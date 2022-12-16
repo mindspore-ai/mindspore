@@ -170,6 +170,8 @@ void MsFunction::ReplaceNewTensorsInGradGraph(const GradExecutor *grad_executor,
   // The forward node in ms_function graph is created during compilation and is a
   // placeholder(mindspore/ccsrc/frontend/optimizer/ad/pynative_dfunctor.cc).After running ms_function, need to update
   // to real value.
+  (void)std::for_each(total_output_tensors.begin(), total_output_tensors.end(),
+                      [](const tensor::TensorPtr &tensor) { tensor->set_is_forward_output(true); });
   RunReplace(added_make_tuple, total_output_tensors, grad_graph, is_dynamic_shape);
   grad_executor->top_cell()->set_op_info_with_ms_func_forward_tensors(op_run_info->op_info, total_output_tensors);
 }
@@ -290,6 +292,8 @@ CNodePtr MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
   auto grad_param = std::make_shared<ad::GradParam>(ms_function_cnode, op_run_info->input_value, op_run_info->out_value,
                                                     grad_graph, !top_cell->is_high_order_top_cell());
+  grad_param->set_graph_cache_key(op_run_info->op_info);
+  grad_param->set_use_dynamic_shape_process(grad_executor->use_dynamic_shape_process());
   {
     py::gil_scoped_release gil_release;
     grad_executor->async_executor()->Wait();

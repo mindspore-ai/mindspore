@@ -108,9 +108,13 @@ InputArgsInfoPtr ParsePyArgsToInputArgsInfo(const py::object &obj, const py::arg
 
 AnfNodePtr GetNonTensorInput(const ValuePtr &v, const std::string &obj_id) {
   MS_EXCEPTION_IF_NULL(v);
-  if (!v->isa<ValueSequence>() && !PyNativeAlgo::Common::IsTensor(v)) {
+  bool is_value_seq = v->isa<ValueSequence>();
+  bool is_single_non_tensor = !is_value_seq && !PyNativeAlgo::Common::IsTensor(v);
+  bool is_seq_non_tensor = is_value_seq && !PyNativeAlgo::Common::IsTensor(v, true);
+  if (is_single_non_tensor || is_seq_non_tensor) {
     auto node = NewValueNode(v);
     MS_LOG(DEBUG) << "Get input value node " << node->ToString() << ", id " << obj_id;
+    node->set_abstract(v->ToAbstract()->Broaden());
     return node;
   }
   return nullptr;
@@ -312,7 +316,7 @@ bool IsDynamicDetectCnodeChange(const DynamicDetectNodeInfoPtr &old_node_info, c
 }
 
 FuncGraphPtr BpropGraphFinalOpt(const FuncGraphPtr &bprop_graph, bool need_renormalize) {
-  MS_LOG(DEBUG) << "Do bporp graph final opt";
+  MS_LOG(DEBUG) << "Do bprop graph final opt";
   MS_EXCEPTION_IF_NULL(bprop_graph);
   if (need_renormalize && bprop_graph->has_flag(kPrimCPrimPyMixed)) {
     MS_LOG(DEBUG) << "Convert PrimitiveC to PrimitivePy";
@@ -770,7 +774,6 @@ void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info
     }
     already_run_top_cell_[already_top_cell_id] = new_top_cell;
     new_top_cell->set_force_top_cell_compile(false);
-    MS_LOG(DEBUG) << "Top cell " << already_top_cell_id << " has been ran";
   } else {
     MS_LOG(DEBUG) << "No need to compile graph again";
     pre_top_cell->set_input_args_id(new_top_cell->input_args_id());
@@ -917,6 +920,12 @@ std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, 
       // Single input
       (void)w_args.emplace_back(fn(weights));
       *weight_param_is_tuple = false;
+    } else {
+      MS_LOG(DEBUG) << "No weights passed by python, add all graph_info weights parameters to bprop graph";
+      const auto &graph_info = top_cell()->graph_info_map().at(curr_g());
+      for (auto it : graph_info->weight_params) {
+        (void)w_args.emplace_back(it.second);
+      }
     }
   }
   return w_args;
@@ -1039,7 +1048,15 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const ad::GradAttr &grad_attr, const ve
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop_graph->set_flag(kFlagIsPynativeBpropGraph, true);
   bool use_dynamic_shape_process = !(forward()->device_target() == kAscendDevice) && use_dynamic_shape_process_;
-  bprop_graph->set_flag(kFlagUseDynamicShapeProcess, use_dynamic_shape_process);
+  if (use_dynamic_shape_process) {
+    // Temporary solution for solve shenzhenwan network, because some op run nan in dynamic process
+    if (std::any_of(top_cell_list_.begin(), top_cell_list_.end(),
+                    [](const TopCellInfoPtr &t) { return t->is_high_order_top_cell(); })) {
+      bprop_graph->set_flag(kFlagIsDynamicStructure, true);
+    } else {
+      bprop_graph->set_flag(kFlagUseDynamicShapeProcess, use_dynamic_shape_process);
+    }
+  }
   bprop_graph->set_attr(kAttrFuncGraphCellId, MakeValue(top_input_args_info_->obj_id));
   return bprop_graph;
 }
@@ -1142,9 +1159,10 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
     MS_LOG(DEBUG) << "Bprop nested";
   }
   MS_EXCEPTION_IF_NULL(first_grad_fg);
-  std::vector<AnfNodePtr> inputs{NewValueNode(first_grad_fg)};
-  auto cur_vm_compile = top_cell()->vm_compile();
+  auto graph_pair = GetNestedGradGraph(first_grad_fg);
+  std::vector<AnfNodePtr> inputs{NewValueNode(graph_pair.first)};
   ValuePtrList weights_args;
+  const std::string &cur_top_cell_id = top_cell()->obj_id_with_grad_order();
   DoParameterReplace(first_grad_fg, forward_args, &inputs, &weights_args);
 
   auto cnode = curr_g()->NewCNode(inputs);
@@ -1158,52 +1176,50 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   top_cell()->SetNodeMapInGraphInfoMap(out_id, cnode);
   cnode->set_abstract(out_value->ToAbstract()->Broaden());
   MS_LOG(DEBUG) << "Nested make cnode is " << cnode->DebugString() << ", out id " << out_id;
-  // High grad hit cache
-  bool need_do_grad = true;
-  if (!cur_vm_compile) {
-    const auto &pre_top_cell = GetAlreadyRunTopCell(top_cell()->already_run_cell_id());
-    if (pre_top_cell != nullptr) {
-      const auto &dynamic_nodes = cell_id_with_dynamic_detect_nodes_[top_cell()->obj_id_with_grad_order()];
-      MS_LOG(DEBUG) << "Cur op index " << (top_cell()->op_index() + 1) << ", outer graph all op size "
-                    << dynamic_nodes.size();
-      if (top_cell()->op_index() + 1 == dynamic_nodes.size()) {
-        need_do_grad = false;
-      }
-    }
-  }
-  if (!use_dynamic_shape_process_ && !need_do_grad) {
-    return;
-  }
-
-  // Because ConvertPrimToPrimPy will change first_grad_fg, when hit bprop graph cache
-  // resource->func_graph() will be changed, abstract may be nullptr.
-  first_grad_fg = BasicClone(first_grad_fg);
-  if (!opt::ConvertPrimToPrimPy(first_grad_fg)) {
-    MS_LOG(EXCEPTION) << "Convert PrimitiveC to PrimitivePy failed";
-  }
-
-  auto r = std::make_shared<pipeline::Resource>();
-  set_eliminate_forward(false);
-  (void)first_grad_fg->transforms().erase(kGrad);
-  // Do high order
-  FuncGraphPtr second_grad_fg = ad::Grad(first_grad_fg, opt::Optimizer::MakeEmptyOptimizer(r));
-  set_eliminate_forward(true);
-  PyNativeAlgo::Common::DumpGraphIR("second_grad_fg.ir", second_grad_fg);
-  r->Clean();
-
-  MS_LOG(DEBUG) << "Get cur graph ptr " << curr_g().get();
 
   // Get input values
   ValuePtrList input_args(forward_args);
   (void)input_args.insert(input_args.end(), weights_args.cbegin(), weights_args.cend());
 
-  auto grad_param = std::make_shared<ad::GradParam>(cnode, input_args, out_value, second_grad_fg,
+  auto grad_param = std::make_shared<ad::GradParam>(cnode, input_args, out_value, graph_pair.second,
                                                     !top_cell()->is_high_order_top_cell());
+  grad_param->set_graph_cache_key(cur_top_cell_id);
+  grad_param->set_use_dynamic_shape_process(use_dynamic_shape_process_);
   if (!top_cell()->auto_grad_cell_ptr()->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to run ad grad for second grad graph " << cnode->ToString();
   }
   top_cell()->set_need_do_final_opt(true);
   need_renormalize_ = true;
+}
+
+std::pair<FuncGraphPtr, FuncGraphPtr> GradExecutor::GetNestedGradGraph(const FuncGraphPtr &first_grad_fg) {
+  // High grad hit cache
+  if (!use_dynamic_shape_process_ && !top_cell()->vm_compile()) {
+    const auto it = nested_grad_graph_.find(top_cell()->obj_id_with_grad_order());
+    if (it != nested_grad_graph_.end()) {
+      MS_LOG(DEBUG) << "Get nested grad graph by cache";
+      return std::make_pair(first_grad_fg, it->second);
+    }
+  }
+  MS_LOG(DEBUG) << "Create nested grad graph";
+  // Because ConvertPrimToPrimPy will change first_grad_fg, when hit bprop graph cache
+  // resource->func_graph() will be changed, abstract may be nullptr.
+  auto clone_first_grad_fg = BasicClone(first_grad_fg);
+  if (!opt::ConvertPrimToPrimPy(clone_first_grad_fg)) {
+    MS_LOG(EXCEPTION) << "Convert PrimitiveC to PrimitivePy failed";
+  }
+
+  auto r = std::make_shared<pipeline::Resource>();
+  set_eliminate_forward(false);
+  (void)clone_first_grad_fg->transforms().erase(kGrad);
+  // Do high order
+  FuncGraphPtr second_grad_fg = ad::Grad(clone_first_grad_fg, opt::Optimizer::MakeEmptyOptimizer(r));
+  set_eliminate_forward(true);
+  PyNativeAlgo::Common::DumpGraphIR("second_grad_fg.ir", second_grad_fg);
+  if (!use_dynamic_shape_process_) {
+    nested_grad_graph_[top_cell()->obj_id_with_grad_order()] = BasicClone(second_grad_fg, true);
+  }
+  return std::make_pair(clone_first_grad_fg, second_grad_fg);
 }
 
 void GradExecutor::DoParameterReplace(const FuncGraphPtr &first_grad_fg, const std::vector<ValuePtr> &forward_args,
@@ -1286,9 +1302,14 @@ void GradExecutor::ClearGlobalRes() {
 }
 
 void GradExecutor::ClearGradRes() {
+  bool has_high_grad = std::any_of(top_cell_list_.begin(), top_cell_list_.end(),
+                                   [](const TopCellInfoPtr &t) { return t->is_high_order_top_cell(); });
   // Custom bprop nested, top cell reset by first time, second time no need clean
   if (top_cell_ != nullptr) {
-    top_cell_->ClearDeviceMemory();
+    // High order must no clean
+    if (!has_high_grad) {
+      top_cell_->ClearDeviceMemory();
+    }
     const auto &pre_top_cell = GetAlreadyRunTopCell(top_cell()->already_run_cell_id());
     if (use_dynamic_shape_process_ || pre_top_cell != nullptr) {
       top_cell_ = nullptr;
@@ -1320,6 +1341,7 @@ void GradExecutor::ClearRes() {
   }
   top_cell_list_.clear();
   already_run_top_cell_.clear();
+  nested_grad_graph_.clear();
   cell_id_with_dynamic_detect_nodes_.clear();
   std::stack<InputArgsInfoPtr>().swap(input_args_info_stack_);
   std::stack<std::pair<std::string, bool>>().swap(bprop_grad_stack_);
@@ -1349,6 +1371,7 @@ AnfNodePtr GradExecutor::GetInput(const ValuePtr &v, const string &obj_id) const
     return node;
   }
   node = NewValueNode(v);
+  node->set_abstract(v->ToAbstract()->Broaden());
   MS_LOG(DEBUG) << "Get input value node " << node->ToString() << ", id " << obj_id;
   return node;
 }
@@ -1381,6 +1404,7 @@ AnfNodePtr GradExecutor::GetParamInput(const ValuePtr &v, const std::string &id)
     weight_param->set_name(param_name);
     weight_param->debug_info()->set_name(param_name);
     weight_param->set_default_param(tensor);
+    weight_param->set_abstract(v->ToAbstract()->Broaden());
     top_cell()->SetParamNodeMapInGraphInfoMap(id, weight_param, true);
     return weight_param;
   }
@@ -1934,6 +1958,7 @@ bool GradExecutor::CheckGraphDynamic(const AnfNodePtr &anf_node, bool is_ms_func
   if (use_dynamic_shape_process_) {
     MS_LOG(DEBUG) << "Set use_dynamic_shape_process_: " << use_dynamic_shape_process_;
     cell_id_with_dynamic_detect_nodes_.clear();
+    nested_grad_graph_.clear();
     return use_dynamic_shape_process_;
   }
   return false;

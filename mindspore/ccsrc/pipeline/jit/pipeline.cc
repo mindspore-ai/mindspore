@@ -1820,6 +1820,7 @@ void MemoryRecycle() {
   ReclaimOptimizer();
   session::ExecutorManager::Instance().ClearDoneTasks();
   ad::g_k_prims.clear();
+  ad::ClearPyNativeAutoGradStaticRes();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
   abstract::AnalysisResultCacheMgr::GetInstance().Clear();
   abstract::AnalysisContext::ClearContext();
@@ -1862,6 +1863,7 @@ void ClearResPart1() {
   (void)distributed::collective::CollectiveManager::instance()->Finalize();
   PrimitivePy::ClearHookRes();
   ad::g_k_prims.clear();
+  ad::ClearPyNativeAutoGradStaticRes();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
 
   abstract::ClearPrimEvaluatorMap();

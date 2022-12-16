@@ -25,6 +25,7 @@
 #include <algorithm>
 #include "mindspore/core/ops/core_ops.h"
 #include "ir/anf.h"
+#include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/ad/adjoint.h"
 #include "utils/info.h"
 #include "pipeline/jit/debug/trace.h"
@@ -44,6 +45,8 @@ const std::map<SpecialType, std::shared_ptr<Primitive>> kValueType{{SpecialType:
 const std::vector<PrimitivePtr> kGradBlackList{
   prim::kPrimMakeTuple,           prim::kPrimTupleGetItem,      prim::kPrimStopGradient,       prim::kPrimUpdateState,
   prim::kPrimNPUAllocFloatStatus, prim::kPrimNPUGetFloatStatus, prim::kPrimNPUClearFloatStatus};
+
+mindspore::HashMap<std::string, FuncGraphPtr> pass_grad_graph_;
 
 void ClearDeviceAddress(const ValuePtr &value) {
   std::vector<tensor::TensorPtr> tensors;
@@ -185,8 +188,17 @@ bool IsZerosLikeNode(const AnfNodePtr &node) {
   return false;
 }
 
-FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph) {
+FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph, const GradParamPtr &grad_param) {
   pynative::PyNativeAlgo::Common::DumpGraphIR("bprop_builder_before_opt.ir", bprop_func_graph);
+  if (!grad_param->use_dynamic_shape_process) {
+    const auto it = pass_grad_graph_.find(grad_param->graph_cache_key);
+    if (it != pass_grad_graph_.end()) {
+      MS_LOG(DEBUG) << "Get pass pass graph by cache";
+      return BasicClone(it->second, true);
+    }
+  } else {
+    pass_grad_graph_.clear();
+  }
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
   resource->set_func_graph(bprop_func_graph);
   auto manager = resource->manager();
@@ -194,6 +206,9 @@ FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph) {
   manager->AddFuncGraph(bprop_func_graph);
   auto after_opt_bg = pipeline::OptGradGraphPass(resource);
   pynative::PyNativeAlgo::Common::DumpGraphIR("bprop_builder_after_opt.ir", after_opt_bg);
+  if (!grad_param->use_dynamic_shape_process) {
+    pass_grad_graph_[grad_param->graph_cache_key] = BasicClone(after_opt_bg, true);
+  }
   return after_opt_bg;
 }
 
@@ -392,11 +407,11 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
       v_node->set_abstract(grad_param->op_args[i]->ToAbstract()->Broaden());
       (void)args_node_list.emplace_back(v_node);
     }
-    bprop_cnode = GetBPropFromFProp(grad_param->fprop_fg, args_node_list, grad_param->out, &dout);
+    bprop_cnode = GetBPropFromFProp(grad_param, args_node_list, &dout);
   } else {
     k_node = BuildKNode(grad_param);
     BuildKNodeListFromPrimalCNode(grad_param->cnode, grad_param->op_args, &args_node_list);
-    bprop_cnode = GetBPropFromFProp(grad_param->fprop_fg, args_node_list, grad_param->out, &dout);
+    bprop_cnode = GetBPropFromFProp(grad_param, args_node_list, &dout);
   }
   auto fn = std::make_shared<FunctionNode>(tape_, dout);
   auto variable_adjoint = std::make_shared<VariableAdjoint>(fn, grad_param->out);
@@ -414,13 +429,13 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
   return true;
 }
 
-CNodePtr AutoGradCellImpl::GetBPropFromFProp(const FuncGraphPtr &fprop_fg, const AnfNodePtrList &args,
-                                             const ValuePtr &out, AnfNodePtr *const tape_dout) {
+CNodePtr AutoGradCellImpl::GetBPropFromFProp(const GradParamPtr &grad_param, const AnfNodePtrList &args,
+                                             AnfNodePtr *const tape_dout) {
   // Wrap tuple_getitem(fprop_app, 1) in a FuncGraph and optimize it;
   auto bprop_builder = std::make_shared<FuncGraph>();
   bprop_builder->debug_info()->set_name("bprop_builder");
 
-  AnfNodePtrList fprop_app_inputs{NewValueNode(fprop_fg)};
+  AnfNodePtrList fprop_app_inputs{NewValueNode(grad_param->fprop_fg)};
   AnfNodePtrList bprop_builder_inputs;
   for (const auto &arg : args) {
     auto param = bprop_builder->add_parameter();
@@ -435,18 +450,18 @@ CNodePtr AutoGradCellImpl::GetBPropFromFProp(const FuncGraphPtr &fprop_fg, const
   // Get bprop from fprop_fg, it is 2th output of fprop_fg
   AnfNodePtrList node_list{get_bprop};
   auto dout = bprop_builder->add_parameter();
-  MS_EXCEPTION_IF_NULL(out);
-  dout->set_abstract(out->ToAbstract()->Broaden());
+  MS_EXCEPTION_IF_NULL(grad_param->out);
+  dout->set_abstract(grad_param->out->ToAbstract()->Broaden());
   (void)node_list.emplace_back(dout);
   auto call_bprop = bprop_builder->NewCNode(node_list);
   bprop_builder->set_output(call_bprop);
 
   // Call pass for optimize graph, such as inline
-  auto after_opt_fg = OptimizeBpropBuilder(bprop_builder);
+  auto after_opt_fg = OptimizeBpropBuilder(bprop_builder, grad_param);
 
   // Call by tape_
   MS_EXCEPTION_IF_NULL(tape_dout);
-  *tape_dout = BuildZerosLikeNode(tape_, out);
+  *tape_dout = BuildZerosLikeNode(tape_, grad_param->out);
   (void)bprop_builder_inputs.emplace_back(*tape_dout);
   (void)bprop_builder_inputs.insert(bprop_builder_inputs.cbegin(), NewValueNode(after_opt_fg));
   get_bprop = tape_->NewCNode(bprop_builder_inputs);
@@ -573,7 +588,7 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForMakeTuple(const AnfNodePtr &input_node
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
   ValuePtrList op_args;
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
     (void)inputs.emplace_back(BuildKNodeForCNodeInput(cnode->input(i)));
     if (cnode->input(i)->isa<CNode>() || cnode->input(i)->isa<Parameter>()) {
       const auto input_adjoint_iter = anfnode_to_variable_adjoint_.find(cnode->input(i));
@@ -595,6 +610,17 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForMakeTuple(const AnfNodePtr &input_node
   k_node->set_abstract(input_node->abstract());
   variable_adjoint->set_k_node(k_node);
   (void)anfnode_to_variable_adjoint_.insert(std::make_pair(input_node, variable_adjoint));
+
+  // Create dout for maketuple
+  std::vector<CNodePtr> make_tuple_dout;
+  size_t input_num = cnode->size() - 1;
+  for (size_t i = 0; i < input_num; ++i) {
+    auto d = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), dout, NewValueNode(SizeToLong(i))});
+    d->set_abstract(op_args[i]->ToAbstract()->Broaden());
+    (void)make_tuple_dout.emplace_back(d);
+    AddUser(dout, d, 1);
+  }
+  UpdateNextEdges(variable_adjoint, cnode, make_tuple_dout, op_args);
   return k_node;
 }
 
@@ -610,8 +636,9 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForTupleGetItem(const AnfNodePtr &input_n
   }
   const auto &v_tuple = input_adjoint_iter->second->out_value()->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(v_tuple);
-  auto index_value = LongToSize(GetValueNode<Int64ImmPtr>(tuple_item_cnode->input(2))->value());
-  auto out_value = (*v_tuple)[index_value];
+  auto index_value = GetValueNode<Int64ImmPtr>(tuple_item_cnode->input(2));
+  auto index_value_int = LongToSize(index_value->value());
+  auto out_value = (*v_tuple)[index_value_int];
   MS_EXCEPTION_IF_NULL(out_value);
   AnfNodePtr dout = BuildSpecialLikeValue(tape_, out_value, SpecialType::kZerosLikeType);
   auto fn = std::make_shared<FunctionNode>(tape_, dout);
@@ -623,9 +650,26 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForTupleGetItem(const AnfNodePtr &input_n
   // Get index knode
   (void)inputs.emplace_back(BuildKNodeForCNodeInput(tuple_item_cnode->input(2)));
   auto k_node = tape_->NewCNode(inputs);
-  k_node->set_abstract(input_node->abstract());
+  k_node->set_abstract(out_value->ToAbstract()->Broaden());
   variable_adjoint->set_k_node(k_node);
   (void)anfnode_to_variable_adjoint_.insert(std::make_pair(input_node, variable_adjoint));
+
+  // Create dout for tuplegetitem
+  std::vector<AnfNodePtr> tuple_getitem_dout{NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t i = 0; i < v_tuple->size(); ++i) {
+    const auto &v = v_tuple->value()[i];
+    if (i == index_value_int) {
+      (void)tuple_getitem_dout.emplace_back(dout);
+    } else {
+      (void)tuple_getitem_dout.emplace_back(BuildSpecialLikeValue(tape_, v, SpecialType::kZerosLikeType));
+    }
+  }
+  CNodePtr tuple_getitem_dout_value = tape_->NewCNode(tuple_getitem_dout);
+  tuple_getitem_dout_value->set_abstract(v_tuple->ToAbstract()->Broaden());
+  CNodePtr index_dout_value = BuildSpecialLikeValue(tape_, index_value, SpecialType::kZerosLikeType)->cast<CNodePtr>();
+  UpdateNextEdges(variable_adjoint, tuple_item_cnode, {tuple_getitem_dout_value, index_dout_value},
+                  {v_tuple, index_value});
+  AddUser(dout, tuple_getitem_dout_value, index_value_int + 1);
   return k_node;
 }
 
@@ -651,31 +695,31 @@ void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const
   }
 }
 
-void AutoGradCellImpl::UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &node, const AnfNodePtr &din,
-                                      const ValuePtr &op_arg) {
-  MS_EXCEPTION_IF_NULL(node);
+void AutoGradCellImpl::UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &input_node, const AnfNodePtr &din,
+                                      const ValuePtr &input_arg) {
+  MS_EXCEPTION_IF_NULL(input_node);
   MS_EXCEPTION_IF_NULL(din);
-  MS_EXCEPTION_IF_NULL(op_arg);
-  const auto it = anfnode_to_variable_adjoint_.find(node);
+  MS_EXCEPTION_IF_NULL(input_arg);
+  const auto it = anfnode_to_variable_adjoint_.find(input_node);
   if (it != anfnode_to_variable_adjoint_.end()) {
     if (!it->second->is_need_grad()) {
       return;
     }
-    auto real_din = GetRealDin(fn, it->second->out_value(), op_arg, din);
-    fn->AddNextEdge(node, real_din);
-  } else if (node->isa<CNode>()) {
-    const auto &cnode = node->cast<CNodePtr>();
+    auto real_din = GetRealDin(fn, it->second->out_value(), input_arg, din);
+    fn->AddNextEdge(input_node, real_din);
+  } else if (input_node->isa<CNode>()) {
+    const auto &cnode = input_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (IsPrimitiveCNode(cnode, prim::kPrimStopGradient) || IsPrimitiveCNode(cnode, prim::kPrimUpdateState)) {
       return;
     }
     if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
-      if (!op_arg->isa<ValueSequence>()) {
+      if (!input_arg->isa<ValueSequence>()) {
         MS_LOG(EXCEPTION) << "op_arg type is not valuesequence";
       }
-      auto value_seq = op_arg->cast<ValueSequencePtr>();
+      auto value_seq = input_arg->cast<ValueSequencePtr>();
       for (size_t i = 0; i < value_seq->value().size(); ++i) {
-        auto input_node = cnode->input(i + 1);
+        auto input = cnode->input(i + 1);
         auto sub_value = value_seq->value()[i];
         CNodePtr new_din = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), din, NewValueNode(SizeToLong(i))});
         new_din->set_abstract(sub_value->ToAbstract()->Broaden());
@@ -684,7 +728,7 @@ void AutoGradCellImpl::UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePt
           AddUser(fn->fake_dout(), new_din, 1);
         }
         // Add next edge to fn
-        UpdateNextEdge(fn, input_node, new_din, sub_value);
+        UpdateNextEdge(fn, input, new_din, sub_value);
       }
     } else if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
       auto src_node = cnode->input(1);
@@ -692,18 +736,18 @@ void AutoGradCellImpl::UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePt
       if (index_value == nullptr) {
         MS_LOG(EXCEPTION) << "CNode input 2 should be a Int64Imm, CNode: " << cnode->DebugString();
       }
-      UpdateNextEdge(fn, src_node, din, op_arg);
+      UpdateNextEdge(fn, src_node, din, input_arg);
     } else {
       MS_LOG(EXCEPTION) << "Cnode should be tuplegetitem or maketuple " << cnode->DebugString();
     }
-  } else if (node->isa<Parameter>()) {
-    auto param = node->cast<ParameterPtr>();
+  } else if (input_node->isa<Parameter>()) {
+    auto param = input_node->cast<ParameterPtr>();
     auto tensor = param->default_param();
     MS_EXCEPTION_IF_NULL(tensor);
     AddParameterNode(param, tensor);
-    UpdateNextEdge(fn, node, din, op_arg);
+    UpdateNextEdge(fn, input_node, din, input_arg);
   } else {
-    MS_LOG(DEBUG) << "It is not a cnode or parameter: " << node->DebugString();
+    MS_LOG(DEBUG) << "It is not a cnode or parameter: " << input_node->DebugString();
     return;
   }
 }
@@ -736,15 +780,15 @@ void AutoGradCellImpl::AddParameterNode(const AnfNodePtr &parameter, const Value
   (void)weights_used_in_graph_.emplace_back(parameter);
 }
 
-AnfNodePtr AutoGradCellImpl::GetRealDin(const FunctionNodePtr &fn, const ValuePtr &out_value, const ValuePtr &sub_value,
+AnfNodePtr AutoGradCellImpl::GetRealDin(const FunctionNodePtr &fn, const ValuePtr &out_value, const ValuePtr &input_arg,
                                         const AnfNodePtr &din) {
   MS_EXCEPTION_IF_NULL(out_value);
-  MS_EXCEPTION_IF_NULL(sub_value);
+  MS_EXCEPTION_IF_NULL(input_arg);
   MS_EXCEPTION_IF_NULL(din);
   const auto &out_value_id = pynative::PyNativeAlgo::Common::GetIdByValue(out_value);
-  const auto &sub_value_id = pynative::PyNativeAlgo::Common::GetIdByValue(sub_value);
+  const auto &input_arg_id = pynative::PyNativeAlgo::Common::GetIdByValue(input_arg);
   // The node corresponding output tensor is the same as the currently used tensor
-  if (out_value_id == sub_value_id) {
+  if (out_value_id == input_arg_id) {
     return din;
   } else if (out_value->isa<tensor::Tensor>()) {
     // out_value is be used, may be it is one of multiple output
@@ -762,7 +806,7 @@ AnfNodePtr AutoGradCellImpl::GetRealDin(const FunctionNodePtr &fn, const ValuePt
     for (const auto &value : value_seq->value()) {
       // Find the value's din, if value equal to sub_value, means value be used, is it will get din; Otherwise value's
       // din is zero , which set by second branch condition above
-      auto real_din = GetRealDin(fn, value, sub_value, din);
+      auto real_din = GetRealDin(fn, value, input_arg, din);
       (void)inputs.emplace_back(real_din);
 
       // if exist din == fake_dout, we record it in user vector
@@ -1180,5 +1224,7 @@ FuncGraphPtr GradPynativeCellEnd(const AutoGradCellImplPtr &auto_grad_cell, cons
                                  const std::vector<size_t> &grad_position, const GradAttr &grad_attr) {
   return auto_grad_cell->Finish(weights, grad_position, grad_attr);
 }
+
+void ClearPyNativeAutoGradStaticRes() { pass_grad_graph_.clear(); }
 }  // namespace ad
 }  // namespace mindspore

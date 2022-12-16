@@ -47,6 +47,8 @@ struct GradParam {
             bool grad_by_value)
       : cnode(cnode), op_args(op_args), out(out), fprop_fg(std::move(fprop_fg)), grad_by_value(grad_by_value) {}
 
+  void set_graph_cache_key(const std::string &key) { graph_cache_key = key; }
+  void set_use_dynamic_shape_process(bool id_dynamic) { use_dynamic_shape_process = id_dynamic; }
   // Primal CNode create by op forward process
   const CNodePtr cnode;
   // Input value for cnode
@@ -55,8 +57,11 @@ struct GradParam {
   const ValuePtr out;
   // Bprop func graph
   const FuncGraphPtr fprop_fg;
-  // High order used this, which
+  // High order used this
   bool grad_by_value = true;
+  bool use_dynamic_shape_process;
+  // For pass graph cache key
+  std::string graph_cache_key;
 };
 using GradParamPtr = std::shared_ptr<GradParam>;
 
@@ -134,8 +139,7 @@ class AutoGradCellImpl {
   bool KPynativeOp(const GradParamPtr &grad_param);
   // Reverse connect ms_function or higher order sub bprop funcgraph
   bool KPynativeWithFProp(const GradParamPtr &grad_param);
-  CNodePtr GetBPropFromFProp(const FuncGraphPtr &fprop_fg, const AnfNodePtrList &args, const ValuePtr &out,
-                             AnfNodePtr *const tape_dout);
+  CNodePtr GetBPropFromFProp(const GradParamPtr &grad_param, const AnfNodePtrList &args, AnfNodePtr *const tape_dout);
   // Update top cell output, record last_node
   void UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, const ValuePtr &sens_out);
   // Build a back propagate funcgraph, each cnode in primal funcgraph is replaced by value node or formal cnode, so it
@@ -170,12 +174,13 @@ class AutoGradCellImpl {
   // Back propagate for one node;
   void UpdateNextEdges(const VariableAdjointPtr &variable, const CNodePtr &cnode, const std::vector<CNodePtr> &dins,
                        const ValuePtrList &op_args);
-  void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &node, const AnfNodePtr &din, const ValuePtr &op_arg);
+  void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &input_node, const AnfNodePtr &din,
+                      const ValuePtr &input_arg);
 
   void BuildForwardLastNode();
   // Add parameter(weights) to anfnode_to_variable_adjoint_
   void AddParameterNode(const AnfNodePtr &parameter, const ValuePtr &tensor);
-  AnfNodePtr GetRealDin(const FunctionNodePtr &fn, const ValuePtr &out_value, const ValuePtr &sub_value,
+  AnfNodePtr GetRealDin(const FunctionNodePtr &fn, const ValuePtr &out_value, const ValuePtr &input_arg,
                         const AnfNodePtr &din);
   void BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
   void BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
@@ -241,6 +246,7 @@ bool GradPynativeOp(const AutoGradCellImplPtr &k_cell, const GradParamPtr &grad_
 // adjoint bprop form ms_function and high grad
 void GradPynativeFBprop(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
                         const FuncGraphPtr &fprop_fg);
+void ClearPyNativeAutoGradStaticRes();
 }  // namespace ad
 }  // namespace mindspore
 
