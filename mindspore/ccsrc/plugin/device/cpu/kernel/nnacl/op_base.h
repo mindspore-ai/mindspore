@@ -538,8 +538,9 @@ enum PrimType {
   PrimType_ScatterElements = 217,
   PrimType_Triu = 218,
   PrimType_Tril = 219,
+  PrimType_AdamWeightDecay = 220,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_Tril + 1,
+  PrimType_MAX = PrimType_AdamWeightDecay + 1,
 
   // inner operators.
   PrimType_Inner_ToFormat = 10000,

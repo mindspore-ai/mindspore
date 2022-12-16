@@ -95,8 +95,8 @@ class OnRequestExit(Callback):
             self.train_file_path = os.path.abspath(os.path.join(directory, f"{file_name}_train"))
             self.eval_file_path = os.path.abspath(os.path.join(directory, f"{file_name}_eval"))
         self.sig = Validator.check_isinstance('sig', sig, int)
-        if self.sig == signal.SIGKILL or self.sig == signal.SIGINT:
-            raise ValueError("Not support send exit request by signal SIGKILL or SIGINT.")
+        if hasattr(signal, "SIGKILL") and self.sig == signal.SIGKILL:
+            raise ValueError("Not support send exit request by signal SIGKILL.")
         self.exit = False
 
     def on_train_begin(self, run_context):

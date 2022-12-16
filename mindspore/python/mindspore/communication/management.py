@@ -109,7 +109,7 @@ def init(backend_name=None):
                       have not been exported when backend is HCCL.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
@@ -225,7 +225,7 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If HCCL/NCCL is not available.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
@@ -322,7 +322,7 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If HCCL/NCCL is not available.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::

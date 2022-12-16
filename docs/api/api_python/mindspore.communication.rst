@@ -8,7 +8,6 @@ mindspore.communication
 
 针对GPU设备，用户需要准备host文件和mpi，详见 `GPU指导文档 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html#准备环节>`_ 。
 
-目前尚不支持CPU。
 
 .. py:class:: mindspore.communication.GlobalComm
 

@@ -18,6 +18,7 @@
 #ifdef _MSC_VER
 #include "nnacl/infer/activation_grad_infer.h"
 #include "nnacl/infer/adam_infer.h"
+#include "nnacl/infer/adam_weight_decay_infer.h"
 #include "nnacl/infer/add_sub_grad_infer.h"
 #include "nnacl/infer/addn_infer.h"
 #include "nnacl/infer/affine_infer.h"
@@ -168,6 +169,7 @@ void RegAllInferFunc1() {
   g_infer_func[PrimType_Activation] = CommonInferShape;
   g_infer_func[PrimType_ActivationGrad] = ActivationGradInferShape;
   g_infer_func[PrimType_Adam] = AdamInferShape;
+  g_infer_func[PrimType_AdamWeightDecay] = AdamWeightDecayInferShape;
   g_infer_func[PrimType_AdderFusion] = Conv2dInferShape;
   g_infer_func[PrimType_AddFusion] = ArithmeticInferShape;
   g_infer_func[PrimType_AddGrad] = AddSubGradInferShape;

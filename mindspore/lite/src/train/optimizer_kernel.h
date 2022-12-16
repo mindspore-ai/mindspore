@@ -29,6 +29,10 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::RET_OUT_OF_TENSOR_RANGE;
 
 namespace mindspore::kernel {
+constexpr static int kWeightIdx = 0;
+constexpr static int kMomentVector1stIdx = 1;
+constexpr static int kMomentVector2stIdx = 2;
+
 enum class WeightUpdateMode { NORMAL, VIRTUAL_BATCH, ACCUMULATE_GRADS };
 
 class OptimizerKernel : public LiteKernel {

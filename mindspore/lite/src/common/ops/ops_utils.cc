@@ -278,6 +278,7 @@ REG_MINDSPORE_OPERATOR(Tril)
 REG_MINDSPORE_OPERATOR(SparseFillEmptyRows)
 REG_MINDSPORE_OPERATOR(SparseReshape)
 REG_MINDSPORE_OPERATOR(SparseSegmentSum)
+REG_MINDSPORE_OPERATOR(AdamWeightDecay)
 }  // namespace lite
 }  // namespace mindspore
 
