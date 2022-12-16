@@ -12,13 +12,11 @@ mindspore.ops.standard_normal
 
     参数：
         - **shape** (Union[tuple, Tensor]) - 待生成的Tensor的shape。当为tuple类型时，只支持常量值；当为Tensor类型时，支持动态Shape。
-        - **seed** (int) - 随机种子，非负值。默认值：None。
+        - **seed** (int, 可选) - 随机种子，非负值。默认值：None。
 
     返回：
         Tensor。shape为输入 `shape` 。数据类型支持float32。
 
     异常：
-        - **TypeError** - `seed` 不是int类型。
         - **TypeError** - `shape` 既不是tuple，也不是Tensor。
-        - **ValueError** - `seed` 不是非负的int。
         - **ValueError** - `shape` 为tuple时，包含非正的元素。

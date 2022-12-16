@@ -12,7 +12,7 @@ mindspore.ops.random_poisson
     参数：
         - **shape** (Tensor) - 表示要从每个分布中采样的随机数张量的形状。必须是一个一维的张量且数据类型必须是 `mindspore.dtype.int32` 或者 `mindspore.dtype.int64` 。
         - **rate** (Tensor) - 泊松分布的 :math:`μ` 参数，表示泊松分布的均值，同时也是分布的方差。必须是一个张量，且其数据类型必须是以下类型中的一种：mindspore.dtype.int64，mindspore.dtype.int32，mindspore.dtype.float64，mindspore.dtype.float32或者mindspore.dtype.float16。
-        - **seed** (int) - 随机数种子，用于在随机数引擎中产生随机数。必须是一个非负的整数。默认值是None，表示使用0作为随机数种子。
+        - **seed** (int, 可选) - 随机数种子，用于在随机数引擎中产生随机数。必须是一个非负的整数。默认值是None，表示使用0作为随机数种子。
         - **dtype** (mindspore.dtype) - 表示要生成的随机数张量的数据类型。必须是mindspore.dtype类型，可以是以下值中的一种：mindspore.dtype.int64，mindspore.dtype.int32，mindspore.dtype.float64，mindspore.dtype.float32或者mindspore.dtype.float16。
 
     返回：
