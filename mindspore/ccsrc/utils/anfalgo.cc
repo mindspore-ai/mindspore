@@ -1666,6 +1666,8 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
     fn(reinterpret_cast<int32_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt64) {
     fn(reinterpret_cast<int64_t *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeUInt64) {
+    fn(reinterpret_cast<uint64_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeFloat16) {
     fn(reinterpret_cast<float16 *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeFloat64) {
