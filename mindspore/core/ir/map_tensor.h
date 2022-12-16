@@ -145,24 +145,6 @@ class MS_CORE_API MapTensor final : public Tensor {
 
   std::string ToString() const override;
 
-  /// \brief Get or create values.
-  ///
-  /// \param[in] key_tensor [Tensor] The key tensor.
-  /// \param[in] insert_default_value [bool] The flag of insert default_value.
-  /// \return The value tensor according the key tensor, return default_value if key_tensor is not exist.
-  TensorPtr Get(const TensorPtr &key_tensor, bool insert_default_value);
-
-  /// \brief Put or insert key value pairs.
-  ///
-  /// \param[in] key_tensor [Tensor] The key tensor.
-  /// \param[in] value_tensor [Tensor] The value tensor.
-  void Put(const TensorPtr &key_tensor, const TensorPtr &value_tensor);
-
-  /// \brief Remove items with the given keys.
-  ///
-  /// \param[in] key_tensor [Tensor] The key tensor.
-  void Erase(const TensorPtr &key_tensor);
-
   /// \brief Update MapTensor from exported data.
   ///
   /// \param[in] data [ExportData] The data.
@@ -206,7 +188,7 @@ class MS_CORE_API MapTensor final : public Tensor {
 
   void set_status_tensor(const TensorPtr status_tensor) { status_tensor_ = status_tensor; }
 
-  bool CheckData();
+  bool CheckData() const;
 
  private:
   // Data type of the keys.

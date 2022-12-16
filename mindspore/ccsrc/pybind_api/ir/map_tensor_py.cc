@@ -76,13 +76,6 @@ std::tuple<py::array, py::array, py::array> MapTensorPy::ExportAsNumpy(const Map
                          TensorPy::AsNumpy(*data.status_tensor));
 }
 
-// Python wrapper for MapTensor::Get.
-static tensor::TensorPtr PyMapTensorGet(const MapTensorPtr &map_tensor, const tensor::TensorPtr &key_tensor,
-                                        bool insert_default_value) {
-  MS_EXCEPTION_IF_NULL(map_tensor);
-  return map_tensor->Get(key_tensor, insert_default_value);
-}
-
 static tensor::TensorPtr PyMapTensorGetKeys(const MapTensorPtr &map_tensor) {
   MS_EXCEPTION_IF_NULL(map_tensor);
   return map_tensor->key_tensor();
@@ -135,9 +128,6 @@ void RegMapTensor(py::module *m) {
     .def_property_readonly("value_dtype", &MapTensor::ValueDtype)
     .def_property_readonly("value_shape", &MapTensor::value_shape)
     .def_property_readonly("size", &MapTensor::size)
-    .def("get", &PyMapTensorGet)
-    .def("put", &MapTensor::Put)
-    .def("erase", &MapTensor::Erase)
     .def("export_data", &MapTensorPy::ExportAsNumpy)
     .def("import_data", &MapTensorPy::UpdateFromNumpy)
     .def("__str__", &MapTensor::ToString)

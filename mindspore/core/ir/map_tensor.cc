@@ -65,30 +65,6 @@ std::string MapTensor::ToString() const {
          ", evict_filter=" + (evict_filter_value_ == nullptr ? "<null>" : evict_filter_value_->ToString()) + ")";
 }
 
-TensorPtr MapTensor::Get(const TensorPtr &key_tensor, bool insert_default_value) {
-  MS_EXCEPTION_IF_NULL(key_tensor);
-  // Check input.
-  if (key_tensor->shape().size() != 1) {
-    MS_LOG(EXCEPTION) << "Invalid key tensor shape: " << tensor::ShapeToString(key_tensor->shape());
-  }
-  // Result shape = key_tensor.shape + value_shape.
-  ShapeVector result_shape = ConcatShape(key_tensor->shape(), value_shape());
-  // Make the result tensor.
-  TensorPtr result_tensor = std::make_shared<Tensor>(value_dtype(), result_shape);
-  // Note: this is the fake implementation that fill result tensor with zeros.
-  size_t nbytes = static_cast<size_t>(result_tensor->data().nbytes());
-  auto data_ptr = static_cast<uint8_t *>(result_tensor->data_c());
-  (void)std::fill(data_ptr, data_ptr + nbytes, 0);
-  return result_tensor;
-}
-
-void MapTensor::Put(const TensorPtr &key_tensor, const TensorPtr &value_tensor) {
-  MS_EXCEPTION_IF_NULL(key_tensor);
-  MS_EXCEPTION_IF_NULL(value_tensor);
-}
-
-void MapTensor::Erase(const TensorPtr &key_tensor) { MS_EXCEPTION_IF_NULL(key_tensor); }
-
 void MapTensor::Update(const MapTensor::ExportData &data) {
   MS_EXCEPTION_IF_NULL(data.key_tensor);
   MS_EXCEPTION_IF_NULL(data.value_tensor);
@@ -182,7 +158,7 @@ MapTensor::ExportData MapTensor::ExportDataFromDevice(const DeviceSyncPtr &devic
 }
 
 // If the data on the host side is valid, the data on the host side will be exported.
-bool MapTensor::CheckData() {
+bool MapTensor::CheckData() const {
   // check key
   if (key_tensor()->shape().size() != 1 || key_tensor()->shape()[0] < 1) {
     MS_LOG(WARNING) << "Invalid key tensor shape: " << tensor::ShapeToString(key_tensor()->shape());
