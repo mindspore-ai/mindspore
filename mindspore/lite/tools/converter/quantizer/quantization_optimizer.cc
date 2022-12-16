@@ -22,6 +22,7 @@
 #include <deque>
 #include <map>
 #include <set>
+#include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "base/base.h"
 #include "tools/converter/quantizer/quantize_util.h"
@@ -237,27 +238,28 @@ int ConvertValueNodeToParameter(const FuncGraphPtr &func_graph) {
 }
 
 int PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
-  int status;
-
-  status = ConvertFp16ToFp32(old_graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Convert fp16 To fp32 failed.";
-    return status;
-  }
-
   if (!param->train_model) {
-    status = ConvertValueNodeToParameter(old_graph);
+    auto status = ConvertValueNodeToParameter(old_graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Convert value node To parameter failed.";
       return status;
     }
   }
 
+  auto convert_pm = std::make_shared<opt::LitePassManager>("anf graph convert pass manager", true);
+  convert_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>(param->train_model));
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  optimizer->AddPassManager(convert_pm);
+  if (optimizer->Optimize(old_graph) == nullptr) {
+    MS_LOG(ERROR) << "run graph pass failed";
+    return RET_ERROR;
+  }
+
   bool per_layer = param->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL &&
                    !param->fullQuantParam.per_channel && param->fullQuantParam.target_device != DSP;
   if (per_layer) {
     CLEStrategy cle_strategy(old_graph);
-    status = cle_strategy.Run();
+    auto status = cle_strategy.Run();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "do pre process failed!";
       return status;

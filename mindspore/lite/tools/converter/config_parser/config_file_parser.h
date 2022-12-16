@@ -55,6 +55,7 @@ struct MixedBitWeightQuantString {
 
 struct WeightQuantString {
   std::string dequant_strategy;
+  std::string update_mindir;
 };
 
 struct FullQuantString {

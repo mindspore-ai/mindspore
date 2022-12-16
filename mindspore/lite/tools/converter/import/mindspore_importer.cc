@@ -279,6 +279,10 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const std::shared_ptr<ConverterPara
 
 FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const std::shared_ptr<ConverterPara> &param,
                                                         FuncGraphPtr func_graph) {
+  if (!param->weightQuantParam.update_mindir) {
+    MS_LOG(INFO) << "It will not update mindir.";
+    return func_graph;
+  }
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "get funcGraph failed for fmk:MINDIR";
     MS_LOG(ERROR)

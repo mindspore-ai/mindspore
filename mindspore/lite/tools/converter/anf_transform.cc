@@ -565,7 +565,7 @@ STATUS AnfTransform::DoSingleGraphQATTransform(const FuncGraphPtr &func_graph,
     prim::kPrimSGD,          prim::kPrimApplyMomentum};
   auto weight_quantizer = quant::WeightQuantizer();
   ret = weight_quantizer.WeightQuant(func_graph, support_primitive_types, per_layer_primitive_types,
-                                     support_primitive_types, true, true, false);
+                                     support_primitive_types, false, true, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run supplement weight quant param pass failed.";
     return ret;
@@ -621,8 +621,8 @@ STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::sha
 }
 
 int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
-  quant::QuantizationOptimizer optimizer(param);
-  auto ret = optimizer.Run(old_graph);
+  quant::QuantizationOptimizer quantization_optimizer(param);
+  auto ret = quantization_optimizer.Run(old_graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Post training quantization failed.";
     return ret;
@@ -795,6 +795,11 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
   if (param->no_fusion && param->export_mindir == kMindIR) {  // converter, online
     if (ProcOnlineTransform(old_graph, param) != lite::RET_OK) {
       MS_LOG(ERROR) << "Proc online transform failed.";
+      return nullptr;
+    }
+    auto status = DoQuantize(old_graph, param);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Do Quantize failed.";
       return nullptr;
     }
     return old_graph;

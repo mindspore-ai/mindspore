@@ -81,6 +81,9 @@ ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type,
                                    const std::vector<schema::QuantParamT> &output_quant_params, int axis = 0,
                                    bool set_quant_flag = true);
 
+ValueNodePtr NewFSEDecodePrimitive(int dst_type, const uint64_t curr_chunk, const int64_t curr_chunk_index,
+                                   const int64_t curr_bit_count, const int64_t table_log);
+
 bool IsGraphInDTypeCast(const CNodePtr &cnode);
 
 bool IsGraphOutDTypeCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode);

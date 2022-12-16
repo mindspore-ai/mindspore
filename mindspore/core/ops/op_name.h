@@ -381,6 +381,10 @@ constexpr auto kConjugate = "conjugate";
 constexpr auto KExclusive = "exclusive";
 constexpr auto KReverse = "reverse";
 constexpr auto KComputeEigenvectors = "compute_eigenvectors";
+constexpr auto KCurrChunk = "curr_chunk";
+constexpr auto KCurrChunkIndex = "curr_chunk_index";
+constexpr auto KCurrBitCount = "curr_bit_count";
+constexpr auto KTableLog = "table_log";
 
 constexpr size_t kInputIndex0 = 0;
 constexpr size_t kInputIndex1 = 1;

@@ -116,6 +116,7 @@ struct CommonQuantParam {
 
 struct WeightQuantParam {
   DequantStrategy dequant_strategy = DEFAULT;
+  bool update_mindir = true;
 };
 
 struct MixedBitWeightQuantParam {
