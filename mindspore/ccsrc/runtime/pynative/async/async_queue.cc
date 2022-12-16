@@ -42,7 +42,6 @@ void AsyncQueue::WorkerLoop() {
     std::shared_ptr<AsyncTask> task;
     bool task_empty = false;
     {
-      MS_LOG(DEBUG) << "Wait task in queue";
       std::unique_lock<std::mutex> lock(task_mutex_);
       task_empty = tasks_.empty();
       if (!task_empty) {
