@@ -45,7 +45,7 @@ mindspore.dataset.audio.MelSpectrogram
         - **ValueError** - 如果 `n_mels` 为负数。
         - **ValueError** - 如果 `f_min` 大于 `f_max` 。
         - **ValueError** - 如果 `f_max` 为负数。
-        - **ValueError** - 当 `f_max`为None时, 如果 `f_min` 大于 `sample_rate // 2` 。
+        - **ValueError** - 当 `f_max` 为None时, 如果 `f_min` 大于 `sample_rate // 2` 。
         - **ValueError** - 如果 `power` 不为正数。
         - **ValueError** - 如果 `pad` 为负数。
         - **ValueError** - 如果 `win_length` 不为正数。
