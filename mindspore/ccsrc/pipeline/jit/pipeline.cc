@@ -19,7 +19,6 @@
 #include "pipeline/jit/pipeline.h"
 
 #include <memory>
-#include <sstream>
 #include <map>
 #include <cstdlib>
 #include <algorithm>
@@ -75,6 +74,7 @@
 #include "kernel/akg/akg_kernel_build_manager.h"
 #include "kernel/graph_kernel_info.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
+#include "pybind_api/ir/log_adapter_py.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif

@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CCSRC_PYBINDAPI_IR_LOGADAPTERPY_H_
+#define MINDSPORE_CCSRC_PYBINDAPI_IR_LOGADAPTERPY_H_
 
 #include "utils/log_adapter.h"
 
@@ -24,7 +26,10 @@ namespace py = pybind11;
 namespace mindspore {
 class PyExceptionInitializer {
  public:
-  PyExceptionInitializer() { mindspore::LogWriter::SetExceptionHandler(HandleExceptionPy); }
+  PyExceptionInitializer() {
+    MS_LOG(INFO) << "Set exception handler";
+    mindspore::LogWriter::SetExceptionHandler(HandleExceptionPy);
+  }
 
   ~PyExceptionInitializer() = default;
 
@@ -96,3 +101,4 @@ class PyExceptionInitializer {
 
 static PyExceptionInitializer py_exception_initializer;
 }  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_PYBINDAPI_IR_LOGADAPTERPY_H_
