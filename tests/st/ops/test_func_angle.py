@@ -28,12 +28,13 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_tensor_arcsin(mode):
+def test_tensor_angle(mode):
     """
-    Feature: tensor.arcsin
-    Description: Verify the result of arcsin
+    Feature: ops.angle
+    Description: Verify the result of angle
     Expectation: success
     """
     ms.set_context(mode=mode)
