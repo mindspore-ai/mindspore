@@ -768,7 +768,6 @@ abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
   // Parallel checking.
   auto context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
-  context->ParallelParameterContextInitShape(func_graph);
 
   // Handle the Parameter from FV inputs.
   for (const auto &param : func_graph->parameters()) {

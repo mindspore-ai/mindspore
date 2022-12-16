@@ -48,7 +48,6 @@ constexpr char kAllGroupParallel[] = "all_group_parallel";
 constexpr char kSameServerGroupParallel[] = "same_server_group_parallel";
 constexpr char kNoGroupParallel[] = "no_group_parallel";
 
-constexpr char kIsFirstIteration[] = "is_first_iteration";
 constexpr char kPynativeShard[] = "pynative_shard";
 constexpr char kSkipAutoParallelCompile[] = "skip_auto_parallel_compile";
 constexpr char kKeepInputUnchanged[] = "keep_input_unchanged";
@@ -178,7 +177,6 @@ class COMMON_EXPORT ParallelContext {
   bool dataset_repeat_dim_right() const { return dataset_repeat_dim_right_; }
 
   void Reset();
-  void ParallelParameterContextInitShape(const FuncGraphPtr &func_graph);
   void ParallelParameterContextRestoreShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
                                             const AbstractBasePtr &ptr) const;
   void set_sharding_propagation(const bool stra_pto);
@@ -223,7 +221,6 @@ class COMMON_EXPORT ParallelContext {
   std::string strategy_ckpt_save_file_;
   std::string group_ckpt_save_file_;
   bool enable_parallel_optimizer_;
-  bool init_param_shape_;
   std::string communi_parallel_mode_;
   int64_t optimizer_weight_shard_size_;
   bool optimizer_weight_shard_aggregated_save_;
