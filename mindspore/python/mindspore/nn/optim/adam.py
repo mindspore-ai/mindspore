@@ -765,7 +765,7 @@ class Adam(Optimizer):
 
             self._init_distributed_opts(use_locking, use_nesterov)
 
-    def apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):
+    def _apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):
         """Execute Adam optimizer and its variants."""
         if self.use_offload:
             if self.is_group_lr:
@@ -877,7 +877,7 @@ class Adam(Optimizer):
         beta2_power = self.beta2_power * self.beta2
         self.beta2_power = beta2_power
 
-        return self.apply_adam(params, beta1_power, beta2_power, moment1, moment2, lr, gradients)
+        return self._apply_adam(params, beta1_power, beta2_power, moment1, moment2, lr, gradients)
 
     @Optimizer.target.setter
     def target(self, value):
