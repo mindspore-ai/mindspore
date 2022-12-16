@@ -20,6 +20,11 @@
 #include "thread/parallel_threadpool.h"
 
 namespace mindspore {
+namespace {
+const char *kInnerIDs = "inner_ids";
+const char *kInnerRunnerID = "inner_runner_id";
+const char *kInnerModelID = "inner_model_id";
+}  // namespace
 ParallelThreadPoolManager *ParallelThreadPoolManager::GetInstance() {
   static ParallelThreadPoolManager instance;
   return &instance;
@@ -50,11 +55,11 @@ void ParallelThreadPoolManager::BindPoolToRunner(
     return;
   }
   std::string runner_id;
-  auto it_id = config_info->find("inner_ids");
+  auto it_id = config_info->find(kInnerIDs);
   if (it_id != config_info->end()) {
-    auto item_runner = it_id->second.find("inner_runner_id");
+    auto item_runner = it_id->second.find(kInnerRunnerID);
     if (item_runner != it_id->second.end()) {
-      runner_id = it_id->second.at("inner_runner_id");
+      runner_id = it_id->second.at(kInnerRunnerID);
     }
   }
   auto parallel_pool = static_cast<ParallelThreadPool *>(pool);
@@ -62,9 +67,9 @@ void ParallelThreadPoolManager::BindPoolToRunner(
     THREAD_ERROR("parallel pool is nullptr.");
   }
   int model_id = 0;
-  auto item_runner = it_id->second.find("inner_model_id");
+  auto item_runner = it_id->second.find(kInnerModelID);
   if (item_runner != it_id->second.end()) {
-    model_id = std::atoi(it_id->second.at("inner_model_id").c_str());
+    model_id = std::atoi(it_id->second.at(kInnerModelID).c_str());
   }
   runner_id_pools_[runner_id].at(model_id) = parallel_pool;
   parallel_pool->SetRunnerID(runner_id);

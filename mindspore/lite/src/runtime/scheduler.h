@@ -142,7 +142,7 @@ class Scheduler {
   bool GetEnableGLTexture() { return context_->GetDeviceInfo(DT_GPU).gpu_device_info_.enable_gl_texture_; }
   void *GetGLContext() { return context_->GetDeviceInfo(DT_GPU).gpu_device_info_.gl_context_; }
   void *GetGLDisplay() { return context_->GetDeviceInfo(DT_GPU).gpu_device_info_.gl_display_; }
-  int GetThreadNumLimit();
+  STATUS ParseThreadNumLimit(int *thread_num_limit);
 
  protected:
   InnerContext *context_ = nullptr;
