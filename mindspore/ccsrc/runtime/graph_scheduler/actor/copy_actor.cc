@@ -136,7 +136,7 @@ void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *const context) {
     input_device_tensor_[0] = input_data->data_;
 
     MS_EXCEPTION_IF_NULL(output_);
-    output_device_tensor_[0] = output_;
+    output_device_tensor_[0] = output_.get();
   }
 
   if (is_need_update_output_size_ && (input_device_tensor_[0]->GetSize() != output_device_tensor_[0]->GetSize())) {

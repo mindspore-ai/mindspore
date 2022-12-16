@@ -318,7 +318,7 @@ void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
   ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
 
-  auto device_tensor = actor->output();
+  auto &device_tensor = actor->output();
   if (device_tensor != nullptr) {
     ofs << "\t\toutput_index:" << 0 << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
         << "\toriginal_ref_count:" << device_tensor->original_ref_count()

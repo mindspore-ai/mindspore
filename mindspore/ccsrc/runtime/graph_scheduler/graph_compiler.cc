@@ -199,7 +199,7 @@ void OptimizeNopNode(KernelGraph *graph) {
   std::vector<CNodePtr> nop_nodes_need_set_ref;
   std::set<AnfNodePtr> nop_nodes_need_eliminated;
 
-  // Skip the graph mode or dynamic shape.
+  // Skip the graph mode.
   if (graph->is_graph_run_mode()) {
     return;
   }
@@ -242,6 +242,10 @@ void OptimizeNopNode(KernelGraph *graph) {
     // The device address of parameter as input may be not the running used in the heterogeneous or control flow
     // scenarios, and not set the ref node.
     if (origin_pair.first->isa<Parameter>() || origin_pair.first->isa<ValueNode>()) {
+      continue;
+    }
+    // The ref node cannot be set for node pairs from different device target(appears in the kernel backoff scene).
+    if (AnfAlgo::FetchDeviceTarget(origin_pair.first, graph) != AnfAlgo::FetchDeviceTarget(ref_node, graph)) {
       continue;
     }
     MS_LOG(INFO) << "The reference relation of nopnode " << ref_node->fullname_with_scope() << ", index: " << 0

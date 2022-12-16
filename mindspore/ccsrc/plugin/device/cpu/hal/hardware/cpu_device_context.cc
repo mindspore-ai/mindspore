@@ -480,10 +480,7 @@ void CPUKernelExecutor::RebuildKernelSelectBackoffOp(const std::vector<CNodePtr>
     if (!AnfAlgo::IsKernelSelectBackoffOp(node)) {
       continue;
     }
-
-    auto failure_info = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrKernelBackoffWithFailureInfo);
-    auto failure_type =
-      static_cast<ExceptionType>(common::AnfAlgo::GetNodeAttr<int32_t>(node, kAttrKernelBackoffWithFailureType));
+    auto [failure_info, failure_type] = AnfAlgo::GetKernelSelectBackoffInfo(node);
     if (IsVmapNotSupported(node)) {
       MS_EXCEPTION(failure_type) << failure_info;
     }

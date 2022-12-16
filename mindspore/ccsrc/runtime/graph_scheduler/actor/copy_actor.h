@@ -48,7 +48,7 @@ class CopyActor : public MemoryAwareActor {
   // The copy processing after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
-  const DeviceTensor *output() const { return output_; }
+  const DeviceTensorPtr &output() const { return output_; }
   bool is_need_update_output_size() const { return is_need_update_output_size_; }
 
  protected:
@@ -73,7 +73,7 @@ class CopyActor : public MemoryAwareActor {
   // The output device tensor is saved from the output or fetched by device_tensor_store_keys_.
   std::vector<DeviceTensor *> output_device_tensor_;
 
-  DeviceTensor *output_;
+  DeviceTensorPtr output_;
   // The output size needs to be updated in the dynamic shape scene.
   bool is_need_update_output_size_;
 };

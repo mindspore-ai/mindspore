@@ -1703,11 +1703,14 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
 
     // Set the member output_ of the copy actor.
     if (to_actor->type_ == KernelTransformType::kSuperKernelActor) {
-      copy_actor->output_ = AnfAlgo::GetMutableOutputAddr(to_kernel_with_input_idx.first, 0, false).get();
+      copy_actor->output_ = AnfAlgo::GetMutableOutputAddr(to_kernel_with_input_idx.first, 0, false);
     } else {
-      copy_actor->output_ =
-        AnfAlgo::GetPrevNodeMutableOutputAddr(to_kernel_with_input_idx.first, to_kernel_with_input_idx.second, false)
-          .get();
+      const auto &pre_device_tensor =
+        AnfAlgo::GetPrevNodeMutableOutputAddr(to_kernel_with_input_idx.first, to_kernel_with_input_idx.second, false);
+      MS_EXCEPTION_IF_NULL(pre_device_tensor);
+      copy_actor->output_ = to_device_context->device_res_manager_->CreateDeviceAddress(
+        nullptr, pre_device_tensor->GetSize(), pre_device_tensor->format(), pre_device_tensor->type_id(),
+        pre_device_tensor->host_shape());
     }
     MS_EXCEPTION_IF_NULL(copy_actor->output_);
     if (copy_actor->output_->GetDeviceType() != to_device_context->GetDeviceType()) {
@@ -1723,9 +1726,9 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
   // If the copy actor already exists, only need link between copy actor and to actor.
   SchedulerHelper::AddDataArrow(copy_actor, to_actor, 0, to_kernel_with_input_idx.second, nullptr);
   if (to_actor->type_ == KernelTransformType::kSuperKernelActor) {
-    UpdateRefCount(copy_actor->output_, true);
+    UpdateRefCount(copy_actor->output_.get(), true);
   } else {
-    UpdateRefCount(copy_actor->output_, false);
+    UpdateRefCount(copy_actor->output_.get(), false);
   }
 }
 
@@ -2400,63 +2403,108 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ab
 }
 
 void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info) const {
-  const auto &parser = graph_compiler_info.control_node_parser_;
-  MS_EXCEPTION_IF_NULL(parser);
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
-    MS_EXCEPTION_IF_NULL(graph);
-    MS_EXCEPTION_IF_NULL(device_context);
-
     for (auto &value_node : graph->graph_value_nodes()) {
-      MS_EXCEPTION_IF_NULL(value_node);
-      if (!AnfAlgo::OutputAddrExist(value_node, 0)) {
-        MS_LOG(INFO) << "The device address is not exist: " << value_node->ToString();
-        continue;
-      }
-      auto device_tensor = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
-      MS_EXCEPTION_IF_NULL(device_tensor);
-      const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
-      device_tensor->SetNodeIndex(value_node, 0);
-      SchedulerHelper::AddDeviceTensorStore(front_node.get(), device_tensor);
+      PersistDeviceTensorForValueNode(value_node, graph, device_context);
     }
 
     for (auto &input_node : graph->input_nodes()) {
-      MS_EXCEPTION_IF_NULL(input_node);
-      AnfNodePtr front_node = nullptr;
-      if (IsInternalParameter(input_node, graph)) {
-        auto front_output_with_index = graph->GetFrontNodeByInternalParameter(input_node);
-        front_node = front_output_with_index.first;
-      } else if (IsPersistentDeviceTensor(input_node)) {
-        front_node = AnfAlgo::FetchFrontNodeByBackendNode(input_node, *graph);
-      }
-      // The front node may be value node in the heterogeneous scene, needs to handle.
-      if ((front_node == nullptr) ||
-          (!front_node->isa<ValueNode>() && !parser->IsRootGraphPersistentDeviceTensor(front_node))) {
+      PersistDeviceTensorForParameter(input_node, graph, graph_compiler_info, device_context);
+    }
+
+    // The device tensor store used by backoff kernel need update with the real device context.
+    for (auto &kernel : graph->execution_order()) {
+      if (!AnfAlgo::IsKernelSelectBackoffOp(kernel)) {
         continue;
       }
-
-      auto device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
-      MS_EXCEPTION_IF_NULL(device_tensor);
-      if (IsPersistentDeviceTensor(input_node) || device_tensor->is_ptr_persisted()) {
-        device_tensor->SetNodeIndex(input_node, 0);
-        SchedulerHelper::AddDeviceTensorStore(front_node.get(), device_tensor);
-      }
-
-      // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
-      if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType()) == nullptr) {
-        MS_LOG(WARNING) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
-                        << ", type:" << device_context->GetDeviceType();
-        auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-          nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
-          device_tensor->host_shape());
-        other_type_device_tensor->SetNodeIndex(input_node, 0);
-        other_type_device_tensor->set_from_persistent_mem(input_node->isa<Parameter>());
-        SchedulerHelper::AddDeviceTensorStore(front_node.get(), other_type_device_tensor);
+      const auto &real_device_context = device::FetchRealDeviceContext(kernel, device_context);
+      MS_EXCEPTION_IF_NULL(real_device_context);
+      for (size_t j = 0; j < common::AnfAlgo::GetInputTensorNum(kernel); ++j) {
+        const auto &input_node = common::AnfAlgo::GetInputNode(kernel, j);
+        const auto &real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false).first;
+        if (real_input_node->isa<ValueNode>()) {
+          PersistDeviceTensorForValueNode(real_input_node, graph, real_device_context);
+        }
+        if (real_input_node->isa<Parameter>()) {
+          PersistDeviceTensorForParameter(real_input_node, graph, graph_compiler_info, real_device_context);
+        }
       }
     }
   }
+
   PersistDeviceTensorForRootGraphControlNode(graph_compiler_info);
+}
+
+void GraphScheduler::PersistDeviceTensorForValueNode(const AnfNodePtr &value_node, const KernelGraphPtr &graph,
+                                                     const DeviceContext *device_context) const {
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(device_context);
+  if (!AnfAlgo::OutputAddrExist(value_node, 0)) {
+    MS_LOG(INFO) << "The device address is not exist: " << value_node->ToString();
+    return;
+  }
+  auto device_tensor = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
+  device_tensor->SetNodeIndex(value_node, 0);
+  SchedulerHelper::AddDeviceTensorStore(front_node.get(), device_tensor);
+
+  // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
+  if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType()) == nullptr) {
+    MS_LOG(WARNING) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
+                    << ", type:" << device_context->GetDeviceType();
+    auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
+      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
+      device_tensor->host_shape());
+    other_type_device_tensor->SetNodeIndex(value_node, 0);
+    other_type_device_tensor->set_from_persistent_mem(true);
+    SchedulerHelper::AddDeviceTensorStore(front_node.get(), other_type_device_tensor);
+  }
+}
+
+void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter, const KernelGraphPtr &graph,
+                                                     const GraphCompilerInfo &graph_compiler_info,
+                                                     const DeviceContext *device_context) const {
+  MS_EXCEPTION_IF_NULL(parameter);
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+  AnfNodePtr front_node = nullptr;
+  if (IsInternalParameter(parameter, graph)) {
+    auto front_output_with_index = graph->GetFrontNodeByInternalParameter(parameter);
+    front_node = front_output_with_index.first;
+  } else if (IsPersistentDeviceTensor(parameter)) {
+    front_node = AnfAlgo::FetchFrontNodeByBackendNode(parameter, *graph);
+  }
+  // The front node may be value node in the heterogeneous scene, needs to handle.
+  if ((front_node == nullptr) ||
+      (!front_node->isa<ValueNode>() && !parser->IsRootGraphPersistentDeviceTensor(front_node))) {
+    return;
+  }
+
+  auto device_tensor = AnfAlgo::GetMutableOutputAddr(parameter, 0, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  if (IsPersistentDeviceTensor(parameter) || device_tensor->is_ptr_persisted()) {
+    device_tensor->SetNodeIndex(parameter, 0);
+    SchedulerHelper::AddDeviceTensorStore(front_node.get(), device_tensor);
+  }
+
+  // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
+  if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType()) == nullptr) {
+    MS_LOG(WARNING) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
+                    << ", type:" << device_context->GetDeviceType();
+    auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
+      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
+      device_tensor->host_shape());
+    other_type_device_tensor->SetNodeIndex(parameter, 0);
+    other_type_device_tensor->set_from_persistent_mem(true);
+    SchedulerHelper::AddDeviceTensorStore(front_node.get(), other_type_device_tensor);
+  }
 }
 
 void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompilerInfo &graph_compiler_info) const {
