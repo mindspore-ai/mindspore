@@ -796,58 +796,6 @@ AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, Primitive
   return CreateCNodeWithGraph(input_nodes, graph);
 }
 
-// rectify absttract if the input has been converted to the attr
-AbstractBasePtrList RectifyAbstractFromRegAttr(const PrimitivePtr &primitive,
-                                               const AbstractBasePtrList &input_abstract) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  opt::ConstInputToAttrInfoRegister reg;
-  if (!opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(primitive->name(), &reg)) {
-    return input_abstract;
-  }
-  if (common::AnfAlgo::HasDynamicShapeFlag(primitive)) {
-    return input_abstract;
-  }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (device == kGPUDevice) {
-    if (IsOneOfDynamicShapeConstInputToAttrGPU(primitive->name())) {
-      return input_abstract;
-    }
-  }
-  auto convert_input_list = reg.GetConstInputAttrInfo();
-  auto input_names = primitive->GetAttr(kAttrInputNames);
-  if (input_names == nullptr) {
-    return input_abstract;
-  }
-  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
-  AbstractBasePtrList rectify_abs_list;
-  size_t ori_index = 0;
-  rectify_abs_list.resize(input_names_vec.size());
-  for (size_t index = 0; index < rectify_abs_list.size(); ++index) {
-    // if convert input list find the index it means the input has been converted to the attr
-    if (convert_input_list.find(index) != convert_input_list.end()) {
-      AbstractBasePtr rectify_abs = nullptr;
-      auto input_name = input_names_vec[index];
-      auto attr = primitive->GetAttr(input_name);
-      if (attr != nullptr) {
-        rectify_abs = attr->ToAbstract();
-      } else {
-        MS_LOG(DEBUG) << "the node prim name :" << primitive->name() << "input index :" << index
-                      << " input name :" << input_name << "has not been converted to the attr";
-        rectify_abs = input_abstract[ori_index++];
-      }
-      rectify_abs_list[index] = rectify_abs;
-      continue;
-    }
-    if (ori_index > input_abstract.size()) {
-      MS_LOG(EXCEPTION) << "Index " << ori_index << " is out of range in input abstract size " << input_abstract.size();
-    }
-    rectify_abs_list[index] = input_abstract[ori_index++];
-  }
-  return rectify_abs_list;
-}
-
 AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &prim,
                                                     const AbstractBasePtrList &input_abstract) {
   MS_EXCEPTION_IF_NULL(prim);
@@ -889,8 +837,7 @@ AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &prim,
 }
 
 AbstractBasePtrList RectifyAbstract(const PrimitivePtr &primitive, const AbstractBasePtrList &input_abstract) {
-  auto rectify_abs_list = RectifyAbstractFromRegAttr(primitive, input_abstract);
-  return RectifyAbstractFromDynamicInput(primitive, rectify_abs_list);
+  return RectifyAbstractFromDynamicInput(primitive, input_abstract);
 }
 }  // namespace
 
