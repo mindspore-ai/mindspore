@@ -151,7 +151,7 @@ class MS_API Model {
   /// \return Status.
   Status UpdateWeights(const std::vector<MSTensor> &new_weights);
 
-  /// \brief Inference model.
+  /// \brief Inference model API. If use this API in train mode, it's equal to RunStep API.
   ///
   /// \param[in] inputs A vector where model inputs are arranged in sequence.
   /// \param[out] outputs Which is a pointer to a vector. The model outputs are filled in the container in sequence.
@@ -162,7 +162,7 @@ class MS_API Model {
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
-  /// \brief Inference model.
+  /// \brief Inference model API. If use this API in train mode, it's equal to RunStep API.
   ///
   /// \param[in] before CallBack before predict.
   /// \param[in] after CallBack after predict.
@@ -170,7 +170,7 @@ class MS_API Model {
   /// \return Status.
   Status Predict(const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
-  /// \brief Run model by step.
+  /// \brief Training API. Run model by step.
   ///
   /// \param[in] before CallBack before RunStep.
   /// \param[in] after CallBack after RunStep.
