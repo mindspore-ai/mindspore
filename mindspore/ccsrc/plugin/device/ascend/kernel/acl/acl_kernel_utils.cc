@@ -456,8 +456,8 @@ void AclOpDesc::AddConstInputTensor(const AnfNodePtr &anf_node) {
     }
     auto value = prim->GetAttr(attr_name);
     if (value == nullptr) {
-      MS_LOG(WARNING) << "Attr name " << attr_name
-                      << " isn't in current node, please check adaptor's attr name and index:" << index;
+      MS_LOG(INFO) << "Attr name " << attr_name
+                   << " isn't in current node, please check adaptor's attr name and index:" << index;
       continue;
     }
     ProcessAclAttrs(attr_name, value, SET_ACL_INPUT);
@@ -561,8 +561,8 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
   const auto &add_index_info = GeOpConvertor::GetNeedAddInput(anf_node, true);
   for (const auto &[attr_name, index] : add_index_info) {
     if (already_add_index.count(index) != 0) {
-      MS_LOG(WARNING) << "Current node's input " << index
-                      << " is convert from attr, but already set input, please check adaptor of attr " << attr_name;
+      MS_LOG(INFO) << "Current node's input " << index
+                   << " is convert from attr, but already set input, please check adaptor of attr " << attr_name;
     }
   }
   return res;
