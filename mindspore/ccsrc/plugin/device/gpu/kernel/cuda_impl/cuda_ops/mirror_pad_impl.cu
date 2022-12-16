@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/mirror_pad_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "include/cuda_fp16.h"
 
 // check for existence in current padded array on X and Y dims
@@ -253,33 +254,44 @@ void CalMirrorPadGrad(const size_t dx_size, const size_t interim_dy_size, T *dy,
     mode, dx);
 }
 
-template CUDA_LIB_EXPORT void CalMirrorPad<float>(const size_t size, const float *input, const int old_batch,
-                                                  const int old_channel, const int old_height, const int old_width,
-                                                  const int padded_height, const int padded_width, int padd_num,
-                                                  const int64_t *paddings, int mode, float *output,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalMirrorPad<half>(const size_t size, const half *input, const int old_batch,
-                                                 const int old_channel, const int old_height, const int old_width,
-                                                 const int padded_height, const int padded_width, int padd_num,
-                                                 const int64_t *paddings, int mode, half *output,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalMirrorPad<int>(const size_t size, const int *input, const int old_batch,
-                                                const int old_channel, const int old_height, const int old_width,
-                                                const int padded_height, const int padded_width, int padd_num,
-                                                const int64_t *paddings, int mode, int *output,
-                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalMirrorPadGrad<float>(const size_t dx_size, const size_t dy_size, float *dy,
-                                                      float *interim_dy, const int dx_batches, const int dx_channels,
-                                                      const int dx_height, const int dx_width, const int dy_height,
-                                                      const int dy_width, const int padd_dim, const int64_t *paddings,
-                                                      int mode, float *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalMirrorPadGrad<half>(const size_t dx_size, const size_t dy_size, half *dy,
-                                                     half *interim_dy, const int dx_batches, const int dx_channels,
-                                                     const int dx_height, const int dx_width, const int dy_height,
-                                                     const int dy_width, const int padd_dim, const int64_t *paddings,
-                                                     int mode, half *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalMirrorPadGrad<int>(const size_t dx_size, const size_t dy_size, int *dy,
-                                                    int *interim_dy, const int dx_batches, const int dx_channels,
-                                                    const int dx_height, const int dx_width, const int dy_height,
-                                                    const int dy_width, const int padd_dim, const int64_t *paddings,
-                                                    int mode, int *dx, cudaStream_t cuda_stream);
+#define REG_MIRROR_PAD_CUDA(type)                                                                                \
+  template CUDA_LIB_EXPORT void CalMirrorPad<type>(                                                              \
+    const size_t size, const type *input, const int old_batch, const int old_channel, const int old_height,      \
+    const int old_width, const int padded_height, const int padded_width, int padd_num, const int64_t *paddings, \
+    int mode, type *output, cudaStream_t cuda_stream)
+
+REG_MIRROR_PAD_CUDA(half);
+REG_MIRROR_PAD_CUDA(float);
+REG_MIRROR_PAD_CUDA(double);
+REG_MIRROR_PAD_CUDA(uint8_t);
+REG_MIRROR_PAD_CUDA(uint16_t);
+REG_MIRROR_PAD_CUDA(uint32_t);
+REG_MIRROR_PAD_CUDA(uint64_t);
+REG_MIRROR_PAD_CUDA(int8_t);
+REG_MIRROR_PAD_CUDA(int16_t);
+REG_MIRROR_PAD_CUDA(int32_t);
+REG_MIRROR_PAD_CUDA(int64_t);
+REG_MIRROR_PAD_CUDA(bool);
+REG_MIRROR_PAD_CUDA(Complex<float>);
+REG_MIRROR_PAD_CUDA(Complex<double>);
+
+#define REG_MIRROR_PAD_GRAD_CUDA(type)                                                                       \
+  template CUDA_LIB_EXPORT void CalMirrorPadGrad<type>(                                                      \
+    const size_t dx_size, const size_t dy_size, type *dy, type *interim_dy, const int dx_batches,            \
+    const int dx_channels, const int dx_height, const int dx_width, const int dy_height, const int dy_width, \
+    const int padd_dim, const int64_t *paddings, int mode, type *dx, cudaStream_t cuda_stream);
+
+REG_MIRROR_PAD_GRAD_CUDA(half);
+REG_MIRROR_PAD_GRAD_CUDA(float);
+REG_MIRROR_PAD_GRAD_CUDA(double);
+REG_MIRROR_PAD_GRAD_CUDA(uint8_t);
+REG_MIRROR_PAD_GRAD_CUDA(uint16_t);
+REG_MIRROR_PAD_GRAD_CUDA(uint32_t);
+REG_MIRROR_PAD_GRAD_CUDA(uint64_t);
+REG_MIRROR_PAD_GRAD_CUDA(int8_t);
+REG_MIRROR_PAD_GRAD_CUDA(int16_t);
+REG_MIRROR_PAD_GRAD_CUDA(int32_t);
+REG_MIRROR_PAD_GRAD_CUDA(int64_t);
+REG_MIRROR_PAD_GRAD_CUDA(bool);
+REG_MIRROR_PAD_GRAD_CUDA(Complex<float>);
+REG_MIRROR_PAD_GRAD_CUDA(Complex<double>);
