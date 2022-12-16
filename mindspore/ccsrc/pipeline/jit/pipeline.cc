@@ -917,9 +917,9 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   std::vector<ValuePtr> arguments;
   std::size_t size = args.size();
   MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
-  bool is_auto_parallel = (parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kSemiAutoParallel ||
-                           parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kAutoParallel) &&
-                          !py::hasattr(source_obj, parallel::kSkipAutoParallelCompile) &&
+  bool is_parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kSemiAutoParallel ||
+                          parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kAutoParallel;
+  bool is_auto_parallel = is_parallel_mode && !py::hasattr(source_obj, parallel::kSkipAutoParallelCompile) &&
                           !py::hasattr(source_obj, parallel::kKeepInputUnchanged);
   for (std::size_t i = 0; i < size; i++) {
     ValuePtr converted = nullptr;
@@ -957,7 +957,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
 
   // Save the compiled graph to MsPipeLine.
   SaveCompiledGraph(phase);
-  if (is_auto_parallel) {
+  if (is_parallel_mode) {
     ParallelPostProcess(phase, use_compile_cache);
   }
 #ifdef ENABLE_DUMP_IR
@@ -1843,6 +1843,7 @@ void MemoryRecycle() {
   parse::data_converter::ClearObjectCache();
   parse::Parser::CleanParserResource();
   trace::ClearTraceStack();
+  pynative::autograd::ClearPyNativeAutoGradStaticRes();
   pynative::PyNativeExecutor::GetInstance()->ClearRes();
   pynative::PyNativeExecutor::GetInstance()->WorkerJoin();
   ConfigManager::GetInstance().ResetConfig();

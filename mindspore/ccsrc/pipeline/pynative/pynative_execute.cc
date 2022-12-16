@@ -138,6 +138,7 @@ void PyNativeExecutor::set_kernel_build_server_dir(const py::object &kernel_buil
 void PyNativeExecutor::ClearRes() const {
   runtime::OpExecutor::GetInstance().Reset();
   pynative::OpCompiler::GetInstance().ClearAllCache();
+  pynative::autograd::ClearPyNativeAutoGradStaticRes();
 
   // Maybe exit in runop step
   auto ms_context = MsContext::GetInstance();
@@ -171,10 +172,6 @@ void PyNativeExecutor::SetHookChanged(const py::object &cell) const {
     MS_LOG(EXCEPTION) << "The 'set_hook_changed' function is only supported on Cell object!";
   }
   grad_executor()->SetHookChanged(cell);
-}
-
-void PyNativeExecutor::set_graph_phase(const std::string &graph_phase) const {
-  grad_executor()->ms_function()->set_graph_phase(graph_phase);
 }
 
 bool PyNativeExecutor::grad_flag() const { return grad_executor()->grad_flag(); }
@@ -227,8 +224,9 @@ void PyNativeExecutor::SetLazyBuild(bool enable) const { forward_executor()->set
 
 bool PyNativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstCell(); }
 
-void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling) const {
+void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling, const std::string &phase) const {
   forward_executor()->set_is_ms_function_compiling(is_compiling);
+  grad_executor()->ms_function()->set_graph_phase(phase);
 }
 
 void PyNativeExecutor::SetDynamicInput(const py::object &cell, const py::args &args) const {
@@ -251,7 +249,6 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("sync", &PyNativeExecutor::Sync, "pynative sync stream.")
     .def("set_lazy_build", &PyNativeExecutor::SetLazyBuild, "pynative build kernel async")
     .def("__call__", &PyNativeExecutor::Run, "pynative executor run grad graph.")
-    .def("set_graph_phase", &PyNativeExecutor::set_graph_phase, "pynative set graph phase")
     .def("grad_flag", &PyNativeExecutor::grad_flag, "pynative grad flag")
     .def("set_hook_changed", &PyNativeExecutor::SetHookChanged, "set pynative hook changed")
     .def("set_grad_flag", &PyNativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),

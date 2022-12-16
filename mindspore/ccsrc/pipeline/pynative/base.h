@@ -75,29 +75,28 @@ using FrontendOpRunInfoPtr = std::shared_ptr<FrontendOpRunInfo>;
 struct InputArgsInfo {
   InputArgsInfo() = default;
   ~InputArgsInfo() = default;
-  InputArgsInfo(bool is_grad_topest_cell, bool is_high_order_top_cell, bool has_custom_bprop, size_t input_size,
-                std::string obj_id)
+  InputArgsInfo(bool is_grad_topest_cell, bool is_high_order_top_cell, bool grad_is_running, size_t obj_order)
       : is_grad_topest_cell(is_grad_topest_cell),
         is_high_order_top_cell(is_high_order_top_cell),
-        has_custom_bprop(has_custom_bprop),
-        input_size(input_size),
-        obj_id(std::move(obj_id)) {}
+        grad_is_running(grad_is_running),
+        obj_order(obj_order) {}
 
   bool is_grad_topest_cell;
   bool is_high_order_top_cell;
-  bool has_custom_bprop;
-  size_t input_size;
-  std::string obj_id;
+  bool grad_is_running;
+  size_t obj_order;
 
+  bool has_custom_bprop{false};
   bool has_sens{false};
-  bool grad_is_running{false};
   PrimitivePyPtr custom_bprop_prim{nullptr};
   ValuePtr out_value{nullptr};
+  std::string obj_id;
   std::string cell_id;
   std::string already_run_cell_id;
   std::string input_args_id;
   // Cell unique id, cell_id + cell_order;
   std::string obj_order_id;
+  size_t input_size = 0;
   size_t custom_bprop_cell_count = 0;
   size_t grad_order = 0;
   std::vector<std::string> input_arg_id_vec;

@@ -46,7 +46,7 @@ struct GradAttr {
 struct GradParam {
   GradParam(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out, FuncGraphPtr fprop_fg,
             bool grad_by_value)
-      : cnode(cnode), op_args(op_args), out(out), fprop_fg(std::move(fprop_fg)), grad_by_value(grad_by_value) {}
+      : cnode(cnode), op_args(op_args), out(out), fg(std::move(fprop_fg)), grad_by_value(grad_by_value) {}
 
   // Primal CNode create by op forward process
   const CNodePtr cnode;
@@ -54,10 +54,20 @@ struct GradParam {
   const ValuePtrList op_args;
   // Output of op
   const ValuePtr out;
-  // Bprop func graph
-  const FuncGraphPtr fprop_fg;
-  // High order used this, which
-  bool grad_by_value = true;
+  // Forward func graph
+  const FuncGraphPtr fg;
+  // High order used this
+  bool grad_by_value{true};
+  // Dynamic shape or dynamic structure
+  bool use_dynamic_shape_process{false};
+  // Op forward output used in bprop graph
+  bool out_used_in_bporp_graph{false};
+  // ms function
+  bool is_ms_function_graph{false};
+  // control flow or auto parallel
+  bool is_not_support_by_expander{false};
+  // For pass graph cache key
+  std::string graph_cache_key;
 };
 using GradParamPtr = std::shared_ptr<GradParam>;
 
@@ -126,9 +136,21 @@ class VariableAdjoint {
 };
 using VariableAdjointPtr = std::shared_ptr<VariableAdjoint>;
 
+using UserType = mindspore::HashMap<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
+struct AdParam {
+  AdParam() : tape_(std::make_shared<FuncGraph>()) {}
+  // Bprop funcgraph
+  FuncGraphPtr tape_;
+  AnfNodePtr last_node_{nullptr};
+  // Bprop dins of each variable or middle out
+  OrderedMap<AnfNodePtr, VariableAdjointPtr> anfnode_to_variable_adjoint_;
+  // Record cnode's input map for tape_
+  UserType users_;
+};
+using AdParamPtr = std::shared_ptr<AdParam>;
+
 class AutoGradCellImpl {
  public:
-  using UserType = mindspore::HashMap<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
   AutoGradCellImpl(const AnfNodePtrList &cell_inputs, const std::vector<ValuePtr> &input_param_values,
                    const AbstractBasePtrList &abs_list, size_t op_num_in_bprop_graph);
   ~AutoGradCellImpl() = default;
@@ -136,8 +158,6 @@ class AutoGradCellImpl {
   bool KPynativeOp(const GradParamPtr &grad_param);
   // Reverse connect ms_function or higher order sub bprop funcgraph
   bool KPynativeWithFProp(const GradParamPtr &grad_param);
-  CNodePtr GetBPropFromFProp(const FuncGraphPtr &fprop_fg, const AnfNodePtrList &args, const ValuePtr &out,
-                             AnfNodePtr *const tape_dout);
   // Update top cell output, record last_node
   void UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, const ValuePtr &sens_out);
   // Build a back propagate funcgraph, each cnode in primal funcgraph is replaced by value node or formal cnode, so it
@@ -146,39 +166,34 @@ class AutoGradCellImpl {
                       const GradAttr &grad_attr);
 
  private:
-  // Last cnode of this Cell, may be a primitive op or cell with user defined bprop.
-  AnfNodePtr last_node_{nullptr};
-  ValuePtr sens_value_{nullptr};
-  // Bprop funcgraph
-  FuncGraphPtr tape_;
-  // Top cell inputs
-  AnfNodePtrList cell_inputs_;
-  // These weights need to calculate gradient.
-  mindspore::HashSet<std::string> need_grad_weights_;
-  // Bprop dins of each variable or middle out
-  OrderedMap<AnfNodePtr, VariableAdjointPtr> anfnode_to_variable_adjoint_;
-  AnfNodePtrList weights_used_in_graph_;
-  // Record cnode's input map for tape_
-  UserType users_;
-  // Flag for ms_funtcion and high order
-  bool need_do_manager_replace_{false};
+  // Grad for function graph
+  inline AdParamPtr ad_param() const {
+    MS_EXCEPTION_IF_NULL(ad_param_);
+    return ad_param_;
+  }
+  FuncGraphPtr GradFuncGraph(const GradParamPtr &grad_param);
+  CNodePtr GetBpropGraphCNode(const GradParamPtr &grad_param, const AnfNodePtrList &args, AnfNodePtr *const tape_dout);
+  CNodePtr GetBPropFromExpander(const GradParamPtr &grad_param, const AnfNodePtrList &args,
+                                AnfNodePtr *const tape_dout);
+  CNodePtr GetBPropFromFProp(const GradParamPtr &grad_param, const AnfNodePtrList &args, AnfNodePtr *const tape_dout);
+  void GradGraphByExpander(const GradParamPtr &grad_param);
+  ValuePtrList GetInputArgs(const GradParamPtr &grad_param, const CNodePtr &cnode,
+                            std::vector<AnfNodePtr> *cnode_inputs);
+  void CreateParameterAdjoint(const GradParamPtr &grad_param);
 
-  bool IsCNodeNeedGrad(const AnfNodePtr &node_ptr) const;
-  std::vector<bool> GetNeedGradFlags(const CNodePtr &cnode);
-  size_t op_num_in_bprop_graph_{0};
-
-  // construct input as cnode for expander
+  // Construct input as cnode for expander
   CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout,
                                     const VariableAdjointPtr &variable_adjoint, bool is_custom_prim);
   // Back propagate for one node;
   void UpdateNextEdges(const VariableAdjointPtr &variable, const CNodePtr &cnode, const std::vector<CNodePtr> &dins,
                        const ValuePtrList &op_args);
-  void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &node, const AnfNodePtr &din, const ValuePtr &op_arg);
+  void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &input_node, const AnfNodePtr &din,
+                      const ValuePtr &input_arg);
 
   void BuildForwardLastNode();
   // Add parameter(weights) to anfnode_to_variable_adjoint_
   void AddParameterNode(const AnfNodePtr &parameter, const ValuePtr &tensor);
-  AnfNodePtr GetRealDin(const FunctionNodePtr &fn, const ValuePtr &out_value, const ValuePtr &sub_value,
+  AnfNodePtr GetRealDin(const FunctionNodePtr &fn, const ValuePtr &out_value, const ValuePtr &input_arg,
                         const AnfNodePtr &din);
   void BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
   void BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
@@ -195,7 +210,7 @@ class AutoGradCellImpl {
   void BackPropagate();
   // Set return node according to grad flag
   void SetOutput(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position, const GradAttr &grad_attr);
-  AnfNodePtr GetGradNodeByIndex(const AnfNodePtrList &node_list, size_t index);
+  AnfNodePtr GetGradNodeByIndex(const AnfNodePtr &grad_node);
   AnfNodePtr GetInputGrad(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position);
   AnfNodePtr GetWeightGrad(bool grad_weights, const AnfNodePtrList &weights, bool weight_param_is_tuple);
   // Input node is user cnode one of input, index is user input index
@@ -205,12 +220,24 @@ class AutoGradCellImpl {
   void ElimateTupleGetItem();
 
   // Fbprop
-  AnfNodePtr BuildKNode(const GradParamPtr &grad_param);
+  AnfNodePtr BuildKNode(const GradParamPtr &grad_param, bool from_single_op);
   void BuildKNodeListFromPrimalCNode(const CNodePtr &cnode, const ValuePtrList &op_args,
                                      std::vector<AnfNodePtr> *const node_list);
   AnfNodePtr BuildKNodeForCNodeInput(const AnfNodePtr &input_node);
   AnfNodePtr BuildKNodeForMakeTuple(const AnfNodePtr &input_node);
   AnfNodePtr BuildKNodeForTupleGetItem(const AnfNodePtr &input_node);
+
+  // Last cnode of this Cell, may be a primitive op or cell with user defined bprop.
+  ValuePtr sens_value_{nullptr};
+  AdParamPtr ad_param_{nullptr};
+  // Top cell inputs
+  AnfNodePtrList cell_inputs_;
+  // These weights need to calculate gradient.
+  mindspore::HashSet<std::string> need_grad_weights_;
+  AnfNodePtrList weights_used_in_graph_;
+  // Flag for ms_funtcion and high order
+  bool need_do_manager_replace_{false};
+  size_t op_num_in_bprop_graph_{0};
 };
 using AutoGradCellImplPtr = std::shared_ptr<AutoGradCellImpl>;
 
@@ -243,6 +270,7 @@ FuncGraphPtr GradPynativeCellEnd(const AutoGradCellImplPtr &k_cell, const AnfNod
 // op_args: the arguments list of each input parameters.
 // out: the op result.
 bool GradPynativeOp(const AutoGradCellImplPtr &k_cell, const GradParamPtr &grad_param);
+void ClearPyNativeAutoGradStaticRes();
 }  // namespace autograd
 }  // namespace pynative
 }  // namespace mindspore

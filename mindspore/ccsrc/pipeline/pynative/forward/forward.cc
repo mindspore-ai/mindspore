@@ -175,14 +175,14 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
     MS_LOG(DEBUG) << "Grad flag is false";
     return;
   }
-  // Set forward output flag for release memory,
-  // Because tensor address may change, it should set in main thread to ensure consistency.
-  PyNativeAlgo::Common::SetForwardOutputFlag(op_run_info->out_value);
-
   // Const value no need do op grad
   if (op_run_info->output_get_by_infer_value) {
     return;
   }
+  // Set forward output flag for release memory,
+  // Because tensor address may change, it should set in main thread to ensure consistency.
+  PyNativeAlgo::Common::SetForwardOutputFlag(op_run_info->out_value);
+
   // 4. Do op grad and record op info
   // If ms function is compile, op info will not be find in second training step
   if (!is_ms_function_compiling_ && grad()->custom_bprop_cell_count() <= 0) {
@@ -288,18 +288,17 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   if (kVmOperators.find(op_run_info->base_op_run_info.op_name) != kVmOperators.end()) {
     std::vector<ValuePtr> result(op_run_info->input_size);
     for (size_t i = 0; i < op_run_info->input_size; i++) {
-      auto tensor = op_run_info->input_value[i]->cast<TensorPtr>();
-      MS_EXCEPTION_IF_NULL(tensor);
-      if (op_run_info->base_op_run_info.op_name == prim::kPrimHookBackward->name() ||
-          op_run_info->base_op_run_info.op_name == prim::kPrimCellBackwardHook->name()) {
-        // the input object is not a output of forward cnode, eg: parameter
-        result[i] = tensor;
-      } else {
-        // the input object is a output of forward cnode
+      bool input_is_tensor = op_run_info->input_value[i]->isa<tensor::Tensor>();
+      if (input_is_tensor && op_run_info->base_op_run_info.op_name != prim::kPrimHookBackward->name() &&
+          op_run_info->base_op_run_info.op_name != prim::kPrimCellBackwardHook->name()) {
+        auto tensor = op_run_info->input_value[i]->cast<tensor::TensorPtr>();
+        // Just get new tensor id
         auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
         new_tensor->set_device_address(tensor->device_address());
         new_tensor->set_sync_status(tensor->sync_status());
         result[i] = new_tensor;
+      } else {
+        result[i] = op_run_info->input_value[i];
       }
     }
     auto result_v = std::make_shared<ValueTuple>(result);

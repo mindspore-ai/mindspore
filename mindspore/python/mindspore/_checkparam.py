@@ -1128,19 +1128,15 @@ class Validator:
                             f"{indices_dtype}.")
 
     @staticmethod
-    def check_dynamic_shape(dyn_inputs, actual_inputs):
+    def check_dynamic_shape(dyn_elem, actual_input, i):
         """Check the consistency of dynamic shape tensors and actual input tensors."""
-        if len(dyn_inputs) != len(actual_inputs):
-            raise ValueError(f"The number of actual input tensors: {len(actual_inputs)} is not equal to the number of "
-                             f"dynamic shape tensors: {len(dyn_inputs)}.")
-        for i, dyn_elem in enumerate(dyn_inputs):
-            if dyn_elem.dtype is not actual_inputs[i].dtype:
-                raise TypeError(f"The data type of `{i}`th args in actual input tensors should be `{dyn_elem.dtype}`, "
-                                f"but got `{actual_inputs[i].dtype}`.")
-            if dyn_elem.ndim != actual_inputs[i].ndim:
-                raise ValueError(f"The dimension of `{i}`th args in actual input tensors should be `{dyn_elem.ndim}`, "
-                                 f"but got `{actual_inputs[i].ndim}`.")
-            check_dyn_shape_value_equal(i, dyn_elem.shape, actual_inputs[i].shape)
+        if dyn_elem.dtype is not actual_input.dtype:
+            raise TypeError(f"The data type of `{i}`th args in actual input tensors should be `{dyn_elem.dtype}`, "
+                            f"but got `{actual_input.dtype}`.")
+        if dyn_elem.ndim != actual_input.ndim:
+            raise ValueError(f"The dimension of `{i}`th args in actual input tensors should be `{dyn_elem.ndim}`, "
+                             f"but got `{actual_input.ndim}`.")
+        check_dyn_shape_value_equal(i, dyn_elem.shape, actual_input.shape)
 
     @staticmethod
     def check_element_type_of_iterable(arg_name, arg_value, valid_types, prim_name=None):

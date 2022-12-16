@@ -35,6 +35,7 @@ class MsFunction {
   MsFunction() = default;
   ~MsFunction() = default;
   inline void set_graph_phase(const std::string &graph_phase) { graph_phase_ = graph_phase; }
+  void ModifyMsFunctionForwardOutput(const FuncGraphPtr &ms_func_graph);
   py::object GradMsFunction(const py::object &out, const py::args &args);
 
  private:
@@ -51,9 +52,9 @@ class MsFunction {
   // Update device address of value node in grad graph by forward tensors.
   void RunReplace(const CNodePtr &added_make_tuple, const std::vector<tensor::TensorPtr> &total_output_tensors,
                   const FuncGraphPtr &grad_graph, bool is_dynamic_shape) const;
-  void ReplaceNewTensorsInGradGraph(const GradExecutor *grad_executor, const ValuePtr &added_out,
-                                    const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
-                                    const FrontendOpRunInfoPtr &op_run_info) const;
+  void ReplaceWithRealTensorsInGradGraph(const GradExecutor *grad_executor, const ValuePtr &added_out,
+                                         const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
+                                         const FrontendOpRunInfoPtr &op_run_info) const;
   void UpdateMsFunctionForwardTensors(const GradExecutor *grad_executor, const TopCellInfoPtr &top_cell,
                                       const string &op_info, const ValuePtr &new_forward_value) const;
   // Make CNode for ms_function forward graph.
@@ -67,6 +68,7 @@ class MsFunction {
   CNodePtr MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                                     const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph) const;
 
+  bool is_not_support_by_expander_{false};
   // The graph phase is used to obtain backend graph that is complied by ms_function
   std::string graph_phase_;
   // Stores parameter in ms_function
