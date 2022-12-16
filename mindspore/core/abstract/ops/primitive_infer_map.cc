@@ -99,7 +99,7 @@ using ops::InferImplDropout;
 
 PrimShapeDependMap &GetInferDependsMap() {
   // Registration directly by the host_depends map will be deprecated and
-  // should be registered by the REGISTER_INFER_DEPENDS
+  // should be registered by the GetValueDependArgIndices
   using ShapeSet = std::set<int64_t>;
   static const auto &kMirrorPad = prim::kPrimMirrorPad->name();
   static const auto &kAdaptiveAvgPool3D = prim::kPrimAdaptiveAvgPool3D->name();

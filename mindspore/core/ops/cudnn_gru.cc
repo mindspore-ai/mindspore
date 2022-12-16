@@ -127,16 +127,21 @@ TuplePtr CudnnGRUInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
-AbstractBasePtr CudnnGRUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kCudnnGRUInputsNum, primitive->name());
-  auto infer_shape = CudnnGRUInferShape(primitive, input_args);
-  auto infer_type = CudnnGRUInferType(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
 MIND_API_OPERATOR_IMPL(CudnnGRU, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(CudnnGRU, prim::kPrimCudnnGRU, CudnnGRUInfer, nullptr, true);
+class MIND_API CudnnGRUInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return CudnnGRUInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kCudnnGRUInputsNum, primitive->name());
+    return CudnnGRUInferType(primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(CudnnGRU, prim::kPrimCudnnGRU, CudnnGRUInfer, false);
 }  // namespace ops
 }  // namespace mindspore

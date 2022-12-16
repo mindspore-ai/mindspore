@@ -69,14 +69,18 @@ std::vector<int64_t> Cauchy::get_size() {
 
 MIND_API_OPERATOR_IMPL(Cauchy, BaseOperator);
 
-abstract::AbstractBasePtr CauchyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
+class MIND_API CauchyInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return CauchyInferShape(primitive, input_args);
+  }
 
-  auto infer_shape = CauchyInferShape(primitive, input_args);
-  auto infer_type = std::make_shared<TensorType>(kFloat32);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(Cauchy, prim::kPrimCauchy, CauchyInfer, nullptr, true);
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return std::make_shared<TensorType>(kFloat32);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Cauchy, prim::kPrimCauchy, CauchyInfer, false);
 }  // namespace ops
 }  // namespace mindspore

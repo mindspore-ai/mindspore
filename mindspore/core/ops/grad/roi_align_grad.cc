@@ -66,6 +66,8 @@ class ROIAlignGradInfer : public abstract::OpInferBase {
                                                      prim->name());
     return input_args[kInputIndex0]->BuildType();
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
 };
 
 void ROIAlignGrad::set_pooled_height(const int64_t pooled_height) {
@@ -99,7 +101,6 @@ void ROIAlignGrad::Init(const int64_t pooled_height, const int64_t pooled_width,
   this->set_spatial_scale(spatial_scale);
   this->set_sample_num(sample_num);
 }
-REGISTER_INFER_DEPENDS(kNameROIAlignGrad, {2});
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ROIAlignGrad, prim::kPrimROIAlignGrad, ROIAlignGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

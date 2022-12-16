@@ -47,13 +47,21 @@ bool TensorSummary::get_side_effect_io() const {
 
 void TensorSummary::Init() { this->set_side_effect_io(); }
 
-AbstractBasePtr TensorSummaryInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  // check
-  CheckAndConvertUtils::CheckSummaryParam(input_args[0], input_args[1], primitive->name());
-  return abstract::MakeAbstract(TensorSummaryInferShape(primitive, input_args), kInt32);
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(TensorSummary, prim::kPrimTensorSummary, TensorSummaryInfer, nullptr, true);
+class MIND_API TensorSummaryInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return TensorSummaryInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    // check
+    CheckAndConvertUtils::CheckSummaryParam(input_args[0], input_args[1], primitive->name());
+    return kInt32;
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorSummary, prim::kPrimTensorSummary, TensorSummaryInfer, false);
 }  // namespace ops
 }  // namespace mindspore

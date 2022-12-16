@@ -72,8 +72,6 @@ class MIND_API CudnnUniformReal : public BaseOperator {
   /// \return seed2.
   int64_t get_seed2() const;
 };
-MIND_API abstract::AbstractBasePtr UniformRealInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

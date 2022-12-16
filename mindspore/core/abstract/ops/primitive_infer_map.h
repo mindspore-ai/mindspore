@@ -126,10 +126,6 @@ class RegisterInferDependsHelper {
   RegisterInferDependsHelper(const std::string &name, const std::set<int64_t> &depends);
   ~RegisterInferDependsHelper() = default;
 };
-
-// Processes such as InferShape need to obtain some inputs value on the host
-#define REGISTER_INFER_DEPENDS(name, ...) \
-  static auto helper_host_depends_##name = abstract::RegisterInferDependsHelper(name, __VA_ARGS__);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_

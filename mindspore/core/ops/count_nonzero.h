@@ -33,9 +33,6 @@ class MIND_API CountNonZero : public BaseOperator {
   MIND_API_BASE_MEMBER(CountNonZero);
   CountNonZero() : BaseOperator(kNameCountNonZero) { InitIOName({"x"}, {"y"}); }
 };
-
-abstract::AbstractBasePtr CountNonZeroInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_COUNT_NONZERO_H_

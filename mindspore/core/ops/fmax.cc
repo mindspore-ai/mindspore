@@ -46,14 +46,19 @@ TypePtr FmaxInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
 }
 }  // namespace
 MIND_API_OPERATOR_IMPL(Fmax, BaseOperator);
-AbstractBasePtr FmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto infer_type = FmaxInferType(primitive, input_args);
-  auto infer_shape = FmaxInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Fmax, prim::kPrimFmax, FmaxInfer, nullptr, true);
+class MIND_API FmaxInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return FmaxInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return FmaxInferType(primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Fmax, prim::kPrimFmax, FmaxInfer, false);
 }  // namespace ops
 }  // namespace mindspore

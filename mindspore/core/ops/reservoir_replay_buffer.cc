@@ -218,25 +218,10 @@ MIND_API_OPERATOR_IMPL(ReservoirReplayBufferSample, BaseOperator);
 MIND_API_OPERATOR_IMPL(ReservoirReplayBufferDestroy, BaseOperator);
 
 namespace {
-AbstractBasePtr CreateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-
-  const std::string &prim_name = primitive->name();
-  if (input_args.size() != 0) {
-    MS_LOG(EXCEPTION) << "For Primitive[" << prim_name << "], the input should be empty.";
-  }
+BaseShapePtr CommonInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   const ShapeVector &shape = {1};
   BaseShapePtr out_shape = std::make_shared<abstract::Shape>(shape);
-  return abstract::MakeAbstract(out_shape, kInt64);
-}
-
-AbstractBasePtr PushInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const ShapeVector &shape = {1};
-  BaseShapePtr out_shape = std::make_shared<abstract::Shape>(shape);
-  return abstract::MakeAbstract(out_shape, kInt64);
+  return out_shape;
 }
 
 AbstractBasePtr SampleInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -262,23 +247,46 @@ AbstractBasePtr SampleInfer(const abstract::AnalysisEnginePtr &, const Primitive
 
   return std::make_shared<abstract::AbstractTuple>(output);
 }
-
-AbstractBasePtr DestroyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &) {
-  MS_EXCEPTION_IF_NULL(primitive);
-
-  const ShapeVector &shape = {1};
-  BaseShapePtr out_shape = std::make_shared<abstract::Shape>(shape);
-  return abstract::MakeAbstract(out_shape, kInt64);
-}
 }  // namespace
 
-REGISTER_PRIMITIVE_EVAL_IMPL(ReservoirReplayBufferCreate, prim::kPrimReservoirReplayBufferCreate, CreateInfer, nullptr,
-                             true);
-REGISTER_PRIMITIVE_EVAL_IMPL(ReservoirReplayBufferPush, prim::kPrimReservoirReplayBufferPush, PushInfer, nullptr, true);
+class MIND_API CreateInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return CommonInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+
+    const std::string &prim_name = primitive->name();
+    if (input_args.size() != 0) {
+      MS_LOG(EXCEPTION) << "For Primitive[" << prim_name << "], the input should be empty.";
+    }
+    return kInt64;
+  }
+};
+
+class MIND_API CommonInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return CommonInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    return kInt64;
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ReservoirReplayBufferCreate, prim::kPrimReservoirReplayBufferCreate, CreateInfer,
+                                 false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ReservoirReplayBufferPush, prim::kPrimReservoirReplayBufferPush, CommonInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ReservoirReplayBufferDestroy, prim::kPrimReservoirReplayBufferDestroy, CommonInfer,
+                                 false);
+
 REGISTER_PRIMITIVE_EVAL_IMPL(ReservoirReplayBufferSample, prim::kPrimReservoirReplayBufferSample, SampleInfer, nullptr,
                              true);
-REGISTER_PRIMITIVE_EVAL_IMPL(ReservoirReplayBufferDestroy, prim::kPrimReservoirReplayBufferDestroy, DestroyInfer,
-                             nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

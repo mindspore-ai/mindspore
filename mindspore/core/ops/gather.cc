@@ -23,10 +23,10 @@
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
 #include "utils/check_convert_utils.h"
+#include "ops/gather_comm.h"
 
 namespace mindspore {
 namespace ops {
-namespace {
 abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string &op_name = primitive->name();
@@ -118,7 +118,6 @@ TypePtr GatherInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
   return params->BuildType();
 }
-}  // namespace
 
 AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {

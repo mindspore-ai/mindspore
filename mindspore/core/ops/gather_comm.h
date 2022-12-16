@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-#include "ops/pack.h"
-#include "ops/stack_comm.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "mindapi/src/helper.h"
+#ifndef MINDSPORE_CORE_OPS_GATHER_COMM_H_
+#define MINDSPORE_CORE_OPS_GATHER_COMM_H_
+
+#include <vector>
+#include "abstract/ops/op_infer.h"
 
 namespace mindspore {
 namespace ops {
-void Pack::set_axis(const int64_t &axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
-
-int64_t Pack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
-
-void Pack::Init(const int64_t &axis) { this->set_axis(axis); }
-
-MIND_API_OPERATOR_IMPL(Pack, BaseOperator);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(Pack, prim::kPrimPack, AGStackInfer, false);
+abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+TypePtr GatherInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_GATHER_COMM_H_

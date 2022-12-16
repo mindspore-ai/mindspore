@@ -91,9 +91,10 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
   }
   (void)primitive->AddAttr(kPadList, MakeValue(pad_list));
 }
+}  // namespace
 
-abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
-                                                 const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto input_size = input_args[kConv2DBackpropInputSizeIndex];
   auto out_shape = GetShapeValue(primitive, input_size);
@@ -119,7 +120,6 @@ TypePtr Conv2DBackpropInputInferType(const PrimitivePtr &prim, const std::vector
   std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
 }
-}  // namespace
 
 MIND_API_OPERATOR_IMPL(Conv2DBackpropInput, BaseOperator);
 AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

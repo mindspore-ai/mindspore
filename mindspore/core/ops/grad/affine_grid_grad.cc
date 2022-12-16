@@ -143,8 +143,27 @@ bool AffineGridGrad::get_align_corners() const {
   return GetValue<bool>(value_ptr);
 }
 
-REGISTER_INFER_DEPENDS(kNameAffineGridGrad, {1});
 MIND_API_OPERATOR_IMPL(AffineGridGrad, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(AffineGridGrad, prim::kPrimAffineGridGrad, AffineGridGradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGAffineGridGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return AffineGridGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return AffineGridGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return AffineGridGradInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AffineGridGrad, prim::kPrimAffineGridGrad, AGAffineGridGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

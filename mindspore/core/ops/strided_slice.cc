@@ -483,6 +483,24 @@ AbstractBasePtr StridedSliceInfer(const abstract::AnalysisEnginePtr &, const Pri
   return std::make_shared<abstract::AbstractTensor>(StridedSliceInferType(primitive, input_args),
                                                     StridedSliceInferShape(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(StridedSlice, prim::kPrimStridedSlice, StridedSliceInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGStridedSliceInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return StridedSliceInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return StridedSliceInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return StridedSliceInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(StridedSlice, prim::kPrimStridedSlice, AGStridedSliceInfer, false);
 }  // namespace ops
 }  // namespace mindspore
