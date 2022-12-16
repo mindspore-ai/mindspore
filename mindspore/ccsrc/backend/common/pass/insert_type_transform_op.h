@@ -93,9 +93,6 @@ void CheckDynamicInputSize(const CNodePtr &new_cnode, const CNodePtr &origin_nod
 // Mainly update the inputs/outputs device types and kernel object types.
 void UpdateKernelBuildInfo(const CNodePtr &new_cnode, const CNodePtr &origin_node);
 
-// Extend the node output with TupleUnfold type.
-void ExtendTupleUnfoldOutput(const AnfNodePtr &input);
-
 // After kernel selection phase, one kernel's acquired input type may not be the same as the actual input type(the input
 // node's output type). We need this pass to transform these types to valid types.
 class BACKEND_EXPORT InsertTypeTransformOp : public PatternProcessPass {

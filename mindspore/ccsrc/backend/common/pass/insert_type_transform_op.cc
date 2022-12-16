@@ -149,62 +149,10 @@ void UpdateKernelBuildInfo(const CNodePtr &new_cnode, const CNodePtr &origin_nod
   auto new_kernel_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(origin_kernel_build_info);
   MS_EXCEPTION_IF_NULL(new_kernel_builder);
 
-  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, new_cnode)) {
-    // Check validation of kernel info for two nodes.
-    CheckDynamicInputSize(new_cnode, origin_node);
-
-    // Construct new inputs info and set to the new kernel build info.
-    std::vector<std::string> inputs_device_format;
-    std::vector<TypeId> inputs_device_type;
-    auto dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(origin_node, kAttrDynInputSizes);
-
-    for (size_t i = kIndex0; i < dyn_input_sizes.size(); ++i) {
-      int64_t s = (dyn_input_sizes[i] < 0) ? 1 : dyn_input_sizes[i];
-      for (int64_t j = kIndex0; j < s; ++j) {
-        inputs_device_format.push_back(origin_kernel_build_info->GetInputFormat(i));
-        inputs_device_type.push_back(origin_kernel_build_info->GetInputDeviceType(i));
-      }
-    }
-
-    new_kernel_builder->SetInputsFormat(inputs_device_format);
-    new_kernel_builder->SetInputsDeviceType(inputs_device_type);
-    MS_LOG(DEBUG) << "Input format, device type and kernel object type are " << inputs_device_format << ", "
-                  << inputs_device_type << ", " << origin_kernel_build_info->GetAllInputKernelObjectTypes();
-  }
-
   auto kernel_info = std::make_shared<device::KernelInfo>();
   MS_EXCEPTION_IF_NULL(kernel_info);
   new_cnode->set_kernel_info(kernel_info);
   AnfAlgo::SetSelectKernelBuildInfo(new_kernel_builder->Build(), new_cnode.get());
-}
-
-void ExtendTupleUnfoldOutput(const AnfNodePtr &input) {
-  MS_EXCEPTION_IF_NULL(input);
-  // This method could be called multiple times for the same node.
-  // Only need to expand once.
-  if (AnfUtils::IsRealKernel(input) && !common::AnfAlgo::HasNodeAttr(kTupleUnfoldExpanded, input->cast<CNodePtr>())) {
-    size_t output_num = AnfAlgo::GetOutputTensorNum(input);
-    KernelBuildInfoPtr kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(input);
-    MS_EXCEPTION_IF_NULL(kernel_build_info);
-
-    // Check output kernel object type.
-    auto kernel_obj_type_list = kernel_build_info->GetAllOutputKernelObjectTypes();
-    if (kernel_obj_type_list.size() != kSizeOne || kernel_obj_type_list[kIndex0] != KernelObjectType::TUPLE_UNFOLD) {
-      MS_LOG(EXCEPTION) << "The node should be with TupleUnfold type. But got " << kernel_obj_type_list.size()
-                        << " kernel object types: " << kObjectTypeToString[kernel_obj_type_list[kIndex0]];
-    }
-
-    // Temporarily, each output format and type should be identical for TupleUnfold.
-    // Original output is folded so there's only one output format and type, we extend them up to 'output_num'.
-    std::vector<std::string> outputs_device_format(output_num, kernel_build_info->GetOutputFormat(kIndex0));
-    std::vector<TypeId> outputs_device_type(output_num, kernel_build_info->GetOutputDeviceType(kIndex0));
-
-    kernel_build_info->SetOutputsFormat(outputs_device_format);
-    kernel_build_info->SetOutputsDeviceType(outputs_device_type);
-    common::AnfAlgo::SetNodeAttr(kTupleUnfoldExpanded, MakeValue(true), input);
-    MS_LOG(DEBUG) << "Expand output for " << input->fullname_with_scope() << " with format " << outputs_device_format
-                  << ", type " << outputs_device_type;
-  }
 }
 
 // A map of kernel object type pairs to processing functions.
@@ -297,7 +245,6 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTupleUnfold(const Func
   bool skip = (is_bprop_cut && input->abstract()->isa<abstract::AbstractSparseTensor>()) ||
               IsPrimitiveCNode(node, prim::kPrimTupleGetItem);
   if (skip) {
-    ExtendTupleUnfoldOutput(input);
     return {input};
   }
 
@@ -306,8 +253,6 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTupleUnfold(const Func
   MS_LOG(DEBUG) << "Transform tuple unfold input: " << input->fullname_with_scope() << " to " << unfold_num
                 << " inputs.";
 
-  // If input is a real kernel, we need to update input node's kernel build info to 'extend' its output.
-  ExtendTupleUnfoldOutput(input);
   return plant_inputs;
 }
 }  // namespace opt
