@@ -18,6 +18,7 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
+REG_BPROP_BUILDERS_BEGIN(GradClipOps)
 REG_BPROP_BUILDER("ClipByNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto clip_norm = ib->GetInput(kIndex1);
@@ -54,4 +55,5 @@ REG_BPROP_BUILDER("ClipByNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto clip_norm_dout = ib->Cast(ib->Add(mul_dout_y, max_dout_y), ib->GetDtype(clip_norm));
   return {x_dout, clip_norm_dout};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

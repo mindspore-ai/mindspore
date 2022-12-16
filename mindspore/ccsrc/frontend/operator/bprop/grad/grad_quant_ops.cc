@@ -18,6 +18,7 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
+REG_BPROP_BUILDERS_BEGIN(GradQuantOps)
 REG_BPROP_BUILDER("BNTrainingReduce").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   return {ib->ZerosLike(x)};
@@ -227,4 +228,5 @@ REG_BPROP_BUILDER("FakeLearnedScaleQuantPerChannel").SetBody([](const BpropIRBui
   auto dalpha = ib->TupleGetItem(tmp, 1);
   return {dx, dalpha, ib->ZerosLike(x_quant_max)};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

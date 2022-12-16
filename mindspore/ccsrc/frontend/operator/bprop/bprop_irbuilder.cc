@@ -144,6 +144,40 @@ NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, s
                {kAttrNewAxisMask, zero},
                {kAttrShrinkAxisMask, MakeValue(shrink_axis_mask)}});
 }
+
+#ifdef _MSC_VER
+void RegGradArrayOps();
+void RegGradClipOps();
+void RegGradCommOps();
+void RegGradDebugOps();
+void RegGradImageOps();
+void RegGradImplementationsOps();
+void RegGradInnerOps();
+void RegGradLinalgOps();
+void RegGradMathOps();
+void RegGradNnOps();
+void RegGradOtherOps();
+void RegGradQuantOps();
+void RegGradScipyOps();
+void RegGradSparseOps();
+
+void RegBpropExpanders() {
+  RegGradArrayOps();
+  RegGradClipOps();
+  RegGradCommOps();
+  RegGradDebugOps();
+  RegGradImageOps();
+  RegGradImplementationsOps();
+  RegGradInnerOps();
+  RegGradLinalgOps();
+  RegGradMathOps();
+  RegGradNnOps();
+  RegGradOtherOps();
+  RegGradQuantOps();
+  RegGradScipyOps();
+  RegGradSparseOps();
+}
+#endif
 }  // namespace bprop
 }  // namespace expander
 }  // namespace mindspore

@@ -20,6 +20,7 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
+REG_BPROP_BUILDERS_BEGIN(GradImageOps)
 REG_BPROP_BUILDER("ResizeBicubic").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto images = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
@@ -169,4 +170,5 @@ REG_BPROP_BUILDER("RGBToHSV").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   auto doutient_input = dv_drgb + ds_drgb + dh_drgb;
   return {doutient_input};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

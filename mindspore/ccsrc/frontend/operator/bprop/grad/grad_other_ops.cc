@@ -18,6 +18,7 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
+REG_BPROP_BUILDERS_BEGIN(GradOtherOps)
 REG_BPROP_BUILDER("Assign").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -65,4 +66,5 @@ REG_BPROP_BUILDER("_DynamicLossScale").SetBody([](const BpropIRBuilder *ib) -> N
                       {{"split_overflow", MakeValue(true)}, {"layer_overflow", ib->GetAttr("layer")}});
   return {res, ib->ZerosLike(loss_scale)};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

@@ -19,6 +19,87 @@
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::expander::bprop {
+NodePtrList Dropout2DBpropExpander(const BpropIRBuilder *ib) {
+  auto keep_prob = GetValue<float>(ib->GetAttr("keep_prob"));
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto mask = ib->TupleGetItem(out, 1);
+  auto dy = ib->TupleGetItem(dout, 0);
+  mask = ib->Cast(mask, kFloat32);
+  if (keep_prob != 0) {
+    dy = ib->Mul(dy, ib->Tensor((1.0 / keep_prob), ib->GetDtype(dy)));
+  }
+  dy = ib->Mul(mask, dy);
+  dy = ib->Cast(dy, ib->GetDtype(x));
+  return {dy};
+}
+
+NodePtrList GeLUBpropExpander(const BpropIRBuilder *ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("GeLUGrad", {dout, x, out});
+  return {dx};
+}
+
+NodePtrList FastGeLUBpropExpander(const BpropIRBuilder *ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("FastGeLUGrad", {dout, x});
+  return {dx};
+}
+
+NodePtrList Conv2DTransposeBpropExpander(const BpropIRBuilder *ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto w = ib->GetInput(kIndex1);
+  auto f_sizes = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto w_shape = ib->GetShape(w);
+  auto dx = ib->Emit(kConv2DOpName, {dout, w},
+                     {{"pad_mode", ib->GetAttr("pad_mode")},
+                      {"pad", ib->GetAttr("pad")},
+                      {"dilation", ib->GetAttr("dilation")},
+                      {"stride", ib->GetAttr("stride")},
+                      {"group", ib->GetAttr("group")},
+                      {"groups", ib->GetAttr("group")},
+                      {"format", ib->GetAttr("format")},
+                      {"data_format", ib->GetAttr("format")},
+                      {"out_channel", ib->GetAttr("out_channel")},
+                      {"kernel_size", ib->GetAttr("kernel_size")},
+                      {"mode", MakeValue(1)}});
+  auto dw = ib->Emit(kConv2DBackpropFilterOpName, {x, dout, ib->Value(w_shape)},
+                     {{"mode", ib->GetAttr("mode")},
+                      {"dilation", ib->GetAttr("dilation")},
+                      {"stride", ib->GetAttr("stride")},
+                      {"group", ib->GetAttr("group")},
+                      {"groups", ib->GetAttr("group")},
+                      {"format", ib->GetAttr("format")},
+                      {"data_format", ib->GetAttr("format")},
+                      {"out_channel", ib->GetAttr("out_channel")},
+                      {"kernel_size", ib->GetAttr("kernel_size")},
+                      {"pad_mode", ib->GetAttr("pad_mode")},
+                      {"pad", ib->GetAttr("pad")},
+                      {"pad_list", ib->GetAttr("pad_list")}});
+  return {dx, dw, ib->ZerosLike(f_sizes)};
+}
+
+NodePtrList CommonMaxMinGradBprop(const BpropIRBuilder *ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex4);
+  auto btmp = ib->TupleGetItem(out, 0);
+  auto btmp_type = ib->GetDtype(btmp);
+  auto out0 = ib->Cast(ib->NotEqual(btmp, ib->Tensor(0, btmp_type)), btmp_type);
+  auto btmp1 = ib->TupleGetItem(out, 1);
+  auto btmp1_type = ib->GetDtype(btmp1);
+  auto out1 = ib->Cast(ib->NotEqual(btmp1, ib->Tensor(0, btmp1_type)), btmp1_type);
+  auto dz = ib->Add(ib->Mul(out0, ib->TupleGetItem(dout, 0)), ib->Mul(out1, ib->TupleGetItem(dout, 1)));
+  return {ib->ZerosLike(x), ib->ZerosLike(y), dz};
+}
+
+REG_BPROP_BUILDERS_BEGIN(GradNnOps)
 REG_BPROP_BUILDER("Conv2D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
@@ -626,21 +707,6 @@ REG_BPROP_BUILDER("UpsampleTrilinear3D").SetBody([](const BpropIRBuilder *ib) ->
   return {dx};
 });
 
-NodePtrList Dropout2DBpropExpander(const BpropIRBuilder *ib) {
-  auto keep_prob = GetValue<float>(ib->GetAttr("keep_prob"));
-  auto x = ib->GetInput(kIndex0);
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
-  auto mask = ib->TupleGetItem(out, 1);
-  auto dy = ib->TupleGetItem(dout, 0);
-  mask = ib->Cast(mask, kFloat32);
-  if (keep_prob != 0) {
-    dy = ib->Mul(dy, ib->Tensor((1.0 / keep_prob), ib->GetDtype(dy)));
-  }
-  dy = ib->Mul(mask, dy);
-  dy = ib->Cast(dy, ib->GetDtype(x));
-  return {dy};
-}
 REG_BPROP_BUILDER("Dropout2D").SetBody(Dropout2DBpropExpander);
 REG_BPROP_BUILDER("Dropout3D").SetBody(Dropout2DBpropExpander);
 
@@ -924,22 +990,9 @@ REG_BPROP_BUILDER("TanhGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dy, dgrad};
 });
 
-NodePtrList GeLUBpropExpander(const BpropIRBuilder *ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("GeLUGrad", {dout, x, out});
-  return {dx};
-}
 REG_BPROP_BUILDER("GeLU").SetBody(GeLUBpropExpander);
 REG_BPROP_BUILDER("Gelu").SetBody(GeLUBpropExpander);
 
-NodePtrList FastGeLUBpropExpander(const BpropIRBuilder *ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("FastGeLUGrad", {dout, x});
-  return {dx};
-}
 REG_BPROP_BUILDER("FastGeLU").SetBody(FastGeLUBpropExpander);
 REG_BPROP_BUILDER("FastGelu").SetBody(FastGeLUBpropExpander);
 
@@ -1128,39 +1181,6 @@ REG_BPROP_BUILDER("AdaptiveMaxPool2D").SetBody([](const BpropIRBuilder *ib) -> N
   return {dx};
 });
 
-NodePtrList Conv2DTransposeBpropExpander(const BpropIRBuilder *ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto w = ib->GetInput(kIndex1);
-  auto f_sizes = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex4);
-  auto w_shape = ib->GetShape(w);
-  auto dx = ib->Emit(kConv2DOpName, {dout, w},
-                     {{"pad_mode", ib->GetAttr("pad_mode")},
-                      {"pad", ib->GetAttr("pad")},
-                      {"dilation", ib->GetAttr("dilation")},
-                      {"stride", ib->GetAttr("stride")},
-                      {"group", ib->GetAttr("group")},
-                      {"groups", ib->GetAttr("group")},
-                      {"format", ib->GetAttr("format")},
-                      {"data_format", ib->GetAttr("format")},
-                      {"out_channel", ib->GetAttr("out_channel")},
-                      {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"mode", MakeValue(1)}});
-  auto dw = ib->Emit(kConv2DBackpropFilterOpName, {x, dout, ib->Value(w_shape)},
-                     {{"mode", ib->GetAttr("mode")},
-                      {"dilation", ib->GetAttr("dilation")},
-                      {"stride", ib->GetAttr("stride")},
-                      {"group", ib->GetAttr("group")},
-                      {"groups", ib->GetAttr("group")},
-                      {"format", ib->GetAttr("format")},
-                      {"data_format", ib->GetAttr("format")},
-                      {"out_channel", ib->GetAttr("out_channel")},
-                      {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"pad_mode", ib->GetAttr("pad_mode")},
-                      {"pad", ib->GetAttr("pad")},
-                      {"pad_list", ib->GetAttr("pad_list")}});
-  return {dx, dw, ib->ZerosLike(f_sizes)};
-}
 REG_BPROP_BUILDER("Conv2DTranspose").SetBody(Conv2DTransposeBpropExpander);
 REG_BPROP_BUILDER("Conv2DBackpropInput").SetBody(Conv2DTransposeBpropExpander);
 
@@ -1672,20 +1692,7 @@ REG_BPROP_BUILDER("PadV3").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx, ib->ZerosLike(paddings), ib->ZerosLike(constant_values)};
 });
 
-NodePtrList CommonMaxMinGradBprop(const BpropIRBuilder *ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto y = ib->GetInput(kIndex1);
-  auto out = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex4);
-  auto btmp = ib->TupleGetItem(out, 0);
-  auto btmp_type = ib->GetDtype(btmp);
-  auto out0 = ib->Cast(ib->NotEqual(btmp, ib->Tensor(0, btmp_type)), btmp_type);
-  auto btmp1 = ib->TupleGetItem(out, 1);
-  auto btmp1_type = ib->GetDtype(btmp1);
-  auto out1 = ib->Cast(ib->NotEqual(btmp1, ib->Tensor(0, btmp1_type)), btmp1_type);
-  auto dz = ib->Add(ib->Mul(out0, ib->TupleGetItem(dout, 0)), ib->Mul(out1, ib->TupleGetItem(dout, 1)));
-  return {ib->ZerosLike(x), ib->ZerosLike(y), dz};
-}
 REG_BPROP_BUILDER("MaximumGrad").SetBody(CommonMaxMinGradBprop);
 REG_BPROP_BUILDER("MinimumGrad").SetBody(CommonMaxMinGradBprop);
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

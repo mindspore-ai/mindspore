@@ -17,6 +17,7 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
+REG_BPROP_BUILDERS_BEGIN(GradDebugOps)
 REG_BPROP_BUILDER("ScalarSummary").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto tag = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
@@ -40,4 +41,5 @@ REG_BPROP_BUILDER("HistogramSummary").SetBody([](const BpropIRBuilder *ib) -> No
   auto x = ib->GetInput(kIndex1);
   return {tag, ib->ZerosLike(x)};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

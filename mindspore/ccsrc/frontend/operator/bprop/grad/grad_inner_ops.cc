@@ -40,6 +40,7 @@ static NodePtr GetMatrixDiagPartAssist(const BpropIRBuilder *ib, const ShapeVect
   return ib->Reshape(tile, x_shape);
 }
 
+REG_BPROP_BUILDERS_BEGIN(GradInnerOps)
 REG_BPROP_BUILDER("MatrixDiag").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -236,4 +237,5 @@ REG_BPROP_BUILDER("ParallelResizeBilinear").SetBody([](const BpropIRBuilder *ib)
                       {"half_pixel_centers", MakeValue(false)}});
   return {dx, ib->ZerosLike(size)};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
