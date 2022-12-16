@@ -54,6 +54,7 @@
 #endif
 #include "src/runtime/runtime_convert.h"
 #include "extendrt/mindir_loader/model_loader.h"
+#include "thread/parallel_thread_pool_manager.h"
 
 using AbstractBaseModel = mindspore::infer::AbstractBaseModel;
 
@@ -753,6 +754,12 @@ int LiteSession::ContextInit(InnerContext *context) {
 #ifdef MS_COMPILE_IOS
   context_->thread_pool()->SetMaxSpinCount(kDefaulLiteIosSpinCount);
   context_->thread_pool()->SetMinSpinCount(kDefaulLiteIosSpinCount);
+#endif
+#ifdef PARALLEL_INFERENCE
+  if (context_->inter_op_parallel_num_ > 1 && ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool()) {
+    MS_LOG(INFO) << "Enable subgraph parallelism and enable thread pool sharing";
+    ParallelThreadPoolManager::GetInstance()->BindPoolToRunner(context_->thread_pool(), config_info_);
+  }
 #endif
   return RET_OK;
 }

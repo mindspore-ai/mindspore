@@ -156,6 +156,11 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::inter_op_parallel_num_, "interOpParallelNum", "parallel number of operators in predict",
             1);
     AddFlag(&BenchmarkFlags::enable_gl_texture_, "enableGLTexture", "Enable GlTexture2D", false);
+    AddFlag(&BenchmarkFlags::enable_shared_thread_pool_, "enableSharedThreadPool", "Enable shared thread pool", false);
+    AddFlag(&BenchmarkFlags::thread_num_limit_per_worker_, "threadNumLimitPerWorker", "thread num limit per worker ",
+            "");
+    AddFlag(&BenchmarkFlags::thread_num_remaining_per_worker_, "threadNumRemainingPerWorker",
+            "thread num limit per worker ", "");
   }
 
   ~BenchmarkFlags() override = default;
@@ -208,6 +213,9 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   std::string decrypt_key_str_;
   std::string dec_mode_ = "AES-GCM";
   std::string crypto_lib_path_;
+  bool enable_shared_thread_pool_ = false;
+  std::string thread_num_limit_per_worker_;
+  std::string thread_num_remaining_per_worker_;
 };
 
 class MS_API BenchmarkBase {

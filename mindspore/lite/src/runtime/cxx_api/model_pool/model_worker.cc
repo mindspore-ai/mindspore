@@ -39,6 +39,7 @@ void ModelWorker::InitModelWorker(const char *model_buf, size_t size,
   worker_config_ = worker_config;
   MS_LOG(DEBUG) << "worker bind core id list: " << worker_config_->context->GetThreadAffinityCoreList();
   MS_LOG(DEBUG) << "worker thread num: " << worker_config_->context->GetThreadNum();
+  worker_id_ = worker_config_->worker_id;
   predict_task_queue_ = predict_task_queue;
   numa::NUMAAdapter::GetInstance()->Bind(worker_config_->numa_id);
   auto status = Init(model_buf, size);

@@ -53,6 +53,7 @@
 #include "include/registry/register_kernel_interface.h"
 #include "extendrt/mindir_loader/abstract_base_model.h"
 #include "src/runtime/pack_weight_manager.h"
+#include "thread/parallel_thread_pool_manager.h"
 
 using AbstractBaseModel = mindspore::infer::AbstractBaseModel;
 
@@ -1037,6 +1038,24 @@ void Scheduler::ResetByExecutionPlan(std::string node_name, TypeId *data_type) {
   return;
 }
 
+int Scheduler::GetThreadNumLimit() {
+  int thread_num_limit = -1;
+  if (config_info_ != nullptr) {
+    auto shared_thread_pool = config_info_->find(kSharedThreadPool);
+    if (shared_thread_pool != config_info_->end()) {
+      auto shared_thread_pool_param = shared_thread_pool->second;
+      if (shared_thread_pool_param.find(kEnable) != shared_thread_pool_param.end() &&
+          shared_thread_pool_param[kEnable] == "true" &&
+          shared_thread_pool_param.find(kThreadNumLimitPerWorker) != shared_thread_pool_param.end() &&
+          !shared_thread_pool_param[kThreadNumLimitPerWorker].empty()) {
+        thread_num_limit = std::atoi(shared_thread_pool_param[kThreadNumLimitPerWorker].c_str());
+      }
+    }
+  }
+  MS_LOG(INFO) << "thread num limit: " << thread_num_limit;
+  return thread_num_limit;
+}
+
 int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                              OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type,
                              kernel::KernelExec **kernel) {
@@ -1068,6 +1087,11 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
       MS_LOG(DEBUG) << "CastConstTensorsData failed: " << ret;
       return RET_NOT_SUPPORT;
     }
+  }
+  // reset op task num, The number of operator segmentation tasks is not necessarily equal to the number of threads
+  auto thread_num_limit = GetThreadNumLimit();
+  if (thread_num_limit != -1 && IsSharedThreadPoolOp(op_type)) {
+    op_parameter->thread_num_ = thread_num_limit;
   }
   ret = KernelRegistry::GetInstance()->GetKernelExec(in_tensors, out_tensors, context_, ms_context_, cpu_desc,
                                                      op_parameter, kernel);

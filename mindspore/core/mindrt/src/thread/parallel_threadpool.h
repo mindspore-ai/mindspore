@@ -21,6 +21,7 @@
 #include <vector>
 #include <mutex>
 #include <atomic>
+#include <string>
 #include <condition_variable>
 #include "thread/actor_threadpool.h"
 
@@ -43,18 +44,11 @@ class ParallelWorker : public Worker {
   }
   void CreateThread() override;
   bool RunLocalKernelTask() override;
-  ~ParallelWorker() override {
-    {
-      std::lock_guard<std::mutex> _l(mutex_);
-      alive_ = false;
-    }
-    cond_var_.notify_one();
-    if (thread_.joinable()) {
-      thread_.join();
-    }
-    pool_ = nullptr;
-    parallel_pool_ = nullptr;
-  }
+  ~ParallelWorker() override;
+  void RunOtherPoolTask(ParallelTask *p_task);
+  void WaitOtherPoolTask();
+  void DirectRunOtherPoolTask();
+  void ActivateByOtherPoolTask(ParallelTask *task = nullptr);
 
  protected:
   void WaitUntilActive() override;
@@ -63,6 +57,10 @@ class ParallelWorker : public Worker {
   void Run() override;
   bool RunQueueActorTask();
   ParallelThreadPool *parallel_pool_{nullptr};
+  bool wait_do_other_task_{true};
+  ParallelTask *other_task_ = nullptr;
+  std::mutex other_task_mutex_;
+  std::condition_variable cv_other_task_;
 };
 
 class ParallelThreadPool : public ActorThreadPool {
@@ -119,7 +117,11 @@ class ParallelThreadPool : public ActorThreadPool {
     THREAD_DEBUG("actor[%s] enqueue success", actor->GetAID().Name().c_str());
     size_t size = workers_.size() > tasks_size_ ? tasks_size_ : workers_.size();
     for (size_t i = 0; i < size; i++) {
-      workers_[i]->Active();
+      if (!enable_shared_) {
+        workers_[i]->Active();
+      } else {
+        static_cast<ParallelWorker *>(workers_[i])->ActivateByOtherPoolTask(nullptr);
+      }
     }
   }
 
@@ -129,6 +131,16 @@ class ParallelThreadPool : public ActorThreadPool {
 
   size_t tasks_size() const { return tasks_size_; }
 
+  bool IsIdlePool();
+
+  int GetPoolRef();
+
+  void SetRunnerID(std::string runner_id) { bind_runner_id_ = runner_id; }
+
+  std::vector<ParallelWorker *> GetParallelPoolWorkers();
+
+  void UseThreadPool(int num);
+
  private:
   ParallelThreadPool() {}
   int CreateParallelThreads(size_t actor_thread_num, size_t all_thread_num, const std::vector<int> &core_list);
@@ -137,6 +149,11 @@ class ParallelThreadPool : public ActorThreadPool {
   std::atomic_int tasks_end_ = 0;
   ParallelTask *tasks_;
   size_t tasks_size_ = 0;
+  bool enable_shared_ = false;
+  std::string bind_runner_id_;
+  std::mutex mutex_pool_ref_count_;
+  std::atomic_int pool_ref_count_ = 0;
+  int thread_num_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_PARALLEL_THREADPOOL_H_

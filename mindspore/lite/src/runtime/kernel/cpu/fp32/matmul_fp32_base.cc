@@ -19,6 +19,7 @@
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/pack_fp32_opt.h"
+#include "thread/parallel_thread_pool_manager.h"
 
 using mindspore::lite::kCHWDimNumber;
 using mindspore::lite::kHWDimNumber;
@@ -27,7 +28,11 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMulFusion;
-
+#ifdef PARALLEL_INFERENCE
+namespace {
+constexpr int kNumDeepThreshold = 512;
+}
+#endif
 namespace mindspore::kernel {
 int MatmulRun(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
@@ -678,6 +683,11 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
 }
 
 int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
+#ifdef PARALLEL_INFERENCE
+  if (params_->deep_ < kNumDeepThreshold && ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool()) {
+    params_->op_parameter_.thread_num_ = ParallelThreadPoolManager::GetInstance()->GetThreadPoolSize();
+  }
+#endif
   if ((a_batch_ >= op_parameter_->thread_num_ && (b_batch_ == a_batch_ || !SupportMulBatchCuttingByRow())) ||
       params_->col_ == 1) {
     thread_count_ = op_parameter_->thread_num_;
