@@ -4493,6 +4493,8 @@ def reciprocal(x):
         >>> print(output)
         [1.   0.5  0.25]
     """
+    if not ops.is_floating_point(x):
+        x = ops.cast(x, mstype.float32)
     return _get_cache_prim(ops.Reciprocal)()(x)
 
 
