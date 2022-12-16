@@ -79,7 +79,6 @@ int KLDivLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     output_before_reduction_shape_.begin(), output_before_reduction_shape_.end(), 1, std::multiplies<int64_t>());
 
   size_t type_size = GetTypeByte(TypeIdToType(inputs[kIndex0]->GetDtype()));
-  workspace_size_list_.push_back(input_target_shape_size_ * type_size);
   if (reductionMode_ != ops::kNone) {
     workspace_size_list_.push_back(output_before_reduction_shape_size_ * type_size);
   }
@@ -103,96 +102,63 @@ std::vector<KernelAttr> KLDivLossCpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-bool KLDivLossCpuKernelMod::LaunchNoneReduction(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
-  auto *input_x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *input_target = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto *input_target_log = reinterpret_cast<T *>(workspace[kIndex0]->addr);
-  auto *y = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_x(input_x, input_x_shape_size_, 1);
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_target(input_target, input_target_shape_size_, 1);
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_log(input_target_log, input_target_shape_size_, 1);
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_y(y, output_before_reduction_shape_size_, 1);
-
-  array_log = Eigen::log(array_target);
-  BroadcastIterator base_iter(input_x_shape_, input_target_shape_, output_before_reduction_shape_);
-  auto task = [&](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
-    for (size_t i = start; i < end; ++i) {
-      T diff = static_cast<T>(array_log[iter.GetInputPosB()] - array_x[iter.GetInputPosA()]);
-      array_y[i] = static_cast<T>(diff * array_target[iter.GetInputPosB()]);
-      if (std::isnan(static_cast<float>(array_y[i]))) {
-        array_y[i] = static_cast<T>(0);
-      }
-      iter.GenNextPos();
-    }
-  };
-  ParallelLaunchAutoSearch(task, output_before_reduction_shape_size_, this, &parallel_search_info_);
-  return true;
-}
-
-template <typename T>
-bool KLDivLossCpuKernelMod::LaunchOther(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
-  auto *input_x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *input_target = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto *input_target_log = reinterpret_cast<T *>(workspace[kIndex0]->addr);
-  auto *tmp_result = reinterpret_cast<T *>(workspace[kIndex1]->addr);
-  auto *y = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_x(input_x, input_x_shape_size_, 1);
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_target(input_target, input_target_shape_size_, 1);
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_log(input_target_log, input_target_shape_size_, 1);
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_tmp(tmp_result, output_before_reduction_shape_size_, 1);
-
-  array_log = Eigen::log(array_target);
-  BroadcastIterator base_iter(input_x_shape_, input_target_shape_, output_before_reduction_shape_);
-  auto task = [&](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
-    for (size_t i = start; i < end; ++i) {
-      T diff = static_cast<T>(array_log[iter.GetInputPosB()] - array_x[iter.GetInputPosA()]);
-      array_tmp[i] = static_cast<T>(diff * array_target[iter.GetInputPosB()]);
-      if (std::isnan(static_cast<float>(array_tmp[i]))) {
-        array_tmp[i] = static_cast<T>(0);
-      }
-      iter.GenNextPos();
-    }
-  };
-  ParallelLaunchAutoSearch(task, output_before_reduction_shape_size_, this, &parallel_search_info_);
-
-  if (reductionMode_ == ops::kSum) {
-    y[kIndex0] = array_tmp.sum();
-    return true;
-  }
-
-  if (reductionMode_ == ops::kMean) {
-    y[kIndex0] = array_tmp.mean();
-    return true;
-  }
-
-  if (reductionMode_ == ops::kBatchMean) {
-    y[kIndex0] = array_tmp.sum() / static_cast<T>(batch_size_);
-    return true;
-  }
-  return false;
-}
-
-template <typename T>
 bool KLDivLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &workspace,
                                          const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMyAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMyAddOutputsNum, kernel_name_);
 
+  T *input_x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  T *input_target = reinterpret_cast<T *>(inputs[kIndex1]->addr);
+  T *y = nullptr;
   if (reductionMode_ == ops::kNone) {
-    return LaunchNoneReduction<T>(inputs, workspace, outputs);
+    y = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  } else {
+    y = reinterpret_cast<T *>(workspace[kIndex0]->addr);
   }
 
-  return LaunchOther<T>(inputs, workspace, outputs);
+  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_x(input_x, input_x_shape_size_, 1);
+  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_target(input_target, input_target_shape_size_, 1);
+  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_y(y, output_before_reduction_shape_size_, 1);
+
+  array_y = (Eigen::log(array_target) - array_x) * array_target;
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      array_y[i] = std::isnan(array_y[i]) ? static_cast<T>(0) : array_y[i];
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_before_reduction_shape_size_, this, &parallel_search_info_);
+
+  if (reductionMode_ == ops::kNone) {
+    return true;
+  }
+
+  T *y_ret = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  double total_sum = 0;
+  auto task2 = [&](size_t start, size_t end) {
+    double local_sum = 0;
+    for (size_t i = start; i < end; ++i) {
+      local_sum += static_cast<double>(array_y[i]);
+    }
+    total_sum += local_sum;
+  };
+  ParallelLaunchAutoSearch(task2, output_before_reduction_shape_size_, this, &parallel_search_info_);
+
+  if (reductionMode_ == ops::kSum) {
+    y_ret[kIndex0] = static_cast<T>(total_sum);
+    return true;
+  }
+
+  if (reductionMode_ == ops::kMean) {
+    y_ret[kIndex0] = static_cast<T>(total_sum) / static_cast<T>(output_before_reduction_shape_size_);
+    return true;
+  }
+
+  if (reductionMode_ == ops::kBatchMean) {
+    y_ret[kIndex0] = static_cast<T>(total_sum) / static_cast<T>(batch_size_);
+    return true;
+  }
+  return false;
 }
 
 std::vector<std::pair<KernelAttr, KLDivLossCpuKernelMod::KLDivLossFunc>> KLDivLossCpuKernelMod::func_list_ = {
