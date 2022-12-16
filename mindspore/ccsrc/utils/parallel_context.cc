@@ -41,7 +41,6 @@ std::shared_ptr<ParallelContext> ParallelContext::GetInstance() {
 ParallelContext::ParallelContext() { Reset(); }
 
 void ParallelContext::Reset() {
-  init_param_shape_ = true;
   gradients_mean_ = false;
   full_batch_ = false;
   full_batch_is_set_ = false;
@@ -233,31 +232,6 @@ bool ParallelContext::set_communi_parallel_mode(const std::string &communi_paral
   return true;
 }
 
-void ParallelContext::ParallelParameterContextInitShape(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  if (!ParallelContextCareGraph(func_graph)) {
-    return;
-  }
-  if (func_graph->has_flag(kIsFirstIteration)) {
-    init_param_shape_ = true;
-    MS_LOG(INFO) << "Init the parameter shape dict in increment predict with two graph";
-    return;
-  }
-  if (!func_graph->has_flag(kTraining)) {
-    init_param_shape_ = false;
-    MS_LOG(INFO) << "In parallel evaluation or prediction, may be need to restore the parameter shape";
-    return;
-  }
-
-  if ((ParallelContext::GetInstance()->grad_accumulation_step() > 1) && !func_graph->has_flag(kAccumulation)) {
-    init_param_shape_ = false;
-    MS_LOG(INFO) << "In parallel grad accumulation second graph, need to restore the parameter shape";
-  } else {
-    init_param_shape_ = true;
-    MS_LOG(INFO) << "Init the parameter shape dict";
-  }
-}
-
 // Restore the parameters' shape for evaluation/prediction in auto-parallel or semi-auto-parallel mode
 void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &func_graph,
                                                            const ParameterPtr &param_node,
@@ -269,9 +243,6 @@ void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &f
     return;
   }
 
-  if (init_param_shape_) {
-    return;
-  }
   auto param_info = param_node->param_info();
   if (!param_info) {
     return;

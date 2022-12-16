@@ -1036,7 +1036,7 @@ bool IsPynativeParallel() {
 
 bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) {
   // compile graph order:
-  // 1, ParallelParameterContextInitShape/Ckpt/Restore
+  // 1, ParallelParameterContextRestoreShape
   // 2, PynativeShard: find 'shard' node and set 'pynative_shard' flag for root graph
   // 3, PipelineSplit: insert virtual dataset
   // 4, StepAutoParallel
