@@ -135,7 +135,7 @@ class ParallelThreadPool : public ActorThreadPool {
 
   int GetPoolRef();
 
-  void SetRunnerID(std::string runner_id) { bind_runner_id_ = runner_id; }
+  inline void SetRunnerID(const std::string &runner_id) { bind_runner_id_ = runner_id; }
 
   std::vector<ParallelWorker *> GetParallelPoolWorkers();
 
