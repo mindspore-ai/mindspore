@@ -19,6 +19,7 @@
 #include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 
 namespace mindspore::expander::bprop {
+REG_BPROP_BUILDERS_BEGIN(GradQuantOps)
 REG_BPROP_BUILDER("BNTrainingReduce").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   return {ib->ZerosLike(x)};
@@ -228,4 +229,5 @@ REG_BPROP_BUILDER("FakeLearnedScaleQuantPerChannel").SetUnusedInputs({i3}).SetBo
   auto dalpha = ib->TupleGetItem(tmp, 1);
   return {dx, dalpha, ib->ZerosLike(x_quant_max)};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

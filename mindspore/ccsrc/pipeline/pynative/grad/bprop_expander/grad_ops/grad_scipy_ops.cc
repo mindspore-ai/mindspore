@@ -19,6 +19,7 @@
 #include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 
 namespace mindspore::expander::bprop {
+REG_BPROP_BUILDERS_BEGIN(GradScipyOps)
 REG_BPROP_BUILDER("SolveTriangular").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto reverse_perm = [](const ShapeVector &shape) -> ShapeVector {
     ShapeVector perm;
@@ -172,4 +173,5 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
                     {{"max_length", MakeValue<int64_t>(200000000)}, {"align", MakeValue<std::string>("RIGHT_LEFT")}});
   return {grad_a};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

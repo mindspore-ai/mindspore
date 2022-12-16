@@ -49,9 +49,21 @@ class BpropExpander {
   CNodePtrList *outputs_{nullptr};
   UserType *users_{nullptr};
 };
+
+#ifdef _MSC_VER
+class WinBpropRegister {
+ public:
+  WinBpropRegister();
+  ~WinBpropRegister() {}
+  void DoNothing() const {}
+};
+#endif
 }  // namespace bprop
 }  // namespace expander
 
 using expander::bprop::BpropExpander;
+#ifdef _MSC_VER
+using expander::bprop::WinBpropRegister;
+#endif
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_EXPANDER_BPROP_H_

@@ -19,9 +19,11 @@
 #include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 
 namespace mindspore::expander::bprop {
+REG_BPROP_BUILDERS_BEGIN(GradImplementationsOps)
 REG_BPROP_BUILDER("Load").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto u_monad = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   return {dout, ib->ZerosLike(u_monad)};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
