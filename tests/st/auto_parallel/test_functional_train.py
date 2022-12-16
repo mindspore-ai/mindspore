@@ -60,3 +60,18 @@ def test_graph_functional_sink_train():
     '''
     ret = os.system("mpirun -n 8 --allow-run-as-root pytest -s -v functional_train.py::test_graph_func_sink")
     assert ret == 0
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_single
+def test_pynative_func_sink():
+    '''
+    Feature: Object Oriented and Functional Mixed Programming
+    Description: pynative mode, data sink with jit
+    Expectation: Run success
+    '''
+    ret = os.system("mpirun -n 8 --allow-run-as-root pytest -s -v functional_train.py::test_pynative_func_sink")
+    assert ret == 0

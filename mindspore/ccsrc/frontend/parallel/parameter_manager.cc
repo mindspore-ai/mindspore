@@ -416,12 +416,9 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
   }
 }
 
-void InitOptimizerState(const FuncGraphPtr &root) {
+void InitPynativeNoShardParams(const FuncGraphPtr &root) {
   auto parameters = root->parameters();
   for (auto &parameter : parameters) {
-    if (!ParameterIsCloned(parameter)) {
-      continue;
-    }
     auto param_ptr = parameter->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param_ptr);
     auto param_info = param_ptr->param_info();

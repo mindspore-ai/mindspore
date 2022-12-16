@@ -57,12 +57,12 @@ Status AddNInfo::InferTensorMap() {
   outputs_tensor_map_.clear();
 
   Shape sub_tensor_map;
-  size_t dev_size = dev_matrix_shape_.size();
-  for (size_t i = 0; i < dev_size; ++i) {
-    sub_tensor_map.push_back(dev_size - i - 1);
+  Strategies strategies = strategy_->GetInputDim();
+  size_t dim = strategies.at(0).size();
+  for (size_t i = 0; i < dim; ++i) {
+    sub_tensor_map.push_back(dim - i - 1);
   }
 
-  Strategies strategies = strategy_->GetInputDim();
   for (size_t i = 0; i < strategies.size(); ++i) {
     inputs_tensor_map_.push_back(sub_tensor_map);
   }
