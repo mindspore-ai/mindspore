@@ -25,7 +25,8 @@
 
 namespace mindspore {
 namespace ops {
-AbstractBasePtr AbstractInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+namespace {
+AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   constexpr size_t input_num = 4;
@@ -61,22 +62,23 @@ AbstractBasePtr AbstractInferInner(const PrimitivePtr &primitive, const std::vec
   ret->CheckAndConvertToDynamicLenSequence();
   return ret;
 }
+}  // namespace
 
 MIND_API_OPERATOR_IMPL(SequenceSlice, BaseOperator);
 class SequenceSliceInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return AbstractInferInner(primitive, input_args)->BuildShape();
+    return SliceInferInner(primitive, input_args)->BuildShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return AbstractInferInner(prim, input_args)->BuildType();
+    return SliceInferInner(prim, input_args)->BuildType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    return AbstractInferInner(primitive, input_args);
+    return SliceInferInner(primitive, input_args);
   }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(SequenceSlice, prim::kPrimSequenceSlice, SequenceSliceInfer, false);

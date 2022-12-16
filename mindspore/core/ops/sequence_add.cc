@@ -26,6 +26,7 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
 // Take out the abstract of element.
 // The elements of input should have same shape and type. Dynamic length sequence already satisfies this requirement.
 // For constant length sequence, this requirement need to be checked in this function.
@@ -93,6 +94,7 @@ AbstractBasePtr SequenceAddInferInner(const PrimitivePtr &primitive, const std::
   }
   return input_2->Clone();
 }
+}  // namespace
 MIND_API_OPERATOR_IMPL(SequenceAdd, BaseOperator);
 class SequenceAddInfer : public abstract::OpInferBase {
  public:

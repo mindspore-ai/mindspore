@@ -335,6 +335,7 @@ class MS_CORE_API CheckAndConvertUtils {
                                             const std::string &standard_abs_description = "",
                                             const std::string &differ_abs_description = "");
   static bool CheckValueSame(const ValuePtr &value_1, const ValuePtr &value_2);
+  static abstract::AbstractSequencePtr BroadenAllSequenceElements(const abstract::AbstractSequencePtr &sequence);
 
  private:
   static TypePtr _CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
