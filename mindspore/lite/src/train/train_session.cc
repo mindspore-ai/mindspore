@@ -49,6 +49,31 @@ void FreeGradients(const std::vector<lite::Tensor *> &gradients) {
     delete gradient;
   }
 }  // namespace
+
+void AddNonConstTrainableParams(const std::vector<kernel::KernelExec *> &in_kernels, kernel::OptimizerKernel *optimizer,
+                                std::vector<lite::Tensor *> *params) {
+  auto indices = optimizer->GetTrainableParamsIdxs();
+  if (params->size() == indices.size()) {
+    return;
+  }
+  for (size_t ix = 0; ix < indices.size(); ix++) {
+    auto param = optimizer->in_tensors().at(indices[ix]);
+    if (param->IsConst()) {
+      continue;
+    }
+    for (size_t i = 0; i < in_kernels.size(); i++) {
+      auto out_tensors = in_kernels.at(i)->out_tensors();
+      if (std::find(out_tensors.begin(), out_tensors.end(), param) != out_tensors.end() &&
+          !in_kernels.at(i)->in_tensors().empty()) {
+        auto filtered_tensor = in_kernels.at(i)->in_tensors().at(FIRST_INPUT);
+        if (filtered_tensor->IsConst()) {
+          params->emplace_back(filtered_tensor);
+          break;
+        }
+      }
+    }
+  }
+}
 }  // namespace
 const char *kGradName = "Gradients";
 const char *kOptimizerName = "optimizer";
@@ -354,6 +379,7 @@ int TrainSession::CompileTrainGraph(std::shared_ptr<Model> model) {
   RestoreOps(restore);
   CompileTrainKernels();      // Prepare a list of train kernels
   CompileOptimizedKernels();  // Prepare a list of kernels which are optimized (weight update step)
+  CompileTrainableParams();   // Prepare trainable parameters of optimizers
   CompileTrainOutputs();      // prepare outputs in train mode
   CompileEvalOutputs();       // prepare outputs in eval mode
   // Prepare a list of eval kernels
@@ -835,6 +861,25 @@ void TrainSession::CompileOptimizedKernels() {
   }
 }
 
+void TrainSession::CompileTrainableParams() {
+  for (auto kernel : this->train_kernels_) {
+    if (!IsOptimizer(kernel)) {
+      continue;
+    }
+    auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
+    auto params = optimizer->GetTrainableParams();
+    auto in_kernels = kernel->in_kernels();
+    AddNonConstTrainableParams(in_kernels, optimizer, &params);
+
+    for (auto param : params) {
+      if (std::find(trainable_parameters_.begin(), trainable_parameters_.end(), param) != trainable_parameters_.end()) {
+        continue;
+      }
+      trainable_parameters_.emplace_back(param);
+    }
+  }
+}
+
 int TrainSession::SetLearningRate(float learning_rate) {
   if (learning_rate < 0.0f) {
     MS_LOG(ERROR) << "learning rate should more than 0";
@@ -1245,6 +1290,8 @@ std::vector<lite::Tensor *> TrainSession::GetFeatureMaps() const {
   }
   return features;
 }
+
+std::vector<lite::Tensor *> TrainSession::GetTrainableParams() const { return trainable_parameters_; }
 
 int TrainSession::UpdateFeatureMaps(const std::vector<lite::Tensor *> &features_map) {
   for (auto feature : features_map) {

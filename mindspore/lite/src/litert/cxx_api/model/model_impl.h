@@ -91,6 +91,7 @@ class ModelImpl {
   std::vector<MSTensor> GetGradients() const;
   Status ApplyGradients(const std::vector<MSTensor> &gradients);
   std::vector<MSTensor> GetFeatureMaps() const;
+  std::vector<MSTensor> GetTrainableParams() const;
   Status UpdateFeatureMaps(const std::vector<MSTensor> &new_weights);
   std::vector<MSTensor> GetOptimizerParams() const;
   Status SetOptimizerParams(const std::vector<MSTensor> &params);

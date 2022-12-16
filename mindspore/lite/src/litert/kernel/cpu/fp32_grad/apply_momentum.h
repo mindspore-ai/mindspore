@@ -43,6 +43,7 @@ class ApplyMomentumCPUKernel : public OptimizerKernel {
   int Run() override;
   int OptimizerStep() override;
   std::vector<int> GetOptimizerParamsIdxs() const override;
+  std::vector<int> GetTrainableParamsIdxs() const override;
 
  private:
   int thread_count_;

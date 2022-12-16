@@ -43,6 +43,7 @@ class SgdCPUKernel : public OptimizerKernel {
   int DoExecute(int task_id);
   int OptimizerStep() override;
   std::vector<int> GetOptimizerParamsIdxs() const override;
+  std::vector<int> GetTrainableParamsIdxs() const override;
 
  private:
   int thread_count_;

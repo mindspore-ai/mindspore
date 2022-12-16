@@ -111,6 +111,10 @@ class LiteSession {
     std::vector<lite::Tensor *> features;
     return features;
   }
+  virtual std::vector<lite::Tensor *> GetTrainableParams() const {
+    std::vector<lite::Tensor *> train_params;
+    return train_params;
+  }
   virtual int UpdateFeatureMaps(const std::vector<lite::Tensor *> &features) { return mindspore::lite::RET_ERROR; }
   virtual std::vector<lite::Tensor *> GetGradients() const {
     std::vector<lite::Tensor *> gradients;

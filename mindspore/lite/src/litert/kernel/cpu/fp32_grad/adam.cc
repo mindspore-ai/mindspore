@@ -112,6 +112,11 @@ std::vector<int> AdamCPUKernel::GetOptimizerParamsIdxs() const {
   return indices;
 }
 
+std::vector<int> AdamCPUKernel::GetTrainableParamsIdxs() const {
+  std::vector<int> indices = {0, 1, 2, 3, 4, 5};
+  return indices;
+}
+
 int AdamCPUKernel::OptimizerStep() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_10D - 1);
   auto weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIdx)->MutableData());
