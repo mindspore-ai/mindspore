@@ -1643,6 +1643,7 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
     std::tuple<uint32_t, uint32_t> rank_and_graph = rank_and_graph_item.first;
     uint32_t rank_id = std::get<0>(rank_and_graph);
     uint32_t root_graph_id = std::get<1>(rank_and_graph);
+    MS_LOG(INFO) << "Get tensor files for rank_id: " << rank_id << ", root_graph_id: " << root_graph_id;
     std::string specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(rank_id) + "/" + net_name_ + "/" +
                                     std::to_string(root_graph_id) + "/" + IterationString(iteration);
     std::string real_dump_dir = RealPath(specific_dump_dir);
@@ -1672,7 +1673,8 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
     if (is_sync_mode_) {
       // search files in dir for the one that meets the filename prefix and read the file into memory
       NPYFilePool npy_files = PreProcessDumpDirSync(real_dump_dir);
-      *processed_npy_files = ProcessNPYFilePool(npy_files);
+      auto processed_npy_files_in_rank = ProcessNPYFilePool(npy_files);
+      processed_npy_files->insert(processed_npy_files_in_rank.begin(), processed_npy_files_in_rank.end());
       ProcessTensorDataSync(proto_to_dump, real_dump_dir, *processed_npy_files, iteration, rank_id, root_graph_id,
                             &tensor_list, error_on_no_value);
     } else {
@@ -1680,7 +1682,8 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
       // convert all files in proto_to_dump to npy and add to pool of async file names
       NPYFilePool async_file_pool;
       ConvertWatchPointNodes(std::get<1>(preprocess_async_result), proto_to_dump, real_dump_dir, &async_file_pool);
-      *processed_npy_files = ProcessNPYFilePool(async_file_pool);
+      auto processed_npy_files_in_rank = ProcessNPYFilePool(async_file_pool);
+      processed_npy_files->insert(processed_npy_files_in_rank.begin(), processed_npy_files_in_rank.end());
       GetTensorDataInfoAsync(proto_to_dump, real_dump_dir, iteration, rank_id, root_graph_id, *processed_npy_files,
                              &tensor_list);
     }
