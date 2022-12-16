@@ -95,7 +95,8 @@ INPUT_MAP(HardSigmoid) = {{1, INPUT_DESC(input_x)}};
 ATTR_MAP(HardSigmoid) = {{"alpha", ATTR_DESC(alpha, AnyTraits<float>())},
                          {"beta", ATTR_DESC(beta, AnyTraits<float>())}};
 OUTPUT_MAP(HardSigmoid) = {{0, OUTPUT_DESC(output_y)}};
-REG_ADPT_DESC(HardSigmoid, kNameHSigmoid, ADPT_DESC(HardSigmoid))
+REG_ADPT_DESC(HSigmoid, kNameHSigmoid, ADPT_DESC(HardSigmoid))
+REG_ADPT_DESC(HardSigmoid, kHardSigmoidOpName, ADPT_DESC(HardSigmoid))
 
 // Relu6
 INPUT_MAP(Relu6) = {{1, INPUT_DESC(x)}};
