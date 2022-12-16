@@ -49,59 +49,13 @@ TEST_F(TestFakeQuantParam, test_attr_perlayer) {
   auto perchannel = ops->get_is_perchannel();
   EXPECT_EQ(perchannel, false);
 
-  bool has_error = false;
-  try {
-    ops->set_scale(1.0, 1);
-  } catch (...) {
-    has_error = true;
-  }
-  EXPECT_EQ(has_error, true);
+  ops->set_scales({1.0});
+  auto scale = ops->get_scales();
+  EXPECT_EQ(scale[0], 1.0);
 
-  ops->set_scale(1.0);
-  auto scale = ops->get_scale();
-  EXPECT_EQ(scale, 1.0);
-
-  ops->set_zero_point(1);
-  auto zp = ops->get_zero_point();
-  EXPECT_EQ(zp, 1);
-
-  ops->set_quant_param("slb-rate", api::MakeValue<float>(1.0));
-  auto slb_rate_value = ops->get_quant_param("slb-rate");
-  EXPECT_EQ(slb_rate_value->isa<api::FP32Imm>(), true);
-  auto slb_rate_imm = slb_rate_value->cast<api::FP32ImmPtr>();
-  auto slb_rate = slb_rate_imm->value();
-  EXPECT_EQ(slb_rate, 1.0);
-}
-
-/// Feature: setter and getter of per-channel FakeQuantParam operation.
-/// Description: call setter and getter of FakeQuantParam operation and compare result of getter with argument of
-/// setter.
-/// Expectation: success.
-TEST_F(TestFakeQuantParam, test_attr_perchannel) {
-  auto ops = std::make_shared<FakeQuantParam>();
-  ops->Init(kQuantDataTypeInt7, kAttrKeyLinearQuantAlgoName, true);
-  auto quant_dtype = ops->get_quant_dtype();
-  EXPECT_EQ(quant_dtype, kQuantDataTypeInt7);
-  auto algo_name = ops->get_quant_algo_name();
-  EXPECT_EQ(algo_name, kAttrKeyLinearQuantAlgoName);
-  auto perchannel = ops->get_is_perchannel();
-  EXPECT_EQ(perchannel, true);
-
-  bool has_error = false;
-  try {
-    ops->set_scale(1.0, 1);
-  } catch (...) {
-    has_error = true;
-  }
-  EXPECT_EQ(has_error, true);
-
-  ops->set_scale(1.0);
-  auto scale = ops->get_scale();
-  EXPECT_EQ(scale, 1.0);
-
-  ops->set_zero_point(1);
-  auto zp = ops->get_zero_point();
-  EXPECT_EQ(zp, 1);
+  ops->set_zero_points({1});
+  auto zp = ops->get_zero_points();
+  EXPECT_EQ(zp[0], 1);
 
   ops->set_quant_param("slb-rate", api::MakeValue<float>(1.0));
   auto slb_rate_value = ops->get_quant_param("slb-rate");
@@ -117,8 +71,8 @@ TEST_F(TestFakeQuantParam, test_attr_perchannel) {
 TEST_F(TestFakeQuantParam, test_infer_shape) {
   auto ops = std::make_shared<FakeQuantParam>();
   ops->Init(kQuantDataTypeInt7, kAttrKeyLinearQuantAlgoName, false);
-  ops->set_scale(1.0);
-  ops->set_zero_point(1);
+  ops->set_scales({1.0});
+  ops->set_zero_points({1});
 
   auto input_x = TensorConstructUtils::CreateOnesTensor(kFloat32, std::vector<int64_t>{32, 3, 224, 224});
   MS_EXCEPTION_IF_NULL(input_x);

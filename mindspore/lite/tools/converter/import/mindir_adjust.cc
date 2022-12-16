@@ -17,176 +17,143 @@
 #include <vector>
 #include <memory>
 #include <set>
+#include <map>
+#include <algorithm>
+#include <utility>
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
-#include "tools/converter/quantizer/quantize_util.h"
 #include "src/common/log_adapter.h"
 #include "src/common/quant_utils.h"
-#include "tools/common/node_util.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "nnacl/op_base.h"
 #include "ops/core_ops.h"
+#include "ops/op_utils.h"
+#include "ops/fake_quant_param.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
-int ConvertInputQuantParam(const PrimitivePtr &prim, bool input_narrow_range, bool weight_narrow_range,
-                           int32_t act_numbits, int32_t weight_numbits,
-                           std::map<int, std::vector<schema::QuantParamT>> *input_quant_params) {
-  std::vector<schema::QuantParamT> quants;
+int ConvertQuantParam(const api::SharedPtr<mindspore::ops::FakeQuantParam> &fake_quant_prim,
+                      std::vector<schema::QuantParamT> *quant_params) {
+  MS_CHECK_TRUE_MSG(fake_quant_prim != nullptr, RET_NULL_PTR, "fake_quant_prim is nullptr.");
+  MS_CHECK_TRUE_MSG(quant_params != nullptr, RET_NULL_PTR, "quant_params is nullptr.");
   schema::QuantParamT quant_param;
-  auto input_min = prim->GetAttr("input_minq");
-  auto input_max = prim->GetAttr("input_maxq");
-  if (input_min != nullptr && input_max != nullptr) {
-    auto input_min_ptr = input_min->cast<tensor::TensorPtr>();
-    MS_ASSERT(input_min_ptr != nullptr);
-    auto input_max_ptr = input_max->cast<tensor::TensorPtr>();
-    MS_ASSERT(input_max_ptr != nullptr);
-    MS_CHECK_TRUE_MSG(input_min_ptr->data_c() != nullptr, RET_ERROR, "input_min_ptr->data_c() is nullptr");
-    MS_CHECK_TRUE_MSG(input_max_ptr->data_c() != nullptr, RET_ERROR, "input_max_ptr->data_c() is nullptr");
-    auto *min_buf = static_cast<float *>(input_min_ptr->data_c());
-    auto *max_buf = static_cast<float *>(input_max_ptr->data_c());
-    quant_param.min = *min_buf;
-    quant_param.max = *max_buf;
-    auto ret = CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, act_numbits, input_narrow_range);
-    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Failed to calculate quant parameters.");
-    quants.emplace_back(quant_param);
-    input_quant_params->insert({0, quants});
+  auto scale = fake_quant_prim->get_scales();
+  auto zp = fake_quant_prim->get_zero_points();
+  if (scale.size() != zp.size()) {
+    MS_LOG(ERROR) << "The number of quant params scale and zero_points should be same.";
+    return RET_ERROR;
   }
-
-  quants.clear();
-  auto filter_min = prim->GetAttr("filter_minq");
-  auto filter_max = prim->GetAttr("filter_maxq");
-  if (filter_min != nullptr && filter_max != nullptr) {
-    auto filter_min_ptr = filter_min->cast<tensor::TensorPtr>();
-    MS_ASSERT(filter_min_ptr != nullptr);
-    auto filter_max_ptr = filter_max->cast<tensor::TensorPtr>();
-    MS_ASSERT(filter_max_ptr != nullptr);
-    MS_CHECK_TRUE_MSG(filter_min_ptr->data_c() != nullptr, RET_ERROR, "filter_min_ptr->data_c() is nullptr");
-    MS_CHECK_TRUE_MSG(filter_max_ptr->data_c() != nullptr, RET_ERROR, "filter_max_ptr->data_c() is nullptr");
-    auto *min_buf = static_cast<float *>(filter_min_ptr->data_c());
-    auto *max_buf = static_cast<float *>(filter_max_ptr->data_c());
-    quant_param.min = FLT_MAX;
-    quant_param.max = FLT_MIN;
-    for (int i = 0; i < filter_min_ptr->ElementsNum(); ++i) {
-      schema::QuantParamT tmp_quant_param;
-      tmp_quant_param.min = *min_buf;
-      tmp_quant_param.max = *max_buf;
-      auto ret = CalQuantizationParams(&tmp_quant_param, tmp_quant_param.min, tmp_quant_param.max, weight_numbits,
-                                       weight_narrow_range);
-      MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Failed to calculate quant parameters.");
-      quants.emplace_back(tmp_quant_param);
-      min_buf++;
-      max_buf++;
-    }
-    input_quant_params->insert({1, quants});
+  quant_params->resize(scale.size());
+  for (size_t i = 0; i < scale.size(); i++) {
+    quant_param.inited = True;
+    quant_param.scale = scale[i];
+    quant_param.zeroPoint = zp[i];
+    (*quant_params)[i] = quant_param;
   }
   return lite::RET_OK;
 }
 
-int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits,
-                            std::map<int, std::vector<schema::QuantParamT>> *output_quant_params) {
+int ConvertNodesQuantParam(const std::vector<std::shared_ptr<AnfNode>> &nodes,
+                           std::map<int, std::vector<schema::QuantParamT>> *quant_params) {
   std::vector<schema::QuantParamT> quants;
-  schema::QuantParamT quant_param;
-  auto outputMin = prim->GetAttr("output_minq");
-  auto outputMax = prim->GetAttr("output_maxq");
-  if (outputMin != nullptr && outputMax != nullptr) {
-    auto outputMinPtr = outputMin->cast<tensor::TensorPtr>();
-    auto outputMaxPtr = outputMax->cast<tensor::TensorPtr>();
-    MS_ASSERT(outputMinPtr != nullptr);
-    MS_ASSERT(outputMaxPtr != nullptr);
-    MS_CHECK_TRUE_MSG(outputMinPtr->data_c() != nullptr, RET_ERROR, "outputMinPtr->data_c() is nullptr");
-    MS_CHECK_TRUE_MSG(outputMaxPtr->data_c() != nullptr, RET_ERROR, "outputMaxPtr->data_c() is nullptr");
-    auto *minBuf = static_cast<float *>(outputMinPtr->data_c());
-    auto *maxBuf = static_cast<float *>(outputMaxPtr->data_c());
-    quant_param.min = *minBuf;
-    quant_param.max = *maxBuf;
-    auto ret = CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, numbits, narrow_range);
-    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Failed to calculate quant parameters.");
-    quants.emplace_back(quant_param);
-    output_quant_params->insert({0, quants});
-  }
-  return lite::RET_OK;
-}
-
-int GetNarrowRange(const PrimitivePtr &prim, const std::string &narrow_range_str, bool *const narrow_range_param) {
-  MS_CHECK_TRUE_MSG(narrow_range_param != nullptr, RET_ERROR, "narrow_range_param is nullptr");
-  auto narrow_range = prim->GetAttr(narrow_range_str);
-  if (narrow_range != nullptr) {
-    if (utils::isa<tensor::TensorPtr>(narrow_range)) {
-      auto narrow_range_tensor = narrow_range->cast<tensor::TensorPtr>();
-      MS_ASSERT(narrow_range_tensor != nullptr);
-      MS_CHECK_TRUE_MSG(narrow_range_tensor->data_c() != nullptr, RET_ERROR,
-                        "narrow_range_tensor->data_c() is nullptr");
-      *narrow_range_param = *reinterpret_cast<bool *>(narrow_range_tensor->data_c());
-    } else if (utils::isa<ImmTraits<bool>::type>(narrow_range)) {
-      *narrow_range_param = GetValue<bool>(narrow_range);
-    } else {
-      MS_LOG(ERROR) << "valueptr is invalid.";
-      return lite::RET_ERROR;
+  for (size_t i = 0; i < nodes.size(); i++) {
+    quants.clear();
+    if (IsPrimitiveCNode(nodes[i], prim::kPrimFakeQuantParam)) {
+      auto fake_quant_prim =
+        ops::GetOperator<mindspore::ops::FakeQuantParam>(nodes[i]->cast<CNodePtr>()->input(0)->cast<ValueNodePtr>());
+      auto status = ConvertQuantParam(fake_quant_prim, &quants);
+      if (status != lite::RET_OK) {
+        MS_LOG(ERROR) << "Convert quant param from FakeQuantParam operation failed.";
+        return lite::RET_ERROR;
+      }
+    }
+    if (!quants.empty()) {
+      quant_params->insert({i, quants});
     }
   }
   return lite::RET_OK;
 }
 
-int GetNumBits(const PrimitivePtr &prim, const std::string &num_bits_str, int *const num_bits_param) {
-  MS_CHECK_TRUE_MSG(num_bits_param != nullptr, RET_ERROR, "num_bits_param is nullptr");
-  auto num_bits = prim->GetAttr(num_bits_str);
-  if (num_bits != nullptr) {
-    if (utils::isa<tensor::TensorPtr>(num_bits)) {
-      auto num_bits_tensor = num_bits->cast<tensor::TensorPtr>();
-      MS_ASSERT(num_bits_tensor != nullptr);
-      MS_CHECK_TRUE_MSG(num_bits_tensor->data_c() != nullptr, RET_ERROR, "num_bits_tensor->data_c() is nullptr");
-      MS_CHECK_TRUE_MSG(num_bits_tensor->data().nbytes() >= static_cast<int>(sizeof(int64_t)), RET_ERROR,
-                        "num_bits_tensor->data_c() is not longer enough for int64_t");
-      *num_bits_param = *reinterpret_cast<int64_t *>(num_bits_tensor->data_c());
-    } else if (utils::isa<ImmTraits<int64_t>::type>(num_bits)) {
-      *num_bits_param = GetValue<int64_t>(num_bits);
-    } else {
-      MS_LOG(ERROR) << "valueptr is invalid.";
-      return lite::RET_ERROR;
+int RemoveFakeQuantParam(const FuncGraphPtr &fg) {
+  MS_CHECK_TRUE_MSG(fg != nullptr, RET_NULL_PTR, "fg is nullptr.");
+  auto manager = fg->manager();
+  auto node_list = TopoSort(fg->get_return());
+  for (auto &node : node_list) {
+    if (IsPrimitiveCNode(node, prim::kPrimFakeQuantParam)) {
+      auto inputs = node->cast<CNodePtr>()->inputs();
+      if (std::any_of(inputs.begin(), inputs.end(), [](const std::shared_ptr<AnfNode> &input) {
+            return IsPrimitiveCNode(input, prim::kPrimFakeQuantParam);
+          })) {
+        MS_LOG(ERROR) << "Two FakeQuantParam operators can't be joined together in mindir origin model";
+        return RET_ERROR;
+      }
+
+      auto iter = manager->node_users().find(node);
+      if (iter != manager->node_users().end()) {
+        auto outputs_set = manager->node_users()[node];
+        if (std::any_of(outputs_set.begin(), outputs_set.end(),
+                        [](const std::pair<std::shared_ptr<AnfNode>, int> &output) {
+                          return IsPrimitiveCNode(output.first, prim::kPrimFakeQuantParam);
+                        })) {
+          MS_LOG(ERROR) << "Two FakeQuantParam operators can't be joined together in mindir origin model";
+          return RET_ERROR;
+        }
+      }
+      auto pre_node = node->cast<CNodePtr>()->input(1);
+      (void)manager->Replace(node, pre_node);
     }
   }
-  return lite::RET_OK;
+  return RET_OK;
 }
 
-int ConvertQuantParam(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs) {
-  bool input_narrow_range_param = false;
-  auto status = GetNarrowRange(prim, "input_narrow_range", &input_narrow_range_param);
-  MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "Get input narrow range failed.");
-  bool weight_narrow_range_param = true;
-  status = GetNarrowRange(prim, "weight_narrow_range", &weight_narrow_range_param);
-  MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "Get weight narrow range failed.");
-  bool output_narrow_range_param = false;
-  status = GetNarrowRange(prim, "output_narrow_range", &output_narrow_range_param);
-  MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "Get output narrow range failed.");
-  int32_t act_num_bits_param = 8;
-  status = GetNumBits(prim, "act_num_bits", &act_num_bits_param);
-  MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "Get activation num_bits failed.");
-  int32_t weight_num_bits_param = 8;
-  status = GetNumBits(prim, "weight_num_bits", &weight_num_bits_param);
-  MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "Get weight num_bits failed.");
+int GetNodeQuantParam(std::shared_ptr<AnfNode> anf_node, const PrimitivePtr &primitive,
+                      const FuncGraphManagerPtr &manager) {
+  if (!utils::isa<CNodePtr>(anf_node)) {
+    MS_LOG(INFO) << "Only cnode need to convert primitive.";
+    return RET_NO_CHANGE;
+  }
 
   std::map<int, std::vector<schema::QuantParamT>> input_quant_params;
   std::map<int, std::vector<schema::QuantParamT>> output_quant_params;
-  status = ConvertInputQuantParam(prim, input_narrow_range_param, weight_narrow_range_param, act_num_bits_param,
-                                  weight_num_bits_param, &input_quant_params);
-  MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "Compute input quant param failed.");
-  status = ConvertOutputQuantParam(prim, output_narrow_range_param, act_num_bits_param, &output_quant_params);
-  MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "Compute output quant param failed.");
+  auto cnode = anf_node->cast<CNodePtr>();
+  auto inputs = cnode->inputs();
+  inputs.erase(inputs.begin());
+  auto status = ConvertNodesQuantParam(inputs, &input_quant_params);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Convert input quant param failed.";
+    return RET_ERROR;
+  }
+
+  auto iter = manager->node_users().find(anf_node);
+  std::vector<AnfNodePtr> outputs;
+  if (iter != manager->node_users().end()) {
+    auto outputs_set = manager->node_users()[anf_node];
+    std::transform(outputs_set.begin(), outputs_set.end(), std::back_inserter(outputs),
+                   [](const std::pair<std::shared_ptr<AnfNode>, int> &output) { return output.first; });
+    status = ConvertNodesQuantParam(outputs, &output_quant_params);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Convert output quant param failed.";
+      return RET_ERROR;
+    }
+    if (output_quant_params.size() > 1 || (output_quant_params.size() == 1 && outputs.size() != 1)) {
+      MS_LOG(ERROR) << "There can only be one FakeQuantParam as the output of " << anf_node->fullname_with_scope();
+      return RET_ERROR;
+    }
+  }
 
   if (!input_quant_params.empty() || !output_quant_params.empty()) {
-    auto quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
+    auto quant_params_holder = std::make_shared<QuantParamHolder>(inputs.size(), outputs.size());
     MSLITE_CHECK_PTR(quant_params_holder);
-    for (auto &iter : input_quant_params) {
-      quant_params_holder->set_input_quant_param(iter.first, iter.second);
+    for (auto &input : input_quant_params) {
+      quant_params_holder->set_input_quant_param(input.first, input.second);
     }
-    for (auto &iter : output_quant_params) {
-      quant_params_holder->set_output_quant_param(iter.first, iter.second);
+    for (auto &output : output_quant_params) {
+      quant_params_holder->set_output_quant_param(output.first, output.second);
     }
-    prim->AddAttr("quant_params", quant_params_holder);
+    primitive->AddAttr("quant_params", quant_params_holder);
   }
-  return lite::RET_OK;
+  return RET_OK;
 }
 }  // namespace
 
@@ -216,7 +183,7 @@ int MindirAdjust::ValueNodeInt64Convert(AnfNodePtr anf_node) {
     return lite::RET_NO_CHANGE;
   }
   auto value_node = anf_node->cast<ValueNodePtr>();
-  MS_ASSERT(value_node != nullptr);
+  MS_CHECK_TRUE_MSG(value_node != nullptr, RET_ERROR, "value_node is nullptr");
   if (value_node->abstract() == nullptr) {
     return lite::RET_NO_CHANGE;
   }
@@ -260,7 +227,7 @@ int MindirAdjust::ValueNodeInt64Convert(AnfNodePtr anf_node) {
   return lite::RET_NO_CHANGE;
 }
 
-int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
+int MindirAdjust::ConvertQuantParams(std::shared_ptr<AnfNode> anf_node, const FuncGraphManagerPtr &manager) {
   MS_CHECK_TRUE_MSG(anf_node != nullptr, RET_ERROR, "anf_node is nullptr");
   if (!utils::isa<CNodePtr>(anf_node)) {
     MS_LOG(INFO) << "only cnode need to convert primitive.";
@@ -290,30 +257,7 @@ int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
       return lite::RET_ERROR;
     }
   }
-  auto inputs = cnode->inputs();
-  inputs.erase(inputs.begin());
-
-  if (ConvertQuantParam(primitive, inputs) != lite::RET_OK) {
-    MS_LOG(ERROR) << "compute quant param failed.";
-    return lite::RET_ERROR;
-  }
-  return lite::RET_OK;
-}
-
-int MindirAdjust::UpdateConv2DTransposeInput(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-  if (!opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
-    return RET_OK;
-  }
-  auto inputs = cnode->inputs();
-  if (inputs.size() != opt::kInputSizeFour) {
-    MS_LOG(ERROR) << "the input size of mindir conv2dtranspose should be 4, but now is " << inputs.size()
-                  << ", please check.";
-    return RET_ERROR;
-  }
-  inputs.pop_back();
-  cnode->set_inputs(inputs);
-  return RET_OK;
+  return GetNodeQuantParam(anf_node, primitive, manager);
 }
 
 int MindirAdjust::ResetFuncGraph(const FuncGraphPtr &fg, std::set<FuncGraphPtr> all_func_graphs) {
@@ -322,11 +266,21 @@ int MindirAdjust::ResetFuncGraph(const FuncGraphPtr &fg, std::set<FuncGraphPtr> 
   MS_CHECK_TRUE_MSG(manager != nullptr, RET_NULL_PTR, "manager is nullptr.");
   manager->Clear();
   manager->AddFuncGraph(fg, true);
+  auto status = RemoveFakeQuantParam(fg);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Remove FakeQuantParam operators failed.";
+    return RET_ERROR;
+  }
   for (auto &item : all_func_graphs) {
     if (item == fg) {
       continue;
     }
     manager->AddFuncGraph(item);
+    status = RemoveFakeQuantParam(item);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Remove FakeQuantParam operators failed.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -340,12 +294,14 @@ bool MindirAdjust::Run(const FuncGraphPtr &func_graph) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(func_graph, &all_func_graphs);
   for (auto &graph : all_func_graphs) {
+    auto manager = graph->manager();
+    MS_CHECK_TRUE_MSG(manager != nullptr, RET_NULL_PTR, "manager is nullptr.");
     auto node_list = TopoSort(graph->get_return());
     int status = lite::RET_OK;
     bool success_flag = true;
     for (auto &node : node_list) {
       if (utils::isa<CNodePtr>(node)) {
-        status = ComputeQuantParams(node);
+        status = ConvertQuantParams(node, manager);
       } else if (utils::isa<ParameterPtr>(node)) {
         status = AdjustInputDataType(node);
       } else if (utils::isa<ValueNodePtr>(node)) {

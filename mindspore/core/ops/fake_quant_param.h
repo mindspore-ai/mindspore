@@ -89,48 +89,34 @@ class MIND_API FakeQuantParam : public BaseOperator {
   ///
   /// \param[in] key Define the name of quant parameter.
   /// \param[in] param Define the value of quant parameter.
-  /// \param[in] channel_index Define the index indicates which channel the quant parameter belong to. Default is 0
-  /// indicating first channel.
-  void set_quant_param(const std::string &key, api::ValuePtr param, size_t channel_index = 0);
+  void set_quant_param(const std::string &key, api::ValuePtr param);
 
   /// \brief Method to get quant parameter named `key`.
   ///
   /// \param[in] key Define the name of quant parameter.
-  /// \param[in] channel_index Define the index indicates which channel the quant parameter belong to. Default is 0
-  /// indicating first channel.
   ///
   /// \return a ValuePtr represents quant parameter.
-  api::ValuePtr get_quant_param(const std::string &key, size_t channel_index = 0) const;
+  api::ValuePtr get_quant_param(const std::string &key) const;
 
-  /// \brief Method to get quant parameter named `scale` for linear algorithm.
+  /// \brief Method to set quant parameter named `scale` for linear algorithm.
   ///
   /// \param[in] scale Define the value of quant parameter.
-  /// \param[in] channel_index Define the index indicates which channel the quant parameter belong to. Default is 0
-  /// indicating first channel.
-  void set_scale(double scale, size_t channel_index = 0);
+  void set_scales(std::vector<float> scales);
 
-  /// \brief Method to get quant parameter named `scale` for linear algorithm.
+  /// \brief Method to get quant parameters named `scale` for linear algorithm.
   ///
-  /// \param[in] channel_index Define the index indicates which channel the quant parameter belong to. Default is 0
-  /// indicating first channel.
-  ///
-  /// \return a double as scale.
-  double get_scale(size_t channel_index = 0) const;
+  /// \return a float vector as scale parameters.
+  std::vector<float> get_scales() const;
 
-  /// \brief Method to get quant parameter named `zero_point` for linear algorithm.
+  /// \brief Method to set quant parameter named `zero_point` for linear algorithm.
   ///
-  /// \param[in] zero_point Define the value of quant parameter.
-  /// \param[in] channel_index Define the index indicates which channel the quant parameter belong to. Default is 0
-  /// indicating first channel.
-  void set_zero_point(int64_t zero_point, size_t channel_index = 0);
+  /// \param[in] zero_points Define the value of quant parameter.
+  void set_zero_points(std::vector<int64_t> zero_points);
 
-  /// \brief Method to get quant parameter named `zero_point` for linear algorithm.
+  /// \brief Method to get quant parameters named `zero_point` for linear algorithm.
   ///
-  /// \param[in] channel_index Define the index indicates which channel the quant parameter belong to. Default is 0
-  /// indicating first channel.
-  ///
-  /// \return a int64_t as zero_point.
-  int64_t get_zero_point(size_t channel_index = 0) const;
+  /// \return a int64_t vector as zero_point parameters.
+  std::vector<int64_t> get_zero_points() const;
 };
 
 using FakeQuantParamPtr = std::shared_ptr<FakeQuantParam>;

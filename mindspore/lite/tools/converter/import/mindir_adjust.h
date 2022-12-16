@@ -36,8 +36,7 @@ class MindirAdjust {
  private:
   int AdjustInputDataType(AnfNodePtr anf_node);
   int ValueNodeInt64Convert(AnfNodePtr anf_node);
-  int ComputeQuantParams(AnfNodePtr anf_node);
-  int UpdateConv2DTransposeInput(const CNodePtr &cnode);
+  int ConvertQuantParams(AnfNodePtr anf_node, const FuncGraphManagerPtr &manager);
   int ResetFuncGraph(const FuncGraphPtr &fg, std::set<FuncGraphPtr> all_func_graphs);
 
   FmkType fmk_type_ = FmkType::kFmkTypeMs;

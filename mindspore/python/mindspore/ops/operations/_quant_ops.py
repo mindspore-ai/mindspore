@@ -117,8 +117,22 @@ class FakeQuantParam(Primitive):
 
     @classmethod
     def linear_quant_param(cls, quant_dtype, scale, zp, is_per_channel=False, **kwargs):
-        kwargs[FakeQuantParam.attr_key_linear_quant_scale] = scale
-        kwargs[FakeQuantParam.attr_key_linear_quant_zero_point] = zp
+        """
+        Create a linear quantization operator based on scale and zero-point parameter.
+        """
+        validator.check_value_type("scale", scale, [float, tuple, list], "FakeQuantParam")
+        if isinstance(scale, float):
+            scale_list = [scale]
+        else:
+            scale_list = scale
+        validator.check_value_type("zero_point", zp, [int, tuple, list], "FakeQuantParam")
+        if isinstance(zp, int):
+            zp_list = [zp]
+        else:
+            zp_list = zp
+        validator.check_value_type("is_per_channel", is_per_channel, [bool], "FakeQuantParam")
+        kwargs[FakeQuantParam.attr_key_linear_quant_scale] = scale_list
+        kwargs[FakeQuantParam.attr_key_linear_quant_zero_point] = zp_list
         return cls(quant_dtype, FakeQuantParam.attr_value_linear_quant_algo_name, is_per_channel, **kwargs)
 
 
