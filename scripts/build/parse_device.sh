@@ -78,6 +78,7 @@ parse_device()
     elif [[ "X$D" == "Xcpu" ]]; then
       export ENABLE_CPU="on"
       export ENABLE_AKG="on"
+      export ENABLE_MPI="on"
     elif [[ "X$D" == "X" ]]; then
       :
     else

@@ -92,7 +92,10 @@ else
   if [[ "X$ENABLE_ACL" == "Xon" ]] && [[ "X$ENABLE_D" == "Xoff" ]]; then
       echo "acl mode, skipping deploy phase"
       rm -rf ${BASEPATH}/output/_CPack_Packages/
-    else
+  elif [[ "X$FASTER_BUILD_FOR_PLUGINS" == "Xon" ]]; then
+      echo "plugin mode, skipping deploy phase"
+      rm -rf ${BASEPATH}/output/_CPack_Packages/
+  else
       cp -rf ${BUILD_PATH}/package/mindspore/lib ${BASEPATH}/mindspore/python/mindspore
       cp -rf ${BUILD_PATH}/package/mindspore/*.so ${BASEPATH}/mindspore/python/mindspore
   fi

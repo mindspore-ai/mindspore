@@ -47,13 +47,14 @@ target_link_libraries(mindspore_gpu PRIVATE proto_input mindspore::protobuf)
 target_link_libraries(mindspore_gpu PRIVATE securec)
 set_target_properties(mindspore_gpu PROPERTIES INSTALL_RPATH
         ${ORIGIN_PATH}:${ORIGIN_PATH}/gpu:${ORIGIN_PATH}/gpu${CUDA_VERSION}:${ORIGIN_PATH}/../:${CUDA_PATH}/lib64)
-target_link_libraries(mindspore_gpu PRIVATE mindspore::dnnl mindspore::mkldnn nnacl)
-if(NOT WIN32)
-target_link_libraries(mindspore_gpu PRIVATE mindspore::ssl mindspore::crypto)
-target_link_libraries(mindspore_gpu PRIVATE mindspore::event mindspore::event_pthreads
-        mindspore::event_openssl -Wl,--no-as-needed mindspore::event_core ps_cache)
+if(ENABLE_CPU)
+    target_link_libraries(mindspore_gpu PRIVATE mindspore::dnnl mindspore::mkldnn nnacl)
+    if(NOT WIN32)
+        target_link_libraries(mindspore_gpu PRIVATE mindspore::ssl mindspore::crypto)
+        target_link_libraries(mindspore_gpu PRIVATE mindspore::event mindspore::event_pthreads
+            mindspore::event_openssl -Wl,--no-as-needed mindspore::event_core ps_cache)
+    endif()
 endif()
-
 if(ENABLE_GPU)
     message("add gpu lib to mindspore_gpu")
     if(WIN32)

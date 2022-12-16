@@ -53,8 +53,7 @@ target_link_libraries(mindspore_ascend PRIVATE mindspore_backend mindspore_core 
 target_link_libraries(mindspore_ascend PRIVATE mindspore_shared_lib)
 target_link_libraries(mindspore_ascend PRIVATE proto_input mindspore::protobuf)
 target_link_libraries(mindspore_ascend PRIVATE securec d_collective)
-target_link_libraries(mindspore_ascend PRIVATE mindspore::dnnl mindspore::mkldnn mindspore::ssl
-                      mindspore::crypto nnacl)
+target_link_libraries(mindspore_ascend PRIVATE mindspore::ssl mindspore::crypto)
 set_target_properties(mindspore_ascend PROPERTIES INSTALL_RPATH
         ${ORIGIN_PATH}:${ORIGIN_PATH}/ascend:${ORIGIN_PATH}/../:${ASCEND_RPATH})
 
@@ -69,8 +68,10 @@ if(ENABLE_D)
     find_library(GE_RUNNER ge_runner ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(GRAPH graph ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     target_link_libraries(mindspore_ascend PRIVATE ${GE_RUNNER} ${GRAPH})
-    target_link_libraries(mindspore_ascend PRIVATE mindspore::event mindspore::event_pthreads
+    if(ENABLE_CPU)
+        target_link_libraries(mindspore_ascend PRIVATE mindspore::event mindspore::event_pthreads
             mindspore::event_openssl -Wl,--no-as-needed mindspore::event_core ps_cache)
+    endif()
 endif()
 
 if(MODE_ASCEND_ALL)

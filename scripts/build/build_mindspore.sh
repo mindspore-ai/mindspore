@@ -109,6 +109,9 @@ build_mindspore()
     else
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_FAST_HASH_TABLE=OFF"
     fi
+    if [[ "X$FASTER_BUILD_FOR_PLUGINS" == "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DONLY_BUILD_DEVICE_PLUGINS=ON"
+    fi
     echo "${CMAKE_ARGS}"
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
       cmake ${CMAKE_ARGS} ${BASEPATH}
