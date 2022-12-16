@@ -469,7 +469,7 @@ FuncGraphPtr UpdateStateGradient::GenerateFuncGraph(const AbstractBasePtrList &a
 
   std::vector<AnfNodePtr> grads;
   grads.push_back(NewValueNode(prim::kPrimMakeTuple));
-  b->add_parameter();
+  (void)b->add_parameter();
   grads.push_back(NewEnviron(b));
   // bprop_update_state(u_monad, x1, x2, ..., xn, out, dout):
   //    return C.zeros_like(u_monad), C.zeros_like(x1), C.zeros_like(x2), ..., C.zeros_like(xn)
