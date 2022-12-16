@@ -5,6 +5,9 @@
 
     计算张量的共轭，并转置最后两个维度。
 
+    .. note::
+        Ascend尚未支持Complex类型Tensor的输入。
+
     参数：
         - **x** (Tensor) - 参与计算的tensor。
 
