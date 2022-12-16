@@ -64,7 +64,7 @@ SendRecvPair CreateSenderReceiverPair(uint32_t worker_rank, uint32_t server_rank
                                                                  cache_operation, param_key));
   sender->set_inter_process_edge_name(GenerateInterProcessEdge(distributed::kEnvRoleOfWorker, worker_rank,
                                                                distributed::kEnvRoleOfPServer, server_rank,
-                                                               distributed::kLookupEmbeddingCache, param_key));
+                                                               cache_operation, param_key));
 
   // Set route table proxy.
   receiver->set_actor_route_table_proxy(CreateRouteTableProxy());
