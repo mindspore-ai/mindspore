@@ -108,8 +108,8 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
   }
 
 #if defined(__linux__) && defined(WITH_BACKEND)
-  // Update rpc actors' status.
-  RpcActorStatusUpdater::GetInstance().UpdateRpcActorStatus();
+  // Flush sent data after each step is done.
+  RpcActorStatusUpdater::GetInstance().FlushRpcData();
 #endif
 
   // The LoopCountActor exits.

@@ -72,8 +72,11 @@ class RpcActor : public KernelActor {
   // each sinked loop is done in case rpc actors visit the invalid op context.
   virtual void ResetOpcontext() {}
 
-  // Update rpc actor status, for example update ready status of mux recv actors.
+  // Update rpc actor status, for example update ready status of recv actors.
   virtual void UpdateStatus() {}
+
+  // Flush data for rpc actor, for example flush sent data for send actors.
+  virtual void FlushData() {}
 
   // Set the actor route proxy for rpc actors.
   void set_actor_route_table_proxy(const ActorRouteTableProxyPtr &proxy);

@@ -93,9 +93,9 @@ class RpcActorOpContextSetter {
 };
 
 // This class is used to refresh the state of the rpc actor. For example, the mux recv actor receives requests for
-// the service process. Currently, the requests are processed serially. After each request (that is, the execution of an
-// actor dag) ends, the state of the Recv actor needs to be refreshed. Make it in the ready state to continue with the
-// next request.
+// the service process. Currently, the requests are processed serially. Before each request (that is, the execution of
+// an actor dag) begins, the state of the Recv actor needs to be refreshed. Make it in the ready state to continue with
+// the next request.
 class RpcActorStatusUpdater {
  public:
   static RpcActorStatusUpdater &GetInstance();
@@ -105,6 +105,9 @@ class RpcActorStatusUpdater {
 
   // Update rpc actors' status.
   void UpdateRpcActorStatus() const;
+
+  // Sent data should be flushed after each step.
+  void FlushRpcData() const;
 
  private:
   RpcActorStatusUpdater() = default;

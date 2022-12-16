@@ -41,8 +41,6 @@ void RecvActor::SetOpcontext(OpContext<DeviceTensor> *const op_context) {
   std::unique_lock<std::mutex> lock(context_mtx_);
   MS_EXCEPTION_IF_NULL(op_context);
   op_context_ = op_context;
-  is_context_valid_ = true;
-  context_cv_.notify_all();
 }
 
 void RecvActor::ResetOpcontext() {

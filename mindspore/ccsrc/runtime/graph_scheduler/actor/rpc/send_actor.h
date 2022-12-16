@@ -46,7 +46,7 @@ class SendActor : public RpcActor {
   // Lookup peer actors' route and create connection to them.
   bool ConnectServer();
 
-  void UpdateStatus() override;
+  void FlushData() override;
 
  protected:
   // Do real send operation in this method.

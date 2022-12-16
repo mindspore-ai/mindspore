@@ -28,6 +28,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "distributed/recovery/recovery_context.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
+#include "runtime/graph_scheduler/rpc_node_scheduler.h"
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #endif
 
@@ -421,6 +422,12 @@ void DataPrepareActor::SetInitTensorsIfNeeded(const std::vector<std::vector<Tens
 void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                    OpContext<DeviceTensor> *const context, GraphExecutionStrategy real_strategy) {
   MS_EXCEPTION_IF_NULL(context);
+
+#if defined(__linux__) && defined(WITH_BACKEND)
+  // Update rpc actors' status.
+  RpcActorStatusUpdater::GetInstance().UpdateRpcActorStatus();
+#endif
+
   try {
     // Preprocess before prepare data for data prepare actor.
     PreprocessBeforePrepareData();
