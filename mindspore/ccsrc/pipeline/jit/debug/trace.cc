@@ -505,7 +505,7 @@ void GetTraceStackInfo(std::ostringstream &oss, bool add_title) {
 
 // Register trace provider to LogWriter.
 struct TraceProviderRegister {
-  TraceProviderRegister() noexcept { LogWriter::set_trace_provider(GetTraceStackInfo); }
+  TraceProviderRegister() noexcept { LogWriter::SetTraceProvider(GetTraceStackInfo); }
   ~TraceProviderRegister() = default;
 } trace_provider_register;
 
