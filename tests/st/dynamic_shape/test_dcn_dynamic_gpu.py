@@ -209,7 +209,7 @@ def get_train_loss(numeric_columns, sparse_columns, data_list, mode):
     loss_callback = LossCallback()
     model = Model(train_net)
     sink_step = dataset.get_dataset_size()
-    model.train(sink_step, dataset, callbacks=loss_callback, sink_size=1)
+    model.train(sink_step, dataset, callbacks=loss_callback, dataset_sink_mode=True, sink_size=1)
     loss_list = loss_callback.loss_list
     return loss_list
 

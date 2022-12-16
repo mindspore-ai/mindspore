@@ -904,7 +904,7 @@ class Model:
                 outputs = self._train_network(*next_element)
                 cb_params.net_outputs = outputs
                 if self._loss_scale_manager and self._loss_scale_manager.get_drop_overflow_update():
-                    _, overflow, _ = outputs
+                    overflow = outputs[1]
                     overflow = np.all(overflow.asnumpy())
                     self._loss_scale_manager.update_loss_scale(overflow)
 
@@ -943,7 +943,7 @@ class Model:
 
         list_callback.on_train_end(run_context)
 
-    def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1, initial_epoch=0):
+    def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=False, sink_size=-1, initial_epoch=0):
         """
         Training API.
 
@@ -981,7 +981,7 @@ class Model:
                                                             Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
-                                      dataset not sink. Default: True.
+                                      dataset not sink. Default: False.
             sink_size (int): Control the amount of data in each sink. `sink_size` is invalid if `dataset_sink_mode`
                              is False.
                              If sink_size = -1, sink the complete dataset for each epoch.
@@ -1085,7 +1085,7 @@ class Model:
                                          "using customized callbacks." % (cb_name, invalid_methods_names))
 
     def fit(self, epoch, train_dataset, valid_dataset=None, valid_frequency=1, callbacks=None,
-            dataset_sink_mode=True, valid_dataset_sink_mode=True, sink_size=-1, initial_epoch=0):
+            dataset_sink_mode=False, valid_dataset_sink_mode=False, sink_size=-1, initial_epoch=0):
         """
         Fit API.
 
@@ -1117,9 +1117,9 @@ class Model:
                                                             Default: None.
             dataset_sink_mode (bool): Determines whether to pass the train data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
-                                      dataset not sink. Default: True.
+                                      dataset not sink. Default: False.
             valid_dataset_sink_mode (bool): Determines whether to pass the validation data through dataset channel.
-                                      Default: True.
+                                      Default: False.
             sink_size (int): Control the amount of data in each sink. `sink_size` is invalid if `dataset_sink_mode`
                              is False.
                              If sink_size = -1, sink the complete dataset for each epoch.
@@ -1362,7 +1362,7 @@ class Model:
         list_callback.on_eval_end(run_context)
         return metrics
 
-    def eval(self, valid_dataset, callbacks=None, dataset_sink_mode=True):
+    def eval(self, valid_dataset, callbacks=None, dataset_sink_mode=False):
         """
         Evaluation API.
 
@@ -1382,7 +1382,7 @@ class Model:
                                                             which should be executed while evaluation.
                                                             Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
-                Default: True.
+                Default: False.
 
         Returns:
             Dict, the key is the metric name defined by users and the value is the metrics value for
