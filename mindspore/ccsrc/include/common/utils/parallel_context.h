@@ -60,6 +60,7 @@ constexpr int64_t kFusionThreshold = 64;
 constexpr int64_t kDataParallelFusionThreshold = -1;
 constexpr char kRelatedFusionKey[] = "related_fusion_key";
 constexpr char kRelatedNodeId[] = "related_node_id";
+constexpr char FIRST_RECEIVE[] = "first_receive";
 
 class COMMON_EXPORT ParallelContext {
  public:
