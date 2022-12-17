@@ -64,7 +64,8 @@ void SparseDenseCwiseDivCpuKernelMod::ComputeDiv(const std::vector<AddressPtr> &
 
   for (size_t i = 0; i < static_cast<size_t>(index_num); i++) {
     for (size_t j = 0; j < static_cast<size_t>(dimension); j++) {
-      if (indices_data[i * static_cast<size_t>(dimension) + j] >= sparse_shape_data[j]) {
+      if (indices_data[i * static_cast<size_t>(dimension) + j] >= sparse_shape_data[j] ||
+          indices_data[i * static_cast<size_t>(dimension) + j] < 0) {
         MS_EXCEPTION(ValueError) << "For SparseDenseCwiseDiv, the indices cannot go out of bounds.";
       }
     }
