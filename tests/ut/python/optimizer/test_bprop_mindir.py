@@ -29,6 +29,9 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops._grad.grad_base import bprop_getters, bprops
 from mindspore._c_expression import _check_bprop_mindir
 from mindspore import mutable
+from mindspore import context
+
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class Net(nn.Cell):

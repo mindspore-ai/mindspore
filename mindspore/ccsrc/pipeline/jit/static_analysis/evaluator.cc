@@ -27,6 +27,7 @@
 #include "pipeline/jit/static_analysis/stack_frame.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "mindspore/core/ops/core_ops.h"
+#include "frontend/operator/graph_bprop/bprop_meta_func_graph.h"
 
 namespace mindspore {
 namespace abstract {
@@ -416,10 +417,33 @@ FuncGraphPtr FuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, const Ab
   return res;
 }
 
+namespace {
+FuncGraphPtr GetCloneBpropGraph(const MetaFuncGraphPtr &meta_func_graph, const FuncGraphPtr &generated_func_graph,
+                                const AnfNodePtr &bound_node, const ScopePtr &scope) {
+  auto bound_cnode = dyn_cast_ptr<CNode>(bound_node);
+  if (bound_cnode == nullptr) {
+    MS_LOG(EXCEPTION) << "For BpropMetaFuncGraph '" << meta_func_graph->ToString()
+                      << "', the evaluator should have the bound cnode.";
+  }
+  PrimalAttrGuard primal_attr_guard(bound_cnode->primal_attrs());
+  const auto &primal_debug_infos = bound_cnode->primal_debug_infos();
+  std::vector<NodeDebugInfoPtr> primal_debug_infos_vec;
+  (void)std::copy(primal_debug_infos.begin(), primal_debug_infos.end(), std::back_inserter(primal_debug_infos_vec));
+  PrimalDebugInfoGuard primal_debug_info_guard(primal_debug_infos_vec);
+  FuncGraphPtr cloned_func_graph =
+    BasicClone(generated_func_graph, false, std::make_shared<UpdateInfo>(scope, bound_cnode->debug_info()));
+  return cloned_func_graph;
+}
+}  // namespace
 FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list) {
   auto iter = func_graph_cache_.find(args_abs_list);
   if (iter != func_graph_cache_.end()) {
-    return iter->second;
+    if (!meta_func_graph_->isa<graph_bprop::BpropMetaFuncGraph>()) {
+      return iter->second;
+    }
+    auto cloned_func_graph = GetCloneBpropGraph(meta_func_graph_, iter->second, this->bound_node(), scope_);
+    engine->func_graph_manager()->AddFuncGraph(cloned_func_graph);
+    return cloned_func_graph;
   }
 
   MS_EXCEPTION_IF_NULL(meta_func_graph_);
@@ -431,12 +455,16 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
     generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_abs_list);
   }
 
+  FuncGraphPtr cloned_func_graph;
   NodeDebugInfoPtr debug_info;
   if (this->bound_node() != nullptr) {
     debug_info = this->bound_node()->debug_info();
   }
-  FuncGraphPtr cloned_func_graph =
-    BasicClone(generated_func_graph, false, std::make_shared<UpdateInfo>(scope_, debug_info));
+  if (meta_func_graph_->isa<graph_bprop::BpropMetaFuncGraph>()) {
+    cloned_func_graph = GetCloneBpropGraph(meta_func_graph_, generated_func_graph, this->bound_node(), scope_);
+  } else {
+    cloned_func_graph = BasicClone(generated_func_graph, false, std::make_shared<UpdateInfo>(scope_, debug_info));
+  }
   func_graph_cache_[args_abs_list] = cloned_func_graph;
   MS_EXCEPTION_IF_NULL(engine);
   engine->func_graph_manager()->AddFuncGraph(cloned_func_graph);
