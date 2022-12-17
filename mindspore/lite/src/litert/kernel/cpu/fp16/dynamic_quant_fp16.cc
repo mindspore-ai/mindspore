@@ -100,34 +100,33 @@ int CalculateFp16MinMaxRun(void *cdata, int task_id, float, float) {
   return RET_OK;
 }
 
-void DynamicQuantFp16CPUKernel::ReduceMinMaxFp32() {
+void DynamicQuantFp16CPUKernel::CalculateScaleZp() {
+  float real_min = FLT16_MAX;
+  float real_max = -FLT16_MAX;
   for (int i = 0; i < kBucketNums; i++) {
-    if (real_min_array_[i] < real_min_) {
-      real_min_ = real_min_array_[i];
+    if (real_min_array_[i] < real_min) {
+      real_min = real_min_array_[i];
     }
-    if (real_max_array_[i] > real_max_) {
-      real_max_ = real_max_array_[i];
+    if (real_max_array_[i] > real_max) {
+      real_max = real_max_array_[i];
     }
   }
-  return;
-}
 
-void DynamicQuantFp16CPUKernel::CalculateScaleZp() {
   lite::LiteQuantParam quant_parm;
   double scale;
   int zp = 0;
   constexpr int kQSymmetricRange = 255;
   constexpr int kQAsymmetricRange = 254;
   if (!symmetric_) {
-    auto range = real_max_ - real_min_;
+    auto range = real_max - real_min;
     if (range <= 0) {
       range = kDefaultRange;
       MS_LOG(WARNING) << name_ << " range is 0 and set the range to 0.01.";
     }
     scale = range / kQSymmetricRange;  // -128 ~ 127
-    zp = static_cast<int>(std::round(INT8_MIN - real_min_ / scale));
+    zp = static_cast<int>(std::round(INT8_MIN - real_min / scale));
   } else {
-    auto max = std::max(abs(real_max_), abs(real_min_));
+    auto max = std::max(abs(real_max), abs(real_min));
     scale = 2 * max / kQAsymmetricRange;  // -127 ~ 127
   }
   quant_parm.scale = scale;
@@ -189,7 +188,6 @@ int DynamicQuantFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "Run error error_code[" << ret << "]";
     return RET_ERROR;
   }
-  ReduceMinMaxFp32();
   CalculateScaleZp();
   ret = ParallelLaunch(this->ms_context_, QuantFp16DataRun, this, thread_n_num_);
   if (ret != RET_OK) {

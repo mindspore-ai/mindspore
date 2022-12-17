@@ -48,10 +48,8 @@ class DynamicQuantCPUKernel : public LiteKernel {
   int8_t *int8_ptr_ = nullptr;
   float *float32_ptr_ = nullptr;
 
-  float real_min_array_[8] = {0};
-  float real_max_array_[8] = {0};
-  float real_min_ = FLT_MAX;
-  float real_max_ = -FLT_MAX;
+  float real_min_array_[8] = {FLT_MAX};
+  float real_max_array_[8] = {-FLT_MAX};
   int32_t src_dtype_{0};
   int32_t dst_dtype_{0};
   bool symmetric_ = false;
