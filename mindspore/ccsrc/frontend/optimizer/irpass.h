@@ -152,9 +152,6 @@ class OptimizeIRPassLib {
   // Pynative Eliminate
   SubstitutionPtr pynative_eliminate_;
 
-  // Pynative no need grad eliminate
-  SubstitutionPtr pynative_no_grad_eliminate_;
-
   // Recompute
   SubstitutionPtr set_cell_output_no_recompute_;
 

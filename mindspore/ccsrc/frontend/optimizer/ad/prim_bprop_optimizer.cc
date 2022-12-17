@@ -238,7 +238,7 @@ FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_
   level_1_graph->set_attr(kAttrNeedGradFlagOfInputs, MakeValue(need_grad_flags));
   // do step2 opt
   auto new_abs_list = AddOutToAbsList(out, abs_list);
-  level_2_graph_info = PrimBpropOptStep2(level_1_graph, new_abs_list, need_grad_flags);
+  level_2_graph_info = PrimBpropOptStep2(level_1_graph, new_abs_list);
   level_2_graph_info->TryFreeArgsValue(op_args, out);
   auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
   if (enable_grad_cache) {
@@ -302,8 +302,7 @@ void PrimBpropOptimizer::BindAbsToParameters(const FuncGraphPtr &bprop_fg,
 }
 
 PrimBpropOptGraphLevel2InfoPtr PrimBpropOptimizer::PrimBpropOptStep2(
-  const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input,
-  const std::vector<bool> &need_grad_flags) const {
+  const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input) const {
   opt::irpass::OptimizeIRPassLib irpass;
   BindAbsToParameters(bprop_fg, abs_list_input);
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
@@ -316,7 +315,7 @@ PrimBpropOptGraphLevel2InfoPtr PrimBpropOptimizer::PrimBpropOptStep2(
     }
   }
   manager->AddFuncGraph(bprop_fg);
-  auto opt_bprop_fg = PrimBpOptPassStep2(irpass, resource, need_grad_flags);
+  auto opt_bprop_fg = PrimBpOptPassStep2(irpass, resource);
   auto level_2_graph_info = std::make_shared<PrimBpropOptGraphLevel2Info>(opt_bprop_fg);
   level_2_graph_info->AnalysisArgUsingInfo(manager);
   return level_2_graph_info;

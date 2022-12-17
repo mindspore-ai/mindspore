@@ -164,8 +164,7 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
   return func_graph;
 }
 
-FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource,
-                                const std::vector<bool> &need_grad_flags) {
+FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   MS_EXCEPTION_IF_NULL(resource->func_graph());
   OptPassGroupMap map;
@@ -189,14 +188,6 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
   map.push_back({"ad_inline", inline_opt});
   map.push_back({"ad_special_op_simplify", special_op_simplify});
   map.push_back({"auto_monad_grad", opt::OptPassConfig(re_auto_monadwrapper)});
-  if (!need_grad_flags.empty()) {
-    // If func graph has not need_grad_flag_of_inputs attr, this graph has no need do this pass.
-    opt::OptPassConfig pynative_no_grad_eliminate = opt::OptPassConfig({
-      irpass.pynative_no_grad_eliminate_,
-    });
-
-    map.push_back({"pynative_no_grad_eliminate", pynative_no_grad_eliminate});
-  }
 
   auto prim_bprop_opt_step_2 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_2", resource, map);
   FuncGraphPtr func_graph = resource->func_graph();

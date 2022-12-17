@@ -167,9 +167,8 @@ class PrimBpropOptimizer {
   PrimBpropOptGraphInfoPtr PrimBpropOptStep1(const FuncGraphPtr &bprop_fg) const;
 
   // do opt with input info
-  PrimBpropOptGraphLevel2InfoPtr PrimBpropOptStep2(
-    const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input,
-    const std::vector<bool> &need_grad_flags = std::vector<bool>()) const;
+  PrimBpropOptGraphLevel2InfoPtr PrimBpropOptStep2(const FuncGraphPtr &bprop_fg,
+                                                   const abstract::AbstractBasePtrList &abs_list_input) const;
 
   void BindAbsToParameters(const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input) const;
 
