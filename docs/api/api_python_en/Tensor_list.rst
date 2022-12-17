@@ -129,6 +129,7 @@
     mindspore.Tensor.greater
     mindspore.Tensor.greater_equal
     mindspore.Tensor.gt
+    mindspore.Tensor.H
     mindspore.Tensor.half
     mindspore.Tensor.hardshrink
     mindspore.Tensor.has_init

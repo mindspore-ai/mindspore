@@ -503,6 +503,7 @@ BuiltInTypeMap &GetAttrMap() {
        {"dtype", prim::kPrimDType},             // C.dtype_
        {"size", std::string("size_")},          // C.size_
        {"ndim", std::string("ndim_")},          // C.ndim_
+       {"H", std::string("H")},                 // C.H
        {"T", std::string("T_")},                // C.T_
        {"itemsize", std::string("itemsize_")},  // C.itemsize_
        {"nbytes", std::string("nbytes_")},      // C.nbytes_

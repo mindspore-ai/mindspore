@@ -450,6 +450,17 @@ class Tensor(Tensor_):
         return len(self._shape)
 
     @property
+    def H(self):
+        """
+        Returns a view of a matrix (2-D tensor) conjugated and transposed.
+        x.H is equivalent to x.swapaxes(0, 1).conj() for complex matrices and x.swapaxes(0, 1) for real matrices.
+        """
+        output = self.swapaxes(0, 1)
+        if self.dtype in (mstype.complex64, mstype.complex128):
+            return output.conj()
+        return output
+
+    @property
     def has_init(self):
         """Whether tensor is initialized."""
         return self.init is not None

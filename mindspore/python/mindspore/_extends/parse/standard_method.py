@@ -219,6 +219,14 @@ def bincount(x, weights=None, minlength=0):
     return F.bincount(x, weights, minlength)
 
 
+def H(x):
+    """Returns a view of a matrix (2-D tensor) conjugated and transposed."""
+    output = x.swapaxes(0, 1)
+    if x.dtype in (mstype.complex64, mstype.complex128):
+        return output.conj()
+    return output
+
+
 def size_(x):
     """
     Return the number of elements in tensor `x`.
