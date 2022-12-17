@@ -198,6 +198,10 @@ void DebugInfoManager::SaveInfo(std::ofstream &out_file, const QuantDebugInfo &i
 }
 
 int DebugInfoManager::SaveInfo(const std::string &file_path) {
+  if (file_path.empty()) {
+    MS_LOG(ERROR) << "path is invalid.";
+    return RET_ERROR;
+  }
   std::ofstream out_file;
   out_file.open(file_path, std::ios::out);
   if (!out_file.is_open()) {
@@ -623,6 +627,10 @@ void DebugInfoManager::PrintQuantParam() {
 }
 
 int DebugInfoManager::SaveQuantParam(const std::string &file_path) {
+  if (file_path.empty()) {
+    MS_LOG(ERROR) << "path is invalid.";
+    return RET_ERROR;
+  }
   if (quant_params_.empty()) {
     return RET_OK;
   }
@@ -696,6 +704,10 @@ void DebugInfoManager::GetOutputInfo() {
 }
 
 int DebugInfoManager::SaveOutputInfo(const std::string &file_path) {
+  if (file_path.empty()) {
+    MS_LOG(ERROR) << "path is invalid.";
+    return RET_ERROR;
+  }
   if (output_infos_.empty()) {
     return RET_OK;
   }
@@ -787,6 +799,9 @@ void DebugInfoManager::CollectQuantParam(const mindspore::lite::LiteModel &quant
 
 std::string DebugInfoManager::CreateFilePath(const std::string &dir_path, const std::string &file_name) const {
   auto real_path = RealPath(dir_path.c_str());
+  if (real_path.empty()) {
+    return "";
+  }
   std::string file_path = real_path + FILE_SEPARATOR + file_name;
   return file_path;
 }
