@@ -255,6 +255,8 @@ BACKEND_EXPORT int64_t GetNodeOutputTotalUsedNum(const session::KernelGraph &ker
 
 // Get custom operator attr input indexes
 BACKEND_EXPORT void GetCustomOpAttrIndex(const PrimitivePtr &primitive, mindspore::HashSet<size_t> *indexes);
+
+BACKEND_EXPORT size_t GetInputNodeIndex(const AnfNodePtr &input, const CNodePtr &user_node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_

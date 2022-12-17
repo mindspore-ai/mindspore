@@ -1191,5 +1191,19 @@ void GetCustomOpAttrIndex(const PrimitivePtr &primitive, mindspore::HashSet<size
     }
   }
 }
+
+size_t GetInputNodeIndex(const AnfNodePtr &input, const CNodePtr &user_node) {
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(user_node);
+
+  AnfNodePtrList input_list = user_node->inputs();
+  auto pos = std::find(input_list.begin(), input_list.end(), input);
+  if (pos == input_list.end()) {
+    MS_LOG(EXCEPTION) << input->fullname_with_scope() << " is not the input of " << user_node->fullname_with_scope();
+  }
+
+  // The first input is Primitive and needs to be skipped.
+  return std::distance(input_list.begin() + kSizeOne, pos);
+}
 }  // namespace opt
 }  // namespace mindspore

@@ -25,96 +25,6 @@
 
 namespace mindspore {
 namespace opt {
-const std::vector<PrimitivePtr> need_handled_types = {prim::kPrimMakeTuple, prim::kPrimTupleGetItem};
-
-void SetObjTypeForTupleGetItemNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto kernel_builder = std::make_shared<KernelBuildInfoBuilder>();
-  MS_EXCEPTION_IF_NULL(kernel_builder);
-
-  // First input of TupleGetItem must be TUPLE_UNFOLD.
-  // Second is the index.
-  std::vector<KernelObjectType> input_obj_types = {KernelObjectType::TUPLE_UNFOLD, KernelObjectType::TENSOR};
-
-  // Get actual output type of TupleGetItem node.
-  auto abs_type = AnfAlgo::GetAbstractObjectType(node->abstract());
-  std::vector<KernelObjectType> output_obj_types = {kernel::TypeIdToKernelObjectType(abs_type)};
-
-  kernel_builder->SetInputsKernelObjectType(input_obj_types);
-  kernel_builder->SetOutputsKernelObjectType(output_obj_types);
-
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  node->set_kernel_info(kernel_info);
-  AnfAlgo::SetSelectKernelBuildInfo(kernel_builder->Build(), node.get());
-}
-
-std::string GenerateOutputFormatForNewCNode(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (IsPrimitiveCNode(cnode, prim::kPrimRealMakeTuple)) {
-    // We take first input format as the output format because multiple types and formats of RealMakeTuple are not
-    // supported.
-    std::string represent_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, kIndex0);
-    return represent_format;
-  }
-  return kOpFormat_DEFAULT;
-}
-
-void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<KernelObjectType> *input_obj_type,
-                                         std::vector<KernelObjectType> *output_obj_type) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(input_obj_type);
-  MS_EXCEPTION_IF_NULL(output_obj_type);
-
-  for (size_t i = kIndex1; i < cnode->inputs().size(); i++) {
-    // Set input kernel object type as input node's output kernel object type.
-    auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(cnode->input(i));
-    input_obj_type->push_back(kernel_build_info->GetOutputKernelObjectType(kIndex0));
-  }
-  if (IsPrimitiveCNode(cnode, prim::kPrimRealMakeTuple)) {
-    output_obj_type->push_back(KernelObjectType::TUPLE);
-  }
-}
-
-void SetKernelInfoForNewCNode(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-
-  // Set input and output format.
-  std::vector<std::string> inputs_format;
-  std::vector<TypeId> inputs_type;
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    inputs_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(cnode, input_index));
-    inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
-  }
-  std::vector<std::string> outputs_format;
-  std::vector<TypeId> outputs_type;
-  // The output number should be 1 before object type is set.
-  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    outputs_format.emplace_back(GenerateOutputFormatForNewCNode(cnode));
-    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(cnode, output_index));
-  }
-
-  // Set input and output object type for subsequent type matching process.
-  std::vector<KernelObjectType> input_obj_type;
-  std::vector<KernelObjectType> output_obj_type;
-  GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
-
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  cnode->set_kernel_info(kernel_info);
-
-  auto builder = std::make_shared<KernelBuildInfoBuilder>();
-  builder->SetInputsFormat(inputs_format);
-  builder->SetInputsDeviceType(inputs_type);
-  builder->SetOutputsFormat(outputs_format);
-  builder->SetOutputsDeviceType(outputs_type);
-  builder->SetInputsKernelObjectType(input_obj_type);
-  builder->SetOutputsKernelObjectType(output_obj_type);
-  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode.get());
-}
-
 int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
                          std::vector<AnfNodePtr> *plant_inputs) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -151,7 +61,7 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
     MS_LOG(DEBUG) << "Create TupleGetItem node " << dynamic_input_node->fullname_with_scope() << " for tuple node "
                   << tuple_input->fullname_with_scope();
     // The virtual node's object types should be set.
-    SetObjTypeForTupleGetItemNode(dynamic_input_node);
+    SetKernelInfoForNewCNode(dynamic_input_node, false);
     (void)plant_inputs->emplace_back(dynamic_input_node);
   }
   return input_size;
@@ -177,50 +87,8 @@ AnfNodePtr CreateNewNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &i
 
   // Need to reset new cnode's kernel build info because the inputs type and number could be changed after processing
   // methods. Only reset input types.
-  UpdateKernelBuildInfo(new_cnode, origin_node);
+  SetKernelInfoForNewCNodeByOrigNode(new_cnode, origin_node);
   return new_cnode;
-}
-
-void CheckDynamicInputSize(const CNodePtr &new_cnode, const CNodePtr &origin_node) {
-  MS_EXCEPTION_IF_NULL(new_cnode);
-  MS_EXCEPTION_IF_NULL(origin_node);
-
-  // Original node should have same dyn_input_sizes and kernel object type size.
-  KernelBuildInfoPtr origin_kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(origin_node);
-  MS_EXCEPTION_IF_NULL(origin_kernel_build_info);
-
-  auto dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(origin_node, kAttrDynInputSizes);
-  size_t origin_inputs_kernel_obj_type_size = origin_kernel_build_info->GetAllOutputKernelObjectTypes().size();
-  if (dyn_input_sizes.size() != origin_inputs_kernel_obj_type_size) {
-    MS_LOG(EXCEPTION) << "Dynamic input size array is " << dyn_input_sizes << " with length " << dyn_input_sizes.size()
-                      << ". But input kernel object type size is " << origin_inputs_kernel_obj_type_size;
-  }
-
-  size_t total_input_size =
-    std::accumulate(dyn_input_sizes.begin(), dyn_input_sizes.end(), 0,
-                    [](size_t total, const auto &s) { return total + LongToSize((s < 0) ? 1 : s); });
-  size_t expanded_input_size = common::AnfAlgo::GetInputTensorNum(new_cnode);
-  if (total_input_size != expanded_input_size) {
-    MS_LOG(EXCEPTION) << "Total input size calculated by attr kAttrDynInputSizes is " << total_input_size
-                      << ". But new node's expanded input size is " << expanded_input_size;
-  }
-  MS_LOG(DEBUG) << "Dynamic input size is " << total_input_size << " for node " << new_cnode->fullname_with_scope();
-}
-
-void UpdateKernelBuildInfo(const CNodePtr &new_cnode, const CNodePtr &origin_node) {
-  MS_EXCEPTION_IF_NULL(new_cnode);
-  MS_EXCEPTION_IF_NULL(origin_node);
-
-  // Inherit from origin kernel build info.
-  KernelBuildInfoPtr origin_kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(origin_node);
-  MS_EXCEPTION_IF_NULL(origin_kernel_build_info);
-  auto new_kernel_builder = std::make_shared<KernelBuildInfoBuilder>(origin_kernel_build_info);
-  MS_EXCEPTION_IF_NULL(new_kernel_builder);
-
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  new_cnode->set_kernel_info(kernel_info);
-  AnfAlgo::SetSelectKernelBuildInfo(new_kernel_builder->Build(), new_cnode.get());
 }
 
 AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const CNodePtr &make_tuple_node) {
@@ -235,7 +103,7 @@ AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const 
   CNodePtr real_make_tuple = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(real_make_tuple);
   real_make_tuple->set_abstract(make_tuple_node->abstract());
-  // Set format, object type and device type.
+
   SetKernelInfoForNewCNode(real_make_tuple);
   return real_make_tuple;
 }
@@ -254,15 +122,132 @@ AnfNodePtr CreateRealMakeTupleByTupleUnfoldInput(const FuncGraphPtr &func_graph,
   real_make_tuple->set_abstract(node_with_tuple_unfold_output->abstract());
 
   SetKernelInfoForNewCNode(real_make_tuple);
+
+  // Set object type to TupleUnfold so TupleUnfoldToTupleUnfold pattern will be matched.
   KernelBuildInfoPtr real_make_tuple_build_info = AnfAlgo::GetSelectKernelBuildInfo(real_make_tuple);
   MS_EXCEPTION_IF_NULL(real_make_tuple_build_info);
-  // Set object type to TupleUnfold so TupleUnfoldToTupleUnfold pattern will be matched.
   real_make_tuple_build_info->SetInputsKernelObjectType({KernelObjectType::TUPLE_UNFOLD});
   return real_make_tuple;
 }
 
+void SetKernelInfoForNewCNodeByOrigNode(const CNodePtr &new_cnode, const CNodePtr &origin_node) {
+  MS_EXCEPTION_IF_NULL(new_cnode);
+  MS_EXCEPTION_IF_NULL(origin_node);
+
+  // Inherit from origin kernel build info.
+  KernelBuildInfoPtr origin_kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(origin_node);
+  MS_EXCEPTION_IF_NULL(origin_kernel_build_info);
+  auto new_kernel_builder = std::make_shared<KernelBuildInfoBuilder>(origin_kernel_build_info);
+  MS_EXCEPTION_IF_NULL(new_kernel_builder);
+
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  new_cnode->set_kernel_info(kernel_info);
+  AnfAlgo::SetSelectKernelBuildInfo(new_kernel_builder->Build(), new_cnode.get());
+}
+
+void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  cnode->set_kernel_info(kernel_info);
+  auto builder = std::make_shared<KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(builder);
+
+  // Set input and output object type for subsequent type matching process.
+  std::vector<KernelObjectType> input_obj_type;
+  std::vector<KernelObjectType> output_obj_type;
+  GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
+  builder->SetInputsKernelObjectType(input_obj_type);
+  builder->SetOutputsKernelObjectType(output_obj_type);
+
+  if (set_format_type) {
+    // Set input and output format.
+    std::vector<std::string> inputs_format;
+    std::vector<TypeId> inputs_type;
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+    for (size_t input_index = 0; input_index < input_num; ++input_index) {
+      inputs_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(cnode, input_index));
+      inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
+    }
+    std::vector<std::string> outputs_format;
+    std::vector<TypeId> outputs_type;
+    // The output number should be 1 before object type is set.
+    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+    for (size_t output_index = 0; output_index < output_num; ++output_index) {
+      outputs_format.emplace_back(GenerateOutputFormatForNewCNode(cnode));
+      outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(cnode, output_index));
+    }
+
+    builder->SetInputsFormat(inputs_format);
+    builder->SetInputsDeviceType(inputs_type);
+    builder->SetOutputsFormat(outputs_format);
+    builder->SetOutputsDeviceType(outputs_type);
+  }
+
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode.get());
+}
+
+abstract::AbstractBasePtr GenerateAbsByUserNodeInput(const CNodePtr &user_node, size_t input_index) {
+  MS_EXCEPTION_IF_NULL(user_node);
+  auto shape = AnfAlgo::GetInputDeviceShape(user_node, input_index);
+  auto type_id = AnfAlgo::GetInputDeviceDataType(user_node, input_index);
+  // Defaultly the input is a tensor. Other cases should be handled respectively.
+  auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape);
+  MS_EXCEPTION_IF_NULL(abs);
+  return abs;
+}
+
+std::string GenerateOutputFormatForNewCNode(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (IsPrimitiveCNode(cnode, prim::kPrimRealMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimTupleToTensor)) {
+    // We take first input format as the output format because multiple types and formats of RealMakeTuple/TupleToTensor
+    // are not supported.
+    std::string represent_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, kIndex0);
+    return represent_format;
+  }
+  return kOpFormat_DEFAULT;
+}
+
+void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<KernelObjectType> *input_obj_type,
+                                         std::vector<KernelObjectType> *output_obj_type) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(input_obj_type);
+  MS_EXCEPTION_IF_NULL(output_obj_type);
+
+  // Simply trasverse all inputs and get their object types.
+  // But if the input's object type is not set, this will throw exception so must pay attention when using this
+  // function.
+  auto general_input_obj_type_func = [&]() {
+    for (size_t i = kIndex1; i < cnode->inputs().size(); i++) {
+      // Set input kernel object type as input node's output kernel object type.
+      auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(cnode->input(i));
+      input_obj_type->push_back(kernel_build_info->GetOutputKernelObjectType(kIndex0));
+    }
+  };
+
+  if (IsPrimitiveCNode(cnode, prim::kPrimRealMakeTuple)) {
+    general_input_obj_type_func();
+    output_obj_type->push_back(KernelObjectType::TUPLE);
+  } else if (IsPrimitiveCNode(cnode, prim::kPrimTupleToTensor)) {
+    general_input_obj_type_func();
+    output_obj_type->push_back(KernelObjectType::TENSOR);
+  } else if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
+    // First input of TupleGetItem must be TUPLE_UNFOLD.
+    // Second is the index.
+    *input_obj_type = {KernelObjectType::TUPLE_UNFOLD, KernelObjectType::TENSOR};
+    // Get actual output type of TupleGetItem node.
+    auto abs_type = AnfAlgo::GetAbstractObjectType(cnode->abstract());
+    output_obj_type->push_back(kernel::TypeIdToKernelObjectType(abs_type));
+  }
+}
+
 // A map of kernel object type pairs to processing functions.
 static std::map<ObjectTypePair, ProcessTypeTransformFunc> kTypePairToProcessFunc;
+
+// The nodes of which object types should be handled.
+const std::vector<PrimitivePtr> need_handled_types = {prim::kPrimMakeTuple, prim::kPrimTupleGetItem};
 
 InsertTypeTransformOp::InsertTypeTransformOp(bool multigraph)
     : PatternProcessPass("insert_type_transform_op", multigraph) {
@@ -271,6 +256,9 @@ InsertTypeTransformOp::InsertTypeTransformOp(bool multigraph)
               std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
   kTypePairToProcessFunc[{KernelObjectType::TUPLE_UNFOLD, KernelObjectType::TUPLE}] =
     std::bind(&InsertTypeTransformOp::ProcessTupleUnfoldToTuple, this, std::placeholders::_1, std::placeholders::_2,
+              std::placeholders::_3, std::placeholders::_4);
+  kTypePairToProcessFunc[{KernelObjectType::TUPLE_UNFOLD, KernelObjectType::TENSOR}] =
+    std::bind(&InsertTypeTransformOp::ProcessTupleUnfoldToTensor, this, std::placeholders::_1, std::placeholders::_2,
               std::placeholders::_3, std::placeholders::_4);
 }
 
@@ -325,8 +313,9 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
     ObjectTypePair type_pair = {current_input_type, needed_input_type};
     if (kTypePairToProcessFunc.count(type_pair) != 0) {
       matched = true;
-      MS_LOG(INFO) << "Kernel object type pair of input index " << (i - 1) << " for node "
-                   << cnode->fullname_with_scope() << " is " << type_pair.to_string();
+      MS_LOG(INFO) << "Kernel object type pair of input index " << i << " for node pair "
+                   << input_node->fullname_with_scope() << " to " << cnode->fullname_with_scope() << " is "
+                   << type_pair.to_string();
       bool new_prim = false;
       AnfNodePtrList processed_input_list = kTypePairToProcessFunc[type_pair](func_graph, input_node, cnode, &new_prim);
       if (new_prim) {
@@ -393,6 +382,37 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTuple(const FuncGraphP
   }
   result.push_back(real_make_tuple_node);
   return result;
+}
+
+AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTensor(const FuncGraphPtr &func_graph,
+                                                                 const AnfNodePtr &input, const CNodePtr &node,
+                                                                 bool *) {
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(node);
+
+  // Use TupleToTensor op as the input of this node. Then TupleUnfoldToTuple pattern will be matched.
+  auto prim = NewValueNode(prim::kPrimTupleToTensor);
+  MS_EXCEPTION_IF_NULL(prim);
+  AnfNodePtrList inputs = {prim, input};
+  CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(tuple_to_tensor);
+
+  // Set abstract for TupleToTensor op according to user node's input shape and type.
+  size_t input_index = GetInputNodeIndex(input, node);
+  auto abs = GenerateAbsByUserNodeInput(node, input_index);
+  MS_EXCEPTION_IF_NULL(abs);
+  MS_LOG(DEBUG) << "Abstract for TupleToTensor op is " << abs->ToString();
+  tuple_to_tensor->set_abstract(abs);
+
+  // Need to check if input is MakeTuple node, the format and device type could be abtained or not.
+  SetKernelInfoForNewCNode(tuple_to_tensor);
+
+  // Set object type to TUPLE for TupleUnfoldToTuple pattern to be matched.
+  KernelBuildInfoPtr tuple_to_tensor_build_info = AnfAlgo::GetSelectKernelBuildInfo(tuple_to_tensor);
+  MS_EXCEPTION_IF_NULL(tuple_to_tensor_build_info);
+  tuple_to_tensor_build_info->SetInputsKernelObjectType({KernelObjectType::TUPLE});
+
+  return {tuple_to_tensor};
 }
 }  // namespace opt
 }  // namespace mindspore
