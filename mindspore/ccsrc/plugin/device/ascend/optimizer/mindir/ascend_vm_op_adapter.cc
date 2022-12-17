@@ -31,6 +31,13 @@ const AnfNodePtr AscendVmOpAdapter::Process(const FuncGraphPtr &graph, const Anf
   if (node == nullptr || !AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
+
+  const auto kAttrAlreadyInputToAttr = "already_input_to_attr";
+  if (common::AnfAlgo::HasNodeAttr(kAttrAlreadyInputToAttr, node->cast<CNodePtr>())) {
+    return nullptr;
+  }
+  common::AnfAlgo::SetNodeAttr(kAttrAlreadyInputToAttr, MakeValue(true), node);
+
   auto op_name = common::AnfAlgo::GetCNodeName(node);
   auto is_dynamic = common::AnfAlgo::IsDynamicShape(node) || graph->has_flag(kAttrMutableKernel);
   auto op_adaptation_info =
