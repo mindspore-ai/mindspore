@@ -47,7 +47,7 @@ class StackFrame final : public Base {
   MS_DECLARE_PARENT(StackFrame, Base);
 
   void Load() {
-    node_slots_ = TopoSort(func_graph_->get_return(), SuccIncoming, [this](const AnfNodePtr &node) -> IncludeType {
+    node_slots_ = TopoSort(func_graph_->get_return(), SuccIncoming, [](const AnfNodePtr &node) -> IncludeType {
       if (node->isa<ValueNode>() || node->isa<Parameter>()) {
         return EXCLUDE;
       }

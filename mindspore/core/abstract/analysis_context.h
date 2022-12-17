@@ -49,6 +49,8 @@ class MS_CORE_API AnalysisContext : public std::enable_shared_from_this<Analysis
   // Extend this context with values for another graph.
   AnalysisContextPtr NewContext(const FuncGraphPtr &fg, const AbstractBasePtrList &args_spec_list);
 
+  AnalysisContextPtr GetCachedContext(const FuncGraphPtr &fg, const AbstractBasePtrList &args_spec_list);
+
   // Return a context restricted to a graph and its parent.
   AnalysisContextPtr FindOwnOrParentContext(FuncGraph *fg);
 
