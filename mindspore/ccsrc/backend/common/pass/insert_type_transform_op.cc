@@ -260,6 +260,9 @@ InsertTypeTransformOp::InsertTypeTransformOp(bool multigraph)
   kTypePairToProcessFunc[{KernelObjectType::TUPLE_UNFOLD, KernelObjectType::TENSOR}] =
     std::bind(&InsertTypeTransformOp::ProcessTupleUnfoldToTensor, this, std::placeholders::_1, std::placeholders::_2,
               std::placeholders::_3, std::placeholders::_4);
+  kTypePairToProcessFunc[{KernelObjectType::TUPLE, KernelObjectType::TENSOR}] =
+    std::bind(&InsertTypeTransformOp::ProcessTupleToTensor, this, std::placeholders::_1, std::placeholders::_2,
+              std::placeholders::_3, std::placeholders::_4);
 }
 
 const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -412,6 +415,28 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTensor(const FuncGraph
   MS_EXCEPTION_IF_NULL(tuple_to_tensor_build_info);
   tuple_to_tensor_build_info->SetInputsKernelObjectType({KernelObjectType::TUPLE});
 
+  return {tuple_to_tensor};
+}
+
+AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                                           const CNodePtr &node, bool *new_prim) {
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(node);
+
+  // Simply insert TupleToTensor op between 'input' and 'node'.
+  auto prim = NewValueNode(prim::kPrimTupleToTensor);
+  MS_EXCEPTION_IF_NULL(prim);
+  AnfNodePtrList inputs = {prim, input};
+  CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(tuple_to_tensor);
+
+  // Set abstract for TupleToTensor op according to user node's input shape and type.
+  size_t input_index = GetInputNodeIndex(input, node);
+  auto abs = GenerateAbsByUserNodeInput(node, input_index);
+  MS_EXCEPTION_IF_NULL(abs);
+  MS_LOG(DEBUG) << "Abstract for TupleToTensor op is " << abs->ToString();
+  tuple_to_tensor->set_abstract(abs);
+  SetKernelInfoForNewCNode(tuple_to_tensor);
   return {tuple_to_tensor};
 }
 }  // namespace opt
