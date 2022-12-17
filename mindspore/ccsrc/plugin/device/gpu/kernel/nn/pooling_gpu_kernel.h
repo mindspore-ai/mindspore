@@ -137,12 +137,6 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
     if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
       return ret;
     }
-    for (const auto &input : inputs) {
-      auto input_shape = input->GetShapeVector();
-      if (!IsValidShape(input_shape)) {
-        return KRET_UNKNOWN_SHAPE;
-      }
-    }
     ResetResource();
     auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
     auto output_shape = outputs[0]->GetDeviceShapeAdaptively();

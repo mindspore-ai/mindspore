@@ -69,6 +69,7 @@ bool PoolingGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   pad_mode_ = GetValue<std::string>(prim->GetAttr(PAD_MODE));
   kernel_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(KERNEL_SIZE));
   strides_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(STRIDES));
+  dtype_ = inputs[grad_index_]->GetDtype();
   return true;
 }
 
@@ -143,18 +144,20 @@ int PoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return KRET_OK;
 }
 
-void PoolingGradCpuKernelMod::ReComputeDivisor(float *dst) {
+template <typename T>
+void PoolingGradCpuKernelMod::ReComputeDivisor(T *dst) {
   const int64_t kernel_size = std::accumulate(kernel_.begin(), kernel_.end(), int64_t(1), std::multiplies<int64_t>());
   const size_t size = std::accumulate(dst_shape_.begin(), dst_shape_.end(), size_t(1), std::multiplies<size_t>());
   CTask task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      dst[i] = dst[i] * LongToFloat(kernel_size) / LongToFloat(divisor_override_);
+      dst[i] = dst[i] * static_cast<T>(LongToFloat(kernel_size)) / static_cast<T>(LongToFloat(divisor_override_));
     }
   };
   ParallelLaunchAutoSearch(task, size, this, &parallel_search_info_);
 }
 
-void PoolingGradCpuKernelMod::EliminateInvalidPadding(float *dst) {
+template <typename T>
+void PoolingGradCpuKernelMod::EliminateInvalidPadding(T *dst) {
   if (dst_shape_.size() < SHAPE_5D || kernel_.size() + NC_LEN < SHAPE_5D ||
       padding_invalid_.size() + NC_LEN < SHAPE_5D) {
     MS_LOG(ERROR) << "The dst_shape must be 5D, the kernel and the padding_invalid must be 3D!";
@@ -193,7 +196,8 @@ void PoolingGradCpuKernelMod::EliminateInvalidPadding(float *dst) {
               const size_t index =
                 static_cast<size_t>(i * dst_shape_[D_INDEX] * dst_shape_[H_INDEX] * dst_shape_[W_INDEX] +
                                     d * dst_shape_[H_INDEX] * dst_shape_[W_INDEX] + h * dst_shape_[W_INDEX] + w);
-              dst[index] = dst[index] * LongToFloat(kernel_size) / LongToFloat(valid_kernel_size);
+              dst[index] =
+                dst[index] * static_cast<T>(LongToFloat(kernel_size)) / static_cast<T>(LongToFloat(valid_kernel_size));
             }
           }
         }
@@ -293,7 +297,22 @@ bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
     return true;
   }
 
-  float *dst = reinterpret_cast<float *>(inputs[grad_index_]->addr);
+  if (dtype_ == kNumberTypeFloat32) {
+    LaunchKernel<float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat16) {
+    LaunchKernel<float16>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    LaunchKernel<double>(inputs, outputs);
+  } else {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << " error get " << TypeIdToType(dtype_)->ToString();
+  }
+  return true;
+}
+
+template <typename T>
+bool PoolingGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                           const std::vector<kernel::AddressPtr> &outputs) {
+  T *dst = reinterpret_cast<T *>(inputs[grad_index_]->addr);
   if (divisor_override_ != 0) {
     ReComputeDivisor(dst);
   } else {

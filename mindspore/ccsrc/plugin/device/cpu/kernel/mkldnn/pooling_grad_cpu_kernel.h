@@ -58,7 +58,10 @@ class PoolingGradCpuKernelMod : public MKLCpuKernelMod {
            .AddInputAttr(kNumberTypeFloat32)
            .AddInputAttr(kNumberTypeFloat32)
            .AddInputAttr(kNumberTypeFloat32)
-           .AddOutputAttr(kNumberTypeFloat32)}}},
+           .AddOutputAttr(kNumberTypeFloat32)},
+        {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)},
+        {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16)},
+        {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)}}},
       {kAvgPool3DGrad,
        {{KernelAttr()
            .AddInputAttr(kNumberTypeInt32)
@@ -89,8 +92,10 @@ class PoolingGradCpuKernelMod : public MKLCpuKernelMod {
   }
 
  private:
-  void EliminateInvalidPadding(float *output);
-  void ReComputeDivisor(float *output);
+  template <typename T>
+  void EliminateInvalidPadding(T *output);
+  template <typename T>
+  void ReComputeDivisor(T *output);
 
   dnnl::algorithm algorithm_{dnnl::algorithm::pooling_max};
   bool ceil_mode_{false};
@@ -119,6 +124,11 @@ class PoolingGradCpuKernelMod : public MKLCpuKernelMod {
   std::shared_ptr<dnnl::pooling_forward> primitive_forward_{nullptr};
   ParallelSearchInfo forward_parallel_info_{};
   std::string kernel_type_{kUnknown};
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+
+  TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore

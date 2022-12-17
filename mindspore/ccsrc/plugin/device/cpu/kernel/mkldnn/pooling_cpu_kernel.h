@@ -49,8 +49,10 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
-  void EliminateInvalidPadding(float *output);
-  void ReComputeDivisor(float *output);
+  template <typename T>
+  void EliminateInvalidPadding(T *output);
+  template <typename T>
+  void ReComputeDivisor(T *output);
 
   dnnl::algorithm algorithm_{dnnl::algorithm::pooling_max};
   bool ceil_mode_{false};
@@ -72,6 +74,11 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
                          const std::vector<KernelTensorPtr> &outputs);
 
   std::string kernel_type_{kUnkown};
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+
+  TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore
