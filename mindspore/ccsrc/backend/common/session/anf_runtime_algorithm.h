@@ -85,8 +85,10 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
                                                              const std::string &format);
   // get input kernel object type
   static std::vector<KernelObjectType> GetInputKernelObjectTypes(const AnfNodePtr &node);
+  static KernelObjectType GetInputKernelObjectType(const AnfNodePtr &node, size_t input_idx);
   // get output kernel object type
   static std::vector<KernelObjectType> GetOutputKernelObjectTypes(const AnfNodePtr &node);
+  static KernelObjectType GetOutputKernelObjectType(const AnfNodePtr &node, size_t output_idx);
   // Get Input Padding Axis
   static std::string GetInputReshapeType(const AnfNodePtr &node, size_t input_idx);
   // Get Output Padding Axis

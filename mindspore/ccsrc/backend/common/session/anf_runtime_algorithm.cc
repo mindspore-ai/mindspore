@@ -346,14 +346,35 @@ std::string AnfRuntimeAlgorithm::GetPrevNodeOutputReshapeType(const AnfNodePtr &
 }
 
 std::vector<KernelObjectType> AnfRuntimeAlgorithm::GetInputKernelObjectTypes(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
-  MS_EXCEPTION_IF_NULL(build_info);
+  if (build_info == nullptr) {
+    MS_LOG(EXCEPTION) << "Empty build info for node:" << node->DebugString();
+  }
   return build_info->GetAllInputKernelObjectTypes();
 }
 
+KernelObjectType AnfRuntimeAlgorithm::GetInputKernelObjectType(const AnfNodePtr &node, size_t input_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  if (build_info == nullptr) {
+    MS_LOG(EXCEPTION) << "Empty build info for node:" << node->DebugString();
+  }
+  const auto &input_kernel_obj_types = build_info->GetAllInputKernelObjectTypes();
+  if (input_idx >= input_kernel_obj_types.size()) {
+    MS_LOG(EXCEPTION) << "Input index " << input_idx << ", but the node input kernel object types size just "
+                      << input_kernel_obj_types.size() << ". node: " << node->DebugString() << "."
+                      << trace::DumpSourceLines(node);
+  }
+  return input_kernel_obj_types[input_idx];
+}
+
 std::vector<KernelObjectType> AnfRuntimeAlgorithm::GetOutputKernelObjectTypes(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
@@ -361,6 +382,23 @@ std::vector<KernelObjectType> AnfRuntimeAlgorithm::GetOutputKernelObjectTypes(co
     MS_LOG(EXCEPTION) << "Empty build info for node:" << node->DebugString();
   }
   return build_info->GetAllOutputKernelObjectTypes();
+}
+
+KernelObjectType AnfRuntimeAlgorithm::GetOutputKernelObjectType(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  if (build_info == nullptr) {
+    MS_LOG(EXCEPTION) << "Empty build info for node:" << node->DebugString();
+  }
+  const auto &output_kernel_obj_types = build_info->GetAllOutputKernelObjectTypes();
+  if (output_idx >= output_kernel_obj_types.size()) {
+    MS_LOG(EXCEPTION) << "Output index " << output_idx << ", but the node output kernel object types size just "
+                      << output_kernel_obj_types.size() << ". node: " << node->DebugString() << "."
+                      << trace::DumpSourceLines(node);
+  }
+  return output_kernel_obj_types[output_idx];
 }
 
 std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeForTbeBuild(const AnfNodePtr &node, size_t output_idx,

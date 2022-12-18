@@ -45,8 +45,7 @@ struct ObjectTypePair {
   KernelObjectType needed_input_type;
 
   std::string to_string() const {
-    if (kObjectTypeToString.find(current_input_type) == kObjectTypeToString.end() ||
-        kObjectTypeToString.find(needed_input_type) == kObjectTypeToString.end()) {
+    if (kObjectTypeToString.count(current_input_type) == 0 || kObjectTypeToString.count(needed_input_type) == 0) {
       MS_LOG(EXCEPTION) << "The current input object type " << current_input_type << " or needed input object type "
                         << needed_input_type << " is not valid.";
     }

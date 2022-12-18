@@ -25,6 +25,8 @@
 
 namespace mindspore {
 namespace opt {
+const std::vector<PrimitivePtr> need_handled_types = {prim::kPrimMakeTuple, prim::kPrimTupleGetItem};
+
 void SetObjTypeForTupleGetItemNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
@@ -224,43 +226,54 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
   if (!node->isa<CNode>()) {
     return nullptr;
   }
-
-  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall) ||
-      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+  if ((node->kernel_info() == nullptr) ||
+      (!dynamic_cast<device::KernelInfo *>(node->kernel_info())->has_build_info())) {
     return nullptr;
   }
 
-  auto needed_input_type_list = AnfAlgo::GetInputKernelObjectTypes(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   AnfNodePtrList new_input_list = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
-
-  // If the kernel object types are matched, set this flag to true and new node will be created to replace original
-  // node.
+  // If kernel object types are matched, set this flag to true and new node will be created to replace original node.
   bool matched = false;
-  for (size_t i = kIndex1; i < cnode->inputs().size(); i++) {
-    MS_LOG(DEBUG) << "Kernel object type of index " << i << " is "
-                  << kObjectTypeToString[needed_input_type_list[i - 1]];
-    // Get actually needed input kernel object type.
-    KernelObjectType needed_input_type = needed_input_type_list[i - 1];
-
-    // Some nodes may not have kernel info.
-    if (cnode->inputs()[i]->kernel_info() == nullptr) {
-      new_input_list.push_back(cnode->inputs()[i]);
+  for (size_t i = 0; i < common::AnfAlgo::GetInputNum(cnode); ++i) {
+    const auto &input_node = common::AnfAlgo::GetInputNode(cnode, i);
+    // Skip for monad input.
+    if (HasAbstractMonad(input_node)) {
+      new_input_list.push_back(input_node);
       continue;
     }
 
-    // Get current input's kernel object type.
-    auto current_input_type_list = AnfAlgo::GetOutputKernelObjectTypes(cnode->inputs()[i]);
-    KernelObjectType current_input_type = current_input_type_list[kIndex0];
+    const auto &real_input_node =
+      common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false, need_handled_types).first;
+    MS_EXCEPTION_IF_NULL(real_input_node);
+    if ((real_input_node->kernel_info() == nullptr) ||
+        (!dynamic_cast<device::KernelInfo *>(real_input_node->kernel_info())->has_build_info())) {
+      MS_LOG(ERROR) << node->fullname_with_scope() << " input index:" << i
+                    << ", input node:" << real_input_node->fullname_with_scope() << " doesn't have build info.";
+      new_input_list.push_back(input_node);
+      continue;
+    }
+
+    auto needed_input_type = AnfAlgo::GetInputKernelObjectType(node, i);
+    auto current_input_type = AnfAlgo::GetOutputKernelObjectType(real_input_node, 0);
+    if ((kObjectTypeToString.count(needed_input_type) == 0) || (kObjectTypeToString.count(current_input_type) == 0)) {
+      MS_LOG(EXCEPTION) << "The current input object type " << current_input_type << " or needed input object type "
+                        << needed_input_type << " is not valid for node " << node->fullname_with_scope()
+                        << " input index:" << i << ", input node:" << real_input_node->fullname_with_scope();
+    }
+    MS_LOG(DEBUG) << "The current input object type " << kObjectTypeToString[current_input_type]
+                  << " or needed input object type " << kObjectTypeToString[needed_input_type]
+                  << " is not valid for node " << node->fullname_with_scope() << " input index:" << i
+                  << ", input node:" << real_input_node->fullname_with_scope();
+
     ObjectTypePair type_pair = {current_input_type, needed_input_type};
     if (kTypePairToProcessFunc.count(type_pair) != 0) {
       matched = true;
       MS_LOG(INFO) << "Kernel object type pair of input index " << (i - 1) << " for node "
                    << cnode->fullname_with_scope() << " is " << type_pair.to_string();
       bool new_prim = false;
-      AnfNodePtrList processed_input_list =
-        kTypePairToProcessFunc[type_pair](func_graph, cnode->inputs()[i], cnode, &new_prim);
+      AnfNodePtrList processed_input_list = kTypePairToProcessFunc[type_pair](func_graph, input_node, cnode, &new_prim);
       if (new_prim) {
         // If new primitive is created, replace the old one, which is the first element of the input list.
         new_input_list[kIndex0] = processed_input_list[kIndex0];
@@ -272,7 +285,7 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
       }
     } else {
       // If this input type is valid, just push back the origin input.
-      new_input_list.push_back(cnode->inputs()[i]);
+      new_input_list.push_back(input_node);
     }
   }
 
