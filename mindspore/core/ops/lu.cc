@@ -42,7 +42,7 @@ abstract::TupleShapePtr LuInferShape(const PrimitivePtr &primitive, const std::v
   std::vector<int64_t> p_shape(input_shape.begin(), (input_shape.end() - number1));
   abstract::ShapePtr p_shape_ptr = std::make_shared<abstract::Shape>(p_shape);
   auto input_rank = SizeToLong(input_shape.size());
-  CheckAndConvertUtils::CheckInteger("input rank", input_rank, kGreaterEqual, rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input rank", input_rank, kGreaterEqual, rank, prim_name);
   int64_t size1 = input_shape[input_shape.size() - number1];
   int64_t size2 = input_shape[input_shape.size() - number2];
   if (size1 != size2) {

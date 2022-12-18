@@ -33,9 +33,9 @@ constexpr size_t kAffineGridGradOutputsNum = 1;
 #define AFFINEGRIDGRAD_LAUNCH_CASE(DTYPE, TYPE, DTYPE0, INPUTS, OUTPUTS) \
   case DTYPE: {                                                          \
     if ((DTYPE0) == kNumberTypeInt32) {                                  \
-      LaunchKernel<TYPE, int32_t>(INPUTS, OUTPUTS);                      \
+      (void)LaunchKernel<TYPE, int32_t>(INPUTS, OUTPUTS);                \
     } else {                                                             \
-      LaunchKernel<TYPE, int64_t>(INPUTS, OUTPUTS);                      \
+      (void)LaunchKernel<TYPE, int64_t>(INPUTS, OUTPUTS);                \
     }                                                                    \
     break;                                                               \
   }
@@ -89,8 +89,8 @@ void AffineGridGradCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::Addre
   int64_t H = x_size_data[kXSizeH3D];
   int64_t W = x_size_data[kXSizeW3D];
   Eigen::VectorXf vecX, vecY;
-  vecX.setZero(W, 1);
-  vecY.setZero(H, 1);
+  (void)vecX.setZero(W, 1);
+  (void)vecY.setZero(H, 1);
   if (W != 1) {
     vecX = Eigen::VectorXf::LinSpaced(vecX.size(), -1.0, 1.0);
   }
@@ -184,9 +184,9 @@ void AffineGridGradCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::Addre
   int64_t W = x_size_data[kXSizeW4D];
 
   Eigen::VectorXf vecX, vecY, vecZ;
-  vecX.setZero(W, 1);
-  vecY.setZero(H, 1);
-  vecZ.setZero(D, 1);
+  (void)vecX.setZero(W, 1);
+  (void)vecY.setZero(H, 1);
+  (void)vecZ.setZero(D, 1);
   if (W != 1) {
     vecX = Eigen::VectorXf::LinSpaced(vecX.size(), -1.0, 1.0);
   }

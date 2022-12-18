@@ -29,7 +29,7 @@ constexpr size_t kSparseReshapeOutputsNum = 2;
 
 bool SparseReshapeCpuKernelMod::SameConvert(int64_t input_size, int64_t output_size, int64_t input_rank,
                                             int64_t output_rank, int64_t *in0, const int64_t *in1, int64_t *out0,
-                                            const int64_t *out1) {
+                                            const int64_t *out1) const {
   if (input_size == output_size && input_rank == output_rank) {
     bool flag = true;
     for (int64_t i = 0; i < input_rank; ++i) {

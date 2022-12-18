@@ -45,7 +45,7 @@ int SetSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   }
   auto values_shape = inputs[kIndex1]->GetShapeVector();
   shape_ = inputs[kIndex2]->GetShapeVector();
-  values_size_ = SizeToLong(values_shape[0]);
+  values_size_ = values_shape[0];
   output_shape_ = outputs[kIndex0]->GetShapeVector();
   dims_ = shape_[0];
   return KRET_OK;

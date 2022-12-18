@@ -125,10 +125,10 @@ bool InplaceIndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
                                                const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInplaceIndexAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInplaceIndexAddOutputsNum, kernel_name_);
-  auto *x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *indices = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto *y = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto *x = static_cast<T *>(inputs[kIndex0]->addr);
+  auto *indices = static_cast<int32_t *>(inputs[kIndex1]->addr);
+  auto *y = static_cast<T *>(inputs[kIndex2]->addr);
+  auto *output = static_cast<T *>(outputs[kIndex0]->addr);
   CheckParams();
   // check indices's value is valid
   auto axis = LongToSize(axis_);
