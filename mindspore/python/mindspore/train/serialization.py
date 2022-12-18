@@ -608,6 +608,9 @@ def obfuscate_model(obf_config, **kwargs):
     for item in model_inputs:
         if not isinstance(item, Tensor):
             raise TypeError("The item in 'model_inputs' must be Tensor, but got {}.".format(type(item)))
+        if -1 in item.shape:
+            raise ValueError(
+                "Dynamic shape input is not supported now, but got the shape of inputs: {}.".format(item.shape))
     obf_ratio, customized_funcs, obf_password = _check_obfuscate_params(obf_config)
     if customized_funcs and obf_password > 0:
         logger.warning("Although 'customized_func' and 'obf_password' are set, the 'obf_password' mode would be"
@@ -1388,6 +1391,10 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
     # set obfuscate configs
     if 'obf_config' in kwargs.keys():
         _set_obfuscate_config(**kwargs)
+        for item in inputs:
+            if -1 in item.shape:
+                raise ValueError(
+                    "Dynamic shape input is not supported now, but got the shape of inputs: {}.".format(item.shape))
 
     incremental = kwargs.get('incremental', False)
 
