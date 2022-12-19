@@ -202,7 +202,8 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
       CreateDeviceAddressForTensorValue(device_context, node_value, 0, value_node);
     } else if (node_value->isa<StringImm>()) {
       auto value = GetValue<std::string>(node_value);
-      size_t tensor_size = value.size();
+      // Allocate one more byte to '/0'
+      size_t tensor_size = value.size() + 1;
       auto address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
                                                                               kObjectTypeString, ShapeVector());
       MS_EXCEPTION_IF_NULL(address);

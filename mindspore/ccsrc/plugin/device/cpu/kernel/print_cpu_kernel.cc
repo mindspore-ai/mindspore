@@ -100,6 +100,9 @@ void PrintCpuKernelMod::LaunchKernel(size_t index, const std::vector<kernel::Add
   if (input_sizes_[index] == 0) {
     auto num = reinterpret_cast<T *>(inputs[index]->addr);
     if constexpr (std::is_same<T, char>::value) {
+      size_t str_len = inputs[index]->size;
+      // Avoid memory reuse with dirty data.
+      num[str_len - 1] = '\0';
       std::cout << num << std::endl;
     } else {
       std::cout << *num << std::endl;
