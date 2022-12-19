@@ -67,31 +67,67 @@ size_t KernelTensor::GetSizeInBytes() const {
 }
 
 TypeId KernelTensor::GetDtype() const {
-  const TensorInfo &info = std::get<TensorInfo>(meta_);
-  if (info.base_ == nullptr) {
-    return TypeId::kTypeUnknown;
+  if (meta_type_ == kObjectTypeNumber) {
+    // Scalar
+    const ScalarInfo &info = std::get<ScalarInfo>(meta_);
+    return info.base_->BuildType()->type_id();
+  } else if (meta_type_ == kObjectTypeTuple) {
+    // Tuple
+    const TupleInfo &info = std::get<TupleInfo>(meta_);
+    return info.base_->elements()[0]->BuildType()->type_id();
+  } else if (meta_type_ == kObjectTypeList) {
+    // List
+    const ListInfo &info = std::get<ListInfo>(meta_);
+    return info.base_->elements()[0]->BuildType()->type_id();
+  } else {
+    // Tensor
+    const TensorInfo &info = std::get<TensorInfo>(meta_);
+    if (info.base_ == nullptr) {
+      return TypeId::kTypeUnknown;
+    }
+    auto type_ptr = info.base_->BuildType();
+    if (type_ptr == nullptr || !type_ptr->isa<TensorType>()) {
+      return TypeId::kTypeUnknown;
+    }
+    auto tensor_ptr = type_ptr->cast<TensorTypePtr>();
+    auto elem = tensor_ptr->element();
+    if (elem == nullptr) {
+      return TypeId::kTypeUnknown;
+    }
+    return elem->type_id();
   }
-
-  auto type_ptr = info.base_->BuildType();
-  if (type_ptr == nullptr || !type_ptr->isa<TensorType>()) {
-    return TypeId::kTypeUnknown;
-  }
-
-  auto tensor_ptr = type_ptr->cast<TensorTypePtr>();
-  auto elem = tensor_ptr->element();
-  if (elem == nullptr) {
-    return TypeId::kTypeUnknown;
-  }
-  return elem->type_id();
+  return kTypeUnknown;
 }
 
 ShapeVector KernelTensor::GetShapeVector() const {
-  auto base_shape_ptr = GetBaseShape();
-  if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::Shape>()) {
+  if (meta_type_ == kObjectTypeTensorType) {
+    // Tensor
+    auto base_shape_ptr = GetBaseShape();
+    if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::Shape>()) {
+      return {};
+    }
+    auto shape = base_shape_ptr->cast<abstract::ShapePtr>()->shape();
+    return shape;
+  } else if (meta_type_ == kObjectTypeTuple) {
+    // Tuple: only for depth=1 cases
+    const TupleInfo &tuple_info = std::get<TupleInfo>(meta_);
+    if (tuple_info.base_->dynamic_len()) {
+      return {-1};
+    } else {
+      return {(int64_t)tuple_info.base_->elements().size()};
+    }
+  } else if (meta_type_ == kObjectTypeList) {
+    // List: only for depth=1 cases
+    const ListInfo &list_info = std::get<ListInfo>(meta_);
+    if (list_info.base_->dynamic_len()) {
+      return {-1};
+    } else {
+      return {(int64_t)list_info.base_->elements().size()};
+    }
+  } else {
+    // Scalar
     return {};
   }
-  auto shape = base_shape_ptr->cast<abstract::ShapePtr>()->shape();
-  return shape;
 }
 
 ShapeVector KernelTensor::GetMaxShape() const {
