@@ -41,8 +41,10 @@ class TestInsertTypeTransformOp : public BackendCommon {
   ~TestInsertTypeTransformOp() override = default;
 
  public:
-  void SetTupleUnfoldToTupleUnfoldKernelBuildInfo(const FuncGraphPtr &func_graph, AnfNodePtr *split1_ptr,
-                                                  AnfNodePtr *addn1_ptr, AnfNodePtr *split2_ptr, AnfNodePtr *addn2_ptr);
+  void SetTupleUnfoldToTupleUnfoldKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *split1_ptr, AnfNodePtr *addn1_ptr,
+                                                  AnfNodePtr *split2_ptr, AnfNodePtr *addn2_ptr);
+  void SetTupleUnfoldToTupleKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *make_tuple_ptr, AnfNodePtr *split_ptr,
+                                            AnfNodePtr *tuple_add1_ptr, AnfNodePtr *tuple_add2_ptr);
   void SetKernelBuildInfo(const AnfNodePtr &node, const std::vector<std::string> &input_formats,
                           const std::vector<TypeId> &input_types, const std::vector<std::string> &output_formats,
                           const std::vector<TypeId> &output_types, const std::vector<KernelObjectType> &input_obj_types,
@@ -113,6 +115,43 @@ void TestInsertTypeTransformOp::SetTupleUnfoldToTupleUnfoldKernelBuildInfo(
                      {KernelObjectType::TENSOR}, {KernelObjectType::TENSOR});
 }
 
+void TestInsertTypeTransformOp::SetTupleUnfoldToTupleKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *make_tuple_ptr,
+                                                                     AnfNodePtr *split_ptr, AnfNodePtr *tuple_add1_ptr,
+                                                                     AnfNodePtr *tuple_add2_ptr) {
+  auto ret = g->get_return();
+  EXPECT_NE(ret->input(1), nullptr);
+  auto tuple_add2 = ret->input(1)->cast<CNodePtr>();
+  *tuple_add2_ptr = tuple_add2;
+  SetKernelBuildInfo(tuple_add2, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32},
+                     {KernelObjectType::TUPLE}, {KernelObjectType::TENSOR});
+
+  auto split = tuple_add2->input(1)->cast<CNodePtr>();
+  *split_ptr = split;
+  MS_LOG(INFO) << "split is " << split->fullname_with_scope();
+  SetKernelBuildInfo(split, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32}, {KernelObjectType::TENSOR},
+                     {KernelObjectType::TUPLE_UNFOLD});
+
+  auto tuple_add1 = split->input(1)->cast<CNodePtr>();
+  *tuple_add1_ptr = tuple_add1;
+  SetKernelBuildInfo(tuple_add1, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32},
+                     {KernelObjectType::TUPLE}, {KernelObjectType::TENSOR});
+
+  auto make_tuple = tuple_add1->input(1)->cast<CNodePtr>();
+  *make_tuple_ptr = make_tuple;
+  MS_LOG(INFO) << "make_tuple is " << make_tuple->fullname_with_scope();
+  SetKernelBuildInfo(make_tuple, {"NCHW", "NCHW"}, {kNumberTypeFloat32, kNumberTypeFloat32}, {"NCHW"},
+                     {kNumberTypeFloat32}, {KernelObjectType::TENSOR, KernelObjectType::TENSOR},
+                     {KernelObjectType::TUPLE_UNFOLD});
+
+  auto input_node1 = make_tuple->input(1);
+  SetKernelBuildInfo(input_node1, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32},
+                     {KernelObjectType::TENSOR}, {KernelObjectType::TENSOR});
+
+  auto input_node2 = make_tuple->input(2);
+  SetKernelBuildInfo(input_node2, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32},
+                     {KernelObjectType::TENSOR}, {KernelObjectType::TENSOR});
+}
+
 void TestInsertTypeTransformOp::SetKernelBuildInfo(
   const AnfNodePtr &node, const std::vector<std::string> &input_formats, const std::vector<TypeId> &input_types,
   const std::vector<std::string> &output_formats, const std::vector<TypeId> &output_types,
@@ -173,6 +212,33 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_unfold_transform) {
   CheckInputKernelInfo(addn2, kSizeTwo, kSizeTwo, kSizeOne);
 
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tuple_unfold_transform", "after");
+  ASSERT_TRUE(g_after != nullptr);
+  EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
+}
+
+/// Feature: Dynamic shape.
+/// Description: Test TupleUnfold to Tuple type transforming pass.
+/// Expectation: After InsertTypeTransformOp pass, the graph is identical to the expected graph expressed by python.
+TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_transform) {
+  FuncGraphPtr g = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tuple_transform", "before");
+  ASSERT_TRUE(g != nullptr);
+  std::vector<int64_t> shp_x{2, 4};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
+  std::vector<int64_t> shp_y{2, 4};
+  auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
+  AbstractBasePtrList args_spec_list{x_abstract, y_abstract};
+  auto func_graph = GetFuncGraph(g, args_spec_list);
+  ASSERT_TRUE(func_graph != nullptr);
+  AnfNodePtr make_tuple, split, tuple_add1, tuple_add2;
+  SetTupleUnfoldToTupleKernelBuildInfo(func_graph, &make_tuple, &split, &tuple_add1, &tuple_add2);
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
+  optimizer->AddPassManager(pm);
+  optimizer->Optimize(func_graph);
+
+  FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tuple_transform", "after");
   ASSERT_TRUE(g_after != nullptr);
   EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
 }
