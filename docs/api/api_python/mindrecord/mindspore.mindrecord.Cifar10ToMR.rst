@@ -26,7 +26,7 @@
 
     .. py:method:: transform(fields=None)
 
-        :func:`mindspore.mindrecord.Cifar10ToMR.run` 的包装函数来保证异常时正常退出。
+        封装 :func:`mindspore.mindrecord.Cifar10ToMR.run` 函数来保证异常时正常退出。
 
         参数：
             - **fields** (list[str]，可选) - 索引字段的列表。默认值：None。
