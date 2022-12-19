@@ -23,6 +23,7 @@
 #include "mindspore/core/utils/file_utils.h"
 #include "google/protobuf/util/json_util.h"
 #include "nlohmann/json.hpp"
+#include "proto/profiling_parallel.pb.h"
 
 #ifdef WITH_BACKEND
 #include "ps/ps_context.h"
@@ -75,14 +76,14 @@ bool ParallelStrategy::StringToInt(std::string *str, int32_t *value) {
   return true;
 }
 
-irpb::ProfilingParallel ParallelStrategy::GetProfilingParallel(const FuncGraphPtr &func_graph) {
-  irpb::ProfilingParallel profiling_parallel;
+std::shared_ptr<irpb::ProfilingParallel> ParallelStrategy::GetProfilingParallel() {
+  std::shared_ptr<irpb::ProfilingParallel> profiling_parallel = std::make_shared<irpb::ProfilingParallel>();
 
   // set parallel model
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   std::string parallel_mode = parallel_context->parallel_mode();
-  irpb::Config *config = profiling_parallel.mutable_config();
+  irpb::Config *config = profiling_parallel->mutable_config();
   MS_EXCEPTION_IF_NULL(config);
   config->set_parallel_type(parallel_mode);
 
@@ -138,7 +139,7 @@ void ParallelStrategy::DumpProfileParallelStrategy(const FuncGraphPtr &func_grap
 
   MS_LOG(INFO) << "Start to DumpProfileParallelStrategy.";
 
-  cache_profiling_parallel_pb_ = GetProfilingParallel(func_graph);
+  cache_profiling_parallel_pb_ = GetProfilingParallel();
   graph_proto_str_ = GetFuncGraphProtoJsonString(func_graph);
 
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
@@ -165,7 +166,7 @@ void ParallelStrategy::SaveParallelStrategyToFile() {
     rank_id = "0";
   }
   std::string parallel_str;
-  (void)google::protobuf::util::MessageToJsonString(cache_profiling_parallel_pb_, &parallel_str);
+  (void)google::protobuf::util::MessageToJsonString(*cache_profiling_parallel_pb_, &parallel_str);
   std::string parallel_file = std::string("parallel_strategy_") + std::string(rank_id) + std::string(".json");
   std::string parallel_path = dir + "/" + parallel_file;
   MS_LOG(INFO) << "Start to write parallel strategy string, file path is " << parallel_path;
@@ -189,17 +190,16 @@ void ParallelStrategy::SaveParallelStrategyToFile() {
 std::string ParallelStrategy::GetParallelStrategyForReport() {
   bool parallel_data_save_status = has_got_parallel_strategy_data_;
   std::string report_data;
-  irpb::ProfilingParallel profiling_parallel;
+  std::shared_ptr<irpb::ProfilingParallel> profiling_parallel;
   if (has_got_parallel_strategy_data_) {
     profiling_parallel = cache_profiling_parallel_pb_;
   } else {
-    FuncGraphPtr func_graph = nullptr;
-    profiling_parallel = GetProfilingParallel(func_graph);
+    profiling_parallel = GetProfilingParallel();
   }
 
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
-  (void)google::protobuf::util::MessageToJsonString(profiling_parallel, &report_data);
+  (void)google::protobuf::util::MessageToJsonString(*profiling_parallel, &report_data);
   try {
     nlohmann::json report_content = nlohmann::json::parse(report_data);
     report_content["config"]["ai_framework_type"] = "MindSpore";
