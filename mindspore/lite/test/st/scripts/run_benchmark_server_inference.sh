@@ -177,7 +177,6 @@ if [[ $backend == "all" || $backend == "server_inference_arm" ]]; then
     Run_arm64_status=$?
 fi
 
-
 if [[ $backend == "all" || $backend == "server_inference_x86" ]]; then
     if [[ ${Run_x86_status} != 0 ]];then
         echo "run x86 server inference failed"

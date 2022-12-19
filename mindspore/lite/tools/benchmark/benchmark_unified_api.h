@@ -55,7 +55,8 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
  protected:
   int CompareDataGetTotalBiasAndSize(const std::string &name, mindspore::MSTensor *tensor, float *total_bias,
-                                     int *total_size);
+                                     int *total_size, float relative_tolerance = kRelativeTolerance,
+                                     float absolute_tolerance = kAbsoluteTolerance);
   int CompareDataGetTotalCosineDistanceAndSize(const std::string &name, mindspore::MSTensor *tensor,
                                                float *total_cosine_distance, int *total_size);
   void InitContext(const std::shared_ptr<mindspore::Context> &context);
