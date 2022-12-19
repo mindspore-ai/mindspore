@@ -78,6 +78,7 @@ int LayerNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   block_num_ = 1;
   block_size_ = 1;
   param_num_ = 1;
+  param_size_ = 1;
   for (size_t i = 0; i < LongToSize(begin_norm_axis); i++) {
     block_num_ *= LongToUlong(x_shape[i]);
   }
