@@ -49,14 +49,6 @@ class KLDivLossCpuKernelMod : public NativeCpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
 
-  template <typename T>
-  bool LaunchNoneReduction(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                           const std::vector<AddressPtr> &outputs);
-
-  template <typename T>
-  bool LaunchOther(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                   const std::vector<AddressPtr> &outputs);
-
   using KLDivLossFunc = std::function<bool(KLDivLossCpuKernelMod *, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
 
