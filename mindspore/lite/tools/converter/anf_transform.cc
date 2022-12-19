@@ -127,6 +127,7 @@
 #include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
 #include "backend/common/optimizer/graph_optimizer.h"
 #include "tools/optimizer/fusion/squeeze_expanddims_fusion.h"
+#include "mindspore/core/ops/op_name.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -444,10 +445,7 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::share
         MS_LOG(ERROR) << "Acl pass ptr is nullptr.";
         return RET_ERROR;
       }
-      if (SpecInputFormat(old_graph, param) != RET_OK) {
-        MS_LOG(ERROR) << "Failed to specify input format, spec input format: " << param->spec_input_format;
-        return RET_ERROR;
-      }
+
       if (!acl_pass_ptr->Run(old_graph)) {
         MS_LOG(ERROR) << "Acl pass failed.";
         opt::AclPassPlugin::GetInstance().DestroyAclPass(acl_pass_ptr);
@@ -630,46 +628,27 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const std::shared_pt
   return RET_OK;
 }
 
-int AnfTransform::SpecInputFormat(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
-  auto spec_input_format = param->spec_input_format;
-  if (spec_input_format == Format::DEFAULT_FORMAT) {
+int AnfTransform::DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  if (param->export_mindir != kMindIR) {
     return RET_OK;
   }
-  Format cur_input_format = DEFAULT_FORMAT;
-  if (!opt::SpecifyGraphInputFormat::GetCurGraphInputFormat(old_graph, param->fmk_type, &cur_input_format)) {
-    MS_LOG(ERROR) << "Failed to get current format of graph input";
-    return RET_ERROR;
-  }
-  opt::SpecifyGraphInputFormat pass(true, spec_input_format, cur_input_format);
-  if (!pass.Run(old_graph)) {
-    MS_LOG(ERROR) << "Failed to Specify graph input format to " << spec_input_format;
-  }
-  return RET_OK;
-}
-
-int AnfTransform::DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
-  if (param->export_mindir == kMindIR) {
+  if (param->no_fusion || param->device.find("Ascend") == std::string::npos) {
     MS_LOG(INFO) << "export MindIR, run pass ToNCHWFormat";
     if (!RunOptimizerPass(old_graph, {"ToNCHWFormat", "DecreaseTransposeAlgo"})) {
       MS_LOG(ERROR) << "Run ToNCHWFormat pass failed";
       return RET_ERROR;
     }
-    if (param->device.find("Ascend") == std::string::npos) {
-      if (SpecInputFormat(old_graph, param) != RET_OK) {
-        MS_LOG(ERROR) << "Failed to specify input format, spec input format: " << param->spec_input_format;
-        return RET_ERROR;
-      }
-    }
-    if (!RunOptimizerPass(old_graph, {"DecreaseTransposeAlgo"})) {
-      MS_LOG(ERROR) << "Run ToNCHWFormat pass failed";
-      return RET_ERROR;
-    }
-    old_graph->set_attr(kOriginalFmkType, MakeValue(static_cast<int32_t>(param->fmk_type)));
   }
+  old_graph->set_attr(kOriginalFmkType, MakeValue(static_cast<int32_t>(param->fmk_type)));
+
   return RET_OK;
 }
 
 int AnfTransform::RunFormatTrans(const FuncGraphPtr &old_graph) {
+  auto value = old_graph->get_attr(ops::kFormat);
+  if (value != nullptr && GetValue<int64_t>(value) == mindspore::NHWC) {
+    return RET_OK;
+  }
   if (!RunOptimizerPass(old_graph, {"ToNHWCFormat", "DecreaseTransposeAlgo"})) {
     MS_LOG(ERROR) << "Run ToNHWCFormat pass failed";
     return RET_ERROR;
@@ -763,11 +742,10 @@ int AnfTransform::RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<C
 
   if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
     MS_LOG(WARNING) << "Run infershape opt pass failed.";
-    status = RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat", "SpecialNodePostProcess"}) ? RET_OK : RET_ERROR;
+    status = RunOptimizerPass(old_graph, {"SpecialNodePostProcess"}) ? RET_OK : RET_ERROR;
   } else {
-    status = RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat", "SpecialNodePostProcess"})
-               ? RunDecreaseTransposePass(old_graph, param)
-               : RET_ERROR;
+    status =
+      RunOptimizerPass(old_graph, {"SpecialNodePostProcess"}) ? RunDecreaseTransposePass(old_graph, param) : RET_ERROR;
   }
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run transpose opt pass failed.";
@@ -788,74 +766,74 @@ int AnfTransform::RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<C
   return RET_OK;
 }
 
-FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
-                                              const std::shared_ptr<ConverterPara> &param) {
+STATUS AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   MS_ASSERT(old_graph != nullptr);
   MS_ASSERT(param != nullptr);
   if (param->no_fusion && param->export_mindir == kMindIR) {  // converter, online
     if (ProcOnlineTransform(old_graph, param) != lite::RET_OK) {
       MS_LOG(ERROR) << "Proc online transform failed.";
-      return nullptr;
+      return RET_ERROR;
     }
     auto status = DoQuantize(old_graph, param);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do Quantize failed.";
-      return nullptr;
+      return RET_ERROR;
     }
-    return old_graph;
+    return RET_OK;
   }
   auto value = old_graph->get_attr(kIsOptimized);
   auto is_ascend = (param->device.find("Ascend") != std::string::npos);
   if (param->is_runtime_converter) {  // load online
     if (value != nullptr) {           // other models converted to MindIR
-      if (RunFormatTrans(old_graph) != RET_OK) {
+      auto status = RunFormatTrans(old_graph);
+      if (status != RET_OK) {
         MS_LOG(ERROR) << "Run format trans failed";
-        return nullptr;
+        return status;
       }
     } else if (!is_ascend) {
+      // new MindIR
       auto redundant_op_remove_pass = std::make_shared<mindspore::opt::RemoveRedundantOpPass>(param->train_model, true);
-      MS_CHECK_TRUE_MSG(redundant_op_remove_pass != nullptr, nullptr, "redundant_op_remove_pass is nullptr.");
+      MS_CHECK_TRUE_MSG(redundant_op_remove_pass != nullptr, RET_NULL_PTR, "redundant_op_remove_pass is nullptr.");
       if (!redundant_op_remove_pass->Run(old_graph)) {
         MS_LOG(ERROR) << "Run remove redundant op failed";
-        return nullptr;
+        return RET_ERROR;
       }
 
-      auto unify_format =
-        std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model, param->export_mindir);
-      MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
+      auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model);
+      MS_CHECK_TRUE_MSG(unify_format != nullptr, RET_NULL_PTR, "unify_format is nullptr.");
       if (!unify_format->Run(old_graph)) {
         MS_LOG(ERROR) << "Run insert transpose failed.";
-        return nullptr;
+        return RET_ERROR;
       }
     }
   }
 
   if (RunPass(old_graph, param) != RET_OK) {
     MS_LOG(ERROR) << "Proc online transform failed.";
-    return nullptr;
+    return RET_ERROR;
   }
 
   if (CheckExternalExtension(param)) {
     MS_LOG(ERROR) << "Unsupported external extension with quantization.";
-    return nullptr;
+    return RET_ERROR;
   }
 
   auto status = QATTransform(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Do QATTransform failed.";
-    return nullptr;
+    return RET_ERROR;
   }
 
   status = DoQuantize(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Do Quantize failed.";
-    return nullptr;
+    return RET_ERROR;
   }
   status = DoFormatForMindIR(old_graph, param);
   if (status != RET_OK) {
-    return nullptr;
+    return RET_ERROR;
   }
-  return old_graph;
+  return RET_OK;
 }
 
 bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param) {
@@ -865,21 +843,18 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
   }
   auto fmk = param->fmk_type;
   auto is_train = param->train_model;
-  auto export_mindir = param->export_mindir;
 
   // pass_name, pass and boolean value to indicate whether can be called by external extension,
   std::vector<std::tuple<std::string, opt::PassPtr, bool>> pass_infos = {
     {"DumpGraph", std::make_shared<opt::DumpGraph>(param), true},
     {"RemoveRedundantOpPass", std::make_shared<opt::RemoveRedundantOpPass>(param->train_model), false},
-    {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train, export_mindir), true},
-    {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train, export_mindir), true},
+    {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train), true},
+    {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train), true},
     {"ConstFoldPass", std::make_shared<opt::ConstFoldPass>(fmk, is_train), true},
     {"InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train), false},
     {"DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>(), false},
     {"SpecialNodePostProcess", std::make_shared<opt::SpecialNodePostProcess>(), false},
-    {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true},
-    {"SpecifyGraphInputFormat",
-     std::make_shared<opt::SpecifyGraphInputFormat>(export_mindir != kMindIR, param->input_format), false}};
+    {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true}};
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
     PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));
@@ -890,19 +865,19 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
   return true;
 }
 
-FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::shared_ptr<ConverterPara> &param) {
-  MS_CHECK_TRUE_MSG(main_graph != nullptr, nullptr, "Input func_graph is nullptr");
-  MS_CHECK_TRUE_MSG(param != nullptr, nullptr, "Input converter param is nullptr");
+STATUS AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::shared_ptr<ConverterPara> &param) {
+  MS_CHECK_TRUE_MSG(main_graph != nullptr, RET_NULL_PTR, "Input func_graph is nullptr");
+  MS_CHECK_TRUE_MSG(param != nullptr, RET_NULL_PTR, "Input converter param is nullptr");
   manager_ = Manage(main_graph, true);
 
   if (main_graph->has_attr(kOriginalFmkType)) {
     auto val_ptr = main_graph->get_attr(kOriginalFmkType);
-    MS_CHECK_TRUE_MSG(val_ptr != nullptr, nullptr, "Val ptr is nullptr.");
+    MS_CHECK_TRUE_MSG(val_ptr != nullptr, RET_NULL_PTR, "Val ptr is nullptr.");
     param->fmk_type = static_cast<converter::FmkType>(GetValue<int32_t>(val_ptr));
   }
   if (main_graph->has_attr(kConverterInputShape)) {
     auto val_ptr = main_graph->get_attr(kConverterInputShape);
-    MS_CHECK_TRUE_MSG(val_ptr != nullptr, nullptr, "Val ptr is nullptr.");
+    MS_CHECK_TRUE_MSG(val_ptr != nullptr, RET_NULL_PTR, "Val ptr is nullptr.");
     param->input_shape = TransStringToInputShapes(GetValue<std::string>(val_ptr));
     for (auto &kv : param->input_shape) {
       lite::ConverterInnerContext::GetInstance()->UpdateGraphInputTensorShape(kv.first, kv.second);
@@ -910,24 +885,14 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::
   }
   if (!StoreBuiltinPass(param)) {
     MS_LOG(ERROR) << "store pass failed.";
-    return nullptr;
+    return RET_ERROR;
   }
-  auto value = main_graph->get_attr(kIsOptimized);
-  if (value != nullptr) {
-    if (GetValue<bool>(value)) {  // offline optimized, only CPU backend during loading
-      auto ret = RunFormatTrans(main_graph);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Run Format trans pass failed.";
-        return nullptr;
-      }
-      return main_graph;
-    }
-  }
-  auto new_graph = TransformFuncGraph(main_graph, param);
-  if (new_graph == nullptr) {
+
+  auto status = TransformFuncGraph(main_graph, param);
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "optimizer failed.";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NULL_PTR);
+    return RET_NULL_PTR;
   }
-  return new_graph;
+  return RET_OK;
 }
 }  // namespace mindspore::lite

@@ -25,7 +25,7 @@ namespace lite {
 class UnifyFormatToNHWC : public opt::ToFormatBase {
  public:
   explicit UnifyFormatToNHWC(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false,
-                             mindspore::ModelType export_mindir = kMindIR_Lite)
+                             mindspore::ModelType export_mindir = kMindIR)
       : ToFormatBase(fmk_type, train_flag, export_mindir) {}
   ~UnifyFormatToNHWC() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;

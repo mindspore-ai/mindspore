@@ -18,17 +18,16 @@
 #include <string>
 #include "src/extendrt/convert/runtime_convert.h"
 #include "tools/common/string_util.h"
-#include "tools/converter/converter.h"
+#include "tools/converter/converter_funcgraph.h"
 #include "tools/converter/cxx_api/converter_para.h"
 #include "tools/converter/config_parser/config_file_parser.h"
 
-mindspore::api::FuncGraphPtr RuntimeConvert(const char *model_buf, const size_t &buf_size,
-                                            const std::shared_ptr<mindspore::Context> &context,
-                                            const ConfigInfos &config_info) {
+int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_ptr<mindspore::Context> &context,
+                   const ConfigInfos &config_info) {
   auto param = std::make_shared<mindspore::ConverterPara>();
   if (param == nullptr) {
     MS_LOG(ERROR) << "New ConverterPara failed";
-    return nullptr;
+    return RET_ERROR;
   }
   param->fmk_type = mindspore::converter::kFmkTypeMs;
   param->input_data_type = mindspore::DataType::kTypeUnknown;
@@ -78,13 +77,12 @@ mindspore::api::FuncGraphPtr RuntimeConvert(const char *model_buf, const size_t 
       continue;
     }
   }
-
-  mindspore::lite::ConverterImpl cvt;
-  mindspore::FuncGraphPtr graph = cvt.Convert(param, model_buf, buf_size);
-  if (graph == nullptr) {
+  auto func_graph = std::dynamic_pointer_cast<mindspore::FuncGraph>(graph->impl());
+  mindspore::lite::ConverterFuncGraph cvt;
+  auto status = cvt.Optimize(param, func_graph);
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert model failed";
-    return nullptr;
+    return status;
   }
-  auto api_graph = mindspore::api::MakeShared<mindspore::api::FuncGraph>(graph);
-  return api_graph;
+  return RET_OK;
 }

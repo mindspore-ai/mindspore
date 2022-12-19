@@ -86,30 +86,44 @@ void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all
   }
 }
 
-int CommonAnfAdjust(const FuncGraphPtr &func_graph) {
+bool IsOriginalFuncGraph(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
+  auto value = func_graph->get_attr(kIsOptimized);
+  if (value == nullptr) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool IsOptimizedFuncGraph(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   bool is_optimized = false;
   auto value = func_graph->get_attr(kIsOptimized);
   if (value != nullptr) {
     is_optimized = GetValue<bool>(value);
   }
-  {
-    auto asylic_optimizer = std::make_shared<opt::GraphOptimizer>();
-    MS_CHECK_TRUE_MSG(asylic_optimizer != nullptr, RET_NULL_PTR, "asylic_optimizer is nullptr.");
-    auto asylic_pm = std::make_shared<opt::LitePassManager>("asylic pass manager", false);
-    MS_CHECK_TRUE_MSG(asylic_pm != nullptr, RET_NULL_PTR, "asylic_pm is nullptr.");
+  return is_optimized;
+}
 
-    // fuse tf1.x bidirection_gru into GRU, must be placed here because graph is cyclic
-    asylic_pm->AddPass(std::make_shared<opt::TfBidirectionGruCfFusion>());
-    // remove remaining cyclic nodes
-    asylic_pm->AddPass(std::make_shared<opt::UnusedNodeRemovePass>());
-    asylic_optimizer->AddPassManager(asylic_pm);
+int CommonAnfAdjust(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
 
-    if (!is_optimized && !asylic_optimizer->Optimize(func_graph)) {
-      MS_LOG(ERROR) << "gru cf fusion pass failed.";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-      return RET_ERROR;
-    }
+  auto asylic_optimizer = std::make_shared<opt::GraphOptimizer>();
+  MS_CHECK_TRUE_MSG(asylic_optimizer != nullptr, RET_NULL_PTR, "asylic_optimizer is nullptr.");
+  auto asylic_pm = std::make_shared<opt::LitePassManager>("asylic pass manager", false);
+  MS_CHECK_TRUE_MSG(asylic_pm != nullptr, RET_NULL_PTR, "asylic_pm is nullptr.");
+
+  // fuse tf1.x bidirection_gru into GRU, must be placed here because graph is cyclic
+  asylic_pm->AddPass(std::make_shared<opt::TfBidirectionGruCfFusion>());
+  // remove remaining cyclic nodes
+  asylic_pm->AddPass(std::make_shared<opt::UnusedNodeRemovePass>());
+  asylic_optimizer->AddPassManager(asylic_pm);
+
+  if (!asylic_optimizer->Optimize(func_graph)) {
+    MS_LOG(ERROR) << "gru cf fusion pass failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return RET_ERROR;
   }
 
   std::set<FuncGraphPtr> all_func_graphs = {};
@@ -122,13 +136,11 @@ int CommonAnfAdjust(const FuncGraphPtr &func_graph) {
       return RET_ERROR;
     }
     // adjust for conv1d
-    if (!is_optimized) {
-      auto conv1d_adjust = std::make_shared<Conv1DInOutAdjust>();
-      MS_CHECK_TRUE_MSG(conv1d_adjust != nullptr, RET_NULL_PTR, "conv1d_adjust is nullptr.");
-      if (!conv1d_adjust->Run(sub_graph)) {
-        MS_LOG(ERROR) << "adjust conv1d failed.";
-        return RET_ERROR;
-      }
+    auto conv1d_adjust = std::make_shared<Conv1DInOutAdjust>();
+    MS_CHECK_TRUE_MSG(conv1d_adjust != nullptr, RET_NULL_PTR, "conv1d_adjust is nullptr.");
+    if (!conv1d_adjust->Run(sub_graph)) {
+      MS_LOG(ERROR) << "adjust conv1d failed.";
+      return RET_ERROR;
     }
   }
   return RET_OK;

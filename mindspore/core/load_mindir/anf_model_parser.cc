@@ -1753,6 +1753,10 @@ bool MSANFModelParser::BuildAttrForFuncGraph(const FuncGraphPtr &outputFuncGraph
         outputFuncGraph->set_attr(attr_proto.name(), ParseAttrInSingleScalar_int32_t_int32_t(attr_proto));
         break;
       }
+      case mind_ir::AttributeProto_AttributeType_INT64: {
+        outputFuncGraph->set_attr(attr_proto.name(), ParseAttrInSingleScalar_int64_t_int64_t(attr_proto));
+        break;
+      }
       case mind_ir::AttributeProto_AttributeType_TUPLE:
       case mind_ir::AttributeProto_AttributeType_LIST: {
         auto sequence_value = ObtainValueInSequenceForm(attr_proto);

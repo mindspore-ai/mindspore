@@ -293,6 +293,21 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
   return dstgraph_ptr;
 }
 
+FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std::string &mindir_path) {
+  mind_ir::ModelProto model;
+  auto ret = model.ParseFromArray(buffer, SizeToInt(size));
+  if (!ret) {
+    MS_LOG(ERROR) << "ParseFromArray failed.";
+    return nullptr;
+  }
+
+  MSANFModelParser model_parser;
+  InitModelParser(&model_parser);
+  model_parser.SetMindIRPath(mindir_path);
+  FuncGraphPtr func_graph = model_parser.Parse(model);
+  return func_graph;
+}
+
 std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file) {
   if (file.empty()) {
     MS_LOG(ERROR) << "file is nullptr";

@@ -150,7 +150,7 @@ int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const Fu
     MS_LOG(ERROR) << "error occur when check condition of saving together.";
     return ret;
   }
-  is_fusion_ = !param->no_fusion;
+
   if (save_together_) {
     ret = SaveMindIRTogether();
   } else {
@@ -507,17 +507,6 @@ int MindIRSerializer::IfSaveTogether(bool *save_together) {
 }
 
 int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file) {
-  mind_ir::GraphProto *graph_proto = model_proto->mutable_graph();
-  mind_ir::AttributeProto *attr_proto = graph_proto->add_attribute();
-  if (attr_proto != nullptr) {
-    attr_proto->set_name(kIsOptimized);
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_BOOL);
-    attr_proto->set_i(is_fusion_);
-  }
-  if (isRuntimeConvert_) {
-    return RET_OK;
-  }
-
   auto realpath = Common::CreatePrefixPath(output_file, true);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path of file " << output_file << " failed.";
@@ -556,17 +545,14 @@ int MindIRSerializer::GetBuffAndSize(void **buff, size_t *size) {
   return RET_OK;
 }
 
-int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph, bool isRuntimeConvert,
-                    void **buff, size_t *size) {
-  mindspore::lite::MindIRSerializer serializer(isRuntimeConvert);
+int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph, void **buff,
+                    size_t *size) {
+  mindspore::lite::MindIRSerializer serializer;
   auto ret = serializer.Save(param, func_graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MindIR serialize fail";
     return ret;
   }
-  if (isRuntimeConvert) {
-    return serializer.GetBuffAndSize(buff, size);
-  }
-  return RET_OK;
+  return serializer.GetBuffAndSize(buff, size);
 }
 }  // namespace mindspore::lite

@@ -22,6 +22,7 @@
 #include <vector>
 #include <regex>
 #include <queue>
+#include <algorithm>
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/import/cast_op_adjust.h"
 #include "tools/converter/import/primitive_adjust.h"
@@ -352,8 +353,7 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const std::shared_ptr<Co
       }
     }
 
-    auto unify_format =
-      std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model, param->export_mindir);
+    auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model);
     MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
     if (!unify_format->Run(func_graph)) {
       MS_LOG(ERROR) << "Run insert transpose failed.";

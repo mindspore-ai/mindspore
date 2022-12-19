@@ -60,6 +60,8 @@ class ConverterImpl {
   int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph, FuncGraphPtr func_graph);
   FuncGraphPtr Convert(const std::shared_ptr<ConverterPara> &param, const void *buff, const size_t &size);
 
+  int Convert(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size, bool not_save);
+
  private:
   FuncGraphPtr BuildFuncGraph(const std::shared_ptr<ConverterPara> &param);
   FuncGraphPtr BuildFuncGraph(const std::shared_ptr<ConverterPara> &param, const void *buf, const size_t &size);
@@ -75,6 +77,10 @@ class ConverterImpl {
   std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key);
   int ReplaceShapeWithDynamicShape(const FuncGraphPtr &graph);
   int SaveOutputNames(const FuncGraphPtr &graph);
+
+  int SaveGraph(FuncGraphPtr graph, const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size,
+                bool not_save);
+  int LoadPluginLib(const std::shared_ptr<ConverterPara> &param);
 
  protected:
   converter::ModelParser *model_parser_ = nullptr;

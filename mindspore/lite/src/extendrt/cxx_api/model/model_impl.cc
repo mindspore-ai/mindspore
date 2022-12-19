@@ -23,11 +23,12 @@
 #include "extendrt/mindir_loader/mindir_model/mindir_model_util.h"
 #include "src/extendrt/convert/runtime_convert.h"
 #include "src/common/config_file.h"
-#include "src/common/common.h"
 #include "src/extendrt/utils/serialization.h"
 #include "mindapi/ir/func_graph.h"
 #include "mindapi/base/base.h"
 #include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
+#include "mindspore/core/load_mindir/load_model.h"
+#include "src/common/common.h"
 namespace mindspore {
 namespace {
 const char *const kExecutionPlan = "execution_plan";
@@ -108,17 +109,29 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
     MS_LOG(ERROR) << "Init session failed.";
     return ret;
   }
-  if (infer::mindir::MindirModelUtil::NeedRuntimeConvert(model_data, data_size, model_context)) {
-    return CompileGraphOnline(model_data, data_size, model_context);
+
+  // for model pool
+  FuncGraphPtr func_graph = FuncGraphReuseManager::GetInstance()->GetSharedFuncGraph(config_info_);
+  if (func_graph != nullptr) {
+    MS_LOG(INFO) << "the model buffer is the same as the last time. we can directly use the cached function graph.";
+    return session_->CompileGraph(func_graph);
   }
-  graph_ = std::make_shared<Graph>();
-  ret = mindspore::infer::Serialization::Load(model_buff, model_size, model_type, graph_.get(), Key{}, kDecModeAesGcm,
-                                              mindir_path);
+
+  MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
+  func_graph = mindir_loader.LoadMindIR(model_buff, model_size, mindir_path);
+  // convert and optimize func graph to infer
+  ret = ConvertGraphOnline(func_graph, model_context);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Serialization::Load model failed.";
+    MS_LOG(ERROR) << "convert graph failed.";
     return ret;
   }
-  return session_->CompileGraph(graph_->graph_data_->GetFuncGraph());
+
+  ret = FuncGraphReuseManager::GetInstance()->StoreFuncGraph(func_graph, config_info_);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "store function graph failed.";
+    return ret;
+  }
+  return session_->CompileGraph(func_graph);
 }
 
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
@@ -140,34 +153,30 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
   return BuildByBufferImpl(buffer.Data(), buffer.DataSize(), model_type, model_context, model_path);
 }
 
-Status ModelImpl::CompileGraphOnline(const void *model_data, size_t data_size,
-                                     const std::shared_ptr<Context> &model_context) {
-  MS_LOG(INFO) << "Need runtime convert";
-  FuncGraphPtr func_graph = FuncGraphReuseManager::GetInstance()->GetSharedFuncGraph(config_info_);
-  if (func_graph == nullptr) {
-    auto convert = ConverterPlugin::Instance().GetConverterFunc();
-    if (convert == nullptr) {
-      MS_LOG(ERROR) << "convert is nullptr";
-      return kLiteNullptr;
+Status ModelImpl::ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::shared_ptr<Context> &model_context) {
+  MS_ASSERT(func_graph != nullptr);
+  auto value = func_graph->get_attr(lite::kIsOptimized);
+  if (value != nullptr) {
+    if (GetValue<bool>(value)) {
+      // it does not need to convert, if funcgraph is optimized.
+      return kSuccess;
     }
-    auto api_graph = convert(static_cast<const char *>(model_data), data_size, model_context, config_info_);
-    if (api_graph == nullptr) {
-      MS_LOG(ERROR) << "Failed to converter graph";
-      return kLiteNullptr;
-    }
-    auto impl = api_graph->impl();
-    func_graph = std::dynamic_pointer_cast<FuncGraph>(impl);
-    auto status = FuncGraphReuseManager::GetInstance()->StoreFuncGraph(func_graph, config_info_);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "store function graph failed.";
-      return kLiteError;
-    }
-  } else {
-    MS_LOG(INFO) << "the model buffer is the same as the last time. We do not need to perform repeated online "
-                    "conversion, and we can directly use the cached function graph.";
   }
-  return session_->CompileGraph(func_graph);
-}
+
+  auto convert = ConverterPlugin::Instance().GetConverterFunc();
+  if (convert == nullptr) {
+    MS_LOG(ERROR) << "get Converter func failed";
+    return kLiteNullptr;
+  }
+  auto api_graph = mindspore::api::MakeShared<mindspore::api::FuncGraph>(func_graph);
+  auto status = convert(api_graph, model_context, config_info_);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "Failed to converter graph";
+    return kLiteError;
+  }
+
+  return kSuccess;
+}  // namespace mindspore
 
 Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
   MS_EXCEPTION_IF_NULL(session_);

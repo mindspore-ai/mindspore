@@ -99,7 +99,11 @@ static STATUS GetShapeVectorAndIdxFromCNode(const CNodePtr &cnode, std::vector<i
   } else {
     cnode_abstract = cnode->abstract();
   }
-  MS_CHECK_TRUE_MSG(cnode_abstract != nullptr, lite::RET_ERROR, "node abstract is nullptr");
+  // the control flow model may be nullptr
+  if (cnode_abstract == nullptr) {
+    *shape_vector = std::vector<int64_t>();
+    return lite::RET_OK;
+  }
   if (cnode_abstract->BuildShape() == mindspore::abstract::kNoShape) {
     *shape_vector = std::vector<int64_t>();
     return lite::RET_OK;
@@ -150,7 +154,12 @@ static STATUS TraceOutput(const AnfNodePtr &node, std::vector<std::pair<AnfNodeP
   MS_LOG(INFO) << "Func name of cnode " << name << " ,trace iter: " << iter;
   if (name == kMakeTuple) {
     for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-      if (TraceOutput(cnode->input(i), outputs, output_names, output_dims) != lite::RET_OK) {
+      auto make_tuple_input = cnode->input(i);
+      if (opt::CheckPrimitiveType(make_tuple_input, prim::kPrimUpdateState) ||
+          opt::CheckPrimitiveType(make_tuple_input, prim::kPrimLoad)) {
+        continue;
+      }
+      if (TraceOutput(make_tuple_input, outputs, output_names, output_dims) != lite::RET_OK) {
         MS_LOG(ERROR) << "The input[ " << i << "]"
                       << " trace output failed, name: " << name;
         return lite::RET_ERROR;
@@ -169,7 +178,7 @@ static STATUS TraceOutput(const AnfNodePtr &node, std::vector<std::pair<AnfNodeP
     MS_LOG(INFO) << "Name of graph output node is " << cnode->fullname_with_scope();
     std::string node_name = cnode->fullname_with_scope();
     std::vector<int64_t> dims;
-    size_t idx = 0;
+    size_t idx = -1;
     STATUS ret;
     if (pre_node != nullptr && IsPrimitiveCNode(pre_node, prim::kPrimTupleGetItem)) {
       ret = GetShapeVectorAndIdxFromCNode(pre_node, &dims, &idx);

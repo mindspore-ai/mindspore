@@ -30,10 +30,6 @@ namespace mindspore {
 namespace opt {
 bool SpecifyGraphInputFormat::Run(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
-  if (!update_input_format_) {
-    MS_LOG(INFO) << "Export model type is MindIR, skip Pass SpecifyGraphInputFormat";
-    return true;
-  }
   if (exp_graph_input_format_ == cur_graph_input_format_) {
     return true;
   }
