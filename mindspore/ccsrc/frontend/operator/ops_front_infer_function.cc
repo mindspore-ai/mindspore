@@ -80,64 +80,6 @@ AbstractBasePtr InferImplTupleOrListEqual(const std::string &op_name, const Abst
   return std::make_shared<AbstractScalar>(*x_value == *y_value);
 }
 
-void CheckSlideInput(const ValuePtr &arg_value) {
-  MS_EXCEPTION_IF_NULL(arg_value);
-  auto value_type = arg_value->type();
-  std::string str_type;
-  if (value_type) {
-    str_type = value_type->ToString();
-  } else {
-    str_type = "AnyValue";
-  }
-  MS_LOG(EXCEPTION) << "The type of inputs in range operator only support int64 number. "
-                    << "But get a " << str_type << " number.";
-}
-
-void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) {
-  int64_t arg1 = 0;
-  int64_t arg2 = 0;
-  const size_t two_args = 2;
-  const size_t three_args = 3;
-  const size_t second_index = 2;
-  if (!args_spec_list.empty()) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-    auto arg_value = args_spec_list[0]->BuildValue();
-    if (!arg_value->isa<Int64Imm>()) {
-      CheckSlideInput(arg_value);
-    }
-    arg1 = GetValue<int64_t>(arg_value);
-  }
-
-  if (args_spec_list.size() >= two_args) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[1]);
-    auto arg_value = args_spec_list[1]->BuildValue();
-    if (!arg_value->isa<Int64Imm>()) {
-      CheckSlideInput(arg_value);
-    }
-    arg2 = GetValue<int64_t>(arg_value);
-  }
-
-  if (args_spec_list.size() == three_args) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[second_index]);
-    auto arg_value = args_spec_list[second_index]->BuildValue();
-    if (!arg_value->isa<Int64Imm>()) {
-      CheckSlideInput(arg_value);
-    }
-    slide->step = GetValue<int64_t>(arg_value);
-    slide->start = arg1;
-    slide->stop = arg2;
-  }
-
-  if (args_spec_list.size() == two_args) {
-    slide->start = arg1;
-    slide->stop = arg2;
-  }
-
-  if (args_spec_list.size() == 1) {
-    slide->stop = arg1;
-  }
-}
-
 void ComputeReduceIndex(const std::vector<int64_t> &reverse_x, const std::vector<int64_t> &reverse_y,
                         std::vector<int64_t> *grad_x_reduce_idx, std::vector<int64_t> *grad_y_reduce_idy) {
   MS_EXCEPTION_IF_NULL(grad_x_reduce_idx);
@@ -839,20 +781,43 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
                                          slice_args[kMakeSliceInput2]);
 }
 
-AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                   const AbstractBasePtrList &args_spec_list) {
-  if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << "For 'range', the arguments could not be empty.";
-  }
-
+bool CheckMakeRangeInput(const std::vector<AbstractBasePtr> &input_args, const std::string &prim_name) {
   constexpr size_t max_args_size = 3;
-  if (args_spec_list.size() > max_args_size) {
-    MS_LOG(EXCEPTION) << "For 'range', the size of arguments could not exceed 3. But the size of inputs is "
-                      << args_spec_list.size() << ".";
+  constexpr size_t min_args_size = 1;
+  auto inputs_size = input_args.size();
+  if (inputs_size > max_args_size || inputs_size < min_args_size) {
+    MS_LOG(EXCEPTION) << "For '" << prim_name << "', the input size should within [" << min_args_size << ", "
+                      << max_args_size << "] but got" << inputs_size;
   }
+  bool has_variable = false;
+  for (size_t i = 0; i < input_args.size(); ++i) {
+    auto element = input_args[i];
+    MS_EXCEPTION_IF_NULL(element);
+    auto element_type = element->BuildType();
+    if (element_type->type_id() != kInt64->type_id()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int64 scalar but got "
+                              << element->ToString();
+    }
+    if (!has_variable && element->BuildValue() == kAnyValue) {
+      has_variable = true;
+    }
+  }
+  return has_variable;
+}
 
+abstract::AbstractTuplePtr CalcSlidePara(const std::vector<int64_t> &values, const std::string &prim_name) {
   SlideInfo slide = {0, 1, 0};
-  CalcSlidePara(args_spec_list, &slide);
+  auto values_size = values.size();
+  if (values_size == kDim3) {
+    slide.start = values[kIndex0];
+    slide.stop = values[kIndex1];
+    slide.step = values[kIndex2];
+  } else if (values_size == kDim2) {
+    slide.start = values[kIndex0];
+    slide.stop = values[kIndex1];
+  } else {
+    slide.stop = values[kIndex0];
+  }
 
   if (slide.step == 0) {
     MS_LOG(EXCEPTION) << "For 'range', the argument 'step' could not be 0.";
@@ -861,14 +826,14 @@ AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr
   AbstractBasePtrList args;
   if (slide.start <= slide.stop) {
     if (slide.step <= 0) {
-      MS_LOG(EXCEPTION) << "For 'range', while the argument 'start' " << slide.start
+      MS_LOG(EXCEPTION) << "For '" << prim_name << "', when the argument 'start' " << slide.start
                         << " is less than or equal to the argument 'stop' " << slide.stop << ", "
                         << "the argument 'step' must be greater than 0, but the argument 'step' is " << slide.step
                         << ".";
     }
 
     for (int64_t i = slide.start; i < slide.stop; i += slide.step) {
-      args.push_back(abstract::FromValue(i));
+      args.push_back(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(i)));
       if (i > 0 && INT_MAX - i < slide.step) {
         MS_EXCEPTION(ValueError) << "Integer overflow error occurred when traversing the range. "
                                  << "Please check the inputs of range.";
@@ -876,21 +841,46 @@ AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr
     }
   } else {
     if (slide.step >= 0) {
-      MS_LOG(EXCEPTION) << "For 'range', while the argument 'start' " << slide.start << " is greater than the argument "
+      MS_LOG(EXCEPTION) << "For '" << prim_name << "', while the argument 'start' " << slide.start
+                        << " is greater than the argument "
                         << "'stop' " << slide.stop << ", the argument 'step' must be less than 0, "
                         << "but the argument 'step' is " << slide.step << ".";
     }
 
     for (int64_t i = slide.start; i > slide.stop; i += slide.step) {
-      args.push_back(abstract::FromValue(i));
+      args.push_back(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(i)));
       if (i < 0 && INT_MIN - i > slide.step) {
         MS_EXCEPTION(ValueError) << "Integer overflow error occurred when traversing the range. "
                                  << "Please check the inputs of range.";
       }
     }
   }
+  return std::make_shared<abstract::AbstractTuple>(args);
+}
 
-  return std::make_shared<AbstractTuple>(args);
+AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  bool has_variable = CheckMakeRangeInput(args_spec_list, prim_name);
+  if (has_variable) {
+    // If the input to make_range has variable input, the output abs should be dynamic length sequence.
+    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64);
+    auto ret = std::make_shared<abstract::AbstractTuple>(AbstractBasePtrList{element});
+    ret->CheckAndConvertToDynamicLenSequence();
+    return ret;
+  }
+  std::vector<int64_t> values;
+  for (size_t i = 0; i < args_spec_list.size(); ++i) {
+    auto element = args_spec_list[i];
+    auto element_val = element->BuildValue();
+    if (!element_val->isa<Int64Imm>()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int64 scalar but got "
+                              << element->ToString();
+    }
+    values.push_back(element_val->cast<Int64ImmPtr>()->value());
+  }
+  return CalcSlidePara(values, prim_name);
 }
 
 AbstractBasePtr InferImplStopGradient(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

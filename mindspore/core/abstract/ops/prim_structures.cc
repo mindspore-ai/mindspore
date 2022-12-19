@@ -138,9 +138,11 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
   MS_EXCEPTION_IF_NULL(index_value);
   // Input or index is variable, items shape and type should be same.
   if (index_value == kAnyValue) {
-    CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(args_spec_list,
-                                                        "For " + op_name + ", when index is not constant");
-    return queue->elements()[0]->Broaden();
+    const auto &elements = queue->elements();
+    CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(elements, "For " + op_name + ", when index is not constant");
+    auto ret = elements[0];
+    MS_EXCEPTION_IF_NULL(ret);
+    return ret->Broaden();
   }
   // For constant index, return input[index] of sequence.
   if (!index_value->isa<Int64Imm>()) {
