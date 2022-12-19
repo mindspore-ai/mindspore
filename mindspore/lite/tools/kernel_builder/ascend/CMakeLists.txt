@@ -1,0 +1,2 @@
+cmake_minimum_required(VERSION 3.12)
+project(MS_ASCEND_CUSTOM_KERNEL_INSTALLER)

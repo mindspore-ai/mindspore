@@ -184,3 +184,10 @@
 "mindspore/mindspore/lite/python/api/tensor.py"                                                          "protected-access"
 "mindspore/mindspore/lite/test"                                                                          "missing-docstring"
 "mindspore/mindspore/lite/test"                                                                          "unused-variable"
+# ascend samples
+"mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "wrong-import-order"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "wrong-import-order"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "bad-whitespace"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "bad-whitespace"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "bad-continuation"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "bad-continuation"
