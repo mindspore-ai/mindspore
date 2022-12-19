@@ -22,6 +22,7 @@
 #include <set>
 #include <memory>
 #include <vector>
+#include <utility>
 #include "ir/anf.h"
 #include "kernel/kernel.h"
 #include "kernel/kernel_fusion.h"
@@ -77,9 +78,11 @@ class TbeKernelCompileManager {
   // pre build
   void TbePreBuild(const KernelGraphPtr &kernel_graph);
   // single op compile
-  void TbeSingleOpCompile(const std::vector<CNodePtr> &node_list);
+  std::pair<std::vector<CNodePtr>, std::vector<CNodePtr>> TbeSingleOpCompile(const std::vector<CNodePtr> &node_list);
   // fusion op compile
   JsonNameMap TbeFusionOpCompile(const std::vector<FusionScopeInfo> &fusion_scopes);
+  void ClearFailedLog() { failed_log_.clear(); }
+  std::string failed_log() { return failed_log_; }
 
  private:
   TbeKernelCompileManager() = default;
@@ -104,7 +107,8 @@ class TbeKernelCompileManager {
   // query all build task
   void Query(const std::string &type);
   // single op build/pre-build
-  void QueryProcess(const std::string &type, const std::string &job_result, std::vector<int> *success_job);
+  void QueryProcess(const std::string &type, const std::string &job_result, std::vector<int> *success_job,
+                    std::vector<int> *failed_job);
   void GetAllTbeNodes(const std::shared_ptr<session::KernelGraph> &kernel_graph,
                       std::vector<CNodePtr> *tbe_nodes) const;
   void PrintProcessLog(const nlohmann::json &json, int adjust_log_level) const;
@@ -119,7 +123,7 @@ class TbeKernelCompileManager {
   void ClearOldTask();
   void UpdateFusionTypeAndOutputDataDesc(const std::vector<CNodePtr> &nodes);
   JsonNameMap GetAllSuccessFusion();
-  void GenKernelMod(const std::vector<CNodePtr> &node_list);
+  std::pair<std::vector<CNodePtr>, std::vector<CNodePtr>> GenKernelMod(const std::vector<CNodePtr> &node_list);
   void DistributeCompileTask(const std::vector<CNodePtr> &node_list, const std::string &job_type);
   void DistributePreBuildTask(const std::vector<CNodePtr> &node_list);
 
@@ -154,6 +158,8 @@ class TbeKernelCompileManager {
   // for fusion op
   JsonNameMap success_fusion_ops_;
   JsonNameMap all_fusion_ops_;
+  // build failed log
+  std::string failed_log_;
 };
 }  // namespace ascend
 }  // namespace kernel

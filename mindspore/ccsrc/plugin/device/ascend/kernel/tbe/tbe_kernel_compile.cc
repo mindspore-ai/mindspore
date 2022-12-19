@@ -466,8 +466,9 @@ void TbeKernelCompileManager::SaveTaskInfo(const bool is_dynamic, const nlohmann
 }
 
 void TbeKernelCompileManager::QueryProcess(const std::string &type, const std::string &job_result,
-                                           std::vector<int> *success_job) {
+                                           std::vector<int> *success_job, std::vector<int> *failed_job) {
   MS_EXCEPTION_IF_NULL(success_job);
+  MS_EXCEPTION_IF_NULL(failed_job);
   auto json_obj = TurnStrToJson(job_result);
   // the query job' status.
   if (json_obj.at(kStatus) == kSuccess) {
@@ -488,16 +489,19 @@ void TbeKernelCompileManager::QueryProcess(const std::string &type, const std::s
       if (type == kPreCompile) {
         MS_LOG(INFO) << "Single op pre build failed, op: " << kernel_name
                      << "\n except_msg : " << target_status.except_msg;
-        (void)success_job->emplace_back(target_status.target_job_id);
+        (void)failed_job->emplace_back(target_status.target_job_id);
       } else if (type == kCompile) {
-        auto target_node = job_id_to_node_[target_status.target_job_id];
-        ClearOldTask();
-        MS_LOG(EXCEPTION) << "Single op compile failed, op: " << kernel_name
-                          << ".#dmsg#Operator Compilation Exception Message:#dmsg#" << target_status.except_msg
-                          << trace::DumpSourceLines(target_node);
+        auto target_job_id = target_status.target_job_id;
+        auto target_cnode = job_id_to_node_[target_job_id];
+        std::ostringstream oss;
+        (void)failed_job->emplace_back(target_job_id);
+        oss << "op: " << kernel_name << ".#dmsg#Operator Compilation Exception Message:#dmsg#"
+            << target_status.except_msg << trace::DumpSourceLines(target_cnode) << "\n";
+        failed_log_ += oss.str();
+        MS_LOG(INFO) << "Single op compile failed. " << oss.str();
       } else {
         MS_LOG(INFO) << "Op " << kernel_name << " " << type << " failed,\n except_msg : " << target_status.except_msg;
-        (void)success_job->emplace_back(target_status.target_job_id);
+        (void)failed_job->emplace_back(target_status.target_job_id);
       }
     }
     return;
@@ -511,6 +515,7 @@ void TbeKernelCompileManager::Query(const std::string &type) {
   size_t sleep_time = 0;
   while (!task_map_.empty()) {
     std::vector<int> success_job;
+    std::vector<int> failed_job;
     auto iter = task_map_.begin();
     while (iter != task_map_.end()) {
       nlohmann::json query_json;
@@ -519,15 +524,22 @@ void TbeKernelCompileManager::Query(const std::string &type) {
       JsonAssemble(kQuery, kernel_json, &query_json);
       auto job_result = DispatchCompileTask(query_json);
       query_cnt++;
-      QueryProcess(type, job_result, &success_job);
+      QueryProcess(type, job_result, &success_job, &failed_job);
       (void)iter++;
     }
+
     bool sleep_flag = true;
     for (auto k : success_job) {
       (void)task_map_.erase(k);
       sleep_flag = false;
     }
     success_job.clear();
+    for (auto k : failed_job) {
+      (void)task_map_.erase(k);
+      sleep_flag = false;
+    }
+    failed_job.clear();
+
     if (sleep_flag && !task_map_.empty()) {
       if ((query_cnt - last_sleep) > KSleepInterval * task_map_.size()) {
         MS_LOG(INFO) << "Querying Parallel Compilation Job. Current Query Count: " << query_cnt;
@@ -539,11 +551,16 @@ void TbeKernelCompileManager::Query(const std::string &type) {
   }
 }
 
-void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_list) {
+std::pair<std::vector<CNodePtr>, std::vector<CNodePtr>> TbeKernelCompileManager::GenKernelMod(
+  const std::vector<CNodePtr> &node_list) {
   MS_LOG(INFO) << "Gen kernel mod start!";
+  std::vector<CNodePtr> success_node;
+  std::vector<CNodePtr> failed_node;
+
   for (auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     if (AnfAlgo::GetKernelMod(node) != nullptr) {
+      (void)success_node.emplace_back(node);
       continue;  // kernel mod already exist, continue;
     }
     auto full_name = node->fullname_with_scope();
@@ -554,8 +571,9 @@ void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_lis
       MS_EXCEPTION_IF_NULL(bin_map);
       kernel_pack = bin_map->SearchInFile(json_name);
       if (kernel_pack == nullptr) {
-        MS_LOG(EXCEPTION) << "Can not find .json file or the .o file for op:" << json_name
-                          << trace::DumpSourceLines(node);
+        MS_LOG(INFO) << "Can not find .json file or the .o file for op:" << json_name << trace::DumpSourceLines(node);
+        (void)failed_node.emplace_back(node);
+        continue;
       }
     }
     auto kernel_info_json = kernel_pack->kernel_json_info();
@@ -575,9 +593,10 @@ void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_lis
     kernel_mod_ptr->SetOutputSizeList(iter->second.output_size_list);
     kernel_mod_ptr->SetWorkspaceSizeList(kernel_info_json.workspaces);
     AnfAlgo::SetKernelMod(kernel_mod_ptr, node.get());
+    (void)success_node.emplace_back(node);
   }
-  ClearOldTask();
   MS_LOG(INFO) << "Gen kernel mod end!";
+  return std::make_pair(success_node, failed_node);
 }
 
 void TbeKernelCompileManager::UpdateFusionTypeAndOutputDataDesc(const std::vector<CNodePtr> &nodes) {
@@ -772,12 +791,17 @@ void TbeKernelCompileManager::TbePreBuild(const KernelGraphPtr &kernel_graph) {
   MS_LOG(INFO) << "Single op pre build end.";
 }
 
-void TbeKernelCompileManager::TbeSingleOpCompile(const std::vector<CNodePtr> &node_list) {
+std::pair<std::vector<CNodePtr>, std::vector<CNodePtr>> TbeKernelCompileManager::TbeSingleOpCompile(
+  const std::vector<CNodePtr> &node_list) {
   MS_LOG(INFO) << "Single op parallel build start.";
   auto job_type = is_tune_flag_ ? kTune : kCompile;
   DistributeCompileTask(node_list, job_type);
   Query(job_type);
-  GenKernelMod(node_list);
+  auto ret = GenKernelMod(node_list);
+  ClearOldTask();
+  MS_LOG(INFO) << "TBE Single op parallel build result: all:" << node_list.size() << " success:" << ret.first.size()
+               << " failed:" << ret.second.size() << ".";
+  return ret;
 }
 
 JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<FusionScopeInfo> &fusion_scopes) {
