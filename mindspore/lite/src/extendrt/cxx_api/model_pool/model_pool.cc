@@ -987,6 +987,15 @@ ModelPool::~ModelPool() {
   if (predict_task_queue_ != nullptr) {
     predict_task_queue_->SetPredictTaskDone();
   }
+  for (auto &item : all_model_workers_) {
+    auto model_workers = item.second;
+    for (auto &model_worker : model_workers) {
+      while (!model_worker->ModelIsNull()) {
+        MS_LOG(INFO) << "wait model of model worker destroy";
+        std::this_thread::yield();
+      }
+    }
+  }
   MS_LOG(INFO) << "delete model pool task.";
   if (tasks_ != nullptr) {
     delete[] tasks_;

@@ -59,7 +59,6 @@ class FuncGraphReuseManager {
   FuncGraphReuseManager() = default;
 
  private:
-  std::mutex mtx_manager_;
   // runner id <=> function graph ptr
   // the cached funcgraph is cleared when the model impl is destructed
   std::unordered_map<std::string, FuncGraphPtr> all_func_graphs_;
