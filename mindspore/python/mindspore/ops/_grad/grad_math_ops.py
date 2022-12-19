@@ -309,35 +309,6 @@ def _argmin_or_argmax_grad(x, axis, keep_dims, op, out, dout):
     return dx
 
 
-@bprop_getters.register(P.MatMul)
-def bprop_matmul(self):
-    """Grad definition for `MatMul` operation."""
-    ta = self.transpose_a
-    tb = self.transpose_b
-    mul1 = P.MatMul(transpose_a=(ta and tb),
-                    transpose_b=(ta or (not tb)))
-    mul2 = P.MatMul(transpose_a=((not ta) or tb),
-                    transpose_b=(ta and tb))
-
-    def bprop(x, w, out, dout):
-        conj = P.Conj()
-        origin_dtype = x.dtype
-        if origin_dtype in (mstype.complex64, mstype.complex128):
-            x = conj(x)
-            w = conj(w)
-        if ta:
-            dx = mul1(w, dout)
-        else:
-            dx = mul1(dout, w)
-        if tb:
-            dw = mul2(dout, x)
-        else:
-            dw = mul2(x, dout)
-        return dx, dw
-
-    return bprop
-
-
 @bprop_getters.register(P.BatchMatMul)
 def bprop_batchmatmul(self):
     """Grad definition for `BatchMatMul` operation."""
@@ -406,17 +377,6 @@ def get_bprop_neg(self):
     def bprop(x, out, dout):
         dx = neg_grad(dout)
         return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(P.Sub)
-def get_bprop_sub(self):
-    """Grad definition for `Sub` operation."""
-    neg_func = P.Neg()
-
-    def bprop(x, y, out, dout):
-        return binop_grad_common(x, y, dout, neg_func(dout))
 
     return bprop
 

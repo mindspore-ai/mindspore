@@ -17,12 +17,10 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore.ops import composite as C
-from mindspore.nn import Momentum
 from mindspore import context, Tensor
 from mindspore.common.api import jit
 
 grad_all = C.GradOperation(get_all=True)
-grad_by_list = C.GradOperation(get_by_list=True)
 
 
 class CellBprop(nn.Cell):
@@ -41,34 +39,3 @@ def test_cell_bprop_grad():
     net = CellBprop()
     with pytest.raises(RuntimeError):
         grad_all(net)(input_x, input_y)
-
-
-class ConvNet(nn.Cell):
-    def __init__(self):
-        super(ConvNet, self).__init__()
-        self.conv = nn.Conv2d(1, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
-
-    def construct(self, x):
-        out = self.conv(x)
-        return out
-
-
-class MomentumWithMsFunc(nn.Cell):
-    def __init__(self, net):
-        super(MomentumWithMsFunc, self).__init__()
-        self.net = net
-        self.optimizer = Momentum(filter(lambda x: x.requires_grad, self.net.get_parameters()), 0.1, 0.9)
-
-    @jit
-    def construct(self, grads):
-        ret = self.optimizer(grads)
-        return ret
-
-
-def test_ms_func_decorate_forward():
-    context.set_context(mode=context.PYNATIVE_MODE)
-    input_x = Tensor(np.random.randn(1, 1, 2, 2).astype(np.float32))
-    net = ConvNet()
-    grad_out = grad_by_list(net, net.trainable_params())(input_x)
-    opt = MomentumWithMsFunc(net)
-    opt(grad_out)

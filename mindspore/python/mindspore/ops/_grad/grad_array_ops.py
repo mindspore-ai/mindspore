@@ -30,8 +30,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops._utils.utils import range_op, get_1d_shape, generate_shape_index
-from mindspore.ops._grad.grad_base import dyn_rank, convert_to_tensor, dyn_invert_permutation, dyn_size, dyn_ones, \
-    dyn_fill
+from mindspore.ops._grad.grad_base import dyn_rank, convert_to_tensor, dyn_ones, dyn_fill
 from mindspore.ops._grad.grad_base import sum_grad_reduce_axis
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
 from ..operations._inner_ops import DynamicBroadcastGradientArgs, IsSubClass
@@ -386,35 +385,6 @@ def get_bprop_padding(self):
             begin = make_begin(shp)
         dx = P.Slice()(dout, begin, shp)
         return (dx,)
-
-    return bprop
-
-
-@constexpr
-def _transpose_perm_positive(perm):
-    res = []
-    for value in perm:
-        value = value if (value >= 0) else (value + len(perm))
-        res.append(value)
-    return tuple(res)
-
-
-def _dyn_transpose_perm_positive(perm):
-    return (perm + dyn_size(perm)) % (dyn_size(perm))
-
-
-@bprop_getters.register(P.Transpose)
-def get_bprop_transpose(self):
-    """Generate bprop for Transpose"""
-
-    def bprop(x, perm, out, dout):
-        is_mutable, perm = convert_to_tensor(perm)
-        if is_mutable:
-            perm = _dyn_transpose_perm_positive(perm)
-            return transpose(dout, dyn_invert_permutation(perm)), zeros_like(perm)
-
-        perm = _transpose_perm_positive(perm)
-        return transpose(dout, invert_permutation(perm)), zeros_like(perm)
 
     return bprop
 

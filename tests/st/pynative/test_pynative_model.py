@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_pynative_model """
+import pytest
 import numpy as np
 
 import mindspore.nn as nn
@@ -21,7 +22,6 @@ from mindspore import context
 from mindspore.nn.optim import Momentum
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from ..ut_filter import non_graph_engine
 
 
 grad_by_list = C.GradOperation(get_by_list=True)
@@ -44,7 +44,9 @@ class GradWrap(nn.Cell):
         return grad_by_list(self.network, weights)(x, label)
 
 
-@non_graph_engine
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_softmaxloss_grad():
     """ test_softmaxloss_grad """
 
@@ -68,10 +70,10 @@ def test_softmaxloss_grad():
             self.weight = Parameter(Tensor(np.ones([64, 10]).astype(np.float32)), name="weight")
             self.bias = Parameter(Tensor(np.ones([10]).astype(np.float32)), name="bias")
             self.fc = P.MatMul()
-            self.biasAdd = P.BiasAdd()
+            self.bias_add = P.BiasAdd()
 
         def construct(self, x):
-            x = self.biasAdd(self.fc(x, self.weight), self.bias)
+            x = self.bias_add(self.fc(x, self.weight), self.bias)
             return x
 
     net = GradWrap(NetWithLossClass(Net()))
@@ -84,7 +86,9 @@ def test_softmaxloss_grad():
     print(out[0], (out[0]).asnumpy(), ":result")
 
 
-@non_graph_engine
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_lenet_grad():
     """ test_lenet_grad """
 
