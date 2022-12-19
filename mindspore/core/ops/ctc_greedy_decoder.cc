@@ -57,7 +57,15 @@ AbstractBasePtr CTCGreedyDecoderInfer(const abstract::AnalysisEnginePtr &, const
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto inputs_x_shape = inputs_x_shape_map[kShape];
   auto sequence_length_shape = sequence_length_shape_map[kShape];
+  if (inputs_x_shape.size() != kInputsRank && !IsDynamicRank(inputs_x_shape)) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', inputs's dim must be 3, but got: " << inputs_x_shape.size()
+                             << ".";
+  }
 
+  if (sequence_length_shape.size() != kSeqLenRank && !IsDynamicRank(sequence_length_shape)) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', sequence_length's dims must be 1, but got: " << sequence_length_shape.size() << ".";
+  }
   ShapeVector decoded_indices_shape = {-1, 2};
   ShapeVector decoded_indices_max_shape = {inputs_x_shape[0] * inputs_x_shape[1], 2};
   ShapeVector decoded_values_shape = {-1};
@@ -74,19 +82,8 @@ AbstractBasePtr CTCGreedyDecoderInfer(const abstract::AnalysisEnginePtr &, const
     std::make_shared<abstract::AbstractTensor>(inputs_x_ptr->element()->BuildType(), log_probability_shape);
 
   AbstractBasePtrList ret = {decoded_indices, decoded_values, decoded_shape, log_probability};
-
   if (inputs_x_shape_ptr->IsDynamic() || sequence_length_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::AbstractTuple>(ret);
-  }
-
-  if (inputs_x_shape.size() != kInputsRank && !IsDynamicRank(inputs_x_shape)) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', inputs's dim must be 3, but got: " << inputs_x_shape.size()
-                             << ".";
-  }
-
-  if (sequence_length_shape.size() != kSeqLenRank && !IsDynamicRank(sequence_length_shape)) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', sequence_length's dims must be 1, but got: " << sequence_length_shape.size() << ".";
   }
 
   if (inputs_x_shape[1] != sequence_length_shape[0]) {

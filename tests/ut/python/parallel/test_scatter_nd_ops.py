@@ -86,6 +86,26 @@ class Net2(nn.Cell):
         return out
 
 
+class Net3(nn.Cell):
+    """Net definition"""
+    def __init__(self, strategy1=None, strategy2=None, ops_type="Add"):
+        super(Net3, self).__init__()
+        self.inputs = Parameter(Tensor(np.ones([8, 8, 64]).astype(np.float32)), "input")
+        self.inputs1 = Parameter(Tensor(np.ones([8, 8, 64]).astype(np.float32)), "input1")
+        self.indices = Tensor(np.ones([8, 8, 2]).astype(np.int32))
+        self.updates = Tensor(np.ones([8, 8, 64]).astype(np.float32))
+        self.scatter_ops = scatter_nd_ops_map.get(ops_type).shard(strategy1)
+        self.add = P.TensorAdd().shard(strategy2)
+        self.relu = P.ReLU()
+
+    def construct(self, x):
+        out = self.scatter_ops(self.inputs, self.indices, self.updates)
+        out = self.scatter_ops(self.inputs1, self.indices, out)
+        out = self.add(x, out)
+        out = self.relu(out)
+        return out
+
+
 def compile_net(net, *inputs):
     net.set_auto_parallel()
     net.set_train(False)
@@ -111,6 +131,28 @@ def test_scatter_nd_add():
     # check layout
     inputs_expect_layout = ([2, 4], [-1, 1, 0], [32, 32, 32], 0, True, '')
     assert validator.check_parameter_layout('input', inputs_expect_layout)
+
+
+def test_two_scatter_nd_add():
+    """
+    Feature: distribute operator scatter_nd_add in auto parallel.
+    Description: scatter_nd_add net with sharding updating strategy in semi auto parallel.
+    Expectation: assert ok.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, full_batch=True)
+    inputs = Tensor(np.ones([8, 8, 64]).astype(np.float32))
+    strategy1 = ((1, 8, 1), (1, 1, 1), (1, 1, 1))
+    strategy2 = ((1, 8, 1), (1, 8, 1))
+    net = Net3(strategy1, strategy2)
+    phase = compile_net(net, inputs)
+    validator = ParallelValidator(net, phase)
+    # check sub_graph
+    sub_graph = {
+        'ScatterNdAdd-0': ['input', 'Sub-1', 'Mul-3'],
+        'ScatterNdAdd-1': ['input1', 'Sub-0', 'Mul-5'],
+    }
+    assert validator.check_graph_structure(sub_graph)
 
 
 def test_scatter_nd_wrong_strategy():

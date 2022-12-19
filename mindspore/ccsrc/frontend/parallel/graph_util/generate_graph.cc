@@ -186,7 +186,6 @@ AnfNodePtr GenerateGraph::PushBack(const std::vector<AnfNodePtr> &inputs) {
   if (inputs.size() < 2) {
     MS_LOG(EXCEPTION) << "inputs.size() must be more than 1";
   }
-  (void)manager_->Replace(inputs.at(1), cnode);  // using Replace function to insert cnode after inputs[1]
   auto new_anf_node_ptr = cnode->cast<AnfNodePtr>();
   MS_EXCEPTION_IF_NULL(new_anf_node_ptr);
   return new_anf_node_ptr;
