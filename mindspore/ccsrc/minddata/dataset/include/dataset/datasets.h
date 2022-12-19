@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATASETS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATASETS_H_
 
-#include <sys/stat.h>
 #include <algorithm>
 #include <functional>
 #include <map>

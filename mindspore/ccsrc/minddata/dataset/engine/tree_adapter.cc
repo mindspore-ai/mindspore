@@ -240,8 +240,8 @@ Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_
 Status TreeAdapter::AdjustReset(const int64_t epoch_num) {
   if (GlobalContext::config_manager()->fast_recovery() && epoch_num > 0) {
     MS_LOG(INFO) << "Adjusting dataset pipeline for failover reset to start on epoch: " << (epoch_num + 1);
-    for (auto op = tree_->begin(); op != tree_->end(); op++) {
-      op->SetEpoch(epoch_num);
+    for (auto op = tree_->begin(); op != tree_->end(); ++op) {
+      RETURN_IF_NOT_OK(op->SetEpoch(epoch_num));
     }
   }
   return Status::OK();

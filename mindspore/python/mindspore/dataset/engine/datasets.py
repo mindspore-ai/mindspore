@@ -124,7 +124,7 @@ def _reset_training_dataset(step, epoch):
     """
     dataset = _get_training_dataset()
     if dataset is not None:
-        dataset._reset(step, epoch)  # pylint: disable=W0212
+        dataset._reset(step, epoch)  # pylint: disable=protected-access
     else:
         raise RuntimeError("Training dataset is not set.")
 
@@ -3698,9 +3698,6 @@ class _ToDevice:
     def send(self):
         self._to_device.Send()
 
-    def _reset(self, step, epoch):
-        self._to_device.Reset(step, epoch)
-
     def stop_send(self):
         """
         send stop send signal to pipeline, it is used when end of sequence is sent at the epoch end.
@@ -3738,6 +3735,9 @@ class _ToDevice:
         """
         offload_model = GetOffloadModel(self._to_device, col_names)
         return offload_model
+
+    def _reset(self, step, epoch):
+        self._to_device.Reset(step, epoch)
 
 
 class TransferDataset(Dataset):
@@ -3809,11 +3809,6 @@ class TransferDataset(Dataset):
         if self._to_device is not None:
             self._to_device.continue_send()
 
-    def _reset(self, step, epoch):
-        if self._to_device is not None:
-            logger.info("Reset the dataset pipeline to step: " + str(step) + ", epoch: " + str(epoch))
-            self._to_device._reset(step, epoch)  # pylint: disable=W0212
-
     def get_data_info(self):
         """
         Get type and shape of current batch
@@ -3834,6 +3829,11 @@ class TransferDataset(Dataset):
         """
         if self._to_device is not None:
             self._to_device.release()
+
+    def _reset(self, step, epoch):
+        if self._to_device is not None:
+            logger.info("Reset the dataset pipeline to step: " + str(step) + ", epoch: " + str(epoch))
+            self._to_device._reset(step, epoch)  # pylint: disable=protected-access
 
 
 class Schema:

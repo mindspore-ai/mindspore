@@ -54,7 +54,7 @@ Status ShuffleOp::PrepareOperator() {
   // in reset mode, we need to move forward the random generator seed.
   if (GlobalContext::config_manager()->fast_recovery() && op_current_repeats_ > 0) {
     for (auto i = 0; i < op_current_repeats_; i++) {
-      SelfReset();
+      RETURN_IF_NOT_OK(SelfReset());
     }
   }
   return Status::OK();

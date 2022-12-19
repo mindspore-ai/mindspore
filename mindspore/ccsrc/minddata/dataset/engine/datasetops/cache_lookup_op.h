@@ -41,8 +41,8 @@ class CacheLookupOp : public CacheBase, public SamplerRT {
   Status operator()() override;
   Status WorkerEntry(int32_t worker_id) override;
   // As a sampler, we override the following functions
-  Status ResetSampler(const bool failover_reset = false) override;
-  Status HandshakeRandomAccessOp(const RandomAccessOp *op, const int32_t reset_count = 0) override;
+  Status ResetSampler(const bool failover_reset) override;
+  Status HandshakeRandomAccessOp(const RandomAccessOp *op, const int32_t reset_count) override;
   Status InitSampler() override;
   Status GetNextSample(TensorRow *out) override;
   void Print(std::ostream &out, bool show_all) const override;

@@ -49,8 +49,8 @@ class ParallelOp : public DatasetOp {
         epoch_sync_flag_(false),
         num_workers_(num_workers),
         next_worker_id_(0),
-        strategy_{nullptr},
-        worker_connector_size_(op_connector_size) {
+        worker_connector_size_(op_connector_size),
+        strategy_{nullptr} {
     // reduce excessive memory usage with high parallelism
     constexpr int32_t worker_limit = 4;
     if (num_workers_ > worker_limit) {
@@ -168,17 +168,18 @@ class ParallelOp : public DatasetOp {
   class RowHandlingStrategy {
    public:
     explicit RowHandlingStrategy(ParallelOp *op) : op_(op) {}
+    virtual ~RowHandlingStrategy() = default;
 
-    virtual Status HandleHealthyRow(TensorRow *row) {
+    virtual Status HandleHealthyRow([[maybe_unused]] TensorRow *row) {
       ++this->op_->ep_step_;
       ++this->op_->total_step_;
-      RETURN_IF_NOT_OK(this->op_->callback_manager_.StepEnd(
-        CallbackParam(this->op_->current_epochs_ + 1, this->op_->ep_step_, this->op_->total_step_)));
+      RETURN_IF_NOT_OK(this->op_->callback_manager_.StepEnd(CallbackParam(
+        static_cast<int64_t>(this->op_->current_epochs_) + 1, this->op_->ep_step_, this->op_->total_step_)));
       return this->op_->out_connector_->Add(std::move(*row));
     }
-    virtual Status HandleErrorRow(TensorRow *row) = 0;
+    virtual Status HandleErrorRow([[maybe_unused]] TensorRow *row) = 0;
 
-    virtual Status HandleEOE(TensorRow *row) {
+    virtual Status HandleEOE([[maybe_unused]] TensorRow *row) {
       this->op_->current_repeats_++;
       // check whether this is the end of a real epoch (not all eoe signals end of epoch)
       if (this->op_->current_repeats_ % this->op_->GetOpNumRepeatsPerEpoch() == 0) {
@@ -189,9 +190,9 @@ class ParallelOp : public DatasetOp {
       }
       return op_->out_connector_->Add(std::move(*row));
     }
-    virtual Status HandleEOF(TensorRow *row) {
-      RETURN_IF_NOT_OK(this->op_->callback_manager_.End(
-        CallbackParam(this->op_->current_epochs_ + 1, this->op_->ep_step_, this->op_->total_step_)));
+    virtual Status HandleEOF([[maybe_unused]] TensorRow *row) {
+      RETURN_IF_NOT_OK(this->op_->callback_manager_.End(CallbackParam(
+        static_cast<int64_t>(this->op_->current_epochs_) + 1, this->op_->ep_step_, this->op_->total_step_)));
       return op_->out_connector_->Add(std::move(*row));
     }
 
@@ -202,7 +203,7 @@ class ParallelOp : public DatasetOp {
   class ErrorStrategy : public RowHandlingStrategy {
    public:
     using RowHandlingStrategy::RowHandlingStrategy;
-    Status HandleErrorRow(TensorRow *row) override {
+    Status HandleErrorRow([[maybe_unused]] TensorRow *row) override {
       return Status(StatusCode::kMDUnexpectedError,
                     "[Internal Error] Error row is detected in collector while Error strategy is set to error out!");
     }
@@ -211,14 +212,14 @@ class ParallelOp : public DatasetOp {
   class SkipStrategy : public RowHandlingStrategy {
    public:
     using RowHandlingStrategy::RowHandlingStrategy;
-    Status HandleErrorRow(TensorRow *row) override { return Status::OK(); }
+    Status HandleErrorRow([[maybe_unused]] TensorRow *row) override { return Status::OK(); }
   };
 
   class ReplaceStrategy : public RowHandlingStrategy {
    public:
     using RowHandlingStrategy::RowHandlingStrategy;
 
-    Status HandleHealthyRow(TensorRow *row) override {
+    Status HandleHealthyRow([[maybe_unused]] TensorRow *row) override {
       CHECK_FAIL_RETURN_UNEXPECTED(backup_index_ < kCachedRowsSize,
                                    "[Internal Error] Number of cached rows is beyond the number set.");
       if (backup_index_ < kCachedRowsSize - 1) {  // cache has used row(s) or is not full
@@ -239,12 +240,12 @@ class ParallelOp : public DatasetOp {
       // send the healthy row to next op
       ++this->op_->ep_step_;
       ++this->op_->total_step_;
-      RETURN_IF_NOT_OK(this->op_->callback_manager_.StepEnd(
-        CallbackParam(this->op_->current_epochs_ + 1, this->op_->ep_step_, this->op_->total_step_)));
+      RETURN_IF_NOT_OK(this->op_->callback_manager_.StepEnd(CallbackParam(
+        static_cast<int64_t>(this->op_->current_epochs_) + 1, this->op_->ep_step_, this->op_->total_step_)));
       return this->op_->out_connector_->Add(std::move(*row));
     }
 
-    Status HandleErrorRow(TensorRow *row) override {
+    Status HandleErrorRow([[maybe_unused]] TensorRow *row) override {
       CHECK_FAIL_RETURN_UNEXPECTED(backup_index_ < kCachedRowsSize,
                                    "[Internal Error] Number of cached rows is beyond the number set.");
       // cache is not full of unused rows
@@ -256,7 +257,7 @@ class ParallelOp : public DatasetOp {
       return AddFromCache();
     }
 
-    Status HandleEOE(TensorRow *row) override {
+    Status HandleEOE([[maybe_unused]] TensorRow *row) override {
       CHECK_FAIL_RETURN_UNEXPECTED(missing_errors_ == 0 || !IsCacheEmpty(),
                                    "All data is garbage and cannot be replaced.");
       // send outstanding rows first and then send eoe
@@ -267,19 +268,23 @@ class ParallelOp : public DatasetOp {
       return RowHandlingStrategy::HandleEOE(row);
     }
 
+    Status HandleEOF([[maybe_unused]] TensorRow *row) override {
+      // release memory
+      std::deque<TensorRow>().swap(backup_rows);
+      return RowHandlingStrategy::HandleEOF(row);
+    }
+
    private:
     Status AddFromCache() {
       CHECK_FAIL_RETURN_UNEXPECTED(backup_rows.size() > 0, "Cannot add a row from cache since cache is empty!");
-      // Note: If backup_index_ is negative (error samples at the end of data),
-      // the modulo division with size_t will be result in 0, and backup_rows[0] accessed.
-      const TensorRow &cached_row = backup_rows[backup_index_ % backup_rows.size()];
+      const TensorRow &cached_row = backup_rows[static_cast<size_t>(backup_index_) % backup_rows.size()];
       TensorRow copy_row;
       RETURN_IF_NOT_OK(cached_row.Clone(&copy_row));
       backup_index_--;
       ++this->op_->ep_step_;
       ++this->op_->total_step_;
-      RETURN_IF_NOT_OK(this->op_->callback_manager_.StepEnd(
-        CallbackParam(this->op_->current_epochs_ + 1, this->op_->ep_step_, this->op_->total_step_)));
+      RETURN_IF_NOT_OK(this->op_->callback_manager_.StepEnd(CallbackParam(
+        static_cast<int64_t>(this->op_->current_epochs_) + 1, this->op_->ep_step_, this->op_->total_step_)));
       return this->op_->out_connector_->Add(std::move(copy_row));
     }
 
@@ -291,7 +296,7 @@ class ParallelOp : public DatasetOp {
         "[Internal Error] Inserting another row to cache while cache is already full of unused rows.");
       TensorRow copy_row;
       RETURN_IF_NOT_OK(row.Clone(&copy_row));
-      backup_rows.emplace_front(std::move(copy_row));
+      (void)backup_rows.emplace_front(std::move(copy_row));
       backup_index_++;
       return Status::OK();
     }
