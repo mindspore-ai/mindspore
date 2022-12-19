@@ -87,6 +87,46 @@ def _run_opt_with_sparse_dist(opt, sparse_opt, push, pull, use_locking, use_nest
 
 
 @_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
+                         "Tensor", "Tensor", "Tensor", "Tensor", "MapTensor", "MapTensor", "MapTensor", "MapTensor",
+                         "Bool", "Bool", "Function", "Bool", "Function", "Bool")
+def _run_map_tensor_opt_with_sparse_dist(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power,
+                                         beta2_power, beta1, beta2, eps, lr, gradient, params, m, v,
+                                         ps_parameter, cache_enable, distributed_opt, use_flag, distributed_sparse_opt,
+                                         use_sparse_flag):
+    """Apply sparse lazy adam optimizer to the weight parameter when the gradient is sparse."""
+    success = True
+    indices, values = gradient.get_data()
+    if use_sparse_flag:
+        # PS Mode.
+        success = F.depend(success, distributed_sparse_opt(params, m, v, beta1_power, beta2_power, lr, beta1, beta2,
+                                                           eps, values, indices))
+    else:
+        # PS Cache mode.
+        op_sqrt = P.Sqrt()
+
+        m_slice = m.get(indices)
+        v_slice = v.get(indices)
+
+        next_m = m_slice * beta1 + values * (1 - beta1)
+        next_v = v_slice * beta2 + values * values * (1 - beta2)
+
+        lr_t = lr * op_sqrt(1 - beta2_power) / (1 - beta1_power)
+
+        if use_nesterov:
+            m_temp = beta1 * next_m + values * (1 - beta1)
+            param_update = m_temp / (op_sqrt(next_v) + eps)
+        else:
+            param_update = next_m / (op_sqrt(next_v) + eps)
+
+        params_need_update = params.get(indices)
+        params.put(indices, params_need_update - lr_t * param_update)
+        m.put(indices, next_m)
+        v.put(indices, next_v)
+
+    return success
+
+
+@_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
                          "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool",
                          "Function", "Bool", "Function", "Bool")
 def _run_opt_with_one_number_dist(opt, sparse_opt, push, pull, use_locking, use_nesterov, target,

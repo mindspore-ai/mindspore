@@ -490,6 +490,7 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("insert_accumu_init_info", &PSContext::InsertAccumuInitInfo, "Insert accumulation initialization value.")
     .def("clone_hash_table", &PSContext::CloneHashTable, "Clone a hash table.")
     .def("set_cache_enable", &PSContext::set_cache_enable, "Set ps mode cache enable or not.")
+    .def("set_cache_size", &PSContext::set_cache_size, "Set embedding cache size for ps cache mode.")
     .def("cache_enable", &PSContext::cache_enable, "Get ps mode cache enable or not.")
     .def("set_sparse_format", &PSContext::set_sparse_format, "Set the storage format of the embedding table.")
     .def("set_rank_id", &PSContext::set_rank_id, "Set rank id for worker on ps mode.")

@@ -220,8 +220,11 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   //  automatic parallel scenario.
   int cache_indices_lower_bound() const;
 
-  // Get vocab cache size on device.
-  size_t vocab_cache_size() const { return device_cache_size_; }
+  // Set embedding vocab cache size on device.
+  void set_cache_size(size_t cache_size) { device_cache_size_ = cache_size; }
+
+  // Get embedding vocab cache size on device.
+  size_t cache_size() const { return device_cache_size_; }
 
   // Set the storage format (`dense` or `sparse`) of embedding tables.
   void set_sparse_format(bool is_sparse) { sparse_format_ = is_sparse; }

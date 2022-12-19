@@ -195,6 +195,12 @@ bool PSContext::cache_enable() const {
   return false;
 }
 
+void PSContext::set_cache_size(size_t cache_size) const {
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+  distributed::EmbeddingCacheTableManager::GetInstance().set_cache_size(cache_size);
+#endif
+}
+
 void PSContext::set_sparse_format(bool is_sparse) {
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   distributed::EmbeddingCacheTableManager::GetInstance().set_sparse_format(is_sparse);

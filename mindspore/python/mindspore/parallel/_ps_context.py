@@ -210,6 +210,14 @@ def _cache_enable():
     return ps_context().cache_enable()
 
 
+def _set_cache_size(cache_size):
+    ps_context().set_cache_size(cache_size)
+
+
+def _set_sparse_format(sparse_format):
+    ps_context().set_sparse_format(sparse_format)
+
+
 def _set_rank_id(rank_id):
     ps_context().set_rank_id(rank_id)
 

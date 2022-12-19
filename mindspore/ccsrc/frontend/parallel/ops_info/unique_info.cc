@@ -114,7 +114,7 @@ Status UniqueInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   if (ps::PSContext::instance()->enable_distributed_mindrt()) {
     bias = static_cast<int64_t>(embedding_cache_table_manager.cache_indices_lower_bound());
   }
-  auto slice_size = SizeToLong(embedding_cache_table_manager.vocab_cache_size());
+  auto slice_size = SizeToLong(embedding_cache_table_manager.cache_size());
 
   auto sub = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(bias)});
   auto relu = gen_g.PushBack({gen_g.NewOpInst(RELU), sub});
