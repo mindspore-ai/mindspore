@@ -61,8 +61,8 @@ enum MS_API AiModelDescription_Frequency {
 
 enum MS_API DumpMode { DUMP_MODE_ALL = 0, DUMP_MODE_INPUT = 1, DUMP_MODE_OUTPUT = 2 };
 
-constexpr float relativeTolerance = 1e-5;
-constexpr float absoluteTolerance = 1e-8;
+constexpr float kRelativeTolerance = 1e-5;
+constexpr float kAbsoluteTolerance = 1e-8;
 constexpr int CosineErrMaxVal = 2;
 constexpr float kFloatMSEC = 1000.0f;
 
@@ -264,7 +264,8 @@ class MS_API BenchmarkBase {
 
   // tensorData need to be converter first
   template <typename T, typename ST>
-  float CompareData(const std::string &nodeName, const std::vector<ST> &msShape, const void *tensor_data) {
+  float CompareData(const std::string &nodeName, const std::vector<ST> &msShape, const void *tensor_data,
+                    float relativeTolerance = kRelativeTolerance, float absoluteTolerance = kAbsoluteTolerance) {
     const T *msTensorData = static_cast<const T *>(tensor_data);
     auto iter = this->benchmark_data_.find(nodeName);
     if (iter != this->benchmark_data_.end()) {
