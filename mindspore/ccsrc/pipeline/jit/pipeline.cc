@@ -856,10 +856,11 @@ void GraphExecutorPy::ParallelPostProcess(const std::string &phase) {
   if (phase.find("after_shard") != std::string::npos) {
     after_shard = true;
   }
+  // Initialize parameters for graph which auto-parallel not care.
   if (root == nullptr && !after_shard) {
     auto graph = info_[phase]->resource->func_graph();
     MS_EXCEPTION_IF_NULL(graph);
-    parallel::InitOptimizerState(graph);
+    parallel::InitPynativeNoShardParams(graph);
     return;
   }
   MS_EXCEPTION_IF_NULL(root);

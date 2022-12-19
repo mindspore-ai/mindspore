@@ -52,7 +52,8 @@ void HandleFullySplitParameters(const FuncGraphPtr &root);
 void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root);
 void HandleAdaFactorOpt(const FuncGraphPtr &root);
 void AutoParallelPostProcess(const FuncGraphPtr &root);
-void InitOptimizerState(const FuncGraphPtr &root);
+// Init the parameters for graph which not specified by shard under PyNative mode.
+void InitPynativeNoShardParams(const FuncGraphPtr &root);
 std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
 std::pair<AnfNodePtr, bool> FindParameterWithAllgather(const AnfNodePtr &node, const FuncGraphPtr &func_graph,
                                                        const std::string &name);

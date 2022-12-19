@@ -41,9 +41,10 @@ static void GenerateDefaultStrategy(const ValueNodePtr &axes, const std::vector<
   for (auto &strategy : strategies) {
     auto node = nodes[i];
     if (strategy->isa<None>()) {
-      auto node_size = common::AnfAlgo::GetOutputInferShape(node, 0).size();
+      auto node_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
+      auto node_size = node_shape.size();
       std::vector<int64_t> current_d_strategy(node_size, 1);
-      if (!current_d_strategy.empty()) {
+      if (!node_shape.empty() && device_num > 0 && node_shape[0] % device_num == 0) {
         current_d_strategy[0] = SizeToLong(device_num);
       }
       (void)default_strategy->emplace_back(std::move(current_d_strategy));

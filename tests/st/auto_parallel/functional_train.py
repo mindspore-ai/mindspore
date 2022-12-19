@@ -231,3 +231,61 @@ def test_graph_func_sink():
         loss = sink_process()
     assert np.allclose(np.array([loss.asnumpy()]), np.array([0.0047495714]), 0.00001, 0.00001)
     ms.reset_auto_parallel_context()
+
+
+def test_pynative_func_sink():
+    '''
+    Feature: Object Oriented and Functional Mixed Programming
+    Description: pynative mode, run two step, auto_parallel + data sink with jit
+    Expectation: Run success
+    '''
+    var_step_per_epoch = 2
+    var_single_batch_size = 16
+    var_in_dim = 32
+    var_hidden_dim = 8
+    var_out_dim = 16
+
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.AUTO_PARALLEL, search_mode="sharding_propagation",
+                                 enable_parallel_optimizer=True, dataset_strategy="full_batch")
+
+    init()
+
+    # dataset
+    fake_dataset = get_dataset(var_single_batch_size, var_step_per_epoch, var_in_dim, var_out_dim)
+    dataset = ds.GeneratorDataset(fake_dataset, ["input", "label"])
+
+    # define net
+    net = Net(var_in_dim, var_hidden_dim, var_out_dim)
+
+    # define loss
+    loss_fn = MSELoss()
+
+    # define opt
+    learning_rate = 0.3
+    momentum = 0.1
+    opt = Momentum(net.trainable_params(), learning_rate, momentum)
+
+    # define forward function
+    def net_forward(x, y):
+        out = net(x)
+        loss = loss_fn(out, y)
+        return loss
+
+    grad_net = ops.value_and_grad(net_forward, grad_position=None, weights=net.trainable_params())
+
+    def train_one_step(x, y):
+        loss, grads = grad_net(x, y)
+        opt(grads)
+        return loss
+
+    sink_size = 1
+    epoch = 1
+    sink_process = ms.train.data_sink(train_one_step, dataset, sink_size=sink_size, jit_config=ms.JitConfig())
+    loop_num = int(epoch * var_step_per_epoch / sink_size)
+
+    loss = 0.0
+    for _ in range(loop_num):
+        loss = sink_process()
+    assert np.allclose(np.array([loss.asnumpy()]), np.array([0.0047495714]), 0.00001, 0.00001)
+    ms.reset_auto_parallel_context()
