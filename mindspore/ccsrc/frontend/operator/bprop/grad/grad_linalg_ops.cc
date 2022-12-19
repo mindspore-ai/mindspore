@@ -59,6 +59,7 @@ NodePtr SafeReciprocal(const BpropIRBuilder *ib, const NodePtr &x) {
   return ib->Mul(x, ib->Reciprocal(ib->Cast(ib->Add(ib->Square(x), ib->Tensor(1e-20, ib->GetDtype(x))), kFloat32)));
 }
 
+REG_BPROP_BUILDERS_BEGIN(GradLinalgOps)
 REG_BPROP_BUILDER("Svd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto full_matrices = GetValue<bool>(ib->GetAttr("full_matrices"));
   auto compute_uv = GetValue<bool>(ib->GetAttr("compute_uv"));
@@ -141,4 +142,5 @@ REG_BPROP_BUILDER("Svd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
     return {da_before_transpose};
   }
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

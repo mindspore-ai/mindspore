@@ -29,6 +29,7 @@
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/expander.h"
 #include "pipeline/jit/pass.h"
+#include "frontend/operator/bprop/bprop.h"
 
 namespace mindspore {
 namespace pynative {
@@ -1546,6 +1547,10 @@ void GradExecutor::SaveOutputNodeMap(const std::string &obj_id, const FrontendOp
 void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNodePtr &cnode,
                             const ValuePtr &op_out) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
+#ifdef _MSC_VER
+  static WinBpropRegister reg;
+  reg.EmptyFunc();
+#endif
   if (grad_is_running_ && !bprop_grad_stack_.top().second) {
     MS_LOG(DEBUG) << "Custom bprop, no need do op grad";
     return;

@@ -30,5 +30,14 @@ void BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, DoutUserType *dout
 
 using UserType = std::map<AnfNodePtr, std::vector<std::pair<CNodePtr, int>>>;
 bool BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, UserType *users);
+
+#ifdef _MSC_VER
+class WinBpropRegister {
+ public:
+  WinBpropRegister() { expander::bprop::RegBpropExpanders(); }
+  ~WinBpropRegister() {}
+  void EmptyFunc() const {}
+};
+#endif
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_BPROP_BPROP_H_

@@ -18,6 +18,7 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
+REG_BPROP_BUILDERS_BEGIN(GradScipyOps)
 REG_BPROP_BUILDER("SolveTriangular").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto reverse_perm = [](const ShapeVector &shape) -> ShapeVector {
     ShapeVector perm;
@@ -171,4 +172,5 @@ REG_BPROP_BUILDER("Eigh").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
                     {{"max_length", MakeValue<int64_t>(200000000)}, {"align", MakeValue<std::string>("RIGHT_LEFT")}});
   return {grad_a};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
