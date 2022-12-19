@@ -211,6 +211,9 @@ int64_t GetIntValue(const NodePtr &node) { return AnfUtils::GetIntValue(node->ge
 std::vector<int64_t> GetIntList(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    tensor->data_sync();
     return CheckAndConvertUtils::CheckTensorIntValue("tensor", value, "bprop");
   } else {
     return CheckAndConvertUtils::CheckIntOrTupleInt("value", value, "bprop");
