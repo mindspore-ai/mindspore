@@ -21,6 +21,13 @@
 #include <vector>
 #include "src/litert/kernel/cpu/fp32/matmul_fp32_base.h"
 namespace mindspore::kernel {
+struct MatmulSlice {
+  int row_s_ = 0;
+  int row_e_ = 0;
+  int col_s_ = 0;
+  int col_e_ = 0;
+};
+
 class MatmulFp32AVX512CPUKernel : public MatmulFp32BaseCPUKernel {
  public:
   MatmulFp32AVX512CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -29,12 +36,25 @@ class MatmulFp32AVX512CPUKernel : public MatmulFp32BaseCPUKernel {
   ~MatmulFp32AVX512CPUKernel() = default;
 
   void InitGlobalVariable() override;
+  int InitParameter() override;
+  int GetThreadCuttingPolicy() override;
   int PackMatrixAImplOpt() override;
   int ParallelRunByBatch(int task_id) const override;
   int ParallelRunByRow(int task_id) const override;
   int ParallelRunByOC(int task_id) const override;
+  int ParallelRunByGEMM(int task_id) const override;
+  int ParallelRunByBatchColRowGEMM(int task_id) const override;
+  int ParallelRunByRow1Deep1GEPDOT(int task_id) const override;
+  int ParallelRunByGEPDOT(int task_id) const override;
+  int ParallelRunByGEPM(int task_id) const override;
+  void BatchRowThreadCut();
+  void BatchColThreadCut();
+  void BatchColRowSliceThreadCut();
+  void BatchColRowThreadCut();
   bool CheckThreadCuttingByRow() override;
   bool SupportMulBatchCuttingByRow() { return true; }
+
+  std::vector<std::vector<MatmulSlice>> matmul_slice_set_;
 };
 }  // namespace mindspore::kernel
 #endif
