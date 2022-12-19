@@ -175,7 +175,9 @@ mindspore.ops
     mindspore.ops.angle
     mindspore.ops.arccosh
     mindspore.ops.arcsin
+    mindspore.ops.arcsinh
     mindspore.ops.arctan
+    mindspore.ops.arctanh
     mindspore.ops.arctan2
     mindspore.ops.asin
     mindspore.ops.asinh
@@ -207,6 +209,7 @@ mindspore.ops
     mindspore.ops.copysign
     mindspore.ops.cos
     mindspore.ops.cosh
+    mindspore.ops.cosine_similarity
     mindspore.ops.deg2rad
     mindspore.ops.digamma
     mindspore.ops.div
