@@ -44,6 +44,7 @@ using AscendAutoMonad = mindspore::session::AscendAutoMonad;
 
 namespace {
 const std::unordered_set<std::string> kDefaultFormatAclOps = {kAddNOpName};
+const size_t DEFAULT_MAX_COMM_OP_REUSE_NUM = 1000;
 
 void RemoveUnusedValueNode(const KernelGraphPtr &graph) {
   auto m = graph->manager();
@@ -249,9 +250,21 @@ void AscendGraphOptimization::CommOpReuse(const KernelGraphPtr &graph) const {
   if (!graph->is_graph_run_mode() || max_comm_op_reuse_num_env.empty()) {
     return;
   }
-  MS_LOG(INFO) << "Status record: start comm op reuse. graph id: " << graph->graph_id();
-  const size_t max_comm_op_reuse_num = LongToSize(std::stol(max_comm_op_reuse_num_env));
+  int64_t max_comm_op_reuse_num_l = -1;
+  TRY_AND_CATCH_WITH_EXCEPTION((max_comm_op_reuse_num_l = std::stol(max_comm_op_reuse_num_env)),
+                               "Invalid MS_COMM_COMPILER_OPT value! It should be -1 or a positive integer.");
+  size_t max_comm_op_reuse_num;
+  if (max_comm_op_reuse_num_l == -1) {
+    max_comm_op_reuse_num = DEFAULT_MAX_COMM_OP_REUSE_NUM;
+  } else if (max_comm_op_reuse_num_l > 0) {
+    max_comm_op_reuse_num = LongToSize(max_comm_op_reuse_num_l);
+  } else {
+    MS_LOG(WARNING) << "MS_COMM_COMPILER_OPT should be -1 or a positive integer but set to " << max_comm_op_reuse_num_l
+                    << ". Comm subgraph reuse is disabled.";
+    return;
+  }
   MS_LOG(INFO) << "MAX_COMM_OP_REUSE_NUM: " << max_comm_op_reuse_num;
+  MS_LOG(INFO) << "Status record: start comm op reuse. graph id: " << graph->graph_id();
   opt::AscendCommOpReuse comm_io_reuse(graph, max_comm_op_reuse_num);
   comm_io_reuse.Run();
   MS_LOG(INFO) << "Status record: end comm op reuse. graph id: " << graph->graph_id();
