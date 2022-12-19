@@ -59,9 +59,9 @@ bool NanToNumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNanToNumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNanToNumOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
+  auto input = static_cast<T *>(inputs[0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output = static_cast<T *>(outputs[0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
 
   T posinf_value = static_cast<T>(posinf_value_);

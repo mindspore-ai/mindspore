@@ -185,8 +185,12 @@ uint32_t ScaleAndTranslateCpuKernelMod::GatherSpans(
 
 template <typename T>
 inline const T &Clamp(const T &low, const T &high, const T &value) {
-  if (high < value) return high;
-  if (value < low) return low;
+  if (high < value) {
+    return high;
+  }
+  if (value < low) {
+    return low;
+  }
   return value;
 }
 

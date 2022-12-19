@@ -58,7 +58,6 @@ class QuantileCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
-  bool CheckInputAndAttr();
   int dim_ = 0;
   bool keep_dims_ = false;
   std::vector<int64_t> input_shape_;
