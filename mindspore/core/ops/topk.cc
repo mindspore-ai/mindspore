@@ -63,11 +63,13 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
   } else {
     MS_LOG(EXCEPTION) << "Invalid abstract type:" << input_args[kInputIndex1]->type_name();
   }
-  auto ndims = x_shape.size() - 1;
-  if (x_shape[ndims] != abstract::Shape::kShapeDimAny) {
-    std::pair<int64_t, int64_t> k_range(0, x_shape[ndims]);
-    CheckAndConvertUtils::CheckInRange<int64_t>("k", k_v, kIncludeRight, k_range, prim_name);
-    x_shape[ndims] = k_v;
+  if (!x_shape.empty()) {
+    auto ndims = x_shape.size() - 1;
+    if (x_shape[ndims] != abstract::Shape::kShapeDimAny) {
+      std::pair<int64_t, int64_t> k_range(0, x_shape[ndims]);
+      CheckAndConvertUtils::CheckInRange<int64_t>("k", k_v, kIncludeRight, k_range, prim_name);
+      x_shape[ndims] = k_v;
+    }
   }
 
   auto out_shape_ptr = std::make_shared<abstract::Shape>(x_shape);
