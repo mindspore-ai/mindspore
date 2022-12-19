@@ -72,7 +72,7 @@ Depth512:
             mov x23, x12 // rhs
             mov x21, #512  // depth unit
             cmp x9, #4
-            blt LoopCol12x4
+            ble LoopCol12x4
 
             LoopCol12x8:
                 cbz x20, Reload12x8
@@ -240,7 +240,7 @@ Depth512:
             mov x23, x12 // rhs
             mov x21, #512  // depth unit
             cmp x9, #4
-            blt LoopCol8x4
+            ble LoopCol8x4
 
             LoopCol8x8:
                 cbz x20, Reload8x8
@@ -272,7 +272,7 @@ Depth512:
                 ld1 {v20.4s, v21.4s}, [x15]
                 ld1 {v22.4s, v23.4s}, [x15]
                 add x15, x15, #32
-                b Compute12x8
+                b Compute8x8
              Reload8x8:
                 mov x15, x14
                 ld1 {v8.4s, v9.4s}, [x15], x8
@@ -368,7 +368,7 @@ Depth512:
             mov x23, x12 // rhs
             mov x21, #512  // depth unit
             cmp x9, #4
-            blt LoopCol4x4
+            ble LoopCol4x4
 
             LoopCol4x8:
                 cbz x20, Reload4x8
@@ -422,7 +422,7 @@ Depth512:
                 dup v10.2d, xzr
                 dup v12.2d, xzr
                 dup v14.2d, xzr
-                b Compute8x4
+                b Compute4x4
             InitFromBias4x4:
                 ld1 {v8.4s}, [x15]
                 ld1 {v10.4s}, [x15]
@@ -894,7 +894,7 @@ DepthTail:
             mov x23, x12 // rhs
             mov x21, x5  // depth unit
             cmp x9, #4
-            blt LoopTailCol12x4
+            ble LoopTailCol12x4
 
             LoopTailCol12x8:
                 cbz x20, ReloadTail12x8
@@ -1164,7 +1164,7 @@ DepthTail:
             mov x23, x12 // rhs
             mov x21, x5  // depth unit
             cmp x9, #4
-            blt LoopTailCol8x4
+            ble LoopTailCol8x4
 
             LoopTailCol8x8:
                 cbz x20, ReloadTail8x8
@@ -1196,7 +1196,7 @@ DepthTail:
                 ld1 {v20.4s, v21.4s}, [x15]
                 ld1 {v22.4s, v23.4s}, [x15]
                 add x15, x15, #32
-                b ComputeTail12x8
+                b ComputeTail8x8
              ReloadTail8x8:
                 mov x15, x14
                 ld1 {v8.4s, v9.4s}, [x15], x8
@@ -1370,7 +1370,7 @@ DepthTail:
             mov x23, x12 // rhs
             mov x21, x5  // depth unit
             cmp x9, #4
-            blt LoopTailCol4x4
+            ble LoopTailCol4x4
 
             LoopTailCol4x8:
                 cbz x20, ReloadTail4x8
@@ -1455,7 +1455,7 @@ DepthTail:
                 dup v10.2d, xzr
                 dup v12.2d, xzr
                 dup v14.2d, xzr
-                b ComputeTail8x4
+                b ComputeTail4x4
             InitTailFromBias4x4:
                 ld1 {v8.4s}, [x15]
                 ld1 {v10.4s}, [x15]
