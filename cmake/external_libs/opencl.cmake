@@ -33,23 +33,12 @@ function(gene_opencl CL_SRC_DIR)
     endif()
     file(GLOB_RECURSE CL_LIST ${CL_SRC_DIR}/*.cl)
     foreach(file_path ${CL_LIST})
-        file(REMOVE ${file_path}.inc)
+        set(out_file_path "${file_path}.inc")
+        file(REMOVE ${out_file_path})
+
         string(REGEX REPLACE ".+/(.+)\\..*" "\\1" kernel_name "${file_path}")
-        set(inc_file_ex "${file_path}.inc")
-        execute_process(
-                COMMAND bash -c "sed 's/\\\\/\\\\\\\\/g' "
-                COMMAND bash -c "sed 's/\\\"/\\\\\\\"/g' "
-                COMMAND bash -c "sed 's/$/\\\\n\\\" \\\\/' "
-                COMMAND bash -c "sed 's/^/\\\"/' "
-                WORKING_DIRECTORY ${CL_SRC_DIR}
-                INPUT_FILE ${file_path}
-                OUTPUT_FILE ${inc_file_ex}
-                RESULT_VARIABLE RESULT)
-        if(NOT RESULT EQUAL "0")
-            message(FATAL_ERROR "error! when generate ${inc_file_ex}")
-        endif()
-        __exec_cmd(COMMAND sed -i "1i\\static const char *${kernel_name}_source =\\\"\\\\n\\\" \\\\"
-          ${inc_file_ex} WORKING_DIRECTORY ${CL_SRC_DIR})
-        __exec_cmd(COMMAND sed -i "$a\\\\\;" ${inc_file_ex} WORKING_DIRECTORY ${CL_SRC_DIR})
+        file(READ ${file_path} cl_program)
+        string(CONCAT cl_str "static const std::string ${kernel_name}_source = R\"(\n" "${cl_program}" ")\";")
+        file(WRITE ${out_file_path} "${cl_str}")
     endforeach()
 endfunction()

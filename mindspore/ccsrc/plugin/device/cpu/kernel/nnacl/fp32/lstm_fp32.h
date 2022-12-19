@@ -43,7 +43,7 @@ int ElementOptMulAcc(const float *input0, const float input1, float *output, con
 
 void LstmStepUnit(float *output, float *input_gate, float *forget_gate, float *cell_gate, float *output_gate,
                   const float *state_weight, const float *state_bias, float *hidden_state, float *cell_state,
-                  float *buffer[7], const LstmParameter *lstm_param);
+                  float *buffer[C6NUM], const LstmParameter *lstm_param);
 
 void Lstm(float *output, const float *input, const float *weight_i, const float *weight_h, const float *input_bias,
           const float *state_bias, float *hidden_state, float *cell_state, float *buffer[7],
