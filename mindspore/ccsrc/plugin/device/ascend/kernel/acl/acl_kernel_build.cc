@@ -28,58 +28,62 @@ namespace mindspore {
 namespace kernel {
 namespace {
 static const std::unordered_set<std::string> kAclStaticList = {kTensorMoveOpName, kAddNOpName};
+
+void GetStringTypeSize(const AnfNodePtr &node, size_t current_idx, size_t real_index,
+                       std::vector<size_t> *input_size_list) {
+  MS_EXCEPTION_IF_NULL(input_size_list);
+  if (!node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "This node is not cnode, " << node->fullname_with_scope();
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto input_node = common::AnfAlgo::GetInputNode(cnode, current_idx);
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (input_node->isa<ValueNode>()) {
+    auto value_ptr = GetValueNode(input_node);
+    auto value = GetValue<std::string>(value_ptr);
+    (*input_size_list)[real_index] = value.size();
+  }
+}
+
 bool SetIOInputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &input_num,
                     std::vector<size_t> *input_size_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(input_size_list);
-
-  input_size_list->clear();
-  const auto &input_names = AclUtils::GetOpInputAnchorNames(anf_node);
-  input_size_list->resize(input_names.size(), SIZE_MAX);
   for (size_t i = 0; i < input_num; i++) {
-    auto index = AnfAlgo::GetInputKernelIdxByGraphIdx(anf_node, i);
-    if (input_names.find(index) == input_names.end()) {
-      MS_LOG(INFO) << "Error input index for adaptor:" << index << " of node " << anf_node->fullname_with_scope();
+    auto index = AclUtils::GetInputKernelIdxByGraphIdx(anf_node, i);
+    if (index < 0) {
       continue;
     }
-
-    auto shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);
+    if (index >= SizeToInt(input_size_list->size())) {
+      MS_LOG(EXCEPTION) << "Invalid index: " << index << ", vector length: " << input_size_list->size()
+                        << ", node: " << anf_node->fullname_with_scope();
+    }
     if (AnfAlgo::GetInputDeviceDataType(anf_node, i) == kObjectTypeString) {
-      if (!anf_node->isa<CNode>()) {
-        MS_LOG(EXCEPTION) << "anf_node is not CNode.";
-      }
-      auto cnode = anf_node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      if (cnode->inputs().size() <= i) {
-        MS_LOG(ERROR) << "cnode inputs size " << cnode->inputs().size() << " is smaller than " << i + 1;
-        return false;
-      }
-      auto input_node = cnode->inputs()[i + 1];
-      MS_EXCEPTION_IF_NULL(input_node);
-      if (input_node->isa<ValueNode>()) {
-        auto value_ptr = GetValueNode(input_node);
-        auto value = GetValue<std::string>(value_ptr);
-        (*input_size_list)[index] = value.size();
-      }
+      GetStringTypeSize(anf_node, i, index, input_size_list);
     } else {
       auto type_ptr = TypeIdToType(AnfAlgo::GetInputDeviceDataType(anf_node, i));
       int64_t size_i = 1;
-      if (!GetShapeSize(shape_i, type_ptr, &size_i)) {
-        MS_LOG(INFO) << "Empty input " << i << " with node " << anf_node->DebugString();
+      const auto &device_shape = AnfAlgo::GetInputDeviceShape(anf_node, i);
+      if (!GetShapeSize(device_shape, type_ptr, &size_i)) {
+        MS_LOG(INFO) << "Empty shape or invalid type, shape: " << device_shape << ", type: " << type_ptr
+                     << ", index: " << i << ", using default: SIZE_MAX. Node: " << anf_node->fullname_with_scope();
         continue;
       }
       (*input_size_list)[index] = LongToSize(size_i);
     }
   }
-
   return true;
 }
 
 bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const AclKernelModPtr &kernel_mod_ptr) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
-  std::vector<size_t> input_size_list;
-  std::vector<size_t> output_size_list;
+  const auto &input_names = AclUtils::GetOpInputAnchorNames(anf_node);
+  const auto &output_names = AclUtils::GetOpOutputAnchorNames(anf_node);
+  std::vector<size_t> input_size_list(input_names.size(), kSizeMax);
+  std::vector<size_t> output_size_list(output_names.size(), kSizeMax);
+
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
   size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
 
@@ -93,12 +97,15 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const AclKernelModPtr &
   if (output_num == 1 && HasAbstractMonad(anf_node)) {
     output_num = 0;
   }
-  const auto &output_names = AclUtils::GetOpOutputAnchorNames(anf_node);
-  if (output_names.size() != output_num) {
-    MS_LOG(EXCEPTION) << "Error output size between " << output_names.size() << " and " << output_num;
-  }
-  output_size_list.resize(output_num, SIZE_MAX);
+  // process output
   for (size_t i = 0; i < output_num; i++) {
+    if (AclUtils::GetOutputKernelIdxByGraphIdx(anf_node, i) < 0) {
+      continue;
+    }
+    if (i >= output_size_list.size()) {
+      MS_LOG(EXCEPTION) << "Invalid index: " << i << ", vector length: " << output_size_list.size()
+                        << ", node: " << anf_node->fullname_with_scope();
+    }
     auto shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
     TypePtr type_ptr = TypeIdToType(AnfAlgo::GetOutputDeviceDataType(anf_node, i));
     int64_t size_i = 1;
@@ -121,8 +128,6 @@ void SetGeInfo(const AnfNodePtr &node, const AclKernelModPtr &kernel_mod_ptr) {
   const auto &output_desc_list = AclUtils::GetOutputTensorDesc(node);
   kernel_mod_ptr->SetInputDescList(input_desc_list);
   kernel_mod_ptr->SetOutputDescList(output_desc_list);
-  auto attr_list = GeOpConvertor::GetAttrAndValue(node, true);
-  kernel_mod_ptr->SetAttrList(attr_list);
   if (kAclStaticList.count(op_type) == 0) {
     kernel_mod_ptr->SetDynamic(true);
   }

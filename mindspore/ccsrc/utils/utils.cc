@@ -43,7 +43,7 @@ bool IsOneOf3DFormat(const std::string &format) {
 
 bool IsOneOfNoPaddingFormat(const std::string &format) {
   const std::set<std::string> kNoPaddingFormatSet = {kOpFormat_ChannelLast, kOpFormat_FRAC_NZ, kOpFormat_FRACTAL_ZN_RNN,
-                                                     kOpFormat_ND_RNN_BIAS};
+                                                     kOpFormat_ND_RNN_BIAS, kOpFormat_DEFAULT};
 
   auto iter = kNoPaddingFormatSet.find(format);
   return iter != kNoPaddingFormatSet.end();

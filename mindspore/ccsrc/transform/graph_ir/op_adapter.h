@@ -237,6 +237,7 @@ class OpAdapter : public BaseOpAdapter {
   const mindspore::HashMap<int, DynInputDesc> &getDynInputMap() override { return dyn_input_map_; }
   const mindspore::HashMap<int, SubGraphDesc> &getSubgraphMap() override { return subgraph_map_; }
   const mindspore::HashMap<int, OutputDesc> &getOutputMap() override { return output_map_; }
+  const mindspore::HashMap<int, DynOutputDesc> &getDynOutputMap() override { return dyn_output_map_; }
   const mindspore::HashMap<int, DynSubGraphDesc> &getDynSubgraphMap() override { return dyn_subgraph_map_; }
   std::map<std::string, ValuePtr> GetNormalOpAttrList(const AnfNodePtr &node) override {
     return impl_->GetNormalOpAttrList(node);

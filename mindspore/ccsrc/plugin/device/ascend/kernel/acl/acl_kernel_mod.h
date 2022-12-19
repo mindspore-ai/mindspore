@@ -43,19 +43,15 @@ class AclKernelMod : public AscendKernelMod {
   void SetOpType(const std::string &op_type) { op_type_ = op_type; }
   void SetInputDescList(const std::vector<GeTensorDescPtr> &input_desc_list) { input_desc_list_ = input_desc_list; }
   void SetOutputDescList(const std::vector<GeTensorDescPtr> &output_desc_list) { output_desc_list_ = output_desc_list; }
-  void SetAttrList(const std::map<std::string, ValuePtr> &attr_list) { attr_list_ = attr_list; }
   void SetDynamic(const bool is_dynamic) { is_dynamic_ = is_dynamic; }
 
  protected:
   void SyncData() override;
-  bool SkipUnRunNode(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, void *stream_ptr,
-                     const size_t input_size);
   void ProcessAttribute(const std::shared_ptr<AclOpDesc> &op_desc_ptr);
 
  private:
   std::vector<GeTensorDescPtr> input_desc_list_{};
   std::vector<GeTensorDescPtr> output_desc_list_{};
-  std::map<std::string, ValuePtr> attr_list_{};
   std::string op_type_{};
   bool is_dynamic_{false};
 };

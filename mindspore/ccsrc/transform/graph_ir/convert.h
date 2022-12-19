@@ -73,6 +73,10 @@ class GeOpConvertor {
   static std::map<int, std::string> GetAclInputNames(const AnfNodePtr &node);
 
   static std::map<int, std::string> GetAclOutputNames(const AnfNodePtr &node);
+
+  static std::map<int, std::string> GetAclDynamicInputNames(const AnfNodePtr &node);
+
+  static std::map<int, std::string> GetAclDynamicOutputNames(const AnfNodePtr &node);
 };
 
 class DfGraphConvertor {

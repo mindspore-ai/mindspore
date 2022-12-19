@@ -49,6 +49,7 @@ ATTR_MAP(Conv2DBackpropInput) = {
 };
 OUTPUT_MAP(Conv2DBackpropInput) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv2DBackpropInput, prim::kPrimConv2DBackpropInput->name(), ADPT_DESC(Conv2DBackpropInput))
+REG_ADPT_DESC(Conv2DBackpropInputD, kNameConv2DBackpropInputD, ADPT_DESC(Conv2DBackpropInput))
 
 // Conv2DBackpropInputD
 INPUT_MAP(Conv2DBackpropInputD) = {{1, INPUT_DESC(out_backprop)}, {2, INPUT_DESC(filter)}};
@@ -62,7 +63,6 @@ ATTR_MAP(Conv2DBackpropInputD) = {
   {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
 };
 OUTPUT_MAP(Conv2DBackpropInputD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Conv2DBackpropInputD, kNameConv2DBackpropInputD, ADPT_DESC(Conv2DBackpropInputD))
 
 // Conv2DBackpropInput for tf inference
 REG_ADPT_DESC(Conv2DBackpropInputV2, kNameConv2DBackpropInputV2, ADPT_DESC(Conv2DBackpropInput))
@@ -108,6 +108,7 @@ ATTR_MAP(Conv2DBackpropFilter) = {
 };
 OUTPUT_MAP(Conv2DBackpropFilter) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv2DBackpropFilter, prim::kPrimConv2DBackpropFilter->name(), ADPT_DESC(Conv2DBackpropFilter))
+REG_ADPT_DESC(Conv2DBackpropFilterD, kNameConv2DBackpropFilterD, ADPT_DESC(Conv2DBackpropFilter))
 
 // Conv2DBackpropFilterD
 INPUT_MAP(Conv2DBackpropFilterD) = {{1, INPUT_DESC(out_backprop)}, {2, INPUT_DESC(x)}};
@@ -121,7 +122,6 @@ ATTR_MAP(Conv2DBackpropFilterD) = {
   {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
 };
 OUTPUT_MAP(Conv2DBackpropFilterD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Conv2DBackpropFilterD, kNameConv2DBackpropFilterD, ADPT_DESC(Conv2DBackpropFilterD))
 
 // Conv3DTransposeD
 INPUT_MAP(Conv3DTransposeD) = {

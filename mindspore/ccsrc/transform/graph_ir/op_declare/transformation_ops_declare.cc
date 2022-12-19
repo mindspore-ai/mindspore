@@ -64,6 +64,7 @@ INPUT_MAP(Transpose) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(perm)}};
 ATTR_INPUT_MAP(Transpose) = {{"perm", "perm"}};
 ATTR_MAP(Transpose) = EMPTY_ATTR_MAP;
 // Do not set Transpose operator output descriptor
+OUTPUT_MAP(Transpose) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Transpose, prim::kPrimTranspose->name(), ADPT_DESC(Transpose))
 REG_ADPT_DESC(TransposeD, prim::kPrimTransposeD->name(), ADPT_DESC(Transpose))
 

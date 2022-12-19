@@ -2970,6 +2970,10 @@ std::map<int, std::string> GeOpConvertor::GetAclInputNames(const AnfNodePtr &nod
   for (const auto &[k, v] : adapterPtr->getInputMap()) {
     input_names.emplace(k, v.name);
   }
+  // dynamic input
+  for (const auto &[k, v] : adapterPtr->getDynInputMap()) {
+    input_names.emplace(k, v.name);
+  }
   return input_names;
 }
 
@@ -2984,7 +2988,38 @@ std::map<int, std::string> GeOpConvertor::GetAclOutputNames(const AnfNodePtr &no
   for (const auto &[k, v] : adapterPtr->getOutputMap()) {
     output_names.emplace(k, v.name);
   }
+
+  // dynamic output
+  for (const auto &[k, v] : adapterPtr->getDynOutputMap()) {
+    output_names.emplace(k, v.name);
+  }
   return output_names;
+}
+
+std::map<int, std::string> GeOpConvertor::GetAclDynamicInputNames(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  OpAdapterPtr adapterPtr = FindAdapter(node, true);
+  if (adapterPtr == nullptr) {
+    MS_LOG(EXCEPTION) << "Can't find a adapter for op:" << node->DebugString();
+  }
+  std::map<int, std::string> dyn_input_names;
+  for (const auto &[k, v] : adapterPtr->getDynInputMap()) {
+    dyn_input_names.emplace(k, v.name);
+  }
+  return dyn_input_names;
+}
+
+std::map<int, std::string> GeOpConvertor::GetAclDynamicOutputNames(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  OpAdapterPtr adapterPtr = FindAdapter(node, true);
+  if (adapterPtr == nullptr) {
+    MS_LOG(EXCEPTION) << "Can't find a adapter for op:" << node->DebugString();
+  }
+  std::map<int, std::string> dyn_output_names;
+  for (const auto &[k, v] : adapterPtr->getDynOutputMap()) {
+    dyn_output_names.emplace(k, v.name);
+  }
+  return dyn_output_names;
 }
 }  // namespace transform
 }  // namespace mindspore

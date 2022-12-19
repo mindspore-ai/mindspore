@@ -26,7 +26,7 @@ DYN_OUTPUT_MAP(SplitD) = {{0, DYN_OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Split, kNameSplit, ADPT_DESC(SplitD))
 
 // Split
-INPUT_MAP(Split) = {{1, INPUT_DESC(split_dim)}, {2, INPUT_DESC(x)}};
+INPUT_MAP(Split) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(split_dim)}};
 ATTR_INPUT_MAP(Split) = {{"axis", "split_dim"}};
 ATTR_MAP(Split) = {{"num_split", ATTR_DESC(num_split, AnyTraits<int64_t>())}};
 DYN_OUTPUT_MAP(Split) = {{0, DYN_OUTPUT_DESC(y)}};
@@ -61,11 +61,12 @@ OUTPUT_MAP(ConcatD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ConcatD, prim::kPrimConcat->name(), ADPT_DESC(ConcatD))
 
 // Concat
-INPUT_MAP(Concat) = {{1, INPUT_DESC(concat_dim)}};
-DYN_INPUT_MAP(Concat) = {{2, DYN_INPUT_DESC(x)}};
+INPUT_MAP(Concat) = {{2, INPUT_DESC(concat_dim)}};
+DYN_INPUT_MAP(Concat) = {{1, DYN_INPUT_DESC(x)}};
+ATTR_INPUT_MAP(Concat) = {{"axis", "concat_dim"}};
 ATTR_MAP(Concat) = {{"inputNums", ATTR_DESC(N, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Concat) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Concat, prim::kPrimConcatD->name(), ADPT_DESC(ConcatD))
+REG_ADPT_DESC(Concat, prim::kPrimConcatD->name(), ADPT_DESC(Concat))
 
 // ConcatV2 Inference for tf
 DYN_INPUT_MAP(ConcatV2) = {{1, DYN_INPUT_DESC(x)}};
@@ -82,4 +83,5 @@ ATTR_MAP(SplitV) = {{"num_split", ATTR_DESC(num_split, AnyTraits<int64_t>())}};
 ATTR_INPUT_MAP(SplitV) = {{"size_splits", "size_splits"}, {"split_dim", "split_dim"}};
 DYN_OUTPUT_MAP(SplitV) = {{0, DYN_OUTPUT_DESC(y)}};
 REG_ADPT_DESC(SplitV, prim::kPrimSplitV->name(), ADPT_DESC(SplitV))
+REG_ADPT_DESC(SplitVD, prim::kPrimSplitVD->name(), ADPT_DESC(SplitV))
 }  // namespace mindspore::transform
