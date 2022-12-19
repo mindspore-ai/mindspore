@@ -49,6 +49,7 @@ class StridedSliceInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status GetMask(const std::string &mask_name, int64_t *mask_value);
+  Status ChangeCNodeBeginEnd();
 
  private:
   std::vector<int64_t> begin_;
@@ -59,6 +60,7 @@ class StridedSliceInfo : public OperatorInfo {
   int64_t ellipsis_mask_ = 0;
   int64_t new_axis_mask_ = 0;
   int64_t shrink_axis_mask_ = 0;
+  bool skip_redistribution_ = false;
   std::vector<bool> begin_mask_bitmap_;
   std::vector<bool> end_mask_bitmap_;
   std::vector<bool> ellipsis_mask_bitmap_;

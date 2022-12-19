@@ -67,6 +67,8 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
   if (!IsPrimitiveCNode(node, prim::kPrimStridedSlice)) {
     return;
   }
+  bool full_batch = ParallelContext::GetInstance()->full_batch();
+  auto dev_num = g_device_manager->stage_device_num();
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<Shapes> shape_list = ExtractShape(cnode);
@@ -82,6 +84,15 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
     for (size_t j = 0; j < shape_list[0][i].size(); j++) {
       input_strategy.push_back(1);
     }
+    static const auto skip_redis = (common::GetEnv("PIPELINE_SLICE_SKIP_REDISTRIBUTION") == "1");
+    if (skip_redis && !full_batch && input_strategy.size() > 0) {
+      input_strategy[0] = dev_num < shape_list[1][0][0] ? dev_num : shape_list[1][0][0];
+      auto prim = GetCNodePrimitive(node);
+      auto attrs = prim->attrs();
+      attrs[parallel::SKIP_REDISTRIBUTION] = MakeValue<bool>(true);
+      prim->SetAttrs(attrs);
+    }
+
     elements.push_back(MakeValue(input_strategy));
   }
   ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
