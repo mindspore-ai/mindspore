@@ -2234,6 +2234,65 @@ def test_generator_traceback():
         pass
 
 
+def test_generator_split_with_yield():
+    """
+    Feature: GeneratorDataset
+    Description: When GeneratorDataset calls split, it can be split if the input is in yield mode
+    Expectation: The dataset is processed as expected
+    """
+    dataset = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
+    dataset_train, dataset_val = dataset.split([0.8, 0.2])
+    assert dataset_train.get_dataset_size() == 51
+    assert dataset_val.get_dataset_size() == 13
+
+
+def test_generator_split_with_getitem():
+    """
+    Feature: GeneratorDataset
+    Description: When GeneratorDataset calls split, it can be split if the input is in getitem mode
+    Expectation: The dataset is processed as expected
+    """
+    dataset_generator = DatasetGenerator()
+    dataset = ds.GeneratorDataset(dataset_generator, ["data"], shuffle=False)
+    dataset_train, dataset_val = dataset.split([0.8, 0.2])
+    assert dataset_train.get_dataset_size() == 8
+    assert dataset_val.get_dataset_size() == 2
+
+
+def test_generator_split_with_next():
+    """
+    Feature: GeneratorDataset
+    Description: When GeneratorDataset calls split, it can be split if the input is in next mode
+    Expectation: The dataset is processed as expected
+    """
+
+    class GetDatasetGenerator:
+        def __init__(self, data):
+            self.__data = data
+            self.__count = 0
+
+        def __next__(self):
+            if self.__count >= 10:
+                raise StopIteration
+
+            self.__count += 1
+            return self.__data
+
+        def __iter__(self):
+            self.__count = 0
+            return self
+
+        def __len__(self):
+            return 10
+
+    data_tuple = (np.array([[1, 2, 3], [2, 3, 4]]),)
+    dataset_generator = GetDatasetGenerator(data_tuple)
+    dataset = ds.GeneratorDataset(dataset_generator, ["data"], shuffle=False)
+    dataset_train, dataset_val = dataset.split([0.8, 0.2])
+    assert dataset_train.get_dataset_size() == 8
+    assert dataset_val.get_dataset_size() == 2
+
+
 if __name__ == "__main__":
     test_generator_0()
     test_generator_1()
@@ -2288,3 +2347,6 @@ if __name__ == "__main__":
     test_generator_with_single_numpy_with_next()
     test_generator_with_single_numpy_with_yield()
     test_generator_traceback()
+    test_generator_split_with_yield()
+    test_generator_split_with_getitem()
+    test_generator_split_with_next()
