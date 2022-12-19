@@ -449,6 +449,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"signbit", std::string("signbit")},                                // signbit()
        {"sinh", std::string("sinh")},                                      // sinh()
        {"sort", std::string("sort")},                                      // sort()
+       {"argsort", std::string("argsort")},                                // argsort()
        {"trunc", std::string("trunc")},                                    // trunc()
        {"where", std::string("where")},                                    // where()
        {"imag", std::string("imag")},                                      // imag()

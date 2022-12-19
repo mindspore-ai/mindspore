@@ -4720,6 +4720,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('sort')(axis=dim, descending=descending)(self)
 
+    def argsort(self, axis=-1, descending=False):
+        """
+        For details, please refer to :func:`mindspore.ops.argsort`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('argsort')(self, axis, descending)
+
     def trunc(self):
         r"""
         Returns a new tensor with the truncated integer values of the elements of input.

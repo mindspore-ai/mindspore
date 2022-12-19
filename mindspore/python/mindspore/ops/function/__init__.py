@@ -133,6 +133,7 @@ from .array_func import (
     diagonal,
     lstsq,
     mvlgamma,
+    argsort,
 )
 from .parameter_func import (
     assign,
