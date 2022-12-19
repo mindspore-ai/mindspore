@@ -128,6 +128,13 @@ void TensorInfo::SetShape(const std::vector<int64_t> &shape) {
   impl_->tensor_impl_.SetShape(shape);
 }
 
+void TensorInfo::SetDataType(const mindspore::DataType data_type) {
+  if (impl_ == nullptr) {
+    return;
+  }
+  impl_->tensor_impl_.SetDataType(data_type);
+}
+
 void TensorInfo::SetData(const void *data, size_t data_len) {
   if (impl_ == nullptr) {
     return;

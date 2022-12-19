@@ -430,6 +430,12 @@ Status TensorRTExecutor::BuildSubGraph(const KernelGraphPtr &kernel_graph) {
   if (status != kSuccess) {
     return status;
   }
+  for (auto &out_tensor_info : outputs_) {
+    if (out_tensor_info.DataType() == DataType::kNumberTypeFloat16) {
+      MS_LOG(INFO) << "output " << out_tensor_info.Name() << " is Float16, set to Float32";
+      out_tensor_info.SetDataType(DataType::kNumberTypeFloat32);
+    }
+  }
   std::vector<TensorInfo> trt_outputs = outputs_;
   std::copy(dump_outputs_.begin(), dump_outputs_.end(), std::back_inserter(trt_outputs));
   tensorrt_graph_ = CreateTensorRTGraph(tensorrt_ops, kernel_graph, tensorrt_subgraph_index, inputs_, trt_outputs);
