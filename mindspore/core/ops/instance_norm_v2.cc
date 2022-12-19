@@ -51,12 +51,14 @@ void InstanceNormV2InputShapeCheck(const PrimitivePtr &primitive, const std::vec
   ShapeVector check_shape = x_shape;
   int64_t image_size = 0;
   constexpr int64_t kDimSizeOne = 1;
-  if (x_shape.size() == kDim4) {
+  size_t dim4 = static_cast<size_t>(kDim4);
+  size_t dim5 = static_cast<size_t>(kDim5);
+  if (x_shape.size() == dim4) {
     // data format NCHW
     check_shape[kFormatNCHWIndexH] = kDimSizeOne;
     check_shape[kFormatNCHWIndexW] = kDimSizeOne;
     image_size = x_shape[kFormatNCHWIndexH] * x_shape[kFormatNCHWIndexW];
-  } else if (x_shape.size() == kDim5) {
+  } else if (x_shape.size() == dim5) {
     // data format NC1HWC0
     check_shape[kFormatNC1HWC0IndexH] = kDimSizeOne;
     check_shape[kFormatNC1HWC0IndexW] = kDimSizeOne;
