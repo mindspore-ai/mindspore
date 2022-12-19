@@ -77,7 +77,6 @@ class ActivationFwdGpuKernelMod : public NativeGpuKernelMod {
   ActivationFunc kernel_func_;
   ShapeVector input_shape_{};
   bool is_null_input_{true};
-  bool is_additional_dtype_{false};
   cudnnHandle_t cudnn_handle_{nullptr};
   cudnnActivationDescriptor_t activation_desc_{nullptr};
   cudnnActivationMode_t mode_{CUDNN_ACTIVATION_SIGMOID};
