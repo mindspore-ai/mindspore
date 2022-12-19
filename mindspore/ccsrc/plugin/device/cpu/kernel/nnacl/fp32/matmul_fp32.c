@@ -346,6 +346,32 @@ void GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, 
 }
 
 // act_type must be 0, 1, 2. 0: no_act, 1: relu, 3: relu6.
+void Row1Deep1GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, int col, int deep,
+                            int act_type) {
+  int index = 0;
+
+  SIMD_RUN_NO_SCALAR(Row1Deep1GemmIsNotPack, index, a, b, c, bias, col, act_type);
+  for (; index < col; ++index) {
+    float dst = a[0] * b[index] + bias[index];
+    ActCompute(32, 0, C6NUM);
+    c[index] = dst;
+  }
+}
+
+// act_type must be 0, 1, 2. 0: no_act, 1: relu, 3: relu6.
+void Row1Deep1NoBiasGemmIsNotPack(const float *a, const float *b, float *c, const float *bias, int col, int deep,
+                                  int act_type) {
+  int index = 0;
+
+  SIMD_RUN_NO_SCALAR(Row1Deep1NoBiasGemmIsNotPack, index, a, b, c, bias, col, act_type);
+  for (; index < col; ++index) {
+    float dst = a[0] * b[index];
+    ActCompute(32, 0, C6NUM);
+    c[index] = dst;
+  }
+}
+
+// act_type must be 0, 1, 2. 0: no_act, 1: relu, 3: relu6.
 void GemmIsNotPackOptimize(const float *a, const float *b, float *c, const float *bias, int m, int k, int act_type) {
   // gemm dot is [m, k] * [k, 1] ==>> [m, 1]
   int m_index = 0;
