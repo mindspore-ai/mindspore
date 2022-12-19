@@ -245,6 +245,7 @@ constexpr char FIELD_SIZE[] = "field_size";
 constexpr char Y[] = "Y";
 constexpr char OPTIMIZER_SUB_STRING[] = "optimizer";
 constexpr char DEVICE[] = "Device";
+constexpr char PARALLEL_OPTIMIZER[] = "parallel_optimizer";
 constexpr char PARALLEL_OPTIMIZER_ALLGATHER[] = "parallel_optimizer_allgather";
 constexpr char PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE[] = "parallel_optimizer_allgather_not_recompute";
 constexpr char PARALLEL_OPTIMIZER_COMM_OP[] = "parallel_optimizer_comm_op";

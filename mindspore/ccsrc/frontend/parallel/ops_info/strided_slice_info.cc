@@ -219,6 +219,11 @@ Status StridedSliceInfo::GetAttrs() {
   ComputeEllipsisMask();
   ComputeNewAxisMask();
   // no need to handle shrink axis mask
+  auto prim = GetCNodePrimitive(cnode_);
+  if (prim->HasAttr(parallel::SKIP_REDISTRIBUTION)) {
+    skip_redistribution_ = GetValue<bool>(prim->GetAttr(parallel::SKIP_REDISTRIBUTION));
+  }
+
   return SUCCESS;
 }
 
@@ -255,7 +260,7 @@ Status StridedSliceInfo::CheckInputStrategy(const Shape &strategy_value) {
 
   for (size_t k = 0; k < begin_.size(); ++k) {
     bool no_fully_fetch = ((begin_[k] != 0) || (end_[k] < input_shape_in_process_[k]));
-    if (no_fully_fetch && (strategy_in_process[k] != 1)) {
+    if (no_fully_fetch && (strategy_in_process[k] != 1) && !skip_redistribution_) {
       MS_LOG(ERROR) << name_
                     << ": When a dimension is not fully fetched, the dimension can not be split now, the begin is "
                     << begin_ << ", the end is " << end_ << ", the index is " << k << ", the input shape in process is "
@@ -348,7 +353,30 @@ Status StridedSliceInfo::InferTensorMap() {
   return SUCCESS;
 }
 
+Status StridedSliceInfo::ChangeCNodeBeginEnd() {
+  if (!skip_redistribution_) {
+    return SUCCESS;
+  }
+  auto shard_size = strategy_->GetInputDim()[0];
+  auto begin_new = begin_;
+  auto end_new = end_;
+  for (size_t i = 0; i < shard_size.size(); ++i) {
+    begin_new[i] = begin_new[i] / shard_size[i];
+    end_new[i] = end_new[i] / shard_size[i];
+  }
+  auto begin_new_value = MakeValue(begin_new);
+  auto end_new_value = MakeValue(end_new);
+  auto new_begin_value_node = std::make_shared<ValueNode>(begin_new_value);
+  auto new_end_value_node = std::make_shared<ValueNode>(end_new_value);
+  cnode_->set_input(INDEX_TWO, new_begin_value_node);
+  cnode_->set_input(INDEX_THREE, new_end_value_node);
+  return SUCCESS;
+}
+
 Status StridedSliceInfo::InferMirrorOps() {
+  if (ChangeCNodeBeginEnd() != SUCCESS) {
+    return FAILED;
+  }
   mirror_ops_.clear();
   if (inputs_tensor_map_.empty()) {
     MS_LOG(ERROR) << name_ << ": The inputs tensor map is empty";
