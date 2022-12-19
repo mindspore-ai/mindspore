@@ -486,7 +486,6 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("insert_hash_table_size", &PSContext::InsertHashTableSize, "Insert hash table size.")
     .def("reinsert_hash_table_size", &PSContext::ReInsertHashTableSize,
          "Insert hash table size with new parameter name.")
-    .def("insert_weight_init_info", &PSContext::InsertWeightInitInfo, "Insert embedding table initialization seed.")
     .def("insert_accumu_init_info", &PSContext::InsertAccumuInitInfo, "Insert accumulation initialization value.")
     .def("clone_hash_table", &PSContext::CloneHashTable, "Clone a hash table.")
     .def("set_cache_enable", &PSContext::set_cache_enable, "Set ps mode cache enable or not.")

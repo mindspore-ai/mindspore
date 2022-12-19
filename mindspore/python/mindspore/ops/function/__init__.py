@@ -488,7 +488,12 @@ from .random_func import (
     random_poisson,
     log_uniform_candidate_sampler,
     shuffle,
-    choice_with_mask
+    choice_with_mask,
+    normal,
+    laplace,
+    gamma,
+    poisson,
+    multinomial,
 )
 from .grad import (
     grad_func,

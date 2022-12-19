@@ -57,10 +57,6 @@ partial = P.Partial()
 depend = P.Depend()
 identity = P.identity()
 
-# Dynamic shape
-is_sequence_value_unknown = Primitive("IsShapeUnKnown")
-is_sequence_shape_unknown = Primitive("IsDimUnKnown")
-
 tuple_setitem = Primitive('tuple_setitem')
 tuple_getitem = Primitive(_constants.kTupleGetItem)
 list_getitem = Primitive('list_getitem')
