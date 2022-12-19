@@ -17,7 +17,10 @@
 #include "extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
 #include "src/common/common.h"
 namespace mindspore {
+std::mutex mtx_manager_;
+
 FuncGraphReuseManager *FuncGraphReuseManager::GetInstance() {
+  std::unique_lock<std::mutex> l(mtx_manager_);
   static FuncGraphReuseManager instance;
   return &instance;
 }
@@ -179,6 +182,7 @@ Status FuncGraphReuseManager::StoreInOut(std::map<std::string, std::map<std::str
 void FuncGraphReuseManager::ReleaseSharedFuncGraph(
   std::map<std::string, std::map<std::string, std::string>> config_info) {
   std::unique_lock<std::mutex> l(mtx_manager_);
+  MS_LOG(INFO) << "ReleaseSharedFuncGraph begin.";
   std::string runner_id = "";
   auto id = config_info.find(lite::kInnerIDs);
   if (id != config_info.end()) {
@@ -192,8 +196,8 @@ void FuncGraphReuseManager::ReleaseSharedFuncGraph(
     MS_LOG(INFO) << "release shared kernel graph of runner id: " << runner_id;
     all_kernel_graph_.erase(runner_id);
   }
-  if (all_in_names_.find(runner_id) != all_in_names_.end() || all_out_names_.find(runner_id) != all_out_names_.end() ||
-      all_in_tensors_.find(runner_id) != all_in_tensors_.end() ||
+  if (all_in_names_.find(runner_id) != all_in_names_.end() && all_out_names_.find(runner_id) != all_out_names_.end() &&
+      all_in_tensors_.find(runner_id) != all_in_tensors_.end() &&
       all_out_tensors_.find(runner_id) != all_out_tensors_.end()) {
     MS_LOG(INFO) << "release shared input/output of runner id: " << runner_id;
     all_in_names_.erase(runner_id);
@@ -209,10 +213,12 @@ void FuncGraphReuseManager::ReleaseSharedFuncGraph(
     }
     all_fb_model_buf_.erase(runner_id);
   }
+  MS_LOG(INFO) << "ReleaseSharedFuncGraph end.";
 }
 
 FuncGraphReuseManager::~FuncGraphReuseManager() {
   std::unique_lock<std::mutex> l(mtx_manager_);
+  MS_LOG(INFO) << "~FuncGraphReuseManager() begin.";
   all_func_graphs_.clear();
   all_kernel_graph_.clear();
   all_in_tensors_.clear();
@@ -225,5 +231,6 @@ FuncGraphReuseManager::~FuncGraphReuseManager() {
     buf = nullptr;
   }
   all_fb_model_buf_.clear();
+  MS_LOG(INFO) << "~FuncGraphReuseManager() end.";
 }
 }  // namespace mindspore

@@ -61,6 +61,8 @@ class ModelWorker {
   void InitModelWorker(const char *model_buf, size_t size, const std::shared_ptr<WorkerConfig> &worker_config,
                        const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success);
 
+  bool ModelIsNull() { return model_is_nullptr_; }
+
  private:
   void Run();
 
@@ -72,7 +74,7 @@ class ModelWorker {
   void PrintWorkerInfo();
 
  private:
-  std::shared_ptr<mindspore::Model> model_ = nullptr;
+  mindspore::Model *model_ = nullptr;
   std::shared_ptr<WorkerConfig> worker_config_ = nullptr;
   std::shared_ptr<PredictTaskQueue> predict_task_queue_ = nullptr;
   std::vector<MSTensor> origin_worker_inputs_;
@@ -84,6 +86,7 @@ class ModelWorker {
   // run
   std::mutex mtx_worker_;
   std::atomic_bool available_ = true;
+  bool model_is_nullptr_ = false;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_WORKER_H_

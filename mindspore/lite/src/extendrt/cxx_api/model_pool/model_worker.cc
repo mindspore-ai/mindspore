@@ -97,12 +97,15 @@ void ModelWorker::Run() {
     task->ready = true;
     predict_task_queue_->ActiveTask(task);
   }
+  delete model_;
+  model_ = nullptr;
+  model_is_nullptr_ = true;
   MS_LOG(INFO) << "task queue all tasks completed.";
 }
 
 Status ModelWorker::Init(const char *model_buf, size_t size) {
   MS_CHECK_TRUE_MSG(model_buf != nullptr, kLiteError, "model_buf is nullptr in model worker.");
-  model_ = std::make_shared<Model>();
+  model_ = new Model();
   if (model_ == nullptr) {
     MS_LOG(ERROR) << "model is nullptr.";
     return kLiteNullptr;
@@ -113,6 +116,9 @@ Status ModelWorker::Init(const char *model_buf, size_t size) {
     auto status = model_->LoadConfig(worker_config_->config_path);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "model load config failed.";
+      delete model_;
+      model_ = nullptr;
+      model_is_nullptr_ = true;
       return kLiteError;
     }
   }
@@ -121,6 +127,9 @@ Status ModelWorker::Init(const char *model_buf, size_t size) {
       auto status = model_->UpdateConfig(section.first, std::make_pair(config.first, config.second));
       if (status != kSuccess) {
         MS_LOG(ERROR) << "Update Config failed, status=" << status;
+        delete model_;
+        model_ = nullptr;
+        model_is_nullptr_ = true;
         return status;
       }
     }
@@ -129,6 +138,9 @@ Status ModelWorker::Init(const char *model_buf, size_t size) {
   auto status = model_->Build(model_buf, size, model_type, worker_config_->context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model build failed in ModelPool Init";
+    delete model_;
+    model_ = nullptr;
+    model_is_nullptr_ = true;
     return status;
   }
   MS_LOG(INFO) << "ms model init done.";
@@ -136,6 +148,9 @@ Status ModelWorker::Init(const char *model_buf, size_t size) {
   origin_worker_outputs_ = model_->GetOutputs();
   if (origin_worker_outputs_.empty() || origin_worker_outputs_.empty()) {
     MS_LOG(ERROR) << "model worker get empty input/output.";
+    delete model_;
+    model_ = nullptr;
+    model_is_nullptr_ = true;
     return kLiteError;
   }
   return kSuccess;

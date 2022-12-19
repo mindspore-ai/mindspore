@@ -379,9 +379,17 @@ function Run_Benchmark() {
           MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} >> "$4"
         fi
         if [ $? = 0 ]; then
-          run_result="$6_$7_${mode}: ${model_file##*/} pass"; echo ${run_result} >> $5
+          if [[ ${extra_info} == "parallel_predict" ]]; then
+            run_result="$6_$7_${mode}: ${model_file##*/} parallel_pass"; echo ${run_result} >> $5
+          else
+            run_result="$6_$7_${mode}: ${model_file##*/} pass"; echo ${run_result} >> $5
+          fi
         else
-          run_result="$6_$7_${mode}: ${model_file##*/} failed"; echo ${run_result} >> $5
+          if [[ ${extra_info} == "parallel_predict" ]]; then
+            run_result="$6_$7_${mode}: ${model_file##*/} parallel_failed"; echo ${run_result} >> $5
+          else
+            run_result="$6_$7_${mode}: ${model_file##*/} failed"; echo ${run_result} >> $5
+          fi
           if [[ $9 != "ON" ]]; then
               return 1
           fi
