@@ -2491,10 +2491,6 @@ test_case_math_ops = [
                         Tensor(np.array([[[1.], [3.]], [[1.], [3.]]]).astype(np.float32)),
                         Tensor(np.random.uniform(0.0, 5.0), mstype.float64)],
         'desc_bprop': [Tensor(np.array([[[1.], [1.]], [[1.], [1.]]]).astype(np.float32))]}),
-    ('MatrixDeterminant', {
-        'block': P.MatrixDeterminant(),
-        'desc_inputs': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))],
-        'desc_bprop': [Tensor(np.array([1.0, 2.0]).astype(np.float32))]}),
     ('Median', {
         'block': Median(global_median=False, axis=0, keep_dims=False),
         'desc_inputs': [Tensor(np.array([[1.0, 7.0, 6.0], [5.0, 1.0, 3.0], [9.0, 17.0, 1.0]]).astype(np.float32))],
@@ -2507,10 +2503,6 @@ test_case_math_ops = [
                         Tensor(np.array([1, 1, 1]).astype(np.int64))),
         'desc_bprop': [],
         'skip': ['backward']}),
-    ('LogMatrixDeterminant', {
-        'block': P.LogMatrixDeterminant(),
-        'desc_inputs': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))],
-        'desc_bprop': [(Tensor(np.array([1, 2]).astype(np.float32)), Tensor(np.array([1, 2]).astype(np.float32)))]}),
     ('Erfinv', {
         'block': P.Erfinv(),
         'desc_inputs': [Tensor(np.array([0.1, 0.1, 0.1]).astype(np.float16))],
