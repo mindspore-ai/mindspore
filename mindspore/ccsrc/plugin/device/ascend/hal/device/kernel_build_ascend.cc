@@ -108,7 +108,28 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
   if (!tbe_nodes.empty()) {
     std::lock_guard<std::mutex> lock(compile_mtx);
     auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
-    build_manager.TbeSingleOpCompile(tbe_nodes);
+    build_manager.ClearFailedLog();
+    auto build_result = build_manager.TbeSingleOpCompile(tbe_nodes);
+    auto build_failed_nodes = build_result.second;
+    if (!build_failed_nodes.empty()) {
+      auto ms_context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(ms_context);
+      bool enable_reconfig_to_acl = !ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+      if (enable_reconfig_to_acl) {
+        for (const auto &node : build_failed_nodes) {
+          auto new_builder =
+            std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
+          MS_EXCEPTION_IF_NULL(new_builder);
+          new_builder->SetKernelType(ACL_KERNEL);
+          MS_LOG(INFO) << "SUCCESS SET ACL KERNEL FOR" << node->DebugString();
+          AnfAlgo::SetSelectKernelBuildInfo(new_builder->Build(), node.get());
+          (void)other_nodes.emplace_back(node);
+        }
+      } else {
+        MS_LOG(EXCEPTION) << "TBE Single op compile failed. Compile failed op number:" << build_failed_nodes.size()
+                          << ", failed log:" << build_manager.failed_log();
+      }
+    }
   }
   bool akg_ret = true;
   if (!akg_nodes.empty()) {
