@@ -65,6 +65,9 @@ class BACKEND_EXPORT PSContext {
   void set_cache_enable(bool cache_enable) const;
   bool cache_enable() const;
 
+  // Set embedding cache size for  ps cache mode.
+  void set_cache_size(size_t cache_size) const;
+
   // Set if the storage format of embedding table is sparse or not.
   void set_sparse_format(bool is_sparse);
 

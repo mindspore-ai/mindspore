@@ -21,7 +21,7 @@ import sys
 from copy import copy
 import numbers
 import mindspore as ms
-from mindspore.common.parameter import Parameter
+from mindspore.common.parameter import Parameter, _get_unique_parameter_key
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import MapTensor_
 from mindspore.ops.operations import _map_tensor_ops
@@ -176,6 +176,9 @@ class MapParameter(Parameter):
             x.default_value = init  # pylint: disable=W0201
         x._map_tensor = MapTensor_(x.key_dtype, x.value_dtype, x.value_shape, x.default_value, x.permit_filter_value,  # pylint: disable=W0212
                                    x.evict_filter_value)
+        x.cache_enable = self.cache_enable
+        if x.cache_enable:
+            x.key = _get_unique_parameter_key()
         return x
 
     def get(self, key_tensor, insert_default_value=True):
