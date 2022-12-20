@@ -1,4 +1,5 @@
 #!/bin/bash
+source ${benchmark_test}/run_benchmark_python.sh
 
 # Example:sh run_remote_ascend.sh -v version -b backend
 while getopts "v:b:d:a:c:" opt; do
@@ -158,6 +159,19 @@ else
     cat ${run_ascend_log_file}
     Print_Benchmark_Result $run_benchmark_result_file
     exit 1
+fi
+
+# run python ST
+if [[ ${backend} =~ "cloud" ]]; then
+  models_python_config=${benchmark_test}/models_python_ascend.cfg
+  models_python_cfg_file_list=("$models_python_config")
+  Run_python_ST ${benchmark_test} ${benchmark_test} ${ms_models_path} ${model_data_path}'/models/hiai' "${models_python_cfg_file_list[*]}" "Ascend"
+  Run_python_status=$?
+  if [[ ${Run_python_status} != 0 ]];then
+      cat ${run_ascend_log_file}
+      echo "Run_python_status failed"
+      exit 1
+  fi
 fi
 
 exit ${Run_benchmark_status}

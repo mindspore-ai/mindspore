@@ -125,7 +125,6 @@ if __name__ == '__main__':
         test_parallel_inference_gpu(model_file, in_data_file_list, shapes)
     elif backend == "Ascend":
         test_model_inference_ascend(model_file, in_data_file_list, shapes)
-        test_parallel_inference_ascend(model_file, in_data_file_list, shapes)
     else:
         raise RuntimeError('not support backend!')
     print("run success.")
