@@ -158,7 +158,7 @@ Print_Benchmark_Result $run_benchmark_result_file
 
 # run python ST
 if [[ $backend == "all" || $backend == "x86_cloud_onnx" ]]; then
-  models_python_config=${basepath}/../config_level0/models_python.cfg
+  models_python_config=${basepath}/../config_level0/models_python_cpu.cfg
   models_python_cfg_file_list=("$models_python_config")
   Run_python_ST ${basepath} ${x86_path} ${ms_models_path} ${models_path} "${models_python_cfg_file_list[*]}" "CPU"
   Run_python_status=$?

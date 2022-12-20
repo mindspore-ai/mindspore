@@ -7,16 +7,20 @@ function PrePareLocal() {
   mkdir -p ${benchmark_test_path}
 
   cp ./scripts/base_functions.sh ${benchmark_test_path} || exit 1
+  cp -r ./python ${benchmark_test_path} || exit 1
   cp ./scripts/ascend/run_converter_ascend.sh ${benchmark_test_path} || exit 1
+  cp ./scripts/run_benchmark_python.sh ${benchmark_test_path} || exit 1
   cp ./scripts/ascend/run_benchmark_ascend.sh ${benchmark_test_path} || exit 1
   if [[ ${backend} =~ "_cloud" ]]; then
       cp ./../${config_folder}/models_ascend_cloud.cfg ${benchmark_test_path} || exit 1
+      cp ./../${config_folder}/models_python_ascend.cfg ${benchmark_test_path} || exit 1
   else
       cp ./../${config_folder}/models_ascend_lite.cfg ${benchmark_test_path} || exit 1
   fi
   if [[ ${backend} =~ "arm" ]]; then
       if [[ ${backend} =~ "_cloud" ]]; then
           cp ${release_path}/linux_aarch64/cloud_fusion/*-linux-${arch}.tar.gz ${benchmark_test_path} || exit 1
+          cp ${release_path}/linux_aarch64/cloud_fusion/*.whl ${benchmark_test_path} || exit 1
       else
           cp ${release_path}/linux_aarch64/ascend/*-linux-${arch}.tar.gz ${benchmark_test_path} || exit 1
       fi
@@ -35,16 +39,20 @@ function PrePareRemote() {
   ssh ${user_name}@${device_ip} "rm -rf ${benchmark_test_path}; mkdir -p ${benchmark_test_path}" || exit 1
 
   scp ./scripts/ascend/run_converter_ascend.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+  scp -r ./python ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp ./scripts/ascend/run_benchmark_ascend.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+  scp ./scripts/run_benchmark_python.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp ./scripts/base_functions.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   if [[ ${backend} =~ "_cloud" ]]; then
       scp ./../${config_folder}/models_ascend_cloud.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+      scp ./../${config_folder}/models_python_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   else
       scp ./../${config_folder}/models_ascend_lite.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   fi
   if [[ ${backend} =~ "arm" ]]; then
       if [[ ${backend} =~ "_cloud" ]]; then
           scp ${release_path}/linux_aarch64/cloud_fusion/*-linux-${arch}.tar.gz ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+          scp ${release_path}/linux_aarch64/cloud_fusion/*.whl ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
       else
           scp ${release_path}/linux_aarch64/ascend/*-linux-${arch}.tar.gz ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
       fi
