@@ -83,6 +83,9 @@ void GetAndCheckAttrMaskV2(const PrimitivePtr &primitive, std::vector<int64_t> *
 
 int64_t GetSlicingLengthForPositiveStridesV2(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) {
   int64_t slicing_length = 0;
+  if (strides == 0) {
+    MS_EXCEPTION(ValueError) << "For 'StridedSliceV2', input 'strides' can not contain 0.";
+  }
   if ((start_pos < x_dim) && end_pos >= -x_dim) {
     if (-x_dim <= start_pos && start_pos < 0) {
       start_pos += x_dim;
@@ -107,6 +110,9 @@ int64_t GetSlicingLengthForPositiveStridesV2(int64_t start_pos, int64_t end_pos,
 
 int64_t GetSlicingLengthForNegativeStridesV2(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) {
   int64_t slicing_length = 0;
+  if (strides == 0) {
+    MS_EXCEPTION(ValueError) << "For 'StridedSliceV2', input 'strides' can not contain 0.";
+  }
   if (start_pos >= -x_dim && end_pos < x_dim) {
     if (start_pos >= 0 && start_pos < x_dim) {
       start_pos += -x_dim;
@@ -385,9 +391,9 @@ abstract::ShapePtr StridedSliceV2InferShape(const PrimitivePtr &primitive,
   auto x_shape = shape_map[kShape];
   bool x_is_dyn =
     std::any_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value == abstract::Shape::kShapeDimAny; });
-  ShapeVector begin_v;
-  ShapeVector end_v;
-  ShapeVector strides_v;
+  ShapeVector begin;
+  ShapeVector end;
+  ShapeVector strides;
   ShapeVector ret_in_shape;
   size_t begin_len = 0;
   size_t end_len = 0;
@@ -395,9 +401,9 @@ abstract::ShapePtr StridedSliceV2InferShape(const PrimitivePtr &primitive,
   const size_t begin_index = 1;
   const size_t end_index = 2;
   const size_t stride_index = 3;
-  bool begin_dynamic = CheckAndGetDynamicSliceV2(input_args[begin_index], "begin", &begin_v, &begin_len);
-  bool end_dynamic = CheckAndGetDynamicSliceV2(input_args[end_index], "end", &end_v, &end_len);
-  bool stride_dynamic = CheckAndGetDynamicSliceV2(input_args[stride_index], "strides", &strides_v, &stride_len);
+  bool begin_dynamic = CheckAndGetDynamicSliceV2(input_args[begin_index], "begin", &begin, &begin_len);
+  bool end_dynamic = CheckAndGetDynamicSliceV2(input_args[end_index], "end", &end, &end_len);
+  bool stride_dynamic = CheckAndGetDynamicSliceV2(input_args[stride_index], "strides", &strides, &stride_len);
   if (begin_len != stride_len || end_len != stride_len) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'begin', 'end' and 'strides' must have the same length, "
                              << "but got length of 'begin': " << begin_len << ", 'end': " << end_len
@@ -409,7 +415,7 @@ abstract::ShapePtr StridedSliceV2InferShape(const PrimitivePtr &primitive,
     slice_dynamic = true;
   }
   if (!slice_dynamic) {
-    ret_in_shape = ComputeInferShapeV2(primitive, begin_v, end_v, strides_v, x_shape);
+    ret_in_shape = ComputeInferShapeV2(primitive, begin, end, strides, x_shape);
     return std::make_shared<abstract::Shape>(ret_in_shape);
   }
   auto ret_shape_map = DynamicComputeInferShapeV2(primitive, x_shape, begin_len);
