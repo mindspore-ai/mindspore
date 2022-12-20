@@ -49,6 +49,7 @@
 #include "tools/common/string_util.h"
 #include "src/common/file_utils.h"
 #include "ops/dynamic_shape.h"
+#include "tools/common/parse_config_utils.h"
 
 namespace mindspore {
 extern "C" {
@@ -425,13 +426,16 @@ int PreInference(const schema::MetaGraphT &meta_graph, bool train_model) {
 
 int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param) {
   lite::ConfigFileParser config_parser;
+  std::map<std::string, std::map<std::string, std::string>> maps;
   auto ret = RET_OK;
+  auto parse_map_ret = RET_OK;
   if (!param->config_file.empty()) {
     ret = config_parser.ParseConfigFile(param->config_file);
+    parse_map_ret = mindspore::lite::ParseConfigFile(param->config_file, &maps);
   } else {
     ret = config_parser.ParseConfigParam(&param->config_param);
   }
-  if (ret != RET_OK) {
+  if (ret != RET_OK || parse_map_ret != RET_OK) {
     MS_LOG(ERROR) << "Parse config param failed.";
     return ret;
   }
@@ -472,6 +476,11 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param) 
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse acl option param failed.";
     return ret;
+  }
+  // parse ascend_context in config file, the priority is higher
+  if (maps.find("ascend_context") != maps.end()) {
+    auto map = maps.at("ascend_context");
+    config_parser.SetParamByConfigfile(param, map);
   }
   if (!param->config_file.empty()) {
     (void)CheckOfflineParallelConfig(param->config_file, &param->parallel_split_config);
