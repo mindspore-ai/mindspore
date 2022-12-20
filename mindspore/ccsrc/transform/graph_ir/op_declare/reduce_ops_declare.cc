@@ -52,21 +52,21 @@ ATTR_MAP(BNTrainingUpdateGrad) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float
 OUTPUT_MAP(BNTrainingUpdateGrad) = {{0, OUTPUT_DESC(diff_scale)}, {1, OUTPUT_DESC(diff_offset)}};
 REG_ADPT_DESC(BNTrainingUpdateGrad, kNameBNTrainingUpdateGrad, ADPT_DESC(BNTrainingUpdateGrad))
 
-// ReduceAny
-INPUT_MAP(ReduceAny) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
-ATTR_INPUT_MAP(ReduceAny) = {{"axis", "axes"}};
-ATTR_MAP(ReduceAny) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceAny) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceAny, kNameReduceAny, ADPT_DESC(ReduceAny))
-REG_ADPT_DESC(ReduceAnyD, kNameReduceAnyD, ADPT_DESC(ReduceAny))
+// ReduceAnyD
+INPUT_MAP(ReduceAnyD) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(ReduceAnyD) = {
+  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(ReduceAnyD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceAnyD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceAnyD, kNameReduceAnyD, ADPT_DESC(ReduceAnyD))
 
-// ReduceSum
-INPUT_MAP(ReduceSum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
-ATTR_INPUT_MAP(ReduceSum) = {{"axis", "axes"}};
-ATTR_MAP(ReduceSum) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceSum) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceSum, prim::kPrimReduceSum->name(), ADPT_DESC(ReduceSum))
-REG_ADPT_DESC(ReduceSumD, prim::kPrimReduceSumD->name(), ADPT_DESC(ReduceSum))
+// ReduceSumD
+INPUT_MAP(ReduceSumD) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(ReduceSumD) = {
+  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(ReduceSumD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceSumD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceSumD, prim::kPrimReduceSum->name(), ADPT_DESC(ReduceSumD))
 
 // ReduceProdD
 INPUT_MAP(ReduceProdD) = {{1, INPUT_DESC(x)}};
