@@ -47,6 +47,7 @@ from mindspore.ops.operations.array_ops import (
     Lstsq,
     Mvlgamma,
     CountNonZero,
+    Tril
 )
 from mindspore.ops.operations.array_ops import TensorScatterElements
 from mindspore.common import Tensor
@@ -4687,6 +4688,66 @@ def split(x, split_size_or_sections, axis=0):
     return res
 
 
+def tril(input_x, diagonal):
+    """
+    Returns the lower triangular part of the matrix (2-D tensor) or batch of matrices input,
+    the other elements of the result tensor out are set to 0.
+    The lower triangular part of the matrix is defined as the elements on and below the diagonal.
+
+    Args:
+        input_x (Tensor): A Tensor with shape :math:`(x_1, x_2, ..., x_R)`. The rank must be at least 2.
+          Supporting all number types including bool.
+        diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: 0,
+            indicating the main diagonal.
+
+    Returns:
+        Tensor, the same shape and data type as the input `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `diagonal` is not an int.
+        TypeError: If the type of `x` is neither number nor bool.
+        ValueError: If the rank of `x` is less than 2.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
+        >>> result = ops.tril(x)
+        >>> print(result)
+        [[ 1  0  0  0]
+         [ 5  6  0  0]
+         [10 11 12  0]
+         [14 15 16 17]]
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
+        >>> result = ops.tril(x, diagonal=1)
+        >>> print(result)
+        [[ 1  2  0  0]
+         [ 5  6  7  0]
+         [10 11 12 13]
+         [14 15 16 17]]
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
+        >>> result = ops.tril(x, diagonal=-1)
+        >>> print(result)
+        [[ 0  0  0  0]
+         [ 5  0  0  0]
+         [10 11  0  0]
+         [14 15 16  0]]
+    """
+    tril_ = Tril(diagonal)
+    return tril_(input_x)
+
+
 @constexpr
 def _canonicalize_axis(axis, ndim):
     """
@@ -5792,6 +5853,7 @@ __all__ = [
     'scatter_div',
     'scatter_update',
     'select',
+    'tril',
     'nonzero',
     'matrix_diag',
     'matrix_diag_part',

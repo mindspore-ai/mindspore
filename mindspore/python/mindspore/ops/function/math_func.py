@@ -3175,6 +3175,42 @@ def matrix_solve(matrix, rhs, adjoint=False):  # pylint: disable=redefined-outer
     return matrix_solve_(matrix, rhs)
 
 
+def slogdet(x):
+    r"""
+    Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
+
+    Args:
+        x (Tensor): A matrix to be calculated, its shape is :math:`[..., M, M]`.
+          The matrix must be at least two dimensions, and the last two
+          dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
+
+    Returns:
+        Tensor. The signs of the log determinants. The shape is :math:`x.shape[:-2]`,
+        and the dtype is same as `x`.
+
+        Tensor. The absolute values of the log determinants. The shape is :math:`x.shape[:-2]`, and
+        the dtype is same as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` not float32, float64, complex64 or complex128.
+        ValueError: If the last two dimensions of `x` is not same size.
+        ValueError: If the dimension of `x` is less than 2.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
+        >>> sign, output = ops.slogdet(input_x)
+        >>> print(sign)
+        [-1.   1.]
+        >>> print(output)
+        [2.80336046e+00    3.04452229e+00]
+    """
+    return log_matrix_determinant_(x)
+
+
 def truncate_div(x, y):
     """
     Divides the first input tensor by the second input tensor element-wise for integer types, negative numbers will
@@ -9751,6 +9787,7 @@ __all__ = [
     'chain_matmul',
     'hann_window',
     'log2',
+    'slogdet',
     'xlogy',
     'log10',
     'log1p',

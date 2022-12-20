@@ -245,6 +245,7 @@ mindspore.Tensor
     mindspore.Tensor.sin
     mindspore.Tensor.sinc
     mindspore.Tensor.size
+    mindspore.Tensor.slogdet
     mindspore.Tensor.soft_shrink
     mindspore.Tensor.split
     mindspore.Tensor.sqrt
@@ -272,6 +273,7 @@ mindspore.Tensor
     mindspore.Tensor.top_k
     mindspore.Tensor.trace
     mindspore.Tensor.transpose
+    mindspore.Tensor.tril
     mindspore.Tensor.triu
     mindspore.Tensor.true_divide
     mindspore.Tensor.unbind
