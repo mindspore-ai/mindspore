@@ -455,6 +455,8 @@ class Tensor(Tensor_):
         Returns a view of a matrix (2-D tensor) conjugated and transposed.
         x.H is equivalent to x.swapaxes(0, 1).conj() for complex matrices and x.swapaxes(0, 1) for real matrices.
         """
+        if self.ndim != 2:
+            raise ValueError(f"For tensor.H only support 2-D Tensor, but got {self.ndim}-D.")
         output = self.swapaxes(0, 1)
         if self.dtype in (mstype.complex64, mstype.complex128):
             return output.conj()

@@ -352,7 +352,7 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
 
     Examples:
         >>> print(ops.hamming_window(6, False))
-        [[0.08 0.39785218 0.91214782  0.91214782  0.39785218 0.08]]
+        [0.08 0.39785218 0.91214782  0.91214782  0.39785218 0.08]
     """
     if not isinstance(window_length, int):
         raise TypeError(f"For array function 'hamming_window', 'window_length' must be int, but got" \
