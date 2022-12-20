@@ -110,7 +110,7 @@ abstract::ShapePtr AffineGridGradInferShape(const PrimitivePtr &primitive,
 
 TypePtr AffineGridGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::string op_name = prim->name();
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
   auto y_grad_type = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(y_grad_type);
   const std::set<TypePtr> y_grad_valid_types = {kFloat16, kFloat32};

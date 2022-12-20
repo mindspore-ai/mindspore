@@ -110,7 +110,7 @@ void TrilCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
-  size_t input_size = 1;
+  int64_t input_size = 1;
   for (size_t i = 0; i < input_dims_; ++i) {
     input_size *= input_shape_[i];
   }

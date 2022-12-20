@@ -30,8 +30,8 @@ abstract::ShapePtr ReverseV2InferShape(const PrimitivePtr &primitive, const std:
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto axis_ptr = primitive->GetAttr("axis");
   auto input_axis = GetValue<std::vector<int64_t>>(axis_ptr);
-  auto axis_dims = SizeToLong(input_axis.size());
-  auto x_dims = SizeToLong(x_shape.size());
+  auto axis_dims = input_axis.size();
+  auto x_dims = x_shape.size();
   (void)primitive->AddAttr("axis", MakeValue(input_axis));
   const int64_t input_max_dim = 8;
 
@@ -46,13 +46,13 @@ abstract::ShapePtr ReverseV2InferShape(const PrimitivePtr &primitive, const std:
   }
   if (x_dims != 0) {
     std::vector<bool> reverse_shape;
-    for (int64_t i = 0; i < x_dims; i++) {
+    for (size_t i = 0; i < x_dims; i++) {
       reverse_shape.push_back(false);
     }
-    for (int64_t i = 0; i < axis_dims; ++i) {
-      int64_t realdim = static_cast<int64_t>(input_axis[i] < 0 ? x_dims + input_axis[i] : input_axis[i]);
+    for (size_t i = 0; i < axis_dims; ++i) {
+      int64_t realdim = static_cast<int64_t>(input_axis[i] < 0 ? SizeToLong(x_dims) + input_axis[i] : input_axis[i]);
       input_axis[i] = realdim;
-      if (realdim < 0 || realdim >= x_dims) {
+      if (realdim < 0 || realdim >= SizeToLong(x_dims)) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the 'axis[" << i << "]' must be in range of [-"
                                  << x_dims << ", " << x_dims << "), but got " << input_axis[i] << " with type 'int'.";
       } else if (realdim >= 0 && reverse_shape[realdim] == true) {

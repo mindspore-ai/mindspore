@@ -18,7 +18,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <utility>
 
 #include "ops/digamma.h"
 #include "ops/op_utils.h"

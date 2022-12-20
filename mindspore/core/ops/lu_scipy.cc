@@ -48,7 +48,7 @@ abstract::TupleShapePtr LUInferShape(const PrimitivePtr &primitive, const std::v
   }
 
   auto k_shape = std::min(x_shape[x_shape_size - kLastDim], x_shape[x_shape_size - kPenultimateDim]);
-  ShapeVector top_k_shape(x_shape.begin(), x_shape.end() - kPenultimateDim);
+  ShapeVector top_k_shape(x_shape.begin(), x_shape.end() - SizeToLong(kPenultimateDim));
   ShapeVector pivots_shape = top_k_shape;
   pivots_shape.push_back(k_shape);
   ShapeVector permutation_shape = pivots_shape;
@@ -70,7 +70,7 @@ TuplePtr LUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
 AbstractBasePtr LUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kLUInputsNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, SizeToLong(kLUInputsNum), primitive->name());
   auto infer_type = LUInferType(primitive, input_args);
   auto infer_shape = LUInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
