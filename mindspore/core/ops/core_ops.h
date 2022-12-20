@@ -779,6 +779,7 @@ GVAR_DEF(PrimitivePtr, kPrimAdamNoUpdateParam, std::make_shared<Primitive>("Adam
 GVAR_DEF(PrimitivePtr, kPrimLamb, std::make_shared<Primitive>("Lamb"));
 GVAR_DEF(PrimitivePtr, kPrimApplyAdaMax, std::make_shared<Primitive>("ApplyAdaMax"));
 GVAR_DEF(PrimitivePtr, kPrimApplyAdaMaxD, std::make_shared<Primitive>("ApplyAdaMaxD"));
+GVAR_DEF(PrimitivePtr, kPrimApplyAdam, std::make_shared<Primitive>("ApplyAdam"));
 GVAR_DEF(PrimitivePtr, kPrimApplyAdamD, std::make_shared<Primitive>("ApplyAdamD"));
 GVAR_DEF(PrimitivePtr, kPrimAudioSpectrogram, std::make_shared<Primitive>("AudioSpectrogram"));
 GVAR_DEF(PrimitivePtr, kPrimFlatten, std::make_shared<Primitive>("Flatten"));
