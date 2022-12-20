@@ -20,6 +20,7 @@ if(ENABLE_CPU)
         "rpc/*.cc"
         "utils/*.cc"
         "map_tensor/*.cc"
+        "sequence/*.cc"
     )
 
     if(NOT ENABLE_MPI)

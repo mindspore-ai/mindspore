@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,16 +45,24 @@ AbstractBasePtr SequenceMulInferInner(const PrimitivePtr &primitive, const std::
   auto scalar_abs = input_args[scalar_index];
   const std::set<TypePtr> scalar_valid_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTypeValid("scalar", scalar_abs->BuildType(), scalar_valid_types, prim_name);
-  if (seq_abs->BuildValue() != kAnyValue && scalar_abs->BuildValue() != kAnyValue) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', at least one of the inputs should be kAnyValue, but got "
-                             << "sequence input: " << seq_abs->BuildValue()
-                             << " and scalar input: " << scalar_abs->BuildValue();
-  }
   if (seq_abs->dynamic_len()) {
     return seq_abs;
   }
-  auto ret = seq_abs->Clone()->cast<abstract::AbstractSequencePtr>();
-  ret->CheckAndConvertToDynamicLenSequence();
+
+  if (scalar_abs->BuildValue() == kAnyValue) {
+    auto ret = seq_abs->Clone()->cast<abstract::AbstractSequencePtr>();
+    ret->CheckAndConvertToDynamicLenSequence();
+    return ret;
+  }
+
+  abstract::AbstractBasePtrList mul;
+  int scalar_value = GetValue<int64_t>(scalar_abs->BuildValue());
+  for (int i = 0; i < scalar_value; ++i) {
+    for (size_t j = 0; j < seq_abs->size(); ++j) {
+      mul.push_back(seq_abs->elements()[j]);
+    }
+  }
+  auto ret = std::make_shared<abstract::AbstractTuple>(mul);
   return ret;
 }
 }  // namespace
@@ -75,6 +83,8 @@ class SequenceMulInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return SequenceMulInferInner(primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(SequenceMul, prim::kPrimSequenceMul, SequenceMulInfer, true);
 }  // namespace ops
