@@ -49,8 +49,6 @@ def test_net():
     y2_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float64)
     x3_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float64)
     y3_np = np.array(3).astype(np.float64)
-    x4_np = np.array([[0, 0, 1], [1, 0, 1]]).astype(bool)
-    y4_np = np.array([[1, 0, 0], [0, 1, 1]]).astype(bool)
 
     x0 = Tensor(x0_np)
     y0 = Tensor(y0_np)
@@ -60,8 +58,6 @@ def test_net():
     y2 = Tensor(y2_np)
     x3 = Tensor(x3_np)
     y3 = Tensor(y3_np)
-    x4 = Tensor(x4_np)
-    y4 = Tensor(y4_np)
 
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     net = Net()
@@ -82,11 +78,6 @@ def test_net():
 
     out = net(x3, y3).asnumpy()
     expect = np.power(x3_np, y3_np)
-    assert np.all(out == expect)
-    assert out.shape == expect.shape
-
-    out = net(x4, y4).asnumpy()
-    expect = np.power(x4_np, y4_np)
     assert np.all(out == expect)
     assert out.shape == expect.shape
 

@@ -198,23 +198,6 @@ POW_INTEGER_IMPL(int16_t)
 POW_INTEGER_IMPL(int32_t)
 POW_INTEGER_IMPL(int64_t)
 
-template <>
-struct PowerFunc<bool> {
-  __device__ __host__ __forceinline__ bool operator()(const bool &lhs, const bool &rhs) {
-    bool ret = true;
-    bool base = lhs;
-    bool exp = rhs;
-    while (exp) {
-      if (exp & 1) {
-        ret = ret && base;
-      }
-      base = base && base;
-      exp /= 2;
-    }
-    return ret;
-  }
-};
-
 template <typename T>
 __device__ __host__ T abs_complex(const Complex<T> &x) {
   double res = 0.0;

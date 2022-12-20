@@ -64,7 +64,7 @@ TypePtr PowInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x1", x1_type);
   (void)types.emplace("x2", x2_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex_and_bool, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, prim->name());
   return x1_type;
 }
 }  // namespace
