@@ -327,9 +327,9 @@ class Cell(Cell_):
         try:
             if self.compile_cache:
                 _cell_graph_executor.del_net_res(self, self.compile_cache)
-        except AttributeError:
+        except AttributeError as e:
             raise AttributeError(f"The '{type(self).__name__}' object does not inherit attribute from 'cell'. "
-                                 f"Please use 'super().__init__()'.")
+                                 f"Please use 'super().__init__()'.") from e
 
     def __delattr__(self, name):
         if name in self._params:
@@ -453,9 +453,9 @@ class Cell(Cell_):
         try:
             if self._enable_forward_pre_hook or self._enable_forward_hook or self._enable_backward_hook:
                 return True
-        except AttributeError:
+        except AttributeError as e:
             raise AttributeError(f"The '{type(self).__name__}' object does not inherit attribute from 'cell'. "
-                                 f"Please use 'super().__init__()'.")
+                                 f"Please use 'super().__init__()'.") from e
         if not self._is_recursion_hook:
             self._is_recursion_hook = True
             for cell in self.cells():

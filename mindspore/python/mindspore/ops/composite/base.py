@@ -611,6 +611,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         name (str): Operator name.
         read_value (bool, optional): If the registered function do not need to set value on Parameter,
             and all inputs will pass by value, set `read_value` to True. Default: False.
+        doc_url (str, optional): The official document link corresponding to the registered function. Default:"".
 
     Raises:
         ValueError: If failed to find a matching function for the given arguments.
