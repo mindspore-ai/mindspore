@@ -263,6 +263,7 @@ int SparseTensorDenseAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   }
   // A Code Block For setting input and output shape.
   input_elements_ = input_shape_0[0];
+  output_elements_ = 1;
   for (size_t i = 0; i < output_shape_size; i++) {
     output_elements_ *= output_shape_[i];
   }
