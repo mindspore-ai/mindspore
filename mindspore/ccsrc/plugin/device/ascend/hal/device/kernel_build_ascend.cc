@@ -83,6 +83,9 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
   std::vector<AnfNodePtr> other_nodes;
   for (const auto &anf_node : kernels) {
     MS_EXCEPTION_IF_NULL(anf_node);
+    if (AnfAlgo::IsKernelSelectBackoffOp(anf_node)) {
+      continue;
+    }
     if (!AnfUtils::IsRealKernel(anf_node)) {
       continue;
     }
@@ -455,6 +458,9 @@ void TagNeedInsertAtomicAttr(const std::vector<CNodePtr> &nodes) {
   }
   std::map<AnfNodePtr, std::vector<size_t>> comm_input_info_map = GetCommunicationOpInputInfo(nodes);
   for (const auto &anf_node : nodes) {
+    if (AnfAlgo::IsKernelSelectBackoffOp(anf_node)) {
+      continue;
+    }
     if (comm_input_info_map.find(anf_node) != comm_input_info_map.end()) {
       auto indexes = comm_input_info_map[anf_node];
       if (common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, anf_node)) {

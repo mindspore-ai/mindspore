@@ -88,6 +88,8 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> LabelSwitchDesc::GetKernel
     // LabelSwitch always return UMonad.
     builder.SetOutputsFormat({kOpFormat_DEFAULT});
     builder.SetOutputsDeviceType({TypeId::kObjectTypeUMonad});
+    builder.SetInputsKernelObjectType({KernelObjectType::TENSOR});
+    builder.SetOutputsKernelObjectType({KernelObjectType::TENSOR});
     label_switch_build_info.emplace_back(builder.Build());
   }
   return label_switch_build_info;

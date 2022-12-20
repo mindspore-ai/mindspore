@@ -59,20 +59,24 @@ void AicpuMetadataInfoForSpecialNodes(const CNodePtr &kernel_node,
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   std::vector<std::string> inputs_format{};
   std::vector<TypeId> inputs_type{};
+  std::vector<KernelObjectType> inputs_object_type{};
   auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (kDynamicInputOps.find(op_name) != kDynamicInputOps.end()) {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
       inputs_format.emplace_back(kOpFormat_DEFAULT);
       (void)inputs_type.emplace_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
+      inputs_object_type.emplace_back(KernelObjectType::TENSOR);
     }
   }
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
+  std::vector<KernelObjectType> outputs_object_type{};
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_format.emplace_back(kOpFormat_DEFAULT);
     (void)outputs_type.emplace_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
+    outputs_object_type.emplace_back(KernelObjectType::TENSOR);
   }
   auto builder = KernelBuildInfo::KernelBuildInfoBuilder();
   builder.SetInputsFormat(inputs_format);
@@ -82,6 +86,9 @@ void AicpuMetadataInfoForSpecialNodes(const CNodePtr &kernel_node,
   builder.SetProcessor(AICPU);
   builder.SetKernelType(AICPU_KERNEL);
   builder.SetFusionType(kPatternOpaque);
+  builder.SetInputsKernelObjectType(inputs_object_type);
+  builder.SetOutputsKernelObjectType(outputs_object_type);
+
   (void)kernel_info_list->emplace_back(builder.Build());
   return;
 }

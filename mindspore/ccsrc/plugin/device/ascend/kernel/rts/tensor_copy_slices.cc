@@ -186,6 +186,8 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> TensorCopySlicesDesc::GetK
       builder.SetProcessor(AICORE);
       builder.SetKernelType(RT_KERNEL);
       builder.SetFusionType(kPatternOpaque);
+      builder.SetInputsKernelObjectType({KernelObjectType::TENSOR, KernelObjectType::TENSOR});
+      builder.SetOutputsKernelObjectType({KernelObjectType::TENSOR});
       tensor_copy_slices_build_info.emplace_back(builder.Build());
     }
   }

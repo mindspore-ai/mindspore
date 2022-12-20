@@ -446,7 +446,7 @@ void TbeKernelSelect::GenerateKernelBuildInfo(const SupportFormatDType &support_
   auto dyn_input_sizes = GetNodeDynamicInputs();
   // get real input/output num
   size_t real_input_num = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
-  size_t real_output_num = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
+  size_t real_output_num = common::AnfAlgo::GetOutputElementNum(cnode_ptr_);
   auto op_info_input_num = support_format_dtype.input_dtypes.size();
   auto op_info_output_num = support_format_dtype.output_dtypes.size();
   if (op_info_output_num == 0 && op_info_input_num == 0) {
@@ -499,10 +499,14 @@ void TbeKernelSelect::ConstructKernelBuildInfo(const KernelBuildInfoItem &input_
   builder.SetKernelType(TBE_KERNEL);
   builder.SetInputsDeviceType(input_kernel_build_info.device_types);
   builder.SetInputsFormat(input_kernel_build_info.formats);
+  builder.SetInputsKernelObjectType(
+    std::vector<KernelObjectType>(input_kernel_build_info.formats.size(), KernelObjectType::TENSOR));
   builder.SetInputsReshapeType(input_kernel_build_info.reshape_types);
   builder.SetOutputsDeviceType(output_kernel_build_info.device_types);
   builder.SetOutputsFormat(output_kernel_build_info.formats);
   builder.SetOutputsReshapeType(output_kernel_build_info.reshape_types);
+  builder.SetOutputsKernelObjectType(
+    std::vector<KernelObjectType>(output_kernel_build_info.formats.size(), KernelObjectType::TENSOR));
   (void)kernel_info_list_->emplace_back(builder.Build());
 }
 

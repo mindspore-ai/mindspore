@@ -160,6 +160,8 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> MemCpyAsyncDesc::GetKernel
       builder.SetProcessor(AICORE);
       builder.SetKernelType(RT_KERNEL);
       builder.SetFusionType(kPatternOpaque);
+      builder.SetInputsKernelObjectType({KernelObjectType::TENSOR});
+      builder.SetOutputsKernelObjectType({KernelObjectType::TENSOR});
       memcpy_build_info.emplace_back(builder.Build());
     }
   }

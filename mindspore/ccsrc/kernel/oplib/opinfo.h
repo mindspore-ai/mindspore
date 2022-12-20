@@ -66,6 +66,7 @@ class OpIOInfo {
   const std::vector<std::string> &dtypes() const { return dtypes_; }
   const std::vector<std::string> &formats() const { return formats_; }
   const std::vector<std::string> &unknown_shape_formats() const { return unknown_shape_formats_; }
+  const std::vector<std::string> &object_types() const { return object_types_; }
   const std::string &value_depend() const { return value_depend_; }
   const std::string &shapes_type() const { return shapes_type_; }
 
@@ -80,6 +81,7 @@ class OpIOInfo {
   void set_unknown_shape_formats(const std::vector<std::string> &unknown_shape_formats) {
     unknown_shape_formats_ = unknown_shape_formats;
   }
+  void set_object_types(const std::vector<std::string> &object_types) { object_types_ = object_types; }
   void set_value_depend(const std::string &value_depend) { value_depend_ = value_depend; }
   void set_shapes_type(const std::string &shapes_type) { shapes_type_ = shapes_type; }
 
@@ -95,6 +97,7 @@ class OpIOInfo {
   std::vector<std::string> dtypes_;
   std::vector<std::string> formats_;
   std::vector<std::string> unknown_shape_formats_;
+  std::vector<std::string> object_types_;
 };
 
 class OpInfo {
