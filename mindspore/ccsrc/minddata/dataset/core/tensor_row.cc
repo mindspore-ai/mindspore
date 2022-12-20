@@ -54,7 +54,7 @@ Status TensorRow::Clone(TensorRow *new_tr) const {
   for (const std::shared_ptr<Tensor> &s : row_) {
     std::shared_ptr<Tensor> d;
     RETURN_IF_NOT_OK(Tensor::CreateFromTensor(s, &d));
-    new_tr->row_.emplace_back(std::move(d));
+    (void)new_tr->row_.emplace_back(std::move(d));
   }
   new_tr->id_ = id_;
   new_tr->path_ = path_;

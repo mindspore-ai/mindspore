@@ -40,7 +40,7 @@ Status CacheLookupOp::WorkerEntry(int32_t worker_id) {
   RETURN_IF_NOT_OK(FetchFromCache(worker_id));
   return Status::OK();
 }
-Status CacheLookupOp::ResetSampler(const bool failover_reset) { return Status::OK(); }
+Status CacheLookupOp::ResetSampler([[maybe_unused]] const bool failover_reset) { return Status::OK(); }
 Status CacheLookupOp::HandshakeRandomAccessOp(const RandomAccessOp *op, const int32_t reset_count) {
   RETURN_UNEXPECTED_IF_NULL(op);
   // We act like a sampler and as a dataset op. During handshake with leaf op,

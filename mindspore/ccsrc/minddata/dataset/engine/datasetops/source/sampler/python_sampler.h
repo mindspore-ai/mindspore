@@ -43,7 +43,7 @@ class PythonSamplerRT : public SamplerRT {
   /// \brief Reset for next epoch.
   /// \param[in] failover_reset A boolean to show whether we are resetting the pipeline
   /// \return Status The status code returned
-  Status ResetSampler(const bool failover_reset = false) override;
+  Status ResetSampler(const bool failover_reset) override;
 
   // Op calls this to get next Sample that contains all the sampleIds
   // @param TensorRow to be returned to corresponding Dataset Op

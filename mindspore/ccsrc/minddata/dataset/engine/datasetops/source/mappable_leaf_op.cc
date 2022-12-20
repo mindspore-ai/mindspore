@@ -68,8 +68,8 @@ Status MappableLeafOp::operator()() {
   RETURN_IF_NOT_OK(callback_manager_.Begin(CallbackParam(0, ep_step, total_step)));
   TensorRow sample_row;
   RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
-  while (true) {  // each iteration is 1 repeat (usually =1 epoch, unless we have a repeat node above us), breaks when
-                  // IsLastIteration() is true
+  for (;;) {  // each iteration is 1 repeat (usually =1 epoch, unless we have a repeat node above us), breaks when
+              // IsLastIteration() is true
     if (op_current_repeats_ % GetOpNumRepeatsPerEpoch() == 0) {
       ep_step = 0;
       RETURN_IF_NOT_OK(callback_manager_.EpochBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));

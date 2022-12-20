@@ -41,8 +41,8 @@ NonMappableLeafOp::NonMappableLeafOp(int32_t num_workers, int32_t worker_connect
       load_io_block_queue_(true),
       shuffle_files_(shuffle_files),
       num_rows_per_shard_(0),
-      num_rows_(0),
       compression_type_(compression_type),
+      num_rows_(0),
       shuffled_keys_({}),
       seed_(0) {
   worker_connector_size_ = worker_connector_size;
