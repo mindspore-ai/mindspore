@@ -34,11 +34,11 @@ constexpr auto kVersion910ProA = "Ascend910ProA";
 constexpr auto kVersion910PremiumA = "Ascend910PremiumA";
 constexpr auto kVersion920A = "Ascend920A";
 constexpr auto kVersion910APath =
-  "/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/config/ascend910/aic-ascend910-ops-info.json";
+  "/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/config/ascend910/aic-ascend910-ops-info.json";
 constexpr auto kVersion920APath =
-  "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/config/ascend920/aic-ascend920-ops-info.json";
+  "/usr/local/Ascend/opp/built-in/op_impl/ai_core/tbe/config/ascend920/aic-ascend920-ops-info.json";
 constexpr auto kVersion910ATPath =
-  "/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/config/ascend910/"
+  "/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/config/ascend910/"
   "aic-ascend910-ops-info.json";
 
 static const std::map<std::string, std::string> kVersionPathMap = {{kVersion910A, kVersion910APath},

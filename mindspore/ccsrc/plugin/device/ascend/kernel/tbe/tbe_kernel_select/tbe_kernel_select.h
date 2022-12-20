@@ -43,6 +43,7 @@ class TbeKernelSelect {
  private:
   void FilterInvalidKernelInfo();
   bool FilterInvalidShape(const KernelBuildInfoPtr &kernel_build_info, const std::vector<int64_t> &dynamic_inputs);
+  bool FilterUnspportedMatMul(const KernelBuildInfoPtr &kernel_build_info);
   bool IsShapeMatchFormat(const ShapeVector &shape, const std::string &format);
   bool IsShapeMatchFormatRNN(const ShapeVector &shape, const std::string &format);
   bool TbeCheckSupported(const KernelBuildInfoPtr &kernel_build_info);
