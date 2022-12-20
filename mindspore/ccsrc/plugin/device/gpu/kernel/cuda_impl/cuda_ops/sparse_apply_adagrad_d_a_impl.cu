@@ -45,16 +45,6 @@ __device__ __forceinline__ half MaxFunc(half x, half y) {
 }
 
 template <typename T>
-__device__ __forceinline__ T NanFunc(T x) {
-  return isnan(x);
-}
-
-template <>
-__device__ __forceinline__ half NanFunc(half x) {
-  return isnan(__half2float(x));
-}
-
-template <typename T>
 __device__ __forceinline__ T Sign(T num) {
   if (num > static_cast<T>(0.0)) {
     return static_cast<T>(1.0);
@@ -87,7 +77,7 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, T *var, T *a
         int grad_pos = rows_index[idx] * inner_size + pos_x;
         accum[update_pos] += grad[grad_pos];
         squared_accum[update_pos] += grad[grad_pos] * grad[grad_pos];
-        if (squared_accum[update_pos] <= zero || NanFunc(var[update_pos])) {
+        if (squared_accum[update_pos] <= zero) {
           var[update_pos] = NAN;
           continue;
         }
@@ -133,7 +123,7 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
         int grad_pos = rows_index[idx] * inner_size + pos_x;
         accum[update_pos] += grad[grad_pos];
         squared_accum[update_pos] += grad[grad_pos] * grad[grad_pos];
-        if (squared_accum[update_pos] <= __float2half(zero) || NanFunc(var[update_pos])) {
+        if (squared_accum[update_pos] <= __float2half(zero)) {
           var[update_pos] = NAN;
           continue;
         }
@@ -178,7 +168,7 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
         int grad_pos = rows_index[idx] * inner_size + pos_x;
         accum[update_pos] += grad[grad_pos];
         squared_accum[update_pos] += grad[grad_pos] * grad[grad_pos];
-        if (squared_accum[update_pos] <= __float2half(zero) || NanFunc(var[update_pos])) {
+        if (squared_accum[update_pos] <= __float2half(zero)) {
           var[update_pos] = NAN;
           continue;
         }
@@ -223,7 +213,7 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
         int grad_pos = rows_index[idx] * inner_size + pos_x;
         accum[update_pos] += grad[grad_pos];
         squared_accum[update_pos] += grad[grad_pos] * grad[grad_pos];
-        if (squared_accum[update_pos] <= __float2half(zero) || NanFunc(var[update_pos])) {
+        if (squared_accum[update_pos] <= __float2half(zero)) {
           var[update_pos] = NAN;
           continue;
         }
@@ -268,7 +258,7 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
         int grad_pos = rows_index[idx] * inner_size + pos_x;
         accum[update_pos] += grad[grad_pos];
         squared_accum[update_pos] += grad[grad_pos] * grad[grad_pos];
-        if (squared_accum[update_pos] <= __float2half(zero) || NanFunc(var[update_pos])) {
+        if (squared_accum[update_pos] <= __float2half(zero)) {
           var[update_pos] = NAN;
           continue;
         }
