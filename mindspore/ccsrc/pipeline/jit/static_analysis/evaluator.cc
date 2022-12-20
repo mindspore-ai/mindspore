@@ -343,15 +343,8 @@ void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *
   MS_EXCEPTION_IF_NULL(broaded_args);
   (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(*broaded_args),
                        [](const AbstractBasePtr &arg) -> AbstractBasePtr {
-                         MS_EXCEPTION_IF_NULL(arg);
-                         auto arg_type = arg->BuildType();
-                         MS_EXCEPTION_IF_NULL(arg_type);
-                         if (arg->isa<AbstractScalar>() && arg_type->isa<Number>()) {
-                           MS_LOG(DEBUG) << "Set variable for scalar arg:" << arg->ToString();
-                           arg->cast_ptr<AbstractScalar>()->set_is_variable(true);
-                         }
                          if (arg->GetValueTrack() != kAnyValue) {
-                           return arg->Broaden();
+                           return AbstractBroaden(arg);
                          }
                          return arg;
                        });

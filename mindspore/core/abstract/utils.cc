@@ -49,38 +49,6 @@ TypePtr TypeJoin(const TypePtr &type1, const TypePtr &type2) {
   return kAnyType;
 }
 
-// Broaden all values within the input abstract. Since for AbstractScalar, calling Broaden() can not set
-// the value directly to kAnyValue, this function can not be replaced by calling abs->Broaden().
-AbstractBasePtr BroadenAllValues(const AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  AbstractBasePtr ret = nullptr;
-  if (abs->isa<abstract::AbstractDictionary>()) {
-    MS_EXCEPTION(TypeError) << "BroadenAllValues does not support dictionary yet";
-  }
-  if (abs->isa<abstract::AbstractScalar>()) {
-    ret = abs->Clone();
-    ret->cast<abstract::AbstractScalarPtr>()->set_is_variable(true);
-    return ret->Broaden();
-  }
-  if (abs->isa<abstract::AbstractSequence>()) {
-    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-    if (abs_seq->dynamic_len()) {
-      // The value of elements for dynamic length sequence should all be kAnyValue.
-      return abs->Clone();
-    }
-    AbstractBasePtrList elements = abs_seq->elements();
-    AbstractBasePtrList new_elements;
-    (void)std::transform(elements.begin(), elements.end(), std::back_inserter(new_elements), BroadenAllValues);
-    if (abs->isa<abstract::AbstractList>()) {
-      ret = std::make_shared<abstract::AbstractList>(new_elements, abs_seq->sequence_nodes());
-    } else {
-      ret = std::make_shared<abstract::AbstractTuple>(new_elements, abs_seq->sequence_nodes());
-    }
-    return ret;
-  }
-  return abs->Broaden();
-}
-
 bool IsShapesDynamicRank(const std::vector<ShapeVector> &shapes) {
   return std::any_of(shapes.begin(), shapes.end(), [](const ShapeVector &shape) {
     return std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim == Shape::kShapeRankAny; });
@@ -203,6 +171,40 @@ AbstractBasePtrList AbstractJoin(const AbstractBasePtrList &spec1, const Abstrac
     return spec1;
   }
   return joined_list;
+}
+
+AbstractBasePtr AbstractBroaden(const AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<AbstractSequence>() && !abs->isa<AbstractSparseTensor>()) {
+    auto sequence_abs = abs->cast<AbstractSequencePtr>();
+    if (sequence_abs->dynamic_len()) {
+      auto elem_abs = sequence_abs->dynamic_len_element_abs();
+      if (elem_abs != nullptr && elem_abs->isa<AbstractScalar>()) {
+        elem_abs->cast<AbstractScalarPtr>()->set_is_variable(true);
+      }
+      return abs->Broaden();
+    }
+    std::vector<AbstractBasePtr> new_elements;
+    new_elements.reserve(sequence_abs->elements().size());
+    (void)std::transform(sequence_abs->elements().cbegin(), sequence_abs->elements().cend(),
+                         std::back_inserter(new_elements), AbstractBroaden);
+    if (sequence_abs->isa<AbstractTuple>()) {
+      return std::make_shared<AbstractTuple>(new_elements, sequence_abs->sequence_nodes());
+    }
+    if (sequence_abs->isa<AbstractList>()) {
+      return std::make_shared<AbstractList>(new_elements, sequence_abs->sequence_nodes());
+    }
+    MS_EXCEPTION(TypeError) << "Unknown AbstractSequence type:" << abs->ToString();
+  }
+  if (abs->isa<AbstractScalar>()) {
+    auto arg_type = abs->BuildType();
+    MS_EXCEPTION_IF_NULL(arg_type);
+    auto abs_scalar = abs->cast<AbstractScalarPtr>();
+    if (arg_type->isa<Number>()) {
+      abs_scalar->set_is_variable(true);
+    }
+  }
+  return abs->Broaden();
 }
 
 AbstractBasePtr SensitivityTransform(const AbstractBasePtr &spec) {
