@@ -26,8 +26,8 @@
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 
-#include "mindspore/ccsrc/distributed/embedding_cache/embedding_cache_utils.h"
-#include "mindspore/ccsrc/distributed/embedding_cache/embedding_store.h"
+#include "distributed/embedding_cache/embedding_cache_utils.h"
+#include "distributed/embedding_cache/embedding_storage/embedding_storage.h"
 
 namespace mindspore {
 namespace parallel {
@@ -562,13 +562,7 @@ void PsEmbeddingCacheInserter::BuildEmbeddingStores() {
     size_t emb_dim = LongToSize(slice_shape.back());
     std::string name = std::to_string(key);
 
-    auto emb_store = std::make_shared<distributed::EmbeddingStore<int32_t, float>>(name, capacity, emb_dim);
-    MS_EXCEPTION_IF_NULL(emb_store);
-    if (!emb_store->Initialize()) {
-      MS_LOG(EXCEPTION) << "Failed to Initialize for parameter(key): " << key;
-    }
-    embedding_store_manager.Add(name, emb_store);
-
+    // Note: create dense or sparse embedding storage and add into embedding storage manager.
     MS_LOG(INFO) << "Add a new embedding store: " << name << ", emb_dim: " << emb_dim << ", capacity: " << capacity
                  << ", origin emb_dim:" << origin_emb_dim << ", origin capacity: " << origin_capacity;
   }

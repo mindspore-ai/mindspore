@@ -231,9 +231,9 @@ class PersistentTensorDataNumpy : public TensorDataNumpy {
 
     size_t first_dim = (size_t)SliceDataShape()[0];
     size_t start_key = slice_index * first_dim;
-    std::vector<size_t> keys(first_dim);
+    std::vector<int> keys(first_dim);
     std::iota(keys.begin(), keys.end(), start_key);
-    if (!emb_store->Get(first_dim, keys.data(), this->data())) {
+    if (!emb_store->Get(keys.data(), first_dim, reinterpret_cast<float *>(this->data()))) {
       MS_LOG(EXCEPTION) << "Failed to get data from embedding store!";
     }
   }
