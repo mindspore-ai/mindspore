@@ -456,6 +456,10 @@ kernel::AddressPtrList CreateKernelWorkspaceAddressDynamic(const std::shared_ptr
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();
+  if (workspace_sizes.size() != runtime_info->GetWorkspaceSize()) {
+    MS_LOG(EXCEPTION) << "Check workspace size failed, kernel_mode workspace num " << workspace_sizes.size()
+                      << " kernel_info workspace num " << runtime_info->GetWorkspaceSize();
+  }
 
   kernel::AddressPtrList workspaces;
   for (size_t i = 0; i < workspace_sizes.size(); ++i) {
@@ -512,6 +516,16 @@ void ResizeNodeInput(const CNodePtr &kernel) {
   }
 }
 
+void UpdateKernelWorkspace(const CNodePtr &kernel) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  auto workspace_num = kernel_mod->GetWorkspaceSizeList().size();
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  kernel_info->set_workspace_address_list(std::vector<device::DeviceAddressPtr>(workspace_num, nullptr));
+}
+
 // kernel_mode launch
 void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceContext *device_context,
                           bool is_gradient_out) {
@@ -540,6 +554,7 @@ void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceConte
     runtime::DeviceAddressUtils::UpdateDeviceAddressForRefNode(graph);
 
     ResizeNodeInput(node);
+    UpdateKernelWorkspace(node);
 
     runtime::DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(device_context, graph);
     auto workspaces = CreateKernelWorkspaceAddressDynamic(runtime_info, device_context, node);

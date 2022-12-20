@@ -260,6 +260,29 @@ bool EnablePyNativeSyncRunning() {
   MS_EXCEPTION_IF_NULL(ms_context);
   return ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
 }
+
+void UpdateGraphInputAbstract(const KernelGraphPtr &graph, const session::BackendOpRunInfoPtr &op_run_info,
+                              const device::DeviceContext *device_context) {
+  auto input_nodes = graph->input_nodes();
+  auto input_size = input_nodes.size();
+  auto input_tensors = GetTensorWithoutValueMask(op_run_info);
+  if (input_size > input_tensors.size()) {
+    MS_LOG(EXCEPTION) << "input_size is bigger than input_tensors size, input_size:" << input_size
+                      << ", input_tensors size:" << input_tensors.size();
+  }
+  // Update the Graph`s Parameter shape
+  for (size_t i = 0; i < input_size; ++i) {
+    MS_EXCEPTION_IF_NULL(input_tensors[i]);
+    auto type_of_tensor = input_tensors[i]->Dtype();
+    std::shared_ptr<abstract::AbstractTensor> abstract;
+    abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, input_tensors[i]->shape());
+    input_nodes[i]->set_abstract(abstract);
+  }
+
+  // Create input address before infer
+  runtime::DeviceAddressUtils::CreateParameterDeviceAddress(device_context, graph);
+  runtime::DeviceAddressUtils::CreateValueNodeDeviceAddress(device_context, graph);
+}
 }  // namespace
 
 VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) {
@@ -1410,28 +1433,8 @@ void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info
     MS_EXCEPTION_IF_NULL(context_ptr);
     bool enable_cache = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
     op_compiler_info->need_erase_ = !enable_cache;
-  } else {
-    auto input_nodes = graph->input_nodes();
-    auto input_size = input_nodes.size();
-    auto input_tensors = GetTensorWithoutValueMask(op_run_info);
-    if (input_size > input_tensors.size()) {
-      MS_LOG(EXCEPTION) << "input_size is bigger than input_tensors size, input_size:" << input_size
-                        << ", input_tensors size:" << input_tensors.size();
-    }
-    // Update the Graph`s Parameter shape
-    for (size_t i = 0; i < input_size; ++i) {
-      MS_EXCEPTION_IF_NULL(input_tensors[i]);
-      auto type_of_tensor = input_tensors[i]->Dtype();
-      std::shared_ptr<abstract::AbstractTensor> abstract;
-      abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, input_tensors[i]->shape());
-      input_nodes[i]->set_abstract(abstract);
-    }
-
-    // Create input address before infer
-    runtime::DeviceAddressUtils::CreateParameterDeviceAddress(device_context, graph);
-    runtime::DeviceAddressUtils::CreateValueNodeDeviceAddress(device_context, graph);
   }
-
+  UpdateGraphInputAbstract(graph, op_run_info, device_context);
   RunOpImplDynamic(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
 }
 
