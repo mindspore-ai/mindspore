@@ -28,7 +28,8 @@ namespace mindspore::kernel {
 namespace acl {
 struct AclModelOptions {
   int32_t device_id;
-  std::string dump_cfg_path;
+  std::string dump_path;
+  std::string profiling_path;
 
   AclModelOptions() : device_id(0) {}
 };

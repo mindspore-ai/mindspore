@@ -17,11 +17,9 @@
 #include <map>
 #include <string>
 #include "src/extendrt/convert/runtime_convert.h"
-#include "src/common/config_infos.h"
 #include "tools/common/string_util.h"
 #include "tools/converter/converter.h"
 #include "tools/converter/cxx_api/converter_para.h"
-
 #include "tools/converter/config_parser/config_file_parser.h"
 
 mindspore::api::FuncGraphPtr RuntimeConvert(const char *model_buf, const size_t &buf_size,

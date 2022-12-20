@@ -86,10 +86,14 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
   std::string net_id = "0";
   std::string init_graph = "init_subgraph." + net_id;
   std::string checkpoint_name = "save." + net_id;
-
+  std::string compute_graph_name = anf_graph->ToString();
+  auto option = options_.lock();
+  if (option != nullptr && !option->GetDumpModelName().empty()) {
+    compute_graph_name = option->GetDumpModelName();
+  }
   transform::SetTraining(converter, false);
 
-  transform::BuildGraph(converter, GetParams(anf_graph));
+  transform::BuildGraph(compute_graph_name, converter, GetParams(anf_graph));
 
   transform::GenerateCheckpointGraph(converter);
   auto err_code = transform::ErrCode(converter);

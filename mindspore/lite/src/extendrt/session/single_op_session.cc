@@ -30,6 +30,8 @@
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
 #include "src/extendrt/utils/kernel_build_utils.h"
 #include "src/extendrt/kernel/ascend/plugin/ascend_kernel_plugin.h"
+#include "src/common/common.h"
+#include "mindspore/core/ops/custom.h"
 #include "extendrt/session/factory.h"
 #include "extendrt/utils/runtime_utils.h"
 #include "extendrt/utils/tensor_default_impl.h"
@@ -69,6 +71,39 @@ Status SingleOpInferSession::Init(const std::shared_ptr<Context> &context) {
     return kLiteError;
   }
   return kSuccess;
+}
+
+void SingleOpInferSession::SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr &op) {
+  if (config_infos_.find(lite::kAscendContext) == config_infos_.end()) {
+    MS_LOG(DEBUG) << "There is no ascend context info in config infos.";
+    return;
+  }
+  // set custom op attrs
+  auto custom_op = std::dynamic_pointer_cast<ops::Custom>(op);
+  if (custom_op == nullptr) {
+    MS_LOG(ERROR) << "Cast Custom op failed, can't set custom attrs.";
+    return;
+  }
+  auto dst_prim = custom_op->GetPrim();
+  if (dst_prim == nullptr) {
+    MS_LOG(ERROR) << "Get prim from custom op failed.";
+    return;
+  }
+  auto ascend_context = config_infos_[lite::kAscendContext];
+  std::string profiling_path;
+  if (ascend_context.find(lite::kProfilingPath) != ascend_context.end()) {
+    profiling_path = ascend_context[lite::kProfilingPath];
+    dst_prim->AddAttr(lite::kProfilingPath, MakeValue(profiling_path));
+  }
+  if (ascend_context.find(lite::kDumpPath) != ascend_context.end()) {
+    if (!profiling_path.empty()) {
+      MS_LOG(ERROR) << "Profiling and dump can't be set at the same time.";
+      return;
+    }
+    auto dump_path = ascend_context[lite::kDumpPath];
+    dst_prim->AddAttr(lite::kDumpPath, MakeValue(dump_path));
+  }
+  return;
 }
 
 Status SingleOpInferSession::BuildCustomAscendKernel(const CNodePtr &cnode) {
@@ -127,6 +162,7 @@ Status SingleOpInferSession::BuildCustomAscendKernel(const CNodePtr &cnode) {
     }
     args.outputs.push_back(kernel_tensor);
   }
+  SetCustomAscendOpAttrs(args.op);
   auto ret = kernel_mod->Init(args.op, args.inputs, args.outputs);
   MS_LOG(INFO) << "SingleOpInferSession::Kernels ret " << ret;
   if (!ret) {
@@ -379,6 +415,7 @@ static std::shared_ptr<InferSession> SingleOpSessionCreator(const std::shared_pt
                                                             const ConfigInfos &config_infos) {
   auto session = std::make_shared<SingleOpInferSession>();
   session->Init(ctx);
+  session->SetConfigInfo(config_infos);
   return session;
 }
 REG_SESSION(kSingleOpSession, SingleOpSessionCreator);

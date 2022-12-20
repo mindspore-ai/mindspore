@@ -22,6 +22,7 @@
 
 #include "tools/common/string_util.h"
 #include "src/common/config_infos.h"
+#include "src/common/common.h"
 
 namespace mindspore {
 namespace lite {
@@ -173,6 +174,9 @@ void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
   }
   if (!(ascend_string = FindInAscendMap("aoe_mode", ascend_map)).empty()) {
     param->aclModelOptionCfgParam.aoe_mode = ascend_string;
+  }
+  if (!(ascend_string = FindInAscendMap(kDumpModelName, ascend_map)).empty()) {
+    param->aclModelOptionCfgParam.dump_model_name = ascend_string;
   }
 
   auto it = ascend_map.find("input_shape");

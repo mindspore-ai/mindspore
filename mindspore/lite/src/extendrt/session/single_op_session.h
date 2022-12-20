@@ -42,6 +42,8 @@ class SingleOpInferSession : public InferSession {
   std::vector<std::string> GetInputNames() override;
   MutableTensorImplPtr GetOutputByTensorName(const std::string &tensorName) override;
   MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
+  void SetConfigInfo(ConfigInfos config_infos) { config_infos_ = config_infos; }
+  void SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr &op);
 
  private:
   Status OnNewInputShapes(const std::vector<ShapeVector> &new_shapes);
@@ -56,6 +58,7 @@ class SingleOpInferSession : public InferSession {
 
   kernel::KernelModPtr kernel_mod_ = nullptr;
   kernel::KernelArgs kernel_args_;
+  ConfigInfos config_infos_;
 };
 }  // namespace mindspore
 

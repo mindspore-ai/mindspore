@@ -1468,7 +1468,7 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs) {
   }
 }
 
-DfGraphConvertor &DfGraphConvertor::BuildGraph() {
+DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   MS_LOG(INFO) << "Start BuildGraph, graph: " << anf_graph_->ToString();
   SetupDatasetIterGetNextNode();
 
@@ -1494,7 +1494,7 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
   }
 
   if (error_ == SUCCESS) {
-    df_graph_ = make_shared<DfGraph>(anf_graph_->ToString());
+    df_graph_ = make_shared<DfGraph>(name);
   } else {
     return *this;
   }
@@ -2310,7 +2310,7 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr 
     }
   }
 
-  (void)converter.ConvertAllNode().BuildGraph();
+  (void)converter.ConvertAllNode().BuildGraph(anf_graph->ToString());
 #ifdef ENABLE_DUMP_IR
   std::string name = graph_node->ToString() + "_ge_graph.dot";
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {

@@ -23,6 +23,7 @@
 #include "extendrt/mindir_loader/mindir_model/mindir_model_util.h"
 #include "src/extendrt/convert/runtime_convert.h"
 #include "src/common/config_file.h"
+#include "src/common/common.h"
 #include "src/extendrt/utils/serialization.h"
 #include "mindapi/ir/func_graph.h"
 #include "mindapi/base/base.h"
@@ -87,6 +88,14 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
   if (mindir_path == "") {
     // user does not set mindir_path, convert from model_path
     mindir_path = model_path.substr(0, model_path.rfind("/"));
+  }
+  auto dump_path = GetConfig(lite::kAscendContext, lite::kDumpPath);
+  if (!dump_path.empty()) {
+    auto dir_pos = model_path.find_last_of('/');
+    auto mindir_name = dir_pos != std::string::npos ? model_path.substr(dir_pos + 1) : model_path;
+    auto dot_pos = mindir_name.find_last_of('.');
+    auto model_name = mindir_name.substr(0, dot_pos);
+    (void)UpdateConfig(lite::kAscendContext, std::pair<std::string, std::string>(lite::kDumpModelName, model_name));
   }
   SetMsContext();
   session_ = InferSession::CreateSession(model_context, config_info_);
