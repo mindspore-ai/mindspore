@@ -15,6 +15,7 @@
  */
 
 #include "frontend/optimizer/ad/bprop_utils.h"
+
 #include <string>
 #include <regex>
 #include <utility>
@@ -27,6 +28,9 @@
 #include "utils/system/sha256.h"
 #include "mindspore/core/load_mindir/load_model.h"
 #include "pipeline/jit/parse/resolve.h"
+#include "pipeline/pynative/grad/bprop_expander/bprop.h"
+#include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
+#include "frontend/optimizer/expander.h"
 #include "include/common/debug/dump_proto.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
@@ -305,7 +309,7 @@ bool CheckMindir(const py::object &obj) {
 }
 #endif
 
-FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources) {
+FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources, const CNodePtr &cnode) {
   // Set a child scope named "grad'PrimitiveName'" for the bprop function,
   // and add "Gradients" to the front.
   static const std::string gradients_scope = "Gradients/";
@@ -319,9 +323,17 @@ FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr 
   FuncGraphPtr func_graph = nullptr;
   if (common::GetEnv("MS_DEV_GET_PYTHON_BPROP") != "1") {
     const auto &bprop_impl_map = graph_bprop::GetPrimitiveBpropImplMap();
-    auto iter = bprop_impl_map.find(prim);
+    auto iter = bprop_impl_map.find(prim->name());
     if (iter != bprop_impl_map.end()) {
-      func_graph = iter->second(prim);
+      std::vector<AnfNodePtr> node_lists = cnode->inputs();
+      auto forward_inputs_size = cnode->inputs().size() - 1;
+      for (size_t i = 1; i < node_lists.size(); i++) {
+        auto inputi = node_lists[i];
+        if (HasAbstractMonad(inputi)) {
+          --forward_inputs_size;
+        }
+      }
+      func_graph = iter->second(prim, forward_inputs_size);
       MS_EXCEPTION_IF_NULL(func_graph);
       func_graph->set_flag(mindspore::kFuncGraphFlagMetaFuncGraphBprop, true);
       if (GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_BACKPROP)) {

@@ -30,6 +30,7 @@
 #include "pipeline/jit/resource.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/operator/composite/composite.h"
+#include "pipeline/pynative/grad/bprop_expander/bprop.h"
 #include "include/common/utils/utils.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
@@ -37,6 +38,7 @@
 #include "pipeline/jit/debug/trace.h"
 #include "utils/anf_utils.h"
 #include "frontend/optimizer/ad/bprop_utils.h"
+#include "frontend/optimizer/expander.h"
 
 namespace mindspore {
 namespace ad {
@@ -47,7 +49,7 @@ constexpr char kLiftedUserDataKey[] = "lifted_from_fv";
 }  // namespace
 
 FuncGraphPtr KPrim::GetPrimBprop(const PrimitivePtr &prim, const ValueNodePtr &value_node,
-                                 const pipeline::ResourceBasePtr &resources) {
+                                 const pipeline::ResourceBasePtr &resources, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(value_node);
   auto iter = bprop_registry_.find(prim);
@@ -55,7 +57,7 @@ FuncGraphPtr KPrim::GetPrimBprop(const PrimitivePtr &prim, const ValueNodePtr &v
     return iter->second;
   }
 
-  FuncGraphPtr bprop_fg = GetBprop(prim, resources);
+  FuncGraphPtr bprop_fg = GetBprop(prim, resources, cnode);
   if (bprop_fg != nullptr) {
     // Set bprop_g graph cache
     bprop_registry_[prim] = bprop_fg;
@@ -218,7 +220,7 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
     }
     bprop_fg = BpropCut(value_node, resources);
   } else {
-    bprop_fg = GetPrimBprop(prim, value_node, resources);
+    bprop_fg = GetPrimBprop(prim, value_node, resources, cnode);
   }
 
   SetDumpFlag(prim, bprop_fg);

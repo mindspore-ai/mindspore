@@ -36,18 +36,37 @@ class BpropExpander {
   bool Run(const CNodePtr &cnode);
   const std::vector<size_t> &GetUnusedInputs(const CNodePtr &cnode) const;
 
- private:
+ protected:
   bool RunBprop(const CNodePtr &cnode);
-  NodePtrList ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder);
+  virtual void ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder);
+  virtual std::unique_ptr<BpropIRBuilder> CreateIRBuilder(const std::string &name, const CNodePtr &cnode,
+                                                          const std::shared_ptr<CppInfer> &infer);
   const BpropHandle *GetBpropHandle(const std::string &name) const {
     return BpropIRBuilderFactory::Instance().GetBuilder(name);
   }
-  void PostProcess(const NodePtrList &inputs) const;
-  void DumpResult(const std::string &name, const NodePtrList &inputs) const;
-
- private:
+  virtual void PostProcess() const;
+  virtual void DumpResult(const std::string &name) const;
+  NodePtrList input_nodes_;
+  // outputs_ must be CNodePtrList, but output_nodes_ may not necessary. output_nodes_ are used to
+  // create bprop func_graph in graph_mode.
+  NodePtrList output_nodes_;
   CNodePtrList *outputs_{nullptr};
   UserType *users_{nullptr};
+};
+
+class BpropExpanderInGraphMode : public BpropExpander {
+ public:
+  BpropExpanderInGraphMode() {}
+  ~BpropExpanderInGraphMode() = default;
+  FuncGraphPtr GetGraph() { return fg_; }
+
+ protected:
+  FuncGraphPtr fg_{nullptr};
+  void ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder) override;
+  std::unique_ptr<BpropIRBuilder> CreateIRBuilder(const std::string &name, const CNodePtr &cnode,
+                                                  const std::shared_ptr<CppInfer> &infer) override;
+  void PostProcess() const override;
+  void DumpResult(const std::string &name) const override;
 };
 
 #ifdef _MSC_VER

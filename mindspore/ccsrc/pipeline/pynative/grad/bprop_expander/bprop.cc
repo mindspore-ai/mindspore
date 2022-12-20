@@ -27,17 +27,20 @@ namespace expander {
 namespace bprop {
 bool BpropExpander::Run(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(outputs_);
   MS_LOG(DEBUG) << "Begin building bprop for " << cnode->fullname_with_scope();
   bool ret = true;
-  outputs_->clear();
+  if (outputs_ != nullptr) {
+    outputs_->clear();
+  }
   try {
     ret = RunBprop(cnode);
   } catch (const std::exception &e) {
     auto node_name = AnfUtils::GetCNodeName(cnode);
     MS_LOG(DEBUG) << "Bprop \"" << node_name << "\" encounter a problem: [" << e.what() << "]";
     MS_LOG(INFO) << "Python bprop will be used for \"" << node_name << "\"";
-    outputs_->clear();
+    if (outputs_ != nullptr) {
+      outputs_->clear();
+    }
     ret = false;
   }
   MS_LOG(DEBUG) << "Finish building bprop for " << cnode->fullname_with_scope();
@@ -56,51 +59,55 @@ const std::vector<size_t> &BpropExpander::GetUnusedInputs(const CNodePtr &cnode)
   return handle->unused_inputs;
 }
 
-NodePtrList BpropExpander::ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder) {
-  NodePtrList nodes;
-  nodes.reserve(cnode->size());
-  (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(nodes),
+void BpropExpander::ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder) {
+  input_nodes_.reserve(cnode->size());
+  (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(input_nodes_),
                        [ir_builder](const AnfNodePtr &no) { return std::make_shared<Node>(no, ir_builder); });
-  return nodes;
+}
+
+std::unique_ptr<BpropIRBuilder> BpropExpander::CreateIRBuilder(const std::string &name, const CNodePtr &cnode,
+                                                               const std::shared_ptr<CppInfer> &infer) {
+  return std::make_unique<BpropIRBuilder>(name, cnode->func_graph(), infer);
 }
 
 bool BpropExpander::RunBprop(const CNodePtr &cnode) {
   auto infer = std::make_shared<CppInfer>();
   auto name = AnfUtils::GetCNodeName(cnode);
-  auto ir_builder = std::make_unique<BpropIRBuilder>(name, cnode->func_graph(), infer);
-  auto inputs = ExtractInputs(cnode, ir_builder.get());
+  auto ir_builder = CreateIRBuilder(name, cnode, infer);
+  ExtractInputs(cnode, ir_builder.get());
   auto &attrs = GetCNodePrimitive(cnode)->attrs();
   auto handle = GetBpropHandle(name);
   if (handle == nullptr) {
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";
     return false;
   }
-  auto output_nodes = ir_builder->Run(inputs, attrs, *handle);
-  if (output_nodes.empty()) {
+  output_nodes_ = ir_builder->Run(input_nodes_, attrs, *handle);
+  if (output_nodes_.empty()) {
     MS_LOG(DEBUG) << "The output nodes of bprop function [" << name << "] is empty.";
     return false;
   }
-  outputs_->reserve(output_nodes.size());
-  (void)std::transform(output_nodes.cbegin(), output_nodes.cend(), std::back_inserter(*outputs_),
-                       [](const NodePtr &node) {
-                         auto cnode = node->get<CNodePtr>();
-                         MS_EXCEPTION_IF_NULL(cnode);
-                         return cnode;
-                       });
-  PostProcess(inputs);
-  DumpResult(name, inputs);
+  PostProcess();
+  DumpResult(name);
+  input_nodes_.clear();
   return true;
 }
 
-void BpropExpander::PostProcess(const NodePtrList &inputs) const {
+void BpropExpander::PostProcess() const {
+  outputs_->reserve(output_nodes_.size());
+  (void)std::transform(output_nodes_.cbegin(), output_nodes_.cend(), std::back_inserter(*outputs_),
+                       [](const NodePtr &node) {
+                         auto cnode = node->get<CNodePtr>();
+                         return cnode;
+                       });
   std::set<AnfNodePtr> visited;
   // do not visit the inputs again.
-  std::for_each(inputs.cbegin(), inputs.cend(), [&visited](const NodePtr &node) { visited.insert(node->get()); });
+  std::for_each(input_nodes_.cbegin(), input_nodes_.cend(),
+                [&visited](const NodePtr &node) { visited.insert(node->get()); });
 
   std::queue<CNodePtr> que;
   std::for_each(outputs_->cbegin(), outputs_->cend(), [&que](const CNodePtr &cnode) { que.push(cnode); });
 
-  AnfNodePtr dout = inputs.back()->get();
+  AnfNodePtr dout = input_nodes_.back()->get();
   while (!que.empty()) {
     auto node = que.front();
     que.pop();
@@ -138,7 +145,7 @@ void BpropExpander::PostProcess(const NodePtrList &inputs) const {
   }
 }
 
-void BpropExpander::DumpResult(const std::string &name, const NodePtrList &inputs) const {
+void BpropExpander::DumpResult(const std::string &name) const {
   static bool dump_result = (common::GetEnv("MS_DEV_DUMP_BPROP") == "on");
   if (!dump_result) {
     return;
@@ -146,7 +153,7 @@ void BpropExpander::DumpResult(const std::string &name, const NodePtrList &input
   auto fg = std::make_shared<FuncGraph>();
   std::map<AnfNodePtr, AnfNodePtr> node_map;
   CNodePtrList newcnodes;
-  for (auto &inp : inputs) {
+  for (auto &inp : input_nodes_) {
     auto p = fg->add_parameter();
     p->set_abstract(inp->get()->abstract());
     node_map[inp->get()] = p;
@@ -209,6 +216,45 @@ void BpropExpander::DumpResult(const std::string &name, const NodePtrList &input
       }
     }
   }
+}
+
+void BpropExpanderInGraphMode::ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder) {
+  input_nodes_.reserve(cnode->size());
+
+  (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(input_nodes_),
+                       [ir_builder, this](const AnfNodePtr &no) {
+                         auto p = this->fg_->add_parameter();
+                         p->set_abstract(no->abstract());
+                         return std::make_shared<Node>(p, ir_builder);
+                       });
+}
+
+std::unique_ptr<BpropIRBuilder> BpropExpanderInGraphMode::CreateIRBuilder(const std::string &name,
+                                                                          const CNodePtr &cnode,
+                                                                          const std::shared_ptr<CppInfer> &infer) {
+  fg_ = std::make_shared<FuncGraph>();
+  return std::make_unique<BpropIRBuilder>(name, fg_, infer);
+}
+
+void BpropExpanderInGraphMode::PostProcess() const {
+  AnfNodePtrList new_outputs{NewValueNode(prim::kPrimMakeTuple)};
+  AbstractBasePtrList abs;
+  (void)std::transform(output_nodes_.cbegin(), output_nodes_.cend(), std::back_inserter(new_outputs),
+                       [&abs](const NodePtr &node) {
+                         abs.push_back(node->get()->abstract());
+                         return node->get();
+                       });
+  auto mt = fg_->NewCNode(new_outputs);
+  mt->set_abstract(std::make_shared<abstract::AbstractTuple>(abs));
+  fg_->set_output(mt);
+}
+
+void BpropExpanderInGraphMode::DumpResult(const std::string &name) const {
+  static bool dump_result = (common::GetEnv("MS_DEV_DUMP_BPROP") == "on");
+  if (!dump_result) {
+    return;
+  }
+  DumpIR("bprop/bprop_expander_" + name + ".ir", fg_, true);
 }
 
 #ifdef _MSC_VER

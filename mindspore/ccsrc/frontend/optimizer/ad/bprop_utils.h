@@ -31,7 +31,8 @@ void ExportBpropToMindir(const py::object &obj, bool force_update);
 bool CheckMindir(const py::object &obj);
 #endif
 // Get bprop function of a primitive.
-FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources = nullptr);
+FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources = nullptr,
+                      const CNodePtr &cnode = nullptr);
 }  // namespace ad
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_BPROP_MANAGER_H_
