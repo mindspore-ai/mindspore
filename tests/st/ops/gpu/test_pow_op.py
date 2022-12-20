@@ -43,7 +43,7 @@ def test_real_datatypes():
     """
     real_datatypes = (np.uint8, np.uint16, np.uint32, np.uint64,
                       np.int8, np.int16, np.int32, np.int64,
-                      np.float16, np.float32, np.float64, bool)
+                      np.float16, np.float32, np.float64)
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     net = Net()
     for datatype in real_datatypes:

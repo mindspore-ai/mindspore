@@ -996,8 +996,6 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
      SpecializeArithFunc<uint32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
      SpecializeArithFunc<uint64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-     SpecializeArithFunc<bool>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeComplex64)
        .AddInputAttr(kNumberTypeComplex64)
