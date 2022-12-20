@@ -10,3 +10,6 @@ mindspore.ops.numel
 
     返回：
         int。Tensor的元素的总数量。
+
+    异常：
+        - **TypeError** - `x` 不是Tensor。

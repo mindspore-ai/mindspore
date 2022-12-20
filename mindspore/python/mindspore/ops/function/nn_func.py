@@ -2464,7 +2464,7 @@ def pad(input_x, padding, mode='constant', value=None):
         >>> import numpy as np
         >>> x = ms.Tensor(np.arange(1 * 2 * 2 * 2).reshape((1, 2, 2, 2)), dtype=ms.float64)
         >>> output = ops.pad(x, [1, 0, 0, 1], mode='constant', value=6.0)
-        >>> print(x)
+        >>> print(output)
         [[[[6. 0. 1.]
            [6. 2. 3.]
            [6. 6. 6.]]
@@ -2508,7 +2508,7 @@ def pad(input_x, padding, mode='constant', value=None):
             raise ValueError(f"For 'pad', the padding mode '{mode}' can not set value, but got value {value}.")
         if mode == "replicate":
             mode = "edge"
-        if padding.shape[0] == input_x.ndim + 1:
+        if padding.shape[0] // 2 + 1 == input_x.ndim:
             input_x = input_x.expand_dims(0)
             is_expand = True
     out = PadV3(mode=mode, paddings_contiguous=True)(input_x, padding, value)

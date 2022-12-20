@@ -114,7 +114,6 @@ tensor_le = P.LessEqual()
 tensor_gt = P.Greater()
 tensor_ge = P.GreaterEqual()
 not_equal_ = P.NotEqual()
-size_ = P.Size()
 transpose_ = P.Transpose()
 cast_ = P.Cast()
 
@@ -601,6 +600,7 @@ def positive(x):
         Tensor, self input.
 
     Raises:
+        TypeError: If `x` is not a Tensor.
         TypeError: If the dtype of self Tensor is bool type.
 
     Supported Platforms:
@@ -613,6 +613,8 @@ def positive(x):
         >>> print(ops.positive(x))
         [-5.0, 1.5, 3.0, 100.0]
     """
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError(f"For positive, the input must be a Tensor, but got {type(x)}")
     if x.dtype == mstype.bool_:
         raise TypeError("For positive, the type of tensor can not be bool.")
     return x
@@ -628,6 +630,9 @@ def numel(x):
     Returns:
         int. A scalar representing the total of elements in the Tensor.
 
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -636,7 +641,9 @@ def numel(x):
         >>> print(ops.numel(input_x))
         4
     """
-    return size_(x)
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError(f"For numel, the input must be a Tensor, but got {type(x)}")
+    return x.size
 
 
 def permute(x, dims):
