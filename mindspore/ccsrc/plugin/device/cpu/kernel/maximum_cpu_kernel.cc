@@ -67,6 +67,7 @@ int MaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   output_shape_ = outputs[0]->GetShapeVector();
   TypeId input_x_dtype = inputs[0]->GetDtype();
   TypeId input_y_dtype = inputs[1]->GetDtype();
+  output_num_ = 1;
   size_t max_input_shape_size =
     input_x_shape_.size() > input_y_shape_.size() ? input_x_shape_.size() : input_y_shape_.size();
   for (size_t i = 0; i < output_shape_.size(); i++) {
@@ -189,6 +190,9 @@ void MaximumCpuKernelMod::BroadcastArithKernel(const size_t l0, const size_t l1,
                                                const size_t r5, const size_t r6, const size_t d0, const size_t d1,
                                                const size_t d2, const size_t d3, const size_t d4, const size_t d5,
                                                const size_t d6, const T *input_x, const T *input_y, T *output) const {
+  if (d0 == 0 || d1 == 0 || d2 == 0 || d3 == 0 || d4 == 0 || d5 == 0 || d6 == 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output must not be 0";
+  }
   for (size_t pos = 0; pos < output_num_; pos++) {
     size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
     size_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
