@@ -40,10 +40,28 @@ AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   MS_EXCEPTION_IF_NULL(gamma_backprob);
   MS_EXCEPTION_IF_NULL(beta_backprob);
 
-  auto shapes = std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
-    x_backprob->BuildShape(), gamma_backprob->BuildShape(), beta_backprob->BuildShape()});
   auto types = std::make_shared<Tuple>(
     std::vector<TypePtr>{x_backprob->BuildType(), gamma_backprob->BuildType(), beta_backprob->BuildType()});
+
+  auto input_shape = dyn_cast<abstract::Shape>(x_backprob->BuildShape());
+  auto gamma_shape = dyn_cast<abstract::Shape>(gamma_backprob->BuildShape());
+  auto beta_shape = dyn_cast<abstract::Shape>(beta_backprob->BuildShape());
+  MS_EXCEPTION_IF_NULL(input_shape);
+  MS_EXCEPTION_IF_NULL(gamma_shape);
+  MS_EXCEPTION_IF_NULL(beta_shape);
+  auto const &input_shape_list = input_shape->shape();
+  auto const &gamma_shape_list = gamma_shape->shape();
+  auto const &beta_shape_list = beta_shape->shape();
+
+  if (IsDynamicRank(input_shape_list) || IsDynamicRank(gamma_shape_list) || IsDynamicRank(beta_shape_list)) {
+    auto any_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+    std::vector<BaseShapePtr> shapes_list = {any_shape, any_shape, any_shape};
+    return abstract::MakeAbstract(std::make_shared<abstract::TupleShape>(shapes_list), types);
+  }
+
+  auto shapes =
+    std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{input_shape, gamma_shape, beta_shape});
+
   return abstract::MakeAbstract(shapes, types);
 }
 void LayerNormGrad::Init(const int64_t begin_norm_axis, const int64_t begin_params_axis) {

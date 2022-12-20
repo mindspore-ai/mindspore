@@ -54,9 +54,34 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto gamma = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, gamma_index);
   auto beta = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, beta_index);
 
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::vector<TypePtr> types_list;
+  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (is_ascend) {
+    types_list = {input_x->BuildType(), input_x->BuildType(), input_x->BuildType()};
+  } else {
+    types_list = {input_x->BuildType(), kFloat32, kFloat32};
+  }
+
   auto input_shape = input_x->shape();
   MS_EXCEPTION_IF_NULL(input_shape);
+  auto gamma_shape = dyn_cast<abstract::Shape>(gamma->BuildShape());
+  auto beta_shape = dyn_cast<abstract::Shape>(beta->BuildShape());
+  MS_EXCEPTION_IF_NULL(gamma_shape);
+  MS_EXCEPTION_IF_NULL(beta_shape);
+
   auto const &input_shape_list = input_shape->shape();
+  auto const &gamma_shape_list = gamma_shape->shape();
+  auto const &beta_shape_list = beta_shape->shape();
+
+  if (IsDynamicRank(input_shape_list) || IsDynamicRank(gamma_shape_list) || IsDynamicRank(beta_shape_list)) {
+    auto any_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+    std::vector<BaseShapePtr> shapes_list = {any_shape, any_shape, any_shape};
+    return abstract::MakeAbstract(std::make_shared<abstract::TupleShape>(shapes_list),
+                                  std::make_shared<Tuple>(types_list));
+  }
+
   const size_t input_rank = input_shape_list.size();
   if (input_rank == 0) {
     MS_LOG(EXCEPTION) << "For '" << op_name << "', input_rank can not be zero, but got: " << input_rank << ".";
@@ -78,13 +103,6 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   (void)CheckAndConvertUtils::CheckTensorTypeValid("beta_dtype", input_args[beta_index]->BuildType(), valid_types,
                                                    op_name);
 
-  auto gamma_shape = dyn_cast<abstract::Shape>(gamma->BuildShape());
-  auto beta_shape = dyn_cast<abstract::Shape>(beta->BuildShape());
-  MS_EXCEPTION_IF_NULL(gamma_shape);
-  MS_EXCEPTION_IF_NULL(beta_shape);
-
-  auto const &gamma_shape_list = gamma_shape->shape();
-  auto const &beta_shape_list = beta_shape->shape();
   if (gamma_shape_list.empty() || beta_shape_list.empty()) {
     MS_EXCEPTION(ValueError) << "For 'LayerNorm', evaluator gamma or beta can not be an AbstractScalar.";
   }
@@ -117,18 +135,8 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
   (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
 
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-  if (is_ascend) {
-    std::vector<TypePtr> types_list = {input_x->BuildType(), input_x->BuildType(), input_x->BuildType()};
-    return abstract::MakeAbstract(std::make_shared<abstract::TupleShape>(shapes_list),
-                                  std::make_shared<Tuple>(types_list));
-  } else {
-    std::vector<TypePtr> types_list = {input_x->BuildType(), kFloat32, kFloat32};
-    return abstract::MakeAbstract(std::make_shared<abstract::TupleShape>(shapes_list),
-                                  std::make_shared<Tuple>(types_list));
-  }
+  return abstract::MakeAbstract(std::make_shared<abstract::TupleShape>(shapes_list),
+                                std::make_shared<Tuple>(types_list));
 }
 
 void LayerNorm::Init(const int64_t begin_norm_axis, const int64_t begin_params_axis, const float epsilon) {
