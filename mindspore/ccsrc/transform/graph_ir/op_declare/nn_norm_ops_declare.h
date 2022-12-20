@@ -22,11 +22,11 @@
 #include "ops/nn_norm_ops.h"
 
 namespace mindspore::transform {
-DECLARE_OP_ADAPTER(SmoothL1Loss)
-DECLARE_OP_USE_OUTPUT(SmoothL1Loss)
+DECLARE_OP_ADAPTER(SmoothL1LossV2)
+DECLARE_OP_USE_OUTPUT(SmoothL1LossV2)
 
-DECLARE_OP_ADAPTER(SmoothL1LossGrad)
-DECLARE_OP_USE_OUTPUT(SmoothL1LossGrad)
+DECLARE_OP_ADAPTER(SmoothL1LossGradV2)
+DECLARE_OP_USE_OUTPUT(SmoothL1LossGradV2)
 
 DECLARE_OP_ADAPTER(SigmoidCrossEntropyWithLogits)
 DECLARE_OP_USE_OUTPUT(SigmoidCrossEntropyWithLogits)
