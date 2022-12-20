@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore as ms
-from mindspore import Tensor, ops
+from mindspore import Tensor, ops, Parameter
 
 
 class PrintNet(nn.Cell):
@@ -112,3 +112,33 @@ def test_print_op_tuple():
     net = PrintTupleNet()
     x = Tensor([6, 7, 8, 9, 10])
     net(x)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_print_op_string_twice():
+    """
+    Feature: cpu Print op.
+    Description: test Print string twice. Avoid memory reuse with dirty data.
+    Expectation: success.
+    """
+    class Network(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.w = Parameter(Tensor(np.random.randn(5, 3), ms.float32), name='w')
+            self.b = Parameter(Tensor(np.random.randn(3,), ms.float32), name='b')
+
+        def construct(self, x):
+            out = ops.matmul(x, self.w)
+            print('matmul: ', out)
+            out = out + self.b
+            print('add bias: ', out)
+            return out
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    x = ops.ones(5, ms.float32)
+    model = Network()
+    model.compile(x)
+    out = model(x)
+    print('out: ', out)
