@@ -393,7 +393,7 @@ int64_t TFReaderOp::HelperBinDataToInt(const unsigned char *str_record_size, siz
   }
 }
 
-Status TFReaderOp::HelperInflateZLIB(ZLIBStreamInf *zlib_stream, const std::string &filename) {
+Status TFReaderOp::HelperInflateZLIB(ZLIBStreamInf *zlib_stream, const std::string &filename) const {
   if (zlib_stream->left_to_read != 0) {
     zlib_stream->strm.avail_out =
       static_cast<unsigned int>(zlib_stream->left_to_read);  // need to read the rest before process

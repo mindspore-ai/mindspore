@@ -136,7 +136,7 @@ class TFReaderOp : public NonMappableLeafOp {
 
 #if !defined(_WIN32) && !defined(_WIN64)
   // ZLIBStream struct to initial ZLIB stream
-  typedef struct ZLIBStreamInf {
+  typedef struct ZLIBStreamInflate {
     z_stream strm;
     char input_stream[kZLIBChunkSize];               // instream
     unsigned char record_size[kTFRecordRecLenSize];  // in order to get record_length
@@ -147,7 +147,7 @@ class TFReaderOp : public NonMappableLeafOp {
     int64_t left_to_read;                            // number of bytes left to read for particular read_flag
     int inflate_status;                              // in order to keep track of inflate status
 
-    ZLIBStreamInf()
+    ZLIBStreamInflate()
         : record_length(0),
           read_flag(static_cast<int>(ZLIBReadFlag::RecordLength)),
           left_to_read(0),
@@ -191,7 +191,7 @@ class TFReaderOp : public NonMappableLeafOp {
   // @param zlib_stream - ZLIB stream.
   // @param filename - TFRecord file name (for throwing error purposes)
   // @return Status - the error code returned.
-  Status HelperInflateZLIB(ZLIBStreamInf *zlib_stream, const std::string &filename);
+  Status HelperInflateZLIB(ZLIBStreamInf *zlib_stream, const std::string &filename) const;
 
   // Helper function to process ZLIB data depending on the flag.
   // @param zlib_stream - ZLIB stream.
