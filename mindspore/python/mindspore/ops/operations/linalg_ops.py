@@ -72,7 +72,7 @@ class Svd(Primitive):
     Refer to :func:`mindspore.ops.svd` for more details.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

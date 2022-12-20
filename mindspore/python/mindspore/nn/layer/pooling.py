@@ -377,12 +377,9 @@ class MaxPool2d(_PoolNd):
         pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
-            - same: Adopts the way of completion. The height and width of the output will be the same as
-              the input. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top and bottom, left and right if possible.
-              Otherwise, the last extra padding will be done from the bottom and the right side.
+            - same: The output shape is the same as the input shape evenly divided by `stride`.
 
-            - valid: Adopts the way of discarding. The possible largest height and width of output
+            - valid: The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
         data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
             Default: 'NCHW'.

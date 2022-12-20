@@ -702,7 +702,7 @@ def laplace(shape, mean, lambda_param, seed=None):
         The dtype is float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
