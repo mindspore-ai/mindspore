@@ -710,6 +710,8 @@ class Profiler:
 
         if GlobalComm.INITED:
             self._rank_size = get_group_size()
+        else:
+            self._rank_size = os.getenv('RANK_SIZE')
 
         if self._has_started:
             self.stop()
@@ -902,6 +904,8 @@ class Profiler:
 
         if GlobalComm.INITED:
             self._rank_size = get_group_size()
+        else:
+            self._rank_size = os.getenv('RANK_SIZE')
 
         if self._has_started:
             self.stop()
