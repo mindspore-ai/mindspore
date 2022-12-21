@@ -70,3 +70,26 @@ def test_cell_list_zip():
     """
     x = Tensor(np.ones([1, 120, 1024, 640]), mstype.float32)
     CellListNet()(x)
+
+
+def test_cell_list_attr():
+    """
+    Feature: nn.CellList
+    Description: Fix the problem of func_graph cloner.
+    Expectation: No exception.
+    """
+    class AttrNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.conv = nn.Conv2d(3, 3, 3)
+            self.conv.from_idx = 1
+            self.model = nn.CellList([self.conv])
+
+        def construct(self, *inputs):
+            for m in self.model:
+                return m.from_idx
+            return 0
+
+    x = Tensor(np.random.randn(2, 3, 4, 4), mstype.float32)
+    out = AttrNet()(x)
+    assert out == 1
