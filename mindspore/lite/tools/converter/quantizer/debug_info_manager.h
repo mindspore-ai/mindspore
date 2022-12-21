@@ -91,8 +91,8 @@ class DebugInfoManager {
                              const std::shared_ptr<mindspore::Model> &quant,
                              const std::map<std::string, OpParameter *> &op_parameters,
                              const std::shared_ptr<ConverterPara> &param,
-                             const mindspore::lite::LiteModel &origin_lite_model,
-                             const mindspore::lite::LiteModel &quant_lite_model);
+                             const std::shared_ptr<lite::Model> &origin_lite_model,
+                             const std::shared_ptr<lite::Model> &quant_lite_model);
 
  private:
   int AddOriginInfo(const mindspore::MSCallBackParam &call_back_param, bool is_input, size_t tensor_index,
@@ -124,7 +124,7 @@ class DebugInfoManager {
 
   void SaveInfo(std::ofstream &out_file, const QuantDebugInfo &info);
 
-  std::map<std::string, mindspore::schema::Tensor *> ParseInputTensors(const mindspore::lite::LiteModel &model) const;
+  std::map<std::string, mindspore::schema::Tensor *> ParseInputTensors(const std::shared_ptr<lite::Model> &model) const;
 
   std::map<std::string, mindspore::schema::Tensor *> ParseOutputTensorFromModel(const Model &model);
 
@@ -172,7 +172,7 @@ class DebugInfoManager {
 
   void AddQuantParamExtend(const mindspore::lite::LiteGraph::Node *node, const mindspore::schema::Tensor *tensor);
 
-  void CollectQuantParam(const mindspore::lite::LiteModel &quant_lite_model);
+  void CollectQuantParam(const std::shared_ptr<lite::Model> &quant_lite_model);
 
   template <typename T>
   void GetStatByTensor(const T *tensor_data, size_t element_num, QuantDebugInfo *infos) {
