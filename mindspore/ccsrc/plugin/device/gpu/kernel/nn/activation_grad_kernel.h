@@ -65,8 +65,6 @@ class ActivationGradGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  template <typename T>
   bool LaunchTanhGrad(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   template <typename T>
   bool LaunchSigmoidGrad(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);

@@ -40,11 +40,11 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationFwdGpuKernelMo
       {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
        &ActivationFwdGpuKernelMod::LaunchTanh<utils::Complex<float>>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-       &ActivationFwdGpuKernelMod::LaunchKernel<double>},
+       &ActivationFwdGpuKernelMod::LaunchTanh<double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &ActivationFwdGpuKernelMod::LaunchKernel<float>},
+       &ActivationFwdGpuKernelMod::LaunchTanh<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &ActivationFwdGpuKernelMod::LaunchKernel<half>}}},
+       &ActivationFwdGpuKernelMod::LaunchTanh<half>}}},
     {kElu,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &ActivationFwdGpuKernelMod::LaunchKernel<double>},
@@ -58,11 +58,11 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationFwdGpuKernelMo
       {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
        &ActivationFwdGpuKernelMod::LaunchSigmoid<utils::Complex<float>>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-       &ActivationFwdGpuKernelMod::LaunchKernel<double>},
+       &ActivationFwdGpuKernelMod::LaunchSigmoid<double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &ActivationFwdGpuKernelMod::LaunchKernel<float>},
+       &ActivationFwdGpuKernelMod::LaunchSigmoid<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &ActivationFwdGpuKernelMod::LaunchKernel<half>}}}};
+       &ActivationFwdGpuKernelMod::LaunchSigmoid<half>}}}};
 
 bool ActivationFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
@@ -101,11 +101,10 @@ bool ActivationFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   mode_ = mode_iter->second;
 
   dtype_ = inputs.at(kIndex0)->GetDtype();
-  // is_additional_dtype_ is True when:
-  // Tanh: Complex<float>, Complex<double>
-  // Sigmoid: Complex<float>, Complex<double>
-  if ((dtype_ == kNumberTypeComplex64) || (dtype_ == kNumberTypeComplex128)) {
-    is_additional_dtype_ = true;
+  if (((dtype_ == kNumberTypeComplex64) || (dtype_ == kNumberTypeComplex128)) && (kernel_name_ != kTanh) &&
+      (kernel_name_ != kSigmoid)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', only tanh and sigmoid support complex input, but got "
+                  << kernel_name_ << " with dtype " << TypeIdLabel(inputs.at(kIndex0)->GetDtype());
   }
   return true;
 }
@@ -127,13 +126,13 @@ int ActivationFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     return KRET_OK;
   }
 
-  if (dtype_ == kNumberTypeComplex128) {
-    elements_ = static_cast<size_t>(input_size_list_[0] / sizeof(utils::Complex<double>));
-    // Does not call Cudnn
-    return KRET_OK;
-  }
-  if (dtype_ == kNumberTypeComplex64) {
-    elements_ = static_cast<size_t>(input_size_list_[0] / sizeof(utils::Complex<float>));
+  if (kernel_name_ == kTanh || kernel_name_ == kSigmoid) {
+    auto dtype_size = abstract::TypeIdSize(dtype_);
+    if (dtype_size == 0) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the len of dtype is zero!";
+      return KRET_RESIZE_FAILED;
+    }
+    elements_ = static_cast<size_t>(input_size_list_[0] / dtype_size);
     // Does not call Cudnn
     return KRET_OK;
   }

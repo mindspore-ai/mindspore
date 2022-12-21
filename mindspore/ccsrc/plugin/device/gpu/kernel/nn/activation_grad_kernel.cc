@@ -47,11 +47,11 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationGradGpuKernelM
          .AddOutputAttr(kNumberTypeComplex64),
        &ActivationGradGpuKernelMod::LaunchTanhGrad<utils::Complex<float>>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-       &ActivationGradGpuKernelMod::LaunchKernel<double>},
+       &ActivationGradGpuKernelMod::LaunchTanhGrad<double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &ActivationGradGpuKernelMod::LaunchKernel<float>},
+       &ActivationGradGpuKernelMod::LaunchTanhGrad<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &ActivationGradGpuKernelMod::LaunchKernel<half>}}},
+       &ActivationGradGpuKernelMod::LaunchTanhGrad<half>}}},
     {kEluGrad,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &ActivationGradGpuKernelMod::LaunchEluRelu<float>},
@@ -59,11 +59,11 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationGradGpuKernelM
        &ActivationGradGpuKernelMod::LaunchEluRelu<half>}}},
     {kSigmoidGrad,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &ActivationGradGpuKernelMod::LaunchKernel<float>},
+       &ActivationGradGpuKernelMod::LaunchSigmoidGrad<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &ActivationGradGpuKernelMod::LaunchKernel<half>},
+       &ActivationGradGpuKernelMod::LaunchSigmoidGrad<half>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-       &ActivationGradGpuKernelMod::LaunchKernel<double>},
+       &ActivationGradGpuKernelMod::LaunchSigmoidGrad<double>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeComplex64)
          .AddInputAttr(kNumberTypeComplex64)
@@ -138,14 +138,14 @@ int ActivationGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     return KRET_OK;
   }
 
-  if (dtype_ == kNumberTypeComplex128) {
-    elements_ = static_cast<size_t>(input_size_list_[0] / sizeof(utils::Complex<double>));
-    // only tanh and sigmoid support complex dytpe, Does not call Cudnn
-    return KRET_OK;
-  }
-  if (dtype_ == kNumberTypeComplex64) {
-    elements_ = static_cast<size_t>(input_size_list_[0] / sizeof(utils::Complex<float>));
-    // only tanh and sigmoid support complex dytpe, Does not call Cudnn
+  if (kernel_name_ == kSigmoidGrad || kernel_name_ == kTanhGrad) {
+    auto dtype_size = abstract::TypeIdSize(dtype_);
+    if (dtype_size == 0) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the len of dtype is zero!";
+      return KRET_RESIZE_FAILED;
+    }
+    elements_ = static_cast<size_t>(input_size_list_[0] / dtype_size);
+    // Does not call Cudnn
     return KRET_OK;
   }
 
@@ -230,32 +230,6 @@ bool ActivationGradGpuKernelMod::LaunchEluRelu(const std::vector<kernel::Address
     cudnnActivationBackward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, y, data_descriptor_, dy,
                             data_descriptor_, y, &beta, data_descriptor_, dx),
     "For 'ActivationGrad', cudnnActivationBackward failed.");
-
-  return true;
-}
-
-template <typename T>
-bool ActivationGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  T *dy = GetDeviceAddress<T>(inputs, kIndex1);
-  T *y = GetDeviceAddress<T>(inputs, kIndex0);
-  T *dx = GetDeviceAddress<T>(outputs, kIndex0);
-
-  if constexpr (std::is_same_v<T, double>) {
-    constexpr double alpha = 1.0;
-    constexpr double beta = 0.0;
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnActivationBackward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, y, data_descriptor_, dy,
-                              data_descriptor_, y, &beta, data_descriptor_, dx),
-      "For 'ActivationGrad', cudnnActivationBackward failed.");
-  } else {
-    constexpr float alpha = 1.0;
-    constexpr float beta = 0.0;
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnActivationBackward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, y, data_descriptor_, dy,
-                              data_descriptor_, y, &beta, data_descriptor_, dx),
-      "For 'ActivationGrad', cudnnActivationBackward failed.");
-  }
 
   return true;
 }

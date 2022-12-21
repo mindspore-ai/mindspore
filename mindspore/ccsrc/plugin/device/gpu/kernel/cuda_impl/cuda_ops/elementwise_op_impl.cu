@@ -263,8 +263,7 @@ template CUDA_LIB_EXPORT void InvOpt<int16_t>(const int16_t *input, int16_t *out
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void InvOpt<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void InvOpt<int>(const int *input, int *output, const size_t count,
-                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void InvOpt<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
                                                cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void InvOpt<int64_t>(const int64_t *input, int64_t *output, const size_t count,
@@ -590,8 +589,7 @@ template CUDA_LIB_EXPORT void TanhOpt<int16_t>(const int16_t *input, int16_t *ou
                                                cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void TanhOpt<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TanhOpt<int>(const int *input, int *output, const size_t count,
-                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhOpt<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void TanhOpt<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void TanhOpt<int64_t>(const int64_t *input, int64_t *output, const size_t count,
@@ -606,30 +604,38 @@ template CUDA_LIB_EXPORT void TanhOpt<Complex<double>>(const Complex<double> *in
 // sigmoid
 template <typename T>
 struct SigmoidFunctor {
-  T one_ = static_cast<T>(1.0);
   SigmoidFunctor() {}
-  __device__ __forceinline__ T operator()(T x) const { return one_ / (one_ + exp(-x)); }
+  __device__ __forceinline__ T operator()(T x) const {
+    T one_{1};
+    return one_ / (one_ + exp(-x));
+  }
 };
 
 template <>
 struct SigmoidFunctor<half> {
-  half one_ = half(1.0);
   SigmoidFunctor() {}
-  __device__ __forceinline__ half operator()(half x) const { return one_ / (one_ + hexp(-x)); }
+  __device__ __forceinline__ half operator()(half x) const {
+    half one_{1.};
+    return one_ / (one_ + hexp(-x));
+  }
 };
 
 template <>
 struct SigmoidFunctor<Complex<float>> {
-  Complex<float> one_{1.0, 0};
   SigmoidFunctor() {}
-  __device__ __forceinline__ Complex<float> operator()(Complex<float> x) const { return one_ / (one_ + exp(-x)); }
+  __device__ __forceinline__ Complex<float> operator()(Complex<float> x) const {
+    Complex<float> one_{1.0, 0};
+    return one_ / (one_ + exp(-x));
+  }
 };
 
 template <>
 struct SigmoidFunctor<Complex<double>> {
-  Complex<double> one_{1.0, 0};
   SigmoidFunctor() {}
-  __device__ __forceinline__ Complex<double> operator()(Complex<double> x) const { return one_ / (one_ + exp(-x)); }
+  __device__ __forceinline__ Complex<double> operator()(Complex<double> x) const {
+    Complex<double> one_{1.0, 0};
+    return one_ / (one_ + exp(-x));
+  }
 };
 
 template <typename T>
@@ -653,11 +659,16 @@ template CUDA_LIB_EXPORT void SigmoidOpt<Complex<double>>(const Complex<double> 
 // TanhGrad
 template <typename T>
 struct TanhGradFunctor {
-  T one_ = static_cast<T>(1.0);
   TanhGradFunctor() {}
-  __device__ __forceinline__ T operator()(T y, T dout) const {
-    T divisor = one_ - y * y;
-    return dout * divisor;
+  __device__ __forceinline__ T operator()(T y, T dout) const { return dout * (static_cast<T>(1) - y * y); }
+};
+
+template <>
+struct TanhGradFunctor<half> {
+  TanhGradFunctor() {}
+  __device__ __forceinline__ half operator()(half y, half dout) const {
+    float float_y = __half2float(y);
+    return __float2half(__half2float(dout) * (1. - float_y * float_y));
   }
 };
 
@@ -701,31 +712,34 @@ template CUDA_LIB_EXPORT void TanhGradOpt<Complex<double>>(const Complex<double>
 // SigmoidGrad
 template <typename T>
 struct SigmoidGradFunctor {
-  T one_ = static_cast<T>(1.0);
   SigmoidGradFunctor() {}
-  __device__ __forceinline__ T operator()(T y, T dout) const {
-    T divisor = y * (one_ - y);
-    return dout * divisor;
+  __device__ __forceinline__ T operator()(T y, T dout) const { return dout * y * (static_cast<T>(1) - y); }
+};
+
+template <>
+struct SigmoidGradFunctor<half> {
+  SigmoidGradFunctor() {}
+  __device__ __forceinline__ half operator()(half y, half dout) const {
+    float float_y = __half2float(y);
+    return __float2half(__half2float(dout) * float_y * (1. - float_y));
   }
 };
 
 template <>
 struct SigmoidGradFunctor<Complex<float>> {
-  Complex<float> one_{1.0, 0};
   SigmoidGradFunctor() {}
   __device__ __forceinline__ Complex<float> operator()(Complex<float> y, Complex<float> dout) const {
-    Complex<float> divisor = y * (one_ - y);
-    return dout * conj(divisor);
+    Complex<float> one_{1., 0.};
+    return dout * conj(y * (one_ - y));
   }
 };
 
 template <>
 struct SigmoidGradFunctor<Complex<double>> {
-  Complex<double> one_{1.0, 0};
   SigmoidGradFunctor() {}
   __device__ __forceinline__ Complex<double> operator()(Complex<double> y, Complex<double> dout) const {
-    Complex<double> divisor = y * (one_ - y);
-    return dout * conj(divisor);
+    Complex<double> one_{1., 0.};
+    return dout * conj(y * (one_ - y));
   }
 };
 
