@@ -66,19 +66,18 @@ pip install numpy wheel
 
 # Download model and input data file
 BASEPATH=$(cd "$(dirname $0)" || exit; pwd)
-MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms"
+MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.mindir"
 INPUT_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/input.bin"
 
 mkdir -p model
-if [ ! -e ${BASEPATH}/model/mobilenetv2.ms ]; then
-    wget -c -O ${BASEPATH}/model/mobilenetv2.ms --no-check-certificate ${MODEL_DOWNLOAD_URL}
+if [ ! -e ${BASEPATH}/model/mobilenetv2.mindir ]; then
+    wget -c -O ${BASEPATH}/model/mobilenetv2.mindir --no-check-certificate ${MODEL_DOWNLOAD_URL}
 fi
 if [ ! -e ${BASEPATH}/model/input.bin ]; then
     wget -c -O ${BASEPATH}/model/input.bin --no-check-certificate ${INPUT_DOWNLOAD_URL}
 fi
 
 # Reinstall MindSpore Lite whl package
-arch=`uname -m`
 mindspore_lite_whl=`ls ${BASEPATH}/mindspore_lite*.whl`
 if [ -f "${mindspore_lite_whl}" ]; then
   echo "==========[INFO]MindSpore Lite Whl found, install the current directory's package.=========="
@@ -87,7 +86,7 @@ if [ -f "${mindspore_lite_whl}" ]; then
 else
   echo "==========[INFO]MindSpore Lite Whl not found, install package from the network.=========="
   python -m pip uninstall -y mindspore_lite
-  python -m pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/${MINDSPORE_LITE_VERSION}/MindSpore/lite/release/linux/${arch}/server/mindspore_lite-${MINDSPORE_LITE_VERSION/-/}-cp37-cp37m-linux_${arch}.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
+  python -m pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/${MINDSPORE_LITE_VERSION}/MindSpore/lite/release/centos_x86/cloud_fusion/mindspore_lite-${MINDSPORE_LITE_VERSION}-cp37-cp37m-linux_x86.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
 fi
 # Check MindSpore Lite installation
 python -c "import mindspore_lite"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,22 +19,22 @@ get_version() {
     VERSION_STR=$(cat ${BASEPATH}/../../../../version.txt)
 }
 get_version
-MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms"
+MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.mindir"
 MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-linux-x64"
 MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
-MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}.B310/MindSpore/lite/release/linux/x86_64/server/${MINDSPORE_FILE}"
+MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/centos_x86/cloud_fusion/${MINDSPORE_FILE}"
+
+mkdir -p model
+if [ ! -e ${BASEPATH}/model/mobilenetv2.mindir ]; then
+    wget -c -O ${BASEPATH}/model/mobilenetv2.mindir --no-check-certificate ${MODEL_DOWNLOAD_URL}
+fi
+if [ ! -e ${BASEPATH}/${MINDSPORE_FILE} ]; then
+  wget -c -O ${BASEPATH}/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
+fi
+tar xzvf ${BASEPATH}/${MINDSPORE_FILE}
+export LITE_HOME=${BASEPATH}/${MINDSPORE_FILE_NAME}
 
 mkdir -p build
-mkdir -p lib
-mkdir -p model
-if [ ! -e ${BASEPATH}/model/mobilenetv2.ms ]; then
-    wget -c -O ${BASEPATH}/model/mobilenetv2.ms --no-check-certificate ${MODEL_DOWNLOAD_URL}
-fi
-if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
-  wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
-fi
-tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/* ${BASEPATH}/lib
-cd ${BASEPATH}/ || exit
-
-mvn package
+cd build || exit
+cmake ..
+make

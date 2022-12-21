@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.mindspore.lite.demo</groupId>
-    <artifactId>quick_start_server_inference_java</artifactId>
+    <artifactId>quick_start_parallel_java</artifactId>
     <version>1.0</version>
 
     <properties>
@@ -20,7 +20,7 @@
             <artifactId>mindspore-lite-java</artifactId>
             <version>1.0</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/mindspore-lite-java.jar</systemPath>
+            <systemPath>${project.basedir}/lib/runtime/lib/mindspore-lite-java.jar</systemPath>
         </dependency>
     </dependencies>
 

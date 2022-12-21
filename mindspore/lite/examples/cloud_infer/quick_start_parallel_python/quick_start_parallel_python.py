@@ -82,7 +82,7 @@ context.append_device_info(cpu_device_info)
 parallel_runner_config = mslite.RunnerConfig(context=context, workers_num=WORKERS_NUM)
 # Build ModelParallelRunner from file
 model_parallel_runner = mslite.ModelParallelRunner()
-model_parallel_runner.init(model_path="./model/mobilenetv2.ms", runner_config=parallel_runner_config)
+model_parallel_runner.init(model_path="./model/mobilenetv2.mindir", runner_config=parallel_runner_config)
 # The server creates 5 threads to store the inference tasks of 5 clients.
 threads = []
 total_start_time = time.time()
