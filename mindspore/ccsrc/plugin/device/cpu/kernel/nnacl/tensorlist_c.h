@@ -26,6 +26,7 @@ typedef struct vvector {
 } vvector;
 
 typedef struct TensorListC {
+  bool shape_changed_;
   int data_type_;
   int format_;
   int shape_value_;

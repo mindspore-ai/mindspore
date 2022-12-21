@@ -35,6 +35,7 @@ class TensorListGetItemCPUKernel : public LiteKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
+  bool InferShapeDone() const override { return false; }
 
  private:
   int index_ = 0;

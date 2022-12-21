@@ -199,11 +199,8 @@ class KernelExec {
   bool is_model_output() const { return this->is_model_output_; }
 
   bool InferShapeDone() const {
-    auto shape = out_tensors().front()->shape();
-    if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
-      return false;
-    }
-    return true;
+    auto checker = context_ != nullptr ? context_->get_infer_checker() : lite::InferCheckerOutput;
+    return checker != nullptr && checker(in_tensors(), out_tensors());
   }
 
   schema::PrimitiveType type() const {

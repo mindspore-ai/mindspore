@@ -324,6 +324,7 @@ void LiteOpActor::InitInputData() {
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto dst_tensor = kernel_->in_tensors()[i];
     auto src_tensor = inputs_data_[i];
+    dst_tensor->set_shape_changed(src_tensor->get_shape_changed());
     if (dst_tensor->init_ref_count() == 0) {
       src_tensor->DecRefCount();
       continue;

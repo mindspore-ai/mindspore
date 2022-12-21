@@ -41,6 +41,7 @@ class TensorListStackCPUKernel : public LiteKernel {
   int MergeElementShape();
   int MergeSubShape(const std::vector<int> &shape);
   bool IsFullyDefined(const std::vector<int> &shape) const;
+  bool InferShapeDone() const override { return false; }
 
  private:
   size_t TypeUnknownSize = 0;

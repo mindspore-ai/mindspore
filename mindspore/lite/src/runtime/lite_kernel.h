@@ -92,16 +92,10 @@ class LiteKernel : public Abstractkernel {
 
   void set_parameter(OpParameter *param) { op_parameter_ = param; }
 
-  bool InferShapeDone() const {
-    if (std::any_of(in_tensors_.begin(), in_tensors_.end(),
-                    [](const lite::Tensor *input) { return input->data_type() == kObjectTypeTensorType; })) {
-      return false;
-    }
-    auto shape = out_tensors_.front()->shape();
-    if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
-      return false;
-    }
-    return true;
+  virtual bool InferShapeDone() const {
+    auto checker = ms_context_ != nullptr ? static_cast<const lite::InnerContext *>(ms_context_)->get_infer_checker()
+                                          : lite::InferCheckerOutput;
+    return checker != nullptr && checker(in_tensors_, out_tensors_);
   }
 
   schema::PrimitiveType type() const override {

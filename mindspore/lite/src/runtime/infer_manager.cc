@@ -34,6 +34,33 @@ namespace {
 static const size_t kNumMaxMallocSize = GetMaxMallocSize();
 }
 
+bool InferCheckerAll(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
+  auto out = outputs.front();
+  if (!out->get_shape_changed() &&
+      std::any_of(inputs.begin(), inputs.end(), [](const lite::Tensor *input) { return input->get_shape_changed(); })) {
+    return false;
+  }
+  auto shape = out->shape();
+  if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
+    return false;
+  }
+  return true;
+}
+
+bool InferCheckerInput(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
+  return outputs.front()->get_shape_changed() ||
+         std::all_of(inputs.begin(), inputs.end(),
+                     [](const lite::Tensor *input) { return !input->get_shape_changed(); });
+}
+
+bool InferCheckerOutput(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
+  auto shape = outputs.front()->shape();
+  if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
+    return false;
+  }
+  return true;
+}
+
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      const void *primitive, std::set<std::string> &&providers, int schema_version,
                      const kernel::Kernel *kernel) {
@@ -193,6 +220,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     if (ret == NNACL_INFER_INVALID) {
       outputs.at(i)->set_shape({-1});
     }
+    outputs.at(i)->set_shape_changed(true);
   }
   FreeOutTensorC(&out_tensors, allocator);
 
