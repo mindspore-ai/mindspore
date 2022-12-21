@@ -3364,11 +3364,11 @@ def ceil(x):
     return F.ceil(x)
 
 
-def top_k(input_x, k, sorted=True):
+def top_k(input_x, k, dim=None, sorted=True):
+    r"""
+    For details, please refer to :func:`mindspore.ops.top_k`.
     """
-    Finds values and indices of the `k` largest entries along the last dimension.
-    """
-    return F.top_k(input_x, k, sorted)
+    return F.top_k(input_x, k, dim, sorted)
 
 
 def subtract(x, other, *, alpha=1):
