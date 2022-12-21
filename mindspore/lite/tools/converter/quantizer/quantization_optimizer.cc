@@ -101,11 +101,12 @@ int DoDynamicQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<Converte
   return RET_OK;
 }
 
-lite::LiteModel *ParseLiteModel(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
+std::shared_ptr<lite::Model> ParseLiteModel(const FuncGraphPtr &func_graph,
+                                            const std::shared_ptr<ConverterPara> &param) {
   auto meta_graph = Export(func_graph, true, true);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta_graph failed";
-    return static_cast<lite::LiteModel *>(nullptr);
+    return nullptr;
   }
 
   // transform
@@ -115,7 +116,7 @@ lite::LiteModel *ParseLiteModel(const FuncGraphPtr &func_graph, const std::share
   if (status != RET_OK) {
     MS_LOG(ERROR) << "FBTransform model failed";
     delete meta_graph;
-    return static_cast<LiteModel *>(nullptr);
+    return nullptr;
   }
   meta_graph->version = Version();
 
@@ -127,14 +128,16 @@ lite::LiteModel *ParseLiteModel(const FuncGraphPtr &func_graph, const std::share
   auto content = reinterpret_cast<const char *>(builder.GetBufferPointer());
   if (content == nullptr) {
     MS_LOG(ERROR) << "GetBufferPointer nullptr";
-    return static_cast<LiteModel *>(nullptr);
+    delete meta_graph;
+    return nullptr;
   }
-  return static_cast<LiteModel *>(LiteModel::Import(content, size));
+  delete meta_graph;
+  return std::shared_ptr<lite::Model>(LiteModel::Import(content, size));
 }
 
 int DoQuantDebug(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param,
                  const std::shared_ptr<mindspore::Model> &origin_model,
-                 const mindspore::lite::LiteModel *origin_lite_model) {
+                 const std::shared_ptr<lite::Model> &origin_lite_model) {
   auto quant_model = std::make_shared<mindspore::Model>();
   CHECK_NULL_RETURN(quant_model);
   size_t size = 0;
@@ -160,8 +163,9 @@ int DoQuantDebug(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterP
     MS_LOG(ERROR) << "Origin lite model nullptr.";
     return RET_ERROR;
   }
-  ret = manager.CompareOriginWithQuant(origin_model, quant_model, op_parameters, param, *origin_lite_model,
-                                       *quant_lite_model);
+
+  ret = manager.CompareOriginWithQuant(origin_model, quant_model, op_parameters, param, origin_lite_model,
+                                       quant_lite_model);
   auto free_buffer = [&] {
     for (auto parameter : op_parameters) {
       if (parameter.second != nullptr) {
@@ -281,7 +285,7 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<C
   }
 
   std::shared_ptr<mindspore::Model> origin;
-  lite::LiteModel *origin_lite_model = nullptr;
+  std::shared_ptr<lite::Model> origin_lite_model;
   if (param->commonQuantParam.is_debug) {  // Bak fp32 model for debug
     auto quant_type = param->commonQuantParam.quant_type;
     param->commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
