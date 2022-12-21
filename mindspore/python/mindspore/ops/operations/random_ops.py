@@ -601,7 +601,7 @@ class UniformInt(Primitive):
         seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: 0.
 
     Inputs:
-        - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
+        - **shape** (Union[tuple, Tensor]) - The shape of random tensor to be generated. Only constant value is allowed.
         - **minval** (Tensor) - The distribution parameter, a.
           It defines the minimum possibly generated value, with int32 data type. Only one number is supported.
         - **maxval** (Tensor) - The distribution parameter, b.
@@ -612,7 +612,7 @@ class UniformInt(Primitive):
 
     Raises:
         TypeError: If neither `seed` nor `seed2` is an int.
-        TypeError: If `shape` is not a tuple.
+        TypeError: If `shape` is neither a tuple nor a tensor.
         TypeError: If neither `minval` nor `maxval` is a Tensor.
         ValueError: If `shape` is not a constant value.
 
@@ -659,14 +659,14 @@ class UniformReal(Primitive):
           operator-level random seed.
 
     Inputs:
-        - **shape** (tuple) - The shape of tensor to be generated. Only constant value is allowed.
+        - **shape** (Union[tuple, Tensor]) - The shape of tensor to be generated. Only constant value is allowed.
 
     Outputs:
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.
 
     Raises:
         TypeError: If `seed` or `seed2` is not an int.
-        TypeError: If `shape` is not a tuple.
+        TypeError: If `shape` is neither a tuple nor a tensor.
         ValueError: If `shape` is not a constant value.
 
     Supported Platforms:

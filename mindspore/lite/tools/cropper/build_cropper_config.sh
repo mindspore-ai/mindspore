@@ -394,6 +394,10 @@ for file in ${npu_files[@]}; do
   echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
 done
 
+# support for nnapi
+while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/litert/delegate/nnapi/*.cc)
+while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/litert/delegate/nnapi/op/*.cc)
+
 sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | uniq >${NPU_MAPPING_OUTPUT_FILE}
 chmod 444 ${NPU_MAPPING_OUTPUT_FILE}
 
