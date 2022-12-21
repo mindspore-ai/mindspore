@@ -20,8 +20,7 @@ from mindspore.ops.primitive import Primitive
 from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
-from mindspore import ops
-
+from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 dyn_shape = P.TensorShape()
 cast = P.Cast()
 
@@ -140,7 +139,7 @@ def dyn_invert_permutation(perm):
 def dyn_fill(value_type, shape, value):
     """create a Tensor of the specified shape of tensor and fill it with the specified value."""
     value_tensor = P.Cast()(value, value_type)
-    return ops.broadcast_to(value_tensor, shape)
+    return DynamicBroadcastTo()(value_tensor, shape)
 
 
 def dyn_ones(shape, value_type):
