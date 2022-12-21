@@ -67,6 +67,7 @@ Loss Functions
     mindspore.ops.cross_entropy
     mindspore.ops.gaussian_nll_loss
     mindspore.ops.hinge_embedding_loss
+    mindspore.ops.l1_loss
     mindspore.ops.mse_loss
     mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
