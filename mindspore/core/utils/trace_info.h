@@ -60,7 +60,11 @@ class TracePhi : public TraceInfo {
   explicit TracePhi(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TracePhi() override = default;
   // phi: Φ
+#ifdef _WIN32
+  MS_DECLARE_TRACE_NAME_SYMBOL("phi", "phi-");
+#else
   MS_DECLARE_TRACE_NAME_SYMBOL("phi", "\u0444");
+#endif
   TraceInfoPtr clone() override { return std::make_shared<TracePhi>(*this); }
 };
 
