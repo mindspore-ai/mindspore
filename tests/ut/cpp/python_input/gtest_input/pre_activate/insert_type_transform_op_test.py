@@ -97,3 +97,30 @@ def test_tuple_unfold_to_tuple_transform(tag):
         return res
 
     return fns[tag]
+
+
+def test_tuple_unfold_to_tensor_transform(tag):
+    """
+    Feature: Dynamic shape.
+    Description: Test TupleUnfold to Tensor transforming pass.
+    Expectation: The 'after' graph is identical to the graph after this pass.
+    """
+    fns = FnDict()
+    reshape = P.Reshape()
+    real_make_tuple = Primitive('RealMakeTuple')
+    tuple_to_tensor = Primitive('TupleToTensor')
+
+    @fns
+    def before(input_1, input_2, input_3):
+        res = make_tuple(input_1, input_2)
+        res = reshape(input_3, res)
+        return res
+
+    @fns
+    def after(input_1, input_2, input_3):
+        res = real_make_tuple(input_1, input_2)
+        res = tuple_to_tensor(res)
+        res = reshape(input_3, res)
+        return res
+
+    return fns[tag]

@@ -74,35 +74,14 @@ struct ObjectTypePair {
 using ProcessTypeTransformFunc = std::function<AnfNodePtrList(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                                               const CNodePtr &node, bool *new_prim)>;
 
-// The utils most of which are only applicable to this pass.
-
-// Kernel object type for newly created virtual node should be set.
-void SetObjTypeForTupleGetItemNode(const AnfNodePtr &node);
-
-// Generate output format and object type for newly created node.
-// They are generated according to node pritimive and inputs.
-std::string GenerateOutputFormatForNewCNode(const CNodePtr &cnode);
-void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<KernelObjectType> *input_obj_type,
-                                         std::vector<KernelObjectType> *output_obj_type);
-
-// Set kernel info for newly created cnodes.
-void SetKernelInfoForNewCNode(const CNodePtr &cnode);
-
 // SplitTupleInputs methods refer to the pass ConvertTupleInputToDynamicInput. It unfolds tuple inputs and returns the
 // unfolded inputs nodes.
 int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
                          std::vector<AnfNodePtr> *plant_inputs);
 
 // Create the new cnode which will replace the original cnode.
+// This method is called at the last step of this pass specifically.
 AnfNodePtr CreateNewNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &input_list, const CNodePtr &origin_node);
-
-// The dynamic input size and real input size should match.
-// This method checks input size of new_cnode and origin_node.
-void CheckDynamicInputSize(const CNodePtr &new_cnode, const CNodePtr &origin_node);
-
-// Update new cnode's kernel build info according to the original cnode.
-// Mainly update the inputs/outputs device types and kernel object types.
-void UpdateKernelBuildInfo(const CNodePtr &new_cnode, const CNodePtr &origin_node);
 
 // Transforming MakeTuple to RealMakeTuple scenario.
 AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const CNodePtr &make_tuple_node);
@@ -110,6 +89,22 @@ AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const 
 // Node with TupleUnfold output(not MakeTuple) connected to Tuple input scenario.
 AnfNodePtr CreateRealMakeTupleByTupleUnfoldInput(const FuncGraphPtr &func_graph,
                                                  const AnfNodePtr &node_with_tuple_unfold_output);
+
+// Inherit new cnode's kernel build info from the original cnode.
+void SetKernelInfoForNewCNodeByOrigNode(const CNodePtr &new_cnode, const CNodePtr &origin_node);
+
+// Set kernel info for newly created cnodes. The kernel info will be generated from scratch.
+// In some cases, there's no need to set input/output format and type for the node.
+void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type = true);
+
+// Generate abstract, format and object type for newly created node.
+// They can be generated in multiple ways because new node is not processed by kernel selecting method.
+
+// Generate abstract according to input type and shape which is already set to the user node.
+abstract::AbstractBasePtr GenerateAbsByUserNodeInput(const CNodePtr &user_node, size_t input_index);
+std::string GenerateOutputFormatForNewCNode(const CNodePtr &cnode);
+void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<KernelObjectType> *input_obj_type,
+                                         std::vector<KernelObjectType> *output_obj_type);
 
 // After kernel selection phase, one kernel's acquired input type may not be the same as the actual input type(the input
 // node's output type). We need this pass to transform these types to valid types.
@@ -128,6 +123,10 @@ class BACKEND_EXPORT InsertTypeTransformOp : public PatternProcessPass {
   // Convert TupleUnfold output to tuple, real tuple with continuous memory.
   AnfNodePtrList ProcessTupleUnfoldToTuple(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                            const CNodePtr &node, bool *new_prim);
+
+  // Convert TupleUnfold output to Tensor. Firstly insert TupleToTensor op. Then transform TupleUnfold to Tuple.
+  AnfNodePtrList ProcessTupleUnfoldToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                            const CNodePtr &node, bool *new_prim);
 };
 }  // namespace opt
 }  // namespace mindspore
