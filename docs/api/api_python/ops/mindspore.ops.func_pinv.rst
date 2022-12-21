@@ -14,7 +14,7 @@ mindspore.ops.pinv
         - **hermitian** (bool) - 为True时假设x为实对称矩阵。默认值：False。
 
     输出：
-        Tensor，类型与输入相同。
+        Tensor: 类型与输入相同。若输入x(m, n)，则输出(n, m)
 
     异常：
         - **TypeError** - `hermitian` 不是bool。
