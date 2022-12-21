@@ -117,15 +117,15 @@ bool KLDivLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     y = reinterpret_cast<T *>(workspace[kIndex0]->addr);
   }
 
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_x(input_x, input_x_shape_size_, 1);
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_target(input_target, input_target_shape_size_, 1);
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_y(y, output_before_reduction_shape_size_, 1);
-
-  array_y = (Eigen::log(array_target) - array_x) * array_target;
+  double total_sum = 0;
   auto task = [&](size_t start, size_t end) {
+    double local_sum = 0;
     for (size_t i = start; i < end; ++i) {
-      array_y[i] = std::isnan(array_y[i]) ? static_cast<T>(0) : array_y[i];
+      T out_before_clip = (log(input_target[i]) - input_x[i]) * input_target[i];
+      y[i] = std::isnan(static_cast<float>(out_before_clip)) ? static_cast<T>(0) : out_before_clip;
+      local_sum += static_cast<double>(y[i]);
     }
+    total_sum += local_sum;
   };
   ParallelLaunchAutoSearch(task, output_before_reduction_shape_size_, this, &parallel_search_info_);
 
@@ -134,16 +134,6 @@ bool KLDivLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
 
   T *y_ret = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  double total_sum = 0;
-  auto task2 = [&](size_t start, size_t end) {
-    double local_sum = 0;
-    for (size_t i = start; i < end; ++i) {
-      local_sum += static_cast<double>(array_y[i]);
-    }
-    total_sum += local_sum;
-  };
-  ParallelLaunchAutoSearch(task2, output_before_reduction_shape_size_, this, &parallel_search_info_);
-
   if (reductionMode_ == ops::kSum) {
     y_ret[kIndex0] = static_cast<T>(total_sum);
     return true;
@@ -163,7 +153,7 @@ bool KLDivLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
 std::vector<std::pair<KernelAttr, KLDivLossCpuKernelMod::KLDivLossFunc>> KLDivLossCpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &KLDivLossCpuKernelMod::LaunchKernel<Eigen::half>},
+   &KLDivLossCpuKernelMod::LaunchKernel<float16>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &KLDivLossCpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
