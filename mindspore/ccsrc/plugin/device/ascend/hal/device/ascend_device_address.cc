@@ -167,7 +167,7 @@ void AscendDeviceAddress::BindDevice() const {
       MS_LOG(WARNING) << "Bind device to current thread failed.";
     }
   } else {
-    MS_LOG(WARNING) << "Device name is null.";
+    MS_LOG(DEBUG) << "Device name is null.";
   }
 }
 
