@@ -26,6 +26,7 @@
 #include "src/common/common.h"
 #include "src/runtime/cxx_api/model_pool/resource_manager.h"
 #include "thread/parallel_thread_pool_manager.h"
+#include "src/common/config_file.h"
 namespace mindspore {
 namespace {
 constexpr int kNumDeviceInfo = 2;
@@ -812,17 +813,15 @@ Status ModelPool::CanUseAllPhysicalResources() {
   return kSuccess;
 }
 
-Status ModelPool::ParseSharedThreadPoolParam(const std::shared_ptr<RunnerConfig> &runner_config) {
-  if (runner_config == nullptr) {
-    return kSuccess;
-  }
-  auto config_info = runner_config->GetConfigInfo();
+Status ModelPool::ParseParamByConfigInfo(std::map<std::string, std::map<std::string, std::string>> config_info) {
   auto shared_thread_pool = config_info.find(lite::kSharedThreadPool);
   if (shared_thread_pool == config_info.end()) {
+    MS_LOG(INFO) << "not set shared thread pool.";
     return kSuccess;
   }
   auto shared_thread_pool_param = shared_thread_pool->second;
   if (shared_thread_pool_param.find(lite::kEnable) == shared_thread_pool_param.end()) {
+    MS_LOG(INFO) << "not find key of enable_shared_thread_pool";
     return kLiteParamInvalid;
   }
   if (shared_thread_pool_param[lite::kEnable] == "false") {
@@ -835,7 +834,7 @@ Status ModelPool::ParseSharedThreadPoolParam(const std::shared_ptr<RunnerConfig>
         !shared_thread_pool_param[lite::kThreadNumLimitPerWorker].empty()) {
       thread_num_limit_ = std::atoi(shared_thread_pool_param[lite::kThreadNumLimitPerWorker].c_str());
       if (thread_num_limit_ <= 0) {
-        MS_LOG(ERROR) << "thread_num_limit is invalid, thread_num_limit: " << thread_num_limit_;
+        MS_LOG(WARNING) << "thread_num_limit is invalid, thread_num_limit: " << thread_num_limit_;
         return kLiteParamInvalid;
       }
     }
@@ -848,7 +847,7 @@ Status ModelPool::ParseSharedThreadPoolParam(const std::shared_ptr<RunnerConfig>
       if (!shared_thread_pool_param[lite::kThreadNumRemainingPerWorker].empty()) {
         remaining_thread_num_ = std::atoi(shared_thread_pool_param[lite::kThreadNumRemainingPerWorker].c_str());
         if (remaining_thread_num_ < 0) {
-          MS_LOG(ERROR) << "remaining_thread_num_ is invalid, remaining_thread_num_: " << remaining_thread_num_;
+          MS_LOG(WARNING) << "remaining_thread_num_ is invalid, remaining_thread_num_: " << remaining_thread_num_;
           return kLiteParamInvalid;
         }
       } else {
@@ -859,6 +858,28 @@ Status ModelPool::ParseSharedThreadPoolParam(const std::shared_ptr<RunnerConfig>
   MS_LOG(INFO) << "use thread pool shared, remaining thread num: " << remaining_thread_num_
                << " | Limit thread num: " << thread_num_limit_;
   return kSuccess;
+}
+
+Status ModelPool::ParseSharedThreadPoolParam(const std::shared_ptr<RunnerConfig> &runner_config) {
+  if (runner_config == nullptr) {
+    MS_LOG(INFO) << "runner config is nullptr.";
+    return kSuccess;
+  }
+  std::map<std::string, std::map<std::string, std::string>> config_file_info;
+  if (!runner_config->GetConfigPath().empty()) {
+    int ret = lite::GetAllSectionInfoFromConfigFile(runner_config->GetConfigPath(), &config_file_info);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "GetAllSectionInfoFromConfigFile failed.";
+      return kLiteError;
+    }
+  }
+  if (config_file_info.find(lite::kSharedThreadPool) != config_file_info.end()) {
+    MS_LOG(INFO) << "parse shared thread pool parm by config file.";
+    if (ParseParamByConfigInfo(config_file_info) != kSuccess) {
+      MS_LOG(WARNING) << "config file param is wrong.";
+    }
+  }
+  return ParseParamByConfigInfo(runner_config->GetConfigInfo());
 }
 
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {

@@ -113,6 +113,8 @@ class ModelPool {
 
   Status CheckSharingThreadPoolParam(const ModelPoolConfig &model_pool_config);
 
+  Status ParseParamByConfigInfo(std::map<std::string, std::map<std::string, std::string>> config_info);
+
  private:
   // different workers get tasks from different task queues.
   // currently task queues are distinguished according to different numa node numbers.
