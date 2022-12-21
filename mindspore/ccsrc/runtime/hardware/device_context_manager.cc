@@ -97,9 +97,11 @@ std::string GetCudaVersionFromNvcc(const std::string &nvcc_path) {
       MS_LOG(ERROR) << "Wait child process failed, ret = " << errno << ", reason = " << strerror(errno);
       return "";
     }
-    if (read(pipe_fd[0], buffer.data(), buffer.size()) <= 0) {
+    if (auto read_size = read(pipe_fd[0], buffer.data(), buffer.size()); read_size <= 0) {
       MS_LOG(WARNING) << "Read from pipe failed, ret = " << errno << ", reason = " << strerror(errno);
       return "";
+    } else {
+      buffer.resize(read_size);
     }
 
     MS_LOG(DEBUG) << "Child process return: " << buffer;
@@ -219,9 +221,11 @@ bool TestLoadDynamicLib(const std::string &plugin_file, std::string *err_msg) {
       MS_LOG(ERROR) << "Wait child process failed, ret = " << errno << ", reason = " << strerror(errno);
       return false;
     }
-    if (read(pipe_fd[0], buffer.data(), buffer.size()) <= 0) {
+    if (auto read_size = read(pipe_fd[0], buffer.data(), buffer.size()); read_size <= 0) {
       MS_LOG(WARNING) << "Read from pipe failed, ret = " << errno << ", reason = " << strerror(errno);
       return false;
+    } else {
+      buffer.resize(read_size);
     }
 
     MS_LOG(DEBUG) << "Child process return: " << buffer;
