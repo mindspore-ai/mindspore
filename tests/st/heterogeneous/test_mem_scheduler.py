@@ -28,7 +28,7 @@ from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from tests.st.tbe_networks.resnet import resnet50
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", memory_optimize_level='O0')
+context.set_context(mode=context.GRAPH_MODE, memory_optimize_level='O0')
 
 
 class LeNet(nn.Cell):
@@ -157,6 +157,7 @@ def test_lenet_manual_offload():
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_1024_batch_size_resnet():
     """

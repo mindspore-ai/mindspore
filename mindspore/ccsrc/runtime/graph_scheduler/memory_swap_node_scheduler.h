@@ -16,10 +16,11 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_SWAP_NODE_SCHEDULER_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_SWAP_NODE_SCHEDULER_H_
 
-#include <vector>
 #include <map>
-#include <utility>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "utils/ms_utils.h"
 #include "runtime/device/memory_offload_strategy.h"
@@ -82,7 +83,8 @@ class MemorySwapNodeScheduler {
   MemSwapActorPtr GenSwapOutActor(const CNodePtr &kernel, const device::MemEventPtrList<DeviceTensor *> &swap_events,
                                   const std::vector<bool> &swap_out_real_parameter_without_max_ref_count) const;
   void LinkControlArrowBySwapActor(const KernelGraphPtr &graph, const ControlNodeParserPtr &parser,
-                                   const std::vector<MemSwapActorPtr> &swap_actors) const;
+                                   const std::vector<MemSwapActorPtr> &swap_actors,
+                                   const std::string &actor_set_name) const;
   void LinkDataArrowForRealParameter() const;
 
   const AID *recorder_aid_;
