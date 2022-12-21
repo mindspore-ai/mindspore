@@ -1933,10 +1933,10 @@ class ToPIL(py_transforms.PyTensorOperation):
     Convert the input decoded numpy.ndarray image to PIL Image.
 
     Note:
-        The conversion mode will be determined by the data type using :class:`PIL.Image.fromarray` .
+        The conversion mode will be determined by the data type using `PIL.Image.fromarray` .
 
     Raises:
-        TypeError: If the input image is not of type :class:`numpy.ndarray` or :class:`PIL.Image.Image` .
+        TypeError: If the input image is not of type :class:`numpy.ndarray` or `PIL.Image.Image` .
 
     Supported Platforms:
         ``CPU``
@@ -1977,10 +1977,10 @@ class ToTensor(py_transforms.PyTensorOperation):
     from (H, W, C) to (C, H, W).
 
     Args:
-        output_type (numpy.dtype, optional): The desired dtype of the output image. Default: :class:`numpy.float32` .
+        output_type (numpy.dtype, optional): The desired dtype of the output image. Default: `numpy.float32` .
 
     Raises:
-        TypeError: If the input image is not of type :class:`PIL.Image.Image` or :class:`numpy.ndarray` .
+        TypeError: If the input image is not of type `PIL.Image.Image` or :class:`numpy.ndarray` .
         TypeError: If dimension of the input image is not 2 or 3.
 
     Supported Platforms:
@@ -2021,7 +2021,7 @@ class ToType(py_transforms.PyTensorOperation):
     Convert the input numpy.ndarray image to the desired dtype.
 
     Args:
-        output_type (numpy.dtype): The desired dtype of the output image, e.g. :class:`numpy.float32` .
+        output_type (numpy.dtype): The desired dtype of the output image, e.g. `numpy.float32` .
 
     Raises:
         TypeError: If the input image is not of type :class:`numpy.ndarray` .

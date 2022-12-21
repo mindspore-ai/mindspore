@@ -20,10 +20,10 @@
         - **parallel_config** (OpParallelConfig) - 并行设置，内容请参阅 `OpParallelConfig` 的定义。默认值为 `default_dpmp_config` ，一个用默认参数初始化的 `OpParallelConfig` 的实例。
 
     输入：
-        - **q** (Tensor) - Tensor query (:class:`mstype.fp16` [batch_size, seq_length, hidden_size])：表示上下文的query向量。
-        - **k** (Tensor) - Tensor key (:class:`mstype.fp16` [batch_size, seq_length, hidden_size])：表示上下文的key向量。
-        - **v** (Tensor) - Tensor value (:class:`mstype.fp16` [批次大小, seq_length, hidden_size])：表示上下文的value向量。
-        - **attention_mask** (Tensor) - Float Tensor the mask of (:class:`mstype.fp32` , :class:`mstype.fp16` [batch_size, seq_length, seq_length])：
+        - **q** (Tensor) - Tensor query ( `mstype.fp16` [batch_size, seq_length, hidden_size])：表示上下文的query向量。
+        - **k** (Tensor) - Tensor key ( `mstype.fp16` [batch_size, seq_length, hidden_size])：表示上下文的key向量。
+        - **v** (Tensor) - Tensor value ( `mstype.fp16` [批次大小, seq_length, hidden_size])：表示上下文的value向量。
+        - **attention_mask** (Tensor) - Float Tensor the mask of ( `mstype.fp32` , `mstype.fp16` [batch_size, seq_length, seq_length])：
           表示掩码的下三角形矩阵。
 
     输出：

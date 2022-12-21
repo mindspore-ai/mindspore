@@ -2025,7 +2025,7 @@ class Tensor(Tensor_):
 
         Args:
             dtype (Union[:class:`mindspore.dtype`, numpy.dtype, str]): Designated tensor dtype, can be in
-                format of :class:`mindspore.dtype.float32` or :class:`numpy.float32` or `float32`.
+                format of `mindspore.dtype.float32` or `numpy.float32` or `float32`.
             copy (bool, optional): By default, astype always returns a newly allocated
                 tensor. If this is set to false, the input tensor is returned instead
                 of a copy. Default: True.

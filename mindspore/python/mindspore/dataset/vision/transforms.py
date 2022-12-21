@@ -4021,10 +4021,10 @@ class ToTensor(ImageTensorOperation):
 
     Args:
         output_type (Union[mindspore.dtype, numpy.dtype], optional): The desired dtype of the output image.
-            Default: :class:`numpy.float32` .
+            Default: `numpy.float32` .
 
     Raises:
-        TypeError: If the input image is not of type :class:`PIL.Image.Image` or :class:`numpy.ndarray` .
+        TypeError: If the input image is not of type `PIL.Image.Image` or :class:`numpy.ndarray` .
         TypeError: If dimension of the input image is not 2 or 3.
 
     Supported Platforms:
@@ -4068,7 +4068,7 @@ class ToType(TypeCast):
 
     Args:
         data_type (Union[mindspore.dtype, numpy.dtype]): The desired data type of the output image,
-            such as :class:`numpy.float32` .
+            such as `numpy.float32` .
 
     Raises:
         TypeError: If `data_type` is not of type :class:`mindspore.dtype` or :class:`numpy.dtype` .

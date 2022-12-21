@@ -4355,7 +4355,7 @@ class NPUAllocFloatStatus(Primitive):
 
 class NPUGetFloatStatus(Primitive):
     """
-    :class:`mindspore.ops.NPUGetFloatStatus` updates the flag which is
+    `mindspore.ops.NPUGetFloatStatus` updates the flag which is
     the output tensor of :class:`mindspore.ops.NPUAllocFloatStatus` with the latest overflow status.
 
 
