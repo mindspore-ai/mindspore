@@ -64,13 +64,13 @@ int MatmulFp32AVXCPUKernel::ParallelRunByBatch(int task_id) const {
 }
 
 int MatmulFp32AVXCPUKernel::ParallelRunByRow(int task_id) const {
-  if (task_id < 0 || task_id >= thread_count_) {
+  if (task_id < 0 || task_id >= thread_num_) {
     MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
     return RET_ERROR;
   }
   int start_row = split_points_[task_id];
   int end_row = row_num_;
-  if (task_id < (thread_count_ - 1)) {
+  if (task_id < (thread_num_ - 1)) {
     end_row = split_points_[task_id + 1];
   }
   int row_num = end_row - start_row;
@@ -93,13 +93,13 @@ int MatmulFp32AVXCPUKernel::ParallelRunByRow(int task_id) const {
 }
 
 int MatmulFp32AVXCPUKernel::ParallelRunByOC(int task_id) const {
-  if (task_id < 0 || task_id >= thread_count_) {
+  if (task_id < 0 || task_id >= thread_num_) {
     MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
     return RET_ERROR;
   }
   int start_oc = split_points_[task_id];
   int end_oc = col_step_;
-  if (task_id < (thread_count_ - 1)) {
+  if (task_id < (thread_num_ - 1)) {
     end_oc = split_points_[task_id + 1];
   }
   int compute_oc = end_oc - start_oc;
