@@ -152,7 +152,6 @@ class KPrim {
     bprop_registry_meta_.clear();
     bprop_registry_.clear();
   }
-  FuncGraphPtr GetPossibleBprop(const PrimitivePtr &prim);
 
  private:
   FuncGraphPtr GetFprop(const PrimitivePtr &prim) const;
@@ -193,7 +192,11 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
   {
     PrimalAttrGuard primal_attr_guard(primal_attrs);
     PrimalDebugInfoGuard primal_debug_info_guard(primal_debug_infos);
-    cloned_bprop_fg = BasicClone(bprop_fg);
+    if (bprop_fg->has_flag(mindspore::kFuncGraphFlagMetaFuncGraphBprop) && !cnode->primal_attrs().empty()) {
+      cloned_bprop_fg = BasicClone(bprop_fg, true);
+    } else {
+      cloned_bprop_fg = BasicClone(bprop_fg);
+    }
   }
   MS_EXCEPTION_IF_NULL(cloned_bprop_fg);
 

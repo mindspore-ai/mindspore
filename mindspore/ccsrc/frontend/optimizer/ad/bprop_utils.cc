@@ -323,6 +323,7 @@ FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr 
     if (iter != bprop_impl_map.end()) {
       func_graph = iter->second(prim);
       MS_EXCEPTION_IF_NULL(func_graph);
+      func_graph->set_flag(mindspore::kFuncGraphFlagMetaFuncGraphBprop, true);
       if (GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_BACKPROP)) {
         func_graph->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
       }
