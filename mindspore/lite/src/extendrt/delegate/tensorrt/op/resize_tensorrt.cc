@@ -49,11 +49,6 @@ int ResizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
     MS_LOG(ERROR) << "convert failed " << op_name_;
     return RET_ERROR;
   }
-  if (resize_op_->coordinate_transform_mode() == schema::CoordinateTransformMode_ALIGN_CORNERS &&
-      resize_op_->method() == schema::ResizeMethod_LINEAR) {
-    MS_LOG(ERROR) << "Resize op do not support coordinate_transform_mode == ALIGN_CORNERS when method == LINEAR "
-                  << op_name_;
-  }
   dynamic_shape_params_.support_dynamic_ = (resize_op_->new_height() > 0 && resize_op_->new_width() > 0) ? false : true;
   dynamic_shape_params_.support_hw_dynamic_ =
     (resize_op_->new_height() > 0 && resize_op_->new_width() > 0) ? false : true;
@@ -311,7 +306,8 @@ int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
     return RET_ERROR;
   }
   resize_layer->setCoordinateTransformation(transform_it->second);
-  if (resize_op_->new_height() != 0 || resize_op_->new_width() != 0) {
+  if (resize_op_->new_height() != 0 || resize_op_->new_width() != 0 ||
+      resize_op_->method() == schema::ResizeMethod_LINEAR) {
     resize_layer->setCoordinateTransformation(nvinfer1::ResizeCoordinateTransformation::kALIGN_CORNERS);
   }
 #else
