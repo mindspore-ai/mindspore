@@ -130,9 +130,6 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   void TerminateDebugger();
 #endif
 
-  std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> FetchInfoForQuantExport(
-    const std::string &phase);
-
   // Generate a key for mapping function graph
   py::object GenerateArgumentsKey(const py::object &obj, const py::tuple &args, bool enable_tuple_broaden = false);
 
@@ -140,8 +137,6 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
 
  private:
   GraphExecutorPy() = default;
-  void GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weight_node,
-                     std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table) const;
   void ParallelPostProcess(const string &phase);
   void GetGeBackendPolicy() const;
   // filter some pipeline actions according to phase, e.g. when exporting onnx, it is no need to execute actions after

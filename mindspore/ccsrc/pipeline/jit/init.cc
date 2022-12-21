@@ -168,8 +168,6 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get the number of parallel operators.")
     .def("get_allreduce_fusion", &GraphExecutorPy::GetAllreduceFusion, py::arg("phase") = py::str("train"),
          "Get Allreduce Fusion Dictionary.")
-    .def("fetch_info_for_quant_export", &GraphExecutorPy::FetchInfoForQuantExport, py::arg("phase") = py::str("train"),
-         "Fetch the inputs of Conv or Matmul for quant export.")
     .def("build_data_graph", &GraphExecutorPy::BuildGraph, py::arg("build_params"), py::arg("phase") = py::str("train"),
          "Build data graph.")
     .def("export_graph", &GraphExecutorPy::ExportGraph, py::arg("file_name"), py::arg("phase"),

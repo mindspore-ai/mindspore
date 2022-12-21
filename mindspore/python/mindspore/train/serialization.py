@@ -25,7 +25,6 @@ import stat
 import threading
 from threading import Thread, Lock
 from collections import defaultdict, OrderedDict
-from functools import wraps
 from io import BytesIO
 
 import math
@@ -52,7 +51,6 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.common._utils import is_shape_unknown
 from mindspore.communication.management import get_rank, get_group_size
-from mindspore.compression.export import quant_export
 from mindspore.experimental import MapParameter
 from mindspore.parallel._cell_wrapper import get_allgather_cell
 from mindspore.parallel._tensor import _load_tensor, _get_tensor_strategy, _get_tensor_slice_index
@@ -1123,12 +1121,6 @@ def export(net, *inputs, file_name, file_format, **kwargs):
 
         kwargs (dict): Configuration options dictionary.
 
-            - quant_mode (str): If the network is a quantization aware training network, the quant_mode should
-              be set to "QUANT", else the quant_mode should be set to "NONQUANT".
-            - mean (float): The mean of input data after preprocessing, used for quantizing the first layer of network.
-              Default: 127.5.
-            - std_dev (float): The variance of input data after preprocessing,
-              used for quantizing the first layer of the network. Default: 127.5.
             - enc_key (byte): Byte-type key used for encryption. The valid length is 16, 24, or 32.
             - enc_mode (Union[str, function]): Specifies the encryption mode, to take effect when enc_key is set.
 
@@ -1192,7 +1184,6 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         inputs = tuple(inputs_col)
 
     file_name = os.path.realpath(file_name)
-    net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
     if 'enc_key' in kwargs.keys():
         kwargs['enc_key'], kwargs['enc_mode'] = _check_key_mode_type(file_format, **kwargs)
     _export(net, file_name, file_format, *inputs, **kwargs)
@@ -1558,62 +1549,6 @@ def _save_dataset_to_mindir(model, dataset):
             model.preprocessor.op[-1].op_type = json.dumps(op['op_type'])
             model.preprocessor.op[-1].operations = json.dumps(op['operations'])
             model.preprocessor.op[-1].offload = op['offload'] if 'offload' in op.keys() else False
-
-
-def quant_mode_manage(func):
-    """Inherit the quant_mode in old version."""
-
-    @wraps(func)
-    def wrapper(network, *inputs, file_format, **kwargs):
-        if 'quant_mode' not in kwargs:
-            return network
-        quant_mode = kwargs.get('quant_mode')
-        if not isinstance(quant_mode, str):
-            raise TypeError("For 'export', the type of 'quant_mode' should be string, "
-                            "but got {}.".format(type(quant_mode)))
-        if quant_mode in ('AUTO', 'MANUAL'):
-            kwargs['quant_mode'] = 'QUANT'
-        return func(network, *inputs, file_format=file_format, **kwargs)
-
-    return wrapper
-
-
-@quant_mode_manage
-def _quant_export(network, *inputs, file_format, **kwargs):
-    """Exports MindSpore quantization predict model to deploy with AIR and MINDIR."""
-    supported_device = ["Ascend", "GPU"]
-    supported_formats = ['AIR', 'MINDIR']
-    quant_mode_formats = ['QUANT', 'NONQUANT']
-
-    quant_mode = kwargs['quant_mode']
-    if quant_mode not in quant_mode_formats:
-        raise KeyError(f"For 'export', the argument 'quant_mode' must be one of {quant_mode_formats}, "
-                       f"but got {quant_mode}.")
-    if quant_mode == 'NONQUANT':
-        return network
-    quant_net = copy.deepcopy(network)
-    quant_net._create_time = int(time.time() * 1e9)
-
-    mean = 127.5 if kwargs.get('mean', None) is None else kwargs.get('mean')
-    std_dev = 127.5 if kwargs.get('std_dev', None) is None else kwargs.get('std_dev')
-    mean = Validator.check_value_type("mean", mean, (int, float))
-    std_dev = Validator.check_value_type("std_dev", std_dev, (int, float))
-
-    if context.get_context('device_target') not in supported_device:
-        raise KeyError(f"For 'export', quant export only support {supported_device} device target now, "
-                       f"but got {context.get_context('device_target')}")
-
-    if file_format not in supported_formats:
-        raise ValueError(f"For 'export', quant export only support 'file_format' {supported_formats}, "
-                         f"but got {file_format}.")
-
-    quant_net.set_train(False)
-    if file_format == "MINDIR":
-        exporter = quant_export.ExportToQuantInferNetwork(quant_net, mean, std_dev, *inputs, is_mindir=True)
-    else:
-        exporter = quant_export.ExportToQuantInferNetwork(quant_net, mean, std_dev, *inputs)
-    deploy_net = exporter.run()
-    return deploy_net
 
 
 def parse_print(print_file_name):

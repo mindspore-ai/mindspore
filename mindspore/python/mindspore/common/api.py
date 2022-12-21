@@ -1487,12 +1487,6 @@ class _CellGraphExecutor:
         """
         self._graph_executor.export_graph(file_name, graph_id, encrypt_func, enc_key)
 
-    def fetch_info_for_quant_export(self, exec_id):
-        """Get graph proto from pipeline."""
-        if self._graph_executor.has_compiled(exec_id) is False:
-            return None
-        return self._graph_executor.fetch_info_for_quant_export(exec_id)
-
 
 def ms_memory_recycle():
     """

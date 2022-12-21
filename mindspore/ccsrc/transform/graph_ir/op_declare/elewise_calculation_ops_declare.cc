@@ -56,41 +56,6 @@ ATTR_MAP(ConfusionMulGrad) = {{"axes", ATTR_DESC(axes, AnyTraits<std::vector<int
 OUTPUT_MAP(ConfusionMulGrad) = {{0, OUTPUT_DESC(output0)}, {1, OUTPUT_DESC(output1)}};
 REG_ADPT_DESC(ConfusionMulGrad, kNameConfusionMulGrad, ADPT_DESC(ConfusionMulGrad))
 
-// FakeQuantWithMinMaxVars
-INPUT_MAP(FakeQuantWithMinMaxVars) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(min)}, {3, INPUT_DESC(max)}};
-ATTR_MAP(FakeQuantWithMinMaxVars) = {{"num_bits", ATTR_DESC(num_bits, AnyTraits<int64_t>())},
-                                     {"narrow_range", ATTR_DESC(narrow_range, AnyTraits<bool>())}};
-OUTPUT_MAP(FakeQuantWithMinMaxVars) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(FakeQuantWithMinMaxVars, kNameFakeQuantWithMinMaxVars, ADPT_DESC(FakeQuantWithMinMaxVars))
-
-// FakeQuantWithMinMaxVarsGradient
-INPUT_MAP(FakeQuantWithMinMaxVarsGradient) = {
-  {1, INPUT_DESC(gradients)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(min)}, {4, INPUT_DESC(max)}};
-ATTR_MAP(FakeQuantWithMinMaxVarsGradient) = {{"num_bits", ATTR_DESC(num_bits, AnyTraits<int64_t>())},
-                                             {"narrow_range", ATTR_DESC(narrow_range, AnyTraits<bool>())}};
-OUTPUT_MAP(FakeQuantWithMinMaxVarsGradient) = {
-  {0, OUTPUT_DESC(backprops_wrt_x)}, {1, OUTPUT_DESC(backprops_wrt_min)}, {2, OUTPUT_DESC(backprops_wrt_max)}};
-REG_ADPT_DESC(FakeQuantWithMinMaxVarsGradient, kNameFakeQuantWithMinMaxVarsGradient,
-              ADPT_DESC(FakeQuantWithMinMaxVarsGradient))
-
-// FakeQuantWithMinMaxVarsPerChannel
-INPUT_MAP(FakeQuantWithMinMaxVarsPerChannel) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(min)}, {3, INPUT_DESC(max)}};
-ATTR_MAP(FakeQuantWithMinMaxVarsPerChannel) = {{"num_bits", ATTR_DESC(num_bits, AnyTraits<int64_t>())},
-                                               {"narrow_range", ATTR_DESC(narrow_range, AnyTraits<bool>())}};
-OUTPUT_MAP(FakeQuantWithMinMaxVarsPerChannel) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(FakeQuantWithMinMaxVarsPerChannel, kNameFakeQuantWithMinMaxVarsPerChannel,
-              ADPT_DESC(FakeQuantWithMinMaxVarsPerChannel))
-
-// FakeQuantWithMinMaxVarsPerChannelGradient
-INPUT_MAP(FakeQuantWithMinMaxVarsPerChannelGradient) = {
-  {1, INPUT_DESC(gradients)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(min)}, {4, INPUT_DESC(max)}};
-ATTR_MAP(FakeQuantWithMinMaxVarsPerChannelGradient) = {{"num_bits", ATTR_DESC(num_bits, AnyTraits<int64_t>())},
-                                                       {"narrow_range", ATTR_DESC(narrow_range, AnyTraits<bool>())}};
-OUTPUT_MAP(FakeQuantWithMinMaxVarsPerChannelGradient) = {
-  {0, OUTPUT_DESC(backprops_wrt_x)}, {1, OUTPUT_DESC(backprops_wrt_min)}, {2, OUTPUT_DESC(backprops_wrt_max)}};
-REG_ADPT_DESC(FakeQuantWithMinMaxVarsPerChannelGradient, kNameFakeQuantWithMinMaxVarsPerChannelGradient,
-              ADPT_DESC(FakeQuantWithMinMaxVarsPerChannelGradient))
-
 // GreaterEqual
 INPUT_MAP(GreaterEqual) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(GreaterEqual) = EMPTY_ATTR_MAP;
