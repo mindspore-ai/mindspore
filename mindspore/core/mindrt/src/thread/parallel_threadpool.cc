@@ -66,7 +66,6 @@ void ParallelWorker::Run() {
           WaitUntilActive();
           spin_count_ = 0;
         } else {
-          wait_do_other_task_ = true;
           WaitOtherPoolTask();
         }
       } else {
@@ -126,6 +125,7 @@ void ParallelWorker::WaitOtherPoolTask() {
   }
   RunOtherPoolTask(other_task_);
   other_task_ = nullptr;
+  wait_do_other_task_ = true;
   return;
 }
 

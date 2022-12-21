@@ -161,7 +161,8 @@ class ModelPool {
   std::mutex warm_up_mutex;
 
   std::string runner_id_;
-  bool enable_shared_thread_pool_ = false;
+  bool enable_shared_thread_pool_ = true;
+  int thread_num_limit_ = 0;
   int remaining_thread_num_ = 0;
 };
 }  // namespace mindspore

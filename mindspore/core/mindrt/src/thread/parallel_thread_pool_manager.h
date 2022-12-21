@@ -38,7 +38,8 @@ class ParallelThreadPoolManager {
 
   ~ParallelThreadPoolManager();
 
-  void Init(bool enable_shared_thread_pool, const std::string &runner_id, int worker_num, int remaining_thread_num);
+  void Init(bool enable_shared_thread_pool, const std::string &runner_id, int worker_num, int remaining_thread_num,
+            int task_num);
 
   void SetHasIdlePool(bool is_idle);
 
@@ -56,6 +57,8 @@ class ParallelThreadPoolManager {
 
   int GetThreadPoolSize();
 
+  int GetTaskNum();
+
  private:
   ParallelThreadPoolManager() = default;
 
@@ -69,6 +72,7 @@ class ParallelThreadPoolManager {
   bool has_idle_pool_ = true;
   bool enable_shared_thread_pool_ = false;
   int remaining_thread_num_ = 0;
+  int thread_num_limit_ = 0;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_PARALLEL_THREAD_POOL_MANAGER_H_
