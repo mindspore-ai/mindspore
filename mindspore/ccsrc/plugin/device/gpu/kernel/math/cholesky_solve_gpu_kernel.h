@@ -103,13 +103,14 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
     auto d_a_array_addr = GetDeviceAddress<pointer>(workspace, kDim0);
     auto d_b_array_addr = GetDeviceAddress<pointer>(workspace, kDim1);
     auto d_c_array_addr = GetDeviceAddress<pointer>(workspace, kDim2);
+    auto wrokspace_addr = GetDeviceAddress<T>(workspace, kDim3);
     std::vector<pointer> h_a_array(batch_num_);
     std::vector<pointer> h_b_array(batch_num_);
     std::vector<pointer> h_c_array(batch_num_);
     for (size_t i = 0; i < batch_num_; i++) {
       h_a_array[i] = input_a_addr + i * lda_ * nrhs_;
       h_b_array[i] = input_b_addr + i * ldb_ * m_;
-      h_c_array[i] = output_addr + i * lda_ * nrhs_;
+      h_c_array[i] = wrokspace_addr + i * lda_ * nrhs_;
     }
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(d_a_array_addr, h_a_array.data(), sizeof(pointer) * batch_num_, cudaMemcpyHostToDevice,
@@ -123,8 +124,8 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
       cudaMemcpyAsync(d_c_array_addr, h_c_array.data(), sizeof(pointer) * batch_num_, cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(cuda_stream_)),
       "cuda memcopy Fail");
-    MatrixTranspose(input_a_addr, SizeToInt(batch_num_ * lda_ * nrhs_), SizeToInt(lda_), SizeToInt(nrhs_), output_addr,
-                    device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    MatrixTranspose(input_a_addr, SizeToInt(batch_num_ * lda_ * nrhs_), SizeToInt(lda_), SizeToInt(nrhs_),
+                    wrokspace_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
     cublasFillMode_t uplo_ = CUBLAS_FILL_MODE_UPPER;
     if (upper_) {
       uplo_ = CUBLAS_FILL_MODE_LOWER;
@@ -134,11 +135,11 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
     T alpha = 1;
     if (batch_num_ == 1) {
       CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasXtrsm(handle_, CUBLAS_SIDE_LEFT, uplo_, transa_, CUBLAS_DIAG_NON_UNIT,
-                                                       lda_, nrhs_, &alpha, input_b_addr, ldb_, output_addr, lda_),
+                                                       lda_, nrhs_, &alpha, input_b_addr, ldb_, wrokspace_addr, lda_),
                                            "cholesky solve cublasXtrsm failed!");
       CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
         cublasXtrsm(handle_, CUBLAS_SIDE_LEFT, uplo_, transa_t_, CUBLAS_DIAG_NON_UNIT, lda_, nrhs_, &alpha,
-                    input_b_addr, ldb_, output_addr, lda_),
+                    input_b_addr, ldb_, wrokspace_addr, lda_),
         "cholesky solve cublasXtrsm failed!");
     } else {
       CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
@@ -150,10 +151,8 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
                            d_b_array_addr, ldb_, d_c_array_addr, lda_, batch_num_),
         "cholesky solve cublasXgetrsBatched failed!");
     }
-    MatrixTranspose(output_addr, SizeToInt(batch_num_ * lda_ * nrhs_), SizeToInt(nrhs_), SizeToInt(lda_), input_a_addr,
-                    device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-    auto output_elements = batch_num_ * lda_ * nrhs_;
-    MatrixCopy(input_a_addr, output_addr, output_elements, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    MatrixTranspose(wrokspace_addr, SizeToInt(batch_num_ * lda_ * nrhs_), SizeToInt(nrhs_), SizeToInt(lda_),
+                    output_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
     return true;
   }
 
@@ -174,10 +173,10 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
     ldb_ = m_;
     lda_ = m_;
     nrhs_ = b_shape.back();
-
+    size_t out_size = SizeOf(outputs[0]->GetShapeVector()) * GetTypeByte(TypeIdToType(outputs[0]->GetDtype()));
     workspace_size_list_.clear();
     workspace_size_list_ = {batch_num_ * sizeof(float *), batch_num_ * sizeof(float *), batch_num_ * sizeof(float *),
-                            batch_num_ * sizeof(int)};
+                            out_size};
 
     return KRET_OK;
   }
