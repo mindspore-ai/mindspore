@@ -109,8 +109,8 @@ Status TFRecordNode::ValidateTFRecordFiles(const std::vector<std::string> &filen
 }
 
 Status TFRecordNode::ValidateTFRecordCompressionType(const std::string &compression_type,
-                                                     const std::vector<std::string> &dataset_files, int32_t num_shards,
-                                                     int64_t num_samples) const {
+                                                     const std::vector<std::string> &dataset_files,
+                                                     int32_t num_shards) const {
   if (!compression_type.empty() && compression_type != "ZLIB" && compression_type != "GZIP") {
     RETURN_STATUS_UNEXPECTED(
       "Input compression_type can only be either '' (no compression), 'ZLIB', or 'GZIP', but got '" + compression_type +
@@ -154,7 +154,7 @@ Status TFRecordNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("TFRecordDataset", "num_samples", num_samples_, {0}, false));
   RETURN_IF_NOT_OK(ValidateDatasetShardParams("TFRecordDataset", num_shards_, shard_id_));
 
-  RETURN_IF_NOT_OK(ValidateTFRecordCompressionType(compression_type_, dataset_files_, num_shards_, num_samples_));
+  RETURN_IF_NOT_OK(ValidateTFRecordCompressionType(compression_type_, dataset_files_, num_shards_));
   RETURN_IF_NOT_OK(ValidateTFRecordFiles(dataset_files_));
   return Status::OK();
 }
@@ -268,7 +268,7 @@ Status TFRecordNode::GetShardFileList(std::vector<std::string> *shard_filenames)
   if (!shard_filenames->empty()) {
     RETURN_STATUS_UNEXPECTED("The initial file list must be empty.");
   }
-  int cut_off_file = dataset_files_.size();
+  int cut_off_file = static_cast<int>(dataset_files_.size());
   if (!compression_type_.empty() && num_samples_ > 0) {
     cut_off_file = static_cast<int>(cut_off_file / num_shards_) * num_shards_;
   }
@@ -278,7 +278,7 @@ Status TFRecordNode::GetShardFileList(std::vector<std::string> *shard_filenames)
   return Status::OK();
 }
 
-//
+// Helper get compression type
 Status TFRecordNode::HelperGetCompressType(NonMappableLeafOp::CompressionType *compression_type) {
   if (compression_type_.empty()) {
     *compression_type = NonMappableLeafOp::CompressionType::NONE;

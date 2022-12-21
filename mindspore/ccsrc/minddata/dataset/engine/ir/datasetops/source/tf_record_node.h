@@ -171,8 +171,7 @@ class TFRecordNode : public NonMappableSourceNode {
 
   /// Check and return if compression type is invalid or number of files in dataset_files is less than num_shards
   Status ValidateTFRecordCompressionType(const std::string &compression_type,
-                                         const std::vector<std::string> &dataset_files, int32_t num_shards,
-                                         int64_t num_samples) const;
+                                         const std::vector<std::string> &dataset_files, int32_t num_shards) const;
 
   /// Record large tf file and log a warning.
   void CheckLargeFile(const std::string &filename, std::ifstream *reader);
