@@ -19,6 +19,8 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <memory>
+#include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore {
 namespace lite {
@@ -99,7 +101,8 @@ class ConfigFileParser {
  public:
   int ParseConfigFile(const std::string &config_file_path);
   int ParseConfigParam(std::map<std::string, std::map<std::string, std::string>> *maps);
-
+  void SetParamByConfigfile(const std::shared_ptr<mindspore::ConverterPara> &param,
+                            const std::map<std::string, std::string> &ascend_map);
   DataPreProcessString GetDataPreProcessString() const { return this->data_pre_process_string_; }
   CommonQuantString GetCommonQuantString() const { return this->common_quant_string_; }
   MixedBitWeightQuantString GetMixedBitWeightQuantString() const { return this->mixed_bit_quant_string_; }

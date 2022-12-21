@@ -77,6 +77,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${SRC_DIR}/common/dynamic_library_loader.cc
         ${SRC_DIR}/train/train_populate_parameter.cc
         ${SRC_DIR}/common/config_file.cc
+        ${SRC_DIR}/common/config_infos.cc
         ${SRC_DIR}/common/primitive_t_utils.cc
         ../optimizer/*.cc
         )
