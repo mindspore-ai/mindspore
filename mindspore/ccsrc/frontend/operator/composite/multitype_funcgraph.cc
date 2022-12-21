@@ -110,8 +110,8 @@ std::string IntToNumber(const std::string &v) {
   }
 }
 
-const std::vector<mindspore::TypePtrList> GetSortedCache(const TypeListMap<py::function> &fn_cache_py_,
-                                                         const TypePtrList &types, size_t match_max_idx) {
+std::vector<mindspore::TypePtrList> GetSortedCache(const TypeListMap<py::function> &fn_cache_py_,
+                                                   const TypePtrList &types, size_t match_max_idx) {
   std::vector<mindspore::TypePtrList> cache_vec;
   std::transform(fn_cache_py_.begin(), fn_cache_py_.end(), back_inserter(cache_vec),
                  [](const auto &fcp) { return fcp.first; });

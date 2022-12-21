@@ -922,6 +922,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
       MS_EXCEPTION_IF_NULL(value);
       if (value->isa<parse::MsClassObject>()) {
         auto value_obj = dyn_cast_ptr<parse::MsClassObject>(value);
+        MS_EXCEPTION_IF_NULL(value_obj);
         auto obj_name = std::regex_replace(value_obj->name(), std::regex("MsClassObject:"), "");
         MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell' type "
                           << "object, but got object with jit_class type" << obj_name << ".\n'GradOperation' "

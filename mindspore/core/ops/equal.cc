@@ -37,9 +37,6 @@ void EqualImpl(void *x1, void *x2, void *result, size_t size) {
   T *x1_data = static_cast<T *>(x1);
   T *x2_data = static_cast<T *>(x2);
   auto result_data = static_cast<bool *>(result);
-  MS_EXCEPTION_IF_NULL(x1_data);
-  MS_EXCEPTION_IF_NULL(x2_data);
-  MS_EXCEPTION_IF_NULL(result_data);
   for (size_t i = 0; i < size; ++i) {
     result_data[i] = x1_data[i] == x2_data[i];
   }
@@ -53,9 +50,6 @@ void EqualFloatImpl(void *x1, void *x2, void *result, size_t size) {
   T *x1_data = static_cast<T *>(x1);
   T *x2_data = static_cast<T *>(x2);
   auto result_data = static_cast<bool *>(result);
-  MS_EXCEPTION_IF_NULL(x1_data);
-  MS_EXCEPTION_IF_NULL(x2_data);
-  MS_EXCEPTION_IF_NULL(result_data);
   for (size_t i = 0; i < size; ++i) {
     result_data[i] = std::abs(x1_data[i] - x2_data[i]) < std::numeric_limits<T>::epsilon();
   }
