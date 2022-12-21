@@ -332,34 +332,6 @@ NodePtr GetEps(const BpropIRBuilder *ib, const TypePtr &type) {
   }
 }
 
-NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto indices = ib->GetInput(kIndex1);
-  auto axis = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex4);
-  auto orig_indices = indices;
-  auto x_shp = ib->GetShape(x);
-  auto out_shp = ib->GetShape(dout);
-  auto ind_shp = ib->GetShape(indices);
-  auto axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
-  if (out_shp.empty()) {
-    dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
-  }
-  if (ind_shp.empty()) {
-    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
-    ind_shp = ib->GetShape(indices);
-    auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
-    dout = ib->Reshape(dout, out_shp1);
-  }
-  out_shp = ib->GetShape(dout);
-  auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_v);
-  auto values_transpose = ib->Transpose(dout, perm_1);
-  auto tmp = ib->Emit("UnsortedSegmentSum", {values_transpose, indices, ib->Value<int64_t>(x_shp[axis_v])});
-  auto perm_2 = GenerateInverseIndex(x_shp, axis_v);
-  auto params_grad = ib->Transpose(tmp, perm_2);
-  return {params_grad, ib->ZerosLike(orig_indices), ib->ZerosLike(axis)};
-}
-
 std::vector<int64_t> GenerateInverseIndex(const std::vector<int64_t> &x_shp, int64_t axis_v) {
   int64_t x_rank = static_cast<int64_t>(x_shp.size());
   auto index = Range(x_rank);

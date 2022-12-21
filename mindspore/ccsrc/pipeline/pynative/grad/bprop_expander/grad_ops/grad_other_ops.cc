@@ -16,26 +16,27 @@
 
 #include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
 #include "include/common/utils/utils.h"
+#include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 
 namespace mindspore::expander::bprop {
-REG_BPROP_BUILDER("Assign").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Assign").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   return {dout, ib->ZerosLike(y)};
 });
 
-REG_BPROP_BUILDER("InvertPermutation").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("InvertPermutation").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   return {ib->ZerosLike(x)};
 });
 
-REG_BPROP_BUILDER("IOU").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("IOU").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   return {ib->ZerosLike(x), ib->ZerosLike(y)};
 });
 
-REG_BPROP_BUILDER("SyncBatchNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("SyncBatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto scale = ib->GetInput(kIndex1);
   auto mean = ib->GetInput(kIndex3);
@@ -53,12 +54,12 @@ REG_BPROP_BUILDER("SyncBatchNorm").SetBody([](const BpropIRBuilder *ib) -> NodeP
   return {dx, dscale, dbias, ib->ZerosLike(mean), ib->ZerosLike(variance)};
 });
 
-REG_BPROP_BUILDER("GpuConvertToDynamicShape").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("GpuConvertToDynamicShape").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   return {dout};
 });
 
-REG_BPROP_BUILDER("_DynamicLossScale").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("_DynamicLossScale").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto loss_scale = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto res = ib->Emit("Mul", {dout, loss_scale},

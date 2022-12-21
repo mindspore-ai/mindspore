@@ -127,8 +127,9 @@ using VariableAdjointPtr = std::shared_ptr<VariableAdjoint>;
 
 class AutoGradCellImpl {
  public:
-  using UserType = std::map<AnfNodePtr, std::vector<std::pair<CNodePtr, int>>>;
-  AutoGradCellImpl(const AnfNodePtrList &cell_inputs, const std::vector<ValuePtr> &input_param_values);
+  using UserType = std::map<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
+  AutoGradCellImpl(const AnfNodePtrList &cell_inputs, const std::vector<ValuePtr> &input_param_values,
+                   const AbstractBasePtrList &abs_list);
   ~AutoGradCellImpl() = default;
   // Reverse connect bprop of op
   bool KPynativeOp(const GradParamPtr &grad_param);
@@ -214,7 +215,8 @@ using AutoGradCellImplPtr = std::shared_ptr<AutoGradCellImpl>;
 // Start building back propagate funcgraph for this cell.
 // cell_inputs: the input parameter list of this cell except the weights;
 AutoGradCellImplPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
-                                          const std::vector<ValuePtr> &input_param_values);
+                                          const std::vector<ValuePtr> &input_param_values,
+                                          const AbstractBasePtrList &abs_list);
 
 // Return the back propagate funcgraph for this cell.
 // weights: weights parameters used in this cell.

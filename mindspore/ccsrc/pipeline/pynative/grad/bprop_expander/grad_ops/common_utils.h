@@ -24,6 +24,17 @@
 #include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
 
 namespace mindspore::expander::bprop {
+constexpr size_t i0 = 0;
+constexpr size_t i1 = 1;
+constexpr size_t i2 = 2;
+constexpr size_t i3 = 3;
+constexpr size_t i4 = 4;
+constexpr size_t i5 = 5;
+constexpr size_t i6 = 6;
+constexpr size_t i7 = 7;
+constexpr size_t i8 = 8;
+constexpr size_t i9 = 9;
+constexpr size_t i10 = 10;
 inline const auto pi = std::acos(-1.0);
 inline const auto log_2 = std::log(2.0);
 inline const auto log_pi = std::log(pi);
@@ -62,7 +73,6 @@ std::vector<int64_t> GetIntList(const ValuePtr &value);
 std::vector<int64_t> GetIntList(const NodePtr &node);
 
 NodePtr GetEps(const BpropIRBuilder *ib, const TypePtr &type);
-NodePtrList BinopGatherCommon(const BpropIRBuilder *ib);
 std::vector<int64_t> GenerateInverseIndex(const std::vector<int64_t> &x_shp, int64_t axis_v);
 std::vector<int64_t> GenerateShapeIndex(const std::vector<int64_t> &out_shp, const std::vector<int64_t> &ind_shp,
                                         int64_t axis_v);

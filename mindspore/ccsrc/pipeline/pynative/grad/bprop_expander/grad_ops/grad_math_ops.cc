@@ -38,35 +38,35 @@ NodePtrList AddnGradFunc(const BpropIRBuilder *ib) {
   return {ib->MakeTuple(result)};
 }
 
-REG_BPROP_BUILDER("MatMul").SetBody([](const BpropIRBuilder *builder) -> NodePtrList {
-  auto ta = builder->GetAttr<bool>("transpose_a");
-  auto tb = builder->GetAttr<bool>("transpose_b");
-  auto x = builder->GetInput(kIndex0);
-  auto w = builder->GetInput(kIndex1);
-  auto dout = builder->GetInput(kIndex3);
+REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto ta = ib->GetAttr<bool>("transpose_a");
+  auto tb = ib->GetAttr<bool>("transpose_b");
+  auto x = ib->GetInput(kIndex0);
+  auto w = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
   NodePtr dx;
   NodePtr dw;
   if (ta) {
-    dx = builder->MatMul(w, dout, (ta && tb), (ta || (!tb)));
+    dx = ib->MatMul(w, dout, (ta && tb), (ta || (!tb)));
   } else {
-    dx = builder->MatMul(dout, w, (ta && tb), (ta || (!tb)));
+    dx = ib->MatMul(dout, w, (ta && tb), (ta || (!tb)));
   }
   if (tb) {
-    dw = builder->MatMul(dout, x, ((!ta) || tb), (ta && tb));
+    dw = ib->MatMul(dout, x, ((!ta) || tb), (ta && tb));
   } else {
-    dw = builder->MatMul(x, dout, ((!ta) || tb), (ta && tb));
+    dw = ib->MatMul(x, dout, ((!ta) || tb), (ta && tb));
   }
   return {dx, dw};
 });
 
-REG_BPROP_BUILDER("Add").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Add").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   return BinopGradCommon(ib, x, y, dout, dout);
 });
 
-REG_BPROP_BUILDER("Mul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Mul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -75,14 +75,14 @@ REG_BPROP_BUILDER("Mul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return BinopGradCommon(ib, x, y, bc_dx, bc_dy);
 });
 
-REG_BPROP_BUILDER("Sub").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Sub").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   return BinopGradCommon(ib, x, y, dout, ib->Emit(kNegOpName, {dout}));
 });
 
-REG_BPROP_BUILDER("Div").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Div").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -92,35 +92,35 @@ REG_BPROP_BUILDER("Div").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return BinopGradCommon(ib, x, y, bc_x, bc_y);
 });
 
-REG_BPROP_BUILDER("Less").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("Less").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("LessEqual").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("LessEqual").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("LogicalNot").SetBody(CheckBpropExpander);
+REG_BPROP_BUILDER("LogicalNot").SetUnusedInputs({i1, i2}).SetBody(CheckBpropExpander);
 
-REG_BPROP_BUILDER("LogicalAnd").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("LogicalAnd").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("LogicalOr").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("LogicalOr").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("AssignAdd").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("AssignAdd").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("AssignSub").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("AssignSub").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("Sin").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Sin").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Mul(dout, (ib->Emit("Cos", {x})));
   return {dx};
 });
 
-REG_BPROP_BUILDER("Asin").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Asin").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("AsinGrad", {x, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER("AsinGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("AsinGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto grad = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -131,14 +131,14 @@ REG_BPROP_BUILDER("AsinGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {d2x, ddy};
 });
 
-REG_BPROP_BUILDER("Asinh").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Asinh").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("AsinhGrad", {out, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER("AsinhGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("AsinhGrad").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
@@ -148,28 +148,28 @@ REG_BPROP_BUILDER("AsinhGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {dy, dgrad};
 });
 
-REG_BPROP_BUILDER("Sinh").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Sinh").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Mul((ib->Emit("Cosh", {x})), dout);
   return {dx};
 });
 
-REG_BPROP_BUILDER("Cos").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Cos").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Mul(dout, (ib->Emit("Neg", {ib->Emit("Sin", {x})})));
   return {dx};
 });
 
-REG_BPROP_BUILDER("ACos").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ACos").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("ACosGrad", {x, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER("ACosGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ACosGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto grad = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -181,14 +181,14 @@ REG_BPROP_BUILDER("ACosGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {d2x, ddy};
 });
 
-REG_BPROP_BUILDER("Acosh").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Acosh").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("AcoshGrad", {out, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER("AcoshGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("AcoshGrad").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
@@ -197,27 +197,27 @@ REG_BPROP_BUILDER("AcoshGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {dy, dgrad};
 });
 
-REG_BPROP_BUILDER("Cosh").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Cosh").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Mul((ib->Emit("Sinh", {x})), dout);
   return {dx};
 });
 
-REG_BPROP_BUILDER("Abs").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Abs").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("AbsGrad", {x, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER("Conj").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Conj").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("Conj", {dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER("ScalarCast").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ScalarCast").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto t = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -225,11 +225,11 @@ REG_BPROP_BUILDER("ScalarCast").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   return {dx, ib->ZerosLike(t)};
 });
 
-REG_BPROP_BUILDER("Sign").SetBody(CheckBpropExpander);
+REG_BPROP_BUILDER("Sign").SetUnusedInputs({i1, i2}).SetBody(CheckBpropExpander);
 
-REG_BPROP_BUILDER("Round").SetBody(CheckBpropExpander);
+REG_BPROP_BUILDER("Round").SetUnusedInputs({i1, i2}).SetBody(CheckBpropExpander);
 
-REG_BPROP_BUILDER("Atan2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Atan2").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -239,7 +239,7 @@ REG_BPROP_BUILDER("Atan2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
 });
 
-REG_BPROP_BUILDER("BesselI0e").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BesselI0e").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -247,14 +247,14 @@ REG_BPROP_BUILDER("BesselI0e").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {dx};
 });
 
-REG_BPROP_BUILDER("Atan").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Atan").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("AtanGrad", {x, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER("AtanGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("AtanGrad").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
@@ -263,7 +263,7 @@ REG_BPROP_BUILDER("AtanGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dx, dgrad};
 });
 
-REG_BPROP_BUILDER("Log1p").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Log1p").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto x_1p = ib->Add(x, ib->Tensor(1, ib->GetDtype(x)));
@@ -272,7 +272,7 @@ REG_BPROP_BUILDER("Log1p").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx};
 });
 
-REG_BPROP_BUILDER("Erf").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Erf").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto half_root_pi =
@@ -283,7 +283,7 @@ REG_BPROP_BUILDER("Erf").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx};
 });
 
-REG_BPROP_BUILDER("Erfc").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Erfc").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto half_root_pi =
@@ -294,7 +294,7 @@ REG_BPROP_BUILDER("Erfc").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx};
 });
 
-REG_BPROP_BUILDER("Pow").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Pow").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto power = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -306,7 +306,7 @@ REG_BPROP_BUILDER("Pow").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {BinopGradCommon(ib, x, power, bc_dx, bc_dpower)};
 });
 
-REG_BPROP_BUILDER("Exp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Exp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto g = ib->Exp(x);
@@ -314,7 +314,7 @@ REG_BPROP_BUILDER("Exp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx};
 });
 
-REG_BPROP_BUILDER("Expm1").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Expm1").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto g = ib->Exp(x);
@@ -322,7 +322,7 @@ REG_BPROP_BUILDER("Expm1").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx};
 });
 
-REG_BPROP_BUILDER("Minimum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Minimum").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -332,7 +332,7 @@ REG_BPROP_BUILDER("Minimum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   return {dx, dy};
 });
 
-REG_BPROP_BUILDER("Maximum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Maximum").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -342,7 +342,7 @@ REG_BPROP_BUILDER("Maximum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   return {dx, dy};
 });
 
-REG_BPROP_BUILDER("CumSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("CumSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto axis = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto reverse = GetValue<bool>(ib->GetAttr("reverse"));
@@ -350,7 +350,7 @@ REG_BPROP_BUILDER("CumSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
           ib->ZerosLike(axis)};
 });
 
-REG_BPROP_BUILDER("MulNoNan").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MulNoNan").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -370,7 +370,7 @@ REG_BPROP_BUILDER("MulNoNan").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dx, dy};
 });
 
-REG_BPROP_BUILDER("BesselI0").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BesselI0").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto bessel_i1 = ib->Emit("BesselI1", {x});
@@ -378,7 +378,7 @@ REG_BPROP_BUILDER("BesselI0").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dx};
 });
 
-REG_BPROP_BUILDER("BesselI1").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BesselI1").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -390,7 +390,7 @@ REG_BPROP_BUILDER("BesselI1").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dx};
 });
 
-REG_BPROP_BUILDER("BesselJ0").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BesselJ0").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto bessel_j1 = ib->Emit("BesselJ1", {x});
@@ -398,7 +398,7 @@ REG_BPROP_BUILDER("BesselJ0").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dx};
 });
 
-REG_BPROP_BUILDER("BesselJ1").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BesselJ1").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -410,7 +410,7 @@ REG_BPROP_BUILDER("BesselJ1").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dx};
 });
 
-REG_BPROP_BUILDER("BesselK0").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BesselK0").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto bessel_k1 = ib->Emit("BesselK1", {x});
@@ -418,7 +418,7 @@ REG_BPROP_BUILDER("BesselK0").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dx};
 });
 
-REG_BPROP_BUILDER("BesselK1").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BesselK1").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -428,7 +428,7 @@ REG_BPROP_BUILDER("BesselK1").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dx};
 });
 
-REG_BPROP_BUILDER("BesselK0e").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BesselK0e").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -437,7 +437,7 @@ REG_BPROP_BUILDER("BesselK0e").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {dx};
 });
 
-REG_BPROP_BUILDER("BesselK1e").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BesselK1e").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -448,7 +448,7 @@ REG_BPROP_BUILDER("BesselK1e").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {dx};
 });
 
-REG_BPROP_BUILDER("BesselY0").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BesselY0").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto bessel_y1 = ib->Emit("BesselY1", {x});
@@ -456,7 +456,7 @@ REG_BPROP_BUILDER("BesselY0").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dx};
 });
 
-REG_BPROP_BUILDER("BesselY1").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BesselY1").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -466,11 +466,11 @@ REG_BPROP_BUILDER("BesselY1").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dx};
 });
 
-REG_BPROP_BUILDER("AddN").SetBody(AddnGradFunc);
+REG_BPROP_BUILDER("AddN").SetUnusedInputs({i0, i1}).SetBody(AddnGradFunc);
 
-REG_BPROP_BUILDER("AccumulateNV2").SetBody(AddnGradFunc);
+REG_BPROP_BUILDER("AccumulateNV2").SetUnusedInputs({i0, i1}).SetBody(AddnGradFunc);
 
-REG_BPROP_BUILDER("Tan").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Tan").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -480,7 +480,7 @@ REG_BPROP_BUILDER("Tan").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx};
 });
 
-REG_BPROP_BUILDER("BesselI1e").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BesselI1e").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -495,7 +495,7 @@ REG_BPROP_BUILDER("BesselI1e").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {dx};
 });
 
-REG_BPROP_BUILDER("Atanh").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Atanh").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -508,21 +508,21 @@ REG_BPROP_BUILDER("Atanh").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx};
 });
 
-REG_BPROP_BUILDER("Inv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Inv").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit(prim::kPrimInvGrad->name(), {out, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER("LinSpace").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("LinSpace").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib) {
   auto start = ib->GetInput(kIndex0);
   auto stop = ib->GetInput(kIndex1);
   auto num = ib->GetInput(kIndex2);
   return {ib->ZerosLike(start), ib->ZerosLike(stop), ib->ZerosLike(num)};
 });
 
-REG_BPROP_BUILDER("IndexAdd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("IndexAdd").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex4);
@@ -531,14 +531,14 @@ REG_BPROP_BUILDER("IndexAdd").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dout, ib->ZerosLike(indices), dy};
 });
 
-REG_BPROP_BUILDER("Logit").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Logit").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("LogitGrad", {dout, x}, {{"eps", ib->GetAttr("eps")}});
   return {dx};
 });
 
-REG_BPROP_BUILDER("Cdist").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Cdist").SetBody(BODYFUNC(ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto input_y = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -558,7 +558,7 @@ REG_BPROP_BUILDER("Cdist").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx, dy};
 });
 
-REG_BPROP_BUILDER("LuUnpack").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("LuUnpack").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto lu_data = ib->GetInput(kIndex0);
   auto lu_pivots = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -571,7 +571,7 @@ REG_BPROP_BUILDER("LuUnpack").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {lu_data_grad, ib->ZerosLike(lu_pivots)};
 });
 
-REG_BPROP_BUILDER("Sinc").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Sinc").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto product = ib->Mul(ib->Tensor(pi, ib->GetDtype(x)), x);
@@ -585,7 +585,7 @@ REG_BPROP_BUILDER("Sinc").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx};
 });
 
-REG_BPROP_BUILDER("CumProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("CumProd").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -598,35 +598,35 @@ REG_BPROP_BUILDER("CumProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   return {ib->RealDiv(out, x), ib->ZerosLike(axis)};
 });
 
-REG_BPROP_BUILDER("ReduceAll").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ReduceAll").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   return {ib->ZerosLike(x), ib->ZerosLike(axis)};
 });
 
-REG_BPROP_BUILDER("ReduceAny").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ReduceAny").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   return {ib->ZerosLike(x), ib->ZerosLike(axis)};
 });
 
-REG_BPROP_BUILDER("IsFinite").SetBody(CheckBpropExpander);
+REG_BPROP_BUILDER("IsFinite").SetUnusedInputs({i1, i2}).SetBody(CheckBpropExpander);
 
-REG_BPROP_BUILDER("IsNan").SetBody(CheckBpropExpander);
+REG_BPROP_BUILDER("IsNan").SetUnusedInputs({i1, i2}).SetBody(CheckBpropExpander);
 
-REG_BPROP_BUILDER("IsInf").SetBody(CheckBpropExpander);
+REG_BPROP_BUILDER("IsInf").SetUnusedInputs({i1, i2}).SetBody(CheckBpropExpander);
 
-REG_BPROP_BUILDER("ApproximateEqual").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("ApproximateEqual").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("Equal").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("Equal").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("NotEqual").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("NotEqual").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("Greater").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("Greater").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("GreaterEqual").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("GreaterEqual").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("MatrixInverse").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MatrixInverse").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto out_shape = ib->GetShape(out);
@@ -641,12 +641,12 @@ REG_BPROP_BUILDER("MatrixInverse").SetBody([](const BpropIRBuilder *ib) -> NodeP
   return {-dx};
 });
 
-REG_BPROP_BUILDER("Neg").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Neg").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   return {-dout};
 });
 
-REG_BPROP_BUILDER("RealDiv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("RealDiv").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -656,7 +656,7 @@ REG_BPROP_BUILDER("RealDiv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
 });
 
-REG_BPROP_BUILDER("DivNoNan").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("DivNoNan").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -666,7 +666,7 @@ REG_BPROP_BUILDER("DivNoNan").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
 });
 
-REG_BPROP_BUILDER("Xdivy").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Xdivy").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -677,9 +677,9 @@ REG_BPROP_BUILDER("Xdivy").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
 });
 
-REG_BPROP_BUILDER("FloorDiv").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("FloorDiv").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("FloorMod").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("FloorMod").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -690,9 +690,9 @@ REG_BPROP_BUILDER("FloorMod").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
 });
 
-REG_BPROP_BUILDER("TruncateDiv").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("TruncateDiv").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("TruncateMod").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("TruncateMod").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -701,7 +701,7 @@ REG_BPROP_BUILDER("TruncateMod").SetBody([](const BpropIRBuilder *ib) -> NodePtr
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
 });
 
-REG_BPROP_BUILDER("Mod").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Mod").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -712,7 +712,7 @@ REG_BPROP_BUILDER("Mod").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
 });
 
-REG_BPROP_BUILDER("Xlogy").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Xlogy").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -723,14 +723,14 @@ REG_BPROP_BUILDER("Xlogy").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
 });
 
-REG_BPROP_BUILDER("Sqrt").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Sqrt").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("SqrtGrad", {out, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER("SqrtGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("SqrtGrad").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
@@ -741,14 +741,14 @@ REG_BPROP_BUILDER("SqrtGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dy, dgrad};
 });
 
-REG_BPROP_BUILDER("Rsqrt").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Rsqrt").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("RsqrtGrad", {out, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER("RsqrtGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("RsqrtGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex0);
   auto grad = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -758,14 +758,14 @@ REG_BPROP_BUILDER("RsqrtGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {dy, dgrad};
 });
 
-REG_BPROP_BUILDER("Reciprocal").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Reciprocal").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("ReciprocalGrad", {out, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER("Log").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Log").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto g = ib->Emit("Reciprocal", {x});
@@ -773,18 +773,18 @@ REG_BPROP_BUILDER("Log").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx};
 });
 
-REG_BPROP_BUILDER("Floor").SetBody(CheckBpropExpander);
+REG_BPROP_BUILDER("Floor").SetUnusedInputs({i1, i2}).SetBody(CheckBpropExpander);
 
-REG_BPROP_BUILDER("Ceil").SetBody(CheckBpropExpander);
+REG_BPROP_BUILDER("Ceil").SetUnusedInputs({i1, i2}).SetBody(CheckBpropExpander);
 
-REG_BPROP_BUILDER("Square").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Square").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = dout * x * ib->Tensor(2.0, ib->GetDtype(x));
   return {dx};
 });
 
-REG_BPROP_BUILDER("SquaredDifference").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("SquaredDifference").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -792,7 +792,7 @@ REG_BPROP_BUILDER("SquaredDifference").SetBody([](const BpropIRBuilder *ib) -> N
   return {BinopGradCommon(ib, x, y, dx, -dx)};
 });
 
-REG_BPROP_BUILDER("SquareSumAll").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("SquareSumAll").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -803,7 +803,7 @@ REG_BPROP_BUILDER("SquareSumAll").SetBody([](const BpropIRBuilder *ib) -> NodePt
   return {dx, dy};
 });
 
-REG_BPROP_BUILDER("Hypot").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Hypot").SetBody(BODYFUNC(ib) {
   auto x1 = ib->GetInput(kIndex0);
   auto x2 = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -820,9 +820,9 @@ REG_BPROP_BUILDER("Hypot").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {result_dx1, result_dx2};
 });
 
-REG_BPROP_BUILDER("Trunc").SetBody(CheckBpropExpander);
+REG_BPROP_BUILDER("Trunc").SetUnusedInputs({i1, i2}).SetBody(CheckBpropExpander);
 
-REG_BPROP_BUILDER("Ger").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Ger").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto input_y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -836,7 +836,7 @@ REG_BPROP_BUILDER("Ger").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx, dy};
 });
 
-REG_BPROP_BUILDER("Cross").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Cross").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto input1 = ib->GetInput(kIndex0);
   auto input2 = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -844,7 +844,7 @@ REG_BPROP_BUILDER("Cross").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
           ib->Emit("Cross", {dout, input1}, {{"dim", ib->GetAttr("dim")}})};
 });
 
-REG_BPROP_BUILDER("Median").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Median").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -857,7 +857,7 @@ REG_BPROP_BUILDER("Median").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
   return {dx};
 });
 
-REG_BPROP_BUILDER("Trace").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Trace").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto shape = ib->GetShape(x);
@@ -865,7 +865,7 @@ REG_BPROP_BUILDER("Trace").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx};
 });
 
-REG_BPROP_BUILDER("Erfinv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Erfinv").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto out_type = ib->GetDtype(dout);
@@ -876,9 +876,9 @@ REG_BPROP_BUILDER("Erfinv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
   return {dx};
 });
 
-REG_BPROP_BUILDER("Bernoulli").SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("Bernoulli").SetUnusedInputs({i2, i3}).SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER("ReduceSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ReduceSum").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -886,7 +886,7 @@ REG_BPROP_BUILDER("ReduceSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {dx, ib->ZerosLike(axis)};
 });
 
-REG_BPROP_BUILDER("ReduceProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ReduceProd").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -910,7 +910,7 @@ REG_BPROP_BUILDER("ReduceProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   return {dx, ib->ZerosLike(axis)};
 });
 
-REG_BPROP_BUILDER("ReduceMax").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ReduceMax").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -919,7 +919,7 @@ REG_BPROP_BUILDER("ReduceMax").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {dx, ib->ZerosLike(axis)};
 });
 
-REG_BPROP_BUILDER("ReduceMin").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ReduceMin").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -928,7 +928,7 @@ REG_BPROP_BUILDER("ReduceMin").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {dx, ib->ZerosLike(axis)};
 });
 
-REG_BPROP_BUILDER("ReduceMean").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ReduceMean").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -952,7 +952,7 @@ REG_BPROP_BUILDER("ReduceMean").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   return {dx, ib->ZerosLike(axis)};
 });
 
-REG_BPROP_BUILDER("ArgMaxWithValue").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ArgMaxWithValue").SetBody(BODYFUNC(ib) {
   auto axis = GetValue<int64_t>(ib->GetAttr("axis"));
   auto keep_dims = GetValue<bool>(ib->GetAttr("keep_dims"));
   auto x = ib->GetInput(kIndex0);
@@ -962,7 +962,7 @@ REG_BPROP_BUILDER("ArgMaxWithValue").SetBody([](const BpropIRBuilder *ib) -> Nod
   return {dx};
 });
 
-REG_BPROP_BUILDER("ArgMinWithValue").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ArgMinWithValue").SetBody(BODYFUNC(ib) {
   auto axis = GetValue<int64_t>(ib->GetAttr("axis"));
   auto keep_dims = GetValue<bool>(ib->GetAttr("keep_dims"));
   auto x = ib->GetInput(kIndex0);
@@ -972,7 +972,7 @@ REG_BPROP_BUILDER("ArgMinWithValue").SetBody([](const BpropIRBuilder *ib) -> Nod
   return {dx};
 });
 
-REG_BPROP_BUILDER("ComplexAbs").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ComplexAbs").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -980,19 +980,19 @@ REG_BPROP_BUILDER("ComplexAbs").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
                        ib->Emit("Complex", {out, ib->ZerosLike(out)}))};
 });
 
-REG_BPROP_BUILDER("Real").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Real").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto zero = ib->ZerosLike(dout);
   return {ib->Emit("Complex", {dout, zero})};
 });
 
-REG_BPROP_BUILDER("Imag").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Imag").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto zero = ib->ZerosLike(dout);
   return {ib->Emit("Complex", {zero, dout})};
 });
 
-REG_BPROP_BUILDER("Betainc").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Betainc").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto input_a = ib->GetInput(kIndex0);
   auto input_b = ib->GetInput(kIndex1);
   auto input_x = ib->GetInput(kIndex2);
@@ -1007,7 +1007,7 @@ REG_BPROP_BUILDER("Betainc").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   return {ib->ZerosLike(input_a), ib->ZerosLike(input_b), ib->Reshape(ib->Mul(partial_x, dout), sx)};
 });
 
-REG_BPROP_BUILDER("LogMatrixDeterminant").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("LogMatrixDeterminant").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -1020,7 +1020,7 @@ REG_BPROP_BUILDER("LogMatrixDeterminant").SetBody([](const BpropIRBuilder *ib) -
   return {dx};
 });
 
-REG_BPROP_BUILDER("MatrixDeterminant").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MatrixDeterminant").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -1033,7 +1033,7 @@ REG_BPROP_BUILDER("MatrixDeterminant").SetBody([](const BpropIRBuilder *ib) -> N
   return {dx};
 });
 
-REG_BPROP_BUILDER("MatrixPower").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MatrixPower").SetBody(BODYFUNC(ib) {
   auto n = GetValue<int64_t>(ib->GetAttr("n"));
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
@@ -1062,7 +1062,7 @@ REG_BPROP_BUILDER("MatrixPower").SetBody([](const BpropIRBuilder *ib) -> NodePtr
   return {dx};
 });
 
-REG_BPROP_BUILDER("MatrixSolve").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MatrixSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto adjoint = GetValue<bool>(ib->GetAttr("adjoint"));
   auto input_a = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex2);
@@ -1101,7 +1101,7 @@ REG_BPROP_BUILDER("MatrixSolve").SetBody([](const BpropIRBuilder *ib) -> NodePtr
   }
 });
 
-REG_BPROP_BUILDER("MatrixExp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MatrixExp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto shape_x = ib->GetShape(x);
@@ -1127,14 +1127,14 @@ REG_BPROP_BUILDER("MatrixExp").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {ib->Emit("Slice", {meta_grad, ib->EmitValue(MakeValue(begins)), ib->EmitValue(MakeValue(sizes))})};
 });
 
-REG_BPROP_BUILDER("Complex").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Complex").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
   auto dx = ib->Emit("Real", {dout});
   auto dy = ib->Emit("Imag", {dout});
   return {dx, dy};
 });
 
-REG_BPROP_BUILDER("CholeskyInverse").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("CholeskyInverse").SetBody(BODYFUNC(ib) {
   auto upper = GetValue<bool>(ib->GetAttr("upper"));
   auto input_x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
@@ -1165,7 +1165,7 @@ REG_BPROP_BUILDER("CholeskyInverse").SetBody([](const BpropIRBuilder *ib) -> Nod
   return {dx};
 });
 
-REG_BPROP_BUILDER("CholeskySolve").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("CholeskySolve").SetBody(BODYFUNC(ib) {
   auto upper = GetValue<bool>(ib->GetAttr("upper"));
   auto x1 = ib->GetInput(kIndex0);
   auto x2 = ib->GetInput(kIndex1);
@@ -1210,7 +1210,7 @@ REG_BPROP_BUILDER("CholeskySolve").SetBody([](const BpropIRBuilder *ib) -> NodeP
   return {dx1, dx2};
 });
 
-REG_BPROP_BUILDER("NextAfter").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("NextAfter").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x1 = ib->GetInput(kIndex0);
   auto x2 = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -1234,7 +1234,7 @@ REG_BPROP_BUILDER("NextAfter").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {ib->Cast(dx1, dout_type), ib->Cast(dx2, dout_type)};
 });
 
-REG_BPROP_BUILDER("MinimumGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MinimumGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto x1 = ib->GetInput(kIndex0);
   auto x2 = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex4);
@@ -1245,7 +1245,7 @@ REG_BPROP_BUILDER("MinimumGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtr
   return {sopd_x1, sopd_x2, sopd_grads};
 });
 
-REG_BPROP_BUILDER("Lerp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto start = ib->GetInput(kIndex0);
   auto end = ib->GetInput(kIndex1);
   auto weight = ib->GetInput(kIndex2);
@@ -1285,7 +1285,7 @@ REG_BPROP_BUILDER("Lerp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dstart, dend, dweight};
 });
 
-REG_BPROP_BUILDER("TridiagonalMatMul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto LeftShift = [](const BpropIRBuilder *ib, NodePtr x) {
     auto x_shape = ib->GetShape(x);
     std::vector<std::vector<int64_t>> paddings;
@@ -1357,8 +1357,7 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetBody([](const BpropIRBuilder *ib) -> N
   auto maindiag = ib->GetInput(kIndex1);
   auto subdiag = ib->GetInput(kIndex2);
   auto rhs = ib->GetInput(kIndex3);
-  auto out = ib->GetInput(kIndex4);
-  auto grad = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex5);
   auto superdiag_type = ib->GetDtype(superdiag);
   auto superdiag_conj = MatrixTranspose(ib, superdiag);
   auto maindiag_conj = MatrixTranspose(ib, maindiag);
@@ -1370,24 +1369,24 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetBody([](const BpropIRBuilder *ib) -> N
     subdiag_conj = ib->Emit("Conj", {subdiag_conj});
     rhs_conj = ib->Emit("Conj", {rhs});
   }
-  auto superdiag_grad = ib->ReduceSum(LeftShift(ib, rhs_conj) * grad, ShapeVector{-1LL});
-  auto maindiag_grad = ib->ReduceSum(rhs_conj * grad, ShapeVector{-1LL});
-  auto subdiag_grad = ib->ReduceSum(RightShift(ib, rhs_conj) * grad, ShapeVector{-1LL});
-  auto rhs_grad = RightShift(ib, superdiag_conj * grad) + maindiag_conj * grad + LeftShift(ib, subdiag_conj * grad);
+  auto superdiag_grad = ib->ReduceSum(LeftShift(ib, rhs_conj) * dout, ShapeVector{-1LL});
+  auto maindiag_grad = ib->ReduceSum(rhs_conj * dout, ShapeVector{-1LL});
+  auto subdiag_grad = ib->ReduceSum(RightShift(ib, rhs_conj) * dout, ShapeVector{-1LL});
+  auto rhs_grad = RightShift(ib, superdiag_conj * dout) + maindiag_conj * dout + LeftShift(ib, subdiag_conj * dout);
   superdiag_grad = ib->ExpandDims(superdiag_grad, -2);
   maindiag_grad = ib->ExpandDims(maindiag_grad, -2);
   subdiag_grad = ib->ExpandDims(subdiag_grad, -2);
   return {superdiag_grad, maindiag_grad, subdiag_grad, rhs_grad};
 });
 
-REG_BPROP_BUILDER("AddV2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("AddV2").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   return {BinopGradCommon(ib, x, y, dout, dout)};
 });
 
-REG_BPROP_BUILDER("Addcdiv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Addcdiv").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto input_data = ib->GetInput(kIndex0);
   auto x1 = ib->GetInput(kIndex1);
   auto x2 = ib->GetInput(kIndex2);
@@ -1426,7 +1425,7 @@ REG_BPROP_BUILDER("Addcdiv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   return {dinput_data, dx1, dx2, dvalue};
 });
 
-REG_BPROP_BUILDER("Addcmul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Addcmul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto input_data = ib->GetInput(kIndex0);
   auto x1 = ib->GetInput(kIndex1);
   auto x2 = ib->GetInput(kIndex2);
@@ -1465,7 +1464,7 @@ REG_BPROP_BUILDER("Addcmul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   return {dinput_data, dx1, dx2, dvalue};
 });
 
-REG_BPROP_BUILDER("LpNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("LpNorm").SetBody(BODYFUNC(ib) {
   auto p = GetValue<int64_t>(ib->GetAttr("p"));
   auto keep_dims = GetValue<bool>(ib->GetAttr("keep_dims"));
   auto axis = GetIntList(ib->GetAttr("axis"));
@@ -1497,7 +1496,7 @@ REG_BPROP_BUILDER("LpNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
   }
 });
 
-REG_BPROP_BUILDER("Renorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Renorm").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto p = FloatToInt(GetValue<float>(ib->GetAttr("p")));
   float ext = 1e-07;
   auto dim = GetIntList(ib->GetAttr("dim"))[0];
@@ -1546,7 +1545,7 @@ REG_BPROP_BUILDER("Renorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
   return {ib->Select(q, grad_norm, dout)};
 });
 
-REG_BPROP_BUILDER("ReduceStd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
   auto axis = GetIntList(ib->GetAttr("axis"));
   auto keep_dims = GetValue<bool>(ib->GetAttr("keep_dims"));
   auto unbiased = GetValue<bool>(ib->GetAttr("unbiased"));
@@ -1601,7 +1600,7 @@ REG_BPROP_BUILDER("ReduceStd").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {dx};
 });
 
-REG_BPROP_BUILDER("CumulativeLogsumexp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("CumulativeLogsumexp").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -1644,11 +1643,11 @@ REG_BPROP_BUILDER("CumulativeLogsumexp").SetBody([](const BpropIRBuilder *ib) ->
   return {ib->Sub(output_pos, output_neg), ib->ZerosLike(x)};
 });
 
-REG_BPROP_BUILDER("NPUAllocFloatStatus").SetBody([](const BpropIRBuilder *ib) -> NodePtrList { return {}; });
+REG_BPROP_BUILDER("NPUAllocFloatStatus").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) { return {}; });
 
-REG_BPROP_BUILDER("NPUGetFloatStatus").SetBody(CheckBpropExpander);
+REG_BPROP_BUILDER("NPUGetFloatStatus").SetUnusedInputs({i1, i2}).SetBody(CheckBpropExpander);
 
-REG_BPROP_BUILDER("NPUClearFloatStatus").SetBody(CheckBpropExpander);
+REG_BPROP_BUILDER("NPUClearFloatStatus").SetUnusedInputs({i1, i2}).SetBody(CheckBpropExpander);
 
 NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
   auto a = ib->GetInput(kIndex0);
@@ -1677,16 +1676,16 @@ NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
   return {r1, r2};
 }
 
-REG_BPROP_BUILDER("Igamma").SetBody([](const BpropIRBuilder *ib) -> NodePtrList { return IgammaBpropExpander(ib); });
+REG_BPROP_BUILDER("Igamma").SetUnusedInputs({i2}).SetBody(IgammaBpropExpander);
 
-REG_BPROP_BUILDER("Igammac").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Igammac").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto r_dx = IgammaBpropExpander(ib);
   r_dx[0] = ib->Neg(r_dx[0]);
   r_dx[1] = ib->Neg(r_dx[1]);
   return r_dx;
 });
 
-REG_BPROP_BUILDER("Einsum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Einsum").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("EinsumGrad", {x, dout}, {{"equation", ib->GetAttr("equation")}});

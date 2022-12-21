@@ -19,16 +19,39 @@
 #include <map>
 #include <vector>
 #include <utility>
+#include <string>
+#include <memory>
 #include "ir/anf.h"
 #include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
-#include "include/common/visible.h"
 
 namespace mindspore {
-using DoutUserType = std::vector<std::pair<CNodePtr, int>>;
-// deprecated
-void BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, DoutUserType *dout_user);
+namespace expander {
+namespace bprop {
+using UserType = std::map<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
+class BpropExpander {
+ public:
+  BpropExpander() {}
+  BpropExpander(CNodePtrList *outputs, UserType *users) : outputs_(outputs), users_(users) {}
+  ~BpropExpander() = default;
+  bool Run(const CNodePtr &cnode);
+  const std::vector<size_t> &GetUnusedInputs(const CNodePtr &cnode) const;
 
-using UserType = std::map<AnfNodePtr, std::vector<std::pair<CNodePtr, int>>>;
-bool BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, UserType *users);
+ private:
+  bool RunBprop(const CNodePtr &cnode);
+  NodePtrList ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder);
+  const BpropHandle *GetBpropHandle(const std::string &name) const {
+    return BpropIRBuilderFactory::Instance().GetBuilder(name);
+  }
+  void PostProcess(const NodePtrList &inputs) const;
+  void DumpResult(const std::string &name, const NodePtrList &inputs) const;
+
+ private:
+  CNodePtrList *outputs_{nullptr};
+  UserType *users_{nullptr};
+};
+}  // namespace bprop
+}  // namespace expander
+
+using expander::bprop::BpropExpander;
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_EXPANDER_BPROP_H_

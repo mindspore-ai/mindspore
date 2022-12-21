@@ -20,7 +20,7 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
-REG_BPROP_BUILDER("ResizeBicubic").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ResizeBicubic").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto images = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -36,7 +36,7 @@ REG_BPROP_BUILDER("ResizeBicubic").SetBody([](const BpropIRBuilder *ib) -> NodeP
   return {dx, ib->Emit("ZerosLike", {size})};
 });
 
-REG_BPROP_BUILDER("CropAndResize").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   std::set<TypeId> allowed_types = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
   auto method = GetValue<std::string>(ib->GetAttr("method"));
   auto target = ib->GetTargetFromContext();
@@ -63,7 +63,7 @@ REG_BPROP_BUILDER("CropAndResize").SetBody([](const BpropIRBuilder *ib) -> NodeP
   return {dimage, dbox, ib->ZerosLike(box_index), ib->ZerosLike(crop_size)};
 });
 
-REG_BPROP_BUILDER("ScaleAndTranslate").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ScaleAndTranslate").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto images = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
   auto scale = ib->GetInput(kIndex2);
@@ -77,7 +77,7 @@ REG_BPROP_BUILDER("ScaleAndTranslate").SetBody([](const BpropIRBuilder *ib) -> N
   return {grad0, ib->ZerosLike(size), ib->ZerosLike(scale), ib->ZerosLike(translation)};
 });
 
-REG_BPROP_BUILDER("RGBToHSV").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("RGBToHSV").SetBody(BODYFUNC(ib) {
   auto images = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);

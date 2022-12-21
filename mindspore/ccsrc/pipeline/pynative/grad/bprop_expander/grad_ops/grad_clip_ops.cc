@@ -18,7 +18,7 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
-REG_BPROP_BUILDER("ClipByNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ClipByNorm").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto clip_norm = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);

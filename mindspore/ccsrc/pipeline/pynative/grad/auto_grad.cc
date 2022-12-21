@@ -298,19 +298,18 @@ AnfNodePtr VariableAdjoint::RealDout() {
   return accumulate_dout;
 }
 
-AutoGradCellImpl::AutoGradCellImpl(const AnfNodePtrList &cell_inputs, const std::vector<ValuePtr> &input_param_values)
+AutoGradCellImpl::AutoGradCellImpl(const AnfNodePtrList &cell_inputs, const std::vector<ValuePtr> &input_param_values,
+                                   const AbstractBasePtrList &abs_list)
     : tape_(std::make_shared<FuncGraph>()), cell_inputs_(cell_inputs) {
   tape_->debug_info()->set_name("grad_top");
   MS_LOG(DEBUG) << "Start AutoGradCellImpl, cell_inputs size: " << cell_inputs.size();
   for (size_t i = 0; i < cell_inputs.size(); ++i) {
     TraceGuard trace_guard(std::make_shared<TraceCopy>(cell_inputs[i]->debug_info()));
     auto parameter = tape_->add_parameter();
-    parameter->set_abstract(input_param_values[i]->ToAbstract()->Broaden());
+    parameter->set_abstract(abs_list[i]);
     auto zeros_like_dout = BuildZerosLikeNode(tape_, input_param_values[i]);
     auto func_node = std::make_shared<FunctionNode>(tape_, zeros_like_dout);
-    const auto &clone_value = ShallowCopyTensorValue(input_param_values[i]);
-    ClearDeviceAddress(clone_value);
-    auto input_adjoint = std::make_shared<VariableAdjoint>(func_node, clone_value);
+    auto input_adjoint = std::make_shared<VariableAdjoint>(func_node, input_param_values[i]);
     (void)anfnode_to_variable_adjoint_.insert(std::make_pair(cell_inputs[i], input_adjoint));
   }
 }
@@ -349,8 +348,8 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
     BuildBPropCutCNode(input_node, prim, &outputs);
   } else {
 #ifndef ENABLE_TEST
-    mindspore::BuildBprop(input_node, &outputs, &users_);
-    if (outputs.empty()) {
+    auto ret = BpropExpander(&outputs, &users_).Run(input_node);
+    if (!ret || outputs.empty()) {
       MS_LOG(DEBUG) << "Expander has no bprop of this prim: " << grad_param->cnode->DebugString();
       BuildCustomBpropCNode(input_node, prim, &outputs);
     }
@@ -460,7 +459,6 @@ void AutoGradCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, 
   MS_EXCEPTION_IF_NULL(sens_out);
   MS_LOG(DEBUG) << "Real output node of top cell is " << output_node->DebugString();
   last_node_ = output_node;
-  ClearDeviceAddress(sens_out);
   sens_value_ = sens_out;
 }
 
@@ -1077,7 +1075,7 @@ void AutoGradCellImpl::AddUser(const AnfNodePtr &node, const CNodePtr &user, siz
   if (users_.find(node) == users_.end()) {
     users_[node] = {};
   }
-  (void)users_[node].emplace_back(make_pair(user, index));
+  (void)users_[node].emplace_back(user, index);
 }
 
 void AutoGradCellImpl::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node) {
@@ -1086,7 +1084,10 @@ void AutoGradCellImpl::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new
   }
   auto &old_node_users = users_[old_node];
   for (const auto &pair_node : old_node_users) {
-    auto cnode = pair_node.first;
+    auto cnode = pair_node.first.lock();
+    if (cnode == nullptr) {
+      continue;
+    }
     size_t index = pair_node.second;
     if (index >= cnode->size()) {
       MS_LOG(EXCEPTION) << "exception for index:" << index << "greater than cnode size:" << cnode->size();
@@ -1181,7 +1182,8 @@ void AutoGradCellImpl::ReplacePrimalParameter(const AnfNodePtrList &weights, boo
 }
 
 AutoGradCellImplPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
-                                          const std::vector<ValuePtr> &input_param_values) {
+                                          const std::vector<ValuePtr> &input_param_values,
+                                          const AbstractBasePtrList &abs_list) {
   auto abstract_are_set = std::all_of(cell_inputs.cbegin(), cell_inputs.cend(),
                                       [](const AnfNodePtr &node) { return node->abstract() != nullptr; });
   if (!abstract_are_set) {
@@ -1191,7 +1193,7 @@ AutoGradCellImplPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
     MS_LOG(EXCEPTION) << "The size of cell inputs " << cell_inputs.size()
                       << " is not equal to the size of input parameter values " << input_param_values.size();
   }
-  return std::make_shared<AutoGradCellImpl>(cell_inputs, input_param_values);
+  return std::make_shared<AutoGradCellImpl>(cell_inputs, input_param_values, abs_list);
 }
 
 FuncGraphPtr GradPynativeCellEnd(const AutoGradCellImplPtr &auto_grad_cell, const AnfNodePtrList &weights,

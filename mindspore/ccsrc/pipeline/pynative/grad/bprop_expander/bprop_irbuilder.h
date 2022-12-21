@@ -29,13 +29,21 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
+class BpropIRBuilder;
+
+using BpropIRBuilderFunc = std::function<NodePtrList(const BpropIRBuilder *)>;
+struct BpropHandle {
+  BpropIRBuilderFunc func;
+  std::vector<size_t> unused_inputs;
+};
+
 class BpropIRBuilder : public Emitter {
  public:
   BpropIRBuilder(const std::string &name, const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer)
       : Emitter(func_graph, infer, std::make_shared<Scope>(std::string("Bprop/grad") + name)), name_(name) {}
 
   /// \brief Run irbuilder to generate a graph
-  bool Run(const NodePtrList &inputs, const DAttr &attrs, CNodePtrList *outputs);
+  NodePtrList Run(const NodePtrList &inputs, const DAttr &attrs, const BpropHandle &handle);
 
   ValuePtr GetAttr(const std::string &attr) const;
   template <typename S>
@@ -72,23 +80,28 @@ class BpropIRBuilder : public Emitter {
   const NodePtrList *inputs_ptr_{nullptr};
   const DAttr *attrs_ptr_{nullptr};
 };
-using BpropIRBuilderPtr = std::shared_ptr<BpropIRBuilder>;
 
-using BpropIRBuilderFunc = std::function<NodePtrList(const BpropIRBuilder *)>;
 class BpropIRBuilderFactory {
  public:
   static BpropIRBuilderFactory &Instance() {
     static BpropIRBuilderFactory instance{};
     return instance;
   }
-  const BpropIRBuilderFunc &GetBuilder(const std::string &name) { return builders()[name]; }
-  void RegBuilder(const std::string &name, const BpropIRBuilderFunc &func) { builders()[name] = func; }
-  bool HasOp(const std::string &name) const { return builders().count(name) != 0; }
+
+  const BpropHandle *GetBuilder(const std::string &name) {
+    auto iter = registry().find(name);
+    return (iter == registry().end()) ? nullptr : &(iter->second);
+  }
+
+  void RegBuilder(const std::string &name, const BpropIRBuilderFunc &func) { registry()[name].func = func; }
+  void RegUnusedInputs(const std::string &name, const std::vector<size_t> &unused) {
+    registry()[name].unused_inputs = unused;
+  }
 
  private:
-  HashMap<std::string, BpropIRBuilderFunc> &builders() const {
-    static HashMap<std::string, BpropIRBuilderFunc> builder_map;
-    return builder_map;
+  HashMap<std::string, BpropHandle> &registry() const {
+    static HashMap<std::string, BpropHandle> reg;
+    return reg;
   }
 };
 
@@ -100,6 +113,10 @@ class BpropIRBuilderRegHelper {
     BpropIRBuilderFactory::Instance().RegBuilder(name_, func);
     return *this;
   }
+  const BpropIRBuilderRegHelper &SetUnusedInputs(const std::initializer_list<size_t> &unused_inputs) const {
+    BpropIRBuilderFactory::Instance().RegUnusedInputs(name_, unused_inputs);
+    return *this;
+  }
 
  private:
   std::string name_;
@@ -109,6 +126,7 @@ class BpropIRBuilderRegHelper {
 #define BPROP_EXPANDER_UNIQUE_NAME(prefix, cnt) BPROP_EXPANDER_JOIN(prefix, cnt)
 #define REG_BPROP_BUILDER(name) \
   const BpropIRBuilderRegHelper BPROP_EXPANDER_UNIQUE_NAME(g_bprop, __COUNTER__) = BpropIRBuilderRegHelper(name)
+#define BODYFUNC(v) [](const BpropIRBuilder *v) -> NodePtrList
 }  // namespace bprop
 }  // namespace expander
 }  // namespace mindspore
