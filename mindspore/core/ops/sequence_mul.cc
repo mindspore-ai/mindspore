@@ -28,6 +28,7 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
 AbstractBasePtr SequenceMulInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
@@ -56,6 +57,7 @@ AbstractBasePtr SequenceMulInferInner(const PrimitivePtr &primitive, const std::
   ret->CheckAndConvertToDynamicLenSequence();
   return ret;
 }
+}  // namespace
 
 MIND_API_OPERATOR_IMPL(SequenceMul, BaseOperator);
 class SequenceMulInfer : public abstract::OpInferBase {

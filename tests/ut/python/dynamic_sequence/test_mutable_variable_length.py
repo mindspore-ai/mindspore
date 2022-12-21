@@ -224,9 +224,9 @@ def test_dynamic_length_sequence_setitem_3():
         x = mutable([1, 2, 3, 4], True)
         x[3] = 10.0
         return x
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(TypeError) as ex:
         foo()
-    assert "the type is not match" in str(ex.value)
+    assert "when the queue is dynamic length" in str(ex.value)
 
 
 def test_dynamic_length_sequence_setitem_4():
@@ -241,9 +241,9 @@ def test_dynamic_length_sequence_setitem_4():
         x = mutable([(1, 2, 3), (2, 3, 4)], True)
         x[3] = (2, 3)
         return x
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(TypeError) as ex:
         foo()
-    assert "the shape is not match" in str(ex.value)
+    assert "when the queue is dynamic length" in str(ex.value)
 
 
 def test_dynamic_sequence_len():

@@ -22,12 +22,12 @@ from mindspore.ops.operations._inner_ops import SliceGetItem
 from mindspore.ops.operations import _map_tensor_ops
 from mindspore.ops.composite import base
 from mindspore.common import Tensor
+from ...operations._sequence_ops import SequenceSliceSetItem
 
 DOC_URL = "https://mindspore.cn/docs/zh-CN/master/note/index_support.html"
-
 setitem = base.MultitypeFuncGraph('setitem', doc_url=DOC_URL)
-
 slice_get_item = SliceGetItem()
+sequence_slice_setitem = SequenceSliceSetItem()
 
 
 class _ListSliceSetItem(base.ListSliceSetItem_):
@@ -147,6 +147,11 @@ def _list_slice_setitem_with_tuple(data, slice_index, value):
     Outputs:
         list, type is the same as the element type of data.
     """
+    if F.is_sequence_shape_unknown(data) or F.is_sequence_shape_unknown(value) or not F.isconstant(slice_index):
+        start = slice_get_item(slice_index, "start")
+        stop = slice_get_item(slice_index, "stop")
+        step = slice_get_item(slice_index, "step")
+        return sequence_slice_setitem(data, value, start, stop, step)
     list_value = list(value)
     return _list_slice_set_item(data, slice_index, list_value)
 
@@ -164,6 +169,11 @@ def _list_slice_setitem_with_list(data, slice_index, value):
     Outputs:
         list, type is the same as the element type of data.
     """
+    if F.is_sequence_shape_unknown(data) or F.is_sequence_shape_unknown(value) or not F.isconstant(slice_index):
+        start = slice_get_item(slice_index, "start")
+        stop = slice_get_item(slice_index, "stop")
+        step = slice_get_item(slice_index, "step")
+        return sequence_slice_setitem(data, value, start, stop, step)
     return _list_slice_set_item(data, slice_index, value)
 
 
@@ -181,6 +191,11 @@ def _list_slice_setitem_with_tensor(data, slice_index, value):
         list, type is the same as the element type of data.
     """
     value_list = list(value)
+    if F.is_sequence_shape_unknown(data) or F.is_sequence_shape_unknown(value_list) or not F.isconstant(slice_index):
+        start = slice_get_item(slice_index, "start")
+        stop = slice_get_item(slice_index, "stop")
+        step = slice_get_item(slice_index, "step")
+        return sequence_slice_setitem(data, value_list, start, stop, step)
     return _list_slice_set_item(data, slice_index, value_list)
 
 

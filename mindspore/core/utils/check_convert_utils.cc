@@ -369,6 +369,30 @@ void CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(const std::vector<Abstr
   }
 }
 
+abstract::AbstractSequencePtr CheckAndConvertUtils::BroadenAllSequenceElements(
+  const abstract::AbstractSequencePtr &sequence) {
+  MS_EXCEPTION_IF_NULL(sequence);
+  const auto &elements = sequence->elements();
+  AbstractBasePtrList new_elements;
+  for (auto element : elements) {
+    AbstractBasePtr new_element = nullptr;
+    if (element->isa<abstract::AbstractSequence>()) {
+      new_element = BroadenAllSequenceElements(element->cast<abstract::AbstractSequencePtr>());
+    } else {
+      auto tmp_element = element->Clone();
+      if (element->isa<abstract::AbstractScalar>()) {
+        tmp_element->cast<abstract::AbstractScalarPtr>()->set_is_variable(true);
+      }
+      new_element = tmp_element->Broaden();
+    }
+    new_elements.push_back(new_element);
+  }
+  if (sequence->isa<abstract::AbstractList>()) {
+    return std::make_shared<abstract::AbstractList>(new_elements, sequence->sequence_nodes());
+  }
+  return std::make_shared<abstract::AbstractTuple>(new_elements, sequence->sequence_nodes());
+}
+
 bool CheckAndConvertUtils::CheckValueSame(const ValuePtr &value_1, const ValuePtr &value_2) {
   MS_EXCEPTION_IF_NULL(value_1);
   MS_EXCEPTION_IF_NULL(value_2);

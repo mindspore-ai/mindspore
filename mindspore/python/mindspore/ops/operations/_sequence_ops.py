@@ -62,7 +62,7 @@ class SequenceSlice(Primitive):
         - **step** (int) - step of slice.
 
     Outputs:
-        Dynamic length sequence after addition.
+        Dynamic length sequence after slice.
 
     Raises:
         TypeError: The 'seq' input is neither list or tuple.
@@ -73,8 +73,39 @@ class SequenceSlice(Primitive):
     """
     @prim_attr_register
     def __init__(self):
-        """Initialize SequenceCount"""
+        """Initialize SequenceSlice"""
         self.init_prim_io_names(inputs=['seq', 'start', 'stop', 'step'], outputs=['output_data'])
+
+
+class SequenceSliceSetItem(Primitive):
+    r"""
+    Sequence slice setitem operation.
+
+    .. note::
+        This it is only for internal used. The sequence input should be dynamic length sequence or at least one of
+        start/end/step should be variable.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **seq** (Union[List, Tuple]) - The sequence to perform slice setitem.
+        - **target** (Union[List, Tuple]) - The target item to set.
+        - **start** (int) - start index of slice.
+        - **stop** (int) - stop index of slice.
+        - **step** (int) - step of slice.
+
+    Outputs:
+        Dynamic length sequence after slice setitem.
+
+    Raises:
+        ValueError: The 'seq' and 'target' input is not dynamic length and none of start/end/step is variable.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SequenceSliceSetItem"""
+        self.init_prim_io_names(inputs=['seq', 'target', 'start', 'stop', 'step'], outputs=['output_data'])
 
 
 class SequenceAdd(Primitive):
