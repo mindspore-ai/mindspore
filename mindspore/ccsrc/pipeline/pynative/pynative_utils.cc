@@ -254,6 +254,10 @@ void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, 
 py::object DataConvert::ValueToPyObj(const ValuePtr &v) { return ValueToPyData(v); }
 
 ValuePtr DataConvert::PyObjToValue(const py::object &obj) {
+  // In PyNative mode, AdapterTensor is treated as ms.Tensor.
+  if (py::hasattr(obj, PYTHON_ADAPTER_TENSOR) && py::getattr(obj, PYTHON_ADAPTER_TENSOR).cast<bool>()) {
+    py::setattr(obj, PYTHON_ADAPTER_TENSOR, py::bool_(false));
+  }
   ValuePtr converted_ret = parse::data_converter::PyDataToValue(obj);
   if (converted_ret == nullptr) {
     MS_LOG(EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(obj));

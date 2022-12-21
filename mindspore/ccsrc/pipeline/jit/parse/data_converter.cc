@@ -24,6 +24,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/cell.h"
+#include "ir/adapter_tensor.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
@@ -47,6 +48,8 @@ using COOTensor = mindspore::tensor::COOTensor;
 using COOTensorPtr = mindspore::tensor::COOTensorPtr;
 using MapTensor = mindspore::tensor::MapTensor;
 using MapTensorPtr = mindspore::tensor::MapTensorPtr;
+using AdapterTensor = mindspore::tensor::AdapterTensor;
+using AdapterTensorPtr = mindspore::tensor::AdapterTensorPtr;
 
 using InstanceCheckFunc = std::function<bool(const py::object &)>;
 using InstanceConvertFunc = std::function<ValuePtr(const py::object &, bool, const TypePtr &)>;
@@ -80,7 +83,7 @@ using ArgsObjConvertFunc = std::function<ValuePtr(const py::object &)>;
 using ArgsObjSigConvertFunc = std::function<ValuePtr(const py::object &, bool)>;
 using ArgsOjbTypeConvertFunc = std::function<ValuePtr(const py::object &, const TypePtr &)>;
 
-// Convert the data according instance type
+// Convert the data according to instance type
 template <typename T>
 class ByTypeDataConverter : public DataConverter {
  public:
@@ -117,7 +120,7 @@ class ByTypeDataConverter : public DataConverter {
   InstanceCheckFunc check_func_ = nullptr;
 };
 
-// Convert the data according object attribute.
+// Convert the data according to object attribute.
 class ByAttrDataConverter : public DataConverter {
  public:
   ByAttrDataConverter(const std::string &attr_name, const ArgsObjConvertFunc &convert_func)
@@ -137,6 +140,28 @@ class ByAttrDataConverter : public DataConverter {
 
  private:
   std::string attr_name_;
+};
+
+// Convert the data according to match function.
+class ByFuncDataConverter : public DataConverter {
+ public:
+  ByFuncDataConverter(const InstanceCheckFunc &match_func, const ArgsObjConvertFunc &convert_func)
+      : DataConverter(
+          [convert_func](const py::object &obj, bool, const TypePtr &) -> ValuePtr { return convert_func(obj); }),
+        match_func_(match_func) {}
+
+  ByFuncDataConverter(const InstanceCheckFunc &match_func, const ArgsObjSigConvertFunc &convert_func)
+      : DataConverter([convert_func](const py::object &obj, bool use_sig, const TypePtr &) -> ValuePtr {
+          return convert_func(obj, use_sig);
+        }),
+        match_func_(match_func) {}
+
+  ~ByFuncDataConverter() override = default;
+
+  bool Matched(const py::object &obj) override { return match_func_ != nullptr ? match_func_(obj) : false; }
+
+ private:
+  InstanceCheckFunc match_func_ = nullptr;
 };
 
 FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
@@ -171,6 +196,25 @@ FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
 }
 
 namespace {
+bool IsAdapterTensor(const py::object &obj) {
+  if (!py::hasattr(obj, PYTHON_ADAPTER_TENSOR)) {
+    return false;
+  }
+  // Only class instances are considered.
+  if (data_converter::IsClassType(obj)) {
+    return false;
+  }
+  // Check if the attribute is true.
+  return py::getattr(obj, PYTHON_ADAPTER_TENSOR).cast<bool>();
+}
+
+ValuePtr ConvertAdapterTensor(const py::object &obj) {
+  // Use class AdapterTensor instead of Tensor to avoid circular dependencies.
+  MS_LOG(DEBUG) << "Converting adapter tensor";
+  auto tensor = obj.cast<TensorPtr>();
+  return std::make_shared<AdapterTensor>(tensor);
+}
+
 ValuePtr ConvertTuple(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python tuple";
   auto tuple = obj.cast<py::tuple>();
@@ -512,8 +556,10 @@ ValuePtr ObjCast(const py::object &obj) {
 }
 
 static const std::vector<DataConverterPtr> &GetDataConverters() {
+  // Convert data by python object type.
   static const std::vector<DataConverterPtr> data_converters{
-    // Convert data by python object type.
+    // AdapterTensor needs to be processed before Tensor because it inherits from Tensor.
+    std::make_shared<ByFuncDataConverter>(IsAdapterTensor, ConvertAdapterTensor),
     std::make_shared<ByTypeDataConverter<Tensor>>(ObjCast<TensorPtr>),
     std::make_shared<ByTypeDataConverter<MetaTensor>>(ObjCast<MetaTensorPtr>),
     std::make_shared<ByTypeDataConverter<CSRTensor>>(ObjCast<CSRTensorPtr>),

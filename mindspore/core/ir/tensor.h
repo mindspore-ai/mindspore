@@ -466,6 +466,16 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \param[in] flag Whether this Tensor is initialized.
   void set_init_flag(bool flag) { init_flag_ = flag; }
 
+  /// \brief Check whether this Tensor needs to be converted.
+  ///
+  /// \return Whether this Tensor needs to be converted.
+  bool is_adapter() const { return adapter_flag_; }
+
+  /// \brief Set the adapter flag of this Tensor.
+  ///
+  /// \param[in] flag Whether this Tensor needs to be converted.
+  void set_adapter_flag(bool flag) { adapter_flag_ = flag; }
+
   /// \brief Check if this Tensor is forward output.
   ///
   /// \return Whether this Tensor is forward output.
@@ -772,6 +782,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   void ExecuteLazyTask() const;
 
   bool init_flag_{false};
+  bool adapter_flag_{false};
   bool is_forward_output_{false};
   TensorDataPtr data_{nullptr};
   std::string id_{""};

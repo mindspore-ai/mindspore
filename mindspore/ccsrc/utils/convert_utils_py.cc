@@ -41,20 +41,45 @@ namespace mindspore {
 py::object BuiltinsToPyData(const Any &value);
 py::object BuiltinsToPyData(const BaseRef &value);
 py::object VectorToPyData(const Any &value);
-py::object VectorRefToPyData(const VectorRef &value_list);
-py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &output);
+py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &abs = nullptr);
 py::object MakeCSRTensor(const VectorRef &value_list);
 py::object MakeCSRTensor(const ValuePtr &value);
 py::object MakeCOOTensor(const VectorRef &value_list);
 py::object MakeCOOTensor(const ValuePtr &value);
 ShapeVector ConvertShapeTupleToShapeVector(const ValueTuplePtr &shape_tuple);
 ShapeVector ConvertToShapeVector(const VectorRef &value_list, size_t shape_idx);
+
+// For AbstractSequence and AbstractDictionary.
+template <typename T>
+T CheckAbstractElementsSize(const AbstractBasePtr &abs_value, size_t value_size) {
+  if (abs_value == nullptr) {
+    return nullptr;
+  }
+  auto abs = abs_value->cast<T>();
+  if (abs != nullptr && value_size != abs->size()) {
+    MS_LOG(EXCEPTION) << "The size of elements should be equal to " << value_size << ", but got " << abs->size();
+  }
+  return abs;
+}
+
+py::object SetAdaptedAttrToTensor(const py::object &tensor, const AbstractBasePtr &abs) {
+  if (abs == nullptr || !abs->isa<abstract::AbstractTensor>()) {
+    return tensor;
+  }
+  auto tensor_abs = abs->cast<abstract::AbstractTensorPtr>();
+  if (tensor_abs->is_adapter()) {
+    py::setattr(tensor, "adapter_flag", py::bool_(true));
+  }
+  return tensor;
+}
+
 py::object CSRTensorToPyData(const tensor::CSRTensorPtr &csr_tensor) {
   auto ref = py::tuple(1);
   ref[0] = csr_tensor;
   return ref[0];
 }
-py::object TensorToPyData(const tensor::TensorPtr &tensor) {
+
+py::object TensorToPyData(const tensor::TensorPtr &tensor, const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->NeedWait()) {
     py::gil_scoped_release release;
@@ -62,6 +87,7 @@ py::object TensorToPyData(const tensor::TensorPtr &tensor) {
   }
   py::tuple v(1);
   v[0] = tensor;
+  v[0] = SetAdaptedAttrToTensor(v[0], abs);
   return v[0];
 }
 
@@ -120,79 +146,110 @@ py::object ScalarPtrToPyData(const ScalarPtr &value) {
   }
 }
 
-using ConverterFunction = std::function<py::object(const ValuePtr &value)>;
+py::object ValueSequenceToPyData(const ValueSequencePtr &value, const AbstractBasePtr &abs) {
+  auto value_sequeue = value->value();
+  auto value_size = value_sequeue.size();
+  py::tuple res_sequeue(value_size);
+  auto abs_sequeue = CheckAbstractElementsSize<abstract::AbstractSequencePtr>(abs, value_size);
+  if (abs_sequeue == nullptr) {
+    for (size_t i = 0; i < value_size; i++) {
+      res_sequeue[i] = ValueToPyData(value_sequeue[i]);
+    }
+  } else {
+    for (size_t i = 0; i < value_size; i++) {
+      res_sequeue[i] = ValueToPyData(value_sequeue[i], abs_sequeue->elements()[i]);
+    }
+  }
+  if (value->isa<ValueTuple>()) {
+    return res_sequeue;
+  }
+  return res_sequeue.cast<py::list>();
+}
+
+py::object ValueDictionaryToPyData(const ValueDictionaryPtr &value, const AbstractBasePtr &abs) {
+  auto value_dict = value->value();
+  auto value_size = value_dict.size();
+  py::dict res_dict;
+  auto abs_dict = CheckAbstractElementsSize<abstract::AbstractDictionaryPtr>(abs, value_size);
+  if (abs_dict == nullptr) {
+    for (const auto &v : value_dict) {
+      res_dict[ValueToPyData(v.first)] = ValueToPyData(v.second);
+    }
+  } else {
+    for (size_t i = 0; i < value_size; i++) {
+      auto v = value_dict[i];
+      auto abs_elem = abs_dict->elements()[i];
+      res_dict[ValueToPyData(v.first, abs_elem.first)] = ValueToPyData(v.second, abs_elem.second);
+    }
+  }
+  return res_dict;
+}
+
+using ConverterFunction = std::function<py::object(const ValuePtr &value, const AbstractBasePtr &abs)>;
 using ValueNameToConverterVector = std::vector<std::pair<uint32_t, ConverterFunction>>;
 
 // (Value Type Name) -> (Converter Function)
 // The converter function is used to convert Value object to Python data object.
 static ValueNameToConverterVector value_name_to_converter = {
   // Scalar
-  {Scalar::kTypeId, [](const ValuePtr &value) -> py::object { return ScalarPtrToPyData(value->cast<ScalarPtr>()); }},
+  {Scalar::kTypeId,
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
+     return ScalarPtrToPyData(value->cast<ScalarPtr>());
+   }},
   // Tensor
   {tensor::Tensor::kTypeId,
-   [](const ValuePtr &value) -> py::object {
+   [](const ValuePtr &value, const AbstractBasePtr &abs) -> py::object {
      auto tensor_ptr = value->cast<tensor::TensorPtr>();
-     return TensorToPyData(tensor_ptr);
+     return TensorToPyData(tensor_ptr, abs);
    }},
   // MetaTenser
   {tensor::MetaTensor::kTypeId,
-   [](const ValuePtr &value) -> py::object {
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      py::tuple tuple_container(1);
      tuple_container[0] = value->cast<tensor::MetaTensorPtr>();
      return tuple_container[0];
    }},
   // CSRTensor
   {tensor::CSRTensor::kTypeId,
-   [](const ValuePtr &value) -> py::object {
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      auto csr_tensor_ptr = value->cast<tensor::CSRTensorPtr>();
      return CSRTensorToPyData(csr_tensor_ptr);
    }},
   // RefKey
   {RefKey::kTypeId,
-   [](const ValuePtr &value) -> py::object {
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      py::tuple tuple_container(1);
      tuple_container[0] = value->cast<RefKeyPtr>();
      return tuple_container[0];
    }},
   // Type
   {Type::kTypeId,
-   [](const ValuePtr &value) -> py::object {
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      py::tuple tuple_container(1);
      tuple_container[0] = value->cast<TypePtr>();
      return tuple_container[0];
    }},
   // StringImm
   {StringImm::kTypeId,
-   [](const ValuePtr &value) -> py::object {
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      py::str res = value->cast<StringImmPtr>()->value();
      return res;
    }},
   // ValueSequence
   {ValueSequence::kTypeId,
-   [](const ValuePtr &value) -> py::object {
-     auto value_sequeue = value->cast<ValueSequencePtr>()->value();
-     py::tuple res_sequeue(value_sequeue.size());
-     for (size_t i = 0; i < value_sequeue.size(); i++) {
-       res_sequeue[i] = ValueToPyData(value_sequeue[i]);
-     }
-     if (value->isa<ValueTuple>()) {
-       return res_sequeue;
-     }
-     return res_sequeue.cast<py::list>();
+   [](const ValuePtr &value, const AbstractBasePtr &abs) -> py::object {
+     auto value_sequeue = value->cast<ValueSequencePtr>();
+     return ValueSequenceToPyData(value_sequeue, abs);
    }},
   // ValueDictionary
   {ValueDictionary::kTypeId,
-   [](const ValuePtr &value) -> py::object {
-     auto value_list = value->cast<ValueDictionaryPtr>()->value();
-     py::dict res_dict;
-     for (const auto &v : value_list) {
-       res_dict[ValueToPyData(v.first)] = ValueToPyData(v.second);
-     }
-     return res_dict;
+   [](const ValuePtr &value, const AbstractBasePtr &abs) -> py::object {
+     auto value_dict = value->cast<ValueDictionaryPtr>();
+     return ValueDictionaryToPyData(value_dict, abs);
    }},
   // ValueSlice
   {ValueSlice::kTypeId,
-   [](const ValuePtr &value) -> py::object {
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      auto slice = value->cast<ValueSlicePtr>();
      auto start = ValueToPyData(slice->start());
      auto end = ValueToPyData(slice->stop());
@@ -201,7 +258,7 @@ static ValueNameToConverterVector value_name_to_converter = {
    }},
   // KeywordArg
   {KeywordArg::kTypeId,
-   [](const ValuePtr &value) -> py::object {
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      auto abs_keyword_arg = value->ToAbstract()->cast<abstract::AbstractKeywordArgPtr>();
      auto key = abs_keyword_arg->get_key();
      auto val = abs_keyword_arg->get_arg()->BuildValue();
@@ -212,53 +269,53 @@ static ValueNameToConverterVector value_name_to_converter = {
    }},
   // parse::NameSpace
   {parse::NameSpace::kTypeId,
-   [](const ValuePtr &value) -> py::object {
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      auto ns = value->cast<parse::NameSpacePtr>();
      return ns->module_obj();
    }},
   // parse::ClassType
   {parse::ClassType::kTypeId,
-   [](const ValuePtr &value) -> py::object {
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      auto class_type = value->cast<parse::ClassTypePtr>();
      return class_type->obj();
    }},
   // parse::MsClassObject
   {parse::MsClassObject::kTypeId,
-   [](const ValuePtr &value) -> py::object {
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      auto ms_class_object = value->cast<parse::MsClassObjectPtr>();
      return ms_class_object->obj();
    }},
   // parse::InterpretedObject
   {parse::InterpretedObject::kTypeId,
-   [](const ValuePtr &value) -> py::object {
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      auto interpreted_object = value->cast<parse::InterpretedObjectPtr>();
      return interpreted_object->obj();
    }},
   // None
-  {None::kTypeId, [](const ValuePtr &) -> py::object { return py::none(); }},
+  {None::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
   // AnyValue
-  {AnyValue::kTypeId, [](const ValuePtr &) -> py::object { return py::none(); }},
+  {AnyValue::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
   // ErrorValue
-  {ErrorValue::kTypeId, [](const ValuePtr &) -> py::object { return py::none(); }},
+  {ErrorValue::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
   // FuncGraph
-  {FuncGraph::kTypeId, [](const ValuePtr &) -> py::object { return py::none(); }},
+  {FuncGraph::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
   // Primitive
-  {Primitive::kTypeId, [](const ValuePtr &) -> py::object { return py::none(); }},
+  {Primitive::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
   // Monad
-  {Monad::kTypeId, [](const ValuePtr &) -> py::object { return py::none(); }},
+  {Monad::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
   // Ellipsis
-  {Ellipsis::kTypeId, [](const ValuePtr &) -> py::object { return py::ellipsis(); }}};
+  {Ellipsis::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::ellipsis(); }}};
 
 // When converting data to tensor, ValueToPyData will only return _c_expression Tensor,
 // but not python tensor. If python tensor is needed, call _convert_python_data to the output.
-py::object ValueToPyData(const ValuePtr &value) {
+py::object ValueToPyData(const ValuePtr &value, const AbstractBasePtr &abs) {
   if (value == nullptr) {
     MS_LOG(EXCEPTION) << "The `value` should not be null";
   }
   py::gil_scoped_acquire gil;
   for (auto &iter : value_name_to_converter) {
     if (value->IsFromTypeId(iter.first)) {
-      return iter.second(value);
+      return iter.second(value, abs);
     }
   }
   MS_LOG(EXCEPTION) << "Unsupported to convert " << value->ToString() << "[" << value->type_name() << "] to a PyData";
@@ -273,10 +330,6 @@ py::object AnyToPyData(const Any &value) {
     MS_LOG(DEBUG) << "ValuePtr";
     ValuePtr v = value.cast<ValuePtr>();
     ret = ValueToPyData(v);
-  } else if (value.is<tensor::TensorPtr>()) {
-    MS_LOG(DEBUG) << "tensor";
-    auto tensor_ptr = value.cast<tensor::TensorPtr>();
-    ret = TensorToPyData(tensor_ptr);
   } else if (value.is<py::object>()) {
     MS_LOG(DEBUG) << "py obj";
     ret = value.cast<py::object>();
@@ -307,24 +360,7 @@ py::object AnyToPyData(const Any &value) {
   return ret;
 }
 
-py::object BaseRefToPyData(const BaseRef &value, const AbstractBasePtr &output) {
-  py::object ret;
-  // If output value is a tuple, check if abstract is a COOTensor in funcgraph output
-  if (utils::isa<VectorRef>(value)) {
-    MS_LOG(DEBUG) << "BaseRefToPyData, value is tuple: " << value.ToString();
-    auto vec_ref = utils::cast<VectorRef>(value);
-    if (output != nullptr) {
-      ret = VectorRefToPyData(vec_ref, output);
-    } else {
-      ret = VectorRefToPyData(vec_ref);
-    }
-  } else {
-    ret = BaseRefToPyData(value);
-  }
-  return ret;
-}
-
-py::object BaseRefToPyData(const BaseRef &value) {
+py::object BaseRefToPyData(const BaseRef &value, const AbstractBasePtr &abs) {
   py::object ret;
   MS_LOG(DEBUG) << "BaseRefToPyData " << value.ToString();
   if (utils::isa<int>(value) || utils::isa<float>(value) || utils::isa<double>(value) || utils::isa<bool>(value)) {
@@ -332,18 +368,14 @@ py::object BaseRefToPyData(const BaseRef &value) {
   } else if (utils::isa<ValuePtr>(value)) {
     MS_LOG(DEBUG) << "ValuePtr";
     ValuePtr v = utils::cast<ValuePtr>(value);
-    ret = ValueToPyData(v);
-  } else if (utils::isa<tensor::TensorPtr>(value)) {
-    MS_LOG(DEBUG) << "tensor";
-    auto tensor_ptr = utils::cast<tensor::TensorPtr>(value);
-    ret = TensorToPyData(tensor_ptr);
+    ret = ValueToPyData(v, abs);
   } else if (utils::isa<PyObjectRef>(value)) {
     MS_LOG(DEBUG) << "py obj";
     PyObjectRef py_ref = utils::cast<PyObjectRef>(value);
     ret = py_ref.object_;
   } else if (utils::isa<VectorRef>(value)) {
     auto vec_ref = utils::cast<VectorRef>(value);
-    ret = VectorRefToPyData(vec_ref);
+    ret = VectorRefToPyData(vec_ref, abs);
   } else if (utils::isa<TypePtr>(value)) {
     py::tuple v(1);
     v[0] = utils::cast<TypePtr>(value);
@@ -419,42 +451,29 @@ py::object VectorToPyData(const Any &value) {
   return ret;
 }
 
-py::object VectorRefToPyData(const VectorRef &value_list) {
-  py::object ret;
-  MS_LOG(DEBUG) << "vector_ref";
-  size_t value_size = value_list.size();
-  auto ref_tuple = py::tuple(value_size);
-  for (size_t i = 0; i < value_size; i++) {
-    ref_tuple[i] = BaseRefToPyData(value_list[i]);
-  }
-  ret = ref_tuple;
-  return ret;
-}
-
-py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &output) {
-  MS_LOG(DEBUG) << "vector_ref";
+py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &abs) {
   // Current VectorRef reflects a COOTensor type
-  if (output->isa<abstract::AbstractCSRTensor>()) {
+  if (abs != nullptr && abs->isa<abstract::AbstractCSRTensor>()) {
     return MakeCSRTensor(value_list);
   }
-  if (output->isa<abstract::AbstractCOOTensor>()) {
+  if (abs != nullptr && abs->isa<abstract::AbstractCOOTensor>()) {
     return MakeCOOTensor(value_list);
   }
+
   py::object ret;
   size_t value_size = value_list.size();
   auto ref_tuple = py::tuple(value_size);
-  abstract::AbstractTuplePtr tuple_output = output->cast<abstract::AbstractTuplePtr>();
-  bool is_abstract_tuple = tuple_output != nullptr;
-  for (size_t i = 0; i < value_size; i++) {
-    if (!is_abstract_tuple || i >= tuple_output->size()) {
-      // Fall back to original process
+  auto seq_abs = CheckAbstractElementsSize<abstract::AbstractSequencePtr>(abs, value_size);
+  if (seq_abs == nullptr) {
+    for (size_t i = 0; i < value_size; i++) {
       ref_tuple[i] = BaseRefToPyData(value_list[i]);
-    } else {
-      ref_tuple[i] = BaseRefToPyData(value_list[i], (*tuple_output)[i]);
+    }
+  } else {
+    for (size_t i = 0; i < value_size; i++) {
+      ref_tuple[i] = BaseRefToPyData(value_list[i], seq_abs->elements()[i]);
     }
   }
-  ret = ref_tuple;
-  return ret;
+  return ref_tuple;
 }
 
 bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
@@ -462,12 +481,14 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
   if (output->isa<ValueNode>()) {
     MS_LOG(INFO) << "Graph's output is a constant. No need to execute.";
     ValuePtr value = GetValueNode(output);
-    if (output->abstract()->isa<abstract::AbstractCSRTensor>()) {
+    auto abs = output->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    if (abs->isa<abstract::AbstractCSRTensor>()) {
       *ret_val = MakeCSRTensor(value);
-    } else if (output->abstract()->isa<abstract::AbstractCOOTensor>()) {
+    } else if (abs->isa<abstract::AbstractCOOTensor>()) {
       *ret_val = MakeCOOTensor(value);
     } else {
-      *ret_val = ValueToPyData(value);
+      *ret_val = ValueToPyData(value, abs);
     }
     return true;
   }
@@ -505,6 +526,7 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
       auto tensor = param->default_param();
       *ret_val = py::cast(tensor);
     }
+    *ret_val = SetAdaptedAttrToTensor(*ret_val, output->abstract());
     return true;
   }
   return false;

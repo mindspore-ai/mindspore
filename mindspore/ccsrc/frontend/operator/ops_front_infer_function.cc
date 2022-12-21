@@ -214,6 +214,22 @@ AbstractBasePtr InferImplHasType(const AnalysisEnginePtr &, const PrimitivePtr &
   return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(v), kBool);
 }
 
+bool IsAdapterTensor(const AbstractBasePtr &x) {
+  if (!x->isa<abstract::AbstractTensor>()) {
+    return false;
+  }
+  return x->cast<abstract::AbstractTensorPtr>()->is_adapter();
+}
+
+bool IsAdapterTensorClassType(const AbstractBasePtr &cmp) {
+  auto cmp_value = cmp->BuildValue();
+  if (!cmp_value->isa<parse::ClassType>()) {
+    return false;
+  }
+  auto class_obj = cmp_value->cast<parse::ClassTypePtr>()->obj();
+  return py::hasattr(class_obj, PYTHON_ADAPTER_TENSOR);
+}
+
 bool CheckPythonIsInstance(const py::object &x, const AbstractBasePtr &cmp, const py::module &mod, bool is_const) {
   if (cmp->isa<abstract::AbstractTuple>()) {
     const auto &cmp_tuple_elements = cmp->cast<abstract::AbstractTuplePtr>()->elements();
@@ -399,6 +415,11 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
     const size_t row_index = 2;
     result = CheckIsInstanceForSparse(cmp, kSparsePrimStr[row_index]);
     return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
+  }
+
+  // x is adapter tensor.
+  if (IsAdapterTensor(x) && IsAdapterTensorClassType(cmp)) {
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(true), kBool);
   }
 
   auto x_value = x->BuildValue();
@@ -1112,6 +1133,42 @@ std::optional<StandardPrimitiveImplReg> GetFrontendPrimitiveInferImpl(const Prim
   return std::optional<StandardPrimitiveImplReg>();
 }
 
+AbstractBasePtr SetAdapterFlag(const std::string &op_name, const AbstractBasePtr &abs_input, bool adapter_flag) {
+  MS_EXCEPTION_IF_NULL(abs_input);
+  // Clone is needed here.
+  if (abs_input->isa<AbstractRefTensor>()) {
+    auto abs_ref = abs_input->Clone()->cast<AbstractRefPtr>();
+    abs_ref->set_is_adapter(adapter_flag);
+    return abs_ref;
+  }
+  if (abs_input->isa<AbstractTensor>()) {
+    auto abs_tensor = abs_input->Clone()->cast<AbstractTensorPtr>();
+    abs_tensor->set_is_adapter(adapter_flag);
+    return abs_tensor;
+  }
+  MS_LOG(EXCEPTION) << op_name << " requires a tensor as the first argument, but got " << abs_input->ToString();
+}
+
+AbstractBasePtr InferImplConvertToAdapterTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a tensor.
+  constexpr size_t args_num = 1;
+  constexpr size_t input_index = 0;
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, args_num);
+  return SetAdapterFlag(op_name, args_spec_list[input_index], true);
+}
+
+AbstractBasePtr InferImplConvertToMsTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a tensor.
+  constexpr size_t args_num = 1;
+  constexpr size_t input_index = 0;
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, args_num);
+  return SetAdapterFlag(op_name, args_spec_list[input_index], false);
+}
+
 #ifndef _MSC_VER
 // String
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringMul, prim::kPrimStringMul, InferImplStringMul, nullptr);
@@ -1149,6 +1206,10 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Taylor, prim::kPrimTaylor, InferImplTaylor, n
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Shard, prim::kPrimShard, InferImplShard, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Vmap, prim::kPrimVmap, InferImplVmap, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Lower, prim::kPrimLower, InferImplLower, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ConvertToAdapterTensor, prim::kPrimConvertToAdapterTensor,
+                                   InferImplConvertToAdapterTensor, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ConvertToMsTensor, prim::kPrimConvertToMsTensor, InferImplConvertToMsTensor,
+                                   nullptr);
 #else
 void RegPrimitiveFrontEval() {
   // String
@@ -1213,6 +1274,11 @@ void RegPrimitiveFrontEval() {
                                                 InferImplVmap, nullptr);
   abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimLower,
                                                 InferImplLower, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(),
+                                                prim::kPrimConvertToAdapterTensor, InferImplConvertToAdapterTensor,
+                                                nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(),
+                                                prim::kPrimConvertToMsTensor, InferImplConvertToMsTensor, nullptr);
 }  // namespace abstract
 #endif
 }  // namespace abstract

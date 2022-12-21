@@ -12,6 +12,7 @@
 "mindspore/mindspore/python/mindspore/_check_version.py"                                                                 "unused-import"
 "mindspore/mindspore/python/mindspore/_check_version.py"                                                                 "broad-except"
 "mindspore/mindspore/python/mindspore/common/api.py"                                                                     "protected-access"
+"mindspore/mindspore/python/mindspore/common/api.py"                                                                     "not-callable"
 "mindspore/mindspore/python/mindspore/common/parameter.py"                                                               "protected-access"
 "mindspore/mindspore/python/mindspore/common/parameter.py"                                                               "no-value-for-parameter"
 "mindspore/mindspore/python/mindspore/common/hook_handle.py"                                                             "protected-access"
@@ -72,6 +73,7 @@
 "mindspore/mindspore/python/mindspore/ops/function/array_func.py"                                                        "redefined-builtin"
 "mindspore/mindspore/python/mindspore/ops/operations/array_ops.py"                                                       "redefined-builtin"
 "mindspore/mindspore/python/mindspore/ops/_grad_experimental/grad_sparse_ops.py"                                         "unused-variable"
+"mindspore/mindspore/python/mindspore/ops/operations/_inner_ops.py"                                                      "not-callable"
 
 # MindData
 "mindspore/mindspore/python/mindspore/dataset/__init__.py"                                                               "redefined-builtin"
@@ -175,6 +177,11 @@
 "mindspore/tests/"                                                                                      "c-extension-no-member"
 "mindspore/tests/st/parameter/test_parameter_celllist.py"                                               "protected-access"
 "mindspore/tests/ut/python/rewrite/test_cellcontainer.py"                                               "protected-access"
+"mindspore/tests/st/ms_adapter/_register/utils.py"                                                      "protected-access"
+"mindspore/tests/st/ms_adapter/_register/utils.py"                                                      "unused-variable"
+"mindspore/tests/st/ms_adapter/test_ms_adapter_base.py"                                                 "unidiomatic-typecheck"
+"mindspore/tests/st/ms_adapter/test_operator.py"                                                        "unidiomatic-typecheck"
+"mindspore/tests/st/ms_adapter/test_python_builtins.py"                                                 "unidiomatic-typecheck"
 
 #MindSpore Lite
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/generator.py"                                         "redefined-builtin"

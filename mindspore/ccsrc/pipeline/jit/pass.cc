@@ -307,6 +307,7 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.stopgrad_eliminater_,
     irpass.partial_eliminate_,
     irpass.replace_applicator_,
+    irpass.convert_tensor_eliminate_,
 
     // Miscellaneous
     irpass.tuple_list_get_item_eliminator_,
@@ -761,13 +762,16 @@ bool EliminateSpecialOpOptPass(const ResourcePtr &resource) {
   opt::OptPassConfig mutable_op_eliminate = opt::OptPassConfig({
     irpass.mutable_op_eliminate_,
   });
+  opt::OptPassConfig convert_tensor_op_eliminate = opt::OptPassConfig({
+    irpass.convert_tensor_all_eliminate_,
+  });
   OptPassGroupMap map({
     {"ad_related_special_op_eliminate", ad_related_special_op_eliminate},
     {"mutable_op_eliminate", mutable_op_eliminate},
+    {"convert_tensor_op_eliminate", convert_tensor_op_eliminate},
   });
-  auto ad_related_special_op_eliminate_opt =
-    opt::Optimizer::MakeOptimizer("ad_related_special_op_eliminate", resource, map);
-  (void)ad_related_special_op_eliminate_opt->step(func_graph, false);
+  auto special_op_eliminate_opt = opt::Optimizer::MakeOptimizer("special_op_eliminate", resource, map);
+  (void)special_op_eliminate_opt->step(func_graph, false);
   return true;
 }
 

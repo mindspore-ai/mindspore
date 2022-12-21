@@ -45,6 +45,7 @@ from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcas
 from mindspore._checkparam import Validator
 from mindspore.common._utils import is_shape_unknown
 from mindspore.common.mutable import mutable
+from mindspore.common._register_for_adapter import ms_adapter_registry
 
 # store ms_function class compiled pipeline cache
 ms_compile_cache = set()
@@ -65,6 +66,8 @@ def _convert_python_data(data):
     Returns:
         data, a data convert C++ to python
     """
+    if isinstance(data, Tensor) and data.adapter_flag:
+        return ms_adapter_registry.tensor(data)
     if isinstance(data, Tensor) and not isinstance(data, PythonTensor):
         return PythonTensor(data, internal=True)
     if isinstance(data, CSRTensor) and not isinstance(data, PythonCSRTensor):
@@ -876,6 +879,25 @@ def jit_class(cls):
         raise TypeError(f"Decorator jit_class is used for user-defined classes and cannot be used for nn.Cell: {cls}.")
     setattr(cls, '__ms_class__', True)
     return cls
+
+
+def set_adapter_config(config):
+    """
+    Register configuration information for MSAdapter.
+
+    Args:
+        config (dict): Configuration information.
+    """
+    if not isinstance(config, dict):
+        raise TypeError(f"The input argument of 'set_adapter_config' should be a dict, but got {config}.")
+    for key, value in config.items():
+        if key == "Tensor":
+            setattr(value, "__adapter_tensor__", True)
+            ms_adapter_registry.register_tensor(value)
+        elif key == "convert_object_map":
+            ms_adapter_registry.register_convert_map(value)
+        else:
+            raise ValueError(f"Unsupported key in adapter config: {key}")
 
 
 def _function_forbid_reuse(func):
