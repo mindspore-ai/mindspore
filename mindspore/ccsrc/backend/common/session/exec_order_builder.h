@@ -54,12 +54,15 @@ class ExecOrderBuilder {
 
   void CheckLoop();
 
+  bool IsTrivialNode(const AnfNodePtr &node);
+
   FuncGraph *graph_{nullptr};
   std::stack<AnfNodePtr> independent_nodes_;
   mindspore::HashMap<AnfNodePtr, size_t> node_input_num_;
   mindspore::HashMap<AnfNodePtr, size_t> node_output_num_;
   mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> node_input_edges_;
   mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> node_output_edges_;
+  std::set<AnfNodePtr> trivial_nodes_;
 };
 }  // namespace session
 }  // namespace mindspore

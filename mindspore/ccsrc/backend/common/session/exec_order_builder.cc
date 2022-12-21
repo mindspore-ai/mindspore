@@ -42,27 +42,6 @@ bool NeedOptimize(const AnfNodePtr &node, const std::string &optimized_comm_grou
   }
   return false;
 }
-
-bool IsDummyNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    return true;
-  }
-
-  if (AnfUtils::IsRealKernel(node)) {
-    return false;
-  }
-
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  for (auto &input : cnode->inputs()) {
-    MS_EXCEPTION_IF_NULL(input);
-    if (input->isa<CNode>()) {
-      return false;
-    }
-  }
-  return true;
-}
 }  // namespace
 
 ExecOrderBuilder::~ExecOrderBuilder() { ClearLinkInfo(); }
@@ -81,6 +60,34 @@ void ExecOrderBuilder::ClearLinkInfo() {
   node_output_num_.clear();
   node_input_edges_.clear();
   node_output_edges_.clear();
+  trivial_nodes_.clear();
+}
+
+bool ExecOrderBuilder::IsTrivialNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return true;
+  }
+
+  if (AnfUtils::IsRealKernel(node)) {
+    return false;
+  }
+
+  auto iter = trivial_nodes_.find(node);
+  if (iter != trivial_nodes_.end()) {
+    return true;
+  }
+
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  for (auto &input : cnode->inputs()) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (!IsTrivialNode(input)) {
+      return false;
+    }
+  }
+  (void)trivial_nodes_.insert(node);
+  return true;
 }
 
 void ExecOrderBuilder::BuildLinkInfo() {
@@ -98,11 +105,9 @@ void ExecOrderBuilder::BuildLinkInfo() {
     MS_EXCEPTION_IF_NULL(cnode);
     for (auto &input : cnode->inputs()) {
       MS_EXCEPTION_IF_NULL(input);
-      if (IsDummyNode(input)) {
+      if (IsTrivialNode(input)) {
         continue;
       }
-
-      MS_LOG(DEBUG) << "Input:" << input->DebugString() << ",  node:" << node->DebugString();
       node_output_edges_[input].emplace_back(node);
       node_input_edges_[node].emplace_back(input);
       node_input_num_[node] += 1;
@@ -117,16 +122,16 @@ void ExecOrderBuilder::BuildLinkInfo() {
 }
 
 void ExecOrderBuilder::FindIndependentNodes() {
-  std::stack<AnfNodePtr> to_visit;
-  std::stack<AnfNodePtr> vnode_to_visit;
+  std::queue<AnfNodePtr> to_visit;
+  std::queue<AnfNodePtr> vnode_to_visit;
   vnode_to_visit.push(graph_->get_return());
   while (!to_visit.empty() || !vnode_to_visit.empty()) {
     AnfNodePtr node = nullptr;
     if (vnode_to_visit.empty()) {
-      node = to_visit.top();
+      node = to_visit.front();
       to_visit.pop();
     } else {
-      node = vnode_to_visit.top();
+      node = vnode_to_visit.front();
       vnode_to_visit.pop();
     }
 
@@ -146,7 +151,7 @@ void ExecOrderBuilder::FindIndependentNodes() {
     for (auto iter = inputs.begin(); iter != inputs.end(); ++iter) {
       auto &input = *iter;
       MS_EXCEPTION_IF_NULL(input);
-      if (IsDummyNode(input)) {
+      if (IsTrivialNode(input)) {
         continue;
       }
       independent = false;
