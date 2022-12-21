@@ -299,6 +299,13 @@ def slogdet(x):
     return F.slogdet(x)
 
 
+def chunk(x, chunks, axis=0):
+    r"""
+    For details, please refer to :func:`mindspore.ops.chunk`.
+    """
+    return F.chunk(x, chunks, axis)
+
+
 def tril(x, diagonal=0):
     r"""
     For details, please refer to :func:`mindspore.ops.tril`.

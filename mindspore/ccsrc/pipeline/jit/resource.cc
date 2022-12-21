@@ -173,6 +173,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"angle", std::string("angle")},                                    // C.reduce_any
        {"any", std::string("any_")},                                       // C.reduce_any
        {"bincount", std::string("bincount")},                              // bincount
+       {"chunk", std::string("chunk")},                                    // chunk
        {"slogdet", std::string("slogdet")},                                // slogdet
        {"tril", std::string("tril")},                                      // tril
        {"__add__", std::string("add")},                                    // C.add

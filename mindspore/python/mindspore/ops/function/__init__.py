@@ -35,6 +35,8 @@ from .array_func import (
     padding,
     fill,
     fill_,
+    full,
+    chunk,
     tile,
     size,
     ones,
