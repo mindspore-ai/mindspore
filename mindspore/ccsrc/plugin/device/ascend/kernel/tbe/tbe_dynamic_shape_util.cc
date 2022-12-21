@@ -57,8 +57,7 @@ std::shared_ptr<OpInfo> TbeDynamicShapeUtil::FindOp(const std::string &op_name, 
   auto op_info = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kImplyTBE, is_dynamic_shape);
   // If have no dynamic shape op, get static shape op
   if (op_info != nullptr && !op_info->dynamic_shape_support() && is_dynamic_shape) {
-    MS_LOG(ERROR) << "Node(" << cnode->fullname_with_scope() << ") not support dynamic shape:" << cnode->DebugString();
-    return nullptr;
+    MS_LOG(INFO) << "Node(" << cnode->fullname_with_scope() << ") not support dynamic shape:" << cnode->DebugString();
   }
   return op_info;
 }

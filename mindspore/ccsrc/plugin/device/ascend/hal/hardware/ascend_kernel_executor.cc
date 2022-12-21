@@ -326,6 +326,11 @@ bool AscendKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Ad
 
 bool AscendKernelExecutor::GetKernelRealInputs(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
                                                std::vector<AddressPtr> *real_inputs) const {
+  if (AnfAlgo::GetKernelType(kernel) == KernelType::ACL_KERNEL) {
+    *real_inputs = inputs;
+    return true;
+  }
+
   auto input_num = common::AnfAlgo::GetInputTensorNum(kernel);
   if (input_num != inputs.size()) {
     MS_LOG(ERROR) << "Input num is " << input_num << " but input address num is " << inputs.size();

@@ -196,8 +196,7 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) co
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
   // Used for async run
   op_run_info->grad_flag = grad()->grad_flag();
-  op_run_info->base_op_run_info.use_dynamic_shape_process =
-    !(device_target() == kAscendDevice) && grad()->use_dynamic_shape_process();
+  op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->use_dynamic_shape_process();
   op_run_info->base_op_run_info.op_name = args[static_cast<size_t>(RunOpArgsEnum::PY_NAME)].cast<std::string>();
   op_run_info->base_op_run_info.lazy_build = lazy_build_;
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);

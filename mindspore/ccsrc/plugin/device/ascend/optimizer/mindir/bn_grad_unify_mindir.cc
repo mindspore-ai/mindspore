@@ -70,7 +70,7 @@ const AnfNodePtr BatchNormGradUnifyMindIR::Process(const FuncGraphPtr &func_grap
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (common::AnfAlgo::HasNodeAttr(kAttrUnifyIRPassed, cnode)) {
+  if (common::AnfAlgo::HasNodeAttr(kAttrUnifyIRPassed, cnode) || func_graph->has_flag(kAttrMutableKernel)) {
     return nullptr;
   }
   return CreateNewBatchNormGrad(func_graph, cnode);

@@ -71,6 +71,9 @@ static const std::unordered_set<std::string> kAclKernelSet = {kConv2DOpName,
 const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
   {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
 
+mindspore::HashSet<std::string> kHighPrecisionOp = {kConv2DOpName, kMatMulOpName, kBatchMatMulOpName,
+                                                    kConv2DBackpropInputOpName, kConv2DBackpropFilterOpName};
+
 bool MatchInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfo &kernel_build_info) {
   MS_EXCEPTION_IF_NULL(cnode);
   // Check input data type
@@ -789,6 +792,27 @@ void SetRaiseOrReduceFlag(const CNodePtr &kernel_node, KernelSelectStatus status
   }
 }
 
+void UpdateInputForHighPrecisionOp(const CNodePtr &kernel_node,
+                                   const std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder> &builder) {
+  auto input_dtypes = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
+  auto output_dtypes = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
+  auto has_fp32 = std::any_of(output_dtypes.begin(), output_dtypes.end(),
+                              [](TypeId type) { return type == TypeId::kNumberTypeFloat32; });
+  if (has_fp32) {
+    std::vector<TypeId> new_input_types;
+    for (auto type : input_dtypes) {
+      if (type == TypeId::kNumberTypeFloat16) {
+        new_input_types.push_back(TypeId::kNumberTypeFloat32);
+      } else {
+        new_input_types.push_back(type);
+      }
+    }
+    builder->SetInputsDeviceType(new_input_types);
+    MS_LOG(INFO) << "Update data type for " << kernel_node->fullname_with_scope() << " from " << input_dtypes << " to "
+                 << new_input_types;
+  }
+}
+
 void SetAclKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   if (!common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel_node)) {
@@ -821,6 +845,13 @@ void SetAclKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(new_builder);
   new_builder->SetKernelType(ACL_KERNEL);
   MS_LOG(INFO) << "SUCCESS SET ACL KERNEL FOR" << kernel_node->DebugString();
+
+  // For high precision op
+  auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  if (kHighPrecisionOp.count(op_name) != 0) {
+    UpdateInputForHighPrecisionOp(kernel_node, new_builder);
+  }
+
   AnfAlgo::SetSelectKernelBuildInfo(new_builder->Build(), kernel_node.get());
 }
 
