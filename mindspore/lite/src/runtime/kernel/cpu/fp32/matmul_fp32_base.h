@@ -117,7 +117,6 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   int row_num_;
   int row_min_unit_{1};
   int col_min_unit_{1};
-  int thread_count_ = 0;
   float *output_data_ = nullptr;
   bool out_need_aligned_ = false;
   int col_step_ = 0;
