@@ -732,6 +732,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
     bool use_dynamic_shape_process = root_graph_->has_flag(kFlagUseDynamicShapeProcess);
     py::gil_scoped_release release;
     for (const auto &kernel : graph->execution_order()) {
+      MS_LOG(INFO) << "Split and run op " << kernel->fullname_with_scope();
       InputTensorInfo input_tensor_info;
       VectorRef op_outputs;
       if (common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
@@ -1406,6 +1407,7 @@ void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info
   MS_EXCEPTION_IF_NULL(graph);
 
   if (!single_op_cache_hit) {
+    MS_LOG(INFO) << "Run Op cache miss " << op_run_info->base_op_run_info.graph_info;
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     bool enable_cache = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
