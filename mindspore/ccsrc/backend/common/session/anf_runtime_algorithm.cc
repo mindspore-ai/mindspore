@@ -123,6 +123,18 @@ tensor::TensorPtr GetForwardOutputTensor(const AnfNodePtr &node) {
   }
   return nullptr;
 }
+
+#ifdef ENABLE_TUPLE_UNFOLD
+size_t GetOutputTensorNumByKernelInfo(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->kernel_info());
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  const auto &build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+  MS_EXCEPTION_IF_NULL(build_info);
+  return build_info->GetAllOutputDeviceTypes().size();
+}
+#endif
 }  // namespace
 
 AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
@@ -168,7 +180,41 @@ void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &
   }
 }
 
-size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) { return AnfUtils::GetOutputTensorNum(node); }
+size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) {
+#ifdef ENABLE_TUPLE_UNFOLD
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &kernel_info = node->kernel_info();
+  if (kernel_info == nullptr || (!kernel_info->has_build_info())) {
+    return 1;
+  }
+
+  size_t res;
+  TypePtr type = node->Type();
+  if (type == nullptr) {
+    res = 0;
+  } else if (type->isa<Tuple>()) {
+    res = GetOutputTensorNumByKernelInfo(node);
+  } else if (type->isa<TypeNone>()) {
+    res = 0;
+  } else if (type->isa<CSRTensorType>()) {
+    // Currently, CSRTensor only supports 2-D matrix (shape has 2 values). 5 outputs = 3 Tensors + 2 shape values.
+    constexpr size_t kCSRTensorOutputNum = 5;
+    res = kCSRTensorOutputNum;
+  } else if (type->isa<COOTensorType>()) {
+    // Currently, COOTensor only supports 2-D matrix (shape has 2 values). 4 outputs = 2 Tensors + 2 shape values.
+    constexpr size_t kCOOTensorOutputNum = 4;
+    res = kCOOTensorOutputNum;
+  } else if (AnfUtils::NeedJumpMonadOutput(node) && type->isa<MonadType>()) {
+    // Some nodes could have monad outputs like RpcRecv. We need to jump these outputs.
+    res = 0;
+  } else {
+    res = 1;
+  }
+  return res;
+#else
+  return AnfUtils::GetOutputTensorNum(node);
+#endif
+}
 
 size_t AnfRuntimeAlgorithm::GetOutputTensorMemSize(const AnfNodePtr &node, size_t output_index) {
   MS_EXCEPTION_IF_NULL(node);
