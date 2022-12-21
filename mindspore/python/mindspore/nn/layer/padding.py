@@ -21,20 +21,20 @@ from mindspore.ops.operations import nn_ops
 from mindspore.ops.primitive import constexpr
 from mindspore.nn.cell import Cell
 
-__all__ = ['ConstantPad1d', 'ConstantPad2d', 'ConstantPad3d', 'ReflectionPad1d', 'ReflectionPad2d', 'ZeroPad2d',
-           'ReplicationPad1d', 'ReplicationPad2d', 'ReplicationPad3d']
+__all__ = ['ConstantPad1d', 'ConstantPad2d', 'ConstantPad3d', 'ReflectionPad1d', 'ReflectionPad2d', 'ReflectionPad3d',
+           'ZeroPad2d', 'ReplicationPad1d', 'ReplicationPad2d', 'ReplicationPad3d']
 
 
 @constexpr
 def _check_padding_dimension(dimension, padding):
     r"""
-    Validate the input padding and add place holders if needed.
+    Validate the input padding and add placeholders if needed.
     Note: the input 'padding' in this function is already converted to list of lists to match MirrorPad
     """
     if dimension < len(padding):
         raise ValueError(f"For padding with length {len(padding) * 2}, the dimension of the tensor should be at least "
                          f"{len(padding)}, but got {dimension}")
-    # add place holders
+    # add placeholders
     if dimension > len(padding):
         padding = [(0, 0) for _ in range(dimension - len(padding))] + [x for x in padding]
     return padding
@@ -42,7 +42,7 @@ def _check_padding_dimension(dimension, padding):
 
 def _swap_to_ms_padding_order(padding):
     r"""
-    Check whether the input padding is a tuple or a int converted to a tuple.
+    Check whether the input padding is a tuple or an int converted to a tuple.
     Check if the length of padding is divisible by 2.
     Convert the input padding to the format that MirrorPad would understand.
     """
@@ -536,6 +536,72 @@ class ReflectionPad2d(_ReflectionPadNd):
         super(ReflectionPad2d, self).__init__(padding, 'ReflectionPad2d')
 
 
+class ReflectionPad3d(_ReflectionPadNd):
+    r"""
+    Using a given padding to do reflection pad the given tensor.
+
+    Note:
+        ReflectionPad3d has not supported 5D tensor yet.
+
+    Args:
+        padding (union[int, tuple]): The padding size to pad the input tensor.
+           If padding is an integer: all directions will be padded with the same size.
+           If padding is a tuple: uses :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down},
+           pad_{front}, pad_{back})` to pad.
+
+    Inputs:
+        - **x** (Tensor) - 4D Tensor, shape: :math:`(N, D_{in}, H_{in}, W_{out})`.
+
+    Outputs:
+        Tensor, after padding. Shape: :math:`(N, D_{out}, H_{out}, W_{out})`,
+        where :math:`D_{out} = D_{in} + pad_{front} + pad_{back}`, :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`
+        :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`.
+
+    Raises:
+        TypeError: If 'padding' is not a tuple or int.
+        TypeError: If there is an element in 'padding' that is not int.
+        ValueError: If the length of 'padding' is not divisible by 2.
+        ValueError: If there is an element in 'padding' that is negative.
+        ValueError: If the there is a dimension mismatch between the padding and the tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.nn import ReflectionPad3d
+        >>> arr = np.arange(8).astype(np.float32).reshape((1, 2, 2, 2))
+        >>> x = Tensor(arr)
+        >>> # x has shape (1, 2, 2, 2)
+        >>> padding = (1, 1, 1, 0, 0, 1)
+        >>> pad3d = ReflectionPad3d(padding)
+        >>> out = pad3d(x)
+        >>> # The first dimension of x remains the same.
+        >>> # The second dimension of x: D_out = D_in + pad_front + pad_back = 2 + 0 + 1 = 3
+        >>> # The third dimension of x: H_out = H_in + pad_up + pad_down = 2 + 1 + 0 = 3
+        >>> # The last dimension of x: W_out = W_in + pad_left + pad_right = 2 + 1 + 1 = 4
+        >>> # The shape of out is (1, 3, 3, 4)
+        >>> print(out)
+        [[[[3. 2. 3. 2.]
+           [1. 0. 1. 0.]
+           [3. 2. 3. 2.]]
+
+          [[7. 6. 7. 6.]
+           [5. 4. 5. 4.]
+           [7. 6. 7. 6.]]
+
+          [[3. 2. 3. 2.]
+           [1. 0. 1. 0.]
+           [3. 2. 3. 2.]]]]
+    """
+
+    def __init__(self, padding):
+        if isinstance(padding, int):
+            padding = (padding, padding, padding, padding, padding, padding)
+        super(ReflectionPad3d, self).__init__(padding, 'ReflectionPad3d')
+
+
 class ZeroPad2d(_ConstantPadNd):
     r"""
     Pads the last two dimensions of input tensor with zero.
@@ -591,6 +657,7 @@ class _ReplicationPadNd(Cell):
     Using a given padding to do replication pad on the given tensor.
     Work as a parent class, and only accepts tuple as padding input.
     """
+
     def __init__(self, padding, name="ReplicationPadNd"):
         super(_ReplicationPadNd, self).__init__()
         self.name = name
@@ -675,6 +742,7 @@ class ReplicationPad1d(_ReplicationPadNd):
               [[[0., 0., 0., 0., 1., 2., 3., 3.],
                  [4., 4., 4., 4., 5., 6., 7., 7.]]])
     """
+
     def __init__(self, padding):
         if isinstance(padding, int):
             padding = (padding, padding)
