@@ -14,15 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef AICPU_KERNELS_NORMALIZED_ACOS_H
-#define AICPU_KERNELS_NORMALIZED_ACOS_H
+#ifndef AICPU_KERNELS_NORMALIZED_FILL_H
+#define AICPU_KERNELS_NORMALIZED_FILL_H
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_ops_kernel.h"
 
 namespace aicpu {
-class AcosCpuKernel final : public CpuKernel {
+class FillCpuKernel : public CpuKernel {
  public:
-  std::uint32_t Compute(const CpuKernelContext &ctx) override;
+  FillCpuKernel() = default;
+  ~FillCpuKernel() override = default;
+  uint32_t Compute(const CpuKernelContext &ctx) override;
+
+ private:
+  uint32_t GetDimsByType(const CpuKernelContext &ctx);
+  /**
+   * @brief calc dims from input dims tensor
+   * @param dims_tensor input dims tensor
+   * @param dims output shape dims
+   * @return status if success
+   */
+  template <typename T>
+  uint32_t CalcDims(const Tensor *dims_tensor, std::vector<int64_t> &dims);
+
+  std::vector<int64_t> dims;
 };
 }  // namespace aicpu
-#endif
+#endif  // AICPU_KERNELS_NORMALIZED_FILL_H_
