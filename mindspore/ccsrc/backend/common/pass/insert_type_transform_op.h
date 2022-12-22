@@ -115,6 +115,10 @@ class BACKEND_EXPORT InsertTypeTransformOp : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
+  // This method check whether new inputs are generated to replace the old one. If so, new input node list will be
+  // returned by method 'Process'.
+  bool IsInputUpdated(const AnfNodePtr &origin_input, const AnfNodePtrList &new_input_list) const;
+
   // This scenario is migrated from the pass ConvertTupleInputToDynamicInput. Please refer to
   // convert_tuple_input_to_dynamic_input.h/cc
   AnfNodePtrList ProcessTupleUnfoldToTupleUnfold(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
@@ -128,8 +132,12 @@ class BACKEND_EXPORT InsertTypeTransformOp : public PatternProcessPass {
   AnfNodePtrList ProcessTupleUnfoldToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                             const CNodePtr &node, bool *new_prim);
 
-  // Convert Tuple output to Tensor. Simply add TupleToTensor op.
+  // Convert Tuple output to Tensor. Simply insert TupleToTensor op.
   AnfNodePtrList ProcessTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const CNodePtr &node,
+                                      bool *new_prim);
+
+  // Transform Tensor to Tuple. Simply insert TensorToTuple op.
+  AnfNodePtrList ProcessTensorToTuple(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const CNodePtr &node,
                                       bool *new_prim);
 };
 }  // namespace opt
