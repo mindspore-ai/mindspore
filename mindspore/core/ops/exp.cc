@@ -84,7 +84,7 @@ TypePtr ExpInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
     MS_EXCEPTION(TypeError) << "For '" << prim->name() << "', the input x only support tensor!";
   }
   (void)CheckAndConvertUtils::CheckSubClass("x_type", input_args[0]->BuildType(), valid_params_types, prim->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex_and_bool, prim->name());
   return input_args[0]->BuildType();
 }
 

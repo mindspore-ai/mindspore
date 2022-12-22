@@ -76,6 +76,12 @@ std::vector<std::pair<KernelAttr, ReLUFwdGpuKernelMod::ReLUFwLaunchFunc>> ReLUFw
    &ReLUFwdGpuKernelMod::LaunchKernel<int8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
    &ReLUFwdGpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &ReLUFwdGpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &ReLUFwdGpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &ReLUFwdGpuKernelMod::LaunchKernel<uint64_t>},
 };
 
 std::vector<KernelAttr> ReLUFwdGpuKernelMod::GetOpSupport() {

@@ -32,11 +32,15 @@ class NetLog(nn.Cell):
         return self.log(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
-def test_log(data_type):
+@pytest.mark.parametrize("data_type", [np.bool_, np.int8, np.int16, np.int32, np.int64,
+                                       np.uint8, np.uint16, np.uint32, np.uint64,
+                                       np.float16, np.float32, np.float64,
+                                       np.complex64, np.complex128])
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_log(data_type, mode):
     """
     Feature: Log
     Description: test cases for Log
@@ -49,18 +53,7 @@ def test_log(data_type):
     expect0 = np.log(x0_np)
     expect1 = np.log(x1_np)
 
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    log = NetLog()
-    output0 = log(x0)
-    output1 = log(x1)
-
-    assert output0.shape == expect0.shape
-    assert output1.shape == expect1.shape
-
-    np.allclose(output0.asnumpy(), expect0)
-    np.allclose(output1.asnumpy(), expect1)
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=mode, device_target="GPU")
     log = NetLog()
     output0 = log(x0)
     output1 = log(x1)

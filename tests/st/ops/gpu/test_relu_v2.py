@@ -34,29 +34,76 @@ class ReluNet(nn.Cell):
         dx = self.relu_grad(dy, y)
         return y, dx
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_ReluV2():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+@pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64,
+                                   np.float16, np.float32, np.float64])
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_reluv2(dtype, mode):
+    """
+    Feature: relu
+    Description: test cases for relu
+    Expectation: Success
+    """
+    context.set_context(mode=mode, device_target="GPU")
 
     x = Tensor(np.array([[[[-1, 1, 10],
                            [1, -1, 1],
-                           [10, 1, -1]]]]).astype(np.float32))
+                           [10, 1, -1]]]]).astype(dtype))
     dy = Tensor(np.array([[[[1, 0, 3],
                             [0, 1, 0],
-                            [2, 1, 1]]]]).astype(np.float32))
+                            [2, 1, 1]]]]).astype(dtype))
     expect_y = np.array([[[[0, 1, 10,],
                            [1, 0, 1,],
-                           [10, 1, 0.]]]]).astype(np.float32)
+                           [10, 1, 0.]]]]).astype(dtype)
     expect_dx = np.array([[[[0, 0, 3],
                             [0, 0, 0],
-                            [2, 1, 0]]]]).astype(np.float32)
+                            [2, 1, 0]]]]).astype(dtype)
     net = ReluNet()
     y, dx = net(Tensor(x), Tensor(dy))
 
     assert np.allclose(y.asnumpy(), expect_y)
     assert np.allclose(dx.asnumpy(), expect_dx)
+
+
+class ReluForwardNet(nn.Cell):
+    """ReluForwardNet"""
+    def __init__(self):
+        """init"""
+        super(ReluForwardNet, self).__init__()
+        self.relu = P.ReLU()
+
+    def construct(self, x):
+        """construct"""
+        y = self.relu(x)
+        return y
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_reluv2_uint(dtype, mode):
+    """
+    Feature: relu
+    Description: test cases for relu
+    Expectation: Success
+    """
+    context.set_context(mode=mode, device_target="GPU")
+
+    x = Tensor(np.array([[[[1, 1, 10],
+                           [1, 1, 1],
+                           [10, 1, 1]]]]).astype(dtype))
+    expect_y = np.array([[[[1, 1, 10],
+                           [1, 1, 1],
+                           [10, 1, 1.]]]]).astype(dtype)
+    net = ReluForwardNet()
+    y = net(Tensor(x))
+
+    assert np.allclose(y.asnumpy(), expect_y)
 
 
 class AddReluNet(nn.Cell):

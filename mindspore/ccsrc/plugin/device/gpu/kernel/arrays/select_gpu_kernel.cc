@@ -55,6 +55,18 @@ const std::vector<selectPair> &SelectGpuKernelMod::GetFuncList() const {
      &SelectGpuKernelMod::LaunchKernel<half>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeBool)
+       .AddInputAttr(kNumberTypeInt8)
+       .AddInputAttr(kNumberTypeInt8)
+       .AddOutputAttr(kNumberTypeInt8),
+     &SelectGpuKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeBool)
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kNumberTypeInt16)
+       .AddOutputAttr(kNumberTypeInt16),
+     &SelectGpuKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeBool)
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeInt32),
@@ -67,10 +79,46 @@ const std::vector<selectPair> &SelectGpuKernelMod::GetFuncList() const {
      &SelectGpuKernelMod::LaunchKernel<int64_t>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeBool)
+       .AddInputAttr(kNumberTypeUInt8)
+       .AddInputAttr(kNumberTypeUInt8)
+       .AddOutputAttr(kNumberTypeUInt8),
+     &SelectGpuKernelMod::LaunchKernel<uint8_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeBool)
+       .AddInputAttr(kNumberTypeUInt16)
+       .AddInputAttr(kNumberTypeUInt16)
+       .AddOutputAttr(kNumberTypeUInt16),
+     &SelectGpuKernelMod::LaunchKernel<uint16_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeBool)
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddOutputAttr(kNumberTypeUInt32),
+     &SelectGpuKernelMod::LaunchKernel<uint32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeBool)
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddOutputAttr(kNumberTypeUInt64),
+     &SelectGpuKernelMod::LaunchKernel<uint64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeBool)
        .AddInputAttr(kNumberTypeBool)
        .AddInputAttr(kNumberTypeBool)
        .AddOutputAttr(kNumberTypeBool),
      &SelectGpuKernelMod::LaunchKernel<bool>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeBool)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     &SelectGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeBool)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &SelectGpuKernelMod::LaunchKernel<utils::Complex<double>>},
   };
   return func_list;
 }

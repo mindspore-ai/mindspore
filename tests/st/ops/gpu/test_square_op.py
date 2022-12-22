@@ -31,26 +31,31 @@ class SquareNet(nn.Cell):
         return self.ops(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_square_normal(dtype):
+@pytest.mark.parametrize("dtype", [np.bool_, np.int8, np.int16, np.int32, np.int64,
+                                   np.uint8, np.uint16, np.uint32, np.uint64,
+                                   np.float16, np.float32, np.float64,
+                                   np.complex64, np.complex128])
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_square_normal(dtype, mode):
     """
     Feature: ALL To ALL
     Description: test cases for Square
     Expectation: the result match to numpy
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    x_np = np.random.rand(2, 3, 4, 4).astype(np.float32)
+    context.set_context(mode=mode, device_target="GPU")
+    error_tol = 1.0e-3
+    x_np = np.random.rand(2, 3, 4, 4).astype(dtype)
     output_ms = P.Square()(Tensor(x_np))
     output_np = np.square(x_np)
-    assert np.allclose(output_ms.asnumpy(), output_np)
-    x_np = np.random.rand(2, 3, 1, 5, 4, 4).astype(np.float32)
+    assert np.allclose(output_ms.asnumpy(), output_np, error_tol, error_tol)
+    x_np = np.random.rand(2, 3, 1, 5, 4, 4).astype(dtype)
     output_ms = P.Square()(Tensor(x_np))
     output_np = np.square(x_np)
-    assert np.allclose(output_ms.asnumpy(), output_np)
-    x_np = np.random.rand(2).astype(np.float32)
+    assert np.allclose(output_ms.asnumpy(), output_np, error_tol, error_tol)
+    x_np = np.random.rand(2).astype(dtype)
     output_ms = P.Square()(Tensor(x_np))
     output_np = np.square(x_np)
-    assert np.allclose(output_ms.asnumpy(), output_np)
+    assert np.allclose(output_ms.asnumpy(), output_np, error_tol, error_tol)

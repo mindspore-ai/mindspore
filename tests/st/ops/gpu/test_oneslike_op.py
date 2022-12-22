@@ -33,53 +33,32 @@ class NetOnesLike(nn.Cell):
         return self.ones_like(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_OnesLike():
-    x0_np = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)
-    x1_np = np.random.uniform(-2, 2, 1).astype(np.float16)
-    x2_np = np.zeros([3, 3, 3], dtype=np.int32)
+@pytest.mark.parametrize("nptype", [np.bool_, np.int8, np.int16, np.int32, np.int64,
+                                    np.uint8, np.uint16, np.uint32, np.uint64,
+                                    np.float16, np.float32, np.float64,
+                                    np.complex64, np.complex128])
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_ones_like(nptype, mode):
+    """
+    Feature: ALL To ALL
+    Description: test cases for OnesLike
+    Expectation: the result match to numpy
+    """
+    x0_np = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(nptype)
+    x1_np = np.random.uniform(-2, 2, 1).astype(nptype)
 
     x0 = Tensor(x0_np)
     x1 = Tensor(x1_np)
-    x2 = Tensor(x2_np)
 
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=mode, device_target="GPU")
     ones_like = NetOnesLike()
     output0 = ones_like(x0)
     expect0 = np.ones_like(x0_np)
-    diff0 = output0.asnumpy() - expect0
-    error0 = np.ones(shape=expect0.shape) * 1.0e-5
-    assert np.all(diff0 < error0)
-    assert output0.shape == expect0.shape
+    assert np.allclose(output0.asnumpy(), expect0, 1.0e-3, 1.0e-3)
 
     output1 = ones_like(x1)
     expect1 = np.ones_like(x1_np)
-    diff1 = output1.asnumpy() - expect1
-    error1 = np.ones(shape=expect1.shape) * 1.0e-5
-    assert np.all(diff1 < error1)
-    assert output1.shape == expect1.shape
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    ones_like = NetOnesLike()
-    output0 = ones_like(x0)
-    expect0 = np.ones_like(x0_np)
-    diff0 = output0.asnumpy() - expect0
-    error0 = np.ones(shape=expect0.shape) * 1.0e-5
-    assert np.all(diff0 < error0)
-    assert output0.shape == expect0.shape
-
-    output1 = ones_like(x1)
-    expect1 = np.ones_like(x1_np)
-    diff1 = output1.asnumpy() - expect1
-    error1 = np.ones(shape=expect1.shape) * 1.0e-5
-    assert np.all(diff1 < error1)
-    assert output1.shape == expect1.shape
-
-    output2 = ones_like(x2)
-    expect2 = np.ones_like(x2_np)
-    diff2 = output2.asnumpy() - expect2
-    error2 = np.ones(shape=expect2.shape) * 1.0e-5
-    assert np.all(diff2 < error2)
-    assert output2.shape == expect2.shape
+    assert np.allclose(output1.asnumpy(), expect1, 1.0e-3, 1.0e-3)

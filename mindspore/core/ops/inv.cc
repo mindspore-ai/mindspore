@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "ops/core_ops.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
@@ -48,7 +49,7 @@ TypePtr InvInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
   std::set<TypePtr> valid_types{};
   if (is_gpu || is_cpu) {
-    valid_types = {kInt32, kInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+    valid_types = common_valid_types_with_complex_and_bool;
   } else {
     valid_types = {kFloat16, kFloat32, kInt32};
   }

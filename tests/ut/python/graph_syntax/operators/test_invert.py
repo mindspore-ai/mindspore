@@ -14,7 +14,6 @@
 # ============================================================================
 """ test '~' """
 import numpy as np
-import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -44,20 +43,3 @@ def test_invert_bool_tensor():
 
     context.set_context(mode=context.GRAPH_MODE)
     net(input_x)
-
-
-def test_invert_int_tensor():
-    net = InvertNet()
-    input_x = Tensor(np.array([1, 2, 3], np.int32))
-
-    context.set_context(mode=context.PYNATIVE_MODE)
-    with pytest.raises(TypeError) as err:
-        net(input_x)
-    assert "For primitive[LogicalNot], the input argument[x] must be a type of {Tensor[Bool]}, " \
-           "but got Tensor[Int32]." in str(err.value)
-
-    context.set_context(mode=context.GRAPH_MODE)
-    with pytest.raises(TypeError) as err:
-        net(input_x)
-    assert "For primitive[LogicalNot], the input argument[x] must be a type of {Tensor[Bool]}, " \
-           "but got Tensor[Int32]." in str(err.value)
