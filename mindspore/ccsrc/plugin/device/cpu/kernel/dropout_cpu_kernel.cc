@@ -60,6 +60,7 @@ int DropoutCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
+  tensor_size_ = 1;
   input_shape_ = inputs[0]->GetShapeVector();
   for (const auto &d : input_shape_) {
     tensor_size_ *= LongToSize(d);
