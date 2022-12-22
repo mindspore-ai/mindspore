@@ -24,6 +24,9 @@ Common imported modules in corresponding API examples are as follows:
     import mindspore.dataset as ds
     import mindspore.dataset.text as text
 
+See `Text Data Processing and Augmentation
+<https://www.mindspore.cn/tutorials/en/r1.9/beginner/transforms.html#text-transforms>`_ tutorial for more details.
+
 Descriptions of common data processing terms are as follows:
 
 - TensorOperation, the base class of all data processing operations implemented in C++.
