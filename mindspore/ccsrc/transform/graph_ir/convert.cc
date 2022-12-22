@@ -1631,6 +1631,19 @@ bool DfGraphConvertor::IsDataInput(const AnfNodePtr &node, const AnfNodePtr &inp
     MS_LOG(ERROR) << "Node or input is null.";
     return false;
   }
+  // Ignore the null ValueTupe in MakeTuple
+  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple) && input->isa<ValueNode>()) {
+    auto type = input->Type();
+    MS_EXCEPTION_IF_NULL(type);
+    if (type->isa<Tuple>()) {
+      auto tuple_type = type->cast<std::shared_ptr<Tuple>>();
+      MS_EXCEPTION_IF_NULL(tuple_type);
+      if (tuple_type->elements().empty()) {
+        return false;
+      }
+    }
+  }
+
   // UpdateState has no data input
   if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
     return false;
@@ -2359,16 +2372,36 @@ void DfGraphConvertor::ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) const {
             attr_value = prim->GetAttr("crops");
           }
           std::vector<int64_t> attr_list;
+          std::vector<int64_t> attr_size;
           if (attr_value->isa<ValueList>()) {
             const ValueListPtr &value = dyn_cast<ValueList>(attr_value);
+            bool already_record = false;
+            attr_size.push_back(value->size());
             for (const auto &item : value->value()) {
               if (item->isa<ValueList>()) {
                 auto value_list = GetValue<std::vector<int64_t>>(item);
                 (void)std::copy(value_list.begin(), value_list.end(), std::back_inserter(attr_list));
+                if (!already_record) {
+                  attr_size.push_back(value_list.size());
+                  already_record = true;
+                }
               }
             }
           }
-          auto new_value_attr = NewValueNode(attr_list);
+          tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, attr_size);
+          MS_EXCEPTION_IF_NULL(tensor);
+          if (!attr_size.empty()) {
+            auto data_ptr = tensor->data_c();
+            MS_EXCEPTION_IF_NULL(data_ptr);
+            auto elem_length =
+              std::accumulate(attr_size.begin(), attr_size.end(), 1, std::multiplies<int64_t>()) * sizeof(int64_t);
+            auto ret_code =
+              memcpy_s(data_ptr, static_cast<size_t>(tensor->data().nbytes()), &attr_list[0], elem_length);
+            if (ret_code != EOK) {
+              MS_LOG(EXCEPTION) << "Failed to copy data into tensor, memcpy_s errorno: " << ret_code;
+            }
+          }
+          auto new_value_attr = NewValueNode(tensor);
           new_value_attr->set_abstract(attr_value->ToAbstract());
           node->add_input(new_value_attr);
         }
