@@ -98,6 +98,7 @@ constexpr auto kAtomicAddrCleanOpName = "AtomicAddrClean";
 constexpr auto kAvgPool3DGradOpName = "AvgPool3DGrad";
 constexpr auto kAvgPool3DGradDOpName = "AvgPool3DGradD";
 constexpr auto kAvgPool3DOpName = "AvgPool3D";
+constexpr auto kACosOpName = "ACos";
 constexpr auto kACosGradOpName = "ACosGrad";
 constexpr auto kAcosGradOpName = "AcosGrad";
 constexpr auto kAvgPool3DDOpName = "AvgPool3DD";

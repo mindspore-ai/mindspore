@@ -20,7 +20,6 @@
 #include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 
 namespace mindspore {
 namespace opt {
@@ -49,7 +48,7 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                       kSliceGradOpName,
                                                       kRandomShuffleOpName,
                                                       kRangeOpName};
-  static const std::set<std::string> kMigrateAicpuKernelOps = {mindspore::kernel::kACos};
+  static const std::set<std::string> kMigrateAicpuKernelOps = {kACosOpName};
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
   static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";
 
