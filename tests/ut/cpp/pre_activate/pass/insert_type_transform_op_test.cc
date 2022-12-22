@@ -46,6 +46,7 @@ class TestInsertTypeTransformOp : public BackendCommon {
   void SetTupleUnfoldToTupleKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *make_tuple_ptr, AnfNodePtr *split_ptr,
                                             AnfNodePtr *tuple_add1_ptr, AnfNodePtr *tuple_add2_ptr);
   void SetTupleUnfoldToTensorKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *make_tuple, AnfNodePtr *reshape);
+  void SetTupleToTensorKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *reshape_ptr);
 
   void SetKernelBuildInfo(const AnfNodePtr &node, const std::vector<std::string> &input_formats,
                           const std::vector<TypeId> &input_types, const std::vector<std::string> &output_formats,
@@ -165,7 +166,7 @@ void TestInsertTypeTransformOp::SetTupleUnfoldToTensorKernelBuildInfo(const Func
                      {kNumberTypeFloat32}, {KernelObjectType::TENSOR, KernelObjectType::TENSOR},
                      {KernelObjectType::TENSOR});
 
-  auto input_node3 = reshape->input(0);
+  auto input_node3 = reshape->input(1);
   SetKernelBuildInfo(input_node3, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32},
                      {KernelObjectType::TENSOR}, {KernelObjectType::TENSOR});
 
@@ -182,6 +183,23 @@ void TestInsertTypeTransformOp::SetTupleUnfoldToTensorKernelBuildInfo(const Func
   auto input_node2 = make_tuple->input(2);
   SetKernelBuildInfo(input_node2, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32},
                      {KernelObjectType::TENSOR}, {KernelObjectType::TENSOR});
+}
+
+void TestInsertTypeTransformOp::SetTupleToTensorKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *reshape_ptr) {
+  auto ret = g->get_return();
+  EXPECT_NE(ret->input(1), nullptr);
+  auto reshape = ret->input(1)->cast<CNodePtr>();
+  *reshape_ptr = reshape;
+  SetKernelBuildInfo(reshape, {"NCHW", "NCHW"}, {kNumberTypeFloat32, kNumberTypeFloat32}, {"NCHW"},
+                     {kNumberTypeFloat32}, {KernelObjectType::TENSOR, KernelObjectType::TENSOR},
+                     {KernelObjectType::TENSOR});
+  auto input2 = reshape->input(2);
+  SetKernelBuildInfo(input2, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32}, {KernelObjectType::TENSOR},
+                     {KernelObjectType::TUPLE});
+
+  auto input1 = reshape->input(1);
+  SetKernelBuildInfo(input1, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32}, {KernelObjectType::TENSOR},
+                     {KernelObjectType::TENSOR});
 }
 
 void TestInsertTypeTransformOp::SetKernelBuildInfo(
@@ -219,7 +237,8 @@ void TestInsertTypeTransformOp::CheckOutputKernelInfo(const AnfNodePtr &node, si
 
 /// Feature: Dynamic shape.
 /// Description: Test TupleUnfold to TupleUnfold type transforming pass.
-/// Expectation: After InsertTypeTransformOp pass, the graph is identical to the expected graph expressed by python.
+/// Expectation: After InsertTypeTransformOp pass, the graph is identical to the expected graph
+/// expressed by python.
 TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_unfold_transform) {
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tuple_unfold_transform", "before");
   ASSERT_TRUE(g != nullptr);
@@ -250,7 +269,8 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_unfold_transform) {
 
 /// Feature: Dynamic shape.
 /// Description: Test TupleUnfold to Tuple type transforming pass.
-/// Expectation: After InsertTypeTransformOp pass, the graph is identical to the expected graph expressed by python.
+/// Expectation: After InsertTypeTransformOp pass, the graph is identical to the expected graph
+/// expressed by python.
 TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_transform) {
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tuple_transform", "before");
   ASSERT_TRUE(g != nullptr);
@@ -277,7 +297,8 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_transform) {
 
 /// Feature: Dynamic shape.
 /// Description: Test TupleUnfold to Tensor type transforming pass.
-/// Expectation: After InsertTypeTransformOp pass, the graph is identical to the expected graph expressed by python.
+/// Expectation: After InsertTypeTransformOp pass, the graph is identical to the expected graph
+/// expressed by python.
 TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tensor_transform) {
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tensor_transform", "before");
   ASSERT_TRUE(g != nullptr);
@@ -300,6 +321,32 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tensor_transform) {
   optimizer->Optimize(func_graph);
 
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tensor_transform", "after");
+  ASSERT_TRUE(g_after != nullptr);
+  EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
+}
+
+/// Description: Test Tuple to Tensor type transforming pass.
+/// Expectation: After InsertTypeTransformOp pass, the graph is identical to the expected graph expressed by python.
+TEST_F(TestInsertTypeTransformOp, test_tuple_to_tensor_transform) {
+  FuncGraphPtr g = getPyFun_.CallAndParseRet("test_tuple_to_tensor_transform", "before");
+  ASSERT_TRUE(g != nullptr);
+  std::vector<int64_t> shp_x{4, 2};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
+  std::vector<int64_t> shp_y{2};
+  auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
+  AbstractBasePtrList args_spec_list{x_abstract, y_abstract};
+  auto func_graph = GetFuncGraph(g, args_spec_list);
+  ASSERT_TRUE(func_graph != nullptr);
+  AnfNodePtr reshape;
+  SetTupleToTensorKernelBuildInfo(func_graph, &reshape);
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
+  optimizer->AddPassManager(pm);
+  optimizer->Optimize(func_graph);
+
+  FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_tuple_to_tensor_transform", "after");
   ASSERT_TRUE(g_after != nullptr);
   EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
 }

@@ -124,3 +124,27 @@ def test_tuple_unfold_to_tensor_transform(tag):
         return res
 
     return fns[tag]
+
+
+def test_tuple_to_tensor_transform(tag):
+    """
+    Feature: Dynamic shape.
+    Description: Test Tuple to Tensor transforming pass.
+    Expectation: The 'after' graph is identical to the graph after this pass.
+    """
+    fns = FnDict()
+    reshape = P.Reshape()
+    tuple_to_tensor = Primitive('TupleToTensor')
+
+    @fns
+    def before(x, y):
+        res = reshape(x, y)
+        return res
+
+    @fns
+    def after(x, y):
+        res = tuple_to_tensor(y)
+        res = reshape(x, res)
+        return res
+
+    return fns[tag]

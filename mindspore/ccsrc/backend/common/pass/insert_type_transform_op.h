@@ -127,6 +127,10 @@ class BACKEND_EXPORT InsertTypeTransformOp : public PatternProcessPass {
   // Convert TupleUnfold output to Tensor. Firstly insert TupleToTensor op. Then transform TupleUnfold to Tuple.
   AnfNodePtrList ProcessTupleUnfoldToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                             const CNodePtr &node, bool *new_prim);
+
+  // Convert Tuple output to Tensor. Simply add TupleToTensor op.
+  AnfNodePtrList ProcessTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const CNodePtr &node,
+                                      bool *new_prim);
 };
 }  // namespace opt
 }  // namespace mindspore
