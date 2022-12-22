@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IM2COL_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IM2COL_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_IM2COL_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_IM2COL_GPU_KERNEL_H_
 
 #include <map>
 #include <vector>
 #include <utility>
 #include <string>
-#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/im2col_impl.cuh"
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class Im2ColCpuKernelMod : public NativeCpuKernelMod {
+class Im2ColGpuKernelMod : public NativeGpuKernelMod {
  public:
-  Im2ColCpuKernelMod() = default;
-  ~Im2ColCpuKernelMod() override = default;
+  Im2ColGpuKernelMod() = default;
+  ~Im2ColGpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -39,15 +40,19 @@ class Im2ColCpuKernelMod : public NativeCpuKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    return kernel_func_(this, inputs, outputs, stream_ptr);
+  }
 
+ protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using Im2ColFunc = std::function<bool(Im2ColCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
+                    void *stream_ptr);
+  using Im2ColFunc = std::function<bool(Im2ColGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &, void *)>;
   static std::vector<std::pair<KernelAttr, Im2ColFunc>> func_list_;
   Im2ColFunc kernel_func_;
 
@@ -62,4 +67,4 @@ class Im2ColCpuKernelMod : public NativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IM2COL_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_IM2COL_GPU_KERNEL_H_

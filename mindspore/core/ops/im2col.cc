@@ -182,8 +182,8 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
 }
 
 TypePtr Im2ColInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), common_valid_types,
-                                                    primitive->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(),
+                                                    common_valid_types_with_complex, primitive->name());
 }
 }  // namespace
 

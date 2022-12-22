@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "kernel/common_utils.h"
 #include "plugin/factory/ms_factory.h"
@@ -37,7 +38,9 @@ class Col2ImCpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -45,8 +48,12 @@ class Col2ImCpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  using Col2ImFunc =
+    std::function<bool(Col2ImCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, Col2ImFunc>> func_list_;
 
-  TypeId y_type_;
+  Col2ImFunc kernel_func_;
+
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> y_shape_;
   std::vector<int64_t> kernel_size_;
