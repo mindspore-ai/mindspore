@@ -717,20 +717,20 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
     return RET_ERROR;
   }
   STATUS ret = CheckTensorsInvalid(inputs_);
-  if (ret != RET_OK) {
+  if (MS_UNLIKELY(ret != RET_OK)) {
     is_running_.store(false);
     MS_LOG(ERROR) << "CheckInputs failed.";
     return ret;
   }
   ret = CheckGraphInputShapes(inputs_, input_shape_map_);
-  if (ret != RET_OK) {
+  if (MS_UNLIKELY(ret != RET_OK)) {
     is_running_.store(false);
     MS_LOG(ERROR) << "Check graph input shapes failed.";
     return ret;
   }
   MS_ASSERT(this->context_ != nullptr);
   ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, before, after);
-  if (ret != RET_OK) {
+  if (MS_UNLIKELY(ret != RET_OK)) {
     MS_LOG(ERROR) << "RunGraph failed : " << ret;
   }
   if (infer_along_running_) {
