@@ -463,6 +463,7 @@ Array Operation
     mindspore.ops.shape
     mindspore.ops.size
     mindspore.ops.slice
+    mindspore.ops.slogdet
     mindspore.ops.space_to_batch_nd
     mindspore.ops.sparse_segment_mean
     mindspore.ops.split
@@ -479,6 +480,7 @@ Array Operation
     mindspore.ops.tensor_scatter_elements
     mindspore.ops.tensor_split
     mindspore.ops.tile
+    mindspore.ops.tril
     mindspore.ops.top_k
     mindspore.ops.transpose
     mindspore.ops.unbind
