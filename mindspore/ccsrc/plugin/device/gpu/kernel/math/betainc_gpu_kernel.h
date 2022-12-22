@@ -32,7 +32,7 @@ namespace mindspore {
 namespace kernel {
 class BetaincGpuKernelMod : public NativeGpuKernelMod {
  public:
-  BetaincGpuKernelMod() { ResetResource(); }
+  BetaincGpuKernelMod() = default;
   ~BetaincGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -46,32 +46,7 @@ class BetaincGpuKernelMod : public NativeGpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  void ResetResource() noexcept {
-    is_null_input_ = false;
-    input_elements_ = 0;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
   std::vector<KernelAttr> GetOpSupport() override;
-
- protected:
-  void InitSizeLists() {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(input_size_);
-    workspace_size_list_.push_back(input_size_);
-    workspace_size_list_.push_back(input_size_);
-    workspace_size_list_.push_back(input_size_);
-    workspace_size_list_.push_back(input_size_);
-    workspace_size_list_.push_back(input_size_);
-    workspace_size_list_.push_back(input_size_);
-  }
 
  private:
   template <typename T>
@@ -82,10 +57,7 @@ class BetaincGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
   KernelFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, KernelFunc>> func_list_;
-  bool is_null_input_;
-  size_t input_elements_;
-  size_t input_size_;
-  size_t output_size;
+  size_t input_element_;
   std::vector<size_t> a_shape_;
   std::vector<size_t> b_shape_;
   std::vector<size_t> x_shape_;

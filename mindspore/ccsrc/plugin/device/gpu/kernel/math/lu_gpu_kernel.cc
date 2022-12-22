@@ -49,11 +49,20 @@ int LuGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vect
   }
   unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
   auto in_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(in_shape.begin(), in_shape.end(), std::back_inserter(in_shape_), LongToSize);
-  if (!CheckLuShape()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input shape init failed.";
+  if (in_shape.size() <= 1) {
+    MS_LOG(ERROR) << kernel_name_ << " input shape is " << in_shape.size() << " which is invalid.";
     return KRET_RESIZE_FAILED;
   }
+  constexpr size_t lu_reverse_row_dim = 2;
+  m_ = static_cast<size_t>(in_shape.at(in_shape.size() - lu_reverse_row_dim));
+  n_ = static_cast<size_t>(in_shape.at(in_shape.size() - 1));
+  k_ = std::min(m_, n_);
+  input_elements_ = SizeOf(in_shape);
+  batch_size_ = 1;
+  for (int batch = 0; batch < static_cast<int>(in_shape.size() - lu_reverse_row_dim); ++batch) {
+    batch_size_ *= static_cast<size_t>(in_shape.at(batch));
+  }
+
   // a device addr to place lu factor return code
   workspace_size_list_.push_back(sizeof(int));
 
@@ -77,18 +86,18 @@ void LuGpuKernelMod::ResetResource() noexcept {
 template <typename T>
 void LuGpuKernelMod::BufferSize(T *batch_output_addr, int *lwork) {
   if constexpr (std::is_same_v<T, float>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnSgetrf_bufferSize(handle_, m_, n_, batch_output_addr, lda_, lwork),
+    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnSgetrf_bufferSize(handle_, m_, n_, batch_output_addr, m_, lwork),
                                            "cusolver query lu work size fail");
   } else if constexpr (std::is_same_v<T, double>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnDgetrf_bufferSize(handle_, m_, n_, batch_output_addr, lda_, lwork),
+    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnDgetrf_bufferSize(handle_, m_, n_, batch_output_addr, m_, lwork),
                                            "cusolver query lu work size fail");
   } else if constexpr (std::is_same_v<T, utils::Complex<float>>) {
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnCgetrf_bufferSize(handle_, m_, n_, reinterpret_cast<cuComplex *>(batch_output_addr), lda_, lwork),
+      cusolverDnCgetrf_bufferSize(handle_, m_, n_, reinterpret_cast<cuComplex *>(batch_output_addr), m_, lwork),
       "cusolver query lu work size fail");
   } else {
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnZgetrf_bufferSize(handle_, m_, n_, reinterpret_cast<cuDoubleComplex *>(batch_output_addr), lda_, lwork),
+      cusolverDnZgetrf_bufferSize(handle_, m_, n_, reinterpret_cast<cuDoubleComplex *>(batch_output_addr), m_, lwork),
       "cusolver query lu work size fail");
   }
 }
@@ -121,20 +130,20 @@ void LuGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs,
     int *dev_piv = dev_batch_piv + batch * k_;
     if constexpr (std::is_same_v<T, float>) {
       CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-        cusolverDnSgetrf(handle_, m_, n_, dev_work + batch * m_ * n_, lda_, d_work_, dev_piv, info_output_addr),
+        cusolverDnSgetrf(handle_, m_, n_, dev_work + batch * m_ * n_, m_, d_work_, dev_piv, info_output_addr),
         "cusolver lu fail");
     } else if constexpr (std::is_same_v<T, double>) {
       CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-        cusolverDnDgetrf(handle_, m_, n_, dev_work + batch * m_ * n_, lda_, d_work_, dev_piv, info_output_addr),
+        cusolverDnDgetrf(handle_, m_, n_, dev_work + batch * m_ * n_, m_, d_work_, dev_piv, info_output_addr),
         "cusolver lu fail");
     } else if constexpr (std::is_same_v<T, utils::Complex<float>>) {
       CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-        cusolverDnCgetrf(handle_, m_, n_, reinterpret_cast<cuComplex *>(dev_work + batch * m_ * n_), lda_,
+        cusolverDnCgetrf(handle_, m_, n_, reinterpret_cast<cuComplex *>(dev_work + batch * m_ * n_), m_,
                          reinterpret_cast<cuComplex *>(d_work_), dev_piv, info_output_addr),
         "cusolver lu fail");
     } else {
       CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-        cusolverDnZgetrf(handle_, m_, n_, reinterpret_cast<cuDoubleComplex *>(dev_work + batch * m_ * n_), lda_,
+        cusolverDnZgetrf(handle_, m_, n_, reinterpret_cast<cuDoubleComplex *>(dev_work + batch * m_ * n_), m_,
                          reinterpret_cast<cuDoubleComplex *>(d_work_), dev_piv, info_output_addr),
         "cusolver lu fail");
     }
@@ -266,30 +275,6 @@ bool LuGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const s
   }
   return true;
 }
-
-bool LuGpuKernelMod::CheckLuShape() {
-  constexpr size_t lu_min_dim = 1;
-  if (in_shape_.size() <= lu_min_dim) {
-    MS_LOG(ERROR) << kernel_name_ << " input shape is " << in_shape_.size() << " which is invalid.";
-    return false;
-  }
-  constexpr size_t lu_reverse_row_dim = 2;
-  lu_row_ = in_shape_.at(in_shape_.size() - lu_reverse_row_dim);
-  lu_col_ = in_shape_.at(in_shape_.size() - 1);
-  input_elements_ = std::accumulate(in_shape_.begin(), in_shape_.end(), size_t(1), std::multiplies<size_t>());
-  batch_size_ = lu_min_dim;
-  for (int batch = 0; batch < static_cast<int>(in_shape_.size() - lu_reverse_row_dim); ++batch) {
-    batch_size_ *= in_shape_.at(batch);
-  }
-  // set matrix row or col to be lead dimension
-  m_ = SizeToInt(lu_row_);
-  n_ = SizeToInt(lu_col_);
-  k_ = std::min(lu_row_, lu_col_);
-  lda_ = m_;
-  ldb_ = n_;
-  return true;
-}
-
 const std::vector<std::pair<KernelAttr, LuGpuKernelMod::KernelRunFunc>> &LuGpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, LuGpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
