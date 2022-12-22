@@ -1839,8 +1839,7 @@ def sinc(x):
 
     Returns:
         Tensor, has the same shape as the `x`. The dtype of output is float32 when dtype of `x` is in
-        [uint8, uint8, uint16, int16, uint32, int32, uint64, int64, bool]. Otherwise output has the
-        same dtype as the `x`.
+        [int, bool]. Otherwise output has the same dtype as the `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
