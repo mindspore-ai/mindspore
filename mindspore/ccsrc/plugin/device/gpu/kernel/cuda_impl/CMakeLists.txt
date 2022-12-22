@@ -35,4 +35,23 @@ if(ENABLE_GPU)
     endif()
     cuda_add_library(cuda_ops SHARED ${CUDA_OPS_SRC_LIST} $<TARGET_OBJECTS:cuda_common_obj>)
     message("add gpu lib to cuda_ops")
+    if(WIN32)
+    target_link_libraries(cuda_ops mindspore_core
+            ${CUBLAS_LIBRARY_PATH}
+            ${CUDA_PATH}/lib/x64/curand.lib
+            ${CUDNN_LIBRARY_PATH}
+            ${CUDA_PATH}/lib/x64/cudart.lib
+            ${CUDA_PATH}/lib/x64/cuda.lib
+            ${CUDA_PATH}/lib/x64/cusolver.lib
+            ${CUDA_PATH}/lib/x64/cufft.lib)
+    else()
+    target_link_libraries(cuda_ops mindspore_core
+            ${CUBLAS_LIBRARY_PATH}
+            ${CUDA_PATH}/lib64/libcurand.so
+            ${CUDNN_LIBRARY_PATH}
+            ${CUDA_PATH}/lib64/libcudart.so
+            ${CUDA_PATH}/lib64/stubs/libcuda.so
+            ${CUDA_PATH}/lib64/libcusolver.so
+            ${CUDA_PATH}/lib64/libcufft.so)
+    endif()
 endif()
