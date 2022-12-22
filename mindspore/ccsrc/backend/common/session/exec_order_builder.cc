@@ -148,7 +148,7 @@ void ExecOrderBuilder::FindIndependentNodes() {
     MS_EXCEPTION_IF_NULL(cnode);
     bool independent = true;
     auto &inputs = cnode->inputs();
-    for (auto iter = inputs.begin(); iter != inputs.end(); ++iter) {
+    for (auto iter = inputs.rbegin(); iter != inputs.rend(); ++iter) {
       auto &input = *iter;
       MS_EXCEPTION_IF_NULL(input);
       if (IsTrivialNode(input)) {
@@ -164,6 +164,13 @@ void ExecOrderBuilder::FindIndependentNodes() {
       }
       if (AnfUtils::IsRealKernel(node)) {
         to_visit.push(input);
+        if (!independent_nodes_.empty()) {
+          auto inode = independent_nodes_.top();
+          node_output_edges_[input].emplace_back(inode);
+          node_input_edges_[inode].emplace_back(input);
+          node_input_num_[inode] += 1;
+          independent_nodes_.pop();
+        }
       } else {
         vnode_to_visit.push(input);
       }
