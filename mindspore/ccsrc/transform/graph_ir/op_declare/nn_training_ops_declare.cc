@@ -49,6 +49,7 @@ INPUT_MAP(ApplyAdam) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},       
 ATTR_MAP(ApplyAdam) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
                        {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdam) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyAdam, kNameApplyAdam, ADPT_DESC(ApplyAdam))
 REG_ADPT_DESC(ApplyAdamD, kNameApplyAdamD, ADPT_DESC(ApplyAdam))
 
 // ApplyAdamD

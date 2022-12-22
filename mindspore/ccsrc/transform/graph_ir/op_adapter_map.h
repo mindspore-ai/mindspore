@@ -88,6 +88,7 @@ constexpr const char kNameConfusionMatrix[] = "ConfusionMatrix";
 constexpr const char kNameResizeNearestNeighbor[] = "ResizeNearestNeighbor";
 constexpr const char kNameResizeNearestNeighborGrad[] = "ResizeNearestNeighborGrad";
 constexpr const char kNameAdam[] = "Adam";
+constexpr const char kNameApplyAdam[] = "ApplyAdam";
 constexpr const char kNameApplyAdamD[] = "ApplyAdamD";
 constexpr const char kNameApplyAdagrad[] = "ApplyAdagrad";
 constexpr const char kNameApplyAdadelta[] = "ApplyAdadelta";

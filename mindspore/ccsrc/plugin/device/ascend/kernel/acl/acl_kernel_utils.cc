@@ -60,11 +60,9 @@ static const std::map<std::string, std::vector<int>> kInputOrders = {
 
 static const std::map<std::string, std::vector<int>> kOutputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
-  {prim::kPrimApplyMomentum->name(), {0, -1}},
-  {prim::kPrimApplyFtrlD->name(), {0, -1, -1}},
-  {prim::kPrimSparseApplyFtrlV2D->name(), {0, -1, -1}},
-  {prim::kPrimApplyAdamD->name(), {0, -1, -1}},
-  {prim::kPrimApplyMomentumD->name(), {0, -1}}};
+  {prim::kPrimApplyMomentum->name(), {0, -1}},          {prim::kPrimApplyFtrlD->name(), {0, -1, -1}},
+  {prim::kPrimSparseApplyFtrlV2D->name(), {0, -1, -1}}, {prim::kPrimApplyAdam->name(), {0, -1, -1}},
+  {prim::kPrimApplyAdamD->name(), {0, -1, -1}},         {prim::kPrimApplyMomentumD->name(), {0, -1}}};
 }  // namespace
 
 AclOpDesc::AclOpDesc(const std::string &op_type, const AnfNodePtr &anf_node_ptr) {
@@ -693,7 +691,8 @@ std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf
   std::vector<GeTensorDescPtr> res(output_names.size(), nullptr);
 
   for (size_t i = 0; i < output_num; ++i) {
-    if (AclUtils::GetOutputKernelIdxByGraphIdx(anf_node, i) < 0) {
+    auto index = AclUtils::GetOutputKernelIdxByGraphIdx(anf_node, i);
+    if (index < 0) {
       continue;
     }
     auto output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, i);
@@ -707,8 +706,8 @@ std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf
     ori_shape = UpdateShape(ori_shape, output_format, anf_node);
     auto output_desc = GeOpConvertor::GetTensorDesc(output_shape, output_type, output_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(output_desc);
-    output_desc->SetName(output_names[i]);
-    res[i] = output_desc;
+    output_desc->SetName(output_names[index]);
+    res[index] = output_desc;
   }
   return res;
 }
