@@ -25,8 +25,8 @@ void PostConvFuncCommInt8(const int32_t *in, int8_t *out, const int32_t *bias, s
   }
   for (int r = 0; r < plane; r++) {
     for (int c = 0; c < oc; c++) {
-      int c8div = c / size, c8mod = c % size;
-      int src_index = c8div * in_plane_stride + r * size + c8mod;
+      int c4div = c / size, c4mod = c % size;
+      int src_index = c4div * in_plane_stride + r * size + c4mod;
       int dst_index = r * out_oc_stride + c;
       int32_t value = in[src_index];
       if (bias != NULL) {
