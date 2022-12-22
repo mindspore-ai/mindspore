@@ -532,8 +532,7 @@ void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceConte
     }
     auto inputs = CreateKernelInputAddress(runtime_info);
 
-    opt::dynamic_shape::InferOpDynamic(node);
-    opt::dynamic_shape::SetOpArgs(node);
+    InferNodeRealShape(node);
 
     runtime::DeviceAddressUtils::CreateKernelOutputDeviceAddress(device_context, graph, is_gradient_out);
     runtime::DeviceAddressUtils::UpdateDeviceAddressForInplaceNode(graph);
