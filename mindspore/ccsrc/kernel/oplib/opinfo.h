@@ -123,6 +123,7 @@ class OpInfo {
   std::string range_limit() const { return range_limit_; }
   const std::vector<std::string> &sagt_key_attrs() const { return sagt_key_attrs_; }
   std::string slice_pattern() const { return slice_pattern_; }
+  std::string prebuild_pattern() const { return prebuild_pattern_; }
   // Attr
   std::string impl_path() const { return impl_path_; }
   std::string processor() const { return processor_; }
@@ -160,6 +161,7 @@ class OpInfo {
   void set_range_limit(const std::string &range_limit) { range_limit_ = range_limit; }
   void set_sagt_key_attrs(const std::vector<std::string> &sagt_key_attrs) { sagt_key_attrs_ = sagt_key_attrs; }
   void set_slice_pattern(const std::string &slice_pattern) { slice_pattern_ = slice_pattern; }
+  void set_prebuild_pattern(const std::string &prebuild_pattern) { prebuild_pattern_ = prebuild_pattern; }
 
   void set_impl_path(const std::string &impl_path) { impl_path_ = impl_path; }
   void set_processor(const std::string &processor) { processor_ = processor; }
@@ -209,6 +211,7 @@ class OpInfo {
   std::string range_limit_;
   std::vector<std::string> sagt_key_attrs_ = {};
   std::string slice_pattern_;
+  std::string prebuild_pattern_;
   // Attr info
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr_;
   // Input/Output info
