@@ -78,12 +78,12 @@ class MirrorPadInfer : public abstract::OpInferBase {
     auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
     auto mode = GetValue<std::string>(primitive->GetAttr(kMode));
     CheckPaddingParam(paddings_shape, x_shape, prim_name);
-    for (size_t i = 0; i < paddings_arg.size(); i = i + kPaddingsSecondDimSize) {
+    for (size_t i = 0; i < paddings_arg.size(); i = i + static_cast<size_t>(kPaddingsSecondDimSize)) {
       paddings_attr.push_back(std::make_pair(paddings_arg[i], paddings_arg[i + 1]));
     }
     (void)CheckAndConvertUtils::CheckInteger(kPaddingsSize, SizeToLong(paddings_attr.size()), kEqual,
                                              SizeToLong(x_shape.size()), prim_name);
-    int64_t size = x_shape.size();
+    int64_t size = static_cast<int64_t>(x_shape.size());
     if (size < 0 || size > MAX_PADDINGS) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
                                << "', the dimension of input only supports less than or equal to 5 dims, but got "
@@ -97,20 +97,22 @@ class MirrorPadInfer : public abstract::OpInferBase {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', all elements of paddings must be >= 0.";
       }
       if (mode == "SYMMETRIC") {
-        if (paddings_attr[i].first > x_shape[i] || paddings_attr[i].second > x_shape[i]) {
+        if (paddings_attr[i].first > static_cast<int64_t>(x_shape[i]) ||
+            paddings_attr[i].second > static_cast<int64_t>(x_shape[i])) {
           MS_EXCEPTION(ValueError) << "For '" << prim_name
                                    << "', paddings must be no greater "
                                       "than the dimension size: ["
                                    << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] greater than ["
-                                   << x_shape[i] << "]";
+                                   << static_cast<int64_t>(x_shape[i]) << "]";
         }
       } else if (mode == "REFLECT") {
-        if (paddings_attr[i].first >= x_shape[i] || paddings_attr[i].second >= x_shape[i]) {
+        if (paddings_attr[i].first >= static_cast<int64_t>(x_shape[i]) ||
+            paddings_attr[i].second >= static_cast<int64_t>(x_shape[i])) {
           MS_EXCEPTION(ValueError) << "For '" << prim_name
                                    << "', paddings must be no greater "
                                       "than the dimension size: ["
                                    << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] not less than ["
-                                   << x_shape[i] << "]";
+                                   << static_cast<int64_t>(x_shape[i]) << "]";
         }
       }
     }
