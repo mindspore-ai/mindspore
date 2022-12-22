@@ -31,21 +31,34 @@ ParallelThreadPoolManager *ParallelThreadPoolManager::GetInstance() {
 }
 
 void ParallelThreadPoolManager::Init(bool enable_shared_thread_pool, const std::string &runner_id, int worker_num,
-                                     int remaining_thread_num) {
+                                     int remaining_thread_num, int thread_num_limit) {
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
+  enable_shared_thread_pool_ = enable_shared_thread_pool;
   if (!enable_shared_thread_pool) {
     THREAD_INFO("not enable shared parallel thread pool.");
     return;
   }
-  enable_shared_thread_pool_ = enable_shared_thread_pool;
   std::vector<ParallelThreadPool *> runner_pools(worker_num, nullptr);
   runner_id_pools_[runner_id] = runner_pools;
   remaining_thread_num_ = remaining_thread_num;
+  thread_num_limit_ = thread_num_limit;
 }
 
 void ParallelThreadPoolManager::SetHasIdlePool(bool is_idle) { has_idle_pool_ = is_idle; }
 
-int ParallelThreadPoolManager::GetThreadPoolSize() { return pool_workers_.begin()->second.size(); }
+int ParallelThreadPoolManager::GetTaskNum() {
+  std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
+  if (!enable_shared_thread_pool_) {
+    THREAD_INFO("not enable shared parallel thread pool.");
+    return -1;
+  }
+  return thread_num_limit_;
+}
+
+int ParallelThreadPoolManager::GetThreadPoolSize() {
+  std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
+  return pool_workers_.begin()->second.size();
+}
 
 void ParallelThreadPoolManager::BindPoolToRunner(
   ThreadPool *pool, const std::map<std::string, std::map<std::string, std::string>> *config_info) {
@@ -80,7 +93,10 @@ void ParallelThreadPoolManager::BindPoolToRunner(
   }
 }
 
-bool ParallelThreadPoolManager::GetEnableSharedThreadPool() { return enable_shared_thread_pool_; }
+bool ParallelThreadPoolManager::GetEnableSharedThreadPool() {
+  std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
+  return enable_shared_thread_pool_;
+}
 
 void ParallelThreadPoolManager::ActivatePool(const std::string &runner_id, int model_id) {
   std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);

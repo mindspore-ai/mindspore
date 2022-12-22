@@ -65,7 +65,8 @@ TEST_F(ModelParallelRunnerTest, RunnerConfigWithContext) {
 
   auto context = std::make_shared<Context>();
   ASSERT_NE(nullptr, context);
-  context->SetThreadNum(1);
+  context->SetThreadNum(2);
+  context->SetInterOpParallelNum(2);
   auto &device_list = context->MutableDeviceInfo();
   auto device_info = std::make_shared<mindspore::CPUDeviceInfo>();
   ASSERT_NE(nullptr, device_info);
@@ -85,7 +86,8 @@ TEST_F(ModelParallelRunnerTest, RunnerGetInput) {
 
   auto context = std::make_shared<Context>();
   ASSERT_NE(nullptr, context);
-  context->SetThreadNum(1);
+  context->SetThreadNum(2);
+  context->SetInterOpParallelNum(2);
   auto &device_list = context->MutableDeviceInfo();
   auto device_info = std::make_shared<mindspore::CPUDeviceInfo>();
   ASSERT_NE(nullptr, device_info);
@@ -107,7 +109,8 @@ TEST_F(ModelParallelRunnerTest, RunnerGetOutput) {
 
   auto context = std::make_shared<Context>();
   ASSERT_NE(nullptr, context);
-  context->SetThreadNum(1);
+  context->SetThreadNum(2);
+  context->SetInterOpParallelNum(2);
   auto &device_list = context->MutableDeviceInfo();
   auto device_info = std::make_shared<mindspore::CPUDeviceInfo>();
   ASSERT_NE(nullptr, device_info);
@@ -130,6 +133,7 @@ TEST_F(ModelParallelRunnerTest, PredictWithoutInput) {
   auto context = std::make_shared<Context>();
   ASSERT_NE(nullptr, context);
   context->SetThreadNum(2);
+  context->SetInterOpParallelNum(2);
   auto &device_list = context->MutableDeviceInfo();
   auto device_info = std::make_shared<mindspore::CPUDeviceInfo>();
   ASSERT_NE(nullptr, device_info);

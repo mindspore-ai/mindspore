@@ -53,15 +53,15 @@
 #include "include/registry/register_kernel_interface.h"
 #include "extendrt/mindir_loader/abstract_base_model.h"
 #include "src/runtime/pack_weight_manager.h"
+#ifdef PARALLEL_INFERENCE
 #include "thread/parallel_thread_pool_manager.h"
+#endif
 
 using AbstractBaseModel = mindspore::infer::AbstractBaseModel;
 
 namespace mindspore::lite {
 namespace {
 constexpr int kMainSubGraphIndex = 0;
-constexpr int kMaxThreadNumTimes = 5;
-constexpr int kDefaultThreadNumTimes = 2;
 }  // namespace
 
 namespace {
@@ -1045,38 +1045,6 @@ void Scheduler::ResetByExecutionPlan(std::string node_name, TypeId *data_type) {
   return;
 }
 
-STATUS Scheduler::ParseThreadNumLimit(int *thread_num_limit) {
-  *thread_num_limit = -1;
-  if (config_info_ == nullptr) {
-    return RET_OK;
-  }
-  auto shared_thread_pool = config_info_->find(kSharedThreadPool);
-  if (shared_thread_pool == config_info_->end()) {
-    return RET_OK;
-  }
-  auto shared_thread_pool_param = shared_thread_pool->second;
-  if (shared_thread_pool_param.find(kEnable) != shared_thread_pool_param.end() &&
-      shared_thread_pool_param[kEnable] == "true") {
-    if (shared_thread_pool_param.find(kThreadNumLimitPerWorker) != shared_thread_pool_param.end() &&
-        !shared_thread_pool_param[kThreadNumLimitPerWorker].empty()) {
-      *thread_num_limit = std::atoi(shared_thread_pool_param[kThreadNumLimitPerWorker].c_str());
-    } else {
-      *thread_num_limit = context_->thread_num_ * kDefaultThreadNumTimes;
-    }
-  }
-  if (*thread_num_limit <= 0) {
-    MS_LOG(ERROR) << "thread_num_limit is invalid, thread_num_limit: " << *thread_num_limit;
-    return RET_ERROR;
-  }
-  if (*thread_num_limit > context_->thread_num_ * kMaxThreadNumTimes) {
-    MS_LOG(ERROR) << "thread num limit: " << *thread_num_limit
-                  << " is more than 5 times thread num: " << context_->thread_num_
-                  << ", change it to 5 times thread num. Please check whether Thread num is reasonable.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
 int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                              OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type,
                              kernel::KernelExec **kernel) {
@@ -1109,16 +1077,13 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
       return RET_NOT_SUPPORT;
     }
   }
+#ifdef PARALLEL_INFERENCE
   // reset op task num, The number of operator segmentation tasks is not necessarily equal to the number of threads
-  int thread_num_limit = -1;
-  ret = ParseThreadNumLimit(&thread_num_limit);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ParseThreadNumLimit failed.";
-    return RET_ERROR;
-  }
+  int thread_num_limit = ParallelThreadPoolManager::GetInstance()->GetTaskNum();
   if (thread_num_limit != -1 && IsSharedThreadPoolOp(op_type)) {
     op_parameter->thread_num_ = thread_num_limit;
   }
+#endif
   ret = KernelRegistry::GetInstance()->GetKernelExec(in_tensors, out_tensors, context_, ms_context_, cpu_desc,
                                                      op_parameter, kernel);
   if (ret == RET_OK) {

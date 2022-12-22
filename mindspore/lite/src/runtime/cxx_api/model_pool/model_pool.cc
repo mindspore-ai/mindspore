@@ -36,6 +36,7 @@ constexpr int kDefaultThreadsNum = 8;
 constexpr int kInvalidNumaId = -1;
 constexpr int kNumDefaultInterOpParallel = 4;
 constexpr int kCoreNumTimes = 5;
+constexpr int kDefaultThreadNumTimes = 2;
 }  // namespace
 
 int ModelPool::GetDefaultThreadNum(int worker_num) {
@@ -356,6 +357,10 @@ std::shared_ptr<Context> ModelPool::GetInitContext(const std::shared_ptr<RunnerC
     std::vector<int> empty = {};
     context->SetThreadAffinity(empty);
   }
+  if (context->GetEnableParallel()) {
+    MS_LOG(WARNING)
+      << "EnableParallel parameter is not recommended in parallel inference, InterOpParallelNum is recommended";
+  }
   return context;
 }
 
@@ -654,8 +659,9 @@ Status ModelPool::CheckSharingThreadPoolParam(const ModelPoolConfig &model_pool_
     return kSuccess;
   }
   if (model_pool_config.front()->context->GetInterOpParallelNum() <= 1) {
-    MS_LOG(ERROR) << "If you want to enable thread pool sharing, please enable parallelThreadPool";
-    return kLiteError;
+    enable_shared_thread_pool_ = false;
+    MS_LOG(WARNING) << "Not enable parallelThreadPool, not enable sharing thread pool.";
+    return kSuccess;
   }
   if (remaining_thread_num_ < 0) {
     MS_LOG(ERROR) << "remaining thread num is invalid, remaining_thread_num_: " << remaining_thread_num_;
@@ -666,8 +672,21 @@ Status ModelPool::CheckSharingThreadPoolParam(const ModelPoolConfig &model_pool_
                   << remaining_thread_num_ << ", thread num: " << model_pool_config.front()->context->GetThreadNum();
     return kLiteParamInvalid;
   }
-  ParallelThreadPoolManager::GetInstance()->Init(enable_shared_thread_pool_, runner_id_, workers_num_,
-                                                 remaining_thread_num_);
+  if (thread_num_limit_ == 0) {
+    thread_num_limit_ = model_pool_config.front()->context->GetThreadNum() * kDefaultThreadNumTimes;
+  }
+  if (thread_num_limit_ <= model_pool_config.front()->context->GetThreadNum()) {
+    MS_LOG(ERROR) << "thread_num_limit_ is:" << thread_num_limit_ << "  thread num."
+                  << model_pool_config.front()->context->GetThreadNum()
+                  << " thread_num_limit_ should more than thread num.";
+    return kLiteParamInvalid;
+  }
+  if (thread_num_limit_ > model_pool_config.front()->context->GetThreadNum() * kCoreNumTimes) {
+    MS_LOG(ERROR) << "thread num limit: " << thread_num_limit_
+                  << " is more than 5 times thread num: " << model_pool_config.front()->context->GetThreadNum()
+                  << ", change it to 5 times thread num. Please check whether Thread num is reasonable.";
+    return kLiteParamInvalid;
+  }
   return kSuccess;
 }
 
@@ -687,6 +706,11 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
     MS_LOG(ERROR) << "CheckSharingThreadPoolParam failed.";
     return kLiteError;
   }
+  MS_LOG(INFO) << "runner_id_: " << runner_id_ << " | enable_shared_thread_pool_: " << enable_shared_thread_pool_
+               << " | workers_num_: " << workers_num_ << " | remaining_thread_num_: " << remaining_thread_num_
+               << " | thread_num_limit_: " << thread_num_limit_;
+  ParallelThreadPoolManager::GetInstance()->Init(enable_shared_thread_pool_, runner_id_, workers_num_,
+                                                 remaining_thread_num_, thread_num_limit_);
   for (size_t i = 0; i < workers_num_; i++) {
     ids[lite::kInnerModelID] = std::to_string(i);
     model_pool_config[i]->config_info[lite::kInnerIDs] = ids;
@@ -797,26 +821,43 @@ Status ModelPool::ParseSharedThreadPoolParam(const std::shared_ptr<RunnerConfig>
   if (shared_thread_pool == config_info.end()) {
     return kSuccess;
   }
-  int remaining_thread_num = 0;
   auto shared_thread_pool_param = shared_thread_pool->second;
-  if (shared_thread_pool_param.find(lite::kEnable) != shared_thread_pool_param.end() &&
-      shared_thread_pool_param[lite::kEnable] == "true" &&
+  if (shared_thread_pool_param.find(lite::kEnable) == shared_thread_pool_param.end()) {
+    return kLiteParamInvalid;
+  }
+  if (shared_thread_pool_param[lite::kEnable] == "false") {
+    MS_LOG(INFO) << "Not use shared thread pool";
+    enable_shared_thread_pool_ = false;
+    return kSuccess;
+  }
+  if (shared_thread_pool_param[lite::kEnable] == "true") {
+    if (shared_thread_pool_param.find(lite::kThreadNumLimitPerWorker) != shared_thread_pool_param.end() &&
+        !shared_thread_pool_param[lite::kThreadNumLimitPerWorker].empty()) {
+      thread_num_limit_ = std::atoi(shared_thread_pool_param[lite::kThreadNumLimitPerWorker].c_str());
+      if (thread_num_limit_ <= 0) {
+        MS_LOG(ERROR) << "thread_num_limit is invalid, thread_num_limit: " << thread_num_limit_;
+        return kLiteParamInvalid;
+      }
+    }
+  }
+  if (shared_thread_pool_param[lite::kEnable] == "true" &&
       shared_thread_pool_param.find(lite::kThreadNumLimitPerWorker) != shared_thread_pool_param.end()) {
     MS_LOG(INFO) << "use shared thread pool";
     enable_shared_thread_pool_ = true;
     if (shared_thread_pool_param.find(lite::kThreadNumRemainingPerWorker) != shared_thread_pool_param.end()) {
       if (!shared_thread_pool_param[lite::kThreadNumRemainingPerWorker].empty()) {
         remaining_thread_num_ = std::atoi(shared_thread_pool_param[lite::kThreadNumRemainingPerWorker].c_str());
+        if (remaining_thread_num_ < 0) {
+          MS_LOG(ERROR) << "remaining_thread_num_ is invalid, remaining_thread_num_: " << remaining_thread_num_;
+          return kLiteParamInvalid;
+        }
       } else {
         MS_LOG(INFO) << "not set thread_num_remaining_per_worker param, default remaining thread num is 0.";
       }
     }
-  } else {
-    MS_LOG(ERROR) << "Set shared thread pool param failed.";
-    return kLiteParamInvalid;
   }
-  MS_LOG(INFO) << "use thread pool shared, remaining thread num: " << remaining_thread_num
-               << " | Limit thread num: " << shared_thread_pool_param[lite::kThreadNumLimitPerWorker];
+  MS_LOG(INFO) << "use thread pool shared, remaining thread num: " << remaining_thread_num_
+               << " | Limit thread num: " << thread_num_limit_;
   return kSuccess;
 }
 
@@ -824,7 +865,8 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   model_path_ = model_path;
   auto status = ParseSharedThreadPoolParam(runner_config);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "ParseSharedThreadPoolParam failed, Not use thread pool shared.";
+    MS_LOG(WARNING) << "ParseSharedThreadPoolParam failed, Not use thread pool shared.";
+    enable_shared_thread_pool_ = false;
   }
   status = CanUseAllPhysicalResources();
   if (status != kSuccess) {
