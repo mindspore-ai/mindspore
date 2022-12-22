@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_SPARSE_APPLY_R_M_S_PROP_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_SPARSE_APPLY_R_M_S_PROP_GPU_KERNEL_H_
 
-#include <vector>
 #include <algorithm>
-#include <iostream>
-#include <utility>
-#include <memory>
 #include <functional>
+#include <iostream>
 #include <map>
+#include <memory>
 #include <string>
+#include <vector>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sparse_apply_r_m_s_prop_impl.cuh"

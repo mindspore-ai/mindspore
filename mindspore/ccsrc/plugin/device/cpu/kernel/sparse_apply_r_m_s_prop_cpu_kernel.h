@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SPARSE_APPLY_R_M_S_PORP_H_
 
 #include <map>
-#include <vector>
 #include <utility>
+#include <vector>
 #include "plugin/device/cpu/kernel/sparse_optimizer_cpu_kernel.h"
 
 namespace mindspore {
@@ -49,13 +49,13 @@ class SparseApplyRMSPropCpuKernelMod : public SparseOptimizerCpuKernelMod,
   void ResetResource() noexcept;
 
  private:
-  template <typename I, typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  template <typename T, typename I>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &);
 
-  float rho_;
-  float momentum_;
-  float epsilon_;
+  float rho_{-1};
+  float momentum_{-1};
+  float epsilon_{-1};
   ShapeVector var_shape_;
 };
 }  // namespace kernel
