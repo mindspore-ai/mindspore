@@ -17,7 +17,7 @@
 import numpy as np
 import pytest
 
-from mindspore import Tensor
+from mindspore import Tensor, jit
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 import mindspore.context as context
@@ -224,3 +224,32 @@ def test_print_tensor_dtype_in_nested_tuple(mode):
     y = Tensor([1, 2], dtype=ms.int32)
     net = PrintDtypeNet()
     net(x, y)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+def test_print_abs():
+    """
+    Feature: Print op.
+    Description: Print the result of max.
+    Expectation: success.
+    """
+    @jit
+    def function():
+        tuple_x = (Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32"))
+        sum_x = Tensor(0).astype("float32")
+        max_x = Tensor(0).astype("float32")
+        for i in range(3):
+            max_x = max(tuple_x)
+            sum_x += max_x
+            print(max_x)
+            print(i)
+        for x in zip(tuple_x):
+            sum_x = sum(x, sum_x)
+            print(sum_x)
+        return sum_x
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    out = function()
+    print("out:", out)
