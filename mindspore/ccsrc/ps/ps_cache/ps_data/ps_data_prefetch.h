@@ -57,6 +57,8 @@ class EXPORT PsDataPrefetch {
   std::condition_variable data_process_;
   std::atomic_bool need_wait_{true};
   std::atomic_bool invalid_data_type_{false};
+  // Ensure that the Finalize function is multithreaded safe.
+  std::mutex finalize_mutex_;
 };
 }  // namespace ps
 }  // namespace mindspore

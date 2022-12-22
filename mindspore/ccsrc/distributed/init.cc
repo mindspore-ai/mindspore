@@ -75,7 +75,10 @@ bool InitializeCluster() {
     if (graph_scheduler.initialized() && graph_scheduler.rpc_node_scheduler() != nullptr) {
       graph_scheduler.rpc_node_scheduler()->Abort();
     }
-    runtime::EmbeddingCacheScheduler::GetInstance().Finalize();
+
+    MS_LOG(INFO) << "Begin finalize the EmbeddingCacheScheduler.";
+    runtime::EmbeddingCacheScheduler::GetInstance().Finalize(false);
+    MS_LOG(INFO) << "End finalize the EmbeddingCacheScheduler.";
   });
   node->set_abnormal_callback(callback);
 

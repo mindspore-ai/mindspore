@@ -40,6 +40,9 @@
 #include "distributed/init.h"
 #include "distributed/recovery/recovery_context.h"
 #include "distributed/collective/collective_manager.h"
+#if defined(__linux__) && defined(WITH_BACKEND)
+#include "runtime/graph_scheduler/embedding_cache_scheduler.h"
+#endif
 #include "frontend/parallel/tensor_layout/tensor_transform.h"
 
 #include "pybind_api/gil_scoped_long_running.h"
@@ -428,6 +431,12 @@ PYBIND11_MODULE(_c_expression, m) {
       MS_LOG(ERROR) << "Failed to parse profiler data." << e.what();
     }
 #endif
+
+#if defined(__linux__) && defined(WITH_BACKEND)
+    mindspore::runtime::EmbeddingCacheScheduler::GetInstance().Finalize(
+      !mindspore::distributed::cluster_exit_with_exception());
+#endif
+
 #ifdef ENABLE_MINDDATA
     MS_LOG(INFO) << "Start releasing dataset handles...";
     py::module iterators = py::module::import("mindspore.dataset.engine.iterators");

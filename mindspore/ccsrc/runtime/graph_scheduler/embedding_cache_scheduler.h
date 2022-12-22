@@ -59,7 +59,7 @@ class BACKEND_EXPORT EmbeddingCacheScheduler {
   void SyncEmbeddingTable() const;
 
   // Finalize embedding cache prefetch actor.
-  void Finalize();
+  void Finalize(bool sync_embedding_table = true);
 
  private:
   EmbeddingCacheScheduler() = default;
@@ -87,6 +87,8 @@ class BACKEND_EXPORT EmbeddingCacheScheduler {
   bool scheduled_{false};
   // The flag indicates whether the EmbeddingCacheScheduler is finalized.
   bool finalized_{false};
+  // Ensure that the Finalize function is multithreaded safe.
+  std::mutex finalize_mutex_;
 
   // Record data set channel name, used for multi dataset mode, such as predict after train.
   // Key: data prepare actor id for an actor set, Value: data set channel name.
