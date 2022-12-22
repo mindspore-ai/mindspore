@@ -2264,6 +2264,11 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
         validator.check_tensor_dtype_valid("x", x['dtype'], valid_type, self.name)
         validator.check_tensor_dtype_valid("segment_ids", segment_ids['dtype'], [mstype.int32, mstype.int64], self.name)
 
+        # support vmap : segment_ids_shape support batch rank
+        if not hasattr(self, 'batch_rank'):
+            if not is_dim_unknown(x_shape) and not is_dim_unknown(segment_ids_shape):
+                validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
+
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.number], self.name)
         if not is_shape_unknown(x_shape) and not is_shape_unknown(segment_ids_shape):
@@ -2368,6 +2373,11 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         validator.check_tensor_dtype_valid("x", x['dtype'], valid_type, self.name)
         validator.check_tensors_dtypes_same_and_valid({"segment_ids": segment_ids['dtype']},
                                                       [mstype.int32, mstype.int64], self.name)
+
+        # support vmap : segment_ids_shape support batch rank
+        if not hasattr(self, 'batch_rank'):
+            if not is_dim_unknown(x_shape) and not is_dim_unknown(segment_ids_shape):
+                validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
 
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.number], self.name)

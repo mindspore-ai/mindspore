@@ -195,7 +195,6 @@ bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   init_seed_ = LongToUint(seed_);
   // check the attribute, inputs and outputs
   CheckAttribute();
-  CheckInputsAndOutputs(inputs, outputs);
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
