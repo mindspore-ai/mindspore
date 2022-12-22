@@ -53,6 +53,8 @@
 // w16  hw  loop control
 
 asm_function PostFuncInt8C4Neon64
+  sub sp, sp, #16
+  stp x24, x25, [sp], #16
 
   ldr w8, [sp]
   ldr w9, [sp, #8]
@@ -68,10 +70,10 @@ asm_function PostFuncInt8C4Neon64
   dup v30.4s, w11
   dup v31.4s, w12
 
-  mov w15, #0
+  mov x15, #0
 
 Loop_C4:
-  cmp w15, w3
+  cmp x15, x3
   beq Loop_C1
   mov x25,  #4
   mul x24, x15, x25
@@ -81,9 +83,9 @@ Loop_C4:
   ld1 {v16.4s}, [x1], #16
 
 Loop_4x4:
-  cmp w16, #4
+  cmp x16, #4
   blt Loop_1x4
-  sub w16, w16, #4
+  sub x16, x16, #4
   ld1 {v0.4s, v1.4s, v2.4s, v3.4s}, [x0], #64
 
   add v0.4s, v0.4s, v16.4s
@@ -135,17 +137,17 @@ Loop_4x4:
   sqxtn v2.8b, v6.8h
   sqxtn v3.8b, v7.8h
 
-  st1 {v0.s}[0], [x2], x6
-  st1 {v1.s}[0], [x2], x6
-  st1 {v2.s}[0], [x2], x6
-  st1 {v3.s}[0], [x2], x6
+  st1 {v0.s}[0], [x25], x6
+  st1 {v1.s}[0], [x25], x6
+  st1 {v2.s}[0], [x25], x6
+  st1 {v3.s}[0], [x25], x6
   b Loop_4x4
 
 
 Loop_1x4:
-  cmp w16, #0
+  cmp x16, #0
   beq Loop_C4
-  sub w16, w16, #1
+  sub x16, x16, #1
   ld1 {v0.4s}, [x0], #16
 
   add v0.4s, v0.4s, v16.4s
@@ -161,13 +163,13 @@ Loop_1x4:
   sqxtn v1.4h, v0.4s
   sqxtn v0.8b, v1.8h
 
-  st1 {v0.s}[0], [x2], x6
+  st1 {v0.s}[0], [x25], x6
   b Loop_1x4
 
 Loop_C1:
   cmp x4, #0
   beq End
-  mov w16, w5
+  mov x16, x5
   ld1 {v16.4s}, [x1], #16
   mov x25,  #4
   mul x24, x15, x25
@@ -182,9 +184,9 @@ Loop_C1:
   beq Loop_C1_3
 
 Loop_C1_1:
-  cmp w16, #0
+  cmp x16, #0
   beq End
-  sub w16, w16, #1
+  sub x16, x16, #1
   ld1 {v0.4s}, [x0], #16
 
   add v0.4s, v0.4s, v16.4s
@@ -205,9 +207,9 @@ Loop_C1_1:
 
 
 Loop_C1_2:
-  cmp w16, #0
+  cmp x16, #0
   beq End
-  sub w16, w16, #1
+  sub x16, x16, #1
   ld1 {v0.4s}, [x0], #16
 
   add v0.4s, v0.4s, v16.4s
@@ -228,9 +230,9 @@ Loop_C1_2:
 
 
 Loop_C1_3:
-  cmp w16, #0
+  cmp x16, #0
   beq End
-  sub w16, w16, #1
+  sub x16, x16, #1
   ld1 {v0.4s}, [x0], #16
 
   add v0.4s, v0.4s, v16.4s
@@ -252,5 +254,7 @@ Loop_C1_3:
 
 
 End:
+  sub sp, sp, #16
+  ldp x24, x25, [sp], #16
   ret
 #endif
