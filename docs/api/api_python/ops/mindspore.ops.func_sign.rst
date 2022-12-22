@@ -12,8 +12,6 @@ mindspore.ops.sign
                            1 & \text{x} > 0
                          \end{cases}
 
-    如果输入为nan则返回0。
-
     参数：
         - **x** (Tensor) - 输入Tensor。
 

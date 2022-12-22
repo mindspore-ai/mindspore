@@ -1689,8 +1689,6 @@ def sign(x):
                         \frac{{\text{x}_i}}{|{\text{x}_i}|} & \text{otherwise}
                         \end{cases}
 
-    0 is returned for nan inputs.
-
     Args:
         x (Tensor): Input Tensor.
 
@@ -1772,7 +1770,7 @@ def sgn(x):
         TypeError: If input is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -3966,7 +3964,7 @@ def nan_to_num(x, nan=0.0, posinf=None, neginf=None):
         TypeError: If dtype of `x` is not float16 or float32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([float('nan'), float('inf'), -float('inf'), 3.14]), mindspore.float32)
@@ -4536,7 +4534,7 @@ def reciprocal(x):
         >>> print(output)
         [1.   0.5  0.25]
     """
-    if not ops.is_floating_point(x):
+    if not is_complex(x) and not ops.is_floating_point(x):
         x = ops.cast(x, mstype.float32)
     return _get_cache_prim(ops.Reciprocal)()(x)
 

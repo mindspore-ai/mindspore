@@ -2456,7 +2456,7 @@ def pad(input_x, padding, mode='constant', value=None):
         ValueError: If mode is not "constant" and value not None.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
