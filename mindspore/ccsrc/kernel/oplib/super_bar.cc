@@ -27,8 +27,7 @@ constexpr auto kNodeName = "NodeName";
 constexpr auto kInputOrders = "InputOrders";
 constexpr auto kSkipNodes = "SkipNodes";
 constexpr auto kSkipDynamicCompileStatic = "SkipDynamicCompileStatic";
-bool SuperBar::LoadSBConfig(const std::string &super_bar_config) {
-  auto js = nlohmann::json::parse(super_bar_config);
+bool SuperBar::LoadSBConfig(const nlohmann::json &js) {
   if (!LoadSBNodeAttr(js)) {
     return false;
   }

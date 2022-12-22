@@ -28,7 +28,7 @@ class BACKEND_EXPORT SuperBar {
  public:
   SuperBar() = default;
   ~SuperBar() = default;
-  static bool LoadSBConfig(const std::string &super_bar_config);
+  static bool LoadSBConfig(const nlohmann::json &js);
   static std::string GetSBMSAttrByKernelAttr(const std::string &op_name, const std::string &attr_name);
   static std::string GetSBKernelAttrByMSAttr(const std::string &op_name, const std::string &attr_name);
   static std::string GetSBNodeAttrDefaultValue(const std::string &op_name, const std::string &attr_name);

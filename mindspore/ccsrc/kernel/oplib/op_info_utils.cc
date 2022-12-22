@@ -27,8 +27,10 @@
 #include "kernel/oplib/super_bar.h"
 #include "kernel/oplib/oplib.h"
 #include "utils/file_utils.h"
+#include "utils/dlopen_macro.h"
 
 namespace mindspore::kernel {
+namespace {
 constexpr auto kVersion910A = "Ascend910A";
 constexpr auto kVersion910ProA = "Ascend910ProA";
 constexpr auto kVersion910PremiumA = "Ascend910PremiumA";
@@ -60,6 +62,55 @@ static const std::map<std::string, OpPattern> kPatternMap = {
   } catch (std::exception & e) {                                \
     MS_LOG(EXCEPTION) << "Make share ptr failed: " << e.what(); \
   }
+
+#if !defined(_WIN32) && !defined(_WIN64)
+bool LoadSuperBarFile(nlohmann::json *super_bar) {
+  Dl_info dl_info;
+  if (dladdr(reinterpret_cast<void *>(LoadSuperBarFile), &dl_info) == 0) {
+    MS_LOG(ERROR) << "Get dladdr error";
+    return false;
+  }
+  std::string cur_so_path = dl_info.dli_fname;
+  auto pos = cur_so_path.find_last_of(PATH_SEPARATOR);
+  if (cur_so_path.empty() || pos == std::string::npos) {
+    MS_LOG(ERROR) << "Current so path is empty or the path [" << cur_so_path << "] is invalid.";
+    return false;
+  }
+
+  auto super_bar_path = cur_so_path.substr(0, pos) + "/../config/super_bar_config.json";
+  if (super_bar_path.size() >= PATH_MAX) {
+    MS_LOG(ERROR) << "Current path [" << super_bar_path << "] length " << super_bar_path.size() << " exceeds the limit "
+                  << PATH_MAX;
+    return false;
+  }
+
+  char real_path_mem[PATH_MAX] = {0};
+  if (realpath(common::SafeCStr(super_bar_path), real_path_mem) == nullptr) {
+    super_bar_path = cur_so_path.substr(0, pos) + "/../../../../config/super_bar_config.json";
+    if (super_bar_path.size() >= PATH_MAX) {
+      MS_LOG(ERROR) << "Current path [" << super_bar_path << "] length " << super_bar_path.size()
+                    << " exceeds the limit " << PATH_MAX;
+      return false;
+    }
+
+    if (realpath(common::SafeCStr(super_bar_path), real_path_mem) == nullptr) {
+      MS_LOG(ERROR) << "The file of super_bar_config.json is not exists in path: [" << super_bar_path << "], ";
+      return false;
+    }
+  }
+
+  auto file_path = std::string(real_path_mem);
+  std::ifstream file(file_path);
+  if (!file.is_open()) {
+    MS_LOG(ERROR) << "Open op info file failed, real_path: " << file_path;
+    return false;
+  }
+  file >> (*super_bar);
+  file.close();
+  return true;
+}
+#endif
+}  // namespace
 
 bool OpInfoUtils::GenerateOpInfos(const std::string &version) {
   // Step1: Load json file
@@ -116,6 +167,14 @@ bool OpInfoUtils::GenerateOpInfos(const std::string &version) {
 }
 
 bool OpInfoUtils::LoadOpInfoJson(const std::string &version, nlohmann::json *js_) {
+#if !defined(_WIN32) && !defined(_WIN64)
+  nlohmann::json super_bar;
+  if (!LoadSuperBarFile(&super_bar)) {
+    MS_LOG(ERROR) << "Load super bar file failed.";
+    return false;
+  }
+  SuperBar::LoadSBConfig(super_bar);
+#endif
   std::string dir = common::GetEnv("MINDSPORE_OP_INFO_JSON_PATH");
   if (dir.empty()) {
     // normal path
