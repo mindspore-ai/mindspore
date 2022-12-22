@@ -114,7 +114,7 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
   auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
 
   auto output_addr = AnfAlgo::GetMutableOutputAddr(real_input, real_input_index, skip_nop_node);
-  if (output_addr != nullptr && output_addr->GetPtr() != nullptr) {
+  if (output_addr != nullptr && output_addr->IsPtrValid()) {
     // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
     // address size will be wrong in the dynamic shape scenario.
     out_tensor->set_device_address(output_addr, false);

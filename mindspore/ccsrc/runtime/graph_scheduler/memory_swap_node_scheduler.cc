@@ -32,6 +32,11 @@ constexpr size_t kMinMemReuseFactor = 5;
 constexpr size_t kRetryFactor = 1;
 constexpr size_t kReuseFactorDenominator = 10;
 namespace {
+AbstractActor *GetKernelActor(const CNodePtr &kernel, const KernelGraphPtr &graph, const std::string &actor_set_name) {
+  const auto kernel_type = FetchKernelTransformType(kernel, graph, {}, GraphExecutionStrategy::kPipeline);
+  return FetchActor(kernel_type, actor_set_name, kernel, graph);
+}
+
 AbstractActor *GetEntranceActorByKernelGraph(const ControlNodeParserPtr &parser, const KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(parser);
   const auto func_graph = parser->FetchFuncGraphByKernelGraph(graph);
@@ -52,11 +57,9 @@ AbstractActor *GetExitActorByKernelGraph(const ControlNodeParserPtr &parser, con
   return FetchActor(exit_actor_name);
 }
 
-AbstractActor *GetLatestKernelActor(const KernelGraph *graph, size_t index, const ControlNodeParserPtr &parser) {
+AbstractActor *GetLatestKernelActor(const KernelGraphPtr &graph, size_t index, const ControlNodeParserPtr &parser,
+                                    const std::string &actor_set_name) {
   MS_EXCEPTION_IF_NULL(graph);
-  if (index == 0) {
-    return GetEntranceActorByKernelGraph(parser, graph);
-  }
   AbstractActor *latest_actor = nullptr;
   size_t latest_index = index - 1;
   while (latest_actor == nullptr && latest_index > 0) {
@@ -65,13 +68,14 @@ AbstractActor *GetLatestKernelActor(const KernelGraph *graph, size_t index, cons
       latest_index -= 1;
       continue;
     }
-    latest_actor = FetchActor(latest_kernel->fullname_with_scope());
+    latest_actor = GetKernelActor(latest_kernel, graph, actor_set_name);
     latest_index -= 1;
   }
-  return latest_actor == nullptr ? GetEntranceActorByKernelGraph(parser, graph) : latest_actor;
+  return latest_actor == nullptr ? GetEntranceActorByKernelGraph(parser, graph.get()) : latest_actor;
 }
 
-AbstractActor *GetNextKernelActor(const KernelGraph *graph, size_t index, const ControlNodeParserPtr &parser) {
+AbstractActor *GetNextKernelActor(const KernelGraphPtr &graph, size_t index, const ControlNodeParserPtr &parser,
+                                  const std::string &actor_set_name) {
   MS_EXCEPTION_IF_NULL(graph);
   AbstractActor *next_actor = nullptr;
   size_t next_index = index + 1;
@@ -81,10 +85,10 @@ AbstractActor *GetNextKernelActor(const KernelGraph *graph, size_t index, const 
       next_index += 1;
       continue;
     }
-    next_actor = FetchActor(next_kernel->fullname_with_scope());
+    next_actor = GetKernelActor(next_kernel, graph, actor_set_name);
     next_index += 1;
   }
-  return next_actor == nullptr ? GetExitActorByKernelGraph(parser, graph) : next_actor;
+  return next_actor == nullptr ? GetExitActorByKernelGraph(parser, graph.get()) : next_actor;
 }
 }  // namespace
 std::vector<std::vector<MemSwapActorPtr>> MemorySwapNodeScheduler::Build(const GraphCompilerInfo &graph_compiler_info,
@@ -473,14 +477,15 @@ void MemorySwapNodeScheduler::Link(const GraphCompilerInfo &graph_compiler_info,
       }
     }
     LinkControlArrowBySwapActor(graph_compiler_info.graphs_[i], graph_compiler_info.control_node_parser_,
-                                actor_set->swap_actors_[i]);
+                                actor_set->swap_actors_[i], graph_compiler_info.name_);
   }
   LinkDataArrowForRealParameter();
 }
 
 void MemorySwapNodeScheduler::LinkControlArrowBySwapActor(const KernelGraphPtr &graph,
                                                           const ControlNodeParserPtr &parser,
-                                                          const std::vector<MemSwapActorPtr> &swap_actors) const {
+                                                          const std::vector<MemSwapActorPtr> &swap_actors,
+                                                          const std::string &actor_set_name) const {
   if (swap_actors.empty()) {
     return;
   }
@@ -497,24 +502,22 @@ void MemorySwapNodeScheduler::LinkControlArrowBySwapActor(const KernelGraphPtr &
     AbstractActor *kernel_actor = nullptr;
     if (swap_in_actor != nullptr) {
       if (i != 0) {
-        const auto &pre_kernel_actor = GetLatestKernelActor(graph.get(), i, parser);
+        const auto &pre_kernel_actor = GetLatestKernelActor(graph, i, parser, actor_set_name);
         MS_EXCEPTION_IF_NULL(pre_kernel_actor);
         SchedulerHelper::AddControlArrow(pre_kernel_actor, swap_in_actor.get());
       }
-      kernel_actor = FetchActor(kernel->fullname_with_scope());
+      kernel_actor = GetKernelActor(kernel, graph, actor_set_name);
       MS_EXCEPTION_IF_NULL(kernel_actor);
       SchedulerHelper::AddControlArrow(swap_in_actor.get(), kernel_actor);
     }
     const std::shared_ptr<MemorySwapActor> &swap_out_actor = swap_actors.at(i * kKindOfSwapActor + 1);
     if (swap_out_actor != nullptr) {
-      if (i < graph->execution_order().size()) {
-        const auto &next_kernel_actor = GetNextKernelActor(graph.get(), i, parser);
-        if (next_kernel_actor != nullptr) {
-          SchedulerHelper::AddControlArrow(swap_out_actor.get(), next_kernel_actor);
-        }
+      const auto &next_kernel_actor = GetNextKernelActor(graph, i, parser, actor_set_name);
+      if (next_kernel_actor != nullptr) {
+        SchedulerHelper::AddControlArrow(swap_out_actor.get(), next_kernel_actor);
       }
       if (kernel_actor == nullptr) {
-        kernel_actor = FetchActor(kernel->fullname_with_scope());
+        kernel_actor = GetKernelActor(kernel, graph, actor_set_name);
         MS_EXCEPTION_IF_NULL(kernel_actor);
       }
       SchedulerHelper::AddControlArrow(kernel_actor, swap_out_actor.get());
