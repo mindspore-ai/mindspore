@@ -524,7 +524,7 @@ int LiteSession::CompileGraph(Model *model) {
     // Convert to abstract base model interface
     ret = ConvertTensors(model);
   }
-  if (ret != RET_OK) {
+  if (MS_UNLIKELY(ret != RET_OK)) {
     MS_LOG(ERROR) << "ConvertTensors failed: " << ret;
     is_running_.store(false);
     return ret;
