@@ -1890,6 +1890,45 @@ def cos(x):
     return cos_(x)
 
 
+def cosine_similarity(x1, x2, dim=1, eps=1e-08):
+    r"""
+    Returns cosine similarity between x1 and x2, computed along dim. x1 and x2 must be broadcastable to a common shape.
+
+    .. math::
+        \text{similarity} = \dfrac{x_1 \cdot x_2}{\max(\Vert x_1 \Vert _2 \cdot \Vert x_2 \Vert _2, \epsilon)}
+
+    Args:
+        x1 (Tensor): The first input Tensor.
+        x2 (Tensor): The second input Tensor.
+        dim (int, optional): Dimension along which cosine similarity is computed. Default: 1.
+        eps (float, optional): Small value to avoid division by zero. Default: 1e-8.
+
+    Returns:
+        Tensor, cosine similarity between x1 and x2.
+
+    Raises:
+        TypeError: If the dtype of x1 or x2 is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> x1 = ms.Tensor([[-0.0256, 0.0127, -0.2475, 0.2316, 0.8037],
+        ...                 [0.5809, -1.2712, -0.7038, -0.2558, 0.7494]], dtype=ms.float32)
+        >>> x2 = ms.Tensor([[-0.6115, -0.1965, -0.8484, 0.2389, 0.2409],
+        ...                 [1.8940, -2.1997, 0.1915, 0.0856, 0.7542]], dtype=ms.float32)
+        >>> output = ops.cosine_similarity(x1, x2)
+        >>> print(output)
+        [0.4843164  0.81647635]
+    """
+    molecule = ops.sum(x1 * x2, dim=dim)
+    denominator = (ops.norm(x1, axis=dim, p=2) * ops.norm(x2, axis=dim, p=2)).clip(min=eps)
+    output = molecule / denominator
+    return output
+
+
 def t(x):
     r"""
     Transposes a 2-D Tensor. 1-D Tensor are returned as it is.
@@ -2293,6 +2332,20 @@ def asinh(x):
         [-2.3124382  1.1947632  1.8184465  5.298342 ]
     """
     return asinh_(x)
+
+
+def arcsinh(x):
+    r"""
+    Alias for :func:`mindspore.ops.asinh`.
+    """
+    return asinh(x)
+
+
+def arctanh(x):
+    r"""
+    Alias for :func:`mindspore.ops.atanh`.
+    """
+    return atanh(x)
 
 
 def acosh(x):
@@ -9721,8 +9774,10 @@ __all__ = [
     'cosh',
     'tanh',
     'asinh',
+    'arcsinh',
     'acosh',
     'atanh',
+    'arctanh',
     'atan2',
     'round',
     'bitwise_and',
@@ -9809,6 +9864,7 @@ __all__ = [
     'cholesky',
     'cholesky_inverse',
     'conj',
+    'cosine_similarity',
     'cross',
     'einsum',
     'erfinv',

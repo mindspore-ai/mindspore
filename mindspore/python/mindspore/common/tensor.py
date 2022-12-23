@@ -3816,7 +3816,8 @@ class Tensor(Tensor_):
         r"""
         Alias for :func:`mindspore.Tensor.asinh`.
         """
-        return self.asinh()
+        self._init_check()
+        return tensor_operator_registry.get('arcsinh')(self)
 
     def atan(self):
         r"""
@@ -3836,7 +3837,8 @@ class Tensor(Tensor_):
         r"""
         Alias for :func:`mindspore.Tensor.atanh`.
         """
-        return self.atanh()
+        self._init_check()
+        return tensor_operator_registry.get('arctanh')(self)
 
     def bmm(self, mat2):
         r"""
