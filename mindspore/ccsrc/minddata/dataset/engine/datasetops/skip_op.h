@@ -52,12 +52,12 @@ class SkipOp : public PipelineOp {
 
   void SetOnceOnly(bool once_only) { once_only_ = once_only; }
 
- protected:
   /// \brief Gets the next row
   /// \param row[out] - Fetched TensorRow
   /// \return Status The status code returned
   Status GetNextRowPullMode(TensorRow *const row) override;
 
+ protected:
   /// \brief Gets the implementation status for operator in pull mode
   /// \return implementation status
   ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }

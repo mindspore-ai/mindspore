@@ -94,7 +94,7 @@ class ConcatOp : public PipelineOp {
   std::vector<std::pair<int, int>> children_flag_and_nums_;
   std::vector<std::pair<int, int>> children_start_end_index_;
 
-  int32_t cur_child_;
+  size_t cur_child_;
   bool verified_;
   int64_t sample_number_;
 

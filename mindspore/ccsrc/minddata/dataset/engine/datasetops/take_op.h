@@ -60,12 +60,12 @@ class TakeOp : public PipelineOp {
 
   Status GetNextRow(TensorRow *row) override;
 
- protected:
   /// \brief Gets the next row
   /// \param row[out] - Fetched TensorRow
   /// \return Status The status code returned
   Status GetNextRowPullMode(TensorRow *const row) override;
 
+ protected:
   /// \brief Gets the implementation status for operator in pull mode
   /// \return implementation status
   ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }

@@ -42,7 +42,8 @@ Status CpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) {
       // Call compute function for cpu
       Status rc = ops_[i]->Compute(input_row, &result_row);
       if (rc.IsError()) {
-        RETURN_IF_NOT_OK(RebuildMapErrorMsg(input_row, i, &rc));
+        std::string op_name = ops_[i]->Name();
+        RETURN_IF_NOT_OK(util::RebuildMapErrorMsg(input_row, op_name, &rc));
       }
 
       // Assign result_row to to_process for the next TensorOp processing, except for the last TensorOp in the list.
@@ -53,38 +54,6 @@ Status CpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) {
     out->push_back(std::move(result_row));
   }
   return Status::OK();
-}
-
-Status CpuMapJob::RebuildMapErrorMsg(const TensorRow &input_row, const size_t &i, Status *rc) {
-  std::string err_msg = "";
-  std::string op_name = ops_[i]->Name();
-  // Need to remove the suffix "Op" which length is 2
-  std::string abbr_op_name = op_name.substr(0, op_name.length() - 2);
-  err_msg += "map operation: [" + abbr_op_name + "] failed. ";
-  if (input_row.getPath().size() > 0 && !input_row.getPath()[0].empty()) {
-    err_msg += "The corresponding data file is: " + input_row.getPath()[0];
-    if (input_row.getPath().size() > 1) {
-      std::set<std::string> path_set;
-      path_set.insert(input_row.getPath()[0]);
-      for (auto j = 1; j < input_row.getPath().size(); j++) {
-        if (!input_row.getPath()[j].empty() && path_set.find(input_row.getPath()[j]) == path_set.end()) {
-          err_msg += ", " + input_row.getPath()[j];
-          path_set.insert(input_row.getPath()[j]);
-        }
-      }
-    }
-    err_msg += ". ";
-  }
-  std::string tensor_err_msg = rc->GetErrDescription();
-  if (rc->GetLineOfCode() < 0) {
-    err_msg += "Error description:\n";
-  }
-  err_msg += tensor_err_msg;
-  if (abbr_op_name == "PyFunc") {
-    RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, err_msg);
-  }
-  rc->SetErrDescription(err_msg);
-  return *rc;
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -166,7 +166,8 @@ Status ConcatOp::GetNextRow(TensorRow *row) {
     const bool second_ne_zero = children_flag_and_nums_[cur_child_].second == 0 ? true : false;
     is_not_mappable_or_second_ne_zero = is_not_mappable || second_ne_zero;
   }
-  RETURN_IF_NOT_OK(child_[static_cast<size_t>(cur_child_)]->GetNextRow(row));
+
+  RETURN_IF_NOT_OK(child_[cur_child_]->GetNextRow(row));
 
   if (!row->eoe() && !row->eof()) {
     if (!verified_) {
@@ -217,7 +218,7 @@ Status ConcatOp::GetNextRowPullMode(TensorRow *const row) {
     const bool second_ne_zero = children_flag_and_nums_[cur_child_].second == 0 ? true : false;
     is_not_mappable_or_second_ne_zero = is_not_mappable || second_ne_zero;
   }
-  RETURN_IF_NOT_OK(child_[static_cast<size_t>(cur_child_)]->GetNextRowPullMode(row));
+  RETURN_IF_NOT_OK(child_[cur_child_]->GetNextRowPullMode(row));
 
   if (row->eoe()) {
     // if last child, send out eoe and reset epoch
@@ -234,7 +235,6 @@ Status ConcatOp::GetNextRowPullMode(TensorRow *const row) {
     cur_child_++;
     verified_ = false;
     RETURN_IF_NOT_OK(GetNextRowPullMode(row));
-    return Status::OK();
   } else {
     if (!verified_) {
       RETURN_IF_NOT_OK(Verify(cur_child_, *row));
@@ -242,7 +242,6 @@ Status ConcatOp::GetNextRowPullMode(TensorRow *const row) {
     if (IgnoreSample()) {
       RETURN_IF_NOT_OK(GetNextRowPullMode(row));
     }
-    return Status::OK();
   }
   return Status::OK();
 }

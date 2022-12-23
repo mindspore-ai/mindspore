@@ -179,7 +179,7 @@ Status MappableLeafOp::GetNextRowPullMode(TensorRow *const row) {
   }
   int64_t key;
   RETURN_IF_NOT_OK(sample_ids_->GetItemAt(&key, {curr_row_}));
-  RETURN_IF_NOT_OK(LoadTensorRow(key, row));
+  RETURN_IF_NOT_OK(LoadTensorRowPullMode(key, row));
   curr_row_++;
   return Status::OK();
 }

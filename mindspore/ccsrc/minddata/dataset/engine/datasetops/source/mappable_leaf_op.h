@@ -76,6 +76,11 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
                              const py::function &decrypt = py::none());
 #endif
 
+  /// \brief In pull mode, gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRowPullMode(TensorRow *const row) override;
+
  protected:
   TensorPtr sample_ids_;  // sample id pointer for pull mode
   uint32_t curr_row_;     // current row number count for pull mode
@@ -111,14 +116,15 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
   Status SendWaitFlagToWorker(int32_t worker_id) override;
   Status SendQuitFlagToWorker(int32_t worker_id) override;
 
-  /// \brief In pull mode, gets the next row
-  /// \param row[out] - Fetched TensorRow
-  /// \return Status The status code returned
-  Status GetNextRowPullMode(TensorRow *const row) override;
-
   /// Initialize pull mode, calls PrepareData() within
   /// @return Status The status code returned
   virtual Status InitPullMode() { return PrepareData(); }
+
+  /// Virtual function to load a tensor row at location row_id for pull mode
+  /// \param row_id_type row_id - id for this tensor row
+  /// \param TensorRow row - loaded row
+  /// \return Status The status code returned
+  virtual Status LoadTensorRowPullMode(row_id_type row_id, TensorRow *row) { return LoadTensorRow(row_id, row); }
 
   /// \brief Gets the implementation status for operator in pull mode
   /// \return implementation status
