@@ -75,3 +75,18 @@ def test_pynative_func_sink():
     '''
     ret = os.system("mpirun -n 8 --allow-run-as-root pytest -s -v functional_train.py::test_pynative_func_sink")
     assert ret == 0
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_single
+def test_shard_func():
+    '''
+    Feature: shard func in pynative mode
+    Description: pynative mode, shard func
+    Expectation: Run success
+    '''
+    ret = os.system("mpirun -n 8 --allow-run-as-root pytest -s -v functional_train.py::test_shard_func")
+    assert ret == 0

@@ -15,13 +15,14 @@
 
 import numpy as np
 
-from mindspore import Parameter, jit
+from mindspore import Parameter, jit, Tensor
 from mindspore.nn import Cell, Momentum
 from mindspore.nn import MSELoss
 import mindspore.dataset as ds
 import mindspore.ops as ops
 import mindspore as ms
 from mindspore.common.initializer import initializer
+from mindspore.ops import functional as F
 from mindspore.communication import init
 
 
@@ -289,3 +290,29 @@ def test_pynative_func_sink():
         loss = sink_process()
     assert np.allclose(np.array([loss.asnumpy()]), np.array([0.0047495714]), 0.00001, 0.00001)
     ms.reset_auto_parallel_context()
+
+
+def my_func(x, y):
+    out = F.matmul(x, y)
+    out = F.square(out)
+    return out
+
+
+def test_shard_func():
+    '''
+    Feature: shard func in pynative mode
+    Description: pynative mode, shard func
+    Expectation: Run success
+    '''
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    init()
+
+    x = Tensor(np.arange(16).reshape(4, 4), dtype=ms.float32)
+    y = Tensor(np.arange(16).reshape(4, 4), dtype=ms.float32)
+    stand_alone_out = my_func(x, y)
+
+    ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.AUTO_PARALLEL, search_mode="sharding_propagation")
+    parallel_func = ms.shard(my_func, in_strategy=((2, 2), (2, 2)))
+    parallel_out = parallel_func(x, y)
+
+    np.testing.assert_allclose(stand_alone_out.asnumpy(), parallel_out.asnumpy(), 0.0001, 0.0001)
