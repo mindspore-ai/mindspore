@@ -55,5 +55,3 @@ class JitConfig:
         self.jit_config_dict = dict()
         self.jit_config_dict["jit_level"] = jit_level
         self.jit_config_dict["exc_mode"] = exc_mode
-        for key, value in kwargs.items():
-            self.jit_config_dict[key] = value
