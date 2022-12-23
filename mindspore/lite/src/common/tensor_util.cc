@@ -195,27 +195,27 @@ int GenerateInTensorC(const std::vector<lite::Tensor *> &inputs, std::vector<Ten
 }
 
 int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
-  for (auto &tensor : tensors) {
+  for (auto tensor : tensors) {
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "Graph input tensor is nullptr";
       return RET_ERROR;
     }
-    if (tensor->data_type() != kObjectTypeTensorType && tensor->data() == nullptr) {
+    if (MS_UNLIKELY(tensor->data_type() != kObjectTypeTensorType && tensor->data() == nullptr)) {
       MS_LOG(ERROR) << "Graph input tensor data is nullptr " << tensor->tensor_name();
       return RET_ERROR;
     }
     const auto &shape = tensor->shape();
     bool valid = all_of(shape.begin(), shape.end(), [](int i) { return i >= 0; });
-    if (!valid) {
+    if (MS_UNLIKELY(!valid)) {
       MS_LOG(ERROR) << "The shape of tensor contains negative dimension,"
                     << "check the model and assign the input shape with method Resize().";
       return RET_ERROR;
     }
-    if (tensor->format() != mindspore::NHWC && tensor->format() != mindspore::NCHW) {
+    if (MS_UNLIKELY(tensor->format() != mindspore::NHWC && tensor->format() != mindspore::NCHW)) {
       MS_LOG(ERROR) << "model input's format may be changed, which should be NHWC or NCHW";
       return RET_FORMAT_ERR;
     }
-    if (tensor->data() == nullptr) {
+    if (MS_UNLIKELY(tensor->data() == nullptr)) {
       MS_LOG(ERROR) << "tensor data should be filled before run op";
       return RET_ERROR;
     }
