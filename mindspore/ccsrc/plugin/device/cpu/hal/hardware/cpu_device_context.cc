@@ -38,6 +38,7 @@
 #include "plugin/device/cpu/optimizer/insert_cast_cpu.h"
 #include "plugin/device/cpu/optimizer/insert_format_transform_op.h"
 #include "plugin/device/cpu/optimizer/softmax_grad_fusion.h"
+#include "backend/common/pass/insert_type_transform_op.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/replace_node_by_proxy.h"
 #include "backend/common/pass/erase_visit_attr.h"
@@ -56,6 +57,9 @@
 #endif
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#endif
+#ifdef ENABLE_DUMP_IR
+#include "include/common/debug/anf_ir_dump.h"
 #endif
 
 namespace mindspore {
@@ -143,6 +147,16 @@ void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
 
     kernel_graph->SetKernelObjectTypesForUnrealNodes();
     SetOperatorInfo(kernel_graph);
+    // SetOperatorInfo may generate new node, so need set kernel object type again.
+    kernel_graph->SetKernelObjectTypesForUnrealNodes();
+#ifdef ENABLE_DUMP_IR
+    const auto &ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+      DumpIR("hwopt_comm_after_kernel_select_" + graph->ToString() + ".ir", graph, true);
+    }
+#endif
+
     OptimizeGraphImpl(kernel_graph);
 
     // Run final optimization.
@@ -191,6 +205,9 @@ void CPUKernelExecutor::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+#ifdef ENABLE_TUPLE_UNFOLD
+  pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>("insert_type_transform_op"));
+#endif
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast"));

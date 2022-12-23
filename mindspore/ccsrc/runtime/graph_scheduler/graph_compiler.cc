@@ -578,7 +578,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     OptimizeNopNode(graph.get());
 #ifdef ENABLE_DUMP_IR
     if (save_graphs) {
-      DumpIR("hwopt_comm_after_eliminate_nopnode_" + graph->ToString(), graph);
+      DumpIR("hwopt_comm_after_eliminate_nopnode_" + graph->ToString() + ".ir", graph, true);
     }
 #endif
   }

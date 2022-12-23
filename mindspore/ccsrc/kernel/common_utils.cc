@@ -1068,22 +1068,6 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t) {
   return bytes;
 }
 
-bool IsObjectTypeMatched(const std::vector<TypeId> &object_types, const std::vector<TypeId> &kernel_object_types,
-                         bool strict) {
-  if (object_types.size() != kernel_object_types.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < object_types.size(); i++) {
-    bool strict_cond = (object_types[i] == kernel_object_types[i]);
-    bool not_strict_cond = (strict_cond || object_types[i] == kObjectTypeTuple ||
-                            (kernel_object_types[i] == kObjectTypeTensorType && object_types[i] == kObjectTypeNumber));
-    if ((strict && !strict_cond) || (!strict && !not_strict_cond)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 std::vector<TypeId> GetOutputObjectTypeListFromKernelAttr(const kernel::KernelAttr &kernel_attr) {
   size_t output_attr_size = kernel_attr.GetOutputSize();
   std::vector<TypeId> res;
@@ -1102,32 +1086,61 @@ std::vector<TypeId> GetInputObjectTypeListFromKernelAttr(const kernel::KernelAtt
   return res;
 }
 
-bool MatchObjectType(const CNodePtr &kernel_node, const kernel::KernelAttr &kernel_attr, bool strict) {
-  auto inputs_object_types = AnfAlgo::GetAllInputObjectType(kernel_node);
-  auto output_object_types = AnfAlgo::GetAllOutputObjectType(kernel_node);
-  auto abstract_type = AnfAlgo::GetAbstractObjectType(kernel_node->abstract());
-  auto kernel_inputs_object_types = GetInputObjectTypeListFromKernelAttr(kernel_attr);
-  auto kernel_outputs_object_types = GetOutputObjectTypeListFromKernelAttr(kernel_attr);
-  size_t output_attr_size = kernel_attr.GetOutputSize();
-  return IsObjectTypeMatched(inputs_object_types, kernel_inputs_object_types, strict) &&
-         ((output_attr_size == 1 && IsObjectTypeMatched({abstract_type}, {kernel_outputs_object_types[0]}, strict)) ||
-          IsObjectTypeMatched(output_object_types, kernel_outputs_object_types, strict));
+bool IsObjectTypeMatched(const std::vector<TypeId> &object_types, const std::vector<TypeId> &kernel_object_types,
+                         const KernelAttr &ori_kernel_attr, size_t element_num, bool strict) {
+  // Full matched.
+  if (object_types.size() == kernel_object_types.size()) {
+    size_t equal_num = 0;
+    for (size_t i = 0; i < object_types.size(); i++) {
+      if (object_types[i] == kernel_object_types[i]) {
+        ++equal_num;
+      }
+    }
+    if (equal_num == object_types.size()) {
+      return true;
+    }
+  }
+
+  if (strict) {
+    return false;
+  }
+
+  // Check the matched without strict.
+  // 1. The size equal can trigger the kernel object backoff(For example Reshape op).
+  if (object_types.size() == kernel_object_types.size()) {
+    return true;
+  }
+  // 2. AllSame is the tupleUnfold type(For example Split/Addn op).
+  if (ori_kernel_attr.GetAllSame()) {
+    return true;
+  }
+  // 3. Multiple outputs are expanded in the kernel attr(For example BatchNorm op).
+  if (kernel_object_types.size() == element_num) {
+    return true;
+  }
+
+  return false;
 }
 
-std::vector<kernel::KernelAttr> SelectKernelObjectType(
-  const CNodePtr &kernel_node, const std::vector<kernel::KernelAttr> &selected_kernel_attr_list) {
-  auto SelectKernelObjectTypeImpl = [&](bool strict) {
-    std::vector<kernel::KernelAttr> selected;
-    std::copy_if(
-      selected_kernel_attr_list.begin(), selected_kernel_attr_list.end(), std::back_inserter(selected),
-      [&](const kernel::KernelAttr &kernel_attr) { return MatchObjectType(kernel_node, kernel_attr, strict); });
-    return selected;
-  };
-  auto selected_result = SelectKernelObjectTypeImpl(true);
-  if (selected_result.empty()) {
-    return SelectKernelObjectTypeImpl(false);
+bool SelectKernelByObjectType(const CNodePtr &kernel_node, const std::vector<KernelAttr> &ori_kernel_attrs,
+                              std::vector<KernelAttr> *selected_kernel_attrs, bool strict) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(selected_kernel_attrs);
+  const auto &inputs_object_types = AnfAlgo::GetAllInputObjectType(kernel_node);
+  const auto &output_object_types = AnfAlgo::GetAllOutputObjectType(kernel_node);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  auto output_num = AnfAlgo::GetOutputElementNum(kernel_node);
+
+  for (auto &ori_kernel_attr : ori_kernel_attrs) {
+    const auto &kernel_inputs_object_types = GetInputObjectTypeListFromKernelAttr(ori_kernel_attr);
+    const auto &kernel_outputs_object_types = GetOutputObjectTypeListFromKernelAttr(ori_kernel_attr);
+    if (IsObjectTypeMatched(inputs_object_types, kernel_inputs_object_types, ori_kernel_attr, input_num, strict) &&
+        IsObjectTypeMatched(output_object_types, kernel_outputs_object_types, ori_kernel_attr, output_num, strict)) {
+      (void)selected_kernel_attrs->emplace_back(ori_kernel_attr);
+    }
   }
-  return selected_result;
+
+  return (!selected_kernel_attrs->empty());
 }
 
 KernelObjectType TypeIdToKernelObjectType(const TypeId &type_id) {
@@ -1146,6 +1159,25 @@ std::vector<KernelObjectType> TypeIdToKernelObjectType(const std::vector<TypeId>
   std::vector<KernelObjectType> ret;
   std::transform(type_ids.begin(), type_ids.end(), std::back_inserter(ret),
                  [](const TypeId &type_id) { return kernel::TypeIdToKernelObjectType(type_id); });
+  return ret;
+}
+
+KernelObjectType TypeIdToKernelObjectTypeForTupleUnfold(const TypeId &type_id) {
+  std::unordered_map<TypeId, KernelObjectType> trans_map{{kObjectTypeTuple, KernelObjectType::TUPLE_UNFOLD},
+                                                         {kObjectTypeNumber, KernelObjectType::SCALAR},
+                                                         {kObjectTypeTensorType, KernelObjectType::TENSOR}};
+  if (trans_map.find(type_id) == trans_map.end()) {
+    MS_LOG(DEBUG) << "Unsupported type id " << TypeIdToString(type_id)
+                  << ", that cannot converted to corresponding kernel object type.";
+    return KernelObjectType::UNKNOWN_TYPE;
+  }
+  return trans_map[type_id];
+}
+
+std::vector<KernelObjectType> TypeIdToKernelObjectTypeForTupleUnfold(const std::vector<TypeId> &type_ids) {
+  std::vector<KernelObjectType> ret;
+  std::transform(type_ids.begin(), type_ids.end(), std::back_inserter(ret),
+                 [](const TypeId &type_id) { return kernel::TypeIdToKernelObjectTypeForTupleUnfold(type_id); });
   return ret;
 }
 
@@ -1177,28 +1209,28 @@ KernelObjectType StringToKernelObjectType(const std::string &object_type) {
   return iter->second;
 }
 
-KernelObjectType CalKernelObjectType(const TypeId &object_type, const TypeId &selected_object_type) {
-  if (object_type == selected_object_type) {
-    return TypeIdToKernelObjectType(object_type);
-  }
-  if (object_type == kObjectTypeTuple && selected_object_type != kObjectTypeTuple) {
-    return KernelObjectType::TUPLE_UNFOLD;
-  }
-  if (object_type == kObjectTypeNumber) {
-    return TypeIdToKernelObjectType(selected_object_type);
-  }
-  return KernelObjectType::UNKNOWN_TYPE;
-}
-
+// The allsame/skip_check and the unequal size scenario don't support object type backoff and use the object_types,
+// other scenes support the object type backoff and use the selected_object_types.
 std::vector<KernelObjectType> CalKernelObjectTypes(const std::vector<TypeId> &object_types,
-                                                   const std::vector<TypeId> &selected_object_types) {
+                                                   const std::vector<TypeId> &selected_object_types, bool all_same,
+                                                   bool skip_check) {
   std::vector<KernelObjectType> ret;
-  if (object_types.size() != selected_object_types.size()) {
-    MS_LOG(EXCEPTION) << "The size of object_types and selected_object_types must be same, but got "
-                      << object_types.size() << "vs " << selected_object_types.size();
+  //  Use the selected_object_types in the equal size scenario.
+  if (object_types.size() == selected_object_types.size()) {
+    for (size_t i = 0; i < selected_object_types.size(); ++i) {
+      // Allsame/skip_check doesn't support the backoff.
+      if ((all_same || skip_check) && (selected_object_types[i] != object_types[i])) {
+        (void)ret.emplace_back(TypeIdToKernelObjectTypeForTupleUnfold(object_types[i]));
+      } else {
+        (void)ret.emplace_back(TypeIdToKernelObjectType(selected_object_types[i]));
+      }
+    }
+    return ret;
   }
+
+  // Use the object_types in the unequal size scenario, and convert tuple to tupleUnflod.
   for (size_t i = 0; i < object_types.size(); ++i) {
-    ret.push_back(CalKernelObjectType(object_types[i], selected_object_types[i]));
+    (void)ret.emplace_back(TypeIdToKernelObjectTypeForTupleUnfold(object_types[i]));
   }
   return ret;
 }
@@ -1207,21 +1239,33 @@ std::vector<KernelObjectType> CalInputKernelObjectTypes(const AnfNodePtr &kernel
                                                         const kernel::KernelAttr &selected_kernel_attr) {
   auto selected_input_object_types = GetInputObjectTypeListFromKernelAttr(selected_kernel_attr);
   auto input_object_types = AnfAlgo::GetAllInputObjectType(kernel_node);
-  return CalKernelObjectTypes(input_object_types, selected_input_object_types);
+  return CalKernelObjectTypes(input_object_types, selected_input_object_types, selected_kernel_attr.GetAllSame(),
+                              selected_kernel_attr.GetSkipCheck());
 }
 
 std::vector<KernelObjectType> CalOutputKernelObjectTypes(const AnfNodePtr &kernel_node,
                                                          const kernel::KernelAttr &selected_kernel_attr) {
   auto selected_output_object_types = GetOutputObjectTypeListFromKernelAttr(selected_kernel_attr);
   auto output_object_types = AnfAlgo::GetAllOutputObjectType(kernel_node);
-  auto abstract_type = AnfAlgo::GetAbstractObjectType(kernel_node->abstract());
-  if (selected_output_object_types.size() == 1) {
-    auto ret_type = CalKernelObjectType(abstract_type, selected_output_object_types[0]);
-    if (ret_type != KernelObjectType::UNKNOWN_TYPE) {
-      return {ret_type};
-    }
-  }
-  return CalKernelObjectTypes(output_object_types, selected_output_object_types);
+  return CalKernelObjectTypes(output_object_types, selected_output_object_types, selected_kernel_attr.GetAllSame(),
+                              selected_kernel_attr.GetSkipCheck());
+}
+
+std::string FetchPrintInfoByKernelAttr(KernelAttr selected_kernel_attr) {
+  std::string attr_info = "input[";
+  std::for_each(std::begin(selected_kernel_attr.input_type()), std::end(selected_kernel_attr.input_type()),
+                [&attr_info](auto &input_type) {
+                  attr_info += TypeIdToString(input_type.object_type) + " " + TypeIdToString(input_type.dtype) + " " +
+                               input_type.format + ",";
+                });
+  attr_info += "] output[";
+  std::for_each(std::begin(selected_kernel_attr.output_type()), std::end(selected_kernel_attr.output_type()),
+                [&attr_info](auto &output_type) {
+                  attr_info += TypeIdToString(output_type.object_type) + " " + TypeIdToString(output_type.dtype) + " " +
+                               output_type.format + ",";
+                });
+  attr_info += "]";
+  return attr_info;
 }
 
 void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
@@ -1233,6 +1277,9 @@ void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
   if (!kernel_node->kernel_info()->has_build_info()) {
     AnfAlgo::SetSelectKernelBuildInfo(std::make_shared<kernel::KernelBuildInfo>(), kernel_node.get());
   }
+
+  MS_LOG(DEBUG) << kernel_node->fullname_with_scope() << " input kernel object type is: " << input_kernel_object_types
+                << ", output kernel object type is: " << output_kernel_object_types;
   auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   kernel_build_info->SetOutputsKernelObjectType(output_kernel_object_types);
   kernel_build_info->SetInputsKernelObjectType(input_kernel_object_types);
@@ -1242,6 +1289,84 @@ void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kern
   auto input_kernel_object_types = CalInputKernelObjectTypes(kernel_node, selected_kernel_attr);
   auto output_kernel_object_types = CalOutputKernelObjectTypes(kernel_node, selected_kernel_attr);
   SetKernelObjectTypeBuildInfo(kernel_node, input_kernel_object_types, output_kernel_object_types);
+}
+
+void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std::vector<TypeId> &input_types,
+                        const std::vector<std::string> &output_formats, const std::vector<TypeId> &output_types,
+                        AnfNode *kernel_node) {
+  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(builder);
+  builder->SetInputsFormat(input_formats);
+  builder->SetInputsDeviceType(input_types);
+  builder->SetOutputsFormat(output_formats);
+  builder->SetOutputsDeviceType(output_types);
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node);
+}
+
+void UnfoldKernelBuildInfo(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+  auto input_num = kernel_build_info->GetInputNum();
+  auto output_num = kernel_build_info->GetOutputNum();
+  const auto &input_kernel_object_types = kernel_build_info->GetAllInputKernelObjectTypes();
+  const auto &output_kernel_object_types = kernel_build_info->GetAllOutputKernelObjectTypes();
+  const auto &input_dtypes = kernel_build_info->GetAllInputDeviceTypes();
+  const auto &output_dtypes = kernel_build_info->GetAllOutputDeviceTypes();
+  const auto &input_formats = kernel_build_info->GetAllInputFormats();
+  const auto &output_formats = kernel_build_info->GetAllOutputFormats();
+
+  std::vector<TypeId> unfold_input_dtypes;
+  std::vector<TypeId> unfold_output_dtypes;
+  std::vector<std::string> unfold_input_formats;
+  std::vector<std::string> unfold_output_formats;
+  auto Append = [&](bool in_or_out, size_t index) {
+    if (in_or_out) {
+      MS_EXCEPTION_IF_CHECK_FAIL((input_num > index), "Input index is out of range.");
+      unfold_input_dtypes.push_back(input_dtypes[index]);
+      unfold_input_formats.push_back(input_formats[index]);
+    } else {
+      MS_EXCEPTION_IF_CHECK_FAIL((output_num > index), "Output index is out of range.");
+      unfold_output_dtypes.push_back(output_dtypes[index]);
+      unfold_output_formats.push_back(output_formats[index]);
+    }
+  };
+  auto RepeatAppend = [&](bool in_or_out, size_t index, size_t times) {
+    while (times > 0) {
+      Append(in_or_out, index);
+      times--;
+    }
+  };
+
+  for (size_t i = 0; i < input_kernel_object_types.size(); ++i) {
+    if (input_kernel_object_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
+      auto input_node = common::AnfAlgo::GetInputNode(kernel_node, i);
+      auto unfold_num = AnfAlgo::GetOutputElementNum(input_node);
+      MS_LOG(DEBUG) << kernel_node->fullname_with_scope() << " input idnex:" << i << " unfold num:" << unfold_num;
+      RepeatAppend(true, i, unfold_num);
+    } else {
+      Append(true, i);
+    }
+  }
+
+  for (size_t i = 0; i < output_kernel_object_types.size(); ++i) {
+    if (output_kernel_object_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
+      auto unfold_num = AnfAlgo::GetOutputElementNum(kernel_node);
+      MS_LOG(DEBUG) << kernel_node->fullname_with_scope() << " output idnex:" << i << " unfold num:" << unfold_num;
+      // Multiple outputs are expanded in the kernel attr(For example BatchNorm op).
+      if (output_num == unfold_num) {
+        for (size_t j = 0; j < unfold_num; ++j) {
+          Append(false, j);
+        }
+      } else {
+        RepeatAppend(false, i, unfold_num);
+      }
+    } else {
+      Append(false, i);
+    }
+  }
+
+  SetKernelBuildInfo(unfold_input_formats, unfold_input_dtypes, unfold_output_formats, unfold_output_dtypes,
+                     kernel_node.get());
 }
 
 KernelAttr &KernelAttr::AddInputAttr(const TypeId &object_type, const TypeId &ms_type, const std::string &format) {
@@ -1567,18 +1692,18 @@ void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<Ke
     dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(apply_kernel, kAttrDynInputSizes);
   }
   std::pair<bool, int64_t> match_result;
+
   if (kernel_attrs[0].GetSkipCheck()) {
     // If kernel skips attr check, we need to synchronize the ref map in case it's discarded.
     SyncOutInRef(kernel_attrs[0], &kernel_attr);
     kernel_attrs[0] = kernel_attr;
     match_result = {true, 0};
-  } else if (kernel_attrs[0].GetAllSame()) {
-    match_result = MatchKernelAttr(kernel_attr, kernel_attrs);
-  } else if (dyn_input_sizes.empty()) {
+  } else if (dyn_input_sizes.empty() || kernel_attrs[0].GetAllSame()) {
     match_result = MatchKernelAttr(kernel_attr, kernel_attrs);
   } else {
     match_result = MatchMultiDynamicKernelAttr(kernel_attr, dyn_input_sizes, kernel_attrs);
   }
+
   auto [is_match, index] = match_result;
   if (!is_match) {
     MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(apply_kernel)

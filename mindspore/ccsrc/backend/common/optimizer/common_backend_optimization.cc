@@ -68,7 +68,11 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
   common_pm->AddPass(std::make_shared<ConvertUnusedTupleParaToMakeTuple>());
   common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
+#ifdef ENABLE_TUPLE_UNFOLD
+  MS_LOG(INFO) << "Enable tuple unfold.";
+#else
   common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
+#endif
   common_pm->AddPass(std::make_shared<FlattenConcatFission>());
   common_pm->AddPass(std::make_shared<AddDropoutAttrs>());
   optimizer->AddPassManager(common_pm);

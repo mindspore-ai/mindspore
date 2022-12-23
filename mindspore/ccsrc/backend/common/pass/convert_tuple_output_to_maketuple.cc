@@ -48,6 +48,25 @@ AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNode
   kernel_graph->ReplaceGraphInput(tuple_anf, make_tuple);
   return make_tuple;
 }
+
+#ifdef ENABLE_TUPLE_UNFOLD
+bool IsKerenlGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
+  const auto &outputs = common::AnfAlgo::GetAllOutputWithIndex(func_graph->output());
+  return std::find_if(outputs.begin(), outputs.end(), [&node](const auto &output) { return output.first == node; }) !=
+         outputs.end();
+}
+#endif
+
+bool IsNeedConvert(const FuncGraphPtr &func_graph, const AnfNodePtr &input) {
+#ifdef ENABLE_TUPLE_UNFOLD
+  return (input->Type() != nullptr && AnfUtils::IsRealKernel(input) && common::AnfAlgo::IsTupleOutput(input) &&
+          !common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall) &&
+          (input->isa<Parameter>() || input->isa<ValueNode>() || IsKerenlGraphOutput(func_graph, input)));
+#else
+  return (input->Type() != nullptr && AnfUtils::IsRealKernel(input) && common::AnfAlgo::IsTupleOutput(input) &&
+          !common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall));
+#endif
+}
 }  // namespace
 
 const BaseRef ConvertTupleOutputToMaketuple::DefinePattern() const {
@@ -76,8 +95,7 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   bool cnode_input_changed = false;
   for (size_t i = 0; i < cnode->inputs().size(); ++i) {
     const auto &input = cnode->inputs()[i];
-    if (input->Type() != nullptr && AnfUtils::IsRealKernel(input) && common::AnfAlgo::IsTupleOutput(input) &&
-        !common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall)) {
+    if (IsNeedConvert(func_graph, input)) {
       auto new_input = ConvertTupleInputToMakeTuple(func_graph, input);
       if (new_input->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(new_input, prim::kPrimMakeTuple)) {
         auto make_tuple = new_input->cast<CNodePtr>();

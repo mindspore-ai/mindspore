@@ -136,7 +136,7 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
   // Output num must be exactly equal to the number of outputs of the node.
   size_t outputs_num = 1;
   if (AnfUtils::IsRealCNodeKernel(node)) {
-    outputs_num = AnfAlgo::GetOutputElementNum(node);
+    outputs_num = AnfUtils::GetOutputTensorNum(node);
   }
   // Call node maybe a real cnode and the last interface cannot get output num exactly, so we should get
   // output num from abstract again.
@@ -318,7 +318,7 @@ KernelWithIndex AnfAlgo::FetchRealNodeSkipMonadControl(const KernelWithIndex &no
 
 std::vector<AnfNodePtr> AnfAlgo::GetAllOutput(const AnfNodePtr &node, const std::vector<PrimitivePtr> &return_types) {
   std::vector<AnfNodePtr> ret;
-  const auto output_pair = GetAllOutputIndexByReturnTypes(node, return_types);
+  const auto &output_pair = GetAllOutputIndexByReturnTypes(node, return_types);
   std::transform(output_pair.begin(), output_pair.end(), std::back_inserter(ret),
                  [](const KernelWithIndex &ele) { return ele.first; });
   return ret;
@@ -534,8 +534,6 @@ size_t AnfAlgo::GetInputTensorNum(const AnfNodePtr &node) {
   // this function was moved to AnfUtils.
   return AnfUtils::GetInputTensorNum(node);
 }
-
-size_t AnfAlgo::GetOutputElementNum(const AnfNodePtr &node) { return AnfUtils::GetOutputTensorNum(node); }
 
 KernelWithIndex AnfAlgo::GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx, bool skip_nop_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -1730,6 +1728,32 @@ bool AnfAlgo::IsDynamicSequence(const abstract::AbstractBasePtr &abstract) {
   const auto &sequence_abstract = abstract->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(sequence_abstract);
   return sequence_abstract->dynamic_len();
+}
+
+bool AnfAlgo::HasTupleInput(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  size_t input_num = node->inputs().size() - 1;
+  for (size_t i = 0; i < input_num; ++i) {
+    auto input_node = common::AnfAlgo::GetInputNode(node, i);
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (common::AnfAlgo::IsTupleOutput(input_node)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool AnfAlgo::HasDynamicTupleInput(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  size_t input_num = node->inputs().size() - 1;
+  for (size_t i = 0; i < input_num; ++i) {
+    auto input_node = common::AnfAlgo::GetInputNode(node, i);
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (common::AnfAlgo::IsDynamicSequence(input_node->abstract())) {
+      return true;
+    }
+  }
+  return false;
 }
 }  // namespace common
 }  // namespace mindspore
