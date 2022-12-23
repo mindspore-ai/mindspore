@@ -421,6 +421,7 @@ from .nn_func import (
     mirror_pad,
     nll_loss,
     smooth_l1_loss,
+    l1_loss,
     cross_entropy,
     grid_sample,
     ctc_greedy_decoder,

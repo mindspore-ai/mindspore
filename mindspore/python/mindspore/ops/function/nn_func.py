@@ -2943,6 +2943,66 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
     return loss
 
 
+def l1_loss(x, target, reduction='mean'):
+    r"""
+    l1_loss is used to calculate the mean absolute error between the `x` value and the target value.
+
+    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, `reduction` is set to "none" ,
+    then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
+
+    The formula is as follows:
+
+    .. math::
+        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|,
+
+    where :math:`N` is the batch size.
+
+    If `reduction` is "mean" or "sum", then:
+
+    .. math::
+        \ell(x, y) =
+        \begin{cases}
+            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
+
+    Args:
+        x (Tensor) - Predicted value, Tensor of any dimension.
+        target (Tensor) - Target value, same shape as the `x` .
+        reduction (str, optional): Type of reduction to be applied to loss. The optional value is "mean", "sum" or
+            "none". Default: "mean".
+
+    Returns:
+        Tensor, the result of l1_loss.
+
+    Raises:
+        ValueError: If `reduction` is not one of "none", "mean" or "sum".
+        ValueError: If `x` and `target` have different shapes.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = ms.Tensor([[1, 2, 3], [4, 5, 6]], ms.float32)
+        >>> target = ms.Tensor([[6, 5, 4], [3, 2, 1]], ms.float32)
+        >>> output = ops.l1_loss(x, target, reduction="mean")
+        >>> print(output)
+        3.0
+    """
+    _check_is_tensor('x', x, "l1_loss")
+    _check_is_tensor('target', target, "l1_loss")
+    if reduction not in ('mean', 'sum', 'none'):
+        raise ValueError(f"For l1_loss, the 'reduction' must be in ['mean', 'sum', 'none'], but got {reduction}.")
+    if x.shape != target.shape:
+        raise ValueError(f"For l1_loss, x and target must be the same shape, but got {x.shape} and {target.shape}")
+    loss = _get_cache_prim(P.Abs)()(x - target)
+    if reduction == "mean":
+        loss = _get_cache_prim(P.ReduceMean)()(loss, _get_axis(loss))
+    if reduction == "sum":
+        loss = _get_cache_prim(P.ReduceSum)()(loss, _get_axis(loss))
+    return loss
+
+
 def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
     r"""
     Computes smooth L1 loss, a robust L1 loss.
@@ -5101,6 +5161,7 @@ __all__ = [
     'cross_entropy',
     'grid_sample',
     'smooth_l1_loss',
+    'l1_loss',
     'nll_loss',
     'ctc_loss',
     'ctc_greedy_decoder',
