@@ -14,6 +14,8 @@ mindspore.dataset.text
     import mindspore.dataset as ds
     from mindspore.dataset import text
 
+更多详情请参考 `文本数据变换 <https://www.mindspore.cn/tutorials/zh-CN/r1.10/beginner/transforms.html#text-transforms>`_ 。
+
 常用数据处理术语说明如下：
 
 - TensorOperation，所有C++实现的数据处理操作的基类。
