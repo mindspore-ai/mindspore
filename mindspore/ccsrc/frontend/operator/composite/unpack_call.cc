@@ -28,10 +28,10 @@
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
-using mindspore::abstract::AbstractAttribute;
 using mindspore::abstract::AbstractBase;
 using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractDictionaryPtr;
+using mindspore::abstract::AbstractElementPair;
 using mindspore::abstract::AbstractFunction;
 using mindspore::abstract::AbstractKeywordArg;
 using mindspore::abstract::AbstractList;
@@ -78,7 +78,7 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_abs_l
       auto dict_elems = arg_dict->elements();
       (void)std::transform(
         dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(elems),
-        [res_graph, para_dict](const AbstractAttribute &item) {
+        [res_graph, para_dict](const AbstractElementPair &item) {
           // Dict_elems's first element represents parameter names, which should be string type.
           auto key_value = GetValue<std::string>(item.first->BuildValue());
           auto dict_get_item =

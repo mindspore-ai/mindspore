@@ -14,6 +14,7 @@
 # ============================================================================
 """st for scipy.optimize."""
 
+import os
 import pytest
 import numpy as onp
 import scipy as osp
@@ -210,6 +211,7 @@ def test_bfgs_graph(dtype, func_x0):
     Description: test cases for bfgs in GRAPH mode
     Expectation: the result match scipy
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     context.set_context(mode=context.GRAPH_MODE)
     func, x0 = func_x0
     x0 = x0.astype(dtype)
@@ -218,6 +220,7 @@ def test_bfgs_graph(dtype, func_x0):
                                    options=dict(maxiter=None, gtol=1e-6))
     scipy_res = osp.optimize.minimize(func(onp), x0, method='BFGS')
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 def _scalar_func_1(np):
@@ -349,6 +352,7 @@ def test_line_search_graph(maxiter, func, x, p):
     Description: test cases for n-d function in GRAPH mode
     Expectation: the result match scipy
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     context.set_context(mode=context.GRAPH_MODE)
     A = [[1.76405235, 0.40015721, 0.97873798, 2.2408932, 1.86755799],
          [-0.97727788, 0.95008842, -0.15135721, -0.10321885, 0.4105985],
@@ -356,8 +360,8 @@ def test_line_search_graph(maxiter, func, x, p):
          [0.33367433, 1.49407907, -0.20515826, 0.3130677, -0.85409574],
          [-2.55298982, 0.6536186, 0.8644362, -0.74216502, 2.26975462]]
 
-    osp_x, osp_p, osp_A = onp.array(x), onp.array(p), onp.array(A)
-    osp_f, osp_fp = func(onp, osp_A)
+    osp_x, osp_p, osp_a = onp.array(x), onp.array(p), onp.array(A)
+    osp_f, osp_fp = func(onp, osp_a)
     osp_res = osp_line_search(osp_f, osp_fp, osp_x, osp_p, maxiter=maxiter)
 
     msp_x, msp_p, msp_A = mnp.array(x), mnp.array(p), mnp.array(A)
@@ -366,6 +370,7 @@ def test_line_search_graph(maxiter, func, x, p):
 
     match_array(msp_res.a_k, osp_res[0], error=5)
     match_array(msp_res.f_k, osp_res[3], error=5)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 @pytest.mark.level0
@@ -380,6 +385,7 @@ def test_lbfgs1(dtype, func_x0):
     Description: test cases for lbfgs in PYNATIVE mode
     Expectation: the result match bfgs
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     func, x0 = func_x0
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
@@ -388,6 +394,7 @@ def test_lbfgs1(dtype, func_x0):
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
                                    options=dict(maxiter=None, gtol=1e-6))
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 @pytest.mark.level0
@@ -402,6 +409,7 @@ def test_lbfgs2(dtype, func_x0):
     Description: test cases for lbfgs in PYNATIVE mode
     Expectation: the result match bfgs
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     func, x0 = func_x0
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
@@ -410,6 +418,7 @@ def test_lbfgs2(dtype, func_x0):
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
                                    options=dict(maxiter=None, gtol=1e-6))
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 @pytest.mark.level0
@@ -424,6 +433,7 @@ def test_lbfgs3(dtype, func_x0):
     Description: test cases for lbfgs in PYNATIVE mode
     Expectation: the result match bfgs
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     func, x0 = func_x0
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
@@ -432,6 +442,7 @@ def test_lbfgs3(dtype, func_x0):
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
                                    options=dict(maxiter=None, gtol=1e-6))
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 @pytest.mark.level0
@@ -446,6 +457,7 @@ def test_lbfgs4(dtype, func_x0):
     Description: test cases for lbfgs in PYNATIVE mode
     Expectation: the result match bfgs
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     func, x0 = func_x0
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
@@ -454,6 +466,7 @@ def test_lbfgs4(dtype, func_x0):
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
                                    options=dict(maxiter=None, gtol=1e-6))
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 @pytest.mark.level0
@@ -468,6 +481,7 @@ def test_lbfgs5(dtype, func_x0):
     Description: test cases for lbfgs in PYNATIVE mode
     Expectation: the result match bfgs
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     func, x0 = func_x0
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
@@ -476,6 +490,7 @@ def test_lbfgs5(dtype, func_x0):
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
                                    options=dict(maxiter=None, gtol=1e-6))
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 @pytest.mark.level0
@@ -490,6 +505,7 @@ def test_lbfgs6(dtype, func_x0):
     Description: test cases for lbfgs in PYNATIVE mode
     Expectation: the result match bfgs
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     func, x0 = func_x0
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
@@ -498,6 +514,7 @@ def test_lbfgs6(dtype, func_x0):
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
                                    options=dict(maxiter=None, gtol=1e-6))
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 @pytest.mark.level0
@@ -511,6 +528,7 @@ def test_lbfgs_fixes4594(dtype):
     Description: test cases for lbfgs in PYNATIVE mode
     Expectation: the result match bfgs
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     n = 2
     a = Tensor(onp.eye(n, dtype=dtype)) * 1e4
 
@@ -520,6 +538,7 @@ def test_lbfgs_fixes4594(dtype):
     results = msp.optimize.minimize(func, Tensor(onp.ones(n, dtype=dtype)), method='LBFGS',
                                     options=dict(maxiter=None, gtol=1e-6)).x
     onp.testing.assert_allclose(results.asnumpy(), onp.zeros(n, dtype=dtype), rtol=1e-6, atol=1e-6)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 @pytest.mark.level1
@@ -534,6 +553,7 @@ def test_lbfgs_graph(dtype, func_x0):
     Description: test cases for lbfgs in GRAPH mode
     Expectation: the result match bfgs
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     context.set_context(mode=context.GRAPH_MODE)
     func, x0 = func_x0
     x0 = x0.astype(dtype)
@@ -543,3 +563,4 @@ def test_lbfgs_graph(dtype, func_x0):
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
                                    options=dict(maxiter=None, gtol=1e-6))
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'

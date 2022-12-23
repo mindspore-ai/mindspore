@@ -1350,9 +1350,9 @@ bool AbstractDictionary::operator==(const AbstractBase &other) const {
 }
 
 AbstractBasePtr AbstractDictionary::Clone() const {
-  std::vector<AbstractAttribute> kv;
+  std::vector<AbstractElementPair> kv;
   (void)std::transform(key_values_.cbegin(), key_values_.cend(), std::back_inserter(kv),
-                       [](const AbstractAttribute &item) {
+                       [](const AbstractElementPair &item) {
                          MS_EXCEPTION_IF_NULL(item.first);
                          MS_EXCEPTION_IF_NULL(item.second);
                          return std::make_pair(item.first->Clone(), item.second->Clone());
@@ -1361,9 +1361,9 @@ AbstractBasePtr AbstractDictionary::Clone() const {
 }
 
 AbstractBasePtr AbstractDictionary::Broaden() const {
-  std::vector<AbstractAttribute> kv;
+  std::vector<AbstractElementPair> kv;
   (void)std::transform(key_values_.cbegin(), key_values_.cend(), std::back_inserter(kv),
-                       [](const AbstractAttribute &item) {
+                       [](const AbstractElementPair &item) {
                          MS_EXCEPTION_IF_NULL(item.second);
                          return std::make_pair(item.first, item.second->Broaden());
                        });
@@ -1384,7 +1384,7 @@ std::string AbstractDictionary::ToString() const {
 
 std::size_t AbstractDictionary::hash() const {
   std::size_t hash_sum = std::accumulate(key_values_.cbegin(), key_values_.cend(), tid(),
-                                         [](std::size_t hash_sum, const AbstractAttribute &item) {
+                                         [](std::size_t hash_sum, const AbstractElementPair &item) {
                                            MS_EXCEPTION_IF_NULL(item.first);
                                            MS_EXCEPTION_IF_NULL(item.second);
                                            hash_sum = hash_combine(hash_sum, item.first->hash());

@@ -49,12 +49,12 @@ FuncGraphPtr DictHasKey::GenerateFuncGraph(const abstract::AbstractBasePtrList &
   ValuePtr key_value = args_list[1]->BuildValue();
   MS_EXCEPTION_IF_NULL(dict);
   MS_EXCEPTION_IF_NULL(key_value);
-  auto dict_elems = dict->elements();
+  auto elems = dict->elements();
   bool has_key = false;
-  auto it = std::find_if(dict_elems.cbegin(), dict_elems.cend(), [&key_value](const abstract::AbstractAttribute &item) {
+  auto it = std::find_if(elems.cbegin(), elems.cend(), [&key_value](const abstract::AbstractElementPair &item) {
     return *key_value == *item.first->BuildValue();
   });
-  if (it != dict_elems.cend()) {
+  if (it != elems.cend()) {
     has_key = true;
   }
 
@@ -153,7 +153,7 @@ abstract::AbstractBasePtrList DictFromKeys::ParseIterableObject(const abstract::
     AbstractBasePtrList keys;
     auto &dict_elems = dict_keys->elements();
     std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(keys),
-                   [](const abstract::AbstractAttribute &item) { return item.first; });
+                   [](const abstract::AbstractElementPair &item) { return item.first; });
     return keys;
   }
   if (key_type->IsSameTypeId(String::kTypeId)) {

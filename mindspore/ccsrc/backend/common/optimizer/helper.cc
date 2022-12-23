@@ -848,10 +848,10 @@ AbstractBasePtrList RectifyAbstractFromRegAttr(const PrimitivePtr &primitive,
   return rectify_abs_list;
 }
 
-AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &primitive,
+AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &prim,
                                                     const AbstractBasePtrList &input_abstract) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto dynamic_inputs_list = primitive->GetAttr(kAttrDynInputSizes);
+  MS_EXCEPTION_IF_NULL(prim);
+  auto dynamic_inputs_list = prim->GetAttr(kAttrDynInputSizes);
   if (dynamic_inputs_list == nullptr) {
     return input_abstract;
   }
@@ -873,6 +873,10 @@ AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &primitiv
       AbstractBasePtrList dynamic_inputs_abs;
       for (auto index = item; index > 0; --index) {
         if (input_index >= input_abstract.size()) {
+          // Not to check for PyExecute.
+          if ((prim->Hash() == prim::kPrimPyExecute->Hash() && prim->name() == prim::kPrimPyExecute->name())) {
+            continue;
+          }
           MS_LOG(EXCEPTION) << "Index " << input_index << " is out of range in input abstract "
                             << input_abstract.size();
         }

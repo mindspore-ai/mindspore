@@ -55,7 +55,7 @@ class PyExecuteInitializer {
       MS_LOG(EXCEPTION) << "Value tuple should not be anyvalue.";
     }
     const auto &values = dyn_cast<ValueSequence>(values_tuple);
-    MS_LOG(ERROR) << "script: " << script->ToString() << ", keys_tuple: " << keys_tuple->ToString()
+    MS_LOG(DEBUG) << "script: " << script->ToString() << ", keys_tuple: " << keys_tuple->ToString()
                   << ", values_tuple: " << values_tuple->ToString();
 
     py::gil_scoped_acquire gil_acquire;
@@ -90,13 +90,21 @@ class PyExecuteInitializer {
       const auto &res_tensor = tensor::TensorPy::MakeTensorOfNumpy(py_res);
       MS_LOG(DEBUG) << "res_tensor: " << res_tensor->ToString();
     } else if (py::isinstance<py::float_>(py_res)) {
-      MS_LOG(ERROR) << "is py::float_, py_res: " << py_res;
+      MS_LOG(DEBUG) << "is py::float_, py_res: " << py_res;
     } else if (py::isinstance<py::int_>(py_res)) {
-      MS_LOG(ERROR) << "is py::int_, py_res: " << py_res;
+      MS_LOG(DEBUG) << "is py::int_, py_res: " << py_res;
     } else if (py::isinstance<py::bool_>(py_res)) {
-      MS_LOG(ERROR) << "is py::bool_, py_res: " << py_res;
+      MS_LOG(DEBUG) << "is py::bool_, py_res: " << py_res;
     } else if (py::isinstance<py::str>(py_res)) {
-      MS_LOG(ERROR) << "is py::str, py_res: " << py_res;
+      MS_LOG(DEBUG) << "is py::str, py_res: " << py_res;
+    } else if (py::isinstance<py::tuple>(py_res)) {
+      MS_LOG(DEBUG) << "is py::tuple, py_res: " << py_res;
+    } else if (py::isinstance<py::list>(py_res)) {
+      MS_LOG(DEBUG) << "is py::list, py_res: " << py_res;
+    } else if (py::isinstance<py::dict>(py_res)) {
+      MS_LOG(DEBUG) << "is py::dict, py_res: " << py_res;
+    } else if (py::isinstance<py::set>(py_res)) {
+      MS_LOG(DEBUG) << "is py::set, py_res: " << py_res;
     } else {
       MS_LOG(EXCEPTION) << "py_res is invalid, py_res: " << py_res;
     }

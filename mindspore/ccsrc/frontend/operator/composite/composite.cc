@@ -41,11 +41,11 @@ namespace mindspore {
 namespace prim {
 constexpr auto kStepDefault = 1;
 
-using mindspore::abstract::AbstractAttribute;
 using mindspore::abstract::AbstractBase;
 using mindspore::abstract::AbstractBasePtr;
 using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractDictionaryPtr;
+using mindspore::abstract::AbstractElementPair;
 using mindspore::abstract::AbstractEllipsis;
 using mindspore::abstract::AbstractEllipsisPtr;
 using mindspore::abstract::AbstractFunction;

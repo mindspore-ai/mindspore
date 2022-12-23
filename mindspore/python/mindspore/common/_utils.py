@@ -53,3 +53,8 @@ def split_to_slice_if_need(dtype, shape):
         return slice_num
     slice_num = math.ceil(data_size / emb_cache_size)
     return slice_num
+
+
+def update_and_return_dict(dic, key, val):
+    dic.__setitem__(key, val)
+    return dic

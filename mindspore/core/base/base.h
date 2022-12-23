@@ -231,7 +231,7 @@ using FuncGraphWeakPtr = std::weak_ptr<FuncGraph>;
 namespace abstract {
 class AbstractBase;
 using AbstractBasePtr = std::shared_ptr<AbstractBase>;
-using AbstractAttribute = std::pair<AbstractBasePtr, AbstractBasePtr>;
+using AbstractElementPair = std::pair<AbstractBasePtr, AbstractBasePtr>;
 class AnalysisContext;
 using AnalysisContextPtr = std::shared_ptr<AnalysisContext>;
 }  // namespace abstract

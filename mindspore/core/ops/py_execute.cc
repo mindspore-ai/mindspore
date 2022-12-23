@@ -28,30 +28,28 @@ MIND_API_OPERATOR_IMPL(PyExecute, BaseOperator);
 
 BaseShapePtr PyExecuteInfer::InferShape(const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  if (infer_handler_ == nullptr) {
-    MS_LOG(EXCEPTION) << "infer_handler_ should not be null.";
-  }
-  // TODO(zh_qh): Will call 'infer_handler_(input_args)' check the abstract shape and type later.
   ShapeVector out_shape = {1};
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr PyExecuteInfer::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  // TODO(zh_qh): Will call 'infer_handler_(input_args)' check the abstract shape and type later.
   return kFloat64;
 }
 
 AbstractBasePtr PyExecuteInfer::InferShapeAndType(const abstract::AnalysisEnginePtr &engine,
                                                   const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(primitive);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+    MS_LOG(DEBUG) << "item: " << item->ToString();
+  }
+
+  if (infer_handler_ == nullptr) {
+    MS_LOG(EXCEPTION) << "infer_handler_ should not be null.";
+  }
+  infer_handler_(input_args);
+
   const auto &type = InferType(primitive, input_args);
   const auto &shape = InferShape(primitive, input_args);
   const auto &abstract = MakeAbstract(shape, type);

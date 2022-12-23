@@ -177,7 +177,7 @@ static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_a
         auto arg_dict = specialize_args_before_unpack[index]->cast_ptr<AbstractDictionary>();
         auto dict_elems = arg_dict->elements();
         (void)std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(graph_specialize_args),
-                             [](const AbstractAttribute &item) {
+                             [](const AbstractElementPair &item) {
                                // Dict_elems's first element represents parameter names, which should be string type.
                                return std::make_shared<AbstractKeywordArg>(
                                  GetValue<std::string>(item.first->BuildValue()), item.second);
@@ -1817,9 +1817,21 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   // Call python script string.
   MS_LOG(DEBUG) << "Call script: " << script << ", args: " << args_abs_list;
 
-  ShapeVector shp;
-  (void)shp.emplace_back(Shape::kShapeRankAny);
-  AbstractBasePtr res = std::make_shared<AbstractTensor>(kFloat64, std::make_shared<Shape>(shp));
+  TypePtr type = kFloat32;
+  if (current_interpret_node->has_user_data("__py_execute_tensor_type__")) {
+    type = current_interpret_node->user_data<Type>("__py_execute_tensor_type__");
+    MS_LOG(DEBUG) << "type: " << type->ToString();
+  }
+  BaseShapePtr shape;
+  if (current_interpret_node->has_user_data("__py_execute_tensor_shape__")) {
+    shape = current_interpret_node->user_data<BaseShape>("__py_execute_tensor_shape__");
+    MS_LOG(DEBUG) << "shape: " << shape->ToString();
+  } else {
+    ShapeVector shp;
+    (void)shp.emplace_back(Shape::kShapeRankAny);
+    shape = std::make_shared<Shape>(shp);
+  }
+  AbstractBasePtr res = std::make_shared<AbstractTensor>(type, shape);
   auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
   return infer_result;
@@ -2246,10 +2258,17 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       MS_EXCEPTION_IF_NULL(local_abs_val);
       auto py_data_name = py::str(ValueToPyData(name->BuildValue()));
       if (local_abs_val == kAnyValue) {
-        MS_LOG(INFO) << "When using JIT Fallback to handle script '" << script
-                     << "', the inputs should be constant, but found variable '" << py_data_name
-                     << "' to be nonconstant. To convert to PyExecute() afterwards";
-        non_const_err_ = true;
+        static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+        if (support_fallback_runtime) {
+          MS_LOG(INFO) << "When using JIT Fallback to handle script '" << script
+                       << "', the inputs should be constant, but found variable '" << py_data_name
+                       << "' to be nonconstant. To convert to PyExecute() afterwards";
+          non_const_err_ = true;
+        } else {
+          MS_EXCEPTION(ValueError) << "When using JIT Fallback to handle script '" << script
+                                   << "', the inputs should be constant, but found variable '" << py_data_name
+                                   << "' to be nonconstant.";
+        }
       }
       if (local_abs->isa<abstract::AbstractTensor>()) {
         MS_LOG(WARNING) << "When using JIT Fallback to handle script '" << script << "', found variable '"
@@ -2341,11 +2360,11 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
 
   AbstractDictionaryPtr FilterParameters(const AbstractDictionaryPtr &abstract_dict) const {
     MS_EXCEPTION_IF_NULL(abstract_dict);
-    std::vector<AbstractAttribute> kv;
+    std::vector<AbstractElementPair> kv;
     const auto &keys_values = abstract_dict->elements();
     // Filter out the element of Function type.
     (void)std::copy_if(keys_values.cbegin(), keys_values.cend(), std::back_inserter(kv),
-                       [](const AbstractAttribute &item) {
+                       [](const AbstractElementPair &item) {
                          MS_EXCEPTION_IF_NULL(item.second);
                          return (!item.second->isa<abstract::AbstractFunction>());
                        });
