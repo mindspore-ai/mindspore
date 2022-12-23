@@ -454,6 +454,11 @@ def test_parameter_value_control_flow_ascend():
     assert graph_out == (9, 4)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_control_while_for_if_break_parameter():
     """
     Feature: UpdateState grad in pynative mode.
@@ -487,4 +492,4 @@ def test_control_while_for_if_break_parameter():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net30()
     ms_grad = ops.GradOperation(get_all=True, get_by_list=True, sens_param=False)
-    ms_grad(net)(Tensor(2), Tensor(20), Tensor(np.random.rand(4, 4, 4)))
+    ms_grad(net)(Tensor(2), Tensor(20), Tensor(np.random.rand(4, 4, 4), dtype=ms.float32))

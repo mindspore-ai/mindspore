@@ -28,6 +28,7 @@
 #include "utils/flags.h"
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 /* namespace to support opt */
@@ -94,6 +95,10 @@ bool CSE::BuildOrderGroupAndDoReplaceForOneGraph(const FuncGraphPtr &fg, const F
 
     std::size_t h = 0;
     if (node->isa<ValueNode>()) {
+      auto prim = GetValueNode<PrimitivePtr>(node);
+      if (IsPrimitiveEquals(prim, prim::kPrimUpdateState)) {
+        continue;
+      }
       ValueNodePtr value_node = node->cast<ValueNodePtr>();
       auto value = value_node->value();
       MS_EXCEPTION_IF_NULL(value);

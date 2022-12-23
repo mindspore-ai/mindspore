@@ -95,12 +95,6 @@ MetaFuncGraphPtr KPrim::KMetaFuncGraph(const PrimitivePtr &prim) {
     return meta;
   }
 
-  if (IsPrimitiveEquals(prim, prim::kPrimUpdateState)) {
-    MetaFuncGraphPtr meta = std::make_shared<prim::UpdateStateGradient>("update_state_gradient");
-    bprop_registry_meta_[prim::kPrimUpdateState] = meta;
-    return meta;
-  }
-
   MS_LOG(EXCEPTION) << "Fail to find bprop function for " << prim->name() << ".";
 }
 
@@ -203,8 +197,7 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
     auto fprop = GetFprop(prim);
     fprop->transforms().emplace("primal", FuncGraphTransform(prim::kPrimSwitchLayer));
     return fprop;
-  } else if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList) ||
-             IsPrimitiveEquals(prim, prim::kPrimUpdateState)) {
+  } else if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
     return nullptr;
   }
 
@@ -545,7 +538,11 @@ FuncGraphPtr KPrim::FakeBprop(const ValueNodePtr &value_node, const pipeline::Re
     // Mock params for inputs
     auto param = func_graph->add_parameter();
     // Mock derivatives for each inputs
-    outputs.push_back(func_graph->NewCNode({NewValueNode(fake_bprop), param}));
+    if (IsPrimitiveEquals(prim, prim::kPrimUpdateState)) {
+      outputs.push_back(func_graph->NewCNode({NewValueNode(prim::GetPythonOps("zeros_like")), param}));
+    } else {
+      outputs.push_back(func_graph->NewCNode({NewValueNode(fake_bprop), param}));
+    }
   }
   // mock params for out and dout
   (void)func_graph->add_parameter();
