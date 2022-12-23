@@ -100,9 +100,12 @@ bool ConcatOffsetV1CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
 }
 
 std::vector<std::pair<KernelAttr, ConcatOffsetV1CpuKernelMod::ConcatOffsetV1Func>>
-  ConcatOffsetV1CpuKernelMod::func_list_ = {
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-     &ConcatOffsetV1CpuKernelMod::LaunchKernel<int32_t>}};
+  ConcatOffsetV1CpuKernelMod::func_list_ = {{KernelAttr()
+                                               .AddAllSameAttr(true)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeInt32),
+                                             &ConcatOffsetV1CpuKernelMod::LaunchKernel<int32_t>}};
 
 std::vector<KernelAttr> ConcatOffsetV1CpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
