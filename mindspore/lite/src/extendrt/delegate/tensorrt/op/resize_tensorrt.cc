@@ -239,6 +239,10 @@ int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
     return RET_ERROR;
   }
   resize_layer->setCoordinateTransformation(transform_it->second);
+  if (resize_op_->get_new_height() != 0 || resize_op_->get_new_width() != 0 ||
+      (coordinate_transform_mode == CoordinateTransformMode::ALIGN_CORNERS && method == ResizeMethod::LINEAR)) {
+    resize_layer->setCoordinateTransformation(nvinfer1::ResizeCoordinateTransformation::kALIGN_CORNERS);
+  }
 #else
   if (coordinate_transform_mode != CoordinateTransformMode::ASYMMETRIC) {
     MS_LOG(WARNING) << op_name_ << " has coordinate_transform_mode may not supported: "
