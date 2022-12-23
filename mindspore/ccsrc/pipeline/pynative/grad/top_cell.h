@@ -111,11 +111,11 @@ class TopCellInfo {
     graph_info_map_[fg] = graph_info;
   }
   inline const OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() const { return graph_info_map_; }
-  inline ad::AutoGradCellImplPtr auto_grad_cell_ptr() const {
+  inline autograd::AutoGradCellImplPtr auto_grad_cell_ptr() const {
     MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr_);
     return auto_grad_cell_ptr_;
   }
-  void set_auto_grad_cell_ptr(const ad::AutoGradCellImplPtr &auto_grad_cell_ptr) {
+  void set_auto_grad_cell_ptr(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr) {
     auto_grad_cell_ptr_ = auto_grad_cell_ptr;
   }
   inline const OpInfoWithTensorId &op_info_with_tensor_id() const { return op_info_with_tensor_id_; }
@@ -179,7 +179,7 @@ class TopCellInfo {
   std::string grad_operation_;
   pipeline::ResourcePtr resource_{nullptr};
   FuncGraphPtr fg_{nullptr};
-  ad::AutoGradCellImplPtr auto_grad_cell_ptr_{nullptr};
+  autograd::AutoGradCellImplPtr auto_grad_cell_ptr_{nullptr};
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
   // Record `register hook` or `remove hook` function has been called by sub cell
   // The record range between the begin and end of top cell.

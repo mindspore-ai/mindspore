@@ -123,8 +123,10 @@ class GradExecutor {
   void SaveOutputNodeMap(const std::string &obj_id, const FrontendOpRunInfoPtr &op_run_info,
                          const CNodePtr &cnode) const;
   void DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNodePtr &cnode, const ValuePtr &op_out) const;
-  void GradPynativeOp(const ad::AutoGradCellImplPtr &auto_grad_cell_ptr, const ad::GradParamPtr &grad_param) const;
-  void AsyncGradPynativeOp(const ad::AutoGradCellImplPtr &auto_grad_cell_ptr, const ad::GradParamPtr &grad_param) const;
+  void GradPynativeOp(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
+                      const autograd::GradParamPtr &grad_param) const;
+  void AsyncGradPynativeOp(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
+                           const autograd::GradParamPtr &grad_param) const;
   void AsyncUpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, const ValuePtr &cloned_value) const;
   AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node) const;
   void SetBpropGraphJitLevel(const py::object &obj) const;
@@ -174,9 +176,9 @@ class GradExecutor {
   void DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id);
   void CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info);
   void EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell);
-  void GetGradGraph(const ad::GradAttr &grad_attr, const std::vector<AnfNodePtr> &w_args,
+  void GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<AnfNodePtr> &w_args,
                     const std::vector<size_t> &p_args);
-  FuncGraphPtr GetBpropGraph(const ad::GradAttr &grad_attr, const vector<AnfNodePtr> &w_args,
+  FuncGraphPtr GetBpropGraph(const autograd::GradAttr &grad_attr, const vector<AnfNodePtr> &w_args,
                              const vector<size_t> &p_args);
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, bool *weight_param_is_tuple) const;
   void CheckParamShapeAndType(const AnfNodePtr &param, const ParameterPtr &param_node,
@@ -206,6 +208,7 @@ class GradExecutor {
   size_t obj_order_{0};
   // If grad_order=1, indicate first derivative; grad_order=2, indicate second derivative; ...
   size_t grad_order_{0};
+  size_t op_num_in_bprop_graph_{0};
   std::string grad_operation_;
   TopCellInfoPtr top_cell_{nullptr};
   InputArgsInfoPtr top_input_args_info_{nullptr};

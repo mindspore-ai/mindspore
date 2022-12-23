@@ -470,7 +470,8 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
     (void)abs_list.emplace_back(param_i_abs);
     top_cell()->SetParamNodeMapInGraphInfoMap(input_args_info->input_arg_id_vec[i], new_param);
   }
-  top_cell()->set_auto_grad_cell_ptr(ad::GradPynativeCellBegin(curr_g()->parameters(), input_param_values, abs_list));
+  top_cell()->set_auto_grad_cell_ptr(
+    autograd::GradPynativeCellBegin(curr_g()->parameters(), input_param_values, abs_list, op_num_in_bprop_graph_));
 }
 
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
@@ -818,32 +819,38 @@ void GradExecutor::EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell) {
 
 void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                                 const py::object &grad_position, const py::args &args) {
-  {
-    py::gil_scoped_release gil_release;
-    async_executor_->Wait();
-  }
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
   MS_LOG(DEBUG) << "GradNetInner start " << args.size() << ", cell_id " << top_input_args_info_->cell_id
                 << ", input args info ptr " << top_input_args_info_.get();
 
   SetSensValue(grad, top_input_args_info_, args);
   GetPreRunTopCell(obj);
+
   // For async, top can not be change when run SetForwardLastNodeInfo; Change top cell after sync
-  set_top_cell(already_run_top_cell_.at(top_cell()->already_run_cell_id()));
-  if (!top_cell()->need_compile_graph()) {
+  auto already_run_top_cell = already_run_top_cell_.at(top_cell()->already_run_cell_id());
+  if (!already_run_top_cell->need_compile_graph()) {
     MS_LOG(DEBUG) << "No need compile graph";
+    // If no need compile, we can finish construct left bprop
+    async_executor_->Reset();
     top_cell_list_.pop_back();
+    set_top_cell(already_run_top_cell);
     top_cell()->UpdateTopCellInfo(false, false, false);
     return;
   }
   MS_LOG(DEBUG) << "Need compile graph";
+  {
+    py::gil_scoped_release gil_release;
+    async_executor_->Wait();
+  }
+  set_top_cell(already_run_top_cell);
+  op_num_in_bprop_graph_ = top_cell()->op_index();
   top_cell()->set_grad_operation(grad_operation_);
   SetBpropGraphJitLevel(obj);
   bool weight_param_is_tuple = true;
   auto w_args = GetWeightsArgs(weights, &weight_param_is_tuple);
   auto p_args = GetGradPositionArgs(grad_position, grad->get_by_position_);
-  ad::GradAttr grad_attr(grad->get_all_, grad->get_by_list_, grad->sens_param_, grad->get_by_position_,
-                         weight_param_is_tuple);
+  autograd::GradAttr grad_attr(grad->get_all_, grad->get_by_list_, grad->sens_param_, grad->get_by_position_,
+                               weight_param_is_tuple);
   GetGradGraph(grad_attr, w_args, p_args);
 }
 
@@ -880,7 +887,7 @@ void GradExecutor::GetPreRunTopCell(const py::object &obj) {
   top_cell_ = GetTopCell(check_already_run_cell_id);
 }
 
-void GradExecutor::GetGradGraph(const ad::GradAttr &grad_attr, const std::vector<AnfNodePtr> &w_args,
+void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<AnfNodePtr> &w_args,
                                 const std::vector<size_t> &p_args) {
   // Get bprop graph of top cell
   auto bprop_graph = GetBpropGraph(grad_attr, w_args, p_args);
@@ -1031,11 +1038,11 @@ void GradExecutor::UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args,
   }
 }
 
-FuncGraphPtr GradExecutor::GetBpropGraph(const ad::GradAttr &grad_attr, const vector<AnfNodePtr> &w_args,
+FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr, const vector<AnfNodePtr> &w_args,
                                          const vector<size_t> &p_args) {
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
   auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
-  FuncGraphPtr bprop_graph = ad::GradPynativeCellEnd(auto_grad_cell_ptr, w_args, p_args, grad_attr);
+  FuncGraphPtr bprop_graph = autograd::GradPynativeCellEnd(auto_grad_cell_ptr, w_args, p_args, grad_attr);
 
   MS_LOG(DEBUG) << "Top graph input params size " << top_input_args_info_->input_arg_value_vec.size();
   std::ostringstream ss;
@@ -1208,8 +1215,8 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   ValuePtrList input_args(forward_args);
   (void)input_args.insert(input_args.end(), weights_args.cbegin(), weights_args.cend());
 
-  auto grad_param = std::make_shared<ad::GradParam>(cnode, input_args, out_value, second_grad_fg,
-                                                    !top_cell()->is_high_order_top_cell());
+  auto grad_param = std::make_shared<autograd::GradParam>(cnode, input_args, out_value, second_grad_fg,
+                                                          !top_cell()->is_high_order_top_cell());
   if (!top_cell()->auto_grad_cell_ptr()->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to run ad grad for second grad graph " << cnode->ToString();
   }
@@ -1583,9 +1590,8 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNode
   if (is_unused_index(cloned_op_args.size())) {
     ClearDeviceAddress(cloned_out);
   }
-
-  auto grad_param =
-    std::make_shared<ad::GradParam>(cnode, cloned_op_args, cloned_out, nullptr, !top_cell()->is_high_order_top_cell());
+  auto grad_param = std::make_shared<autograd::GradParam>(cnode, cloned_op_args, cloned_out, nullptr,
+                                                          !top_cell()->is_high_order_top_cell());
   auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
     AsyncGradPynativeOp(auto_grad_cell_ptr, grad_param);
@@ -1594,15 +1600,15 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNode
   }
 }
 
-void GradExecutor::GradPynativeOp(const ad::AutoGradCellImplPtr &auto_grad_cell_ptr,
-                                  const ad::GradParamPtr &grad_param) const {
-  if (!ad::GradPynativeOp(auto_grad_cell_ptr, grad_param)) {
+void GradExecutor::GradPynativeOp(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
+                                  const autograd::GradParamPtr &grad_param) const {
+  if (!autograd::GradPynativeOp(auto_grad_cell_ptr, grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to run ad grad for op ";
   }
 }
 
-void GradExecutor::AsyncGradPynativeOp(const ad::AutoGradCellImplPtr &auto_grad_cell_ptr,
-                                       const ad::GradParamPtr &grad_param) const {
+void GradExecutor::AsyncGradPynativeOp(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
+                                       const autograd::GradParamPtr &grad_param) const {
   const auto fn = [this, auto_grad_cell_ptr, grad_param]() { this->GradPynativeOp(auto_grad_cell_ptr, grad_param); };
   auto task = std::make_shared<BpropTask>(fn);
   async_executor_->Push(task);
