@@ -161,7 +161,6 @@
 #include "plugin/device/ascend/optimizer/mindir/maxpool_to_maxpool_with_argmax.h"
 #include "plugin/device/ascend/optimizer/mindir/maxpool_with_argmax_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/optimizer_unify_output.h"
-#include "plugin/device/ascend/optimizer/mindir/fake_learned_scale_quant_grad_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/slice_grad_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/update_input_names_strided_slice_grad.h"
@@ -667,8 +666,6 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
   unify_mindir_pm->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
   unify_mindir_pm->AddPass(std::make_shared<opt::CenteredRMSPropUnifyOutput>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::FakeLearnedScaleQuantPerLayerGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::FakeLearnedScaleQuantPerChannelGradUnifyMindIR>());
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {

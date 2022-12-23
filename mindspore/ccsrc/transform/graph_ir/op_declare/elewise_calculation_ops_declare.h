@@ -32,18 +32,6 @@ DECLARE_OP_USE_OUTPUT(AccumulateNV2)
 DECLARE_OP_ADAPTER(ConfusionMulGrad)
 DECLARE_OP_USE_OUTPUT(ConfusionMulGrad)
 
-DECLARE_OP_ADAPTER(FakeQuantWithMinMaxVars)
-DECLARE_OP_USE_OUTPUT(FakeQuantWithMinMaxVars)
-
-DECLARE_OP_ADAPTER(FakeQuantWithMinMaxVarsGradient)
-DECLARE_OP_USE_OUTPUT(FakeQuantWithMinMaxVarsGradient)
-
-DECLARE_OP_ADAPTER(FakeQuantWithMinMaxVarsPerChannel)
-DECLARE_OP_USE_OUTPUT(FakeQuantWithMinMaxVarsPerChannel)
-
-DECLARE_OP_ADAPTER(FakeQuantWithMinMaxVarsPerChannelGradient)
-DECLARE_OP_USE_OUTPUT(FakeQuantWithMinMaxVarsPerChannelGradient)
-
 DECLARE_OP_ADAPTER(GreaterEqual)
 DECLARE_OP_USE_OUTPUT(GreaterEqual)
 

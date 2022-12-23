@@ -22,20 +22,18 @@ from mindspore import nn
 from mindspore import context
 from mindspore import Tensor
 from mindspore.common import set_seed
-from mindspore.compression.quant import create_quant_config
 
 class Net(nn.Cell):
-    def __init__(self, qconfig):
+    def __init__(self):
         super(Net, self).__init__()
-        self.conv = nn.Conv2dBnFoldQuant(2, 3, kernel_size=(2, 2), stride=(1, 1),
-                                         pad_mode='valid', quant_config=qconfig)
+        self.conv = nn.Conv2dBnFoldQuant(2, 3, kernel_size=(2, 2), stride=(1, 1), pad_mode='valid')
     def construct(self, x):
         return self.conv(x)
 
+
 def test_conv2d_bn_fold_quant():
     set_seed(1)
-    quant_config = create_quant_config()
-    network = Net(quant_config)
+    network = Net()
     inputs = Tensor(np.ones([1, 2, 5, 5]).astype(np.float32))
     label = Tensor(np.ones([1, 3, 4, 4]).astype(np.int32))
     opt = nn.Momentum(filter(lambda x: x.requires_grad, network.get_parameters()), learning_rate=0.1, momentum=0.9)
@@ -44,10 +42,12 @@ def test_conv2d_bn_fold_quant():
     train_network = nn.TrainOneStepCell(net_with_loss, opt)
     train_network.set_train()
     out_loss = train_network(inputs, label)
+    print("------------------", out_loss.asnumpy())
     expect_loss = np.array([0.940427])
     error = np.array([0.1])
     diff = out_loss.asnumpy() - expect_loss
     assert np.all(abs(diff) < error)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
