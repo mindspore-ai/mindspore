@@ -157,6 +157,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::inter_op_parallel_num_, "interOpParallelNum", "parallel number of operators in predict",
             1);
     AddFlag(&BenchmarkFlags::enable_gl_texture_, "enableGLTexture", "Enable GlTexture2D", false);
+    AddFlag(&BenchmarkFlags::delegate_mode_, "delegateMode", "set the delegate mode: CoreML | NNAPI", "");
   }
 
   ~BenchmarkFlags() override = default;
@@ -210,6 +211,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   std::string decrypt_key_str_;
   std::string dec_mode_ = "AES-GCM";
   std::string crypto_lib_path_;
+  std::string delegate_mode_;
 };
 
 class MS_API BenchmarkBase {

@@ -437,6 +437,13 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
   if (!flags_->core_list_.empty()) {
     context->SetThreadAffinity(flags_->core_list_);
   }
+#ifndef ENABLE_CLOUD_FUSION_INFERENCE
+  if (flags_->delegate_mode_ == "CoreML") {
+    context->SetBuiltInDelegate(kCoreML);
+  } else if (flags_->delegate_mode_ == "NNAPI") {
+    context->SetBuiltInDelegate(kNNAPI);
+  }
+#endif
 
   auto &device_list = context->MutableDeviceInfo();
 

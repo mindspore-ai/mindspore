@@ -1355,7 +1355,7 @@ kernel::KernelExec *Scheduler::SchedulePartialToKernel(const lite::LiteGraph::No
 
 #ifdef ENABLE_FP16
 int Scheduler::SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_data_type) {
-  if (!context_->IsCpuFloat16Enabled()) {
+  if (!context_->IsCpuFloat16Enabled() || context_->GetDelegateMode() == kNNAPI) {
     *prefer_data_type = kNumberTypeFloat32;
     return RET_OK;
   }
@@ -1398,7 +1398,8 @@ std::vector<kernel::KernelExec *> Scheduler::ScheduleMainSubGraphToKernels() {
   std::vector<kernel::KernelExec *> kernels;
   std::vector<lite::Tensor *> in_tensors;
   std::vector<lite::Tensor *> out_tensors;
-  auto ret = ScheduleSubGraphToKernels(kMainSubGraphIndex, &kernels, &in_tensors, &out_tensors);
+  TypeId prefer_data_type = context_->GetDelegateMode() == kNNAPI ? kNumberTypeFloat32 : kTypeUnknown;
+  auto ret = ScheduleSubGraphToKernels(kMainSubGraphIndex, &kernels, &in_tensors, &out_tensors, prefer_data_type);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule subgraph failed, index: " << kMainSubGraphIndex;
     for (auto *kernel : kernels) {
