@@ -345,8 +345,8 @@ int SocketOperation::Listen(const std::string &url) {
   }
 
   // bind
-  if (::bind(listenFd, reinterpret_cast<struct sockaddr *>(&addr), sizeof(SocketAddress)) > 0) {
-    MS_LOG(ERROR) << "Failed to call bind, url: " << url.c_str();
+  if (::bind(listenFd, reinterpret_cast<struct sockaddr *>(&addr), sizeof(SocketAddress)) != 0) {
+    MS_LOG(ERROR) << "Failed to call bind, url: " << url.c_str() << " " << strerror(errno);
     if (close(listenFd) != 0) {
       MS_LOG(EXCEPTION) << "Failed to close fd:" << listenFd;
     }
@@ -354,8 +354,9 @@ int SocketOperation::Listen(const std::string &url) {
   }
 
   // listen
-  if (::listen(listenFd, SOCKET_LISTEN_BACKLOG) > 0) {
-    MS_LOG(ERROR) << "Failed to call listen, fd: " << listenFd << ", errno: " << errno << ", url: " << url.c_str();
+  if (::listen(listenFd, SOCKET_LISTEN_BACKLOG) != 0) {
+    MS_LOG(ERROR) << "Failed to call listen, fd: " << listenFd << ", errno: " << errno << ", url: " << url.c_str()
+                  << " " << strerror(errno);
     if (close(listenFd) != 0) {
       MS_LOG(EXCEPTION) << "Failed to close fd:" << listenFd;
     }
