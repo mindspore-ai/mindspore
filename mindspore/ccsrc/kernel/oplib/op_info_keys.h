@@ -50,6 +50,7 @@ constexpr auto kNull = "Null";
 constexpr auto kJitCompile = "jitCompile";
 constexpr auto kSoftSync = "softsync";
 constexpr auto kOpImplSwitch = "opImplSwitch";
+constexpr auto kPreBuildPattern = "prebuildPattern";
 
 // attr keys
 constexpr auto kAttr = "attr";

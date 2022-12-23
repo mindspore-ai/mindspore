@@ -379,6 +379,12 @@ bool ParseCommonOpImplSwitch(const nlohmann::json &item, const OpInfoPtr &op_inf
   return true;
 }
 
+bool ParseCommonPreBuildPattern(const nlohmann::json &item, const OpInfoPtr &op_info_ptr) {
+  CHECK_VALUE(item, kValue)
+  op_info_ptr->set_prebuild_pattern(item.at(kValue));
+  return true;
+}
+
 bool ParseCommonCube(const nlohmann::json &item, const OpInfoPtr &op_info_ptr) {
   CHECK_VALUE(item, kFlag)
   op_info_ptr->set_cube_op(item.at(kFlag) == kTrue);
@@ -409,6 +415,7 @@ const std::map<std::string, std::function<bool(const nlohmann::json &item, const
     {kJitCompile, ParseCommonJitCompile},
     {kSoftSync, ParseCommonSoftSync},
     {kOpImplSwitch, ParseCommonOpImplSwitch},
+    {kPreBuildPattern, ParseCommonPreBuildPattern},
 };
 
 bool ParseAttrParamType(const std::string &value, const OpAttrPtr &op_attr_ptr) {
