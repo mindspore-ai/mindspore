@@ -4,6 +4,7 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.nn import ReflectionPad1d
 from mindspore.nn import ReflectionPad2d
+from mindspore.nn import ReflectionPad3d
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -122,6 +123,37 @@ def test_invalid_padding_reflection_pad_1d():
     x = Tensor([[1, 2, 3], [1, 2, 3]])
     with pytest.raises(ValueError):
         ReflectionPad1d(padding)(x)
+
+
+def test_reflection_pad_3d():
+    """
+    Feature: ReflectionPad3d
+    Description: Infer process of ReflectionPad3d with three type parameters.
+    Expectation: success
+    """
+
+    # Test functionality with 4D tensor as input
+    arr = np.arange(8).astype(np.float32).reshape((1, 2, 2, 2))
+    x = Tensor(arr)
+    padding = (1, 1, 1, 0, 0, 1)
+    net3d = ReflectionPad3d(padding)
+    output = net3d(x)
+    expected_output = Tensor(np.array([[[[3, 2, 3, 2], [1, 0, 1, 0], [3, 2, 3, 2]],
+                                        [[7, 6, 7, 6], [5, 4, 5, 4], [7, 6, 7, 6]],
+                                        [[3, 2, 3, 2], [1, 0, 1, 0], [3, 2, 3, 2]]]]).astype(np.float32))
+    print(output, expected_output)
+
+    padding = 1
+    output = ReflectionPad3d(padding)(x)
+    expected_output = Tensor(np.array([[[[7., 6., 7., 6.], [5., 4., 5., 4.],
+                                         [7., 6., 7., 6.], [5., 4., 5., 4.]],
+                                        [[3., 2., 3., 2.], [1., 0., 1., 0.],
+                                         [3., 2., 3., 2.], [1., 0., 1., 0.]],
+                                        [[7., 6., 7., 6.], [5., 4., 5., 4.],
+                                         [7., 6., 7., 6.], [5., 4., 5., 4.]],
+                                        [[3., 2., 3., 2.], [1., 0., 1., 0.],
+                                         [3., 2., 3., 2.], [1., 0., 1., 0.]]]]).astype(np.float32))
+    print(output, expected_output)
 
 
 def test_invalid_padding_reflection_pad_2d():
