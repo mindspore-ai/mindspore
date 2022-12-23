@@ -6,6 +6,9 @@ mindspore.ops.hypot
     按元素计算以输入Tensor为直角边的三角形的斜边。
     两个输入的shape需要支持广播，数据类型应为：float32、float64。
 
+    .. math::
+        out_i = \sqrt{x_i^2 + other_i^2}
+
     参数：
         - **x** (Tensor) - 第一个输入Tesnor。
         - **other** (Tensor) - 第二个输入Tesnor。

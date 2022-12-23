@@ -4322,10 +4322,13 @@ def orgqr(x, tau):
 
 
 def hypot(x, other):
-    """
+    r"""
     Computes hypotenuse of input tensors element-wise as legs of a right triangle.
     The shape of two inputs should be broadcastable, and data type of them should be
     one of: float32, float64
+
+    .. math::
+        out_i = \sqrt{x_i^2 + other_i^2}
 
     Args:
         x (Tensor): The first input tensor.
