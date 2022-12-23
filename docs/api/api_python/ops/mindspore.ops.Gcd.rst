@@ -3,7 +3,7 @@ mindspore.ops.Gcd
 
 .. py:class:: mindspore.ops.Gcd
 
-    逐元素计算输入输入Tensor的最大公约数。两个输入的shape需要能进行广播操作，并且数据类型必须为：int32、int64。
+    逐元素计算输入Tensor的最大公约数。两个输入的shape需要能进行广播操作，并且数据类型必须为：int32、int64。
 
     输入：
         - **x1** (Tensor) - 第一个输入Tensor。
