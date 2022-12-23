@@ -148,3 +148,28 @@ def test_tuple_to_tensor_transform(tag):
         return res
 
     return fns[tag]
+
+
+def test_tensor_to_tuple_transform(tag):
+    """
+    Feature: Dynamic shape.
+    Description: Test Tensor to Tuple transforming pass.
+    Expectation: The 'after' graph is identical to the graph after this pass.
+    """
+    fns = FnDict()
+    tuple_add = P.Add()
+    tensor_to_tuple = Primitive('TensorToTuple')
+
+    @fns
+    def before(x, y):
+        res = tuple_add(x, y)
+        return res
+
+    @fns
+    def after(x, y):
+        input1 = tensor_to_tuple(x)
+        input2 = tensor_to_tuple(y)
+        res = tuple_add(input1, input2)
+        return res
+
+    return fns[tag]
