@@ -2457,8 +2457,8 @@ class Conv2DTranspose(Conv2DBackpropInput):
                     padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
         pad_list (Union[str, None]): The pad list like (top, bottom, left, right). Default: None.
         mode (int): Modes for different convolutions. The value is currently not used. Default: 1.
-        stride (Union[int. tuple[int]]): The stride to be applied to the convolution filter. Default: 1.
-        dilation (Union[int. tuple[int]]): Specifies the dilation rate to be used for the dilated convolution.
+        stride (Union[int, tuple[int]]): The stride to be applied to the convolution filter. Default: 1.
+        dilation (Union[int, tuple[int]]): Specifies the dilation rate to be used for the dilated convolution.
             Default: 1.
         group (int): Splits input into groups. Default: 1.
         data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'，\
