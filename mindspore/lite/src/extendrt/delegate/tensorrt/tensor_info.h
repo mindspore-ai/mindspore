@@ -45,6 +45,7 @@ class TensorInfo {
   bool IsConst() const;
 
   void SetShape(const std::vector<int64_t> &shape);
+  void SetDataType(const mindspore::DataType data_type);
   void SetData(const void *data, size_t data_len);
 
   size_t item_size() const;
