@@ -307,7 +307,8 @@ int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
   }
   resize_layer->setCoordinateTransformation(transform_it->second);
   if (resize_op_->new_height() != 0 || resize_op_->new_width() != 0 ||
-      resize_op_->method() == schema::ResizeMethod_LINEAR) {
+      resize_op_->coordinate_transform_mode() == schema::CoordinateTransformMode_ALIGN_CORNERS &&
+        method == schema::ResizeMethod_LINEAR) {
     resize_layer->setCoordinateTransformation(nvinfer1::ResizeCoordinateTransformation::kALIGN_CORNERS);
   }
 #else
