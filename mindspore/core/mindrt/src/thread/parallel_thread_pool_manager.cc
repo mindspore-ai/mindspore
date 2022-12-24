@@ -73,8 +73,8 @@ int ParallelThreadPoolManager::GetThreadPoolSize() {
 }
 
 void ParallelThreadPoolManager::BindPoolToRunner(
-#ifndef MS_COMPILE_IOS
   ThreadPool *pool, const std::map<std::string, std::map<std::string, std::string>> *config_info) {
+#ifndef MS_COMPILE_IOS
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
   if (!enable_shared_thread_pool_ || config_info == nullptr) {
     THREAD_ERROR("not use parallel thread pool shared.");
