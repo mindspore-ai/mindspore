@@ -469,6 +469,53 @@ int SplitInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_sh
   return lite::RET_OK;
 }
 
+int SqueezeInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_shapes,
+                      std::vector<ShapeVector> *out_shapes) {
+  MS_ASSERT(cnode != nullptr);
+  if (in_shapes.empty()) {
+    MS_LOG(ERROR) << "Squeeze should have one input at least.";
+    return lite::RET_ERROR;
+  }
+  auto prim = GetCNodePrimitive(cnode);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Squeeze's primitive is a nullptr.";
+    return lite::RET_ERROR;
+  }
+  auto axes = prim->GetAttr(ops::kAxis) != nullptr ? GetValue<std::vector<int64_t>>(prim->GetAttr(ops::kAxis))
+                                                   : std::vector<int64_t>();
+  auto &in_shape = in_shapes.front();
+  ShapeVector out_shape;
+  if (axes.empty()) {
+    for (size_t i = 0; i < in_shape.size(); ++i) {
+      if (in_shape[i] < 0) {
+        return lite::RET_NOT_SUPPORT;
+      }
+      if (in_shape[i] != 1) {
+        out_shape.push_back(in_shape[i]);
+      }
+    }
+  } else {
+    auto dims = static_cast<int64_t>(in_shape.size());
+    std::vector<int> flags(dims, 0);
+    for (auto axis : axes) {
+      axis = axis < 0 ? axis + dims : axis;
+      if (axis < 0 || axis >= dims) {
+        MS_LOG(ERROR) << "Squeeze's axis is invalid. node name is " << cnode->fullname_with_scope();
+        return lite::RET_ERROR;
+      }
+      flags[axis] = 1;
+    }
+    for (int64_t i = 0; i < dims; ++i) {
+      if (flags[i] == 0) {
+        out_shape.push_back(in_shape[i]);
+      }
+    }
+  }
+  out_shapes->clear();
+  out_shapes->push_back(out_shape);
+  return lite::RET_OK;
+}
+
 int StackInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_shapes,
                     std::vector<ShapeVector> *out_shapes) {
   MS_ASSERT(cnode != nullptr);
@@ -723,8 +770,8 @@ int DynamicShapePreprocessor::ProcessOps(const FuncGraphPtr &func_graph) {
     prim::kPrimConcat->name(),       prim::kPrimExpandDims->name(), prim::kPrimGather->name(),
     prim::kPrimMatMulFusion->name(), prim::kPrimMulFusion->name(),  prim::kPrimNotEqual->name(),
     prim::kPrimReduceFusion->name(), prim::kPrimReshape->name(),    prim::kPrimShape->name(),
-    prim::kPrimSplit->name(),        prim::kPrimStack->name(),      prim::kPrimStridedSlice->name(),
-    prim::kPrimTranspose->name()};
+    prim::kPrimSplit->name(),        prim::kPrimSqueeze->name(),    prim::kPrimStack->name(),
+    prim::kPrimStridedSlice->name(), prim::kPrimTranspose->name()};
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (!utils::isa<CNode>(node)) {
@@ -771,22 +818,16 @@ int DynamicShapePreprocessor::DoInfer(const CNodePtr &cnode, const std::string &
   MS_ASSERT(cnode != nullptr);
   std::map<std::string, std::function<int(const CNodePtr &cnode, const std::vector<ShapeVector> &in_shapes,
                                           std::vector<ShapeVector> *out_shapes)>>
-    infer_func = {{prim::kPrimAddFusion->name(), ArithmeticInferShape},
-                  {prim::kPrimActivation->name(), CommonInferShape},
-                  {prim::kPrimCast->name(), CommonInferShape},
-                  {prim::kPrimConcat->name(), ConcatInferShape},
-                  {prim::kPrimExpandDims->name(), ExpandDimsInferShape},
-                  {prim::kPrimGather->name(), GatherInferShape},
-                  {prim::kPrimMatMulFusion->name(), MatMulInferShape},
-                  {prim::kPrimMulFusion->name(), ArithmeticInferShape},
-                  {prim::kPrimNotEqual->name(), CommonInferShape},
-                  {prim::kPrimReduceFusion->name(), ReduceInferShape},
-                  {prim::kPrimReshape->name(), ReshapeInferShape},
-                  {prim::kPrimShape->name(), ShapeInferShape},
-                  {prim::kPrimSplit->name(), SplitInferShape},
-                  {prim::kPrimStack->name(), StackInferShape},
-                  {prim::kPrimStridedSlice->name(), StridedSliceInferShape},
-                  {prim::kPrimTranspose->name(), TransposeInferShape}};
+    infer_func = {
+      {prim::kPrimAddFusion->name(), ArithmeticInferShape},  {prim::kPrimActivation->name(), CommonInferShape},
+      {prim::kPrimCast->name(), CommonInferShape},           {prim::kPrimConcat->name(), ConcatInferShape},
+      {prim::kPrimExpandDims->name(), ExpandDimsInferShape}, {prim::kPrimGather->name(), GatherInferShape},
+      {prim::kPrimMatMulFusion->name(), MatMulInferShape},   {prim::kPrimMulFusion->name(), ArithmeticInferShape},
+      {prim::kPrimNotEqual->name(), CommonInferShape},       {prim::kPrimReduceFusion->name(), ReduceInferShape},
+      {prim::kPrimReshape->name(), ReshapeInferShape},       {prim::kPrimShape->name(), ShapeInferShape},
+      {prim::kPrimSplit->name(), SplitInferShape},           {prim::kPrimSqueeze->name(), SqueezeInferShape},
+      {prim::kPrimStack->name(), StackInferShape},           {prim::kPrimStridedSlice->name(), StridedSliceInferShape},
+      {prim::kPrimTranspose->name(), TransposeInferShape}};
   if (infer_func.find(op_type) == infer_func.end()) {
     MS_LOG(ERROR) << "Current op: " << op_type << " doesn't support infer.";
     return lite::RET_ERROR;
