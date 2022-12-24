@@ -507,7 +507,7 @@ class COOTensor(COOTensor_):
             TypeError: If (self/other)'s value's type is not matched with thresh's type
 
         Supported Platforms:
-            ``CPU`` ``GPU``
+            ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor, COOTensor
@@ -804,7 +804,7 @@ class CSRTensor(CSRTensor_):
             Tensor or CSRTensor.
 
         Supported Platforms:
-            ``CPU`` ``GPU``
+            ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor, CSRTensor

@@ -10,7 +10,7 @@ mindspore.ops.Zeta
 
     .. math::
 
-        \\zeta \\left ( x,q \\right )=  \\textstyle \\sum_{n=0} ^ {\\infty} \\left (  q+n\\right )^{-x}
+        \zeta \left ( x,q \right )=  \textstyle \sum_{n=0} ^ {\infty} \left ( q+n\right )^{-x}
 
     输入：
         - **x** (Tensor) - Tensor，数据类型为：float32、float64。

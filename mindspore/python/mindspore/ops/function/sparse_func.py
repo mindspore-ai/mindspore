@@ -676,7 +676,7 @@ def coo_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
         TypeError: If (x1/x2)'s value's type is not matched with thresh's type.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor, COOTensor

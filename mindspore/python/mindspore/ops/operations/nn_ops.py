@@ -1273,7 +1273,7 @@ class BatchNorm(PrimitiveWithInfer):
         TypeError: If dtype of `input_x`, `scale` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
@@ -3664,7 +3664,7 @@ class ResizeBilinear(PrimitiveWithInfer):
         ValueError: If length of shape of `x` is not equal to 4.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
@@ -3752,7 +3752,7 @@ class UpsampleTrilinear3D(Primitive):
         ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> ops = ops.UpsampleTrilinear3D(output_size=[4, 64, 48])
@@ -5689,7 +5689,7 @@ class ApplyAdadelta(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -5784,7 +5784,7 @@ class ApplyAdagrad(Primitive):
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -5980,7 +5980,7 @@ class SparseApplyAdagradV2(Primitive):
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -8363,7 +8363,7 @@ class SoftShrink(Primitive):
     Refer to :func:`mindspore.ops.soft_shrink` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -8391,7 +8391,7 @@ class HShrink(Primitive):
     Refer to :func:`mindspore.ops.hardshrink` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -8596,7 +8596,7 @@ class SparseApplyRMSProp(Primitive):
         RuntimeError: If the data type of `var`, `ms`, `mom` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``  ``CPU`` ``GPU``
+        ``Ascend``  ``GPU`` ``CPU``
 
     Examples:
         >>> class SparseApplyRMSPropNet(nn.Cell):
@@ -8938,7 +8938,7 @@ class ApplyAdamWithAmsgrad(Primitive):
         ValueError: If the shape of `beta1_power`, `beta2_power`, `lr` is not 0.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class ApplyAdamWithAmsgradNet(nn.Cell):
@@ -9480,7 +9480,7 @@ class TripletMarginLoss(Primitive):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> loss = ops.TripletMarginLoss()
@@ -9510,7 +9510,7 @@ class DeformableOffsets(Primitive):
     Refer to :func:`mindspore.ops.deformable_conv2d` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -9559,8 +9559,7 @@ class DeformableOffsets(Primitive):
 class GridSampler2D(Primitive):
     """
     This operation samples 2d input_x by using interpolation based on flow field grid,
-    which is usually gennerated by
-    affine_grid.
+    which is usually gennerated by :func:`mindspore.ops.affine_grid`.
 
     Args:
         interpolation_mode (str, optional): An optional string specifying the interpolation method.
@@ -9656,7 +9655,7 @@ class Pdist(Primitive):
         ValueError: If dimension of `x` is not 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor

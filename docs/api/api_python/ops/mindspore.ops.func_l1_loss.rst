@@ -1,7 +1,7 @@
 mindspore.ops.l1_loss
 =====================
 
-.. py:function:: mindspore.ops.l1_loss(x, target, reduction='mean'):
+.. py:function:: mindspore.ops.l1_loss(x, target, reduction='mean')
 
     l1_loss用于计算预测值和目标值之间的平均绝对误差。
 

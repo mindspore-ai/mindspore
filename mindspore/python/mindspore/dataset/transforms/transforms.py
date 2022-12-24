@@ -896,7 +896,7 @@ class TypeCast(TensorOperation):
         TypeError: If `data_type` is not of MindSpore data type bool, int, float, string or type :class:`numpy.dtype` .
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

@@ -96,7 +96,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
         OptimizeResults, object holding optimization results.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp

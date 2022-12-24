@@ -3585,7 +3585,7 @@ class Mvlgamma(Primitive):
     Refer to :func:`mindspore.ops.mvlgamma` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[3, 4, 5], [4, 2, 6]]), mindspore.float32)
@@ -4029,7 +4029,7 @@ class ScatterMax(_ScatterOpDynamic):
                       and `updates` is greater than 8 dimensions.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32),
@@ -4262,7 +4262,7 @@ class ScatterSub(Primitive):
                       is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), mindspore.float32), name="x")
@@ -5455,7 +5455,7 @@ class Meshgrid(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.meshgrid` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
@@ -5798,7 +5798,7 @@ class EmbeddingLookup(PrimitiveWithCheck):
         ValueError: If length of shape of `input_params` is greater than 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
@@ -5873,7 +5873,7 @@ class Identity(Primitive):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
@@ -6679,7 +6679,7 @@ class TensorScatterElements(Primitive):
         value of that position in the output will be nondeterministic.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> op = ops.TensorScatterElements(0, "none")
@@ -6954,7 +6954,7 @@ class LowerBound(Primitive):
         ValueError: If the first dimension of the shape of `sorted_x` is not equal to that of `values`.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -7007,7 +7007,7 @@ class UpperBound(Primitive):
         ValueError: If the number of rows of `sorted_x` is not consistent with that of `values`.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -7608,7 +7608,7 @@ class HammingWindow(Primitive):
         ValueError: If data of `length` is negative.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: periodic=True.

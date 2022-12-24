@@ -716,7 +716,7 @@ class HWC2CHW(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> transforms_list = [c_vision.Decode(),
@@ -822,7 +822,7 @@ class Normalize(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <...,H, W, C>.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> decode_op = c_vision.Decode()
@@ -1214,7 +1214,7 @@ class RandomColorAdjust(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> decode_op = c_vision.Decode()
@@ -1561,7 +1561,7 @@ class RandomHorizontalFlip(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.RandomHorizontalFlip(0.75)]
@@ -2070,7 +2070,7 @@ class RandomSharpness(ImageTensorOperation):
         ValueError: If `degrees` is in (max, min) format instead of (min, max).
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.RandomSharpness(degrees=(0.2, 1.9))]
@@ -2136,7 +2136,7 @@ class RandomVerticalFlip(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.RandomVerticalFlip(0.25)]
@@ -2200,7 +2200,7 @@ class Rescale(ImageTensorOperation):
         TypeError: If `shift` is not of type float.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.Rescale(1.0 / 255.0, -1.0)]
