@@ -783,7 +783,7 @@ def zeros_like(x, *, dtype=None):
 
     Examples:
         >>> x = Tensor(np.arange(4).reshape(2, 2))
-        >>> output = ops.zeros_like(x, mindspore.float32)
+        >>> output = ops.zeros_like(x, dtype=mindspore.float32)
         >>> print(output)
         [[0. 0.]
          [0. 0.]]
