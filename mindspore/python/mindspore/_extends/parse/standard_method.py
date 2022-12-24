@@ -3312,9 +3312,11 @@ def lerp(start, end, weight):
     return F.lerp(start, end, weight)
 
 
-def norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
+# pylint: disable=redefined-builtin
+# pylint: disable=invalid-name
+def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     """Returns the matrix norm or vector norm of a given tensor."""
-    return F.norm(input_x, axis, p, keep_dims, epsilon)
+    return F.norm(A, ord, dim, keepdim, dtype=dtype)
 
 
 def renorm(input_x, p, dim, maxnorm):
