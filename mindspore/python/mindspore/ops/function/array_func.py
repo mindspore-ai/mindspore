@@ -328,8 +328,14 @@ def eye(n, m, t):
 
 
 def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype=None):
-    """
+    r"""
     Returns the Hamming window.
+
+    .. math::
+
+        w[n]=\alpha − \beta \cos \left( \frac{2 \pi n}{N - 1} \right),
+
+    where N is the full window size.
 
     Args:
         window_length (int): The size of returned window. Must be a non negative integer.
