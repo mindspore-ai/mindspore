@@ -833,8 +833,11 @@ void AbstractSequence::set_dynamic_len_element_abs(const AbstractBasePtr &dynami
   if (dynamic_len_element_abs == nullptr) {
     return;
   }
+  if (dynamic_len_element_abs->isa<abstract::AbstractDictionary>()) {
+    MS_EXCEPTION(TypeError) << "DynamicSequence does not support dictionary type as element type now.";
+  }
   // dynamic_len_element_abs should ignore value.
-  dynamic_len_element_abs_ = BroadenAllValues(dynamic_len_element_abs);
+  dynamic_len_element_abs_ = AbstractBroaden(dynamic_len_element_abs);
 }
 
 bool AbstractSequence::operator==(const AbstractBase &other) const {

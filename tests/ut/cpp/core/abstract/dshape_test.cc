@@ -74,6 +74,5 @@ TEST_F(TestDShape, Clone) {
   ASSERT_EQ(*shp_noshp_1.Clone(), shp_noshp_1);
   ASSERT_EQ(*shp_tuple_2.Clone(), shp_tuple_2);
 }
-
 }  // namespace abstract
 }  // namespace mindspore

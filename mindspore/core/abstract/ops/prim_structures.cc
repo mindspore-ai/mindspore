@@ -397,12 +397,10 @@ void CheckMutableArgAbstract(const AbstractBasePtr &abs) {
     }
     return;
   }
-  if (abs->isa<AbstractScalar>()) {
-    MS_LOG(DEBUG) << "Set scalar as variable, scalar abstract:" << abs->ToString();
-    abs->cast_ptr<AbstractScalar>()->set_is_variable(true);
+  if (abs->isa<AbstractTensor>()) {
     return;
   }
-  if (abs->isa<AbstractTensor>()) {
+  if (abs->isa<AbstractScalar>()) {
     return;
   }
   MS_EXCEPTION(TypeError)
@@ -429,7 +427,7 @@ AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &
   }
   if (!variable_len) {
     CheckMutableArgAbstract(args_spec_list[0]);
-    return args_spec_list[0]->Broaden();
+    return AbstractBroaden(args_spec_list[0]);
   }
   auto ret = args_spec_list[0]->Clone();
   if (!ret->isa<abstract::AbstractSequence>()) {
