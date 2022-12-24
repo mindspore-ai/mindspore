@@ -140,13 +140,13 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByBatch(int task_id) const {
 }
 
 int MatmulFp32AVX512CPUKernel::ParallelRunByRow(int task_id) const {
-  if (task_id < 0 || task_id >= thread_count_) {
+  if (task_id < 0 || task_id >= thread_num_) {
     MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
     return RET_ERROR;
   }
   int start_row = split_points_[task_id];
   int end_row = row_num_;
-  if (task_id < (thread_count_ - 1)) {
+  if (task_id < (thread_num_ - 1)) {
     end_row = split_points_[task_id + 1];
   }
   int row_num = end_row - start_row;
@@ -174,13 +174,13 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByRow(int task_id) const {
 }
 
 int MatmulFp32AVX512CPUKernel::ParallelRunByOC(int task_id) const {
-  if (task_id < 0 || task_id >= thread_count_) {
+  if (task_id < 0 || task_id >= thread_num_) {
     MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
     return RET_ERROR;
   }
   int start_oc = split_points_[task_id];
   int end_oc = col_step_;
-  if (task_id < (thread_count_ - 1)) {
+  if (task_id < (thread_num_ - 1)) {
     end_oc = split_points_[task_id + 1];
   }
   int compute_oc = end_oc - start_oc;
@@ -220,7 +220,7 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByOC(int task_id) const {
 
 // vec * vec
 int MatmulFp32AVX512CPUKernel::ParallelRunByGEPDOT(int task_id) const {
-  if (task_id < 0 || task_id >= thread_count_) {
+  if (task_id < 0 || task_id >= thread_num_) {
     MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
     return RET_ERROR;
   }
@@ -244,7 +244,7 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByGEPDOT(int task_id) const {
   if (task_id >= split_points_size) {
     return RET_OK;
   }
-  for (int index = thread_count_ * batch_stride_; index < params_->batch; ++index) {
+  for (int index = thread_num_ * batch_stride_; index < params_->batch; ++index) {
     int start_row = row_split_points_[task_id];
     int end_row = row_split_points_[task_id + 1];
     int row_num = end_row - start_row;
@@ -298,7 +298,7 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByRow1Deep1GEPDOT(int task_id) const {
     }
 
     auto bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr + start_oc;
-    for (int i = thread_count_ * batch_stride_; i < params_->batch; ++i) {
+    for (int i = thread_num_ * batch_stride_; i < params_->batch; ++i) {
       auto a = matrix_a_.pack_ptr + a_offset_[i] * a_plane_size;
       auto b = matrix_b_.pack_ptr + b_offset_[i] * b_plane_size + start_oc;
       auto c = output_data_ + i * c_plane_size + start_oc;
@@ -346,7 +346,7 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByGEPM(int task_id) const {
     }
 
     auto bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr + start_oc;
-    for (int i = thread_count_ * batch_stride_; i < params_->batch; ++i) {
+    for (int i = thread_num_ * batch_stride_; i < params_->batch; ++i) {
       auto a = matrix_a_.pack_ptr + a_offset_[i] * a_plane_size;
       auto b = matrix_b_.pack_ptr + b_offset_[i] * b_plane_size + start_oc;
       auto c = output_data_ + i * c_plane_size + start_oc;
@@ -359,7 +359,7 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByGEPM(int task_id) const {
 
 // mat * mat
 int MatmulFp32AVX512CPUKernel::ParallelRunByGEMM(int task_id) const {
-  if (task_id < 0 || task_id >= thread_count_) {
+  if (task_id < 0 || task_id >= thread_num_) {
     MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
     return RET_ERROR;
   }
@@ -393,7 +393,7 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByGEMM(int task_id) const {
 
     bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr + start_oc;
     if (compute_oc > 0) {
-      for (int i = thread_count_ * batch_stride_; i < params_->batch; ++i) {
+      for (int i = thread_num_ * batch_stride_; i < params_->batch; ++i) {
         auto a = matrix_a_.pack_ptr + a_offset_[i] * a_plane_size;
         auto b = matrix_b_.pack_ptr + b_offset_[i] * b_plane_size + start_oc * matrix_deep;
         auto c = output_data_ + i * c_plane_size + start_oc;
@@ -423,7 +423,7 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByGEMM(int task_id) const {
   }
 
   bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr + start_oc;
-  for (int i = thread_count_ * batch_stride_; i < params_->batch; ++i) {
+  for (int i = thread_num_ * batch_stride_; i < params_->batch; ++i) {
     auto a = matrix_a_.pack_ptr + a_offset_[i] * a_plane_size + start_row * matrix_deep;
     auto b = matrix_b_.pack_ptr + b_offset_[i] * b_plane_size + start_oc * matrix_deep;
     auto c = output_data_ + i * c_plane_size + start_row * matrix_col + start_oc;
@@ -436,7 +436,7 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByGEMM(int task_id) const {
 
 // mat * mat
 int MatmulFp32AVX512CPUKernel::ParallelRunByBatchColRowGEMM(int task_id) const {
-  if (task_id < 0 || task_id >= thread_count_) {
+  if (task_id < 0 || task_id >= thread_num_) {
     MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
     return RET_ERROR;
   }
@@ -476,7 +476,7 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByBatchColRowGEMM(int task_id) const {
     }
 
     bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr + start_oc;
-    for (int i = thread_count_ * batch_stride_; i < params_->batch; ++i) {
+    for (int i = thread_num_ * batch_stride_; i < params_->batch; ++i) {
       auto a = matrix_a_.pack_ptr + a_offset_[i] * a_plane_size + start_row * matrix_deep;
       auto b = matrix_b_.pack_ptr + b_offset_[i] * b_plane_size + start_oc * matrix_deep;
       auto c = output_data_ + i * c_plane_size + start_row * matrix_col + start_oc;
@@ -490,12 +490,11 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByBatchColRowGEMM(int task_id) const {
 
 void MatmulFp32AVX512CPUKernel::BatchRowThreadCut() {
   // BatchCut
-  thread_count_ = op_parameter_->thread_num_;
-  batch_stride_ = DOWN_DIV(params_->batch, thread_count_);
+  batch_stride_ = DOWN_DIV(params_->batch, thread_num_);
 
   // RowCut
-  int row_step = MSMAX(params_->row_ / thread_count_, row_min_unit_);
-  int row_remaining = params_->row_ - row_step * thread_count_;
+  int row_step = MSMAX(params_->row_ / thread_num_, row_min_unit_);
+  int row_remaining = params_->row_ - row_step * thread_num_;
   row_split_points_.clear();
   int row_split_point = 0;
   while (row_split_point < params_->row_) {
@@ -508,22 +507,18 @@ void MatmulFp32AVX512CPUKernel::BatchRowThreadCut() {
   }
   row_split_points_.push_back(params_->row_);
   if (batch_stride_ == 0) {
-    thread_count_ = row_split_points_.size() - 1;
+    thread_num_ = row_split_points_.size() - 1;
   }
 }
 
 void MatmulFp32AVX512CPUKernel::BatchColThreadCut() {
-  size_t total_cost = static_cast<size_t>(params_->batch) * static_cast<size_t>(params_->row_) *
-                      static_cast<size_t>(params_->col_) * static_cast<size_t>(params_->deep_);
-
   // BatchCut
-  thread_count_ = MSMAX(MSMIN(static_cast<int>(total_cost / min_calc_cost_), op_parameter_->thread_num_), C1NUM);
-  batch_stride_ = DOWN_DIV(params_->batch, thread_count_);
+  batch_stride_ = DOWN_DIV(params_->batch, thread_num_);
 
   // ColCut
   int total_col_unit = UP_DIV(params_->col_align_, col_min_unit_);
-  auto thread_count_tmp = MSMIN(thread_count_, total_col_unit);
-  int block_col_unit = UP_DIV(total_col_unit, thread_count_tmp);
+  auto thread_num_tmp = MSMIN(thread_num_, total_col_unit);
+  int block_col_unit = UP_DIV(total_col_unit, thread_num_tmp);
   col_split_points_.clear();
   int split_point = 0;
   while (split_point < total_col_unit) {
@@ -531,31 +526,30 @@ void MatmulFp32AVX512CPUKernel::BatchColThreadCut() {
     split_point += block_col_unit;
   }
   if (batch_stride_ == 0) {
-    thread_count_ = col_split_points_.size();
+    thread_num_ = col_split_points_.size();
   }
 }
 
 void MatmulFp32AVX512CPUKernel::BatchColRowThreadCut() {
   // BatchCut
-  thread_count_ = op_parameter_->thread_num_;
-  batch_stride_ = DOWN_DIV(params_->batch, thread_count_);
+  batch_stride_ = DOWN_DIV(params_->batch, thread_num_);
 
   // ColCut
   int total_col_unit = UP_DIV(params_->col_align_, col_min_unit_);
-  block_col_unit_ = DOWN_DIV(total_col_unit, thread_count_);
+  block_col_unit_ = DOWN_DIV(total_col_unit, thread_num_);
   col_split_points_.clear();
   col_split_points_.push_back(0);
   if (block_col_unit_ > 0) {
     int col_split_point = 0;
-    for (int i = 0; i < thread_count_; i++) {
+    for (int i = 0; i < thread_num_; i++) {
       col_split_point += block_col_unit_;
       col_split_points_.push_back(MSMIN(col_split_point * col_min_unit_, col_step_));
     }
   }
 
   // RowCut
-  int row_step = MSMAX(params_->row_ / thread_count_, row_min_unit_);
-  int row_remaining = params_->row_ - row_step * thread_count_;
+  int row_step = MSMAX(params_->row_ / thread_num_, row_min_unit_);
+  int row_remaining = params_->row_ - row_step * thread_num_;
   row_split_points_.clear();
   int row_split_point = 0;
   while (row_split_point < params_->row_) {
@@ -568,17 +562,13 @@ void MatmulFp32AVX512CPUKernel::BatchColRowThreadCut() {
   }
   row_split_points_.push_back(params_->row_);
   if (batch_stride_ == 0 && block_col_unit_ == 0) {
-    thread_count_ = row_split_points_.size() - 1;
+    thread_num_ = row_split_points_.size() - 1;
   }
 }
 
 void MatmulFp32AVX512CPUKernel::BatchColRowSliceThreadCut() {
-  size_t total_cost = static_cast<size_t>(params_->batch) * static_cast<size_t>(params_->row_) *
-                      static_cast<size_t>(params_->col_) * static_cast<size_t>(params_->deep_);
-
   // BatchCut
-  thread_count_ = MSMAX(MSMIN(static_cast<int>(total_cost / min_calc_cost_), op_parameter_->thread_num_), C1NUM);
-  batch_stride_ = DOWN_DIV(params_->batch, thread_count_);
+  batch_stride_ = DOWN_DIV(params_->batch, thread_num_);
 
   int row_s = 0;
   int row_e = params_->row_;
@@ -587,12 +577,12 @@ void MatmulFp32AVX512CPUKernel::BatchColRowSliceThreadCut() {
 
   // ColCut
   int total_col_unit = UP_DIV(params_->col_align_, col_min_unit_);
-  block_col_unit_ = DOWN_DIV(total_col_unit, thread_count_);
+  block_col_unit_ = DOWN_DIV(total_col_unit, thread_num_);
   col_split_points_.clear();
   col_split_points_.push_back(0);
   if (block_col_unit_ > 0) {
     int col_split_point = 0;
-    for (int i = 0; i < thread_count_; i++) {
+    for (int i = 0; i < thread_num_; i++) {
       MatmulSlice matmul_slice;
       matmul_slice.row_s_ = row_s;
       matmul_slice.row_e_ = row_e;
@@ -612,13 +602,13 @@ void MatmulFp32AVX512CPUKernel::BatchColRowSliceThreadCut() {
 
   auto less_col_align = UP_ROUND(col_e - col_s, C16NUM);
   bool use_colrowcut_flag = ((less_col_align / C64NUM) * C64NUM) == less_col_align;
-  bool use_rowcut_flag = params_->row_ >= C6NUM * thread_count_ || col_e - col_s <= C64NUM;
+  bool use_rowcut_flag = params_->row_ >= C6NUM * thread_num_ || col_e - col_s <= C64NUM;
   if (use_rowcut_flag && !use_colrowcut_flag) {
-    int row_step = MSMAX(params_->row_ / thread_count_, row_min_unit_);
-    int row_remaining = params_->row_ - row_step * thread_count_;
+    int row_step = MSMAX(params_->row_ / thread_num_, row_min_unit_);
+    int row_remaining = params_->row_ - row_step * thread_num_;
     int row_split_point = 0;
 
-    for (row_thread = 0; row_thread < thread_count_ && row_split_point < params_->row_; row_thread++) {
+    for (row_thread = 0; row_thread < thread_num_ && row_split_point < params_->row_; row_thread++) {
       MatmulSlice matmul_slice;
       matmul_slice.row_s_ = row_split_point;
 
@@ -635,8 +625,8 @@ void MatmulFp32AVX512CPUKernel::BatchColRowSliceThreadCut() {
     }
   } else {
     auto col_num = UP_DIV(col_e - col_s, C64NUM);
-    auto row_num = MSMIN(UP_DIV(thread_count_, col_num), (row_e - row_s));
-    auto tile_remaining = MSMAX(col_num * row_num - thread_count_, 0);
+    auto row_num = MSMIN(UP_DIV(thread_num_, col_num), (row_e - row_s));
+    auto tile_remaining = MSMAX(col_num * row_num - thread_num_, 0);
 
     int row_step = (row_e - row_s) / row_num;
     int row_remaining_tmp = (row_e - row_s) - row_step * row_num;
@@ -677,16 +667,22 @@ void MatmulFp32AVX512CPUKernel::BatchColRowSliceThreadCut() {
     }
   }
   if ((batch_stride_ == 0) && (block_col_unit_ == 0)) {
-    thread_count_ = row_thread;
+    thread_num_ = row_thread;
   }
 }  // namespace mindspore::kernel
 
 int MatmulFp32AVX512CPUKernel::GetThreadCuttingPolicy() {
+  size_t total_cost = static_cast<size_t>(params_->batch) * static_cast<size_t>(params_->row_) *
+                      static_cast<size_t>(params_->col_) * static_cast<size_t>(params_->deep_);
+
+  // Thread Update
+  thread_num_ = MSMAX(MSMIN(static_cast<int>(total_cost / min_calc_cost_), op_parameter_->thread_num_), C1NUM);
+
   if (params_->deep_ < C128NUM) {
     return MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy();
   }
   matmul_slice_set_.clear();
-  matmul_slice_set_.resize(op_parameter_->thread_num_);
+  matmul_slice_set_.resize(thread_num_);
 
   if (params_->col_ == 1 && !params_->a_const_) {
     BatchRowThreadCut();
@@ -723,7 +719,7 @@ bool MatmulFp32AVX512CPUKernel::CheckThreadCuttingByRow() {
   if (b_batch_ != C1NUM) {
     return false;
   }
-  if (row_num_ < op_parameter_->thread_num_) {
+  if (row_num_ < thread_num_) {
     return false;
   }
   if (params_->col_ == 1) {
@@ -739,8 +735,7 @@ bool MatmulFp32AVX512CPUKernel::CheckThreadCuttingByRow() {
   } else if (col_step_ < C64NUM) {
     row_min_unit_ = C8NUM;
   }
-  return MSMIN(row_num_ / row_min_unit_, op_parameter_->thread_num_) >
-         MSMIN(col_step_ / col_min_unit_, op_parameter_->thread_num_);
+  return MSMIN(row_num_ / row_min_unit_, thread_num_) > MSMIN(col_step_ / col_min_unit_, thread_num_);
 }
 }  // namespace mindspore::kernel
 #endif
