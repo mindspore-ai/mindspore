@@ -4592,7 +4592,7 @@ def cummin(x, axis):
 
     .. math::
         \begin{array}{ll} \\
-            y{i} = min(x{1}, x{2}, ... , x{i})
+            y_{i} = min(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
     Args:
@@ -4644,7 +4644,7 @@ def cummax(x, axis):
 
     .. math::
         \begin{array}{ll} \\
-            y{i} = max(x{1}, x{2}, ... , x{i})
+            y_{i} = max(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
     Args:

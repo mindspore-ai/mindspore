@@ -389,7 +389,7 @@ class GetNextSingleOp(Cell):
     """
     Cell to run for getting the next operation.
 
-    For detailed information, refer to `mindspore.ops.GetNext`.
+    For detailed information, refer to :class:`mindspore.ops.GetNext`.
 
     Args:
         dataset_types (list[:class:`mindspore.dtype`]): The types of dataset.

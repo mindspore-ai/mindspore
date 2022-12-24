@@ -67,6 +67,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.FractionalMaxPool
     mindspore.ops.FractionalMaxPoolWithFixedKsize
     mindspore.ops.FractionalMaxPool3DWithFixedKsize
+    mindspore.ops.GridSampler2D
     mindspore.ops.GridSampler3D
     mindspore.ops.LayerNorm
     mindspore.ops.LRN
@@ -196,7 +197,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     :template: classtemplate.rst
     
     mindspore.ops.ComputeAccidentalHits
-    mindspore.ops.GridSampler2D
     mindspore.ops.LogUniformCandidateSampler
     mindspore.ops.UniformCandidateSampler
     mindspore.ops.UpsampleNearest3D
