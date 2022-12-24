@@ -6,7 +6,7 @@ mindspore.ops.sqrt
     逐元素返回当前Tensor的平方。
 
     .. math::
-        y_i = \\sqrt(x_i)
+        y_i = \sqrt(x_i)
 
     参数：
         - **x** (Tensor) - 任意维度的输入Tensor。该值必须大于0。
