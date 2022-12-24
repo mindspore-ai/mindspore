@@ -105,7 +105,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         hermitian (bool): An optional bool. x is assumed to be symmetric if real. Default: False.
 
     Outputs:
-        Tensor.
+        Tensor: same type as input. if input x(m, n), output(n, m).
 
     Raises:
         TypeError: If `hermitian` is not a bool.
@@ -116,11 +116,11 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         ``CPU``
 
     Examples:
-        >>> x = Tensor([[2., 1.], [1., 2.]], mindspore.float32)
+        >>> x = Tensor([[4., 0.], [0., 5.]], mindspore.float32)
         >>> output = ops.pinv(x)
         >>> print(output)
-        [[ 0.6666667  -0.33333334]
-        [-0.33333334  0.6666667 ]]
+        [[0.25  0. ]
+        [0.  0.2 ]]
     """
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError("The input x must be tensor")
