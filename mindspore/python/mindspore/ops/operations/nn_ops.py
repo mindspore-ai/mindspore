@@ -9602,7 +9602,7 @@ class DeformableOffsets(Primitive):
 class GridSampler2D(Primitive):
     """
     This operation samples 2d input_x by using interpolation based on flow field grid, which is usually gennerated by
-    affine_grid.
+    :func:`mindspore.ops.affine_grid`.
 
     Args:
         interpolation_mode (str): An optional string specifying the interpolation method. The optional values are

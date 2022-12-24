@@ -3,9 +3,9 @@ mindspore.ops.broadcast_to
 
 .. py:function:: mindspore.ops.broadcast_to(x, shape)
 
-    将输入shape广播到目标shape。输入shape维度必须小于等于目标shape维度，设输入shape为 :math: `(x1, x2, ..., xm)`，目标shape为 :math:`(*, y_1, y_2, ..., y_m)`，其中 :math:`*` 为任意额外的维度。广播规则如下：
+    将输入shape广播到目标shape。输入shape维度必须小于等于目标shape维度，设输入shape为 :math:`(x_1, x_2, ..., x_m)`，目标shape为 :math:`(*, y_1, y_2, ..., y_m)`，其中 :math:`*` 为任意额外的维度。广播规则如下：
 
-    依次比较 `x_m` 与 `y_m` 、 `x_{m-1}` 与 `y_{m-1}` 、...、 `x_1` 与 `y_1` 的值确定是否可以广播以及广播后输出shape对应维的值。
+    依次比较 :math:`x_m` 与 :math:`y_m` 、 :math:`x_{m-1}` 与 :math:`y_{m-1}` 、...、 :math:`x_1` 与 :math:`y_1` 的值确定是否可以广播以及广播后输出shape对应维的值。
 
     - 如果相等，则这个值即为目标shape该维的值。比如说输入shape为 :math:`(2, 3)` ，目标shape为 :math:`(2, 3)` ，则输出shape为 :math:`(2, 3)`。
 

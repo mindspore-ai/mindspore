@@ -1153,6 +1153,8 @@ def reset_ps_context():
     Reset parameter server training mode context attributes to the default values:
 
     - enable_ps: False.
+
+    Meaning of each field and its default value refer to :func:`mindspore.set_ps_context`.
     """
     _reset_ps_context()
 

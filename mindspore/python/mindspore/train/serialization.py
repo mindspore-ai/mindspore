@@ -1880,7 +1880,8 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
     """
     Load checkpoint into net for distributed predication. Used in the case of distributed inference.
     For details of distributed inference, please check:
-    `<https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/distributed_inference.html>`_.
+    `Distributed Inference <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/
+    distributed_inference.html>`_ .
 
     Args:
         network (Cell): Network for distributed predication.

@@ -2190,7 +2190,7 @@ class GraphCell(Cell):
             If the parameter exists in the graph according to the name, update it's value.
             If the parameter does not exist, ignore it. Default: None.
         obf_password (int): The password used for dynamic obfuscation. "dynamic obfuscation" is used for model
-            protection, which can refer to `mindspore.train.serialization.obfuscate_model()`. If the input 'graph' is a
+            protection, which can refer to :func:`mindspore.obfuscate_model`. If the input 'graph' is a
             func_graph loaded from a mindir file obfuscated in password mode, then obf_password should be provided.
             obf_password should be larger than zero and less or equal than int_64 (9223372036854775807). default: None.
 
