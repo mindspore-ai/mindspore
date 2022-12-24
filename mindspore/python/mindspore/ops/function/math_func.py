@@ -2729,7 +2729,7 @@ def trunc(input):
 
 def ldexp(x, other):
     """
-    Multiplies input by 2** `other` .
+    Multiplies input by :math:`2^{other}` .
 
     .. math::
 

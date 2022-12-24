@@ -3,7 +3,7 @@ mindspore.ops.ldexp
 
 .. py:function:: mindspore.ops.ldexp(x, other)
 
-    将输入乘以 2** `other` 。
+    将输入乘以 :math:`2^{other}` 。
 
     .. math::
         out_{i} = x_{i} * ( 2_{i} ^{other} )
