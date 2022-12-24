@@ -139,13 +139,22 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
  public:
   NativeCpuKernelMod() = default;
   ~NativeCpuKernelMod() override = default;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void * /*stream_ptr*/) override {
     return Launch(inputs, workspace, outputs);
   }
+  bool Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+              const std::vector<AddressPtr> &workspace, void *) override {
+    return Launch(inputs, outputs, workspace);
+  }
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs) = 0;
+                      const std::vector<AddressPtr> &outputs) {
+    return false;
+  }
+  virtual bool Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+                      const std::vector<AddressPtr> &workspace) {
+    return false;
+  }
 
   // Must be called before Init.
   void SetThreadPool(ThreadPool *pool) { pool_ = pool; }

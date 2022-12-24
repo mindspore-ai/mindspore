@@ -198,6 +198,8 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
                       const std::vector<KernelTensorPtr> &outputs,
                       const std::map<uint32_t, tensor::TensorPtr> & /* inputsOnHost */) {
   auto ret = KRET_OK;
+  this->inputs_ = inputs;
+  this->outputs_ = outputs;
   workspace_size_list_.clear();
   input_size_list_.clear();
   input_shapes_.clear();
@@ -250,22 +252,28 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
   return static_cast<int>(ret);
 }
 
-bool KernelMod::Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &workspace,
-                       const std::vector<KernelTensorPtr> &outputs, void *stream_ptr) {
-  // redirect to the old method to keep compatibility
-  std::vector<AddressPtr> inAddr;
-  std::vector<AddressPtr> wsAddr;
-  std::vector<AddressPtr> outAddr;
-
-  std::transform(inputs.begin(), inputs.end(), inAddr.begin(), [](KernelTensorPtr t) { return t->GetData(); });
-  std::transform(workspace.begin(), workspace.end(), wsAddr.begin(), [](KernelTensorPtr t) { return t->GetData(); });
-  std::transform(outputs.begin(), outputs.end(), outAddr.begin(), [](KernelTensorPtr t) { return t->GetData(); });
-  return Launch(inAddr, wsAddr, outAddr, stream_ptr);
+bool KernelMod::Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+                       const std::vector<AddressPtr> &workspace, void *stream_ptr) {
+  return false;
 }
 // deprecated
 bool KernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  return true;
+  MS_EXCEPTION_IF_CHECK_FAIL(this->inputs_.size() == inputs.size(), "inputs size check failed");
+  MS_EXCEPTION_IF_CHECK_FAIL(this->outputs_.size() == outputs.size(), "inputs size check failed");
+  auto it1 = this->inputs_.begin();
+  auto it2 = inputs.begin();
+  for (; it1 != this->inputs_.end() && it2 != inputs.end(); it1++, it2++) {
+    (*it1)->SetData((*it2));
+  }
+
+  it1 = this->outputs_.begin();
+  it2 = outputs.begin();
+  for (; it1 != this->outputs_.end() && it2 != outputs.end(); it1++, it2++) {
+    (*it1)->SetData((*it2));
+  }
+
+  return Launch(this->inputs_, this->outputs_, workspace, stream_ptr);
 }
 
 std::vector<int64_t> GetIntValueFromData(void *const data_c, const TypeId &type_id, size_t data_size,
