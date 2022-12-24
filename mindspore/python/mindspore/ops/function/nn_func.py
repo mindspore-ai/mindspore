@@ -2967,8 +2967,8 @@ def l1_loss(x, target, reduction='mean'):
         \end{cases}
 
     Args:
-        x (Tensor) - Predicted value, Tensor of any dimension.
-        target (Tensor) - Target value, same shape as the `x` .
+        x (Tensor): Predicted value, Tensor of any dimension.
+        target (Tensor): Target value, same shape as the `x` .
         reduction (str, optional): Type of reduction to be applied to loss. The optional value is "mean", "sum" or
             "none". Default: "mean".
 

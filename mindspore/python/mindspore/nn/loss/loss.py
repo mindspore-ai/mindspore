@@ -2430,8 +2430,8 @@ class CTCLoss(LossBase):
         ValueError: If `reduction` is not "none", "mean" or "sum".
         ValueError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
         ValueError: If the value of `blank` is not in range [0, C). C is number of classes of `log_probs` .
-        ValueError: If any value of `input_lengths` is larger than T. T is length of `log_probs` .
-        ValueError: If any target_lengths[i] is not in range [0, input_length[i]].
+        RuntimeError: If any value of `input_lengths` is larger than T. T is length of `log_probs` .
+        RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
