@@ -1293,14 +1293,18 @@ void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kern
 
 void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std::vector<TypeId> &input_types,
                         const std::vector<std::string> &output_formats, const std::vector<TypeId> &output_types,
-                        AnfNode *kernel_node) {
-  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  MS_EXCEPTION_IF_NULL(builder);
-  builder->SetInputsFormat(input_formats);
-  builder->SetInputsDeviceType(input_types);
-  builder->SetOutputsFormat(output_formats);
-  builder->SetOutputsDeviceType(output_types);
-  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node);
+                        const CNodePtr &kernel_node) {
+  if (kernel_node->kernel_info() == nullptr) {
+    kernel_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+  }
+  if (!kernel_node->kernel_info()->has_build_info()) {
+    AnfAlgo::SetSelectKernelBuildInfo(std::make_shared<kernel::KernelBuildInfo>(), kernel_node.get());
+  }
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+  build_info->SetInputsFormat(input_formats);
+  build_info->SetInputsDeviceType(input_types);
+  build_info->SetOutputsFormat(output_formats);
+  build_info->SetOutputsDeviceType(output_types);
 }
 
 void UnfoldKernelBuildInfo(const CNodePtr &kernel_node) {
@@ -1366,7 +1370,54 @@ void UnfoldKernelBuildInfo(const CNodePtr &kernel_node) {
   }
 
   SetKernelBuildInfo(unfold_input_formats, unfold_input_dtypes, unfold_output_formats, unfold_output_dtypes,
-                     kernel_node.get());
+                     kernel_node);
+}
+
+int64_t CalOutputTupleSize(const AnfNodePtr &node) {
+  bool is_bprop_cut = common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimBpropCut);
+  bool skip = (is_bprop_cut && node->abstract()->isa<abstract::AbstractSparseTensor>());
+  if (skip || !common::AnfAlgo::IsTupleOutput(node)) {
+    return -1;
+  }
+  const auto &real_node = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false, {prim::kPrimTupleGetItem}).first;
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(real_node);
+  if (build_info != nullptr) {
+    auto output_object = AnfAlgo::GetOutputKernelObjectType(real_node, 0);
+    if (output_object != kernel::KernelObjectType::TUPLE_UNFOLD) {
+      return -1;
+    }
+  }
+  auto output_size = AnfAlgo::GetOutputElementNum(node);
+  if (node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+    auto make_tuple = node->cast<CNodePtr>();
+    size_t tuple_input_num = common::AnfAlgo::GetInputTensorNum(make_tuple);
+    for (size_t j = 0; j < tuple_input_num; ++j) {
+      // using for graph kernel
+      auto dyn_input_node = common::AnfAlgo::GetInputNode(make_tuple, j);
+      // Handle tuple nested scenes.
+      if (dyn_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple)) {
+        output_size += CalOutputTupleSize(dyn_input_node);
+      }
+    }
+  }
+  return output_size == 0 ? -1 : output_size;
+}
+
+void SetDynamicInputSizeAttr(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall) ||
+      common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimPartial)) {
+    return;
+  }
+  std::vector<int64_t> dyn_input_sizes;
+  size_t input_num = cnode->inputs().size() - 1;
+  for (size_t i = 0; i < input_num; ++i) {
+    auto input_node = common::AnfAlgo::GetInputNode(cnode, i);
+    dyn_input_sizes.push_back(CalOutputTupleSize(input_node));
+  }
+  if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
+    common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);
+  }
 }
 
 KernelAttr &KernelAttr::AddInputAttr(const TypeId &object_type, const TypeId &ms_type, const std::string &format) {

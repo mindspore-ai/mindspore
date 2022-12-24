@@ -357,6 +357,9 @@ void GPUKernelExecutor::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph)
   // Graph optimization relevant to device data format
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+#ifdef ENABLE_TUPLE_UNFOLD
+  pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>("insert_type_transform_op"));
+#endif
   pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
@@ -584,6 +587,9 @@ void GPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
 
     FormatTransformChecker::GetInstance().CheckSupportFormatTransform(kernel_graph);
     SetOperatorInfo(kernel_graph);
+
+    // Set kernel object types for TupleGetItem/MakeTuple after kernel selection.
+    kernel_graph->SetKernelObjectTypesForUnrealNodes();
 
     // Optimization pass which is relevant to device type or format.
     OptimizeGraphWithDeviceInfo(kernel_graph);

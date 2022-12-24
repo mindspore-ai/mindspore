@@ -437,13 +437,14 @@ inline std::map<uint32_t, tensor::TensorPtr> GetKernelDepends(const CNodePtr &cn
 
 std::string FetchPrintInfoByKernelAttr(KernelAttr selected_kernel_attr);
 // The related interfaces of kernel object type.
-void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
-                                  const std::vector<KernelObjectType> &input_kernel_object_types,
-                                  const std::vector<KernelObjectType> &output_kernel_object_types);
-void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kernel::KernelAttr &selected_kernel_attr);
-bool MatchObjectType(const CNodePtr &kernel_node, const kernel::KernelAttr &kernel_attr, bool strict);
-bool SelectKernelByObjectType(const CNodePtr &kernel_node, const std::vector<KernelAttr> &ori_kernel_attrs,
-                              std::vector<KernelAttr> *selected_kernel_attrs, bool strict);
+BACKEND_EXPORT void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
+                                                 const std::vector<KernelObjectType> &input_kernel_object_types,
+                                                 const std::vector<KernelObjectType> &output_kernel_object_types);
+BACKEND_EXPORT void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node,
+                                                        const kernel::KernelAttr &selected_kernel_attr);
+BACKEND_EXPORT bool SelectKernelByObjectType(const CNodePtr &kernel_node,
+                                             const std::vector<KernelAttr> &ori_kernel_attrs,
+                                             std::vector<KernelAttr> *selected_kernel_attrs, bool strict);
 // Tuple --> Tuple.
 BACKEND_EXPORT KernelObjectType TypeIdToKernelObjectType(const TypeId &type_id);
 BACKEND_EXPORT std::vector<KernelObjectType> TypeIdToKernelObjectType(const std::vector<TypeId> &type_ids);
@@ -452,8 +453,9 @@ BACKEND_EXPORT KernelObjectType TypeIdToKernelObjectTypeForTupleUnfold(const Typ
 BACKEND_EXPORT std::vector<KernelObjectType> TypeIdToKernelObjectTypeForTupleUnfold(
   const std::vector<TypeId> &type_ids);
 BACKEND_EXPORT TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_type);
-BACKEND_EXPORT KernelObjectType StringToKernelObjectType(const std::string &object_type);
-void UnfoldKernelBuildInfo(const CNodePtr &kernel_node);
+KernelObjectType StringToKernelObjectType(const std::string &object_type);
+BACKEND_EXPORT void UnfoldKernelBuildInfo(const CNodePtr &kernel_node);
+BACKEND_EXPORT void SetDynamicInputSizeAttr(const CNodePtr &cnode);
 
 template <typename Derived>
 class MatchKernelHelper {

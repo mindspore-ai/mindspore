@@ -101,7 +101,11 @@ class BACKEND_EXPORT KernelBuildInfo {
 
   void SetOutputDeviceType(const TypeId &output_device_type, size_t index);
 
+  void SetInputsFormat(const std::vector<std::string> &inputs_format);
+
   void SetOutputsFormat(const std::vector<std::string> &outputs_format);
+
+  void SetInputsDeviceType(const std::vector<TypeId> &inputs_device_type);
 
   void SetOutputsDeviceType(const std::vector<TypeId> &outputs_device_type);
 
