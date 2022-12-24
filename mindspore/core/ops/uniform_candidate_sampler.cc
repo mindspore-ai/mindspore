@@ -42,7 +42,7 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
       std::vector<abstract::BaseShapePtr>{unknow_shape_ptr, unknow_shape_ptr, unknow_shape_ptr});
   }
   if (input_shape_ptr->IsDynamic()) {
-    auto unknow_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{-1});
+    auto unknow_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeDimAny});
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{unknow_shape_ptr, unknow_shape_ptr, unknow_shape_ptr});
   }

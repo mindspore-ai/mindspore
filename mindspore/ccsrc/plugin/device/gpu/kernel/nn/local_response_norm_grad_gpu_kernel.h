@@ -132,7 +132,7 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
     beta_ = kernel_ptr->get_beta();
     use_native_ = false;
     int lrnN = kCoef * depth_radius_ + 1;
-    if (lrnN > CUDNN_LRN_MIN_N || lrnN < CUDNN_LRN_MAX_N || bias_ < CUDNN_LRN_MIN_K || beta_ < CUDNN_LRN_MIN_BETA) {
+    if (lrnN < CUDNN_LRN_MIN_N || lrnN > CUDNN_LRN_MAX_N || bias_ < CUDNN_LRN_MIN_K || beta_ < CUDNN_LRN_MIN_BETA) {
       use_native_ = true;
     }
     InitResource();
