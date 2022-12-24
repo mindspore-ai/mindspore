@@ -105,13 +105,13 @@ int MatmulFp32BaseCPUKernel::ParallelRunByRow(int task_id) const {
 }
 
 int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
-  if (task_id < 0 || task_id >= thread_count_) {
+  if (task_id < 0 || task_id >= thread_num_) {
     MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
     return RET_ERROR;
   }
   int start_oc = split_points_[task_id];
   int end_oc = col_step_;
-  if (task_id < (thread_count_ - 1)) {
+  if (task_id < (thread_num_ - 1)) {
     end_oc = split_points_[task_id + 1];
   }
   int compute_oc = end_oc - start_oc;
@@ -522,6 +522,7 @@ int MatmulFp32BaseCPUKernel::ReSize() {
   if (op_parameter_->is_train_session_) {
     set_workspace_size((matrix_a_.pack_size + matrix_b_.pack_size) * static_cast<int>(sizeof(float)));
   }
+  thread_num_ = op_parameter_->thread_num_;
   ret = GetThreadCuttingPolicy();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ThreadCuttingPolicy error!";
@@ -719,10 +720,8 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
 }
 
 int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
-  if ((a_batch_ >= op_parameter_->thread_num_ && (b_batch_ == a_batch_ || !SupportMulBatchCuttingByRow())) ||
-      params_->col_ == 1) {
-    thread_count_ = op_parameter_->thread_num_;
-    batch_stride_ = UP_DIV(params_->batch, thread_count_);
+  if ((a_batch_ >= thread_num_ && (b_batch_ == a_batch_ || !SupportMulBatchCuttingByRow())) || params_->col_ == 1) {
+    batch_stride_ = UP_DIV(params_->batch, thread_num_);
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByBatch;
     if (params_->col_ != 1 || params_->a_const_) {
       return RET_OK;
@@ -738,28 +737,28 @@ int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
       }
     }
     return RET_OK;
-  } else if ((a_batch_ >= op_parameter_->thread_num_ && b_batch_ == 1) || CheckThreadCuttingByRow()) {
+  } else if ((a_batch_ >= thread_num_ && b_batch_ == 1) || CheckThreadCuttingByRow()) {
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByRow;
     GetThreadCuttingInfoByRow();
   } else {
     int total_col_unit = UP_DIV(params_->col_align_, col_min_unit_);
-    thread_count_ = MSMIN(op_parameter_->thread_num_, total_col_unit);
-    int block_col_unit = UP_DIV(total_col_unit, thread_count_);
+    thread_num_ = MSMIN(thread_num_, total_col_unit);
+    int block_col_unit = UP_DIV(total_col_unit, thread_num_);
     split_points_.clear();
     int split_point = 0;
     while (split_point < total_col_unit) {
       split_points_.push_back(split_point * col_min_unit_);
       split_point += block_col_unit;
     }
-    thread_count_ = split_points_.size();
+    thread_num_ = split_points_.size();
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByOC;
   }
   return RET_OK;
 }
 
 void MatmulFp32BaseCPUKernel::GetThreadCuttingInfoByRow() {
-  int row_step = MSMAX(row_num_ / op_parameter_->thread_num_, row_min_unit_);
-  int row_remaining = row_num_ - row_step * op_parameter_->thread_num_;
+  int row_step = MSMAX(row_num_ / thread_num_, row_min_unit_);
+  int row_remaining = row_num_ - row_step * thread_num_;
   split_points_.clear();
   int split_point = 0;
   while (split_point < row_num_) {
@@ -770,7 +769,7 @@ void MatmulFp32BaseCPUKernel::GetThreadCuttingInfoByRow() {
       --row_remaining;
     }
   }
-  thread_count_ = split_points_.size();
+  thread_num_ = split_points_.size();
 }
 
 int MatmulFp32BaseCPUKernel::Run() {
@@ -790,7 +789,7 @@ int MatmulFp32BaseCPUKernel::Run() {
   MS_CHECK_TRUE_MSG(matrix_a_.pack_ptr != nullptr, RET_ERROR, "matrix-a pack ptr is a nullptr.");
   MS_CHECK_TRUE_MSG(matrix_b_.pack_ptr != nullptr, RET_ERROR, "matrix-b pack ptr is a nullptr.");
 
-  auto ret = ParallelLaunch(this->ms_context_, MatmulRun, this, thread_count_);
+  auto ret = ParallelLaunch(this->ms_context_, MatmulRun, this, thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MatmulRun failed in split by batch";
     return ret;
