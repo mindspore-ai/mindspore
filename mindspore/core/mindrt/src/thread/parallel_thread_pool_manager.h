@@ -63,6 +63,7 @@ class ParallelThreadPoolManager {
   ParallelThreadPoolManager() = default;
 
  private:
+#ifndef MS_COMPILE_IOS
   // runner id <=> thread pool(a model has a thread pool)
   std::map<std::string, std::vector<ParallelThreadPool *>> runner_id_pools_;
   // pool sorted by model worker id
@@ -73,6 +74,7 @@ class ParallelThreadPoolManager {
   bool enable_shared_thread_pool_ = false;
   int remaining_thread_num_ = 0;
   int thread_num_limit_ = 0;
+#endif
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_PARALLEL_THREAD_POOL_MANAGER_H_
