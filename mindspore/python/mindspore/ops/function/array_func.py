@@ -3248,11 +3248,12 @@ def affine_grid(theta, output_size, align_corners=False):
 def broadcast_to(x, shape):
     """
     Broadcasts input tensor to a given shape. The dim of input shape must be smaller
-    than or equal to that of target shape. Suppose input shape is :math:`(x1, x2, ..., xm)`,
+    than or equal to that of target shape. Suppose input shape is :math:`(x_1, x_2, ..., x_m)`,
     target shape is :math:`(*, y_1, y_2, ..., y_m)`, where :math:`*` means any additional dimension.
     The broadcast rules are as follows:
 
-    Compare the value of `x_m` and `y_m`, `x_{m-1}` and `y_{m-1}`, ..., `x_1` and `y_1` consecutively and
+    Compare the value of :math:`x_m` and :math:`y_m`, :math:`x_{m-1}` and :math:`y_{m-1}`, ...,
+    :math:`x_1` and :math:`y_1` consecutively and
     decide whether these shapes are broadcastable and what the broadcast result is.
 
     If the value pairs at a specific dim are equal, then that value goes right into that dim of output shape.
