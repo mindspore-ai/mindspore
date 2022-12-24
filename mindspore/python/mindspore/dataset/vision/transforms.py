@@ -2940,7 +2940,6 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
         ValueError: If `scale` is negative.
         ValueError: If `ratio` is negative.
         ValueError: If `max_attempts` is not positive.
-        RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
         ``CPU``
