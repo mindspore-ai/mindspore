@@ -47,10 +47,8 @@ class DynamicQuantFp16CPUKernel : public LiteKernel {
   int num_unit_{0};
   int8_t *int8_ptr_ = nullptr;
   float16_t *float16_ptr_ = nullptr;
-  float16_t real_min_array_[8] = {0};
-  float16_t real_max_array_[8] = {0};
-  float real_min_ = FLT_MAX;
-  float real_max_ = -FLT_MAX;
+  float16_t real_min_array_[8] = {FLT16_MAX};
+  float16_t real_max_array_[8] = {-FLT16_MAX};
   int32_t src_dtype_{0};
   int32_t dst_dtype_{0};
   bool symmetric_ = false;
