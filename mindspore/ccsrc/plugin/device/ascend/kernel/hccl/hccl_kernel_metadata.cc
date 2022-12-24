@@ -88,13 +88,16 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   for (const auto &type : kHcclSupportTypes) {
     std::vector<std::string> inputs_format{};
     std::vector<TypeId> inputs_type{};
+    std::vector<KernelObjectType> input_object_type{};
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
       (void)inputs_format.emplace_back(GetKernelFormat(kernel_node, input_index));
-      inputs_type.push_back(type);
+      (void)inputs_type.push_back(type);
+      (void)input_object_type.push_back(KernelObjectType::TENSOR);
     }
     std::vector<std::string> outputs_format;
     std::vector<TypeId> outputs_type;
+    std::vector<KernelObjectType> output_object_type{};
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       (void)outputs_format.emplace_back(GetKernelFormat(kernel_node, output_index));
@@ -103,6 +106,7 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
       } else {
         outputs_type.push_back(type);
       }
+      (void)output_object_type.push_back(KernelObjectType::TENSOR);
     }
     auto builder = KernelBuildInfo::KernelBuildInfoBuilder();
     builder.SetInputsFormat(inputs_format);
@@ -110,6 +114,8 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
     builder.SetOutputsFormat(outputs_format);
     builder.SetOutputsDeviceType(outputs_type);
     builder.SetKernelType(HCCL_KERNEL);
+    builder.SetInputsKernelObjectType(input_object_type);
+    builder.SetOutputsKernelObjectType(output_object_type);
     kernel_info_list->push_back(builder.Build());
   }
 }

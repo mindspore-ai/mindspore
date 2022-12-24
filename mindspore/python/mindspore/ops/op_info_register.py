@@ -329,10 +329,12 @@ class RegOp:
             raise ValueError("input size add output size must be equal to dtype format size")
         dtype_format = []
         for arg in args:
-            if not isinstance(arg, tuple) or len(arg) != 2:
-                raise ValueError("dtype and format value must be tuple of two elements")
+            if not isinstance(arg, tuple) or (len(arg) != 2 and len(arg) != 3):
+                raise ValueError("dtype and format value must be tuple of two or three elements")
             self._is_string(arg[0])
             self._is_string(arg[1])
+            if len(arg) == 3:
+                self._is_string(arg[2])
             dtype_format.append(arg)
         self.dtype_format_.append(tuple(dtype_format))
         return self

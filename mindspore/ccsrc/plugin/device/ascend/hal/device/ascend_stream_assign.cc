@@ -240,6 +240,9 @@ void AscendStreamAssign::AssignStreamForNonTaskSink(const std::vector<CNodePtr> 
     return;
   }
   for (const auto &node : kernels) {
+    if (AnfAlgo::IsKernelSelectBackoffOp(node)) {
+      continue;
+    }
     if (common::AnfAlgo::IsCommunicationOp(node)) {
       AnfAlgo::SetStreamId(kWorldGroupStreamIndex, node.get());
     } else {
@@ -426,6 +429,9 @@ void AscendStreamAssign::GenEventsForParallelOp(
   mindspore::HashMap<CNodePtr, NodeIoExecInfoPtr> kernel_io_exec_info_map;
   GenKernelIoExecInfoMap(kernel_graph, &kernel_io_exec_info_map);
   for (auto &process_kernel : exec_kernels) {
+    if (AnfAlgo::IsKernelSelectBackoffOp(process_kernel)) {
+      continue;
+    }
     MS_EXCEPTION_IF_NULL(process_kernel);
     auto process_stream_id = AnfAlgo::GetStreamId(process_kernel);
     if (process_stream_id == kDefaultStreamIndex) {
@@ -974,6 +980,10 @@ void AscendStreamAssign::ClassifyNodeByKernel(const NotNull<KernelGraphPtr> &gra
   MS_EXCEPTION_IF_NULL(comm_sub_graph_list);
   for (auto cur_cnode : graph_ptr->execution_order()) {
     MS_EXCEPTION_IF_NULL(cur_cnode);
+    if (AnfAlgo::IsKernelSelectBackoffOp(cur_cnode)) {
+      MS_LOG(EXCEPTION) << "Not support kernel select backoff node in task sink mode, node:"
+                        << cur_cnode->fullname_with_scope();
+    }
     if (IsHcom(cur_cnode)) {
       if (IsCommSubGraph(graph_ptr, cur_cnode)) {
         comm_sub_graph_list->push_back(cur_cnode);

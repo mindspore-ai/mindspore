@@ -842,7 +842,7 @@ void AnfRuntimeAlgorithm::SetSelectKernelBuildInfo(const KernelBuildInfoPtr &sel
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
-  if (kernel_info->has_build_info()) {
+  if (kernel_info->has_build_info() && (select_kernel_build_info != nullptr)) {
     auto ori_kernel_build_info = kernel_info->GetMutableSelectKernelBuildInfo();
     auto input_object_types = ori_kernel_build_info->GetAllInputKernelObjectTypes();
     auto output_object_types = ori_kernel_build_info->GetAllOutputKernelObjectTypes();
@@ -1629,5 +1629,22 @@ std::vector<TypeId> AnfAlgo::GetAllOutputInferDataTypes(const AnfNodePtr &node) 
     outputs.push_back(type);
   }
   return outputs;
+}
+
+size_t AnfAlgo::GetInputElementNum(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  size_t element_num = 0;
+  size_t input_num = cnode->inputs().size() - 1;
+  for (size_t i = 0; i < input_num; ++i) {
+    auto input_node = common::AnfAlgo::GetInputNode(cnode, i);
+    if (common::AnfAlgo::IsTupleOutput(input_node)) {
+      element_num += AnfUtils::GetOutputTensorNum(input_node);
+    } else {
+      ++element_num;
+    }
+  }
+  return element_num;
 }
 }  // namespace mindspore::session

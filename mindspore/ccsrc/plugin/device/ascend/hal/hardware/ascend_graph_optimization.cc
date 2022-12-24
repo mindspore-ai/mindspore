@@ -20,6 +20,7 @@
 #include <unordered_set>
 #include <string>
 #include <memory>
+#include <utility>
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_comm_op_reuse.h"
@@ -476,7 +477,13 @@ void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
       };
       auto cnode = graphkernel::TryExpandCNode(node, f);
       if (cnode == nullptr) {
-        MS_EXCEPTION(etype) << msg;
+        if (graph == nullptr || graph->is_from_single_op() || graph->is_graph_run_mode()) {
+          MS_EXCEPTION(etype) << msg;
+        }
+        MS_LOG(INFO) << "Try to use backoff CPU kernel, node:" << node->fullname_with_scope();
+        std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
+        AnfAlgo::SetKernelSelectBackoffInfo(node, failure_info);
+        continue;
       }
       (void)mng->Replace(node, cnode);
       MS_LOG(INFO) << msg << " but expand success.";

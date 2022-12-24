@@ -250,12 +250,19 @@ bool OpLib::DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::sha
   try {
     std::vector<std::string> dtype;
     std::vector<std::string> format;
+    std::vector<std::string> object_type;
     for (const auto &it : dtype_format) {
-      dtype.emplace_back(it[index][0]);
-      format.emplace_back(it[index][1]);
+      dtype.emplace_back(it[index][kIndex0]);
+      format.emplace_back(it[index][kIndex1]);
+      if (it[index].size() == kIndex3) {
+        object_type.emplace_back(it[index][kIndex2]);
+      } else {
+        object_type.emplace_back("tensor");
+      }
     }
     op_io->set_dtypes(dtype);
     op_io->set_formats(format);
+    op_io->set_object_types(object_type);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "DecodeDtypeFormat failed" << e.what();
     ret = false;
@@ -283,6 +290,7 @@ bool OpLib::DecodeInputOutput(const nlohmann::json &obj, OpImplyType imply_type,
     } else {
       op_io->set_dtypes(obj.at(kDtype));
       op_io->set_formats(obj.at(kFormat));
+      op_io->set_object_types(std::vector<std::string>(op_io->dtypes().size(), "tensor"));
       if (op_info->dynamic_shape_support()) {
         op_io->set_unknown_shape_formats(obj.at(kFormat));
       }

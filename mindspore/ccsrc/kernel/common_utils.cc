@@ -324,6 +324,7 @@ bool SetInputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &inp
 
   std::vector<TypeId> inputs_device_type;
   std::vector<std::string> inputs_format;
+  std::vector<KernelObjectType> inputs_object_type;
   size_t dyn_input_idx = 0;
   size_t kernel_info_index = 0;
   MS_EXCEPTION_IF_NULL(inputs[0]);
@@ -334,9 +335,13 @@ bool SetInputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &inp
     std::string param_type = input->param_type();
     std::vector<std::string> dtypes = input->dtypes();
     std::vector<std::string> formats = input->formats();
-    if (dtypes.size() != kernel_info_cnt || formats.size() != kernel_info_cnt) {
-      MS_LOG(DEBUG) << "Set input kernel builder info failed, dtyps size != formats size. dtypes size: "
-                    << dtypes.size() << ", formats size : " << formats.size();
+    std::vector<std::string> object_types = input->object_types();
+    if (dtypes.size() != kernel_info_cnt || formats.size() != kernel_info_cnt ||
+        object_types.size() != kernel_info_cnt) {
+      MS_LOG(DEBUG) << "Set input kernel builder info failed, dtyps size, formats size and object_types size are not "
+                       "same. dtypes size: "
+                    << dtypes.size() << ", formats size : " << formats.size()
+                    << ", object_types size: " << object_types.size();
       return false;
     }
 
@@ -351,12 +356,14 @@ bool SetInputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &inp
         auto type_id = DtypeToTypeId(dtypes[builder_idex]);
         inputs_device_type.push_back(type_id);
         inputs_format.push_back(formats[builder_idex]);
+        inputs_object_type.push_back(StringToKernelObjectType(object_types[builder_idex]));
       }
     } else if (param_type == "required") {
       kernel_info_index++;
       auto type_id = DtypeToTypeId(dtypes[builder_idex]);
       inputs_device_type.push_back(type_id);
       inputs_format.push_back(formats[builder_idex]);
+      inputs_object_type.push_back(StringToKernelObjectType(object_types[builder_idex]));
     } else {
       if (kernel_info_index < real_input_num) {
         MS_LOG(INFO) << "Set input kernel builder info, input type is optional, input index is :" << kernel_info_index;
@@ -364,6 +371,7 @@ bool SetInputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &inp
         auto type_id = DtypeToTypeId(dtypes[builder_idex]);
         inputs_device_type.push_back(type_id);
         inputs_format.push_back(formats[builder_idex]);
+        inputs_object_type.push_back(StringToKernelObjectType(object_types[builder_idex]));
       }
     }
     dyn_input_idx++;
@@ -371,6 +379,8 @@ bool SetInputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &inp
 
   builder->SetInputsDeviceType(inputs_device_type);
   builder->SetInputsFormat(inputs_format);
+  builder->SetInputsKernelObjectType(inputs_object_type);
+
   return true;
 }
 
@@ -383,6 +393,7 @@ bool SetOutputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &ou
   size_t output_idx = 0;
   std::vector<TypeId> outputs_device_type;
   std::vector<std::string> outputs_format;
+  std::vector<KernelObjectType> outputs_object_type;
   MS_EXCEPTION_IF_NULL(outputs[0]);
   size_t kernel_info_cnt = outputs[0]->dtypes().size();
 
@@ -410,19 +421,26 @@ bool SetOutputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &ou
     for (size_t i = 0; i < output_num; i++) {
       std::vector<std::string> dtypes = output->dtypes();
       std::vector<std::string> formats = output->formats();
-      if (dtypes.size() != kernel_info_cnt || formats.size() != kernel_info_cnt) {
-        MS_LOG(DEBUG) << "Set output kernel builder info, dtyps size != formats size.";
+      std::vector<std::string> object_types = output->object_types();
+      if (dtypes.size() != kernel_info_cnt || formats.size() != kernel_info_cnt ||
+          object_types.size() != kernel_info_cnt) {
+        MS_LOG(DEBUG)
+          << "Set output kernel builder info failed, dtyps size, formats size and object_types size are not "
+             "same. dtypes size: "
+          << dtypes.size() << ", formats size : " << formats.size() << ", object_types size: " << object_types.size();
         return false;
       }
       auto type_id = DtypeToTypeId(dtypes[builder_idex]);
       outputs_device_type.push_back(type_id);
       outputs_format.push_back(formats[builder_idex]);
+      outputs_object_type.push_back(StringToKernelObjectType(object_types[builder_idex]));
       output_idx++;
     }
   }
 
   builder->SetOutputsFormat(outputs_format);
   builder->SetOutputsDeviceType(outputs_device_type);
+  builder->SetOutputsKernelObjectType(outputs_object_type);
   return true;
 }
 
@@ -1142,6 +1160,21 @@ TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_type) {
     return kTypeUnknown;
   }
   return trans_map[object_type];
+}
+
+KernelObjectType StringToKernelObjectType(const std::string &object_type) {
+  static const std::unordered_map<std::string, KernelObjectType> object_type_maps = {
+    {"unknown", KernelObjectType::UNKNOWN_TYPE},
+    {"tensor", KernelObjectType::TENSOR},
+    {"scalar", KernelObjectType::SCALAR},
+    {"tuple", KernelObjectType::TUPLE},
+    {"tuple_unfold", KernelObjectType::TUPLE_UNFOLD},
+  };
+  auto iter = object_type_maps.find(object_type);
+  if (iter == object_type_maps.end()) {
+    MS_LOG(EXCEPTION) << "Illegal input object type: " << object_type;
+  }
+  return iter->second;
 }
 
 KernelObjectType CalKernelObjectType(const TypeId &object_type, const TypeId &selected_object_type) {

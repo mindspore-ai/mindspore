@@ -215,6 +215,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static std::vector<TypeId> GetAllOutputObjectType(const AnfNodePtr &node);
   // get all output infer data type
   static std::vector<TypeId> GetAllOutputInferDataTypes(const AnfNodePtr &node);
+  static size_t GetInputElementNum(const AnfNodePtr &node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

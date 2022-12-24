@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/hal/hardware/ascend_kernel_executor.h"
 #include <algorithm>
+#include <utility>
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
@@ -126,7 +127,14 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
     // Kernel selection process.
     auto [status, msg, etype] = SelectKernelInfoWithMsg(node);
     if (status == device::ascend::kNoMatched) {
-      MS_EXCEPTION(etype) << msg;
+      auto graph = AnfAlgo::FetchKernelGraph(node.get());
+      if (graph == nullptr || graph->is_from_single_op() || graph->is_graph_run_mode()) {
+        MS_EXCEPTION(etype) << msg;
+      }
+      MS_LOG(INFO) << "Try to use backoff CPU kernel, node:" << node->fullname_with_scope();
+      std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
+      AnfAlgo::SetKernelSelectBackoffInfo(node, failure_info);
+      continue;
     }
   }
 }

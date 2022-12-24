@@ -443,9 +443,10 @@ void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kern
 bool MatchObjectType(const CNodePtr &kernel_node, const kernel::KernelAttr &kernel_attr, bool strict);
 std::vector<kernel::KernelAttr> SelectKernelObjectType(
   const CNodePtr &kernel_node, const std::vector<kernel::KernelAttr> &selected_kernel_attr_list);
-KernelObjectType TypeIdToKernelObjectType(const TypeId &type_id);
-std::vector<KernelObjectType> TypeIdToKernelObjectType(const std::vector<TypeId> &type_ids);
+BACKEND_EXPORT KernelObjectType TypeIdToKernelObjectType(const TypeId &type_id);
+BACKEND_EXPORT std::vector<KernelObjectType> TypeIdToKernelObjectType(const std::vector<TypeId> &type_ids);
 TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_type);
+KernelObjectType StringToKernelObjectType(const std::string &object_type);
 
 template <typename Derived>
 class MatchKernelHelper {

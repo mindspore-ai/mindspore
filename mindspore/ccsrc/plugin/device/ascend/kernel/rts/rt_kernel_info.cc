@@ -72,6 +72,8 @@ void GetRtKelInfo(const CNodePtr &kernel_node,
     auto input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_build_info_builder);
     kernel_build_info_builder->SetInputsFormat(std::vector<std::string>(input_num, kOpFormat_DEFAULT));
+    kernel_build_info_builder->SetInputsKernelObjectType(
+      std::vector<KernelObjectType>(input_num, KernelObjectType::TENSOR));
     std::vector<TypeId> input_types = {};
     for (size_t i = 0; i < input_num; i++) {
       input_types.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, i));
@@ -80,6 +82,7 @@ void GetRtKelInfo(const CNodePtr &kernel_node,
     // Kernel ops in while-list such as 'LabelSet' always return UMonad.
     kernel_build_info_builder->SetOutputsFormat({kOpFormat_DEFAULT});
     kernel_build_info_builder->SetOutputsDeviceType({TypeId::kObjectTypeUMonad});
+    kernel_build_info_builder->SetOutputsKernelObjectType({KernelObjectType::TENSOR});
     // set other info
     kernel_build_info_builder->SetFusionType(kernel::kPatternOpaque);
     kernel_build_info_builder->SetProcessor(kernel::Processor::AICORE);
