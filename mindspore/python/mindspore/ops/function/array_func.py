@@ -5003,7 +5003,7 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
         ValueError: if the input tensor has less than two dimensions.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[0, 1], [2, 3]], mstype.float32)
