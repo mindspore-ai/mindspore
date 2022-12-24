@@ -63,8 +63,7 @@ int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, un
   } else {
     MS_LOG(EXCEPTION) << "Unknown type for sampling.";
   }
-
-  std::mt19937 random_generator(seed);
+  std::default_random_engine random_generator(seed);
   std::uniform_int_distribution<T> distribution(0, range - 1);
   if (!unique_) {
     for (int64_t i = 0; i < num_sampled_; i++) {
@@ -195,7 +194,6 @@ bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   init_seed_ = LongToUint(seed_);
   // check the attribute, inputs and outputs
   CheckAttribute();
-  CheckInputsAndOutputs(inputs, outputs);
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
@@ -246,17 +244,14 @@ bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<Address
   S *true_expected_count = GetDeviceAddress<S>(outputs, kIndex1);
   S *sampled_expected_count = GetDeviceAddress<S>(outputs, kIndex2);
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
-
+  unsigned int RNG_seed = 0;
+  if (init_seed_ != 0) {
+    RNG_seed = init_seed_;
+  } else {
+    RNG_seed = time(NULL);
+  }
+  MS_LOG(DEBUG) << "For UniformCandidateSampler, generator seed : RNG_seed = " << RNG_seed;
   for (int64_t j = 0; j < batch_size_; ++j) {
-    unsigned int RNG_seed = 0;
-    std::random_device rd;
-    if (init_seed_ != 0) {
-      RNG_seed = init_seed_;
-    } else {
-      RNG_seed = rd();
-    }
-    MS_LOG(DEBUG) << "For UniformCandidateSampler, generator seed : RNG_seed = " << RNG_seed;
-
     if (remove_accidental_hits_) {
       set_input_.clear();  // reset for each batch
       for (size_t i = 0; i < input_size_; i++) {
