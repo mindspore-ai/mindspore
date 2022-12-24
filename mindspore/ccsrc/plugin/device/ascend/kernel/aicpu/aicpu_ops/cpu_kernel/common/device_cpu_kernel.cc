@@ -21,7 +21,6 @@
 #include "cce/aicpu_engine_struct.h"
 #include "cce/fwk_adpt_struct.h"
 #include "cpu_kernel/common/cpu_kernel_cache.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
 #include "cpu_kernel/common/session_cache.h"
 #include "cpu_kernel/common/status.h"
