@@ -17,12 +17,12 @@ mindspore.ops.UniformReal
         - 全局的随机种子和算子层的随机种子都设置了：全局的随机种子和算子层的随机种子拼接。
 
     输入：
-        - **shape** (tuple) - 待生成的Tensor的shape。只支持常量值。
+        - **shape** (Union[tuple, Tensor]) - 待生成的Tensor的shape。只支持常量值。
 
     输出：
         Tensor。它的shape为输入 `shape`。数据类型为float32。
 
     异常：
         - **TypeError** - `seed` 或 `seed2` 不是int。
-        - **TypeError** - `shape` 不是tuple。
+        - **TypeError** - `shape` 不是tuple或Tensor。
         - **ValueError** - `shape` 不是常量值。

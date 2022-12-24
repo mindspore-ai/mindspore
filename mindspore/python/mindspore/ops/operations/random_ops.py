@@ -612,7 +612,7 @@ class UniformInt(Primitive):
 
     Raises:
         TypeError: If neither `seed` nor `seed2` is an int.
-        TypeError: If `shape` is neither a tuple nor a tensor.
+        TypeError: If `shape` is neither a tuple nor a Tensor.
         TypeError: If neither `minval` nor `maxval` is a Tensor.
         ValueError: If `shape` is not a constant value.
 
@@ -666,7 +666,7 @@ class UniformReal(Primitive):
 
     Raises:
         TypeError: If `seed` or `seed2` is not an int.
-        TypeError: If `shape` is neither a tuple nor a tensor.
+        TypeError: If `shape` is neither a tuple nor a Tensor.
         ValueError: If `shape` is not a constant value.
 
     Supported Platforms:

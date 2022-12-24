@@ -18,7 +18,7 @@ mindspore.ops.UniformInt
         - **seed2** (int) - 随机种子2，用来防止随机种子冲突，非负值。默认值：0。
 
     输入：
-        - **shape** (tuple) - 目标Tensor的shape。只允许常量值。
+        - **shape** (Union[tuple, Tensor]) - 目标Tensor的shape。只允许常量值。
         - **minval** (Tensor) - 分布参数， :math:`a` 。
           决定可能生成的最小值，数据类型为int32。需为标量。
         - **maxval** (Tensor) - 分布参数， :math:`b` 。
@@ -29,6 +29,6 @@ mindspore.ops.UniformInt
 
     异常：
         - **TypeError** - `seed` 或 `seed2` 不是int类型。
-        - **TypeError** - `shape` 不是Tuple。
+        - **TypeError** - `shape` 不是tuple或Tensor。
         - **TypeError** - `minval` 或 `maxval` 不是Tensor。
         - **ValueError** - `shape` 不是常量值。
