@@ -18,6 +18,10 @@
 #include <thread>
 #include <memory>
 #include <algorithm>
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#include <wincrypt.h>
+#endif
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -131,13 +135,27 @@ bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &workspace,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   unsigned int RNG_seed = 0;
-  std::random_device rd;
   if (seed2_ != 0) {
     RNG_seed = IntToUint(seed2_);
   } else if (seed_ != 0) {
     RNG_seed = IntToUint(seed_);
   } else {
+#if defined(_WIN32) || defined(_WIN64)
+    HCRYPTPROV h_crypt_prov;
+    if (!CryptAcquireContext(reinterpret_cast<HCRYPTPROV *>(&h_crypt_prov), nullptr, nullptr, PROV_RSA_FULL, 0)) {
+      auto err_code = GetLastError();
+      MS_LOG(EXCEPTION) << "Acquire crypt context failed when generate a seed value for the random operator: "
+                        << kernel_type_ << ". The error code: " << err_code;
+    }
+    if (!CryptGenRandom(h_crypt_prov, sizeof(unsigned int), reinterpret_cast<BYTE *>(&RNG_seed))) {
+      auto err_code = GetLastError();
+      MS_LOG(EXCEPTION) << "Generate crypt random failed when generate a seed value for the random operator: "
+                        << kernel_type_ << ". The error code: " << err_code;
+    }
+#else
+    std::random_device rd;
     RNG_seed = rd();
+#endif
   }
 
   if (random_op_type_ == RANDOM_OP_NORMAL) {
