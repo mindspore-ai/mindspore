@@ -42,6 +42,7 @@ void TbeKernelReduceSelector::GetSupportedFormatDType(SupportFormatDType *suppor
   GetReduceSupport5HD(&support_format);
   GetReduceSupportNDC1HWC0(&support_format);
   GetReduceSupportFracZ(&support_format);
+  GetReduceSupportFracNZ(&support_format);
   GetReduceSupportC1HWNCoC0(&support_format);
   GetReduceSupportFracZ3D(&support_format);
   GenerateSupportFormatDType(cnode_ptr_, support_format, support_format_dtype);
@@ -92,7 +93,8 @@ void TbeKernelReduceSelector::GetCheckInfo() {
 void TbeKernelReduceSelector::GetReduceSupport5HD(SupportFormat *support_format) const {
   MS_EXCEPTION_IF_NULL(support_format);
   // Note: if input and output size == 2, the last index only support 5hd(float16) --> default
-  if (!is_shape_4_dims_) {
+  // keep_dims = false , infer shape error, so not support
+  if (!keep_dims_ || !is_shape_4_dims_) {
     return;
   }
   auto support_output_format = is_reduce_c_channel_ ? kOpFormat_DEFAULT : kOpFormat_NC1HWC0;
@@ -102,7 +104,7 @@ void TbeKernelReduceSelector::GetReduceSupport5HD(SupportFormat *support_format)
 
 void TbeKernelReduceSelector::GetReduceSupportNDC1HWC0(SupportFormat *support_format) const {
   MS_EXCEPTION_IF_NULL(support_format);
-  if (!is_shape_5_dims_) {
+  if (!keep_dims_ || !is_shape_5_dims_) {
     return;
   }
   if (is_reduce_c_channel_) {
@@ -170,9 +172,6 @@ void TbeKernelReduceSelector::GetReduceSupportFracNZ(SupportFormat *support_form
   if (is_shape_less_2_dims_) {
     return;
   }
-  if (!keep_dims_) {
-    return;
-  }
   int64_t last_channel = SizeToLong(input_shape_.at(0).size()) - 1;
   bool is_reduce_last = CheckReduceContainChanel(last_channel);
   int64_t last_channel_but_one = SizeToLong(input_shape_.at(0).size()) - 2;
@@ -180,6 +179,9 @@ void TbeKernelReduceSelector::GetReduceSupportFracNZ(SupportFormat *support_form
   if (!is_reduce_last && !is_reduce_last_but_one) {
     GenerateSupportFormat(kOpFormat_FRAC_NZ, input_shape_.size(), kOpFormat_FRAC_NZ, output_shape_.size(),
                           support_format);
+    return;
+  }
+  if (!keep_dims_) {
     return;
   }
   if (last_channel >= 0 && LongToSize(last_channel) < input_shape_.at(kIndex0).size() &&
@@ -241,8 +243,8 @@ void TbeKernelReduceSelector::FilterInvalidFormatDType(SupportFormatDType *suppo
 
 bool TbeKernelReduceSelector::CheckOriginInputShapeDimEqual(size_t support_dim_size) const {
   // Note: identify format not check
-  return std::any_of(input_shape_.begin(), input_shape_.end(),
-                     [&support_dim_size](const auto &shape) { return (shape.size() != support_dim_size); });
+  return std::all_of(input_shape_.begin(), input_shape_.end(),
+                     [&support_dim_size](const auto &shape) { return (shape.size() == support_dim_size); });
 }
 
 bool TbeKernelReduceSelector::CheckOriginInputShapeDimLess(size_t support_min_dim_size) const {
