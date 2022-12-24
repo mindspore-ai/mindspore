@@ -159,7 +159,7 @@ class Adagrad(Optimizer):
         ValueError: If `accum` or `weight_decay` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms

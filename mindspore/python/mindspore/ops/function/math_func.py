@@ -953,7 +953,7 @@ def div(input, other, rounding_mode=None):
         ValueError: If `rounding_mode` value is not None, "floor" or "trunc".
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -1978,7 +1978,7 @@ def tan(x):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1.0, 0.0, 1.0]), mindspore.float32)
@@ -2442,7 +2442,7 @@ def atan2(x, y):
                       when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 1]), mindspore.float32)
@@ -3297,7 +3297,7 @@ def truncate_div(x, y):
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -3343,7 +3343,7 @@ def truncate_mod(x, y):
         ValueError: If the shape `x` and `y` cannot be broadcasted to each other.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -5488,7 +5488,7 @@ def cummin(x, axis):
 
     .. math::
         \begin{array}{ll} \\
-            y{i} = min(x{1}, x{2}, ... , x{i})
+            y_{i} = min(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
     Args:
@@ -5540,7 +5540,7 @@ def cummax(x, axis):
 
     .. math::
         \begin{array}{ll} \\
-            y{i} = max(x{1}, x{2}, ... , x{i})
+            y_{i} = max(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
     Args:
@@ -7131,7 +7131,7 @@ def renorm(input_x, p, dim, maxnorm):
         ValueError: If the value of `p` less than 1.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
@@ -8163,7 +8163,7 @@ def kron(x, y):
         TypeError: If `y` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -8894,7 +8894,7 @@ def erfinv(input):
         TypeError: If dtype of `input` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0.5, -0.9]), mindspore.float32)
@@ -8976,7 +8976,7 @@ def cumprod(input, dim, dtype=None):
         ValueError: If `dim` is None.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3], np.float32))
@@ -9008,7 +9008,7 @@ def greater(input, other):
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -9038,7 +9038,7 @@ def greater_equal(input, other):
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -9087,7 +9087,7 @@ def igamma(input, other):
         ValueError: If `input` could not be broadcast to a tensor with shape of `other`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
@@ -9136,7 +9136,7 @@ def igammac(input, other):
         ValueError: If `input` could not be broadcast to a tensor with shape of `other`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
@@ -9285,7 +9285,7 @@ def isinf(input):
         TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
@@ -9406,7 +9406,7 @@ def imag(input):
        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(1.3 + 0.4j)), mindspore.complex64)

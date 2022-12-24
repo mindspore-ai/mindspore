@@ -78,19 +78,25 @@ class ExtractImagePatches(Primitive):
         Tensor, a 4-D tensor whose data type is same as 'input_x',
         and the shape is [out_batch, out_depth, out_row, out_col], Where the out_batch is the same as the in_batch
         and
+
         .. math::
             out_depth=ksize\_row * ksize\_col * in\_depth
+
         and
         if 'padding' is "valid":
+
         .. math::
             out\_row=floor((in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) / stride\_row) + 1
             out\_col=floor((in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) / stride\_col) + 1
+
         if 'padding' is "same":
+
         .. math::
             out\_row=floor((in\_row - 1) / stride\_row) + 1
             out\_col=floor((in\_col - 1) / stride\_col) + 1
-        Supported Platforms:
-        ``GPU`` ``Ascend``
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
 
     @prim_attr_register
@@ -194,12 +200,14 @@ class Lamb(PrimitiveWithInfer):
           Default: 0.0.
         - **global_step** (Tensor) - Tensor to record current global step.
         - **gradient** (Tensor) - Gradient, has the same shape and data type as `var`.
+
     Outputs:
         Tensor, the updated parameters.
+
         - **var** (Tensor) - The same shape and data type as `var`.
 
     Supported Platforms:
-        ``GPU`` ``Ascend``
+        ``Ascend````GPU``
     """
 
     @prim_attr_register

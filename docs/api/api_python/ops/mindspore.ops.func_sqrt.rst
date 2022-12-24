@@ -6,7 +6,7 @@ mindspore.ops.sqrt
     逐元素返回当前Tensor的平方根。
 
     .. math::
-        out_{i} = \\sqrt{x_{i}}
+        out_{i} = \sqrt{x_{i}}
 
     参数：
         - **x** (Tensor) - 输入Tensor，数据类型为number.Number，其rank需要在[0, 7]范围内.

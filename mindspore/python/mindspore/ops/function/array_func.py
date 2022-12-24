@@ -2107,7 +2107,7 @@ def scatter_max(input_x, indices, updates):
                       and `updates` is greater than 8 dimensions.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32), name="input_x")
@@ -3841,7 +3841,7 @@ def meshgrid(inputs, indexing='xy'):
         ValueError: If `indexing` is neither 'xy' nor 'ij'.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -3947,11 +3947,12 @@ def affine_grid(theta, output_size, align_corners=False):
 def broadcast_to(x, shape):
     """
     Broadcasts input tensor to a given shape. The dim of input shape must be smaller
-    than or equal to that of target shape. Suppose input shape is :math:`(x1, x2, ..., xm)`,
+    than or equal to that of target shape. Suppose input shape is :math:`(x_1, x_2, ..., x_m)`,
     target shape is :math:`(*, y_1, y_2, ..., y_m)`, where :math:`*` means any additional dimension.
     The broadcast rules are as follows:
 
-    Compare the value of `x_m` and `y_m`, `x_{m-1}` and `y_{m-1}`, ..., `x_1` and `y_1` consecutively and
+    Compare the value of :math:`x_m` and :math:`y_m`, :math:`x_{m-1}` and :math:`y_{m-1}`, ...,
+    :math:`x_1` and :math:`y_1` consecutively and
     decide whether these shapes are broadcastable and what the broadcast result is.
 
     If the value pairs at a specific dim are equal, then that value goes right into that dim of output shape.
@@ -5464,7 +5465,7 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
         ValueError: If `input.shape[3]` does not match the calculated number of sliding blocks.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
@@ -5728,7 +5729,7 @@ def mvlgamma(input, p):
         ValueError: If not all elements of `input` are greater than :math:`(p - 1) / 2`.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[3, 4, 5], [4, 2, 6]]), mindspore.float32)

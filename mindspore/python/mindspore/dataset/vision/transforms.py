@@ -3465,7 +3465,7 @@ class Rescale(ImageTensorOperation):
         TypeError: If `shift` is not of type float.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> transforms_list = [vision.Decode(), vision.Rescale(1.0 / 255.0, -1.0)]
@@ -4074,7 +4074,7 @@ class ToType(TypeCast):
         TypeError: If `data_type` is not of type :class:`mindspore.dtype` or :class:`numpy.dtype` .
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

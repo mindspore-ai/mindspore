@@ -66,6 +66,7 @@ Neural Network
     mindspore.ops.FractionalMaxPool
     mindspore.ops.FractionalMaxPoolWithFixedKsize
     mindspore.ops.FractionalMaxPool3DWithFixedKsize
+    mindspore.ops.GridSampler2D
     mindspore.ops.GridSampler3D
     mindspore.ops.LayerNorm
     mindspore.ops.LRN
@@ -196,7 +197,6 @@ Sampling Operator
     :template: classtemplate.rst
     
     mindspore.ops.ComputeAccidentalHits
-    mindspore.ops.GridSampler2D
     mindspore.ops.LogUniformCandidateSampler
     mindspore.ops.UniformCandidateSampler
     

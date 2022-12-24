@@ -318,7 +318,7 @@ def gmres(A, b, x0=None, *, tol=1e-5, restart=20, maxiter=None,
           >0 : convergence to tolerance not achieved, number of iterations. <0 : illegal input or breakdown.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp
@@ -493,7 +493,7 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None
         TypeError: If `A` and `b` don't have the same data types.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp
@@ -617,7 +617,7 @@ def bicgstab(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         TypeError: If `A`, `x0` and `b` don't have the same float types(`mstype.float32` or `mstype.float64`).
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp

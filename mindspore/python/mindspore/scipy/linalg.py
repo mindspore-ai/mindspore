@@ -56,7 +56,7 @@ def block_diag(*arrs):
         ValueError: If there are Tensors with dimensions higher than 2 in all arguments.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp
@@ -155,7 +155,7 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
         ValueError: If `a` is singular matrix.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         Solve the lower triangular system :math:`a x = b`, where::
@@ -224,7 +224,7 @@ def inv(a, overwrite_a=False, check_finite=True):
         ValueError: If :math:`a` is not square, or not 2D.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp
@@ -289,7 +289,7 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
         ValueError: If input a tensor is not a square matrix or it's dims not equal to 2D.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp
@@ -350,7 +350,7 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
         ValueError: If input a tensor is not a square matrix or it's dims not equal to 2D.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp
@@ -402,7 +402,7 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
         Tensor, the solution to the system a x = b
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp
@@ -512,7 +512,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         ValueError: If `eigvals` is not None.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp
@@ -603,7 +603,7 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
         ValueError: If :math:`a` is not square.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp
@@ -672,7 +672,7 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
         - Tensor, :math:`(K, N)` upper triangular or trapezoidal matrix.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp
@@ -750,7 +750,7 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
         Tensor, solution to the system
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp

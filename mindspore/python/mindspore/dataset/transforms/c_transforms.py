@@ -142,7 +142,7 @@ class TypeCast(TensorOperation):
         TypeError: If `data_type` is not of type bool, int, float or string.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

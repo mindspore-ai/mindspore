@@ -115,7 +115,7 @@ def csr_tan(x: CSRTensor) -> CSRTensor:
         TypeError: If `x` is not a CSRTensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
@@ -150,7 +150,7 @@ def coo_tan(x: COOTensor) -> COOTensor:
         TypeError: If `x` is not a COOTensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
@@ -1938,7 +1938,7 @@ def csr_isinf(x: CSRTensor) -> CSRTensor:
         TypeError: If `x` is not a CSRTensor.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
@@ -1978,7 +1978,7 @@ def coo_isinf(x: COOTensor) -> COOTensor:
         TypeError: If `x` is not a COOTensor.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)

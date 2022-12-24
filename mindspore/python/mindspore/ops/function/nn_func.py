@@ -686,11 +686,11 @@ def adaptive_max_pool3d(x, output_size, return_indices=False):
 
 def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=None):
     r"""
-    Computes a partial inverse of MaxPool1d.
+    Computes a partial inverse of maxpool1d.
 
-    MaxPool1d is not fully invertible, since the non-maximal values are lost.
+    maxpool1d is not fully invertible, since the non-maximal values are lost.
 
-    max_unpool1d takes the output of MaxPool1d as input including the indices of the maximal values
+    max_unpool1d takes the output of maxpool1d as input including the indices of the maximal values
     and computes a partial inverse in which all non-maximal values are set to zero. Typically the input
     is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape :math:`(N, C, H_{out}`
     or :math:`(C, H_{out}`. The operation is as follows.
@@ -1134,7 +1134,7 @@ def celu(x, alpha=1.0):
         ValueError: If `alpha` has the value of 0.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
@@ -2014,7 +2014,7 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
         ValueError: If `mode` is not in the support list.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: linear mode
@@ -2161,7 +2161,7 @@ def soft_shrink(x, lambd=0.5):
         ValueError: If lambd is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor
@@ -4168,7 +4168,7 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         TypeError: If dtype of `input_x`, `weight` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
@@ -4789,7 +4789,7 @@ def gelu(input_x, approximate='none'):
         ValueError: If `approximate` value is neither `none` or `tanh`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([1.0, 2.0, 3.0], mindspore.float32)
@@ -5040,7 +5040,7 @@ def mse_loss(input_x, target, reduction='mean'):
         ValueError: If `input_x` and `target` have different shapes and cannot be broadcasted.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -5097,7 +5097,7 @@ def msort(x):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms

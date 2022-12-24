@@ -462,7 +462,7 @@ class NonMaxSuppressionWithOverlaps(Primitive):
         ValueError: If the shape of `scores` is not equal to the shape of the dim0 or dim1 of `overlaps`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> overlaps = Tensor(np.array([[0.6964692, 0.28613934, 0.22685145, 0.5513148],
@@ -662,7 +662,7 @@ class ResizeLinear1D(Primitive):
         TypeError: If `coordinate_transformation_mode` is not in the support list.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
@@ -718,7 +718,7 @@ class ResizeBilinearV2(Primitive):
         ValueError: If `size` contains other than 2 elements.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
@@ -780,7 +780,7 @@ class ResizeBicubic(Primitive):
 
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class NetResizeBicubic(nn.Cell):
@@ -883,7 +883,7 @@ class ResizeArea(Primitive):
         ValueError: If any value of `size` is not positive.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> images = Tensor([[[[2], [4], [6], [8]], [[10], [12], [14], [16]]]], mindspore.float16)

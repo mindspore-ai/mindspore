@@ -1444,7 +1444,7 @@ class LayerNormGradGrad(Primitive):
         ValueError: If gamma, d_dg, d_db don't have the same shape.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -1936,7 +1936,7 @@ class UpsampleNearest3DGrad(Primitive):
         ValueError: If shape of `x` is not 5D.
 
     Supported Platforms:
-        ``GPU`` ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
     @prim_attr_register
     def __init__(self, input_size, output_size=None, scales=None):
@@ -2541,7 +2541,7 @@ class PdistGrad(Primitive):
         ValueError: If dimension of `x` is not 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -2616,7 +2616,7 @@ class HShrinkGrad(Primitive):
         TypeError: If dtype of `gradients` or `features` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -2990,7 +2990,7 @@ class UpsampleTrilinear3DGrad(Primitive):
         ValueError: If elements number of `input_size` is not 5.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
     @prim_attr_register
     def __init__(self, input_size, output_size=None, scales=None, align_corners=False):
@@ -3240,7 +3240,7 @@ class TraceGrad(Primitive):
         ValueError: If length of shape of `x_shape` is not equal to 2.
 
     Support Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -3553,7 +3553,7 @@ class ResizeBicubicGrad(Primitive):
         ValueError: If `size` dim is not 4.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
     @prim_attr_register
     def __init__(self, align_corners=False, half_pixel_centers=False):

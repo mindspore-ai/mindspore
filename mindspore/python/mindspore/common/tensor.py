@@ -4347,7 +4347,7 @@ class Tensor(Tensor_):
             ValueError: If all elements of input tensor are not greater than (p-1)/2.
 
         Supported Platforms:
-            ``CPU`` ``GPU``
+            ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([[3, 4, 5], [4, 2, 6]]), mindspore.float32)
@@ -4384,7 +4384,7 @@ class Tensor(Tensor_):
             ValueError: If the shape of input tensor and `tensor2` could not broadcast together.
 
         Supported Platforms:
-            ``Ascend`` ``CPU`` ``GPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.arange(2*3*4).reshape(2, 3, 4), mindspore.float32)
@@ -4439,7 +4439,7 @@ class Tensor(Tensor_):
             ValueError: If `input` and `other` are not the same shape.
 
         Supported Platforms:
-            ``Ascend`` ``CPU`` ``GPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
@@ -4492,7 +4492,7 @@ class Tensor(Tensor_):
             ValueError: If input tensor and `value` are not the same shape.
 
         Supported Platforms:
-            ``Ascend`` ``CPU`` ``GPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -4522,7 +4522,7 @@ class Tensor(Tensor_):
             Tensor, has the same shape and dtype as input.
 
         Supported Platforms:
-            ``Ascend`` ``CPU`` ``GPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
@@ -4557,7 +4557,7 @@ class Tensor(Tensor_):
             TypeError: If neither input tensor and `other` is a Tensor.
 
         Supported Platforms:
-            ``Ascend`` ``CPU`` ``GPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -4593,7 +4593,7 @@ class Tensor(Tensor_):
             TypeError: If `size` is not an int, list or tuple of integers.
 
         Supported Platforms:
-            ``Ascend`` ``CPU`` ``GPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -4627,7 +4627,7 @@ class Tensor(Tensor_):
             TypeError: If `size` is not an int, list or tuple of integers.
 
         Supported Platforms:
-            ``Ascend`` ``CPU`` ``GPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -4690,7 +4690,7 @@ class Tensor(Tensor_):
             Tensor, has the same shape as input tensor.
 
         Supported Platforms:
-            ``Ascend`` ``CPU`` ``GPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
@@ -4721,7 +4721,7 @@ class Tensor(Tensor_):
             ValueError: If `dim` is not in range of [-len(x.shape), len(x.shape)).
 
         Supported Platforms:
-            ``Ascend`` ``CPU`` ``GPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
@@ -4780,7 +4780,7 @@ class Tensor(Tensor_):
             Tensor, the shape is the same as the input tensor.
 
         Supported Platforms:
-            ``CPU`` ``GPU``
+            ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.asarray(np.complex(1.3 + 0.4j)), mindspore.complex64)

@@ -223,7 +223,7 @@ class SparseSlice(Primitive):
         ValueError: If the shape of `shape` is not corresponding to `size`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> indices = Tensor(np.array([[0, 1], [1, 2], [1, 3], [2, 2]]).astype(np.int64))
@@ -1527,7 +1527,7 @@ class SparseAdd(Primitive):
         TypeError: If (x1_values/x2_values)'s type is not matched with thresh's type.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor

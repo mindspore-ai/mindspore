@@ -3,7 +3,7 @@ mindspore.ops.GridSampler2D
 
 .. py:class:: mindspore.ops.GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=False)
 
-    此操作使用基于流场网格的插值对 2D input_x进行采样，该插值通常由 `affine_grid` 生成。
+    此操作使用基于流场网格的插值对 2D input_x进行采样，该插值通常由 :func:`mindspore.ops.affine_grid` 生成。
 
     参数：
         - **interpolation_mode** (str，可选) - 指定插值方法的可选字符串。可选值为："bilinear"、"nearest"，默认为："bilinear"。

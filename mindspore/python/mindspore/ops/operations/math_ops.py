@@ -3278,7 +3278,7 @@ class TruncateDiv(Primitive):
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
-        ``Ascend``  ``CPU`` ``GPU``
+        ``Ascend``  ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -3331,7 +3331,7 @@ class TruncateMod(Primitive):
         ValueError: If the shape `x` and `y` cannot be broadcasted to each other.
 
     Supported Platforms:
-        ``Ascend``  ``CPU`` ``GPU``
+        ``Ascend``  ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -4698,7 +4698,7 @@ class Sign(Primitive):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
          >>> x = Tensor(np.array([[2.0, 0.0, -1.0]]), mindspore.float32)
@@ -4743,7 +4743,7 @@ class Tan(Primitive):
     Refer to :func:`mindspore.ops.tan` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> tan = ops.Tan()
@@ -4815,7 +4815,7 @@ class Atan2(_MathBinaryOp):
     Refer to :func:`mindspore.ops.atan2` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 1]), mindspore.float32)
@@ -4888,7 +4888,7 @@ class BitwiseAnd(_BitwiseBinaryOp):
     Refer to :func:`mindspore.ops.bitwise_and` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
@@ -4907,7 +4907,7 @@ class BitwiseOr(_BitwiseBinaryOp):
     Refer to :func:`mindspore.ops.bitwise_or` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
@@ -4926,7 +4926,7 @@ class BitwiseXor(_BitwiseBinaryOp):
     Refer to :func:`mindspore.ops.bitwise_xor` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
@@ -5795,7 +5795,7 @@ class ComplexAbs(Primitive):
        TypeError: If the input type is not complex64 or complex128.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(3+4j)), mindspore.complex64)
@@ -5858,7 +5858,7 @@ class Complex(Primitive):
        TypeError: If the dtypes of two inputs are not same.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> real = Tensor(np.array([1]), mindspore.float32)
@@ -6363,7 +6363,7 @@ class LuSolve(Primitive):
         ValueError: If `x` dimension less than 2, `lu_data` dimension less than 2 or `lu_pivots` dimension less than 1.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1], [3], [3]]), mindspore.float32)
@@ -6853,7 +6853,7 @@ class Zeta(Primitive):
         ValueError: If shape of `x` is not same as the `q`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([10.]), mindspore.float32)
@@ -6960,7 +6960,7 @@ class Renorm(Primitive):
     Refer to :func:`mindspore.ops.renorm` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
@@ -7298,7 +7298,7 @@ class NextAfter(Primitive):
         ValueError: If `x1`'s shape is not the same as `x2`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> nextafter = ops.NextAfter()
