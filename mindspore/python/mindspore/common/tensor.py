@@ -2657,14 +2657,14 @@ class Tensor(Tensor_):
 
     def digamma(self):
         r"""
-        Refer to :func:`mindspore.ops.digamma`.
+        For details, please refer to :func:`mindspore.ops.digamma`.
         """
         self._init_check()
         return tensor_operator_registry.get('digamma')(self)
 
     def lgamma(self):
         r"""
-        Refer to :func:`mindspore.ops.lgamma`.
+        For details, please refer to :func:`mindspore.ops.lgamma`.
         """
         self._init_check()
         return tensor_operator_registry.get('lgamma')(self)
