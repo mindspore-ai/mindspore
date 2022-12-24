@@ -422,6 +422,8 @@ from .nn_func import (
     nll_loss,
     smooth_l1_loss,
     l1_loss,
+    threshold,
+    leaky_relu,
     cross_entropy,
     grid_sample,
     ctc_greedy_decoder,

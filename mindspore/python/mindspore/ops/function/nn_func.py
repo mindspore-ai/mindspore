@@ -2977,6 +2977,8 @@ def l1_loss(x, target, reduction='mean'):
         Tensor, the result of l1_loss.
 
     Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `target` is not a Tensor.
         ValueError: If `reduction` is not one of "none", "mean" or "sum".
         ValueError: If `x` and `target` have different shapes.
 
@@ -3063,6 +3065,93 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
     """
     _smooth_l1_loss = _get_cache_prim(P.SmoothL1Loss)(beta, reduction)
     return _smooth_l1_loss(logits, labels)
+
+
+def threshold(input_x, thr, value):
+    r"""
+    thresholds each element of the input Tensor.
+
+    The formula is defined as follows:
+
+    .. math::
+        y =
+        \begin{cases}
+        x, &\text{ if } x > \text{thr} \\
+        \text{value}, &\text{ otherwise }
+        \end{cases}
+
+    Args:
+        input_x (Tensor): The input of threshold with data type of float16 or float32.
+        thr (Union[int, float]): The value to threshold at.
+        value (Union[int, float]): The value to replace with when element is less than threshold.
+
+    Returns:
+        Tensor, the same shape and data type as the input.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `thr` is not a float or an int.
+        TypeError: If `value` is not a float or an int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> inputs = mindspore.Tensor([0.0, 0.2, 0.3], mindspore.float32)
+        >>> outputs = ops.threshold(inputs, 0.1, 20)
+        >>> print(outputs)
+        [ 20.0     0.2      0.3]
+    """
+    _check_is_tensor('input_x', input_x, "threshold")
+    _check_value_type("thr", thr, [float, int], "threshold")
+    _check_value_type("value", value, [float, int], "threshold")
+    cond = _get_cache_prim(P.Greater)()(input_x, thr)
+    value = _get_cache_prim(P.Fill)()(input_x.dtype, input_x.shape, value)
+    return _get_cache_prim(P.Select)()(cond, input_x, value)
+
+
+def leaky_relu(x, alpha=0.2):
+    r"""
+    leaky_relu activation function. The element of `x` less than 0 times `alpha` .
+
+    The activation function is defined as:
+
+    .. math::
+        \text{leaky_relu}(x) = \begin{cases}x, &\text{if } x \geq 0; \cr
+        {\alpha} * x, &\text{otherwise.}\end{cases}
+
+    where :math:`\alpha` represents the `alpha` parameter.
+
+    For more details, see `Rectifier Nonlinearities Improve Neural Network Acoustic Models
+    <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_.
+
+    Args:
+        x (Tensor): The input of leaky_relu is a Tensor of any dimension.
+        alpha (Union[int, float]): Slope of the activation function when the element of `x` is less than 0.
+          Default: 0.2.
+
+    Returns:
+        Tensor, has the same type and shape as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `alpha` is not a float or an int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> print(ops.leaky_relu(x, negative_slope=0.2))
+        [[-0.2  4.  -1.6]
+         [ 2.  -1.   9. ]]
+    """
+    _check_is_tensor('x', x, "leaky_relu")
+    _check_value_type("alpha", alpha, [float, int], "leaky_relu")
+    select_op = _get_cache_prim(P.Maximum)()
+    if alpha > 1:
+        select_op = _get_cache_prim(P.Minimum)()
+    return select_op(alpha * x, x)
 
 
 def intopk(x1, x2, k):
@@ -5163,6 +5252,8 @@ __all__ = [
     'grid_sample',
     'smooth_l1_loss',
     'l1_loss',
+    'threshold',
+    'leaky_relu',
     'nll_loss',
     'ctc_loss',
     'ctc_greedy_decoder',
