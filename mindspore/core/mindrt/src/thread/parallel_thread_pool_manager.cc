@@ -20,11 +20,13 @@
 #include "thread/parallel_threadpool.h"
 
 namespace mindspore {
+#ifndef MS_COMPILE_IOS
 namespace {
 const char *kInnerIDs = "inner_ids";
 const char *kInnerRunnerID = "inner_runner_id";
 const char *kInnerModelID = "inner_model_id";
 }  // namespace
+#endif
 ParallelThreadPoolManager *ParallelThreadPoolManager::GetInstance() {
   static ParallelThreadPoolManager instance;
   return &instance;

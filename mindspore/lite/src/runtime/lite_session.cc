@@ -512,7 +512,7 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::KernelExec *> &kern
 
 int LiteSession::CompileGraph(Model *model) {
   auto ret = PreCheck(model);
-  if (ret != RET_OK) {
+  if (MS_UNLIKELY(ret != RET_OK)) {
     MS_LOG(ERROR) << "schedule check failed: " << ret;
     is_running_.store(false);
     return ret;
