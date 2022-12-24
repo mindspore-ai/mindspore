@@ -19,7 +19,7 @@ API样例中常用的导入模块如下：
     import mindspore.dataset.vision.py_transforms as py_vision
     from mindspore.dataset.transforms import c_transforms
 
-更多详情请参考 `图像数据加载与增强 <https://www.mindspore.cn/tutorials/zh-CN/r1.9/advanced/dataset/augment_image_data.html>`_。
+更多详情请参考 `视觉数据变换 <https://www.mindspore.cn/tutorials/zh-CN/r1.9/beginner/transforms.html#vision-transforms>`_ 。
 
 常用数据处理术语说明如下：
 
