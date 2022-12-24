@@ -24,24 +24,6 @@ constexpr size_t kSparseApplyRMSPropInputsNum = 6;
 constexpr size_t kSparseApplyRMSPropOutputsNum = 3;
 constexpr size_t kIndicesDim = 1;
 using KernelRunFunc = SparseApplyRMSPropGpuKernelMod::KernelRunFunc;
-#define ADD_INPUT_ATTR(var_type, indices_type) \
-  .AddInputAttr(var_type)                      \
-    .AddInputAttr(var_type)                    \
-    .AddInputAttr(var_type)                    \
-    .AddInputAttr(var_type)                    \
-    .AddInputAttr(var_type)                    \
-    .AddInputAttr(indices_type)
-
-#define ADDOI_SAME_INDEX(ind1, ind2, ind3) .AddOutInRef(ind1, ind1).AddOutInRef(ind2, ind2).AddOutInRef(ind3, ind3)
-
-#define GPU_FUNLIST_KERNEL_REGISTER(var_type, lanch_type, indices_type, index_type) \
-  {                                                                                 \
-    KernelAttr() ADD_INPUT_ATTR(var_type, indices_type)                             \
-      .AddOutputAttr(var_type)                                                      \
-      .AddOutputAttr(var_type)                                                      \
-      .AddOutputAttr(var_type) ADDOI_SAME_INDEX(0, 1, 2),                           \
-      &SparseApplyRMSPropGpuKernelMod::LaunchKernel<lanch_type, index_type>         \
-  }
 }  // namespace
 
 bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTensorPtr> &inputs) {
@@ -108,7 +90,6 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTe
                              << var_shape_[kDim0] << " and 'indices_shape[0]': " << indices_shape[kDim0];
     return false;
   }
-  // indices_size_ = indices_shape[kDim0];
   return true;
 }
 bool SparseApplyRMSPropGpuKernelMod::ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs) {
@@ -225,10 +206,62 @@ bool SparseApplyRMSPropGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
 
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyRMSPropGpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
-    GPU_FUNLIST_KERNEL_REGISTER(kNumberTypeFloat32, float, kNumberTypeInt32, int),
-    GPU_FUNLIST_KERNEL_REGISTER(kNumberTypeFloat32, float, kNumberTypeInt64, int64_t),
-    GPU_FUNLIST_KERNEL_REGISTER(kNumberTypeFloat16, half, kNumberTypeInt32, int),
-    GPU_FUNLIST_KERNEL_REGISTER(kNumberTypeFloat16, half, kNumberTypeInt64, int64_t)};
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutInRef(0, 0)
+       .AddOutInRef(1, 1)
+       .AddOutInRef(2, 2),
+     &SparseApplyRMSPropGpuKernelMod::LaunchKernel<float, int>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutInRef(0, 0)
+       .AddOutInRef(1, 1)
+       .AddOutInRef(2, 2),
+     &SparseApplyRMSPropGpuKernelMod::LaunchKernel<float, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutInRef(0, 0)
+       .AddOutInRef(1, 1)
+       .AddOutInRef(2, 2),
+     &SparseApplyRMSPropGpuKernelMod::LaunchKernel<half, int>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutInRef(0, 0)
+       .AddOutInRef(1, 1)
+       .AddOutInRef(2, 2),
+     &SparseApplyRMSPropGpuKernelMod::LaunchKernel<half, int64_t>}};
   return func_list;
 }
 

@@ -2164,7 +2164,7 @@ Status InverseMelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
 }
 
 template <typename T>
-Status GetSincResampleKernel(int32_t orig_freq, int32_t des_freq, ResampleMethod resample_method,
+Status GetSincResampleKernel(const int32_t orig_freq, const int32_t des_freq, ResampleMethod resample_method,
                              int32_t lowpass_filter_width, float rolloff, float beta, DataType datatype,
                              Eigen::MatrixX<T> *kernel_ptr, int32_t *width) {
   CHECK_FAIL_RETURN_UNEXPECTED(orig_freq != 0, "Resample: invalid parameter, 'orig_freq' can not be zero.");
@@ -2222,13 +2222,14 @@ Status GetSincResampleKernel(int32_t orig_freq, int32_t des_freq, ResampleMethod
 
 template <typename T>
 std::shared_ptr<Eigen::MatrixX<T>> Cov1dStride(const Eigen::MatrixX<T> &waveform_pad_matrix,
-                                               const Eigen::MatrixX<T> &kernel, int32_t num_waveform, int32_t orig_freq,
-                                               int32_t target_length, int32_t pad_length) {
+                                               const Eigen::MatrixX<T> &kernel, const int32_t num_waveform,
+                                               const int32_t orig_freq, const int32_t target_length,
+                                               const int32_t pad_length) {
   Eigen::MatrixX<T> output_matrix(target_length, num_waveform);
   Eigen::MatrixX<T> mul_matrix;
-  int32_t kernel_x = kernel.rows();
-  int32_t kernel_y = kernel.cols();
-  int32_t resample_num = static_cast<int32_t>(ceil(static_cast<float>(target_length) / kernel_x));
+  const int32_t kernel_x = static_cast<int32_t>(kernel.rows());
+  const int32_t kernel_y = static_cast<int32_t>(kernel.cols());
+  const int32_t resample_num = static_cast<int32_t>(ceil(static_cast<float>(target_length) / kernel_x));
   Eigen::MatrixX<T> multi_input(kernel_y, resample_num);
   for (int32_t i = 0; i < num_waveform; i++) {
     for (int32_t j = 0, x_dim = 0; j + kernel_y < pad_length && x_dim < resample_num; j += orig_freq, ++x_dim) {
@@ -2243,35 +2244,35 @@ std::shared_ptr<Eigen::MatrixX<T>> Cov1dStride(const Eigen::MatrixX<T> &waveform
 template <typename T>
 Status Resample(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float orig_freq, float des_freq,
                 ResampleMethod resample_method, int32_t lowpass_filter_width, float rolloff, float beta) {
-  TensorShape input_shape = input->shape();
-  int32_t waveform_length = input_shape[-1];
-  int32_t num_waveform = input->Size() / waveform_length;
-  TensorShape to_shape = TensorShape({num_waveform, waveform_length});
+  const TensorShape input_shape = input->shape();
+  const int32_t waveform_length = input_shape[-1];
+  const int32_t num_waveform = input->Size() / waveform_length;
+  const TensorShape to_shape = TensorShape({num_waveform, waveform_length});
   RETURN_IF_NOT_OK(input->Reshape(to_shape));
 
-  int32_t gcd = std::gcd(static_cast<int32_t>(orig_freq), static_cast<int32_t>(des_freq));
+  const int32_t gcd = std::gcd(static_cast<int32_t>(orig_freq), static_cast<int32_t>(des_freq));
   CHECK_FAIL_RETURN_UNEXPECTED(gcd != 0, "Resample: gcd cannot be equal to 0.");
-  int32_t orig_freq_prime = static_cast<int32_t>(floor(orig_freq / gcd));
-  int32_t des_freq_prime = static_cast<int32_t>(floor(des_freq / gcd));
+  const int32_t orig_freq_prime = static_cast<int32_t>(floor(orig_freq / gcd));
+  const int32_t des_freq_prime = static_cast<int32_t>(floor(des_freq / gcd));
   CHECK_FAIL_RETURN_UNEXPECTED(orig_freq_prime != 0, "Resample: invalid parameter, 'orig_freq_prime' cannot be zero.");
   Eigen::MatrixX<T> kernel;
   int32_t width = 0;
   RETURN_IF_NOT_OK(GetSincResampleKernel<T>(orig_freq_prime, des_freq_prime, resample_method, lowpass_filter_width,
                                             rolloff, beta, input->type(), &kernel, &width));
   const int32_t ZERO = 0;
-  const int32_t kernel_rows = kernel.rows();
-  const int32_t kernel_cols = kernel.cols();
-  ValidateGreaterThan("Resample", "kernel.cols()", kernel_cols, "boundary", ZERO);
-  ValidateGreaterThan("Resample", "kernel.rows()", kernel_rows, "boundary", ZERO);
+  const int32_t kernel_rows = static_cast<int32_t>(kernel.rows());
+  const int32_t kernel_cols = static_cast<int32_t>(kernel.cols());
+  RETURN_IF_NOT_OK(ValidateGreaterThan("Resample", "kernel.cols()", kernel_cols, "boundary", ZERO));
+  RETURN_IF_NOT_OK(ValidateGreaterThan("Resample", "kernel.rows()", kernel_rows, "boundary", ZERO));
 
   // padding
-  int32_t pad_length = waveform_length + 2 * width + orig_freq_prime;
+  const int32_t pad_length = waveform_length + 2 * width + orig_freq_prime;
   std::shared_ptr<Tensor> waveform_pad;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({1, pad_length}), input->type(), &waveform_pad));
   RETURN_IF_NOT_OK(Pad<T>(input, &waveform_pad, width, width + orig_freq_prime, BorderType::kConstant));
   Eigen::MatrixX<T> waveform_pad_matrix =
     Eigen::Map<Eigen::MatrixX<T>>(&*waveform_pad->begin<T>(), waveform_pad->shape()[1], waveform_pad->shape()[0]);
-  int32_t target_length =
+  const int32_t target_length =
     static_cast<int32_t>(std::ceil(static_cast<double>(des_freq_prime * waveform_length) / orig_freq_prime));
 
   // cov1d with stide = orig_freq_prime
