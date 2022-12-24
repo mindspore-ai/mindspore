@@ -1090,7 +1090,7 @@ def _fill_param_into_net(net, parameter_list):
         else:
             parameter_dict[param_name] = Parameter(Tensor(np_val), name=param_name)
 
-    load_param_into_net(net, parameter_dict)
+    load_param_into_net(net, parameter_dict, strict_load=True)
 
 
 def export(net, *inputs, file_name, file_format, **kwargs):
