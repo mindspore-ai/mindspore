@@ -305,7 +305,9 @@ class InlinerBase : public AnfVisitor {
     node_inputs.push_back(NewValueNode(new_fg));
     std::transform(used_param_index.begin(), used_param_index.end(), std::back_inserter(node_inputs),
                    [&args](size_t i) { return args[i]; });
-    return node->func_graph()->NewCNode(node_inputs);
+    auto ret_node = node->func_graph()->NewCNode(node_inputs);
+    ret_node->set_abstract(node->abstract());
+    return ret_node;
   }
 
   bool CheckSwitchInputs(const std::vector<AnfNodePtr> &sw_inputs) {
@@ -366,7 +368,6 @@ class InlinerBase : public AnfVisitor {
     return has_branch;
   }
 
- private:
   bool is_checked_{false};
   bool is_recursive_{false};
   // If the user guarantee that fg has no recursive.

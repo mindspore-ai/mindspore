@@ -60,7 +60,9 @@ class PrintTupleWrapper : public AnfVisitor {
 
 class PrintConstStringWrapper : public AnfVisitor {
   bool CheckNeedConvert(const AbstractBasePtr &abs) const {
-    MS_EXCEPTION_IF_NULL(abs);
+    if (abs == nullptr) {
+      return false;
+    }
     if (abs->isa<abstract::AbstractSequence>()) {
       auto sequence_abs = abs->cast<abstract::AbstractSequencePtr>();
       const auto &elements = sequence_abs->elements();
