@@ -906,6 +906,7 @@ class OpNameInfo {
 #define OPERATOR_ONNX_CONVERT_DEFINE(name, onnx_name, impl) \
   OpNameInfo GetOpOnnxConvertInfo_##name() { return impl.set_op_type(#name).set_onnx_type(#onnx_name); }
 
+OPERATOR_ONNX_CONVERT_DEFINE(Mod, Mod, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Add, Add, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Mul, Mul, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Pow, Pow, OpNameInfo())
@@ -1070,6 +1071,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(Atan2, Atan2, OpNameInfo())
 #define OP_CONVERT_FUNCTION_NAME(name) GetOpOnnxConvertInfo_##name
 
 void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
+  fn(OP_CONVERT_FUNCTION_NAME(Mod)());
   fn(OP_CONVERT_FUNCTION_NAME(DepthToSpace)());
   fn(OP_CONVERT_FUNCTION_NAME(Add)());
   fn(OP_CONVERT_FUNCTION_NAME(Mul)());
@@ -1251,6 +1253,8 @@ class OnnxExporter {
   void ExportPrimScatterNd(const FuncGraphPtr &func_graph, const CNodePtr &node,
                            std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimArgMaxWithValue(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                                 std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimArgMinWithValue(const FuncGraphPtr &func_graph, const CNodePtr &node,
                                  std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimOneHot(const FuncGraphPtr &func_graph, const CNodePtr &node,
                         std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
@@ -3009,6 +3013,36 @@ void OnnxExporter::ExportPrimArgMaxWithValue(const FuncGraphPtr &, const CNodePt
   AddReduceOp("ReduceMax", input_x_name, max_output_name, {axis}, keep_dims, graph_proto);
 }
 
+void OnnxExporter::ExportPrimArgMinWithValue(const FuncGraphPtr &, const CNodePtr &node,
+                                             std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                             onnx::GraphProto *const graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  auto input_x_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto axis = GetOpAttribute<int64_t>(node, "axis");
+  auto keep_dims = GetOpAttribute<bool>(node, "keep_dims");
+
+  auto indices_output_name = MakeOutputName(node_name, kZeroNum);
+  auto indices_cast_name = indices_output_name + "_cast";
+
+  onnx::NodeProto *argmax_proto = graph_proto->add_node();
+  argmax_proto->set_op_type("ArgMin");
+  argmax_proto->add_input(input_x_name);
+  argmax_proto->add_output(indices_cast_name);
+  onnx::AttributeProto *argmax_axis_attr_proto = argmax_proto->add_attribute();
+  argmax_axis_attr_proto->set_name("axis");
+  argmax_axis_attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  argmax_axis_attr_proto->set_i(axis);
+  onnx::AttributeProto *argmax_keepdims_attr_proto = argmax_proto->add_attribute();
+  argmax_keepdims_attr_proto->set_name("keepdims");
+  argmax_keepdims_attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  argmax_keepdims_attr_proto->set_i(keep_dims);
+
+  AddCastOp(indices_cast_name, indices_output_name, onnx::TensorProto_DataType_INT32, graph_proto);
+
+  auto max_output_name = MakeOutputName(node_name, kOneNum);
+  AddReduceOp("ReduceMin", input_x_name, max_output_name, {axis}, keep_dims, graph_proto);
+}
+
 void OnnxExporter::ExportPrimOneHot(const FuncGraphPtr &, const CNodePtr &node,
                                     std::map<AnfNodePtr, std::string> *node_map_ptr,
                                     onnx::GraphProto *const graph_proto) {
@@ -3843,6 +3877,7 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimOnesLike, &OnnxExporter::ExportPrimOnesLike},
     {prim::kPrimScatterNd, &OnnxExporter::ExportPrimScatterNd},
     {prim::kPrimArgMaxWithValue, &OnnxExporter::ExportPrimArgMaxWithValue},
+    {prim::kPrimArgMinWithValue, &OnnxExporter::ExportPrimArgMinWithValue},
     {prim::kPrimOneHot, &OnnxExporter::ExportPrimOneHot},
     {prim::kPrimConv2DTranspose, &OnnxExporter::ExportPrimConv2DTranspose},
     {prim::kPrimGreaterEqual, &OnnxExporter::ExportPrimGreaterEqual},
