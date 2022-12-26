@@ -364,6 +364,62 @@ def test_map_with_deprecated_parameter():
     assert "The parameter 'column_order' had been deleted in map operation." in str(info.value)
 
 
+def test_map_just_exchange_columns():
+    """
+    Feature: Map op
+    Description: map with exchange columns pyfunc
+    Expectation: success
+    """
+    # construct the data
+    data1 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+    data2 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+    data3 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+    data4 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+
+    label = [1, 2, 3, 4]
+
+    # dataset with two columns
+    dataset = ds.NumpySlicesDataset(([data1, data2, data3, data4], label), ["data", "label"])
+
+    def exchange_columns(col1, col2):
+        return col2, col1
+    dataset = dataset.map(operations=exchange_columns, input_columns=["data", "label"],
+                          output_columns=["label", "data"])
+
+    for item in dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
+        assert len(item.keys()) == 2
+        assert "label" in item.keys()
+        assert "data" in item.keys()
+
+    for item in dataset.create_tuple_iterator(output_numpy=True, num_epochs=1):
+        assert len(item) == 2
+        assert item[0].shape == ()
+        assert item[1].shape == (300, 300, 3)
+
+    # dataset with three columns
+    dataset2 = ds.NumpySlicesDataset(([data1, data2, data3, data4], [data1, data2, data3, data4], label),
+                                     ["data", "data2", "label"])
+    dataset2 = dataset2.map(operations=vision.RandomCrop(size=(250, 250)), input_columns="data2")
+
+    def exchange_columns_three(col1, col2, col3):
+        return col2, col3, col1
+    dataset2 = dataset2.map(operations=exchange_columns_three, input_columns=["data", "data2", "label"],
+                            output_columns=["data2", "label", "data"])
+
+    for item in dataset2.create_dict_iterator(output_numpy=True, num_epochs=1):
+        assert len(item.keys()) == 3
+        assert "label" in item.keys()
+        assert "data" in item.keys()
+        assert "data2" in item.keys()
+
+    for item in dataset2.create_tuple_iterator(output_numpy=True, num_epochs=1):
+        assert len(item) == 3
+        print(item[0].shape, item[1].shape, item[2].shape)
+        assert item[0].shape == (250, 250, 3)
+        assert item[1].shape == ()
+        assert item[2].shape == (300, 300, 3)
+
+
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
@@ -374,3 +430,4 @@ if __name__ == '__main__':
     test_python_map_mp_repeatability(num_parallel_workers=4, num_samples=4)
     test_python_map_mp_seed_repeatability()
     test_map_with_deprecated_parameter()
+    test_map_just_exchange_columns()
