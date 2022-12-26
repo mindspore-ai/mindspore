@@ -120,7 +120,8 @@ size_t BoundingBoxDecodePlugin::getSerializationSize() const noexcept {
 
 bool BoundingBoxDecodePlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc,
                                                         int nbInputs, int nbOutputs) noexcept {
-  return tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR;
+  return tensorsDesc[pos].type == nvinfer1::DataType::kFLOAT &&
+         tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR;
 }
 
 void BoundingBoxDecodePlugin::serialize(void *buffer) const noexcept {
