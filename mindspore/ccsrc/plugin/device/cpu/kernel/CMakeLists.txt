@@ -19,6 +19,7 @@ if(ENABLE_CPU)
         "environ/*.cc"
         "rpc/*.cc"
         "utils/*.cc"
+        "map_tensor/*.cc"
     )
 
     if(NOT ENABLE_MPI)
