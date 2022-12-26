@@ -35,10 +35,10 @@ from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.ops import composite as CP
 from mindspore.nn.optim.momentum import Momentum
-from mindspore.train.callback import Callback
+from mindspore.train import Callback
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
-from mindspore.train.model import Model
+from mindspore.train import Model
 from mindspore.context import ParallelMode
 import mindspore.communication.management as D
 MINDSPORE_HCCL_CONFIG_PATH = "/home/workspace/mindspore_config/hccl/rank_table_8p.json"

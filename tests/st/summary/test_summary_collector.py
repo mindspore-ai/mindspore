@@ -25,12 +25,11 @@ import pytest
 from mindspore.common import set_seed
 from mindspore import nn, Tensor, context
 from mindspore.common.initializer import Normal
-from mindspore.train.metrics import Loss
+from mindspore.train import Loss
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.train import Model
-from mindspore.train.callback import SummaryCollector, SummaryLandscape
-from mindspore.train.summary.summary_record import SummaryRecord
+from mindspore import SummaryCollector, SummaryLandscape, SummaryRecord
 from tests.st.summary.dataset import create_mnist_dataset
 from tests.summary_utils import SummaryReader
 from tests.security_utils import security_off_wrap

@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor
-from mindspore.train.metrics import Loss
+from mindspore.train import Loss
 
 
 def test_loss_inputs_error():

@@ -16,7 +16,7 @@
 import time
 import numpy as np
 import mindspore as ms
-from mindspore.train.callback import Callback
+from mindspore.train import Callback
 
 
 class LossGet(Callback):

@@ -20,7 +20,7 @@ import numpy as np
 from mindspore import context, Tensor
 from mindspore.nn.optim.momentum import Momentum
 from mindspore import Model
-from mindspore.train.callback import Callback
+from mindspore.train import Callback
 from src.md_dataset import create_dataset
 from src.losses import OhemLoss
 from src.deeplabv3 import deeplabv3_resnet50

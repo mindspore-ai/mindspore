@@ -21,9 +21,8 @@ import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.nn.optim import Adam
-from mindspore.train.model import Model
+from mindspore.train import Model, Callback
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
-from mindspore.train.callback import Callback
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as deC
 from mindspore import context

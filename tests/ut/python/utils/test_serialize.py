@@ -32,7 +32,8 @@ from mindspore.common.initializer import Normal
 from mindspore.nn import SoftmaxCrossEntropyWithLogits, WithLossCell, TrainOneStepCell, Accuracy
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, _CheckpointManager
+from mindspore.train import ModelCheckpoint, CheckpointConfig, LossMonitor
+from mindspore.train.callback import _CheckpointManager
 from mindspore.train.serialization import save_checkpoint, load_checkpoint, load_param_into_net, \
      export, _save_graph, load
 from tests.security_utils import security_off_wrap

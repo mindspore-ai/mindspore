@@ -28,9 +28,8 @@ import pytest
 import numpy as np
 import mindspore.nn as nn
 from mindspore import context, Tensor
-from mindspore.train import Model
+from mindspore.train import Model, Callback
 from mindspore.common.initializer import initializer
-from mindspore.train.callback import Callback
 
 from src.yolov3 import yolov3_resnet18, YoloWithLossCell, TrainingWrapper
 from src.dataset import create_yolo_dataset

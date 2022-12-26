@@ -18,7 +18,7 @@ import pytest
 
 import mindspore
 import mindspore.nn as nn
-from mindspore import Model, context
+from mindspore import context
 from mindspore.common.tensor import Tensor
 
 
@@ -50,7 +50,7 @@ def predict_checke_param(in_str):
     """ predict_checke_param """
     net = LeNet5()  # neural network
     context.set_context(mode=context.GRAPH_MODE)
-    model = Model(net)
+    model = mindspore.train.Model(net)
 
     a1, a2, b1, b2, b3, b4 = in_str.strip().split()
     a1 = int(a1)

@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor
-from mindspore.train.metrics import get_metric_fn, Fbeta
+from mindspore.train import get_metric_fn, Fbeta
 
 
 def test_classification_fbeta():

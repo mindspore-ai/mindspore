@@ -19,8 +19,7 @@ import pytest
 from mindspore import ops, nn, Tensor, Parameter, ParameterTuple, context, set_seed
 from mindspore.common.initializer import initializer, XavierUniform
 import mindspore.dataset as ds
-from mindspore.train.callback import Callback
-from mindspore.train import Model
+from mindspore.train import Callback, Model
 from mindspore.common import dtype as mstype
 import mindspore as ms
 

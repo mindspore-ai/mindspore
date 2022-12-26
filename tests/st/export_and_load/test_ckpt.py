@@ -22,7 +22,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms as C
 import mindspore.dataset.vision as CV
 import mindspore.nn as nn
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
+from mindspore.train import ModelCheckpoint, CheckpointConfig, Callback
 from mindspore import load_checkpoint
 from mindspore.common import dtype as mstype
 from mindspore.dataset.vision import Inter

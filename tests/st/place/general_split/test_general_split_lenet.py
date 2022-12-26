@@ -15,9 +15,8 @@
 
 import mindspore.context as context
 from mindspore import set_seed
-from mindspore.train.metrics import Accuracy
-from mindspore.train import Model
-from mindspore.train.callback import LossMonitor, TimeMonitor
+from mindspore.train import Accuracy
+from mindspore.train import Model, LossMonitor, TimeMonitor
 from mindspore.communication.management import init
 
 from src.lenet import Net, get_optimizer, get_loss, get_dataset

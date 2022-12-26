@@ -16,7 +16,7 @@
 Defined callback for DeepFM.
 """
 import time
-from mindspore.train.callback import Callback
+from mindspore.train import Callback
 
 
 def add_write(file_path, out_str):

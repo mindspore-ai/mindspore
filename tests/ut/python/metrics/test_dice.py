@@ -17,7 +17,7 @@ import math
 import numpy as np
 import pytest
 from mindspore import Tensor
-from mindspore.train.metrics import get_metric_fn, Dice
+from mindspore.train import get_metric_fn, Dice
 
 
 def test_classification_dice():

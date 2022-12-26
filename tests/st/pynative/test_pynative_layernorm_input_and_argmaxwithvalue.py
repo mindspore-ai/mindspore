@@ -21,7 +21,7 @@ from mindspore import Tensor, context
 from mindspore.nn import LayerNorm, Cell
 from mindspore.common import ParameterTuple
 from mindspore.ops.composite import GradOperation
-from mindspore.train.model import Model
+from mindspore.train import Model
 
 class _Grad(Cell):
     def __init__(self, grad, network, wrt_params=False, real_inputs_count=None):

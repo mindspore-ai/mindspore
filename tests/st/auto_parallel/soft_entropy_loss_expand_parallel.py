@@ -27,8 +27,7 @@ from mindspore.nn import Cell
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.train import Model
-from mindspore.train.callback import Callback
+from mindspore.train import Model, Callback
 
 np.set_printoptions(threshold=np.inf)
 device_num = 2

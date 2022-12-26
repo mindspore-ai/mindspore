@@ -18,7 +18,7 @@
 import os
 import sys
 from mindspore import Model, context
-from mindspore.train.callback import TimeMonitor
+from mindspore.train import TimeMonitor
 from mindspore.context import ParallelMode
 from mindspore.communication.management import get_rank, get_group_size, init
 from mindspore.nn.wrap.cell_wrapper import VirtualDatasetCellTriple

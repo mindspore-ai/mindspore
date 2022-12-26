@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor
-from mindspore.train.metrics import Accuracy
+from mindspore.train import Accuracy
 
 
 def test_classification_accuracy():

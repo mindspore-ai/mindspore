@@ -27,7 +27,7 @@ import numpy as np
 
 from mindspore import context, Tensor
 from mindspore.common.initializer import initializer
-from mindspore.train.callback import Callback
+from mindspore.train import Callback
 from mindspore.context import ParallelMode
 from mindspore.nn.optim.momentum import Momentum
 import mindspore as ms

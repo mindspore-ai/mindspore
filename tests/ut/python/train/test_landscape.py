@@ -19,10 +19,9 @@ import tempfile
 import pytest
 
 from mindspore.common import set_seed
-from mindspore import nn
-from mindspore.train.metrics import Loss
+from mindspore import nn, SummaryLandscape
+from mindspore.train import Loss
 from mindspore.train import Model
-from mindspore.train.callback import SummaryLandscape
 from tests.security_utils import security_off_wrap
 from tests.ut.python.train.dataset import create_mnist_dataset, LeNet5
 

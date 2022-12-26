@@ -28,9 +28,8 @@ from mindspore.experimental import MapParameter
 from mindspore.nn import Cell, Flatten, Dense
 from mindspore.nn import SoftmaxCrossEntropyWithLogits
 from mindspore.nn import Adam
-from mindspore.train import Model
-from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
-from mindspore.train.metrics import Accuracy
+from mindspore.train import Model, CheckpointConfig, ModelCheckpoint
+from mindspore.train import Accuracy
 from mindspore.common import set_seed
 
 

@@ -15,7 +15,7 @@
 
 import mindspore.context as context
 from mindspore import set_seed
-from mindspore.train.metrics import Accuracy
+from mindspore.train import Accuracy
 from mindspore.train import Model
 from mindspore.communication.management import init, get_rank
 

@@ -17,7 +17,7 @@ import os
 import pytest
 
 from mindspore import context
-from mindspore.train.model import Model
+from mindspore.train import Model
 from mindspore.common import set_seed
 
 from src.deepfm import ModelBuilder, AUCMetric

@@ -39,8 +39,7 @@ from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.nn.optim import Adam
 
-from mindspore.train import Model
-from mindspore.train.callback._callback import Callback
+from mindspore.train import Model, Callback
 from mindspore import context, ParameterTuple, set_seed
 from mindspore.context import ParallelMode
 from mindspore.communication.management import get_group_size

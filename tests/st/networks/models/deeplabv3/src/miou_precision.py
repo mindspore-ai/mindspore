@@ -14,7 +14,7 @@
 # ============================================================================
 """mIou."""
 import numpy as np
-from mindspore.train.metrics import Metric
+from mindspore.train import Metric
 
 
 def confuse_matrix(target, pred, n):

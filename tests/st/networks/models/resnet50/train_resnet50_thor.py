@@ -17,7 +17,7 @@ import os
 import numpy as np
 import mindspore as ms
 from mindspore import nn
-from mindspore.train.train_thor import ConvertModelUtils
+from mindspore.train import ConvertModelUtils
 from tests.st.networks.models.resnet50.src.callback import LossGet
 from tests.st.networks.models.resnet50.src_thor.config import config as thor_config
 from tests.st.networks.models.resnet50.src_thor.dataset import create_dataset2 as create_dataset_thor

@@ -23,8 +23,7 @@ import mindspore.nn as nn
 
 from mindspore import context
 from mindspore import Tensor
-from mindspore.train import Model
-from mindspore.train.callback import LossMonitor
+from mindspore.train import Model, LossMonitor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 

@@ -35,8 +35,7 @@ from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.ops import composite as C, functional as F
 from mindspore.ops.functional import stop_gradient
 from mindspore.parallel._utils import _get_parallel_mode, _get_device_num, _get_gradients_mean
-from mindspore.train import Model
-from mindspore.train.callback._callback import Callback
+from mindspore.train import Model, Callback
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 

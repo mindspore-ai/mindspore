@@ -20,7 +20,7 @@ from resnet import resnet50
 
 import mindspore.common.dtype as mstype
 import mindspore.ops.functional as F
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
+from mindspore.train import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as C
@@ -31,7 +31,7 @@ from mindspore import context
 from mindspore.communication.management import init
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
-from mindspore.train.model import Model
+from mindspore.train import Model
 from mindspore.context import ParallelMode
 
 random.seed(1)

@@ -16,10 +16,9 @@ import pytest
 
 from mindspore.ops import operations as P
 import mindspore.nn as nn
-from mindspore.train import Model
+from mindspore.train import Model, Callback
 from mindspore.common import set_seed
 import mindspore.dataset as ds
-from mindspore.train.callback import Callback
 from mindspore import log as logger
 
 set_seed(1)

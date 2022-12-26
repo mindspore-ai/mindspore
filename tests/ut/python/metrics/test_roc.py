@@ -17,7 +17,7 @@
 import numpy as np
 import pytest
 from mindspore import Tensor
-from mindspore.train.metrics import ROC
+from mindspore.train import ROC
 
 
 def test_roc():

@@ -18,7 +18,7 @@ import mindspore.context as context
 import mindspore.ops.operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
-from mindspore.train.model import Model
+from mindspore.train import Model
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 

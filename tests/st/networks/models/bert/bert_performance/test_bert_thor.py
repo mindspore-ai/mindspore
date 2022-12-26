@@ -25,12 +25,11 @@ import mindspore.common.dtype as mstype
 import mindspore.communication.management as D
 from mindspore import context
 from mindspore import log as logger
-from mindspore.train.callback import Callback
+from mindspore.train import Callback
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn.optim import thor
-from mindspore.train.model import Model
-from mindspore.train.train_thor import ConvertModelUtils
+from mindspore.train import Model, ConvertModelUtils
 import mindspore.dataset.transforms as C
 
 from tests.st.networks.models.bert.bert_performance.src.bert_for_pre_training import BertNetworkWithLoss, \

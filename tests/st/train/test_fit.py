@@ -17,9 +17,9 @@
 
 import pytest
 import numpy as np
-from mindspore import Model, nn, Tensor
+from mindspore import nn, Tensor
 from mindspore.common.initializer import Normal
-from mindspore.train.callback import Callback, TimeMonitor, LossMonitor
+from mindspore.train import Callback, TimeMonitor, LossMonitor, Model
 from mindspore import dataset as ds
 
 

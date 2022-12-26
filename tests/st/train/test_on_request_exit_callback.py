@@ -23,11 +23,10 @@ from multiprocessing import Process
 import numpy as np
 import pytest
 
-from mindspore import Model
 from mindspore import nn, context
 from mindspore import dataset as ds
 from mindspore.common.initializer import TruncatedNormal
-from mindspore.train.callback import Callback, OnRequestExit, LossMonitor
+from mindspore.train import Callback, OnRequestExit, LossMonitor, Model
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):

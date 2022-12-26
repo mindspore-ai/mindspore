@@ -16,7 +16,7 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.communication.management import init
 from mindspore.parallel import set_algo_parameters
-from mindspore.train.model import Model
+from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.communication._comm_helper import GlobalComm
 from .test_auto_parallel_resnet import resnet50
