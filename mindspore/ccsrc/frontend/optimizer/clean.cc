@@ -38,11 +38,11 @@
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
-using mindspore::abstract::AbstractAttribute;
 using mindspore::abstract::AbstractBase;
 using mindspore::abstract::AbstractBasePtr;
 using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractDictionaryPtr;
+using mindspore::abstract::AbstractElementPair;
 using mindspore::abstract::AbstractList;
 using mindspore::abstract::AbstractListPtr;
 using mindspore::abstract::AbstractRowTensor;
@@ -164,7 +164,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
  public:
   using ThisClass = SimplifyDataStructuresRewriter;
   SimplifyDataStructuresRewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager)
-      : BaseRewriter(root_graph, manager) {}
+      : BaseRewriter(root_graph, manager), is_dict_output_{IsDictOutput()} {}
   ~SimplifyDataStructuresRewriter() override = default;
 
  protected:
@@ -176,7 +176,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     return str->value();
   }
 
-  static int64_t GetAttrIndex(const std::vector<AbstractAttribute> &attrs, const AnfNodePtr &name) {
+  static int64_t GetElementIndex(const std::vector<AbstractElementPair> &attrs, const AnfNodePtr &name) {
     auto n_attrs = attrs.size();
     auto name_abstract = GetAbstract<AbstractBase>(name);
     MS_EXCEPTION_IF_NULL(name_abstract);
@@ -191,15 +191,15 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
   }
 
   static CNodePtr NewTupleGetCNode(const AnfNodePtr &cnode, const AnfNodePtr &data_node,
-                                   const std::vector<AbstractAttribute> &attributes, const AnfNodePtr &name_node) {
-    int64_t index = GetAttrIndex(attributes, name_node);
+                                   const std::vector<AbstractElementPair> &elements, const AnfNodePtr &name_node) {
+    int64_t index = GetElementIndex(elements, name_node);
     auto index_node = NewValueNode(index);
     auto prim_node = NewValueNode(prim::kPrimTupleGetItem);
     return cnode->func_graph()->NewCNode({prim_node, data_node, index_node});
   }
 
   // From:
-  //   DictGetItem(data:AbstractDictionary, cons:AbstractBase)
+  //   DictGetItem(data:AbstractDictionary, key:AbstractBase)
   // To:
   //   TupleGetItem(data, index:Int64Imm)
   AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr &node) {
@@ -211,27 +211,98 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     CheckInputsSize(node, expect_inputs_size);
 
     constexpr size_t data_index = 1;
-    constexpr size_t attr_index = 2;
+    constexpr size_t key_index = 2;
     const auto &inputs = node->inputs();
     auto &data = inputs[data_index];
-    auto &attr = inputs[attr_index];
+    auto &key = inputs[key_index];
     MS_EXCEPTION_IF_NULL(data);
-    MS_EXCEPTION_IF_NULL(attr);
+    MS_EXCEPTION_IF_NULL(key);
 
     auto abs_dict = GetAbstract<AbstractDictionary>(data);
     if (abs_dict == nullptr) {
       return nullptr;
     }
-    return NewTupleGetCNode(node, data, abs_dict->elements(), attr);
+    return NewTupleGetCNode(node, data, abs_dict->elements(), key);
+  }
+
+  // DictGetItem --> PyExecute()
+  AnfNodePtr RebuidDictGetItem(const CNodePtr &node) const {
+    MS_EXCEPTION_IF_NULL(node);
+    // Inputs should be [dict_setitem, dict, item]
+    const size_t expect_inputs_size = 3;
+    CheckInputsSize(node, expect_inputs_size);
+
+    const size_t data_index = 1;
+    const size_t item_key_index = 2;
+    const auto &inputs = node->inputs();
+    auto &data = inputs[data_index];
+    auto &key = inputs[item_key_index];
+    MS_EXCEPTION_IF_NULL(data);
+    MS_EXCEPTION_IF_NULL(key);
+
+    auto abs_dict = GetAbstract<AbstractDictionary>(data);
+    if (abs_dict == nullptr) {
+      return nullptr;
+    }
+    auto func_graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+
+    // Script
+    constexpr auto internal_dict_self_str = "__internal_dict_self__";
+    constexpr auto internal_dict_key_str = "__internal_dict_key__";
+    std::stringstream script_buffer;
+    script_buffer << internal_dict_self_str << "[" << internal_dict_key_str << "]";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+
+    // Pack local parameters keys.
+    const auto script_dict_self_name = std::make_shared<StringImm>(internal_dict_self_str);
+    const auto script_dict_key_name = std::make_shared<StringImm>(internal_dict_key_str);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_self_name));
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_key_name));
+    const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
+
+    // Pack the local parameters values, not support list, tuple, or dict.
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(data);
+    (void)key_value_list.emplace_back(key);
+    const auto key_value_tuple = func_graph->NewCNode(key_value_list);
+
+    // Build the new dict node.
+    const auto dict_getitem_node = func_graph->NewCNode(
+      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    int64_t index = GetElementIndex(abs_dict->elements(), key);
+    const auto &val = abs_dict->elements()[index].second;
+    const auto &tensor_val = dyn_cast<abstract::AbstractTensor>(val);
+    if (tensor_val != nullptr) {
+      const auto &tensor_type = tensor_val->element()->BuildType();
+      dict_getitem_node->set_user_data<Type>("__py_execute_tensor_type__", tensor_type);
+      const auto &tensor_shape = dyn_cast<abstract::Shape>(tensor_val->BuildShape());
+      MS_EXCEPTION_IF_NULL(tensor_shape);
+      dict_getitem_node->set_user_data<abstract::Shape>("__py_execute_tensor_shape__", tensor_shape);
+      MS_LOG(DEBUG) << "key: " << key->abstract()->BuildValue()->ToString() << ", type: " << tensor_type->ToString()
+                    << ", shape: " << tensor_shape->ToString() << ", val: " << tensor_val->ToString();
+    }
+    MS_LOG(DEBUG) << "Made dict getitem node: " << dict_getitem_node->DebugString();
+    return dict_getitem_node;
+  }
+
+  AnfNodePtr ConvertDictGetItem(const CNodePtr &node) {
+    static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") == "1");
+    if (support_fallback_runtime && is_dict_output_) {
+      return RebuidDictGetItem(node);
+    }
+    return ConvertDictGetItemToTupleGetItem(node);
   }
 
   // From:
-  //   DictSetItem(data:AbstractDictionary, cons:AbstractBase, value)
+  //   DictSetItem(data:AbstractDictionary, key:AbstractBase, value)
   // To:
   //   TupleSetItem(data, index:Int64Imm, value)
   // Or:
   //   tuple_add(data, value)
-  AnfNodePtr ConvertDictSetItemToTupleSetItem(const CNodePtr &node) {
+  AnfNodePtr ConvertDictSetItemToTupleSetItem(const CNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_NULL(node->func_graph());
 
@@ -244,16 +315,18 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     const size_t item_value_index = 3;
     const auto &inputs = node->inputs();
     auto &data = inputs[data_index];
-    auto &cons = inputs[cons_index];
+    auto &key = inputs[cons_index];
     auto &item_value = inputs[item_value_index];
     MS_EXCEPTION_IF_NULL(data);
-    MS_EXCEPTION_IF_NULL(cons);
+    MS_EXCEPTION_IF_NULL(key);
 
     auto abs_dict = GetAbstract<AbstractDictionary>(data);
     if (abs_dict == nullptr) {
       return nullptr;
     }
-    int64_t index = GetAttrIndex(abs_dict->elements(), cons);
+    int64_t index = GetElementIndex(abs_dict->elements(), key);
+    auto func_graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
     if (index >= static_cast<int64_t>(abs_dict->elements().size())) {
       // For dictionary set, if the key does not exist, we should create a new item.
       std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
@@ -269,16 +342,147 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, index_node, item_value});
   }
 
+  bool IsDictOutput() const {
+    const AnfNodePtr &output = root_graph_->output();
+    auto abs_dict = GetAbstract<AbstractDictionary>(output);
+    if (abs_dict != nullptr) {
+      return true;
+    }
+    return false;
+  }
+
+  // DictSetItem --> PyExecute()
+  AnfNodePtr RebuidDictSetItem(const CNodePtr &node) const {
+    MS_EXCEPTION_IF_NULL(node);
+    // Inputs should be [dict_setitem, dict, item, value]
+    const size_t expect_inputs_size = 4;
+    CheckInputsSize(node, expect_inputs_size);
+
+    const size_t data_index = 1;
+    const size_t item_key_index = 2;
+    const size_t item_value_index = 3;
+    const auto &inputs = node->inputs();
+    auto &data = inputs[data_index];
+    auto &key = inputs[item_key_index];
+    auto &item_value = inputs[item_value_index];
+    MS_EXCEPTION_IF_NULL(data);
+    MS_EXCEPTION_IF_NULL(key);
+
+    auto abs_dict = GetAbstract<AbstractDictionary>(data);
+    if (abs_dict == nullptr) {
+      return nullptr;
+    }
+    auto func_graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+
+    // Script
+    constexpr auto internal_dict_self_str = "__internal_dict_self__";
+    constexpr auto internal_dict_key_str = "__internal_dict_key__";
+    constexpr auto internal_dict_value_str = "__internal_dict_value__";
+    std::stringstream script_buffer;
+    script_buffer << "__import__('mindspore').update_and_return_dict(" << internal_dict_self_str << ", "
+                  << internal_dict_key_str << ", " << internal_dict_value_str << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+
+    // Pack local parameters keys.
+    const auto script_dict_self_name = std::make_shared<StringImm>(internal_dict_self_str);
+    const auto script_dict_key_name = std::make_shared<StringImm>(internal_dict_key_str);
+    const auto script_dict_value_name = std::make_shared<StringImm>(internal_dict_value_str);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_self_name));
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_key_name));
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_value_name));
+    const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
+
+    // Pack the local parameters values, not support list, tuple, or dict.
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(data);
+    (void)key_value_list.emplace_back(key);
+    (void)key_value_list.emplace_back(item_value);
+    const auto key_value_tuple = func_graph->NewCNode(key_value_list);
+
+    // Build the new dict node.
+    const auto dict_setitem_node = func_graph->NewCNode(
+      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    MS_LOG(DEBUG) << "Made dict setitem node: " << dict_setitem_node->DebugString();
+    return dict_setitem_node;
+  }
+
+  AnfNodePtr ConvertDictSetItem(const CNodePtr &node) {
+    static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") == "1");
+    if (support_fallback_runtime && is_dict_output_) {
+      return RebuidDictSetItem(node);
+    }
+    return ConvertDictSetItemToTupleSetItem(node);
+  }
+
   // From:
   //   MakeDict(name, input)
   // To:
   //   input
-  AnfNodePtr EraseMakeDictNode(const CNodePtr &node) {
+  AnfNodePtr EraseMakeDictNode(const CNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     constexpr size_t expect_inputs_size = 3;
     constexpr size_t input_index = 2;
     CheckInputsSize(node, expect_inputs_size);
     return node->input(input_index);
+  }
+
+  // MakeDict(keys, values) --> PyExecute('dict(zip(keys, values))', ...)
+  AnfNodePtr RebuildMakeDictNode(const CNodePtr &node) const {
+    constexpr auto internal_tuple_keys_str = "__internal_tuple_keys__";
+    constexpr auto internal_tuple_values_str = "__internal_tuple_values__";
+    constexpr auto internal_dict_zip_keys_str = "__internal_dict_zip_keys__";
+    constexpr auto internal_dict_zip_values_str = "__internal_dict_zip_values__";
+    const auto &fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+
+    // Local parameters values.
+    // Pack the key tuple.
+    constexpr size_t values_input_index = 2;
+    const auto script_key_tuple_str = std::make_shared<StringImm>(internal_tuple_keys_str);
+    const auto make_key_tuple_node =
+      fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_key_tuple_str),
+                    NewValueNode(script_key_tuple_str), node->input(values_input_index)});
+    // Pack the value tuple.
+    const auto script_value_tuple_str = std::make_shared<StringImm>(internal_tuple_values_str);
+    const auto make_value_tuple_node =
+      fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_value_tuple_str),
+                    NewValueNode(script_value_tuple_str), node->input(1)});
+    // Pack the local parameters values
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(make_key_tuple_node);
+    (void)key_value_list.emplace_back(make_value_tuple_node);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    // Pack local parameters keys.
+    const auto script_dict_key_name = std::make_shared<StringImm>(internal_dict_zip_keys_str);
+    const auto script_dict_value_name = std::make_shared<StringImm>(internal_dict_zip_values_str);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_key_name));
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_value_name));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+
+    // Script
+    std::stringstream script_buffer;
+    script_buffer << "dict(zip(" << internal_dict_zip_keys_str << "," << internal_dict_zip_values_str << "),)";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+
+    // Build the new dict node.
+    const auto make_dict_node = fg->NewCNode(
+      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    MS_LOG(DEBUG) << "Made dict node: " << make_dict_node->DebugString();
+    return make_dict_node;
+  }
+
+  AnfNodePtr ConvertMakeDict(const CNodePtr &node) {
+    static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") == "1");
+    if (support_fallback_runtime && is_dict_output_) {
+      return RebuildMakeDictNode(node);
+    }
+    return EraseMakeDictNode(node);
   }
 
   // From:
@@ -350,22 +554,79 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
   }
 
   // dict(k0:v0, k1:v1, ...) --> tuple(v0, v1, ...)
-  ValueTuplePtr DictToTuple(const ValueDictionaryPtr &dict) const {
-    const auto &elements = dict->value();
-    std::vector<ValuePtr> values;
-    values.reserve(elements.size());
-    (void)std::transform(elements.begin(), elements.end(), std::back_inserter(values),
-                         [](const auto &element) { return element.second; });
-    return std::make_shared<ValueTuple>(values);
+  AnfNodePtr DictToTuple(const ValueDictionaryPtr &dict) const {
+    const auto &keys_values = dict->value();
+    std::vector<ValuePtr> value_list;
+    value_list.reserve(keys_values.size());
+    (void)std::transform(keys_values.begin(), keys_values.end(), std::back_inserter(value_list),
+                         [](const auto &value) { return value.second; });
+    return NewValueNode(std::make_shared<ValueTuple>(value_list));
+  }
+
+  // dict(k0:v0, k1:v1, ...) --> PyExecute('dict(zip(keys, values))', ...)
+  AnfNodePtr RebuildValueDict(const ValueDictionaryPtr &dict) const {
+    constexpr auto internal_tuple_keys_str = "__internal_tuple_keys__";
+    constexpr auto internal_tuple_values_str = "__internal_tuple_values__";
+    constexpr auto internal_dict_zip_keys_str = "__internal_dict_zip_keys__";
+    constexpr auto internal_dict_zip_values_str = "__internal_dict_zip_values__";
+
+    const auto &keys_values = dict->value();
+    std::vector<ValuePtr> key_list;
+    key_list.reserve(keys_values.size());
+    std::vector<ValuePtr> value_list;
+    value_list.reserve(keys_values.size());
+    for (const auto &key_value : keys_values) {
+      (void)key_list.emplace_back(key_value.first);
+      (void)value_list.emplace_back(key_value.second);
+    }
+
+    // Local parameters values.
+    // Pack the key tuple.
+    const auto script_key_tuple_str = std::make_shared<StringImm>(internal_tuple_keys_str);
+    const auto key_tuple = std::make_shared<ValueTuple>(key_list);
+    const auto make_key_tuple_node =
+      root_graph_->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_key_tuple_str),
+                             NewValueNode(script_key_tuple_str), NewValueNode(key_tuple)});
+    // Pack the value tuple.
+    const auto script_value_tuple_str = std::make_shared<StringImm>(internal_tuple_values_str);
+    const auto value_tuple = std::make_shared<ValueTuple>(value_list);
+    const auto make_value_tuple_node =
+      root_graph_->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_value_tuple_str),
+                             NewValueNode(script_value_tuple_str), NewValueNode(value_tuple)});
+    // Pack the local parameters values
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(make_key_tuple_node);
+    (void)key_value_list.emplace_back(make_value_tuple_node);
+    const auto key_value_tuple = root_graph_->NewCNode(key_value_list);
+
+    // Pack local parameters keys.
+    const auto script_dict_key_name = std::make_shared<StringImm>(internal_dict_zip_keys_str);
+    const auto script_dict_value_name = std::make_shared<StringImm>(internal_dict_zip_values_str);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_key_name));
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_value_name));
+    const auto key_value_name_tuple = root_graph_->NewCNode(key_value_names_list);
+
+    // Script
+    std::stringstream script_buffer;
+    script_buffer << "dict(zip(" << internal_dict_zip_keys_str << "," << internal_dict_zip_values_str << "),)";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+
+    // Build the new dict node.
+    const auto make_dict_node = root_graph_->NewCNode(
+      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    MS_LOG(DEBUG) << "Made dict node: " << make_dict_node->DebugString();
+    return make_dict_node;
   }
 
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &);
   using ConverterMap = mindspore::HashMap<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
-    {prim::kPrimDictGetItem, &ThisClass::ConvertDictGetItemToTupleGetItem},
-    {prim::kPrimDictSetItem, &ThisClass::ConvertDictSetItemToTupleSetItem},
+    {prim::kPrimDictGetItem, &ThisClass::ConvertDictGetItem},
+    {prim::kPrimDictSetItem, &ThisClass::ConvertDictSetItem},
     {prim::kPrimDictGetValues, &ThisClass::EraseDictGetValues},
-    {prim::kPrimMakeDict, &ThisClass::EraseMakeDictNode},
+    {prim::kPrimMakeDict, &ThisClass::ConvertMakeDict},
     {prim::kPrimMakeKeywordArg, &ThisClass::EraseMakeKeywordArgNode},
     {prim::kPrimExtractKeywordArg, &ThisClass::EraseExtractKeywordArg},
     {prim::kPrimDictItems, &ThisClass::EraseDictItems},
@@ -384,12 +645,16 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
   AnfNodePtr ConvertValueNode(const ValueNodePtr &, const ValuePtr &value) override {
     // Convert Dictionary value node.
     if (value->isa<ValueDictionary>()) {
-      return NewValueNode(DictToTuple(value->cast<ValueDictionaryPtr>()));
+      static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") == "1");
+      if (support_fallback_runtime && is_dict_output_) {
+        return RebuildValueDict(value->cast<ValueDictionaryPtr>());
+      }
+      return DictToTuple(value->cast<ValueDictionaryPtr>());
     }
     return nullptr;
   }
 
-  static std::shared_ptr<AbstractTuple> MakeAbstractTuple(const std::vector<AbstractAttribute> &attrs) {
+  static std::shared_ptr<AbstractTuple> MakeAbstractTuple(const std::vector<AbstractElementPair> &attrs) {
     std::vector<AbstractBasePtr> elements;
     elements.reserve(attrs.size());
     (void)std::transform(attrs.begin(), attrs.end(), std::back_inserter(elements),
@@ -459,6 +724,9 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     // AbstractDictionary --> AbstractSequence.
     return ConvertToAbstractSequence(abs, 0);
   }
+
+ private:
+  bool is_dict_output_{false};
 };
 
 // ==================================================================
@@ -489,9 +757,9 @@ class CleanAfterOptARewriter : public BaseRewriter {
   }
 
   // From:
-  //   ListGetItem(list, cons)
+  //   ListGetItem(list, key)
   // To:
-  //   TupleGetItem(list, cons)
+  //   TupleGetItem(list, key)
   AnfNodePtr ConvertListGetItemToTupleGetItem(const CNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_NULL(node->func_graph());
@@ -503,8 +771,8 @@ class CleanAfterOptARewriter : public BaseRewriter {
     constexpr size_t cons_index = 2;
     const auto &inputs = node->inputs();
     auto &data = inputs[data_index];
-    auto &cons = inputs[cons_index];
-    return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, cons});
+    auto &key = inputs[cons_index];
+    return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, key});
   }
 
   // From:
@@ -524,9 +792,9 @@ class CleanAfterOptARewriter : public BaseRewriter {
     const size_t value_index = 3;
     const auto &inputs = node->inputs();
     auto &data = inputs[data_index];
-    auto &cons = inputs[cons_index];
+    auto &key = inputs[cons_index];
     auto &value = inputs[value_index];
-    return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, cons, value});
+    return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, key, value});
   }
 
   // From:

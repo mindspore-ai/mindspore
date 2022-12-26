@@ -48,6 +48,7 @@
 #include "frontend/optimizer/environ_conversion.h"
 #include "frontend/optimizer/comm_op_reuse_tag.h"
 #include "frontend/optimizer/overlap_opt_shard_in_pipeline.h"
+#include "frontend/optimizer/py_interpret_to_execute.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/pynative/pynative_execute.h"
@@ -85,6 +86,19 @@ void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource)
   resource->set_args_abs(args_abs);
 }
 }  // namespace
+
+bool PyInterpretToExecutePass(const ResourcePtr &resource) {
+  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") == "1");
+  if (!support_fallback_runtime) {
+    return true;
+  }
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  (void)opt::PyInterpretToExecute(resource);
+  UpdateArgsSpec(func_graph, resource);
+  return true;
+}
 
 bool SimplifyDataStructuresPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
@@ -840,6 +854,7 @@ bool AddEmbeddingCachePass(const ResourcePtr &resource) {
 }
 
 std::vector<PassItem> kVmPasses = {
+  {"py_interpret_to_execute", PyInterpretToExecutePass},
   {"simplify_data_structures", SimplifyDataStructuresPass},
   {"opt_a", OptPassAGroup},
   {"clean_after_opta", CleanAfterOptAPass},
@@ -859,7 +874,8 @@ std::vector<PassItem> kVmPasses = {
   {"overlap_opt_shard_in_pipeline", OverlapOptShardInPipelinePass},
 };
 
-std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
+std::vector<PassItem> kGePasses = {{"py_interpret_to_execute", PyInterpretToExecutePass},
+                                   {"simplify_data_structures", SimplifyDataStructuresPass},
                                    {"opt_a", OptPassAGroup},
                                    {"clean_after_opta", CleanAfterOptAPass},
                                    {"opt_b", OptPassBGroup},

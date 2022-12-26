@@ -706,6 +706,39 @@ class identity(Primitive):
         return x
 
 
+class PyInterpret(Primitive):
+    r"""
+    Interpret Python expression.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        super(PyInterpret, self).__init__(self.__class__.__name__)
+        self.add_prim_attr('side_effect_io', True)
+
+
+class PyExecute(PrimitiveWithInfer):
+    r"""
+    Execute Python expression.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        super(PyExecute, self).__init__(self.__class__.__name__)
+        self.add_prim_attr('side_effect_io', True)
+        self.add_prim_attr("primitive_target", "CPU")
+
+    def infer_shape(self, *args):
+        logger.error("The function output are empty tuple. Add a placeholder instead. "
+                     "Do not use it as it could be any uninitialized data.")
+        return ((1,),)
+
+    def infer_dtype(self, *args):
+        logger.error("The function output are empty tuple. Add a placeholder instead. "
+                     "Do not use it as it could be any uninitialized data.")
+        return (mstype.int32,)
+
+
 class PyFunc(PrimitiveWithInfer):
     r"""
     Execute Python function.
