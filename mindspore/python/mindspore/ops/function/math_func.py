@@ -965,14 +965,11 @@ def div(input, other, rounding_mode=None):
     if rounding_mode is not None and rounding_mode not in ['floor', 'trunc']:
         raise ValueError("For ops.div, rounding_mode value should be None, 'floor' or 'trunc'.")
 
-    output = _get_cache_prim(P.Div)()(input, other)
-
     if rounding_mode == 'floor':
-        output = _get_cache_prim(P.Floor)()(output)
-
+        return _get_cache_prim(P.FloorDiv)()(input, other)
+    output = _get_cache_prim(P.Div)()(input, other)
     if rounding_mode == 'trunc':
         output = _get_cache_prim(P.Trunc)()(output)
-
     return output
 
 
