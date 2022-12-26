@@ -19,11 +19,11 @@
 #include <utility>
 
 namespace aicpu {
-BroadcastIterator::BroadcastIterator(const std::vector<int64_t> &input_shape_a,
-                                     const std::vector<int64_t> &input_shape_b, std::vector<int64_t> *output_shape)
+BroadcastIterator::BroadcastIterator(std::vector<int64_t> &input_shape_a, std::vector<int64_t> &input_shape_b,
+                                     std::vector<int64_t> &output_shape)
     : input_shape_a_(std::move(input_shape_a)),
       input_shape_b_(std::move(input_shape_b)),
-      output_shape_(std::move(*output_shape)) {
+      output_shape_(std::move(output_shape)) {
   output_dimension_ = output_shape_.size();  // Assign dimension to int for iterator
   BroadcastShape();
   // Allocate strides memory
@@ -91,7 +91,7 @@ void BroadcastIterator::InitStrides() {
 }
 
 uint32_t GetBroadcastShape(const std::vector<int64_t> &x, const std::vector<int64_t> &y,
-                           std::vector<int64_t> *broadcast_shape) {
+                           std::vector<int64_t> &broadcast_shape) {
   int64_t x_len = x.size();
   int64_t y_len = y.size();
   int64_t length = x_len < y_len ? x_len : y_len;
@@ -109,15 +109,15 @@ uint32_t GetBroadcastShape(const std::vector<int64_t> &x, const std::vector<int6
   }
   if (length == x_len) {
     for (int64_t i = 0; i < y_len - length; ++i) {
-      broadcast_shape->push_back(y[i]);
+      broadcast_shape.push_back(y[i]);
     }
   } else {
     for (int64_t i = 0; i < x_len - length; ++i) {
-      broadcast_shape->push_back(x[i]);
+      broadcast_shape.push_back(x[i]);
     }
   }
   for (int64_t i = 0; i < length; ++i) {
-    broadcast_shape->push_back(broadcast_shape_back[i]);
+    broadcast_shape.push_back(broadcast_shape_back[i]);
   }
   return KERNEL_STATUS_OK;
 }

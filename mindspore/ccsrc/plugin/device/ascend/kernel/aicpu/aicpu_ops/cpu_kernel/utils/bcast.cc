@@ -83,7 +83,7 @@ uint32_t Bcast::Init(const std::vector<int64_t> &x, const std::vector<int64_t> &
   return KERNEL_STATUS_OK;
 }
 
-Bcast::Bcast(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape) : valid_(true) {
+Bcast::Bcast(std::vector<int64_t> &x_shape, std::vector<int64_t> &y_shape) : valid_(true) {
   if (x_shape == y_shape) {
     int64_t elements_num = 1;
     for (size_t i = 0; i < x_shape.size(); ++i) {
@@ -252,15 +252,15 @@ uint32_t Bcast::GenerateBcastInfo(const BCalcInfo &calcInfo) {
   return KERNEL_STATUS_OK;
 }
 
-void Bcast::GetBcastVec(BCalcInfo *calcInfo) {
-  calcInfo->reshape_0 = std::move(x_reshape_);
-  calcInfo->reshape_1 = std::move(y_reshape_);
-  calcInfo->shape_out = std::move(shape_out_);
-  calcInfo->bcast_0 = std::move(x_bcast_);
-  calcInfo->bcast_1 = std::move(y_bcast_);
+void Bcast::GetBcastVec(BCalcInfo &calcInfo) {
+  calcInfo.reshape_0 = std::move(x_reshape_);
+  calcInfo.reshape_1 = std::move(y_reshape_);
+  calcInfo.shape_out = std::move(shape_out_);
+  calcInfo.bcast_0 = std::move(x_bcast_);
+  calcInfo.bcast_1 = std::move(y_bcast_);
 }
 
-void Bcast::BCastIndexes(std::vector<int64_t> *x_indexes, std::vector<int64_t> *y_indexes) {
+void Bcast::BCastIndexes(std::vector<int64_t> &x_indexes, std::vector<int64_t> &y_indexes) {
   std::reverse(x_reshape_.begin(), x_reshape_.end());
   std::reverse(y_reshape_.begin(), y_reshape_.end());
   std::reverse(shape_out_.begin(), shape_out_.end());
@@ -281,8 +281,8 @@ void Bcast::BCastIndexes(std::vector<int64_t> *x_indexes, std::vector<int64_t> *
   int64_t y_bias = y_dim;
 
   for (int64_t i = 0; i < out_dim; i++) {
-    x_indexes->push_back(x_dim == 1 ? 0 : i);
-    y_indexes->push_back(y_dim == 1 ? 0 : i);
+    x_indexes.push_back(x_dim == 1 ? 0 : i);
+    y_indexes.push_back(y_dim == 1 ? 0 : i);
   }
 
   // Process the remaining dimensions
@@ -291,11 +291,11 @@ void Bcast::BCastIndexes(std::vector<int64_t> *x_indexes, std::vector<int64_t> *
     y_dim = y_reshape_.at(i);    // i-th dimension of y.
     out_dim = shape_out_.at(i);  // i-th dimension of shape_out_.
 
-    std::vector<int64_t>::size_type stride = x_indexes->size();
+    std::vector<int64_t>::size_type stride = x_indexes.size();
     for (int64_t j = 1; j < out_dim; j++) {
       for (std::vector<int64_t>::size_type k = 0; k < stride; k++) {
-        x_indexes->push_back(x_indexes->at(k) + (x_dim == 1 ? 0 : (j * x_bias)));
-        y_indexes->push_back(y_indexes->at(k) + (y_dim == 1 ? 0 : (j * y_bias)));
+        x_indexes.push_back(x_indexes.at(k) + (x_dim == 1 ? 0 : (j * x_bias)));
+        y_indexes.push_back(y_indexes.at(k) + (y_dim == 1 ? 0 : (j * y_bias)));
       }
     }
     x_bias *= x_dim;

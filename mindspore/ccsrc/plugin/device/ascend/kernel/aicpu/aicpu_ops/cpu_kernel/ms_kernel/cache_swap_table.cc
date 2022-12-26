@@ -102,7 +102,7 @@ uint32_t CacheSwapTableMsCpuKernel::DoCompute() {
   return calls[indices_type_](inputs_, outputs_, batch_size_, output_size_, one_line_col_, type_size);
 }
 
-uint32_t CacheSwapTableMsCpuKernel::GetInputAndCheck(const CpuKernelContext &ctx) {
+uint32_t CacheSwapTableMsCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   KERNEL_LOG_INFO("GetInputAndCheck start!");
   // get input Tensors
   const uint32_t kNumInput = 3;
@@ -137,7 +137,7 @@ uint32_t CacheSwapTableMsCpuKernel::GetInputAndCheck(const CpuKernelContext &ctx
   return KERNEL_STATUS_OK;
 }
 
-uint32_t CacheSwapTableMsCpuKernel::Compute(const CpuKernelContext &ctx) {
+uint32_t CacheSwapTableMsCpuKernel::Compute(CpuKernelContext &ctx) {
   uint32_t res = GetInputAndCheck(ctx);
   if (res != KERNEL_STATUS_OK) {
     return res;

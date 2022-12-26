@@ -38,7 +38,7 @@ constexpr int64_t kParallelDataNums = 8 * 1024;
 }  // namespace
 
 namespace aicpu {
-uint32_t LogMatrixDeterminantCpuKernel::Compute(const CpuKernelContext &ctx) {
+uint32_t LogMatrixDeterminantCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
                       kLogMatrixDeterminant);
   KERNEL_HANDLE_ERROR(LogMatrixDeterminantCheck(ctx), "[%s] check params failed.", kLogMatrixDeterminant);
@@ -55,7 +55,7 @@ uint32_t LogMatrixDeterminantCpuKernel::Compute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCheck(const CpuKernelContext &ctx) {
+uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCheck(CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(0);
   auto output_0 = ctx.Output(0);
   auto output_1 = ctx.Output(1);
@@ -96,7 +96,7 @@ uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCheck(const CpuKerne
 }
 
 template <typename T>
-uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCompute(const CpuKernelContext &ctx) {
+uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCompute(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_sign = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(1)->GetData());

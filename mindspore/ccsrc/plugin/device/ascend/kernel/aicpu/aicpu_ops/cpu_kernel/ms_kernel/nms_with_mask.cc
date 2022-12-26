@@ -27,7 +27,7 @@ const char *kNMSWithMask = "NMSWithMask";
 }  // namespace
 
 namespace aicpu {
-uint32_t NMSWithMaskCpuKernel::Compute(const CpuKernelContext &ctx) {
+uint32_t NMSWithMaskCpuKernel::Compute(CpuKernelContext &ctx) {
   // check param
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "NMSWithMask check input or output is failed");
   AttrValue *iou_threshold = ctx.GetAttr("iou_threshold");
@@ -64,7 +64,7 @@ uint32_t NMSWithMaskCpuKernel::Compute(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t NMSWithMaskCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t NMSWithMaskCpuKernel::DoCompute(CpuKernelContext &ctx) {
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output = reinterpret_cast<T *>(ctx.Output(OUTPUT)->GetData());
   auto sel_idx = reinterpret_cast<int *>(ctx.Output(SEL_IDX)->GetData());

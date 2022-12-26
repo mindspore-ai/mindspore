@@ -38,8 +38,8 @@ bool NodeDefImpl::ParseFromString(const std::string &str) {
 /*
  * serialize string to node def.
  */
-bool NodeDefImpl::SerializeToString(std::string *str) const {
-  if (!nodedef_->SerializeToString(str)) {
+bool NodeDefImpl::SerializeToString(std::string &str) const {
+  if (!nodedef_->SerializeToString(&str)) {
     KERNEL_LOG_ERROR("SerializeToString failed");
     return false;
   }

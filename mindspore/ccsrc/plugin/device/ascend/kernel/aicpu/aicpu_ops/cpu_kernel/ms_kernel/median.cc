@@ -49,7 +49,7 @@ const char *kMedian = "Median";
 }  // namespace
 
 namespace aicpu {
-uint32_t MedianCpuKernel::Compute(const CpuKernelContext &ctx) {
+uint32_t MedianCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(MedianCheck(ctx), "Median check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   AttrValue *global_ptr = ctx.GetAttr("global_median");
@@ -80,7 +80,7 @@ uint32_t MedianCpuKernel::Compute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MedianCpuKernel::MedianCheck(const CpuKernelContext &ctx) {
+uint32_t MedianCpuKernel::MedianCheck(CpuKernelContext &ctx) {
   auto global_median = ctx.GetAttr("global_median");
   KERNEL_CHECK_NULLPTR(global_median, KERNEL_STATUS_PARAM_INVALID, "Get attr global_median failed.");
   bool global_median_value = global_median->GetBool();
@@ -127,7 +127,7 @@ uint32_t MedianCpuKernel::MedianCheck(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t MedianCpuKernel::GlobalMedianCompute(const CpuKernelContext &ctx) {
+uint32_t MedianCpuKernel::GlobalMedianCompute(CpuKernelContext &ctx) {
   auto input_x0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y0 = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   size_t data_num = ctx.Input(0)->GetTensorShape()->NumElements();
@@ -138,7 +138,7 @@ uint32_t MedianCpuKernel::GlobalMedianCompute(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t MedianCpuKernel::MedianCompute(const CpuKernelContext &ctx) {
+uint32_t MedianCpuKernel::MedianCompute(CpuKernelContext &ctx) {
   auto input_x0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y0 = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto output_y1 = reinterpret_cast<int64_t *>(ctx.Output(1)->GetData());

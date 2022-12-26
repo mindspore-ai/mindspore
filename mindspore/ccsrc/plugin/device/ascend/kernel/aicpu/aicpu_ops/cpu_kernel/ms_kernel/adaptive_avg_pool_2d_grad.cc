@@ -52,7 +52,7 @@ inline int EndIndex(int offset, int out_size, int in_size) {
 
 namespace aicpu {
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool2dGradOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args) {
+uint32_t AdaptiveAvgPool2dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args) {
   uint32_t min_core_num = 1;
   int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
 
@@ -111,7 +111,7 @@ uint32_t AdaptiveAvgPool2dGradOutFrame(const CpuKernelContext &ctx, AdaptiveCalc
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(const CpuKernelContext &ctx) {
+uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
   Tensor &input = *(ctx.Input(kFirstInputIndex));
 
   auto input_shape_ptr = input.GetTensorShape();
@@ -178,7 +178,7 @@ uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(const CpuKernelContext &ctx) {
   return AdaptiveAvgPool2dGradOutFrame<SCALAR_T>(ctx, args);
 }
 
-uint32_t AdaptiveAvgPool2dGrad::Compute(const CpuKernelContext &ctx) {
+uint32_t AdaptiveAvgPool2dGrad::Compute(CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(kFirstInputIndex);
   KERNEL_CHECK_NULLPTR(input_0, KERNEL_STATUS_PARAM_INVALID, "Get input tensor failed.");
   KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.");

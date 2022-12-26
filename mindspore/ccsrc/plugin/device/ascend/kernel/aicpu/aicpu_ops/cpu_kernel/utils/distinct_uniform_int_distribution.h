@@ -41,8 +41,8 @@ class DistinctUniformIntDistribution {
   }
 
   template <typename Generator>
-  ResultType exec(const Generator &engine) {
-    if (!(uset_.size() < range_)) {
+  ResultType exec(Generator &engine) {
+    if (not(uset_.size() < range_)) {
       std::terminate();
     }
     ResultType res;

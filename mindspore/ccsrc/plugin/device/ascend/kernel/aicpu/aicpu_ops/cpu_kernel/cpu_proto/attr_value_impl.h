@@ -29,7 +29,7 @@ class AttrValueImpl {
   friend class CpuKernelUtils;
 
  public:
-  explicit AttrValueImpl(
+  AttrValueImpl(
     aicpuops::AttrValue *attr, std::function<void(aicpuops::AttrValue *)> del_func = [](aicpuops::AttrValue *p) {})
       : attr_value_(attr, del_func) {}
 

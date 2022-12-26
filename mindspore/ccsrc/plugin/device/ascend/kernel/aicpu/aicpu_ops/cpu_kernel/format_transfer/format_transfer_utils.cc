@@ -70,7 +70,7 @@ int64_t GetCubeSizeByDataType(DataType data_type) {
   }
 }
 
-bool IsTransShapeSrcCorrect(const TransArgs &args, const std::vector<int64_t> &expect_shape) {
+bool IsTransShapeSrcCorrect(const TransArgs &args, std::vector<int64_t> &expect_shape) {
   if (args.src_shape != expect_shape) {
     std::string error = "Failed to trans format from" + FmtToStr(FormatToSerialString(args.src_format)) + " to " +
                         FmtToStr(FormatToSerialString(args.dst_format)) + ", invalid relationship between src shape " +
@@ -82,7 +82,7 @@ bool IsTransShapeSrcCorrect(const TransArgs &args, const std::vector<int64_t> &e
   return true;
 }
 
-bool IsTransShapeDstCorrect(const TransArgs &args, const std::vector<int64_t> &expect_shape) {
+bool IsTransShapeDstCorrect(const TransArgs &args, std::vector<int64_t> &expect_shape) {
   if (!args.dst_shape.empty() && args.dst_shape != expect_shape) {
     std::string error = "Failed to trans format from " + FmtToStr(FormatToSerialString(args.src_format)) + " to " +
                         FmtToStr(FormatToSerialString(args.dst_format)) + ", the dst shape" +
@@ -97,11 +97,13 @@ bool IsTransShapeDstCorrect(const TransArgs &args, const std::vector<int64_t> &e
 int64_t GetItemNumByShape(const std::vector<int64_t> &shape) {
   // shape will not be greater than INT_MAX
   int64_t num = 1;
-  num = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+  for (auto dim : shape) {
+    num *= dim;
+  }
   return num;
 }
 
-uint32_t TransFormat(const TransArgs &args, TransResult *result) {
+uint32_t TransFormat(const TransArgs &args, TransResult &result) {
   auto transfer = BuildFormatTransfer(args);
   if (transfer == nullptr) {
     std::string error = "Failed to trans data from format " + FmtToStr(FormatToSerialString(args.src_format)) + " to " +
@@ -157,44 +159,44 @@ KernelStatus CheckDimOri(int64_t cin_ori, int64_t cout_ori) {
   return KERNEL_STATUS_OK;
 }
 
-KernelStatus GetFormatDim(int64_t *d_dim, int64_t *h_dim, int64_t *w_dim, int64_t *c_dim, int64_t *n_dim,
+KernelStatus GetFormatDim(int64_t &d_dim, int64_t &h_dim, int64_t &w_dim, int64_t &c_dim, int64_t &n_dim,
                           const Format &input_format, const std::vector<int64_t> &dims) {
   if (input_format == FORMAT_NCDHW) {
-    *n_dim = dims[kNcdhwN];
-    *c_dim = dims[kNcdhwC];
-    *d_dim = dims[kNcdhwD];
-    *h_dim = dims[kNcdhwH];
-    *w_dim = dims[kNcdhwW];
+    n_dim = dims[kNcdhwN];
+    c_dim = dims[kNcdhwC];
+    d_dim = dims[kNcdhwD];
+    h_dim = dims[kNcdhwH];
+    w_dim = dims[kNcdhwW];
   } else if (input_format == FORMAT_DHWCN) {
-    *d_dim = dims[kDhwcnD];
-    *h_dim = dims[kDhwcnH];
-    *w_dim = dims[kDhwcnW];
-    *c_dim = dims[kDhwcnC];
-    *n_dim = dims[kDhwcnN];
+    d_dim = dims[kDhwcnD];
+    h_dim = dims[kDhwcnH];
+    w_dim = dims[kDhwcnW];
+    c_dim = dims[kDhwcnC];
+    n_dim = dims[kDhwcnN];
   } else if (input_format == FORMAT_NDHWC) {
-    *n_dim = dims[kNdhwcN];
-    *d_dim = dims[kNdhwcD];
-    *h_dim = dims[kNdhwcH];
-    *w_dim = dims[kNdhwcW];
-    *c_dim = dims[kNdhwcC];
+    n_dim = dims[kNdhwcN];
+    d_dim = dims[kNdhwcD];
+    h_dim = dims[kNdhwcH];
+    w_dim = dims[kNdhwcW];
+    c_dim = dims[kNdhwcC];
   } else if (input_format == FORMAT_NHWC) {
-    *n_dim = dims[kNhwcN];
-    *h_dim = dims[kNhwcH];
-    *d_dim = 1;
-    *w_dim = dims[kNhwcW];
-    *c_dim = dims[kNhwcC];
+    n_dim = dims[kNhwcN];
+    h_dim = dims[kNhwcH];
+    d_dim = 1;
+    w_dim = dims[kNhwcW];
+    c_dim = dims[kNhwcC];
   } else if (input_format == FORMAT_NCHW) {
-    *n_dim = dims[kNchwN];
-    *c_dim = dims[kNchwC];
-    *h_dim = dims[kNchwH];
-    *w_dim = dims[kNchwW];
-    *d_dim = 1;
+    n_dim = dims[kNchwN];
+    c_dim = dims[kNchwC];
+    h_dim = dims[kNchwH];
+    w_dim = dims[kNchwW];
+    d_dim = 1;
   } else if (input_format == FORMAT_HWCN) {
-    *h_dim = dims[kHwcnH];
-    *w_dim = dims[kHwcnW];
-    *c_dim = dims[kHwcnC];
-    *n_dim = dims[kHwcnN];
-    *d_dim = 1;
+    h_dim = dims[kHwcnH];
+    w_dim = dims[kHwcnW];
+    c_dim = dims[kHwcnC];
+    n_dim = dims[kHwcnN];
+    d_dim = 1;
   } else {
     KERNEL_LOG_WARN(
       "Format is not FORMAT_DHWCN or FORMAT_NDHWC or FORMAT_NCDHW or "

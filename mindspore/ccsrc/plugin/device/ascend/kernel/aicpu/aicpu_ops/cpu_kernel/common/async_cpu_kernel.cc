@@ -18,7 +18,7 @@
 #include "cpu_kernel/common/notification.h"
 
 namespace aicpu {
-uint32_t AsyncCpuKernel::Compute(const CpuKernelContext &ctx) {
+uint32_t AsyncCpuKernel::Compute(CpuKernelContext &ctx) {
   Notification n;
   uint32_t ret = ComputeAsync(ctx, [&n](uint32_t status) { n.Notify(); });
   n.WaitForNotification();

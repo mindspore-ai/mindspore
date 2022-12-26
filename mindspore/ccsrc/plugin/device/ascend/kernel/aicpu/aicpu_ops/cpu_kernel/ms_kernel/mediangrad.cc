@@ -52,7 +52,7 @@ const int64_t kParallelDataNumMid = 16 * 1024;
 }  // namespace
 
 namespace aicpu {
-uint32_t MedianGradCpuKernel::Compute(const CpuKernelContext &ctx) {
+uint32_t MedianGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
   KERNEL_HANDLE_ERROR(MedianGradParamCheck(ctx), "MedianGrad check params failed.");
   auto data_type_x = ctx.Input(1)->GetDataType();
@@ -85,7 +85,7 @@ uint32_t MedianGradCpuKernel::Compute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MedianGradCpuKernel::MedianGradParamCheck(const CpuKernelContext &ctx) {
+uint32_t MedianGradCpuKernel::MedianGradParamCheck(CpuKernelContext &ctx) {
   auto global_median_ptr = ctx.GetAttr("global_median");
   KERNEL_CHECK_NULLPTR(global_median_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr global_median failed.");
   bool global_median = global_median_ptr->GetBool();
@@ -133,7 +133,7 @@ uint32_t MedianGradCpuKernel::MedianGradParamCheck(const CpuKernelContext &ctx) 
 }
 
 template <typename T1, typename T2>
-uint32_t MedianGradCpuKernel::GlobalMedianGradCompute(const CpuKernelContext &ctx) {
+uint32_t MedianGradCpuKernel::GlobalMedianGradCompute(CpuKernelContext &ctx) {
   auto y_grad = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
   auto x = reinterpret_cast<T1 *>(ctx.Input(1)->GetData());
   auto y = reinterpret_cast<T1 *>(ctx.Input(2)->GetData());
@@ -175,7 +175,7 @@ uint32_t MedianGradCpuKernel::GlobalMedianGradCompute(const CpuKernelContext &ct
 }
 
 template <typename T1, typename T2>
-uint32_t MedianGradCpuKernel::MedianGradCompute(const CpuKernelContext &ctx) {
+uint32_t MedianGradCpuKernel::MedianGradCompute(CpuKernelContext &ctx) {
   auto y_grad = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
   auto indices = reinterpret_cast<int64_t *>(ctx.Input(3)->GetData());
   auto x_grad = reinterpret_cast<T2 *>(ctx.Output(0)->GetData());

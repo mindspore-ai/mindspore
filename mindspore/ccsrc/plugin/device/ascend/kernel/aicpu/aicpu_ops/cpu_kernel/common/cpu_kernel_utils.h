@@ -53,7 +53,7 @@ class AICPU_VISIBILITY CpuKernelUtils {
   /*
    * set tensor name.
    */
-  static void SetTensorName(const std::string &name, std::shared_ptr<Tensor> *tensor);
+  static void SetTensorName(const std::string &name, std::shared_ptr<Tensor> &tensor);
 
   /*
    * create Tensor shape.

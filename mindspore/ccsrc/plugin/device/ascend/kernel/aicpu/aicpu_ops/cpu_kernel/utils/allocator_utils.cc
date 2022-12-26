@@ -28,19 +28,19 @@ std::unordered_set<uint64_t> g_allocated_ptr;
 
 namespace aicpu {
 uint32_t CpuKernelAllocatorUtils::ParamCheck(const std::vector<int64_t> &dims, const void *data_ptr,
-                                             Tensor **outputResultTensor) {
+                                             Tensor *&outputResultTensor) {
   if (dims.empty()) {
     KERNEL_LOG_ERROR("UpdateOutputDataTensor dims size == 0.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_CHECK_NULLPTR(*outputResultTensor, KERNEL_STATUS_PARAM_INVALID, "outputResultTensor nullptr");
+  KERNEL_CHECK_NULLPTR(outputResultTensor, KERNEL_STATUS_PARAM_INVALID, "outputResultTensor nullptr");
   KERNEL_CHECK_NULLPTR(data_ptr, KERNEL_STATUS_PARAM_INVALID, "data_ptr nullptr");
   return KERNEL_STATUS_OK;
 }
 
 uint32_t CpuKernelAllocatorUtils::UpdateOutputDataTensor(const std::vector<int64_t> &dims, DataType type,
                                                          const void *data_ptr, int64_t input_data_size,
-                                                         Tensor **outputResultTensor) {
+                                                         Tensor *&outputResultTensor) {
   uint32_t check_ret = ParamCheck(dims, &data_ptr, outputResultTensor);
   if (check_ret != KERNEL_STATUS_OK) {
     return check_ret;
@@ -72,7 +72,7 @@ uint32_t CpuKernelAllocatorUtils::UpdateOutputDataTensor(const std::vector<int64
   }
 
   aicpu::FWKAdapter::ResultSummary *result_summary =
-    reinterpret_cast<aicpu::FWKAdapter::ResultSummary *>((*outputResultTensor)->GetData());
+    reinterpret_cast<aicpu::FWKAdapter::ResultSummary *>(outputResultTensor->GetData());
   result_summary->raw_data_size = data_size;
   result_summary->shape_data_size = shape_buff_size;
 
@@ -113,8 +113,9 @@ uint32_t CpuKernelAllocatorUtils::UpdateOutputDataTensor(const std::vector<int64
 
 int64_t CpuKernelAllocatorUtils::GetInputDataSize(const std::vector<int64_t> &dims, DataType type) {
   int64_t num_elements = 1;
+  int64_t dim_size = 0;
   for (size_t i = 0; i < dims.size(); i++) {
-    int64_t dim_size = dims[i];
+    dim_size = dims[i];
     KERNEL_CHECK_ASSIGN_64S_MULTI(num_elements, dim_size, num_elements, KERNEL_STATUS_PARAM_INVALID);
   }
 

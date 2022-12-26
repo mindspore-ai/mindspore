@@ -46,21 +46,18 @@ std::map<Format, std::map<Format, std::vector<int64_t>>> perm_args{
     {FORMAT_HWCN, std::vector<int64_t>({kChwnH, kChwnW, kChwnC, kChwnN})}}},
 };
 
-bool LessThanZero(int64_t dim) { return dim < 0; }
-
 bool ShapeArgValid(const std::vector<int64_t> &src_shape, const std::vector<int64_t> &perm_arg) {
   if (src_shape.empty()) {
     KERNEL_LOG_ERROR("Failed to transpose, src shape is empty");
     return false;
   }
-
-  std::vector<int64_t>::const_iterator it = find_if(src_shape.begin(), src_shape.end(), LessThanZero);
-  if (it == src_shape.end()) {
-    KERNEL_LOG_ERROR("Failed to transpose, negative dim [%d] in src shape [%s]", *it,
-                     FmtToStr(VectorToString(src_shape)).c_str());
-    return false;
+  for (auto dim : src_shape) {
+    if (dim < 0) {
+      KERNEL_LOG_ERROR("Failed to transpose, negative dim [%d] in src shape [%s]", dim,
+                       FmtToStr(VectorToString(src_shape)).c_str());
+      return false;
+    }
   }
-
   if (perm_arg.size() != src_shape.size()) {
     KERNEL_LOG_ERROR(
       "Failed to transpose, the size of src shape [%s] and perm arg [%s] are "
@@ -93,11 +90,11 @@ bool IsTransposeArgValid(const uint8_t *src, const std::vector<int64_t> &src_sha
   return ShapeArgValid(src_shape, perm_arg);
 }
 
-void GenHeads(const std::vector<int64_t> &shape, std::vector<int64_t> *heads) {
-  heads->resize(shape.size());
-  (*heads)[shape.size() - 1] = 1;
+void GenHeads(const std::vector<int64_t> &shape, std::vector<int64_t> &heads) {
+  heads.resize(shape.size());
+  heads[shape.size() - 1] = 1;
   for (auto i = static_cast<int64_t>(shape.size() - 2); i >= 0; --i) {
-    (*heads)[i] = shape[i + 1] * (*heads)[i + 1];
+    heads[i] = shape[i + 1] * heads[i + 1];
   }
 }
 
@@ -109,13 +106,13 @@ int64_t GenOffset(const std::vector<int64_t> &offsets, const std::vector<int64_t
   return offset;
 }
 
-void AddOne(const std::vector<int64_t> &shape, std::vector<int64_t> *indexes) {
-  size_t i = indexes->size() - 1;
-  (*indexes)[i]++;
+void AddOne(const std::vector<int64_t> &shape, std::vector<int64_t> &indexes) {
+  size_t i = indexes.size() - 1;
+  indexes[i]++;
   while (i > 0) {
-    if ((*indexes)[i] >= shape[i]) {
-      (*indexes)[i] = 0;
-      (*indexes)[i - 1]++;
+    if (indexes[i] >= shape[i]) {
+      indexes[i] = 0;
+      indexes[i - 1]++;
       --i;
     } else {
       break;
@@ -124,25 +121,25 @@ void AddOne(const std::vector<int64_t> &shape, std::vector<int64_t> *indexes) {
 }
 
 void TransShapeByPerm(const std::vector<int64_t> &src_shape, const std::vector<int64_t> &perm_arg,
-                      std::vector<int64_t> *dst_shape) {
-  dst_shape->resize(src_shape.size());
+                      std::vector<int64_t> &dst_shape) {
+  dst_shape.resize(src_shape.size());
   for (size_t i = 0; i < perm_arg.size(); ++i) {
-    (*dst_shape)[i] = src_shape[perm_arg[i]];
+    dst_shape[i] = src_shape[perm_arg[i]];
   }
 }
 }  // namespace
 
 uint32_t Transpose(const uint8_t *src, const std::vector<int64_t> &src_shape, DataType src_data_type,
-                   const std::vector<int64_t> &perm_arg, TransResult *result) {
+                   const std::vector<int64_t> &perm_arg, TransResult &result) {
   if (!IsTransposeArgValid(src, src_shape, src_data_type, perm_arg)) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
   std::vector<int64_t> dst_shape;
-  TransShapeByPerm(src_shape, perm_arg, &dst_shape);
+  TransShapeByPerm(src_shape, perm_arg, dst_shape);
   std::vector<int64_t> src_origin_ordered_heads;
-  GenHeads(src_shape, &src_origin_ordered_heads);
+  GenHeads(src_shape, src_origin_ordered_heads);
   std::vector<int64_t> src_heads;
-  TransShapeByPerm(src_origin_ordered_heads, perm_arg, &src_heads);
+  TransShapeByPerm(src_origin_ordered_heads, perm_arg, src_heads);
 
   int64_t dst_ele_num = GetItemNumByShape(dst_shape);
   int64_t data_size = GetSizeByDataType(src_data_type);
@@ -154,7 +151,7 @@ uint32_t Transpose(const uint8_t *src, const std::vector<int64_t> &src_shape, Da
     VectorToString(src_shape).c_str(), VectorToString(perm_arg).c_str(), VectorToString(dst_shape).c_str(),
     DTypeStr(src_data_type).c_str());
   if (dst_ele_num == 0) {
-    result->length = static_cast<size_t>(dst_size);
+    result.length = static_cast<size_t>(dst_size);
     return KERNEL_STATUS_OK;
   }
 
@@ -184,23 +181,23 @@ uint32_t Transpose(const uint8_t *src, const std::vector<int64_t> &src_shape, Da
         dst_offset_bytes, VectorToString(dst_indexes).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
-    AddOne(dst_shape, &dst_indexes);
+    AddOne(dst_shape, dst_indexes);
     ++dst_index;
   }
 
-  result->data = dst;
-  result->length = static_cast<size_t>(dst_size);
+  result.data = dst;
+  result.length = static_cast<size_t>(dst_size);
   return KERNEL_STATUS_OK;
 }
 
 uint32_t TransposeWithShapeCheck(const uint8_t *data, const std::vector<int64_t> &src_shape,
                                  const std::vector<int64_t> &dst_shape, DataType src_data_type,
-                                 const std::vector<int64_t> &perm_arg, TransResult *result) {
+                                 const std::vector<int64_t> &perm_arg, TransResult &result) {
   if (!IsTransposeArgValid(data, src_shape, src_data_type, perm_arg)) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
   std::vector<int64_t> expected_shape;
-  TransShapeByPerm(src_shape, perm_arg, &expected_shape);
+  TransShapeByPerm(src_shape, perm_arg, expected_shape);
   if (dst_shape != expected_shape) {
     KERNEL_LOG_ERROR(
       "Failed to trans axis for perm_arg [%s], invalid dst shape [%s], "
@@ -212,7 +209,7 @@ uint32_t TransposeWithShapeCheck(const uint8_t *data, const std::vector<int64_t>
   return Transpose(data, src_shape, src_data_type, perm_arg, result);
 }
 
-uint32_t GetPermByForamt(Format src_format, Format dst_format, std::vector<int64_t> *perm) {
+uint32_t GetPermByForamt(Format src_format, Format dst_format, std::vector<int64_t> &perm) {
   auto dst_iter = perm_args.find(src_format);
   if (dst_iter == perm_args.end()) {
     KERNEL_LOG_ERROR(
@@ -229,14 +226,14 @@ uint32_t GetPermByForamt(Format src_format, Format dst_format, std::vector<int64
       FormatToSerialString(src_format).c_str(), FormatToSerialString(dst_format).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  *perm = iter->second;
+  perm = iter->second;
   return KERNEL_STATUS_OK;
 }
 
-uint32_t FormatTransferTranspose::TransFormat(const TransArgs &args, TransResult *result) {
+uint32_t FormatTransferTranspose::TransFormat(const TransArgs &args, TransResult &result) {
   std::vector<int64_t> expected_shape;
   auto ret =
-    TransShape(args.src_format, args.src_shape, args.src_data_type, args.dst_format, &expected_shape, args.groups);
+    TransShape(args.src_format, args.src_shape, args.src_data_type, args.dst_format, expected_shape, args.groups);
   if (ret != KERNEL_STATUS_OK) {
     return ret;
   }
@@ -248,10 +245,10 @@ uint32_t FormatTransferTranspose::TransFormat(const TransArgs &args, TransResult
 }
 
 uint32_t FormatTransferTranspose::TransShape(Format src_format, const std::vector<int64_t> &src_shape,
-                                             DataType data_type, Format dst_format, std::vector<int64_t> *dst_shape,
+                                             DataType data_type, Format dst_format, std::vector<int64_t> &dst_shape,
                                              int64_t groups) {
   std::vector<int64_t> perm_arg;
-  if (GetPermByForamt(src_format, dst_format, &perm_arg) != KERNEL_STATUS_OK) {
+  if (GetPermByForamt(src_format, dst_format, perm_arg) != KERNEL_STATUS_OK) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (!ShapeArgValid(src_shape, perm_arg)) {

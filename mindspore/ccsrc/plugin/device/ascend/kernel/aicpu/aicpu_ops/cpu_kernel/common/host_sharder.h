@@ -20,7 +20,7 @@
 namespace aicpu {
 class HostSharder : public Sharder {
  public:
-  explicit HostSharder(DeviceType device) : Sharder(device) {}
+  explicit HostSharder(DeviceType device) : Sharder(device){};
 
   ~HostSharder() = default;
 

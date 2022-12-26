@@ -85,7 +85,7 @@ std::vector<std::string> CpuKernelRegister::GetAllRegisteredOpTypes() const {
  * param ctx: context of kernel
  * @return uint32_t: 0->success other->failed
  */
-uint32_t CpuKernelRegister::RunCpuKernel(const CpuKernelContext &ctx) {
+uint32_t CpuKernelRegister::RunCpuKernel(CpuKernelContext &ctx) {
   std::string type = ctx.GetOpType();
   KERNEL_LOG_INFO("RunCpuKernel[%s] begin.", type.c_str());
   auto kernel = GetCpuKernel(type);
@@ -114,8 +114,8 @@ uint32_t CpuKernelRegister::RunCpuKernel(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t CpuKernelRegister::RunCpuKernelAsync(const CpuKernelContext &ctx, const uint8_t wait_type,
-                                              const uint32_t wait_id, std::function<uint32_t()> cb) {
+uint32_t CpuKernelRegister::RunCpuKernelAsync(CpuKernelContext &ctx, const uint8_t wait_type, const uint32_t wait_id,
+                                              std::function<uint32_t()> cb) {
   std::string type = ctx.GetOpType();
   KERNEL_LOG_INFO("RunCpuKernelAsync[%s] begin.", type.c_str());
   auto kernel = GetCpuKernel(type);

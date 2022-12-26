@@ -83,41 +83,40 @@ class CpuKernelCache : public KernelCache<CpuCacheData> {
    * update framework output tensor shape.
    * @return uint32_t: 0 indicates success, while the others fail
    */
-  uint32_t UpdateFWKOutputShape(ExtInfoMsg *ext_info_msg, const CpuKernelContext &ctx) const;
+  uint32_t UpdateFWKOutputShape(ExtInfoMsg &ext_info_msg, const CpuKernelContext &ctx) const;
 
   /*
    * get shape information from framework.
    * @param dims: shape information
    */
-  void GetDimsFromShapeAndType(const FWKAdapter::ShapeAndType *shape_and_type, std::vector<int64_t> *dims) const;
+  void GetDimsFromShapeAndType(const FWKAdapter::ShapeAndType *shape_and_type, std::vector<int64_t> &dims) const;
 
   /*
    * get shape information from arrays.
    * @param dims: shape information
    */
-  void GetDimsFromArrays(const int64_t *shape, size_t len, std::vector<int64_t> *dims) const;
+  void GetDimsFromArrays(const int64_t *shape, size_t len, std::vector<int64_t> &dims) const;
 
   /*
    * update tensor information.
    * @param ctx: kernel context
    * @return uint32_t: 0 indicates success, while the others fail
    */
-  uint32_t UpdateTensor(const std::vector<uint64_t> &io_addrs, ExtInfoMsg *ext_info_msg,
-                        const CpuKernelContext &ctx) const;
+  uint32_t UpdateTensor(const std::vector<uint64_t> &io_addrs, ExtInfoMsg &ext_info_msg, CpuKernelContext &ctx) const;
 
   /*
    * parse extend tensor shape types information.
    * @param ext_info: extend information
    * @return uint32_t: 0 indicates success, while the others fail
    */
-  uint32_t ParseExtShapeType(const FWKAdapter::ExtInfo *ext_info, bool *unknown_shape) const;
+  uint32_t ParseExtShapeType(const FWKAdapter::ExtInfo *ext_info, bool &unknown_shape) const;
 
   /*
    * parse extend tensor bitmap information.
    * @param ext_info: extend information
    * @return uint32_t: 0 indicates success, while the others fail
    */
-  uint32_t ParseExtBitMap(const FWKAdapter::ExtInfo *ext_info, bool *unknown_shape);
+  uint32_t ParseExtBitMap(const FWKAdapter::ExtInfo *ext_info, bool &unknown_shape);
 
   /*
    * parse extend tensor shape and types information.
@@ -126,7 +125,7 @@ class CpuKernelCache : public KernelCache<CpuCacheData> {
    * @return uint32_t: 0 indicates success, while the others fail
    */
   uint32_t ParseExtShapeAndType(bool unknown_shape, FWKAdapter::ExtInfo *ext_info,
-                                std::vector<FWKAdapter::ShapeAndType *> *shape_and_type) const;
+                                std::vector<FWKAdapter::ShapeAndType *> &shape_and_type) const;
 
   /*
    * parse extend unknown shape index information.
@@ -135,7 +134,7 @@ class CpuKernelCache : public KernelCache<CpuCacheData> {
    * @return uint32_t: 0 indicates success, while the others fail
    */
   uint32_t ParseExtUnknownShapeIndex(FWKAdapter::ExtInfo *ext_info,
-                                     std::map<uint32_t, uint64_t> *unknown_shape_index_addr) const;
+                                     std::map<uint32_t, uint64_t> &unknown_shape_index_addr) const;
 
   /*
    * parse extend session information.
@@ -143,7 +142,7 @@ class CpuKernelCache : public KernelCache<CpuCacheData> {
    * @param kernel_id: kernel id from extend information
    * @return uint32_t: 0 indicates success, while the others fail
    */
-  uint32_t ParseExtSessionInfo(FWKAdapter::ExtInfo *ext_info, uint64_t *kernel_id) const;
+  uint32_t ParseExtSessionInfo(FWKAdapter::ExtInfo *ext_info, uint64_t &kernel_id) const;
 
   /*
    * parse extend async wait info
@@ -152,7 +151,7 @@ class CpuKernelCache : public KernelCache<CpuCacheData> {
    * @param wait_id : event wait id
    * @return uint32_t: 0 indicates success, while the others fail
    */
-  uint32_t ParseAsyncWait(FWKAdapter::ExtInfo *ext_info, uint8_t *wait_type, uint32_t *wait_id) const;
+  uint32_t ParseAsyncWait(FWKAdapter::ExtInfo *ext_info, uint8_t &wait_type, uint32_t &wait_id) const;
 
   /*
    * parse extend information.
@@ -160,7 +159,7 @@ class CpuKernelCache : public KernelCache<CpuCacheData> {
    * @param ext_info_msg: extend info msg
    * @return uint32_t: 0 indicates success, while the others fail
    */
-  uint32_t ParseExtMsg(AicpuParamHead *param_head, ExtInfoMsg *ext_info_msg);
+  uint32_t ParseExtMsg(AicpuParamHead *param_head, ExtInfoMsg &ext_info_msg);
 
   /*
    * parse io address.
@@ -170,8 +169,8 @@ class CpuKernelCache : public KernelCache<CpuCacheData> {
    * @param nodedef_len: kernel node def length
    * @return uint32_t: 0 indicates success, while the others fail
    */
-  uint32_t ParseIoAddr(AicpuParamHead *param_head, std::vector<uint64_t> *io_addrs, char **nodedef,
-                       uint32_t *nodedef_len) const;
+  uint32_t ParseIoAddr(AicpuParamHead *param_head, std::vector<uint64_t> &io_addrs, char *&nodedef,
+                       uint32_t &nodedef_len) const;
 
   /*
    * get cpu kernel context from cache
@@ -180,7 +179,7 @@ class CpuKernelCache : public KernelCache<CpuCacheData> {
    * @return uint32_t: 0 indicates success, while the others fail
    */
   std::shared_ptr<CpuKernelContext> GetCpuKernelContext(bool has_sess_info, uint64_t kernel_id, const char *nodedef,
-                                                        uint32_t nodedef_len, std::shared_ptr<NodeDef> *nodedef_proto);
+                                                        uint32_t nodedef_len, std::shared_ptr<NodeDef> &nodedef_proto);
 
   /*
    * get cpu kernel context from cache
@@ -191,7 +190,7 @@ class CpuKernelCache : public KernelCache<CpuCacheData> {
    */
   std::shared_ptr<CpuKernelContext> GetCpuKernelContextWithBlock(std::shared_ptr<ExtInfoMsg> extInfoMsg,
                                                                  const char *nodedef, uint32_t nodedef_len,
-                                                                 std::shared_ptr<NodeDef> *nodedef_proto,
+                                                                 std::shared_ptr<NodeDef> &nodedef_proto,
                                                                  struct BlkDimInfo *blkdim_info);
 
   /*

@@ -31,7 +31,7 @@ class NodeDefBuilder {
 
   static std::shared_ptr<NodeDef> CreateNodeDef();
 
-  NodeDefBuilder(NodeDef *nodeDef, const std::string &name, std::string opName);
+  NodeDefBuilder(NodeDef *nodeDef, std::string name, std::string opName);
 
   NodeDefBuilder &Input(const InputOutputNode &input);
 
@@ -63,13 +63,13 @@ class NodeDefBuilder {
 
   NodeDefBuilder &Attr(std::string name, const std::vector<aicpu::DataType> &value);
 
-  NodeDefBuilder &Attr(std::string name, const std::vector<int64_t> &dims, const std::string &type);
+  NodeDefBuilder &Attr(std::string name, const std::vector<int64_t> &dims, std::string type);
 
-  NodeDefBuilder &Attr(std::string name, const std::vector<std::vector<int64_t>> &shapeLists, const std::string &type);
+  NodeDefBuilder &Attr(std::string name, const std::vector<std::vector<int64_t>> &shapeLists, std::string type);
 
   NodeDefBuilder &Attr(std::string name, aicpu::Tensor *tensor);
 
-  NodeDefBuilder &Attr(std::string name, const std::vector<aicpu::Tensor *> &tensors);
+  NodeDefBuilder &Attr(std::string name, std::vector<aicpu::Tensor *> &tensors);
 
  private:
   void BuildNodeFromInputOutputNode(const InputOutputNode &node, bool isInput);

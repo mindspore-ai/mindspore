@@ -24,10 +24,10 @@ class FillCpuKernel : public CpuKernel {
  public:
   FillCpuKernel() = default;
   ~FillCpuKernel() override = default;
-  uint32_t Compute(const CpuKernelContext &ctx) override;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t GetDimsByType(const CpuKernelContext &ctx);
+  uint32_t GetDimsByType(CpuKernelContext &ctx);
   /**
    * @brief calc dims from input dims tensor
    * @param dims_tensor input dims tensor

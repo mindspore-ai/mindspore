@@ -24,17 +24,17 @@
 namespace aicpu {
 namespace formats {
 uint32_t Transpose(const uint8_t *src, const std::vector<int64_t> &src_shape, DataType src_data_type,
-                   const std::vector<int64_t> &perm_arg, TransResult *result);
+                   const std::vector<int64_t> &perm_arg, TransResult &result);
 
 uint32_t TransposeWithShapeCheck(const uint8_t *src, const std::vector<int64_t> &src_shape,
                                  const std::vector<int64_t> &dst_shape, DataType src_data_type,
-                                 const std::vector<int64_t> &perm_arg, TransResult *result);
-uint32_t GetPermByForamt(Format src_format, Format dst_format, std::vector<int64_t> *perm);
+                                 const std::vector<int64_t> &perm_arg, TransResult &result);
+uint32_t GetPermByForamt(Format src_format, Format dst_format, std::vector<int64_t> &perm);
 class FormatTransferTranspose : public FormatTransfer {
  public:
-  uint32_t TransFormat(const TransArgs &args, TransResult *result) override;
+  uint32_t TransFormat(const TransArgs &args, TransResult &result) override;
   uint32_t TransShape(Format src_format, const std::vector<int64_t> &src_shape, DataType data_type, Format dst_format,
-                      std::vector<int64_t> *dst_shape, int64_t groups) override;
+                      std::vector<int64_t> &dst_shape, int64_t groups) override;
 };
 }  // namespace formats
 }  // namespace aicpu

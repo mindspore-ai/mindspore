@@ -27,7 +27,7 @@ class TensorShapeImpl {
   friend class CpuKernelUtils;
 
  public:
-  explicit TensorShapeImpl(
+  TensorShapeImpl(
     aicpuops::TensorShape *shape,
     std::function<void(aicpuops::TensorShape *)> del_func = [](aicpuops::TensorShape *p) {})
       : tensor_shape_(shape, del_func) {}
