@@ -30,5 +30,5 @@ mindspore.ops.pad
     异常：
         - **TypeError** - `padding` 不是全为int的tuple或者list。
         - **TypeError** - `input_x` 不是Tensor。
-        - **ValueError** - `paddings` 的shape不等于 2 * len(input_x)。
+        - **ValueError** - `paddings` 的长度不为偶数。
         - **ValueError** - mode不为"constant"并且value不为None。
