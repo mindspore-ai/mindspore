@@ -53,9 +53,9 @@ target_link_libraries(mindspore_cpu_kernels PRIVATE
     -pthread
     )
 
-set(INSTALL_LIBRARY_DIR lib)
+set(INSTALL_LIBRARY_DIR lib/plugin)
 install(TARGETS mindspore_cpu_kernels OPTIONAL
     EXPORT mindspore_cpu_kernels-targets
-    LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR}
+    LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR}/ascend
 )
 
