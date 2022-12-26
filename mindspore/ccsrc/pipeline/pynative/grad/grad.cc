@@ -1889,6 +1889,10 @@ bool GradExecutor::IsGraphDynamic(const AnfNodePtr &anf_node, const size_t node_
     return true;
   }
 
+  if (anf_node->isa<CNode>()) {
+    top_cell()->set_cnode_hash_with_op_index(anf_node->hash(), node_idx);
+  }
+
   // 1.Detect ms_function phase
   const DynamicDetectNodeInfoPtr &old_node_info = dynamic_nodes[node_idx];
   if (is_ms_function_node) {
@@ -1911,7 +1915,6 @@ bool GradExecutor::IsGraphDynamic(const AnfNodePtr &anf_node, const size_t node_
                     << " is different, cnode: " << cnode->fullname_with_scope();
       return true;
     }
-    top_cell()->set_cnode_hash_with_op_index(cnode->hash(), node_idx);
   } else if (anf_node->isa<ValueNode>()) {
     if (!old_anf_node->isa<ValueNode>()) {
       MS_LOG(DEBUG) << "Graph is dynamic, new node: " << anf_node->fullname_with_scope() << " is a value node,"
