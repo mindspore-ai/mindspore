@@ -40,7 +40,7 @@ static NodePtr GetMatrixDiagPartAssist(const BpropIRBuilder *ib, const ShapeVect
   return ib->Reshape(tile, x_shape);
 }
 
-REG_BPROP_BUILDER("MatrixDiag").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MatrixDiag").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto shape = ib->GetShape(dout);
@@ -50,7 +50,7 @@ REG_BPROP_BUILDER("MatrixDiag").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   return {dx, ib->ZerosLike(y)};
 });
 
-REG_BPROP_BUILDER("MatrixDiagPart").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MatrixDiagPart").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -65,7 +65,7 @@ REG_BPROP_BUILDER("MatrixDiagPart").SetBody([](const BpropIRBuilder *ib) -> Node
   return {ib->Emit("MatrixSetDiag", {ib->ZerosLike(x), dout, assist1}), ib->ZerosLike(y)};
 });
 
-REG_BPROP_BUILDER("MatrixSetDiag").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MatrixSetDiag").SetUnusedInputs({i1, i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto z = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
@@ -83,7 +83,7 @@ REG_BPROP_BUILDER("MatrixSetDiag").SetBody([](const BpropIRBuilder *ib) -> NodeP
   return {dx, dy, dz};
 });
 
-REG_BPROP_BUILDER("DSDMatmul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("DSDMatmul").SetBody(BODYFUNC(ib) {
   auto w1_gm = ib->GetInput(kIndex0);
   auto w2_gm = ib->GetInput(kIndex1);
   auto v_gm = ib->GetInput(kIndex2);
@@ -96,13 +96,12 @@ REG_BPROP_BUILDER("DSDMatmul").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {d_w1_gm, d_w2_gm, d_v_gm};
 });
 
-REG_BPROP_BUILDER("MatmulDDS").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MatmulDDS").SetUnusedInputs({i2, i3, i5}).SetBody(BODYFUNC(ib) {
   auto q = ib->GetInput(kIndex0);
   auto k = ib->GetInput(kIndex1);
   auto local_mask = ib->GetInput(kIndex2);
   auto global_mask = ib->GetInput(kIndex3);
   auto out = ib->GetInput(kIndex4);
-  auto d_out = ib->GetInput(kIndex5);
   auto lc = ib->TupleGetItem(out, kIndex0);
   auto gc = ib->TupleGetItem(out, kIndex1);
   auto d_lc = ib->TupleGetItem(out, kIndex0);
@@ -115,7 +114,7 @@ REG_BPROP_BUILDER("MatmulDDS").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   return {dq, dk, ib->ZerosLike(local_mask), ib->ZerosLike(global_mask)};
 });
 
-REG_BPROP_BUILDER("PsROIPooling").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("PsROIPooling").SetBody(BODYFUNC(ib) {
   auto pooled_height = GetValue<int64_t>(ib->GetAttr("pooled_height"));
   auto pooled_width = GetValue<int64_t>(ib->GetAttr("pooled_width"));
   auto spatial_scale = GetValue<float>(ib->GetAttr("spatial_scale"));
@@ -144,7 +143,7 @@ REG_BPROP_BUILDER("PsROIPooling").SetBody([](const BpropIRBuilder *ib) -> NodePt
   return {dx, ib->ZerosLike(rois)};
 });
 
-REG_BPROP_BUILDER("ResizeBilinearV2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ResizeBilinearV2").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -154,18 +153,18 @@ REG_BPROP_BUILDER("ResizeBilinearV2").SetBody([](const BpropIRBuilder *ib) -> No
   return {dx, ib->ZerosLike(size)};
 });
 
-REG_BPROP_BUILDER("ConvertToDynamic").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ConvertToDynamic").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   return {dout};
 });
 
-REG_BPROP_BUILDER("_VirtualPipelineEnd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("_VirtualPipelineEnd").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("_VirtualPipelineEnd", {dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER("FillV2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("FillV2").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
   auto shape = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
   auto dout_typeptr = ib->GetDtype(dout);
@@ -182,7 +181,7 @@ REG_BPROP_BUILDER("FillV2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
   return {ib->ZerosLike(shape), ib->Cast(dvalue, dout_typeptr)};
 });
 
-REG_BPROP_BUILDER("TensorCopySlices").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("TensorCopySlices").SetUnusedInputs({i0, i5}).SetBody(BODYFUNC(ib) {
   auto update = ib->GetInput(kIndex1);
   auto begin = ib->GetInput(kIndex2);
   auto end = ib->GetInput(kIndex3);
@@ -203,14 +202,14 @@ REG_BPROP_BUILDER("TensorCopySlices").SetBody([](const BpropIRBuilder *ib) -> No
   return {x_grad, update_grad, ib->ZerosLike(begin), ib->ZerosLike(end), ib->ZerosLike(stride)};
 });
 
-REG_BPROP_BUILDER("Roll").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   std::vector<int64_t> shift = GetIntList(ib->GetAttr("shift"));
   std::transform(shift.begin(), shift.end(), shift.begin(), [](const int64_t &e) { return -e; });
   return {ib->Emit("Roll", {dout}, {{"axis", ib->GetAttr("axis")}, {"shift", MakeValue(shift)}})};
 });
 
-REG_BPROP_BUILDER("DynamicResizeNearestNeighbor").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("DynamicResizeNearestNeighbor").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto inputs = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -224,7 +223,7 @@ REG_BPROP_BUILDER("DynamicResizeNearestNeighbor").SetBody([](const BpropIRBuilde
     ib->ZerosLike(size)};
 });
 
-REG_BPROP_BUILDER("ParallelResizeBilinear").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ParallelResizeBilinear").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);

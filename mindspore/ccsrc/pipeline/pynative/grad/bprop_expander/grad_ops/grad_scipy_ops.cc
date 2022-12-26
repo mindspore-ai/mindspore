@@ -16,9 +16,10 @@
 
 #include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
 #include "include/common/utils/utils.h"
+#include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 
 namespace mindspore::expander::bprop {
-REG_BPROP_BUILDER("SolveTriangular").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("SolveTriangular").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto reverse_perm = [](const ShapeVector &shape) -> ShapeVector {
     ShapeVector perm;
     for (int64_t i = shape.size() - 1; i >= 0; --i) {
@@ -58,7 +59,7 @@ REG_BPROP_BUILDER("SolveTriangular").SetBody([](const BpropIRBuilder *ib) -> Nod
   return {grad_a, grad_b};
 });
 
-REG_BPROP_BUILDER("Eigh").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
   auto is_compute_v = GetValue<bool>(ib->GetAttr("compute_eigenvectors"));
   auto is_lower = GetValue<bool>(ib->GetAttr("lower"));
   auto lower = static_cast<int64_t>(is_lower);

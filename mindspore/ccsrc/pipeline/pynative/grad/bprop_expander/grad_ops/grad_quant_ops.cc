@@ -16,35 +16,36 @@
 #include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
+#include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 
 namespace mindspore::expander::bprop {
-REG_BPROP_BUILDER("BNTrainingReduce").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BNTrainingReduce").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   return {ib->ZerosLike(x)};
 });
 
-REG_BPROP_BUILDER("MinMaxUpdatePerLayer").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MinMaxUpdatePerLayer").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_min = ib->GetInput(kIndex1);
   auto x_max = ib->GetInput(kIndex2);
   return {ib->ZerosLike(x), ib->ZerosLike(x_min), ib->ZerosLike(x_max)};
 });
 
-REG_BPROP_BUILDER("MinMaxUpdatePerChannel").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MinMaxUpdatePerChannel").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_min = ib->GetInput(kIndex1);
   auto x_max = ib->GetInput(kIndex2);
   return {ib->ZerosLike(x), ib->ZerosLike(x_min), ib->ZerosLike(x_max)};
 });
 
-REG_BPROP_BUILDER("WtsARQ").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("WtsARQ").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto w_min = ib->GetInput(kIndex1);
   auto w_max = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   return {dout, ib->ZerosLike(w_min), ib->ZerosLike(w_max)};
 });
 
-REG_BPROP_BUILDER("FakeQuantPerLayer").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("FakeQuantPerLayer").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_min = ib->GetInput(kIndex1);
   auto x_max = ib->GetInput(kIndex2);
@@ -60,7 +61,7 @@ REG_BPROP_BUILDER("FakeQuantPerLayer").SetBody([](const BpropIRBuilder *ib) -> N
   return {dx, ib->ZerosLike(x_min), ib->ZerosLike(x_max)};
 });
 
-REG_BPROP_BUILDER("FakeQuantWithMinMaxVars").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("FakeQuantWithMinMaxVars").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_min = ib->GetInput(kIndex1);
   auto x_max = ib->GetInput(kIndex2);
@@ -70,7 +71,7 @@ REG_BPROP_BUILDER("FakeQuantWithMinMaxVars").SetBody([](const BpropIRBuilder *ib
   return {dx, ib->ZerosLike(x_min), ib->ZerosLike(x_max)};
 });
 
-REG_BPROP_BUILDER("FakeQuantWithMinMaxVarsPerChannel").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("FakeQuantWithMinMaxVarsPerChannel").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_min = ib->GetInput(kIndex1);
   auto x_max = ib->GetInput(kIndex2);
@@ -80,7 +81,7 @@ REG_BPROP_BUILDER("FakeQuantWithMinMaxVarsPerChannel").SetBody([](const BpropIRB
   return {dx, ib->ZerosLike(x_min), ib->ZerosLike(x_max)};
 });
 
-REG_BPROP_BUILDER("FakeQuantPerChannel").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("FakeQuantPerChannel").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_min = ib->GetInput(kIndex1);
   auto x_max = ib->GetInput(kIndex2);
@@ -94,7 +95,7 @@ REG_BPROP_BUILDER("FakeQuantPerChannel").SetBody([](const BpropIRBuilder *ib) ->
   return {dx, ib->ZerosLike(x_min), ib->ZerosLike(x_max)};
 });
 
-REG_BPROP_BUILDER("BatchNormFold").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BatchNormFold").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto mean = ib->GetInput(kIndex1);
   auto variance = ib->GetInput(kIndex2);
@@ -110,7 +111,7 @@ REG_BPROP_BUILDER("BatchNormFold").SetBody([](const BpropIRBuilder *ib) -> NodeP
   return {dx, ib->ZerosLike(mean), ib->ZerosLike(variance), ib->ZerosLike(global_step)};
 });
 
-REG_BPROP_BUILDER("CorrectionMul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("CorrectionMul").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto batch_std = ib->GetInput(kIndex1);
   auto running_std = ib->GetInput(kIndex2);
@@ -126,7 +127,7 @@ REG_BPROP_BUILDER("CorrectionMul").SetBody([](const BpropIRBuilder *ib) -> NodeP
   return {dx, d_batch_std, ib->ZerosLike(running_std)};
 });
 
-REG_BPROP_BUILDER("BatchNormFold2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BatchNormFold2").SetUnusedInputs({i1, i8}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto gamma = ib->GetInput(kIndex2);
   auto batch_std = ib->GetInput(kIndex3);
@@ -153,7 +154,7 @@ REG_BPROP_BUILDER("BatchNormFold2").SetBody([](const BpropIRBuilder *ib) -> Node
           ib->ZerosLike(global_step)};
 });
 
-REG_BPROP_BUILDER("BatchNormFoldD").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BatchNormFoldD").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_sum = ib->GetInput(kIndex1);
   auto x_square_sum = ib->GetInput(kIndex2);
@@ -170,7 +171,7 @@ REG_BPROP_BUILDER("BatchNormFoldD").SetBody([](const BpropIRBuilder *ib) -> Node
   return {dx, ib->ZerosLike(x_sum), ib->ZerosLike(x_square_sum), ib->ZerosLike(mean), ib->ZerosLike(variance)};
 });
 
-REG_BPROP_BUILDER("BatchNormFold2D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BatchNormFold2D").SetUnusedInputs({i1, i6}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto gamma = ib->GetInput(kIndex2);
   auto batch_std = ib->GetInput(kIndex3);
@@ -189,7 +190,7 @@ REG_BPROP_BUILDER("BatchNormFold2D").SetBody([](const BpropIRBuilder *ib) -> Nod
   return {d_x, dout_reduce, d_gamma, d_batch_std, d_batch_mean, ib->ZerosLike(running_std)};
 });
 
-REG_BPROP_BUILDER("ActsULQ").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ActsULQ").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex4);
   auto dout0 = ib->TupleGetItem(dout, kIndex0);
@@ -202,7 +203,7 @@ REG_BPROP_BUILDER("ActsULQ").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   return {dx, dx1, dx2};
 });
 
-REG_BPROP_BUILDER("FakeLearnedScaleQuantPerLayer").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("FakeLearnedScaleQuantPerLayer").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_alpha = ib->GetInput(kIndex1);
   auto x_quant_max = ib->GetInput(kIndex2);
@@ -214,7 +215,7 @@ REG_BPROP_BUILDER("FakeLearnedScaleQuantPerLayer").SetBody([](const BpropIRBuild
   return {dx, dalpha, ib->ZerosLike(x_quant_max)};
 });
 
-REG_BPROP_BUILDER("FakeLearnedScaleQuantPerChannel").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("FakeLearnedScaleQuantPerChannel").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_alpha = ib->GetInput(kIndex1);
   auto x_quant_max = ib->GetInput(kIndex2);

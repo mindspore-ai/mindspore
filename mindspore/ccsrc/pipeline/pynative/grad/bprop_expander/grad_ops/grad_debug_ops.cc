@@ -15,27 +15,28 @@
  */
 #include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
 #include "include/common/utils/utils.h"
+#include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 
 namespace mindspore::expander::bprop {
-REG_BPROP_BUILDER("ScalarSummary").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ScalarSummary").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto tag = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   return {tag, ib->ZerosLike(x)};
 });
 
-REG_BPROP_BUILDER("TensorSummary").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("TensorSummary").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto tag = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   return {tag, ib->ZerosLike(x)};
 });
 
-REG_BPROP_BUILDER("ImageSummary").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ImageSummary").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto tag = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   return {tag, ib->ZerosLike(x)};
 });
 
-REG_BPROP_BUILDER("HistogramSummary").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("HistogramSummary").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto tag = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   return {tag, ib->ZerosLike(x)};

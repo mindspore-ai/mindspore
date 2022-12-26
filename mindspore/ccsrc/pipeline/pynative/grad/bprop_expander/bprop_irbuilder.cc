@@ -26,27 +26,10 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
-namespace {
-constexpr size_t kMaxDims = 8;
-}  // namespace
-
-bool BpropIRBuilder::Run(const NodePtrList &inputs, const DAttr &attrs, CNodePtrList *outputs) {
-  MS_EXCEPTION_IF_NULL(outputs);
-  if (!BpropIRBuilderFactory::Instance().HasOp(name())) {
-    return false;
-  }
+NodePtrList BpropIRBuilder::Run(const NodePtrList &inputs, const DAttr &attrs, const BpropHandle &handle) {
   inputs_ptr_ = &inputs;
   attrs_ptr_ = &attrs;
-  auto func = BpropIRBuilderFactory::Instance().GetBuilder(name());
-  auto output_nodes = func(this);
-  outputs->reserve(output_nodes.size());
-  (void)std::transform(output_nodes.cbegin(), output_nodes.cend(), std::back_inserter(*outputs),
-                       [](const NodePtr &node) {
-                         auto cnode = node->get<CNodePtr>();
-                         MS_EXCEPTION_IF_NULL(cnode);
-                         return cnode;
-                       });
-  return true;
+  return handle.func(this);
 }
 
 ValuePtr BpropIRBuilder::GetAttr(const std::string &attr) const {
@@ -86,6 +69,7 @@ std::string BpropIRBuilder::GetTargetFromContext() const {
 NodePtr BpropIRBuilder::TensorGetItem(const NodePtr &node, int64_t idx) const {
   auto data_shape = GetShape(node);
   auto n = data_shape.size();
+  constexpr const size_t kMaxDims = 8;
   if (n < 1 || n > kMaxDims) {
     MS_EXCEPTION(ValueError) << "Expect Tensor to have dimension between 1 and " << kMaxDims << ", but got: " << n;
   }

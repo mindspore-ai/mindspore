@@ -28,12 +28,22 @@
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/expander.h"
 #include "pipeline/jit/pass.h"
+#include "pipeline/pynative/grad/bprop_expander/bprop.h"
 
 namespace mindspore {
 namespace pynative {
 namespace {
 const mindspore::HashSet<std::string> kHookOp = {"HookBackward", "CellBackwardHook"};
 const char kGrad[] = "grad";
+
+void ClearDeviceAddress(const ValuePtr &value) {
+  std::vector<tensor::TensorPtr> tensors;
+  TensorValueToTensor(value, &tensors);
+  for (auto tensor : tensors) {
+    tensor->set_device_address(nullptr);
+    tensor->set_is_forward_output(false);
+  }
+}
 
 std::string GetCellId(const py::object &obj, const py::args &args, const InputArgsInfoPtr &input_args_info) {
   auto cell_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
@@ -443,20 +453,24 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
   if (input_args_info->input_size != 0 && input_value.empty()) {
     MS_LOG(EXCEPTION) << "Input value is empty";
   }
+  AbstractBasePtrList abs_list;
   for (size_t i = 0; i < input_args_info->input_size; ++i) {
     const auto &v = input_value[i];
     if (!PyNativeAlgo::Common::IsTensor(v)) {
       continue;
     }
     auto new_param = curr_g()->add_parameter();
-    (void)input_param_values.emplace_back(v);
+    auto cloned_v = ShallowCopyTensorValue(v);
+    ClearDeviceAddress(cloned_v);
+    (void)input_param_values.emplace_back(cloned_v);
     auto param_i_abs = v->ToAbstract();
     MS_EXCEPTION_IF_NULL(param_i_abs);
     param_i_abs = param_i_abs->Broaden();
     new_param->set_abstract(param_i_abs);
+    (void)abs_list.emplace_back(param_i_abs);
     top_cell()->SetParamNodeMapInGraphInfoMap(input_args_info->input_arg_id_vec[i], new_param);
   }
-  top_cell()->set_auto_grad_cell_ptr(ad::GradPynativeCellBegin(curr_g()->parameters(), input_param_values));
+  top_cell()->set_auto_grad_cell_ptr(ad::GradPynativeCellBegin(curr_g()->parameters(), input_param_values, abs_list));
 }
 
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
@@ -577,6 +591,7 @@ void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v, const std::string &
   auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
   auto cloned_value = ShallowCopyTensorValue(v);
+  ClearDeviceAddress(cloned_value);
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
     AsyncUpdateOutputNodeOfTopCell(output_node, cloned_value);
   } else {
@@ -1552,6 +1567,19 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNode
                        std::back_inserter(cloned_op_args),
                        [](const ValuePtr &value) { return ShallowCopyTensorValue(value); });
   ValuePtr cloned_out = ShallowCopyTensorValue(op_out);
+  const auto &unused_inputs = BpropExpander().GetUnusedInputs(cnode);
+  auto is_unused_index = [&unused_inputs](size_t i) {
+    return std::find(unused_inputs.begin(), unused_inputs.end(), i) != unused_inputs.end();
+  };
+  for (size_t i = 0; i < cloned_op_args.size(); i++) {
+    if (is_unused_index(i)) {
+      ClearDeviceAddress(cloned_op_args[i]);
+    }
+  }
+  if (is_unused_index(cloned_op_args.size())) {
+    ClearDeviceAddress(cloned_out);
+  }
+
   auto grad_param =
     std::make_shared<ad::GradParam>(cnode, cloned_op_args, cloned_out, nullptr, !top_cell()->is_high_order_top_cell());
   auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();

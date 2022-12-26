@@ -40,6 +40,14 @@
 "mindspore/mindspore/core/ops/max_pool.cc"                                                            "zerodivcond"
 "mindspore/core/utils/log_adapter.cc"                                                                 "stlIfStrFind"
 "mindspore/mindspore/ccsrc/transform/graph_ir/convert.cc"                                             "knownConditionTrueFalse"
+"mindspore/mindspore/ccsrc/pipeline/pynative/grad/bprop_expander/grad_ops/grad_array_ops.cc"          "internalAstError"
+"mindspore/mindspore/ccsrc/pipeline/pynative/grad/bprop_expander/grad_ops/grad_image_ops.cc"          "internalAstError"
+"mindspore/mindspore/ccsrc/pipeline/pynative/grad/bprop_expander/grad_ops/grad_inner_ops.cc"          "internalAstError"
+"mindspore/mindspore/ccsrc/pipeline/pynative/grad/bprop_expander/grad_ops/grad_math_ops.cc"           "internalAstError"
+"mindspore/mindspore/ccsrc/pipeline/pynative/grad/bprop_expander/grad_ops/grad_nn_ops.cc"             "internalAstError"
+"mindspore/mindspore/ccsrc/pipeline/pynative/grad/bprop_expander/grad_ops/grad_quant_ops.cc"          "internalAstError"
+"mindspore/mindspore/ccsrc/pipeline/pynative/grad/bprop_expander/grad_ops/grad_scipy_ops.cc"          "internalAstError"
+"mindspore/mindspore/ccsrc/pipeline/pynative/grad/bprop_expander/grad_ops/grad_sparse_ops.cc"         "internalAstError"
 
 # MindData
 "mindspore/mindspore/ccsrc/minddata/dataset/engine/dataset_iterator.cc"                               "useStlAlgorithm"
