@@ -609,7 +609,7 @@ def positive(x):
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), ms.float32)
+        >>> x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), mstype.float32)
         >>> print(ops.positive(x))
         [-5.0, 1.5, 3.0, 100.0]
     """
@@ -1946,7 +1946,7 @@ def t(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor([[1, 2, 3], [2, 3, 4]], ms.float32)
+        >>> x = Tensor([[1, 2, 3], [2, 3, 4]], mstype.float32)
         >>> output = ops.t(x)
         >>> print(output)
         [[1. 2.]
@@ -2727,7 +2727,7 @@ def inverse(x):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor([[1., 2.], [3., 4.]], ms.float32)
+        >>> x = Tensor([[1., 2.], [3., 4.]], mstype.float32)
         >>> print(ops.inverse(x))
         [[-2.   1. ]
          [ 1.5 -0.5]]
@@ -6155,7 +6155,7 @@ def view_as_real(x):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor([2+1j,2+3j,2-1j,2], ms.complex64),
+        >>> x = Tensor([2+1j,2+3j,2-1j,2], mstype.complex64)
         >>> print(ops.view_as_real(x))
         [[ 2.  1.]
          [ 2.  3.]
@@ -7572,14 +7572,14 @@ def inner(x, other):
 
     Examples:
         >>> # case1: 2 1D tensors
-        >>> x = ms.Tensor([1, 2, 3], ms.float32)
-        >>> y = ms.Tensor([4, 5, 6], ms.float32)
+        >>> x = ms.Tensor([1, 2, 3], mstype.float32)
+        >>> y = ms.Tensor([4, 5, 6], mstype.float32)
         >>> output = ops.inner(x, y)
         >>> print(output)
         32
         >>> # case2: Tensor scalar and tensor
-        >>> x = ms.Tensor([[[1, 2, 3], [3, 2, 1]], [[4, 5, 6], [4, 5, 6]]], ms.float32)
-        >>> y = ms.Tensor(2, ms.float32)
+        >>> x = ms.Tensor([[[1, 2, 3], [3, 2, 1]], [[4, 5, 6], [4, 5, 6]]], mstype.float32)
+        >>> y = ms.Tensor(2, mstype.float32)
         >>> output = ops.inner(x, y)
         >>> print(output)
         [[[ 2.  4.  6.]
@@ -7587,8 +7587,8 @@ def inner(x, other):
          [[ 8. 10. 12.]
           [ 8. 10. 12.]]]
         >>> # case3: Two tensors
-        >>> x = ms.Tensor([[[1, 2, 3], [3, 2, 1]], [[4, 5, 6], [4, 5, 6]]], ms.float32)
-        >>> y = ms.Tensor([[2, 3, 4], [4, 3, 2]], ms.float32)
+        >>> x = ms.Tensor([[[1, 2, 3], [3, 2, 1]], [[4, 5, 6], [4, 5, 6]]], mstype.float32)
+        >>> y = ms.Tensor([[2, 3, 4], [4, 3, 2]], mstype.float32)
         >>> output = ops.inner(x, y)
         >>> print(output)
         [[[20. 16.]
@@ -9326,7 +9326,7 @@ def isposinf(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> output = ops.isposinf(Tensor([-float("inf"), float("inf"), 1.2], ms.float32))
+        >>> output = ops.isposinf(Tensor([-float("inf"), float("inf"), 1.2], mstype.float32))
         >>> print(output)
         [False  True False]
     """
@@ -9350,7 +9350,7 @@ def isneginf(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> output = ops.isneginf(Tensor([-float("inf"), float("inf"), 1.2], ms.float32))
+        >>> output = ops.isneginf(Tensor([-float("inf"), float("inf"), 1.2], mstype.float32))
         >>> print(output)
         [ True False False]
     """
@@ -9616,7 +9616,7 @@ def sum(x, dim=None, keepdim=False, *, dtype=None):
     Examples:
         >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
         ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
-        ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), ms.float32)
+        ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mstype.float32)
         >>> out = ops.sum(x)
         >>> print(out)
         270.0
