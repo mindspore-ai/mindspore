@@ -178,6 +178,15 @@ class MakeListEvaluator : public TransitionPrimEvaluator {
                          const AnfNodeConfigPtr &out_conf) override;
 };
 
+class PyExecuteEvaluator : public TransitionPrimEvaluator {
+ public:
+  PyExecuteEvaluator() : TransitionPrimEvaluator("PyExecuteEvaluator") {}
+  ~PyExecuteEvaluator() override = default;
+  MS_DECLARE_PARENT(PyExecuteEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override;
+};
+
 bool IsInWhiteList(const PrimitivePtr &primitive);
 
 PrimEvaluatorMap &GetPrimEvaluatorConstructors();

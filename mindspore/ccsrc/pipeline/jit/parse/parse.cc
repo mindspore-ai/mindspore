@@ -1218,6 +1218,22 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   UpdateInterpretForUserNode(call_cnode, call_function_node);
   MS_EXCEPTION_IF_NULL(call_cnode);
 
+  MS_LOG(DEBUG) << "call_cnode: " << call_cnode->DebugString()
+                << ", call_function_node: " << call_function_node->DebugString();
+  // Support tensor.asnumpy() in runtime by JIT Fallback.
+  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") == "1");
+  if (support_fallback_runtime && IsPrimitiveCNode(call_function_node, prim::kPrimGetAttr)) {
+    constexpr size_t index_two = 2;
+    const auto &attr_node = call_function_node->cast<CNodePtr>()->input(index_two);
+    const auto &attr_str = GetValueNode<StringImmPtr>(attr_node);
+    MS_EXCEPTION_IF_NULL(attr_str);
+    if (attr_str->value() == "asnumpy") {
+      call_cnode->set_interpret(true);
+      call_cnode = HandleInterpret(block, call_cnode, node);
+      return call_cnode;
+    }
+  }
+
   // Process bulitin function, for example, sum(np.array(xx))
   py::tuple namespace_info = ast_->CallParserObjMethod(PYTHON_PARSE_GET_BUILTIN_NAMESPACE_SYMBOL, name_id);
   constexpr size_t namespace_info_size = 4;
@@ -1432,7 +1448,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
 
   // Process the node attr
   auto attr_str = python_adapter::GetPyObjAttr(node, "attr").cast<std::string>();
-  MS_LOG(DEBUG) << "Attr = " << attr_str;
+  MS_LOG(DEBUG) << "node: " << node << ", attr: " << attr_str << ", value: " << value_body;
   // The fallback feature is enabled in default.
   static const auto use_fallback = (support_fallback() != "0");
   if (use_fallback && attr_str == "Tensor") {
@@ -1449,21 +1465,19 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
       return ret;
     }
   }
-  AnfNodePtr attr_node = nullptr;
-  {
-    TraceGuard guard(GetLocation(python_adapter::GetPyObjAttr(node, "attr")));
-    attr_node = NewValueNode(attr_str);
-  }
+
   MS_EXCEPTION_IF_NULL(block->func_graph());
   // Create the apply node
+  AnfNodePtr attr_node = NewValueNode(attr_str);
   auto attr_cnode = block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node});
   if (use_fallback) {
     // Check whether it is constant, constant does not need interpret.
     auto value_str = py::cast<std::string>(ast()->GetAstNodeText(value_body));
     py::bool_ is_const_value =
       ast()->CallParserObjMethod(PYTHON_PARSE_CHECK_IS_CONSTANT_VALUE, value_str, common::SafeCStr(attr_str));
+    static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") == "1");
     auto is_constant = py::cast<bool>(is_const_value);
-    if (!is_constant) {
+    if (!is_constant || (support_fallback_runtime && attr_str == "asnumpy")) {
       UpdateInterpretForUserNode(attr_cnode, value_node);
     }
   }
@@ -2114,7 +2128,7 @@ CNodePtr GenerateInterpretGetItem(const FuncGraphPtr &fg, const AnfNodePtr &iter
   auto local_dict_node = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeDict), local_dict_key, local_dict_value});
 
   // Construct script text node.
-  parse::ScriptPtr script = std::make_shared<parse::Script>("x[i]");
+  auto script = std::make_shared<Script>("x[i]");
   auto script_node = NewValueNode(script);
 
   return fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});

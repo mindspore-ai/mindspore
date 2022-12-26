@@ -80,8 +80,6 @@ MS_CORE_API PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap();
 
 MS_CORE_API StandardPrimitiveImplReg GetPrimitiveInferImpl(const PrimitivePtr &primitive);
 
-MS_CORE_API std::set<int64_t> GetValueDependArgIndices(const std::string &prim_name, size_t input_num);
-
 MS_CORE_API std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode);
 
 MS_CORE_API void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &impl_reg);

@@ -886,8 +886,9 @@ AnfNodePtr AnfAlgo::GetInputNode(const CNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   auto get_input_index = index + 1;
   if (get_input_index >= node->inputs().size()) {
-    MS_LOG(EXCEPTION) << "Input index size " << get_input_index << "but the node input size just"
-                      << node->inputs().size() << "." << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Input index size " << get_input_index << ", but the node input size just "
+                      << node->inputs().size() << ". node: " << node->DebugString() << "."
+                      << trace::DumpSourceLines(node);
   }
   // input 0 is primitive node
   return node->input(get_input_index);

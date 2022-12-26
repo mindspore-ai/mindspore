@@ -68,7 +68,7 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
     const auto &key = key_list[index];
     CheckDictKey(key, op_name);
   }
-  std::vector<AbstractAttribute> key_value;
+  std::vector<AbstractElementPair> key_value;
   AbstractBasePtrList value_list = values->elements();
   for (size_t index = 0; index < keys_size; index++) {
     (void)key_value.emplace_back(key_list[index], value_list[index]);
@@ -259,8 +259,8 @@ AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitiveP
 
   ValuePtr key_value = key->BuildValue();
   MS_EXCEPTION_IF_NULL(key_value);
-  std::vector<AbstractAttribute> dict_elems = dict->elements();
-  auto it = std::find_if(dict_elems.cbegin(), dict_elems.cend(), [&key_value](const AbstractAttribute &item) {
+  std::vector<AbstractElementPair> dict_elems = dict->elements();
+  auto it = std::find_if(dict_elems.cbegin(), dict_elems.cend(), [&key_value](const AbstractElementPair &item) {
     return *key_value == *item.first->BuildValue();
   });
   if (it == dict_elems.end()) {
@@ -284,8 +284,8 @@ AbstractBasePtr InferImplDictSetItem(const AnalysisEnginePtr &, const PrimitiveP
 
   ValuePtr key_value = key->BuildValue();
   MS_EXCEPTION_IF_NULL(key_value);
-  std::vector<AbstractAttribute> dict_elems = dict->elements();
-  auto it = std::find_if(dict_elems.cbegin(), dict_elems.cend(), [&key_value](const AbstractAttribute &item) {
+  std::vector<AbstractElementPair> dict_elems = dict->elements();
+  auto it = std::find_if(dict_elems.cbegin(), dict_elems.cend(), [&key_value](const AbstractElementPair &item) {
     return *key_value == *item.first->BuildValue();
   });
 
@@ -307,10 +307,10 @@ AbstractBasePtr InferImplDictGetKeys(const AnalysisEnginePtr &, const PrimitiveP
   constexpr int args_spec_size = 1;
   CheckArgsSize(op_name, args_spec_list, args_spec_size);
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
-  std::vector<AbstractAttribute> dict_elems = dict->elements();
+  std::vector<AbstractElementPair> dict_elems = dict->elements();
   AbstractBasePtrList keys;
   std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(keys),
-                 [](const AbstractAttribute &item) { return item.first; });
+                 [](const AbstractElementPair &item) { return item.first; });
   return std::make_shared<AbstractTuple>(keys);
 }
 
@@ -321,10 +321,10 @@ AbstractBasePtr InferImplDictGetValues(const AnalysisEnginePtr &, const Primitiv
   constexpr int args_spec_size = 1;
   CheckArgsSize(op_name, args_spec_list, args_spec_size);
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
-  std::vector<AbstractAttribute> dict_elems = dict->elements();
+  std::vector<AbstractElementPair> dict_elems = dict->elements();
   AbstractBasePtrList values;
   std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(values),
-                 [](const AbstractAttribute &item) { return item.second; });
+                 [](const AbstractElementPair &item) { return item.second; });
   return std::make_shared<AbstractTuple>(values);
 }
 
@@ -335,10 +335,10 @@ AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr
   constexpr int args_spec_size = 1;
   CheckArgsSize(op_name, args_spec_list, args_spec_size);
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
-  std::vector<AbstractAttribute> dict_elems = dict->elements();
+  std::vector<AbstractElementPair> dict_elems = dict->elements();
   AbstractBasePtrList items;
   (void)std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(items),
-                       [](const AbstractAttribute &item) {
+                       [](const AbstractElementPair &item) {
                          return std::make_shared<AbstractTuple>(AbstractBasePtrList{item.first, item.second});
                        });
   return std::make_shared<AbstractList>(items);
