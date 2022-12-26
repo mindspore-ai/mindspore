@@ -452,28 +452,42 @@ py::object VectorToPyData(const Any &value) {
 }
 
 py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &abs) {
-  // Current VectorRef reflects a COOTensor type
-  if (abs != nullptr && abs->isa<abstract::AbstractCSRTensor>()) {
-    return MakeCSRTensor(value_list);
-  }
-  if (abs != nullptr && abs->isa<abstract::AbstractCOOTensor>()) {
-    return MakeCOOTensor(value_list);
-  }
-
   py::object ret;
   size_t value_size = value_list.size();
   auto ref_tuple = py::tuple(value_size);
-  auto seq_abs = CheckAbstractElementsSize<abstract::AbstractSequencePtr>(abs, value_size);
-  if (seq_abs == nullptr) {
+  if (abs == nullptr) {
     for (size_t i = 0; i < value_size; i++) {
       ref_tuple[i] = BaseRefToPyData(value_list[i]);
     }
-  } else {
-    for (size_t i = 0; i < value_size; i++) {
-      ref_tuple[i] = BaseRefToPyData(value_list[i], seq_abs->elements()[i]);
-    }
+    ret = ref_tuple;
+    return ret;
   }
-  return ref_tuple;
+
+  // Current VectorRef reflects a COOTensor type
+  if (abs->isa<abstract::AbstractCSRTensor>()) {
+    return MakeCSRTensor(value_list);
+  }
+  if (abs->isa<abstract::AbstractCOOTensor>()) {
+    return MakeCOOTensor(value_list);
+  }
+  auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_abs);
+  // The size of seq_abs may be larger than the size of value_list, because the backend will eliminate None.
+  size_t ref_idx = 0;
+  for (size_t i = 0; i < seq_abs->size(); i++) {
+    auto elem_abs = seq_abs->elements()[i];
+    if (elem_abs->isa<abstract::AbstractNone>()) {
+      continue;
+    }
+    ref_tuple[ref_idx] = BaseRefToPyData(value_list[ref_idx], elem_abs);
+    ref_idx++;
+  }
+  if (ref_idx != value_size) {
+    MS_LOG(EXCEPTION) << "The size of elements (excluding None) should be equal to " << value_size << ", but got "
+                      << ref_idx;
+  }
+  ret = ref_tuple;
+  return ret;
 }
 
 bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
