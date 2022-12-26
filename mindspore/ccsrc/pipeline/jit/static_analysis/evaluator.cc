@@ -431,12 +431,7 @@ FuncGraphPtr GetCloneBpropGraph(const MetaFuncGraphPtr &meta_func_graph, const F
 FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list) {
   auto iter = func_graph_cache_.find(args_abs_list);
   if (iter != func_graph_cache_.end()) {
-    if (!meta_func_graph_->isa<graph_bprop::BpropMetaFuncGraph>()) {
-      return iter->second;
-    }
-    auto cloned_func_graph = GetCloneBpropGraph(meta_func_graph_, iter->second, this->bound_node(), scope_);
-    engine->func_graph_manager()->AddFuncGraph(cloned_func_graph);
-    return cloned_func_graph;
+    return iter->second;
   }
 
   MS_EXCEPTION_IF_NULL(meta_func_graph_);

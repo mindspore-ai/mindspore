@@ -50,38 +50,19 @@ FuncGraphPtr KPrim::GetPrimBprop(const PrimitivePtr &prim, const ValueNodePtr &v
                                  const pipeline::ResourceBasePtr &resources) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(value_node);
-  FuncGraphPtr bprop_fg = nullptr;
   auto iter = bprop_registry_.find(prim);
   if (iter != bprop_registry_.end()) {
-    bprop_fg = iter->second;
+    return iter->second;
   }
 
-  if (bprop_fg == nullptr) {
-    bprop_fg = GetBprop(prim, resources);
-    if (bprop_fg != nullptr) {
-      // Set bprop_g graph cache
-      bprop_registry_[prim] = bprop_fg;
-    } else {
-      bprop_fg = FakeBprop(value_node, resources);
-    }
-  }
-  return bprop_fg;
-}
-
-FuncGraphPtr KPrim::GetPossibleBprop(const PrimitivePtr &prim) {
-  FuncGraphPtr bprop_fg = nullptr;
-  auto iter = bprop_registry_.find(prim);
-  if (iter != bprop_registry_.end()) {
-    bprop_fg = iter->second;
+  FuncGraphPtr bprop_fg = GetBprop(prim, resources);
+  if (bprop_fg != nullptr) {
+    // Set bprop_g graph cache
+    bprop_registry_[prim] = bprop_fg;
+  } else {
+    bprop_fg = FakeBprop(value_node, resources);
   }
 
-  if (bprop_fg == nullptr) {
-    bprop_fg = GetBprop(prim);
-    if (bprop_fg != nullptr) {
-      // Set bprop_g graph cache
-      bprop_registry_[prim] = bprop_fg;
-    }
-  }
   return bprop_fg;
 }
 

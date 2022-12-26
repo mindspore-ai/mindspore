@@ -98,6 +98,7 @@ const char kFuncGraphFlagUndetermined[] = "undeterminate";
 const char kFuncGraphFlagBackPropEntry[] = "back_prop_entry";
 const char kFuncGraphFlagReAutoMonad[] = "re_auto_monad";
 const char kFuncGraphFlagRecursive[] = "recursive";
+const char kFuncGraphFlagMetaFuncGraphBprop[] = "meta_fg_bprop";
 
 class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
  public:
