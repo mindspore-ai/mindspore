@@ -308,16 +308,18 @@ class BACKEND_EXPORT KernelMod {
   virtual const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
   virtual const std::vector<std::vector<int64_t>> &GetInputShapes() const { return input_shapes_; }
   virtual const std::vector<std::vector<int64_t>> &GetOutputShapes() const { return output_shapes_; }
-  virtual bool Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &workspace,
-                      const std::vector<KernelTensorPtr> &outputs, void *stream_ptr);
+  virtual bool Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+                      const std::vector<AddressPtr> &workspace, void *stream_ptr);
   // deprecated
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr);
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void ReleaseResource() {}
   // Initialization for the kernel mod.
-  virtual bool Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> & /* inputs */,
-                    const std::vector<KernelTensorPtr> & /* outputs */) {
+  virtual bool Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> &inputs,
+                    const std::vector<KernelTensorPtr> &outputs) {
+    this->inputs_ = inputs;
+    this->outputs_ = outputs;
     return true;
   }
   virtual std::vector<KernelAttr> GetOpSupport() = 0;
@@ -383,6 +385,9 @@ class BACKEND_EXPORT KernelMod {
   std::vector<AddressPtr> inputs_addr_;
   std::vector<AddressPtr> workspaces_addr_;
   std::vector<AddressPtr> outputs_addr_;
+  std::vector<KernelTensorPtr> inputs_;
+  std::vector<KernelTensorPtr> workspace_;
+  std::vector<KernelTensorPtr> outputs_;
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
 
