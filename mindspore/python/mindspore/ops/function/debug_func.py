@@ -44,7 +44,7 @@ def print_(*input_x):
         Invalid value, should be ignored.
 
     Raises:
-        TypeError: If `input_x` is not one of the following: Tensor, bool, int, float, str.
+        TypeError: If `input_x` is not one of the following: Tensor, bool, int, float, str, tuple or list.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
