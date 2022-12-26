@@ -35,6 +35,7 @@ class ResourceManager {
   Status DistinguishPhysicalAndLogical(std::vector<int> *physical_cores, std::vector<int> *logical_cores);
   Status DistinguishPhysicalAndLogicalByNuma(std::vector<std::vector<int>> *numa_physical_cores,
                                              std::vector<std::vector<int>> *numa_logical_cores);
+  std::string GenRunnerID();
 
  private:
   ResourceManager() = default;
@@ -47,6 +48,7 @@ class ResourceManager {
   std::vector<int> logical_core_ids_ = {};
   std::vector<std::vector<int>> numa_physical_core_ids_;
   std::vector<std::vector<int>> numa_logical_core_ids_;
+  size_t runner_id_ = 1;
 };
 
 class InitWorkerThread {

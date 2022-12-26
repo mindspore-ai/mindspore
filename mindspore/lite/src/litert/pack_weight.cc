@@ -262,15 +262,19 @@ void PackWeight::FreePackWeight(std::string id) {
   }
   model_weights_.erase(id);
   shared_bufs_.erase(id);
+  MS_LOG(INFO) << "FreePackWeight done.";
 }
 
 PackWeight::~PackWeight() {
+  MS_LOG(INFO) << "~PackWeight() begin";
   if (model_weights_.empty()) {
+    MS_LOG(INFO) << "~PackWeight() empty end";
     return;
   }
   for (auto &numa_item : model_weights_) {
     std::string id = numa_item.first;
     FreePackWeight(id);
   }
+  MS_LOG(INFO) << "~PackWeight() end";
 }
 }  // namespace mindspore::lite

@@ -1024,7 +1024,7 @@ LiteSession::~LiteSession() {
 #endif
   delete ms_context_;
   ms_context_ = nullptr;
-  lite::PackWeightManager::GetInstance()->FreePackWeight(id_);
+  lite::PackWeightManager::GetInstance()->FreePackWeight(runner_id_, model_id_);
   if (model_ != nullptr && is_shared_weight_) {
     model_->buf = nullptr;
   }
@@ -1682,13 +1682,14 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
 int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type,
                                                 const size_t &buf_size) {
 #endif
-  auto status = lite::PackWeightManager::GetInstance()->InitPackWeightManager(model_buf, buf_size, &id_, config_info_);
+  auto status = lite::PackWeightManager::GetInstance()->InitPackWeightManager(model_buf, buf_size, &model_id_,
+                                                                              &runner_id_, config_info_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "InitPackWeightByBuf failed.";
     return RET_ERROR;
   }
   auto new_model_buf =
-    lite::PackWeightManager::GetInstance()->GetSharedModelBuf(model_buf, id_, config_info_, &is_shared_weight_);
+    lite::PackWeightManager::GetInstance()->GetSharedModelBuf(model_buf, model_id_, config_info_, &is_shared_weight_);
   if (new_model_buf == nullptr) {
     MS_LOG(ERROR) << "get shared model buf is nullptr.";
     return RET_ERROR;
@@ -1729,14 +1730,14 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
     MS_LOG(ERROR) << "Read model file failed";
     return RET_ERROR;
   }
-  auto status =
-    lite::PackWeightManager::GetInstance()->InitPackWeightManager(model_buf, model_size, &id_, config_info_);
+  auto status = lite::PackWeightManager::GetInstance()->InitPackWeightManager(model_buf, model_size, &model_id_,
+                                                                              &runner_id_, config_info_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "InitPackWeightByBuf failed.";
     return RET_ERROR;
   }
   auto new_model_buf =
-    lite::PackWeightManager::GetInstance()->GetSharedModelBuf(model_buf, id_, config_info_, &is_shared_weight_);
+    lite::PackWeightManager::GetInstance()->GetSharedModelBuf(model_buf, model_id_, config_info_, &is_shared_weight_);
   if (new_model_buf == nullptr) {
     MS_LOG(ERROR) << "get shared model buf is nullptr.";
     return RET_ERROR;

@@ -264,11 +264,12 @@ Status ModelImpl::Build() {
     return kLiteNullptr;
   }
   std::string model_id;
+  std::string runner_id;
   auto model_buf = model->buf;
   auto model_size = model->buf_size_;
   auto is_shared_weight = false;
-  auto status =
-    lite::PackWeightManager::GetInstance()->InitPackWeightManager(model_buf, model_size, &model_id, &config_info_);
+  auto status = lite::PackWeightManager::GetInstance()->InitPackWeightManager(model_buf, model_size, &model_id,
+                                                                              &runner_id, &config_info_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "InitPackWeightByBuf failed.";
     return kLiteError;

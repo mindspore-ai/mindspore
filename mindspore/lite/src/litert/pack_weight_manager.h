@@ -32,7 +32,7 @@ class PackWeightManager {
  public:
   static PackWeightManager *GetInstance();
   ~PackWeightManager() = default;
-  STATUS InitPackWeightManager(const char *model_buf, size_t model_size, std::string *model_id,
+  STATUS InitPackWeightManager(const char *model_buf, size_t model_size, std::string *model_id, std::string *runner_id,
                                const std::map<std::string, std::map<std::string, std::string>> *config_info);
   char *GetSharedModelBuf(const char *model_buf, std::string model_id,
                           const std::map<std::string, std::map<std::string, std::string>> *config_info,
@@ -42,8 +42,7 @@ class PackWeightManager {
   void Free(void *tensor_data);
   bool IsCopyTensor(int op_type);
   void *ReplaceFp16Data(void *origin_fp16_data, size_t size, bool *replace);
-  void FreePackWeight(std::string id);
-  std::string GenRunnerID();
+  void FreePackWeight(std::string runner_id, std::string model_id);
   std::string GenModelID();
 
  private:
@@ -55,9 +54,7 @@ class PackWeightManager {
   std::shared_ptr<PackWeight> pack_weight_ = nullptr;
 #endif
   std::mutex manager_mutex_;
-  std::vector<std::string> runner_ids_;
   std::vector<std::string> model_ids_;
-  size_t runner_id_ = 1;
   size_t model_id_ = 1;
 };
 }  // namespace mindspore::lite

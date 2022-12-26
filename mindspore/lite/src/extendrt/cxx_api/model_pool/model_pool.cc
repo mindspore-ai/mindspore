@@ -668,7 +668,7 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
     return kLiteError;
   }
   bool create_worker_success = true;
-  runner_id_ = lite::PackWeightManager::GetInstance()->GenRunnerID();
+  runner_id_ = ResourceManager::GetInstance()->GenRunnerID();
   for (size_t i = 0; i < workers_num_; i++) {
     int numa_node_id = model_pool_config[i]->numa_id;
     std::map<std::string, std::string> ids;
@@ -987,6 +987,7 @@ ModelPool::~ModelPool() {
   if (predict_task_queue_ != nullptr) {
     predict_task_queue_->SetPredictTaskDone();
   }
+  MS_LOG(INFO) << "delete model worker.";
   for (auto &item : all_model_workers_) {
     auto model_workers = item.second;
     for (auto &model_worker : model_workers) {
@@ -1001,9 +1002,6 @@ ModelPool::~ModelPool() {
     delete[] tasks_;
     tasks_ = nullptr;
   }
-  // free weight sharing related memory
-  MS_LOG(INFO) << "free pack weight model buf.";
-  lite::PackWeightManager::GetInstance()->FreePackWeight(runner_id_);
   MS_LOG(INFO) << "free model pool done.";
 }
 }  // namespace mindspore

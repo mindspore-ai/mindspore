@@ -65,17 +65,11 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate_graph_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/optimizer/tensorrt_optimizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/litert/func_graph_reuse_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/pack_weight_manager.cc
         )
     if(MSLITE_ENABLE_BFC_MEMORY)
         set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
             ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_allocator.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_manager.cc
-            )
-    endif()
-    if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
-        set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../litert/pack_weight_manager.cc
             )
     endif()
     include_directories("${CCSRC_DIR}/ps/core")
