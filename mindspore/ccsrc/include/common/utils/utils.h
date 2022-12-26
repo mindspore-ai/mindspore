@@ -387,6 +387,7 @@ constexpr auto kLSTMOpName = "LSTM";
 constexpr auto kLuUnpackOpName = "LuUnpack";
 constexpr auto kMaskedFillOpName = "MaskedFill";
 constexpr auto kMaskedSelectOpName = "MaskedSelect";
+constexpr auto kMaskedSelectGradOpName = "MaskedSelectGrad";
 constexpr auto kMatMulOpName = "MatMul";
 constexpr auto kMatMulV2OpName = "MatMulV2";
 constexpr auto kMatrixDiagOpName = "MatrixDiag";
