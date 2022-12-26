@@ -50,5 +50,9 @@ REGISTER(ZerosLikeInfo);
 REGISTER(OnesLikeInfo);
 REGISTER(BesselI0eInfo);
 REGISTER(BesselI1eInfo);
+REGISTER(BesselI0Info);
+REGISTER(BesselI1Info);
+REGISTER(BesselJ0Info);
+REGISTER(BesselJ1Info);
 }  // namespace parallel
 }  // namespace mindspore

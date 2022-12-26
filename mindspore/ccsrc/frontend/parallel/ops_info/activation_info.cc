@@ -231,9 +231,9 @@ Status CumOpBase::GetAttrs() {
   }
 
   if (axis < 0) {
-    axis_ = LongToInt(dim + axis);
+    axis_ = dim + axis;
   } else {
-    axis_ = LongToInt(axis);
+    axis_ = axis;
   }
   MS_LOG(INFO) << name_ << ": The axis is " << axis;
   return SUCCESS;
@@ -645,6 +645,43 @@ Status L2LossInfo::InferForwardCommunication() {
   return SUCCESS;
 }
 
+Status CummaxInfo::GetAttrs() {
+  axis_ = GetIntAttr(AXIS);
+  if (axis_ < 0) {
+    axis_ += SizeToLong(inputs_shape_[0].size());
+  }
+
+  MS_LOG(INFO) << name_ << ": The axis is " << axis_;
+  return SUCCESS;
+}
+
+Status CummaxInfo::InferMirrorOps() { return OperatorInfo::InferMirrorOps(); }
+
+Status CummaxInfo::InferTensorMap() {
+  Shape tensor_map_index;
+  size_t size = inputs_shape_.at(0).size();
+  for (size_t i = 0; i < size; ++i) {
+    tensor_map_index.push_back(static_cast<int64_t>(size - i - 1));
+  }
+
+  inputs_tensor_map_.push_back(tensor_map_index);
+  outputs_tensor_map_.push_back(tensor_map_index);
+  outputs_tensor_map_.push_back(tensor_map_index);  // cummax has two outputs
+  return SUCCESS;
+}
+
+Status CummaxInfo::InferAsLossDivisor() {
+  if (outputs_tensor_map_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The size of outputs tensor map is empty";
+    return FAILED;
+  }
+  as_loss_divisor_ = ComputeRepeatDeviceNumByTensorMap(dev_matrix_shape_, outputs_tensor_map_[0]);
+  MS_LOG(INFO) << name_ << " : The dev matrix shape is " << ShapeToString(dev_matrix_shape_)
+               << ", the output[0]'s tensor map is " << ShapeToString(outputs_tensor_map_[0])
+               << ", as_loss_divisor_ is " << as_loss_divisor_;
+  return SUCCESS;
+}
+
 REGISTER(ActivationInfo);
 REGISTER(GeLUInfo);
 REGISTER(FastGeLUInfo);
@@ -652,6 +689,8 @@ REGISTER(TanhInfo);
 REGISTER(SoftmaxInfo);
 REGISTER(LogSoftmaxInfo);
 REGISTER(CumSumInfo);
+REGISTER(CummaxInfo);
+REGISTER(CumminInfo);
 REGISTER(CumProdInfo);
 REGISTER(EluInfo);
 REGISTER(ReLUInfo);

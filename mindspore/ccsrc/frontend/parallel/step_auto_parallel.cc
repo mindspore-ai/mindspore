@@ -152,13 +152,14 @@ bool IsElementWiseOperator(const std::string &op_name) {
                                                        RSQRT,      RECIPROCAL,   INV,
                                                        ROUND,      FLOOR,        SIGN,
                                                        ERF,        ERFC,         ZEROSLIKE,
-                                                       ONESLIKE,   BESSELI0E,    MOD,
+                                                       ONESLIKE,   BESSELI0E,    BESSELI0,
+                                                       BESSELI1,   BESSELJ0,     BESSELJ0,
                                                        ASSIGN,     ASSIGN_ADD,   ATAN2,
                                                        DIVNONAN,   LOGICALAND,   ELU,
                                                        LOGICALOR,  RELU6,        SOFTPLUS,
                                                        SOFTSIGN,   LESS,         LESSEQUAL,
                                                        BESSELI1E,  GREATEREQUAL, APPROXIMATEEQUAL,
-                                                       REPEAT_ELEMENTS};
+                                                       REPEAT_ELEMENTS, MOD};
   // clang-format on
   auto iter = elementwise_op.find(op_name);
   return (iter != elementwise_op.cend());
