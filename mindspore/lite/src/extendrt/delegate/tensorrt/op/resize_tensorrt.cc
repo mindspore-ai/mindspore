@@ -310,6 +310,14 @@ int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
       resize_op_->method() == schema::ResizeMethod_LINEAR) {
     resize_layer->setCoordinateTransformation(nvinfer1::ResizeCoordinateTransformation::kALIGN_CORNERS);
   }
+  if (resize_op_->nearest_mode() != schema::NearestMode_NORMAL) {
+    std::unordered_map<schema::NearestMode, nvinfer1::ResizeRoundMode> nearest_mode_transform = {
+      {schema::NearestMode_ROUND_HALF_DOWN, nvinfer1::ResizeRoundMode::kHALF_DOWN},
+      {schema::NearestMode_ROUND_HALF_UP, nvinfer1::ResizeRoundMode::kHALF_UP},
+      {schema::NearestMode_FLOOR, nvinfer1::ResizeRoundMode::kFLOOR},
+      {schema::NearestMode_CEIL, nvinfer1::ResizeRoundMode::kCEIL}};
+    resize_layer->setNearestRounding(nearest_mode_transform.at(resize_op_->nearest_mode()));
+  }
 #else
   if (resize_op_->coordinate_transform_mode() != schema::CoordinateTransformMode_ASYMMETRIC) {
     MS_LOG(WARNING) << op_name_ << " has coordinate_transform_mode may not supported: "
