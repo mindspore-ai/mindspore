@@ -14,6 +14,7 @@
 # ============================================================================
 """ test nn pad """
 import numpy as np
+import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -319,3 +320,70 @@ def test_zero_pad_2d_train():
     grad = Grad(ZeroPad2dNet(padding))
     output = grad(Tensor(x), Tensor(grads))
     print(output)
+
+
+def test_invalid_padding_reflection_pad_1d():
+    """
+    Feature: ReflectionPad1d
+    Description: test 5 cases of invalid input.
+    Expectation: success
+    """
+    # case 1: padding is not int or tuple
+    padding = '-1'
+    with pytest.raises(TypeError):
+        nn.ReflectionPad1d(padding)
+
+    # case 2: padding length is not divisible by 2
+    padding = (1, 2, 2)
+    with pytest.raises(ValueError):
+        nn.ReflectionPad1d(padding)
+
+    # case 3: padding element is not int
+    padding = ('2', 2)
+    with pytest.raises(TypeError):
+        nn.ReflectionPad1d(padding)
+
+    # case 4: negative padding
+    padding = (-1, 2)
+    with pytest.raises(ValueError):
+        nn.ReflectionPad1d(padding)
+
+    # case 5: padding dimension does not match tensor dimension
+    padding = (1, 1, 1, 1, 1, 1, 1, 1)
+    x = Tensor([[1, 2, 3], [1, 2, 3]])
+    with pytest.raises(ValueError):
+        nn.ReflectionPad1d(padding)(x)
+
+
+
+def test_invalid_padding_reflection_pad_2d():
+    """
+    Feature: ReflectionPad2d
+    Description: test 5 cases of invalid input.
+    Expectation: success
+    """
+    # case 1: padding is not int or tuple
+    padding = '-1'
+    with pytest.raises(TypeError):
+        nn.ReflectionPad2d(padding)
+
+    # case 2: padding length is not divisible by 2
+    padding = (1, 2, 2)
+    with pytest.raises(ValueError):
+        nn.ReflectionPad2d(padding)
+
+    # case 3: padding element is not int
+    padding = ('2', 2)
+    with pytest.raises(TypeError):
+        nn.ReflectionPad2d(padding)
+
+    # case 4: negative padding
+    padding = (-1, 2)
+    with pytest.raises(ValueError):
+        nn.ReflectionPad2d(padding)
+
+    # case 5: padding dimension does not match tensor dimension
+    padding = (1, 1, 1, 1, 1, 1, 1, 1)
+    x = Tensor([[1, 2, 3], [1, 2, 3]])
+    with pytest.raises(ValueError):
+        nn.ReflectionPad2d(padding)(x)

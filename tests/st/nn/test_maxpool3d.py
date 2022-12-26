@@ -20,26 +20,6 @@ import mindspore as ms
 import mindspore.nn as nn
 
 
-class Net(nn.Cell):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.pool = nn.MaxPool3d(kernel_size=3, stride=1, padding=1)
-
-    def construct(self, x):
-        out = self.pool(x)
-        return out
-
-
-class Net2(nn.Cell):
-    def __init__(self):
-        super(Net2, self).__init__()
-        self.pool = nn.MaxPool3d(kernel_size=3, stride=1, padding=1, return_indices=True)
-
-    def construct(self, x):
-        out = self.pool(x)
-        return out
-
-
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -53,8 +33,8 @@ def test_maxpool3d_normal(mode):
     ms.set_context(mode=mode)
     np_array = np.arange(1 * 2 * 4 * 4 * 5).reshape((1, 2, 4, 4, 5))
 
-    net1 = Net()
-    net2 = Net2()
+    net1 = nn.MaxPool3d(kernel_size=3, stride=1, padding=1)
+    net2 = nn.MaxPool3d(kernel_size=3, stride=1, padding=1, return_indices=True)
     x = ms.Tensor(np_array, ms.float32)
     output1 = net1(x)
     output2 = net2(x)

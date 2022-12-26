@@ -12,18 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
+
 import mindspore.context as context
 import mindspore.nn as nn
 from .weight_decay_utils import dynamic_weight_decay_cmp, WeightDecaySchdule, Net
 
 
-def test_momentum_dynamic_weight_decay_pynative():
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_momentum_dynamic_weight_decay(mode):
     """
     Feature: Dynamic weight decay
     Description: Test dynamic weight decay for Momentum
     Expectation: The value of decay changes according to preset weight decay schedule
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=mode)
     net1, net2 = Net(), Net()
     weight_decay_schedule = WeightDecaySchdule()
     optimizer1 = nn.Momentum(net1.trainable_params(), momentum=0.001, learning_rate=0.001, weight_decay=0.001)
@@ -32,28 +42,21 @@ def test_momentum_dynamic_weight_decay_pynative():
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-def test_momentum_dynamic_weight_decay_graph():
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_momentum_dynamic_weight_decay_group(mode):
     """
     Feature: Dynamic weight decay
     Description: Test dynamic weight decay for Momentum
     Expectation: The value of decay changes according to preset weight decay schedule
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    net1, net2 = Net(), Net()
-    weight_decay_schedule = WeightDecaySchdule()
-    optimizer1 = nn.Momentum(net1.trainable_params(), momentum=0.001, learning_rate=0.001, weight_decay=0.001)
-    optimizer2 = nn.Momentum(net2.trainable_params(), momentum=0.001, learning_rate=0.001,
-                             weight_decay=weight_decay_schedule)
-    dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
-
-
-def test_momentum_dynamic_weight_decay_graph_group():
-    """
-    Feature: Dynamic weight decay
-    Description: Test dynamic weight decay for Momentum
-    Expectation: The value of decay changes according to preset weight decay schedule
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=mode)
     weight_decay_schedule = WeightDecaySchdule()
     net1, net2 = Net(), Net()
 
@@ -74,13 +77,21 @@ def test_momentum_dynamic_weight_decay_graph_group():
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-def test_adamweightdecay_dynamic_weight_decay_pynative():
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_adamweightdecay_dynamic_weight_decay(mode):
     """
     Feature: Dynamic weight decay
     Description: Test dynamic weight decay for AdamWeightDecay
     Expectation: The value of decay changes according to preset weight decay schedule
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=mode)
     net1, net2 = Net(), Net()
     weight_decay_schedule = WeightDecaySchdule()
     optimizer1 = nn.AdamWeightDecay(net1.trainable_params(), learning_rate=0.001, weight_decay=0.001)
@@ -88,27 +99,21 @@ def test_adamweightdecay_dynamic_weight_decay_pynative():
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-def test_adamweightdecay_dynamic_weight_decay_graph():
-    """
-    Feature: Dynamic weight decay
-    Description: Test dynamic weight decay for AdamWeightDecay
-    Expectation: The value of decay changes according to preset weight decay schedule
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    net1, net2 = Net(), Net()
-    weight_decay_schedule = WeightDecaySchdule()
-    optimizer1 = nn.AdamWeightDecay(net1.trainable_params(), learning_rate=0.001, weight_decay=0.001)
-    optimizer2 = nn.AdamWeightDecay(net2.trainable_params(), learning_rate=0.001, weight_decay=weight_decay_schedule)
-    dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
-
-
-def test_adamweightdecay_dynamic_weight_decay_graph_group():
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_adamweightdecay_dynamic_weight_decay_group(mode):
     """
     Feature: Dynamic weight decay
     Description: Test dynamic weight decay for Momentum
     Expectation: The value of decay changes according to preset weight decay schedule
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=mode)
     weight_decay_schedule = WeightDecaySchdule()
     net1, net2 = Net(), Net()
 
@@ -129,42 +134,19 @@ def test_adamweightdecay_dynamic_weight_decay_graph_group():
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-
-def test_lamb_dynamic_weight_decay_pynative():
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_lamb_dynamic_weight_decay_graph_group(mode):
     """
     Feature: Dynamic weight decay
-    Description: Test dynamic weight decay for Lamb
+    Description: Test dynamic weight decay for LAMB
     Expectation: The value of decay changes according to preset weight decay schedule
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    net1, net2 = Net(), Net()
-    weight_decay_schedule = WeightDecaySchdule()
-    optimizer1 = nn.Lamb(net1.trainable_params(), learning_rate=0.001, weight_decay=0.001)
-    optimizer2 = nn.Lamb(net2.trainable_params(), learning_rate=0.001, weight_decay=weight_decay_schedule)
-    dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
-
-
-def test_lamb_dynamic_weight_decay_graph():
-    """
-    Feature: Dynamic weight decay
-    Description: Test dynamic weight decay for Lamb
-    Expectation: The value of decay changes according to preset weight decay schedule
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    net1, net2 = Net(), Net()
-    weight_decay_schedule = WeightDecaySchdule()
-    optimizer1 = nn.Lamb(net1.trainable_params(), learning_rate=0.001, weight_decay=0.001)
-    optimizer2 = nn.Lamb(net2.trainable_params(), learning_rate=0.001, weight_decay=weight_decay_schedule)
-    dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
-
-
-def test_lamb_dynamic_weight_decay_graph_group():
-    """
-    Feature: Dynamic weight decay
-    Description: Test dynamic weight decay for Momentum
-    Expectation: The value of decay changes according to preset weight decay schedule
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=mode)
     weight_decay_schedule = WeightDecaySchdule()
     net1, net2 = Net(), Net()
 
@@ -185,13 +167,18 @@ def test_lamb_dynamic_weight_decay_graph_group():
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-def test_lars_dynamic_weight_decay_pynative():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_lars_dynamic_weight_decay(mode):
     """
     Feature: Dynamic weight decay
     Description: Test dynamic weight decay for Lars
     Expectation: The value of decay changes according to preset weight decay schedule
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=mode)
     net1, net2 = Net(), Net()
     weight_decay_schedule = WeightDecaySchdule()
 
@@ -202,30 +189,18 @@ def test_lars_dynamic_weight_decay_pynative():
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-def test_lars_dynamic_weight_decay_graph():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_lars_dynamic_weight_decay_group(mode):
     """
     Feature: Dynamic weight decay
     Description: Test dynamic weight decay for Lars
     Expectation: The value of decay changes according to preset weight decay schedule
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    net1, net2 = Net(), Net()
-    weight_decay_schedule = WeightDecaySchdule()
-
-    opt1 = nn.Momentum(net1.trainable_params(), momentum=0.001, learning_rate=0.001, weight_decay=0.001)
-    opt2 = nn.Momentum(net2.trainable_params(), momentum=0.001, learning_rate=0.001, weight_decay=weight_decay_schedule)
-    optimizer1 = nn.LARS(opt1, lars_filter=lambda x: 'LayerNorm' not in x.name)
-    optimizer2 = nn.LARS(opt2, lars_filter=lambda x: 'LayerNorm' not in x.name)
-    dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
-
-
-def test_lars_dynamic_weight_decay_graph_group():
-    """
-    Feature: Dynamic weight decay
-    Description: Test dynamic weight decay for Momentum
-    Expectation: The value of decay changes according to preset weight decay schedule
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=mode)
     net1, net2 = Net(), Net()
     weight_decay_schedule = WeightDecaySchdule()
 

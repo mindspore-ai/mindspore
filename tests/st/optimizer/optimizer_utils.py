@@ -94,7 +94,7 @@ class FakeNet(nn.Cell):
                 m.bias.set_data(Tensor(fc2_bias))
 
 
-def build_network(opt_config, is_group=False, net=FakeNet(), loss_fn=nn.MSELoss(reduction='sum')):
+def build_network(opt_config, net, is_group=False, loss_fn=nn.MSELoss(reduction='sum')):
     """
     Construct training
     """

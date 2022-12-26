@@ -23,18 +23,19 @@ from mindspore.common import set_seed
 from tests.st.networks.models.lenet import LeNet
 
 set_seed(1)
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_lenet_flatten_weight_with_adam():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_lenet_flatten_weight_with_adam(mode):
     '''
     Feature: Fused optimizer
     Description: Test fused adam with flatten weights
     Expectation: Run lenet success and loss < 2.2
     '''
+    context.set_context(mode=mode)
     data = Tensor(np.ones([32, 3, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([32]).astype(np.int32))
     net = LeNet()
@@ -55,12 +56,14 @@ def test_lenet_flatten_weight_with_adam():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_lenet_flatten_weight_with_adam_weight_decay():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_lenet_flatten_weight_with_adam_weight_decay(mode):
     '''
     Feature: Fused optimizer
     Description: Test fused adam weight decay with flatten weights
     Expectation: Run lenet success and loss < 0.1
     '''
+    context.set_context(mode=mode)
     data = Tensor(np.ones([32, 3, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([32]).astype(np.int32))
     net = LeNet()
