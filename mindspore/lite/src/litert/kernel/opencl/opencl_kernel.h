@@ -341,7 +341,6 @@ kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &input
   auto *kernel = new (std::nothrow) T(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(WARNING) << "kernel " << opParameter->name_ << "is nullptr.";
-    free(opParameter);
     return nullptr;
   }
 
