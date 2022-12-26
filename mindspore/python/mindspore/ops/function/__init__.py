@@ -415,6 +415,7 @@ from .nn_func import (
     softsign,
     selu,
     softmax,
+    softmin,
     pdist,
     pad,
     prelu,

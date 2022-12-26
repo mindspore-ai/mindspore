@@ -94,6 +94,7 @@ Activation Functions
     mindspore.ops.softsign
     mindspore.ops.soft_shrink
     mindspore.ops.softmax
+    mindspore.ops.softmin
     mindspore.ops.tanh
 
 Distance Functions

@@ -1,0 +1,24 @@
+mindspore.ops.softmin
+=====================
+
+.. py:function:: mindspore.ops.softmin(x, axis=-1)
+
+    在指定轴上对输入Tensor执行Softmin函数做归一化操作。假设指定轴 :math:`x` 上有切片，那么每个元素 :math:`x_i` 所对应的Softmin函数如下所示：
+
+    .. math::
+        \text{output}(x_i) = \frac{exp(-x_i)}{\sum_{j = 0}^{N-1}\exp(-x_j)},
+
+    其中 :math:`N` 代表Tensor的长度。
+
+    参数：
+        - **x** (Tensor) - Softmin的输入，任意维度的Tensor。其数据类型为float16或float32。
+        - **axis** (Union[int, tuple[int]], 可选) - 指定Softmin操作的轴。默认值：-1。
+
+    返回：
+        Tensor，数据类型和shape与 `x` 相同。
+
+    异常：
+        - **TypeError** - `axis` 不是int或者tuple。
+        - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+        - **ValueError** - `axis` 是长度小于1的tuple。
+        - **ValueError** - `axis` 是一个tuple，其元素不全在[-len(x.shape), len(x.shape))范围中。
