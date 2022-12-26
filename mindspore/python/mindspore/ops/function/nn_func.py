@@ -2452,7 +2452,7 @@ def pad(input_x, padding, mode='constant', value=None):
     Raises:
         TypeError: If `paddings` is not an int of tuple or int of list.
         TypeError: If `input_x` is not a Tensor.
-        ValueError: If padding.size is not equal to 2 * len(input_x).
+        ValueError: If length of `padding` is not even.
         ValueError: If mode is not "constant" and value not None.
 
     Supported Platforms:
