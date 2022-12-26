@@ -377,10 +377,21 @@ void MapOp::CreateFinalColMap(std::unordered_map<std::string, int32_t> *col_name
   size_t num_cols = col_name_id_map->size();
   std::vector<int32_t> new_ids(num_cols);
   if (in_columns_.size() == out_columns_.size()) {
+    // example
+    // in_columns: [a, b], out_columns: [c, d]
+    // in_columns: [a, b], out_columns: [b, a]
+    // in_columns: [a, b, c], out_columns: [b, c, a]
+
+    // get the input columns index
+    std::vector<size_t> input_columns_index = {};
     for (size_t i = 0; i < in_columns_.size(); i++) {
-      int32_t loc = (*col_name_id_map)[in_columns_[i]];
+      input_columns_index.push_back((*col_name_id_map)[in_columns_[i]]);
       (void)col_name_id_map->erase(in_columns_[i]);
-      (*col_name_id_map)[out_columns_[i]] = loc;
+    }
+
+    // update the output column index
+    for (size_t i = 0; i < input_columns_index.size(); i++) {
+      (*col_name_id_map)[out_columns_[i]] = input_columns_index[i];
     }
 
     // Set the base class final column id map result
