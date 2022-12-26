@@ -27,6 +27,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 
+from mindspore.common.api import jit
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.common.sparse_tensor import RowTensorInner
@@ -36,12 +37,10 @@ from mindspore.common.initializer import initializer, _calculate_correct_fan, On
 import mindspore.nn as nn
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
-from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.nn.optim import Adam
 
 from mindspore.train import Model, Callback
 from mindspore import context, ParameterTuple, set_seed
-from mindspore.context import ParallelMode
 from mindspore.communication.management import get_group_size
 import mindspore.dataset.engine as de
 
@@ -131,7 +130,7 @@ def _clip_grad(clip_type, clip_value, grad):
     return new_grad
 
 
-class TrainAccumulationAllReduceEachWithLossScaleCell(nn.Cell):
+class TrainAccumulationAllReduceEachWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
     """
     Encapsulation class of network training.
 
@@ -151,13 +150,8 @@ class TrainAccumulationAllReduceEachWithLossScaleCell(nn.Cell):
                                   batch_size * accumulation_steps. Default: 1.
     """
 
-    def __init__(self, network, optimizer, scale_update_cell=None, accumulation_steps=1, enable_global_norm=False):
-        super(TrainAccumulationAllReduceEachWithLossScaleCell,
-              self).__init__(auto_prefix=False)
-        self.network = network
-        self.network.set_grad()
-        self.weights = optimizer.parameters
-        self.optimizer = optimizer
+    def __init__(self, network, optimizer, scale_update_cell, accumulation_steps=1, enable_global_norm=False):
+        super(TrainAccumulationAllReduceEachWithLossScaleCell, self).__init__(network, optimizer, scale_update_cell)
         self.accumulation_steps = accumulation_steps
         self.enable_global_norm = enable_global_norm
         self.one = Tensor([1], mstype.int32)
@@ -168,42 +162,21 @@ class TrainAccumulationAllReduceEachWithLossScaleCell(nn.Cell):
         self.accu_loss = Parameter(initializer(0, [1], mstype.float32))
 
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
-        self.reducer_flag = False
-        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
-            self.reducer_flag = True
-        self.grad_reducer = F.identity
         self.degree = 1
         if self.reducer_flag:
             self.degree = get_group_size()
-            self.grad_reducer = DistributedGradReducer(
-                optimizer.parameters, False, self.degree)
-        self.is_distributed = self.parallel_mode != ParallelMode.STAND_ALONE
-        self.allreduce = P.AllReduce()
         self.cast = P.Cast()
-        self.alloc_status = P.NPUAllocFloatStatus()
-        self.get_status = P.NPUGetFloatStatus()
-        self.clear_before_grad = P.NPUClearFloatStatus()
-        self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.base = Tensor(1, mstype.float32)
-        self.less_equal = P.LessEqual()
         self.logical_or = P.LogicalOr()
         self.not_equal = P.NotEqual()
         self.select = P.Select()
         self.reshape = P.Reshape()
-        self.hyper_map = C.HyperMap()
-        self.loss_scale = None
-        self.loss_scaling_manager = scale_update_cell
-        if scale_update_cell:
-            self.loss_scale = Parameter(
-                Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
+        self.loss_scale = self.scale_sense
 
     @C.add_flags(has_effect=True)
     def construct(self, *inputs):
         """Defines the computation performed."""
         weights = self.weights
         loss = self.network(*inputs)
-        loss = self.reshape(loss, (1,))
 
         scaling_sens = self.loss_scale
 
@@ -211,7 +184,8 @@ class TrainAccumulationAllReduceEachWithLossScaleCell(nn.Cell):
         is_accu_step = self.not_equal(self.local_step, self.accumulation_steps)
         self.local_step = self.select(
             is_accu_step, self.local_step + self.one, self.one)
-        self.accu_loss = self.select(is_accu_step, self.accu_loss + loss, loss)
+        loss_broadcast = self.reshape(loss, (1,))
+        self.accu_loss = self.select(is_accu_step, self.accu_loss + loss_broadcast, loss_broadcast)
         mean_loss = self.accu_loss / self.local_step
         is_accu_step = self.not_equal(self.local_step, self.accumulation_steps)
 
@@ -235,83 +209,34 @@ class TrainAccumulationAllReduceEachWithLossScaleCell(nn.Cell):
         overflow = self.reshape(overflow, (()))
 
         if is_accu_step:
-            accu_succ = self.hyper_map(
-                update_accu_grads, self.accu_grads, accu_grads)
+            accu_succ = self.update_accu_grads_(accu_grads)
         else:
             overflow = self.loss_scaling_manager(self.loss_scale, overflow)
             if not overflow:
                 if self.enable_global_norm:
                     grads = C.clip_by_global_norm(grads, 1.0, None)
                 else:
-                    grads = self.hyper_map(
-                        F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+                    grads = self.clip_grads(grads)
 
                 self.optimizer(grads)
 
-            accu_succ = self.hyper_map(reset_accu_grads, self.accu_grads)
+            accu_succ = self.reset_accu_grads_()
 
         ret = (mean_loss, overflow, scaling_sens.value(), overflow)
         return F.depend(ret, accu_succ)
 
-    def start_overflow_check(self, pre_cond, compute_input):
-        """
-        Start floating-point overflow detection. Create and clear the overflow detection state.
+    @jit
+    def update_accu_grads_(self, accu_grads):
+        return self.hyper_map(update_accu_grads, self.accu_grads, accu_grads)
 
-        Specify the argument 'pre_cond' and 'compute_input' to make sure overflow status is cleared at the right time.
-        Taking this situation as an example, we need to execute state clearing after loss calculation and then detect
-        overflow in the process of gradient calculation. In this case, pre_cond should be the output of the loss
-        function, and compute_input should be the input of gradients-computing function.
+    @jit
+    def clip_grads(self, grads):
+        return self.hyper_map(
+                        F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
 
-        Args:
-            pre_cond(object): A precondition for starting overflow detection. It determines the executing order of
-                overflow state clearing and prior processions. It makes sure that the function 'start_overflow' clears
-                status after finishing the process of precondition.
-            compute_input(object): The input of subsequent process. Overflow detection should be performed on a certain
-                computation. Set `compute_input` as the input of the computation, to ensure overflow status is cleared
-                before executing the computation.
-
-        Returns:
-            Tuple[object, object], the first value is False for GPU backend, while it is a instance of
-            NPUAllocFloatStatus for other backend. The status is used to detect overflow during overflow detection.
-            The second value is the same as the input of `compute_input`, but contains some information about the
-            execution order.
-        """
-        status = False
-        # init overflow buffer
-        status = P.NPUAllocFloatStatus()()
-        status = F.depend(status, pre_cond)
-        # clear overflow buffer
-        clear_status = P.NPUClearFloatStatus()(status)
-        compute_input = F.depend(compute_input, clear_status)
-        return status, compute_input
-
-    def get_overflow_status(self, status, compute_output):
-        """
-        Get floating-point overflow status.
-
-        Get overflow results after executing the target process for overflow detection.
-
-        Args:
-            status(object): A status instance used to detect the overflow.
-            compute_output: Overflow detection should be performed on a certain computation. Set `compute_output` as
-                the output of the computation, to ensure overflow status is acquired before executing the computation.
-
-        Returns:
-            bool, whether the overflow occurs or not.
-        """
-        status = F.depend(status, compute_output)
-        get_status = P.NPUGetFloatStatus()(status)
-        status = F.depend(status, get_status)
-        # sum overflow buffer elements, 0:not overflow , >0:overflow
-        flag_sum = self.reduce_sum(status, (0,))
-
-        if self.is_distributed:
-            # sum overflow flag over devices
-            flag_reduce = self.allreduce(flag_sum)
-            overflow = self.less_equal(self.base, flag_reduce)
-        else:
-            overflow = self.less_equal(self.base, flag_sum)
-        return overflow
+    @jit
+    def reset_accu_grads_(self):
+        return self.hyper_map(reset_accu_grads, self.accu_grads)
 
 
 class TimeMonitor(Callback):
@@ -506,7 +431,6 @@ class ASRWarmupLR(LearningRateSchedule):
         self.learninig_rate = learninig_rate
         self.warmup_steps = Tensor(np.array([warmup_steps]).astype(np.float32))
         self.min = ops.Minimum()
-        self.scalar_summary = ops.ScalarSummary()
         self.start_steps = start_steps
 
     def construct(self, global_step):
@@ -1557,7 +1481,6 @@ class ASRModelWithAcc(nn.Cell):
         self.equal = ops.Equal()
         self.mul = ops.Mul()
         self.print = ops.Print()
-        self.scalar_summary = ops.ScalarSummary()
         self.expand_dims = ops.ExpandDims()
         self.tile = ops.Tile()
         self.topk = ops.TopK()
@@ -1613,14 +1536,6 @@ class ASRModelWithAcc(nn.Cell):
         else:
             loss = self.ctc_weight * loss_ctc + \
                 (1 - self.ctc_weight) * loss_att
-
-        self.scalar_summary("loss", loss)
-        if loss_att is not None:
-            self.scalar_summary("loss_att", loss_att)
-            self.scalar_summary("acc_att", acc_att)
-        if loss_ctc is not None:
-            self.scalar_summary("loss_ctc", loss_ctc)
-
         return loss, acc_att
 
     def _calc_att_loss(
@@ -1797,6 +1712,17 @@ def get_train_loss(train_dataset, run_mode):
     return callback.loss
 
 
+def train_proccess(mode):
+    logging.info("Initializing training dataset.")
+    bs = BATCH_SIZE
+    ll = LABLE_LEN
+    mb = MEL_BINS
+    set_seed(0)
+    train_dataset = create_dataset(bs, ll, mb)
+    expect_graph_loss = get_train_loss(train_dataset, mode)
+    assert np.allclose(expect_graph_loss, 111.1163, 0.0001, 0.0001)
+
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1807,12 +1733,17 @@ def test_train():
     Description:  The sequence length of inputs is dynamic.
     Expectation: Assert that the training loss of fixed data is consistent with the expected loss.
     """
-    # Set random seed
-    logging.info("Initializing training dataset.")
-    bs = BATCH_SIZE
-    ll = LABLE_LEN
-    mb = MEL_BINS
-    set_seed(0)
-    train_dataset = create_dataset(bs, ll, mb)
-    expect_graph_loss = get_train_loss(train_dataset, context.GRAPH_MODE)
-    assert np.allclose(expect_graph_loss, 111.1163, 0.0001, 0.0001)
+    train_proccess(context.GRAPH_MODE)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_train_pynative():
+    """
+    Feature: Test the simplified dynamic shape WeNet-ASR network with small data.
+    Description:  The sequence length of inputs is dynamic.
+    Expectation: Assert that the training loss of fixed data is consistent with the expected loss.
+    """
+    train_proccess(context.PYNATIVE_MODE)
