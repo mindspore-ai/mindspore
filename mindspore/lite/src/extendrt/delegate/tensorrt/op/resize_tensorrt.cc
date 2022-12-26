@@ -18,6 +18,7 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include <unordered_map>
 #include "nnacl/nnacl_common.h"
 #include "ops/resize.h"
 
@@ -242,6 +243,14 @@ int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
   if (resize_op_->get_new_height() != 0 || resize_op_->get_new_width() != 0 ||
       (coordinate_transform_mode == CoordinateTransformMode::ALIGN_CORNERS && method == ResizeMethod::LINEAR)) {
     resize_layer->setCoordinateTransformation(nvinfer1::ResizeCoordinateTransformation::kALIGN_CORNERS);
+  }
+  if (resize_op_->get_nearest_mode() != NearestMode::NORMAL) {
+    std::unordered_map<NearestMode, nvinfer1::ResizeRoundMode> nearest_mode_transform = {
+      {NearestMode::ROUND_HALF_DOWN, nvinfer1::ResizeRoundMode::kHALF_DOWN},
+      {NearestMode::ROUND_HALF_UP, nvinfer1::ResizeRoundMode::kHALF_UP},
+      {NearestMode::FLOOR, nvinfer1::ResizeRoundMode::kFLOOR},
+      {NearestMode::CEIL, nvinfer1::ResizeRoundMode::kCEIL}};
+    resize_layer->setNearestRounding(nearest_mode_transform.at(resize_op_->get_nearest_mode()));
   }
 #else
   if (coordinate_transform_mode != CoordinateTransformMode::ASYMMETRIC) {
