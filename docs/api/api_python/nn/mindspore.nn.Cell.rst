@@ -27,6 +27,16 @@
         参数：
             - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
 
+    .. py:method:: apply(fn)
+
+        递归地将 `fn` 应用于每个子Cell（由 `.cells()` 返回）以及自身。通常用于初始化模型的参数。
+
+        参数：
+            - **fn** (function) - 被执行于每个Cell的function。
+        
+        返回：
+            Cell类型，Cell本身。
+
     .. py:method:: auto_cast_inputs(inputs)
 
         在混合精度下，自动对输入进行类型转换。

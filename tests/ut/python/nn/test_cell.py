@@ -22,6 +22,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
 from mindspore.common.api import _cell_graph_executor
+from mindspore.common.initializer import initializer, One
 
 
 class ModA(nn.Cell):
@@ -266,6 +267,25 @@ def test_add_attr():
         ModAddCellError(ta)
 
 
+def test_apply():
+    """
+    Feature: Cell.apply.
+    Description: Verify Cell.apply.
+    Expectation: No exception.
+    """
+    net = nn.SequentialCell(nn.Dense(2, 2), nn.Dense(2, 2))
+
+    def func(cell):
+        if isinstance(cell, nn.Dense):
+            cell.weight.set_data(initializer(One(), cell.weight.shape, cell.weight.dtype))
+
+    net.apply(func)
+
+    target = np.ones((2, 2), ms.dtype_to_nptype(net[0].weight.dtype))
+    assert np.allclose(target, net[0].weight.asnumpy())
+    assert np.allclose(target, net[1].weight.asnumpy())
+
+
 def test_train_eval():
     m = nn.Cell()
     assert not m.training
@@ -305,15 +325,13 @@ def test_cell_names():
 
 
 class TestKwargsNet(nn.Cell):
-    def __init__(self):
-        super(TestKwargsNet, self).__init__()
-
     def construct(self, p1, p2, p3=False, p4=False):
         if p3:
             return p1
         if p4:
             return P.Add()(p1, p2)
         return p2
+
 
 def test_kwargs_default_value1():
     """
@@ -334,7 +352,6 @@ def test_kwargs_default_value2():
     Description: Pass kwargs.
     Expectation: No exception.
     """
-    # Tensor(np.array([1, 2, 3, 4]), ms.float32).reshape((1, 1, 2, 2))
     x = Tensor([[[[1.0, 2.0], [3.0, 4.0]]]], ms.float32)
     nn_op = nn.ResizeBilinear()
     res = nn_op(x, (4, 4), align_corners=True)
