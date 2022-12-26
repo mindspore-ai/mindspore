@@ -5930,7 +5930,7 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
 
     Outputs:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type is specified by `dtype`.
-          The shape of output is :math:`(2, tril_size)`, where :math:`tril_size` is the number of elements in the
+          The shape of output is :math:`(2, tril\_size)`, where :math:`tril\_size` is the number of elements in the
           lower triangular matrix.
 
     Raises:
@@ -5974,7 +5974,7 @@ def triu_indices(row, col, offset=0, dtype=mstype.int64):
 
     Outputs:
         - **y** (Tensor) - indices of the elements in upper triangular part of matrix. The type is specified by `dtype`.
-          The shape of output is :math:`(2, triu_size)`, where :math:`triu_size` is the number of elements in the
+          The shape of output is :math:`(2, triu\_size)`, where :math:`triu\_size` is the number of elements in the
           upper triangular matrix.
 
     Raises:

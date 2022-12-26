@@ -1371,7 +1371,7 @@ class SparseMatrixNNZ(Primitive):
 
 
 class SparseFillEmptyRows(Primitive):
-    """
+    r"""
     Fill the blank lines in the input 2D SparseTensor with default values.
 
     Inputs:
@@ -1391,7 +1391,7 @@ class SparseFillEmptyRows(Primitive):
         - **output_values** (Tensor) - A 1-D Tensor. It represents the value corresponding to the position
           in the `output_indices`, the shape of which should be :math:`(m,)`, because of being filled, m>=n.
         - **empty_row_indicator** (Tensor) - A 1-D Tensor. It indicates whether each row is empty.
-          Support bool. The shape is :math:`(dense_shape[0],)`.
+          Support bool. The shape is :math:`(dense\_shape[0],)`.
         - **reverse_index_map** (Tensor) - A 1-D Tensor. It is the index that means the value here is original
           rather than filled. Support bool. The shape is :math:`(n, 2)`.
 

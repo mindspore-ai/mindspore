@@ -3,7 +3,7 @@ mindspore.ops.zeros
 
 .. py:function:: mindspore.ops.zeros(shape, dtype=None)
 
-    创建一个填满0的Tensor，shape由 `size` 决定， dtype由 `dtype` 决定。
+    创建一个填满0的Tensor，shape由 `shape` 决定， dtype由 `dtype` 决定。
 
     参数：
         - **shape** (Union[tuple[int], int]) - 用来描述所创建的Tensor的 `shape` 。

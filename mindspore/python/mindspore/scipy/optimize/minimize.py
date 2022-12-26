@@ -49,7 +49,7 @@ class OptimizeResults(NamedTuple):
 
 def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bounds=None, constraints=(),
              tol=None, callback=None, options=None):
-    """Minimization of scalar function of one or more variables.
+    r"""Minimization of scalar function of one or more variables.
 
     This API for this function matches SciPy with some minor deviations:
 
@@ -67,7 +67,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
 
         - `minimize` is not supported on Windows platform yet.
 
-    Parameters:
+    Args:
       func (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
           where `x` is a 1-D array with shape :math:`(n,)` and `args` is a tuple
           of the fixed parameters needed to completely specify the function.
@@ -79,7 +79,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
       jac (Callable, optional): method for computing the gradient vector. Only for `"BFGS"` and `"LBFGS"`.
           if it is None, the gradient will be estimated with gradient of ``func``.
           if it is a callable, it should be a function that returns the gradient vector:
-          :math:`jac(x, *args) -> array_like, shape (n,)`
+          :math:`jac(x, *args) -> array\_like, shape (n,)`
           where x is an array with shape (n,) and args is a tuple with the fixed parameters.
       tol (float, optional): tolerance for termination. For detailed control, use solver-specific
           options. Default: None.

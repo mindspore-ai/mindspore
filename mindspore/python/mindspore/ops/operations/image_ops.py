@@ -364,8 +364,8 @@ class NonMaxSuppressionV3(Primitive):
           selected by the algorithm.
 
     Inputs:
-        - **boxes** (Tensor) - A 2-D Tensor of shape :math:`(num_boxes, 4)`.
-        - **scores** (Tensor) - A 1-D Tensor of shape :math:`(num_boxes)` representing a single score
+        - **boxes** (Tensor) - A 2-D Tensor of shape :math:`(num\_boxes, 4)`.
+        - **scores** (Tensor) - A 1-D Tensor of shape :math:`(num\_boxes)` representing a single score
           corresponding to each box (each row of boxes), the num_boxes of `scores` must be equal to
           the num_boxes of `boxes`.
         - **max_output_size** (Union[Tensor, Number.Int]) - A scalar integer Tensor representing the maximum
@@ -417,7 +417,7 @@ class NonMaxSuppressionV3(Primitive):
 
 
 class NonMaxSuppressionWithOverlaps(Primitive):
-    """
+    r"""
     Greedily selects a subset of bounding boxes in descending order of score.
 
     Note:
@@ -427,9 +427,9 @@ class NonMaxSuppressionWithOverlaps(Primitive):
           selected by the algorithm.
 
     Inputs:
-        - **overlaps** (Tensor) - A 2-D Tensor of shape :math:`(num_boxes, num_boxes)`,
+        - **overlaps** (Tensor) - A 2-D Tensor of shape :math:`(num\_boxes, num\_boxes)`,
           representing the n-by-n box overlap values. Types allowed:float32.
-        - **scores** (Tensor) - A 1-D Tensor of shape :math:`(num_boxes)` representing a single score
+        - **scores** (Tensor) - A 1-D Tensor of shape :math:`(num\_boxes)` representing a single score
           corresponding to each box (each row of boxes), the num_boxes of `scores` must be equal to
           the num_boxes of `overlaps`.
           Types allowed:float32.
@@ -488,7 +488,7 @@ class NonMaxSuppressionWithOverlaps(Primitive):
 
 
 class HSVToRGB(Primitive):
-    """
+    r"""
     Convert one or more images from HSV to RGB.
     Outputs a tensor of the same shape as the images tensor,
     containing the HSV value of the pixels. The output is only
@@ -496,11 +496,11 @@ class HSVToRGB(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input image must be a 4-D tensor of shape
-          :math:`[batch, image_height, image_width, channel]`.
+          :math:`[batch, image\_height, image\_width, channel]`.
           Number of channel must be 3. Types allowed: float16, float32, float64.
 
     Outputs:
-        A 4-D tensor of shape :math:`[batch, image_height, image_width, channel]`
+        A 4-D tensor of shape :math:`[batch, image\_height, image\_width, channel]`
         with same type of input.
 
     Raises:
@@ -849,7 +849,7 @@ class ResizeBicubic(Primitive):
 
 
 class ResizeArea(Primitive):
-    """
+    r"""
     Resize images to a certain size using area interpolation.
 
     The resizing process only changes the two dimensions of images, which represent the width and height of images.
@@ -870,7 +870,7 @@ class ResizeArea(Primitive):
           Types allowed: int32.
 
     Outputs:
-        A 4-D tensor of shape :math:`(batch, new_height, new_width, channels)` with type float32.
+        A 4-D tensor of shape :math:`(batch, new\_height, new\_width, channels)` with type float32.
 
     Raises:
         TypeError: If dtype of `images` is not supported.
@@ -1003,7 +1003,7 @@ class CropAndResizeGradImage(Primitive):
 
 
 class ScaleAndTranslate(Primitive):
-    """
+    r"""
     Scale And Translate the input image tensor.
 
     Note:
@@ -1017,7 +1017,7 @@ class ScaleAndTranslate(Primitive):
         antialias (bool, optional): Deciding whether to use the antialias. Default: True.
 
     Inputs:
-        - **images** (Tensor) - A 4-D tensor of shape :math:`(batch, image_height, image_width, channel)`.
+        - **images** (Tensor) - A 4-D tensor of shape :math:`(batch, image\_height, image\_width, channel)`.
         - **size** (Tensor) - The size of the output image after scale and translate operations. A 1-D tensor with two
           positive elements whose dtype is int32 and shape must be (2,).
         - **scale** (Tensor) - Indicates the zoom factor. A 1-D tensor with two positive elements whose dtype is float32
