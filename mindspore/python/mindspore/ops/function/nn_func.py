@@ -2480,6 +2480,7 @@ def pad(input_x, padding, mode='constant', value=None):
            [7. 6. 7.]
            [5. 4. 5.]]]]
         >>> output2 = ops.pad(x, (1, 1, 2, 1), mode='replicate')
+        >>> print(output2)
         [[[[0. 0. 1. 1.]
            [0. 0. 1. 1.]
            [0. 0. 1. 1.]
@@ -2983,8 +2984,8 @@ def l1_loss(x, target, reduction='mean'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = ms.Tensor([[1, 2, 3], [4, 5, 6]], ms.float32)
-        >>> target = ms.Tensor([[6, 5, 4], [3, 2, 1]], ms.float32)
+        >>> x = ms.Tensor([[1, 2, 3], [4, 5, 6]], mstype.float32)
+        >>> target = ms.Tensor([[6, 5, 4], [3, 2, 1]], mstype.float32)
         >>> output = ops.l1_loss(x, target, reduction="mean")
         >>> print(output)
         3.0
@@ -4506,7 +4507,7 @@ def pixel_unshuffle(x, downscale_factor):
         >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
         >>> output = ops.pixel_unshuffle(input_x, 3)
         >>> print(output.shape)
-        >>> (1, 9, 4, 4)
+        (1, 9, 4, 4)
     """
     _check_positive_int(downscale_factor, "downscale_factor")
     idx = x.shape

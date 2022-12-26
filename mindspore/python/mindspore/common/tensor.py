@@ -1172,8 +1172,8 @@ class Tensor(Tensor_):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> a = Tensor([[1, 2, 3], [2, 3, 4]], ms.float32)
-            >>> b = Tensor([1, 1, 1, 1, 1, 1], ms.float32)
+            >>> a = Tensor([[1, 2, 3], [2, 3, 4]], mstype.float32)
+            >>> b = Tensor([1, 1, 1, 1, 1, 1], mstype.float32)
             >>> output = a.view_as(b)
             >>> print(output)
             [1. 2. 3. 2. 3. 4.]
