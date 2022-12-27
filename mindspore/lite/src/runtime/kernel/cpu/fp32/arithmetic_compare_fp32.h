@@ -23,16 +23,22 @@ namespace mindspore::kernel {
 class ArithmeticCompareCPUKernel : public ArithmeticCPUKernel {
   typedef int (*ArithmeticCompareFp32Func)(const float *input0, const float *input1, uint8_t *output, int element_size);
   typedef int (*ArithmeticCompareIntFunc)(const int *input0, const int *input1, uint8_t *output, int element_size);
+  typedef int (*ArithmeticCompareInt64Func)(const int64_t *input0, const int64_t *input1, uint8_t *output,
+                                            int element_size);
   typedef int (*ArithmeticOptCompareFp32Func)(const float *input0, const float *input1, uint8_t *output,
                                               int element_size, const ArithmeticParameter *param);
   typedef int (*ArithmeticOptCompareIntFunc)(const int *input0, const int *input1, uint8_t *output, int element_size,
                                              const ArithmeticParameter *param);
+  typedef int (*ArithmeticOptCompareInt64Func)(const int64_t *input0, const int64_t *input1, uint8_t *output,
+                                               int element_size, const ArithmeticParameter *param);
   typedef struct {
     int primitive_type_;
     ArithmeticCompareFp32Func func_;
     ArithmeticCompareIntFunc int_func_;
     ArithmeticOptCompareFp32Func opt_func_;
     ArithmeticOptCompareIntFunc opt_int_func_;
+    ArithmeticCompareInt64Func int64_func_;
+    ArithmeticOptCompareInt64Func opt_int64_func_;
   } ARITHMETIC_COMEPARE_FUNC_INFO_FP32;
 
  public:
@@ -48,6 +54,8 @@ class ArithmeticCompareCPUKernel : public ArithmeticCPUKernel {
   ArithmeticCompareIntFunc func_int32_{nullptr};
   ArithmeticOptCompareFp32Func opt_func_fp32_{nullptr};
   ArithmeticOptCompareIntFunc opt_func_int32_{nullptr};
+  ArithmeticCompareInt64Func func_int64_{nullptr};
+  ArithmeticOptCompareInt64Func opt_func_int64_{nullptr};
 };
 }  // namespace mindspore::kernel
 
