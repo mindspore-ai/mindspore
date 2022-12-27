@@ -21,6 +21,7 @@
 #include <functional>
 #include <memory>
 #include "include/common/utils/anfalgo.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
@@ -104,6 +105,71 @@ size_t GetFusionSize(const AnfNodePtr &node) {
   }
   return 0;
 }
+
+int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
+                         std::vector<AnfNodePtr> *plant_inputs) {
+  if (!common::AnfAlgo::IsTupleOutput(tuple_input)) {
+    auto abs = tuple_input->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    MS_LOG(WARNING) << "The Function only split the output type is tuple type but got" << abs->ToString();
+    return -1;
+  }
+  MS_EXCEPTION_IF_NULL(plant_inputs);
+  auto input_size = AnfAlgo::GetOutputTensorNum(tuple_input);
+  if (tuple_input->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(tuple_input, prim::kPrimMakeTuple)) {
+    auto make_tuple = tuple_input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple);
+    size_t tuple_input_num = common::AnfAlgo::GetInputTensorNum(make_tuple);
+    for (size_t j = 0; j < tuple_input_num; ++j) {
+      // using for graph kernel
+      auto dyn_input_node = common::AnfAlgo::GetInputNode(make_tuple, j);
+      MS_EXCEPTION_IF_NULL(dyn_input_node);
+      // Handle tuple nested scenes.
+      if (dyn_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple)) {
+        input_size += SplitTupleInputs(graph, dyn_input_node, plant_inputs);
+        continue;
+      }
+      (void)plant_inputs->emplace_back(dyn_input_node);
+    }
+    return input_size;
+  }
+  for (size_t index = 0; index < input_size; ++index) {
+    auto dynamic_input_node = CreatTupleGetItemNode(graph, tuple_input, index);
+    (void)plant_inputs->emplace_back(dynamic_input_node);
+  }
+  return input_size;
+}
+
+void ExpandFlattenConcatTupleInput(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
+  MS_EXCEPTION_IF_NULL(cnode_ptr);
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimFlattenConcat)) {
+    return;
+  }
+  std::vector<AnfNodePtr> plant_inputs;
+  std::vector<int64_t> dyn_input_sizes;
+  plant_inputs.push_back(common::AnfAlgo::GetCNodePrimitiveNode(cnode_ptr));
+  size_t input_num = cnode_ptr->inputs().size() - 1;
+  for (size_t i = 0; i < input_num; ++i) {
+    auto input_node = common::AnfAlgo::GetInputNode(cnode_ptr, i);
+    MS_EXCEPTION_IF_NULL(input_node);
+    bool output_is_tuple = common::AnfAlgo::IsTupleOutput(input_node);
+    if (output_is_tuple) {
+      auto dyn_input_size = SplitTupleInputs(graph, input_node, &plant_inputs);
+      if (dyn_input_size == 0) {
+        dyn_input_sizes.push_back(-1);
+        plant_inputs.push_back(input_node);
+      } else {
+        (void)dyn_input_sizes.emplace_back(dyn_input_size);
+      }
+    } else {
+      dyn_input_sizes.push_back(-1);
+      plant_inputs.push_back(input_node);
+    }
+  }
+  // Expand the inputs and replace the original inputs.
+  cnode_ptr->set_inputs(plant_inputs);
+}
 }  // namespace
 
 const BaseRef FlattenConcatFission::DefinePattern() const {
@@ -117,6 +183,10 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+
+  // After ConvertTupleInputToDynamicInput pass is removed, we need to expand tuple inputs for FlattenConcat op here.
+  ExpandFlattenConcatTupleInput(func_graph, cnode);
+
   std::unordered_map<TypeId, std::pair<std::vector<AnfNodePtr>, int64_t>> type_id_to_node_info;
   std::vector<TypeId> output_type_id_order;
   size_t block_size = GetFusionSize(node);
