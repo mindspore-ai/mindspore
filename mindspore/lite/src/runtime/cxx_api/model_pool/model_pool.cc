@@ -358,9 +358,10 @@ std::shared_ptr<Context> ModelPool::GetInitContext(const std::shared_ptr<RunnerC
     std::vector<int> empty = {};
     context->SetThreadAffinity(empty);
   }
-  if (context->GetEnableParallel()) {
-    MS_LOG(WARNING)
-      << "EnableParallel parameter is not recommended in parallel inference, InterOpParallelNum is recommended";
+  if (context->GetEnableParallel() && context->GetInterOpParallelNum() != 1) {
+    MS_LOG(ERROR) << "EnableParallel parameter is not recommended in parallel inference, InterOpParallelNum is "
+                     "recommended, if you want to use EnabelParallel, please set InterOpParallelNum as 1.";
+    return nullptr;
   }
   return context;
 }
