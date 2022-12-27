@@ -26,9 +26,6 @@ from mindspore.profiler.common.util import query_latest_trace_time_file, to_int,
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 
 
-csv.field_size_limit(sys.maxsize)
-
-
 class Integrator:
     """
     The integrator for integrating parsed profiling files.
@@ -57,6 +54,7 @@ class Integrator:
     _aicore_trace_data = []
 
     def __init__(self, profiling_dir, device_id):
+        csv.field_size_limit(sys.maxsize)
         self._profiling_dir = profiling_dir
         self._device_id = device_id
         self._op_time_cache = {}
