@@ -22,11 +22,11 @@
 #include "cxx_api/acl_utils.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/base/base_ref_utils.h"
-#include "backend/common/session/session_factory.h"
 #include "backend/common/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/dev.h"
 #include "include/common/utils/python_adapter.h"
+#include "backend/common/session/session_basic.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "distributed/init.h"
 
@@ -62,10 +62,108 @@ void InitHccl() {
     }
   }
 }
+
+VectorRef GenerateInputsRef(const std::vector<tensor::TensorPtr> &inputs, const FuncGraphPtr &func_graph) {
+  VectorRef results;
+  std::size_t size = inputs.size();
+  for (std::size_t i = 0; i < size; i++) {
+    results.push_back(inputs[i]);
+  }
+
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> graph_params = func_graph->parameters();
+  std::size_t graph_params_size = graph_params.size();
+  if (results.size() != graph_params_size) {
+    // Maybe some default parameter
+    for (std::size_t i = results.size(); i < graph_params_size; i++) {
+      MS_EXCEPTION_IF_NULL(graph_params[i]);
+      auto param_ptr = (graph_params[i])->cast_ptr<Parameter>();
+      MS_EXCEPTION_IF_NULL(param_ptr);
+      if (!param_ptr->has_default()) {
+        MS_LOG(EXCEPTION) << "Parameter[" << i << "] has no default param";
+      }
+      if (!param_ptr->default_param()->isa<Tensor>()) {
+        MS_LOG(EXCEPTION) << "Parameter[" << param_ptr->ToString()
+                          << "] is not initialized, need to call `.init_data()`";
+      }
+      results.push_back(param_ptr->default_param());
+    }
+  }
+  return results;
+}
+
+uint32_t GetRootGraphIdFromActorInfo(const std::string &actor_info) {
+  const std::string prefix = "kernel_graph_";
+  auto pos = actor_info.find(prefix);
+  if (pos == std::string::npos) {
+    MS_LOG(EXCEPTION) << "Cannot find prefix " << prefix << " from actor_info" << actor_info
+                      << ", failed to get graph id.";
+  }
+  std::string first_num = "";
+  for (size_t i = prefix.size(); i < actor_info.size(); ++i) {
+    if (actor_info[i] >= '0' && actor_info[i] <= '9') {
+      first_num.push_back(actor_info[i]);
+    } else {
+      break;
+    }
+  }
+  return std::stoul(first_num);
+}
+
+void GetModelInputsInfo(const std::shared_ptr<KernelGraph> &kernel_graph, std::vector<tensor::TensorPtr> *inputs,
+                        std::vector<std::string> *inputs_name) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(inputs);
+  MS_EXCEPTION_IF_NULL(inputs_name);
+  auto kernel_graph_inputs = kernel_graph->inputs();
+  // find parameters of graph inputs
+  for (size_t i = 0; i < kernel_graph_inputs.size(); ++i) {
+    if (!kernel_graph_inputs[i]->isa<Parameter>()) {
+      MS_LOG(ERROR) << "Kernel graph inputs have anfnode which is not Parameter.";
+      continue;
+    }
+    auto parameter = kernel_graph_inputs[i]->cast<ParameterPtr>();
+    if (!common::AnfAlgo::IsParameterWeight(parameter)) {
+      auto input_shape = AnfAlgo::GetOutputDeviceShape(parameter, 0);
+      auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(parameter);
+      auto data_type = kernel_build_info->GetOutputDeviceType(0);
+      auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, input_shape);
+      inputs->push_back(ms_tensor);
+      inputs_name->push_back(parameter->name());
+    }
+  }
+}
+
+void GetModelOutputsInfo(const std::shared_ptr<KernelGraph> &kernel_graph, std::vector<tensor::TensorPtr> *outputs,
+                         std::vector<std::string> *output_names) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(output_names);
+
+  std::vector<tensor::TensorPtr> inputs;
+  std::vector<std::string> input_names;
+  GetModelInputsInfo(kernel_graph, &inputs, &input_names);
+
+  VectorRef vector_outputs;
+  std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
+  session::KernelMapTensor node_to_tensor;
+  auto anf_outputs = kernel_graph->outputs();
+  for (auto &item : anf_outputs) {
+    MS_EXCEPTION_IF_NULL(item);
+    MS_LOG(INFO) << "Create node output[" << item->DebugString() << "]";
+    vector_outputs.emplace_back(
+      session::SessionBasic::CreateNodeOutputTensors(item, kernel_graph, inputs, &tensor_to_node, &node_to_tensor));
+  }
+  *outputs = TransformVectorRefToMultiTensor(vector_outputs);
+  for (size_t i = 0; i < outputs->size(); i++) {
+    output_names->push_back("output" + std::to_string(i));
+  }
+}
 }  // namespace
 AscendGraphImpl::AscendGraphImpl()
-    : session_impl_(nullptr),
-      graph_id_(0),
+    : backend_(nullptr),
+      actor_info_(""),
+      kernel_graph_(),
       device_type_("Ascend"),
       device_id_(0),
       context_(nullptr),
@@ -85,22 +183,27 @@ Status AscendGraphImpl::InitEnv() {
     return kMCDeviceError;
   }
 
-  session_impl_ = session::SessionFactory::Get().Create(kDavinciInferenceDevice);
-  if (session_impl_ == nullptr) {
-    MS_LOG(ERROR) << "Session create failed!, please make sure target device:" << kDavinciInferenceDevice
+  backend_ = std::make_shared<compile::MindRTBackend>(kMsConvert, kAscendDevice, device_id_);
+  if (backend_ == nullptr) {
+    MS_LOG(ERROR) << "DeviceContext create failed!, please make sure target device:" << kAscendDevice
                   << " is available.";
     return kMCFailed;
   }
-  session_impl_->Init(device_id_);
 
   MS_LOG(INFO) << "InitEnv success.";
   return kSuccess;
 }
 
-Status AscendGraphImpl::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr) {
-  MS_ASSERT(session_impl_ != nullptr);
+Status AscendGraphImpl::CompileGraph(const std::shared_ptr<FuncGraph> &func_graph) {
+  MS_ASSERT(backend_ != nullptr);
   try {
-    graph_id_ = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
+    MS_EXCEPTION_IF_NULL(func_graph);
+    // perpare func graph
+    auto manager = MakeManager();
+    manager->AddFuncGraph(func_graph);
+    func_graph->set_manager(manager);
+    actor_info_ = backend_->CompileGraphs(func_graph);
+    kernel_graph_ = backend_->GetGraphById(GetRootGraphIdFromActorInfo(actor_info_));
     return kSuccess;
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "CompileGraph failed: " << e.what();
@@ -111,21 +214,12 @@ Status AscendGraphImpl::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraph
 std::vector<tensor::TensorPtr> AscendGraphImpl::RunGraph(const std::vector<tensor::TensorPtr> &inputs) {
   try {
     VectorRef outputs;
-    session_impl_->RunGraph(graph_id_, inputs, &outputs);
+    backend_->RunGraph(actor_info_, GenerateInputsRef(inputs, func_graph_.lock()), &outputs);
     return TransformVectorRefToMultiTensor(outputs);
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "RunGraph failed: " << e.what();
     return std::vector<tensor::TensorPtr>();
   }
-}
-
-Status AscendGraphImpl::CheckModelInputs(const std::vector<tensor::TensorPtr> &inputs) const {
-  MS_ASSERT(session_impl_ != nullptr);
-  std::string error_msg;
-  if (!session_impl_->CheckModelInputs(graph_id_, inputs, &error_msg)) {
-    return Status(kMCInvalidInput, error_msg);
-  }
-  return kSuccess;
 }
 
 Status AscendGraphImpl::ExecuteModel(const std::vector<MSTensor> &request, std::vector<MSTensor> *reply) {
@@ -161,6 +255,9 @@ Status AscendGraphImpl::ExecuteModel(const std::vector<MSTensor> &request, std::
   if (outputs.empty()) {
     MS_LOG(ERROR) << "Execute Model Failed";
     return kMCFailed;
+  }
+  for (const auto &out : outputs) {
+    out->data_sync();
   }
   last_outputs_ = outputs;
   reply->clear();
@@ -226,6 +323,7 @@ Status AscendGraphImpl::Load(uint32_t device_id) {
   const auto &graph_data = GraphImpl::MutableGraphData();
   MS_EXCEPTION_IF_NULL(graph_data);
   auto func_graph = graph_data->GetFuncGraph();
+  func_graph_ = func_graph;
 
   // init
   device_id_ = device_id;
@@ -242,9 +340,11 @@ Status AscendGraphImpl::Load(uint32_t device_id) {
       MS_LOG(ERROR) << "Compile graph model failed";
       return ret;
     }
-    MS_EXCEPTION_IF_NULL(session_impl_);
-    session_impl_->GetModelInputsInfo(graph_id_, &inputs_info_, &input_names_);
-    session_impl_->GetModelOutputsInfo(graph_id_, &outputs_info_, &output_names_);
+    auto kg = kernel_graph_.lock();
+    MS_EXCEPTION_IF_NULL(backend_);
+    MS_EXCEPTION_IF_NULL(kg);
+    GetModelInputsInfo(kg, &inputs_info_, &input_names_);
+    GetModelOutputsInfo(kg, &outputs_info_, &output_names_);
     if (inputs_info_.size() != input_names_.size()) {
       MS_LOG_ERROR << "Get model inputs info failed";
       return kMCInvalidInput;

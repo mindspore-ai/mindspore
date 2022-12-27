@@ -176,45 +176,6 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
   return tensor;
 }
 
-BaseRef CreateNodeOutputTensors(const AnfNodePtr &anf, const KernelGraphPtr &graph,
-                                const std::vector<tensor::TensorPtr> &input_tensors,
-                                std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
-                                KernelMapTensor *node_to_tensor) {
-  MS_EXCEPTION_IF_NULL(anf);
-  MS_EXCEPTION_IF_NULL(tensor_to_node);
-  MS_EXCEPTION_IF_NULL(node_to_tensor);
-  MS_LOG(DEBUG) << "Create tensor for output[" << anf->DebugString() << "]";
-  auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(anf, 0);
-  MS_EXCEPTION_IF_NULL(item_with_index.first);
-  MS_LOG(DEBUG) << "Create tensor for output after visit:" << item_with_index.first->DebugString();
-  // special handle for maketuple
-  if (common::AnfAlgo::CheckPrimitiveType(item_with_index.first, prim::kPrimMakeTuple)) {
-    auto cnode = item_with_index.first->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    VectorRef ret;
-    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-      auto out = CreateNodeOutputTensors(cnode->input(i), graph, input_tensors, tensor_to_node, node_to_tensor);
-      ret.push_back(out);
-    }
-    return ret;
-  }
-  // if is graph return nothing ,the function should return a null anylist
-  size_t size = common::AnfAlgo::GetOutputTensorNum(item_with_index.first);
-  if (size == 0) {
-    return VectorRef();
-  }
-
-  //  The outputs of graph may have the same kernel node, no need to create new tensor.
-  const auto &iter = node_to_tensor->find(item_with_index);
-  if (iter != node_to_tensor->end()) {
-    return iter->second;
-  }
-
-  const auto &tensor = CreateNodeOutputTensor(item_with_index, graph, input_tensors, tensor_to_node);
-  (*node_to_tensor)[item_with_index] = tensor;
-  return tensor;
-}
-
 std::string GetOpRunDeviceTarget(const PrimitivePtr &op_prim) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -422,6 +383,45 @@ std::vector<ValuePtr> TransformVectorRefToMultiValue(const VectorRef &base_ref) 
   return msTensors;
 }
 }  // namespace
+
+BaseRef SessionBasic::CreateNodeOutputTensors(const AnfNodePtr &anf, const KernelGraphPtr &graph,
+                                              const std::vector<tensor::TensorPtr> &input_tensors,
+                                              std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
+                                              KernelMapTensor *node_to_tensor) {
+  MS_EXCEPTION_IF_NULL(anf);
+  MS_EXCEPTION_IF_NULL(tensor_to_node);
+  MS_EXCEPTION_IF_NULL(node_to_tensor);
+  MS_LOG(DEBUG) << "Create tensor for output[" << anf->DebugString() << "]";
+  auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(anf, 0);
+  MS_EXCEPTION_IF_NULL(item_with_index.first);
+  MS_LOG(DEBUG) << "Create tensor for output after visit:" << item_with_index.first->DebugString();
+  // special handle for maketuple
+  if (common::AnfAlgo::CheckPrimitiveType(item_with_index.first, prim::kPrimMakeTuple)) {
+    auto cnode = item_with_index.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    VectorRef ret;
+    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+      auto out = CreateNodeOutputTensors(cnode->input(i), graph, input_tensors, tensor_to_node, node_to_tensor);
+      ret.push_back(out);
+    }
+    return ret;
+  }
+  // if is graph return nothing ,the function should return a null anylist
+  size_t size = common::AnfAlgo::GetOutputTensorNum(item_with_index.first);
+  if (size == 0) {
+    return VectorRef();
+  }
+
+  //  The outputs of graph may have the same kernel node, no need to create new tensor.
+  const auto &iter = node_to_tensor->find(item_with_index);
+  if (iter != node_to_tensor->end()) {
+    return iter->second;
+  }
+
+  const auto &tensor = CreateNodeOutputTensor(item_with_index, graph, input_tensors, tensor_to_node);
+  (*node_to_tensor)[item_with_index] = tensor;
+  return tensor;
+}
 
 void SessionBasic::InitExecutor(const std::string &device_name, uint32_t device_id) {
   device_id_ = device_id;

@@ -83,6 +83,8 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   // Sync default stream in PyNative mode.
   void SyncStream();
 
+  KernelGraphPtr GetGraphById(GraphId graph_id);
+
  private:
   // CreateKernel, Transform and Schedule have not been finished when LazyBuild is enabled in PyNative mode.
   void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
