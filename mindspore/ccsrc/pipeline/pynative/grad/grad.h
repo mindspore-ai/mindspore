@@ -151,7 +151,7 @@ class GradExecutor {
   std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args) const;
   void GradNetInner(const py::object *ret, const prim::GradOperationPtr &grad, const py::object &cell,
                     const py::object &weights, const py::object &grad_position, const py::args &args);
-  FuncGraphPtr GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
+  FuncGraphPtr GetBpropGraph(const ad::GradAttr &grad_attr, const py::object &cell,
                              const std::vector<AnfNodePtr> &weights, const std::vector<size_t> &grad_position,
                              size_t arg_size, const py::args &args);
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder) const;

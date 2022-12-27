@@ -45,9 +45,14 @@ struct GradAttr {
   bool grad_weights;
   bool has_sens;
   bool get_by_position;
+  bool weight_param_is_tuple;
 
-  GradAttr(bool get_all, bool get_by_list, bool sens_param, bool get_by_position)
-      : grad_all_inputs(get_all), grad_weights(get_by_list), has_sens(sens_param), get_by_position(get_by_position) {}
+  GradAttr(bool get_all, bool get_by_list, bool sens_param, bool get_by_position, bool weight_param_is_tuple)
+      : grad_all_inputs(get_all),
+        grad_weights(get_by_list),
+        has_sens(sens_param),
+        get_by_position(get_by_position),
+        weight_param_is_tuple(weight_param_is_tuple) {}
 };
 
 // bprop_fg: user defined back propagate funcgraph or back propagate funcgraph of primitive, it will be passed after
