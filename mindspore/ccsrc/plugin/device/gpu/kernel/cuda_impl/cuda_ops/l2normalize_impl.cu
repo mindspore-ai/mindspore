@@ -19,8 +19,8 @@
 template <typename T>
 __global__ void AssignEps(const size_t size, const float eps, T* value) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
-    float v = static_cast<float>(value[pos]);
-    float max = v > eps ? v : eps;
+    double v = static_cast<double>(value[pos]);
+    double max = v > eps ? v : eps;
     value[pos] = static_cast<T>(max);
   }
 }
@@ -36,3 +36,5 @@ template CUDA_LIB_EXPORT void GetMaxWithEpsAndValue<half>(const size_t size, con
                                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void GetMaxWithEpsAndValue<int>(const size_t size, const float eps, int* value,
                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void GetMaxWithEpsAndValue<double>(const size_t size, const float eps, double* value,
+                                                            cudaStream_t cuda_stream);

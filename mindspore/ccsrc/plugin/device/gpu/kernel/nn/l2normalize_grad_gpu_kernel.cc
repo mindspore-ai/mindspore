@@ -110,8 +110,8 @@ bool L2NormalizeGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, kIndex2);
   T *workspace_y_dy_addr = GetPossiblyNullDeviceAddress<T>(workspace, kIndex3);
 
-  const float alpha = 1;
-  const float beta = 0;
+  T alpha = static_cast<T>(1.0f);
+  T beta = static_cast<T>(0.0f);
 
   if (all_match_) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
@@ -119,11 +119,21 @@ bool L2NormalizeGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       kernel_name_ + " cudaMemcpyAsync failed in L2Normalize::Launch.");
   } else {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr,
-                        workspace_size_list_[kIndex2], &alpha, inputA_descriptor_, x_addr, &beta, outputC_descriptor_,
-                        reduce_workspace_addr),
-      kernel_name_ + " cudnnReduceTensor failed.");
+    if (data_type_ == CUDNN_DATA_DOUBLE) {
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+        cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr,
+                          workspace_size_list_[kIndex2], &alpha, inputA_descriptor_, x_addr, &beta, outputC_descriptor_,
+                          reduce_workspace_addr),
+        kernel_name_ + " cudnnReduceTensor failed.");
+    } else {
+      const float alphaf = static_cast<float>(alpha);
+      const float betaf = static_cast<float>(beta);
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+        cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr,
+                          workspace_size_list_[kIndex2], &alphaf, inputA_descriptor_, x_addr, &betaf,
+                          outputC_descriptor_, reduce_workspace_addr),
+        kernel_name_ + " cudnnReduceTensor failed.");
+    }
   }
   GetMaxWithEpsAndValue(workspace_size_list_[0] / sizeof(T), epsilon_, reduce_workspace_addr,
                         reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -135,11 +145,21 @@ bool L2NormalizeGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       kernel_name_ + " cudaMemcpyAsync failed in L2Normalize::Launch.");
   } else {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnReduceTensor(cudnn_handle_, reduce_sum_tensor_descriptor_, nullptr, 0, workspace_y_dy_addr,
-                        workspace_size_list_[kIndex3], &alpha, inputA_descriptor_, dx_addr, &beta, outputC_descriptor_,
-                        reduce_y_dy_workspace_addr),
-      kernel_name_ + " cudnnReduceTensor failed.");
+    if (data_type_ == CUDNN_DATA_DOUBLE) {
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+        cudnnReduceTensor(cudnn_handle_, reduce_sum_tensor_descriptor_, nullptr, 0, workspace_y_dy_addr,
+                          workspace_size_list_[kIndex3], &alpha, inputA_descriptor_, dx_addr, &beta,
+                          outputC_descriptor_, reduce_y_dy_workspace_addr),
+        kernel_name_ + " cudnnReduceTensor failed.");
+    } else {
+      const float alphaf = static_cast<float>(alpha);
+      const float betaf = static_cast<float>(beta);
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+        cudnnReduceTensor(cudnn_handle_, reduce_sum_tensor_descriptor_, nullptr, 0, workspace_y_dy_addr,
+                          workspace_size_list_[kIndex3], &alphaf, inputA_descriptor_, dx_addr, &betaf,
+                          outputC_descriptor_, reduce_y_dy_workspace_addr),
+        kernel_name_ + " cudnnReduceTensor failed.");
+    }
   }
   BroadcastArith(rhs_shape_, lhs_shape_, output_shape_, BROADCAST_TYPE_MUL, reduce_y_dy_workspace_addr, y_addr, dx_addr,
                  reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -164,6 +184,12 @@ std::vector<std::pair<KernelAttr, L2NormalizeGradGpuKernelMod::L2NormalizeGradGp
                                                 .AddInputAttr(kNumberTypeFloat32)
                                                 .AddOutputAttr(kNumberTypeFloat32),
                                               &L2NormalizeGradGpuKernelMod::LaunchKernel<float>},
+                                             {KernelAttr()
+                                                .AddInputAttr(kNumberTypeFloat64)
+                                                .AddInputAttr(kNumberTypeFloat64)
+                                                .AddInputAttr(kNumberTypeFloat64)
+                                                .AddOutputAttr(kNumberTypeFloat64),
+                                              &L2NormalizeGradGpuKernelMod::LaunchKernel<double>},
                                              {KernelAttr()
                                                 .AddInputAttr(kNumberTypeInt32)
                                                 .AddInputAttr(kNumberTypeInt32)

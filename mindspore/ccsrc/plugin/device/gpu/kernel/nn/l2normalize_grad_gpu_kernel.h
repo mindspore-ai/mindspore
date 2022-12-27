@@ -112,13 +112,14 @@ class L2NormalizeGradGpuKernelMod : public NativeGpuKernelMod {
                                        kernel_name_ + " cudnnDestroyTensorDescriptor failed.");
   }
   void InferArrayReduceType() {
+    cudnnDataType_t comp_type = (data_type_ == CUDNN_DATA_DOUBLE) ? CUDNN_DATA_DOUBLE : CUDNN_DATA_FLOAT;
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor_, CUDNN_REDUCE_TENSOR_NORM2, CUDNN_DATA_FLOAT, nan_prop_,
+      cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor_, CUDNN_REDUCE_TENSOR_NORM2, comp_type, nan_prop_,
                                      reduce_indices_, CUDNN_32BIT_INDICES),
       kernel_name_ + " cudnnSetReduceTensorDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnSetReduceTensorDescriptor(reduce_sum_tensor_descriptor_, CUDNN_REDUCE_TENSOR_ADD, CUDNN_DATA_FLOAT,
-                                     nan_prop_, reduce_indices_, CUDNN_32BIT_INDICES),
+      cudnnSetReduceTensorDescriptor(reduce_sum_tensor_descriptor_, CUDNN_REDUCE_TENSOR_ADD, comp_type, nan_prop_,
+                                     reduce_indices_, CUDNN_32BIT_INDICES),
       kernel_name_ + " cudnnSetReduceTensorDescriptor failed");
     return;
   }

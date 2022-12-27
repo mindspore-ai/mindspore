@@ -24,5 +24,7 @@ MS_REG_GPU_KERNEL_ONE(L2Normalize, KernelAttr().AddInputAttr(kNumberTypeFloat16)
                       L2NormalizeGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(L2Normalize, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
                       L2NormalizeGpuKernelMod, int)
+MS_REG_GPU_KERNEL_ONE(L2Normalize, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                      L2NormalizeGpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore

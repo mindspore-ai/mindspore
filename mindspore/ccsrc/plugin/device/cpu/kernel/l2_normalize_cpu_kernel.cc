@@ -200,7 +200,8 @@ std::shared_ptr<CpuKernelFunc> SpecializeL2NormFunc() {
 using SpecializeL2NormFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::vector<std::pair<KernelAttr, SpecializeL2NormFuncCreator>> func_class_list = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), SpecializeL2NormFunc<float16>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeL2NormFunc<float>}};
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeL2NormFunc<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeL2NormFunc<double>}};
 }  // namespace
 
 bool L2NormalizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
