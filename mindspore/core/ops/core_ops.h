@@ -453,9 +453,10 @@ constexpr auto kSetSize = "SetSize";
 constexpr auto kStandardLaplace = "StandardLaplace";
 constexpr auto kLower = "Lower";
 
-constexpr auto kScalarToTensor = "ScalarToTensor";
 constexpr auto kTupleToTensor = "TupleToTensor";
+constexpr auto kScalarToTensor = "ScalarToTensor";
 constexpr auto kTensorToTuple = "TensorToTuple";
+constexpr auto kTensorToScalar = "TensorToScalar";
 constexpr auto kRealMakeTuple = "RealMakeTuple";
 constexpr auto kRealTupleGetItem = "RealTupleGetItem";
 constexpr auto kRealMakeList = "RealMakeList";
@@ -1736,7 +1737,9 @@ GVAR_DEF(PrimitivePtr, kPrimOCRDetectionPreHandle, std::make_shared<Primitive>("
 
 // Real tuple and list ops.
 GVAR_DEF(PrimitivePtr, kPrimTupleToTensor, std::make_shared<Primitive>(kTupleToTensor));
+GVAR_DEF(PrimitivePtr, kPrimScalarToTensor, std::make_shared<Primitive>(kScalarToTensor));
 GVAR_DEF(PrimitivePtr, kPrimTensorToTuple, std::make_shared<Primitive>(kTensorToTuple));
+GVAR_DEF(PrimitivePtr, kPrimTensorToScalar, std::make_shared<Primitive>(kTensorToScalar));
 GVAR_DEF(PrimitivePtr, kPrimRealMakeTuple, std::make_shared<Primitive>(kRealMakeTuple));
 GVAR_DEF(PrimitivePtr, kPrimTupleAdd, std::make_shared<Primitive>(kTupleAdd));
 
