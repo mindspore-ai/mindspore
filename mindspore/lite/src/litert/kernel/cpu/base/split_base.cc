@@ -176,5 +176,6 @@ int SplitBaseCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Split, LiteKernelCreator<SplitBaseCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Split, LiteKernelCreator<SplitBaseCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_Split, LiteKernelCreator<SplitBaseCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Split, LiteKernelCreator<SplitBaseCPUKernel>)
 }  // namespace mindspore::kernel
