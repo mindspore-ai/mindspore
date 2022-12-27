@@ -7318,7 +7318,7 @@ class NextAfter(Primitive):
 class TrilIndices(Primitive):
     r"""
     Returns the indices of the lower triangular part of a `row` -by- `col` matrix in a Tensor.
-    The Tensor has a shape :math:`(2, tril_size)` where :math:`tril_size` is the number of
+    The Tensor has a shape :math:`(2, tril\_size)` where :math:`tril\_size` is the number of
     elements in the lower triangular matrix. The first row contains row coordinates of
     all indices and the second row contains column coordinates.
     Indices are ordered based on rows and then columns.
@@ -7337,7 +7337,7 @@ class TrilIndices(Primitive):
 
     Outputs:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
-          The shape of output is :math:`(2, tril_size)`, where :math:`tril_size` is the number of elements in the
+          The shape of output is :math:`(2, tril\_size)`, where :math:`tril\_size` is the number of elements in the
           lower triangular matrix.
 
     Raises:
@@ -7547,7 +7547,7 @@ class Orgqr(Primitive):
 class TriuIndices(Primitive):
     r"""
     Returns the indices of the upper triangular part of a `row` -by- `col` matrix in a Tensor.
-    The Tensor has a shape :math:`(2, tril_size)` where :math:`tril_size` is the number of
+    The Tensor has a shape :math:`(2, tril\_size)` where :math:`tril\_size` is the number of
     elements in the upper triangular matrix. The first row contains row coordinates of
     all indices and the second row contains column coordinates.
     Indices are ordered based on rows and then columns.
@@ -7566,7 +7566,7 @@ class TriuIndices(Primitive):
 
     Outputs:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
-          The shape of output is :math:`(2, tril_size)`, where :math:`tril_size` is the number of elements in the
+          The shape of output is :math:`(2, tril\_size)`, where :math:`tril\_size` is the number of elements in the
           lower triangular matrix.
 
     Raises:

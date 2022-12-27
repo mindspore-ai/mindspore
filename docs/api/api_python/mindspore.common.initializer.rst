@@ -92,7 +92,7 @@ mindspore.common.initializer
 
 .. py:class:: mindspore.common.initializer.XavierNormal(gain=1)
 
-    生成一个服从Xarvier正态分布的随机数组:math:`{N}(0, \text{sigma}^2)` 用于初始化Tensor，其中：
+    生成一个服从Xarvier正态分布的随机数组 :math:`{N}(0, \text{sigma}^2)` 用于初始化Tensor，其中：
 
     .. math::
         sigma = gain * \sqrt{\frac{2}{n_{in} + n_{out}}}

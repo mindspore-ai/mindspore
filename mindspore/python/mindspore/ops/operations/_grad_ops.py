@@ -1633,32 +1633,32 @@ class DynamicGRUV2Grad(Primitive):
         reset_after (bool): An bool identifying whether to apply reset gate after matrix multiplication. Default: True.
 
     Inputs:
-        - **x** (Tensor) - Current words. Tensor of shape :math:`(num_step, batch_size, input_size)`.
+        - **x** (Tensor) - Current words. Tensor of shape :math:`(num\_step, batch\_size, input\_size)`.
           The data type must be float16 or float32.
-        - **weight_input** (Tensor) - Weight. Tensor of shape :math:`(input_size, 3 x hidden_size)`.
+        - **weight_input** (Tensor) - Weight. Tensor of shape :math:`(input\_size, 3 x hidden\_size)`.
           The data type must be float16 or float32.
-        - **weight_hidden** (Tensor) - Bias. Tensor of shape :math:`(hidden_size, 3 x hidden_size)`.
+        - **weight_hidden** (Tensor) - Bias. Tensor of shape :math:`(hidden\_size, 3 x hidden\_size)`.
           The data type must be float16 or float32.
         - **y** (Tensor) - A Tensor of shape :math:
           if num_proj > 0 `(num_step, batch_size, min(hidden_size, num_proj)`,
           if num_proj == 0 `(num_step, batch_size, hidden_size)`.
           The data type must be float16 or float32.
         - **init_h** (Tensor) - Hidden state of initial time.
-          Tensor of shape :math:`(batch_size, hidden_size)`.
+          Tensor of shape :math:`(batch\_size, hidden\_size)`.
           The data type must be float16 or float32.
-        - **h** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
+        - **h** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           The data type must be float16 or float32.
         - **dy** (Tensor) - Gradient of `y`, has the same shape and data type as `y`.
         - **dh** (Tensor) - Gradient of `h`, has the same shape and data type as `init_h`.
-        - **update** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
+        - **update** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           The data type must be float16 or float32.
-        - **reset** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
+        - **reset** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           The data type must be float16 or float32.
-        - **new** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
+        - **new** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           The data type must be float16 or float32.
-        - **hidden_new** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
+        - **hidden_new** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           The data type must be float16 or float32.
-        - **seq_length** (Tensor) - The length of each batch. Tensor of shape :math:`(batch_size)`.
+        - **seq_length** (Tensor) - The length of each batch. Tensor of shape :math:`(batch\_size)`.
           Only `None` is currently supported.
         - **mask** (Tensor) - A 4-D Tensor. The data type must be float16 or float32.
 
@@ -1667,13 +1667,13 @@ class DynamicGRUV2Grad(Primitive):
           Has the same type with input `x`.
         - **dw_hidden** (Tensor) - A Tensor has the same shape as `weight_hidden`.
           Has the same type with input `x`.
-        - **db_input** (Tensor) - A Tensor of shape :math:`(3 x hidden_size)`.
+        - **db_input** (Tensor) - A Tensor of shape :math:`(3 x hidden\_size)`.
           Has the same type with input `x`.
-        - **db_hidden** (Tensor) - A Tensor of shape :math:`(3 x hidden_size)`.
+        - **db_hidden** (Tensor) - A Tensor of shape :math:`(3 x hidden\_size)`.
           Has the same type with input `x`.
-        - **dx** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
+        - **dx** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           Has the same type with input `x`.
-        - **dh_prev** (Tensor) - A Tensor of shape :math:`(batch_size, hidden_size)`.
+        - **dh_prev** (Tensor) - A Tensor of shape :math:`(batch\_size, hidden\_size)`.
           Has the same type with input `x`.
     """
 
