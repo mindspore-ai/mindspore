@@ -263,7 +263,7 @@ class _LayerNorm(Cell):
             - **x** (Tensor) - Tensor of shape :math:`(batch, seq\_length, hidden\_size)`.
 
         Outputs:
-            Tensor of shape :math:`(batch, seq_length, hidden_size)`.
+            Tensor of shape :math:`(batch, seq\_length, hidden\_size)`.
     """
 
     def __init__(self, normalized_shape, eps=1e-5, param_init_type=mstype.float32, is_self_defined=False):

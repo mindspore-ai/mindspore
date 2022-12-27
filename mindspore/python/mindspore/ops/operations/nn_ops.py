@@ -7878,7 +7878,7 @@ class Conv3DBackpropInput(Primitive):
         data_format (str): The optional value for data format. Currently only support 'NCDHW'.
 
     Inputs:
-        - **weight** (Tensor) - Set size of kernel is :math:`(D_in, K_h, K_w)`, then the shape is
+        - **weight** (Tensor) - Set size of kernel is :math:`(D_{in}, K_h, K_w)`, then the shape is
           :math:`(C_{out}, C_{in}, D_{in}, K_h, K_w)`. Currently weight data type only support float16 and float32.
         - **dout** (Tensor) - the gradients with respect to the output of the convolution.
           The shape conforms to the default.
@@ -9566,7 +9566,7 @@ class PSROIPooling(Primitive):
 
     Inputs:
         - **features** (Tensor) - The input features, whose shape must be :math:`(N, C, H, W)`. With data type is
-          float16 or float32. This formula should hold: :math:`(C == output_dim * group_size * group_size)`.
+          float16 or float32. This formula should hold: :math:`(C == output\_dim * group\_size * group\_size)`.
         - **rois** (Tensor) - The shape is `(batch, 5, rois_n)`. With data type of float16 or float32.
           The size of first dimension `batch` is batch_size. The size of the second dimension must be `5`.
           The size of third dimension `rois_n` is the number of rois. The value of `rois` like:

@@ -2913,12 +2913,12 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
         num_rows (Union[int, Tensor], optional): A Tensor of type int32 with only one value. The number of rows of the
             output Tensor. If `num_rows` is -1, indicating that the innermost matrix of the output Tensor is a square
             matrix, and the real number of rows will be derivated by other inputs. That is
-            :math:`num_rows = x.shape[-1] - min(k[1], 0)`. Otherwise, the value must be equal or greater than
+            :math:`num\_rows = x.shape[-1] - min(k[1], 0)`. Otherwise, the value must be equal or greater than
             :math:`x.shape[-1] - min(k[1], 0)`. Default: -1.
         num_cols (Union[int, Tensor], optional): A Tensor of type int32 with only one value. The number of columns of
             the output Tensor. If `num_cols` is -1, indicating that the innermost matrix of the output
             Tensor is a square matrix, and the real number of columns will be derivated by other inputs.
-            That is :math:`num_cols = x.shape[-1] + max(k[0], 0)`. Otherwise, the value must be equal or
+            That is :math:`num\_cols = x.shape[-1] + max(k[0], 0)`. Otherwise, the value must be equal or
             greater than :math:`x.shape[-1] - min(k[1], 0)`.  Default: -1.
         padding_value (Union[int, float, Tensor], optional): A Tensor with only one value. Have the same dtype as x.
             The number to fill the area outside the specified diagonal band.  Default: 0.
@@ -3335,7 +3335,7 @@ def unsorted_segment_min(x, segment_ids, num_segments):
 
         \text { output }_i=\text{min}_{j \ldots} \text { data }[j \ldots]
 
-    where :math:`min` over tuples :math:`j...` such that :math:`segment_ids[j...] == i`.
+    where :math:`min` over tuples :math:`j...` such that :math:`segment\_ids[j...] == i`.
 
     Note:
         - If the segment_id i is absent in the segment_ids, then output[i] will be filled with
