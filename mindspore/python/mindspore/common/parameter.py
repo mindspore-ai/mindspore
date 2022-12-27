@@ -740,7 +740,7 @@ class Parameter(Tensor_):
             TypeError: If `layout` is not tuple.
         """
         if self.is_default_input_init and self.is_in_parallel != _is_in_parallel_mode():
-            raise RuntimeError("Must set or change parallel mode before any Tensor created.")
+            raise RuntimeError("Must set or change parallel mode before any initializer Tensor created.")
         if self.init_mode is None:
             return self
         if self.inited_param is not None:

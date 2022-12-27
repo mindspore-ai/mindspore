@@ -299,15 +299,18 @@ def get_bprop_micro_step_all_gather(self):
     """Generate bprop for _MicroStepAllGather"""
     fusion = self.get_attr_dict()["fusion"]
     mean_flag = self.get_attr_dict()["mean_flag"]
-    do_mirror = self.get_attr_dict()["do_mirror"]
-    scale = 1.0 / self.rank_size
-    all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
-    rank = get_rank(self.group)
-    dev_num = get_group_size(self.group)
-    split = P.Split(output_num=dev_num)
-    if self.instance_name:
-        instance_name = "grad_" + self.instance_name
-        all_reduce.set_prim_instance_name(instance_name)
+    do_mirror = False
+    if self.group != "":
+        do_mirror = self.get_attr_dict()["do_mirror"]
+    if do_mirror:
+        scale = 1.0 / self.rank_size
+        all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
+        rank = get_rank(self.group)
+        dev_num = get_group_size(self.group)
+        split = P.Split(output_num=dev_num)
+        if self.instance_name:
+            instance_name = "grad_" + self.instance_name
+            all_reduce.set_prim_instance_name(instance_name)
     cast = P.Cast()
     dtype = P.DType()
     out_tensor = Tensor(1.0, mstype.float16)

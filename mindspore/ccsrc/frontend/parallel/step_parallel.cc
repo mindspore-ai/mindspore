@@ -1319,14 +1319,15 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
 
 static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &parameter,
                                     const std::string &opt_shard_group) {
-  if (opt_shard_group.empty()) {
+  int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  auto enable_opt_shard = ParallelContext::GetInstance()->enable_parallel_optimizer();
+  if ((opt_shard_group.empty() && split_stage_num <= 1) || (!enable_opt_shard)) {
     return;
   }
 
   // set all gather type
   MS_EXCEPTION_IF_NULL(parameter);
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
-  int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
   std::string op_name;
   if (grad_accumulation_step > 1) {
     op_name = MINI_STEP_ALL_GATHER;
@@ -2667,8 +2668,11 @@ static AnfNodePtr GetMirrorOp(const NodeUsersMap &node_user_map, const AnfNodePt
     if (!cnode->in_forward_flag()) {
       continue;
     }
-    if (IsInTrivialNodeList(cnode) || IsSomePrimitive(cnode, LOAD)) {
-      auto load_users = node_user_map.at(param_pair.first);
+    while (IsInTrivialNodeList(cnode) || IsSomePrimitive(cnode, LOAD) ||
+           IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather)) {
+      auto load_users = node_user_map.at(cnode);
+      cnode = node_user_map.at(cnode).front().first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
       (void)std::transform(load_users.begin(), load_users.end(), std::back_inserter(candidate),
                            [](const auto &v) { return v.first; });
     }

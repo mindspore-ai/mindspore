@@ -261,6 +261,25 @@ def test_pipeline_split_stage0_opt_shard():
     model.train(2, dataset, dataset_sink_mode=False)
 
 
+def test_pipeline_split_stage0_opt_shard_with_no_data_parallel():
+    '''
+    Feature: pipeline + opt_shard
+    Description: In pipeline mode, if there is no data parallel, opt_shard is True, expected success
+    Expectation: success
+    '''
+    context.set_auto_parallel_context(device_num=16, global_rank=2, pipeline_stages=2, enable_parallel_optimizer=True)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    data = Tensor(np.ones([128, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    strategy1 = ((1, 1), (1, 8))
+    strategy2 = ((1, 1), (1, 4))
+    net = PipelineCell(PipelineSplit(strategy1, strategy2), 8)
+    dataset = DatasetLenet(data, label, 3)
+    optimizer = nn.Lamb(net.trainable_params(), learning_rate=0.01)
+    model = Model(net, optimizer=optimizer)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+
 def test_pipeline_split_stage1_opt_shard():
     context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2, enable_parallel_optimizer=True)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
