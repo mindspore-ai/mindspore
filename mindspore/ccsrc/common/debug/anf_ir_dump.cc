@@ -184,7 +184,7 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     gsub->buffer << AnfDumpHandler::PrintInputTypeShapeFormat(node, i);
   }
   gsub->buffer << ") -> (";
-  size_t output_num = common::AnfAlgo::GetOutputElementNum(node);
+  size_t output_num = AnfUtils::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; ++i) {
     if (i != 0) {
       gsub->buffer << ", ";

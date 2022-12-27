@@ -1227,8 +1227,8 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
   std::vector<AnfNodePtr> make_tuple_inputs;
   make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
   MS_EXCEPTION_IF_NULL(graph);
-  if (AnfAlgo::GetOutputTensorNum(cnode) > 1) {
-    for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(cnode); output_index++) {
+  if (AnfAlgo::GetOutputElementNum(cnode) > 1) {
+    for (size_t output_index = 0; output_index < AnfAlgo::GetOutputElementNum(cnode); output_index++) {
       auto idx = NewValueNode(SizeToLong(output_index));
       MS_EXCEPTION_IF_NULL(idx);
       auto imm = std::make_shared<Int64Imm>(output_index);

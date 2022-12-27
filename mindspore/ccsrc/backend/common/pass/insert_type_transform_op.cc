@@ -287,7 +287,8 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
     return nullptr;
   }
   if ((node->kernel_info() == nullptr) ||
-      (!dynamic_cast<device::KernelInfo *>(node->kernel_info())->has_build_info())) {
+      (!dynamic_cast<device::KernelInfo *>(node->kernel_info())->has_build_info()) ||
+      (common::AnfAlgo::GetCNodeName(node) == "MakeTuple")) {
     return nullptr;
   }
 
@@ -299,7 +300,8 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
   for (size_t i = 0; i < common::AnfAlgo::GetInputNum(cnode); ++i) {
     const auto &input_node = common::AnfAlgo::GetInputNode(cnode, i);
     // Skip for monad input.
-    if (HasAbstractMonad(input_node)) {
+    if (HasAbstractMonad(input_node) || (node->kernel_info() == nullptr) ||
+        !dynamic_cast<device::KernelInfo *>(node->kernel_info())) {
       new_input_list.push_back(input_node);
       continue;
     }
@@ -322,9 +324,9 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
                         << needed_input_type << " is not valid for node " << node->fullname_with_scope()
                         << " input index:" << i << ", input node:" << real_input_node->fullname_with_scope();
     }
-    MS_LOG(DEBUG) << "The current input object type " << kObjectTypeToString[current_input_type]
-                  << " or needed input object type " << kObjectTypeToString[needed_input_type]
-                  << " is not valid for node " << node->fullname_with_scope() << " input index:" << i
+    MS_LOG(DEBUG) << "The current input object type:" << kObjectTypeToString[current_input_type]
+                  << ", needed input object type:" << kObjectTypeToString[needed_input_type]
+                  << " for node:" << node->fullname_with_scope() << " input index:" << i
                   << ", input node:" << real_input_node->fullname_with_scope();
 
     ObjectTypePair type_pair = {current_input_type, needed_input_type};
@@ -399,7 +401,6 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTupleUnfold(const Func
   int64_t unfold_num = SplitTupleInputs(func_graph, input, &plant_inputs);
   MS_LOG(DEBUG) << "Transform tuple unfold input: " << input->fullname_with_scope() << " to " << unfold_num
                 << " inputs.";
-
   return plant_inputs;
 }
 

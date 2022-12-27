@@ -113,7 +113,6 @@ class COMMON_EXPORT AnfAlgo {
   static size_t GetInputNum(const CNodePtr &cnode);
   // get the num of inputs exclude monads for real_kernel (which can be build and run in device)
   static size_t GetInputTensorNum(const AnfNodePtr &node);
-  static size_t GetOutputElementNum(const AnfNodePtr &node);
   // get prev node output width output index
   static KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx, bool skip_nop_node = false);
   // get output shapes inferred by ME from input nodes.
@@ -281,7 +280,10 @@ class COMMON_EXPORT AnfAlgo {
 
   // Get jit level from func_graph
   static std::string GetJitLevel(const FuncGraphPtr &func_graph);
+
   static bool IsDynamicSequence(const abstract::AbstractBasePtr &abstract);
+  static bool HasTupleInput(const CNodePtr &node);
+  static bool HasDynamicTupleInput(const CNodePtr &node);
 };
 }  // namespace common
 }  // namespace mindspore

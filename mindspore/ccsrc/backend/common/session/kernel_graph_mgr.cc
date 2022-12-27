@@ -235,18 +235,18 @@ void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, con
     if (!AnfAlgo::OutputAddrExist(ref_real_node, ref_real_node_index, true)) {
       return;
     }
-    auto address = AnfAlgo::GetMutableOutputAddr(ref_real_node, ref_real_node_index);
+
+    // Update the kernel build info.
     auto format = AnfAlgo::GetOutputFormat(ref_real_node, ref_real_node_index);
     auto type = AnfAlgo::GetOutputDeviceDataType(ref_real_node, ref_real_node_index);
-    auto d_kernel_info = std::make_shared<device::KernelInfo>();
-    MS_EXCEPTION_IF_NULL(d_kernel_info);
-    parameter->set_kernel_info(d_kernel_info);
     kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
     builder.SetOutputsDeviceType({type});
     builder.SetOutputsFormat({format});
-    d_kernel_info->set_select_kernel_build_info(builder.Build());
+    AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), parameter.get());
+
     // If the flag is enable, it means the graph would run in subgraph sink mode, the internal parameter cannot share
     // the same device address.
+    auto address = AnfAlgo::GetMutableOutputAddr(ref_real_node, ref_real_node_index);
     if (!node_graph->has_flag(kFlagEnableZeroCopyInGraph)) {
       AnfAlgo::SetOutputAddr(address, 0, parameter.get());
     }
@@ -285,7 +285,7 @@ AnfNodePtr KernelGraphMgr::CreateParameterFromTuple(const AnfNodePtr &node, Kern
   }
   size_t param_index = 0;
   for (const auto &out_node : pre_graph_out) {
-    size_t output_size = common::AnfAlgo::GetOutputElementNum(out_node);
+    size_t output_size = AnfAlgo::GetOutputElementNum(out_node);
     for (size_t i = 0; i < output_size; i++) {
       if (param_index >= parameters.size()) {
         MS_LOG(EXCEPTION) << "Parameters size:" << parameters.size() << "out of range.Node:" << node->DebugString()

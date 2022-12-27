@@ -687,7 +687,7 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
     return;
   }
 
-  auto outputs_num = common::AnfAlgo::GetOutputElementNum(output_node);
+  auto outputs_num = AnfAlgo::GetOutputElementNum(output_node);
   // The value node uses the value to be output, to avoid the host memory of value free due to value node destruction.
   if (output_node->isa<ValueNode>()) {
     auto value = output_node->cast<ValueNodePtr>()->value();
