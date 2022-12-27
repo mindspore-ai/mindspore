@@ -60,6 +60,8 @@ int DenseToCSRSparseMatrixCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
   batch_size_ = (rank_ == kDefaultRank) ? kOne : dense_shape[kZero];
   num_rows_ = (rank_ == kDefaultRank) ? dense_shape[kZero] : dense_shape[kOne];
   num_cols_ = (rank_ == kDefaultRank) ? dense_shape[kOne] : dense_shape[kTwo];
+  total_ele_ = (rank_ == kDefaultRank) ? dense_shape[kZero] * dense_shape[kOne]
+                                       : dense_shape[kZero] * dense_shape[kOne] * dense_shape[kTwo];
   return KRET_OK;
 }
 
@@ -116,6 +118,13 @@ bool DenseToCSRSparseMatrixCpuKernelMod::Launch(const std::vector<kernel::Addres
   return true;
 }
 
+inline void CheckIndicesInRange(const size_t total_ele, const size_t idx, const std::string &name) {
+  if (idx >= total_ele) {
+    MS_LOG(EXCEPTION) << "For '" << name << "', flattened index must in range: [0, " << total_ele
+                      << "), but got: " << idx << ".";
+  }
+}
+
 template <typename indiceT, typename valueT>
 void DenseToCSRSparseMatrixCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                       const std::vector<AddressPtr> &outputs) const {
@@ -136,12 +145,14 @@ void DenseToCSRSparseMatrixCpuKernelMod::LaunchKernel(const std::vector<AddressP
   }
   for (size_t i = kZero; i < total_nnz_; i++) {
     if (rank_ == kDefaultRank) {
-      auto cur_idx = indices_ptr[i * rank_] * indiceT(num_cols_) + indices_ptr[i * rank_ + kOne];
-      y_values_ptr[i] = dense_input_ptr[LongToSize(cur_idx)];
+      auto cur_idx = LongToSize(indices_ptr[i * rank_] * indiceT(num_cols_) + indices_ptr[i * rank_ + kOne]);
+      CheckIndicesInRange(total_ele_, cur_idx, kernel_name_);
+      y_values_ptr[i] = dense_input_ptr[cur_idx];
     } else {
-      auto cur_idx = indices_ptr[i * rank_] * indiceT(num_rows_) * indiceT(num_cols_) +
-                     indices_ptr[i * rank_ + kOne] * indiceT(num_cols_) + indices_ptr[i * rank_ + kTwo];
-      y_values_ptr[i] = dense_input_ptr[LongToSize(cur_idx)];
+      auto cur_idx = LongToSize(indices_ptr[i * rank_] * indiceT(num_rows_) * indiceT(num_cols_) +
+                                indices_ptr[i * rank_ + kOne] * indiceT(num_cols_) + indices_ptr[i * rank_ + kTwo]);
+      CheckIndicesInRange(total_ele_, cur_idx, kernel_name_);
+      y_values_ptr[i] = dense_input_ptr[cur_idx];
     }
   }
   for (size_t i = kZero; i < batch_size_ * (num_rows_ + kOne); i++) {

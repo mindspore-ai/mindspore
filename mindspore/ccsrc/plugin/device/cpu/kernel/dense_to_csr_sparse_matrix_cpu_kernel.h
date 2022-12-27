@@ -52,6 +52,7 @@ class DenseToCSRSparseMatrixCpuKernelMod : public NativeCpuKernelMod {
   size_t num_rows_{0};
   size_t num_cols_{0};
   size_t total_nnz_{0};
+  size_t total_ele_{0};
   TypeId values_type_{kTypeUnknown};
   TypeId indices_type_{kTypeUnknown};
 };

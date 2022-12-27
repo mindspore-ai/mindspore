@@ -29,6 +29,7 @@ namespace ops {
 namespace {
 abstract::TupleShapePtr DenseToCSRSparseMatrixInferShape(const PrimitivePtr &primitive,
                                                          const std::vector<AbstractBasePtr> &input_args) {
+  CheckInputShapeEmpty(primitive->name(), input_args);
   auto dense_input_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto dense_input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dense_input_shape_ptr);
   auto dense_input_shape = dense_input_shape_map[kShape];
