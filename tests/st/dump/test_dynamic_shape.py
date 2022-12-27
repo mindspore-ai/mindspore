@@ -33,7 +33,7 @@ from mindspore.nn import Dense
 from mindspore.nn import SoftmaxCrossEntropyWithLogits
 from mindspore.nn import WithLossCell
 from mindspore import dataset as ds
-from mindspore import Model
+from mindspore.train import Model
 from dump_test_utils import generate_dump_json, generate_statistic_dump_json, check_dump_structure
 from tests.security_utils import security_off_wrap
 

@@ -29,8 +29,7 @@ from mindspore.communication.management import init
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
-from mindspore.train.model import Model
+from mindspore.train import ModelCheckpoint, CheckpointConfig, LossMonitor, Model
 from mindspore.context import ParallelMode
 
 random.seed(1)

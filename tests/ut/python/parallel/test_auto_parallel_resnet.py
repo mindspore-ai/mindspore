@@ -29,7 +29,7 @@ from mindspore.ops import operations as P
 from mindspore.parallel import _cost_model_context as cost_model_context
 from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._utils import _reset_op_id as resset_op_id
-from mindspore.train.model import Model
+from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.communication._comm_helper import GlobalComm
 

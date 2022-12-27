@@ -18,7 +18,8 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.dataset as ds
 from mindspore.ops import operations as P
-from mindspore import Model, Tensor
+from mindspore import Tensor
+from mindspore.train import Model
 import mindspore as ms
 
 context.set_context(mode=context.GRAPH_MODE,

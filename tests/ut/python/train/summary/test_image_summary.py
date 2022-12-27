@@ -18,11 +18,11 @@ import os
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import Model, context
+from mindspore import context
+from mindspore.train import Model, Callback
 from mindspore import Tensor
 from mindspore.nn.optim import Momentum
 from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
-from mindspore.train.callback import Callback
 from tests.security_utils import security_off_wrap
 from .....dataset_mock import MindData
 

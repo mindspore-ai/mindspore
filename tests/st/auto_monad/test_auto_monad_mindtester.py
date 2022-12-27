@@ -21,7 +21,7 @@ from mindspore.nn import Cell
 from mindspore import context, Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
-from mindspore.train.model import Model
+from mindspore.train import Model
 from mindspore.ops.composite import GradOperation
 from mindspore.common import ParameterTuple
 from tests.security_utils import security_off_wrap

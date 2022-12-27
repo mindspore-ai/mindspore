@@ -24,7 +24,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
 from mindspore.nn.optim import Momentum
-from mindspore.train.model import Model
+from mindspore.train import Model
 
 log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)

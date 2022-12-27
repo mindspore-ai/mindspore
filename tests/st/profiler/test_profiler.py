@@ -22,14 +22,13 @@ import pytest
 
 from mindspore import dataset as ds
 from mindspore import nn, Tensor, context
-from mindspore.train.metrics import Accuracy
 from mindspore.nn.optim import Momentum
 from mindspore.dataset.transforms import transforms as C
 from mindspore.dataset.vision import transforms as CV
 from mindspore.dataset.vision import Inter
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import TruncatedNormal
-from mindspore.train import Model
+from mindspore.train import Model, Accuracy
 from mindspore import Profiler
 
 

@@ -23,8 +23,8 @@ from mindspore.nn import MultiFieldEmbeddingLookup as embedding
 from mindspore import Tensor
 from mindspore import context
 from mindspore.train import Model
-from mindspore.train.callback import CheckpointConfig
-from mindspore.train.callback import ModelCheckpoint
+from mindspore.train import CheckpointConfig
+from mindspore.train import ModelCheckpoint
 from mindspore.train.serialization import load_checkpoint
 from mindspore.train.serialization import load_param_into_net
 from mindspore.communication.management import init

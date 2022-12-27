@@ -22,9 +22,9 @@ import numpy as np
 from mindspore import context
 from mindspore.common.tensor import Tensor
 import mindspore.communication.management as D
-from mindspore.train.model import Model
+from mindspore.train import Model
 from mindspore.context import ParallelMode
-from mindspore.train.callback import Callback
+from mindspore.train import Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 import mindspore.nn as nn
 import mindspore.dataset as ds

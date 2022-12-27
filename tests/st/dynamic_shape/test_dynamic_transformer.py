@@ -21,9 +21,8 @@ import pytest
 import mindspore as ms
 from mindspore.common.tensor import Tensor
 from mindspore.nn.optim import Adam
-from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
-from mindspore.train.callback import Callback, TimeMonitor
+from mindspore.train import Callback, TimeMonitor, Model
 from mindspore.common import set_seed
 import mindspore.dataset as de
 from transformer.transformer_for_train import TransformerNetworkWithLoss, TransformerTrainOneStepWithLossScaleCell

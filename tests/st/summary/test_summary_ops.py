@@ -22,7 +22,7 @@ import pytest
 
 from mindspore import nn, Tensor, context
 from mindspore.common.initializer import Normal
-from mindspore.train.metrics import Loss
+from mindspore.train import Loss
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.train import Model

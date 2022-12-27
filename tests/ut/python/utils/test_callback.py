@@ -29,8 +29,9 @@ from mindspore.common.api import jit
 from mindspore.common.tensor import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
-from mindspore.train.callback import ModelCheckpoint, RunContext, LossMonitor, _InternalCallbackParam, \
-    _CallbackManager, Callback, CheckpointConfig, _set_cur_net, _checkpoint_cb_for_save_op, History, LambdaCallback
+from mindspore.train import ModelCheckpoint, RunContext, LossMonitor, Callback, CheckpointConfig, \
+    LambdaCallback, History
+from mindspore.train.callback import _InternalCallbackParam, _CallbackManager, _checkpoint_cb_for_save_op, _set_cur_net
 from mindspore.train.callback._checkpoint import _chg_ckpt_file_name_if_same_exist
 
 

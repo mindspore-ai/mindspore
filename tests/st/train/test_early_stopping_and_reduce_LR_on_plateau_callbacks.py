@@ -23,8 +23,8 @@ from mindspore import nn, Model
 from mindspore import dataset as ds
 from mindspore.nn.optim import Momentum
 from mindspore.common.initializer import Normal
-from mindspore.train.callback import RunContext, _InternalCallbackParam, \
-    _CallbackManager, ReduceLROnPlateau, EarlyStopping
+from mindspore.train import RunContext, ReduceLROnPlateau, EarlyStopping
+from mindspore.train.callback import _InternalCallbackParam, _CallbackManager
 
 
 def get_data(num, w=4.0, b=5.0):

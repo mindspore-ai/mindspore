@@ -23,8 +23,7 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor
-from mindspore import Parameter
-from mindspore.train.callback import SummaryCollector
+from mindspore import Parameter, SummaryCollector
 from mindspore.train.callback import _InternalCallbackParam
 from mindspore.train.summary.enums import ModeEnum, PluginEnum
 from mindspore.train.summary import SummaryRecord

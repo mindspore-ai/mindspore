@@ -16,7 +16,7 @@
 import pytest
 
 import mindspore.nn as nn
-from mindspore import Model
+from mindspore.train import Model
 
 
 class Net(nn.Cell):

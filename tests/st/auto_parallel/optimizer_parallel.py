@@ -27,8 +27,8 @@ from mindspore.nn import Flatten
 from mindspore.nn import Momentum
 import mindspore.ops.operations as P
 from mindspore.train.serialization import load_param_into_net
-from mindspore.train.callback import CheckpointConfig
-from mindspore.train.callback import ModelCheckpoint
+from mindspore.train import CheckpointConfig
+from mindspore.train import ModelCheckpoint
 from mindspore.train.serialization import load_checkpoint
 
 from mindspore.nn import SoftmaxCrossEntropyWithLogits

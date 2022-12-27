@@ -15,7 +15,7 @@
 callbacks
 """
 import time
-from mindspore.train.callback import Callback
+from mindspore.train import Callback
 from mindspore import context
 from mindspore.context import ParallelMode
 from mindspore.communication.management import get_rank

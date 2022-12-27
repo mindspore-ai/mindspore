@@ -18,10 +18,10 @@ import numpy as np
 import pytest
 
 import mindspore.nn as nn
-from mindspore import Model, context
-from mindspore import Tensor
-from mindspore.train.callback import Callback
-from mindspore.train.callback import BackupAndRestore
+from mindspore import Tensor, context
+from mindspore.train import Model
+from mindspore.train import Callback
+from mindspore.train import BackupAndRestore
 from mindspore.nn.optim import Momentum
 from ..ut_filter import non_graph_engine
 from ....dataset_mock import MindData

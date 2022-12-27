@@ -149,7 +149,7 @@ def test_pipeline_split_stage0_mirror_group():
     Expectation: group info list match expectation value.
     """
     import mindspore as ms
-    from mindspore import Model
+    from mindspore.train import Model
     from .test_pipeline_split import PipelineCell, PipelineSplit, DatasetLenet
     os.environ['GROUP_INFO_FILE'] = "./test_pipeline_split_stage0_mirror_group.pb"
     context.set_auto_parallel_context(device_num=64, global_rank=0, pipeline_stages=2)
@@ -175,7 +175,7 @@ def test_pipeline_split_stage1_mirror_group():
     Expectation: group info list match expectation value.
     """
     import mindspore as ms
-    from mindspore import Model
+    from mindspore.train import Model
     from .test_pipeline_split import PipelineCell, PipelineSplit, DatasetLenet
     os.environ['GROUP_INFO_FILE'] = "./test_pipeline_split_stage1_mirror_group.pb"
     context.set_auto_parallel_context(device_num=64, global_rank=63, pipeline_stages=2)

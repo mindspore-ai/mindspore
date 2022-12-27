@@ -24,7 +24,7 @@ from mindspore import amp
 from mindspore import Tensor
 from mindspore import context
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
-from mindspore.train.model import Model
+from mindspore.train import Model
 from utils import FakeData
 from utils import allclose_nparray
 from utils import FakeDataInitMode

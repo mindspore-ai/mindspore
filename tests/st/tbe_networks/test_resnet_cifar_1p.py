@@ -28,8 +28,8 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
-from mindspore.train.callback import Callback
-from mindspore.train.model import Model
+from mindspore.train import Callback
+from mindspore.train import Model
 
 random.seed(1)
 np.random.seed(1)

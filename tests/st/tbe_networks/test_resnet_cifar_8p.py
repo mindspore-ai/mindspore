@@ -30,8 +30,7 @@ from mindspore import context
 from mindspore.communication.management import init
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
-from mindspore.train.callback import Callback
-from mindspore.train.model import Model
+from mindspore.train import Callback, Model
 from mindspore.context import ParallelMode
 
 random.seed(1)

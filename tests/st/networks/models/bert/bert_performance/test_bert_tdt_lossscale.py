@@ -27,9 +27,9 @@ from mindspore import log as logger
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.nn.optim import Lamb
-from mindspore.train.callback import Callback
+from mindspore.train import Callback
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
-from mindspore.train.model import Model
+from mindspore.train import Model
 import mindspore.nn.learning_rate_schedule as lr_schedules
 from tests.models.official.nlp.bert.src.bert_for_pre_training import BertNetworkWithLoss
 from tests.models.official.nlp.bert.src.bert_for_pre_training import BertTrainOneStepWithLossScaleCell

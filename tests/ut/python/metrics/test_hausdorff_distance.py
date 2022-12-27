@@ -18,7 +18,7 @@ import math
 import numpy as np
 import pytest
 from mindspore import Tensor
-from mindspore.train.metrics import get_metric_fn, HausdorffDistance
+from mindspore.train import get_metric_fn, HausdorffDistance
 
 
 def test_hausdorff_distance():

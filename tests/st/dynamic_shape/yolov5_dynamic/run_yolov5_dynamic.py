@@ -18,7 +18,7 @@ import numpy as np
 from mindspore.train import Model
 from mindspore import Tensor
 import mindspore.dataset as ds
-from mindspore.train.callback import LossMonitor
+from mindspore.train import LossMonitor
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.communication as comm

@@ -18,7 +18,7 @@ import os
 import sys
 import numpy as np
 from mindspore import Model, context
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
+from mindspore.train import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.context import ParallelMode
 from mindspore.communication.management import get_rank, get_group_size, init
 

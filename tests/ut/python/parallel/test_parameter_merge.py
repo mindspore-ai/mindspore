@@ -20,7 +20,7 @@ from mindspore import context, Tensor, Parameter
 from mindspore.nn import Cell, Momentum
 from mindspore.ops import operations as P
 from mindspore.train import Model
-from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
+from mindspore.train import CheckpointConfig, ModelCheckpoint
 from tests.dataset_mock import MindData
 
 class Dataset(MindData):

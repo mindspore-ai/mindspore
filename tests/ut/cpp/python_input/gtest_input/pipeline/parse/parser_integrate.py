@@ -23,7 +23,7 @@ from mindspore.common.api import jit, _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
-from mindspore.train.model import Model
+from mindspore.train import Model
 from tests.ut.python.model.resnet import resnet50
 
 

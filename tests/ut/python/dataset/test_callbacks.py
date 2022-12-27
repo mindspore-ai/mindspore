@@ -20,8 +20,7 @@ import pytest
 from mindspore import context
 from mindspore import log as logger
 from mindspore.dataset.callback import DSCallback, WaitedDSCallback
-from mindspore.train import Model
-from mindspore.train.callback import Callback
+from mindspore.train import Model, Callback
 
 import mindspore.dataset as ds
 import mindspore.nn as nn

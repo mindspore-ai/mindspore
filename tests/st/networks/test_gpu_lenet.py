@@ -27,12 +27,11 @@ from mindspore import Tensor, ParameterTuple
 from mindspore.common import dtype as mstype
 from mindspore.dataset.vision import Inter
 from mindspore.nn import Dense, TrainOneStepCell, WithLossCell, ForwardValueAndGrad
-from mindspore.train.metrics import Accuracy
+from mindspore.train import Accuracy
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.train import Model
-from mindspore.train.callback import LossMonitor
+from mindspore.train import Model, LossMonitor
 from mindspore.common.initializer import TruncatedNormal
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")

@@ -22,10 +22,10 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.nn import Dropout
 from mindspore.nn.optim import Adam
-from mindspore.train.metrics import Metric
+from mindspore.train import Metric
 from mindspore import nn, Tensor, ParameterTuple, Parameter
 from mindspore.common.initializer import Uniform, initializer
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
+from mindspore.train import ModelCheckpoint, CheckpointConfig
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
