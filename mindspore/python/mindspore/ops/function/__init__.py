@@ -418,6 +418,7 @@ from .nn_func import (
     hardtanh,
     huber_loss,
     softsign,
+    silu,
     selu,
     softmax,
     softmin,
