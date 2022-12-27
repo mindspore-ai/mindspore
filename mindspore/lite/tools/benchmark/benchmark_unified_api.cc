@@ -490,7 +490,10 @@ int BenchmarkUnifiedApi::CompareOutputForModelPool(std::vector<mindspore::MSTens
       MS_LOG(ERROR) << "Get tensor failed, tensor name: " << tensor_name;
       return RET_ERROR;
     }
-    int ret = CompareDataGetTotalBiasAndSize(tensor_name, &tensor, &total_bias, &total_size);
+    constexpr float kParallelRelative = 1e-7;
+    constexpr float kParallelAbsolute = 1e-10;
+    int ret = CompareDataGetTotalBiasAndSize(tensor_name, &tensor, &total_bias, &total_size, kParallelRelative,
+                                             kParallelAbsolute);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Error in CompareData";
       std::cerr << "Error in CompareData" << std::endl;
@@ -638,7 +641,8 @@ int BenchmarkUnifiedApi::CompareOutputByCosineDistance(float cosine_distance_thr
 }
 
 int BenchmarkUnifiedApi::CompareDataGetTotalBiasAndSize(const std::string &name, mindspore::MSTensor *tensor,
-                                                        float *total_bias, int *total_size) {
+                                                        float *total_bias, int *total_size, float relative_tolerance,
+                                                        float absolute_tolerance) {
   float bias = 0;
   auto mutableData = tensor->MutableData();
   if (mutableData == nullptr) {
@@ -648,27 +652,27 @@ int BenchmarkUnifiedApi::CompareDataGetTotalBiasAndSize(const std::string &name,
   switch (static_cast<int>(tensor->DataType())) {
     case TypeId::kNumberTypeFloat:
     case TypeId::kNumberTypeFloat32: {
-      bias = CompareData<float, int64_t>(name, tensor->Shape(), mutableData);
+      bias = CompareData<float, int64_t>(name, tensor->Shape(), mutableData, relative_tolerance, absolute_tolerance);
       break;
     }
     case TypeId::kNumberTypeInt8: {
-      bias = CompareData<int8_t, int64_t>(name, tensor->Shape(), mutableData);
+      bias = CompareData<int8_t, int64_t>(name, tensor->Shape(), mutableData, relative_tolerance, absolute_tolerance);
       break;
     }
     case TypeId::kNumberTypeUInt8: {
-      bias = CompareData<uint8_t, int64_t>(name, tensor->Shape(), mutableData);
+      bias = CompareData<uint8_t, int64_t>(name, tensor->Shape(), mutableData, relative_tolerance, absolute_tolerance);
       break;
     }
     case TypeId::kNumberTypeInt32: {
-      bias = CompareData<int32_t, int64_t>(name, tensor->Shape(), mutableData);
+      bias = CompareData<int32_t, int64_t>(name, tensor->Shape(), mutableData, relative_tolerance, absolute_tolerance);
       break;
     }
     case TypeId::kNumberTypeInt16: {
-      bias = CompareData<int16_t, int64_t>(name, tensor->Shape(), mutableData);
+      bias = CompareData<int16_t, int64_t>(name, tensor->Shape(), mutableData, relative_tolerance, absolute_tolerance);
       break;
     }
     case TypeId::kNumberTypeBool: {
-      bias = CompareData<bool, int64_t>(name, tensor->Shape(), mutableData);
+      bias = CompareData<bool, int64_t>(name, tensor->Shape(), mutableData, relative_tolerance, absolute_tolerance);
       break;
     }
     default:
