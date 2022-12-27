@@ -120,12 +120,12 @@ void ParallelWorker::WaitOtherPoolTask() {
   while (alive_ && wait_do_other_task_) {
     cv_other_task_.wait(l);
   }
+  wait_do_other_task_ = true;
   if (other_task_ == nullptr) {
     return;
   }
   RunOtherPoolTask(other_task_);
   other_task_ = nullptr;
-  wait_do_other_task_ = true;
   return;
 }
 
