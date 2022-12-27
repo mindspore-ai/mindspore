@@ -15,6 +15,7 @@
 """Parse ast.Assign in construct function to node of SymbolTree."""
 from typing import Union
 import ast
+import os
 import astunparse
 
 from mindspore import log as logger
@@ -448,52 +449,57 @@ class AssignParser(Parser):
         """
 
         targets = node.targets
-        if len(targets) != 1:
-            raise RuntimeError(
-                error_str(f"only support one target in assign now.", child_node=targets, father_node=node))
-        value = node.value
-        if isinstance(value, ast.Call):
-            node_ = self._convert_ast_call_to_node(value, node, stree)
-            stree.append_origin_field(node_)
-        elif isinstance(value, ast.BinOp):
-            if isinstance(value.op, ast.Add):
-                node_ = AssignParser._convert_ast_binop_to_node(value, node)
+        try:
+            if len(targets) != 1:
+                raise RuntimeError(
+                    error_str(f"only support one target in assign now.", child_node=targets, father_node=node))
+            value = node.value
+            if isinstance(value, ast.Call):
+                node_ = self._convert_ast_call_to_node(value, node, stree)
                 stree.append_origin_field(node_)
-            else:
+            elif isinstance(value, ast.BinOp):
                 logger.info(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
                             f"ignored as a python node now")
                 stree.try_append_python_node(node, node)
-        elif isinstance(value, (ast.BoolOp, ast.Subscript)):
-            logger.info(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
-                        f"ignored as a python node now")
-            stree.try_append_python_node(node, node)
-        elif isinstance(value, (ast.Name, ast.Constant, ast.Attribute, ast.Num, ast.NameConstant, ast.Bytes, ast.Str)):
-            if isinstance(value, ast.Name):
-                node_name = "name_assign"
-            elif isinstance(value, ast.Constant):
-                node_name = "constant_assign"
+            elif isinstance(value, (ast.BoolOp, ast.Subscript)):
+                logger.info(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
+                            f"ignored as a python node now")
+                stree.try_append_python_node(node, node)
+            elif isinstance(value, (ast.Name, ast.Constant, ast.Attribute, ast.Num, ast.NameConstant,
+                                    ast.Bytes, ast.Str)):
+                if isinstance(value, ast.Name):
+                    node_name = "name_assign"
+                elif isinstance(value, ast.Constant):
+                    node_name = "constant_assign"
+                else:
+                    node_name = "attribute_assign"
+                targets = AssignParser._get_targets(AssignParser._create_scopedvalue(node.targets[0]))
+                call_args = [AssignParser._create_scopedvalue(value)]
+                node_ = Node.create_call_pass_through_method(node, targets, call_args, {}, node_name)
+                stree.append_origin_field(node_)
+            elif isinstance(value, ast.Tuple):
+                targets = AssignParser._get_targets(AssignParser._create_scopedvalue(node.targets[0]))
+                args = []
+                for elt in value.elts:
+                    args.append(AssignParser._create_scopedvalue(elt))
+                node_ = Node.create_call_method(node, targets, ScopedValue.create_naming_value("tuple"),
+                                                args, {}, "tuple")
+                stree.append_origin_field(node_)
+            elif isinstance(value, (ast.List, ast.Dict)):
+                # add these as callmethod node if necessary
+                stree.try_append_python_node(node, node)
             else:
-                node_name = "attribute_assign"
-            targets = AssignParser._get_targets(AssignParser._create_scopedvalue(node.targets[0]))
-            call_args = [AssignParser._create_scopedvalue(value)]
-            node_ = Node.create_call_pass_through_method(node, targets, call_args, {}, node_name)
-            stree.append_origin_field(node_)
-        elif isinstance(value, ast.Tuple):
-            targets = AssignParser._get_targets(AssignParser._create_scopedvalue(node.targets[0]))
-            args = []
-            for elt in value.elts:
-                args.append(AssignParser._create_scopedvalue(elt))
-            node_ = Node.create_call_method(node, targets, ScopedValue.create_naming_value("tuple"), args, {}, "tuple")
-            stree.append_origin_field(node_)
-        elif isinstance(value, (ast.List, ast.Dict)):
-            # add these as callmethod node if necessary
-            stree.try_append_python_node(node, node)
-        else:
-            raise RuntimeError(
-                error_str(f"only support (ast.Call, ast.BinOp, ast.BoolOp, ast.Subscript, ast.Name, ast.Constant, "
-                          f"ast.Attribute, ast.Num, ast.NameConstant, ast.Bytes, ast.Str, ast.Tuple, ast.List, ast.Dict"
-                          f") as value of ast.assign, but got ast type '{type(value).__name__}'", child_node=value,
-                          father_node=node))
+                raise RuntimeError(
+                    error_str(f"only support (ast.Call, ast.BinOp, ast.BoolOp, ast.Subscript, ast.Name, ast.Constant, "
+                              f"ast.Attribute, ast.Num, ast.NameConstant, ast.Bytes, ast.Str, ast.Tuple, ast.List, "
+                              f"ast.Dict) as value of ast.assign, but got ast type '{type(value).__name__}'",
+                              child_node=value, father_node=node))
+        except RuntimeError as e:
+            if os.getenv("STREE_PYTHON_FALLBACK"):
+                logger.info(f"ops-call({astunparse.unparse(node)}) not supported in rewrite, fallback to python")
+                stree.try_append_python_node(node, node)
+            else:
+                raise e
 
 
 g_assign_parser = reg_parser(AssignParser())
