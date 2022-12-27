@@ -416,6 +416,7 @@ Array Operation
     mindspore.ops.bincount
     mindspore.ops.broadcast_to
     mindspore.ops.cat
+    mindspore.ops.chunk
     mindspore.ops.col2im
     mindspore.ops.concat
     mindspore.ops.count_nonzero
@@ -430,6 +431,7 @@ Array Operation
     mindspore.ops.fliplr
     mindspore.ops.flipud
     mindspore.ops.fold
+    mindspore.ops.full
     mindspore.ops.gather
     mindspore.ops.gather_d
     mindspore.ops.gather_elements

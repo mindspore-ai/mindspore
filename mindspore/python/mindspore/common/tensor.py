@@ -607,6 +607,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('bincount')(self, weights, minlength)
 
+    def chunk(self, chunks, axis=0):
+        r"""
+        For details, please refer to :func:`mindspore.ops.chunk`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('chunk')(self, chunks, axis)
+
     def item(self, index=None):
         """
         Get the item at the specified index of the tensor.

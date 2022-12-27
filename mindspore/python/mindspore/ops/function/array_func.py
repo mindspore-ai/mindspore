@@ -17,7 +17,6 @@
 from __future__ import absolute_import
 
 import builtins
-
 import numpy as np
 
 import mindspore.common.dtype as mstype
@@ -669,6 +668,113 @@ def fills(x, value):
         raise TypeError("For 'ops.fills', the type of argument 'value' should be int, float or Tensor,"
                         " but got {}".format(type(value)))
     return fills_(x, value_)
+
+
+def full(size, fill_value, *, dtype=None): # pylint: disable=redefined-outer-name
+    """
+    Create a Tensor of the specified shape and fill it with the specified value.
+
+    Args:
+        size (Union(tuple[int], list[int])): The specified shape of output tensor.
+        fill_value (number.Number): Value to fill the returned tensor.
+        dtype (mindspore.dtype): The specified type of output tensor. The data type only supports
+            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ and
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: If `size` is not a tuple or list.
+        TypeError: The element in `size` is less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> output = ops.full((2, 2), 1)
+        >>> print(output)
+        [[1. 1.]
+         [1. 1.]]
+        >>> output = ops.full((3, 3), 0)
+        >>> print(output)
+        [[0. 0. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]]
+    """
+    if not isinstance(size, (list, tuple)):
+        raise TypeError(f"For 'ops.full', 'size' must be a tuple or list of ints, but got {type(size)}.")
+    if dtype is None:
+        dtype = mstype.int64
+    if dtype not in mstype.all_types:
+        raise TypeError(f"For 'ops.full', 'dtype' must be mindspore.type, but got {dtype}.")
+    if isinstance(size, list):
+        size = tuple(size)
+    return fill_(dtype, size, fill_value)
+
+
+def chunk(x, chunks, axis=0):
+    """
+    Splits the Tensor into chunks along the given axis.
+
+    Note:
+        This function may return less then the specified number of chunks!
+
+    Args:
+        x (Tensor): A Tensor to be divided.
+        chunks (int): Number of chunks to return.
+        axis (int): The axis along which to split. Default: 0.
+
+    Returns:
+        A tuple of sub-tensors.
+
+    Raises:
+        TypeError: If argument `x` is not Tensor.
+        TypeError: The sum of `chunks` is not int.
+        TypeError: If argument `axis` is not int.
+        ValueError: If argument `axis` is out of range of :math:`[-x.ndim, x.ndim)` .
+        ValueError: If argument `chunks` is not positive number.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = np.arange(9).astype("float32")
+        >>> output = ops.chunk(Tensor(input_x), 3)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Float32, value= [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]),
+         Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
+         Tensor(shape=[3], dtype=Float32, value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
+    """
+    if not isinstance(x, Tensor):
+        raise TypeError(f'For ops.chunk parameter `x` must be Tensor, but got {type(x)}')
+    _ = validator.check_axis_type(axis, True, False, False)
+    axis = _canonicalize_axis(axis, x.ndim)
+
+    if not isinstance(chunks, int):
+        raise TypeError(f"For ops.chunk type of argument `chunks` should be integer, but got {type(chunks)}")
+    if chunks <= 0:
+        raise ValueError(f"For ops.chunk parameter 'chunks' must be greater than 0, but got {chunks}")
+
+    arr_shape = x.shape
+    length_along_dim = arr_shape[axis]
+
+    if chunks > length_along_dim:
+        res = P.Split(axis, length_along_dim)(x)
+    elif length_along_dim % chunks == 0:
+        res = P.Split(axis, chunks)(x)
+    else:
+        block_size = int(np.ceil(length_along_dim / chunks))
+        true_chunks = int(length_along_dim // block_size)
+        length1 = true_chunks * block_size
+        length2 = length_along_dim - length1
+        start1 = _list_comprehensions(rank(x), 0, True)
+        size1 = _tuple_setitem(arr_shape, axis, length1)
+        start2 = _tuple_setitem(start1, axis, length1)
+        size2 = _tuple_setitem(arr_shape, axis, length2)
+        res = P.Split(axis, true_chunks)(tensor_slice(x, start1, size1)) + \
+              P.Split(axis, 1)(tensor_slice(x, start2, size2))
+    return res
 
 
 def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
@@ -4695,7 +4801,7 @@ def split(x, split_size_or_sections, axis=0):
     return res
 
 
-def tril(input_x, diagonal):
+def tril(input_x, diagonal=0): # pylint: disable=redefined-outer-name
     """
     Returns the lower triangular part of the matrix (2-D tensor) or batch of matrices input,
     the other elements of the result tensor out are set to 0.
@@ -5803,6 +5909,8 @@ __all__ = [
     'reverse',
     'reverse_sequence',
     'hamming_window',
+    'chunk',
+    'full',
     'dyn_shape',
     'rank',
     'range',

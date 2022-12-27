@@ -78,6 +78,7 @@
     mindspore.Tensor.cholesky
     mindspore.Tensor.cholesky_inverse
     mindspore.Tensor.choose
+    mindspore.Tensor.chunk
     mindspore.Tensor.clamp
     mindspore.Tensor.clip
     mindspore.Tensor.col2im
