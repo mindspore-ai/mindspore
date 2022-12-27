@@ -113,6 +113,15 @@ std::vector<std::pair<KernelAttr, MomentumGpuKernelMod::LaunchFunc>> MomentumGpu
      .AddOutInRef(0, 0),
    &MomentumGpuKernelMod::LaunchKernel<uint32_t, uint32_t, uint32_t>},
   {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32)
+     .AddOutInRef(0, 0),
+   &MomentumGpuKernelMod::LaunchKernel<int32_t, int32_t, int32_t>},
+  {KernelAttr()
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)

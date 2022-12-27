@@ -74,6 +74,8 @@ bool ApplyMomentumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
     LaunchApplyMomentum<uint16_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeUInt32) {
     LaunchApplyMomentum<uint32_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt32) {
+    LaunchApplyMomentum<int32_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt64) {
     LaunchApplyMomentum<int64_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeUInt64) {
@@ -131,12 +133,13 @@ void ApplyMomentumCpuKernelMod::LaunchApplyMomentum(const std::vector<AddressPtr
 
 std::vector<KernelAttr> ApplyMomentumCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> kernel_attr_list = {
-    ADD_KERNEL_1(Float32),   ADD_KERNEL_2(Float32),   ADD_KERNEL_1(Float16),    ADD_KERNEL_2(Float16),
-    ADD_KERNEL_1(Int8),      ADD_KERNEL_2(Int8),      ADD_KERNEL_1(UInt8),      ADD_KERNEL_2(UInt8),
-    ADD_KERNEL_1(Int16),     ADD_KERNEL_2(Int16),     ADD_KERNEL_1(UInt16),     ADD_KERNEL_2(UInt16),
-    ADD_KERNEL_1(UInt32),    ADD_KERNEL_2(UInt32),    ADD_KERNEL_1(Int64),      ADD_KERNEL_2(Int64),
-    ADD_KERNEL_1(UInt64),    ADD_KERNEL_2(UInt64),    ADD_KERNEL_1(Float64),    ADD_KERNEL_2(Float64),
-    ADD_KERNEL_1(Complex64), ADD_KERNEL_2(Complex64), ADD_KERNEL_1(Complex128), ADD_KERNEL_2(Complex128)};
+    ADD_KERNEL_1(Float32),    ADD_KERNEL_2(Float32),   ADD_KERNEL_1(Float16),   ADD_KERNEL_2(Float16),
+    ADD_KERNEL_1(Int8),       ADD_KERNEL_2(Int8),      ADD_KERNEL_1(UInt8),     ADD_KERNEL_2(UInt8),
+    ADD_KERNEL_1(Int16),      ADD_KERNEL_2(Int16),     ADD_KERNEL_1(UInt16),    ADD_KERNEL_2(UInt16),
+    ADD_KERNEL_1(UInt32),     ADD_KERNEL_2(UInt32),    ADD_KERNEL_1(Int32),     ADD_KERNEL_2(Int32),
+    ADD_KERNEL_1(Int64),      ADD_KERNEL_2(Int64),     ADD_KERNEL_1(UInt64),    ADD_KERNEL_2(UInt64),
+    ADD_KERNEL_1(Float64),    ADD_KERNEL_2(Float64),   ADD_KERNEL_1(Complex64), ADD_KERNEL_2(Complex64),
+    ADD_KERNEL_1(Complex128), ADD_KERNEL_2(Complex128)};
   return kernel_attr_list;
 }
 

@@ -211,6 +211,9 @@ template CUDA_LIB_EXPORT void MomentumUpdateVariable<uint16_t, uint16_t, uint16_
 template CUDA_LIB_EXPORT void MomentumUpdateVariable<uint32_t, uint32_t, uint32_t>(
   const size_t size, uint32_t *variable, uint32_t *accumulation, const uint32_t *learning_rate,
   const uint32_t *gradient, const uint32_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MomentumUpdateVariable<int32_t, int32_t, int32_t>(
+  const size_t size, int32_t *variable, int32_t *accumulation, const int32_t *learning_rate,
+  const int32_t *gradient, const int32_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MomentumUpdateVariable<int64_t, int64_t, int64_t>(
   const size_t size, int64_t *variable, int64_t *accumulation, const int64_t *learning_rate, const int64_t *gradient,
   const int64_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
