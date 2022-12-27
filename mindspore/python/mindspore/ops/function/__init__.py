@@ -414,6 +414,8 @@ from .nn_func import (
     max_unpool2d,
     max_unpool3d,
     hardswish,
+    hardtanh,
+    huber_loss,
     softsign,
     selu,
     softmax,

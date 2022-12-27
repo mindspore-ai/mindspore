@@ -1850,18 +1850,6 @@ class FocalLoss(LossBase):
         return self.get_loss(loss)
 
 
-@constexpr
-def _dtype_check(logits_dtype, labels_dtype, prim_name):
-    """Check dtype."""
-    if logits_dtype not in [mstype.float32, mstype.float16]:
-        raise TypeError("For {}, the logits_dtype must be float32 or float16, but got {}.".format(prim_name,
-                                                                                                  logits_dtype))
-    if logits_dtype != labels_dtype:
-        raise TypeError("For {}, the labels_dtype must equal to logits_dtype {}, but got {}".format(prim_name,
-                                                                                                    logits_dtype,
-                                                                                                    labels_dtype))
-
-
 class HuberLoss(LossBase):
     r"""
     HuberLoss calculate the error between the predicted value and the target value.
@@ -1942,31 +1930,11 @@ class HuberLoss(LossBase):
     def __init__(self, reduction='mean', delta=1.0):
         """Initialize HuberLoss."""
         super(HuberLoss, self).__init__(reduction=reduction)
-        validator.check_value_type('delta', delta, [float, int], self.cls_name)
-        validator.check_number("delta", delta, 0.0, Rel.GT, self.cls_name)
-        self.sub = P.Sub()
-        self.mul = P.Mul()
-        self.abs = P.Abs()
-        self.less = P.Less()
-        self.square = P.Square()
-        self.select = P.Select()
-        self.dtype = P.DType()
+        self.reduction = reduction
         self.delta = delta
-        self.delta_half = 0.5 * self.delta
 
     def construct(self, logits, labels):
-        _check_is_tensor('logits', logits, self.cls_name)
-        _check_is_tensor('labels', labels, self.cls_name)
-        logits_dtype = self.dtype(logits)
-        labels_dtype = self.dtype(labels)
-        _dtype_check(logits_dtype, labels_dtype, self.cls_name)
-        z = self.abs(self.sub(logits, labels))
-        condition = self.less(z, self.delta)
-        l1 = self.mul(0.5, self.square(z))
-        l2 = self.mul(self.delta, self.sub(z, self.delta_half))
-        loss = self.select(condition, l1, l2)
-
-        return self.get_loss(loss)
+        return F.huber_loss(logits, labels, self.reduction, self.delta)
 
 
 class TripletMarginLoss(LossBase):

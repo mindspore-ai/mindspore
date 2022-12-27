@@ -68,12 +68,12 @@ mindspore.ops
     mindspore.ops.cross_entropy
     mindspore.ops.gaussian_nll_loss
     mindspore.ops.hinge_embedding_loss
+    mindspore.ops.huber_loss
     mindspore.ops.l1_loss
     mindspore.ops.leaky_relu
     mindspore.ops.mse_loss
     mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
-    mindspore.ops.threshold
 
 激活函数
 ^^^^^^^^^^
@@ -91,6 +91,7 @@ mindspore.ops
     mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
     mindspore.ops.hardswish
+    mindspore.ops.hardtanh
     mindspore.ops.log_softmax
     mindspore.ops.logsigmoid
     mindspore.ops.mish
@@ -102,6 +103,7 @@ mindspore.ops
     mindspore.ops.softmin
     mindspore.ops.softsign
     mindspore.ops.tanh
+    mindspore.ops.threshold
 
 距离函数
 ^^^^^^^^^^
