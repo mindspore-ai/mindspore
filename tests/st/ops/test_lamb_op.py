@@ -146,12 +146,17 @@ class MyLamb(nn.Cell):
         return self.lamb(self.param, self.m, self.v, lr, beta1, beta2, eps, weight_decay, global_step, self.gradient)
 
 
-def test_gpu_net():
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_gpu_net(mode):
     """
     Feature: gpu testcase for Lamb
     Description: fixed input when using gpu
     Expectation: get the same result when use new lamb kernel and old kernel
     """
+    context.set_context(mode=mode)
     my_lamb = MyLamb(param_val, m_val, v_val, grad_val)
     my_lamb(beta1_val, beta2_val, eps_val, global_step_val, lr_val, weight_decay_val)
 
@@ -161,12 +166,18 @@ def test_gpu_net():
     assert np.allclose(my_lamb.param.asnumpy(), lamb_gpu_origin.param.asnumpy())
 
 
-def test_ascend_net():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_ascend_net(mode):
     """
     Feature: ascend testcase for Lamb
     Description: fixed input when using ascend
     Expectation: get the same result when use new lamb kernel and old kernel
     """
+    context.set_context(mode=mode)
     my_lamb = MyLamb(param_val, m_val, v_val, grad_val)
     my_lamb(beta1_val, beta2_val, eps_val, global_step_val, lr_val, weight_decay_val)
 
@@ -174,57 +185,3 @@ def test_ascend_net():
     lamb_ascend_origin(beta1_val, beta2_val, eps_val, global_step_val, lr_val, weight_decay_val, True)
 
     assert np.allclose(my_lamb.param.asnumpy(), lamb_ascend_origin.param.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_graph_net():
-    """
-    Feature: graph kernel testcase for Lamb
-    Description: fixed input when using ascend in graph mode
-    Expectation: get the same result when use new lamb kernel and old kernel
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_gpu_net()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_pynative_net():
-    """
-    Feature: pynative kernel testcase for Lamb
-    Description: fixed input when using ascend in pynative mode
-    Expectation: get the same result when use new lamb kernel and old kernel
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    test_gpu_net()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_ascend_graph_net():
-    """
-    Feature: graph kernel testcase for Lamb
-    Description: fixed input when using ascend in graph mode
-    Expectation: get the same result when use new lamb kernel and old kernel
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_ascend_net()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_ascend_pynative_net():
-    """
-    Feature: pynative kernel testcase for Lamb
-    Description: fixed input when using ascend in pynative mode
-    Expectation: get the same result when use new lamb kernel and old kernel
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    test_ascend_net()

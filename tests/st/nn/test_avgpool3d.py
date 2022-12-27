@@ -33,6 +33,8 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_avgpool3d_normal(mode):
@@ -51,4 +53,3 @@ def test_avgpool3d_normal(mode):
                                 [[126.0, 127.0, 128.0], [131.0, 132.0, 133.0]]]]])
     assert output.shape == (1, 2, 2, 2, 3)
     assert np.allclose(output.asnumpy(), expect_output, rtol=1e-3)
-    

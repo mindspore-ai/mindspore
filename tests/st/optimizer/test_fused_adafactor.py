@@ -21,18 +21,18 @@ from mindspore import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from tests.st.networks.models.lenet import LeNet
 
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_lenet():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_lenet(mode):
     '''
     Feature: AdaFactor
     Description: Test AdaFactor
     Expectation: Run lenet success
     '''
+    context.set_context(mode=mode)
     data = Tensor(np.ones([32, 3, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([32]).astype(np.int32))
     net = LeNet()

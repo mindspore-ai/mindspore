@@ -14,10 +14,11 @@
 # ============================================================================
 
 import numpy as np
+import pytest
+
 import mindspore.context as context
 from mindspore import nn, Tensor
-from optimizer_utils import build_network, \
-    loss_default_adamax, loss_not_default_adamax, loss_group_adamax
+from .optimizer_utils import build_network, loss_default_adamax, loss_not_default_adamax, loss_group_adamax
 
 
 w1 = np.array([[0.03909272, 0.08893055, -0.259909, -0.459185,
@@ -51,78 +52,63 @@ class Net(nn.Cell):
         return self.fc2(x)
 
 
-def test_default_adamax_pynative():
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_default_adamax(mode):
     """
     Feature: Test adamax optimizer
-    Description: Test adamax in Pynative mode with default parameter
+    Description: Test adamax with default parameter
     Expectation: Loss values and parameters conform to preset values.
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
+    context.set_context(mode=mode)
     config = {'name': 'adamax', 'lr': 0.001, "beta1": 0.9, "beta2": 0.999, "eps": 1e-07,
               'weight_decay': 0.0}
     loss = build_network(config, net=Net(), loss_fn=nn.MSELoss(reduction='mean'))
     assert np.allclose(loss_default_adamax, loss, atol=1.e-5)
 
 
-def test_default_adamax_graph():
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_no_default_adamax(mode):
     """
     Feature: Test adamax optimizer
-    Description: Test adamax in Graph mode with default parameter
+    Description: Test adamax with another set of parameter
     Expectation: Loss values and parameters conform to preset values.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
-    config = {'name': 'adamax', 'lr': 0.001, "beta1": 0.9, "beta2": 0.999, "eps": 1e-07,
-              'weight_decay': 0.0}
-    loss = build_network(config, net=Net(), loss_fn=nn.MSELoss(reduction='mean'))
-    assert np.allclose(loss_default_adamax, loss, atol=1.e-5)
-
-
-def test_no_default_adamax_pynative():
-    """
-    Feature: Test adamax optimizer
-    Description: Test adamax in Pynative mode with another set of parameter
-    Expectation: Loss values and parameters conform to preset values.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
+    context.set_context(mode=mode)
     config = {'name': 'adamax', 'lr': 0.01, "beta1": 0.9, "beta2": 0.98, "eps": 1e-06,
               'weight_decay': 0.0}
     loss = build_network(config, net=Net(), loss_fn=nn.MSELoss(reduction='mean'))
     assert np.allclose(loss_not_default_adamax, loss, atol=1.e-5)
 
 
-def test_no_default_adamax_graph():
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_default_adamax_group(mode):
     """
     Feature: Test adamax optimizer
-    Description: Test adamax in Graph mode with another set of parameter
+    Description: Test adamax with parameter grouping
     Expectation: Loss values and parameters conform to preset values.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
-    config = {'name': 'adamax', 'lr': 0.01, "beta1": 0.9, "beta2": 0.98, "eps": 1e-06,
-              'weight_decay': 0.0}
-    loss = build_network(config, net=Net(), loss_fn=nn.MSELoss(reduction='mean'))
-    assert np.allclose(loss_not_default_adamax, loss, atol=1.e-5)
-
-
-def test_default_adamax_group_pynative():
-    """
-    Feature: Test adamax optimizer
-    Description: Test adamax in Pynative mode with parameter grouping
-    Expectation: Loss values and parameters conform to preset values.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
-    config = {'name': 'adamax', 'lr': 0.002, "beta1": 0.9, "beta2": 0.999, "eps": 1e-08,
-              'weight_decay': 0.0}
-    loss = build_network(config, is_group=True, net=Net(), loss_fn=nn.MSELoss(reduction='mean'))
-    assert np.allclose(loss_group_adamax, loss, atol=1.e-5)
-
-
-def test_default_adamax_group_graph():
-    """
-    Feature: Test adamax optimizer
-    Description: Test adamax in Graph mode with parameter grouping
-    Expectation: Loss values and parameters conform to preset values.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+    context.set_context(mode=mode)
     config = {'name': 'adamax', 'lr': 0.002, "beta1": 0.9, "beta2": 0.999, "eps": 1e-08,
               'weight_decay': 0.0}
     loss = build_network(config, is_group=True, net=Net(), loss_fn=nn.MSELoss(reduction='mean'))
