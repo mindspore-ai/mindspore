@@ -911,6 +911,10 @@ constexpr auto kAttrInsertDefaultValue = "insert_default_value";
 constexpr auto kAttrIsSparse = "IsSparse";
 constexpr auto kAttrKernelBackoffWithFailureInfo = "kernel_backoff_with_failure_info";
 constexpr auto kAttrKernelBackoffWithFailureType = "kernel_backoff_with_failure_type";
+constexpr auto kAttrKernelGraph = "kernel_graph";
+constexpr auto kAttrPreKernelGraph = "pre_kernel_graph";
+constexpr auto kAttrNeedInline = "need_inline";
+constexpr auto kAttrOriFusionName = "ori_fusion_name";
 
 // FuncGraph Flags
 constexpr auto kFlagIsDynamicStructure = "is_dynamic_structure";

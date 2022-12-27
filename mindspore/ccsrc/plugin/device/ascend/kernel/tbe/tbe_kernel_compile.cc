@@ -350,7 +350,7 @@ void TbeKernelCompileManager::GetAllTbeNodes(const std::shared_ptr<session::Kern
   auto all_nodes = kernel_graph->execution_order();
   for (const auto &anf_node : all_nodes) {
     MS_EXCEPTION_IF_NULL(anf_node);
-    if (!AnfUtils::IsRealKernel(anf_node)) {
+    if (!AnfUtils::IsRealKernel(anf_node) || IsPrimitiveCNode(anf_node, prim::kPrimCallInline)) {
       continue;
     }
     KernelType kernel_type = AnfAlgo::GetKernelType(anf_node);
@@ -564,6 +564,9 @@ std::pair<std::vector<CNodePtr>, std::vector<CNodePtr>> TbeKernelCompileManager:
       continue;  // kernel mod already exist, continue;
     }
     auto full_name = node->fullname_with_scope();
+    if (common::AnfAlgo::HasNodeAttr(kAttrOriFusionName, node)) {
+      full_name = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrOriFusionName);
+    }
     auto json_name = full_name_to_json_name_[full_name];
     auto kernel_pack = tbe::TbeUtils::SearchCache(json_name, false);
     if (kernel_pack == nullptr) {

@@ -35,6 +35,7 @@
 #ifndef ENABLE_SECURITY
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
+#include "ir/func_graph_cloner.h"
 #endif
 
 namespace mindspore {
@@ -93,12 +94,96 @@ bool SetDefaultFormatForSpecialAclOp(const KernelGraphPtr &graph) {
   }
   return need_change_format;
 }
+
+AnfNodePtr DoInline(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
+                    const AnfNodePtrList &func_graph_args, const ScopePtr &scope) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(target_func_graph);
+  Cloner cloner({}, false);
+  if (scope != nullptr) {
+    cloner.set_scope(scope);
+  }
+  cloner.AddClone(func_graph, target_func_graph, func_graph_args, kInline);
+  auto node_list = TopoSort(func_graph->output());
+  for (auto &ori_node : node_list) {
+    if (ori_node->isa<Parameter>()) {
+      continue;
+    }
+    auto new_node = cloner[ori_node];
+    auto kernel_info = dynamic_cast<device::KernelInfo *>(new_node->kernel_info());
+    // deep copy kernel info
+    if (kernel_info != nullptr && new_node->kernel_info()->has_build_info()) {
+      // some check
+      MS_EXCEPTION_IF_CHECK_FAIL(kernel_info->MutableKernelMod() == nullptr,
+                                 "Inline ERROR: " + ori_node->DebugString() + ", kernel mod is not nullptr");
+      MS_EXCEPTION_IF_CHECK_FAIL(kernel_info->output_address_list().empty(),
+                                 "Inline ERROR: " + ori_node->DebugString() + ", output_address_list is not empty");
+      MS_EXCEPTION_IF_CHECK_FAIL(kernel_info->workspace_address_list().empty(),
+                                 "Inline ERROR: " + ori_node->DebugString() + ", workspace_address_list is not empty");
+
+      auto new_kernel_info = std::make_shared<device::KernelInfo>();
+      auto builder =
+        std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(new_node));
+      new_kernel_info->set_select_kernel_build_info(builder->Build());
+      new_kernel_info->set_graph_id(kernel_info->graph_id());
+      new_kernel_info->set_feature_map_flag(kernel_info->is_feature_map());
+      new_kernel_info->set_ref_map(false, kernel_info->out_in_ref_map());
+      new_node->set_kernel_info(new_kernel_info);
+    }
+    if (ori_node->isa<CNode>()) {
+      auto ori_cnode = ori_node->cast<CNodePtr>();
+      if (common::AnfAlgo::HasNodeAttr(kAttrIsUBFusionOp, ori_cnode) &&
+          common::AnfAlgo::GetNodeAttr<bool>(ori_node, kAttrIsUBFusionOp)) {
+        // already done fusion compile
+        auto ori_full_name = ori_cnode->fullname_with_scope();
+        common::AnfAlgo::SetNodeAttr(kAttrOriFusionName, MakeValue(ori_full_name), new_node);
+      }
+      common::AnfAlgo::SetNodeAttr(kAttrNeedInline, MakeValue(ori_node->fullname_with_scope()), new_node);
+      common::AnfAlgo::SetNodeAttr(kAttrPreKernelGraph, MakeValue(func_graph), new_node);
+    }
+  }
+  return cloner[func_graph->output()];
+}
 }  // namespace
 
 void AscendGraphOptimization::Reset() {
   MS_LOG(INFO) << "Clear Ascend Graph Optimization Resource.";
   memo_.clear();
   graph_manager_->Clear();
+}
+
+void AscendGraphOptimization::InlineSubGraph(const KernelGraphPtr &graph) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_before_inline_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
+  auto kernel_cnodes = graph->execution_order();
+  for (auto &kernel_cnode : kernel_cnodes) {
+    if (common::AnfAlgo::CheckPrimitiveType(kernel_cnode, prim::kPrimCallInline)) {
+      auto sub_graph = common::AnfAlgo::GetNodeAttr<KernelGraphPtr>(kernel_cnode, kAttrKernelGraph);
+      MS_LOG(INFO) << "InlineSubGraph: " << kernel_cnode->DebugString() << ", sub graph: " << sub_graph->graph_id()
+                   << ", need inline: " << sub_graph->need_inline();
+      auto main_graph = kernel_cnode->func_graph();
+      auto mng = main_graph->manager();
+      AnfNodePtrList inp(kernel_cnode->inputs().begin() + 1, kernel_cnode->inputs().end());
+      auto out = DoInline(sub_graph, main_graph, inp, kernel_cnode->input(0)->scope());
+      (void)mng->Replace(kernel_cnode, out);
+    }
+  }
+  memo_.clear();
+  opt::AscendAfterInlineOptimization(graph);
+  memo_.clear();
+#ifdef ENABLE_DUMP_IR
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_after_inline_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
 }
 
 void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
@@ -116,6 +201,9 @@ void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
   OptimizeGraphWithoutDeviceInfo(graph);
   SelectKernel(graph);
   OptimizeGraphWithDeviceInfo(graph);
+
+  // inline func before gen execution order
+  InlineSubGraph(graph);
   OptimizeExecutionOrder(graph);
   PostOptimization(graph);
 
@@ -193,8 +281,8 @@ void AscendGraphOptimization::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &
   MS_EXCEPTION_IF_NULL(graph);
   memo_.clear();
   HardWareOptimization(graph);
-  // copy child graph ref output map to father graph ref output map
   memo_.clear();
+  // copy child graph ref output map to father graph ref output map
   UpdateRefOutputMap(graph);
   AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(graph));
   RemoveUnusedValueNode(graph);
@@ -274,6 +362,9 @@ void AscendGraphOptimization::HardWareOptimization(const KernelGraphPtr &graph) 
     return;
   }
   (void)memo_.insert(graph);
+  for (auto &child_graph : graph->child_graph_order()) {
+    HardWareOptimization(child_graph.lock());
+  }
   opt::AscendBackendOptimization(graph);
   opt::CommonFinalOptimization(graph);
   if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
@@ -281,10 +372,6 @@ void AscendGraphOptimization::HardWareOptimization(const KernelGraphPtr &graph) 
     graph->SetExecOrderByDefault();
   }
   MS_LOG(INFO) << "Status record: end hardware optimize. graph id: " << graph->graph_id();
-
-  for (auto &child_graph : graph->child_graph_order()) {
-    HardWareOptimization(child_graph.lock());
-  }
 }
 
 void AscendGraphOptimization::AddGraphToManager(const NotNull<KernelGraphPtr> graph,
@@ -335,6 +422,11 @@ void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &grap
     return;
   }
   (void)memo_.insert(graph);
+  for (auto &child_graph : graph->child_graph_order()) {
+    if (child_graph.lock()->need_inline()) {
+      RecurseSelectKernelInfo(child_graph.lock());
+    }
+  }
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -347,16 +439,16 @@ void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &grap
   MS_LOG(INFO) << "Status record: start select kernel info. graph id: " << graph->graph_id();
   SetOperatorInfo(graph);
   MS_LOG(INFO) << "Status record: end select kernel info. graph id: " << graph->graph_id();
-
 #ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     std::string file_name = "select_kernel_after_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph);
   }
 #endif
-
   for (auto &child_graph : graph->child_graph_order()) {
-    RecurseSelectKernelInfo(child_graph.lock());
+    if (!child_graph.lock()->need_inline()) {
+      RecurseSelectKernelInfo(child_graph.lock());
+    }
   }
 }
 

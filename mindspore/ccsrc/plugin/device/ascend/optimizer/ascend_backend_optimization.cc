@@ -94,6 +94,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/softmax_dropout_do_mask_v3_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/conv2d_backprop_input_dilation_fusion.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
+#include "plugin/device/ascend/optimizer/format_type/reselect_call_inline_format.h"
 #include "plugin/device/ascend/optimizer/format_type/trans_op_format_refine.h"
 #include "plugin/device/ascend/optimizer/format_type/dynamic_rnn_grad_reformat.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_transpose_for_basiclstm_op.h"
@@ -286,6 +287,7 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto data_layout_pm = std::make_shared<PassManager>("transop_pm");
+  data_layout_pm->AddPass(std::make_shared<ReselectCallInlineFormat>());
   data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
   data_layout_pm->AddPass(std::make_shared<DynamicRNNGradReformat>());
   data_layout_pm->AddPass(std::make_shared<ChangeAxisOfReduceKernel>());
@@ -506,6 +508,16 @@ void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> 
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
   optimizer->AddPassManager(other_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+}
+
+void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  auto optimizer = std::make_shared<GraphOptimizer>();
+  auto after_inline_pm = std::make_shared<PassManager>("after_inline_pm");
+  after_inline_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
+  after_inline_pm->AddPass(std::make_shared<EliminateRedundantOp>());
+  optimizer->AddPassManager(after_inline_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 }

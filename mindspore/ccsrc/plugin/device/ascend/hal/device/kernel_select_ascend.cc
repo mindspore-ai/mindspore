@@ -838,7 +838,11 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
     SelectGraphKernelInfo(kernel_node, func_graph);
     return result;
   }
-
+  if (IsPrimitiveCNode(kernel_node, prim::kPrimCallInline)) {
+    opt::SelectCallInlineKernelInfo(kernel_node);
+    SetTensorDeviceInfo(kernel_node);
+    return result;
+  }
   if (common::AnfAlgo::HasNodeAttr(ops::kBatchRank, kernel_node)) {
     std::stringstream ss;
     ss << common::AnfAlgo::GetCNodeName(kernel_node)

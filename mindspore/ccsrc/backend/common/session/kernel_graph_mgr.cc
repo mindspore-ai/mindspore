@@ -735,9 +735,20 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateSwitchOrPartialNode(const CNodePtr
       auto info = kernel_graph_partial_map_[sub_kernel_graph.get()];
       call_node->set_abstract(info.abstract);
       cnode_inputs.emplace_back(info.sub_graph);
-      if (info.param_begin != tuple_get_idx) {
+      if (common::GetEnv("MS_DEV_GRAPH_REUSE") == "2") {
+        // call_graph and info.sub_graph need inline when cell reuse.
+        sub_kernel_graph->set_need_inline(true);
+        auto partial_sub_graph = GetValueNodeKernelGraph(info.sub_graph);
+        MS_EXCEPTION_IF_NULL(partial_sub_graph);
+        partial_sub_graph->set_need_inline(true);
+        MS_LOG(INFO) << "Inline graph " << sub_kernel_graph->graph_id() << " and graph "
+                     << partial_sub_graph->graph_id();
+      }
+      MS_LOG(INFO) << "Use cell reuse: " << sub_kernel_graph->graph_id();
+      if (info.param_begin != tuple_get_idx + std::max(static_cast<int>(info.multi_tuple) - 1, 0)) {
         MS_LOG(EXCEPTION) << "Call param is not a graph, the TupleGetItem index: " << tuple_get_idx
                           << ", the partial graph index: " << info.param_begin
+                          << ", need idx: " << tuple_get_idx + std::max(static_cast<int>(info.multi_tuple) - 1, 0)
                           << ", call graph: " << call_graph->fullname_with_scope();
       }
       for (size_t i = info.param_begin; i < info.param_end; i++) {
@@ -867,6 +878,31 @@ ParameterPtr KernelGraphMgr::CreateNewParameter(const AnfNodePtr &anf, KernelGra
   return new_parameter;
 }
 
+void KernelGraphMgr::FlattenTuple(const CNodePtr &node, KernelGraph *graph) {
+  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall)) {
+    auto call_graph = node->input(kFirstIndex);
+    auto sub_kernel_graph = GetValueNodeKernelGraph(call_graph);
+    MS_EXCEPTION_IF_NULL(sub_kernel_graph);
+    auto iter = kernel_graph_partial_map_.find(sub_kernel_graph.get());
+    if (iter != kernel_graph_partial_map_.end() && iter->second.multi_tuple != 0) {
+      need_flatten_.insert(node);
+    }
+  } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
+    auto input = node->input(kFirstIndex);
+    auto get_idx = common::AnfAlgo::GetTupleGetItemOutIndex(node);
+    if (need_flatten_.find(input) != need_flatten_.end() && get_idx == 0) {
+      need_flatten_tuple_map_[node] = input;
+    }
+  }
+  for (size_t i = 0; i < common::AnfAlgo::GetInputNum(node); i++) {
+    auto input = common::AnfAlgo::GetInputNode(node, i);
+    auto iter = need_flatten_tuple_map_.find(input);
+    if (iter != need_flatten_tuple_map_.end()) {
+      node->set_input(i + 1, iter->second);
+    }
+  }
+}
+
 bool KernelGraphMgr::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
@@ -883,6 +919,7 @@ bool KernelGraphMgr::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGrap
   new_cnode->set_scope(cnode->scope());
   graph->FrontBackendMapAdd(node, new_cnode);
   SetReturnNode(new_cnode, graph);
+  FlattenTuple(new_cnode, graph);
   return true;
 }
 
@@ -938,14 +975,40 @@ void KernelGraphMgr::SetReturnNode(const AnfNodePtr &node, KernelGraph *graph) {
       auto last_input_node = common::AnfAlgo::GetInputNode(make_tuple, tuple_input_num - 1);
       MS_EXCEPTION_IF_NULL(last_input_node);
       if (last_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(last_input_node, prim::kPrimPartial)) {
+        size_t multi_tuple = 0;
         auto partial_node = last_input_node->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(partial_node);
         size_t partial_input_num = common::AnfAlgo::GetInputTensorNum(partial_node);
         std::vector<AnfNodePtr> make_tuple_inputs;
         make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
         // skip last return node (is a partial)
+        size_t param_begin = 0;
         for (size_t i = 0; i < tuple_input_num - 1; i++) {
-          make_tuple_inputs.emplace_back(common::AnfAlgo::GetInputNode(make_tuple, i));
+          auto input = common::AnfAlgo::GetInputNode(make_tuple, i);
+          auto node_abs = input->abstract();
+          if (node_abs->isa<abstract::AbstractTuple>()) {
+            MS_EXCEPTION_IF_CHECK_FAIL(
+              i == 0, "Input index: " + std::to_string(i) + " is a make tuple, input node: " + input->DebugString());
+            MS_LOG(DEBUG) << "Flatten the make tuple, input node: " << input->DebugString()
+                          << ", output num: " << AnfUtils::GetOutputTensorNum(input);
+            // flatten the make tuple
+            for (size_t j = 0; j < AnfUtils::GetOutputTensorNum(input); j++) {
+              auto idx = NewValueNode(SizeToLong(j));
+              MS_EXCEPTION_IF_NULL(idx);
+              auto imm = std::make_shared<Int64Imm>(j);
+              idx->set_abstract(std::make_shared<abstract::AbstractScalar>(imm));
+              auto getitem = graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), input, idx});
+              std::vector<TypeId> types = {common::AnfAlgo::GetOutputInferDataType(input, j)};
+              auto shapes = {common::AnfAlgo::GetOutputInferShape(input, j)};
+              common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, getitem.get());
+              param_begin++;
+              multi_tuple++;
+              make_tuple_inputs.emplace_back(getitem);
+            }
+          } else {
+            param_begin++;
+            make_tuple_inputs.emplace_back(input);
+          }
         }
         // skip partial graph
         for (size_t i = kFirstIndex; i < partial_input_num; i++) {
@@ -965,8 +1028,8 @@ void KernelGraphMgr::SetReturnNode(const AnfNodePtr &node, KernelGraph *graph) {
         g_output->set_abstract(abstract);
         graph->set_output(g_output);
 
-        kernel_graph_partial_map_[graph] = {abstract, common::AnfAlgo::GetInputNode(partial_node, 0),
-                                            tuple_input_num - 1, common::AnfAlgo::GetInputTensorNum(g_output)};
+        kernel_graph_partial_map_[graph] = {abstract, common::AnfAlgo::GetInputNode(partial_node, 0), param_begin,
+                                            common::AnfAlgo::GetInputTensorNum(g_output), multi_tuple};
       }
     }
   }
@@ -1041,6 +1104,10 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(const FuncGrap
   auto graph = NewKernelGraph();
   MS_EXCEPTION_IF_NULL(graph);
   front_backend_graph_map_[func_graph.get()] = graph;
+  if (func_graph->has_flag(FUNC_GRAPH_FLAG_NEED_BACKEND_INLINE)) {
+    MS_LOG(INFO) << "Need backend inline: " << graph->graph_id();
+    graph->set_need_inline(true);
+  }
   MS_LOG(INFO) << "Create graph: " << graph->graph_id();
   graph->set_device_target(device_target);
   // Create parameter

@@ -628,6 +628,9 @@ FuncGraphPtr GenerateReusingGraph(const FuncGraphPtr &fg) {
     }
   }
   MS_LOG(DEBUG) << "The reusable graph parameter size: " << reusing_graph->parameters().size();
+  if (common::GetEnv("MS_DEV_GRAPH_REUSE") == "2") {
+    reusing_graph->set_flag(FUNC_GRAPH_FLAG_NEED_BACKEND_INLINE, true);
+  }
   return reusing_graph;
 }
 
@@ -652,14 +655,9 @@ void ReplaceWithReusingGraph(const FuncGraphPtr &reusing_graph, const FuncGraphP
 // Make the reusable cell to be the reusable function graph.
 bool GraphReusingAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  constexpr size_t graph_reusing_count = 2;
   const auto &obj_map = parse::data_converter::GetObjGraphs();
   for (const auto &[cell_key, graphs] : obj_map) {
     MS_LOG(DEBUG) << "Start to handle the reusable graph: " << cell_key << ", size: " << graphs.size();
-    // Only make the reusable cell that is used more than graph_reusing_count to be reusable.
-    if (graphs.size() < graph_reusing_count) {
-      continue;
-    }
     const auto &fg = graphs[0];
     // fg->paramter_obj_nodes().empty() have been handled by combine like.
     if (!fg->paramter_obj_nodes().empty()) {
@@ -1514,7 +1512,8 @@ static std::vector<ActionItem> CommonPipeline() {
   }
 
   // Make the reusable cell to be the reusable function graph
-  static bool enable_graph_reusing = (common::GetEnv("MS_DEV_GRAPH_REUSE") == "1");
+  static bool enable_graph_reusing =
+    (common::GetEnv("MS_DEV_GRAPH_REUSE") == "1" || common::GetEnv("MS_DEV_GRAPH_REUSE") == "2");
   if (enable_graph_reusing) {
     (void)actions.emplace_back(std::make_pair("graph_reusing", GraphReusingAction));
   }

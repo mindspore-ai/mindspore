@@ -619,6 +619,9 @@ void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value
 
 void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  if (graph.need_inline()) {
+    return;
+  }
   auto graph_id = graph.graph_id();
   MS_LOG(INFO) << "AssignStaticMemoryInput start for graph " << graph_id;
   auto graph_inputs = GetGraphInputs(graph);
@@ -711,6 +714,9 @@ void KernelRuntime::GetDeviceAddress(const AnfNodePtr &item,
 }
 
 void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph &graph) {
+  if (graph.need_inline()) {
+    return;
+  }
   MS_LOG(INFO) << "AssignStaticMemoryOutput start for graph " << graph.graph_id();
   auto nodes = common::AnfAlgo::GetAllOutput(graph.output(), {prim::kPrimTupleGetItem});
   std::vector<session::KernelWithIndex> non_communication_op;

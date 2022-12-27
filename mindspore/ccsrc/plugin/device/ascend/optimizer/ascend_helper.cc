@@ -635,6 +635,41 @@ void SetInputOutputNames(const std::vector<std::string> &input_names, const std:
   common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), node);
 }
 
+void SelectCallInlineKernelInfo(const CNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimCallInline)) {
+    return;
+  }
+  // need inline
+  auto sub_graph = common::AnfAlgo::GetNodeAttr<KernelGraphPtr>(node, kAttrKernelGraph);
+  auto sub_ret = sub_graph->output();
+  std::vector<std::string> input_formats;
+  std::vector<TypeId> input_types;
+  std::vector<std::string> output_formats;
+  std::vector<TypeId> output_types;
+  for (auto &param : sub_graph->inputs()) {
+    TypeId type_id = AnfAlgo::GetOutputDeviceDataType(param, 0);
+    if (type_id == kTypeUnknown) {
+      type_id = common::AnfAlgo::GetOutputInferDataType(param, 0);
+    }
+    if (type_id > kMonadTypeBegin && type_id < kMonadTypeEnd) {
+      continue;
+    }
+    input_types.push_back(type_id);
+    input_formats.push_back(AnfAlgo::GetOutputFormat(param, 0));
+  }
+  for (size_t i = 0; i < AnfUtils::GetOutputTensorNum(node); ++i) {
+    output_formats.push_back(AnfAlgo::GetOutputFormat(sub_ret, i));
+    output_types.push_back(common::AnfAlgo::GetOutputInferDataType(sub_ret, i));
+  }
+  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(builder);
+  builder->SetInputsFormat(input_formats);
+  builder->SetInputsDeviceType(input_types);
+  builder->SetOutputsFormat(output_formats);
+  builder->SetOutputsDeviceType(output_types);
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
+}
+
 template <typename T, typename Scalar>
 ValuePtr GetTensorValue(const tensor::TensorPtr &tensor) {
   ValuePtr ret;

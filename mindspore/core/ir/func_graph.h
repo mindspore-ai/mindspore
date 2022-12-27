@@ -83,6 +83,7 @@ const char FUNC_GRAPH_FLAG_IGNORE_VALUE[] = "ignore_value";
 const char FUNC_GRAPH_FLAG_DEFER_INLINE[] = "defer_inline";
 const char FUNC_GRAPH_FLAG_SPARSE_BPROP[] = "sparse_bprop";
 const char FUNC_GRAPH_FLAG_NO_INLINE[] = "no_inline";
+const char FUNC_GRAPH_FLAG_NEED_BACKEND_INLINE[] = "need_backend_inline";
 const char FUNC_GRAPH_FLAG_AFTER_BLOCK[] = "after_block";
 const char FUNC_GRAPH_FLAG_CORE[] = "core";
 const char FUNC_GRAPH_FLAG_K_GRAPH[] = "k_graph";
