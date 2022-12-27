@@ -461,7 +461,6 @@ constexpr auto kRealTupleGetItem = "RealTupleGetItem";
 constexpr auto kRealMakeList = "RealMakeList";
 constexpr auto kRealListGetItem = "RealListGetItem";
 constexpr auto kTupleSetItem = "TupleSetItem";
-constexpr auto kTupleAdd = "TupleAdd";
 
 GVAR_DEF(PrimitivePtr, kPrimExtractGlimpse, std::make_shared<Primitive>(kExtractGlimpse));
 //
@@ -1738,7 +1737,6 @@ GVAR_DEF(PrimitivePtr, kPrimOCRDetectionPreHandle, std::make_shared<Primitive>("
 GVAR_DEF(PrimitivePtr, kPrimTupleToTensor, std::make_shared<Primitive>(kTupleToTensor));
 GVAR_DEF(PrimitivePtr, kPrimTensorToTuple, std::make_shared<Primitive>(kTensorToTuple));
 GVAR_DEF(PrimitivePtr, kPrimRealMakeTuple, std::make_shared<Primitive>(kRealMakeTuple));
-GVAR_DEF(PrimitivePtr, kPrimTupleAdd, std::make_shared<Primitive>(kTupleAdd));
 
 // AdamApplyOne
 GVAR_DEF(PrimitivePtr, kPrimAdamApplyOne, std::make_shared<Primitive>("AdamApplyOne"));
