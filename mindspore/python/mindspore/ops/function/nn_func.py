@@ -16,6 +16,7 @@
 """Defines nn operators with functional form."""
 from __future__ import absolute_import
 from math import pi, log
+import numpy as np
 
 import mindspore.ops as ops
 from mindspore.ops.primitive import constexpr
@@ -2252,6 +2253,46 @@ def sigmoid(input_x):
     return sigmoid_(input_x)
 
 
+def logsigmoid(x):
+    r"""
+    Logsigmoid activation function.
+
+    Applies logsigmoid activation element-wise. The input is a Tensor with any valid shape.
+
+    Logsigmoid is defined as:
+
+    .. math::
+        \text{logsigmoid}(x_{i}) = log(\frac{1}{1 + \exp(-x_i)}),
+
+    where :math:`x_{i}` is the element of the input.
+
+    Args:
+        x (Tensor): The input of LogSigmoid with data type of float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Returns:
+        Tensor, with the same type and shape as the `x`.
+
+    Raises:
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> output = ops.logsigmoid(x)
+        >>> print(output)
+        [-0.31326166 -0.12692806 -0.04858734]
+    """
+    output = _get_cache_prim(P.Mul)()(x, -1)
+    output = _get_cache_prim(P.Exp)()(output)
+    output = _get_cache_prim(P.Add)()(output, 1)
+    output = _get_cache_prim(P.Reciprocal)()(output)
+    ret = _get_cache_prim(P.Log)()(output)
+    return ret
+
+
 def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=None, dilations=(1, 1, 1, 1), groups=1,
                       deformable_groups=1, modulated=True):
     r"""
@@ -2644,6 +2685,65 @@ def prelu(x, weight):
     """
     prelu_ = _get_cache_prim(NN_OPS.PReLU)()
     return prelu_(x, weight)
+
+
+def rrelu(x, lower=1 / 8, upper=1 / 3):
+    r"""
+
+    Randomized Leaky ReLU activation function.
+
+    The activation function is defined as:
+
+    .. math::
+        \text{rrelu}(x_{ji}) = \begin{cases}x_{ji}, &\text{if } x_{ji} \geq 0; \cr
+        {\alpha_{ji}} * x_{ji}, &\text{otherwise.}\end{cases}
+
+    where :math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math:`l \le u`.
+
+    Applies the rrelu function elementally, as described in the paper:
+    `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_ .
+
+    Args:
+        x  (Tensor): The input of rrelu is a Tensor of any dimension.
+        lower (Union[int, float]): Slope of the activation function at x < 0. Default: 1/8.
+        upper (Union[int, float]): Slope of the activation function at x < 0. Default: 1/3.
+
+    Returns:
+        Tensor, after rrelu, has the same type and shape as the `x`.
+
+    Raises:
+        TypeError: If `lower` is not a float or an int.
+        TypeError: If `upper` is not a float or an int.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `x` is not a Tensor of mindspore.float16 or mindpore.float32.
+        ValueError: If `lower` is greater than upper.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[-1.0, 4.0], [2.0, 0]]), mindspore.float32)
+        >>> output = ops.rrelu(x)
+        >>> print(output)
+        [[-0.31465699  4.        ]
+         [ 2.          0.        ]]
+    """
+    if not isinstance(upper, (float, int)):
+        raise TypeError(f"For 'ops.rrelu', `upper` must be an int or a float, but got {type(upper)}")
+    if not isinstance(lower, (float, int)):
+        raise TypeError(f"For 'ops.rrelu', `lower` must be an int or a float, but got {type(lower)}")
+    if lower > upper:
+        raise ValueError(f"For 'ops.rrelu', the value of `upper` must be greater than `lower`, "
+                         f"but got upper: {upper}, lower: {lower}. ")
+    size = x.shape
+    sign_matrix = _get_cache_prim(P.Sign)()(x)
+    negative_filter = sign_matrix.clip(None, 0)
+    positive_filter = sign_matrix.clip(0, None)
+    mask = _get_cache_prim(P.Cast)()(Tensor(np.random.uniform(lower, upper, size=size)), _get_cache_prim(P.DType)()(x))
+    negative_mask = negative_filter * mask * -1
+    total_mask = negative_mask + positive_filter
+    out = total_mask * x
+    return out
 
 
 def mirror_pad(input_x, paddings, mode):
@@ -5170,8 +5270,10 @@ __all__ = [
     'conv3d_transpose',
     'conv2d',
     'sigmoid',
+    'logsigmoid',
     'relu',
     'relu6',
+    'rrelu',
     'conv3d',
     'glu',
     'margin_ranking_loss',
