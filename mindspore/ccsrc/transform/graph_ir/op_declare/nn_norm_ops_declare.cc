@@ -163,7 +163,9 @@ REG_ADPT_DESC(BinaryCrossEntropyGrad, kNameBinaryCrossEntropyGrad, ADPT_DESC(Bin
 
 // Centralization
 INPUT_MAP(Centralization) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Centralization) = {{"axes", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>())}};
+INPUT_ATTR_MAP(Centralization) = {
+  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(Centralization) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Centralization) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Centralization, kNameCentralization, ADPT_DESC(Centralization))
 
