@@ -321,13 +321,15 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecis
     return filtered_kernel_info_list;
   }
 
-  // reduce precision
+  // reduce precision or reduce_and_raise precision
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_REDUCE_PRECISION)) {
+    auto reduce_and_raise_map = reduce_map;
+    reduce_and_raise_map.insert(raise_map.begin(), raise_map.end());
     for (const auto &kernel_info : kernel_info_list) {
       MS_EXCEPTION_IF_NULL(kernel_info);
-      if (TagRaiseReduce(kernel_info, cnode, reduce_map)) {
+      if (TagRaiseReduce(kernel_info, cnode, reduce_and_raise_map)) {
         filtered_kernel_info_list.push_back(kernel_info);
       }
     }
