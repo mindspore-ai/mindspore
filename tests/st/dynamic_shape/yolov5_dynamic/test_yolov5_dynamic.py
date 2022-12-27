@@ -20,7 +20,7 @@ from mindspore import log as logger
 from tests.st.model_zoo_tests import utils
 
 
-def run_yolov5_dynamic_case(device_target):
+def run_yolov5_dynamic_case(device_target, mode="GRAPH"):
     cur_path = os.getcwd()
     model_path = "{}/../../../../tests/models/official/cv".format(cur_path)
     model_name = "yolov5"
@@ -31,9 +31,10 @@ def run_yolov5_dynamic_case(device_target):
     # pylint: disable=anomalous-backslash-in-string
     new_list = ["-1"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/yolo.py"))
+    os.system("""sed -i '1i\mode_name: "GRAPH"' {}""".format(os.path.join(cur_model_path, "default_config.yaml")))
     os.system("cp -r {} {}".format(os.path.join(cur_path, "run_yolov5_dynamic.py"), cur_model_path))
-    exec_network_shell = "cd {}; python run_yolov5_dynamic.py --device_target={} > log &".format(
-        cur_model_path, device_target)
+    exec_network_shell = "cd {}; python run_yolov5_dynamic.py --device_target={} --mode_name={} > log &".format(
+        cur_model_path, device_target, mode)
     logger.warning("cmd [{}] is running...".format(exec_network_shell))
     os.system(exec_network_shell)
     cmd = "ps -ef | grep python | grep run_yolov5_dynamic.py | grep -v grep"
@@ -47,6 +48,22 @@ def run_yolov5_dynamic_case(device_target):
     print("loss_list is: ", loss_list)
     assert len(loss_list) >= 3
     return loss_list
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_yolov5_dynamic_gpu_pynative():
+    """
+    Feature: yolov5_dynamic
+    Description: test yolov5_dynamic run
+    Expectation: loss is same with the expect on PYNATIVE_MODE
+    """
+    loss_list = run_yolov5_dynamic_case("GPU", "PYNATIVE")
+    expect_loss = [7200.505, 544.873, 600.88]
+    # Different gpu device (such as V100 and 3090) lead to some differences
+    # in the calculation results, so atol and rtol is large
+    assert np.allclose(loss_list, expect_loss, 1e-2, 1e-2)
 
 
 @pytest.mark.level0
