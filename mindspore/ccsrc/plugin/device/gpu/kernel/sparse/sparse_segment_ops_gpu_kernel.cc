@@ -81,6 +81,9 @@ int SparseSegmentOpsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   x_shape_0_ = x_shape[0];
   x_elements_ = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies{});
   outer_size_ = x_shape.front();
+  if (outer_size_ == 0) {
+    return KRET_RESIZE_FAILED;
+  }
   inner_size_ = x_elements_ / x_shape.front();
   std::vector<int64_t> indices_shape = inputs.at(kIndex1)->GetShapeVector();
   idx_seg_elements_ = std::accumulate(indices_shape.begin(), indices_shape.end(), 1, std::multiplies{});
