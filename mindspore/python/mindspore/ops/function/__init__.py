@@ -512,6 +512,12 @@ from .random_func import (
     gamma,
     poisson,
     multinomial,
+    rand,
+    rand_like,
+    randn,
+    randn_like,
+    randint,
+    randint_like
 )
 from .grad import (
     grad_func,
