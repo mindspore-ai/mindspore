@@ -113,6 +113,26 @@ AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &fg, const Abs
   return result.first->second;
 }
 
+AnalysisContextPtr AnalysisContext::GetCachedContext(const FuncGraphPtr &fg,
+                                                     const AbstractBasePtrList &args_spec_list) {
+  // Find func graph's parent and its parent context firstly.
+  MS_EXCEPTION_IF_NULL(fg);
+  FuncGraphPtr parent_graph = fg->parent();
+  auto parent_context = FindContext(parent_graph);
+  if (parent_context == nullptr) {
+    // If parent context is not found, we'll raise exception.
+    MS_LOG(EXCEPTION) << "BUG: Failed to find parent context in current context: " << this->ToString()
+                      << ", func_graph: " << fg->ToString()
+                      << ", parent_graph: " << (parent_graph == nullptr ? "null" : parent_graph->ToString()) << " "
+                      << trace::GetDebugInfo(fg->debug_info());
+  }
+  auto it = parent_context->children_.find(std::make_pair(fg, args_spec_list));
+  if (it == parent_context->children_.cend()) {
+    return nullptr;
+  }
+  return it->second;
+}
+
 AnalysisContext *AnalysisContext::FindContext(const FuncGraphPtr &fg) {
   if (fg == nullptr) {
     return DummyContext().get();
