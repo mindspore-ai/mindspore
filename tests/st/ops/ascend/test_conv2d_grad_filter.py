@@ -62,9 +62,9 @@ def test_net():
         [0, -2, -4, -7],
         [-3, -2, -3, -16]]]]).astype(np.float16))
     operator = Net()
-    output = operator(x, out)
     operator.set_inputs(Tensor(shape=[None, 1, 6, 6], dtype=mstype.float16),
                         Tensor(shape=[None, 1, 4, 4], dtype=mstype.float16))
+    output = operator(x, out)
     expect_out = np.array(
         [[[[-60., -142., -265.], [-104., -211., -322.], [-102., -144., -248.]]]]).astype(np.float16)
     assert np.allclose(output.asnumpy(), expect_out, 1e-3, 1e-3)

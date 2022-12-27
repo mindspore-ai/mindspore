@@ -36,12 +36,6 @@ namespace mindspore {
 namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 namespace {
-bool NeedInsertTransData(const ShapeVector &origin_shape, const std::string &format) {
-  bool shape_check =
-    origin_shape.size() > 1 || (origin_shape.size() == 1 && origin_shape[0] % SizeToLong(kCubeSize) != 0);
-  return kCommonFormatSet.find(format) == kCommonFormatSet.end() && (shape_check || format == kOpFormat_ND_RNN_BIAS);
-}
-
 std::string GetTransOpName(const std::string &spec_format) {
   std::string trans_opname = (spec_format == kOpFormat_FRACTAL_ZN_RNN || spec_format == kOpFormat_ND_RNN_BIAS)
                                ? prim::kPrimTransDataRNN->name()

@@ -60,14 +60,13 @@ OUTPUT_MAP(ReduceAny) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceAny, kNameReduceAny, ADPT_DESC(ReduceAny))
 REG_ADPT_DESC(ReduceAnyD, kNameReduceAnyD, ADPT_DESC(ReduceAny))
 
-// ReduceSumD
-INPUT_MAP(ReduceSumD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ReduceSumD) = {
-  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(ReduceSumD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceSumD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceSum, prim::kPrimReduceSum->name(), ADPT_DESC(ReduceSumD))
-REG_ADPT_DESC(ReduceSumD, prim::kPrimReduceSumD->name(), ADPT_DESC(ReduceSumD))
+// ReduceSum
+INPUT_MAP(ReduceSum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_INPUT_MAP(ReduceSum) = {{"axis", "axes"}};
+ATTR_MAP(ReduceSum) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceSum) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceSum, prim::kPrimReduceSum->name(), ADPT_DESC(ReduceSum))
+REG_ADPT_DESC(ReduceSumD, prim::kPrimReduceSumD->name(), ADPT_DESC(ReduceSum))
 
 // ReduceProdD
 INPUT_MAP(ReduceProdD) = {{1, INPUT_DESC(x)}};

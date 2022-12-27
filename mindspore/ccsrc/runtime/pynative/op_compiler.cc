@@ -106,7 +106,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   std::vector<KernelWithIndex> outputs_with_index;
   for (auto &node : output_nodes) {
     MS_EXCEPTION_IF_NULL(node);
-    (void)outputs_with_index.emplace_back(common::AnfAlgo::VisitKernelWithReturnType(node, 0, false));
+    (void)outputs_with_index.emplace_back(common::AnfAlgo::VisitKernel(node, 0));
   }
   AnfAlgo::UpdateGraphValidRefPair(graph);
 

@@ -28,6 +28,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 
 #include "plugin/device/ascend/hal/device/ge_types_convert.h"
+#include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {
 namespace kernel {
@@ -675,6 +676,11 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
     auto input_shape = AnfAlgo::GetOutputDeviceShape(input, idx);
     auto input_format = AnfAlgo::GetOutputFormat(input, idx);
     auto ori_format = IsOneOf3DFormat(input_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
+    if (!opt::NeedInsertTransData(ori_shape, input_format)) {
+      MS_LOG_DEBUG << "Set format of " << anf_node->fullname_with_scope() << " to origin format";
+      input_shape = ori_shape;
+      input_format = ori_format;
+    }
     ori_shape = UpdateShape(ori_shape, input_format, anf_node);
     auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(input_desc);
@@ -703,6 +709,11 @@ std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf
     auto output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, i);
     auto output_format = AnfAlgo::GetOutputFormat(anf_node, i);
     auto ori_format = IsOneOf3DFormat(output_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
+    if (!opt::NeedInsertTransData(ori_shape, output_format)) {
+      MS_LOG_DEBUG << "Set format of " << anf_node->fullname_with_scope() << " to origin format";
+      output_shape = ori_shape;
+      output_format = ori_format;
+    }
     ori_shape = UpdateShape(ori_shape, output_format, anf_node);
     auto output_desc = GeOpConvertor::GetTensorDesc(output_shape, output_type, output_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(output_desc);

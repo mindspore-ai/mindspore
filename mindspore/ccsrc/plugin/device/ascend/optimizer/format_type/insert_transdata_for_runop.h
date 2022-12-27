@@ -41,7 +41,7 @@ class RunOpInsertTransData : public Pass {
   bool ConvertNodeFormat(const FuncGraphPtr &graph, const AnfNodePtr &node, const std::string &format,
                          size_t insert_index, size_t input_index, bool is_insert) const;
   KernelSelectPtr kernel_select_;
-  size_t input_size_{0};
+  ShapeVector input_shape_;
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -98,7 +98,7 @@ bool RunOpInsertTransData::ConvertNodeFormat(const FuncGraphPtr &graph, const An
   MS_EXCEPTION_IF_NULL(cnode);
   bool changed = false;
   // convert the format of node to default
-  if (kCommonFormatSet.find(format) == kCommonFormatSet.end() && (input_size_ > 1 || format == kOpFormat_ND_RNN_BIAS)) {
+  if (NeedInsertTransData(input_shape_, format)) {
     auto input_node = (!is_insert) ? common::AnfAlgo::GetInputNode(cnode, input_index) : node;
     auto trans_node = AddTransOpNodeToGraph(graph, input_node, kernel_select_, insert_index, is_insert);
     common::AnfAlgo::SetNodeInput(cnode, trans_node, input_index);
@@ -121,7 +121,7 @@ bool RunOpInsertTransData::Run(const FuncGraphPtr &graph) {
     for (size_t index = 0; index < input_num; ++index) {
       auto prev_input_format = AnfAlgo::GetPrevNodeOutputFormat(node, index);
       auto prev_node_out_infer_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, index);
-      input_size_ = prev_node_out_infer_shape.size();
+      input_shape_ = prev_node_out_infer_shape;
       auto input_format = AnfAlgo::GetInputFormat(node, index);
       // convert the format of node's input or output
       auto input_changed = ConvertNodeFormat(graph, node, prev_input_format, 0, index, false);
