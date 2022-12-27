@@ -26,6 +26,7 @@
 #include "src/common/common.h"
 #include "src/tensor.h"
 #include "tools/common/string_util.h"
+#include "nnacl/nnacl_common.h"
 #ifdef ENABLE_ARM64
 #include <linux/perf_event.h>
 #include <sys/ioctl.h>
@@ -733,6 +734,26 @@ int BenchmarkUnifiedApi::CompareDataGetTotalBiasAndSize(const std::string &name,
     }
     case TypeId::kNumberTypeBool: {
       bias = CompareData<bool, int64_t>(name, tensor->Shape(), mutableData);
+      break;
+    }
+    case TypeId::kNumberTypeFloat16: {
+      size_t shapeSize = 1;
+      for (int64_t dim : tensor->Shape()) {
+        if (dim <= 0) {
+          MS_LOG(ERROR) << "The shape of output " << name << " should be great than 0 after inference, got "
+                        << tensor->Shape();
+          return RET_ERROR;
+        }
+        MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(shapeSize, static_cast<size_t>(dim)), RET_ERROR, "mul overflow");
+        shapeSize *= static_cast<size_t>(dim);
+      }
+      auto *floatArr = new float[shapeSize];
+      for (size_t i = 0; i < shapeSize; ++i) {
+        uint16_t tmpInt = reinterpret_cast<uint16_t *>(mutableData)[i];
+        floatArr[i] = ShortToFloat32(tmpInt);
+      }
+      bias = CompareData<float, int64_t>(name, tensor->Shape(), floatArr);
+      delete[] floatArr;
       break;
     }
     default:
