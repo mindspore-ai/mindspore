@@ -28,6 +28,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "acl/acl_rt.h"
+#include "plugin/device/ascend/hal/device/kernel_adjust.h"
 
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -183,6 +184,8 @@ void AscendKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const 
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(kernel_graph);
+  device::KernelAdjust::GetInstance().AssignLoopCtrlMemory(*kernel_graph);
   if (kernel_graph->is_from_single_op()) {
     PreprocessBeforeRunSingleOpGraph(kernel_graph);
   } else {

@@ -51,6 +51,7 @@ class DebugActor : public ActorBase {
 
   // The debug on step end.
   void DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid);
+  static inline uint32_t current_step{0};
 
  private:
   // class members

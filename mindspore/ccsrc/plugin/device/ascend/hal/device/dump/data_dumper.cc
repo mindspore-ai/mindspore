@@ -35,6 +35,7 @@
 #include "utils/ms_context.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#include "plugin/device/ascend/hal/device/dump/dumper_base.h"
 #endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
@@ -43,32 +44,6 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-namespace {
-static constexpr uint32_t kAicpuLoadFlag = 1;
-static constexpr uint32_t kAicpuUnloadFlag = 0;
-static constexpr uint32_t kTupleTaskId = 0;
-static constexpr uint32_t kTupleStreamId = 1;
-static constexpr uint32_t kTupleArgs = 2;
-static constexpr uint64_t kOpDebugShape = 2048;
-static constexpr uint64_t kOpDebugHostMemSize = 2048;
-static constexpr uint64_t kOpDebugDevMemSize = sizeof(void *);
-static constexpr uint8_t kNoOverflow = 0;
-static constexpr uint8_t kAiCoreOverflow = 0x1;
-static constexpr uint8_t kAtomicOverflow = (0x1 << 1);
-static constexpr uint8_t kAllOverflow = (kAiCoreOverflow | kAtomicOverflow);
-static const std::map<uint32_t, std::string> kOverflowModeStr = {{kNoOverflow, "NoOverflow"},
-                                                                 {kAiCoreOverflow, "AiCoreOverflow"},
-                                                                 {kAtomicOverflow, "AtomicOverflow"},
-                                                                 {kAllOverflow, "AllOverflow"}};
-constexpr const char *kNodeNameOpDebug = "Node_OpDebug";
-constexpr const char *kOpTypeOpDebug = "Opdebug";
-constexpr const char *kNodeNameEndGraph = "Node_EndGraph";
-constexpr const char *kOpTypeOpEndGraph = "EndGraph";
-static constexpr auto kCurLoopCountName = "current_loop_count";
-static constexpr auto kCurEpochCountName = "current_epoch_count";
-static constexpr auto kConstLoopNumInEpochName = "const_loop_num_in_epoch";
-}  // namespace
-
 DataDumper::~DataDumper() {
   kernel_graph_ = nullptr;
   ReleaseDevMem(&dev_load_mem_);
@@ -113,7 +88,7 @@ void DataDumper::LoadDumpInfo() {
   MS_EXCEPTION_IF_NULL(kernel_graph_);
   aicpu::dump::OpMappingInfo dump_info;
   SetOpEndgraphMappingInfo(NOT_NULL(&dump_info));
-  SetOpDebugMappingInfo(NOT_NULL(&dump_info));
+  SetOpDebugMappingInfo(NOT_NULL(&dump_info), debug_task_id_, debug_stream_id_, op_debug_dump_args_);
   SetOpMappingInfo(NOT_NULL(&dump_info));
 
   auto kernels = kernel_graph_->execution_order();
@@ -213,16 +188,6 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   }
   MS_LOG(INFO) << "SetOpMappinglnfo End.";
 }
-
-bool DataDumper::KernelNeedDump(const CNodePtr &kernel) const {
-  if (AnfAlgo::GetKernelType(kernel) != TBE_KERNEL && AnfAlgo::GetKernelType(kernel) != AICPU_KERNEL &&
-      AnfAlgo::GetKernelType(kernel) != AKG_KERNEL) {
-    return false;
-  }
-  MS_EXCEPTION_IF_NULL(kernel);
-  // dump all kernel if mode is set 0 in data_dump.json
-  return DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope());
-}
 #endif
 
 void DataDumper::UnloadDumpInfo() {
@@ -250,19 +215,6 @@ void DataDumper::UnloadDumpInfo() {
   }
 
   RtLoadDumpData(op_mapping_info, &dev_unload_mem_);
-}
-
-void DataDumper::ReleaseDevMem(void **ptr) const noexcept {
-  if (ptr == nullptr) {
-    return;
-  }
-  if (*ptr != nullptr) {
-    rtError_t rt_error = rtFree(*ptr);
-    if (rt_error != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "[DataDump] Call rtFree failed, ret:" << rt_error;
-    }
-    *ptr = nullptr;
-  }
 }
 
 void DataDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) const {
@@ -304,42 +256,6 @@ void DataDumper::SetOpEndgraphMappingInfo(const NotNull<aicpu::dump::OpMappingIn
     task.mutable_op()->set_op_type(kOpTypeOpEndGraph);
     dump_info->mutable_task()->Add(std::move(task));
   }
-}
-
-void DataDumper::SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const {
-  if (!is_op_debug_) {
-    MS_LOG(INFO) << "[DataDump] Not op debug mode, no need to set OpDebugMappingInfo.";
-    return;
-  }
-  MS_LOG(INFO) << "[DataDump] Add op debug info to OpMappingInfo, task id = " << debug_task_id_
-               << ", stream id = " << debug_stream_id_;
-  aicpu::dump::Task task;
-  task.set_end_graph(false);
-  task.set_task_id(debug_task_id_);
-  task.set_stream_id(debug_stream_id_);
-  MS_EXCEPTION_IF_NULL(task.mutable_op());
-  task.mutable_op()->set_op_name(kNodeNameOpDebug);
-  task.mutable_op()->set_op_type(kOpTypeOpDebug);
-
-  aicpu::dump::Output output;
-  output.set_data_type(static_cast<int>(ge::proto::DataType::DT_UINT8));
-  output.set_format(static_cast<int>(ge::Format::FORMAT_ND));
-
-  MS_EXCEPTION_IF_NULL(output.mutable_shape());
-  output.mutable_shape()->add_dim(kOpDebugShape);
-
-  output.set_original_name(kNodeNameOpDebug);
-  output.set_original_output_index(0);
-  output.set_original_output_format(static_cast<int>(ge::Format::FORMAT_ND));
-  output.set_original_output_data_type(static_cast<int>(ge::proto::DataType::DT_UINT8));
-  // due to lhisi virtual addr bug, cannot use args now
-  output.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(op_debug_dump_args_)));
-  output.set_size(kOpDebugHostMemSize);
-
-  MS_EXCEPTION_IF_NULL(task.mutable_output());
-  task.mutable_output()->Add(std::move(output));
-  MS_EXCEPTION_IF_NULL(dump_info->mutable_task());
-  dump_info->mutable_task()->Add(std::move(task));
 }
 
 #ifndef ENABLE_SECURITY
@@ -401,41 +317,6 @@ void DataDumper::OpDebugUnregister() {
   }
 }
 #endif
-
-void DataDumper::RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr) {
-  std::string proto_str;
-  size_t proto_size = dump_info.ByteSizeLong();
-  bool ret = dump_info.SerializeToString(&proto_str);
-  if (!ret || proto_size == 0) {
-    MS_LOG(EXCEPTION) << "[DataDump] Protobuf SerializeToString failed, proto size %zu.";
-  }
-
-  if (ptr == nullptr) {
-    MS_LOG(ERROR) << "[DataDump] rtMalloc failed, ptr is nullptr";
-    return;
-  }
-
-  rtError_t rt_ret = rtMalloc(ptr, proto_size, RT_MEMORY_HBM);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "[DataDump] Call rtMalloc failed";
-  }
-  rt_ret = aclrtMemcpy(*ptr, proto_size, proto_str.c_str(), proto_size, ACL_MEMCPY_HOST_TO_DEVICE);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "[DataDump] Call aclrtMemcpy failed";
-  }
-
-  MS_LOG(INFO) << "[DataDump] rtDatadumpInfoLoad start";
-  rt_ret = rtDatadumpInfoLoad(*ptr, SizeToUint(proto_size));
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "[DataDump] Call rtDatadumpInfoLoad failed";
-  }
-}
-
-void SetDumpShape(const ShapeVector &ms_shape, NotNull<aicpu::dump::Shape *> dump_shape) {
-  for (auto &dim : ms_shape) {
-    dump_shape->add_dim(dim);
-  }
-}
 
 #ifndef ENABLE_SECURITY
 void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {

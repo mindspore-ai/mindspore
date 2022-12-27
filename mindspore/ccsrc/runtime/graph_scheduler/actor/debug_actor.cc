@@ -24,6 +24,8 @@
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/cpu_e2e_dump.h"
 #include "debug/data_dump/e2e_dump.h"
+#include "debug/data_dump/overflow_dumper.h"
+#include "utils/ms_context.h"
 #endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
@@ -78,13 +80,21 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
 #endif
   } else if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
 #ifdef ENABLE_DEBUGGER
+#ifndef ENABLE_SECURITY
+    if (DumpJsonParser::GetInstance().async_dump_enabled()) {
+      auto kernel_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
+      kernel_dumper->Init();
+      kernel_dumper->OpDebugRegisterForStream(cnode);
+      kernel_dumper->OpLoadDumpInfo(cnode);
+    }
+#endif
     auto debugger = Debugger::GetInstance();
     if (debugger != nullptr) {
       auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
       debugger->InsertExecutedGraph(kernel_graph);
       debugger->SetAscendKernelByKernelFlag(true);
       bool read_data = CheckReadData(cnode);
-      if (read_data) {
+      if (read_data && !DumpJsonParser::GetInstance().async_dump_enabled()) {
         ReadDataAndDump(cnode, launch_info_, exec_order_, device_context);
       }
     }
@@ -164,6 +174,33 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
         DumpJsonParser::GetInstance().SaveGraph(graphs[i].get());
       }
     }
+  }
+  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
+    auto kCurLoopCountName = "current_loop_count";
+    for (size_t i = 0; i < graphs.size(); i++) {
+      const auto &graph_ = graphs[i];
+      if (device_contexts[i]->GetDeviceType() != device::DeviceType::kAscend) {
+        continue;
+      }
+      auto device_loop_control_tensors = graph_->device_loop_control_tensors();
+      if (device_loop_control_tensors.count(kCurLoopCountName) == 0) {
+        MS_LOG(WARNING) << "Can't find Device Loop Control Tensor " << kCurLoopCountName;
+        return;
+      }
+      auto tensor = device_loop_control_tensors.at(kCurLoopCountName);
+      MS_EXCEPTION_IF_NULL(tensor);
+      auto *cur_val = static_cast<int32_t *>(tensor->data_c());
+      MS_EXCEPTION_IF_NULL(cur_val);
+      *cur_val = current_step;
+      tensor->set_sync_status(kNeedSyncHostToDevice);
+      auto device_address = tensor->device_address();
+      MS_EXCEPTION_IF_NULL(device_address);
+      if (!device_address->SyncHostToDevice(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
+                                            tensor->data_c(), tensor->device_info().host_format_)) {
+        MS_LOG(EXCEPTION) << "SyncHostToDevice failed for device loop control parameter " << kCurLoopCountName;
+      }
+    }
+    current_step++;
   }
 #endif
 }
