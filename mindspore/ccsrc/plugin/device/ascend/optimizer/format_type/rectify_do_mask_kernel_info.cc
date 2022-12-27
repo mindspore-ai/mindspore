@@ -93,7 +93,7 @@ const AnfNodePtr RectifyDoMaskKernelInfo::Process(const FuncGraphPtr &graph, con
   auto do_mask_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(do_mask_node);
   if (!do_mask_node->HasPrimalAttr(kPrimalAttrUniqueId) && !do_mask_node->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
-    MS_LOG(WARNING) << "The DoMask cnode has no primal attr: " << do_mask_node->DebugString();
+    MS_LOG(INFO) << "The DoMask cnode has no primal attr: " << do_mask_node->DebugString();
     return nullptr;
   }
   MS_EXCEPTION_IF_NULL(do_mask_node);
