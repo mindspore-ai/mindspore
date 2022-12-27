@@ -579,7 +579,8 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const std::string &attr_key, c
   auto it = attr_map_.find(attr_key);
   if (it != attr_map_.end()) {
     // switch case for each avalilable attribute type
-    MS_LOG(INFO) << "Set attr: " << attr_key << "(" << it->second.name << "), value: " << attr_value->ToString();
+    MS_LOG(INFO) << "Op: " << op->GetName() << ", set attr: " << attr_key << "(" << it->second.name
+                 << "), value: " << attr_value->ToString();
     adpt_->AddAttrToDrawGraph(attr_key + std::string("=") + attr_value->ToString());
     it->second.set_attr(op, attr_value);
     return 0;
@@ -699,6 +700,10 @@ int OpAdapterImpl::SetNormalOpAttr(const OperatorPtr &op, const PrimitivePtr &pr
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(op);
   for (auto &it : attr_map_) {
+    if (attr_input_map_.count(it.first)) {
+      MS_LOG(WARNING) << "Attr: " << it.first << " will convert to input, please del it from ATTR_MAP.";
+      continue;
+    }
     auto value = prim->GetAttr(it.first);
     if (value != nullptr) {
       // convert parts of attr to str eg. data_format or change ir attr to op attr eg. axis[0]

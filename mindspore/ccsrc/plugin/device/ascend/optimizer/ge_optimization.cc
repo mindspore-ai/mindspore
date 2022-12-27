@@ -53,8 +53,6 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("ge_optimization_pm");
-  pm->AddPass(std::make_shared<opt::ConvertAttrToInput>());
-  pm->AddPass(std::make_shared<opt::ConvertResizeNearestNeighborXDtype>());
   pm->AddPass(std::make_shared<opt::BatchNormTransform>());
   auto env_train = common::GetEnv("MS_GE_TRAIN");
   if (env_train == "1") {
