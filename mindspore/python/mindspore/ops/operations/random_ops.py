@@ -436,10 +436,10 @@ class Gamma(PrimitiveWithInfer):
 
 
 class ParameterizedTruncatedNormal(Primitive):
-    """
+    r"""
     Returns a tensor of the specified shape filled with truncated normal values.
-    When `shape` is :math:`(batch_size, *)`, the shape of `mean`, `stdevs`,
-    `min` and `max` should be :math:`()` or :math:`(batch_size, )`.
+    When `shape` is :math:`(batch\_size, *)`, the shape of `mean`, `stdevs`,
+    `min` and `max` should be :math:`()` or :math:`(batch\_size, )`.
 
     Note:
         The value in tensor `min` must be strictly less than `max` at any position after broadcasting.
@@ -468,8 +468,8 @@ class ParameterizedTruncatedNormal(Primitive):
         TypeError: If data type of `shape`, `mean`, `stdevs`, `min` and `max` are not allowed.
         TypeError: If `mean`, `stdevs`, `min`, `max` don't have the same type.
         TypeError: If any of `shape`, `mean`, `stdevs`, `min` and `max` is not Tensor.
-        ValueError: When `shape` is :math:`(batch_size, *)`, if the shape of `mean`, `stdevs`, `min` or `max`
-                    is not :math:`()` or :math:`(batch_size, )`.
+        ValueError: When `shape` is :math:`(batch\_size, *)`, if the shape of `mean`, `stdevs`, `min` or `max`
+                    is not :math:`()` or :math:`(batch\_size, )`.
         ValueError: If `shape` elements are not positive.
         ValueError: If `stdevs` elements are not positive.
         ValueError: If `shape` has less than 2 elements.

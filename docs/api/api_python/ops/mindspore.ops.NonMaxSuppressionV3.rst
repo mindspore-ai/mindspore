@@ -13,8 +13,8 @@ mindspore.ops.NonMaxSuppressionV3
         - 对于坐标系的正交变换和平移，该算法不受影响，因此坐标系的平移变换后算法会选择相同的框。
 
     输入：
-        - **boxes** (Tensor) - 二维Tensor，shape为 :math:`(num_boxes, 4)` 。
-        - **scores** (Tensor) - 一维Tensor，其shape为 :math:`(num_boxes)` 。表示对应每一行每个方框的score值， `scores` 和 `boxes` 的num_boxes必须相等。支持的数据类型为float32。
+        - **boxes** (Tensor) - 二维Tensor，shape为 :math:`(num\_boxes, 4)` 。
+        - **scores** (Tensor) - 一维Tensor，其shape为 :math:`(num\_boxes)` 。表示对应每一行每个方框的score值， `scores` 和 `boxes` 的num_boxes必须相等。支持的数据类型为float32。
         - **max_output_size** (Union[Tensor, Number.Int]) - 选取最大的边框数，必须大于等于0，数据类型为int32。
         - **iou_threshold** (Union[Tensor, Number.Float]) - 边框重叠值阈值，重叠值大于此值说明重叠过大，其值必须大于等于0，小于等于1。支持的数据类型为float32。
         - **score_threshold** (Union[Tensor, Number.Float]) - 移除边框阈值，边框score值大于此值则移除相应边框。支持的数据类型为float32。

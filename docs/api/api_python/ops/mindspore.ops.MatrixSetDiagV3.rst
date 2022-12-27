@@ -6,9 +6,9 @@ mindspore.ops.MatrixSetDiagV3
     返回具有新的对角线值的批处理矩阵Tensor。
     给定输入 `x` 和对角线 `diagonal` ，此操作返回与 `x` 具有相同shape和值的Tensor，但返回的Tensor除开最内层矩阵的对角线，
     这些值将被对角线中的值覆盖。如果某些对角线比 `max_diag_len` 短，则需要被填充，其中 `max_diag_len` 指对角线的最长长度。
-    `diagonal` 的维度 :math:`shape[-2]` 必须等于对角线个数 `num_diags` ， :math:`num_diags = k[1] - k[0] + 1`，
+    `diagonal` 的维度 :math:`shape[-2]` 必须等于对角线个数 `num_diags` ， :math:`num\_diags = k[1] - k[0] + 1`，
     `diagonal` 的维度 :math:`shape[-1]` 必须等于最长对角线值 `max_diag_len` ，
-    :math:`max_diag_len = min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` 。
+    :math:`max\_diag\_len = min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` 。
     设 `x` 具有 `r + 1` 维 :math:`[I, J, ..., L, M, N]` 。
     当 `k` 是整数或 :math:`k[0] == k[1]` 时，对角线 `diagonal` 的shape为 :math:`[I, J, ..., L, max\_diag\_len]` 。
     否则，其shape为 :math:`[I, J, ... L, num\_diags, max\_diag\_len]` 。
@@ -48,7 +48,7 @@ mindspore.ops.MatrixSetDiagV3
         - **ValueError** - 对角线 `diagonal` 的维度与输入 `x` 的维度不匹配。
         - **ValueError** - 对角线 `diagonal` 的shape与输入 `x` 不匹配。
         - **ValueError** - 对角线 `diagonal` 的维度 :math:`shape[-2]` 不等于与对角线个数 `num_diags` ，
-          :math:`num_diags = k[1]-k[0]+1` 。
+          :math:`num\_diags = k[1]-k[0]+1` 。
         - **ValueError** - `k` 的取值不在 :math:`(-x.shape[-2], x.shape[-1])` 范围内。
         - **ValueError** - 对角线 `diagonal` 的维度 :math:`shape[-1]` 不等于最长对角线长度 `max_diag_len`，
-          :math:`max_diag_len = min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` 。
+          :math:`max\_diag\_len = min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` 。

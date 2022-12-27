@@ -70,7 +70,7 @@ class CusBatchMatMul(PrimitiveWithInfer):
 
 
 class CusCholeskyTrsm(PrimitiveWithInfer):
-    """
+    r"""
     L * LT = A.
     LT * (LT)^-1 = I.
     return (LT)^-1.
@@ -81,7 +81,7 @@ class CusCholeskyTrsm(PrimitiveWithInfer):
         - **input_x** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, N)`.
 
     Outputs:
-        Tensor, the shape of the output tensor is :math:`(N // Split_dim, Split_dim, Split_dim)`.
+        Tensor, the shape of the output tensor is :math:`(N // Split\_dim, Split\_dim, Split\_dim)`.
 
     Examples:
         >>> input_x = Tensor(np.ones(shape=[256, 256]), mindspore.float32)

@@ -36,9 +36,9 @@ mindspore.ops.Im2Col
   
         - **pads** (Union[int, tuple[int], list[int]]，可选) - 窗口的填充，必须是1个、2个或4个整数来指定高宽和宽度方向的填充。默认值：0。
         
-          - 如果是1个整数，则 :math:`pad_height = pad_width` 。
-          - 如果是2个整数，则 :math:`pad_height = pads[0]`, :math:`pad_width = pads[1]` 。
-          - 如果是4个整数，则 :math:`pads = [pad_height_top, pad_height_bottom, pad_width_left, pad_width_right]` 。
+          - 如果是1个整数，则 :math:`pad\_height = pad\_width` 。
+          - 如果是2个整数，则 :math:`pad\_height = pads[0]`, :math:`pad\_width = pads[1]` 。
+          - 如果是4个整数，则 :math:`pads = [pad\_height\_top, pad\_height\_bottom, pad\_width\_left, pad\_width\_right]` 。
 
     输入：
         - **x** (Tensor) - 输入Tensor，只支持4-D Tensor(1个batch的图像Tensor)。支持所有的实数类型。
