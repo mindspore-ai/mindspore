@@ -253,6 +253,9 @@ constexpr auto kCOO2CSR = "COO2CSR";
 constexpr auto kCSRDiv = "CSRDiv";
 constexpr auto kDenseToDenseSetOperation = "DenseToDenseSetOperation";
 constexpr auto kSparseMatrixAdd = "SparseMatrixAdd";
+constexpr auto kSparseReshape = "SparseReshape";
+constexpr auto kSparseFillEmptyRows = "SparseFillEmptyRows";
+constexpr auto kSparseSegmentSum = "SparseSegmentSum";
 constexpr auto kSparseAdd = "SparseAdd";
 
 // Meta Function Graph
@@ -837,6 +840,9 @@ GVAR_DEF(PrimitivePtr, kPrimCOO2CSR, std::make_shared<Primitive>(kCOO2CSR));
 GVAR_DEF(PrimitivePtr, kPrimCSRDiv, std::make_shared<Primitive>(kCSRDiv));
 GVAR_DEF(PrimitivePtr, kPrimDenseToDenseSetOperation, std::make_shared<Primitive>(kDenseToDenseSetOperation));
 GVAR_DEF(PrimitivePtr, kPrimSparseMatrixAdd, std::make_shared<Primitive>(kSparseMatrixAdd));
+GVAR_DEF(PrimitivePtr, kPrimSparseReshape, std::make_shared<Primitive>(kSparseReshape));
+GVAR_DEF(PrimitivePtr, kPrimSparseFillEmptyRows, std::make_shared<Primitive>(kSparseFillEmptyRows));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSum, std::make_shared<Primitive>(kSparseSegmentSum));
 GVAR_DEF(PrimitivePtr, kPrimSparseAdd, std::make_shared<Primitive>(kSparseAdd));
 GVAR_DEF(PrimitivePtr, kPrimDenseToCSRSparseMatrix, std::make_shared<Primitive>("DenseToCSRSparseMatrix"));
 GVAR_DEF(PrimitivePtr, kPrimCSRSparseMatrixToSparseTensor, std::make_shared<Primitive>(kCSRSparseMatrixToSparseTensor));

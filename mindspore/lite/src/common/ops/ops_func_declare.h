@@ -259,6 +259,9 @@
 #include "ops/grad/nllloss_grad.h"
 #include "ops/format_transpose.h"
 #include "ops/gather_d.h"
+#include "ops/sparse_fill_empty_rows.h"
+#include "ops/sparse_reshape.h"
+#include "ops/sparse_segment_sum.h"
 
 namespace mindspore::lite::ops {
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP) std::unique_ptr<schema::PrimitiveT> MSOp2SchemaOp(const mindspore::ops::OP *op);
@@ -486,6 +489,9 @@ FUNC_MSOP2SCHEMAOP_DECLARE(FormatTranspose)
 FUNC_MSOP2SCHEMAOP_DECLARE(GatherD)
 FUNC_MSOP2SCHEMAOP_DECLARE(GroupNormFusion)
 FUNC_MSOP2SCHEMAOP_DECLARE(Log1p)
+FUNC_MSOP2SCHEMAOP_DECLARE(SparseFillEmptyRows)
+FUNC_MSOP2SCHEMAOP_DECLARE(SparseReshape)
+FUNC_MSOP2SCHEMAOP_DECLARE(SparseSegmentSum)
 #endif
 }  // namespace mindspore::lite::ops
 #else
