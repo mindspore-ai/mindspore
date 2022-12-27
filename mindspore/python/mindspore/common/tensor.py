@@ -2992,9 +2992,46 @@ class Tensor(Tensor_):
         return res.astype(dtype)
 
     def sum_to_size(self, *size):
-        """For details, please refer to :func:`mindspore.ops.sum_to_size`."""
+        r"""
+        Sum self Tensor to the `size`. `size` must be expandable to the Tensor size.
+
+        Args:
+            size (Union[tuple(int), int]): The expected shape of output Tensor.
+
+        Returns:
+            Tensor, the sum result of self Tensor according to the `size`.
+
+        Raises:
+            ValueError: If `size` is not expandable to the size of self Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.random.randn(3, 3, 3, 3, 3, 3), mindspore.float32)
+            >>> output = x.sum_to_size((1, 3, 1, 3))
+            >>> print(output.shape)
+            (1, 3, 1, 3)
+        """
         self._init_check()
-        return tensor_operator_registry.get("sum_to_size")(self, *size)
+        x = self
+        if len(size) == 1 and isinstance(size[0], tuple):
+            size = size[0]
+        shape_x = x.shape
+        if len(size) > x.ndim:
+            raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_x}.")
+        if len(size) < x.ndim:
+            pre_axis = tuple([axis for axis in range(x.ndim - len(size))])
+            x = x.sum(pre_axis)
+        axes = []
+        for i, element in enumerate(size):
+            if element != x.shape[i] and element == 1:
+                axes.append(i)
+            elif element != x.shape[i]:
+                raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_x}.")
+        if axes:
+            return x.sum(tuple(axes), keepdims=True)
+        return x
 
     def repeat(self, repeats, axis=None):
         """
