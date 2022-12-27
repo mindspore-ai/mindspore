@@ -11,6 +11,9 @@ if(NOT MSVC)
     #add flags
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/include -Werror")
 endif()
+if(TARGET_OHOS)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-command-line-argument")
+endif()
 
 include_directories(./include)
 add_subdirectory(src)
