@@ -5,7 +5,7 @@ mindspore.ops.IdentityN
 
     返回与输入具有相同shape和值的tuple(Tensor)。
 
-    此操作可用于覆盖复杂函数的梯度。例如，假设 :math: `y = f(x)` ，
+    此操作可用于覆盖复杂函数的梯度。例如，假设 :math:`y = f(x)` ，
     我们希望为反向传播应用自定义函数g，则 :math:`dx=g(dy)` 。
 
     输入：

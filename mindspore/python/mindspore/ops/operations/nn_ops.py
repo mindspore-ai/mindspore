@@ -2082,8 +2082,8 @@ class MaxUnpool2D(Primitive):
 
         output_shape (tuple[int], optional): The target output size is an optional input. Default: ().
 
-            - If :math:`output_shape == ()` , then the shape of output computed by `kszie`, `strides` and `pads` .
-            - If :math:`output_shape != ()` , then `output_shape` must be :math:`(N, C, H, W)` or :math:`(N, H, W, C)`
+            - If :math:`output\_shape == ()` , then the shape of output computed by `kszie`, `strides` and `pads` .
+            - If :math:`output\_shape != ()` , then `output_shape` must be :math:`(N, C, H, W)` or :math:`(N, H, W, C)`
               and `output_shape` must belong to :math:`[(N, C, H_{out} - strides[0], W_{out} - strides[1]),
               (N, C, H_{out} + strides[0], W_{out} + strides[1])]`.
 
@@ -7770,7 +7770,7 @@ class Conv3DBackpropInput(Primitive):
         data_format (str): The optional value for data format. Currently only support 'NCDHW'.
 
     Inputs:
-        - **weight** (Tensor) - Set size of kernel is :math:`(D_in, K_h, K_w)`, then the shape is
+        - **weight** (Tensor) - Set size of kernel is :math:`(D_{in}, K_h, K_w)`, then the shape is
           :math:`(C_{out}, C_{in}, D_{in}, K_h, K_w)`. Currently weight data type only support float16 and float32.
         - **dout** (Tensor) - the gradients with respect to the output of the convolution.
           The shape conforms to the default.
@@ -9385,7 +9385,7 @@ class PSROIPooling(Primitive):
 
     Inputs:
         - **features** (Tensor) - The input features, whose shape must be :math:`(N, C, H, W)`. With data type is
-          float16 or float32. This formula should hold: :math:`(C == output_dim * group_size * group_size)`.
+          float16 or float32. This formula should hold: :math:`(C == output\_dim * group\_size * group\_size)`.
         - **rois** (Tensor) - The shape is `(batch, 5, rois_n)`. With data type of float16 or float32.
           The size of first dimension `batch` is batch_size. The size of the second dimension must be `5`.
           The size of third dimension `rois_n` is the number of rois. The value of `rois` like:
@@ -9402,7 +9402,7 @@ class PSROIPooling(Primitive):
         TypeError: If `group_size` or `output_dim` is not an int.
         TypeError: If `features` or `rois` is not a Tensor.
         TypeError: If dtype of `rois` is not float16 or float32.
-        ValueError: If shape of `features` does not satisfy :math:`(C == output_dim * group_size * group_size)`.
+        ValueError: If shape of `features` does not satisfy :math:`(C == output\_dim * group\_size * group\_size)`.
         ValueError: If `spatial_scale` is negative.
 
     Supported Platforms:

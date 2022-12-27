@@ -12,7 +12,7 @@ mindspore.ops.NuclearNorm
     根据 `dim` 列表，输入Tensor根据 `dim` 重新排列。 `dim` 指定的两个维度将被放在末尾，其他维度的顺序相对不变。对每个调整后的Tensor的切片执行SVD以获得奇异值，将所有奇异值求和即为获得核规范。
 
     参数：
-        - **dim** (Union[list(int), tuple(int)]，可选) - 指定计算 `x` 矩阵核范数的哪两个维度，如果 `dim` 为None，则核规范将在输入所有维度上计算。 `dim` 的长度应该是2，其值应在此范围内：:math:`[-x_rank,x_rank)` 。x_rank是 `x` 的维度。dim[0]和dim[1]的值不能指向相同的维度。默认值：None。
+        - **dim** (Union[list(int), tuple(int)]，可选) - 指定计算 `x` 矩阵核范数的哪两个维度，如果 `dim` 为None，则核规范将在输入所有维度上计算。 `dim` 的长度应该是2，其值应在此范围内：:math:`[-x\_rank,x\_rank)` 。x_rank是 `x` 的维度。dim[0]和dim[1]的值不能指向相同的维度。默认值：None。
         - **keepdim** (bool，可选) - 输出Tensor是否保留维度。默认值：False。
 
     输入：
@@ -31,6 +31,6 @@ mindspore.ops.NuclearNorm
         - **ValueError** - 指定的 `dim` 的长度不等于2。
         - **ValueError** - 没有指定 `dim` 的时候， `x` 的维度不等于2。
         - **ValueError** - `dim[0]` 和 `dim[1]` 指向相同的维度。
-        - **ValueError** - `dim[0]` 或者 `dim[1]` 超出范围：:math:`[-x_rank, x_rank)` ，其中x_rank 为 `x` 的维度。
+        - **ValueError** - `dim[0]` 或者 `dim[1]` 超出范围：:math:`[-x\_rank, x\_rank)` ，其中x_rank 为 `x` 的维度。
 
 

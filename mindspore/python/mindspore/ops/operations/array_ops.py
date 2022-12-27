@@ -449,9 +449,9 @@ class Im2Col(Primitive):
         pads (Union[int, tuple[int], list[int]], optional): The pad of the window, that must be a tuple of
             one or two or four `int` for height and width. Default: 0.
 
-            - If one int, :math:`pad_height = pad_width`.
-            - If two int, :math:`pad_height = pads[0]`, :math:`pad_width = pads[1]`.
-            - If four int, :math:`pads = [pad_height_top, pad_height_bottom, pad_width_left, pad_width_right]`.
+            - If one int, :math:`pad\_height = pad\_width`.
+            - If two int, :math:`pad\_height = pads[0]`, :math:`pad\_width = pads[1]`.
+            - If four int, :math:`pads = [pad\_height\_top, pad\_height\_bottom, pad\_width\_left, pad\_width\_right]`.
 
     Inputs:
         - **x** (Tensor) - input tensor, only 4-D input tensors (batched image-like tensors) are supported.
@@ -1348,9 +1348,9 @@ class MatrixSetDiagV3(Primitive):
     equal to the longest diagonal value `max_diag_len` calculated
     by :math:`min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` .
     Let x have r + 1 dimensions [I, J, ..., L, M, N].
-    The diagonal tensor has rank r with shape :math:`[I, J, ..., L, max_diag_len]`
+    The diagonal tensor has rank r with shape :math:`[I, J, ..., L, max\_diag\_len]`
     when k is an integer or :math:`k[0] == k[1]` . Otherwise, it has rank r + 1
-    with shape :math:`[I, J, ..., L, num_diags, max_diag_len]` .
+    with shape :math:`[I, J, ..., L, num\_diags, max\_diag\_len]` .
 
     Args:
         align (str, optional): An optional string from: "RIGHT_LEFT", "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT".

@@ -30,7 +30,7 @@ mindspore.ops.multi_margin_loss
           - 'sum'：输出的总和。
 
     返回：
-        - **outputs** - (Tensor)，当 `reduction` 为"none"时，shape为:math:`(N,)`。否则，为标量。类型与 `inputs` 相同。
+        - **outputs** - (Tensor)，当 `reduction` 为"none"时，shape为 :math:`(N,)`。否则，为标量。类型与 `inputs` 相同。
 
     异常：
         - **TypeError** - `p` 或者 `target` 数据类型不是int。
