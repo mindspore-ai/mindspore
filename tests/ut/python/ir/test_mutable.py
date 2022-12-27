@@ -287,38 +287,46 @@ def test_tensor_inputs_compile_phase():
     assert phase1 == phase2
 
 
-def test_check_mutable_value():
+def test_mutable_with_scalar():
     """
     Feature: Set Constants mutable.
-    Description: Check the illegal mutable value.
-    Expectation: Raise the correct error log.
+    Description: Set mutable for scalar.
+    Expectation: No Exception.
     """
-
-    try:
-        mutable(1)
-    except TypeError as e:
-        assert "For 'mutable', the 'input_data' should be one of (Tensor, tuple[Tensor], list[Tensor], dict[Tensor]) " \
-               "or their nested structures, but got" in str(e)
-
-    try:
-        mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), (2,)])
-    except TypeError as e:
-        assert "For 'mutable', the 'input_data' should be one of (Tensor, tuple[Tensor], list[Tensor], dict[Tensor]) " \
-               "or their nested structures, but got" in str(e)
-
-    try:
-        mutable({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), 'b': (2,)})
-    except TypeError as e:
-        assert "For 'mutable', the 'input_data' should be one of (Tensor, tuple[Tensor], list[Tensor], dict[Tensor]) " \
-               "or their nested structures, but got" in str(e)
-
+    mutable(1)
+    mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), (2,)])
+    mutable({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), 'b': (2,)})
     @jit
     def net():
         x = mutable(2)
+        return x
+    net()
+
+
+def test_mutable_with_bool():
+    """
+    Feature: Set Constants mutable.
+    Description: Set mutable for bool value.
+    Expectation: Raise TypeError.
+    """
+
+    try:
+        mutable(True)
+    except TypeError as e:
+        assert "the 'input_data' should be one of (int, float, bool, Tensor, tuple, list, dict)" in str(e)
+
+
+    try:
+        mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), (True,)])
+    except TypeError as e:
+        assert "the 'input_data' should be one of (int, float, bool, Tensor, tuple, list, dict)" in str(e)
+
+    @jit
+    def net():
+        x = mutable(False)
         return x
 
     try:
         net()
     except TypeError as e:
-        assert "For mutable api in graph, the input arg should be one of (Tensor, tuple[Tensor], list[Tensor], " \
-               "dict[Tensor]) or their nested structures, but got " in str(e)
+        assert "the input arg should be one of (int, float, Tensor, tuple, list, dict)" in str(e)
