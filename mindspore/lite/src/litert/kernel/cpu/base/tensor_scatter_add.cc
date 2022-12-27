@@ -42,6 +42,8 @@ int TensorScatterAddCPUKernel::TensorScatterAdd(int task_id) {
     return RET_ERROR;
   }
   int type = data_type == kNumberTypeFloat32 ? 0 : 1;
+  // multi thread have some problems to solve
+  param_->op_parameter.thread_num_ = 1;
   auto ret = ScatterNDAdd(in_tensors_[kScatterUpdateIndex]->data(), out_tensors_[kOutputIndex]->data(),
                           output_unit_offsets_.data(), param_, type, task_id);
   if (ret != RET_OK) {
