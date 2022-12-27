@@ -16,8 +16,10 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
+from mindspore.common.initializer import initializer, One
 from ...ut_filter import non_graph_engine
 
 
@@ -274,6 +276,25 @@ def test_add_attr():
 
     with pytest.raises(AttributeError):
         ModAddCellError(ta)
+
+
+def test_apply():
+    """
+    Feature: Cell.apply.
+    Description: Verify Cell.apply.
+    Expectation: No exception.
+    """
+    net = nn.SequentialCell(nn.Dense(2, 2), nn.Dense(2, 2))
+
+    def func(cell):
+        if isinstance(cell, nn.Dense):
+            cell.weight.set_data(initializer(One(), cell.weight.shape, cell.weight.dtype))
+
+    net.apply(func)
+
+    target = np.ones((2, 2), ms.dtype_to_nptype(net[0].weight.dtype))
+    assert np.allclose(target, net[0].weight.asnumpy())
+    assert np.allclose(target, net[1].weight.asnumpy())
 
 
 def test_train_eval():

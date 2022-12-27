@@ -1414,6 +1414,38 @@ class Cell(Cell_):
         if "fp32" in flags and flags.get("fp32", False):
             self._set_mixed_precision_type_recursive(MixedPrecisionType.FP32)
 
+    def apply(self, fn):
+        """
+        Applies fn recursively to every subcell (as returned by .cells()) as well as self.
+        Typical use includes initializing the parameters of a model.
+
+        Args:
+            fn (function) – function to be applied to each subcell
+
+        Returns:
+            Cell, self.
+
+        Examples:
+        >>> import mindspore.nn as nn
+        >>> from mindspore.common.initializer import initializer, One
+        >>> net = nn.SequentialCell(nn.Dense(2, 2), nn.Dense(2, 2))
+        >>> def func(cell):
+        ...     if isinstance(cell, nn.Dense):
+        ...         cell.weight.set_data(initializer(One(), cell.weight.shape, cell.weight.dtype))
+        >>> net.apply(func)
+        SequentialCell<
+          (0): Dense<input_channels=2, output_channels=2, has_bias=True>
+          (1): Dense<input_channels=2, output_channels=2, has_bias=True>
+          >
+        >>> print(net[0].weight.asnumpy())
+        [[1. 1.]
+         [1. 1.]]
+        """
+        for cell in self.cells():
+            cell.apply(fn)
+        fn(self)
+        return self
+
     def add_flags(self, **flags):
         """
         Add customized attributes for cell.
