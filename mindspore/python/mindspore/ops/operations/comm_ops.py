@@ -773,7 +773,7 @@ class AlltoAll(PrimitiveWithInfer):
 
         :math:`y_{concat\_dim} = x_{concat\_dim} * split\_count`
 
-        :math:`y_other = x_other`.
+        :math:`y\_other = x\_other`.
 
     Raises:
         TypeError: If group is not a string.

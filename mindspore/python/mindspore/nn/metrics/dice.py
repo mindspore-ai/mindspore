@@ -67,8 +67,8 @@ class Dice(Metric):
 
     @rearrange_inputs
     def update(self, *inputs):
-        """
-        Updates the internal evaluation result :math:`y_pred` and :math:`y`.
+        r"""
+        Updates the internal evaluation result :math:`y\_pred` and :math:`y`.
 
         Args:
             inputs (tuple): Input `y_pred` and `y`. `y_pred` and `y` are Tensor, list or numpy.ndarray. `y_pred` is the
