@@ -4479,7 +4479,6 @@ class MirrorPad(Primitive):
         self.init_prim_io_names(inputs=['x', 'paddings'], outputs=['y'])
         validator.check_string(mode, ['REFLECT', 'SYMMETRIC'], 'mode', self.name)
         self.mode = mode
-        self.set_const_input_indexes([1])
 
 
 class ComputeAccidentalHits(PrimitiveWithCheck):
