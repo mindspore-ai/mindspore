@@ -2033,8 +2033,26 @@ def sum(x, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disa
 
 
 def sum_to_size(x, *size):
-    """For details, please refer to :func:`mindspore.ops.sum_to_size`."""
-    return F.sum_to_size(x, *size)
+    """
+    Sum `x` to the `size`. `size` must be expandable to the Tensor size.
+    """
+    if len(size) == 1 and isinstance(size[0], tuple):
+        size = size[0]
+    shape_x = x.shape
+    if len(size) > x.ndim:
+        raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_x}.")
+    if len(size) < x.ndim:
+        pre_axis = tuple([axis for axis in range(x.ndim - len(size))])
+        x = x.sum(pre_axis)
+    axes = []
+    for i, element in enumerate(size):
+        if element != x.shape[i] and element == 1:
+            axes.append(i)
+        elif element != x.shape[i]:
+            raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_x}.")
+    if axes:
+        return x.sum(tuple(axes), keepdims=True)
+    return x
 
 
 def repeat(x, repeats, axis=None):

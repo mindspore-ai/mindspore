@@ -177,7 +177,6 @@ from .math_func import (
     real,
     sub,
     subtract,
-    sum_to_size,
     sqrt,
     square,
     tensor_mul,
