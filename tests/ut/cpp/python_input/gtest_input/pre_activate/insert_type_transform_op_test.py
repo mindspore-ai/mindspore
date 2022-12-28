@@ -18,6 +18,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
+
 tuple_get_item = Primitive(Constants.kTupleGetItem)
 
 make_tuple = Primitive('MakeTuple')
@@ -74,26 +75,26 @@ def test_tuple_unfold_to_tuple_transform(tag):
     Expectation: The 'after' graph is identical to the graph after this pass.
     """
     fns = FnDict()
-    # Need to change AddN to TupleAdd in later version.
-    tuple_add1 = P.AddN()
-    tuple_add2 = P.AddN()
+    # Need to change AddN to SequenceAdd in later version. This case is just used to cover this pattern.
+    seq_add1 = P.AddN()
+    seq_add2 = P.AddN()
     real_make_tuple = Primitive('RealMakeTuple')
 
     @fns
-    def before(input_1, input_2):
+    def before(input_1, input_2, x):
         res = make_tuple(input_1, input_2)
-        res = tuple_add1(res)
+        res = seq_add1(res, x)
         res = split1(res)
-        res = tuple_add2(res)
+        res = seq_add2(res, x)
         return res
 
     @fns
-    def after(input_1, input_2):
+    def after(input_1, input_2, x):
         res = real_make_tuple(input_1, input_2)
-        res = tuple_add1(res)
+        res = seq_add1(res, x)
         res = split1(res)
         res = real_make_tuple(tuple_get_item(res, 0), tuple_get_item(res, 1))
-        res = tuple_add2(res)
+        res = seq_add2(res, x)
         return res
 
     return fns[tag]
@@ -157,19 +158,20 @@ def test_tensor_to_tuple_transform(tag):
     Expectation: The 'after' graph is identical to the graph after this pass.
     """
     fns = FnDict()
-    tuple_add = P.Add()
+    # Need to change Add to SequenceAdd in later version. This case is just used to cover this pattern.
+    seq_add = P.Add()
     tensor_to_tuple = Primitive('TensorToTuple')
 
     @fns
     def before(x, y):
-        res = tuple_add(x, y)
+        res = seq_add(x, y)
         return res
 
     @fns
     def after(x, y):
         input1 = tensor_to_tuple(x)
         input2 = tensor_to_tuple(y)
-        res = tuple_add(input1, input2)
+        res = seq_add(input1, input2)
         return res
 
     return fns[tag]

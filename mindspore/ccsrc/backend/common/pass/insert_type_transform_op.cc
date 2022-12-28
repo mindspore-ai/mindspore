@@ -442,14 +442,16 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTensor(const FuncGraph
   MS_LOG(DEBUG) << "Abstract for TupleToTensor op is " << abs->ToString();
   tuple_to_tensor->set_abstract(abs);
 
-  // Need to check if input is MakeTuple node, the format and device type could be abtained or not.
-  SetKernelInfoForNewCNode(tuple_to_tensor);
+  // Data type of the tensor should be set as an attr of TupleToTensor op.
+  auto data_type = AnfAlgo::GetInputDeviceDataType(node, input_index);
+  // Attr name is to be confirmed.
+  common::AnfAlgo::SetNodeAttr("tensor_type", MakeValue(static_cast<int64_t>(data_type)), tuple_to_tensor);
 
+  SetKernelInfoForNewCNode(tuple_to_tensor);
   // Set object type to TUPLE for TupleUnfoldToTuple pattern to be matched.
   KernelBuildInfoPtr tuple_to_tensor_build_info = AnfAlgo::GetSelectKernelBuildInfo(tuple_to_tensor);
   MS_EXCEPTION_IF_NULL(tuple_to_tensor_build_info);
   tuple_to_tensor_build_info->SetInputsKernelObjectType({KernelObjectType::TUPLE});
-
   return {tuple_to_tensor};
 }
 
@@ -471,6 +473,12 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for TupleToTensor op is " << abs->ToString();
   tuple_to_tensor->set_abstract(abs);
+
+  // Data type of the tensor should be set as an attr of TupleToTensor op.
+  auto data_type = AnfAlgo::GetInputDeviceDataType(node, input_index);
+  // Attr name is to be confirmed.
+  common::AnfAlgo::SetNodeAttr("tensor_type", MakeValue(static_cast<int64_t>(data_type)), tuple_to_tensor);
+
   SetKernelInfoForNewCNode(tuple_to_tensor);
   return {tuple_to_tensor};
 }
