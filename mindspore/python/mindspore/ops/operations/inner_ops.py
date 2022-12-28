@@ -294,7 +294,7 @@ class LambApplyWeightAssign(PrimitiveWithInfer):
         - **w_norm** (Tensor) - :math:`\left \| w \right \|` in the updating formula, float32/float16.
         - **g_norm** (Tensor) - :math:`\left \| r \right \|` in the updating formula, has the same type as `w_norm`.
         - **lr** (Tensor) - :math:`l` in the updating formula, the learning rate, float32/float16.
-        - **update** (Tensor) -:math:`r + \lambda * w`in the updating formula, float32/float16.
+        - **update** (Tensor) - :math:`r + \lambda * w` in the updating formula, float32/float16.
         - **var** (Tensor) - Weights to be updated, the same shape and type as `update`.
 
     Outputs:
