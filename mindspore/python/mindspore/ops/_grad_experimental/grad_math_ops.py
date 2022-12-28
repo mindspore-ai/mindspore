@@ -601,22 +601,6 @@ def get_bprop_matrix_exp(self):
     return bprop
 
 
-@bprop_getters.register(P.MatrixInverse)
-def get_bprop_matrix_inverse(self):
-    """Generate bprop for MatrixInverse"""
-    matmul_x1 = nn.MatMul(transpose_x1=True)
-    matmul_x2 = nn.MatMul(transpose_x2=True)
-    neg = P.Neg()
-
-    def bprop(x, out, dout):
-        dx = matmul_x2(dout, out)
-        dx = matmul_x1(out, dx)
-        dx = neg(dx)
-        return (dx,)
-
-    return bprop
-
-
 @bprop_getters.register(MatrixPower)
 def get_bprop_matrix_power(self):
     """Generate bprop for MatrixPower"""
@@ -786,7 +770,7 @@ def get_bprop_matrix_solve_ls(self):
                 grad_a = add(neg(matmul(matrix, zx_sym)), matmul(rhs, z_temp))
                 grad_b = matmul(matrix, z)
 
-            return (grad_a, grad_b, None)
+            return (grad_a, grad_b, zeros_like(l2))
 
         def under_determined(matrix, rhs, l2, dout):
             if matrix.dtype == mstype.complex64:
@@ -833,7 +817,7 @@ def get_bprop_matrix_solve_ls(self):
                 a2 = matmul(tmp, a2_temp)
 
             grad_a = add(a1, a2)
-            return (grad_a, grad_b, None)
+            return (grad_a, grad_b, zeros_like(l2))
 
         if fast is False:
             raise ValueError("For MatrixSolveLs, gradient not defined for fast=False")

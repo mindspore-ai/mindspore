@@ -39,7 +39,7 @@ class TridiagonalMatMulCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  CNodeWeakPtr node_wpt_;
+  ShapeVector rhs_shape_;
   TypeId dtype_{kTypeUnknown};
   template <typename T>
   void LaunchTridiagonalMatMul(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);

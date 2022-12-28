@@ -34,8 +34,6 @@ bool QuantileCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     MS_LOG(ERROR) << "cast Quantile ops failed!";
     return false;
   }
-  input_shape_ = inputs.at(0)->GetShapeVector();
-  q_shape_ = inputs.at(1)->GetShapeVector();
   kernel_name_ = kernel_ptr->name();
   dim_ = GetValue<int64_t>(base_operator->GetAttr("dim"));
   keep_dims_ = GetValue<bool>(base_operator->GetAttr("keep_dims"));
@@ -47,11 +45,13 @@ int QuantileCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs,
                                  const std::map<uint32_t, tensor::TensorPtr> &others) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != KRET_OK) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
-  return 0;
+  input_shape_ = inputs.at(0)->GetShapeVector();
+  q_shape_ = inputs.at(1)->GetShapeVector();
+  return KRET_OK;
 }
 
 uint32_t QuantileCpuKernelMod::MaybeWrapDim(int dim, int dim_post_expr) {

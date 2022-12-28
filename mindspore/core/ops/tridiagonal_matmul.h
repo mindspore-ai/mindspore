@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTridiagonalMatMul = "TridiagonalMatMul";
-class MS_CORE_API TridiagonalMatMul : public BaseOperator {
+class MIND_API TridiagonalMatMul : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TridiagonalMatMul);
   TridiagonalMatMul() : BaseOperator(kNameTridiagonalMatMul) {
