@@ -80,6 +80,7 @@ DECLARE_OP_ADAPTER(BinaryCrossEntropyGrad)
 DECLARE_OP_USE_OUTPUT(BinaryCrossEntropyGrad)
 
 DECLARE_OP_ADAPTER(Centralization)
+DECLARE_OP_USE_INPUT_ATTR(Centralization)
 DECLARE_OP_USE_OUTPUT(Centralization)
 
 DECLARE_OP_ADAPTER(Scale)
