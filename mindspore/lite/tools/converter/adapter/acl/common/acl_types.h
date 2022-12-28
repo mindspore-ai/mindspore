@@ -41,6 +41,9 @@ struct AclModelOptionCfg {
   std::string dynamic_image_size;
   std::string om_file_path;
   std::string aoe_mode;
+  std::string profiling_path;
+  std::string dump_path;
+  std::string dump_model_name;
 };
 
 constexpr auto kOutputShapes = "outputs_shape";

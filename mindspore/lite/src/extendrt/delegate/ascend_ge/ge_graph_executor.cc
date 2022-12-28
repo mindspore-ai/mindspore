@@ -92,7 +92,7 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
     MS_LOG(INFO) << "Set DfGraphConvertor training : false";
     transform::SetTraining(converter, false);
   }
-  transform::BuildGraph(converter, init_inputs_map);
+  transform::BuildGraph(anf_graph->ToString(), converter, init_inputs_map);
   transform::GenerateBroadcastGraph(converter, init_inputs_map);
   transform::GenerateCheckpointGraph(converter);
   auto err_code = transform::ErrCode(converter);

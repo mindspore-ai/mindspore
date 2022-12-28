@@ -76,6 +76,11 @@ static const char *const kOptimizeDims = "opt_dims";
 static const char *const kPrecisionMode = "precision_mode";
 static const char *const kDumpOps = "dump_ops";
 static const char *const kDumpDir = "dump_dir";
+// ascend context
+static const char *const kAscendContext = "ascend_context";
+static const char *const kProfilingPath = "profiling_path";
+static const char *const kDumpPath = "dump_path";
+static const char *const kDumpModelName = "dump_model_name";
 }  // namespace lite
 }  // namespace mindspore
 

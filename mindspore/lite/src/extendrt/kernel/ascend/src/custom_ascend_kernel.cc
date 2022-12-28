@@ -26,6 +26,7 @@
 #include "core/ops/custom.h"
 #include "plugin/factory/ms_factory.h"
 #include "src/common/log_util.h"
+#include "src/common/common.h"
 #include "common/log_adapter.h"
 
 namespace mindspore::kernel {
@@ -54,26 +55,49 @@ void CustomAscendKernelMod::RecordInputDataIndex(const std::vector<KernelTensorP
   }
 }
 
-void CustomAscendKernelMod::SetDeviceId() {
-  if (acl_options_ == nullptr) {
-    MS_LOG(ERROR) << "Acl options is nullptr.";
-    return;
+AclModelOptionsPtr CustomAscendKernelMod::GenAclOptions(const BaseOperatorPtr &base_operator) {
+  auto acl_options_ptr = std::make_shared<AclModelOptions>();
+  if (acl_options_ptr == nullptr) {
+    MS_LOG(ERROR) << "Acl options make shared failed.";
+    return nullptr;
   }
+  auto custom_op = std::dynamic_pointer_cast<ops::Custom>(base_operator);
+  if (custom_op == nullptr) {
+    MS_LOG(ERROR) << "Cast Custom ops failed!";
+    return nullptr;
+  }
+  auto prim = custom_op->GetPrim();
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Get prim from custom op failed.";
+    return nullptr;
+  }
+  auto profiling_path_val = prim->GetAttr(lite::kProfilingPath);
+  if (profiling_path_val != nullptr) {
+    auto val = GetValue<std::string>(profiling_path_val);
+    acl_options_ptr->profiling_path = val;
+  }
+  auto dump_path_val = prim->GetAttr(lite::kDumpPath);
+  if (dump_path_val != nullptr) {
+    auto val = GetValue<std::string>(dump_path_val);
+    acl_options_ptr->dump_path = val;
+  }
+  // set device id
   uint32_t device_count;
   if (aclrtGetDeviceCount(&device_count) != ACL_ERROR_NONE) {
     MS_LOG(WARNING) << "Get device count failed, set default device id 0.";
-    return;
+    return acl_options_ptr;
   }
   if (device_id_ >= device_count) {
     MS_LOG(WARNING) << "Current device id " << device_id_ << " is larger than max count " << device_count
                     << ",please check the device info of context and set the default device id 0.";
-    return;
+    return acl_options_ptr;
   }
-  acl_options_->device_id = static_cast<int32_t>(device_id_);
+  acl_options_ptr->device_id = static_cast<int32_t>(device_id_);
   MS_LOG(INFO) << "Set device id " << device_id_;
+  return acl_options_ptr;
 }
 
-bool CustomAscendKernelMod::InitParam(const std::vector<KernelTensorPtr> &inputs,
+bool CustomAscendKernelMod::InitParam(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "Custom kernel has empty inputs or outputs, which is invalid.";
@@ -81,8 +105,11 @@ bool CustomAscendKernelMod::InitParam(const std::vector<KernelTensorPtr> &inputs
   }
   inputs_.assign(inputs.begin(), inputs.end() - 1);
   outputs_.assign(outputs.begin(), outputs.end());
-  acl_options_ = std::make_shared<AclModelOptions>();
-  SetDeviceId();
+  acl_options_ = GenAclOptions(base_operator);
+  if (acl_options_ == nullptr) {
+    MS_LOG(ERROR) << "Generate acl options failed.";
+    return false;
+  }
   int idx = inputs.size() - 1;
   if (inputs[idx] == nullptr || inputs[idx]->GetData() == nullptr) {
     MS_LOG(ERROR) << "Input " << idx << " is invalid.";
@@ -104,13 +131,7 @@ bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(INFO) << "Om has been loaded in custom kernel.";
     return true;
   }
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Custom>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast Custom ops failed!";
-    return false;
-  }
-  if (!InitParam(inputs, outputs)) {
+  if (!InitParam(base_operator, inputs, outputs)) {
     MS_LOG(ERROR) << "Init param failed.";
     return false;
   }

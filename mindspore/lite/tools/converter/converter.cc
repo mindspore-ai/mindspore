@@ -197,7 +197,6 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
     MS_LOG(ERROR) << "Input param is nullptr";
     return RET_ERROR;
   }
-  param->aclModelOptionCfgParam.om_file_path = param->output_file;
   if (!param->config_file.empty() || !param->config_param.empty()) {
     auto ret = InitConfigParam(param);
     if (ret != RET_OK) {
@@ -470,7 +469,11 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param) 
     MS_LOG(ERROR) << "Parse extended integration info failed.";
     return ret;
   }
-
+  std::string output_file = param->output_file;
+  param->aclModelOptionCfgParam.om_file_path = output_file;
+  auto dir_pos = output_file.find_last_of('/');
+  param->aclModelOptionCfgParam.dump_model_name =
+    dir_pos != std::string::npos ? output_file.substr(dir_pos + 1) : output_file;
   lite::AclOptionParamParser acl_param_parser;
   ret = acl_param_parser.ParseAclOptionCfg(config_parser.GetAclOptionCfgString(), &param->aclModelOptionCfgParam);
   if (ret != RET_OK) {

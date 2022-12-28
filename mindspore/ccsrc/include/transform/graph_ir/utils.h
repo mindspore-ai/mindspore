@@ -71,7 +71,7 @@ FuncGraphPtr GetAnfGraph(uint32_t graph_id);
 BACKEND_EXPORT DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph);
 
 BACKEND_EXPORT void SetTraining(const DfGraphConvertorPtr &converter, bool training);
-BACKEND_EXPORT void BuildGraph(const DfGraphConvertorPtr &converter,
+BACKEND_EXPORT void BuildGraph(const std::string &name, const DfGraphConvertorPtr &converter,
                                const std::map<std::string, std::shared_ptr<tensor::Tensor>> &maps);
 void GenerateBroadcastGraph(const DfGraphConvertorPtr &converter, const TensorOrderMap &tensors);
 BACKEND_EXPORT void GenerateCheckpointGraph(const DfGraphConvertorPtr &converter);

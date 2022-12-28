@@ -39,7 +39,10 @@ bool ModelInfer::Init() {
     MS_LOG(ERROR) << "Acl options is nullptr.";
     return false;
   }
-  acl_env_ = AclEnvGuard::GetAclEnv(options_->dump_cfg_path);
+  std::string acl_init_option = !options_->dump_path.empty()
+                                  ? options_->dump_path
+                                  : (!options_->profiling_path.empty() ? options_->profiling_path : std::string());
+  acl_env_ = AclEnvGuard::GetAclEnv(acl_init_option);
   if (acl_env_ == nullptr) {
     MS_LOG(ERROR) << "Acl init failed.";
     return false;

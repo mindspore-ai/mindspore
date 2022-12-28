@@ -290,10 +290,10 @@ void SetTraining(const DfGraphConvertorPtr &converter, bool training) {
   converter->set_training(training);
 }
 
-void BuildGraph(const DfGraphConvertorPtr &converter,
+void BuildGraph(const std::string &name, const DfGraphConvertorPtr &converter,
                 const std::map<std::string, std::shared_ptr<tensor::Tensor>> &maps) {
   MS_EXCEPTION_IF_NULL(converter);
-  (void)converter->ConvertAllNode().InitParam(maps).BuildGraph();
+  (void)converter->ConvertAllNode().InitParam(maps).BuildGraph(name);
 }
 
 void GenerateBroadcastGraph(const DfGraphConvertorPtr &converter, const TensorOrderMap &tensors) {
