@@ -1055,7 +1055,7 @@ int LiteSession::ResizeInputs(const std::vector<mindspore::lite::Tensor *> &inpu
       return RET_PARAM_INVALID;
     }
     inputs_[i]->FreeData();
-    if (infer_along_running_) {
+    if (infer_along_running_ && !inputs_[i]->get_shape_changed()) {
       inputs_[i]->set_shape_changed(dims[i] != inputs_[i]->shape());
     }
     inputs_[i]->set_shape(dims[i]);
