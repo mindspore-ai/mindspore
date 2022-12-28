@@ -785,11 +785,11 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
 
 def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=None):
     r"""
-    Computes a partial inverse of Maxpool2d.
+    Computes a partial inverse of maxpool2d.
 
-    MaxPool2d is not fully invertible, since the non-maximal values are lost.
+    maxpool2d is not fully invertible, since the non-maximal values are lost.
 
-    max_unpool2d takes the output of MaxPool1d as inputs including the indices of the maximal values
+    max_unpool2d takes the output of maxpool2d as inputs including the indices of the maximal values
     and computes a partial inverse in which all non-maximal values are set to zero. Typically the input
     is of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`, and the output is of
     shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`. The operation is as follows.
@@ -886,11 +886,11 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
 
 def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=None):
     r"""
-    Computes a partial inverse of MaxPool3d.
+    Computes a partial inverse of maxpool3d.
 
-    MaxPool3d is not fully invertible, since the non-maximal values are lost.
+    maxpool3d is not fully invertible, since the non-maximal values are lost.
 
-    max_unpool3d takes the output of MaxPool1d as input including the indices of the maximal values and computes a
+    max_unpool3d takes the output of maxpool3d as input including the indices of the maximal values and computes a
     partial inverse in which all non-maximal values are set to zero. Typically the input is of shape
     :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`, and the output is of shape
     :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})`. The operation is as follows.
