@@ -109,9 +109,8 @@ bool AscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
     std::string rank_id_str = std::to_string(global_rank);
     (void)hccl::HcclAdapter::GetInstance().InitHccl(local_rank_id, rank_id_str);
   } catch (const std::exception &e) {
-    MS_LOG(EXCEPTION) << "Ascend collective communication initialization failed." << GetErrorMessage(true)
-                      << "#dmsg#Framework Error Message:#dmsg#" << e.what();
-    throw;
+    MS_LOG(EXCEPTION) << "Ascend collective communication initialization failed.#dmsg#Framework Error Message:#dmsg#"
+                      << e.what();
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

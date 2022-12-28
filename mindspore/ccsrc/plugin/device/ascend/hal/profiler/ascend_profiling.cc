@@ -17,7 +17,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "common/util/error_manager/error_manager.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
@@ -29,7 +28,7 @@
 #include "kernel/kernel.h"
 #include "acl/acl_rt.h"
 
-using mindspore::device::ascend::GetErrorMessage;
+using mindspore::device::ascend::ErrorManagerAdapter;
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingReporter;
 using mindspore::profiler::ascend::MemoryProfiling;
@@ -83,9 +82,7 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
   }
 
   // Init ErrorManager instance in order to get error msg reported by Ascend.
-  if (ErrorManager::GetInstance().Init() != 0) {
-    MS_LOG(WARNING) << "[Internal Error] Failed to init ErrorManager class.";
-  }
+  (void)ErrorManagerAdapter::Init();
 
   (void)ProfilingManager::GetInstance().InitProfiling(profiling_path, device_id);
 
@@ -93,7 +90,7 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
 
   aclError aclRet = aclprofInit(profile_data_path_.c_str(), profile_data_path_.length());
   if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofInit function." << GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "Failed to call aclprofInit function.";
   }
 
   init_flag_ = true;
@@ -150,11 +147,11 @@ void AscendProfiler::Start() {
   aclprofAicoreMetrics aic_metrics = GetAicMetrics();
   acl_config_ = aclprofCreateConfig(device_list, device_num, aic_metrics, nullptr, GetOptionsMask());
   if (acl_config_ == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofCreateConfig function." << GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "Failed to call aclprofCreateConfig function.";
   }
   aclError aclRet = aclprofStart(acl_config_);
   if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofStart function." << GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "Failed to call aclprofStart function.";
   }
   MS_LOG(INFO) << "Start profiling, options mask is " << mask << " aic_metrics is " << aic_metrics;
 
@@ -175,11 +172,11 @@ void AscendProfiler::Stop() {
 
   aclError aclRet = aclprofStop(acl_config_);
   if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofStop function." << GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "Failed to call aclprofStop function.";
   }
   aclRet = aclprofDestroyConfig(acl_config_);
   if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function." << GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function.";
   }
 
   MemoryProfiling::GetInstance().StopMemoryProfiling();
@@ -191,7 +188,7 @@ void AscendProfiler::Finalize() {
   MS_LOG(INFO) << "Begin to finalize profiling";
   aclError aclRet = aclprofFinalize();
   if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function." << GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function.";
   }
 }
 

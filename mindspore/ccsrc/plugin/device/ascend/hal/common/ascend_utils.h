@@ -19,6 +19,7 @@
 
 #include <string>
 #include <set>
+#include "common/util/error_manager/error_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
 #include "backend/common/session/kernel_graph.h"
 
@@ -39,9 +40,23 @@ std::string MapToString(const Map &value) {
   return buffer.str();
 }
 
-std::string GetErrorMessage(bool add_title = false);
-std::string GetWarningMessage();
-void SetErrorManagerContext();
+class ErrorManagerAdapter {
+ public:
+  ErrorManagerAdapter() = default;
+  ~ErrorManagerAdapter() = default;
+  static bool Init();
+  static std::string GetErrorMessage(bool add_title = false);
+  static std::string GetWarningMessage(bool add_title = false);
+  static void BindToCurrentThread();
+
+ private:
+  static void MessageHandler(std::ostringstream *oss);
+
+ private:
+  static error_message::Context context_;
+  static std::mutex initialized_mutex_;
+  static bool initialized_;
+};
 
 bool IsGraphMode();
 bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph);

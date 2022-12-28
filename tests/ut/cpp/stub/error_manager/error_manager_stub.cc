@@ -202,6 +202,11 @@ void ErrorManager::ClearWarningMsgContainerByWorkId(const uint64_t work_stream_i
 
 void ErrorManager::SetErrorContext(error_message::Context error_context) {}
 
+error_message::Context &ErrorManager::GetErrorManagerContext() {
+  static error_message::Context context;
+  return context;
+}
+
 void ErrorManager::SetStage(const std::string &first_stage, const std::string &second_stage) {}
 
 void ErrorManager::SetStage(const error_message::char_t *first_stage, const size_t first_len,

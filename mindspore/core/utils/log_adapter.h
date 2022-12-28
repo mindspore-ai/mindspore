@@ -249,6 +249,7 @@ class TryCatchGuard {
 class MS_CORE_API LogWriter {
  public:
   using ExceptionHandler = void (*)(ExceptionType, const std::string &);
+  using MessageHandler = void (*)(std::ostringstream *oss);
   using TraceProvider = std::function<void(std::ostringstream &oss, bool add_title)>;
 
   LogWriter(const LocationInfo &location, MsLogLevel log_level, SubModuleId submodule,
@@ -278,6 +279,16 @@ class MS_CORE_API LogWriter {
   /// \param[in] A function pointer of converting exception types in c++.
   static void SetExceptionHandler(const ExceptionHandler &new_exception_handler);
 
+  /// \brief Get the function pointer of handling message for different device.
+  ///
+  /// \return A pointer of the function.
+  static const MessageHandler &GetMessageHandler();
+
+  /// \brief Set the function pointer of handling message for different device.
+  ///
+  /// \param[in] A function pointer of handling message for different device.
+  static void SetMessageHandler(const MessageHandler &new_message_handler);
+
   /// \brief Get the function pointer of printing trace stacks.
   ///
   /// \return A pointer of the function.
@@ -292,6 +303,7 @@ class MS_CORE_API LogWriter {
   void OutputLog(const std::ostringstream &msg) const;
   void RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const;
   static ExceptionHandler &exception_handler();
+  static MessageHandler &message_handler();
   static TraceProvider &trace_provider();
 
   LocationInfo location_;
