@@ -75,8 +75,8 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
     int64_t axis = GetValue<int64_t>(axis_ptr);
     int64_t ndims = SizeToLong(input_shape_vec.size());
     if (axis >= ndims || axis < -ndims) {
-      MS_LOG(EXCEPTION) << "For " << op_name << ", the axis must be in the range [-" << ndims << "," << ndims << ")"
-                        << "but got " << axis << ".";
+      MS_LOG(EXCEPTION) << "For " << op_name << ", the axis must be in the range [-" << ndims << "," << ndims << "),"
+                        << " but got " << axis << ".";
     }
     if (axis < 0) {
       axis = axis + ndims;
