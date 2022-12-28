@@ -6018,7 +6018,7 @@ class SparseApplyAdagradV2(Primitive):
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - Accumulation to be updated. The shape and data type must be the same as `var`.
         - **grad** (Tensor) - Gradients has the same data type as `var` and
-          grad.shape[1:] = var.shape[1:] if var.shape > 1.
+          :math:`grad.shape[1:] = var.shape[1:]` if var.shape > 1.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
           The type must be int32 and indices.shape[0] = grad.shape[0].
 
@@ -6859,7 +6859,8 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - The accumulation to be updated, must be same data type and shape as `var`.
         - **linear** (Parameter) - the linear coefficient to be updated, must be same data type and shape as `var`.
-        - **grad** (Tensor) - A tensor of the same type as `var` and grad.shape[1:] = var.shape[1:] if var.shape > 1.
+        - **grad** (Tensor) - A tensor of the same type as `var` and
+          :math:`grad.shape[1:] = var.shape[1:]` if var.shape > 1.
         - **indices** (Tensor) - A vector of indices in the first dimension of `var` and `accum`.
           The type must be int32 and indices.shape[0] = grad.shape[0].
 
