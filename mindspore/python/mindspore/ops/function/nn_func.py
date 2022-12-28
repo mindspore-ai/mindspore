@@ -4710,6 +4710,68 @@ def multi_label_margin_loss(inputs, target, reduction='mean'):
     return outputs
 
 
+def multilabel_soft_margin_loss(x, target, weight=None, reduction='mean'):
+    r"""
+    Calculates the MultiLabelSoftMarginLoss.
+    Create a criterion for optimizing multi-label one-to-total loss based on maximum entropy.
+
+    .. math::
+        \mathcal{L}_{D} = - \frac{1}{|D|}\sum_{i = 0}^{|D|}\left(
+        y_{i}\ln\frac{1}{1 + e^{- x_{i}}} + \left( 1 - y_{i}
+        \right)\ln\frac{1}{1 + e^{x_{i}}} \right)
+
+    where :math:`\mathcal{L}_{D}` is the loss, :math:`y_{i}` is the `target`,
+    :math:`x_{i}` is the `x`. `weight` will multiply to the loss of each class if given.
+
+    Args:
+        x (Tensor): A tensor of shape (N, C), where N is batch size and C is number of classes.
+        target (Tensor): The label target Tensor which has the same shape as `x`.
+        weight (Union[Tensor, int, float]): The manual rescaling weight given to each class. Default: None.
+        reduction (str): Specifies which reduction to be applied to the output. It must be one of
+            'none', 'mean', and 'sum', meaning no reduction, reduce mean and sum on output, respectively.
+            Default: 'mean'.
+
+    Returns:
+        Tensor, the data type is the same as x, if the reduction is 'none', its shape is (N), otherwise it is zero.
+
+    Raises:
+        ValueError: If the rank of `x` or `target`is not 2.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[0.3, 0.6, 0.6], [0.9, 0.4, 0.2]])
+        >>> target = Tensor([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]])
+        >>> loss = ops.multilabel_soft_margin_loss(x, target, reduction='mean')
+        >>> out = loss(x, target)
+        >>> print(out.asnumpy())
+        0.84693956
+    """
+    cls_name = "multilabel_soft_margin_loss"
+    _check_is_tensor('x', x, cls_name)
+    _check_is_tensor('target', target, cls_name)
+    if x.ndim != 2 or target.ndim != 2:
+        raise ValueError(
+            "For 'MultiLabelSoftMarginLoss', the inputs must be 2d tensor, but got shapes: "
+            f"x: {x.shape}, target: {target.shape} "
+        )
+
+    mul_op = _get_cache_prim(P.Mul)()
+    exp_op = _get_cache_prim(P.Exp)()
+    add_op = _get_cache_prim(P.Add)()
+    log_op = _get_cache_prim(P.Log)()
+
+    pos = log_op(add_op(exp_op(-x), 1))
+    neg = log_op(add_op(exp_op(x), 1))
+    loss = mul_op(target, pos) + mul_op(1 - target, neg)
+    if weight is not None:
+        loss = mul_op(loss, weight)
+    class_dim = x.ndim - 1
+    loss = loss.sum(axis=class_dim) / x.shape[class_dim]
+    return _get_loss(loss, reduction, cls_name)
+
+
 def elu(input_x, alpha=1.0):
     r"""
     Exponential Linear Unit activation function.
@@ -5177,6 +5239,7 @@ __all__ = [
     'margin_ranking_loss',
     'multi_margin_loss',
     'multi_label_margin_loss',
+    'multilabel_soft_margin_loss',
     'elu',
     'gelu',
     'hinge_embedding_loss',

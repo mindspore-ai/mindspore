@@ -45,6 +45,7 @@ Neural Network
     mindspore.ops.max_unpool3d
     mindspore.ops.multi_margin_loss
     mindspore.ops.multi_label_margin_loss
+    mindspore.ops.multilabel_soft_margin_loss
     mindspore.ops.kl_div
     mindspore.ops.pad
     mindspore.ops.padding

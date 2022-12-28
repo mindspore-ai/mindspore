@@ -1269,10 +1269,10 @@ class MultiLabelSoftMarginLoss(LossBase):
     :math:`x_{i}` is the `x`. `weight` will multiply to the loss of each class if given.
 
     Args:
-        weight (int, float): The manual rescaling weight given to each class. Default: None.
-        reduction (string): Specifies which reduction to be applied to the output. It must be one of
+        weight (Union[Tensor, int, float]): The manual rescaling weight given to each class. Default: None.
+        reduction (str): Specifies which reduction to be applied to the output. It must be one of
             'none', 'mean', and 'sum', meaning no reduction, reduce mean and sum on output, respectively.
-            Default 'mean'.
+            Default: 'mean'.
 
     Inputs:
         - **x** (Tensor) - A tensor of shape (N, C), where N is batch size and C is number
@@ -1280,8 +1280,7 @@ class MultiLabelSoftMarginLoss(LossBase):
         - **target** (Tensor) - The label target Tensor which has the same shape as `x`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', the output is a tensor of shape (N) with the same data type as `x`.
-        Otherwise it is a scalar.
+        Tensor, the data type is the same as x, if the reduction is 'none', its shape is (N), otherwise it is zero.
 
     Raises:
         ValueError: If the rank of `x` or `target`is not 2.
@@ -1302,27 +1301,10 @@ class MultiLabelSoftMarginLoss(LossBase):
         """Initialize MultiLabelSoftMarginLoss."""
         super(MultiLabelSoftMarginLoss, self).__init__(reduction)
         self.weight = weight
-        self.mul = P.Mul()
-        self.exp = P.Exp()
-        self.add = P.Add()
-        self.log = P.Log()
+        self.reduction = reduction
 
     def construct(self, x, target):
-        _check_is_tensor('x', x, self.cls_name)
-        _check_is_tensor('target', target, self.cls_name)
-        if x.ndim != 2 or target.ndim != 2:
-            raise ValueError(
-                "For 'MultiLabelSoftMarginLoss', the inputs must be 2d tensor, but got shapes: "
-                f"x: {x.shape}, target: {target.shape} "
-            )
-        pos = self.log(self.add(self.exp(-x), 1))
-        neg = self.log(self.add(self.exp(x), 1))
-        loss = target * pos + (1 - target) * neg
-        if self.weight is not None:
-            loss = loss * self.weight
-        class_dim = x.ndim - 1
-        loss = loss.sum(axis=class_dim) / x.shape[class_dim]
-        return self.get_loss(loss)
+        return F.multilabel_soft_margin_loss(x, target, self.weight, self.reduction)
 
 
 class MultiMarginLoss(LossBase):
