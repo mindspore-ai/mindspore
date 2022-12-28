@@ -95,7 +95,7 @@ def sparsify(f, arg_types, sparse_rules=None):
     Args:
         f (Cell): Cell object to be sparsified.
         arg_types (Tuple[ArgType] | Dict[int, ArgType]): The type of argument (sparse csr, sparse coo,
-            non-sparse etc.) expected by `f`. If `arg_type ` is a tuple, its length should be the same as the number of
+            non-sparse etc.) expected by `f`. If `arg_type` is a tuple, its length should be the same as the number of
             arguments for `f`; if `arg_type` is a dictionary, each key represents an index into the arguments, and
             arguments not referenced by the dictionary are considered to be non-sparse.
         sparse_rules (Dict[str, SparseFunc], Optional): Additional sparse rules.

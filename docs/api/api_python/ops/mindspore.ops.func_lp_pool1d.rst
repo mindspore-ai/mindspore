@@ -24,7 +24,7 @@ mindspore.ops.lp_pool1d
         - **ceil_mode** (bool) - 若为True，使用ceil来计算输出shape。若为False，使用floor来计算输出shape。默认值：False。
 
     返回：
-        - **output** - LPPool1d的计算结果，shape为 :math:`(N, C_{out}, L_{out})` 或 :math:`(C, L_{in})`的Tensor，与 输入 `x` 的类型一致。
+        - **output** - LPPool1d的计算结果，shape为 :math:`(N, C_{out}, L_{out})` 或 :math:`(C, L_{in})` 的Tensor，与 输入 `x` 的类型一致。
 
     异常：
         - **TypeError** - `x` 不是Tensor。

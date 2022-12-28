@@ -3975,10 +3975,10 @@ class ToPIL(PyTensorOperation):
     Convert the input decoded numpy.ndarray image to PIL Image.
 
     Note:
-        The conversion mode will be determined by the data type using :class:`PIL.Image.fromarray` .
+        The conversion mode will be determined by the data type using `PIL.Image.fromarray` .
 
     Raises:
-        TypeError: If the input image is not of type :class:`numpy.ndarray` or :class:`PIL.Image.Image` .
+        TypeError: If the input image is not of type :class:`numpy.ndarray` or `PIL.Image.Image` .
 
     Supported Platforms:
         ``CPU``
