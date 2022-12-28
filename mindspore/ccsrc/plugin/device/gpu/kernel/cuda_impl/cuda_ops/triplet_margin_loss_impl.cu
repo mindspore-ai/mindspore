@@ -227,42 +227,42 @@ void CalTripletMarginLoss(const T *anchor, const T *positive, const T *negative,
                           const std::string reduction, const bool swap, const bool need_broadcast,
                           const uint32_t &device_id, cudaStream_t cuda_stream) {
   const int64_t size = outer_size * inner_size * bound;
-  size_t n;
-  if (swap)
-    n = 3;
-  else
-    n = 2;
+  size_t n = swap ? 3 : 2;
   const size_t output_size = outer_size * inner_size;
+  size_t block_num = 256 > n * output_size ? n * output_size : 256;
   if (p == 0) {
-    PairwiseDistancePzero<<<CUDA_BLOCKS(device_id, n * output_size), CUDA_THREADS(device_id), 0, cuda_stream>>>
+    PairwiseDistancePzero<<<CUDA_BLOCKS_CAL(device_id, n * output_size, block_num), block_num, 0, cuda_stream>>>
                                        (bound_list, output_size, tem_output, n);
   } else if (need_broadcast) {
-    FillAndBroadcast<<<CUDA_BLOCKS(device_id, 3 * size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    block_num = 256 > 3 * size ? 3 * size : 256;
+    FillAndBroadcast<<<CUDA_BLOCKS_CAL(device_id, 3 * size, block_num), block_num, 0, cuda_stream>>>(
                             size, shape_size, tensor_shapes, dst_shape, anchor, positive, negative,
                             anchor_broadcast);
-    PairwiseDistance<<<CUDA_BLOCKS(device_id, n * output_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    block_num = 256 > n * output_size ? n * output_size : 256;
+    PairwiseDistance<<<CUDA_BLOCKS_CAL(device_id, n * output_size, block_num), block_num, 0, cuda_stream>>>(
                             anchor_broadcast, positive_broadcast, negative_broadcast, bound_list, bound, outer_size,
                             inner_size, tem_output, n, p, eps);
   } else {
-    PairwiseDistance<<<CUDA_BLOCKS(device_id, n * output_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    PairwiseDistance<<<CUDA_BLOCKS_CAL(device_id, n * output_size, block_num), block_num, 0, cuda_stream>>>(
                         anchor, positive, negative, bound_list, bound, outer_size, inner_size, tem_output, n, p, eps);
   }
-
+  block_num = 256 > output_size ? output_size : 256;
   if (swap) {
-    SwapTrue<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(tem_output,
+    SwapTrue<<<CUDA_BLOCKS_CAL(device_id, output_size, block_num), block_num, 0, cuda_stream>>>(tem_output,
       output_size);
   }
   if (reduction == "none") {
-    MaxReduction<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(tem_output,
+    MaxReduction<<<CUDA_BLOCKS_CAL(device_id, output_size, block_num), block_num, 0, cuda_stream>>>(tem_output,
       output, output_size, margin);
   } else {
-    MaxReduction<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(tem_output,
+    MaxReduction<<<CUDA_BLOCKS_CAL(device_id, output_size, block_num), block_num, 0, cuda_stream>>>(tem_output,
       tem_output, output_size, margin);
     if (output_size % 2 == 1 && output_size != 1) {
       AddTile<<<1, 1, 0, cuda_stream>>>(tem_output, output_size - 1);
     }
     for (size_t stride = output_size / 2; stride > 0; stride >>= 1) {
-      PartialSum<<<CUDA_BLOCKS(device_id, stride), CUDA_THREADS(device_id), 0, cuda_stream>>>(tem_output, stride);
+      block_num = 256 > stride ? stride : 256;
+      PartialSum<<<CUDA_BLOCKS_CAL(device_id, stride, block_num), block_num, 0, cuda_stream>>>(tem_output, stride);
       if (stride > 2 && stride % 2 == 1) {
         AddTile<<<1, 1, 0, cuda_stream>>>(tem_output, stride - 1);
       }
