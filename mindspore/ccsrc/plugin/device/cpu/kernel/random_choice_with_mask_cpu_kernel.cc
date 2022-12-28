@@ -106,6 +106,11 @@ int RandomChoiceWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     return ret;
   }
   auto x_shape = inputs[kIndex0]->GetShapeVector();
+  if (x_shape[0] == 0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape size of 'input_x' must be greater than or equal to 1, but got 0.";
+    return KRET_RESIZE_FAILED;
+  }
   dims_.clear();
   for (size_t i = 0; i < batch_rank_; i++) {
     batch_size_ *= x_shape[i];
