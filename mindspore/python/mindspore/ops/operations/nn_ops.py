@@ -7595,7 +7595,7 @@ class AvgPool3D(Primitive):
         ValueError: If `data_format` is not 'NCDHW'.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float16)
@@ -8298,7 +8298,7 @@ class Dilation2D(Primitive):
         ValueError: If `data_format` is not the str of 'NCHW'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones([10, 5, 32, 32]), mindspore.float16)

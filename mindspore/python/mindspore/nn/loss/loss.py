@@ -578,7 +578,7 @@ class SmoothL1Loss(LossBase):
 
     Outputs:
         Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `logits`.
-        Otherwise the shape of output tensor is `(1,)`.
+        Otherwise the shape of output tensor is `()`.
 
     Raises:
         TypeError: If `beta` is not a float.

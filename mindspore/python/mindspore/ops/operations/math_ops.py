@@ -3849,7 +3849,7 @@ class ApproximateEqual(_LogicBinaryOp):
                       but data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -5946,7 +5946,7 @@ class Trunc(Primitive):
     Refer to :func:`mindspore.ops.trunc` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]), mindspore.float32)
@@ -6720,7 +6720,7 @@ class Trace(Primitive):
         ValueError: If the dimension of `x` is not equal to 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)

@@ -40,7 +40,7 @@ mindspore.nn.SmoothL1Loss
         - **labels** (Tensor) - 目标值，数据类型和shape与 `logits` 相同的Tensor。
 
     输出：
-        Tensor。如果 `reduction` 为'none'，则输出为Tensor且与 `logits` 的shape相同。否则shape为 `(1,)`。
+        Tensor。如果 `reduction` 为'none'，则输出为Tensor且与 `logits` 的shape相同。否则shape为 `()`。
 
     异常：
         - **TypeError** - `beta` 不是float。

@@ -1982,7 +1982,7 @@ def xlogy(x, y):
         ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
@@ -3324,7 +3324,7 @@ def trunc(input):
         TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32)
@@ -5015,7 +5015,7 @@ def lcm(x1, x2):
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([7, 8, 9]))
@@ -5090,7 +5090,7 @@ def gcd(x1, x2):
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([7, 8, 9]))

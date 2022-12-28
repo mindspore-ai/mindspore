@@ -7234,7 +7234,7 @@ class Tril(Primitive):
         ValueError: If the rank of `x` is less than 2.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
