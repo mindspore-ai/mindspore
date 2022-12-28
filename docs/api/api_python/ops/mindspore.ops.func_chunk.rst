@@ -7,7 +7,7 @@ mindspore.ops.chunk
 
     参数：
         - **x** (Tensor) - Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。
-        - **chunks** (int]) - 要返回的块数。
+        - **chunks** (int) - 要返回的块数。
         - **axis** (int) - 指定分割轴。默认值：0。
 
     返回：
