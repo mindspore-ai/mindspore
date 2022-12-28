@@ -428,32 +428,31 @@ class NonMaxSuppressionWithOverlaps(Primitive):
 
     Inputs:
         - **overlaps** (Tensor) - A 2-D Tensor of shape :math:`(num\_boxes, num\_boxes)`,
-          representing the n-by-n box overlap values. Types allowed:float32.
+          representing the n-by-n box overlap values. Types allowed:float16, float32 and float64.
         - **scores** (Tensor) - A 1-D Tensor of shape :math:`(num\_boxes)` representing a single score
           corresponding to each box (each row of boxes), the num_boxes of `scores` must be equal to
-          the num_boxes of `overlaps`.
-          Types allowed:float32.
+          the num_boxes of `overlaps`. It has the same dtype as `overlaps`.
         - **max_output_size** (Union[Tensor, Number.Int]) - A scalar integer Tensor representing the maximum
           number of boxes to be selected by non max suppression, and max_output_size must be equal to or greater
           than 0.
           Types allowed:int32.
         - **overlap_threshold** (Union[Tensor, Number.Float]) - A 0-D float Tensor representing the threshold for
           deciding whether boxes overlap too much.
-          Types allowed:float32.
+          Types allowed:float16, float32 and float64.
         - **score_threshold** (Union[Tensor, Number.Float]) - A 0-D float Tensor representing the threshold for
-          deciding when to remove boxes based on score.
-          Types allowed:float32.
+          deciding when to remove boxes based on score. It has the same dtype as `overlap_threshold`.
 
     Outputs:
        A 1-D integer Tensor of shape :math:`(M)` representing the selected indices from the boxes Tensor,
        where M <= max_output_size. Its data type is int32.
 
     Raises:
-        TypeError: If the dtype of `overlaps` , `scores` `overlap_threshold` and `score_threshold` is not float32.
+        TypeError: If the dtype of `overlaps` , `scores` `overlap_threshold` and `score_threshold`
+                   is not float16, float32 or float64.
         TypeError: If `overlaps` or `scores` is not Tensor。
         TypeError: If `max_output_size` is not Tensor or Scalar.If `max_output_size` is not int32.
-        TypeError: If `overlap_threshold` is not Tensor or scalar. If its type is not float32.
-        TypeError: If `score_threshold` is not Tensor or scalar. If its type is not float32.
+        TypeError: If `overlap_threshold` is not Tensor or scalar. If its type is not float16, float32 or float64.
+        TypeError: If `score_threshold` is not Tensor or scalar. If its type is not float16, float32 or float64.
         ValueError: If the size of shape of `overlaps` is not 2 or the second value of its shape
                     is not equal to the first value of its shape.
         ValueError: If the size of shape of `scores` is not 1.
