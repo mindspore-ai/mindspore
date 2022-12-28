@@ -85,7 +85,8 @@ Flags::Flags() {
   AddFlag(&Flags::exportMindIR, "exportMindIR", "MINDIR  | MINDIR_LITE", "MINDIR_LITE");
   AddFlag(&Flags::noFusionStr, "NoFusion",
           "Avoid fusion optimization true|false. NoFusion is true when exportMindIR is MINDIR.", "");
-  AddFlag(&Flags::device, "device", "Set the target device, support Ascend310 or Ascend310P", "");
+  AddFlag(&Flags::device, "device",
+          "Set the target device, support Ascend, Ascend310 and Ascend310P will be deprecated.", "");
 }
 
 int Flags::InitInputOutputDataType() {

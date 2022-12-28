@@ -170,8 +170,8 @@ class Converter:
         train_model (bool, optional):   Whether the model is going to be trained on device. Default: False.
         no_fusion(bool, optional): Whether avoid fusion optimization, fusion optimization is allowed by default.
             Default: False.
-        device (str, optional): Set target device when converter model. Only valid for ascend. The following 2 device
-            are supported: "Ascend310" | "Ascend310P". Default: "".
+        device (str, optional): Set target device when converter model. Only valid for ascend. The following device
+            are supported: "Ascend". Default: "".
     Raises:
         TypeError: `fmk_type` is not a FmkType.
         TypeError: `model_file` is not a str.
@@ -197,7 +197,7 @@ class Converter:
         TypeError: `device` is not a str.
         ValueError: `input_format` is neither Format.NCHW nor Format.NHWC when it is a Format.
         ValueError: `decrypt_mode` is neither "AES-GCM" nor "AES-CBC" when it is a str.
-        ValueError: `device` is neither "Ascend310" nor "Ascend310P" when it is a str.
+        ValueError: `device` is "Ascend" when it is a str.
         RuntimeError: `model_file` does not exist.
         RuntimeError: `weight_file` is not "", but `weight_file` does not exist.
         RuntimeError: `config_file` is not "", but `config_file` does not exist.
@@ -263,8 +263,8 @@ class Converter:
         if input_format not in [Format.NCHW, Format.NHWC]:
             raise ValueError(f"Converter's init failed, input_format must be NCHW or NHWC.")
         if device != "":
-            if device not in ["Ascend310", "Ascend310P"]:
-                raise ValueError(f"Converter's init failed, device must be Ascend310 or Ascend310P.")
+            if device not in ["Ascend"]:
+                raise ValueError(f"Converter's init failed, device must be Ascend.")
         if decrypt_mode not in ["AES-GCM", "AES-CBC"]:
             raise ValueError(f"Converter's init failed, decrypt_mode must be AES-GCM or AES-CBC.")
         input_shape_ = {} if input_shape is None else input_shape
