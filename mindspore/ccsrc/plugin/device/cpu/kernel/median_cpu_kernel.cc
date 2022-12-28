@@ -57,6 +57,18 @@ int MedianCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
   input_dim_ = input_shape_.size();
   input_num_elements_ = 1;
+  if (global_median_) {
+    if (axis_ != 0) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', when 'global_median' is True, the 'axis' must be 0, but got "
+                    << axis_;
+      return KRET_RESIZE_FAILED;
+    }
+    if (keepdim_) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', when 'global_median' is True, the 'keep_dims' must be False, but got " << keepdim_;
+      return KRET_RESIZE_FAILED;
+    }
+  }
   if (input_dim_ != 0) {
     if (axis_ > static_cast<int>(input_dim_ - 1) || axis_ < static_cast<int>(-input_dim_)) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the axis must be in [" << -input_dim_ << "," << input_dim_
