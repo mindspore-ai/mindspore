@@ -115,6 +115,11 @@ int OnehotPlugin::RunCudaOneHot(const nvinfer1::PluginTensorDesc *inputDesc, con
     OneHot<float, int>(static_cast<const int *>(inputs[0]), depth_, static_cast<const float *>(inputs[ON_VALUE_INDEX]),
                        static_cast<const float *>(inputs[OFF_VALUE_INDEX]), left_dims, right_dims,
                        static_cast<float *>(outputs[0]), device_id_, stream);
+  } else if (inputDesc[0].type == nvinfer1::DataType::kINT32 &&
+             inputDesc[ON_VALUE_INDEX].type == nvinfer1::DataType::kHALF) {
+    OneHot<half, int>(static_cast<const int *>(inputs[0]), depth_, static_cast<const half *>(inputs[ON_VALUE_INDEX]),
+                      static_cast<const half *>(inputs[OFF_VALUE_INDEX]), left_dims, right_dims,
+                      static_cast<half *>(outputs[0]), device_id_, stream);
   } else {
     MS_LOG(ERROR) << "invalid onehot type ";
     return RET_ERROR;
