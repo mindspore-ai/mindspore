@@ -147,10 +147,11 @@ bool CdistGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   }
 
   auto task = [this, grad_start, dist_start, t1_start, t2_start, res_start](size_t b_start, size_t b_end) {
-    const float *i = t1_start;
-    const float *j = t2_start;
+    const float *i = t1_start + b_start;
+    const float *j = t2_start + b_start;
+    float *res_l = res_start + b_start;
     float *res_end = res_start + b_end;
-    for (float *res_l = res_start + b_start; res_l != res_end; i += 1, j += 1, res_l += 1) {
+    for (; res_l != res_end; i += 1, j += 1, res_l += 1) {
       const float *t1 = i;
       const float *t2 = j;
       float *res = res_l;
