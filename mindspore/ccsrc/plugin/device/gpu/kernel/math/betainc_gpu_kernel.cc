@@ -54,35 +54,22 @@ bool BetaincGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   return true;
 }
 int BetaincGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs,
                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  for (const auto &input : inputs) {
-    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != 0) {
+    return ret;
   }
-  ResetResource();
-  std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  for (int64_t i = 0; i < static_cast<int64_t>(input_shape_.size()); i++) {
-    input_size_ *= input_shape_[i];
-  }
-  InitSizeLists();
-  return KRET_OK;
+  input_element_ = SizeOf(inputs[0]->GetShapeVector());
+  return ret;
 }
 
 bool BetaincGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                  const std::vector<kernel::AddressPtr> &workspace,
                                  const std::vector<kernel::AddressPtr> &outputs, void *cuda_stream) {
-  if (is_null_input_) {
-    return true;
-  }
   return kernel_func_(this, inputs, outputs, workspace, cuda_stream);
 }
 
@@ -93,10 +80,8 @@ bool BetaincGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   T *input_b = GetDeviceAddress<T>(inputs, kBIndex);
   T *input_x = GetDeviceAddress<T>(inputs, kXIndex);
   T *output = GetDeviceAddress<T>(outputs, kAIndex);
-
-  CalBetainc(input_size_ / sizeof(T), input_a, input_b, input_x, output, device_id_,
+  CalBetainc(input_element_, input_a, input_b, input_x, output, device_id_,
              reinterpret_cast<cudaStream_t>(cuda_stream));
-
   return true;
 }
 

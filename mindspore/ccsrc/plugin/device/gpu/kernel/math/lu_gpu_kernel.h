@@ -52,9 +52,6 @@ class LuGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<LuGpu
 
  private:
   void ResetResource() noexcept;
-
-  bool CheckLuShape();
-
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
@@ -72,17 +69,12 @@ class LuGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<LuGpu
 
   bool is_null_input_{false};
   bool pivot_on_{true};
-  std::vector<size_t> in_shape_;
   size_t unit_size_{1};
   size_t batch_size_{1};
   size_t input_elements_{};
-  size_t lu_row_{0};
-  size_t lu_col_{0};
   size_t k_{0};
   size_t m_{0};
   size_t n_{0};
-  size_t lda_{0};
-  size_t ldb_{0};
   int lwork_{0};
   void *cuda_stream_{nullptr};
   cusolverDnHandle_t handle_{nullptr};
