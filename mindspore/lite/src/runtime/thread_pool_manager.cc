@@ -16,6 +16,7 @@
 
 #include "src/runtime/thread_pool_manager.h"
 #include <mutex>
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 namespace lite {
@@ -37,7 +38,8 @@ ThreadPoolManager::~ThreadPoolManager() {
 }
 
 ThreadPool *ThreadPoolManager::GetThreadPool(size_t actor_num, size_t inter_op_parallel_num, size_t thread_num,
-                                             BindMode bind_mode, const std::vector<int> &core_list) {
+                                             BindMode bind_mode, const std::vector<int> &core_list,
+                                             std::string runner_id) {
 #ifdef SERVER_INFERENCE
   auto hash_key = ComputeHash(actor_num, inter_op_parallel_num, thread_num, bind_mode, core_list);
   std::lock_guard<std::mutex> lock(l);
@@ -48,6 +50,10 @@ ThreadPool *ThreadPoolManager::GetThreadPool(size_t actor_num, size_t inter_op_p
     return nullptr;
   }
   auto thread_pool = thread_pool_container_[hash_key].back();
+  if (inter_op_parallel_num > 1 && !thread_pool->SetRunnerID(runner_id)) {
+    MS_LOG(WARNING) << "can not reuse thread pool.";
+    return nullptr;
+  }
   thread_pool_container_[hash_key].pop_back();
   return thread_pool;
 #else

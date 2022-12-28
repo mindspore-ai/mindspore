@@ -29,7 +29,7 @@ ParallelWorker::~ParallelWorker() {
     std::lock_guard<std::mutex> _l(mutex_);
     alive_ = false;
   }
-  if (ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool()) {
+  if (enable_shared_thread_pool_) {
     ActivateByOtherPoolTask(nullptr);
   } else {
     cond_var_.notify_one();
@@ -55,6 +55,8 @@ void ParallelWorker::Run() {
   _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
   _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
 #endif
+  std::string bind_runner_id = parallel_pool_->GetPoolBindRunnerID();
+  enable_shared_thread_pool_ = ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool(bind_runner_id);
   while (alive_) {
     // only run either local KernelTask or PoolQueue ActorTask
     if (RunLocalKernelTask() || RunQueueActorTask()) {
@@ -62,7 +64,7 @@ void ParallelWorker::Run() {
     } else {
       (void)DirectRunOtherPoolTask();
       if (++spin_count_ > max_spin_count_) {
-        if (!ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool()) {
+        if (!enable_shared_thread_pool_) {
           WaitUntilActive();
           spin_count_ = 0;
         } else {
@@ -156,6 +158,16 @@ bool ParallelWorker::RunQueueActorTask() {
 void ParallelThreadPool::UseThreadPool(int num) {
   std::lock_guard<std::mutex> l(mutex_pool_ref_count_);
   pool_ref_count_ += num;
+}
+
+bool ParallelThreadPool::SetRunnerID(const std::string &runner_id) {
+  if (!bind_runner_id_.empty() &&
+      ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool(runner_id) != enable_shared_) {
+    THREAD_ERROR("can not set runner id.");
+    return false;
+  }
+  bind_runner_id_ = runner_id;
+  return true;
 }
 
 std::vector<ParallelWorker *> ParallelThreadPool::GetParallelPoolWorkers() {
@@ -360,7 +372,7 @@ int ParallelThreadPool::CreateParallelThreads(size_t actor_thread_num, size_t al
   if (TaskQueuesInit(all_thread_num) != THREAD_OK) {
     return THREAD_ERROR;
   }
-  enable_shared_ = ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool();
+  enable_shared_ = ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool(bind_runner_id_);
   auto ret = ThreadPool::CreateThreads<ParallelWorker>(all_thread_num, core_list);
   if (ret != THREAD_OK) {
     return THREAD_ERROR;
@@ -370,10 +382,15 @@ int ParallelThreadPool::CreateParallelThreads(size_t actor_thread_num, size_t al
 }
 
 ParallelThreadPool *ParallelThreadPool::CreateThreadPool(size_t actor_thread_num, size_t all_thread_num,
-                                                         const std::vector<int> &core_list, BindMode bind_mode) {
+                                                         const std::vector<int> &core_list, BindMode bind_mode,
+                                                         std::string runner_id) {
   std::lock_guard<std::mutex> lock(create_thread_pool_muntex_);
   ParallelThreadPool *pool = new (std::nothrow) ParallelThreadPool();
   if (pool == nullptr) {
+    return nullptr;
+  }
+  if (!pool->SetRunnerID(runner_id)) {
+    delete pool;
     return nullptr;
   }
   int ret = pool->InitAffinityInfo();

@@ -79,6 +79,8 @@ struct InnerContext : public Context {
 
   inline const InferChecker get_infer_checker() const { return infer_checker_; }
 
+  inline void SetBindRunnerId(std::string runner_id) { runner_id_ = runner_id; }
+
  private:
   bool IsAllDeviceTypeValid() const;
 
@@ -97,6 +99,7 @@ struct InnerContext : public Context {
 #ifdef BFC_MEMORY
   int node_id_ = -1;
 #endif
+  std::string runner_id_;
 
   BindMode bind_mode_{Power_NoBind};
   size_t actor_thread_num_{0};

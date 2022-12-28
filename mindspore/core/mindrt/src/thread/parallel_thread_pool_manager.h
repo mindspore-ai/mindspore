@@ -41,13 +41,13 @@ class ParallelThreadPoolManager {
   void Init(bool enable_shared_thread_pool, const std::string &runner_id, int worker_num, int remaining_thread_num,
             int task_num);
 
-  void SetHasIdlePool(bool is_idle);
+  void SetHasIdlePool(std::string runner_id, bool is_idle);
 
   ParallelThreadPool *GetIdleThreadPool(const std::string &runner_id, ParallelTask *task);
 
   void ResetParallelThreadPoolManager(const std::string &runner_id);
 
-  bool GetEnableSharedThreadPool();
+  bool GetEnableSharedThreadPool(std::string runner_id);
 
   void ActivatePool(const std::string &runner_id, int model_id);
 
@@ -55,9 +55,9 @@ class ParallelThreadPoolManager {
 
   void BindPoolToRunner(ThreadPool *pool, const std::map<std::string, std::map<std::string, std::string>> *config_info);
 
-  int GetThreadPoolSize();
+  int GetThreadPoolSize(ThreadPool *pool);
 
-  int GetTaskNum();
+  int GetTaskNum(const std::map<std::string, std::map<std::string, std::string>> *config_info);
 
  private:
   ParallelThreadPoolManager() = default;
@@ -70,10 +70,10 @@ class ParallelThreadPoolManager {
   std::unordered_map<ParallelThreadPool *, std::vector<ParallelWorker *>> pool_workers_;
 
   std::shared_mutex pool_manager_mutex_;
-  bool has_idle_pool_ = true;
-  bool enable_shared_thread_pool_ = false;
-  int remaining_thread_num_ = 0;
-  int thread_num_limit_ = 0;
+  std::map<std::string, bool> has_idle_pool_;
+  std::map<std::string, bool> enable_shared_thread_pool_;
+  std::map<std::string, int> remaining_thread_num_;
+  std::map<std::string, int> thread_num_limit_;
 #endif
 };
 }  // namespace mindspore
