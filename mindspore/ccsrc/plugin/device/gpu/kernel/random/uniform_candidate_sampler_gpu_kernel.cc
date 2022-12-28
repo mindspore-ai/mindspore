@@ -46,12 +46,7 @@ bool UniformCandidateSamplerGpuKernelMod::Init(const BaseOperatorPtr &base_opera
   range_max_ = kernel_ptr->get_range_max();
   remove_accidental_hits_ = kernel_ptr->get_remove_accidental_hits();
   init_seed_ = kernel_ptr->get_seed();
-  if (init_seed_ == 0) {
-    cur_seed_ = time(NULL);
-    generator_.seed(cur_seed_);
-  } else {
-    generator_.seed(init_seed_);
-  }
+
   return true;
 }
 
@@ -75,11 +70,13 @@ template <typename T, typename S>
 bool UniformCandidateSamplerGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                        const std::vector<AddressPtr> &,
                                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (init_seed_ == 0 && cur_seed_ == 0) {
-    // Update current seed.
+  if (init_seed_ == 0) {
     cur_seed_ = time(NULL);
     generator_.seed(cur_seed_);
+  } else {
+    generator_.seed(init_seed_);
   }
+
   T *sampled_candidates = GetDeviceAddress<T>(outputs, kIndex0);
   S *true_expected_count = GetDeviceAddress<S>(outputs, kIndex1);
   S *sampled_expected_count = GetDeviceAddress<S>(outputs, kIndex2);
