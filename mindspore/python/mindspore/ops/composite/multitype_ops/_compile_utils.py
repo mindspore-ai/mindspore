@@ -834,18 +834,9 @@ def _tensor_setitem_by_int_tensor_with_tensor(data, index, value):
 
 def _tensor_setitem_by_bool_tensor_with_tensor(data, index, value):
     """Set a tensor item by a bool tensor with a tensor."""
-    index_shape = F.shape(index)
-    data_shape = F.shape(data)
-    const_utils.check_equal(data_shape, index_shape,
-                            "The tensor(shape={}) and tensor index(shape={}) should be the same shape.")
-    size = F.shape_mul(F.shape(value))
-    const_utils.check_equal(1, size,
-                            "When assign value is a tensor, its size should be {}, but current size is {}.")
     dtype = F.dtype(data)
     u_cast = F.cast(value, dtype)
-    one_data = F.ones_like(data)
-    u = F.tensor_mul(one_data, u_cast)
-    result = F.select(index, u, data)
+    result = data * index + u_cast * F.logical_not(index)
     return result
 
 
