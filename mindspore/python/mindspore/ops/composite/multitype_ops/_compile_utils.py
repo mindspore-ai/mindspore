@@ -940,7 +940,7 @@ def tensor_setitem_by_slice_with_tensor(data, input_slice, value):
     if check_result:
         data_shape = F.shape(data)
         step = const_utils.get_step_from_slice(input_slice)
-        if step == 1:
+        if step == 1 and not const_utils.is_ascend():
             if is_shape_unknown(data_shape):
                 return tensor_copy_slice_from_slice(data, input_slice, value)
             start, stop, step = const_utils.normalize_slice(input_slice, data.shape[0])
@@ -995,7 +995,7 @@ def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
     op_name = const_utils.TENSOR_SETITEM
     tuple_index = _transform_ellipsis_to_slice(data, tuple_index, op_name)
 
-    if const_utils.use_copy_slice(tuple_index):
+    if const_utils.use_copy_slice(tuple_index) and not const_utils.is_ascend():
         if is_shape_unknown(F.shape(data)):
             return tensor_copy_slice_from_tuple(data, tuple_index, value)
         dim1_start, dim1_stop, _ = const_utils.normalize_slice(tuple_index[1], data.shape[1])
