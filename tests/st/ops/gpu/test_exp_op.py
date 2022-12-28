@@ -32,20 +32,30 @@ class NetExp(nn.Cell):
         return self.exp(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_exp():
-    x0_np = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)
-    x1_np = np.random.uniform(-2, 2, 1).astype(np.float32)
+@pytest.mark.parametrize("dtype", [np.bool_, np.int8, np.int16, np.int32, np.int64,
+                                   np.uint8, np.uint16, np.uint32, np.uint64,
+                                   np.float16, np.float32, np.float64,
+                                   np.complex64, np.complex128])
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_exp(dtype, mode):
+    """
+    Feature: test Exp op float32 on GPU
+    Description: test Exp
+    Expectation: success.
+    """
+    x0_np = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(dtype)
+    x1_np = np.random.uniform(-2, 2, 1).astype(dtype)
     x0 = Tensor(x0_np)
     x1 = Tensor(x1_np)
     expect0 = np.exp(x0_np)
     expect1 = np.exp(x1_np)
-    error0 = np.ones(shape=expect0.shape) * 1.0e-5
-    error1 = np.ones(shape=expect1.shape) * 1.0e-5
+    error0 = np.ones(shape=expect0.shape) * 1.0e-3
+    error1 = np.ones(shape=expect1.shape) * 1.0e-3
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=mode, device_target="GPU")
     exp = NetExp()
     output0 = exp(x0)
     diff0 = output0.asnumpy() - expect0
@@ -56,16 +66,6 @@ def test_exp():
     assert np.all(diff1 < error1)
     assert output1.shape == expect1.shape
 
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    exp = NetExp()
-    output0 = exp(x0)
-    diff0 = output0.asnumpy() - expect0
-    assert np.all(diff0 < error0)
-    assert output0.shape == expect0.shape
-    output1 = exp(x1)
-    diff1 = output1.asnumpy() - expect1
-    assert np.all(diff1 < error1)
-    assert output1.shape == expect1.shape
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training

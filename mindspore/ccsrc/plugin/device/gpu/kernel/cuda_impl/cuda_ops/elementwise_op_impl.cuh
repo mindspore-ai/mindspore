@@ -37,7 +37,7 @@ CUDA_LIB_EXPORT void SqrtOpt(const T *input, T *output, const size_t count, cuda
 template <typename T>
 CUDA_LIB_EXPORT void CalOnesLike(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void LogicalNot(const T *input, T *output, const size_t count, cudaStream_t stream);
+CUDA_LIB_EXPORT void LogicalNot(const T *input, bool *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 CUDA_LIB_EXPORT void CalSelect(const bool *cond, const T *input_x, const T *input_y, T *output, const size_t count,
                                cudaStream_t cuda_stream);

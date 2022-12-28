@@ -59,7 +59,8 @@ abstract::ShapePtr SqrtInferShape(const PrimitivePtr &primitive, const std::vect
 
 TypePtr SqrtInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto x_type = input_args[kInputIndex0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types_with_complex, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types_with_complex_and_bool,
+                                                   primitive->name());
   return x_type;
 }
 

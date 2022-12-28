@@ -30,7 +30,15 @@ class SqrtNet(nn.Cell):
         return self.ops(x)
 
 
-def sqrt(nptype):
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("nptype", [np.bool_, np.int8, np.int16, np.int32, np.int64,
+                                    np.uint8, np.uint16, np.uint32, np.uint64,
+                                    np.float16, np.float32, np.float64,
+                                    np.complex64, np.complex128])
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_sqrt(nptype, mode):
     """
     Feature: ALL To ALL
     Description: a function to test sqrt accuracy.
@@ -38,31 +46,10 @@ def sqrt(nptype):
     """
     np.random.seed(0)
     x_np = np.random.rand(2, 3, 4, 4).astype(nptype)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=mode, device_target="GPU")
     output_ms = P.Sqrt()(Tensor(x_np))
     output_np = np.sqrt(x_np)
-    assert np.allclose(output_ms.asnumpy(), output_np)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_sqrt_float16():
-    sqrt(np.float16)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_sqrt_float32():
-    sqrt(np.float32)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_sqrt_float64():
-    sqrt(np.float64)
+    assert np.allclose(output_ms.asnumpy(), output_np, 1.0e-03, 1.0e-03)
 
 
 @pytest.mark.level1

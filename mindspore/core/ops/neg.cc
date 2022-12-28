@@ -48,9 +48,8 @@ abstract::ShapePtr NegInferShape(const PrimitivePtr &, const std::vector<Abstrac
 }
 
 TypePtr NegInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kUInt8,   kInt8,    kInt16,   kInt32,     kInt64,
-                                         kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), common_valid_types_with_complex,
+                                                   prim->name());
   return input_args[0]->BuildType();
 }
 

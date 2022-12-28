@@ -121,7 +121,7 @@ def test_tanh_fp16():
                [-0.2433, -0.05484, -0.848, -0.7197, -0.01453, 0.2637],
                [0.1528, 0.6494, 0.006195, 1.307, -0.2024, 2.113]]]
 
-    assert np.allclose(output[0].asnumpy(), expect, rtol=1e-3, atol=1e-3)
+    assert np.allclose(output[0].asnumpy(), expect, rtol=0.5 * 1e-2, atol=0.5 * 1e-2)
 
 
 @pytest.mark.level1

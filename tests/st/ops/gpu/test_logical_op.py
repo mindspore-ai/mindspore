@@ -20,6 +20,7 @@ import mindspore.context as context
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
+from mindspore import dtype as mstype
 
 
 class NetAnd(Cell):
@@ -83,19 +84,25 @@ def test_logicalor():
     assert np.all(output.asnumpy() == np.logical_or(x, y))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_logicalnot():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+@pytest.mark.parametrize("dtype", [np.bool_, np.int8, np.int16, np.int32, np.int64,
+                                   np.uint8, np.uint16, np.uint32, np.uint64,
+                                   np.float16, np.float32, np.float64,
+                                   np.complex64, np.complex128])
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_logicalnot(dtype, mode):
+    """
+    Feature: sigmoid
+    Description: test cases for sigmoid
+    Expectation: success
+    """
+    input_x = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(dtype)
+    context.set_context(mode=mode, device_target="GPU")
     logicalnot = NetNot()
-    output = logicalnot(Tensor(x))
-    assert np.all(output.asnumpy() == np.logical_not(x))
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    logicalnot = NetNot()
-    output = logicalnot(Tensor(x))
-    assert np.all(output.asnumpy() == np.logical_not(x))
+    output = logicalnot(Tensor(input_x))
+    assert np.allclose(output.asnumpy(), np.logical_not(input_x), 1.0e-3, 1.0e-3)
 
 
 @pytest.mark.level1

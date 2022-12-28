@@ -55,8 +55,8 @@ TypePtr SigmoidGradInfertype(const PrimitivePtr &prim, const std::vector<Abstrac
   (void)abstract::CheckDtypeSame(prim_name, y, dy);
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
-  const std::set<TypePtr> input_types = common_valid_types_with_complex;
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, input_types, prim->name());
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
   return x_type;
 }
 }  // namespace

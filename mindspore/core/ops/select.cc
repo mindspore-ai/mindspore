@@ -16,6 +16,7 @@
 
 #include <complex>
 #include "ops/select.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/tensor_construct_utils.h"
@@ -88,8 +89,11 @@ TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   auto cond_type = input_args[kSelectCondIndex]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
   MS_EXCEPTION_IF_NULL(y_type);
-  (void)CheckAndConvertUtils::CheckSubClass("x_type", x_type, {kTensorType}, prim_name);
-  (void)CheckAndConvertUtils::CheckSubClass("y_type", y_type, {kTensorType}, prim_name);
+
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_type", x_type, common_valid_types_with_complex_and_bool,
+                                                   prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("y_type", y_type, common_valid_types_with_complex_and_bool,
+                                                   prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("cond", cond_type, {kBool}, prim_name);
   if (*x_type != *y_type) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
@@ -180,7 +184,8 @@ void SelectInnerInferValue(const PrimitivePtr &prim, const tensor::TensorPtr &co
       MS_EXCEPTION_IF_NULL(result_type);
       MS_EXCEPTION(TypeError) << "For '" << prim->name()
                               << "', the supported data type is ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', "
-                                 "'uint16','uint32', 'uint64','float16', 'float32', 'float64'], but got "
+                                 "'uint16','uint32', 'uint64','float16', 'float32', 'float64', 'complex64', "
+                                 "'complex128'], but got "
                               << result_type->ToString() << ".";
     }
   }

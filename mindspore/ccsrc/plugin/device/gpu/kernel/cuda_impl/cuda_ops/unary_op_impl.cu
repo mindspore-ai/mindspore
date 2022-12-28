@@ -1496,11 +1496,46 @@ template CUDA_LIB_EXPORT void Atanh<Complex<double>>(const Complex<double> *inpu
 template CUDA_LIB_EXPORT void Expm1<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                      const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Log1p<Complex<double>>(const Complex<double> *input, Complex<double> *output,
-                                                   const size_t count, cudaStream_t cuda_stream);
+                                                     const size_t count, cudaStream_t cuda_stream);
 
 // bool
+template CUDA_LIB_EXPORT void Expm1<bool>(const bool *input, bool *output, const size_t count,
+                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Log1p<bool>(const bool *input, bool *output, const size_t count,
+                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Erf<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Erfc<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Invert<bool>(const bool *input, bool *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sin<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cos<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tan<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cosh<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asin<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ACos<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Atan<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asinh<bool>(const bool *input, bool *output, const size_t count,
+                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Acosh<bool>(const bool *input, bool *output, const size_t count,
+                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Atanh<bool>(const bool *input, bool *output, const size_t count,
+                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Rsqrt<bool>(const bool *input, bool *output, const size_t count,
+                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Abs<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Floor<bool>(const bool *input, bool *output, const size_t count,
+                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Trunc<bool>(const bool *input, bool *output, const size_t count,
+                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Ceil<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Rint<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Round<bool>(const bool *input, bool *output, const size_t count,
+                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sign<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Real<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Imag<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Conj<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
 
 // int16
 template CUDA_LIB_EXPORT void Real<int16_t>(const int16_t *input, int16_t *output, const size_t count,
@@ -1541,4 +1576,3 @@ template CUDA_LIB_EXPORT void Imag<uint64_t>(const uint64_t *input, uint64_t *ou
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Conj<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
-

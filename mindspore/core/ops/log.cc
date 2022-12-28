@@ -94,8 +94,7 @@ TypePtr LogInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   (void)types.emplace("x", input_args[0]->BuildType());
   std::set<TypePtr> valid_params_types = {kTensorType};
   (void)CheckAndConvertUtils::CheckSubClass("x_type", input_args[0]->BuildType(), valid_params_types, op_name);
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex_and_bool, prim->name());
   return input_args[0]->BuildType();
 }
 ValuePtr LogInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
