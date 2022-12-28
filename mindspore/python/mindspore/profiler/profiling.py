@@ -711,7 +711,7 @@ class Profiler:
         if GlobalComm.INITED:
             self._rank_size = get_group_size()
         else:
-            self._rank_size = os.getenv('RANK_SIZE')
+            self._rank_size = int(os.getenv('RANK_SIZE', '1'))
 
         if self._has_started:
             self.stop()
@@ -905,7 +905,7 @@ class Profiler:
         if GlobalComm.INITED:
             self._rank_size = get_group_size()
         else:
-            self._rank_size = os.getenv('RANK_SIZE')
+            self._rank_size = int(os.getenv('RANK_SIZE', '1'))
 
         if self._has_started:
             self.stop()
@@ -988,7 +988,7 @@ class Profiler:
         """Collect and analyse cpu performance data."""
 
         try:
-            timeline_generator = CpuTimelineGenerator(self._output_path, context.get_context("mode"))
+            timeline_generator = CpuTimelineGenerator(self._output_path, self._rank_id, context.get_context("mode"))
             timeline_generator.init_timeline()
             timeline_generator.write_timeline(self._timeline_size_limit_byte)
             timeline_generator.write_timeline_summary()

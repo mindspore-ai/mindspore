@@ -81,6 +81,7 @@ class BaseTimelineGenerator:
     _aicpu_op_label = "AICPU OP"
 
     _device_id = 0
+    _rank_size = 1
     _profiling_dir = ""
     _timeline_summary_filename = ""
     _display_filename = ""

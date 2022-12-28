@@ -431,6 +431,9 @@ void ProfilingUtils::SetReportProfilingData(const std::vector<uint32_t> &task_id
 
 // Report MindSpore Framework data to Ascend Profiler
 void ProfilingUtils::ReportMindSporeFrameworkData() {
+  if (ProfilingManager::GetInstance().IsMsprofiling()) {
+    return;
+  }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
