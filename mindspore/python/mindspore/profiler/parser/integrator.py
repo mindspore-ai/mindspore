@@ -19,7 +19,6 @@ import os
 from decimal import Decimal
 from enum import Enum
 import sys
-
 from mindspore import log as logger
 from mindspore.profiler.common.exceptions.exceptions import ProfilerRawFileException
 from mindspore.profiler.common.util import query_latest_trace_time_file, to_int, to_millisecond
