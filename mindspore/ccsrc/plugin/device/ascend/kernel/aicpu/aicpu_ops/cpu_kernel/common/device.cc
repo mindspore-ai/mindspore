@@ -22,7 +22,7 @@
 #include "cpu_kernel/common/host_sharder.h"
 
 namespace aicpu {
-Device::Device(DeviceType device) : device_(device), sharder_(InitSharder(device)) {}
+Device::Device(DeviceType device) : device_(device), sharder_(InitSharder(device)){};
 
 Device::~Device() {
   if (sharder_ != nullptr) {

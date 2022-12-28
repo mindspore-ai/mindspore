@@ -74,9 +74,9 @@ std::string CpuKernelUtils::GetTensorName(const Tensor *tensor) {
 /*
  * set tensor name.
  */
-void CpuKernelUtils::SetTensorName(const std::string &name, std::shared_ptr<Tensor> *tensor) {
+void CpuKernelUtils::SetTensorName(const std::string &name, std::shared_ptr<Tensor> &tensor) {
   KERNEL_LOG_INFO("Set tensor name[%s]", name.c_str());
-  auto impl = GetImpl(tensor->get());
+  auto impl = GetImpl(tensor.get());
   KERNEL_CHECK_NULLPTR_VOID(impl, "Get Tensor impl failed.")
   impl->SetName(name);
 }

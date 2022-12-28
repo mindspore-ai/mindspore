@@ -22,6 +22,7 @@
 #include <mutex>
 
 namespace aicpu {
+
 class Notification {
  public:
   Notification() : notified_(0) {}
@@ -47,9 +48,10 @@ class Notification {
   }
 
  private:
-  std::mutex mu_;
-  std::condition_variable cv_;
-  std::atomic<bool> notified_;
+  std::mutex mu_;               // protects mutations of notified_
+  std::condition_variable cv_;  // signaled when notified_ becomes non-zero
+  std::atomic<bool> notified_;  // mutations under mu_
 };
+
 }  // namespace aicpu
 #endif  // AICPU_CONTEXT_COMMON_NOTIFICATION_H

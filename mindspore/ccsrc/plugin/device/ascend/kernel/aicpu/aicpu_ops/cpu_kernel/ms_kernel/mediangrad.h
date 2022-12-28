@@ -27,16 +27,16 @@ class MedianGradCpuKernel : public CpuKernel {
   ~MedianGradCpuKernel() override = default;
 
  protected:
-  uint32_t Compute(const CpuKernelContext &ctx) override;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t MedianGradParamCheck(const CpuKernelContext &ctx);
+  uint32_t MedianGradParamCheck(CpuKernelContext &ctx);
 
   template <typename T1, typename T2>
-  uint32_t MedianGradCompute(const CpuKernelContext &ctx);
+  uint32_t MedianGradCompute(CpuKernelContext &ctx);
 
   template <typename T1, typename T2>
-  uint32_t GlobalMedianGradCompute(const CpuKernelContext &ctx);
+  uint32_t GlobalMedianGradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

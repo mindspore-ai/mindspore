@@ -30,7 +30,7 @@ const char *const kMaskedSelectGrad = "MaskedSelectGrad";
 }  // namespace
 
 namespace aicpu {
-uint32_t MaskedSelectGradCpuKernel::Compute(const CpuKernelContext &ctx) {
+uint32_t MaskedSelectGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kMaskedSelectGradInputNum, kMaskedSelectGradOutputNum),
                       "[%s] check params failed.", kMaskedSelectGrad);
@@ -82,7 +82,7 @@ uint32_t MaskedSelectGradCpuKernel::Compute(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t MaskedSelectGradCpuKernel::MaskedSelectGradCompute(const CpuKernelContext &ctx) {
+uint32_t MaskedSelectGradCpuKernel::MaskedSelectGradCompute(CpuKernelContext &ctx) {
   bool *mask = reinterpret_cast<bool *>(ctx.Input(1)->GetData());
   KERNEL_CHECK_NULLPTR(mask, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "[%s] get input_data[1] failed.",
                        kMaskedSelectGrad);
@@ -96,7 +96,7 @@ uint32_t MaskedSelectGradCpuKernel::MaskedSelectGradCompute(const CpuKernelConte
   auto input_shape_a = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   auto input_shape_b = ctx.Input(1)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> output_shape;
-  auto ret = GetBroadcastShape(input_shape_a, input_shape_b, &output_shape);
+  auto ret = GetBroadcastShape(input_shape_a, input_shape_b, output_shape);
   KERNEL_CHECK_FALSE(ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID, "Shape of x and mask can't be broadcast.");
   int64_t tensor_size = 1;
   for (const int64_t &d : output_shape) {
@@ -107,7 +107,7 @@ uint32_t MaskedSelectGradCpuKernel::MaskedSelectGradCompute(const CpuKernelConte
     dx[k] = NUM_ZERO;
   }
   int64_t j = 0;
-  BroadcastIterator iter(input_shape_a, input_shape_b, &output_shape);
+  BroadcastIterator iter(input_shape_a, input_shape_b, output_shape);
   iter.SetPos(0);
   for (int64_t i = 0; i < tensor_size; ++i) {
     if (mask[iter.GetInputPosB()]) {

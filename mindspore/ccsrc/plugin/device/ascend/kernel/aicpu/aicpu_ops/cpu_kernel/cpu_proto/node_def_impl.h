@@ -29,7 +29,7 @@ class NodeDefImpl {
   friend class CpuKernelUtils;
 
  public:
-  explicit NodeDefImpl(
+  NodeDefImpl(
     aicpuops::NodeDef *nodedef, std::function<void(aicpuops::NodeDef *)> del_func = [](aicpuops::NodeDef *p) {})
       : nodedef_(nodedef, del_func) {}
 
@@ -49,7 +49,7 @@ class NodeDefImpl {
    * serialize string to node def.
    * @return bool: true->success, false->failed
    */
-  bool SerializeToString(std::string *str) const;
+  bool SerializeToString(std::string &str) const;
 
   /*
    * set op type to node def.

@@ -26,18 +26,18 @@ namespace aicpu {
  * @return status code
  */
 template <typename T>
-uint32_t EqualCalculate(const CpuKernelContext &ctx, BCalcInfo *calcInfo, bool flag) {
-  auto input_x1 = reinterpret_cast<T *>(calcInfo->input_0->GetData());
-  auto input_x2 = reinterpret_cast<T *>(calcInfo->input_1->GetData());
-  auto output_y = reinterpret_cast<bool *>(calcInfo->output->GetData());
+uint32_t EqualCalculate(const CpuKernelContext &ctx, BCalcInfo &calcInfo, bool flag) {
+  auto input_x1 = reinterpret_cast<T *>(calcInfo.input_0->GetData());
+  auto input_x2 = reinterpret_cast<T *>(calcInfo.input_1->GetData());
+  auto output_y = reinterpret_cast<bool *>(calcInfo.output->GetData());
   KERNEL_CHECK_NULLPTR(input_x1, KERNEL_STATUS_PARAM_INVALID, "Get input x1 data failed.")
   KERNEL_CHECK_NULLPTR(input_x2, KERNEL_STATUS_PARAM_INVALID, "Get input x2 data failed.")
   KERNEL_CHECK_NULLPTR(output_y, KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
-  size_t data_num = calcInfo->x_indexes.size();
+  size_t data_num = calcInfo.x_indexes.size();
   auto shard_equal = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto x_index = input_x1 + calcInfo->x_indexes[i];
-      auto y_index = input_x2 + calcInfo->y_indexes[i];
+      auto x_index = input_x1 + calcInfo.x_indexes[i];
+      auto y_index = input_x2 + calcInfo.y_indexes[i];
       output_y[i] = (flag == true) ? (*x_index == *y_index) : (*x_index != *y_index);
     }
   };
@@ -73,7 +73,7 @@ uint32_t EqualCompute(const CpuKernelContext &ctx, bool flag) {
   bcast.BCastIndexes(calcInfo.x_indexes, calcInfo.y_indexes);
   bcast.GetBcastVec(calcInfo);
 
-  return EqualCalculate<T>(ctx, &calcInfo, flag);
+  return EqualCalculate<T>(ctx, calcInfo, flag);
 }
 }  // namespace aicpu
 #endif

@@ -27,7 +27,7 @@ bool NodeDef::ParseFromString(const std::string &str) { return impl_->ParseFromS
 /*
  * serialize string to node def.
  */
-bool NodeDef::SerializeToString(std::string *str) const { return impl_->SerializeToString(str); }
+bool NodeDef::SerializeToString(std::string &str) const { return impl_->SerializeToString(str); }
 
 /*
  * set op type to node def.

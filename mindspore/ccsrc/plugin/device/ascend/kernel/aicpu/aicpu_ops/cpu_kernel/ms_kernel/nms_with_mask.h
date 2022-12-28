@@ -32,11 +32,11 @@ class NMSWithMaskCpuKernel : public CpuKernel {
  public:
   NMSWithMaskCpuKernel() = default;
   ~NMSWithMaskCpuKernel() override = default;
-  uint32_t Compute(const CpuKernelContext &ctx) override;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 
   int num_input_{0};
   float iou_value_{0.0};

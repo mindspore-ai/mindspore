@@ -25,8 +25,8 @@
 namespace aicpu {
 class BroadcastIterator {
  public:
-  BroadcastIterator(const std::vector<int64_t> &input_shape_a, const std::vector<int64_t> &input_shape_b,
-                    std::vector<int64_t> *output_shape);
+  BroadcastIterator(std::vector<int64_t> &input_shape_a, std::vector<int64_t> &input_shape_b,
+                    std::vector<int64_t> &output_shape);
   virtual ~BroadcastIterator() = default;
   inline int64_t GetInputPosA() const { return input_pos_[0]; }
   inline int64_t GetInputPosB() const { return input_pos_[1]; }
@@ -52,8 +52,7 @@ class BroadcastIterator {
   std::vector<int64_t> input_strides_b_;
   std::vector<int64_t> input_back_strides_a_;
   std::vector<int64_t> input_back_strides_b_;
-  static const size_t size_two = 2;
-  std::array<int64_t, size_two> input_pos_ = {{0, 0}};
+  std::array<int64_t, 2> input_pos_ = {{0, 0}};
   size_t output_dimension_{0};
 };
 
@@ -63,6 +62,6 @@ class BroadcastIterator {
  * @return status
  */
 uint32_t GetBroadcastShape(const std::vector<int64_t> &x, const std::vector<int64_t> &y,
-                           std::vector<int64_t> *broadcast_shape);
+                           std::vector<int64_t> &broadcast_shape);
 }  // namespace aicpu
 #endif

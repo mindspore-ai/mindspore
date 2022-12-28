@@ -68,23 +68,23 @@ bool CheckShape(Format format, const ShapeVector &shape) {
  * @dst_shape: N*W1*H1*H0*w0
  * @return
  */
-uint32_t TransShapeToFracNz(const ShapeVector &src_shape, DataType data_type, ShapeVector *dst_shape,
-                            ShapeVector *hw_shape) {
-  dst_shape->clear();
-  hw_shape->clear();
+uint32_t TransShapeToFracNz(const ShapeVector &src_shape, DataType data_type, ShapeVector &dst_shape,
+                            ShapeVector &hw_shape) {
+  dst_shape.clear();
+  hw_shape.clear();
   auto w0 = GetCubeSizeByDataType(data_type);
   int64_t h0 = kCubeSize;
   switch (src_shape.size()) {
     case kSingleDim:
-      dst_shape->push_back(Ceil(src_shape[kNdDimIndexN], w0));
-      dst_shape->push_back(kDimDefaultValue);
-      dst_shape->push_back(h0);
-      dst_shape->push_back(w0);
-      hw_shape->push_back(kDimDefaultValue);
-      hw_shape->push_back(kDimDefaultValue);
-      hw_shape->push_back(src_shape[kNdDimIndexN]);
-      if (!IsShapeValid(*dst_shape)) {
-        KERNEL_LOG_ERROR("Failed to check dst shape [%s]", VectorToString(*dst_shape).c_str());
+      dst_shape.push_back(Ceil(src_shape[kNdDimIndexN], w0));
+      dst_shape.push_back(kDimDefaultValue);
+      dst_shape.push_back(h0);
+      dst_shape.push_back(w0);
+      hw_shape.push_back(kDimDefaultValue);
+      hw_shape.push_back(kDimDefaultValue);
+      hw_shape.push_back(src_shape[kNdDimIndexN]);
+      if (!IsShapeValid(dst_shape)) {
+        KERNEL_LOG_ERROR("Failed to check dst shape [%s]", VectorToString(dst_shape).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
       }
       return KERNEL_STATUS_OK;
@@ -92,27 +92,27 @@ uint32_t TransShapeToFracNz(const ShapeVector &src_shape, DataType data_type, Sh
       auto size = src_shape.size();
       int64_t times = 1;
       for (size_t i = 0; i != size - kDimDValueBNdFNz; i++) {
-        dst_shape->push_back(src_shape[i]);
+        dst_shape.push_back(src_shape[i]);
         times *= src_shape[i];
       }
-      dst_shape->push_back(Ceil(src_shape[size - kNdDimCountBackwardsW], w0));
-      dst_shape->push_back(Ceil(src_shape[size - kNdDimCountBackwardsWH], h0));
-      dst_shape->push_back(h0);
-      dst_shape->push_back(w0);
-      hw_shape->push_back(times);
-      hw_shape->push_back(src_shape[size - kNdDimCountBackwardsWH]);
-      hw_shape->push_back(src_shape[size - kNdDimCountBackwardsW]);
-      if (!IsShapeValid(*dst_shape)) {
-        KERNEL_LOG_ERROR("Failed to check dst shape [%s]", VectorToString(*dst_shape).c_str());
+      dst_shape.push_back(Ceil(src_shape[size - kNdDimCountBackwardsW], w0));
+      dst_shape.push_back(Ceil(src_shape[size - kNdDimCountBackwardsWH], h0));
+      dst_shape.push_back(h0);
+      dst_shape.push_back(w0);
+      hw_shape.push_back(times);
+      hw_shape.push_back(src_shape[size - kNdDimCountBackwardsWH]);
+      hw_shape.push_back(src_shape[size - kNdDimCountBackwardsW]);
+      if (!IsShapeValid(dst_shape)) {
+        KERNEL_LOG_ERROR("Failed to check dst shape [%s]", VectorToString(dst_shape).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
       }
       return KERNEL_STATUS_OK;
   }
 }
 
-uint32_t CheckShapeRelation(const TransArgs &args, ShapeVector *hw_shape) {
+uint32_t CheckShapeRelation(const TransArgs &args, ShapeVector &hw_shape) {
   ShapeVector expect_src_shape;
-  auto ret = TransShapeToFracNz(args.dst_shape, args.src_data_type, &expect_src_shape, hw_shape);
+  auto ret = TransShapeToFracNz(args.dst_shape, args.src_data_type, expect_src_shape, hw_shape);
   if (ret != KERNEL_STATUS_OK) {
     KERNEL_LOG_ERROR(
       "Trans shape from [%s] to [%s], shape [%s] to [%s], data type [%s] "
@@ -128,12 +128,12 @@ uint32_t CheckShapeRelation(const TransArgs &args, ShapeVector *hw_shape) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t TransFormatFromNdToFracNz(const TransArgs &args, TransResult *result, const ShapeVector &hw_shape) {
+uint32_t TransFormatFromNdToFracNz(const TransArgs &args, TransResult &result, const ShapeVector &hw_shape) {
   int size = GetSizeByDataType(args.src_data_type);
   // data size will not be greater than INT_MAX
   int64_t dst_size = GetItemNumByShape(args.dst_shape) * size;
   if (dst_size == 0) {
-    result->length = static_cast<size_t>(dst_size);
+    result.length = static_cast<size_t>(dst_size);
     return KERNEL_STATUS_OK;
   }
 
@@ -206,16 +206,16 @@ uint32_t TransFormatFromNdToFracNz(const TransArgs &args, TransResult *result, c
       }
     }
   }
-  result->data = dst;
-  result->length = static_cast<size_t>(dst_size);
+  result.data = dst;
+  result.length = static_cast<size_t>(dst_size);
   return KERNEL_STATUS_OK;
 }
 
-uint32_t TransFormatFromFracNzToNd(const TransArgs &args, TransResult *result, const ShapeVector &dst_hw_shape) {
+uint32_t TransFormatFromFracNzToNd(const TransArgs &args, TransResult &result, const ShapeVector &dst_hw_shape) {
   int size = GetSizeByDataType(args.src_data_type);
   int64_t dst_size = GetItemNumByShape(args.dst_shape) * size;
   if (dst_size == 0) {
-    result->length = static_cast<size_t>(dst_size);
+    result.length = static_cast<size_t>(dst_size);
     return KERNEL_STATUS_OK;
   }
 
@@ -286,13 +286,13 @@ uint32_t TransFormatFromFracNzToNd(const TransArgs &args, TransResult *result, c
       }
     }
   }
-  result->data = dst;
-  result->length = static_cast<size_t>(dst_size);
+  result.data = dst;
+  result.length = static_cast<size_t>(dst_size);
   return KERNEL_STATUS_OK;
 }
 }  // namespace
 
-uint32_t FormatTransferFractalNz::TransFormat(const TransArgs &args, TransResult *result) {
+uint32_t FormatTransferFractalNz::TransFormat(const TransArgs &args, TransResult &result) {
   if (!IsDataTypeSupport(args.src_data_type)) {
     KERNEL_LOG_ERROR(
       "Trans format from [%s] to [%s], src shape [%s], dst shape [%s], data "
@@ -319,7 +319,7 @@ uint32_t FormatTransferFractalNz::TransFormat(const TransArgs &args, TransResult
     DTypeStr(args.src_data_type).c_str());
   ShapeVector expect_shape;
   ShapeVector hw_shape;
-  auto ret = TransShapeToFracNz(args.src_shape, args.src_data_type, &expect_shape, &hw_shape);
+  auto ret = TransShapeToFracNz(args.src_shape, args.src_data_type, expect_shape, hw_shape);
   if (ret != KERNEL_STATUS_OK) {
     return ret;
   }
@@ -330,7 +330,7 @@ uint32_t FormatTransferFractalNz::TransFormat(const TransArgs &args, TransResult
 }
 
 uint32_t FormatTransferFractalNz::TransShape(Format src_format, const ShapeVector &src_shape, DataType data_type,
-                                             Format dst_format, ShapeVector *dst_shape, int64_t groups) {
+                                             Format dst_format, ShapeVector &dst_shape, int64_t groups) {
   if (!IsDataTypeSupport(data_type)) {
     KERNEL_LOG_ERROR(
       "Trans format from [%s] to [%s], src shape [%s], data type [%s] is not "
@@ -348,10 +348,10 @@ uint32_t FormatTransferFractalNz::TransShape(Format src_format, const ShapeVecto
     return KERNEL_STATUS_PARAM_INVALID;
   }
   ShapeVector hw_shape;
-  return TransShapeToFracNz(src_shape, data_type, dst_shape, &hw_shape);
+  return TransShapeToFracNz(src_shape, data_type, dst_shape, hw_shape);
 }
 
-uint32_t FormatTransferFractalNzND::TransFormat(const TransArgs &args, TransResult *result) {
+uint32_t FormatTransferFractalNzND::TransFormat(const TransArgs &args, TransResult &result) {
   if (!IsDataTypeSupport(args.src_data_type)) {
     KERNEL_LOG_ERROR(
       "Trans format from [%s] to [%s], src shape [%s], dst shape [%s], data "
@@ -379,7 +379,7 @@ uint32_t FormatTransferFractalNzND::TransFormat(const TransArgs &args, TransResu
     DTypeStr(args.src_data_type).c_str());
 
   ShapeVector hw_shape;
-  auto ret = CheckShapeRelation(args, &hw_shape);
+  auto ret = CheckShapeRelation(args, hw_shape);
   if (ret != KERNEL_STATUS_OK) {
     return ret;
   }
@@ -387,7 +387,7 @@ uint32_t FormatTransferFractalNzND::TransFormat(const TransArgs &args, TransResu
 }
 
 uint32_t FormatTransferFractalNzND::TransShape(Format src_format, const ShapeVector &src_shape, DataType data_type,
-                                               Format dst_format, ShapeVector *dst_shape, int64_t groups) {
+                                               Format dst_format, ShapeVector &dst_shape, int64_t groups) {
   KERNEL_LOG_ERROR(
     "The shape derivation from [%s] to [%s] is not unique. Trans shape is "
     "not supported",

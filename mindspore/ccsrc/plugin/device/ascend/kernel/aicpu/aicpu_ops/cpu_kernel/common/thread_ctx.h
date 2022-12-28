@@ -30,7 +30,7 @@ class ThreadCtx {
 
   virtual uint32_t SetThreadCtxInfo(CtxType type, const std::string &key, const std::string &value) const = 0;
 
-  virtual uint32_t GetThreadCtxInfo(CtxType type, const std::string &key, std::string *value) const = 0;
+  virtual uint32_t GetThreadCtxInfo(CtxType type, const std::string &key, std::string &value) const = 0;
 
   virtual uint32_t RemoveThreadCtxInfo(CtxType type, const std::string &key) const = 0;
 

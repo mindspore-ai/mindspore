@@ -25,14 +25,14 @@ class MedianCpuKernel : public CpuKernel {
  public:
   MedianCpuKernel() = default;
   ~MedianCpuKernel() override = default;
-  uint32_t Compute(const CpuKernelContext &ctx) override;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t MedianCheck(const CpuKernelContext &ctx);
+  uint32_t MedianCheck(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t GlobalMedianCompute(const CpuKernelContext &ctx);
+  uint32_t GlobalMedianCompute(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t MedianCompute(const CpuKernelContext &ctx);
+  uint32_t MedianCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

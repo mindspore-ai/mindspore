@@ -49,13 +49,13 @@ struct BCalcInfo {
 
 class Bcast {
  public:
-  Bcast() : valid_(true) {}
-  Bcast(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape);
+  Bcast() : valid_(true){};
+  Bcast(std::vector<int64_t> &x_shape, std::vector<int64_t> &y_shape);
   ~Bcast() = default;
 
   uint32_t GenerateBcastInfo(const BCalcInfo &calcInfo);
-  void GetBcastVec(BCalcInfo *calcInfo);
-  void BCastIndexes(std::vector<int64_t> *x_indexes, std::vector<int64_t> *y_indexes);
+  void GetBcastVec(BCalcInfo &calcInfo);
+  void BCastIndexes(std::vector<int64_t> &x_indexes, std::vector<int64_t> &y_indexes);
   int64_t GetBroadcastXIndex(int64_t index) const;
   int64_t GetBroadcastYIndex(int64_t index) const;
   bool IsValid() const { return valid_; }

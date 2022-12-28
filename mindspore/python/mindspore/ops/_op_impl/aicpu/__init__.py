@@ -166,3 +166,8 @@ from .parallel_concat import _parallel_concat_aicpu
 from .concat_offset import _concat_offset_aicpu
 from .range import _range_aicpu
 from .slice_grad import _slice_grad_aicpu
+from .median import _median_aicpu
+from .median_grad import _median_grad_aicpu
+from .reduce_sum import _reduce_sum_aicpu
+from .adaptive_avg_pool_2d_v1 import _adaptive_avg_pool_2d_v1_aicpu
+from .fill_v2 import _fill_v2_aicpu

@@ -40,7 +40,7 @@ KernelStatus CheckDataTypeSupport(DataType data_type) {
 }
 
 void TransSrcDataToDstData(const TransArgs &args, const std::vector<int64_t> &shape_ndhwc,
-                           std::shared_ptr<uint8_t> *dst, int64_t c0, int32_t data_size) {
+                           std::shared_ptr<uint8_t> &dst, int64_t c0, int32_t data_size) {
   const int64_t n = shape_ndhwc[0];
   const int64_t d = shape_ndhwc[1];
   const int64_t h = shape_ndhwc[2];
@@ -55,6 +55,7 @@ void TransSrcDataToDstData(const TransArgs &args, const std::vector<int64_t> &sh
   const int64_t c1hwc0 = c1 * hwc0;
   const int64_t dc1hwc0 = d * c1hwc0;
   const int64_t ndhwc = n * dhwc;
+  int64_t src_index = 0;
 
   for (int64_t ndhwc_idx = 0; ndhwc_idx < ndhwc; ++ndhwc_idx) {
     const int64_t n_idx = ndhwc_idx / dhwc;
@@ -62,11 +63,11 @@ void TransSrcDataToDstData(const TransArgs &args, const std::vector<int64_t> &sh
     const int64_t c_idx = ndhwc_idx % c;
     const int64_t dst_index =
       n_idx * dc1hwc0 + (dhw_idx / hw) * c1hwc0 + (c_idx / c0) * hwc0 + (dhw_idx % hw) * c0 + c_idx % c0;
-    int64_t src_index = n_idx * dhwc + c_idx * dhw + dhw_idx;
+    src_index = n_idx * dhwc + c_idx * dhw + dhw_idx;
     if (args.src_format == FORMAT_NDHWC) {
       src_index = n_idx * dhwc + dhw_idx * c + c_idx;
     }
-    uint8_t *dst_data = dst->get() + dst_index * data_size;
+    uint8_t *dst_data = dst.get() + dst_index * data_size;
     const uint8_t *src_data = args.data + src_index * data_size;
     for (int64_t index = 0; index < data_size; ++index) {
       *dst_data++ = *src_data++;
@@ -74,12 +75,12 @@ void TransSrcDataToDstData(const TransArgs &args, const std::vector<int64_t> &sh
   }
 }
 
-uint32_t TransDstDataToNdc1hwc0(const TransArgs &args, TransResult *result) {
+uint32_t TransDstDataToNdc1hwc0(const TransArgs &args, TransResult &result) {
   const int32_t data_size = GetSizeByDataType(args.src_data_type);
   const auto dst_size = GetItemNumByShape(args.dst_shape) * data_size;
   // The input is empty tensor, we should return success directly
   if (dst_size == 0) {
-    result->length = 0;
+    result.length = 0;
     return KERNEL_STATUS_OK;
   }
   std::shared_ptr<uint8_t> dst(new (std::nothrow) uint8_t[dst_size], std::default_delete<uint8_t[]>());
@@ -117,16 +118,16 @@ uint32_t TransDstDataToNdc1hwc0(const TransArgs &args, TransResult *result) {
     KERNEL_LOG_ERROR("Failed to get c0, c0 is [%ld]", c0);
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  TransSrcDataToDstData(args, shape_ndhwc, &dst, c0, data_size);
+  TransSrcDataToDstData(args, shape_ndhwc, dst, c0, data_size);
 
-  result->data = dst;
-  result->length = static_cast<size_t>(dst_size);
+  result.data = dst;
+  result.length = static_cast<size_t>(dst_size);
 
   return KERNEL_STATUS_OK;
 }
 
 uint32_t TransShapeToNdc1hwc0(const std::vector<int64_t> &src_shape, const Format &src_format,
-                              const DataType &data_type, std::vector<int64_t> *dst_shape) {
+                              const DataType &data_type, std::vector<int64_t> &dst_shape) {
   auto iter = kFormatTable.find(src_format);
   if (iter == kFormatTable.end()) {
     KERNEL_LOG_ERROR("src_format is wrong, now format is [%d]", static_cast<int32_t>(src_format));
@@ -148,15 +149,15 @@ uint32_t TransShapeToNdc1hwc0(const std::vector<int64_t> &src_shape, const Forma
   if (!CheckShapeValid(src_shape, static_cast<int64_t>(cur_format.length()))) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  dst_shape->clear();
-  dst_shape->push_back(src_shape.at(n_index));
-  dst_shape->push_back(src_shape.at(d_index));
-  dst_shape->push_back(Ceil(src_shape.at(c_index), c0));
-  dst_shape->push_back(src_shape.at(h_index));
-  dst_shape->push_back(src_shape.at(w_index));
-  dst_shape->push_back(c0);
-  if (!IsShapeValid(*dst_shape)) {
-    KERNEL_LOG_ERROR("Check shape failed, dst shape [%s]", VectorToString(*dst_shape).c_str());
+  dst_shape.clear();
+  dst_shape.push_back(src_shape.at(n_index));
+  dst_shape.push_back(src_shape.at(d_index));
+  dst_shape.push_back(Ceil(src_shape.at(c_index), c0));
+  dst_shape.push_back(src_shape.at(h_index));
+  dst_shape.push_back(src_shape.at(w_index));
+  dst_shape.push_back(c0);
+  if (!IsShapeValid(dst_shape)) {
+    KERNEL_LOG_ERROR("Check shape failed, dst shape [%s]", VectorToString(dst_shape).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -164,7 +165,7 @@ uint32_t TransShapeToNdc1hwc0(const std::vector<int64_t> &src_shape, const Forma
 }
 }  // namespace
 
-uint32_t FormatTransferNdc1hwc0::TransFormat(const TransArgs &args, TransResult *result) {
+uint32_t FormatTransferNdc1hwc0::TransFormat(const TransArgs &args, TransResult &result) {
   KERNEL_LOG_INFO(
     "Begin to trans format from [%s] to [%s], src shape [%s], data type [%s], dst "
     "shape [%s]",
@@ -174,7 +175,7 @@ uint32_t FormatTransferNdc1hwc0::TransFormat(const TransArgs &args, TransResult 
 
   std::vector<int64_t> expect_shape;
   auto ret =
-    TransShape(args.src_format, args.src_shape, args.src_data_type, args.dst_format, &expect_shape, args.groups);
+    TransShape(args.src_format, args.src_shape, args.src_data_type, args.dst_format, expect_shape, args.groups);
   if (ret != KERNEL_STATUS_OK) {
     return ret;
   }
@@ -186,7 +187,7 @@ uint32_t FormatTransferNdc1hwc0::TransFormat(const TransArgs &args, TransResult 
 }
 
 uint32_t FormatTransferNdc1hwc0::TransShape(Format src_format, const std::vector<int64_t> &src_shape,
-                                            DataType data_type, Format dst_format, std::vector<int64_t> *dst_shape,
+                                            DataType data_type, Format dst_format, std::vector<int64_t> &dst_shape,
                                             int64_t groups) {
   (void)dst_format;
   (void)groups;

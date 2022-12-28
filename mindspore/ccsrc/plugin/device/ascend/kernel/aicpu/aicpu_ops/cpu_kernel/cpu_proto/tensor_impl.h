@@ -27,7 +27,7 @@ class TensorImpl {
   friend class CpuKernelUtils;
 
  public:
-  explicit TensorImpl(
+  TensorImpl(
     aicpuops::Tensor *tensor, std::function<void(aicpuops::Tensor *)> delFunc = [](aicpuops::Tensor *p) {})
       : tensor_(tensor, delFunc) {}
 

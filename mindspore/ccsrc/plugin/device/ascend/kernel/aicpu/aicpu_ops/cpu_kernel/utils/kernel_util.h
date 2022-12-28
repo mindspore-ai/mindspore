@@ -130,8 +130,7 @@ std::string FormatToSerialString(Format format);
 inline int32_t GetPrimaryFormat(int32_t format) { return static_cast<int32_t>(static_cast<uint32_t>(format) & 0xff); }
 
 inline int32_t GetSubFormat(int32_t format) {
-  constexpr size_t OffsetEight = 8;
-  return static_cast<int32_t>((static_cast<uint32_t>(format) & 0xffff00) >> OffsetEight);
+  return static_cast<int32_t>((static_cast<uint32_t>(format) & 0xffff00) >> 8);
 }
 
 inline bool HasSubFormat(int32_t format) { return GetSubFormat(format) > 0; }
@@ -150,16 +149,16 @@ bool IsEmptyTensor(Tensor *tensor);
  * @param xy product of x and y
  * @return true: normal, false: overflow
  */
-inline bool MulWithoutOverflow(const int64_t x, const int64_t y, int64_t *xy) {
+inline bool MulWithoutOverflow(const int64_t x, const int64_t y, int64_t &xy) {
   // Multiply in uint64 rather than int64 since signed overflow is undefined.
   // Negative values will wrap around to large unsigned values in the casts
   // (see section 4.7 [conv.integral] of the C++14 standard).
   const uint64_t ux = static_cast<uint64_t>(x);
   const uint64_t uy = static_cast<uint64_t>(y);
   const uint64_t uxy = ux * uy;
-  constexpr size_t OffsetThirtyTwo = 32;
+
   // Check if we overflow uint64, using a cheap check if both inputs are small
-  if (((ux | uy) >> OffsetThirtyTwo) != 0) {
+  if ((ux | uy) >> 32 != 0) {
     // Ensure nonnegativity.  Note that negative numbers will appear "large"
     // to the unsigned comparisons above.
     if (x < 0 || y < 0) {
@@ -174,7 +173,7 @@ inline bool MulWithoutOverflow(const int64_t x, const int64_t y, int64_t *xy) {
   }
 
   // Cast back to signed.  Any negative value will signal an error.
-  *xy = static_cast<int64_t>(uxy);
+  xy = static_cast<int64_t>(uxy);
   return true;
 }
 
@@ -185,13 +184,13 @@ inline bool MulWithoutOverflow(const int64_t x, const int64_t y, int64_t *xy) {
  * @param sum sum of x and y
  * @return true: normal, false: overflow
  */
-inline bool AddWithoutOverflow(const int64_t x, const int64_t y, int64_t *sum) {
+inline bool AddWithoutOverflow(const int64_t x, const int64_t y, int64_t &sum) {
   const uint64_t ux = static_cast<uint64_t>(x);
   const uint64_t uy = static_cast<uint64_t>(y);
   const uint64_t usum = ux + uy;
-  *sum = static_cast<int64_t>(usum);
+  sum = static_cast<int64_t>(usum);
 
-  return !(((x >= 0) == (y >= 0)) && (((*sum) >= 0) != (x >= 0)));
+  return !(((x >= 0) == (y >= 0)) && ((sum >= 0) != (x >= 0)));
 }
 
 /**
@@ -199,7 +198,7 @@ inline bool AddWithoutOverflow(const int64_t x, const int64_t y, int64_t *sum) {
  * @param ctx context
  * @return status code
  */
-uint32_t NormalMathCheck(const CpuKernelContext &ctx);
+uint32_t NormalMathCheck(CpuKernelContext &ctx);
 
 /**
  * @brief normal check for kernel
@@ -208,7 +207,7 @@ uint32_t NormalMathCheck(const CpuKernelContext &ctx);
  * @param outputs_num num of outputs
  * @return status code
  */
-uint32_t NormalCheck(const CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num);
+uint32_t NormalCheck(CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num);
 
 /**
  * @brief normal check for kernel
@@ -218,7 +217,7 @@ uint32_t NormalCheck(const CpuKernelContext &ctx, const uint32_t inputs_num, con
  * @param attr_names names of attrs
  * @return status code
  */
-uint32_t NormalCheck(const CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num,
+uint32_t NormalCheck(CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num,
                      const std::vector<std::string> &attr_names);
 
 bool IsScalar(const std::vector<int64_t> &shape);
@@ -250,5 +249,6 @@ DataType DType(std::string dtype_str);
  * @return string of data type
  */
 std::string DTypeStr(DataType dtype);
+
 }  // namespace aicpu
 #endif

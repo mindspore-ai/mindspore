@@ -104,14 +104,14 @@ void ComputeSingleThread(int64_t start, int64_t end, AdaptiveCalcArgs<SCALAR_T> 
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool2dOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
+uint32_t AdaptiveAvgPool2dOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
   auto shard_frame = [&](int64_t start, int64_t end) { ComputeSingleThread(start, end, args); };
   SWITCH_PARALLEL(shard_frame, args.size_d, num);
   return KERNEL_STATUS_OK;
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool2dOutTemplate(const CpuKernelContext &ctx) {
+uint32_t AdaptiveAvgPool2dOutTemplate(CpuKernelContext &ctx) {
   Tensor &input = *(ctx.Input(kFirstInputIndex));
   auto input_shape_ptr = input.GetTensorShape();
   int32_t input_dims = input_shape_ptr->GetDims();
@@ -176,7 +176,7 @@ uint32_t AdaptiveAvgPool2dOutTemplate(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t AdaptiveAvgPool2d::Compute(const CpuKernelContext &ctx) {
+uint32_t AdaptiveAvgPool2d::Compute(CpuKernelContext &ctx) {
   // check params
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output number failed.",
                       kAdaptiveAvgPool2d);

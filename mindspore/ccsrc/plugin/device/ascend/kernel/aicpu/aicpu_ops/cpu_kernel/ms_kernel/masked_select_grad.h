@@ -22,7 +22,7 @@ namespace aicpu {
 class MaskedSelectGradCpuKernel : public CpuKernel {
  public:
   ~MaskedSelectGradCpuKernel() = default;
-  uint32_t Compute(const CpuKernelContext &ctx) override;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
   /**
@@ -31,7 +31,7 @@ class MaskedSelectGradCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t MaskedSelectGradCompute(const CpuKernelContext &ctx);
+  uint32_t MaskedSelectGradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

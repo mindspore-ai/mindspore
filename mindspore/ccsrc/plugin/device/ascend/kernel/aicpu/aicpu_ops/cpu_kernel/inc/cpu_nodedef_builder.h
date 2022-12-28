@@ -60,7 +60,7 @@ class AICPU_VISIBILITY NodeDefBuilder {
 
   NodeDefBuilder &Attr(std::string name, aicpu::Tensor *tensor);
 
-  NodeDefBuilder &Attr(std::string name, std::vector<aicpu::Tensor *> *tensors);
+  NodeDefBuilder &Attr(std::string name, std::vector<aicpu::Tensor *> &tensors);
 
  private:
   void BuildNodeFromInputOutputNode(const InputOutputNode &node, bool isInput);

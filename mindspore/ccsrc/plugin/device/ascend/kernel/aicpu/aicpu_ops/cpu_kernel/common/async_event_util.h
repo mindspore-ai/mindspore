@@ -21,12 +21,13 @@
 #include "aicpu_sharder/aicpu_context.h"
 
 namespace aicpu {
-using NotifyWaitFunc = void (*)(void *notify_param, const uint32_t param_len);
-using RegEventCbFunc = bool (*)(const uint32_t event_id, const uint32_t sub_event_id,
-                                const std::function<void(void *)> &cb);
-using RegEventCbWithTimesFunc = bool (*)(const uint32_t event_id, const uint32_t sub_event_id,
-                                         const std::function<void(void *)> &cb, const int32_t times);
-using UnregEventCbFunc = void (*)(const uint32_t event_id, const uint32_t sub_event_id);
+typedef void (*NotifyWaitFunc)(void *notify_param, const uint32_t param_len);
+typedef bool (*RegEventCbFunc)(const uint32_t event_id, const uint32_t sub_event_id,
+                               const std::function<void(void *)> &cb);
+typedef bool (*RegEventCbWithTimesFunc)(const uint32_t event_id, const uint32_t sub_event_id,
+                                        const std::function<void(void *)> &cb, const int32_t times);
+typedef void (*UnregEventCbFunc)(const uint32_t event_id, const uint32_t sub_event_id);
+
 class AsyncEventUtil {
  public:
   static AsyncEventUtil &GetInstance();

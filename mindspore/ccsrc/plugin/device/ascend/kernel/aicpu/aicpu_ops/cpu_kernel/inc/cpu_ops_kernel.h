@@ -15,7 +15,7 @@
 namespace aicpu {
 class AICPU_VISIBILITY CpuKernel {
  public:
-  virtual uint32_t Compute(const CpuKernelContext &ctx) = 0;
+  virtual uint32_t Compute(CpuKernelContext &ctx) = 0;
 
   virtual ~CpuKernel() {}
 };

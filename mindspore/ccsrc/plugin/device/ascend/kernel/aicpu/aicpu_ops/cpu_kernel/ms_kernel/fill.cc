@@ -37,7 +37,7 @@ void FillGenerateCase(Tensor *&value_tensor, Tensor *&output) {
   }
 }
 
-uint32_t FillCpuKernel::GetDimsByType(const CpuKernelContext &ctx) {
+uint32_t FillCpuKernel::GetDimsByType(CpuKernelContext &ctx) {
   dims.clear();
   Tensor *dims_tensor = ctx.Input(0);
   KERNEL_CHECK_NULLPTR(dims_tensor, KERNEL_STATUS_PARAM_INVALID, "Get dims input failed")
@@ -63,7 +63,7 @@ uint32_t FillCpuKernel::GetDimsByType(const CpuKernelContext &ctx) {
   return ret;
 }
 
-uint32_t FillCpuKernel::Compute(const CpuKernelContext &ctx) {
+uint32_t FillCpuKernel::Compute(CpuKernelContext &ctx) {
   uint32_t check = GetDimsByType(ctx);
   if (check != KERNEL_STATUS_OK) {
     return check;

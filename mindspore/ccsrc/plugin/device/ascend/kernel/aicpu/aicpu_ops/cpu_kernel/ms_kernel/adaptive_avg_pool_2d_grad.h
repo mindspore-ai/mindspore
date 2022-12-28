@@ -26,7 +26,7 @@ class AdaptiveAvgPool2dGrad : public CpuKernel {
   ~AdaptiveAvgPool2dGrad() = default;
 
  protected:
-  uint32_t Compute(const CpuKernelContext &ctx) override;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_ADAPTIVE_AVG_POOL_2DGRAD_H_

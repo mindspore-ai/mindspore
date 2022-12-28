@@ -113,7 +113,7 @@ void UpdateIndexByCarry(std::vector<int64_t> &preIndex, const std::vector<int64_
 }  // namespace
 
 namespace aicpu {
-uint32_t MaskedSelectCpuKernel::Compute(const CpuKernelContext &ctx) {
+uint32_t MaskedSelectCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kMaskedSelectInputNum, kMaskedSelectOutputNum), "[%s] check params failed.",
                       kMaskedSelect);
@@ -165,7 +165,7 @@ uint32_t MaskedSelectCpuKernel::Compute(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t MaskedSelectCpuKernel::ParallelCompute(const CpuKernelContext &ctx, const std::vector<int64_t> &inputShapeX,
+uint32_t MaskedSelectCpuKernel::ParallelCompute(CpuKernelContext &ctx, const std::vector<int64_t> &inputShapeX,
                                                 const std::vector<int64_t> &inputShapeMask,
                                                 const std::vector<int64_t> &outputShape, int64_t dataNum) {
   T *x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
@@ -241,7 +241,7 @@ uint32_t MaskedSelectCpuKernel::ParallelCompute(const CpuKernelContext &ctx, con
 }
 
 template <typename T>
-uint32_t MaskedSelectCpuKernel::MaskedSelectCompute(const CpuKernelContext &ctx) {
+uint32_t MaskedSelectCpuKernel::MaskedSelectCompute(CpuKernelContext &ctx) {
   T *x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   KERNEL_CHECK_NULLPTR(x, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "[%s] get input_data[0] failed.",
                        kMaskedSelect);
@@ -264,7 +264,7 @@ uint32_t MaskedSelectCpuKernel::MaskedSelectCompute(const CpuKernelContext &ctx)
     return static_cast<uint32_t>(KERNEL_STATUS_OK);
   }
   std::vector<int64_t> output_shape;
-  auto ret = GetBroadcastShape(input_shape_a, input_shape_b, &output_shape);
+  auto ret = GetBroadcastShape(input_shape_a, input_shape_b, output_shape);
   KERNEL_CHECK_FALSE(ret == KERNEL_STATUS_OK, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
                      "Shape of x and mask can't be broadcast.");
   int64_t tensor_size = 1;
@@ -278,7 +278,7 @@ uint32_t MaskedSelectCpuKernel::MaskedSelectCompute(const CpuKernelContext &ctx)
   }
 
   int64_t j = 0;
-  BroadcastIterator iter(input_shape_a, input_shape_b, &output_shape);
+  BroadcastIterator iter(input_shape_a, input_shape_b, output_shape);
   iter.SetPos(0);
   for (int64_t i = 0; i < tensor_size; ++i) {
     if (mask[iter.GetInputPosB()]) {

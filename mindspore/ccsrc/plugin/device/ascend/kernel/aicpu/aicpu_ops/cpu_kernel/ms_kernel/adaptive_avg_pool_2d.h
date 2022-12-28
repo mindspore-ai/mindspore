@@ -26,7 +26,7 @@ class AdaptiveAvgPool2d : public CpuKernel {
  public:
   AdaptiveAvgPool2d() = default;
   ~AdaptiveAvgPool2d() = default;
-  uint32_t Compute(const CpuKernelContext &ctx) override;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 };
 
 inline int StartIndex(int offset, int out_size, int in_size) {

@@ -41,7 +41,7 @@ class AICPU_VISIBILITY NodeDef {
    * serialize string to node def.
    * @return bool: true->success, false->failed
    */
-  bool SerializeToString(std::string *str) const;
+  bool SerializeToString(std::string &str) const;
 
   /*
    * set op type to node def.

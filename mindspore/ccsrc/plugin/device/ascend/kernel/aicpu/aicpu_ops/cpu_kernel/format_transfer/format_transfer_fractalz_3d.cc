@@ -45,7 +45,7 @@ KernelStatus CheckDataTypeSupport(DataType data_type) {
  */
 
 uint32_t TransShapeToFz3DWithGroups(int64_t n, int64_t c, int64_t d, int64_t h, int64_t w, DataType data_type,
-                                    std::vector<int64_t> *dst_shape, int64_t groups) {
+                                    std::vector<int64_t> &dst_shape, int64_t groups) {
   auto c0 = GetCubeSizeByDataType(data_type);
   if (c0 < 0) {
     KERNEL_LOG_ERROR("Cube size must greater than or equal to 0");
@@ -68,20 +68,20 @@ uint32_t TransShapeToFz3DWithGroups(int64_t n, int64_t c, int64_t d, int64_t h, 
   int64_t c1_dim = cin_opt / cube_k;
   int64_t dim_g = Ceil(groups, e_mult);
   auto n1 = Ceil(cout_ori * e_mult, static_cast<int64_t>(kCubeSize));
-  dst_shape->clear();
-  dst_shape->push_back(dim_g * c1_dim * d * h * w);
-  dst_shape->push_back(n1);
-  dst_shape->push_back(kNiSize);
-  dst_shape->push_back(cube_k);
-  if (!IsShapeValid(*dst_shape)) {
-    KERNEL_LOG_ERROR("Check shape failed, dst shape [%s]", VectorToString(*dst_shape).c_str());
+  dst_shape.clear();
+  dst_shape.push_back(dim_g * c1_dim * d * h * w);
+  dst_shape.push_back(n1);
+  dst_shape.push_back(kNiSize);
+  dst_shape.push_back(cube_k);
+  if (!IsShapeValid(dst_shape)) {
+    KERNEL_LOG_ERROR("Check shape failed, dst shape [%s]", VectorToString(dst_shape).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 uint32_t TransShapeNcdhwToFzWithGroups(const std::vector<int64_t> &src_shape, DataType data_type,
-                                       std::vector<int64_t> *dst_shape, int64_t groups) {
+                                       std::vector<int64_t> &dst_shape, int64_t groups) {
   if (!CheckShapeValid(src_shape, static_cast<int64_t>(kNcdhwDimsNum))) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
@@ -94,7 +94,7 @@ uint32_t TransShapeNcdhwToFzWithGroups(const std::vector<int64_t> &src_shape, Da
 }
 
 uint32_t TransShapeDhwcnToFzWithGroups(const std::vector<int64_t> &src_shape, DataType data_type,
-                                       std::vector<int64_t> *dst_shape, int64_t groups) {
+                                       std::vector<int64_t> &dst_shape, int64_t groups) {
   if (!CheckShapeValid(src_shape, static_cast<int64_t>(kDhwcnDimsNum))) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
@@ -108,7 +108,7 @@ uint32_t TransShapeDhwcnToFzWithGroups(const std::vector<int64_t> &src_shape, Da
 }
 
 uint32_t TransShapeNdhwcToFzWithGroups(const std::vector<int64_t> &src_shape, DataType data_type,
-                                       std::vector<int64_t> *dst_shape, int64_t groups) {
+                                       std::vector<int64_t> &dst_shape, int64_t groups) {
   if (!CheckShapeValid(src_shape, kNdhwcDimsNum)) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
@@ -128,13 +128,13 @@ uint32_t TransShapeNdhwcToFzWithGroups(const std::vector<int64_t> &src_shape, Da
 // index between NCDHW and FORMAT_FRACTAL_Z_3D , then Convert the old filter to the new
 // filter, and finally added 0 to the position where there is no data.
 uint32_t TransFormatWithGroups(const Format &format_5d, const std::vector<int64_t> &shape_5d, const TransArgs &args,
-                               TransResult *result, bool reverse) {
+                               TransResult &result, bool reverse) {
   int64_t h_dim = 0;
   int64_t w_dim = 0;
   int64_t c_dim = 0;
   int64_t n_dim = 0;
   int64_t d_dim = 0;
-  if (GetFormatDim(&d_dim, &h_dim, &w_dim, &c_dim, &n_dim, format_5d, shape_5d) != KERNEL_STATUS_OK) {
+  if (GetFormatDim(d_dim, h_dim, w_dim, c_dim, n_dim, format_5d, shape_5d) != KERNEL_STATUS_OK) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
   int64_t cin_ori = c_dim;
@@ -153,7 +153,7 @@ uint32_t TransFormatWithGroups(const Format &format_5d, const std::vector<int64_
   int64_t dst_size = GetItemNumByShape(args.dst_shape) * data_size;
   // The input is empty tensor, we should return success directly.
   if (dst_size == 0) {
-    result->length = static_cast<size_t>(dst_size);
+    result.length = static_cast<size_t>(dst_size);
     return KERNEL_STATUS_OK;
   }
   std::shared_ptr<uint8_t> dst(new (std::nothrow) uint8_t[dst_size], std::default_delete<uint8_t[]>());
@@ -200,13 +200,14 @@ uint32_t TransFormatWithGroups(const Format &format_5d, const std::vector<int64_
       }
     }
   }
-  result->data = dst;
-  result->length = static_cast<size_t>(dst_size);
+  result.data = dst;
+  result.length = static_cast<size_t>(dst_size);
   return KERNEL_STATUS_OK;
 }
+
 }  // namespace
 
-uint32_t FormatTransferFractalz3D::TransFormat(const TransArgs &args, TransResult *result) {
+uint32_t FormatTransferFractalz3D::TransFormat(const TransArgs &args, TransResult &result) {
   KERNEL_LOG_DEBUG(
     "Begin to trans format from [%s] to [%s], src shape [%s], data type "
     "[%s], dst "
@@ -224,7 +225,7 @@ uint32_t FormatTransferFractalz3D::TransFormat(const TransArgs &args, TransResul
       args.dst_format == FORMAT_FRACTAL_Z_3D) {
     std::vector<int64_t> expect_shape;
     auto ret =
-      TransShape(args.src_format, args.src_shape, args.src_data_type, args.dst_format, &expect_shape, args.groups);
+      TransShape(args.src_format, args.src_shape, args.src_data_type, args.dst_format, expect_shape, args.groups);
     if (ret != KERNEL_STATUS_OK) {
       return ret;
     }
@@ -236,8 +237,8 @@ uint32_t FormatTransferFractalz3D::TransFormat(const TransArgs &args, TransResul
               (args.dst_format == FORMAT_NCDHW)) &&
              args.src_format == FORMAT_FRACTAL_Z_3D) {
     std::vector<int64_t> expect_input_shape;
-    auto ret = TransShape(args.dst_format, args.dst_shape, args.src_data_type, args.src_format, &expect_input_shape,
-                          args.groups);
+    auto ret =
+      TransShape(args.dst_format, args.dst_shape, args.src_data_type, args.src_format, expect_input_shape, args.groups);
     if (ret != KERNEL_STATUS_OK) {
       KERNEL_LOG_ERROR("Check dst shape failed, dst shape [%s]", VectorToString(args.dst_shape).c_str());
       return ret;
@@ -254,7 +255,7 @@ uint32_t FormatTransferFractalz3D::TransFormat(const TransArgs &args, TransResul
 }
 
 uint32_t FormatTransferFractalz3D::TransShape(Format src_format, const std::vector<int64_t> &src_shape,
-                                              DataType data_type, Format dst_format, std::vector<int64_t> *dst_shape,
+                                              DataType data_type, Format dst_format, std::vector<int64_t> &dst_shape,
                                               int64_t groups) {
   if (CheckDataTypeSupport(data_type) != KERNEL_STATUS_OK) {
     return KERNEL_STATUS_PARAM_INVALID;
