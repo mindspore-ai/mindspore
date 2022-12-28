@@ -170,7 +170,7 @@ bool AdaptiveAvgPool2DV1CpuKernelMod::LaunchKernel(const std::vector<kernel::Add
         sub_args.input_data = args.input_data + b * args.in_stride_d * args.size_d;
         sub_args.output_data = args.output_data + b * args.size_d * args.out_size_h * args.out_size_w;
         auto shard_frame = AdaptiveAvgPool2DV1OutFrame<SCALAR_T>(sub_args);
-        ParallelLaunchAutoSearch(shard_frame, sub_args.size_d, this, &parallel_search_info_);
+        shard_frame(0, sub_args.size_d);
       }
     };
     ParallelLaunchAutoSearch(shard_template, input_dim_sizes_[0], this, &parallel_search_info_);
