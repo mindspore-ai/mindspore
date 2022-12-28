@@ -704,7 +704,7 @@ def _check_target_specific_cfgs(device, arg_key):
 
 
 @args_unreset_check(device_id=int, variable_memory_max_size=str, max_device_memory=str, mempool_block_size=str)
-@args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
+@args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=(bool, int),
                  save_graphs_path=str, enable_dump=bool, auto_tune_mode=str,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_auto_mixed_precision=bool, inter_op_parallel_num=int,
@@ -712,7 +712,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
                  grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
-                 op_timeout=int, save_graph_dot=bool)
+                 op_timeout=int)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -993,6 +993,13 @@ def set_context(**kwargs):
             logger.warning(f"For 'context.set_context', '{key}' parameter is deprecated. "
                            "For details, please see the interface parameter API comments")
             continue
+        if key == 'save_graphs':
+            if value is True:
+                value = 1
+            if value is False:
+                value = 0
+            if value > 3:
+                raise ValueError(f"value for save_graphs should be 0-3 but got '{value}'")
         if not _check_target_specific_cfgs(device, key):
             continue
         if hasattr(ctx, key):

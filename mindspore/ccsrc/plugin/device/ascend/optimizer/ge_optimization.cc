@@ -42,10 +42,9 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "GE optimization start, graph: " << func_graph->ToString() << ".";
 
 #ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(advanced)) {
     std::string file_name = "hwopt_d_before_ge_optimization_graph_" + func_graph->ToString() + ".ir";
     DumpIR(file_name, func_graph);
   }
@@ -78,7 +77,7 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
   (void)optimizer->Optimize(func_graph);
 
 #ifdef ENABLE_DUMP_IR
-  if (save_graphs) {
+  if (context->CanDump(advanced)) {
     std::string file_name = "hwopt_d_after_ge_optimization_graph_" + func_graph->ToString() + ".ir";
     DumpIR(file_name, func_graph);
   }

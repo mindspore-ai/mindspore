@@ -413,9 +413,8 @@ GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
   json_parser.Parse();
 #endif
 #ifdef ENABLE_DUMP_IR
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  // Dump .pb graph before graph optimization
-  if (save_graphs) {
+  if (context_ptr->CanDump(advanced)) {
+    // Dump .pb graph before graph optimization
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
   }
 #endif
@@ -435,7 +434,7 @@ GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
   AssignStream(graph);
 #ifdef ENABLE_DUMP_IR
   // Dump .pb graph before remove nop nodes
-  if (save_graphs) {
+  if (context_ptr->CanDump(advanced)) {
     DumpIRProto(graph, "before_removeNop_" + std::to_string(graph->graph_id()));
   }
 #endif
@@ -453,7 +452,7 @@ GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
 #endif
   // Dump .pb graph after graph optimization
 #ifdef ENABLE_DUMP_IR
-  if (save_graphs) {
+  if (context_ptr->CanDump(advanced)) {
     DumpIRProto(graph, "after_opt_" + std::to_string(graph->graph_id()));
   }
 #endif

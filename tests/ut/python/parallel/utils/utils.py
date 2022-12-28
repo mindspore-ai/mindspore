@@ -156,7 +156,7 @@ class BasicValidator:
 
     def setup_method(self):
         self.output_path = './graphs' + self.__str__()
-        context.set_context(save_graphs=True,
+        context.set_context(save_graphs=3,
                             save_graphs_path=self.output_path)
 
     def teardown_method(self):

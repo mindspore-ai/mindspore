@@ -178,8 +178,7 @@ bool Somas::Assign(const KernelGraphPtr &graph_ptr) {
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(graph_ptr);
 #ifndef ENABLE_SECURITY
-  auto enable_save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (enable_save_graphs) {
+  if (context_ptr->CanDump(advanced)) {
     std::string file_name = "somas_input_graph_" + std::to_string(graph_ptr->graph_id()) + ".ir";
     DumpIR(file_name, graph_ptr, true, kWholeStack);
   }
@@ -198,7 +197,7 @@ bool Somas::GetEnableCacheFlag(const session::KernelGraph &graph) const {
 std::pair<bool, std::string> Somas::GetDebugConfig() const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto enable_save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto enable_save_graphs = context_ptr->CanDump(advanced);
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";

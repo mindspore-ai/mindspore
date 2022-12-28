@@ -830,7 +830,9 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
         MS_LOG(EXCEPTION) << "Pass running to end, failed in pass:" << pass.first;
       }
 #ifdef ENABLE_DUMP_IR
-      if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && resource->func_graph() != nullptr) {
+      auto context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(context);
+      if (context->CanDump(advanced) && resource->func_graph() != nullptr) {
         auto fg_name = "opt_pass_" + std::to_string(counter) + "_" + pass.first;
         auto func_graph = resource->func_graph();
         MS_EXCEPTION_IF_NULL(func_graph);
@@ -840,7 +842,7 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
         } else {
           DumpIR(fg_name + ".ir", func_graph);
         }
-        if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPH_DOT)) {
+        if (context->CanDump(fully)) {
           draw::Draw(fg_name + ".dot", func_graph);
         }
         MS_LOG(DEBUG) << "Dump " << fg_name << " func graph.";

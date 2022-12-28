@@ -272,7 +272,9 @@ FuncGraphPtr CompileCacheManager::GetCachedFuncGraph(const FuncGraphManagerPtr &
       break;
     }
   }
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(advanced)) {
     DumpIR("cache_loaded_graph_" + std::to_string(compile_cache_id_) + ".ir", fg);
   }
   return fg;

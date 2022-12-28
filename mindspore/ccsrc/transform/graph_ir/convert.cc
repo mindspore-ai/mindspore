@@ -973,7 +973,9 @@ void DfGraphConvertor::ConvertWhileBody(const AnfNodePtr &node) {
   converter.ConvertAllNode().BuildWhileSubGraph();
   while_dfgraph_cache_[cur_while_node_]->push_back(*(converter.df_graph_));
   std::string name = graph_node->ToString() + "_ge_graph.dot";
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(fully)) {
     converter.DrawComputeGraph(name);
   }
   return;
@@ -1103,7 +1105,9 @@ void DfGraphConvertor::ConvertWhileCond(const AnfNodePtr &node) {
   converter.ConvertAllNode().BuildWhileSubGraph();
   while_dfgraph_cache_[cur_while_node_]->push_back(*(converter.df_graph_));
   std::string name = func_graph->ToString() + "_ge_graph.dot";
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(fully)) {
     converter.DrawComputeGraph(name);
   }
 
@@ -1151,7 +1155,9 @@ void DfGraphConvertor::ConvertWhileAfter(const AnfNodePtr &node) {
   converter.SetWhileOutputHandle(while_op);
   converter.ConvertAllNode().BuildWhileAfterSubGraph();
   std::string name = graph_node->ToString() + "_ge_graph.dot";
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(fully)) {
     converter.DrawComputeGraph(name);
   }
   MS_LOG(DEBUG) << "add while after graph " << converter.graph_const_inputs_.size()
@@ -2313,7 +2319,9 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr 
   (void)converter.ConvertAllNode().BuildGraph(anf_graph->ToString());
 #ifdef ENABLE_DUMP_IR
   std::string name = graph_node->ToString() + "_ge_graph.dot";
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(fully)) {
     converter.DrawComputeGraph(name);
   }
 #endif
@@ -2655,8 +2663,7 @@ void DfGraphConvertor::TransDataType(const FuncGraphPtr &anf_graph) const {
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
+  if (context_ptr->CanDump(advanced)) {
     std::string file_name = "ge_trans_data_type_before_graph_" + anf_graph->ToString() + ".ir";
     DumpIR(file_name, anf_graph);
   }
@@ -2672,7 +2679,7 @@ void DfGraphConvertor::TransDataType(const FuncGraphPtr &anf_graph) const {
     }
   }
 #ifdef ENABLE_DUMP_IR
-  if (save_graphs) {
+  if (context_ptr->CanDump(advanced)) {
     std::string file_name = "ge_trans_data_type_after_graph_" + anf_graph->ToString() + ".ir";
     DumpIR(file_name, anf_graph);
   }

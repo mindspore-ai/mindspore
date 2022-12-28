@@ -48,14 +48,16 @@ std::vector<PrimitivePtr> FindPrimtive(const FuncGraphPtr &graph, const std::str
 
 void DumpGraph(const FuncGraphPtr &root, const std::string &name) {
 #ifdef ENABLE_DUMP_IR
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(advanced)) {
     static const auto switch_order = (common::GetEnv("MS_DEV_SAVE_GRAPHS_SORT_MODE") == "1");
     if (switch_order) {
       ExportIR(name + ".ir", root);
     } else {
       DumpIR(name + ".ir", root);
     }
-    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPH_DOT)) {
+    if (context->CanDump(fully)) {
       draw::Draw(name + ".dot", root);
     }
   }

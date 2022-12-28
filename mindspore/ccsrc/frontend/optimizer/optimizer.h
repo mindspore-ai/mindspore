@@ -203,7 +203,9 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
           use_profile ? (WITH(MsProfile::GetProfile()->Step(pass_names_[i])) opt_func) : opt_func();
 #ifdef ENABLE_DUMP_IR
           static const auto enable_dump_pass_ir = GetDumpConfig().enable_dump_pass_ir;
-          if (enable_dump_pass_ir && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+          auto context = MsContext::GetInstance();
+          MS_EXCEPTION_IF_NULL(context);
+          if ((enable_dump_pass_ir && context->CanDump(introductory)) || context->CanDump(fully)) {
             auto fg_name =
               "opt_substep_" + name_ + "_r" + std::to_string(counter) + "_" + std::to_string(i) + "_" + pass_names_[i];
             MS_LOG(DEBUG) << "The opt " << name_ << " round " << counter << " OptPass " << pass_names_[i] << " end.";
@@ -213,7 +215,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
             } else {
               DumpIR(fg_name + ".ir", func_graph);
             }
-            if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPH_DOT)) {
+            if (context->CanDump(fully)) {
               draw::Draw(fg_name + ".dot", func_graph);
             }
             MS_LOG(DEBUG) << "Dump " << pass_names_[i] << " func graph.";
