@@ -68,10 +68,10 @@ int BoundingBoxDecodeTensorRT::AddInnerOp(TensorRTContext *ctx) {
   auto in_tensor1 = input(ctx, 0).trt_tensor_;
   auto in_tensor2 = input(ctx, 1).trt_tensor_;
   if (in_tensors_[0].DataType() == DataType::kNumberTypeFloat16) {
-    in_tensor1 = TRTTensorCast(ctx, in_tensor1, nvinfer1::DataType::kFLOAT, op_name_ + "_cast_in");
+    in_tensor1 = TRTTensorCast(ctx, in_tensor1, nvinfer1::DataType::kFLOAT, op_name_ + "_cast_in_0");
   }
   if (in_tensors_[1].DataType() == DataType::kNumberTypeFloat16) {
-    in_tensor2 = TRTTensorCast(ctx, in_tensor2, nvinfer1::DataType::kFLOAT, op_name_ + "_cast_in");
+    in_tensor2 = TRTTensorCast(ctx, in_tensor2, nvinfer1::DataType::kFLOAT, op_name_ + "_cast_in_1");
   }
   nvinfer1::ITensor *inputTensors[] = {in_tensor1, in_tensor2};
   nvinfer1::IPluginV2Layer *layer = ctx->network()->addPluginV2(inputTensors, INPUT_SIZE2, *plugin);
