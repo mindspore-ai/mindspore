@@ -5,6 +5,9 @@ mindspore.ops.chunk
 
     根据指定的轴将输入Tensor切分成块。
 
+    .. note::
+        此函数返回的数量可能小于通过 `chunks` 指定的数量!
+
     参数：
         - **x** (Tensor) - Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。
         - **chunks** (int) - 要返回的块数。

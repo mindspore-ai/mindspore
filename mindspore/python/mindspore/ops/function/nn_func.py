@@ -3503,6 +3503,90 @@ def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
     return _get_loss(x, reduction, "margin_ranking_loss")
 
 
+@constexpr
+def _check_reduced_shape_valid(ori_shape, reduced_shape, axis, cls_name, arg_name1, arg_name2):
+    """Internal function, used to check whether the reduced shape meets the requirements."""
+    validator.check_reduce_shape(ori_shape, reduced_shape, axis, cls_name, arg_name1, arg_name2)
+
+
+def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
+    r"""
+    CosineEmbeddingLoss creates a criterion to measure the similarity between two tensors using cosine distance.
+
+    Given two tensors :math:`input1`, :math:`input2`, and a Tensor label :math:`target` with values 1 or -1:
+
+    .. math::
+        loss(input1, input2, target) = \begin{cases}
+        1-cos(input1, input2), & \text{if } target = 1\\
+        max(0, cos(input1, input2)-margin), & \text{if } target = -1\\
+        \end{cases}
+
+    Args:
+        input1 (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means, any number
+          of additional dimensions.
+        input2 (Tensor): Tensor of shape :math:`(N, *)`, same shape and dtype as `input1`.
+        target (Tensor): Contains value 1 or -1. Suppose the shape of `input1` is
+          :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
+        margin (float): Should be in [-1.0, 1.0]. Default 0.0.
+        reduction (str): Specifies which reduction to be applied to the output. It must be one of
+          "none", "mean", and "sum", meaning no reduction, reduce mean and sum on output, respectively. Default "mean".
+
+    Returns:
+        Tensor or Scalar, if `reduction` is "none", its shape is the same as `target`.
+        Otherwise, a scalar value will be returned.
+
+    Raises:
+        TypeError: If `margin` is not a float.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `margin` is not in range [-1, 1].
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> intput1 = Tensor(np.array([[0.3, 0.8], [0.4, 0.3]]), mindspore.float32)
+        >>> intput2 = Tensor(np.array([[0.4, 1.2], [-0.4, -0.9]]), mindspore.float32)
+        >>> target = Tensor(np.array([1, -1]), mindspore.int32)
+        >>> output = ops.cosine_embedding_loss(intput1, intput2, target)
+        >>> print(output)
+        0.0003425479
+    """
+
+    _check_is_tensor('input1', input1, "ops.cosine_embedding_loss")
+    _check_is_tensor('input2', input2, "ops.cosine_embedding_loss")
+    _check_is_tensor('target', target, "ops.cosine_embedding_loss")
+    _check_type_and_shape_same('input1', input1, 'input2', input2, 'ops.cosine_embedding_loss')
+    _check_reduced_shape_valid(ops.shape(input1), ops.shape(target), (1,),
+                               "ops.cosine_embedding_loss", "input1", "target")
+    if input1.dtype in (mstype.int32, mstype.int64):
+        input1 = input1.astype(mstype.float32)
+    if input2.dtype in (mstype.int32, mstype.int64):
+        input2 = input2.astype(mstype.float32)
+    margin_f = float(margin) if isinstance(margin, int) else margin
+    _check_value_type("margin", margin_f, [float], "ops.cosine_embedding_loss")
+    if not isinstance(margin_f, float):
+        raise TypeError(f"For ops.cosine_embedding_loss, 'margin' must be float, but got {type(margin_f)}")
+    if margin_f > 1.0 or margin_f < -1.0:
+        raise ValueError(f"For ops.cosine_embedding_loss, the value of 'margin' should be in [-1, 1],"
+                         f"but got {margin_f}.")
+    # if target > 0, 1-cosine(input1, input2)
+    # else, max(0, cosine(input1, input2)-margin)
+    prod_sum = _get_cache_prim(P.ReduceSum)()(input1 * input2, (1,))
+    square1 = _get_cache_prim(P.ReduceSum)()(ops.square(input1), (1,))
+    square2 = _get_cache_prim(P.ReduceSum)()(ops.square(input2), (1,))
+    denom = ops.sqrt(square1) * ops.sqrt(square2)
+    cosine = prod_sum / denom
+
+    pos_value = 1.0 - cosine
+    neg_value = _get_cache_prim(P.Maximum)()(cosine - margin_f, 0.0)
+    zeros = ops.zeros_like(cosine)
+    pos_part = ops.select(target == 1, pos_value, zeros)
+    neg_part = ops.select(target == -1, neg_value, zeros)
+    output_unreduced = pos_part + neg_part
+
+    return _get_loss(output_unreduced, reduction, "cosine_embedding_loss")
+
+
 def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
     r"""
     Performs a 3D max pooling on the input Tensor.
@@ -5511,6 +5595,7 @@ __all__ = [
     'bias_add',
     'binary_cross_entropy',
     'binary_cross_entropy_with_logits',
+    'cosine_embedding_loss',
     'max_pool3d',
     'kl_div',
     'celu',
