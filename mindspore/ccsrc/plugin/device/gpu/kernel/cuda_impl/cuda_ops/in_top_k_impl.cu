@@ -17,15 +17,14 @@
 #include <cuda_runtime.h>
 #include "include/cuda_fp16.h"
 
-__device__ __forceinline__ bool Isfinite(half x) {
-  return isfinite(static_cast<float>(x));
-}
+__device__ __forceinline__ bool Isfinite(half x) { return isfinite(static_cast<float>(x)); }
 
 template <typename T>
 __device__ __forceinline__ bool Isfinite(T x) {
   return isfinite(x);
 }
 
+// Need calculate topk for top_k_output before this function.
 template <typename T, typename S>
 __global__ void InTopK(const T *predictions, const S *targets, bool *output, const T *top_k_output, size_t batch_size,
                        size_t class_id_count, int64_t k) {
@@ -45,10 +44,47 @@ __global__ void InTopK(const T *predictions, const S *targets, bool *output, con
 }
 
 template <typename T, typename S>
+__global__ void InTopKV2(const T *predictions, const S *targets, bool *output, size_t batch_size, size_t class_id_count,
+                         int64_t k) {
+  size_t gt_id = blockIdx.x * blockDim.x + threadIdx.x;
+  for (; gt_id < batch_size; gt_id += blockDim.x * gridDim.x) {
+    S target_index = targets[gt_id];
+    auto target_pred = predictions[gt_id * class_id_count + target_index];
+    bool is_invalid = (static_cast<size_t>(target_index) >= class_id_count) || !Isfinite(target_pred);
+    int64_t pos_num = 0;
+    if (!is_invalid) {
+      for (size_t pos = 0; pos < class_id_count; pos++) {
+        auto predicted_value = predictions[gt_id * class_id_count + pos];
+        if (!Isfinite(predicted_value)) {
+          is_invalid = true;
+          break;
+        } else if (predicted_value > target_pred) {
+          pos_num++;
+          if (pos_num > k) {
+            break;
+          }
+        }
+      }
+    }
+    output[gt_id] = is_invalid ? false : pos_num < k;
+  }
+}
+
+template <typename T, typename S>
 void CalInTopK(const T *predictions, const S *targets, bool *output, const T *top_k_output, size_t batch_size,
                size_t class_id_count, int64_t k, cudaStream_t cuda_stream) {
   InTopK<<<GET_BLOCKS(class_id_count), GET_THREADS, 0, cuda_stream>>>(predictions, targets, output, top_k_output,
                                                                       batch_size, class_id_count, k);
+}
+
+template <typename T, typename S>
+void ApplyInTopK(const T *predictions, const S *targets, bool *output, size_t batch_size, size_t class_id_count,
+                 int64_t k, uint32_t device_id, cudaStream_t cuda_stream) {
+  int block = 256;
+  block = CUDA_THREADS_MAXSIZE(device_id, block);
+  int grid = ((batch_size - 1) / block) + 1;
+  grid = CUDA_BLOCKS_MAXSIZE(device_id, grid);
+  InTopKV2<<<grid, block, 0, cuda_stream>>>(predictions, targets, output, batch_size, class_id_count, k);
 }
 
 template CUDA_LIB_EXPORT void CalInTopK<half, int32_t>(const half *predictions, const int32_t *targets, bool *output,
@@ -66,3 +102,19 @@ template CUDA_LIB_EXPORT void CalInTopK<half, int64_t>(const half *predictions, 
 template CUDA_LIB_EXPORT void CalInTopK<float, int64_t>(const float *predictions, const int64_t *targets, bool *output,
                                                         const float *top_k_output, size_t batch_size,
                                                         size_t class_id_count, int64_t k, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void ApplyInTopK<half, int32_t>(const half *predictions, const int32_t *targets, bool *output,
+                                                         size_t batch_size, size_t class_id_count, int64_t k,
+                                                         uint32_t device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void ApplyInTopK<float, int32_t>(const float *predictions, const int32_t *targets,
+                                                          bool *output, size_t batch_size, size_t class_id_count,
+                                                          int64_t k, uint32_t device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void ApplyInTopK<half, int64_t>(const half *predictions, const int64_t *targets, bool *output,
+                                                         size_t batch_size, size_t class_id_count, int64_t k,
+                                                         uint32_t device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void ApplyInTopK<float, int64_t>(const float *predictions, const int64_t *targets,
+                                                          bool *output, size_t batch_size, size_t class_id_count,
+                                                          int64_t k, uint32_t device_id, cudaStream_t cuda_stream);

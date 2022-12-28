@@ -116,6 +116,15 @@ bool InTopKGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   }
 
   k_ = std::min(k_, static_cast<int64_t>(inner_size_));
+
+  constexpr int64_t max_for_topk = 128;
+  if (k_ > max_for_topk) {
+    // ApplyInTopK have a better performance when k > 128.
+    ApplyInTopK(predictions_device, targets_device, output_device, input_shape_[0], input_shape_[1], k_, device_id_,
+                reinterpret_cast<cudaStream_t>(stream_ptr));
+    return true;
+  }
+
   T *top_k_output_device = GetDeviceAddress<T>(workspace, kIndex0);
   int32_t *top_k_indices_device = GetDeviceAddress<int32_t>(workspace, kIndex1);
 
