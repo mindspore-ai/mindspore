@@ -1541,11 +1541,11 @@ class MaxUnpool1d(Cell):
 
 class MaxUnpool2d(Cell):
     r"""
-    Computes a partial inverse of Maxpool2d.
+    Computes a partial inverse of MaxPool2d.
 
     MaxPool2d is not fully invertible, since the non-maximal values are lost.
 
-    MaxUnpool2d takes in as input the output of Maxpool2d including the indices of the maximal values
+    MaxUnpool2d takes in as input the output of MaxPool2d including the indices of the maximal values
     and computes a partial inverse in which all non-maximal values are set to zero. Typically the input
     is of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`, and the output is of
     shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`. The operation is as follows.
