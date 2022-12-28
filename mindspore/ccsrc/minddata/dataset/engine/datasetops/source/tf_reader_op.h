@@ -234,8 +234,8 @@ class TFReaderOp : public NonMappableLeafOp {
   // @param realpath_value - the path for the file.
   // @param filename - TFRecord file name (for throwing error purposes)
   // @return Status - the error code returned.
-  Status HelperGetExampleSchema(std::string *serialized_example, const std::string &realpath_value,
-                                const std::string &filename);
+  Status HelperGetExampleSchema(std::string *const serialized_example, const std::string &realpath_value,
+                                const std::string &filename) const;
 
   // Parses a single row and puts the data into a tensor table.
   // @param tf_record_file - the row to be parsed.

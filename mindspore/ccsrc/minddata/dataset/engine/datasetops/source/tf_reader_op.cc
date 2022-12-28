@@ -770,8 +770,8 @@ Status TFReaderOp::CreateSchema(const std::string tf_record_file, std::vector<st
   return Status::OK();
 }
 
-Status TFReaderOp::HelperGetExampleSchema(std::string *serialized_example, const std::string &realpath_value,
-                                          const std::string &filename) {
+Status TFReaderOp::HelperGetExampleSchema(std::string *const serialized_example, const std::string &realpath_value,
+                                          const std::string &filename) const {
   if (compression_type_ == CompressionType::NONE) {
     std::ifstream reader;
     reader.open(realpath_value);
