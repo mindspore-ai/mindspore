@@ -23,7 +23,7 @@
 #include <utility>
 #include "kernel/kernel.h"
 #include "distributed/embedding_cache/embedding_hash_map.h"
-#include "distributed/embedding_cache/embedding_store.h"
+#include "distributed/embedding_cache/embedding_storage/embedding_storage.h"
 #include "runtime/hardware/device_context.h"
 #include "include/backend/visible.h"
 
@@ -284,8 +284,8 @@ class BACKEND_EXPORT EmbeddingStoreManager {
     static EmbeddingStoreManager instance{};
     return instance;
   }
-  void Add(const std::string &name, std::shared_ptr<EmbeddingStore<int32_t, float>> emb_store) {}
-  std::shared_ptr<EmbeddingStore<int32_t, float>> Get(const std::string &name) { return nullptr; }
+  void Add(const std::string &name, std::shared_ptr<storage::EmbeddingStorage<int32_t, float>> emb_store) {}
+  std::shared_ptr<storage::EmbeddingStorage<int32_t, float>> Get(const std::string &name) { return nullptr; }
 
   bool IsExists(const std::string &name) const { return false; }
 
