@@ -1061,7 +1061,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   if (available_worker != nullptr) {
     // dispatch tasks directly to workers
     if (enable_shared_thread_pool_) {
-      ParallelThreadPoolManager::GetInstance()->SetHasIdlePool(true);
+      ParallelThreadPoolManager::GetInstance()->SetHasIdlePool(runner_id_, true);
       ParallelThreadPoolManager::GetInstance()->ActivatePool(runner_id_, available_worker->GetWorkerID());
     }
     auto ret = available_worker->Predict(inputs, outputs, before, after);
@@ -1076,7 +1076,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     return kSuccess;
   } else {
     if (enable_shared_thread_pool_) {
-      ParallelThreadPoolManager::GetInstance()->SetHasIdlePool(false);
+      ParallelThreadPoolManager::GetInstance()->SetHasIdlePool(runner_id_, false);
     }
     // do predict
     size_t task_id;

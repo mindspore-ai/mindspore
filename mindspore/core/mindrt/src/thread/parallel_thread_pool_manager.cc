@@ -36,40 +36,65 @@ void ParallelThreadPoolManager::Init(bool enable_shared_thread_pool, const std::
                                      int remaining_thread_num, int thread_num_limit) {
 #ifndef MS_COMPILE_IOS
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
-  enable_shared_thread_pool_ = enable_shared_thread_pool;
+  if (enable_shared_thread_pool_.find(runner_id) != enable_shared_thread_pool_.end()) {
+    THREAD_ERROR("Not need to repeat init.");
+    return;
+  }
+  enable_shared_thread_pool_[runner_id] = enable_shared_thread_pool;
   if (!enable_shared_thread_pool) {
     THREAD_INFO("not enable shared parallel thread pool.");
     return;
   }
   std::vector<ParallelThreadPool *> runner_pools(worker_num, nullptr);
   runner_id_pools_[runner_id] = runner_pools;
-  remaining_thread_num_ = remaining_thread_num;
-  thread_num_limit_ = thread_num_limit;
+  remaining_thread_num_[runner_id] = remaining_thread_num;
+  thread_num_limit_[runner_id] = thread_num_limit;
 #endif
 }
 
-void ParallelThreadPoolManager::SetHasIdlePool(bool is_idle) {
+void ParallelThreadPoolManager::SetHasIdlePool(std::string runner_id, bool is_idle) {
 #ifndef MS_COMPILE_IOS
-  has_idle_pool_ = is_idle;
+  has_idle_pool_[runner_id] = is_idle;
 #endif
 }
 
-int ParallelThreadPoolManager::GetTaskNum() {
+int ParallelThreadPoolManager::GetTaskNum(
+  const std::map<std::string, std::map<std::string, std::string>> *config_info) {
 #ifndef MS_COMPILE_IOS
+  if (config_info == nullptr) {
+    THREAD_ERROR("config_info is nullptr.");
+    return -1;
+  }
+  std::string runner_id;
+  auto it_id = config_info->find(kInnerIDs);
+  if (it_id != config_info->end()) {
+    auto item_runner = it_id->second.find(kInnerRunnerID);
+    if (item_runner != it_id->second.end()) {
+      runner_id = it_id->second.at(kInnerRunnerID);
+    }
+  }
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
-  if (!enable_shared_thread_pool_) {
+  if (runner_id.empty() || !enable_shared_thread_pool_[runner_id]) {
     THREAD_INFO("not enable shared parallel thread pool.");
     return -1;
   }
-  return thread_num_limit_;
+  return thread_num_limit_[runner_id];
 #endif
   return 0;
 }
 
-int ParallelThreadPoolManager::GetThreadPoolSize() {
+int ParallelThreadPoolManager::GetThreadPoolSize(ThreadPool *pool) {
 #ifndef MS_COMPILE_IOS
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
-  return pool_workers_.begin()->second.size();
+  ParallelThreadPool *thread_pool = static_cast<ParallelThreadPool *>(pool);
+  if (thread_pool == nullptr) {
+    return -1;
+  }
+  if (pool_workers_.find(thread_pool) != pool_workers_.end()) {
+    return pool_workers_[thread_pool].size();
+  } else {
+    return -1;
+  }
 #endif
   return 0;
 }
@@ -78,8 +103,8 @@ void ParallelThreadPoolManager::BindPoolToRunner(
   ThreadPool *pool, const std::map<std::string, std::map<std::string, std::string>> *config_info) {
 #ifndef MS_COMPILE_IOS
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
-  if (!enable_shared_thread_pool_ || config_info == nullptr) {
-    THREAD_ERROR("not use parallel thread pool shared.");
+  if (config_info == nullptr) {
+    THREAD_ERROR("config_info is nullptr.");
     return;
   }
   std::string runner_id;
@@ -89,6 +114,10 @@ void ParallelThreadPoolManager::BindPoolToRunner(
     if (item_runner != it_id->second.end()) {
       runner_id = it_id->second.at(kInnerRunnerID);
     }
+  }
+  if (!enable_shared_thread_pool_[runner_id]) {
+    THREAD_ERROR("not use parallel thread pool shared.");
+    return;
   }
   auto parallel_pool = static_cast<ParallelThreadPool *>(pool);
   if (parallel_pool == nullptr) {
@@ -100,7 +129,6 @@ void ParallelThreadPoolManager::BindPoolToRunner(
     model_id = std::atoi(it_id->second.at(kInnerModelID).c_str());
   }
   runner_id_pools_[runner_id].at(model_id) = parallel_pool;
-  parallel_pool->SetRunnerID(runner_id);
   auto all_workers = parallel_pool->GetParallelPoolWorkers();
   for (size_t i = 0; i < all_workers.size(); i++) {
     auto worker = static_cast<ParallelWorker *>(all_workers[i]);
@@ -109,10 +137,10 @@ void ParallelThreadPoolManager::BindPoolToRunner(
 #endif
 }
 
-bool ParallelThreadPoolManager::GetEnableSharedThreadPool() {
+bool ParallelThreadPoolManager::GetEnableSharedThreadPool(std::string runner_id) {
 #ifndef MS_COMPILE_IOS
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
-  return enable_shared_thread_pool_;
+  return enable_shared_thread_pool_[runner_id];
 #endif
   return false;
 }
@@ -139,7 +167,7 @@ void ParallelThreadPoolManager::SetFreePool(const std::string &runner_id, int mo
 
 ParallelThreadPool *ParallelThreadPoolManager::GetIdleThreadPool(const std::string &runner_id, ParallelTask *task) {
 #ifndef MS_COMPILE_IOS
-  if (!has_idle_pool_) {
+  if (!has_idle_pool_[runner_id]) {
     return nullptr;
   }
   std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
@@ -148,7 +176,7 @@ ParallelThreadPool *ParallelThreadPoolManager::GetIdleThreadPool(const std::stri
     auto &pool = all_pools[pool_index];
     if (pool->IsIdlePool()) {
       auto &workers = pool_workers_[pool];
-      for (size_t i = 0; i < workers.size() - remaining_thread_num_; i++) {
+      for (size_t i = 0; i < workers.size() - remaining_thread_num_[runner_id]; i++) {
         workers[i]->ActivateByOtherPoolTask(task);
       }
       return pool;
@@ -169,6 +197,10 @@ void ParallelThreadPoolManager::ResetParallelThreadPoolManager(const std::string
     pool_workers_.erase(pool);
   }
   runner_id_pools_.erase(runner_id);
+  has_idle_pool_.erase(runner_id);
+  enable_shared_thread_pool_.erase(runner_id);
+  remaining_thread_num_.erase(runner_id);
+  thread_num_limit_.erase(runner_id);
 #endif
 }
 
@@ -178,6 +210,10 @@ ParallelThreadPoolManager::~ParallelThreadPoolManager() {
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
   pool_workers_.clear();
   runner_id_pools_.clear();
+  has_idle_pool_.clear();
+  enable_shared_thread_pool_.clear();
+  remaining_thread_num_.clear();
+  thread_num_limit_.clear();
   THREAD_INFO("~ParallelThreadPoolManager end.");
 #endif
 }

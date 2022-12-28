@@ -1079,7 +1079,7 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   }
 #ifdef PARALLEL_INFERENCE
   // reset op task num, The number of operator segmentation tasks is not necessarily equal to the number of threads
-  int thread_num_limit = ParallelThreadPoolManager::GetInstance()->GetTaskNum();
+  int thread_num_limit = ParallelThreadPoolManager::GetInstance()->GetTaskNum(config_info_);
   if (thread_num_limit != -1 && IsSharedThreadPoolOp(op_type)) {
     op_parameter->thread_num_ = thread_num_limit;
   }

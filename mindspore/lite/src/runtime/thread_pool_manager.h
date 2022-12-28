@@ -34,7 +34,7 @@ class ThreadPoolManager {
   ~ThreadPoolManager();
 
   ThreadPool *GetThreadPool(size_t actor_num, size_t inter_op_parallel_num, size_t thread_num, BindMode bind_mode,
-                            const std::vector<int> &core_list);
+                            const std::vector<int> &core_list, std::string runner_id);
 
   void RetrieveThreadPool(size_t actor_num, size_t inter_op_parallel_num, size_t thread_num, BindMode bind_mode,
                           const std::vector<int> &core_list, ThreadPool *thread_pool);

@@ -61,12 +61,14 @@ class ParallelWorker : public Worker {
   ParallelTask *other_task_ = nullptr;
   std::mutex other_task_mutex_;
   std::condition_variable cv_other_task_;
+  bool enable_shared_thread_pool_ = false;
 };
 
 class ParallelThreadPool : public ActorThreadPool {
  public:
   static ParallelThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num,
-                                              const std::vector<int> &core_list, BindMode bind_mode);
+                                              const std::vector<int> &core_list, BindMode bind_mode,
+                                              std::string runner_id = "");
   ~ParallelThreadPool() override {
     MS_LOG(INFO) << "free parallel thread pool.";
     // wait until actor queue is empty
@@ -135,11 +137,15 @@ class ParallelThreadPool : public ActorThreadPool {
 
   int GetPoolRef();
 
-  inline void SetRunnerID(const std::string &runner_id) { bind_runner_id_ = runner_id; }
+  bool SetRunnerID(const std::string &runner_id) override;
 
   std::vector<ParallelWorker *> GetParallelPoolWorkers();
 
   void UseThreadPool(int num);
+
+  inline std::string GetPoolBindRunnerID() { return bind_runner_id_; }
+
+  inline bool GetEnableShared() { return enable_shared_; }
 
  private:
   ParallelThreadPool() {}

@@ -134,13 +134,13 @@ int InnerContext::CreateThreadPool() {
     this->inter_op_parallel_num_ =
       (!this->enable_parallel_ && this->inter_op_parallel_num_ > 1) ? this->inter_op_parallel_num_ : 1;
     actor_thread_num_ = (inter_op_parallel_num_ > 1) ? 1 : (this->enable_parallel_ ? kDefaultParallelNum : 1);
-    thread_pool_ = ThreadPoolManager::GetInstance()->GetThreadPool(actor_thread_num_, inter_op_parallel_num_,
-                                                                   thread_num_, bind_mode_, affinity_core_list_);
+    thread_pool_ = ThreadPoolManager::GetInstance()->GetThreadPool(
+      actor_thread_num_, inter_op_parallel_num_, thread_num_, bind_mode_, affinity_core_list_, runner_id_);
     if (thread_pool_ == nullptr) {
 #ifdef ENABLE_MINDRT
       if (inter_op_parallel_num_ > 1) {
         thread_pool_ = ParallelThreadPool::CreateThreadPool(this->inter_op_parallel_num_, this->thread_num_,
-                                                            this->affinity_core_list_, bind_mode_);
+                                                            this->affinity_core_list_, bind_mode_, runner_id_);
       } else {
         thread_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num_, this->thread_num_,
                                                          this->affinity_core_list_, bind_mode_);

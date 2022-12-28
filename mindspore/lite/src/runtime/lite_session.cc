@@ -750,6 +750,17 @@ int LiteSession::ContextInit(InnerContext *context) {
   }
   this->context_ = context;
 
+  std::string runner_id;
+  if (config_info_ != nullptr) {
+    auto it_id = config_info_->find(kInnerIDs);
+    if (it_id != config_info_->end()) {
+      auto item_runner = it_id->second.find(kInnerRunnerID);
+      if (item_runner != it_id->second.end()) {
+        runner_id = it_id->second.at(kInnerRunnerID);
+      }
+    }
+  }
+  context_->SetBindRunnerId(runner_id);
   auto ret = this->context_->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
@@ -767,7 +778,9 @@ int LiteSession::ContextInit(InnerContext *context) {
   context_->thread_pool()->SetMinSpinCount(kDefaulLiteIosSpinCount);
 #endif
 #ifdef PARALLEL_INFERENCE
-  if (context_->inter_op_parallel_num_ > 1 && ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool()) {
+
+  if (context_->inter_op_parallel_num_ > 1 && !runner_id.empty() &&
+      ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool(runner_id)) {
     MS_LOG(INFO) << "Enable subgraph parallelism and enable thread pool sharing";
     ParallelThreadPoolManager::GetInstance()->BindPoolToRunner(context_->thread_pool(), config_info_);
   }

@@ -685,8 +685,10 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
 
 int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
 #ifdef PARALLEL_INFERENCE
-  if (params_->deep_ < kNumDeepThreshold && ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool()) {
-    params_->op_parameter_.thread_num_ = ParallelThreadPoolManager::GetInstance()->GetThreadPoolSize();
+  if (params_->deep_ < kNumDeepThreshold) {
+    auto num = ParallelThreadPoolManager::GetInstance()->GetThreadPoolSize(
+      static_cast<const lite::InnerContext *>(ms_context_)->thread_pool());
+    params_->op_parameter_.thread_num_ = num != -1 ? num : params_->op_parameter_.thread_num_;
   }
 #endif
   if ((a_batch_ >= thread_num_ && (b_batch_ == a_batch_ || !SupportMulBatchCuttingByRow())) || params_->col_ == 1) {
