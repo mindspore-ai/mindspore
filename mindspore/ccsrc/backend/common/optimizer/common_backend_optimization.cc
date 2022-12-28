@@ -38,7 +38,6 @@
 #include "backend/common/optimizer/dynamic_shape/link_custom_op.h"
 #include "backend/common/pass/convert_unused_tuple_para_to_make_tuple.h"
 #include "backend/common/pass/convert_dynamic_broadcast_to.h"
-#include "backend/common/optimizer/dynamic_shape/dynamic_shape_dtype_record.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/anf_ir_dump.h"
 
@@ -207,7 +206,6 @@ void DynamicShapeConvertPass(const std::shared_ptr<session::KernelGraph> &kernel
   auto dynamic_shape_convert_pm = std::make_shared<opt::PassManager>("dynamic_shape_convert_pm");
   dynamic_shape_convert_pm->AddPass(std::make_shared<opt::dynamic_shape::ConvertCustomOp>());
   dynamic_shape_convert_pm->AddPass(std::make_shared<opt::dynamic_shape::LinkCustomOp>());
-  dynamic_shape_convert_pm->AddPass(std::make_shared<opt::dynamic_shape::DynamicShapeDtypeRecord>());
   optimizer->AddPassManager(dynamic_shape_convert_pm);
   (void)optimizer->Optimize(kernel_graph);
 #ifdef ENABLE_DUMP_IR

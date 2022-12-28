@@ -45,9 +45,10 @@ inline const PrimitivePtr kPrimAttrConvertTest = std::make_shared<Primitive>(kAt
 inline const PrimitivePtr kPrimDynamicInputTest = std::make_shared<Primitive>("dynamic_input_test");
 AbstractBasePtr InferImplAttrTest(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
-  EXPECT_EQ(args_spec_list.size(), 3);
+  // CppInferShapeAndType does not convert attr to input
+  EXPECT_EQ(args_spec_list.size(), 2);
   EXPECT_NE(args_spec_list[1], nullptr);
-  EXPECT_EQ(args_spec_list[1]->isa<abstract::AbstractTuple>(), true);
+  EXPECT_EQ(args_spec_list[1]->isa<abstract::AbstractTensor>(), true);
   return args_spec_list[0];
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(TestAttr, kPrimAttrConvertTest, InferImplAttrTest, nullptr, true);

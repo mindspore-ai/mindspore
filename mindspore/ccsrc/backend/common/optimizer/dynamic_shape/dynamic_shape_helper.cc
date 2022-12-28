@@ -24,7 +24,6 @@
 #include <map>
 #include <utility>
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "backend/common/optimizer/dynamic_shape/dynamic_shape_dtype_record.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
@@ -98,18 +97,17 @@ bool InferShapeForDefiniteOutputNode(const CNodePtr &cnode) {
 
 tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
                                        const std::pair<AnfNodePtr, size_t> &input_node_with_index, bool skip_nop_node,
-                                       void *args, bool abstract_in_cache) {
+                                       void *args) {
   auto real_input = input_node_with_index.first;
   MS_EXCEPTION_IF_NULL(real_input);
   auto real_input_index = input_node_with_index.second;
   auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
   TypeId host_type;
-  if (abstract_in_cache) {
-    // for cnode in the cache, we use device type as there is a mismatch
-    host_type = AnfAlgo::GetOutputDeviceDataType(real_input, real_input_index);
-  } else {
-    // for cnode not in the cache, valuenodes and other nodes, we use inferred type
+  if (real_input->isa<ValueNode>()) {
+    // the type of ValueNode in KernelInfo is kTypeUnknown
     host_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
+  } else {
+    host_type = AnfAlgo::GetOutputDeviceDataType(real_input, real_input_index);
   }
   auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
 
@@ -167,40 +165,14 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
     auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i, false);
     auto real_input = input_node_with_index.first;
     auto real_input_index = input_node_with_index.second;
-
-    bool abstract_in_cache = DynamicShapeDtypeManager::GetInstance().CheckDeviceType(real_input);
-    AbstractBasePtr cached_abstract;
     AbstractBasePtr real_input_abs = real_input->abstract();
 
-    if (abstract_in_cache) {
-      auto cached_type_list = DynamicShapeDtypeManager::GetInstance().GetDeviceType(real_input);
-      if (real_input_abs->isa<abstract::AbstractTensor>()) {
-        auto shape_ptr = real_input_abs->BuildShape();
-        cached_abstract = std::make_shared<abstract::AbstractTensor>(cached_type_list[0], shape_ptr);
-      } else if (real_input_abs->isa<abstract::AbstractTuple>()) {
-        auto abstract_tuple = real_input_abs->cast<abstract::AbstractTuplePtr>();
-        MS_EXCEPTION_IF_NULL(abstract_tuple);
-        AbstractBasePtrList abstract_list;
-
-        for (size_t output_index = 0; output_index < cached_type_list.size(); ++output_index) {
-          auto cur_element = abstract_tuple->elements()[output_index];
-          MS_EXCEPTION_IF_NULL(cur_element);
-          auto shape_ptr = cur_element->BuildShape();
-          auto new_abstract = std::make_shared<abstract::AbstractTensor>(cached_type_list[output_index], shape_ptr);
-          abstract_list.push_back(new_abstract);
-        }
-        cached_abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
-      } else {
-        MS_LOG(EXCEPTION) << "Output of " << real_input->fullname_with_scope()
-                          << " is neither a Tensor nor a Tuple of Tensor, but " << real_input_abs->ToString();
-      }
-    }
     MS_EXCEPTION_IF_NULL(real_input);
     if (skip_nop_node) {
       InferShapeForNopNode(real_input);
     }
     if (depend_list.find(i) != depend_list.end()) {
-      auto out_tensor = GetDependValueTensor(cnode, i, input_node_with_index, skip_nop_node, args, abstract_in_cache);
+      auto out_tensor = GetDependValueTensor(cnode, i, input_node_with_index, skip_nop_node, args);
       auto ret2 = depend_tensor_map->try_emplace(i, out_tensor);
       if (!ret2.second) {
         MS_LOG(EXCEPTION) << "Insert map failed.";
@@ -208,12 +180,7 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
 
       // cppcheck-suppress unreadVariable
       auto lock = AnfUtils::GetAbstractLock(real_input.get());
-      AbstractBasePtr real_abs;
-      if (abstract_in_cache) {
-        real_abs = cached_abstract;
-      } else {
-        real_abs = real_input->abstract();
-      }
+      auto real_abs = real_input->abstract();
       if (real_abs->isa<abstract::AbstractTensor>()) {
         real_abs->set_value(out_tensor);
       } else if (real_abs->isa<abstract::AbstractTuple>()) {
@@ -224,19 +191,8 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
         tuple_elements->set_value(out_tensor);
       }
     }
-    if (abstract_in_cache) {
-      if (cached_abstract->isa<abstract::AbstractTuple>()) {
-        auto abs_tuple = cached_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
-        MS_EXCEPTION_IF_NULL(abs_tuple);
-        MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abs_tuple->elements().size()), "Index is out of range.");
-        auto abs_index = abs_tuple->elements()[real_input_index];
-        (void)args_spec_list.emplace_back(abs_index);
-      } else {
-        (void)args_spec_list.emplace_back(cached_abstract->Clone());
-      }
-    } else {
-      common::AnfAlgo::AddArgList(&args_spec_list, real_input, real_input_index);
-    }
+
+    common::AnfAlgo::AddArgList(&args_spec_list, real_input, real_input_index);
   }
 
   // Pynative mode is rely on the origin abstract of cnode, so cannot modify the abstract inplace, clone from old
