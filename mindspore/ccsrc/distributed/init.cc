@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include "distributed/recovery/recovery_context.h"
+#include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 
 namespace mindspore {
 namespace distributed {
@@ -38,6 +39,7 @@ bool Initialize() {
     if (!collective::CollectiveManager::instance()->Finalize()) {
       MS_LOG(EXCEPTION) << "Failed to finalize the collective communication lib.";
     }
+    runtime::EmbeddingCacheScheduler::GetInstance().Finalize();
   });
   node->set_abnormal_callback(callback);
 

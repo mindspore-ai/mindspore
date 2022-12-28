@@ -47,7 +47,7 @@ class RpcNodeScheduler {
   void SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<DeviceTensor> *const op_context) const;
 
   // Reset op context for rpc actors.
-  void ResetOpcontext(const RpcActorSetPtr &rpc_actors) const;
+  void ResetOpcontext(const RpcActorSetPtr &rpc_actors);
 
  private:
   /**

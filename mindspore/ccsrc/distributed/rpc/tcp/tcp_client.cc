@@ -57,7 +57,7 @@ void TCPClient::Finalize() {
 }
 
 bool TCPClient::Connect(const std::string &dst_url, size_t retry_count, const MemFreeCallback &free_cb) {
-  unsigned int interval = 5;
+  unsigned int interval = 2;
   for (size_t i = 0; i < retry_count; ++i) {
     if (tcp_comm_->Connect(dst_url, free_cb)) {
       MS_LOG(INFO) << "Connected to the tcp server " << dst_url << " successfully.";

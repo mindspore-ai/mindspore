@@ -199,7 +199,7 @@ void RpcNodeScheduler::SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<
   }
 }
 
-void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) const {
+void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) {
   MS_EXCEPTION_IF_NULL(rpc_actors);
 
   for (auto &recv_actor : rpc_actors->recv_actors_) {
