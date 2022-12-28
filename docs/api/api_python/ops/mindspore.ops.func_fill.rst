@@ -7,11 +7,11 @@ mindspore.ops.fill
 
     参数：
         - **type** (mindspore.dtype) - 指定输出Tensor的数据类型。数据类型只支持 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 和 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
-        - **shape** (tuple[int]) - 指定输出Tensor的shape。
-        - **value** (Union(number.Number, bool)) - 用来填充输出Tensor的值。
+        - **shape** (Union(Tensor, tuple[int])) - 指定输出Tensor的shape。
+        - **value** (Union(Tensor, number.Number, bool)) - 用来填充输出Tensor的值。
 
     返回：
         Tensor。
 
     异常：
-        - **TypeError** - `shape` 不是元组。
+        - **TypeError** - `shape` 不是元组或Tensor。
