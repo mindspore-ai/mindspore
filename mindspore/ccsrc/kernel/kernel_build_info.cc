@@ -111,6 +111,12 @@ void KernelBuildInfo::SetInputsKernelObjectType(const std::vector<KernelObjectTy
   inputs_kernel_object_type_ = inputs_kernel_object_type;
 }
 
+void KernelBuildInfo::SetInputsFormat(const std::vector<std::string> &inputs_format) { inputs_format_ = inputs_format; }
+
+void KernelBuildInfo::SetInputsDeviceType(const std::vector<TypeId> &inputs_device_type) {
+  inputs_device_type_ = inputs_device_type;
+}
+
 void KernelBuildInfo::SetOutputFormat(const std::string &format, size_t index) {
   if (index >= outputs_format_.size()) {
     MS_LOG(EXCEPTION) << "The index [" << index << "] is exceed the number of output";

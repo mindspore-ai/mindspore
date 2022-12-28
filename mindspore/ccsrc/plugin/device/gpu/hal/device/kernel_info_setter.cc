@@ -240,7 +240,6 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
   if (kernel_info_list.empty()) {
     MS_LOG(EXCEPTION) << "Not find valid metadata of op[" << op_name << "].";
   }
-
   bool match = std::any_of(kernel_info_list.begin(), kernel_info_list.end(),
                            [&](const std::shared_ptr<KernelBuildInfo> &alternative_kernel_info) {
                              return CheckKernelInfo(alternative_kernel_info, selected_kernel_info, true);
@@ -588,6 +587,28 @@ bool GetSelectKernelResult(const CNodePtr &kernel_node,
   return result;
 }
 
+#ifdef ENABLE_TUPLE_UNFOLD
+bool GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node) {
+  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto kernel_attrs = kernel::NativeGpuKernelMod::GetGpuSupportedList(kernel_name);
+  if (kernel_attrs.empty() || kernel_attrs[0].GetSkipCheck()) {
+    auto input_object_types =
+      kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllInputObjectType(kernel_node));
+    auto output_object_types =
+      kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(kernel_node));
+    kernel::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types);
+    return true;
+  }
+  std::vector<kernel::KernelAttr> object_selected_kernel_attrs;
+  if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, true) &&
+      !kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, false)) {
+    return false;
+  }
+  kernel::SetKernelObjectTypeWithSelectedAttr(kernel_node, object_selected_kernel_attrs[0]);
+  return true;
+}
+#endif
+
 std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kernel_node, KernelType kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   if (common::AnfAlgo::IsGraphKernel(kernel_node)) {
@@ -596,7 +617,17 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     SetGraphKernelInfo(kernel_node, func_graph);
     return {};
   }
-
+  auto builder = std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
+#ifdef ENABLE_TUPLE_UNFOLD
+  bool selected = GetSelectKernelObjectTypeResult(kernel_node);
+  if (!selected) {
+    std::stringstream ss;
+    ss << "kernel object types are not supported for " << common::AnfAlgo::GetCNodeName(kernel_node)
+       << " on GPU currently.";
+    return {ss.str(), NotSupportError};
+  }
+#endif
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -604,25 +635,39 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     inputs_format.emplace_back(kOpFormat_DEFAULT);
     inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
   }
+
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    outputs_format.emplace_back(kOpFormat_DEFAULT);
-    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
+#ifdef ENABLE_TUPLE_UNFOLD
+  auto output_kernel_object_types = builder->Build()->GetAllOutputKernelObjectTypes();
+  if (output_kernel_object_types.size() == 1 && output_kernel_object_types[0] == kernel::KernelObjectType::TUPLE) {
+    outputs_type = {common::AnfAlgo::GetOutputInferDataType(kernel_node, 0)};
+    outputs_format = {kOpFormat_DEFAULT};
+  } else {
+#endif
+    size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);
+    for (size_t output_index = 0; output_index < output_num; ++output_index) {
+      outputs_format.emplace_back(kOpFormat_DEFAULT);
+      outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
+    }
+#ifdef ENABLE_TUPLE_UNFOLD
   }
+#endif
   std::string origin_data_format = kOpFormat_DEFAULT;
   if (IsNeedProcessFormatInfo(kernel_node, inputs_type)) {
     UpdateKernelFormatInfo(kernel_node, inputs_type, &inputs_format, &outputs_format, &origin_data_format);
   }
-  auto builder = std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
   builder->SetOriginDataFormat(origin_data_format);
   builder->SetInputsFormat(inputs_format);
   builder->SetInputsDeviceType(inputs_type);
   builder->SetOutputsFormat(outputs_format);
   builder->SetOutputsDeviceType(outputs_type);
-  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
-
+#ifdef ENABLE_TUPLE_UNFOLD
+  kernel::UnfoldKernelBuildInfo(kernel_node);
+  if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
+    kernel::SetDynamicInputSizeAttr(kernel_node);
+  }
+#endif
   std::vector<std::tuple<size_t, TypeId, TypeId>> input_reduce_index;
   bool result = GetSelectKernelResult(kernel_node, builder, &kernel_type, &input_reduce_index);
   SetTensorDeviceInfo(*(builder->Build()), kernel_node, input_reduce_index);
