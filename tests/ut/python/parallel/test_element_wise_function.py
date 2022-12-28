@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 import numpy as np
 
 import mindspore as ms
@@ -21,6 +22,7 @@ from mindspore import context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops.operations.math_ops import BesselJ0, BesselJ1, BesselI0, BesselI1
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
@@ -1207,3 +1209,40 @@ def test_matmul_erfinv():
     y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
     b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
     compile_net(net, x, y, b)
+
+
+def test_Bessel_ops():
+    """
+    Feature: bessel ops in auto parallel.
+    Description: sharding propagation for bessel ops
+    Expectation: run successfully
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy):
+            super().__init__()
+            self.BesselI0 = BesselI0().shard(strategy)
+            self.BesselI1 = BesselI1()
+            self.BesselJ0 = BesselJ0()
+            self.BesselJ1 = BesselJ1()
+
+        def construct(self, x):
+            out = self.BesselI0(x)
+            out = self.BesselI1(out)
+            out = self.BesselJ0(out)
+            out = self.BesselJ1(out)
+            return out
+
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0,
+                                      search_mode="sharding_propagation")
+    x = Tensor(np.random.uniform(1, 5, size=(32, 8)), dtype=ms.float32)
+    strategy = ((4, 2),)
+    net = Net(strategy=strategy)
+    _cell_graph_executor.compile(net, x, phase='train')
+    strategies = _cell_graph_executor._get_shard_strategy(net)
+    for (k, v) in strategies.items():
+        if re.search("BesselI1", k) is not None:
+            assert v == [[4, 2],]
+        elif re.search("BesselJ0", k) is not None:
+            assert v == [[4, 2],]
+        elif re.search("BesselJ1", k) is not None:
+            assert v == [[4, 2],]
