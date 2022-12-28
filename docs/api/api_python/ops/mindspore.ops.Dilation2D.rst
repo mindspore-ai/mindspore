@@ -7,7 +7,7 @@
 
     对输入的shape为 :math:`(N, C_{in}, H_{in}, W_{in})` ，应用2-D膨胀，其中，
 
-    :math:`N` 为batch大小， :math:`H` 为高度， :math:`W`为宽度， :math:`C` 为通道数量。
+    :math:`N` 为batch大小， :math:`H` 为高度， :math:`W` 为宽度， :math:`C` 为通道数量。
 
     给定kernel size :math:`ks = (h_{ker}, w_{ker})`, stride :math:`s = (s_0, s_1)`，和
 

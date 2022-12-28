@@ -8295,7 +8295,7 @@ class Dilation2D(Primitive):
         ValueError: If `data_format` is not the str of 'NCHW'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones([10, 5, 32, 32]), mindspore.float16)
