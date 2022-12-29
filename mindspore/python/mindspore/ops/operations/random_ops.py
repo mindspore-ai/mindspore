@@ -441,10 +441,10 @@ class ParameterizedTruncatedNormal(Primitive):
 
     Examples:
         >>> shape = Tensor(np.array([2, 3]), mstype.int32)
-        >>> mean = Tensor(np.array([0], mstype.float32))
-        >>> stdevs = Tensor(np.array([1], mstype.float32))
-        >>> min = Tensor(np.array([-100], mstype.float32))
-        >>> max = Tensor(np.array([100],  mstype.float32))
+        >>> mean = Tensor(np.array([0]), mstype.float32)
+        >>> stdevs = Tensor(np.array([1]), mstype.float32)
+        >>> min = Tensor(np.array([-100]), mstype.float32)
+        >>> max = Tensor(np.array([100]),  mstype.float32)
         >>> seed = 1
         >>> seed2 = 2
         >>> parameterized_truncated_normal = ops.ParameterizedTruncatedNormal(seed=seed, seed2=seed2)
