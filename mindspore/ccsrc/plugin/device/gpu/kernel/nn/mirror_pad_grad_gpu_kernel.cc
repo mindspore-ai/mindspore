@@ -91,6 +91,20 @@ void MirrorPadGradGpuKernelMod::CalculateWorkspace(const ShapeVector &input_shap
     workspace_size_ *= input_shape[i + kOutputDimLowerLimit];  // WIDTH, HEIGHT -> Input Size
   }
   workspace_size_list_.push_back(workspace_size_);
+
+  int max_width = input_shape_[kIndexForMaxWidth];
+  // basic error check for padding value
+  if (mode_ == 1) {  // symmetric
+    max_width = max_width + (kSymmetricCoef * max_width);
+  } else {  // reflect
+    max_width = max_width + (kSymmetricCoef * (max_width - 1));
+  }
+  if (output_shape_[(output_shape_.size() - kMaxIndexOffset) + 0] > max_width ||
+      output_shape_[(output_shape_.size() - kMaxIndexOffset) + 1] > max_width) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the output.shape[-1] and output.shape[-2] cannot be greater "
+                      << "than input_x.shape[-1], but got output.shape: " << CONVERT_VECTOR_TO_STRING(output_shape_)
+                      << ", input_x.shape: " << CONVERT_VECTOR_TO_STRING(input_shape_);
+  }
 }
 
 int MirrorPadGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
