@@ -79,14 +79,42 @@ abstract::AbstractBasePtr GetChildAbstract(const abstract::AbstractBasePtr &cur_
 }
 
 KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract, const TypeId &real_type, size_t idx,
-                                   const ShapeVector &device_shape_adaptively, const std::string &format_str) {
-  auto tag_abstract = GetChildAbstract(cur_abstract, idx);
+                                   const ShapeVector &device_shape_adaptively, const std::string &format_str,
+                                   bool is_real_tuple_input = false) {
+  abstract::AbstractBasePtr tag_abstract = nullptr;
+  if (is_real_tuple_input) {
+    tag_abstract = cur_abstract;
+  } else {
+    tag_abstract = GetChildAbstract(cur_abstract, idx);
+  }
   TypePtr tag_type_ptr = TypeIdToType(real_type);
-  auto abstract_shape_ptr = GetValidShapeFromAbstract(tag_abstract);
-  auto new_abstract = std::make_shared<abstract::AbstractTensor>(tag_type_ptr, abstract_shape_ptr);
-  TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), new_abstract, device_shape_adaptively};
   KernelTensorPtr res_tensor = std::make_shared<KernelTensor>();
-  res_tensor->SetTensorInfo(tensor_info);
+  if (tag_abstract->isa<abstract::AbstractScalar>()) {
+    // Scalar
+    auto new_abstract = tag_abstract->Clone()->cast<abstract::AbstractScalarPtr>();
+    ScalarInfo scalar_info{new_abstract};
+    res_tensor->SetScalarInfo(scalar_info);
+    res_tensor->SetMetaType(kObjectTypeNumber);
+  } else if (tag_abstract->isa<abstract::AbstractTuple>()) {
+    // Tuple
+    auto new_abstract = tag_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
+    TupleInfo tuple_info{new_abstract};
+    res_tensor->SetTupleInfo(tuple_info);
+    res_tensor->SetMetaType(kObjectTypeTuple);
+  } else if (tag_abstract->isa<abstract::AbstractList>()) {
+    // List
+    auto new_abstract = tag_abstract->Clone()->cast<abstract::AbstractListPtr>();
+    ListInfo list_info{new_abstract};
+    res_tensor->SetListInfo(list_info);
+    res_tensor->SetMetaType(kObjectTypeList);
+  } else {
+    // Tensor
+    auto abstract_shape_ptr = GetValidShapeFromAbstract(tag_abstract);
+    auto new_abstract = std::make_shared<abstract::AbstractTensor>(tag_type_ptr, abstract_shape_ptr);
+    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), new_abstract, device_shape_adaptively};
+    res_tensor->SetTensorInfo(tensor_info);
+    res_tensor->SetMetaType(kObjectTypeTensorType);
+  }
   return res_tensor;
 }
 
@@ -119,20 +147,32 @@ inline BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
   return base_operator;
 }
 
+bool CheckInputIsRealTupleFromCNode(const std::vector<mindspore::kernel::KernelObjectType> &input_obj_types,
+                                    const size_t input_idx) {
+  // if input_obj_types is empty, regard it as a Tensor by default.
+  if (input_obj_types.size() != 0 && input_obj_types[input_idx] == KernelObjectType::TUPLE) {
+    return true;
+  }
+  return false;
+}
+
 using InOutKernelTensors = std::pair<std::vector<KernelTensorPtr>, std::vector<KernelTensorPtr>>;
 inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
-  // Makeup input tensors.
+  // Makeup input KernelTensors, meta_types can be tensor, scalar, tuple, list.
   std::vector<KernelTensorPtr> input_tensors;
   auto real_input_types = AnfAlgo::GetAllInputDeviceTypes(cnode);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(cnode);
+  auto input_obj_types = build_info->GetAllInputKernelObjectTypes();
   for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
+    bool is_real_tuple_input = CheckInputIsRealTupleFromCNode(input_obj_types, input_idx);
     const auto &[prev_node, output_idx] = common::AnfAlgo::GetPrevNodeOutput(cnode, input_idx);
     auto prev_abstract = prev_node->abstract();
     auto real_input_type = real_input_types[input_idx];
     auto device_shape_adaptively = AnfAlgo::GetInputDeviceShapeAdaptively(cnode, input_idx);
     auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
-    auto input_tensor =
-      CreateKernelTensor(prev_abstract, real_input_type, output_idx, device_shape_adaptively, format_str);
+    auto input_tensor = CreateKernelTensor(prev_abstract, real_input_type, output_idx, device_shape_adaptively,
+                                           format_str, is_real_tuple_input);
     input_tensors.push_back(input_tensor);
   }
 

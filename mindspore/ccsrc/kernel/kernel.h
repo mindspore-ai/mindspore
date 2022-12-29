@@ -227,7 +227,7 @@ using TensorInfoPtr = std::shared_ptr<TensorInfo>;
 using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
 
 class KernelAttr;
-// we extend KernelTensor to represent tensor/list/tuple/scalar data type.
+// we extend KernelTensor to represent tensor/map_tensor/list/tuple/scalar data type.
 class BACKEND_EXPORT KernelTensor {
  public:
   KernelTensor() = default;
@@ -239,9 +239,14 @@ class BACKEND_EXPORT KernelTensor {
   AddressPtr GetHostData() const { return host_data_; }
   TypeId GetDtype() const;
   mindspore::Format GetFormat() const {
-    const TensorInfo &info = std::get<TensorInfo>(meta_);
-    return info.format;
+    if (meta_type_ == kObjectTypeTensorType) {
+      const TensorInfo &info = std::get<TensorInfo>(meta_);
+      return info.format;
+    }
+    return Format::DEFAULT_FORMAT;
   }
+  TypeId GetMetaType() const { return meta_type_; }
+  std::variant<TensorInfo, ScalarInfo, TupleInfo, ListInfo> GetMeta() const { return meta_; }
   // If real type is not a list or tuple tensor, it will return kTypeUnknown.
   std::vector<TypeId> GetListOrTupleDtype() const;
   // If real type is not a single shape vector, it will return empty.
@@ -255,6 +260,7 @@ class BACKEND_EXPORT KernelTensor {
     TensorInfo &info = std::get<TensorInfo>(meta_);
     info.format = format;
   }
+  void SetMetaType(const TypeId meta_type) { meta_type_ = meta_type; }
   void SetShapeVector(const ShapeVector &shape);
 
   // max shape is only used in compute-depended ops
@@ -263,17 +269,28 @@ class BACKEND_EXPORT KernelTensor {
   abstract::BaseShapePtr GetBaseShape() const;
   // If the shape need to be List or Tuple, `SetBaseShape` should be called.
   void SetBaseShape(const abstract::BaseShapePtr &base_shape);
-  void SetTensorInfo(const TensorInfo &tensor_info) {
-    data_type_ = kObjectTypeTensorType;
-    meta_ = tensor_info;
+  void SetTensorInfo(const TensorInfo &info) {
+    meta_type_ = kObjectTypeTensorType;
+    meta_ = info;
   }
-
+  void SetScalarInfo(const ScalarInfo &info) {
+    meta_type_ = kObjectTypeNumber;
+    meta_ = info;
+  }
+  void SetTupleInfo(const TupleInfo &info) {
+    meta_type_ = kObjectTypeTuple;
+    meta_ = info;
+  }
+  void SetListInfo(const ListInfo &info) {
+    meta_type_ = kObjectTypeList;
+    meta_ = info;
+  }
   // deprecated field for dynamic shape
   const ShapeVector &GetDeviceShapeAdaptively() const;
   void SetDeviceShapeAdaptively(const ShapeVector &device_shape_adaptively);
 
  private:
-  TypeId data_type_{kObjectTypeTensorType};
+  TypeId meta_type_{kObjectTypeTensorType};
   // meta is a type-safe union of TensorInfo, ScalarInfo, TupleInfo, ListInfo.
   std::variant<TensorInfo, ScalarInfo, TupleInfo, ListInfo> meta_{TensorInfo()};
   AddressPtr data_{nullptr};       // Device data address.
