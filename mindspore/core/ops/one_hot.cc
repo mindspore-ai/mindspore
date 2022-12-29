@@ -85,6 +85,9 @@ class OneHotInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(prim);
     auto op_name = prim->name();
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kOneHotInputsNum,
+                                             op_name);
+
     (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex0]->BuildType(),
                                                      {kUInt8, kInt32, kInt64}, op_name);
     (void)CheckAndConvertUtils::CheckTypeValid("depth", input_args[kInputIndex1]->BuildType(),
