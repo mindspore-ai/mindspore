@@ -87,7 +87,13 @@ AnfNodePtr CreateNewNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &i
 
   // Need to reset new cnode's kernel build info because the inputs type and number could be changed after processing
   // methods. Only reset input types.
-  SetKernelInfoForNewCNodeByOrigNode(new_cnode, origin_node);
+  auto new_prim = GetValueNode<PrimitivePtr>(new_cnode->input(kIndex0));
+  auto origin_prim = GetValueNode<PrimitivePtr>(origin_node->input(kIndex0));
+  if (!IsPrimitiveEquals(new_prim, origin_prim)) {
+    SetKernelInfoForNewCNode(new_cnode, true);
+  } else {
+    SetKernelInfoForNewCNodeByOrigNode(new_cnode, origin_node);
+  }
   return new_cnode;
 }
 
@@ -144,6 +150,18 @@ void SetKernelInfoForNewCNodeByOrigNode(const CNodePtr &new_cnode, const CNodePt
   MS_EXCEPTION_IF_NULL(kernel_info);
   new_cnode->set_kernel_info(kernel_info);
   AnfAlgo::SetSelectKernelBuildInfo(new_kernel_builder->Build(), new_cnode.get());
+
+  auto new_prim = GetValueNode<PrimitivePtr>(new_cnode->input(kIndex0));
+  auto origin_prim = GetValueNode<PrimitivePtr>(origin_node->input(kIndex0));
+  if (!IsPrimitiveEquals(new_prim, origin_prim)) {
+    // If primitive changed, maybe input/output object types should be updated as well.
+    std::vector<KernelObjectType> input_obj_type;
+    std::vector<KernelObjectType> output_obj_type;
+    GenerateKernelObjectTypeForNewCNode(new_cnode, &input_obj_type, &output_obj_type);
+
+    new_kernel_builder->SetInputsKernelObjectType(input_obj_type);
+    new_kernel_builder->SetOutputsKernelObjectType(output_obj_type);
+  }
 }
 
 void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
@@ -168,7 +186,12 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
     std::vector<TypeId> inputs_type;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      inputs_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(cnode, input_index));
+      auto input_node = common::AnfAlgo::GetInputNode(cnode, input_index);
+      if (input_node->kernel_info() == nullptr) {
+        inputs_format.emplace_back(kOpFormat_DEFAULT);
+      } else {
+        inputs_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(cnode, input_index));
+      }
       inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
     }
     std::vector<std::string> outputs_format;
@@ -187,6 +210,33 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
   }
 
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode.get());
+}
+
+void SetKernelInfoForValueNode(const ValueNodePtr &value_node) {
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  value_node->set_kernel_info(kernel_info);
+  auto builder = std::make_shared<KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(builder);
+
+  auto type_id = value_node->value()->type()->type_id();
+  std::vector<std::string> inputs_format = {kOpFormat_DEFAULT};
+  std::vector<TypeId> inputs_type = {type_id};
+  std::vector<std::string> outputs_format = {kOpFormat_DEFAULT};
+  std::vector<TypeId> outputs_type = {type_id};
+
+  auto abs_type = AnfAlgo::GetAbstractObjectType(value_node->abstract());
+  std::vector<KernelObjectType> input_obj_type = {kernel::TypeIdToKernelObjectType(abs_type)};
+  std::vector<KernelObjectType> output_obj_type = {kernel::TypeIdToKernelObjectType(abs_type)};
+
+  builder->SetInputsFormat(inputs_format);
+  builder->SetInputsDeviceType(inputs_type);
+  builder->SetOutputsFormat(outputs_format);
+  builder->SetOutputsDeviceType(outputs_type);
+  builder->SetInputsKernelObjectType(input_obj_type);
+  builder->SetOutputsKernelObjectType(output_obj_type);
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), value_node.get());
 }
 
 abstract::AbstractBasePtr GenerateAbsByUserNodeInput(const CNodePtr &user_node, size_t input_index) {
@@ -221,9 +271,16 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
   // function.
   auto general_input_obj_type_func = [&]() {
     for (size_t i = kIndex1; i < cnode->inputs().size(); i++) {
+      auto input_node = cnode->input(i);
+      MS_EXCEPTION_IF_NULL(input_node);
       // Set input kernel object type as input node's output kernel object type.
-      auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(cnode->input(i));
-      input_obj_type->push_back(kernel_build_info->GetOutputKernelObjectType(kIndex0));
+      if (input_node->kernel_info() == nullptr) {
+        auto abs_type = AnfAlgo::GetAbstractObjectType(input_node->abstract());
+        input_obj_type->push_back(kernel::TypeIdToKernelObjectType(abs_type));
+      } else {
+        auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(cnode->input(i));
+        input_obj_type->push_back(kernel_build_info->GetOutputKernelObjectType(kIndex0));
+      }
     }
   };
 
@@ -270,6 +327,9 @@ InsertTypeTransformOp::InsertTypeTransformOp(bool multigraph)
               std::placeholders::_3, std::placeholders::_4);
   kTypePairToProcessFunc[{KernelObjectType::TUPLE_UNFOLD, KernelObjectType::TENSOR}] =
     std::bind(&InsertTypeTransformOp::ProcessTupleUnfoldToTensor, this, std::placeholders::_1, std::placeholders::_2,
+              std::placeholders::_3, std::placeholders::_4);
+  kTypePairToProcessFunc[{KernelObjectType::TUPLE, KernelObjectType::TUPLE_UNFOLD}] =
+    std::bind(&InsertTypeTransformOp::ProcessTupleToTupleUnfold, this, std::placeholders::_1, std::placeholders::_2,
               std::placeholders::_3, std::placeholders::_4);
   kTypePairToProcessFunc[{KernelObjectType::TUPLE, KernelObjectType::TENSOR}] =
     std::bind(&InsertTypeTransformOp::ProcessTupleToTensor, this, std::placeholders::_1, std::placeholders::_2,
@@ -346,6 +406,8 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
         matched = true;
       }
       if (new_prim) {
+        MS_LOG(DEBUG) << "New primtive is " << processed_input_list[kIndex0]->fullname_with_scope() << " to replace "
+                      << new_input_list[kIndex0]->fullname_with_scope();
         // If new primitive is created, replace the old one, which is the first element of the input list.
         new_input_list[kIndex0] = processed_input_list[kIndex0];
         // Jump the primitive node the first one, and the rest is the new inputs.
@@ -461,8 +523,40 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTensor(const FuncGraph
   return {tuple_to_tensor};
 }
 
+AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTupleUnfold(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                                                const CNodePtr &node, bool *new_prim) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(node);
+
+  // This pattern only supports user node is a TupleGetItem node.
+  // If this pattern is matched but the user node is not TupleGetItem, throw exception.
+  if (!IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    MS_LOG(EXCEPTION) << "Tuple to TupleUnfold pattern should have TupleGetItem as user node, but got "
+                      << node->fullname_with_scope() << ", " << node->DebugString();
+  }
+
+  auto prim = NewValueNode(prim::kPrimRealTupleGetItem);
+  MS_EXCEPTION_IF_NULL(prim);
+  // Use original inputs except the primitive.
+  AnfNodePtrList new_inputs = {prim, input};
+
+  // For TupleGetItem node, the second input value node's kernel info must be in case of nullptr.
+  if (common::AnfAlgo::GetInputTensorNum(node) != kSizeTwo) {
+    MS_LOG(EXCEPTION) << "Input number of TupleGetItem node " << node->DebugString() << " should be 2. But got "
+                      << common::AnfAlgo::GetInputTensorNum(node);
+  }
+  if (node->input(kIndex2)->kernel_info() == nullptr && node->input(kIndex2)->isa<ValueNode>()) {
+    SetKernelInfoForValueNode(node->input(kIndex2)->cast<ValueNodePtr>());
+  }
+
+  // The primitive of user is changed.
+  *new_prim = true;
+  return new_inputs;
+}
+
 AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
-                                                           const CNodePtr &node, bool *new_prim) {
+                                                           const CNodePtr &node, bool *) {
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -512,7 +606,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessScalarToTensor(const FuncGraphPtr &
 }
 
 AnfNodePtrList InsertTypeTransformOp::ProcessTensorToTuple(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
-                                                           const CNodePtr &node, bool *new_prim) {
+                                                           const CNodePtr &node, bool *) {
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
 

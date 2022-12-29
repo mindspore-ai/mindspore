@@ -97,6 +97,9 @@ void SetKernelInfoForNewCNodeByOrigNode(const CNodePtr &new_cnode, const CNodePt
 // In some cases, there's no need to set input/output format and type for the node.
 void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type = true);
 
+// Set kernel info for some value nodes manually.
+void SetKernelInfoForValueNode(const ValueNodePtr &value_node);
+
 // Generate abstract, format and object type for newly created node.
 // They can be generated in multiple ways because new node is not processed by kernel selecting method.
 
@@ -131,6 +134,10 @@ class BACKEND_EXPORT InsertTypeTransformOp : public PatternProcessPass {
   // Convert TupleUnfold output to Tensor. Firstly insert TupleToTensor op. Then transform TupleUnfold to Tuple.
   AnfNodePtrList ProcessTupleUnfoldToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                             const CNodePtr &node, bool *new_prim);
+
+  // Convert Tuple output to TupleUnfold. User must be TupleGetItem op and change it to RealTupleGetItem.
+  AnfNodePtrList ProcessTupleToTupleUnfold(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                           const CNodePtr &node, bool *new_prim);
 
   // Convert Tuple/Scalar output to Tensor. Simply insert TupleToTensor/ScalarToTensor op.
   AnfNodePtrList ProcessTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const CNodePtr &node,
