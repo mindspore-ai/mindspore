@@ -77,11 +77,13 @@ constexpr auto kTypeIf = "If";
 namespace {
 // {node name | {{input_index, dst_type}...}}
 std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputDTypeMap = {
-  {kResizeNearestNeighborGradOpName, {{2, kNumberTypeInt32}}}, {kOneHotOpName, {{2, kNumberTypeInt32}}}};
+  {kResizeNearestNeighborGradOpName, {{2, kNumberTypeInt32}}},
+  {kTileOpName, {{1, kNumberTypeInt32}}},
+  {kOneHotOpName, {{2, kNumberTypeInt32}}}};
 
 // {node name | {{attr_name, dst_type}...}}
 std::map<std::string, std::vector<std::pair<std::string, TypeId>>> kTransAttrDTypeMap = {
-  {kResizeNearestNeighborOpName, {{"size", kNumberTypeInt32}}}};
+  {kResizeNearestNeighborOpName, {{"size", kNumberTypeInt32}}}, {kResizeBilinearOpName, {{"size", kNumberTypeInt32}}}};
 
 template <typename T>
 ValuePtr CreateNewValue(const ValuePtr &value, const std::vector<T> &values, const TypeId &dst_type) {
@@ -643,12 +645,8 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
   restore_checkpoint_sout_ << "digraph {" << endl;
   // Trans data_type for some specific nodes' inputs and attr.
   TransDataType(anf_graph_);
-  // Convert ResizeBilinear attr size to input
-  ConvertResizeBilinear(anf_graph_);
   // Convert SpaceBatch attr to input
   ConvertSpaceBatchNd(anf_graph_);
-  // Convert Tile input1 to int32
-  ConvertTile(anf_graph_);
   // Convert all anf node to Operator
   MS_LOG(INFO) << "Convert all node, graph: " << anf_graph_->ToString();
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_, while_cond_node_);
@@ -1998,10 +1996,6 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
   // Set input from attr.
   const auto &primitive = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
-  if (kTransAttrDTypeMap.count(GetCNodeFuncName(node)) == 0) {
-    MS_LOG(DEBUG) << "Now, not support to convert attr to input for node:" << node->DebugString();
-    return;
-  }
   const auto &attr_input_map = adpt->getAttrInputMap();
   const auto &input_map = adpt->getInputMap();
   MS_EXCEPTION_IF_NULL(anf_graph_);
@@ -2439,30 +2433,6 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
   op_cache_[value_ptr.get()] = op;
 }
 
-void DfGraphConvertor::ConvertResizeBilinear(const FuncGraphPtr anf_graph) const {
-  std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
-  for (auto &it : nodes) {
-    if (it->isa<CNode>()) {
-      auto node = it->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(node);
-      std::string name = GetCNodeTargetFuncName(node);
-      if (name == prim::kPrimResizeBilinear->name()) {
-        AnfNodePtr op = node->input(0);
-        if (IsValueNode<Primitive>(op)) {
-          auto prim = GetValueNode<PrimitivePtr>(op);
-          ValuePtr size_value = prim->GetAttr("size");
-          auto int64_value = GetValue<std::vector<int64_t>>(size_value);
-          std::vector<int32_t> int32_value;
-          (void)std::transform(int64_value.begin(), int64_value.end(), std::back_inserter(int32_value), LongToInt);
-          auto valuend = NewValueNode(int32_value);
-          valuend->set_abstract(size_value->ToAbstract());
-          node->add_input(valuend);
-        }
-      }
-    }
-  }
-}
-
 void DfGraphConvertor::ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) const {
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
   for (auto &it : nodes) {
@@ -2536,27 +2506,6 @@ AnfNodePtr DfGraphConvertor::CreateCast(const AnfNodePtr &input, const TypePtr &
   auto abs_tensor = std::make_shared<abstract::AbstractTensor>(dst_type, input->Shape());
   cnode->set_abstract(abs_tensor);
   return cnode;
-}
-
-void DfGraphConvertor::ConvertTile(const FuncGraphPtr anf_graph) const {
-  std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
-  for (auto &it : nodes) {
-    if (it->isa<CNode>()) {
-      auto node = it->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(node);
-      std::string name = GetCNodeTargetFuncName(node);
-      if (name == prim::kPrimTile->name()) {
-        auto type_ptr = node->input(1)->Type();
-        MS_EXCEPTION_IF_NULL(type_ptr);
-        auto tensor_type = type_ptr->cast<TensorTypePtr>();
-        MS_EXCEPTION_IF_NULL(tensor_type);
-        if (tensor_type->element()->number_type() == kNumberTypeInt64) {
-          auto new_cast = CreateCast(node->input(1), kInt32);
-          node->set_input(1, new_cast);
-        }
-      }
-    }
-  }
 }
 
 std::vector<int64_t> DfGraphConvertor::CastToInt(const ValuePtr &value) const {

@@ -191,9 +191,7 @@ class DfGraphConvertor {
   void SaveParamFormat(CNodePtr node);
   void GetBranchNodeInput(const CNodePtr node);
   void ConvertTopK(const CNodePtr &node);
-  void ConvertResizeBilinear(const FuncGraphPtr anf_graph) const;
   void ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) const;
-  void ConvertTile(const FuncGraphPtr anf_graph) const;
   AnfNodePtr CreateCast(const AnfNodePtr &input, const TypePtr &dst_type) const;
   void ConvertReshape(const CNodePtr &node);
   void ConvertAllReduce(const CNodePtr &node);
