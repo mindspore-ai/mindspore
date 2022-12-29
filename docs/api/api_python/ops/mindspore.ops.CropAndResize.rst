@@ -27,7 +27,7 @@ mindspore.ops.CropAndResize
         - **TypeError** - `boxes` 的数据类型不是float， 或者，`box_index` 的数据类型不是int32。
         - **TypeError** - `method` 不是字符串。
         - **TypeError** - `extrapolation_value` 不是浮点值。
-        - **ValueError** - `x` 的维度不是4维。
+        - **ValueError** - `x` 的维度不是四维。
         - **ValueError** - `boxes` 的纬度不是二维。
         - **ValueError** - `boxes` 的第二维不是4。
         - **ValueError** - `box_index` 的维度不是一维。

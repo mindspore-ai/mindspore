@@ -19,14 +19,14 @@ mindspore.nn.FractionalMaxPool3d
         - **_random_samples** (Tensor，可选) - 随机步长。支持的数据类型：float16、float32、double。shape为 :math:`(N, C, 3)` 的Tensor。数值介于0到1之间。默认值：None。
 
     输入：
-        - **input_x** (Tensor) - 4维或5维的张量，支持的数据类型：float16、float32、double、int32、int64。支持shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 。
+        - **input_x** (Tensor) - 四维或五维的张量，支持的数据类型：float16、float32、double、int32、int64。支持shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 。
 
     输出：
         - **y** (Tensor) - 3D分数最大池化的输出，是一个张量。数据类型和输入相同，shape是 :math:`(N, C, D, H, W)` 。
         - **argmax** (Tensor) - 仅当 `return_indices` 为True时，输出最大池化的索引值。shape和输出 `y` 一致。
 
     异常：
-        - **TypeError** - `input_x` 不是4维或5维张量。
+        - **TypeError** - `input_x` 不是四维或五维张量。
         - **TypeError** - `random_samples` 不是三维张量。
         - **TypeError** - `x` 数据类型不是float16、float32、double、int32、int64。
         - **TypeError** - `random_samples` 数据类型不是float16、float32、double。

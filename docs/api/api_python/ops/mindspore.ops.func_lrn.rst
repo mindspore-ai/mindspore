@@ -14,7 +14,7 @@ mindspore.ops.lrn
     :math:`\alpha` 为参数 `alpha` ； :math:`\beta` 为参数 `beta` 。
 
     参数：
-        - **x** (Tensor) - 数据类型为float16或float32的4维Tensor。
+        - **x** (Tensor) - 数据类型为float16或float32的四维Tensor。
         - **depth_radius** (int) - 一维归一化窗口的半宽。默认值：5。
         - **bias** (float) - 偏移量（通常为正以避免除零问题）。默认值：1.0。
         - **alpha** (float) - 比例系数，通常为正。默认值：1.0。
