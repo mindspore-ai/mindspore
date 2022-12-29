@@ -173,7 +173,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         timeline_list, communication_info = self._load_op_data(op_file_path, reduce_op_type)
         communication_info.sort(key=lambda x: float(x[2]))
         # Add host cpu op timeline.
-        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._model)
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._device_id, self._model)
         cpu_timeline_list = cpu_timeline_generator.load_cpu_op_data()
         if cpu_timeline_list:
             self._clock_synchronize_to_gpu(cpu_timeline_list)
@@ -508,8 +508,8 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
     _display_filename = 'cpu_timeline_display_{}.json'
     _timeline_summary_filename = 'cpu_timeline_summary_{}.json'
 
-    def __init__(self, profiling_dir, model):
-        super().__init__(profiling_dir, 0, 0, model)
+    def __init__(self, profiling_dir, device_id, model):
+        super().__init__(profiling_dir, device_id, 0, model)
         self._device_target = DeviceTarget.CPU.value
 
     def get_timeline_data(self):
