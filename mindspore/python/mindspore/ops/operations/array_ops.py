@@ -6273,7 +6273,6 @@ class TensorScatterUpdate(_TensorScatterOp):
 
     @prim_attr_register
     def __init__(self):
-        super().__init__("TensorScatterUpdate")
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
     def _infer_specified_value(self, input_x_value, indices_value, updates_value):
@@ -6343,7 +6342,6 @@ class TensorScatterMax(Primitive):
 
     @prim_attr_register
     def __init__(self):
-        super().__init__("TensorScatterMax")
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
 
@@ -6379,7 +6377,6 @@ class TensorScatterMin(Primitive):
 
     @prim_attr_register
     def __init__(self):
-        super().__init__("TensorScatterMin")
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
 
@@ -6417,7 +6414,6 @@ class TensorScatterSub(Primitive):
 
     @prim_attr_register
     def __init__(self):
-        super().__init__("TensorScatterSub")
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
 
@@ -6456,7 +6452,6 @@ class TensorScatterAdd(Primitive):
 
     @prim_attr_register
     def __init__(self):
-        super().__init__("TensorScatterAdd")
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
 
@@ -6494,7 +6489,6 @@ class TensorScatterMul(_TensorScatterOp):
 
     @prim_attr_register
     def __init__(self):
-        super().__init__("TensorScatterMul")
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
 
@@ -6532,7 +6526,6 @@ class TensorScatterDiv(_TensorScatterOp):
 
     @prim_attr_register
     def __init__(self):
-        super().__init__("TensorScatterDiv")
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
 
