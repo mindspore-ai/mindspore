@@ -694,6 +694,10 @@ bool RemoveValueNodeDuplicationsPass(const ResourcePtr &resource) {
     auto value_nodes = fg->value_nodes();
     for (const auto &value_pair : value_nodes) {
       auto &users = node_user_map.at(value_pair.first);
+      auto prim = GetValueNode<PrimitivePtr>(value_pair.first);
+      if (IsPrimitiveEquals(prim, prim::kPrimUpdateState)) {
+        continue;
+      }
       // For data parallel with some parameters redundant, the allreduce will share the same value node
       // which will raise an error when do allreduce fusion, so the solution is to make the allreduce's value node
       // not be removed, if we found the fusion tag.
