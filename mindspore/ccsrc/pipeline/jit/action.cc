@@ -262,7 +262,7 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const Func
           auto is_load = primitive->GetAttr("is_load");
           if (abstract::GetPrimEvaluator(primitive, engine) == nullptr && is_load != nullptr &&
               GetValue<bool>(is_load)) {
-            MS_LOG(ERROR) << "The primitive is not defined in front end. Primitive: " << primitive->ToString();
+            MS_LOG(WARNING) << "The primitive is not defined in front end. Primitive: " << primitive->ToString();
             continue;
           }
         }
