@@ -132,13 +132,17 @@ class BACKEND_EXPORT InsertTypeTransformOp : public PatternProcessPass {
   AnfNodePtrList ProcessTupleUnfoldToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                             const CNodePtr &node, bool *new_prim);
 
-  // Convert Tuple output to Tensor. Simply insert TupleToTensor op.
+  // Convert Tuple/Scalar output to Tensor. Simply insert TupleToTensor/ScalarToTensor op.
   AnfNodePtrList ProcessTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const CNodePtr &node,
                                       bool *new_prim);
+  AnfNodePtrList ProcessScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const CNodePtr &node,
+                                       bool *new_prim);
 
-  // Transform Tensor to Tuple. Simply insert TensorToTuple op.
+  // Transform Tensor to Tuple/Scalar. Simply insert TensorToTuple/TensorToScalar op.
   AnfNodePtrList ProcessTensorToTuple(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const CNodePtr &node,
                                       bool *new_prim);
+  AnfNodePtrList ProcessTensorToScalar(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const CNodePtr &node,
+                                       bool *new_prim);
 };
 }  // namespace opt
 }  // namespace mindspore

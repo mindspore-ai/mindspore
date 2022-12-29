@@ -274,8 +274,14 @@ InsertTypeTransformOp::InsertTypeTransformOp(bool multigraph)
   kTypePairToProcessFunc[{KernelObjectType::TUPLE, KernelObjectType::TENSOR}] =
     std::bind(&InsertTypeTransformOp::ProcessTupleToTensor, this, std::placeholders::_1, std::placeholders::_2,
               std::placeholders::_3, std::placeholders::_4);
+  kTypePairToProcessFunc[{KernelObjectType::SCALAR, KernelObjectType::TENSOR}] =
+    std::bind(&InsertTypeTransformOp::ProcessScalarToTensor, this, std::placeholders::_1, std::placeholders::_2,
+              std::placeholders::_3, std::placeholders::_4);
   kTypePairToProcessFunc[{KernelObjectType::TENSOR, KernelObjectType::TUPLE}] =
     std::bind(&InsertTypeTransformOp::ProcessTensorToTuple, this, std::placeholders::_1, std::placeholders::_2,
+              std::placeholders::_3, std::placeholders::_4);
+  kTypePairToProcessFunc[{KernelObjectType::TENSOR, KernelObjectType::SCALAR}] =
+    std::bind(&InsertTypeTransformOp::ProcessTensorToScalar, this, std::placeholders::_1, std::placeholders::_2,
               std::placeholders::_3, std::placeholders::_4);
 }
 
@@ -483,6 +489,28 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
   return {tuple_to_tensor};
 }
 
+AnfNodePtrList InsertTypeTransformOp::ProcessScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                                            const CNodePtr &node, bool *new_prim) {
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(node);
+
+  // Simply insert ScalarToTensor op between 'input' and 'node'.
+  auto prim = NewValueNode(prim::kPrimScalarToTensor);
+  MS_EXCEPTION_IF_NULL(prim);
+  AnfNodePtrList inputs = {prim, input};
+  CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(scalar_to_tensor);
+
+  // Set abstract for ScalarToTensor op according to user node's input shape and type.
+  size_t input_index = GetInputNodeIndex(input, node);
+  auto abs = GenerateAbsByUserNodeInput(node, input_index);
+  MS_EXCEPTION_IF_NULL(abs);
+  MS_LOG(DEBUG) << "Abstract for ScalarToTensor op is " << abs->ToString();
+  scalar_to_tensor->set_abstract(abs);
+  SetKernelInfoForNewCNode(scalar_to_tensor);
+  return {scalar_to_tensor};
+}
+
 AnfNodePtrList InsertTypeTransformOp::ProcessTensorToTuple(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                                            const CNodePtr &node, bool *new_prim) {
   MS_EXCEPTION_IF_NULL(input);
@@ -504,6 +532,29 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTensorToTuple(const FuncGraphPtr &f
 
   SetKernelInfoForNewCNode(tensor_to_tuple);
   return {tensor_to_tuple};
+}
+
+AnfNodePtrList InsertTypeTransformOp::ProcessTensorToScalar(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                                            const CNodePtr &node, bool *new_prim) {
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(node);
+
+  // Create TensorToScalar op.
+  auto prim = NewValueNode(prim::kPrimTensorToScalar);
+  MS_EXCEPTION_IF_NULL(prim);
+  AnfNodePtrList inputs = {prim, input};
+  CNodePtr tensor_to_scalar = func_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(tensor_to_scalar);
+
+  // Set abstract for TensorToScalar op according to user node's input shape and type.
+  size_t input_index = GetInputNodeIndex(input, node);
+  auto abs = GenerateAbsByUserNodeInput(node, input_index);
+  MS_EXCEPTION_IF_NULL(abs);
+  MS_LOG(DEBUG) << "Abstract for TensorToScalar op is " << abs->ToString();
+  tensor_to_scalar->set_abstract(abs);
+
+  SetKernelInfoForNewCNode(tensor_to_scalar);
+  return {tensor_to_scalar};
 }
 }  // namespace opt
 }  // namespace mindspore
