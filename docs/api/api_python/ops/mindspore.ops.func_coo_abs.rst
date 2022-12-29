@@ -9,7 +9,7 @@ mindspore.ops.coo_abs
         out_i = |x_i|
 
     参数：
-        - **x** (COOTensor) - 输入COOTensor。T其shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **x** (COOTensor) - 输入COOTensor。
 
     返回：
         COOTensor，shape与 `x` 相同。

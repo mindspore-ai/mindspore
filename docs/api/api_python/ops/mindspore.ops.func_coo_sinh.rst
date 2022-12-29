@@ -6,7 +6,7 @@ mindspore.ops.coo_sinh
     逐元素计算输入COOTensor的双曲正弦。
 
     .. math::
-        out_i = \coo_sinh(x_i)
+        out_i = \sinh(x_i)
 
     参数：
         - **x** (COOTensor) - coo_sinh的输入COOTensor，其秩范围必须在[0, 7]。
