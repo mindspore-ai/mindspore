@@ -4862,7 +4862,12 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     Applies a 1D power lp pooling over an input signal composed of several input planes.
 
     Typically the input is of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`, the output is of shape
-    :math:`(N, C, L_{in})` or :math:`(C, L_{in})`, with the same shape as input, the operation is as follows.
+    :math:`(N, C, L_{out})` or :math:`(C, L_{out})`.
+
+    .. math::
+        L_{out} = \left\lfloor\frac{L_{in} - \text{kernel_size}}{\text{stride}} + 1\right\rfloor
+
+    The operation is as follows.
 
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
@@ -4880,7 +4885,7 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
 
     Returns:
-        - **output** (Tensor) - LPPool1d result, with shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`,
+        - **output** (Tensor) - LPPool1d result, with shape :math:`(N, C, L_{out})` or :math:`(C, L_{out})`,
           It has the same data type as `x`.
 
     Raises:

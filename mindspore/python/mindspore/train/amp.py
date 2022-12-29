@@ -410,7 +410,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
             (with property `drop_overflow_update=False` ).
 
     Examples:
-        >>> from mindpsore import amp, nn
+        >>> from mindspore import amp, nn
         >>> network = LeNet5()
         >>> net_loss = nn.SoftmaxCrossEntropyWithLogits(reduction="mean")
         >>> net_opt = nn.Momentum(network.trainable_params(), learning_rate=0.01, momentum=0.9)

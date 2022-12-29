@@ -7,13 +7,18 @@ mindspore.ops.lp_pool1d
 
     在一个输入Tensor上应用1D LP pooling，可被视为组成一个1D输入平面。
 
-    通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` 或 :math:`(C, L_{in})`，输出的shape为 :math:`(N_{in}, C_{in}, L_{in})` 或 :math:`(C, L_{in})`，输出与输入的shape一致，公式如下：
+    通常，输入的shape为 :math:`(N, C, L_{in})` 或 :math:`(C, L_{in})`，输出的shape为 :math:`(N, C, L_{out})` 或 :math:`(C, L_{out})`。
+
+    .. math::
+        L_{out} = \left\lfloor\frac{L_{in} - \text{kernel_size}}{\text{stride}} + 1\right\rfloor
+
+    公式如下：
 
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
     参数：
-        - **x** (Tensor) - shape为 :math:`(N, C_{in}, L_{in})` 或 :math:`(C, L_{in})` 的Tensor。
+        - **x** (Tensor) - shape为 :math:`(N, C, L_{in})` 或 :math:`(C, L_{in})` 的Tensor。
         - **norm_type** (Union[int, float]) - 标准化类型，代表公式里的p，不能为0，
 
           - 如果 p = 1，得到的结果为池化核内元素之和（与平均池化成比例），
@@ -24,7 +29,7 @@ mindspore.ops.lp_pool1d
         - **ceil_mode** (bool) - 若为True，使用ceil来计算输出shape。若为False，使用floor来计算输出shape。默认值：False。
 
     返回：
-        - **output** - LPPool1d的计算结果，shape为 :math:`(N, C_{out}, L_{out})` 或 :math:`(C, L_{in})` 的Tensor，与 输入 `x` 的类型一致。
+        - **output** - LPPool1d的计算结果，shape为 :math:`(N, C, L_{out})` 或 :math:`(C, L_{out})` 的Tensor，与 输入 `x` 的类型一致。
 
     异常：
         - **TypeError** - `x` 不是Tensor。
