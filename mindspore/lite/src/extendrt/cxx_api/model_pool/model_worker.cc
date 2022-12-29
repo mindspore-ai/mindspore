@@ -97,10 +97,11 @@ void ModelWorker::Run() {
     task->ready = true;
     predict_task_queue_->ActiveTask(task);
   }
+  MS_LOG(INFO) << "task queue all tasks completed.";
   delete model_;
   model_ = nullptr;
   model_is_nullptr_ = true;
-  MS_LOG(INFO) << "task queue all tasks completed.";
+  MS_LOG(INFO) << "delete model.";
 }
 
 Status ModelWorker::Init(const char *model_buf, size_t size) {
