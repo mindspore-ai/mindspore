@@ -484,7 +484,11 @@ std::vector<int32_t> MapOp::GetMPWorkerPIDs() const {
 Status MapOp::GetNextRowPullMode(TensorRow *const row) {
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
+  if (new_row.eoe()) {
+    UpdateRepeatAndEpochCounter();
+  }
   if (new_row.empty()) {
+    (*row) = std::move(new_row);
     return Status::OK();
   }
   auto column_name_id_map = child_[0]->column_name_id_map();

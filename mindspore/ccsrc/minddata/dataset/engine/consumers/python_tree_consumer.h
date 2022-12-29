@@ -49,7 +49,7 @@ class PythonPullBasedIteratorConsumer : public PullBasedIteratorConsumer {
  public:
   /// Constructor which will call the base class default constructor.
   /// \param num_epochs number of epochs. Default to -1 (infinite epochs).
-  explicit PythonPullBasedIteratorConsumer(int32_t num_epochs = -1) : PullBasedIteratorConsumer() {}
+  explicit PythonPullBasedIteratorConsumer(int32_t num_epochs = -1) : PullBasedIteratorConsumer(num_epochs) {}
 
   ~PythonPullBasedIteratorConsumer() = default;
   /// Returns the next row in a vector format

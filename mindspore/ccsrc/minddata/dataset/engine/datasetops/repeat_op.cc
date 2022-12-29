@@ -130,5 +130,28 @@ Status RepeatOp::Reset() {
 }
 
 int64_t RepeatOp::GetTreeRepeatCount() { return num_repeats_; }
+
+Status RepeatOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
+  if (child_.empty()) {
+    RETURN_STATUS_UNEXPECTED(
+      "[Internal ERROR] Pipeline init failed, RepeatOp can't be the leaf node(first operator) of pipeline.");
+  }
+  RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
+  // Loop until non EOE is received
+  while (row->eoe()) {
+    MS_LOG(INFO) << "RepeatOp::GetNextRowPullMode eoe received.";
+    RETURN_IF_NOT_OK(EoeReceived(0));
+    if (state_ == OpState::kDeOpIdle) {
+      return Status::OK();
+    }
+    RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
+  }
+  // Check if the last buf is next eof
+  if (row->eof()) {
+    RETURN_IF_NOT_OK(EofReceived(0));
+  }
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

@@ -49,6 +49,11 @@ class EpochCtrlOp : public RepeatOp {
   Status EoeReceived(int32_t worker_id) override;
 
   int64_t GetTreeRepeatCount() override;
+
+  /// \brief In pull mode, gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRowPullMode(TensorRow *const row) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

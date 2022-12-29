@@ -22,7 +22,11 @@
 namespace mindspore {
 namespace dataset {
 MappableLeafOp::MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared_ptr<SamplerRT> sampler)
-    : ParallelOp(num_wkrs, queue_size, std::move(sampler)), sample_ids_(nullptr), curr_row_(0), prepared_data_{false} {}
+    : ParallelOp(num_wkrs, queue_size, std::move(sampler)),
+      sample_ids_(nullptr),
+      curr_row_(0),
+      prepared_data_{false},
+      eof_handled_{false} {}
 
 #ifdef ENABLE_PYTHON
 Status MappableLeafOp::ImageDecrypt(const std::string &path, std::shared_ptr<Tensor> *tensor,
@@ -110,6 +114,7 @@ Status MappableLeafOp::operator()() {
 Status MappableLeafOp::Reset() {
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   RETURN_IF_NOT_OK(sampler_->ResetSampler());
+  curr_row_ = 0;
   return Status::OK();
 }
 
@@ -166,21 +171,37 @@ Status MappableLeafOp::GetNextRowPullMode(TensorRow *const row) {
     RETURN_IF_NOT_OK(InitPullMode());
     prepared_data_ = true;
   }
+  if (eof_handled_) {
+    *row = TensorRow(TensorRow::kFlagEOF);
+    return Status::OK();
+  }
+  TensorRow sample_row;
   if (sample_ids_ == nullptr) {
     RETURN_IF_NOT_OK(this->InitSampler());
-    TensorRow sample_row;
     RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
     CHECK_FAIL_RETURN_UNEXPECTED(sample_row.size() > 0, "GetNextRowPullMode: Expect at least one sample in sampler.");
     sample_ids_ = sample_row[0];
   }
   if (curr_row_ + 1 > sample_ids_->Size()) {
     *row = TensorRow(TensorRow::kFlagEOE);
+    RETURN_IF_NOT_OK(ResetAndUpdateRepeat());
+    RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
     return Status::OK();
   }
   int64_t key;
   RETURN_IF_NOT_OK(sample_ids_->GetItemAt(&key, {curr_row_}));
   RETURN_IF_NOT_OK(LoadTensorRowPullMode(key, row));
   curr_row_++;
+  return Status::OK();
+}
+
+Status MappableLeafOp::ResetAndUpdateRepeat() {
+  if (!IsLastIteration()) {
+    RETURN_IF_NOT_OK(Reset());
+    UpdateRepeatAndEpochCounter();
+  } else {
+    eof_handled_ = true;
+  }
   return Status::OK();
 }
 }  // namespace dataset

@@ -51,6 +51,9 @@ class TreeAdapterLite {
   // Run the mandatory pass checking the syntax and semantics of the IR tree
   Status PrePass(std::shared_ptr<DatasetNode> ir) const;
 
+  // Run the mandatory pass augmenting the IR tree
+  Status PostPass(std::shared_ptr<DatasetNode> ir) const;
+
   std::shared_ptr<DatasetNode> input_ir_;
   std::shared_ptr<DatasetNode> root_ir_;
 

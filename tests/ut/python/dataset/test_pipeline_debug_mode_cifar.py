@@ -611,6 +611,40 @@ def test_cifar100ops():
     assert "Input count is not within the required interval of" in str(error_info.value)
 
 
+def test_pipeline_debug_mode_multi_epoch_cifar10():
+    """
+    Feature: Pipeline debug mode.
+    Description: Test creating tuple iterator in cifar10 dataset with multi epochs.
+    Expectation: Output is equal to the expected output
+    """
+    logger.info("test_pipeline_debug_mode_multi_epoch_cifar10")
+    data_dir_10 = "../data/dataset/testCifar10Data"
+    num_repeat = 2
+    batch_size = 32
+    limit_dataset = 100
+    # apply dataset operations
+    data1 = ds.Cifar10Dataset(data_dir_10, num_samples=limit_dataset)
+    data1 = data1.repeat(num_repeat)
+    data1 = data1.batch(batch_size, True)
+    num_epoch = 5
+    iter1 = data1.create_tuple_iterator(num_epochs=num_epoch)
+    epoch_count = 0
+    sample_count = 0
+    for _ in range(num_epoch):
+        row_count = 0
+        for _ in iter1:
+            # in this example, each row has columns "image" and "label"
+            row_count += 1
+        assert row_count == int(limit_dataset * num_repeat / batch_size)
+        logger.debug("row_count: ", row_count)
+        epoch_count += 1
+        sample_count += row_count
+    assert epoch_count == num_epoch
+    logger.debug("total epochs: ", epoch_count)
+    assert sample_count == int(limit_dataset * num_repeat / batch_size) * num_epoch
+    logger.debug("total sample: ", sample_count)
+
+
 if __name__ == '__main__':
     setup_function()
     test_cifar10_content_check()
@@ -629,4 +663,5 @@ if __name__ == '__main__':
     test_cifar10_with_chained_sampler_get_dataset_size()
     test_cifar10_pk_sampler_get_dataset_size()
     test_cifar100ops()
+    test_pipeline_debug_mode_multi_epoch_cifar10()
     teardown_function()

@@ -85,6 +85,7 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
   TensorPtr sample_ids_;  // sample id pointer for pull mode
   uint32_t curr_row_;     // current row number count for pull mode
   bool prepared_data_;    // flag to indicate whether the data is prepared before LoadTensorRow for pull mode
+  bool eof_handled_;      // T/F if this op got an eof
 
   /// Initialize Sampler, calls sampler->Init() within
   /// @return Status The status code returned
@@ -125,6 +126,11 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
   /// \param TensorRow row - loaded row
   /// \return Status The status code returned
   virtual Status LoadTensorRowPullMode(row_id_type row_id, TensorRow *row) { return LoadTensorRow(row_id, row); }
+
+  /// reset the op and update repeat and epoch number if the condition is met.
+  /// \param row[out] - Fetched EOF if it is the last iteration for epoch
+  /// \return Status The status code returned
+  virtual Status ResetAndUpdateRepeat();
 
   /// \brief Gets the implementation status for operator in pull mode
   /// \return implementation status
