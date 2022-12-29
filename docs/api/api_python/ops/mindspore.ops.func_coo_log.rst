@@ -6,7 +6,7 @@ mindspore.ops.coo_log
     逐元素返回COOTensor的自然对数。
 
     .. math::
-        y_i = coo_log_e(x_i)
+        y_i = log_e(x_i)
 
     .. warning::
 

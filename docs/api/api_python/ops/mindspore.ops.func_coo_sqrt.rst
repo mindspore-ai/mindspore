@@ -6,7 +6,7 @@ mindspore.ops.coo_sqrt
     逐元素返回当前COOTensor的平方根。
 
     .. math::
-        out_{i} = \\coo_sqrt{x_{i}}
+        out_{i} = \\sqrt{x_{i}}
 
     参数：
         - **x** (COOTensor) - 输入COOTensor，数据类型为number.Number，其rank需要在[0, 7]范围内.

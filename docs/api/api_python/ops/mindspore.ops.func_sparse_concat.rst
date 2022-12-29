@@ -19,5 +19,4 @@ mindspore.ops.sparse_concat
 
     异常：
         - **ValueError** - 如果只有一个COOTensor输入，报错。
-        - **ValueError** - 如果输入的COOTensor的shape纬度大于3。COOTensor的构造会报错，
-            目前COOTensor的shape维度只能为2。
+        - **ValueError** - 如果输入的COOTensor的shape维度大于3，COOTensor的构造会报错。目前COOTensor的shape维度只能为2。

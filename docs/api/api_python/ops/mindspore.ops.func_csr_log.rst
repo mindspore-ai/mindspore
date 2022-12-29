@@ -6,7 +6,7 @@ mindspore.ops.csr_log
     逐元素返回CSRTensor的自然对数。
 
     .. math::
-        y_i = csr_log_e(x_i)
+        y_i = log_e(x_i)
 
     .. warning::
 
