@@ -3,9 +3,7 @@ mindspore.ops.softmax
 
 .. py:function:: mindspore.ops.softmax(x, axis=-1)
 
-    Softmax函数。
-
-    在指定轴上使用Softmax函数做归一化操作。假设指定轴 :math:`x` 上有切片，那么每个元素 :math:`x_i` 所对应的Softmax函数如下所示：
+    在指定轴上对输入Tensor执行Softmax激活函数做归一化操作。假设指定轴 :math:`x` 上有切片，那么每个元素 :math:`x_i` 所对应的Softmax函数如下所示：
 
     .. math::
         \text{output}(x_i) = \frac{exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)},

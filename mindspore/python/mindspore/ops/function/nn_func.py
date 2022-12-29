@@ -41,8 +41,6 @@ sigmoid_ = NN_OPS.Sigmoid()
 
 def adaptive_avg_pool2d(input_x, output_size):
     r"""
-    2D adaptive average pooling for temporal data.
-
     This operator applies a 2D adaptive average pooling to an input signal composed of multiple input planes.
     That is, for any input size, the size of the specified output is H x W.
     The number of output features is equal to the number of input features.
@@ -131,8 +129,6 @@ def adaptive_avg_pool2d(input_x, output_size):
 
 def adaptive_avg_pool3d(input_x, output_size):
     r"""
-    3D adaptive average pooling for temporal data.
-
     This operator applies a 3D adaptive average pooling to an input signal composed of multiple input planes.
     That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
     The number of output features is equal to the number of input planes.
@@ -717,8 +713,6 @@ def hardshrink(x, lambd=0.5):
 
 def hardswish(x):
     r"""
-    Hard swish activation function.
-
     Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
 
     Hard swish is defined as:
@@ -944,8 +938,6 @@ def softsign(x):
 
 def softmax(x, axis=-1):
     r"""
-    Softmax operation.
-
     Applies the Softmax operation to the input tensor on the specified axis.
     Suppose a slice in the given axis :math:`x`, then for each element :math:`x_i`,
     the Softmax function is shown as follows:
@@ -1071,8 +1063,6 @@ def selu(input_x):
 
 def sigmoid(input_x):
     r"""
-    Sigmoid activation function.
-
     Computes Sigmoid of input element-wise. The Sigmoid function is defined as:
 
     .. math::
@@ -1887,8 +1877,6 @@ def intopk(x1, x2, k):
 
 def log_softmax(logits, axis=-1):
     r"""
-    Log Softmax activation function.
-
     Applies the Log Softmax function to the input tensor on the specified axis.
     Supposes a slice in the given axis, :math:`x` for each element :math:`x_i`,
     the Log Softmax function is shown as follows:
@@ -2359,9 +2347,8 @@ def conv3d_transpose(inputs, weight, pad_mode='valid', padding=0, stride=1, dila
 
 def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, group=1):
     r"""
-    2D convolution layer.
-
-    Applies a 2D convolution over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
+    Applies a 2D convolution over an input tensor.
+    The input tensor is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
     where :math:`N` is batch size, :math:`C` is channel number, :math:`H` is height, :math:`W` is width, :math:`X_i` is
     the :math:`i^{th}` input value and :math:`b_i` indicates the deviation value of the :math:`i^{th}` input value.
     For each batch of shape :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
@@ -2495,8 +2482,6 @@ def hardsigmoid(input_x):
 
 def adaptive_avg_pool1d(input_x, output_size):
     r"""
-    1D adaptive average pooling for temporal data.
-
     Applies a 1D adaptive average pooling over an input Tensor which can be regarded as a composition of 1D input
     planes.
 
@@ -2572,8 +2557,6 @@ def adaptive_avg_pool1d(input_x, output_size):
 
 def adaptive_max_pool1d(input_x, output_size):
     r"""
-    1D adaptive maximum pooling for temporal data.
-
     Applies a 1D adaptive maximum pooling over an input Tensor which can be regarded as
     a composition of 1D input planes.
 

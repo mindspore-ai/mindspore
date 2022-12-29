@@ -3,7 +3,7 @@ mindspore.Tensor.sigmoid
 
 .. py:method:: mindspore.Tensor.sigmoid
 
-    Sigmoid激活函数，按元素计算Sigmoid激活函数。
+    逐元素计算Sigmoid激活函数。
 
     Sigmoid函数定义为：
 

@@ -78,8 +78,6 @@ def _shape_check(in_shape, prim_name=None):
 
 class MaxPool2d(_PoolNd):
     r"""
-    2D max pooling operation for temporal data.
-
     Applies a 2D max pooling over an input Tensor which can be regarded as a composition of 2D planes.
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool2d outputs
@@ -153,8 +151,6 @@ class MaxPool2d(_PoolNd):
 
 class MaxPool1d(_PoolNd):
     r"""
-    1D max pooling operation for temporal data.
-
     Applies a 1D max pooling over an input Tensor which can be regarded as a composition of 1D planes.
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, MaxPool1d outputs
@@ -236,8 +232,6 @@ class MaxPool1d(_PoolNd):
 
 class AvgPool2d(_PoolNd):
     r"""
-    2D average pooling for temporal data.
-
     Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, AvgPool2d outputs
@@ -315,8 +309,6 @@ class AvgPool2d(_PoolNd):
 
 class AvgPool1d(_PoolNd):
     r"""
-    1D average pooling for temporal data.
-
     Applies a 1D average pooling over an input Tensor which can be regarded as a composition of 1D input planes.
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, AvgPool1d outputs
@@ -432,8 +424,6 @@ def _adaptive_dtype_check(x_dtype, prim_name):
 
 class AdaptiveAvgPool1d(Cell):
     r"""
-    1D adaptive average pooling for temporal data.
-
     Applies a 1D adaptive average pooling over an input Tensor which can be regarded as
     a composition of 1D input planes.
 
@@ -510,8 +500,6 @@ class AdaptiveAvgPool1d(Cell):
 
 class AdaptiveAvgPool2d(Cell):
     r"""
-    2D adaptive average pooling for temporal data.
-
     This operator applies a 2D adaptive average pooling to an input signal composed of multiple input planes.
     That is, for any input size, the size of the specified output is H x W.
     The number of output features is equal to the number of input features.
@@ -572,8 +560,6 @@ class AdaptiveAvgPool2d(Cell):
 
 class AdaptiveAvgPool3d(Cell):
     r"""
-    3D adaptive average pooling for temporal data.
-
     This operator applies a 3D adaptive average pooling to an input signal composed of multiple input planes.
     That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
     The number of output features is equal to the number of input planes.
@@ -653,8 +639,6 @@ class AdaptiveAvgPool3d(Cell):
 
 class AdaptiveMaxPool1d(Cell):
     r"""
-    1D adaptive maximum pooling for temporal data.
-
     Applies a 1D adaptive maximum pooling over an input Tensor which can be regarded as
     a composition of 1D input planes.
 
@@ -730,8 +714,6 @@ class AdaptiveMaxPool1d(Cell):
 
 class AdaptiveMaxPool2d(Cell):
     r"""
-    AdaptiveMaxPool2d operation.
-
     This operator applies a 2D adaptive max pooling to an input signal composed of multiple input planes.
     That is, for any input size, the size of the specified output is H x W.
     The number of output features is equal to the number of input planes.

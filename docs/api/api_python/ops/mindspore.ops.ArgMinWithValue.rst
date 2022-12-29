@@ -3,8 +3,6 @@
 
 .. py:class:: mindspore.ops.ArgMinWithValue(axis=0, keep_dims=False)
 
-    根据指定的索引计算最小值，并返回索引和值。
-
     在给定轴上计算输入Tensor的最小值，并且返回最小值和索引。
 
     .. note::

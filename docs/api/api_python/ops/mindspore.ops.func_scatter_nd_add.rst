@@ -3,7 +3,7 @@ mindspore.ops.scatter_nd_add
 
 .. py:function:: mindspore.ops.scatter_nd_add(input_x, indices, updates, use_locking=False)
 
-    将sparse addition应用于张量中的单个值或切片。
+    将sparse addition应用于Tensor中的单个值或切片。
 
     使用给定值通过加法运算和输入索引更新Tensor值。在更新完成后输出 `input_x` ，这有利于更加方便地使用更新后的值。
 

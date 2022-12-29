@@ -2163,9 +2163,7 @@ class ArgminV2(Primitive):
 
 class ArgMaxWithValue(Primitive):
     """
-    Calculates the maximum value with the corresponding index.
-
-    Calculates the maximum value along with the given axis for the input tensor. It returns the maximum values and
+    Calculates the maximum value along with the given axis for the input tensor, and returns the maximum values and
     indices.
 
     Note:
@@ -2226,9 +2224,7 @@ class ArgMaxWithValue(Primitive):
 
 class ArgMinWithValue(Primitive):
     """
-    Calculates the minimum value with corresponding index, and returns indices and values.
-
-    Calculates the minimum value along with the given axis for the input tensor. It returns the minimum values and
+    Calculates the minimum value along with the given axis for the input tensor, and returns the minimum values and
     indices.
 
     Note:

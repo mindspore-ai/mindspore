@@ -3,9 +3,7 @@ mindspore.nn.BatchNorm1d
 
 .. py:class:: mindspore.nn.BatchNorm1d(num_features, eps=1e-5, momentum=0.9, affine=True, gamma_init='ones', beta_init='zeros', moving_mean_init='zeros', moving_var_init='ones', use_batch_statistics=None)
 
-    对输入的二维数据进行批归一化(Batch Normalization Layer)。
-
-    在二维输入（mini-batch 一维输入）上应用批归一化，避免内部协变量偏移。归一化在卷积网络中被广泛的应用。请见论文 `Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_ 。
+    在二维输入（mini-batch 一维输入）上应用批归一化（Batch Normalization Layer），避免内部协变量偏移。归一化在卷积网络中被广泛的应用。请见论文 `Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_ 。
 
     使用mini-batch数据和学习参数进行训练，计算公式如下。
 

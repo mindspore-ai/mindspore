@@ -3,7 +3,7 @@ mindspore.ops.trunc
 
 .. py:function:: mindspore.ops.trunc(input_x)
 
-    返回一个新的张量，该张量具有输入元素的截断整数值。
+    返回一个新的Tensor，该Tensor具有输入元素的截断整数值。
 
     参数：
         - **input_x** (Tensor) - 任意维度的Tensor。

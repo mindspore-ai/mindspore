@@ -3,9 +3,7 @@ mindspore.nn.AdaptiveMaxPool3d
 
 .. py:class:: mindspore.nn.AdaptiveMaxPool3d(output_size, return_indices=False)
 
-    三维自适应最大值池化。
-
-    对于任何输入尺寸，输出的大小为 :math:`(D, H, W)` 。输出特征的数量与输入特征的数量相同。
+    对输入Tensor，提供三维自适应最大池化操作。对于任何输入尺寸，输出的大小为 :math:`(D, H, W)` 。输出特征的数量与输入特征的数量相同。
 
     参数：
         - **output_size** (Union[int, tuple]) - 表示输出特征图的尺寸，输入可以是tuple :math:`(D, H, W)`，也可以是一个int值D来表示输出尺寸为 :math:`(D, D, D)` 。:math:`D` ， :math:`H` 和 :math:`W` 可以是int型整数或者None，其中None表示输出大小与对应的输入的大小相同。

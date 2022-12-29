@@ -3,8 +3,6 @@ mindspore.nn.Conv3dTranspose
 
 .. py:class:: mindspore.nn.Conv3dTranspose(in_channels, out_channels, kernel_size, stride=1, pad_mode='same', padding=0, dilation=1, group=1, output_padding=0, has_bias=False, weight_init='normal', bias_init='zeros', data_format='NCDHW')
 
-    三维转置卷积层。
-
     计算三维转置卷积，可以视为Conv3d对输入求梯度，也称为反卷积（实际不是真正的反卷积）。
 
     输入的shape通常为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` ，其中 :math:`N` 为batch size， :math:`C_{in}` 是空间维度。:math:`D_{in}, H_{in}, W_{in}` 分别为特征层的深度、高度和宽度。

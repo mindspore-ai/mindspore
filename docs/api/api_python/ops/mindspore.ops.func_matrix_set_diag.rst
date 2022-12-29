@@ -3,7 +3,7 @@ mindspore.ops.matrix_set_diag
 
 .. py:function:: mindspore.ops.matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT")
 
-    返回具有新的对角线值的批处理矩阵张量。
+    返回具有新的对角线值的批处理矩阵Tensor。
     给定输入 `x` 和对角线 `diagonal` ，此操作返回与 `x` 具有相同形状和值的张量，但返回的张量除开最内层矩阵的对角线。这些值将被对角线中的值覆盖。如果某些对角线比 `max_diag_len` 短，则需要被填充。
     其中 `max_diag_len` 指的是对角线的最长长度。
     `diagonal` 的维度 :math:`shape[-2]` 必须等于对角线个数 `num_diags` :math:`k[1] - k[0] + 1`， `diagonal` 的维度 :math:`shape[-1]` 必须

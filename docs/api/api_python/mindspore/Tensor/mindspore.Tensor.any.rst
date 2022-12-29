@@ -10,4 +10,4 @@ mindspore.Tensor.any
         - **keep_dims** (bool) - 计算结果是否保留维度。默认值：False。
 
     返回：
-        Tensor。如果在指定轴方向上所有Tensor元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则默认降维。
+        Tensor。如果在指定轴方向上存在任意Tensor元素为True，则其值为True，否则其值为False。如果轴为None或空元组，则默认降维。
