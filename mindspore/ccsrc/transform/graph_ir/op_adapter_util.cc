@@ -128,8 +128,69 @@ GeDataType ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEType>) {
   return TransformUtil::ConvertDataType(me_type);
 }
 
+template <typename T1, typename T2>
+GeTensor NestedVectorToTensorImpl(const ValuePtrList &vec, const TypeId &type) {
+  const auto &vec_item =
+    vec[0]->isa<ValueTuple>() ? vec[0]->cast<ValueTuplePtr>()->value() : vec[0]->cast<ValueListPtr>()->value();
+  size_t attr_size1 = vec.size();
+  size_t attr_size2 = vec_item.size();
+  std::vector<T1> attr_list;
+  for (const auto item : vec) {
+    auto value_list = GetValue<std::vector<T1>>(item);
+    (void)std::copy(value_list.begin(), value_list.end(), std::back_inserter(attr_list));
+  }
+  auto attr_value = MakeValue(attr_list);
+  auto data = ConvertAnyUtil(attr_value, AnyTraits<T1>(), AnyTraits<std::vector<T2>>());
+  auto desc =
+    TransformUtil::GetGeTensorDesc({static_cast<int>(attr_size1), static_cast<int>(attr_size2)}, type, kOpFormat_NCHW);
+  if (desc == nullptr) {
+    MS_LOG(EXCEPTION) << "Update conversion descriptor failed!";
+  }
+  return GeTensor(*desc, reinterpret_cast<uint8_t *>(data.data()), data.size() * sizeof(T2));
+}
+
+GeTensor NestedVectorToTensor(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  const auto &vec =
+    value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
+  const auto &vec_item =
+    vec[0]->isa<ValueTuple>() ? vec[0]->cast<ValueTuplePtr>()->value() : vec[0]->cast<ValueListPtr>()->value();
+  if (vec_item.empty()) {
+    MS_LOG(WARNING) << "Convert a none nested tuple to an empty ge tensor";
+    return GeTensor(GeTensorDesc(::ge::Shape({0})));
+  }
+  MS_EXCEPTION_IF_NULL(vec_item[0]);
+  TypeId type;
+  if (vec_item[0]->isa<Int32Imm>()) {
+    type = kNumberTypeInt32;
+    return NestedVectorToTensorImpl<int32_t, int32_t>(vec, type);
+  } else if (vec_item[0]->isa<Int64Imm>()) {
+    type = kNumberTypeInt64;
+    return NestedVectorToTensorImpl<int64_t, int64_t>(vec, type);
+  } else if (vec_item[0]->isa<FP32Imm>()) {
+    type = kNumberTypeFloat32;
+    return NestedVectorToTensorImpl<float, float>(vec, type);
+  } else if (vec_item[0]->isa<BoolImm>()) {
+    type = kNumberTypeBool;
+    return NestedVectorToTensorImpl<bool, uint8_t>(vec, type);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported data type of nested tuple or list elements: " << vec_item[0]->type_name();
+  }
+}
+
+template <typename T1, typename T2>
+GeTensor VectorToTensorImpl(const ValuePtr &value, const TypeId &type) {
+  const auto &vec =
+    value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
+  auto data = ConvertAnyUtil(value, AnyTraits<T1>(), AnyTraits<std::vector<T2>>());
+  auto desc = TransformUtil::GetGeTensorDesc({static_cast<int>(vec.size())}, type, kOpFormat_NCHW);
+  if (desc == nullptr) {
+    MS_LOG(EXCEPTION) << "Update conversion descriptor failed!";
+  }
+  return GeTensor(*desc, reinterpret_cast<uint8_t *>(data.data()), data.size() * sizeof(T2));
+}
+
 GeTensor VectorToTensorUtil(const ValuePtr &value) {
-  // convert tuple or list to ge tensor, only supported one dim for now
   MS_EXCEPTION_IF_NULL(value);
   auto vec = value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
   if (vec.empty()) {
@@ -137,39 +198,27 @@ GeTensor VectorToTensorUtil(const ValuePtr &value) {
     return GeTensor(GeTensorDesc(::ge::Shape({0})));
   }
   MS_EXCEPTION_IF_NULL(vec[0]);
+  TypeId type;
   if (vec[0]->isa<Int32Imm>()) {
     MS_LOG(INFO) << "convert value to tensor with data type = Int32";
-    auto data = ConvertAnyUtil(value, AnyTraits<int32_t>(), AnyTraits<std::vector<int32_t>>());
-    auto desc = TransformUtil::GetGeTensorDesc({static_cast<int>(vec.size())}, kNumberTypeInt32, kOpFormat_NCHW);
-    if (desc == nullptr) {
-      MS_LOG(EXCEPTION) << "Update conversion descriptor failed!";
-    }
-    return GeTensor(*desc, reinterpret_cast<uint8_t *>(data.data()), data.size() * sizeof(int32_t));
+    type = kNumberTypeInt32;
+    return VectorToTensorImpl<int32_t, int32_t>(value, type);
   } else if (vec[0]->isa<Int64Imm>()) {
     MS_LOG(INFO) << "convert value to tensor with data type = Int64";
-    auto data = ConvertAnyUtil(value, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>());
-    auto desc = TransformUtil::GetGeTensorDesc({static_cast<int>(vec.size())}, kNumberTypeInt64, kOpFormat_NCHW);
-    if (desc == nullptr) {
-      MS_LOG(EXCEPTION) << "Update conversion descriptor failed!";
-    }
-    return GeTensor(*desc, reinterpret_cast<uint8_t *>(data.data()), data.size() * sizeof(int64_t));
+    type = kNumberTypeInt64;
+    return VectorToTensorImpl<int64_t, int64_t>(value, type);
   } else if (vec[0]->isa<FP32Imm>()) {
     MS_LOG(INFO) << "convert value to tensor with data type = Float32";
-    auto data = ConvertAnyUtil(value, AnyTraits<float>(), AnyTraits<std::vector<float>>());
-    auto desc = TransformUtil::GetGeTensorDesc({static_cast<int>(vec.size())}, kNumberTypeFloat32, kOpFormat_NCHW);
-    if (desc == nullptr) {
-      MS_LOG(EXCEPTION) << "Update conversion descriptor failed!";
-    }
-    return GeTensor(*desc, reinterpret_cast<uint8_t *>(data.data()), data.size() * sizeof(float));
+    type = kNumberTypeFloat32;
+    return VectorToTensorImpl<float, float>(value, type);
   } else if (vec[0]->isa<BoolImm>()) {
     MS_LOG(INFO) << "convert value to tensor with data type = Bool";
-    // We use uint8_t to save bool type data
-    auto data = ConvertAnyUtil(value, AnyTraits<bool>(), AnyTraits<std::vector<uint8_t>>());
-    auto desc = TransformUtil::GetGeTensorDesc({static_cast<int>(vec.size())}, kNumberTypeBool, kOpFormat_NCHW);
-    if (desc == nullptr) {
-      MS_LOG(EXCEPTION) << "Update conversion descriptor failed!";
-    }
-    return GeTensor(*desc, static_cast<uint8_t *>(data.data()), data.size() * sizeof(uint8_t));
+    type = kNumberTypeBool;
+    return VectorToTensorImpl<bool, uint8_t>(value, type);
+  } else if (vec[0]->isa<ValueTuple>() || vec[0]->isa<ValueList>()) {
+    // convert nested tuple or list to ge tensor, supported two dims
+    MS_LOG(INFO) << "Convert nested tuple or list to ge tensor.";
+    return NestedVectorToTensor(value);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported data type of tuple or list elements: " << vec[0]->type_name();
   }
