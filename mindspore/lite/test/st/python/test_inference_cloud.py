@@ -119,12 +119,19 @@ if __name__ == '__main__':
     in_data_file_list = in_data_file.split(",")
     if backend == "CPU":
         test_model_inference_cpu(model_file, in_data_file_list, shapes)
+        print("run model inference cpu success.")
         test_parallel_inference_cpu(model_file, in_data_file_list, shapes)
+        print("run parallel inference cpu success.")
     elif backend == "GPU":
         test_model_inference_gpu(model_file, in_data_file_list, shapes)
+        print("run model inference gpu success.")
         test_parallel_inference_gpu(model_file, in_data_file_list, shapes)
+        print("run parallel inference gpu success.")
     elif backend == "Ascend":
         test_model_inference_ascend(model_file, in_data_file_list, shapes)
+        print("run model inference ascend success.")
+        test_parallel_inference_ascend(model_file, in_data_file_list, shapes)
+        print("run parallel inference ascend success.")
     else:
         raise RuntimeError('not support backend!')
     print("run success.")
