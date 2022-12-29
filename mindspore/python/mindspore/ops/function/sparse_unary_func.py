@@ -1553,12 +1553,12 @@ def coo_log1p(x: COOTensor) -> COOTensor:
 
 
 def csr_round(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Returns half to even of a csr_tensor element-wise.
 
     .. math::
 
-        out_i \approx x_i
+        out_i \\approx x_i
 
     Args:
         x (CSRTensor): The input csr_tensor.
@@ -1588,12 +1588,12 @@ def csr_round(x: CSRTensor) -> CSRTensor:
 
 
 def coo_round(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Returns half to even of a coo_tensor element-wise.
 
     .. math::
 
-        out_i \approx x_i
+        out_i \\approx x_i
 
     Args:
         x (COOTensor): The input coo_tensor.

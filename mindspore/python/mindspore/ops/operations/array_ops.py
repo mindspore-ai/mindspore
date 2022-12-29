@@ -5174,8 +5174,7 @@ class BatchToSpace(PrimitiveWithInfer):
             Each list contains 2 integers.
             All values must be not less than 0. crops[i] specifies the crop values for the spatial dimension i, which
             corresponds to the input dimension i+2. It is required that
-
-            :math:`input\_shape[i+2]*block\_size > crops[i][0]+crops[i][1]`
+            :math:`input\_shape[i+2]*block\_size > crops[i][0]+crops[i][1]` .
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor, dimension 0 must be divisible by
@@ -6523,7 +6522,7 @@ class ListDiff(Primitive):
     is sorted in the same order that the numbers appear in `x` (duplicates are
     preserved). This operation also returns a list `idx` that represents the
     position of each `out` element in `x`. In other words:
-    :math:`out[i] = x[idx[i]] for i in [0, 1, ..., len(out) - 1]` .
+    :code:`out[i] = x[idx[i]] for i in [0, 1, ..., len(out) - 1]` .
 
     Args:
         out_idx (:class:`mindspore.dtype`, optional): The dtype of `idx`,
@@ -6709,11 +6708,11 @@ class ExtractVolumePatches(Primitive):
 
     Args:
         kernel_size (Union[int, tuple[int], list[int]]): A list of ints which's length is 3 or 5.
-            The size of the sliding window for each dimension of input. Must be: [1, 1, k_d, k_h, k_w] or
-            [k_d, k_h, k_w]. If k_d = k_h = k_w, you can enter an integer.
+            The size of the sliding window for each dimension of input. Must be: :math:`[1, 1, k_d, k_h, k_w]` or
+            :math:`[k_d, k_h, k_w]`. If :math:`k_d = k_h = k_w`, you can enter an integer.
         strides (Union[int, tuple[int], list[int]]): A list of ints which's length is 3 or 5.
-            How far the centers of two consecutive patches are in input. Must be: [1, 1, s_d, s_h, s_w] or
-            [s_d, s_h, s_w]. If s_d = s_h = s_w, you can enter an integer.
+            How far the centers of two consecutive patches are in input. Must be: :math:`[1, 1, s_d, s_h, s_w]` or
+            :math:`[s_d, s_h, s_w]`. If :math:`s_d = s_h = s_w`, you can enter an integer.
         padding (str): A string from: "SAME", "VALID". The type of padding algorithm to use.
 
     Inputs:
@@ -6845,7 +6844,7 @@ class Lstsq(Primitive):
     Computes the solutions of the least squares and minimum norm problems of full-rank
     matrix `x` of size :math:`(m \times n)` and matrix `a` of size :math:`(m \times k)`.
 
-    If :math:`m \geq n`, `lstsq` solves the least-squares problem:
+    If :math:`m \geq n`, `Lstsq` solves the least-squares problem:
 
     .. math::
 
@@ -6853,7 +6852,7 @@ class Lstsq(Primitive):
        \min_y & \|xy-a\|_2.
        \end{array}
 
-    If :math:`m < n`, `lstsq` solves the least-norm problem:
+    If :math:`m < n`, `Lstsq` solves the least-norm problem:
 
     .. math::
 
@@ -7666,7 +7665,7 @@ class SegmentMean(Primitive):
     r"""
     Computes the mean along segments of a tensor.
 
-    Computes a tensor such that :math:`output_i = \mean_j input\_x_j` where mean is over :math:`j` such that
+    Computes a tensor such that :math:`output_i = mean_j(input\_x_j)` where mean is over :math:`j` such that
     :math:`segment\_ids[j] == i`. If the mean is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
 
     .. warning::

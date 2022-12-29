@@ -140,6 +140,9 @@ class Custom(ops.PrimitiveWithInfer):
     primitives. You can construct a `Custom` object with a predefined function, which describes the computation
     logic of a user defined operator. You can also construct another `Custom` object with another predefined
     function if needed. Then these `Custom` objects can be directly used in neural networks.
+    Detailed description and introduction of user-defined operators, including correct writing of parameters,
+    please refer to `Custom Operators Tutorial
+    <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/operation/op_custom.html>`_ .
 
     .. warning::
         This is an experimental prototype that is subject to change.

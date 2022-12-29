@@ -5,7 +5,7 @@ mindspore.ops.NeighborExchangeV2
 
     NeighborExchangeV2是一个集合通讯操作。
 
-    将数据从本地rank发送到 `send_rank_ids` 中指定的rank，同时从 `recv_rank_ids` 接收数据。请参考 `MindSpore <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0.0-alpha/parallel/communicate_ops.html#neighborexchangev2>`_ 了解具体的数据是如何在相邻设备间交换的。
+    将数据从本地rank发送到 `send_rank_ids` 中指定的rank，同时从 `recv_rank_ids` 接收数据。请参考 `分布式集合通信原语 - NeighborExchangeV2 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0.0-alpha/parallel/communicate_ops.html#neighborexchangev2>`_ 了解具体的数据是如何在相邻设备间交换的。
 
     .. note::
         在运行以下示例之前，用户需要预置环境变量，请在 `NeighborExchangeV2数据交换 <https://www.mindspore.cn/docs/zh-CN/r2.0.0-alpha/api_python/mindspore.ops.html#通信算子>`_ 的官方网站上查看详细信息。
