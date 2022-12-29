@@ -3080,7 +3080,7 @@ def matrix_exp(x):
 
     Args:
         x (Tensor): The shape of tensor is :math:`(*, n, n)` where * is zero or more batch dimensions.
-          Must be one of the following types: float64, float32, float16, complex64, complex128.
+            Must be one of the following types: float16, float32, float64, complex64, complex128.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -9835,6 +9835,7 @@ __all__ = [
     'logical_xor',
     'imag',
     'roll',
-    'sum'
+    'sum',
+    'matrix_exp'
 ]
 __all__.sort()

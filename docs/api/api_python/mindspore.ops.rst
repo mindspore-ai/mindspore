@@ -152,11 +152,12 @@ mindspore.ops
     mindspore.ops.cross
     mindspore.ops.cumprod
     mindspore.ops.erfinv
-    mindspore.ops.less_equal
     mindspore.ops.igamma
     mindspore.ops.igammac
-    mindspore.ops.is_floating_point
     mindspore.ops.is_complex
+    mindspore.ops.is_floating_point
+    mindspore.ops.less_equal
+    mindspore.ops.matrix_exp
     mindspore.ops.pinv
 
 逐元素运算

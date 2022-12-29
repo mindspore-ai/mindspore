@@ -153,10 +153,11 @@ Mathematical Functions
     mindspore.ops.cross
     mindspore.ops.cumprod
     mindspore.ops.erfinv
-    mindspore.ops.less_equal
     mindspore.ops.igamma
     mindspore.ops.igammac
     mindspore.ops.is_floating_point
+    mindspore.ops.less_equal
+    mindspore.ops.matrix_exp
     mindspore.ops.pinv
 
 Element-by-Element Operations

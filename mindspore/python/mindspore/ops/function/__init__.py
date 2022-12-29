@@ -370,6 +370,7 @@ from .math_func import (
     roll,
     orgqr,
     sum,
+    matrix_exp
 )
 from .nn_func import (
     adaptive_avg_pool1d,
