@@ -171,7 +171,7 @@ Status ConcatOp::GetNextRow(TensorRow *row) {
 
   if (!row->eoe() && !row->eof()) {
     if (!verified_) {
-      RETURN_IF_NOT_OK(Verify(cur_child_, *row));
+      RETURN_IF_NOT_OK(Verify(static_cast<int32_t>(cur_child_), *row));
     }
 
     if (IgnoreSample()) {
@@ -237,7 +237,7 @@ Status ConcatOp::GetNextRowPullMode(TensorRow *const row) {
     RETURN_IF_NOT_OK(GetNextRowPullMode(row));
   } else {
     if (!verified_) {
-      RETURN_IF_NOT_OK(Verify(cur_child_, *row));
+      RETURN_IF_NOT_OK(Verify(static_cast<int32_t>(cur_child_), *row));
     }
     if (IgnoreSample()) {
       RETURN_IF_NOT_OK(GetNextRowPullMode(row));

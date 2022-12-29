@@ -84,6 +84,7 @@ class CelebAOp : public MappableLeafOp {
   // @return Name of the current Op
   std::string Name() const override { return "CelebAOp"; }
 
+ protected:
   /// Initialize pull mode, calls PrepareData() within
   /// @return Status The status code returned
   Status InitPullMode() override;
