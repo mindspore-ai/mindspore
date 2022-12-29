@@ -248,13 +248,10 @@ class L1Loss(LossBase):
     def __init__(self, reduction='mean'):
         """Initialize L1Loss."""
         super(L1Loss, self).__init__(reduction)
-        self.abs = P.Abs()
+        self.reduction = reduction
 
     def construct(self, logits, labels):
-        _check_is_tensor('logits', logits, self.cls_name)
-        _check_is_tensor('labels', labels, self.cls_name)
-        x = self.abs(logits - labels)
-        return self.get_loss(x)
+        return F.l1_loss(logits, labels, self.reduction)
 
 
 class MSELoss(LossBase):

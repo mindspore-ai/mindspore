@@ -32,5 +32,7 @@ mindspore.ops.l1_loss
         Tensor，l1_loss的结果。
 
     异常：
+        - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - `target` 不是Tensor。
         - **ValueError** - `reduction` 不为"mean"、"sum"或"none"。
         - **ValueError** - `x` 和 `target` 有不同的shape。

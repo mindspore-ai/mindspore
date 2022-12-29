@@ -1433,19 +1433,12 @@ class Threshold(Cell):
 
     def __init__(self, threshold, value):
         """Initialize Threshold."""
-        super().__init__()
-        validator.check_value_type('threshold', threshold, [float, int], self.cls_name)
-        validator.check_value_type('value', value, [float, int], self.cls_name)
+        super(Threshold, self).__init__()
         self.threshold = threshold
         self.value = value
-        self.greater = P.Greater()
-        self.fill = P.Fill()
-        self.select = P.Select()
 
     def construct(self, input_x):
-        cond = self.greater(input_x, self.threshold)
-        value = self.fill(input_x.dtype, input_x.shape, self.value)
-        return self.select(cond, input_x, value)
+        return F.threshold(input_x, self.threshold, self.value)
 
 
 class Mish(Cell):
