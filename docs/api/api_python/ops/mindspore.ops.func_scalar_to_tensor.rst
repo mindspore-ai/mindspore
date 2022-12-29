@@ -10,7 +10,7 @@ mindspore.ops.scalar_to_tensor
         - **dtype** (mindspore.dtype) - 指定输出的数据类型。只能是常量值。默认值：mindspore.float32。
 
     返回：
-        Tensor，0维Tensor，其值和输入一致。
+        Tensor，零维Tensor，其值和输入一致。
 
     异常：
         - **TypeError** - `input_x` 既不是int也不是float。

@@ -11,8 +11,8 @@ mindspore.ops.sparse_segment_mean
 
     参数：
         - **x** (Tensor) - Tensor，其维度必须大于或等于1。
-        - **indices** (Tensor) - 1维Tensor，数据类型为int32或int64。
-        - **segment_ids** (Tensor) - 1维Tensor，与 `indices` 有同样的数据类型。索引值应当是已排序的，并且可以重复。
+        - **indices** (Tensor) - 一维Tensor，数据类型为int32或int64。
+        - **segment_ids** (Tensor) - 一维Tensor，与 `indices` 有同样的数据类型。索引值应当是已排序的，并且可以重复。
 
     返回：
         Tensor，其数据类型和维数与 `x` 相同。第一维度等于 `segment_ids` 的最后一个元素的值加一，其他维度与 `x` 的对应维度相同。

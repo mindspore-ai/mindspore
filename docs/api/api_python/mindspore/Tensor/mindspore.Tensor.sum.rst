@@ -15,7 +15,7 @@ mindspore.Tensor.sum
         - **initial** (scalar) - 初始化的起始值。默认值：None。
 
     返回：
-        Tensor。具有与输入相同shape的Tensor，删除了指定的轴。如果输入Tensor是0维数组，或axis为None时，返回一个标量。
+        Tensor。具有与输入相同shape的Tensor，删除了指定的轴。如果输入Tensor是零维数组，或axis为None时，返回一个标量。
 
     异常：
         - **TypeError** - input不是Tensor，`axis` 不是整数或整数元组，`keepdims` 不是整数，或者 `initial` 不是标量。

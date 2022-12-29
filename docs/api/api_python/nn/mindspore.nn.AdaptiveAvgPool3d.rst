@@ -5,9 +5,9 @@ mindspore.nn.AdaptiveAvgPool3d
 
     三维自适应平均池化。
 
-    对输入Tensor，提供3维的自适应平均池化操作。也就是说对于输入任何尺寸，指定输出的尺寸都为 :math:`(D, H, W)`。但是输入和输出特征的数目不会变化。
+    对输入Tensor，提供三维的自适应平均池化操作。也就是说对于输入任何尺寸，指定输出的尺寸都为 :math:`(D, H, W)`。但是输入和输出特征的数目不会变化。
 
-    假设输入 `x` 最后3维大小分别为 :math:`(inD, inH, inW)`，则输出的最后3维大小分别为 :math:`(outD, outH, outW)`。运算如下：
+    假设输入 `x` 最后三维大小分别为 :math:`(inD, inH, inW)`，则输出的最后三维大小分别为 :math:`(outD, outH, outW)`。运算如下：
 
     .. math::
         \begin{array}{ll} \\

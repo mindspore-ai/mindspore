@@ -27,7 +27,7 @@ mindspore.nn.FractionalMaxPool3d
 
     异常：
         - **TypeError** - `input_x` 不是4维或5维张量。
-        - **TypeError** - `random_samples` 不是3维张量。
+        - **TypeError** - `random_samples` 不是三维张量。
         - **TypeError** - `x` 数据类型不是float16、float32、double、int32、int64。
         - **TypeError** - `random_samples` 数据类型不是float16、float32、double。
         - **TypeError** - `argmax` 数据类型不是int32、int64。

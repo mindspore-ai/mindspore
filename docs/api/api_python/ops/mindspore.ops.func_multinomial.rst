@@ -9,7 +9,7 @@ mindspore.ops.multinomial
         输入的行不需要求和为1（当使用值作为权重的情况下），但必须是非负的、有限的，并且和不能为0。
 
     参数：
-        - **inputs** (Tensor) - 输入的概率值Tensor，必须是1维或2维，数据类型为float32。
+        - **inputs** (Tensor) - 输入的概率值Tensor，必须是一维或二维，数据类型为float32。
         - **num_sample** (int) - 采样的次数。
         - **replacement** (bool, 可选) - 是否是可放回的采样，默认值：True。
         - **seed** (int, 可选) - 随机数种子，用于生成随机数(伪随机数)，必须是非负数。默认值：None。

@@ -3,7 +3,7 @@ mindspore.ops.t
 
 .. py:function:: mindspore.ops.t(x)
 
-    转置2维Tensor。1维Tensor按原样返回。
+    转置二维Tensor。一维Tensor按原样返回。
 
     参数：
         - **x** (Tensor) - 输入Tensor。

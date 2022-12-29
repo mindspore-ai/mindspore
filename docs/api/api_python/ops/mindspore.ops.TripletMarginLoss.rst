@@ -23,7 +23,7 @@ mindspore.ops.TripletMarginLoss
     参数：        
         - **p** (int，可选) - 成对距离的范数。默认值：2。
         - **eps** (float，可选) - 默认值：1e-06。
-        - **swap** (bool，可选) - 距离交换，在V. Balntas、E. Riba等人在论文 `Learning shallow convolutional feature descriptors with triplet losses` 默认值：False。
+        - **swap** (bool，可选) - 距离交换。默认值：False。
         - **reduction** (str，可选) - 指定要应用于输出的缩减。取值为"mean"、"sum"或"none"。默认值："mean"。
 
     输入：

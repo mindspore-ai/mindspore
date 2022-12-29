@@ -3,7 +3,7 @@ mindspore.ops.UpsampleTrilinear3D
 
 .. py:class:: mindspore.ops.UpsampleTrilinear3D(output_size=None, scales=None, align_corners=False)
 
-    输入为5维度Tensor，跨其中3维执行三线性插值上调采样。
+    输入为5维度Tensor，跨其中三维执行三线性插值上调采样。
 
     此运算符使用指定的 `output_size` 或 `scales` 缩放因子放大输入体积，过程使用三线性上调算法。
 
