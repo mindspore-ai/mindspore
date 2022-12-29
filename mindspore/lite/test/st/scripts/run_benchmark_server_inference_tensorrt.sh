@@ -48,6 +48,7 @@ function Run_TensorRT() {
             # model_info     accuracy_limit      run_mode
             model_info=`echo ${line_info} | awk -F ' ' '{print $1}'`
             accuracy_info=`echo ${line_info} | awk -F ' ' '{print $2}'`
+            has_config=`echo ${accuracy_info} | awk -F ';' '{print $3}'`
             spec_acc_limit=`echo ${accuracy_info} | awk -F ';' '{print $1}'`
 
             # model_info detail
@@ -95,8 +96,14 @@ function Run_TensorRT() {
             if [[ ${mode} == "fp16" ]]; then
                 enableFp16="true"
             fi
-            echo 'CUDA_VISIBLE_DEVICES='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --enableParallelPredict=true --device=GPU'
-            CUDA_VISIBLE_DEVICES=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --enableParallelPredict=true --device=GPU
+            if [[ ${has_config} == "1" ]]; then
+                config_file=${data_path}'input/'${model_name}.ms.config
+                echo 'CUDA_VISIBLE_DEVICES='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --enableParallelPredict=true --configFile='${config_file}' --device=GPU'
+                CUDA_VISIBLE_DEVICES=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --enableParallelPredict=true --configFile=${config_file} --device=GPU
+            else
+                echo 'CUDA_VISIBLE_DEVICES='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --enableParallelPredict=true --device=GPU'
+                CUDA_VISIBLE_DEVICES=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --enableParallelPredict=true --device=GPU
+            fi
 
             if [ $? = 0 ]; then
                 run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
