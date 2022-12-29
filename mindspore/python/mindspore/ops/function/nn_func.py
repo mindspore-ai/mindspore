@@ -548,6 +548,12 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     return avg_pool_op(input_x)
 
 
+@constexpr
+def _check_adaptive_max_pool2d(return_indices):
+    """check the type of return_indices"""
+    validator.check_value_type("return_indices", return_indices, bool, "adaptive_max_pool2d")
+
+
 def adaptive_max_pool2d(input_x, output_size, return_indices=False):
     r"""
     adaptive_max_pool2d operation.
@@ -631,7 +637,7 @@ def adaptive_max_pool2d(input_x, output_size, return_indices=False):
           [[8. 9.]]
           [[8. 9.]]]]
     """
-    validator.check_value_type("return_indices", return_indices, bool, "adaptive_max_pool2d")
+    _check_adaptive_max_pool2d(return_indices)
     _adaptive_max_pool2d = _get_cache_prim(NN_OPS.AdaptiveMaxPool2D)(output_size)
     out = _adaptive_max_pool2d(input_x)
     output = out if return_indices else out[0]

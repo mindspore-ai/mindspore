@@ -31,27 +31,8 @@ namespace {
 #define F16 kNumberTypeFloat16
 #define I32 kNumberTypeInt32
 #define I64 kNumberTypeInt64
-constexpr size_t k4D = 4;
-constexpr size_t k3D = 3;
-constexpr size_t kInputsNum = 3;
-constexpr size_t kOutputsNum = 1;
-constexpr int64_t kOne = 1;
-constexpr size_t kInputIndex0 = 0;
-constexpr size_t kInputIndex1 = 1;
-constexpr size_t kInputIndex2 = 2;
 
-template <typename SCALAR_T, typename INDICES_T>
-struct AdaptiveCalcArgs {
-  SCALAR_T *input_grad_data = nullptr;
-  SCALAR_T *output_grad_data = nullptr;
-  INDICES_T *indices_data = nullptr;
-  int64_t in_size_b = 0;
-  int64_t in_size_d = 0;
-  int64_t in_size_h = 0;
-  int64_t in_size_w = 0;
-  int64_t out_size_h = 0;
-  int64_t out_size_w = 0;
-};
+constexpr size_t kHWSize = 2;
 }  // namespace
 
 bool AdaptiveMaxPool2DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
@@ -76,87 +57,60 @@ int AdaptiveMaxPool2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_y_grad_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  input_x_shape = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
-  input_argmax_shape = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
+  input_y_grad_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  input_x_shape_ = inputs.at(kIndex1)->GetShapeVector();
+  input_argmax_shape_ = inputs.at(kIndex2)->GetShapeVector();
+  ShapeVector output_shape = outputs.at(kIndex0)->GetShapeVector();
+
+  outer_size_ = 1;
+  inner_size_ = 1;
+  output_stride_ = 1;
+  output_size_ = 1;
+  const size_t shape_size = input_argmax_shape_.size();
+  for (size_t i = 0; i < shape_size; i++) {
+    if (i < shape_size - kHWSize) {
+      outer_size_ *= input_argmax_shape_[i];
+    } else {
+      inner_size_ *= input_argmax_shape_[i];
+    }
+  }
+
+  for (size_t k = 0; k < shape_size; k++) {
+    output_size_ *= output_shape[k];
+    if (k >= shape_size - kHWSize) {
+      output_stride_ *= output_shape[k];
+    }
+  }
+
   return KRET_OK;
 }
 
-template <typename SCALAR_T, typename INDICES_T>
-CTask AdaptiveMaxPool2DGradOutFrame(const AdaptiveCalcArgs<SCALAR_T, INDICES_T> &args) {
-  auto shard_frame = [&args](int64_t start, int64_t end) {
-    for (auto d = start; d < end; d++) {
-      SCALAR_T *grad_input_p_d = args.input_grad_data + d * args.in_size_h * args.in_size_w;
-      SCALAR_T *grad_output_p_d = args.output_grad_data + d * args.out_size_h * args.out_size_w;
-      INDICES_T *ind_p_d = args.indices_data + d * args.out_size_h * args.out_size_w;
-      /* calculate max points */
-      int64_t oh, ow;
-      for (oh = 0; oh < args.out_size_h; oh++) {
-        for (ow = 0; ow < args.out_size_w; ow++) {
-          /* retrieve position of max */
-          INDICES_T maxp = ind_p_d[oh * args.out_size_w + ow];
+template <typename T, typename S>
+bool AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                     const std::vector<kernel::AddressPtr> &outputs) {
+  auto input_grad = GetDeviceAddress<T>(inputs, kIndex0);
+  auto input_argmax = GetDeviceAddress<S>(inputs, kIndex2);
+  auto output = GetDeviceAddress<T>(outputs, kIndex0);
 
-          grad_input_p_d[maxp] += grad_output_p_d[oh * args.out_size_w + ow];
-        }
+  auto init_task = [&](size_t start, size_t end) {
+    size_t mem_size = (end - start) * sizeof(T);
+    auto ret = memset_s(output + start, mem_size, 0, mem_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
+    }
+  };
+  ParallelLaunchAutoSearch(init_task, LongToSize(output_size_), this, &search_info_);
+
+  auto adaptive_max_pool_2d_grad = [&](int64_t start, int64_t end) {
+    for (int64_t n = start; n < end; ++n) {
+      for (int64_t i = 0; i < inner_size_; ++i) {
+        int32_t maxp = input_argmax[i + n * inner_size_] + n * output_stride_;
+        output[maxp] += static_cast<T>(input_grad[i + n * inner_size_]);
       }
     }
   };
-  return shard_frame;
-}
+  ParallelLaunchAutoSearch(adaptive_max_pool_2d_grad, LongToSize(outer_size_), this, &parallel_search_info_);
 
-template <typename SCALAR_T, typename INDICES_T>
-bool AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
-  const size_t input_x_dims = input_x_shape.size();
-  int64_t dim_w = 2;
-  int64_t dim_h = 1;
-  int64_t size_b = 1;
-  if (input_x_dims == k4D) {
-    size_b = input_x_shape[0];
-    dim_w++;
-    dim_h++;
-  }
-  AdaptiveCalcArgs<SCALAR_T, INDICES_T> args;
-  args.in_size_b = size_b;
-  args.in_size_d = input_x_shape[dim_h - kOne];
-  args.in_size_h = input_x_shape[dim_h];
-  args.in_size_w = input_x_shape[dim_w];
-  args.out_size_h = input_y_grad_shape[dim_h];
-  args.out_size_w = input_y_grad_shape[dim_w];
-
-  auto input_grad_data_ptr_ret = static_cast<SCALAR_T *>(outputs[0]->addr);
-  MS_EXCEPTION_IF_NULL(input_grad_data_ptr_ret);
-  int64_t output_num = std::accumulate(input_x_shape.cbegin(), input_x_shape.cend(), 1, std::multiplies<int64_t>{});
-  std::unique_ptr<SCALAR_T[]> input_grad_data_ptr = std::make_unique<SCALAR_T[]>(output_num);
-  std::fill_n(input_grad_data_ptr.get(), output_num, static_cast<SCALAR_T>(0));
-  auto output_grad_data_ptr = static_cast<SCALAR_T *>(inputs[0]->addr);
-  MS_EXCEPTION_IF_NULL(output_grad_data_ptr);
-  auto indices_data_ptr = static_cast<INDICES_T *>(inputs[2]->addr);
-  MS_EXCEPTION_IF_NULL(indices_data_ptr);
-  // resize output
-  if (input_x_dims == k3D) {
-    args.input_grad_data = input_grad_data_ptr.get();
-    args.output_grad_data = output_grad_data_ptr;
-    args.indices_data = indices_data_ptr;
-    auto shard_frame = AdaptiveMaxPool2DGradOutFrame<SCALAR_T, INDICES_T>(args);
-    ParallelLaunchAutoSearch(shard_frame, args.in_size_d, this, &parallel_search_info_);
-  } else {
-    auto shard_template = [&args, &input_grad_data_ptr, &output_grad_data_ptr, &indices_data_ptr, this](int64_t start,
-                                                                                                        int64_t end) {
-      for (auto b = start; b < end; b++) {
-        AdaptiveCalcArgs<SCALAR_T, INDICES_T> sub_args = args;
-        sub_args.input_grad_data = input_grad_data_ptr.get() + b * args.in_size_d * args.in_size_h * args.in_size_w;
-        sub_args.output_grad_data = output_grad_data_ptr + b * args.in_size_d * args.out_size_h * args.out_size_w;
-        sub_args.indices_data = indices_data_ptr + b * args.in_size_d * args.out_size_h * args.out_size_w;
-        auto shard_frame = AdaptiveMaxPool2DGradOutFrame<SCALAR_T, INDICES_T>(sub_args);
-        ParallelLaunchAutoSearch(shard_frame, sub_args.in_size_d, this, &parallel_search_info_);
-      }
-    };
-    ParallelLaunchAutoSearch(shard_template, args.in_size_b, this, &parallel_search_info_);
-  }
-  for (int64_t i = 0; i < output_num; i++) {
-    input_grad_data_ptr_ret[i] = static_cast<SCALAR_T>(input_grad_data_ptr[i]);
-  }
   return true;
 }
 
