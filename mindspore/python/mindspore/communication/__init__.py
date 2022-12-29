@@ -15,7 +15,7 @@
 """
 Collective communication interface.
 
-Note the API in the file needs to preset communication environment variables.
+Note that the APIs in the following list need to preset communication environment variables.
 
 For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
 Please see the `Ascend tutorial

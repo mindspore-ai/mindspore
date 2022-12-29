@@ -16,6 +16,7 @@ mindspore.ops
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.adaptive_avg_pool3d
     mindspore.ops.adaptive_max_pool1d
+    mindspore.ops.adaptive_max_pool2d
     mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool1d
     mindspore.ops.avg_pool2d
@@ -354,6 +355,7 @@ Reduction函数
     mindspore.ops.matrix_solve
     mindspore.ops.mm
     mindspore.ops.ger
+    mindspore.ops.orgqr
     mindspore.ops.renorm
     mindspore.ops.tensor_dot
 
@@ -408,7 +410,6 @@ Array操作
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.adaptive_max_pool2d
     mindspore.ops.affine_grid
     mindspore.ops.arange
     mindspore.ops.argsort

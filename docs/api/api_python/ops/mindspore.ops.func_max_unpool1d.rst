@@ -10,7 +10,7 @@ mindspore.ops.max_unpool1d
 
     .. math::
         \begin{array}{ll} \\
-        H_{out} = (H{in} - 1) \times stride[0] - 2 \times padding[0] + kernel_size[0] \\
+        H_{out} = (H{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
         \end{array}
 
     参数：

@@ -7,7 +7,7 @@ mindspore.ops.ListDiff
 
     给定一个列表 `x` 和一个列表 `y`，此操作返回一个列表 `out`，表示在 `x` 中但不在 `y` 中的所有值。
     返回列表 `out` 的排序顺序与数字出现在 `x` 中的顺序相同（保留重复项）。此操作还会返回一个列表 `idx` ，
-    表示每个 `out` 元素在 `x` 中的位置。即： :math:`out[i] = x[idx[i]] for i in [0, 1, ..., len(out) - 1]` 。
+    表示每个 `out` 元素在 `x` 中的位置。即： :code:`out[i] = x[idx[i]] for i in [0, 1, ..., len(out) - 1]` 。
 
     参数：
         - **out_idx** (:class:`mindspore.dtype`，可选) - `idx` 的数据类型，可选值： `mindspore.dtype.int32` 和 `mindspore.dtype.int64` 。默认值： `mindspore.dtype.int32` 。
