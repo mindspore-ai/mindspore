@@ -41,7 +41,7 @@ uint32_t EqualCalculate(const CpuKernelContext &ctx, BCalcInfo &calcInfo, bool f
       output_y[i] = (flag == true) ? (*x_index == *y_index) : (*x_index != *y_index);
     }
   };
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, 1, shard_equal), "Equal calculate failed.")
+  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, 1, shard_equal), "Equal calculate failed.");
   return KERNEL_STATUS_OK;
 }
 /**
@@ -69,7 +69,7 @@ uint32_t EqualCompute(const CpuKernelContext &ctx, bool flag) {
     calcInfo.input_1->GetDataSize(), calcInfo.output->GetData(), calcInfo.output->GetDataSize());
 
   Bcast bcast;
-  KERNEL_HANDLE_ERROR(bcast.GenerateBcastInfo(calcInfo), "Generate broadcast info failed.")
+  KERNEL_HANDLE_ERROR(bcast.GenerateBcastInfo(calcInfo), "Generate broadcast info failed.");
   bcast.BCastIndexes(calcInfo.x_indexes, calcInfo.y_indexes);
   bcast.GetBcastVec(calcInfo);
 

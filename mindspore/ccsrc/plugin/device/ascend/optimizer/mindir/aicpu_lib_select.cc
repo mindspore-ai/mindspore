@@ -51,8 +51,12 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
   static const std::set<std::string> kMigrateAicpuKernelOps = {mindspore::kAdaptiveAvgPool2dOpName,
                                                                mindspore::kAdaptiveAvgPool2dGradOpName,
                                                                mindspore::kCacheSwapTableOpName,
+                                                               mindspore::kCol2imOpName,
+                                                               mindspore::kCumulativeLogsumexpOpName,
+                                                               mindspore::kDataFormatVecPermuteOpName,
                                                                mindspore::kFillOpName,
                                                                mindspore::kLogMatrixDeterminantOpName,
+                                                               mindspore::kMatrixSolveLsOpName,
                                                                mindspore::kMaskedSelectOpName,
                                                                mindspore::kMaskedSelectGradOpName,
                                                                mindspore::kMedianOpName,
@@ -71,6 +75,10 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                                mindspore::kNanToNumOpName,
                                                                mindspore::kQrOpName,
                                                                mindspore::kResizeBicubicOpName};
+                                                               mindspore::kNuclearNormOpName,
+                                                               mindspore::kQuantileOpName,
+                                                               mindspore::kSparseSegmentSqrtNOpName,
+                                                               mindspore::kUnsortedSegmentProdOpName};
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
   static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";
 
