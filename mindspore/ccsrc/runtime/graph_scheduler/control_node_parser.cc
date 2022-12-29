@@ -260,15 +260,40 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
   }
 
   if (front_node->kernel_info() == nullptr) {
-    front_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+    auto kernel_info = std::make_shared<device::KernelInfo>();
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    front_node->set_kernel_info(kernel_info);
+    std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
+    MS_EXCEPTION_IF_NULL(builder);
+    kernel_info->set_select_kernel_build_info(builder->Build());
+    kernel_info->GetMutableSelectKernelBuildInfo()->SetOutputsKernelObjectType(
+      {kernel::KernelObjectType::TUPLE_UNFOLD});
   }
 
-  // Get the select kernel build info.
-  auto kernel_info = static_cast<device::KernelInfo *>(backend_node->kernel_info());
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-  MS_EXCEPTION_IF_NULL(build_info);
-  AnfAlgo::SetSelectKernelBuildInfo(build_info, front_node.get());
+  // Set build info to front node.
+  auto backend_kernel_info = static_cast<device::KernelInfo *>(backend_node->kernel_info());
+  MS_EXCEPTION_IF_NULL(backend_kernel_info);
+  auto backend_build_info = backend_kernel_info->GetMutableSelectKernelBuildInfo();
+  MS_EXCEPTION_IF_NULL(backend_build_info);
+
+  auto front_kernel_info = static_cast<device::KernelInfo *>(front_node->kernel_info());
+  MS_EXCEPTION_IF_NULL(front_kernel_info);
+  auto front_build_info = front_kernel_info->GetMutableSelectKernelBuildInfo();
+  MS_EXCEPTION_IF_NULL(front_build_info);
+  // Set output format and device data type.
+  if (front_build_info->GetAllOutputFormats().size() > front_node_with_index.second) {
+    front_build_info->SetOutputFormat(backend_build_info->GetOutputFormat(0), front_node_with_index.second);
+    front_build_info->SetOutputDeviceType(backend_build_info->GetOutputDeviceType(0), front_node_with_index.second);
+  } else {
+    auto formats = front_build_info->GetAllOutputFormats();
+    auto types = front_build_info->GetAllOutputDeviceTypes();
+    for (size_t i = 0; i <= front_node_with_index.second - front_build_info->GetAllOutputFormats().size(); ++i) {
+      (void)formats.emplace_back(backend_build_info->GetOutputFormat(0));
+      (void)types.emplace_back(backend_build_info->GetOutputDeviceType(0));
+    }
+    front_build_info->SetOutputsFormat(formats);
+    front_build_info->SetOutputsDeviceType(types);
+  }
 
   device::DeviceAddressPtr address = nullptr;
   if (node_value->isa<tensor::Tensor>() && node_value->cast<TensorPtr>()->is_forward_output()) {
@@ -283,8 +308,8 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
                                                                        output_type_id, ShapeVector());
   }
   MS_EXCEPTION_IF_NULL(address);
-  MS_LOG(DEBUG) << "Create address for node:" << common::AnfAlgo::GetNodeDebugString(front_node) << " addr:" << address
-                << " size:" << tensor_size;
+  MS_LOG(DEBUG) << "Create address for node:" << common::AnfAlgo::GetNodeDebugString(front_node)
+                << " index:" << front_node_with_index.second << " addr:" << address << " size:" << tensor_size;
   AnfAlgo::SetOutputAddr(address, front_node_with_index.second, front_node.get());
   UpdateRefCount(address.get(), true);
 }
@@ -297,7 +322,8 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   const auto &node = front_node_with_index.first;
 
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(DEBUG) << "Start create device tensor for front node:" << front_node_with_index.first->DebugString();
+  MS_LOG(DEBUG) << "Start create device tensor for front node:" << front_node_with_index.first->DebugString()
+                << " index:" << front_node_with_index.second;
 
   // Create kernel info for front node.
   if (node->kernel_info() == nullptr) {
