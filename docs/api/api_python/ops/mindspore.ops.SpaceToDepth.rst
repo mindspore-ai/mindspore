@@ -17,10 +17,10 @@ mindspore.ops.SpaceToDepth
         - **block_size** (int) - 用于划分空间维度的子块的大小。必须>=2。
 
     输入：
-        - **x** (Tensor) - 4维Tensor。数据类型为Number。
+        - **x** (Tensor) - 四维Tensor。数据类型为Number。
 
     输出：
-        4维Tensor，数据类型与 `x` 相同，shape： :math:`(N,(C_{in} * \text{block_size} * 2), H_{in} / \text{block_size}, W_{in} / \text{block_size})` 。
+        四维Tensor，数据类型与 `x` 相同，shape： :math:`(N,(C_{in} * \text{block_size} * 2), H_{in} / \text{block_size}, W_{in} / \text{block_size})` 。
 
     异常：
         - **TypeError** - `block_size` 不是int类型。

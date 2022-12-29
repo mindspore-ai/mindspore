@@ -3,7 +3,7 @@ mindspore.ops.UpsampleTrilinear3D
 
 .. py:class:: mindspore.ops.UpsampleTrilinear3D(output_size=None, scales=None, align_corners=False)
 
-    输入为5维度Tensor，跨其中三维执行三线性插值上调采样。
+    输入为五维度Tensor，跨其中三维执行三线性插值上调采样。
 
     此运算符使用指定的 `output_size` 或 `scales` 缩放因子放大输入体积，过程使用三线性上调算法。
 
@@ -16,7 +16,7 @@ mindspore.ops.UpsampleTrilinear3D
         - **align_corners** (bool，可选) - 如果为True，则输入和输出Tensor由其角像素的中心点对齐，保留角像素处的值。如果为False，则输入和输出Tensor由其角像素的角点对齐，插值对边界外值使用边值填充。默认值：False。
 
     输入：
-        - **x** (Tensor) - Shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的5维Tensor。支持的数据类型：[float16, float32, float64]。
+        - **x** (Tensor) - Shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的五维Tensor。支持的数据类型：[float16, float32, float64]。
 
     输出：
         - **y** (Tensor) - 上采样输出。其shape :math:`(N, C, D_{out}, H_{out}, W_{out})` ，数据类型与 `x` 相同。

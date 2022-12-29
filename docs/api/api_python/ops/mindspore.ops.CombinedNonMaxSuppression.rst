@@ -26,7 +26,7 @@
     异常：
         - **TypeError** -  `boxes` 、 `scores` 、 `iou_threshold` 、 `score threshold` 的数据格式不是float32。
         - **TypeError** -  `max_output_size_per_class` 和 `max_total_size` 的数据格式不是int32。
-        - **ValueError** -  `boxes` 不是4维Tensor。
+        - **ValueError** -  `boxes` 不是四维Tensor。
         - **ValueError** -  `max_output_size_per_class` 、 `max_total_size` 、 `iou_threshold` 和 `score threshold` 不是0D Tensor。
         - **ValueError** -  `boxes` 和 `scores` 的shape[0]或shape[1]不一致。
         - **ValueError** -  `boxes` 和 `scores` 的shape[2]不一致或 `boxes` 的shape[2]不为1。

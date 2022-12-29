@@ -24,7 +24,7 @@ mindspore.nn.Hardtanh
         - **max_val** (Union[int, float]) - 线性区域范围的最大值。默认值：1.0。
 
     输入：
-        - **x** (Tensor) - 数据类型为float16或float32的Tensor。在CPU和Ascend平台上支持0-7维。在GPU平台上支持0-4维。
+        - **x** (Tensor) - 数据类型为float16或float32的Tensor。在CPU和Ascend平台上支持零到七维。在GPU平台上支持零到四维。
 
     输出：
         Tensor，数据类型和shape与 `x` 的相同。
