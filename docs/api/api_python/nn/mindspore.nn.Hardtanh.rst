@@ -3,8 +3,6 @@ mindspore.nn.Hardtanh
 
 .. py:class:: mindspore.nn.Hardtanh(min_val=-1.0, max_val=1.0)
 
-    Hardtanh激活函数。
-
     按元素计算Hardtanh函数。Hardtanh函数定义为：
 
     .. math::

@@ -3,9 +3,7 @@ mindspore.nn.InstanceNorm3d
 
 .. py:class:: mindspore.nn.InstanceNorm3d(num_features, eps=1e-5, momentum=0.1, affine=True, gamma_init='ones', beta_init='zeros')
 
-    对五维输入实现实例归一化（Instance Normalization Layer）。
-
-    该层在五维输入（带有额外通道维度的mini-batch三维输入）上应用实例归一化，详见论文 `Instance Normalization:
+    该层在五维输入（带有额外通道维度的mini-batch三维输入）上应用实例归一化。详见论文 `Instance Normalization:
     The Missing Ingredient for Fast Stylization <https://arxiv.org/abs/1607.08022>`_ 。
     使用mini-batch数据和学习参数进行训练，参数见如下公式。
 

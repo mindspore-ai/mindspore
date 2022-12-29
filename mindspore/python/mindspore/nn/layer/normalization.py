@@ -163,8 +163,6 @@ class _BatchNorm(Cell):
 
 class BatchNorm1d(_BatchNorm):
     r"""
-    Batch Normalization layer over a 2D input.
-
     This layer
     applies Batch Normalization over a 2D input (a mini-batch of 1D inputs) to
     reduce internal covariate shift. Batch Normalization is widely used in convolutional networks.
@@ -239,8 +237,6 @@ class BatchNorm1d(_BatchNorm):
 
 class BatchNorm2d(_BatchNorm):
     r"""
-    Batch Normalization layer over a 4D input.
-
     Batch Normalization is widely used in convolutional networks. This layer
     applies Batch Normalization over a 4D input (a mini-batch of 2D inputs with
     additional channel dimension) to avoid internal covariate shift as described
@@ -333,8 +329,6 @@ class BatchNorm2d(_BatchNorm):
 
 class BatchNorm3d(Cell):
     r"""
-    Batch Normalization layer over a 5D input.
-
     Batch Normalization is widely used in convolutional networks. This layer
     applies Batch Normalization over a 5D input (a mini-batch of 3D inputs with
     additional channel dimension) to avoid internal covariate shift.
@@ -759,10 +753,8 @@ class _InstanceNorm(Cell):
 
 class InstanceNorm1d(_InstanceNorm):
     r"""
-    Instance Normalization layer over a 3D input.
-
     This layer applies Instance Normalization over a 3D input (a mini-batch of 1D inputs with
-    additional channel dimension) as described in the paper `Instance Normalization: The Missing Ingredient for
+    additional channel dimension). Refer to the paper `Instance Normalization: The Missing Ingredient for
     Fast Stylization <https://arxiv.org/abs/1607.08022>`_. It rescales and recenters the feature using a mini-batch
     of data and the learned parameters which can be described in the following formula.
 
@@ -840,10 +832,8 @@ class InstanceNorm1d(_InstanceNorm):
 
 class InstanceNorm2d(_InstanceNorm):
     r"""
-    Instance Normalization layer over a 4D input.
-
     This layer applies Instance Normalization over a 4D input (a mini-batch of 2D inputs with
-    additional channel dimension) as described in the paper `Instance Normalization: The Missing Ingredient for
+    additional channel dimension). Refer to the paper `Instance Normalization: The Missing Ingredient for
     Fast Stylization <https://arxiv.org/abs/1607.08022>`_. It rescales and recenters the feature using a mini-batch
     of data and the learned parameters which can be described in the following formula.
 
@@ -921,10 +911,8 @@ class InstanceNorm2d(_InstanceNorm):
 
 class InstanceNorm3d(_InstanceNorm):
     r"""
-    Instance Normalization layer over a 5D input.
-
     This layer applies Instance Normalization over a 5D input (a mini-batch of 3D inputs with
-    additional channel dimension) as described in the paper `Instance Normalization: The Missing Ingredient for
+    additional channel dimension). Refer to the paper `Instance Normalization: The Missing Ingredient for
     Fast Stylization <https://arxiv.org/abs/1607.08022>`_. It rescales and recenters the feature using a mini-batch
     of data and the learned parameters which can be described in the following formula.
 

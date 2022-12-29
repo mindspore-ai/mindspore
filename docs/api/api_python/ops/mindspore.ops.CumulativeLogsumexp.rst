@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.CumulativeLogsumexp(exclusive=False, reverse=False)
 
-    计算输入 `x` 沿轴 `axis` 的累积LogSumExp函数值，即：若输入 `x` 为[a, b, c]，则输出为[a, log(exp(a) + exp(b)), log(exp(a) + exp(b) + exp(c))]。
+    计算输入 `x` 沿轴 `axis` 的累积LogSumExp函数值。即：若输入 `x` 为[a, b, c]，则输出为[a, log(exp(a) + exp(b)), log(exp(a) + exp(b) + exp(c))]。
 
     参数：
         - **exclusive** (bool, 可选) - 如果为True，将在计算时跳过最后一个元素，此时输出为：[-inf, a, log(exp(a) * exp(b))]，其中-inf在输出时出于性能原因将以一个极小负数的形式呈现。默认值：False。

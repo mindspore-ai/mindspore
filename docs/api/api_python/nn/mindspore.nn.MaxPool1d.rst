@@ -3,9 +3,7 @@ mindspore.nn.MaxPool1d
 
 .. py:class:: mindspore.nn.MaxPool1d(kernel_size=1, stride=1, pad_mode='valid')
 
-    对时间数据进行最大池化运算。
-
-    在一个输入张量上应用1D max pooling，该张量可被视为一维平面的组合。
+    在一个输入Tensor上应用1D最大池化运算，该Tensor可被视为一维平面的组合。
 
     通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` ，MaxPool1d输出 :math:`(L_{in})` 维度区域最大值。
     给定 `kernel_size` 和 `stride` ，公式如下：

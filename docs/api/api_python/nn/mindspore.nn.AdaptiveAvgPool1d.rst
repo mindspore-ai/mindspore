@@ -3,9 +3,7 @@ mindspore.nn.AdaptiveAvgPool1d
 
 .. py:class:: mindspore.nn.AdaptiveAvgPool1d(output_size)
 
-    对输入的多维数据进行一维平面上的自适应平均池化运算。
-
-    在一个输入Tensor上应用1D adaptive average pooling，可视为组成一个1D输入平面。
+    在一个输入Tensor上应用1D自适应平均池化运算，可视为组成一个1D输入平面。
 
     通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` ，AdaptiveAvgPool1d在 :math:`L_{in}` 维度上计算区域平均值。
     输出的shape为 :math:`(N_{in}, C_{in}, L_{out})` ，其中， :math:`L_{out}` 为 `output_size`。
