@@ -53,7 +53,7 @@ std::string RealPath(std::string_view path);
 DIR *OpenDir(std::string_view dir_name);
 std::vector<std::string> GetAllFiles(std::string_view dir_name);
 
-TEST_F(TestZeroCopy, TestMindIR) {
+TEST_F(TestZeroCopy, DISABLED_TestMindIR) {
 #ifdef ENABLE_ACL
   // Set context
   auto context = ContextAutoSet();
@@ -101,7 +101,7 @@ TEST_F(TestZeroCopy, TestMindIR) {
 #endif
 }
 
-TEST_F(TestZeroCopy, TestDeviceTensor) {
+TEST_F(TestZeroCopy, DISABLED_TestDeviceTensor) {
 #ifdef ENABLE_ACL
 // Set context
   auto context = ContextAutoSet();
