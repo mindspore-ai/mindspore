@@ -150,6 +150,7 @@ class GradExecutor {
                           std::vector<AnfNodePtr> *inputs, ValuePtrList *weights_args);
   void MakeNestedCnode(bool has_custom_bprop, const std::vector<ValuePtr> &forward_args,
                        const FuncGraphPtr &cur_run_bprop_graph, const BaseRef &out);
+  std::pair<FuncGraphPtr, FuncGraphPtr> GetNestedGradGraph(const FuncGraphPtr &first_grad_fg);
   TopCellInfoPtr PopHighOrderGraphStack();
   void PushInputArgsInfoStack(const InputArgsInfoPtr &input_args_info);
   void PopInputArgsInfoStack();
@@ -222,6 +223,7 @@ class GradExecutor {
   ForwardExecutorWeakPtr forward_executor_;
   MsFunctionPtr ms_function_;
   std::shared_ptr<AsyncQueue> async_executor_;
+  mutable mindspore::HashMap<std::string, FuncGraphPtr> nested_grad_graph_;
   mutable mindspore::HashMap<std::string, std::vector<DynamicDetectNodeInfoPtr>> cell_id_with_dynamic_detect_nodes_;
 };
 }  // namespace pynative

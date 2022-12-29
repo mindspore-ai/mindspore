@@ -99,6 +99,9 @@ bool Common::IsTensor(const ValuePtr &v, bool include_sequence) {
       return true;
     } else if (v->isa<ValueSequence>()) {
       auto v_seq = v->cast<ValueSequencePtr>();
+      if (v_seq->size() == 0) {
+        return false;
+      }
       // SpareTensor have scalar index, so just check have csr tensor
       if (v_seq->value().front()->isa<tensor::MetaSparseTensor>()) {
         return true;
