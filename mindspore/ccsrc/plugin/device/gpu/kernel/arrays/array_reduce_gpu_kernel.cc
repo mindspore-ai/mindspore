@@ -19,6 +19,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
 #include "ops/reduce.h"
+#include "plugin/device/gpu/kernel/arrays/cast_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,6 +41,9 @@ constexpr size_t kDynamicAxisInputNum = 2;
 constexpr size_t kComplexFloatFlag = 1;
 constexpr size_t kComplexDoubleFlag = 2;
 constexpr size_t kComplexRate = 2;
+constexpr size_t kInt32Flag = 1;
+constexpr size_t kInt64Flag = 2;
+constexpr size_t kInt16Flag = 3;
 
 const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
   {"ReduceMax", CUDNN_REDUCE_TENSOR_MAX},  {"ReduceMean", CUDNN_REDUCE_TENSOR_AVG},
@@ -77,6 +81,12 @@ std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayRed
   {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
   {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double)},
   {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
+  {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
+  {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
+  {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
+  {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
+  {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
+  {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
   {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
   {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
   {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
@@ -146,8 +156,18 @@ bool ArrayReduceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   } else if (type_id == kNumberTypeComplex128) {
     data_type_ = CUDNN_DATA_DOUBLE;
     complex_op_type = kComplexDoubleFlag;
+  } else if (type_id == kNumberTypeInt64) {
+    data_type_ = CUDNN_DATA_DOUBLE;
+    int_op_type = kInt64Flag;
+  } else if (type_id == kNumberTypeInt16) {
+    data_type_ = CUDNN_DATA_FLOAT;
+    int_op_type = kInt16Flag;
   } else {
     data_type_ = GetCudnnDataType(type_name);
+  }
+  if (data_type_ == CUDNN_DATA_INT32) {
+    data_type_ = CUDNN_DATA_FLOAT;
+    int_op_type = kInt32Flag;
   }
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
@@ -297,6 +317,31 @@ void ArrayReduceGpuKernelMod::InferArrayReduceType() {
     "cudnnSetReduceTensorDescriptor failed");
   return;
 }
+template <typename T, typename S>
+void ArrayReduceGpuKernelMod::LaunchIntKernel(const std::vector<AddressPtr> &inputs,
+                                              const std::vector<AddressPtr> &workspace,
+                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  S *input_addr = GetDeviceAddress<S>(inputs, 0);
+  S *output_addr = GetDeviceAddress<S>(outputs, 0);
+
+  T alpha = static_cast<T>(1.0f);
+  T beta = static_cast<T>(0.0f);
+
+  S *workspace_addr = GetPossiblyNullDeviceAddress<S>(workspace, 0);
+  T *casted_input = GetDeviceAddress<T>(inputs, 0);
+  T *output_before_cast = GetDeviceAddress<T>(outputs, 0);
+
+  const int input_num = input_size_ / sizeof(T);
+  const int output_num = output_size_list_[kIndex0] / sizeof(S);
+
+  Cast(input_num, input_addr, casted_input, reinterpret_cast<cudaStream_t>(stream_ptr), GET_CTX_DEVICE_ID);
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+    cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
+                      inputA_descriptor_, casted_input, &beta, outputC_descriptor_, output_before_cast),
+    "cudnnReduceTensor failed.");
+  Cast(output_num, output_before_cast, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr), GET_CTX_DEVICE_ID);
+  return;
+}
 
 template <typename T, typename S>
 void ArrayReduceGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> &inputs,
@@ -362,6 +407,16 @@ bool ArrayReduceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   T alpha = static_cast<T>(1.0f);
   T beta = static_cast<T>(0.0f);
   T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
+  if (int_op_type == kInt32Flag) {
+    LaunchIntKernel<float, int32_t>(inputs, workspace, outputs, stream_ptr);
+    return true;
+  } else if (int_op_type == kInt64Flag) {
+    LaunchIntKernel<double, int64_t>(inputs, workspace, outputs, stream_ptr);
+    return true;
+  } else if (int_op_type == kInt16Flag) {
+    LaunchIntKernel<float, int16_t>(inputs, workspace, outputs, stream_ptr);
+    return true;
+  }
   if (data_type_ == CUDNN_DATA_DOUBLE) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
