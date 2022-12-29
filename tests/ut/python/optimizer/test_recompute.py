@@ -16,8 +16,11 @@
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.common.dtype as mstype
+from mindspore import Tensor
 
 recompute_prefix = 'recompute_'
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -35,11 +38,13 @@ def test_set_recompute_true():
     net.pool.recompute()
     assert net.pool.get_scope() == recompute_prefix
 
+
 def test_set_recompute_true_with_mp_comm_recompute():
     context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     net.pool.recompute(mp_comm_recompute=True)
     assert net.pool.get_scope() == recompute_prefix
+
 
 def test_set_recompute_true_with_mp_comm_recompute_false():
     context.set_context(mode=context.GRAPH_MODE)
@@ -47,9 +52,26 @@ def test_set_recompute_true_with_mp_comm_recompute_false():
     net.pool.recompute(mp_comm_recompute=False)
     assert net.pool.get_scope() == recompute_prefix
 
+
 def test_set_recompute_true_twice():
     context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     net.pool.recompute()
     with pytest.raises(RuntimeError):
         net.pool.recompute()
+
+
+def test_set_recompute_in_pynative_mode():
+    """
+    Feature: Recomputation.
+    Description: Call recompute api of Cell in PyNative mode.
+    Expectation: Raise TypeError when call the cell.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    net.pool.recompute()
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    try:
+        net(x)
+    except TypeError as e:
+        assert "Recompute is not supported in PyNative mode currently" in str(e)

@@ -636,6 +636,7 @@ class Cell(Cell_):
             self._do_parameter_broadcast()
 
         self._check_args(args)
+        self._check_cell_flags_in_pynative()
 
         if self.requires_grad:
             _pynative_executor.set_grad_flag(True)
@@ -654,6 +655,12 @@ class Cell(Cell_):
         if isinstance(output, Parameter):
             output = output.data
         return output
+
+    def _check_cell_flags_in_pynative(self):
+        """Check the flags added to cell in pynative mode"""
+        if hasattr(self, "_func_graph_flags") and self._func_graph_flags.get("output_no_recompute"):
+            raise TypeError("Recompute is not supported in PyNative mode currently, you can use "
+                            "'context.set_context(mode=context.GRAPH_MODE)' or @jit to set graph mode.")
 
     def _add_attr(self, name, value):
         if name and name[:2] != '__' and name not in Cell.IGNORE_LIST:
@@ -2050,9 +2057,6 @@ class Cell(Cell_):
         """
         Set the cell recomputed.
         """
-        if context._get_mode() == context.PYNATIVE_MODE:
-            raise TypeError("Recompute is not supported in pynative mode currently, you can use "
-                            "'context.set_context(mode=context.GRAPH_MODE)' to set graph mode.")
         Validator.check_bool(mode)
         Validator.check_bool(output_recompute)
         if not self._has_config_recompute:
