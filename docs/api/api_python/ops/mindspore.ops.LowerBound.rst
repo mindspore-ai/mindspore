@@ -24,4 +24,4 @@ mindspore.ops.LowerBound
         - **TypeError** - 若 `sorted_x` 与 `values` 的类型不一致。
         - **ValueError** - 若 `sorted_x` 的秩不等于2。
         - **ValueError** - 若 `values` 的秩不等于2。
-        - **ValueError** - 若 `sorted_x` 和 `values` shape的第1维不相等。
+        - **ValueError** - 若 `sorted_x` 和 `values` shape的第一维不相等。

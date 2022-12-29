@@ -25,7 +25,7 @@ mindspore.ops.fractional_max_pool3d
 
     异常：
         - **TypeError** - `input_x` 不是4维或5维Tensor。
-        - **TypeError** - `random_samples` 不是3维Tensor。
+        - **TypeError** - `random_samples` 不是三维Tensor。
         - **TypeError** - `x` 数据类型不是float16、float32、double、int32、int64。
         - **TypeError** - `random_samples` 数据类型不是float16、float32、double。
         - **TypeError** - `argmax` 数据类型不是int32、int64。

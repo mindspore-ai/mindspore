@@ -138,14 +138,14 @@ mindspore.common.initializer
 
 .. py:class:: mindspore.common.initializer.Identity(**kwargs)
 
-    生成一个2维的单位矩阵用于初始化Tensor。
+    生成一个二维的单位矩阵用于初始化Tensor。
 
     异常：
         - **ValueError** - 被初始化的Tensor的维度不等于2。
 
 .. py:class:: mindspore.common.initializer.Sparse(sparsity, sigma=0.01)
 
-    生成一个2维的稀疏矩阵用于初始化Tensor。矩阵非0的位置的值服从正态分布 :math:`N(0, 0.01)` 。
+    生成一个二维的稀疏矩阵用于初始化Tensor。矩阵非0的位置的值服从正态分布 :math:`N(0, 0.01)` 。
 
     参数：
         - **sparsity** (float) - 矩阵每列中元素被置0的比例。

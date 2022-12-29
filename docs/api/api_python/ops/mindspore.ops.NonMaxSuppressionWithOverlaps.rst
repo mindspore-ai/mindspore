@@ -29,4 +29,4 @@ mindspore.ops.NonMaxSuppressionWithOverlaps
         - **ValueError** - `scores` 的shape长度不是1。
         - **ValueError** - `max_output_size` 、 `overlap_threshold` 或者 `score_threshold` 的shape长度不是1。
         - **ValueError** - `max_output_size` 小于零。
-        - **ValueError** - `scores` shape的大小与 `overlaps` 的第0或第1维不相等。
+        - **ValueError** - `scores` shape的大小与 `overlaps` 的第0或第一维不相等。

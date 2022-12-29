@@ -9448,9 +9448,7 @@ class TripletMarginLoss(Primitive):
     Args:
         p (int, optional): The norm degree for pairwise distance. Default: 2.
         eps (float, optional): Default: 1e-06.
-        swap (bool, optional): The distance swap is described in detail in the paper
-            `Learning local feature descriptors with triplets and shallow convolutional neural networks`
-            by V. Balntas, E. Riba et al. Default: "False".
+        swap (bool, optional): The distance swap. Default: "False".
         reduction (str, optional): Apply specific reduction method to the
             output: 'none', 'mean', 'sum'. Default: "mean".
 
