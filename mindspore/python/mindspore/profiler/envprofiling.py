@@ -156,11 +156,12 @@ def parse_profiling_args(options):
 def combine_profile_options(profiling_options):
     """Combined profiling options."""
     factor_s_to_us = 1e7
+    output_path = os.path.join(os.getcwd(), "data")
     options = {
         "start": profiling_options.get('start', False),
         "start_time": int(time.time() * factor_s_to_us),
         "pid": os.getpid(),
-        "output_path": profiling_options.get('output_path', ""),
+        "output_path": profiling_options.get('output_path', output_path),
         "profiler_path": "",
         "profile_memory": profiling_options.get("memory", False),
         "profile_communication": profiling_options.get("hccl", False),
@@ -179,7 +180,6 @@ class EnvProfiler:
 
     def __init__(self):
         self._profiling_options = ''
-        self._environ_enable = False
         self._output_path = False
         self.profile_memory = False
         self.profile_communication = False
@@ -195,8 +195,11 @@ class EnvProfiler:
         """Determine whether to stop collecting and parsing performance data based on environment variables."""
         if not os.getenv("MS_PROFILER_OPTIONS"):
             return
-        options = construct_profiling_options()
-        self._environ_enable = options.get("start")
+        options = json.loads(os.getenv("MS_PROFILER_RUN_CONFIG", "{}"))
+        if not options.get("pid", 0) == os.getpid():
+            return
+        if not options.get("start"):
+            return
         self._output_path = options.get("profiler_path")
         self.profile_memory = options.get("profile_memory")
         self.profile_communication = options.get("profile_communication")
@@ -206,12 +209,7 @@ class EnvProfiler:
         self.parallel_strategy_enable = options.get("parallel_strategy_enable")
         self.timeline_limit_size = options.get("timeline_limit_size")
         self.data_process_enable = options.get("data_process_enable")
-        if not self._environ_enable:
-            return
-        env_options = json.loads(os.getenv("MS_PROFILER_RUN_CONFIG", "{}"))
-        if not env_options.get("pid", 0) == os.getpid():
-            return
-        self.start_time = env_options.get("start_time")
+        self.start_time = options.get("start_time")
         options = {
             "output_path": self._output_path,
             "profile_memory": self.profile_memory,
