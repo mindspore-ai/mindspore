@@ -1836,8 +1836,8 @@ class InplaceAdd(PrimitiveWithInfer):
 
 
 class InplaceSub(PrimitiveWithInfer):
-    """
-    Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v`.
+    r"""
+    Subtracts `v` into specified rows of `x`. Computes :math:`y = x`; :math:`y[i,] -= input\_v`.
 
     Refer to :func:`mindspore.ops.inplace_sub` for more detail.
 
@@ -3159,7 +3159,7 @@ class Mod(_MathBinaryOp):
         - When the elements of input exceed 2048, the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
-        - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
+        - If shape is expressed as :math:`(D1,D2... ,Dn)`, then :math:`D1*D2... *DN<=1000000,n<=8`.
 
     Inputs:
         - **x** (Union[Tensor, numbers.Number, bool]) - The first input is a number, a bool
@@ -6732,7 +6732,7 @@ class NextAfter(Primitive):
 
     .. math::
 
-        out_{i} =  nextafter{x1_{i}, x2_{i}}
+        out_{i} =  nextafter({x1_{i}, x2_{i}})
 
     Inputs:
         - **x1** (Tensor) - The shape of tensor is
