@@ -657,7 +657,6 @@ class Mish(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize Mish"""
-        super().__init__("Mish")
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
