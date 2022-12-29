@@ -2270,8 +2270,6 @@ def scatter_add(input_x, indices, updates):
 
 def scatter_min(input_x, indices, updates):
     r"""
-    Updates the value of the input tensor through the minimum operation.
-
     Using given values to update tensor value through the min operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
@@ -2326,8 +2324,6 @@ def scatter_min(input_x, indices, updates):
 
 def scatter_div(input_x, indices, updates):
     r"""
-    Updates the value of the input tensor through the divide operation.
-
     Using given values to update tensor value through the div operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
@@ -4234,7 +4230,7 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
     r"""
     Computes the product of a tensor along segments.
 
-    The following figure shows the calculation process of UnsortedSegmentProd:
+    The following figure shows the calculation process of unsorted_segment_prod:
 
     .. image:: UnsortedSegmentProd.png
 
@@ -5130,8 +5126,6 @@ def dsplit(x, indices_or_sections):
 
 def max(x, axis=0, keep_dims=False):
     """
-    Calculates the maximum value with the corresponding index.
-
     Calculates the maximum value along with the given axis for the input tensor. It returns the maximum values and
     indices.
 
@@ -5225,8 +5219,6 @@ def argmax(x, axis=None, keepdims=False):
 
 def min(x, axis=0, keep_dims=False):
     """
-    Calculates the minimum value with corresponding index, and returns indices and values.
-
     Calculates the minimum value along with the given axis for the input tensor. It returns the minimum values and
     indices.
 
@@ -5380,7 +5372,7 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
     up. Segment_ids does not need to be sorted, and it does not need to cover all values in the entire valid value
     range.
 
-    The following figure shows the calculation process of UnsortedSegmentSum:
+    The following figure shows the calculation process of unsorted_segment_sum:
 
     .. image:: UnsortedSegmentSum.png
 

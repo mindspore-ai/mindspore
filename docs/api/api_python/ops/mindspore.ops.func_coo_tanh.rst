@@ -3,8 +3,6 @@
 
 .. py:function:: mindspore.ops.coo_tanh(x: COOTensor)
 
-    Tanh激活函数。
-
     按元素计算COOTensor输入元素的双曲正切。Tanh函数定义为：
 
     .. math::

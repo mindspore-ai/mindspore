@@ -3,8 +3,6 @@ mindspore.nn.AdaptiveMaxPool2d
 
 .. py:class:: mindspore.nn.AdaptiveMaxPool2d(output_size, return_indices=False)
 
-    二维自适应最大池化运算。
-
     对输入Tensor，提供二维自适应最大池化操作。对于输入任何格式，指定输出的格式都为H * W。但是输入和输出特征的数目不会变化。
 
     输入和输出数据格式可以是"NCHW"和"CHW"。N是批处理大小，C是通道数，H是特征高度，W是特征宽度。运算如下：

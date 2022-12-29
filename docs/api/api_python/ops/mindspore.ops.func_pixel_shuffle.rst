@@ -3,8 +3,6 @@ mindspore.ops.pixel_shuffle
 
 .. py:function:: mindspore.ops.pixel_shuffle(x, upscale_factor)
 
-    pixel_shuffle函数。
-
     在多个输入平面组成的输入上面应用pixel_shuffle算法。在平面上应用高效亚像素卷积，步长为 :math:`1/r` 。关于pixel_shuffle算法详细介绍，请参考 `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network <https://arxiv.org/abs/1609.05158>`_ 。
 
     通常情况下，`x` shape :math:`(*, C \times r^2, H, W)` ，输出shape :math:`(*, C, H \times r, W \times r)` 。`r` 是缩小因子。 `*` 是大于等于0的维度。

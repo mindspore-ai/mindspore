@@ -3,7 +3,7 @@ mindspore.ops.cummin
 
 .. py:function:: mindspore.ops.cummin(x, axis)
 
-    返回一个元组（最值、索引），其中最值是输入张量 `x` 沿维度 `axis` 的累积最小值，索引是每个最小值的索引位置。
+    返回一个元组（最值、索引），其中最值是输入Tensor `x` 沿维度 `axis` 的累积最小值，索引是每个最小值的索引位置。
 
     .. math::
         \begin{array}{ll} \\

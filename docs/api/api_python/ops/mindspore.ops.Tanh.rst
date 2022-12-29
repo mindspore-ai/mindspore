@@ -3,8 +3,6 @@
 
 .. py:class:: mindspore.ops.Tanh
 
-    Tanh激活函数。
-
-    按元素计算输入元素的双曲正切。
+    逐元素计算输入元素的双曲正切。
 
     更多参考详见 :func:`mindspore.ops.tanh`。

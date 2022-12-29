@@ -265,8 +265,6 @@ class Softmax(Cell):
 
 class LogSoftmax(Cell):
     r"""
-    LogSoftmax activation function.
-
     Applies the LogSoftmax function to n-dimensional input tensor.
 
     The input is transformed by the Softmax function and then by the log function to lie in range[-inf,0).
@@ -661,8 +659,6 @@ class SiLU(Cell):
 
 class Tanh(Cell):
     r"""
-    Tanh activation function.
-
     Applies the Tanh function element-wise, returns a new tensor with the hyperbolic tangent of the elements of input,
     The input is a Tensor with any valid shape.
 
@@ -759,8 +755,6 @@ def _dtype_check(x_dtype, prim_name):
 
 class Hardtanh(Cell):
     r"""
-    Hardtanh activation function.
-
     Applies the Hardtanh function element-wise. The activation function is defined as:
 
     .. math::
@@ -1131,8 +1125,6 @@ class PReLU(Cell):
 
 class HSwish(Cell):
     r"""
-    Hard swish activation function.
-
     Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
 
     Hard swish is defined as:
@@ -1214,8 +1206,6 @@ class HSigmoid(Cell):
 
 class LogSigmoid(Cell):
     r"""
-    Logsigmoid activation function.
-
     Applies logsigmoid activation element-wise. The input is a Tensor with any valid shape.
 
     Logsigmoid is defined as:

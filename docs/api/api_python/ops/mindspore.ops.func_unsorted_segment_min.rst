@@ -5,7 +5,7 @@ mindspore.ops.unsorted_segment_min
 
     沿分段计算输入Tensor的最小值。
 
-    UnsortedSegmentMin的计算过程如下图所示：
+    unsorted_segment_min的计算过程如下图所示：
 
     .. image:: UnsortedSegmentMin.png
 

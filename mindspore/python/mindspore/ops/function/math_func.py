@@ -247,8 +247,7 @@ def abs(x):
 
 def absolute(x):
     """
-    Alias for ops.abs().
-    For details, please refer to :func:`mindspore.ops.abs`.
+    Alias for :func:`mindspore.ops.abs` .
     """
     return abs(x)
 
@@ -583,8 +582,7 @@ def neg(x):
 
 def negative(x):
     r"""
-    Alias for ops.neg().
-    For details, please refer to :func:`mindspore.ops.neg`.
+    Alias for :func:`mindspore.ops.neg` .
     """
     return neg_tensor(x)
 
@@ -816,8 +814,7 @@ def subtract(x, other, *, alpha=1):
 
 def true_divide(dividend, divisor):
     r"""
-    Alias for Tensor.div() with :math:`rounding\_mode=None`.
-    For details, please refer to :func:`mindspore.ops.div`.
+    Alias for :func:`mindspore.ops.div` with :math:`rounding\_mode=None`.
     """
     return div(dividend, divisor, rounding_mode=None)
 
@@ -933,8 +930,7 @@ def div(input, other, rounding_mode=None):
 
 def divide(x, other, *, rounding_mode=None):
     """
-    Alias for ops.div().
-    For details, please refer to :func:`mindspore.ops.div`.
+    Alias for :func:`mindspore.ops.div` .
     """
     return div(x, other, rounding_mode)
 
@@ -1333,8 +1329,7 @@ def floor(x):
 
 def i0(x):
     r"""
-    Alias for ops.bessel_i0.
-    For details, please refer to :func:`mindspore.ops.bessel_i0`.
+    Alias for :func:`mindspore.ops.bessel_i0` .
     """
     return bessel_i0(x)
 
@@ -2126,8 +2121,7 @@ def acos(x):
 
 def arccos(x):
     """
-    Alias for ops.acos().
-    For details, please refer to :func:`mindspore.ops.acos`.
+    Alias for :func:`mindspore.ops.acos` .
     """
     return acos(x)
 
@@ -2227,8 +2221,6 @@ def cosh(x):
 
 def tanh(input_x):
     r"""
-    Tanh activation function.
-
     Computes hyperbolic tangent of input element-wise. The Tanh function is defined as:
 
     .. math::

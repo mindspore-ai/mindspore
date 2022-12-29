@@ -3,7 +3,7 @@ mindspore.ops.unique_consecutive
 
 .. py:function:: mindspore.ops.unique_consecutive(x, return_idx=False, return_counts=False, axis=None)
 
-    对输入张量中连续且重复的元素去重。
+    对输入Tensor中连续且重复的元素去重。
 
     参数：
         - **x** (Tensor) - 输入Tensor。

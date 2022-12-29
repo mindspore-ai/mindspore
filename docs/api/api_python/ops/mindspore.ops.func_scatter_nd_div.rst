@@ -3,7 +3,7 @@ mindspore.ops.scatter_nd_div
 
 .. py:function:: mindspore.ops.scatter_nd_div(input_x, indices, updates, use_locking=False)
 
-    将sparse division应用于张量中的单个值或切片。
+    将sparse division应用于Tensor中的单个值或切片。
 
     使用给定值通过除法运算和输入索引更新 `input_x` 的值。为便于使用，函数返回 `input_x` 的复制。
 

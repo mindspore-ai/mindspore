@@ -3,7 +3,7 @@ mindspore.ops.space_to_batch_nd
 
 .. py:function:: mindspore.ops.space_to_batch_nd(input_x, block_size, paddings)
 
-    将空间维度划分为对应大小的块，然后在批次维度重排张量。
+    将空间维度划分为对应大小的块，然后在批次维度重排Tensor。
 
     此函数将输入的空间维度 [1, ..., M] 划分为形状为 `block_size` 的块网格，并将这些块在批次维度上（默认是第零维）中交错排列。
     输出的张量在空间维度上的截面是输入在对应空间维度上截面的一个网格，而输出的批次维度的大小为空间维度分解成块网格的数量乘以输入的批次维度的大小。

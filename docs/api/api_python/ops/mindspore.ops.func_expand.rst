@@ -3,7 +3,7 @@ mindspore.ops.expand
 
 .. py:function:: mindspore.ops.expand(input_x, size)
 
-    返回一个当前张量的新视图，其中单维度扩展到更大的尺寸。
+    返回一个当前Tensor的新视图，其中单维度扩展到更大的尺寸。
 
     .. note::
         将 `-1` 作为维度的 `size` 意味着不更改该维度的大小。张量也可以扩展到更大的维度，新的维度会附加在前面。对于新的维度，`size` 不能设置为-1。

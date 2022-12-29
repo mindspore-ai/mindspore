@@ -3,7 +3,7 @@ mindspore.ops.amin
 
 .. py:function:: mindspore.ops.amin(x, axis=(), keep_dims=False)
 
-    默认情况下，移除输入所有维度，返回 `x` 中的最大值。也可仅缩小指定维度 `axis` 大小至1。 `keep_dims` 控制输出和输入的维度是否相同。
+    默认情况下，移除输入所有维度，返回 `x` 中的最小值。也可仅缩小指定维度 `axis` 大小至1。 `keep_dims` 控制输出和输入的维度是否相同。
 
     参数：
         - **x** (Tensor[Number]) - 输入Tensor，其数据类型为数值型。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。秩应小于8。

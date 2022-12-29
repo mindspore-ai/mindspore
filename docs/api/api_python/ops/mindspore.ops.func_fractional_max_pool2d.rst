@@ -3,8 +3,6 @@ mindspore.ops.fractional_max_pool2d
 
 .. py:function:: mindspore.ops.fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=None, return_indices=False, _random_samples=None)
 
-    对输入的多维数据进行二维的分数最大池化运算。
-
     对多个输入平面组成的输入上应用2D分数最大池化。在 :math:`(kH_{in}, kW_{in})` 区域上应用最大池化操作，由输出shape决定随机步长。对于任何输入shape，指定输出shape为 :math:`(H, W)` 。输出特征的数量等于输入平面的数量。
     在一个输入Tensor上应用2D fractional max pooling，可被视为组成一个2D平面。
 
