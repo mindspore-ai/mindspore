@@ -317,6 +317,7 @@ from .math_func import (
     imag,
     roll,
     orgqr,
+    matrix_exp
 )
 from .nn_func import (
     adaptive_avg_pool1d,
