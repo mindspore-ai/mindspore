@@ -90,7 +90,9 @@ mindspore.ops
     mindspore.ops.hardshrink
     mindspore.ops.hardswish
     mindspore.ops.log_softmax
+    mindspore.ops.logsigmoid
     mindspore.ops.mish
+    mindspore.ops.rrelu
     mindspore.ops.selu
     mindspore.ops.sigmoid
     mindspore.ops.soft_shrink
