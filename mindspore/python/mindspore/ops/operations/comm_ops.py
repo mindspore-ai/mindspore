@@ -331,15 +331,17 @@ class _MicroStepAllGather(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP, mean_flag=None):
         validator.check_value_type('group', _get_group(group), (str,), self.name)
-        self.rank = get_rank(_get_group(group))
-        self.rank_size = get_group_size(_get_group(group))
-        validator.check('rank', self.rank, 'rank_size', self.rank_size, Rel.LT, self.name)
-        self.add_prim_attr('rank_size', self.rank_size)
-        self.add_prim_attr('group', _get_group(group))
-        self.add_prim_attr('fusion', 1)
-        self.add_prim_attr('do_mirror', False)
-        self.mean_flag = mean_flag
-        self.add_prim_attr('order_enforce_skip', True)
+        self.rank_size = 1
+        if group != "":
+            self.rank = get_rank(_get_group(group))
+            self.rank_size = get_group_size(_get_group(group))
+            validator.check('rank', self.rank, 'rank_size', self.rank_size, Rel.LT, self.name)
+            self.add_prim_attr('rank_size', self.rank_size)
+            self.add_prim_attr('group', _get_group(group))
+            self.add_prim_attr('fusion', 1)
+            self.add_prim_attr('do_mirror', False)
+            self.mean_flag = mean_flag
+            self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape, z_shape):
         validator.check_positive_int(len(x_shape), "x shape", self.name)
