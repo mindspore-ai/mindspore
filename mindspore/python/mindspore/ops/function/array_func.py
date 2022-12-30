@@ -3067,8 +3067,7 @@ def argsort(input_x, axis=-1, descending=False):
     Examples:
         >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
         >>> sort = ops.argsort(x)
-        >>> output = sort(x)
-        >>> print(output)
+        >>> print(sort)
     """
     _sort = _get_cache_prim(P.Sort)(axis, descending)
     _, arg_sort = _sort(input_x)
