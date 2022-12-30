@@ -79,5 +79,24 @@ Status EpochCtrlOp::EoeReceived(int32_t worker_id) {
 }
 
 int64_t EpochCtrlOp::GetTreeRepeatCount() { return child_[0]->GetTreeRepeatCount(); }
+
+Status EpochCtrlOp::GetNextRowPullMode(TensorRow *row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
+  if (child_.empty()) {
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] EpochCtrlOp can't be the leaf node(first operator) of pipeline.");
+  }
+
+  // `retry_if_eoe` is false because EpochCtrlOp does not eat EOE.
+  RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
+
+  // Only intercept EOE for EoeReceived processing, after that the EOE is forwarded to next op.
+  // Other TensorRows containing data or EOF will simply be forwarded.
+  // EOF can simply be forwarded because this op does not spawn any thread, thus does not require clean up.
+  if (row->eoe()) {
+    RETURN_IF_NOT_OK(EoeReceived(0));
+  }
+
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

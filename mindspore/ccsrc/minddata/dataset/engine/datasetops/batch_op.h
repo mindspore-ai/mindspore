@@ -315,6 +315,9 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   /// \brief Gets the implementation status for operator in pull mode
   /// \return implementation status
   ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }
+
+ private:
+  bool eoe_received_ = false;
 };
 }  // namespace dataset
 }  // namespace mindspore

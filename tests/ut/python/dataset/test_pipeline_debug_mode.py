@@ -24,7 +24,6 @@ from mindspore import log as logger
 # the global configuration setting of debug_mode may impact other tests running in parallel.
 pytestmark = pytest.mark.forked
 
-DATA_DIR_10 = "../data/dataset/testCifar10Data"
 DEBUG_MODE = False
 SEED_VAL = 0  # seed will be set internally in debug mode, save original seed value to restore.
 
@@ -163,17 +162,28 @@ def test_pipeline_debug_mode_concat():
     """
     logger.info("test_pipeline_debug_mode_concat")
     data_dir = "../data/dataset/testCelebAData/"
+    num_repeat = 3
     data1 = ds.CelebADataset(data_dir, decode=True, num_shards=1, shard_id=0)
     data2 = ds.CelebADataset(data_dir, decode=True, num_shards=1, shard_id=0)
     data3 = ds.CelebADataset(data_dir, decode=True, num_shards=1, shard_id=0)
     data4 = data1.concat(data2)
     data5 = data3 + data4
-    num_rows = 0
-    for item1 in data5.create_tuple_iterator(num_epochs=1):
-        assert len(item1) == 2
-        assert item1[0].shape == (2268, 4032, 3)
-        num_rows += 1
-    assert num_rows == 12
+    data5 = data5.repeat(num_repeat)
+    num_epoch = 2
+    epoch_count = 0
+    sample_row = 12
+    sample_count = 0
+    for _ in range(num_epoch):
+        num_rows = 0
+        for item1 in data5.create_tuple_iterator(num_epochs=1):
+            assert len(item1) == 2
+            assert item1[0].shape == (2268, 4032, 3)
+            num_rows += 1
+        epoch_count += 1
+        sample_count += num_rows
+        assert num_rows == sample_row * num_repeat
+    assert epoch_count == num_epoch
+    assert sample_count == num_repeat * num_epoch * sample_row
 
 
 def test_pipeline_debug_mode_map_random():
@@ -223,26 +233,61 @@ def test_pipeline_debug_mode_imdb_shuffle():
     Expectation: The data is processed successfully in the same order.
     """
     logger.info("test_pipeline_debug_mode_imdb_shuffle")
-    buffer_size = 5
 
     # apply dataset operations
     data1 = ds.IMDBDataset("../data/dataset/testIMDBDataset", shuffle=True)
-    data1 = data1.shuffle(buffer_size=buffer_size)
 
     # Verify dataset size
     data1_size = data1.get_dataset_size()
     logger.info("dataset size is: {}".format(data1_size))
     assert data1_size == 8
-
+    expect_output = [["train_pos_1.txt", 1], ["train_pos_0.txt", 1], ["train_neg_0.txt", 0], ["test_pos_1.txt", 1], [
+        "test_neg_1.txt", 0], ["test_pos_0.txt", 1], ["test_neg_0.txt", 0], ["train_neg_1.txt", 0]]
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
         logger.info("text is {}".format(item["text"]))
+        assert item["text"] == expect_output[num_iter][0]
         logger.info("label is {}".format(item["label"]))
+        assert item["label"] == expect_output[num_iter][1]
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
     assert num_iter == 8
+
+
+def test_pipeline_debug_mode_multi_epoch_map_pyfunc():
+    """
+    Feature: Pipeline debug mode.
+    Description: Test creating dict iterator with map(PyFunc) with num_epochs > 1.
+    Expectation: Successful.
+    """
+    logger.info("test_pipeline_debug_mode_multi_epoch_map_pyfunc")
+    data = ds.CelebADataset("../data/dataset/testCelebAData/", sampler=ds.SequentialSampler(),
+                            decode=True)
+    num_repeat = 5
+    sample_row = 4
+    data = data.repeat(num_repeat)
+    data = data.map(operations=[(lambda x: x - 1), (lambda x: x * 2)], input_columns=["image"])
+    num_epoch = 7
+    epoch_count = 0
+    sample_count = 0
+    iter1 = data.create_dict_iterator(num_epochs=num_epoch)
+    for _ in range(num_epoch):
+        num_rows = 0
+        for item in iter1:
+            assert len(item) == 2
+            assert item["image"].shape == (2268, 4032, 3)
+            num_rows += 1
+        assert num_rows == sample_row * num_repeat
+        sample_count += num_rows
+        epoch_count += 1
+    assert epoch_count == num_epoch
+    assert sample_count == num_repeat * num_epoch * sample_row
+
+    err_msg = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs."
+    with pytest.raises(RuntimeError, match=err_msg):
+        iter1.__next__()
 
 
 if __name__ == '__main__':
@@ -257,4 +302,5 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_shuffle()
     test_pipeline_debug_mode_map_random()
     test_pipeline_debug_mode_imdb_shuffle()
+    test_pipeline_debug_mode_multi_epoch_map_pyfunc()
     teardown_function()

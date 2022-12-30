@@ -678,6 +678,12 @@ int64_t BatchOp::GetTreeBatchSize() {
 
 Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
   RETURN_UNEXPECTED_IF_NULL(row);
+  if (eoe_received_) {
+    UpdateRepeatAndEpochCounter();
+    *row = TensorRow(TensorRow::kFlagEOE);
+    eoe_received_ = false;
+    return Status::OK();
+  }
   std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   int32_t cur_batch_size = 0;
@@ -685,6 +691,16 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
   for (int i = 0; i < cur_batch_size; i++) {
     TensorRow new_row;
     RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
+    if (new_row.eoe()) {
+      if (!drop_) {
+        eoe_received_ = true;
+      } else {
+        *row = new_row;
+        UpdateRepeatAndEpochCounter();
+        return Status::OK();
+      }
+      break;
+    }
     if (!new_row.empty()) {
       table->emplace_back(new_row);
       if (table->size() == static_cast<size_t>(cur_batch_size)) {
