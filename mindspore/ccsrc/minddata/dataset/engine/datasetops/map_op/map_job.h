@@ -38,11 +38,11 @@ static inline Status RebuildMapErrorMsg(const TensorRow &input_row, const std::s
     err_msg += "The corresponding data file is: " + input_row.getPath()[0];
     if (input_row.getPath().size() > 1) {
       std::set<std::string> path_set;
-      path_set.insert(input_row.getPath()[0]);
-      for (auto j = 1; j < input_row.getPath().size(); j++) {
+      (void)path_set.insert(input_row.getPath()[0]);
+      for (size_t j = 1; j < input_row.getPath().size(); j++) {
         if (!input_row.getPath()[j].empty() && path_set.find(input_row.getPath()[j]) == path_set.end()) {
           err_msg += ", " + input_row.getPath()[j];
-          path_set.insert(input_row.getPath()[j]);
+          (void)path_set.insert(input_row.getPath()[j]);
         }
       }
     }
@@ -56,7 +56,7 @@ static inline Status RebuildMapErrorMsg(const TensorRow &input_row, const std::s
   if (abbr_op_name == "PyFunc") {
     RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, err_msg);
   }
-  rc->SetErrDescription(err_msg);
+  (void)rc->SetErrDescription(err_msg);
   return *rc;
 }
 }  // namespace util
