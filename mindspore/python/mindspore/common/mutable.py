@@ -80,7 +80,7 @@ def mutable(input_data, dynamic_len=False):
             'input_data' is list/tuple/dict, the type of each element should also in the valid types.
         dynamic_len (bool): Whether to set the whole sequence to be dynamic length. In graph compilation, if
             `dynamic_len` is True, the `input_data` must be list or tuple and the elements of `input_data` must have
-             the same type and shape. Default: False.
+            the same type and shape. Default: False.
 
     .. warning::
         - This is an experimental prototype that is subject to change or deletion.
