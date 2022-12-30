@@ -409,7 +409,7 @@ class _HostAllGather(PrimitiveWithInfer):
 class ReduceScatter(Primitive):
     r"""
     Reduces and scatters tensors from the specified communication group.
-    For more details about it, please refer to `ReduceScatter \
+    For more details about it, please refer to `Distributed Set Communication Primitives - ReduceScatter \
     <https://www.mindspore.cn/tutorials/experts/en/master/parallel/communicate_ops.html#reducescatter>`_ .
 
     Note:
@@ -884,7 +884,7 @@ class NeighborExchangeV2(Primitive):
 
     NeighborExchangeV2 sends data from the local rank to ranks in the `send_rank_ids`,
     as while receive data from `recv_rank_ids`. Please refer to
-    `NeighborExchangeV2 data exchange rules \
+    `Distributed Set Communication Primitives - NeighborExchangeV2 \
     <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#neighborexchangev2>`_
     to learn about how the data is exchanged between neighborhood devices.
 

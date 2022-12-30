@@ -96,8 +96,6 @@ def init(backend_name=None):
         - The full name of HCCL is Huawei Collective Communication Library.
         - The full name of NCCL is NVIDIA Collective Communication Library.
         - The full name of MCCL is MindSpore Collective Communication Library.
-        - The user needs to preset communication environment variables
-        before running the following example, please see the docstring of the mindspore.communication.
 
     Args:
         backend_name (str): Backend, using HCCL/NCCL/MCCL. HCCL should be used for Ascend hardware platforms and
@@ -114,6 +112,17 @@ def init(backend_name=None):
         ``Ascend`` ``GPU``
 
     Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
         >>> from mindspore.communication import init
         >>> init()
     """
@@ -169,8 +178,7 @@ def release():
     Release distributed resource. e.g. HCCL/NCCL.
 
     Note:
-        This method should be used after init(). The user needs to preset communication environment variables
-        before running the following example, please see the docstring of the mindspore.communication.
+        This method should be used after init().
 
     Raises:
         RuntimeError: If failed to release distributed resource.
@@ -179,6 +187,17 @@ def release():
         ``Ascend`` ``GPU``
 
     Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
         >>> from mindspore.communication import init, release
         >>> init()
         >>> release()
@@ -191,8 +210,7 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
     Get the rank ID for the current device in the specified collective communication group.
 
     Note:
-        This method should be used after init(). The user needs to preset communication environment variables
-        before running the following example, please see the docstring of the mindspore.communication.
+        This method should be used after init().
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
@@ -210,6 +228,17 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
         ``Ascend`` ``GPU``
 
     Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
         >>> from mindspore.communication import init, get_rank
         >>> init()
         >>> rank_id = get_rank()
@@ -228,8 +257,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
     Note:
         GPU version of MindSpore doesn't support this method.
-        This method should be used after init(). The user needs to preset communication environment variables
-        before running the following example, please see the docstring of the mindspore.communication.
+        This method should be used after init().
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
@@ -247,6 +275,17 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
         ``Ascend``
 
     Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
         >>> import mindspore as ms
         >>> from mindspore.communication.management import init, get_rank, get_local_rank
         >>> ms.set_context(device_target="Ascend")
@@ -268,8 +307,7 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
     Get the rank size of the specified collective communication group.
 
     Note:
-        This method should be used after init(). The user needs to preset communication environment variables before
-        running the following example, please see the docstring of the mindspore.communication.
+        This method should be used after init().
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
@@ -287,6 +325,17 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
         ``Ascend`` ``GPU``
 
     Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
         >>> import mindspore as ms
         >>> from mindspore.communication.management import init, get_group_size
         >>> ms.set_auto_parallel_context(device_num=8)
@@ -307,8 +356,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
 
     Note:
         GPU version of MindSpore doesn't support this method.
-        This method should be used after init(). The user needs to preset communication environment variables before
-        running the following example, please see the docstring of the mindspore.communication.
+        This method should be used after init().
 
     Args:
         group (str): The communication group to work on. The group is created by create_group
@@ -326,6 +374,17 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
         ``Ascend``
 
     Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
         >>> import mindspore as ms
         >>> from mindspore.communication.management import init, get_local_rank_size
         >>> ms.set_context(device_target="Ascend")
@@ -349,8 +408,7 @@ def get_world_rank_from_group_rank(group, group_rank_id):
     Note:
         GPU version of MindSpore doesn't support this method.
         The parameter group should not be "hccl_world_group".
-        This method should be used after init(). The user needs to preset communication environment variables
-        before running the following example, please see the docstring of the mindspore.communication.
+        This method should be used after init().
 
     Args:
         group (str): The communication group to work on. The group is created by create_group.
@@ -368,6 +426,17 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         ``Ascend``
 
     Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
         >>> from mindspore import set_context
         >>> from mindspore.communication.management import init, create_group, get_world_rank_from_group_rank
         >>> set_context(device_target="Ascend")
@@ -394,8 +463,6 @@ def get_group_rank_from_world_rank(world_rank_id, group):
         GPU version of MindSpore doesn't support this method.
         The parameter group should not be "hccl_world_group".
         This method should be used after init().
-        The user needs to preset communication environment variables before running the following example, please see
-        the docstring of the mindspore.managerment.
 
     Args:
         world_rank_id (int): A rank ID in the world communication group.
@@ -413,6 +480,17 @@ def get_group_rank_from_world_rank(world_rank_id, group):
         ``Ascend``
 
     Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
         >>> from mindspore import set_context
         >>> from mindspore.communication.management import init, create_group, get_group_rank_from_world_rank
         >>> set_context(device_target="Ascend")
@@ -439,8 +517,6 @@ def create_group(group, rank_ids):
         The size of rank_ids should be larger than 1, rank_ids should not have duplicate data.
         This method should be used after init().
         Only support global single communication group in PyNative mode if you do not start with mpirun.
-        The user needs to preset communication environment variables before running the following example, please see
-        the docstring of the mindspore.managerment.
 
     Args:
         group (str): The name of the communication group to be created.
@@ -455,6 +531,17 @@ def create_group(group, rank_ids):
         ``Ascend``
 
     Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
         >>> from mindspore import set_context
         >>> import mindspore.ops as ops
         >>> from mindspore.communication.management import init, create_group

@@ -1475,8 +1475,8 @@ def inplace_index_add(var, indices, updates, axis):
 
 
 def inplace_sub(x, v, indices):
-    """
-    Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v`.
+    r"""
+    Subtracts `v` into specified rows of `x`. Computes :math:`y = x`; :math:`y[i,] -= input\_v`.
 
     Note:
             `indices` refers to the left-most dimension.

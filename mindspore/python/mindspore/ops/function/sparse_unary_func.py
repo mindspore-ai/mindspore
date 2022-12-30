@@ -1553,12 +1553,12 @@ def coo_log1p(x: COOTensor) -> COOTensor:
 
 
 def csr_round(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Returns half to even of a csr_tensor element-wise.
 
     .. math::
 
-        out_i \approx x_i
+        out_i \\approx x_i
 
     Args:
         x (CSRTensor): The input csr_tensor.
@@ -1995,12 +1995,12 @@ def coo_isinf(x: COOTensor) -> COOTensor:
 
 
 def csr_atanh(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Computes inverse hyperbolic tangent of the input element-wise.
 
     .. math::
 
-        out_i = \tanh^{-1}(x_{i})
+        out_i = \\tanh^{-1}(x_{i})
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
