@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2020-2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_KERNELS_NORMALIZED_IS_INF_H_
-#define AICPU_KERNELS_NORMALIZED_IS_INF_H_
+
+#ifndef AICPU_KERNELS_NORMALIZED_GCD_H_
+#define AICPU_KERNELS_NORMALIZED_GCD_H_
 
 #include "cpu_ops_kernel.h"
+#include "utils/bcast.h"
 
 namespace aicpu {
-class IsInfCpuKernel : public CpuKernel {
+class GcdCpuKernel : public CpuKernel {
  public:
-  IsInfCpuKernel() = default;
-  ~IsInfCpuKernel() override = default;
+  ~GcdCpuKernel() override = default;
+
+ protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
-
- private:
-  uint32_t IsInfCheck(const CpuKernelContext &ctx) const;
-
-  template <typename T>
-  uint32_t IsInfCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif
