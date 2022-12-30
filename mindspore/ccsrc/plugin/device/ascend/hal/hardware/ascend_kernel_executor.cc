@@ -441,7 +441,7 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   if ((profiler_manage_instance->GetNetDynamicShapeStatus() ||
        ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) &&
       ascend_instance->GetEnableFlag()) {
-    ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, UintToInt(device_id), kernel_type);
+    ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, UintToInt(device_id), kernel_type, kernel_mod->task_id());
   }
 
   return PySyncRuning();
