@@ -33,5 +33,5 @@ mindspore.ops.CholeskySolve
         - **TypeError** - 如果 `x2` 不是Tensor。
         - **ValueError** - 如果 `x1` 和 `x2` 具有不同的批大小。
         - **ValueError** - 如果 `x1` 和 `x2` 具有不同的行数。
-        - **ValueError** - 如果 `x1` 不是2维或3维矩阵。
-        - **ValueError** - 如果 `x2` 不是2维或3维方阵。
+        - **ValueError** - 如果 `x1` 不是二维或三维矩阵。
+        - **ValueError** - 如果 `x2` 不是二维或三维方阵。

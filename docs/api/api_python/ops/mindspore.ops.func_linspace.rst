@@ -3,7 +3,7 @@ mindspore.ops.linspace
 
 .. py:function:: mindspore.ops.linspace(start, stop, num)
 
-    返回一个在区间 `start` 和 `stop` （包括 `start` 和 `stop` ）内均匀分布的，包含 `num` 个值的1维Tensor。
+    返回一个在区间 `start` 和 `stop` （包括 `start` 和 `stop` ）内均匀分布的，包含 `num` 个值的一维Tensor。
 
     .. math::
         \begin{aligned}

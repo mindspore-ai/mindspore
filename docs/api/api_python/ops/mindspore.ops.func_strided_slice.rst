@@ -13,15 +13,15 @@ mindspore.ops.strided_slice
 
     切片时，第i维从索引 `begin[i]` 开始取到索引 `end[i]` ，步长为 `strides[i]`。
 
-    例：`input_x` 是shape为 :math:`(5, 6, 7)` 的三维Tensor， `begin` 为(1, 3, 2), `end` 为(3, 5, 6), `strides` 为(1, 1, 2)。切片时，第0维从索引1开始取到3，步长为1；第1维从索引3开始取到5，步长为1；第2维从索引2开始取到6，步长为2。相当于Python式切片 `input_x[1:3, 3:5, 2:6:2]` 。
+    例：`input_x` 是shape为 :math:`(5, 6, 7)` 的三维Tensor， `begin` 为(1, 3, 2), `end` 为(3, 5, 6), `strides` 为(1, 1, 2)。切片时，第零维从索引1开始取到3，步长为1；第一维从索引3开始取到5，步长为1；第二维从索引2开始取到6，步长为2。相当于Python式切片 `input_x[1:3, 3:5, 2:6:2]` 。
 
     如果 `begin` 、 `end` 和 `strides` 的长度小于 `input_x` 的维度， 则缺失的维度默认切取所有的元素， 相当于 `begin` 用0补足， `end` 用相应维度的长度补足， `strides` 用1补足。
 
-    例：`input_x` 是shape为 :math:`(5, 6, 7)` 的三维Tensor， `begin` 为(1, 3), `end` 为(3, 5), `strides` 为(1, 1)。切片时，第0维从索引1开始取到3，步长为1；第1维从索引3开始取到5，步长为1；第2维从索引0开始取到6，步长为1。相当于Python式切片 `input_x[1:3, 3:5, 0:7]` 。
+    例：`input_x` 是shape为 :math:`(5, 6, 7)` 的三维Tensor， `begin` 为(1, 3), `end` 为(3, 5), `strides` 为(1, 1)。切片时，第零维从索引1开始取到3，步长为1；第一维从索引3开始取到5，步长为1；第二维从索引0开始取到6，步长为1。相当于Python式切片 `input_x[1:3, 3:5, 0:7]` 。
 
     mask（掩码）的工作原理：
 
-    对于每个特定的mask，内部先将其转化为二进制表示，然后倒序排布后进行计算。比如，对于一个shape为 :math:`(5, 6, 7)` 的Tensor，mask设置为3，3转化为二进制表示为0b011，倒序后为0b110，则该mask只在第0维和第1维产生作用。下面各自举例说明，为简化表达，后面提到的mask都表示转换为二进制并且倒序后的值。
+    对于每个特定的mask，内部先将其转化为二进制表示，然后倒序排布后进行计算。比如，对于一个shape为 :math:`(5, 6, 7)` 的Tensor，mask设置为3，3转化为二进制表示为0b011，倒序后为0b110，则该mask只在第零维和第一维产生作用。下面各自举例说明，为简化表达，后面提到的mask都表示转换为二进制并且倒序后的值。
 
     - `begin_mask` 和 `end_mask`
 
@@ -41,7 +41,7 @@ mindspore.ops.strided_slice
     - `shrink_axis_mask`
 
       如果 `shrink_axis_mask` 的第i位为1，则第i维被收缩掉，忽略 `begin[i]` 、 `end[i]` 和 `strides[i]` 索引处的值。
-      对于shape为 :math:`(5, 6, 7)` 的Tensor，若 `shrink_axis_mask` 为0b010， 则第1维收缩掉，相当于切片 `x[:, 5, :]` 使得输出shape为 :math:`(5, 7)` 。
+      对于shape为 :math:`(5, 6, 7)` 的Tensor，若 `shrink_axis_mask` 为0b010， 则第一维收缩掉，相当于切片 `x[:, 5, :]` 使得输出shape为 :math:`(5, 7)` 。
 
     .. note:: 
         `new_axis_mask` 和 `shrink_axis_mask` 不建议同时使用，可能会产生预料之外的结果。

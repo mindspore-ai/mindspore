@@ -3,7 +3,7 @@ mindspore.ops.FillDiagonal
 
 .. py:class:: mindspore.ops.FillDiagonal(fill_value, wrap=False)
 
-    填充至少具有2维的Tensor的主对角线。当 `dims>2` 时，输入的所有维度必须等长。此函数就地修改输入Tensor，并返回输入Tensor。
+    填充至少具有二维的Tensor的主对角线。当 `dims>2` 时，输入的所有维度必须等长。此函数就地修改输入Tensor，并返回输入Tensor。
 
     参数：
         - **fill_value** (float) - 填充值。

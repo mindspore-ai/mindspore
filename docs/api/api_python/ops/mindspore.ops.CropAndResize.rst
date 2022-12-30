@@ -27,11 +27,11 @@ mindspore.ops.CropAndResize
         - **TypeError** - `boxes` 的数据类型不是float， 或者，`box_index` 的数据类型不是int32。
         - **TypeError** - `method` 不是字符串。
         - **TypeError** - `extrapolation_value` 不是浮点值。
-        - **ValueError** - `x` 的维度不是4维。
-        - **ValueError** - `boxes` 的纬度不是2维。
-        - **ValueError** - `boxes` 的第2维不是4。
-        - **ValueError** - `box_index` 的维度不是1维。
-        - **ValueError** - `box_index` 的第1维与 `boxes` 的第1维不相等。
+        - **ValueError** - `x` 的维度不是四维。
+        - **ValueError** - `boxes` 的纬度不是二维。
+        - **ValueError** - `boxes` 的第二维不是4。
+        - **ValueError** - `box_index` 的维度不是一维。
+        - **ValueError** - `box_index` 的第一维与 `boxes` 的第一维不相等。
         - **ValueError** - `box_index` 存在元素不在 `[0, batch)` 的范围内.
         - **ValueError** - `crop_size` 的数据不是正整数.
         - **ValueError** - `method` 不是 "bilinear"、"nearest"、"bilinear_v2"之一。

@@ -14,7 +14,7 @@ mindspore.ops.ScaleAndTranslate
         - **antialias** (bool，可选) - 决定是否使用抗锯齿。默认值：True。
 
     输入：
-        - **images** (Tensor) - 4维Tensor，shape为 :math:`(batch, image\_height, image\_width, channel)` 。
+        - **images** (Tensor) - 四维Tensor，shape为 :math:`(batch, image\_height, image\_width, channel)` 。
         - **size** (Tensor) - 缩放和平移操作后输出图像的大小。包含两个正数的的一维Tensor，形状必须为 :math:`(2,)` ，数据类型为int32。
         - **scale** (Tensor) - 指示缩放因子。包含两个正数的的一维Tensor，形状必须为 :math:`(2,)` ，数据类型为int32。
         - **translation** (Tensor) - 平移像素值。包含两个数的的一维Tensor，形状必须为 :math:`(2,)` ，数据类型为float32。

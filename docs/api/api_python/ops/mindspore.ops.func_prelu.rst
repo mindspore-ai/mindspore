@@ -14,7 +14,7 @@ mindspore.ops.prelu
 
     .. note::
 
-        Ascend不支持标量和1维向量格式的输入。
+        Ascend不支持标量和一维向量格式的输入。
 
     参数：
         - **x** (Tensor) - 激活函数的输入Tensor。数据类型为float16或float32。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意的附加维度。

@@ -12,7 +12,7 @@ mindspore.ops.orgqr
     其中 :math:`\mathrm{I}_{M}` 是 :math:`M` 维单位矩阵。当 :math:`w` 是复数的时候，:math:`w^{\mathrm{H}}` 是共轭转置，否则是一般转置。输出矩阵的shape与输入矩阵 `x` 相同。    
 
     参数：
-        - **x** (Tensor) - shape :math:`(*, M, N)` 的Tensor，表示2维或者3维矩阵。数据类型为float32、float64、complex64或者complex128。
+        - **x** (Tensor) - shape :math:`(*, M, N)` 的Tensor，表示二维或者三维矩阵。数据类型为float32、float64、complex64或者complex128。
         - **tau** (Tensor) - Householder转换的反射系数，其shape为 :math:`(*, K)` ，其中 `K` 小于等于 `N` 。数据类型与 `x` 一致。
 
     返回：

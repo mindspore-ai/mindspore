@@ -33,7 +33,7 @@ mindspore.ops.NLLLoss
     输出：
         由 `loss` 和 `total_weight` 组成的2个Tensor的tuple。
 
-        - **loss** (Tensor) - 当 `reduction` 为'none'且 `logits` 为2维Tensor时， `loss` 的shape为 :math:`(N,)` 。否则， `loss` 为scalar。数据类型与 `logits` 相同。
+        - **loss** (Tensor) - 当 `reduction` 为'none'且 `logits` 为二维Tensor时， `loss` 的shape为 :math:`(N,)` 。否则， `loss` 为scalar。数据类型与 `logits` 相同。
         - **total_weight** (Tensor) - `total_weight` 是scalar，数据类型与 `weight` 相同。
 
     异常：

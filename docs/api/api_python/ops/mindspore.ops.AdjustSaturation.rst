@@ -10,7 +10,7 @@ mindspore.ops.AdjustSaturation
         当多个调整依次进行时尽量减少冗余转换的数量。
 
     输入：
-        - **image** (Tensor) - 输入的Tensor。dtype需要是float16或float32。Tensor的维度至少是3维。shape的最后一个维度表示通道数，且必须为3。
+        - **image** (Tensor) - 输入的Tensor。dtype需要是float16或float32。Tensor的维度至少是三维。shape的最后一个维度表示通道数，且必须为3。
         - **scale** (Tensor) - 饱和通道的添加值。dtype需要是float32。Tensor必须是0维的。
 
     输出：
@@ -20,5 +20,5 @@ mindspore.ops.AdjustSaturation
         - **TypeError** - 如果 `image` 或 `scale` 不是Tensor。
         - **TypeError** - 如果 `image` 的dtype不是：float32或float16。
         - **TypeError** - 如果 `scale` 的dtype不是：float32。
-        - **ValueError** - 如果 `image` 的维度低于3维。
+        - **ValueError** - 如果 `image` 的维度低于三维。
         - **ValueError** - 如果 `image` 的shape的最后一个维度不是3。
