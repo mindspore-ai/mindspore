@@ -367,6 +367,8 @@ class TrainOneStepCell(Cell):
         if self.reducer_flag:
             self.mean = _get_gradients_mean()
             self.degree = _get_device_num()
+            from mindspore.communication.management import GlobalComm
+            group = GlobalComm.WORLD_COMM_GROUP
             if isinstance(self.optimizer, (nn.AdaSumByGradWrapCell, nn.AdaSumByDeltaWeightWrapCell)):
                 from mindspore.communication.management import get_group_size, create_group, get_rank
                 group_number = get_group_size() // 8
@@ -375,10 +377,8 @@ class TrainOneStepCell(Cell):
                 current_index = get_rank() // 8
                 server_group_name = "allreduce_" + str(current_index)
                 create_group(server_group_name, group_list[current_index])
-                self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree,
-                                                           group=server_group_name)
-            else:
-                self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree)
+                group = server_group_name
+            self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree, group=group)
         if isinstance(network, Cell) and network.jit_config_dict:
             self._jit_config_dict = network.jit_config_dict
 
