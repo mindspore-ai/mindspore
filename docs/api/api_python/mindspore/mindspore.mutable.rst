@@ -1,7 +1,7 @@
 mindspore.mutable
 ==================
 
-.. py:function:: mindspore.mutable(input_data)
+.. py:function:: mindspore.mutable(input_data, dynamic_len=False)
 
     设置一个常量值为可变的。
 
@@ -10,16 +10,22 @@ mindspore.mutable
 
     为解决以上的问题，我们提供了 `mutable` 接口去设置网络的常量输入为"可变的"。一个"可变的"输入意味着这个输入成为了像Tensor一样的变量，最重要的是，我们可以对其进行求导了。
 
+    当 `input_data` 是tuple或者list并且 `dynamic_len` 是False的情况下，`mutable` 的返回值是一个固定长度的tuple或者list，且其中的每一个元素都是可变的。当 `dyanmic_len` 被设置为True的时候，返回的tuple或者list长度是动态的。
+
+    如果一个动态长度的tuple或者list被作为网络的输入并且这个网络被重复调用，且每一次的输入的tuple或者list长度都不一致，这个网络也不需要被重新编译。
+
     参数：
-        - **input_data** (Union[Tensor, tuple[Tensor], list[Tensor], dict[Tensor]]) - 要设置为可变的输入数据。
+        - **input_data** (Union[int, float, Tensor, tuple, list, dict) - 要设置为可变的输入数据。如果`input_data`是list，tuple或者dict， 其内部元素的类型也需要是这些有效类型中的一个。
+        - **dynamic_len** (bool) - 是否要将整个序列设置为动态长度的。在图编译内，如果 `dynamic_len` 被设置为True， 那么 `input_data` 必须为tuple或者list， 并且其中的元素必须有相同的类型以及形状。默认值：False。
 
     .. warning::
         - 这是一个实验特性，未来有可能被修改或删除。
-        - 目前运行时暂时不支持处理标量数据流，所以我们目前只支持Tensor、tuple[Tensor]、list[Tensor]或dict[Tensor]作为输入，主要解决重复编译的问题。
         - 当前该接口只在图模式下生效。
 
     返回：
         状态设置为可变的原输入数据。
 
     异常：
-        - **TypeError** - 如果 `input_data` 不是Tensor、tuple[Tensor]、list[Tensor]或dict[Tensor]的其中一种类型或者不是它们的嵌套结构。
+        - **TypeError** - 如果 `input_data` 不是int、float、tuple[Tensor]、list[Tensor]或dict[Tensor]的其中一种类型或者不是它们的嵌套结构。
+        - **TypeError** - 如果 `dynamic_len` 被设置为True并且 `input_data` 不是tuple或者list。
+        - **ValueError** - 如果 `dynamic_len` 被设置为True， `input_data` 是tuple或者list的情况下， 其中的元素的形状或者类型不一致。
