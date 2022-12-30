@@ -139,6 +139,9 @@ T InnerScalarPow(T x, U y) {
 
 template <typename T, typename U>
 bool InnerScalarEq(T x, U y) {
+  if (std::isinf(static_cast<double>(x)) && std::isinf(static_cast<double>(y))) {
+    return true;
+  }
   double error = static_cast<double>(x) - static_cast<double>(y);
   error = fabs(error);
   return error < DBL_EPSILON;
