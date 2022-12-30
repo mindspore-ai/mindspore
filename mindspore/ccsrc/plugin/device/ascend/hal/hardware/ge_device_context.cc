@@ -623,10 +623,11 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   }
 
   if (training == "1") {
-    (*ge_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
+    (*ge_options)["ge.exec.precision_mode"] = "allow_mix_precision";
   } else {
     (*ge_options)["ge.exec.precision_mode"] = "force_fp16";
   }
+  (*ge_options)["ge.enableSmallChannel"] = "1";
 
   // Disable the global variable acc, only enable it while adding training graph in pipeline
   (*ge_options)["ge.exec.variable_acc"] = "0";
