@@ -21,7 +21,7 @@ mindspore.ops.LRN
         - **norm_region** (str) - 指定归一化区域。可选值："ACROSS_CHANNELS"。默认值："ACROSS_CHANNELS"。
 
     输入：
-        - **x** (Tensor) - 数据类型为float16或float32的4维Tensor。
+        - **x** (Tensor) - 数据类型为float16或float32的四维Tensor。
 
     输出：
         Tensor，与 `x` 的shape和数据类型相同。

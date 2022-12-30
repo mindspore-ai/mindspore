@@ -17,8 +17,8 @@ mindspore.ops.choice_with_mask
     返回：
         两个Tensor，第一个为索引，另一个为掩码。
 
-        - **index** (Tensor) - 2维Tensor。
-        - **mask** (Tensor) - 1维Tensor。
+        - **index** (Tensor) - 二维Tensor。
+        - **mask** (Tensor) - 一维Tensor。
 
     异常：
         - **TypeError** - `count` 不是int类型。

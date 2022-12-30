@@ -19,13 +19,13 @@ mindspore.ops.SampleDistortedBoundingBoxV2
 
     输入：
         - **image_size** (Tensor) - 包含[height, width, channels]三个元素的一维Tensor，其中每个值都应大于零。
-        - **bounding_boxes** (Tensor) - shape 为 :math:`(batch, N, 4)` 的3维Tensor，用于描述于输入image相关联的N个边框。该输入的值应该在[0.0, 1.0]的范围内。数据类型支持float32。
+        - **bounding_boxes** (Tensor) - shape 为 :math:`(batch, N, 4)` 的三维Tensor，用于描述于输入image相关联的N个边框。该输入的值应该在[0.0, 1.0]的范围内。数据类型支持float32。
         - **min_object_covered** (Tensor) - 图像的裁剪区域必须至少包含此比例的任何提供的边界框。此参数的值应该在范围[0.0, 1.0]内。在为0的情况下，裁剪区域不需要重叠任何提供的边界框。数据类型支持float32。
 
     输出：
         - **begin** (Tensor) - 包含[offset_height, offset_width, 0]的一维Tensor，数据类型与 `image_size` 一致。
         - **size** (Tensor) - 包含[target_height, target_width, -1]的一维Tensor，数据类型与 `image_size` 一致。当 `image_size` 数据类型为uint8的时候， `size` 的最后一个值将由原来的-1强制转变为255。
-        - **bboxes** (Tensor) - 3维Tensor，shape为 :math:`(1, 1, 4)` 。包含随机扭曲后的边框。数据类型支持float32。
+        - **bboxes** (Tensor) - 三维Tensor，shape为 :math:`(1, 1, 4)` 。包含随机扭曲后的边框。数据类型支持float32。
 
     异常：
         - **TypeError** - `image_size` 不是Tensor。

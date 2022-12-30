@@ -10,7 +10,7 @@ mindspore.ops.AdjustHue
         当多个调整依次进行时尽量减少冗余转换的数量。
 
     输入：
-        - **image** (Tensor) - 输入的Tensor。shape的最后一个维度的必须为3。dtype需要是float16或float32。Tensor的维度至少是3维。
+        - **image** (Tensor) - 输入的Tensor。shape的最后一个维度的必须为3。dtype需要是float16或float32。Tensor的维度至少是三维。
         - **delta** (Tensor) - 色调通道的添加值。dtype需要是float32。Tensor必须是0维的。
 
     输出：
@@ -20,4 +20,4 @@ mindspore.ops.AdjustHue
         - **TypeError** - 如果 `image` 或 `delta` 不是Tensor。
         - **TypeError** - 如果 `image` 的dtype不是：float32或float16。
         - **TypeError** - 如果 `delta` 的dtype不是：float32。
-        - **ValueError** - 如果 `image` 的维度低于3维。
+        - **ValueError** - 如果 `image` 的维度低于三维。

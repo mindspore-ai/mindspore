@@ -32,7 +32,7 @@ mindspore.ops.grid_sample
         - **TypeError** - 如果 `input_x` 和 `grid` 的数据类型不一致。
         - **TypeError** - 如果 `input_x` 或 `grid` 的数据类型无效。
         - **TypeError** - 如果 `align_corners` 不是一个布尔值。
-        - **ValueError** - 如果 `input_x` 或 `grid` 的维度不是4维或5维。
+        - **ValueError** - 如果 `input_x` 或 `grid` 的维度不是四维或五维。
         - **ValueError** - 如果 `input_x` 的第一个维度不等于 `grid` 的第一个维度。
         - **ValueError** - 如果 `grid` 最后一个维度不等于2（4-D场景）或者3（5-D场景）。
         - **ValueError** - 如果 `interpolation_mode` 不是 `bilinear`，`nearest`，`bicubic`，数据类型不为String。

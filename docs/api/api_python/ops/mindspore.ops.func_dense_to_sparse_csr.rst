@@ -6,13 +6,13 @@ mindspore.ops.dense_to_sparse_csr
     将常规Tensor转为稀疏化的CSRTensor。
 
     .. note::
-        现在只支持2维Tensor。
+        现在只支持二维Tensor。
 
     参数：
-        - **tensor** (Tensor) - 一个稠密Tensor，必须是2维。
+        - **tensor** (Tensor) - 一个稠密Tensor，必须是二维。
 
     返回：
-        返回一个2维的CSRTensor，是原稠密Tensor的稀疏化表示。其中数据分别为：
+        返回一个二维的CSRTensor，是原稠密Tensor的稀疏化表示。其中数据分别为：
 
         - **indptr** (Tensor) - 一维整数张量，表示每行非零元素的在 `values` 中存储的起止位置。
         - **indices** (Tensor) - 一维整数张量，表示每个元素的列索引值。
@@ -21,4 +21,4 @@ mindspore.ops.dense_to_sparse_csr
 
     异常：
         - **TypeError** - `tensor` 不是Tensor。
-        - **ValueError** - `tensor` 不是2维Tensor。
+        - **ValueError** - `tensor` 不是二维Tensor。
