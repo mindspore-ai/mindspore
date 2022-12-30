@@ -46,6 +46,7 @@ struct PartialFuncInfo {
   AnfNodePtr sub_graph;
   size_t param_begin;
   size_t param_end;
+  size_t multi_tuple;
 };
 
 class BACKEND_EXPORT KernelGraphMgr {
@@ -111,6 +112,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph) const;
   void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph) const;
   void SetReturnNode(const AnfNodePtr &node, KernelGraph *graph);
+  void FlattenTuple(const CNodePtr &node, KernelGraph *graph);
 
  protected:
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
@@ -123,6 +125,8 @@ class BACKEND_EXPORT KernelGraphMgr {
   mindspore::HashMap<AnfNodePtr, ParameterPtr> default_param_map_;
   mindspore::HashMap<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;
   mindspore::HashMap<KernelGraph *, PartialFuncInfo> kernel_graph_partial_map_;
+  mindspore::HashSet<AnfNodePtr> need_flatten_;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> need_flatten_tuple_map_;
   static GraphId graph_sum_;
 };
 }  // namespace session

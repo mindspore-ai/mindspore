@@ -51,6 +51,7 @@ class AscendGraphOptimization {
   void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph);
   void OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph);
   void OptimizeExecutionOrder(const KernelGraphPtr &graph);
+  void InlineSubGraph(const KernelGraphPtr &graph);
   void PostOptimization(const KernelGraphPtr &graph) const;
 
   // Graph Optimized level-3 interface

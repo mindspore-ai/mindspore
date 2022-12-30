@@ -78,6 +78,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
         device_target_(DeviceType::kUnknown),
         executable_(true),
         summary_node_exist_(false),
+        need_inline_(false),
         start_label_(nullptr),
         end_goto_(nullptr),
         current_epoch_(0),
@@ -102,6 +103,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     updated_parameters_ = graph.updated_parameters_;
     executable_ = graph.executable_;
     summary_node_exist_ = graph.summary_node_exist_;
+    need_inline_ = graph.need_inline_;
     valid_inputs_ = graph.valid_inputs_;
     child_graph_order_ = graph.child_graph_order_;
     device_loop_ctrl_tensors_ = graph.device_loop_ctrl_tensors_;
@@ -216,6 +218,10 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 #endif
   // check whether exist summary node in graph
   bool summary_node_exist() const { return summary_node_exist_; }
+  // set need inline
+  void set_need_inline(bool need_inline) { need_inline_ = need_inline; }
+  // check whether need inline
+  bool need_inline() const { return need_inline_; }
   // set invalid inputs for control sink
   std::vector<bool> *MutableValidInputs() { return &valid_inputs_; }
   std::vector<bool> valid_inputs() const { return valid_inputs_; }
@@ -520,6 +526,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   bool summary_node_exist_{false};
   // valid inputs
   std::vector<bool> valid_inputs_;
+  // need inline
+  bool need_inline_;
 
   // child graph execute order in parent graph
   std::vector<std::weak_ptr<KernelGraph>> child_graph_order_;

@@ -57,6 +57,7 @@ const char ITEREND[] = "PROFILING_ITER_END";
 
 const auto kSingleOutput = 1;
 const auto kFirstOutput = 0;
+constexpr size_t kFirstIndex = 1;
 
 #ifdef ENABLE_DUMP_IR
 bool IsSaveGraph() {
@@ -142,6 +143,20 @@ void DumpExecuteOrder(const NotNull<KernelGraphPtr> &kg) {
 }
 #endif
 
+KernelGraphPtr GetValueNodeKernelGraph(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto value_node = node->cast<ValueNodePtr>();
+  if (value_node == nullptr) {
+    return nullptr;
+  }
+  auto value = value_node->value();
+  if (value == nullptr) {
+    return nullptr;
+  }
+  auto kernel_graph = value->cast<KernelGraphPtr>();
+  return kernel_graph;
+}
+
 // Return kNoLabel when label id attribute not set for the graph.
 uint32_t GetGraphLabel(const KernelGraphPtr &kg) {
   auto value = kg->get_attr(kAttrLabelIndex);
@@ -149,6 +164,15 @@ uint32_t GetGraphLabel(const KernelGraphPtr &kg) {
     return kNoLabel;
   }
   return GetValue<uint32_t>(value);
+}
+
+bool CheckCallInline(const CNodePtr &cnode) {
+  if (!common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall)) {
+    return false;
+  }
+  auto call_graph = cnode->input(kFirstIndex);
+  auto sub_kernel_graph = GetValueNodeKernelGraph(call_graph);
+  return sub_kernel_graph->need_inline();
 }
 
 bool IsCompatible(const abstract::AbstractBasePtr &a1, const abstract::AbstractBasePtr &a2);
@@ -502,6 +526,12 @@ class CallInfoFinder {
   // Find call-return pairs.
   void FindCallReturns() {
     for (auto &[caller, call_info] : context_.call_info_map) {
+      if (caller->need_inline() && (call_info.recursive || call_info.call_sites.size() != 0)) {
+        MS_LOG(INFO) << "Do not inline cell reuse because it has sub-graph call, graph id: " << caller->graph_id();
+        caller->set_need_inline(false);
+      }
+    }
+    for (auto &[caller, call_info] : context_.call_info_map) {
       for (auto &call_site : call_info.call_sites) {
         for (auto &callee : call_site.callees) {
           MakeGraphLabel(callee.graph);
@@ -623,7 +653,7 @@ class CallInfoFinder {
     }
 
     // Create a parameter for the return value.
-    if (call_site->out_param == nullptr) {
+    if (call_site->out_param == nullptr && !CheckCallInline(call_site->cnode)) {
       call_site->out_param = context_.CreateParameter(call_site->cnode->abstract());
     }
     // Add a return point for the callee graph.
@@ -634,7 +664,7 @@ class CallInfoFinder {
     // Setup label index if there are multi return points.
     const auto n_return_points = call_info.return_points.size();
     const size_t return_point_sizes = 2;
-    if (n_return_points > 1) {
+    if (n_return_points > 1 && !CheckCallInline(call_site->cnode)) {
       if (n_return_points == return_point_sizes) {
         // Create a parameter to store label index.
         const ShapeVector shape = {1};
@@ -753,6 +783,10 @@ class AscendAutoMonadConverter {
   ~AscendAutoMonadConverter() = default;
 
   void Run() {
+    // need inline
+    if (kernel_graph_->need_inline()) {
+      return;
+    }
     // Create an stack
     InitStack();
     // Setup entry label if found.
@@ -1033,6 +1067,20 @@ class AscendAutoMonadConverter {
 
     // The call/switch/switch_layer cnode.
     auto &cnode = call_site->cnode;
+    if (CheckCallInline(cnode)) {
+      auto call_graph = cnode->input(kFirstIndex);
+      auto sub_kernel_graph = GetValueNodeKernelGraph(call_graph);
+      std::vector<AnfNodePtr> call_inline_inputs = {NewPrimitive(prim::kPrimCallInline)};
+      for (size_t i = kFirstIndex; i < common::AnfAlgo::GetInputNum(cnode); i++) {
+        call_inline_inputs.emplace_back(common::AnfAlgo::GetInputNode(cnode, i));
+      }
+      auto call_inline = kernel_graph_->NewCNode(call_inline_inputs);
+      MS_EXCEPTION_IF_NULL(call_inline);
+      call_inline->set_abstract(cnode->abstract());
+      common::AnfAlgo::SetNodeAttr(kAttrKernelGraph, MakeValue(sub_kernel_graph), call_inline);
+      ReplaceNode(cnode, call_inline);
+      return;
+    }
 
     // Get branches of the call_site.
     // for call, there is one branch;

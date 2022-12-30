@@ -25,6 +25,7 @@ void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> 
 void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph);
