@@ -33,7 +33,7 @@ class BACKEND_EXPORT DenseEmbeddingStorage : public EmbeddingStorage<KeyType, Va
 
   DenseEmbeddingStorage(int32_t embedding_key, size_t embedding_dim, size_t capacity,
                         const Allocator &alloc = Allocator())
-      : EmbeddingStorage<KeyType, ValueType>(embedding_key, embedding_dim, capacity, alloc) {}
+      : EmbeddingStorage<KeyType, ValueType, Allocator>(embedding_key, embedding_dim, capacity, alloc) {}
   ~DenseEmbeddingStorage() override = default;
 
   // Initialize the EmbeddingStorage, such as recording the device address of the Embedding Table corresponding to the
@@ -60,6 +60,47 @@ class BACKEND_EXPORT DenseEmbeddingStorage : public EmbeddingStorage<KeyType, Va
   bool Put(const KeyType *keys, size_t key_num, const ValueType *values) override;
 
  private:
+  // Query cache to get the index in the embedding table tensor of each cache hit key, and count the number of cache
+  // miss keys. Access an element of the cache generally affects the location or order of the elements in the cache,
+  // depending on different cache strategies.
+  //
+  // Parameter[in] `keys`: The array records all keys which need to query.
+  // Parameter[in] `key_num`: The number of keys which need to query.
+  // Parameter[out] `cache_miss_offsets`: The array records the offset(index) of cache miss key in origin keys array.
+  // Parameter[out] `cache_miss_cnt`: The number of cache miss keys.
+  // Parameter[out] `indices_in_cache`: The array records the indices in the embedding table tensor of each cache hit
+  // keys.
+  void QueryCache(const KeyType *keys, size_t key_num, int *cache_miss_offsets, size_t *cache_miss_cnt,
+                  int *indices_in_cache) const;
+
+  // Reserve space for cache miss keys in the cache, write the evicted element to SSD,
+  // and record the new space position in the cache.
+  //
+  // Parameter[in] `reserve_size`: The number of element slots that are expected to be reserved. If the
+  // reserve_size is less than or equal to the number of slots remaining in the cache, the function does nothing.
+  // Return whether the function was successfully executed.
+  bool TryEvict(size_t reserve_size);
+
+  // Insert the cache miss elements into the cache from persistent storage, and copy them to the output values.
+  //
+  // Parameter[in] `keys`: The array records all origin keys for batch embeddings lookup operation.
+  // Parameter[in] `cache_miss_offsets`: The array records the offset(index) of cache miss key in origin keys array.
+  // Parameter[in] `cache_miss_cnt`: The number of cache miss keys.
+  // Parameter[out] `values`: The output embeddings.
+  // Return whether the function was successfully executed.
+  bool InsertMissCacheFromStorage(const KeyType *keys, const int *cache_miss_offsets, size_t cache_miss_cnt,
+                                  ValueType *values);
+
+  // Insert the cache miss elements into the cache from host memory.
+  //
+  // Parameter[in] `keys`: The array records all origin keys for batch embeddings update/insert operation.
+  // Parameter[in] `cache_miss_offsets`: The array records the offset(index) of cache miss key in origin keys array.
+  // Parameter[in] `cache_miss_cnt`: The number of cache miss keys.
+  // Parameter[in] `values`: Embeddings corresponding to all keys need to be updated.
+  // Return whether the function was successfully executed.
+  bool InsertMissCacheFromMemory(const KeyType *keys, const int *cache_miss_offsets, size_t cache_miss_cnt,
+                                 const ValueType *values);
+
   // The base pointer to embedding table parameter, all embeddings in host cache is recorded in embedding_param_ptr_.
   ValueType *embedding_param_ptr_{nullptr};
 

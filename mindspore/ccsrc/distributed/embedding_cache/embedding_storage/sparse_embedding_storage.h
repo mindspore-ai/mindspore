@@ -38,7 +38,7 @@ class BACKEND_EXPORT SparseEmbeddingStorage : public EmbeddingStorage<KeyType, V
 
   SparseEmbeddingStorage(int32_t embedding_key, size_t embedding_dim, size_t capacity,
                          const Allocator &alloc = Allocator())
-      : EmbeddingStorage<KeyType, ValueType>(embedding_key, embedding_dim, capacity, alloc) {}
+      : EmbeddingStorage<KeyType, ValueType, Allocator>(embedding_key, embedding_dim, capacity, alloc) {}
   ~SparseEmbeddingStorage() override = default;
 
   // Initialize the EmbeddingStorage, such as recording the hash table of the Embedding Table corresponding to the
