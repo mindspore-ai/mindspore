@@ -509,29 +509,18 @@ void CPUKernelExecutor::RebuildKernelSelectBackoffOp(const std::vector<CNodePtr>
     const auto &supported_kernel_attrs =
       kernel::NativeCpuKernelMod::GetCpuSupportedList(common::AnfAlgo::GetCNodeName(node));
     const auto &match_result = kernel::MatchKernelAttrStrict(kernel_attr, supported_kernel_attrs);
+    auto attr_info = kernel::FetchPrintInfoByKernelAttr(kernel_attr);
     if (!match_result.first) {
+      MS_LOG(INFO) << "Backoff and rebuild kernel on CPU failed for node: " << node->fullname_with_scope()
+                   << ", node attr: " << attr_info;
       MS_EXCEPTION(failure_type) << failure_info;
     } else {
       // Set the CPU flag.
       common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), node);
       kernel_build_info->set_kernel_type(CPU_KERNEL);
       kernel_build_info->set_processor(kernel::Processor::CPU);
-
-      std::string attr_info = "input[";
-      std::for_each(std::begin(kernel_attr.input_type()), std::end(kernel_attr.input_type()),
-                    [&attr_info](auto &input_type) {
-                      attr_info += TypeIdToString(input_type.object_type) + " " + TypeIdToString(input_type.dtype) +
-                                   " " + input_type.format + ",";
-                    });
-      attr_info += "] output[";
-      std::for_each(std::begin(kernel_attr.output_type()), std::end(kernel_attr.output_type()),
-                    [&attr_info](auto &output_type) {
-                      attr_info += TypeIdToString(output_type.object_type) + " " + TypeIdToString(output_type.dtype) +
-                                   " " + output_type.format + ",";
-                    });
-      attr_info += "]";
-      MS_LOG(INFO) << "Backoff and rebuild kernel in device CPU for node: " << node->fullname_with_scope()
-                   << ", supported attr index: " << match_result.second << ", attr: " << attr_info;
+      MS_LOG(INFO) << "Backoff and rebuild kernel on CPU successfully for node: " << node->fullname_with_scope()
+                   << ", node attr: " << attr_info;
     }
 
     CreateKernel({node});

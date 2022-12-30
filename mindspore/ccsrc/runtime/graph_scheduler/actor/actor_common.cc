@@ -191,10 +191,10 @@ bool IsMemoryActor(KernelTransformType actor_type) {
 
 bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph) {
   static std::string launch_skipped = "";
-  static bool first_get_env = true;
-  if (first_get_env) {
+  static bool first_get_launch_skipped_env = true;
+  if (first_get_launch_skipped_env) {
     launch_skipped = common::GetEnv(kLaunchSkippedEnv);
-    first_get_env = false;
+    first_get_launch_skipped_env = false;
   }
 
   if (launch_skipped.empty()) {
