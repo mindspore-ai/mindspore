@@ -5175,7 +5175,7 @@ def bernoulli(x, p=0.5, seed=-1):
         ValueError: If `seed` is less than 0 and not -1.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -5192,6 +5192,8 @@ def bernoulli(x, p=0.5, seed=-1):
         [0 1 1]
     """
     bernoulli_ = _get_cache_prim(Bernoulli)(seed)
+    if not isinstance(p, Tensor):
+        p = Tensor([p])
     return bernoulli_(x, p)
 
 

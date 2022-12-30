@@ -6876,22 +6876,22 @@ class Bernoulli(Primitive):
     Refer to :func:`mindspore.ops.bernoulli` for more details.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int8)
+        >>> input_x = Tensor([0.1, 0.2, 0.3], mindspore.float32)
         >>> bernoulli = Bernoulli()
-        >>> output = bernoulli(input_x, 1.0)
+        >>> output = bernoulli(input_x, Tensor([1.0]))
         >>> print(output)
-        [1 1 1]
-        >>> input_p = Tensor(np.array([0.0, 1.0, 1.0]), mindspore.float32)
+        [1. 1. 1.]
+        >>> input_p = Tensor([0.0, 1.0, 1.0], mindspore.float32)
         >>> output = bernoulli(input_x, input_p)
         >>> print(output)
-        [0 1 1]
+        [0. 1. 1.]
     """
 
     @prim_attr_register
-    def __init__(self, seed=-1):
+    def __init__(self, seed=-1, offset=0):
         """Initialize Bernoulli"""
         self.init_prim_io_names(inputs=['x', 'p'], outputs=['y'])
         validator.check_value_type("seed", seed, [int], self.name)
