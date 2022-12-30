@@ -17,7 +17,7 @@ mindspore.ops.ReduceMean
     输出：
         与输入 `x` 具有相同数据类型的Tensor。
 
-        - 如果 `axis` 为()，且 `keep_dims` 为False，则输出一个0维Tensor，表示输入Tensor中所有元素的平均值。
+        - 如果 `axis` 为()，且 `keep_dims` 为False，则输出一个零维Tensor，表示输入Tensor中所有元素的平均值。
         - 如果 `axis` 为int，取值为1，并且 `keep_dims` 为False，则输出的shape为 :math:`(x_0, x_2, ..., x_R)` 。
         - 如果 `axis` 为tuple(int)或list(int)，取值为(1, 2)，并且 `keep_dims` 为False，则输出Tensor的shape为 :math:`(x_0, x_3, ..., x_R)` 。
 

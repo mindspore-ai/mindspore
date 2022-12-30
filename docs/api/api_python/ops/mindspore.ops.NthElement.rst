@@ -12,7 +12,7 @@ mindspore.ops.NthElement
 
     输入：
         - **input** (Tensor) - 一维或者更高维度的Tensor，最后一维的大小必须大于等于 :math:`n+1` 。
-        - **n** (Union[int, Tensor]) - 如果 :math:`n` 为Tensor，则必须是0维的，数据类型是int32。 :math:`n` 的有效范围是：:math:`[0, input.shape[-1])` 。
+        - **n** (Union[int, Tensor]) - 如果 :math:`n` 为Tensor，则必须是零维的，数据类型是int32。 :math:`n` 的有效范围是：:math:`[0, input.shape[-1])` 。
 
     输出：
         - **values** (Tensor) - 其shape满足： `values`.shape = `input`.shape[:-1]，数据类型与 `input` 一致。

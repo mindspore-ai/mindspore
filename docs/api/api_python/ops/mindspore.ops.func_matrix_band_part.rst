@@ -21,5 +21,5 @@ mindspore.ops.matrix_band_part
         - **TypeError** - `lower` 的数据类型不是int32或int64。
         - **TypeError** - `upper` 的数据类型不是int32或int64。
         - **ValueError** - `x` 的shape不是大于或等于二维。
-        - **ValueError** - `lower` 的shape不等于0维。
-        - **ValueError** - `upper` 的shape不等于0维。
+        - **ValueError** - `lower` 的shape不等于零维。
+        - **ValueError** - `upper` 的shape不等于零维。
