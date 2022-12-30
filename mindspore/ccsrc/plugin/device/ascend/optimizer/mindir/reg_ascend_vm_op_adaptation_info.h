@@ -96,6 +96,7 @@ RER_ASCEND_STATIC_CONST_TO_ATTR(kUnsortedSegmentMaxOpName, 2);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kUnsortedSegmentMinOpName, 2);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kUnsortedSegmentProdOpName, 2);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kUnsortedSegmentSumOpName, 2);
+RER_ASCEND_STATIC_CONST_TO_ATTR(kOneHotOpName, 1);
 
 // ===============================  new reg interface  =================================================
 #define REG_ASCEND_VM_OP_ADAPTATION_INFO(origin_op_name) REG_OP_ADAPTATION_INFO(origin_op_name, kAscendDevice, false)
