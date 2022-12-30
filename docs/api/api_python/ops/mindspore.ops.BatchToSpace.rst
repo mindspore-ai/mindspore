@@ -12,7 +12,7 @@ mindspore.ops.BatchToSpace
         - **crops** (Union[list(int), tuple(int)]) - 指定H和W维度上的裁剪值，包含2个列表。每个列表包含2个整数。所有值都必须不小于0。crops[i]表示指定空间维度i的裁剪值，该维度对应于输入维度i+2。要求 :math:`input\_shape[i+2]*block\_size > crops[i][0]+crops[i][1]` 。
 
     输入：
-        - **input_x** (Tensor) - 输入Tensor。必须是四维，第0维度（维度n）的大小必须可被 `block_size` 的乘积整除。数据类型为float16或float32。
+        - **input_x** (Tensor) - 输入Tensor。必须是四维，第零维度（维度n）的大小必须可被 `block_size` 的乘积整除。数据类型为float16或float32。
 
     输出：
         Tensor，数据类型与输入Tensor相同。假设输入shape为 :math:`(n,c,h,w)` ，经过 `block_size` 和 `crops` 计算后。输出shape将为 :math:`(n'，c'，h'，w')` ，其中

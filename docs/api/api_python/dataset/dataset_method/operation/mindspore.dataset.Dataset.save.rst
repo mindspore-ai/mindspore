@@ -57,7 +57,7 @@ mindspore.dataset.Dataset.save
     .. note::
         1. 如需按顺序保存数据，将数据集的 `shuffle` 设置为False，将 `num_files` 设置为1。
         2. 在执行保存操作之前，不要使用batch操作、repeat操作或具有随机属性的数据增强的map操作。
-        3. 当数据的维度可变时，只支持一维数组或者在第0维变化的多维数组。
+        3. 当数据的维度可变时，只支持一维数组或者在第零维变化的多维数组。
         4. 不支持UINT64类型、多维的UINT8类型、多维STRING类型。
 
     参数：

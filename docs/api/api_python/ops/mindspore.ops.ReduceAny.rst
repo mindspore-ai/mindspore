@@ -17,7 +17,7 @@
         bool类型的Tensor。
 
         - 如果 `axis` 为()，且 `keep_dims` 为False，
-          则输出一个0维Tensor，表示输入Tensor中所有元素的逻辑或运算结果。
+          则输出一个零维Tensor，表示输入Tensor中所有元素的逻辑或运算结果。
         - 如果 `axis` 为int，值为2，并且 `keep_dims` 为False，
           则输出Tensor的shape为： :math:`(x_1, x_3, ..., x_R)` 。
         - 如果 `axis` 为tuple(int)，值为(2, 3)，并且 `keep_dims` 为False，

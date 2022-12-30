@@ -7,9 +7,9 @@ mindspore.ops.index_fill
 
     参数：
         - **x** (Tensor) - 输入Tensor，支持的数据类型是数值型和布尔型。
-        - **dim** (Union[int, Tensor]) - 填充输入Tensor的维度，要求是一个int或者数据类型为int32或int64的0维Tensor。
+        - **dim** (Union[int, Tensor]) - 填充输入Tensor的维度，要求是一个int或者数据类型为int32或int64的零维Tensor。
         - **index** (Tensor) - 填充输入Tensor的索引，数据类型为int32。
-        - **value** (Union[bool, int, float, Tensor]) - 填充输入Tensor的值。如果 `value` 是Tensor，那么 `value` 要求是数据类型与 `x` 相同的0维Tensor。否则，该值会自动转化为一个数据类型与 `x` 相同的0维Tensor。
+        - **value** (Union[bool, int, float, Tensor]) - 填充输入Tensor的值。如果 `value` 是Tensor，那么 `value` 要求是数据类型与 `x` 相同的零维Tensor。否则，该值会自动转化为一个数据类型与 `x` 相同的零维Tensor。
 
     返回：
         填充后的Tensor。shape和数据类型与输入 `x` 相同。
