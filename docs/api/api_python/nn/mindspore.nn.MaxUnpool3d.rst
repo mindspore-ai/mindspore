@@ -10,9 +10,9 @@ mindspore.nn.MaxUnpool3d
 
     .. math::
         \begin{array}{ll} \\
-        D_{out} = (D{in} - 1) \times stride[0] - 2 \times padding[0] + kernel_size[0] \\
-        H_{out} = (H{in} - 1) \times stride[1] - 2 \times padding[1] + kernel_size[1] \\
-        W_{out} = (W{in} - 1) \times stride[2] - 2 \times padding[2] + kernel_size[2] \\
+        D_{out} = (D{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
+        H_{out} = (H{in} - 1) \times stride[1] - 2 \times padding[1] + kernel\_size[1] \\
+        W_{out} = (W{in} - 1) \times stride[2] - 2 \times padding[2] + kernel\_size[2] \\
         \end{array}
 
     参数：
