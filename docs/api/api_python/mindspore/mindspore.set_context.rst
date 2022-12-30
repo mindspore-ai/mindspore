@@ -80,7 +80,7 @@ mindspore.set_context
 
     参数：
         - **device_id** (int) - 表示目标设备的ID，其值必须在[0, device_num_per_host-1]范围中，且 `device_num_per_host` 的值不应超过4096。默认值：0。
-        - **device_target** (str) - 表示待运行的目标设备，支持'Ascend'、'GPU'和'CPU'。如果未设置此参数，则使用MindSpore包对应的后端设备。
+        - **device_target** (str) - 表示待运行的目标设备，支持 'Ascend'、 'GPU'和 'CPU'。如果未设置此参数，则使用MindSpore包对应的后端设备。
         - **max_device_memory** (str) - 设置设备可用的最大内存。格式为"xxGB"。默认值：1024GB。实际使用的内存大小是设备的可用内存和 `max_device_memory` 值中的最小值。
         - **variable_memory_max_size** (str) - 此参数已弃用，将被删除。请使用 `max_device_memory` 。
         - **mempool_block_size** (str) - 设置设备内存池的块大小。格式为"xxGB"。默认值：1GB。最小值是1GB。实际使用的内存池块大小是设备的可用内存和 `mempool_block_size` 值中的最小值。
@@ -148,7 +148,7 @@ mindspore.set_context
 
           - O0: 执行性能优先，关闭 SOMAS (Safe Optimized Memory Allocation Solver)。
           - O1: 内存性能优先，使能 SOMAS。
-        - **memory_offload** (str) - 是否开启Offload功能，在内存不足场景下将空闲数据临时拷贝至Host侧内存。其值必须在['ON', 'OFF']范围中，默认值为'OFF'。
+        - **memory_offload** (str) - 是否开启Offload功能，在内存不足场景下将空闲数据临时拷贝至Host侧内存。其值必须在['ON', 'OFF']范围中，默认值为 'OFF'。
 
           - ON：开启memory offload功能。在Ascend硬件平台，未设置环境变量“GRAPH_OP_RUN=1”时本参数不生效；设置memory_optimize_level='O1'时本参数不生效。
           - OFF：关闭memory offload功能。

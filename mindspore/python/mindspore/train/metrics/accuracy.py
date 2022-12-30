@@ -73,13 +73,14 @@ class Accuracy(EvaluationBase):
 
         Args:
             inputs: Logits and labels. `y_pred` stands for logits, `y` stands for labels. `y_pred` and `y` must be a
-              `Tensor`, a list or an array.
-              For the 'classification' evaluation type, `y_pred` is a list of floating numbers in range :math:`[0, 1]`
-              and the shape is :math:`(N, C)` in most cases (not strictly), where :math:`N` is the number of cases and
-              :math:`C` is the number of categories. `y` must be in one-hot format that shape is :math:`(N, C)`, or can
-              be transformed to one-hot format that shape is :math:`(N,)`.
-              For 'multilabel' evaluation type, the value of `y_pred` and `y` can only be 0 or 1, indices with 1
-              indicate the positive category. The shape of `y_pred` and `y` are both :math:`(N, C)`.
+                `Tensor`, a list or an array.
+
+                - For the 'classification' evaluation type, `y_pred` is a list of floating numbers in range
+                  :math:`[0, 1]` and the shape is :math:`(N, C)` in most cases (not strictly), where :math:`N`
+                  is the number of cases and :math:`C` is the number of categories. `y` must be in one-hot format
+                  that shape is :math:`(N, C)`, or can be transformed to one-hot format that shape is :math:`(N,)`.
+                - For 'multilabel' evaluation type, the value of `y_pred` and `y` can only be 0 or 1, indices with 1
+                  indicate the positive category. The shape of `y_pred` and `y` are both :math:`(N, C)`.
 
         Raises:
             ValueError: If the number of the inputs is not 2.
