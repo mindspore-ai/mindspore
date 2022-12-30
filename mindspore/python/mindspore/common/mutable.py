@@ -61,21 +61,31 @@ def mutable(input_data, dynamic_len=False):
     input means that it is changed to be a variable input just like Tensor and the most important thing is that it
     will be differentiable.
 
+    When the `input_data` is tuple or list and `dynamic_len` is False, `mutable` will return a constant length tuple
+    or list with all mutable elements. If `dynamic_len` is True, the length of the return tuple or list will be dynamic.
+
+    If a dynamic length tuple or list is used as the input of the network and the network is repeatedly called, and
+    the length of the tuple or list is different for each run, it does not need to be re-compiled.
+
     Args:
-        input_data (Union[Tensor, tuple[Tensor], list[Tensor], dict[Tensor]]): The input data to be made mutable.
+        input_data (Union[int, float, Tensor, tuple, list, dict): The input data to be made mutable. If
+            'input_data' is list/tuple/dict, the type of each element should also in the valid types.
+        dynamic_len (bool): Whether to set the whole sequence to be dynamic length. In graph compilation, if
+            `dynamic_len` is True, the `input_data` must be list or tuple and the elements of `input_data` must have
+            the same type and shape. Default: False.
 
     .. warning::
         - This is an experimental prototype that is subject to change or deletion.
-        - The runtime has not yet supported to handle the scalar data flow. So we only support tuple[Tensor],
-          list[Tensor] or dict[Tensor] for network input to avoid the re-compiled problem now.
         - Currently this api only works in GRAPH mode.
 
     Returns:
         The origin input data which has been set mutable.
 
     Raises:
-        TypeError: If `input_data` is not one of Tensor, tuple[Tensor], list[Tensor], dict[Tensor] or their nested
-            structure.
+        TypeError: If `input_data` is not one of int, float, Tensor, tuple, list, dict or their nested structure.
+        TypeError: If `dynamic_len` is True and `input_data` is not tuple or list.
+        ValueError: If `dynamic_len` is True, `input_data` is tuple or list but the elements within `input_data` do not
+            have the same shape and type.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
