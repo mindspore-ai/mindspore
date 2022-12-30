@@ -1865,9 +1865,9 @@ Status OperatorInfo::CorrectMemoryCost(size_t input_index) {
                                 static_cast<double>(operator_cost()->inputs_type_lengths()[input_index]);
     swc->cost_list[0]->memory_with_reuse_ -= parameter_mem_cost;
     if (swc->cost_list[0]->memory_with_reuse_ < 0) {
-      MS_LOG(ERROR) << name_ << ": The memory cost after correction is: " << swc->cost_list[0]->memory_with_reuse_
-                    << ", the parameter memory cost is: " << parameter_mem_cost;
-      return FAILED;
+      MS_LOG(WARNING) << name_ << ": The memory cost after correction is: " << swc->cost_list[0]->memory_with_reuse_
+                      << ", the parameter memory cost is: " << parameter_mem_cost;
+      swc->cost_list[0]->memory_with_reuse_ = 0;
     }
   }
   return SUCCESS;
