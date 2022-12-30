@@ -516,7 +516,7 @@ void CommUtil::verifyCertPipeline(const X509 *caCert, const X509 *subCert) {
   }
 
   if (!CommUtil::verifySingature(caCert, subCert)) {
-    MS_LOG(EXCEPTION) << "Verify Singature failed.";
+    MS_LOG(EXCEPTION) << "Verify Signature failed.";
   }
 
   if (!CommUtil::verifyExtendedAttributes(caCert)) {
