@@ -1,0 +1,23 @@
+mindspore.ops.matrix_exp
+========================
+
+.. py:function:: mindspore.ops.matrix_exp(x)
+
+    计算方阵的矩阵指数。支持batch维输入。
+
+    .. math::
+
+        matrix\_exp(x) = \sum_{k=0}^{\infty} \frac{1}{k !} x^{k} \in \mathbb{K}^{n \times n}
+
+    参数：
+        - **x** (Tensor) - 输入Tensor，shape为 :math:`(*, n, n)` ，其中 `*` 表示0或更多的batch维。
+          支持数据类型：float16、float32、float64、complex64、complex128。
+
+    返回：
+        Tensor，其shape和数据类型均与 `x` 相同。
+
+    异常：
+        - **TypeError** -  `x` 不为Tensor。
+        - **TypeError** -  `x` 的dtype不属于以下类型：float16、float32、float64、complex64、complex128。
+        - **ValueError** - `x` 的秩小于2。
+        - **ValueError** - `x` 的最后两维不相等。
