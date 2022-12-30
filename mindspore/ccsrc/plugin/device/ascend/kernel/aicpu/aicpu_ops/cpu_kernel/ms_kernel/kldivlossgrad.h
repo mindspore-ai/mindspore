@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright (c) Huawei Technologies Co., Ltd. 2021-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef AICPU_KERNELS_NORMALIZED_RECIPROCAL_H_
-#define AICPU_KERNELS_NORMALIZED_RECIPROCAL_H_
+#ifndef AICPU_KERNELS_NORMALIZED_KLDIVLOSSGRAD_H
+#define AICPU_KERNELS_NORMALIZED_KLDIVLOSSGRAD_H
+#define EIGEN_USE_THREADS
+#define EIGEN_USE_SIMPLE_THREAD_POOL
 
 #include "cpu_ops_kernel.h"
+#include "cpu_types.h"
+#include "utils/bcast.h"
 
 namespace aicpu {
-class ReciprocalCpuKernel : public CpuKernel {
+class KlDivLossGradCpuKernel : public CpuKernel {
  public:
-  ~ReciprocalCpuKernel() = default;
+  KlDivLossGradCpuKernel() = default;
+  ~KlDivLossGradCpuKernel() = default;
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
+  /**
+   * @brief compute for all types
+   * @param ctx cpu kernel context
+   * @return status if success
+   */
   template <typename T>
-  uint32_t ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
-  template <typename T>
-  uint32_t ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
+  uint32_t KlDivLossGradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
-#endif
+#endif  // AICPU_KERNELS_NORMALIZED_KLDIVLOSSGRAD_H
