@@ -52,6 +52,10 @@ abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &, const std::vector<Abstr
                              << ", while x.shape[-2] is " << x_shape[rank - kRowIndex] << " and x.shape[-1] is "
                              << x_shape[rank - kColIndex] << ".";
   }
+  if (tau_shape.size() < 1) {
+    MS_EXCEPTION(ValueError) << "For Orgqr,  tau should have one dimension less than x"
+                             << ", but tensor has no dimensions";
+  }
   if (*(x_shape.end() - 1) < *(tau_shape.end() - 1)) {
     MS_EXCEPTION(ValueError) << "For Orgqr, x.shape[-1] must be greater than or equal to tau.shape[-1]"
                              << ", while x.shape[-1] is " << x_shape[rank - kColIndex] << " and "
