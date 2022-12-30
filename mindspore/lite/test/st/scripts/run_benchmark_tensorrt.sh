@@ -338,4 +338,4 @@ if [[ ${Run_benchmark_status} != 0 ]];then
 fi
 
 Print_Benchmark_Result $run_benchmark_result_file
-exit ${Run_benchmark_status}
+exit 0
