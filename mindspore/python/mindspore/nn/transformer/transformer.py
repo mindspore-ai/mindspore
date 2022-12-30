@@ -399,13 +399,13 @@ class FeedForward(Cell):
             (2, 20, 15)
             >>> # Example 2 using custom hidden activation
             >>> class MyActivationNoShard(nn.Cell):
-            >>>     def __init__(self):
-            >>>         super(MyActivationNoShard, self).__init__()
-            >>>         self.add = ops.Add()
-            >>>     def construct(self, x):
-            >>>         return self.add(x, 0.1)
+            ...     def __init__(self):
+            ...         super(MyActivationNoShard, self).__init__()
+            ...         self.add = ops.Add()
+            ...     def construct(self, x):
+            ...         return self.add(x, 0.1)
             >>> model = FeedForward(hidden_size=15, ffn_hidden_size=30, dropout_rate=0.1,
-            >>>                     hidden_act=MyActivationNoShard)
+            ...                     hidden_act=MyActivationNoShard)
             >>> tensor = Tensor(np.ones((2, 20, 15)), mstype.float32)
             >>> output = model(tensor)
             >>> print(output.shape)
@@ -415,16 +415,16 @@ class FeedForward(Cell):
             >>> # a class function named activation_shard. It accepts the argument parallel_config (OpParallelConfig,
             >>> # MoEParallelConfig) and set the shard for the primitives used in the construct.
             >>> class MyActivationWithShard(nn.Cell):
-            >>>     def __init__(self):
-            >>>         super(MyActivationWithShard, self).__init__()
-            >>>         self.add = ops.Add()
-            >>>     def construct(self, x):
-            >>>         return self.add(x, 0.1)
-            >>>     def activation_shard(self, parallel_config):
-            >>>         self.add.shard(((parallel_config.data_parallel, parallel_config.model_parallel), ()))
+            ...     def __init__(self):
+            ...         super(MyActivationWithShard, self).__init__()
+            ...         self.add = ops.Add()
+            ...     def construct(self, x):
+            ...         return self.add(x, 0.1)
+            ...     def activation_shard(self, parallel_config):
+            ...         self.add.shard(((parallel_config.data_parallel, parallel_config.model_parallel), ()))
             >>>
             >>> model = FeedForward(hidden_size=15, ffn_hidden_size=30, dropout_rate=0.1,
-            >>>                     hidden_act=MyActivationWithShard)
+            ...                     hidden_act=MyActivationWithShard)
             >>> tensor = Tensor(np.ones((2, 20, 15)), mstype.float32)
             >>> output = model(tensor)
             >>> print(output.shape)
