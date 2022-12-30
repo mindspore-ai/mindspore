@@ -891,6 +891,7 @@ void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const st
     if (!IsPrimitiveCNode(node, prim::kPrimLoad)) {
       node->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
       node->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
+      node->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
       return;
     }
     auto func_graph = node->func_graph();
@@ -905,6 +906,7 @@ void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const st
       auto next_cnode = pair.first->cast<CNodePtr>();
       next_cnode->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
       next_cnode->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
+      node->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
     }
   }
 }

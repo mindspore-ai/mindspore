@@ -39,6 +39,43 @@ void SetMirrorFusion(const CNodePtr &mirror_cnode, int64_t fusion, const std::st
   (void)node_prim->AddAttr(PARAMETER, MakeValue(std::make_shared<StringImm>(parameter_name)));
 }
 
+void AdjustRelatedFusionNode(const CNodePtr &ret, const std::unordered_map<std::string, CNodePtr> &comm_node_map) {
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+  for (const auto &related_node : all_nodes) {
+    if (!IsPrimitiveCNode(related_node)) {
+      continue;
+    }
+    auto related_cnode = related_node->cast<CNodePtr>();
+    if (!related_cnode->HasAttr(kRelatedCommNodeId)) {
+      continue;
+    }
+    auto related_comm_node_id = GetValue<std::string>(related_cnode->GetAttr(kRelatedCommNodeId));
+    if (comm_node_map.find(related_comm_node_id) == comm_node_map.end()) {
+      continue;
+    }
+    auto comm_cnode = comm_node_map.at(related_comm_node_id);
+    if (!IsPrimitiveCNode(comm_cnode)) {
+      continue;
+    }
+    auto node_prim = GetValueNode<PrimitivePtr>(comm_cnode->input(0));
+    if (!node_prim->HasAttr(FUSION)) {
+      continue;
+    }
+    if (!related_cnode->HasPrimalAttr(kRelatedNodeId) || !related_cnode->HasPrimalAttr(kRelatedFusionKey)) {
+      continue;
+    }
+    auto related_fusion_key = GetValue<std::string>(related_cnode->GetPrimalAttr(kRelatedFusionKey));
+    auto fusion_id_pos = related_fusion_key.rfind("_");
+    if (fusion_id_pos != std::string::npos) {
+      auto sub_str = related_fusion_key.substr(0, fusion_id_pos);
+      auto auto_fusion_id = GetValue<int64_t>(node_prim->GetAttr(FUSION));
+      auto new_related_fusion_key = sub_str + "_" + std::to_string(auto_fusion_id);
+      MS_LOG(INFO) << "replace related fusion key to: " << new_related_fusion_key;
+      related_cnode->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(new_related_fusion_key));
+    }
+  }
+}
+
 Status AllCommFusion::SetFusionBySize(const CNodePtr &ret, int64_t threshold, const PrimitivePtr &primp) const {
   auto filter = [primp](const AnfNodePtr &node) { return !IsPrimitiveCNode(node, primp); };
   auto todo = DeepScopedGraphSearchWithFilter(ret, AlwaysInclude, filter);
@@ -47,6 +84,7 @@ Status AllCommFusion::SetFusionBySize(const CNodePtr &ret, int64_t threshold, co
   bool init = true;
   std::string parameter_name;
   std::string name;
+  std::unordered_map<std::string, CNodePtr> comm_node_map;
   for (auto &node : todo) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode->input(1)->Shape() == nullptr) {
@@ -88,7 +126,9 @@ Status AllCommFusion::SetFusionBySize(const CNodePtr &ret, int64_t threshold, co
       fusion++;
     }
     SetMirrorFusion(cnode, fusion, parameter_name);
+    comm_node_map[cnode->UniqueId()] = cnode;
   }
+  AdjustRelatedFusionNode(ret, comm_node_map);
   MS_LOG(INFO) << name << " fusion by size succeed.";
   return SUCCESS;
 }
@@ -100,6 +140,7 @@ Status AllCommFusion::SetFusionBySizeReduceScatter(const CNodePtr &ret, int64_t 
   auto temp = threshold;
   int64_t fusion = 1;
   bool init = true;
+  std::unordered_map<std::string, CNodePtr> comm_node_map;
   for (auto &node : todo) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode->input(1) == nullptr) {
@@ -122,7 +163,9 @@ Status AllCommFusion::SetFusionBySizeReduceScatter(const CNodePtr &ret, int64_t 
       fusion++;
     }
     SetMirrorFusion(cnode, fusion, parameter_name);
+    comm_node_map[cnode->UniqueId()] = cnode;
   }
+  AdjustRelatedFusionNode(ret, comm_node_map);
   MS_LOG(INFO) << "Reduce_Scatter fusion by size succeed.";
   return SUCCESS;
 }
