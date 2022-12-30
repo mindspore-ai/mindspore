@@ -22,6 +22,7 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -300,6 +301,9 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
     // Get actual output type of TupleGetItem node.
     auto abs_type = AnfAlgo::GetAbstractObjectType(cnode->abstract());
     output_obj_type->push_back(kernel::TypeIdToKernelObjectType(abs_type));
+  } else if (IsPrimitiveCNode(cnode, prim::kPrimTensorToScalar)) {
+    general_input_obj_type_func();
+    output_obj_type->push_back(KernelObjectType::SCALAR);
   } else {
     // For other ops, defaulty set TENSOR as output object type.
     general_input_obj_type_func();
@@ -642,7 +646,22 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTensorToScalar(const FuncGraphPtr &
 
   // Set abstract for TensorToScalar op according to user node's input shape and type.
   size_t input_index = GetInputNodeIndex(input, node);
-  auto abs = GenerateAbsByUserNodeInput(node, input_index);
+  auto input_node = common::AnfAlgo::GetInputNode(node, input_index);
+  auto origin_input_abs = input_node->abstract();
+  MS_EXCEPTION_IF_NULL(origin_input_abs);
+  abstract::AbstractScalarPtr abs = nullptr;
+  if (input_node->isa<ValueNode>()) {
+    ValuePtr tensor_value = origin_input_abs->BuildValue();
+    if (!tensor_value->isa<tensor::Tensor>()) {
+      MS_LOG(EXCEPTION) << "The abstract of " << input_node->DebugString() << " should be a tensor value.";
+    }
+    ValuePtr scalar_value = CreateValueFromTensor(tensor_value->cast<tensor::TensorPtr>());
+    MS_EXCEPTION_IF_NULL(scalar_value);
+    abs = std::make_shared<abstract::AbstractScalar>(scalar_value, scalar_value->type());
+  } else {
+    abs = std::make_shared<abstract::AbstractScalar>(
+      kAnyValue, TypeIdToType(common::AnfAlgo::GetOutputInferDataType(input_node, kIndex0)));
+  }
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for TensorToScalar op is " << abs->ToString();
   tensor_to_scalar->set_abstract(abs);

@@ -704,7 +704,7 @@ bool ConvertConstInputToAttr(const CNodePtr &cnode, const std::map<size_t, std::
           MS_LOG(DEBUG) << "Const input data ptr is null from op " << cnode->fullname_with_scope() << "'s input " << i;
           return false;
         }
-        value = opt::CreateValueFromTensor(tensor);
+        value = CreateValueFromTensor(tensor);
         value = opt::UpdateValueByAttrDataType(value, iter->second);
         MS_LOG(DEBUG) << "new attr value:" << value_node->ToString() << ", Type:" << value_node->type_name();
       }

@@ -63,6 +63,8 @@ COMMON_EXPORT bool Isomorphic(const FuncGraphPtr &g1, const FuncGraphPtr &g2, Fu
 
 COMMON_EXPORT tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar);
 
+COMMON_EXPORT ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor);
+
 template <typename T>
 std::vector<T> TensorValueToVector(const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
