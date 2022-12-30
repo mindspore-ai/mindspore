@@ -671,6 +671,9 @@ void WingmanQueue::Close() {
 std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
   if (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName) return nullptr;
   auto queue_name = common::AnfAlgo::GetNodeAttr<std::string>(node, "shared_name");
+  if (!DataQueueMgr::GetInstance().IsCreated(queue_name)) {
+    return nullptr;
+  }
   return DataQueueMgr::GetInstance().GetDataQueue(queue_name);
 }
 
