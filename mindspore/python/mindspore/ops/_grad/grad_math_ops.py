@@ -538,6 +538,36 @@ def get_bprop_floordiv(self):
     return bprop
 
 
+@bprop_getters.register(P.BitwiseAnd)
+def get_bprop_bitwiseand(self):
+    """Grad definition for `BitwiseAnd` operation."""
+
+    def bprop(x, y, out, dout):
+        return zeros_like(x), zeros_like(y)
+
+    return bprop
+
+
+@bprop_getters.register(P.BitwiseOr)
+def get_bprop_bitwiseor(self):
+    """Grad definition for `BitwiseOr` operation."""
+
+    def bprop(x, y, out, dout):
+        return zeros_like(x), zeros_like(y)
+
+    return bprop
+
+
+@bprop_getters.register(P.BitwiseXor)
+def get_bprop_bitwisexor(self):
+    """Grad definition for `BitwiseXor` operation."""
+
+    def bprop(x, y, out, dout):
+        return zeros_like(x), zeros_like(y)
+
+    return bprop
+
+
 @bprop_getters.register(P.FloorMod)
 def get_bprop_floormod(self):
     """Grad definition for `FloorMod` operation."""
