@@ -83,29 +83,16 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &model_context) {
-  graph_ = std::make_shared<Graph>();
-  auto ret = Serialization::Load(model_path, model_type, graph_.get());
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Serialization::Load model failed.";
-    return ret;
-  }
-  session_ = InferSession::CreateSession(model_context);
-  if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Create session failed.";
+  if (model_path.empty()) {
+    MS_LOG(ERROR) << "Model path cannot be empty";
     return kLiteNullptr;
   }
-  ret = session_->Init(model_context);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Init session failed.";
-    return ret;
+  auto buffer = ReadFile(model_path);
+  if (buffer.DataSize() == 0) {
+    MS_LOG(ERROR) << "Failed to read buffer from model file: " << model_path;
+    return kLiteNullptr;
   }
-  if (MsContext::GetInstance() == nullptr) {
-    MS_LOG(INFO) << "MsContext::GetInstance() is nullptr.";
-    MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
-      device_type_seter.reset(new (std::nothrow) MsContext("vm", kCPUDevice));
-    });
-  }
-  return session_->CompileGraph(graph_->graph_data_->GetFuncGraph());
+  return build_by_buffer_impl(buffer.Data(), buffer.DataSize(), model_type, model_context);
 }
 
 Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
