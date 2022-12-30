@@ -143,6 +143,7 @@ bool CheckLogLevel(int log_level_check);
   }
 
 #define KERNEL_HANDLE_ERROR(expression, logText...)       \
+  ;                                                       \
   do {                                                    \
     uint32_t ret = expression;                            \
     if (ret != static_cast<uint32_t>(KERNEL_STATUS_OK)) { \
