@@ -8,7 +8,7 @@ mindspore.obfuscate_model
     参数：
         - **obf_config** (dict) - 模型混淆配置选项字典。
 
-          - **type** (str) - 混淆类型，目前支持动态混淆，即'dynamic'。
+          - **type** (str) - 混淆类型，目前支持动态混淆，即 'dynamic'。
           - **original_model_path** (str) - 待混淆的MindIR模型地址。如果该模型是加密文件的，则需要在 `kwargs` 中传入 `enc_key` 和 `enc_mode` 。
           - **save_model_path** (str) - 混淆模型的保存地址。
           - **model_inputs** (list[Tensor]) - 模型的推理输入，Tensor的值可以是随机的，和使用 :func:`mindspore.export` 接口类似。
@@ -19,7 +19,7 @@ mindspore.obfuscate_model
         - **kwargs** (dict) - 配置选项字典。
 
           - **enc_key** (bytes) - 用于加密的字节类型密钥，有效长度为16、24或者32。
-          - **enc_mode** (str) - 指定加密模式，当设置 `enc_key` 时启用。支持的加密选项有：'AES-GCM'，'AES-CBC', 'SM4-CBC'。默认值："AES-GCM"。
+          - **enc_mode** (str) - 指定加密模式，当设置 `enc_key` 时启用。支持的加密选项有： 'AES-GCM'， 'AES-CBC', 'SM4-CBC'。默认值："AES-GCM"。
 
     异常：
         - **TypeError** - `obf_config` 不是字典类型。

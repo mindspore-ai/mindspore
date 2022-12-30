@@ -9,7 +9,7 @@ mindspore.train.ConfusionMatrixMetric
     此函数支持计算参数metric_name中描述中列出的所有度量名称。
     
     如果要使用混淆矩阵计算，如"PPV"、"TPR"、"TNR"，请使用此类。
-    如果只想计算混淆矩阵，请使用'mindspore.train.ConfusionMatrix'。
+    如果只想计算混淆矩阵，请使用 :class:`mindspore.train.ConfusionMatrix` 。
 
     参数： 
         - **skip_channel** (bool) - 是否跳过预测输出的第一个通道的度量计算。默认值：True。

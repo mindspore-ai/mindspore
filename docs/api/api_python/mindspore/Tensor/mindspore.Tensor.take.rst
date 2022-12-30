@@ -18,4 +18,4 @@ mindspore.Tensor.take
         Tensor，索引的结果。
 
     异常：
-        - **ValueError** - `axis` 超出范围，或 `mode` 被设置为'raise'、'wrap'和'clip'以外的值。
+        - **ValueError** - `axis` 超出范围，或 `mode` 被设置为 'raise'、 'wrap'和 'clip'以外的值。
