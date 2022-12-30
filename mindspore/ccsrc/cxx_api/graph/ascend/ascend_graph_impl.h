@@ -22,8 +22,8 @@
 #include <memory>
 #include "include/api/status.h"
 #include "include/api/graph.h"
+#include "backend/graph_compiler/backend.h"
 #include "cxx_api/graph/graph_impl.h"
-#include "backend/common/session/session_basic.h"
 #include "ir/anf.h"
 #include "cxx_api/model/model_impl.h"
 #include "runtime/context.h"
@@ -44,13 +44,14 @@ class AscendGraphImpl : public GraphCell::GraphImpl {
   class MsEnvGuard;
 
   Status InitEnv();
-  Status CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr);
-  Status CheckModelInputs(const std::vector<tensor::TensorPtr> &inputs) const;
+  Status CompileGraph(const std::shared_ptr<FuncGraph> &func_graph);
   std::vector<tensor::TensorPtr> RunGraph(const std::vector<tensor::TensorPtr> &inputs);
   Status ExecuteModel(const std::vector<MSTensor> &request, std::vector<MSTensor> *reply);
 
-  std::shared_ptr<session::SessionBasic> session_impl_;
-  uint32_t graph_id_;
+  std::shared_ptr<compile::MindRTBackend> backend_;
+  std::string actor_info_;
+  std::weak_ptr<KernelGraph> kernel_graph_;
+  std::weak_ptr<FuncGraph> func_graph_;
   std::string device_type_;
   uint32_t device_id_;
   rtContext_t context_;

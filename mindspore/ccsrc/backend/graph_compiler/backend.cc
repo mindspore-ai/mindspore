@@ -1465,5 +1465,10 @@ void MindRTBackend::ClearResource() {
   actor_to_graph_compiler_info_.clear();
   cnode_ref_counts_.clear();
 }
+
+KernelGraphPtr MindRTBackend::GetGraphById(GraphId graph_id) {
+  MS_EXCEPTION_IF_NULL(graph_compiler_);
+  return graph_compiler_->Fetch(graph_id);
+}
 }  // namespace compile
 }  // namespace mindspore
