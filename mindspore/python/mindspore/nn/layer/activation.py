@@ -27,6 +27,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN_OPS
 from mindspore.ops.primitive import constexpr
 from mindspore.nn.cell import Cell
+from mindspore import ops
 
 __all__ = ['Softmin',
            'Softmax',
@@ -156,11 +157,10 @@ class Softmin(Cell):
     def __init__(self, axis=-1):
         """Initialize Softmin."""
         super(Softmin, self).__init__()
-        self.softmax = P.Softmax(axis)
+        self.axis = axis
 
     def construct(self, x):
-        x = -1 * x
-        return self.softmax(x)
+        return ops.function.softmin(x, self.axis)
 
 
 class Softmax2d(Cell):

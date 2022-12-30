@@ -2136,6 +2136,45 @@ def softmax(x, axis=-1):
     return softmax_(x)
 
 
+def softmin(x, axis=-1):
+    r"""
+    Applies the Softmin operation to the input tensor on the specified axis.
+    Suppose a slice in the given axis :math:`x`, then for each element :math:`x_i`,
+    the Softmin function is shown as follows:
+
+    .. math::
+        \text{output}(x_i) = \frac{exp(-x_i)}{\sum_{j = 0}^{N-1}\exp(-x_j)},
+
+    where :math:`N` is the length of the tensor.
+
+    Args:
+        axis (Union[int, tuple[int]], optional): The axis to perform the Softmin operation. Default: -1.
+        x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
+
+    Returns:
+        Tensor, with the same type and shape as the logits.
+
+    Raises:
+        TypeError: If `axis` is not an int or a tuple.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `axis` is a tuple whose length is less than 1.
+        ValueError: If `axis` is a tuple whose elements are not all in range [-len(logits.shape), len(logits.shape)).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> output = ops.softmin(x)
+        >>> print(output)
+        [0.2341  0.636  0.0862  0.01165  0.03168 ]
+    """
+
+    softmax_ = _get_cache_prim(P.Softmax)(axis=axis)
+    return softmax_(-x)
+
+
 def soft_shrink(x, lambd=0.5):
     r"""
     Applies the SoftShrink function element-wise.
@@ -5411,6 +5450,7 @@ __all__ = [
     'softsign',
     'selu',
     'softmax',
+    'softmin',
     'pdist',
     'pad',
     'prelu',

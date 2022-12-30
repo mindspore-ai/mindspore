@@ -99,6 +99,7 @@ mindspore.ops
     mindspore.ops.sigmoid
     mindspore.ops.soft_shrink
     mindspore.ops.softmax
+    mindspore.ops.softmin
     mindspore.ops.softsign
     mindspore.ops.tanh
 
