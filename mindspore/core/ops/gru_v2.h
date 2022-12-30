@@ -23,6 +23,7 @@
 #include "mindapi/base/types.h"
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
+#include "mindspore/core/ops/op_name.h"
 
 namespace mindspore {
 namespace ops {
@@ -35,6 +36,21 @@ class MIND_API GRUV2 : public BaseOperator {
   /// \brief Constructor.
   GRUV2() : BaseOperator(kNameGRUV2) {
     InitIOName({"input", "h", "w", "seq_lengths"}, {"output", "h_n", "reserve", "state"});
+  }
+
+  void set_bidirectional(bool bidirectional) { (void)AddAttr(kBidirectional, api::MakeValue(bidirectional)); }
+
+  bool get_bidirectional() const {
+    auto value_ptr = this->GetAttr(kBidirectional);
+    return GetValue<bool>(value_ptr);
+  }
+
+  int64_t get_input_size() const { return GetValue<int64_t>(GetAttr(kInput_size)); }
+  int64_t get_hidden_size() const { return GetValue<int64_t>(GetAttr(kHidden_size)); }
+  int64_t get_num_layers() const { return GetValue<int64_t>(GetAttr(kNumLayers)); }
+  bool get_has_bias() const {
+    auto value_ptr = this->GetAttr(kHasBias);
+    return GetValue<bool>(value_ptr);
   }
 };
 AbstractBasePtr GRUV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
