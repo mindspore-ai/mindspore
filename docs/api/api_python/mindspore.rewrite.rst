@@ -321,7 +321,7 @@ ReWrite完整示例请参考
 
         在 `stree` 上面执行当前的匹配模式。
 
-        .. note:: 
+        .. note::
             当前还不支持子树节点。
 
         参数：
@@ -451,7 +451,7 @@ ReWrite完整示例请参考
 
         用于从匹配结果创建替换节点的接口定义。
 
-        .. note:: 
+        .. note::
             返回值将作为SymbolTree的替换函数的参数，返回值应遵循替换函数参数的 `new_nodes` 的约束。请参阅SymbolTree的 `replace` 的文档字符串中的详细信息。
 
         参数：
@@ -482,3 +482,34 @@ ReWrite完整示例请参考
         异常：
             - **RuntimeError** - 如果参数 `node` 不是 NodeType.Tree类型。
             - **TypeError** - 如果参数 `node` 不是Node类型实例。
+
+.. py:method:: mindspore.rewrite.sparsify(f, arg_types, sparse_rules=None)
+
+    模型自动稀疏化接口，将稠密模型转换为稀疏模型。通过 `arg_types` 指定的参数类型，将稀疏参数在模型中传导，并调用相应的稀疏函数。
+
+    参数：
+        - **f** (Cell) - 被稀疏化的网络。
+        - **arg_types** (Tuple[ArgType] | Dict[int, ArgType]) - `f` 接受的参数类型（稀疏CSR/COO、非稀疏等）。如果是tuple，长度需要和 `f` 的参数数量相等；如果是dict，每个键值对应一个参数的索引，字典里没有表示的参数默认为非稀疏。
+        - **sparse_rules** (Dict[str, SparseFunc], Optional) - 自定义稀疏规则。默认为None。
+
+.. py:class:: mindspore.rewrite.ArgType
+
+    稀疏化的参数类型。
+
+    - CSR表示CSRTensor
+    - COO表示COOTensor
+    - NONSPARSE表示非稀疏
+
+.. py:class:: mindspore.rewrite.SparseFunc(fn: Union[str, Callable], inputs: Optional[Any] = None, outputs: Optional[Any] = None)
+
+    在稀疏化中表示一个稀疏函数。
+
+    .. note::
+        如果 `fn` 是一个包含类型注解的函数，且同时提供了 `inputs`，则类型注解中的输入类型将被忽略。`outputs` 同理。
+
+    参数：
+        - **fn** (Union[str, Callable]) - 稀疏函数，如果是字符串，表示一个mindspore.ops.function接口；或者是任意函数对象。
+        - **inputs** (Optional[Any]) - 函数的输入类型。如果是None，则使用函数本身的类型注解。默认是None。
+        - **outputs** ( Optional[Any]) - 函数的输出类型。如果是None，则使用函数本身的类型注解。默认是None。
+
+

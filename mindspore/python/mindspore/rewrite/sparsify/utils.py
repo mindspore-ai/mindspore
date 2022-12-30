@@ -26,7 +26,13 @@ from mindspore.rewrite.namespace import get_functional
 
 
 class ArgType(Enum):
-    """ArgType Enum"""
+    """
+    Argument types for sparsify.
+
+    - CSR represents a CSRTensor.
+    - COO represents a COOTensor.
+    - NONSPARSE represents a non-sparse value.
+    """
     NONSPARSE = auto()
     CSR = auto()
     COO = auto()
@@ -35,10 +41,18 @@ class ArgType(Enum):
 
 class SparseFunc(NamedTuple):
     """
-    Values for sparse_rules.
-    If `fn` is a string, the function is assumed to be a mindspore functional op.
-    If `fn` is a function and is annotated, `inputs` and/or `outputs`, when provided, override the type hinted by the
-    annotation.
+    Represents a sparse function in sparsify.
+
+    Note:
+        If `fn` is a function with type hints, `inputs` and/or `outputs`, when provided, override function type hints.
+
+    Args:
+        fn (Union[str, Callable]): a sparse function. If `fn` is a string, the function represents a mindspore
+            functional op; or `fn` can be any function object.
+        inputs (Optional[Any]): input types for the function. If `inputs` is None, use the input types in function
+            type hints. Defaults to None.
+        outputs (Optional[Any]): output types for the function. If `outputs` is None, use the output types in function
+            type hints. Defaults to None.
     """
     fn: Union[str, Callable]
     inputs: Optional[Any] = None

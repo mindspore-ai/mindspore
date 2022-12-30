@@ -728,12 +728,12 @@ def csr_softmax(logits: CSRTensor, dtype: mstype):
         dtype (dtype): Input data type.
 
     Returns:
-        CSRTensor, a csr_tensor containing
+        CSRTensor, a CSRTensor containing
 
         - **indptr** - Indicates the start and end point for non-zero values in each row.
         - **indices** - The column positions of all non-zero values of the input.
         - **values** - The non-zero values of the dense tensor.
-        - **shape** - The shape of the csr_tensor.
+        - **shape** - The shape of the CSRTensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -783,12 +783,12 @@ def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTenso
         beta(Tensor): Dense Tensor, its shape must be able to broadcast to b.
 
     Returns:
-        CSRTensor, a csr_tensor containing the following parts.
+        CSRTensor, a CSRTensor containing the following parts.
 
         - **indptr** -  Indicates the start and end point for non-zero values in each row.
         - **indices** - The column positions of all non-zero values of the input.
         - **values** - The non-zero values of the dense tensor.
-        - **shape** - The shape of the csr_tensor.
+        - **shape** - The shape of the CSRTensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``

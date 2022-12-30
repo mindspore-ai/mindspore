@@ -22,16 +22,16 @@ from mindspore.ops.function import math_func, nn_func
 
 def csr_cos(x: CSRTensor) -> CSRTensor:
     """
-    Computes csr_cosine of input element-wise.
+    Computes cosine of input element-wise.
 
     .. math::
-        out_i = csr_cos(x_i)
+        out_i = cos(x_i)
 
     .. warning::
         If use Float64, there may be a problem of missing precision.
 
     Args:
-        x (CSRTensor): Input csr_tensor.
+        x (CSRTensor): Input CSRTensor.
 
     Returns:
         CSRTensor, has the same shape and dtype as `x`.
@@ -61,16 +61,16 @@ def csr_cos(x: CSRTensor) -> CSRTensor:
 
 def coo_cos(x: COOTensor) -> COOTensor:
     """
-    Computes coo_cosine of input element-wise.
+    Computes cosine of input element-wise.
 
     .. math::
-        out_i = coo_cos(x_i)
+        out_i = cos(x_i)
 
     .. warning::
         If use Float64, there may be a problem of missing precision.
 
     Args:
-        x (COOTensor): Input coo_tensor.
+        x (COOTensor): Input COOTensor.
 
     Returns:
         COOTensor, has the same shape and dtype as `x`.
@@ -99,11 +99,11 @@ def coo_cos(x: COOTensor) -> COOTensor:
 
 def csr_tan(x: CSRTensor) -> CSRTensor:
     """
-    Computes csr_tangent of `x` element-wise.
+    Computes tangent of `x` element-wise.
 
     .. math::
 
-        out_i = csr_tan(x_i)
+        out_i = tan(x_i)
 
     Args:
         x (CSRTensor): The input CSRTensor.
@@ -134,11 +134,11 @@ def csr_tan(x: CSRTensor) -> CSRTensor:
 
 def coo_tan(x: COOTensor) -> COOTensor:
     """
-    Computes coo_tangent of `x` element-wise.
+    Computes tangent of `x` element-wise.
 
     .. math::
 
-        out_i = coo_tan(x_i)
+        out_i = tan(x_i)
 
     Args:
         x (COOTensor): The input COOTensor.
@@ -168,14 +168,14 @@ def coo_tan(x: COOTensor) -> COOTensor:
 
 def csr_exp(x: CSRTensor) -> CSRTensor:
     """
-    Returns csr_exponential of a csr_tensor element-wise.
+    Returns csr_exponential of a CSRTensor element-wise.
 
     .. math::
 
         out_i = e^{x_i}
 
     Args:
-        x (CSRTensor): The input csr_tensor, its rank must be in [0, 7] inclusive.
+        x (CSRTensor): The input CSRTensor, its rank must be in [0, 7] inclusive.
 
     Returns:
         CSRTensor, has the same shape and dtype as the `x`.
@@ -203,14 +203,14 @@ def csr_exp(x: CSRTensor) -> CSRTensor:
 
 def coo_exp(x: COOTensor) -> COOTensor:
     """
-    Returns coo_exponential of a coo_tensor element-wise.
+    Returns coo_exponential of a COOTensor element-wise.
 
     .. math::
 
         out_i = e^{x_i}
 
     Args:
-        x (COOTensor): The input coo_tensor, its rank must be in [0, 7] inclusive.
+        x (COOTensor): The input COOTensor, its rank must be in [0, 7] inclusive.
 
     Returns:
         COOTensor, has the same shape and dtype as the `x`.
@@ -237,7 +237,7 @@ def coo_exp(x: COOTensor) -> COOTensor:
 
 def csr_inv(x: CSRTensor) -> CSRTensor:
     r"""
-    Computes Reciprocal of input csr_tensor element-wise.
+    Computes Reciprocal of input CSRTensor element-wise.
 
     .. math::
         out_i = \frac{1}{x_{i} }
@@ -272,7 +272,7 @@ def csr_inv(x: CSRTensor) -> CSRTensor:
 
 def coo_inv(x: COOTensor) -> COOTensor:
     r"""
-    Computes Reciprocal of input coo_tensor element-wise.
+    Computes Reciprocal of input COOTensor element-wise.
 
     .. math::
         out_i = \frac{1}{x_{i} }
@@ -391,14 +391,14 @@ def coo_relu(x: COOTensor) -> COOTensor:
 
 def csr_expm1(x: CSRTensor) -> CSRTensor:
     """
-    Returns exponential then minus 1 of a csr_tensor element-wise.
+    Returns exponential then minus 1 of a CSRTensor element-wise.
 
     .. math::
 
         out_i = e^{x_i} - 1
 
     Args:
-        x (CSRTensor): The input csr_tensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
+        x (CSRTensor): The input CSRTensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
 
     Returns:
         CSRTensor, has the same shape as the `x`.
@@ -427,14 +427,14 @@ def csr_expm1(x: CSRTensor) -> CSRTensor:
 
 def coo_expm1(x: COOTensor) -> COOTensor:
     """
-    Returns exponential then minus 1 of a coo_tensor element-wise.
+    Returns exponential then minus 1 of a COOTensor element-wise.
 
     .. math::
 
         out_i = e^{x_i} - 1
 
     Args:
-        x (COOTensor): The input coo_tensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
+        x (COOTensor): The input COOTensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
 
     Returns:
         COOTensor, has the same shape as the `x`.
@@ -472,7 +472,7 @@ def csr_isfinite(x: CSRTensor) -> CSRTensor:
         \end{cases}
 
     Args:
-        x (CSRTensor): The input csr_tensor.
+        x (CSRTensor): The input CSRTensor.
 
     Returns:
         CSRTensor, has the same shape of input, and the dtype is bool.
@@ -510,7 +510,7 @@ def coo_isfinite(x: COOTensor) -> COOTensor:
         \end{cases}
 
     Args:
-        x (COOTensor): The input coo_tensor.
+        x (COOTensor): The input COOTensor.
 
     Returns:
         COOTensor, has the same shape of input, and the dtype is bool.
@@ -544,7 +544,7 @@ def csr_asin(x: CSRTensor) -> CSRTensor:
         out_i = sin^{-1}(x_i)
 
     Args:
-        x (CSRTensor): Input csr_tensor.
+        x (CSRTensor): Input CSRTensor.
 
     Returns:
         CSRTensor, has the same shape and dtype as `x`.
@@ -580,7 +580,7 @@ def coo_asin(x: COOTensor) -> COOTensor:
         out_i = sin^{-1}(x_i)
 
     Args:
-        x (COOTensor): Input coo_tensor.
+        x (COOTensor): Input COOTensor.
 
     Returns:
         COOTensor, has the same shape and dtype as `x`.
@@ -608,14 +608,14 @@ def coo_asin(x: COOTensor) -> COOTensor:
 
 def csr_sqrt(x: CSRTensor) -> CSRTensor:
     r"""
-    Returns csr_sqrt of a csr_tensor element-wise.
+    Returns sqrt of a CSRTensor element-wise.
 
     .. math::
 
-        out_{i} = \csr_sqrt{x_{i}}
+        out_{i} = \sqrt{x_{i}}
 
     Args:
-        x (CSRTensor): The input csr_tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        x (CSRTensor): The input CSRTensor with a dtype of Number, its rank must be in [0, 7] inclusive.
 
     Returns:
         CSRTensor, has the same shape and dtype as the `x`.
@@ -643,14 +643,14 @@ def csr_sqrt(x: CSRTensor) -> CSRTensor:
 
 def coo_sqrt(x: COOTensor) -> COOTensor:
     r"""
-    Returns coo_sqrt of a coo_tensor element-wise.
+    Returns sqrt of a COOTensor element-wise.
 
     .. math::
 
-        out_{i} = \coo_sqrt{x_{i}}
+        out_{i} = \sqrt{x_{i}}
 
     Args:
-        x (COOTensor): The input coo_tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        x (COOTensor): The input COOTensor with a dtype of Number, its rank must be in [0, 7] inclusive.
 
     Returns:
         COOTensor, has the same shape and dtype as the `x`.
@@ -677,10 +677,10 @@ def coo_sqrt(x: COOTensor) -> COOTensor:
 
 def csr_log(x: CSRTensor) -> CSRTensor:
     """
-    Returns the natural csr_logarithm of a csr_tensor element-wise.
+    Returns the natural logarithm of a CSRTensor element-wise.
 
     .. math::
-        y_i = csr_log_e(x_i)
+        y_i = log_e(x_i)
 
     .. warning::
         If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
@@ -717,10 +717,10 @@ def csr_log(x: CSRTensor) -> CSRTensor:
 
 def coo_log(x: COOTensor) -> COOTensor:
     """
-    Returns the natural coo_logarithm of a coo_tensor element-wise.
+    Returns the natural logarithm of a COOTensor element-wise.
 
     .. math::
-        y_i = coo_log_e(x_i)
+        y_i = log_e(x_i)
 
     .. warning::
         If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
@@ -768,7 +768,7 @@ def csr_isnan(x: CSRTensor) -> CSRTensor:
     where :math:`Nan` means not a number.
 
     Args:
-        x (CSRTensor): The input csr_tensor.
+        x (CSRTensor): The input CSRTensor.
 
     Returns:
         CSRTensor, has the same shape of input, and the dtype is bool.
@@ -808,7 +808,7 @@ def coo_isnan(x: COOTensor) -> COOTensor:
     where :math:`Nan` means not a number.
 
     Args:
-        x (COOTensor): The input coo_tensor.
+        x (COOTensor): The input COOTensor.
 
     Returns:
         COOTensor, has the same shape of input, and the dtype is bool.
@@ -842,7 +842,7 @@ def csr_acos(x: CSRTensor) -> CSRTensor:
         out_i = cos^{-1}(x_i)
 
     Args:
-        x (CSRTensor): Input csr_tensor.
+        x (CSRTensor): Input CSRTensor.
 
     Returns:
         CSRTensor, has the same shape and dtype as `x`.
@@ -879,15 +879,14 @@ def coo_acos(x: COOTensor) -> COOTensor:
         out_i = cos^{-1}(x_i)
 
     Args:
-        x (COOTensor): Input coo_tensor.
+        x (COOTensor): Input COOTensor.
 
     Returns:
         COOTensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64, complex64,
-    complex128.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -908,14 +907,14 @@ def coo_acos(x: COOTensor) -> COOTensor:
 
 def csr_floor(x: CSRTensor) -> CSRTensor:
     r"""
-    Rounds a csr_tensor down to the closest integer element-wise.
+    Rounds a CSRTensor down to the closest integer element-wise.
 
     .. math::
 
-        out_i = \lcsr_floor x_i \rcsr_floor
+        out_i = \lfloor x_i \rfloor
 
     Args:
-        x (CSRTensor): The input csr_tensor, its rank must be in [0, 7] inclusive
+        x (CSRTensor): The input CSRTensor, its rank must be in [0, 7] inclusive
             and data type must be float16, float32 or float64.
 
     Returns:
@@ -945,14 +944,14 @@ def csr_floor(x: CSRTensor) -> CSRTensor:
 
 def coo_floor(x: COOTensor) -> COOTensor:
     r"""
-    Rounds a coo_tensor down to the closest integer element-wise.
+    Rounds a COOTensor down to the closest integer element-wise.
 
     .. math::
 
-        out_i = \lcoo_floor x_i \rcoo_floor
+        out_i = \lfloor x_i \rfloor
 
     Args:
-        x (COOTensor): The input coo_tensor, its rank must be in [0, 7] inclusive
+        x (COOTensor): The input COOTensor, its rank must be in [0, 7] inclusive
             and data type must be float16, float32 or float64.
 
     Returns:
@@ -1052,14 +1051,14 @@ def coo_atan(x: COOTensor) -> COOTensor:
 
 def csr_square(x: CSRTensor) -> CSRTensor:
     """
-    Returns csr_square of a csr_tensor element-wise.
+    Returns square of a CSRTensor element-wise.
 
     .. math::
 
         out_{i} = (x_{i})^2
 
     Args:
-        x (CSRTensor): The input csr_tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        x (CSRTensor): The input CSRTensor with a dtype of Number, its rank must be in [0, 7] inclusive.
 
     Returns:
         CSRTensor, has the same shape and dtype as the `x`.
@@ -1087,14 +1086,14 @@ def csr_square(x: CSRTensor) -> CSRTensor:
 
 def coo_square(x: COOTensor) -> COOTensor:
     """
-    Returns coo_square of a coo_tensor element-wise.
+    Returns square of a COOTensor element-wise.
 
     .. math::
 
         out_{i} = (x_{i})^2
 
     Args:
-        x (COOTensor): The input coo_tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        x (COOTensor): The input COOTensor with a dtype of Number, its rank must be in [0, 7] inclusive.
 
     Returns:
         COOTensor, has the same shape and dtype as the `x`.
@@ -1200,10 +1199,10 @@ def csr_sinh(x: CSRTensor) -> CSRTensor:
 
     .. math::
 
-        out_i = \csr_sinh(x_i)
+        out_i = \sinh(x_i)
 
     Args:
-        x (CSRTensor): The input csr_tensor of hyperbolic sine function, its rank must be in [0, 7] inclusive.
+        x (CSRTensor): The input CSRTensor of hyperbolic sine function, its rank must be in [0, 7] inclusive.
 
     Returns:
         CSRTensor, has the same shape as `x`.
@@ -1235,10 +1234,10 @@ def coo_sinh(x: COOTensor) -> COOTensor:
 
     .. math::
 
-        out_i = \coo_sinh(x_i)
+        out_i = \sinh(x_i)
 
     Args:
-        x (COOTensor): The input coo_tensor of hyperbolic sine function, its rank must be in [0, 7] inclusive.
+        x (COOTensor): The input COOTensor of hyperbolic sine function, its rank must be in [0, 7] inclusive.
 
     Returns:
         COOTensor, has the same shape as `x`.
@@ -1265,14 +1264,14 @@ def coo_sinh(x: COOTensor) -> COOTensor:
 
 def csr_ceil(x: CSRTensor) -> CSRTensor:
     r"""
-    Rounds a csr_tensor up to the closest integer element-wise.
+    Rounds a CSRTensor up to the closest integer element-wise.
 
     .. math::
 
-        out_i = \lcsr_ceil x_i \rcsr_ceil = \lfloor x_i \rfloor + 1
+        out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
 
     Args:
-        x (CSRTensor): The input csr_tensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
+        x (CSRTensor): The input CSRTensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
 
     Returns:
         CSRTensor, has the same shape as the `x`.
@@ -1301,14 +1300,14 @@ def csr_ceil(x: CSRTensor) -> CSRTensor:
 
 def coo_ceil(x: COOTensor) -> COOTensor:
     r"""
-    Rounds a coo_tensor up to the closest integer element-wise.
+    Rounds a COOTensor up to the closest integer element-wise.
 
     .. math::
 
-        out_i = \lcoo_ceil x_i \rcoo_ceil = \lfloor x_i \rfloor + 1
+        out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
 
     Args:
-        x (COOTensor): The input coo_tensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
+        x (COOTensor): The input COOTensor with a dtype of float16 or float32.
 
     Returns:
         COOTensor, has the same shape as the `x`.
@@ -1340,10 +1339,10 @@ def csr_cosh(x: CSRTensor) -> CSRTensor:
 
     .. math::
 
-        out_i = \csr_cosh(x_i)
+        out_i = \cosh(x_i)
 
     Args:
-        x (CSRTensor): The input csr_tensor of hyperbolic cosine function, its rank must be in [0, 7] inclusive
+        x (CSRTensor): The input CSRTensor of hyperbolic cosine function, its rank must be in [0, 7] inclusive
             and data type must be float16, float32, float64, complex64 or complex128.
 
     Returns:
@@ -1378,10 +1377,10 @@ def coo_cosh(x: COOTensor) -> COOTensor:
 
     .. math::
 
-        out_i = \coo_cosh(x_i)
+        out_i = \cosh(x_i)
 
     Args:
-        x (COOTensor): The input coo_tensor of hyperbolic cosine function, its rank must be in [0, 7] inclusive
+        x (COOTensor): The input COOTensor of hyperbolic cosine function, its rank must be in [0, 7] inclusive
             and data type must be float16, float32, float64, complex64 or complex128.
 
     Returns:
@@ -1484,13 +1483,13 @@ def coo_softsign(x: COOTensor) -> COOTensor:
 
 def csr_log1p(x: CSRTensor) -> CSRTensor:
     """
-    Returns the natural logarithm of one plus the input csr_tensor element-wise.
+    Returns the natural logarithm of one plus the input CSRTensor element-wise.
 
     .. math::
         out_i = {log_e}(x_i + 1)
 
     Args:
-        x (CSRTensor): The input csr_tensor. With float16 or float32 data type.
+        x (CSRTensor): The input CSRTensor. With float16 or float32 data type.
             The value must be greater than -1.
 
     Returns:
@@ -1520,13 +1519,13 @@ def csr_log1p(x: CSRTensor) -> CSRTensor:
 
 def coo_log1p(x: COOTensor) -> COOTensor:
     """
-    Returns the natural logarithm of one plus the input coo_tensor element-wise.
+    Returns the natural logarithm of one plus the input COOTensor element-wise.
 
     .. math::
         out_i = {log_e}(x_i + 1)
 
     Args:
-        x (COOTensor): The input coo_tensor. With float16 or float32 data type.
+        x (COOTensor): The input COOTensor. With float16 or float32 data type.
 
     Returns:
         COOTensor, has the same shape as the `x`.
@@ -1554,14 +1553,14 @@ def coo_log1p(x: COOTensor) -> COOTensor:
 
 def csr_round(x: CSRTensor) -> CSRTensor:
     r"""
-    Returns half to even of a csr_tensor element-wise.
+    Returns half to even of a CSRTensor element-wise.
 
     .. math::
 
         out_i \\approx x_i
 
     Args:
-        x (CSRTensor): The input csr_tensor.
+        x (CSRTensor): The input CSRTensor.
 
     Returns:
         CSRTensor, has the same shape and type as the `x`.
@@ -1589,14 +1588,14 @@ def csr_round(x: CSRTensor) -> CSRTensor:
 
 def coo_round(x: COOTensor) -> COOTensor:
     """
-    Returns half to even of a coo_tensor element-wise.
+    Returns half to even of a COOTensor element-wise.
 
     .. math::
 
         out_i \approx x_i
 
     Args:
-        x (COOTensor): The input coo_tensor.
+        x (COOTensor): The input COOTensor.
 
     Returns:
         COOTensor, has the same shape and type as the `x`.
@@ -1629,7 +1628,7 @@ def csr_tanh(x: CSRTensor) -> CSRTensor:
 
     .. math::
 
-        csr_tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
+        tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
     where :math:`x_i` is an element of the input CSRTensor.
 
@@ -1669,7 +1668,7 @@ def coo_tanh(x: COOTensor) -> COOTensor:
 
     .. math::
 
-        coo_tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
+        tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
     where :math:`x_i` is an element of the input COOTensor.
 
@@ -1709,7 +1708,7 @@ def csr_asinh(x: CSRTensor) -> CSRTensor:
         out_i = \sinh^{-1}(input_i)
 
     Args:
-        x (CSRTensor): The input csr_tensor of inverse hyperbolic sine function, its rank must be in [0, 7] inclusive.
+        x (CSRTensor): The input CSRTensor of inverse hyperbolic sine function, its rank must be in [0, 7] inclusive.
 
     Returns:
         CSRTensor, has the same shape and type as `x`.
@@ -1744,7 +1743,7 @@ def coo_asinh(x: COOTensor) -> COOTensor:
         out_i = \sinh^{-1}(input_i)
 
     Args:
-        x (COOTensor): The input coo_tensor of inverse hyperbolic sine function, its rank must be in [0, 7] inclusive.
+        x (COOTensor): The input COOTensor of inverse hyperbolic sine function, its rank must be in [0, 7] inclusive.
 
     Returns:
         COOTensor, has the same shape and type as `x`.
@@ -1771,14 +1770,14 @@ def coo_asinh(x: COOTensor) -> COOTensor:
 
 def csr_neg(x: CSRTensor) -> CSRTensor:
     """
-    Returns a csr_tensor with csr_negative values of the input csr_tensor element-wise.
+    Returns a CSRTensor with csr_negative values of the input CSRTensor element-wise.
 
     .. math::
 
         out_{i} = - x_{i}
 
     Args:
-        x (CSRTensor): The input csr_tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        x (CSRTensor): The input CSRTensor with a dtype of Number, its rank must be in [0, 7] inclusive.
 
     Returns:
         CSRTensor, has the same shape and dtype as input.
@@ -1806,14 +1805,14 @@ def csr_neg(x: CSRTensor) -> CSRTensor:
 
 def coo_neg(x: COOTensor) -> COOTensor:
     """
-    Returns a coo_tensor with coo_negative values of the input coo_tensor element-wise.
+    Returns a COOTensor with coo_negative values of the input COOTensor element-wise.
 
     .. math::
 
         out_{i} = - x_{i}
 
     Args:
-        x (COOTensor): The input coo_tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        x (COOTensor): The input COOTensor with a dtype of Number, its rank must be in [0, 7] inclusive.
 
     Returns:
         COOTensor, has the same shape and dtype as input.
@@ -1847,11 +1846,11 @@ def csr_acosh(x: CSRTensor) -> CSRTensor:
         out_i = \cosh^{-1}(input_i)
 
     .. warning::
-        Given an input csr_tensor x, the function computes inverse hyperbolic cosine of every element.
+        Given an input CSRTensor x, the function computes inverse hyperbolic cosine of every element.
         Input range is [1, inf].
 
     Args:
-        x (CSRTensor): The input csr_tensor of inverse hyperbolic cosine function, its rank must be in [0, 7] inclusive.
+        x (CSRTensor): The input CSRTensor of inverse hyperbolic cosine function, its rank must be in [0, 7] inclusive.
 
     Returns:
         CSRTensor, has the same shape and type as `x`.
@@ -1886,11 +1885,11 @@ def coo_acosh(x: COOTensor) -> COOTensor:
         out_i = \cosh^{-1}(input_i)
 
     .. warning::
-        Given an input coo_tensor x, the function computes inverse hyperbolic cosine of every element.
+        Given an input COOTensor x, the function computes inverse hyperbolic cosine of every element.
         Input range is [1, inf].
 
     Args:
-        x (COOTensor): The input coo_tensor of inverse hyperbolic cosine function, its rank must be in [0, 7] inclusive.
+        x (COOTensor): The input COOTensor of inverse hyperbolic cosine function, its rank must be in [0, 7] inclusive.
 
     Returns:
         COOTensor, has the same shape and type as `x`.
@@ -1929,7 +1928,7 @@ def csr_isinf(x: CSRTensor) -> CSRTensor:
     where :math:`Inf` means not a number.
 
     Args:
-        x (CSRTensor): The input csr_tensor.
+        x (CSRTensor): The input CSRTensor.
 
     Returns:
         CSRTensor, has the same shape of input, and the dtype is bool.
@@ -1969,7 +1968,7 @@ def coo_isinf(x: COOTensor) -> COOTensor:
     where :math:`Inf` means not a number.
 
     Args:
-        x (COOTensor): The input coo_tensor.
+        x (COOTensor): The input COOTensor.
 
     Returns:
         COOTensor, has the same shape of input, and the dtype is bool.
@@ -2006,7 +2005,7 @@ def csr_atanh(x: CSRTensor) -> CSRTensor:
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        x (CSRTensor): Input csr_tensor.
+        x (CSRTensor): Input CSRTensor.
             The data type should be one of the following types: float16, float32.
 
     Returns:
@@ -2046,7 +2045,7 @@ def coo_atanh(x: COOTensor) -> COOTensor:
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        x (COOTensor): Input coo_tensor.
+        x (COOTensor): Input COOTensor.
             The data type should be one of the following types: float16, float32.
 
     Returns:
@@ -2154,14 +2153,14 @@ def coo_sigmoid(x: COOTensor) -> COOTensor:
 
 def csr_abs(x: CSRTensor) -> CSRTensor:
     """
-    Returns csr_absolute value of a csr_tensor element-wise.
+    Returns csr_absolute value of a CSRTensor element-wise.
 
     .. math::
 
         out_i = |x_i|
 
     Args:
-        x (CSRTensor): The input csr_tensor.
+        x (CSRTensor): The input CSRTensor.
 
     Returns:
         CSRTensor, has the same shape as the `x`.
@@ -2189,14 +2188,14 @@ def csr_abs(x: CSRTensor) -> CSRTensor:
 
 def coo_abs(x: COOTensor) -> COOTensor:
     """
-    Returns coo_absolute value of a coo_tensor element-wise.
+    Returns coo_absolute value of a COOTensor element-wise.
 
     .. math::
 
         out_i = |x_i|
 
     Args:
-        x (COOTensor): The input coo_tensor.
+        x (COOTensor): The input COOTensor.
 
     Returns:
         COOTensor, has the same shape as the `x`.
@@ -2223,14 +2222,14 @@ def coo_abs(x: COOTensor) -> COOTensor:
 
 def csr_sin(x: CSRTensor) -> CSRTensor:
     """
-    Computes csr_sine of the input element-wise.
+    Computes sine of the input element-wise.
 
     .. math::
 
-        out_i = csr_sin(x_i)
+        out_i = sin(x_i)
 
     Args:
-        x (CSRTensor): Input csr_tensor.
+        x (CSRTensor): Input CSRTensor.
 
     Returns:
         CSRTensor, has the same shape and dtype as `x`.
@@ -2260,14 +2259,14 @@ def csr_sin(x: CSRTensor) -> CSRTensor:
 
 def coo_sin(x: COOTensor) -> COOTensor:
     """
-    Computes coo_sine of the input element-wise.
+    Computes sine of the input element-wise.
 
     .. math::
 
-        out_i = coo_sin(x_i)
+        out_i = sin(x_i)
 
     Args:
-        x (COOTensor): Input coo_tensor.
+        x (COOTensor): Input COOTensor.
 
     Returns:
         COOTensor, has the same shape and dtype as `x`.
