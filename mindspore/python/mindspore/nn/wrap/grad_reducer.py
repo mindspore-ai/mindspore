@@ -295,7 +295,9 @@ class DistributedGradReducer(Cell):
 
     Args:
         parameters (list): the parameters to be updated.
-        mean (bool): When mean is true, the mean coefficient (degree) would apply on gradients. Default: True.
+        mean (bool): When mean is true, the mean coefficient (degree) would apply on gradients.
+                     When it is not specified, using the configuration `gradients_mean` in auto_parallel_context.
+                     Default: None.
         degree (int): The mean coefficient. Usually it equals to device number. Default: None.
         fusion_type (int): The type of all reduce fusion. Default: 1.
         group (str): The communication group to work on. Normally, the group should be created by create_group,
@@ -387,9 +389,12 @@ class DistributedGradReducer(Cell):
         256.0
     """
 
-    def __init__(self, parameters, mean=True, degree=None, fusion_type=1, group=GlobalComm.WORLD_COMM_GROUP):
+    def __init__(self, parameters, mean=None, degree=None, fusion_type=1, group=GlobalComm.WORLD_COMM_GROUP):
         super(DistributedGradReducer, self).__init__(auto_prefix=False)
         self.map_ = C.Map()
+        self.mean = mean
+        if mean is None:
+            self.mean = auto_parallel_context().get_gradients_mean()
         if degree is None:
             self.degree = get_group_size()
         else:
@@ -399,7 +404,7 @@ class DistributedGradReducer(Cell):
                                  "should large than 0 and be int, degree: {}.".format(degree))
             self.degree = degree
         self.degree = Tensor(1.0 / self.degree, mstype.float32)
-        self.mean = mean
+
         self.allreduce_filter = tuple((x.layerwise_parallel is False) and (x.is_in_shard is False) for x in parameters)
         is_parallel_optimizer = context.get_auto_parallel_context("enable_parallel_optimizer")
         split_indices = auto_parallel_context().get_all_reduce_fusion_split_indices()
