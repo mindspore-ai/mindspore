@@ -18,6 +18,7 @@
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
 #include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/cast_eliminate.h"
+#include "frontend/optimizer/irpass/get_grad_eliminate.h"
 #include "frontend/optimizer/irpass/convert.h"
 #include "frontend/optimizer/irpass/environ_eliminate.h"
 #include "frontend/optimizer/irpass/meta_fg_var_prepare.h"
@@ -113,6 +114,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<StackUnstackEliminator>(), "stack_unstack_eliminate", prim::kPrimUnstack);
   tile_eliminate_ = MakeSubstitution(std::make_shared<TileEliminater>(), "tile_eliminate", prim::kPrimTile);
   cast_eliminate_ = MakeSubstitution(std::make_shared<CastEliminater>(), "cast_eliminate", prim::kPrimCast);
+  get_grad_eliminate_ =
+    MakeSubstitution(std::make_shared<GetGradEliminater>(), "get_grad_eliminate", prim::kPrimGetGrad);
   reshape_eliminate_ = MakeSubstitution(std::make_shared<ReshapeEliminater>(), "reshape_eliminate", prim::kPrimReshape);
   transpose_eliminate_ =
     MakeSubstitution(std::make_shared<TransposeSameIOEliminater>(), "transpose_eliminate", prim::kPrimTranspose);

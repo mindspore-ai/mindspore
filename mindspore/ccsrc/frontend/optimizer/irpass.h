@@ -66,6 +66,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr real_op_eliminate_;
   SubstitutionPtr convert_tensor_eliminate_;
   SubstitutionPtr convert_tensor_all_eliminate_;
+  SubstitutionPtr get_grad_eliminate_;
 
   // Env Item Eliminate
   SubstitutionPtr environ_get_eliminate_;

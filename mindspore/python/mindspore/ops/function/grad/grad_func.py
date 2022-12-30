@@ -26,6 +26,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.ops.function.array_func import ones, expand_dims, size, reshape, broadcast_to, transpose
 from mindspore.ops.composite import _Vmap, _Grad, _TaylorOperation, GradOperation
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 
 cast = P.Cast()
 dtype = P.DType()
@@ -86,11 +87,12 @@ def _check_grad_position(grad_position, args_num):
 
 
 @constexpr
-def _get_grad_op(get_by_list, get_by_position, has_aux, get_value=False):
-    return _Grad(get_by_list=get_by_list, get_by_position=get_by_position, has_aux=has_aux, get_value=get_value)
+def _get_grad_op(get_by_list, get_by_position, has_aux, get_value=False, return_ids=False):
+    return _Grad(get_by_list=get_by_list, get_by_position=get_by_position, has_aux=has_aux, get_value=get_value,
+                 return_ids=return_ids)
 
 
-def grad(fn, grad_position=0, weights=None, has_aux=False):
+def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False):
     """
     A wrapper function to generate the gradient function for the input function.
 
@@ -113,11 +115,18 @@ def grad(fn, grad_position=0, weights=None, has_aux=False):
         has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
             will be returned straightly. It means the `fn` must return more than one outputs in this case.
             Default: False.
+        return_ids(bool): If True, every output gradient will be combined with its position id or parameter name as a
+            tuple. The format of the output will be the same with the output of grad when return_ids is set to false,
+            but every gradient in the output will be replaced by a tuple of position id or parameter name and its
+            gradient.
 
     Returns:
         Function, the gradient function to calculate gradient for the input function or cell.
         For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set True, gradient function will return outputs
         like `(gradient, out2)` and `out2` does not contribute to the differentiation, otherwise `gradient`.
+        When return_ids is set to True, The format of the output will be the same with the output of grad when
+        return_ids is set to false, but every gradient in the output will be replaced by a tuple of position id or
+        parameter name and its gradient.
 
     Raises:
         ValueError: If both `grad_position` and `weights` are None.
@@ -192,17 +201,36 @@ def grad(fn, grad_position=0, weights=None, has_aux=False):
         >>> inputs_gradient, params_gradient = grad_fn(inputs, labels)
         >>> print(len(weights), len(params_gradient))
         2 2
+        >>> # Case 4: return the gradient with ids.
+        >>> import numpy as np
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import grad
+        >>>
+        >>> # Cell object to be differentiated
+        >>> class Net(nn.Cell):
+        ...     def construct(self, x, y, z):
+        ...         return x * y * z
+        >>> x = Tensor([1, 2], mindspore.float32)
+        >>> y = Tensor([-2, 3], mindspore.float32)
+        >>> z = Tensor([0, 3], mindspore.float32)
+        >>> net = Net()
+        >>> output = grad(net, grad_position=(1, 2), return_ids = True)(x, y, z)
+        >>> print(output)
+        ((1, Tensor(shape=[2], dtype=Float32, value=[ 0.00000000e+00,  6.00000000e+00])),
+         (2, Tensor(shape=[2], dtype=Float32, value=[-2.00000000e+00,  6.00000000e+00])))
     """
     if grad_position is None and weights is None:
         raise ValueError("`grad_position` and `weight` can not be None at the same time.")
 
     if grad_position is None:
-        return _get_grad_op(True, False, has_aux)(fn, weights)
+        return _get_grad_op(True, False, has_aux, False, return_ids)(fn, weights)
 
     grad_position = _convert_grad_position_type(grad_position)
     if weights is None:
-        return _get_grad_op(False, True, has_aux)(fn, None, grad_position)
-    return _get_grad_op(True, True, has_aux)(fn, weights, grad_position)
+        return _get_grad_op(False, True, has_aux, False, return_ids)(fn, None, grad_position)
+    return _get_grad_op(True, True, has_aux, False, return_ids)(fn, weights, grad_position)
 
 
 def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
@@ -327,6 +355,56 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
     if weights is None:
         return _get_grad_op(False, True, has_aux, True)(fn, None, grad_position)
     return _get_grad_op(True, True, has_aux, True)(fn, weights, grad_position)
+
+
+def get_grad(gradients, x):
+    """
+    A function to get get expected gradient from the return value of ops.grad, when it has return_ids parameter set
+    to True, by using the position id of a tensor or the parameter.
+
+    As for gradient, three typical cases are included:
+
+    1. gradient with respect to inputs. In this case, use return value of ops.grad as the first input and
+    the position of the tensor as the second input.
+    2. gradient with respect to weights. In this case, use return value of ops.grad as the first input and
+    the parameter as the second input.
+
+    Args:
+        The return value of ops.grad.
+        position number of a tensor, or a parameter that is used in ops.grad.
+
+    Returns:
+        The gradient of the tensor on the position of the position number used as the second input, or the gradient
+        of the parameter used as the second input.
+
+    Raises:
+        RuntimeError: If gradient is not found.
+        TypeError: If type of Args does not belong to required ones.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import grad
+        >>>
+        >>>  # Cell object to be differentiated
+        >>> class Net(nn.Cell):
+        >>> def construct(self, x, y, z):
+        >>> return x * y * z
+        >>> x = Tensor([1, 2], mindspore.float32)
+        >>> y = Tensor([-2, 3], mindspore.float32)
+        >>> z = Tensor([0, 3], mindspore.float32)
+        >>> net = Net()
+        >>> out_grad = grad(net, grad_position=(1, 2), return_ids = True)(x, y, z)
+        >>> output = get_grad(out_grad, 1)
+        >>> print(output)
+        Tensor(shape=[2], dtype=Float32, value=[0.00000000e+00,  6.00000000e+00]
+    """
+    return inner.GetGrad()(gradients, x)
 
 
 def _trans_jet_inputs(primals_item, series_item):
@@ -1345,6 +1423,7 @@ __all__ = [
     'vjp',
     'custom_vjp',
     'linearize',
-    'stop_gradient'
+    'stop_gradient',
+    'get_grad'
 ]
 __all__.sort()

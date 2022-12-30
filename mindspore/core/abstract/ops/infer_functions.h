@@ -102,6 +102,8 @@ MIND_API AbstractBasePtr InferImplArrayLen(const AnalysisEnginePtr &, const Prim
                                            const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const AbstractBasePtrList &args_spec_list);
+MIND_API AbstractBasePtr InferImplGetGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplIdentity(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const AbstractBasePtrList &args_spec_list);
 

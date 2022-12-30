@@ -415,7 +415,7 @@ void CheckMutableArgAbstract(const AbstractBasePtr &abs) {
 
 AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name();
+  const std::string &op_name = primitive->name();
   constexpr int max_args_spec_size = 2;
   auto arg_size = args_spec_list.size();
   (void)CheckAndConvertUtils::CheckValue<size_t>("input size", arg_size, kLessEqual, max_args_spec_size, op_name);
@@ -439,6 +439,76 @@ AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &
   }
   auto ret_seq = ret->cast<AbstractSequencePtr>();
   ret_seq->CheckAndConvertToDynamicLenSequence();
+  return ret;
+}
+
+namespace {
+std::string GetRefKey(const AbstractRefPtr &ref_tensor) {
+  const auto &ref_key_value = ref_tensor->ref_key_value();
+  MS_EXCEPTION_IF_NULL(ref_key_value);
+  auto ref_key = ref_key_value->cast_ptr<RefKey>();
+  MS_EXCEPTION_IF_NULL(ref_key);
+  return ref_key->value();
+}
+
+void GetGradAbstract(const AbstractBasePtr &grads_abs, const std::string &para_name, int64_t position,
+                     AbstractBasePtr *ret) {
+  auto grad_abs_tuple = grads_abs->cast_ptr<AbstractTuple>();
+  if (grad_abs_tuple == nullptr || grad_abs_tuple->elements().size() == 0) {
+    return;
+  }
+  auto abs0 = grad_abs_tuple->elements()[0];
+  if (abs0->isa<AbstractScalar>()) {
+    auto build_value = abs0->cast_ptr<AbstractScalar>()->BuildValue();
+    size_t expect_size = 2;
+    if (grad_abs_tuple->elements().size() >= expect_size) {
+      if (build_value->isa<Int64Imm>()) {
+        if (GetValue<int64_t>(build_value) == position) {
+          *ret = grad_abs_tuple->elements()[1];
+        }
+      } else if (build_value->isa<StringImm>()) {
+        if (GetValue<std::string>(build_value) == para_name) {
+          *ret = grad_abs_tuple->elements()[1];
+        }
+      }
+    }
+    return;
+  } else {
+    for (const auto &abs : grad_abs_tuple->elements()) {
+      GetGradAbstract(abs, para_name, position, ret);
+    }
+    return;
+  }
+}
+}  // namespace
+
+AbstractBasePtr InferImplGetGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const AbstractBasePtrList &args_spec_list) {
+  const std::string &op_name = primitive->name();
+  constexpr int expected_args_spec_size = 2;
+  CheckArgsSize(op_name, args_spec_list, expected_args_spec_size);
+  auto &hash_id_abs = args_spec_list[1];
+
+  int64_t position = -1;
+  std::string para_name;
+  if (hash_id_abs->isa<AbstractScalar>()) {
+    auto build_value = hash_id_abs->cast_ptr<AbstractScalar>()->BuildValue();
+    if (!build_value->isa<Int64Imm>()) {
+      MS_EXCEPTION(TypeError) << "For " << op_name << ", the `x` should be an int64 number, but got "
+                              << build_value->ToString();
+    }
+    position = GetValue<int64_t>(build_value);
+  } else if (hash_id_abs->isa<AbstractRefTensor>()) {
+    para_name = GetRefKey(hash_id_abs->cast<AbstractRefPtr>());
+  } else {
+    MS_EXCEPTION(TypeError) << "For " << op_name << ", the `x` should be an integer or a Parameter, but got "
+                            << hash_id_abs->ToString();
+  }
+  AbstractBasePtr ret = nullptr;
+  GetGradAbstract(args_spec_list[0], para_name, position, &ret);
+  if (ret == nullptr) {
+    MS_LOG(EXCEPTION) << "Can not find the gradient for position or Parameter " << args_spec_list[1]->ToString();
+  }
   return ret;
 }
 }  // namespace abstract
