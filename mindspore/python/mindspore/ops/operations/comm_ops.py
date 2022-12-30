@@ -396,7 +396,7 @@ class ReduceScatter(PrimitiveWithInfer):
         The back propagation of the op is not supported yet. Stay tuned for more.
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
         communication environment variables before running the following example, please check the details on the
-        official website of `MindSpore \
+        official website of `Communication Operator API \
         <https://www.mindspore.cn/docs/en/r1.10/api_python/mindspore.ops.html#communication-operator>`_.
 
     Args:
@@ -852,11 +852,11 @@ class NeighborExchangeV2(Primitive):
     Note:
         The user needs to preset
         communication environment variables before running the following example, please check the details on the
-        official website of `MindSpore \
+        official website of `Communication Operator API \
         <https://www.mindspore.cn/docs/en/r1.10/api_python/mindspore.ops.html#communication-operator>`_.
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
-        in the same subnet, please check the `details \
+        in the same subnet, please check the `Distributed Set Communication Primitives - Notes \
         <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.10/parallel/communicate_ops.html#注意事项>`_.
 
     Args:

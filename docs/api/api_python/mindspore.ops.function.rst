@@ -14,6 +14,7 @@ mindspore.ops.function
 
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.adaptive_avg_pool3d
+    mindspore.ops.adaptive_max_pool2d
     mindspore.ops.avg_pool2d
     mindspore.ops.bias_add
     mindspore.ops.conv2d
@@ -293,7 +294,6 @@ Array操作
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.adaptive_max_pool2d
     mindspore.ops.batch_to_space_nd
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
