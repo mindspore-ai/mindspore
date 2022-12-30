@@ -288,6 +288,8 @@ class BACKEND_EXPORT KernelTensor {
   // deprecated field for dynamic shape
   const ShapeVector &GetDeviceShapeAdaptively() const;
   void SetDeviceShapeAdaptively(const ShapeVector &device_shape_adaptively);
+  TypeId GetScalarDtype() const;
+  TypeId GetTupleElementDtype() const;
 
  private:
   TypeId meta_type_{kObjectTypeTensorType};
