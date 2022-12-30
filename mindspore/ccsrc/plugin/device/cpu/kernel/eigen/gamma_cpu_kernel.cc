@@ -37,7 +37,6 @@ bool GammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   kernel_name_ = kernel_ptr->name();
   seed_ = kernel_ptr->get_seed();
   seed2_ = kernel_ptr->get_seed2();
-  generator_.Init(seed_, seed2_);
 
   outputs_ = outputs;
   output_shape_ = outputs[0]->GetShapeVector();
@@ -82,6 +81,7 @@ int GammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 // T: float16 float32 float64 dtype of alpha, beta and output
 template <typename T>
 void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+  generator_.Init(seed_, seed2_);
   const auto *alpha_flat = reinterpret_cast<T *>(inputs[1]->addr);
   auto *samples_flat = reinterpret_cast<T *>(outputs[0]->addr);
 
