@@ -318,7 +318,7 @@ bool ParseCommonCompute(const nlohmann::json &item, const OpInfoPtr &op_info_ptr
 
 bool ParseCommonDynamicFormat(const nlohmann::json &item, const OpInfoPtr &op_info_ptr) {
   CHECK_VALUE(item, kFlag)
-  bool is_dynamic_format = (item.at(kFlag) == kTrue);
+  bool is_dynamic_format = (item.at(kFlag) == "True" || item.at(kFlag) == kTrue);
   if (is_dynamic_format) {
     op_info_ptr->set_op_pattern(kDynamicFormatPattern);
   }
