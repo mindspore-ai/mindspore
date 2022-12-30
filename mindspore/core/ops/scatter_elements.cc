@@ -28,9 +28,8 @@ constexpr size_t kScatterElementsArgSize = 3;
 
 namespace mindspore {
 namespace ops {
-int64_t ScatterElements::get_axis() const { return axis_; }
-
-void ScatterElements::set_axis(const int64_t axis) { axis_ = axis; }
+void ScatterElements::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+int64_t ScatterElements::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 AbstractBasePtr ScatterElementsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const abstract::AbstractBasePtrList &args_spec_list) {

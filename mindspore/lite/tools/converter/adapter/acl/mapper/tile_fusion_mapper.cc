@@ -39,22 +39,21 @@ STATUS TileFusionMapper::Mapper(const CNodePtr &cnode) {
   }
   auto repeats_input = cnode->input(kNameTileInputNum - 1);
   MS_CHECK_TRUE_RET(repeats_input != nullptr, RET_ERROR);
-  if (!utils::isa<ParameterPtr>(repeats_input)) {
-    MS_LOG(ERROR) << "The repeats node is not parameter.";
-    return RET_ERROR;
+  if (utils::isa<ParameterPtr>(repeats_input)) {
+    MS_LOG(WARNING) << "The repeats node is not parameter.";
+    ParameterPtr repeats_param = repeats_input->cast<ParameterPtr>();
+    MS_CHECK_TRUE_RET(repeats_param != nullptr, RET_ERROR);
+    auto data = acl::GetIntParameterData(repeats_param);
+    std::vector<int64_t> multiples;
+    std::transform(data.begin(), data.end(), std::back_inserter(multiples),
+                   [](int32_t x) -> int64_t { return static_cast<int64_t>(x); });
+    ValueNodePtr value_node = NewValueNode<std::vector<int64_t>>(multiples);
+    MS_CHECK_TRUE_RET(value_node != nullptr, RET_ERROR);
+    std::vector<int64_t> shape_vec_shape = {static_cast<int64_t>(multiples.size())};
+    auto abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec_shape);
+    value_node->set_abstract(abstract);
+    cnode->set_input(kNameTileInputNum - 1, value_node);
   }
-  ParameterPtr repeats_param = repeats_input->cast<ParameterPtr>();
-  MS_CHECK_TRUE_RET(repeats_param != nullptr, RET_ERROR);
-  auto data = acl::GetIntParameterData(repeats_param);
-  std::vector<int64_t> multiples;
-  std::transform(data.begin(), data.end(), std::back_inserter(multiples),
-                 [](int32_t x) -> int64_t { return static_cast<int64_t>(x); });
-  ValueNodePtr value_node = NewValueNode<std::vector<int64_t>>(multiples);
-  MS_CHECK_TRUE_RET(value_node != nullptr, RET_ERROR);
-  std::vector<int64_t> shape_vec_shape = {static_cast<int64_t>(multiples.size())};
-  auto abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec_shape);
-  value_node->set_abstract(abstract);
-  cnode->set_input(kNameTileInputNum - 1, value_node);
 
   ops::Tile tile;
   auto dst_prim = tile.GetPrim();

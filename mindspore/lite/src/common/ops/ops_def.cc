@@ -231,6 +231,7 @@ OP_TYPE(GatherD)
 OP_TYPE(GroupNormFusion)
 OP_TYPE(Log1p)
 OP_TYPE(TensorScatterAdd)
+OP_TYPE(ScatterElements)
 OP_TYPE_DEF_END(PrimitiveType)
 
 OP_SCHEMA_DEF(Abs)
@@ -1301,3 +1302,7 @@ OP_SCHEMA_DEF_END(Log1p)
 
 OP_SCHEMA_DEF(TensorScatterAdd)
 OP_SCHEMA_DEF_END(TensorScatterAdd)
+
+OP_SCHEMA_DEF(ScatterElements)
+OP_ATTR(axis, long)
+OP_SCHEMA_DEF_END(ScatterElements)
