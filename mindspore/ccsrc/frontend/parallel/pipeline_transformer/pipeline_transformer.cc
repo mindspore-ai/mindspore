@@ -1013,9 +1013,7 @@ void PipelineTransformer::CoverSensShape() {
   std::vector<AnfNodePtr> fill_input = {NewValueNode(fill_op), NewValueNode(type_ptr_),
                                         NewValueNode(MakeValue(shape_->value())), NewValueNode(0)};
   auto fill = root_->NewCNode(fill_input);
-  std::vector<AnfNodePtr> new_sens_input = {sens_cnode->input(0), fill};
-  auto new_sens_node = root_->NewCNode(new_sens_input);
-  (void)manager_->Replace(sens_cnode, new_sens_node);
+  manager_->SetEdge(sens_cnode, 1, fill);
 }
 
 void PipelineTransformer::RedundancyNode(const AnfNodePtr &node,

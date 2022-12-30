@@ -136,7 +136,7 @@ FuncGraphPtr GradOneFuncGraph(const FuncGraphPtr &func_graph, const opt::Optimiz
     }
   };
 
-  auto f = std::make_shared<DFunctor>(func_graph, resources);
+  auto f = std::make_shared<DFunctor>(func_graph, resources, is_top);
   auto user_defined = f->KUserDefined(func_graph);
   if (user_defined != nullptr) {
     multi_graph_sink(user_defined);

@@ -562,7 +562,8 @@ EvalResultPtr PartialAppEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtr
   return res;
 }
 
-EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, const AnfNodeConfigPtr &) {
+EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                              const AnfNodeConfigPtr &out_conf) {
   AbstractBasePtrList args_abs_list = EvaluateArguments(args_conf_list);
   MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
   auto eval_result = evaluator_cache_mgr_->GetValue(args_abs_list);
@@ -594,8 +595,21 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
                          return SensitivityTransform(arg_abs);
                        });
   AbstractBasePtr bparams_final = std::make_shared<AbstractTuple>(bparams);
-  AbstractFunctionPtr bprop =
-    std::make_shared<VirtualAbstractClosure>(SensitivityTransform(result->abstract()), bparams_final);
+  AbstractFunctionPtr bprop;
+  auto current_node = out_conf->node();
+  MS_EXCEPTION_IF_NULL(current_node);
+  if (current_node->isa<CNode>()) {
+    auto current_cnode = current_node->cast<CNodePtr>();
+    auto effect_info = current_cnode->GetEffectInfo();
+    if (current_cnode->IsEffectHandled() && effect_info.back_mem) {
+      AbstractBasePtrList bprop_inputs{SensitivityTransform(result->abstract()), kUMonad->ToAbstract()};
+      bprop = std::make_shared<VirtualAbstractClosure>(bprop_inputs, bparams_final);
+    } else {
+      bprop = std::make_shared<VirtualAbstractClosure>(SensitivityTransform(result->abstract()), bparams_final);
+    }
+  } else {
+    bprop = std::make_shared<VirtualAbstractClosure>(SensitivityTransform(result->abstract()), bparams_final);
+  }
 
   // J(f)(J(x)) return a tuple (y, bprop_f)
   AbstractBasePtrList jargs = {result->abstract(), bprop};
