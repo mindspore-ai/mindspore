@@ -16,4 +16,4 @@ mindspore.ops.logical_not
 
     异常：
         - **TypeError** - 如果 `x` 不是Tensor。
-        - **TypeError** - 如果 `x` 的数据类型不是bool。
+        - **TypeError** - 在CPU和Ascend平台上运行时， `x` 的数据类型不是bool。

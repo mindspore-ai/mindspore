@@ -1257,7 +1257,7 @@ def log(x):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64 on GPU and CPU.
+        TypeError: If dtype of `x` is not float16, float32 or float64 on CPU.
         TypeError: If dtype of `x` is not float16 or float32 on Ascend.
 
     Supported Platforms:
@@ -1536,7 +1536,7 @@ def logical_not(x):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not a bool.
+        TypeError: If dtype of `x` is not a bool on CPU and Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
