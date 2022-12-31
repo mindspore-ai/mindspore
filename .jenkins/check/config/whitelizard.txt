@@ -269,3 +269,10 @@ mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/crop_and_resize_cpu_kernel.cc
 
 # AICPU migration
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/mediangrad.cc:aicpu::MedianGradCpuKernel::MedianGradCompute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/adaptive_max_pool_3d.cc:aicpu::AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCompute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/adaptive_max_pool_3d_grad.cc:aicpu::AdaptiveMaxPool3dGradCpuKernel::Compute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/avgpoolgrad.cc:aicpu::ComputeAvgPoolGradImpl
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/batch_norm_grad_grad.cc:aicpu::BatchNormGradGradCpuKernel::TrainingComputeNHWC
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/batch_norm_grad_grad.cc:aicpu::BatchNormGradGradCpuKernel::TrainingComputeNCHW
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/avgpool.cc:aicpu::AvgPoolCpuKernel::RealCompute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/bias_add.cc:aicpu::BiasAddCpuKernel::Compute
