@@ -41,6 +41,7 @@ class MS_CORE_API MindIRLoader {
   const LayoutMap &layout_map() const { return layout_map_; }
   void InitModelParser(MSANFModelParser *model_parser);
   FuncGraphPtr LoadMindIR(const void *buffer, const size_t &size);
+  FuncGraphPtr LoadMindIR(const void *buffer, const size_t &size, const std::string &mindir_path);
   FuncGraphPtr LoadMindIR(const std::string &file_name);
   std::vector<FuncGraphPtr> LoadMindIRs(const std::vector<std::string> &file_names);
   std::vector<std::string> LoadPreprocess(const std::string &file_name);

@@ -81,13 +81,6 @@ function Convert() {
         elif [[ ${cfg_file_name} =~ "_train" ]]; then
           train_model="true"
         elif [[ ${cfg_file_name} =~ "_ascend" ]]; then
-          model_path=$2
-          option_file="${model_path}/model_option/${model_name}.txt"
-          if [[ ${cfg_file_name} =~ "_lite" ]]; then
-            if [ -f "$option_file" ]; then
-              config_file=${option_file}
-            fi
-          fi
           export_mindir="MINDIR"
           target_device="Ascend310"
           if [[ ${extra_info} =~ "online_convert" ]]; then
@@ -143,16 +136,21 @@ function Convert() {
         # start running converter
         echo "Convert ${model_name} ${quant_type} ......"
         echo ${model_name} >> "$4"
-        echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
-             ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape="'${spec_shapes}'" --fp16='${fp16_weight}\
-             ' --configFile='${config_file}' --trainModel='${train_model}' --exportMindIR='${export_mindir} ' --device='${target_device}\
-             ' --encryption='${encryption_flag} ' --inputDataFormat='${input_format} '--NoFusion='${no_fusion}
         if [[ ${cfg_file_name} =~ "_cloud" ]]; then
+            echo "./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
+              --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes} --fp16=${fp16_weight}\
+              --configFile=${config_file} --exportMindIR=${export_mindir} --NoFusion=${no_fusion} --encryption=${encryption_flag}\
+              --trainModel=${train_model} --device=${target_device} --inputDataFormat=${input_format}"
+              
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
               --configFile=${config_file} --exportMindIR=${export_mindir} --NoFusion=${no_fusion} --encryption=${encryption_flag}\
               --trainModel=${train_model} --device=${target_device} --inputDataFormat=${input_format} >> "$4" 
         else
+            echo "./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
+              --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes} --fp16=${fp16_weight}\
+              --configFile=${config_file} --trainModel=${train_model} --device=${target_device}"
+
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
               --configFile=${config_file} --trainModel=${train_model} --device=${target_device} >> "$4"

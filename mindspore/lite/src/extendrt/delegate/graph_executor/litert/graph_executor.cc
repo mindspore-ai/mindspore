@@ -21,7 +21,7 @@
 #include <algorithm>
 
 #include "extendrt/delegate/graph_executor/litert/graph_executor.h"
-#include "tools/converter/converter.h"
+#include "tools/converter/converter_metagraph.h"
 #include "src/litert/lite_model.h"
 #include "src/litert/cpu_info.h"
 #include "include/errorcode.h"
@@ -94,22 +94,25 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
   }
   size_t data_size;
   fb_model_buf_ = FuncGraphReuseManager::GetInstance()->GetFbModelBuf(&data_size, &is_shared_fb_buf_, config_infos_);
-  schema::MetaGraphT *meta_graph_t = nullptr;
+  schema::MetaGraphT *meta_graph = nullptr;
   if (fb_model_buf_ == nullptr) {
-    auto converter = std::make_shared<mindspore::lite::ConverterImpl>();
     auto param = std::make_shared<ConverterPara>();
     param->fmk_type = converter::kFmkTypeMs;
     param->export_mindir = kMindIR;
     auto mutable_graph = std::const_pointer_cast<FuncGraph>(graph);
-    converter->Convert(param, &meta_graph_t, mutable_graph);
-    if (this->IsNeedExtractTensorData(meta_graph_t)) {
-      if (!this->ExtractTensorData(meta_graph_t)) {
+    meta_graph = lite::ConverterToMetaGraph::Build(param, mutable_graph);
+    if (meta_graph == nullptr) {
+      MS_LOG(ERROR) << "func graph convert to meta graph failed.";
+      return false;
+    }
+    if (this->IsNeedExtractTensorData(meta_graph)) {
+      if (!this->ExtractTensorData(meta_graph)) {
         MS_LOG(ERROR) << "Compile Large Graph failed, extract tensor data error.";
         return false;
       }
     }
     flatbuffers::FlatBufferBuilder builder(kBufferSize);
-    auto buffer = lite::MetaGraphSerializer::GetMetaGraphPackedBuff(&builder, *meta_graph_t, &data_size);
+    auto buffer = lite::MetaGraphSerializer::GetMetaGraphPackedBuff(&builder, *meta_graph, &data_size);
     fb_model_buf_ = malloc(data_size);
     memcpy(fb_model_buf_, buffer, data_size);
     FuncGraphReuseManager::GetInstance()->StoreFbModelBuf(fb_model_buf_, data_size, config_infos_);
@@ -119,8 +122,8 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
   }
   int ret = lite_session_->LoadModelAndCompileByBuf(reinterpret_cast<char *>(fb_model_buf_), kMindIR_Lite, data_size,
                                                     helpers_.get());
-  delete meta_graph_t;
-  meta_graph_t = nullptr;
+  delete meta_graph;
+  meta_graph = nullptr;
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Load model by meta graph failed";
     return false;

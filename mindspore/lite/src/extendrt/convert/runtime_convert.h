@@ -27,9 +27,8 @@
 extern "C" {
 #endif
 using ConfigInfos = std::map<std::string, std::map<std::string, std::string>>;
-mindspore::api::FuncGraphPtr RuntimeConvert(const char *model_buf, const size_t &buf_size,
-                                            const std::shared_ptr<mindspore::Context> &context,
-                                            const ConfigInfos &config_info);
+int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_ptr<mindspore::Context> &context,
+                   const ConfigInfos &config_info);
 #ifdef __cplusplus
 }
 #endif

@@ -398,6 +398,10 @@ STATUS ToFormatBase::ConvWeightFormatTrans(const FuncGraphPtr &graph, std::set<A
 
 bool ToFormatBase::Run(const FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, false);
+  auto value = func_graph->get_attr(ops::kFormat);
+  if (value != nullptr && GetValue<int64_t>(value) == format_) {
+    return true;
+  }
   if (format_ != mindspore::NHWC && format_ != mindspore::NCHW) {
     MS_LOG(ERROR) << "format transferring only support nc2nh or nh2nc.";
     return false;
@@ -423,6 +427,8 @@ bool ToFormatBase::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "transfer format failed.";
     return false;
   }
+  func_graph->set_attr(ops::kFormat, MakeValue<int64_t>(format_));
+
   return true;
 }
 }  // namespace opt

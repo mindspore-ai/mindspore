@@ -35,8 +35,8 @@
 #include <dlfcn.h>
 #endif
 namespace mindspore {
-typedef mindspore::api::FuncGraphPtr (*ConverterFunc)(const char *, const size_t &, const std::shared_ptr<Context> &,
-                                                      const ConfigInfos &);
+typedef int (*ConverterFunc)(const mindspore::api::FuncGraphPtr &, const std::shared_ptr<Context> &,
+                             const ConfigInfos &);
 
 class ConverterPlugin {
  public:
@@ -194,12 +194,11 @@ class ModelImpl {
 
   /// \brief Compare and optimize model online.
   ///
-  /// \param[in] model_data Define the buffer read from a model file.
-  /// \param[in] data_size Define bytes number of model buffer.
+  /// \param[in] func_graph load from a model file.
   /// \param[in] model_context Define the context used to store options during execution.
   ///
   /// \return value of config as string type.
-  Status CompileGraphOnline(const void *model_data, size_t data_size, const std::shared_ptr<Context> &model_context);
+  Status ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::shared_ptr<Context> &model_context);
 
   /// \brief Set Mindspore Context.
   /// This is used for load mindir file for model, turn off the infer shape flow

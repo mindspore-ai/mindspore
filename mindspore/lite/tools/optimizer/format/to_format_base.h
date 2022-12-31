@@ -32,7 +32,7 @@ namespace opt {
 class ToFormatBase : public Pass {
  public:
   explicit ToFormatBase(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false,
-                        ModelType export_mindir = kMindIR_Lite, const std::string &pass_name = "ToFormatBase")
+                        ModelType export_mindir = kMindIR, const std::string &pass_name = "ToFormatBase")
       : Pass(pass_name), fmk_type_(fmk_type), train_flag_(train_flag), export_mindir_(export_mindir) {}
   ~ToFormatBase() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;

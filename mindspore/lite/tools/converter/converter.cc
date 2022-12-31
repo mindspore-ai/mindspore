@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <set>
+#include <map>
 #include <tuple>
 #include <algorithm>
 #include <utility>
@@ -46,6 +47,8 @@
 #include "tools/converter/config_parser/micro_param_parser.h"
 #include "tools/converter/config_parser/preprocess_parser.h"
 #include "tools/converter/config_parser/quant_param_parser.h"
+#include "tools/converter/converter_funcgraph.h"
+#include "tools/converter/converter_metagraph.h"
 #include "tools/common/string_util.h"
 #include "src/common/file_utils.h"
 #include "ops/dynamic_shape.h"
@@ -233,17 +236,17 @@ int ConverterImpl::FuncGraphConvert(const std::shared_ptr<ConverterPara> &param,
     return RET_ERROR;
   }
   MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, RET_ERROR, "funcgraph_transform init failed");
-  graph = funcgraph_transform_->Transform(graph, param);
-  MS_CHECK_TRUE_MSG(graph != nullptr, RET_ERROR, "Transform anf graph return nullptr.");
+  auto status = funcgraph_transform_->Transform(graph, param);
+  MS_CHECK_TRUE_MSG(status == RET_OK, status, "Transform anf graph return nullptr.");
 
   // export protobuf
   if (param->export_mindir == kMindIR) {
-    auto status = UpdateFuncGraphInputAndOutputNames(graph);
+    status = UpdateFuncGraphInputAndOutputNames(graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Update input and output names of funcgraph failed.";
       return RET_ERROR;
     }
-    status = MindIRSerialize(param, graph, isRuntimeConvert, buff, size);
+    status = MindIRSerialize(param, graph, buff, size);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Export to mindir failed";
       return RET_ERROR;
@@ -270,10 +273,10 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
   }
   MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, RET_ERROR, "funcgraph_transform init failed");
   // funcgraph transform
-  func_graph_ptr = funcgraph_transform_->Transform(func_graph_ptr, param);
-  if (func_graph_ptr == nullptr) {
+  auto status = funcgraph_transform_->Transform(func_graph_ptr, param);
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Transform anf graph return nullptr";
-    return RET_ERROR;
+    return status;
   }
   *meta_graph = TransferFuncGraph(param, func_graph_ptr);
   return RET_OK;
@@ -292,10 +295,10 @@ FuncGraphPtr ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param,
   }
 
   MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed");
-  graph = funcgraph_transform_->Transform(graph, param);
-  MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "Transform anf graph return nullptr.");
+  auto status = funcgraph_transform_->Transform(graph, param);
+  MS_CHECK_TRUE_MSG(status == RET_OK, nullptr, "Transform anf graph return nullptr.");
   graph->set_attr(kIsOptimized, MakeValue(true));
-  auto status = UpdateFuncGraphInputAndOutputNames(graph);
+  status = UpdateFuncGraphInputAndOutputNames(graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Update input and output names of funcgraph failed.";
     return nullptr;
@@ -805,6 +808,7 @@ int CheckOutputFile(const std::shared_ptr<ConverterPara> &param) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: output file must be a valid file path";
       return RET_INPUT_PARAM_INVALID;
     }
+    param->aclModelOptionCfgParam.om_file_path = param->output_file;
   }
   return RET_OK;
 }
@@ -1008,6 +1012,110 @@ int InitEncryption(const std::shared_ptr<ConverterPara> &param, unsigned char *e
   return RET_OK;
 }
 
+int ConverterImpl::LoadPluginLib(const std::shared_ptr<ConverterPara> &param) {
+  if (!param->plugins_path.empty()) {
+    for (auto &path : param->plugins_path) {
+      auto dl_loader = std::make_shared<DynamicLibraryLoader>();
+      MS_CHECK_TRUE_RET(dl_loader != nullptr, RET_ERROR);
+      auto status = dl_loader->Open(path);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "open dynamic library failed. " << path;
+        return RET_ERROR;
+      }
+      dl_loaders.emplace_back(dl_loader);
+    }
+  }
+  return RET_OK;
+}
+
+int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size,
+                           bool not_save) {
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "Input param is nullptr";
+    return RET_ERROR;
+  }
+  auto ret = InitConfigParam(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init config file failed: " << ret << " " << GetErrorInfo(ret);
+    return ret;
+  }
+  ret = StoreConverterParameters(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get converter parameter failed: " << ret << " " << GetErrorInfo(ret);
+    return ret;
+  }
+
+  ret = LoadPluginLib(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Load plugin lib failed: " << ret << " " << GetErrorInfo(ret);
+    return ret;
+  }
+
+  auto graph = ConverterFuncGraph::Build(param);
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "Build func graph failed";
+    return RET_ERROR;
+  }
+
+  ret = ConverterFuncGraph::Optimize(param, graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Optimize func graph failed: " << ret << " " << GetErrorInfo(ret);
+    return ret;
+  }
+
+  ret = SaveGraph(graph, param, model_data, data_size, not_save);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Save graph failed: " << ret << " " << GetErrorInfo(ret);
+    return ret;
+  }
+
+  return RET_OK;
+}
+
+int ConverterImpl::SaveGraph(FuncGraphPtr graph, const std::shared_ptr<ConverterPara> &param, void **model_data,
+                             size_t *data_size, bool not_save) {
+  int status = RET_ERROR;
+  if (param->export_mindir == kMindIR) {
+    status = ConverterFuncGraph::Save(param, graph, model_data, data_size);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Export to mindir failed: " << status << " " << GetErrorInfo(status);
+      return RET_ERROR;
+    }
+    return RET_OK;
+  }
+
+  auto meta_graph = ConverterToMetaGraph::Build(param, graph);
+  if (meta_graph == nullptr) {
+    MS_LOG(ERROR) << "Convert to meta graph failed";
+    return RET_ERROR;
+  }
+  meta_graph->version = Version();
+
+  if (param->pre_infer) {
+    status = PreInference(*meta_graph, param->train_model);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Preinference failed: " << status << " " << GetErrorInfo(status);
+      delete meta_graph;
+      return status;
+    }
+  }
+
+  if (param->microParam.enable_micro) {
+    status = micro::Coder::MicroSourceCodeGeneration(*meta_graph, param->output_file, param->microParam.codegen_mode,
+                                                     param->microParam.target, param->microParam.support_parallel,
+                                                     param->microParam.debug_mode);
+  } else {
+    status = ConverterToMetaGraph::Save(meta_graph, param, model_data, data_size, not_save);
+  }
+  delete meta_graph;
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Save  failed:" << status << " " << GetErrorInfo(status);
+    return status;
+  }
+
+  return RET_OK;
+}
+
 int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size, bool not_save) {
   mindspore::mindspore_log_init();
 
@@ -1018,85 +1126,13 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
     return status;
   }
   ConverterImpl converter_impl;
-  schema::MetaGraphT *meta_graph = nullptr;
-  status = converter_impl.Convert(param, &meta_graph);
+  status = converter_impl.Convert(param, model_data, data_size, not_save);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert model failed";
-    return RET_ERROR;
-  }
-  if (param->export_mindir == kMindIR) {
-    MS_LOG(INFO) << "CONVERT RESULT SUCCESS:" << status;
-    std::cout << "CONVERT RESULT SUCCESS:" << status << std::endl;
-    return RET_OK;
-  }
-  NotSupportOp::GetInstance()->PrintOps();
-  status = ReturnCode::GetSingleReturnCode()->status_code();
-  if (meta_graph == nullptr) {
-    CONVERTER_LOG_ERROR("CONVERT RESULT FAILED:" << status << " " << GetErrorInfo(status));
-    status = RET_ERROR;
+    NotSupportOp::GetInstance()->PrintOps();
     return status;
   }
-  //   save graph to file
-  meta_graph->version = Version();
 
-  if (param->pre_infer) {
-    status = PreInference(*meta_graph, param->train_model);
-    if (status != RET_OK) {
-      CONVERTER_LOG_ERROR("PRE INFERENCE FAILED:" << status << " " << GetErrorInfo(status));
-      delete meta_graph;
-      return status;
-    }
-  }
-
-  if (param->microParam.enable_micro) {
-    status = micro::Coder::MicroSourceCodeGeneration(*meta_graph, param->output_file, param->microParam.codegen_mode,
-                                                     param->microParam.target, param->microParam.support_parallel,
-                                                     param->microParam.debug_mode);
-    if (status != RET_OK) {
-      delete meta_graph;
-      CONVERTER_LOG_ERROR("MICRO CODEGEN FAILED:" << status << " " << GetErrorInfo(status));
-      return status;
-    }
-  } else {
-    unsigned char encKey[kEncMaxLen] = {0};
-    size_t keyLen = 0;
-    status = InitEncryption(param, encKey, &keyLen);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "check encryption failed.";
-      delete meta_graph;
-      return status;
-    }
-    if (not_save) {
-      flatbuffers::FlatBufferBuilder builder(kFlatbuffersBuilderInitSize);
-      auto packed_buffer = MetaGraphSerializer::GetMetaGraphPackedBuff(&builder, *meta_graph, data_size);
-      auto buffer = malloc(*data_size);
-      if (buffer == nullptr) {
-        MS_LOG(ERROR) << "malloc failed.";
-        delete meta_graph;
-        return RET_ERROR;
-      }
-      if (memcpy_s(buffer, *data_size, packed_buffer, *data_size) != EOK) {
-        free(buffer);
-        delete meta_graph;
-        MS_LOG(ERROR) << "memory copy failed.";
-        return RET_ERROR;
-      }
-      *model_data = buffer;
-    } else {
-      status = MetaGraphSerializer::Save(*meta_graph, param->output_file, encKey, keyLen, param->encrypt_mode);
-    }
-    if (memset_s(encKey, kEncMaxLen, 0, kEncMaxLen) != EOK) {
-      MS_LOG(ERROR) << "memset failed.";
-      delete meta_graph;
-      return RET_ERROR;
-    }
-    if (status != RET_OK) {
-      delete meta_graph;
-      CONVERTER_LOG_ERROR("SAVE GRAPH FAILED:" << status << " " << GetErrorInfo(status));
-      return status;
-    }
-  }
-  delete meta_graph;
   MS_LOG(INFO) << "CONVERT RESULT SUCCESS:" << status;
   std::cout << "CONVERT RESULT SUCCESS:" << status << std::endl;
   return status;

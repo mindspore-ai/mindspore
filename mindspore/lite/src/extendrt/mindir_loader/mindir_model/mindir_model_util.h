@@ -35,8 +35,6 @@ class MindirModelUtil {
   static mindspore::ValuePtr MakeValueFromScalarAttribute(const mind_ir::AttributeProto &attr_proto);
 
   static mindspore::TypeId ProtoTypeToTypeId(int32_t proto_type);
-  static bool NeedRuntimeConvert(const void *model_data, size_t data_size,
-                                 const std::shared_ptr<mindspore::Context> &context);
 };
 }  // namespace mindspore::infer::mindir
 

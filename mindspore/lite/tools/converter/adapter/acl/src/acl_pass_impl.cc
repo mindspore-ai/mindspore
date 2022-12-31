@@ -60,7 +60,23 @@ constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
 
-STATUS PreProcForMindIr(const FuncGraphPtr &func_graph, bool offline) { return lite::RET_OK; }
+STATUS PreProcForMindIr(const FuncGraphPtr &func_graph, bool offline) {
+  auto value = func_graph->get_attr(ops::kFormat);
+  if (value == nullptr || GetValue<int64_t>(value) == mindspore::NCHW) {
+    return lite::RET_OK;
+  }
+  if (offline) {
+    if (!lite::RunOptimizerPass(func_graph, {kInferShapePass})) {
+      MS_LOG(ERROR) << "Infer shape pass failed.";
+      return lite::RET_ERROR;
+    }
+  }
+  if (!lite::RunOptimizerPass(func_graph, {kToNCHWFormatPass, "DecreaseTransposeAlgo"})) {
+    MS_LOG(ERROR) << "Run ToNCHWFormat pass failed";
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
 
 STATUS PreProcForTF(const FuncGraphPtr &func_graph, bool offline) {
   if (offline) {

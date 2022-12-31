@@ -34,10 +34,10 @@ class AnfTransform {
  public:
   AnfTransform();
   virtual ~AnfTransform();
-  FuncGraphPtr Transform(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
+  STATUS Transform(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
  private:
-  FuncGraphPtr TransformFuncGraph(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
+  STATUS TransformFuncGraph(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
   static int RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
@@ -53,7 +53,6 @@ class AnfTransform {
 
   static int DoQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
-  static int SpecInputFormat(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
   static int DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
   static bool StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param);

@@ -144,9 +144,9 @@ TEST_F(ConvBiasAddFusionTest, TestConvAddNode) {
   auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_BiasAdd);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
-  auto new_graph = anf_transform->Transform(func_graph, nullptr);
-  ASSERT_NE(nullptr, new_graph);
-  auto new_meta_graph = lite::Export(new_graph);
+  auto status = anf_transform->Transform(func_graph, nullptr);
+  ASSERT_NE(status, lite::RET_OK);
+  auto new_meta_graph = lite::Export(func_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 1);
   MS_LOG(INFO) << "Passed";
 }
@@ -155,9 +155,9 @@ TEST_F(ConvBiasAddFusionTest, TestDeptiwiseConvAddNode) {
   auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_AddFusion);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
-  auto new_graph = anf_transform->Transform(func_graph, nullptr);
-  ASSERT_NE(nullptr, new_graph);
-  auto new_meta_graph = lite::Export(new_graph);
+  auto status = anf_transform->Transform(func_graph, nullptr);
+  ASSERT_NE(status, lite::RET_OK);
+  auto new_meta_graph = lite::Export(func_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 1);
 }
 
@@ -165,9 +165,9 @@ TEST_F(ConvBiasAddFusionTest, TestBadCase_ConvAdd) {
   auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_MatMulFusion);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
-  auto new_graph = anf_transform->Transform(func_graph, nullptr);
-  ASSERT_NE(nullptr, new_graph);
-  auto new_meta_graph = lite::Export(new_graph);
+  auto status = anf_transform->Transform(func_graph, nullptr);
+  ASSERT_NE(status, lite::RET_OK);
+  auto new_meta_graph = lite::Export(func_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 2);
 }
 }  // namespace mindspore

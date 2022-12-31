@@ -156,9 +156,9 @@ TEST_F(AddConcatActivationFusionTest, TestAddConcatReluNode) {
   auto meta_graph = BuildGraph(schema::ActivationType_RELU6);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
-  auto new_graph = anf_transform->Transform(func_graph, nullptr);
-  ASSERT_NE(nullptr, new_graph);
-  auto new_meta_graph = lite::Export(new_graph);
+  auto status = anf_transform->Transform(func_graph, nullptr);
+  ASSERT_NE(status, lite::RET_OK);
+  auto new_meta_graph = lite::Export(func_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), kGraphNodeSize);
   for (auto &cnode : new_meta_graph->nodes) {
     if (cnode->primitive->value.type == schema::PrimitiveType_AddFusion) {

@@ -135,9 +135,9 @@ TEST_F(ConvActivationFusionTest, TestConvReluNode) {
   auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2DFusion, schema::ActivationType_RELU);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
-  auto new_graph = anf_transform->Transform(func_graph, nullptr);
-  ASSERT_NE(nullptr, new_graph);
-  auto new_meta_graph = lite::Export(new_graph);
+  auto status = anf_transform->Transform(func_graph, nullptr);
+  ASSERT_NE(status, lite::RET_OK);
+  auto new_meta_graph = lite::Export(func_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 1);
   for (auto &cnode : new_meta_graph->nodes) {
     ASSERT_EQ(cnode->primitive->value.AsConv2DFusion()->activation_type, schema::ActivationType_RELU);
@@ -148,9 +148,9 @@ TEST_F(ConvActivationFusionTest, TestConvRelu6Node) {
   auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2DFusion, schema::ActivationType_RELU6);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
-  auto new_graph = anf_transform->Transform(func_graph, nullptr);
-  ASSERT_NE(nullptr, new_graph);
-  auto new_meta_graph = lite::Export(new_graph);
+  auto status = anf_transform->Transform(func_graph, nullptr);
+  ASSERT_NE(status, lite::RET_OK);
+  auto new_meta_graph = lite::Export(func_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 1);
   for (auto &cnode : new_meta_graph->nodes) {
     ASSERT_EQ(cnode->primitive->value.AsConv2DFusion()->activation_type, schema::ActivationType_RELU6);
@@ -161,9 +161,9 @@ TEST_F(ConvActivationFusionTest, TestBadCase_ConvRelu) {
   auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2DFusion, schema::ActivationType_LEAKY_RELU);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
-  auto new_graph = anf_transform->Transform(func_graph, nullptr);
-  ASSERT_NE(nullptr, new_graph);
-  auto new_meta_graph = lite::Export(new_graph);
+  auto status = anf_transform->Transform(func_graph, nullptr);
+  ASSERT_NE(status, lite::RET_OK);
+  auto new_meta_graph = lite::Export(func_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 2);
   for (auto &cnode : new_meta_graph->nodes) {
     if (cnode->primitive->value.type == schema::PrimitiveType_Conv2DFusion) {
