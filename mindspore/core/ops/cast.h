@@ -20,7 +20,6 @@
 #include <memory>
 
 #include "ops/base_operator.h"
-#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
@@ -33,7 +32,6 @@ class MIND_API Cast : public BaseOperator {
   /// \brief Constructor.
   Cast() : BaseOperator(kNameCast) { InitIOName({"x", "dst_type"}, {"output"}); }
 };
-using PrimCast = std::shared_ptr<Cast>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CAST_H_

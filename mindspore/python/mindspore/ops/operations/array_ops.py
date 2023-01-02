@@ -297,7 +297,7 @@ class CheckNumerics(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
-class Cast(PrimitiveWithInfer):
+class Cast(PrimitiveWithCheck):
     """
     Returns a tensor with the new specified data type.
 
@@ -330,11 +330,11 @@ class Cast(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        # if primitive need setattr in __infer__ need add this flag
         """Initialize Cast"""
         self.init_prim_io_names(inputs=['x', 'dst_type'], outputs=['output'])
 
     def check_elim(self, x, dtype):
+        """Cast Infer Value in Pynative Mode"""
         if isinstance(x, (Tensor, numbers.Number, Parameter)):
             if isinstance(x, Parameter):
                 data = x.data
@@ -348,35 +348,27 @@ class Cast(PrimitiveWithInfer):
                 return (True, Tensor(x, dtype=dtype))
         return (False, None)
 
-    def __infer__(self, x, t):
-        src_type = x['dtype']
-        dst_type = t['value']
-
-        validator.check_subclass("input_x", src_type, [mstype.tensor, mstype.number], self.name)
+    def infer_value(self, x, dst_type):
+        """Cast Infer Value"""
+        if x is None:
+            return None
+        src_type = mstype.get_py_obj_dtype(x)
+        validator.check_subclass("input_x", src_type,
+                                 [mstype.tensor, mstype.number], self.name)
         validator.check_subclass("type", dst_type, mstype.number, self.name)
 
         if isinstance(src_type, type(mstype.tensor)):
-            src_type = x['dtype'].element_type()
+            src_type = src_type.element_type()
         if isinstance(dst_type, type(mstype.tensor)):
             dst_type = dst_type.element_type()
-        self.add_prim_attr('DstT', dst_type)
-        self.add_prim_attr('SrcT', src_type)
-        self.add_prim_attr('dst_type', dst_type)
 
         value = None
-        if x['value'] is not None:
-            np_dst_type = mstype.dtype_to_nptype(dst_type)
-            if isinstance(x['value'], (int, float)):
-                value = Tensor(np.array(x['value']).astype(np_dst_type))
-            else:
-                value = Tensor(x['value'].asnumpy().astype(np_dst_type))
-
-        out = {'shape': x['shape'],
-               'dtype': mstype.tensor_type(t['value']),
-               'value': value}
-        if 'shape_value' in x:
-            out['shape_value'] = tuple(np.array(x['shape_value']).astype(np.int64))
-        return out
+        np_dst_type = mstype.dtype_to_nptype(dst_type)
+        if isinstance(x, (int, float)):
+            value = Tensor(np.array(x).astype(np_dst_type))
+        else:
+            value = Tensor(x.asnumpy().astype(np_dst_type))
+        return value
 
 
 class Im2Col(Primitive):
