@@ -69,12 +69,13 @@ int SoftmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 
   // axis size must be 1
   if (axis.size() < 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be equal to 0, but got "
-                      << axis.size();
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the length of 'axis' cannot be equal to 0, but got " << axis.size();
+    return KRET_RESIZE_FAILED;
   }
   if (axis.size() > 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be greater than 1, but got "
-                      << axis.size();
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the length of 'axis' cannot be greater than 1, but got "
+                  << axis.size();
+    return KRET_RESIZE_FAILED;
   }
 
   // check axis value
@@ -117,6 +118,7 @@ bool SoftmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
     Softmax<T, false>(input_addr, output_addr, shape_[axis_acc_], outer_size_, inner_size_, device_id_,
                       reinterpret_cast<cudaStream_t>(stream_ptr));
   }
+  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaGetLastError(), "For '" << kernel_name_ << "', it failed to Softmax.");
 
   return true;
 }
