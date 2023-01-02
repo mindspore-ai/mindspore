@@ -102,6 +102,7 @@ class BACKEND_EXPORT DumpJsonParser {
   std::string iteration_;
   uint32_t input_output_{0};
   std::map<std::string, uint32_t> kernels_;
+  std::map<std::string, uint32_t> kernel_types_;
   std::vector<std::string> cell_dump_kernels_;
   std::set<uint32_t> support_devices_;
   uint32_t op_debug_mode_{0};
