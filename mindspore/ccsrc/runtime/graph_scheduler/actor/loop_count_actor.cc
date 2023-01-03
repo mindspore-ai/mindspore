@@ -63,7 +63,7 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
   }
 
   // Sync device stream.
-  if (strategy_ == GraphExecutionStrategy::kPipeline) {
+  if ((strategy_ == GraphExecutionStrategy::kPipeline) && is_need_sync_stream_) {
     std::set<const DeviceContext *> sync_stream_device_contexts;
     for (auto &device_context : device_contexts_) {
       MS_EXCEPTION_IF_NULL(device_context);

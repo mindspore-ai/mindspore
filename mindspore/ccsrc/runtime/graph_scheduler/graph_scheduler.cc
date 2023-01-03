@@ -87,6 +87,18 @@ constexpr char kTransformFinishReady[] = "1";
 static const size_t kRetry = 20;
 static const size_t kInterval = 3;
 
+bool GetNeedSyncStream(const GraphCompilerInfo &graph_compiler_info) {
+  const auto &graphs = graph_compiler_info.graphs_;
+  if (graphs.empty() && graph_compiler_info.control_nodes_.size() > 1) {
+    return true;
+  }
+  if (graphs.empty()) {
+    MS_LOG(EXCEPTION) << "No graphs found in GraphCompilerInfo";
+  }
+  MS_EXCEPTION_IF_NULL(graphs[0]);
+  return !graphs[0]->has_flag(kFlagPyNativeRunInGraph);
+}
+
 int64_t GetLoopCount(const GraphCompilerInfo &graph_compiler_info) {
   const auto &graphs = graph_compiler_info.graphs_;
   if (graphs.empty() && graph_compiler_info.control_nodes_.size() > 1) {
@@ -1168,9 +1180,10 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
 
   auto loop_count = GetLoopCount(graph_compiler_info);
   auto actor_name = graph_compiler_info.name_ + kLoopCountActorNameSuffix;
-  auto loop_count_actor =
-    std::make_shared<LoopCountActor>(actor_name, loop_count, memory_manager_aid_, debug_aid_, recorder_aid_,
-                                     graph_compiler_info.strategy_, graph_compiler_info.device_contexts_);
+  auto is_need_sync_stream = GetNeedSyncStream(graph_compiler_info);
+  auto loop_count_actor = std::make_shared<LoopCountActor>(actor_name, loop_count, memory_manager_aid_, debug_aid_,
+                                                           recorder_aid_, graph_compiler_info.strategy_,
+                                                           graph_compiler_info.device_contexts_, is_need_sync_stream);
   MS_LOG(INFO) << "Create loop count actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(loop_count_actor);
 
