@@ -47,45 +47,19 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data 
 class ConverterImpl {
  public:
   ConverterImpl() = default;
-  ~ConverterImpl() {
-    delete model_parser_;
-    this->model_parser_ = nullptr;
-  }
-  int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph);
-  int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph, const void *buff,
-              const size_t &size, void **dst_buff, size_t *dst_size) {
-    auto graph = BuildFuncGraph(param, buff, size);
-    return FuncGraphConvert(param, graph, meta_graph, true, dst_buff, dst_size);
-  }
-  int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph, FuncGraphPtr func_graph);
-  FuncGraphPtr Convert(const std::shared_ptr<ConverterPara> &param, const void *buff, const size_t &size);
+  ~ConverterImpl() {}
 
   int Convert(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size, bool not_save);
 
  private:
-  FuncGraphPtr BuildFuncGraph(const std::shared_ptr<ConverterPara> &param);
-  FuncGraphPtr BuildFuncGraph(const std::shared_ptr<ConverterPara> &param, const void *buf, const size_t &size);
-  int FuncGraphConvert(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr graph, schema::MetaGraphT **meta_graph,
-                       bool isRuntimeConvert, void **buff, size_t *size);
-
-  schema::MetaGraphT *TransferFuncGraph(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
-
   int InitConfigParam(const std::shared_ptr<ConverterPara> &param);
   int InitExtendedIntegrationInfo(const std::shared_ptr<ConverterPara> &param,
                                   const lite::ConfigFileParser &config_file_parser);
   bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);
   std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key);
-  int ReplaceShapeWithDynamicShape(const FuncGraphPtr &graph);
-  int SaveOutputNames(const FuncGraphPtr &graph);
-
   int SaveGraph(FuncGraphPtr graph, const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size,
                 bool not_save);
   int LoadPluginLib(const std::shared_ptr<ConverterPara> &param);
-
- protected:
-  converter::ModelParser *model_parser_ = nullptr;
-  std::unique_ptr<GraphDefTransform> metagraph_transform_ = std::make_unique<GraphDefTransform>();
-  std::unique_ptr<AnfTransform> funcgraph_transform_ = std::make_unique<AnfTransform>();
 };
 }  // namespace lite
 }  // namespace mindspore
