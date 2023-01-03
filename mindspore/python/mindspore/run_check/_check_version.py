@@ -357,7 +357,7 @@ class AscendEnvChecker(EnvChecker):
                 attention_warning = True
                 logger.warning(f"MindSpore version {mindspore_version} and \"hccl\" wheel package version {v} does not "
                                "match, reference to the match info on: https://www.mindspore.cn/install")
-        # DO NOT modify exception type to any other, you DO NOT know what kind of exceptions will the te throw
+        # DO NOT modify exception type to any other, you DO NOT know what kind of exceptions the te will throw.
         # pylint: disable=broad-except
         except Exception as e:
             logger.error("CheckFailed:", e.args)
