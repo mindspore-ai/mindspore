@@ -20,7 +20,7 @@
 #include <vector>
 #include <cmath>
 #include <string>
-#include "schema/inner/model_generated.h"
+#include "tools/converter/quantizer/quant_params.h"
 #include "src/common/log_adapter.h"
 #include "src/common/quant_utils.h"
 #include "ir/tensor.h"
@@ -47,7 +47,7 @@ class MixedBitWeightQuantization {
   ~MixedBitWeightQuantization() = default;
 
   int QuantFilter(const PrimitivePtr &primitive, const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
-                  int index, schema::QuantType quant_type, bool use_auto_tune_alg = false);
+                  int index, QuantType quant_type, bool use_auto_tune_alg = false);
 
  private:
   int DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,

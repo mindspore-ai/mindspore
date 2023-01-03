@@ -169,6 +169,11 @@ function Convert() {
               if [ ${model_size} -gt ${calib_final_size} ]; then
                 echo "${output_file}.ms " model size is " ${model_size} " and calib size is " ${calib_size}"
                 converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' failed';echo ${converter_result} >> $5
+                if [ "${export_mindir}"x == "MINDIR"x ]; then
+                  rm -rf ${output_file}.mindir
+                else
+                  rm -rf ${output_file}.ms
+                fi
                 if [[ $6 != "ON" ]]; then
                   fail=1
                 fi

@@ -102,7 +102,7 @@ class WeightQuantizer : public Quantizer {
 
   int WeightQuant(const FuncGraphPtr &func_graph, const std::set<PrimitivePtr> &support_weight_quant_types,
                   const std::set<PrimitivePtr> &per_layer_types, const std::set<PrimitivePtr> &symmetric_types,
-                  bool compression = true, bool check_quant_conditions = false, bool update_tensor = true);
+                  bool compression = true);
 
   std::set<tensor::TensorPtr> GetWeightQuantizedTensors() { return this->weight_quantized_tensors_; }
 
@@ -110,17 +110,16 @@ class WeightQuantizer : public Quantizer {
   int WeightQuantPerCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                           const std::set<PrimitivePtr> &support_weight_quant_types,
                           const std::set<PrimitivePtr> &per_layer_types, const std::set<PrimitivePtr> &symmetric_types,
-                          bool compression = true, bool update_tensor = true);
+                          bool compression = true);
   int LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::set<PrimitivePtr> &per_layer_types,
                   const std::set<PrimitivePtr> &symmetric_types, const std::vector<int> &weight_indices,
-                  bool compression = true, bool update_tensor = true);
+                  bool compression = true);
   int MarkGraphWeightQuantType(const FuncGraphPtr &func_graph);
   int MarkCnodeWeightQuantType(const CNodePtr &cnode);
   int DoCompression(const CNodePtr &cnode, const ParameterPtr &parameter, int idx);
   int DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &parameter, int idx, const tensor::TensorPtr &tensor_info,
                     int preferred_dim, WeightQuantType weight_quant_type, bool symmetric = true,
                     bool update_tensor = true);
-  bool CheckWeightQuantExist(const CNodePtr &cnode);
   int InsertDequantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const ParameterPtr &parameter, int idx,
                         const tensor::TensorPtr &tensor_info);
 
@@ -137,7 +136,7 @@ class WeightQuantizer : public Quantizer {
   TypeId type_id_{kNumberTypeInt8};
   std::set<std::string> skip_quant_node_;
   std::unique_ptr<QuantStrategy> quant_strategy_;
-  schema::QuantType quant_type_{schema::QuantType_WeightQuant};
+  quant::QuantType quant_type_{quant::QUANT_WEIGHT};
   bool enable_encode_{true};
   WeightQuantType weight_quant_type_ = WeightQuantType::FIXED_BIT_PER_CHANNEL;
   DequantStrategy dequant_strategy_ = DEFAULT;

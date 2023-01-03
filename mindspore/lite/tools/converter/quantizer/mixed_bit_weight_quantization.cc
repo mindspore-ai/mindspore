@@ -275,7 +275,7 @@ int MixedBitWeightQuantization::QuantizeByScale(const float *weights, int weight
 }
 
 int MixedBitWeightQuantization::QuantFilter(const PrimitivePtr &primitive, const AnfNodePtr &parameter_node,
-                                            const tensor::TensorPtr &weight, int index, schema::QuantType quant_type,
+                                            const tensor::TensorPtr &weight, int index, QuantType quant_type,
                                             bool use_auto_tune_alg) {
   CHECK_NULL_RETURN(primitive);
   CHECK_NULL_RETURN(weight);

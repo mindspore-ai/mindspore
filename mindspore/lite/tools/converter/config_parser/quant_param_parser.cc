@@ -65,17 +65,17 @@ int QuantParamParser::ParseBitNum(const CommonQuantString &common_quant_string, 
     MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be a valid number.";
     return RET_INPUT_PARAM_INVALID;
   }
-  if (common_quant->quant_type == schema::QuantType_QUANT_WEIGHT) {
+  if (common_quant->quant_type == quant::QUANT_WEIGHT) {
     if (common_quant->bit_num < 0 || common_quant->bit_num > kQuantBitNumInt16) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be [0,16].";
       return RET_INPUT_PARAM_INVALID;
     }
-  } else if (common_quant->quant_type == schema::QuantType_QUANT_ALL) {
+  } else if (common_quant->quant_type == quant::QUANT_ALL) {
     if (common_quant->bit_num != kQuantBitNumInt8) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be 8.";
       return RET_INPUT_PARAM_INVALID;
     }
-  } else if (common_quant->quant_type == schema::QuantType_QUANT_DYNAMIC) {
+  } else if (common_quant->quant_type == quant::QUANT_DYNAMIC) {
     if (common_quant->bit_num != kQuantBitNumInt8) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be 8.";
       return RET_INPUT_PARAM_INVALID;
@@ -91,7 +91,7 @@ int QuantParamParser::ParseEnableEncode(const CommonQuantString &common_quant_st
     MS_LOG(ERROR) << "INPUT ILLEGAL: enable_encode should be true or false.";
     return RET_INPUT_PARAM_INVALID;
   }
-  if (common_quant->quant_type == schema::QuantType_QUANT_WEIGHT &&
+  if (common_quant->quant_type == quant::QUANT_WEIGHT &&
       (common_quant->bit_num != kQuantBitNumInt8 && common_quant->bit_num != kQuantBitNumInt16)) {
     if (!common_quant->enable_encode) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: enable_encode should be true when parameter bit_num belongs to [0,7] or [9,15].";
@@ -199,18 +199,18 @@ int QuantParamParser::ParseFullQuant(const FullQuantString &full_quant_string, q
   return RET_OK;
 }
 
-int QuantParamParser::ParseQuantType(const std::string &quant_type_str, schema::QuantType *quant_type) {
+int QuantParamParser::ParseQuantType(const std::string &quant_type_str, quant::QuantType *quant_type) {
   if (quant_type_str == "WEIGHT_QUANT") {
-    (*quant_type) = schema::QuantType_QUANT_WEIGHT;
+    (*quant_type) = quant::QUANT_WEIGHT;
     return RET_OK;
   } else if (quant_type_str == "FULL_QUANT") {
-    (*quant_type) = schema::QuantType_QUANT_ALL;
+    (*quant_type) = quant::QUANT_ALL;
     return RET_OK;
   } else if (quant_type_str == "DYNAMIC_QUANT") {
-    (*quant_type) = schema::QuantType_QUANT_DYNAMIC;
+    (*quant_type) = quant::QUANT_DYNAMIC;
     return RET_OK;
   } else if (quant_type_str.empty()) {
-    (*quant_type) = schema::QuantType_QUANT_NONE;
+    (*quant_type) = quant::QUANT_NONE;
     return RET_OK;
   } else {
     MS_LOG(ERROR) << "INPUT ILLEGAL: quant_type must be WEIGHT_QUANT|FULL_QUANT|DYNAMIC_QUANT.";

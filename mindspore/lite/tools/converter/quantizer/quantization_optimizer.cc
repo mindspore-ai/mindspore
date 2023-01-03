@@ -259,8 +259,8 @@ int PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<Convert
     return RET_ERROR;
   }
 
-  bool per_layer = param->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL &&
-                   !param->fullQuantParam.per_channel && param->fullQuantParam.target_device != DSP;
+  bool per_layer = param->commonQuantParam.quant_type == quant::QUANT_ALL && !param->fullQuantParam.per_channel &&
+                   param->fullQuantParam.target_device != DSP;
   if (per_layer) {
     CLEStrategy cle_strategy(old_graph);
     auto status = cle_strategy.Run();
@@ -274,7 +274,7 @@ int PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<Convert
 
 int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   CHECK_NULL_RETURN(param);
-  if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_NONE) {
+  if (param->commonQuantParam.quant_type == quant::QUANT_NONE) {
     return RET_OK;
   }
 
@@ -288,7 +288,7 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<C
   std::shared_ptr<lite::Model> origin_lite_model;
   if (param->commonQuantParam.is_debug) {  // Bak fp32 model for debug
     auto quant_type = param->commonQuantParam.quant_type;
-    param->commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
+    param->commonQuantParam.quant_type = quant::QUANT_NONE;
     origin = std::make_shared<mindspore::Model>();
     CHECK_NULL_RETURN(origin);
     size_t size = 0;
@@ -304,19 +304,19 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<C
       return RET_ERROR;
     }
   }
-  if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {  // Full Quantization
+  if (param->commonQuantParam.quant_type == quant::QUANT_ALL) {  // Full Quantization
     status = DoFullQuant(old_graph, param);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do full quant failed.";
       return status;
     }
-  } else if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {  // Weight Quantization
+  } else if (param->commonQuantParam.quant_type == quant::QUANT_WEIGHT) {  // Weight Quantization
     status = DoWeightQuant(old_graph, param);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do weight quant failed.";
       return status;
     }
-  } else if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_DYNAMIC) {  // Dynamic Quantization
+  } else if (param->commonQuantParam.quant_type == quant::QUANT_DYNAMIC) {  // Dynamic Quantization
     status = DoDynamicQuant(old_graph, param);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do dynamic quant failed.";

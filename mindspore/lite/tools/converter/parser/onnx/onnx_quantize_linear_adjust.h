@@ -32,7 +32,7 @@ class OnnxQuantizeLinearAdjust {
  private:
   static void RemoveDequantizeLinear(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
-  static QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
+  static QuantParamHolderPtr GetQuantHolder(const PrimitivePtr &primitive);
 
   static bool SetInputQuantParam(const CNodePtr &cnode, const QuantParamHolderPtr &quant_param_holder, size_t index);
 };

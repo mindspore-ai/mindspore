@@ -47,7 +47,7 @@ class PropagateQuantParamPass {
   int ForwardPropagate(const std::list<CNodePtr> &nodes);
   int BackwardPropagate(const std::list<CNodePtr> &nodes);
   int BackwardPerNode(const CNodePtr &post_cnode, const CNodePtr &cnode, size_t curr_index);
-  bool CheckValidQuantParams(const std::vector<schema::QuantParamT> quant_params);
+  bool CheckValidQuantParams(const std::vector<schema::QuantParamT> &quant_params);
   int ForwardTupleGetItem(const CNodePtr &cnode);
 
  private:

@@ -21,9 +21,10 @@
 #include <string>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "include/registry/converter_context.h"
+#include "tools/converter/quantizer/quant_params.h"
 
 using mindspore::converter::FmkType;
-using mindspore::schema::QuantType;
+using mindspore::lite::quant::QuantType;
 namespace mindspore::lite {
 class MindirAdjust {
  public:

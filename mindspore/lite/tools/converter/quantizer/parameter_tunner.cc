@@ -104,7 +104,7 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
   *best_compress_ratio = 0.0f;
   *found_valid_scale = false;
   for (int scale = s_param->range_start; scale <= s_param->range_end; scale += s_param->step) {
-    param->commonQuantParam.quant_type = schema::QuantType_QUANT_WEIGHT;
+    param->commonQuantParam.quant_type = quant::QUANT_WEIGHT;
     FuncGraphPtr func_graph_bak;
     auto ret = CloneFuncGraph(func_graph, param, &func_graph_bak);
     if (ret != RET_OK) {
@@ -278,7 +278,7 @@ int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph,
     MS_LOG(ERROR) << "Clone FuncGraph failed.";
     return RET_ERROR;
   }
-  param->commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
+  param->commonQuantParam.quant_type = quant::QUANT_NONE;
   *origin_model_size = 0;
   auto status = BuildModelByFuncGraph(origin_model, func_graph_bak, param, origin_model_size);
   if (status != kSuccess) {

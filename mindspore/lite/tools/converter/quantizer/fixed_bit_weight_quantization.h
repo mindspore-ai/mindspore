@@ -33,14 +33,14 @@ class FixedBitWeightQuantization {
   ~FixedBitWeightQuantization() = default;
 
   int QuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
-                  schema::QuantType quant_type, int quant_max, int quant_min, size_t bit_num,
+                  quant::QuantType quant_type, int quant_max, int quant_min, size_t bit_num,
                   WeightQuantType weight_quant_type, TypeId quant_data_type, int index, int preferred_dim,
                   bool symmetric = false, bool narrow_range = false);
 
-  int StatisticsFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
-                       schema::QuantType quant_type, int quant_max, int quant_min, size_t bit_num,
-                       WeightQuantType weight_quant_type, TypeId quant_data_type, int index, int preferred_dim,
-                       bool symmetric = false, bool narrow_range = false);
+  int StatisticsFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, quant::QuantType quant_type,
+                       int quant_max, int quant_min, size_t bit_num, WeightQuantType weight_quant_type,
+                       TypeId quant_data_type, int index, int preferred_dim, bool symmetric = false,
+                       bool narrow_range = false);
 
   int QuantBias(const ParameterPtr &bias, const PrimitivePtr &primitive);
 
@@ -51,7 +51,7 @@ class FixedBitWeightQuantization {
 
   template <typename T>
   int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
-                          const PrimitivePtr &primitive, schema::QuantType quant_type, int quant_max, int quant_min,
+                          const PrimitivePtr &primitive, quant::QuantType quant_type, int quant_max, int quant_min,
                           size_t bit_num, WeightQuantType weight_quant_type, TypeId quant_data_type, int index,
                           int preferred_dim, bool symmetric = false, bool narrow_range = false) {
     size_t elem_count = weight->DataSize();
@@ -62,8 +62,8 @@ class FixedBitWeightQuantization {
     }
     std::vector<T> quant_data(elem_count);
     auto status =
-      FixedBitStatisticsFilter<T>(parameter_node, weight, primitive, quant_type, quant_max, quant_min, bit_num,
-                                  weight_quant_type, index, preferred_dim, &quant_data, symmetric, narrow_range);
+      FixedBitStatisticsFilter<T>(weight, primitive, quant_type, quant_max, quant_min, bit_num, weight_quant_type,
+                                  index, preferred_dim, &quant_data, symmetric, narrow_range);
     if (status == RET_NO_CHANGE) {
       return status;
     } else if (status != RET_OK) {
@@ -83,11 +83,10 @@ class FixedBitWeightQuantization {
   }
 
   template <typename T>
-  int FixedBitStatisticsFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
-                               const PrimitivePtr &primitive, schema::QuantType quant_type, int quant_max,
-                               int quant_min, size_t bit_num, WeightQuantType weight_quant_type, int index,
-                               int preferred_dim, std::vector<T> *quant_data, bool symmetric = false,
-                               bool narrow_range = false) {
+  int FixedBitStatisticsFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
+                               quant::QuantType quant_type, int quant_max, int quant_min, size_t bit_num,
+                               WeightQuantType weight_quant_type, int index, int preferred_dim,
+                               std::vector<T> *quant_data, bool symmetric = false, bool narrow_range = false) {
     MS_ASSERT(weight != nullptr);
     MS_ASSERT(primitive != nullptr);
     auto dims = weight->shape();
@@ -101,10 +100,13 @@ class FixedBitWeightQuantization {
     std::vector<schema::QuantParamT> quant_params;
     int ret = RET_OK;
     if (weight_quant_type == FIXED_BIT_PER_CHANNEL) {
-      ret = DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(),
-                                 static_cast<mindspore::schema::QuantType>(quant_type), &quant_params, quant_max,
+      bool cal_gain = false;
+      if (quant_type == QUANT_WEIGHT) {
+        cal_gain = true;
+      }
+      ret = DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(), &quant_params, quant_max,
                                  quant_min, bit_num, quant_data, ConvertShapeVectorToInt32(dims), preferred_dim,
-                                 symmetric, narrow_range);
+                                 cal_gain, symmetric, narrow_range);
       if (ret == RET_NO_CHANGE) {
         return ret;
       } else if (ret != RET_OK) {

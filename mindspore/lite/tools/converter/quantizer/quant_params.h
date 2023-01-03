@@ -43,9 +43,6 @@ constexpr int kCpuBindMode = 1;
 constexpr int kPrimIndex = 0;
 constexpr int kPrimOffset = 1;
 constexpr int kU8ZeroPointOffset = 128;
-constexpr int kQuantRange = 127;
-constexpr int kInt8LeftRange = -128;
-constexpr int kInt8RightRange = 127;
 constexpr int kMinIterations = 40;
 constexpr auto kQuantParam = "quant_param";
 constexpr auto kQuantType = "quant_type";
@@ -66,6 +63,13 @@ const std::set<PrimitivePtr> kHasBiasOperator = {prim::kPrimConv2DFusion, prim::
                                                  prim::kPrimLayerNormFusion};
 const std::set<PrimitivePtr> kUint8toFP32Operator = {prim::kPrimDetectionPostProcess};
 const std::set<TypeId> kFullQuantDType = {kNumberTypeInt8, kNumberTypeUInt8, kNumberTypeFloat32};
+
+enum QuantType {
+  QUANT_NONE = 0,
+  QUANT_WEIGHT = 4,
+  QUANT_ALL = 5,
+  QUANT_DYNAMIC = 6,
+};
 
 enum ActivationQuantizedMethod {
   MAX_MIN = 0,
@@ -102,7 +106,7 @@ enum DequantStrategy {
 };
 
 struct CommonQuantParam {
-  schema::QuantType quant_type = schema::QuantType_QUANT_NONE;
+  QuantType quant_type = QUANT_NONE;
   int bit_num = 8;
   int min_quant_weight_size = 0;
   int min_quant_weight_channel = 16;

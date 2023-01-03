@@ -34,7 +34,6 @@
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/gather.h"
 #include "ops/op_utils.h"
-#include "ops/fse_decode.h"
 #include "src/common/utils.h"
 #include "src/litert/cxx_api/tensor/tensor_impl.h"
 #include "ir/anf.h"
@@ -57,40 +56,11 @@ constexpr size_t kAnfPrimitiveIndex = 0;
 constexpr int kDefaultThreadNumFour = 4;
 }  // namespace
 
-QuantParamHolderPtr GetCNodeQuantHolder(const CNodePtr &cnode) {
-  MS_CHECK_TRUE_RET(cnode != nullptr, nullptr);
-  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (primitive == nullptr) {
-    MS_LOG(INFO) << "primitive is nullptr";
-    return nullptr;
-  }
-  return GetCNodeQuantHolder(primitive);
-}
-
-QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive) {
-  MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
-  QuantParamHolderPtr quant_params_holder = nullptr;
-  auto quant_params_valueptr = primitive->GetAttr("quant_params");
-  if (quant_params_valueptr == nullptr) {
-    quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
-    MS_CHECK_TRUE_MSG(quant_params_holder != nullptr, nullptr, "quant_params_holder is nullptr.");
-    primitive->AddAttr("quant_params", quant_params_holder);
-  } else {
-    quant_params_holder = quant_params_valueptr->cast<QuantParamHolderPtr>();
-    if (quant_params_holder == nullptr) {
-      quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
-      MS_CHECK_TRUE_MSG(quant_params_holder != nullptr, nullptr, "quant_params_holder is nullptr.");
-      primitive->AddAttr("quant_params", quant_params_holder);
-    }
-  }
-  return quant_params_holder;
-}
-
-int GetQuantType(const CNodePtr &cnode, schema::QuantType *quant_type) {
+int GetQuantType(const CNodePtr &cnode, quant::QuantType *quant_type) {
   CHECK_NULL_RETURN(cnode);
   auto quant_param_holder = GetCNodeQuantHolder(cnode);
   if (quant_param_holder == nullptr) {
-    *quant_type = schema::QuantType_QUANT_NONE;
+    *quant_type = quant::QUANT_NONE;
     return RET_OK;
   }
   *quant_type = quant_param_holder->quant_type();
@@ -143,38 +113,6 @@ int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type) {
     abstract_tensor->element()->set_type(TypeIdToType(new_data_type));
   }
   return RET_OK;
-}
-
-ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type,
-                                   const std::vector<schema::QuantParamT> &input_quant_params,
-                                   const std::vector<schema::QuantParamT> &output_quant_params, int axis,
-                                   bool set_quant_flag) {
-  auto prim_c = std::make_shared<ops::QuantDTypeCast>();
-  MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
-  prim_c->Init(src_type, dst_type);
-  prim_c->set_axis(axis);
-  auto quant_params_holder = std::make_shared<QuantParamHolder>(input_quant_params.size(), output_quant_params.size());
-  MS_CHECK_TRUE_MSG(quant_params_holder != nullptr, nullptr, "quant_params_holder is nullptr.");
-  if (set_quant_flag) {
-    quant_params_holder->set_quant_type(schema::QuantType_QUANT_ALL);
-  }
-  quant_params_holder->set_input_quant_param(0, input_quant_params);
-  quant_params_holder->set_output_quant_param(0, output_quant_params);
-  auto prim = prim_c->GetPrim();
-  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr");
-  prim->AddAttr("quant_params", quant_params_holder);
-  return NewValueNode(prim);
-}
-
-ValueNodePtr NewFSEDecodePrimitive(int dst_type, const uint64_t curr_chunk, const int64_t curr_chunk_index,
-                                   const int64_t curr_bit_count, const int64_t table_log) {
-  auto prim_c = std::make_shared<ops::FSEDecode>();
-  MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
-  prim_c->Init(dst_type, curr_chunk, curr_chunk_index, curr_bit_count, table_log);
-
-  auto prim = prim_c->GetPrim();
-  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr");
-  return NewValueNode(prim);
 }
 
 bool IsGraphInDTypeCast(const CNodePtr &cnode) {
@@ -258,17 +196,6 @@ int GetCastNodeType(const FuncGraphPtr &func_graph, const CNodePtr &cnode, CastN
     }
   }
   return RET_OK;
-}
-
-bool TensorQuantParamsInited(const schema::TensorT &tensor) {
-  if (tensor.quantParams.empty()) {
-    return false;
-  }
-
-  bool is_quant_params_inited =
-    std::all_of(tensor.quantParams.cbegin(), tensor.quantParams.cend(),
-                [](const std::unique_ptr<mindspore::schema::QuantParamT> &quant_param) { return quant_param->inited; });
-  return is_quant_params_inited;
 }
 
 std::string NodePrimitiveType(const CNodePtr &cnode) {
@@ -394,12 +321,12 @@ void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::
   }
 }
 
-int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &weight, void *quant_datas, int new_size,
+int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &weight, void *quant_datas, size_t new_size,
                             TypeId new_data_type) {
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(new_size > 0, RET_NULL_PTR);
   weight->set_data_type(new_data_type);
-  if (new_size != weight->data().nbytes()) {
+  if (new_size != static_cast<size_t>(weight->data().nbytes())) {
     MS_LOG(ERROR) << "Data size of tensor info is error.";
     return RET_ERROR;
   }
@@ -413,19 +340,6 @@ int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &wei
     MS_LOG(ERROR) << node->fullname_with_scope() << " set new dtype failed.";
     return ret;
   }
-  auto abstract_base = node->abstract();
-  if (abstract_base == nullptr) {
-    MS_LOG(ERROR) << "Abstract of node is nullptr, " << node->fullname_with_scope();
-    return RET_NULL_PTR;
-  }
-  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
-    MS_LOG(ERROR) << "Abstract of node should be anstract tensor, " << node->fullname_with_scope();
-    return RET_ERROR;
-  }
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
-  CHECK_NULL_RETURN(abstract_tensor);
-  CHECK_NULL_RETURN(abstract_tensor->element());
-  abstract_tensor->element()->set_type(TypeIdToType(new_data_type));
   return RET_OK;
 }
 
@@ -492,21 +406,6 @@ int GetGatherPreferredDim(const CNodePtr &cnode) {
   return axis_data[0];
 }
 
-int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first) {
-  auto channels = dims[0];
-  if (!(*channel_at_first)) {
-    if (dims.size() != DIMENSION_2D) {
-      MS_LOG(WARNING) << "unexpected dims size: " << dims.size();
-      *channel_at_first = true;
-    } else {
-      channels = dims[1];
-    }
-  } else {
-    channels = channel_cnt == -1 ? channels : channel_cnt;
-  }
-  return channels;
-}
-
 int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<int> &dims) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
@@ -532,39 +431,6 @@ std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims) {
     }
   }
   return shape;
-}
-
-void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<int> &shapes, int index,
-                       bool *channel_at_first, int *channel_cnt) {
-  MS_ASSERT(primitive != nullptr);
-  if (shapes.empty()) {
-    MS_LOG(ERROR) << " shape vector is empty.";
-    return;
-  }
-  if (primitive.value.type == schema::PrimitiveType_MatMulFusion && static_cast<int>(shapes.size()) == DIMENSION_2D) {
-    auto matmul_prim = primitive.value.AsMatMulFusion();
-    MS_ASSERT(matmul_prim != nullptr);
-    *channel_at_first = index != 1 || matmul_prim->transpose_b;
-  } else if (primitive.value.type == schema::PrimitiveType_LSTM) {
-    if (index == kLstmInputWeightIndex || index == kLstmStateWeightIndex) {
-      if (shapes.size() != kLstmWeightShapeSize) {
-        MS_LOG(WARNING) << "unexpected lstm shape size: " << shapes.size();
-      } else {
-        *channel_cnt = shapes[0] * shapes[1];
-      }
-    } else if (index == kLstmBiasIndex) {
-      if (shapes.size() != kLstmBiasShapeSize) {
-        MS_LOG(WARNING) << "unexpected lstm shape size: " << shapes.size();
-      } else {
-        auto tensor_elem_cnt = shapes[0] * shapes[1];
-        if (tensor_elem_cnt % kSingleDirBiasTensorSize == 0) {
-          *channel_cnt = kSingleDirBiasTensorSize;
-        }
-      }
-    } else {
-      MS_LOG(WARNING) << "unexpected index of lstm: " << index;
-    }
-  }
 }
 
 bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_primitive_types) {

@@ -30,7 +30,7 @@ class QuantParamParser {
   static int ParseWeightQuant(const WeightQuantString &weight_quant_string, quant::WeightQuantParam *weight_quant);
 
  private:
-  static int ParseQuantType(const std::string &quant_type_str, schema::QuantType *quant_type);
+  static int ParseQuantType(const std::string &quant_type_str, quant::QuantType *quant_type);
   static int ParseTargetDevice(const std::string &target_device_str, quant::TargetDevice *target_device);
 
   static int ParseActivationQuantizedMethod(const std::string &activation_quant_method_str,

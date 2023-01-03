@@ -168,7 +168,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   CHECK_NULL_RETURN(quant_param_holder);
   input_quant_params = quant_param_holder->get_input_quant_params();
   output_quant_params = quant_param_holder->get_output_quant_params();
-  dst_node->quantType = quant_param_holder->quant_type();
+  dst_node->quantType = static_cast<schema::QuantType>(static_cast<int>(quant_param_holder->quant_type()));
 
   // convert input quant param
   for (size_t i = 0; i < dst_node->inputIndex.size(); i++) {
@@ -184,7 +184,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
 
     tensor_input->quantClusters = quant_param_holder->GetQuantClusters(i);
 
-    if (!quant::TensorQuantParamsInited(*tensor_input)) {
+    if (!TensorQuantParamsInited(*tensor_input)) {
       tensor_input->quantParams.clear();
       for (auto input_quant_param : input_quant_params[i]) {
         auto input_quant_param_ptr = std::make_unique<schema::QuantParamT>(input_quant_param);

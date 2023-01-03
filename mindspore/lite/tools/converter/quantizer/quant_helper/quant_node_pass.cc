@@ -258,7 +258,7 @@ int QuantNodePass::DoFullQuant(const CNodePtr &cnode) {
       return RET_ERROR;
     }
   }
-  primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
+  primitive_quant_holder->set_quant_type(quant::QUANT_ALL);
   // do output quant
   return RET_OK;
 }
@@ -310,19 +310,19 @@ int QuantNodePass::Quant() {
     }
     auto quant_type = quant_holder->quant_type();
     auto node_name = cnode->fullname_with_scope();
-    if (quant_type == schema::QuantType_QUANT_NONE) {
+    if (quant_type == quant::QUANT_NONE) {
       if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
         continue;
       }
       // Remove unused quant param.
       MS_LOG(INFO) << node_name << " is not quant node.";
       quant_holder->ClearQuantParams();
-    } else if (quant_type == schema::QuantType_QUANT_WEIGHT) {
+    } else if (quant_type == quant::QUANT_WEIGHT) {
       // Reference Weight Quant
       if (DoWeightQuant(cnode) != RET_OK) {
         MS_LOG(INFO) << node_name << " quant weight failed.";
       }
-    } else if (quant_type == schema::QuantType_QUANT_ALL) {
+    } else if (quant_type == quant::QUANT_ALL) {
       if (DoFullQuant(cnode) != RET_OK) {
         MS_LOG(INFO) << node_name << " full quant failed.";
       }

@@ -56,9 +56,9 @@ bool AttentionQuantTypeDeterminer::DetermineQuantWeight(const mindspore::schema:
   MS_CHECK_TRUE_RET(weight_key_tensor != nullptr, false);
   MS_CHECK_TRUE_RET(weight_value_tensor != nullptr, false);
   MS_CHECK_TRUE_RET(weight_output_tensor != nullptr, false);
-  if (!quant::TensorQuantParamsInited(*input_tensor) && quant::TensorQuantParamsInited(*weight_query_tensor) &&
-      quant::TensorQuantParamsInited(*weight_key_tensor) && quant::TensorQuantParamsInited(*weight_value_tensor) &&
-      quant::TensorQuantParamsInited(*weight_output_tensor)) {
+  if (!TensorQuantParamsInited(*input_tensor) && TensorQuantParamsInited(*weight_query_tensor) &&
+      TensorQuantParamsInited(*weight_key_tensor) && TensorQuantParamsInited(*weight_value_tensor) &&
+      TensorQuantParamsInited(*weight_output_tensor)) {
     node->quantType = schema::QuantType_QUANT_WEIGHT;
     return true;
   }

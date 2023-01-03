@@ -124,8 +124,8 @@ int TrainExport::QuantTensorData(schema::TensorT *dest_tensor, const lite::Tenso
                                   &(quant_params), quant_max, quant_min, bit_num, &data, false, false);
   } else {
     ret = DoPerChannelQuant<int8_t>(reinterpret_cast<float *>(src_tensor->data()), src_tensor->ElementsNum(),
-                                    schema::QuantType_QUANT_WEIGHT, &(quant_params), quant_max, quant_min, bit_num,
-                                    &data, dest_tensor->dims, preferred_dim, false, false);
+                                    &(quant_params), quant_max, quant_min, bit_num, &data, dest_tensor->dims,
+                                    preferred_dim, true, false, false);
   }
   if (ret == RET_NO_CHANGE) {
     MS_LOG(DEBUG) << "No Need to quant per channel";

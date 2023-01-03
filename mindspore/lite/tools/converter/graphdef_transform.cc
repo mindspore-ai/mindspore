@@ -25,7 +25,6 @@
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
-#include "tools/converter/legacy_optimizer/graph/tensor_quant_pass.h"
 #include "tools/converter/legacy_optimizer/graph/tensor_name_pass.h"
 #include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
 #include "tools/converter/legacy_optimizer/graph/set_unused_quant_param_to_default_pass.h"
@@ -53,8 +52,8 @@ std::vector<schema::CNodeT *> GetGraphNodes(const schema::MetaGraphT &graph_defT
 int QuantTransform(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT *graph_defT) {
   MS_ASSERT(param != nullptr && graph_defT != nullptr);
   // quantization
-  if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_NONE ||
-      param->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {
+  if (param->commonQuantParam.quant_type == quant::QUANT_NONE ||
+      param->commonQuantParam.quant_type == quant::QUANT_WEIGHT) {
     {
       // quantization
       // init old node indices

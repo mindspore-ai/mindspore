@@ -46,8 +46,6 @@ class ParameterOptimizer {
                          double *init_scale);
 
  private:
-  MinMax GetFineTuneRange(std::vector<float> *candidate_scales);
-
   int WeightQuantModelInference(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
                                 const std::shared_ptr<mindspore::Model> &origin_model, size_t origin_model_size,
                                 SearchParams *s_param, int *ret_scale, float *best_compress_ratio,

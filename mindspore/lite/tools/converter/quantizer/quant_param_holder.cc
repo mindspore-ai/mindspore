@@ -13,15 +13,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define USE_DEPRECATED_API
 #include "tools/converter/quantizer/quant_param_holder.h"
 #include <utility>
 #include <vector>
 #include <memory>
 #include "schema/inner/model_generated.h"
+#include "ir/anf.h"
+#include "tools/optimizer/common/gllo_utils.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 namespace lite {
+bool TensorQuantParamsInited(const schema::TensorT &tensor) {
+  if (tensor.quantParams.empty()) {
+    return false;
+  }
+
+  bool is_quant_params_inited =
+    std::all_of(tensor.quantParams.cbegin(), tensor.quantParams.cend(),
+                [](const std::unique_ptr<mindspore::schema::QuantParamT> &quant_param) { return quant_param->inited; });
+  return is_quant_params_inited;
+}
+
+QuantParamHolderPtr GetCNodeQuantHolder(const CNodePtr &cnode) {
+  MS_CHECK_TRUE_RET(cnode != nullptr, nullptr);
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (primitive == nullptr) {
+    MS_LOG(INFO) << "primitive is nullptr";
+    return nullptr;
+  }
+  return GetCNodeQuantHolder(primitive);
+}
+
+QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive) {
+  MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
+  QuantParamHolderPtr quant_params_holder = nullptr;
+  auto quant_params_valueptr = primitive->GetAttr("quant_params");
+  if (quant_params_valueptr == nullptr) {
+    quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
+    MS_CHECK_TRUE_MSG(quant_params_holder != nullptr, nullptr, "quant_params_holder is nullptr.");
+    primitive->AddAttr("quant_params", quant_params_holder);
+  } else {
+    quant_params_holder = quant_params_valueptr->cast<QuantParamHolderPtr>();
+    if (quant_params_holder == nullptr) {
+      quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
+      MS_CHECK_TRUE_MSG(quant_params_holder != nullptr, nullptr, "quant_params_holder is nullptr.");
+      primitive->AddAttr("quant_params", quant_params_holder);
+    }
+  }
+  return quant_params_holder;
+}
+
 void QuantParamHolder::set_input_quant_param(const size_t &index,
                                              const std::vector<schema::QuantParamT> &input_quant_param) {
   if (index >= this->input_quant_params_.size()) {
@@ -84,7 +127,7 @@ bool QuantParamHolder::IsOutputExistInited() {
 }
 
 void QuantParamHolder::ClearQuantParams() {
-  quant_type_ = schema::QuantType_QUANT_NONE;
+  quant_type_ = quant::QUANT_NONE;
   input_quant_params_.clear();
   output_quant_params_.clear();
 }

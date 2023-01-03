@@ -16,13 +16,14 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_PARAM_HOLDER_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_PARAM_HOLDER_H_
-
+#define USE_DEPRECATED_API
 #include <vector>
 #include <memory>
 #include <map>
 #include "ir/anf.h"
 #include "schema/inner/model_generated.h"
 #include "nnacl/op_base.h"
+#include "tools/converter/quantizer/quant_params.h"
 
 namespace mindspore {
 namespace lite {
@@ -101,9 +102,9 @@ class QuantParamHolder : public Value {
     return true;
   }
 
-  void set_quant_type(const schema::QuantType &quant_type) { quant_type_ = quant_type; }
+  void set_quant_type(const quant::QuantType &quant_type) { quant_type_ = quant_type; }
 
-  schema::QuantType quant_type() const { return quant_type_; }
+  quant::QuantType quant_type() const { return quant_type_; }
 
   void set_enable_huffman_code(bool enable_huffman_code) { enable_huffman_code_ = enable_huffman_code; }
 
@@ -134,13 +135,19 @@ class QuantParamHolder : public Value {
   std::vector<float> GetQuantClusters(size_t index);
 
  private:
-  schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
+  quant::QuantType quant_type_{quant::QUANT_NONE};
   QuantParamsVector input_quant_params_;
   QuantParamsVector output_quant_params_;
   bool enable_huffman_code_ = false;
   std::map<size_t, std::vector<float>> quant_clusters;
 };
 using QuantParamHolderPtr = std::shared_ptr<QuantParamHolder>;
+
+QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
+
+QuantParamHolderPtr GetCNodeQuantHolder(const CNodePtr &cnode);
+
+bool TensorQuantParamsInited(const schema::TensorT &tensor);
 }  // namespace lite
 }  // namespace mindspore
 
