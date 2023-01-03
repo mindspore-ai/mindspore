@@ -3017,6 +3017,12 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
                     # For kill -15, we still exit after 30s
                     if exit_code == -15:
                         return 30
+                # In some cases the subprocess has been killed but the exitcode is still None.
+                # So we use os.kill(pid, 0) to check if it is alive.
+                subprocess_alive = _PythonMultiprocessing.is_process_alive(w.pid)
+                if not subprocess_alive:
+                    # Like kill -15, we wait 30s before exit
+                    return 30
             except ValueError:
                 # process has been closed already
                 return 0
@@ -3177,6 +3183,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         if platform.system().lower() != 'windows':
             self.cleaning_process = multiprocessing.Process(target=self._clean_process,
                                                             args=(self.ppid, self.workers),
+                                                            name="OrphanCleaner",
                                                             daemon=True)
             self.cleaning_process.start()
 
@@ -3184,6 +3191,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
                 self.eot = threading.Event()
                 self.watch_dog = threading.Thread(target=self._watch_dog,
                                                   args=(self.eot, self.workers + [self.cleaning_process]),
+                                                  name="WatchDog",
                                                   daemon=True)
                 self.watch_dog.start()
 
