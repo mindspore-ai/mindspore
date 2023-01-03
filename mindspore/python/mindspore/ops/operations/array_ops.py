@@ -5362,7 +5362,7 @@ class BatchToSpaceND(Primitive):
     Examples:
         >>> block_size = 2
         >>> crops = [[0, 0], [0, 0]]
-        >>> batch_to_space = ops.BatchToSpace(block_size, crops)
+        >>> batch_to_space = ops.BatchToSpaceND(block_size, crops)
         >>> input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
         >>> output = batch_to_space(input_x)
         >>> print(output)
@@ -7504,7 +7504,7 @@ class FillDiagonal(Primitive):
 
     Args:
         fill_value (float): The fill value.
-        wrap (bool, optional): the diagonal ‘wrapped’ after N columns for tall matrices. Default: False.
+        wrap (bool, optional): the diagonal `wrapped` after N columns for tall matrices. Default: False.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.

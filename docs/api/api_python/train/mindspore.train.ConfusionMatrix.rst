@@ -5,7 +5,7 @@ mindspore.train.ConfusionMatrix
 
     计算混淆矩阵(confusion matrix)，通常用于评估分类模型的性能，包括二分类和多分类场景。
 
-    如果只想使用混淆矩阵，请使用该类。如果想计算"PPV"、"TPR"、"TNR"等，请使用'mindspore.train.ConfusionMatrixMetric'类。
+    如果只想使用混淆矩阵，请使用该类。如果想计算"PPV"、"TPR"、"TNR"等，请使用 :class:`mindspore.train.ConfusionMatrixMetric` 类。
 
     参数：
         - **num_classes** (int) - 数据集中的类别数量。

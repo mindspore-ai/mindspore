@@ -3426,30 +3426,7 @@ class Tensor(Tensor_):
 
     def sigmoid(self):
         r"""
-        Sigmoid activation function.
-
-        Computes Sigmoid of input element-wise. The Sigmoid function is defined as:
-
-        .. math::
-
-            \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
-
-        where :math:`x_i` is an element of the self tensor.
-
-        Returns:
-            Tensor, with the same type and shape as the self tensor.
-
-        Raises:
-            TypeError: If dtype of self tensor is not float16, float32, float64, complex64 or complex128.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-            >>> output = input_x.sigmoid()
-            >>> print(output)
-            [0.7310586  0.880797   0.95257413 0.98201376 0.9933072 ]
+        For details, please refer to :func:`mindspore.ops.sigmoid`.
         """
         return tensor_operator_registry.get("sigmoid")()(self)
 
