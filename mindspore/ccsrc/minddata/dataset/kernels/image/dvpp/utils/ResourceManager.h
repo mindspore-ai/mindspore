@@ -17,8 +17,6 @@
 #define RESOURCEMANAGER_H
 
 #include <climits>
-#include <cstring>
-#include <climits>
 #include <mutex>
 #include <set>
 #include <sys/stat.h>

@@ -17,11 +17,9 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_SST2_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_SST2_OP_H_
 
-#include <limits>
 #include <map>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/source/csv_op.h"
