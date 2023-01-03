@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -91,3 +91,20 @@ def test_list_extend_4():
         return x
     out = list_net_4()
     assert np.all(out == ())
+
+
+def test_list_extend_tuple():
+    """
+    Feature: list extend.
+    Description: support list extend.
+    Expectation: No exception.
+    """
+    @jit
+    def func():
+        x = [1, 2, 3, 4]
+        y = (5, 6, 7)
+        x.extend(y)
+        return x
+
+    out = func()
+    assert np.all(out == (1, 2, 3, 4, 5, 6, 7))
