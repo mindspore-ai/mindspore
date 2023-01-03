@@ -431,6 +431,45 @@ class _TaylorOperation(TaylorOperation_):
         return self.grad_fn
 
 
+def _combine_with_ids(grad_position, weights, out):
+    """ Making resulting tuple, when return_ids is set to True. """
+    out_with_ids = []
+    position = 0
+    position_tuple = []
+    weight_tuple = []
+    if grad_position == (0,) and weights is not None:
+        position_tuple.append(0)
+        position_tuple.append(out[0])
+    elif grad_position == (0,):
+        position_tuple.append(0)
+        position_tuple.append(out)
+    elif weights is not None:
+        for index in grad_position:
+            position_tuple.append((index, out[0][position]))
+            position += 1
+        position = 0
+    else:
+        for index in grad_position:
+            position_tuple.append((index, out[position]))
+            position += 1
+        position = 0
+    out_with_ids.append(tuple(position_tuple))
+    if weights and isinstance(weights, (list, ParameterTuple)):
+        for weight in weights:
+            weight_tuple.append((weight.name, out[1][position]))
+            position += 1
+        out_with_ids.append(tuple(weight_tuple))
+    elif weights:
+        weight_tuple.append(weights.name)
+        weight_tuple.append(out[1])
+        out_with_ids.append(tuple(weight_tuple))
+    else:
+        out_with_ids = position_tuple
+    if not out_with_ids:
+        raise ValueError(f"output tuple should not be a empty tuple.")
+    return tuple(out_with_ids)
+
+
 class _Grad(GradOperation_):
     """
     A higher-order function which is used to generate the gradient function by position for the input function.
@@ -520,7 +559,7 @@ class _Grad(GradOperation_):
                 out = _pynative_executor()
                 out = _grads_divided_by_device_num_if_recomputation(out)
                 if self.return_ids and out:
-                    out = self._combine_with_ids(grad_position, weights, out)
+                    out = _combine_with_ids(grad_position, weights, out)
                 if self.get_value:
                     return res, out
                 if self.has_aux:
@@ -549,42 +588,6 @@ class _Grad(GradOperation_):
         self.weights_id = weights_id
         self.grad_hash_id = (grad_position, weights_id)
         return self.grad_fn
-
-    def _combine_with_ids(self, grad_position, weights, out):
-        """ Making resulting tuple, when return_ids is set to True. """
-        out_with_ids = []
-        j = 0
-        position_tuple = []
-        weight_tuple = []
-        if grad_position == (0,) and weights is not None:
-            position_tuple.append(0)
-            position_tuple.append(out[0])
-        elif grad_position == (0,):
-            position_tuple.append(0)
-            position_tuple.append(out)
-        elif weights is not None:
-            for i in grad_position:
-                position_tuple.append((i, out[0][j]))
-                j += 1
-            j = 0
-        else:
-            for i in grad_position:
-                position_tuple.append((i, out[j]))
-                j += 1
-            j = 0
-        out_with_ids.append(tuple(position_tuple))
-        if weights and isinstance(weights, (list, ParameterTuple)):
-            for weight in weights:
-                weight_tuple.append((weight.name, out[1][j]))
-                j += 1
-            out_with_ids.append(tuple(weight_tuple))
-        elif weights:
-            weight_tuple.append(weights.name)
-            weight_tuple.append(out[1])
-            out_with_ids.append(tuple(weight_tuple))
-        else:
-            out_with_ids = position_tuple
-        return tuple(out_with_ids)
 
     def _pynative_forward_run(self, fn, grad, args, kwargs):
         """ Pynative forward runs to build grad graph. """

@@ -459,7 +459,8 @@ void GetGradAbstract(const AbstractBasePtr &grads_abs, const std::string &para_n
   }
   auto abs0 = grad_abs_tuple->elements()[0];
   if (abs0->isa<AbstractScalar>()) {
-    auto build_value = abs0->cast_ptr<AbstractScalar>()->BuildValue();
+    auto buildptr = abs0->cast_ptr<AbstractScalar>();
+    auto build_value = buildptr->BuildValue();
     size_t expect_size = 2;
     if (grad_abs_tuple->elements().size() >= expect_size) {
       if (build_value->isa<Int64Imm>()) {
@@ -492,7 +493,11 @@ AbstractBasePtr InferImplGetGrad(const AnalysisEnginePtr &, const PrimitivePtr &
   int64_t position = -1;
   std::string para_name;
   if (hash_id_abs->isa<AbstractScalar>()) {
-    auto build_value = hash_id_abs->cast_ptr<AbstractScalar>()->BuildValue();
+    auto buildptr = hash_id_abs->cast_ptr<AbstractScalar>();
+    if (buildptr == nullptr) {
+      MS_EXCEPTION(TypeError) << "For " << op_name << ", the `x` should be an integer or a Parameter, but got nullptr";
+    }
+    auto build_value = buildptr->BuildValue();
     if (!build_value->isa<Int64Imm>()) {
       MS_EXCEPTION(TypeError) << "For " << op_name << ", the `x` should be an int64 number, but got "
                               << build_value->ToString();

@@ -115,10 +115,11 @@ def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False):
         has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
             will be returned straightly. It means the `fn` must return more than one outputs in this case.
             Default: False.
-        return_ids(bool): If True, every output gradient will be combined with its position id or parameter name as a
-            tuple. The format of the output will be the same with the output of grad when return_ids is set to false,
-            but every gradient in the output will be replaced by a tuple of position id or parameter name and its
-            gradient.
+        return_ids(bool): Whether return the tuple made by gradients and the index to specify which inputs
+            to be differentiated or the name of parameters of the training network that need to calculate the gradient.
+            If True, the output gradients will be replaced by the tuples made by gradients and the index to specify
+            which inputs to be differentiated or the name of parameters of the training network.
+            Default: False.
 
     Returns:
         Function, the gradient function to calculate gradient for the input function or cell.
@@ -357,7 +358,7 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
     return _get_grad_op(True, True, has_aux, True)(fn, weights, grad_position)
 
 
-def get_grad(gradients, x):
+def get_grad(gradients, identifier):
     """
     A function to get get expected gradient from the return value of ops.grad, when it has return_ids parameter set
     to True, by using the position id of a tensor or the parameter.
@@ -370,8 +371,10 @@ def get_grad(gradients, x):
     the parameter as the second input.
 
     Args:
-        The return value of ops.grad.
-        position number of a tensor, or a parameter that is used in ops.grad.
+        gradients (Union[tuple[int, Tensor], tuple[tuple, tuple]]): The return value of mindspore.grad when return_ids
+            is set to True.
+        identifier (Union[int, Parameter]): The position number of a tensor, or a parameter that is used in
+            mindspore.grad.
 
     Returns:
         The gradient of the tensor on the position of the position number used as the second input, or the gradient
@@ -404,7 +407,7 @@ def get_grad(gradients, x):
         >>> print(output)
         Tensor(shape=[2], dtype=Float32, value=[0.00000000e+00,  6.00000000e+00]
     """
-    return inner.GetGrad()(gradients, x)
+    return inner.GetGrad()(gradients, identifier)
 
 
 def _trans_jet_inputs(primals_item, series_item):
