@@ -29,6 +29,7 @@
 #include "ir/param_info.h"
 #include "utils/ms_context.h"
 #include "utils/anf_utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 bool ValueToBool(const ValuePtr &v, bool *value) {
@@ -285,6 +286,96 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar) {
     default:
       MS_LOG(EXCEPTION) << "When convert scalar to tensor, the scalar type: " << data_type << " is invalid.";
   }
+}
+
+template <typename T, typename Scalar>
+ValuePtr GetTensorValue(const tensor::TensorPtr &tensor) {
+  ValuePtr ret;
+  auto tensor_value = TensorValueToVector<T>(tensor);
+  if (tensor_value.size() == 1) {
+    ret = std::make_shared<Scalar>(tensor_value[0]);
+  } else {
+    std::vector<ValuePtr> value_vec;
+    for (const auto &elem : tensor_value) {
+      auto value = std::make_shared<Scalar>(elem);
+      MS_EXCEPTION_IF_NULL(value);
+      value_vec.push_back(value);
+    }
+    ret = std::make_shared<ValueTuple>(value_vec);
+  }
+  return ret;
+}
+
+ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor) {
+  ValuePtr ret;
+  if (tensor->has_user_data(kTensorValueIsType)) {
+    ret = tensor->user_data<mindspore::Type>(kTensorValueIsType);
+    return ret;
+  }
+
+  if (tensor->has_user_data(kTensorValueIsEmpty)) {
+    ret = tensor->user_data<mindspore::Value>(kTensorValueIsEmpty);
+    return ret;
+  }
+
+  TypePtr data_type = tensor->Dtype();
+  MS_EXCEPTION_IF_NULL(data_type);
+  TypeId type_id = data_type->type_id();
+  switch (type_id) {
+    case kNumberTypeInt8: {
+      ret = GetTensorValue<int8_t, Int8Imm>(tensor);
+      break;
+    }
+
+    case kNumberTypeUInt8: {
+      ret = GetTensorValue<uint8_t, UInt8Imm>(tensor);
+      break;
+    }
+
+    case kNumberTypeInt16: {
+      ret = GetTensorValue<int16_t, Int16Imm>(tensor);
+      break;
+    }
+
+    case kNumberTypeUInt16: {
+      ret = GetTensorValue<uint16_t, UInt16Imm>(tensor);
+      break;
+    }
+
+    case kNumberTypeInt32: {
+      ret = GetTensorValue<int32_t, Int32Imm>(tensor);
+      break;
+    }
+
+    case kNumberTypeUInt32: {
+      ret = GetTensorValue<uint32_t, UInt32Imm>(tensor);
+      break;
+    }
+
+    case kNumberTypeInt64: {
+      ret = GetTensorValue<int64_t, Int64Imm>(tensor);
+      break;
+    }
+
+    case kNumberTypeUInt64: {
+      ret = GetTensorValue<uint64_t, UInt64Imm>(tensor);
+      break;
+    }
+
+    case kNumberTypeFloat32: {
+      ret = GetTensorValue<float, FP32Imm>(tensor);
+      break;
+    }
+
+    case kNumberTypeFloat64: {
+      ret = GetTensorValue<double, FP64Imm>(tensor);
+      break;
+    }
+
+    default:
+      MS_LOG(EXCEPTION) << "Can't parse attr value :" << tensor->ToString() << ", Type:" << tensor->type_name();
+  }
+  return ret;
 }
 
 void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *tensors) {

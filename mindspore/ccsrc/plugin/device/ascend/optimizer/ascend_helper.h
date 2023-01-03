@@ -43,7 +43,6 @@ bool CheckAICoreSupported(const AnfNodePtr &anf_node);
 bool CheckAICoreSupportedAny(const AnfNodePtr &anf_node);
 bool CheckAICoreSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info);
 bool CheckAICPUSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info);
-ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor);
 std::string GetInputName(const CNodePtr &origin_op, size_t input_index);
 ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &attr_data_type);
 
