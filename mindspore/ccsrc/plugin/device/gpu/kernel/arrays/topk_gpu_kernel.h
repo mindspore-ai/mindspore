@@ -107,6 +107,7 @@ class TopKGpuKernelMod : public NativeGpuKernelMod {
     }
 
     input_shape_size_ = input_shapes.size();
+    outer_size_ = 1;
     for (size_t i = 0; i < input_shapes.size() - 1; i++) {
       outer_size_ *= LongToSize(input_shapes[i]);
     }
