@@ -40,25 +40,28 @@ class MS_API DelegateRegistry {
 
   static DelegateRegistry &GetInstance();
 
-  void RegDelegate(const mindspore::DeviceType &device_type, const std::string &provider, DelegateCreator creator);
+  void RegDelegate(const mindspore::DeviceType &device_type, const std::string &provider, DelegateCreator *creator);
   void UnRegDelegate(const mindspore::DeviceType &device_type, const std::string &provider);
   std::shared_ptr<GraphExecutor> GetDelegate(const mindspore::DeviceType &device_type, const std::string &provider,
                                              const std::shared_ptr<Context> &ctx, const ConfigInfos &config_infos);
 
  private:
-  mindspore::HashMap<DeviceType, mindspore::HashMap<std::string, DelegateCreator>> creator_map_;
+  mindspore::HashMap<DeviceType, mindspore::HashMap<std::string, DelegateCreator *>> creator_map_;
 };
 
 class DelegateRegistrar {
  public:
-  DelegateRegistrar(const mindspore::DeviceType &device_type, const std::string &provider, DelegateCreator creator) {
+  DelegateRegistrar(const mindspore::DeviceType &device_type, const std::string &provider, DelegateCreator *creator) {
     DelegateRegistry::GetInstance().RegDelegate(device_type, provider, creator);
   }
   ~DelegateRegistrar() = default;
 };
 
-#define REG_DELEGATE(device_type, provider, creator) \
-  static DelegateRegistrar g_##device_type##provider##Delegate(device_type, provider, creator);
+#define REG_DELEGATE(device_type, provider, creator)                                                            \
+  static DelegateCreator func = [=](const std::shared_ptr<Context> &context, const ConfigInfos &config_infos) { \
+    return creator(context, config_infos);                                                                      \
+  };                                                                                                            \
+  static DelegateRegistrar g_##device_type##provider##Delegate(device_type, provider, &func);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_FACTORY_H_
