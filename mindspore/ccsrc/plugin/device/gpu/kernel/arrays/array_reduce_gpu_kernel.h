@@ -97,6 +97,9 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
   template <typename T, typename S>
+  void LaunchIntKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                       const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  template <typename T, typename S>
   void LaunchComplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                            const std::vector<AddressPtr> &outputs, void *stream_ptr);
   using ReduceFunc =
@@ -126,6 +129,7 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
   bool all_match_;
   bool is_null_input_;
   int complex_op_type;
+  size_t int_op_type;
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
