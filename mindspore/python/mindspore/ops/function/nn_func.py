@@ -963,21 +963,21 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         output_size = (1,) + output_size
     max_unpool_3d = MaxUnpool3D(ksize=kernel_size, strides=stride, pads=padding, output_shape=output_size,
                                 data_format="NCDHW")
-    shape = P.Shape()
-    x_shape = shape(x)
-    indices_shape = shape(indices)
+    x_shape = P.Shape()(x)
+    indices_shape = P.Shape()(indices)
     x_dim = len(x_shape)
     if x_shape != indices_shape:
         raise ValueError(f"For max_unpool3d, the x shape and indices shape must be equal, but got input "
                          f"shape {x_shape} and indices shape {indices_shape}.")
     if x_dim not in (4, 5):
         raise ValueError(f"For max_unpool3d, the x shape must have 4 or 5 dims, but got {x_dim}.")
-    out = max_unpool_3d(x, indices)
     if x_dim == 4:
         x = x.expand_dims(axis=0)
         indices = indices.expand_dims(axis=0)
         out = max_unpool_3d(x, indices)
         out = out.squeeze(0)
+    else:
+        out = max_unpool_3d(x, indices)
     return out
 
 
