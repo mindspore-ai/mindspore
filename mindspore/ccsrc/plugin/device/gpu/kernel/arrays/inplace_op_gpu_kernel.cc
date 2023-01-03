@@ -89,6 +89,9 @@ int InplaceOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   input_size_list_.push_back(input_size_v);
   output_size_list_.push_back(input_size_x);
   workspace_size_list_.push_back(indices_size);
+  if (kernel_name_ == "InplaceUpdate") {
+    workspace_size_list_.push_back(indices_size);
+  }
   return KRET_OK;
 }
 
@@ -110,6 +113,10 @@ bool InplaceOpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   T *input_v = GetDeviceAddress<T>(inputs, kIndex1);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   auto indices_ptr = GetDeviceAddress<int64_t>(workspace, kIndex0);
+  int64_t *indices_key_ptr = nullptr;
+  if (kernel_name_ == "InplaceUpdate") {
+    indices_key_ptr = GetDeviceAddress<int64_t>(workspace, kIndex1);
+  }
   auto cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
 
   // Copy from 'x' into 'y'.
@@ -120,7 +127,8 @@ bool InplaceOpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(indices_ptr, indices_.data(), indices_.size() * sizeof(int64_t),
                                                      cudaMemcpyHostToDevice, cuda_stream),
                                      "cudaMemcpyAsync indices variable failed.");
-  CalInplaceOp(input_elements_v, input_v, output, indices_ptr, band_size_, device_id_, kernel_type_, cuda_stream);
+  CalInplaceOp(input_elements_v, input_v, output, indices_ptr, indices_key_ptr, band_size_, device_id_, kernel_type_,
+               cuda_stream);
   return true;
 }
 

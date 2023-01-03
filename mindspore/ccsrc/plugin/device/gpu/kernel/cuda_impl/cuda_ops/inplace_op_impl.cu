@@ -15,71 +15,87 @@
  */
 
 #include "inplace_op_impl.cuh"
-
-template <typename T>
-struct UpdateFunc {
-  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return rhs; }
-};
+#include <thrust/device_ptr.h>
+#include <thrust/execution_policy.h>
+#include <thrust/sequence.h>
+#include <thrust/sort.h>
+#include <thrust/unique.h>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 template <typename T>
 struct SubFunc {
-  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return lhs - rhs; }
+  __device__ __forceinline__ void operator()(T *lhs, const T &rhs) { MsAtomicSub(lhs, rhs); }
 };
 
 template <typename T>
 struct AddFunc {
-  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return lhs + rhs; }
+  __device__ __forceinline__ void operator()(T *lhs, const T &rhs) { MsAtomicAdd(lhs, rhs); }
 };
 
+template <typename T>
+__global__ void InplaceUpdate(const size_t size, const T *input_v, T *output, const int64_t *indices,
+                              int64_t *indices_key, size_t indices_len, const int64_t band_size) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
+    size_t row = pos / band_size;
+    if (row == indices_len || indices[row] != indices[row + 1]) {
+      int x_row = indices[row];
+      int v_row = indices_key[row];
+      int offset = pos % band_size;
+      int x_offset = x_row * band_size;
+      output[x_offset + offset] = input_v[v_row * band_size + offset];
+    }
+  }
+  return;
+}
 template <typename T, typename Func>
-__global__ void InplaceOp(const size_t size, const T *input_v, T *output, const int64_t *indices,
-                          const int64_t band_size) {
+__global__ void InplaceAddOrSub(const size_t size, const T *input_v, T *output, const int64_t *indices,
+                                const int64_t band_size) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     int v_row = pos / band_size;
     int x_row = indices[v_row];
     int offset = pos % band_size;
     int x_offset = x_row * band_size;
-    //   output[x_offset + offset] = input_v[pos];
-    output[x_offset + offset] = Func()(output[x_offset + offset], input_v[pos]);
+    Func()(&output[x_offset + offset], input_v[pos]);
   }
   return;
 }
 
 template <typename T>
-void CalInplaceOp(const size_t size_v, const T *input_v, T *output, const int64_t *indices, const int64_t band_size,
-                  const uint32_t &device_id, int op_type, cudaStream_t cuda_stream) {
-  switch (op_type) {
-    case INPLACE_OP_TYPE_UPDATE:
-      InplaceOp<T, UpdateFunc<T>><<<CUDA_BLOCKS(device_id, size_v), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-        size_v, input_v, output, indices, band_size);
-      break;
-    case INPLACE_OP_TYPE_ADD:
-      InplaceOp<T, AddFunc<T>><<<CUDA_BLOCKS(device_id, size_v), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-        size_v, input_v, output, indices, band_size);
-      break;
-    case INPLACE_OP_TYPE_SUB:
-      InplaceOp<T, SubFunc<T>><<<CUDA_BLOCKS(device_id, size_v), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-        size_v, input_v, output, indices, band_size);
-      break;
-    default:
-      break;
+void CalInplaceOp(const size_t size_v, const T *input_v, T *output, int64_t *indices, int64_t *indices_key,
+                  const int64_t band_size, const uint32_t &device_id, int op_type, cudaStream_t cuda_stream) {
+  int thread_num = 256 > size_v ? size_v : 256;
+  if (op_type == INPLACE_OP_TYPE_UPDATE) {
+    auto policy = thrust::cuda::par.on(cuda_stream);
+    size_t indices_element = size_v / band_size;
+    thrust::sequence(policy, thrust::device_pointer_cast(indices_key),
+                     thrust::device_pointer_cast(indices_key) + indices_element);
+    thrust::stable_sort_by_key(policy, thrust::device_pointer_cast(indices),
+                               thrust::device_pointer_cast(indices) + indices_element,
+                               thrust::device_pointer_cast(indices_key));
+    InplaceUpdate<<<CUDA_BLOCKS_CAL(device_id, size_v, thread_num), thread_num, 0, cuda_stream>>>(
+      size_v, input_v, output, indices, indices_key, indices_element, band_size);
+  } else if (op_type == INPLACE_OP_TYPE_ADD) {
+    InplaceAddOrSub<T, AddFunc<T>><<<CUDA_BLOCKS_CAL(device_id, size_v, thread_num), thread_num, 0, cuda_stream>>>(
+      size_v, input_v, output, indices, band_size);
+  } else if (op_type == INPLACE_OP_TYPE_SUB) {
+    InplaceAddOrSub<T, SubFunc<T>><<<CUDA_BLOCKS_CAL(device_id, size_v, thread_num), thread_num, 0, cuda_stream>>>(
+      size_v, input_v, output, indices, band_size);
   }
-
   return;
 }
 
 template CUDA_LIB_EXPORT void CalInplaceOp<half>(const size_t size_v, const half *input_v, half *output,
-                                                 const int64_t *indices, const int64_t band_size,
+                                                 int64_t *indices, int64_t *indices_key, const int64_t band_size,
                                                  const uint32_t &device_id, int op_type, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalInplaceOp<float>(const size_t size_v, const float *input_v, float *output,
-                                                  const int64_t *indices, const int64_t band_size,
+                                                  int64_t *indices, int64_t *indices_key, const int64_t band_size,
                                                   const uint32_t &device_id, int op_type, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalInplaceOp<double>(const size_t size_v, const double *input_v, double *output,
-                                                   const int64_t *indices, const int64_t band_size,
+                                                   int64_t *indices, int64_t *indices_key, const int64_t band_size,
                                                    const uint32_t &device_id, int op_type, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalInplaceOp<int>(const size_t size_v, const int *input_v, int *output,
-                                                const int64_t *indices, const int64_t band_size,
+template CUDA_LIB_EXPORT void CalInplaceOp<int>(const size_t size_v, const int *input_v, int *output, int64_t *indices,
+                                                int64_t *indices_key, const int64_t band_size,
                                                 const uint32_t &device_id, int op_type, cudaStream_t cuda_stream);
