@@ -635,7 +635,7 @@ def coo_concat(sp_input, concat_dim=0):
         >>> shape1 = (3, 4)
         >>> input1 = COOTensor(indices1, values1, shape1)
         >>> concat_dim = 1
-        >>> out = F.coo_concat((input0, input1), concat_dim)
+        >>> out = ops.coo_concat((input0, input1), concat_dim)
         >>> print(out)
         COOTensor(shape=[3, 8], dtype=Int32, indices=Tensor(shape=[4, 2], dtype=Int32, value=
         [[0 1]
