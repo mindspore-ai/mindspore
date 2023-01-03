@@ -503,6 +503,29 @@ void AnalysisEngine::Clear() {
   root_context_ = nullptr;
 }
 
+EvaluatorPtr GetPyEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &engine) {
+  auto prim_py = dyn_cast<PrimitivePy>(prim);
+  if (prim_py != nullptr) {
+    auto is_constexpr = prim_py->HasAttr(GRAPH_FLAG_CONSTEXPR_PRIM);
+    if (is_constexpr) {
+      return std::make_shared<ConstexprEvaluator>(prim_py);
+    }
+    if (engine == nullptr) {
+      return std::make_shared<PythonPrimEvaluator>(prim_py);
+    }
+
+    const auto &iter = engine->prim_py_evaluators_.find(prim_py);
+    if (iter != engine->prim_py_evaluators_.end()) {
+      return iter->second;
+    }
+    auto evaluator = std::make_shared<PythonPrimEvaluator>(prim_py);
+    engine->prim_py_evaluators_[prim_py] = evaluator;
+    return evaluator;
+  }
+  MS_LOG(ERROR) << "The primitive with python evaluator should be a python primitive.";
+  return nullptr;
+}
+
 EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &engine) {
   // Custom Primitive with python infer_shape, infer_type
   MS_EXCEPTION_IF_NULL(prim);
@@ -533,22 +556,7 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   // Use python infer function if the infer function not founded in the map return a python evaluator
   EvaluatorPtr evaluator = nullptr;
   if (prim->HasPyEvaluator()) {
-    auto prim_py = dyn_cast<PrimitivePy>(prim);
-    if (prim_py != nullptr) {
-      if (engine == nullptr) {
-        return std::make_shared<PythonPrimEvaluator>(prim_py);
-      }
-
-      const auto &iter = engine->prim_py_evaluators_.find(prim_py);
-      if (iter != engine->prim_py_evaluators_.end()) {
-        return iter->second;
-      }
-      evaluator = std::make_shared<PythonPrimEvaluator>(prim_py);
-      engine->prim_py_evaluators_[prim_py] = evaluator;
-      return evaluator;
-    }
-    MS_LOG(ERROR) << "The primitive with python evaluator should be a python primitive.";
-    return nullptr;
+    return GetPyEvaluator(prim, engine);
   }
 
   // Return a default evaluator

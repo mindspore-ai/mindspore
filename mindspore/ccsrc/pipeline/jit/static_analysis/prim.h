@@ -160,6 +160,19 @@ class MixedPrecisionCastEvaluator final : public Evaluator {
   PrimitivePtr prim_;
 };
 
+class ConstexprEvaluator : public TransitionPrimEvaluator {
+ public:
+  explicit ConstexprEvaluator(const PrimitivePyPtr primitive)
+      : TransitionPrimEvaluator("ConstexprEvaluator"), prim_py_(primitive) {}
+  ~ConstexprEvaluator() override = default;
+  MS_DECLARE_PARENT(ConstexprEvaluator, TransitionPrimEvaluator)
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override;
+
+ private:
+  PrimitivePyPtr prim_py_;
+};
+
 class MakeTupleEvaluator : public TransitionPrimEvaluator {
  public:
   MakeTupleEvaluator() : TransitionPrimEvaluator("MakeTupleEvaluator") {}

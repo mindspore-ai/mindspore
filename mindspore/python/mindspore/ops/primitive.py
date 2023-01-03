@@ -777,6 +777,7 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
                 PrimitiveWithInfer.__init__(self, op_name)
                 self.set_const_prim(True)
                 self.fn = fn
+                self.add_prim_attr('constexpr_prim', True)
                 if not reuse_result:
                     self.add_prim_attr('forbid_reuse_result', True)
 
@@ -786,6 +787,7 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
                     if (item["dtype"] is not None and item["value"] is None and check):
                         logger.warning("The \"" + self.name + "\" is a constexpr function." \
                                                               " The input arguments must be all constant value.")
+                        return {'dtype': None, 'shape': None, 'value': None, 'fn': (fn,)}
                     value_args.append(item["value"])
                 return {'dtype': None, 'shape': None, 'value': fn(*value_args)}
 

@@ -77,7 +77,7 @@ def _check_dtype(dtype):
 @constexpr
 def _is_shape_empty(shp):
     """Check whether shape contains zero"""
-    if shp is None:
+    if F.is_sequence_shape_unknown(shp):
         return False
     if isinstance(shp, int):
         return shp == 0

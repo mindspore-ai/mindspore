@@ -19,7 +19,6 @@ from mindspore.ops import functional as F
 from mindspore import Tensor
 from mindspore import jit
 from mindspore import context
-from mindspore.ops.primitive import constexpr
 
 
 def test_generate_mutable_sequence_with_dynamic_length_with_jit():
@@ -135,33 +134,6 @@ def test_dynamic_length_sequence_length_sequence_value_shape_unknown_2():
     ret1, ret2 = foo2(x2)
     assert ret1
     assert not ret2
-
-
-def test_dynamic_length_sequence_length_sequence_with_constexpr():
-    """
-    Feature: Mutable with dynamic length.
-    Description: Dynamic length sequence should be convert to None with passing to constexpr.
-    Expectation: No exception.
-    """
-    context.set_context(mode=context.GRAPH_MODE)
-
-    @constexpr
-    def test(x):
-        return x
-
-    @jit
-    def foo(x):
-        return test(x)
-
-    x = mutable([Tensor([1]), Tensor([2])], True)
-    ret = foo(x)
-    assert ret is None
-
-    y = mutable([Tensor([1]), Tensor([2])], False)
-    ret = foo(y)
-    assert len(ret) == 2
-    assert ret[0] is None
-    assert ret[1] is None
 
 
 def test_dynamic_length_sequence_getitem():
