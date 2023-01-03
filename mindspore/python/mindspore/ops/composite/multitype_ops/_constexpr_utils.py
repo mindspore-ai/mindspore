@@ -29,6 +29,7 @@ from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.ops import _utils as op_utils
 from mindspore._checkparam import Validator as validator
 from mindspore.ops import operations as P
+from mindspore import context
 
 ALL_TENSOR = 0
 NO_TENSOR = 1
@@ -886,6 +887,11 @@ def use_copy_slice(tuple_index):
                 isinstance(tuple_index[1], slice) and tuple_index[1].step in (1, None) and
                 all(x == slice(None, None, None) for x in tuple_index[2:]))
     return False
+
+
+@constexpr
+def is_ascend():
+    return context.get_context('device_target') == "Ascend"
 
 
 @constexpr
