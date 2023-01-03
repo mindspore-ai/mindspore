@@ -366,31 +366,31 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
     params.push_back(fg->add_parameter());
   }
 
-  // make fprob first result, maketuple's forward result.
+  // Make fprop first result, make_tuple's forward result.
   AnfNodePtr out = fg->NewCNodeInOrder(params);
 
-  // make fprob second result, maketuple's backward function.
-  FuncGraphPtr b = std::make_shared<FuncGraph>();
+  // Make fprop second result, make_tuple's backward function.
+  FuncGraphPtr bprop = std::make_shared<FuncGraph>();
 
   ss.str(std::string());
   ss.clear();
   // ◀make_tuple_
   ss << "\u25C2make_tuple_" << tuple_size;
-  b->debug_info()->set_name(ss.str());
-  AnfNodePtr dout = b->add_parameter();
+  bprop->debug_info()->set_name(ss.str());
+  AnfNodePtr dout = bprop->add_parameter();
 
   std::vector<AnfNodePtr> grads;
   grads.push_back(NewValueNode(prim::kPrimMakeTuple));
-  grads.push_back(NewEnviron(b));
+  grads.push_back(NewEnviron(bprop));
   for (int64_t i = 0; i < tuple_size; ++i) {
-    grads.push_back(b->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), dout, NewValueNode(i)}));
+    grads.push_back(bprop->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), dout, NewValueNode(i)}));
   }
 
-  b->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  b->set_output(b->NewCNodeInOrder(grads));
+  bprop->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  bprop->set_output(bprop->NewCNodeInOrder(grads));
 
   fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(b)}));
+  fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(bprop)}));
   (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimMakeTuple));
   return fg;
 }
@@ -410,32 +410,115 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
     params.push_back(fg->add_parameter());
   }
 
-  // make fprob first result, maketuple's forward result.
+  // Make fprop first result, make_list's forward result.
   AnfNodePtr out = fg->NewCNodeInOrder(params);
 
-  // make fprob second result, maketuple's backward function.
-  FuncGraphPtr b = std::make_shared<FuncGraph>();
+  // Make fprop second result, make_list's backward function.
+  FuncGraphPtr bprop = std::make_shared<FuncGraph>();
 
   ss.str(std::string());
   ss.clear();
   // ◀make_list_
   ss << "\u25C2make_list_" << list_size;
-  b->debug_info()->set_name(ss.str());
-  AnfNodePtr dout = b->add_parameter();
+  bprop->debug_info()->set_name(ss.str());
+  AnfNodePtr dout = bprop->add_parameter();
 
   std::vector<AnfNodePtr> grads;
   grads.push_back(NewValueNode(prim::kPrimMakeTuple));
-  grads.push_back(NewEnviron(b));
+  grads.push_back(NewEnviron(bprop));
   for (int64_t i = 0; i < list_size; ++i) {
-    grads.push_back(b->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), dout, NewValueNode(i)}));
+    grads.push_back(bprop->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), dout, NewValueNode(i)}));
   }
 
-  b->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  b->set_output(b->NewCNodeInOrder(grads));
+  bprop->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  bprop->set_output(bprop->NewCNodeInOrder(grads));
 
   fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(b)}));
+  fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(bprop)}));
   (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimMakeList));
+  return fg;
+}
+
+FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+  int64_t args_size = SizeToLong(args_spec_list.size());
+  constexpr auto py_execute_grad_input_count = 3;
+  constexpr auto op_name = "PyExecute";
+  CheckArgsSize(op_name, args_spec_list, py_execute_grad_input_count);
+
+  std::ostringstream ss;
+  // ▶PyExecute
+  ss << "\u25B8PyExecute_" << args_size;
+  FuncGraphPtr fg = std::make_shared<FuncGraph>();
+  fg->debug_info()->set_name(ss.str());
+
+  std::vector<AnfNodePtr> params;
+  (void)params.emplace_back(NewValueNode(prim::kPrimPyExecute));
+  for (int64_t i = 0; i < args_size; ++i) {
+    (void)params.emplace_back(fg->add_parameter());
+  }
+
+  // Make fprop first result, PyExecute's forward result.
+  AnfNodePtr out = fg->NewCNodeInOrder(params);
+
+  // make fprop second result, PyExecute's backward function.
+  FuncGraphPtr bprop = std::make_shared<FuncGraph>();
+
+  ss.str(std::string());
+  ss.clear();
+  // ◀PyExecute
+  ss << "\u25C2PyExecute_" << args_size;
+  bprop->debug_info()->set_name(ss.str());
+  (void)bprop->add_parameter();
+
+  std::vector<AnfNodePtr> grads;
+  (void)grads.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  (void)grads.emplace_back(NewEnviron(bprop));
+  // Propagate for script string.
+  (void)grads.emplace_back(params[1]);
+  // Propagate for local dict keys.
+  const auto &local_key_args = dyn_cast<abstract::AbstractTuple>(args_spec_list[1]);
+  MS_EXCEPTION_IF_NULL(local_key_args);
+  std::vector<AnfNodePtr> keys;
+  (void)keys.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  for (size_t i = 0; i < local_key_args->size(); ++i) {
+    constexpr auto keys_num = 2;
+    const auto &key_item =
+      bprop->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), params[keys_num], NewValueNode(SizeToLong(i))});
+    const auto &element = local_key_args->elements()[i];
+    const auto &str_element = dyn_cast<abstract::AbstractScalar>(element);
+    if (str_element != nullptr && str_element->BuildType()->isa<String>()) {
+      (void)keys.emplace_back(key_item);
+    } else {
+      (void)keys.emplace_back(bprop->NewCNodeInOrder({NewValueNode(prim::GetPythonOps("zeros_like")), key_item}));
+    }
+  }
+  (void)grads.emplace_back(bprop->NewCNodeInOrder(keys));
+  // Propagate for local dict values.
+  constexpr auto values_arg_num = 2;
+  const auto &local_value_args = dyn_cast<abstract::AbstractTuple>(args_spec_list[values_arg_num]);
+  MS_EXCEPTION_IF_NULL(local_value_args);
+  std::vector<AnfNodePtr> values;
+  (void)values.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  for (size_t i = 0; i < local_value_args->size(); ++i) {
+    constexpr auto values_num = 3;
+    const auto &value_item =
+      bprop->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), params[values_num], NewValueNode(SizeToLong(i))});
+    const auto &element = local_value_args->elements()[i];
+    const auto &str_element = dyn_cast<abstract::AbstractScalar>(element);
+    if (str_element != nullptr && str_element->BuildType()->isa<String>()) {
+      (void)values.emplace_back(value_item);
+    } else {
+      (void)values.emplace_back(bprop->NewCNodeInOrder({NewValueNode(prim::GetPythonOps("zeros_like")), value_item}));
+    }
+  }
+  (void)grads.emplace_back(bprop->NewCNodeInOrder(values));
+
+  bprop->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  bprop->set_output(bprop->NewCNodeInOrder(grads));
+
+  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(bprop)}));
+  (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimPyExecute));
   return fg;
 }
 
@@ -1081,9 +1164,9 @@ FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
     MS_LOG(EXCEPTION) << "'VmapOperation' requires a network or function as an input, while the input is empty.";
   }
 
-  constexpr auto kVmapOperationInputNum = 3;
+  constexpr auto vmap_operation_input_num = 3;
   const std::string op_name = "vmap";
-  CheckArgsSize(op_name, args_spec_list, kVmapOperationInputNum);
+  CheckArgsSize(op_name, args_spec_list, vmap_operation_input_num);
 
   auto fn_arg = args_spec_list[0];
   auto in_axes_arg = args_spec_list[1];

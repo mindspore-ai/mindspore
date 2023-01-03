@@ -231,9 +231,3 @@ def bprop_scalar_not(x, out, dout):
 def bprop_tensor_move(x, out, dout):
     """Backpropagator for primitive `TensorMove`."""
     return (dout,)
-
-
-@bprops.register("PyExecute")
-def get_bprop_py_execute(x, y, z, out, dout):
-    """Generate bprop for PyExecute"""
-    return x, y, z
