@@ -782,28 +782,12 @@ STATUS AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, const std
     return RET_OK;
   }
   auto value = old_graph->get_attr(kIsOptimized);
-  auto is_ascend = (param->device.find("Ascend") != std::string::npos);
   if (param->is_runtime_converter) {  // load online
     if (value != nullptr) {           // other models converted to MindIR
       auto status = RunFormatTrans(old_graph);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Run format trans failed";
         return status;
-      }
-    } else if (!is_ascend) {
-      // new MindIR
-      auto redundant_op_remove_pass = std::make_shared<mindspore::opt::RemoveRedundantOpPass>(param->train_model, true);
-      MS_CHECK_TRUE_MSG(redundant_op_remove_pass != nullptr, RET_NULL_PTR, "redundant_op_remove_pass is nullptr.");
-      if (!redundant_op_remove_pass->Run(old_graph)) {
-        MS_LOG(ERROR) << "Run remove redundant op failed";
-        return RET_ERROR;
-      }
-
-      auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model);
-      MS_CHECK_TRUE_MSG(unify_format != nullptr, RET_NULL_PTR, "unify_format is nullptr.");
-      if (!unify_format->Run(old_graph)) {
-        MS_LOG(ERROR) << "Run insert transpose failed.";
-        return RET_ERROR;
       }
     }
   }

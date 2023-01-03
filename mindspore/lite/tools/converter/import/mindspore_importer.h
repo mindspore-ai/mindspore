@@ -30,16 +30,9 @@ class MindsporeImporter {
  public:
   MindsporeImporter() = default;
   ~MindsporeImporter() = default;
-  FuncGraphPtr ImportMindIR(const std::shared_ptr<ConverterPara> &param);
-  FuncGraphPtr ImportMindIR(const std::shared_ptr<ConverterPara> &param, const void *buff, const size_t &size);
-  FuncGraphPtr CheckAndUpdateFuncGraph(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
-  static STATUS Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param);
-  static void RemoveUnusedGraphInput(const FuncGraphPtr &func_graph);
 
- private:
-  STATUS GetFuncGraphOutputName(const CNodePtr &cnode);
-  STATUS TraceOutput(const AnfNodePtr &node);
-  std::vector<std::string> output_tensor_name_;
+  static void RemoveUnusedGraphInput(const FuncGraphPtr &func_graph);
+  static STATUS Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param);
 };
 
 }  // namespace mindspore::lite
