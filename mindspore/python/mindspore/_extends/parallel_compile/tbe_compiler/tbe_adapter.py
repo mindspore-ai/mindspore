@@ -512,7 +512,7 @@ def parallel_compile_fusion_op(job: TbeJob):
     relation = ""
     fixpipe_ub_cfg = ""
     dispatch_fusion_op_compile_task(job.source_id, job.id, l1_size, json.dumps(job.content), op_kernel_name, None, None,
-                                    options, None, job.pass_list, op_name, relation, fixpipe_ub_cfg)
+                                    options, None, job.pass_list, op_name, relation, fixpipe_ub_cfg, None)
     return True
 
 
