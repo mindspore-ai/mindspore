@@ -699,8 +699,8 @@ REG_BPROP_BUILDER("UpsampleTrilinear3D").SetUnusedInputs({i0, i1}).SetBody(BODYF
   return {dx};
 });
 
-REG_BPROP_BUILDER("Dropout2D").SetBody(Dropout2DBpropExpander);
-REG_BPROP_BUILDER("Dropout3D").SetBody(Dropout2DBpropExpander);
+REG_BPROP_BUILDER("Dropout2D").SetUnusedInputs({i0}).SetBody(Dropout2DBpropExpander);
+REG_BPROP_BUILDER("Dropout3D").SetUnusedInputs({i0}).SetBody(Dropout2DBpropExpander);
 
 REG_BPROP_BUILDER("CTCLoss").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto labels_indices = ib->GetInput(kIndex1);
@@ -1683,7 +1683,7 @@ REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   return {dx, ib->ZerosLike(paddings), ib->ZerosLike(constant_values)};
 });
 
-REG_BPROP_BUILDER("MaximumGrad").SetUnusedInputs({i2}).SetBody(CommonMaxMinGradBprop);
-REG_BPROP_BUILDER("MinimumGrad").SetUnusedInputs({i2}).SetBody(CommonMaxMinGradBprop);
+REG_BPROP_BUILDER("MaximumGrad").SetUnusedInputs({i0, i1, i2}).SetBody(CommonMaxMinGradBprop);
+REG_BPROP_BUILDER("MinimumGrad").SetUnusedInputs({i0, i1, i2}).SetBody(CommonMaxMinGradBprop);
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

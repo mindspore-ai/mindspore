@@ -21,7 +21,7 @@
 
 namespace mindspore::expander::bprop {
 REG_BPROP_BUILDERS_BEGIN(GradImageOps)
-REG_BPROP_BUILDER("ResizeBicubic").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ResizeBicubic").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
   auto images = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -34,10 +34,10 @@ REG_BPROP_BUILDER("ResizeBicubic").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto dx = ib->Emit(
     "ResizeBicubicGrad", {dout, images},
     {{"align_corners", ib->GetAttr("align_corners")}, {"half_pixel_centers", ib->GetAttr("half_pixel_centers")}});
-  return {dx, ib->Emit("ZerosLike", {size})};
+  return {dx, ib->ZerosLike(size)};
 });
 
-REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib) {
   std::set<TypeId> allowed_types = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
   auto method = GetValue<std::string>(ib->GetAttr("method"));
   auto target = ib->GetTargetFromContext();
@@ -64,7 +64,7 @@ REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   return {dimage, dbox, ib->ZerosLike(box_index), ib->ZerosLike(crop_size)};
 });
 
-REG_BPROP_BUILDER("ScaleAndTranslate").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ScaleAndTranslate").SetUnusedInputs({i1, i4}).SetBody(BODYFUNC(ib) {
   auto images = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
   auto scale = ib->GetInput(kIndex2);

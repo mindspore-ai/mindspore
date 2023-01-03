@@ -41,7 +41,7 @@ static NodePtr GetMatrixDiagPartAssist(const BpropIRBuilder *ib, const ShapeVect
 }
 
 REG_BPROP_BUILDERS_BEGIN(GradInnerOps)
-REG_BPROP_BUILDER("MatrixDiag").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("MatrixDiag").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto shape = ib->GetShape(dout);
@@ -51,7 +51,7 @@ REG_BPROP_BUILDER("MatrixDiag").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   return {dx, ib->ZerosLike(y)};
 });
 
-REG_BPROP_BUILDER("MatrixDiagPart").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("MatrixDiagPart").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -66,7 +66,7 @@ REG_BPROP_BUILDER("MatrixDiagPart").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {ib->Emit("MatrixSetDiag", {ib->ZerosLike(x), dout, assist1}), ib->ZerosLike(y)};
 });
 
-REG_BPROP_BUILDER("MatrixSetDiag").SetUnusedInputs({i1, i3}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("MatrixSetDiag").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto z = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
@@ -115,7 +115,7 @@ REG_BPROP_BUILDER("MatmulDDS").SetUnusedInputs({i2, i3, i5}).SetBody(BODYFUNC(ib
   return {dq, dk, ib->ZerosLike(local_mask), ib->ZerosLike(global_mask)};
 });
 
-REG_BPROP_BUILDER("PsROIPooling").SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("PsROIPooling").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto pooled_height = GetValue<int64_t>(ib->GetAttr("pooled_height"));
   auto pooled_width = GetValue<int64_t>(ib->GetAttr("pooled_width"));
   auto spatial_scale = GetValue<float>(ib->GetAttr("spatial_scale"));
@@ -144,7 +144,7 @@ REG_BPROP_BUILDER("PsROIPooling").SetBody(BODYFUNC(ib) {
   return {dx, ib->ZerosLike(rois)};
 });
 
-REG_BPROP_BUILDER("ResizeBilinearV2").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ResizeBilinearV2").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -165,7 +165,7 @@ REG_BPROP_BUILDER("_VirtualPipelineEnd").SetUnusedInputs({i0, i1}).SetBody(BODYF
   return {dx};
 });
 
-REG_BPROP_BUILDER("FillV2").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("FillV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto shape = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
   auto dout_typeptr = ib->GetDtype(dout);
@@ -210,7 +210,7 @@ REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   return {ib->Emit("Roll", {dout}, {{"axis", ib->GetAttr("axis")}, {"shift", MakeValue(shift)}})};
 });
 
-REG_BPROP_BUILDER("DynamicResizeNearestNeighbor").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("DynamicResizeNearestNeighbor").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto inputs = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
