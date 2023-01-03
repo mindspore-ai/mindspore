@@ -23,6 +23,8 @@ ctc_loss_v2_grad_info = TBERegOp("CTCLossV2Grad") \
     .compute_cost(10) \
     .kernel_name("ctc_loss_v2_grad") \
     .partial_flag(True) \
+    .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
     .attr("blank", "optional", "int", "all", "0") \
     .attr("reduction", "optional", "str", "all", "none") \
     .attr("zero_infinity", "optional", "bool", "all", "false") \

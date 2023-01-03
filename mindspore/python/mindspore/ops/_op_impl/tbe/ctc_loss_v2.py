@@ -23,6 +23,8 @@ ctc_loss_v2_info = TBERegOp("CTCLossV2") \
     .compute_cost(10) \
     .kernel_name("ctc_loss_v2") \
     .partial_flag(True) \
+    .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
     .attr("blank", "optional", "int", "all", "0") \
     .attr("reduction", "optional", "str", "all", "none") \
     .attr("zero_infinity", "optional", "bool", "all", "false") \
