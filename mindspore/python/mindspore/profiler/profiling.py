@@ -637,9 +637,7 @@ class Profiler:
         if not isinstance(self._profile_communication, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter profile_communication must be bool, "
                             f"but got type {type(self._profile_communication)}")
-        if self._profile_communication and context.get_context("mode") == context.PYNATIVE_MODE:
-            logger.warning("[Profiler]The parameter profile_communication is not supported on Ascend "
-                           "PyNative mode currently.")
+
         if self._profile_communication:
             hccl_option = {"output": self._output_path, "task_trace": "on"}
             os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
@@ -651,9 +649,11 @@ class Profiler:
         if not isinstance(self._profile_memory, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter profile_memory must be bool, "
                             f"but got type '{type(self._profile_memory)}'")
-        if self._profile_memory and context.get_context("mode") == context.PYNATIVE_MODE:
-            logger.warning("[Profiler]The parameter profile_memory is not supported on Ascend "
-                           "PyNative mode currently.")
+
+        self._sync_enable = kwargs.pop("sync_enable", False)
+        if self._sync_enable:
+            logger.warning(f"The parameter sync_enabl is not supported on Ascend currently.")
+
         if kwargs:
             logger.warning("%s are invalid params which don't work.", kwargs)
 
@@ -711,13 +711,12 @@ class Profiler:
         if GlobalComm.INITED:
             self._rank_size = get_group_size()
         else:
-            self._rank_size = os.getenv('RANK_SIZE')
+            self._rank_size = int(os.getenv('RANK_SIZE', '1'))
 
         if self._has_started:
             self.stop()
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
-
         self._ascend_graph_analyse()
 
         # Call MSAdvisor function
@@ -737,6 +736,9 @@ class Profiler:
         """Analyse memory usage info."""
         if not self._profile_memory:
             return
+        if self._profile_memory and context.get_context("mode") == context.PYNATIVE_MODE:
+            logger.warning("[Profiler]The parameter profile_memory is not supported on Ascend "
+                           "PyNative mode currently.")
         try:
             logger.info("Profiling: analyzing the memory usage info.")
             self._analyse_memory_usage(points)
@@ -749,6 +751,9 @@ class Profiler:
         """Analyse hccl profiler info."""
         if not self._profile_communication:
             return
+        if self._profile_communication and context.get_context("mode") == context.PYNATIVE_MODE:
+            logger.warning("[Profiler]The parameter profile_communication is not supported on Ascend "
+                           "PyNative mode currently.")
         try:
             logger.info("Profiling: analyzing the hccl profiler info.")
             self._analyse_hccl_info()
@@ -905,7 +910,7 @@ class Profiler:
         if GlobalComm.INITED:
             self._rank_size = get_group_size()
         else:
-            self._rank_size = os.getenv('RANK_SIZE')
+            self._rank_size = int(os.getenv('RANK_SIZE', '1'))
 
         if self._has_started:
             self.stop()
@@ -988,7 +993,7 @@ class Profiler:
         """Collect and analyse cpu performance data."""
 
         try:
-            timeline_generator = CpuTimelineGenerator(self._output_path, context.get_context("mode"))
+            timeline_generator = CpuTimelineGenerator(self._output_path, self._rank_id, context.get_context("mode"))
             timeline_generator.init_timeline()
             timeline_generator.write_timeline(self._timeline_size_limit_byte)
             timeline_generator.write_timeline_summary()

@@ -128,7 +128,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
     def init_pynative_timeline(self):
         """Init timeline for pynative model."""
         timeline_list = OPIntermediateParser(self._profiling_dir, self._rank_id).get_timeline_data()
-        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._model)
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._model)
         cpu_timeline_list = cpu_timeline_generator.load_cpu_op_data()
         if cpu_timeline_list:
             self._pynative_clock_synchronize(cpu_timeline_list)
@@ -194,7 +194,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         for timeline in timeline_list:
             timeline[self._tid_idx] = f"Stream #{timeline[self._tid_idx]}"
 
-        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._model)
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._model)
         cpu_timeline_list = cpu_timeline_generator.get_timeline_data()
         if cpu_timeline_list:
             self._clock_synchronize_to_device(cpu_timeline_list, source_path)
