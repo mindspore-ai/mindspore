@@ -19,6 +19,7 @@
 #include "ir/anf.h"
 
 namespace mindspore::expander::bprop {
+REG_BPROP_BUILDERS_BEGIN(GradCommOps)
 REG_BPROP_BUILDER("AllReduce").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
@@ -48,4 +49,5 @@ REG_BPROP_BUILDER("AllReduce").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
     return {ib->Mul(dx, z)};
   }
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

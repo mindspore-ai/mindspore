@@ -110,8 +110,47 @@ ShapeVector InferOutShape(const ShapeVector &sh1, const ShapeVector &sh2) {
   }
   return res;
 }
-};  // namespace
 
+NodePtrList CommonSparseSegmentBprop(const BpropIRBuilder *ib, const std::string &grad_op, bool with_segments) {
+  auto x = ib->GetInput(kIndex0);
+  auto indices = ib->GetInput(kIndex1);
+  auto segment_ids = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(with_segments ? kIndex5 : kIndex4);
+  auto shape_x = ib->GetShape(x);
+  auto output_dim0 = ib->Tensor(shape_x[0], kInt32);
+  if (ib->GetDtypeId(indices) != kNumberTypeInt32) {
+    indices = ib->Cast(indices, kInt32);
+  }
+  segment_ids = ib->Cast(segment_ids, kInt32);
+  auto dx = ib->Emit(grad_op, {dout, indices, segment_ids, output_dim0});
+  NodePtrList result = {dx, ib->ZerosLike(indices), ib->ZerosLike(segment_ids)};
+  if (with_segments) {
+    result.emplace_back(ib->ZerosLike(ib->GetInput(kIndex3)));
+  }
+  return result;
+}
+
+NodePtrList CommonSparseSegmentBpropForCpu(const BpropIRBuilder *ib, bool with_segments) {
+  auto x = ib->GetInput(kIndex0);
+  auto indices = ib->GetInput(kIndex1);
+  auto segment_ids = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(with_segments ? kIndex5 : kIndex4);
+  auto shape_x = ib->GetShape(x);
+  auto output_dim0 = ib->Tensor(shape_x[0], kInt32);
+  segment_ids = ib->Cast(segment_ids, kInt32);
+  auto input0 = ib->Emit("Gather", {dout, segment_ids, ib->Tensor(0, kInt64)});
+  input0 = ib->Cast(input0, kFloat32);
+  indices = ib->Cast(indices, kInt32);
+  auto dx = ib->Emit("UnsortedSegmentSum", {input0, indices, output_dim0});
+  dx = ib->Cast(dx, ib->GetDtype(dout));
+  NodePtrList result = {dx, ib->ZerosLike(indices), ib->ZerosLike(segment_ids)};
+  if (with_segments) {
+    result.emplace_back(ib->ZerosLike(ib->GetInput(kIndex3)));
+  }
+  return result;
+}
+}  // namespace
+REG_BPROP_BUILDERS_BEGIN(GradSparseOps)
 REG_BPROP_BUILDER("SparseToDense").SetUnusedInputs({i1, i3}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex0);
   auto dense_shape = ib->GetInput(kIndex2);
@@ -479,45 +518,6 @@ REG_BPROP_BUILDER("CSRSparseMatrixToSparseTensor").SetUnusedInputs({i0, i1, i2, 
           ib->TupleGetItem(dx, kIndex3), ib->TupleGetItem(dx, kIndex4)};
 });
 
-NodePtrList CommonSparseSegmentBprop(const BpropIRBuilder *ib, const std::string &grad_op, bool with_segments) {
-  auto x = ib->GetInput(kIndex0);
-  auto indices = ib->GetInput(kIndex1);
-  auto segment_ids = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(with_segments ? kIndex5 : kIndex4);
-  auto shape_x = ib->GetShape(x);
-  auto output_dim0 = ib->Tensor(shape_x[0], kInt32);
-  if (ib->GetDtypeId(indices) != kNumberTypeInt32) {
-    indices = ib->Cast(indices, kInt32);
-  }
-  segment_ids = ib->Cast(segment_ids, kInt32);
-  auto dx = ib->Emit(grad_op, {dout, indices, segment_ids, output_dim0});
-  NodePtrList result = {dx, ib->ZerosLike(indices), ib->ZerosLike(segment_ids)};
-  if (with_segments) {
-    result.emplace_back(ib->ZerosLike(ib->GetInput(kIndex3)));
-  }
-  return result;
-}
-
-NodePtrList CommonSparseSegmentBpropForCpu(const BpropIRBuilder *ib, bool with_segments) {
-  auto x = ib->GetInput(kIndex0);
-  auto indices = ib->GetInput(kIndex1);
-  auto segment_ids = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(with_segments ? kIndex5 : kIndex4);
-  auto shape_x = ib->GetShape(x);
-  auto output_dim0 = ib->Tensor(shape_x[0], kInt32);
-  segment_ids = ib->Cast(segment_ids, kInt32);
-  auto input0 = ib->Emit("Gather", {dout, segment_ids, ib->Tensor(0, kInt64)});
-  input0 = ib->Cast(input0, kFloat32);
-  indices = ib->Cast(indices, kInt32);
-  auto dx = ib->Emit("UnsortedSegmentSum", {input0, indices, output_dim0});
-  dx = ib->Cast(dx, ib->GetDtype(dout));
-  NodePtrList result = {dx, ib->ZerosLike(indices), ib->ZerosLike(segment_ids)};
-  if (with_segments) {
-    result.emplace_back(ib->ZerosLike(ib->GetInput(kIndex3)));
-  }
-  return result;
-}
-
 REG_BPROP_BUILDER("SparseSegmentSqrtN").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
   return CommonSparseSegmentBprop(ib, "SparseSegmentSqrtNGrad", false);
 });
@@ -614,4 +614,5 @@ REG_BPROP_BUILDER("SparseDenseCwiseDiv").SetUnusedInputs({i4}).SetBody(BODYFUNC(
   NodePtrList d_all = {ib->ZerosLike(x1_indices), dx1, ib->ZerosLike(x1_shape), dx2};
   return d_all;
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

@@ -67,8 +67,83 @@ NodePtrList UnsortedSegmentMinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr 
   auto zeros = ib->ZerosLike(gathered_grads);
   return {ib->Select(is_selected, gathered_grads, zeros), ib->ZerosLike(segment_ids), ib->ZerosLike(num_segments)};
 }
+
+NodePtrList SegmentMinOrMaxGrad(const BpropIRBuilder *ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto segment_ids = ib->GetInput(kIndex1);
+  auto output = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto input_x_type = ib->GetDtype(input_x);
+  if (input_x_type->type_id() != kNumberTypeFloat32) {
+    input_x = ib->Cast(input_x, kFloat32);
+    output = ib->Cast(output, kFloat32);
+    dout = ib->Cast(dout, kFloat32);
+  }
+  auto zero_value = ib->Value<int64_t>(0);
+  auto gathered_outputs = ib->Emit("Gather", {output, segment_ids, zero_value});
+  auto is_selected = ib->Equal(input_x, gathered_outputs);
+  const int64_t max_len = 1000000;
+  auto num_selected =
+    ib->Emit("SegmentSum", {ib->Cast(is_selected, kFloat32), segment_ids}, {{"max_length", MakeValue(max_len)}});
+  auto weighted_grads = ib->Div(dout, num_selected);
+  auto gathered_grads = ib->Emit("Gather", {weighted_grads, segment_ids, zero_value});
+  auto dx = ib->Select(is_selected, gathered_grads, ib->ZerosLike(input_x));
+  if (input_x_type->type_id() != kNumberTypeFloat32) {
+    dx = ib->Cast(dx, input_x_type);
+  }
+  return {dx, ib->ZerosLike(segment_ids)};
+}
+
+NodePtrList TensorScatterPossibleReplacement(const BpropIRBuilder *ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto indices = ib->GetInput(kIndex1);
+  auto updates = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex4);
+  auto x_indicators = ib->Cast(ib->Equal(x, out), kInt32);
+  auto possibly_updated = ib->Emit("GatherNd", {out, indices});
+  auto out_indicators = ib->Cast(ib->Equal(updates, possibly_updated), kInt32);
+  auto input_shape = ib->GetShape(x);
+  auto scattered_out_indicators = ib->Emit("ScatterNd", {indices, out_indicators, ib->Tensor(input_shape)});
+  auto indicators = ib->Add(x_indicators, scattered_out_indicators);
+  auto dx = ib->RealDiv((ib->Mul(dout, (ib->Cast(x_indicators, ib->GetDtype(dout))))),
+                        (ib->Cast(indicators, ib->GetDtype(dout))));
+  auto dupdates =
+    ib->Mul((ib->Emit("GatherNd", {ib->RealDiv(dout, (ib->Cast(indicators, ib->GetDtype(dout)))), indices})),
+            (ib->Cast(out_indicators, ib->GetDtype(dout))));
+  return {ib->Cast(dx, ib->GetDtype(x)), ib->ZerosLike(indices), ib->Cast(dupdates, ib->GetDtype(updates))};
+}
+
+NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto indices = ib->GetInput(kIndex1);
+  auto axis = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto orig_indices = indices;
+  auto x_shp = ib->GetShape(x);
+  auto out_shp = ib->GetShape(dout);
+  auto ind_shp = ib->GetShape(indices);
+  auto axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
+  if (out_shp.empty()) {
+    dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
+  }
+  if (ind_shp.empty()) {
+    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+    ind_shp = ib->GetShape(indices);
+    auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
+    dout = ib->Reshape(dout, out_shp1);
+  }
+  out_shp = ib->GetShape(dout);
+  auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_v);
+  auto values_transpose = ib->Transpose(dout, perm_1);
+  auto tmp = ib->Emit("UnsortedSegmentSum", {values_transpose, indices, ib->Value<int64_t>(x_shp[axis_v])});
+  auto perm_2 = GenerateInverseIndex(x_shp, axis_v);
+  auto params_grad = ib->Transpose(tmp, perm_2);
+  return {params_grad, ib->ZerosLike(orig_indices), ib->ZerosLike(axis)};
+}
 }  // namespace
 
+REG_BPROP_BUILDERS_BEGIN(GradArrayOps)
 REG_BPROP_BUILDER("GatherD").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dim = ib->GetInput(kIndex1);
@@ -577,26 +652,6 @@ REG_BPROP_BUILDER("TensorScatterMul").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib)
   return {dx, ib->ZerosLike(indices), d_update};
 });
 
-NodePtrList TensorScatterPossibleReplacement(const BpropIRBuilder *ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto indices = ib->GetInput(kIndex1);
-  auto updates = ib->GetInput(kIndex2);
-  auto out = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex4);
-  auto x_indicators = ib->Cast(ib->Equal(x, out), kInt32);
-  auto possibly_updated = ib->Emit("GatherNd", {out, indices});
-  auto out_indicators = ib->Cast(ib->Equal(updates, possibly_updated), kInt32);
-  auto input_shape = ib->GetShape(x);
-  auto scattered_out_indicators = ib->Emit("ScatterNd", {indices, out_indicators, ib->Tensor(input_shape)});
-  auto indicators = ib->Add(x_indicators, scattered_out_indicators);
-  auto dx = ib->RealDiv((ib->Mul(dout, (ib->Cast(x_indicators, ib->GetDtype(dout))))),
-                        (ib->Cast(indicators, ib->GetDtype(dout))));
-  auto dupdates =
-    ib->Mul((ib->Emit("GatherNd", {ib->RealDiv(dout, (ib->Cast(indicators, ib->GetDtype(dout)))), indices})),
-            (ib->Cast(out_indicators, ib->GetDtype(dout))));
-  return {ib->Cast(dx, ib->GetDtype(x)), ib->ZerosLike(indices), ib->Cast(dupdates, ib->GetDtype(updates))};
-}
-
 REG_BPROP_BUILDER("TensorScatterMax").SetBody(TensorScatterPossibleReplacement);
 REG_BPROP_BUILDER("TensorScatterMin").SetBody(TensorScatterPossibleReplacement);
 
@@ -858,33 +913,6 @@ REG_BPROP_BUILDER("Tile").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {dx, ib->ZerosLike(input_multiples)};
 });
 
-NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto indices = ib->GetInput(kIndex1);
-  auto axis = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex4);
-  auto orig_indices = indices;
-  auto x_shp = ib->GetShape(x);
-  auto out_shp = ib->GetShape(dout);
-  auto ind_shp = ib->GetShape(indices);
-  auto axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
-  if (out_shp.empty()) {
-    dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
-  }
-  if (ind_shp.empty()) {
-    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
-    ind_shp = ib->GetShape(indices);
-    auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
-    dout = ib->Reshape(dout, out_shp1);
-  }
-  out_shp = ib->GetShape(dout);
-  auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_v);
-  auto values_transpose = ib->Transpose(dout, perm_1);
-  auto tmp = ib->Emit("UnsortedSegmentSum", {values_transpose, indices, ib->Value<int64_t>(x_shp[axis_v])});
-  auto perm_2 = GenerateInverseIndex(x_shp, axis_v);
-  auto params_grad = ib->Transpose(tmp, perm_2);
-  return {params_grad, ib->ZerosLike(orig_indices), ib->ZerosLike(axis)};
-}
 REG_BPROP_BUILDER("Gather").SetUnusedInputs({i3}).SetBody(BinopGatherCommon);
 REG_BPROP_BUILDER("GatherV2").SetUnusedInputs({i3}).SetBody(BinopGatherCommon);
 
@@ -1266,31 +1294,6 @@ REG_BPROP_BUILDER("AffineGrid").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {};
 });
 
-NodePtrList SegmentMinOrMaxGrad(const BpropIRBuilder *ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto segment_ids = ib->GetInput(kIndex1);
-  auto output = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex3);
-  auto input_x_type = ib->GetDtype(input_x);
-  if (input_x_type->type_id() != kNumberTypeFloat32) {
-    input_x = ib->Cast(input_x, kFloat32);
-    output = ib->Cast(output, kFloat32);
-    dout = ib->Cast(dout, kFloat32);
-  }
-  auto zero_value = ib->Value<int64_t>(0);
-  auto gathered_outputs = ib->Emit("Gather", {output, segment_ids, zero_value});
-  auto is_selected = ib->Equal(input_x, gathered_outputs);
-  const int64_t max_len = 1000000;
-  auto num_selected =
-    ib->Emit("SegmentSum", {ib->Cast(is_selected, kFloat32), segment_ids}, {{"max_length", MakeValue(max_len)}});
-  auto weighted_grads = ib->Div(dout, num_selected);
-  auto gathered_grads = ib->Emit("Gather", {weighted_grads, segment_ids, zero_value});
-  auto dx = ib->Select(is_selected, gathered_grads, ib->ZerosLike(input_x));
-  if (input_x_type->type_id() != kNumberTypeFloat32) {
-    dx = ib->Cast(dx, input_x_type);
-  }
-  return {dx, ib->ZerosLike(segment_ids)};
-}
 REG_BPROP_BUILDER("SegmentMax").SetBody(SegmentMinOrMaxGrad);
 REG_BPROP_BUILDER("SegmentMin").SetBody(SegmentMinOrMaxGrad);
 
@@ -1370,4 +1373,5 @@ REG_BPROP_BUILDER("SegmentMean").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   }
   return {dx, ib->ZerosLike(segment_ids)};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

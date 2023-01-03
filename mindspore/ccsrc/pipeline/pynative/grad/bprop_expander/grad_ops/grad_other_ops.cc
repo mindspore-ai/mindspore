@@ -19,6 +19,7 @@
 #include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 
 namespace mindspore::expander::bprop {
+REG_BPROP_BUILDERS_BEGIN(GradOtherOps)
 REG_BPROP_BUILDER("Assign").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -66,4 +67,5 @@ REG_BPROP_BUILDER("_DynamicLossScale").SetUnusedInputs({i0, i2}).SetBody(BODYFUN
                       {{"split_overflow", MakeValue(true)}, {"layer_overflow", ib->GetAttr("layer")}});
   return {res, ib->ZerosLike(loss_scale)};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

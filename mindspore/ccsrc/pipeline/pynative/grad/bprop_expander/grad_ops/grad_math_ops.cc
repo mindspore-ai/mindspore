@@ -38,6 +38,34 @@ NodePtrList AddnGradFunc(const BpropIRBuilder *ib) {
   return {ib->MakeTuple(result)};
 }
 
+NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
+  auto a = ib->GetInput(kIndex0);
+  auto x = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto sa = ib->GetShape(a);
+  auto sx = ib->GetShape(x);
+  auto rax = BroadcastGradientArgs(sa, sx);
+  auto ra = rax[0];
+  auto rx = rax[1];
+  auto partial_a = ib->Emit("IgammaGradA", {a, x});
+  auto lgamma = LGamma(ib, a);
+  auto partial_x = ib->Exp(
+    ib->Sub((ib->Add((ib->Neg(x)), (ib->Mul((ib->Sub(a, (ib->Tensor(1, ib->GetDtype(a))))), (ib->Log(x)))))), lgamma));
+  NodePtr r1, r2;
+  if (ra.size()) {
+    r1 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_a, dout), ra), sa);
+  } else {
+    r1 = ib->Reshape(ib->Mul(partial_a, dout), sa);
+  }
+  if (rx.size()) {
+    r2 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_x, dout), rx), sx);
+  } else {
+    r2 = ib->Reshape(ib->Mul(partial_x, dout), sx);
+  }
+  return {r1, r2};
+}
+
+REG_BPROP_BUILDERS_BEGIN(GradMathOps)
 REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto ta = ib->GetAttr<bool>("transpose_a");
   auto tb = ib->GetAttr<bool>("transpose_b");
@@ -1649,33 +1677,6 @@ REG_BPROP_BUILDER("NPUGetFloatStatus").SetUnusedInputs({i1, i2}).SetBody(CheckBp
 
 REG_BPROP_BUILDER("NPUClearFloatStatus").SetUnusedInputs({i1, i2}).SetBody(CheckBpropExpander);
 
-NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
-  auto a = ib->GetInput(kIndex0);
-  auto x = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto sa = ib->GetShape(a);
-  auto sx = ib->GetShape(x);
-  auto rax = BroadcastGradientArgs(sa, sx);
-  auto ra = rax[0];
-  auto rx = rax[1];
-  auto partial_a = ib->Emit("IgammaGradA", {a, x});
-  auto lgamma = LGamma(ib, a);
-  auto partial_x = ib->Exp(
-    ib->Sub((ib->Add((ib->Neg(x)), (ib->Mul((ib->Sub(a, (ib->Tensor(1, ib->GetDtype(a))))), (ib->Log(x)))))), lgamma));
-  NodePtr r1, r2;
-  if (ra.size()) {
-    r1 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_a, dout), ra), sa);
-  } else {
-    r1 = ib->Reshape(ib->Mul(partial_a, dout), sa);
-  }
-  if (rx.size()) {
-    r2 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_x, dout), rx), sx);
-  } else {
-    r2 = ib->Reshape(ib->Mul(partial_x, dout), sx);
-  }
-  return {r1, r2};
-}
-
 REG_BPROP_BUILDER("Igamma").SetUnusedInputs({i2}).SetBody(IgammaBpropExpander);
 
 REG_BPROP_BUILDER("Igammac").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
@@ -1691,4 +1692,5 @@ REG_BPROP_BUILDER("Einsum").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto dx = ib->Emit("EinsumGrad", {x, dout}, {{"equation", ib->GetAttr("equation")}});
   return {dx};
 });
+REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

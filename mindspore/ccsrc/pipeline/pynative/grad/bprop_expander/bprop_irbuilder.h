@@ -127,6 +127,14 @@ class BpropIRBuilderRegHelper {
 #define REG_BPROP_BUILDER(name) \
   const BpropIRBuilderRegHelper BPROP_EXPANDER_UNIQUE_NAME(g_bprop, __COUNTER__) = BpropIRBuilderRegHelper(name)
 #define BODYFUNC(v) [](const BpropIRBuilder *v) -> NodePtrList
+
+#ifdef _MSC_VER
+#define REG_BPROP_BUILDERS_BEGIN(func_name) void Reg##func_name() {
+#define REG_BPROP_BUILDERS_END }
+#else
+#define REG_BPROP_BUILDERS_BEGIN(func_name)
+#define REG_BPROP_BUILDERS_END
+#endif
 }  // namespace bprop
 }  // namespace expander
 }  // namespace mindspore
