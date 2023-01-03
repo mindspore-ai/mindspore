@@ -196,6 +196,9 @@ int StridedSliceCPUKernel::FastRun() {
     case kNumberTypeInt32:
       inner_size_ = inner_ * sizeof(int32_t);
       break;
+    case kNumberTypeInt64:
+      inner_size_ = inner_ * sizeof(int64_t);
+      break;
     default:
       MS_LOG(ERROR) << "Not supported data type: " << input->data_type();
       return RET_ERROR;
@@ -226,6 +229,9 @@ int StridedSliceCPUKernel::NormalRun() {
       break;
     case kNumberTypeInt32:
       param_->data_type = ::kNumberTypeInt32;
+      break;
+    case kNumberTypeInt64:
+      param_->data_type = ::kNumberTypeInt64;
       break;
     default:
       MS_LOG(ERROR) << "Not supported data type: " << input->data_type();
@@ -305,6 +311,7 @@ int StridedSliceCPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_StridedSlice, LiteKernelCreator<StridedSliceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_StridedSlice, LiteKernelCreator<StridedSliceCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_StridedSlice, LiteKernelCreator<StridedSliceCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_StridedSlice, LiteKernelCreator<StridedSliceCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_StridedSlice, LiteKernelCreator<StridedSliceCPUKernel>)
