@@ -21,7 +21,6 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/data_schema.h"

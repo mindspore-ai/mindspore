@@ -134,7 +134,9 @@ Status CenterCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
     RETURN_IF_NOT_OK(ConstructShape(inputs[0], &output_shape_new));
     outputs.emplace_back(*output_shape_new);
   }
-  if (!outputs.empty()) return Status::OK();
+  if (!outputs.empty()) {
+    return Status::OK();
+  }
   return Status(
     StatusCode::kMDUnexpectedError,
     "CenterCrop: input tensor should have at least 2 dimensions, but got: " + std::to_string(inputs[0].Rank()));

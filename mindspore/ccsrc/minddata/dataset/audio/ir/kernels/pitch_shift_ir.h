@@ -19,7 +19,6 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
 
