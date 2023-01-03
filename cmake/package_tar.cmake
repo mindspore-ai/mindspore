@@ -100,7 +100,7 @@ if(ENABLE_MINDDATA)
     if(ENABLE_ACL)
         install(
                 TARGETS dvpp_utils
-                DESTINATION ${INSTALL_PLUGIN_DIR}
+                DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
                 COMPONENT mindspore
         )
     endif()
