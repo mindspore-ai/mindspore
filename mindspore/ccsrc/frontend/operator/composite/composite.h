@@ -142,6 +142,16 @@ class MakeListGradient : public MetaFuncGraph {
 };
 using MakeListGradientPtr = std::shared_ptr<MakeListGradient>;
 
+class PyExecuteGradient : public MetaFuncGraph {
+ public:
+  explicit PyExecuteGradient(const std::string &name) : MetaFuncGraph(name) {}
+  ~PyExecuteGradient() override = default;
+  MS_DECLARE_PARENT(PyExecuteGradient, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const PyExecuteGradient &lhs, const PyExecuteGradient &rhs) { return lhs.name_ == rhs.name_; }
+};
+using PyExecuteGradientPtr = std::shared_ptr<PyExecuteGradient>;
+
 class GradOperation : public MetaFuncGraph {
  public:
   explicit GradOperation(const std::string &name, bool get_all = false, bool get_by_list = false,

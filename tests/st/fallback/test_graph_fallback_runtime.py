@@ -123,22 +123,46 @@ def test_dict_return_1():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_dict_get_1():
+def test_dict_return_2():
     """
     Feature: Return dict.
     Description: Support dict return.
     Expectation: No exception.
     """
     @ms.jit
-    def dict_net_1():
+    def dict_net_2():
         x = {'a': 1, 'b': 2}
         y = x.get('a')
         y_tensor = ms.Tensor([y])
         z = dict(a=y_tensor)
         return z
 
-    out = dict_net_1()
+    out = dict_net_2()
     print(f'out: {out}')
+
+
+@pytest.mark.skip(reason="No support None and Scalar in dict.")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dict_return_3():
+    """
+    Feature: Return dict.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def dict_net_3():
+        x = {'a': 'a', 'b': 'b'}
+        y = x.get('a')
+        z = dict(y=y, u=9, v=False, w=None)
+        return z
+
+    out = dict_net_3()
+    print(f'out: {out}')
+    assert out == {'y': 'a', 'u': 9, 'v': False, 'w': None}
 
 
 @pytest.mark.level1
