@@ -212,8 +212,10 @@ def test_equal_inf():
     Expectation: success
     """
     @ms.jit
-    def func(x):
-        return x == float("inf")
+    def func(x, y):
+        return x == float("inf"), y == float("-inf"), x == y
 
     x = float("inf")
-    assert func(x)
+    y = float("-inf")
+    out = func(x, y)
+    assert out == (True, True, False)
