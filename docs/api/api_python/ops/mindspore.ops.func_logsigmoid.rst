@@ -3,8 +3,6 @@ mindspore.ops.logsigmoid
 
 .. py:function:: mindspore.ops.logsigmoid(x)
 
-    logsigmoid激活函数。
-
     按元素计算logsigmoid激活函数。输入是任意格式的Tensor。
 
     logsigmoid定义为：

@@ -3,8 +3,6 @@ mindspore.ops.FractionalMaxPoolWithFixedKsize
 
 .. py:class:: mindspore.ops.FractionalMaxPoolWithFixedKsize(ksize, output_shape, data_format="NCHW")
 
-    进行分数最大池化操作。
-
     此运算对由多个输入平面组成的输入信号进行2D分数最大池化。最大池化操作通过由目标输出大小确定的随机步长在 `kH x kW` 区域中进行。
 
     对于任何输入大小，指定输出的大小为 `H x W` 。输出特征的数量等于输入平面的数量。

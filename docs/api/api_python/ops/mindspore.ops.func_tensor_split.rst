@@ -3,7 +3,7 @@ mindspore.ops.tensor_split
 
 .. py:function:: mindspore.ops.tensor_split(x, indices_or_sections, axis=0)
 
-    根据指定的轴将输入Tensor进行分割成多个子tensor。
+    根据指定的轴将输入Tensor进行分割成多个子Tensor。
 
     参数：
         - **x** (Tensor) - 待分割的Tensor。

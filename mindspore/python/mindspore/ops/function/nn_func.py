@@ -49,8 +49,6 @@ sigmoid_ = NN_OPS.Sigmoid()
 
 def adaptive_avg_pool2d(input_x, output_size):
     r"""
-    2D adaptive average pooling for temporal data.
-
     This operator applies a 2D adaptive average pooling to an input signal composed of multiple input planes.
     That is, for any input size, the size of the specified output is H x W.
     The number of output features is equal to the number of input features.
@@ -139,8 +137,6 @@ def adaptive_avg_pool2d(input_x, output_size):
 
 def adaptive_avg_pool3d(input_x, output_size):
     r"""
-    3D adaptive average pooling for temporal data.
-
     This operator applies a 3D adaptive average pooling to an input signal composed of multiple input planes.
     That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
     The number of output features is equal to the number of input planes.
@@ -550,8 +546,6 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
 
 def adaptive_max_pool2d(input_x, output_size, return_indices=False):
     r"""
-    adaptive_max_pool2d operation.
-
     This operator applies a 2D adaptive max pooling to an input signal composed of multiple input planes.
     That is, for any input size, the size of the specified output is H x W.
     The number of output features is equal to the number of input planes.
@@ -1351,9 +1345,8 @@ def _check_float_range_inc_right(arg_value, lower_limit, upper_limit, arg_name=N
 def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=None, return_indices=False,
                           _random_samples=None):
     r"""
-    2D fractional max pooling operation for temporal data.
-
-    Applies a 2D fractional max pooling to an input signal composed of multiple input planes.
+    Applies a 2D fractional max pooling to an input signal.
+    The input is composed of multiple input planes.
     The max-pooling operation is applied in kH × kW regions by a stochastic step size determined by
     the target output size. For any input size, the size of the specified output is H x W. The number
     of output features is equal to the number of input planes.
@@ -1453,9 +1446,8 @@ def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=N
 def fractional_max_pool3d(input_x, kernel_size, output_size=None, output_ratio=None, return_indices=False,
                           _random_samples=None):
     r"""
-    3D fractional max pooling operation for temporal data.
-
-    This operator applies a 3D fractional max pooling over an input signal composed of several input planes.
+    This operator applies a 3D fractional max pooling over an input signal.
+    The input is composed of several input planes.
     The max-pooling operation is applied in kD x kH x kW regions by a stochastic step size determined
     by the target output size.The number of output features is equal to the number of input planes.
 
@@ -1868,8 +1860,6 @@ def is_floating_point(x):
 
 def hardswish(x):
     r"""
-    Hard swish activation function.
-
     Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
 
     Hard swish is defined as:
@@ -2094,8 +2084,6 @@ def softsign(x):
 
 def softmax(x, axis=-1):
     r"""
-    Softmax operation.
-
     Applies the Softmax operation to the input tensor on the specified axis.
     Suppose a slice in the given axis :math:`x`, then for each element :math:`x_i`,
     the Softmax function is shown as follows:
@@ -2260,8 +2248,6 @@ def selu(input_x):
 
 def sigmoid(input_x):
     r"""
-    Sigmoid activation function.
-
     Computes Sigmoid of input element-wise. The Sigmoid function is defined as:
 
     .. math::
@@ -2294,8 +2280,6 @@ def sigmoid(input_x):
 
 def logsigmoid(x):
     r"""
-    Logsigmoid activation function.
-
     Applies logsigmoid activation element-wise. The input is a Tensor with any valid shape.
 
     Logsigmoid is defined as:
@@ -3330,8 +3314,6 @@ def intopk(x1, x2, k):
 
 def log_softmax(logits, axis=-1):
     r"""
-    Log Softmax activation function.
-
     Applies the Log Softmax function to the input tensor on the specified axis.
     Supposes a slice in the given axis, :math:`x` for each element :math:`x_i`,
     the Log Softmax function is shown as follows:
@@ -4048,9 +4030,8 @@ def conv3d_transpose(inputs, weight, pad_mode='valid', padding=0, stride=1, dila
 
 def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, group=1):
     r"""
-    2D convolution layer.
-
-    Applies a 2D convolution over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
+    Applies a 2D convolution over an input tensor.
+    The input tensor is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
     where :math:`N` is batch size, :math:`C` is channel number, :math:`H` is height, :math:`W` is width, :math:`X_i` is
     the :math:`i^{th}` input value and :math:`b_i` indicates the deviation value of the :math:`i^{th}` input value.
     For each batch of shape :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
@@ -4187,8 +4168,6 @@ def hardsigmoid(input_x):
 
 def adaptive_avg_pool1d(input_x, output_size):
     r"""
-    1D adaptive average pooling for temporal data.
-
     Applies a 1D adaptive average pooling over an input Tensor which can be regarded as a composition of 1D input
     planes.
 
@@ -4272,8 +4251,6 @@ def _check_adaptive_max_pool1d_output_size(output_size):
 
 def adaptive_max_pool1d(input_x, output_size):
     r"""
-    1D adaptive maximum pooling for temporal data.
-
     Applies a 1D adaptive maximum pooling over an input Tensor which can be regarded as
     a composition of 1D input planes.
 
@@ -4509,9 +4486,7 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
 
 def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, group=1):
     r"""
-    3D convolution layer.
-
-    Applies a 3D convolution over an input tensor which is typically of shape
+    Applies a 3D convolution over an input tensor. The input tensor is typically of shape
     :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
     :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Where :math:`N` is batch size, :math:`C` is channel number,
     :math:`D` is depth, :math:`H` is height, :math:`W` is width.
@@ -4647,8 +4622,6 @@ def _check_positive_int(arg_value, arg_name=None, prim_name=None):
 
 def pixel_shuffle(x, upscale_factor):
     r"""
-    pixel_shuffle operatrion.
-
     Applies a pixel_shuffle operation over an input signal composed of several input planes. This is useful for
     implementiong efficient sub-pixel convolution with a stride of :math:`1/r`. For more details, refer to
     `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
@@ -4705,8 +4678,6 @@ def pixel_shuffle(x, upscale_factor):
 
 def pixel_unshuffle(x, downscale_factor):
     r"""
-    pixel_unshuffle operatrion.
-
     Applies a pixel_unshuffle operation over an input signal composed of several input planes. For more details, refer
     to `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
     <https://arxiv.org/abs/1609.05158>`_ .
@@ -5147,8 +5118,6 @@ def channel_shuffle(x, groups):
 
 def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     r"""
-    LPPool1d pooling operation.
-
     Applies a 1D power lp pooling over an input signal composed of several input planes.
 
     Typically the input is of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`, the output is of shape
@@ -5230,8 +5199,6 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
 def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     r"""
-    LPPool2d pooling operation.
-
     Applies a 2D power lp pooling over an input signal composed of several input planes.
 
     Typically the input is of shape :math:`(N, C, H_{in}, W_{in})`, the output is of shape

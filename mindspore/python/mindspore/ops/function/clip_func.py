@@ -207,8 +207,7 @@ def clamp(x, min=None, max=None):
 
 def clip(x, min=None, max=None):
     r"""
-    Alias for ops.clamp.
-    For details, please refer to :func:`mindspore.ops.clamp`.
+    Alias for :func:`mindspore.ops.clamp` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

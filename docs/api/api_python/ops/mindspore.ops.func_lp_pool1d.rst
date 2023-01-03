@@ -3,9 +3,7 @@ mindspore.ops.lp_pool1d
 
 .. py:function:: mindspore.ops.lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False)
 
-    对输入的多维数据进行一维平面上的LP池化运算。
-
-    在一个输入Tensor上应用1D LP pooling，可被视为组成一个1D输入平面。
+    在输入Tensor上应用1D LP池化运算，可被视为组成一个1D输入平面。
 
     通常，输入的shape为 :math:`(N, C, L_{in})` 或 :math:`(C, L_{in})`，输出的shape为 :math:`(N, C, L_{out})` 或 :math:`(C, L_{out})`。
 

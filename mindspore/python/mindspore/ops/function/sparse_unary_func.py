@@ -1622,8 +1622,6 @@ def coo_round(x: COOTensor) -> COOTensor:
 
 def csr_tanh(x: CSRTensor) -> CSRTensor:
     r"""
-    Tanh activation function.
-
     Computes hyperbolic tangent of input element-wise. The Tanh function is defined as:
 
     .. math::
@@ -1662,8 +1660,6 @@ def csr_tanh(x: CSRTensor) -> CSRTensor:
 
 def coo_tanh(x: COOTensor) -> COOTensor:
     r"""
-    Tanh activation function.
-
     Computes hyperbolic tangent of input element-wise. The Tanh function is defined as:
 
     .. math::

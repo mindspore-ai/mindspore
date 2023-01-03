@@ -923,8 +923,6 @@ class HSigmoid(Primitive):
 
 class Tanh(Primitive):
     r"""
-    Tanh activation function.
-
     Computes hyperbolic tangent of input element-wise.
 
     Refer to :func:`mindspore.ops.tanh` for more details.
@@ -1892,8 +1890,6 @@ class MaxPoolWithArgmax(Primitive):
 
 class MaxPool3D(Primitive):
     r"""
-    3D max pooling operation.
-
     Applies a 3D max pooling over an input Tensor which can be regarded as a composition of 3D planes.
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`, MaxPool outputs
@@ -7528,7 +7524,6 @@ class AvgPool3D(Primitive):
     r"""
     3D Average pooling operation.
 
-    Applies a 3D average pooling over an input Tensor which can be regarded as a composition of 3D input planes.
     Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, AvgPool3D outputs
     regional average in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
     :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
@@ -9107,8 +9102,6 @@ class FractionalMaxPool(Primitive):
 
 class FractionalMaxPool3DWithFixedKsize(Primitive):
     r"""
-    3D fractional max pooling operation.
-
     This operator applies a 3D fractional max pooling over an input signal composed of several input planes.
     The max-pooling operation is applied in kD x kH x kW regions by a stochastic step size determined
     by the target output size.
@@ -10171,8 +10164,6 @@ class GLU(Primitive):
 
 class FractionalMaxPoolWithFixedKsize(Primitive):
     r"""
-    Fractional max pooling operation.
-
     Applies a 2D fractional max pooling to an input signal composed of multiple input planes.
     The max-pooling operation is applied in kH × kW regions by a stochastic step size determined by
     the target output size. For any input size, the size of the specified output is H x W. The number

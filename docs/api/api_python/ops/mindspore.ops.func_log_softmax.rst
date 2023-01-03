@@ -3,8 +3,6 @@ mindspore.ops.log_softmax
 
 .. py:function:: mindspore.ops.log_softmax(logits, axis=-1)
 
-    LogSoftmax激活函数。
-
     在指定轴上对输入Tensor应用LogSoftmax函数。假设在指定轴上， :math:`x` 对应每个元素 :math:`x_i` ，则LogSoftmax函数如下所示：
 
     .. math::

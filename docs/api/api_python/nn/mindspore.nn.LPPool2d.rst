@@ -3,9 +3,7 @@ mindspore.nn.LPPool2d
 
 .. py:class:: mindspore.nn.LPPool2d(norm_type, kernel_size, stride=None, ceil_mode=False)
 
-    对输入的多维数据进行二维平面上的LP池化运算。
-
-    在一个输入Tensor上应用2D LP pooling，可被视为组成一个2D输入平面。
+    在一个输入Tensor上应用2D LP池化运算，可被视为组成一个2D输入平面。
 
     通常，输入的shape为 :math:`(N, C, H_{in}, W_{in})`，输出的shape为 :math:`(N, C, H_{in}, W_{in})`，输出与输入的shape一致，公式如下：
 

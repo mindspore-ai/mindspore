@@ -3,8 +3,6 @@ mindspore.ops.pixel_unshuffle
 
 .. py:function:: mindspore.ops.pixel_unshuffle(x, downscale_factor)
 
-    pixel_unshuffle函数。
-
     在多个输入平面组成的输入上面应用pixel_unshuffle算法。关于pixel_unshuffle算法详细介绍，请参考 `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network <https://arxiv.org/abs/1609.05158>`_ 。
 
     通常情况下，`x` shape :math:`(*, C, H \times r, W \times r)` ，输出shape :math:`(*, C \times r^2, H, W)` 。`r` 是缩小因子。 `*` 是大于等于0的维度。
