@@ -19,6 +19,7 @@ from mindspore.ops.composite import GradOperation
 from mindspore.common import mutable
 from mindspore.common.api import _CellGraphExecutor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Tensor
@@ -301,6 +302,23 @@ def test_mutable_with_scalar():
         x = mutable(2)
         return x
     net()
+
+
+def test_mutable_with_scalar_2():
+    """
+    Feature: Set Constants mutable.
+    Description: Set mutable for scalar.
+    Expectation: No Exception.
+    """
+    @jit
+    def foo1(x):
+        return F.isconstant(x)
+    assert not foo1(mutable(1))
+
+    @jit
+    def foo2(x):
+        return F.isconstant(x[0])
+    assert not foo2(mutable([1, 2, 3, 4]))
 
 
 def test_mutable_with_bool():

@@ -184,7 +184,10 @@ bool GradForScalar(const ValuePtr &value) {
 AbstractBasePtr ArgsToAbstract(const py::object &arg, const ValuePtr &value, bool enable_tuple_broaden = false) {
   bool broaden = TensorArgMutable(arg, value) || Mutable(arg, value) || value->isa<MetaSparseTensor>() ||
                  EnableTupleBroaden(value, enable_tuple_broaden) || GradForScalar(value);
-  auto ret = abstract::FromValue(value, broaden);
+  auto ret = abstract::ToAbstract(value, nullptr, nullptr);
+  if (broaden) {
+    ret = AbstractBroaden(ret);
+  }
   CheckAndConvertToVariableLenSequence(arg, ret);
   return ret;
 }
