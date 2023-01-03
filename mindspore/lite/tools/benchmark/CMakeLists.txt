@@ -62,6 +62,7 @@ set(COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/config_file.cc
+        ${CCSRC_DIR}/plugin/device/cpu/kernel/nnacl/nnacl_common.c
         )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../lite)
