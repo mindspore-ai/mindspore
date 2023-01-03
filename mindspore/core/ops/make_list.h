@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_MAKE_TUPLE_H_
-#define MINDSPORE_CORE_OPS_MAKE_TUPLE_H_
+#ifndef MINDSPORE_CORE_OPS_MAKE_LIST_H_
+#define MINDSPORE_CORE_OPS_MAKE_LIST_H_
 #include "ops/base_operator.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMakeTuple = "MakeTuple";
-/// \brief MakeTuple op is used to pack multiple nodes into a whole, which is only used in FuncGraph.
-class MIND_API MakeTuple : public BaseOperator {
+/// \brief MakeList op is used to pack multiple nodes into a whole, which is only used in FuncGraph.
+class MIND_API MakeList : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(MakeTuple);
+  MIND_API_BASE_MEMBER(MakeList);
   /// \brief Constructor.
-  MakeTuple() : BaseOperator(kNameMakeTuple) {}
+  MakeList() : BaseOperator(prim::kMakeList) {}
   /// \brief Init.
   void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_MAKE_TUPLE_H_
+#endif  // MINDSPORE_CORE_OPS_MAKE_LIST_H_

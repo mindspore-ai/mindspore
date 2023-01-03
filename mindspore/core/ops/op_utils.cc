@@ -596,6 +596,51 @@ template std::shared_ptr<abstract::AbstractCSRTensor> InferSparseAttr(const Prim
 template std::shared_ptr<abstract::AbstractCOOTensor> InferSparseAttr(const PrimitivePtr &primitive,
                                                                       const AbstractBasePtrList &args_spec_list);
 
+template <typename T>
+AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  constexpr size_t input_len = 1;
+  constexpr size_t input_0_index = 0;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, prim_name);
+
+  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  auto x_shape = shape_ptr->shape();
+  if (x_shape.size() != 1) {
+    MS_EXCEPTION(ValueError) << "For Primitive[" << prim_name << "], the input shape size must be 1, but got "
+                             << x_shape << ".";
+  }
+
+  auto x_type = input_args[input_0_index]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  if (!x_type->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "For Primitive[" << prim_name << "], the input must be a Tensor but got "
+                            << x_type->ToString() << ".";
+  }
+  auto tensor_type = x_type->cast<TensorTypePtr>();
+  const auto &element_type = tensor_type->element();
+  MS_EXCEPTION_IF_NULL(element_type);
+  AbstractBasePtrList abs_list;
+  if (IsDynamic(x_shape)) {
+    abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kAnyValue, element_type));
+    auto abs = std::make_shared<T>(abs_list);
+    abs->CheckAndConvertToDynamicLenSequence();
+    return abs;
+  }
+  for (int64_t i = 0; i < x_shape[0]; i++) {
+    abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kAnyValue, element_type));
+  }
+  auto abs = std::make_shared<T>(abs_list);
+  return abs;
+}
+
+template AbstractBasePtr TensorToSequenceInfer<abstract::AbstractList>(const PrimitivePtr &primitive,
+                                                                       const std::vector<AbstractBasePtr> &input_args);
+
+template AbstractBasePtr TensorToSequenceInfer<abstract::AbstractTuple>(const PrimitivePtr &primitive,
+                                                                        const std::vector<AbstractBasePtr> &input_args);
+
 bool IsValueKnown(const ValuePtr &value) {
   // For now if the Abstract is a container of elements such as AbstractSequence and AbstractDictionary,
   // the BuildValue returns AnyValue if any one of the elements' value is AnyValue

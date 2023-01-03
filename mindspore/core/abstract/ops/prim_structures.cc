@@ -24,16 +24,6 @@
 
 namespace mindspore {
 namespace abstract {
-AbstractBasePtr InferImplMakeTuple(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                   const AbstractBasePtrList &args_spec_list) {
-  return std::make_shared<AbstractTuple>(args_spec_list);
-}
-
-AbstractBasePtr InferImplMakeList(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                  const AbstractBasePtrList &args_spec_list) {
-  return std::make_shared<AbstractList>(args_spec_list);
-}
-
 namespace {
 void CheckDictKey(const AbstractBasePtr &key, const std::string &op_name) {
   auto key_value = key->BuildValue();
@@ -117,59 +107,6 @@ AbstractBasePtr InferImplExtractKeywordArg(const AnalysisEnginePtr &, const Prim
   return kwarg->get_arg();
 }
 
-template <typename T>
-AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tuple or list and a scalar whose value is an int32 number.
-  constexpr int args_spec_size = 2;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  auto queue = CheckArg<T>(op_name, args_spec_list, 0);
-  AbstractScalarPtr index = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
-
-  // For list/tuple with dynamic len, getitem can not be folded.
-  if (queue->dynamic_len()) {
-    // The value of dynamic_len_element_abs is kAnyValue, do not need to Broaden.
-    auto element_abs = queue->dynamic_len_element_abs();
-    if (element_abs == nullptr) {
-      MS_LOG(EXCEPTION) << "Getitem can not get element from an empty dynamic length sequence.";
-    }
-    return element_abs->Clone();
-  }
-
-  ValuePtr index_value = index->BuildValue();
-  MS_EXCEPTION_IF_NULL(index_value);
-  // Input or index is variable, items shape and type should be same.
-  if (index_value == kAnyValue) {
-    const auto &elements = queue->elements();
-    CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(elements, "For " + op_name + ", when index is not constant");
-    auto ret = elements[0];
-    MS_EXCEPTION_IF_NULL(ret);
-    return ret->Broaden();
-  }
-  // For constant index, return input[index] of sequence.
-  if (!index_value->isa<Int64Imm>()) {
-    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got " << index->ToString();
-  }
-  auto index_int64_value = GetValue<int64_t>(index_value);
-  std::size_t nelems = queue->elements().size();
-  if (index_int64_value >= SizeToLong(nelems) || index_int64_value < -SizeToLong(nelems)) {
-    if (nelems == 0) {
-      MS_EXCEPTION(ValueError) << "For primitive:'" << op_name << "', cannot get item by index from an empty sequence.";
-    }
-    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be in range[-" << SizeToLong(nelems) << ", "
-                             << SizeToLong(nelems) << "), but got " << index_int64_value << ".";
-  }
-
-  std::size_t index_unsigned_value = 0;
-  if (index_int64_value >= 0) {
-    index_unsigned_value = LongToSize(index_int64_value);
-  } else {
-    index_unsigned_value = LongToSize(index_int64_value + SizeToLong(nelems));
-  }
-  MS_LOG(DEBUG) << "GetItem use flags, index: " << index_unsigned_value << ", for " << queue->ToString();
-  SetSequenceElementsUseFlags(queue, index_unsigned_value, true);
-  return queue->elements()[index_unsigned_value];
-}
-
 void CheckDynamicLengthSequenceSetItem(const std::string &op_name, const AbstractSequencePtr &queue,
                                        const AbstractBasePtr &target) {
   auto element_abs = queue->dynamic_len_element_abs();
@@ -239,16 +176,6 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
   elements[index_unsigned_value] = args_spec_list[kIndex2];
   MS_LOG(DEBUG) << "SetItem use flags, index: " << index_unsigned_value << ", for " << queue->ToString();
   return std::make_shared<T>(elements, queue->sequence_nodes());
-}
-
-AbstractBasePtr InferImplTupleGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_spec_list) {
-  return InferTupleOrListGetItem<AbstractTuple>(primitive->name(), args_spec_list);
-}
-
-AbstractBasePtr InferImplListGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
-  return InferTupleOrListGetItem<AbstractList>(primitive->name(), args_spec_list);
 }
 
 AbstractBasePtr InferImplTupleSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

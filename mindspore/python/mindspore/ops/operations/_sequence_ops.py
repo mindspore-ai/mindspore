@@ -43,6 +43,7 @@ class ListAppend(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize ListAppend"""
+        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['input_data', 'target'], outputs=['output_data'])
 
 
@@ -74,6 +75,7 @@ class SequenceSlice(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SequenceSlice"""
+        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['seq', 'start', 'stop', 'step'], outputs=['output_data'])
 
 
@@ -105,6 +107,7 @@ class SequenceSliceSetItem(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SequenceSliceSetItem"""
+        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['seq', 'target', 'start', 'stop', 'step'], outputs=['output_data'])
 
 
@@ -133,7 +136,156 @@ class SequenceAdd(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SequenceAdd"""
+        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['input_1', 'input_2'], outputs=['output_data'])
+
+
+class TupleToTensor(Primitive):
+    r"""
+    Convert tuple to tensor
+
+    If the type of the first number in the tuple is integer, the data type of the output tensor is int.
+    Otherwise, the data type of the output tensor is float.
+
+    .. note::
+        This it is only for internal used. The input_tuple can be constant/variable value or dynamic length tuple.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_tuple** (Tuple) - A tuple of numbers. These numbers have the same type. The shape is :math:`(N,)`
+        - **dtype** (mindspore.dtype): The target data type. Default: mindspore.float32.
+
+    Outputs:
+        Tensor, if the input tuple contains `N` numbers, then the shape of the output tensor is (N,).
+
+    Raises:
+        TypeError: If `input_tuple` is not a tuple.
+        ValueError: If length of `input_tuple` is less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize TupleToTensor"""
+        self.add_prim_attr("primitive_target", "CPU")
+        self.init_prim_io_names(inputs=['input_tuple', 'dtype'], outputs=['output_data'])
+
+
+class ListToTensor(Primitive):
+    r"""
+    Convert list to tensor
+
+    If the type of the first number in the list is integer, the data type of the output tensor is int.
+    Otherwise, the data type of the output tensor is float.
+
+    .. note::
+        This it is only for internal used. The input_list can be constant/variable value or dynamic length list.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_list** (List) - A tuple of numbers. These numbers have the same type. The shape is :math:`(N,)`
+        - **dtype** (mindspore.dtype): The target data type. Default: mindspore.float32.
+
+    Outputs:
+        Tensor, if the input tuple contains `N` numbers, then the shape of the output tensor is (N,).
+
+    Raises:
+        TypeError: If `input_list` is not a list.
+        ValueError: If length of `input_list` is less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ListToTensor"""
+        self.add_prim_attr("primitive_target", "CPU")
+        self.init_prim_io_names(inputs=['input_list', 'dtype'], outputs=['output_data'])
+
+
+class TensorToTuple(Primitive):
+    r"""
+    Convert tensor to tuple
+
+    .. note::
+        This it is only for internal used. The input_tensor can be constant/variable value.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_tensor** (Tensor) - The input_tensor must be a 1-D Tensor.
+
+    Outputs:
+        Tuple, the length is equal to tensor shape.
+
+    Raises:
+        TypeError: If `input_tensor` is not a tensor.
+        ValueError: If rank of `input_tensor` is not 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize TensorToTuple"""
+        self.add_prim_attr("primitive_target", "CPU")
+        self.init_prim_io_names(inputs=['input_tensor'], outputs=['output_data'])
+
+
+class TensorToList(Primitive):
+    r"""
+    Convert tensor to list
+
+    .. note::
+        This it is only for internal used. The input_tensor can be constant/variable value.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_tensor** (Tensor) - The input_tensor must be a 1-D Tensor.
+
+    Outputs:
+        List, the length is equal to tensor shape.
+
+    Raises:
+        TypeError: If `input_tensor` is not a tensor.
+        ValueError: If rank of `input_tensor` is not 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize TensorToList"""
+        self.add_prim_attr("primitive_target", "CPU")
+        self.init_prim_io_names(inputs=['input_tensor'], outputs=['output_data'])
+
+
+class TensorToScalar(Primitive):
+    r"""
+    Convert tensor to scalar
+
+    .. note::
+        This it is only for internal used. The input_tensor can be constant/variable value.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_tensor** (Tensor) - The input_tensor must be a 0-D Tensor.
+
+    Outputs:
+        Scalar, a constant or variable scalar.
+
+    Raises:
+        TypeError: If `input_tensor` is not a tensor.
+        ValueError: If rank of `input_tensor` is not 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize TensorToScalar"""
+        self.add_prim_attr("primitive_target", "CPU")
+        self.init_prim_io_names(inputs=['input_tensor'], outputs=['output_data'])
 
 
 class SequenceCount(Primitive):
@@ -160,6 +312,7 @@ class SequenceCount(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SequenceCount"""
+        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['sequence', 'target'], outputs=['output_data'])
 
 
@@ -188,4 +341,5 @@ class SequenceMul(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SequenceMul"""
+        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['sequence', 'scalar'], outputs=['output_data'])
