@@ -15,6 +15,7 @@
  */
 #include "debug/data_dump/dump_json_parser.h"
 #include <fstream>
+#include <algorithm>
 #include "utils/log_adapter.h"
 #include "include/common/debug/common.h"
 #include "debug/utils.h"
@@ -575,11 +576,16 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
     return;
   }
   for (const auto &kernel : content) {
+    bool ret;
     auto kernel_str = kernel.dump();
     kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), '\"'), kernel_str.end());
     MS_LOG(INFO) << "Need dump kernel:" << kernel_str;
-    auto ret = kernels_.try_emplace({kernel_str, 0});
-    if (!ret.second) {
+    if (static_cast<int>(kernel_str.rfind('/')) == -1 && static_cast<int>(kernel_str.rfind("-op")) == -1) {
+      ret = kernel_types_.try_emplace({kernel_str, 0}).second;
+    } else {
+      ret = kernels_.try_emplace({kernel_str, 0}).second;
+    }
+    if (!ret) {
       MS_LOG(WARNING) << "Duplicate dump kernel name:" << kernel_str;
     }
   }
@@ -685,6 +691,7 @@ void DumpJsonParser::JudgeDumpEnabled() {
  */
 bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
   bool need_dump = false;
+
   switch (dump_mode_) {
     case DUMP_ALL:
       need_dump = true;
@@ -692,6 +699,22 @@ bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
     case DUMP_KERNEL:
       if (kernels_.find(op_full_name) != kernels_.end()) {
         need_dump = true;
+        break;
+      }
+      for (const auto &iter : kernel_types_) {
+        int start_index = static_cast<int>(op_full_name.rfind('/')) + 1;
+        int end_index = static_cast<int>(op_full_name.rfind('-'));
+        if (end_index == -1) {
+          end_index = static_cast<int>(op_full_name.length());
+        }
+        std::string op_name = op_full_name.substr(start_index, end_index - start_index);
+        transform(op_name.begin(), op_name.end(), op_name.begin(), ::tolower);
+        std::string kernel_type(iter.first);
+        transform(kernel_type.begin(), kernel_type.end(), kernel_type.begin(), ::tolower);
+        if (op_name.find(kernel_type) != std::string::npos) {
+          need_dump = true;
+          break;
+        }
       }
       break;
     case DUMP_KERNELS_WITH_FLAG:
