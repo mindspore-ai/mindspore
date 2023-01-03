@@ -295,6 +295,7 @@ void ArithmeticBaseCPUKernel::ComputeOfflineInfo() {
       c_matric_.batch_post_sum[i] = c_matric_.shape[i] * c_matric_.batch_post_sum[i + 1];
     }
   }
+  scalar_opt_ = false;
   if (a_matric_.inner_size == 1) {
     param_->in_elements_num0_ = 1;
     scalar_opt_ = true;
