@@ -57,7 +57,7 @@ mindspore.ops.FFTWithSize
 
     异常：
         - **TypeError** - 如果FFT/IFFT/IRFF的输入类型不是以下类型之一：complex64、complex128。
-        - **TypeError** - 如果RFFT的输入类型不是以下类型之一：float3、float64。
+        - **TypeError** - 如果RFFT的输入类型不是以下类型之一：float32、float64。
         - **TypeError** - 如果输入的类型不是Tensor。
         - **ValueError** - 如果输入 `x` 的维度小于 `signal_ndim` 。
         - **ValueError** - 如果 `signal_ndim` 大于3或小于1。
