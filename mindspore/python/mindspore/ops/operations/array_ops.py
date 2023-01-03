@@ -7184,7 +7184,7 @@ class NonZero(Primitive):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> from mindspore.ops.operations.array_ops import NonZero
+        >>> from mindspore.ops import NonZero
         >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
         >>> nonzero = NonZero()
         >>> output = nonzero(x)

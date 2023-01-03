@@ -606,7 +606,8 @@ def positive(x):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), mstype.float32)
         >>> print(ops.positive(x))
         [-5.0, 1.5, 3.0, 100.0]
@@ -3890,7 +3891,8 @@ def isreal(x):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops
+        >>> from mindspore import ops, Tensor
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor([1, 1+1j, 2+0j], mstype.complex64)
         >>> output = ops.isreal(x)
         >>> print(output)
@@ -3927,7 +3929,8 @@ def is_complex(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops
+        >>> from mindspore import ops, Tensor
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor([1, 1+1j, 2+2j], mstype.complex64)
         >>> output = ops.is_complex(x)
         >>> print(output)
@@ -5323,7 +5326,7 @@ def deg2rad(x):
 
     Examples:
         >>> x = Tensor(np.array([[90.0, -90.0], [180.0, -180.0], [270.0, -270.0]]).astype(np.float32))
-        >>> output = ops.deg2Rad(x)
+        >>> output = ops.deg2rad(x)
         >>> print(output)
         [[ 1.5707964 -1.5707964]
          [ 3.1415927 -3.1415927]
@@ -9120,8 +9123,7 @@ def lgamma(x):
 
     Examples:
         >>> x = Tensor(np.array([0.5, 3.2, 8.5]), mindspore.float32)
-        >>> lgamma = ops.Lgamma()
-        >>> output = lgamma(x)
+        >>> output = ops.lgamma(x)
         >>> print(output)
         [0.5723649 0.8854049 9.549267 ]
     """
@@ -9154,8 +9156,7 @@ def digamma(x):
 
     Examples:
         >>> x = Tensor(np.array([1.5, 0.5, 9]).astype(np.float16))
-        >>> digamma = P.Digamma()
-        >>> output = digamma(x)
+        >>> output = ops.digamma(x)
         >>> print(output)
         [ 0.0365 -1.964   2.14  ]
     """

@@ -6429,7 +6429,7 @@ class LuUnpack(Primitive):
         ...                             [ 0.1015, -0.5363,  0.6165]]]), mstype.float32)
         >>> LU_pivots = Tensor(np.array([[1, 3, 3],
         ...                              [2, 3, 3]]), mstype.int32)
-        >>> lu_unpack = LuUnpack()
+        >>> lu_unpack = ops.LuUnpack()
         >>> pivots, L, U = lu_unpack(LU_data, LU_pivots)
         >>> print(pivots)
         [[[1. 0. 0.]
