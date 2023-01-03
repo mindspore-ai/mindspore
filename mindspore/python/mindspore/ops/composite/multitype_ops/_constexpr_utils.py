@@ -1025,3 +1025,14 @@ def promote_binary_dtype(dtype_1, dtype_2):
     if dtype_1 in complex_types or dtype_2 in complex_types:
         return get_output_dtype(dtype_1, dtype_2, True)
     return get_output_dtype(dtype_1, dtype_2, False)
+
+
+@constexpr
+def generate_padding_shape(shape, length):
+    """
+    pad the `shape` to `length` with 1.
+    """
+    if len(shape) > length:
+        raise ValueError(f"Can not pad {shape} to length {length}.")
+
+    return shape + (1,) * (length - len(shape))
