@@ -3,7 +3,7 @@ mindspore.ops.diag
 
 .. py:function:: mindspore.ops.diag(input_x)
 
-    用给定的对角线值构造对角线张量。
+    用给定的对角线值构造对角线Tensor。
 
     假设输入Tensor维度为 :math:`[D_1,... D_k]` ，则输出是一个rank为2k的tensor，其维度为 :math:`[D_1,..., D_k, D_1,..., D_k]` ，其中 :math:`output[i_1,..., i_k, i_1,..., i_k] = input_x[i_1,..., i_k]` 并且其他位置的值为0。
 

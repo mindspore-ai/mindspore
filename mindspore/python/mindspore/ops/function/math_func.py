@@ -1498,8 +1498,6 @@ def cosh(x):
 
 def tanh(input_x):
     r"""
-    Tanh activation function.
-
     Computes hyperbolic tangent of input element-wise. The Tanh function is defined as:
 
     .. math::

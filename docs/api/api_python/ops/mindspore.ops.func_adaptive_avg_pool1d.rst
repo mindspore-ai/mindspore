@@ -3,9 +3,7 @@ mindspore.ops.adaptive_avg_pool1d
 
 .. py:function:: mindspore.ops.adaptive_avg_pool1d(input_x, output_size)
 
-    1维自适应平均池化。
-
-    对输入Tensor，提供1维的自适应平均池化操作。
+    对可以看作是由一系列一维平面组成的输入Tensor，应用一维自适应平均池化操作。
 
     通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})`，adaptive_avg_pool1d输出区域平均值在 :math:`L_{in}` 区间。
     输出的shape为 :math:`(N_{in}, C_{in}, L_{out})`，其中 :math:`L_{out}` 由 `output_size` 定义。

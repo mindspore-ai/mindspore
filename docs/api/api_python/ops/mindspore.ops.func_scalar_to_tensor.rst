@@ -3,7 +3,7 @@ mindspore.ops.scalar_to_tensor
 
 .. py:function:: mindspore.ops.scalar_to_tensor(input_x, dtype=mstype.float32)
 
-    将Scalar转换为指定数据类型的 `Tensor` 。
+    将Scalar转换为指定数据类型的Tensor。
 
     参数：
         - **input_x** (Union[int, float]) - 输入是Scalar。只能是常量值。

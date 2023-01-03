@@ -3,8 +3,6 @@ mindspore.nn.LogSoftmax
 
 .. py:class:: mindspore.nn.LogSoftmax(axis=-1)
 
-    Log Softmax激活函数。
-
     按元素计算Log Softmax激活函数。
 
     输入经Softmax函数、Log函数转换后，值的范围在[-inf,0)。

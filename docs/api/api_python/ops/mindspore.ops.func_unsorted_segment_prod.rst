@@ -5,7 +5,7 @@ mindspore.ops.unsorted_segment_prod
 
     沿分段计算输入Tensor元素的乘积。
 
-    UnsortedSegmentProd的计算过程如下图所示：
+    unsorted_segment_prod的计算过程如下图所示：
 
     .. image:: UnsortedSegmentProd.png
 
