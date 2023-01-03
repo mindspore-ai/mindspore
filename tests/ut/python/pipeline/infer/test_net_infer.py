@@ -14,9 +14,9 @@
 # ============================================================================
 """ test_net_infer """
 import numpy as np
-
+import pytest
 import mindspore.nn as nn
-from mindspore import Tensor, context
+from mindspore import Tensor, context, jit, ops
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 import mindspore.ops.operations as op
@@ -124,3 +124,23 @@ def test_maybe_poly_func():
     y_input = Tensor(np.array([1, 2]).astype(np.int32))
     z_input = Tensor(np.array([[2, 2], [3, 3]]).astype(np.int32))
     Net()(Tensor(np.array(1).astype(np.int32)), y_input, z_input)
+
+
+def test_invalid_primitive():
+    """
+    Feature: Inner primitive infer.
+    Description: Test invalid primitive.
+    Expectation: RuntimeError.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    invalid_prim = ops.Primitive("invalid_prim")
+
+    @jit
+    def func(x):
+        return invalid_prim(x)
+
+    a = Tensor([1])
+    with pytest.raises(RuntimeError) as ex:
+        func(a)
+    assert "Operator 'invalid_prim' is invalid." in str(
+        ex.value)

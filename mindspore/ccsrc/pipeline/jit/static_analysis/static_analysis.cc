@@ -469,20 +469,23 @@ void AnalysisEngine::ClearEvaluatorCache() {
   py::gil_scoped_acquire gil;
   for (auto &element : evaluators_) {
     EvaluatorPtr evaluator = element.second;
-    MS_EXCEPTION_IF_NULL(evaluator);
-    MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_mgr());
+    if (evaluator == nullptr || evaluator->evaluator_cache_mgr() == nullptr) {
+      continue;
+    }
     evaluator->evaluator_cache_mgr()->Clear();
   }
   for (auto &element : prim_constructors_) {
     EvaluatorPtr evaluator = element.second;
-    MS_EXCEPTION_IF_NULL(evaluator);
-    MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_mgr());
+    if (evaluator == nullptr || evaluator->evaluator_cache_mgr() == nullptr) {
+      continue;
+    }
     evaluator->evaluator_cache_mgr()->Clear();
   }
   for (auto &element : prim_py_evaluators_) {
     EvaluatorPtr evaluator = element.second;
-    MS_EXCEPTION_IF_NULL(evaluator);
-    MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_mgr());
+    if (evaluator == nullptr || evaluator->evaluator_cache_mgr() == nullptr) {
+      continue;
+    }
     evaluator->evaluator_cache_mgr()->Clear();
   }
   // Release exception to avoid hup at exit.
@@ -582,7 +585,7 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PrimitiveAbs
     if (is_new) {
       iter->second = GetPrimEvaluator(primitive, shared_from_this());
       if (iter->second == nullptr) {
-        MS_LOG(EXCEPTION) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
+        MS_LOG(EXCEPTION) << "Operator '" << primitive->name() << "' is invalid.";
       }
     }
     return iter->second;
