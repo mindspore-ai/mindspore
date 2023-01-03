@@ -236,6 +236,62 @@ class XdivyInfo : public ArithmeticBase {
   ~XdivyInfo() = default;
 };
 
+class HypotInfo : public XdivyInfo {
+ public:
+  HypotInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+            const PrimitiveAttrs &attrs)
+      : XdivyInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~HypotInfo() = default;
+};
+
+class IgammaInfo : public XdivyInfo {
+ public:
+  IgammaInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : XdivyInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~IgammaInfo() = default;
+};
+
+class IgammacInfo : public XdivyInfo {
+ public:
+  IgammacInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+              const PrimitiveAttrs &attrs)
+      : XdivyInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~IgammacInfo() = default;
+};
+
+class LeftShiftInfo : public XdivyInfo {
+ public:
+  LeftShiftInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
+      : XdivyInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~LeftShiftInfo() = default;
+};
+
+class RightShiftInfo : public XdivyInfo {
+ public:
+  RightShiftInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                 const PrimitiveAttrs &attrs)
+      : XdivyInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~RightShiftInfo() = default;
+};
+
+class NextAfterInfo : public XdivyInfo {
+ public:
+  NextAfterInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
+      : XdivyInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~NextAfterInfo() = default;
+};
+
+class ZetaInfo : public XdivyInfo {
+ public:
+  ZetaInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+           const PrimitiveAttrs &attrs)
+      : XdivyInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~ZetaInfo() = default;
+};
+
 class XlogyInfo : public ArithmeticBase {
  public:
   XlogyInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,

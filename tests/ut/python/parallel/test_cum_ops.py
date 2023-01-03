@@ -35,6 +35,9 @@ class Net(Cell):
         self.cum_prod = P.CumProd()
         self.cum_max = P.Cummax(axis=-2)
         self.cum_min = P.Cummin(axis=-2)
+        self.reversev2 = P.ReverseV2(axis=[-2])
+        self.lgamma = P.Lgamma()
+        self.trunc = P.Trunc()
 
     def construct(self, x, y):
         out = self.add(x, self.weight)
@@ -42,6 +45,9 @@ class Net(Cell):
         out = self.cum_prod(out, -2)
         out, _ = self.cum_max(out)
         out, _ = self.cum_min(out)
+        out = self.reversev2(out)
+        out = self.lgamma(out)
+        out = self.trunc(out)
         return out
 
 
@@ -68,4 +74,10 @@ def test_cum_ops():
         elif re.search("Cummax", k) is not None:
             assert v == [[2, 2, 1, 2],]
         elif re.search("Cummin", k) is not None:
+            assert v == [[2, 2, 1, 2],]
+        elif re.search("ReverseV2", k) is not None:
+            assert v == [[2, 2, 1, 2],]
+        elif re.search("Lgamma", k) is not None:
+            assert v == [[2, 2, 1, 2],]
+        elif re.search("Trunc", k) is not None:
             assert v == [[2, 2, 1, 2],]

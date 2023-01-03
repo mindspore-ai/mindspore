@@ -128,5 +128,6 @@ std::vector<StrategyPtr> SelectInfo::GenerateOpStrategies(int64_t stage_id) {
 }
 
 REGISTER(SelectInfo);
+REGISTER(BetaincInfo);
 }  // namespace parallel
 }  // namespace mindspore

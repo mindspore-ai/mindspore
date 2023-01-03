@@ -688,6 +688,7 @@ REGISTER(FastGeLUInfo);
 REGISTER(TanhInfo);
 REGISTER(SoftmaxInfo);
 REGISTER(LogSoftmaxInfo);
+REGISTER(ReverseV2Info);
 REGISTER(CumSumInfo);
 REGISTER(CummaxInfo);
 REGISTER(CumminInfo);

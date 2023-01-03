@@ -135,6 +135,14 @@ class LogSoftmaxInfo : public Softmax {
   ~LogSoftmaxInfo() override = default;
 };
 
+class ReverseV2Info : public Softmax {
+ public:
+  ReverseV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
+      : Softmax(name, inputs_shape, outputs_shape, attrs) {}
+  ~ReverseV2Info() override = default;
+};
+
 class CumOpBase : public ActivationBase {
  public:
   CumOpBase(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,

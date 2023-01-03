@@ -48,6 +48,14 @@ class SelectInfo : public OperatorInfo {
   Status InferTensorMap() override;
 };
 
+class BetaincInfo : public SelectInfo {
+ public:
+  BetaincInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+              const PrimitiveAttrs &attrs)
+      : SelectInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~BetaincInfo() override = default;
+};
+
 using SelectInfoPtr = std::shared_ptr<SelectInfo>;
 }  // namespace parallel
 }  // namespace mindspore
