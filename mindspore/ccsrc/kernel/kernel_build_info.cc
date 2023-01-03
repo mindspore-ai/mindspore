@@ -69,8 +69,10 @@ TypeId KernelBuildInfo::GetOutputDeviceType(size_t output_index) const {
 
 KernelObjectType KernelBuildInfo::GetInputKernelObjectType(size_t input_index) const {
   if (input_index >= inputs_kernel_object_type_.size()) {
-    // The log will be modified to ERROR after the function is finished.
-    MS_LOG(DEBUG) << "The index [" << input_index << "] is exceed the number of input";
+#ifdef ENABLE_TUPLE_UNFOLD
+    MS_LOG(ERROR) << "The input index [" << input_index
+                  << "] is exceed the number of input:" << inputs_kernel_object_type_.size();
+#endif
     return KernelObjectType::UNKNOWN_TYPE;
   }
   return inputs_kernel_object_type_[input_index];
@@ -78,8 +80,10 @@ KernelObjectType KernelBuildInfo::GetInputKernelObjectType(size_t input_index) c
 
 KernelObjectType KernelBuildInfo::GetOutputKernelObjectType(size_t output_index) const {
   if (output_index >= outputs_kernel_object_type_.size()) {
-    // The log will be modified to ERROR after the function is finished.
-    MS_LOG(DEBUG) << "The index [" << output_index << "] is exceed the number of input";
+#ifdef ENABLE_TUPLE_UNFOLD
+    MS_LOG(ERROR) << "The output index [" << output_index
+                  << "] is exceed the number of output:" << outputs_kernel_object_type_.size();
+#endif
     return KernelObjectType::UNKNOWN_TYPE;
   }
   return outputs_kernel_object_type_[output_index];

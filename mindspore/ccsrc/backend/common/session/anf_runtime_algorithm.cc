@@ -47,6 +47,8 @@ using device::KernelInfo;
 using kernel::KernelBuildInfoPtr;
 using kernel::KernelMod;
 using kernel::KernelModPtr;
+constexpr char kDisableKernelBackoff[] = "MS_DISABLE_KERNEL_BACKOFF";
+
 namespace {
 constexpr size_t kReturnDataIndex = 1;
 constexpr size_t kSwitchTrueBranchIndex = 2;
@@ -1499,6 +1501,17 @@ bool AnfRuntimeAlgorithm::NodeValueIsFuncGraph(const AnfNodePtr &node) {
   auto value = value_node->value().get();
   MS_EXCEPTION_IF_NULL(value);
   return value->isa<FuncGraph>();
+}
+
+bool AnfRuntimeAlgorithm::IsEnableKernelSelectBackoff() {
+  static std::string disable_kernel_backoff = "";
+  static bool first_get_backoff_env = true;
+  if (first_get_backoff_env) {
+    disable_kernel_backoff = common::GetEnv(kDisableKernelBackoff);
+    first_get_backoff_env = false;
+  }
+
+  return (disable_kernel_backoff != "1");
 }
 
 void AnfRuntimeAlgorithm::SetKernelSelectBackoffInfo(const CNodePtr &node,

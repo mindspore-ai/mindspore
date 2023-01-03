@@ -472,15 +472,14 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
                                const std::pair<std::string, ExceptionType> &failure_info) {
   MS_EXCEPTION_IF_NULL(node);
   // The single op does not support the backoff ability.
-  if ((graph == nullptr) || graph->is_from_single_op()) {
+  if (!AnfAlgo::IsEnableKernelSelectBackoff() || (graph == nullptr) || graph->is_from_single_op()) {
     MS_EXCEPTION(failure_info.second) << failure_info.first;
   }
 
+  MS_LOG(INFO) << "GPU doesn't support the kernel " << common::AnfAlgo::GetCNodeName(node)
+               << " and will try to backoff on CPU.";
   // Mark kernel selection backoff info.
   AnfAlgo::SetKernelSelectBackoffInfo(node, failure_info);
-
-  // The logic will be deleted after the function is finished.
-  MS_EXCEPTION(failure_info.second) << failure_info.first;
 }
 
 // Before creating the kernel, check whether the node has completed the operator selection. If not, the operator
