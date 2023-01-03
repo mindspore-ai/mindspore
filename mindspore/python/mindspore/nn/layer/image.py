@@ -561,8 +561,6 @@ class CentralCrop(Cell):
 
 class PixelShuffle(Cell):
     r"""
-    PixelShuffle operatrion.
-
     Applies a pixelshuffle operation over an input signal composed of several input planes. This is useful for
     implementiong efficient sub-pixel convolution with a stride of :math:`1/r`. For more details, refer to
     `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
@@ -607,8 +605,6 @@ class PixelShuffle(Cell):
 
 class PixelUnshuffle(Cell):
     r"""
-    PixelUnshuffle operatrion.
-
     Applies a pixelunshuffle operation over an input signal composed of several input planes. For more details, refer to
     `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
     <https://arxiv.org/abs/1609.05158>`_ .

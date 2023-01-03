@@ -3,7 +3,7 @@ mindspore.ops.col2im
 
 .. py:function:: mindspore.ops.col2im(input_x, output_size, kernel_size, dilation, padding_value, stride)
 
-    将一组滑动局部块组合成一个大的张量。
+    将一组滑动局部块组合成一个大的Tensor。
 
     参数：
         - **input_x** (Tensor) - 四维Tensor，输入的批量的滑动局部块，数据类型支持float16和float32。

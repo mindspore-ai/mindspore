@@ -3,9 +3,7 @@ mindspore.nn.FractionalMaxPool3d
 
 .. py:class:: mindspore.nn.FractionalMaxPool3d(kernel_size, output_size=None, output_ratio=None, return_indices=False, _random_samples=None)
 
-    对输入的多维数据进行三维的分数最大池化运算。
-
-    对多个输入平面组成的输入上应用3D分数最大池化。在  :math:`(kD_{in}, kH_{in}, kW_{in})` 区域上应用最大池化操作，由输出shape决定随机步长。输出特征的数量等于输入平面的数量。
+    对多个输入平面组成的输入上应用3D分数最大池化。在 :math:`(kD_{in}, kH_{in}, kW_{in})` 区域上应用最大池化操作，由输出shape决定随机步长。输出特征的数量等于输入平面的数量。
 
     分数最大池化的详细描述在 `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_ 。
 

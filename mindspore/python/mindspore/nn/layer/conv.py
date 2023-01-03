@@ -130,9 +130,8 @@ class _Conv(Cell):
 
 class Conv2d(_Conv):
     r"""
-    2D convolution layer.
-
-    Calculates the 2D convolution on the input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
+    Calculates the 2D convolution on the input tensor.
+    The input is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
     where :math:`N` is batch size, :math:`C_{in}` is a number of channels,
     :math:`H_{in}, W_{in}` are the height and width of the feature layer respectively.
     For the tensor of each batch, its shape is :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
@@ -324,9 +323,7 @@ def _check_input_3d(input_shape, op_name):
 
 class Conv1d(_Conv):
     r"""
-    1D convolution layer.
-
-    Calculates the 1D convolution on the input tensor which is typically of shape :math:`(N, C_{in}, L_{in})`,
+    Calculates the 1D convolution on the input tensor. The input is typically of shape :math:`(N, C_{in}, L_{in})`,
     where :math:`N` is batch size, :math:`C_{in}` is a number of channels and :math:`L_{in}` is a length of sequence.
     For the tensor of each batch, its shape is :math:`(C_{in}, L_{in})`, and the formula is defined as:
 
@@ -507,9 +504,7 @@ def _check_input_5dims(input_shape, op_name):
 
 class Conv3d(_Conv):
     r"""
-    3D convolution layer.
-
-    Calculates the 3D convolution on the input tensor which is typically of shape
+    Calculates the 3D convolution on the input tensor. The input is typically of shape
     :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`,
     where :math:`N` is batch size, :math:`C_{in}` is a number of channels,
     :math:`D_{in}, H_{in}, W_{in}` are the depth, height and width of the feature layer respectively.
@@ -726,8 +721,6 @@ class Conv3d(_Conv):
 
 class Conv3dTranspose(_Conv):
     r"""
-    3D transposed convolution layer.
-
     Calculates a 3D transposed convolution, which can be regarded as Conv3d for the gradient of the input.
     It also called deconvolution (although it is not an actual deconvolution).
 
@@ -938,8 +931,6 @@ def _deconv_output_length(is_valid, is_same, is_pad, input_length, filter_size, 
 
 class Conv2dTranspose(_Conv):
     r"""
-    2D transposed convolution layer.
-
     Calculates a 2D transposed convolution, which can be regarded as Conv2d for the gradient of the input,
     also called deconvolution (although it is not an actual deconvolution).
 
@@ -1134,8 +1125,6 @@ class Conv2dTranspose(_Conv):
 
 class Conv1dTranspose(_Conv):
     r"""
-    1D transposed convolution layer.
-
     Calculates a 1D transposed convolution, which can be regarded as Conv1d for the gradient of the input,
     also called deconvolution (although it is not an actual deconvolution).
 

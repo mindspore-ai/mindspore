@@ -3,7 +3,7 @@ mindspore.ops.masked_select
 
 .. py:function:: mindspore.ops.masked_select(x, mask)
 
-    返回一个一维张量，其中的内容是 `x` 张量中对应于 `mask` 张量中True位置的值。`mask` 的shape与 `x` 的shape不需要一样，但必须符合广播规则。
+    返回一个一维Tensor，其中的内容是 `x` 中对应于 `mask` 中True位置的值。`mask` 的shape与 `x` 的shape不需要一样，但必须符合广播规则。
 
     参数：
         - **x** (Tensor) - 它的shape是 :math:`(x_1, x_2, ..., x_R)`。
