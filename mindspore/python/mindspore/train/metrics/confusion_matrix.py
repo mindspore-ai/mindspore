@@ -27,7 +27,7 @@ class ConfusionMatrix(Metric):
     including binary classification and multiple classification.
 
     If you only need confusion matrix, use this class. If you want to calculate other metrics, such as 'PPV',
-    'TPR', 'TNR', etc., use class 'mindspore.train.ConfusionMatrixMetric'.
+    'TPR', 'TNR', etc., use class :class:`mindspore.train.ConfusionMatrixMetric` .
 
     Args:
         num_classes (int): Number of classes in the dataset.
@@ -152,7 +152,7 @@ class ConfusionMatrixMetric(Metric):
     of `metric_name`.
 
     If you want to calculate metrics related to confusion matrix, such as 'PPV', 'TPR', 'TNR', use this class.
-    If you only want to calculate confusion matrix, please use 'mindspore.metrics.ConfusionMatrix'.
+    If you only want to calculate confusion matrix, please use :class:`mindspore.train.ConfusionMatrix` .
 
     Args:
         skip_channel (bool): Whether to skip the measurement calculation on the first channel of the predicted output.
