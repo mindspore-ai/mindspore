@@ -72,6 +72,7 @@ class NonDeterministicInts(Primitive):
         self.init_prim_io_names(inputs=["shape"], outputs=["output"])
         valid_values = (mstype.int32, mstype.int64)
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
+        self.add_prim_attr("side_effect_hidden", True)
 
 
 class TruncatedNormal(Primitive):
@@ -130,6 +131,7 @@ class TruncatedNormal(Primitive):
         Validator.check_value_type('seed2', seed2, [int], self.name)
         valid_values = (mstype.float16, mstype.float32, mstype.float64)
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
+        self.add_prim_attr("side_effect_hidden", True)
 
 
 class StandardNormal(Primitive):
@@ -311,6 +313,7 @@ class LogNormalReverse(Primitive):
         """Initialize LogNormalReverse"""
         Validator.check_value_type("mean", mean, [float], self.name)
         Validator.check_value_type("std", std, [float], self.name)
+        self.add_prim_attr("side_effect_hidden", True)
 
 
 class RandomGammaGrad(Primitive):
@@ -500,6 +503,7 @@ class ParameterizedTruncatedNormal(Primitive):
             inputs=['shape', 'mean', 'stdevs', 'min', 'max'], outputs=['y'])
         Validator.check_value_type('seed', seed, [int], self.name)
         Validator.check_value_type('seed2', seed2, [int], self.name)
+        self.add_prim_attr("side_effect_hidden", True)
 
 
 class Poisson(PrimitiveWithInfer):
@@ -619,6 +623,7 @@ class RandomPoisson(Primitive):
         valid_values = (mstype.int64, mstype.int32,
                         mstype.float16, mstype.float32, mstype.float64)
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
+        self.add_prim_attr("side_effect_hidden", True)
 
 
 class UniformInt(Primitive):
@@ -863,6 +868,7 @@ class Multinomial(Primitive):
         Validator.check_value_type("dtype", dtype, [mstype.Type], self.name)
         valid_values = (mstype.int64, mstype.int32)
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
+        self.add_prim_attr("side_effect_hidden", True)
 
 
 class MultinomialWithReplacement(Primitive):
@@ -892,6 +898,7 @@ class MultinomialWithReplacement(Primitive):
         Validator.check_non_negative_int(numsamples, "numsamples", self.name)
         Validator.check_value_type("replacement", replacement, [bool], self.name)
         self.init_prim_io_names(inputs=['x', 'seed', 'offset'], outputs=['y'])
+        self.add_prim_attr("side_effect_hidden", True)
 
 
 class UniformCandidateSampler(PrimitiveWithInfer):
@@ -939,6 +946,7 @@ class UniformCandidateSampler(PrimitiveWithInfer):
                             "value of range_max", range_max, Rel.LE, self.name)
         Validator.check("value of seed", seed, '', 0, Rel.GE, self.name)
         self.num_sampled = num_sampled
+        self.add_prim_attr("side_effect_hidden", True)
 
     def infer_dtype(self, true_classes_type):
         Validator.check_subclass(
@@ -998,6 +1006,7 @@ class LogUniformCandidateSampler(Primitive):
         self.range_max = range_max
         self.unique = unique
         self.seed = Validator.check_number("seed", seed, 0, Rel.GE, self.name)
+        self.add_prim_attr("side_effect_hidden", True)
 
 
 class RandomShuffle(Primitive):
