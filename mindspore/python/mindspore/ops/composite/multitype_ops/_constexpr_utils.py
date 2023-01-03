@@ -27,6 +27,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
 
 from mindspore import log as logger
+from mindspore import context
 
 ALL_TENSOR = 0
 NO_TENSOR = 1
@@ -993,6 +994,11 @@ def use_copy_slice(tuple_index):
 
 
 #TODO: remove comment
+@constexpr
+def is_ascend():
+    return context.get_context('device_target') == "Ascend"
+
+
 @constexpr
 def gen_exception_msg(msg_format, *args):
     return msg_format.format(*args)
