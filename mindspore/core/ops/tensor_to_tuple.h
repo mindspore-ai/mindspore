@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_MAKE_TUPLE_H_
-#define MINDSPORE_CORE_OPS_MAKE_TUPLE_H_
+#ifndef MINDSPORE_CORE_OPS_TENSOR_TO_TUPLE_H_
+#define MINDSPORE_CORE_OPS_TENSOR_TO_TUPLE_H_
 #include "ops/base_operator.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMakeTuple = "MakeTuple";
-/// \brief MakeTuple op is used to pack multiple nodes into a whole, which is only used in FuncGraph.
-class MIND_API MakeTuple : public BaseOperator {
+/// \brief TensorToTuple op is used to convert tensor to tuple.
+class MIND_API TensorToTuple : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(MakeTuple);
+  MIND_API_BASE_MEMBER(TensorToTuple);
   /// \brief Constructor.
-  MakeTuple() : BaseOperator(kNameMakeTuple) {}
+  TensorToTuple() : BaseOperator(prim::kTensorToTuple) {}
   /// \brief Init.
   void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_MAKE_TUPLE_H_
+#endif  // MINDSPORE_CORE_OPS_TENSOR_TO_TUPLE_H_

@@ -62,10 +62,6 @@ MIND_API AbstractBasePtr InferImplArrayToScalar(const AnalysisEnginePtr &, const
 MIND_API AbstractBasePtr InferImplBroadcastShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                  const AbstractBasePtrList &args_spec_list);
 
-MIND_API AbstractBasePtr InferImplMakeTuple(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                            const AbstractBasePtrList &args_spec_list);
-MIND_API AbstractBasePtr InferImplMakeList(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                           const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -78,10 +74,6 @@ MIND_API AbstractBasePtr InferImplMakeKeywordArg(const AnalysisEnginePtr &, cons
                                                  const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplExtractKeywordArg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                     const AbstractBasePtrList &args_spec_list);
-MIND_API AbstractBasePtr InferImplTupleGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const AbstractBasePtrList &args_spec_list);
-MIND_API AbstractBasePtr InferImplListGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplTupleSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplListSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -660,6 +660,11 @@ constexpr auto kDynamicBroadcastToOpName = "DynamicBroadcastTo";
 constexpr auto kCheckValidOpName = "CheckValid";
 constexpr auto kSoftmaxGradFusionOpName = "SoftmaxGradFusion";
 
+// Sequence ops
+constexpr auto kScalarToTensorOpName = "ScalarToTensor";
+constexpr auto kTupleToTensorOpName = "TupleToTensor";
+constexpr auto kListToTensorOpName = "ListToTensor";
+
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
 constexpr auto kHcclWorldGroup = "hccl_world_group";

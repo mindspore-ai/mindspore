@@ -13,44 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/make_tuple.h"
 
-#include <string>
-#include <memory>
+#include "ops/tensor_to_tuple.h"
+
 #include <vector>
+#include <string>
 
 #include "ops/op_utils.h"
-#include "ops/real_maketuple.h"
-#include "abstract/ops/op_infer.h"
 #include "utils/check_convert_utils.h"
 #include "include/common/utils/utils.h"
+#include "abstract/ops/op_infer.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(MakeTuple, BaseOperator);
-MIND_API_OPERATOR_IMPL(RealMakeTuple, BaseOperator);
-AbstractBasePtr MakeTupleInnerInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTuple>(input_args);
-}
-
-class MakeTupleInfer : public abstract::OpInferBase {
+class TensorToTupleInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return MakeTupleInnerInfer(primitive, input_args)->BuildShape();
+    return TensorToSequenceInfer<abstract::AbstractTuple>(primitive, input_args)->BuildShape();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return MakeTupleInnerInfer(primitive, input_args)->BuildType();
+    return TensorToSequenceInfer<abstract::AbstractTuple>(primitive, input_args)->BuildType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    return MakeTupleInnerInfer(primitive, input_args);
+    return TensorToSequenceInfer<abstract::AbstractTuple>(primitive, input_args);
   }
 };
-REGISTER_PRIMITIVE_OP_INFER_IMPL(MakeTuple, prim::kPrimMakeTuple, MakeTupleInfer, false);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(RealMakeTuple, prim::kPrimRealMakeTuple, MakeTupleInfer, false);
+MIND_API_OPERATOR_IMPL(TensorToTuple, BaseOperator);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorToTuple, prim::kPrimTensorToTuple, TensorToTupleInfer, false);
 }  // namespace ops
 }  // namespace mindspore

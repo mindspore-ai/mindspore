@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-#include "ops/tuple_get_item.h"
-#include "ops/primitive_c.h"
-#include "mindapi/src/helper.h"
+#ifndef MINDSPORE_CORE_OPS_REAL_LIST_GETITEM_H_
+#define MINDSPORE_CORE_OPS_REAL_LIST_GETITEM_H_
+#include "ops/base_operator.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(TupleGetItem, BaseOperator);
-REGISTER_PRIMITIVE_C(kNameTupleGetItem, TupleGetItem);
+/// \brief RealListGetItem op is used to get list[index] value, list is a dynamic length list or index is variable
+class MIND_API RealListGetItem : public BaseOperator {
+ public:
+  MIND_API_BASE_MEMBER(RealListGetItem);
+  /// \brief Constructor.
+  RealListGetItem() : BaseOperator(prim::kRealListGetItem) { InitIOName({"input", "index"}, {"output"}); }
+};
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_REAL_LIST_GETITEM_H_

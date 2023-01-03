@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_MAKE_TUPLE_H_
-#define MINDSPORE_CORE_OPS_MAKE_TUPLE_H_
+#ifndef MINDSPORE_CORE_OPS_REAL_TUPLE_GETITEM_H_
+#define MINDSPORE_CORE_OPS_REAL_TUPLE_GETITEM_H_
 #include "ops/base_operator.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMakeTuple = "MakeTuple";
-/// \brief MakeTuple op is used to pack multiple nodes into a whole, which is only used in FuncGraph.
-class MIND_API MakeTuple : public BaseOperator {
+/// \brief RealTupleGetItem op is used to get tuple[index] value, tuple is a dynamic length tuple or index is variable
+class MIND_API RealTupleGetItem : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(MakeTuple);
+  MIND_API_BASE_MEMBER(RealTupleGetItem);
   /// \brief Constructor.
-  MakeTuple() : BaseOperator(kNameMakeTuple) {}
-  /// \brief Init.
-  void Init() const {}
+  RealTupleGetItem() : BaseOperator(prim::kRealTupleGetItem) { InitIOName({"input", "index"}, {"output"}); }
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_MAKE_TUPLE_H_
+#endif  // MINDSPORE_CORE_OPS_REAL_TUPLE_GETITEM_H_
