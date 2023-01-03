@@ -74,7 +74,7 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                                mindspore::kMultinomialOpName,
                                                                mindspore::kNanToNumOpName,
                                                                mindspore::kQrOpName,
-                                                               mindspore::kResizeBicubicOpName};
+                                                               mindspore::kResizeBicubicOpName,
                                                                mindspore::kNuclearNormOpName,
                                                                mindspore::kQuantileOpName,
                                                                mindspore::kSparseSegmentSqrtNOpName,
