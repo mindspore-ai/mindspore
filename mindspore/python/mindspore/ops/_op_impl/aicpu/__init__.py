@@ -171,3 +171,5 @@ from .median_grad import _median_grad_aicpu
 from .reduce_sum import _reduce_sum_aicpu
 from .adaptive_avg_pool_2d_v1 import _adaptive_avg_pool_2d_v1_aicpu
 from .fill_v2 import _fill_v2_aicpu
+from .data_format_vec_permute import _data_format_vec_permute_aicpu
+from .quantile import _quantile_aicpu
