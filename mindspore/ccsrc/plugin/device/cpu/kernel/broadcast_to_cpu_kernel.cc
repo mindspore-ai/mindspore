@@ -68,7 +68,9 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod:
       {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
        &BroadcastToCpuKernelMod::LaunchKernel<int>},
       {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-       &BroadcastToCpuKernelMod::LaunchKernel<bool>}}}};
+       &BroadcastToCpuKernelMod::LaunchKernel<bool>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+       &BroadcastToCpuKernelMod::LaunchKernel<int>}}}};
 
 bool BroadcastToCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
