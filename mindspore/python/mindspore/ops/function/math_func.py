@@ -534,7 +534,8 @@ def positive(x):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), ms.float32)
         >>> print(ops.positive(x))
         [-5.0, 1.5, 3.0, 100.0]
@@ -3272,7 +3273,8 @@ def isreal(x):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops
+        >>> from mindspore import ops, Tensor
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor([1, 1+1j, 2+0j], mstype.complex64)
         >>> output = ops.isreal(x)
         >>> print(output)
@@ -4466,7 +4468,7 @@ def deg2rad(x):
 
     Examples:
         >>> x = Tensor(np.array([[90.0, -90.0], [180.0, -180.0], [270.0, -270.0]]).astype(np.float32))
-        >>> output = ops.deg2Rad(x)
+        >>> output = ops.deg2rad(x)
         >>> print(output)
         [[ 1.5707964 -1.5707964]
          [ 3.1415927 -3.1415927]
