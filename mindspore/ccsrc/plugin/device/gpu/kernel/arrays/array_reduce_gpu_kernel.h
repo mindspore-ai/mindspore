@@ -109,7 +109,8 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
   static std::vector<std::pair<KernelAttr, ReduceFunc>> all_any_list_;
   static std::vector<std::pair<KernelAttr, ReduceFunc>> prod_list_;
   static std::vector<std::pair<KernelAttr, ReduceFunc>> sum_list_;
-  static std::vector<std::pair<KernelAttr, ReduceFunc>> max_min_mean_list_;
+  static std::vector<std::pair<KernelAttr, ReduceFunc>> max_min_list_;
+  static std::vector<std::pair<KernelAttr, ReduceFunc>> mean_list_;
   static std::map<std::string, std::vector<std::pair<KernelAttr, ReduceFunc>>> kernel_attr_list_;
 
  private:
