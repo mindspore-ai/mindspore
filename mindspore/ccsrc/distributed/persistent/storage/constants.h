@@ -38,6 +38,8 @@ constexpr size_t JSON_SUFFIX_LENS = 5;
 // Storage config related.
 constexpr char kFileStoragePath[] = "file_storage_path";
 constexpr char kMaxBlockLength[] = "max_block_length";
+
+constexpr char kElementSize[] = "element_size";
 }  // namespace storage
 }  // namespace distributed
 }  // namespace mindspore

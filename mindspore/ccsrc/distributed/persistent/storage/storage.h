@@ -35,11 +35,29 @@ using OutputData = std::pair<void *, size_t>;
 // DirtyInfo is used to indicate the part of the Tensor that needs to be rewritten to storage,
 using DirtyInfo = std::vector<int>;
 
+// Data memory buffer and buffer length.
+struct DataWithLen {
+  void *data_{nullptr};
+  size_t data_len_{0};
+};
+
+// Const data memory buffer and buffer length.
+struct ConstDataWithLen {
+  const void *data_{nullptr};
+  size_t data_len_{0};
+};
+
 // This Class provides upper-layer interfaces for persistent storage.
 class StorageBase {
  public:
   StorageBase() = default;
   virtual ~StorageBase() = default;
+
+  // Initialize the storage module and allocate necessary resources.
+  virtual void Initialize() {}
+
+  // Release the resource the storage module allocates.
+  virtual void Finalize() {}
 
   // Write input tensor to storage medium or memory buffer.
   // The parameter dirty_info indicates that the part of the Tensor that needs to be rewritten to storage,
@@ -52,11 +70,23 @@ class StorageBase {
   // The parameter dirty_info indicates that the part of the Tensor that needs to be rewritten to storage.
   virtual void Write(const std::vector<InputData> &input, const DirtyInfo &dirty_info) {}
 
+  // Write key-value pairs data into persistent storage.
+  // Parameter[in] `keys`: The keys need to write, containing data pointer and data buffer length.
+  // Parameter[in] `values`: The values corresponding to keys need to write, containing data pointer and data buffer
+  // length.
+  virtual void Write(const ConstDataWithLen &keys, const ConstDataWithLen &values) {}
+
   // Read data from the storage medium or memory buffer and merge them into contiguous memory.
   virtual void Read(const OutputData &output) {}
 
   // Read data from the storage medium or memory buffer and merge them into contiguous memory for multiple tensors.
   virtual void Read(const std::vector<OutputData> &outputs) {}
+
+  // Read key-value pairs' values data from persistent storage.
+  // Parameter[in] `keys`: The keys whose values need to read, containing data pointer and data buffer length.
+  // Parameter[out] `values`: The values corresponding to keys need to read, containing data pointer and data buffer
+  // length.
+  virtual void Read(const ConstDataWithLen &keys, const DataWithLen &values) {}
 };
 }  // namespace storage
 }  // namespace distributed
