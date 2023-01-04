@@ -63,7 +63,7 @@ def init_status():
     Returns a Tensor indicating initialized status for overflow detection.
 
     Note:
-        Only Ascend need status to capture overflow status, you can alse call
+        Only Ascend need status to capture overflow status, you can also call
         this function on GPU or CPU, but the return value is useless.
 
     Returns:
@@ -73,7 +73,7 @@ def init_status():
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> status = init_status()
+        >>> status = amp.init_status()
     """
     if _ascend_target():
         status = ops.NPUAllocFloatStatus()()
@@ -98,6 +98,8 @@ def all_finite(inputs, status=None):
 
     Args:
         inputs (Union(tuple(Tensor), list(Tensor))): a iterable Tensor.
+        status (Tensor): the status Tensor for overflow detection, only required on
+            Ascend. Default: None.
 
     Returns:
         Tensor, a scalar Tensor and the dtype is bool.
@@ -107,7 +109,7 @@ def all_finite(inputs, status=None):
 
     Examples:
         >>> x = (Tensor(np.array([np.log(-1), 1, np.log(0)])), Tensor(np.array([1.0]))
-        >>> output = all_finite(x)
+        >>> output = amp.all_finite(x)
     """
     if _ascend_target():
         if status is None:
