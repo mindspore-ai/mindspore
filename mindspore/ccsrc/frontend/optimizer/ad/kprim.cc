@@ -95,6 +95,12 @@ MetaFuncGraphPtr KPrim::KMetaFuncGraph(const PrimitivePtr &prim) {
     return meta;
   }
 
+  if (IsPrimitiveEquals(prim, prim::kPrimPyExecute)) {
+    MetaFuncGraphPtr meta = std::make_shared<prim::PyExecuteGradient>("PyExecuteGradient");
+    bprop_registry_meta_[prim::kPrimPyExecute] = meta;
+    return meta;
+  }
+
   MS_LOG(EXCEPTION) << "Fail to find bprop function for " << prim->name() << ".";
 }
 
@@ -197,7 +203,9 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
     auto fprop = GetFprop(prim);
     fprop->transforms().emplace("primal", FuncGraphTransform(prim::kPrimSwitchLayer));
     return fprop;
-  } else if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
+  } else if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList) ||
+             IsPrimitiveEquals(prim, prim::kPrimPyExecute)) {
+    // Return null to use Meta bprop.
     return nullptr;
   }
 
