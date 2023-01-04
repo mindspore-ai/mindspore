@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 #include <iterator>
+#include <algorithm>
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
@@ -45,6 +46,7 @@ constexpr char kParamTypeDynamic[] = "dynamic";
 constexpr char kParamTypeRequre[] = "required";
 constexpr char kParamTypeOptional[] = "optional";
 constexpr int64_t kDynamicInvalidNum = -1;
+constexpr size_t kMatMulInputSize = 3;
 
 void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
   auto tbe_selector = TbeKernelSelect(kernel_node, kernel_info_list);
@@ -340,6 +342,9 @@ void TbeKernelSelect::FilterInvalidKernelInfo() {
     if (!FilterInvalidShape(kernel_build_info, !dynamic_inputs.empty())) {
       continue;
     }
+    if (!FilterUnsupportedMatMul(kernel_build_info)) {
+      continue;
+    }
     if (!TbeCheckSupported(kernel_build_info)) {
       continue;
     }
@@ -349,6 +354,21 @@ void TbeKernelSelect::FilterInvalidKernelInfo() {
     MS_LOG(DEBUG) << "After tbe check supported, all valid AI CORE kernel infos were filtered out. Node:" << full_name_;
   }
   (*kernel_info_list_).swap(kernel_info_list);
+}
+
+bool TbeKernelSelect::FilterUnsupportedMatMul(const KernelBuildInfoPtr &kernel_build_info) {
+  // A MatMul op is unsupported if it has a bias and bias is fp32
+  // we need to filter it out or it will cause compile error.
+  if (common::AnfAlgo::GetCNodeName(cnode_ptr_) != prim::kPrimMatMul->name() ||
+      !common::AnfAlgo::IsDynamicShape(cnode_ptr_)) {
+    return true;
+  }
+  const auto &input_dtypes = kernel_build_info->GetAllInputDeviceTypes();
+  if (input_dtypes.size() < kMatMulInputSize) {
+    return true;
+  }
+  const auto bias_dtype = input_dtypes[kMatMulInputSize - 1];
+  return !(bias_dtype == TypeId::kNumberTypeFloat32 || bias_dtype == TypeId::kNumberTypeFloat);
 }
 
 bool TbeKernelSelect::FilterInvalidShape(const KernelBuildInfoPtr &kernel_build_info, bool is_dynamic_input) {
