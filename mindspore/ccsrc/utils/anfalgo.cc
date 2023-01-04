@@ -1132,6 +1132,8 @@ void AnfAlgo::ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list) {
   result = DelayExecNode(result, kCastOpName, true);
   result = DelayExecNode(result, kAdamApplyOneWithDecayOpName, false);
   result = DelayExecNode(result, kAdamApplyOneOpName, false);
+  result = DelayExecNode(result, kQuantDTypeCastOpName, false);
+  result = DelayExecNode(result, kFSEDecodeOpName, false);
   if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
     result = DelayExecNode(result, kDropoutGenMaskOpName, true);
     result = DelayExecNode(result, kStatelessDropOutGenMaskOpName, true);
