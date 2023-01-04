@@ -47,7 +47,7 @@ mindspore.nn.thor
         - **decay_filter** (function) - 用于确定权重衰减应用于哪些层的函数，只有在weight_decay>0时才有效。默认值：lambda x: x.name not in []。
         - **split_indices** (list) - 按A/G层（A/G含义见上述公式）索引设置allreduce融合策略。仅在分布式计算中有效。ResNet50作为一个样本，A/G的层数分别为54层，当split_indices设置为[26,53]时，表示A/G被分成两组allreduce，一组为0~26层，另一组是27~53层。默认值：None。
         - **enable_clip_grad** (bool) - 是否剪切梯度。默认值：False。
-        - **frequency** (int) - A/G和$A^{-1}/G^{-1}$的更新间隔。每隔frequency个step，A/G和$A^{-1}/G^{-1}$将更新一次。必须大于1。默认值：100。
+        - **frequency** (int) - A/G和 :math:`A^{-1}/G^{-1}` 的更新间隔。当frequency等于N(N必须大于1)，每隔frequency个step，A/G和 :math:`A^{-1}/G^{-1}` 将更新一次。其他step将使用之前的A/G和 :math:`A^{-1}/G^{-1}` 来更新权重。默认值：100。
 
     输入：
         - **gradients** （tuple[Tensor]） - 训练参数的梯度，矩阵维度与训练参数相同。

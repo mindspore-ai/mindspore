@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameExpandDims = "ExpandDims";
-/// \brief Adds an additional dimension to ‘input_x` at the given axis.
+/// \brief Adds an additional dimension to `input_x` at the given axis.
 /// Refer to Python API @ref mindspore.ops.ExpandDims for more details.
 class MIND_API ExpandDims : public BaseOperator {
  public:
