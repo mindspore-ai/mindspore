@@ -112,7 +112,11 @@ struct GetSumExpFloat {
 
 template <typename T>
 __device__ __forceinline__ T WARPSHFL_XOR(T value, int laneMask, int width = warpSize, unsigned int mask = 0xffffffff) {
+#ifndef __HIP_PLATFORM_HCC__
+  return __shfl_xor_sync(mask, value, laneMask, width);
+#else
   return __shfl_xor(value, laneMask, width);
+#endif
 }
 
 template <typename T, typename Function>
