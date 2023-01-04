@@ -102,7 +102,36 @@ const std::map<uint32_t, std::string> error_msg = {
 constexpr auto kUnknowErrorString = "Unknown error occurred";
 }  // namespace
 
-std::string GetErrorMessage(bool add_title) {
+error_message::Context ErrorManagerAdapter::context_;
+std::mutex ErrorManagerAdapter::initialized_mutex_;
+bool ErrorManagerAdapter::initialized_ = false;
+
+bool ErrorManagerAdapter::Init() {
+  std::unique_lock<std::mutex> lock(initialized_mutex_);
+  if (initialized_) {
+    MS_LOG(DEBUG) << "Ascend error manager has been initialized.";
+    return true;
+  }
+  const auto error_manager_init_ret = ErrorManager::GetInstance().Init();
+  if (error_manager_init_ret != 0) {
+    MS_LOG(WARNING) << "Init ascend error manager failed, some ascend error log may be left out.";
+    return false;
+  }
+  ErrorManager::GetInstance().GenWorkStreamIdDefault();
+  context_ = ErrorManager::GetInstance().GetErrorManagerContext();
+  MS_LOG(DEBUG) << "Initialize ascend error manager successfully. Work stream id: " << context_.work_stream_id;
+  initialized_ = true;
+  LogWriter::SetMessageHandler(&MessageHandler);
+  return true;
+}
+
+void ErrorManagerAdapter::BindToCurrentThread() {
+  if (initialized_) {
+    ErrorManager::GetInstance().SetErrorContext(context_);
+  }
+}
+
+std::string ErrorManagerAdapter::GetErrorMessage(bool add_title) {
   const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
   if (error_message.empty() || error_message.find(kUnknowErrorString) != string::npos) {
     return "";
@@ -114,14 +143,26 @@ std::string GetErrorMessage(bool add_title) {
   return error_message;
 }
 
-void SetErrorManagerContext() { ErrorManager::GetInstance().GenWorkStreamIdDefault(); }
-
-std::string GetWarningMessage() {
+std::string ErrorManagerAdapter::GetWarningMessage(bool add_title) {
   const string &warning_message = ErrorManager::GetInstance().GetWarningMessage();
-  if (!warning_message.empty()) {
-    return warning_message;
+  if (warning_message.empty()) {
+    return "";
   }
-  return "";
+  if (add_title) {
+    return "#umsg#Ascend Warning Message:#umsg#" + warning_message;
+  }
+  return warning_message;
+}
+
+void ErrorManagerAdapter::MessageHandler(std::ostringstream *oss) {
+  const auto &error_message = GetErrorMessage(true);
+  if (!error_message.empty()) {
+    *oss << error_message;
+  }
+  const auto &warning_message = GetWarningMessage(true);
+  if (!warning_message.empty()) {
+    *oss << warning_message;
+  }
 }
 
 bool IsGraphMode() {

@@ -16,7 +16,6 @@
 
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include <cstdlib>
-#include "common/util/error_manager/error_manager.h"
 #include "securec/include/securec.h"
 #include "./prof_mgr_core.h"
 #include "utils/log_adapter.h"
@@ -242,7 +241,7 @@ void ProfilingManager::QueryHashId(const int32_t &device_id, const std::string &
                                        &hash_data, sizeof(MsprofHashData));
   if (ret != UintToInt(PROF_SUCCESS)) {
     MS_LOG(EXCEPTION) << "[Profiling] Query hash id of long string failed, src string is " << src_str.c_str()
-                      << ", ret is " << ret << "." << GetErrorMessage(true);
+                      << ", ret is " << ret << ".";
   }
 
   *hash_id = hash_data.hashId;

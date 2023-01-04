@@ -53,7 +53,6 @@
 #include "toolchain/adx_datadump_server.h"
 #include "utils/trace_base.h"
 #include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
-#include "common/util/error_manager/error_manager.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/comm_manager.h"
@@ -155,6 +154,7 @@ AscendKernelRuntime::~AscendKernelRuntime() {
 }
 
 void AscendKernelRuntime::SetContext() {
+  ErrorManagerAdapter::BindToCurrentThread();
   if (rt_context_ == nullptr) {
     return;
   }
@@ -338,7 +338,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 
 #ifndef ENABLE_SECURITY
 void AscendKernelRuntime::PreInit() {
-  const auto error_manager_ret = ErrorManager::GetInstance().Init();
+  const auto error_manager_ret = ErrorManagerAdapter::Init();
   if (error_manager_ret != 0) {
     MS_LOG(WARNING) << "Init ErrorManager failed.";
   }
@@ -366,7 +366,7 @@ bool AscendKernelRuntime::Init() {
   if (!mindspore::kernel::OpInfoUtils::GenerateOpInfos(soc_version)) {
     MS_LOG(EXCEPTION) << "Load op info form json config failed, version: " << soc_version;
   }
-  const auto error_manager_ret = ErrorManager::GetInstance().Init();
+  const auto error_manager_ret = ErrorManagerAdapter::Init();
   if (error_manager_ret != 0) {
     MS_LOG(WARNING) << "Init ErrorManager failed.";
   }
@@ -404,7 +404,7 @@ bool AscendKernelRuntime::Init() {
       ResetDevice(device_id_);
     }
     MS_LOG(EXCEPTION) << "Ascend kernel runtime initialization failed. The details refer to 'Ascend Error Message'."
-                      << GetErrorMessage(true) << "#dmsg#Framework Error Message:#dmsg#" << e.what();
+                      << "#dmsg#Framework Error Message:#dmsg#" << e.what();
   }
 
   initialized_ = true;

@@ -172,6 +172,11 @@ LogWriter::ExceptionHandler &LogWriter::exception_handler() {
   return g_exception_handler;
 }
 
+LogWriter::MessageHandler &LogWriter::message_handler() {
+  static LogWriter::MessageHandler g_message_handler = nullptr;
+  return g_message_handler;
+}
+
 LogWriter::TraceProvider &LogWriter::trace_provider() {
   static LogWriter::TraceProvider g_trace_provider = nullptr;
   return g_trace_provider;
@@ -185,6 +190,12 @@ const LogWriter::ExceptionHandler &LogWriter::GetExceptionHandler() {
 void LogWriter::SetExceptionHandler(const LogWriter::ExceptionHandler &new_exception_handler) {
   auto &exception_handler_tmp = exception_handler();
   exception_handler_tmp = new_exception_handler;
+}
+
+const LogWriter::MessageHandler &LogWriter::GetMessageHandler() { return message_handler(); }
+
+void LogWriter::SetMessageHandler(const LogWriter::MessageHandler &new_message_handler) {
+  message_handler() = new_message_handler;
 }
 
 const LogWriter::TraceProvider &LogWriter::GetTraceProvider() {
@@ -397,6 +408,12 @@ void LogWriter::operator<(const LogStream &stream) const noexcept {
 void LogWriter::operator^(const LogStream &stream) const {
   std::ostringstream msg;
   msg << stream.sstream_->rdbuf();
+
+  const auto &message_handler = GetMessageHandler();
+  if (message_handler != nullptr) {
+    message_handler(&msg);
+  }
+
   std::ostringstream oss;
   std::vector<std::string> dmsg;
   std::vector<std::string> umsg;

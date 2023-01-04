@@ -264,8 +264,7 @@ void ProfilingReporter::ReportData(uint32_t device_id, unsigned char *data, size
 
   auto report_ret = ProfilingManager::GetInstance().CallMsprofReport(NOT_NULL(&report_data));
   if (report_ret != 0) {
-    MS_LOG(EXCEPTION) << "Report data failed, tag is " << tag_name << ", ret: " << report_ret << "."
-                      << GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "Report data failed, tag is " << tag_name << ", ret: " << report_ret << ".";
   }
 }
 
