@@ -54,7 +54,6 @@ Status UnsortedSegmentOpInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": the number of segments should be non negative value.";
     return FAILED;
   }
-  infer_strategy_mode_ = INDIVIDUAL_MODE;
   return SUCCESS;
 }
 
@@ -309,32 +308,6 @@ Status UnsortedSegmentMaxInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     std::make_pair(input_nodes, final_output));
 
   return SUCCESS;
-}
-
-// in_strategy: ((A, B, C), ()),  Shapes: ((a, b, c), (a, b)), return: ((A, B, C), (A, B))
-// in_strategy: ((), (A, B)),  Shapes: ((a, b, c), (a, b)), return: ((A, B, 1), (A, B))
-Shapes UnsortedSegmentOpInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
-  if (in_strategy.size() != 2) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy must be 3, but got " << in_strategy.size();
-  }
-
-  if (!in_strategy[0].empty()) {
-    return Shapes({in_strategy[0], Shape(in_strategy[0].begin(), in_strategy[0].begin() + inputs_shape_[1].size())});
-  }
-
-  if (!in_strategy[1].empty()) {
-    Shape tmp_strategy = in_strategy[1];
-    if (inputs_shape_[0].size() < inputs_shape_[1].size()) {
-      MS_LOG(EXCEPTION) << name_
-                        << ": The size of inputs_shape[0] can not smaller than the size of inputs_shape[1], but the "
-                           "size of inputs_shape[0] is "
-                        << inputs_shape_[0].size() << ", the size of inputs_shape[1] is " << inputs_shape_[1].size();
-    }
-    size_t diff_len = inputs_shape_[0].size() - inputs_shape_[1].size();
-    (void)tmp_strategy.insert(tmp_strategy.end(), diff_len, 1);
-    return Shapes({tmp_strategy, in_strategy[1]});
-  }
-  MS_LOG(EXCEPTION) << name_ << ": The in_strategy[0] and in_strategy[1] are empty";
 }
 
 REGISTER(UnsortedSegmentSumInfo);

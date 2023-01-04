@@ -74,7 +74,6 @@ Status BatchNormInfo::GetAttrs() {
   MS_LOG(INFO) << name_ << ": The is_traing is " << is_training_ << ", epsilon is " << epsilon_ << ", momentum is "
                << momentum_ << ", data format is " << format_;
 
-  infer_strategy_mode_ = INDIVIDUAL_MODE;
   return SUCCESS;
 }
 
@@ -335,38 +334,6 @@ std::vector<StrategyPtr> BatchNormInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-// in_strategy: ((N, C, H, W), (), (), (), ()) return: ((N, C, H, W), (C), (C), (C), (C))
-// in_strategy: ((), (C), (C), (C), (C)) return: ((1, C, 1, 1), (C), (C), (C), (C))
-// in_strategy: ((), (C), (), (C), (C)) throw exception
-Shapes BatchNormInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
-  if (in_strategy.size() != 5) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in strategy must be 5, but got " << in_strategy.size();
-  }
-
-  if ((in_strategy[2] != in_strategy[1]) || (in_strategy[3] != in_strategy[1]) || (in_strategy[4] != in_strategy[1])) {
-    MS_LOG(EXCEPTION) << name_ << ": The last 4 strategy must be equal, but got " << in_strategy;
-  }
-
-  Shape channel_strategy;
-  if (!in_strategy[0].empty()) {
-    if (in_strategy[0].size() != 4 && in_strategy[0].size() != 2) {
-      MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy[0] must be 4 or 2, but got " << in_strategy[0].size();
-    }
-    channel_strategy = {in_strategy[0][1]};
-    return Shapes({in_strategy[0], channel_strategy, channel_strategy, channel_strategy, channel_strategy});
-  }
-
-  for (size_t i = 1; i < in_strategy.size(); ++i) {
-    if (!in_strategy[i].empty()) {
-      channel_strategy = in_strategy[i];
-      break;
-    }
-  }
-
-  Shape tmp_strategy(inputs_shape_[0].size(), 1);
-  tmp_strategy[1] = channel_strategy[0];
-  return Shapes({tmp_strategy, channel_strategy, channel_strategy, channel_strategy, channel_strategy});
-}
 REGISTER(BatchNormInfo);
 }  // namespace parallel
 }  // namespace mindspore

@@ -47,7 +47,6 @@ Status OneHotInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": Axis " << axis_ << " is out of range[-1, 1].";
     return FAILED;
   }
-  infer_strategy_mode_ = INDIVIDUAL_MODE;
   return SUCCESS;
 }
 
@@ -246,24 +245,6 @@ std::shared_ptr<Strategies> OneHotInfo::GenerateBatchStrategies() {
   Dimensions empty_strategy;
   Strategies strategy_v = {strategy, empty_strategy, empty_strategy};
   return std::make_shared<Strategies>(strategy_v);
-}
-
-Shapes OneHotInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
-  if (in_strategy.size() != 3) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy must be 3, but got " << in_strategy.size();
-  }
-
-  if (in_strategy[0].empty()) {
-    Shape strategy = {stage_device_size_, 1};
-    Shape empty_strategy;
-    return Shapes({strategy, empty_strategy, empty_strategy});
-  }
-
-  if (in_strategy[0].size() != 1) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy[0] must be 1, but got " << in_strategy[0].size();
-  }
-
-  return Shapes({{in_strategy[0][0], 1}, {}, {}});
 }
 
 REGISTER(OneHotInfo);

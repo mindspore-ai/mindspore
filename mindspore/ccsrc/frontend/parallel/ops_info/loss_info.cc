@@ -65,7 +65,6 @@ Status SoftmaxCrossEntropyWithLogitsInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << " : Inputs shape size or outputs shape size is wrong.";
     return FAILED;
   }
-  infer_strategy_mode_ = SAME_MODE;
   return SUCCESS;
 }
 

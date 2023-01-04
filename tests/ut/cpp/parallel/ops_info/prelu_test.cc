@@ -272,49 +272,5 @@ TEST_F(TestPReLUInfo, AutoStrategy_2d1) {
     ASSERT_EQ(stra1[0], 1);
   }
 }
-
-/// Feature: infer strategy for inputs_shape: {{64, 4, 8, 16}, {4}}
-/// Description: the in strategy is {{2, 4, 8, 16}, {}}
-/// Expectation: the return strategy is {{2, 4, 8, 16}, {4}}
-TEST_F(TestPReLUInfo, GenerateFullStrategy1) {
-  Strategies in_strategy = {{2, 4, 8, 16}, {}};
-  Strategies ret = prelu->GenerateFullStrategy(in_strategy);
-
-  Strategies expect = {{2, 4, 8, 16}, {4}};
-  ASSERT_EQ(ret, expect);
-}
-
-/// Feature: infer strategy for inputs_shape: {{64, 4, 8, 16}, {4}}
-/// Description: the in strategy is {{}, {4}}
-/// Expectation: the return strategy is {{1, 4, 1, 1}, {4}}
-TEST_F(TestPReLUInfo, GenerateFullStrategy2) {
-  Strategies in_strategy = {{}, {4}};
-  Strategies ret = prelu->GenerateFullStrategy(in_strategy);
-
-  Strategies expect = {{1, 4, 1, 1}, {4}};
-  ASSERT_EQ(ret, expect);
-}
-
-/// Feature: infer strategy for inputs_shape: {{1024, 4}, {4}}
-/// Description: the in strategy is {{8, 4}, {}}
-/// Expectation: the return strategy is {{8, 4}, {4}}
-TEST_F(TestPReLUInfo, GenerateFullStrategy3) {
-  Strategies in_strategy = {{8, 4}, {}};
-  Strategies ret = prelu_2d->GenerateFullStrategy(in_strategy);
-
-  Strategies expect = {{8, 4}, {4}};
-  ASSERT_EQ(ret, expect);
-}
-
-/// Feature: infer strategy for inputs_shape: {{1024, 4}, {4}}
-/// Description: the in strategy is {{}, {4}}
-/// Expectation: the return strategy is {{1, 4}, {4}}
-TEST_F(TestPReLUInfo, GenerateFullStrategy4) {
-  Strategies in_strategy = {{}, {4}};
-  Strategies ret = prelu_2d->GenerateFullStrategy(in_strategy);
-
-  Strategies expect = {{1, 4}, {4}};
-  ASSERT_EQ(ret, expect);
-}
 }  // namespace parallel
 }  // namespace mindspore

@@ -25,7 +25,6 @@ namespace mindspore {
 namespace parallel {
 Status KLDivLossInfo::GetAttrs() {
   reduction_ = GetStringAttr(REDUCTION);
-  infer_strategy_mode_ = SAME_MODE;
   return SUCCESS;
 }
 

@@ -28,7 +28,6 @@ Status CdistInfo::GetAttrs() {
     MS_LOG(ERROR) << "Dimension of each input must be 2 or 3, but got dimension is " << input_dims_ << ".";
     return FAILED;
   }
-  infer_strategy_mode_ = INDIVIDUAL_MODE;
   return SUCCESS;
 }
 
@@ -115,29 +114,6 @@ void CdistInfo::ReComputeBatchSplitFlagList() {
   } else if (inputs_shape_[1][0] != 1) {
     split_flag_list_[1] = true;
   }
-}
-
-// in_strategy: ((B, P, 1), ()), inputs shape: ((b, p, m), (b, r, m)), return: ((B, P, 1), (B, 1, 1))
-// in_strategy: ((), (B, R, 1)), inputs shape: ((b, p, m), (b, r, m)), return: ((B, 1, 1), (B, R, 1))
-Shapes CdistInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
-  if (in_strategy.size() != 2) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy must be 2, but got " << in_strategy.size();
-  }
-
-  Shape tmp_strategy;
-  if (!in_strategy[0].empty()) {
-    tmp_strategy = Shape(inputs_shape_[1].size(), 1);
-    tmp_strategy[0] = in_strategy[0][0];
-    return Shapes({in_strategy[0], tmp_strategy});
-  }
-
-  if (!in_strategy[1].empty()) {
-    tmp_strategy = Shape(inputs_shape_[0].size(), 1);
-    tmp_strategy[0] = in_strategy[1][0];
-    return Shapes({tmp_strategy, in_strategy[1]});
-  }
-
-  MS_LOG(EXCEPTION) << name_ << ": The in_strategy[0] and in_strategy[1] are empty";
 }
 
 REGISTER(CdistInfo);

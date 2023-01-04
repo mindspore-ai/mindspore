@@ -49,7 +49,6 @@ class OneHotInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status ExtractInputInfo();
-  Shapes InferStrategyIndividualMode(const Shapes &in_strategy) override;
 
  private:
   Status ComputeReplaceGraph(const CNodePtr &cnode);

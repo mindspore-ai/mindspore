@@ -134,7 +134,6 @@ Status Conv2DInfo::GetAttrsBase() {
   // group
   group_ = GetIntAttr(GROUP);
 
-  infer_strategy_mode_ = INDIVIDUAL_MODE;
   return SUCCESS;
 }
 
@@ -1037,68 +1036,6 @@ std::vector<StrategyPtr> Conv2DInfo::GenerateOpStrategies(int64_t stage_id) {
     sp->ResetInputs(replace_strategy);
   }
   return sp_vector;
-}
-
-// conv2d: ((N, C-in, H, W), (C-out, C-in, k1, k2))
-// in_strategy: ((N, C, H, W), ()), return: ((N, C, H, W), (1, C, 1, 1))
-// in_strategy: ((), (C0, C1, 1, 1)), return: ((1, C1, 1, 1), (C0, C1, 1, 1))
-Shapes Conv2DInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
-  if (in_strategy.size() != 2) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy must be 2, but got " << in_strategy.size();
-  }
-
-  Shape tmp_strategy;
-  if (!in_strategy[0].empty()) {
-    if (in_strategy[0].size() != inputs_shape_[0].size()) {
-      MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy[0] must be " << inputs_shape_[0].size() << ", but got "
-                        << in_strategy[0].size();
-    }
-    tmp_strategy = Shape(inputs_shape_[1].size(), 1);
-    tmp_strategy[1] = in_strategy[0][1];
-    return Shapes({in_strategy[0], tmp_strategy});
-  }
-
-  if (!in_strategy[1].empty()) {
-    if (in_strategy[1].size() != inputs_shape_[1].size()) {
-      MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy[1] must be " << inputs_shape_[1].size() << ", but got "
-                        << in_strategy[1].size();
-    }
-    tmp_strategy = Shape(inputs_shape_[0].size(), 1);
-    tmp_strategy[1] = in_strategy[1][1];
-    return Shapes({tmp_strategy, in_strategy[1]});
-  }
-
-  MS_LOG(EXCEPTION) << name_ << ": The in_strategy[0] and in_strategy[1] are empty";
-}
-
-// conv2d-transpose: ((N, C-out, H, W), (C-out, C-in, k1, k2))
-// in_strategy: ((N, C, H, W), ()), return: ((N, C, H, W), (C, 1, 1, 1))
-// in_strategy: ((), (C0, C1, 1, 1)), return: ((1, C0, 1, 1), (C0, C1, 1, 1))
-Shapes Conv2DBackpropInputInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
-  if (in_strategy.size() != 2) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy must be 2, but got " << in_strategy.size();
-  }
-
-  Shape tmp_strategy;
-  if (!in_strategy[0].empty()) {
-    if (in_strategy[0].size() != 4) {
-      MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy[0] must be 4, but got " << in_strategy[0].size();
-    }
-    tmp_strategy = Shape(inputs_shape_[1].size(), 1);
-    tmp_strategy[0] = in_strategy[0][1];
-    return Shapes({in_strategy[0], tmp_strategy});
-  }
-
-  if (!in_strategy[1].empty()) {
-    if (in_strategy[1].size() != 4) {
-      MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy[1] must be 4, but got " << in_strategy[1].size();
-    }
-    tmp_strategy = Shape(inputs_shape_[0].size(), 1);
-    tmp_strategy[1] = in_strategy[1][0];
-    return Shapes({tmp_strategy, in_strategy[1]});
-  }
-
-  MS_LOG(EXCEPTION) << name_ << ": The in_strategy[0] and in_strategy[1] are empty";
 }
 
 Status Conv2DBackpropInputInfo::GetOutShape() {
