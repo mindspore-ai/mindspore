@@ -272,6 +272,7 @@ from .math_func import (
     sinh,
     cosh,
     tanh,
+    tanhshrink,
     asinh,
     arcsinh,
     acosh,

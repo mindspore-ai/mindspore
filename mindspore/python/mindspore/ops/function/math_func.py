@@ -9607,6 +9607,28 @@ def sum(x, dim=None, keepdim=False, *, dtype=None):
     return out
 
 
+def tanhshrink(x):
+    '''
+    Applies element-wise, :math:`Tanhshrink(x)=x-Tanh(x)` .
+    see :class:`mindspore.nn.Tanhshrink` for more details.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> x = Tensor(np.array([1, 2, 3, 2, 1]), ms.float16)
+        >>> output = ops.tanhshrink(x)
+        >>> print(output)
+        [0.2383 1.036  2.004  1.036  0.2383]
+    '''
+    tanh_op = _get_cache_prim(P.Tanh)()
+    return x - tanh_op(x)
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -9725,6 +9747,7 @@ __all__ = [
     'sinh',
     'cosh',
     'tanh',
+    'tanhshrink',
     'asinh',
     'arcsinh',
     'acosh',

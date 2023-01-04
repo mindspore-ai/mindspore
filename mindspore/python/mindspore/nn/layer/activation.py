@@ -740,10 +740,9 @@ class Tanhshrink(Cell):
     def __init__(self):
         """Initialize Tanhshrink."""
         super(Tanhshrink, self).__init__()
-        self.tanh = P.Tanh()
 
     def construct(self, x):
-        return x - self.tanh(x)
+        return F.tanhshrink(x)
 
 
 class Hardtanh(Cell):

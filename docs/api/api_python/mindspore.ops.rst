@@ -286,6 +286,7 @@ mindspore.ops
     mindspore.ops.svd
     mindspore.ops.t
     mindspore.ops.tan
+    mindspore.ops.tanhshrink
     mindspore.ops.true_divide
     mindspore.ops.trunc
     mindspore.ops.truncate_div
