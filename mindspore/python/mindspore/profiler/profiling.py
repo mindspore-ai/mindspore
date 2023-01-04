@@ -51,6 +51,16 @@ from mindspore.profiler.parser.profiler_info import ProfilerInfo
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
+AICORE_METRICS_DICT = {
+    0: "ArithmeticUtilization",
+    1: "PipeUtilization",
+    2: "Memory",
+    3: "MemoryL0",
+    4: "ResourceConflictRatio",
+    5: "MemoryUB",
+    -1: "None"
+}
+
 
 def _environment_check():
     if c_expression.security.enable_security():
@@ -153,15 +163,6 @@ class Profiler:
     _has_initialized = False
     _ascend_profiling_options = ""
     _ascend_job_id = ""
-    _aicore_metrics_dict = {
-        0: "ArithmeticUtilization",
-        1: "PipeUtilization",
-        2: "Memory",
-        3: "MemoryL0",
-        4: "ResourceConflictRatio",
-        5: "MemoryUB",
-        -1: "None"
-    }
 
     def __init__(self, **kwargs):
         self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
@@ -195,7 +196,7 @@ class Profiler:
         # default aicore_metrics type is ArithmeticUtilization
         self._aicore_metrics_id = 0
         self._l2_cache = "off"
-        self._data_process_enable = True
+        self._data_process = True
         self._parser_kwargs(kwargs)
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()
@@ -399,11 +400,11 @@ class Profiler:
         self._cpu_profiler.step_profiling_enable(True)
 
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
-            if self._data_process_enable:
+            if self._data_process:
                 self._md_profiler.start()
             self._gpu_profiler.step_profiling_enable(True)
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
-            if self._data_process_enable:
+            if self._data_process:
                 self._md_profiler.start()
             self._ascend_graph_start()
         ProfilerInfo.set_profiling_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
@@ -449,7 +450,7 @@ class Profiler:
         # No need to stop anything if parse profiling data offline
         if self._is_offline_parser():
             return
-        if self._data_process_enable:
+        if self._data_process:
             self._md_profiler.stop()
             self._md_profiler.save(self._output_path)
 
@@ -471,16 +472,16 @@ class Profiler:
         self._is_heterogeneous = False
         self._rank_size = 1
         self._start_time = options.get("start_time")
-        self._output_path = options.get('output_path')
+        self._output_path = options.get('file_output_path')
         self._profile_memory = options.get('profile_memory')
-        self._parallel_strategy_enable = options.get('parallel_strategy_enable')
-        self._timeline_size_limit_byte = options.get('timeline_limit_size')
-        self._data_process_enable = options.get('data_process_enable')
+        self._parallel_strategy = options.get('parallel_strategy')
+        self._timeline_size_limit_byte = options.get('timeline_limit')
+        self._data_process = options.get('data_process')
         self._profile_communication = options.get('profile_communication')
         self._device_target = context.get_context("device_target").lower()
         self._profiler_manager = c_expression.ProfilerManager.get_instance()
         self._cpu_profiler = c_expression.Profiler.get_instance("CPU")
-        if self._data_process_enable:
+        if self._data_process:
             self._md_profiler = cde.GlobalContext.profiling_manager()
         if self._device_target == DeviceTarget.GPU.value:
             self._gpu_profiler = c_expression.Profiler.get_instance("GPU")
@@ -532,7 +533,7 @@ class Profiler:
     def _gpu_profiler_init(self, kwargs):
         """Gpu profiler init."""
         # Setup and start MindData Profiling
-        if self._data_process_enable:
+        if self._data_process:
             self._md_profiler = cde.GlobalContext.profiling_manager()
             self._md_profiler.init()
         self._parse_parameter_for_gpu(kwargs)
@@ -549,7 +550,7 @@ class Profiler:
     def _ascend_profiler_init(self, kwargs):
         """Ascend profiler init."""
         # Setup and start MindData Profiling
-        if self._data_process_enable:
+        if self._data_process:
             self._md_profiler = cde.GlobalContext.profiling_manager()
             self._md_profiler.init()
         self._init_time = int(time.time() * 10000000)
@@ -594,12 +595,12 @@ class Profiler:
             "bp_point": bp_point,
             "training_trace": "on",
             "task_trace": "on",
-            "aic_metrics": Profiler._aicore_metrics_dict.get(self._aicore_metrics_id, "ArithmeticUtilization"),
+            "aic_metrics": AICORE_METRICS_DICT.get(self._aicore_metrics_id, "ArithmeticUtilization"),
             "aicpu": "on",
             "profile_memory": profile_memory,
             "hccl": profiler_communication,
             "l2_cache": self._l2_cache,
-            "parallel_strategy": "on" if self._parallel_strategy_enable else "off",
+            "parallel_strategy": "on" if self._parallel_strategy else "off",
         }
 
         return profiling_options
@@ -650,9 +651,31 @@ class Profiler:
             raise TypeError(f"For '{self.__class__.__name__}', the parameter profile_memory must be bool, "
                             f"but got type '{type(self._profile_memory)}'")
 
+        self._aicore_metrics_id = kwargs.pop("aicore_metrics", 0)
+        if not isinstance(self._aicore_metrics_id, int):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter aicore_metrics must be int, "
+                            f"but got type {type(self._aicore_metrics_id)}")
+        if self._aicore_metrics_id not in AICORE_METRICS_DICT:
+            raise ValueError(f"For '{self.__class__.__name__}', the parameter aicore_metrics must be in "
+                             f"[-1, 0, 1, 2, 3, 4, 5], but got {self._aicore_metrics_id}")
+
+        l2_cache_enable = kwargs.pop("l2_cache", False)
+        if not isinstance(l2_cache_enable, bool):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter l2_cache must be bool, "
+                            f"but got type {type(l2_cache_enable)}")
+        if l2_cache_enable:
+            self._l2_cache = "on"
+        else:
+            self._l2_cache = "off"
+
+        self._parallel_strategy = kwargs.pop("parallel_strategy", True)
+        if not isinstance(self._parallel_strategy, bool):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter parallel_strategy must be bool, "
+                            f"but got type {type(self._parallel_strategy)}")
+
         self._sync_enable = kwargs.pop("sync_enable", False)
         if self._sync_enable:
-            logger.warning(f"The parameter sync_enabl is not supported on Ascend currently.")
+            logger.warning(f"The parameter sync_enable is not supported on Ascend currently.")
 
         if kwargs:
             logger.warning("%s are invalid params which don't work.", kwargs)
@@ -1312,38 +1335,16 @@ class Profiler:
 
     def _parser_kwargs(self, kwargs):
         """Parse kwargs vale."""
-        self._aicore_metrics_id = kwargs.pop("aicore_metrics", 0)
-        if not isinstance(self._aicore_metrics_id, int):
-            raise TypeError(f"For '{self.__class__.__name__}', the parameter aicore_metrics must be int, "
-                            f"but got type {type(self._aicore_metrics_id)}")
-        if self._aicore_metrics_id not in self._aicore_metrics_dict:
-            raise ValueError(f"For '{self.__class__.__name__}', the parameter aicore_metrics must be in "
-                             f"[-1, 0, 1, 2, 3, 4, 5], but got {self._aicore_metrics_id}")
+        self._data_process = kwargs.pop("data_process", True)
+        if not isinstance(self._data_process, bool):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter data_process must be bool, "
+                            f"but got type {type(self._data_process)}")
 
-        l2_cache_enable = kwargs.pop("l2_cache", False)
-        if not isinstance(l2_cache_enable, bool):
-            raise TypeError(f"For '{self.__class__.__name__}', the parameter l2_cache must be bool, "
-                            f"but got type {type(l2_cache_enable)}")
-        if l2_cache_enable:
-            self._l2_cache = "on"
-        else:
-            self._l2_cache = "off"
-
-        self._data_process_enable = kwargs.pop("data_process_enable", True)
-        if not isinstance(self._data_process_enable, bool):
-            raise TypeError(f"For '{self.__class__.__name__}', the parameter data_process_enable must be bool, "
-                            f"but got type {type(self.data_process_enable)}")
-
-        timeline_limit_size = kwargs.pop("timeline_limit_size", 500)
-        if not isinstance(timeline_limit_size, int):
-            raise TypeError(f"For '{self.__class__.__name__}', the parameter timeline_limit_size must be int, "
-                            f"but got type {type(self.timeline_limit_size)}")
-        self._timeline_size_limit_byte = timeline_limit_size * 1024 * 1024
-
-        self._parallel_strategy_enable = kwargs.pop("parallel_strategy_enable", True)
-        if not isinstance(self._parallel_strategy_enable, bool):
-            raise TypeError(f"For '{self.__class__.__name__}', the parameter parallel_strategy_enable must be bool, "
-                            f"but got type {type(self._parallel_strategy_enable)}")
+        timeline_limit = kwargs.pop("timeline_limit", 500)
+        if not isinstance(timeline_limit, int):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter timeline_limit must be int, "
+                            f"but got type {type(timeline_limit)}")
+        self._timeline_size_limit_byte = timeline_limit * 1024 * 1024
 
     def _analyse_hccl_info(self):
         """Analyse hccl info."""
