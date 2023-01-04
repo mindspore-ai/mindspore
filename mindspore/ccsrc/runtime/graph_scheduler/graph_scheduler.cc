@@ -323,6 +323,12 @@ void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<Kernel
 }
 
 void GraphScheduler::Clear() {
+#ifdef ENABLE_RPC_ACTOR
+  if (rpc_node_scheduler_ != nullptr) {
+    rpc_node_scheduler_->Clear();
+  }
+#endif
+
   // Terminate all actors.
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);

@@ -29,6 +29,7 @@ SendActor::~SendActor() {
     } catch (const std::exception &) {
       MS_LOG(ERROR) << "Failed to disconnect and finalize for tcp client in send actor.";
     }
+    client_ = nullptr;
   }
 }
 
@@ -69,6 +70,14 @@ bool SendActor::ConnectServer() {
 void SendActor::FlushData() {
   if (!client_->Flush(server_url_)) {
     MS_LOG(EXCEPTION) << "Failed to flush client for server " << server_url_;
+  }
+}
+
+void SendActor::Clear() {
+  if (client_) {
+    (void)client_->Disconnect(server_url_);
+    client_->Finalize();
+    client_ = nullptr;
   }
 }
 

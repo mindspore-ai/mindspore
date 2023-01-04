@@ -88,6 +88,9 @@ class RpcActor : public KernelActor {
   virtual void SetRouteInfo(uint32_t peer_rank, const std::string &peer_role, const std::string &src_node_name,
                             const std::string &dst_node_name) {}
 
+  // Clear resource of rpc actor.
+  virtual void Clear() {}
+
   /**
    * @description: Stop rpc communication to avoid dead lock after exception is thrown.
    * @return {void}
