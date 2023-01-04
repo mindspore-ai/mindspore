@@ -202,7 +202,7 @@ int ClusterQuantization::KMeansQuantization(const CNodePtr &cnode, const std::ve
     auto quant_param_holder = GetCNodeQuantHolder(cnode);
     CHECK_NULL_RETURN(quant_param_holder);
     quant_param_holder->SetQuantClusters(idx - kPrimOffset, cluster_centroid);
-    quant_param_holder->set_quant_type(schema::QuantType_QUANT_WEIGHT);
+    quant_param_holder->set_quant_type(quant::QUANT_WEIGHT);
 
     FSEEncoder fse_encoder;
     ret = fse_encoder.Compress(parameter, {}, mindspore::kFSEInt);

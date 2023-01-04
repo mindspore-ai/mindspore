@@ -48,7 +48,7 @@ void OnnxQuantizeLinearAdjust::RemoveDequantizeLinear(const FuncGraphPtr &func_g
   }
 }
 
-QuantParamHolderPtr OnnxQuantizeLinearAdjust::GetCNodeQuantHolder(const PrimitivePtr &primitive) {
+QuantParamHolderPtr OnnxQuantizeLinearAdjust::GetQuantHolder(const PrimitivePtr &primitive) {
   MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
   QuantParamHolderPtr quant_params_holder = nullptr;
   auto quant_params_valueptr = primitive->GetAttr("quant_params");
@@ -110,7 +110,7 @@ bool OnnxQuantizeLinearAdjust::Adjust(const FuncGraphPtr &func_graph) {
     MS_CHECK_TRUE_RET(manager != nullptr, false);
     auto node_users = manager->node_users()[cnode];
     for (auto &node_user : node_users) {
-      auto next_quant_holder = quant::GetCNodeQuantHolder(node_user.first->cast<CNodePtr>());
+      auto next_quant_holder = GetCNodeQuantHolder(node_user.first->cast<CNodePtr>());
       auto ret = SetInputQuantParam(cnode, next_quant_holder, (node_user.second - kPrimOffset));
       if (!ret) {
         MS_LOG(ERROR) << "Set quant param failed.";
@@ -124,7 +124,7 @@ bool OnnxQuantizeLinearAdjust::Adjust(const FuncGraphPtr &func_graph) {
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     MS_LOG(DEBUG) << "check cnode name: " << cnode->fullname_with_scope();
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-    auto primitive_quant_holder = quant::GetCNodeQuantHolder(primitive);
+    auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
     auto input_quant_params = primitive_quant_holder->get_input_quant_params();
     for (size_t i = 0; i < input_quant_params.size(); i++) {
       auto quant_params = input_quant_params.at(i);

@@ -39,13 +39,13 @@ class InsertQuantNodeManager {
   int InsertFP32DtypeCastNode(const FuncGraphPtr &graph);
 
   int InsertForwardCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype,
-                            schema::QuantType curr_quant_type);
+                            quant::QuantType curr_quant_type);
 
   int InsertCastNodeForFullQuant(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype,
-                                 schema::QuantType curr_quant_type);
+                                 quant::QuantType curr_quant_type);
 
   int InsertBackwardCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype,
-                             schema::QuantType curr_quant_type);
+                             quant::QuantType curr_quant_type);
 
   int InsertWeightQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index, TypeId src_dtype,
                             TypeId dst_dtype, int axis);
@@ -71,6 +71,14 @@ class InsertQuantNodeManager {
                          TypeId cast_dtype, CastNodeType cast_node_type, size_t index, const AnfNodePtr &output_node);
   int CreateFSEInputs(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, std::vector<AnfNodePtr> *op_inputs,
                       TypeId dst_dtype);
+
+  ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type,
+                                     const std::vector<schema::QuantParamT> &input_quant_params,
+                                     const std::vector<schema::QuantParamT> &output_quant_params, int axis = 0,
+                                     bool set_quant_flag = true);
+
+  ValueNodePtr NewFSEDecodePrimitive(int dst_type, const uint64_t curr_chunk, const int64_t curr_chunk_index,
+                                     const int64_t curr_bit_count, const int64_t table_log);
 
  private:
   TypeId dst_type_ = kNumberTypeInt8;

@@ -21,10 +21,11 @@
 #include <vector>
 #include <set>
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/converter/quantizer/quant_params.h"
 #include "include/registry/converter_context.h"
 
 using mindspore::converter::FmkType;
-using mindspore::schema::QuantType;
+using mindspore::lite::quant::QuantType;
 namespace mindspore::lite {
 class MindIRControlFlowAdjust {
  public:

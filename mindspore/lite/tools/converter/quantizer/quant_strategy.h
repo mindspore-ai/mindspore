@@ -44,8 +44,8 @@ class QuantStrategy {
   bool IsSkipOp(const std::string &skip_node_name);
 
  private:
-  size_t min_quant_weight_size_;
-  size_t min_quant_weight_channel_;
+  size_t min_quant_weight_size_ = 0;
+  size_t min_quant_weight_channel_ = 0;
   std::set<std::string> skip_node_;
 };
 }  // namespace mindspore::lite::quant

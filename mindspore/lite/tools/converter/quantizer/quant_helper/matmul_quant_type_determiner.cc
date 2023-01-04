@@ -33,9 +33,9 @@ bool MatmulQuantTypeDeterminer::DetermineQuantWeight(const mindspore::schema::Me
   MS_CHECK_TRUE_RET(input_tensor1 != nullptr, false);
   MS_CHECK_TRUE_RET(input_tensor2 != nullptr, false);
   MS_CHECK_TRUE_RET(output_tensor != nullptr, false);
-  if (((!quant::TensorQuantParamsInited(*input_tensor1) && !quant::TensorQuantParamsInited(*input_tensor2)) ||
-       (!quant::TensorQuantParamsInited(*input_tensor1) && !quant::TensorQuantParamsInited(*input_tensor2))) &&
-      quant::TensorQuantParamsInited(*output_tensor)) {
+  if (((!TensorQuantParamsInited(*input_tensor1) && !TensorQuantParamsInited(*input_tensor2)) ||
+       (!TensorQuantParamsInited(*input_tensor1) && !TensorQuantParamsInited(*input_tensor2))) &&
+      TensorQuantParamsInited(*output_tensor)) {
     node->quantType = schema::QuantType_QUANT_WEIGHT;
     return true;
   }

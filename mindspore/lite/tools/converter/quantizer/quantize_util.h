@@ -46,23 +46,8 @@
 #include "ops/quant_dtype_cast.h"
 
 namespace mindspore::lite::quant {
-static const std::set<PrimitivePtr> has_bias_operator = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
-                                                         prim::kPrimMatMulFusion, prim::kPrimFullConnection,
-                                                         prim::kPrimLayerNormFusion};
-
-QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
-
-QuantParamHolderPtr GetCNodeQuantHolder(const CNodePtr &cnode);
-
-int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &weight, void *quant_datas, int new_size,
+int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &weight, void *quant_datas, size_t new_size,
                             TypeId new_data_type);
-
-void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<int> &shapes, int index,
-                       bool *channel_at_first, int *channel_cnt);
-
-bool TensorQuantParamsInited(const schema::TensorT &tensor);
-
-int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first);
 
 int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<int> &dims);
 
@@ -70,19 +55,11 @@ std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
 int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_data);
 
-int GetQuantType(const CNodePtr &cnode, schema::QuantType *quant_type);
+int GetQuantType(const CNodePtr &cnode, quant::QuantType *quant_type);
 
 void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
 
 int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type);
-
-ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type,
-                                   const std::vector<schema::QuantParamT> &input_quant_params,
-                                   const std::vector<schema::QuantParamT> &output_quant_params, int axis = 0,
-                                   bool set_quant_flag = true);
-
-ValueNodePtr NewFSEDecodePrimitive(int dst_type, const uint64_t curr_chunk, const int64_t curr_chunk_index,
-                                   const int64_t curr_bit_count, const int64_t table_log);
 
 bool IsGraphInDTypeCast(const CNodePtr &cnode);
 

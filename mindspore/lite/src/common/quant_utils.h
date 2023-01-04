@@ -139,10 +139,10 @@ int CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vec
                        std::vector<schema::QuantParamT> *quant_params, const std::vector<int> &dims, int preferred_dim);
 
 template <typename T>
-int DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::QuantType &quant_type,
-                      std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,
-                      const size_t &bit_num, std::vector<T> *quant_datas, const std::vector<int> &dims,
-                      int preferred_dim, bool symmetric = false, bool narrow_range = false) {
+int DoPerChannelQuant(const float *raw_datas, size_t elem_count, std::vector<schema::QuantParamT> *quant_params,
+                      const int &quant_max, const int &quant_min, const size_t &bit_num, std::vector<T> *quant_datas,
+                      const std::vector<int> &dims, int preferred_dim, bool cal_gain = true, bool symmetric = false,
+                      bool narrow_range = false) {
   if (raw_datas == nullptr || quant_params == nullptr || quant_datas == nullptr) {
     MS_LOG(ERROR) << "raw_data, quant_params or quant_data is nullptr.";
     return RET_ERROR;
@@ -155,7 +155,7 @@ int DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::Q
   }
 
   CHECK_LESS_RETURN(dims.size(), static_cast<size_t>(preferred_dim + 1));
-  if (quant_type == schema::QuantType_QUANT_WEIGHT) {
+  if (cal_gain) {
     ret = CalPerChannelGain(bit_num, dims, preferred_dim);
     if (ret == RET_NO_CHANGE) {
       return RET_NO_CHANGE;
@@ -190,7 +190,7 @@ int DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::Q
     dequant_datas.at(i) = quant_param.scale * (quant_data - quant_param.zeroPoint);
   }
 
-  if (quant_type == schema::QuantType_QUANT_WEIGHT) {
+  if (cal_gain) {
     ret = CalWeightQuantBias(raw_datas, elem_count, dequant_datas, quant_params, dims, preferred_dim);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Cal weight quant bias failed.";

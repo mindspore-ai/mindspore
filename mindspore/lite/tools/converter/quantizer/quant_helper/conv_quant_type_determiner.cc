@@ -32,8 +32,8 @@ bool ConvQuantTypeDeterminer::DetermineQuantWeight(const mindspore::schema::Meta
   MS_CHECK_TRUE_RET(input_tensor != nullptr, false);
   MS_CHECK_TRUE_RET(output_tensor != nullptr, false);
   MS_CHECK_TRUE_RET(weight_tensor != nullptr, false);
-  if ((!quant::TensorQuantParamsInited(*input_tensor) || !quant::TensorQuantParamsInited(*output_tensor)) &&
-      quant::TensorQuantParamsInited(*weight_tensor)) {
+  if ((!TensorQuantParamsInited(*input_tensor) || !TensorQuantParamsInited(*output_tensor)) &&
+      TensorQuantParamsInited(*weight_tensor)) {
     node->quantType = schema::QuantType_QUANT_WEIGHT;
     return true;
   }

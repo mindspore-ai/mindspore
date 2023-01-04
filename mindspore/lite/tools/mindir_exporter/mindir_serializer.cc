@@ -182,9 +182,8 @@ int MindIRSerializer::ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &
         MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
         return RET_OK;
       }
-      auto quant_params_holder = quant::GetCNodeQuantHolder(primitive);
-      if (quant_params_holder == nullptr ||
-          quant_params_holder->quant_type() == mindspore::schema::QuantType_QUANT_NONE) {
+      auto quant_params_holder = GetCNodeQuantHolder(primitive);
+      if (quant_params_holder == nullptr || quant_params_holder->quant_type() == quant::QUANT_NONE) {
         continue;
       }
 

@@ -58,7 +58,7 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
     MS_ASSERT(graph_in_idx < graph->allTensors.size());
     auto &tensor = graph->allTensors.at(graph_in_idx);
     CHECK_NULL_RETURN(tensor);
-    if (!quant::TensorQuantParamsInited(*tensor)) {
+    if (!TensorQuantParamsInited(*tensor)) {
       continue;
     }
 
@@ -109,7 +109,7 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
     MS_ASSERT(graph_out_idx < graph->allTensors.size());
     auto &tensor = graph->allTensors.at(graph_out_idx);
     CHECK_NULL_RETURN(tensor);
-    if (!quant::TensorQuantParamsInited(*tensor)) {
+    if (!TensorQuantParamsInited(*tensor)) {
       continue;
     }
 
@@ -158,7 +158,7 @@ STATUS DTypeTransPass::InsetDTypeTransNodeForWrongDtypeQuantOp(schema::MetaGraph
     CHECK_NULL_RETURN(pre_tensor);
     // insert quant cast op for tensor which should be int8
     if ((pre_tensor->dataType == kNumberTypeFloat32 || pre_tensor->dataType == kNumberTypeUInt8) &&
-        quant::TensorQuantParamsInited(*pre_tensor)) {
+        TensorQuantParamsInited(*pre_tensor)) {
       if (!pre_tensor->data.empty()) {
         MS_LOG(ERROR) << "tensor with float data should be quantized at tensor_quant_pass.";
         return RET_ERROR;
@@ -177,7 +177,7 @@ STATUS DTypeTransPass::InsetDTypeTransNodeForWrongDtypeQuantOp(schema::MetaGraph
     // insert quant cast op for tensor which should be int8
     // e.g: reshape's shape tensor don't need insert quant op so its quant param isn't inited
     if ((post_tensor->dataType == kNumberTypeFloat32 || post_tensor->dataType == kNumberTypeUInt8) &&
-        quant::TensorQuantParamsInited(*post_tensor)) {
+        TensorQuantParamsInited(*post_tensor)) {
       *iter = InsertDTypeTransNode(graph, *iter, kAfter, i, kNumberTypeInt8, post_tensor->dataType, &status);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Insert int8 to float32 or uint8 node after " << node_name.c_str() << " failed";
@@ -196,7 +196,7 @@ STATUS DTypeTransPass::InsetDTypeTransNodeForUnsupportedInt8Op(schema::MetaGraph
   // insert int8 to fp32 before
   for (size_t i = 0; i < (**iter)->inputIndex.size(); i++) {
     auto &pre_tensor = graph->allTensors.at((**iter)->inputIndex.at(i));
-    if (pre_tensor->dataType == kNumberTypeInt8 && quant::TensorQuantParamsInited(*pre_tensor)) {
+    if (pre_tensor->dataType == kNumberTypeInt8 && TensorQuantParamsInited(*pre_tensor)) {
       *iter = InsertDTypeTransNode(graph, *iter, kBefore, i, kNumberTypeInt8, kNumberTypeFloat32, &status);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "InsertInt8ToFloat32Node before " << node_name.c_str() << " failed";
@@ -209,7 +209,7 @@ STATUS DTypeTransPass::InsetDTypeTransNodeForUnsupportedInt8Op(schema::MetaGraph
   for (size_t i = 0; i < (**iter)->outputIndex.size(); i++) {
     auto &post_tensor = graph->allTensors.at((**iter)->outputIndex.at(i));
     CHECK_NULL_RETURN(post_tensor);
-    if (post_tensor->dataType == kNumberTypeInt8 && quant::TensorQuantParamsInited(*post_tensor)) {
+    if (post_tensor->dataType == kNumberTypeInt8 && TensorQuantParamsInited(*post_tensor)) {
       *iter = InsertDTypeTransNode(graph, *iter, kAfter, i, kNumberTypeInt8, kNumberTypeFloat32, &status);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "InsertFloat32ToInt8Node before " << node_name.c_str() << " failed";

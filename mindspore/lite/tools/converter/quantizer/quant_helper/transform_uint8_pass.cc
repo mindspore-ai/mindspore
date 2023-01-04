@@ -41,12 +41,12 @@ int TransformUint8Pass::Transform() {
       MS_LOG(ERROR) << "DoNodeDTypeTrans failed, cnode name: " << cnode->fullname_with_scope();
       return status;
     }
-    schema::QuantType curr_quant_type;
+    quant::QuantType curr_quant_type;
     if (GetQuantType(cnode, &curr_quant_type) != RET_OK) {
       MS_LOG(ERROR) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
       return RET_ERROR;
     }
-    if (curr_quant_type != schema::QuantType_QUANT_ALL) {
+    if (curr_quant_type != quant::QUANT_ALL) {
       MS_LOG(INFO) << "Invalid cnode quant type, cnode name: " << cnode->fullname_with_scope()
                    << " quant type: " << curr_quant_type;
       continue;
@@ -183,7 +183,7 @@ int TransformUint8Pass::DoNodeDTypeTrans(const CNodePtr &cnode) {
 
   // DTypeCastNode, set quant type
   if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
-    curr_quant_param_holder->set_quant_type(schema::QuantType_QUANT_NONE);
+    curr_quant_param_holder->set_quant_type(quant::QUANT_NONE);
   }
 
   for (size_t index = 1; index < cnode->size(); index++) {
@@ -192,12 +192,12 @@ int TransformUint8Pass::DoNodeDTypeTrans(const CNodePtr &cnode) {
     if (IsGraphInput(input_node) || input_node->isa<mindspore::CNode>()) {
       // updata graph input quant params
       if (curr_quant_param_holder->get_input_quant_params().size() < index) {
-        MS_LOG(WARNING) << "quant params invalid, input node name: " << input_node->fullname_with_scope();
+        MS_LOG(INFO) << "quant params invalid, input node name: " << input_node->fullname_with_scope();
         continue;
       }
       auto input_quant_params = curr_quant_param_holder->get_input_quant_params()[index - 1];
       if (input_quant_params.empty() || !input_quant_params.front().inited) {
-        MS_LOG(WARNING) << "input node not quantizied, input node name: " << input_node->fullname_with_scope();
+        MS_LOG(INFO) << "input node not quantizied, input node name: " << input_node->fullname_with_scope();
         continue;
       }
       for (auto &quant_param : input_quant_params) {

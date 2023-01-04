@@ -29,7 +29,7 @@ namespace mindspore {
 namespace lite {
 bool TFFakeQuantAdjust::SetQuantParam(const CNodePtr &cnode, const CNodePtr &post_cnode, size_t index) {
   MS_CHECK_TRUE_RET(post_cnode != nullptr, false);
-  auto quant_param_holder = quant::GetCNodeQuantHolder(post_cnode);
+  auto quant_param_holder = GetCNodeQuantHolder(post_cnode);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, false, "Primitive quant param holder nullptr.");
 
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));

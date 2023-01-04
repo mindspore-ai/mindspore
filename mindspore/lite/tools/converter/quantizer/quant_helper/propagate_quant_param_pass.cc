@@ -81,19 +81,16 @@ int PropagateQuantParamPass::ForwardTupleGetItem(const CNodePtr &cnode) {
   }
   size_t index = static_cast<size_t>(opt::CastToInt(index_value_node->value()).front());
   auto input_node = cnode->input(SECOND_INPUT);
-  MS_CHECK_TRUE_MSG(input_node != nullptr, RET_ERROR, "input_node == nullptr");
+  CHECK_NULL_RETURN(input_node);
   auto input_cnode = input_node->cast<mindspore::CNodePtr>();
-  MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_ERROR, "input_cnode == nullptr");
+  CHECK_NULL_RETURN(input_cnode);
   auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
-  if (input_cnode_primitive == nullptr) {
-    MS_LOG(WARNING) << "input_cnode_primitive is null";
-    return RET_NULL_PTR;
-  }
-  auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive);
-  MS_CHECK_TRUE_MSG(input_primitive_quant_holder != nullptr, RET_NULL_PTR, "quant_holder is nullptr.");
+  CHECK_NULL_RETURN(input_cnode_primitive);
 
+  auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive);
+  CHECK_NULL_RETURN(input_primitive_quant_holder);
   auto curr_quant_holder = GetCNodeQuantHolder(cnode);
-  MS_CHECK_TRUE_MSG(curr_quant_holder != nullptr, RET_NULL_PTR, "curr_quant_holder is nullptr.");
+  CHECK_NULL_RETURN(curr_quant_holder);
   if (input_primitive_quant_holder->get_output_quant_params().size() > index) {
     auto quant_param = input_primitive_quant_holder->get_output_quant_params()[index];
     curr_quant_holder->set_input_quant_param(0, quant_param);
@@ -103,7 +100,7 @@ int PropagateQuantParamPass::ForwardTupleGetItem(const CNodePtr &cnode) {
                  << "'s output quant_params size: " << input_primitive_quant_holder->get_output_quant_params().size()
                  << ", but index: " << index;
   }
-  curr_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
+  curr_quant_holder->set_quant_type(quant::QUANT_ALL);
   return RET_OK;
 }
 
@@ -160,7 +157,7 @@ int PropagateQuantParamPass::ForwardPropagate(const std::list<CNodePtr> &nodes) 
       size_t before_out_index = before_cnode_map.second;
       auto before_quant_holder = GetCNodeQuantHolder(before_cnode);
       if (before_quant_holder == nullptr) {
-        MS_LOG(INFO) << cnode->fullname_with_scope() << " get before_quant_holder failed.";
+        MS_LOG(INFO) << cnode->fullname_with_scope() << " before_quant_holder is empty.";
         continue;
       }
       auto before_output_quant_param = before_quant_holder->get_output_quant_params();
@@ -338,7 +335,7 @@ int PropagateQuantParamPass::BackwardPerNode(const CNodePtr &post_cnode, const C
   return RET_OK;
 }
 
-bool PropagateQuantParamPass::CheckValidQuantParams(const std::vector<schema::QuantParamT> quant_params) {
+bool PropagateQuantParamPass::CheckValidQuantParams(const std::vector<schema::QuantParamT> &quant_params) {
   return (!quant_params.empty() && quant_params.at(0).inited);
 }
 }  // namespace mindspore::lite::quant

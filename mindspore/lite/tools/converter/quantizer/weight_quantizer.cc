@@ -63,26 +63,10 @@ tensor::TensorPtr ConvertParameterFp16TensorToFp32(const ParameterPtr &parameter
 int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
                                  const std::set<PrimitivePtr> &support_weight_quant_types,
                                  const std::set<PrimitivePtr> &per_layer_types,
-                                 const std::set<PrimitivePtr> &symmetric_types, bool compression,
-                                 bool check_quant_conditions, bool update_tensor) {
+                                 const std::set<PrimitivePtr> &symmetric_types, bool compression) {
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
-    if (check_quant_conditions) {
-      auto quant_param_holder = GetCNodeQuantHolder(cnode);
-      if (quant_param_holder == nullptr) {
-        continue;
-      }
-      auto quant_type = quant_param_holder->quant_type();
-      if (quant_type != schema::QuantType_QUANT_WEIGHT && quant_type != schema::QuantType_QUANT_ALL) {
-        MS_LOG(DEBUG) << "Invalid quant type, dont need weight quant.";
-        continue;
-      }
-      if (CheckWeightQuantExist(cnode)) {
-        MS_LOG(INFO) << "Weight quant param exist, cnode name: " << cnode->fullname_with_scope();
-        continue;
-      }
-    }
-    auto ret = WeightQuantPerCNode(func_graph, cnode, support_weight_quant_types, per_layer_types, symmetric_types,
-                                   compression, update_tensor);
+    auto ret =
+      WeightQuantPerCNode(func_graph, cnode, support_weight_quant_types, per_layer_types, symmetric_types, compression);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " execute weight quantize error.";
       return RET_ERROR;
@@ -94,8 +78,7 @@ int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
 int WeightQuantizer::WeightQuantPerCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                          const std::set<PrimitivePtr> &support_weight_quant_types,
                                          const std::set<PrimitivePtr> &per_layer_types,
-                                         const std::set<PrimitivePtr> &symmetric_types, bool compression,
-                                         bool update_tensor) {
+                                         const std::set<PrimitivePtr> &symmetric_types, bool compression) {
   auto primitive = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
   if (primitive == nullptr) {
     MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
@@ -126,8 +109,7 @@ int WeightQuantizer::WeightQuantPerCNode(const FuncGraphPtr &func_graph, const C
   }
 
   if (linear_quant_) {
-    auto ret =
-      LinearQuant(func_graph, cnode, per_layer_types, symmetric_types, weight_indices, compression, update_tensor);
+    auto ret = LinearQuant(func_graph, cnode, per_layer_types, symmetric_types, weight_indices, compression);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " execute linear weight quantize error.";
       return RET_ERROR;
@@ -146,7 +128,7 @@ int WeightQuantizer::WeightQuantPerCNode(const FuncGraphPtr &func_graph, const C
 int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                  const std::set<PrimitivePtr> &per_layer_types,
                                  const std::set<PrimitivePtr> &symmetric_types, const std::vector<int> &weight_indices,
-                                 bool compression, bool update_tensor) {
+                                 bool compression) {
   CHECK_NULL_RETURN(cnode);
   // Avoid affecting other operators
   auto tmp_weight_quant_type = weight_quant_type_;
@@ -198,14 +180,8 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
       status = DoMixBitQuant(cnode, parameter, idx, tensor_info, preferred_dim, tmp_weight_quant_type, symmetric);
     } else {
       FixedBitWeightQuantization fixed_bit_quant;
-      if (update_tensor) {
-        status = fixed_bit_quant.QuantFilter(parameter, tensor_info, primitive, quant_type_, q_max, q_min, bit_num_,
-                                             tmp_weight_quant_type, type_id_, idx - 1, preferred_dim, symmetric);
-      } else {
-        status =
-          fixed_bit_quant.StatisticsFilter(parameter, tensor_info, primitive, quant_type_, q_max, q_min, bit_num_,
+      status = fixed_bit_quant.QuantFilter(parameter, tensor_info, primitive, quant_type_, q_max, q_min, bit_num_,
                                            tmp_weight_quant_type, type_id_, idx - 1, preferred_dim, symmetric);
-      }
     }
     if (status == RET_NO_CHANGE) {
       continue;
@@ -322,9 +298,8 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
         fixed_bit_quant.QuantFilter(parameter, tensor_info, primitive, quant_type_, quant_max, quant_min, bit_num_,
                                     weight_quant_type, kNumberTypeInt8, idx - 1, preferred_dim, symmetric);
     } else {
-      status =
-        fixed_bit_quant.StatisticsFilter(parameter, tensor_info, primitive, quant_type_, quant_max, quant_min, bit_num_,
-                                         weight_quant_type, kNumberTypeInt8, idx - 1, preferred_dim, symmetric);
+      status = fixed_bit_quant.StatisticsFilter(tensor_info, primitive, quant_type_, quant_max, quant_min, bit_num_,
+                                                weight_quant_type, kNumberTypeInt8, idx - 1, preferred_dim, symmetric);
     }
   }
   return status;
@@ -379,7 +354,7 @@ int WeightQuantizer::MarkCnodeWeightQuantType(const CNodePtr &cnode) {
 
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
-  if (quant_param_holder->quant_type() == schema::QuantType_QUANT_WEIGHT) {
+  if (quant_param_holder->quant_type() == quant::QUANT_WEIGHT) {
     // already marked with QuantType_QUANT_WEIGHT
     return RET_OK;
   }
@@ -393,7 +368,7 @@ int WeightQuantizer::MarkCnodeWeightQuantType(const CNodePtr &cnode) {
       GetLiteParameter(inputNode, &param_node, &tensor_info);
       auto param = weight_quantized_tensors_.find(tensor_info);
       if (param != weight_quantized_tensors_.end()) {
-        quant_param_holder->set_quant_type(schema::QuantType_QUANT_WEIGHT);
+        quant_param_holder->set_quant_type(quant::QUANT_WEIGHT);
         continue;
       }
     }
@@ -416,27 +391,6 @@ int WeightQuantizer::MarkGraphWeightQuantType(const FuncGraphPtr &func_graph) {
     }
   }
   return RET_OK;
-}
-
-bool WeightQuantizer::CheckWeightQuantExist(const CNodePtr &cnode) {
-  auto quant_param_holder = GetCNodeQuantHolder(cnode);
-  MS_CHECK_TRUE_RET(quant_param_holder != nullptr, false);
-  for (size_t index = 1; index < cnode->size(); index++) {
-    auto input_node = cnode->input(index);
-    if (IsGraphInput(input_node)) {
-      continue;
-    }
-    if (input_node->isa<mindspore::Parameter>()) {
-      if (index == THIRD_INPUT + 1 && quant::CheckNodeInSet(cnode, quant::kHasBiasOperator)) {
-        continue;
-      }
-      // Constants have quantization parameters
-      if (quant_param_holder->CheckInit(index - quant::kPrimOffset, true)) {
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {

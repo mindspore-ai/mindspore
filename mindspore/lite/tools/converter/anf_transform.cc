@@ -113,21 +113,16 @@
 #include "tools/optimizer/fusion/reduce_stack_fusion.h"
 #include "tools/optimizer/fusion/remove_transitivity_op.h"
 #include "tools/converter/import/cast_op_adjust.h"
-#include "tools/converter/quantizer/quant_helper/remove_unused_quant_param.h"
 #include "tools/converter/adapter/acl/plugin/acl_pass_plugin.h"
-#include "tools/converter/quantizer/quant_helper/quant_type_determiner.h"
-#include "tools/converter/quantizer/quant_helper/propagate_quant_param_pass.h"
-#include "tools/converter/quantizer/quant_helper/transform_uint8_pass.h"
-#include "tools/converter/quantizer/quant_helper/quant_node_pass.h"
-#include "tools/converter/quantizer/insert_quant_node_manager.h"
-#include "tools/converter/quantizer/weight_quantizer.h"
+#include "tools/converter/quantizer/quant_helper/qat_transform.h"
 #include "tools/converter/parser/conv2d_transpose_input_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/unify_format.h"
-#include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
 #include "backend/common/optimizer/graph_optimizer.h"
 #include "tools/optimizer/fusion/squeeze_expanddims_fusion.h"
 #include "mindspore/core/ops/op_name.h"
+#include "tools/common/string_util.h"
+#include "src/common/common.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -526,96 +521,7 @@ int RunDecreaseTransposePass(const FuncGraphPtr &old_graph, const std::shared_pt
 }
 
 bool AnfTransform::CheckExternalExtension(const std::shared_ptr<ConverterPara> &param) {
-  return (!param->plugins_path.empty() && param->commonQuantParam.quant_type != schema::QuantType_QUANT_NONE);
-}
-
-STATUS AnfTransform::DoSingleGraphQATTransform(const FuncGraphPtr &func_graph,
-                                               const std::shared_ptr<ConverterPara> &param) {
-  if (param->fullQuantParam.target_device == quant::TargetDevice::DSP &&
-      param->commonQuantParam.quant_type != schema::QuantType_QUANT_ALL) {
-    auto remove_quant_param_pass = quant::RemoveQuantParam(func_graph);
-    auto ret = remove_quant_param_pass.Remove();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "remove unused quant param failed.";
-      return RET_ERROR;
-    }
-  }
-  auto propogate_pass = quant::PropagateQuantParamPass(func_graph);
-  auto ret = propogate_pass.Propagate();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Propagate quant param failed.";
-    return ret;
-  }
-  auto determiner = quant::QuantTypeDeterminer(func_graph);
-  ret = determiner.Determine();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run quant type determine failed.";
-    return ret;
-  }
-
-  const std::set<PrimitivePtr> support_primitive_types = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
-                                                          prim::kPrimMatMulFusion, prim::kPrimFullConnection,
-                                                          prim::kPrimLstm,         prim::kPrimGather,
-                                                          prim::kPrimAdam,         prim::kPrimSGD,
-                                                          prim::kPrimApplyMomentum};
-  std::set<PrimitivePtr> per_layer_primitive_types = {
-    prim::kPrimMatMulFusion, prim::kPrimFullConnection, prim::kPrimLstm, prim::kPrimGather, prim::kPrimAdam,
-    prim::kPrimSGD,          prim::kPrimApplyMomentum};
-  auto weight_quantizer = quant::WeightQuantizer();
-  ret = weight_quantizer.WeightQuant(func_graph, support_primitive_types, per_layer_primitive_types,
-                                     support_primitive_types, false, true, false);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run supplement weight quant param pass failed.";
-    return ret;
-  }
-  auto transform_uint8_pass = quant::TransformUint8Pass(func_graph);
-  ret = transform_uint8_pass.Transform();
-  if (ret != RET_OK && ret != RET_NO_CHANGE) {
-    MS_LOG(ERROR) << "Run dtype transform pass failed.";
-    return ret;
-  }
-  auto quant_node_pass = quant::QuantNodePass(func_graph);
-  ret = quant_node_pass.Quant();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run quant node pass failed.";
-    return ret;
-  }
-  quant::InsertQuantNodeManager inset_quant_node_pass;
-  ret = inset_quant_node_pass.InsertFP32DtypeCastNode(func_graph);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Add QuantCast error";
-    return RET_ERROR;
-  }
-
-  {
-    auto optimizer = std::make_shared<opt::GraphOptimizer>();
-    CHECK_NULL_RETURN(optimizer);
-    auto fusion_pm = std::make_shared<opt::LitePassManager>("fusion pass manager after quant", false);
-    CHECK_NULL_RETURN(fusion_pm);
-    fusion_pm->AddPass(std::make_shared<opt::QuantDtypeCastFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
-    optimizer->AddPassManager(fusion_pm);
-    if (optimizer->Optimize(func_graph) == nullptr) {
-      MS_LOG(ERROR) << "run cast node fusion failed.";
-      return RET_ERROR;
-    }
-  }
-
-  return RET_OK;
-}
-
-STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
-  std::set<FuncGraphPtr> all_func_graphs{};
-  quant::GetFuncGraphs(func_graph, &all_func_graphs);
-  // Support for multi-subgraph models
-  for (auto &item : all_func_graphs) {
-    auto status = DoSingleGraphQATTransform(item, param);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Do QATTransform failed.";
-      return status;
-    }
-  }
-  return RET_OK;
+  return (!param->plugins_path.empty() && param->commonQuantParam.quant_type != quant::QUANT_NONE);
 }
 
 int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
@@ -801,8 +707,8 @@ STATUS AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, const std
     MS_LOG(ERROR) << "Unsupported external extension with quantization.";
     return RET_ERROR;
   }
-
-  auto status = QATTransform(old_graph, param);
+  auto qat_transform = quant::QATTransform(old_graph, param);
+  auto status = qat_transform.Transform();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Do QATTransform failed.";
     return RET_ERROR;

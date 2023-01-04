@@ -80,9 +80,9 @@ int FullQuantQuantizer::QuantWeight(const CNodePtr &cnode, const PrimitivePtr &p
   auto weight_q_min = per_channel ? init_param_.weight_channel_q_min_ : init_param_.weight_layer_q_min_;
   auto weight_q_max = per_channel ? init_param_.weight_channel_q_max_ : init_param_.weight_layer_q_max_;
   auto symmetric = per_channel ? init_param_.weight_channel_symmetric_ : init_param_.weight_layer_symmetric_;
-  return fixed_bit_quant_.QuantFilter(weight, tensor_info, primitive, schema::QuantType_QUANT_ALL, weight_q_max,
-                                      weight_q_min, init_param_.bit_num_, weight_quant_type, kNumberTypeInt8,
-                                      input_index - 1, preferred_dim, symmetric);
+  return fixed_bit_quant_.QuantFilter(weight, tensor_info, primitive, quant::QUANT_ALL, weight_q_max, weight_q_min,
+                                      init_param_.bit_num_, weight_quant_type, kNumberTypeInt8, input_index - 1,
+                                      preferred_dim, symmetric);
 }
 
 int FullQuantQuantizer::DoParameterWeightQuant(const CNodePtr &cnode, const ParameterPtr &weight,
@@ -294,7 +294,7 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
     MS_CHECK_TRUE_MSG(primitive_quant_holder != nullptr, RET_NULL_PTR, "primitive_quant_holder is nullptr.");
     if (inputs_diverg_info->find(op_name) == inputs_diverg_info->end()) {
       MS_LOG(INFO) << op_name << " can not do quant";
-      primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_NONE);
+      primitive_quant_holder->set_quant_type(quant::QUANT_NONE);
       continue;
     }
 
@@ -332,7 +332,7 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
                         << "'s output quant_params size: "
                         << input_primitive_quant_holder->get_output_quant_params().size() << ", but index: " << index;
       }
-      primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
+      primitive_quant_holder->set_quant_type(quant::QUANT_ALL);
       continue;
     } else {  // do simple op quant
       auto status = QuantNodeSimpleOp(cnode);
@@ -350,7 +350,7 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
         MS_LOG(ERROR) << "Set In/Out quant param failed.";
         return ret;
       }
-      primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
+      primitive_quant_holder->set_quant_type(quant::QUANT_ALL);
     }
   }
   return RET_OK;
@@ -696,7 +696,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
       init_param_.activation_target_data_type_ == kNumberTypeUInt8) {
     // add quant_cast
     for (auto &cnode : func_graph->GetOrderedCnodes()) {
-      schema::QuantType curr_quant_type;
+      quant::QuantType curr_quant_type;
       if (GetQuantType(cnode, &curr_quant_type) != RET_OK) {
         MS_LOG(ERROR) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
         return RET_ERROR;

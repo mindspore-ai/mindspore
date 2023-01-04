@@ -21,7 +21,7 @@
 
 namespace mindspore::lite::quant {
 int FixedBitWeightQuantization::QuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
-                                            const PrimitivePtr &primitive, schema::QuantType quant_type, int quant_max,
+                                            const PrimitivePtr &primitive, quant::QuantType quant_type, int quant_max,
                                             int quant_min, size_t bit_num, WeightQuantType weight_quant_type,
                                             TypeId quant_data_type, int index, int preferred_dim, bool symmetric,
                                             bool narrow_range) {
@@ -39,21 +39,21 @@ int FixedBitWeightQuantization::QuantFilter(const AnfNodePtr &parameter_node, co
   }
 }
 
-int FixedBitWeightQuantization::StatisticsFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
-                                                 const PrimitivePtr &primitive, schema::QuantType quant_type,
-                                                 int quant_max, int quant_min, size_t bit_num,
-                                                 WeightQuantType weight_quant_type, TypeId quant_data_type, int index,
-                                                 int preferred_dim, bool symmetric, bool narrow_range) {
+int FixedBitWeightQuantization::StatisticsFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
+                                                 quant::QuantType quant_type, int quant_max, int quant_min,
+                                                 size_t bit_num, WeightQuantType weight_quant_type,
+                                                 TypeId quant_data_type, int index, int preferred_dim, bool symmetric,
+                                                 bool narrow_range) {
   size_t elem_count = weight->DataSize();
   if (quant_data_type == kNumberTypeInt8) {
     std::vector<int8_t> quant_data(elem_count);
-    return FixedBitStatisticsFilter<int8_t>(parameter_node, weight, primitive, quant_type, quant_max, quant_min,
-                                            bit_num, weight_quant_type, index, preferred_dim, &quant_data, symmetric,
+    return FixedBitStatisticsFilter<int8_t>(weight, primitive, quant_type, quant_max, quant_min, bit_num,
+                                            weight_quant_type, index, preferred_dim, &quant_data, symmetric,
                                             narrow_range);
   } else if (quant_data_type == kNumberTypeInt16) {
     std::vector<int16_t> quant_data(elem_count);
-    return FixedBitStatisticsFilter<int16_t>(parameter_node, weight, primitive, quant_type, quant_max, quant_min,
-                                             bit_num, weight_quant_type, index, preferred_dim, &quant_data, symmetric,
+    return FixedBitStatisticsFilter<int16_t>(weight, primitive, quant_type, quant_max, quant_min, bit_num,
+                                             weight_quant_type, index, preferred_dim, &quant_data, symmetric,
                                              narrow_range);
   } else {
     MS_LOG(ERROR) << quant_data_type << " dont support.";
@@ -105,7 +105,7 @@ int FixedBitWeightQuantization::QuantBias(const ParameterPtr &bias, const Primit
   for (double bias_scale : bias_scales) {
     schema::QuantParamT quant_param;
     if (bias_scale == 0) {
-      MS_LOG(WARNING) << "bias_scale == 0";
+      MS_LOG(WARNING) << "bias_scale is 0, and set bias_scale to 1.";
       quant_param.scale = 1;
     } else {
       quant_param.scale = bias_scale;
@@ -125,27 +125,12 @@ int FixedBitWeightQuantization::QuantBias(const ParameterPtr &bias, const Primit
     return RET_ERROR;
   }
   quant_param_holder->set_input_quant_param(THIRD_INPUT, quant_params);
-  auto ret = SetTensorData(bias_param, quant_datas.data(), shape_size * sizeof(int32_t));
+  auto ret =
+    UpdateTensorDataAndSize(bias, bias_param, quant_datas.data(), shape_size * sizeof(int32_t), kNumberTypeInt32);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "set tensor data failed.";
+    MS_LOG(ERROR) << bias->fullname_with_scope() << " update tensor data adn size failed.";
     return RET_ERROR;
   }
-  // set dtype
-  auto abstractBase = bias->abstract();
-  if (abstractBase == nullptr) {
-    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << bias->name();
-    return RET_ERROR;
-  }
-  if (!abstractBase->isa<abstract::AbstractTensor>()) {
-    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << bias->name();
-    return RET_ERROR;
-  }
-  auto abstractTensor = abstractBase->cast<abstract::AbstractTensorPtr>();
-  if (abstractTensor == nullptr || abstractTensor->element() == nullptr) {
-    MS_LOG(ERROR) << "abstractTensor is nullptr" << bias->name();
-    return RET_NULL_PTR;
-  }
-  abstractTensor->element()->set_type(TypeIdToType(kNumberTypeInt32));
   return RET_OK;
 }
 

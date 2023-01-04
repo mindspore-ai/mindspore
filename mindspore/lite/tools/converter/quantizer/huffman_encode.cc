@@ -58,7 +58,7 @@ int HuffmanEncode::DoHuffmanEncode(const tensor::TensorPtr &weight, const Primit
       MS_LOG(ERROR) << "memcpy_s failed.";
       return RET_MEMORY_FAILED;
     }
-    auto quant_param_holder = quant::GetCNodeQuantHolder(primitive);
+    auto quant_param_holder = GetCNodeQuantHolder(primitive);
     MS_ASSERT(quant_param_holder != nullptr);
     quant_param_holder->set_enable_huffman_code(true);
   }
