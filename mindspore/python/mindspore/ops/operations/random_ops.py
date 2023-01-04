@@ -792,6 +792,7 @@ class Multinomial(Primitive):
         Validator.check_value_type("dtype", dtype, [mstype.Type], self.name)
         valid_values = (mstype.int64, mstype.int32)
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
+        self.add_prim_attr("side_effect_hidden", True)
 
 
 class UniformCandidateSampler(PrimitiveWithInfer):
