@@ -231,7 +231,7 @@ class MicroStepAllGatherPass : public AnfVisitor {
     auto attrs = prim->attrs();
     std::string group = attrs[parallel::GROUP]->ToString();
     if (group.empty()) {
-      return nullptr;
+      return inputs[1];
     }
     auto fusion = attrs[parallel::FUSION];
     bool contain_recompute = prim->HasAttr(parallel::RECOMPUTE);
