@@ -84,6 +84,7 @@ TypePtr TypeIdToType(TypeId id) {
                                                                 {kObjectTypeString, kString},
                                                                 {kObjectTypeList, kList},
                                                                 {kObjectTypeTuple, kTuple},
+                                                                {kObjectTypeNumber, kNumber},
                                                                 {kObjectTypeDictionary, kDict},
                                                                 {kObjectTypeSlice, kSlice},
                                                                 {kObjectTypeKeyword, kKeyword},

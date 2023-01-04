@@ -69,6 +69,9 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
 #ifdef ENABLE_TUPLE_UNFOLD
   MS_LOG(INFO) << "Enable tuple unfold.";
+  if (kernel_graph->has_flag(kAttrMutableKernel)) {
+    common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
+  }
 #else
   common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
 #endif

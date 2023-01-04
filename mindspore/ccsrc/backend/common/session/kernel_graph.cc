@@ -1074,16 +1074,15 @@ void KernelGraph::SetKernelObjectTypesForUnrealNodes() {
       if (IsPrimitiveCNode(node, prim::kPrimMakeTuple) &&
           (!node->kernel_info_ptr()->has_build_info() || AnfAlgo::GetOutputKernelObjectTypes(node).empty())) {
         const auto &input_object_types = AnfAlgo::GetAllInputObjectType(node);
-        input_kernel_object_types = kernel::TypeIdToKernelObjectType(input_object_types);
+        input_kernel_object_types = kernel::TypeIdToKernelObjectTypeForTupleUnfold(input_object_types);
         output_kernel_object_types = {kernel::KernelObjectType::TUPLE_UNFOLD};
       }
       if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem) &&
           (!node->kernel_info_ptr()->has_build_info() || AnfAlgo::GetOutputKernelObjectTypes(node).empty())) {
         const auto &output_object_types = AnfAlgo::GetAllOutputObjectType(node);
-        output_kernel_object_types = kernel::TypeIdToKernelObjectType(output_object_types);
+        output_kernel_object_types = kernel::TypeIdToKernelObjectTypeForTupleUnfold(output_object_types);
         const auto &input_object_types = AnfAlgo::GetAllInputObjectType(node);
-        input_kernel_object_types = kernel::TypeIdToKernelObjectType(input_object_types);
-        input_kernel_object_types[0] = kernel::KernelObjectType::TUPLE_UNFOLD;
+        input_kernel_object_types = kernel::TypeIdToKernelObjectTypeForTupleUnfold(input_object_types);
       }
     }
     if (output_kernel_object_types.empty() && input_kernel_object_types.empty()) {

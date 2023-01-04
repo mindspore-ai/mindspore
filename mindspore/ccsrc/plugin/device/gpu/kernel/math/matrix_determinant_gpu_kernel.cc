@@ -178,21 +178,19 @@ std::vector<std::pair<KernelAttr, MatrixDeterminantGpuKernelMod::MatrixDetermina
      &MatrixDeterminantGpuKernelMod::LaunchKernel<utils::Complex<float>>},
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
      &MatrixDeterminantGpuKernelMod::LaunchKernel<utils::Complex<double>>},
+};
+
+std::vector<std::pair<KernelAttr, LogMatrixDeterminantGpuKernelMod::LogMatrixDeterminantFunc>>
+  LogMatrixDeterminantGpuKernelMod::func_list_ = {
     // LogMatrixDeterminant's launch kernel
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &MatrixDeterminantGpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     &MatrixDeterminantGpuKernelMod::LaunchKernel<double>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeComplex64)
-       .AddOutputAttr(kNumberTypeComplex64)
-       .AddOutputAttr(kNumberTypeComplex64),
-     &MatrixDeterminantGpuKernelMod::LaunchKernel<utils::Complex<float>>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeComplex128)
-       .AddOutputAttr(kNumberTypeComplex128)
-       .AddOutputAttr(kNumberTypeComplex128),
-     &MatrixDeterminantGpuKernelMod::LaunchKernel<utils::Complex<double>>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddAllSameAttr(true),
+     &LogMatrixDeterminantGpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddAllSameAttr(true),
+     &LogMatrixDeterminantGpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64).AddAllSameAttr(true),
+     &LogMatrixDeterminantGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128).AddAllSameAttr(true),
+     &LogMatrixDeterminantGpuKernelMod::LaunchKernel<utils::Complex<double>>},
 };
 
 void MatrixDeterminantGpuKernelMod::InitWorkSpaceSizeList() {
@@ -215,8 +213,15 @@ std::vector<KernelAttr> MatrixDeterminantGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
+std::vector<KernelAttr> LogMatrixDeterminantGpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, LogMatrixDeterminantFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MatrixDeterminant, MatrixDeterminantGpuKernelMod);
 // Whether to computes the sign and the log of the absolute value of the determinant.
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, LogMatrixDeterminant, MatrixDeterminantGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, LogMatrixDeterminant, LogMatrixDeterminantGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

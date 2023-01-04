@@ -1352,6 +1352,9 @@ void UnfoldKernelBuildInfo(const CNodePtr &kernel_node) {
   auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   auto input_num = kernel_build_info->GetInputNum();
   auto output_num = kernel_build_info->GetOutputNum();
+  if (input_num == 0 && output_num == 0) {
+    return;
+  }
   const auto &input_kernel_object_types = kernel_build_info->GetAllInputKernelObjectTypes();
   const auto &output_kernel_object_types = kernel_build_info->GetAllOutputKernelObjectTypes();
   const auto &input_dtypes = kernel_build_info->GetAllInputDeviceTypes();
