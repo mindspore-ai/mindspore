@@ -142,7 +142,8 @@ bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else {
 #if defined(_WIN32) || defined(_WIN64)
     HCRYPTPROV h_crypt_prov;
-    if (!CryptAcquireContext(reinterpret_cast<HCRYPTPROV *>(&h_crypt_prov), nullptr, nullptr, PROV_RSA_FULL, 0)) {
+    if (!CryptAcquireContext(reinterpret_cast<HCRYPTPROV *>(&h_crypt_prov), nullptr, nullptr, PROV_RSA_FULL,
+                             CRYPT_VERIFYCONTEXT)) {
       auto err_code = GetLastError();
       MS_LOG(EXCEPTION) << "Acquire crypt context failed when generate a seed value for the random operator: "
                         << kernel_type_ << ". The error code: " << err_code;

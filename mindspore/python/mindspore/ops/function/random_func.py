@@ -232,7 +232,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         The dtype is designated as the input `dtype`.
 
     Raises:
-        TypeError: If `shape` is neither a tuple nor a tensor.
+        TypeError: If `shape` is neither a tuple nor a Tensor.
         TypeError: If 'minval' or 'maxval' is neither int32 nor float32
             and dtype of 'minval' is not the same as 'maxval'.
         TypeError: If `seed` is not an int.
