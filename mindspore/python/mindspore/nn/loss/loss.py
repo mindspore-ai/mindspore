@@ -461,11 +461,11 @@ class MarginRankingLoss(LossBase):
     r"""
     MarginRankingLoss creates a criterion that measures the loss.
 
-    Given two tensors :math:`x1`, :math:`x2` and a Tensor label :math:`y` with values 1 or -1,
+    Given two tensors :math:`input1`, :math:`input2` and a Tensor label :math:`target` with values 1 or -1,
     the operation is as follows:
 
     .. math::
-        \text{loss}(x1, x2, y) = \max(0, -y * (x1 - x2) + \text{margin})
+        \text{loss}(input1, input2, target) = \max(0, -target * (input1 - input2) + \text{margin})
 
     Args:
         margin (float): Specify the adjustment factor of the operation. Default 0.0.
