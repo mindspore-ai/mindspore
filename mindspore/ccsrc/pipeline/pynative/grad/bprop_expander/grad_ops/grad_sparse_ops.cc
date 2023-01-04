@@ -151,14 +151,14 @@ NodePtrList CommonSparseSegmentBpropForCpu(const BpropIRBuilder *ib, bool with_s
 }
 }  // namespace
 REG_BPROP_BUILDERS_BEGIN(GradSparseOps)
-REG_BPROP_BUILDER("SparseToDense").SetUnusedInputs({i1, i3}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("SparseToDense").SetUnusedInputs({i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex0);
   auto dense_shape = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   return {ib->ZerosLike(indices), ib->Emit("GatherNd", {dout, indices}), ib->ZerosLike(dense_shape)};
 });
 
-REG_BPROP_BUILDER("SparseToDenseV2").SetUnusedInputs({i2, i3, i4}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("SparseToDenseV2").SetUnusedInputs({i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex0);
   auto output_shape = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex5);
@@ -214,7 +214,7 @@ REG_BPROP_BUILDER("SparseTensorDenseMatmul").SetUnusedInputs({i4}).SetBody(BODYF
   return {ib->ZerosLike(indices), values_grad, ib->ZerosLike(dense_shape), dense_grad};
 });
 
-REG_BPROP_BUILDER("SparseAdd").SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("SparseAdd").SetUnusedInputs({i1, i2, i4, i5, i6}).SetBody(BODYFUNC(ib) {
   auto x1_indices = ib->GetInput(kIndex0);
   auto x1_values = ib->GetInput(kIndex1);
   auto x1_shape = ib->GetInput(kIndex2);
@@ -359,19 +359,19 @@ REG_BPROP_BUILDER("CSRDiv").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
           dense_grad};
 });
 
-REG_BPROP_BUILDER("CSR2COO").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("CSR2COO").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto indptr = ib->GetInput(kIndex0);
   auto nnz = ib->GetInput(kIndex1);
   return {ib->ZerosLike(indptr), ib->ZerosLike(nnz)};
 });
 
-REG_BPROP_BUILDER("COO2CSR").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("COO2CSR").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto row_indices = ib->GetInput(kIndex0);
   auto height = ib->GetInput(kIndex1);
   return {ib->ZerosLike(row_indices), ib->ZerosLike(height)};
 });
 
-REG_BPROP_BUILDER("MakeCOOTensor").SetUnusedInputs({i1, i2, i3}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("MakeCOOTensor").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex4);
   auto dout_values = ib->TupleGetItem(dout, kIndex1);
@@ -394,12 +394,12 @@ REG_BPROP_BUILDER("COOTensorGetValues").SetUnusedInputs({i1}).SetBody(BODYFUNC(i
   return {ib->MakeTuple({ib->ZerosLike(coo_tensor_indices), dout, coo_tensor_shape})};
 });
 
-REG_BPROP_BUILDER("COOTensorGetDenseShape").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("COOTensorGetDenseShape").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto coo_tensor = ib->GetInput(kIndex0);
   return {ib->ZerosLike(coo_tensor)};
 });
 
-REG_BPROP_BUILDER("MakeCSRTensor").SetUnusedInputs({i2, i3, i4}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("MakeCSRTensor").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
   auto indptr = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex5);
@@ -435,7 +435,7 @@ REG_BPROP_BUILDER("CSRTensorGetValues").SetUnusedInputs({i1}).SetBody(BODYFUNC(i
   return {ib->MakeTuple({ib->ZerosLike(csr_tensor_indptr), ib->ZerosLike(csr_tensor_indices), dout, csr_tensor_shape})};
 });
 
-REG_BPROP_BUILDER("CSRTensorGetDenseShape").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("CSRTensorGetDenseShape").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto csr_tensor = ib->GetInput(kIndex0);
   return {ib->ZerosLike(csr_tensor)};
 });
@@ -453,7 +453,7 @@ REG_BPROP_BUILDER("CSRSparseMatrixToDense").SetUnusedInputs({i5}).SetBody(BODYFU
           ib->TupleGetItem(res, kIndex3), ib->TupleGetItem(res, kIndex4)};
 });
 
-REG_BPROP_BUILDER("DenseToCSRSparseMatrix").SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("DenseToCSRSparseMatrix").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
@@ -485,7 +485,7 @@ REG_BPROP_BUILDER("DenseToCSRSparseMatrix").SetBody(BODYFUNC(ib) {
   return {ib->Emit("CSRSparseMatrixToDense", {shape, batch_ptr, row_ptr, col_ind, dvalue}), ib->ZerosLike(indices)};
 });
 
-REG_BPROP_BUILDER("SparseSoftmax").SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("SparseSoftmax").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex0);
   auto values = ib->GetInput(kIndex1);
   auto shape = ib->GetInput(kIndex2);
@@ -518,29 +518,29 @@ REG_BPROP_BUILDER("CSRSparseMatrixToSparseTensor").SetUnusedInputs({i0, i1, i2, 
           ib->TupleGetItem(dx, kIndex3), ib->TupleGetItem(dx, kIndex4)};
 });
 
-REG_BPROP_BUILDER("SparseSegmentSqrtN").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("SparseSegmentSqrtN").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   return CommonSparseSegmentBprop(ib, "SparseSegmentSqrtNGrad", false);
 });
 
-REG_BPROP_BUILDER("SparseSegmentSqrtNWithNumSegments").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("SparseSegmentSqrtNWithNumSegments").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   return CommonSparseSegmentBprop(ib, "SparseSegmentSqrtNGrad", true);
 });
 
-REG_BPROP_BUILDER("SparseSegmentSum").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("SparseSegmentSum").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   if (ib->GetTargetFromContext() == kGPUDevice) {
     return CommonSparseSegmentBprop(ib, "SparseSegmentSumGrad", false);
   }
   return CommonSparseSegmentBpropForCpu(ib, false);
 });
 
-REG_BPROP_BUILDER("SparseSegmentSumWithNumSegments").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("SparseSegmentSumWithNumSegments").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   if (ib->GetTargetFromContext() == kGPUDevice) {
     return CommonSparseSegmentBprop(ib, "SparseSegmentSumGrad", true);
   }
   return CommonSparseSegmentBpropForCpu(ib, true);
 });
 
-REG_BPROP_BUILDER("SparseTensorDenseAdd").SetUnusedInputs({i1, i3, i4}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("SparseTensorDenseAdd").SetUnusedInputs({i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
   auto x1_indices = ib->GetInput(kIndex0);
   auto x1_shape = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex5);
