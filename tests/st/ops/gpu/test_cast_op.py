@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore import nn
+import mindspore as ms
 
 
 class Net(Cell):
@@ -619,3 +621,25 @@ def test_cast32():
     assert (output[0].asnumpy() == expected).all()
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float64'
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_two_cast():
+    """
+    Feature: test cast eliminate.
+    Description: test two cast eliminater.
+    Expectation: no exception.
+    """
+    class TwoCastNet(nn.Cell):
+        def construct(self, x):
+            return ms.ops.Cast()(ms.ops.Cast()(x, ms.int32), ms.float32)
+
+    ms.set_context(mode=context.GRAPH_MODE)
+    input_x = ms.Tensor([1.1], ms.float32)
+    res = TwoCastNet()(input_x)
+    expected = [1.]
+    assert (res.asnumpy() == expected).all()
+    type1 = res.asnumpy().dtype
+    assert type1 == 'float32'
