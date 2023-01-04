@@ -548,7 +548,7 @@ int BiasCorrectionStrategy::DoCNodeBiasCorrection(const FuncGraphPtr &quant_func
         return RET_ERROR;
       }
     }
-  } else if (cnode->size() == kHasBiasTensorSize - 1) {
+  } else if (cnode->size() == kHasBiasTensorSize - kPrimOffset) {
     MS_LOG(INFO) << op_name << " add bias input";
     // need to add bias input
     auto parameter = quant_func_graph->add_parameter();

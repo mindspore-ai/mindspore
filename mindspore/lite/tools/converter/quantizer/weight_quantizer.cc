@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
     auto input = cnode->input(idx);
     ParameterPtr parameter;
     tensor::TensorPtr tensor_info;
-    GetLiteParameter(input, &parameter, &tensor_info);
+    GetParameterAndTensor(input, &parameter, &tensor_info);
     if (parameter == nullptr || tensor_info == nullptr ||
         tensor_info->compression_type() != mindspore::kNoCompression) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";
@@ -263,7 +263,7 @@ int WeightQuantizer::DoCompression(const CNodePtr &cnode, const ParameterPtr &pa
 
 int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &parameter, int idx,
                                    const tensor::TensorPtr &tensor_info, int preferred_dim,
-                                   WeightQuantType weight_quant_type, bool symmetric, bool update_tensor) {
+                                   WeightQuantType weight_quant_type, bool symmetric) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
   auto mixed_bit_quantization = MixedBitWeightQuantization(mixed_bit_init_scale_);
@@ -293,14 +293,8 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
       << parameter->fullname_with_scope()
       << " mixed bit quantization search failed, the current layer rolls back to 8 bit fixed quantization.";
     FixedBitWeightQuantization fixed_bit_quant;
-    if (update_tensor) {
-      status =
-        fixed_bit_quant.QuantFilter(parameter, tensor_info, primitive, quant_type_, quant_max, quant_min, bit_num_,
-                                    weight_quant_type, kNumberTypeInt8, idx - 1, preferred_dim, symmetric);
-    } else {
-      status = fixed_bit_quant.StatisticsFilter(tensor_info, primitive, quant_type_, quant_max, quant_min, bit_num_,
-                                                weight_quant_type, kNumberTypeInt8, idx - 1, preferred_dim, symmetric);
-    }
+    status = fixed_bit_quant.QuantFilter(parameter, tensor_info, primitive, quant_type_, quant_max, quant_min, bit_num_,
+                                         weight_quant_type, kNumberTypeInt8, idx - 1, preferred_dim, symmetric);
   }
   return status;
 }
@@ -332,9 +326,11 @@ int WeightQuantizer::InsertDequantNode(const FuncGraphPtr &func_graph, const CNo
     MS_LOG(INFO) << tensor_name << " insert WeightQuant node";
     auto axis = GetPreferredDim(cnode, idx - kPrimOffset, ConvertShapeVectorToInt32(tensor_info->shape_c()));
     if (type_id == kNumberTypeFloat32) {
-      status = quant_manager.InsertWeightQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat32, axis);
+      status =
+        quant_manager.InsertQuantDtypeCastFlyNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat32, axis);
     } else {
-      status = quant_manager.InsertWeightQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat16, axis);
+      status =
+        quant_manager.InsertQuantDtypeCastFlyNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat16, axis);
     }
     if (status != RET_OK) {
       MS_LOG(ERROR) << tensor_name << " insert weight quant node failed.";
@@ -344,8 +340,8 @@ int WeightQuantizer::InsertDequantNode(const FuncGraphPtr &func_graph, const CNo
   return RET_OK;
 }
 
-int WeightQuantizer::MarkCnodeWeightQuantType(const CNodePtr &cnode) {
-  MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
+int WeightQuantizer::MarkCNodeWeightQuantType(const CNodePtr &cnode) {
+  CHECK_NULL_RETURN(cnode);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
@@ -353,7 +349,7 @@ int WeightQuantizer::MarkCnodeWeightQuantType(const CNodePtr &cnode) {
   }
 
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
+  CHECK_NULL_RETURN(quant_param_holder);
   if (quant_param_holder->quant_type() == quant::QUANT_WEIGHT) {
     // already marked with QuantType_QUANT_WEIGHT
     return RET_OK;
@@ -361,11 +357,11 @@ int WeightQuantizer::MarkCnodeWeightQuantType(const CNodePtr &cnode) {
 
   // Support Share Weight Quant.
   for (size_t i = kPrimOffset; i < cnode->size(); i++) {
-    auto inputNode = cnode->input(i);
-    if (inputNode->isa<Parameter>()) {
+    auto input_node = cnode->input(i);
+    if (input_node->isa<Parameter>()) {
       ParameterPtr param_node;
       tensor::TensorPtr tensor_info;
-      GetLiteParameter(inputNode, &param_node, &tensor_info);
+      GetParameterAndTensor(input_node, &param_node, &tensor_info);
       auto param = weight_quantized_tensors_.find(tensor_info);
       if (param != weight_quantized_tensors_.end()) {
         quant_param_holder->set_quant_type(quant::QUANT_WEIGHT);
@@ -381,12 +377,12 @@ int WeightQuantizer::MarkGraphWeightQuantType(const FuncGraphPtr &func_graph) {
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
     if (primitive == nullptr) {
-      MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
+      MS_LOG(DEBUG) << cnode->fullname_with_scope() << " primitive is nullptr";
       continue;
     }
-    auto status = MarkCnodeWeightQuantType(cnode);
+    auto status = MarkCNodeWeightQuantType(cnode);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "MarkGraphWeightQuantType error marking " << cnode->fullname_with_scope();
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " mark graph QuantType failed.";
       return RET_ERROR;
     }
   }
@@ -394,7 +390,7 @@ int WeightQuantizer::MarkGraphWeightQuantType(const FuncGraphPtr &func_graph) {
 }
 
 int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
-  MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
+  CHECK_NULL_RETURN(func_graph);
   weight_quantized_tensors_.clear();
   const std::set<PrimitivePtr> support_primitive_types = {prim::kPrimConv2DFusion,  prim::kPrimConv2dTransposeFusion,
                                                           prim::kPrimMatMulFusion,  prim::kPrimFullConnection,

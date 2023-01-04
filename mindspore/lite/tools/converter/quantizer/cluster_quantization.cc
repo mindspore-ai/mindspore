@@ -176,7 +176,7 @@ int ClusterQuantization::KMeansQuantization(const CNodePtr &cnode, const std::ve
     auto input = cnode->input(idx);
     ParameterPtr parameter;
     tensor::TensorPtr tensor_info;
-    GetLiteParameter(input, &parameter, &tensor_info);
+    GetParameterAndTensor(input, &parameter, &tensor_info);
     if (parameter == nullptr || tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32 ||
         tensor_info->compression_type() != mindspore::kNoCompression) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";

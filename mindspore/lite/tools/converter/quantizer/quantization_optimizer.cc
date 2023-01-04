@@ -194,7 +194,7 @@ int ConvertFp16ToFp32(const FuncGraphPtr &old_graph) {
       }
       ParameterPtr param_node;
       tensor::TensorPtr tensor_info;
-      GetLiteParameter(input, &param_node, &tensor_info);
+      GetParameterAndTensor(input, &param_node, &tensor_info);
       CHECK_NULL_RETURN(tensor_info);
       CHECK_NULL_RETURN(param_node);
       if (tensor_info->data_type() == kNumberTypeFloat16) {
@@ -272,13 +272,13 @@ int PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<Convert
   return RET_OK;
 }
 
-int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+int DoSingleGraphQuantize(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
   CHECK_NULL_RETURN(param);
   if (param->commonQuantParam.quant_type == quant::QUANT_NONE) {
     return RET_OK;
   }
 
-  int status = PrepareQuantize(old_graph, param);
+  int status = PrepareQuantize(func_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "PrepareQuantize failed.";
     return status;
@@ -292,54 +292,57 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<C
     origin = std::make_shared<mindspore::Model>();
     CHECK_NULL_RETURN(origin);
     size_t size = 0;
-    auto ret = BuildModelByFuncGraph(origin, old_graph, param, &size);
+    auto ret = BuildModelByFuncGraph(origin, func_graph, param, &size);
     param->commonQuantParam.quant_type = quant_type;
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Build model failed";
       return RET_ERROR;
     }
-    origin_lite_model = ParseLiteModel(old_graph, param);
+    origin_lite_model = ParseLiteModel(func_graph, param);
     if (origin_lite_model == nullptr) {
       MS_LOG(ERROR) << "Parse lite model failed.";
       return RET_ERROR;
     }
   }
   if (param->commonQuantParam.quant_type == quant::QUANT_ALL) {  // Full Quantization
-    status = DoFullQuant(old_graph, param);
+    status = ConvertFp16ToFp32(func_graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Converter fp16 to fp32 failed.";
+      return status;
+    }
+    status = DoFullQuant(func_graph, param);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do full quant failed.";
       return status;
     }
   } else if (param->commonQuantParam.quant_type == quant::QUANT_WEIGHT) {  // Weight Quantization
-    status = DoWeightQuant(old_graph, param);
+    status = DoWeightQuant(func_graph, param);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do weight quant failed.";
       return status;
     }
   } else if (param->commonQuantParam.quant_type == quant::QUANT_DYNAMIC) {  // Dynamic Quantization
-    status = DoDynamicQuant(old_graph, param);
+    status = DoDynamicQuant(func_graph, param);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do dynamic quant failed.";
       return status;
     }
   }
 
-  {
-    auto optimizer = std::make_shared<opt::GraphOptimizer>();
-    CHECK_NULL_RETURN(optimizer);
-    auto fusion_pm = std::make_shared<opt::LitePassManager>("fusion pass manager after quant", false);
-    CHECK_NULL_RETURN(fusion_pm);
-    fusion_pm->AddPass(std::make_shared<opt::QuantDtypeCastFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
-    optimizer->AddPassManager(fusion_pm);
-    if (optimizer->Optimize(old_graph) == nullptr) {
-      MS_LOG(ERROR) << "run cast node fusion failed.";
-      return RET_ERROR;
-    }
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  CHECK_NULL_RETURN(optimizer);
+  auto fusion_pm = std::make_shared<opt::LitePassManager>("fusion pass manager after quant", false);
+  CHECK_NULL_RETURN(fusion_pm);
+  fusion_pm->AddPass(std::make_shared<opt::QuantDtypeCastFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
+  optimizer->AddPassManager(fusion_pm);
+  if (optimizer->Optimize(func_graph) == nullptr) {
+    MS_LOG(ERROR) << "run cast node fusion failed.";
+    return RET_ERROR;
   }
 
   if (param->commonQuantParam.is_debug) {
-    status = DoQuantDebug(old_graph, param, origin, origin_lite_model);
+    status = DoQuantDebug(func_graph, param, origin, origin_lite_model);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do quant debug failed.";
       return status;

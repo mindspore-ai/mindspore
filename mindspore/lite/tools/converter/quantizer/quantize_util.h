@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ int GetQuantType(const CNodePtr &cnode, quant::QuantType *quant_type);
 
 void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
 
-int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type);
+int UpdateDataType(const AnfNodePtr &node, TypeId new_data_type);
 
 bool IsGraphInDTypeCast(const CNodePtr &cnode);
 
@@ -92,7 +92,7 @@ mindspore::lite::Tensor *MSTensorToLiteTensor(const mindspore::MSTensor &tensor)
 
 std::vector<mindspore::lite::Tensor *> MSTensorToLiteTensors(const std::vector<mindspore::MSTensor> &src_tensors);
 
-void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
+void GetParameterAndTensor(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
 
 bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_primitive_types);
 

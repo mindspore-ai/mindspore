@@ -26,7 +26,6 @@
 #include "tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
 #include "tools/converter/legacy_optimizer/graph/tensor_name_pass.h"
-#include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
 #include "tools/converter/legacy_optimizer/graph/set_unused_quant_param_to_default_pass.h"
 #include "tools/converter/legacy_optimizer/graph/convert_fp32_to_fp16_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_node_pass.h"
