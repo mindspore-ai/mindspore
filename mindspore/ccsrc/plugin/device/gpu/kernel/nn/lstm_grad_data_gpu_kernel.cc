@@ -56,6 +56,7 @@ int LstmGradDataGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
+  DestroyTensorDescGrp();
 
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
