@@ -173,3 +173,13 @@ from .adaptive_avg_pool_2d_v1 import _adaptive_avg_pool_2d_v1_aicpu
 from .fill_v2 import _fill_v2_aicpu
 from .data_format_vec_permute import _data_format_vec_permute_aicpu
 from .quantile import _quantile_aicpu
+from .multinomial import _multinomial_aicpu
+from .fft_with_size import _fft_with_size_aicpu
+from .histogram import _histogram_aicpu
+from .matrix_determinant import _matrix_determinant_aicpu
+from .matrix_logarithm import _matrix_logarithm_aicpu
+from .matrix_set_diag_v3 import _matrix_set_diag_v3_aicpu
+from .nan_to_num import _nan_to_num_aicpu
+from .qr import _qr_aicpu
+from .col2im import _col2im_aicpu
+from .matrix_solve_ls import _matrix_solve_ls_aicpu
