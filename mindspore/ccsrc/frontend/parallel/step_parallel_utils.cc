@@ -758,7 +758,8 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
   }
   bool bool_result = IsParallelCareNode(cnode) && !IsSplittableOperator(prim->name());
   if (bool_result && (prim->name() != MAKE_TUPLE) && (prim->name() != MAKE_LIST)) {
-    MS_LOG(EXCEPTION) << "Should implementing OperatorInfo for: " << prim->name();
+    MS_LOG(EXCEPTION) << "For 'auto_parallel', missing the implementation of OperatorInfo for: " << prim->name()
+                      << ", please use 'semi_auto_parallel' mode.";
   } else if (prim->name() == CAST) {
     if (cnode->fullname_with_scope().find(OPTIMIZER_SUB_STRING) != std::string::npos) {
       // Do not care CASTs from optimizer
