@@ -75,6 +75,8 @@ constexpr auto kTypeMerge = "Merge";
 constexpr auto kTypeIf = "If";
 
 namespace {
+std::map<TypeId, TypeId> kReduceRaiseMap = {{kNumberTypeInt64, kNumberTypeInt32}};
+
 // {node name | {{input_index, dst_type}...}}
 std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputDTypeMap = {
   {kResizeNearestNeighborGradOpName, {{2, kNumberTypeInt32}}},
@@ -84,6 +86,21 @@ std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputDTypeMa
 // {node name | {{attr_name, dst_type}...}}
 std::map<std::string, std::vector<std::pair<std::string, TypeId>>> kTransAttrDTypeMap = {
   {kResizeNearestNeighborOpName, {{"size", kNumberTypeInt32}}}, {kResizeBilinearOpName, {{"size", kNumberTypeInt32}}}};
+
+bool IsValidConversion(TypeId src_type, TypeId dst_type) {
+  if (src_type == dst_type) {
+    MS_LOG(DEBUG) << "No need convert, src type and dst type is same, type:" << TypeIdToString(src_type);
+    return false;
+  }
+  auto iter = kReduceRaiseMap.find(src_type);
+  if (iter != kReduceRaiseMap.end() && iter->second == dst_type) {
+    MS_LOG(INFO) << "Convert data type from " << TypeIdToString(src_type) << " to " << TypeIdToString(dst_type);
+    return true;
+  }
+  MS_LOG(DEBUG) << "Unsupported conversion. src_type:" << TypeIdToString(src_type)
+                << ", dst_type:" << TypeIdToString(dst_type);
+  return false;
+}
 
 template <typename T>
 ValuePtr CreateNewValue(const ValuePtr &value, const std::vector<T> &values, const TypeId &dst_type) {
@@ -135,6 +152,9 @@ TypeId GetElemType(const ValuePtr &value) {
 ValuePtr CastDstValue(const ValuePtr &value, const TypeId &dst_type) {
   MS_EXCEPTION_IF_NULL(value);
   auto src_type = GetElemType(value);
+  if (!IsValidConversion(src_type, dst_type)) {
+    return nullptr;
+  }
   if (src_type == kNumberTypeInt64) {
     auto values = GetAllValues<int64_t>(value);
     return CreateNewValue<int64_t>(value, values, dst_type);
@@ -2018,7 +2038,6 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     auto input_node = NewValueNode(value);
     input_node->set_abstract(value->ToAbstract());
     manager->AddEdge(node, input_node);
-    primitive->EraseAttr(it.first);
     auto new_input_op = Convert(input_node);
     // Get input desc.
     auto input_name = it.second;
@@ -2551,15 +2570,23 @@ void DfGraphConvertor::TransInputDataType(const CNodePtr &node, std::string node
     TypeId dst_type = item.second;
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<CNode>() || input_node->isa<Parameter>()) {
+      auto src_type = input_node->Type()->type_id();
+      if (kObjectTypeTensorType == src_type) {
+        src_type = dyn_cast<TensorType>(input_node->Type())->element()->type_id();
+      }
+      if (!IsValidConversion(src_type, dst_type)) {
+        continue;
+      }
       auto new_cast = CreateCast(input_node, TypeIdToType(dst_type));
       node->set_input(item.first, new_cast);
     } else if (input_node->isa<ValueNode>()) {
       auto input_value_node = input_node->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(input_value_node);
       auto value = input_value_node->value();
-      MS_EXCEPTION_IF_NULL(value);
       ValuePtr new_value = CastDstValue(value, dst_type);
-      MS_EXCEPTION_IF_NULL(new_value);
+      if (new_value == nullptr) {
+        continue;
+      }
       auto new_value_node = std::make_shared<ValueNode>(new_value);
       MS_EXCEPTION_IF_NULL(new_value_node);
       new_value_node->set_abstract(new_value->ToAbstract());
@@ -2587,12 +2614,10 @@ void DfGraphConvertor::TransAttrDataType(const CNodePtr &node, std::string node_
                         << " has no attr:" << attr_name;
     }
     auto attr_value = prim->GetAttr(attr_name);
-    if (GetElemType(attr_value) == dst_type) {
-      MS_LOG(DEBUG) << "No need to convert.";
+    auto new_attr_value = CastDstValue(attr_value, dst_type);
+    if (new_attr_value == nullptr) {
       continue;
     }
-    auto new_attr_value = CastDstValue(attr_value, dst_type);
-    MS_EXCEPTION_IF_NULL(new_attr_value);
     prim->set_attr(attr_name, new_attr_value);
   }
   MS_LOG(DEBUG) << "Finish to trans attr data type of node:" << node->DebugString();
