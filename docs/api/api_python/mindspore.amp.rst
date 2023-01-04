@@ -26,4 +26,5 @@ Cell管理
     mindspore.amp.StaticLossScaler
     mindspore.amp.LossScaler
     mindspore.amp.auto_mixed_precision
+    mindspore.amp.init_status
     mindspore.amp.all_finite
