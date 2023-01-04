@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from mindspore._checkparam import Rel, Validator as validator
+from mindspore._checkparam import Validator as validator
 from mindspore._extends import cell_attr_register
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
@@ -746,13 +746,6 @@ class Tanhshrink(Cell):
         return x - self.tanh(x)
 
 
-@constexpr
-def _dtype_check(x_dtype, prim_name):
-    """Check dtype."""
-    if x_dtype not in [mstype.float32, mstype.float16]:
-        raise TypeError("For {}, the x_dtype must be float32 or float16, but got {}.".format(prim_name, x_dtype))
-
-
 class Hardtanh(Cell):
     r"""
     Applies the Hardtanh function element-wise. The activation function is defined as:
@@ -804,34 +797,11 @@ class Hardtanh(Cell):
     def __init__(self, min_val=-1.0, max_val=1.0):
         """Initialize Hardtanh."""
         super(Hardtanh, self).__init__()
-        validator.check_value_type('min_val', min_val, [float, int], self.cls_name)
-        validator.check_value_type('max_val', max_val, [float, int], self.cls_name)
-        validator.check_number("max_val", max_val, min_val, Rel.GE, self.cls_name)
-
-        self.max = P.Maximum()
-        self.min = P.Minimum()
         self.min_val = min_val
         self.max_val = max_val
-        self.dtype = P.DType()
-        self.expand = P.ExpandDims()
-        self.squeeze = P.Squeeze(0)
 
     def construct(self, x):
-        if not isinstance(x, Tensor):
-            raise TypeError("'x' must be a Tensor")
-        _dtype_check(self.dtype(x), self.cls_name)
-        # min_val and max_val are scalars, if x is 0d, x is also a scalar.
-        # However, ops.Maximum does not support input two scalar.
-        # To solve this problem, expand x from scalar to tensor, apply Maximum, then squeeze the output back to scalar.
-        if not x.shape:
-            x = self.expand(x, 0)
-            x = self.max(x, self.min_val)
-            x = self.min(x, self.max_val)
-            x = self.squeeze(x)
-        else:
-            x = self.max(x, self.min_val)
-            x = self.min(x, self.max_val)
-        return x
+        return F.hardtanh(x, self.min_val, self.max_val)
 
 
 class GELU(Cell):

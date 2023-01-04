@@ -69,12 +69,12 @@ Loss Functions
     mindspore.ops.cross_entropy
     mindspore.ops.gaussian_nll_loss
     mindspore.ops.hinge_embedding_loss
+    mindspore.ops.huber_loss
     mindspore.ops.l1_loss
     mindspore.ops.leaky_relu
     mindspore.ops.mse_loss
     mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
-    mindspore.ops.threshold
 
 Activation Functions
 ^^^^^^^^^^^^^^^^^^^^
@@ -92,6 +92,7 @@ Activation Functions
     mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
     mindspore.ops.hardswish
+    mindspore.ops.hardtanh
     mindspore.ops.log_softmax
     mindspore.ops.logsigmoid
     mindspore.ops.mish
@@ -103,6 +104,7 @@ Activation Functions
     mindspore.ops.softmax
     mindspore.ops.softmin
     mindspore.ops.tanh
+    mindspore.ops.threshold
 
 Distance Functions
 ^^^^^^^^^^^^^^^^^^^^

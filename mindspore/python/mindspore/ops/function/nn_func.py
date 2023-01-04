@@ -3122,11 +3122,7 @@ def l1_loss(x, target, reduction='mean'):
     if x.shape != target.shape:
         raise ValueError(f"For l1_loss, x and target must be the same shape, but got {x.shape} and {target.shape}")
     loss = _get_cache_prim(P.Abs)()(x - target)
-    if reduction == "mean":
-        loss = _get_cache_prim(P.ReduceMean)()(loss, _get_axis(loss))
-    if reduction == "sum":
-        loss = _get_cache_prim(P.ReduceSum)()(loss, _get_axis(loss))
-    return loss
+    return _get_loss(loss, reduction, "l1_loss")
 
 
 def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
@@ -3446,6 +3442,13 @@ def _check_is_tensor(param_name, input_data, cls_name):
     if input_data is not None and not isinstance(ops.typeof(input_data), mstype.tensor_type):
         raise TypeError(f"For '{cls_name}', the '{param_name}' must be '{mstype.tensor_type}', "
                         f"but got '{ops.typeof(input_data)}'")
+
+
+#TODO: remove comment
+@constexpr
+def _check_number_gt_value(arg_name, arg_value, value, cls_name):
+    """Internal function, used to judge whether arg_value is greater than or equal to value."""
+    return validator.check_number(arg_name, arg_value, value, Rel.GT, cls_name)
 
 
 def _get_axis(x):
@@ -4164,6 +4167,124 @@ def hardsigmoid(input_x):
     """
     hardsigmoid_ = NN_OPS.HSigmoid()
     return hardsigmoid_(input_x)
+
+
+def hardtanh(x, min_val=-1.0, max_val=1.0):
+    r"""
+    Applies the hardtanh activation function element-wise. The activation function is defined as:
+
+    .. math::
+        \text{hardtanh}(x) = \begin{cases}
+            1, & \text{ if } x > 1; \\
+            -1, & \text{ if } x < -1; \\
+            x, & \text{ otherwise. }
+        \end{cases}
+
+    Linear region range :math:`[-1, 1]` can be adjusted using `min_val` and `max_val`.
+
+    Args:
+        x (Tensor): Input Tensor.
+        min_val (Union[int, float]): Minimum value of the linear region range. Default: -1.0.
+        max_val (Union[int, float]): Maximum value of the linear region range. Default: 1.0.
+
+    Returns:
+        Tensor, with the same dtype and shape as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `min_val` is neither float nor int.
+        TypeError: If dtype of `max_val` is neither float nor int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([-1, -2, 0, 2, 1], mindspore.float16)
+        >>> output = ops.hardtanh(x, min_val=-1.0, max_val=1.0)
+        >>> print(output)
+        [-1. -1.  0.  1.  1.]
+    """
+    _check_is_tensor('x', x, "hardtanh")
+    _check_value_type("min_val", min_val, [int, float], "hardtanh")
+    _check_value_type("max_val", max_val, [int, float], "hardtanh")
+    x = _get_cache_prim(P.Maximum)()(x, min_val)
+    x = _get_cache_prim(P.Minimum)()(x, max_val)
+    return x
+
+
+def huber_loss(x, target, reduction='mean', delta=1.0):
+    r"""
+    huber_loss calculate the error between the predicted value and the target value.
+    It has the advantages of both l1_loss and mse_loss.
+
+    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, the reduction parameter is set to "none"
+    then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction. The formula is as follows:
+
+    .. math::
+        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top
+
+    with
+
+    .. math::
+        l_n = \begin{cases}
+            0.5 * (x_n - y_n)^2, & \text{if } |x_n - y_n| < delta; \\
+            delta * (|x_n - y_n| - 0.5 * delta), & \text{otherwise. }
+        \end{cases}
+
+    where :math:`N` is the batch size.
+
+    If `reduction` is "mean" or "sum", then:
+
+    .. math::
+        \ell(x, y) =
+        \begin{cases}
+            \operatorname{mean}(L), & \text{if reduction} = \text{"mean";}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{"sum".}
+        \end{cases}
+
+    Args:
+        x (Tensor): Predicted value, Tensor of any dimension.
+        target (Tensor): Target value, same dtype and shape as the `x`.
+        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
+            Default: "mean".
+        delta (Union[int, float]): The threshold to change between two type of loss.
+            The value must be positive. Default: 1.0.
+
+    Returns:
+        Tensor, with the same dtype and shape as `x`.
+
+    Raises:
+        TypeError: If `x` or `target` is not a Tensor.
+        TypeError: If dtype of `delta` is neither float nor int.
+        ValueError: If `delta` is less than or equal to 0.
+        ValueError: If `reduction` is not one of "none", "mean", "sum".
+        ValueError: If `x` and `target` have different shapes.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([1, 2, 10, 2], mindspore.float32)
+        >>> target = Tensor([1, 5, 1, 20], mindspore.float32)
+        >>> output = ops.huber_loss(x, target, reduction="mean", delta=2)
+        >>> print(output)
+        13.5
+    """
+    _check_is_tensor('x', x, "huber_loss")
+    _check_is_tensor('target', target, "huber_loss")
+    _check_value_type("delta", delta, [int, float], "huber_loss")
+    _check_number_gt_value("delta", delta, 0.0, "huber_loss")
+    if x.shape != target.shape:
+        raise ValueError(f"For huber_loss, x and target must be the same shape, but got {x.shape} and {target.shape}")
+    sub = _get_cache_prim(P.Sub)()
+    multi = _get_cache_prim(P.Mul)()
+    z = sub(x, target)
+    z = _get_cache_prim(P.Abs)()(z)
+    cond = _get_cache_prim(P.Less)()(z, delta)
+    l1 = multi(0.5, _get_cache_prim(P.Square)()(z))
+    l2 = multi(delta, sub(z, 0.5 * delta))
+    loss = _get_cache_prim(P.Select)()(cond, l1, l2)
+    return _get_loss(loss, reduction, "huber_loss")
 
 
 def adaptive_avg_pool1d(input_x, output_size):
@@ -5414,6 +5535,8 @@ __all__ = [
     'mish',
     'lrn',
     'hardswish',
+    'hardtanh',
+    'huber_loss',
     'softsign',
     'selu',
     'softmax',
