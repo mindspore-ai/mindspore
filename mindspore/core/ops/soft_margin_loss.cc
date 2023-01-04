@@ -71,8 +71,9 @@ void SoftMarginLoss::Init(const std::string &reduction) { this->set_reduction(re
 MIND_API_OPERATOR_IMPL(SoftMarginLoss, BaseOperator);
 AbstractBasePtr SoftMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(SoftMarginLossInferShape(primitive, input_args),
-                                SoftMarginLossInferType(primitive, input_args));
+  auto shape = SoftMarginLossInferShape(primitive, input_args);
+  auto type = SoftMarginLossInferType(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
 }
 
 // AG means auto generated
