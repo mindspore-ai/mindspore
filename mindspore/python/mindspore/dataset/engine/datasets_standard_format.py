@@ -112,9 +112,9 @@ class MindDataset(MappableDataset, UnionBaseDataset):
     The columns of generated dataset depend on the source MindRecord files.
 
     Args:
-        dataset_files (Union[str, list[str]]): If dataset_file is a str, it represents for
+        dataset_files (Union[str, list[str]]): If `dataset_files` is a str, it represents for
             a file name of one component of a mindrecord source, other files with identical source
-            in the same path will be found and loaded automatically. If dataset_file is a list,
+            in the same path will be found and loaded automatically. If `dataset_files` is a list,
             it represents for a list of dataset files to be read directly.
         columns_list (list[str], optional): List of columns to be read (default=None).
         num_parallel_workers (int, optional): The number of readers (default=None).
