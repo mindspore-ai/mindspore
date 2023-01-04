@@ -838,7 +838,8 @@ def _tensor_setitem_by_bool_tensor_with_tensor(data, index, value):
     """Set a tensor item by a bool tensor with a tensor."""
     dtype = F.dtype(data)
     u_cast = F.cast(value, dtype)
-    result = data * index + u_cast * F.logical_not(index)
+    index = index.reshape(const_utils.generate_padding_shape(index.shape, len(data.shape)))
+    result = u_cast * index + data * F.logical_not(index)
     return result
 
 
