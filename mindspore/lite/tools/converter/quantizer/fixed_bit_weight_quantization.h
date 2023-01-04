@@ -96,14 +96,15 @@ class FixedBitWeightQuantization {
         weight_quant_type = FIXED_BIT_PER_LAYER;
       }
     }
+    if (weight->data_type_c() != kNumberTypeFloat32) {
+      MS_LOG(ERROR) << "data type is not Float32.";
+      return RET_ERROR;
+    }
 
     std::vector<schema::QuantParamT> quant_params;
     int ret = RET_OK;
     if (weight_quant_type == FIXED_BIT_PER_CHANNEL) {
-      bool cal_gain = false;
-      if (quant_type == QUANT_WEIGHT) {
-        cal_gain = true;
-      }
+      bool cal_gain = (quant_type == QUANT_WEIGHT) ? true : false;
       ret = DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(), &quant_params, quant_max,
                                  quant_min, bit_num, quant_data, ConvertShapeVectorToInt32(dims), preferred_dim,
                                  cal_gain, symmetric, narrow_range);

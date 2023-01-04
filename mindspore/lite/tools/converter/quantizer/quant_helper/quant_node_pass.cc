@@ -36,7 +36,7 @@ int QuantNodePass::DoWeightQuant(const CNodePtr &cnode) {
     auto input = cnode->input(idx);
     ParameterPtr parameter;
     tensor::TensorPtr weight;
-    GetLiteParameter(input, &parameter, &weight);
+    GetParameterAndTensor(input, &parameter, &weight);
     if (parameter == nullptr || weight == nullptr || weight->data_type() != TypeId::kNumberTypeFloat32) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " can not quant weight";
       continue;

@@ -36,7 +36,7 @@ class InsertQuantNodeManager {
   int InsertDynamicQuantNode(const FuncGraphPtr &graph, const std::set<PrimitivePtr> &support_dynamic_quant_ops,
                              const std::set<std::string> &skip_quant_node);
 
-  int InsertFP32DtypeCastNode(const FuncGraphPtr &graph);
+  int InsertDequantNode(const FuncGraphPtr &graph);
 
   int InsertForwardCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype,
                             quant::QuantType curr_quant_type);
@@ -47,8 +47,9 @@ class InsertQuantNodeManager {
   int InsertBackwardCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype,
                              quant::QuantType curr_quant_type);
 
-  int InsertWeightQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index, TypeId src_dtype,
-                            TypeId dst_dtype, int axis);
+  int InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
+                                  TypeId src_dtype, TypeId dst_dtype, int axis);
+
   int InsertFSEDecodeNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index, TypeId dst_dtype);
 
  private:
@@ -67,8 +68,10 @@ class InsertQuantNodeManager {
 
   int InsertBackwardDeQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index,
                                     const AnfNodePtr &output_node);
+
   int InserQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, InsertDirection insert_direction,
                          TypeId cast_dtype, CastNodeType cast_node_type, size_t index, const AnfNodePtr &output_node);
+
   int CreateFSEInputs(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, std::vector<AnfNodePtr> *op_inputs,
                       TypeId dst_dtype);
 
@@ -77,8 +80,8 @@ class InsertQuantNodeManager {
                                      const std::vector<schema::QuantParamT> &output_quant_params, int axis = 0,
                                      bool set_quant_flag = true);
 
-  ValueNodePtr NewFSEDecodePrimitive(int dst_type, const uint64_t curr_chunk, const int64_t curr_chunk_index,
-                                     const int64_t curr_bit_count, const int64_t table_log);
+  ValueNodePtr NewFSEDecodePrimitive(int dst_type, uint64_t curr_chunk, int64_t curr_chunk_index,
+                                     int64_t curr_bit_count, int64_t table_log);
 
  private:
   TypeId dst_type_ = kNumberTypeInt8;

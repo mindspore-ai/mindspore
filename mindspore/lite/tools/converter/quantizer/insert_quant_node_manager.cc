@@ -33,7 +33,6 @@
 namespace mindspore::lite::quant {
 namespace {
 constexpr size_t kMinSize3 = 3;
-constexpr size_t kPrimitiveCOffset = 1;
 constexpr size_t kTableExtend = 3;
 constexpr size_t kAlignOffset = 7;
 constexpr size_t kInt32Mask = 31;
@@ -112,16 +111,16 @@ int InsertQuantNodeManager::NewDynamicQuantNode(const FuncGraphPtr &graph, const
     MS_LOG(ERROR) << op_name << " cnode size:" << cnode->size() << " < 3.";
     return RET_ERROR;
   }
-  auto input = cnode->input(kInputIndex + kPrimitiveCOffset);
+  auto input = cnode->input(kInputIndex + kPrimOffset);
   if (input->isa<mindspore::CNode>() || IsGraphInput(input)) {
-    auto ret = InsertDynamicQuantWithIndex(graph, cnode, kInputIndex + kPrimitiveCOffset);
+    auto ret = InsertDynamicQuantWithIndex(graph, cnode, kInputIndex + kPrimOffset);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert dynamic quant with index failed.";
     }
   }
-  auto weight = cnode->input(kWeightIndex + kPrimitiveCOffset);
+  auto weight = cnode->input(kWeightIndex + kPrimOffset);
   if (weight->isa<mindspore::CNode>() || IsGraphInput(weight)) {
-    auto ret = InsertDynamicQuantWithIndex(graph, cnode, kWeightIndex + kPrimitiveCOffset);
+    auto ret = InsertDynamicQuantWithIndex(graph, cnode, kWeightIndex + kPrimOffset);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert dynamic quant with index failed.";
     }
@@ -130,12 +129,9 @@ int InsertQuantNodeManager::NewDynamicQuantNode(const FuncGraphPtr &graph, const
 }
 
 int InsertQuantNodeManager::MarkDynamicQuantize(const CNodePtr &cnode) {
-  MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
+  CHECK_NULL_RETURN(cnode);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(primitive);
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   quant_param_holder->set_quant_type(quant::QUANT_DYNAMIC);
   return RET_OK;
@@ -144,7 +140,7 @@ int InsertQuantNodeManager::MarkDynamicQuantize(const CNodePtr &cnode) {
 int InsertQuantNodeManager::InsertDynamicQuantNode(const FuncGraphPtr &graph,
                                                    const std::set<PrimitivePtr> &support_dynamic_quant_ops,
                                                    const std::set<std::string> &skip_quant_node) {
-  MS_ASSERT(graph != nullptr);
+  CHECK_NULL_RETURN(graph);
   auto cnodes = graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     auto op_name = cnode->fullname_with_scope();
@@ -184,7 +180,7 @@ int InsertQuantNodeManager::InsertDynamicQuantNode(const FuncGraphPtr &graph,
   return RET_OK;
 }
 
-int InsertQuantNodeManager::InsertFP32DtypeCastNode(const FuncGraphPtr &graph) {
+int InsertQuantNodeManager::InsertDequantNode(const FuncGraphPtr &graph) {
   CHECK_NULL_RETURN(graph);
   auto cnodes = graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
@@ -219,6 +215,8 @@ int InsertQuantNodeManager::InserQuantCastNode(const FuncGraphPtr &graph, const 
                                                InsertDirection insert_direction, TypeId cast_dtype,
                                                CastNodeType cast_node_type, size_t index,
                                                const AnfNodePtr &output_node) {
+  CHECK_NULL_RETURN(graph);
+  CHECK_NULL_RETURN(cnode);
   if (insert_direction == FORWARD) {
     return InsertForwardQuantCastNode(graph, cnode, cast_dtype, index, cast_node_type);
   } else if (insert_direction == BACKWARD && cast_node_type == kDeQuant) {
@@ -287,7 +285,7 @@ int InsertQuantNodeManager::InsertForwardQuantCastNode(const FuncGraphPtr &graph
   ValueNodePtr new_primitive = NewQuantCastPrimitive(src_dtype, dst_dtype, input_quant_params, output_quant_params);
   std::vector<AnfNodePtr> op_inputs = {new_primitive, input_node};
   auto quant_cast_cnode = graph->NewCNode(op_inputs);
-  MS_CHECK_TRUE_MSG(quant_cast_cnode != nullptr, RET_NULL_PTR, "quant_cast_cnode is nullptr.");
+  CHECK_NULL_RETURN(quant_cast_cnode);
   quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_dtype_cast_" + std::to_string(index) +
                                             "_pre");
   // set abstract
@@ -305,7 +303,7 @@ int InsertQuantNodeManager::InsertForwardQuantCastNode(const FuncGraphPtr &graph
   if (manager == nullptr) {
     manager = Manage(graph, true);
   }
-  MS_CHECK_TRUE_RET(manager != nullptr, RET_NULL_PTR);
+  CHECK_NULL_RETURN(manager);
   manager->SetEdge(cnode, index, quant_cast_cnode);
   MS_LOG(INFO) << "InsertForwardQuantCastNode cnode name: " << cnode->fullname_with_scope()
                << " src dtype:" << src_dtype << " dst_type: " << dst_dtype;
@@ -464,8 +462,9 @@ int InsertQuantNodeManager::InsertBackwardCastNode(const FuncGraphPtr &graph, co
   }  // node_users
   return RET_OK;
 }
-int InsertQuantNodeManager::InsertWeightQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                                  size_t input_index, TypeId src_dtype, TypeId dst_dtype, int axis) {
+int InsertQuantNodeManager::InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                        size_t input_index, TypeId src_dtype, TypeId dst_dtype,
+                                                        int axis) {
   auto primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
@@ -688,9 +687,8 @@ ValueNodePtr InsertQuantNodeManager::NewQuantCastPrimitive(int src_type, int dst
   return NewValueNode(prim);
 }
 
-ValueNodePtr InsertQuantNodeManager::NewFSEDecodePrimitive(int dst_type, const uint64_t curr_chunk,
-                                                           const int64_t curr_chunk_index, const int64_t curr_bit_count,
-                                                           const int64_t table_log) {
+ValueNodePtr InsertQuantNodeManager::NewFSEDecodePrimitive(int dst_type, uint64_t curr_chunk, int64_t curr_chunk_index,
+                                                           int64_t curr_bit_count, int64_t table_log) {
   auto prim_c = std::make_shared<ops::FSEDecode>();
   MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
   prim_c->Init(dst_type, curr_chunk, curr_chunk_index, curr_bit_count, table_log);

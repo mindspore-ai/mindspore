@@ -73,7 +73,7 @@ STATUS QATTransform::DoSingleGraphQATTransform(const FuncGraphPtr &func_graph) {
     return ret;
   }
   InsertQuantNodeManager inset_quant_node_pass;
-  ret = inset_quant_node_pass.InsertFP32DtypeCastNode(func_graph);
+  ret = inset_quant_node_pass.InsertDequantNode(func_graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Add QuantCast failed";
     return RET_ERROR;
@@ -149,7 +149,7 @@ int QATTransform::QuantWeight(const FuncGraphPtr &func_graph) {
       auto input = cnode->input(i);
       ParameterPtr parameter;
       tensor::TensorPtr tensor_info;
-      GetLiteParameter(input, &parameter, &tensor_info);
+      GetParameterAndTensor(input, &parameter, &tensor_info);
 
       if (parameter == nullptr || tensor_info == nullptr ||
           tensor_info->compression_type() != mindspore::kNoCompression ||

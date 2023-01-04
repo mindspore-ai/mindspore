@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,15 +45,8 @@ using std::vector;
 
 namespace mindspore::lite::quant {
 namespace {
-constexpr int kLstmInputWeightIndex = 1;
-constexpr int kLstmStateWeightIndex = 2;
-constexpr int kLstmWeightShapeSize = 3;
-constexpr int kSingleDirBiasTensorSize = 4;
-constexpr int kLstmBiasShapeSize = 2;
-constexpr int kLstmBiasIndex = 3;
 constexpr size_t kGatherAxisIndex = 3;
-constexpr size_t kAnfPrimitiveIndex = 0;
-constexpr int kDefaultThreadNumFour = 4;
+constexpr int kDefaultThreadNum = 4;
 }  // namespace
 
 int GetQuantType(const CNodePtr &cnode, quant::QuantType *quant_type) {
@@ -92,10 +85,10 @@ void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_f
   }
 }
 
-int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type) {
-  auto abstract_base = cnode->abstract();
+int UpdateDataType(const AnfNodePtr &node, TypeId new_data_type) {
+  auto abstract_base = node->abstract();
   if (abstract_base == nullptr) {
-    MS_LOG(ERROR) << "Abstract of node is nullptr, " << cnode->fullname_with_scope();
+    MS_LOG(ERROR) << "Abstract of node is nullptr, " << node->fullname_with_scope();
     return RET_NULL_PTR;
   }
 
@@ -260,7 +253,7 @@ Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, con
     delete meta_graph;
     return kLiteNullptr;
   }
-  context->SetThreadNum(kDefaultThreadNumFour);
+  context->SetThreadNum(kDefaultThreadNum);
   context->SetThreadAffinity(kCpuBindMode);
 
   std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
@@ -297,7 +290,7 @@ std::vector<mindspore::lite::Tensor *> MSTensorToLiteTensors(const std::vector<m
   return dst_tensors;
 }
 
-void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info) {
+void GetParameterAndTensor(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info) {
   if (node == nullptr) {
     MS_LOG(ERROR) << "node is nullptr";
     return;
@@ -330,7 +323,7 @@ int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &wei
     MS_LOG(ERROR) << "Data size of tensor info is error.";
     return RET_ERROR;
   }
-  if (memcpy_s(weight->data_c(), new_size, quant_datas, new_size) != EOK) {
+  if (memcpy_s(weight->data_c(), weight->data().nbytes(), quant_datas, new_size) != EOK) {
     MS_LOG(ERROR) << "memcpy data failed.";
     return RET_ERROR;
   }
@@ -379,7 +372,7 @@ int GetDeConvPreferredDim(const PrimitivePtr &primitive, const std::vector<int> 
 }
 
 int GetGatherPreferredDim(const CNodePtr &cnode) {
-  if (cnode->size() < kGatherAxisIndex + 1) {
+  if (cnode->size() < kGatherAxisIndex + kPrimOffset) {
     MS_LOG(WARNING) << "gather cnode size < 4.";
     return 0;
   }
@@ -498,10 +491,10 @@ bool CheckControlFlowType(const AnfNodePtr &node) {
   if (node->isa<mindspore::CNode>()) {
     auto cnode = node->cast<CNodePtr>();
     // control flow call
-    if (!IsValueNode<mindspore::Primitive>(cnode->input(kAnfPrimitiveIndex))) {
+    if (!IsValueNode<mindspore::Primitive>(cnode->input(kPrimIndex))) {
       return true;
     }
-    auto prim = GetValuePtr<mindspore::Primitive>(cnode->input(kAnfPrimitiveIndex));
+    auto prim = GetValuePtr<mindspore::Primitive>(cnode->input(kPrimIndex));
     if (control_flow_ops.find(prim->name()) != control_flow_ops.end()) {
       return true;
     }

@@ -128,7 +128,7 @@ int FixedBitWeightQuantization::QuantBias(const ParameterPtr &bias, const Primit
   auto ret =
     UpdateTensorDataAndSize(bias, bias_param, quant_datas.data(), shape_size * sizeof(int32_t), kNumberTypeInt32);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << bias->fullname_with_scope() << " update tensor data adn size failed.";
+    MS_LOG(ERROR) << bias->fullname_with_scope() << " update tensor data and size failed.";
     return RET_ERROR;
   }
   return RET_OK;

@@ -140,7 +140,7 @@ int CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vec
 
 template <typename T>
 int DoPerChannelQuant(const float *raw_datas, size_t elem_count, std::vector<schema::QuantParamT> *quant_params,
-                      const int &quant_max, const int &quant_min, const size_t &bit_num, std::vector<T> *quant_datas,
+                      int quant_max, int quant_min, size_t bit_num, std::vector<T> *quant_datas,
                       const std::vector<int> &dims, int preferred_dim, bool cal_gain = true, bool symmetric = false,
                       bool narrow_range = false) {
   if (raw_datas == nullptr || quant_params == nullptr || quant_datas == nullptr) {
