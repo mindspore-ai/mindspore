@@ -18,6 +18,7 @@ from typing import NamedTuple
 from ...common import Tensor
 from ._bfgs import minimize_bfgs
 from ._lbfgs import minimize_lbfgs
+from ._lagrange import minimize_lagrange
 
 
 class OptimizeResults(NamedTuple):
@@ -47,6 +48,22 @@ class OptimizeResults(NamedTuple):
     nit: int
 
 
+def lagrange_para_check(func, constraints, options, tol):
+    """check the parameter of lagrange method."""
+
+    if not callable(func):
+        raise TypeError(" 'func' must be of type function, but got {}".format(type(func)))
+    if 'coincide_func' in options:
+        if not callable(options['coincide_fun']):
+            raise TypeError(" 'coincide_fun' must be of type function, but got {}".format(type(coincide_fun)))
+    for constraint in constraints:
+        if not callable(constraint):
+            raise TypeError(" 'constraint' must be of type function, but got {}".format(type(constraint)))
+    if tol is not None:
+        if len(tol) != len(constraints):
+            raise ValueError("The len of tol must be same as the len of constraints")
+
+
 def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bounds=None, constraints=(),
              tol=None, callback=None, options=None):
     r"""Minimization of scalar function of one or more variables.
@@ -66,6 +83,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
           multi-dimensional Tensor, but support for both is planned.
 
         - `minimize` is not supported on Windows platform yet.
+        -  `LAGRANGE` method is only supported on "GPU".
 
     Args:
       func (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
@@ -75,7 +93,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
       x0 (Tensor): initial guess. Array of real elements of size :math:`(n,)`, where `n` is
           the number of independent variables.
       args (Tuple): extra arguments passed to the objective function. Default: ().
-      method (str): solver type. Should be one of `"BFGS"` and `"LBFGS"`.
+      method (str): solver type. Should be one of `"BFGS"` and `"LBFGS"`, `"LAGRANGE"`.
       jac (Callable, optional): method for computing the gradient vector. Only for `"BFGS"` and `"LBFGS"`.
           if it is None, the gradient will be estimated with gradient of ``func``.
           if it is a callable, it should be a function that returns the gradient vector:
@@ -83,6 +101,8 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
           where x is an array with shape (n,) and args is a tuple with the fixed parameters.
       tol (float, optional): tolerance for termination. For detailed control, use solver-specific
           options. Default: None.
+      constraints(Callable, optional): representing the inequality constrains, each function in constrains indicates
+          the function < 0 as an inequality constrain.
       options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following
           generic options, Default: None.
 
@@ -91,6 +111,18 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
 
           - maxiter (int): Maximum number of iterations to perform. Depending on the
             method each iteration may use several function evaluations.
+
+      The follow options are exclusive to Lagrange method.
+         -  save_tol (list): list of saving tolerance, with the same length with 'constrains'.
+          - obj_weight (float): weight for objective function, usually between 1.0 - 100000.0.
+          - lower (Tensor): lower bound constrain for variables, must have same shape with x0.
+          - upper (Tensor): upper bound constrain for variables, must have same shape with x0.
+          - learning_rate (float): learning rate for each Adam step.
+          - coincide_func (Callable): sub-function representing the common parts between objective function
+              and constrains to avoid redundant computation.
+          - rounds (int): times to update Lagrange multipliers.
+          - steps (int): steps to apply Adam per round.
+          - log_sw (bool): whether to print the loss at each step.
 
     Returns:
         OptimizeResults, object holding optimization results.
@@ -154,5 +186,11 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
                                nfev=results.nfev,
                                njev=results.ngev,
                                nit=results.k)
+
+
+    if method.lower() == 'lagrange':
+        lagrange_para_check(func, constraints, options, tol)
+        results = minimize_lagrange(func, x0, constraints, tol, **options)
+        return results
 
     raise ValueError("Method {} not recognized".format(method))
