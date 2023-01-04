@@ -100,38 +100,6 @@ def get_bprop_bias_add_grad(self):
     return bprop
 
 
-@bprop_getters.register(P.Conv2D)
-def get_bprop_conv2d(self):
-    """Grad definition for `Conv2D` operation."""
-    out_channel = self.get_attr_dict()["out_channel"]
-    pad_list = self.get_attr_dict()["pad_list"]
-    input_grad = P.Conv2DBackpropInput(
-        out_channel, self.kernel_size, self.pad_mode, self.pad, pad_list, mode=self.mode,
-        dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
-    )
-    filter_grad = G.Conv2DBackpropFilter(
-        out_channel, self.kernel_size, self.pad_mode, self.pad, pad_list, mode=self.mode,
-        dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
-    )
-    get_shape = P.Shape()
-    get_dyn_shape = P.TensorShape()
-    cast_type = P.Cast()
-
-    def bprop(x, w, out, dout):
-        x_shape = get_shape(x)
-        w_shape = get_shape(w)
-        if F.is_sequence_value_unknown(x_shape):
-            x_shape = get_dyn_shape(x)
-        if F.is_sequence_value_unknown(w_shape):
-            w_shape = get_dyn_shape(w)
-            w_shape = cast_type(w_shape, mstype.int32)
-        dx = input_grad(dout, w, x_shape)
-        dw = filter_grad(dout, x, w_shape)
-        return dx, dw
-
-    return bprop
-
-
 @bprop_getters.register(nps.Conv3D)
 def get_bprop_conv3d(self):
     """Grad definition for `Conv3D` operation."""
@@ -395,22 +363,6 @@ def get_bprop_max_pool_grad_grad_grad(self):
     return bprop
 
 
-@bprop_getters.register(P.MaxPool)
-def get_bprop_max_pool_grad(self):
-    """Grad definition for `MaxPool` operation."""
-    maxpool_grad = G.MaxPoolGrad(
-        kernel_size=self.kernel_size,
-        strides=self.strides,
-        pad_mode=self.pad_mode,
-        data_format=self.format)
-
-    def bprop(x, out, dout):
-        dx = maxpool_grad(x, out, dout)
-        return (dx,)
-
-    return bprop
-
-
 @bprop_getters.register(P.MaxPool3D)
 def get_bprop_max_pool3d_grad(self):
     """Grad definition for `MaxPool3D` operation."""
@@ -596,18 +548,6 @@ def get_bprop_mul_no_nan(self):
         if broadcast_y != ():
             dy = reshape(reduce_sum(dy, broadcast_y), y_shape)
         return dx, dy
-
-    return bprop
-
-
-@bprop_getters.register(P.ReLU)
-def get_bprop_relu(self):
-    """Grad definition for `ReLU` operation."""
-    input_grad = G.ReluGrad()
-
-    def bprop(x, out, dout):
-        dx = input_grad(dout, out)
-        return (dx,)
 
     return bprop
 
@@ -910,30 +850,6 @@ def get_bprop_instance_norm(self):
     return bprop
 
 
-@bprop_getters.register(P.BatchNorm)
-def get_bprop_batch_norm(self):
-    """Grad definition for `BatchNorm` operation."""
-    is_training = self.is_training
-    input_grad = G.BatchNormGrad(is_training, self.epsilon, self.data_format)
-
-    def bprop(x, scale, b, mean, variance, out, dout):
-        if is_training:
-            saved_mean = out[3]
-            saved_variance = out[4]
-            reserve = out[2]
-        else:
-            saved_mean = mean
-            saved_variance = variance
-            reserve = out[2]
-        out = input_grad(dout[0], x, scale, saved_mean, saved_variance, reserve)
-        dx = out[0]
-        dscale = out[1]
-        dbias = out[2]
-        return dx, dscale, dbias, zeros_like(mean), zeros_like(variance)
-
-    return bprop
-
-
 @bprop_getters.register(G.BatchNormGrad)
 def get_bprop_batch_norm_grad(self):
     """Grad definition for `BatchNorm` operation."""
@@ -942,19 +858,6 @@ def get_bprop_batch_norm_grad(self):
     def bprop(dy, x, scale, mean, variance, reserve, out, dout):
         dx, ddy, dscale = grad_op(x, dy, scale, mean, variance, dout[0], dout[1], dout[2])
         return ddy, dx, dscale, zeros_like(mean), zeros_like(variance), zeros_like(reserve)
-
-    return bprop
-
-
-@bprop_getters.register(P.LayerNorm)
-def get_bprop_layer_norm(self):
-    """Grad definition for `LayerNorm` operation."""
-    layer_norm_grad = G.LayerNormGrad(self.begin_norm_axis, self.begin_params_axis)
-
-    def bprop(x, gamma, beta, out, dout):
-        dx, d_gamma, d_beta = layer_norm_grad(
-            x, dout[0], out[2], out[1], gamma)
-        return dx, d_gamma, d_beta
 
     return bprop
 

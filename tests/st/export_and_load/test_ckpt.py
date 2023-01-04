@@ -15,6 +15,7 @@
 import os
 import stat
 
+import numpy as np
 import pytest
 
 import mindspore.context as context
@@ -22,12 +23,15 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms as C
 import mindspore.dataset.vision as CV
 import mindspore.nn as nn
-from mindspore.train import ModelCheckpoint, CheckpointConfig, Callback
+from mindspore.train import ModelCheckpoint, CheckpointConfig, Callback, LossMonitor
 from mindspore import load_checkpoint
 from mindspore.common import dtype as mstype
 from mindspore.dataset.vision import Inter
 from mindspore.train import Model
 from mindspore.common.initializer import TruncatedNormal
+from mindspore.common.parameter import Parameter
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Accuracy
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -180,3 +184,50 @@ def test_ckpt_error():
     if os.path.exists(ckpt_list[0]):
         os.chmod(ckpt_list[0], stat.S_IWRITE)
         os.remove(ckpt_list[0])
+
+
+def get_data(num, img_size=(1, 32, 32), num_classes=10, is_onehot=True):
+    """Get Data"""
+    for _ in range(num):
+        img = np.random.randn(*img_size)
+        target = np.random.randint(0, num_classes)
+        target_ret = np.array([target]).astype(np.float32)
+        if is_onehot:
+            target_onehot = np.zeros(shape=(num_classes,))
+            target_onehot[target] = 1
+            target_ret = target_onehot.astype(np.float32)
+        yield img.astype(np.float32), target_ret
+
+
+def create_dataset_lenet(num_data=32, batch_size=32, repeat_size=1):
+    """Generate Data"""
+    input_data = ds.GeneratorDataset(list(get_data(num_data)), column_names=['data', 'label'])
+    input_data = input_data.batch(batch_size, drop_remainder=True)
+    input_data = input_data.repeat(repeat_size)
+    return input_data
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_checkpointconfig_append_info_and_load_checkpoint():
+    """
+    Feature: Save checkpoint for CheckpointConfig's append_info and load checkpoint.
+    Description: Test save checkpoint and load checkpoint for CheckpointConfig's append_info.
+    Expectation: Checkpoint for CheckpointConfig's append_info can be saved and reloaded.
+    """
+    if os.path.exists('./ckptconfig_append_info-1_1.ckpt'):
+        os.chmod('./ckptconfig_append_info-1_1.ckpt', stat.S_IWRITE)
+        os.remove('./ckptconfig_append_info-1_1.ckpt')
+
+    ds_train = create_dataset_lenet()
+    network = LeNet5(10)
+    net_loss = nn.SoftmaxCrossEntropyWithLogits()
+    net_opt = nn.Momentum(network.trainable_params(), learning_rate=0.01, momentum=0.9)
+    model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
+    config_ck = CheckpointConfig(save_checkpoint_steps=1, keep_checkpoint_max=1,
+                                 append_info=[{'param_1': Tensor(200.0),
+                                               'param_2': Parameter(Tensor([[1, 2], [3, 4]])),
+                                               'param_3': 'param_string'}])
+    ckpt_cb = ModelCheckpoint(prefix='ckptconfig_append_info', directory='./', config=config_ck)
+    model.train(epoch=1, train_dataset=ds_train, callbacks=[LossMonitor(), ckpt_cb])

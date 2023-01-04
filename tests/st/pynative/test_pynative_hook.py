@@ -221,4 +221,113 @@ def test_pynative_custom_bprop_and_Cell_Ms_Cell():
     ms_Cell = custom_cell.test_custom_cell_function(Ms_Cell())
     ms_Cell.bprop_debug = True
     assert grad_all(ms_Cell)(Tensor(1, mstype.float32)) == (Tensor(0.0, mstype.float32),)
-    
+
+
+CELL_HOOK_DONE = False
+VAR_HOOK_DONE = False
+CELL_BPROP_DONE = False
+
+
+def cell_hook_function1(cell_id, grad_input, grad_output):
+    print(cell_id)
+    global CELL_HOOK_DONE
+    CELL_HOOK_DONE = True
+    assert grad_output[0].asnumpy().shape == (32, 6, 14, 14)
+    assert grad_input[0].asnumpy().shape == (32, 16, 10, 10)
+
+
+def var_hook_function(grad_out):
+    print("grad:", grad_out)
+    global VAR_HOOK_DONE
+    VAR_HOOK_DONE = True
+    assert grad_out[0].asnumpy().shape == (32, 120)
+
+
+class Block(nn.Cell):
+    def __init__(self):
+        super(Block, self).__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        return x
+
+    def bprop(self, x, out, dout):
+        global CELL_BPROP_DONE
+        CELL_BPROP_DONE = True
+        grad = out.asnumpy() * dout.asnumpy()
+        grad = Tensor(grad)
+        return (grad,)
+
+
+class LeNet(nn.Cell):
+    """
+    Lenet network
+    Args:
+        num_class (int): Num classes. Default: 10.
+    Returns:
+        Tensor, output tensor
+
+    Examples:
+        >>> LeNet(num_class=10)
+    """
+    def __init__(self, num_class=10):
+        super(LeNet, self).__init__()
+        self.num_class = num_class
+        self.batch_size = 32
+        self.conv1 = conv(1, 6, 5)
+        self.conv2 = conv(6, 16, 5)
+        self.conv2.register_backward_hook(cell_hook_function1)
+        self.block = Block()
+        self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
+        self.fc2 = fc_with_initialize(120, 84)
+        self.fc3 = fc_with_initialize(84, self.num_class)
+        self.relu = nn.ReLU()
+        self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.reshape = P.Reshape()
+        self.hook = P.HookBackward(var_hook_function)
+
+    def construct(self, x):
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.max_pool2d(x)
+        x = self.conv2(x)
+        x = self.block(x)
+        x = self.max_pool2d(x)
+        x = self.reshape(x, (self.batch_size, -1))
+        x = self.fc1(x)
+        x = self.hook(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.relu(x)
+        x = self.fc3(x)
+        return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_hook():
+    """
+    Feature: Hook for auto diff.
+    Description: Run the hook during auto diff.
+    Expectation: No exception.
+    """
+    net = LeNet()
+    optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.1, 0.9)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
+    net_with_criterion = WithLossCell(net, criterion)
+    train_network = GradWrap(net_with_criterion)
+    train_network.set_train()
+
+    input_data = Tensor(np.ones([net.batch_size, 1, 32, 32]).astype(np.float32) * 0.01)
+    label = Tensor(np.ones([net.batch_size, net.num_class]).astype(np.float32))
+    output = net(Tensor(input_data))
+    loss_output = criterion(output, label)
+    grads = train_network(input_data, label)
+    optimizer(grads)
+    assert CELL_HOOK_DONE
+    assert VAR_HOOK_DONE
+    assert CELL_BPROP_DONE
+    print(loss_output.asnumpy())

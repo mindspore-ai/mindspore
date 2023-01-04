@@ -347,15 +347,11 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   if (is_custom_prim) {
     BuildBPropCutCNode(input_node, prim, &outputs);
   } else {
-#ifndef ENABLE_TEST
     auto ret = BpropExpander(&outputs, &users_).Run(input_node);
     if (!ret || outputs.empty()) {
       MS_LOG(DEBUG) << "Expander has no bprop of this prim: " << grad_param->cnode->DebugString();
       BuildCustomBpropCNode(input_node, prim, &outputs);
     }
-#else
-    BuildCustomBpropCNode(input_node, prim, &outputs);
-#endif
   }
   if (outputs.empty()) {
     MS_LOG(DEBUG) << "This op has not custom bprop: " << grad_param->cnode->DebugString();

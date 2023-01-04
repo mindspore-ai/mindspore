@@ -23,9 +23,7 @@ from mindspore.common.api import jit
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
-from ....mindspore_test_framework.utils.check_gradient import (
-    check_jacobian, Tensor, NNGradChecker,
-    OperationGradChecker, check_gradient)
+from ....mindspore_test_framework.utils.check_gradient import Tensor
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -625,103 +623,6 @@ def test_arithmetic_simplify_08():
     assert np.all(res.asnumpy() == expect)
 
 
-def test_GradCheckerPrimitive():
-    """ test_GradCheckerPrimitive """
-    matmul = P.MatMul()
-
-    def prim_f(x, y):
-        return matmul(x, y)
-
-    check_gradient(prim_f, Tensor(np.array([[0.65, 0.8, 0.8]], np.float32)),
-                   Tensor(np.array([[0.1], [0.2], [-.1]], np.float32)),
-                   grad_checker_class=OperationGradChecker, sampling_times=2)
-
-
-def test_NNGradChecker():
-    """ test_NNGradChecker """
-
-    class Net(nn.Cell):
-        """ Net definition """
-
-        def __init__(self):
-            super(Net, self).__init__()
-            self.dense = nn.Dense(10, 10)
-
-        def construct(self, x):
-            out = self.dense(x)
-            return out
-
-    check_gradient(Net(), Tensor(np.random.rand(1, 10).astype(np.float32)),
-                   delta=1e-3,
-                   max_error=1e-3,
-                   grad_checker_class=NNGradChecker, sampling_times=3)
-
-
-def test_OperationGradChecker():
-    """ test_OperationGradChecker """
-
-    class Net(nn.Cell):
-        """ Net definition """
-
-        def __init__(self):
-            super(Net, self).__init__()
-            self.matmul = P.MatMul()
-            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
-
-        def construct(self, x, y):
-            x = x * self.z
-            out = self.matmul(x, y)
-            return out
-
-    check_gradient(Net(), Tensor(np.array([[0.65, 0.8, 0.8]], np.float32)),
-                   Tensor(np.array([[0.1], [0.2], [-.1]], np.float32)), grad_checker_class=OperationGradChecker,
-                   input_selector=[1], sampling_times=2)
-
-
-def test_OperationJacobianChecker():
-    """ test_OperationJacobianChecker """
-
-    class Net(nn.Cell):
-        """ Net definition """
-
-        def __init__(self):
-            super(Net, self).__init__()
-            self.matmul = P.MatMul()
-            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
-
-        def construct(self, x, y):
-            x = x * self.z
-            out = self.matmul(x, y)
-            return x, out
-
-    check_jacobian(Net(), Tensor(np.array([[0.65, 0.8, 0.8], [0.1, 0.2, 0.3]], np.float32)),
-                   Tensor(np.array([[0.1, 0.3], [0.2, 0.2], [-.1, 0.4]], np.float32)),
-                   grad_checker_class=OperationGradChecker, input_selector=[0],
-                   output_selector=[0])
-
-
-def test_NNJacobianChecker():
-    """ test_NNJacobianChecker """
-
-    class Net(nn.Cell):
-        """ Net definition """
-
-        def __init__(self):
-            super(Net, self).__init__()
-            self.dense = nn.Dense(10, 10)
-
-        def construct(self, x):
-            out = self.dense(x)
-            return out, x
-
-    check_jacobian(Net(), Tensor(np.random.rand(1, 10).astype(np.float32)),
-                   delta=1e-3,
-                   max_error=1e-7,
-                   grad_checker_class=NNGradChecker,
-                   input_selector=[1],
-                   output_selector=[0])
-
-
 def multi_outputs(x, y):
     z = x + y
     return 2 * z, 2 * z
@@ -854,10 +755,6 @@ def test_grad_refactor_10():
 def test_grad_refactor_11():
     class Net(nn.Cell):
         """ Net definition """
-
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self, x, y):
             return x * y * y
 
