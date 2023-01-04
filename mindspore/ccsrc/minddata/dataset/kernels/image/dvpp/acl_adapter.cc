@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+#include <libgen.h>
 #include <algorithm>
 #include "utils/ms_context.h"
 
 namespace mindspore {
 namespace dataset {
 namespace {
-constexpr auto kAclPluginFileName = "libdvpp_utils.so";
+constexpr auto kAclPluginRelatedPath = "./lib/plugin/ascend/libdvpp_utils.so";
 }  // namespace
 AclAdapter &AclAdapter::GetInstance() {
   static AclAdapter instance{};
@@ -40,9 +41,17 @@ void AclAdapter::InitPlugin() {
   }
 #endif
 #if !defined(_WIN32) && !defined(_WIN64)
-  plugin_handle_ = dlopen(kAclPluginFileName, RTLD_LAZY | RTLD_LOCAL);
+  Dl_info dl_info;
+  if (dladdr(reinterpret_cast<void *>(AclAdapter::GetInstance), &dl_info) == 0) {
+    MS_LOG(INFO) << "Get dladdr error";
+    return;
+  }
+  std::string cur_so_path = dl_info.dli_fname;
+  std::string acl_plugin_path = std::string(dirname(cur_so_path.data())) + "/" + kAclPluginRelatedPath;
+
+  plugin_handle_ = dlopen(acl_plugin_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
   if (plugin_handle_ == nullptr) {
-    MS_LOG(INFO) << "Cannot dlopen " << kAclPluginFileName << ", result = " << GetDlErrorMsg()
+    MS_LOG(INFO) << "Cannot dlopen " << acl_plugin_path << ", result = " << GetDlErrorMsg()
                  << ", it can be ignored if not running on ascend.";
     return;
   }
