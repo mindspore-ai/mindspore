@@ -33,8 +33,11 @@ class EuclideanNormGpuKernelMod : public NativeGpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
-    if (is_null_input_) {
-      return true;
+    for (size_t idx = 0; idx < inputs.size(); ++idx) {
+      if (inputs.size() == 0) {
+        cudaMemset(outputs[0]->addr, 0, outputs[0]->size);
+        return true;
+      }
     }
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
@@ -63,7 +66,6 @@ class EuclideanNormGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> axes_;
   bool keep_dims_;
   void *cuda_stream_{nullptr};
-  bool is_null_input_{false};
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
   std::vector<size_t> output_axes_;

@@ -62,28 +62,20 @@ bool EuclideanNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
 int EuclideanNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs,
                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  for (const auto &input : inputs) {
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
   }
 
   auto kernel_ptr = std::make_shared<ops::EuclideanNorm>(base_operator->GetPrim());
   axes_ = kernel_ptr->get_axes();
   keep_dims_ = kernel_ptr->get_keep_dims();
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
-    return ret;
-  }
+
   data_type_ = inputs.at(kIndex0)->GetDtype();
   input_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
-  is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input shape");
-  if (is_null_input_) {
-    return KRET_OK;
-  }
 
   output_shape_.clear();
   if (axes_.size() == input_shape.size()) {
