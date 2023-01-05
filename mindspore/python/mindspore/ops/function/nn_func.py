@@ -1902,7 +1902,7 @@ def _check_interpolate_inputs(input_dims, roi, scales, sizes, coordinate_transfo
     support_coordinate_mode_list = ["align_corners", "half_pixel", "asymmetric"]
     if coordinate_transformation_mode not in support_coordinate_mode_list:
         raise TypeError(f"{msg_prefix} coordinate_transformation_mode must be in {support_coordinate_mode_list},"
-                        " but got {coordinate_transformation_mode}")
+                        f" but got {coordinate_transformation_mode}")
     validator.check_value_type("mode", mode, [str], prim_name)
     if mode == "linear":
         validator.check_int(input_dims, 3, Rel.EQ, "input dims", prim_name)
