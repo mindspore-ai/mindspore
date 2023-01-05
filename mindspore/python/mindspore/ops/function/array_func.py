@@ -5710,11 +5710,11 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     elif offset != 0:
         e = e.astype(mstype.float32)
         if offset > 0:
-            e_left = fill_op(dtype, (n, offset), 0)
+            e_left = fill_op(mstype.float32, (n, offset), 0)
             e_right = e[..., 0:m - offset:1]
             e = _get_cache_prim(P.Concat)(1)((e_left, e_right)).astype(dtype)
         elif offset < 0:
-            e_upper = fill_op(dtype, (-offset, m), 0)
+            e_upper = fill_op(mstype.float32, (-offset, m), 0)
             e_lower = e[0:n + offset:1, ...]
             e = _get_cache_prim(P.Concat)(0)((e_upper, e_lower)).astype(dtype)
     e = _get_cache_prim(P.BroadcastTo)(x_shape)(e)

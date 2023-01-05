@@ -3480,7 +3480,7 @@ class Tensor(Tensor_):
             [30. 27.]
         """
         self._init_check()
-        return tensor_operator_registry.get('addmv')(self, mat, vec, beta=1, alpha=1)
+        return tensor_operator_registry.get('addmv')(self, mat, vec, beta=beta, alpha=alpha)
 
     def asinh(self):
         r"""
