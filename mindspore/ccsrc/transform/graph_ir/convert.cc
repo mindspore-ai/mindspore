@@ -70,6 +70,7 @@ constexpr auto kTypeIdentity = "Identity";
 constexpr auto kTypeIdentityN = "IdentityN";
 constexpr auto kTypeMerge = "Merge";
 constexpr auto kTypeIf = "If";
+constexpr auto kTypeVariable = "Variable";
 
 namespace {
 std::vector<AnfNodePtr> GetOrderedCNodes(const FuncGraphPtr fg, const AnfNodePtr node = nullptr) {
@@ -2163,7 +2164,7 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr 
       size_t parent_index = branch_to_parent_node_map[i];
       auto &parent_handle = inputs->at(parent_index);
       OperatorPtr op = nullptr;
-      if (parent_handle.node != nullptr && (parent_handle.node->abstract()->isa<abstract::AbstractRefTensor>())) {
+      if (parent_handle.op->GetOpType() == kTypeVariable) {
         auto name = parent_handle.op->GetName();
         op = std::make_shared<Variable>(name);
         (void)((static_pointer_cast<Variable>(op))->set_attr_index(parent_index));
