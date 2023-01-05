@@ -133,6 +133,8 @@ def _check_inputs(network_shapes, dataset_shapes, dataset_types):
     Check if set inputs are correct.
     """
     for tensor_index, ele_dataset_shape in enumerate(dataset_shapes):
+        if network_shapes[tensor_index] is None:
+            continue
         set_inputs_shape = list(network_shapes[tensor_index].shape)
         inputs_shape = list(ele_dataset_shape)
         if dataset_types[tensor_index] != network_shapes[tensor_index].dtype:
@@ -145,8 +147,6 @@ def _check_inputs(network_shapes, dataset_shapes, dataset_types):
             raise ValueError(
                 f"The {tensor_index + 1}th input dims of 'set_inputs' must be the same as network's input, "
                 f"but got 'set_inputs': {len(set_inputs_shape)} and network's input: {len(inputs_shape)}.")
-        if network_shapes[tensor_index] is None:
-            break
         for index, ele_shape in enumerate(ele_dataset_shape):
             if network_shapes[tensor_index].shape[index] != -1:
                 if set_inputs_shape[index] != ele_shape:
