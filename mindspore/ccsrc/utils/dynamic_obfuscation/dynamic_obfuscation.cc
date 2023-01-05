@@ -669,10 +669,6 @@ FuncGraphPtr DynamicObfuscator::CloneSubGraph(const FuncGraphPtr &fg, const std:
       default:
         return nullptr;
     }
-    auto node_inputs = node->inputs();
-    for (auto input_node : node_inputs) {
-      fg_clone->AddNode(input_node);
-    }
   }
 
   mindspore::ValueNodePtr return_v = std::make_shared<mindspore::ValueNode>(mindspore::prim::kPrimReturn);
@@ -759,10 +755,6 @@ FuncGraphPtr DynamicObfuscator::BuildFakeGraph(const FuncGraphPtr &fg, const std
       }
       default:
         return nullptr;
-    }
-    auto node_inputs = node->inputs();
-    for (auto input_node : node_inputs) {
-      fg_fake->AddNode(input_node);
     }
   }
 
@@ -924,7 +916,7 @@ void DynamicObfuscator::SubGraphFakeBranch(FuncGraphPtr func_graph) {
   int op_num = 0;
   std::vector<mindspore::AnfNodePtr> sorted_nodes;
   for (auto node : all_nodes) {
-    sorted_nodes = TopoSort(node);
+    sorted_nodes = TopoSort(node);  // the node number in front of sorted nodes is the smallest
     op_num = get_op_num(node);
     break;
   }
