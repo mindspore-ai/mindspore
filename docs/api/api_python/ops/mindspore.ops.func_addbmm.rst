@@ -22,4 +22,5 @@
         Tensor，和 `x` 具有相同的dtype。
 
     异常：
+        - **TypeError** - 如果 `alpha`，`beta` 不是int或者float。
         - **ValueError** - 如果 `batch1`， `batch2` 不能进行批量矩阵乘法。
