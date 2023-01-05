@@ -53,6 +53,8 @@ class DropoutCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
 
   ShapeVector input_shape_;
   float keep_prob_{0.0};
+  uint64_t seed_{0};
+  uint64_t seed_offset_{0};
   size_t tensor_size_{1};
 };
 }  // namespace kernel
