@@ -896,7 +896,7 @@ class Parser:
                 src = dedent(original_src)
                 self.col_offset = \
                     len(original_src.split('\n')[0]) - len(src.split('\n')[0])
-                logger.info("Get source: %s", src)
+                logger.debug("Get source: %s", src)
                 try:
                     ast_tokens = asttokens.ASTTokens(src, parse=True)
                 except IndentationError as idt_err:

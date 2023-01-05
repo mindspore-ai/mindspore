@@ -222,7 +222,8 @@ inline bool Skip(const MetaFuncGraphPtr &meta_func_graph) {
          meta_func_graph->isa<prim::UnpackCall>() || meta_func_graph->isa<prim::ZipOperation>() ||
          meta_func_graph->isa<prim::ListAppend>() || meta_func_graph->isa<prim::ListInsert>() ||
          meta_func_graph->isa<prim::DoSignatureMetaFuncGraph>() || meta_func_graph->isa<prim::VmapMatchOutAxis>() ||
-         meta_func_graph->isa<prim::VmapGeneralPreprocess>() || meta_func_graph->isa<prim::GradAux>();
+         meta_func_graph->isa<prim::VmapGeneralPreprocess>() || meta_func_graph->isa<prim::GradAux>() ||
+         meta_func_graph->isa<prim::PyExecuteGradient>();
 }
 
 /* inherit relation of MetaFuncGraph
@@ -236,6 +237,7 @@ inline bool Skip(const MetaFuncGraphPtr &meta_func_graph) {
  * ├── Tail
  * ├── MakeTupleGradient
  * ├── MakeListGradient
+ * ├── PyExecuteGradient
  * ├── GradOperation
  * ├── TupleAdd
  * └── SequenceSlice
