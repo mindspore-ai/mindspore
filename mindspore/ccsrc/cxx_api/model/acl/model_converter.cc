@@ -21,6 +21,7 @@
 #include "graph/model.h"
 #include "acl/acl_rt.h"
 #include "cxx_api/model/aoe/auto_tune_process.h"
+#include "plugin/device/ascend/optimizer/ge_optimization.h"
 
 namespace mindspore {
 namespace {
@@ -82,6 +83,9 @@ bool CreateSessionAndGraphRunner() {
 
 transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph) const {
   MS_EXCEPTION_IF_NULL(anf_graph);
+#ifndef BUILD_LITE
+  opt::GeOptimization(anf_graph);
+#endif
   auto converter = transform::NewConverter(anf_graph);
   std::string net_id = "0";
   std::string init_graph = "init_subgraph." + net_id;
