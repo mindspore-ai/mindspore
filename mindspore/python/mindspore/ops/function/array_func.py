@@ -1039,28 +1039,28 @@ def zeros_like(input, *, dtype=None):
     return output
 
 
-def tile(input, reps):
+def tile(input, multiples):
     r"""
-    Replicates an input tensor with given reps times.
+    Replicates an input tensor with given multiples times.
 
-    Creates a new tensor by replicating `input` `reps` times. The i'th dimension of
-    output tensor has `input.shape[i] * reps[i]` elements, and the values of `input`
-    are replicated `reps[i]` times along the i'th dimension.
+    Creates a new tensor by replicating `input` `multiples` times. The i'th dimension of
+    output tensor has `input.shape[i] * multiples[i]` elements, and the values of `input`
+    are replicated `multiples[i]` times along the i'th dimension.
 
     Note:
-        The length of `reps` must be greater or equal to the length of dimension in `input`.
+        The length of `multiples` must be greater or equal to the length of dimension in `input`.
 
     Args:
         input (Tensor): 1-D or higher dimensional Tensor. Set the shape of input tensor as
             :math:`(x_1, x_2, ..., x_S)` .
 
-        reps (tuple[int]): The parameter that specifies the number of replications,
+        multiples (tuple[int]): The parameter that specifies the number of replications,
             the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
-            The length of `reps` cannot be smaller than the length of the shape of `input`.
+            The length of `multiples` cannot be smaller than the length of the shape of `input`.
             Only constant value is allowed.
 
     Returns:
-        Tensor, has the same data type as the `input`. Suppose the length of `reps` is `d`,
+        Tensor, has the same data type as the `input`. Suppose the length of `multiples` is `d`,
         the dimension of `input` is `input.dim`, and the shape of `input` is :math:`(x_1, x_2, ..., x_S)`.
 
         - If `input.dim = d`, then the shape of their corresponding positions can be multiplied, and
@@ -1071,9 +1071,9 @@ def tile(input, reps):
           :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
 
     Raises:
-        TypeError: If `reps` is not a tuple or its elements are not all int.
-        ValueError: If the elements of `reps` are not all greater than 0.
-        ValueError: If the length of `reps` are smaller than the length of dimension in `input`.
+        TypeError: If `multiples` is not a tuple or its elements are not all int.
+        ValueError: If the elements of `multiples` are not all greater than 0.
+        ValueError: If the length of `multiples` are smaller than the length of dimension in `input`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1103,7 +1103,7 @@ def tile(input, reps):
           [1. 2. 1. 2.]
           [3. 4. 3. 4.]]]
     """
-    return tile_(input, reps)
+    return tile_(input, multiples)
 
 
 def range(start, end, step):
