@@ -664,29 +664,24 @@ class ReduceMean(_Reduce):
 
 class CumulativeLogsumexp(Primitive):
     """
-    Compute the cumulative log-sum-exp of the tensor `x` along `axis` .
-
-    When `exclusive` is set `False`, this operation performs an inclusive cumulative log-sum-exp, which means that the
-    first element of the input is identical to the first element of the output. For example, when takes a tensor
-    [a, b, c] as input, this operation outputs [a, log(exp(a) + exp(b)), log(exp(a) + exp(b) + exp(c))]. When `reverse`
-    is set `True`, the cumulative log-sum-exp is performed in the opposite direction and thus get the output
-    [log(exp(a) + exp(b) + exp(c)), log(exp(b) + exp(c)), c].
-
-    When `exclusive` is set `True`, this operation performs an exclusive cumulative log-sum-exp instead. For example,
-    when takes a tensor [a, b, c] as input, this operation outputs [-inf, a, log(exp(a) * exp(b))]. Note that the
-    neutral element of the log-sum-exp operation is -inf, however, for performance reasons, the minimal value
-    representable by the floating point type is used instead. When `reverse` is set `True`, the cumulative log-sum-exp
-    is performed in the opposite direction and thus get the output [log(exp(b) * exp(c)), c, -inf].
+    Compute the cumulative log-sum-exp of the input tensor `x` along `axis` . For example, with all parameters at
+    default values, if the input `x` is a tensor [a, b, c], the output will be [a, log(exp(a) + exp(b)),
+    log(exp(a) + exp(b) + exp(c))].
 
     Args:
-        exclusive (bool, optional): If true, perform exclusive cumulative log-sum-exp.
-                          If false, perform inclusive cumulative log-sum-exp. Default: False.
-        reverse (bool, optional): If true, the cumulative log-sum-exp is performed in the opposite direction.
-                        If false, the cumulative log-sum-exp is performed in the forward direction. Default: False.
+        exclusive (bool, optional): If true, the last element will be skipped during the calculation and thus an
+                                    exclusive cumulative log-sum-exp will be performed. For example, this operation
+                                    will output [-inf, a, log(exp(a) * exp(b))] with tensor [a, b, c] as the input.
+                                    Note that the minimal value -inf, for performance reasons, is representable by the
+                                    floating point type. Default: False.
+        reverse (bool, optional): If true, the function accumulation values will be calculated after the elements of
+                                  `x` on `axis` are flipped, and the calculation result will be flipped afterwards. For
+                                  example, this operation will output [log(exp(c) + exp(b) + exp(a)), log(exp(c) +
+                                  exp(b)), c] with tensor [a, b, c] as the input. Default: False.
 
     Inputs:
-        - **x** (Tensor) - The input tensor. Must be one of the following types: float16, float32, float64.
-          The dimension of `x` must greater than 0.
+        - **x** (Tensor) - The input tensor. Must be one of the following types: float16, float32, float64. The
+          dimension of `x` must greater than 0.
         - **axis** (Tensor) - A 0-D tensor describing the dimension to compute the cumulative product. Must be one of
           the following types: int64, int32, int16. Must be in the range [-rank(x), rank(x)). Default: 0.
 
@@ -7736,6 +7731,7 @@ class SelfAdjointEig(Primitive):
            [[1.  0.]
             [0.  1.]]
     """
+
     @prim_attr_register
     def __init__(self, compute_v=True):
         """Initialize SelfAdjointEig."""
@@ -7886,6 +7882,7 @@ class Ormqr(Primitive):
          [ -53.659264  -28.157839  -70.42702 ]
          [ -79.54292    24.00183   -41.34253 ]]
     """
+
     @prim_attr_register
     def __init__(self, left=True, transpose=False):
         """Initialize Ormqr"""
