@@ -780,6 +780,7 @@ void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info
     {
       py::gil_scoped_acquire acquire;
       EraseTopCellFromTopCellList(pre_top_cell);
+      pre_top_cell->ClearDeviceMemory();
     }
     already_run_top_cell_[already_top_cell_id] = new_top_cell;
     new_top_cell->set_force_top_cell_compile(false);

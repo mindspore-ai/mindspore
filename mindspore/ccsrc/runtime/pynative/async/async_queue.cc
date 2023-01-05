@@ -40,17 +40,10 @@ void AsyncQueue::WorkerLoop() {
 
   while (true) {
     std::shared_ptr<AsyncTask> task;
-    bool task_empty = false;
     {
       std::unique_lock<std::mutex> lock(task_mutex_);
-      task_empty = tasks_.empty();
-      if (!task_empty) {
-        task = tasks_.front();
-      }
-    }
-    if (task_empty) {
-      std::this_thread::yield();
-      continue;
+      task_cond_var_.wait(lock, [this]() { return !tasks_.empty(); });
+      task = tasks_.front();
     }
 
     MS_LOG(DEBUG) << "Get task";
