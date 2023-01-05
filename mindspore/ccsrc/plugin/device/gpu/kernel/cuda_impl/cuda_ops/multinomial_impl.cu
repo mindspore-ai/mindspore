@@ -89,8 +89,8 @@ __device__ int BinarySearchForMultinomial(T *start_addr, int size, T rand) {
   return start;
 }
 
-template <typename T>
-__global__ void MultinomialKernel(int row, int col, T *probs, curandState *state, int64_t *num_sample, int *output) {
+template <typename T, typename S>
+__global__ void MultinomialKernel(int row, int col, T *probs, curandState *state, int64_t *num_sample, S *output) {
   // Load the probs to shared memory.
   extern __shared__ float accum_probs[];
   int gid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -103,7 +103,7 @@ __global__ void MultinomialKernel(int row, int col, T *probs, curandState *state
   accum_probs[shm_base_index] = probs[probs_base_index];
   for (int i = 1; i < col; i++) {
     probs_base_index++;
-    accum_probs[shm_base_index + i] = accum_probs[shm_base_index + i - 1] + probs[probs_base_index];
+    accum_probs[shm_base_index + i] = accum_probs[shm_base_index + i - 1] + static_cast<float>(probs[probs_base_index]);
   }
   __syncthreads();
 
@@ -119,14 +119,13 @@ __global__ void MultinomialKernel(int row, int col, T *probs, curandState *state
   auto local_state = state[gid];
   for (int i = 0; i < num_sample[0]; i++) {
     float rand = curand_uniform(&local_state);
-    output[output_base_index + i] = BinarySearchForMultinomial(&accum_probs[shm_base_index], col, rand);
+    output[output_base_index + i] = static_cast<S>(BinarySearchForMultinomial(&accum_probs[shm_base_index], col, rand));
   }
   state[gid] = local_state;
 }
 
-template <typename T>
-void Multinomial(int row, int col, T *probs, curandState *state, int64_t *num_sample, int *output,
-                 cudaStream_t stream) {
+template <typename T, typename S>
+void Multinomial(int row, int col, T *probs, curandState *state, int64_t *num_sample, S *output, cudaStream_t stream) {
   // Every block process several rows. It depends on shared memory usage.
   constexpr int max_shm_used_per_block = 256;
   int block_dim = std::max(Floor(std::min(row, max_shm_used_per_block), col), 1);
@@ -136,8 +135,51 @@ void Multinomial(int row, int col, T *probs, curandState *state, int64_t *num_sa
   MultinomialKernel<<<grid_dim, block_dim, shm_size, stream>>>(row, col, probs, state, num_sample, output);
 }
 
-template CUDA_LIB_EXPORT void Multinomial<float>(int row, int col, float *probs, curandState *state,
-                                                 int64_t *num_sample, int *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<float, int64_t>(int row, int col, float *probs, curandState *state,
+                                                          int64_t *num_sample, int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<double, int64_t>(int row, int col, double *probs, curandState *state,
+                                                           int64_t *num_sample, int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<half, int64_t>(int row, int col, half *probs, curandState *state,
+                                                         int64_t *num_sample, int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<int8_t, int64_t>(int row, int col, int8_t *probs, curandState *state,
+                                                           int64_t *num_sample, int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<int16_t, int64_t>(int row, int col, int16_t *probs, curandState *state,
+                                                            int64_t *num_sample, int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<int32_t, int64_t>(int row, int col, int32_t *probs, curandState *state,
+                                                            int64_t *num_sample, int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<int64_t, int64_t>(int row, int col, int64_t *probs, curandState *state,
+                                                            int64_t *num_sample, int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<uint8_t, int64_t>(int row, int col, uint8_t *probs, curandState *state,
+                                                            int64_t *num_sample, int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<uint16_t, int64_t>(int row, int col, uint16_t *probs, curandState *state,
+                                                             int64_t *num_sample, int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<uint32_t, int64_t>(int row, int col, uint32_t *probs, curandState *state,
+                                                             int64_t *num_sample, int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<uint64_t, int64_t>(int row, int col, uint64_t *probs, curandState *state,
+                                                             int64_t *num_sample, int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<float, int32_t>(int row, int col, float *probs, curandState *state,
+                                                          int64_t *num_sample, int32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<double, int32_t>(int row, int col, double *probs, curandState *state,
+                                                           int64_t *num_sample, int32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<half, int32_t>(int row, int col, half *probs, curandState *state,
+                                                         int64_t *num_sample, int32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<int8_t, int32_t>(int row, int col, int8_t *probs, curandState *state,
+                                                           int64_t *num_sample, int32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<int16_t, int32_t>(int row, int col, int16_t *probs, curandState *state,
+                                                            int64_t *num_sample, int32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<int32_t, int32_t>(int row, int col, int32_t *probs, curandState *state,
+                                                            int64_t *num_sample, int32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<int64_t, int32_t>(int row, int col, int64_t *probs, curandState *state,
+                                                            int64_t *num_sample, int32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<uint8_t, int32_t>(int row, int col, uint8_t *probs, curandState *state,
+                                                            int64_t *num_sample, int32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<uint16_t, int32_t>(int row, int col, uint16_t *probs, curandState *state,
+                                                             int64_t *num_sample, int32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<uint32_t, int32_t>(int row, int col, uint32_t *probs, curandState *state,
+                                                             int64_t *num_sample, int32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Multinomial<uint64_t, int32_t>(int row, int col, uint64_t *probs, curandState *state,
+                                                             int64_t *num_sample, int32_t *output, cudaStream_t stream);
+
 template CUDA_LIB_EXPORT void CheckNonNeg<float>(const size_t size, const float *input, float *output,
                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CheckZero<float>(const size_t distributions, const size_t categories, const float *input,

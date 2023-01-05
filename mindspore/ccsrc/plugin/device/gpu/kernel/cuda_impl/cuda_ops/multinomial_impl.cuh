@@ -20,8 +20,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 CUDA_LIB_EXPORT void InitRandState(int seed, int num, curandState *state, cudaStream_t stream);
-template <typename T>
-CUDA_LIB_EXPORT void Multinomial(int row, int col, T *probs, curandState *rand_state, int64_t *num_sample, int *output,
+template <typename T, typename S>
+CUDA_LIB_EXPORT void Multinomial(int row, int col, T *probs, curandState *rand_state, int64_t *num_sample, S *output,
                                  cudaStream_t stream);
 template <typename T>
 CUDA_LIB_EXPORT void CheckNonNeg(const size_t size, const T *input, T *output, cudaStream_t stream);

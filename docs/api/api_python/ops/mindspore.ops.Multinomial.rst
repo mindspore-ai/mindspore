@@ -14,7 +14,7 @@ mindspore.ops.Multinomial
         - **dtype** (dtype) - 输出数据类型，必须是int32或者int64，默认类型：int32。
 
     输入：
-        - **x** (Tensor) - 包含累加概率和的输入Tensor，必须是一维或二维。具有float16、float32或float64数据类型。CPU和GPU后端支持一维或者二维，Ascend后端仅支持二维。
+        - **x** (Tensor) - 包含累加概率和的输入Tensor，必须是1维或2维。CPU和GPU后端支持1维或者2维，Ascend后端仅支持2维。
         - **num_samples** (int) - 要抽取的样本数。
 
     输出：
@@ -22,7 +22,6 @@ mindspore.ops.Multinomial
 
     异常：
         - **TypeError** - 如果 `seed` 或者 `seed2` 不是int类型。
-        - **TypeError** - 如果 `x` 不是数据类型为float16、float32或者float64的Tensor。
         - **TypeError** - 如果 `num_sample` 不是int类型。
         - **TypeError** - 如果 `dtype` 不是int32或者int64类型。
         - **ValueError** - 如果 `seed` 或者 `seed2` 小于零。
