@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef AICPU_KERNELS_NORMALIZED_CUMULATIVELOGSUMEXP_H_
-#define AICPU_KERNELS_NORMALIZED_CUMULATIVELOGSUMEXP_H_
+#ifndef AICPU_KERNELS_NORMALIZED_SHUFFLE_CHANNEL_H_
+#define AICPU_KERNELS_NORMALIZED_SHUFFLE_CHANNEL_H_
 
 #include "cpu_ops_kernel.h"
+#include "utils/bcast.h"
 
 namespace aicpu {
-class CumulativeLogsumexpCpuKernel : public CpuKernel {
+class ShuffleChannelCpuKernel : public CpuKernel {
  public:
-  CumulativeLogsumexpCpuKernel() = default;
-  ~CumulativeLogsumexpCpuKernel() override = default;
+  ShuffleChannelCpuKernel() = default;
+  ~ShuffleChannelCpuKernel() override = default;
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CumulativeLogsumexpCheck(CpuKernelContext &ctx);
+  uint32_t ShuffleChannelParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t CumulativeLogsumexpCompute(CpuKernelContext &ctx);
+  uint32_t ShuffleChannelCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

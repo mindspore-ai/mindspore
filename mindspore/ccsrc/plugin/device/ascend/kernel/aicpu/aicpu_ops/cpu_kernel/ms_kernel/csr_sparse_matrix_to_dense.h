@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef AICPU_KERNELS_NORMALIZED_CSR_SPARSE_MATRIX_TO_DENSE_H_
+#define AICPU_KERNELS_NORMALIZED_CSR_SPARSE_MATRIX_TO_DENSE_H_
 
-#ifndef AICPU_KERNELS_NORMALIZED_CUMULATIVELOGSUMEXP_H_
-#define AICPU_KERNELS_NORMALIZED_CUMULATIVELOGSUMEXP_H_
-
+#include "Eigen/Core"
 #include "cpu_ops_kernel.h"
 
 namespace aicpu {
-class CumulativeLogsumexpCpuKernel : public CpuKernel {
- public:
-  CumulativeLogsumexpCpuKernel() = default;
-  ~CumulativeLogsumexpCpuKernel() override = default;
 
- protected:
+class CSRSparseMatrixToDenseCpuKernel : public CpuKernel {
+ public:
+  ~CSRSparseMatrixToDenseCpuKernel() = default;
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CumulativeLogsumexpCheck(CpuKernelContext &ctx);
-
-  template <typename T>
-  uint32_t CumulativeLogsumexpCompute(CpuKernelContext &ctx);
+  template <typename indiceT, typename valueT>
+  uint32_t DoCompute(CpuKernelContext &ctx);
 };
+
 }  // namespace aicpu
 #endif
