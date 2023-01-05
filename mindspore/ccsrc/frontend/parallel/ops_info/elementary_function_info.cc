@@ -54,5 +54,7 @@ REGISTER(BesselI0Info);
 REGISTER(BesselI1Info);
 REGISTER(BesselJ0Info);
 REGISTER(BesselJ1Info);
+REGISTER(LgammaInfo);
+REGISTER(TruncInfo);
 }  // namespace parallel
 }  // namespace mindspore

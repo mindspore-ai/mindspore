@@ -290,6 +290,22 @@ class BesselJ1Info : public ActivationOther {
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<BesselI0eCost>()) {}
   ~BesselJ1Info() override = default;
 };
+
+class LgammaInfo : public BesselJ1Info {
+ public:
+  LgammaInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : BesselJ1Info(name, inputs_shape, outputs_shape, attrs) {}
+  ~LgammaInfo() override = default;
+};
+
+class TruncInfo : public BesselJ1Info {
+ public:
+  TruncInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+            const PrimitiveAttrs &attrs)
+      : BesselJ1Info(name, inputs_shape, outputs_shape, attrs) {}
+  ~TruncInfo() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 
