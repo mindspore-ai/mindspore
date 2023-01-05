@@ -156,6 +156,8 @@ class ModelPool {
 
   std::vector<const char *> model_bufs_;
   char *graph_buf_ = nullptr;
+  // malloc for graph_buf_
+  std::shared_ptr<Allocator> allocator_ = nullptr;
 
   std::shared_mutex model_pool_mutex_;
   std::string model_path_ = "";

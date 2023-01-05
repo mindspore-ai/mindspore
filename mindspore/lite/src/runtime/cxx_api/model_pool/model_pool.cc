@@ -717,7 +717,12 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
     ids[lite::kInnerModelID] = std::to_string(i);
     model_pool_config[i]->config_info[lite::kInnerIDs] = ids;
     int numa_node_id = model_pool_config[i]->numa_id;
-    auto ret = lite::PackWeightManager::GetInstance()->InitPackWeight(graph_buf, size, numa_node_id, copy_model);
+    bool numa_copy_buf = copy_model;
+    if (copy_model && model_pool_config[i]->numa_id == 0) {
+      // buf on numa 0, not copy.
+      numa_copy_buf = false;
+    }
+    auto ret = lite::PackWeightManager::GetInstance()->InitPackWeight(graph_buf, size, numa_node_id, numa_copy_buf);
     MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
     auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(graph_buf, numa_node_id);
     model_bufs_.push_back(new_model_buf);
@@ -927,12 +932,20 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   }
   // read model by path and init packed weight by buffer
   size_t size = 0;
-  graph_buf_ = lite::ReadFile(model_path.c_str(), &size);
+  bool numa_copy_buf = numa_available_ && (used_numa_node_num_ > 1);
+  if (numa_copy_buf) {
+    allocator_ = std::make_shared<DynamicMemAllocator>(0);
+    if (allocator_ == nullptr) {
+      MS_LOG(ERROR) << "new dynamic allocator failed.";
+      return kLiteNullptr;
+    }
+  }
+  graph_buf_ = lite::ReadFile(model_path.c_str(), &size, allocator_);
   if (graph_buf_ == nullptr) {
     MS_LOG(ERROR) << "read file failed.";
     return kLiteNullptr;
   }
-  status = CreateWorkers(graph_buf_, size, model_pool_config, numa_available_ && (used_numa_node_num_ > 1));
+  status = CreateWorkers(graph_buf_, size, model_pool_config, numa_copy_buf);
   if (status != kSuccess) {
     lite::PackWeightManager::GetInstance()->DeleteOriginModelBufInfo(graph_buf_);
     MS_LOG(ERROR) << "create worker failed.";
@@ -1106,7 +1119,11 @@ ModelPool::~ModelPool() {
   MS_LOG(INFO) << "free pack weight model buf.";
   if (graph_buf_ != nullptr) {
     lite::PackWeightManager::GetInstance()->DeleteOriginModelBufInfo(graph_buf_);
-    delete[] graph_buf_;
+    if (allocator_ != nullptr) {
+      allocator_->Free(graph_buf_);
+    } else {
+      delete[] graph_buf_;
+    }
     graph_buf_ = nullptr;
   }
   lite::PackWeightManager::GetInstance()->FreePackWeight(model_bufs_);
