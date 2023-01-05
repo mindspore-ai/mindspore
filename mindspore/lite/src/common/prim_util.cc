@@ -16,6 +16,7 @@
 
 #include "src/common/prim_util.h"
 #include <set>
+#include <vector>
 #include "nnacl/op_base.h"
 #include "schema/model_generated.h"
 #include "src/common/log_adapter.h"
@@ -120,6 +121,13 @@ int GetPartialGraphIndex(const void *primitive, int schema_version) {
     index = partial_fusion->sub_graph_index();
   }
   return index;
+}
+bool IsSharedThreadPoolOp(int op_type) {
+  std::vector<schema::PrimitiveType> shared_ops = {mindspore::schema::PrimitiveType_MatMulFusion};
+  if (find(shared_ops.begin(), shared_ops.end(), op_type) != shared_ops.end()) {
+    return true;
+  }
+  return false;
 }
 }  // namespace lite
 }  // namespace mindspore

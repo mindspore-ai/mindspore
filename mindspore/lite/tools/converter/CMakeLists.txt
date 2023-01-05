@@ -151,6 +151,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/litert/runtime_shape_fusion_pass.cc
         ${SRC_DIR}/litert/runtime_pass.cc
         ${SRC_DIR}/litert/inner_context.cc
+        ${SRC_DIR}/litert/thread_pool_reuse_manager.cc
         ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/litert/tensor_category.cc
         ${SRC_DIR}/litert/schema_tensor_wrapper.cc

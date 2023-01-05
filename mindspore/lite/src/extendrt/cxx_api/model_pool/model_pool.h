@@ -115,6 +115,12 @@ class ModelPool {
 
   Status WarmUpForAllWorker(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
 
+  Status ParseSharedThreadPoolParam(const std::shared_ptr<RunnerConfig> &runner_config);
+
+  Status ParseParamByConfigInfo(std::map<std::string, std::map<std::string, std::string>> config_info);
+
+  Status CheckSharingThreadPoolParam(const ModelPoolConfig &model_pool_config);
+
  private:
   // different workers get tasks from different task queues.
   // currently task queues are distinguished according to different numa node numbers.
@@ -160,6 +166,9 @@ class ModelPool {
   std::mutex warm_up_mutex;
 
   std::string runner_id_ = "";
+  bool enable_shared_thread_pool_ = true;
+  int thread_num_limit_ = 0;
+  int remaining_thread_num_ = 0;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_POOL_H_

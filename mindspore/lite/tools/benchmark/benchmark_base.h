@@ -158,6 +158,11 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
             1);
     AddFlag(&BenchmarkFlags::enable_gl_texture_, "enableGLTexture", "Enable GlTexture2D", false);
     AddFlag(&BenchmarkFlags::delegate_mode_, "delegateMode", "set the delegate mode: CoreML | NNAPI", "");
+    AddFlag(&BenchmarkFlags::enable_shared_thread_pool_, "enableSharedThreadPool", "Enable shared thread pool", false);
+    AddFlag(&BenchmarkFlags::thread_num_limit_per_worker_, "threadNumLimitPerWorker", "thread num limit per worker ",
+            "");
+    AddFlag(&BenchmarkFlags::thread_num_remaining_per_worker_, "threadNumRemainingPerWorker",
+            "thread num limit per worker ", "");
   }
 
   ~BenchmarkFlags() override = default;
@@ -212,6 +217,9 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   std::string dec_mode_ = "AES-GCM";
   std::string crypto_lib_path_;
   std::string delegate_mode_;
+  bool enable_shared_thread_pool_ = false;
+  std::string thread_num_limit_per_worker_;
+  std::string thread_num_remaining_per_worker_;
 };
 
 class MS_API BenchmarkBase {

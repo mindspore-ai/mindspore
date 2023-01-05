@@ -33,10 +33,6 @@
 #include "include/lite_types.h"
 
 namespace mindspore::lite {
-#ifdef ENABLE_MINDRT
-constexpr int kDefaultParallelNum = 2;
-#endif
-
 typedef struct CpuDeviceInfo {
   bool enable_float16_ = false; /**< prior enable float16 inference */
   CpuBindMode cpu_bind_mode_ = MID_CPU;
@@ -98,6 +94,7 @@ struct InnerContext {
   void SetAllLinkInfo(const std::unordered_map<void *, std::set<void *>> &all_link_info);
   void ReplaceLinkInfoReceiverWithNewOne(void *new_receiver, void *old_receiver);
   void ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_sender);
+  inline void SetBindRunnerId(std::string runner_id) { runner_id_ = runner_id; }
 
   std::string vendor_name_;
   int thread_num_ = 2; /**< thread number config for thread pool */
@@ -121,6 +118,10 @@ struct InnerContext {
   bool IsCpuBindModeInvalid() const;
   int CreateThreadPool();
   void InitExperimentalExecEnv();
+
+  std::string runner_id_;
+  BindMode bind_mode_{Power_NoBind};
+  size_t actor_thread_num_{0};
 };
 
 int ParallelLaunch(const InnerContext *context, const Func &func, Content content, int task_num);

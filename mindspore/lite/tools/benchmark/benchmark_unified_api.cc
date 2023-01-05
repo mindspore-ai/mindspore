@@ -1103,6 +1103,19 @@ int BenchmarkUnifiedApi::AddConfigInfo(const std::shared_ptr<RunnerConfig> &runn
   if (!flags_->config_file_.empty()) {
     runner_config->SetConfigPath(flags_->config_file_);
   }
+  std::map<std::string, std::string> config;
+  if (flags_->enable_shared_thread_pool_) {
+    config[kEnable] = "true";
+    if (!flags_->thread_num_limit_per_worker_.empty()) {
+      config[kThreadNumLimitPerWorker] = flags_->thread_num_limit_per_worker_;
+    }
+    if (!flags_->thread_num_remaining_per_worker_.empty()) {
+      config[kThreadNumRemainingPerWorker] = flags_->thread_num_remaining_per_worker_;
+    }
+  } else {
+    config[kEnable] = "false";
+  }
+  runner_config->SetConfigInfo(kSharedThreadPool, config);
   return RET_OK;
 }
 
