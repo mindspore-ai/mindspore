@@ -203,7 +203,6 @@ def adaptive_avg_pool3d(input_x, output_size):
     return adaptive_avg_pool3d_(input_x)
 
 
-#TODO: remove comment
 @constexpr
 def _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include_pad):
     """Checks the type of avgpool1d input"""
@@ -215,7 +214,6 @@ def _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include
     validator.check_int(stride, 1, Rel.GE, "stride", 'avg_pool1d')
 
 
-#TODO: remove comment
 @constexpr
 def check_non_negative_int(arg_value, arg_name=None, prim_name=None):
     """Check argument is non-negative integer, which mean arg_value >= 0."""
@@ -304,7 +302,6 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     return input_x
 
 
-#TODO: remove comment
 @constexpr
 def _check_avgpool_2d_kernel_size(kernel_size):
     """check and calculate the avgpool2d kernel_size"""
@@ -322,7 +319,6 @@ def _check_avgpool_2d_kernel_size(kernel_size):
     return kernel_size
 
 
-#TODO: remove comment
 @constexpr
 def _check_avgpool_2d_stride(stride):
     """check and calculate the avgpool2d stride"""
@@ -340,7 +336,6 @@ def _check_avgpool_2d_stride(stride):
     return stride
 
 
-#TODO: remove comment
 @constexpr
 def _check_avgpool_2d_padding(padding):
     """check and calculate the avgpool2d padding"""
@@ -358,7 +353,6 @@ def _check_avgpool_2d_padding(padding):
     return padding
 
 
-#TODO: remove comment
 @constexpr
 def _check_avg_pool2d_type_and_value(ceil_mode, count_include_pad, divisor_override):
     """check the type of avgpool2d input"""
@@ -453,7 +447,6 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     return input_x
 
 
-#TODO: remove comment
 @constexpr
 def _check_avg_pool3d_padding(padding):
     """Check the padding value in avg_pool3d op."""
@@ -1333,7 +1326,6 @@ def fast_gelu(x):
     return fast_gelu_(x)
 
 
-#TODO: remove comment
 @constexpr
 def _check_float_range_inc_right(arg_value, lower_limit, upper_limit, arg_name=None, prim_name=None):
     """
@@ -1656,7 +1648,6 @@ def hardshrink(x, lambd=0.5):
     return hshrink_op(x)
 
 
-#TODO: remove comment
 @constexpr
 def _check_axis_in_range(axis, ndim):
     """Checks axes are with the bounds of ndim"""
@@ -1667,7 +1658,6 @@ def _check_axis_in_range(axis, ndim):
     return axis % ndim
 
 
-#TODO: remove comment
 @constexpr
 def _check_axis_valid(axes, ndim):
     """
@@ -1694,7 +1684,6 @@ def _get_flip_end(ndim, shape, axes):
     return tuple([-shape[i] - 1 if i in axes else shape[i] + 1 for i in range(ndim)])
 
 
-#TODO: remove comment
 @constexpr
 def _get_flip_strides(ndim, axes):
     """Calculate the strides of flip"""
@@ -1892,7 +1881,6 @@ def hardswish(x):
     return hardswish_(x)
 
 
-#TODO: remove comment
 @constexpr
 def _check_interpolate_inputs(input_dims, roi, scales, sizes, coordinate_transformation_mode, mode,
                               prim_name):
@@ -2459,7 +2447,6 @@ def pdist(x, p=2.0):
     return pdist_(x)
 
 
-#TODO: remove comment
 @constexpr
 def _check_pad_inputs(padding):
     """check the input of pad"""
@@ -3428,14 +3415,12 @@ def mish(x):
     return mish_(x)
 
 
-#TODO: remove comment
 @constexpr
 def _check_value_type(arg_name, arg_value, valid_types, prim_name=None):
     """Checks whether a value is instance of some types."""
     return validator.check_value_type(arg_name, arg_value, valid_types, prim_name)
 
 
-#TODO: remove comment
 @constexpr(check=False)
 def _check_is_tensor(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
@@ -3444,7 +3429,6 @@ def _check_is_tensor(param_name, input_data, cls_name):
                         f"but got '{ops.typeof(input_data)}'")
 
 
-#TODO: remove comment
 @constexpr
 def _check_number_gt_value(arg_name, arg_value, value, cls_name):
     """Internal function, used to judge whether arg_value is greater than or equal to value."""
@@ -3642,7 +3626,6 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
     return _grid_sampler_3d(input_x, grid)
 
 
-#TODO: remove comment
 @constexpr
 def _check_ctc_loss_inputs(blank, reduction, zero_infinity, prim_name):
     validator.check_value_type("blank", blank, [int], prim_name)
@@ -3719,7 +3702,6 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
     return (loss, log_alpha)
 
 
-#TODO: remove comment
 @constexpr
 def _check_gaussian_nll_loss(full, eps, reduction):
     validator.check_value_type('full', full, [bool], 'gaussian_nll_loss')
@@ -4362,7 +4344,6 @@ def adaptive_avg_pool1d(input_x, output_size):
     return input_x
 
 
-#TODO: remove comment
 @constexpr
 def _check_adaptive_max_pool1d_output_size(output_size):
     """Check the output_size value in adaptive_max_pool1d op."""
@@ -4735,7 +4716,6 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     return output
 
 
-#TODO: remove comment
 @constexpr
 def _check_positive_int(arg_value, arg_name=None, prim_name=None):
     validator.check_positive_int(arg_value, arg_name=arg_name, prim_name=prim_name)

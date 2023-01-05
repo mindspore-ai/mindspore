@@ -76,7 +76,6 @@ from mindspore._c_expression import Tensor as Tensor_
 import mindspore.ops.function as F
 
 
-#TODO: remove comment
 @constexpr
 def _make_tensor(val, dtype):
     """Returns the tensor with value `val` and dtype `dtype`."""
@@ -5421,7 +5420,7 @@ def frac(x):
 #####################################
 
 
-#remove constexpr
+@constexpr
 def _create_cummin_perm(axis, x_shape):
     """Insure axis is in [-len(x_shape),len(s_shape)-1]"""
     len_axis = len(x_shape)
@@ -6571,7 +6570,6 @@ def hann_window(window_length, periodic=True):
     return Tensor(w[:-1]) if periodic else Tensor(w)
 
 
-#TODO: remove comment
 @constexpr
 def _type_convert(force, obj):
     """
@@ -7353,7 +7351,7 @@ def _min(*args):
     return min(*args)
 
 
-#remove constexpr
+@constexpr
 def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
     """Infers the shape of the last two dimensions after performing matmul."""
     shape_rem = []
@@ -7368,7 +7366,7 @@ def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
     return tuple(shape_rem)
 
 
-#remove constexpr
+@constexpr
 def _check_matmul_shapes(shape1, shape2, prim_name=None):
     """Checks shape1 and shape2 are valid to perform matmul, and returns output shape after broadcasting."""
     shape_out = list()
@@ -7383,7 +7381,7 @@ def _check_matmul_shapes(shape1, shape2, prim_name=None):
     return tuple(shape_out)
 
 
-#remove constexpr
+@constexpr
 def _tile_size(shape, out_shape, ndim):
     """Returns tile_size such that shape*tile_size = out_shape"""
     size = [1] * ndim
@@ -7393,7 +7391,7 @@ def _tile_size(shape, out_shape, ndim):
     return tuple(size)
 
 
-#remove constexpr
+@constexpr
 def _expand(x, ndim):
     """Expand x to ndim from axis, which can be 0 or -1."""
     rank_op = _get_cache_prim(P.Rank)()

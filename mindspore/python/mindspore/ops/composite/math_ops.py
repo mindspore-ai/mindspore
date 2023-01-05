@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """math Operations."""
-import numpy as np
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator as validator
@@ -24,7 +23,6 @@ from mindspore.ops.function.math_func import cummin as cummin_
 from mindspore.ops import operations as P
 
 
-#TODO: remove comment
 @constexpr
 def _check_validate_axis(axis, name):
     if isinstance(axis, (tuple, list)):
@@ -34,14 +32,12 @@ def _check_validate_axis(axis, name):
     return axis
 
 
-#TODO: remove comment
 @constexpr
 def _check_validate_keepdims(keep_dims, name):
     keep_dims = validator.check_value_type('keep_dims', keep_dims, [bool], name)
     return keep_dims
 
 
-#TODO: remove comment
 @constexpr
 def is_const(x):
     return x is not None
@@ -119,7 +115,6 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     return nonzero_num
 
 
-#TODO: remove comment
 @constexpr
 def _int_to_tuple_conv(axes):
     """
@@ -131,7 +126,6 @@ def _int_to_tuple_conv(axes):
     return axes
 
 
-#TODO: remove comment
 @constexpr
 def _check_axes(axes, prim_name=None):
     """
@@ -152,7 +146,6 @@ def _check_axes(axes, prim_name=None):
     return axes
 
 
-#TODO: remove comment
 @constexpr
 def _typecheck_input(x1_type, x2_type, prim_name=None):
     """
@@ -166,7 +159,7 @@ def _typecheck_input(x1_type, x2_type, prim_name=None):
                         f"and x2_type: {x2_type}.")
 
 
-#remove constexpr
+@constexpr
 def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
     """
     Convert from single int axes to 2d tuple if required
@@ -182,7 +175,6 @@ def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
     return axes
 
 
-#TODO: remove comment
 @constexpr
 def _calc_new_shape(shape, axes, position=0):
     """
@@ -190,10 +182,14 @@ def _calc_new_shape(shape, axes, position=0):
     'position' refers to whether tensor is first or second in the op.
     """
     contraction_axes = tuple(i if i >= 0 else i + len(shape) for i in axes[position])
-    prod_contraction = int(np.prod([shape[i] for i in contraction_axes]))
+    prod_contraction = 1
+    for i in contraction_axes:
+        prod_contraction *= shape[i]
     free_axes = tuple(i for i in range(len(shape)) if i not in contraction_axes)
     free_dims = tuple(shape[i] if shape[i] is not None else -1 for i in free_axes)
-    prod_free = int(np.prod(free_dims))
+    prod_free = 1
+    for free_dim in free_dims:
+        prod_free *= free_dim
 
     transpose_perm = contraction_axes + free_axes if position else free_axes + contraction_axes
     new_shape = (prod_contraction, prod_free) if position else (prod_free, prod_contraction)
@@ -272,7 +268,6 @@ def tensor_dot(x1, x2, axes):
     return final_result
 
 
-#TODO: remove comment
 @constexpr
 def _typecheck_input_dot(x1_type, x2_type, prim_name=None):
     """
@@ -286,7 +281,7 @@ def _typecheck_input_dot(x1_type, x2_type, prim_name=None):
                         f"x1_type: {x1_type} and x2_type: {x2_type}.")
 
 
-#remove constexpr
+@constexpr
 def _get_transpose_shape(x2_shape):
     x2_shape_range = tuple(range(len(x2_shape)))
     x2_shape_transpose = x2_shape_range[-2:-1] + x2_shape_range[:-2] + x2_shape_range[-1:]
@@ -385,7 +380,7 @@ def dot(x1, x2):
     return matmul_op(x1, x2)
 
 
-#remove constexpr
+@constexpr
 def _get_batch_size(x1_shape, x2_shape, prim_name=None):
     """
     Get batch sizes from two inputs
@@ -393,7 +388,6 @@ def _get_batch_size(x1_shape, x2_shape, prim_name=None):
     return x1_shape[0], x2_shape[0]
 
 
-#TODO: remove comment
 @constexpr
 def _typecheck_input_batch_dot(x1_type, x2_type, prim_name=None):
     """
@@ -407,7 +401,7 @@ def _typecheck_input_batch_dot(x1_type, x2_type, prim_name=None):
                         f"x2_type: {x2_type}.")
 
 
-#remove constexpr
+@constexpr
 def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
     """
     Check whether axes are valid and cast axes from tuple to list
@@ -442,10 +436,14 @@ def _calc_new_shape_batchdot(shape, axes, position=0):
     """
     axis = axes[position]
     contraction_axes = tuple([axis])
-    prod_contraction = int(np.prod([shape[i] for i in contraction_axes]))
+    prod_contraction = 1
+    for i in contraction_axes:
+        prod_contraction *= shape[i]
     free_axes = tuple(i for i in range(1, len(shape)) if i not in contraction_axes)
     free_dims = tuple(shape[i] for i in free_axes)
-    prod_free = int(np.prod(free_dims))
+    prod_free = 1
+    for free_dim in free_dims:
+        prod_free *= free_dim
 
     transpose_perm = contraction_axes + free_axes if position else free_axes + contraction_axes
     transpose_perm = tuple([0]) + transpose_perm
@@ -454,7 +452,6 @@ def _calc_new_shape_batchdot(shape, axes, position=0):
     return new_shape, transpose_perm, free_dims
 
 
-#TODO: remove comment
 @constexpr
 def _check_batch_size(x1_batch_size, x2_batch_size, prim_name=None):
     """
@@ -466,7 +463,6 @@ def _check_batch_size(x1_batch_size, x2_batch_size, prim_name=None):
                          f"'x1_batch_size': {x1_batch_size} and 'x2_batch_size': {x2_batch_size}.")
 
 
-#TODO: remove comment
 @constexpr
 def _get_output_shape(batch_size, x1_ret, x2_ret):
     """
