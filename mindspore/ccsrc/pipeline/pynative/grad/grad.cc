@@ -936,6 +936,7 @@ void GradExecutor::CheckNeedCompileGraph() {
       ++top_cell_switch_counts_;
     }
     EraseTopCellFromTopCellList(pre_top_cell);
+    pre_top_cell->ClearDeviceMemory();
     pre_top_cell->Clear();
     already_run_top_cell_[already_top_cell_id] = new_top_cell;
     top_cell()->set_is_real_dynamic_structure(true);
