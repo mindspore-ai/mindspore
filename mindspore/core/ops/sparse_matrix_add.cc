@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,14 +107,37 @@ TuplePtr SparseMatrixAddInferType(const PrimitivePtr &primitive, const std::vect
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   auto a_values_type = input_args[kAValuesIdx]->BuildType();
   auto b_values_type = input_args[kBValuesIdx]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeSame({{"a values", a_values_type}, {"b values", b_values_type}},
-                                                  valid_types, op_name);
+  auto alpha_type = input_args[kAlphaIndex]->BuildType();
+  auto beta_type = input_args[kBetaIndex]->BuildType();
+  std::map<std::string, TypePtr> value_type;
+  (void)value_type.emplace("a values", a_values_type);
+  (void)value_type.emplace("b values", b_values_type);
+  (void)value_type.emplace("alpha", alpha_type);
+  (void)value_type.emplace("beta", beta_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(value_type, valid_types, op_name);
   auto a_indices_type = input_args[kAIndicesIdx]->BuildType();
+  auto a_dense_shape_type = input_args[kADenseShapeIdx]->BuildType();
+  auto a_batch_ptr_type = input_args[kABatchPtrIdx]->BuildType();
+  auto a_index_ptr_type = input_args[kAIndptrIdx]->BuildType();
   auto b_indices_type = input_args[kBIndicesIdx]->BuildType();
-  const std::set<TypePtr> int_types = {kInt16, kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("a indices", a_indices_type, int_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("b indices", b_indices_type, int_types, op_name);
+  auto b_dense_shape_type = input_args[kBDenseShapeIdx]->BuildType();
+  auto b_batch_ptr_type = input_args[kBBatchPtrIdx]->BuildType();
+  auto b_index_ptr_type = input_args[kBIndptrIdx]->BuildType();
 
+  const std::set<TypePtr> int_types = {kInt32, kInt64};
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("a indices type", a_indices_type);
+  (void)types.emplace("b indices type", b_indices_type);
+  (void)types.emplace("a batch ptr type", a_batch_ptr_type);
+  (void)types.emplace("a index ptr type", a_index_ptr_type);
+  (void)types.emplace("b batch ptr type", b_batch_ptr_type);
+  (void)types.emplace("b index ptr type", b_index_ptr_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, int_types, op_name);
+
+  (void)types.emplace("a dense shape type", a_dense_shape_type);
+  (void)types.emplace("b dense shape type", b_dense_shape_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(
+    {{"a dense type", a_dense_shape_type}, {"b dense type", b_dense_shape_type}}, int_types, op_name);
   return std::make_shared<Tuple>(
     std::vector<TypePtr>{a_indices_type, a_indices_type, a_indices_type, a_indices_type, a_values_type});
 }
