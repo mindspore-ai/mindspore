@@ -1480,8 +1480,9 @@ EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AbstractBasePtrList 
   return eng->ForwardConfig(out_conf, fn_conf);
 }
 
-EvalResultPtr GetEvaluatedValueForCellAttrOrMethod(const AbstractBasePtrList &args_abs_list,
-                                                   const FuncGraphPtr &func_value, const AnfNodeConfigPtr &out_conf) {
+EvalResultPtr GetEvaluatedValueForFuncGraphAttrOrMethod(const AbstractBasePtrList &args_abs_list,
+                                                        const FuncGraphPtr &func_value,
+                                                        const AnfNodeConfigPtr &out_conf) {
   constexpr size_t item_index = 1;
   auto item_args = args_abs_list[item_index];
   ValuePtr item_value = item_args->BuildValue();
@@ -1507,6 +1508,28 @@ EvalResultPtr GetEvaluatedValueForCellAttrOrMethod(const AbstractBasePtrList &ar
       python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, real_python_obj);
     auto ns = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);
     return GetEvaluatedValueForNameSpaceString(args_abs_list, ns, out_conf, py_obj_str);
+  }
+  if (py::hasattr(real_python_obj, PYTHON_MS_CLASS)) {
+    auto out_node = out_conf->node();
+    auto out_cnode = out_node->cast_ptr<CNode>();
+    MS_EXCEPTION_IF_NULL(out_cnode);
+    auto fg = out_cnode->func_graph();
+    std::string item_name = item_value->cast_ptr<StringImm>()->value();
+    auto new_node = parse::ResolveMsClassWithAttr(fg->manager(), real_python_obj, item_name, out_node);
+    if (new_node == nullptr) {
+      constexpr auto max_args_len = 3;
+      bool has_default = (args_abs_list.size() == max_args_len);
+      if (!has_default) {
+        MS_EXCEPTION(AttributeError) << py::str(real_python_obj) << " object has no attribute: " << item_name << ".";
+      }
+      constexpr auto default_index = 3;
+      new_node = out_cnode->inputs()[default_index];
+    }
+    fg->ReplaceInOrder(out_node, new_node);
+    AnalysisEnginePtr eng = out_conf->engine();
+    MS_EXCEPTION_IF_NULL(eng);
+    AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
   }
   return nullptr;
 }
@@ -1710,15 +1733,15 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     }
   }
 
-  // Get attribute or method of class object decorated with 'jit_class'.
+  // Get attribute or method of PartialAbstractClosure, the object is class object decorated with 'jit_class'.
   auto class_value = GetMsClassObject(data_args);
   if (class_value != nullptr) {
     return GetEvaluatedValueForMsClassAttrOrMethod(args_abs_list, class_value, out_conf);
   }
-  // Get attribute or method of nn.Cell object.
+  // Get attribute or method of FuncGraphAbstractClosure, the object could be Cell/ms_class object.
   auto data_func_graph = dyn_cast_ptr<FuncGraphAbstractClosure>(data_args);
   if (data_func_graph != nullptr) {
-    auto res = GetEvaluatedValueForCellAttrOrMethod(args_abs_list, data_func_graph->func_graph(), out_conf);
+    auto res = GetEvaluatedValueForFuncGraphAttrOrMethod(args_abs_list, data_func_graph->func_graph(), out_conf);
     if (res != nullptr) {
       return res;
     }
