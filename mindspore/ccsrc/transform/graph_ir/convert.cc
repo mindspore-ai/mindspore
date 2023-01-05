@@ -75,17 +75,17 @@ constexpr auto kTypeMerge = "Merge";
 constexpr auto kTypeIf = "If";
 
 namespace {
-std::map<TypeId, TypeId> kReduceRaiseMap = {{kNumberTypeInt64, kNumberTypeInt32}};
+const std::map<TypeId, TypeId> kReduceRaiseMap = {{kNumberTypeInt64, kNumberTypeInt32}};
 
 // {node name | {{input_index, dst_type}...}}
-std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputDTypeMap = {
+const std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputDTypeMap = {
   {kResizeNearestNeighborGradOpName, {{2, kNumberTypeInt32}}},
   {kTileOpName, {{1, kNumberTypeInt32}}},
   {kOneHotOpName, {{2, kNumberTypeInt32}}},
   {kLinSpaceOpName, {{3, kNumberTypeInt32}}}};
 
 // {node name | {{attr_name, dst_type}...}}
-std::map<std::string, std::vector<std::pair<std::string, TypeId>>> kTransAttrDTypeMap = {
+const std::map<std::string, std::vector<std::pair<std::string, TypeId>>> kTransAttrDTypeMap = {
   {kResizeNearestNeighborOpName, {{"size", kNumberTypeInt32}}}, {kResizeBilinearOpName, {{"size", kNumberTypeInt32}}}};
 
 bool IsValidConversion(TypeId src_type, TypeId dst_type) {
@@ -2019,6 +2019,13 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
   MS_EXCEPTION_IF_NULL(primitive);
   const auto &attr_input_map = adpt->getAttrInputMap();
   const auto &input_map = adpt->getInputMap();
+  if (input_map.size() != attr_input_map.size() + input_size - kIndex1) {
+    MS_LOG(DEBUG) << "For node: " << node->DebugString() << ", the size of real input:" << input_size - kIndex1
+                  << " + the size of attr_input_map: " << attr_input_map.size()
+                  << " != the size of input_map:" << input_map.size()
+                  << ", so do not convert input from attr any more.";
+    return;
+  }
   MS_EXCEPTION_IF_NULL(anf_graph_);
   auto manager = anf_graph_->manager();
   if (manager == nullptr) {
@@ -2560,13 +2567,13 @@ std::vector<int64_t> DfGraphConvertor::CastToInt(const ValuePtr &value) const {
 }
 
 void DfGraphConvertor::TransInputDataType(const CNodePtr &node, std::string node_name) const {
-  if (kTransInputDTypeMap.count(node_name) == 0) {
+  auto iter = kTransInputDTypeMap.find(node_name);
+  if (iter == kTransInputDTypeMap.end()) {
     return;
   }
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Trans input data type of node:" << node->DebugString();
-  auto &inputs = kTransInputDTypeMap[node_name];
-  for (auto &item : inputs) {
+  for (auto &item : iter->second) {
     auto input_node = node->input(item.first);
     TypeId dst_type = item.second;
     MS_EXCEPTION_IF_NULL(input_node);
@@ -2598,16 +2605,15 @@ void DfGraphConvertor::TransInputDataType(const CNodePtr &node, std::string node
 }
 
 void DfGraphConvertor::TransAttrDataType(const CNodePtr &node, std::string node_name) const {
-  MS_EXCEPTION_IF_NULL(node);
-  if (kTransAttrDTypeMap.count(node_name) == 0) {
+  auto iter = kTransAttrDTypeMap.find(node_name);
+  if (iter == kTransAttrDTypeMap.end()) {
     return;
   }
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Trans attr data type of node:" << node->DebugString();
-  auto attrs = kTransAttrDTypeMap[node_name];
   auto prim = common::AnfAlgo::GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(prim);
-  for (auto &item : attrs) {
+  for (auto &item : iter->second) {
     std::string attr_name = item.first;
     TypeId dst_type = item.second;
     if (!prim->HasAttr(attr_name)) {
