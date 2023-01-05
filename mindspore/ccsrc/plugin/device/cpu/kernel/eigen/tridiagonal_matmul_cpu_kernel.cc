@@ -60,6 +60,7 @@ int TridiagonalMatMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto input1_shape = inputs[kIndex1]->GetShapeVector();
   auto input2_shape = inputs[kIndex2]->GetShapeVector();
   auto input3_shape = inputs[kIndex3]->GetShapeVector();
+  rhs_shape_ = input3_shape;
   if ((input0_shape.size() < is_matrix) || (input1_shape.size() < is_matrix) || (input2_shape.size() < is_matrix) ||
       (input3_shape.size() < is_matrix)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
@@ -140,10 +141,6 @@ bool TridiagonalMatMulCpuKernelMod::Launch(const std::vector<kernel::AddressPtr>
 template <typename T>
 void TridiagonalMatMulCpuKernelMod::LaunchTridiagonalMatMul(const std::vector<AddressPtr> &inputs,
                                                             const std::vector<AddressPtr> &outputs) {
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
-  }
   T *superdiag_ptr = reinterpret_cast<T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(superdiag_ptr);
   T *maindiag_ptr = reinterpret_cast<T *>(inputs[1]->addr);
@@ -154,15 +151,14 @@ void TridiagonalMatMulCpuKernelMod::LaunchTridiagonalMatMul(const std::vector<Ad
   MS_EXCEPTION_IF_NULL(rhs_ptr);
   T *y_ptr = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(y_ptr);
-  auto rhs_shape = AnfAlgo::GetInputDeviceShape(node_, kInputShapeIndex3);
-  size_t m = static_cast<size_t>(rhs_shape[rhs_shape.size() - row]);
-  size_t n = static_cast<size_t>(rhs_shape[rhs_shape.size() - col]);
+  size_t m = static_cast<size_t>(rhs_shape_[rhs_shape_.size() - row]);
+  size_t n = static_cast<size_t>(rhs_shape_[rhs_shape_.size() - col]);
   size_t size_mn = m * n;
   using VectorMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>>;
   using MatrixMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
   size_t rhs_num = 1;
-  for (size_t i = 0; i < rhs_shape.size(); i++) {
-    rhs_num *= static_cast<size_t>(rhs_shape[i]);
+  for (size_t i = 0; i < rhs_shape_.size(); i++) {
+    rhs_num *= static_cast<size_t>(rhs_shape_[i]);
   }
   size_t rhs_matrix_num = rhs_num / size_mn;
   for (size_t i = 0; i < rhs_matrix_num; i++) {

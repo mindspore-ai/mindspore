@@ -135,7 +135,7 @@ void InstanceNormV2CpuKernelMod::CollectLinearAndConstant(const typename TTypes<
       } else {
         mean = running_mean(idx);
         float _std_ = std::sqrt(running_var(idx) + static_cast<float>(epsilon_));
-        MS_EXCEPTION_IF_ZERO("_std_", static_cast<int64_t>(_std_));
+        MS_EXCEPTION_IF_ZERO("_std_", _std_);
         invstd = float_init_one / _std_;
       }
       _alpha_[idx] = invstd * gamma(idx);

@@ -144,6 +144,7 @@ class MIND_API AGTridiagonalMatMulInfer : public abstract::OpInferBase {
   }
 };
 
+MIND_API_OPERATOR_IMPL(TridiagonalMatMul, BaseOperator);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(TridiagonalMatMul, prim::kPrimTridiagonalMatMul, AGTridiagonalMatMulInfer, false);
 }  // namespace ops
 }  // namespace mindspore
