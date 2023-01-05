@@ -24,6 +24,7 @@
 #include <utility>
 #include <set>
 #include <list>
+#include <mutex>
 #include "schema/inner/model_generated.h"
 #include "ops/primitive_c.h"
 #include "ir/func_graph.h"
@@ -31,6 +32,7 @@
 #include "tools/converter/converter_context.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/node_util.h"
+#include "tools/common/persist_future.h"
 
 using mindspore::ops::PrimitiveC;
 
@@ -50,18 +52,16 @@ class AnfExporter {
   int ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, schema::CNodeT *output_cnode);
   int ConvertInputCNodeCommonOp(const AnfNodePtr &input_anode, schema::CNodeT *output_cnode);
   int ConvertInputParameter(const CNodePtr &cnode, size_t index, const PrimitivePtr &primitive,
-                            const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *op_node);
+                            const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *op_node,
+                            size_t *tensor_index_ptr);
   int ConvertInputValueNode(const CNodePtr &cnode, size_t index, const PrimitivePtr &primitive,
                             const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *op_node);
   int SetSubGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const size_t &subgraph_index);
   int SetSubGraphOutputIndex(const CNodePtr &cnode, size_t subgraph_index,
                              const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *return_node);
-  static int SetPostTrainOutputTensorType(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
-                                          const std::shared_ptr<mindspore::Primitive> &primitive,
-                                          const std::unique_ptr<schema::CNodeT> &dst_node);
-  static int ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
-                               const std::shared_ptr<mindspore::Primitive> &primitive,
-                               const std::unique_ptr<schema::CNodeT> &dst_node);
+  int ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
+                        const std::shared_ptr<mindspore::Primitive> &primitive,
+                        const std::unique_ptr<schema::CNodeT> &dst_node);
   int Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
              const size_t &subgraph_index, const bool &keep_graph, const bool &copy_primitive);
   int ExportSubgraph(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
@@ -75,7 +75,8 @@ class AnfExporter {
   std::list<CNodePtr> InsertCallNode(const FuncGraphPtr &func_graph);
   int SetMetaGraphInput(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   int SetMetaGraphOutput(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
-  int CreateNewTensorForParameter(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const AnfNodePtr &input);
+  int CreateNewTensorForParameter(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const AnfNodePtr &input,
+                                  size_t *tensor_index_ptr);
   bool CaseToContinue(const string &prim_name);
 
  private:
@@ -83,15 +84,32 @@ class AnfExporter {
   int SetTailCallForReturn(const CNodePtr &return_cnode);
   // To deal witch case which call node has not output.
   int SetTailCallForNonOutput();
+  size_t GetNodeId(const std::pair<AnfNodePtr, size_t> &key);
+  void SetNodeId(const std::pair<AnfNodePtr, size_t> &key, size_t value);
+  bool HasNodeIdKey(const std::pair<AnfNodePtr, size_t> &key);
+
+  // meta graph all tensor op functions
+  // insert tensor to allTensor and return the index of the tensor
+  size_t NewFbTensor(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, mindspore::schema::TensorT *tensor);
+  // insert tensor to allTensor
+  void InsertFbTensor(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, mindspore::schema::TensorT *tensor);
+  // get the allTensor size
+  size_t GetAllTensorSize(const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
+  // get the tensor in allTensor
+  mindspore::schema::TensorT *GetTensorFromAllTensor(const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
+                                                     size_t index);
 
   // Key is a pair of node and its output id. Value is the mapped tensor id of meta_graph.
   std::map<std::pair<AnfNodePtr, size_t>, size_t> node_id_map_;
   // The first item is FuncGraph which has been exported, the second item is the subgraph index in meta_graph
   std::map<FuncGraphPtr, size_t> fg_subgraph_map_;
   std::vector<AnfNodePtr> graph_inputs_;
-  std::set<AnfNodePtr> graph_inputs_has_exported_;
   std::map<AnfNodePtr, size_t> graph_inputs_map_;
   std::map<AnfNodePtr, schema::CNodeT *> call_node_map_;
+  std::mutex fb_graph_node_mutex_;
+  std::mutex fb_graph_all_tensors_mutex_;
+  std::mutex node_id_map_mutex_;
+  std::map<AnfNodePtr, PersistFuture<bool>> batch_cnode_map_;
   uint32_t node_idx_ = 0;
   bool train_flag_ = false;
 };
