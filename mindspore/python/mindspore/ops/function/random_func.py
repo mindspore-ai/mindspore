@@ -73,7 +73,6 @@ def random_gamma(shape, alpha, seed=None):
     return output
 
 
-#TODO: remove comment
 @constexpr(reuse_result=False)
 def _get_seed(op_seed, kernel_name):
     """Get the graph-level seed."""
