@@ -761,7 +761,7 @@ void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const st
 #endif
 }
 
-void GraphExecutorPy::ParallelPostProcess(const std::string &phase) {
+void GraphExecutorPy::ParallelPostProcess(const std::string &phase, bool use_compile_cache) {
   // Slice Python parameter obj
   auto layout_graph = phase + kStepParallelGraph;
   // only Parallel graph has tensor_layout
@@ -769,6 +769,11 @@ void GraphExecutorPy::ParallelPostProcess(const std::string &phase) {
   bool after_shard = false;
   if (phase.find("after_shard") != std::string::npos) {
     after_shard = true;
+  }
+  // Use compile cache
+  if (use_compile_cache) {
+    parallel::InitCompileCacheParams(info_[phase]->resource);
+    return;
   }
   // Initialize parameters for graph which auto-parallel not care.
   if (root == nullptr && !after_shard) {
@@ -823,6 +828,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
   ResourcePtr resource = std::make_shared<Resource>(source_obj);
   InitCompileCacheInfo(resource, phase);
+  bool use_compile_cache = resource->EnableCompileCache() && resource->func_graph();
   ConfigManager::GetInstance().ResetQueue(queue_name_);
 
   auto actions = GetPipeline(resource, phase, use_vm);
@@ -886,7 +892,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   // Save the compiled graph to MsPipeLine.
   SaveCompiledGraph(phase);
   if (is_auto_parallel) {
-    ParallelPostProcess(phase);
+    ParallelPostProcess(phase, use_compile_cache);
   }
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::Snapshot();

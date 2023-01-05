@@ -25,6 +25,7 @@
 #include "base/base.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "pipeline/jit/resource.h"
 #include "pybind11/pybind11.h"
 
 namespace py = pybind11;
@@ -54,6 +55,7 @@ void HandleAdaFactorOpt(const FuncGraphPtr &root);
 void AutoParallelPostProcess(const FuncGraphPtr &root);
 // Init the parameters for graph which not specified by shard under PyNative mode.
 void InitPynativeNoShardParams(const FuncGraphPtr &root);
+void InitCompileCacheParams(const pipeline::ResourcePtr &resource);
 std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
 std::pair<AnfNodePtr, bool> FindParameterWithAllgather(const AnfNodePtr &node, const FuncGraphPtr &func_graph,
                                                        const std::string &name);

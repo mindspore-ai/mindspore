@@ -34,6 +34,7 @@
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/graph_util/get_parallel_info.h"
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/node_check.h"
 #include "ir/param_info.h"
@@ -413,6 +414,58 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
       (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_PARAMETER_FN_NAME, each_cloned_obj, py::str(phase),
                                      layout);
     }
+  }
+}
+
+static void SliceCacheParameterObj(const ParameterPtr &parameter, const py::dict &layout_dict) {
+  auto param_info = parameter->param_info();
+  if (param_info == nullptr) {
+    MS_LOG(WARNING) << "parameter: " << parameter->DebugString() << " doesn't have param_info.";
+    return;
+  }
+  auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
+  MS_EXCEPTION_IF_NULL(graph_executor);
+  auto phase = graph_executor->phase();
+  auto py_obj = GetPyParameterObj(param_info, OBJ);
+  if (py::isinstance<py::none>(py_obj)) {
+    MS_LOG(WARNING) << "Parameter: " << parameter->DebugString() << " can't find python obj.";
+    return;
+  }
+  auto name = parameter->name();
+  if (!layout_dict.contains(name)) {
+    (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, INIT_OPTIMIZER_STATE_FN, py_obj, py::str(phase));
+    return;
+  }
+  auto layout = layout_dict[py::str(name)];
+  // Call Python _slice_parameter Fn to slice python parameter obj
+  (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_PARAMETER_FN_NAME, py_obj, py::str(phase), layout);
+
+  // handle cloned parameter, like accu_grad and optimizer param
+  auto cloned_py_obj = GetPyParameterObj(param_info, CLONED_OBJ);
+  if (!py::isinstance<py::none>(cloned_py_obj)) {
+    if (!py::isinstance<py::list>(cloned_py_obj)) {
+      MS_LOG(EXCEPTION) << "parameter: " << parameter->DebugString() << " doesn't have correct cloned obj";
+    }
+    auto obj_list = py::cast<py::list>(cloned_py_obj);
+    for (size_t i = 0; i < obj_list.size(); ++i) {
+      py::object each_cloned_obj = obj_list[i];
+      (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_PARAMETER_FN_NAME, each_cloned_obj, py::str(phase),
+                                     layout);
+    }
+  }
+}
+
+void InitCompileCacheParams(const pipeline::ResourcePtr &resource) {
+  auto layout_dict = GetParameterLayoutFromResource(resource);
+  auto graph = resource->func_graph();
+  auto params = graph->parameters();
+  for (auto &param : params) {
+    auto param_ptr = param->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_ptr);
+    if (!param_ptr->has_default()) {
+      continue;
+    }
+    SliceCacheParameterObj(param_ptr, layout_dict);
   }
 }
 

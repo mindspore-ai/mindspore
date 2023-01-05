@@ -137,7 +137,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
 
  private:
   GraphExecutorPy() = default;
-  void ParallelPostProcess(const string &phase);
+  void ParallelPostProcess(const string &phase, bool use_compile_cache);
   void GetGeBackendPolicy() const;
   // filter some pipeline actions according to phase, e.g. when exporting onnx, it is no need to execute actions after
   // 'validate' stage
