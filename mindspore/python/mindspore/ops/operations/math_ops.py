@@ -4961,12 +4961,12 @@ class BesselI0(Primitive):
         >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
         >>> output = bessel_i0(x)
         >>> print(output)
-        [1.014452  1.179784  1.0241697 1.0020261]
+        [1.0144521 1.1797839 1.0241698 1.0020262]
     """
 
     @prim_attr_register
     def __init__(self):
-        """Initialize BesselI0"""
+        self.init_prim_io_names(inputs=['x'], outputs='y')
 
 
 class BesselI1(Primitive):

@@ -2852,7 +2852,7 @@ def bessel_i0(x):
         >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
         >>> output = ops.bessel_i0(x)
         >>> print(output)
-        [1.26606588  1.06348337  1.06348337  1.26606588]
+        [1.266066  1.0634835 1.0634835 1.266066]
     """
     return bessel_i0_(x)
 
