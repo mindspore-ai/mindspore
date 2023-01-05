@@ -646,9 +646,10 @@ class TopkRouter(Cell):
                                                     self.on_value, self.off_value))
             accum_combine_tensor = self.add2(accum_combine_tensor, combine_tensor)
 
-        # expert weights normalization
-        combine_tensor_sum = self.reduce_sum_keep2(self.reduce_sum_keep2(accum_combine_tensor, -1), -2)
-        accum_combine_tensor = self.div2(accum_combine_tensor, self.add4(combine_tensor_sum, 1e-9))
+        # expert weights normalization when k > 1
+        if self.num_experts_chosen > 1:
+            combine_tensor_sum = self.reduce_sum_keep2(self.reduce_sum_keep2(accum_combine_tensor, -1), -2)
+            accum_combine_tensor = self.div2(accum_combine_tensor, self.add4(combine_tensor_sum, 1e-9))
         # dispatch_tensor is of boolean type. Here, using NotEqual instead of Cast, for that 'Cast to bool' has
         # bad performance
         dispatch_tensor = self.not_equal(accum_combine_tensor, 0.0)
