@@ -100,6 +100,9 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type = true
 // Set kernel info for some value nodes manually.
 void SetKernelInfoForValueNode(const ValueNodePtr &value_node);
 
+// Multiplex op infer methods defined under core/ops to generate abstract of new cnode.
+abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive);
+
 // Generate abstract, format and object type for newly created node.
 // They can be generated in multiple ways because new node is not processed by kernel selecting method.
 

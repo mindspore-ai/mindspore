@@ -361,9 +361,11 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_to_tensor_transform) {
   ASSERT_TRUE(g != nullptr);
   std::vector<int64_t> shp_x{4, 2};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
-  std::vector<int64_t> shp_y{2};
+  std::vector<int64_t> shp_y{1, 3};
   auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
-  AbstractBasePtrList args_spec_list{x_abstract, y_abstract};
+  AbstractBasePtrList abstract_list = {y_abstract};
+  auto y_tuple_abs = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  AbstractBasePtrList args_spec_list{x_abstract, y_tuple_abs};
   auto func_graph = GetFuncGraph(g, args_spec_list);
   ASSERT_TRUE(func_graph != nullptr);
   AnfNodePtr reshape;
