@@ -21,10 +21,7 @@
 #include <string>
 #include <thread>
 #include <functional>
-
-extern "C" {
-struct acltdtChannelHandle;
-}  // extern "C"
+#include "acl/acl_tdt.h"
 
 namespace mindspore::device::ascend {
 class TensorPrint {
@@ -37,6 +34,29 @@ class TensorPrint {
  private:
   std::string print_file_path_;
   const acltdtChannelHandle *acl_handle_;
+};
+
+enum class ChannelType {
+  kMbuf = 0,
+  kTDT,
+};
+
+class AclHandle {
+ public:
+  static AclHandle &GetInstance();
+  ChannelType GetChannelType() { return channel_type_; }
+  acltdtChannelHandle *Get() { return acl_handle_; }
+  bool CreateChannel(uint32_t deviceId, std::string name, size_t capacity = 16);
+
+  ~AclHandle() = default;
+  AclHandle(const AclHandle &) = delete;
+  AclHandle &operator=(const AclHandle &) = delete;
+
+ private:
+  AclHandle() = default;
+
+  acltdtChannelHandle *acl_handle_{nullptr};
+  ChannelType channel_type_{ChannelType::kMbuf};
 };
 
 using PrintThreadCrt = std::function<std::thread(std::string &, acltdtChannelHandle *)>;
