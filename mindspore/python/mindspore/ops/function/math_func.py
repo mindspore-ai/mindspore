@@ -5737,7 +5737,7 @@ def atleast_1d(inputs):
     for tensor in inputs:
         if not isinstance(tensor, Tensor):
             raise TypeError(f"For 'atleast_1d', each element of 'inputs' must be a tensor, but got {type(tensor)}")
-    return [_expand(arr, 1) for arr in inputs]
+    return tuple([_expand(arr, 1) for arr in inputs])
 
 
 def dstack(inputs):
@@ -5986,7 +5986,7 @@ def atleast_2d(inputs):
         if not isinstance(tensor, Tensor):
             msg = "expect Tensor or list of tensors, but got " + f"{type(tensor)}"
             raise TypeError(msg)
-    return [_expand(arr, 2) for arr in inputs]
+    return tuple([_expand(arr, 2) for arr in inputs])
 
 
 def cartesian_prod(*inputs):
@@ -6085,7 +6085,7 @@ def atleast_3d(inputs):
     for tensor in inputs:
         if not isinstance(tensor, Tensor):
             raise TypeError(f"For 'atleast_3d', each element of 'inputs' must be a tensor, but got {type(tensor)}")
-    return [_expand3(arr) for arr in inputs]
+    return tuple([_expand3(arr) for arr in inputs])
 
 
 def view_as_real(x):

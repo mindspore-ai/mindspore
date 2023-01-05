@@ -1226,6 +1226,7 @@ class PoissonNLLLoss(LossBase):
         self.full = full
         self.eps = eps
         self.maximum = P.Maximum()
+        self.cast = P.Cast()
 
     def construct(self, x, target):
         _check_is_tensor('x', x, self.cls_name)
@@ -1235,6 +1236,7 @@ class PoissonNLLLoss(LossBase):
                 "For 'PoissonNLLLoss', the inputs must be non-scalar, but got shapes: "
                 f"x: {x.shape}, target: {target.shape}"
             )
+        target = self.cast(target, x.dtype)
         if self.log_input:
             loss = x.exp() - target * x
         else:
@@ -1242,7 +1244,7 @@ class PoissonNLLLoss(LossBase):
         if self.full:
             target = self.maximum(target, self.eps)
             stirling_term = (target > 1) * ((target + 0.5) * target.log() - target + get_half_ln_2_pi())
-            loss += stirling_term
+            loss += F.masked_fill(stirling_term, target <= 1, 0)
         out = self.get_loss(loss)
         return out
 

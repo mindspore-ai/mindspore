@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include <set>
 #include <string>
 #include "include/common/utils/utils.h"
@@ -86,6 +87,9 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
     return node;
   }
   auto kernel_name = common::AnfAlgo::GetCNodeName(node);
+  if (kernel::kOpNameToAicpuOpNameMap.find(kernel_name) != kernel::kOpNameToAicpuOpNameMap.end()) {
+    kernel_name = kernel::kOpNameToAicpuOpNameMap.at(kernel_name);
+  }
   if (kAICpuOpNames.find(kernel_name) != kAICpuOpNames.end()) {
     common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kEnvOpSoNames), node);
   }
