@@ -37,14 +37,14 @@ struct AccumulateType<double, true> {
 template <typename T, bool is_cuda>
 using acc_type = typename AccumulateType<T, is_cuda>::type;
 
-template <typename T, typename AccumT, typename OutT>
+template <typename T, typename AccumT, typename OutT, bool is_log_softmax>
 struct SoftMaxForwardEpilogue {
-  __device__ __forceinline__ SoftMaxForwardEpilogue(AccumT max_input, AccumT sum) : max_input(max_input), sum(sum) {}
-
+  __device__ __forceinline__ SoftMaxForwardEpilogue(AccumT max_input, AccumT sum)
+      : max_input(max_input), sum(is_log_softmax == true ? std::log(sum) : sum) {}
   __device__ __forceinline__ OutT operator()(T input) const {
-    return static_cast<OutT>(std::exp((AccumT)input - max_input) / sum);
+    return is_log_softmax == true ? static_cast<OutT>((AccumT)input - max_input - sum)
+                                  : static_cast<OutT>(std::exp((AccumT)input - max_input) / sum);
   }
-
   const AccumT max_input;
   const AccumT sum;
 };
