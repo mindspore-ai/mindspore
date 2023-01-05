@@ -67,6 +67,10 @@ std::vector<int64_t> CheckAttrIntOrTuple(const ValuePtr &attr, const size_t star
   MS_EXCEPTION_IF_NULL(attr);
   if (attr->isa<ValueTuple>()) {
     std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
+    if (attr_vec.size() < start_idx + num_element) {
+      MS_LOG(EXCEPTION) << "ValueTuple size verify failed. ValueTuple size is " << attr_vec.size()
+                        << ", start index is " << start_idx << ", element number is " << num_element;
+    }
     auto it_start = attr_vec.begin() + SizeToLong(start_idx);
     (void)std::transform(it_start, it_start + SizeToLong(num_element), std::back_inserter(result),
                          [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
