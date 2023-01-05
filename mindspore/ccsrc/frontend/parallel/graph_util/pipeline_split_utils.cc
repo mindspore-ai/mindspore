@@ -33,6 +33,22 @@
 
 namespace mindspore {
 namespace parallel {
+namespace {
+bool IsSendRec(const AnfNodePtr &node) {
+  return IsPrimitiveCNode(node, prim::kPrimSend) || IsPrimitiveCNode(node, prim::kPrimReceive);
+}
+
+std::string TagForSendRecDepend(const AnfNodePtr &prior_node, const AnfNodePtr &post_node) {
+  if (!IsSendRec(prior_node) || !IsSendRec(post_node)) {
+    return "";
+  }
+  if (prior_node->cast<CNodePtr>()->HasPrimalAttr(kPrimalAttrForwardNodeName) ==
+      post_node->cast<CNodePtr>()->HasPrimalAttr(kPrimalAttrForwardNodeName)) {
+    return "";
+  }
+  return std::string(SEND_REC_DEPEND);
+}
+}  // namespace
 AnfNodePtr FindAccuGrad(const CNodePtr &cnode) {
   auto pre_node = cnode->input(1);
   size_t depth = 0;
@@ -370,13 +386,16 @@ bool CompFunc(const AnfNodePtr &node1, const AnfNodePtr &node2) {
 }
 
 void InsertDepend(const AnfNodePtr &prior_node, const AnfNodePtr &post_node, const FuncGraphManagerPtr &manager,
-                  const FuncGraphPtr &root) {
+                  const FuncGraphPtr &root, const std::string &attr_tag) {
   MS_EXCEPTION_IF_NULL(prior_node);
   MS_EXCEPTION_IF_NULL(post_node);
   auto post_cnode = post_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(post_cnode);
   std::vector<AnfNodePtr> depend_input = {NewValueNode(prim::kPrimDepend), post_cnode->input(1), prior_node};
   auto depend_node = root->NewCNode(depend_input);
+  if (!attr_tag.empty()) {
+    depend_node->AddAttr(attr_tag, MakeValue<bool>(true));
+  }
   manager->SetEdge(post_node, 1, depend_node);
 }
 
@@ -407,31 +426,31 @@ void ReorderForBackward(const PipelinePair &forward_start_pair, const PipelinePa
   for (size_t i = LongToSize(stage_num - stage_id); i < (forward_start_pair.first.size()); ++i) {
     auto prior_node1 = forward_end_before_pair.second[i];
     auto post_node1 = backward_start_pair.first[LongToSize(SizeToLong(i) - stage_num + stage_id + 1)];
-    InsertDepend(prior_node1, post_node1, manager, root);
+    InsertDepend(prior_node1, post_node1, manager, root, TagForSendRecDepend(prior_node1, post_node1));
     auto prior_node2 = backward_end_pair.second[LongToSize(SizeToLong(i) - stage_num + stage_id)];
     auto post_node2 = forward_start_pair.first[i];
-    InsertDepend(prior_node2, post_node2, manager, root);
+    InsertDepend(prior_node2, post_node2, manager, root, TagForSendRecDepend(prior_node2, post_node2));
   }
   for (size_t i = LongToSize(stage_num - stage_id); i < (forward_start_pair.first.size() + 1); ++i) {
     if (!IsLastStage()) {
       auto prior_node3 = backward_start_pair.second[LongToSize(SizeToLong(i) - stage_num + stage_id)];
       auto post_node3 = forward_end_pair.first[i - 1];
-      InsertDepend(prior_node3, post_node3, manager, root);
+      InsertDepend(prior_node3, post_node3, manager, root, TagForSendRecDepend(prior_node3, post_node3));
       auto prior_node4 = forward_end_pair.second[i - 1];
       auto post_node4 = backward_end_pair.first[LongToSize(SizeToLong(i) - stage_num + stage_id)];
-      InsertDepend(prior_node4, post_node4, manager, root);
+      InsertDepend(prior_node4, post_node4, manager, root, TagForSendRecDepend(prior_node4, post_node4));
     }
   }
   for (size_t j = LongToSize(SizeToLong(backward_start_pair.first.size()) - stage_num + stage_id + 1);
        j < backward_start_pair.first.size(); ++j) {
     auto prior_node5 = backward_end_pair.second[j - 1];
     auto post_node5 = backward_start_pair.first[j];
-    InsertDepend(prior_node5, post_node5, manager, root);
+    InsertDepend(prior_node5, post_node5, manager, root, TagForSendRecDepend(prior_node5, post_node5));
   }
   if (!IsLastStage()) {
     auto prior_node6 = forward_end_before_pair.second[LongToSize(stage_num - 1 - stage_id)];
     auto post_node6 = backward_start_pair.first[0];
-    InsertDepend(prior_node6, post_node6, manager, root);
+    InsertDepend(prior_node6, post_node6, manager, root, TagForSendRecDepend(prior_node6, post_node6));
   }
 }
 

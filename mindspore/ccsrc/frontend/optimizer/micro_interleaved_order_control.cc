@@ -30,7 +30,6 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr auto kGradientsFlag = "Gradients";
-constexpr auto kMicroInterleavedTag = "micro_interleaved_been_tag";
 const size_t interleaved_size = 2;
 const size_t node_size_two = 2;
 const size_t node_size_three = 3;
@@ -41,175 +40,6 @@ bool IsBpropNode(const AnfNodePtr &node) {
     return false;
   }
   return node->fullname_with_scope().find(kGradientsFlag) == 0;
-}
-
-void SpreadMicroInterleavedIndexForForwardCommNodes(const CNodePtr &input_node, size_t micro_interleaved_index,
-                                                    int64_t pipeline_micro = -1) {
-  std::queue<CNodePtr> node_queue;
-  node_queue.push(input_node);
-  size_t forward_order = 0;
-  while (!node_queue.empty()) {
-    auto cnode = node_queue.front();
-    node_queue.pop();
-    auto cnode_inputs = cnode->inputs();
-    auto spread_size = cnode_inputs.size();
-    if (IsPrimitiveCNode(cnode, prim::kPrimDepend) || IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
-      spread_size = node_size_two;
-    }
-    for (size_t i = 1; i < spread_size; ++i) {
-      auto input = cnode_inputs[i];
-      if (!IsPrimitiveCNode(input)) {
-        continue;
-      }
-      if (IsBpropNode(input) || IsPrimitiveCNode(input, prim::kPrimUpdateState)) {
-        continue;
-      }
-      auto input_cnode = input->cast<CNodePtr>();
-      if (input_cnode->HasAttr(kMicroInterleavedTag)) {
-        continue;
-      }
-      bool is_pipeline = (pipeline_micro >= 0 && input_cnode->HasPrimalAttr(parallel::MICRO));
-      if (is_pipeline && GetValue<int64_t>(input_cnode->GetPrimalAttr(parallel::MICRO)) != pipeline_micro) {
-        continue;
-      }
-      input_cnode->AddAttr(kMicroInterleavedTag, MakeValue<bool>(True));
-      node_queue.push(input_cnode);
-      if (input_cnode->HasPrimalAttr(parallel::FORWARD_NODE_UNIQUE_ID)) {
-        if (pipeline_micro >= 0 && !input_cnode->HasPrimalAttr(parallel::MICRO)) {
-          MS_LOG(INFO) << "node :" << input_cnode->DebugString() << " dose not contain micro tag.";
-          continue;
-        }
-        input_cnode->AddAttr(parallel::MICRO_INTERLEAVED_INDEX, MakeValue<size_t>(micro_interleaved_index));
-        input_cnode->AddAttr(parallel::MICRO_INTERLEAVED_FORWARD_COMM_ORDER, MakeValue<size_t>(forward_order));
-        forward_order++;
-      }
-    }
-  }
-}
-
-void LabelMicroInterleavedIndexForBackwardCommNodes(const std::vector<CNodePtr> &all_nodes) {
-  mindspore::HashMap<std::string, CNodePtr> forward_comm_nodes_map;
-  mindspore::HashMap<std::string, CNodePtr> grad_forward_comm_nodes_map;
-  for (auto &cnode : all_nodes) {
-    if (!IsPrimitiveCNode(cnode)) {
-      continue;
-    }
-    if (!cnode->HasPrimalAttr(parallel::FORWARD_NODE_UNIQUE_ID)) {
-      continue;
-    }
-    auto forward_node_unique_id = GetValue<std::string>(cnode->GetPrimalAttr(parallel::FORWARD_NODE_UNIQUE_ID));
-    if (IsBpropNode(cnode)) {
-      grad_forward_comm_nodes_map[forward_node_unique_id] = cnode;
-      continue;
-    }
-    if (cnode->HasAttr(kAttrDuplicated)) {
-      continue;
-    }
-    forward_comm_nodes_map[forward_node_unique_id] = cnode;
-  }
-  for (auto &pair : grad_forward_comm_nodes_map) {
-    if (forward_comm_nodes_map.find(pair.first) == forward_comm_nodes_map.end()) {
-      continue;
-    }
-    auto forward_node = forward_comm_nodes_map[pair.first];
-    if (!forward_node->HasAttr(parallel::MICRO_INTERLEAVED_INDEX) ||
-        !forward_node->HasAttr(parallel::MICRO_INTERLEAVED_FORWARD_COMM_ORDER)) {
-      continue;
-    }
-    pair.second->AddAttr(parallel::MICRO_INTERLEAVED_INDEX, forward_node->GetAttr(parallel::MICRO_INTERLEAVED_INDEX));
-    pair.second->AddAttr(parallel::MICRO_INTERLEAVED_FORWARD_COMM_ORDER,
-                         forward_node->GetAttr(parallel::MICRO_INTERLEAVED_FORWARD_COMM_ORDER));
-  }
-}
-
-void LabelMicroInterleavedIndex(const std::vector<CNodePtr> &all_nodes) {
-  CNodePtr micro_interleaved_add = nullptr;
-  for (auto &cnode : all_nodes) {
-    if (!IsPrimitiveCNode(cnode)) {
-      continue;
-    }
-    if (GetCNodePrimitive(cnode)->HasAttr("micro_interleaved_add_flag")) {
-      micro_interleaved_add = cnode;
-      break;
-    }
-  }
-  if (micro_interleaved_add == nullptr || micro_interleaved_add->size() != node_size_three) {
-    return;
-  }
-  for (size_t i = 1; i < micro_interleaved_add->size(); ++i) {
-    auto input_cnode = micro_interleaved_add->input(i)->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(input_cnode);
-    SpreadMicroInterleavedIndexForForwardCommNodes(input_cnode, i - 1);
-  }
-  LabelMicroInterleavedIndexForBackwardCommNodes(all_nodes);
-}
-
-size_t LabelMicroInterleavedIndexLastStage(const std::vector<CNodePtr> &all_nodes) {
-  std::vector<CNodePtr> micro_interleaved_add_list;
-  for (auto &cnode : all_nodes) {
-    if (!IsPrimitiveCNode(cnode)) {
-      continue;
-    }
-    if (GetCNodePrimitive(cnode)->HasAttr("micro_interleaved_add_flag")) {
-      micro_interleaved_add_list.push_back(cnode);
-    }
-  }
-
-  for (auto &micro_interleaved_add : micro_interleaved_add_list) {
-    auto pipeline_micro = GetValue<int64_t>(micro_interleaved_add->GetPrimalAttr(parallel::MICRO));
-    for (size_t i = 1; i < micro_interleaved_add->size(); ++i) {
-      auto input_cnode = micro_interleaved_add->input(i)->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(input_cnode);
-      SpreadMicroInterleavedIndexForForwardCommNodes(input_cnode, i - 1, pipeline_micro);
-    }
-  }
-  LabelMicroInterleavedIndexForBackwardCommNodes(all_nodes);
-  return micro_interleaved_add_list.size();
-}
-
-size_t LabelMicroInterleavedIndexPipelineStage(const std::vector<CNodePtr> &all_nodes) {
-  mindspore::HashMap<size_t, std::vector<CNodePtr>> pipeline_end_list_map;
-  std::vector<size_t> micro_list;
-  for (auto &cnode : all_nodes) {
-    if (!IsPrimitiveCNode(cnode)) {
-      continue;
-    }
-    if (IsBpropNode(cnode)) {
-      continue;
-    }
-    if (!cnode->HasPrimalAttr(parallel::PIPELINE_END) || !cnode->HasPrimalAttr(parallel::MICRO)) {
-      continue;
-    }
-    size_t pipeline_end = LongToSize(GetValue<int64_t>(cnode->GetPrimalAttr(parallel::PIPELINE_END)));
-    size_t micro = LongToSize(GetValue<int64_t>(cnode->GetPrimalAttr(parallel::MICRO)));
-    if (pipeline_end != micro) {
-      continue;
-    }
-    if (pipeline_end_list_map.find(pipeline_end) == pipeline_end_list_map.end()) {
-      pipeline_end_list_map[pipeline_end] = {cnode};
-      micro_list.push_back(pipeline_end);
-    } else {
-      pipeline_end_list_map[pipeline_end].push_back(cnode);
-    }
-  }
-
-  for (size_t i = 0; i < micro_list.size(); ++i) {
-    auto pipeline_end_list = pipeline_end_list_map[micro_list[i]];
-    if (pipeline_end_list.size() != interleaved_size) {
-      continue;
-    }
-    if (GetCNodePrimitive(pipeline_end_list[0])->HasAttr(parallel::SR_TAG) &&
-        GetCNodePrimitive(pipeline_end_list[1])->HasAttr(parallel::SR_TAG)) {
-      std::sort(pipeline_end_list.begin(), pipeline_end_list.end(), [](auto cnode1, auto cnode2) {
-        return GetValue<int64_t>(GetCNodePrimitive(cnode1)->GetAttr(parallel::SR_TAG)) <
-               GetValue<int64_t>(GetCNodePrimitive(cnode2)->GetAttr(parallel::SR_TAG));
-      });
-    }
-    SpreadMicroInterleavedIndexForForwardCommNodes(pipeline_end_list[0], 0, micro_list[i]);
-    SpreadMicroInterleavedIndexForForwardCommNodes(pipeline_end_list[1], 1, micro_list[i]);
-  }
-  LabelMicroInterleavedIndexForBackwardCommNodes(all_nodes);
-  return micro_list.size();
 }
 
 bool CheckCommNodeEqual(const CNodePtr comm_node1, const CNodePtr comm_node2) {
@@ -297,6 +127,23 @@ bool ExtractInterLeavedCommNode(const std::vector<CNodePtr> &origin_nodes_topolo
   return true;
 }
 
+void CreateGroupForMicroInterleaved(const CNodePtr &comm_cnode, size_t micro_interleaved_index) {
+  auto comm_prim = GetCNodePrimitive(comm_cnode);
+  auto group_name = GetValue<std::string>(comm_prim->GetAttr(parallel::GROUP));
+  if (group_name.find("micro_interleaved") != std::string::npos) {
+    return;
+  }
+  auto rank_ids = parallel::g_device_manager->FindRankListByHashName(group_name);
+  auto dev_list = parallel::g_device_manager->CreateDeviceListByRankList(rank_ids);
+  auto new_group_name = group_name + "_micro_interleaved_" + std::to_string(micro_interleaved_index);
+  parallel::Group cur_device_list;
+  parallel::g_device_manager->CreateGroup(new_group_name, dev_list, &cur_device_list);
+  auto new_comm_prim = comm_prim->Clone();
+  new_comm_prim->SetAttrs(comm_prim->attrs());
+  new_comm_prim->AddAttr(parallel::GROUP, MakeValue<std::string>(new_group_name));
+  comm_cnode->set_input(0, NewValueNode(new_comm_prim));
+}
+
 void InsertInterleavedNodesDepend(const FuncGraphManagerPtr &manager,
                                   const interleaved_node_pair_vector &micro_interleaved_node_list) {
   for (size_t i = 0; i < micro_interleaved_node_list.size() - 1; ++i) {
@@ -336,6 +183,45 @@ void InsertInterleavedNodesDepend(const FuncGraphManagerPtr &manager,
   }
 }
 
+void CreateExtraGroupForModelParallelCommNode(const std::vector<CNodePtr> &origin_nodes_topological,
+                                              const interleaved_node_pair_vector &micro_interleaved_node_list) {
+  std::unordered_map<std::string, size_t> unique_id_interleaved_map;
+  for (const auto &pair : micro_interleaved_node_list) {
+    auto cnode_list = pair.second;
+    CreateGroupForMicroInterleaved(cnode_list[0], 0);
+    CreateGroupForMicroInterleaved(cnode_list[1], 1);
+    if (!IsBpropNode(cnode_list[0]) && cnode_list[0]->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId)) {
+      auto forward_comm_node_unique_id =
+        GetValue<std::string>(cnode_list[0]->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
+      unique_id_interleaved_map[forward_comm_node_unique_id] = 0;
+    }
+    if (!IsBpropNode(cnode_list[1]) && cnode_list[1]->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId)) {
+      auto forward_comm_node_unique_id =
+        GetValue<std::string>(cnode_list[1]->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
+      unique_id_interleaved_map[forward_comm_node_unique_id] = 1;
+    }
+  }
+
+  if (unique_id_interleaved_map.empty()) {
+    return;
+  }
+
+  for (const auto &cnode : origin_nodes_topological) {
+    if (!cnode->HasAttr(kAttrDuplicated)) {
+      continue;
+    }
+    if (!cnode->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId)) {
+      continue;
+    }
+    auto duplicate_comm_node_unique_id =
+      GetValue<std::string>(cnode->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
+    if (unique_id_interleaved_map.find(duplicate_comm_node_unique_id) == unique_id_interleaved_map.end()) {
+      continue;
+    }
+    CreateGroupForMicroInterleaved(cnode, unique_id_interleaved_map[duplicate_comm_node_unique_id]);
+  }
+}
+
 void MicroInterleavedOrderControl(const FuncGraphManagerPtr &manager,
                                   const std::vector<CNodePtr> &origin_nodes_topological, int pipeline_micro = -1) {
   // 1 order forward_node, and the node with same MICRO_INTERLEAVED_FORWARD_COMM_ORDER is the micro interleaved pair
@@ -362,6 +248,7 @@ void MicroInterleavedOrderControl(const FuncGraphManagerPtr &manager,
     if (!CheckCommNodeEqual(cnode_list[0], cnode_list[1])) {
       MS_LOG(INFO) << cnode_list[0]->DebugString() << " and " << cnode_list[1]->DebugString()
                    << " not match for micro interleaved.";
+
       return;
     }
   }
@@ -373,6 +260,11 @@ void MicroInterleavedOrderControl(const FuncGraphManagerPtr &manager,
       return;
     }
   }
+  static const auto micro_interleaved_extra_comm_group = (common::GetEnv("interleaved_extra_group") == "1");
+  if (micro_interleaved_extra_comm_group) {
+    CreateExtraGroupForModelParallelCommNode(origin_nodes_topological, micro_interleaved_forward_node_list);
+    CreateExtraGroupForModelParallelCommNode(origin_nodes_topological, micro_interleaved_backward_node_list);
+  }
   InsertInterleavedNodesDepend(manager, micro_interleaved_forward_node_list);
   InsertInterleavedNodesDepend(manager, micro_interleaved_backward_node_list);
 }
@@ -382,14 +274,7 @@ void MicroInterleavedOrderControlPipeline(const FuncGraphManagerPtr &manager,
   // 1 order forward_node, and the node with same MICRO_INTERLEAVED_FORWARD_COMM_ORDER is the micro interleaved pair
   // nodes.
   MS_EXCEPTION_IF_NULL(parallel::g_device_manager);
-  auto stage_num = parallel::g_device_manager->stage_num();
-  auto stage_id = parallel::g_device_manager->stage_id();
-  size_t pipeline_micro_size = 1;
-  if (stage_id == stage_num - 1) {
-    pipeline_micro_size = LabelMicroInterleavedIndexLastStage(origin_nodes_topological);
-  } else {
-    pipeline_micro_size = LabelMicroInterleavedIndexPipelineStage(origin_nodes_topological);
-  }
+  size_t pipeline_micro_size = parallel::ParallelContext::GetInstance()->pipeline_micro_size();
   MS_LOG(INFO) << "The pipeline micro size in micro interleaved is: " << pipeline_micro_size;
   for (size_t pipeline_micro_id = 0; pipeline_micro_id < pipeline_micro_size; ++pipeline_micro_id) {
     MicroInterleavedOrderControl(manager, origin_nodes_topological, pipeline_micro_id);
@@ -412,7 +297,6 @@ void MicroInterleavedOrderControl(const FuncGraphPtr &graph) {
   std::list<CNodePtr> orders = graph->GetOrderedCnodes();
   std::vector<CNodePtr> origin_nodes_topological(orders.cbegin(), orders.cend());
   if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() == 1) {
-    LabelMicroInterleavedIndex(origin_nodes_topological);
     MicroInterleavedOrderControl(manager, origin_nodes_topological);
     return;
   }

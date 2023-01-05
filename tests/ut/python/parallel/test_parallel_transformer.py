@@ -92,7 +92,7 @@ class TransformerEncoderNet(nn.Cell):
                                    tgt_seq_length=10,
                                    hidden_size=64,
                                    num_heads=8,
-                                   ffn_hifloat16dden_size=64,
+                                   ffn_hidden_size=64,
                                    parallel_config=parallel_config)
         self.loss = CrossEntropyLoss(parallel_config=config.dp_mp_config)
 

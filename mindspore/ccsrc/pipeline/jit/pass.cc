@@ -41,6 +41,8 @@
 #include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/parallel/pynative_shard/pynative_shard.h"
+#include "frontend/parallel/pass/label_micro_interleaved_index.h"
+#include "frontend/parallel/pass/reorder_send_recv_between_fp_bp.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
 #include "frontend/optimizer/micro_interleaved_order_control.h"
@@ -637,6 +639,18 @@ bool SliceRecomputeActivationPass(const ResourcePtr &resource) {
   return true;
 }
 
+bool LabelMicroInterleavedIndexPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::LabelMicroInterleavedIndex(resource->func_graph());
+  return true;
+}
+
+bool ReorderSendRecvBetweenFpBpPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::ReorderSendRecvBetweenFpBp(resource->func_graph());
+  return true;
+}
+
 bool MicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   opt::MicroInterleavedOrderControl(resource->func_graph());
@@ -878,8 +892,10 @@ std::vector<PassItem> kVmPasses = {
   {"add_recomputation", AddRecomputationPass},
   {"cse_after_recomputation", OptAfterRecomputeGroup},
   {"environ_conv", EnvironConversionPass},
+  {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
   {"slice_recompute_activation", SliceRecomputeActivationPass},
   {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
+  {"reorder_send_recv_between_fp_bp", ReorderSendRecvBetweenFpBpPass},
   {"comm_op_add_attrs", CommOpAddAttrs},
   {"add_comm_op_reuse_tag", AddCommOpReusePass},
   {"overlap_opt_shard_in_pipeline", OverlapOptShardInPipelinePass},

@@ -187,6 +187,9 @@ class COMMON_EXPORT ParallelContext {
   void set_enable_micro_interleaved(const bool);
   bool enable_micro_interleaved() const { return enable_micro_interleaved_; }
 
+  void set_pipeline_micro_size(const size_t);
+  size_t pipeline_micro_size() const { return pipeline_micro_size_; }
+
   void set_do_transform(const bool);
   bool do_transform() const { return do_transform_; }
 
@@ -209,6 +212,7 @@ class COMMON_EXPORT ParallelContext {
   std::string parallel_mode_;
   std::string strategy_search_mode_;
   int64_t pipeline_stage_split_num_;
+  size_t pipeline_micro_size_;
   bool parameter_broadcast_;
   bool device_num_is_set_;
   bool fusion_threshold_is_set_;
