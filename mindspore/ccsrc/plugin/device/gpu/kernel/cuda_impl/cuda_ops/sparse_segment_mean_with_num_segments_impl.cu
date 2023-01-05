@@ -125,8 +125,8 @@ inline int Log2Ceil64(uint64_t n) {
 }
 
 template <typename IndexType>
-__global__ void CoalesceKernelCheck(IndexType *indices_ptr, IndexType *segment_ids_ptr, IndexType *num_segments_ptr,
-                                    size_t outer_size, int *ret_flag, size_t indices_size) {
+__global__ void InputValidCheck(IndexType *indices_ptr, IndexType *segment_ids_ptr, IndexType *num_segments_ptr,
+                                size_t outer_size, int *ret_flag, size_t indices_size) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < indices_size; i += gridDim.x * blockDim.x) {
     if ((i != indices_size - 1) && (segment_ids_ptr[i] > segment_ids_ptr[i + 1])) {
       *ret_flag = 1;
@@ -144,32 +144,32 @@ __global__ void CoalesceKernelCheck(IndexType *indices_ptr, IndexType *segment_i
 }
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void CalSparseSegmentMeanWithNumSegments(const DataType *x_ptr, const IndexType *indices_ptr,
-                                                         const IndexType *segment_ids_ptr,
-                                                         const IndexType *num_segments_ptr, size_t *segment_pos_ptr,
-                                                         DataType *y_ptr, size_t outer_size, size_t inner_size,
-                                                         size_t indices_size, size_t segment_size, size_t x_size,
-                                                         size_t y_size, size_t batch_size, int *ret_flag_host,
-                                                         uint32_t device_id, cudaStream_t cuda_stream) {
+CUDA_LIB_EXPORT int CalSparseSegmentMeanWithNumSegments(const DataType *x_ptr, const IndexType *indices_ptr,
+                                                        const IndexType *segment_ids_ptr,
+                                                        const IndexType *num_segments_ptr, size_t *segment_pos_ptr,
+                                                        DataType *y_ptr, size_t outer_size, size_t inner_size,
+                                                        size_t indices_size, size_t segment_size, size_t x_size,
+                                                        size_t y_size, size_t batch_size, int *ret_flag_device,
+                                                        uint32_t device_id, cudaStream_t cuda_stream) {
   // Get start position of each segment and set to segment_pos_ptr.
   // The last element of segment_pos_ptr must equal to segment_size.
-  int *ret_flag_device = nullptr;
-  (void)cudaMalloc(&ret_flag_device, sizeof(int));
-  (void)cudaMemset(ret_flag_device, 0, sizeof(int));
-  CoalesceKernelCheck<<<CUDA_BLOCKS(device_id, indices_size + 1), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+  int ret_flag_host = 0;
+  int thread_num = indices_size + 1 > 256 ? 256 : (indices_size + 1);
+  (void)cudaMemsetAsync(ret_flag_device, 0, sizeof(int), cuda_stream);
+  InputValidCheck<<<CUDA_BLOCKS_CAL(device_id, indices_size + 1, thread_num), thread_num, 0, cuda_stream>>>(
     indices_ptr, segment_ids_ptr, num_segments_ptr, outer_size, ret_flag_device, indices_size);
-  (void)cudaMemcpy(ret_flag_host, ret_flag_device, sizeof(int), cudaMemcpyDeviceToHost);
-  (void)cudaFree(ret_flag_device);
-  if (*ret_flag_host != 0) {
-    return;
+  (void)cudaMemcpyAsync(&ret_flag_host, ret_flag_device, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream);
+  cudaStreamSynchronize(cuda_stream);
+  if (ret_flag_host != 0) {
+    return ret_flag_host;
   }
-  SparseSegmentPosKernel<<<CUDA_BLOCKS(device_id, indices_size + 1), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+  SparseSegmentPosKernel<<<CUDA_BLOCKS_CAL(device_id, indices_size + 1, thread_num), thread_num, 0, cuda_stream>>>(
     segment_ids_ptr, segment_pos_ptr, indices_size, segment_size);
 
   const unsigned int max_grid_x = (1u << 31) - 1;
   const unsigned int max_grid_y = (1u << 16) - 1;
-  const unsigned int max_block_x = 1024;
-  const unsigned int max_block_y = 64;
+  const unsigned int max_block_x = 64;
+  const unsigned int max_block_y = 8;
   unsigned int inner_power2 = 1u << Log2Ceil64(inner_size);
   unsigned int avg_reduce_size = UP_DIV(outer_size, segment_size);
   unsigned int avg_reduce_size_power2 = 1u << Log2Ceil64(avg_reduce_size);
@@ -188,32 +188,32 @@ CUDA_LIB_EXPORT void CalSparseSegmentMeanWithNumSegments(const DataType *x_ptr, 
     SparseSegmentMeanWithNumSegmentsKernel<<<grid, block, shared_memory_size, cuda_stream>>>(
       batch_x_ptr, batch_indices_ptr, segment_pos_ptr, batch_y_ptr, outer_size, inner_size, segment_size);
   }
-  return;
+  return ret_flag_host;
 }
 
-template CUDA_LIB_EXPORT void CalSparseSegmentMeanWithNumSegments<half, int32_t>(
+template CUDA_LIB_EXPORT int CalSparseSegmentMeanWithNumSegments<half, int32_t>(
   const half *x_ptr, const int32_t *indices_ptr, const int32_t *segment_ids_ptr, const int32_t *num_segments_ptr,
   size_t *segment_pos_ptr, half *y_ptr, size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size,
-  size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_host, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseSegmentMeanWithNumSegments<float, int32_t>(
+  size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_device, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalSparseSegmentMeanWithNumSegments<float, int32_t>(
   const float *x_ptr, const int32_t *indices_ptr, const int32_t *segment_ids_ptr, const int32_t *num_segments_ptr,
   size_t *segment_pos_ptr, float *y_ptr, size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size,
-  size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_host, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseSegmentMeanWithNumSegments<double, int32_t>(
+  size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_device, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalSparseSegmentMeanWithNumSegments<double, int32_t>(
   const double *x_ptr, const int32_t *indices_ptr, const int32_t *segment_ids_ptr, const int32_t *num_segments_ptr,
   size_t *segment_pos_ptr, double *y_ptr, size_t outer_size, size_t inner_size, size_t indices_size,
-  size_t segment_size, size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_host, uint32_t device_id,
+  size_t segment_size, size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_device, uint32_t device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseSegmentMeanWithNumSegments<half, int64_t>(
+template CUDA_LIB_EXPORT int CalSparseSegmentMeanWithNumSegments<half, int64_t>(
   const half *x_ptr, const int64_t *indices_ptr, const int64_t *segment_ids_ptr, const int64_t *num_segments_ptr,
   size_t *segment_pos_ptr, half *y_ptr, size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size,
-  size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_host, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseSegmentMeanWithNumSegments<float, int64_t>(
+  size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_device, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalSparseSegmentMeanWithNumSegments<float, int64_t>(
   const float *x_ptr, const int64_t *indices_ptr, const int64_t *segment_ids_ptr, const int64_t *num_segments_ptr,
   size_t *segment_pos_ptr, float *y_ptr, size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size,
-  size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_host, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseSegmentMeanWithNumSegments<double, int64_t>(
+  size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_device, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalSparseSegmentMeanWithNumSegments<double, int64_t>(
   const double *x_ptr, const int64_t *indices_ptr, const int64_t *segment_ids_ptr, const int64_t *num_segments_ptr,
   size_t *segment_pos_ptr, double *y_ptr, size_t outer_size, size_t inner_size, size_t indices_size,
-  size_t segment_size, size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_host, uint32_t device_id,
+  size_t segment_size, size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_device, uint32_t device_id,
   cudaStream_t cuda_stream);

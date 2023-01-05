@@ -65,8 +65,8 @@ abstract::ShapePtr SparseSegmentMeanGradInferShape(const PrimitivePtr &prim,
     auto output_dim0_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name);
     int dim_zero = output_dim0_value_ptr_tensor[kShapeNum0];
-    if (dim_zero <= kDimNum0) {
-      MS_EXCEPTION(ValueError) << "Input output_dim0 must > 0!";
+    if (dim_zero < kDimNum0) {
+      MS_EXCEPTION(ValueError) << "Input output_dim0 must >= 0!";
     } else {
       y_shape[kShapeNum0] = dim_zero;
     }
