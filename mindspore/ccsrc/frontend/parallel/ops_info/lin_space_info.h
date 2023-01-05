@@ -46,6 +46,7 @@ class LinSpaceInfo : public OperatorInfo {
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status InferMirrorOps() override;
   Status InferForwardCommunication() override { return SUCCESS; }
 
  private:

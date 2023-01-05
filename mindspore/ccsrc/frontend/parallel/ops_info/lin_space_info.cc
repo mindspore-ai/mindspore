@@ -71,7 +71,7 @@ Status LinSpaceInfo::InferTensorMap() {
   inputs_tensor_map_.clear();
   outputs_tensor_map_.clear();
 
-  inputs_tensor_map_.assign(2, TensorMap{});
+  inputs_tensor_map_.assign(inputs_shape_.size(), TensorMap{});
   (void)outputs_tensor_map_.emplace_back(TensorMap{0});
   return SUCCESS;
 }
@@ -162,6 +162,21 @@ void LinSpaceInfo::InferSliceId() {
       slice_id_ %= dev_matrix_shape_.front();
     }
   }
+}
+
+Status LinSpaceInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    return FAILED;
+  }
+  // No need to insert mirror ops
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+  if (mirror_ops_.size() == kSizeTwo) {
+    // Push empty mirror op for nums
+    (void)mirror_ops_.emplace_back(OperatorVector());
+  }
+  return SUCCESS;
 }
 
 REGISTER(LinSpaceInfo);
