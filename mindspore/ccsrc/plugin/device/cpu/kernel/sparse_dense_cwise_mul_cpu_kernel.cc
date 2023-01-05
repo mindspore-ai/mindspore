@@ -62,7 +62,8 @@ void SparseDenseCwiseMulCpuKernelMod::ComputeMul(const std::vector<AddressPtr> &
 
   for (int64_t i = 0; i < index_num; i++) {
     for (int64_t j = 0; j < dimension; j++) {
-      if (indices_data[i * dimension + j] >= sparse_shape_data[j]) {
+      if (indices_data[i * dimension + j] >= sparse_shape_data[j] ||
+          indices_data[i * static_cast<size_t>(dimension) + j] < 0) {
         MS_EXCEPTION(ValueError) << "For SparseDenseCwiseMul, the indices cannot go out of bounds.";
       }
     }
