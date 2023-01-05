@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "ops/cumulative_logsumexp.h"
 #include <set>
+#include "abstract/utils.h"
 #include "ops/op_utils.h"
 #include "utils/tensor_construct_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -33,6 +35,11 @@ abstract::ShapePtr CumulativeLogsumexpInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("input x rank", SizeToLong(x_shape.size()), kGreaterEqual, min_dim,
                                            prim_name);
   auto axis_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+
+  auto is_dynamic_rank = IsDynamicRank(x_shape) || IsDynamicRank(axis_shape);
+  if (is_dynamic_rank) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   auto axis_dim = SizeToLong(axis_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("axis dimension", axis_dim, kEqual, kAxisDim, prim_name);
   return std::make_shared<abstract::Shape>(x_shape);
@@ -69,6 +76,11 @@ bool CumulativeLogsumexp::get_exclusive() const {
 bool CumulativeLogsumexp::get_reverse() const {
   auto value_ptr = this->GetAttr(KReverse);
   return GetValue<bool>(value_ptr);
+}
+
+int64_t CumulativeLogsumexp::get_axis() const {
+  auto value_ptr = this->GetAttr(kAxis);
+  return GetValue<int64_t>(value_ptr);
 }
 
 // AG means auto generated
