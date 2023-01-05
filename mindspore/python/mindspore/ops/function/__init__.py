@@ -111,6 +111,7 @@ from .array_func import (
     matrix_diag_part,
     matrix_set_diag,
     diag,
+    diagflat,
     masked_select,
     where,
     meshgrid,

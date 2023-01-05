@@ -351,6 +351,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"unique_consecutive", std::string("unique_consecutive")},          // UniqueConsecutive()
        {"unique_with_pad", std::string("unique_with_pad")},                // P.UniqueWithPad()
        {"diag", std::string("diag")},                                      // P.Diag()
+       {"diagflat", std::string("diagflat")},                              // diagflat()
        {"digamma", std::string("digamma")},                                // digamma()
        {"lgamma", std::string("lgamma")},                                  // lgamma()
        {"adaptive_max_pool2d", std::string("adaptive_max_pool2d")},        // P.AdaptiveMaxPool2D

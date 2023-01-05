@@ -4218,7 +4218,7 @@ def hardtanh(x, min_val=-1.0, max_val=1.0):
 
 def huber_loss(x, target, reduction='mean', delta=1.0):
     r"""
-    huber_loss calculate the error between the predicted value and the target value.
+    huber_loss calculates the error between the predicted value and the target value.
     It has the advantages of both l1_loss and mse_loss.
 
     Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, the reduction parameter is set to "none"

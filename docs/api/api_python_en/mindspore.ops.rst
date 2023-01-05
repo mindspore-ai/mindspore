@@ -432,6 +432,7 @@ Array Operation
     mindspore.ops.concat
     mindspore.ops.count_nonzero
     mindspore.ops.diag
+    mindspore.ops.diagflat
     mindspore.ops.diagonal
     mindspore.ops.dsplit
     mindspore.ops.dyn_shape
