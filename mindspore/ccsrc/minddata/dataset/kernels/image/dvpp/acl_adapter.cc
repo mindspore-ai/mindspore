@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+#if !defined(_WIN32) && !defined(_WIN64)
 #include <libgen.h>
+#endif
 #include <algorithm>
 #include "utils/ms_context.h"
 
