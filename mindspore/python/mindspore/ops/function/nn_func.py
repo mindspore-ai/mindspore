@@ -2501,11 +2501,15 @@ def pad(input_x, padding, mode='constant', value=None):
             For "constant" mode, please refer to :class:`mindspore.nn.ConstantPad1d` as an example to understand
             this filling pattern and extend the padding pattern to n dimensions.
 
-            For "reflect" mode, please refer to :class:`mindspore.nn.ReflectionPad1d` as an example
-            and extend the padding pattern to n dimensions.
+            For "reflect" mode, please refer to :class:`mindspore.nn.ReflectionPad1d` as an example to understand
+            this filling pattern.
+            The reflect mode is used to pad the last two dimensions of 3D or 4D input, or the last dimension of 2D or
+            3D input.
 
-            For "replicate" mode, please refer to :class:`mindspore.nn.ReplicationPad1d` as an example
-            and extend the padding pattern to n dimensions.
+            For "replicate" mode, please refer to :class:`mindspore.nn.ReplicationPad1d` as an example to understand
+            this filling pattern.
+            The replicate mode is used to pad the last three dimensions of 4D or 5D input, the last two dimensions of 3D
+            or 4D input, or the last dimension of 2D or 3D input.
 
         value (Union[int, float, None], optional): Valid only in "constant" mode.
             Set the padding value in "constant" mode. If the value is None, 0 is used as the default padding value.

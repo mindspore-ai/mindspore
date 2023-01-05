@@ -5,10 +5,10 @@ mindspore.nn.MarginRankingLoss
 
     排序损失函数，用于创建一个衡量给定损失的标准。
     
-    给定两个Tensor :math:`x1` 和 :math:`x2` ，以及一个Tensor标签 :math:`y` ，值为1或-1，公式如下：
+    给定两个Tensor :math:`input1` 和 :math:`input2` ，以及一个Tensor标签 :math:`target` ，值为1或-1，公式如下：
     
     .. math::
-        \text{loss}(x1, x2, y) = \max(0, -y * (x1 - x2) + \text{margin})
+        \text{loss}(input1, input2, target) = \max(0, -target * (input1 - input2) + \text{margin})
 
     参数：
         - **margin** (float) - 指定运算的调节因子。默认值：0.0。
