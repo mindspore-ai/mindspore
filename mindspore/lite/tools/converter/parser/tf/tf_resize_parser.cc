@@ -44,6 +44,7 @@ PrimitiveCPtr TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
   } else if (TensorFlowUtils::FindAttrValue(tf_op, "half_pixel_centers", &attr_value) && attr_value.b()) {
     prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::HALF_PIXEL);
     prim->set_cubic_coeff(-0.5f);
+    prim->set_nearest_mode(mindspore::NearestMode::ROUND_HALF_UP);
     prim_c->AddAttr("half_pixel_centers", MakeValue(true));
   } else {
     prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
