@@ -4260,3 +4260,17 @@ def imag(input):
     Returns a new tensor containing imaginary value of the input.
     """
     return F.imag(input)
+
+
+def diff(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.diff`.
+    """
+    return F.diff(x)
+
+
+def frac(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.frac`.
+    """
+    return F.frac(x)

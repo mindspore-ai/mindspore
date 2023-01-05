@@ -224,6 +224,7 @@ mindspore.ops
     mindspore.ops.cosh
     mindspore.ops.cosine_similarity
     mindspore.ops.cov
+    mindspore.ops.diff
     mindspore.ops.deg2rad
     mindspore.ops.digamma
     mindspore.ops.div
@@ -237,6 +238,7 @@ mindspore.ops
     mindspore.ops.floor_mod
     mindspore.ops.float_power
     mindspore.ops.fmod
+    mindspore.ops.frac
     mindspore.ops.heaviside
     mindspore.ops.hypot
     mindspore.ops.i0

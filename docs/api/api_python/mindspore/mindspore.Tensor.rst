@@ -93,6 +93,7 @@ mindspore.Tensor
     mindspore.Tensor.diag
     mindspore.Tensor.diagflat
     mindspore.Tensor.diagonal
+    mindspore.Tensor.diff
     mindspore.Tensor.digamma
     mindspore.Tensor.div
     mindspore.Tensor.divide
@@ -119,6 +120,7 @@ mindspore.Tensor
     mindspore.Tensor.flush_from_cache
     mindspore.Tensor.fmod
     mindspore.Tensor.fold
+    mindspore.Tensor.frac
     mindspore.Tensor.from_numpy
     mindspore.Tensor.gather
     mindspore.Tensor.gather_elements

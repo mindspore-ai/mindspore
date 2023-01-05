@@ -2561,6 +2561,20 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('matrix_determinant')(self)
 
+    def diff(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.diff`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('diff')(self)
+
+    def frac(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.frac`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('frac')(self)
+
     def digamma(self):
         r"""
         For details, please refer to :func:`mindspore.ops.digamma`.
