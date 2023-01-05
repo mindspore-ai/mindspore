@@ -9610,7 +9610,7 @@ def sum(x, dim=None, keepdim=False, *, dtype=None):
 def tanhshrink(x):
     '''
     Applies element-wise, :math:`Tanhshrink(x)=x-Tanh(x)` .
-    see :class:`mindspore.nn.Tanhshrink` for more details.
+    See :class:`mindspore.nn.Tanhshrink` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
