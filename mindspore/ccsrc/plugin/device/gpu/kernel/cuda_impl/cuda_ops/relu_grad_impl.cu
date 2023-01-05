@@ -38,3 +38,6 @@ template CUDA_LIB_EXPORT void CalReLUGrad(int size, int16_t *dy, int16_t *y, int
 template CUDA_LIB_EXPORT void CalReLUGrad(int size, int32_t *dy, int32_t *y, int32_t *dx, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalReLUGrad(int size, int64_t *dy, int64_t *y, int64_t *dx, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalReLUGrad(int size, uint8_t *dy, uint8_t *y, uint8_t *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalReLUGrad(int size, uint16_t *dy, uint16_t *y, uint16_t *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalReLUGrad(int size, uint32_t *dy, uint32_t *y, uint32_t *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalReLUGrad(int size, uint64_t *dy, uint64_t *y, uint64_t *dx, cudaStream_t cuda_stream);
