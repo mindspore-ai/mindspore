@@ -1775,17 +1775,6 @@ KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
   return kernel_attr;
 }
 
-KernelAttr GetKernelAttrFromTypes(const std::vector<TypeId> &inputs, const std::vector<TypeId> &outputs) {
-  KernelAttr kernel_attr;
-  for (auto type_id : inputs) {
-    (void)kernel_attr.AddInputAttr(type_id);
-  }
-  for (auto type_id : outputs) {
-    (void)kernel_attr.AddOutputAttr(type_id);
-  }
-  return kernel_attr;
-}
-
 void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &apply_kernel_attrs) {
   auto kernel_attrs = apply_kernel_attrs;
   if (kernel_attrs.empty()) {
