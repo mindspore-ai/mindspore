@@ -69,7 +69,7 @@ bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
     for (size_t j = 0; j < (inputs[0]->size) / sizeof(T); j++) {
       T Quotient = IndicesData[j];
       for (int i = SizeToInt((inputs[1]->size) / sizeof(T) - 1); i >= 0; i--) {
-        OutputData[IntToSize(i) + j * ((inputs[1]->size) / sizeof(T))] = Quotient % DimsData[IntToSize(i)];
+        OutputData[IntToSize(i) * ((inputs[0]->size) / sizeof(T)) + IntToSize(j)] = Quotient % DimsData[IntToSize(i)];
         Quotient = (Quotient / DimsData[IntToSize(i)]);
       }
     }
@@ -78,7 +78,7 @@ bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
       for (size_t j = start; j < end; j++) {
         T Quotient = IndicesData[j];
         for (int i = SizeToInt((inputs[1]->size) / sizeof(T) - 1); i >= 0; i--) {
-          OutputData[IntToSize(i) + j * ((inputs[1]->size) / sizeof(T))] = Quotient % DimsData[IntToSize(i)];
+          OutputData[IntToSize(i) * ((inputs[0]->size) / sizeof(T)) + IntToSize(j)] = Quotient % DimsData[IntToSize(i)];
           Quotient = (Quotient / DimsData[IntToSize(i)]);
         }
       }
