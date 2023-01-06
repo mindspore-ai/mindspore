@@ -93,7 +93,6 @@ const BaseRef ResizeFusion1::DefinePattern() const {
 }
 
 const BaseRef ResizeFusion2::DefinePattern() const {
-  MS_LOG(WARNING) << "DefinePattern begin";
   input_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(input_ != nullptr, false);
 
@@ -145,7 +144,6 @@ const BaseRef ResizeFusion2::DefinePattern() const {
   auto is_resize = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimResize>);
   MS_CHECK_TRUE_RET(is_resize != nullptr, {});
   VectorRef resize_ref = VectorRef({is_resize, input_, gather_ref});
-  MS_LOG(WARNING) << "DefinePattern end";
 
   return resize_ref;
 }
@@ -211,7 +209,6 @@ int ResizeFusion1::DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &no
 }
 
 int ResizeFusion2::DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
-  MS_LOG(WARNING) << "DoFuison begin";
   MS_ASSERT(node != nullptr);
   auto resize_cnode = node->cast<CNodePtr>();
   MS_ASSERT(resize_cnode != nullptr);
@@ -233,7 +230,6 @@ int ResizeFusion2::DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &no
   MS_ASSERT(manager != nullptr);
   manager->SetEdge(resize_cnode, kInputIndexTwo, resize_input);
 
-  MS_LOG(WARNING) << "DoFuison end";
   return lite::RET_OK;
 }
 
