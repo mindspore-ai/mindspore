@@ -1068,17 +1068,20 @@ void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const std::vector<AnfNode
 
 void KernelGraph::SetKernelObjectTypesForUnrealNodes() {
   auto SetKernelObjectTypesForUnrealNode = [](const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
     std::vector<kernel::KernelObjectType> output_kernel_object_types;
     std::vector<kernel::KernelObjectType> input_kernel_object_types;
     if (node->isa<CNode>()) {
+      auto kernel_info = node->kernel_info_ptr();
+      MS_EXCEPTION_IF_NULL(kernel_info);
       if (IsPrimitiveCNode(node, prim::kPrimMakeTuple) &&
-          (!node->kernel_info_ptr()->has_build_info() || AnfAlgo::GetOutputKernelObjectTypes(node).empty())) {
+          (!kernel_info->has_build_info() || AnfAlgo::GetOutputKernelObjectTypes(node).empty())) {
         const auto &input_object_types = AnfAlgo::GetAllInputObjectType(node);
         input_kernel_object_types = kernel::TypeIdToKernelObjectType(input_object_types);
         output_kernel_object_types = {kernel::KernelObjectType::TUPLE_UNFOLD};
       }
       if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem) &&
-          (!node->kernel_info_ptr()->has_build_info() || AnfAlgo::GetOutputKernelObjectTypes(node).empty())) {
+          (!kernel_info->has_build_info() || AnfAlgo::GetOutputKernelObjectTypes(node).empty())) {
         const auto &output_object_types = AnfAlgo::GetAllOutputObjectType(node);
         output_kernel_object_types = kernel::TypeIdToKernelObjectType(output_object_types);
         const auto &input_object_types = AnfAlgo::GetAllInputObjectType(node);

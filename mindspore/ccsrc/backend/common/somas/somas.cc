@@ -313,9 +313,17 @@ void Somas::UpdateSomasResultToGraph(const session::KernelGraph &graph) {
 
   // Contiguous gaps postprocessing
   for (auto list : contiguous_tensors_list_) {
+    if (list.empty()) {
+      MS_LOG(EXCEPTION) << "list is empty.";
+    }
+    MS_EXCEPTION_IF_NULL(tensors_list_[list[0]]);
     size_t offset = tensors_list_[list[0]]->offset_;
     size_t all_size = 0;
     for (auto i : list) {
+      if (i >= tensors_list_.size()) {
+        MS_LOG(EXCEPTION) << "Index " << i << "is out of range " << tensors_list_.size();
+      }
+      MS_EXCEPTION_IF_NULL(tensors_list_[i]);
       offset = std::min(offset, tensors_list_[i]->offset_);
       all_size += tensors_list_[i]->aligned_size_;
     }
@@ -660,6 +668,7 @@ void Somas::InitSomasStreamAndNode(const session::KernelGraph &graph) {
     if (common::AnfAlgo::IsCommunicationOp(kernel)) {
       type = kCommunicationNode;
     }
+    MS_EXCEPTION_IF_NULL(stream);
     auto node = std::make_shared<SomasNode>(kernel->fullname_with_scope(), i, type, stream->GetId());
     MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_CHECK_FAIL(nodes_list_.size() == i, "node_list_ size error!!!");
@@ -684,6 +693,7 @@ void Somas::InitSomasOutputAndWorkspaceTensors(const session::KernelGraph &graph
   size_t tensor_index = 0;
   auto &kernel_cnodes = graph.execution_order();
   for (const auto &kernel : kernel_cnodes) {
+    MS_EXCEPTION_IF_NULL(kernel);
     auto nodes = nodes_map_[kernel.get()];
     auto node = nodes[0];
     MS_EXCEPTION_IF_NULL(node);
@@ -1677,6 +1687,10 @@ void Somas::UpdateUnionTensorsOffset() {
 
 // Disjoint-set
 size_t find_father(std::vector<size_t> *father, size_t x) {
+  MS_EXCEPTION_IF_NULL(father);
+  if (x >= father->size()) {
+    MS_LOG(EXCEPTION) << "Index " << x << " out of range " << father->size();
+  }
   if (x == (*father)[x]) {
     return x;
   }
@@ -1686,12 +1700,16 @@ size_t find_father(std::vector<size_t> *father, size_t x) {
 
 void Somas::UpdateUnionTensorsConflict() {
   // Keep all constraints for first tensor in list
+  MS_EXCEPTION_IF_NULL(tensors_list_.back());
   size_t cnt = tensors_list_.back()->GetId() + 1;
   std::vector<size_t> father;
   for (size_t i = 0; i < cnt; i++) {
     father.push_back(i);
   }
   for (auto union_node_list : union_tensors_list_) {
+    if (union_node_list.empty()) {
+      MS_LOG(EXCEPTION) << "union node list is empty.";
+    }
     size_t tid_0 = union_node_list[0];
     for (size_t i = 1; i < union_node_list.size(); ++i) {
       size_t tid_1 = union_node_list[i];
@@ -1750,8 +1768,9 @@ void Somas::UpdateUnionTensorsConflict() {
   // solver should ignore union contiguous tensors.
   for (auto ref_list_pair : contiguous_list_with_ref_index_map_) {
     size_t index_second = ref_list_pair.second;
-    for (size_t x : contiguous_tensors_list_[index_second]) {
-      tensors_list_[x]->aligned_size_ = 0;
+    for (size_t x : contiguous_tensors_list_.at(index_second)) {
+      MS_EXCEPTION_IF_NULL(tensors_list_.at(x));
+      tensors_list_.at(x)->aligned_size_ = 0;
     }
   }
 }

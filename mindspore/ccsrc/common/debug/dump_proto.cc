@@ -101,6 +101,7 @@ static irpb::DataType GetNumberDataType(const TypePtr &type) {
 }
 
 static inline bool IsKindOfTensorType(const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(type);
   return type->isa<TensorType>() || type->isa<RowTensorType>() || type->isa<CSRTensorType>() ||
          type->isa<COOTensorType>() || type->isa<MapTensorType>();
 }
@@ -331,6 +332,7 @@ void ProtoExporter::SetDictionaryToProto(const ValueDictionaryPtr &val, irpb::Va
   value_proto->set_dtype(irpb::DT_DICT);
   for (const auto &item : val->value()) {
     irpb::NamedValueProto *named_val = value_proto->add_dict_val();
+    MS_EXCEPTION_IF_NULL(item.first);
     if (!item.first->isa<StringImm>()) {
       MS_LOG(EXCEPTION) << "The key of NamedValueProto should be string type, but got " << item.first->ToString();
     }

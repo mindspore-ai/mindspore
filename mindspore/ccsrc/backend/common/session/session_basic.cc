@@ -358,6 +358,7 @@ void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size
 }
 
 void IterateFindTensor(std::vector<ValuePtr> *msTensors, const VectorRef &ref_list) {
+  MS_EXCEPTION_IF_NULL(msTensors);
   for (size_t i = 0; i < ref_list.size(); ++i) {
     if (utils::isa<tensor::TensorPtr>(ref_list[i])) {
       auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(ref_list[i]);
@@ -1428,6 +1429,7 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     GraphInfo graph_info;
     // Get OpRunInfo and GraphInfo
     BackendOpRunInfoPtr run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, &graph_output_info);
+    MS_EXCEPTION_IF_NULL(run_info);
     GetSingleOpGraphInfo(kernel, input_tensor_info, &graph_info, run_info);
     run_info->base_op_run_info.graph_info = graph_info;
 

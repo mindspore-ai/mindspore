@@ -580,6 +580,7 @@ void OutputOrderList(const FuncGraphPtr &sub_graph, std::ostringstream &oss) {
   oss << "# order:\n";
   int i = 1;
   for (auto &node : order_list) {
+    MS_EXCEPTION_IF_NULL(node);
     oss << '#' << std::setw(width) << i << ": " << node->DebugString() << '\n';
     ++i;
   }
