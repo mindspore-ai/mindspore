@@ -570,6 +570,7 @@ Array操作
     mindspore.ops.Sort
     mindspore.ops.SpaceToBatchND
     mindspore.ops.SpaceToDepth
+    mindspore.ops.SparseSlice
     mindspore.ops.SparseGatherV2
     mindspore.ops.Split
     mindspore.ops.SplitV

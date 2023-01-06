@@ -3623,57 +3623,11 @@ class DropoutDoMask(Primitive):
 
 class ResizeBilinear(PrimitiveWithInfer):
     r"""
-    Resizes an image to a certain size using the bilinear interpolation.
-
-    The resizing only affects the lower two dimensions which represent the height and width. The input images
-    can be represented by different data types, but the data types of output images are always float32.
-
-    For general resize, refer to :func:`mindspore.ops.interpolate` for more details.
-
-    .. warning::
-        This interface does not support dynamic shape and is subject to change or deletion,
-        use :func:`mindspore.ops.interpolate` instead.
-
-    Args:
-        size (Union[tuple[int], list[int]]): A tuple or list of 2 int elements :math:`(new\_height, new\_width)`,
-            the new size of the images.
-        align_corners (bool): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`,
-                       which exactly aligns the 4 corners of images and resized images. If false,
-                       rescale by :math:`new\_height / height`. Default: False.
-        half_pixel_centers (bool): Whether half pixel center. If set to True, `align_corners` should be False.
-                           Default: False.
-
-    Inputs:
-        - **x** (Tensor) - Image to be resized. Input images must be a 4-D tensor with shape
-          :math:`(batch, channels, height, width)`, with data type of float32 or float16.
-
-    Outputs:
-        Tensor, resized image. 4-D with shape :math:`(batch, channels, new\_height, new\_width)`,
-        with the same data type as input `x`.
-
-    Raises:
-        TypeError: If `size` is neither a tuple nor list.
-        TypeError: If `align_corners` is not a bool.
-        TypeError: If `half_pixel_centers` is not a bool.
-        TypeError: If `align_corners` and `half_pixel_centers` are all True.
-        TypeError: If `half_pixel_centers` is True and device_target not Ascend.
-        TypeError: If dtype of `x` is neither float16 nor float32.
-        TypeError: If `x` is not a Tensor.
-        ValueError: If length of shape of `x` is not equal to 4.
+    This API is deprecated, please use the :class:`mindspore.ops.ResizeBilinearV2` instead.
+    For general resizing with other interpolation methods, refer to :func:`mindspore.ops.interpolate` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> x = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
-        >>> resize_bilinear = ops.ResizeBilinear((5, 5))
-        >>> output = resize_bilinear(x)
-        >>> print(output)
-        [[[[1. 2. 3. 4. 5.]
-           [1. 2. 3. 4. 5.]
-           [1. 2. 3. 4. 5.]
-           [1. 2. 3. 4. 5.]
-           [1. 2. 3. 4. 5.]]]]
+        Deprecated
     """
 
     @prim_attr_register
@@ -7096,7 +7050,7 @@ class CTCGreedyDecoder(Primitive):
 
     Examples:
         >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]],
-        >>>                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
+        ...                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
         >>> decoded_indices, decoded_values, decoded_shape, log_probability = ops.CTCGreedyDecoder()(inputs,
         ...                                                                                          sequence_length)
@@ -7972,7 +7926,7 @@ class CTCLossV2(Primitive):
 
     Examples:
         >>> log_probs = Tensor(np.array([[[0.3, 0.6, 0.6]],
-                                         [[0.9, 0.4, 0.2]]]).astype(np.float32))
+        ...                              [[0.9, 0.4, 0.2]]]).astype(np.float32))
         >>> targets = Tensor(np.array([[0, 1]]), mstype.int32)
         >>> input_lengths = Tensor(np.array([2]), mstype.int32)
         >>> target_lengths = Tensor(np.array([1]), mstype.int32)
@@ -8271,7 +8225,7 @@ class Dilation2D(Primitive):
         data_format (str, optional): The value for data format, only 'NCHW' is supported at present. Default: "NCHW".
 
     Inputs:
-        - **x** (Tensor) - Input data. A four dimension tensor with float16 or float32 data type. The shape must be
+        - **x** (Tensor) - Input data. A 4-D Tensor, its shape must be
           :math:`(N, C_{in}, H_{in}, W_{in})`.
         - **filter** (Tensor) - A three dimension tensor with the same type as input. The shape must be
           :math:`(C_{in}, H_{filter}, W_{filter})`.
