@@ -38,3 +38,19 @@ def test_tensor_slice_by_bool_broadcast():
     data_np[index_np] = value
     data_tensor[index_tensor] = value
     assert np.allclose(data_tensor.asnumpy(), data_np)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tensor_slice_by_bool_nan():
+    """
+    Feature: Tensor-setitem-by-bool support nan.
+    Description: Tensor-setitem-by-bool support nan.
+    Expectation: success.
+    """
+    data = Tensor(np.ones([2, 3, 4], np.float32))
+    index = Tensor(np.array([False, False]))
+    data[index] = Tensor([np.nan])
+    assert np.allclose(data.asnumpy(), np.ones([2, 3, 4], np.float32))
