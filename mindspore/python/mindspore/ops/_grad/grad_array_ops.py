@@ -18,7 +18,6 @@
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor
-from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations.array_ops import Fills, NonZero
@@ -93,47 +92,6 @@ def get_bprop_dtype(self):
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
-
-    return bprop
-
-
-dout_cast = C.MultitypeFuncGraph("dout_cast")
-
-
-@dout_cast.register("Tensor", "Tensor")
-def dout_cast_tensor(dout, x):
-    """Casts dout to the dtype of x for Tensor."""
-    cast = P.Cast()
-    get_dtype = P.DType()
-    dx = cast(dout, get_dtype(x))
-    return dx
-
-
-@dout_cast.register("Number", "Number")
-def dout_cast_number(dout, x):
-    """Casts dout to the dtype of x for Number."""
-    cast = P.Cast()
-    get_dtype = P.DType()
-    dx = cast(dout, get_dtype(x))
-    return dx
-
-
-@dout_cast.register("RowTensor", "Tensor")
-def dout_cast_row_tensor(dout, x):
-    """Casts dout values to the dtype of x for RowTensor."""
-    cast = P.Cast()
-    get_dtype = P.DType()
-    values = cast(dout.values, get_dtype(x))
-    return RowTensorInner(dout.indices, values, dout.dense_shape)
-
-
-@bprop_getters.register(P.Cast)
-def get_bprop_cast(self):
-    """Generate bprop for Cast"""
-
-    def bprop(x, t, out, dout):
-        dx = dout_cast(dout, x)
-        return dx, zeros_like(t)
 
     return bprop
 

@@ -70,5 +70,54 @@ FuncGraphPtr SubBprop(const PrimitivePtr &primal, const AbstractBasePtrList &inp
   return fg;
 }
 REGISTER_PRIMITIVE_BPROP_IMPL(Sub, prim::kPrimSub, SubBprop, 2);
+
+FuncGraphPtr AddBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
+  auto fg = NewGraph(input_abs);
+  constexpr size_t expected_arg_size = 4;
+  const auto &parameters = fg->parameters();
+  CheckArgSize(parameters, input_abs, primal, expected_arg_size);
+  fg->set_output(
+    BinopGradCommon(fg, parameters[kIndex0], parameters[kIndex1], parameters[kIndex3], parameters[kIndex3]));
+  return fg;
+}
+REGISTER_PRIMITIVE_BPROP_IMPL(Add, prim::kPrimAdd, AddBprop, 2);
+
+FuncGraphPtr AssignAddBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
+  auto fg = NewGraph(input_abs);
+  constexpr size_t expected_arg_size = 4;
+  const auto &parameters = fg->parameters();
+  CheckArgSize(parameters, input_abs, primal, expected_arg_size);
+  auto x = parameters[kIndex0];
+  auto y = parameters[kIndex1];
+  auto out1 = ZerosLikeFunction(fg, x);
+  auto out2 = ZerosLikeFunction(fg, y);
+  fg->set_output(NewNode(fg, {MakeTuple(), out1, out2}));
+  return fg;
+}
+REGISTER_PRIMITIVE_BPROP_IMPL(AssignAdd, prim::kPrimAssignAdd, AssignAddBprop, 2);
+
+FuncGraphPtr NegBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
+  auto neg_grad = Neg();
+  auto fg = NewGraph(input_abs);
+  constexpr size_t expected_arg_size = 3;
+  const auto &parameters = fg->parameters();
+  CheckArgSize(parameters, input_abs, primal, expected_arg_size);
+  auto dx = NewNode(fg, {neg_grad, parameters[kIndex2]});
+  fg->set_output(NewNode(fg, {MakeTuple(), dx}));
+  return fg;
+}
+REGISTER_PRIMITIVE_BPROP_IMPL(Neg, prim::kPrimNeg, NegBprop, 1);
+
+FuncGraphPtr LogicalOrBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
+  auto fg = NewGraph(input_abs);
+  constexpr size_t expected_arg_size = 4;
+  const auto &parameters = fg->parameters();
+  CheckArgSize(parameters, input_abs, primal, expected_arg_size);
+  auto dx = ZerosLikeFunction(fg, parameters[kIndex0]);
+  auto dy = ZerosLikeFunction(fg, parameters[kIndex1]);
+  fg->set_output(NewNode(fg, {MakeTuple(), dx, dy}));
+  return fg;
+}
+REGISTER_PRIMITIVE_BPROP_IMPL(LogicalOr, prim::kPrimLogicalOr, LogicalOrBprop, 2);
 }  // namespace graph_bprop
 }  // namespace mindspore
