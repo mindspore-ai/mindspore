@@ -48,9 +48,9 @@ TEST_F(TestPersistStorage, test_embedding_storage) {
   embedding_shape->push_back(vocab);
   embedding_shape->push_back(emb_dim);
 
-  std::vector<int> data = std::vector<int>(total_dim, 1);
-  auto data_ptr = std::make_shared<std::vector<int>>(data);
-  PersistentData<int> embedding_table(data_ptr, embedding_shape);
+  std::vector<float> data = std::vector<float>(total_dim, 1.0);
+  auto data_ptr = std::make_shared<std::vector<float>>(data);
+  PersistentData<float> embedding_table(data_ptr, embedding_shape);
 
   std::vector<int> shape = *(embedding_table.shape());
   for (size_t i = 0; i < shape.size(); i++) {
@@ -85,8 +85,8 @@ TEST_F(TestPersistStorage, test_embedding_storage) {
 
   dirty_info.push_back(1);
   for (size_t i = 0; i < emb_dim; i++) {
-    (embedding_table.data())[emb_dim + i] = i;
-    data[emb_dim + i] = i;
+    (embedding_table.data())[emb_dim + i] = static_cast<float>(i);
+    data[emb_dim + i] = static_cast<float>(i);
   }
 
   EXPECT_NO_THROW(embedding_table.Persist(dirty_info));

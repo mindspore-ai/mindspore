@@ -78,7 +78,7 @@ void EmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(const DeviceAdd
 
   std::map<std::string, std::string> config_map;
   config_map[kFileStoragePath] = real_storage_file_path;
-  storage_ = std::make_unique<LocalFile>(config_map);
+  storage_ = std::make_unique<LocalFile<KeyType, ValueType>>(config_map);
   MS_EXCEPTION_IF_NULL(storage_);
 }
 
