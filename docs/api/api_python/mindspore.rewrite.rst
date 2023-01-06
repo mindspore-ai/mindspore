@@ -6,6 +6,10 @@ ReWrite完整示例请参考
 `rewrite_example.py <https://gitee.com/mindspore/mindspore/tree/master/docs/api/api_python/rewrite_example.py>`_ 。
 该样例代码的主要功能包括：怎么通过网络创建SymbolTree，并且对SymbolTree中的节点进行插入删除替换等操作，其中还包含了对子网络的修改和通过模式匹配进行节点替换。
 
+.. literalinclude:: rewrite_example.py
+    :language: python
+    :start-at: import
+
 .. py:class:: mindspore.rewrite.SymbolTree(handler: SymbolTreeImpl)
 
     SymbolTree通常对应于网络的前向计算过程。
@@ -483,7 +487,7 @@ ReWrite完整示例请参考
             - **RuntimeError** - 如果参数 `node` 不是 NodeType.Tree类型。
             - **TypeError** - 如果参数 `node` 不是Node类型实例。
 
-.. py:method:: mindspore.rewrite.sparsify(f, arg_types, sparse_rules=None)
+.. py:function:: mindspore.rewrite.sparsify(f, arg_types, sparse_rules=None)
 
     模型自动稀疏化接口，将稠密模型转换为稀疏模型。通过 `arg_types` 指定的参数类型，将稀疏参数在模型中传导，并调用相应的稀疏函数。
 

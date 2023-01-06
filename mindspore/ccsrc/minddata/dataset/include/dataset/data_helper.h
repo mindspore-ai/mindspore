@@ -340,7 +340,7 @@ class DATASET_API DataHelper {
   }
 
   /// \brief Write pointer to bin, use pointer to avoid memcpy
-  /// \note The value of `length`` must be equal to the length of `data`
+  /// \note The value of `length` must be equal to the length of `data`
   /// \param[in] in_file File name to write to
   /// \param[in] data Pointer to data
   /// \param[in] length Length of values to write from pointer
