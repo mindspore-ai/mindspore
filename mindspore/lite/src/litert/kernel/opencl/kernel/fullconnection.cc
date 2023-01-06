@@ -52,7 +52,7 @@ int FullConnectionOpenCLKernel::CheckSpecs() {
   }
   // for fusion: ActivationType_TANH
   if (param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6 &&
-      static_cast<schema::ActivationType>(param->act_type_) != ActivationType_TANH) {
+      param->act_type_ != ActType_Tanh && param->act_type_ != ActType_Sigmoid) {
     MS_LOG(WARNING) << "Unsupported activation type " << param->act_type_;
     return RET_ERROR;
   }

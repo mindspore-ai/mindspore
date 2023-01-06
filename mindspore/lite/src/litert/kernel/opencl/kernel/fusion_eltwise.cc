@@ -125,8 +125,6 @@ FusionEltwiseParameter *CreateParam(KernelExec *node,
   return param;
 }
 
-bool IsOperatorSupported(KernelExec *node) { return CheckSupport(node); }
-
 FusionEltwiseParameter *CreateFusionEltwiseParameter(
   KernelExec *node, const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map) {
   return CreateParam(node, replace_map);
@@ -141,7 +139,7 @@ bool CheckDateTypeSupport(lite::Tensor *tensor) {
 
 bool IsEltwiseAndOperatorSupported(KernelExec *node) {
   MS_ASSERT(node);
-  if (!IsOperatorSupported(node)) {
+  if (!CheckSupport(node)) {
     return false;
   }
   if (node->out_tensors().size() != 1) {
