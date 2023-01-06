@@ -169,7 +169,6 @@ std::vector<std::string> MindIRLoader::LoadPreprocess(const std::string &file_na
         child_dataset_json["op_type"] = nlohmann::json::parse(preprocessor.op()[i].op_type());
         child_dataset_json["operations"] = nlohmann::json::parse(preprocessor.op()[i].operations());
         child_dataset_json["output_columns"] = nlohmann::json::parse(preprocessor.op()[i].output_columns());
-        child_dataset_json["project_columns"] = nlohmann::json::parse(preprocessor.op()[i].project_columns());
         child_dataset_json["offload"] = preprocessor.op()[i].offload();
 
         dataset_json["children"] = child_dataset_json;
