@@ -514,6 +514,6 @@ ReWrite完整示例请参考
     参数：
         - **fn** (Union[str, Callable]) - 稀疏函数，如果是字符串，表示一个mindspore.ops.function接口；或者是任意函数对象。
         - **inputs** (Optional[Any]) - 函数的输入类型。如果是None，则使用函数本身的类型注解。默认是None。
-        - **outputs** ( Optional[Any]) - 函数的输出类型。如果是None，则使用函数本身的类型注解。默认是None。
+        - **outputs** (Optional[Any]) - 函数的输出类型。如果是None，则使用函数本身的类型注解。默认是None。
 
 

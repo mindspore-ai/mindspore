@@ -86,43 +86,43 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
         -  `LAGRANGE` method is only supported on "GPU".
 
     Args:
-      func (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
-          where `x` is a 1-D array with shape :math:`(n,)` and `args` is a tuple
-          of the fixed parameters needed to completely specify the function.
-          `fun` must support differentiation if jac is None.
-      x0 (Tensor): initial guess. Array of real elements of size :math:`(n,)`, where `n` is
-          the number of independent variables.
-      args (Tuple): extra arguments passed to the objective function. Default: ().
-      method (str): solver type. Should be one of `"BFGS"` and `"LBFGS"`, `"LAGRANGE"`.
-      jac (Callable, optional): method for computing the gradient vector. Only for `"BFGS"` and `"LBFGS"`.
-          if it is None, the gradient will be estimated with gradient of ``func``.
-          if it is a callable, it should be a function that returns the gradient vector:
-          :math:`jac(x, *args) -> array\_like, shape (n,)`
-          where x is an array with shape (n,) and args is a tuple with the fixed parameters.
-      tol (float, optional): tolerance for termination. For detailed control, use solver-specific
-          options. Default: None.
-      constraints(Callable, optional): representing the inequality constrains, each function in constrains indicates
-          the function < 0 as an inequality constrain.
-      options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following
-          generic options, Default: None.
+        func (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
+            where `x` is a 1-D array with shape :math:`(n,)` and `args` is a tuple
+            of the fixed parameters needed to completely specify the function.
+            `fun` must support differentiation if jac is None.
+        x0 (Tensor): initial guess. Array of real elements of size :math:`(n,)`, where `n` is
+            the number of independent variables.
+        args (Tuple): extra arguments passed to the objective function. Default: ().
+        method (str): solver type. Should be one of `"BFGS"` and `"LBFGS"`, `"LAGRANGE"`.
+        jac (Callable, optional): method for computing the gradient vector. Only for `"BFGS"` and `"LBFGS"`.
+            if it is None, the gradient will be estimated with gradient of ``func``.
+            if it is a callable, it should be a function that returns the gradient vector:
+            :math:`jac(x, *args) -> array\_like, shape (n,)`
+            where x is an array with shape (n,) and args is a tuple with the fixed parameters.
+        tol (float, optional): tolerance for termination. For detailed control, use solver-specific
+            options. Default: None.
+        constraints(Callable, optional): representing the inequality constrains, each function in constrains indicates
+            the function < 0 as an inequality constrain.
+        options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following
+            generic options, Default: None.
 
-          - history_size (int): size of buffer used to help to update inv hessian, only used with method="LBFGS".
-            Default: 20.
+            - history_size (int): size of buffer used to help to update inv hessian, only used with method="LBFGS".
+              Default: 20.
+            - maxiter (int): Maximum number of iterations to perform. Depending on the
+              method each iteration may use several function evaluations.
 
-          - maxiter (int): Maximum number of iterations to perform. Depending on the
-            method each iteration may use several function evaluations.
+        The follow options are exclusive to Lagrange method:
 
-      The follow options are exclusive to Lagrange method.
-         -  save_tol (list): list of saving tolerance, with the same length with 'constrains'.
-          - obj_weight (float): weight for objective function, usually between 1.0 - 100000.0.
-          - lower (Tensor): lower bound constrain for variables, must have same shape with x0.
-          - upper (Tensor): upper bound constrain for variables, must have same shape with x0.
-          - learning_rate (float): learning rate for each Adam step.
-          - coincide_func (Callable): sub-function representing the common parts between objective function
+            - save_tol (list): list of saving tolerance, with the same length with 'constrains'.
+            - obj_weight (float): weight for objective function, usually between 1.0 - 100000.0.
+            - lower (Tensor): lower bound constrain for variables, must have same shape with x0.
+            - upper (Tensor): upper bound constrain for variables, must have same shape with x0.
+            - learning_rate (float): learning rate for each Adam step.
+            - coincide_func (Callable): sub-function representing the common parts between objective function
               and constrains to avoid redundant computation.
-          - rounds (int): times to update Lagrange multipliers.
-          - steps (int): steps to apply Adam per round.
-          - log_sw (bool): whether to print the loss at each step.
+            - rounds (int): times to update Lagrange multipliers.
+            - steps (int): steps to apply Adam per round.
+            - log_sw (bool): whether to print the loss at each step.
 
     Returns:
         OptimizeResults, object holding optimization results.

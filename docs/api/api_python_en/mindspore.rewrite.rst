@@ -10,4 +10,7 @@ The main functions of the sample code include: how to create a SymbolTree throug
     :start-at: import
 
 .. automodule:: mindspore.rewrite
+    :exclude-members: SparseFunc
     :members:
+
+.. autoclass:: mindspore.rewrite.SparseFunc
