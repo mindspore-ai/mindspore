@@ -412,7 +412,7 @@ BACKEND_EXPORT KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode, bool is_w
 
 BACKEND_EXPORT KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
                                                    const std::vector<KernelTensorPtr> &outputs);
-
+BACKEND_EXPORT KernelAttr GetKernelAttrFromTypes(const std::vector<TypeId> &inputs, const std::vector<TypeId> &outputs);
 void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &apply_kernel_attrs);
 Format GetFormatFromStrToEnum(const std::string &format_str);
 BACKEND_EXPORT std::string GetFormatFromEnumToStr(Format format);

@@ -147,8 +147,8 @@ inline BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
   return base_operator;
 }
 
-bool CheckInputIsRealTupleFromCNode(const std::vector<mindspore::kernel::KernelObjectType> &input_obj_types,
-                                    const size_t input_idx) {
+bool CheckRealTupleFromCNode(const std::vector<mindspore::kernel::KernelObjectType> &input_obj_types,
+                             const size_t input_idx) {
   // if input_obj_types is empty, regard it as a Tensor by default.
   if (input_obj_types.size() != 0 && input_obj_types[input_idx] == KernelObjectType::TUPLE) {
     return true;
@@ -165,7 +165,7 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(cnode);
   auto input_obj_types = build_info->GetAllInputKernelObjectTypes();
   for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
-    bool is_real_tuple_input = CheckInputIsRealTupleFromCNode(input_obj_types, input_idx);
+    bool is_real_tuple_input = CheckRealTupleFromCNode(input_obj_types, input_idx);
     const auto &[prev_node, output_idx] = common::AnfAlgo::GetPrevNodeOutput(cnode, input_idx);
     auto prev_abstract = prev_node->abstract();
     auto real_input_type = real_input_types[input_idx];
@@ -182,7 +182,9 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
   auto cur_abstract = cnode->abstract();
   MS_EXCEPTION_IF_NULL(cur_abstract);
   size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  auto output_obj_types = build_info->GetAllOutputKernelObjectTypes();
   for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
+    bool is_real_tuple_output = CheckRealTupleFromCNode(output_obj_types, output_idx);
     auto child_abs = GetChildAbstract(cur_abstract, output_idx);
     if (child_abs->isa<abstract::AbstractMonad>()) {
       MS_LOG(DEBUG) << "The " << output_idx << " output of " << cnode->fullname_with_scope()
@@ -192,8 +194,8 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
     auto real_output_type = real_output_types[output_idx];
     auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, output_idx);
     auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
-    auto output_tensor =
-      CreateKernelTensor(cur_abstract, real_output_type, output_idx, device_shape_adaptively, format_str);
+    auto output_tensor = CreateKernelTensor(cur_abstract, real_output_type, output_idx, device_shape_adaptively,
+                                            format_str, is_real_tuple_output);
     output_tensors.push_back(output_tensor);
   }
   return std::make_pair(input_tensors, output_tensors);
@@ -1769,6 +1771,17 @@ KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
   }
   for (auto tensor : outputs) {
     (void)kernel_attr.AddOutputAttr(tensor->GetDtype(), GetFormatFromEnumToStr(tensor->GetFormat()));
+  }
+  return kernel_attr;
+}
+
+KernelAttr GetKernelAttrFromTypes(const std::vector<TypeId> &inputs, const std::vector<TypeId> &outputs) {
+  KernelAttr kernel_attr;
+  for (auto type_id : inputs) {
+    (void)kernel_attr.AddInputAttr(type_id);
+  }
+  for (auto type_id : outputs) {
+    (void)kernel_attr.AddOutputAttr(type_id);
   }
   return kernel_attr;
 }
