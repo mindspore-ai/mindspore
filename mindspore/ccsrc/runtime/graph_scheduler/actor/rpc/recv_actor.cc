@@ -34,6 +34,7 @@ RecvActor::~RecvActor() {
     } catch (const std::exception &) {
       MS_LOG(ERROR) << "Failed to finalize for tcp server in recv actor.";
     }
+    server_ = nullptr;
   }
 }
 
@@ -100,6 +101,13 @@ bool RecvActor::StartServer() {
     }
   }
   return true;
+}
+
+void RecvActor::Clear() {
+  if (server_) {
+    server_->Finalize();
+    server_ = nullptr;
+  }
 }
 
 void RecvActor::StopRpcAtException() {

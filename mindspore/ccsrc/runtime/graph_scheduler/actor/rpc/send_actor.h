@@ -46,7 +46,11 @@ class SendActor : public RpcActor {
   // Lookup peer actors' route and create connection to them.
   bool ConnectServer();
 
+  // Flush and wait for sent data to be passed to kernel.
   void FlushData() override;
+
+  // Finalize tcp client.
+  void Clear() override;
 
  protected:
   // Do real send operation in this method.

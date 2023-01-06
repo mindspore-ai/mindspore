@@ -49,6 +49,9 @@ class RpcNodeScheduler {
   // Reset op context for rpc actors.
   void ResetOpcontext(const RpcActorSetPtr &rpc_actors);
 
+  // Clear resource of rpc actors. Finalize tcp clients/servers.
+  void Clear();
+
   // Abort rpc communication. This is usually called when the cluster exits with exception.
   void Abort();
 

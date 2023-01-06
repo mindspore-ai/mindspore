@@ -62,6 +62,9 @@ class RecvActor : public RpcActor {
   // Start recv actor server and register this server address to actor route table in scheduler by proxy.
   bool StartServer();
 
+  // Finalize tcp server.
+  void Clear() override;
+
   void StopRpcAtException() override;
 
  protected:

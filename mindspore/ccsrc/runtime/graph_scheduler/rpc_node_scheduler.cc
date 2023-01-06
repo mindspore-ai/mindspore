@@ -217,6 +217,21 @@ void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) {
   op_context_ = nullptr;
 }
 
+void RpcNodeScheduler::Clear() {
+  if (rpc_actors_ != nullptr) {
+    MS_LOG(INFO) << "Start finalizing tcp server and client for rpc actors.";
+    for (auto &recv_actor : rpc_actors_->recv_actors_) {
+      MS_EXCEPTION_IF_NULL(recv_actor);
+      recv_actor->Clear();
+    }
+    for (auto &send_actor : rpc_actors_->send_actors_) {
+      MS_EXCEPTION_IF_NULL(send_actor);
+      send_actor->Clear();
+    }
+    MS_LOG(INFO) << "End finalizing tcp server and client for rpc actors.";
+  }
+}
+
 void RpcNodeScheduler::Abort() {
   MS_LOG(INFO) << "Start aborting rpc actors.";
   MS_ERROR_IF_NULL_WO_RET_VAL(rpc_actors_);
