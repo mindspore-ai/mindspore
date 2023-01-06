@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <cmath>
 
 namespace mindspore {
 namespace kernel {
@@ -90,7 +91,8 @@ bool TruncateDivCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
           }
           continue;
         }
-        output_addr[i] = static_cast<T>(dividend / divisor);
+        double output_trunc = trunc(static_cast<double>(dividend / divisor));
+        output_addr[i] = static_cast<T>(output_trunc);
       }
     };
     ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
@@ -115,7 +117,8 @@ bool TruncateDivCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
           }
           continue;
         }
-        output_addr[i] = static_cast<T>(dividend / divisor);
+        double output_trunc = trunc(static_cast<double>(dividend / divisor));
+        output_addr[i] = static_cast<T>(output_trunc);
         iter.GenNextPos();
       }
     };

@@ -58,14 +58,14 @@ def test_truncatediv_output_diff_types():
 
     truncatediv_op = TruncateDiv()
     out = truncatediv_op(input_x, input_y).asnumpy()
-    exp = np.array([0.33333334, 1.33333334, -1.4])
+    exp = np.array([0., 1., -1.])
     diff = np.abs(out - exp)
     err = np.ones(shape=exp.shape) * 1.0e-5
     assert np.all(diff < err)
     assert out.shape == exp.shape
 
     out_1 = truncatediv_op(input_x_1, input_y_1).asnumpy()
-    exp = np.array([0.33333334, 1.33333334, -0.6])
+    exp = np.array([0., 1., -0.])
     diff = np.abs(out_1 - exp)
     err = np.ones(shape=exp.shape) * 1.0e-5
     assert np.all(diff < err)
