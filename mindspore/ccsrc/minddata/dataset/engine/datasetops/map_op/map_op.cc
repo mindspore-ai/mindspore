@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -492,20 +492,29 @@ Status MapOp::GetNextRowPullMode(TensorRow *const row) {
     return Status::OK();
   }
   auto column_name_id_map = child_[0]->column_name_id_map();
+  TensorRow i_row, o_row;
+  (void)std::transform(to_process_indices_.begin(), to_process_indices_.end(), std::back_inserter(i_row),
+                       [&new_row](const auto &it) { return new_row[it]; });
+  i_row.setId(new_row.getId());
+  std::vector<std::string> cur_row_path = new_row.getPath();
+  if (cur_row_path.size() > 0) {
+    std::vector<std::string> to_process_path;
+    (void)std::transform(to_process_indices_.begin(), to_process_indices_.end(), std::back_inserter(to_process_path),
+                         [&cur_row_path](const auto &it) { return cur_row_path[it]; });
+    i_row.setPath(to_process_path);
+  }
   // Apply transforms on tensor
   for (auto &t : tfuncs_[0]) {
-    for (auto &col_name : in_columns_) {
-      TensorRow i_row, o_row;
-      auto index = column_name_id_map[col_name];
-      i_row.push_back(new_row.at(index));
-      Status rc = t->Compute(i_row, &o_row);
-      if (rc.IsError()) {
-        std::string op_name = t->Name();
-        RETURN_IF_NOT_OK(util::RebuildMapErrorMsg(new_row, op_name, &rc));
-      }
-      // For next transform
-      new_row[index] = std::move(o_row.at(0));
+    Status rc = t->Compute(i_row, &o_row);
+    if (rc.IsError()) {
+      std::string op_name = t->Name();
+      RETURN_IF_NOT_OK(util::RebuildMapErrorMsg(i_row, op_name, &rc));
     }
+    i_row = std::move(o_row);
+  }
+  // assign transformed tensor back to the original
+  for (size_t i = 0; i < to_process_indices_.size(); i++) {
+    new_row[to_process_indices_[i]] = i_row.at(i);
   }
   (*row) = std::move(new_row);
   return Status::OK();

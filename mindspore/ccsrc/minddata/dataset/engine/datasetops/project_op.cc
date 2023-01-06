@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/execution_tree.h"
@@ -109,6 +110,10 @@ Status ProjectOp::GetNextRowPullMode(TensorRow *const row) {
   RETURN_IF_NOT_OK(ComputeColMap());
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
+  if (new_row.empty()) {
+    (*row) = std::move(new_row);
+    return Status::OK();
+  }
   (void)std::transform(projected_column_indices_.begin(), projected_column_indices_.end(), std::back_inserter(*row),
                        [&new_row](uint32_t x) { return new_row[x]; });
   // Now if columns changed after map, we don't know which column we should keep,
