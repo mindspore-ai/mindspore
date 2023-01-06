@@ -48,6 +48,12 @@ bool CumProdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
 
+  auto dims_shape = inputs[kIndex0]->GetShapeVector();
+  if (dims_shape.size() == 0) {
+    MS_LOG(ERROR) << "Invalid input tensor shape: " << dims_shape.size();
+    return false;
+  }
+
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
