@@ -56,7 +56,8 @@ static const std::map<std::string, aclFormat> kMsSpecOriginFormat = {{"BatchMatM
 static const std::map<std::string, std::vector<int>> kInputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
   {prim::kPrimOneHotD->name(), {0, 2, 3}},
-  {prim::kPrimAvgPool->name(), {0, -1, -1}}};
+  {prim::kPrimAvgPool->name(), {0, -1, -1}},
+  {prim::kPrimDeformableOffsets->name(), {0, 1, -1}}};
 
 static const std::map<std::string, std::vector<int>> kOutputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel

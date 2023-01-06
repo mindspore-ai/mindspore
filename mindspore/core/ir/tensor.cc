@@ -672,6 +672,11 @@ Tensor::Tensor(const std::vector<int64_t> &input, const TypePtr &data_type)
       data_(MakeTensorData(data_type_, shape_, input.data(), input.size())),
       id_(MakeId()) {}
 
+Tensor::Tensor(const std::vector<int32_t> &input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeInt32), {static_cast<int>(input.size())}),
+      data_(MakeTensorData(data_type_, shape_, input.data(), input.size())),
+      id_(MakeId()) {}
+
 Tensor::Tensor(const std::vector<double> &input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeFloat32), {static_cast<int>(input.size())}),
       data_(MakeTensorData(data_type_, shape_, input.data(), input.size())),
