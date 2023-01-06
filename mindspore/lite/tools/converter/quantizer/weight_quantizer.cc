@@ -165,7 +165,7 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
     }
     int preferred_dim = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
     if (quant_strategy_ != nullptr && !quant_strategy_->CanTensorQuantized(cnode, input, preferred_dim)) {
-      MS_LOG(INFO) << input->fullname_with_scope() << " is not quantizable";
+      MS_LOG(INFO) << input->fullname_with_scope() << " will not quantify";
       continue;
     }
     // support for matmul shared weight

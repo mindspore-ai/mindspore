@@ -42,6 +42,8 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
         ${CMAKE_CURRENT_SOURCE_DIR}/slice_grad_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/random_shuffle_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/range_kernel.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/quant_dtype_cast_kernel.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/fse_decode_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/replay_buffer/reservoir_replay_buffer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/replay_buffer/reservoir_replay_buffer_kernels.cc
     )
