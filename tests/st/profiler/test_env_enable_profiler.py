@@ -122,7 +122,7 @@ class TestEnvEnableProfiler:
     @security_off_wrap
     def test_gpu_profiler(self):
         status = os.system(
-            """export MS_PROFILER_OPTIONS='{"start":true, "memory":true, "sync_enable":true}';
+            """export MS_PROFILER_OPTIONS='{"start":true, "profile_memory":true, "sync_enable":true}';
                python ./run_net.py --target=GPU --mode=0;
             """
         )
@@ -154,7 +154,7 @@ class TestEnvEnableProfiler:
     @security_off_wrap
     def test_ascend_profiler(self):
         status = os.system(
-            """export MS_PROFILER_OPTIONS='{"start":true, "memory":true}';
+            """export MS_PROFILER_OPTIONS='{"start":true, "profile_memory":true}';
                python ./run_net.py --target=Ascend --mode=0;
             """
         )
