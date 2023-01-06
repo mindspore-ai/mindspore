@@ -52,10 +52,15 @@ class AdaptiveMaxPool2DGradCpuKernelMod : public NativeCpuKernelMod {
     AdaptiveMaxPool2DGradCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, AdaptiveMaxPool2DGradLaunchFunc>> func_list_;
   AdaptiveMaxPool2DGradLaunchFunc kernel_func_;
+  ParallelSearchInfo search_info_;
 
-  std::vector<int64_t> input_y_grad_shape;
-  std::vector<int64_t> input_x_shape;
-  std::vector<int64_t> input_argmax_shape;
+  ShapeVector input_y_grad_shape_;
+  ShapeVector input_x_shape_;
+  ShapeVector input_argmax_shape_;
+  int64_t outer_size_{1};
+  int64_t inner_size_{1};
+  int64_t output_stride_{1};
+  int64_t output_size_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore
