@@ -21,7 +21,7 @@ from mindspore.common.dtype import Type, int8, byte, int16, short, int32, intc, 
     float32, single, float64, double, bool_, float_, list_, tuple_, int_, \
     uint, number, tensor, string, type_none, tensor_type, Int, \
     complex64, complex128, dtype_to_nptype, _null, _null_type, \
-    dtype_to_pytype, pytype_to_dtype, get_py_obj_dtype
+    dtype_to_pytype, pytype_to_dtype, get_py_obj_dtype, QuantDtype
 from mindspore.common.dump import set_dump
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.seed import set_seed, get_seed
@@ -50,7 +50,7 @@ __all__ = [
     "number", "tensor",
     "string", "type_none",
     "_null",
-    "tensor_type",
+    "tensor_type", "QuantDtype",
     "Type", "Int", "_null_type",
     "complex64", "complex128",
     # __method__ from dtype
