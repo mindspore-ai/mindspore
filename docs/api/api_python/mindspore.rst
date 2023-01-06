@@ -97,6 +97,7 @@ mindspore
 
     mindspore.grad
     mindspore.value_and_grad
+    mindspore.get_grad
     mindspore.jacfwd
     mindspore.jacrev
     mindspore.jvp
