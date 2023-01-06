@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 #include <unordered_map>
+#include <stack>
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
@@ -60,8 +61,9 @@ class ProgramSpecializer {
   void EraseSeen(const AnfNodePtr &node) { (void)seen_.erase(node); }
 
   std::shared_ptr<FuncGraphSpecializer> GetFuncGraphSpecializer(const AnalysisContextPtr &context);
-  // Specialze one FuncGraph in a given context.
-  FuncGraphPtr SpecializeFuncGraph(const FuncGraphPtr &fg, const AnalysisContextPtr &context);
+
+  std::shared_ptr<FuncGraphSpecializer> NewFuncGraphSpecializer(const AnalysisContextPtr &context,
+                                                                const FuncGraphPtr &fg);
 
   std::shared_ptr<AnalysisEngine> engine() { return engine_; }
 
@@ -105,6 +107,10 @@ class ProgramSpecializer {
     return nullptr;
   }
 
+  void PushFuncGraphTodoItem(const std::shared_ptr<FuncGraphSpecializer> &fg_spec) {
+    func_graph_todo_items_.push(fg_spec);
+  }
+
  private:
   std::shared_ptr<AnalysisEngine> engine_;
   mindspore::HashSet<AnfNodePtr> seen_;
@@ -127,6 +133,8 @@ class ProgramSpecializer {
   mindspore::HashMap<FuncGraphPtr, std::pair<bool, AbstractFunctionPtr>> func_graph_to_abstract_map_;
 
   AbstractFunctionPtr SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func);
+
+  std::stack<std::shared_ptr<FuncGraphSpecializer>> func_graph_todo_items_;
 };
 
 class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecializer> {
@@ -137,6 +145,8 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   FuncGraphPtr specialized_func_graph() { return specialized_func_graph_; }
 
   std::shared_ptr<FuncGraphSpecializer> GetTopSpecializer(const AnfNodePtr &node);
+
+  bool done() const { return done_; }
 
  private:
   ProgramSpecializer *specializer_;
@@ -149,14 +159,15 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   std::vector<AnfNodePtr> todo_;
   mindspore::HashSet<AnfNodePtr> marked_;
   mindspore::HashMap<EvaluatorPtr, EvaluatorCacheMgrPtr> eval_cache_;
+  std::vector<CNodePtr> second_pass_todo_;
+  size_t second_pass_todo_inedx_{0};
+  bool done_{false};
 
   void FirstPass();
   void SecondPass();
   void ProcessNode(const AnfNodePtr &node);
-  void ProcessCNode(const CNodePtr &cnode);
-  // If cnode need deferred specialized, return true, otherwise return false.
-  bool RecordDeferredCNode(const CNodePtr &cnode, const AnalysisContextPtr &context);
-  void ProcessDeferredCNode();
+  bool ProcessCNode(const CNodePtr &cnode);
+  bool ParentNotSpecialized(const AnalysisContextPtr &context);
 
   void EliminateUnusedSequenceItem(const CNodePtr &cnode) const;
 
@@ -209,6 +220,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   std::pair<AbstractBasePtrList, AbstractBasePtr> BuildFromBroadedArgsVal(const EvaluatorPtr &eval);
   void UpdateNewCNodeInputs(const AnfNodePtr &node, const AnfNodePtr &new_node);
 };
+using FuncGraphSpecializerPtr = std::shared_ptr<FuncGraphSpecializer>;
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_SPECIALIZE_H_
