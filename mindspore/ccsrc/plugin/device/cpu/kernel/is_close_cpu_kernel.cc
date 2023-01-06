@@ -66,6 +66,11 @@ int IsCloseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   auto input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   auto other_shape = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
   auto output_shape = LongVecToSizeVec(outputs.at(kIndex0)->GetShapeVector());
+  has_null_input_ = CheckNullInput(input_shape);
+  has_null_input_ = has_null_input_ || CheckNullInput(other_shape);
+  if (has_null_input_) {
+    return KRET_OK;
+  }
   is_need_broadcast_ = input_shape != other_shape;
   if (is_need_broadcast_) {
     GetBroadCastIndex(input_shape, output_shape, &index_list1_);
@@ -82,6 +87,10 @@ bool IsCloseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   auto input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto other = reinterpret_cast<T *>(inputs[kIndex1]->addr);
   auto output = reinterpret_cast<bool *>(outputs[kIndex0]->addr);
+
+  if (has_null_input_) {
+    return true;
+  }
 
   CTask task;
   if (!is_need_broadcast_) {

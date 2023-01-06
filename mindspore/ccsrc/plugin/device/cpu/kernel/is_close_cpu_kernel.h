@@ -58,6 +58,7 @@ class IsCloseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   std::vector<size_t> index_list1_{};
   std::vector<size_t> index_list2_{};
   bool is_need_broadcast_{false};
+  bool has_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
