@@ -7,7 +7,7 @@ operators that can be used for constructor function of Cell
 
     import mindspore.ops as ops
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops` operators in MindSpore, please refer to the link `API Updates <https://gitee.com/mindspore/docs/blob/r2.0.0-alpha/resource/api_updates/ops_api_updates.md>`_ .
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops.primitive` operators in MindSpore, please refer to the link `API Updates <https://gitee.com/mindspore/docs/blob/r2.0.0-alpha/resource/api_updates/ops_api_updates.md>`_ .
 
 Operator Primitives
 -------------------
