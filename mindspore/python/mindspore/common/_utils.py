@@ -55,6 +55,6 @@ def split_to_slice_if_need(dtype, shape):
     return slice_num
 
 
-def update_and_return_dict(dic, key, val):
+def dict_setitem(dic, key, val):
     dic.__setitem__(key, val)
     return dic

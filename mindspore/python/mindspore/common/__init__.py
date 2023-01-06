@@ -29,7 +29,6 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.sparse_tensor import RowTensor, RowTensorInner, SparseTensor, COOTensor, CSRTensor
 from mindspore.common.mutable import mutable
 from mindspore.common.jit_config import JitConfig
-from mindspore.common._utils import update_and_return_dict
 
 # symbols from dtype
 __all__ = [
@@ -67,5 +66,4 @@ __all__.extend([
     "set_dump",
     "ms_memory_recycle",
     "mutable", "JitConfig",
-    "update_and_return_dict",
 ])
