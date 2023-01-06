@@ -30,15 +30,12 @@ from mindspore._checkparam import Validator as validator
 
 from mindspore.numpy.dtypes import promotion_rule, dtype_tuple, all_types, dtype_map, rule_for_trigonometric
 
-
 _check_axis_type = constexpr(validator.check_axis_type)
 
 
 @constexpr
 def _check_shape(shape):
     """check the shape param to match the numpy style"""
-    if not isinstance(shape, (int, tuple, list, Tensor, typing.Tuple, typing.List)):
-        raise TypeError(f"only int, tuple, list and tensor are allowed for shape, but got {type(shape)}")
     # convert tensor to int/list, use followed if statements to do further conversions
     if isinstance(shape, Tensor):
         shape = shape.asnumpy().tolist()
@@ -47,11 +44,6 @@ def _check_shape(shape):
         shape = (shape,)
     elif isinstance(shape, (list, typing.List)):
         shape = tuple(shape)
-    for s in shape:
-        if not isinstance(s, int):
-            raise TypeError("each entry in shape should be int.")
-        if s < 0:
-            raise ValueError("each entry in shape should no less than 0.")
     return shape
 
 
@@ -89,8 +81,6 @@ def _is_shape_empty(shp):
 @constexpr
 def _check_start_normalize(start, ndim):
     """check and normalize start argument for rollaxis."""
-    if start < -ndim or start > ndim:
-        raise ValueError(f"For rollaxis, start {start} is out of bounds. Ranging from {-ndim} to {ndim} is allowed.")
     if start < 0:
         start = start + ndim
     return start
@@ -112,9 +102,6 @@ def _check_axes_range(axes, ndim):
         TypeError: If the axes are not integer, tuple(int) or list(int).
         ValueError: If duplicate axes exists or some axis is out of bounds.
     """
-    _check_axis_type(axes, True, True, True)
-    if isinstance(axes, (list, tuple)):
-        _check_element_int(axes)
     axes = _canonicalize_axis(axes, ndim)
     return axes
 
@@ -125,14 +112,12 @@ def _get_device():
     return context.get_context('device_target')
 
 
-#remove constexpr
 def _infer_out_shape(*shapes):
     """
     Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
     """
     shape_out = list()
     max_len = max([len(it) for it in shapes])
-
     for i in range(max_len):
         items = [it[i-max_len+len(it)] if i-max_len +
                  len(it) >= 0 else 1 for it in shapes]
@@ -146,23 +131,14 @@ def _can_broadcast(*shapes):
     """
     Returns Ture if shapes can broadcast, False if they cannot.
     """
-    try:
-        _infer_out_shape(*shapes)
-    except ValueError:
-        return False
-    finally:
-        pass
+    _infer_out_shape(*shapes)
     return True
 
 
 @constexpr
 def _check_axis_in_range(axis, ndim):
     """Checks axes are with the bounds of ndim"""
-    if not isinstance(axis, int):
-        raise TypeError(f'axes should be integers, not {type(axis)}')
-    if not -ndim <= axis < ndim:
-        raise ValueError(f'axis {axis} is out of bounds for array of dimension {ndim}')
-    return axis % ndim
+    return axis - axis // ndim * ndim
 
 
 @constexpr
@@ -176,17 +152,8 @@ def _check_axis_valid(axes, ndim):
         return axes
     if isinstance(axes, (tuple, list)):
         axes = tuple(map(lambda x: _check_axis_in_range(x, ndim), axes))
-        if any(axes.count(el) > 1 for el in axes):
-            raise ValueError('duplicate value in "axis"')
         return axes
     return (_check_axis_in_range(axes, ndim),)
-
-
-@constexpr
-def _check_shape_aligned(shape1, shape2):
-    """Checks shape1 and shape2 are valid shapes to perform inner product"""
-    if shape1[-1] != shape2[-1]:
-        raise ValueError(f'shapes {shape1} {shape2} not aligned: {shape1[-1]} (dim 0) != {shape2[-1]} (dim 0)')
 
 
 @constexpr
@@ -341,10 +308,31 @@ def _canonicalize_axis(axis, ndim):
     def canonicalizer(ax):
         return ax + ndim if ax < 0 else ax
 
+    def _sort_axis(ax):
+        def merge(left, right):
+            result = []
+            i = j = 0
+            while i < len(left) and j < len(right):
+                if left[i] <= right[j]:
+                    result.append(left[i])
+                    i += 1
+                else:
+                    result.append(right[j])
+                    j += 1
+
+            return result + left[i:] + right[j:]
+
+        if len(ax) <= 1:
+            return ax
+
+        middle = len(ax) // 2
+        left = _sort_axis(ax[:middle])
+        right = _sort_axis(ax[middle:])
+
+        return merge(left, right)
+
     axis = tuple([canonicalizer(axis) for axis in axis])
-    if all(axis.count(el) <= 1 for el in axis):
-        return tuple(sorted(axis)) if len(axis) > 1 else axis[0]
-    raise ValueError(f"duplicate axes in {axis}.")
+    return tuple(_sort_axis(axis)) if len(axis) > 1 else axis[0]
 
 
 @constexpr

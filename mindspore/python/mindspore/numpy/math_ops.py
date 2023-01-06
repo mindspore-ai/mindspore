@@ -39,7 +39,7 @@ from mindspore.numpy.array_ops import ravel, expand_dims, moveaxis, concatenate,
     split
 
 from mindspore.numpy.utils_const import _infer_out_shape, _check_axis_valid, _get_device, \
-    _check_shape_aligned, _raise_type_error, _check_same_type, _check_is_float, \
+    _raise_type_error, _check_same_type, _check_is_float, \
     _raise_value_error, _promote, _check_axis_type, _canonicalize_axis, \
     _is_shape_empty, _check_is_int, _expanded_shape, _check_axis_in_range, \
     _check_dtype, _list_comprehensions, _tuple_setitem, _add_unit_axes, _seq_prod, \
@@ -682,7 +682,6 @@ def inner(a, b):
     if F.rank(a) == 0 or F.rank(b) == 0:
         return F.tensor_mul(a, b)
 
-    _check_shape_aligned(F.shape(a), F.shape(b))
     aligned_shape_a = (F.shape_mul(F.shape(a)[:-1]), F.shape(a)[-1])
     aligned_shape_b = (F.shape_mul(F.shape(b)[:-1]), F.shape(a)[-1])
     a_aligned = F.reshape(a, aligned_shape_a)

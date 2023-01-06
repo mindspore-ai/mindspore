@@ -209,3 +209,75 @@ def test_flip():
     net = Net()
     output = net(x)
     assert np.allclose(output.asnumpy(), expect.asnumpy())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_calculate_expert_capacity():
+    """
+    Feature: calculate_expert_capacity func
+    Description: Verify the result of calculate_expert_capacity
+    Expectation: success
+    """
+    from mindspore.nn.transformer.moe import calculate_expert_capacity
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.func = calculate_expert_capacity
+
+        def construct(self, k, tokens_per_group, capacity_factor, expert_dim):
+            return self.func(k, tokens_per_group, capacity_factor, expert_dim)
+    net = Net()
+    assert net(10.1, 2.0, 3.3, 4) == 17
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_infer_out_shape():
+    """
+    Feature: _infer_out_shape func
+    Description: Verify the result of _infer_out_shape
+    Expectation: success
+    """
+    from mindspore.numpy.utils_const import _infer_out_shape
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.func = _infer_out_shape
+
+        def construct(self, *shape):
+            return self.func(*shape)
+    net = Net()
+    assert net((5,), (6, 1), (7, 1, 5), (8, 1, 6, 1)) == (8, 7, 6, 5)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_canonicalize_axis():
+    """
+    Feature: _canonicalize_axis func
+    Description: Verify the result of _canonicalize_axis
+    Expectation: success
+    """
+    from mindspore.numpy.utils_const import _canonicalize_axis
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.func = _canonicalize_axis
+
+        def construct(self, axis, ndim):
+            return self.func(axis, ndim)
+    net = Net()
+    assert net(0, 2) == 0

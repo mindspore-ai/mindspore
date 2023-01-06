@@ -27,7 +27,6 @@ from mindspore._checkparam import Validator as validator
 from mindspore import ops, nn
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.ops.primitive import constexpr
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -467,14 +466,6 @@ class _VirtualDatasetCell(Cell):
         return self._backbone(*output)
 
 
-@constexpr
-def _check_shape_value_on_axis_divided_by_target_value(input_shape, micro_size):
-    if input_shape[0] % micro_size != 0:
-        raise ValueError(f"For micro batch initialization, the 0th dimension shape of input({input_shape[0]}) must be "
-                         f"divided by micro size({micro_size})")
-    return True
-
-
 class _MicroBatch(Cell):
     """
     transform mini-batch to micro-batch in pipeline parallel.
@@ -493,7 +484,6 @@ class _MicroBatch(Cell):
         micro_inputs = ()
         for each_input in inputs:
             input_shape = self.shape(each_input)
-            _check_shape_value_on_axis_divided_by_target_value(input_shape, self.micro_size)
             micro_batch_begin = i * input_shape[0] // self.micro_size
             micro_batch_end = (i + 1) * input_shape[0] // self.micro_size
             strided_slice_begin = (micro_batch_begin,)

@@ -200,28 +200,6 @@ def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
     Validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
 
 
-@constexpr
-def _check_input_shape(input_shape, param_name, func_name, target_len):
-    # check the input length
-    _LayerInputCheck.check_shape_length(input_shape, param_name, func_name, target_len)
-
-
-@constexpr
-def _check_shape_equal(input_shape, param_name, func_name, target_shape):
-    # check the input length
-    _LayerInputCheck.check_shape_equal(input_shape, param_name, func_name, target_shape)
-
-
-@constexpr
-def _check_input_shape_value(input_shape, dim, param_name, cls_name, target_value):
-    _LayerInputCheck.check_shape_value_on_axis(input_shape, dim, param_name, cls_name, target_value)
-
-
-@constexpr
-def _check_shape_equal_without_batch(input_shape, param_name, func_name, target_shape):
-    _LayerInputCheck.check_shape_equal_without_batch(input_shape, param_name, func_name, target_shape)
-
-
 class _Dropout(nn.Cell):
     r"""
         A Dropout Implements with P.DropoutGenMask and  P.DropoutDoMask for parallel training.
@@ -707,17 +685,9 @@ class FixedSparseAttention(nn.Cell):
         self.slice1 = P.StridedSlice().shard(((dp, 1, 1),))
 
     def construct(self, q, k, v, attention_mask):
-        _check_shape_equal(F.shape(q), "q", self.cls_name,
-                           [self.batch_size, self.seq_length, self.hidden_size])
         _check_input_dtype(F.dtype(q), "q", [mstype.float16], self.cls_name)
-        _check_shape_equal(F.shape(k), "k", self.cls_name,
-                           [self.batch_size, self.seq_length, self.hidden_size])
         _check_input_dtype(F.dtype(k), "k", [mstype.float16], self.cls_name)
-        _check_shape_equal(F.shape(v), "v", self.cls_name,
-                           [self.batch_size, self.seq_length, self.hidden_size])
         _check_input_dtype(F.dtype(v), "v", [mstype.float16], self.cls_name)
-        _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
-                           [self.batch_size, self.seq_length, self.seq_length])
         _check_input_dtype(F.dtype(attention_mask), "attention_mask", [mstype.float32, mstype.float16], self.cls_name)
 
         q, k, v = self._transpose_inputs(q, k, v)
