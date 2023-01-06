@@ -399,6 +399,7 @@ void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
   if (graph->is_dynamic_shape()) {
     MS_LOG(INFO) << "Dynamic shape skip some fusion pass";
     pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
+    pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
   } else {
     pm->AddPass(std::make_shared<opt::ClipByNormFission>());
     pm->AddPass(std::make_shared<opt::MatMulBiasAddFusion>());
