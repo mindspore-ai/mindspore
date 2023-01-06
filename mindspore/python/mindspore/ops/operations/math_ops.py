@@ -7175,33 +7175,33 @@ class FFTWithSize(Primitive):
         ``CPU``
 
     Examples:
-          >>> # case FFT: signal_ndim: 1, inverse: False, real: False.
-          >>> fft_in = Tensor(np.array([2, 1, 2]), mindspore.complex64)
-          >>> fft_net = math_ops.FFTWithSize(signal_ndim=1, inverse=False, real=False)
-          >>> fft_output = fft_net(fft_in)
-          >>> print(fft_output)
-          [5.0000005 +2.9802322e-08j 0.50000036+8.6602569e-01j
-           0.49999955-8.6602527e-01j]
-          >>> # case IFFT: signal_ndim: 1, inverse: True, real: False.
-          >>> ifft_in = fft_output
-          >>> ifft_net = math_ops.FFTWithSize(signal_ndim=1, inverse=True, real=False)
-          >>> ifft_output = ifft_net(ifft_in)
-          >>> print(ifft_output)
-          [2.       +1.291434e-07j 1.0000004+7.947286e-08j 2.0000005-7.947286e-08j]
-          >>> # case RFFT2D: signal_ndim: 2, inverse: False, real: True.
-          >>> rfft_in = Tensor(np.array([[2, 1, 2], [3, 1, 6]]), mindspore.float32)
-          >>> rfft_net = math_ops.FFTWithSize(signal_ndim=2, inverse=False, real=True)
-          >>> rfft_output = rfft_net(rfft_in)
-          >>> print(rfft_output)
-          [[ 1.5000001e+01+2.0954278e-07j  1.1920929e-06+5.1961541e+00j]
-           [-5.0000005e+00-5.9604645e-08j  9.9999934e-01-3.4641027e+00j]]
-          >>> # case IRFFT2D: signal_ndim: 2, inverse: True, real: True.
-          >>> irfft_in = rfft_output
-          >>> irfft_net = math_ops.FFTWithSize(signal_ndim=2, inverse=True, real=True, signal_sizes=rfft_in.shape)
-          >>> irfft_output = irfft_net(irfft_in)
-          >>> print(irfft_output)
-          [[2.0000002  0.99999976 2.0000005 ]
-          [3.0000007  0.999999   6.000002  ]]
+        >>> # case FFT: signal_ndim: 1, inverse: False, real: False.
+        >>> fft_in = Tensor(np.array([2, 1, 2]), mindspore.complex64)
+        >>> fft_net = ops.FFTWithSize(signal_ndim=1, inverse=False, real=False)
+        >>> fft_output = fft_net(fft_in)
+        >>> print(fft_output)
+        [5.        +0.j         0.5       +0.86602545j 0.50000006-0.8660255j ]
+        >>> # case IFFT: signal_ndim: 1, inverse: True, real: False.
+        >>> ifft_in = fft_output
+        >>> ifft_net = ops.FFTWithSize(signal_ndim=1, inverse=True, real=False)
+        >>> ifft_output = ifft_net(ifft_in)
+        >>> print(ifft_output)
+        [2.        -1.9868216e-08j 0.99999994+0.0000000e+00j
+         1.9999999 +7.9472862e-08j]
+        >>> # case RFFT2D: signal_ndim: 2, inverse: False, real: True.
+        >>> rfft_in = Tensor(np.array([[2, 1, 2], [3, 1, 6]]), mindspore.float32)
+        >>> rfft_net = ops.FFTWithSize(signal_ndim=2, inverse=False, real=True)
+        >>> rfft_output = rfft_net(rfft_in)
+        >>> print(rfft_output)
+        [[ 1.5000000e+01+1.1920929e-07j -2.3841858e-07+5.1961522e+00j]
+         [-5.0000000e+00-2.9802322e-08j  9.9999988e-01-3.4641016e+00j]]
+        >>> # case IRFFT2D: signal_ndim: 2, inverse: True, real: True.
+        >>> irfft_in = rfft_output
+        >>> irfft_net = ops.FFTWithSize(signal_ndim=2, inverse=True, real=True, signal_sizes=rfft_in.shape)
+        >>> irfft_output = irfft_net(irfft_in)
+        >>> print(irfft_output)
+        [[2.         1.         2.        ]
+         [3.         0.99999994 5.9999995 ]]
     """
 
     @prim_attr_register
