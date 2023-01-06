@@ -1,7 +1,7 @@
 mindspore.ops.huber_loss
 ========================
 
-.. py:class:: mindspore.ops.huber_loss(x, target, reduction='mean', delta=1.0)
+.. py:function:: mindspore.ops.huber_loss(x, target, reduction='mean', delta=1.0)
 
     huber_loss计算预测值和目标值之间的误差。它兼有l1_loss和mse_loss的优点。
 
