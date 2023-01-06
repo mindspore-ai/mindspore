@@ -36,14 +36,9 @@ __all__ = ['LSTM', 'GRU', 'RNN']
 
 
 @constexpr
-def arange(start, stop, step, dtype):
-    return Tensor(np.arange(start, stop, step), dtype)
-
-
-@constexpr
 def _init_state(shape, dtype, is_lstm):
-    hx = Tensor(np.zeros(shape), dtype)
-    cx = Tensor(np.zeros(shape), dtype)
+    hx = P.Zeros()(shape, dtype)
+    cx = P.Zeros()(shape, dtype)
     if is_lstm:
         return (hx, cx)
     return hx
@@ -84,16 +79,9 @@ def _check_tuple_length(param_name, input_data, length, cls_name):
                         f"but got '{len(input_data)}'")
 
 
-@constexpr
-def _check_seq_length_size(batch_size_x, seq_length_size, cls_name):
-    if batch_size_x != seq_length_size:
-        raise ValueError(f"For '{cls_name}' batch size of x and seq_length must be equal, "
-                         f"but got {batch_size_x} of x and {seq_length_size} of seq_length.")
-
-
 def sequence_mask(lengths, maxlen):
     """generate mask matrix by seq_length"""
-    range_vector = arange(0, maxlen, 1, lengths.dtype)
+    range_vector = P.arange(start=0, end=maxlen, step=1, dtype=lengths.dtype)
     result = range_vector < lengths.view(lengths.shape + (1,))
     return result.astype(mstype.int32)
 
@@ -106,7 +94,7 @@ def select_by_mask(inputs, mask):
 
 def get_hidden(output, seq_length):
     """get hidden state by seq_length"""
-    batch_index = arange(0, seq_length.shape[0], 1, seq_length.dtype)
+    batch_index = P.arange(start=0, end=seq_length.shape[0], step=1, dtype=seq_length.dtype)
     indices = P.Concat(1)((seq_length.view(-1, 1) - 1, batch_index.view(-1, 1)))
     return P.GatherNd()(output, indices)
 
@@ -564,7 +552,6 @@ class _RNNBase(Cell):
                              x_dtype, self.is_lstm)
         if seq_length is not None:
             _check_input_dtype(seq_length.dtype, "seq_length", [mstype.int32, mstype.int64], self.cls_name)
-            _check_seq_length_size(max_batch_size, seq_length.shape[0], self.cls_name)
         if self.batch_first:
             x = P.Transpose()(x, (1, 0, 2))
         if self.bidirectional:
