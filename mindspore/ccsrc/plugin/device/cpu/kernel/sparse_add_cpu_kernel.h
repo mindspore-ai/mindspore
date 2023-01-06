@@ -56,6 +56,7 @@ class SparseAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   float thresh_ = 0;
   size_t row_ = 0;
   size_t dense_size_ = 0;
+  size_t indices_column_ = 0;
   std::vector<TypeId> types_;
   ShapeVector dense_shape_;
   std::vector<KernelTensorPtr> outputs_ = {};

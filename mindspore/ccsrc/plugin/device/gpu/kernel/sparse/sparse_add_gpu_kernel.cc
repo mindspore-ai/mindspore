@@ -103,6 +103,7 @@ int SparseAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   auto dense_shape = inputs.at(kSparseAddIndex2)->GetShapeVector();
   auto b_indices_shape = inputs.at(kSparseAddIndex3)->GetShapeVector();
   auto b_values_shape = inputs.at(kSparseAddIndex4)->GetShapeVector();
+  indices_column_ = inputs.at(0)->GetShapeVector()[1];
   if (a_indices_shape.size() >= kDim2 && a_indices_shape.at(1) >= 0) {
     rank_ = LongToSize(a_indices_shape.at(1));
   }
@@ -224,7 +225,7 @@ bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   SparseAdd(a_indices_ptr, a_values_ptr, b_indices_ptr, b_values_ptr, sum_indices_ptr, sum_values_ptr,
             a_value_index_ptr, b_value_index_ptr, is_from_a_ptr, whole_values_ptr, place_holder_index_ptr, indices_ptr,
             threshold_valid_ptr, a_indices_num, b_indices_num, res_store_mem_ptr, sum_count_ptr, threshold_ptr,
-            device_id_, cuda_stream_);
+            indices_column_, device_id_, cuda_stream_);
   // Get dynamic shape
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&real_output_size_, sum_count_ptr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream_),
