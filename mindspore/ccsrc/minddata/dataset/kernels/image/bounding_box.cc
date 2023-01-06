@@ -77,7 +77,8 @@ Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
                                  "BoundingBox: bbox width is too large as coordinate x bigger than max num of int64.");
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int64_t>::max() - bbox->y()) > bbox->height(),
                                  "BoundingBox: bbox height is too large as coordinate y bigger than max num of int64.");
-    if ((bbox->x() + bbox->width() > img_w) || (bbox->y() + bbox->height() > img_h)) {
+    if ((static_cast<int64_t>(bbox->x() + bbox->width()) > img_w) ||
+        (static_cast<int64_t>(bbox->y() + bbox->height()) > img_h)) {
       RETURN_STATUS_ERROR(
         StatusCode::kMDBoundingBoxOutOfBounds,
         "BoundingBox: bounding boxes is out of bounds of the image, as image width: " + std::to_string(img_w) +
