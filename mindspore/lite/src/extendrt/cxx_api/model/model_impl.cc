@@ -155,6 +155,15 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
 
 Status ModelImpl::ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::shared_ptr<Context> &model_context) {
   MS_ASSERT(func_graph != nullptr);
+  auto device_list = model_context->MutableDeviceInfo();
+  for (const auto &device_info : device_list) {
+    if (device_info == nullptr) {
+      continue;
+    }
+    if (device_info->GetDeviceType() == DeviceType::kAscend && device_info->GetProvider() == "ge") {
+      return kSuccess;
+    }
+  }
   auto value = func_graph->get_attr(lite::kIsOptimized);
   if (value != nullptr) {
     if (GetValue<bool>(value)) {
