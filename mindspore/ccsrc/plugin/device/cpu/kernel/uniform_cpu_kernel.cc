@@ -104,8 +104,7 @@ int UniformCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
     return ret;
   }
-  std::vector<int64_t> input_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
+  input_elements_ = SizeOf(inputs.at(kIndex0)->GetShapeVector());
   return ret;
 }
 
@@ -118,7 +117,6 @@ bool UniformCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   InitMSPhiloxRandom(seed_, offset_);
 
   auto y = reinterpret_cast<T *>(outputs[0]->addr);
-  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), int64_t(1), std::multiplies<int64_t>());
   for (int64_t i = 0; i < input_elements_; i++) {
     y[i] = static_cast<T>(RandFloat() * (to_ - from_) + from_);
   }
