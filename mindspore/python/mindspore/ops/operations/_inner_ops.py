@@ -2430,3 +2430,20 @@ class GetGrad(Primitive):
             raise ValueError(
                 f"Can not find the gradient for position or Parameter {x}")
         return output
+
+
+class IsParameter(PrimitiveWithInfer):
+    """
+        Check if input is `Parameter`
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize IsParameter"""
+
+    def __call__(self, x):
+        return isinstance(x, Parameter)
+
+    def __infer__(self, x):
+        return {'shape': [],
+                'dtype': mstype.bool_,
+                'value': isinstance(x['dtype'], mstype.ref_type)}
