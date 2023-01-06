@@ -29,6 +29,7 @@
 #include "include/common/utils/utils.h"
 #include "distributed/persistent/storage/constants.h"
 #include "utils/system/env.h"
+#include "base/float16.h"
 
 namespace mindspore {
 namespace distributed {
@@ -419,8 +420,31 @@ void LocalFile<KeyType, ValueType>::Read(const ConstDataWithLen &keys, const Dat
   }
 }
 
+template class LocalFile<int32_t, bool>;
+template class LocalFile<int32_t, int8_t>;
+template class LocalFile<int32_t, int16_t>;
+template class LocalFile<int32_t, int32_t>;
+template class LocalFile<int32_t, int64_t>;
+template class LocalFile<int32_t, uint8_t>;
+template class LocalFile<int32_t, uint16_t>;
+template class LocalFile<int32_t, uint32_t>;
+template class LocalFile<int32_t, uint64_t>;
+template class LocalFile<int32_t, float16>;
 template class LocalFile<int32_t, float>;
+template class LocalFile<int32_t, double>;
+
+template class LocalFile<int64_t, bool>;
+template class LocalFile<int64_t, int8_t>;
+template class LocalFile<int64_t, int16_t>;
+template class LocalFile<int64_t, int32_t>;
+template class LocalFile<int64_t, int64_t>;
+template class LocalFile<int64_t, uint8_t>;
+template class LocalFile<int64_t, uint16_t>;
+template class LocalFile<int64_t, uint32_t>;
+template class LocalFile<int64_t, uint64_t>;
+template class LocalFile<int64_t, float16>;
 template class LocalFile<int64_t, float>;
+template class LocalFile<int64_t, double>;
 }  // namespace storage
 }  // namespace distributed
 }  // namespace mindspore

@@ -23,6 +23,7 @@
 #include <utility>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,6 +34,14 @@ bool ScatterArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
+
+  if (base_operator->HasAttr(kAttrEnableEmbeddingStorage)) {
+    enable_embedding_storage_ = GetValue<bool>(base_operator->GetAttr(kAttrEnableEmbeddingStorage));
+  }
+  if (base_operator->HasAttr(kAttrParameterKey)) {
+    parameter_key_ = GetValue<int32_t>(base_operator->GetAttr(kAttrParameterKey));
+  }
+
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -104,6 +113,17 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
       }
     }
   } else {
+    if (enable_embedding_storage_) {
+      auto embedding_storage = embedding_storage_manager.Get<S, T>(parameter_key_);
+      MS_ERROR_IF_NULL(embedding_storage);
+      if (!embedding_storage->Put(indices, indices_size_, updates)) {
+        MS_LOG(ERROR) << "For '" << kernel_name_
+                      << "', Update embedding storage failed, parameter key: " << parameter_key_;
+        return false;
+      }
+      return true;
+    }
+
     for (size_t i = 0; i < indices_size_; i++) {
       auto base_index_updates = i * inner_size_;
       auto base_index_input = indices[i] * inner_size_;

@@ -82,8 +82,32 @@ void EmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(const DeviceAdd
   MS_EXCEPTION_IF_NULL(storage_);
 }
 
+template class EmbeddingStorage<int32_t, bool>;
+template class EmbeddingStorage<int32_t, int8_t>;
+template class EmbeddingStorage<int32_t, int16_t>;
+template class EmbeddingStorage<int32_t, int32_t>;
+template class EmbeddingStorage<int32_t, int64_t>;
+template class EmbeddingStorage<int32_t, uint8_t>;
+template class EmbeddingStorage<int32_t, uint16_t>;
+template class EmbeddingStorage<int32_t, uint32_t>;
+template class EmbeddingStorage<int32_t, uint64_t>;
+template class EmbeddingStorage<int32_t, float16>;
 template class EmbeddingStorage<int32_t, float>;
+template class EmbeddingStorage<int32_t, double>;
+
+template class EmbeddingStorage<int64_t, bool>;
+template class EmbeddingStorage<int64_t, int8_t>;
+template class EmbeddingStorage<int64_t, int16_t>;
+template class EmbeddingStorage<int64_t, int32_t>;
+template class EmbeddingStorage<int64_t, int64_t>;
+template class EmbeddingStorage<int64_t, uint8_t>;
+template class EmbeddingStorage<int64_t, uint16_t>;
+template class EmbeddingStorage<int64_t, uint32_t>;
+template class EmbeddingStorage<int64_t, uint64_t>;
+template class EmbeddingStorage<int64_t, float16>;
 template class EmbeddingStorage<int64_t, float>;
+template class EmbeddingStorage<int64_t, double>;
+
 template class EmbeddingStorage<int32_t, float, std::allocator<uint8_t>>;
 template class EmbeddingStorage<int64_t, float, std::allocator<uint8_t>>;
 }  // namespace storage

@@ -221,12 +221,12 @@ class PersistentTensorDataNumpy : public TensorDataNumpy {
   ~PersistentTensorDataNumpy() override = default;
 
   // Fill data with a special slice tensor data. It will read data from persistent storage.
-  void FillSliceData(const uint32_t param_key, const int slice_index) {
+  void FillSliceData(const int32_t param_key, const int slice_index) {
     if (slice_index >= slice_num_) {
       MS_LOG(ERROR) << "Slice index is out of range, index: " << slice_index;
       return;
     }
-    auto emb_store = embedding_store_manager.Get(std::to_string(param_key));
+    auto emb_store = embedding_storage_manager.Get(param_key);
     MS_EXCEPTION_IF_NULL(emb_store);
 
     size_t first_dim = (size_t)SliceDataShape()[0];

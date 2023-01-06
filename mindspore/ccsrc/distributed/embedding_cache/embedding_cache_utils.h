@@ -278,26 +278,74 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   friend class mindspore::runtime::DeviceDenseEmbeddingOperation;
   friend class mindspore::runtime::DeviceSparseEmbeddingOperation;
 };
-class BACKEND_EXPORT EmbeddingStoreManager {
- public:
-  static EmbeddingStoreManager &GetInstance() {
-    static EmbeddingStoreManager instance{};
-    return instance;
-  }
-  void Add(const std::string &name, std::shared_ptr<storage::EmbeddingStorage<int32_t, float>> emb_store) {}
-  std::shared_ptr<storage::EmbeddingStorage<int32_t, float>> Get(const std::string &name) { return nullptr; }
 
-  bool IsExists(const std::string &name) const { return false; }
+// A single instance class used to manager all EmbeddingStorage instances, EmbeddingStorage is encapsulated within the
+// Huge Embedding Table's lookup and update. EmbeddingStorageManager provides Add and Get API to add, replace and
+// acquire EmbeddingStorage instances.
+class BACKEND_EXPORT EmbeddingStorageManager {
+ public:
+  static EmbeddingStorageManager &GetInstance();
+
+  /**
+   * @brief Add the embedding storage instance corresponding to the parameter key, if embedding storage instance already
+   * exists, replace it by input parameter `embed_storage'.
+   * @param[in] `param_key`: The parameter key for embedding table which need to add.
+   * @param[in] `embed_storage`: The embedding storage instance pointer which can not be nullptr.
+   */
+  template <typename KeyType, typename ValueType>
+  void Add(int32_t param_key, const std::shared_ptr<storage::EmbeddingStorage<KeyType, ValueType>> &embed_storage) {
+    MS_EXCEPTION_IF_NULL(embed_storage);
+    embedding_storages_[param_key] = embed_storage;
+  }
+
+  /**
+   * @brief Try get the embedding storage instance corresponding to the parameter key.
+   * @param[in] `param_key`: The parameter key for embedding table which need to acquire.
+   * @return The embedding storage instance pointer if the embedding storage already exists, else throw exception.
+   */
+  template <typename KeyType = int32_t, typename ValueType = float>
+  std::shared_ptr<storage::EmbeddingStorage<KeyType, ValueType>> Get(int32_t param_key) {
+    const auto &iter = embedding_storages_.find(param_key);
+    if (iter != embedding_storages_.end()) {
+      return std::static_pointer_cast<storage::EmbeddingStorage<KeyType, ValueType>>(iter->second);
+    }
+    MS_LOG(EXCEPTION) << "Can not find embedding storage for parameter key[" << param_key << "].";
+  }
+
+  /**
+   * @brief Check if the embedding storage instance corresponding to the parameter key already exists.
+   * @param[in] `param_key`: The parameter key for embedding table which need to check if the embedding storage already
+   * exists.
+   * @return true if the embedding storage already exists, else false.
+   */
+  bool Exists(int32_t param_key) const { return embedding_storages_.find(param_key) != embedding_storages_.end(); }
 
  private:
-  EmbeddingStoreManager() = default;
-  ~EmbeddingStoreManager() = default;
-  DISABLE_COPY_AND_ASSIGN(EmbeddingStoreManager);
+  EmbeddingStorageManager() = default;
+  ~EmbeddingStorageManager() = default;
+  DISABLE_COPY_AND_ASSIGN(EmbeddingStorageManager);
+
+  // Record all {parameter key -> embedding storage instance} pairs.
+  HashMap<int32_t, std::shared_ptr<void>> embedding_storages_;
 };
+
+/**
+ * @brief Create a new embedding storage instance for specific key and value type, and add the instance to
+ * EmbeddingStorageManager.
+ * @param[in] `key_value_types`: The specific key and value data type to determine the type of embedding storage
+ * instance to create.
+ * @param[in] `embedding_key`: The unique parameter key for embedding table.
+ * @param[in] `embedding_dim`: The length of each embedding vector.
+ * @param[in] `capacity`: The capacity for new embedding storage.
+ */
+BACKEND_EXPORT void CreateEmbeddingStorage(std::pair<TypeId, TypeId> key_value_types, int32_t embedding_key,
+                                           size_t embedding_dim, size_t capacity);
 }  // namespace distributed
+
 static distributed::EmbeddingCacheTableManager &embedding_cache_table_manager =
   distributed::EmbeddingCacheTableManager::GetInstance();
 
-static distributed::EmbeddingStoreManager &embedding_store_manager = distributed::EmbeddingStoreManager::GetInstance();
+static distributed::EmbeddingStorageManager &embedding_storage_manager =
+  distributed::EmbeddingStorageManager::GetInstance();
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DISTRIBUTED_EMBEDDING_CACHE_EMBEDDING_CHCHE_UTILS_H_

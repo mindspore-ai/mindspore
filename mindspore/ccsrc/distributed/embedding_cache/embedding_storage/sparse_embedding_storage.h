@@ -45,24 +45,24 @@ class BACKEND_EXPORT SparseEmbeddingStorage : public EmbeddingStorage<KeyType, V
   // SparseEmbeddingStorage.
   // Parameter[in] `device_address`: The device address of the Embedding Table parameter corresponding to the
   // SparseEmbeddingStorage.
-  void Initialize(const DeviceAddress *device_address) override;
+  void Initialize(const DeviceAddress *device_address) override {}
 
   // Finalize the EmbeddingStorage, release allocated resource.
-  void Finalize() override;
+  void Finalize() override {}
 
   // Batch embeddings lookup operation.
   // Query Embeddings in the host cache first, if the corresponding element cannot be found in the host cache, then read
   // the element from the SSD and insert host cache.
   // Access an element of the cache generally affects the location or order of the elements in the cache, depending
   // on different cache strategies.
-  bool Get(const KeyType *keys, size_t key_num, ValueType *values) override;
+  bool Get(const KeyType *keys, size_t key_num, ValueType *values) override { return true; }
 
   // Batch embeddings update/insert operation.
   // Update/Insert Embeddings in the host cache first, if the host cache has insufficient space, the expired elements
   // will automatically be evicted the to the SSD.
   // Update or Insert an element of the cache generally affects the location or order of the elements in the cache,
   // depending on different cache strategies.
-  bool Put(const KeyType *keys, size_t key_num, const ValueType *values) override;
+  bool Put(const KeyType *keys, size_t key_num, const ValueType *values) override { return true; }
 
  private:
   // The base pointer to the hash table of the embedding table parameter.

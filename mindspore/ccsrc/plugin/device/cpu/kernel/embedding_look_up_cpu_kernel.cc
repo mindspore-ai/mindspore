@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/embedding_look_up_cpu_kernel.h"
 #include "mindspore/core/ops/embedding_lookup.h"
 #include "utils/check_convert_utils.h"
+#include "distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -112,6 +113,14 @@ bool EmbeddingLookUpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   kernel_name_ = kernel_ptr->name();
+
+  if (base_operator->HasAttr(kAttrEnableEmbeddingStorage)) {
+    enable_embedding_storage_ = GetValue<bool>(base_operator->GetAttr(kAttrEnableEmbeddingStorage));
+  }
+  if (base_operator->HasAttr(kAttrParameterKey)) {
+    parameter_key_ = GetValue<int32_t>(base_operator->GetAttr(kAttrParameterKey));
+  }
+
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -154,6 +163,18 @@ bool EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   G offset = static_cast<G *>(inputs[kOffsetIndex]->addr)[0];
   offset_ = static_cast<int64_t>(offset);
+
+  if (enable_embedding_storage_) {
+    auto embedding_storage = embedding_storage_manager.Get<S, T>(parameter_key_);
+    MS_ERROR_IF_NULL(embedding_storage);
+    if (!embedding_storage->Get(reinterpret_cast<S *>(input_indices_addr), input_indices_lens_,
+                                reinterpret_cast<T *>(output_addr))) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', lookup embedding from embedding storage failed, parameter key: " << parameter_key_;
+      return false;
+    }
+    return true;
+  }
 
   auto task = [&](size_t start, size_t end) {
     size_t task_proc_lens = end - start;
