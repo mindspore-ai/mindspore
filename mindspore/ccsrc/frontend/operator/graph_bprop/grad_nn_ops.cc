@@ -141,5 +141,34 @@ FuncGraphPtr BatchNormBprop(const PrimitivePtr &primal, const AbstractBasePtrLis
   return fg;
 }
 REGISTER_PRIMITIVE_BPROP_IMPL(BatchNorm, prim::kPrimBatchNorm, BatchNormBprop, 5);
+
+FuncGraphPtr BiasAddBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
+  auto fg = NewGraph(input_abs);
+  auto format = GetAttr<std::string>(primal, "format");
+  // x, out, dout
+  constexpr size_t expected_arg_size = 4;
+  const auto &parameters = fg->parameters();
+  CheckArgSize(parameters, input_abs, primal, expected_arg_size);
+  auto dout = parameters[kIndex3];
+  auto bais_add_grad = NewNode(fg, {BiasAddGrad(format), dout});
+  fg->set_output(NewNode(fg, {MakeTuple(), dout, bais_add_grad}));
+  return fg;
+}
+REGISTER_PRIMITIVE_BPROP_IMPL(BiasAdd, prim::kPrimBiasAdd, BiasAddBprop, 2);
+
+FuncGraphPtr GeLUBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
+  auto fg = NewGraph(input_abs);
+  // x, out, dout
+  constexpr size_t expected_arg_size = 3;
+  const auto &parameters = fg->parameters();
+  CheckArgSize(parameters, input_abs, primal, expected_arg_size);
+  auto x = parameters[kIndex0];
+  auto out = parameters[kIndex1];
+  auto dout = parameters[kIndex2];
+  auto dx = NewNode(fg, {GeLUGrad(), dout, x, out});
+  fg->set_output(NewNode(fg, {MakeTuple(), dx}));
+  return fg;
+}
+REGISTER_PRIMITIVE_BPROP_IMPL(GeLU, prim::kPrimGeLU, GeLUBprop, 1);
 }  // namespace graph_bprop
 }  // namespace mindspore

@@ -1972,3 +1972,28 @@ def test_upsample_trilinear_3d():
     """
     op = ops.UpsampleTrilinear3D(output_size=[4, 64, 48])
     grad_compile_(Tensor(input_data=np.random.randn(2, 3, 4, 512, 256)), op)
+
+
+def test_add():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the add op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.ones([1]).astype(np.int32) * 100)
+    y = Tensor(np.ones([1]).astype(np.int32) * 100)
+    add = Net(P.Add())
+    grad = GradNet(add)
+    grad.compile(x, y)
+
+
+def test_neg():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the batch neg op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
+    neg_net = Net(ops.Neg())
+    grad = GradNet(neg_net)
+    grad.compile(x)

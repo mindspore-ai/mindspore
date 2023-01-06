@@ -30,17 +30,6 @@ from mindspore.ops.operations import _rl_inner_ops as rl_ops
 from mindspore.ops._utils.utils import range_op, get_1d_shape
 
 
-@bprop_getters.register(P.BiasAdd)
-def get_bprop_bias_add(self):
-    """Grad definition for `BiasAdd` operation."""
-    bias_grad = G.BiasAddGrad(self.data_format)
-
-    def bprop(x, w, out, dout):
-        return dout, bias_grad(dout)
-
-    return bprop
-
-
 @constexpr
 def bias_add_gradgrad_helper(shape, bias_shape, data_format):
     """Helper function of BiasGradGrad to calculate expanded shape."""
@@ -792,19 +781,6 @@ def get_bprop_tanh_grad(self):
         dy = dout * -2.0 * grad * y
         dgrad = tanh_grad(y, dout)
         return dy, dgrad
-
-    return bprop
-
-
-@bprop_getters.register(P.Gelu)
-@bprop_getters.register(P.GeLU)
-def get_bprop_gelu(self):
-    """Grad definition for `GeLU` operation."""
-    input_grad = G.GeLUGrad()
-
-    def bprop(x, out, dout):
-        dx = input_grad(dout, x, out)
-        return (dx,)
 
     return bprop
 

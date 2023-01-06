@@ -333,16 +333,6 @@ def bprop_batchmatmul(self):
     return bprop
 
 
-@bprop_getters.register(P.Add)
-def get_bprop_add(self):
-    """Grad definition for `Add` operation."""
-
-    def bprop(x, y, out, dout):
-        return binop_grad_common(x, y, dout, dout)
-
-    return bprop
-
-
 @bprop_getters.register(P.TensorAdd)
 def get_bprop_tensor_add(self):
     """Grad definition for `Add` operation."""
@@ -364,18 +354,6 @@ def get_bprop_matrix_inverse(self):
         dx = matmul_x2(dout, out)
         dx = matmul_x1(out, dx)
         dx = neg(dx)
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(P.Neg)
-def get_bprop_neg(self):
-    """Grad definition for `Neg` operation."""
-    neg_grad = P.Neg()
-
-    def bprop(x, out, dout):
-        dx = neg_grad(dout)
         return (dx,)
 
     return bprop
@@ -1201,16 +1179,6 @@ def get_bprop_logical_not(self):
 @bprop_getters.register(P.LogicalAnd)
 def get_bprop_logical_and(self):
     """Grad definition for `LogicalAnd` operation."""
-
-    def bprop(x, y, out, dout):
-        return zeros_like(x), zeros_like(y)
-
-    return bprop
-
-
-@bprop_getters.register(P.LogicalOr)
-def get_bprop_logical_or(self):
-    """Grad definition for `LogicalOr` operation."""
 
     def bprop(x, y, out, dout):
         return zeros_like(x), zeros_like(y)

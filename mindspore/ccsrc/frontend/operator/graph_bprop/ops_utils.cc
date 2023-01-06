@@ -157,9 +157,18 @@ AnfNodePtr Add() { return NewValueNode(prim::GetPythonOps("add", "mindspore.ops.
 
 AnfNodePtr Mod() { return NewValueNode(prim::GetPythonOps("mod", "mindspore.ops.composite.multitype_ops.mod_impl")); }
 
+AnfNodePtr Mul(const FuncGraphPtr &fg) {
+  return fg->NewCNodeInOrder({GetClassType("mindspore.ops.operations.math_ops", "Mul")});
+}
+
 AnfNodePtr ZerosLikeFunction(const FuncGraphPtr &fg, const AnfNodePtr &input) {
   return fg->NewCNodeInOrder(
     {NewValueNode(prim::GetPythonOps("zeros_like", "mindspore.ops.composite.multitype_ops.zeros_like_impl")), input});
+}
+
+AnfNodePtr BiasAddGrad(const string &format) {
+  auto prim = NewPrimitive(prim::kPrimBiasAddGrad, {{"format", MakeValue(format)}});
+  return NewValueNode(prim);
 }
 
 AnfNodePtr MatMul(const FuncGraphPtr &fg, bool transpose_a, bool transpose_b) {
@@ -171,11 +180,21 @@ AnfNodePtr Conj() { return NewValueNode(prim::kPrimConj); }
 
 AnfNodePtr ReluGrad() { return NewValueNode(prim::kPrimReluGrad); }
 
+AnfNodePtr GeLUGrad() { return NewValueNode(prim::kPrimGeLUGrad); }
+
 AnfNodePtr MakeTuple() { return NewValueNode(prim::kPrimMakeTuple); }
 
 AnfNodePtr TensorShape() { return NewValueNode(prim::kPrimTensorShape); }
 
 AnfNodePtr Shape() { return NewValueNode(prim::kPrimShape); }
+
+AnfNodePtr RowTensorGetValues() { return NewValueNode(prim::kPrimRowTensorGetValues); }
+
+AnfNodePtr RowTensorGetIndices() { return NewValueNode(prim::kPrimRowTensorGetIndices); }
+
+AnfNodePtr RowTensorGetDenseShape() { return NewValueNode(prim::kPrimRowTensorGetDenseShape); }
+
+AnfNodePtr MakeRowTensor() { return NewValueNode(prim::kPrimMakeRowTensor); }
 
 AnfNodePtr Cast(const FuncGraphPtr &fg) {
   return fg->NewCNodeInOrder({GetClassType("mindspore.ops.operations.array_ops", "Cast")});
@@ -484,5 +503,7 @@ ValuePtr GetPadModStr(const ValuePtr &value, bool upper) {
   (void)std::transform(str.begin(), str.end(), str.begin(), toupper);
   return MakeValue(str);
 }
+
+AnfNodePtr DType() { return NewValueNode(prim::kPrimDType); }
 }  // namespace graph_bprop
 }  // namespace mindspore

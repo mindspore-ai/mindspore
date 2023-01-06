@@ -26,13 +26,19 @@ namespace mindspore {
 namespace graph_bprop {
 // Ops.
 AnfNodePtr Add();
+AnfNodePtr Mul(const FuncGraphPtr &fg);
 AnfNodePtr Mod();
 AnfNodePtr MatMul(const FuncGraphPtr &fg, bool transpose_a = false, bool transpose_b = false);
 AnfNodePtr Conj();
 AnfNodePtr ReluGrad();
+AnfNodePtr GeLUGrad();
 AnfNodePtr MakeTuple();
 AnfNodePtr TensorShape();
 AnfNodePtr Shape();
+AnfNodePtr RowTensorGetValues();
+AnfNodePtr RowTensorGetIndices();
+AnfNodePtr RowTensorGetDenseShape();
+AnfNodePtr MakeRowTensor();
 AnfNodePtr Cast(const FuncGraphPtr &fg);
 AnfNodePtr ReduceProd(const FuncGraphPtr &fg);
 AnfNodePtr ExpandDims(const FuncGraphPtr &fg);
@@ -50,6 +56,8 @@ AnfNodePtr Reshape(const FuncGraphPtr &fg);
 AnfNodePtr DynamicBroadcastGradientArgs();
 AnfNodePtr MaxPoolGrad(const FuncGraphPtr &fg, const PrimitivePtr &primal);
 AnfNodePtr BatchNormGrad(const FuncGraphPtr &fg, const PrimitivePtr &primal);
+AnfNodePtr DType();
+AnfNodePtr BiasAddGrad(const string &format);
 
 // Common methods.
 AnfNodePtr ZerosLikeFunction(const FuncGraphPtr &fg, const AnfNodePtr &input);
