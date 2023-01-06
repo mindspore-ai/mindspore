@@ -37,6 +37,7 @@ function Run_Benchmark() {
     cd ${benchmark_test}/mindspore-lite-${version}-linux-${arch} || exit 1
     cp tools/benchmark/benchmark ./ || exit 1
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./runtime/lib
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./runtime/third_party/glog:./runtime/third_party/libjpeg-turbo/lib
 
     local line_info model_info spec_acc_limit model_name input_num input_shapes \
             mode model_file input_files output_file data_path acc_limit enableFp16 \
@@ -65,9 +66,9 @@ function Run_Benchmark() {
         echo "Benchmarking ${model_name} ......"
         model_type=${model_name##*.}
         if [[ ${compile_type} == "cloud" ]]; then
-          model_file=${ms_models_path}'/'${model_name}'.mindir'
+          model_file=${models_path}'/'${model_name}'.mindir'
         else
-          model_file=${ms_models_path}'/'${model_name}'.ms'
+          model_file=${models_path}'/'${model_name}'.ms'
         fi
         input_files=""
         output_file=""
@@ -124,13 +125,9 @@ function Run_Benchmark() {
 
 user_name=${USER}
 benchmark_test=/home/${user_name}/benchmark_test/${device_id}
-ms_models_path=${benchmark_test}/ms_models
-if [[ ${backend} =~ "lite" ]]; then
-    models_ascend_config=${benchmark_test}/models_ascend_lite.cfg
-elif [[ ${backend} =~ "cloud" ]]; then
-    models_ascend_config=${benchmark_test}/models_ascend_cloud.cfg
-fi
+models_ascend_config=${benchmark_test}/models_mindir_cloud_ascend.cfg
 model_data_path=/home/workspace/mindspore_dataset/mslite
+models_path=${model_data_path}/models/hiai
 
 # Write benchmark result to temp file
 run_benchmark_result_file=${benchmark_test}/run_benchmark_result.txt
@@ -161,42 +158,4 @@ else
     exit 1
 fi
 
-# Run Benchmark cloud inference
-if [[ ${backend} =~ "cloud" ]]; then
-    echo "Run cloud fusion inference benchmark"
-    source ${benchmark_test}/run_benchmark_cloud_ascend.sh -v ${version} -b ${backend} -d ${device_id} -a ${arch} -c ${compile_type}
-    Run_benchmark_status=$?
-else
-    echo "Skip cloud fusion inference benchmark"
-fi
-
-# run python ST
-if [[ ${backend} =~ "cloud" ]]; then
-  models_python_config=${benchmark_test}/models_python_ascend.cfg
-  models_python_cfg_file_list=("$models_python_config")
-  Run_python_ST ${benchmark_test} ${benchmark_test} ${ms_models_path} ${model_data_path}'/models/hiai' "${models_python_cfg_file_list[*]}" "Ascend"
-  Run_python_status=$?
-  if [[ ${Run_python_status} != 0 ]];then
-      cat ${run_ascend_log_file}
-      echo "Run_python_status failed"
-      exit 1
-  fi
-fi
-
-if [[ ${backend} =~ "cloud" ]]; then
-  export LITE_ST_MODEL=${model_data_path}/models/hiai/mindspore_uniir_mobilenetv2.mindir
-  export LITE_ST_CPP_DIR=${benchmark_test}/cpp
-  bash ${benchmark_test}/run_device_mem_test.sh > run_device_mem_test.log
-  Run_device_example_status=$?
-  if [[ ${Run_device_example_status} != 0 ]];then
-    echo "Run device example failed"
-    cat run_device_mem_test.log
-    exit 1
-  else
-    echo "Run device example success"
-  fi
-else
-  echo "Skip run device example, while backend is ${backend}"
-fi
-
-exit ${Run_benchmark_status}
+return ${Run_benchmark_status}
