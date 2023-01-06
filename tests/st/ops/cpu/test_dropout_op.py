@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore import ops
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -87,7 +88,52 @@ def test_net2():
     print(mask)
 
 
+class Net3(nn.Cell):
+    def __init__(self):
+        super(Net3, self).__init__()
+        self.dropout = P.Dropout(keep_prob=0.5)
+
+    def construct(self, x):
+        return self.dropout(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net3():
+    """
+    Feature: test dropout mask diff by diff step.
+    Description: dropout.
+    Expectation: No exception.
+    """
+    x = np.arange(0, 12).reshape(3, 4).astype(np.float16)
+    dropout = Net3()
+    output1, mask1 = dropout(Tensor(x))
+    output2, mask2 = dropout(Tensor(x))
+    assert np.allclose(mask1.asnumpy(), mask2.asnumpy()) is False
+    assert np.allclose(output1.asnumpy(), output2.asnumpy()) is False
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_op1():
+    """
+    Feature: test dropout mask equal by equal seed.
+    Description: dropout.
+    Expectation: No exception.
+    """
+    x = Tensor(np.arange(0, 12).reshape(3, 4).astype(np.float16))
+    output1, mask1 = ops.dropout(x, p=0.5, seed0=1, seed1=100)
+    output2, mask2 = ops.dropout(x, p=0.5, seed0=1, seed1=100)
+
+    assert mask1.shape == mask2.shape
+    assert np.allclose(output1.asnumpy(), output2.asnumpy())
+    assert np.allclose(mask1.asnumpy(), mask2.asnumpy())
+
+
 if __name__ == '__main__':
     test_net()
     test_net1()
     test_net2()
+    test_op1()

@@ -1064,7 +1064,7 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
     During training, randomly zeroes some of the elements of the input tensor
     with probability `p` from a Bernoulli distribution. It plays the role of
     reducing neuron correlation and avoid overfitting. The meaning of probability
-    here is opposite to that in `ops.dropout` and `nn.dropout`.
+    here is opposite to that in `ops.Dropout` and `nn.Dropout`.
 
     Args:
         x (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.

@@ -51,6 +51,14 @@ bool DropoutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' must be in (0.0, 1.0], but got " << keep_prob_;
   }
+  auto seed = GetValue<int64_t>(base_operator->GetAttr("Seed0"));
+  if (seed == 0) {
+    seed = GetValue<int64_t>(base_operator->GetAttr("Seed1"));
+    if (seed == 0) {
+      seed = time(nullptr);
+    }
+  }
+  seed_ = static_cast<uint64_t>(seed);
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -78,8 +86,7 @@ bool DropoutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto mask_addr = reinterpret_cast<T *>(outputs[1]->addr);
   T scale = static_cast<T>(1.f / keep_prob_);
-  std::random_device rd;
-  std::default_random_engine generator(rd());
+  std::default_random_engine generator(seed_ + seed_offset_);
   std::uniform_real_distribution<float> uniform(0.f, 1.f);
   auto task = [input_addr, output_addr, mask_addr, scale, &uniform, &generator, this](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -88,6 +95,7 @@ bool DropoutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     }
   };
   ParallelLaunchAutoSearch(task, tensor_size_, this, &parallel_search_info_);
+  seed_offset_ += 1;
   return true;
 }
 
