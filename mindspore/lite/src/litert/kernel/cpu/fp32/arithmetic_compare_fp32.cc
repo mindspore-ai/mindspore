@@ -30,15 +30,17 @@ using mindspore::schema::PrimitiveType_NotEqual;
 namespace mindspore::kernel {
 void ArithmeticCompareCPUKernel::InitRunFunction(int primitive_type) {
   ARITHMETIC_COMEPARE_FUNC_INFO_FP32 fun_table[] = {
-    {PrimitiveType_Equal, ElementEqualFp32, ElementEqualInt32, ElementOptEqualFp32, ElementOptEqualInt32},
-    {PrimitiveType_NotEqual, ElementNotEqualFp32, ElementNotEqualInt32, ElementOptNotEqualFp32,
-     ElementOptNotEqualInt32},
-    {PrimitiveType_Less, ElementLessFp32, ElementLessInt32, ElementOptLessFp32, ElementOptLessInt32},
+    {PrimitiveType_Equal, ElementEqualFp32, ElementEqualInt32, ElementOptEqualFp32, ElementOptEqualInt32, nullptr,
+     nullptr},
+    {PrimitiveType_NotEqual, ElementNotEqualFp32, ElementNotEqualInt32, ElementOptNotEqualFp32, ElementOptNotEqualInt32,
+     ElementNotEqualInt64, ElementOptNotEqualInt64},
+    {PrimitiveType_Less, ElementLessFp32, ElementLessInt32, ElementOptLessFp32, ElementOptLessInt32, nullptr, nullptr},
     {PrimitiveType_LessEqual, ElementLessEqualFp32, ElementLessEqualInt32, ElementOptLessEqualFp32,
-     ElementOptLessEqualInt32},
-    {PrimitiveType_Greater, ElementGreaterFp32, ElementGreaterInt32, ElementOptGreaterFp32, ElementOptGreaterInt32},
+     ElementOptLessEqualInt32, nullptr, nullptr},
+    {PrimitiveType_Greater, ElementGreaterFp32, ElementGreaterInt32, ElementOptGreaterFp32, ElementOptGreaterInt32,
+     nullptr, nullptr},
     {PrimitiveType_GreaterEqual, ElementGreaterEqualFp32, ElementGreaterEqualInt32, ElementOptGreaterEqualFp32,
-     ElementOptGreaterEqualInt32}};
+     ElementOptGreaterEqualInt32, nullptr, nullptr}};
   size_t length = sizeof(fun_table) / sizeof(ARITHMETIC_COMEPARE_FUNC_INFO_FP32);
   for (size_t i = 0; i < length; i++) {
     if (fun_table[i].primitive_type_ == primitive_type) {
@@ -46,6 +48,8 @@ void ArithmeticCompareCPUKernel::InitRunFunction(int primitive_type) {
       func_int32_ = fun_table[i].int_func_;
       opt_func_fp32_ = fun_table[i].opt_func_;
       opt_func_int32_ = fun_table[i].opt_int_func_;
+      func_int64_ = fun_table[i].int64_func_;
+      opt_func_int64_ = fun_table[i].opt_int64_func_;
       return;
     }
   }
@@ -73,6 +77,16 @@ int ArithmeticCompareCPUKernel::DoExecute(const void *input0, const void *input1
       ret = func_int32_(reinterpret_cast<const int *>(input0), reinterpret_cast<const int *>(input1),
                         reinterpret_cast<uint8_t *>(output), size);
     }
+  } else if (in_tensors_[0]->data_type() == kNumberTypeInt64) {
+    if (scalar_opt_) {
+      CHECK_NULL_RETURN(opt_func_int64_);
+      ret = opt_func_int64_(reinterpret_cast<const int64_t *>(input0), reinterpret_cast<const int64_t *>(input1),
+                            reinterpret_cast<uint8_t *>(output), size, param_);
+    } else {
+      CHECK_NULL_RETURN(func_int64_);
+      ret = func_int64_(reinterpret_cast<const int64_t *>(input0), reinterpret_cast<const int64_t *>(input1),
+                        reinterpret_cast<uint8_t *>(output), size);
+    }
   } else {
     MS_LOG(ERROR) << "Error Operator type " << kNumberTypeInt32;
     return RET_ERROR;
@@ -84,6 +98,7 @@ REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Equal, LiteKernelCreator<Arit
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Equal, LiteKernelCreator<ArithmeticCompareCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_NotEqual, LiteKernelCreator<ArithmeticCompareCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_NotEqual, LiteKernelCreator<ArithmeticCompareCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_NotEqual, LiteKernelCreator<ArithmeticCompareCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Less, LiteKernelCreator<ArithmeticCompareCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Less, LiteKernelCreator<ArithmeticCompareCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LessEqual, LiteKernelCreator<ArithmeticCompareCPUKernel>)

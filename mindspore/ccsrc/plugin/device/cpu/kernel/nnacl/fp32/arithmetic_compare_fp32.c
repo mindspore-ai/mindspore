@@ -25,6 +25,7 @@ bool GreaterEqualFp32(float x, float y) { return x >= y; }
 
 bool EqualInt32(int x, int y) { return x == y; }
 bool NotEqualInt32(int x, int y) { return x != y; }
+bool NotEqualInt64(int64_t x, int64_t y) { return x != y; }
 bool LessInt32(int x, int y) { return x < y; }
 bool LessEqualInt32(int x, int y) { return x <= y; }
 bool GreaterInt32(int x, int y) { return x > y; }
@@ -89,6 +90,15 @@ int ElementNotEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *
 int ElementOptNotEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
                             const ArithmeticParameter *param) {
   ELEMENT_COMPARE_OPT(input0, input1, output, element_size, param, NotEqualInt32);
+}
+
+int ElementNotEqualInt64(const int64_t *input0, const int64_t *input1, uint8_t *output, int element_size) {
+  ELEMENT_COMPARE(input0, input1, output, element_size, NotEqualInt64);
+}
+
+int ElementOptNotEqualInt64(const int64_t *input0, const int64_t *input1, uint8_t *output, int element_size,
+                            const ArithmeticParameter *param) {
+  ELEMENT_COMPARE_OPT(input0, input1, output, element_size, param, NotEqualInt64);
 }
 
 // less

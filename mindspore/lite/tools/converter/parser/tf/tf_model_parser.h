@@ -46,10 +46,13 @@ class TFModelParser : public converter::ModelParser {
 
  private:
   static STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);
-  static STATUS ConvertConstTensor(const tensorflow::NodeDef &node_def, const tensorflow::AttrValue &attr_value,
-                                   const TypeId &type, const ParameterPtr &parameter,
-                                   std::vector<int64_t> *shape_vector);
-  static STATUS SetTensorInfoFromType(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);
+  STATUS ConvertConstTensor(const tensorflow::NodeDef &node_def, const tensorflow::AttrValue &attr_value,
+                            const TypeId &type, const ParameterPtr &parameter, std::vector<int64_t> *shape_vector);
+  STATUS SetInt64TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info,
+                            const std::string &node_name);
+  STATUS SetInt64TensorInfoMap(const tensorflow::TensorProto &tensor_proto, const std::string &node_name);
+  STATUS SetTensorInfoFromType(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info,
+                               const std::string &node_name);
   STATUS ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,
                           std::unordered_map<std::string, AnfNodePtr> *anf_node_map, bool root_graph = false);
   STATUS ConvertGraphInputsAndConsts(const std::vector<const tensorflow::NodeDef *> &tf_graph_nodes,
@@ -66,7 +69,9 @@ class TFModelParser : public converter::ModelParser {
   STATUS ConvertOps(const tensorflow::NodeDef &node_def,
                     const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
                     const FuncGraphPtr &func_graph_ptr, std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
-
+  STATUS ResetAbstractTensorToInt64(const std::string &op_type, const std::vector<std::string> &input_names,
+                                    const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
+                                    const std::unordered_map<std::string, AnfNodePtr> &anf_node_map);
   STATUS ProcessControlFlowOp(const CNodePtr &anf_node, const string &op_type, const tensorflow::NodeDef &node_def);
 
   std::set<std::string> GetAllNodeInputs();
@@ -111,6 +116,8 @@ class TFModelParser : public converter::ModelParser {
   std::vector<std::string> if_then_branch_name_;
   std::unordered_map<std::string, int> node_output_num_;
   std::map<CNodePtr, FuncGraphPtr> while_cond_map_, while_body_map_, if_then_map_, if_else_map_;
+  std::map<std::string, AbstractBasePtr> int64_abstract_map_;
+  std::map<std::string, std::pair<tensor::TensorPtr, AbstractBasePtr>> int64_tensor_info_map_;
 };
 }  // namespace lite
 }  // namespace mindspore
