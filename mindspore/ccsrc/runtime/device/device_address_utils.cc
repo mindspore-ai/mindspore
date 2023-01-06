@@ -200,17 +200,29 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
     MS_EXCEPTION_IF_NULL(node_value);
     if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>()) {
       CreateDeviceAddressForTensorValue(device_context, node_value, 0, value_node);
-    } else if (node_value->isa<StringImm>()) {
+      continue;
+    }
+
+    device::DeviceAddressPtr address = nullptr;
+    if (node_value->isa<StringImm>()) {
       auto value = GetValue<std::string>(node_value);
       // Allocate one more byte to '/0'
       size_t tensor_size = value.size() + 1;
-      auto address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
-                                                                              kObjectTypeString, ShapeVector());
-      MS_EXCEPTION_IF_NULL(address);
-      address->set_from_persistent_mem(true);
+      address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
+                                                                         kObjectTypeString, ShapeVector());
+    } else if (node_value->isa<Scalar>()) {
+      auto scalar_value = node_value->cast<ScalarPtr>();
+      MS_EXCEPTION_IF_NULL(scalar_value);
+      TypePtr data_type = scalar_value->type();
+      MS_EXCEPTION_IF_NULL(data_type);
+      TypeId type_id = data_type->type_id();
+      address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, GetTypeByte(TypeIdToType(type_id)),
+                                                                         kOpFormat_DEFAULT, type_id, ShapeVector());
+    }
+    if (address != nullptr) {
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node)
                     << " addr:" << address;
-
+      address->set_from_persistent_mem(true);
       AnfAlgo::SetOutputAddr(address, 0, value_node.get());
     }
   }
