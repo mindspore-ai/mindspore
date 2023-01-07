@@ -6957,13 +6957,15 @@ class Median(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, global_median=False, axis=0, keep_dims=False):
+    def __init__(self, global_median=False, axis=0, keep_dims=False, ignore_nan=False):
+        self.add_prim_attr("cust_aicpu", self.name)
         validator.check_value_type("global_median", global_median, [bool], self.name)
         self.global_median = global_median
         if global_median is False:
             validator.check_value_type("axis", axis, [int], self.name)
             validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['y', 'indices'])
+        validator.check_value_type("ignore_nan", ignore_nan, [bool], self.name)
 
 
 class SparseSegmentMean(Primitive):

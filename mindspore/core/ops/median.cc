@@ -45,10 +45,11 @@
 
 namespace mindspore {
 namespace ops {
-void Median::Init(const bool global_median, const int64_t axis, const bool keep_dims) {
+void Median::Init(const bool global_median, const int64_t axis, const bool keep_dims, const bool ignore_nan) {
   this->set_global_median(global_median);
   this->set_axis(axis);
   this->set_keep_dims(keep_dims);
+  this->set_ignore_nan(ignore_nan);
 }
 
 void Median::set_global_median(const bool global_median) {
@@ -56,6 +57,8 @@ void Median::set_global_median(const bool global_median) {
 }
 
 void Median::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, api::MakeValue(keep_dims)); }
+
+void Median::set_ignore_nan(const bool ignore_nan) { (void)this->AddAttr(kIgnoreNan, api::MakeValue(ignore_nan)); }
 
 void Median::set_axis(const int64_t &axis) {
   int64_t f = axis;
@@ -69,6 +72,11 @@ bool Median::get_global_median() const {
 
 bool Median::get_keep_dims() const {
   auto value_ptr = GetAttr(kKeepDims);
+  return GetValue<bool>(value_ptr);
+}
+
+bool Median::get_ignore_nan() const {
+  auto value_ptr = GetAttr(kIgnoreNan);
   return GetValue<bool>(value_ptr);
 }
 

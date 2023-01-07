@@ -17,13 +17,14 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MEDIAN_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MEDIAN_CPU_KERNEL_H_
 
-#include <map>
 #include <algorithm>
-#include <vector>
+#include <map>
 #include <utility>
+#include <vector>
+
+#include "include/common/utils/convert_utils.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -59,15 +60,20 @@ class MedianCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<M
   std::vector<int64_t> output_shape_;
   bool global_median_;
   bool keepdim_{false};
+  bool ignore_nan_;
   int axis_{0};
-  size_t input_num_elements_;
+  int64_t input_num_elements_;
   size_t output_num_elements_;
   size_t input_dim_;
   bool is_null_input_;
   template <typename T>
   bool GlobalMedianCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
-  bool MedianCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool MedianCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                     const std::vector<AddressPtr> &outputs);
+  template <typename T>
+  bool MedianComputeIgnoreNan(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                              const std::vector<AddressPtr> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore
