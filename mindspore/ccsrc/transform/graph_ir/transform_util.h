@@ -54,7 +54,7 @@ class TransformUtil {
    * Return：
    *     [GeFormat] the data format for ge tensor
    * */
-  static GeFormat ConvertFormat(const std::string &format);
+  static GeFormat ConvertFormat(const std::string &format, const size_t shape_size);
 
   /*
    * Parameters:

@@ -36,7 +36,8 @@ class AscendLaunchTransData : public AscendLaunchKernel {
         src_format_(std::move(src_format)),
         dst_format_(std::move(dst_format)),
         shape_(std::move(host_shape)),
-        groups_(groups) {}
+        groups_(groups),
+        kernel_type_(KernelType::UNKNOWN_KERNEL_TYPE) {}
 
   ~AscendLaunchTransData() override = default;
 
@@ -63,6 +64,7 @@ class AscendLaunchTransData : public AscendLaunchKernel {
  private:
   std::shared_ptr<session::KernelGraph> ObtainTransDataKernelGraph();
   void ConstructKernelGraphAndSetAttr();
+  enum KernelType kernel_type_;
 };
 }  // namespace mindspore::device::ascend
 

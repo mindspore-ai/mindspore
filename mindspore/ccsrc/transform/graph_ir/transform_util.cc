@@ -85,29 +85,40 @@ size_t TransformUtil::GetDataTypeSize(const MeDataType &type) {
   }
 }
 
-GeFormat TransformUtil::ConvertFormat(const string &format) {
-  if (format == kOpFormat_NCHW) {
-    return GeFormat::FORMAT_NCHW;
-  } else if (format == kOpFormat_NDHWC) {
-    return GeFormat::FORMAT_NDHWC;
-  } else if (format == kOpFormat_NCDHW) {
-    return GeFormat::FORMAT_NCDHW;
-  } else if (format == kOpFormat_DHWNC) {
-    return GeFormat::FORMAT_DHWNC;
-  } else if (format == kOpFormat_DHWCN) {
-    return GeFormat::FORMAT_DHWCN;
-  } else if (format == kOpFormat_NC1HWC0) {
-    return GeFormat::FORMAT_NC1HWC0;
-  } else if (format == kOpFormat_NHWC) {
-    return GeFormat::FORMAT_NHWC;
-  } else if (format == kOpFormat_HWCN) {
-    return GeFormat::FORMAT_HWCN;
-  } else if (format == kOpFormat_ND) {
-    return GeFormat::FORMAT_ND;
-  } else {
+GeFormat TransformUtil::ConvertFormat(const string &format, const size_t shape_size) {
+  static constexpr size_t k4dSize = 4;
+  static const std::map<std::string, GeFormat> format_map = {
+    {kOpFormat_DEFAULT, GeFormat::FORMAT_NCHW},
+    {kOpFormat_NC1KHKWHWC0, GeFormat::FORMAT_NC1KHKWHWC0},
+    {kOpFormat_ND, GeFormat::FORMAT_ND},
+    {kOpFormat_NCHW, GeFormat::FORMAT_NCHW},
+    {kOpFormat_NHWC, GeFormat::FORMAT_NHWC},
+    {kOpFormat_HWCN, GeFormat::FORMAT_HWCN},
+    {kOpFormat_NC1HWC0, GeFormat::FORMAT_NC1HWC0},
+    {kOpFormat_FRAC_Z, GeFormat::FORMAT_FRACTAL_Z},
+    {kOpFormat_FRAC_NZ, GeFormat::FORMAT_FRACTAL_NZ},
+    {kOpFormat_C1HWNCoC0, GeFormat::FORMAT_C1HWNCoC0},
+    {kOpFormat_NC1HWC0_C04, GeFormat::FORMAT_NC1HWC0_C04},
+    {kOpFormat_FRACTAL_Z_C04, GeFormat::FORMAT_FRACTAL_Z_C04},
+    {kOpFormat_NDHWC, GeFormat::FORMAT_NDHWC},
+    {kOpFormat_NCDHW, GeFormat::FORMAT_NCDHW},
+    {kOpFormat_DHWNC, GeFormat::FORMAT_DHWNC},
+    {kOpFormat_DHWCN, GeFormat::FORMAT_DHWCN},
+    {kOpFormat_NDC1HWC0, GeFormat::FORMAT_NDC1HWC0},
+    {kOpFormat_FRACTAL_Z_3D, GeFormat::FORMAT_FRACTAL_Z_3D},
+    {kOpFormat_FRACTAL_ZN_LSTM, GeFormat::FORMAT_FRACTAL_ZN_LSTM},
+    {kOpFormat_ND_RNN_BIAS, GeFormat::FORMAT_ND_RNN_BIAS},
+    {kOpFormat_FRACTAL_ZN_RNN, GeFormat::FORMAT_FRACTAL_ZN_RNN}};
+  MS_LOG(INFO) << "GetGeFormat format:" << format << " shape_size:" << shape_size;
+  if (format == kOpFormat_DEFAULT) {
+    return shape_size == k4dSize ? GeFormat::FORMAT_NCHW : GeFormat::FORMAT_ND;
+  }
+  auto iter = format_map.find(format);
+  if (iter == format_map.end()) {
     MS_LOG(ERROR) << "Illegal tensor data format: (" << format << "). Use ND format instead.";
     return GeFormat::FORMAT_ND;
   }
+  return iter->second;
 }
 
 static int64_t IntegerCastFunc(size_t temp) { return static_cast<int64_t>(temp); }
@@ -129,7 +140,7 @@ std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const ShapeVector &
     MS_LOG(INFO) << "The dims size of Ge tensor is zero";
   }
   // convert me format to ge format
-  GeFormat ge_format = ConvertFormat(format);
+  GeFormat ge_format = ConvertFormat(format, me_shape.size());
   if (ge_format == GeFormat::FORMAT_ND) {
     MS_LOG(INFO) << "Set ND data format";
   }

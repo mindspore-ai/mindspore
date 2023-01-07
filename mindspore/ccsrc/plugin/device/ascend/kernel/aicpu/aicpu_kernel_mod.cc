@@ -45,6 +45,25 @@ using mindspore::device::ascend::ProfilingManager;
 
 namespace mindspore {
 namespace kernel {
+namespace {
+// todo: delete
+bool IsTransDataGroupsMoreThanOne(const AnfNodePtr &anf_node) {
+  if (anf_node == nullptr) {
+    return false;
+  }
+
+  if (!IsPrimitiveCNode(anf_node, prim::kPrimTransData)) {
+    return false;
+  }
+
+  if (common::AnfAlgo::GetAttrGroups(anf_node, 0) == 1) {
+    return false;
+  }
+
+  return true;
+}
+}  // namespace
+
 AicpuOpKernelMod::AicpuOpKernelMod() : AscendKernelMod(), unknow_type_(::ge::UnknowShapeOpType::DEPEND_IN_SHAPE) {}
 
 AicpuOpKernelMod::AicpuOpKernelMod(const AnfNodePtr &anf_node_ptr) : AscendKernelMod(anf_node_ptr) {
@@ -113,7 +132,7 @@ void AicpuOpKernelMod::CreateAsyncWaitEventAndUpdateEventInfo(const CNodePtr &cn
 
 void AicpuOpKernelMod::ParseNodeNameAndNodeSo() {
   if (!cust_kernel_) {
-    if (kCpuKernelOps.find(node_name_) != kCpuKernelOps.end()) {
+    if (kCpuKernelOps.find(node_name_) != kCpuKernelOps.end() || IsTransDataGroupsMoreThanOne(anf_node_.lock())) {
       node_so_ = kLibCpuKernelSoName;
       node_name_ = kCpuRunApi;
     } else if (kCacheKernelOps.find(node_name_) != kCacheKernelOps.end()) {
@@ -458,7 +477,6 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
   stream_id_ = stream_id;
 
   ParseNodeNameAndNodeSo();
-
   std::vector<void *> input_data_addrs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
                        [](const AddressPtr &input) -> void * { return input->addr; });

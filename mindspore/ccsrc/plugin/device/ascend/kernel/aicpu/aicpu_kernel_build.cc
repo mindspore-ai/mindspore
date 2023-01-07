@@ -38,6 +38,7 @@
 #include "kernel/oplib/oplib.h"
 #include "cce/fwk_adpt_struct.h"
 #include "external/graph/types.h"
+#include "transform/graph_ir/transform_util.h"
 
 namespace mindspore {
 namespace kernel {
@@ -240,10 +241,16 @@ void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef 
       input_data_type = AicpuOpUtil::MsTypeToProtoType(input_type);
     }
 
-    mindspore::TensorShape *tensorShape = node_inputs->mutable_tensor_shape();
-    MS_EXCEPTION_IF_NULL(tensorShape);
+    mindspore::TensorShape *tensor_shape = node_inputs->mutable_tensor_shape();
+    MS_EXCEPTION_IF_NULL(tensor_shape);
+    // todo: delete
+    if (IsPrimitiveCNode(anf_node, prim::kPrimTransData)) {
+      auto format = AnfAlgo::GetInputFormat(anf_node, input_index);
+      tensor_shape->set_data_format(
+        static_cast<::google::protobuf::int32>(transform::TransformUtil::ConvertFormat(format, input_shape.size())));
+    }
     for (auto item : input_shape) {
-      mindspore::TensorShape_Dim *dim = tensorShape->add_dim();
+      mindspore::TensorShape_Dim *dim = tensor_shape->add_dim();
       dim->set_size((::google::protobuf::int64)item);
     }
     node_inputs->set_tensor_type(input_data_type);
@@ -268,10 +275,16 @@ void SetNodeOutputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef
     ::mindspore::Tensor *node_outputs = proto->add_outputs();
     MS_EXCEPTION_IF_NULL(node_outputs);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
-    mindspore::TensorShape *tensorShape = node_outputs->mutable_tensor_shape();
-    MS_EXCEPTION_IF_NULL(tensorShape);
+    mindspore::TensorShape *tensor_shape = node_outputs->mutable_tensor_shape();
+    MS_EXCEPTION_IF_NULL(tensor_shape);
+    // todo: delete
+    if (IsPrimitiveCNode(anf_node, prim::kPrimTransData)) {
+      auto format = AnfAlgo::GetOutputFormat(anf_node, output_index);
+      tensor_shape->set_data_format(
+        static_cast<::google::protobuf::int32>(transform::TransformUtil::ConvertFormat(format, output_shape.size())));
+    }
     for (auto item : output_shape) {
-      mindspore::TensorShape_Dim *dim = tensorShape->add_dim();
+      mindspore::TensorShape_Dim *dim = tensor_shape->add_dim();
       MS_EXCEPTION_IF_NULL(dim);
       dim->set_size((::google::protobuf::int64)item);
     }

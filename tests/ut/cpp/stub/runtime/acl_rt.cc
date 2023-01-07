@@ -112,3 +112,24 @@ ACL_FUNC_VISIBILITY aclError aclrtMemsetAsync(void *dst, size_t destMax, int32_t
 ACL_FUNC_VISIBILITY aclError aclrtSetOpWaitTimeout(uint32_t timeout) {
   return ACL_SUCCESS;
 }
+
+/**
+ * @ingroup AscendCL
+ * @brief Initialize memory and set contents of memory to specified value
+ *
+ * @par Function
+ *  The memory to be initialized is on the Host or device side,
+ *  and the system determines whether
+ *  it is host or device according to the address
+ *
+ * @param devPtr [IN]    Starting address of memory
+ * @param maxCount [IN]  Max length of destination address memory
+ * @param value [IN]     Set value
+ * @param count [IN]     The length of memory
+ *
+ * @retval ACL_SUCCESS The function is successfully executed.
+ * @retval OtherValues Failure
+ */
+ACL_FUNC_VISIBILITY aclError aclrtMemset(void *devPtr, size_t maxCount, int32_t value, size_t count) {
+  return ACL_SUCCESS;
+}
