@@ -25,6 +25,7 @@ else()
 endif()
 
 add_library(dvpp_utils SHARED ${DVPP_UTILS_SRC})
+enable_target_when_only_build_plugins(dvpp_utils)
 
 if(MSLITE_ENABLE_ACL)
     find_library(acl_dvpp libacl_dvpp.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})

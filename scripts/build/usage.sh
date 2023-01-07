@@ -65,4 +65,5 @@ usage()
   echo "    -F Use fast hash table in mindspore compiler, default on"
   echo "    -G Select an architecture to build, set 'common' to build with common architectures(eg. gpu: 5.3, 6.0, 6.2, 7.0, 7.2, 7.5),\\"
   echo "       set auto to detect automatically, default: 'auto'. Only effective for GPU currently."
+  echo "    -f Faster build process for device plugins, only build plugin."
 }

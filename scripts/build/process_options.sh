@@ -20,7 +20,7 @@ set -e
 process_options()
 {
   # Process the options
-  while getopts 'drvj:c:t:hb:s:a:g:p:ie:l:I:RP:D:zM:V:K:B:En:A:S:k:W:F:H:L:yG:' opt
+  while getopts 'drvj:c:t:hb:s:a:g:p:ie:l:I:RP:D:zM:V:K:B:En:A:S:k:W:F:H:L:yG:f' opt
   do
     CASE_SENSIVE_ARG=${OPTARG}
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
@@ -107,6 +107,8 @@ process_options()
         echo "Link Tensor-RT library. Path: ${CASE_SENSIVE_ARG}" ;;
       G)
         build_option_proc_upper_g ;;
+      f)
+        export FASTER_BUILD_FOR_PLUGINS="on" ;;
       *)
         echo "Unknown option ${opt}!"
         usage

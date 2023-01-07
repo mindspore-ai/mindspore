@@ -30,6 +30,8 @@ done
 MAX_GPU_VERSION=0
 for ((i=1;i<$counter;i=$i+1))
 do
+  echo "Rename $i dirname to mindspore ..."
+  mv ./$i/mindspore.py* "./$i/mindspore"
   echo "Copy $i plugin files to 0 ..."
   if [ -d "./$i/mindspore/lib/plugin" ]; then
     \cp -rf ./$i/mindspore/lib/plugin/* $BASE_PACKAGE_UNZIP_DIR/mindspore/lib/plugin
