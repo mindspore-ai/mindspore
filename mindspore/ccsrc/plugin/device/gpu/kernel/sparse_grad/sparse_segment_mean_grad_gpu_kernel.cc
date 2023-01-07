@@ -99,7 +99,8 @@ bool SparseSegmentMeanGradGpuKernelMod::LaunchKernel(const std::vector<AddressPt
   size_t *segment_pos_ptr = GetDeviceAddress<size_t>(workspace, kIndex0);
   auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
   if (any(grad_ptr, indices_ptr, segment_ids_ptr, segment_pos_ptr, y_ptr)) {
-    return false;
+    cudaMemset(y_ptr, 0, outputs[0]->size);
+    return true;
   }
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
   std::vector<S> indices_host;

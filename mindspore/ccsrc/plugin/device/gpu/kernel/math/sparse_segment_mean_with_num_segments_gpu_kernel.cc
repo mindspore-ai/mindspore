@@ -56,6 +56,7 @@ int SparseSegmentMeanWithNumSegmentsGpuKernelMod::Resize(const BaseOperatorPtr &
   y_size_ = std::accumulate(y_shape.begin() + batch_rank_, y_shape.end(), size_t(1), std::multiplies{});
   segment_size_ = LongToSize(y_shape.at(batch_rank_));
   workspace_size_list_.push_back((segment_size_ + 1) * sizeof(size_t));
+  workspace_size_list_.push_back(sizeof(int));
   return ret;
 }
 
@@ -71,15 +72,16 @@ bool SparseSegmentMeanWithNumSegmentsGpuKernelMod::LaunchKernel(const std::vecto
   auto segment_ids_ptr = GetDeviceAddress<IndexType>(inputs, kIndex2);
   auto num_segments_ptr = GetDeviceAddress<IndexType>(inputs, kIndex3);
   auto segment_pos_ptr = GetDeviceAddress<size_t>(workspace, kIndex0);
+  auto ret_flag_device = GetDeviceAddress<int>(workspace, kIndex1);
   auto y_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);
   auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
   if (any(x_ptr, indices_ptr, segment_ids_ptr, num_segments_ptr, segment_pos_ptr, y_ptr)) {
-    return false;
+    cudaMemset(y_ptr, 0, outputs[0]->size);
+    return true;
   }
-  int ret_flag_host = 0;
-  CalSparseSegmentMeanWithNumSegments(x_ptr, indices_ptr, segment_ids_ptr, num_segments_ptr, segment_pos_ptr, y_ptr,
-                                      outer_size_, inner_size_, indices_size_, segment_size_, x_size_, y_size_,
-                                      batch_size_, &ret_flag_host, device_id_, cuda_stream);
+  int ret_flag_host = CalSparseSegmentMeanWithNumSegments(
+    x_ptr, indices_ptr, segment_ids_ptr, num_segments_ptr, segment_pos_ptr, y_ptr, outer_size_, inner_size_,
+    indices_size_, segment_size_, x_size_, y_size_, batch_size_, ret_flag_device, device_id_, cuda_stream);
   int FALSE_1 = 1;
   int FALSE_2 = 2;
   int FALSE_3 = 3;
