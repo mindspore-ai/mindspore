@@ -22,7 +22,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.composite import base
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, \
-    TopTypeof, issubclass_
+    TopTypeof, issubclass_, IsParameter
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common import Tensor, CSRTensor, COOTensor
@@ -34,6 +34,7 @@ hyper_map = base.HyperMap()
 stack = P.Stack(axis=-1)
 copy_slice = TensorCopySlices()
 toptypeof = TopTypeof()
+is_parameter = IsParameter()
 
 
 def strided_slice(data, begin_strides, end_strides, step_strides, begin_mask=0, end_mask=0, ellipsis_mask=0,
@@ -831,6 +832,8 @@ def _tensor_setitem_by_int_tensor_with_tensor(data, index, value):
     if F.rank(index) < 2:
         index = F.expand_dims(index, 0)
         updates = F.expand_dims(updates, 0)
+    if is_parameter(data):
+        return F.scatter_nd_update(data, index, updates)
     return F.tensor_scatter_update(data, index, updates)
 
 
@@ -1037,6 +1040,8 @@ def tensor_setitem_by_number_with_tensor(data, index, value):
     index = const_utils.int_to_index(index, data_shape)
     value_shape = const_utils.tuple_slice(F.shape(index), None, -1)
     value = _broadcast(value_shape, value.astype(F.dtype(data)))
+    if is_parameter(data):
+        return F.scatter_nd_update(data, index, value)
     return F.tensor_scatter_update(data, index, value)
 
 
