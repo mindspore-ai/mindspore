@@ -22,6 +22,7 @@ trans_data_op_info = AiCPURegOp("TransData") \
     .output(0, "dst", "required") \
     .attr("src_format", "str") \
     .attr("dst_format", "str") \
+    .attr("groups", "int") \
     .dtype_format(DataType.U16_Default, DataType.U16_5HD) \
     .dtype_format(DataType.U16_5HD, DataType.U16_Default) \
     .dtype_format(DataType.I64_5HD, DataType.I64_Default) \

@@ -91,6 +91,10 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
   void BindDevice() const;
   void CopyHostToDevice(const void *src, uint64_t size) const;
   void CopyDeviceToHost(void *dst, uint64_t size) const;
+
+  // The 'const' for this class is irrational, but I abide by it
+  int64_t GetGroupsWithCache() const;
+  mutable int64_t groups_ = 1;
 };
 using AscendDeviceAddressPtr = std::shared_ptr<AscendDeviceAddress>;
 }  // namespace ascend
