@@ -73,13 +73,6 @@ class _PoolNd(Cell):
         return 'kernel_size={kernel_size}, stride={stride}, pad_mode={pad_mode}'.format(**self.__dict__)
 
 
-@constexpr
-def _shape_check(in_shape, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if len(in_shape) != 3:
-        raise ValueError(f"{msg_prefix} input must has 3 dim, but got {len(in_shape)}")
-
-
 class LPPool1d(Cell):
     r"""
     Applies a 1D power lp pooling over an input signal composed of several input planes.
@@ -489,7 +482,6 @@ class MaxPool1d(_PoolNd):
         self.squeeze = P.Squeeze(2)
 
     def construct(self, x):
-        _shape_check(self.shape(x), self.cls_name)
         x = self.expand(x, 2)
         output = self.max_pool(x)
         output = self.squeeze(output)
@@ -743,7 +735,6 @@ class AvgPool1d(_PoolNd):
         self.squeeze = P.Squeeze(2)
 
     def construct(self, x):
-        x = F.depend(x, _shape_check(self.shape(x), self.cls_name))
         batch, channel, width = self.shape(x)
         if width == self.kernel_size[1]:
             x = self.reduce_mean(x, 2)
@@ -755,20 +746,6 @@ class AvgPool1d(_PoolNd):
             x = self.avg_pool(x)
             x = self.squeeze(x)
         return x
-
-
-@constexpr
-def _adaptive_shape_check(in_shape, output_size, prim_name):
-    """Check shape."""
-    msg_prefix = "For {}, the".format(prim_name)
-    if len(in_shape) != 3:
-        raise ValueError("{} input must has 3 dim, but got {}.".format(msg_prefix, len(in_shape)))
-    if in_shape[2] < output_size:
-        raise ValueError("{} input's last dimension must be greater or equal to "
-                         "output size {}, but got {}.".format(msg_prefix, output_size, in_shape[2]))
-    if in_shape[2] % output_size != 0:
-        raise ValueError("{} input's last dimension must be divisible by "
-                         "output size {}, but got {}.".format(msg_prefix, output_size, in_shape[2]))
 
 
 @constexpr
@@ -837,7 +814,6 @@ class AdaptiveAvgPool1d(Cell):
         self.dtype = P.DType()
 
     def construct(self, x):
-        _adaptive_shape_check(self.shape(x), self.output_size, self.cls_name)
         _adaptive_dtype_check(self.dtype(x), self.cls_name)
 
         _, _, width = self.shape(x)
@@ -1052,7 +1028,6 @@ class AdaptiveMaxPool1d(Cell):
         self.dtype = P.DType()
 
     def construct(self, x):
-        _adaptive_shape_check(self.shape(x), self.output_size, self.cls_name)
         _adaptive_dtype_check(self.dtype(x), self.cls_name)
 
         _, _, width = self.shape(x)

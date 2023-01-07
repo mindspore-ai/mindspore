@@ -25,7 +25,6 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN_OPS
-from mindspore.ops.primitive import constexpr
 from mindspore.nn.cell import Cell
 from mindspore import ops
 
@@ -195,18 +194,9 @@ class Softmax2d(Cell):
         """Initialize Softmax2d."""
         super(Softmax2d, self).__init__()
         self.softmax = P.Softmax(axis=-3)
-        self.shape = P.Shape()
 
-    @staticmethod
-    @constexpr
-    def _check_input_dim(shape, cls_name):
-        dim = len(shape)
-        if dim not in (3, 4):
-            raise ValueError(f"For '{cls_name}', the in_shape must have 3 or 4 dims, but got {dim}.")
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        self._check_input_dim(x_shape, self.cls_name)
         return self.softmax(x)
 
 

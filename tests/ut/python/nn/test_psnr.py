@@ -85,21 +85,3 @@ def test_psnr_different_dtype():
     net = PSNRNet()
     with pytest.raises(TypeError):
         _cell_graph_executor.compile(net, img1, img2)
-
-
-def test_psnr_invalid_5d_input():
-    shape_1 = (8, 3, 16, 16)
-    shape_2 = (8, 3, 8, 8)
-    invalid_shape = (8, 3, 16, 16, 1)
-    img1 = Tensor(np.random.random(shape_1))
-    invalid_img1 = Tensor(np.random.random(invalid_shape))
-    img2 = Tensor(np.random.random(shape_2))
-    invalid_img2 = Tensor(np.random.random(invalid_shape))
-
-    net = PSNRNet()
-    with pytest.raises(ValueError):
-        _cell_graph_executor.compile(net, invalid_img1, img2)
-    with pytest.raises(ValueError):
-        _cell_graph_executor.compile(net, img1, invalid_img2)
-    with pytest.raises(ValueError):
-        _cell_graph_executor.compile(net, invalid_img1, invalid_img2)

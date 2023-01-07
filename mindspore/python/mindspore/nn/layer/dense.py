@@ -30,28 +30,12 @@ from mindspore.nn.cell import Cell
 __all__ = ['BiDense']
 
 
-@constexpr
-def check_dense_inputs_same_shape(input1, input2, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if input1[:-1] != input2[:-1]:
-        raise ValueError(f"{msg_prefix} dimensions except the last of 'input1' must be same as 'input2', but got "
-                         f"{input1} of 'input1' and {input2} of 'input2'")
-
-
 @constexpr(check=False)
 def _check_is_tensor(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(P.typeof(input_data), mstype.tensor_type):
         raise TypeError(f"For '{cls_name}', the '{param_name}' must be '{mstype.tensor_type}', "
                         f"but got '{P.typeof(input_data)}'")
-
-
-@constexpr
-def check_last_dimension(input_dim, input_channels, input_name, input_channels_name, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if input_dim != input_channels:
-        raise ValueError(f"{msg_prefix} last dimension of '{input_name}' must be same as '{input_channels_name}',"
-                         f" but got {input_dim} of '{input_name}' and {input_channels} of '{input_channels_name}'")
 
 
 class BiDense(Cell):
@@ -171,9 +155,6 @@ class BiDense(Cell):
         _check_is_tensor("input2", input2, self.cls_name)
         input1_shape = input1.shape
         input2_shape = input2.shape
-        check_last_dimension(input1_shape[-1], self.in1_channels, "input1", "in1_channels", self.cls_name)
-        check_last_dimension(input2_shape[-1], self.in2_channels, "input2", "in2_channels", self.cls_name)
-        check_dense_inputs_same_shape(input1_shape, input2_shape, self.cls_name)
         if len(input1_shape) != 2:
             input1 = input1.reshape((-1, input1_shape[-1]))
             input2 = input2.reshape((-1, input2_shape[-1]))

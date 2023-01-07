@@ -33,9 +33,9 @@ from mindspore.parallel._ps_context import _is_role_worker, _get_ps_context, \
     _set_rank_id, _insert_hash_table_size, _set_cache_enable
 from mindspore.parallel._utils import _get_parallel_mode, _get_full_batch
 from mindspore.context import ParallelMode
-from mindspore.ops.primitive import constexpr
 from mindspore.ops import functional as F
 from mindspore.nn.layer.basic import ClipByNorm
+from mindspore.ops.primitive import constexpr
 
 __all__ = ['DenseThor', 'Conv2dThor', 'EmbeddingThor', 'EmbeddingLookupThor']
 

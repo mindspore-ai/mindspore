@@ -809,7 +809,6 @@ class DiceLoss(LossBase):
     def construct(self, logits, label):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', label, self.cls_name)
-        _check_shape(logits.shape, label.shape, self.cls_name)
         if logits.dtype == mstype.uint8:
             raise TypeError(f"For '{self.cls_name}', the dtype of 'logits' can not be uint8.")
         if label.dtype == mstype.uint8:
@@ -822,31 +821,6 @@ class DiceLoss(LossBase):
         dice_loss = 1 - single_dice_coeff
 
         return dice_loss
-
-
-@constexpr
-def _check_shape(logits_shape, label_shape, prim_name=None):
-    """Internal function, used to check whether the shape of logits and labels meets the requirements."""
-    validator.check('logits_shape', logits_shape, 'label_shape', label_shape, prim_name=prim_name)
-
-
-@constexpr
-def _check_ndim_multi(logits_dim, label_dim, prim_name=None):
-    """Internal function, used to check whether the dimension of logits and label meets the requirements."""
-    msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
-    if logits_dim < 2:
-        raise ValueError(f"{msg_prefix} 'logits' dimension must be greater than 1, but got {logits_dim}.")
-    if label_dim < 2:
-        raise ValueError(f"{msg_prefix} 'labels' dimension must be greater than 1, but got {label_dim}.")
-
-
-@constexpr
-def _check_weights(weight_shape, label_shape, prim_name=None):
-    """Internal function, used to check whether the reduced shape meets the requirements."""
-    msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
-    if weight_shape != label_shape:
-        raise ValueError(f"{msg_prefix} weight_shape[0] must be equal to label_shape[1], "
-                         f"but got weight_shape[0]: {weight_shape} and label_shape[1]: {label_shape}.")
 
 
 class MultiClassDiceLoss(LossBase):
@@ -919,8 +893,6 @@ class MultiClassDiceLoss(LossBase):
     def construct(self, logits, label):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', label, self.cls_name)
-        _check_shape(logits.shape, label.shape, self.cls_name)
-        _check_ndim_multi(logits.ndim, label.ndim, self.cls_name)
         total_loss = 0
 
         if self.activation is not None:
@@ -930,7 +902,6 @@ class MultiClassDiceLoss(LossBase):
             if i != self.ignore_indiex:
                 dice_loss = self.binarydiceloss(logits[:, i], label[:, i])
                 if self.weights is not None:
-                    _check_weights(self.weights.shape[0], label.shape[1], self.cls_name)
                     dice_loss *= self.weights[i]
                 total_loss += dice_loss
 
@@ -1462,12 +1433,6 @@ class BCELoss(LossBase):
         return loss
 
 
-@constexpr
-def _check_reduced_shape_valid(ori_shape, reduced_shape, axis, cls_name, arg_name1, arg_name2):
-    """Internal function, used to check whether the reduced shape meets the requirements."""
-    validator.check_reduce_shape(ori_shape, reduced_shape, axis, cls_name, arg_name1, arg_name2)
-
-
 class CosineEmbeddingLoss(LossBase):
     r"""
     CosineEmbeddingLoss creates a criterion to measure the similarity between two tensors using cosine distance.
@@ -1527,7 +1492,6 @@ class CosineEmbeddingLoss(LossBase):
         _check_is_tensor('logits_x2', logits_x2, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
         inner.same_type_shape_(logits_x1, logits_x2)
-        _check_reduced_shape_valid(F.shape(logits_x1), F.shape(labels), (1,), self.cls_name, "logits_x1", "labels")
         # if labels > 0, 1-cosine(logits_x1, logits_x2)
         # else, max(0, cosine(logits_x1, logits_x2)-margin)
         prod_sum = self.reduce_sum(logits_x1 * logits_x2, (1,))
@@ -1706,32 +1670,6 @@ class BCEWithLogitsLoss(LossBase):
 
 
 @constexpr
-def _check_ndim(logits_nidm, labels_ndim, prime_name=None):
-    '''Internal function, used to check whether the dimension of logits and labels meets the requirements.'''
-    msg_prefix = f'For \'{prime_name}\', the' if prime_name else "The"
-    if logits_nidm < 2 or logits_nidm > 4:
-        raise ValueError(f"{msg_prefix} dimensions of 'logits' must be in [2, 4], but got "
-                         f"dimension of 'logits' {logits_nidm}.")
-    if labels_ndim < 2 or labels_ndim > 4:
-        raise ValueError(f"{msg_prefix} dimensions of 'labels' must be in [2, 4], but got "
-                         f"dimension of 'labels' {labels_ndim}.")
-    if logits_nidm != labels_ndim:
-        raise ValueError(f"{msg_prefix} dimensions of 'logits' and 'labels' must be equal, but got "
-                         f"dimension of 'logits' {logits_nidm} and dimension of 'labels' {labels_ndim}.")
-
-
-@constexpr
-def _check_channel_and_shape(logits, labels, prime_name=None):
-    '''Internal function, used to check whether the channels or shape of logits and labels meets the requirements.'''
-    msg_prefix = f'For \'{prime_name}\', the' if prime_name else "The"
-    if logits == 1:
-        raise ValueError(f"{msg_prefix} 'logits'.shape[1] cannot be one, but got {logits}.")
-    if labels not in (1, logits):
-        raise ValueError(f"{msg_prefix} 'labels'.shape[1] must be one or equal to 'logits'.shape[1]: {logits}, "
-                         f"but got {labels}.")
-
-
-@constexpr
 def _check_input_dtype(labels_dtype, cls_name):
     """Internal function, used to check whether the data type of labels meets the requirements."""
     validator.check_type_name("labels", labels_dtype,
@@ -1814,8 +1752,6 @@ class FocalLoss(LossBase):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
         labelss = labels
-        _check_ndim(logits.ndim, labelss.ndim, self.cls_name)
-        _check_channel_and_shape(logits.shape[1], labelss.shape[1], self.cls_name)
         _check_input_dtype(self.dtype(labelss), self.cls_name)
 
         if logits.ndim > 2:

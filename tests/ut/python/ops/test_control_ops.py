@@ -533,26 +533,6 @@ def test_parser_switch_layer_inputs_tuple():
     back_out = back_net(i, input1, input2, grad)
 
 
-def test_switch_layer_with_single_prim():
-    class SwitchLayerCell(nn.Cell):
-        def __init__(self):
-            super(SwitchLayerCell, self).__init__()
-            self.layers = (nn.ReLU(), nn.ReLU())
-            self.z3 = Parameter(
-                Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
-
-        def construct(self, index, x):
-            ret = self.layers[index](x) * self.z3
-            return ret
-
-    index = Tensor(0, dtype=mstype.int32)
-    net = SwitchLayerCell()
-    net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-    grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
-                                                              Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-    grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-
-
 def test_switch_layer_env_eliminate():
     class Net(nn.Cell):
         def __init__(self):
@@ -1003,7 +983,6 @@ def test_recursive_call():
         def __init__(self):
             super(Net, self).__init__()
             self.fc = nn.Dense(10, 10)  # padding=0
-            # self.net2 = Net2()
 
         def construct(self, x):
             net2 = Net2()
@@ -1037,8 +1016,6 @@ def test_recursive_call():
 # grad for Tensor(Bool) input and eliminate AddN(MakeTuple(Xs, zeros_like(Bool)))
 def test_grad_tensor_bool():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
 
         def construct(self, x, y, z):
             out = z
