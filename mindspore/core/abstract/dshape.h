@@ -114,6 +114,10 @@ GVAR_DEF(std::shared_ptr<NoShape>, kNoShape, std::make_shared<NoShape>());
 class MS_CORE_API Shape final : public BaseShape {
  public:
   static const ShapeValueDType SHP_ANY = -1;
+  static constexpr ShapeValueDType kShapeDimAny = -1;
+  static constexpr ShapeValueDType kShapeRankAny = -2;
+  static constexpr ShapeValueDType kShapeError = -3;
+  static constexpr size_t kDynamicRankLen = 1;
 
   /// \brief Constructor of Shape.
   Shape() : shape_() {}

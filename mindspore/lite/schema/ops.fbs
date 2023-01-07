@@ -230,6 +230,9 @@ union PrimitiveType {
     GatherD,
     GroupNormFusion,
     Log1p,
+    SparseFillEmptyRows,
+    SparseReshape,
+    SparseSegmentSum,
 }
 
 table Abs {
@@ -1287,4 +1290,13 @@ table GroupNormFusion {
 }
 
 table Log1p {
+}
+
+table SparseFillEmptyRows {
+}
+
+table SparseReshape {
+}
+
+table SparseSegmentSum {
 }

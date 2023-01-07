@@ -66,11 +66,11 @@ AnfNodePtr GetAnfNode(const std::string &name, const std::unordered_map<std::str
 
 std::string GetOriginInputName(const tensorflow::NodeDef &node,
                                const std::map<std::string, const tensorflow::NodeDef *> &tf_graph_nodes) {
-  if (node.op() != "Identity" && node.op() != "StopGradient") {
+  if (node.op() != "Identity" && node.op() != "StopGradient" && node.op() != "NoOp") {
     return node.name();
   }
   auto tmp_node = &node;
-  while (tmp_node->op() == "Identity" || tmp_node->op() == "StopGradient") {
+  while (tmp_node->op() == "Identity" || tmp_node->op() == "StopGradient" || tmp_node->op() == "NoOp") {
     auto flatten_input_name = TensorFlowUtils::GetFlattenNodeName(tmp_node->input(0));
     if (tf_graph_nodes.find(flatten_input_name) == tf_graph_nodes.end()) {
       return flatten_input_name;
@@ -513,7 +513,7 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(const std::vector<const tensor
         break;
       }
     }
-    if (!have_data_depend) {
+    if (!have_data_depend && node->op() != "NoOp") {
       CHECK_NULL_RETURN(anf_graph);
       auto parameter = anf_graph->add_parameter();
       CHECK_NULL_RETURN(parameter);
@@ -971,7 +971,7 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   MS_ASSERT(func_graph_ptr != nullptr);
   STATUS status = RET_OK;
   const auto &op_type = node_def.op();
-  if (op_type == "Identity" || op_type == "StopGradient") {
+  if (op_type == "Identity" || op_type == "StopGradient" || op_type == "NoOp") {
     return RET_OK;
   } else if (op_type == "Placeholder" || op_type == "Const") {
     node_output_num_[node_def.name()] = 1;
@@ -1125,11 +1125,12 @@ STATUS TFModelParser::GetGraphOutputNames(std::vector<AnfNodePtr> *output_nodes)
         return RET_ERROR;
       }
       output_nodes->push_back(anf_node);
-      // Get the name of node 'Identity' and 'StopGradient'.
-      if (node->op() == "Identity" || node->op() == "StopGradient") {
+      // Get the name of node 'Identity' and 'StopGradient' and 'NoOp'.
+      if (node->op() == "Identity" || node->op() == "StopGradient" || node->op() == "NoOp") {
         auto tmp_node = node;
         bool found_input = true;
-        while (tmp_node->name().empty() && (tmp_node->op() == "Identity" || tmp_node->op() == "StopGradient")) {
+        while (tmp_node->name().empty() &&
+               (tmp_node->op() == "Identity" || tmp_node->op() == "StopGradient" || tmp_node->op() == "NoOp")) {
           auto flatten_input_name = TensorFlowUtils::GetFlattenNodeName(tmp_node->input(0));
           if (tf_root_graph_nodes_.find(flatten_input_name) != tf_root_graph_nodes_.end()) {
             tmp_node = tf_root_graph_nodes_.at(flatten_input_name);

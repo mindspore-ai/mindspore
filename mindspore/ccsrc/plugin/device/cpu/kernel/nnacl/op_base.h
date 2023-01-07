@@ -521,8 +521,11 @@ enum PrimType {
   PrimType_GatherD = 210,
   PrimType_GroupNormFusion = 211,
   PrimType_Log1p = 212,
+  PrimType_SparseFillEmptyRows = 213,
+  PrimType_SparseReshape = 214,
+  PrimType_SparseSegmentSum = 215,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_Log1p + 1,
+  PrimType_MAX = PrimType_SparseSegmentSum + 1,
 
   // inner operators.
   PrimType_Inner_ToFormat = 10000,

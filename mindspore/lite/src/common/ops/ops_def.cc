@@ -230,6 +230,9 @@ OP_TYPE(FormatTranspose)
 OP_TYPE(GatherD)
 OP_TYPE(GroupNormFusion)
 OP_TYPE(Log1p)
+OP_TYPE(SparseFillEmptyRows)
+OP_TYPE(SparseReshape)
+OP_TYPE(SparseSegmentSum)
 OP_TYPE_DEF_END(PrimitiveType)
 
 OP_SCHEMA_DEF(Abs)
@@ -1288,3 +1291,12 @@ OP_SCHEMA_DEF_END(GroupNormFusion)
 
 OP_SCHEMA_DEF(Log1p)
 OP_SCHEMA_DEF_END(Log1p)
+
+OP_SCHEMA_DEF(SparseFillEmptyRows)
+OP_SCHEMA_DEF_END(SparseFillEmptyRows)
+
+OP_SCHEMA_DEF(SparseReshape)
+OP_SCHEMA_DEF_END(SparseReshape)
+
+OP_SCHEMA_DEF(SparseSegmentSum)
+OP_SCHEMA_DEF_END(SparseSegmentSum)
