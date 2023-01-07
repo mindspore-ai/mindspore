@@ -1441,7 +1441,7 @@ class Dataset:
                 Default: -1, iterator can be iterated infinite number of epochs.
             output_numpy (bool, optional): Whether or not to output NumPy datatype.
                 If output_numpy=False, iterator will output MSTensor. Default: False.
-            do_copy (bool, optional): when output data type is mindspore.Tensor,
+            do_copy (bool, optional): When output data type is mindspore.Tensor,
                 use this param to select the conversion method, only take False for better performance. Default: True.
 
         Returns:
@@ -1464,7 +1464,7 @@ class Dataset:
         return TupleIterator(self, columns, num_epochs, output_numpy, do_copy)
 
     @check_dict_iterator
-    def create_dict_iterator(self, num_epochs=-1, output_numpy=False):
+    def create_dict_iterator(self, num_epochs=-1, output_numpy=False, do_copy=True):
         """
         Create an iterator over the dataset. The data retrieved will be a dictionary datatype.
 
@@ -1473,6 +1473,8 @@ class Dataset:
                 Default: -1, iterator can be iterated infinite number of epochs.
             output_numpy (bool, optional): Whether or not to output NumPy datatype,
                 if output_numpy=False, iterator will output MSTensor. Default: False.
+            do_copy (bool, optional): When output data type is mindspore.Tensor,
+                use this param to select the conversion method, only take False for better performance. Default: True.
 
         Returns:
             Iterator, dictionary iterator over the dataset.
@@ -1491,7 +1493,7 @@ class Dataset:
 
         if Dataset._noop_mode():
             return DummyIterator(self, 'dict', output_numpy)
-        return DictIterator(self, num_epochs, output_numpy)
+        return DictIterator(self, num_epochs, output_numpy, do_copy)
 
     def __iter__(self):
         """Create an iterator over the dataset."""

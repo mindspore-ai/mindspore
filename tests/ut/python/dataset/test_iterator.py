@@ -49,6 +49,7 @@ def test_iterator_create_tuple_numpy():
     check(COLUMNS[7:8])
     check(COLUMNS[0:2:8])
 
+
 def test_iterator_create_dict_mstensor():
     """
     Feature: Iterator
@@ -71,6 +72,16 @@ def test_iterator_create_dict_mstensor():
         i += 1
     assert i == 64
 
+    i = 0
+    for item in data1.create_dict_iterator(num_epochs=1, do_copy=False):
+        golden = np.array([i], dtype=np.float32)
+        np.testing.assert_array_equal(item["data"].asnumpy(), golden)
+        assert isinstance(item["data"], Tensor)
+        assert item["data"].dtype == mstype.float32
+        i += 1
+    assert i == 64
+
+
 def test_iterator_create_tuple_mstensor():
     """
     Feature: Iterator
@@ -86,6 +97,15 @@ def test_iterator_create_tuple_mstensor():
 
     i = 0
     for item in data1.create_tuple_iterator(num_epochs=1):
+        golden = np.array([i], dtype=np.float32)
+        np.testing.assert_array_equal(item[0].asnumpy(), golden)
+        assert isinstance(item[0], Tensor)
+        assert item[0].dtype == mstype.float32
+        i += 1
+    assert i == 64
+
+    i = 0
+    for item in data1.create_tuple_iterator(num_epochs=1, do_copy=False):
         golden = np.array([i], dtype=np.float32)
         np.testing.assert_array_equal(item[0].asnumpy(), golden)
         assert isinstance(item[0], Tensor)
@@ -134,6 +154,7 @@ def test_iterator_weak_ref():
     assert ITERATORS_LIST == []
 
     _cleanup()
+
 
 def test_iterator_exception():
     """
