@@ -9283,6 +9283,8 @@ def isposinf(x):
         >>> print(output)
         [False  True False]
     """
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError(f"For isposinf, the input x must be a Tensor, but got {type(x)}")
     return _is_sign_inf(x, tensor_gt)
 
 
@@ -9307,6 +9309,8 @@ def isneginf(x):
         >>> print(output)
         [ True False False]
     """
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError(f"For isneginf, the input x must be a Tensor, but got {type(x)}")
     return _is_sign_inf(x, tensor_lt)
 
 

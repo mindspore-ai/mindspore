@@ -2778,6 +2778,8 @@ def view(x, *shape):
 
 def view_as(x, other):
     """View self Tensor as the same shape as `other` ."""
+    if not isinstance(other, (Tensor, Tensor_)):
+        raise TypeError(f"For view_as, the input other must be a Tensor, but got {type(other)}")
     return F.reshape(x, other.shape)
 
 
