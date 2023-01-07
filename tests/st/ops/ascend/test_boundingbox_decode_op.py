@@ -38,6 +38,7 @@ def test_bounding_box_decode_functional():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="HISI bug")
 def test_bounding_box_decode_functional_modes():
     """
     Feature: test bounding_box_decode functional API in PyNative and Graph modes.
