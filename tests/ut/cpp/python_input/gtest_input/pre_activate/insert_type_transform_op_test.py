@@ -127,6 +127,31 @@ def test_tuple_unfold_to_tensor_transform(tag):
     return fns[tag]
 
 
+def test_tuple_to_tuple_unfold_transform(tag):
+    """
+    Feature: Dynamic shape.
+    Description: Test Tuple to TupleUnfold transforming pass.
+    Expectation: The 'after' graph is identical to the graph after this pass.
+    """
+    fns = FnDict()
+    shape = P.Shape()
+    real_tuple_get_item = Primitive('RealTupleGetItem')
+
+    @fns
+    def before(x):
+        res = shape(x)
+        res = res[0]
+        return res
+
+    @fns
+    def after(x):
+        res = shape(x, y)
+        res = real_tuple_get_item(res, 0)
+        return res
+
+    return fns[tag]
+
+
 def test_tuple_to_tensor_transform(tag):
     """
     Feature: Dynamic shape.
@@ -146,6 +171,31 @@ def test_tuple_to_tensor_transform(tag):
     def after(x, y):
         res = tuple_to_tensor(y)
         res = reshape(x, res)
+        return res
+
+    return fns[tag]
+
+
+def test_scalar_to_tensor_transform(tag):
+    """
+    Feature: Dynamic shape.
+    Description: Test Scalar to Tensor transforming pass.
+    Expectation: The 'after' graph is identical to the graph after this pass.
+    """
+    fns = FnDict()
+    add = P.Add()
+    scalar_to_tensor = Primitive('ScalarToTensor')
+
+    @fns
+    def before(x, y):
+        res = add(x, y)
+        return res
+
+    @fns
+    def after(x, y):
+        x = scalar_to_tensor(x)
+        y = scalar_to_tensor(y)
+        res = add(x, y)
         return res
 
     return fns[tag]
@@ -172,6 +222,30 @@ def test_tensor_to_tuple_transform(tag):
         input1 = tensor_to_tuple(x)
         input2 = tensor_to_tuple(y)
         res = seq_add(input1, input2)
+        return res
+
+    return fns[tag]
+
+
+def test_tensor_to_scalar_transform(tag):
+    """
+    Feature: Dynamic shape.
+    Description: Test Tensor to Scalar transforming pass.
+    Expectation: The 'after' graph is identical to the graph after this pass.
+    """
+    fns = FnDict()
+    scalar_to_tensor = P.ScalarToTensor()
+    tensor_to_scalar = Primitive('TensorToScalar')
+
+    @fns
+    def before(x):
+        res = scalar_to_tensor(x)
+        return res
+
+    @fns
+    def after(x):
+        res = tensor_to_scalar(x)
+        res = scalar_to_tensor(res)
         return res
 
     return fns[tag]

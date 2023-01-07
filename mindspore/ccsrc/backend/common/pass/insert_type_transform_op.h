@@ -105,9 +105,6 @@ abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive);
 
 // Generate abstract, format and object type for newly created node.
 // They can be generated in multiple ways because new node is not processed by kernel selecting method.
-
-// Generate abstract according to input type and shape which is already set to the user node.
-abstract::AbstractBasePtr GenerateAbsByUserNodeInput(const CNodePtr &user_node, size_t input_index);
 std::string GenerateOutputFormatForNewCNode(const CNodePtr &cnode);
 void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<KernelObjectType> *input_obj_type,
                                          std::vector<KernelObjectType> *output_obj_type);

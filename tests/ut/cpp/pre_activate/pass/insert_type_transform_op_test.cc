@@ -22,6 +22,8 @@
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/pass_manager.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "kernel/kernel_build_info.h"
 
 #define private public
 #define protected public
@@ -45,9 +47,12 @@ class TestInsertTypeTransformOp : public BackendCommon {
                                                   AnfNodePtr *split2_ptr, AnfNodePtr *addn2_ptr);
   void SetTupleUnfoldToTupleKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *make_tuple_ptr, AnfNodePtr *split_ptr,
                                             AnfNodePtr *seq_add1_ptr, AnfNodePtr *seq_add2_ptr);
-  void SetTupleUnfoldToTensorKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *make_tuple, AnfNodePtr *reshape);
+  void SetTupleUnfoldToTensorKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *make_tuple, AnfNodePtr *reshape_ptr);
+  void SetTupleToTupleUnfoldKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *shape_ptr);
   void SetTupleToTensorKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *reshape_ptr);
-  void SetTensorToTupleKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *seq_add);
+  void SetScalarToTensorKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *add_ptr);
+  void SetTensorToTupleKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *seq_add_ptr);
+  void SetTensorToScalarKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *scalar_to_tensor_ptr);
 
   void SetKernelBuildInfo(const AnfNodePtr &node, const std::vector<std::string> &input_formats,
                           const std::vector<TypeId> &input_types, const std::vector<std::string> &output_formats,
@@ -192,6 +197,20 @@ void TestInsertTypeTransformOp::SetTupleUnfoldToTensorKernelBuildInfo(const Func
                      {KernelObjectType::TENSOR}, {KernelObjectType::TENSOR});
 }
 
+void TestInsertTypeTransformOp::SetTupleToTupleUnfoldKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *shape_ptr) {
+  auto ret = g->get_return();
+  EXPECT_NE(ret->input(1), nullptr);
+  auto tuple_get_item = ret->input(1)->cast<CNodePtr>();
+  SetKernelBuildInfo(tuple_get_item, {"NCHW", "NCHW"}, {kNumberTypeFloat32, kNumberTypeInt64}, {"NCHW"},
+                     {kNumberTypeFloat32}, {KernelObjectType::TUPLE_UNFOLD, KernelObjectType::SCALAR},
+                     {KernelObjectType::SCALAR});
+
+  auto shape = tuple_get_item->input(1)->cast<CNodePtr>();
+  *shape_ptr = shape;
+  SetKernelBuildInfo(shape, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeInt64}, {KernelObjectType::SCALAR},
+                     {KernelObjectType::TUPLE});
+}
+
 void TestInsertTypeTransformOp::SetTupleToTensorKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *reshape_ptr) {
   auto ret = g->get_return();
   EXPECT_NE(ret->input(1), nullptr);
@@ -209,6 +228,15 @@ void TestInsertTypeTransformOp::SetTupleToTensorKernelBuildInfo(const FuncGraphP
                      {KernelObjectType::TENSOR});
 }
 
+void TestInsertTypeTransformOp::SetScalarToTensorKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *add_ptr) {
+  auto ret = g->get_return();
+  EXPECT_NE(ret->input(1), nullptr);
+  auto add = ret->input(1)->cast<CNodePtr>();
+  *add_ptr = add;
+  SetKernelBuildInfo(add, {"NCHW", "NCHW"}, {kNumberTypeFloat32, kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32},
+                     {KernelObjectType::TENSOR, KernelObjectType::TENSOR}, {KernelObjectType::TENSOR});
+}
+
 void TestInsertTypeTransformOp::SetTensorToTupleKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *seq_add_ptr) {
   auto ret = g->get_return();
   EXPECT_NE(ret->input(1), nullptr);
@@ -224,6 +252,16 @@ void TestInsertTypeTransformOp::SetTensorToTupleKernelBuildInfo(const FuncGraphP
   auto input1 = seq_add->input(1);
   SetKernelBuildInfo(input1, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32}, {KernelObjectType::TENSOR},
                      {KernelObjectType::TENSOR});
+}
+
+void TestInsertTypeTransformOp::SetTensorToScalarKernelBuildInfo(const FuncGraphPtr &g,
+                                                                 AnfNodePtr *scalar_to_tensor_ptr) {
+  auto ret = g->get_return();
+  EXPECT_NE(ret->input(1), nullptr);
+  auto scalar_to_tensor = ret->input(1)->cast<CNodePtr>();
+  *scalar_to_tensor_ptr = scalar_to_tensor;
+  SetKernelBuildInfo(scalar_to_tensor, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32},
+                     {KernelObjectType::SCALAR}, {KernelObjectType::TENSOR});
 }
 
 void TestInsertTypeTransformOp::SetKernelBuildInfo(
@@ -318,6 +356,12 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_transform) {
   optimizer->AddPassManager(pm);
   optimizer->Optimize(func_graph);
 
+  auto real_make_tuple2 = func_graph->get_return()->input(1)->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
+  ASSERT_TRUE(IsPrimitiveCNode(real_make_tuple2, prim::kPrimRealMakeTuple));
+  ASSERT_TRUE(real_make_tuple2->abstract()->isa<abstract::AbstractTuple>());
+  auto obj_type = AnfAlgo::GetOutputKernelObjectType(real_make_tuple2, 0);
+  ASSERT_TRUE(obj_type == KernelObjectType::TUPLE);
+
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tuple_transform", "after");
   ASSERT_TRUE(g_after != nullptr);
   EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
@@ -348,7 +392,47 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tensor_transform) {
   optimizer->AddPassManager(pm);
   optimizer->Optimize(func_graph);
 
+  auto tuple_to_tensor = func_graph->get_return()->input(1)->cast<CNodePtr>()->input(2)->cast<CNodePtr>();
+  ASSERT_TRUE(IsPrimitiveCNode(tuple_to_tensor, prim::kPrimTupleToTensor));
+  auto real_make_tuple = tuple_to_tensor->input(1);
+  ASSERT_TRUE(IsPrimitiveCNode(real_make_tuple, prim::kPrimRealMakeTuple));
+  ASSERT_TRUE(real_make_tuple->abstract()->isa<abstract::AbstractTuple>());
+  auto obj_type = AnfAlgo::GetOutputKernelObjectType(real_make_tuple, 0);
+  ASSERT_TRUE(obj_type == KernelObjectType::TUPLE);
+
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tensor_transform", "after");
+  ASSERT_TRUE(g_after != nullptr);
+  EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
+}
+
+/// Feature: Dynamic shape.
+/// Description: Test Tuple to TupleUnfold type transforming pass.
+/// Expectation: After InsertTypeTransformOp pass, the graph is identical to the expected graph expressed by python.
+TEST_F(TestInsertTypeTransformOp, DISABLED_test_tuple_to_tuple_unfold_transform) {
+  FuncGraphPtr g = getPyFun_.CallAndParseRet("test_tuple_to_tuple_unfold_transform", "before");
+  ASSERT_TRUE(g != nullptr);
+  std::vector<int64_t> shp_x{4, 2};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
+  AbstractBasePtrList args_spec_list{x_abstract};
+  auto func_graph = GetFuncGraph(g, args_spec_list);
+  ASSERT_TRUE(func_graph != nullptr);
+  AnfNodePtr shape;
+  SetTupleToTupleUnfoldKernelBuildInfo(func_graph, &shape);
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
+  optimizer->AddPassManager(pm);
+  optimizer->Optimize(func_graph);
+
+  auto ret = func_graph->get_return();
+  auto real_tuple_get_item = ret->input(1)->cast<CNodePtr>();
+  ASSERT_TRUE(IsPrimitiveCNode(real_tuple_get_item, prim::kPrimRealTupleGetItem));
+  ASSERT_TRUE(real_tuple_get_item->abstract()->isa<abstract::AbstractScalar>());
+  auto obj_type = AnfAlgo::GetOutputKernelObjectType(real_tuple_get_item, 0);
+  ASSERT_TRUE(obj_type == KernelObjectType::SCALAR);
+
+  FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_tuple_to_tuple_unfold_transform", "after");
   ASSERT_TRUE(g_after != nullptr);
   EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
 }
@@ -377,7 +461,48 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_to_tensor_transform) {
   optimizer->AddPassManager(pm);
   optimizer->Optimize(func_graph);
 
+  auto tuple_to_tensor = func_graph->get_return()->input(1)->cast<CNodePtr>()->input(2)->cast<CNodePtr>();
+  ASSERT_TRUE(IsPrimitiveCNode(tuple_to_tensor, prim::kPrimTupleToTensor));
+  auto dtype = common::AnfAlgo::GetNodeAttr<TypePtr>(tuple_to_tensor, kAttrDType);
+  ASSERT_TRUE(dtype->type_id() == kNumberTypeFloat32);
+  ASSERT_TRUE(tuple_to_tensor->abstract()->isa<abstract::AbstractTensor>());
+  auto obj_type = AnfAlgo::GetOutputKernelObjectType(tuple_to_tensor, 0);
+  ASSERT_TRUE(obj_type == KernelObjectType::TENSOR);
+
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_tuple_to_tensor_transform", "after");
+  ASSERT_TRUE(g_after != nullptr);
+  EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
+}
+
+/// Feature: Dynamic shape.
+/// Description: Test Scalar to Tensor type transforming pass.
+/// Expectation: After InsertTypeTransformOp pass, the graph is identical to the expected graph expressed by python.
+TEST_F(TestInsertTypeTransformOp, DISABLED_test_scalar_to_tensor_transform) {
+  FuncGraphPtr g = getPyFun_.CallAndParseRet("test_scalar_to_tensor_transform", "before");
+  ASSERT_TRUE(g != nullptr);
+  auto x_abstract = std::make_shared<abstract::AbstractScalar>(3);
+  auto y_abstract = std::make_shared<abstract::AbstractScalar>(4);
+  AbstractBasePtrList args_spec_list{x_abstract, y_abstract};
+  auto func_graph = GetFuncGraph(g, args_spec_list);
+  ASSERT_TRUE(func_graph != nullptr);
+  AnfNodePtr add;
+  SetScalarToTensorKernelBuildInfo(func_graph, &add);
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
+  optimizer->AddPassManager(pm);
+  optimizer->Optimize(func_graph);
+
+  auto scalar_to_tensor1 = func_graph->get_return()->input(1)->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
+  ASSERT_TRUE(IsPrimitiveCNode(scalar_to_tensor1, prim::kPrimScalarToTensor));
+  auto dtype = common::AnfAlgo::GetNodeAttr<TypePtr>(scalar_to_tensor1, kAttrDType);
+  ASSERT_TRUE(dtype->type_id() == kNumberTypeInt64);
+  ASSERT_TRUE(scalar_to_tensor1->abstract()->isa<abstract::AbstractTensor>());
+  auto obj_type = AnfAlgo::GetOutputKernelObjectType(scalar_to_tensor1, 0);
+  ASSERT_TRUE(obj_type == KernelObjectType::TENSOR);
+
+  FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_scalar_to_tensor_transform", "after");
   ASSERT_TRUE(g_after != nullptr);
   EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
 }
@@ -404,7 +529,44 @@ TEST_F(TestInsertTypeTransformOp, test_tensor_to_tuple_transform) {
   optimizer->AddPassManager(pm);
   optimizer->Optimize(func_graph);
 
+  auto tensor_to_tuple1 = func_graph->get_return()->input(1)->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
+  ASSERT_TRUE(IsPrimitiveCNode(tensor_to_tuple1, prim::kPrimTensorToTuple));
+  ASSERT_TRUE(tensor_to_tuple1->abstract()->isa<abstract::AbstractTuple>());
+  auto obj_type = AnfAlgo::GetOutputKernelObjectType(tensor_to_tuple1, 0);
+  ASSERT_TRUE(obj_type == KernelObjectType::TUPLE);
+
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_tensor_to_tuple_transform", "after");
+  ASSERT_TRUE(g_after != nullptr);
+  EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
+}
+
+/// Feature: Dynamic shape.
+/// Description: Test Tensor to Scalar type transforming pass.
+/// Expectation: After InsertTypeTransformOp pass, the graph is identical to the expected graph expressed by python.
+TEST_F(TestInsertTypeTransformOp, DISABLED_test_tensor_to_scalar_transform) {
+  FuncGraphPtr g = getPyFun_.CallAndParseRet("test_tensor_to_scalar_transform", "before");
+  ASSERT_TRUE(g != nullptr);
+  std::vector<int64_t> shp_x{4};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
+  AbstractBasePtrList args_spec_list{x_abstract};
+  auto func_graph = GetFuncGraph(g, args_spec_list);
+  ASSERT_TRUE(func_graph != nullptr);
+  AnfNodePtr scalar_to_tensor;
+  SetTensorToScalarKernelBuildInfo(func_graph, &scalar_to_tensor);
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
+  optimizer->AddPassManager(pm);
+  optimizer->Optimize(func_graph);
+
+  auto tensor_to_scalar = func_graph->get_return()->input(1)->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
+  ASSERT_TRUE(IsPrimitiveCNode(tensor_to_scalar, prim::kPrimTensorToScalar));
+  ASSERT_TRUE(tensor_to_scalar->abstract()->isa<abstract::AbstractScalar>());
+  auto obj_type = AnfAlgo::GetOutputKernelObjectType(tensor_to_scalar, 0);
+  ASSERT_TRUE(obj_type == KernelObjectType::SCALAR);
+
+  FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_tensor_to_scalar_transform", "after");
   ASSERT_TRUE(g_after != nullptr);
   EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
 }
