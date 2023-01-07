@@ -68,8 +68,6 @@ class UniformCpuKernelMod : public NativeCpuKernelMod {
 
   static std::vector<std::pair<KernelAttr, UniformFunc>> func_list_;
   UniformFunc kernel_func_;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
   int64_t input_elements_;
   float from_{0.0};
   float to_{1.0};
