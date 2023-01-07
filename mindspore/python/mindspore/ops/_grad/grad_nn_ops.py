@@ -14,7 +14,6 @@
 # ============================================================================
 
 """Define the grad rules of neural network related operations."""
-import numpy as np
 from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
@@ -33,21 +32,23 @@ from mindspore.ops._utils.utils import range_op, get_1d_shape
 @constexpr
 def bias_add_gradgrad_helper(shape, bias_shape, data_format):
     """Helper function of BiasGradGrad to calculate expanded shape."""
-    shape = np.array(shape).astype(np.int)
-    bias_shape = np.array(bias_shape).astype(np.int)
+    new_shape = list(shape)
+    new_bias_shape = list(bias_shape)
+
+    ones_1 = []
+    ones_2 = []
+    for _ in new_shape[2:]:
+        ones_1.append(1)
+
+    for _ in new_shape[:-1]:
+        ones_2.append(1)
+
     if data_format == "NCHW":
-        expanded_shape = np.concatenate([
-            np.ones_like(shape[:1]),
-            bias_shape,
-            np.ones_like(shape[2:])
-        ], axis=0)
-        tile_mults = np.concatenate([shape[:1], [1], shape[2:]], axis=0)
+        expanded_shape = [1] + new_bias_shape + ones_1
+        tile_mults = [new_shape[0]] + [1] + new_shape[2:]
     else:
-        expanded_shape = np.concatenate([
-            np.ones_like(shape[:-1]),
-            bias_shape
-        ], axis=0)
-        tile_mults = np.concatenate([shape[:-1], [1]], axis=0)
+        expanded_shape = ones_2 + new_bias_shape
+        tile_mults = new_shape[:-1] + [1]
     return tuple(expanded_shape), tuple(tile_mults)
 
 
@@ -694,7 +695,7 @@ def get_bprop_softmax(self):
     is_ascend = (device_target == "Ascend")
 
     def bprop(x, out, dout):
-        # dx = (dout - sum(dout * out)) * out
+        # dx can be expressed as (dout - sum(dout * out)) * out
         # This formula is correct only when the `axis` is the last dimension.
         # In order to support the scenario where the `axis` is other values,
         # we transpose the data of the `axis` dimension to the last dimension for calculation,
@@ -952,7 +953,7 @@ def get_bprop_top_kv2(self):
         ind_2d = reshape_op(indices, (-1, ind_lastdim))
         outerdim = shape_op(ind_2d)[0]
 
-        # [0, outterdim, 2*outerdim, ..., (k-1)*outerdim]
+        # range_flatten_index can be expressed as: [0, outterdim, 2*outerdim, ..., (k-1)*outerdim]
         indices_dtype = dtype(indices)
         range_flatten_index = range_op(0, outerdim * in_lastdim, in_lastdim, indices_dtype)
 
@@ -979,7 +980,7 @@ def get_bprop_top_kv2(self):
         ind_2d = reshape_op(indices, create_tensor_by_element((-1, ind_lastdim)))
         outerdim = dyn_shape(ind_2d)[0]
 
-        # [0, outterdim, 2*outerdim, ..., (k-1)*outerdim]
+        # range_flatten_index can be expressed as: [0, outterdim, 2*outerdim, ..., (k-1)*outerdim]
         range_flatten_index = P.Range()(cast(0, mstype.int64), outerdim * in_lastdim, in_lastdim)
 
         # expand_dims to (k, 1), then broadcast

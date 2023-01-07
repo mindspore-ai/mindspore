@@ -875,3 +875,190 @@ def test_constantpad1d():
     pad1d = ConstantPad1d(padding, value)
     output = pad1d(x)
     assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_generate_inverse_index():
+    """
+    Feature: ms_len_with_iterable_check func
+    Description: Verify the result of ms_len_with_iterable_check
+    Expectation: success
+    """
+    from mindspore.ops._grad.grad_array_ops import _generate_inverse_index
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.func = _generate_inverse_index
+
+        def construct(self, x_shape, axis):
+            return self.func(x_shape, axis)
+    x_shape = (3, 2, 3)
+    axis = 2
+    net = Net()
+    assert net(x_shape, axis) == (1, 2, 0)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_split_shape_index():
+    """
+    Feature: ms_len_with_iterable_check func
+    Description: Verify the result of ms_len_with_iterable_check
+    Expectation: success
+    """
+    from mindspore.ops._grad.grad_math_ops import _split_shape_index
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.func = _split_shape_index
+
+        def construct(self, input_shape, axis):
+            return self.func(input_shape, axis)
+    input_shape = (2, 3, 4, 4)
+    axis = 3
+    net = Net()
+    out1, out2 = net(input_shape, axis)
+    assert  out1 == (4, 24)
+    assert  out2 == (3, 0, 1, 2)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_bias_add_gradgrad_helper():
+    """
+    Feature: ms_len_with_iterable_check func
+    Description: Verify the result of ms_len_with_iterable_check
+    Expectation: success
+    """
+    from mindspore.ops._grad.grad_nn_ops import bias_add_gradgrad_helper
+
+    class Net(nn.Cell):
+        def __init__(self, data_format):
+            super(Net, self).__init__()
+            self.func = bias_add_gradgrad_helper
+            self.data_format = data_format
+
+        def construct(self, shape, bias_shape):
+            return self.func(shape, bias_shape, self.data_format)
+    shape = (2, 3, 4, 4)
+    bias_shape = (1, 3)
+    data_format = "NCHW"
+    net = Net(data_format)
+    out1, out2 = net(shape, bias_shape)
+    assert out1 == (1, 1, 3, 1, 1)
+    assert out2 == (2, 1, 4, 4)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fft_rank_offset():
+    """
+    Feature: ms_len_with_iterable_check func
+    Description: Verify the result of ms_len_with_iterable_check
+    Expectation: success
+    """
+    from mindspore.ops._grad_experimental.grad_math_ops import _fft_rank_offset
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.func = _fft_rank_offset
+
+        def construct(self, norm_shape, rank):
+            return self.func(norm_shape, rank)
+    norm_shape = (1, 2, 3, 4, 5, 10)
+    rank = 3
+    net = Net()
+    assert net(norm_shape, rank) == 200
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_rfft_reshape():
+    """
+    Feature: ms_len_with_iterable_check func
+    Description: Verify the result of ms_len_with_iterable_check
+    Expectation: success
+    """
+    from mindspore.ops._grad_experimental.grad_math_ops import _rfft_reshape
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.func = _rfft_reshape
+
+        def construct(self, shape_a, shape_b):
+            return self.func(shape_a, shape_b)
+    shape_a = (1, 2, 3, 4, 5)
+    shape_b = (2, 5, 7, 8)
+    net = Net()
+    assert net(shape_a, shape_b) == (1, 1, 1, 2, 5, 7, 8)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_rfft_tile_reshape():
+    """
+    Feature: ms_len_with_iterable_check func
+    Description: Verify the result of ms_len_with_iterable_check
+    Expectation: success
+    """
+    from mindspore.ops._grad_experimental.grad_math_ops import _rfft_tile_reshape
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.func = _rfft_tile_reshape
+
+        def construct(self, shape_a):
+            return self.func(shape_a)
+    shape_a = (1, 2, 3, 4, 5)
+    net = Net()
+    assert net(shape_a) == (1, 2, 3, 1, 1)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_rfft_last_term_shape():
+    """
+    Feature: ms_len_with_iterable_check func
+    Description: Verify the result of ms_len_with_iterable_check
+    Expectation: success
+    """
+    from mindspore.ops._grad_experimental.grad_math_ops import _rfft_last_term_shape
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.func = _rfft_last_term_shape
+
+        def construct(self, shape_a, shape_b):
+            return self.func(shape_a, shape_b)
+    shape_a = (1, 2, 3, 4, 5)
+    shape_b = (2, 5, 7, 8)
+    net = Net()
+    assert net(shape_a, shape_b) == (1, 1, 1, 1, 2, 5, 7, 8)

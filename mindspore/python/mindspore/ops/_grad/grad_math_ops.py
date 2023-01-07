@@ -15,7 +15,6 @@
 
 """Define the grad rules of math related operations."""
 
-from functools import reduce
 import numpy as np
 import mindspore as ms
 from mindspore import nn
@@ -864,9 +863,19 @@ def _split_shape_index(input_shape, axis):
     if isinstance(axis, int):
         axis = tuple([axis])
     reduction_indices = tuple([(i + rank) % rank for i in axis])
-    other_indices = tuple(set(range(rank)) - set(reduction_indices))
-    reduced_num = reduce(lambda x, y: x * y, [1] + [input_shape[i] for i in reduction_indices])
-    other_num = reduce(lambda x, y: x * y, [1] + [input_shape[i] for i in other_indices])
+    other_indices_list = []
+    for i in range(rank):
+        if i not in reduction_indices and i not in other_indices_list:
+            other_indices_list.append(i)
+    other_indices = tuple(other_indices_list)
+    reduced_list = [1] + [input_shape[i] for i in reduction_indices]
+    other_list = [1] + [input_shape[i] for i in other_indices]
+    reduced_num = 1
+    for i in reduced_list:
+        reduced_num = reduced_num * i
+    other_num = 1
+    for i in other_list:
+        other_num = other_num * i
     perm = reduction_indices + other_indices
     return tuple([reduced_num, other_num]), perm
 

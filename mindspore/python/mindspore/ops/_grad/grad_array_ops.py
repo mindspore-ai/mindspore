@@ -400,12 +400,6 @@ def get_bprop_concat(self):
     return bprop
 
 
-@constexpr
-def _slice_grad_pad(begins, sizes, shapes):
-    pads = tuple((begin, shape - begin - size) for begin, size, shape in zip(begins, sizes, shapes))
-    return pads
-
-
 @bprop_getters.register(P.Slice)
 def get_bprop_slice(self):
     """Generate bprop for Slice"""
