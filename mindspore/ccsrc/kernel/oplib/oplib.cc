@@ -91,8 +91,8 @@ static std::string ImplTypeToStr(OpImplyType impl_type) {
 }
 
 std::vector<std::string> SplitStrToVec(const std::string &input) {
-  static const std::map<std::string, std::string> kSpecFormat = {
-    {kOpFormat_NCHW, kOpFormat_DEFAULT}, {kOpFormat_ND, kOpFormat_DEFAULT}, {kOpFormat_NCDHW, kOpFormat_DEFAULT}};
+  static const std::map<std::string, std::string> kSpecFormat = {{kOpFormat_NCHW, kOpFormat_DEFAULT},
+                                                                 {kOpFormat_ND, kOpFormat_DEFAULT}};
   if (input.empty()) {
     MS_LOG(EXCEPTION) << "Op select ret item is null.";
   }
