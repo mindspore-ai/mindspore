@@ -1340,6 +1340,8 @@ def get_bprop_fmin(self):
     reshape_ = P.Reshape()
 
     def bprop(x1, x2, out, dout):
+        x1_dtype = F.dtype(x1)
+        x2_dtype = F.dtype(x2)
         x1 = F.cast(x1, mstype.float32)
         x2 = F.cast(x2, mstype.float32)
         dout = F.cast(dout, mstype.float32)
@@ -1370,6 +1372,8 @@ def get_bprop_fmin(self):
             sum_r2 = sum_grad_reduce_axis(rrx2, ry)
         brrx1 = reshape_(sum_r1, shape_of_x1)
         brrx2 = reshape_(sum_r2, shape_of_x2)
+        brrx1 = F.cast(brrx1, x1_dtype)
+        brrx2 = F.cast(brrx2, x2_dtype)
         return brrx1, brrx2
 
     return bprop
@@ -1424,6 +1428,8 @@ def get_bprop_fmax(self):
             sum_r2 = sum_grad_reduce_axis(rrx2, ry)
         brrx1 = reshape_(sum_r1, shape_of_x1)
         brrx2 = reshape_(sum_r2, shape_of_x2)
+        brrx1 = F.cast(brrx1, x1_dtype)
+        brrx2 = F.cast(brrx2, x2_dtype)
         return brrx1, brrx2
 
 
