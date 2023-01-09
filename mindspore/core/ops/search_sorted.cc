@@ -51,6 +51,13 @@ abstract::ShapePtr SearchSortedInferShape(const PrimitivePtr &primitive,
                              << "but got shape of 'sorted_sequence': " << sequence_shape_ptr->ToString()
                              << " and shape of 'values': " << values_shape_ptr->ToString() << ".";
   }
+  bool is_empty_shape =
+    std::any_of(sequence_shape.begin(), sequence_shape.end(), [](const auto &element) { return element == 0; });
+  if (is_empty_shape) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the shape of input sequence_shape contains 0, is not permitted. "
+                             << "The shape is: " << sequence_shape;
+  }
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
   MS_EXCEPTION_IF_NULL(values_shape_ptr);
