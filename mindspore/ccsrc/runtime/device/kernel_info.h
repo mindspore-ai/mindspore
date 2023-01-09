@@ -59,6 +59,10 @@ class BACKEND_EXPORT KernelInfo : public KernelInfoDevice {
   DeviceAddressPtr GetMutableWorkspaceAddr(size_t index) const;
   bool WorkspaceAddrExist(size_t index) const;
   bool SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t index);
+  // The number of workspace may change after kernel Resize.
+  void set_workspace_address_list(const std::vector<DeviceAddressPtr> &workspace_address_list) {
+    workspace_address_list_ = workspace_address_list;
+  }
   void set_kernel_mod(const kernel::KernelModPtr &kernel_mod);
   kernel::KernelMod *MutableKernelMod() const;
   const kernel::KernelMod *kernel_mod() const;
