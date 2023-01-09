@@ -346,6 +346,9 @@ class Parser {
   // Check if body block contains return statement, and propagate that flag back to block.
   void CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBlockPtr &body_block) const;
 
+  // Check whether the functions referred by this function and itself are missing 'return' statement.
+  void CheckFuncReturn(const FuncGraphPtr &fn);
+
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
   // Python function id, used to indicate whether two CNodes come from the same Python function
