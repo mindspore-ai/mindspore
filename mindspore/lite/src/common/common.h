@@ -70,7 +70,8 @@ static const char *const kThreadNumRemainingPerWorker = "thread_num_remaining_pe
 static const char *const kInnerRunnerID = "inner_runner_id";
 static const char *const kInnerNumaID = "inner_numa_id";
 static const char *const kInnerModelID = "inner_model_id";
-static const char *const kInnerIDs = "inner_ids";
+static const char *const kInnerModelParallelRunner = "inner_model_parallel_runner";
+static const char *const kInnerSharingWeightCopyBuf = "sharing_weight_copy_buf";
 
 static const char *const kIsOptimized = "isOptimized";
 // gpu context

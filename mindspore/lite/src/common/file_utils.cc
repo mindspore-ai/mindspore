@@ -149,7 +149,7 @@ char *ReadFileSegment(const std::string &file, int64_t offset, int64_t len) {
   return buf;
 }
 
-char *ReadFile(const char *file, size_t *size) {
+char *ReadFile(const char *file, size_t *size, std::shared_ptr<Allocator> allocator) {
   if (file == nullptr) {
     MS_LOG(ERROR) << "File path is nullptr";
     return nullptr;
@@ -185,8 +185,15 @@ char *ReadFile(const char *file, size_t *size) {
     return nullptr;
   }
   *size = static_cast<size_t>(goffset);
-  auto buf = new (std::nothrow) char[*size];
-  if (buf == nullptr) {
+  char *model_buf = nullptr;
+  if (allocator != nullptr) {
+    MS_LOG(INFO) << "read ms model buf in numa 0.";
+    auto buf = allocator->Malloc(*size);
+    model_buf = static_cast<char *>(buf);
+  } else {
+    model_buf = new (std::nothrow) char[*size];
+  }
+  if (model_buf == nullptr) {
     MS_LOG(ERROR) << "malloc buf failed, file: " << file;
     ifs->close();
     delete ifs;
@@ -194,10 +201,10 @@ char *ReadFile(const char *file, size_t *size) {
   }
 
   ifs->seekg(0, std::ios::beg);
-  (void)ifs->read(buf, static_cast<std::streamsize>(*size));
+  ifs->read(model_buf, *size);
   ifs->close();
   delete ifs;
-  return buf;
+  return model_buf;
 }
 
 std::string RealPath(const char *path) {

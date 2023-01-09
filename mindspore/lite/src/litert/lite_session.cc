@@ -758,7 +758,7 @@ int LiteSession::ContextInit(const std::shared_ptr<InnerContext> &context) {
   this->context_ = context;
   std::string runner_id;
   if (config_info_ != nullptr) {
-    auto it_id = config_info_->find(kInnerIDs);
+    auto it_id = config_info_->find(kInnerModelParallelRunner);
     if (it_id != config_info_->end()) {
       auto item_runner = it_id->second.find(kInnerRunnerID);
       if (item_runner != it_id->second.end()) {

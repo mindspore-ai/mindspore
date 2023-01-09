@@ -30,7 +30,7 @@ std::string ParseNumaId(const std::map<std::string, std::map<std::string, std::s
   if (config_info == nullptr) {
     return numa_id;
   }
-  auto it_id = config_info->find(kInnerIDs);
+  auto it_id = config_info->find(kInnerModelParallelRunner);
   if (it_id != config_info->end()) {
     auto item_numa = it_id->second.find(kInnerNumaID);
     if (item_numa != it_id->second.end()) {
@@ -45,7 +45,7 @@ std::string ParseRunnerId(const std::map<std::string, std::map<std::string, std:
   if (config_info == nullptr) {
     return runner_id;
   }
-  auto it_id = config_info->find(kInnerIDs);
+  auto it_id = config_info->find(kInnerModelParallelRunner);
   if (it_id != config_info->end()) {
     auto item_runner = it_id->second.find(kInnerRunnerID);
     if (item_runner != it_id->second.end()) {
@@ -54,8 +54,29 @@ std::string ParseRunnerId(const std::map<std::string, std::map<std::string, std:
   }
   return runner_id;
 }
+
+bool ParseCopyBuf(const std::map<std::string, std::map<std::string, std::string>> *config_info) {
+  // default copy model buf.
+  bool need_copy = true;
+  if (config_info == nullptr) {
+    return need_copy;
+  }
+  std::string copy_buf = "";
+  auto inner_item = config_info->find(kInnerModelParallelRunner);
+  if (inner_item != config_info->end()) {
+    auto item_copy_buf = inner_item->second.find(kInnerSharingWeightCopyBuf);
+    if (item_copy_buf != inner_item->second.end()) {
+      copy_buf = inner_item->second.at(kInnerSharingWeightCopyBuf);
+    }
+  }
+  if (copy_buf == "false") {
+    return false;
+  }
+  return need_copy;
+}
 #endif
 }  // namespace
+
 PackWeightManager *PackWeightManager::GetInstance() {
   static PackWeightManager instance;
   return &instance;
@@ -99,7 +120,8 @@ STATUS PackWeightManager::InitPackWeightManager(
     MS_LOG(INFO) << "model use share pack weight.";
     id = *model_id;
   }
-  return pack_weight_->InitPackWeight(static_cast<const void *>(model_buf), model_size, id, numa_id);
+  bool need_copy_buf = ParseCopyBuf(config_info);
+  return pack_weight_->InitPackWeight(static_cast<const void *>(model_buf), model_size, id, numa_id, need_copy_buf);
 #endif
   return RET_OK;
 }
