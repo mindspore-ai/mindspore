@@ -703,10 +703,6 @@ Status ModelPool::CheckSharingThreadPoolParam(const ModelPoolConfig &model_pool_
 Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelPoolConfig &model_pool_config,
                                 bool copy_model) {
   std::shared_ptr<ModelWorker> model_worker = nullptr;
-  if (model_pool_config.size() != workers_num_) {
-    MS_LOG(ERROR) << "model pool config size is wrong.";
-    return kLiteError;
-  }
   bool create_worker_success = true;
   runner_id_ = ResourceManager::GetInstance()->GenRunnerID();
   auto status = CheckSharingThreadPoolParam(model_pool_config);
@@ -725,7 +721,10 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
     ids[lite::kInnerModelID] = std::to_string(i);
     ids[lite::kInnerRunnerID] = runner_id_;
     ids[lite::kInnerNumaID] = std::to_string(model_pool_config[i]->numa_id);
-    model_pool_config[i]->config_info[lite::kInnerIDs] = ids;
+    model_pool_config[i]->config_info[lite::kInnerModelParallelRunner] = ids;
+    if (!copy_model || model_pool_config[i]->numa_id == 0) {
+      ids[lite::kInnerSharingWeightCopyBuf] = "false";
+    }
 
     model_worker = std::make_shared<ModelWorker>();
     if (model_worker == nullptr) {
@@ -739,16 +738,6 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
                  << " | worker bind core list: " << model_pool_config[i]->context->GetThreadAffinityCoreList()
                  << " | worker thread num: " << model_pool_config[i]->context->GetThreadNum()
                  << " | inter op parallel num: " << model_pool_config[i]->context->GetInterOpParallelNum();
-    if (!model_pool_config[i]->config_info.empty()) {
-      for (auto &item : model_pool_config[i]->config_info) {
-        auto section = item.first;
-        MS_LOG(INFO) << "section: " << section;
-        auto configs = item.second;
-        for (auto &config : configs) {
-          MS_LOG(INFO) << "\t key: " << config.first << " | value: " << config.second;
-        }
-      }
-    }
     InitWorkerManager::GetInstance()->InitModelWorker(model_worker, graph_buf, size, model_pool_config[i],
                                                       predict_task_queue_, &create_worker_success);
     if (i == 0) {
@@ -822,29 +811,45 @@ Status ModelPool::CanUseAllPhysicalResources() {
 }
 
 Status ModelPool::InitByBuf(const char *model_data, size_t size, const std::shared_ptr<RunnerConfig> &runner_config) {
-  auto status = Init(model_data, size, runner_config);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "init by buf failed.";
+  auto model_pool_config = Init(runner_config);
+  if (model_pool_config.empty() || model_pool_config.size() != workers_num_) {
+    MS_LOG(ERROR) << "InitModelPoolConfig failed.";
     return kLiteFileError;
+  }
+  auto status = CreateWorkers(model_data, size, model_pool_config, numa_available_ && (used_numa_node_num_ > 1));
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "create worker failed.";
+    return kLiteError;
   }
   return kSuccess;
 }
 
 Status ModelPool::InitByPath(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
   model_path_ = model_path;
+  auto model_pool_config = Init(runner_config);
+  if (model_pool_config.empty() || model_pool_config.size() != workers_num_) {
+    MS_LOG(ERROR) << "InitModelPoolConfig failed.";
+    return kLiteFileError;
+  }
   size_t size = 0;
-  auto graph_buf = lite::ReadFile(model_path.c_str(), &size);
-  if (graph_buf == nullptr) {
+  bool numa_copy_buf = numa_available_ && (used_numa_node_num_ > 1);
+  if (numa_copy_buf) {
+    allocator_ = std::make_shared<DynamicMemAllocator>(0);
+    if (allocator_ == nullptr) {
+      MS_LOG(ERROR) << "new dynamic allocator failed.";
+      return kLiteNullptr;
+    }
+  }
+  graph_buf_ = lite::ReadFile(model_path.c_str(), &size, allocator_);
+  if (graph_buf_ == nullptr) {
     MS_LOG(ERROR) << "read model failed, model path: " << model_path;
     return kLiteNullptr;
   }
-  auto status = Init(graph_buf, size, runner_config);
+  auto status = CreateWorkers(graph_buf_, size, model_pool_config, numa_copy_buf);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "init failed.";
+    MS_LOG(ERROR) << "create worker failed.";
     return kLiteError;
   }
-  delete[] graph_buf;
-  graph_buf = nullptr;
   return kSuccess;
 }
 
@@ -917,16 +922,12 @@ Status ModelPool::ParseSharedThreadPoolParam(const std::shared_ptr<RunnerConfig>
   return ParseParamByConfigInfo(runner_config->GetConfigInfo());
 }
 
-Status ModelPool::Init(const char *model_buf, size_t size, const std::shared_ptr<RunnerConfig> &runner_config) {
-  auto status = ParseSharedThreadPoolParam(runner_config);
-  if (status != kSuccess) {
-    MS_LOG(WARNING) << "ParseSharedThreadPoolParam failed, Not use thread pool shared.";
-    enable_shared_thread_pool_ = false;
-  }
-  status = CanUseAllPhysicalResources();
+ModelPoolConfig ModelPool::Init(const std::shared_ptr<RunnerConfig> &runner_config) {
+  ModelPoolConfig model_pool_config = {};
+  auto status = CanUseAllPhysicalResources();
   if (status != kSuccess) {
     MS_LOG(ERROR) << "parser sys file failed.";
-    return kLiteError;
+    return model_pool_config;
   }
   if (!can_use_all_physical_core_) {
     numa_available_ = false;
@@ -934,20 +935,31 @@ Status ModelPool::Init(const char *model_buf, size_t size, const std::shared_ptr
     status = InitNumaParameter(runner_config);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "Init numa parameter failed.";
-      return kLiteError;
+      return model_pool_config;
     }
   }
   // create model pool config
-  auto model_pool_config = CreateModelPoolConfig(runner_config);
+  model_pool_config = CreateModelPoolConfig(runner_config);
   if (model_pool_config.empty()) {
     MS_LOG(ERROR) << "CreateModelPoolConfig failed, context is empty.";
-    return kLiteError;
+    return model_pool_config;
+  }
+  if (!model_pool_config[0]->config_info.empty()) {
+    for (auto &item : model_pool_config[0]->config_info) {
+      auto section = item.first;
+      MS_LOG(INFO) << "Model Parallel Runner config info:";
+      MS_LOG(INFO) << "section: " << section;
+      auto configs = item.second;
+      for (auto &config : configs) {
+        MS_LOG(INFO) << "\t key: " << config.first << " | value: " << config.second;
+      }
+    }
   }
   // create task queue for model pool
   predict_task_queue_ = std::make_shared<PredictTaskQueue>();
   if (predict_task_queue_ == nullptr) {
     MS_LOG(ERROR) << "create PredictTaskQueue failed, predict task queue is nullptr.";
-    return kLiteNullptr;
+    return model_pool_config;
   }
   if (numa_available_) {
     status = predict_task_queue_->InitTaskQueue(used_numa_node_num_, kNumMaxTaskQueueSize);
@@ -956,23 +968,18 @@ Status ModelPool::Init(const char *model_buf, size_t size, const std::shared_ptr
   }
   if (status != kSuccess) {
     MS_LOG(ERROR) << "predict task queue init failed, status=" << status;
-    return kLiteError;
-  }
-  status = CreateWorkers(model_buf, size, model_pool_config, numa_available_ && (used_numa_node_num_ > 1));
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "create worker failed.";
-    return kLiteError;
+    return model_pool_config;
   }
   // initialize the task pool
   tasks_ = new (std::nothrow) PredictTask[kNumMaxTaskQueueSize]();
   if (tasks_ == nullptr) {
     MS_LOG(ERROR) << "new task failed.";
-    return kLiteNullptr;
+    return model_pool_config;
   }
   for (size_t i = 0; i < kNumMaxTaskQueueSize; i++) {
     free_tasks_id_.push(i);
   }
-  return kSuccess;
+  return model_pool_config;
 }
 
 Status ModelPool::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
@@ -1121,6 +1128,10 @@ ModelPool::~ModelPool() {
   MS_LOG(INFO) << "free model pool.";
   if (predict_task_queue_ != nullptr) {
     predict_task_queue_->SetPredictTaskDone();
+  }
+  if (allocator_ != nullptr && graph_buf_ != nullptr) {
+    allocator_->Free(graph_buf_);
+    graph_buf_ = nullptr;
   }
   MS_LOG(INFO) << "delete model worker.";
   for (auto &item : all_model_workers_) {

@@ -51,7 +51,7 @@ class ModelPool {
 
   Status InitByBuf(const char *model_data, size_t size, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
 
-  Status Init(const char *model_buf, size_t size, const std::shared_ptr<RunnerConfig> &runner_config);
+  ModelPoolConfig Init(const std::shared_ptr<RunnerConfig> &runner_config);
 
   Status UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config);
 
@@ -169,6 +169,10 @@ class ModelPool {
   bool enable_shared_thread_pool_ = true;
   int thread_num_limit_ = 0;
   int remaining_thread_num_ = 0;
+
+  char *graph_buf_ = nullptr;
+  // malloc for graph_buf_
+  std::shared_ptr<Allocator> allocator_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_POOL_H_

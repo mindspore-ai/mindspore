@@ -28,7 +28,7 @@ FuncGraphReuseManager *FuncGraphReuseManager::GetInstance() {
 FuncGraphPtr FuncGraphReuseManager::GetSharedFuncGraph(
   std::map<std::string, std::map<std::string, std::string>> config_info) {
   std::unique_lock<std::mutex> l(mtx_manager_);
-  auto id = config_info.find(mindspore::lite::kInnerIDs);
+  auto id = config_info.find(mindspore::lite::kInnerModelParallelRunner);
   if (id != config_info.end()) {
     if (id->second.find(lite::kInnerRunnerID) != id->second.end()) {
       auto runner_id = id->second[lite::kInnerRunnerID];
@@ -48,7 +48,7 @@ FuncGraphPtr FuncGraphReuseManager::GetSharedFuncGraph(
 Status FuncGraphReuseManager::StoreFuncGraph(FuncGraphPtr func_graph,
                                              std::map<std::string, std::map<std::string, std::string>> config_info) {
   std::unique_lock<std::mutex> l(mtx_manager_);
-  auto id = config_info.find(lite::kInnerIDs);
+  auto id = config_info.find(lite::kInnerModelParallelRunner);
   if (id != config_info.end()) {
     if (id->second.find(lite::kInnerRunnerID) != id->second.end()) {
       auto runner_id = id->second[lite::kInnerRunnerID];
@@ -62,7 +62,7 @@ Status FuncGraphReuseManager::StoreFuncGraph(FuncGraphPtr func_graph,
 void *FuncGraphReuseManager::GetFbModelBuf(size_t *data_size, bool *is_shared_fb_buf,
                                            std::map<std::string, std::map<std::string, std::string>> config_info) {
   std::unique_lock<std::mutex> l(mtx_manager_);
-  auto id = config_info.find(lite::kInnerIDs);
+  auto id = config_info.find(lite::kInnerModelParallelRunner);
   if (id != config_info.end()) {
     auto item_runner_id = id->second.find(lite::kInnerRunnerID);
     if (item_runner_id != id->second.end()) {
@@ -85,7 +85,7 @@ void *FuncGraphReuseManager::GetFbModelBuf(size_t *data_size, bool *is_shared_fb
 Status FuncGraphReuseManager::StoreFbModelBuf(void *model_buf, size_t data_size,
                                               std::map<std::string, std::map<std::string, std::string>> config_info) {
   std::unique_lock<std::mutex> l(mtx_manager_);
-  auto id = config_info.find(lite::kInnerIDs);
+  auto id = config_info.find(lite::kInnerModelParallelRunner);
   if (id != config_info.end()) {
     auto item_runner_id = id->second.find(lite::kInnerRunnerID);
     if (item_runner_id != id->second.end()) {
@@ -101,7 +101,7 @@ Status FuncGraphReuseManager::StoreFbModelBuf(void *model_buf, size_t data_size,
 KernelGraphPtr FuncGraphReuseManager::GetKernelGraph(
   std::map<std::string, std::map<std::string, std::string>> config_info) {
   std::unique_lock<std::mutex> l(mtx_manager_);
-  auto id = config_info.find(mindspore::lite::kInnerIDs);
+  auto id = config_info.find(mindspore::lite::kInnerModelParallelRunner);
   if (id != config_info.end()) {
     if (id->second.find(lite::kInnerRunnerID) != id->second.end()) {
       auto runner_id = id->second[lite::kInnerRunnerID];
@@ -121,7 +121,7 @@ KernelGraphPtr FuncGraphReuseManager::GetKernelGraph(
 Status FuncGraphReuseManager::StoreKernelGraph(std::map<std::string, std::map<std::string, std::string>> config_info,
                                                KernelGraphPtr kernel_graph) {
   std::unique_lock<std::mutex> l(mtx_manager_);
-  auto id = config_info.find(lite::kInnerIDs);
+  auto id = config_info.find(lite::kInnerModelParallelRunner);
   if (id != config_info.end()) {
     if (id->second.find(lite::kInnerRunnerID) != id->second.end()) {
       auto runner_id = id->second[lite::kInnerRunnerID];
@@ -137,7 +137,7 @@ Status FuncGraphReuseManager::GetInOut(std::map<std::string, std::map<std::strin
                                        std::vector<tensor::TensorPtr> *out_tensor, std::vector<std::string> *in_name,
                                        std::vector<std::string> *out_name) {
   std::unique_lock<std::mutex> l(mtx_manager_);
-  auto id = config_info.find(mindspore::lite::kInnerIDs);
+  auto id = config_info.find(mindspore::lite::kInnerModelParallelRunner);
   if (id != config_info.end()) {
     if (id->second.find(lite::kInnerRunnerID) != id->second.end()) {
       auto runner_id = id->second[lite::kInnerRunnerID];
@@ -165,7 +165,7 @@ Status FuncGraphReuseManager::StoreInOut(std::map<std::string, std::map<std::str
                                          std::vector<tensor::TensorPtr> out_tensor, std::vector<std::string> in_name,
                                          std::vector<std::string> out_name) {
   std::unique_lock<std::mutex> l(mtx_manager_);
-  auto id = config_info.find(lite::kInnerIDs);
+  auto id = config_info.find(lite::kInnerModelParallelRunner);
   if (id != config_info.end()) {
     if (id->second.find(lite::kInnerRunnerID) != id->second.end()) {
       auto runner_id = id->second[lite::kInnerRunnerID];
@@ -184,7 +184,7 @@ void FuncGraphReuseManager::ReleaseSharedFuncGraph(
   std::unique_lock<std::mutex> l(mtx_manager_);
   MS_LOG(INFO) << "ReleaseSharedFuncGraph begin.";
   std::string runner_id = "";
-  auto id = config_info.find(lite::kInnerIDs);
+  auto id = config_info.find(lite::kInnerModelParallelRunner);
   if (id != config_info.end()) {
     runner_id = id->second[lite::kInnerRunnerID];
   }

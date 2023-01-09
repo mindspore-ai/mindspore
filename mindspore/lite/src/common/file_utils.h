@@ -34,6 +34,7 @@ using mode_t = int;
 #include <fstream>
 #include "src/common/utils.h"
 #include "src/common/log_adapter.h"
+#include "src/litert/inner_allocator.h"
 
 namespace mindspore {
 namespace lite {
@@ -49,7 +50,7 @@ std::fstream *OpenFile(const std::string &file_path, std::ios_base::openmode ope
 
 char *ReadFileSegment(const std::string &file, int64_t offset, int64_t len);
 
-char *ReadFile(const char *file, size_t *size);
+char *ReadFile(const char *file, size_t *size, std::shared_ptr<Allocator> allocator = nullptr);
 
 std::string RealPath(const char *path);
 

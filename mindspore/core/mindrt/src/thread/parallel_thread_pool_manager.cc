@@ -22,7 +22,7 @@
 namespace mindspore {
 #ifndef MS_COMPILE_IOS
 namespace {
-const char *kInnerIDs = "inner_ids";
+const char *kInnerModelParallelRunner = "inner_model_parallel_runner";
 const char *kInnerRunnerID = "inner_runner_id";
 const char *kInnerModelID = "inner_model_id";
 }  // namespace
@@ -66,7 +66,7 @@ int ParallelThreadPoolManager::GetTaskNum(
     return -1;
   }
   std::string runner_id;
-  auto it_id = config_info->find(kInnerIDs);
+  auto it_id = config_info->find(kInnerModelParallelRunner);
   if (it_id != config_info->end()) {
     auto item_runner = it_id->second.find(kInnerRunnerID);
     if (item_runner != it_id->second.end()) {
@@ -108,7 +108,7 @@ void ParallelThreadPoolManager::BindPoolToRunner(
     return;
   }
   std::string runner_id;
-  auto it_id = config_info->find(kInnerIDs);
+  auto it_id = config_info->find(kInnerModelParallelRunner);
   if (it_id != config_info->end()) {
     auto item_runner = it_id->second.find(kInnerRunnerID);
     if (item_runner != it_id->second.end()) {
