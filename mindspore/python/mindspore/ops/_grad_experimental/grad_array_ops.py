@@ -956,7 +956,7 @@ def get_bprop_expand(self):
 
     def bprop(x, shape, out, dout):
         reduce_dims = []
-        dshape = zeroslike(dout)
+        dshape = zeroslike(shape)
         dx_shape = dout.shape
         if dx_shape is None:
             return dout.sum(), dshape

@@ -1326,12 +1326,14 @@ REG_BPROP_BUILDER("ScatterAddWithAxis").SetUnusedInputs({i0, i2, i3}).SetBody(BO
   return {dout, ib->ZerosLike(indices), update_grad};
 });
 
-REG_BPROP_BUILDER("Expand").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("Expand").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
+  auto shape = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto dout_shape = ib->GetShape(dout);
+  auto dshape = ib->ZerosLike(shape);
   if (dout_shape.empty()) {
-    return {ib->ReduceSum(dout), ib->ZerosLike(dout)};
+    return {ib->ReduceSum(dout), dshape};
   }
   auto x_shape = ib->GetShape(x);
   auto leading_dims = dout_shape.size() - x_shape.size();
@@ -1345,7 +1347,7 @@ REG_BPROP_BUILDER("Expand").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
     dout = ib->ReduceSum(dout, reduce_dims, true);
   }
   auto dx = leading_dims > 0 ? ib->Reshape(dout, x_shape) : dout;
-  return {dx, ib->ZerosLike(dout)};
+  return {dx, dshape};
 });
 
 REG_BPROP_BUILDER("SegmentMean").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
