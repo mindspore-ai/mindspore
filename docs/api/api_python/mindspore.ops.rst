@@ -98,6 +98,7 @@ mindspore.ops
     mindspore.ops.rrelu
     mindspore.ops.selu
     mindspore.ops.sigmoid
+    mindspore.ops.silu
     mindspore.ops.soft_shrink
     mindspore.ops.softmax
     mindspore.ops.softmin

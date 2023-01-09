@@ -99,6 +99,7 @@ Activation Functions
     mindspore.ops.rrelu
     mindspore.ops.selu
     mindspore.ops.sigmoid
+    mindspore.ops.silu
     mindspore.ops.softsign
     mindspore.ops.soft_shrink
     mindspore.ops.softmax

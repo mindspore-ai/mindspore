@@ -651,10 +651,9 @@ class SiLU(Cell):
     def __init__(self):
         """Initialize SiLU."""
         super(SiLU, self).__init__()
-        self.sigmoid = P.Sigmoid()
 
     def construct(self, x):
-        return self.sigmoid(x) * x
+        return ops.function.silu(x)
 
 
 class Tanh(Cell):

@@ -2198,6 +2198,28 @@ def soft_shrink(x, lambd=0.5):
     return soft_shrink_op(x)
 
 
+def silu(x):
+    r"""
+    Sigmoid Linear Unit.
+
+    Computes Sigmoid Linear Unit of input element-wise. The SiLU function is defined as:
+
+    .. math::
+        \text{SiLU}(x) = x * \sigma(x)
+
+    where the Logistic Sigmoid function is defined as:
+
+    .. math::
+
+        \text{sigma}(x_i) = \frac{1}{1 + \exp(-x_i)}
+
+    where :math:`x_i` is an element of the x.
+
+    For more details, please refer to mindspore.nn.SiLU.
+    """
+    return sigmoid_(x)*x
+
+
 def selu(input_x):
     r"""
     Activation function SeLU (Scaled exponential Linear Unit).
@@ -4632,7 +4654,7 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
     where `group` is the number of groups to split the input `x` in the channel dimension.
 
-    For more details, please refers to the paper `Gradient Based Learning Applied to Document
+    For more details, please refer to the paper `Gradient Based Learning Applied to Document
     Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ .
 
     Note:
@@ -5539,6 +5561,7 @@ __all__ = [
     'huber_loss',
     'softsign',
     'selu',
+    'silu',
     'softmax',
     'softmin',
     'pdist',
