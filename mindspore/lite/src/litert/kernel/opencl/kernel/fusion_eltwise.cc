@@ -20,6 +20,7 @@
 #include "nnacl/arithmetic.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/scale.h"
+#include "src/litert/infer_manager.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -206,6 +207,47 @@ int FusionEltwiseOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
+  return RET_OK;
+}
+
+int FusionEltwiseOpenCLKernel::InferShape() {
+  if (InferShapeDone()) {
+    return RET_OK;
+  }
+
+  if (in_tensors_.empty() || out_tensors_.empty()) {
+    MS_LOG(WARNING) << "Input or output tensor list is empty, infer failed.";
+    return RET_ERROR;
+  }
+
+  // For first input tensor, just invoke ArithmeticSelf InferShape() to get the output shape.
+  op_parameter_->type_ = schema::PrimitiveType_Neg;
+  auto ret = lite::KernelInferShape(in_tensors_, out_tensors_, op_parameter_);
+  op_parameter_->type_ = PrimitiveType_FusionEltwise;
+  if (ret != RET_OK) {
+    MS_LOG(WARNING) << "Infer shape as ArithmeticSelf failed";
+    return ret;
+  }
+  if (in_tensors_.size() == C1NUM) {
+    return RET_OK;
+  }
+
+  // If there is more than one input, choose each input and previous output as new sub input pair,
+  // apply Arithmetic InferShape() on sub inputs, then the final sub_out_shape is the output shape.
+  std::vector<lite::Tensor *> sub_in_tensors_(C2NUM);
+  std::vector<lite::Tensor *> sub_out_tensors_ = out_tensors_;
+  op_parameter_->type_ = schema::PrimitiveType_AddFusion;
+  for (size_t i = C1NUM; i < in_tensors_.size(); i++) {
+    sub_in_tensors_[C0NUM] = in_tensors_[i];
+    sub_in_tensors_[C1NUM] = sub_out_tensors_[C0NUM];
+    auto ret_2 = lite::KernelInferShape(sub_in_tensors_, sub_out_tensors_, op_parameter_);
+    if (ret_2 != RET_OK || sub_out_tensors_.empty()) {
+      MS_LOG(WARNING) << "Infer shape as Arithmetic on input " << (i - 1) << " and " << i << " failed";
+      op_parameter_->type_ = PrimitiveType_FusionEltwise;
+      return ret_2;
+    }
+  }
+  op_parameter_->type_ = PrimitiveType_FusionEltwise;
   return RET_OK;
 }
 
