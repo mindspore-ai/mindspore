@@ -48,13 +48,17 @@ const AnfNodePtr ConvertDataTypeForCNodeInput(const AnfNodePtr &node, size_t inp
     return nullptr;
   } else if (infer_type == src_type) {
     // Create cast primitive.
+    MS_EXCEPTION_IF_NULL(prim::kPrimCast);
     PrimitivePtr cast_prim = std::make_shared<Primitive>(prim::kPrimCast->name());
+    MS_EXCEPTION_IF_NULL(cast_prim);
     (void)cast_prim->AddAttr("dst_type", TypeIdToType(dest_type));
     (void)cast_prim->AddAttr("DstT", TypeIdToType(dest_type));
     (void)cast_prim->AddAttr("SrcT", TypeIdToType(src_type));
     // Create dest type node.
     auto dest_type_ptr = TypeIdToType(dest_type);
     auto dest_type_node = NewValueNode(dest_type_ptr);
+    MS_EXCEPTION_IF_NULL(dest_type_node);
+    MS_EXCEPTION_IF_NULL(dest_type_ptr);
     dest_type_node->set_abstract(dest_type_ptr->ToAbstract());
     // Insert Cast node.
     auto func_graph = node->func_graph();
@@ -69,7 +73,7 @@ const AnfNodePtr ConvertDataTypeForCNodeInput(const AnfNodePtr &node, size_t inp
     cast->set_abstract(cast_abstract);
     auto manager = func_graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
-    manager->SetEdge(node, input_idx, cast);
+    manager->SetEdge(node, SizeToInt(input_idx), cast);
   } else {
     MS_LOG(EXCEPTION) << "Invalid data type: " << infer_type;
   }

@@ -22,6 +22,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
+const size_t kOne = 1;
 ShapeVector GetOutputInferShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto shape = common::AnfAlgo::GetOutputInferShape(node, 0);
@@ -48,14 +49,14 @@ std::vector<int64_t> InferBroadcastShape(const std::vector<int64_t> &x_shape, co
   auto length = x_length < y_length ? x_length : y_length;
   std::vector<int64_t> broadcast_shape;
   if (x_length == length) {
-    (void)std::copy(y_shape.begin(), y_shape.end() - length, std::back_inserter(broadcast_shape));
+    (void)std::copy(y_shape.begin(), y_shape.end() - SizeToInt(length), std::back_inserter(broadcast_shape));
   } else {
-    (void)std::copy(x_shape.begin(), x_shape.end() - length, std::back_inserter(broadcast_shape));
+    (void)std::copy(x_shape.begin(), x_shape.end() - SizeToInt(length), std::back_inserter(broadcast_shape));
   }
   for (size_t i = length; i > 0; --i) {
-    if (x_shape[x_length - i] == 1) {
+    if (x_shape[x_length - i] == kOne) {
       broadcast_shape.push_back(y_shape[y_length - i]);
-    } else if (y_shape[y_length - i] == 1) {
+    } else if (y_shape[y_length - i] == kOne) {
       broadcast_shape.push_back(x_shape[x_length - i]);
     } else if (x_shape[x_length - i] == y_shape[y_length - i]) {
       broadcast_shape.push_back(x_shape[x_length - i]);
@@ -69,6 +70,7 @@ std::vector<int64_t> InferBroadcastShape(const std::vector<int64_t> &x_shape, co
   }
   return broadcast_shape;
 }
+
 std::vector<int64_t> GetAxis(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto output_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
@@ -168,6 +170,7 @@ AnfNodePtr ClipByNormFissionGe::CreateConstantNode(const FuncGraphPtr &func_grap
   auto tensor = std::make_shared<tensor::Tensor>(type_id, shape_vec);
   MS_EXCEPTION_IF_NULL(func_graph);
   ValueNodePtr value_node = CreateValueNode(tensor);
+  MS_EXCEPTION_IF_NULL(value_node);
   auto constant_node = CreateCNodeBase(func_graph, {value_node}, op_name, inp);
   MS_EXCEPTION_IF_NULL(constant_node);
 
@@ -256,6 +259,7 @@ AnfNodePtr ClipByNormFissionGe::CreateCastNode(const FuncGraphPtr &func_graph, c
   } else if (dst_type_id == kNumberTypeFloat32) {
     common::AnfAlgo::SetNodeAttr(kAttrDstType, kFloat32, cast);
   } else {
+    MS_EXCEPTION_IF_NULL(prim::kPrimClipByNorm);
     MS_EXCEPTION(TypeError) << "For '" << prim::kPrimClipByNorm->name()
                             << "`, the data type of input args only supports float16 or float32.";
   }
@@ -294,10 +298,12 @@ const AnfNodePtr ClipByNormFissionGe::Process(const FuncGraphPtr &func_graph, co
   // Create `op3 = cast(op2)` to float32 data type
   auto reduce_sum_cast = CreateCastNode(func_graph, reduce_sum, reduce_sum_output_shape, x_type_id, dst_type_id);
   // Create `op4 = greater(op3, zeros)` op
+  MS_EXCEPTION_IF_NULL(prim::kPrimZerosLike);
   auto zeros_node =
     CreateConstantNode(func_graph, reduce_sum_cast, reduce_sum_output_shape, dst_type_id, prim::kPrimZerosLike->name());
   auto greater = CreateGreaterNode(func_graph, reduce_sum_cast, zeros_node, reduce_sum_output_shape);
   // Create `op5 = select(op4, op3, Ones)` op
+  MS_EXCEPTION_IF_NULL(prim::kPrimOnesLike);
   auto ones_node =
     CreateConstantNode(func_graph, reduce_sum_cast, reduce_sum_output_shape, dst_type_id, prim::kPrimOnesLike->name());
   auto safe_reduce_sum_cast =

@@ -20,7 +20,6 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
@@ -77,6 +76,7 @@ const AnfNodePtr AvgPoolGradForGE::Process(const FuncGraphPtr &graph, const AnfN
   origin_shape_node->set_abstract(origin_shape_value->ToAbstract());
   auto new_avg_pool_node = graph->NewCNode(
     {NewValueNode(prim::kPrimAvgPoolGradGe), origin_shape_node, avg_pool_grad_node->input(kAvgPoolGradInputGradIndex)});
+  MS_EXCEPTION_IF_NULL(new_avg_pool_node);
   common::AnfAlgo::CopyNodeAttr(kPoolKernelSizeAttrName, avg_pool_grad_node, new_avg_pool_node);
   common::AnfAlgo::CopyNodeAttr(kPoolStridesAttrName, avg_pool_grad_node, new_avg_pool_node);
   common::AnfAlgo::SetNodeAttr(kPoolDataFormatAttrName, MakeValue(format), new_avg_pool_node);

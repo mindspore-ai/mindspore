@@ -16,8 +16,8 @@
 
 #include "plugin/device/ascend/optimizer/ge/ge_specialized_prepare.h"
 
+#include <vector>
 #include <memory>
-#include <utility>
 #include <unordered_map>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace opt {
-void GeTensorArrayPrepare::InsertFlowOutputToTA(const AnfNodePtr &node) const {
+void GeTensorArrayPrepare::InsertFlowOutputToTA(const AnfNodePtr &node) {
   auto fg = node->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
   auto mgr = fg->manager();
@@ -43,10 +43,13 @@ void GeTensorArrayPrepare::InsertFlowOutputToTA(const AnfNodePtr &node) const {
     ta_node->set_input(iter.second, new_tuple_get_node);
   }
 }
-void GeTensorArrayPrepare::TransformTASizeFromAttrToInput(const AnfNodePtr &node) const {
+
+void GeTensorArrayPrepare::TransformTASizeFromAttrToInput(const AnfNodePtr &node) {
   auto ta_node = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(ta_node);
   int32_t res_size = 0;
-  PrimitivePtr prim = GetValueNode<PrimitivePtr>(ta_node->input(0));
+  auto prim = GetValueNode<PrimitivePtr>(ta_node->input(0));
+  MS_EXCEPTION_IF_NULL(prim);
   // get size attr
   if (prim->HasAttr("size")) {
     auto size_value_ptr = prim->GetAttr("size");
@@ -56,6 +59,7 @@ void GeTensorArrayPrepare::TransformTASizeFromAttrToInput(const AnfNodePtr &node
   // generate size input
   auto size_node = NewValueNode(MakeValue(res_size));
   auto node_abstract = std::make_shared<abstract::AbstractScalar>(res_size);
+  MS_EXCEPTION_IF_NULL(size_node);
   size_node->set_abstract(node_abstract);
   auto origin_inputs = ta_node->inputs();
   // set cnode input
@@ -83,6 +87,7 @@ void GeTensorArrayPrepare::TransformTASizeFromAttrToInput(const AnfNodePtr &node
   auto new_ta_abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
   ta_node->set_abstract(new_ta_abstract);
 }
+
 const BaseRef GeTensorArrayPrepare::DefinePattern() const {
   VarPtr seq_xs = std::make_shared<SeqVar>();
   return VectorRef({prim::kPrimTensorArray, seq_xs});
