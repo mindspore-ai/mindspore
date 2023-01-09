@@ -24,6 +24,7 @@ assign_add_ds_op_info = TBERegOp("AssignAdd") \
     .kernel_name("assign_add") \
     .partial_flag(True) \
     .dynamic_shape(True) \
+    .dynamic_compile_static(True) \
     .input(0, "ref", False, "required", "all") \
     .input(1, "value", False, "required", "all") \
     .output(0, "ref", False, "required", "all") \

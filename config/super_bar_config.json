@@ -406,7 +406,8 @@
     "ACos": "dynamic impl error",
     "TransData ": "support boll",
     "ScatterNdD ": "Accuracy issues",
-    "Trace": "Hadn't adapted tbe implementation"
+    "Trace": "Hadn't adapted tbe implementation",
+    "AssignAdd" : "Frac_nz in pangu not support"
   },
   "SkipNodes": [
     "BroadcastTo",
@@ -434,6 +435,7 @@
     "Trace",
     "ACos",
     "TransData",
-    "ScatterNdD"
+    "ScatterNdD",
+    "AssignAdd"
   ]
 }
