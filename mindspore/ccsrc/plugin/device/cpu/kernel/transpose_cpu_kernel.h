@@ -78,8 +78,10 @@ class TransposeFwdCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> perm_;
   size_t num_axes_{0};
   size_t data_num_{0};
+  size_t output_size_{1};
   std::vector<int64_t> strides_;
   std::vector<int64_t> out_strides_;
+  std::vector<size_t> tanspose_index_;
   bool got_perm_value_{false};
 
   using TypeKernel =

@@ -49,7 +49,7 @@ class BinaryCrossEntropyCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void LaunchToScalar(const int &input_size, const ReductionType &reduction, T *loss, T *tmp_loss) const;
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   TypeId dtype_{kTypeUnknown};
   size_t input_size_{1};

@@ -81,11 +81,11 @@ int MaskedFillCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   MS_EXCEPTION_IF_ZERO("value_size", value_size_);
   inner_size_ = output_size_ / value_size_;
   MS_EXCEPTION_IF_ZERO("inner_size", inner_size_);
-  mask_index_.clear();
-  input_index_.clear();
-  mask_index_.resize(output_size_);
-  input_index_.resize(output_size_);
   if (need_broadcast_) {
+    mask_index_.clear();
+    input_index_.clear();
+    mask_index_.resize(output_size_);
+    input_index_.resize(output_size_);
     BroadcastIterator base_iter(input_shape, mask_shape, output_shape);
     base_iter.SetPos(0);
     for (size_t i = 0; i < output_size_; i++) {

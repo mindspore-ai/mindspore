@@ -88,9 +88,12 @@ bool DropoutGradBwdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   const T *mask = reinterpret_cast<T *>(inputs[1]->addr);
   const T scale = static_cast<T>(1.f / keep_prob_);
 
-  for (size_t i = 0; i < num_count_; i++) {
-    output[i] = input[i] * mask[i] * scale;
-  }
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      output[i] = input[i] * mask[i] * scale;
+    }
+  };
+  ParallelLaunchAutoSearch(task, num_count_, this, &parallel_search_info_);
   return true;
 }
 

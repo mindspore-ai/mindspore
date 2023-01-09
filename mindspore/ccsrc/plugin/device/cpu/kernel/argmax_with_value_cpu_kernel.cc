@@ -71,23 +71,28 @@ bool ArgMaxWithValueCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   auto output0 = reinterpret_cast<int32_t *>(outputs[0]->addr);
   auto output1 = reinterpret_cast<T *>(outputs[1]->addr);
 
-  for (size_t i = 0; i < num_before_axis_; i++) {
-    size_t src_index_i = i * dim_axis_ * num_after_axis_;
-    for (size_t j = 0; j < num_after_axis_; j++) {
-      std::vector<T> array_axis;
-      size_t src_index_j = src_index_i + j;
+  auto task = [&](size_t start, size_t end) {
+    for (size_t pos = start; pos < end; pos++) {
+      size_t i = pos / num_after_axis_;
+      size_t j = pos % num_after_axis_;
+      size_t src_index_j = i * dim_axis_ * num_after_axis_ + j;
+
+      T max_value = input[src_index_j];
+      int32_t max_index = 0;
       for (size_t k = 0; k < dim_axis_; k++) {
         size_t src_index_k = k * num_after_axis_ + src_index_j;
-        array_axis.push_back(input[src_index_k]);
+        if (input[src_index_k] > max_value) {
+          max_value = input[src_index_k];
+          max_index = SizeToInt(k);
+        }
       }
-      auto max_ops = std::max_element(array_axis.begin(), array_axis.end());
-      auto max_index = static_cast<int32_t>(std::distance(array_axis.begin(), max_ops));
       auto dst_index = i * num_after_axis_ + j;
       output0[dst_index] = max_index;
-      auto src_index = IntToSize(max_index) * num_after_axis_ + src_index_j;
-      output1[dst_index] = input[src_index];
+      output1[dst_index] = max_value;
     }
-  }
+  };
+  ParallelLaunchAutoSearch(task, num_before_axis_ * num_after_axis_, this, &parallel_search_info_);
+
   return true;
 }
 

@@ -48,6 +48,8 @@ int ConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
+
+  input_num_ = inputs.size();
   inputs_shape_.clear();
   for (size_t i = 0; i < inputs.size(); ++i) {
     inputs_shape_.push_back(inputs[i]->GetShapeVector());
@@ -56,58 +58,60 @@ int ConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (axis_ < 0) {
     axis_ = axis_ + SizeToInt(inputs_shape_[0].size());
   }
+
+  input_flat_shape_list_.clear();
+  for (size_t i = 0; i < input_num_; i++) {
+    auto input_shape_i = inputs_shape_[i];
+    auto flat_shape = CPUKernelUtils::FlatShapeByAxis(input_shape_i, axis_);
+    (void)input_flat_shape_list_.emplace_back(flat_shape);
+  }
+
+  output_dim_ = 0;
+  offset_.clear();
+  for (size_t j = 0; j < input_num_; ++j) {
+    offset_.push_back(output_dim_);
+    output_dim_ += LongToSize(input_flat_shape_list_[j][1]);
+  }
+
   return KRET_OK;
 }
 
 template <typename T>
 bool ConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &outputs) {
-  const size_t input_num = inputs.size();
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConcatOutputsNum, kernel_name_);
 
-  std::vector<ShapeVector> input_flat_shape_list;
-  input_flat_shape_list.reserve(input_num);
-  for (size_t i = 0; i < input_num; i++) {
-    auto input_shape_i = inputs_shape_[i];
-    auto flat_shape = CPUKernelUtils::FlatShapeByAxis(input_shape_i, axis_);
-    (void)input_flat_shape_list.emplace_back(flat_shape);
-  }
-
-  size_t output_dim_1 = 0;
-  for (size_t j = 0; j < input_num; ++j) {
-    output_dim_1 += LongToSize(input_flat_shape_list[j][1]);
-  }
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   std::vector<T *> input_addr_list;
-  for (size_t j = 0; j < input_num; ++j) {
+  for (size_t j = 0; j < input_num_; ++j) {
     auto *tmp_addr = reinterpret_cast<T *>(inputs[j]->addr);
     (void)input_addr_list.emplace_back(tmp_addr);
   }
-  if (input_flat_shape_list.size() == 0 || input_flat_shape_list[0].size() == 0) {
+  if (input_flat_shape_list_.size() == 0 || input_flat_shape_list_[0].size() == 0) {
     return true;
   }
-  // each input's row of shape after flat are same
-  auto before_axis = LongToSize(input_flat_shape_list[0][0]);
+
+  auto concat_times = LongToSize(input_flat_shape_list_[0][0]) * input_num_;
   auto task = [&](size_t start, size_t end) {
-    for (size_t i = start; i < end; ++i) {
-      auto output_ptr = output_addr + i * output_dim_1;
-      for (size_t j = 0; j < input_num; ++j) {
-        if (input_flat_shape_list[j][1] == 0) {
-          continue;
-        }
-        auto copy_num = LongToSize(input_flat_shape_list[j][1]);
-        auto copy_size = copy_num * sizeof(T);
-        auto offset = copy_num * i;
-        auto ret = memcpy_s(output_ptr, copy_size, input_addr_list[j] + offset, copy_size);
-        if (ret != EOK) {
-          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed. Error no: " << ret;
-        }
-        output_ptr += copy_num;
+    for (size_t pos = start; pos < end; ++pos) {
+      size_t i = pos / input_num_;
+      size_t j = pos % input_num_;
+
+      if (input_flat_shape_list_[j][1] == 0) {
+        continue;
+      }
+      auto copy_num = LongToSize(input_flat_shape_list_[j][1]);
+      auto copy_size = copy_num * sizeof(T);
+      auto offset = copy_num * i;
+      auto output_ptr = output_addr + i * output_dim_ + offset_[j];
+      auto ret = memcpy_s(output_ptr, copy_size, input_addr_list[j] + offset, copy_size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s failed. Error no: " << ret;
       }
     }
   };
-  ParallelLaunchAutoSearch(task, before_axis, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, concat_times, this, &parallel_search_info_);
   return true;
 }
 

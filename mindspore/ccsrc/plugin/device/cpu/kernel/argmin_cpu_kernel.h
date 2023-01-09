@@ -59,8 +59,6 @@ class ArgminCpuKernelMod : public NativeCpuKernelMod {
   int64_t num_after_axis_{0};
   int64_t dim_axis_{0};
   int64_t axis_{0};
-
-  AxisIterator axisIterator_{};
 };
 }  // namespace kernel
 }  // namespace mindspore
