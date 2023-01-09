@@ -80,7 +80,7 @@ def test_save_graphs1():
                 i = i + 2
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="test_save_graphs1")
+    context.set_context(save_graphs=3, save_graphs_path="test_save_graphs1")
     a = Tensor(np.array(1), mindspore.int32)
     b = Tensor(np.array(3), mindspore.int32)
     graph_forward_net = ForwardNet(max_cycles=10)
@@ -90,7 +90,7 @@ def test_save_graphs1():
     ir, dat, dot = count_ir_files("test_save_graphs1")
     assert ir > 15
     assert dat == 0
-    assert dot == 0
+    assert dot > 0
     remove_path("./test_save_graphs1")
     context.set_context(save_graphs=False)
 
@@ -126,13 +126,13 @@ def test_save_graphs2():
     forward_net = ForwardNet(max_cycles=4)
     backward_net = BackwardNet(forward_net)
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_save_graphs2/tmp")
+    context.set_context(save_graphs=3, save_graphs_path="./test_save_graphs2/tmp")
     backward_net(a, b)
 
     ir, dat, dot = count_ir_files("test_save_graphs2/tmp")
     assert ir > 15
     assert dat == 0
-    assert dot == 0
+    assert dot > 15
     remove_path("./test_save_graphs2")
     context.set_context(save_graphs=False)
 
@@ -170,12 +170,12 @@ def test_save_graphs3():
     graph_forward_net = ForwardNetNoAssign(max_cycles=4)
     graph_backward_net = BackwardNet(graph_forward_net)
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_save_graphs3/../test_save_graphs3")
+    context.set_context(save_graphs=3, save_graphs_path="./test_save_graphs3/../test_save_graphs3")
     graph_backward_net(a, b)
 
     ir, dat, dot = count_ir_files("test_save_graphs3")
     assert ir > 15
     assert dat == 0
-    assert dot == 0
+    assert dot > 15
     remove_path("./test_save_graphs3")
     context.set_context(save_graphs=False)

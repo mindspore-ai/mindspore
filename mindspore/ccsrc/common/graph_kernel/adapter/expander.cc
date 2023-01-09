@@ -201,9 +201,9 @@ AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const
     }
   }
 #ifdef ENABLE_DUMP_IR
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(fully)) {
     DumpIR("verbose_ir_files/expand_" + GetCNodeFuncName(node->cast<CNodePtr>()) + ".ir", expand_fg);
   }
 #endif

@@ -51,7 +51,7 @@ def test_jit():
         return x + 1
 
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_context(save_graphs=True, save_graphs_path="ir_dump_path")
+    context.set_context(save_graphs=3, save_graphs_path="ir_dump_path")
     input1 = np.random.randn(5, 5)
     add(Tensor(input1, ms.float32))
     result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py:51/        return x + 1/")
@@ -74,7 +74,7 @@ def test_cell_jit():
             return x
 
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_context(save_graphs=True, save_graphs_path="ir_dump_path")
+    context.set_context(save_graphs=3, save_graphs_path="ir_dump_path")
     input1 = np.random.randn(5, 5)
     net = Net()
     net(Tensor(input1, ms.float32))

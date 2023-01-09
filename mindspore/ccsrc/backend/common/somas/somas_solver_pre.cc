@@ -196,8 +196,7 @@ void SomasSolverPre::Log(const session::KernelGraph &graph, const TensorsDescMap
                          const vector<vector<size_t>> &continuous_v) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (!save_graphs) {
+  if (context_ptr->CanDump(advanced)) {
     return;
   }
   SolverInputLog(graph, tensors, continuous_v);

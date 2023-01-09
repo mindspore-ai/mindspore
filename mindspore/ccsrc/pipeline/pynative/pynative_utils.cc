@@ -168,10 +168,10 @@ std::shared_ptr<PyNativeExecutor> Common::GetPyNativeExecutor() {
 }
 
 void Common::DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph) {
-#ifdef ENABLE_DUMP_IR
-  const auto &ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+#ifdef ENABLE_DUMP_IRs
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(introductory)) {
     DumpIR(filename, graph);
   }
 #endif

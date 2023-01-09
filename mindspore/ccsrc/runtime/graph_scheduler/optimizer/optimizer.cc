@@ -65,10 +65,9 @@ std::string ActorSetOptimizer::GetPassFullName(const ActorSetPtr &actor_set, con
 
 void ActorSetOptimizer::DumpPassActorSet(const ActorSetPtr &actor_set, const std::string &pass_full_name) const {
   MS_EXCEPTION_IF_NULL(actor_set);
-  const auto &context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  auto save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (!save_graphs) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (!context->CanDump(advanced)) {
     return;
   }
 

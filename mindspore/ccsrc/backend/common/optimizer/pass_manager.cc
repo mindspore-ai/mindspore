@@ -111,9 +111,8 @@ void PassManager::DumpPassIR(const FuncGraphPtr &func_graph, const std::string &
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   static const auto enable_dump = !GetDumpConfig().disable_backend_dump;
-  if (save_graphs && enable_dump) {
+  if (context_ptr->CanDump(fully) && enable_dump) {
     std::ostringstream oss;
     oss << "verbose_ir_files"
         << "/";

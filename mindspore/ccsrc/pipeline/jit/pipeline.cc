@@ -1093,7 +1093,9 @@ void RDRRecordGraph(const size_t action_index, const size_t action_size, const s
 #ifdef ENABLE_DUMP_IR
 void RecordIR(const size_t action_index, const size_t action_size, const std::string &action_name,
               const FuncGraphPtr &graph, FuncGraphPtr *user_graph) {
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && graph != nullptr) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(introductory) && graph != nullptr) {
     *user_graph = graph;
     std::string base_name = GetBaseNameForIR(SizeToLong(action_index), action_name);
 
@@ -1108,7 +1110,7 @@ void RecordIR(const size_t action_index, const size_t action_size, const std::st
         DumpIR(base_name + ".ir", graph, false, kTopStack);
       }
     }
-    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPH_DOT)) {
+    if (context->CanDump(fully)) {
       draw::Draw(base_name + ".dot", graph);
     }
   }
@@ -1119,7 +1121,9 @@ void RecordIR(const size_t action_index, const size_t action_size, const std::st
 void SaveGraphForReadability(const std::string &action_name, const FuncGraphPtr &graph, const ResourcePtr &resource) {
   if (graph != nullptr && action_name.find("optimize") != string::npos) {
 #ifdef ENABLE_DUMP_IR
-    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->CanDump(advanced)) {
       DumpIRProto(graph, action_name);
     }
 #endif
@@ -1190,8 +1194,10 @@ void Pipeline::Run() {
 #endif
 
 #ifdef ENABLE_DUMP_IR
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && (user_graph != nullptr)) {
-    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPH_DOT)) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(advanced) && (user_graph != nullptr)) {
+    if (context->CanDump(fully)) {
       draw::DrawUserFuncGraph("ModelDigraph.dot", user_graph);
     }
   }
@@ -1677,10 +1683,9 @@ FuncGraphPtr LoadMindIR(const std::string &file_name, const char *dec_key, const
     func_graph = mindir_loader.LoadMindIR(file_name);
   }
 #ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(advanced)) {
     DumpIR("load.ir", func_graph);
   }
 #endif

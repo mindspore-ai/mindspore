@@ -652,7 +652,9 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
   if (is_top_cell_end) {
     auto output_node = GetInput(input_args_info->out_value, out_id);
     input_args_info->use_dynamic_shape_process |= CheckGraphDynamic(output_node);
-    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->CanDump(advanced)) {
       curr_g()->set_output(output_node);
       PyNativeAlgo::Common::DumpGraphIR("fg.ir", curr_g());
     }

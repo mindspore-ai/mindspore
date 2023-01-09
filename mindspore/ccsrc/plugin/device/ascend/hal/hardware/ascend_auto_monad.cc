@@ -61,9 +61,9 @@ constexpr size_t kFirstIndex = 1;
 
 #ifdef ENABLE_DUMP_IR
 bool IsSaveGraph() {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  return context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  return context->CanDump(advanced);
 }
 
 void DumpAllGraphs(NotNull<KernelGraphPtr> kg, std::set<KernelGraphPtr> *memo) {

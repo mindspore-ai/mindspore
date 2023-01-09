@@ -120,7 +120,7 @@ def test_sit_auto_mix_precision_model_o0():
     dataset1.set_label_data_type(np.float16)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_context(save_graphs=True, save_graphs_path='./test_amp_o0')
+    context.set_context(save_graphs=3, save_graphs_path='./test_amp_o0')
     net = Net(3, 10)
     net.to_float(dtype.float16)
     opt = nn.Momentum(params=net.trainable_params(), learning_rate=0.001, momentum=0.0009)
@@ -158,7 +158,7 @@ def test_sit_auto_mix_precision_model_o2():
                         fakedata_mode=FakeDataInitMode.OnesInit)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_context(save_graphs=True, save_graphs_path='./test_amp_o2')
+    context.set_context(save_graphs=3, save_graphs_path='./test_amp_o2')
     net = Net(3, 10)
     opt = nn.Momentum(params=net.trainable_params(), learning_rate=0.001, momentum=0.0009)
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
@@ -206,7 +206,7 @@ def test_sit_auto_mix_precision_model_o1():
                         fakedata_mode=FakeDataInitMode.OnesInit)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_context(save_graphs=True, save_graphs_path='./test_amp_o1')
+    context.set_context(save_graphs=3, save_graphs_path='./test_amp_o1')
     net = Net(3, 10)
     opt = nn.Momentum(params=net.trainable_params(), learning_rate=0.001, momentum=0.0009)
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=False)

@@ -36,6 +36,12 @@ enum MsBackendPolicy {
   kMsBackendUnknown = 5,
 };
 
+enum level {
+  introductory = 1,
+  advanced = 2,
+  fully = 3,
+};
+
 const int kGraphMode = 0;
 const int kPynativeMode = 1;
 const char kDeviceUnDefined[] = "DeviceUnDefined";
@@ -78,7 +84,6 @@ enum MsCtxParam : unsigned {
   MS_CTX_IS_PYNATIVE_GE_INIT,
   MS_CTX_PRECOMPILE_ONLY,
   MS_CTX_ENABLE_PROFILING,
-  MS_CTX_SAVE_GRAPHS_FLAG,
   MS_CTX_ENABLE_PARALLEL_SPLIT,
   MS_CTX_ENABLE_INFER_OPT,
   MS_CTX_GRAD_FOR_SCALAR,
@@ -89,13 +94,13 @@ enum MsCtxParam : unsigned {
   MS_CTX_ENABLE_RECOVERY,
   MS_CTX_ENABLE_GE_HETEROGENOUS,
   MS_CTX_DISABLE_FORMAT_TRANSFORM,
-  MS_CTX_SAVE_GRAPH_DOT,
   MS_CTX_TYPE_BOOL_END,
 
   // parameter of type int
   MS_CTX_TYPE_INT_BEGIN = MS_CTX_TYPE_BOOL_END,
   MS_CTX_EXECUTION_MODE = MS_CTX_TYPE_INT_BEGIN,
   MS_CTX_MEMORY_OPTIMIZE_LEVEL,
+  MS_CTX_SAVE_GRAPHS_FLAG,
   MS_CTX_TYPE_INT_END,
 
   // parameter of type uint32
@@ -156,6 +161,7 @@ class MS_CORE_API MsContext {
   void Refresh();
 
   bool enable_dump_ir() const;
+  bool CanDump(const int &level);
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
   // _comm_helper.py will try to dlopen libhccl.so, and minddata will try to dlopen libdvpp_utils.so. if load ascend

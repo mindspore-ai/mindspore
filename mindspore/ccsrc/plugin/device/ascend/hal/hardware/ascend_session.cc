@@ -446,10 +446,9 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   RootGraphExecutorValidate(NOT_NULL(root_graph), all_graphs);
 #ifdef ENABLE_DUMP_IR
   // dump graph before remove nop nodes
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(advanced)) {
     DumpIRProto(root_graph, "before_removeNop_" + std::to_string(graph_sum_));
   }
 #endif
@@ -570,10 +569,9 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) const {
   opt::AscendBackendIRFusionOptimization(child_graph);
   child_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(introductory)) {
     std::string file_name = "select_kernel_before_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
     DumpIR(file_name, child_graph);
   }
@@ -581,7 +579,7 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) const {
   // select kernel build info
   SelectKernel(child_graph);
 #ifdef ENABLE_DUMP_IR
-  if (save_graphs) {
+  if (context->CanDump(introductory)) {
     std::string file_name = "select_kernel_after_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
     DumpIR(file_name, child_graph);
   }
@@ -914,10 +912,9 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
   device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(kernel_graph);
   device::KernelAdjust::GetInstance().ProcessLoopSink(kernel_graph);
 #ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(advanced)) {
     DumpIR("after_adjust_kernel.ir", kernel_graph);
   }
 #endif
@@ -1385,10 +1382,9 @@ void AscendSession::RecurseSelectKernelInfo(const KernelGraphPtr &graph, std::se
   MS_LOG(INFO) << "Finish selecting kernel info in graph: " << graph->graph_id();
 
 #ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(introductory)) {
     std::string file_name = "select_kernel_after_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph);
   }

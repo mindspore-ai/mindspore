@@ -45,12 +45,12 @@ std::shared_ptr<MsContext> MsContext::inst_context_ = nullptr;
 
 MsContext::MsContext(const std::string &policy, const std::string &target) {
 #ifndef ENABLE_SECURITY
-  set_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG, false);
+  set_param<int>(MS_CTX_SAVE_GRAPHS_FLAG, 0);
   set_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH, ".");
   set_param<std::string>(MS_CTX_COMPILE_CACHE_PATH, "");
 #else
   // Need set a default value for arrays even if running in the security mode.
-  bool_params_[MS_CTX_SAVE_GRAPHS_FLAG - MS_CTX_TYPE_BOOL_BEGIN] = false;
+  int_params_[MS_CTX_SAVE_GRAPHS_FLAG - MS_CTX_TYPE_BOOL_BEGIN] = 0;
   string_params_[MS_CTX_SAVE_GRAPHS_PATH - MS_CTX_TYPE_STRING_BEGIN] = ".";
 #endif
   set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, "python");
@@ -110,7 +110,6 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_RECOVERY, false);
   set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
   set_param<bool>(MS_CTX_DISABLE_FORMAT_TRANSFORM, false);
-  set_param<bool>(MS_CTX_SAVE_GRAPH_DOT, false);
   set_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL, kOptimizeO0);
   set_param<uint32_t>(MS_CTX_OP_TIMEOUT, kOpTimeout);
 
@@ -356,5 +355,13 @@ void MsContext::CheckEnv(const std::string &device) {
       check_env_(device, library_path);
     }
   }
+}
+
+bool MsContext::CanDump(const int &level) {
+  int save_graphs = MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs >= level) {
+    return true;
+  }
+  return false;
 }
 }  // namespace mindspore
