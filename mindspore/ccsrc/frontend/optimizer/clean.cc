@@ -384,7 +384,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     constexpr auto internal_dict_key_str = "__internal_dict_key__";
     constexpr auto internal_dict_value_str = "__internal_dict_value__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').update_and_return_dict(" << internal_dict_self_str << ", "
+    script_buffer << "__import__('mindspore').common._utils.dict_setitem(" << internal_dict_self_str << ", "
                   << internal_dict_key_str << ", " << internal_dict_value_str << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);

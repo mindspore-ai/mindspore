@@ -751,8 +751,7 @@ py::object CreatePythonObject(const py::object &type, const py::tuple &args_kwar
 py::object CallPythonScript(const py::object &script, const py::tuple &args_kwargs) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   // `args_kwargs` is a tuple(dict(global), dict(local)).
-  return args_kwargs.empty() ? python_adapter::CallPyModFn(mod, PYTHON_MOD_EVAL_PY_SCRIPT, script)
-                             : python_adapter::CallPyModFn(mod, PYTHON_MOD_EVAL_PY_SCRIPT, script, args_kwargs);
+  return python_adapter::CallPyModFn(mod, PYTHON_MOD_EVAL_PY_SCRIPT, script, args_kwargs);
 }
 
 // Get the ids of python script string.

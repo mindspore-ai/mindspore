@@ -43,8 +43,7 @@ py::object CallPythonScript(const py::object &script, const py::tuple &args_kwar
   py::module mod = python_adapter::GetPyModule(python_mod_parse);
   constexpr auto python_mode_eval = "eval_script";
   // The `args_kwargs` is a tuple(dict(global), dict(local)).
-  return args_kwargs.empty() ? python_adapter::CallPyModFn(mod, python_mode_eval, script)
-                             : python_adapter::CallPyModFn(mod, python_mode_eval, script, args_kwargs);
+  return python_adapter::CallPyModFn(mod, python_mode_eval, script, args_kwargs);
 }
 }  // namespace
 
