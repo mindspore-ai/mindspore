@@ -133,6 +133,18 @@ def vm_impl_mul(self):
     return vm_impl
 
 
+@vm_impl_getters.register(P.Conj)
+def vm_impl_conj(self):
+    """Generate vm_impl function for Conj."""
+
+    def vm_impl(x):
+        x = x.asnumpy()
+        t = np.conj(x)
+        return Tensor(t)
+
+    return vm_impl
+
+
 @vm_impl_getters.register(P.Square)
 def vm_impl_square(self):
     """Generate vm_impl function for Square."""
