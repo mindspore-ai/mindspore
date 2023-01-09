@@ -68,7 +68,7 @@ size_t GetOutputTensorNumForTuple(const CNodePtr &make_tuple) {
       }
     }
   } else {
-    output_num += AnfAlgo::GetOutputTensorNum(make_tuple);
+    output_num += AnfAlgo::GetOutputElementNum(make_tuple);
   }
   return output_num;
 }

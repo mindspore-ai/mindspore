@@ -198,16 +198,15 @@ void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &
 size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) {
 #ifdef ENABLE_TUPLE_UNFOLD
   MS_EXCEPTION_IF_NULL(node);
-  const auto &kernel_info = node->kernel_info();
-  if (kernel_info == nullptr || (!kernel_info->has_build_info())) {
-    return 1;
-  }
-
   size_t res;
   TypePtr type = node->Type();
   if (type == nullptr) {
     res = 0;
   } else if (type->isa<Tuple>()) {
+    const auto &kernel_info = node->kernel_info();
+    if (kernel_info == nullptr || (!kernel_info->has_build_info())) {
+      return 1;
+    }
     res = GetOutputTensorNumByKernelInfo(node);
   } else if (type->isa<TypeNone>()) {
     res = 0;
@@ -1699,7 +1698,9 @@ TypeId AnfRuntimeAlgorithm::GetOutputObjectType(const AnfNodePtr &node, size_t o
 TypeId AnfRuntimeAlgorithm::GetInputObjectType(const CNodePtr &node, size_t input_idx) {
   MS_EXCEPTION_IF_NULL(node);
   auto input_node = common::AnfAlgo::GetInputNode(node, input_idx);
-  return AnfAlgo::GetAbstractObjectType(input_node->abstract());
+  const std::vector<PrimitivePtr> need_handled_prims = {prim::kPrimMakeTuple, prim::kPrimTupleGetItem};
+  auto real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false, need_handled_prims).first;
+  return AnfAlgo::GetAbstractObjectType(real_input_node->abstract());
 }
 
 std::vector<TypeId> AnfRuntimeAlgorithm::GetAllInputObjectType(const AnfNodePtr &node) {

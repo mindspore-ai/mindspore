@@ -38,6 +38,7 @@
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
+#include "kernel/oplib/oplib.h"
 
 namespace mindspore {
 namespace kernel {
@@ -1110,6 +1111,27 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t) {
   return bytes;
 }
 
+bool IsDynamicParamKernel(const std::string &op_name) {
+  const auto &op_info = kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyCPU);
+  constexpr auto kParamDynamic = "dynamic";
+
+  if (op_info == nullptr) {
+    return false;
+  }
+
+  const auto &input_io_info = op_info->inputs_ptr();
+  if (input_io_info.size() != 1 || input_io_info[0]->param_type() != kParamDynamic) {
+    return false;
+  }
+
+  const auto &output_io_info = op_info->outputs_ptr();
+  if (output_io_info.size() != 1 || output_io_info[0]->param_type() != kParamDynamic) {
+    return false;
+  }
+
+  return true;
+}
+
 std::vector<TypeId> GetOutputObjectTypeListFromKernelAttr(const kernel::KernelAttr &kernel_attr) {
   size_t output_attr_size = kernel_attr.GetOutputSize();
   std::vector<TypeId> res;
@@ -1261,7 +1283,11 @@ std::vector<KernelObjectType> CalKernelObjectTypes(const std::vector<TypeId> &ob
   if (object_types.size() == selected_object_types.size()) {
     for (size_t i = 0; i < selected_object_types.size(); ++i) {
       // Allsame/skip_check doesn't support the backoff.
-      if ((all_same || skip_check) && (selected_object_types[i] != object_types[i])) {
+      bool not_backoff = ((all_same || skip_check) && (selected_object_types[i] != object_types[i]));
+      // Ops which support tensor also support scalar.
+      bool scalar_compat =
+        ((selected_object_types[i] == kObjectTypeTensorType) && (object_types[i] == kObjectTypeNumber));
+      if (not_backoff || scalar_compat) {
         (void)ret.emplace_back(TypeIdToKernelObjectTypeForTupleUnfold(object_types[i]));
       } else {
         (void)ret.emplace_back(TypeIdToKernelObjectType(selected_object_types[i]));
@@ -1455,10 +1481,15 @@ void SetDynamicInputSizeAttr(const CNodePtr &cnode) {
     return;
   }
   std::vector<int64_t> dyn_input_sizes;
+  auto input_obj_types = AnfAlgo::GetInputKernelObjectTypes(cnode);
   size_t input_num = cnode->inputs().size() - 1;
   for (size_t i = 0; i < input_num; ++i) {
-    auto input_node = common::AnfAlgo::GetInputNode(cnode, i);
-    dyn_input_sizes.push_back(CalOutputTupleSize(input_node));
+    if (i < input_obj_types.size() && input_obj_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
+      auto input_node = common::AnfAlgo::GetInputNode(cnode, i);
+      dyn_input_sizes.push_back(CalOutputTupleSize(input_node));
+    } else {
+      dyn_input_sizes.push_back(-1);
+    }
   }
   if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
     common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);

@@ -194,6 +194,64 @@ class UnifyRepeatedGetitem : public opt::Pass {
   }
 };
 
+/* if a graphkernel node of multi-output is directly used by other kernel,
+ * change it to use getitem-maketuple.
+ *   %1 = call @graph_kernel(p1, p2)  // assume it has 3 outputs.
+ *   %2 = AddN(%1)
+ *   --->
+ *   %1 = call @graph_kernel(p1, p2)
+ *   %2 = tuple_getitem(%1, 0)
+ *   %3 = tuple_getitem(%1, 1)
+ *   %4 = tuple_getitem(%1, 2)
+ *   %5 = make_tuple(%2, %3, %4)
+ *   %6 = AddN(%5)
+ */
+class TupleNodeFormatter : public opt::Pass {
+ public:
+  bool Run(const FuncGraphPtr &func_graph) override {
+    auto mng = func_graph->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    auto todos = FindGraphKernelsWithMultiOutput(func_graph);
+    bool changed = false;
+    for (auto &node : todos) {
+      auto &users = mng->node_users()[node];
+      for (auto &user : users) {
+        if (!IsPrimitiveCNode(user.first, prim::kPrimTupleGetItem)) {
+          auto mt = TransToMaketuple(node);
+          (void)mng->Replace(node, mt);
+          changed = true;
+          break;
+        }
+      }
+    }
+    if (changed) {
+      (void)EliminateMaketupleGetitem(func_graph);
+    }
+    return changed;
+  }
+
+  AnfNodePtr TransToMaketuple(const AnfNodePtr &node) {
+    auto fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    auto node_abs = node->abstract()->cast<abstract::AbstractTuplePtr>();
+    MS_EXCEPTION_IF_NULL(node_abs);
+    auto output_num = SizeToLong(node_abs->size());
+    AnfNodePtrList mt_inputs{NewValueNode(prim::kPrimMakeTuple)};
+    mt_inputs.reserve(output_num + 1);
+    for (int64_t i = 0; i < output_num; i++) {
+      AnfNodePtrList gt_inputs{NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(MakeValue(i))};
+      gt_inputs.back()->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(i)));
+      auto &gt = mt_inputs.emplace_back(fg->NewCNode(gt_inputs));
+      gt->set_abstract(node_abs->elements()[i]);
+      Callback::Instance()->SetEmptyKernelInfo(gt);
+    }
+    auto mt = fg->NewCNode(mt_inputs);
+    mt->set_abstract(node_abs);
+    Callback::Instance()->SetEmptyKernelInfo(mt);
+    return mt;
+  }
+};
+
 bool EliminateRedundantOutput::Run(const FuncGraphPtr &func_graph) {
   auto mng = func_graph->manager();
   if (mng == nullptr) {
@@ -201,6 +259,7 @@ bool EliminateRedundantOutput::Run(const FuncGraphPtr &func_graph) {
     func_graph->set_manager(mng);
   }
   bool changed = false;
+  changed = std::make_shared<TupleNodeFormatter>()->Run(func_graph) || changed;
   changed = std::make_shared<UnifyRepeatedGetitem>()->Run(func_graph) || changed;
   changed = std::make_shared<UnifyRepeatedOutput>()->Run(func_graph) || changed;
   changed = std::make_shared<UnifyRepeatedGetitem>()->Run(func_graph) || changed;

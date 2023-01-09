@@ -38,8 +38,6 @@ namespace cpu {
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 using mindspore::kernel::KernelBuildInfo;
 namespace {
-constexpr auto kParamDynamic = "dynamic";
-
 static const std::set<std::string> kVmapCPUWhiteList = {kUnsortedSegmentMinOpName,
                                                         kUnsortedSegmentMaxOpName,
                                                         kUnsortedSegmentSumOpName,
@@ -250,7 +248,8 @@ void ExpandKernelAttrByDynamicSize(const CNodePtr &kernel_node, kernel::KernelAt
   MS_EXCEPTION_IF_NULL(kernel_attr);
   if (!has_tuple_input && kernel_attr->GetAllSame()) {
     ExpandKernelAttr(kernel_node, kernel_attr);
-  } else if (!skip_check && common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
+  } else if (!skip_check && common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node) &&
+             kernel_attr->GetInputSize() > 1) {
     auto dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrDynInputSizes);
     ExpandMultiDynamicAttr(kernel_node, dyn_input_sizes, kernel_attr);
   }
@@ -508,25 +507,6 @@ kernel::KernelAttr FillNoneInKernelAttr(const CNodePtr &kernel_node, const std::
 }
 }  // namespace
 
-bool IsDynamicParamKernel(const std::string &op_name) {
-  const auto &op_info = kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyCPU);
-  if (op_info == nullptr) {
-    return false;
-  }
-
-  const auto &input_io_info = op_info->inputs_ptr();
-  if (input_io_info.size() != 1 || input_io_info[0]->param_type() != kParamDynamic) {
-    return false;
-  }
-
-  const auto &output_io_info = op_info->outputs_ptr();
-  if (output_io_info.size() != 1 || output_io_info[0]->param_type() != kParamDynamic) {
-    return false;
-  }
-
-  return true;
-}
-
 kernel::KernelAttr BuildKernelFromInput(const std::vector<TypeId> &inputs, const std::vector<TypeId> &outputs,
                                         const kernel::KernelAttr &origin_attr) {
   kernel::KernelAttr attr = origin_attr;
@@ -642,7 +622,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
       UpdateCustomKernelBuildInfo(kernel_node, false);
       return {};
     }
-  } else if (IsDynamicParamKernel(op_name)) {
+  } else if (kernel::IsDynamicParamKernel(op_name)) {
     // Select for dynamic kernel(both the number and data type are undetermined).
     UpdateDynamicKernelBuildInfo(kernel_node);
     return {};
