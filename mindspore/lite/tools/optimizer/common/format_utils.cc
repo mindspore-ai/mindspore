@@ -238,6 +238,24 @@ bool IsSpecialType(const CNodePtr &cnode) {
          CheckPrimitiveType(cnode, prim::kPrimReturn);
 }
 
+int DetermineCertainOutputFormat(const CNodePtr &cnode, int index, Format *format) {
+  MS_CHECK_TRUE_MSG(cnode != nullptr && format != nullptr, RET_ERROR, "function's parameter is nullptr.");
+  *format = mindspore::NHWC;
+  auto prim = GetCNodePrimitive(cnode);
+  MS_CHECK_TRUE_MSG(prim != nullptr, RET_ERROR, "get primitive failed");
+  auto value_ptr = prim->GetAttr(kOutputsFormat);
+  if (value_ptr != nullptr) {
+    MS_CHECK_TRUE_MSG(value_ptr->isa<ValueSequeue>(), RET_ERROR, "outputs_format attr should be sequence.");
+    auto formats = CastToInt(value_ptr);
+    if (index >= 0 && static_cast<size_t>(index) < formats.size()) {
+      MS_CHECK_TRUE_MSG(formats[index] >= NCHW && formats[index] <= NCW, RET_ERROR,
+                        "format val is out of enum's range.");
+      *format = static_cast<Format>(formats[index]);
+    }
+  }
+  return RET_OK;
+}
+
 int DetermineCertainVarInputFormat(const CNodePtr &cnode, size_t index, Format *format) {
   MS_CHECK_TRUE_MSG(cnode != nullptr && format != nullptr, RET_ERROR, "function's parameter is nullptr.");
   auto var_input_info = GetRealCertainVarInput(cnode, index);
@@ -245,22 +263,9 @@ int DetermineCertainVarInputFormat(const CNodePtr &cnode, size_t index, Format *
     MS_LOG(ERROR) << "cannot get the real var input.";
     return RET_ERROR;
   }
-  *format = mindspore::NHWC;
   auto real_input_cnode = var_input_info.first;
   auto item_index = var_input_info.second;
-  auto input_node_prim = GetValueNode<PrimitivePtr>((real_input_cnode->input(0)));
-  MS_CHECK_TRUE_MSG(input_node_prim != nullptr, RET_ERROR, "get primitive failed");
-  auto value_ptr = input_node_prim->GetAttr(kOutputsFormat);
-  if (value_ptr != nullptr) {
-    MS_CHECK_TRUE_MSG(value_ptr->isa<ValueSequeue>(), RET_ERROR, "outputs_format attr should be sequence.");
-    auto formats = CastToInt(value_ptr);
-    if (item_index >= 0 && static_cast<size_t>(item_index) < formats.size()) {
-      MS_CHECK_TRUE_MSG(formats[item_index] >= NCHW && formats[item_index] <= NCW, RET_ERROR,
-                        "format val is out of enum's range.");
-      *format = static_cast<Format>(formats[item_index]);
-    }
-  }
-  return RET_OK;
+  return DetermineCertainOutputFormat(real_input_cnode, item_index, format);
 }
 }  // namespace opt
 }  // namespace mindspore
