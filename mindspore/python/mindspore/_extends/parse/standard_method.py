@@ -990,12 +990,19 @@ def cummax(x, axis):
     return F.cummax(x, axis)
 
 
-def index_fill(x, dim, index, value):
+def index_fill(x, axis, index, value):
     """
-    Fills the elements under the dim dimension of the input Tensor with the input value
+    Fills the elements under the axis dimension of the input Tensor with the input value
     by selecting the indices in the order given in index.
     """
-    return F.index_fill(x, dim, index, value)
+    return F.index_fill(x, axis, index, value)
+
+
+def index_select(x, axis, index):
+    """
+    Returns a new tensor which indexes the `x` tensor along dimension `axis` using the entries in `index` .
+    """
+    return F.index_select(x, axis, index)
 
 
 def copy(x):

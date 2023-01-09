@@ -342,6 +342,7 @@ Reduction函数
     mindspore.ops.isreal
     mindspore.ops.le
     mindspore.ops.less
+    mindspore.ops.lt
     mindspore.ops.maximum
     mindspore.ops.minimum
     mindspore.ops.ne
@@ -450,6 +451,7 @@ Array操作
     mindspore.ops.hsplit
     mindspore.ops.index_add
     mindspore.ops.index_fill
+    mindspore.ops.index_select
     mindspore.ops.inplace_add
     mindspore.ops.inplace_sub
     mindspore.ops.inplace_update
