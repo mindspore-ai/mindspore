@@ -35,7 +35,7 @@ mindspore.ops.huber_loss
         - **reduction** (str) - 应用于loss的reduction类型。取值为"mean"，"sum"或"none"。默认值："mean"。
         - **delta** (Union[int, float]) - 两种损失之间变化的阈值。该值必须为正。默认值：1.0。
 
-    输出：
+    返回：
         Tensor，和 `x` 具有相同的dtype和shape。
 
     异常：

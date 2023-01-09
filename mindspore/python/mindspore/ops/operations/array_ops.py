@@ -924,7 +924,7 @@ class UniqueConsecutive(Primitive):
 
     Examples:
         >>> x = Tensor(np.array([1, 1, 2, 2, 3, 1, 1, 2]), mstype.int32)
-        >>> unique_consecutive = UniqueConsecutive(True, True, None)
+        >>> unique_consecutive = ops.UniqueConsecutive(True, True, None)
         >>> output, idx, counts = unique_consecutive(x)
         >>> print(output)
         [1 2 3 1 2]
