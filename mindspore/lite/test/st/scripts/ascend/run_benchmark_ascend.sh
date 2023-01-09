@@ -174,4 +174,20 @@ if [[ ${backend} =~ "cloud" ]]; then
   fi
 fi
 
+if [[ ${backend} =~ "cloud" ]]; then
+  export LITE_ST_MODEL=${model_data_path}/models/hiai/mindspore_uniir_mobilenetv2.mindir
+  export LITE_ST_CPP_DIR=${benchmark_test}/cpp
+  bash ${benchmark_test}/run_device_mem_test.sh > run_device_mem_test.log
+  Run_device_example_status=$?
+  if [[ ${Run_device_example_status} != 0 ]];then
+    echo "Run device example failed"
+    cat run_device_mem_test.log
+    exit 1
+  else
+    echo "Run device example success"
+  fi
+else
+  echo "Skip run device example, while backend is ${backend}"
+fi
+
 exit ${Run_benchmark_status}

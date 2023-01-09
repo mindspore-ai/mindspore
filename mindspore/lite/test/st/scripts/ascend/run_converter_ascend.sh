@@ -7,6 +7,8 @@ function Run_Converter() {
     cd ${x86_path}/mindspore-lite-${version}-linux-${arch}/ || exit 1
     cp tools/converter/converter/converter_lite ./ || exit 1
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/
+    export LITE_HOME=$(pwd)
+    echo "LITE_HOME:${LITE_HOME}"
 
     # Prepare the config file list
     local ascend_cfg_file_list=("$models_ascend_config")

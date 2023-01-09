@@ -1,13 +1,13 @@
 #!/bin/bash
 
 function Run_python_ST() {
-  # $1:basePath; $2:whlPath; $3:modelPath; $4:cfgFileList; $5:backend;
+  # $1:basePath; $2:whlPath; $3:modelPath; $4:cfgFileList; $5:target;
   base_path=$1
   whl_path=$2
   model_path=$3
   in_data_path=$4
   cfg_file_list=$5
-  backend=$6
+  target=$6
   mindspore_lite_whl=`ls ${whl_path}/*.whl`
   if [[ -f "${mindspore_lite_whl}" ]]; then
     pip install ${mindspore_lite_whl} --force-reinstall --user || exit 1
@@ -41,7 +41,7 @@ function Run_python_ST() {
         done
       fi
       model_file=${model_path}'/'${model_name}'.mindir'
-      python test_inference_cloud.py ${model_file} ${input_files} ${input_shapes} ${backend}
+      python test_inference_cloud.py ${model_file} ${input_files} ${input_shapes} ${target}
       Run_python_st_status=$?
       if [[ ${Run_python_st_status} != 0 ]];then
         echo "run python model name:     ${model_name}     failed.";
