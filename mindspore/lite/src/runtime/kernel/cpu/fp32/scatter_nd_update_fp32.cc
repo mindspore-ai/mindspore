@@ -133,7 +133,6 @@ int ScatterNdUpdateCPUKernel::ScatterNdUpdate(int task_id) {
     MS_LOG(ERROR) << "DoScatterND failed, ret: " << ret;
     return RET_ERROR;
   }
-  in_tensors_.at(kScatterUpdateInputIndex)->IncRefCount();
   return RET_OK;
 }
 
