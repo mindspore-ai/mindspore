@@ -10,3 +10,6 @@ mindspore.Tensor.view_as
 
     返回：
         Tensor，和 `other` 具有相同的shape。
+
+    异常：
+        - **TypeError** - `other` 不是Tensor。

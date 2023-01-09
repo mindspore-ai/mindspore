@@ -1032,6 +1032,9 @@ class Tensor(Tensor_):
         Returns:
             Tensor, has the same shape as `other`.
 
+        Raises:
+            TypeError: If `other` is not a Tensor.
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
@@ -1043,6 +1046,8 @@ class Tensor(Tensor_):
             [1. 2. 3. 2. 3. 4.]
         """
         self._init_check()
+        if not isinstance(other, (Tensor, Tensor_)):
+            raise TypeError(f"For view_as, the input other must be a Tensor, but got {type(other)}")
         return self.view(other.shape)
 
     def t(self):
