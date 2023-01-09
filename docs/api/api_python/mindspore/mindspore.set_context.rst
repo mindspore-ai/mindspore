@@ -85,7 +85,14 @@ mindspore.set_context
         - **variable_memory_max_size** (str) - 此参数已弃用，将被删除。请使用 `max_device_memory` 。
         - **mempool_block_size** (str) - 设置设备内存池的块大小。格式为"xxGB"。默认值：1GB。最小值是1GB。实际使用的内存池块大小是设备的可用内存和 `mempool_block_size` 值中的最小值。
         - **op_timeout** (int) - 设置一个算子的最大执行时间，以秒为单位。如果执行时间超过这个值，系统将终止该任务。0意味着无限等待。默认值：600。
-        - **save_graphs** (bool) - 表示是否保存计算图。默认值：False。当 `save_graphs` 属性设为True时， `save_graphs_path` 属性用于设置中间编译图的存储路径。默认情况下，计算图保存在当前目录下。
+        - **save_graphs** (bool 或 int) - 表示是否保存中间编译图。默认值：0。可用的选项为：
+
+          - False或0：不保存中间编译图。
+          - True或1：运行时会输出图编译过程中生成的一些中间文件。
+          - 2：生成更多后端流程相关的ir文件。
+          - 3：生成可视化计算图和详细后端ir图。
+          
+          当 `save_graphs` 属性设为1、2、3或者True时， `save_graphs_path` 属性用于设置中间编译图的存储路径。默认情况下，计算图保存在当前目录下。
         - **save_graphs_path** (str) - 表示保存计算图的路径。默认值："."。如果指定的目录不存在，系统将自动创建该目录。在分布式训练中，图形将被保存到 `save_graphs_path/rank_${rank_id}/` 目录下。 `rank_id` 为集群中当前设备的ID。
         - **enable_dump** (bool) - 此参数已弃用，将在下一版本中删除。
         - **save_dump_path** (str) - 此参数已弃用，将在下一版本中删除。

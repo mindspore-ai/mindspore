@@ -808,9 +808,17 @@ def set_context(**kwargs):
         op_timeout (int): Set the maximum duration of executing an operator in seconds.
             If the execution time exceeds this value, system will terminate the task. 0 means endless wait.
             Default: 600.
-        save_graphs (bool): Whether to save graphs. Default: False.
-            When the `save_graphs` attribute is set as True, attribute of `save_graphs_path` is used to set the
-            intermediate compilation graph storage path. By default, the graphs are saved in the current directory.
+        save_graphs (bool or int): Whether to save intermediate compilation graphs. Default: 0.
+            Available values are:
+
+            - False or 0: disable saving of intermediate compilation graphs.
+            - True or 1: some intermediate files will be generated during graph compliation.
+            - 2: Generate more ir files related to backend process.
+            - 3: Generate visualization computing graphs and detailed backend ir graphs.
+
+            When the `save_graphs` attribute is set as True, 1, 2 or 3, attribute of `save_graphs_path` is used
+            to set the intermediate compilation graph storage path. By default, the graphs are saved in the current
+            directory.
         save_graphs_path (str): Path to save graphs. Default: ".".
             If the specified directory does not exist, the system will automatically create the directory.
             During distributed training, graphs will be saved to the directory of
