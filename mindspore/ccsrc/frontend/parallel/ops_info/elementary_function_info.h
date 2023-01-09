@@ -172,6 +172,18 @@ class CeilInfo : public ActivationOther {
   ~CeilInfo() override = default;
 };
 
+class CholeskyInfo : public Softmax {
+ public:
+  CholeskyInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
+      : Softmax(name, inputs_shape, outputs_shape, attrs) {}
+  ~CholeskyInfo() override = default;
+
+ protected:
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status GetAttrs() override;
+};
+
 class AtanhInfo : public ActivationOther {
  public:
   AtanhInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,

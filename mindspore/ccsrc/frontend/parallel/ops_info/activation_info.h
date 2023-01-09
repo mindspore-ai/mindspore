@@ -114,8 +114,6 @@ class Softmax : public ActivationBase {
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status GetAttrs() override;
-
- private:
   std::vector<int64_t> axis_;
 };
 
