@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include "runtime/rt.h"
 #include "ir/tensor.h"
 #include "include/common/utils/anfalgo.h"
@@ -68,11 +69,41 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
   return 0;
 }
 
+bool IsReduceOp(const std::string &op_type) {
+  const std::set<std::string> reduce_op_type = {prim::kPrimReduceAll->name(),  prim::kPrimReduceAny->name(),
+                                                prim::kPrimReduceMean->name(), prim::kPrimReduceMax->name(),
+                                                prim::kPrimReduceMin->name(),  prim::kPrimReduceProd->name(),
+                                                prim::kPrimReduceSum->name(),  prim::kPrimSquareSumV1->name()};
+  if (reduce_op_type.count(op_type)) {
+    return true;
+  }
+  return false;
+}
+
+void AclKernelMod::UpdateReduceAxisAttr(const AnfNodePtr &node) {
+  if (!IsReduceOp(op_type_)) {
+    return;
+  }
+  if (!common::AnfAlgo::HasNodeAttr("axis", node->cast<CNodePtr>())) {
+    return;
+  }
+  ShapeVector axes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "axis");
+  if (!axes.empty()) {
+    return;
+  }
+  auto in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  for (size_t i = 0; i < in_shape.size(); ++i) {
+    axes.push_back(i);
+  }
+  common::AnfAlgo::SetNodeAttr("axis", MakeValue(axes), node);
+}
+
 void AclKernelMod::ProcessAttribute(const std::shared_ptr<AclOpDesc> &op_desc_ptr) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   const auto &attr_to_input_maps = GeOpConvertor::GetNeedAddInput(node, true);
   const auto &input_names = kernel::AclUtils::GetOpInputAnchorNames(node);
+  UpdateReduceAxisAttr(node);
   auto attr_list = GeOpConvertor::GetAttrAndValue(node, true);
   for (auto &[attr_name, value] : attr_list) {
     if (value == nullptr) {

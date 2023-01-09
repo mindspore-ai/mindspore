@@ -120,6 +120,12 @@ void SetInputOutputNames(const std::vector<std::string> &input_names, const std:
 void SelectCallInlineKernelInfo(const CNodePtr &node);
 
 const std::set<std::string> kCommonFormatSet = {kOpFormat_DEFAULT, kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NCDHW};
+
+inline bool NeedInsertTransData(const ShapeVector &origin_shape, const std::string &format) {
+  bool shape_check =
+    origin_shape.size() > 1 || (origin_shape.size() == 1 && origin_shape[0] % SizeToLong(kCubeSize) != 0);
+  return kCommonFormatSet.find(format) == kCommonFormatSet.end() && (shape_check || format == kOpFormat_ND_RNN_BIAS);
+}
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ASCEND_HELPER_H_
