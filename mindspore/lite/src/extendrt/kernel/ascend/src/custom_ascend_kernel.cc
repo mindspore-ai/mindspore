@@ -181,8 +181,7 @@ int CustomAscendKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T, typename U>
-static bool UpdateCheckInputNums(const std::vector<T> &update_info, const std::vector<U> &inputs,
-                                 size_t input_weight = 0) {
+static bool CheckInputNums(const std::vector<T> &update_info, const std::vector<U> &inputs, size_t input_weight = 0) {
   if (update_info.empty()) {
     MS_LOG(ERROR) << "check update info size empty";
     return false;
@@ -190,6 +189,20 @@ static bool UpdateCheckInputNums(const std::vector<T> &update_info, const std::v
   if (update_info.size() + input_weight != inputs.size()) {
     MS_LOG(ERROR) << "update info size and inputs size check failed. update info size: " << update_info.size()
                   << ". inputs' size: " << inputs.size() << ". input weight: " << input_weight;
+    return false;
+  }
+  return true;
+}
+
+template <typename T, typename U>
+static bool CheckOutputNums(const std::vector<T> &update_info, const std::vector<U> &outputs) {
+  if (update_info.empty()) {
+    MS_LOG(ERROR) << "check update info size empty";
+    return false;
+  }
+  if (update_info.size() != outputs.size()) {
+    MS_LOG(ERROR) << "update info size and outputs size check failed. update info size: " << update_info.size()
+                  << ". outputs' size: " << outputs.size();
     return false;
   }
   return true;
@@ -205,8 +218,7 @@ void CustomAscendKernelMod::UpdateInputKernelTensorInfo() {
   const std::vector<TypeId> types = model_infer_->GetInputDataType();
   const std::vector<Format> formats = model_infer_->GetInputFormat();
   MS_LOG(INFO) << "check input kernel tensor info nums";
-  if (!UpdateCheckInputNums(shapes, inputs_) || !UpdateCheckInputNums(types, inputs_) ||
-      !UpdateCheckInputNums(formats, inputs_)) {
+  if (!CheckInputNums(shapes, inputs_) || !CheckInputNums(types, inputs_) || !CheckInputNums(formats, inputs_)) {
     return;
   }
 
@@ -287,17 +299,23 @@ bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &, const std::v
 }
 
 std::vector<KernelTensorPtr> CustomAscendKernelMod::RetrieveOutputShape() {
-  const std::vector<ShapeVector> shapes = model_infer_->GetOutputShape();
-  if (shapes.empty()) {
-    MS_LOG(ERROR) << "update output shape fail because got empty shape";
+  if (model_infer_ == nullptr) {
+    MS_LOG(ERROR) << "update input shape fail because model_infer_ is nullptr";
     return outputs_;
   }
-  if (shapes.size() != outputs_.size()) {
-    MS_LOG(ERROR) << "shapes size and outputs size are not same. shapes' size: " << shapes.size()
-                  << ". outputs' size: " << outputs_.size();
+  const std::vector<ShapeVector> shapes = model_infer_->GetOutputShape();
+  const std::vector<TypeId> types = model_infer_->GetOutputDataType();
+  const std::vector<Format> formats = model_infer_->GetOutputFormat();
+  MS_LOG(INFO) << "check output kernel tensor info nums";
+  if (!CheckOutputNums(shapes, outputs_) || !CheckOutputNums(types, outputs_) || !CheckOutputNums(formats, outputs_)) {
+    return outputs_;
   }
-  for (size_t i = 0; i < shapes.size(); ++i) {
-    outputs_.at(i)->SetShapeVector(shapes[i]);
+  for (size_t i = 0; i < outputs_.size(); ++i) {
+    auto &output = outputs_[i];
+    output->SetShapeVector(shapes[i]);
+    auto new_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), output->GetBaseShape());
+    TensorInfo tensor_info{formats[i], new_abstract, output->GetDeviceShapeAdaptively()};
+    output->SetTensorInfo(tensor_info);
   }
   return outputs_;
 }
