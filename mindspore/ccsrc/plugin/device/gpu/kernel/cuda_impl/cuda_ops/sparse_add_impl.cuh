@@ -26,7 +26,7 @@ CUDA_LIB_EXPORT void SparseAdd(const T *a_indices, const S *a_value, const T *b_
                                size_t *place_holder_index, int64_t *indices, bool *threshold_valid,
                                const size_t a_indices_num, const size_t b_indices_num,
                                S *res_store_mem, int64_t *sum_count,
-                               const K *threshold,  const uint32_t &device_id,
+                               const K *threshold,  const size_t indices_column, const uint32_t &device_id,
                                cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_ADD_IMPL_CUH_

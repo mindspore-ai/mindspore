@@ -60,6 +60,7 @@ class SparseAddGpuKernelMod : public NativeGpuKernelMod {
   static std::vector<std::pair<KernelAttr, SparseAddLaunchFunc>> func_list_;
   SparseAddLaunchFunc kernel_func_;
   cudaStream_t cuda_stream_;
+  size_t indices_column_ = 0;
   size_t a_indices_size_ = 0;
   size_t a_values_size_ = 0;
   size_t dense_shape_size_ = 0;
