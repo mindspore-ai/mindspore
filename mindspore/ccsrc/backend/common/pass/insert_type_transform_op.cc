@@ -318,6 +318,11 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
     // Get actual output type of TupleGetItem node.
     auto abs_type = AnfAlgo::GetAbstractObjectType(cnode->abstract());
     output_obj_type->push_back(kernel::TypeIdToKernelObjectType(abs_type));
+  } else if (IsPrimitiveCNode(cnode, prim::kPrimRealTupleGetItem)) {
+    general_input_obj_type_func();
+    // Get actual output type of RealTupleGetItem node.
+    auto abs_type = AnfAlgo::GetAbstractObjectType(cnode->abstract());
+    output_obj_type->push_back(kernel::TypeIdToKernelObjectType(abs_type));
   } else if (IsPrimitiveCNode(cnode, prim::kPrimTensorToScalar)) {
     general_input_obj_type_func();
     output_obj_type->push_back(KernelObjectType::SCALAR);
@@ -330,6 +335,33 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
   MS_LOG(INFO) << "Generate input and output object types for new node " << cnode->fullname_with_scope() << " "
                << cnode->DebugString() << ". Input object types: " << *input_obj_type
                << ". Output object types: " << *output_obj_type;
+}
+
+void UpdateAbsForTupleGetItem(const CNodePtr &tuple_get_item_node) {
+  MS_EXCEPTION_IF_NULL(tuple_get_item_node);
+  if (!IsPrimitiveCNode(tuple_get_item_node, prim::kPrimTupleGetItem)) {
+    MS_LOG(EXCEPTION) << "Node should be TupleGetItem, but got " << tuple_get_item_node->fullname_with_scope() << ", "
+                      << tuple_get_item_node->DebugString();
+  }
+  auto tuple_input = common::AnfAlgo::GetInputNode(tuple_get_item_node, kIndex0);
+  MS_EXCEPTION_IF_NULL(tuple_input);
+  auto input_abs = tuple_input->abstract();
+  MS_EXCEPTION_IF_NULL(input_abs);
+  if (!input_abs->isa<abstract::AbstractSequence>()) {
+    MS_LOG(EXCEPTION) << "TupleGetItem's first input abstract should be Sequence, but got " << input_abs->ToString();
+  }
+
+  auto seq_abs = input_abs->cast<abstract::AbstractSequencePtr>();
+  AbstractBasePtrList seq_element = seq_abs->elements();
+  // This method is used for TupleGetItem to RealTupleGetItem converting, the tuple elements must be scalar for now.
+  for (const auto &ele : seq_element) {
+    if (!ele->isa<abstract::AbstractScalar>()) {
+      MS_LOG(EXCEPTION) << "Element of the tuple should be scalar, but got " << ele->ToString();
+    }
+  }
+
+  int64_t item_index = GetGetitemIndex(tuple_get_item_node);
+  tuple_get_item_node->set_abstract(seq_element[item_index]);
 }
 
 // A map of kernel object type pairs to processing functions.
@@ -570,6 +602,9 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTupleUnfold(const FuncGraphP
     SetKernelInfoForValueNode(node->input(kIndex2)->cast<ValueNodePtr>());
   }
 
+  // Need to update TupleGetItem abstract.
+  UpdateAbsForTupleGetItem(node);
+
   // The primitive of user is changed.
   *new_prim = true;
   return new_inputs;
@@ -613,6 +648,11 @@ AnfNodePtrList InsertTypeTransformOp::ProcessScalarToTensor(const FuncGraphPtr &
   AnfNodePtrList inputs = {prim, input};
   CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(scalar_to_tensor);
+
+  // Data type of the tensor should be set as an attr of ScalarToTensor op.
+  size_t input_index = GetInputNodeIndex(input, node);
+  auto data_type = AnfAlgo::GetInputDeviceDataType(node, input_index);
+  common::AnfAlgo::SetNodeAttr("dtype", TypeIdToType(data_type), scalar_to_tensor);
 
   auto abs = GenerateAbsByOpInfer(prim::kPrimScalarToTensor, {input});
   MS_EXCEPTION_IF_NULL(abs);
