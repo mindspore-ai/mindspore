@@ -36,6 +36,7 @@ bool BiasAddGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_name_ = base_operator->name();
+  InitResource();
   return true;
 }
 
@@ -84,7 +85,7 @@ int BiasAddGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   dy_num_ *= SizeOf(dy_shape_);
   db_num_ *= SizeOf(db_shape_);
   MethodSelection();
-  InitResource();
+  SetResource();
   InitSizeLists();
   return KRET_OK;
 }
@@ -123,13 +124,10 @@ bool BiasAddGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 }
 
 void BiasAddGradGpuKernelMod::DestroyResource() noexcept {
-  if (use_cudnn_) {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyReduceTensorDescriptor(op_desc_),
-                                        "cudnnDestroyReduceTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(db_desc_), "cudnnDestroyTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(dy_desc_),
-                                        "cudnnDestroyOpTensorDescriptor failed");
-  }
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyReduceTensorDescriptor(op_desc_),
+                                      "cudnnDestroyReduceTensorDescriptor failed");
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(db_desc_), "cudnnDestroyTensorDescriptor failed");
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(dy_desc_), "cudnnDestroyOpTensorDescriptor failed");
 }
 
 void BiasAddGradGpuKernelMod::ResetResource() noexcept {
@@ -143,12 +141,8 @@ void BiasAddGradGpuKernelMod::ResetResource() noexcept {
   dy_shape_.clear();
   db_shape_.clear();
   data_format_ = kOpFormat_NCHW;
-  cudnn_handle_ = nullptr;
   cudnn_data_type_ = CUDNN_DATA_FLOAT;
   cudnn_compute_format_ = CUDNN_TENSOR_NCHW;
-  dy_desc_ = nullptr;
-  db_desc_ = nullptr;
-  op_desc_ = nullptr;
   input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
@@ -174,12 +168,15 @@ void BiasAddGradGpuKernelMod::MethodSelection() {
 }
 
 void BiasAddGradGpuKernelMod::InitResource() {
+  cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&dy_desc_), "cudnnCreateTensorDescriptor failed");
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&db_desc_), "cudnnCreateTensorDescriptor failed");
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateReduceTensorDescriptor(&op_desc_),
+                                      "cudnnCreateOpTensorDescriptor failed");
+}
+
+void BiasAddGradGpuKernelMod::SetResource() {
   if (use_cudnn_) {
-    cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&dy_desc_), "cudnnCreateTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&db_desc_), "cudnnCreateTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateReduceTensorDescriptor(&op_desc_),
-                                        "cudnnCreateOpTensorDescriptor failed");
     // Expand to 4 dims for cudnnSetTensorNdDescriptorEx.
     constexpr size_t four_4D = 4;
     size_t cudnn_dims = std::max(num_dims_, four_4D);
