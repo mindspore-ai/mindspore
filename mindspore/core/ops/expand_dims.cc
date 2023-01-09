@@ -47,22 +47,17 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
   const int64_t rank = SizeToLong(x_shape.size());
 
   constexpr auto kExpandDimsInputsNum = 2;
-  int64_t axis = 0;
+  std::vector<int64_t> axis;
   if (input_args.size() == kExpandDimsInputsNum) {
     auto input_value = input_args[kInputIndex1]->BuildValue();
     if (input_value->isa<tensor::Tensor>()) {
-      auto axis_vec = CheckAndConvertUtils::CheckTensorIntValue("axis", input_value, prim_name);
-      if (axis_vec.size() != 1) {
-        MS_LOG(EXCEPTION) << " The input number of ExpandDims axis must be int, but got " << axis_vec;
-      }
-      axis = axis_vec[0];
+      axis = CheckAndConvertUtils::CheckTensorIntValue("axis", input_value, prim_name);
     } else if (input_value->isa<Int64Imm>()) {
-      axis = GetValue<int64_t>(input_value);
+      axis.emplace_back(GetValue<int64_t>(input_value));
     } else if (input_value->isa<Int32Imm>()) {
-      axis = static_cast<int64_t>(GetValue<int32_t>(input_value));
+      axis.emplace_back(static_cast<int64_t>(GetValue<int32_t>(input_value)));
     } else if (input_value->isa<AnyValue>()) {
-      ShapeVector out_shape;
-      (void)out_shape.insert(out_shape.end(), x_shape.size() + 1, abstract::Shape::kShapeDimAny);
+      ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
       return std::make_shared<abstract::Shape>(out_shape);
     } else {
       MS_LOG(EXCEPTION) << "For " << primitive->name()
@@ -71,24 +66,21 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
   } else if (input_args.size() == 1) {
     auto value_ptr = primitive->GetAttr(kAxis);
     if (value_ptr->isa<tensor::Tensor>()) {
-      auto axis_vec = CheckAndConvertUtils::CheckTensorIntValue("axis", value_ptr, prim_name);
-      if (axis_vec.size() != 1) {
-        MS_LOG(EXCEPTION) << " The input number of ExpandDims axis must be int, but got " << axis_vec;
-      }
-      axis = axis_vec[0];
+      axis = CheckAndConvertUtils::CheckTensorIntValue("axis", value_ptr, prim_name);
     } else {
-      axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
+      axis.emplace_back(GetValue<int64_t>(primitive->GetAttr(kAxis)));
     }
   } else {
     MS_LOG(EXCEPTION) << " The input number of ExpandDims must be 1 or 2, but got " << input_args.size();
   }
-
-  CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-rank - 1, rank}, prim_name);
-  if (axis < 0) {
-    axis += rank + 1;
+  for (size_t idx = 0; idx < axis.size(); ++idx) {
+    if (axis[idx] > rank || axis[idx] < -rank - 1) {
+      MS_LOG(EXCEPTION) << "For " << primitive->name() << ", the value of axis should be in range of [" << -rank - 1
+                        << ", " << rank << "], but got axis: " << axis;
+    }
+    axis[idx] = axis[idx] < 0 ? axis[idx] + rank + 1 : axis[idx];
+    (void)x_shape.insert(x_shape.begin() + axis[idx], 1);
   }
-
-  (void)x_shape.insert(x_shape.begin() + axis, 1);
   return std::make_shared<abstract::Shape>(x_shape);
 }
 

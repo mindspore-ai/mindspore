@@ -68,6 +68,7 @@ from mindspore.ops.operations.math_ops import TridiagonalMatMul
 from mindspore.ops.operations.math_ops import TridiagonalSolve
 from mindspore.ops.operations.math_ops import Logit
 from mindspore.ops.operations.math_ops import Diagonal
+from mindspore.ops.operations.math_ops import EuclideanNorm
 from mindspore.ops.operations.array_ops import Transpose, MatrixSetDiagV3
 from mindspore.ops.operations.math_ops import Fmax
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
@@ -364,6 +365,20 @@ def renew_dim(shape, dim):
     tmp = [i for i in range(len(shape))]
     _ = tmp.pop(new_dim)
     return tuple(tmp)
+
+
+@bprop_getters.register(EuclideanNorm)
+def get_bprop_euclidean_norm(self):
+    """Generate bprop for EuclideanNorm"""
+    expand_dims = P.ExpandDims()
+    keep_dims = self.keep_dims
+    def bprop(x, axes, out, dout):
+        scale_v = dout / out
+        if not keep_dims and x.shape != ():
+            scale_v = expand_dims(scale_v, axes)
+        return (x * scale_v, zeros_like(axes))
+
+    return bprop
 
 
 @bprop_getters.register(Renorm)
