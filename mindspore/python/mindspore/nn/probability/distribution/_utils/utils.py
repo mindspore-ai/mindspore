@@ -237,12 +237,6 @@ def raise_none_error(name):
 
 
 @constexpr
-def raise_probs_logits_error():
-    raise TypeError(
-        "Either 'probs' or 'logits' must be specified, but not both.")
-
-
-@constexpr
 def raise_broadcast_error(shape_a, shape_b):
     raise ValueError(f"Shape {shape_a} and {shape_b} is not broadcastable.")
 

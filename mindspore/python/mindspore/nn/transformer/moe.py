@@ -18,7 +18,6 @@ Note: Mixture of Expert (MoE) structure. This is an experimental interface that 
 from __future__ import absolute_import
 from __future__ import division
 
-import math
 import numpy as np
 
 from mindspore.common.tensor import Tensor
@@ -134,7 +133,9 @@ def _check_moe_config(moe_config=None, parallel_config=None):
 
 @constexpr
 def calculate_expert_capacity(k, tokens_per_group, capacity_factor, expert_dim):
-    return math.ceil(k * tokens_per_group * capacity_factor / expert_dim)
+    res = k * tokens_per_group * capacity_factor / expert_dim
+    res_int = int(res)
+    return res_int if res < 0 or res == res_int else res_int + 1
 
 
 class MoE(Cell):

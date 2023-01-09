@@ -30,7 +30,7 @@ from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_device_num, _get_pipeline_stages
 from mindspore.log import _LogActionOnce
 from mindspore import log as logger
-from mindspore.nn.transformer.layers import _check_input_dtype, _check_input_shape
+from mindspore.nn.transformer.layers import _check_input_dtype
 from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, OpParallelConfig
 
 __all__ = ["CrossEntropyLoss"]
@@ -247,7 +247,4 @@ class CrossEntropyLoss(Cell):
         _check_input_dtype(F.dtype(logits), "logits", [mstype.float32, mstype.float16], self.cls_name)
         _check_input_dtype(F.dtype(label), "label", [mstype.int32], self.cls_name)
         _check_input_dtype(F.dtype(input_mask), "input_mask", [mstype.float32], self.cls_name)
-        _check_input_shape(F.shape(logits), "logits", self.cls_name, 2)
-        _check_input_shape(F.shape(label), "label", self.cls_name, 1)
-        _check_input_shape(F.shape(input_mask), "input_mask", self.cls_name, 1)
         return True
