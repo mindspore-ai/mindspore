@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "scatter_nd_update.h"
+#include "tensor_scatter_update.h"
 
 #include <string.h>
 
@@ -29,12 +29,12 @@
 namespace {
 const uint32_t kInputNum = 3;
 const uint32_t kOutputNum = 1;
-const char *kScatterNdUpdate = "ScatterNdUpdate";
+const char *kTensorScatterUpdate = "TensorScatterUpdate";
 }  // namespace
 
 namespace aicpu {
-uint32_t ScatterNdUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check ScatterNdUpdate Input and Output failed.");
+uint32_t TensorScatterUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
+  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check TensorScatterUpdate Input and Output failed.");
 
   Tensor *input_var = ctx.Input(0);
   Tensor *input_indices = ctx.Input(1);
@@ -90,7 +90,7 @@ uint32_t ScatterNdUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
   auto data_type_indices = input_indices->GetDataType();
 
   if (data_type_indices != DT_INT32 && data_type_indices != DT_INT64) {
-    KERNEL_LOG_ERROR("ScatterNdUpdate kernel data type [%s] not support.", DTypeStr(data_type_indices).c_str());
+    KERNEL_LOG_ERROR("TensorScatterUpdate kernel data type [%s] not support.", DTypeStr(data_type_indices).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -122,7 +122,7 @@ uint32_t ScatterNdUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return DTYPE_CHOOSE<std::complex<double>>(ctx);
     default:
-      KERNEL_LOG_ERROR("ScatterNdUpdate kernel data type [%s] not support.", DTypeStr(data_type_var).c_str());
+      KERNEL_LOG_ERROR("TensorScatterUpdate kernel data type [%s] not support.", DTypeStr(data_type_var).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -130,13 +130,13 @@ uint32_t ScatterNdUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename var_type>
-uint32_t ScatterNdUpdateCpuKernel::DTYPE_CHOOSE(CpuKernelContext &ctx) {
+uint32_t TensorScatterUpdateCpuKernel::DTYPE_CHOOSE(CpuKernelContext &ctx) {
   auto indices_type = static_cast<DataType>(ctx.Input(1)->GetDataType());
   switch (indices_type) {
     case DT_INT32:
-      return ScatterNdUpdateComputeRealKernel<var_type, int32_t>(ctx);
+      return TensorScatterUpdateComputeRealKernel<var_type, int32_t>(ctx);
     case DT_INT64:
-      return ScatterNdUpdateComputeRealKernel<var_type, int64_t>(ctx);
+      return TensorScatterUpdateComputeRealKernel<var_type, int64_t>(ctx);
     default:
       KERNEL_LOG_ERROR("[%s] Data type of input is not supported, input data type is [%s].", ctx.GetOpType().c_str(),
                        DTypeStr(indices_type).c_str());
@@ -145,7 +145,7 @@ uint32_t ScatterNdUpdateCpuKernel::DTYPE_CHOOSE(CpuKernelContext &ctx) {
 }
 
 template <typename var_type, typename indices_type>
-uint32_t ScatterNdUpdateCpuKernel::ScatterNdUpdateComputeRealKernel(CpuKernelContext &ctx) {
+uint32_t TensorScatterUpdateCpuKernel::TensorScatterUpdateComputeRealKernel(CpuKernelContext &ctx) {
   int64_t n_slices = 1;
   int64_t slice_size = 1;
 
@@ -206,5 +206,6 @@ uint32_t ScatterNdUpdateCpuKernel::ScatterNdUpdateComputeRealKernel(CpuKernelCon
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kScatterNdUpdate, ScatterNdUpdateCpuKernel);
+REGISTER_CPU_KERNEL(kTensorScatterUpdate, TensorScatterUpdateCpuKernel);
+
 }  // namespace aicpu
