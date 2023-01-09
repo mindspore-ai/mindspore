@@ -223,6 +223,7 @@ Element-by-Element Operations
     mindspore.ops.cos
     mindspore.ops.cosh
     mindspore.ops.cosine_similarity
+    mindspore.ops.cov
     mindspore.ops.deg2rad
     mindspore.ops.digamma
     mindspore.ops.div

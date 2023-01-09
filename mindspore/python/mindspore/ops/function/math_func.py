@@ -1879,6 +1879,146 @@ def cosine_similarity(x1, x2, dim=1, eps=1e-08):
     return output
 
 
+def _check_cov_weights(weights, weights_name, num_observations, valid_type, valid_type_name):
+    """check cov weights valid"""
+    if weights.ndim > 1:
+        raise ValueError(
+            f"For cov, the {weights_name} must have one or fewer dimensions, but got {weights.ndim} dimensions.")
+    if weights.dtype not in valid_type:
+        raise TypeError(
+            f"For cov, the dtype of {weights_name} must be {valid_type_name} type, but got type {weights.dtype}")
+    if ops.numel(weights) != num_observations:
+        raise ValueError(
+            f"For cov, the numel of {weights_name} must equal the number of columns of input, "
+            f"but got numel:{ops.numel(weights)}, number of columns of input:{num_observations}.")
+    return 0
+
+
+def cov(x, *, correction=1, fweights=None, aweights=None):
+    r"""
+    Estimates the covariance matrix of the variables given by the input matrix,
+    where rows are the variables and columns are the observations.
+
+    A covariance matrix is a square matrix giving the covariance of each pair of variables. The diagonal contains
+    the variance of each variable (covariance of a variable with itself). By definition, if `x` represents
+    a single variable (Scalar or 1D) then its variance is returned.
+
+    The unbiased sample covariance of the variables :math:`a` and :math:`b` is given by:
+
+    .. math::
+        \text{cov}_w(a,b) = \frac{\sum^{N}_{i = 1}(a_{i} - \bar{a})(b_{i} - \bar{b})}{N~-~1}
+
+    where :math:`\bar{a}` and :math:`\bar{b}` are the simple means of the :math:`a` and :math:`b` respectively.
+
+    If `fweights` and/or `aweights` are provided, the unbiased weighted covariance
+    is calculated, which is given by:
+
+    .. math::
+        \text{cov}_w(a,b) = \frac{\sum^{N}_{i = 1}w_i(a_{i} - \mu_a^*)(b_{i} - \mu_b^*)}{\sum^{N}_{i = 1}w_i~-~1}
+
+    where :math:`w` denotes `fweights` or `aweights` based on whichever is provided, or
+    :math:`w = fweights \times aweights` if both are provided, and
+    :math:`\mu_x^* = \frac{\sum^{N}_{i = 1}w_ix_{i} }{\sum^{N}_{i = 1}w_i}` is the weighted mean of the variable.
+
+    .. warning::
+        The values of `fweights` and `aweights` cannot be negative, and the negative weight scene result is undefined.
+
+    Args:
+        x (Tensor): A 2D matrix containing multiple variables and observations, or a
+            Scalar or 1D vector representing a single variable.
+
+    Keyword Args:
+        correction (int, optional): difference between the sample size and sample degrees of freedom.
+            Defaults to Bessel's correction, `correction = 1` which returns the unbiased estimate,
+            even if both `fweights` and `aweights` are specified. `correction = 0`
+            will return the simple average. Default: 1.
+        fweights (Tensor, optional): A Scalar or 1D tensor of observation vector frequencies representing the number of
+            times each observation should be repeated. Its numel must equal the number of columns of `x`.
+            Must have integer dtype. Ignored if `None`. Default: None.
+        aweights (Tensor, optional): A Scalar or 1D array of observation vector weights.
+            These relative weights are typically large for observations considered "important" and smaller for
+            observations considered less "important". Its numel must equal the number of columns of `x`.
+            Must have floating point dtype. Ignored if `None`. Default: None.
+
+    Returns:
+        Tensor, the covariance matrix of the variables.
+
+    Raises:
+        ValueError: If the dimensions of input is greater than 2.
+        ValueError: If the dimensions of fweights is greater than 1.
+        ValueError: If the numel of fweights not equal the number of columns of input.
+        ValueError: If the numel of aweights not equal the number of columns of input.
+        ValueError: If the dimensions of aweights is greater than 1.
+        TypeError: If the dtype of input is bool.
+        TypeError: If the dtype of fweights is not an integer type.
+        TypeError: If the dtype of aweights is not a floating point type.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> x = ms.Tensor([[0, 2], [1, 1], [2, 0]]).T
+        >>> print(x)
+        [[0 1 2]
+         [2 1 0]]
+        >>> print(ops.cov(x))
+        [[ 1. -1.]
+         [-1.  1.]]
+        >>> print(ops.cov(x, correction=0))
+        [[ 0.6666667 -0.6666667]
+         [-0.6666667  0.6666667]]
+        >>> fw = ms.Tensor([5, 2, 4], dtype=ms.int64)
+        >>> aw = ms.Tensor([0.4588, 0.9083, 0.7616], ms.float32)
+        >>> print(ops.cov(x, fweights=fw, aweights=aw))
+        [[ 0.81504613 -0.81504613]
+         [-0.81504613  0.81504613]]
+    """
+    if x.ndim > 2:
+        raise ValueError(f"For cov, the input must have two or fewer dimensions, but got {x.ndim} dimensions.")
+    if x.dtype == mstype.bool_:
+        raise TypeError(f"For cov, the input dtype can not be bool.")
+
+    # View input tensor as 2D
+    input_x = x.view((1, -1)) if x.ndim < 2 else x
+    num_observations = input_x.shape[1]
+    if fweights is not None:
+        _check_cov_weights(fweights, "fweights", num_observations, mstype.int_type, "an integer")
+
+    if aweights is not None:
+        _check_cov_weights(aweights, "aweights", num_observations, mstype.float_type, "a floating point")
+
+    if fweights is not None and aweights is None:
+        w = fweights
+    elif fweights is None and aweights is not None:
+        w = aweights
+    elif fweights is not None and aweights is not None:
+        w = fweights * aweights
+    else:
+        w = None
+
+    if w is not None:
+        w_sum = w.sum().astype(mstype.float32)
+        avg = (input_x * w).sum(1) / w_sum
+    else:
+        w_sum = Tensor(num_observations, dtype=mstype.float32)
+        avg = input_x.sum(1) / w_sum
+
+    if w is not None and aweights is not None and correction != 0:
+        norm_factor = w_sum - correction * (w * aweights).sum() / w_sum
+    else:
+        norm_factor = w_sum - correction
+
+    if norm_factor <= 0:
+        norm_factor = ops.zeros_like(norm_factor)
+
+    input_x = input_x - avg.unsqueeze(1)
+    c = ops.mm(input_x, (input_x * w if w is not None else input_x).T)
+    norm_factor = norm_factor.astype(mstype.float32)
+    return ops.true_divide(c, norm_factor).squeeze()
+
+
 def t(x):
     r"""
     Transposes a 2-D Tensor. 1-D Tensor are returned as it is.
@@ -2284,6 +2424,9 @@ def asinh(x):
 def arcsinh(x):
     r"""
     Alias for :func:`mindspore.ops.asinh`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return asinh(x)
 
@@ -2291,6 +2434,9 @@ def arcsinh(x):
 def arctanh(x):
     r"""
     Alias for :func:`mindspore.ops.atanh`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return atanh(x)
 
@@ -9847,6 +9993,7 @@ __all__ = [
     'cholesky_inverse',
     'conj',
     'cosine_similarity',
+    'cov',
     'cross',
     'einsum',
     'erfinv',
