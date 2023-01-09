@@ -588,8 +588,15 @@ void GPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     FormatTransformChecker::GetInstance().CheckSupportFormatTransform(kernel_graph);
     SetOperatorInfo(kernel_graph);
 
-    // Set kernel object types for TupleGetItem/MakeTuple after kernel selection.
+    // SetOperatorInfo may generate new node, so need set kernel object type again.
     kernel_graph->SetKernelObjectTypesForUnrealNodes();
+#ifdef ENABLE_DUMP_IR
+    const auto &ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+      DumpIR("hwopt_comm_after_kernel_select_" + graph->ToString() + ".ir", graph, true);
+    }
+#endif
 
     // Optimization pass which is relevant to device type or format.
     OptimizeGraphWithDeviceInfo(kernel_graph);

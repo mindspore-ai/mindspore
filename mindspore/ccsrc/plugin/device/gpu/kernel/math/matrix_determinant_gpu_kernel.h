@@ -48,7 +48,7 @@ class MatrixDeterminantGpuKernelMod : public NativeGpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
- private:
+ protected:
   void InitWorkSpaceSizeList();
 
   template <typename T>
@@ -68,7 +68,23 @@ class MatrixDeterminantGpuKernelMod : public NativeGpuKernelMod {
   cublasHandle_t cublas_handle_{nullptr};
   std::vector<size_t> input_shape_;
   MatrixDeterminantFunc kernel_func_{};
+
+ private:
   static std::vector<std::pair<KernelAttr, MatrixDeterminantFunc>> func_list_;
+};
+
+class LogMatrixDeterminantGpuKernelMod : public MatrixDeterminantGpuKernelMod {
+ public:
+  LogMatrixDeterminantGpuKernelMod() = default;
+  ~LogMatrixDeterminantGpuKernelMod() override = default;
+
+  using LogMatrixDeterminantFunc =
+    std::function<bool(LogMatrixDeterminantGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  std::vector<KernelAttr> GetOpSupport() override;
+
+ private:
+  static std::vector<std::pair<KernelAttr, LogMatrixDeterminantFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
