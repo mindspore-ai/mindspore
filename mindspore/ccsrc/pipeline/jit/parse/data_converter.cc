@@ -427,10 +427,38 @@ ValuePtr ConvertConstantNumpyNumber(const py::object &obj, ResolveTypeDef obj_ty
   return nullptr;
 }
 
+void CheckJITForbiddenAPI(const py::object &obj) {
+  auto module = python_adapter::GetPyModule(PYTHON_MOD_MODULE);
+  py::list obj_info = python_adapter::CallPyModFn(module, PYTHON_MOD_GET_MODULE_AND_NAME_INFO, obj);
+  std::ostringstream oss;
+  auto obj_module = py::cast<std::string>(obj_info[0]);
+  auto obj_name = py::cast<std::string>(obj_info[1]);
+  auto obj_type = py::cast<std::string>(obj_info[2]);
+  oss << "Failed to compile in GRAPH_MODE because the " << obj_type << " '" << obj_module << "." << obj_name
+      << "' is not supported in 'construct' or function with @jit decorator. "
+      << "Try to use the " << obj_type << " '" << obj_module << "." << obj_name << "' externally "
+      << "such as initialized in the method '__init__' before assigning"
+      << ".\nFor more details, please refer to "
+      << "https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html \n";
+  // Check if the API is decoratored by @jit_forbidden_register.
+  bool is_jit_forbidden_register = data_converter::IsJITForbiddenAPI(obj);
+  if (is_jit_forbidden_register) {
+    MS_LOG(EXCEPTION) << oss.str();
+  }
+  // Check if the API's module is in the JIT forbidden module set.
+  bool is_jit_forbidden_module =
+    py::cast<bool>(python_adapter::CallPyModFn(module, PYTHON_MOD_IS_JIT_FORBIDDEN_MODULE, obj_info[0]));
+  if (is_jit_forbidden_module) {
+    MS_LOG(EXCEPTION) << oss.str();
+  }
+}
+
 ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
   auto obj_type = data_converter::GetObjType(obj);
   MS_LOG(DEBUG) << "Converting the object(" << ((std::string)py::str(obj)) << ") detail type: " << obj_type << " ";
   if (obj_type == RESOLVE_TYPE_CLASS_TYPE) {
+    // Check JIT forbidden API
+    CheckJITForbiddenAPI(obj);
     MS_LOG(DEBUG) << "Resolve the class type, need create class instance.";
     std::string desc = py::str(obj);
     // desc has format "<class xxxx>", strip the '<' and '>' by offset 1.
@@ -438,6 +466,10 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
   }
   if (obj_type == RESOLVE_TYPE_FUNCTION || obj_type == RESOLVE_TYPE_METHOD ||
       (obj_type == RESOLVE_TYPE_CLASS_INSTANCE && py::hasattr(obj, PYTHON_PARSE_METHOD))) {
+    if (obj_type == RESOLVE_TYPE_FUNCTION || obj_type == RESOLVE_TYPE_METHOD) {
+      // Check JIT forbidden API
+      CheckJITForbiddenAPI(obj);
+    }
     MS_LOG(DEBUG) << "Convert the obj to func graph, type is " << obj_type;
     FuncGraphPtr func_graph = ConvertToFuncGraph(obj, PYTHON_MOD_GET_PARSE_METHOD, forbid_reuse);
     if (func_graph == nullptr) {
@@ -732,6 +764,9 @@ bool IsNumpyArrayInstance(const py::object &obj) {
 
 // Check if the object is MsClass instance.
 bool IsMsClassInstance(const py::object &obj) { return py::hasattr(obj, PYTHON_MS_CLASS); }
+
+// Check if the object is jit forbidden api.
+bool IsJITForbiddenAPI(const py::object &obj) { return py::hasattr(obj, PYTHON_JIT_FORBIDDEN); }
 
 // Check if the object is class type.
 bool IsClassType(const py::object &obj) {

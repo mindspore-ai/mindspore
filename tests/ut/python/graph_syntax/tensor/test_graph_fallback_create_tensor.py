@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -107,13 +107,17 @@ def test_fallback_tensor_with_init():
     """
     Feature: JIT Fallback
     Description: Test Tensor() with init in graph mode.
-    Expectation: No exception.
+    Expectation: throw RuntimeError.
     """
     @jit
     def foo():
         me_x = Tensor(shape=(1, 3), dtype=mstype.float32, init=One())
         return me_x
-    print(foo())
+
+    with pytest.raises(RuntimeError) as ex:
+        foo()
+    assert "Failed to compile in GRAPH_MODE" in str(ex.value)
+    assert "the class 'mindspore.common.initializer.One'" in str(ex.value)
 
 
 def test_fallback_tensor_reshape():

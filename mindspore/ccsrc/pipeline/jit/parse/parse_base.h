@@ -55,6 +55,7 @@ enum ParseTargetTypeDef {
 };
 
 // Define python module name.
+const char PYTHON_MOD_MODULE[] = "mindspore";
 const char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
 const char PYTHON_MOD_PARSE_OBJECT_FUNCTION[] = "parse_cb";
 const char PYTHON_MOD_RESOLVE_FUNCTION[] = "resolve_symbol";
@@ -107,6 +108,9 @@ const char PYTHON_PARSE_GET_CONVERT_OBJECT_FOR_UNSUPPORTED_TYPE[] = "get_convert
 
 const char PYTHON_PARSE_CLASS_SLICE[] = "create_slice_obj";
 const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
+
+const char PYTHON_MOD_GET_MODULE_AND_NAME_INFO[] = "get_obj_module_and_name_info";
+const char PYTHON_MOD_IS_JIT_FORBIDDEN_MODULE[] = "is_jit_forbidden_module";
 
 // Define the common name.
 const char NAMED_PRIMITIVE_LEN[] = "len";

@@ -41,6 +41,7 @@ from mindspore.ops.operations import Cast
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.parallel.shard import Shard
+from mindspore._check_jit_forbidden_api import jit_forbidden_register
 
 
 class Cell(Cell_):
@@ -1205,6 +1206,7 @@ class Cell(Cell_):
                 param.is_init = False
             param.name = prefix + name
 
+    @jit_forbidden_register
     def trainable_params(self, recurse=True):
         """
         Returns all trainable parameters.
@@ -1219,6 +1221,7 @@ class Cell(Cell_):
         """
         return list(filter(lambda x: x.requires_grad, self.get_parameters(expand=recurse)))
 
+    @jit_forbidden_register
     def untrainable_params(self, recurse=True):
         """
         Returns all untrainable parameters.
@@ -1233,6 +1236,7 @@ class Cell(Cell_):
         """
         return list(filter(lambda x: not x.requires_grad, self.get_parameters(expand=recurse)))
 
+    @jit_forbidden_register
     def get_parameters(self, expand=True):
         """
         Returns an iterator over cell parameters.
