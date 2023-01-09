@@ -596,6 +596,8 @@ void GradExecutor::GradNetInner(const py::object *ret, const prim::GradOperation
       // Single input
       (void)w_args.emplace_back(GetInput(PyNativeAlgo::DataConvert::PyObjToValue(weights)));
       weight_param_is_tuple = false;
+    } else {
+      (void)w_args.insert(w_args.end(), df_builder->parameters().cbegin(), df_builder->parameters().cend());
     }
   }
   // Get bprop graph of top cell
@@ -945,8 +947,13 @@ void GradExecutor::CheckNeedCompileGraph() {
       // Increase top cell switches counts
       ++top_cell_switch_counts_;
     }
+
+    auto has_higher_order = std::any_of(top_cell_list_.begin(), top_cell_list_.end(),
+                                        [](const TopCellInfoPtr &value) { return !value->is_topest(); });
     EraseTopCellFromTopCellList(pre_top_cell);
-    pre_top_cell->ClearDeviceMemory();
+    if (pre_top_cell->is_topest() && !has_higher_order) {
+      pre_top_cell->ClearDeviceMemory();
+    }
     pre_top_cell->Clear();
     already_run_top_cell_[already_top_cell_id] = new_top_cell;
     top_cell()->set_is_real_dynamic_structure(true);
