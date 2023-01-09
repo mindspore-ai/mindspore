@@ -476,6 +476,7 @@ class PrimitiveWithCheck(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import dtype as mstype
         >>> from mindspore.ops import prim_attr_register, PrimitiveWithCheck
         >>> # init a Primitive class with check
         >>> class Flatten(PrimitiveWithCheck):
