@@ -95,28 +95,93 @@ bool InferShapeForDefiniteOutputNode(const CNodePtr &cnode) {
   return true;
 }
 
+TypeId GetSequenceType(const abstract::AbstractSequencePtr &seq_abs) {
+  auto elems = seq_abs->elements();
+  if (!elems[0]->isa<abstract::AbstractScalar>()) {
+    MS_LOG(EXCEPTION) << "The 0'th element of sequence must be a scalar, but got:" << elems[0]->ToString();
+  }
+
+  auto fixed_type = elems[0]->BuildType();
+  for (size_t i = 1; i < elems.size(); i++) {
+    if (!elems[i]->isa<abstract::AbstractScalar>()) {
+      MS_LOG(EXCEPTION) << "The " << i << "'th element of sequence must be a scalar, but got:" << elems[i]->ToString();
+    }
+    auto follow_type = elems[i]->BuildType();
+    if (!(fixed_type == follow_type)) {
+      MS_LOG(EXCEPTION) << "Different type found between 0'th element(Type：" << fixed_type->ToString() << ") and " << i
+                        << "'th element(Type: " << follow_type->ToString() << ")";
+    }
+  }
+  return fixed_type->type_id();
+}
+
+bool IsRealSequence(const AnfNodePtr &node, const abstract::AbstractBasePtr &abs) {
+  if (!abs->isa<abstract::AbstractSequence>()) {
+    return false;
+  }
+
+  auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_abs);
+  auto elems = seq_abs->elements();
+  if (elems.size() > 0 && elems[0]->isa<abstract::AbstractTensor>()) {
+    return false;
+  }
+
+  return true;
+}
+
+tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_node_with_index) {
+  auto real_input = input_node_with_index.first;
+  MS_EXCEPTION_IF_NULL(real_input);
+  auto real_input_index = input_node_with_index.second;
+  auto abs = real_input->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+
+  ShapeVector shape;
+  TypeId type;
+  if (abs->isa<abstract::AbstractScalar>()) {
+    shape = {1};
+    type = abs->BuildType()->type_id();
+  } else if (IsRealSequence(real_input, abs)) {
+    auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(seq_abs);
+    auto elem_num = seq_abs->size();
+    if (elem_num == 0) {
+      MS_LOG(DEBUG) << "Empty sequence for node:" << real_input->fullname_with_scope();
+      return nullptr;
+    }
+    type = GetSequenceType(seq_abs);
+    shape = {SizeToLong(elem_num)};
+  } else if (abs->isa<abstract::AbstractTensor>() || abs->isa<abstract::AbstractSequence>()) {
+    shape = trans::GetRuntimePaddingShape(real_input, real_input_index);
+    if (real_input->isa<ValueNode>()) {
+      // the type of ValueNode in KernelInfo is kTypeUnknown
+      type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
+    } else {
+      type = AnfAlgo::GetOutputDeviceDataType(real_input, real_input_index);
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "For node:" << real_input->fullname_with_scope() << ", abstract(" << abs->ToString()
+                      << ") is invalid.";
+  }
+
+  return std::make_shared<tensor::Tensor>(type, shape);
+}
+
 tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
                                        const std::pair<AnfNodePtr, size_t> &input_node_with_index, bool skip_nop_node,
                                        void *args) {
   auto real_input = input_node_with_index.first;
   MS_EXCEPTION_IF_NULL(real_input);
   auto real_input_index = input_node_with_index.second;
-  auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
-  TypeId host_type;
-  if (real_input->isa<ValueNode>()) {
-    // the type of ValueNode in KernelInfo is kTypeUnknown
-    host_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
-  } else {
-    host_type = AnfAlgo::GetOutputDeviceDataType(real_input, real_input_index);
-  }
-  auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
 
+  auto depended_value = CreateTensorMem(input_node_with_index);
   auto output_addr = AnfAlgo::GetMutableOutputAddr(real_input, real_input_index, skip_nop_node);
   if (output_addr != nullptr && output_addr->IsPtrValid()) {
     // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
     // address size will be wrong in the dynamic shape scenario.
-    out_tensor->set_device_address(output_addr, false);
-    out_tensor->data_sync();
+    depended_value->set_device_address(output_addr, false);
+    depended_value->data_sync();
   } else {
     // If real_input is parameter and is control flow's output, the device address stored in AnfNode is useless.
     if (args == nullptr) {
@@ -128,16 +193,77 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
       if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
         MS_LOG(INFO) << "There is no valid address for " << i << " input of " << node->DebugString() << ", "
                      << node->fullname_with_scope();
-        return out_tensor;
+        return depended_value;
       }
       MS_LOG(EXCEPTION) << "There is no valid address for " << i << " input of " << node->DebugString() << ", "
                         << node->fullname_with_scope();
     }
 
-    out_tensor->data_sync_directly(input_device_address->at(i));
+    depended_value->data_sync_directly(input_device_address->at(i));
   }
 
-  return out_tensor;
+  return depended_value;
+}
+
+abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor::TensorPtr &depended_value,
+                                          const size_t &input_index) {
+  auto abs = input->abstract();
+  abstract::AbstractBasePtr new_abs;
+  if (abs->isa<abstract::AbstractTensor>()) {
+    new_abs = abs->Clone();
+    new_abs->set_value(depended_value);
+  } else if (abs->isa<abstract::AbstractScalar>()) {
+    auto type = depended_value->Dtype()->type_id();
+    if (type == kNumberTypeInt32) {
+      auto tensor_data = reinterpret_cast<int32_t *>(depended_value->data_c());
+      MS_EXCEPTION_IF_NULL(tensor_data);
+      new_abs = std::make_shared<abstract::AbstractScalar>(*tensor_data);
+    } else if (type == kNumberTypeInt64) {
+      auto tensor_data = reinterpret_cast<int64_t *>(depended_value->data_c());
+      MS_EXCEPTION_IF_NULL(tensor_data);
+      new_abs = std::make_shared<abstract::AbstractScalar>(*tensor_data);
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported type: " << type;
+    }
+  } else if (IsRealSequence(input, abs)) {
+    auto type = depended_value->Dtype()->type_id();
+    AbstractBasePtrList elems;
+    if (type == kNumberTypeInt32) {
+      auto tensor_data = reinterpret_cast<int32_t *>(depended_value->data_c());
+      MS_EXCEPTION_IF_NULL(tensor_data);
+      for (size_t i = 0; i < depended_value->DataSize(); i++) {
+        auto scalar = std::make_shared<abstract::AbstractScalar>(tensor_data[i]);
+        (void)elems.emplace_back(scalar);
+      }
+    } else if (type == kNumberTypeInt64) {
+      auto tensor_data = reinterpret_cast<int64_t *>(depended_value->data_c());
+      MS_EXCEPTION_IF_NULL(tensor_data);
+      for (size_t i = 0; i < depended_value->DataSize(); i++) {
+        auto scalar = std::make_shared<abstract::AbstractScalar>(tensor_data[i]);
+        (void)elems.emplace_back(scalar);
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported type:" << type;
+    }
+
+    if (abs->isa<abstract::AbstractTuple>()) {
+      new_abs = std::make_shared<abstract::AbstractTuple>(elems);
+    } else if (abs->isa<abstract::AbstractList>()) {
+      new_abs = std::make_shared<abstract::AbstractList>(elems);
+    }
+
+    MS_LOG(EXCEPTION) << "Unsupported abstract type:" << abs->ToString();
+  } else if (abs->isa<abstract::AbstractSequence>()) {
+    auto abstract_seq = abs->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(abstract_seq);
+    MS_EXCEPTION_IF_CHECK_FAIL((input_index < abstract_seq->elements().size()), "Index is out of range.");
+    new_abs = abstract_seq->elements()[input_index]->Clone();
+    new_abs->set_value(depended_value);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported abstract type:" << abs->ToString();
+  }
+
+  return new_abs;
 }
 
 void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *depend_tensor_map, void *args) {
@@ -165,34 +291,33 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
     auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i, false);
     auto real_input = input_node_with_index.first;
     auto real_input_index = input_node_with_index.second;
-    AbstractBasePtr real_input_abs = real_input->abstract();
 
     MS_EXCEPTION_IF_NULL(real_input);
     if (skip_nop_node) {
       InferShapeForNopNode(real_input);
     }
+
     if (depend_list.find(i) != depend_list.end()) {
-      auto out_tensor = GetDependValueTensor(cnode, i, input_node_with_index, skip_nop_node, args);
-      auto ret2 = depend_tensor_map->try_emplace(i, out_tensor);
+      auto depended_value = GetDependValueTensor(cnode, i, input_node_with_index, skip_nop_node, args);
+      auto ret2 = depend_tensor_map->try_emplace(i, depended_value);
       if (!ret2.second) {
         MS_LOG(EXCEPTION) << "Insert map failed.";
       }
 
-      // cppcheck-suppress unreadVariable
-      auto lock = AnfUtils::GetAbstractLock(real_input.get());
-      auto real_abs = real_input->abstract();
-      if (real_abs->isa<abstract::AbstractTensor>()) {
-        real_abs->set_value(out_tensor);
-      } else if (real_abs->isa<abstract::AbstractTuple>()) {
-        auto abstract_tuple = real_abs->cast<abstract::AbstractTuplePtr>();
-        MS_EXCEPTION_IF_NULL(abstract_tuple);
-        MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abstract_tuple->elements().size()), "Index is out of range.");
-        auto tuple_elements = abstract_tuple->elements()[real_input_index];
-        tuple_elements->set_value(out_tensor);
+      auto updated_abs = MakeNewAbstract(real_input, depended_value, real_input_index);
+      (void)args_spec_list.emplace_back(updated_abs);
+    } else {
+      auto abs = real_input->abstract();
+      if (abs->isa<abstract::AbstractSequence>() && !IsRealSequence(real_input, abs)) {
+        auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+        MS_EXCEPTION_IF_NULL(abs_seq);
+        MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abs_seq->elements().size()), "Index is out of range.");
+        auto abs_index = abs_seq->elements()[real_input_index];
+        (void)args_spec_list.emplace_back(abs_index);
+      } else {
+        (void)args_spec_list.emplace_back(abs);
       }
     }
-
-    common::AnfAlgo::AddArgList(&args_spec_list, real_input, real_input_index);
   }
 
   // Pynative mode is rely on the origin abstract of cnode, so cannot modify the abstract inplace, clone from old

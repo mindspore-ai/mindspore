@@ -149,6 +149,74 @@ ShapeVector ReduceFuncCalShapeAxisDyn(const ShapeVector &x_shape, const int64_t 
   return out_shape;
 }
 
+void CheckAndGetAxisValueFromAttr(const PrimitivePtr &primitive, std::vector<int64_t> *axis_value, int64_t *) {
+  auto op_name = primitive->name();
+  auto axis_ptr = primitive->GetAttr("axis");
+  MS_EXCEPTION_IF_NULL(axis_ptr);
+  if (axis_ptr->isa<tensor::Tensor>()) {
+    *axis_value = CheckAndConvertUtils::CheckTensorIntValue("axis", axis_ptr, op_name);
+  } else {
+    *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt("axis", axis_ptr, op_name);
+  }
+}
+
+bool CheckAndGetAxisValueFromScalar(const ValuePtr &input_value, const std::string &op_name,
+                                    std::vector<int64_t> *axis_value, int64_t *axis_shape_v) {
+  *axis_shape_v = 1;
+  bool is_dynamic = false;
+  if (IsValueKnown(input_value)) {
+    *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt("axis", input_value, op_name);
+  } else {
+    is_dynamic = true;
+  }
+  return is_dynamic;
+}
+
+bool CheckAndGetAxisValueFromSequence(const abstract::AbstractBasePtr &abs, const ValuePtr &input_value,
+                                      const std::string &op_name, std::vector<int64_t> *axis_value,
+                                      int64_t *axis_shape_v) {
+  bool is_dynamic = false;
+  if (IsValueKnown(input_value)) {
+    *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt("axis", input_value, op_name);
+    if (axis_value->empty()) {
+      *axis_shape_v = 0;
+    }
+  } else {
+    is_dynamic = true;
+    auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(seq_abs);
+    *axis_shape_v = seq_abs->dynamic_len() ? -1 : seq_abs->size();
+  }
+
+  return is_dynamic;
+}
+
+bool CheckAndGetAxisValueFromTensor(const std::vector<abstract::AbstractBasePtr> &input_args,
+                                    const ValuePtr &input_value, const std::string &op_name,
+                                    std::vector<int64_t> *axis_value, int64_t *axis_shape_v) {
+  bool is_dynamic = false;
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},
+                                                   op_name);
+  if (input_value->isa<tensor::Tensor>()) {
+    *axis_value = CheckAndConvertUtils::CheckTensorIntValue("axis", input_value, op_name);
+    if (axis_value->empty()) {
+      *axis_shape_v = 0;
+    }
+  } else {
+    is_dynamic = true;
+    auto axis_shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 1);
+    if (axis_shape->shape().size() > 1) {
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the axis's shape length should be 1, but got '"
+                               << axis_shape->shape().size() << "'.";
+    } else if (axis_shape->shape().size() == 0) {
+      *axis_shape_v = 1;
+    } else {
+      *axis_shape_v = axis_shape->shape()[0];
+    }
+  }
+  return is_dynamic;
+}
+
 bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_args, std::vector<int64_t> *axis_value,
                           int64_t *axis_shape_v, const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(axis_value);
@@ -156,45 +224,18 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
   bool is_dynamic = false;
   const std::string &op_name = primitive->name();
   if (input_args.size() == 1) {
-    auto axis_ptr = primitive->GetAttr("axis");
-    if (axis_ptr == nullptr) {
-      return is_dynamic;
-    }
-    if (axis_ptr->isa<tensor::Tensor>()) {
-      *axis_value = CheckAndConvertUtils::CheckTensorIntValue("axis", axis_ptr, op_name);
-    } else {
-      *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt("axis", axis_ptr, op_name);
-    }
-    return is_dynamic;
+    CheckAndGetAxisValueFromAttr(primitive, axis_value, axis_shape_v);
+    return false;
   }
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto input_value = input_args[kInputIndex1]->BuildValue();
-  if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>() ||
-      input_args[kInputIndex1]->isa<abstract::AbstractSequence>()) {
-    *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt("axis", input_value, op_name);
-    if (axis_value->empty()) {
-      *axis_shape_v = 0;
-    }
+  if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
+    is_dynamic = CheckAndGetAxisValueFromScalar(input_value, op_name, axis_value, axis_shape_v);
+  } else if (input_args[kInputIndex1]->isa<abstract::AbstractSequence>()) {
+    is_dynamic =
+      CheckAndGetAxisValueFromSequence(input_args[kInputIndex1], input_value, op_name, axis_value, axis_shape_v);
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},
-                                                     op_name);
-    if (input_value->isa<tensor::Tensor>()) {
-      *axis_value = CheckAndConvertUtils::CheckTensorIntValue("axis", input_value, op_name);
-      if (axis_value->empty()) {
-        *axis_shape_v = 0;
-      }
-    } else {
-      is_dynamic = true;
-      auto axis_shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 1);
-      if (axis_shape->shape().size() > 1) {
-        MS_EXCEPTION(ValueError) << "For '" << op_name << "', the axis's shape length should be 1, but got '"
-                                 << axis_shape->shape().size() << "'.";
-      } else if (axis_shape->shape().size() == 0) {
-        *axis_shape_v = 1;
-      } else {
-        *axis_shape_v = axis_shape->shape()[0];
-      }
-    }
+    is_dynamic = CheckAndGetAxisValueFromTensor(input_args, input_value, op_name, axis_value, axis_shape_v);
   } else {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', the second input type should be tensor or scalar, but got invalid abstract type:"
