@@ -368,7 +368,7 @@ Status MaskedFillInfo::InferTensorMap() {
     return FAILED;
   }
 
-  if (input_size_ == 3) {
+  if (input_size_ == kSizeThree) {
     // append a void tensor map for 0-dimensional tensor input 'value'
     (void)inputs_tensor_map_.emplace_back(TensorMap());
   }
@@ -386,6 +386,21 @@ std::vector<StrategyPtr> MaskedFillInfo::GenerateOpStrategies(int64_t stage_id) 
     }
   }
   return sp_vector;
+}
+
+Status MaskedFillInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    return FAILED;
+  }
+  // No need to insert mirror ops
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+  if (mirror_ops_.size() == kSizeTwo) {
+    // Push empty mirror op for value
+    (void)mirror_ops_.emplace_back(OperatorVector());
+  }
+  return SUCCESS;
 }
 
 REGISTER(SubInfo);

@@ -340,6 +340,7 @@ class MaskedFillInfo : public ArithmeticBase {
  protected:
   Status GetAttrs() override;
   Status InferTensorMap() override;
+  Status InferMirrorOps() override;
 
  private:
   size_t input_size_ = 0;
