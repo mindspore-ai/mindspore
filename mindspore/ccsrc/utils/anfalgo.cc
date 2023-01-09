@@ -136,7 +136,11 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
   // Output num must be exactly equal to the number of outputs of the node.
   size_t outputs_num = 1;
   if (AnfUtils::IsRealCNodeKernel(node)) {
-    outputs_num = AnfUtils::GetOutputTensorNum(node);
+    if (node->abstract() != nullptr && common::AnfAlgo::IsDynamicSequence(node)) {
+      outputs_num = common::AnfAlgo::GetOutputNumByAbstract(node->abstract());
+    } else {
+      outputs_num = AnfUtils::GetOutputTensorNum(node);
+    }
   }
   // Call node maybe a real cnode and the last interface cannot get output num exactly, so we should get
   // output num from abstract again.
@@ -185,7 +189,7 @@ bool IsNodeDynamicShape(const AnfNodePtr &node) {
   }
   auto cnode = node->cast<CNodePtr>();
   auto in_dynamic = AnfAlgo::IsNodeInputDynamicShape(cnode);
-  auto out_dynamic = AnfUtils::IsNodeOutputShapeDynamic(cnode);
+  auto out_dynamic = AnfAlgo::IsNodeOutputDynamicShape(cnode);
   if (in_dynamic && !AnfAlgo::HasNodeAttr(kAttrInputIsDynamicShape, cnode)) {
     AnfAlgo::SetNodeAttrSafely(kAttrInputIsDynamicShape, MakeValue(true), cnode);
     MS_LOG(DEBUG) << "Set Input Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
@@ -353,7 +357,8 @@ size_t AnfAlgo::GetOutputNumByAbstract(const AbstractBasePtr &node_abstract) {
   MS_EXCEPTION_IF_NULL(node_abstract);
   size_t result = 0;
 
-  if (!node_abstract->isa<abstract::AbstractSequence>() || IsDynamicSequence(node_abstract)) {
+  if (!node_abstract->isa<abstract::AbstractSequence>() ||
+      node_abstract->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
     return 1;
   }
 
@@ -437,6 +442,7 @@ void AnfAlgo::SetNodeAttrSafely(const std::string &key, const ValuePtr &value, c
     return;
   }
   auto prim = common::AnfAlgo::GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(prim);
   auto new_prim = prim->isa<PrimitivePy>() ? prim : prim->Clone();
   cnode->set_input(0, NewValueNode(new_prim));
 
@@ -573,6 +579,30 @@ inline ShapeVector GetShape(const abstract::BaseShapePtr &base_shape) {
   return shape_ptr->shape();
 }
 
+namespace {
+// Get the element shape of dynamic sequence shape.
+abstract::BaseShapePtr GetDynamicSequenceShape(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->Shape() == nullptr || (!node->Shape()->isa<abstract::DynamicSequenceShape>())) {
+    MS_LOG(EXCEPTION) << "Invalid dynamic shape in node:" << node->DebugString() << ".";
+  }
+  if (node->abstract() == nullptr) {
+    MS_LOG(EXCEPTION) << "Empty abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
+  }
+  if (!node->abstract()->isa<abstract::AbstractSequence>()) {
+    MS_LOG(EXCEPTION) << "Not sequence abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
+  }
+  const auto &sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(sequence_abs);
+  if (!sequence_abs->dynamic_len()) {
+    MS_LOG(EXCEPTION) << "Not dynamic abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
+  }
+  const auto &element_abs = sequence_abs->dynamic_len_element_abs();
+  MS_EXCEPTION_IF_NULL(element_abs);
+  return element_abs->BuildShape();
+}
+}  // namespace
+
 ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,
                                          size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
@@ -589,6 +619,9 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
     MS_EXCEPTION_IF_NULL(tuple_shape);
     if (tuple_shape->size() == 0) {
       return ShapeVector();
+    }
+    if (IsDynamicSequence(node)) {
+      return ShapeVector{SizeToLong(tuple_shape->size())};
     }
     if (output_idx >= tuple_shape->size()) {
       MS_LOG(EXCEPTION) << "Output index " << output_idx << "is larger than output number " << tuple_shape->size()
@@ -613,6 +646,9 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
     }
   } else if (base_shape->isa<abstract::NoShape>()) {
     return ShapeVector();
+  } else if (base_shape->isa<abstract::DynamicSequenceShape>()) {
+    const auto &base_shape = GetDynamicSequenceShape(node, output_idx);
+    return GetOutputInferShape(node, base_shape, 0);
   }
   MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
                     << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);
@@ -633,6 +669,11 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(type_ptr);
   if (type_ptr->isa<Tuple>()) {
     auto tuple_ptr = type_ptr->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_ptr);
+    if (tuple_ptr->dynamic_len()) {
+      MS_EXCEPTION_IF_NULL(tuple_ptr->dynamic_element_type());
+      return tuple_ptr->dynamic_element_type()->type_id();
+    }
     if (tuple_ptr->size() == 0) {
       return tuple_ptr->type_id();
     }
@@ -698,6 +739,8 @@ abstract::BaseShapePtr AnfAlgo::GetOutputDetailShape(const AnfNodePtr &node, siz
     }
   } else if (base_shape->isa<abstract::NoShape>()) {
     return base_shape;
+  } else if (base_shape->isa<abstract::DynamicSequenceShape>()) {
+    return GetDynamicSequenceShape(node, output_idx);
   }
   MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
                     << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);
@@ -742,10 +785,37 @@ void AnfAlgo::SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
   }
 }
 
+void AnfAlgo::SetScalarTupleOutputInferType(const std::vector<TypeId> &types, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::vector<abstract::AbstractBasePtr> abstract_list;
+  for (size_t i = 0; i < types.size(); ++i) {
+    abstract::AbstractScalarPtr abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(types[i]));
+    abstract_list.emplace_back(abstract);
+  }
+  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  node->set_abstract(abstract_tuple);
+}
+
+namespace {
+void DeleteDynamicLen(AnfNode *node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractSequence>()) {
+    const auto &tuple_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_abs);
+    if (tuple_abs->dynamic_len()) {
+      tuple_abs->set_dynamic_len(false);
+    }
+  }
+}
+}  // namespace
+
 // set infer shapes and types of anf node
 void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
-                                         AnfNode *node) {
+                                         AnfNode *node, bool disable_dynamic_len) {
   MS_EXCEPTION_IF_NULL(node);
+  if (disable_dynamic_len) {
+    DeleteDynamicLen(node);
+  }
   auto node_ptr = node->cast<AnfNodePtr>();
   std::string node_name = "";
   if (node_ptr->isa<CNode>()) {
@@ -849,6 +919,12 @@ bool AnfAlgo::IsTupleOutput(const AnfNodePtr &anf) {
   if (type == nullptr) {
     return false;
   }
+
+  // For dynamic sequence node, all output should be emplaced in single tensor.
+  if (anf->abstract() && IsDynamicSequence(anf)) {
+    return false;
+  }
+
   MS_EXCEPTION_IF_NULL(type);
   return type->isa<Tuple>() || type->isa<SparseTensorType>();
 }
@@ -1307,6 +1383,19 @@ ShapeVector AnfAlgo::GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index)
   }
 }
 
+bool AnfAlgo::IsNodeOutputDynamicShape(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto base_shape = node->Shape();
+  if (base_shape == nullptr) {
+    MS_LOG(INFO) << "Invalid base shape, node: " << node->fullname_with_scope();
+    return false;
+  }
+  if (base_shape->isa<abstract::DynamicSequenceShape>()) {
+    return true;
+  }
+  return base_shape->IsDynamic();
+}
+
 bool AnfAlgo::IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
   MS_EXCEPTION_IF_NULL(anf_node_ptr);
   auto input_num = AnfAlgo::GetInputTensorNum(anf_node_ptr);
@@ -1340,6 +1429,8 @@ bool AnfAlgo::IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
       if (b_shp->IsDynamic()) {
         return true;
       }
+    } else if (base_shape->isa<abstract::DynamicSequenceShape>()) {
+      return true;
     }
   }
   return false;
@@ -1430,7 +1521,7 @@ void AnfAlgo::AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &
   auto lock = AnfUtils::GetAbstractLock(real_input.get());
   auto real_abs = real_input->abstract();
   MS_EXCEPTION_IF_NULL(real_abs);
-  if (real_abs->isa<abstract::AbstractTuple>()) {
+  if (real_abs->isa<abstract::AbstractTuple>() && (!common::AnfAlgo::IsDynamicSequence(real_input))) {
     auto abs_tuple = real_abs->Clone()->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(abs_tuple);
     MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abs_tuple->elements().size()), "Index is out of range.");
@@ -1697,7 +1788,7 @@ abstract::AbstractBasePtr AnfAlgo::GetNodeAbstractByIndex(const AnfNodePtr &node
     return nullptr;
   }
 
-  if (index == 0 || (!abstract->isa<abstract::AbstractTuple>())) {
+  if (index == 0 || (!abstract->isa<abstract::AbstractTuple>()) || common::AnfAlgo::IsDynamicSequence(node)) {
     return abstract;
   }
 
@@ -1721,15 +1812,48 @@ std::string AnfAlgo::GetJitLevel(const FuncGraphPtr &func_graph) {
   return jit_level;
 }
 
-bool AnfAlgo::IsDynamicSequence(const abstract::AbstractBasePtr &abstract) {
-  MS_EXCEPTION_IF_NULL(abstract);
-  if (!abstract->isa<abstract::AbstractSequence>()) {
-    return false;
-  }
+bool AnfAlgo::IsDynamicSequence(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  // Check if the node is dynamic sequence by sign in abstract.
+  const auto &is_dynamic_len_func = [&node]() {
+    const auto &abstract = node->abstract();
+    if (abstract == nullptr || (!abstract->isa<abstract::AbstractSequence>())) {
+      return false;
+    }
 
-  const auto &sequence_abstract = abstract->cast<abstract::AbstractSequencePtr>();
-  MS_EXCEPTION_IF_NULL(sequence_abstract);
-  return sequence_abstract->dynamic_len();
+    const auto &sequence_abstract = abstract->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(sequence_abstract);
+    return sequence_abstract->dynamic_len();
+  };
+
+  // Check if the node is dynamic sequence by sign in node, in cnode it is an attr in primitive, in parameter, it is
+  // an sign.
+  if (node->isa<Parameter>()) {
+    const auto &parameter = node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(parameter);
+    if (parameter->dynamic_len()) {
+      return true;
+    }
+    bool is_dynamic = is_dynamic_len_func();
+    if (is_dynamic) {
+      parameter->set_dynamic_len(true);
+    }
+    return is_dynamic;
+  } else if (node->isa<CNode>()) {
+    if (IsCallNode(node)) {
+      return false;
+    }
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (HasNodeAttr(kAttrDynamicLenName, cnode)) {
+      return GetBooleanAttr(node, kAttrDynamicLenName);
+    } else {
+      bool is_dynamic = is_dynamic_len_func();
+      AnfAlgo::SetNodeAttrSafely(kAttrDynamicLenName, MakeValue(is_dynamic), cnode);
+      return is_dynamic;
+    }
+  }
+  return false;
 }
 
 bool AnfAlgo::HasTupleInput(const CNodePtr &node) {
@@ -1751,7 +1875,7 @@ bool AnfAlgo::HasDynamicTupleInput(const CNodePtr &node) {
   for (size_t i = 0; i < input_num; ++i) {
     auto input_node = common::AnfAlgo::GetInputNode(node, i);
     MS_EXCEPTION_IF_NULL(input_node);
-    if (common::AnfAlgo::IsDynamicSequence(input_node->abstract())) {
+    if (common::AnfAlgo::IsDynamicSequence(input_node)) {
       return true;
     }
   }

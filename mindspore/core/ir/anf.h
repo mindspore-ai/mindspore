@@ -825,6 +825,16 @@ class MS_CORE_API Parameter final : public ANode {
   /// \return True if this Parameter has a dynamic shape, otherwise false.
   bool has_dynamic_shape() const { return has_dynamic_shape_; }
 
+  /// \brief Set whether this Parameter is dynamic len.
+  ///
+  /// \param[in] flag Boolean.
+  void set_dynamic_len(bool flag) { is_dynamic_len_ = flag; }
+
+  /// \brief Check whether this Parameter is dynamic len.
+  ///
+  /// \return True if this Parameter is dynamic len, otherwise false.
+  bool dynamic_len() const { return is_dynamic_len_; }
+
   /// \brief Set groups attr in FRACTAL_Z format.
   ///
   /// \param[in] fracz_group Groups attr in FRACTAL_Z format.
@@ -869,6 +879,8 @@ class MS_CORE_API Parameter final : public ANode {
   int used_graph_count_ = 0;
   bool has_default_ = false;
   bool has_dynamic_shape_ = false;
+  // Dynamic len is a flag indicating whether the parameter is dynamic sequence.
+  bool is_dynamic_len_ = false;
   bool is_top_graph_param_ = false;
 };
 using ParameterPtr = std::shared_ptr<Parameter>;

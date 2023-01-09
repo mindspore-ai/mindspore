@@ -87,6 +87,8 @@ COMMON_EXPORT bool IsAKGSparseOP(const AnfNodePtr &cnode);
 
 COMMON_EXPORT tensor::MetaSparseTensorPtr TensorListToSparseTensor(const abstract::AbstractBasePtr &abs_sparse,
                                                                    const tensor::TensorPtrList &tensor_list);
+// Convert tuple shape to shape vector.
+COMMON_EXPORT std::vector<ShapeVector> TupleShapeToShapeVector(const abstract::BaseShapePtr &base_shape);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CONVERT_UTILS_H_

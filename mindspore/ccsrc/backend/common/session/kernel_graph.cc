@@ -495,7 +495,7 @@ AnfNodePtr KernelGraph::TransValueNodeTuple(const AbstractBasePtr &abstract, con
 
 AnfNodePtr KernelGraph::TransParameterTuple(const AbstractBasePtr &abstract) {
   MS_EXCEPTION_IF_NULL(abstract);
-  if (!abstract->isa<abstract::AbstractSequence>() || common::AnfAlgo::IsDynamicSequence(abstract)) {
+  if (!abstract->isa<abstract::AbstractSequence>()) {
     return NewParameter(abstract);
   }
   auto tuple_abstract = abstract->cast<abstract::AbstractSequencePtr>();
@@ -547,6 +547,9 @@ AnfNodePtr KernelGraph::TransTupleToMakeTuple(const AnfNodePtr &node) {
     return node;
   }
   if (node->isa<Parameter>()) {
+    if (common::AnfAlgo::IsDynamicSequence(node)) {
+      return NewParameter(node->cast<ParameterPtr>());
+    }
     return TransParameterTuple(node->abstract());
   } else if (node->isa<ValueNode>()) {
     auto value_node = node->cast<ValueNodePtr>();
@@ -1205,7 +1208,9 @@ void KernelGraph::SetInputNodes() {
     auto params = common::AnfAlgo::GetAllOutput(input_node);
     auto abs = input_node->abstract();
     MS_EXCEPTION_IF_NULL(abs);
-    if (params.size() > 1 || abs->isa<abstract::AbstractSequence>() || abs->isa<abstract::AbstractDictionary>()) {
+    if (params.size() > 1 ||
+        (abs->isa<abstract::AbstractSequence>() && (!common::AnfAlgo::IsDynamicSequence(input_node))) ||
+        abs->isa<abstract::AbstractDictionary>()) {
       if (backend_front_anf_map_.find(input_node) == backend_front_anf_map_.end()) {
         MS_EXCEPTION_IF_NULL(input_node);
         MS_LOG(WARNING) << "Cannot find input_node: " << input_node->DebugString() << " in backend_front_anf_map.";

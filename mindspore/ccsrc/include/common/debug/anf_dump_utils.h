@@ -31,8 +31,8 @@ COMMON_EXPORT std::string GetNodeFuncStr(const AnfNodePtr &nd);
 COMMON_EXPORT std::string GetKernelNodeName(const AnfNodePtr &anf_node);
 
 class COMMON_EXPORT AnfDumpHandler {
-  HANDLER_DEFINE(std::string, PrintInputTypeShapeFormat, AnfNodePtr, size_t);
-  HANDLER_DEFINE(std::string, PrintOutputTypeShapeFormat, AnfNodePtr, size_t);
+  HANDLER_DEFINE(std::string, PrintInputTypeShapeFormat, AnfNodePtr);
+  HANDLER_DEFINE(std::string, PrintOutputTypeShapeFormat, AnfNodePtr);
   HANDLER_DEFINE(std::string, PrintInputKernelObjectTypes, AnfNodePtr);
   HANDLER_DEFINE(std::string, PrintOutputKernelObjectTypes, AnfNodePtr);
   HANDLER_DEFINE(ValuePtr, InStrategyValue, AnfNodePtr);

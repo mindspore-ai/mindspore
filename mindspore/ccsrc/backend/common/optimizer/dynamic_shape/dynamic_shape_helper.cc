@@ -115,21 +115,6 @@ TypeId GetSequenceType(const abstract::AbstractSequencePtr &seq_abs) {
   return fixed_type->type_id();
 }
 
-bool IsRealSequence(const AnfNodePtr &node, const abstract::AbstractBasePtr &abs) {
-  if (!abs->isa<abstract::AbstractSequence>()) {
-    return false;
-  }
-
-  auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
-  MS_EXCEPTION_IF_NULL(seq_abs);
-  auto elems = seq_abs->elements();
-  if (elems.size() > 0 && elems[0]->isa<abstract::AbstractTensor>()) {
-    return false;
-  }
-
-  return true;
-}
-
 tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_node_with_index) {
   auto real_input = input_node_with_index.first;
   MS_EXCEPTION_IF_NULL(real_input);
@@ -142,7 +127,7 @@ tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_nod
   if (abs->isa<abstract::AbstractScalar>()) {
     shape = {1};
     type = abs->BuildType()->type_id();
-  } else if (IsRealSequence(real_input, abs)) {
+  } else if (AnfAlgo::IsRealSquenceOutput(real_input)) {
     auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(seq_abs);
     auto elem_num = seq_abs->size();
@@ -225,7 +210,7 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
     } else {
       MS_LOG(EXCEPTION) << "Unsupported type: " << type;
     }
-  } else if (IsRealSequence(input, abs)) {
+  } else if (AnfAlgo::IsRealSquenceOutput(input)) {
     auto type = depended_value->Dtype()->type_id();
     AbstractBasePtrList elems;
     if (type == kNumberTypeInt32) {
@@ -308,7 +293,7 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
       (void)args_spec_list.emplace_back(updated_abs);
     } else {
       auto abs = real_input->abstract();
-      if (abs->isa<abstract::AbstractSequence>() && !IsRealSequence(real_input, abs)) {
+      if (abs->isa<abstract::AbstractSequence>() && !AnfAlgo::IsRealSquenceOutput(real_input)) {
         auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
         MS_EXCEPTION_IF_NULL(abs_seq);
         MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abs_seq->elements().size()), "Index is out of range.");

@@ -128,7 +128,8 @@ class COMMON_EXPORT AnfAlgo {
   static TypeId GetPrevNodeOutputInferDataType(const AnfNodePtr &node, size_t input_idx);
   // set infer shapes and types of anf node
   static void SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
-                                         AnfNode *node);
+                                         AnfNode *node, bool disable_dynamic_len = false);
+  static void SetScalarTupleOutputInferType(const std::vector<TypeId> &types, const AnfNodePtr &node);
   // get and set output shape ptr
   static abstract::BaseShapePtr GetOutputDetailShape(const AnfNodePtr &node, size_t output_idx);
   static abstract::BaseShapePtr GetPrevNodeOutputDetailShape(const AnfNodePtr &node, size_t input_idx);
@@ -166,6 +167,7 @@ class COMMON_EXPORT AnfAlgo {
   // get fix output precision from prev node, input_idx is the input index of current node related to prev node.
   static TypeId GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_idx);
   static bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr);
+  static bool IsNodeOutputDynamicShape(const AnfNodePtr &node);
   static bool IsDynamicShape(const AnfNodePtr &node);
   static bool HasDynamicShapeFlag(const PrimitivePtr &prim);
   static bool IsCondControlKernel(const CNodePtr &node);
@@ -281,7 +283,7 @@ class COMMON_EXPORT AnfAlgo {
   // Get jit level from func_graph
   static std::string GetJitLevel(const FuncGraphPtr &func_graph);
 
-  static bool IsDynamicSequence(const abstract::AbstractBasePtr &abstract);
+  static bool IsDynamicSequence(const AnfNodePtr &node);
   static bool HasTupleInput(const CNodePtr &node);
   static bool HasDynamicTupleInput(const CNodePtr &node);
 };

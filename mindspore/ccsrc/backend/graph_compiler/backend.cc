@@ -403,7 +403,8 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
         MS_EXCEPTION_IF_NULL(param);
         auto abs = param->abstract();
         MS_EXCEPTION_IF_NULL(abs);
-        if (abs->isa<abstract::AbstractTuple>() && !abs->isa<abstract::AbstractSparseTensor>()) {
+        if (abs->isa<abstract::AbstractTuple>() && !abs->isa<abstract::AbstractSparseTensor>() &&
+            (!common::AnfAlgo::IsDynamicSequence(param))) {
           auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
           MS_EXCEPTION_IF_NULL(abs_tuple);
           args_tuple_num = abs_tuple->elements().size();

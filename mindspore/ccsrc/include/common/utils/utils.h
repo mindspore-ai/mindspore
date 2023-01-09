@@ -952,6 +952,7 @@ constexpr auto kAttrKernelGraph = "kernel_graph";
 constexpr auto kAttrPreKernelGraph = "pre_kernel_graph";
 constexpr auto kAttrNeedInline = "need_inline";
 constexpr auto kAttrOriFusionName = "ori_fusion_name";
+constexpr auto kAttrDynamicLenName = "is_dynamic_len";
 
 // FuncGraph Flags
 constexpr auto kFlagIsDynamicStructure = "is_dynamic_structure";

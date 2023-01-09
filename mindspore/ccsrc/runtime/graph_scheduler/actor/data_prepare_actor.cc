@@ -343,10 +343,19 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
   if (!input_param->has_dynamic_shape()) {
     return;
   }
+  std::vector<TypeId> types = {common::AnfAlgo::GetOutputInferDataType(input_node, 0)};
+  std::vector<ShapeVector> shapes = {input_tensor->shape()};
 
-  auto shape = input_tensor->shape();
-  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape},
-                                              input_node.get());
+  // If the shape of the tensor exists and is a tuple shape, it means that the tensor is a tuple type, and it needs
+  // to be restored the shape to tuple type when infer shape.
+  if (input_tensor->base_shape_ptr() != nullptr && input_tensor->base_shape_ptr()->isa<abstract::SequenceShape>()) {
+    shapes = TupleShapeToShapeVector(input_tensor->base_shape_ptr());
+    types = std::vector(shapes.size(), input_tensor->data_type());
+    common::AnfAlgo::SetScalarTupleOutputInferType(types, input_node);
+    return;
+  }
+  // In runtime, the dynamic len tag should be removed.
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, input_node.get(), true);
 }
 
 void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_node, const TensorPtr &input_tensor,

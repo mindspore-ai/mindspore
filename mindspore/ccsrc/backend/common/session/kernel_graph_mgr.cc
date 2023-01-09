@@ -1185,6 +1185,15 @@ void KernelGraphMgr::SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGr
       if (shape->isa<abstract::Shape>() && shape->IsDynamic()) {
         node_ptr->set_has_dynamic_shape(true);
       }
+      if (input_node->abstract() != nullptr && input_node->abstract()->isa<abstract::AbstractSequence>()) {
+        // If the parameter is dynamic sequence, it is regard as dynamic shape.
+        const auto &tuple_abs = input_node->abstract()->cast<abstract::AbstractSequencePtr>();
+        MS_EXCEPTION_IF_NULL(tuple_abs);
+        if (tuple_abs->dynamic_len()) {
+          MS_LOG(INFO) << "Input node:" << input_node->DebugString() << " set dynamic flag to true";
+          node_ptr->set_has_dynamic_shape(true);
+        }
+      }
     }
   }
 }

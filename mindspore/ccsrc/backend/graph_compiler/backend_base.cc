@@ -47,8 +47,60 @@ Backend::Backend(const std::string &name) : name_(name), is_multi_graph_sink_(fa
   convert_fn_ = MsVmConvert;
 }
 
-void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs) {
+namespace {
+// In dynamic sequence, since the number of members is not determined in compile time, the entire sequence needs
+// to be placed in single tensor, and the shape of the tuple needs to be recorded in the tensor, so that the shape
+// of the tensor can be accurately restored during the dynamic shape derivation process in runtime.
+TensorPtr SequenceToTensor(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (!value->isa<ValueSequence>()) {
+    MS_LOG(EXCEPTION) << "Invalid sequence value:" << value->ToString();
+  }
+
+  const auto &sequence_value = value->cast<ValueSequencePtr>();
+  const auto &values = sequence_value->value();
+  if (values.empty() || values[0] == nullptr || (!values[0]->isa<Scalar>())) {
+    MS_LOG(WARNING) << "Empty sequence in sequence value:" << value->ToString();
+    return std::make_shared<tensor::Tensor>();
+  }
+
+  // Create the tensor.
+  TensorPtr tensor;
+  MS_EXCEPTION_IF_NULL(values[0]->type());
+  if (values[0]->type()->type_id() == TypeId::kNumberTypeInt64) {
+    tensor = std::make_shared<tensor::Tensor>(GetValue<std::vector<int64_t>>(value), values[0]->type());
+  } else if (values[0]->type()->type_id() == TypeId::kNumberTypeInt32) {
+    tensor = std::make_shared<tensor::Tensor>(GetValue<std::vector<int32_t>>(value), values[0]->type());
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid tuple type:" << values[0]->type()->type_id() << " for value:" << value->ToString();
+  }
+  MS_EXCEPTION_IF_NULL(tensor);
+
+  // Build the tuple shape and set into tensor.
+  const auto &element_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
+  const auto &element_shapes = std::vector<abstract::BaseShapePtr>(values.size(), element_shape);
+  tensor->set_base_shape(std::make_shared<abstract::TupleShape>(element_shapes));
+  return tensor;
+}
+}  // namespace
+
+void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(inputs);
+  if (node != nullptr && node->abstract() != nullptr && common::AnfAlgo::IsDynamicSequence(node)) {
+    if (!utils::isa<ValuePtr>(arg)) {
+      MS_LOG(EXCEPTION) << "Invalid input for dynamic sequence node:" << node->DebugString();
+    }
+    auto value = utils::cast<ValuePtr>(arg);
+    MS_EXCEPTION_IF_NULL(value);
+    if (!value->isa<ValueSequence>()) {
+      MS_LOG(EXCEPTION) << "Invalid value:" << value->ToString()
+                        << " for dynamic sequence node:" << node->DebugString();
+    }
+    const auto &tensor = SequenceToTensor(value);
+    inputs->push_back(tensor);
+    return;
+  }
+
   if (utils::isa<tensor::TensorPtr>(arg)) {
     auto value = utils::cast<tensor::TensorPtr>(arg);
     inputs->push_back(value);
@@ -156,7 +208,9 @@ void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters
     return;
   }
   auto position = iter - parameters.begin();
-  PushInputTensor(args[position], input_tensors);
+
+  // If the node is dynamic sequence all the element in tuple should be placed in single tensor.
+  PushInputTensor(args[position], input_tensors, front_node);
 }
 
 void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const AnfNodePtr &front_node,
@@ -214,7 +268,7 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
     MS_EXCEPTION_IF_NULL(parameter);
     const auto &abs = parameter->abstract();
     MS_EXCEPTION_IF_NULL(abs);
-    if (abs->isa<abstract::AbstractTuple>()) {
+    if (abs->isa<abstract::AbstractTuple>() && (!common::AnfAlgo::IsDynamicSequence(parameter))) {
       MS_LOG(DEBUG) << "Fetch input tensor for tuple parameter:" << parameter->DebugString() << " in control flow.";
       PushTupleTensor(args, origin_parameters, parameter, parameter_with_index.second, &input_tensors);
     } else {
@@ -713,7 +767,7 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
   auto &output_abstract = output_node->abstract();
   MS_EXCEPTION_IF_NULL(output_abstract);
   // Wrap output to VectorRef if the output is tuple.
-  if (output_abstract->isa<abstract::AbstractTuple>()) {
+  if (output_abstract->isa<abstract::AbstractTuple>() && (!common::AnfAlgo::IsDynamicSequence(output_node))) {
     VectorRef output_tuple;
     for (size_t i = 0; i < outputs_num; ++i) {
       if (*output_position >= output_tensors.size()) {
