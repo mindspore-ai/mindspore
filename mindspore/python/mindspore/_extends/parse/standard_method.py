@@ -2999,6 +2999,13 @@ def diag(x):
     return F.diag(x)
 
 
+def diagflat(x, offset=0):
+    """
+    Creates a two-dimensional Tensor with the flattened input as a diagonal.
+    """
+    return F.diagflat(x, offset)
+
+
 def masked_select(x, mask):
     """
     Returns a new 1-D Tensor which indexes the input tensor according to the boolean mask.

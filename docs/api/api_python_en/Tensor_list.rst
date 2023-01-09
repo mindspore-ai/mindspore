@@ -95,6 +95,7 @@
     mindspore.Tensor.deg2rad
     mindspore.Tensor.det
     mindspore.Tensor.diag
+    mindspore.Tensor.diagflat
     mindspore.Tensor.diagonal
     mindspore.Tensor.digamma
     mindspore.Tensor.div

@@ -9,7 +9,7 @@ mindspore.ops.pixel_shuffle
 
     参数：
         - **x** (Tensor) - Tensor，shape为 :math:`(*, C \times r^2, H, W)` 。 `x` 的维度需要大于2，并且倒数第三维length可以被 `upscale_factor` 的平方整除。
-        - **upscale_factor** (int) - 增加空间分辨率的因子，是正整数。。
+        - **upscale_factor** (int) - 增加空间分辨率的因子，是正整数。
 
     返回：
         - **output** (Tensor) - Tensor，shape为 :math:`(*, C, H \times r, W \times r)` 。

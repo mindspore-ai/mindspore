@@ -3354,6 +3354,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('diag')()(self)
 
+    def diagflat(self, offset=0):
+        r"""
+        For details, please refer to :func:`mindspore.ops.diagflat`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('diagflat')(self, offset)
+
     def xdivy(self, y):
         r"""
         For details, please refer to :func:`mindspore.ops.xdivy`.
