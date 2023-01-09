@@ -1443,10 +1443,16 @@ class SliceGetItem(Primitive):
             raise TypeError(
                 "Primitive[SliceGetItem] only support to get a slice type element but got {}".format(slice_value))
         if value == "start":
+            if hasattr(slice_value.start, "ndim") and slice_value.start.ndim == 1:
+                return slice_value.start.item()
             return slice_value.start
         if value == "stop":
+            if hasattr(slice_value.stop, "ndim") and slice_value.stop.ndim == 1:
+                return slice_value.stop.item()
             return slice_value.stop
         if value == "step":
+            if hasattr(slice_value.step, "ndim") and slice_value.step.ndim == 1:
+                return slice_value.step.item()
             return slice_value.step
         raise AttributeError("\'slice\' object has no attribute {}".format(value))
 
