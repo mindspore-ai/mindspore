@@ -15,8 +15,8 @@
 """ test graph fallback buildin python function bool"""
 import pytest
 import numpy as np
+import mindspore.nn as nn
 from mindspore import jit, context, Tensor
-
 context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -197,5 +197,43 @@ def test_fallback_bool_with_input_tensor2():
     def foo():
         x = Tensor([10])
         return bool(x)
+
+    assert foo()
+
+
+class Net(nn.Cell):
+    def __init__(self):
+        super(Net, self).__init__()
+
+    def construct(self):
+        return 1
+
+
+def test_bool_for_cell_object():
+    """
+    Feature: Bool function.
+    Description: Test bool() for cell object input
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        net = Net()
+        return bool(net)
+
+    assert foo()
+
+
+def test_bool_for_cell_object_2():
+    """
+    Feature: Bool function.
+    Description: Test bool() for cell object input
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        net = Net()
+        if net:
+            return True
+        return False
 
     assert foo()
