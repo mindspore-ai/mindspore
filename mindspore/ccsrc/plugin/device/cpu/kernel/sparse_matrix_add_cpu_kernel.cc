@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,6 +101,16 @@ int SparseMatrixAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return ret;
 }
 
+template <typename T>
+void CheckInputValid(const T *input, const size_t &size, const std::string &name) {
+  for (size_t i = 0; i < size - 1; i++) {
+    if (input[i] > input[i + 1] || input[i] < 0 || input[i + 1] < 0) {
+      std::vector<T> v(input, input + size);
+      MS_LOG_EXCEPTION << "For SparseMatrixAdd, " << name << " must non-negative and increasing, but got " << v;
+    }
+  }
+}
+
 template <typename T, typename S>
 bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
@@ -132,6 +142,8 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
   }
+  CheckInputValid(a_indptr, inputs[kAIndptrIdx]->size / sizeof(T), "a indptr");
+  CheckInputValid(b_indptr, inputs[kBIndptrIdx]->size / sizeof(T), "b indptr");
   auto batch_size = static_cast<size_t>(a_batch_size > 1 ? (a_batch_size - 1) : 1);
   c_batch[0] = 0;
   // Do the compute: C = alpha * A + beta * B.
