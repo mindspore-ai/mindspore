@@ -143,6 +143,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/pack_weight_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_flow_scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_subgraph_creator.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/litert/thread_pool_reuse_manager.cc
         )
 
 if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)

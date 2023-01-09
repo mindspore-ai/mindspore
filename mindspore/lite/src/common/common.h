@@ -62,10 +62,15 @@ static const char *const kMSCacheSerializePath = "serialize_path";
 static const char *const kWeight = "weight";
 static const char *const kWeightPath = "weight_path";
 
-// model parallel runner id
-static const char *const kInnerIDs = "inner_ids";
+// shared parallel thread pool
+static const char *const kSharedThreadPool = "shared_thread_pool";
+static const char *const kEnable = "enable_shared_thread_pool";
+static const char *const kThreadNumLimitPerWorker = "thread_num_limit_per_worker";
+static const char *const kThreadNumRemainingPerWorker = "thread_num_remaining_per_worker";
 static const char *const kInnerRunnerID = "inner_runner_id";
 static const char *const kInnerNumaID = "inner_numa_id";
+static const char *const kInnerModelID = "inner_model_id";
+static const char *const kInnerIDs = "inner_ids";
 
 static const char *const kIsOptimized = "isOptimized";
 // gpu context

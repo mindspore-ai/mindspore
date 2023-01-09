@@ -32,11 +32,13 @@
 #include "nnacl/kernel.h"
 #include "src/litert/inner_allocator.h"
 #include "experimental/src/exec_env_utils.h"
+#include "src/litert/thread_pool_reuse_manager.h"
 
 namespace mindspore::lite {
 namespace {
 const constexpr int kMaxInnerContextDeviceNums = 3;
 const constexpr int kNumCoreNumTimes = 5;
+constexpr int kDefaultParallelNum = 2;
 }  // namespace
 
 InnerContext::InnerContext() {
@@ -58,27 +60,31 @@ void InnerContext::InitExperimentalExecEnv() {
 
 int InnerContext::CreateThreadPool() {
   if (this->thread_pool_ == nullptr) {
-    BindMode bind_mode = Power_NoBind;
+    bind_mode_ = Power_NoBind;
     if (this->IsDeviceTypeEnabled(DT_CPU)) {
-      bind_mode = static_cast<BindMode>(this->GetDeviceInfo(DT_CPU).cpu_device_info_.cpu_bind_mode_);
+      bind_mode_ = static_cast<BindMode>(this->GetDeviceInfo(DT_CPU).cpu_device_info_.cpu_bind_mode_);
     }
-
+    this->inter_op_parallel_num_ =
+      (!this->enable_parallel_ && this->inter_op_parallel_num_ > 1) ? this->inter_op_parallel_num_ : 1;
+    actor_thread_num_ = (inter_op_parallel_num_ > 1) ? 1 : (this->enable_parallel_ ? kDefaultParallelNum : 1);
+    thread_pool_ = ThreadPoolReuseManager::GetInstance()->GetThreadPool(
+      actor_thread_num_, inter_op_parallel_num_, thread_num_, bind_mode_, affinity_core_list_, runner_id_);
+    if (thread_pool_ == nullptr) {
 #ifdef ENABLE_MINDRT
-    if (!this->enable_parallel_ && this->inter_op_parallel_num_ > 1) {
-      thread_pool_ = ParallelThreadPool::CreateThreadPool(this->inter_op_parallel_num_, this->thread_num_,
-                                                          this->affinity_core_list_, bind_mode);
-      MS_CHECK_TRUE_MSG(thread_pool_ != nullptr, RET_NULL_PTR, "Create Allocator failed");
-    } else {
-      int actor_parallel_thread = this->enable_parallel_ ? kDefaultParallelNum : 1;
-      thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_,
-                                                       this->affinity_core_list_, bind_mode);
-      MS_CHECK_TRUE_MSG(thread_pool_ != nullptr, RET_NULL_PTR, "Create Allocator failed");
-    }
+      if (inter_op_parallel_num_ > 1) {
+        thread_pool_ = ParallelThreadPool::CreateThreadPool(this->inter_op_parallel_num_, this->thread_num_,
+                                                            this->affinity_core_list_, bind_mode_, runner_id_);
+      } else {
+        thread_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num_, this->thread_num_,
+                                                         this->affinity_core_list_, bind_mode_);
+      }
 #else
-    thread_pool_ = ThreadPool::CreateThreadPool(thread_num_ - 1);
-    thread_pool_->SetCpuAffinity(static_cast<mindspore::BindMode>(bind_mode));
+      thread_pool_ = ThreadPool::CreateThreadPool(thread_num_ - 1);
+      thread_pool_->SetCpuAffinity(static_cast<mindspore::BindMode>(bind_mode_));
 #endif
+    }
   }
+  MS_CHECK_TRUE_MSG(thread_pool_ != nullptr, RET_NULL_PTR, "Create Allocator failed");
   return RET_OK;
 }
 int InnerContext::Init() {

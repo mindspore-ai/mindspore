@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_H_
 
 #include <queue>
+#include <string>
 #include <new>
 #include <vector>
 #include <unordered_map>
@@ -184,6 +185,7 @@ class MS_CORE_API ThreadPool {
   const std::unordered_map<std::thread::id, size_t> &GetWorkerIdMap() const { return worker_ids_; }
   float GetServerCpuFrequence() const { return server_cpu_frequence; }
   inline size_t actor_thread_num() const { return actor_thread_num_; }
+  virtual bool SetRunnerID(const std::string &runner_id) { return false; }
   template <typename T = Worker>
   int CreateThreads(size_t thread_num, const std::vector<int> &core_list) {
     size_t core_num = std::thread::hardware_concurrency();

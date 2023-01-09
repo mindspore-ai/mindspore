@@ -58,6 +58,7 @@
 #ifndef __ANDROID__
 #include "kernel/ascend/plugin/ascend_kernel_plugin.h"
 #endif
+#include "thread/parallel_thread_pool_manager.h"
 
 using AbstractBaseModel = mindspore::infer::AbstractBaseModel;
 
@@ -755,7 +756,17 @@ int LiteSession::ContextInit(const std::shared_ptr<InnerContext> &context) {
     return RET_NULL_PTR;
   }
   this->context_ = context;
-
+  std::string runner_id;
+  if (config_info_ != nullptr) {
+    auto it_id = config_info_->find(kInnerIDs);
+    if (it_id != config_info_->end()) {
+      auto item_runner = it_id->second.find(kInnerRunnerID);
+      if (item_runner != it_id->second.end()) {
+        runner_id = it_id->second.at(kInnerRunnerID);
+      }
+    }
+  }
+  context_->SetBindRunnerId(runner_id);
   auto ret = this->context_->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
@@ -771,6 +782,13 @@ int LiteSession::ContextInit(const std::shared_ptr<InnerContext> &context) {
 #ifdef MS_COMPILE_IOS
   context_->thread_pool_->SetMaxSpinCount(kDefaulLiteIosSpinCount);
   context_->thread_pool_->SetMinSpinCount(kDefaulLiteIosSpinCount);
+#endif
+#ifdef PARALLEL_INFERENCE
+  if (context_->inter_op_parallel_num_ > 1 && !runner_id.empty() &&
+      ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool(runner_id)) {
+    MS_LOG(INFO) << "Enable subgraph parallelism and enable thread pool sharing";
+    ParallelThreadPoolManager::GetInstance()->BindPoolToRunner(context_->thread_pool_, config_info_);
+  }
 #endif
   return RET_OK;
 }

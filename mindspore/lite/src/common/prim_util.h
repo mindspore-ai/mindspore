@@ -32,6 +32,7 @@ bool IsSwitchLayerNode(const void *primitive, int schema_version);
 bool IsCustomNode(const void *primitive, int schema_version);
 bool IsTensorListNode(const void *primitive, int schema_version);
 int GetPartialGraphIndex(const void *primitive, int schema_version);
+bool IsSharedThreadPoolOp(int op_type);
 }  // namespace lite
 }  // namespace mindspore
 
