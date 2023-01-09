@@ -519,9 +519,11 @@ AnfNodePtr KernelGraph::CreatTupleGetItemNode(const AnfNodePtr &node, size_t out
   AnfNodePtr tuple_getitem = NewCNode({mindspore::NewValueNode(prim::kPrimTupleGetItem), node, idx});
   MS_EXCEPTION_IF_NULL(tuple_getitem);
   tuple_getitem->set_scope(node->scope());
-  auto origin_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
-  TypeId origin_type = common::AnfAlgo::GetOutputInferDataType(node, output_idx);
-  common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, tuple_getitem.get());
+  auto abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(abs);
+  auto abs_i = abs->elements()[output_idx];
+  MS_EXCEPTION_IF_NULL(abs_i);
+  tuple_getitem->set_abstract(abs_i);
   return tuple_getitem;
 }
 
