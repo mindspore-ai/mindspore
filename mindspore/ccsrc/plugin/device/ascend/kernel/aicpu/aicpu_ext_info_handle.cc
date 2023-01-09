@@ -26,6 +26,7 @@ namespace ascend {
 namespace {
 // if dim count is not reach kMaxShapeDims(8), use INT64_MIN to mark dim end.
 constexpr int64_t kDimEndFlag = INT64_MIN;
+static std::atomic<std::uint64_t> g_kernel_id(0U);
 }  // namespace
 bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
   MS_LOG(INFO) << "Parse Node:" << node_name_ << " start";
@@ -72,6 +73,12 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
       case aicpu::FWKAdapter::FWK_ADPT_EXT_OUTPUT_SHAPE:
         if (!ParseExtOutputShape(aicpu_ext_info)) {
           MS_LOG(ERROR) << "Parse aicpu_ext_info output shape failed, node: " << node_name_;
+          return false;
+        }
+        break;
+      case aicpu::FWKAdapter::FWK_ADPT_EXT_SESSION_INFO:
+        if (!ParseExtSessionInfo(aicpu_ext_info)) {
+          MS_LOG(ERROR) << "Parse aicpu_ext_info session info failed, node: " << node_name_;
           return false;
         }
         break;
@@ -132,6 +139,21 @@ bool AicpuExtInfoHandler::ParseExtInputShape(AicpuExtInfo *aicpu_ext_info) {
     (void)input_shape_and_type_.emplace_back(&input[index]);
   }
   MS_LOG(INFO) << "Node:" << node_name_ << " parse ext input shape success infoLen=" << aicpu_ext_info->infoLen;
+  return true;
+}
+
+bool AicpuExtInfoHandler::ParseExtSessionInfo(AicpuExtInfo *aicpu_ext_info) {
+  auto need_len = sizeof(AicpuSessionInfo);
+  MS_EXCEPTION_IF_NULL(aicpu_ext_info);
+  if (aicpu_ext_info->infoLen != need_len) {
+    MS_LOG(ERROR) << "Node:" << node_name_
+                  << " parse aicpu_ext_info session info failed, aicpu_ext_info->infoLen:" << aicpu_ext_info->infoLen
+                  << " need_len:" << need_len;
+    return false;
+  }
+
+  session_info_ = reinterpret_cast<AicpuSessionInfo *>(aicpu_ext_info->infoMsg);
+  MS_LOG(INFO) << "Node:" << node_name_ << " parse ext session info success infoLen=" << aicpu_ext_info->infoLen;
   return true;
 }
 
@@ -271,6 +293,19 @@ bool AicpuExtInfoHandler::UpdateEventId(const uint32_t event_id) {
   async_wait_->waitId = event_id;
   return true;
 }
+
+bool AicpuExtInfoHandler::UpdateSessionInfoId(const uint64_t session_id) const {
+  if (session_info_ == nullptr) {
+    MS_LOG(DEBUG) << "There is no session info in ext_info, no need update.";
+  }
+
+  session_info_->sessionId = session_id;
+  session_info_->kernelId = GenerateKernelId();
+  session_info_->sessFlag = true;
+  return true;
+}
+
+bool AicpuExtInfoHandler::GenerateKernelId() const { return g_kernel_id++; }
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

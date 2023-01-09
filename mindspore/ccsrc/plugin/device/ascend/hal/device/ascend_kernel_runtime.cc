@@ -584,7 +584,7 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph &graph) {
   }
 
   MS_LOG(INFO) << "LoadDavinciModel mode_id:" << model_iter->first;
-  ModelRunner::Instance().LoadDavinciModel(device_id_, 0, model_iter->first, model_iter->second);
+  ModelRunner::Instance().LoadDavinciModel(device_id_, model_iter->first, model_iter->first, model_iter->second);
 
 #ifndef ENABLE_SECURITY
   std::function<void *()> model_handle =
