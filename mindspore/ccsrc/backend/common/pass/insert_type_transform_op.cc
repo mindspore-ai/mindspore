@@ -134,6 +134,18 @@ AnfNodePtr CreateRealMakeTupleByTupleUnfoldInput(const FuncGraphPtr &func_graph,
   KernelBuildInfoPtr real_make_tuple_build_info = AnfAlgo::GetSelectKernelBuildInfo(real_make_tuple);
   MS_EXCEPTION_IF_NULL(real_make_tuple_build_info);
   real_make_tuple_build_info->SetInputsKernelObjectType({KernelObjectType::TUPLE_UNFOLD});
+
+  // Extend tuple_unfold inputs.
+  abstract::AbstractTuplePtr tuple_unfold_abs =
+    node_with_tuple_unfold_output->abstract()->cast<abstract::AbstractTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_unfold_abs);
+  auto builder = AnfAlgo::GetSelectKernelBuildInfo(real_make_tuple);
+  MS_EXCEPTION_IF_NULL(builder);
+  std::vector<std::string> inputs_format{tuple_unfold_abs->size(), builder->GetInputFormat(kIndex0)};
+  std::vector<TypeId> inputs_type{tuple_unfold_abs->size(), builder->GetInputDeviceType(kIndex0)};
+  builder->SetInputsFormat(inputs_format);
+  builder->SetInputsDeviceType(inputs_type);
+
   return real_make_tuple;
 }
 
@@ -254,16 +266,6 @@ abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, co
   auto abs = infer_impl.InferShapeAndType(nullptr, primitive, input_args);
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for " << primitive->name() << " is " << abs->ToString();
-  return abs;
-}
-
-abstract::AbstractBasePtr GenerateAbsByUserNodeInput(const CNodePtr &user_node, size_t input_index) {
-  MS_EXCEPTION_IF_NULL(user_node);
-  auto shape = AnfAlgo::GetInputDeviceShape(user_node, input_index);
-  auto type_id = AnfAlgo::GetInputDeviceDataType(user_node, input_index);
-  // Defaultly the input is a tensor. Other cases should be handled respectively.
-  auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape);
-  MS_EXCEPTION_IF_NULL(abs);
   return abs;
 }
 
@@ -559,7 +561,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTensor(const FuncGraph
   // Data type of the tensor should be set as an attr of TupleToTensor op.
   size_t input_index = GetInputNodeIndex(input, node);
   auto data_type = AnfAlgo::GetInputDeviceDataType(node, input_index);
-  common::AnfAlgo::SetNodeAttr("dtype", TypeIdToType(data_type), tuple_to_tensor);
+  common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), tuple_to_tensor);
 
   // Set abstract for TupleToTensor op according to user node's input shape and type.
   auto abs = GenerateAbsByOpInfer(prim::kPrimTupleToTensor, {input});
@@ -625,7 +627,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
   // Data type of the tensor should be set as an attr of TupleToTensor op.
   size_t input_index = GetInputNodeIndex(input, node);
   auto data_type = AnfAlgo::GetInputDeviceDataType(node, input_index);
-  common::AnfAlgo::SetNodeAttr("dtype", TypeIdToType(data_type), tuple_to_tensor);
+  common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), tuple_to_tensor);
 
   // Set abstract for TupleToTensor op according to user node's input shape and type.
   auto abs = GenerateAbsByOpInfer(prim::kPrimTupleToTensor, {input});
