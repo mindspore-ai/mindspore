@@ -28,6 +28,7 @@
 #include "src/litert/kernel/opencl/kernel/arithmetic_self.h"
 #include "src/litert/kernel/opencl/kernel/to_format.h"
 #include "schema/ops_generated.h"
+#include "nnacl/arithmetic.h"
 
 using mindspore::schema::ActivationType;
 using mindspore::schema::PrimitiveType;
@@ -104,7 +105,30 @@ struct FusionEltwiseParameter {
     Node_(bool is_leaf, FusionEltwiseParameter *value, std::string value_name)
         : is_leaf_(is_leaf), value_(value), name_(std::move(value_name)) {}
   };
-  OpParameter op_parameter_{"FusionEltwiseParameter", true, PrimitiveType_FusionEltwise, 1};
+  OpParameter op_parameter_{"FusionEltwiseParameter", PrimitiveType_FusionEltwise, 1, schema::QuantType_QUANT_NONE};
+
+  // Node: Duplication of extra fields of ArithmeticParameter here is aiming for FusionEltwise shape inference.
+  // In one step of member method InferShape(), FusionEltwiseParameter is reinterpreted as ArithmeticParameter,
+  // and below fields would be assigned in detail shape inference.
+  bool broadcasting_;
+  size_t ndim_;
+  int activation_type_;
+  int in_shape0_[ARITHMETIC_SUPPORT_DIMS_NUM];
+  int in_elements_num0_;
+  int in_shape1_[ARITHMETIC_SUPPORT_DIMS_NUM];
+  int in_elements_num1_;
+
+  int out_shape_[ARITHMETIC_SUPPORT_DIMS_NUM];
+  int out_elements_num_;
+
+  int in_strides0_[ARITHMETIC_SUPPORT_DIMS_NUM];
+  int in_strides1_[ARITHMETIC_SUPPORT_DIMS_NUM];
+  int out_strides_[ARITHMETIC_SUPPORT_DIMS_NUM];
+
+  int multiples0_[ARITHMETIC_SUPPORT_DIMS_NUM];
+  int multiples1_[ARITHMETIC_SUPPORT_DIMS_NUM];
+  int eltwise_mode_;  // eltwise need
+
   EltwiseOperator operator_;
   std::string name_;
   std::vector<Node_> inputs_;
@@ -159,6 +183,7 @@ class FusionEltwiseOpenCLKernel : public OpenCLKernel {
   }
 
   int Prepare() override;
+  int InferShape() override;
   int InitWeights() override;
   int SetGlobalLocal() override;
   int SetConstArgs() override;
