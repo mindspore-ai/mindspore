@@ -22,10 +22,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename K>
-CUDA_LIB_EXPORT bool InitIndexBySlice(const TensorLayoutHelper &t, int64_t axis, K *data, cudaStream_t cuda_stream);
+bool InitIndexBySlice(const TensorLayoutHelper &t, int64_t axis, K *data, cudaStream_t cuda_stream);
 
 template <typename K, typename V>
-CUDA_LIB_EXPORT bool SortKeyValueInplace(const TensorLayoutHelper &key, K *key_data, const TensorLayoutHelper &value,
-                                         V *value_data, int64_t axis, bool descending, cudaStream_t cuda_stream);
+bool SortKeyValueInplace(const TensorLayoutHelper &key, K *key_data, const TensorLayoutHelper &value, V *value_data,
+                         int64_t axis, bool descending, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SORT_KEY_VALUE_INPLACE_CUH_
