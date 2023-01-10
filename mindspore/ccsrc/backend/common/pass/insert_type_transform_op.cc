@@ -38,7 +38,7 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
     MS_LOG(WARNING) << "The Function only split the output type is tuple type but got" << abs->ToString();
     return -1;
   }
-  MS_EXCEPTION_IF_NULL(plant_inputs);
+
   auto input_size = AnfAlgo::GetOutputTensorNum(tuple_input);
   if (tuple_input->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(tuple_input, prim::kPrimMakeTuple)) {
     auto make_tuple = tuple_input->cast<CNodePtr>();
@@ -50,12 +50,13 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
       MS_EXCEPTION_IF_NULL(dyn_input_node);
       // Handle tuple nested scenes.
       if (dyn_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple)) {
-        input_size += SplitTupleInputs(graph, dyn_input_node, plant_inputs);
+        int64_t dyn_input_size = SplitTupleInputs(graph, dyn_input_node, plant_inputs);
+        input_size += LongToSize(dyn_input_size);
         continue;
       }
       (void)plant_inputs->emplace_back(dyn_input_node);
     }
-    return input_size;
+    return SizeToLong(input_size);
   }
   for (size_t index = 0; index < input_size; ++index) {
     auto dynamic_input_node = CreatTupleGetItemNode(graph, tuple_input, index);
@@ -65,7 +66,7 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
     SetKernelInfoForNewCNode(dynamic_input_node, false);
     (void)plant_inputs->emplace_back(dynamic_input_node);
   }
-  return input_size;
+  return SizeToLong(input_size);
 }
 
 AnfNodePtr CreateNewNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &input_list,
@@ -106,6 +107,9 @@ AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const 
   AnfNodePtrList inputs = make_tuple_node->inputs();
   auto prim = NewValueNode(prim::kPrimRealMakeTuple);
   MS_EXCEPTION_IF_NULL(prim);
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "inputs is empty.";
+  }
   inputs[kIndex0] = prim;
   CNodePtr real_make_tuple = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(real_make_tuple);
@@ -298,7 +302,7 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
         auto abs_type = AnfAlgo::GetAbstractObjectType(input_node->abstract());
         input_obj_type->push_back(kernel::TypeIdToKernelObjectType(abs_type));
       } else {
-        auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(cnode->input(i));
+        auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(input_node);
         input_obj_type->push_back(kernel_build_info->GetOutputKernelObjectType(kIndex0));
       }
     }
@@ -354,6 +358,7 @@ void UpdateAbsForTupleGetItem(const CNodePtr &tuple_get_item_node) {
   }
 
   auto seq_abs = input_abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_abs);
   AbstractBasePtrList seq_element = seq_abs->elements();
   // This method is used for TupleGetItem to RealTupleGetItem converting, the tuple elements must be scalar for now.
   for (const auto &ele : seq_element) {
@@ -428,7 +433,7 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
     }
 
     const auto &real_input_node =
-      common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false, need_handled_types).first;
+      common::AnfAlgo::VisitKernelWithReturnType(input_node, kIndex0, false, need_handled_types).first;
     MS_EXCEPTION_IF_NULL(real_input_node);
     if ((real_input_node->kernel_info() == nullptr) ||
         (!dynamic_cast<device::KernelInfo *>(real_input_node->kernel_info())->has_build_info())) {
@@ -439,7 +444,7 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
     }
 
     auto needed_input_type = AnfAlgo::GetInputKernelObjectType(node, i);
-    auto current_input_type = AnfAlgo::GetOutputKernelObjectType(real_input_node, 0);
+    auto current_input_type = AnfAlgo::GetOutputKernelObjectType(real_input_node, kIndex0);
     if ((kObjectTypeToString.count(needed_input_type) == 0) || (kObjectTypeToString.count(current_input_type) == 0)) {
       MS_LOG(EXCEPTION) << "The current input object type " << current_input_type << " or needed input object type "
                         << needed_input_type << " is not valid for node " << node->fullname_with_scope()
@@ -548,6 +553,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTuple(const FuncGraphP
 AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTensor(const FuncGraphPtr &func_graph,
                                                                  const AnfNodePtr &input, const CNodePtr &node,
                                                                  bool *) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -614,6 +620,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTupleUnfold(const FuncGraphP
 
 AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                                            const CNodePtr &node, bool *) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -641,6 +648,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
 
 AnfNodePtrList InsertTypeTransformOp::ProcessScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                                             const CNodePtr &node, bool *new_prim) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -667,6 +675,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessScalarToTensor(const FuncGraphPtr &
 
 AnfNodePtrList InsertTypeTransformOp::ProcessTensorToTuple(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                                            const CNodePtr &node, bool *) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -688,6 +697,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTensorToTuple(const FuncGraphPtr &f
 
 AnfNodePtrList InsertTypeTransformOp::ProcessTensorToScalar(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                                             const CNodePtr &node, bool *new_prim) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
 
