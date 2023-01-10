@@ -66,7 +66,7 @@ def test_yolov5_dynamic_gpu_pynative():
     assert np.allclose(loss_list, expect_loss, 1e-2, 1e-2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_yolov5_dynamic_gpu():
