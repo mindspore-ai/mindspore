@@ -37,7 +37,7 @@ int BinaryCrossEntropyGrad(const int input_size, const int reduction, const floa
     }
   } else {
     float dloss1 = dloss[0];
-    if (reduction == Reduction_Sum) {
+    if (reduction == Reduction_Mean) {
       dloss1 = dloss[0] / input_size;
     }
     for (int i = 0; i < input_size; i++) {
