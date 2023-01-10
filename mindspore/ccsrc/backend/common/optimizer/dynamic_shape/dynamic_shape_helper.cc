@@ -108,8 +108,8 @@ TypeId GetSequenceType(const abstract::AbstractSequencePtr &seq_abs) {
     }
     auto follow_type = elems[i]->BuildType();
     if (!(fixed_type == follow_type)) {
-      MS_LOG(EXCEPTION) << "Different type found between 0'th element(Type：" << fixed_type->ToString() << ") and " << i
-                        << "'th element(Type: " << follow_type->ToString() << ")";
+      MS_LOG(EXCEPTION) << "Different type found between 0'th element[Type: " << fixed_type->ToString() << "] and " << i
+                        << "'th element[Type: " << follow_type->ToString() << "]";
     }
   }
   return fixed_type->type_id();
