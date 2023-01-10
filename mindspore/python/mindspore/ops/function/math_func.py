@@ -5819,12 +5819,12 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
         prepend (Tensor, optional): Values to prepend or append to a along
             `axis` prior to performing the difference. Scalar values are expanded to
             arrays with length 1 in the direction of `axis` and the shape of the input
-            array in along all other axes. Otherwise the dimension and shape must
+            array in along all other axis. Otherwise the dimension and shape must
             match `x` except along `axis`. Default: None.
         append (Tensor, optional): Values to prepend or append to a along
             `axis` prior to performing the difference. Scalar values are expanded to
             arrays with length 1 in the direction of `axis` and the shape of the input
-            array in along all other axes. Otherwise the dimension and shape must
+            array in along all other axis. Otherwise the dimension and shape must
             match `x` except along `axis`. Default: None.
 
     Returns:
