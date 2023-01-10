@@ -22,6 +22,8 @@
 #include "distributed/cluster/cluster_context.h"
 #endif
 #include "ps/ps_context.h"
+#include "distributed/embedding_cache/embedding_storage/dense_embedding_storage.h"
+#include "distributed/embedding_cache/embedding_storage/sparse_embedding_storage.h"
 
 namespace mindspore {
 namespace distributed {
@@ -219,6 +221,73 @@ void EmbeddingCacheTableManager::DumpHashTables() const {
                  << ", device cache address:" << reinterpret_cast<void *>(item.second.address.addr)
                  << ", host cache address:" << reinterpret_cast<void *>(item.second.host_address.get());
   }
+}
+
+EmbeddingStorageManager &EmbeddingStorageManager::GetInstance() {
+  static EmbeddingStorageManager instance{};
+  return instance;
+}
+
+namespace {
+/**
+ * @brief Create a new embedding storage instance for specific key and value type, and add the instance to
+ * EmbeddingStorageManager, this function is the implementation of function `CreateEmbeddingStorage`.
+ * @param[in] `embedding_key`: The unique parameter key for embedding table.
+ * @param[in] `embedding_dim`: The length of each embedding vector.
+ * @param[in] `capacity`: The capacity for new embedding storage.
+ */
+template <typename KeyType, typename ValueType>
+void CreateEmbeddingStorageFunc(int32_t embedding_key, size_t embedding_dim, size_t capacity) {
+  std::shared_ptr<storage::EmbeddingStorage<KeyType, ValueType>> embedding_storage = nullptr;
+  if (!EmbeddingCacheTableManager::GetInstance().is_sparse_format()) {
+    embedding_storage =
+      std::make_shared<storage::DenseEmbeddingStorage<KeyType, ValueType>>(embedding_key, embedding_dim, capacity);
+  } else {
+    embedding_storage =
+      std::make_shared<storage::SparseEmbeddingStorage<KeyType, ValueType>>(embedding_key, embedding_dim, capacity);
+  }
+  MS_EXCEPTION_IF_NULL(embedding_storage);
+  EmbeddingStorageManager::GetInstance().Add(embedding_key, embedding_storage);
+}
+
+// Key-Value type pair -> CreateEmbeddingStorageFunc map.
+const std::map<std::pair<TypeId, TypeId>, std::function<void(int32_t, size_t, size_t)>> kCreateEmbeddingStorageFuncs = {
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeBool), CreateEmbeddingStorageFunc<int32_t, bool>},
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt8), CreateEmbeddingStorageFunc<int32_t, int8_t>},
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt16), CreateEmbeddingStorageFunc<int32_t, int16_t>},
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt32), CreateEmbeddingStorageFunc<int32_t, int32_t>},
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt64), CreateEmbeddingStorageFunc<int32_t, int64_t>},
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeUInt8), CreateEmbeddingStorageFunc<int32_t, uint8_t>},
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeUInt16), CreateEmbeddingStorageFunc<int32_t, uint16_t>},
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeUInt32), CreateEmbeddingStorageFunc<int32_t, uint32_t>},
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeUInt64), CreateEmbeddingStorageFunc<int32_t, uint64_t>},
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeFloat16), CreateEmbeddingStorageFunc<int32_t, float16>},
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeFloat32), CreateEmbeddingStorageFunc<int32_t, float>},
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeFloat64), CreateEmbeddingStorageFunc<int32_t, double>},
+
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeBool), CreateEmbeddingStorageFunc<int64_t, bool>},
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeInt8), CreateEmbeddingStorageFunc<int64_t, int8_t>},
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeInt16), CreateEmbeddingStorageFunc<int64_t, int16_t>},
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeInt32), CreateEmbeddingStorageFunc<int64_t, int32_t>},
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeInt64), CreateEmbeddingStorageFunc<int64_t, int64_t>},
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeUInt8), CreateEmbeddingStorageFunc<int64_t, uint8_t>},
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeUInt16), CreateEmbeddingStorageFunc<int64_t, uint16_t>},
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeUInt32), CreateEmbeddingStorageFunc<int64_t, uint32_t>},
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeUInt64), CreateEmbeddingStorageFunc<int64_t, uint64_t>},
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeFloat16), CreateEmbeddingStorageFunc<int64_t, float16>},
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeFloat32), CreateEmbeddingStorageFunc<int64_t, float>},
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeFloat64), CreateEmbeddingStorageFunc<int64_t, double>}};
+}  // namespace
+
+void CreateEmbeddingStorage(std::pair<TypeId, TypeId> key_value_types, int32_t embedding_key, size_t embedding_dim,
+                            size_t capacity) {
+  const auto &iter = kCreateEmbeddingStorageFuncs.find(key_value_types);
+  if (iter == kCreateEmbeddingStorageFuncs.end()) {
+    MS_LOG(EXCEPTION) << "Can not find function to create embedding storage for key type:"
+                      << TypeIdToString(key_value_types.first)
+                      << ", value type:" << TypeIdToString(key_value_types.second);
+  }
+  iter->second(embedding_key, embedding_dim, capacity);
 }
 }  // namespace distributed
 }  // namespace mindspore

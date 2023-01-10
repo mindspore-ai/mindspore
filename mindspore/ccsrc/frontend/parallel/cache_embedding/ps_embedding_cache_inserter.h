@@ -55,7 +55,7 @@ class PsEmbeddingCacheInserter {
 
   // Build Embedding store for each param which enable cache. Embedding store can read/write embedding from/to
   // persistent storage.
-  void BuildEmbeddingStores();
+  void BuildEmbeddingStorages();
 
   // Construct the embedding cache services subgraphs, including embedding lookup and update operations, and package the
   // subgraphs corresponding to the related operations into the partial.

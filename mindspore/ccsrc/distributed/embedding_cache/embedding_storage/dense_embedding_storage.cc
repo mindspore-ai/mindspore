@@ -165,7 +165,8 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::TryEvict(size_t reser
     return true;
   }
 
-  KeyType *evicted_keys = this->template AllocateMemory<KeyType>(evicted_elements.size() * sizeof(KeyType));
+  size_t evicted_keys_len = evicted_elements.size() * sizeof(KeyType);
+  KeyType *evicted_keys = this->template AllocateMemory<KeyType>(evicted_keys_len);
   int *evicted_indices = this->template AllocateMemory<int>(evicted_elements.size() * sizeof(int));
   MS_EXCEPTION_IF_NULL(evicted_keys);
   MS_EXCEPTION_IF_NULL(evicted_indices);
@@ -180,8 +181,8 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::TryEvict(size_t reser
   (void)empty_slots_.insert(empty_slots_.end(), evicted_indices, evicted_indices + evicted_elements.size());
 
   // 3. Get all evicted embedding vector values.
-  ValueType *evicted_values =
-    this->template AllocateMemory<ValueType>(evicted_elements.size() * this->embedding_dim_ * sizeof(ValueType));
+  size_t evicted_values_len = evicted_elements.size() * this->embedding_dim_ * sizeof(ValueType);
+  ValueType *evicted_values = this->template AllocateMemory<ValueType>(evicted_values_len);
   MS_EXCEPTION_IF_NULL(evicted_values);
   MS_EXCEPTION_IF_NULL(embedding_param_ptr_);
   for (size_t i = 0; i < evicted_elements.size(); i++) {
@@ -193,7 +194,9 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::TryEvict(size_t reser
       return false;
     }
   }
-  // Note: write evicted element to persistent storage.
+  // 4. Write evicted elements to persistent storage.
+  MS_EXCEPTION_IF_NULL(this->storage_);
+  this->storage_->Write({evicted_keys, evicted_keys_len}, {evicted_values, evicted_values_len});
 
   this->FreeMemory(evicted_keys);
   this->FreeMemory(evicted_indices);
@@ -217,15 +220,19 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::InsertMissCacheFromSt
   }
 
   // 1. Read the cache miss element from the persistent storage.
-  KeyType *cache_miss_keys = this->template AllocateMemory<KeyType>(cache_miss_cnt * sizeof(KeyType));
+  size_t cache_miss_keys_len = cache_miss_cnt * sizeof(KeyType);
+  KeyType *cache_miss_keys = this->template AllocateMemory<KeyType>(cache_miss_keys_len);
   MS_EXCEPTION_IF_NULL(cache_miss_keys);
   for (size_t i = 0; i < cache_miss_cnt; i++) {
     cache_miss_keys[i] = keys[cache_miss_offsets[i]];
   }
-  ValueType *cache_miss_values =
-    this->template AllocateMemory<ValueType>(cache_miss_cnt * this->embedding_dim_ * sizeof(ValueType));
+  size_t cache_miss_values_len = cache_miss_cnt * this->embedding_dim_ * sizeof(ValueType);
+  ValueType *cache_miss_values = this->template AllocateMemory<ValueType>(cache_miss_values_len);
   MS_EXCEPTION_IF_NULL(cache_miss_values);
-  // Note: Read the cache miss element from the storage.
+
+  // Read the persistent storage.
+  MS_EXCEPTION_IF_NULL(this->storage_);
+  this->storage_->Read({cache_miss_keys, cache_miss_keys_len}, {cache_miss_values, cache_miss_values_len});
 
   // 2. Insert the cache miss elements into cache, and copy them to the returned values.
   for (size_t i = 0; i < cache_miss_cnt; i++) {
@@ -298,8 +305,32 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::InsertMissCacheFromMe
   return true;
 }
 
+template class DenseEmbeddingStorage<int32_t, bool>;
+template class DenseEmbeddingStorage<int32_t, int8_t>;
+template class DenseEmbeddingStorage<int32_t, int16_t>;
+template class DenseEmbeddingStorage<int32_t, int32_t>;
+template class DenseEmbeddingStorage<int32_t, int64_t>;
+template class DenseEmbeddingStorage<int32_t, uint8_t>;
+template class DenseEmbeddingStorage<int32_t, uint16_t>;
+template class DenseEmbeddingStorage<int32_t, uint32_t>;
+template class DenseEmbeddingStorage<int32_t, uint64_t>;
+template class DenseEmbeddingStorage<int32_t, float16>;
 template class DenseEmbeddingStorage<int32_t, float>;
+template class DenseEmbeddingStorage<int32_t, double>;
+
+template class DenseEmbeddingStorage<int64_t, bool>;
+template class DenseEmbeddingStorage<int64_t, int8_t>;
+template class DenseEmbeddingStorage<int64_t, int16_t>;
+template class DenseEmbeddingStorage<int64_t, int32_t>;
+template class DenseEmbeddingStorage<int64_t, int64_t>;
+template class DenseEmbeddingStorage<int64_t, uint8_t>;
+template class DenseEmbeddingStorage<int64_t, uint16_t>;
+template class DenseEmbeddingStorage<int64_t, uint32_t>;
+template class DenseEmbeddingStorage<int64_t, uint64_t>;
+template class DenseEmbeddingStorage<int64_t, float16>;
 template class DenseEmbeddingStorage<int64_t, float>;
+template class DenseEmbeddingStorage<int64_t, double>;
+
 template class DenseEmbeddingStorage<int32_t, float, std::allocator<uint8_t>>;
 template class DenseEmbeddingStorage<int64_t, float, std::allocator<uint8_t>>;
 }  // namespace storage
