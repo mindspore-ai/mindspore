@@ -8754,11 +8754,29 @@ def cross(input, other, dim=None):
     return cross_op(input, other)
 
 
+def _einsum_convert_num_to_char(num):
+    """For einsum, convert number into char."""
+    if [num] == [Ellipsis]:
+        return '...'
+    # pylint: disable=chained-comparison
+    if num >= 0 and num < 26:
+        return chr(num + ord('A'))
+    # pylint: disable=chained-comparison
+    if num >= 26 and num < 52:
+        return chr(num - 26 + ord('a'))
+    raise ValueError(f"For Einsum, the number in sublist should be in range [0， 52), but got {num}")
+
+
 def einsum(equation, *operands):
     r"""
     Sums the product of the elements of the input Tensor along
     dimensions specified notation based on the Einstein summation convention(Einsum).
     You can use this operator to perform diagonal, reducesum, transpose, matmul, mul, inner product operations, etc.
+
+    Note::
+        The sublist format is alse supported. For example, ops.einsum(op1, sublist1, op2, sublist2, ..., sublist_out).
+        In this format, equation can be derived by the sublists which are made up of Python's Ellipsis and list of
+        integers in [0, 52). Each operand is followed by a sublist and an output sublist is at the end.
 
     Args:
         equation (str): Notation based on the Einstein summation convention, represent the operation you want to do.
@@ -8773,6 +8791,7 @@ def einsum(equation, *operands):
 
     Raises:
         TypeError: If `equation` is invalid, or the `equation` does not match the input tensor.
+        ValueError: If the number in sublist is not in [0, 52) in sublist format.
 
     Supported Platforms:
         ``GPU``
@@ -8783,51 +8802,70 @@ def einsum(equation, *operands):
         >>> output = ops.einsum(equation, x)
         >>> print(output)
         [7.]
-        >>>
         >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> y = Tensor(np.array([2.0, 4.0, 3.0]), mindspore.float32)
         >>> equation = "i,i->i"
         >>> output = ops.einsum(equation, x, y)
         >>> print(output)
         [ 2. 8. 12.]
-        >>>
         >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
         >>> y = Tensor(np.array([[2.0, 3.0], [1.0, 2.0], [4.0, 5.0]]), mindspore.float32)
         >>> equation = "ij,jk->ik"
         >>> output = ops.einsum(equation, x, y)
         >>> print(output)
         [[16. 22.]
-        [37. 52.]]
-        >>>
+         [37. 52.]]
         >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
         >>> equation = "ij->ji"
         >>> output = ops.einsum(equation, x)
         >>> print(output)
         [[1. 4.]
-        [2. 5.]
-        [3. 6.]]
-        >>>
+         [2. 5.]
+         [3. 6.]]
         >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
         >>> equation = "ij->j"
         >>> output = ops.einsum(equation, x)
         >>> print(output)
         [5. 7. 9.]
-        >>>
         >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
         >>> equation = "...->"
-        >>> output = einsum(equation, x)
+        >>> output = ops.einsum(equation, x)
         >>> print(output)
         [21.]
-        >>>
         >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> y = Tensor(np.array([2.0, 4.0, 1.0]), mindspore.float32)
         >>> equation = "j,i->ji"
         >>> output = ops.einsum(equation, x, y)
         >>> print(output)
         [[ 2. 4. 1.]
-        [ 4. 8. 2.]
-        [ 6. 12. 3.]]
+         [ 4. 8. 2.]
+         [ 6. 12. 3.]]
+        >>> x = mindspore.Tensor([1, 2, 3, 4], mindspore.float32)
+        >>> y = mindspore.Tensor([1, 2], mindspore.float32)
+        >>> output = ops.einsum(x, [..., 1], y, [..., 2], [..., 1, 2])
+        [[1. 2.]
+         [2. 4.]
+         [3. 6.]
+         [4. 8.]]
     """
+    if isinstance(equation, Tensor):
+        equ_tmp = ''
+        for i, lst in enumerate(operands):
+            if i % 2 == 0:
+                for _, num in enumerate(lst):
+                    equ_tmp += _einsum_convert_num_to_char(num)
+                if i in (len(operands) - 1, len(operands) - 2):
+                    continue
+                equ_tmp += ','
+        if len(operands) % 2 == 0:
+            equ_tmp += '->'
+            for _, num in enumerate(operands[-1]):
+                equ_tmp += _einsum_convert_num_to_char(num)
+            operands_tmp = list([equation]) + list(operands[1:-1:2])
+        else:
+            operands_tmp = list([equation]) + list(operands[1::2])
+        equation = equ_tmp
+        operands = tuple(operands_tmp)
     return _get_cache_prim(P.Einsum)(equation)(operands)
 
 

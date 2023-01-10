@@ -28,6 +28,13 @@ class Net(nn.Cell):
         return ops.einsum(self.equation, *operands)
 
 
+class NetSublist(nn.Cell):
+    """Test ops.einsum in sublist format."""
+
+    def construct(self, x, y):
+        return ops.einsum(x, [..., 0, 1], y, [..., 1, 2], [..., 0, 2])
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -95,4 +102,12 @@ def test_ops_einsum(mode):
     expect_output = [[2., 4., 1.],
                      [4., 8., 2.],
                      [6., 12., 3.]]
+    assert np.allclose(output.asnumpy(), expect_output)
+
+    x = Tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], ms.float32)
+    y = Tensor([[2.0, 3.0], [1.0, 2.0], [4.0, 5.0]], ms.float32)
+    net = NetSublist()
+    output = net(x, y)
+    expect_output = [[16., 22.],
+                     [37., 52.]]
     assert np.allclose(output.asnumpy(), expect_output)
