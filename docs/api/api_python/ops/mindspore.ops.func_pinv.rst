@@ -14,7 +14,10 @@ mindspore.ops.pinv
         - **hermitian** (bool) - 为True时假设x为实对称矩阵。默认值：False。
 
     输出：
-        Tensor: 类型与输入相同。若输入x(m, n)，则输出(n, m)
+        - **output** (Tensor): 类型与输入相同。
+          当x shape为 :math:`(*, M, N)`，
+          hermitian为false时，支持2维和更高维度，输出shape为 :math:`(*, N, M)`。
+          hermitian为true时，仅支持2维，输出shape为 :math:`(N, M)`。
 
     异常：
         - **TypeError** - `hermitian` 不是bool。
