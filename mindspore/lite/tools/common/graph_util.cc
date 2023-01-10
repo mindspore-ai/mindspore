@@ -648,7 +648,9 @@ STATUS UpdateFuncGraphInputAndOutputNames(const FuncGraphPtr &func_graph) {
     if (abstract == nullptr) {
       abstract = outputs[i].first->abstract();
     }
-    abstract->set_name(updated_output_names[i]);
+    if (abstract->name().empty()) {
+      abstract->set_name(updated_output_names[i]);
+    }
   }
   return lite::RET_OK;
 }

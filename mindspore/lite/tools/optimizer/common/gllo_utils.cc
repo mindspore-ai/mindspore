@@ -1354,8 +1354,10 @@ void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_fi
          << ", shape: " << GetAnfNodeOutputShape(input, 0) << std::endl;
     }
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    for (auto &attr : prim->attrs()) {
-      fp << "---attr " << attr.first << ": " << attr.second->ToString() << std::endl;
+    if (prim) {
+      for (auto &attr : prim->attrs()) {
+        fp << "---attr " << attr.first << ": " << attr.second->ToString() << std::endl;
+      }
     }
     fp << std::endl;
   }

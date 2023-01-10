@@ -231,18 +231,6 @@ STATUS ConverterFuncGraph::UnifyFuncGraphInputFormat(const std::shared_ptr<Conve
   return RET_OK;
 }
 
-void SetInputParameterName(FuncGraphPtr func_graph) {
-  for (auto &input : func_graph->get_inputs()) {
-    auto parameter = input->cast<ParameterPtr>();
-    if (!parameter->has_default()) {
-      auto abstract = parameter->abstract();
-      if (abstract != nullptr && !abstract->name().empty()) {
-        parameter->set_name(abstract->name());
-      }
-    }
-  }
-}
-
 STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "funcGraph is nullptr";
@@ -268,7 +256,6 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
       return RET_ERROR;
     }
   }
-  SetInputParameterName(func_graph);
   status = UpdateFuncGraphInputsAndOutputsDtype(func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Update graph inputs and outputs dtype failed.";
@@ -289,7 +276,7 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
   }
 
   FuncGraphUtils::SetFuncGraphOutputNames(func_graph, output_names);
-  FuncGraphUtils::UpdateFuncGraphInputNames(func_graph);
+  FuncGraphUtils::SetFuncGraphInputNames(func_graph);
   if (!param->no_fusion) {
     func_graph->set_attr(kIsOptimized, MakeValue(true));
   }
