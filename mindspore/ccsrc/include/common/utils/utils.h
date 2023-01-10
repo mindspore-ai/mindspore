@@ -1166,5 +1166,9 @@ static inline uint64_t GetCurrentUSec() {
   do {                                                                                                      \
     MS_LOG(INFO) << #stage << " called " << count_##stage << " times, costs " << total_##stage << " usec."; \
   } while (0)
+
+#define SET_FLAG(value, flag) ((value) = ((value) | (flag)))
+#define TEST_FLAG(value, flag) (((value) & (flag)) == (flag))
+#define CLEAR_FLAG(value, flag) ((value) = ((value) & (~(flag))))
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_UTILS_H_

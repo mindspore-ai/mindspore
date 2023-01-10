@@ -345,6 +345,11 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
   auto cur_node_output_addr = AnfAlgo::GetMutableOutputAddr(cur_pair.first, cur_pair.second, false);
   MS_EXCEPTION_IF_NULL(cur_node_output_addr);
 
+  // Update the device address flag.
+  size_t device_address_flag = origin_node_output_addr->flag();
+  SET_FLAG(device_address_flag, device::kDeviceAddressFlagRefNode);
+  origin_node_output_addr->set_flag(device_address_flag);
+
   if (origin_node_output_addr.get() != cur_node_output_addr.get()) {
     // Check the device target whether consistent.
     if (origin_node_output_addr->GetDeviceType() != cur_node_output_addr->GetDeviceType()) {
