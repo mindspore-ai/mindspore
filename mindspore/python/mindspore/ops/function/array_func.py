@@ -4266,14 +4266,14 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
     return unsorted_segment_prod_(x, segment_ids, num_segments)
 
 
-def index_fill(x, dim, index, value):
+def index_fill(x, axis, index, value):
     """
-    Fills the elements under the `dim` dimension of the input Tensor `x` with the input `value`
+    Fills the elements under the `axis` dimension of the input Tensor `x` with the input `value`
     by selecting the indices in the order given in `index`.
 
     Args:
         x (Tensor): Input Tensor.  The supported data type is Number or Bool.
-        dim (Union[int, Tensor]): Dimension along which to fill the input Tensor. Only supports
+        axis (Union[int, Tensor]): Dimension along which to fill the input Tensor. Only supports
             an int number or a 0-dimensional Tensor, whose data type is int32 or int64.
         index (Tensor): Indices of the input Tensor to fill in. The dtype must be int32.
         value (Union[bool, int, float, Tensor]): Value to fill the returned Tensor. If `value` is
@@ -4285,17 +4285,17 @@ def index_fill(x, dim, index, value):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If `dim` is neither int number nor Tensor.
-        TypeError: When `dim` is a Tensor, its dtype is not int32 or int64.
+        TypeError: If `axis` is neither int number nor Tensor.
+        TypeError: When `axis` is a Tensor, its dtype is not int32 or int64.
         TypeError: If `index` is not a Tensor.
         TypeError: If dtype of `index` is not int32.
         TypeError: If `value` is not a bool, int, float, or Tensor.
         TypeError: When `value` is a Tensor, the dtype of `x` and `value` are not the same.
-        ValueError: If `dim` is a Tensor and its rank is not equal to 0.
+        ValueError: If `axis` is a Tensor and its rank is not equal to 0.
         ValueError: If the rank of `index` is greater than 1D.
         ValueError: When `value` is a Tensor and its rank is not equal to 0.
-        RuntimeError: If the value of `dim` is out the range of `[-x.ndim, x.ndim - 1]`.
-        RuntimeError: If the values of `index` are out the range of `[-x.shape[dim], x.shape[dim]-1]`.
+        RuntimeError: If the value of `axis` is out the range of `[-x.ndim, x.ndim - 1]`.
+        RuntimeError: If the values of `index` are out the range of `[-x.shape[axis], x.shape[axis]-1]`.
 
     Supported Platforms:
         ``GPU``
@@ -4314,11 +4314,66 @@ def index_fill(x, dim, index, value):
          [-2. 5. -2.]
          [-2. 8. -2.]]
     """
-    if isinstance(dim, int) and not isinstance(dim, bool):
-        dim = cast_(dim, mstype.int32)
+    if isinstance(axis, int) and not isinstance(axis, bool):
+        axis = cast_(axis, mstype.int32)
     if isinstance(value, (bool, float, int)):
         value = cast_(value, x.dtype)
-    return index_fill_(x, dim, index, value)
+    return index_fill_(x, axis, index, value)
+
+
+#TODO: remove comment
+@constexpr
+def _check_check_axis_in_range(axis, ndim):
+    """Checks axes are with the bounds of ndim"""
+    axis = validator.check_axis_in_range(axis, ndim)
+    return axis
+
+
+def index_select(x, axis, index):
+    """
+    Returns a new Tensor which indexes the `x` Tensor along dimension `axis` using the entries in `index` .
+
+    The returned Tensor has the same number of dimensions as the original Tensor ( `x` ). The `axis` th dimension
+    has the same size as the length of `index` ; other dimensions have the same size as in the original Tensor.
+
+    .. note::
+        The value of index must be in the range of `[0, x.shape[axis])`, the result is undefined out of range.
+
+    Args:
+        x (Tensor): Input Tensor.
+        axis (int): Dimension in which we index.
+        index (Tensor): The 1-D Tensor containing the indices to index. The data type can be int32 or int64.
+
+    Returns:
+        Tensor, has the same dtype as input Tensor.
+
+    Raises:
+        TypeError: If `x` or `index` is not a Tensor.
+        TypeError: If `axis` is not int number.
+        ValueError: If the value of `axis` is out the range of `[-x.ndim, x.ndim - 1]`.
+        ValueError: If the dimension of `index` is not equal to 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32))
+        >>> index = Tensor([0, 2], mindspore.int32)
+        >>> y = ops.index_select(x, 1, index)
+        >>> print(y)
+        [[1. 3.]
+         [4. 6.]
+         [7. 9.]]
+    """
+    if not (isinstance(x, Tensor) and isinstance(index, Tensor)):
+        raise TypeError(f"For 'index_select', inputs `x` and `index` must be all tensors.")
+    if index.ndim != 1:
+        raise ValueError(f"For 'index_select', the dimension of `index` must be 1, but got {index.ndim}")
+    axis = _check_check_axis_in_range(axis, x.ndim)
+    return gather_(x, index, axis)
 
 
 def population_count(input_x):
@@ -6021,7 +6076,8 @@ __all__ = [
     'vsplit',
     'hsplit',
     'dsplit',
-    "index_fill",
+    'index_fill',
+    'index_select',
     'max',
     'argmax',
     'min',

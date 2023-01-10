@@ -138,6 +138,7 @@ mindspore.Tensor
     mindspore.Tensor.igammac
     mindspore.Tensor.index_add
     mindspore.Tensor.index_fill
+    mindspore.Tensor.index_select
     mindspore.Tensor.init_data
     mindspore.Tensor.inner
     mindspore.Tensor.inplace_update
@@ -180,6 +181,7 @@ mindspore.Tensor
     mindspore.Tensor.logit
     mindspore.Tensor.logsumexp
     mindspore.Tensor.long
+    mindspore.Tensor.lt
     mindspore.Tensor.masked_fill
     mindspore.Tensor.masked_select
     mindspore.Tensor.matrix_determinant

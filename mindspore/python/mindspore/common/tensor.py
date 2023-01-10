@@ -2086,11 +2086,18 @@ class Tensor(Tensor_):
         """
         return tensor_operator_registry.get('cummax')(self, axis)
 
-    def index_fill(self, dim, index, value):
+    def index_fill(self, axis, index, value):
         """
         For details, please refer to :func:`mindspore.ops.index_fill`.
         """
-        return tensor_operator_registry.get('index_fill')(self, dim, index, value)
+        return tensor_operator_registry.get('index_fill')(self, axis, index, value)
+
+    def index_select(self, axis, index):
+        """
+        For details, please refer to :func:`mindspore.ops.index_select`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('index_select')(self, axis, index)
 
     def inplace_update(self, v, indices):
         """
@@ -3955,6 +3962,12 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('less')(self, other)
+
+    def lt(self, other):
+        """
+        Alias for :func:`mindspore.Tensor.less`.
+        """
+        return self.less(other)
 
     def logical_and(self, other):
         r"""

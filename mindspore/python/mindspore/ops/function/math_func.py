@@ -247,6 +247,9 @@ def abs(x):
 def absolute(x):
     """
     Alias for :func:`mindspore.ops.abs` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return abs(x)
 
@@ -1333,6 +1336,9 @@ def floor(x):
 def i0(x):
     r"""
     Alias for :func:`mindspore.ops.bessel_i0` .
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
     """
     return bessel_i0(x)
 
@@ -2125,6 +2131,9 @@ def acos(x):
 def arccos(x):
     """
     Alias for :func:`mindspore.ops.acos` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return acos(x)
 
@@ -3466,6 +3475,16 @@ def less(x, y):
         [False False True]
     """
     return tensor_lt(x, y)
+
+
+def lt(x, other):
+    """
+    Alias for :func:`mindspore.ops.less` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return less(x, other)
 
 
 def le(x, y):
@@ -9660,6 +9679,7 @@ __all__ = [
     'negative',
     'tensor_lt',
     'less',
+    'lt',
     'logaddexp2',
     'tensor_le',
     'lcm',
