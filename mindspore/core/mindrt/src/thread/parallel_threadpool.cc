@@ -47,7 +47,7 @@ void ParallelWorker::ParallelRun() {
   if (!core_list_.empty()) {
     SetAffinity();
   }
-#if !defined(__APPLE__) && !defined(SUPPORT_MSVC)
+#if !defined(__APPLE__) && !defined(_MSC_VER)
   (void)pthread_setname_np(pthread_self(), ("ParallelThread_" + std::to_string(worker_id_)).c_str());
 #endif
 #ifdef PLATFORM_86
