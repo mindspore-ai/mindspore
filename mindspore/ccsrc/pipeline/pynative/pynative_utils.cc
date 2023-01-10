@@ -41,6 +41,18 @@ void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
 }
 }  // namespace
 
+void Common::SetAnyValue(const AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractTensor>()) {
+    abs->set_value(kAnyValue);
+  } else if (abs->isa<abstract::AbstractTuple>() || abs->isa<abstract::AbstractList>()) {
+    const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(abs_seq);
+    std::for_each(abs_seq->elements().begin(), abs_seq->elements().end(),
+                  [](const AbstractBasePtr &elem) { return SetAnyValue(elem); });
+  }
+}
+
 std::string Common::GetIdByValue(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
   if (v->isa<tensor::Tensor>()) {

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
-using UserType = std::map<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
+using UserType = mindspore::HashMap<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
 class BpropExpander {
  public:
   BpropExpander() {}

@@ -26,7 +26,8 @@
 #include "ir/func_graph.h"
 
 namespace mindspore {
-namespace ad {
+namespace pynative {
+namespace autograd {
 struct GradAttr {
   GradAttr(bool get_all, bool get_by_list, bool sens_param, bool get_by_position, bool weight_param_is_tuple)
       : grad_all_inputs(get_all),
@@ -127,9 +128,9 @@ using VariableAdjointPtr = std::shared_ptr<VariableAdjoint>;
 
 class AutoGradCellImpl {
  public:
-  using UserType = std::map<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
+  using UserType = mindspore::HashMap<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
   AutoGradCellImpl(const AnfNodePtrList &cell_inputs, const std::vector<ValuePtr> &input_param_values,
-                   const AbstractBasePtrList &abs_list);
+                   const AbstractBasePtrList &abs_list, size_t op_num_in_bprop_graph);
   ~AutoGradCellImpl() = default;
   // Reverse connect bprop of op
   bool KPynativeOp(const GradParamPtr &grad_param);
@@ -164,6 +165,7 @@ class AutoGradCellImpl {
 
   bool IsCNodeNeedGrad(const AnfNodePtr &node_ptr) const;
   std::vector<bool> GetNeedGradFlags(const CNodePtr &cnode);
+  size_t op_num_in_bprop_graph_{0};
 
   // construct input as cnode for expander
   CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout,
@@ -199,7 +201,7 @@ class AutoGradCellImpl {
   // Input node is user cnode one of input, index is user input index
   // User->input(index) is input node
   void AddUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
-  void Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
+  void Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, bool need_update = false);
   void ElimateTupleGetItem();
 
   // Fbprop
@@ -216,7 +218,7 @@ using AutoGradCellImplPtr = std::shared_ptr<AutoGradCellImpl>;
 // cell_inputs: the input parameter list of this cell except the weights;
 AutoGradCellImplPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
                                           const std::vector<ValuePtr> &input_param_values,
-                                          const AbstractBasePtrList &abs_list);
+                                          const AbstractBasePtrList &abs_list, size_t op_num_in_bprop_graph);
 
 // Return the back propagate funcgraph for this cell.
 // weights: weights parameters used in this cell.
@@ -241,11 +243,8 @@ FuncGraphPtr GradPynativeCellEnd(const AutoGradCellImplPtr &k_cell, const AnfNod
 // op_args: the arguments list of each input parameters.
 // out: the op result.
 bool GradPynativeOp(const AutoGradCellImplPtr &k_cell, const GradParamPtr &grad_param);
-
-// adjoint bprop form ms_function and high grad
-void GradPynativeFBprop(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
-                        const FuncGraphPtr &fprop_fg);
-}  // namespace ad
+}  // namespace autograd
+}  // namespace pynative
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_AUTO_GRAD_H_

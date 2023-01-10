@@ -287,8 +287,9 @@ CNodePtr MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run
 
   // Connect grad graph of ms_function to context.
   auto auto_grad_cell_ptr = top_cell->auto_grad_cell_ptr();
-  auto grad_param = std::make_shared<ad::GradParam>(ms_function_cnode, op_run_info->input_value, op_run_info->out_value,
-                                                    grad_graph, !top_cell->is_high_order_top_cell());
+  auto grad_param =
+    std::make_shared<autograd::GradParam>(ms_function_cnode, op_run_info->input_value, op_run_info->out_value,
+                                          grad_graph, !top_cell->is_high_order_top_cell());
   {
     py::gil_scoped_release gil_release;
     grad_executor->async_executor()->Wait();
@@ -302,8 +303,8 @@ CNodePtr MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run
 }
 
 void MsFunction::AsyncKPynativeWithFProp(const GradExecutor *grad_executor,
-                                         const ad::AutoGradCellImplPtr &auto_grad_cell_ptr,
-                                         const ad::GradParamPtr &grad_param) const {
+                                         const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
+                                         const autograd::GradParamPtr &grad_param) const {
   MS_EXCEPTION_IF_NULL(grad_executor);
   const auto fn = [grad_param, auto_grad_cell_ptr]() {
     MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
