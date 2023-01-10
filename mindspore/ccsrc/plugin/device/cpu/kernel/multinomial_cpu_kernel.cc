@@ -66,9 +66,9 @@ bool MultinomialCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   seed_ = kernel_ptr->get_seed();
   seed2_ = kernel_ptr->get_seed2();
   int64_t RNG_seed = 0;
-  if (seed2_ > 0) {
+  if (seed2_ != 0) {
     RNG_seed = seed2_;
-  } else if (seed_ > 0) {
+  } else if (seed_ != 0) {
     RNG_seed = seed_;
   } else {
     std::random_device rd;
