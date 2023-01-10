@@ -52,7 +52,8 @@ public class MSTensor {
      * @param buffer     tensor buffer
      */
     public static MSTensor createTensor(String tensorName, int dataType, int[] tensorShape, ByteBuffer buffer) {
-        if (tensorName == null || tensorShape == null || buffer == null) {
+        if (tensorName == null || tensorShape == null || buffer == null || dataType < DataType.kNumberTypeBool ||
+            dataType > DataType.kNumberTypeFloat64) {
             return null;
         }
         long tensorPtr = createTensorByNative(tensorName, dataType, tensorShape, buffer);
