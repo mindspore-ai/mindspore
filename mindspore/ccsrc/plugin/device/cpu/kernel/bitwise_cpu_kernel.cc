@@ -98,6 +98,9 @@ int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   }
 
   switch (input_type_1_) {
+    case kNumberTypeBool:
+      InitFunc<bool>();
+      break;
     case kNumberTypeInt8:
       InitFunc<int8_t>();
       break;
@@ -236,10 +239,11 @@ bool BitwiseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
 
 const std::vector<std::pair<KernelAttr, BitwiseCpuKernelMod::KernelRunFunc>> &BitwiseCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, BitwiseCpuKernelMod::KernelRunFunc>> func_list = {
-    {BITWISE_CPU_KERNEL_MATCH(kNumberTypeInt8, int8_t)},     {BITWISE_CPU_KERNEL_MATCH(kNumberTypeInt16, int16_t)},
-    {BITWISE_CPU_KERNEL_MATCH(kNumberTypeInt32, int32_t)},   {BITWISE_CPU_KERNEL_MATCH(kNumberTypeInt64, int64_t)},
-    {BITWISE_CPU_KERNEL_MATCH(kNumberTypeUInt8, uint8_t)},   {BITWISE_CPU_KERNEL_MATCH(kNumberTypeUInt16, uint16_t)},
-    {BITWISE_CPU_KERNEL_MATCH(kNumberTypeUInt32, uint32_t)}, {BITWISE_CPU_KERNEL_MATCH(kNumberTypeUInt64, uint64_t)},
+    {BITWISE_CPU_KERNEL_MATCH(kNumberTypeBool, bool)},       {BITWISE_CPU_KERNEL_MATCH(kNumberTypeInt8, int8_t)},
+    {BITWISE_CPU_KERNEL_MATCH(kNumberTypeInt16, int16_t)},   {BITWISE_CPU_KERNEL_MATCH(kNumberTypeInt32, int32_t)},
+    {BITWISE_CPU_KERNEL_MATCH(kNumberTypeInt64, int64_t)},   {BITWISE_CPU_KERNEL_MATCH(kNumberTypeUInt8, uint8_t)},
+    {BITWISE_CPU_KERNEL_MATCH(kNumberTypeUInt16, uint16_t)}, {BITWISE_CPU_KERNEL_MATCH(kNumberTypeUInt32, uint32_t)},
+    {BITWISE_CPU_KERNEL_MATCH(kNumberTypeUInt64, uint64_t)},
   };
   return func_list;
 }
