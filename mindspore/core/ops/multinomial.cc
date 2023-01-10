@@ -58,20 +58,9 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
   }
   const int64_t x_rank_max = 2;
   const int64_t x_rank_min = 1;
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-  if (is_ascend) {
-    if (x_shape.size() != x_rank_max) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', input[x] dimension must be 2 in Ascend, but got rank " << x_shape.size() << ".";
-    }
-  } else {
-    if (x_shape.size() > x_rank_max || x_shape.size() < x_rank_min) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', input[x] dimension must be 1 or 2 in CPU and GPU, but got rank " << x_shape.size()
-                               << ".";
-    }
+  if (x_shape.size() > x_rank_max || x_shape.size() < x_rank_min) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input[x] dimension must be 1 or 2, but got rank "
+                             << x_shape.size() << ".";
   }
 
   int64_t num_samples_val = 0;

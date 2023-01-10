@@ -797,7 +797,7 @@ class Multinomial(Primitive):
 
     Inputs:
         - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2
-          dimensions. CPU and GPU supports x 1 or 2 dimensions and Ascend only supports 2 dimensions.
+          dimensions.
         - **num_samples** (int) - number of samples to draw, must be a nonnegative number.
 
     Outputs:
