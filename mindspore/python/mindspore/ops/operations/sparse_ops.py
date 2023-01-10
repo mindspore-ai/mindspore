@@ -192,10 +192,10 @@ class SparseDenseCwiseDiv(Primitive):
 
 class SparseSlice(Primitive):
     r"""
-    Slices a SparseTensor based on the "start" and "size".
+    Slices a SparseTensor based on the `start` and `size`.
 
     Inputs:
-        - **indices** (Tensor) - A 2D Tensor (N x R matrix) of type int64. The indices of the SparseTensor.
+        - **indices** (Tensor) - A 2D Tensor (N x R matrix), the indices of the SparseTensor.
           Support int64, each element value should be a non-negative int number.
           The shape is :math:`(N, R)`.
         - **values** (Tensor) - A 1D Tensor, represents the value corresponding to the position in the `indices`.
@@ -210,7 +210,7 @@ class SparseSlice(Primitive):
     Outputs:
         A `SparseTensor` objects resulting from splicing.
         - *y_indices: A Tensor of type int64.
-        - *y_values: A Tensor. Has the same type as "values".
+        - *y_values: A Tensor. Has the same type as `values`.
         - *y_shape: A Tensor of type int64. Has the same size as `size`.
 
     Raises:

@@ -38,7 +38,7 @@
         - **data_format** (str，可选) - 数据格式的值。目前只支持 `NCHW` ，默认值： `NCHW` 。
 
     输入：
-        - **x** (Tensor) - 输入数据。一个四维Tensor，数据类型为float16、float32，shape必须为
+        - **x** (Tensor) - 输入数据。一个四维Tensor，shape必须为
           :math:`(N, C_{in}, H_{in}, W_{in})` 。
         - **filter** (Tensor) - 一个三维Tensor，数据类型和输入 `x` 相同，shape必须为
           :math:`(C_{in}, H_{filter}, W_{filter})` 。

@@ -9861,6 +9861,7 @@ __all__ = [
     'imag',
     'roll',
     'sum',
-    'matrix_exp'
+    'matrix_exp',
+    'orgqr'
 ]
 __all__.sort()

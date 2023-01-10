@@ -123,7 +123,7 @@ from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamm
                          LogUniformCandidateSampler, TruncatedNormal, LogNormalReverse, NonDeterministicInts,
                          ParameterizedTruncatedNormal, RandomPoisson)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
-from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd)
+from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd, SparseSlice)
 from .spectral_ops import (BartlettWindow, BlackmanWindow)
 
 __all__ = [
@@ -643,7 +643,8 @@ __all__ = [
     "Zeta",
     "PadV3",
     "Roll",
-    "Lgamma"
+    "Lgamma",
+    "SparseSlice"
 ]
 
 __custom__ = [
