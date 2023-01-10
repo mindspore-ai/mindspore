@@ -29,6 +29,10 @@ from .train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager,
 from .train.amp import build_train_network, auto_mixed_precision
 
 
+_hypermap = ops.HyperMap()
+_partial = ops.Partial()
+
+
 @constexpr
 def _ascend_target():
     return context.get_context("device_target") == "Ascend"
@@ -114,7 +118,7 @@ def all_finite(inputs, status=None):
         status_finite = status.sum() == 0
         _ = ops.NPUClearFloatStatus()(status)
         return status_finite
-    outputs = ops.HyperMap()(ops.Partial()(_is_finite), inputs)
+    outputs = _hypermap(_partial(_is_finite), inputs)
     return ops.stack(outputs).all()
 
 
@@ -205,7 +209,7 @@ class StaticLossScaler(LossScaler):
         Returns:
             Union(Tensor, tuple(Tensor)), the scaled value.
         """
-        return ops.HyperMap()(ops.Partial()(_grad_scale, self.scale_value), inputs)
+        return _hypermap(_partial(_grad_scale, self.scale_value), inputs)
 
     def unscale(self, inputs):
         """
@@ -217,7 +221,7 @@ class StaticLossScaler(LossScaler):
         Returns:
             Union(Tensor, tuple(Tensor)), the unscaled value.
         """
-        return ops.HyperMap()(ops.Partial()(_grad_unscale, self.scale_value), inputs)
+        return _hypermap(_partial(_grad_unscale, self.scale_value), inputs)
 
     def adjust(self, grads_finite):
         """
@@ -280,7 +284,7 @@ class DynamicLossScaler(LossScaler):
         Returns:
             Union(Tensor, tuple(Tensor)), the scaled value.
         """
-        return ops.HyperMap()(ops.Partial()(_grad_scale, self.scale_value), inputs)
+        return _hypermap(_partial(_grad_scale, self.scale_value), inputs)
 
     def unscale(self, inputs):
         """
@@ -292,7 +296,7 @@ class DynamicLossScaler(LossScaler):
         Returns:
             Union(Tensor, tuple(Tensor)), the unscaled value.
         """
-        return ops.HyperMap()(ops.Partial()(_grad_unscale, self.scale_value), inputs)
+        return _hypermap(_partial(_grad_unscale, self.scale_value), inputs)
 
     def adjust(self, grads_finite):
         """
