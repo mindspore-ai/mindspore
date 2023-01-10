@@ -404,6 +404,7 @@ else()
     set(LITE_SRC ${LITE_SRC}
         ${CORE_DIR}/mindrt/src/thread/core_affinity.cc
         ${CORE_DIR}/mindrt/src/thread/threadpool.cc
+        ${CORE_DIR}/mindrt/src/thread/parallel_thread_pool_manager.cc
         )
 endif()
 

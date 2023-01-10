@@ -1143,6 +1143,9 @@ ModelPool::~ModelPool() {
       }
     }
   }
+  if (enable_shared_thread_pool_) {
+    ParallelThreadPoolManager::GetInstance()->ResetParallelThreadPoolManager(runner_id_);
+  }
   MS_LOG(INFO) << "delete model pool task.";
   if (tasks_ != nullptr) {
     delete[] tasks_;

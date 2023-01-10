@@ -783,13 +783,13 @@ int LiteSession::ContextInit(const std::shared_ptr<InnerContext> &context) {
   context_->thread_pool_->SetMaxSpinCount(kDefaulLiteIosSpinCount);
   context_->thread_pool_->SetMinSpinCount(kDefaulLiteIosSpinCount);
 #endif
-#ifdef PARALLEL_INFERENCE
+
   if (context_->inter_op_parallel_num_ > 1 && !runner_id.empty() &&
       ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool(runner_id)) {
     MS_LOG(INFO) << "Enable subgraph parallelism and enable thread pool sharing";
     ParallelThreadPoolManager::GetInstance()->BindPoolToRunner(context_->thread_pool_, config_info_);
   }
-#endif
+
   return RET_OK;
 }
 

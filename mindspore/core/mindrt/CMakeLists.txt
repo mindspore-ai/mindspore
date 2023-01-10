@@ -8,8 +8,21 @@ file(GLOB MINDRT_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/async/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/evloop/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/timer/*.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/thread/*.cc
     )
+
+set(MINDRT_SRC ${MINDRT_SRC}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/thread/threadpool.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/thread/actor_threadpool.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/thread/core_affinity.cc
+    )
+
+if(MSLITE_ENABLE_MINDRT)
+    set(MINDRT_SRC ${MINDRT_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/thread/parallel_threadpool.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/thread/parallel_thread_pool_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/thread/core_affinity.cc
+        )
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     add_compile_definitions(BUILDING_CORE_DLL)
