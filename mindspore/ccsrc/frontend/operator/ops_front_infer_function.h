@@ -86,6 +86,9 @@ AbstractBasePtr InferImplConvertToAdapterTensor(const AnalysisEnginePtr &, const
 AbstractBasePtr InferImplConvertToMsTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const AbstractBasePtrList &args_spec_list);
 
+// Delete this when the infer value can be mapped to the CPU backend operator.
+bool PrimNeedFrontendInferValue(const PrimitivePtr &primitive);
+
 const PrimitiveEvalImplMap &GetFrontendPrimitiveInferMap();
 PrimitiveEvalImplMap *GetFrontendPrimitiveInferMapPtr();
 // get prim infer from core/ops infer map or frontend infer map

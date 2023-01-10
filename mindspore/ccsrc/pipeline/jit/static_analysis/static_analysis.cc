@@ -562,6 +562,11 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     return GetPyEvaluator(prim, engine);
   }
 
+  // Delete this when the infer value can be mapped to the CPU backend operator.
+  if (PrimNeedFrontendInferValue(prim)) {
+    return nullptr;
+  }
+
   // Return a default evaluator
   if (engine == nullptr) {
     // If engine is nullptr, get constructor from default.
