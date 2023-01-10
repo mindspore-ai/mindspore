@@ -92,15 +92,14 @@ const AnfNodePtr RectifyDoMaskKernelInfo::Process(const FuncGraphPtr &graph, con
   MS_EXCEPTION_IF_NULL(node);
   auto do_mask_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(do_mask_node);
-  if (!do_mask_node->HasPrimalAttr(kPrimalAttrUniqueId) && !do_mask_node->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
-    MS_LOG(INFO) << "The DoMask cnode has no primal attr: " << do_mask_node->DebugString();
-    return nullptr;
-  }
-  MS_EXCEPTION_IF_NULL(do_mask_node);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     RectifyKernelInfoInPynativeProcess(do_mask_node);
+    return nullptr;
+  }
+  if (!do_mask_node->HasPrimalAttr(kPrimalAttrUniqueId) && !do_mask_node->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
+    MS_LOG(INFO) << "The DoMask cnode has no primal attr: " << do_mask_node->DebugString();
     return nullptr;
   }
   std::string unique_id;
