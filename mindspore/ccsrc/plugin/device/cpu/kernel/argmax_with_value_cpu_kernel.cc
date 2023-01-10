@@ -148,7 +148,7 @@ int ArgMaxWithValueCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMaxWithValue>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   int64_t axis = kernel_ptr->axis();
-  auto input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   if (CheckNullInput(input_shape)) {
     kernel_name_ = base_operator->name();
     MS_LOG(EXCEPTION) << kernel_name_ << " cannot deal with empty input. Please try other inputs.";
