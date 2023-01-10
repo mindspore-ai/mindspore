@@ -714,8 +714,7 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const A
   auto &node_value = node->value();
   MS_EXCEPTION_IF_NULL(node_value);
 
-  if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>()) {
-    //  The branch processing that value type is tensor.
+  if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>() || node_value->isa<Scalar>()) {
     PrepareDataForValueNodeTensor(node, node_value, front_node, device_context, context);
   } else if (node_value->isa<StringImm>()) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, 0, false);

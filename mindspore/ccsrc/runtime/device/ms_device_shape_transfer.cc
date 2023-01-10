@@ -267,6 +267,10 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
     MS_EXCEPTION_IF_NULL(value_node);
     auto node_value = value_node->value();
     MS_EXCEPTION_IF_NULL(node_value);
+    // Scalar has no shape.
+    if (node_value->isa<Scalar>()) {
+      return {};
+    }
     auto tensor = node_value->cast<tensor::TensorPtr>();
     if (tensor == nullptr) {
       MS_LOG(EXCEPTION) << " The node[ " << node->DebugString() << "]'s cannot convert ";

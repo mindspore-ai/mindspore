@@ -514,7 +514,7 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
     MS_EXCEPTION_IF_NULL(value);
     if (value->isa<ValueTuple>()) {
       outputs->emplace_back(output_tmp);
-    } else if (value->isa<tensor::Tensor>()) {
+    } else if (value->isa<tensor::Tensor>() || value->isa<Scalar>()) {
       *outputs = output_tmp;
     } else {
       MS_LOG(INFO) << "Graph output is empty!";

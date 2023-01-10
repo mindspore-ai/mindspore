@@ -398,6 +398,10 @@ void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *
     auto tensor = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     tensors->emplace_back(tensor);
+  } else if (value->isa<Scalar>()) {
+    auto tensor = ScalarToTensor(value->cast<ScalarPtr>());
+    MS_EXCEPTION_IF_NULL(tensor);
+    tensors->emplace_back(tensor);
   }
 }
 
