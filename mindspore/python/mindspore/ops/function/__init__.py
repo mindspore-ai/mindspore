@@ -139,6 +139,9 @@ from .array_func import (
     lstsq,
     mvlgamma,
     argsort,
+    sequence_mask,
+    repeat_elements,
+    repeat_interleave,
 )
 from .parameter_func import (
     assign,
