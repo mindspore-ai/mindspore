@@ -102,6 +102,7 @@ vector<TensorsDescMap> SomasSolverPre::CreateTensorsMaps(const TensorsDescMap &t
   return vecTensorsMap;
 }
 void FindBest(size_t total_sol, const vector<std::shared_ptr<SomasSolverCore>> &solvers, BestInfo *best_info) {
+  MS_EXCEPTION_IF_NULL(best_info);
   for (size_t sol = 0; sol < total_sol; sol++) {
     auto &solver = solvers[sol];
     auto &upperbound = solver->GetUpperbound();

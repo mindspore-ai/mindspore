@@ -34,6 +34,7 @@ std::shared_ptr<GraphCell::GraphImpl> GraphImplFactory::Create(enum DeviceType d
   for (auto &item : creators_) {
     MS_EXCEPTION_IF_NULL(item);
     auto val = item();
+    MS_EXCEPTION_IF_NULL(val);
     if (val->CheckDeviceSupport(device_type)) {
       return val;
     }
