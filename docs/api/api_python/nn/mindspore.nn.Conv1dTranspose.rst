@@ -33,20 +33,12 @@ mindspore.nn.Conv1dTranspose
     输出：
         Tensor，shape为 :math:`(N, C_{out}, L_{out})` 。
 
-        当 `pad_mode` 设置为"same"时：
-
-        .. math::
-            L_{out} = \frac{ L_{in} + \text{stride} - 1 }{ \text{stride} }
-
-        当 `pad_mode` 设置为"valid"时：
-
-        .. math::
-            L_{out} = (L_{in} - 1) \times \text{stride} + \text{dilation} \times (\text{kernel_size} - 1) + 1
-
-        当 `pad_mode` 设置为"pad"时：
-
-        .. math::
-            L_{out} = (L_{in} - 1) \times \text{stride} - 2 \times \text{padding} + \text{dilation} \times (\text{kernel_size} - 1) + 1
+        - 当 `pad_mode` 设置为"same"时：
+          :math:`L_{out} = \frac{ L_{in} + \text{stride} - 1 }{ \text{stride} }`
+        - 当 `pad_mode` 设置为"valid"时：
+          :math:`L_{out} = (L_{in} - 1) \times \text{stride} + \text{dilation} \times (\text{kernel_size} - 1) + 1`
+        - 当 `pad_mode` 设置为"pad"时：
+          :math:`L_{out} = (L_{in} - 1) \times \text{stride} - 2 \times \text{padding} + \text{dilation} \times (\text{kernel_size} - 1) + 1`
 
     异常：
         - **TypeError** - `in_channels` 、 `out_channels` 、 `kernel_size` 、 `stride` 、 `padding` 或 `dilation` 不是int。

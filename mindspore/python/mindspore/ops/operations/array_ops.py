@@ -6241,7 +6241,6 @@ class TensorScatterUpdate(_TensorScatterOp):
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
         - **update** (Tensor) - The tensor to update the input tensor, has the same type as input, and
-
           :math:`update.shape = indices.shape[:-1]+input_x.shape[indices.shape[-1]:]`
 
     Outputs:

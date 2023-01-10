@@ -15,15 +15,12 @@ mindspore.ops.BatchToSpace
         - **input_x** (Tensor) - 输入Tensor。必须是四维，第零维度（维度n）的大小必须可被 `block_size` 的乘积整除。数据类型为float16或float32。
 
     输出：
-        Tensor，数据类型与输入Tensor相同。假设输入shape为 :math:`(n,c,h,w)` ，经过 `block_size` 和 `crops` 计算后。输出shape将为 :math:`(n'，c'，h'，w')` ，其中
+        Tensor，数据类型与输入Tensor相同。假设输入shape为 :math:`(n, c, h, w)` ，经过 `block_size` 和 `crops` 计算后。输出shape将为 :math:`(n', c', h', w')` ，其中
 
-        :math:`n' = n//(block\_size*block\_size)`
-
-        :math:`c' = c`
-
-        :math:`h' = h*block\_size-crops[0][0]-crops[0][1]`
-
-        :math:`w' = w*block\_size-crops[1][0]-crops[1][1]`
+        - :math:`n' = n//(block\_size*block\_size)`
+        - :math:`c' = c`
+        - :math:`h' = h*block\_size-crops[0][0]-crops[0][1]`
+        - :math:`w' = w*block\_size-crops[1][0]-crops[1][1]`
 
     异常：
         - **TypeError** - 如果 `block_size` 或 `crops` 的元素不是int。

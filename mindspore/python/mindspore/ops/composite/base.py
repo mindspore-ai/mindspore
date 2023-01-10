@@ -758,10 +758,11 @@ class HyperMap(HyperMap_):
           Only supported in graph mode. Default is False.
 
     Inputs:
-        - **args** (Tuple[sequence]) - If `ops` is not `None`, all the inputs should be sequences with the same length.
-          And each row of the sequences will be the inputs of the operation.
+        - **args** (Tuple[sequence]) -
 
-          If `ops` is `None`, the first input is the operation, and the others are inputs.
+          - If `ops` is not `None`, all the inputs should be sequences with the same length.
+            And each row of the sequences will be the inputs of the operation.
+          - If `ops` is `None`, the first input is the operation, and the others are inputs.
 
     Note:
         Except for the operation input, the number of inputs should be equal to the number of inputs to `ops`.

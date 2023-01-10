@@ -27,11 +27,9 @@ mindspore.ops.AlltoAll
     输出：
         Tensor，设输入的shape是 :math:`(x_1, x_2, ..., x_R)`，则输出的shape为 :math:`(y_1, y_2, ..., y_R)`，其中：
 
-        :math:`y_{split\_dim} = x_{split\_dim} / split\_count`
-
-        :math:`y_{concat\_dim} = x_{concat\_dim} * split\_count`
-
-        :math:`y_{other} = x_{other}`.
+        - :math:`y_{split\_dim} = x_{split\_dim} / split\_count`
+        - :math:`y_{concat\_dim} = x_{concat\_dim} * split\_count`
+        - :math:`y_{other} = x_{other}`.
 
     异常：
         - **TypeError** - 如果 `group` 不是字符串。

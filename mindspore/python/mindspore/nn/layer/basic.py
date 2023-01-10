@@ -1362,11 +1362,9 @@ class Unfold(Cell):
         Tensor, a 4-D tensor whose data type is same as `x`,
         and the shape is [out_batch, out_depth, out_row, out_col] where `out_batch` is the same as the `in_batch`.
 
-        :math:`out\_depth = ksize\_row * ksize\_col * in\_depth`
-
-        :math:`out\_row = (in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) // stride\_row + 1`
-
-        :math:`out\_col = (in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) // stride\_col + 1`
+        - :math:`out\_depth = ksize\_row * ksize\_col * in\_depth`
+        - :math:`out\_row = (in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) // stride\_row + 1`
+        - :math:`out\_col = (in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) // stride\_col + 1`
 
     Raises:
         TypeError: If `ksizes`, `strides` or `rates` is neither a tuple nor list.

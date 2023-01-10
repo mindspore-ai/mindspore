@@ -9,7 +9,6 @@ mindspore.ops.adaptive_max_pool1d
     输出的shape为 :math:`(N_{in}, C_{in}, L_{out})`，其中 :math:`L_{out}` 由 `output_size` 定义。
 
     .. note::
-
         :math:`L_{in}` 必须能被 `output_size` 整除。
 
     参数：
@@ -18,7 +17,6 @@ mindspore.ops.adaptive_max_pool1d
 
     返回：
         Tensor，数据类型与 `input_x` 相同。
-
         输出的shape为 :math:`(N_{in}, C_{in}, L_{out})` 。
 
     异常：

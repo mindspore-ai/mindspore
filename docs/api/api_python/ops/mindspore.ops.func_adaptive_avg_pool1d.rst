@@ -18,7 +18,6 @@ mindspore.ops.adaptive_avg_pool1d
 
     返回：
         Tensor，数据类型与 `input_x` 相同。
-
         输出的shape为 :math:`(N_{in}, C_{in}, L_{out})` 。
 
     异常：

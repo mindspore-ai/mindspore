@@ -1171,18 +1171,18 @@ class Conv1dTranspose(_Conv):
         pad_mode is 'same':
 
         .. math::
-            L_{out} ＝ \left \lfloor{\frac{L_{in}}{\text{stride}} + 1} \right \rfloor
+            L_{out} = \left \lfloor{\frac{L_{in}}{\text{stride}} + 1} \right \rfloor
 
         pad_mode is 'valid':
 
         .. math::
-            L_{out} ＝ \left \lfloor{\frac{L_{in} - \text{dilation} \times (\text{kernel_size} - 1) }
+            L_{out} = \left \lfloor{\frac{L_{in} - \text{dilation} \times (\text{kernel_size} - 1) }
             {\text{stride}} + 1} \right \rfloor
 
         pad_mode is 'pad':
 
         .. math::
-            L_{out} ＝ \left \lfloor{\frac{L_{in} + 2 \times padding - (\text{dilation} - 1) \times
+            L_{out} = \left \lfloor{\frac{L_{in} + 2 \times padding - (\text{dilation} - 1) \times
             \text{kernel_size} - 1 }{\text{stride}} + 1} \right \rfloor
 
     Raises:
