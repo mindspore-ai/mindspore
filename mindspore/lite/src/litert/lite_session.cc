@@ -524,10 +524,33 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::KernelExec *> &kern
     auto inputs = kernel->in_tensors();
     for (auto *tensor : inputs) {
       MS_ASSERT(tensor != nullptr);
-      if (!tensor->IsConst()) {
+      if (!tensor->IsConst() || tensor->ref_count() >= 1) {
         continue;
       }
       tensor->FreeData();
+    }
+  }
+}
+
+void LiteSession::MarkSharedWeight(const std::vector<kernel::KernelExec *> &kernels) {
+  // For reducing runtime RAM
+  // free pack-op weight because pack-op will not access origin weight in runtime
+  for (auto *kernel : kernels) {
+    MS_ASSERT(kernel != nullptr);
+    if (kernel->subgraph_type() == kernel::kNotSubGraph) {
+      if (IsPackedOp(static_cast<int>(kernel->type()))) {
+        continue;
+      }
+    } else {
+      auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+      MarkSharedWeight(subgraph->nodes());
+    }
+    auto inputs = kernel->in_tensors();
+    for (auto *tensor : inputs) {
+      MS_ASSERT(tensor != nullptr);
+      if (tensor->IsConst()) {
+        tensor->IncRefCount();
+      }
     }
   }
 }
@@ -593,6 +616,7 @@ int LiteSession::CompileGraph(Model *model) {
     return ret;
   }
 
+  MarkSharedWeight(kernels_);
   FreePackOpWeight(kernels_);
 
   ret = RuntimeAllocatorInit();
