@@ -80,7 +80,8 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                                mindspore::kNuclearNormOpName,
                                                                mindspore::kQuantileOpName,
                                                                mindspore::kSparseSegmentSqrtNOpName,
-                                                               mindspore::kUnsortedSegmentProdOpName};
+                                                               mindspore::kUnsortedSegmentProdOpName,
+                                                               mindspore::kMulOpName};
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
   static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";
 
