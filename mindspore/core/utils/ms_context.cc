@@ -338,9 +338,7 @@ void MsContext::SetEnv(const std::string &device) {
 
   if (auto iter = PluginPathMap().find(device); iter != PluginPathMap().end()) {
     const auto &library_path = iter->second;
-    if (set_env_ != nullptr) {
-      set_env_(device, library_path);
-    }
+    set_env_(device, library_path);
   }
 }
 
@@ -349,12 +347,7 @@ void MsContext::CheckEnv(const std::string &device) {
     return;
   }
 
-  if (auto iter = PluginPathMap().find(device); iter != PluginPathMap().end()) {
-    const auto &library_path = iter->second;
-    if (check_env_ != nullptr) {
-      check_env_(device, library_path);
-    }
-  }
+  check_env_(device, "");
 }
 
 bool MsContext::CanDump(const int &level) {
