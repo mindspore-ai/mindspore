@@ -48,12 +48,13 @@ void CreateMultiOutputOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr
   std::map<int64_t, AnfNodePtr> out;
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  auto bn = node;
-  if (manager->node_users().find(bn) == manager->node_users().end()) {
+  const auto &bn = node;
+  auto iter = manager->node_users().find(bn);
+  if (iter == manager->node_users().end()) {
     return;
   }
 
-  for (const auto &node_index : manager->node_users()[bn]) {
+  for (const auto &node_index : iter->second) {
     const AnfNodePtr &output = node_index.first;
     MS_EXCEPTION_IF_NULL(output);
     if (!IsPrimitiveCNode(output, prim::kPrimTupleGetItem)) {
@@ -77,8 +78,9 @@ void CreateMultiOutputOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr
 
 AnfNodePtr CreateSubNode(const FuncGraphPtr &fg, const vector<AnfNodePtr> &inputs) {
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kSubInputNum, "Check Sub input size fail!");
-  auto mean = inputs[0];
-  auto tuple_getitems = inputs[1];
+  const auto &mean = inputs[0];
+  MS_EXCEPTION_IF_NULL(mean);
+  const auto &tuple_getitems = inputs[1];
   auto sub_node = fg->NewCNode({NewValueNode(std::make_shared<Primitive>(kSubOpName)), mean, tuple_getitems});
   MS_EXCEPTION_IF_NULL(sub_node);
   sub_node->set_abstract(mean->abstract());
@@ -99,8 +101,10 @@ AnfNodePtr CreateDataNode(const CNodePtr &node) {
 
 AnfNodePtr CreateMulNode(const FuncGraphPtr &fg, const vector<AnfNodePtr> &inputs) {
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kMulInputNum, "Check Sub input size fail!");
-  auto data_node = inputs[0];
-  auto sub_node = inputs[1];
+  const auto &data_node = inputs[0];
+  const auto &sub_node = inputs[1];
+  MS_EXCEPTION_IF_NULL(data_node);
+  MS_EXCEPTION_IF_NULL(sub_node);
   auto mul_node = fg->NewCNode({NewValueNode(std::make_shared<Primitive>(kMulOpName)), data_node, sub_node});
   MS_EXCEPTION_IF_NULL(mul_node);
   mul_node->set_abstract(sub_node->abstract());

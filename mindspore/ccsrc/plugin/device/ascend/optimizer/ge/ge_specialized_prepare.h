@@ -31,8 +31,8 @@ class GeTensorArrayPrepare : public PatternProcessPass {
 
  private:
   // Add a const input with value `size` to TensorArray node
-  void TransformTASizeFromAttrToInput(const AnfNodePtr &node) const;
-  void InsertFlowOutputToTA(const AnfNodePtr &node) const;
+  static void TransformTASizeFromAttrToInput(const AnfNodePtr &node);
+  static void InsertFlowOutputToTA(const AnfNodePtr &node);
 };
 }  // namespace opt
 }  // namespace mindspore
