@@ -355,7 +355,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(introductory)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_ir_fusion_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
     DumpIRProto(kernel_graph, "before_hwopt_" + std::to_string(kernel_graph->graph_id()));
@@ -402,7 +402,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(introductory)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_ir_fusion_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
@@ -420,7 +420,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
     return;
   }
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(introductory)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     DumpIR("hwopt_d_ir_fusion_before.ir", kernel_graph);
   }
 #endif
@@ -490,7 +490,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(introductory)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     DumpIR("hwopt_d_ir_fusion_after.ir", kernel_graph);
   }
 #endif
@@ -529,7 +529,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(introductory)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
@@ -578,11 +578,11 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   (void)optimizer2->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(advanced)) {
+  if (context_ptr->CanDump(kAdvanced)) {
     std::string file_name = "hwopt_d_end_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph, true, kWholeStack);
     DumpIRProto(kernel_graph, "after_hwopt_" + std::to_string(kernel_graph->graph_id()));
-    if (context_ptr->CanDump(fully)) {
+    if (context_ptr->CanDump(kFully)) {
       draw::Draw("hwopt_d_end.dot", kernel_graph);
     }
   }
@@ -610,7 +610,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
     build_manager.TbePreBuild(kernel_graph);
   }
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(advanced)) {
+  if (context_ptr->CanDump(kAdvanced)) {
     std::string file_name = "hwopt_d_ub_fusion_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
@@ -643,7 +643,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(advanced)) {
+  if (context_ptr->CanDump(kAdvanced)) {
     std::string file_name = "hwopt_d_ub_fusion_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
@@ -655,7 +655,7 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(introductory)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_before_unify_mindir_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
     DumpIRProto(kernel_graph, "before_unify_mindir_hwopt_" + std::to_string(kernel_graph->graph_id()));
@@ -705,7 +705,7 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(introductory)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_after_unify_mindir_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
@@ -717,7 +717,7 @@ void AscendOpAdaptation(const std::shared_ptr<session::KernelGraph> &kernel_grap
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(introductory)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_before_op_adaptation_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph, true, kWholeStack);
     DumpIRProto(kernel_graph, "before_op_adaptation_hwopt_" + std::to_string(kernel_graph->graph_id()));
@@ -731,7 +731,7 @@ void AscendOpAdaptation(const std::shared_ptr<session::KernelGraph> &kernel_grap
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(introductory)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_after_op_adaptation_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph, true, kWholeStack);
   }

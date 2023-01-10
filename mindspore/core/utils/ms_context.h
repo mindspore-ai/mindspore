@@ -37,9 +37,9 @@ enum MsBackendPolicy {
 };
 
 enum level {
-  introductory = 1,
-  advanced = 2,
-  fully = 3,
+  kIntroductory = 1,
+  kAdvanced,
+  kFully,
 };
 
 const int kGraphMode = 0;

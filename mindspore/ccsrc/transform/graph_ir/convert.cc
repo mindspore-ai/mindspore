@@ -995,7 +995,7 @@ void DfGraphConvertor::ConvertWhileBody(const AnfNodePtr &node) {
   std::string name = graph_node->ToString() + "_ge_graph.dot";
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(fully)) {
+  if (context->CanDump(kFully)) {
     converter.DrawComputeGraph(name);
   }
   return;
@@ -1127,7 +1127,7 @@ void DfGraphConvertor::ConvertWhileCond(const AnfNodePtr &node) {
   std::string name = func_graph->ToString() + "_ge_graph.dot";
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(fully)) {
+  if (context->CanDump(kFully)) {
     converter.DrawComputeGraph(name);
   }
 
@@ -1177,7 +1177,7 @@ void DfGraphConvertor::ConvertWhileAfter(const AnfNodePtr &node) {
   std::string name = graph_node->ToString() + "_ge_graph.dot";
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(fully)) {
+  if (context->CanDump(kFully)) {
     converter.DrawComputeGraph(name);
   }
   MS_LOG(DEBUG) << "add while after graph " << converter.graph_const_inputs_.size()
@@ -2343,7 +2343,7 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr 
   std::string name = graph_node->ToString() + "_ge_graph.dot";
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(fully)) {
+  if (context->CanDump(kFully)) {
     converter.DrawComputeGraph(name);
   }
 #endif
@@ -2645,7 +2645,7 @@ void DfGraphConvertor::TransDataType(const FuncGraphPtr &anf_graph) const {
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->CanDump(advanced)) {
+  if (context_ptr->CanDump(kAdvanced)) {
     std::string file_name = "ge_trans_data_type_before_graph_" + anf_graph->ToString() + ".ir";
     DumpIR(file_name, anf_graph);
   }
@@ -2661,7 +2661,7 @@ void DfGraphConvertor::TransDataType(const FuncGraphPtr &anf_graph) const {
     }
   }
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(advanced)) {
+  if (context_ptr->CanDump(kAdvanced)) {
     std::string file_name = "ge_trans_data_type_after_graph_" + anf_graph->ToString() + ".ir";
     DumpIR(file_name, anf_graph);
   }

@@ -143,7 +143,7 @@ AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node) {
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(advanced)) {
+  if (context->CanDump(kAdvanced)) {
     DumpIR("expand_fe_" + GetCNodeFuncName(node->cast<CNodePtr>()) + ".ir", expand_fg);
   }
 #endif

@@ -305,7 +305,7 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
       static const auto enable_dump_pass_ir = GetDumpConfig().enable_dump_pass_ir;
       auto context = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(context);
-      if ((enable_dump_pass_ir && context->CanDump(introductory)) || context->CanDump(fully)) {
+      if ((enable_dump_pass_ir && context->CanDump(kIntroductory)) || context->CanDump(kFully)) {
         auto fg_name = optimizer->name() + "_r" + std::to_string(optimizer->CurPass_.counter) + "_" +
                        optimizer->CurPass_.name + "_" + substitution->name_;
         static const auto switch_order = (common::GetEnv("MS_DEV_SAVE_GRAPHS_SORT_MODE") == "1");
@@ -314,7 +314,7 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
         } else {
           DumpIR(fg_name + ".ir", func_graph);
         }
-        if (context->CanDump(fully)) {
+        if (context->CanDump(kFully)) {
           draw::Draw(fg_name + ".dot", func_graph);
         }
       }
