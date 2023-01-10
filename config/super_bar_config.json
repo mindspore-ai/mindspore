@@ -277,6 +277,9 @@
       "pads": "0,0,0",
       "dilation": "1,1,1",
       "ceil_mode": "0"
+    },
+    "BasicLSTMCellCStateGradV2": {
+      "gate_order": "ijfo"
     }
   },
   "InputOrders": {
