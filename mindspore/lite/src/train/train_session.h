@@ -170,6 +170,9 @@ class TrainSession : virtual public lite::LiteSession {
                                 const std::unordered_map<lite::Tensor *, size_t> &offset_map,
                                 std::unordered_map<lite::Tensor *, int> *ref_count, uint32_t input_idx);
   template <typename DestType>
+  int ExportByDifferentType(DestType destination, ModelType model_type, QuantizationType quant_type,
+                            bool orig_train_state, std::vector<std::string> output_tensor_name = {});
+  template <typename DestType>
   int ExportInner(DestType destination, ModelType model_type, QuantizationType quant_type, FormatType,
                   std::vector<std::string> out_put_tensor_name = {});
   std::map<Tensor *, Tensor *> restored_origin_tensors_;

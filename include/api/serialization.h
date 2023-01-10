@@ -94,7 +94,7 @@ class MS_API Serialization {
   ///
   /// \param[in] model The model data.
   /// \param[in] model_type The model file type.
-  /// \param[in] model_file The exported model file.
+  /// \param[in] model_file The path of exported model file.
   /// \param[in] quantization_type The quantification type.
   /// \param[in] export_inference_only Whether to export a reasoning only model.
   /// \param[in] output_tensor_name The set the name of the output tensor of the exported reasoning model, default as

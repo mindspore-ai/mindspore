@@ -24,6 +24,7 @@
 #include "include/api/cfg.h"
 #include "include/train/train_cfg.h"
 #include "src/litert/inner_context.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 class ContextUtils {
@@ -55,6 +56,9 @@ inline lite::QuantizationType A2L_ConvertQT(mindspore::QuantizationType qt) {
   }
   if (qt == kWeightQuant) {
     return lite::QT_WEIGHT;
+  }
+  if (qt == kFullQuant || qt == kUnknownQuantType) {
+    MS_LOG(WARNING) << "QuantizationType " << qt << " does not support, set the quantizationType to default.";
   }
   return lite::QT_DEFAULT;
 }

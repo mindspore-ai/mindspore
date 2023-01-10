@@ -61,7 +61,7 @@ inline lite::QuantizationType A2L_ConvertQT(mindspore::QuantizationType qt) {
     return lite::QT_WEIGHT;
   }
   if (qt == kFullQuant || qt == kUnknownQuantType) {
-    MS_LOG(WARNING) << qt << " does not support, set the quantizationType to default.";
+    MS_LOG(WARNING) << "QuantizationType " << qt << " does not support, set the quantizationType to default.";
   }
   return lite::QT_DEFAULT;
 }
