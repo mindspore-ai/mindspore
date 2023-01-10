@@ -815,6 +815,9 @@ def subtract(x, other, *, alpha=1):
 def true_divide(dividend, divisor):
     r"""
     Alias for :func:`mindspore.ops.div` with :math:`rounding\_mode=None`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return div(dividend, divisor, rounding_mode=None)
 
