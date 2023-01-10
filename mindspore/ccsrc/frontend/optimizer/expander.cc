@@ -23,6 +23,7 @@
 #include "mindspore/core/utils/anf_utils.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
+#include "frontend/operator/ops_front_infer_function.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "common/graph_kernel/adapter/expander.h"
 #include "utils/ms_context.h"
@@ -52,6 +53,12 @@ bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
     }
     auto primitive = GetCNodePrimitive(node);
     if (primitive == nullptr || primitive->isa<PrimitivePy>()) {
+      continue;
+    }
+    if (abstract::GetFrontendPrimitiveInferImpl(primitive).has_value()) {
+      continue;
+    }
+    if (primitive->isa<prim::DoSignaturePrimitive>()) {
       continue;
     }
     parallel::OperatorAttrs attrs;

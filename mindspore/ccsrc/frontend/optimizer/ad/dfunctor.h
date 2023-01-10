@@ -156,7 +156,7 @@ class KPrim {
  private:
   FuncGraphPtr GetFprop(const PrimitivePtr &prim) const;
   FuncGraphPtr GetPrimBprop(const PrimitivePtr &prim, const ValueNodePtr &value_node,
-                            const pipeline::ResourceBasePtr &resources);
+                            const pipeline::ResourceBasePtr &resources, const CNodePtr &cnode = nullptr);
   FuncGraphPtr FakeBprop(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources) const;
   FuncGraphPtr BpropCut(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources) const;
   // Given a bprop rule, do the K mapping.

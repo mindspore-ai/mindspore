@@ -56,7 +56,7 @@ FuncGraphPtr MatMulBprop(const PrimitivePtr &primal, const AbstractBasePtrList &
   fg->set_output(NewNode(fg, {MakeTuple(), dx, dw}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(MatMul, prim::kPrimMatMul, MatMulBprop, 2);
+REGISTER_PRIMITIVE_BPROP_IMPL(MatMul, MatMulBprop);
 
 FuncGraphPtr SubBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto fg = NewGraph(input_abs);
@@ -69,7 +69,7 @@ FuncGraphPtr SubBprop(const PrimitivePtr &primal, const AbstractBasePtrList &inp
   fg->set_output(BinopGradCommon(fg, parameters[kIndex0], parameters[kIndex1], parameters[kIndex3], neg_dout));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(Sub, prim::kPrimSub, SubBprop, 2);
+REGISTER_PRIMITIVE_BPROP_IMPL(Sub, SubBprop);
 
 FuncGraphPtr AddBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto fg = NewGraph(input_abs);
@@ -80,7 +80,7 @@ FuncGraphPtr AddBprop(const PrimitivePtr &primal, const AbstractBasePtrList &inp
     BinopGradCommon(fg, parameters[kIndex0], parameters[kIndex1], parameters[kIndex3], parameters[kIndex3]));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(Add, prim::kPrimAdd, AddBprop, 2);
+REGISTER_PRIMITIVE_BPROP_IMPL(Add, AddBprop);
 
 FuncGraphPtr AssignAddBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto fg = NewGraph(input_abs);
@@ -94,7 +94,7 @@ FuncGraphPtr AssignAddBprop(const PrimitivePtr &primal, const AbstractBasePtrLis
   fg->set_output(NewNode(fg, {MakeTuple(), out1, out2}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(AssignAdd, prim::kPrimAssignAdd, AssignAddBprop, 2);
+REGISTER_PRIMITIVE_BPROP_IMPL(AssignAdd, AssignAddBprop);
 
 FuncGraphPtr NegBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto neg_grad = Neg();
@@ -106,7 +106,7 @@ FuncGraphPtr NegBprop(const PrimitivePtr &primal, const AbstractBasePtrList &inp
   fg->set_output(NewNode(fg, {MakeTuple(), dx}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(Neg, prim::kPrimNeg, NegBprop, 1);
+REGISTER_PRIMITIVE_BPROP_IMPL(Neg, NegBprop);
 
 FuncGraphPtr LogicalOrBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto fg = NewGraph(input_abs);
@@ -118,6 +118,6 @@ FuncGraphPtr LogicalOrBprop(const PrimitivePtr &primal, const AbstractBasePtrLis
   fg->set_output(NewNode(fg, {MakeTuple(), dx, dy}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(LogicalOr, prim::kPrimLogicalOr, LogicalOrBprop, 2);
+REGISTER_PRIMITIVE_BPROP_IMPL(LogicalOr, LogicalOrBprop);
 }  // namespace graph_bprop
 }  // namespace mindspore

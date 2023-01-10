@@ -62,7 +62,7 @@ FuncGraphPtr TransposeBprop(const PrimitivePtr &primal, const AbstractBasePtrLis
   fg->set_output(NewNode(fg, {MakeTuple(), transpose, zeros_like}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(Transpose, prim::kPrimTranspose, TransposeBprop, 2);
+REGISTER_PRIMITIVE_BPROP_IMPL(Transpose, TransposeBprop);
 
 FuncGraphPtr CastBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   constexpr size_t expected_arg_size = 4;
@@ -90,6 +90,6 @@ FuncGraphPtr CastBprop(const PrimitivePtr &primal, const AbstractBasePtrList &in
   fg->set_output(NewNode(fg, {MakeTuple(), return_node, zeros_like_node}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(Cast, prim::kPrimCast, CastBprop, 2);
+REGISTER_PRIMITIVE_BPROP_IMPL(Cast, CastBprop);
 }  // namespace graph_bprop
 }  // namespace mindspore

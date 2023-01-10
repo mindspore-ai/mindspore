@@ -143,6 +143,39 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
       return Emit(prim::kZerosLike, {Tensor(0)});
     }
   }
+  if (node->isa<Parameter>()) {
+    if (node->get()->abstract()->isa<abstract::AbstractTensor>()) {
+      return Emit(prim::kZerosLike, {node});
+    }
+    if (node->get()->abstract()->isa<abstract::AbstractTuple>()) {
+      NodePtrList list;
+      auto abstract_tuple = node->get()->abstract()->cast<abstract::AbstractTuplePtr>();
+      for (auto &e : abstract_tuple->elements()) {
+        if (e->isa<abstract::AbstractTensor>()) {
+          auto shape = e->BuildShape()->cast<abstract::ShapePtr>()->shape();
+          auto type = e->BuildType()->cast<TensorTypePtr>()->element();
+          list.emplace_back(Emit("Zeros", {EmitValue(MakeValue(shape)), EmitValue(type)}));
+        } else if (e->isa<abstract::AbstractScalar>()) {
+          list.emplace_back(Emit(prim::kZerosLike, {Tensor(0, e->BuildType())}));
+        } else {
+          MS_LOG(WARNING) << "ZerosLike got UNKNOWN TYPE: " << e->ToString();
+          list.emplace_back(Emit(prim::kZerosLike, {Tensor(0, e->BuildType())}));
+        }
+      }
+      return MakeTuple(list);
+    }
+    if (node->get()->abstract()->isa<abstract::AbstractMonad>()) {
+      return Emit(prim::kZerosLike, {Tensor(0)});
+    }
+    auto v = node->get()->abstract()->BuildValue();
+    if (v->isa<Scalar>() || v->isa<Type>()) {
+      return Emit(prim::kZerosLike, {Tensor(0, v->type())});
+    }
+    if (v->isa<ValueSequence>()) {
+      auto sh = GetValue<std::vector<int64_t>>(v);
+      return Emit(prim::kZerosLike, {Tensor(sh)});
+    }
+  }
   return Emit(prim::kZerosLike, {node});
 }
 
