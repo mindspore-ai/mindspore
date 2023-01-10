@@ -73,6 +73,7 @@ if(ENABLE_MINDDATA)
             ./ps/*.cc
             ./fl/*.cc
             ./cxx_api/*.cc
+            ./c_api/*.cc
             ./tbe/*.cc
             ./mindapi/*.cc
             ./runtime/graph_scheduler/*.cc
@@ -292,7 +293,7 @@ endforeach()
 set(ut_objects ${CORE_OBJECT_LIST} $<TARGET_OBJECTS:_ut_ut_obj>
         $<TARGET_OBJECTS:core_proto_obj> $<TARGET_OBJECTS:mindrt_mid>
         $<TARGET_OBJECTS:mindspore_shared_lib_obj> $<TARGET_OBJECTS:_mindspore_utils_obj>
-        $<TARGET_OBJECTS:_mindspore_common_obj>)
+        $<TARGET_OBJECTS:_mindspore_common_obj> $<TARGET_OBJECTS:mindspore_c_api_obj>)
 
 if(ENABLE_MINDDATA)
     set(ut_objects ${ut_objects} ${dataengine_submodules} $<TARGET_OBJECTS:mindrecord_obj>
