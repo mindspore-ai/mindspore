@@ -104,10 +104,10 @@ population_count_ = P.PopulationCount()
 
 @constexpr
 def get_x_shape(x_shape):
-    if -1 in x_shape:
-        return (-1,)
-    if -2 in x_shape:
+    if F.is_sequence_shape_unknown(x_shape):
         return (-2,)
+    if F.is_sequence_value_unknown(x_shape):
+        return (-1,)
     s = 1
     for i in x_shape:
         s = s * i
