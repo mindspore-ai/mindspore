@@ -23,7 +23,36 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kCdistInputDimsMin = 2;
+void CdistPNormalOptSpecial(const float *a, const float *b, float *dst, int64_t m, float p) {
+  /*
+  When m = 1, x < 1, p is large, the result of std::pow(x, p)
+  is different in graph mode and pynative mode.
+  And the result under graph is 0, resulting in precision problems.
+  In order to circumvent this situation, special treatment is done when m = 1.
+  */
+  if (p == 0) {
+    MS_LOG(ERROR) << "Invalid p, p should not be equal to zeor, bug got p =  " << p;
+    return;
+  }
+  if (m == 1) {
+    float res = std::abs(a[0] - b[0]);
+    *dst = res;
+    return;
+  }
 
+  float result = 0;
+  int64_t i = 0;
+  for (; i < m; i++) {
+    float x = std::abs(a[i] - b[i]);
+    result += std::pow(x, p);
+  }
+
+  float r_p = static_cast<float>(1.) / p;
+  result = std::pow(result, r_p);
+  *dst = result;
+
+  return;
+}
 const std::vector<KernelAttr> kernel_attr = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}};
 }  // namespace
@@ -38,7 +67,7 @@ void CdistCpuKernelMod::InitFunc(float p) {
   } else if (std::isinf(p)) {
     dist_func_ = CdistInfNormalOpt;
   } else {
-    dist_func_ = CdistPNormalOpt;
+    dist_func_ = CdistPNormalOptSpecial;
   }
 }
 
@@ -88,8 +117,6 @@ int CdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   m_ = in_shape0[in_shape_size - 1];
   r1_ = in_shape1[in_shape_size - 2];
 
-  thread_num_ = std::min(static_cast<size_t>(batch_), pool_->GetKernelThreadNum());
-
   return 0;
 }
 
@@ -116,33 +143,13 @@ bool CdistCpuKernelMod::LaunchKernel(int64_t start, int64_t end) {
 
 std::vector<KernelAttr> CdistCpuKernelMod::GetOpSupport() { return kernel_attr; }
 
-bool CdistCpuKernelMod::DoLaunch(int task_id) {
-  auto batch_per_thread = UP_DIV(batch_, thread_num_);
-  int64_t start = batch_per_thread * task_id;
-  int64_t end = start + batch_per_thread;
-  end = std::min(end, batch_);
-  return LaunchKernel(start, end);
-}
-
-int CdistRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto cdist_kernel = reinterpret_cast<CdistCpuKernelMod *>(cdata);
-  if (!cdist_kernel->DoLaunch(task_id)) {
-    MS_LOG(ERROR) << "cdist_kernel DoLaunch failed, task_id:" << task_id;
-    return -1;
-  }
-  return 0;
-}
-
 bool CdistCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                const std::vector<AddressPtr> &outputs) {
   in_data0_ = inputs[0]->addr;
   in_data1_ = inputs[1]->addr;
   out_data_ = outputs[0]->addr;
-  int ret = pool_->ParallelLaunch(CdistRun, this, thread_num_);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "CdistCpuKernelMod ParallelLaunch failed, error_code[" << ret << "]";
-    return false;
-  }
+  auto task = [&](size_t start, size_t end) { LaunchKernel(start, end); };
+  ParallelLaunchAutoSearch(task, static_cast<size_t>(batch_), this, &parallel_search_info_);
   return true;
 }
 
