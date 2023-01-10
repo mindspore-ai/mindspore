@@ -143,7 +143,6 @@ constexpr auto kScatterNdMax = "ScatterNdMax";
 constexpr auto kScatterNdMin = "ScatterNdMin";
 constexpr auto kTril = "Tril";
 constexpr auto kSub = "Sub";
-constexpr auto kMul = "Mul";
 constexpr auto kDiv = "Div";
 constexpr auto kNeg = "Neg";
 constexpr auto kNotEqual = "NotEqual";
@@ -220,7 +219,6 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kScatterNdMin,
                                           kTril,
                                           kSub,
-                                          kMul,
                                           kDiv,
                                           kNeg,
                                           kNonZero,
