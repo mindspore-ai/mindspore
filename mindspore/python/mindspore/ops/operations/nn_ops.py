@@ -704,7 +704,6 @@ class SeLU(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SeLU"""
-        super().__init__("SeLU")
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 
