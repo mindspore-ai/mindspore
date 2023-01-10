@@ -36,6 +36,9 @@ class ExpandJPrim : public ExpandMetaFgPrim {
   ExpandJPrim() { prim_ = prim::kPrimJ; }
   virtual ~ExpandJPrim() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) override;
+
+ private:
+  void CloneUsedPrimalGraph(const FuncGraphManagerPtr &manager, FuncGraphVector *func_graphs);
 };
 using ExpandJPrimPtr = std::shared_ptr<ExpandJPrim>;
 }  // namespace irpass

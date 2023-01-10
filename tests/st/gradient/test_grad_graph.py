@@ -1059,3 +1059,31 @@ def test_get_grad_wrap_with_msfunction_graph():
     expect_grad = Tensor(np.array([[2, 13], [1, 6]]).astype(np.float32))
     real_grad = grad_wrap_with_msfunction_get_grad(x, y, z)
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_primal_graph_call_others():
+    """
+    Features: Auto grad.
+    Description: Two graph need to take a derivative and one calls the other graph.
+    Expectation: Get the correct gradient.
+    """
+    def f(x, y):
+        return x + y
+
+    def g(x, y):
+        return f(x, y) * y
+
+    @jit
+    def net(x, y):
+        a = grad(f)(x, y)
+        b = grad(g)(x, y)
+        return a + b
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    y = Tensor(np.array([3, 4]).astype(np.float32))
+    expected = Tensor(np.array([4, 5]).astype(np.float32))
+    output = net(x, y)
+    assert np.allclose(output.asnumpy(), expected.asnumpy())
