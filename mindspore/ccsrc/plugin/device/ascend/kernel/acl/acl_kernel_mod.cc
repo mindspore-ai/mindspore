@@ -69,19 +69,8 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
   return 0;
 }
 
-bool IsReduceOp(const std::string &op_type) {
-  const std::set<std::string> reduce_op_type = {prim::kPrimReduceAll->name(),  prim::kPrimReduceAny->name(),
-                                                prim::kPrimReduceMean->name(), prim::kPrimReduceMax->name(),
-                                                prim::kPrimReduceMin->name(),  prim::kPrimReduceProd->name(),
-                                                prim::kPrimReduceSum->name(),  prim::kPrimSquareSumV1->name()};
-  if (reduce_op_type.count(op_type)) {
-    return true;
-  }
-  return false;
-}
-
 void AclKernelMod::UpdateReduceAxisAttr(const AnfNodePtr &node) {
-  if (!IsReduceOp(op_type_)) {
+  if (!common::AnfAlgo::IsReduceOp(op_type_)) {
     return;
   }
   if (!common::AnfAlgo::HasNodeAttr("axis", node->cast<CNodePtr>())) {

@@ -578,6 +578,57 @@ bool DataConvert::NeedConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run
   return !input_to_attr_ptr->empty();
 }
 
+void ReplaceValueNodeWithParameter(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target) {
+  if (!op_run_info->base_op_run_info.use_dynamic_shape_process) {
+    return;
+  }
+
+  auto replace_tensor_mask = [](const FrontendOpRunInfoPtr &op_run_info) {
+    const auto &tensor_masks = op_run_info->base_op_run_info.input_mask;
+    std::vector<int64_t> new_masks;
+    std::transform(tensor_masks.begin(), tensor_masks.end(), std::back_inserter(new_masks), [](int64_t tensor_mask) {
+      return tensor_mask == kValueNodeTensorMask ? kParameterDataTensorMask : tensor_mask;
+    });
+    op_run_info->base_op_run_info.input_mask = new_masks;
+  };
+
+  if (device_target == kAscendDevice) {
+    auto reg_info = opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(
+      op_run_info->base_op_run_info.op_name, device_target, true);
+    if (reg_info != nullptr) {
+      auto no_need_input_to_attr = reg_info->need_tbe_check_supported();
+      if (no_need_input_to_attr) {
+        replace_tensor_mask(op_run_info);
+      }
+    }
+  } else {
+    replace_tensor_mask(op_run_info);
+  }
+}
+
+void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
+  if (!common::AnfAlgo::IsReduceOp(op_run_info->base_op_run_info.op_name)) {
+    return;
+  }
+  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
+  constexpr size_t kReduceOpInputNum = 2;
+  if (input_tensors.size() < kReduceOpInputNum) {
+    MS_LOG(EXCEPTION) << "Invalid input tensor size " << input_tensors.size() << " of Op "
+                      << op_run_info->base_op_run_info.op_name;
+  }
+
+  const auto &axis_shape = input_tensors[1]->shape();
+  // 2nd input tensor is {}, means reduce all axis.
+  if (axis_shape.size() == 1 && axis_shape[0] == 0) {
+    auto size = input_tensors[0]->shape().size();
+    std::vector<int64_t> axis;
+    for (size_t i = 0; i < size; ++i) {
+      axis.push_back(SizeToLong(i));
+    }
+    op_run_info->base_op_run_info.input_tensor[1] = std::make_shared<tensor::Tensor>(axis);
+  }
+}
+
 void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   mindspore::HashSet<size_t> input_to_attr = {};
@@ -615,6 +666,8 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
     }
   }
   op_prim->EndRecordAddAttr();
+  ReplaceValueNodeWithParameter(op_run_info, device_target);
+  ReplaceReduceAxis(op_run_info);
 }
 }  // namespace PyNativeAlgo
 }  // namespace pynative
