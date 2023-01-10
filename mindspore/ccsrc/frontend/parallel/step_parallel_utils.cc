@@ -1404,5 +1404,19 @@ TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_
   TensorLayout tensorlayout_in = tensorinfo_in.tensor_layout();
   return tensorlayout_in;
 }
+
+std::string GetSerialNumberString(size_t number) {
+  std::string suffix = "th";
+  if (number == kSizeOne) {
+    suffix = "st";
+  } else if (number == kSizeTwo) {
+    suffix = "nd";
+  } else if (number == kSizeThree) {
+    suffix = "rd";
+  }
+  std::ostringstream oss;
+  oss << number << suffix;
+  return oss.str();
+}
 }  // namespace parallel
 }  // namespace mindspore

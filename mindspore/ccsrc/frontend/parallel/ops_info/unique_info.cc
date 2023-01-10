@@ -93,7 +93,7 @@ Status UniqueInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return Se
 
 std::vector<StrategyPtr> UniqueInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split;
-  input0_split.emplace_back(0);
+  (void)input0_split.emplace_back(0);
   Shapes splittable_inputs = {input0_split};
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {

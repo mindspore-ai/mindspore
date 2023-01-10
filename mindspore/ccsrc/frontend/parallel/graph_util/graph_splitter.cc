@@ -311,9 +311,7 @@ std::map<size_t, size_t> GetRealIndexToSeg(const std::vector<size_t> &split_segm
   }
 
   // Check whether the vector of indices is valid.
-  std::vector<size_t> tmp = split_segment;
-  std::sort(tmp.begin(), tmp.end());
-  if (split_segment != tmp) {
+  if (!std::is_sorted(split_segment.begin(), split_segment.end())) {
     MS_LOG(EXCEPTION) << "Indices of segments is not in a ascending order: " << split_segment;
   }
 

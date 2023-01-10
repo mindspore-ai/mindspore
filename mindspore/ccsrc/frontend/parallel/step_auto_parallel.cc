@@ -1055,8 +1055,7 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   // print the selected strategy
   for (auto &op : entire_costgraph->GetOperators()) {
     StrategyPtr s_strategy = op->selected_strategy();
-    MS_LOG(INFO) << op->name() << " : The strategy is:";
-    PrintStrategy(s_strategy);
+    MS_LOG(INFO) << op->name() << ": The strategy is: " << s_strategy->ToString();
   }
   // Remove some operatorInfo from the CNODEs
   (void)IgnoreOperatorsInCostGraph();
@@ -1210,8 +1209,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   // print the selected strategy
   for (auto &op : entire_costgraph->GetOperators()) {
     StrategyPtr s_strategy = op->selected_strategy();
-    MS_LOG(INFO) << op->name() << " : The strategy is:";
-    PrintStrategy(s_strategy);
+    MS_LOG(INFO) << op->name() << ": The strategy is: " << s_strategy->ToString();
   }
 
   (void)IgnoreOperatorsInCostGraph();

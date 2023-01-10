@@ -40,8 +40,8 @@ class Map : public Array {
   std::shared_ptr<Map> ExpandMapByNone(const Arrangement &expand_num_list) const;
   std::shared_ptr<Map> ExpandMapByDecreaseNumber(const Arrangement &expand_num_list) const;
   std::shared_ptr<std::vector<Arrangement>> ReMapVector(const std::vector<Arrangement> &input_vector) const;
-  bool CheckNoneByIdxList(std::vector<size_t> idx_list) const;
-  Map SqueezeMapByIdxList(std::vector<size_t> idx_list) const;
+  bool CheckNoneByIdxList(const std::vector<size_t> &idx_list) const;
+  Map SqueezeMapByIdxList(const std::vector<size_t> &idx_list) const;
 
  private:
   bool IsValidMap();

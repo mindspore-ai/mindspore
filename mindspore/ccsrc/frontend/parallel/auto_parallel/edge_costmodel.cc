@@ -339,14 +339,14 @@ CostPtr Edge::GetCostByStrategyPair(const CostPtrKey &stra_pair) {
   }
   auto cost_vec = cost_map_[stra_pair];
   if (cost_vec.empty()) {
-    PrintStrategy(stra_pair.first);
-    PrintStrategy(stra_pair.second);
-    MS_LOG(EXCEPTION) << "No available cost under current strategy pair of the edge: " << edge_name_;
+    MS_LOG(EXCEPTION) << "stra_pair.first: " << stra_pair.first->ToString() << ", "
+                      << "stra_pair.second: " << stra_pair.second->ToString() << ". "
+                      << "No available cost under current strategy pair of the edge: " << edge_name_;
   }
   if (cost_vec.size() > 1) {
-    PrintStrategy(stra_pair.first);
-    PrintStrategy(stra_pair.second);
-    MS_LOG(INFO) << "Multiple costs available under the stratey pair of the edge: " << edge_name_;
+    MS_LOG(INFO) << "stra_pair.first: " << stra_pair.first->ToString() << ", "
+                 << "stra_pair.second: " << stra_pair.second->ToString() << ". "
+                 << "Multiple costs available under the stratey pair of the edge: " << edge_name_;
   }
   return cost_vec[0];
 }
@@ -374,30 +374,32 @@ StrategyPtr Edge::GetNextOpStrategyByPrevOpStrategyWithMiniComm(const StrategyPt
       return nullptr;
     }
     MS_LOG(WARNING) << "Inconsistency occurred at edge: " << edge_name();
-    std::sort(next_stras.begin(), next_stras.end(),
-              [this](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
-                return !IsDoubleEqual(a.second, b.second) ? a.second < b.second : a.first->Compare(b.first);
-              });
-    return next_stras[0].first;
+    auto min_stra =
+      std::min_element(next_stras.begin(), next_stras.end(),
+                       [this](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
+                         return !IsDoubleEqual(a.second, b.second) ? a.second < b.second : a.first->Compare(b.first);
+                       });
+    return min_stra->first;
   }
   if (next_op_stras.size() > 1) {
     MS_LOG(INFO) << "There are multiple strategies for edge: " << edge_name_
                  << " with zero communication cost, choose the one with minimum computation costs.";
   }
   auto next_op = next_op_;
-  std::sort(next_op_stras.begin(), next_op_stras.end(),
-            [this, &next_op](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
-              if (!IsDoubleEqual(a.second, b.second)) {
-                return a.second < b.second;
-              }
-              auto cost_a = next_op->GetCostByStrategyPtr(a.first)[0]->communication_without_parameter_;
-              auto cost_b = next_op->GetCostByStrategyPtr(b.first)[0]->communication_without_parameter_;
-              if (!IsDoubleEqual(cost_a, cost_b)) {
-                return cost_a < cost_b;
-              }
-              return a.first->Compare(b.first);
-            });
-  return next_op_stras[0].first;
+  auto min_next_op_stra = std::min_element(
+    next_op_stras.begin(), next_op_stras.end(),
+    [this, &next_op](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
+      if (!IsDoubleEqual(a.second, b.second)) {
+        return a.second < b.second;
+      }
+      auto cost_a = next_op->GetCostByStrategyPtr(a.first)[0]->communication_without_parameter_;
+      auto cost_b = next_op->GetCostByStrategyPtr(b.first)[0]->communication_without_parameter_;
+      if (!IsDoubleEqual(cost_a, cost_b)) {
+        return cost_a < cost_b;
+      }
+      return a.first->Compare(b.first);
+    });
+  return min_next_op_stra->first;
 }
 
 StrategyPtr Edge::GetPrevOpStrategyByNextOpStrategyWithMiniComm(const StrategyPtr &next_op_stra) {
@@ -423,30 +425,32 @@ StrategyPtr Edge::GetPrevOpStrategyByNextOpStrategyWithMiniComm(const StrategyPt
       return nullptr;
     }
     MS_LOG(WARNING) << "Inconsistency occurred at edge: " << edge_name();
-    std::sort(prev_stras.begin(), prev_stras.end(),
-              [this](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
-                return !IsDoubleEqual(a.second, b.second) ? a.second < b.second : a.first->Compare(b.first);
-              });
-    return prev_stras[0].first;
+    auto min_prev_stra =
+      std::min_element(prev_stras.begin(), prev_stras.end(),
+                       [this](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
+                         return !IsDoubleEqual(a.second, b.second) ? a.second < b.second : a.first->Compare(b.first);
+                       });
+    return min_prev_stra->first;
   }
   if (prev_op_stras.size() > 1) {
     MS_LOG(INFO) << "There are multiple strategies for edge: " << edge_name_
                  << " with zero communication costs, choose the one with minimum computation costs.";
   }
   auto prev_op = prev_op_;
-  std::sort(prev_op_stras.begin(), prev_op_stras.end(),
-            [this, &prev_op](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
-              if (!IsDoubleEqual(a.second, b.second)) {
-                return a.second < b.second;
-              }
-              auto cost_a = prev_op->GetCostByStrategyPtr(a.first)[0]->communication_without_parameter_;
-              auto cost_b = prev_op->GetCostByStrategyPtr(b.first)[0]->communication_without_parameter_;
-              if (!IsDoubleEqual(cost_a, cost_b)) {
-                return cost_a < cost_b;
-              }
-              return a.first->Compare(b.first);
-            });
-  return prev_op_stras[0].first;
+  auto min_prev_op_stra = std::min_element(
+    prev_op_stras.begin(), prev_op_stras.end(),
+    [this, &prev_op](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
+      if (!IsDoubleEqual(a.second, b.second)) {
+        return a.second < b.second;
+      }
+      auto cost_a = prev_op->GetCostByStrategyPtr(a.first)[0]->communication_without_parameter_;
+      auto cost_b = prev_op->GetCostByStrategyPtr(b.first)[0]->communication_without_parameter_;
+      if (!IsDoubleEqual(cost_a, cost_b)) {
+        return cost_a < cost_b;
+      }
+      return a.first->Compare(b.first);
+    });
+  return min_prev_op_stra->first;
 }
 
 int64_t Edge::GetReshapeSWCIndexByNextOpStrategy(const StrategyPtr &next_op_stra) {
@@ -540,9 +544,8 @@ bool Edge::CheckStrategyConsistency(StrategyPtr prev_stra, StrategyPtr next_stra
   }
   auto cost = GetCostByStrategyPair({prev_stra, next_stra});
   if (cost == nullptr || cost->communication_cost_ > 0.0) {
-    MS_LOG(INFO) << "The edge " << edge_name_ << "'s strategy: ";
-    PrintStrategy(prev_stra);
-    PrintStrategy(next_stra);
+    MS_LOG(INFO) << "The edge " << edge_name_ << "'s strategy: prev_stra is " << prev_stra->ToString()
+                 << ", next_stra is " << next_stra->ToString();
     if (prev_op_->IsTmpIdentity()) {
       MS_LOG(ERROR) << "The parameter: " << prev_op_->refkey_parameter_name()
                     << " has been used by operators with "
