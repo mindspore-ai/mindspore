@@ -338,8 +338,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 
 #ifndef ENABLE_SECURITY
 void AscendKernelRuntime::PreInit() {
-  const auto error_manager_ret = ErrorManagerAdapter::Init();
-  if (error_manager_ret != 0) {
+  if (!ErrorManagerAdapter::Init()) {
     MS_LOG(WARNING) << "Init ErrorManager failed.";
   }
 }
@@ -366,8 +365,7 @@ bool AscendKernelRuntime::Init() {
   if (!mindspore::kernel::OpInfoUtils::GenerateOpInfos(soc_version)) {
     MS_LOG(EXCEPTION) << "Load op info form json config failed, version: " << soc_version;
   }
-  const auto error_manager_ret = ErrorManagerAdapter::Init();
-  if (error_manager_ret != 0) {
+  if (!ErrorManagerAdapter::Init()) {
     MS_LOG(WARNING) << "Init ErrorManager failed.";
   }
   bool init_device = false;
