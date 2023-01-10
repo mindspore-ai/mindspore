@@ -26,7 +26,8 @@ from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _r
     _extend, _dict_clear, _haskey, _update, _fromkeys
 
 from ..._checkparam import Validator as validator
-from ..._checkparam import check_is_number
+from ..._checkparam import check_is_number, check_reshape_shp, check_swapaxes_axis, prepare_shape_for_squeeze, \
+    check_axis_in_range, check_axis_valid, infer_out_shape, check_and_canonicalize_axes, get_log2_size
 from ...ops import functional as F
 from ...ops import operations as P
 from ...ops.composite import tail, MultitypeFuncGraph, env_get, hyper_add, \
@@ -41,7 +42,8 @@ from ...ops.primitive import constexpr
 from ...common import dtype as mstype
 from ...ops.operations._sequence_ops import ListAppend
 
-__all__ = ['MultitypeFuncGraph', 'env_get', 'hyper_add', 'zeros_like', 'ones_like']
+__all__ = ['MultitypeFuncGraph', 'env_get',
+           'hyper_add', 'zeros_like', 'ones_like']
 
 shape_ = P.Shape()
 dtype_ = P.DType()
@@ -519,7 +521,7 @@ def reshape(x, *shape):
         [ 3.6  0.4]
         [ 0.5 -3.2]]
     """
-    new_shape = check_reshape_shp_const(shape)
+    new_shape = check_reshape_shp(shape)
     return F.reshape(x, new_shape)
 
 
@@ -709,7 +711,7 @@ def swapaxes(x, axis1, axis2):
         >>> print(output.shape)
         (4,3,2)
     """
-    axis1, axis2 = check_swapaxes_axis_const((axis1, axis2), x.ndim)
+    axis1, axis2 = check_swapaxes_axis((axis1, axis2), x.ndim)
 
     if axis1 == axis2:
         return x
@@ -720,10 +722,10 @@ def swapaxes(x, axis1, axis2):
     new_perm = None
     if axis2 + 1 < x.ndim:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
     else:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
     return F.transpose(x, new_perm)
 
@@ -757,7 +759,7 @@ def squeeze(x, axis=None):
     if axis is None:
         return F.squeeze(x)
     # yield squeezed shape based on the axes
-    new_shape = prepare_shape_for_squeeze_const(shape, axis)
+    new_shape = prepare_shape_for_squeeze(shape, axis)
     return F.reshape(x, new_shape)
 
 
@@ -869,7 +871,7 @@ def argmin(x, axis=None, keepdims=False):
         axis = 0
         is_axis_none = True
     else:
-        axis = check_axis_in_range_const(axis, F.rank(x))
+        axis = check_axis_in_range(axis, F.rank(x))
     out = P.Argmin(axis)(x)
     if keepdims and not is_axis_none:
         out = expand_dims(out, axis)
@@ -894,7 +896,7 @@ def median(x, global_median, axis=0, keep_dims=False):
         When attr `global_median` is True, the second output Tensor value is meaningless.
 
     """
-    check_axis_in_range_const(axis, x.ndim)
+    check_axis_in_range(axis, x.ndim)
     median_ = Median(global_median, axis, keep_dims)
     return median_(x)
 
@@ -968,7 +970,7 @@ def cumsum(x, axis=None, dtype=None):
     if axis is None:
         x = x.ravel()
         axis = 0
-    check_axis_in_range_const(axis, x.ndim)
+    check_axis_in_range(axis, x.ndim)
     if dtype is not None:
         dtype = check_astype_dtype_const(dtype)
         if original_dtype != dtype:
@@ -1350,7 +1352,8 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
     """
     ndim = x.ndim
     if ndim < 2:
-        const_utils.raise_value_error('diagonal requires an array of at least two dimensions')
+        const_utils.raise_value_error(
+            'diagonal requires an array of at least two dimensions')
     dtype = x.dtype
 
     axes = check_axis_valid((axis1, axis2), ndim)
@@ -1602,14 +1605,15 @@ def take(x, indices, axis=None, mode='clip'):
         [4 3 6]
     """
     if mode not in ('raise', 'wrap', 'clip'):
-        const_utils.raise_value_error('raise should be one of "raise", "wrap", or "clip"')
+        const_utils.raise_value_error(
+            'raise should be one of "raise", "wrap", or "clip"')
     if axis is None:
         a = x.ravel()
         axis = 0
     else:
         a = x
     ndim = a.ndim
-    axis = check_axis_in_range_const(axis, ndim)
+    axis = check_axis_in_range(axis, ndim)
 
     shape_a = a.shape
     shape_indices = indices.shape
@@ -1690,12 +1694,14 @@ def choose(x, choices, mode='clip'):
     # adjusts dtype for F.tensor_mul and F.gather_nd
     a = a.astype(mstype.int32)
     choices = choices.astype(mstype.int32)
-    a = compile_utils.check_indices(choices.shape[0], a, mode, allow_negative_index=False)
+    a = compile_utils.check_indices(
+        choices.shape[0], a, mode, allow_negative_index=False)
 
     grids = []
     ndim = len(a.shape)
     for i in range(ndim):
-        dim_grid = const_utils.make_tensor(F.make_range(a.shape[i]), mstype.int32)
+        dim_grid = const_utils.make_tensor(
+            F.make_range(a.shape[i]), mstype.int32)
         dim_shape = expanded_shape(ndim, a.shape[i], i)
         dim_grid = P.BroadcastTo(a.shape)(dim_grid.reshape(dim_shape))
         grids.append(dim_grid)
@@ -1740,7 +1746,8 @@ def searchsorted(x, v, side='left', sorter=None):
     shape = v.shape
     if sorter is not None:
         if sorter.ndim != 1 or sorter.size != a.size:
-            const_utils.raise_value_error('sorter must be 1-D array with the same size as `a`')
+            const_utils.raise_value_error(
+                'sorter must be 1-D array with the same size as `a`')
         sorter = const_utils.make_tensor(sorter)
         sorter = sorter.reshape(sorter.shape + (1,))
         a = F.gather_nd(a, sorter)
@@ -1748,12 +1755,14 @@ def searchsorted(x, v, side='left', sorter=None):
     i = F.fill(mstype.int32, shape, 0)
     j = F.fill(mstype.int32, shape, a.size)
 
-    sort_range = F.make_range(get_log2_size(F.shape_mul(a.shape) + 1))
-    for _ in sort_range:
+    loop_num = get_log2_size(F.shape_mul(a.shape) + 1)
+    index = Tensor([0])
+    while index < loop_num:
         mid = (i - F.neg_tensor(j)) // 2
         mask = less_op(v, F.gather_nd(a, mid.reshape(mid.shape + (1,))))
         i = F.select(mask, i, mid)
         j = F.select(mask, mid, j)
+        index += 1
     return j
 
 
@@ -1788,7 +1797,8 @@ def fill(x, value):
     """
     if value is None:
         if x.dtype not in (mstype.float16, mstype.float32, mstype.float64):
-            const_utils.raise_type_error("If None is used as value, the original Tensor's dtype must be float.")
+            const_utils.raise_type_error(
+                "If None is used as value, the original Tensor's dtype must be float.")
         value = nan_tensor
         return F.tile(value, x.shape).astype(x.dtype)
     if not isinstance(value, (int, float, bool)):
@@ -1838,7 +1848,6 @@ def ptp(x, axis=None, keepdims=False):
     if axis is None:
         axis = ()
     else:
-        check_axis_type(axis, True, True, False)
         axis = check_axis_valid(axis, x.ndim)
 
     return x.max(axis, keepdims) - x.min(axis, keepdims)
@@ -2102,7 +2111,7 @@ def repeat(x, repeats, axis=None):
         axis = 0
     if not isinstance(axis, int):
         const_utils.raise_type_error('axes should be integers')
-    check_axis_in_range_const(axis, x.ndim)
+    check_axis_in_range(axis, x.ndim)
     axis = axis + x.ndim if axis < 0 else axis
 
     if len(repeats) == 1:
@@ -2112,7 +2121,8 @@ def repeat(x, repeats, axis=None):
         return repeat_elements(x, repeats, axis)
     size = x.shape[axis]
     if len(repeats) != size:
-        const_utils.raise_value_error('operands could not be broadcast together')
+        const_utils.raise_value_error(
+            'operands could not be broadcast together')
     subs = P.Split(axis, size)(x)
     repeated_subs = []
     for sub_item, rep in zip(subs, repeats):
@@ -2224,8 +2234,6 @@ def hasnext(it):
 @constexpr
 def constant_abs(x):
     """Returns the absolute value of the constant."""
-    if x is None:
-        raise ValueError("For abs(), the input should be a constant or Tensor type.")
     return abs(x)
 
 
@@ -2241,7 +2249,8 @@ def constant_round(*data):
     """Returns the rounded value of the constant."""
     for x in data:
         if x is None:
-            raise ValueError("For round(), the input should be a Tensor or 1-2 constants.")
+            raise ValueError(
+                "For round(), the input should be a Tensor or 1-2 constants.")
     return round(*data)
 
 
@@ -2256,7 +2265,8 @@ def ms_round(*data):
             return round_(x)
         return constant_round(x)
     if isinstance(data[0], Tensor) or isinstance(data[1], Tensor):
-        const_utils.raise_type_error("When applying round() to tensor, only one tensor is supported as input.")
+        const_utils.raise_type_error(
+            "When applying round() to tensor, only one tensor is supported as input.")
     return constant_round(*data)
 
 
@@ -2274,9 +2284,11 @@ def str_func(*data):
         return ''
     data = data[0]
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
-        const_utils.raise_type_error("str() does not support sparse tensor input.")
+        const_utils.raise_type_error(
+            "str() does not support sparse tensor input.")
     if not F.isconstant(data):
-        const_utils.raise_type_error("str() does not support non-constant input.")
+        const_utils.raise_type_error(
+            "str() does not support non-constant input.")
     return cast_to_str(data)
 
 
@@ -2294,13 +2306,15 @@ def bool_func(*data):
         return False
     data = data[0]
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
-        const_utils.raise_type_error("bool() does not support sparse tensor input.")
+        const_utils.raise_type_error(
+            "bool() does not support sparse tensor input.")
     if isinstance(data, (Tensor, Tensor_)):
         tensor_shape = F.shape(data)
         tensor_shape_len = len(tensor_shape)
         if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
             return data != 0
-        const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
+        const_utils.raise_value_error(
+            "The truth value of an array with more than one element is ambiguous.")
     if not F.isconstant(data):
         if hasattr(data, "__bool__"):
             return data.__bool__()
@@ -2329,9 +2343,11 @@ def int_func(*data):
         return 0
     target = data[0]
     if not F.isconstant(target):
-        const_utils.raise_type_error("int() does not support non-constant input.")
+        const_utils.raise_type_error(
+            "int() does not support non-constant input.")
     if isinstance(target, (CSRTensor, COOTensor, RowTensorInner)):
-        const_utils.raise_type_error("int() does not support sparse tensor input.")
+        const_utils.raise_type_error(
+            "int() does not support sparse tensor input.")
     return cast_to_int(*data)
 
 
@@ -2351,9 +2367,11 @@ def float_func(*data):
         return 0.0
     data = data[0]
     if not F.isconstant(data):
-        const_utils.raise_type_error("float() does not support non-constant input.")
+        const_utils.raise_type_error(
+            "float() does not support non-constant input.")
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
-        const_utils.raise_type_error("float() does not support sparse tensor input.")
+        const_utils.raise_type_error(
+            "float() does not support sparse tensor input.")
     return cast_to_float(data)
 
 
@@ -2366,10 +2384,12 @@ def list_func(*data):
         return F.make_list()
     data = data[0]
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
-        const_utils.raise_type_error("list() does not support single sparse tensor input.")
+        const_utils.raise_type_error(
+            "list() does not support single sparse tensor input.")
     if not isinstance(data, Tensor) and not hasattr(data, "__ms_iter__"):
         data_type = F.typeof(data)
-        const_utils.raise_type_error(str(data_type) + " object is not iterable.")
+        const_utils.raise_type_error(
+            str(data_type) + " object is not iterable.")
     if isinstance(data, dict):
         data = data.keys()
     ret = F.make_list()
@@ -2387,10 +2407,12 @@ def tuple_func(*data):
         return F.make_tuple()
     data = data[0]
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
-        const_utils.raise_type_error("tuple() does not support single sparse tensor input.")
+        const_utils.raise_type_error(
+            "tuple() does not support single sparse tensor input.")
     if not isinstance(data, Tensor) and not hasattr(data, "__ms_iter__"):
         data_type = F.typeof(data)
-        const_utils.raise_type_error(str(data_type) + " object is not iterable.")
+        const_utils.raise_type_error(
+            str(data_type) + " object is not iterable.")
     if isinstance(data, dict):
         data = data.keys()
     ret = F.make_tuple()
@@ -2419,7 +2441,8 @@ def get_max_min_data_len(*data):
     if isinstance(data, (dict, list, tuple)):
         len_data = len(data)
     else:
-        const_utils.raise_type_error("max() or min() does not support the data type.")
+        const_utils.raise_type_error(
+            "max() or min() does not support the data type.")
     return len_data
 
 
@@ -2431,7 +2454,8 @@ def get_tensor_num(data):
             tensor_shape = F.shape(input_data)
             tensor_shape_len = len(tensor_shape)
             if tensor_shape_len != 0 and not (tensor_shape_len == 1 and tensor_shape[0] == 1):
-                const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
+                const_utils.raise_value_error(
+                    "The truth value of an array with more than one element is ambiguous.")
             tensor_num = tensor_num + 1
     return tensor_num
 
@@ -2453,9 +2477,11 @@ def ms_max_one_element(x):
         tensor_shape = F.shape(x)
         tensor_shape_len = len(tensor_shape)
         if tensor_shape_len == 0:
-            const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
+            const_utils.raise_type_error(
+                "Cannot iterate over a scalar tensor.")
         if tensor_shape_len >= 2:
-            const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
+            const_utils.raise_value_error(
+                "The truth value of an array with more than one element is ambiguous.")
         return x.max()
     # Deal with Tensor in tuple or list
     if isinstance(x, (list, tuple)):
@@ -2465,9 +2491,11 @@ def ms_max_one_element(x):
         if tensor_num == len(x):
             return max_tensor(x)
         if tensor_num != 0:
-            const_utils.raise_type_error("max() cannot contain both tensor and non-tensor type.")
+            const_utils.raise_type_error(
+                "max() cannot contain both tensor and non-tensor type.")
         if exist_tensor(x):
-            const_utils.raise_type_error("max() cannot support tensor in list or tuple nested now.")
+            const_utils.raise_type_error(
+                "max() cannot support tensor in list or tuple nested now.")
     return max_(x)
 
 
@@ -2485,10 +2513,12 @@ def ms_max(*data):
         if tensor_num == len_data:
             return max_tensor(*data)
         if tensor_num != 0:
-            const_utils.raise_type_error("max() cannot contain both tensor and non-tensor type.")
+            const_utils.raise_type_error(
+                "max() cannot contain both tensor and non-tensor type.")
         # exist tensor in list/tuple
         if exist_tensor(data):
-            const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
+            const_utils.raise_value_error(
+                "The truth value of an array with more than one element is ambiguous.")
     return max_(*data)
 
 
@@ -2525,9 +2555,11 @@ def ms_min_one_element(x):
         tensor_shape = F.shape(x)
         tensor_shape_len = len(tensor_shape)
         if tensor_shape_len == 0:
-            const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
+            const_utils.raise_type_error(
+                "Cannot iterate over a scalar tensor.")
         if tensor_shape_len >= 2:
-            const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
+            const_utils.raise_value_error(
+                "The truth value of an array with more than one element is ambiguous.")
         return x.min()
     # Deal with Tensor in tuple or list
     if isinstance(x, (list, tuple)):
@@ -2537,9 +2569,11 @@ def ms_min_one_element(x):
         if tensor_num == len(x):
             return min_tensor(x)
         if tensor_num != 0:
-            const_utils.raise_type_error("min() cannot contain both tensor and non-tensor type.")
+            const_utils.raise_type_error(
+                "min() cannot contain both tensor and non-tensor type.")
         if exist_tensor(x):
-            const_utils.raise_type_error("min() cannot support tensor in list or tuple nested now.")
+            const_utils.raise_type_error(
+                "min() cannot support tensor in list or tuple nested now.")
     return min_(x)
 
 
@@ -2557,10 +2591,12 @@ def ms_min(*data):
         if tensor_num == len_data:
             return min_tensor(*data)
         if tensor_num != 0:
-            const_utils.raise_type_error("min() cannot contain both tensor and non-tensor type.")
+            const_utils.raise_type_error(
+                "min() cannot contain both tensor and non-tensor type.")
         # exist tensor in list/tuple
         if exist_tensor(data):
-            const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
+            const_utils.raise_value_error(
+                "The truth value of an array with more than one element is ambiguous.")
     return min_(*data)
 
 
@@ -2572,11 +2608,13 @@ def ms_sum(*data):
     x = data[0]
     if not isinstance(x, Tensor) and not hasattr(x, "__ms_iter__"):
         data_type = F.typeof(x)
-        const_utils.raise_type_error(str(data_type) + " object is not iterable.")
+        const_utils.raise_type_error(
+            str(data_type) + " object is not iterable.")
     if isinstance(x, Tensor):
         tensor_shape = F.shape(x)
         if len(tensor_shape) == 0:
-            const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
+            const_utils.raise_type_error(
+                "Cannot iterate over a scalar tensor.")
     if isinstance(x, dict):
         x = x.keys()
     result = 0
@@ -2607,7 +2645,8 @@ def ms_len(data):
 def python_len_with_check(data):
     """Return the result of python built-in len function with iterable check"""
     if not hasattr(data, "__iter__"):
-        raise TypeError(str(type(data)) + " object is not iterable in graph mode.")
+        raise TypeError(str(type(data)) +
+                        " object is not iterable in graph mode.")
     return len(data)
 
 
@@ -2617,7 +2656,8 @@ def ms_len_with_iterable_check(data):
         return python_len_with_check(data)
     if not hasattr(data, "__len__"):
         type_str = str(F.typeof(data))
-        const_utils.raise_type_error(type_str + " object is not iterable in graph mode.")
+        const_utils.raise_type_error(
+            type_str + " object is not iterable in graph mode.")
     return data.__len__()
 
 
@@ -2680,7 +2720,6 @@ def expand_dims(x, axis):
     """
     Insert a dimension of shape 1 at the specified axis of Tensor.
     """
-    check_is_int(axis, 'axis')
     return P.ExpandDims()(x, axis)
 
 
@@ -2688,7 +2727,6 @@ def unsqueeze(x, dim):
     """
     Insert a dimension of shape 1 at the specified axis of Tensor.
     """
-    check_is_int(dim, 'dim')
     return P.ExpandDims()(x, dim)
 
 
@@ -2740,7 +2778,8 @@ def check_select_condition(cond_type):
     """
     if isinstance(cond_type, mstype.tensor_type):
         return
-    raise TypeError(f"For select, the argument condition should be Tensor, but got {cond_type}.")
+    raise TypeError(
+        f"For select, the argument condition should be Tensor, but got {cond_type}.")
 
 
 @constexpr
@@ -2893,9 +2932,7 @@ def ge(x, y):
 def while_cond(x):
     """For while condition, if the condition is a tensor, the loop will not be unrolled"""
     if issubclass_(F.typeof(x), F.typeof(mstype.tensor)):
-        is_cond = check_is_tensor_bool_cond(F.shape(x))
-        if is_cond:
-            return F.cast(x, mstype.bool_)
+        return F.cast(x, mstype.bool_)
     return x
 
 
@@ -3046,14 +3083,16 @@ def coo_to_dense(x):
 def coo_coalesce(x):
     """Returns the coalesced sparse tensor of the input."""
     shape = const_utils.make_tensor(x.shape)
-    res_indices, res_values, _ = P.Coalesce()(x.indices.transpose(), x.values, shape)
+    res_indices, res_values, _ = P.Coalesce()(
+        x.indices.transpose(), x.values, shape)
     return COOTensor(res_indices.transpose(), res_values, x.shape)
 
 
 def csr_to_coo(x):
     """convert csr to coo."""
     if x.ndim != 2:
-        const_utils.raise_value_error("Currently only support 2-D CSRTensor when converting to COOTensor.")
+        const_utils.raise_value_error(
+            "Currently only support 2-D CSRTensor when converting to COOTensor.")
     row_indices = F.csr2coo(x.indptr, x.values.shape[0])
     coo_indices = P.Stack(1)((row_indices, x.indices))
     return COOTensor(coo_indices, x.values, x.shape)
@@ -3069,8 +3108,6 @@ def random_categorical_(x, num_sample, seed=0, dtype=mstype.int64):
     Generates random samples from a given categorical distribution tensor.
     Refer to :func:`mindspore.ops.random_categorical` for more detail.
     """
-    validator.check_is_int(num_sample, 'num_sample')
-    validator.check_is_int(seed, 'seed')
     return F.random_categorical(x, num_sample, seed, dtype)
 
 
@@ -3099,33 +3136,31 @@ def check_is_tuple_or_list_or_tensor(x, op_name, arg_name):
     """check whether x is list or tuple or tensor."""
     if isinstance(x, (mstype.List, mstype.Tuple, mstype.tensor_type)):
         return True
-    raise TypeError(f"For '{op_name}', the '{arg_name}' should be tuple or list or tensor, but got {x}.")
+    raise TypeError(
+        f"For '{op_name}', the '{arg_name}' should be tuple or list or tensor, but got {x}.")
 
 
 @constexpr
 def check_is_const_int(x, op_name, arg_name):
     """check whether x is const int."""
     if x is None:
-        raise TypeError(f"For '{op_name}', the '{arg_name}' should be a const int number, but got not const.")
+        raise TypeError(
+            f"For '{op_name}', the '{arg_name}' should be a const int number, but got not const.")
     if not isinstance(x, int):
-        raise TypeError(f"For '{op_name}', the '{arg_name}' should be a const int number, but got {x}.")
+        raise TypeError(
+            f"For '{op_name}', the '{arg_name}' should be a const int number, but got {x}.")
     return True
 
 
 @constexpr
-def check_is_tensor_bool_cond(shp):
-    """check if tensor is a bool condition"""
-    if shp in ((), (1,)):
-        return True
-    if None in shp:
-        raise ValueError(f"Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is "
-                         f"None")
-    raise ValueError(f"Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is {shp}")
-
-
-@constexpr
 def const_tensor_to_bool(x):
-    """convert bool tensor to bool condition"""
+    """convert bool tensor to bool condition
+        def const_tensor_to_bool(x):
+        convert bool tensor to bool condition
+        if x.shape == (1,):
+            return bool(x[0])
+        return bool(x)
+    """
     if x is None:
         raise ValueError("Only tensor which shape is () or (1,) can be converted to bool, but got None")
     x = x.asnumpy()
@@ -3153,36 +3188,22 @@ def check_view_shape(x):
     return x
 
 
-# convert normal param_check functions to constexpr functions
 check_astype_dtype_const = constexpr(validator.check_astype_dtype)
 check_transpose_axis_const = constexpr(validator.check_transpose_axis)
-check_reshape_shp_const = constexpr(validator.check_reshape_shp)
 check_flatten_order_const = constexpr(validator.check_flatten_order)
-check_swapaxes_axis_const = constexpr(validator.check_swapaxes_axis)
-prepare_shape_for_squeeze_const = constexpr(validator.prepare_shape_for_squeeze)
-check_axis_in_range_const = constexpr(validator.check_axis_in_range)
-check_axis_valid = constexpr(validator.check_axis_valid)
 max_ = constexpr(validator.max_)
 min_ = constexpr(validator.min_)
-expanded_shape = constexpr(validator.expanded_shape)
-tuple_slice = constexpr(validator.tuple_slice)
-infer_out_shape = constexpr(validator.infer_out_shape)
-get_log2_size = constexpr(validator.get_log2_size)
-check_axis_type = constexpr(validator.check_axis_type)
-check_and_canonicalize_axes = constexpr(validator.check_and_canonicalize_axes)
-empty_compile = constexpr(validator.empty_compile)
+expanded_shape = validator.expanded_shape
+tuple_slice = validator.tuple_slice
+empty_compile = validator.empty_compile
 check_type_support = constexpr(validator.check_type_support)
-check_is_int = constexpr(validator.check_is_int)
 check_type_name = constexpr(validator.check_type_name)
 check_value_type = constexpr(validator.check_value_type)
-check_int = constexpr(validator.check_int)
-check_bool = constexpr(validator.check_bool)
 
 
 def tensor_bool(x):
     """tensor as condition, if is constant, return immediate bool value"""
-    is_cond = check_is_tensor_bool_cond(F.shape(x))
-    if is_cond and F.isconstant(x):
+    if F.isconstant(x):
         return const_tensor_to_bool(x)
     return F.cast(x, mstype.bool_)
 
@@ -3340,8 +3361,6 @@ def top_k(input_x, k, sorted=True):
     """
     Finds values and indices of the `k` largest entries along the last dimension.
     """
-    check_is_int(k, 'k')
-    check_bool(sorted, 'sorted')
     return F.top_k(input_x, k, sorted)
 
 
@@ -3588,7 +3607,6 @@ def bernoulli(x, p=0.5, seed=-1):
     """
     Randomly draws binary numbers from a Bernoulli distribution.
     """
-    check_is_int(seed, 'bernoulli', 'seed')
     return F.bernoulli(x, p, seed)
 
 

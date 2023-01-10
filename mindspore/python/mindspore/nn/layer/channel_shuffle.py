@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """channel shuffle"""
-from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from mindspore.nn.cell import Cell
 
@@ -82,21 +81,9 @@ class ChannelShuffle(Cell):
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()
 
-    @staticmethod
-    @constexpr
-    def _check_input_dim(shape, channels, groups, cls_name):
-        dim = len(shape)
-        if dim < 3:
-            raise ValueError(f"For {cls_name}, the in_shape must have more than 2 dims, but got {dim}.")
-
-        if channels % groups != 0:
-            raise ValueError(f"For {cls_name}, number of channels must be divisible by groups, "
-                             f"but got {channels} channels and {groups} groups.")
-
     def construct(self, x):
         x_shape = self.shape(x)
         n, c = x_shape[0], x_shape[1]
-        self._check_input_dim(x_shape, c, self.groups, self.cls_name)
         out = self.reshape(x, (n, self.groups, c // self.groups, -1))
         out = self.transpose(out, (0, 2, 1, 3))
         return self.reshape(out, x_shape)

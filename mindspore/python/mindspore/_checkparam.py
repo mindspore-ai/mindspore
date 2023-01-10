@@ -214,6 +214,100 @@ def check_number_range(arg_value, lower_limit, upper_limit, rel, value_type, arg
     return arg_value
 
 
+def check_reshape_shp(shp):
+    """Check the shape argument for tensor.reshape"""
+    if len(shp) == 1:
+        new_shape = shp[0]
+        if isinstance(new_shape, int):
+            return shp
+        if isinstance(new_shape, list):
+            new_shape = tuple(new_shape)
+        return new_shape
+    return shp
+
+
+def check_swapaxes_axis(axes, ndim):
+    """Check all the axes argument for tensor.swapaxes"""
+    if isinstance(axes, int):
+        return axes % ndim
+    if isinstance(axes, (tuple, list)):
+        tmp = []
+        for x in axes:
+            tmp.append((x + ndim) % ndim)
+        axes = tuple(tmp)
+        return axes
+    return axes
+
+
+def prepare_shape_for_squeeze(shape, axes):
+    """
+    yield squeezed shape based on the axes
+    """
+    new_shape = []
+    ndim = len(shape)
+    if isinstance(axes, int):
+        axes = [axes]
+    elif isinstance(axes, (list, tuple)):
+        axes = set(axes)
+    for idx, s in enumerate(shape):
+        if s != 1 or (idx not in axes) and (idx - ndim not in axes):
+            new_shape.append(s)
+    return tuple(new_shape)
+
+
+def check_axis_in_range(axis, ndim):
+    """Checks axes are with the bounds of ndim"""
+    return (axis + ndim) % ndim
+
+
+def check_axis_valid(axes, ndim):
+    """
+    check the validation of axis and return
+    """
+    if axes is None:
+        axes = tuple(range(ndim))
+        return axes
+    if isinstance(axes, (tuple, list)):
+        tmp = []
+        for x in axes:
+            tmp.append((x + ndim) % ndim)
+        axes = tuple(tmp)
+        return axes
+    return (axes % ndim,)
+
+
+def infer_out_shape(*shapes):
+    """
+    Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
+    """
+    shape_out = list()
+    max_len = ms_max([len(it) for it in shapes])
+    for i in range(max_len):
+        items = [it[i-(max_len-len(it))] if i - (max_len - len(it))
+                 >= 0 else 1 for it in shapes]
+        max_size = 0 if 0 in items else ms_max(items)
+        shape_out.append(max_size)
+    return tuple(shape_out)
+
+
+def check_and_canonicalize_axes(axes, ndim):
+    """Check whether the types and values of input axes are valid."""
+    axes = axes if isinstance(axes, tuple) else (axes,)
+    new_axes = ()
+    for ax in axes:
+        ax = ax if ax >= 0 else ax + ndim
+        new_axes += (ax,)
+    return new_axes
+
+
+def get_log2_size(size):
+    """Get log2 size"""
+    log2_res = F.log2(F.cast(Tensor(size), mstype.float32))
+    ceil_res = F.ceil(log2_res)
+    cast_res = F.cast(ceil_res, mstype.int64)
+    return cast_res
+
+
 class Validator:
     """validator for checking input parameters"""
 

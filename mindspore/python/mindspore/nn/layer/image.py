@@ -78,7 +78,6 @@ class ImageGradients(Cell):
         super(ImageGradients, self).__init__()
 
     def construct(self, images):
-        check = _check_input_4d(F.shape(images), "images", self.cls_name)
         images = F.depend(images, check)
         batch_size, depth, height, width = P.Shape()(images)
         if height == 1:
@@ -118,21 +117,6 @@ def _get_dtype_max(dtype):
     else:
         dtype_max = 1.0
     return dtype_max
-
-
-@constexpr
-def _check_input_4d(input_shape, param_name, func_name):
-    if len(input_shape) != 4:
-        raise ValueError(f"For '{func_name}', the dimension of '{param_name}' must be 4d, "
-                         f"but got {len(input_shape)}.")
-    return True
-
-
-@constexpr
-def _check_input_filter_size(input_shape, param_name, filter_size, func_name):
-    _check_input_4d(input_shape, param_name, func_name)
-    validator.check(param_name + " shape[2]", input_shape[2], "filter_size", filter_size, Rel.GE, func_name)
-    validator.check(param_name + " shape[3]", input_shape[3], "filter_size", filter_size, Rel.GE, func_name)
 
 
 @constexpr
@@ -281,7 +265,6 @@ class SSIM(Cell):
 
     def construct(self, img1, img2):
         _check_input_dtype(F.dtype(img1), "img1", [mstype.float32, mstype.float16], self.cls_name)
-        _check_input_filter_size(F.shape(img1), "img1", self.filter_size, self.cls_name)
         inner.SameTypeShape()(img1, img2)
         dtype_max_val = _get_dtype_max(F.dtype(img1))
         max_val = F.scalar_cast(self.max_val, F.dtype(img1))
@@ -387,8 +370,6 @@ class MSSSIM(Cell):
         self.concat = P.Concat(axis=1)
 
     def construct(self, img1, img2):
-        _check_input_4d(F.shape(img1), "img1", self.cls_name)
-        _check_input_4d(F.shape(img2), "img2", self.cls_name)
         valid_type = [mstype.float64, mstype.float32, mstype.float16, mstype.uint8]
         _check_input_dtype(F.dtype(img1), 'img1', valid_type, self.cls_name)
         inner.SameTypeShape()(img1, img2)
@@ -466,8 +447,6 @@ class PSNR(Cell):
         self.max_val = max_val
 
     def construct(self, img1, img2):
-        _check_input_4d(F.shape(img1), "img1", self.cls_name)
-        _check_input_4d(F.shape(img2), "img2", self.cls_name)
         inner.SameTypeShape()(img1, img2)
         dtype_max_val = _get_dtype_max(F.dtype(img1))
         max_val = F.scalar_cast(self.max_val, F.dtype(img1))
@@ -482,21 +461,16 @@ class PSNR(Cell):
 
 
 @constexpr
-def _raise_dims_rank_error(input_shape, param_name, func_name):
-    """raise error if input is not 3d or 4d"""
-    raise ValueError(f"{func_name} {param_name} must be 3d or 4d, but got shape {input_shape}")
-
-
-@constexpr
 def _get_bbox(rank, shape, central_fraction):
     """get bbox start and size for slice"""
+    n, c, h, w = -1, -1, -1, -1
     if rank == 3:
         c, h, w = shape
     else:
         n, c, h, w = shape
 
-    bbox_h_start = int((float(h) - np.float32(h * central_fraction)) / 2)
-    bbox_w_start = int((float(w) - np.float32(w * central_fraction)) / 2)
+    bbox_h_start = int((float(h) - float(h * central_fraction)) / 2)
+    bbox_w_start = int((float(w) - float(w * central_fraction)) / 2)
     bbox_h_size = h - bbox_h_start * 2
     bbox_w_size = w - bbox_w_start * 2
 
@@ -548,8 +522,6 @@ class CentralCrop(Cell):
     def construct(self, image):
         image_shape = F.shape(image)
         rank = len(image_shape)
-        if rank not in (3, 4):
-            return _raise_dims_rank_error(image_shape, "image", self.cls_name)
         if self.central_fraction == 1.0:
             return image
 

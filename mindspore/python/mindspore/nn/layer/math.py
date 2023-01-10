@@ -763,11 +763,6 @@ class LBeta(Cell):
 @constexpr
 def get_broadcast_matmul_shape(x_shape, y_shape, prim_name=None):
     """get broadcast_matmul shape"""
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if (len(x_shape) < 2) or (len(y_shape) < 2):
-        raise ValueError(f"{msg_prefix} length of 'x_shape' and 'y_shape' must be equal to or greater than 2, "
-                         f"but got the length of 'x_shape': {len(x_shape)} and the length of 'y_shape': "
-                         f"{len(y_shape)}.")
     x_shape_batch = x_shape[:-2]
     y_shape_batch = y_shape[:-2]
     if x_shape_batch == y_shape_batch:
@@ -783,34 +778,11 @@ def get_broadcast_matmul_shape(x_shape, y_shape, prim_name=None):
             broadcast_shape_back.append(x_shape[i])
         elif x_shape[i] == y_shape[i]:
             broadcast_shape_back.append(x_shape[i])
-        else:
-            raise ValueError(f"{msg_prefix} 'x_shape[{i}]' must be equal to 1, or the 'y_shape[{i}]' must be equal "
-                             f"to 1, or the 'x_shape[{i}]' must be equal to 'y_shape[{i}]', but got "
-                             f"'x_shape[{i}]': {x_shape[i]}, 'y_shape[{i}]': {y_shape[i]}.")
 
     broadcast_shape_front = y_shape[0: y_len - length] if length == x_len else x_shape[0: x_len - length]
     x_broadcast_shape = broadcast_shape_front + tuple(broadcast_shape_back) + x_shape[-2:]
     y_broadcast_shape = broadcast_shape_front + tuple(broadcast_shape_back) + y_shape[-2:]
     return x_broadcast_shape, y_broadcast_shape
-
-
-@constexpr
-def check_col_row_equal(x1_shape, x2_shape, transpose_x1, transpose_x2, prim_name=None):
-    """check col and row equal"""
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if len(x1_shape) == 1:
-        transpose_x1 = False
-        x1_shape = (1,) + x1_shape
-    if len(x2_shape) == 1:
-        transpose_x2 = False
-        x2_shape = x2_shape + (1,)
-    x1_last = x1_shape[-2:]
-    x2_last = x2_shape[-2:]
-    x1_col = x1_last[not transpose_x1]  # x1_col = x1_last[1] if (not transpose_a) else x1_last[0]
-    x2_row = x2_last[transpose_x2]  # x2_row = x2_last[0] if (not transpose_b) else x2_last[1]
-    if x1_col != x2_row:
-        raise ValueError(f"{msg_prefix} column of matrix dimensions of 'x1' must be equal to "
-                         f"the row of matrix dimensions of 'x2', but got 'x1_col' {x1_col} and 'x2_row' {x2_row}.")
 
 
 def matmul_op_select(x1_shape, x2_shape, transpose_x1, transpose_x2):
@@ -857,7 +829,6 @@ class MatMul(Cell):
     def construct(self, x1, x2):
         x1_shape = self.shape_op(x1)
         x2_shape = self.shape_op(x2)
-        check_col_row_equal(x1_shape, x2_shape, self.transpose_x1, self.transpose_x2, self.cls_name)
         matmul_op = matmul_op_select(x1_shape, x2_shape, self.transpose_x1, self.transpose_x2)
 
         x1_dim, x2_dim = len(x1_shape), len(x2_shape)

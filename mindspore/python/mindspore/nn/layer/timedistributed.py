@@ -25,25 +25,6 @@ __all__ = ['TimeDistributed']
 
 
 @constexpr
-def _check_reshape_pos(reshape_pos, inputs_shape, outputs_shape, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if reshape_pos >= len(outputs_shape) or inputs_shape[reshape_pos] != outputs_shape[reshape_pos]:
-        raise ValueError(f"{msg_prefix} 'reshape_with_axis' is invalid in the input and output. "
-                         f"The 'reshape_pos' must be less than the length of 'outputs_shape', and the "
-                         f"'inputs_shape[reshape_pos]' must be equal to 'outputs_shape[reshape_pos]', but got "
-                         f"'reshape_pos': {reshape_pos}, 'inputs_shape': {inputs_shape}, 'outputs_shape': "
-                         f"{outputs_shape}. You may try pass parameters without 'reshape_with_axis'.")
-
-
-@constexpr
-def _check_expand_dims_axis(time_axis, ndim, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if time_axis > ndim:
-        raise ValueError(f"{msg_prefix} value of 'time_axis' must be in range of [{-ndim - 1}, {ndim}], "
-                         f"but got {time_axis}.")
-
-
-@constexpr
 def _generate_perm(axis_a, axis_b, length):
     perm = tuple(range(length))
     axis_a, axis_b = (axis_a, axis_b) if axis_a < axis_b else (axis_b, axis_a)
@@ -55,13 +36,6 @@ def _check_data(flag, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if not flag:
         raise TypeError(f"{msg_prefix} inputs and outputs must be a Tensor.")
-
-
-@constexpr
-def _check_inputs_dim(shape, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if len(shape) < 3:
-        raise ValueError(f"{msg_prefix} inputs shape must be at least 3D, but got {len(shape)}.")
 
 
 class TimeDistributed(Cell):
@@ -119,7 +93,6 @@ class TimeDistributed(Cell):
 
     def construct(self, inputs):
         _check_data(isinstance(inputs, Tensor), self.cls_name)
-        _check_inputs_dim(inputs.shape, self.cls_name)
         time_axis = self.time_axis % len(inputs.shape)
         if self.reshape_with_axis is not None:
             reshape_with_axis = self.reshape_with_axis % len(inputs.shape)
@@ -134,7 +107,6 @@ class TimeDistributed(Cell):
             inputs = self.reshape(inputs, inputs_shape_new[: reshape_pos] + (-1,) + inputs_shape_new[reshape_pos + 2:])
             outputs = self.layer(inputs)
             _check_data(isinstance(outputs, Tensor), self.cls_name)
-            _check_reshape_pos(reshape_pos, inputs.shape, outputs.shape, self.cls_name)
             outputs_shape_new = outputs.shape[:reshape_pos] + inputs_shape_new[reshape_pos: reshape_pos + 2]
             if reshape_pos + 1 < len(outputs.shape):
                 outputs_shape_new += outputs.shape[reshape_pos + 1:]
@@ -147,7 +119,6 @@ class TimeDistributed(Cell):
         for item in inputs:
             outputs = self.layer(item)
             _check_data(isinstance(outputs, Tensor), self.cls_name)
-            _check_expand_dims_axis(time_axis, outputs.ndim, self.cls_name)
             y += (outputs,)
         y = Stack(time_axis)(y)
         return y

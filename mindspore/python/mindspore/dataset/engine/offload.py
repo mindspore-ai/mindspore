@@ -23,7 +23,6 @@ import mindspore.ops as ops
 import mindspore.nn as nn
 import mindspore.ops.composite as C
 from mindspore.ops import operations as P
-from mindspore.ops.primitive import constexpr
 from mindspore import log as logger
 
 
@@ -96,17 +95,6 @@ def apply_offload_iterators(data, offload_model):
     return data
 
 
-@constexpr
-def check_input_dims(x_shape, required_dim, offload_op_name):
-    """
-    Check if input has the required number of dimensions for the operation.
-    """
-    input_dim = len(x_shape)
-    if input_dim is not required_dim:
-        raise ValueError("For %s offload operation, the dimension of input should be %d, but got %d." %
-                         (offload_op_name, required_dim, input_dim))
-
-
 def assign_min_max_params(in_params, center=1):
     """
     Adjust input parameters for ops.
@@ -175,7 +163,6 @@ class RandomHorizontalFlip(nn.Cell):
 
         x = self.cast(x, mstype.float32)
         x_shape = self.shape(x)
-        check_input_dims(x_shape, 4, 'RandomHorizontalFlip')
         bs, h, w, c = x_shape
 
         flip_rand_factor = Tensor(np.random.uniform(size=(bs, 1)), dtype=mstype.float32)
@@ -208,7 +195,6 @@ class RandomVerticalFlip(nn.Cell):
 
         x = self.cast(x, mstype.float32)
         x_shape = self.shape(x)
-        check_input_dims(x_shape, 4, 'RandomVerticalFlip')
         bs, h, w, c = x_shape
 
         flip_rand_factor = Tensor(np.random.uniform(size=(bs, 1)), dtype=mstype.float32)
@@ -293,7 +279,6 @@ class RandomColorAdjust(nn.Cell):
 
         x = self.cast(x, mstype.float32)
         x_shape = self.shape(x)
-        check_input_dims(x_shape, 4, 'RandomColorAdjust')
         bs, h, w, c = x_shape
 
         br_rand_factor = self.generate_rand_batch(self.br_min, self.br_max, self.check_rand_br, x_shape)
@@ -402,7 +387,6 @@ class RandomSharpness(nn.Cell):
     def construct(self, x):
         x = self.cast(x, mstype.float32)
         x_shape = self.shape(x)
-        check_input_dims(x_shape, 4, 'RandomSharpness')
         bs, h, w, c = x_shape
 
         degree_rand_factor = Tensor(np.random.uniform(size=(bs, 1)), dtype=mstype.float32)
@@ -449,11 +433,8 @@ class HwcToChw(nn.Cell):
     def __init__(self):
         super(HwcToChw, self).__init__()
         self.trans = P.Transpose()
-        self.shape = P.Shape()
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        check_input_dims(x_shape, 4, 'HwcToChw')
         return self.trans(x, (0, 3, 1, 2))
 
 

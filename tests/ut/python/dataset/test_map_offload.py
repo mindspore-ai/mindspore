@@ -384,8 +384,7 @@ def test_offload_dim_check():
     dataset = dataset.map(operations=[C.Decode()], input_columns="image")
     dataset = dataset.map(operations=[C.HWC2CHW()], input_columns="image", offload=True)
 
-    error_msg = "For HwcToChw offload operation, the dimension of input should be 4, but got 3."
-    with pytest.raises(ValueError, match=error_msg):
+    with pytest.raises(ValueError):
         for (_, _) in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
             continue
 
