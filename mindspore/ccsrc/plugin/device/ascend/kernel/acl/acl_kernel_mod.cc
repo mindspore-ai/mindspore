@@ -164,10 +164,6 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     return false;
   }
 
-  if (rtStreamSynchronize(stream_ptr) != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "aclopCompileAndExecute sync failed";
-  }
-
   MS_LOG(INFO) << "Success launch of node: " << node->fullname_with_scope();
   return true;
 }
