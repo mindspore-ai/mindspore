@@ -233,6 +233,9 @@ class SequentialCell(Cell):
         self._cells = temp_dict
         self.cell_list = list(self._cells.values())
 
+    def __bool__(self):
+        return len(self._cells) != 0
+
     def __len__(self):
         return len(self._cells)
 
@@ -354,6 +357,9 @@ class CellList(_CellListBase, Cell):
                     param.name = prefix + str(idx) + "." + ".".join(param.name.split(".")[key_index+1:])
             temp_dict[str(idx)] = cell
         self._cells = temp_dict
+
+    def __bool__(self):
+        return len(self._cells) != 0
 
     def __len__(self):
         return len(self._cells)
