@@ -56,7 +56,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 
 set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS} -s")
 
-if(MSLITE_ENABLE_RUNTIME_GLOG AND MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+if(MSLITE_ENABLE_RUNTIME_GLOG AND (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
     add_definitions(-DUSE_GLOG)
     string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -310,7 +310,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/util/arena.cc
         )
 
-        if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+        if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
             set(MINDDATA_FULL_SRC
                 ${MINDDATA_FULL_SRC}
                 ${MINDDATA_DIR}/kernels/image/pad_op.cc
@@ -344,7 +344,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
     set(minddata_lite_submodules
         $<TARGET_OBJECTS:minddata-lite-obj>
     )
-    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE AND MSLITE_ENABLE_ACL)
+    if((MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE) AND MSLITE_ENABLE_ACL)
         add_dependencies(minddata-lite-obj kernels-dvpp-image)
         set(minddata_lite_submodules
             ${minddata_lite_submodules}
@@ -372,7 +372,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         Threads::Threads
         )
 
-    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE AND MSLITE_ENABLE_ACL)
+    if((MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE) AND MSLITE_ENABLE_ACL)
         target_link_libraries(minddata-lite
             mindspore_core
             mindspore::opencv_core

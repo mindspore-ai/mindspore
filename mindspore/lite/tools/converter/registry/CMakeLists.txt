@@ -17,7 +17,7 @@ set(REG_SRC ${CONVERT_REG_SRC}
         ${CORE_DIR}/utils/status.cc
         ${CONVERTER_DIR}/converter_context.cc
         )
-if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
     set(REG_SRC ${REG_SRC}
             ${CORE_DIR}/utils/log_adapter.cc)
 endif()
