@@ -85,5 +85,34 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
 
   MS_LOG(INFO) << "GE optimization end.";
 }
+
+void ReduceOptimization(const FuncGraphPtr &func_graph) {
+  MS_LOG(INFO) << "Reduce optimization start, graph: " << func_graph->ToString() << ".";
+
+#ifdef ENABLE_DUMP_IR
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(advanced)) {
+    std::string file_name = "hwopt_d_before_reduce_optimization_graph_" + func_graph->ToString() + ".ir";
+    DumpIR(file_name, func_graph);
+  }
+#endif
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>("reduce_optimization_pm");
+  pm->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
+  optimizer->AddPassManager(pm);
+
+  (void)optimizer->Optimize(func_graph);
+
+#ifdef ENABLE_DUMP_IR
+  if (context->CanDump(advanced)) {
+    std::string file_name = "hwopt_d_after_reduce_optimization_graph_" + func_graph->ToString() + ".ir";
+    DumpIR(file_name, func_graph);
+  }
+#endif
+
+  MS_LOG(INFO) << "Reduce optimization end.";
+}
 }  // namespace opt
 }  // namespace mindspore

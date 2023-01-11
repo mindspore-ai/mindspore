@@ -20,6 +20,7 @@
 namespace mindspore {
 namespace opt {
 void GeOptimization(const FuncGraphPtr &func_graph);
+void ReduceOptimization(const FuncGraphPtr &func_graph);
 }  // namespace opt
 }  // namespace mindspore
 
