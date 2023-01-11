@@ -406,6 +406,12 @@ Randomly Generating Functions
     mindspore.ops.gamma
     mindspore.ops.laplace
     mindspore.ops.multinomial
+    mindspore.ops.rand
+    mindspore.ops.rand_like
+    mindspore.ops.randint
+    mindspore.ops.randint_like
+    mindspore.ops.randn
+    mindspore.ops.randn_like
     mindspore.ops.random_poisson
     mindspore.ops.random_categorical
     mindspore.ops.random_gamma
