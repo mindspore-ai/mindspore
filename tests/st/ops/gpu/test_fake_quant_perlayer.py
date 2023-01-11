@@ -64,7 +64,7 @@ def test_fake_quant1():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant2():
