@@ -236,7 +236,7 @@ def auto_mixed_precision(network, amp_level="O0"):
         ValueError: If amp level is not supported.
 
     Examples:
-        >>> from mindpsore import amp, nn
+        >>> from mindspore import amp, nn
         >>> network = LeNet5()
         >>> amp_level = "O1"
         >>> net = amp.auto_mixed_precision(network, amp_level)
