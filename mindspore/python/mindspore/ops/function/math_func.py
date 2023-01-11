@@ -585,6 +585,9 @@ def neg(x):
 def negative(x):
     r"""
     Alias for :func:`mindspore.ops.neg` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return neg_tensor(x)
 
@@ -937,6 +940,9 @@ def div(input, other, rounding_mode=None):
 def divide(x, other, *, rounding_mode=None):
     """
     Alias for :func:`mindspore.ops.div` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return div(x, other, rounding_mode)
 
@@ -2296,6 +2302,9 @@ def asinh(x):
 def arcsinh(x):
     r"""
     Alias for :func:`mindspore.ops.asinh`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return asinh(x)
 
@@ -2303,6 +2312,9 @@ def arcsinh(x):
 def arctanh(x):
     r"""
     Alias for :func:`mindspore.ops.atanh`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return atanh(x)
 
