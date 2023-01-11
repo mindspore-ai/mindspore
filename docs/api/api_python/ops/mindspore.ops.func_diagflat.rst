@@ -18,3 +18,4 @@ mindspore.ops.diagflat
 
     异常：
         - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - `offset` 不是整数。
