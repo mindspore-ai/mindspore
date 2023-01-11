@@ -1,6 +1,6 @@
 set(cmsis_pkg_name cmsis)
 
-if(ENABLE_GITEE)
+if(ENABLE_GITEE OR ENABLE_GITEE_EULER) # Channel GITEE_EULER is NOT supported now, use GITEE instead.
     set(REQ_URL "https://gitee.com/mirrors/CMSIS_5/repository/archive/5.7.0.tar.gz")
     set(SHA256 "1b4aa6d47c7d3a5032555049b95f4962a700e2022405f863781010606fe7f8f1")
 else()

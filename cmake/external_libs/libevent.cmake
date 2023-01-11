@@ -8,7 +8,7 @@ if(NOT MINDSPORE_PROJECT_DIR)
 set(MINDSPORE_PROJECT_DIR ${CMAKE_SOURCE_DIR})
 endif()
 
-if(ENABLE_GITEE)
+if(ENABLE_GITEE OR ENABLE_GITEE_EULER) # Channel GITEE_EULER is NOT supported now, use GITEE instead.
     set(REQ_URL "https://gitee.com/mirrors/libevent/repository/archive/release-2.1.12-stable.tar.gz")
     set(SHA256 "7180a979aaa7000e1264da484f712d403fcf7679b1e9212c4e3d09f5c93efc24")
 else()
