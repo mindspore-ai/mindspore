@@ -25,6 +25,7 @@
 #include "include/common/utils/contract.h"
 #include "cce/fwk_adpt_struct.h"
 #include "external/graph/types.h"
+#include "cce/aicpu_engine_struct.h"
 
 namespace mindspore {
 namespace device {
@@ -32,6 +33,7 @@ namespace ascend {
 using AicpuShapeAndType = aicpu::FWKAdapter::ShapeAndType;
 using AicpuExtInfo = aicpu::FWKAdapter::ExtInfo;
 using AsyncWaitInfo = aicpu::FWKAdapter::AsyncWait;
+using AicpuSessionInfo = SessionInfo;
 
 class AicpuExtInfoHandler {
  public:
@@ -58,11 +60,13 @@ class AicpuExtInfoHandler {
                                            NotNull<TypeId *> data_type);
 
   [[nodiscard]] bool UpdateEventId(const uint32_t event_id);
+  [[nodiscard]] bool UpdateSessionInfoId(const uint64_t session_id) const;
 
  private:
   [[nodiscard]] bool ParseExtShapeType(const AicpuExtInfo &aicpu_ext_info) const;
   [[nodiscard]] bool ParseExtInputShape(AicpuExtInfo *aicpu_ext_info);
   [[nodiscard]] bool ParseExtOutputShape(AicpuExtInfo *aicpu_ext_info);
+  [[nodiscard]] bool ParseExtSessionInfo(AicpuExtInfo *aicpu_ext_info);
   [[nodiscard]] bool ParseExtAsyncWait(AicpuExtInfo *aicpu_ext_info);
 
   [[nodiscard]] static bool UpdateShapeAndType(const std::vector<int64_t> &shape,
@@ -70,6 +74,8 @@ class AicpuExtInfoHandler {
 
   static void GetShapeAndType(const NotNull<const AicpuShapeAndType *> &shape_and_type,
                               const NotNull<std::vector<int64_t> *> &shape, const NotNull<TypeId *> &data_type);
+
+  bool GenerateKernelId() const;
 
   const std::string node_name_;
   const uint32_t input_num_;
@@ -81,6 +87,7 @@ class AicpuExtInfoHandler {
   std::vector<AicpuShapeAndType *> input_shape_and_type_;
   std::vector<AicpuShapeAndType *> output_shape_and_type_;
   AsyncWaitInfo *async_wait_ = nullptr;
+  AicpuSessionInfo *session_info_ = nullptr;
 };
 }  // namespace ascend
 }  // namespace device

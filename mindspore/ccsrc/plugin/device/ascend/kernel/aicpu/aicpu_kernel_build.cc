@@ -39,9 +39,14 @@
 #include "cce/fwk_adpt_struct.h"
 #include "external/graph/types.h"
 #include "transform/graph_ir/transform_util.h"
+#include "cce/aicpu_engine_struct.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+static uint64_t g_aicpu_kernel_id = 0;
+static uint64_t g_aicpu_session_id = 0;
+}  // namespace
 using FNodeAttrHandle = std::function<void(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto)>;
 
 bool SetIOIputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &input_num,
@@ -449,6 +454,34 @@ uint64_t SetExtInfoBitMap(char *ext_info_buf, uint64_t ext_info_offset, uint64_t
   return ext_info_offset;
 }
 
+uint64_t GenerateUniqueKernelId() {
+  if (g_aicpu_kernel_id == ULLONG_MAX) {
+    g_aicpu_kernel_id = 0;
+  }
+  return g_aicpu_kernel_id++;
+}
+
+uint64_t GenerateUniqueSessionId() {
+  if (g_aicpu_session_id == ULLONG_MAX) {
+    g_aicpu_session_id = 0;
+  }
+  return g_aicpu_session_id++;
+}
+
+uint64_t SetExtInfoSessionInfo(char *ext_info_buf, uint64_t ext_info_offset) {
+  // deal5: async wait
+  auto *info = reinterpret_cast<aicpu::FWKAdapter::ExtInfo *>(ext_info_buf + ext_info_offset);
+  info->infoType = static_cast<int32_t>(aicpu::FWKAdapter::FWK_ADPT_EXT_SESSION_INFO);
+  info->infoLen = sizeof(SessionInfo);
+  ext_info_offset += aicpu::FWKAdapter::kExtInfoHeadSize;
+  SessionInfo *session_info = reinterpret_cast<SessionInfo *>(ext_info_buf + ext_info_offset);
+  session_info->sessionId = GenerateUniqueSessionId();
+  session_info->kernelId = GenerateUniqueKernelId();
+  session_info->sessFlag = false;
+  ext_info_offset += info->infoLen;
+  return ext_info_offset;
+}
+
 void CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<AicpuOpKernelMod> &kernel_mod_ptr) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
@@ -480,6 +513,9 @@ void CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
   // 4.addr:output ShapeAndType
   ext_info_len += ext_info_head_len + output_num * sizeof(aicpu::FWKAdapter::ShapeAndType);
 
+  // 5.addr:session info
+  ext_info_len += ext_info_head_len + sizeof(SessionInfo);
+
   // 5.addr:getnext async wait
   if (op_name == kGetNextOpName) {
     ext_info_len += (ext_info_head_len + sizeof(aicpu::FWKAdapter::AsyncWait));
@@ -502,6 +538,7 @@ void CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
   ext_info_offset = SetExtInfoBitMap(ext_info_buf, ext_info_offset, bitmap);
   ext_info_offset = SetExtInfoInputShapeType(ext_info_buf, ext_info_offset, anf_node, input_num);
   ext_info_offset = SetExtInfoOutputShapeType(ext_info_buf, ext_info_offset, anf_node, output_num);
+  ext_info_offset = SetExtInfoSessionInfo(ext_info_buf, ext_info_offset);
   if (op_name == kGetNextOpName) {
     ext_info_offset = SetExtInfoAsyncWait(ext_info_buf, ext_info_offset);
   }

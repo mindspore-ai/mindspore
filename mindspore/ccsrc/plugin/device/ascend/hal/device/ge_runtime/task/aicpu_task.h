@@ -52,6 +52,7 @@ class AicpuTask : public TaskRepeater<AicpuTaskInfo> {
   size_t io_addrs_size_;
   size_t args_size_;
   uint32_t rt_event_id_;
+  uint64_t session_id_;
 };
 }  // namespace mindspore::ge::model_runner
 #endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_GE_RUNTIME_AICPU_TASK_H_
