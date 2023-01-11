@@ -820,7 +820,7 @@ void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t
   auto op_adaptation_info =
     opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(op_name, kAscendDevice, true);
   if (op_adaptation_info == nullptr) {
-    MS_LOG(WARNING) << "Cannot get op_adaptation_info for " << op_name;
+    MS_LOG(DEBUG) << "Cannot get op_adaptation_info for " << op_name << " no need to convert input to attr.";
     return;
   }
   auto input_to_attr_map = op_adaptation_info->input_attr_map();

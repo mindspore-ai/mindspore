@@ -537,6 +537,8 @@ void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceConte
   const auto &execution_order = graph->execution_order();
   for (auto const &node : execution_order) {
     MS_EXCEPTION_IF_NULL(node);
+    MS_LOG(INFO) << "Start launch kernel " << node->fullname_with_scope() << " kernel type "
+                 << AnfAlgo::GetKernelType(node);
     auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(node);
     auto runtime_info = node->user_data<runtime::OpRuntimeInfo>();
     MS_EXCEPTION_IF_NULL(runtime_info);
@@ -584,6 +586,8 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
   const auto &execution_order = graph->execution_order();
   for (auto const &node : execution_order) {
     MS_EXCEPTION_IF_NULL(node);
+    MS_LOG(INFO) << "Start launch kernel " << node->fullname_with_scope() << " kernel type "
+                 << AnfAlgo::GetKernelType(node);
     auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(node);
     auto runtime_info = node->user_data<runtime::OpRuntimeInfo>();
     MS_EXCEPTION_IF_NULL(runtime_info);
