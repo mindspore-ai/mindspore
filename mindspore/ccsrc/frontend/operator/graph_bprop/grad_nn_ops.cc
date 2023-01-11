@@ -35,7 +35,6 @@ FuncGraphPtr ReluBprop(const PrimitivePtr &primal, const AbstractBasePtrList &in
   fg->set_output(NewNode(fg, {MakeTuple(), dx}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(ReLU, ReluBprop);
 
 FuncGraphPtr Conv2DBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto fg = NewGraph(input_abs);
@@ -60,7 +59,6 @@ FuncGraphPtr Conv2DBprop(const PrimitivePtr &primal, const AbstractBasePtrList &
   fg->set_output(NewNode(fg, {MakeTuple(), dx, dw}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(Conv2D, Conv2DBprop);
 
 FuncGraphPtr LayerNormBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto fg = NewGraph(input_abs);
@@ -87,7 +85,6 @@ FuncGraphPtr LayerNormBprop(const PrimitivePtr &primal, const AbstractBasePtrLis
   fg->set_output(NewNode(fg, {MakeTuple(), dx, d_gamma, d_beta}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(LayerNorm, LayerNormBprop);
 
 FuncGraphPtr MaxPoolBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto fg = NewGraph(input_abs);
@@ -103,7 +100,6 @@ FuncGraphPtr MaxPoolBprop(const PrimitivePtr &primal, const AbstractBasePtrList 
   fg->set_output(NewNode(fg, {MakeTuple(), dx}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(MaxPool, MaxPoolBprop);
 
 FuncGraphPtr BatchNormBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto fg = NewGraph(input_abs);
@@ -140,7 +136,6 @@ FuncGraphPtr BatchNormBprop(const PrimitivePtr &primal, const AbstractBasePtrLis
     NewNode(fg, {MakeTuple(), dx, dscale, dbias, ZerosLikeFunction(fg, mean), ZerosLikeFunction(fg, variance)}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(BatchNorm, BatchNormBprop);
 
 FuncGraphPtr BiasAddBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto fg = NewGraph(input_abs);
@@ -154,7 +149,6 @@ FuncGraphPtr BiasAddBprop(const PrimitivePtr &primal, const AbstractBasePtrList 
   fg->set_output(NewNode(fg, {MakeTuple(), dout, bais_add_grad}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(BiasAdd, BiasAddBprop);
 
 FuncGraphPtr GeLUBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto fg = NewGraph(input_abs);
@@ -169,6 +163,15 @@ FuncGraphPtr GeLUBprop(const PrimitivePtr &primal, const AbstractBasePtrList &in
   fg->set_output(NewNode(fg, {MakeTuple(), dx}));
   return fg;
 }
-REGISTER_PRIMITIVE_BPROP_IMPL(GeLU, GeLUBprop);
+
+void RegNNOps() {
+  REGISTER_PRIMITIVE_BPROP_IMPL(ReLU, ReluBprop);
+  REGISTER_PRIMITIVE_BPROP_IMPL(Conv2D, Conv2DBprop);
+  REGISTER_PRIMITIVE_BPROP_IMPL(LayerNorm, LayerNormBprop);
+  REGISTER_PRIMITIVE_BPROP_IMPL(MaxPool, MaxPoolBprop);
+  REGISTER_PRIMITIVE_BPROP_IMPL(BatchNorm, BatchNormBprop);
+  REGISTER_PRIMITIVE_BPROP_IMPL(BiasAdd, BiasAddBprop);
+  REGISTER_PRIMITIVE_BPROP_IMPL(GeLU, GeLUBprop);
+}
 }  // namespace graph_bprop
 }  // namespace mindspore

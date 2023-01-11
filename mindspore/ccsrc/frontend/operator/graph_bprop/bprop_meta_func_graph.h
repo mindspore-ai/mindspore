@@ -24,61 +24,58 @@
 
 namespace mindspore {
 namespace graph_bprop {
+using GetBpropFunction = std::function<FuncGraphPtr(const PrimitivePtr &, const size_t)>;
+using BpropFunction = std::function<FuncGraphPtr(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs)>;
+using PrimitiveBpropImplMap = mindspore::HashMap<std::string, GetBpropFunction>;
+
 class BpropMetaFuncGraph : public MetaFuncGraph {
  public:
-  BpropMetaFuncGraph(const std::string &name, const PrimitivePtr &primal) : MetaFuncGraph(name), primal_(primal) {}
+  BpropMetaFuncGraph(const std::string &name, const PrimitivePtr &primal, const BpropFunction &bprop_fn = {})
+      : MetaFuncGraph("BpropMetaFuncGraph" + name), primal_(primal), bprop_fn_(bprop_fn) {}
   ~BpropMetaFuncGraph() override = default;
   MS_DECLARE_PARENT(BpropMetaFuncGraph, MetaFuncGraph);
 
   FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &input_abs) override {
-    MS_LOG(EXCEPTION) << "Should not generate func_graph for the base BpropMetaFuncGraph class.";
+    return bprop_fn_(primal_, input_abs);
   }
 
  protected:
   PrimitivePtr primal_;
+  BpropFunction bprop_fn_;
 };
 
-using BpropFunction = std::function<FuncGraphPtr(const PrimitivePtr &, const size_t)>;
-using PrimitiveBpropImplMap = mindspore::HashMap<std::string, BpropFunction>;
-
-PrimitiveBpropImplMap &GetPrimitiveBpropImplMap();
+PrimitiveBpropImplMap *GetPrimitiveBpropImplMapPtr();
+const PrimitiveBpropImplMap &GetPrimitiveBpropImplMap();
 
 class RegisterPrimitiveBpropHelper {
  public:
-  RegisterPrimitiveBpropHelper(const std::string &op_name, const BpropFunction &bprop_fn) {
-    auto &prim_bprop_impl_map = GetPrimitiveBpropImplMap();
-    prim_bprop_impl_map[op_name] = bprop_fn;
+  RegisterPrimitiveBpropHelper(const std::string &op_name, const GetBpropFunction &get_bprop_fn) {
+    auto prim_bprop_impl_map = GetPrimitiveBpropImplMapPtr();
+    (*prim_bprop_impl_map)[op_name] = get_bprop_fn;
   }
   ~RegisterPrimitiveBpropHelper() = default;
 };
 
 #define STR(s) #s
 
-#define REGISTER_PRIMITIVE_BPROP_IMPL(name, bprop_fn)                                         \
-  class BpropMetaFuncGraph##name : public BpropMetaFuncGraph {                                \
-   public:                                                                                    \
-    explicit BpropMetaFuncGraph##name(const PrimitivePtr &primal)                             \
-        : BpropMetaFuncGraph(STR(BpropMetaFuncGraph##name), primal) {}                        \
-    ~BpropMetaFuncGraph##name() override = default;                                           \
-    MS_DECLARE_PARENT(BpropMetaFuncGraph##name, BpropMetaFuncGraph);                          \
-                                                                                              \
-    FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &input_abs) override { \
-      return bprop_fn(primal_, input_abs);                                                    \
-    }                                                                                         \
-  };                                                                                          \
-  FuncGraphPtr GetBprop##name(const PrimitivePtr &primal, const size_t forward_inputs_size) { \
-    auto fg = std::make_shared<FuncGraph>();                                                  \
-    auto meta_graph = std::make_shared<BpropMetaFuncGraph##name>(primal);                     \
-    std::vector<AnfNodePtr> inputs{NewValueNode(meta_graph)};                                 \
-    for (size_t i = 0; i < forward_inputs_size; ++i) {                                        \
-      (void)inputs.emplace_back(fg->add_parameter());                                         \
-    }                                                                                         \
-    (void)inputs.emplace_back(fg->add_parameter());                                           \
-    (void)inputs.emplace_back(fg->add_parameter());                                           \
-    fg->set_output(fg->NewCNode(inputs));                                                     \
-    return fg;                                                                                \
-  }                                                                                           \
-  static auto helper_bprop_##name = graph_bprop::RegisterPrimitiveBpropHelper(STR(name), GetBprop##name);
+#define REGISTER_PRIMITIVE_BPROP_IMPL(name, bprop_fn)                                                                \
+  auto get_bprop_##name = [](const PrimitivePtr &primal, const size_t forward_inputs_size) -> FuncGraphPtr {         \
+    auto fg = std::make_shared<FuncGraph>();                                                                         \
+    std::vector<AnfNodePtr> inputs{NewValueNode(std::make_shared<BpropMetaFuncGraph>(STR(name), primal, bprop_fn))}; \
+    for (size_t i = 0; i < forward_inputs_size; ++i) {                                                               \
+      (void)inputs.emplace_back(fg->add_parameter());                                                                \
+    }                                                                                                                \
+    (void)inputs.emplace_back(fg->add_parameter());                                                                  \
+    (void)inputs.emplace_back(fg->add_parameter());                                                                  \
+    fg->set_output(fg->NewCNode(inputs));                                                                            \
+    return fg;                                                                                                       \
+  };                                                                                                                 \
+  static auto helper_bprop_##name = graph_bprop::RegisterPrimitiveBpropHelper(STR(name), get_bprop_##name);
+
+void RegArrayOps();
+void RegMathOps();
+void RegNNOps();
+void RegBpropMetaFuncGraph();
 }  // namespace graph_bprop
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_GRAPH_BPROP_BPROP_META_FUNC_GRAPH_H_

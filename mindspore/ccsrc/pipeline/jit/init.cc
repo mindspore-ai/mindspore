@@ -33,6 +33,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/optimizer/ad/bprop_utils.h"
+#include "frontend/operator/graph_bprop/bprop_meta_func_graph.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/util.h"
 #endif
@@ -112,6 +113,7 @@ void RegModule(py::module *m) {
   RegSecurity(m);
   mindspore::pynative::RegPyNativeExecutor(m);
   mindspore::prim::RegCompositeOpsGroup(m);
+  mindspore::graph_bprop::RegBpropMetaFuncGraph();
 #ifndef ENABLE_SECURITY
   mindspore::profiler::RegProfilerManager(m);
   mindspore::profiler::RegProfiler(m);
