@@ -130,13 +130,13 @@ NodePtrList CommonSparseSegmentBprop(const BpropIRBuilder *ib, const std::string
   return result;
 }
 
-NodePtrList CommonSparseSegmentBpropForCpu(const BpropIRBuilder *ib, bool with_segments) {
+NodePtrList CommonSparseSegmentBpropDefault(const BpropIRBuilder *ib, bool with_segments) {
   auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto segment_ids = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(with_segments ? kIndex5 : kIndex4);
   auto shape_x = ib->GetShape(x);
-  auto output_dim0 = ib->Tensor(shape_x[0], kInt32);
+  auto output_dim0 = ib->Cast(ib->Tensor(shape_x[0]), kInt32);
   segment_ids = ib->Cast(segment_ids, kInt32);
   auto input0 = ib->Emit("Gather", {dout, segment_ids, ib->Tensor(0, kInt64)});
   input0 = ib->Cast(input0, kFloat32);
@@ -530,14 +530,14 @@ REG_BPROP_BUILDER("SparseSegmentSum").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC
   if (ib->GetTargetFromContext() == kGPUDevice) {
     return CommonSparseSegmentBprop(ib, "SparseSegmentSumGrad", false);
   }
-  return CommonSparseSegmentBpropForCpu(ib, false);
+  return CommonSparseSegmentBpropDefault(ib, false);
 });
 
 REG_BPROP_BUILDER("SparseSegmentSumWithNumSegments").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   if (ib->GetTargetFromContext() == kGPUDevice) {
     return CommonSparseSegmentBprop(ib, "SparseSegmentSumGrad", true);
   }
-  return CommonSparseSegmentBpropForCpu(ib, true);
+  return CommonSparseSegmentBpropDefault(ib, true);
 });
 
 REG_BPROP_BUILDER("SparseTensorDenseAdd").SetUnusedInputs({i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
