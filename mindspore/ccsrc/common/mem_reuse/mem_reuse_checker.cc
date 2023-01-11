@@ -353,7 +353,7 @@ void MemReuseChecker::ExportNormalOpIr(const std::vector<CNodePtr> &cnodes) {
   ofs.close();
 }
 
-void MemReuseChecker::SetTesnorFromAndToInfo(const KernelDef *op_def) {
+void MemReuseChecker::SetTensorFromAndToInfo(const KernelDef *op_def) {
   MS_EXCEPTION_IF_NULL(op_def);
   auto split_name = GetSplitName(op_def->scope_full_name());
   for (auto &in : op_def->inputs_) {
@@ -441,7 +441,7 @@ void MemReuseChecker::SetMembuInfos(const KernelDef *op_def, const std::vector<M
   membuf_all_infos_.push_back(curr_mem_infos);
   auto split_name = GetSplitName(op_def->scope_full_name());
   all_split_names_.push_back(split_name);
-  SetTesnorFromAndToInfo(op_def);
+  SetTensorFromAndToInfo(op_def);
 }
 
 void MemReuseChecker::SetAddNewMembuInfos(const KernelDef *op_def, const std::vector<MembufPtr> &membuf_ptr_list,

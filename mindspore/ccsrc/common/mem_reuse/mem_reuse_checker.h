@@ -48,7 +48,7 @@ class BACKEND_EXPORT MemReuseChecker {
   std::string GetSplitName(const std::string &scope_name) const;
   int GetTensorIdx(const void *in) const;
   void SetMembuInfos(const KernelDef *op_def, const std::vector<MembufPtr> &membuf_ptr_list);
-  void SetTesnorFromAndToInfo(const KernelDef *op_def);
+  void SetTensorFromAndToInfo(const KernelDef *op_def);
   void ExportMemOpIr(const KernelDef *def, std::ofstream &ofs, int def_idx) const;
   void ExportNormalOpIr(const std::vector<CNodePtr> &cnodes);
   void ExportNormalTensorIR(std::ofstream &ofs);
