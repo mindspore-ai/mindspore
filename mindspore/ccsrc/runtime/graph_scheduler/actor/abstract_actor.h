@@ -133,7 +133,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // The output_data_nodes_ and output_data_ corresponds to the output_data_arrows_ one by one.
   std::vector<AnfNodePtr> output_data_nodes_;
-  // The second of pair indicates the output data falg. See constant prefixed with kOutputDataFalg for details.
+  // The second of pair indicates the output data flag. See constant prefixed with kOutputDataFalg for details.
   std::vector<std::pair<OpDataUniquePtr<DeviceTensor>, size_t>> output_data_;
   // Record the fusion output index for output data arrow.
   mindspore::HashMap<DataArrow *, size_t> data_arrow_to_fusion_actor_indexs_;

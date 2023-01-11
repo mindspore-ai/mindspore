@@ -131,6 +131,20 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
       auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
         nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id,
         trans::GetRuntimePaddingShape(item, index));
+      MS_EXCEPTION_IF_NULL(device_address);
+      // Set the flag of no user parameter.
+      if (item->isa<Parameter>()) {
+        auto input_param = item->cast<ParameterPtr>();
+        MS_EXCEPTION_IF_NULL(input_param);
+        // Unused address will not alloc memory, which is easy to cause problems for weight node, so skip weight node.
+        if (!common::AnfAlgo::IsParameterWeight(input_param) &&
+            !input_param->IsUsedByRealKernelInGraph(graph->graph_id())) {
+          MS_LOG(INFO) << "Node:" << item->fullname_with_scope() << " debug name:" << item->DebugString()
+                       << " is not used in the graph " << graph->graph_id();
+          device_address->UpdateFlag(device::kDeviceAddressFlagNotUsed);
+        }
+      }
+
       device_address->set_from_persistent_mem(item->isa<Parameter>());
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(item)
                     << " addr:" << device_address;
@@ -358,9 +372,7 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
   MS_EXCEPTION_IF_NULL(cur_node_output_addr);
 
   // Update the device address flag.
-  size_t device_address_flag = origin_node_output_addr->flag();
-  SET_FLAG(device_address_flag, device::kDeviceAddressFlagRefNode);
-  origin_node_output_addr->set_flag(device_address_flag);
+  origin_node_output_addr->UpdateFlag(device::kDeviceAddressFlagRefNode);
 
   if (origin_node_output_addr.get() != cur_node_output_addr.get()) {
     // Check the device target whether consistent.

@@ -622,13 +622,12 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
   if (graph.need_inline()) {
     return;
   }
-  auto graph_id = graph.graph_id();
-  MS_LOG(INFO) << "AssignStaticMemoryInput start for graph " << graph_id;
+  MS_LOG(INFO) << "AssignStaticMemoryInput start for graph " << graph.graph_id();
   auto graph_inputs = GetGraphInputs(graph);
   auto graph_valid_input = graph.valid_inputs();
   graph_inputs.insert(graph_inputs.end(), graph.child_graph_result().begin(), graph.child_graph_result().end());
   std::vector<AnfNodePtr> need_alloc_nodes;
-  auto add_need_alloc_nodes = [&need_alloc_nodes, graph_id, this](const AnfNodePtr &node) {
+  auto add_need_alloc_nodes = [&need_alloc_nodes, this](const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<Parameter>()) {
       return;
@@ -639,10 +638,6 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
       if (address->GetPtr() != nullptr) {
         return;
       }
-    }
-    auto input_param = node->cast<ParameterPtr>();
-    if (input_param != nullptr && !input_param->IsUsedByRealKernelInGraph(graph_id)) {
-      return;
     }
     need_alloc_nodes.push_back(node);
   };
@@ -701,6 +696,20 @@ void KernelRuntime::GetDeviceAddress(const AnfNodePtr &item,
     *device_address =
       CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, {item, index});
   }
+
+  // Set the flag of no user parameter and not malloc memory.
+  if ((*device_address != nullptr) && item->isa<Parameter>()) {
+    auto input_param = item->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(input_param);
+    // Unused address will not alloc memory, which is easy to cause problems for weight node, so skip weight node.
+    if (!common::AnfAlgo::IsParameterWeight(input_param) && !input_param->IsUsedByRealKernelInGraph(graph.graph_id())) {
+      MS_LOG(INFO) << "Node:" << item->fullname_with_scope() << " debug name:" << item->DebugString()
+                   << " is not used in the graph " << graph.graph_id();
+      (*device_address)->UpdateFlag(kDeviceAddressFlagNotUsed);
+      return;
+    }
+  }
+
   if (*device_address != nullptr && (*device_address)->GetPtr() == nullptr) {
     auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
     (*device_address)->set_host_shape(trans::GetRuntimePaddingShape(item, index));
