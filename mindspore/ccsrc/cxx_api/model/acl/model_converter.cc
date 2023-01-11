@@ -84,7 +84,7 @@ bool CreateSessionAndGraphRunner() {
 transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph) const {
   MS_EXCEPTION_IF_NULL(anf_graph);
 #ifndef BUILD_LITE
-  opt::GeOptimization(anf_graph);
+  opt::ReduceOptimization(anf_graph);
 #endif
   auto converter = transform::NewConverter(anf_graph);
   std::string net_id = "0";
