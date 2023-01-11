@@ -16,6 +16,7 @@
 import os
 from io import BytesIO
 import numpy as np
+import pytest as py
 
 import mindspore
 import mindspore.nn as nn
@@ -277,6 +278,27 @@ def test_export_lenet_onnx_with_encryption():
     verify_name = file_name + ".onnx"
     assert os.path.exists(verify_name)
     os.remove(verify_name)
+
+
+def test_export_onnx_dynamic_shape():
+    """
+    Feature: Export dynamic input to ONNX
+    Description: Test export API to save network with dynamic shape into ONNX
+    Expectation: raise valueerror.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    network = LeNet5()
+    network.set_train()
+    file_name = "lenet"
+
+    input1 = Tensor(shape=[None], dtype=mindspore.float32)
+    input2 = Tensor(shape=[None, 12, 34], dtype=mindspore.float32)
+    with py.raises(ValueError):
+        export(network, input1, file_name=file_name, file_format='ONNX')
+    with py.raises(ValueError):
+        export(network, input2, file_name=file_name, file_format='ONNX')
+    with py.raises(ValueError):
+        export(network, input1, input2, file_name=file_name, file_format='ONNX')
 
 
 def test_export_lenet_mindir_with_encryption():

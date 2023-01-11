@@ -58,6 +58,7 @@
     mindspore.Tensor.asin
     mindspore.Tensor.asinh
     mindspore.Tensor.asnumpy
+    mindspore.Tensor.as_strided
     mindspore.Tensor.assign_value
     mindspore.Tensor.astype
     mindspore.Tensor.atan
@@ -211,6 +212,7 @@
     mindspore.Tensor.new_ones
     mindspore.Tensor.new_zeros
     mindspore.Tensor.numel
+    mindspore.Tensor.numpy
     mindspore.Tensor.nonzero
     mindspore.Tensor.norm
     mindspore.Tensor.not_equal

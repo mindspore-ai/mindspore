@@ -1200,23 +1200,12 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
                        f"it would be removed in future release, use 'AIR' instead.")
         file_format = 'AIR'
 
-    # When dumping ONNX file, switch network mode to infer when it is training(NOTE: ONNX only designed for prediction)
-    is_dump_onnx_in_training = False
-    if hasattr(net, 'training'):
-        is_dump_onnx_in_training = net.training and file_format == 'ONNX'
-
-    if is_dump_onnx_in_training:
-        net.set_train(mode=False)
-
     if file_format == 'AIR':
         _save_air(net, file_name, *inputs, **kwargs)
     elif file_format == 'ONNX':
         _save_onnx(net, file_name, *inputs, **kwargs)
     elif file_format == 'MINDIR':
         _save_mindir(net, file_name, *inputs, **kwargs)
-
-    if is_dump_onnx_in_training:
-        net.set_train(mode=True)
 
 
 def _check_key_mode_type(file_format, **kwargs):
@@ -1259,6 +1248,12 @@ def _save_air(net, file_name, *inputs, **kwargs):
 
 def _save_onnx(net, file_name, *inputs, **kwargs):
     """Save ONNX format file."""
+    # When dumping ONNX file, switch network mode to infer when it is training(NOTE: ONNX only designed for prediction)
+    if not isinstance(net, nn.Cell):
+        raise ValueError(f"Export ONNX format model only support nn.Cell object, but got {type(net)}.")
+    _check_dynamic_input(inputs)
+    cell_mode = net.training
+    net.set_train(mode=False)
     total_size = _calculation_net_size(net)
     if total_size > PROTO_LIMIT_SIZE:
         raise RuntimeError('Export onnx model failed. Network size is: {}G, it exceeded the protobuf: {}G limit.'
@@ -1276,6 +1271,13 @@ def _save_onnx(net, file_name, *inputs, **kwargs):
     with open(file_name, 'wb') as f:
         f.write(onnx_stream)
         os.chmod(file_name, stat.S_IRUSR)
+    net.set_train(mode=cell_mode)
+
+
+def _check_dynamic_input(inputs):
+    for ele in inputs:
+        if isinstance(ele, Tensor) and -1 in ele.shape:
+            raise ValueError(f"Export ONNX format model not support dynamic shape mode, but got input {ele}.")
 
 
 def _generate_front_info_for_param_data_file(is_encrypt, kwargs):
