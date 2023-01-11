@@ -156,6 +156,7 @@ class LiteSession {
     const std::vector<kernel::KernelExec *> &kernels,
     const std::unordered_map<Tensor *, Tensor *> &isolate_input_map = std::unordered_map<Tensor *, Tensor *>());
   static void FreePackOpWeight(const std::vector<kernel::KernelExec *> &kernels);
+  static void MarkSharedWeight(const std::vector<kernel::KernelExec *> &kernels);
   std::string ParseWeightPath();
 
  private:
