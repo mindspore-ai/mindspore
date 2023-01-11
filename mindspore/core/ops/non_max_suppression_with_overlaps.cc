@@ -56,10 +56,10 @@ abstract::ShapePtr NonMaxSuppressionWithOverlapsInferShape(const PrimitivePtr &p
 
   auto scores_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   if (scores_shape_map[kShape][0] != -1) {
-    (void)CheckAndConvertUtils::CheckInteger("size of the second dimension of overlaps", overlaps_shape->shape()[1],
-                                             kEqual, overlaps_shape->shape()[0], prim_name);
     (void)CheckAndConvertUtils::CheckInteger("rank of overlaps", overlaps_shape->shape().size(), kEqual, kOverlapsRank,
                                              prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("size of the second dimension of overlaps", overlaps_shape->shape()[1],
+                                             kEqual, overlaps_shape->shape()[0], prim_name);
     (void)CheckAndConvertUtils::CheckInteger("rank of scores", scores_shape->shape().size(), kEqual, 1, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("length of scores", scores_shape->shape()[0], kEqual,
                                              overlaps_shape->shape()[0], prim_name);
