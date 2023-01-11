@@ -178,6 +178,7 @@ int ROIAlignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   rois_size_ = std::accumulate(rois_shape.begin(), rois_shape.end(), 1, std::multiplies{}) * rois_type_size;
   output_size_ = rois_shape[kIndex0] * x_shape[kIndex1] * pooled_height_ * pooled_width_ * x_type_size;
 
+  batch_ = LongToInt(x_shape[kIndex0]);
   channels_ = LongToInt(x_shape[kIndex1]);
   MS_EXCEPTION_IF_ZERO("channels", channels_);
   height_ = LongToInt(x_shape[kIndex2]);
@@ -199,6 +200,11 @@ bool ROIAlignCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   const T *rois = reinterpret_cast<T *>(inputs[1]->addr);
   auto out_data = reinterpret_cast<T *>(outputs[0]->addr);
 
+  const T rois_min = static_cast<T>(0);
+  const T rois_max = static_cast<T>(batch_ - 1);
+  if (rois[0] < rois_min || rois[0] > rois_max) {
+    MS_LOG(EXCEPTION) << "image_index " << rois[0] << " must be a number in [0," << rois_max << "]";
+  }
   size_t elem_num = IntToSize(roi_rows_ * channels_ * pooled_height_ * pooled_width_);
   auto task = [this, &input, &rois, &out_data](size_t start, size_t end) {
     const T kOffset = T(0.001);

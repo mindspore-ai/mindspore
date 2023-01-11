@@ -75,6 +75,7 @@ class ROIAlignCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
 
   int roi_rows_{0};
   int roi_cols_{0};
+  int batch_{0};
   int channels_{0};
   int height_{0};
   int width_{0};
