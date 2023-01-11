@@ -24,7 +24,7 @@ const char *kAdaptiveAvgPool2dGrad = "AdaptiveAvgPool2dGrad";
 template <typename SCALAR_T>
 struct AdaptiveCalcArgs {
   SCALAR_T *input_data = nullptr;
-  SCALAR_T *output_data = nullptr;
+  float *output_data = nullptr;
 
   int64_t in_size_b = 0;
   int64_t in_size_d = 0;
@@ -63,7 +63,7 @@ uint32_t AdaptiveAvgPool2dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<S
   }
   auto shard_init = [&](int64_t start, int64_t end) {
     for (auto c = start; c < end; c++) {
-      args.output_data[c] = (SCALAR_T)0;
+      args.output_data[c] = 0;
     }
   };
   KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, total_size, total_size / max_core_num_total, shard_init),
@@ -76,7 +76,7 @@ uint32_t AdaptiveAvgPool2dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<S
   // treat batch size and channels as one dimension
   auto shard_work = [&](int64_t start, int64_t end) {
     for (auto c = start; c < end; c++) {
-      SCALAR_T *output_offset_ptr = args.output_data + c * args.out_stride_d;
+      float *output_offset_ptr = args.output_data + c * args.out_stride_d;
       SCALAR_T *input_offset_ptr = args.input_data + c * args.in_stride_d;
 
       for (int64_t ih = 0; ih < args.in_size_h; ih++) {
@@ -90,14 +90,11 @@ uint32_t AdaptiveAvgPool2dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<S
           if (step_w == 0 || step_h == 0) {
             continue;
           }
-          SCALAR_T grad_delta = input_offset_ptr[ih * args.in_stride_h + iw] / step_h / step_w;
-          int64_t oh = 0, ow = 0, output_size = args.out_stride_d;
+          float grad_delta = static_cast<float>(input_offset_ptr[ih * args.in_stride_h + iw]) / step_h / step_w;
+          int64_t oh = 0, ow = 0;
           for (oh = out_start_h; oh < out_end_h; oh++) {
             for (ow = out_start_w; ow < out_end_w; ow++) {
               int64_t output_idx = oh * args.out_stride_h + ow;
-              KERNEL_CHECK_FALSE_VOID((output_idx < output_size),
-                                      "Feature map output_idx [%lld] overflow output_size [%lld].", output_idx,
-                                      output_size);
               output_offset_ptr[output_idx] += grad_delta;
             }
           }
@@ -120,12 +117,11 @@ uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
 
   for (int32_t i = 0; i < input_dims; i++) {
     KERNEL_CHECK_FALSE((input_shape_ptr->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "Adaptive_avg_pool2d_grad: expected input to have non-empty spatial dimensions, "
+                       "Adaptive_avg_pool2d_grad: expected input to have non-empty spatial "
+                       "dimensions, "
                        "but input has sizes [%d] with dimension [%d] being empty.",
                        input_dims, i);
   }
-
-  KERNEL_CHECK_FALSE(input_dims == 4, KERNEL_STATUS_PARAM_INVALID, "Non-empty [4D] tensor expected for input.");
 
   AdaptiveCalcArgs<SCALAR_T> args;
   args.in_size_b = 1;
@@ -140,20 +136,11 @@ uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
   args.in_stride_h = 1;
 
   std::vector<int64_t> orig_input_size = ctx.GetAttr("orig_input_shape")->GetListInt();
-  KERNEL_CHECK_FALSE((orig_input_size.size() == 4), KERNEL_STATUS_PARAM_INVALID,
-                     "Adaptive_avg_pool2d_grad: internal error, orig_input_size.size() must be [4]");
-  KERNEL_CHECK_FALSE((input_shape_ptr->GetDimSize(0) == orig_input_size[0]), KERNEL_STATUS_PARAM_INVALID,
-                     "Adaptive_avg_pool2d_grad: internal error, orig_input_size Batch must equal "
-                     "input_size Batch, now orig_input_size Batch is [%lld], input_size Batch is [%lld].",
-                     input_shape_ptr->GetDimSize(0), orig_input_size[0]);
-  KERNEL_CHECK_FALSE((input_shape_ptr->GetDimSize(1) == orig_input_size[1]), KERNEL_STATUS_PARAM_INVALID,
-                     "Adaptive_avg_pool2d_grad: internal error, orig_input_size Channel must equal "
-                     "input_size channel, now orig_input_size Channel is [%lld], input_size Channel is [%lld].",
-                     input_shape_ptr->GetDimSize(1), orig_input_size[1]);
 
-  int dim_w = 3;
-  int dim_h = 2;
+  int dim_w = orig_input_size.size() == 4 ? 3 : 2;
+  int dim_h = orig_input_size.size() == 4 ? 2 : 1;
   // sizes
+  args.in_size_b = orig_input_size.size() == 4 ? input_shape_ptr->GetDimSize(dim_h - 2) : 1;
   args.in_size_d = input_shape_ptr->GetDimSize(dim_h - 1);
   args.in_size_h = input_shape_ptr->GetDimSize(dim_h);
   args.in_size_w = input_shape_ptr->GetDimSize(dim_w);
@@ -161,21 +148,28 @@ uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
   args.out_size_h = orig_input_size[dim_h];
   args.out_size_w = orig_input_size[dim_w];
   KERNEL_CHECK_FALSE((args.out_size_h != 0 && args.out_size_w != 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Adaptive_avg_pool2d_grad: internal error, output_size H or W can not be zero, "
+                     "Adaptive_avg_pool2d_grad: internal error, output_size H "
+                     "or W can not be zero, "
                      "now H is [%lld], W is [%lld].",
                      args.out_size_h, args.out_size_w);
   // strides
-  // The calculation does not overflow because max value is number of user input data,
-  // which less then int64_t range.
+  // The calculation does not overflow because max value is number of user input
+  // data, which less then int64_t range.
   args.out_stride_d = args.out_size_h * args.out_size_w;
   args.out_stride_h = args.out_size_w;
   args.in_stride_d = args.in_size_h * args.in_size_w;
   args.in_stride_h = args.in_size_w;
 
   args.input_data = static_cast<SCALAR_T *>(input.GetData());
-  args.output_data = static_cast<SCALAR_T *>(ctx.Output(kFirstOutputIndex)->GetData());
-
-  return AdaptiveAvgPool2dGradOutFrame<SCALAR_T>(ctx, args);
+  auto output_data = static_cast<SCALAR_T *>(ctx.Output(kFirstOutputIndex)->GetData());
+  float *output_data_ptr = new float[(ctx.Output(kFirstOutputIndex)->NumElements())];
+  args.output_data = output_data_ptr;
+  (void)AdaptiveAvgPool2dGradOutFrame<SCALAR_T>(ctx, args);
+  for (int i = 0; i < ctx.Output(kFirstOutputIndex)->NumElements(); i++) {
+    output_data[i] = static_cast<SCALAR_T>(args.output_data[i]);
+  }
+  delete[] output_data_ptr;
+  return KERNEL_STATUS_OK;
 }
 
 uint32_t AdaptiveAvgPool2dGrad::Compute(CpuKernelContext &ctx) {
@@ -191,8 +185,10 @@ uint32_t AdaptiveAvgPool2dGrad::Compute(CpuKernelContext &ctx) {
                        kAdaptiveAvgPool2dGrad);
   std::vector<int64_t> v_orig_input_shape = attr_orig_input_shape->GetListInt();
 
-  KERNEL_LOG_INFO("AdaptiveAvgPool2dGrad kernel, input[0]: size is [%llu]; output_0: size is [%llu].",
-                  input_0->GetDataSize(), output_0->GetDataSize());
+  KERNEL_LOG_INFO(
+    "AdaptiveAvgPool2dGrad kernel, input[0]: size is [%llu]; output_0: size "
+    "is [%llu].",
+    input_0->GetDataSize(), output_0->GetDataSize());
   KERNEL_LOG_INFO("[%s] get attr:orig_input_shape [%s].", kAdaptiveAvgPool2dGrad,
                   VectorToString(v_orig_input_shape).c_str());
 
