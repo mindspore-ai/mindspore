@@ -150,6 +150,7 @@ ATTR_MAP(Identity) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Identity) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(IdentityLoad, kNameLoad, ADPT_DESC(Identity))
 REG_ADPT_DESC(IdentityTupleGetItem, kNameTupleGetItem, ADPT_DESC(Identity))
+REG_ADPT_DESC(IdentityIdentity, kNameIdentity, ADPT_DESC(Identity))
 
 // IdentityN
 INPUT_MAP(IdentityN) = EMPTY_INPUT_MAP;
