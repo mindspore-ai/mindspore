@@ -8,7 +8,6 @@ mindspore.dataset.vision.AutoAugment
 
     参数：
         - **policy** (AutoAugmentPolicy, 可选) - 在不同数据集上学习的AutoAugment策略。默认值：AutoAugmentPolicy.IMAGENET。
-
           可以是[AutoAugmentPolicy.IMAGENET, AutoAugmentPolicy.CIFAR10, AutoAugmentPolicy.SVHN]中的任何一个。
 
           - **AutoAugmentPolicy.IMAGENET**：表示应用在ImageNet数据集上学习的AutoAugment。
@@ -16,7 +15,6 @@ mindspore.dataset.vision.AutoAugment
           - **AutoAugmentPolicy.SVHN**：表示应用在SVHN数据集上学习的AutoAugment。
 
         - **interpolation** (Inter, 可选) - 图像插值方式。默认值：Inter.NEAREST。
-
           可以是[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC, Inter.AREA]中的任何一个。
 
           - **Inter.NEAREST**：表示插值方法是最近邻插值。

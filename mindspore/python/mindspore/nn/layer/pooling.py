@@ -1083,7 +1083,6 @@ class AdaptiveMaxPool2d(Cell):
 
     Outputs:
         Tensor, with the same type as the `input_x`.
-
         Shape of the output is `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape`.
 
     Raises:

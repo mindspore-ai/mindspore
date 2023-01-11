@@ -3119,10 +3119,10 @@ def log_matrix_determinant(x):
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-        Tensor. The signs of the log determinants. The shape is :math:`x.shape[:-2]`,
-        and the dtype is same as `x`.
-        Tensor. The absolute values of the log determinants. The shape is :math:`x.shape[:-2]`, and
-        the dtype is same as `x`.
+        - Tensor. The signs of the log determinants. The shape is :math:`x.shape[:-2]`,
+          and the dtype is same as `x`.
+        - Tensor. The absolute values of the log determinants. The shape is :math:`x.shape[:-2]`, and
+          the dtype is same as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.

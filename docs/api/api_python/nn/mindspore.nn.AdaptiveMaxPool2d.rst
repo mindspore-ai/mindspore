@@ -29,7 +29,6 @@ mindspore.nn.AdaptiveMaxPool2d
 
     输出：
         Tensor，数据类型与 `input_x` 相同。
-
         输出的shape为 `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape` 。
 
     异常：

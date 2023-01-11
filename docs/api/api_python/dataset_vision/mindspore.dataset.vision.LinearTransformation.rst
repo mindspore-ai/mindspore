@@ -9,11 +9,9 @@ mindspore.dataset.vision.LinearTransformation
 
     参数：        
         - **transformation_matrix** (numpy.ndarray) - shape为(D, D)的变换方阵，其中
-
           :math:`D = C \times H \times W` 。
 
         - **mean_vector** (numpy.ndarray) - shape为(D,)的均值向量，其中
-
           :math:`D = C \times H \times W` 。
 
     异常：

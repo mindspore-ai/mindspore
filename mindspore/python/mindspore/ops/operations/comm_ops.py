@@ -795,11 +795,9 @@ class AlltoAll(PrimitiveWithInfer):
         Tensor. If the shape of input tensor is :math:`(x_1, x_2, ..., x_R)`, then the shape of output tensor is
         :math:`(y_1, y_2, ..., y_R)`, where:
 
-        :math:`y_{split\_dim} = x_{split\_dim} / split\_count`
-
-        :math:`y_{concat\_dim} = x_{concat\_dim} * split\_count`
-
-        :math:`y_{other} = x_{other}`.
+        - :math:`y_{split\_dim} = x_{split\_dim} / split\_count`
+        - :math:`y_{concat\_dim} = x_{concat\_dim} * split\_count`
+        - :math:`y_{other} = x_{other}`.
 
     Raises:
         TypeError: If group is not a string.

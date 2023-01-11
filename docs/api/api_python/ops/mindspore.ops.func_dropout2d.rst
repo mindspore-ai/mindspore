@@ -15,9 +15,8 @@ mindspore.ops.dropout2d
         - **p** (float) - 通道的丢弃概率，介于 0 和 1 之间，例如 `p` = 0.8，意味着80%的清零概率。默认值：0.5。
 
     返回：
-        Tensor，输出，具有与输入 `x` 相同的形状和数据类型。
-
-        Tensor，掩码，形状与 `x` 相同，数据类型为bool。
+        - Tensor，输出，具有与输入 `x` 相同的形状和数据类型。
+        - Tensor，掩码，形状与 `x` 相同，数据类型为bool。
 
     异常：
         - **TypeError** - `x` 不是Tensor。

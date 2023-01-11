@@ -15,10 +15,10 @@ mindspore.ops.SparseTensorDenseMatmul
         - **sparse_shape** (tuple(int) 或 Tensor) - 指定稀疏Tensor的shape，由两个正整数组成，表示稀疏Tensor的shape为 :math:`(N, C)` 。
         - **dense** (Tensor) - 二维Tensor，数据类型与 `values` 相同。
 
-          如果 `adjoint_st` 为False， `adjoint_dt` 为False，则shape必须为 :math:`(C, M)` 。
-          如果 `adjoint_st` 为False， `adjoint_dt` 为True，则shape必须为 :math:`(M, C)` 。
-          如果 `adjoint_st` 为True， `adjoint_dt` 为False，则shape必须为 :math:`(N, M)` 。
-          如果 `adjoint_st` 为True， `adjoint_dt` 为True，则shape必须为 :math:`(M, N)` 。
+          - 如果 `adjoint_st` 为False， `adjoint_dt` 为False，则shape必须为 :math:`(C, M)` 。
+          - 如果 `adjoint_st` 为False， `adjoint_dt` 为True，则shape必须为 :math:`(M, C)` 。
+          - 如果 `adjoint_st` 为True， `adjoint_dt` 为False，则shape必须为 :math:`(N, M)` 。
+          - 如果 `adjoint_st` 为True， `adjoint_dt` 为True，则shape必须为 :math:`(M, N)` 。
 
     输出：
         Tensor，数据类型与 `values` 相同。

@@ -8,13 +8,11 @@ mindspore.ops.pad
     参数：
         - **input_x** (Tensor) - 输入Tensor，shape为 :math:`(N, *)`， :math:`*` 代表任意附加维度。
         - **padding** (Union[tuple[int], list[int], Tensor]) - pad的填充位置。
-          :math:`\left\lfloor\frac{\text{len(padding)}}{2}\right\rfloor` 维度的 `input_x` 将会被填充。
+          :math:`\left\lfloor\frac{\text{len(padding)}}{2}\right\rfloor` 维度的 `input_x` 将会被填充。可根据以下示例以此类推：
 
           - 示例：若只需要填充输入tensor的最后一个维度，则 `padding` 的填充方式为 :math:`(\text{padding_left}, \text{padding_right})`;
           - 示例：若只需要填充输入tensor的最后两个维度，则 `padding` 的填充方式为 :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})`;
           - 示例：若只需要填充输入tensor的最后三个维度，则 `padding` 的填充方式为 :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom}, \text{padding_front}, \text{padding_back})`;
-
-          以此类推。
 
         - **mode** (str，可选) - Pad的填充模式，可选择 "constant", "reflect" 或者 "replicate"。默认值："constant"。
 

@@ -22,11 +22,9 @@ mindspore.nn.Unfold
     输出：
         Tensor，输出为四维Tensor，数据类型与 `x` 相同，其shape为(out_batch, out_depth, out_row, out_col)，且 `out_batch` 与 `in_batch` 相同。
 
-        :math:`out\_depth = ksize\_row * ksize\_col * in\_depth`
-
-        :math:`out\_row = (in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) // stride\_row + 1`
-
-        :math:`out\_col = (in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) // stride\_col + 1`
+        - :math:`out\_depth = ksize\_row * ksize\_col * in\_depth`
+        - :math:`out\_row = (in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) // stride\_row + 1`
+        - :math:`out\_col = (in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) // stride\_col + 1`
 
     异常：
         - **TypeError** - `ksize` ， `strides` 或 `rates` 既不是tuple，也不是list。

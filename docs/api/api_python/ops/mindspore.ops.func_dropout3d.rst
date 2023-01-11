@@ -14,14 +14,13 @@ mindspore.ops.dropout3d
         - **p** (float) - 通道的丢弃概率，介于 0 和 1 之间，例如 `p` = 0.8，意味着80%的清零概率。默认值：0.5。
 
     返回：
-        Tensor，输出，具有与输入 `x` 相同的形状和数据类型。
-
-        Tensor，掩码，形状与 `x` 相同，数据类型为bool。
+        - Tensor，输出，具有与输入 `x` 相同的形状和数据类型。
+        - Tensor，掩码，形状与 `x` 相同，数据类型为bool。
 
     异常：
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `x` 的数据类型不是int8、int16、int32、int64、float16、float32或float64。
         - **TypeError** - `p` 的数据类型不是float。
-        - **ValueError** - `p` 值不在 `[0.0，1.0]` 之间。
+        - **ValueError** - `p` 值不在 `[0.0,1.0]` 之间。
         - **ValueError** - `x` 的维度不等于5。
 

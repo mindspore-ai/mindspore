@@ -22,7 +22,6 @@ mindspore.ops.prelu
 
     返回：
         Tensor，其shape和数据类型与 `x` 相同。
-
         有关详细信息，请参考 :class:`mindspore.nn.PReLU` 。
 
     异常：
