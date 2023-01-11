@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,9 @@ Status PullBasedIteratorConsumer::GetNextAsOrderedPair(
     column_order_.resize(num_cols, {std::string(), invalid_col_id});
     for (const auto &itr : tree_adapter_lite_->GetColumnNameMap()) {
       int32_t ind = itr.second;
-      CHECK_FAIL_RETURN_UNEXPECTED(ind < num_cols && ind >= 0, "column id out of bounds.");
+      CHECK_FAIL_RETURN_UNEXPECTED(ind < num_cols && ind >= 0, "column id out of bounds. Expecting in the range [0," +
+                                                                 std::to_string(num_cols) + "), but got " +
+                                                                 std::to_string(ind));
       column_order_[ind] = std::make_pair(itr.first, ind);
     }
     // error check, make sure the ids in col_name_id_map are continuous and starts from 0

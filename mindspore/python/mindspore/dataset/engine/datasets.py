@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ import mindspore.dataset.transforms.py_transforms as py_transforms
 import mindspore.dataset.transforms as transforms
 from mindspore.dataset.text.utils import SentencePieceModel, DE_C_INTER_SENTENCEPIECE_MODE
 from mindspore.parallel._utils import _get_device_num
+from mindspore.dataset.engine.debug import DebugWrapper
 
 from . import samplers
 from .iterators import DictIterator, TupleIterator, DummyIterator, check_iterator_cleanup, _set_iterator_cleanup, \
@@ -3306,8 +3307,10 @@ class MapDataset(UnionBaseDataset):
                     else:
                         op.implementation = Implementation.C
                 prev_op = op
+            operations = self.__insert_debug_wrapper(operations)
             operations = transforms.transforms.Compose.reduce(operations)
         elif count_old_transforms + count_pyfunc + count_non_data_vision_transforms == len(operations):
+            operations = self.__insert_debug_wrapper(operations)
             operations = transforms.py_transforms.Compose.reduce(operations)
         else:
             raise RuntimeError("Mixing old legacy c/py_transforms and new unified transforms is not allowed.")
@@ -3326,6 +3329,29 @@ class MapDataset(UnionBaseDataset):
         if hasattr(self, "process_pool") and self.process_pool is not None:
             self.process_pool.terminate()
             del self.process_pool
+
+    @staticmethod
+    def __insert_debug_wrapper(operations):
+        """
+        Insert DebuggerWrapper before and after each op if debug mode is on.
+        """
+        if not get_debug_mode():
+            return operations
+        inserted_func = transforms.py_transforms_util.FuncWrapper(DebugWrapper())
+        inserted_func.implementation = Implementation.PY
+        inserted_operations = [inserted_func]
+        for op in operations:
+            if isinstance(op, transforms.py_transforms_util.FuncWrapper):
+                try:
+                    op_name = op.transform.__name__
+                except Exception:
+                    op_name = op.transform.__class__.__name__
+            else:
+                op_name = op.__class__.__name__
+            inserted_func = transforms.py_transforms_util.FuncWrapper(DebugWrapper(op_name))
+            inserted_func.implementation = Implementation.PY
+            inserted_operations.extend([op, inserted_func])
+        return inserted_operations
 
     @staticmethod
     def __count_pyfuncs(operations):
