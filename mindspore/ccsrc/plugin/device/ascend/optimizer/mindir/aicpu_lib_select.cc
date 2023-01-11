@@ -51,8 +51,8 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                       kRangeOpName,
                                                       kQuantDTypeCastOpName,
                                                       kFSEDecodeOpName};
-  static const std::set<std::string> kMigrateAicpuKernelOps = {mindspore::kAdaptiveAvgPool2DV1OpName,
-                                                               mindspore::kAdaptiveAvgPool2DGradV1OpName,
+  static const std::set<std::string> kMigrateAicpuKernelOps = {mindspore::kAdaptiveAvgPool2dOpName,
+                                                               mindspore::kAdaptiveAvgPool2dGradOpName,
                                                                mindspore::kBucketizeOpName,
                                                                mindspore::kCacheSwapTableOpName,
                                                                mindspore::kCauchyOpName,
