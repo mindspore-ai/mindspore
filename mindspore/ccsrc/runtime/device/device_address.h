@@ -68,6 +68,11 @@ using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 enum class DeviceAddressStatus { kInDevice, kInHost, kInDeviceToHost, kInHostToDevice };
 using UserDataPtr = std::shared_ptr<UserData>;
 
+// The flag of device address.
+constexpr size_t kDeviceAddressFlagInit = 0;
+// Indicates that it is the device address of ref node.
+constexpr size_t kDeviceAddressFlagRefNode = 1;
+
 class DeviceAddress : public mindspore::DeviceSync {
  public:
   explicit DeviceAddress(void *ptr, size_t size) : ptr_(ptr), size_(size) {}
@@ -200,6 +205,10 @@ class DeviceAddress : public mindspore::DeviceSync {
   // Free the ptr in user data when the ref count is 0.
   virtual void ClearUserData() {}
 
+  // Flag.
+  size_t flag() const { return flag_; }
+  void set_flag(size_t flag) { flag_ = flag; }
+
  protected:
   const void *ptr() const { return ptr_; }
   size_t size() const { return size_; }
@@ -230,6 +239,9 @@ class DeviceAddress : public mindspore::DeviceSync {
   std::string device_name_{""};
   uint32_t device_id_{0};
   bool from_persistent_mem_{false};
+
+  // The device address flag.
+  size_t flag_{0};
 
   friend class KernelRuntime;
   friend class MemoryManager;
