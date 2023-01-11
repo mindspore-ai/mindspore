@@ -18,6 +18,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -37,18 +38,23 @@ class OpNetWrapper(nn.Cell):
         return self.op(*inputs)
 
 
+suport_type_list = [np.bool_, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64]
+mode_list = [context.PYNATIVE_MODE, context.GRAPH_MODE]
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
-def test_bitwise_and(shape, dtype):
+@pytest.mark.parametrize('dtype', suport_type_list)
+@pytest.mark.parametrize('mode_cpu', mode_list)
+def test_bitwise_and(shape, dtype, mode_cpu):
     """
     Feature: BitwiseAnd cpu kernel.
     Description: test the rightness of BitwiseAnd cpu kernel.
     Expectation: Success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    context.set_context(mode=mode_cpu, device_target='CPU')
     op = P.BitwiseAnd()
     op_wrapper = OpNetWrapper(op)
 
@@ -67,14 +73,15 @@ def test_bitwise_and(shape, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
-def test_bitwise_or(shape, dtype):
+@pytest.mark.parametrize('dtype', suport_type_list)
+@pytest.mark.parametrize('mode_cpu', mode_list)
+def test_bitwise_or(shape, dtype, mode_cpu):
     """
     Feature: BitwiseOr cpu kernel.
     Description: test the rightness of BitwiseOr cpu kernel.
     Expectation: Success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    context.set_context(mode=mode_cpu, device_target='CPU')
     op = P.BitwiseOr()
     op_wrapper = OpNetWrapper(op)
 
@@ -93,14 +100,15 @@ def test_bitwise_or(shape, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
-def test_bitwise_xor(shape, dtype):
+@pytest.mark.parametrize('dtype', suport_type_list)
+@pytest.mark.parametrize('mode_cpu', mode_list)
+def test_bitwise_xor(shape, dtype, mode_cpu):
     """
     Feature: BitwiseXor cpu kernel.
     Description: test the rightness of BitwiseXor cpu kernel.
     Expectation: Success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    context.set_context(mode=mode_cpu, device_target='CPU')
     op = P.BitwiseXor()
     op_wrapper = OpNetWrapper(op)
 
@@ -119,7 +127,7 @@ def test_bitwise_xor(shape, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('op', [P.BitwiseAnd(), P.BitwiseOr(), P.BitwiseXor()])
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize('dtype', suport_type_list)
 def test_bitwise_vmap(op, dtype):
     """
     Feature: Bitwise cpu kernel.
@@ -151,7 +159,7 @@ def test_bitwise_vmap(op, dtype):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize('dtype', suport_type_list)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
 def test_bitwise_and_tensor_interface_operator(dtype, mode, shape):
@@ -173,7 +181,7 @@ def test_bitwise_and_tensor_interface_operator(dtype, mode, shape):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize('dtype', suport_type_list)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
 def test_bitwise_or_tensor_interface_operator(dtype, mode, shape):
@@ -195,7 +203,7 @@ def test_bitwise_or_tensor_interface_operator(dtype, mode, shape):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize('dtype', suport_type_list)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
 def test_bitwise_xor_tensor_interface_operator(dtype, mode, shape):
@@ -217,7 +225,7 @@ def test_bitwise_xor_tensor_interface_operator(dtype, mode, shape):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize('dtype', suport_type_list)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
 def test_bitwise_and_tensor_interface(dtype, mode, shape):
@@ -239,7 +247,7 @@ def test_bitwise_and_tensor_interface(dtype, mode, shape):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize('dtype', suport_type_list)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
 def test_bitwise_or_tensor_interface(dtype, mode, shape):
@@ -261,7 +269,7 @@ def test_bitwise_or_tensor_interface(dtype, mode, shape):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize('dtype', suport_type_list)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
 def test_bitwise_xor_tensor_interface(dtype, mode, shape):
@@ -285,7 +293,7 @@ def test_bitwise_xor_tensor_interface(dtype, mode, shape):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('xshape', [(2, 3)])
 @pytest.mark.parametrize('yshape', [(1, 1), (1, 3), (2, 1)])
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize('dtype', suport_type_list)
 def test_bitwise_and_broadcast(xshape, yshape, dtype):
     """
     Feature: BitwiseAnd cpu kernel.
@@ -312,7 +320,7 @@ def test_bitwise_and_broadcast(xshape, yshape, dtype):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('xshape', [(2, 3)])
 @pytest.mark.parametrize('yshape', [(1, 1), (1, 3), (2, 1)])
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize('dtype', suport_type_list)
 def test_bitwise_or_broadcast(xshape, yshape, dtype):
     """
     Feature: BitwiseOr cpu kernel.
@@ -339,7 +347,7 @@ def test_bitwise_or_broadcast(xshape, yshape, dtype):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('xshape', [(2, 3)])
 @pytest.mark.parametrize('yshape', [(1, 1), (1, 3), (2, 1)])
-@pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize('dtype', suport_type_list)
 def test_bitwise_xor_broadcast(xshape, yshape, dtype):
     """
     Feature: BitwiseXor cpu kernel.
@@ -359,3 +367,46 @@ def test_bitwise_xor_broadcast(xshape, yshape, dtype):
 
     assert np.allclose(outputs.asnumpy(), expect)
     assert np.allclose(outputs_functional.asnumpy(), expect)
+
+
+class NetBitwise(nn.Cell):
+    """NetBitwise"""
+
+    def construct(self, input_x, input_y):
+        """construct"""
+        out_and = input_x & input_y
+        out_or = input_x | input_y
+        out_xor = input_x ^ input_y
+        return out_and, out_or, out_xor
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode_cpu', mode_list)
+def test_bitwise_bool(mode_cpu):
+    """
+    Feature: Bitwise cpu kernel.
+    Description: test the rightness of Bitwise cpu kernel tensor operations.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode_cpu, device_target='CPU')
+
+    input_x = ms.Tensor([True, False], dtype=ms.bool_)
+    input_y = ms.Tensor([True, True], dtype=ms.bool_)
+
+    net = NetBitwise()
+    out = net(input_x, input_y)
+    expect_and = np.array([True, False])
+    expect_or = np.array([True, True])
+    expect_xor = np.array([False, True])
+    assert np.allclose(out[0].asnumpy(), expect_and)
+    assert np.allclose(out[1].asnumpy(), expect_or)
+    assert np.allclose(out[2].asnumpy(), expect_xor)
+
+    res_and = input_x & input_y
+    res_or = input_x | input_y
+    res_xor = input_x ^ input_y
+    assert np.allclose(res_and.asnumpy(), expect_and)
+    assert np.allclose(res_or.asnumpy(), expect_or)
+    assert np.allclose(res_xor.asnumpy(), expect_xor)
