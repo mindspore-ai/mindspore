@@ -37,7 +37,6 @@
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
-#include "kernel/oplib/oplib.h"
 #include "kernel/oplib/super_bar.h"
 
 namespace mindspore::session {
@@ -63,7 +62,7 @@ std::string PrintKernelFormatAndType(const std::string &fmt, const TypeId &type,
   return buffer.str();
 }
 
-struct AnfDumpHandlerRegister {
+[[maybe_unused]] struct AnfDumpHandlerRegister {
   AnfDumpHandlerRegister() {
     AnfDumpHandler::SetPrintInputTypeShapeFormatHandler(
       [](const std::shared_ptr<AnfNode> &node, size_t idx) -> std::string {
@@ -1384,7 +1383,7 @@ void AnfRuntimeAlgorithm::UpdateGraphValidRefPair(const KernelGraphPtr &graph) {
   graph->set_ref_out_in_map(new_ref_map);
 }
 
-bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const bool skip_mode, const ShapeVector &axes_shape) {
+bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(bool skip_mode, const ShapeVector &axes_shape) {
   // Skip run ReduceSum when axis is a Empty Tensor
   if (std::any_of(axes_shape.begin(), axes_shape.end(), [](int64_t shape) { return shape == 0; }) && skip_mode) {
     return true;
@@ -1504,7 +1503,7 @@ bool AnfRuntimeAlgorithm::NodeValueIsFuncGraph(const AnfNodePtr &node) {
 }
 
 bool AnfRuntimeAlgorithm::IsEnableKernelSelectBackoff() {
-  static std::string disable_kernel_backoff = "";
+  static std::string disable_kernel_backoff;
   static bool first_get_backoff_env = true;
   if (first_get_backoff_env) {
     disable_kernel_backoff = common::GetEnv(kDisableKernelBackoff);
@@ -1567,7 +1566,7 @@ std::string AnfRuntimeAlgorithm::FetchDeviceTarget(const AnfNodePtr &node, const
   MS_EXCEPTION_IF_NULL(cnode);
   auto ud_target = cnode->user_data<std::string>(kAttrPrimitiveTarget);
   if (ud_target != nullptr) {
-    return *ud_target.get();
+    return *ud_target;
   }
   if (common::AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, cnode)) {
     return common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrPrimitiveTarget);
