@@ -60,6 +60,7 @@ std::string HighLightLine(const std::string &line, int col_begin, int col_end, S
   }
   return temp_line;
 }
+
 // Generate debug information for the location node .
 // print the file name, line no and column no, and part of the content
 std::string Location::ToString(SourceLineTip tip) const {
@@ -143,7 +144,8 @@ LocationPtr GraphDebugInfo::location() const {
   auto loc = DebugInfo::location();
   if (deco_loc_ != nullptr && loc != nullptr) {
     auto loc_line = loc->line() + ((deco_loc_->line_end() - deco_loc_->line()) + 1);
-    return std::make_shared<Location>(loc->file_name(), loc_line, loc->line_end(), loc->column(), loc->column_end());
+    return std::make_shared<Location>(loc->file_name(), loc_line, loc->line_end(), loc->column(), loc->column_end(),
+                                      loc->expr_src());
   }
   return loc;
 }

@@ -122,11 +122,11 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   auto do_signature_func = dyn_cast_ptr<Primitive>(func);
   if (do_signature_func != nullptr) {
     if (prims_to_skip_undetermined_infer.find(do_signature_func->name()) == prims_to_skip_undetermined_infer.end()) {
-      auto ret_abstract = EvalUndeterminedArgs(args_abs_list);
-      if (ret_abstract != nullptr) {
+      auto res_abstract = EvalUndeterminedArgs(args_abs_list);
+      if (res_abstract != nullptr) {
         MS_LOG(DEBUG) << "DoSignatureEvaluator eval Undetermined for " << do_signature_func->name()
-                      << ", ret_abstract: " << ret_abstract->ToString();
-        return ret_abstract;
+                      << ", res_abstract: " << res_abstract->ToString();
+        return res_abstract;
       }
     }
   }
@@ -886,11 +886,11 @@ py::object GetPyAbsItemOfTupleOut(const py::object &output, const size_t index) 
 
 AbstractBasePtr MakePyInferRes2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
                                               const py::object &output) {
-  auto ret_vec = shape_obj.cast<ShapeVector>();
-  auto ret_dtype = type_obj.cast<TypePtr>();
+  auto res_vec = shape_obj.cast<ShapeVector>();
+  auto res_dtype = type_obj.cast<TypePtr>();
 
-  auto ret_shape = std::make_shared<abstract::Shape>(ret_vec);
-  AbstractBasePtr tensor = MakeAbstractTensor(ret_shape, ret_dtype);
+  auto res_shape = std::make_shared<abstract::Shape>(res_vec);
+  AbstractBasePtr tensor = MakeAbstractTensor(res_shape, res_dtype);
 
   SetShapeValue(tensor, output);
   return tensor;
@@ -901,12 +901,12 @@ AbstractBasePtr MakePyInferRes2Abstract(const py::object &output) {
   auto type_obj = out_dict[ATTR_DTYPE];
   auto shape_obj = out_dict[ATTR_SHAPE];
   if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) && py::isinstance<Type>(type_obj)) {
-    auto ret_vec = shape_obj.cast<ShapeVector>();
-    auto ret_dtype = type_obj.cast<TypePtr>();
-    MS_EXCEPTION_IF_NULL(ret_dtype);
+    auto res_vec = shape_obj.cast<ShapeVector>();
+    auto res_dtype = type_obj.cast<TypePtr>();
+    MS_EXCEPTION_IF_NULL(res_dtype);
     // if the size of shape list is empty, return an scalar abstract
-    if (ret_vec.empty() && (!ret_dtype->isa<TensorType>())) {
-      abstract::AbstractScalarPtr abs_scalar = std::make_shared<abstract::AbstractScalar>(kAnyValue, ret_dtype);
+    if (res_vec.empty() && (!res_dtype->isa<TensorType>())) {
+      abstract::AbstractScalarPtr abs_scalar = std::make_shared<abstract::AbstractScalar>(kAnyValue, res_dtype);
       return abs_scalar;
     }
     return MakePyInferRes2AbstractTensor(shape_obj, type_obj, output);
@@ -1121,10 +1121,10 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   CheckSequenceArgumentForCppPrimitive(prim_, args);
 
   if (prims_to_skip_undetermined_infer.find(prim_->name()) == prims_to_skip_undetermined_infer.end()) {
-    auto ret_abstract = EvalUndeterminedArgs(args);
-    if (ret_abstract != nullptr) {
+    auto res_abstract = EvalUndeterminedArgs(args);
+    if (res_abstract != nullptr) {
       MS_LOG(DEBUG) << "StandardPrimEvaluator eval Undetermined";
-      return ret_abstract;
+      return res_abstract;
     }
   }
   if (prim_->prim_type() == PrimType::kPrimTypePyCheck) {
@@ -1166,10 +1166,10 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   CheckSequenceArgumentForPythonPrimitive(prim_py_, args);
 
   // Ensure input arguments are evaluated.
-  auto ret_abstract = EvalUndeterminedArgs(args);
-  if (ret_abstract != nullptr) {
+  auto res_abstract = EvalUndeterminedArgs(args);
+  if (res_abstract != nullptr) {
     MS_LOG(DEBUG) << "PythonPrimEvaluator eval Undetermined";
-    return ret_abstract;
+    return res_abstract;
   }
   auto forbid_reuse = prim_py_->HasAttr(GRAPH_FLAG_FORBID_REUSE_RESULT);
   if (!forbid_reuse) {
@@ -1212,16 +1212,16 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
 }
 
 EvalResultPtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
-  auto ret_abstract = EvalUndeterminedArgs(args);
-  if (ret_abstract != nullptr) {
+  auto res_abstract = EvalUndeterminedArgs(args);
+  if (res_abstract != nullptr) {
     MS_LOG(DEBUG) << "UniformPrimEvaluator eval Undetermined";
-    return ret_abstract;
+    return res_abstract;
   }
   // if func_desc_.retval type is super class of parameter type, then make the retval type as parameter type.
   if (nargs_ != args.size()) {
     MS_LOG(EXCEPTION) << "UniformPrimEvaluator expect " << nargs_ << " args, but got " << args.size() << " inputs";
   }
-  TypePtr ret_value_type = return_value_type_;
+  TypePtr res_value_type = return_value_type_;
   ValuePtrList value_list;
   for (const auto &arg : args) {
     // Check if all arguments are scalar type.
@@ -1249,20 +1249,20 @@ EvalResultPtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Ab
     MS_EXCEPTION_IF_NULL(return_value_type_);
     MS_EXCEPTION_IF_NULL(item.first);
     if (*return_value_type_ == *(item.first)) {
-      ret_value_type = res;
+      res_value_type = res;
     }
   }
 
   ValuePtr evaluated_value = RunImpl(value_list);
   if (!(*evaluated_value == *kAnyValue)) {
-    ret_value_type = evaluated_value->type();
+    res_value_type = evaluated_value->type();
   }
   // for comparison primitives , return type shall have be specified to be bool.
   if (specify_out_type_ != nullptr) {
-    ret_value_type = specify_out_type_;
+    res_value_type = specify_out_type_;
   }
 
-  AbstractScalarPtr abs_base = std::make_shared<AbstractScalar>(evaluated_value, ret_value_type);
+  AbstractScalarPtr abs_base = std::make_shared<AbstractScalar>(evaluated_value, res_value_type);
   return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>());
 }
 
@@ -1558,6 +1558,46 @@ EvalResultPtr GetEvaluatedValueForAdapterTensorAttrOrMethod(const AnalysisEngine
   return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
 }
 
+EvalResultPtr InterpretGetAttrNode(const AnfNodeConfigPtr &out_conf) {
+  auto out_node = out_conf->node();
+  const auto cnode = dyn_cast<CNode>(out_node);
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto fg = cnode->func_graph();
+
+  const auto &location = out_conf->node()->debug_info()->location();
+  if (location == nullptr) {
+    MS_LOG(WARNING) << "Location info is null, node: " << out_conf->node()->DebugString();
+    return nullptr;
+  }
+  const auto expr = location->expr_src();
+  if (expr.empty()) {
+    MS_LOG(WARNING) << "Location's expr is empty, node: " << out_conf->node()->DebugString();
+    return nullptr;
+  }
+  MS_LOG(INFO) << "expr: " << expr << ", for node: " << out_conf->node()->DebugString();
+  const auto script_getattr_str = std::make_shared<StringImm>(expr);
+  std::vector<ValuePtr> key_list;
+  const auto &owner_node = cnode->input(1);
+  const auto owner_str = std::make_shared<StringImm>(owner_node->debug_info()->name());
+  (void)key_list.emplace_back(owner_str);
+  const auto key_tuple = std::make_shared<ValueTuple>(key_list);
+
+  std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
+  (void)value_list.emplace_back(owner_node);
+  const auto value_tuple_node = fg->NewCNode(value_list);
+
+  const auto getattr_node = fg->NewCNode(
+    {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_getattr_str), NewValueNode(key_tuple), value_tuple_node});
+  getattr_node->set_debug_info(cnode->debug_info());
+  MS_LOG(DEBUG) << "getattr_node: " << getattr_node->DebugString();
+
+  fg->ReplaceInOrder(cnode, getattr_node);
+  auto eng = out_conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());
+  return eng->ForwardConfig(out_conf, fn_conf);
+}
+
 EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine,
                                                           const AbstractBasePtrList &args_abs_list,
                                                           const ConfigPtr &data_conf,
@@ -1585,21 +1625,19 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
       constexpr auto max_args_len = 3;
       bool has_default = (args_abs_list.size() == max_args_len);
       if (!has_default) {
-        constexpr auto tensor_asnumpy_attr_name = "asnumpy";
-        if (item_name != tensor_asnumpy_attr_name) {
+        static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+        if (!support_fallback_runtime) {
           MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
         }
-        auto out_node = out_conf->node();
-        auto out_cnode = out_node->cast_ptr<CNode>();
-        MS_EXCEPTION_IF_NULL(out_cnode);
-        auto fg = out_cnode->func_graph();
-        auto py_interpret_node =
-          fg->NewCNode({NewValueNode(prim::kPrimPyInterpret), NewValueNode(out_node->debug_info()->debug_name())});
-        fg->ReplaceInOrder(out_node, py_interpret_node);
-        auto eng = out_conf->engine();
-        MS_EXCEPTION_IF_NULL(eng);
-        auto fn_conf = eng->MakeConfig(py_interpret_node, out_conf->context(), out_conf->func_graph());
-        return eng->ForwardConfig(out_conf, fn_conf);
+
+        MS_LOG(DEBUG) << "Evaluate " << data_type->ToString() << " attribute: " << item_name
+                      << ".\nnode:" << out_conf->node()->DebugString() << "\n"
+                      << trace::GetDebugInfo(out_conf->node()->debug_info());
+        auto res = InterpretGetAttrNode(out_conf);
+        if (res == nullptr) {
+          MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
+        }
+        return res;
       }
       auto out_node = out_conf->node();
       auto out_cnode = out_node->cast_ptr<CNode>();
@@ -1777,10 +1815,10 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
   }
   // If all inputs are constant value, use python prim evaluator.
   // Ensure input arguments are evaluated.
-  auto ret_abstract = EvalUndeterminedArgs(args_spec_list);
-  if (ret_abstract != nullptr) {
+  auto res_abstract = EvalUndeterminedArgs(args_spec_list);
+  if (res_abstract != nullptr) {
     MS_LOG(DEBUG) << "PythonPrimEvaluator eval Undetermined";
-    return ret_abstract;
+    return res_abstract;
   }
   auto forbid_reuse = prim_py_->HasAttr(GRAPH_FLAG_FORBID_REUSE_RESULT);
   if (!forbid_reuse) {
@@ -1969,16 +2007,16 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
     // which has RefToEmbed CNode, that funcgraph will not be specialized to different funcgraph, so the
     // RefToEmbed CNode in that funcgraph also should not be evaluated to specific SymbolicKey.
     // Only after that funcgrpah is inlined, the RefToEmbed CNode should be evaluated to specific SymbolicKey.
-    bool ifEmbedIsWeight = false;
+    bool embed_is_weight = false;
     if (node_conf->node() != nullptr && node_conf->node()->isa<Parameter>()) {
       auto param = node_conf->node()->cast_ptr<Parameter>();
       MS_EXCEPTION_IF_NULL(param);
-      ifEmbedIsWeight = param->has_default();
+      embed_is_weight = param->has_default();
     }
     auto refkey = ref_key_value->cast_ptr<StringImm>();
-    if (refkey == nullptr || !ifEmbedIsWeight) {
-      auto ret = std::make_shared<AbstractScalar>(type);
-      return std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
+    if (refkey == nullptr || !embed_is_weight) {
+      auto res = std::make_shared<AbstractScalar>(type);
+      return std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
     }
 
     std::string name = refkey->value();
@@ -2009,10 +2047,10 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
     constexpr auto args_min_size = 2;
     constexpr auto args_max_size = 3;
     constexpr auto attr_index = 1;
-    auto ret_abstract = EvalUndeterminedArgs(args_abs_list);
-    if (ret_abstract != nullptr) {
+    auto res_abstract = EvalUndeterminedArgs(args_abs_list);
+    if (res_abstract != nullptr) {
       MS_LOG(DEBUG) << "GetAttrEvaluator eval Undetermined";
-      return ret_abstract;
+      return res_abstract;
     }
     // Inputs: data, item
     const auto args_size = args_abs_list.size();
@@ -2027,17 +2065,17 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
     if (type_id != TypeId::kObjectTypeString) {
       MS_EXCEPTION(TypeError) << "getattr(): attribute name must be string but got: " << TypeIdToString(type_id);
     }
-    EvalResultPtr ret = nullptr;
+    EvalResultPtr res = nullptr;
     if (bound_node() != nullptr) {
       TraceGuard trace_guard(std::make_shared<TraceResolve>(bound_node()->debug_info()));
-      ret = StaticGetter(engine, args_abs_list, in_conf0, out_conf);
+      res = StaticGetter(engine, args_abs_list, in_conf0, out_conf);
     } else {
-      ret = StaticGetter(engine, args_abs_list, in_conf0, out_conf);
+      res = StaticGetter(engine, args_abs_list, in_conf0, out_conf);
     }
     // don't lookup from cache, as different out_conf with same node but different context
     // may add different entry to anfnode_config_map, like getattr primitive;
-    evaluator_cache_mgr_->SetValue(args_abs_list, ret);
-    return ret;
+    evaluator_cache_mgr_->SetValue(args_abs_list, res);
+    return res;
   }
 };
 
@@ -2053,14 +2091,14 @@ class ResolveEvaluator : public TransitionPrimEvaluator {
     if (args_abs_list.size() != resolve_args_size) {
       MS_LOG(EXCEPTION) << "Expected args_abs_list size = 2, but has size:" << args_abs_list.size();
     }
-    EvalResultPtr ret = nullptr;
+    EvalResultPtr res = nullptr;
     if (bound_node() != nullptr) {
       TraceGuard trace_guard(std::make_shared<TraceResolve>(bound_node()->debug_info()));
-      ret = StaticGetter(engine, args_abs_list, in_conf0, out_conf);
+      res = StaticGetter(engine, args_abs_list, in_conf0, out_conf);
     } else {
-      ret = StaticGetter(engine, args_abs_list, in_conf0, out_conf);
+      res = StaticGetter(engine, args_abs_list, in_conf0, out_conf);
     }
-    return ret;
+    return res;
   }
 };
 
@@ -2154,8 +2192,8 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     if (converted_res->isa<FuncGraph>()) {
       AddToManager(engine, converted_res->cast<FuncGraphPtr>());
     }
-    AbstractBasePtr ret = ToAbstract(converted_res, AnalysisContext::DummyContext(), out_conf);
-    auto infer_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
+    AbstractBasePtr res = ToAbstract(converted_res, AnalysisContext::DummyContext(), out_conf);
+    auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
     evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
     return infer_result;
   }
@@ -2463,10 +2501,10 @@ class PartialEvaluator : public Evaluator {
     // Func in hypermap(partial(Func, arg0), arg1, arg2) may become Poly Node.
     if (arg0_value->isa<AbstractError>()) {
       MS_EXCEPTION_IF_NULL(arg0_value->GetValueTrack());
-      auto ret = std::make_shared<AbstractError>(arg0_value->GetValueTrack()->cast<ErrorValuePtr>(), out_conf->node());
+      auto res = std::make_shared<AbstractError>(arg0_value->GetValueTrack()->cast<ErrorValuePtr>(), out_conf->node());
       MS_LOG(DEBUG) << "AbstractError for node: " << out_conf->node()->DebugString()
                     << " as func is: " << arg0_value->ToString();
-      auto eval_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
+      auto eval_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
       evaluator_cache_mgr_->SetValue(args_abs_list, eval_result);
       return eval_result;
     }
@@ -2504,8 +2542,8 @@ class PartialEvaluator : public Evaluator {
     };
     func->Visit(build_partial);
 
-    auto ret = AbstractFunction::MakeAbstractFunction(partial_funcs_list);
-    auto eval_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
+    auto res = AbstractFunction::MakeAbstractFunction(partial_funcs_list);
+    auto eval_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
     evaluator_cache_mgr_->SetValue(args_abs_list, eval_result);
     return eval_result;
   }
@@ -2889,13 +2927,13 @@ class JoinedStrEvaluator : public TransitionPrimEvaluator {
       (void)new_inputs.insert(new_inputs.end(), cnode_inputs.begin() + 1, cnode_inputs.end());
       new_node = cur_graph->NewCNode(new_inputs);
     } else {
-      std::string ret;
+      std::string res;
       for (const auto &arg : args_abs_list) {
         auto arg_value = arg->BuildValue();
         MS_EXCEPTION_IF_NULL(arg_value);
-        ret += arg_value->ToString();
+        res += arg_value->ToString();
       }
-      new_node = NewValueNode(ret);
+      new_node = NewValueNode(res);
     }
 
     cur_graph->ReplaceInOrder(node, new_node);

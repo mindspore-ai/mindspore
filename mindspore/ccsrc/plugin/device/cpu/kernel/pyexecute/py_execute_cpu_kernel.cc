@@ -367,7 +367,7 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   } else if (py::isinstance<py::set>(py_res)) {
     MS_LOG(DEBUG) << "Real output is py::set, py_res: " << py_res;
   } else {
-    MS_LOG(EXCEPTION) << "The output is invalid, py_res: " << py_res;
+    MS_LOG(DEBUG) << "Real output is function or other type, py_res: " << py_res;
   }
   AttachPyOutputData(py_res);
   return true;

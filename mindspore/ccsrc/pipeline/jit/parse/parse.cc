@@ -130,23 +130,19 @@ void Parser::CleanParserResource() {
   ScopeManager::GetInstance().ClearScope();
 }
 
-void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseFunctionAst> &ast) {
+void Parser::CheckFuncReturn(const FuncGraphPtr &fn) {
   // Check whether the functions referred by this function and itself are missing 'return' statement
   auto manager = Manage(fn, false);
-  MS_EXCEPTION_IF_NULL(ast);
+  MS_EXCEPTION_IF_NULL(ast_);
   for (const auto &func_graph : manager->func_graphs()) {
     MS_EXCEPTION_IF_NULL(func_graph);
     if (func_graph->get_return() != nullptr) {
       continue;
     }
-    py::object node = ast->GetAstNode();
-    py::list ret = ast->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
-    constexpr auto min_list_size = 2;
-    if (ret.size() < min_list_size) {
-      MS_LOG(EXCEPTION) << "list size:" << ret.size() << " is less than 2.";
-    }
-    py::str desc =
-      python_adapter::CallPyModFn(ast->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast->function(), ret[0], ret[1]);
+    py::object node = ast_->GetAstNode();
+    const auto &location = GetLocation(node);
+    py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
+                                               location->file_name(), location->line());
     MS_EXCEPTION(TypeError) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
                             << ". FuncGraph: " << func_graph->ToString();
   }
@@ -497,7 +493,7 @@ FuncGraphPtr Parser::ParseFuncGraph() {
   }
   RemoveUnnecessaryPhis();
   MS_EXCEPTION_IF_NULL(fn_block);
-  CheckFuncReturn(fn_block->func_graph(), ast_);
+  CheckFuncReturn(fn_block->func_graph());
   TransformParallelCall();
   return fn_block->func_graph();
 }
@@ -672,8 +668,9 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   }
 
   if (current_fg->get_return() == nullptr) {
-    py::list ret = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
-    py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, node, ret[0], ret[1]);
+    const auto &location = GetLocation(node);
+    py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, node,
+                                               location->file_name(), location->line());
     MS_EXCEPTION(TypeError) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
                             << ".";
   }
@@ -859,20 +856,22 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
 
 LocationPtr Parser::GetLocation(const py::object &node) const {
   MS_EXCEPTION_IF_NULL(ast_);
-  py::list ret = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
-  constexpr size_t list_size = 5;
-  if (ret.size() < list_size) {
+  py::list res = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
+  constexpr size_t list_size = 6;
+  if (res.size() < list_size) {
     MS_LOG(EXCEPTION) << "List size should not be less than 5.";
   }
-  const size_t file_name_index = 0;
-  const size_t line_index = 1;
-  const size_t column_index = 2;
-  const size_t line_end_index = 3;
-  const size_t column_end_index = 4;
-  // Refer to Location::Location() for each member of ret: line, column, line_end, column_end.
-  auto location = std::make_shared<Location>(ret[file_name_index].cast<std::string>(), ret[line_index].cast<int64_t>(),
-                                             ret[column_index].cast<int64_t>(), ret[line_end_index].cast<int64_t>(),
-                                             ret[column_end_index].cast<int64_t>());
+  constexpr size_t file_name_index = 0;
+  constexpr size_t line_index = 1;
+  constexpr size_t column_index = 2;
+  constexpr size_t line_end_index = 3;
+  constexpr size_t column_end_index = 4;
+  constexpr size_t expr_src_index = 5;
+  // Refer to Location::Location() for each member of res: line, column, line_end, column_end, expr_src.
+  auto location =
+    std::make_shared<Location>(res[file_name_index].cast<std::string>(), res[line_index].cast<int64_t>(),
+                               res[column_index].cast<int64_t>(), res[line_end_index].cast<int64_t>(),
+                               res[column_end_index].cast<int64_t>(), res[expr_src_index].cast<std::string>());
   return location;
 }
 
@@ -1217,22 +1216,8 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   }
   UpdateInterpretForUserNode(call_cnode, call_function_node);
   MS_EXCEPTION_IF_NULL(call_cnode);
-
   MS_LOG(DEBUG) << "call_cnode: " << call_cnode->DebugString()
                 << ", call_function_node: " << call_function_node->DebugString();
-  // Support tensor.asnumpy() in runtime by JIT Fallback.
-  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-  if (support_fallback_runtime && IsPrimitiveCNode(call_function_node, prim::kPrimGetAttr)) {
-    constexpr size_t index_two = 2;
-    const auto &attr_node = call_function_node->cast<CNodePtr>()->input(index_two);
-    const auto &attr_str = GetValueNode<StringImmPtr>(attr_node);
-    MS_EXCEPTION_IF_NULL(attr_str);
-    if (attr_str->value() == "asnumpy") {
-      call_cnode->set_interpret(true);
-      call_cnode = HandleInterpret(block, call_cnode, node);
-      return call_cnode;
-    }
-  }
 
   // Process bulitin function, for example, sum(np.array(xx))
   py::tuple namespace_info = ast_->CallParserObjMethod(PYTHON_PARSE_GET_BUILTIN_NAMESPACE_SYMBOL, name_id);
@@ -1475,9 +1460,8 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
     auto value_str = py::cast<std::string>(ast()->GetAstNodeText(value_body));
     py::bool_ is_const_value =
       ast()->CallParserObjMethod(PYTHON_PARSE_CHECK_IS_CONSTANT_VALUE, value_str, common::SafeCStr(attr_str));
-    static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
     auto is_constant = py::cast<bool>(is_const_value);
-    if (!is_constant || (support_fallback_runtime && attr_str == "asnumpy")) {
+    if (!is_constant) {
       UpdateInterpretForUserNode(attr_cnode, value_node);
     }
   }

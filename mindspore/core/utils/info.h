@@ -40,8 +40,13 @@ MS_CORE_API void ClearThreadLocal();
 // Location class record the location in source code.
 class Location {
  public:
-  Location(const std::string &file_name, int line, int column, int line_end, int column_end)
-      : file_name_(file_name), line_(line), column_(column), line_end_(line_end), column_end_(column_end) {}
+  Location(const std::string &file_name, int line, int column, int line_end, int column_end, const std::string &expr)
+      : file_name_(file_name),
+        line_(line),
+        column_(column),
+        line_end_(line_end),
+        column_end_(column_end),
+        expr_src_(expr) {}
   ~Location() = default;
   std::string ToString(SourceLineTip tip = kSourceLineTipNextLine) const;
   std::string file_name() const { return file_name_; }
@@ -49,6 +54,7 @@ class Location {
   int line_end() const { return line_end_; }
   int column() const { return column_; }
   int column_end() const { return column_end_; }
+  std::string expr_src() const { return expr_src_; }
 
   bool operator<(const Location &other) const;
 
@@ -58,6 +64,7 @@ class Location {
   int column_;
   int line_end_;
   int column_end_;
+  std::string expr_src_;
 };
 
 class TraceContext {
@@ -165,6 +172,8 @@ class MS_CORE_API DebugInfo {
     if (top != nullptr) {
       trace_info_ = top->trace_info();
       location_ = top->location();
+    } else {
+      MS_LOG(DEBUG) << "\'" << name << "\' has no trace info.";
     }
   }
 
@@ -262,6 +271,8 @@ class MS_CORE_API NodeDebugInfo : public DebugInfo {
     auto top = TraceManager::CurrentContextInfo();
     if (top != nullptr) {
       py_func_belonged_ = top->func_name();
+    } else {
+      MS_LOG(INFO) << "The node has no trace info.";
     }
   }
 
@@ -272,6 +283,8 @@ class MS_CORE_API NodeDebugInfo : public DebugInfo {
     auto top = TraceManager::CurrentContextInfo();
     if (top != nullptr) {
       py_func_belonged_ = top->func_name();
+    } else {
+      MS_LOG(INFO) << "The node \'" << name << "\' has no trace info.";
     }
   }
 
@@ -315,6 +328,8 @@ class MS_CORE_API GraphDebugInfo : public DebugInfo {
     auto top = TraceManager::CurrentContextInfo();
     if (top != nullptr) {
       py_func_name_ = top->func_name();
+    } else {
+      MS_LOG(INFO) << "The func graph has no trace info.";
     }
   }
 
@@ -322,6 +337,8 @@ class MS_CORE_API GraphDebugInfo : public DebugInfo {
     auto top = TraceManager::CurrentContextInfo();
     if (top != nullptr) {
       py_func_name_ = top->func_name();
+    } else {
+      MS_LOG(INFO) << "The func graph \'" << name << "\' has no trace info.";
     }
   }
 

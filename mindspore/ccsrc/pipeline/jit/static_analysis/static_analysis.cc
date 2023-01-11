@@ -300,12 +300,77 @@ AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, co
   return out;
 }
 
+AnfNodeConfigPtr AnalysisEngine::GetForwardConfig(const AnfNodeConfigPtr &conf) const {
+  MS_EXCEPTION_IF_NULL(conf);
+  AnfNodeConfigPtr new_conf = conf;
+  auto conf_iter = anfnode_config_map().find(conf);
+  while (conf_iter != anfnode_config_map().end()) {
+    new_conf = conf_iter->second;
+    MS_EXCEPTION_IF_NULL(new_conf);
+    conf_iter = anfnode_config_map().find(new_conf);
+  }
+  return new_conf;
+}
+
+EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
+  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+  if (!support_fallback_runtime) {
+    return nullptr;
+  }
+
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto &inputs = cnode->inputs();
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "CNode inputs should not be empty, CNode: " << cnode->DebugString();
+  }
+
+  // Check if the operator input is PyExecute CNode.
+  auto &func_node = inputs[0];
+  MS_EXCEPTION_IF_NULL(func_node);
+  MS_LOG(DEBUG) << "Current CNode function: " << func_node->DebugString();
+  if (!IsPrimitiveCNode(func_node, prim::kPrimGetAttr)) {  // Optimize the performance.
+    return nullptr;
+  }
+  AnfNodeConfigPtr func_conf = MakeConfig(func_node, conf->context(), conf->func_graph());
+  MS_EXCEPTION_IF_NULL(func_conf);
+  const auto &forwarded_conf = GetForwardConfig(func_conf);
+  if (!IsPrimitiveCNode(forwarded_conf->node(), prim::kPrimPyExecute)) {
+    return nullptr;
+  }
+
+  // Forward getattr CNode call to py_execute CNode.
+  constexpr auto internal_getattr_callable_obj_str = "__internal_getattr_callable_obj__";
+  std::stringstream script_buffer;
+  script_buffer << internal_getattr_callable_obj_str << "()";
+  const auto script_call_str = std::make_shared<StringImm>(script_buffer.str());
+
+  std::vector<ValuePtr> key_list;
+  const auto callable_obj_name_str = std::make_shared<StringImm>(internal_getattr_callable_obj_str);
+  (void)key_list.emplace_back(callable_obj_name_str);
+  const auto key_tuple = std::make_shared<ValueTuple>(key_list);
+
+  std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
+  (void)value_list.emplace_back(func_node);
+  auto fg = cnode->func_graph();
+  const auto value_tuple_node = fg->NewCNode(value_list);
+
+  const auto getattr_obj_call_node = fg->NewCNode(
+    {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_call_str), NewValueNode(key_tuple), value_tuple_node});
+
+  getattr_obj_call_node->set_debug_info(cnode->debug_info());
+  fg->ReplaceInOrder(cnode, getattr_obj_call_node);
+  AnalysisEnginePtr eng = conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(getattr_obj_call_node, conf->context(), conf->func_graph());
+  return eng->ForwardConfig(conf, fn_conf);
+}
+
 AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context,
                                                          const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto &inputs = cnode->inputs();
   if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "CNode->inputs() is empty, CNode: " << cnode->DebugString();
+    MS_LOG(EXCEPTION) << "CNode inputs should not be empty, CNode: " << cnode->DebugString();
   }
   auto &func_node = inputs[0];
   MS_EXCEPTION_IF_NULL(func_node);
@@ -370,6 +435,13 @@ EvalResultPtr ConvertClassToFunc(const CNodePtr &cnode, const AbstractBasePtr &a
 EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(cnode);
+
+  // Handle the interpreted node call here.
+  const auto &interpreted_eval_result = InterpretedNodeCall(cnode, conf);
+  if (interpreted_eval_result != nullptr) {
+    return interpreted_eval_result;
+  }
+
   AbstractBasePtr possible_func = GetCNodeOperatorAbstract(cnode, conf->context(), conf->func_graph());
   if (possible_func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
     MS_LOG(DEBUG) << "EvalCNode eval Undetermined";
@@ -538,10 +610,10 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   if (prim->isa<prim::UnpackGraphPrimitive>()) {
     return std::make_shared<UnpackGraphEvaluator>(prim);
   }
-  if (prim->Hash() == prim::kPrimMixedPrecisionCast->Hash() && prim->name() == prim::kPrimMixedPrecisionCast->name()) {
+  if (IsPrimitiveEquals(prim, prim::kPrimMixedPrecisionCast)) {
     return std::make_shared<MixedPrecisionCastEvaluator>(prim);
   }
-  if (prim->Hash() == prim::kPrimPyExecute->Hash() && prim->name() == prim::kPrimPyExecute->name()) {
+  if (IsPrimitiveEquals(prim, prim::kPrimPyExecute)) {
     prim::kPrimPyExecute->AddAttr("primitive_target", MakeValue("CPU"));
     return std::make_shared<PyExecuteEvaluator>();
   }
@@ -550,8 +622,8 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);
   if (eval_impl_opt.has_value()) {
     auto eval_impl = eval_impl_opt.value();
-    if (eval_impl.IsImplInferShapeAndType() && prim->name() != prim::kPrimMakeTuple->name() &&
-        prim->name() != prim::kPrimMakeList->name()) {  // Refactoring infer routine soon.
+    if (eval_impl.IsImplInferShapeAndType() && !IsPrimitiveEquals(prim, prim::kPrimMakeTuple) &&
+        !IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
       return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
     }
   }

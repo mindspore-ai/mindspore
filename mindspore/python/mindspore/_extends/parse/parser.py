@@ -1076,11 +1076,12 @@ class Parser:
                     hasattr(end_node, "last_token"):
                 start_lineno, start_colno = start_node.first_token.start
                 end_lineno, end_colno = end_node.last_token.end
+                expr_src = self.get_source_code(start_lineno, start_colno, end_lineno, end_colno)
                 start_lineno += self.line_offset - 1
                 start_colno += self.col_offset
                 end_lineno += self.line_offset - 1
                 end_colno += self.col_offset
-                res = res + [start_lineno, start_colno, end_lineno, end_colno]
+                res = res + [start_lineno, start_colno, end_lineno, end_colno, expr_src]
             else:
-                res = res + [0, 0, 0, 0]
+                res = res + [0, 0, 0, 0, '']
         return res

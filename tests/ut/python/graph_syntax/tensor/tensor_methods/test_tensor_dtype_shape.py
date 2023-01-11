@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test dtype and shape as attr"""
+import os
 import numpy as np
 import pytest
 
@@ -58,27 +59,43 @@ def test_dtype_and_shape_as_attr_to_new_tensor():
     assert (ret.asnumpy() == (np.zeros([1, 2, 3], np.float32) + 2.2)).all()
 
 
+# When enable JIT Fallback, the error not happens during compiling, but throw in runtime.
 def test_type_not_have_the_attr():
+    """
+    Feature: Support getattr.
+    Description: Test getattr.
+    Expectation: No exception.
+    """
     class Net(nn.Cell):
 
         def construct(self, x):
             shape = x.shapes
             return shape
 
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     net = Net()
     x = Tensor(np.ones([1, 2, 3], np.int32))
     with pytest.raises(AttributeError):
         net(x)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
+# When enable JIT Fallback, the error not happens during compiling, but throw in runtime.
 def test_type_not_have_the_method():
+    """
+    Feature: Support getattr.
+    Description: Test getattr.
+    Expectation: No exception.
+    """
     class Net(nn.Cell):
 
         def construct(self, x):
             shape = x.dtypes()
             return shape
 
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     net = Net()
     x = Tensor(np.ones([1, 2, 3], np.int32))
     with pytest.raises(AttributeError):
         net(x)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
