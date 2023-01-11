@@ -89,25 +89,6 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::strin
   return support_kernel_attrs;
 }
 
-bool NativeCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs) {
-  MS_EXCEPTION_IF_CHECK_FAIL(this->inputs_.size() == inputs.size(), "inputs size check failed");
-  MS_EXCEPTION_IF_CHECK_FAIL(this->outputs_.size() == outputs.size(), "inputs size check failed");
-  auto it1 = this->inputs_.begin();
-  auto it2 = inputs.begin();
-  for (; it1 != this->inputs_.end() && it2 != inputs.end(); it1++, it2++) {
-    (*it1)->SetData((*it2));
-  }
-
-  it1 = this->outputs_.begin();
-  it2 = outputs.begin();
-  for (; it1 != this->outputs_.end() && it2 != outputs.end(); it1++, it2++) {
-    (*it1)->SetData((*it2));
-  }
-
-  return Launch(this->inputs_, this->outputs_, workspace);
-}
-
 int DeprecatedNativeCpuKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &,
                                          const std::vector<KernelTensorPtr> &,
                                          const std::map<uint32_t, tensor::TensorPtr> &) {
