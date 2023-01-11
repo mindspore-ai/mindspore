@@ -61,6 +61,8 @@ AicpuTask::AicpuTask(const ModelContext &model_context, const std::shared_ptr<Ai
   } else {
     rt_event_id_ = 0;
   }
+
+  session_id_ = model_context.session_id();
 }
 
 AicpuTask::~AicpuTask() {
@@ -151,6 +153,11 @@ void AicpuTask::SetAicpuParamHead(uint32_t args_size, uint32_t io_addrs_num) {
     if (!ext_info_handler->Parse(ext_info)) {
       MS_LOG(EXCEPTION) << "Parse AiCpu ext_info_handler failed";
     }
+    // update session info
+    if (!ext_info_handler->UpdateSessionInfoId(session_id_)) {
+      MS_LOG(EXCEPTION) << "Aicpu ext_info_handler update session info failed.";
+    }
+
     // update wait event id
     if (task_info_->is_blocking()) {
       if (!ext_info_handler->UpdateEventId(rt_event_id_)) {
