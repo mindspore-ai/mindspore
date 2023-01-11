@@ -34,19 +34,28 @@ class SortNet(nn.Cell):
 def sort_1d(descending, nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
-    x_numpy = np.array([1, -2, 3, 4]).astype(nptype)
+    x_numpy = np.array([1, 0, 3, 4]).astype(nptype)
     x = Tensor(x_numpy)
     sort_net = SortNet(0, descending)
     output, indices = sort_net(x)
 
     expected_output = np.sort(x_numpy, 0)
     expected_indices = np.array([1, 0, 2, 3])
+    expected_indices_bool_descend = np.array([0, 2, 3, 1])
+    expected_indices_bool_ascend = np.array([1, 0, 2, 3])
+
     if descending:
         expected_output = expected_output[::-1]
         expected_indices = expected_indices[::-1]
 
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
-    np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
+    if nptype is np.bool:
+        if descending:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_descend)
+        else:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_ascend)
+    else:
+        np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
 
 
 def sort_3d(descending, nptype):
@@ -64,55 +73,109 @@ def sort_3d(descending, nptype):
     sort_net = SortNet(axis, descending)
     output, indices = sort_net(x)
 
-    expected_output = np.sort(x_numpy, axis)
+    expected_output = np.sort(x_numpy, axis, kind="stable")
     expected_indices = np.array([[[0, 1, 2, 3],
                                   [3, 2, 1, 0],
                                   [2, 1, 3, 0]],
                                  [[2, 1, 0, 3],
                                   [2, 0, 3, 1],
                                   [1, 3, 0, 2]]])
+    expected_indices_bool_ascend = np.array([[[0, 1, 2, 3],
+                                              [3, 0, 1, 2],
+                                              [0, 1, 2, 3]],
+                                             [[0, 1, 2, 3],
+                                              [2, 0, 1, 3],
+                                              [0, 1, 2, 3]]])
+    expected_indices_bool_descend = np.array([[[0, 1, 2, 3],
+                                               [0, 1, 2, 3],
+                                               [0, 1, 2, 3]],
+                                              [[0, 1, 2, 3],
+                                               [0, 1, 3, 2],
+                                               [0, 1, 2, 3]]])
     if descending:
         expected_output = expected_output[:, :, ::-1]
         expected_indices = expected_indices[:, :, ::-1]
 
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
-    np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
+    if nptype is np.bool:
+        if descending:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_descend)
+        else:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_ascend)
+    else:
+        np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
 
     axis = 1
     sort_net = SortNet(axis, descending)
     output, indices = sort_net(x)
 
-    expected_output = np.sort(x_numpy, axis)
+    expected_output = np.sort(x_numpy, axis, kind="stable")
     expected_indices = np.array([[[0, 0, 2, 1],
                                   [1, 2, 1, 0],
                                   [2, 1, 0, 2]],
                                  [[1, 2, 1, 2],
                                   [0, 0, 0, 1],
                                   [2, 1, 2, 0]]])
+    expected_indices_bool_ascend = np.array([[[0, 0, 0, 1],
+                                              [1, 1, 1, 0],
+                                              [2, 2, 2, 2]],
+                                             [[0, 0, 1, 0],
+                                              [1, 1, 0, 1],
+                                              [2, 2, 2, 2]]])
+    expected_indices_bool_descend = np.array([[[0, 0, 0, 0],
+                                               [1, 1, 1, 2],
+                                               [2, 2, 2, 1]],
+                                              [[0, 0, 0, 0],
+                                               [1, 1, 2, 1],
+                                               [2, 2, 1, 2]]])
     if descending:
         expected_output = expected_output[:, ::-1, :]
         expected_indices = expected_indices[:, ::-1, :]
 
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
-    np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
+    if nptype is np.bool:
+        if descending:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_descend)
+        else:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_ascend)
+    else:
+        np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
 
     axis = -3
     sort_net = SortNet(axis, descending)
     output, indices = sort_net(x)
 
-    expected_output = np.sort(x_numpy, axis)
+    expected_output = np.sort(x_numpy, axis, kind="stable")
     expected_indices = np.array([[[0, 0, 1, 0],
                                   [1, 0, 1, 0],
                                   [1, 1, 0, 1]],
                                  [[1, 1, 0, 1],
                                   [0, 1, 0, 1],
                                   [0, 0, 1, 0]]])
+    expected_indices_bool_ascend = np.array([[[0, 0, 0, 0],
+                                              [0, 0, 1, 0],
+                                              [0, 0, 0, 0]],
+                                             [[1, 1, 1, 1],
+                                              [1, 1, 0, 1],
+                                              [1, 1, 1, 1]]])
+    expected_indices_bool_descend = np.array([[[0, 0, 0, 0],
+                                               [0, 0, 0, 1],
+                                               [0, 0, 0, 0]],
+                                              [[1, 1, 1, 1],
+                                               [1, 1, 1, 0],
+                                               [1, 1, 1, 1]]])
     if descending:
         expected_output = expected_output[::-1, :, :]
         expected_indices = expected_indices[::-1, :, :]
 
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
-    np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
+    if nptype is np.bool:
+        if descending:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_descend)
+        else:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_ascend)
+    else:
+        np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
 
 
 def dynamic_sort_3d(descending, nptype):
@@ -139,19 +202,37 @@ def dynamic_sort_3d(descending, nptype):
     sort_net.set_inputs(input_dyn)
     output, indices = sort_net(x)
 
-    expected_output = np.sort(x_numpy, axis)
+    expected_output = np.sort(x_numpy, axis, kind="stable")
     expected_indices = np.array([[[0, 1, 2, 3],
                                   [3, 2, 1, 0],
                                   [2, 1, 3, 0]],
                                  [[2, 1, 0, 3],
                                   [2, 0, 3, 1],
                                   [1, 3, 0, 2]]])
+    expected_indices_bool_ascend = np.array([[[0, 1, 2, 3],
+                                              [3, 0, 1, 2],
+                                              [0, 1, 2, 3]],
+                                             [[0, 1, 2, 3],
+                                              [2, 0, 1, 3],
+                                              [0, 1, 2, 3]]])
+    expected_indices_bool_descend = np.array([[[0, 1, 2, 3],
+                                               [0, 1, 2, 3],
+                                               [0, 1, 2, 3]],
+                                              [[0, 1, 2, 3],
+                                               [0, 1, 3, 2],
+                                               [0, 1, 2, 3]]])
     if descending:
         expected_output = expected_output[:, :, ::-1]
         expected_indices = expected_indices[:, :, ::-1]
 
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
-    np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
+    if nptype is np.bool:
+        if descending:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_descend)
+        else:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_ascend)
+    else:
+        np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
 
     axis = 1
     sort_net = SortNet(axis, descending)
@@ -160,19 +241,37 @@ def dynamic_sort_3d(descending, nptype):
     sort_net.set_inputs(input_dyn)
     output, indices = sort_net(x)
 
-    expected_output = np.sort(x_numpy, axis)
+    expected_output = np.sort(x_numpy, axis, kind="stable")
     expected_indices = np.array([[[0, 0, 2, 1],
                                   [1, 2, 1, 0],
                                   [2, 1, 0, 2]],
                                  [[1, 2, 1, 2],
                                   [0, 0, 0, 1],
                                   [2, 1, 2, 0]]])
+    expected_indices_bool_ascend = np.array([[[0, 0, 0, 1],
+                                              [1, 1, 1, 0],
+                                              [2, 2, 2, 2]],
+                                             [[0, 0, 1, 0],
+                                              [1, 1, 0, 1],
+                                              [2, 2, 2, 2]]])
+    expected_indices_bool_descend = np.array([[[0, 0, 0, 0],
+                                               [1, 1, 1, 2],
+                                               [2, 2, 2, 1]],
+                                              [[0, 0, 0, 0],
+                                               [1, 1, 2, 1],
+                                               [2, 2, 1, 2]]])
     if descending:
         expected_output = expected_output[:, ::-1, :]
         expected_indices = expected_indices[:, ::-1, :]
 
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
-    np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
+    if nptype is np.bool:
+        if descending:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_descend)
+        else:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_ascend)
+    else:
+        np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
 
     axis = -3
     sort_net = SortNet(axis, descending)
@@ -181,87 +280,82 @@ def dynamic_sort_3d(descending, nptype):
     sort_net.set_inputs(input_dyn)
     output, indices = sort_net(x)
 
-    expected_output = np.sort(x_numpy, axis)
+    expected_output = np.sort(x_numpy, axis, kind="stable")
     expected_indices = np.array([[[0, 0, 1, 0],
                                   [1, 0, 1, 0],
                                   [1, 1, 0, 1]],
                                  [[1, 1, 0, 1],
                                   [0, 1, 0, 1],
                                   [0, 0, 1, 0]]])
+    expected_indices_bool_ascend = np.array([[[0, 0, 0, 0],
+                                              [0, 0, 1, 0],
+                                              [0, 0, 0, 0]],
+                                             [[1, 1, 1, 1],
+                                              [1, 1, 0, 1],
+                                              [1, 1, 1, 1]]])
+    expected_indices_bool_descend = np.array([[[0, 0, 0, 0],
+                                               [0, 0, 0, 1],
+                                               [0, 0, 0, 0]],
+                                              [[1, 1, 1, 1],
+                                               [1, 1, 1, 0],
+                                               [1, 1, 1, 1]]])
     if descending:
         expected_output = expected_output[::-1, :, :]
         expected_indices = expected_indices[::-1, :, :]
 
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
-    np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
+    if nptype is np.bool:
+        if descending:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_descend)
+        else:
+            np.testing.assert_array_equal(indices.asnumpy(), expected_indices_bool_ascend)
+    else:
+        np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_sort1d_float16():
-    sort_1d(False, np.float16)
+@pytest.mark.parametrize("descending", [True, False])
+@pytest.mark.parametrize("nptype", [np.bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.float16, np.float32,
+                                    np.float64])
+def test_sort1d(descending, nptype):
+    """
+    Feature: test gpu sort accuracy with 1d input.
+    Description: test interface.
+    Expectation: the result match with numpy result.
+    """
+    sort_1d(descending, nptype)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_sort1d_descending_float16():
-    sort_1d(True, np.float16)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_sort1d_float32():
-    sort_1d(False, np.float32)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_sort1d_descending_float32():
-    sort_1d(True, np.float32)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_sort3d_float16():
-    sort_3d(False, np.float16)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_sort3d_descending_float16():
-    sort_3d(True, np.float16)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_sort3d_float32():
-    sort_3d(False, np.float32)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_sort3d_descending_float32():
-    sort_3d(True, np.float32)
+@pytest.mark.parametrize("descending", [True, False])
+@pytest.mark.parametrize("nptype", [np.bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.float16, np.float32,
+                                    np.float64])
+def test_sort3d(descending, nptype):
+    """
+    Feature: test gpu sort accuracy with 3d input.
+    Description: test interface.
+    Expectation: the result match with numpy result.
+    """
+    sort_3d(descending, nptype)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_gpu_dynamic_sort3d_descending_float32():
+@pytest.mark.parametrize("descending", [True, False])
+@pytest.mark.parametrize("nptype", [np.bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.float16, np.float32,
+                                    np.float64])
+def test_gpu_dynamic_sort3d(descending, nptype):
     """
     Feature: test gpu sort dynamic function interface.
     Description: test interface.
-    Expectation: the result match with numpy result
+    Expectation: the result match with numpy result.
     """
-    dynamic_sort_3d(True, np.float32)
+    dynamic_sort_3d(descending, nptype)
 
 
 @pytest.mark.level0
