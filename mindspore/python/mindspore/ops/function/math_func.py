@@ -4292,7 +4292,7 @@ def orgqr(x, tau):
     Examples:
         >>> x = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62.]]), mindspore.float32)
         >>> tau = Tensor(np.array([1.55, 1.94, 0.0]), mindspore.float32)
-        >>> net = ops.Orgqr()
+        >>> net = ops.orgqr()
         >>> y = net(x, tau)
         >>> print(y)
         [[-0.54999995 -0.2128925   0.8137956 ]
