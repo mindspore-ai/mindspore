@@ -185,7 +185,6 @@ REG_ADPT_DESC(FullyConnection, kNameFullConnection, ADPT_DESC(FullyConnection))
 INPUT_MAP(IndexAdd) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
 ATTR_MAP(IndexAdd) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(IndexAdd) = {{0, OUTPUT_DESC(var_out)}};
-REG_ADPT_DESC(IndexAdd, prim::kPrimIndexAdd->name(), ADPT_DESC(IndexAdd))
 
 // TensorScatterAdd
 INPUT_MAP(TensorScatterAdd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
