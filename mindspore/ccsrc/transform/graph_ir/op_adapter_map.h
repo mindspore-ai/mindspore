@@ -422,6 +422,7 @@ constexpr const char kNameCosineSimilarity[] = "CosineSimilarity";
 constexpr const char kNameLayerNormXBackpropV2[] = "LayerNormXBackpropV2";
 constexpr const char kNameLayerNormBetaGammaBackpropV2[] = "LayerNormBetaGammaBackpropV2";
 constexpr const char kNameGRUV2HiddenGradCell[] = "GRUV2HiddenGradCell";
+constexpr const char kNameTopKV2[] = "TopKV2";
 
 class OpAdapterDesc;
 

@@ -61,6 +61,14 @@ ATTR_MAP(TopK) = {{"sorted", ATTR_DESC(sorted, AnyTraits<bool>())}};
 OUTPUT_MAP(TopK) = {{0, OUTPUT_DESC(values)}, {1, OUTPUT_DESC(indices)}};
 REG_ADPT_DESC(TopK, kNameTopK, ADPT_DESC(TopK))
 
+// TopKV2
+INPUT_MAP(TopKV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(k)}};
+ATTR_MAP(TopKV2) = {{"axis", ATTR_DESC(dim, AnyTraits<int64_t>())},
+                    {"largest", ATTR_DESC(largest, AnyTraits<bool>())},
+                    {"sorted", ATTR_DESC(sorted, AnyTraits<bool>())}};
+OUTPUT_MAP(TopKV2) = {{0, OUTPUT_DESC(values)}, {1, OUTPUT_DESC(indices)}};
+REG_ADPT_DESC(TopKV2, kNameTopKV2, ADPT_DESC(TopK))
+
 // InTopK
 INPUT_MAP(InTopKD) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(InTopKD) = {{"k", ATTR_DESC(k, AnyTraits<int64_t>())}};

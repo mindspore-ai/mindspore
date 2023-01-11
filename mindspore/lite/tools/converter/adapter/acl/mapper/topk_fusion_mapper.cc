@@ -19,6 +19,7 @@
 #include <vector>
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
+#include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "src/common/log_util.h"
 #include "ops/topk.h"
 #include "ops/op_utils.h"
@@ -33,14 +34,12 @@ constexpr size_t kInputNumTwo = 2;
 }  // namespace
 
 STATUS TopKFusionMapper::Mapper(const CNodePtr &cnode) {
-  ops::TopK topk_op;
-  auto dst_prim = topk_op.GetPrim();
+  auto dst_prim = std::make_shared<acl::TopKV2>();
   if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
     MS_LOG(ERROR) << "TopKFusionMapper mapper failed.";
     return RET_ERROR;
   }
   auto topk_prim = ops::GetOperator<ops::TopKFusion>(cnode->input(0));
-  dst_prim->AddAttr("dims", MakeValue<int64_t>(topk_prim->get_axis()));
   dst_prim->AddAttr("largest", MakeValue<bool>(topk_prim->get_largest() != 0));
 
   auto inputs = cnode->inputs();

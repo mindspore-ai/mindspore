@@ -1,10 +1,3 @@
-set(MODEL_LOADER_FRAMEWORK_SRC
-    ${MODEL_LOADER_FRAMEWORK_SRC}
-    ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/model_loader.cc
-    )
-
-set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
-    ${MODEL_LOADER_FRAMEWORK_SRC})
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     if(PLATFORM_ARM64)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions")
@@ -17,25 +10,12 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
     remove_definitions(-DBUILD_LITE_INFERENCE)
-    set(MINDIR_MODEL_SRC
-        ${MINDIR_MODEL_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model_convertor.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model_loader.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/kernel_mod_util.cc
-        )
-
-    set(MINDIR_KERNEL_SRC
-        ${MINDIR_KERNEL_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/inner_kernel.cc)
 
     set(MSLITE_KERNEL_PLUGIN
         ${MSLITE_KERNEL_PLUGIN}
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend/plugin/ascend_kernel_plugin.cc)
 
-    set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model_util.cc
+    set(MSLITE_EXTEND_RUNTIME_SRC
         ${MSLITE_KERNEL_PLUGIN}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/utils.cc
@@ -217,6 +197,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         target_link_libraries(cloud_infer_test mindspore-extendrt)
     endif()
 else()
+    set(MSLITE_EXTEND_RUNTIME_SRC ${MODEL_LOADER_FRAMEWORK_SRC})
     add_library(mindspore-extendrt OBJECT ${MSLITE_EXTEND_RUNTIME_SRC})
     add_dependencies(mindspore-extendrt fbs_inner_src)
     add_library(mindspore-extendrt_static OBJECT ${MSLITE_EXTEND_RUNTIME_SRC})
