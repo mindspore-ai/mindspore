@@ -37,7 +37,7 @@ STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
 
   ops::MatMul mat_mul;
   auto dst_prim = mat_mul.GetPrim();
-  if (shape_vector.size() == DIMENSION_3D) {
+  if (shape_vector.size() != DIMENSION_2D) {
     ops::BatchMatMul batch_mat_mul;
     dst_prim = batch_mat_mul.GetPrim();
   }
