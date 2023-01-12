@@ -4951,6 +4951,10 @@ def addbmm(x, batch1, batch2, *, beta=1, alpha=1):
          [1285. 1377. 1469.]
          [1621. 1745. 1869.]]
     """
+    dim1 = batch1.ndim
+    dim2 = batch2.ndim
+    if dim1 != 3 or dim2 != 3:
+        raise ValueError(f"For 'addbmm', 'batch1' and 'batch2' must be 3D, but got {dim1} and {dim2} respectively.")
     if not isinstance(alpha, (int, float)):
         raise TypeError(f"For 'addbmm', parameter 'alpha' must be an int or float, but got {type(alpha)}.")
     if not isinstance(beta, (int, float)):
