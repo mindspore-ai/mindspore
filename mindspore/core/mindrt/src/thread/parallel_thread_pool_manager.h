@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PARALLEL_THREAD_POOL_MANAGER_H_
-#define MINDSPORE_LITE_SRC_PARALLEL_THREAD_POOL_MANAGER_H_
+#ifndef MINDSPORE_CORE_MINDRT_RUNTIME_PARALLEL_THREAD_POOL_MANAGER_H_
+#define MINDSPORE_CORE_MINDRT_RUNTIME_PARALLEL_THREAD_POOL_MANAGER_H_
+
+#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
+#define THREAD_POOL_MANAGER
+#endif
 
 #include <queue>
 #include <vector>
@@ -27,11 +31,14 @@
 #include <string>
 
 namespace mindspore {
-class ParallelThreadPool;
 class ThreadPool;
+// class Worker;
+#ifdef ENABLE_MINDRT
+class ParallelThreadPool;
 struct ParallelTask;
 class ParallelWorker;
-class Worker;
+#endif
+
 class ParallelThreadPoolManager {
  public:
   static ParallelThreadPoolManager *GetInstance();
@@ -42,8 +49,6 @@ class ParallelThreadPoolManager {
             int task_num);
 
   void SetHasIdlePool(std::string runner_id, bool is_idle);
-
-  ParallelThreadPool *GetIdleThreadPool(const std::string &runner_id, ParallelTask *task);
 
   void ResetParallelThreadPoolManager(const std::string &runner_id);
 
@@ -59,11 +64,15 @@ class ParallelThreadPoolManager {
 
   int GetTaskNum(const std::map<std::string, std::map<std::string, std::string>> *config_info);
 
+#ifdef ENABLE_MINDRT
+  ParallelThreadPool *GetIdleThreadPool(const std::string &runner_id, ParallelTask *task);
+#endif
+
  private:
   ParallelThreadPoolManager() = default;
 
  private:
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
   // runner id <=> thread pool(a model has a thread pool)
   std::map<std::string, std::vector<ParallelThreadPool *>> runner_id_pools_;
   // pool sorted by model worker id
@@ -77,4 +86,4 @@ class ParallelThreadPoolManager {
 #endif
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_PARALLEL_THREAD_POOL_MANAGER_H_
+#endif  // MINDSPORE_CORE_MINDRT_RUNTIME_PARALLEL_THREAD_POOL_MANAGER_H_

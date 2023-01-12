@@ -28,11 +28,9 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMulFusion;
-#ifdef PARALLEL_INFERENCE
 namespace {
 constexpr int kNumDeepThreshold = 512;
 }
-#endif
 namespace mindspore::kernel {
 int MatmulRun(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
@@ -725,13 +723,11 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
 }
 
 int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
-#ifdef PARALLEL_INFERENCE
   if (params_->deep_ < kNumDeepThreshold) {
     auto num = ParallelThreadPoolManager::GetInstance()->GetThreadPoolSize(
       static_cast<const lite::InnerContext *>(ms_context_)->thread_pool_);
     params_->op_parameter_.thread_num_ = num != -1 ? num : params_->op_parameter_.thread_num_;
   }
-#endif
   if ((a_batch_ >= thread_num_ && (b_batch_ == a_batch_ || !SupportMulBatchCuttingByRow())) || params_->col_ == 1) {
     batch_stride_ = UP_DIV(params_->batch, thread_num_);
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByBatch;

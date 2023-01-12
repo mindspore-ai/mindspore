@@ -17,10 +17,12 @@
 #include "thread/parallel_thread_pool_manager.h"
 #include <map>
 #include <string>
+#ifdef THREAD_POOL_MANAGER
 #include "thread/parallel_threadpool.h"
+#endif
 
 namespace mindspore {
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
 namespace {
 const char *kInnerModelParallelRunner = "inner_model_parallel_runner";
 const char *kInnerRunnerID = "inner_runner_id";
@@ -34,7 +36,7 @@ ParallelThreadPoolManager *ParallelThreadPoolManager::GetInstance() {
 
 void ParallelThreadPoolManager::Init(bool enable_shared_thread_pool, const std::string &runner_id, int worker_num,
                                      int remaining_thread_num, int thread_num_limit) {
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
   if (enable_shared_thread_pool_.find(runner_id) != enable_shared_thread_pool_.end()) {
     THREAD_ERROR("Not need to repeat init.");
@@ -53,14 +55,14 @@ void ParallelThreadPoolManager::Init(bool enable_shared_thread_pool, const std::
 }
 
 void ParallelThreadPoolManager::SetHasIdlePool(std::string runner_id, bool is_idle) {
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
   has_idle_pool_[runner_id] = is_idle;
 #endif
 }
 
 int ParallelThreadPoolManager::GetTaskNum(
   const std::map<std::string, std::map<std::string, std::string>> *config_info) {
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
   if (config_info == nullptr) {
     THREAD_ERROR("config_info is nullptr.");
     return -1;
@@ -80,11 +82,11 @@ int ParallelThreadPoolManager::GetTaskNum(
   }
   return thread_num_limit_[runner_id];
 #endif
-  return 0;
+  return -1;
 }
 
 int ParallelThreadPoolManager::GetThreadPoolSize(ThreadPool *pool) {
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
   ParallelThreadPool *thread_pool = static_cast<ParallelThreadPool *>(pool);
   if (thread_pool == nullptr) {
@@ -96,12 +98,12 @@ int ParallelThreadPoolManager::GetThreadPoolSize(ThreadPool *pool) {
     return -1;
   }
 #endif
-  return 0;
+  return -1;
 }
 
 void ParallelThreadPoolManager::BindPoolToRunner(
   ThreadPool *pool, const std::map<std::string, std::map<std::string, std::string>> *config_info) {
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
   if (config_info == nullptr) {
     THREAD_ERROR("config_info is nullptr.");
@@ -138,7 +140,7 @@ void ParallelThreadPoolManager::BindPoolToRunner(
 }
 
 bool ParallelThreadPoolManager::GetEnableSharedThreadPool(std::string runner_id) {
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
   return enable_shared_thread_pool_[runner_id];
 #endif
@@ -146,7 +148,7 @@ bool ParallelThreadPoolManager::GetEnableSharedThreadPool(std::string runner_id)
 }
 
 void ParallelThreadPoolManager::ActivatePool(const std::string &runner_id, int model_id) {
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
   std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
   auto &pool = runner_id_pools_[runner_id][model_id];
   pool->UseThreadPool(1);
@@ -158,15 +160,16 @@ void ParallelThreadPoolManager::ActivatePool(const std::string &runner_id, int m
 }
 
 void ParallelThreadPoolManager::SetFreePool(const std::string &runner_id, int model_id) {
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
   std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
   auto &pool = runner_id_pools_[runner_id][model_id];
   pool->UseThreadPool(-1);
 #endif
 }
 
+#ifdef ENABLE_MINDRT
 ParallelThreadPool *ParallelThreadPoolManager::GetIdleThreadPool(const std::string &runner_id, ParallelTask *task) {
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
   if (!has_idle_pool_[runner_id]) {
     return nullptr;
   }
@@ -185,9 +188,10 @@ ParallelThreadPool *ParallelThreadPoolManager::GetIdleThreadPool(const std::stri
 #endif
   return nullptr;
 }
+#endif
 
 void ParallelThreadPoolManager::ResetParallelThreadPoolManager(const std::string &runner_id) {
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
   if (runner_id_pools_.find(runner_id) == runner_id_pools_.end()) {
     return;
@@ -205,7 +209,7 @@ void ParallelThreadPoolManager::ResetParallelThreadPoolManager(const std::string
 }
 
 ParallelThreadPoolManager::~ParallelThreadPoolManager() {
-#ifndef MS_COMPILE_IOS
+#ifdef THREAD_POOL_MANAGER
   THREAD_INFO("~ParallelThreadPoolManager start.");
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
   pool_workers_.clear();
