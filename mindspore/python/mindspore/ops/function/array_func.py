@@ -464,6 +464,33 @@ def reverse(x, axis):
     return P.ReverseV2(axis)(x)
 
 
+def ravel(x):
+    """
+    Return a contiguous flattened tensor.
+
+    Args:
+        x (Tensor): A tensor to be flattened.
+
+    Outputs:
+        Tensor, a 1-D tensor, containing the same elements of the input.
+
+    Raises:
+        TypeError: If argument `x` is not Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> output = ops.ravel(x)
+        >>> print(output)
+        [0, 1, 2, 1]
+        >>> print(output.shape)
+        (4,)
+    """
+    return ops.reshape(x, (-1,))
+
+
 def matrix_band_part(x, lower, upper):
     r"""
     Copy a tensor setting everything outside a central band in each innermost matrix to zero.
@@ -711,6 +738,46 @@ def full(size, fill_value, *, dtype=None): # pylint: disable=redefined-outer-nam
     if isinstance(size, list):
         size = tuple(size)
     return fill_(dtype, size, fill_value)
+
+
+def full_like(x, fill_value, *, dtype=None):
+    """
+    Returns  a Tensor with the same size as `x` filled with `fill_value`. 'ops.full_like(x, fill_value)' is
+    equivalent to 'ops.full(x.shape, fill_value, dtype=x.dtype)'.
+
+    Args:
+        x (Tensor): The shape of `x` will determine shape of the output Tensor.
+        fill_value (number.Number): Value to fill the returned Tensor.
+
+    Keyword Args:
+        dtype (mindspore.dtype, optional): The specified type of output tensor. The data type only supports
+            `bool_` and `number` , for details, please refer to :class:`mindspore.dtype` . Default: None.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> output = ops.full((2, 2), 1)
+        >>> print(output)
+        [[1. 1.]
+         [1. 1.]]
+        >>> output = ops.full((3, 3), 0)
+        >>> print(output)
+        [[0. 0. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]]
+    """
+    if not isinstance(x, Tensor):
+        raise TypeError(f"For ops.full_like, the argument 'x' must be tensor, but got {type(x)}")
+    if dtype is None:
+        dtype = x.dtype
+    return full(x.shape, fill_value, dtype=dtype)
 
 
 def chunk(x, chunks, axis=0):
@@ -6195,6 +6262,7 @@ __all__ = [
     'hamming_window',
     'chunk',
     'full',
+    'full_like',
     'dyn_shape',
     'rank',
     'range',
@@ -6245,6 +6313,7 @@ __all__ = [
     'masked_select',
     'where',
     'narrow',
+    'ravel',
     'scatter_add',
     'scatter_mul',
     'scatter_max',

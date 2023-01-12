@@ -270,6 +270,7 @@ mindspore.ops
     mindspore.ops.positive
     mindspore.ops.pow
     mindspore.ops.rad2deg
+    mindspore.ops.ravel
     mindspore.ops.real
     mindspore.ops.reciprocal
     mindspore.ops.remainder
@@ -454,6 +455,7 @@ Array操作
     mindspore.ops.flipud
     mindspore.ops.fold
     mindspore.ops.full
+    mindspore.ops.full_like
     mindspore.ops.gather
     mindspore.ops.gather_d
     mindspore.ops.gather_elements
