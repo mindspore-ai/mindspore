@@ -26,11 +26,7 @@ __global__ void SparseSliceKernel(const IndexType *indices_ptr, const DataType *
                                   const IndexType *x_ptr, IndexType *start_ptr, IndexType *size_ptr,
                                   IndexType *y_indices_ptr, DataType *y_values_ptr, IndexType *out_shape_ptr,
                                   int64_t *sum_count_ptr, size_t input_nnz_, size_t num_dim_, size_t out_size_) {
-  IndexType non_zeros_ = 0;
   int64_t addnum = 1;
-  for (int a = 0; a < out_size_; a += 1) {
-    out_shape_ptr[a] = size_ptr[a];
-  }
   for (size_t input_nz = blockIdx.x * blockDim.x + threadIdx.x; input_nz < input_nnz_;
        input_nz += blockDim.x * gridDim.x) {
     size_t select = 1;
@@ -44,14 +40,13 @@ __global__ void SparseSliceKernel(const IndexType *indices_ptr, const DataType *
       }
     }
     if (select) {
-      y_values_ptr[non_zeros_] = value;
+      y_values_ptr[*sum_count_ptr] = value;
       for (int dim = 0; dim < num_dim_; dim += 1) {
         auto start = start_ptr[dim];
         IndexType index = indices_ptr[input_nz * num_dim_ + dim];
         IndexType new_index = index - start;
-        y_indices_ptr[non_zeros_ * num_dim_ + dim] = new_index;
+        y_indices_ptr[*sum_count_ptr * num_dim_ + dim] = new_index;
       }
-      non_zeros_ += 1;
       MsAtomicAdd(sum_count_ptr, addnum);
     }
   }
@@ -63,7 +58,7 @@ CUDA_LIB_EXPORT void SparseSlice(const IndexType *indices_ptr, const DataType *v
                                  IndexType *y_indices_ptr, DataType *y_values_ptr, IndexType *out_shape_ptr,
                                  int64_t *sum_count_ptr, size_t input_nnz_, size_t num_dim_, size_t out_size_,
                                  uint32_t device_id, cudaStream_t cuda_stream) {
-  SparseSliceKernel<<<GET_BLOCKS(input_nnz_), GET_THREADS, 0, cuda_stream>>>(
+  SparseSliceKernel<<<1, 1, 0, cuda_stream>>>(
     indices_ptr, values_ptr, x_ptr, start_ptr, size_ptr, y_indices_ptr, y_values_ptr, out_shape_ptr, sum_count_ptr,
     input_nnz_, num_dim_, out_size_);
 }

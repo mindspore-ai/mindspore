@@ -98,6 +98,9 @@ bool SparseSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&real_output_size, sum_count_ptr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
     "For SparseSlice, cudaMemcpyAsync failed.");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(out_shape_ptr, size_ptr, sizeof(int64_t) * out_size_, cudaMemcpyDeviceToDevice, cuda_stream),
+    "For SparseSlice, cudaMemcpyAsync out_shape failed.");
   return true;
 }
 
