@@ -249,6 +249,9 @@ void CheckZeroCopyTaskValid(const session::KernelGraph &graph,
     for (size_t i = 0; i < input_num; ++i) {
       size_t input_index_in_graph = AnfAlgo::GetInputGraphIdxByKernelIdx(kernel, i);
       const auto &input_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, input_index_in_graph, true);
+      if (common::AnfAlgo::IsNoneInput(kernel, i)) {
+        continue;
+      }
       const auto device_address = AnfAlgo::GetMutableOutputAddr(input_with_index.first, input_with_index.second, false);
       if (device_address != nullptr && device_address->GetPtr() == nullptr &&
           node_to_offset.find(std::pair(kernel, i)) == node_to_offset.end()) {
