@@ -712,6 +712,7 @@ def get_bprop_matrix_solve_ls(self):
     conjugate_transpose = ConjugateTranspose()
     shape = P.Shape()
     _complex = P.Complex()
+    scalar2tensor = P.ScalarToTensor()
 
     def regularized_gramian_cholesky(matrix, l2, first_kind):
         matrix_dim = rank(matrix)
@@ -775,7 +776,7 @@ def get_bprop_matrix_solve_ls(self):
                 grad_a = add(neg(matmul(matrix, zx_sym)), matmul(rhs, z_temp))
                 grad_b = matmul(matrix, z)
 
-            return (grad_a, grad_b, zeros_like(l2))
+            return (grad_a, grad_b, scalar2tensor(0, l2.dtype))
 
         def under_determined(matrix, rhs, l2, dout):
             if matrix.dtype == mstype.complex64:
@@ -822,7 +823,7 @@ def get_bprop_matrix_solve_ls(self):
                 a2 = matmul(tmp, a2_temp)
 
             grad_a = add(a1, a2)
-            return (grad_a, grad_b, zeros_like(l2))
+            return (grad_a, grad_b, scalar2tensor(0, l2.dtype))
 
         if fast is False:
             raise ValueError("For MatrixSolveLs, gradient not defined for fast=False")

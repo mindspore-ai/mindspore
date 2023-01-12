@@ -1010,7 +1010,7 @@ std::pair<std::string, ExceptionType> CollectNotMatchMessage(
   ExceptionType etype;
   if (ai_core.empty() && ai_cpu.empty()) {
     ss << "Can not find any available kernel info for: " << full_name
-       << ". Maybe the operator can not supported on Ascend platform." << trace::DumpSourceLines(kernel_node);
+       << ". Maybe the operator is not supported on Ascend platform." << trace::DumpSourceLines(kernel_node);
     etype = NotSupportError;
   } else {
     auto candidates = KernelInfoCandidateList(ai_core, ai_cpu);
@@ -1065,7 +1065,7 @@ void SetAclKernelInfo(const CNodePtr &kernel_node) {
 
   KernelType kernel_type = AnfAlgo::GetKernelType(kernel_node);
   if (kernel_type != AICPU_KERNEL && kernel_type != TBE_KERNEL) {
-    MS_LOG(INFO) << "Current node don't support acl kernel launch! Node info:" << kernel_node->DebugString();
+    MS_LOG(INFO) << "Current node doesn't support acl kernel launch! Node info:" << kernel_node->DebugString();
     return;
   }
   auto ms_context = MsContext::GetInstance();
@@ -1073,7 +1073,8 @@ void SetAclKernelInfo(const CNodePtr &kernel_node) {
   auto mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
   auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (mode != kPynativeMode || device_target != kAscendDevice) {
-    MS_LOG(INFO) << "Current mode or device don't support acl kernel launch! Node info:" << kernel_node->DebugString();
+    MS_LOG(INFO) << "Current mode or device doesn't support acl kernel launch! Node info:"
+                 << kernel_node->DebugString();
     return;
   }
 
