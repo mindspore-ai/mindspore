@@ -228,7 +228,13 @@ REG_BPROP_BUILDER("AcoshGrad").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Cosh").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Mul((ib->Emit("Sinh", {x})), dout);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  NodePtr dx;
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'Cosh', gradient not support for complex type currently.";
+  } else {
+    dx = ib->Mul((ib->Emit("Sinh", {x})), dout);
+  }
   return {dx};
 });
 
@@ -501,9 +507,15 @@ REG_BPROP_BUILDER("AccumulateNV2").SetUnusedInputs({i0, i1}).SetBody(AddnGradFun
 REG_BPROP_BUILDER("Tan").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto cosx = ib->Emit("Cos", {x});
-  auto secx2 = ib->Square(ib->Reciprocal(cosx));
-  auto dx = secx2 * dout;
+  auto x_dtype_id = ib->GetDtypeId(x);
+  NodePtr dx;
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'Tan', gradient not support for complex type currently.";
+  } else {
+    auto cosx = ib->Emit("Cos", {x});
+    auto secx2 = ib->Square(ib->Reciprocal(cosx));
+    dx = secx2 * dout;
+  }
   return {dx};
 });
 
@@ -527,10 +539,14 @@ REG_BPROP_BUILDER("Atanh").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto x_dtype = ib->GetDtype(x);
   auto x_dtype_id = x_dtype->type_id();
-  auto one = ib->Tensor(1, x_dtype);
-  auto const_type = (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) ? kInt64 : x_dtype;
-  auto tmp = one - ib->Pow(x, ib->Tensor(2, const_type));
-  auto dx = ib->Div(one, tmp) * dout;
+  NodePtr dx;
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'Atanh', gradient not support for complex type currently.";
+  } else {
+    auto one = ib->Tensor(1, x_dtype);
+    auto tmp = one - ib->Pow(x, ib->Tensor(2, x_dtype));
+    dx = ib->Div(one, tmp) * dout;
+  }
   return {dx};
 });
 

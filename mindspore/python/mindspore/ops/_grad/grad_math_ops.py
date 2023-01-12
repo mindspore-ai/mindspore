@@ -1383,6 +1383,9 @@ def get_bprop_cosh(self):
     sinh = P.Sinh()
 
     def bprop(x, out, dout):
+        if x.dtype in (mstype.complex64, mstype.complex128):
+            raise TypeError("The 'Cosh', gradient not support for complex type currently.")
+
         dx = sinh(x) * dout
         return (dx,)
 
@@ -1536,6 +1539,9 @@ def get_bprop_tan(self):
     cos = P.Cos()
 
     def bprop(x, out, dout):
+        if x.dtype in (mstype.complex64, mstype.complex128):
+            raise TypeError("For 'Tan', gradient not support for complex type currently.")
+
         cosx = cos(x)
         secx2 = square(reciprocal(cosx))
         dx = secx2 * dout
@@ -1577,6 +1583,9 @@ def get_bprop_atanh(self):
     div = P.Div()
 
     def bprop(x, out, dout):
+        if x.dtype in (mstype.complex64, mstype.complex128):
+            raise TypeError("For 'Atanh', gradient not support for complex type currently.")
+
         tmp = 1 - power(x, 2)
         dx = div(1, tmp) * dout
         return (dx,)
