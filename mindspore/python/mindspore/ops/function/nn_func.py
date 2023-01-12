@@ -36,6 +36,7 @@ from mindspore.ops.operations.nn_ops import MaxUnpool2D, MaxUnpool3D
 from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations.nn_ops import ChannelShuffle
+from mindspore.ops.operations.nn_ops import TripletMarginLoss
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -5501,6 +5502,58 @@ def msort(x):
     return ops.Sort(axis=0)(x)[0]
 
 
+def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, swap=False, reduction='mean'):
+    """
+    TripletMarginLoss operation.
+    See :class:`mindspore.nn.TripletMarginLoss` for details.
+
+    Args:
+        anchor (Tensor): A sample randomly selected from the training set. Data type must be BasicType.
+        positive (Tensor): A sample belonging to the same category as `anchor`, with the same type and shape
+            as `anchor`.
+        negative (Tensor): A sample belonging to the different class from `anchor`, with the same type and shape
+            as `anchor`.
+        margin (float, optional): Make a margin between the positive pair and the negative pair. Default: 1.0.
+        p (int, optional): The norm degree for pairwise distance. Default: 2.
+        eps (float, optional): Add small value to avoid division by zero. Default: 1e-06.
+        swap (bool, optional): The distance swap change the negative distance to the distance between positive
+            sample and negative sample. Default: "False".
+        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean', 'sum'.
+            Default: "mean".
+
+    Returns:
+        Tensor. If `reduction` is "none", its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
+
+    Raises:
+        TypeError: If `anchor` or `positive` or 'negative' is not a Tensor.
+        TypeError: If dtype of `anchor`, `positive` and `negative` is not the same.
+        TypeError: If `margin` is not a float.
+        TypeError: If `p` is not an int.
+        TypeError: If `eps` is not a float.
+        TypeError: If `swap` is not a bool.
+        ValueError: If dimensions of input `anchor`, `positive` and `negative` are less than or equal to 1 at the
+            same time.
+        ValueError: If the dimension of input `anchor` or `positive` or `negative` is bigger than or equal to 8.
+        ValueError: If shape of `anchor`, `positive` and `negative` cannot broadcast.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> anchor = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
+        >>> positive = Tensor(np.array([[0.4, 0.6], [0.4, 0.6]]), mindspore.float32)
+        >>> negative = Tensor(np.array([[0.2, 0.9], [0.3, 0.7]]), mindspore.float32)
+        >>> output = ops.triplet_margin_loss(anchor, positive, negative)
+        >>> print(output)
+        0.8881968
+    """
+    if not isinstance(margin, Tensor):
+        margin = Tensor(margin, mstype.float32)
+    triplet_margin_loss_op = _get_cache_prim(TripletMarginLoss)(p=p, eps=eps, swap=swap, reduction=reduction)
+    return triplet_margin_loss_op(anchor, positive, negative, margin)
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -5583,5 +5636,6 @@ __all__ = [
     'max_unpool3d',
     'mse_loss',
     'msort',
+    'triplet_margin_loss',
 ]
 __all__.sort()

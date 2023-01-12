@@ -256,6 +256,7 @@ Loss Function
     mindspore.nn.SmoothL1Loss
     mindspore.nn.SoftMarginLoss
     mindspore.nn.SoftmaxCrossEntropyWithLogits
+    mindspore.nn.TripletMarginLoss
 
 Optimizer
 ---------

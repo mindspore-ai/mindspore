@@ -26,7 +26,6 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations.nn_ops import MultiMarginLoss as MultiMarginLossOp
 from mindspore.ops.operations.nn_ops import MultilabelMarginLoss as MultilabelMarginLossOp
-from mindspore.ops.operations.nn_ops import TripletMarginLoss as TripletMarginLossOp
 from mindspore.ops import functional as F
 from mindspore import nn
 from mindspore.ops.primitive import constexpr
@@ -1942,15 +1941,16 @@ class TripletMarginLoss(LossBase):
     TripletMarginLoss operation.
 
     Creates a criterion that measures the triplet loss given an input
-    tensors :math:`x1`, :math:`x2`, :math:`x3` and a margin with a value greater than :math:`0`.
-    This is used for measuring a relative similarity between samples. A triplet
-    is composed by `a`, `p` and `n` (i.e., `anchor`, `positive examples` and `negative
-    examples` respectively). The shapes of all input tensors should be
+    tensors :math:`x`, :math:`positive`, :math:`negative` and a :math:`margin` with a value greater than :math:`0`.
+    This is used for measuring a relative similarity between samples.
+    A triplet is composed by `a`, `p` and `n` (i.e., `x`, `positive` and `negative` respectively).
+    The shapes of all input tensors should be
     :math:`(N, D)`.
 
-    The distance swap is described in detail in the paper `Learning shallow
-    convolutional feature descriptors with triplet losses` by
-    V. Balntas, E. Riba et al.
+    The distance swap is described in detail in the paper
+    `Learning local feature descriptors with triplets and shallow convolutional neural
+    networks <http://158.109.8.37/files/BRP2016.pdf>`_
+    by V. Balntas, E. Riba et al.
 
     The loss function for each sample in the mini-batch is:
 
@@ -1963,26 +1963,25 @@ class TripletMarginLoss(LossBase):
         d(x_i, y_i) = \left\lVert {\bf x}_i - {\bf y}_i \right\rVert_p
 
     Args:
-        p (int): The norm degree for pairwise distance. Default: 2.
-        eps (float): Default: 1e-06.
-        swap (bool): The distance swap is described in detail in the paper
-            `Learning shallow convolutional feature descriptors with triplet losses` by
-            V. Balntas, E. Riba et al. Default: "False".
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+        p (int, optional): The norm degree for pairwise distance. Default: 2.
+        eps (float, optional): Add small value to avoid division by zero. Default: 1e-06.
+        swap (bool, optional): The distance swap change the negative distance to the distance between positive
+            sample and negative sample. Default: "False".
+        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean', 'sum'.
+            Default: "mean".
 
     Inputs:
         - **x** (Tensor) - A sample randomly selected from the training set. Data type must be BasicType.
-        - **positive** (Tensor) - A sample belonging to the same category as x, with the same type and shape as `x`.
-        - **negative** (Tensor) - A sample belonging to the different class from x, with the same type and shape as `x`.
+        - **positive** (Tensor) - A sample belonging to the same category as `x`, with the same type and shape as `x`.
+        - **negative** (Tensor) - A sample belonging to the different class from `x`, with the same type and shape
+          as `x`.
         - **margin** (Tensor) - Make a margin between the positive pair and the negative pair.
 
     Outputs:
-        Union[Tensor, Scalar], if `reduction` is "none", its shape is :math:`(N)`.
-        Otherwise, a scalar value will be returned.
+        Tensor. If `reduction` is "none", its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `x` or `positive` or 'negative' or 'margin' is not a Tensor.
-        TypeError: If dtype of `x` or `positive` or `negative` is not BasicType.
         TypeError: If dtype of `x`, `positive` and `negative` is not the same.
         TypeError: If `margin` is not float32.
         TypeError: If `p` is not an int.
@@ -1995,7 +1994,7 @@ class TripletMarginLoss(LossBase):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU`
+        ``GPU``
 
     Examples:
         >>> loss = nn.TripletMarginLoss()
@@ -2008,12 +2007,16 @@ class TripletMarginLoss(LossBase):
         0.8881968
     """
 
-    def __init__(self, p=2, swap=False, eps=1e-6, reduction='mean'):
+    def __init__(self, p=2, swap=False, eps=1e-06, reduction='mean'):
         super(TripletMarginLoss, self).__init__()
-        self.triplet_margin_loss = TripletMarginLossOp(p=p, swap=swap, eps=eps, reduction=reduction)
+        self.p = p
+        self.swap = swap
+        self.eps = eps
+        self.reduction = reduction
 
     def construct(self, x, positive, negative, margin):
-        return self.triplet_margin_loss(x, positive, negative, margin)
+        return F.triplet_margin_loss(x, positive, negative, margin=margin, p=self.p,
+                                     eps=self.eps, swap=self.swap, reduction=self.reduction)
 
 
 @constexpr
