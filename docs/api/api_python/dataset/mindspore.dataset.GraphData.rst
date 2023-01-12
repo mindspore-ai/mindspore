@@ -6,8 +6,7 @@ mindspore.dataset.GraphData
     从共享文件或数据库中读取用于GNN训练的图数据集。
     支持读取图数据集Cora、Citeseer和PubMed。
 
-    关于如何将源数据集加载到mindspore中请参考 `加载图数据集 <https://www.mindspore.cn/tutorials/zh-CN/
-    r1.9/advanced/dataset/augment_graph_data.html>`_。
+    关于如何将源数据集加载到mindspore中请参考 `加载图数据集 <https://www.mindspore.cn/tutorials/zh-CN/r1.10/advanced/dataset/augment_graph_data.html>`_。
 
 
     参数：
