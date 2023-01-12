@@ -404,6 +404,7 @@ constexpr auto kMatrixDiagOpName = "MatrixDiag";
 constexpr auto kMatrixDiagDOpName = "MatrixDiagD";
 constexpr auto kMatrixDiagPartOpName = "MatrixDiagPart";
 constexpr auto kMatrixDiagPartDOpName = "MatrixDiagPartD";
+constexpr auto kMatrixDiagPartV3OpName = "MatrixDiagPartV3";
 constexpr auto kMatrixLogarithmOpName = "MatrixLogarithm";
 constexpr auto kMatrixSetDiagOpName = "MatrixSetDiag";
 constexpr auto kMatrixSetDiagDOpName = "MatrixSetDiagD";
