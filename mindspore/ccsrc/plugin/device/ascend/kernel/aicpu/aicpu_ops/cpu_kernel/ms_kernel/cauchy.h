@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef AICPU_KERNELS_NORMALIZED_CUMULATIVELOGSUMEXP_H_
-#define AICPU_KERNELS_NORMALIZED_CUMULATIVELOGSUMEXP_H_
+#ifndef AICPU_KERNELS_NORMALIZED_CAUCHY_WINDOW_H_
+#define AICPU_KERNELS_NORMALIZED_CAUCHY_WINDOW_H_
+#define EIGEN_USE_THREADS
+#define EIGEN_USE_SIMPLE_THREAD_POOL
 
 #include "cpu_ops_kernel.h"
+#include "cpu_types.h"
+#include "unsupported/Eigen/CXX11/Tensor"
 
 namespace aicpu {
-class CumulativeLogsumexpCpuKernel : public CpuKernel {
+class CauchyCpuKernel : public CpuKernel {
  public:
-  CumulativeLogsumexpCpuKernel() = default;
-  ~CumulativeLogsumexpCpuKernel() override = default;
+  CauchyCpuKernel() = default;
+  ~CauchyCpuKernel() = default;
 
- protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CumulativeLogsumexpCheck(CpuKernelContext &ctx);
-
   template <typename T>
-  uint32_t CumulativeLogsumexpCompute(CpuKernelContext &ctx);
+  uint32_t CauchyCompute(CpuKernelContext &ctx);
+
+  float median_ = 0.0;
+  float sigma_ = 1.0;
 };
 }  // namespace aicpu
 #endif

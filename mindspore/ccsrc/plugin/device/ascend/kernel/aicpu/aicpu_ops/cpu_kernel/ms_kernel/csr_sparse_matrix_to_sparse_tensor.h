@@ -13,26 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef AICPU_KERNELS_NORMALIZED_CUMULATIVELOGSUMEXP_H_
-#define AICPU_KERNELS_NORMALIZED_CUMULATIVELOGSUMEXP_H_
+#ifndef AICPU_KERNELS_NORMALIZED_CSRSPARSEMATRIXTOSPARSETENSOR_H_
+#define AICPU_KERNELS_NORMALIZED_CSRSPARSEMATRIXTOSPARSETENSOR_H_
 
 #include "cpu_ops_kernel.h"
 
 namespace aicpu {
-class CumulativeLogsumexpCpuKernel : public CpuKernel {
+class CSRSparseMatrixToSparseTensorCpuKernel : public CpuKernel {
  public:
-  CumulativeLogsumexpCpuKernel() = default;
-  ~CumulativeLogsumexpCpuKernel() override = default;
+  ~CSRSparseMatrixToSparseTensorCpuKernel() = default;
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CumulativeLogsumexpCheck(CpuKernelContext &ctx);
+  template <typename indicesT, typename dataT>
+  uint32_t ComputeKernel(CpuKernelContext &ctx);
 
-  template <typename T>
-  uint32_t CumulativeLogsumexpCompute(CpuKernelContext &ctx);
+  template <typename indicesT>
+  void SpecialCompute(int64_t batch_begin, int64_t batch_end, CpuKernelContext &ctx);
+
+  template <typename indicesT>
+  void IndicesCompute(CpuKernelContext &ctx, int64_t indices_offset, const int64_t batch_idx, const int64_t row_idx,
+                      const int64_t col_idx);
 };
 }  // namespace aicpu
 #endif
