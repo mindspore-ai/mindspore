@@ -97,7 +97,7 @@ class UnravelIndex(Primitive):
         ValueError: If `indices` contains negative elements.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> indices = Tensor(np.array([2, 5]), mindspore.int32)
@@ -2629,7 +2629,7 @@ class Stack(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.stack` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
@@ -3584,7 +3584,7 @@ class Mvlgamma(Primitive):
     Refer to :func:`mindspore.ops.mvlgamma` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[3, 4, 5], [4, 2, 6]]), mindspore.float32)
@@ -3800,7 +3800,7 @@ class ResizeNearestNeighborV2(Primitive):
         ValueError: If attr `half_pixel_centers` and `align_corners` are True at the same time.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> input_tensor = Tensor(np.ones((1, 4, 4, 1)), mstype.float32)
@@ -4360,7 +4360,7 @@ class Triu(Primitive):
         ValueError: If length of shape of x is less than 1.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
@@ -5857,7 +5857,7 @@ class Identity(Primitive):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
@@ -5890,7 +5890,7 @@ class IdentityN(Primitive):
         TypeError: If input `x` type is not RealNumber.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = [Tensor(np.array([1, 2, 3, 4]), mstype.int64), Tensor(np.array([4, 3, 1, 1]), mstype.int64)]
@@ -6542,7 +6542,7 @@ class ListDiff(Primitive):
         TypeError: If attr `out_idx` not in [mindspore.dtype.int32, mindspore.dtype.int64].
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(1, 7, 1), dtype=mindspore.dtype.int32) # [1, 2, 3, 4, 5, 6]
@@ -6801,7 +6801,7 @@ class ScatterAddWithAxis(Primitive):
         ValueError: If the shape of `indices` is not equal to the shape of `updates`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> op = ops.ScatterAddWithAxis(0)
@@ -7133,7 +7133,7 @@ class LogSpace(Primitive):
         ValueError: If `base` is not a non-negative integer.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> logspace = ops.LogSpace(steps = 10, base = 10, dtype=mindspore.float32)
@@ -7208,7 +7208,7 @@ class Tril(Primitive):
         ValueError: If the rank of `x` is less than 2.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
@@ -7261,7 +7261,7 @@ class IndexFill(Primitive):
     Refer to :func:`mindspore.ops.index_fill` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> index_fill = ops.IndexFill()
@@ -7311,7 +7311,7 @@ class SegmentMax(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-         ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
@@ -7361,7 +7361,7 @@ class SegmentMin(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-         ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
@@ -7415,7 +7415,7 @@ class SegmentSum(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-         ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
@@ -7465,7 +7465,7 @@ class LeftShift(Primitive):
         ValueError: If `x1` and `x2` could not be broadcast.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> left_shift = ops.LeftShift()
@@ -7505,7 +7505,7 @@ class FillDiagonal(Primitive):
         ValueError: If the size of each dimension is not equal, when the dimension is greater than 2.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32))
@@ -7592,7 +7592,7 @@ class HammingWindow(Primitive):
         ValueError: If data of `length` is negative.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: periodic=True.
@@ -7634,7 +7634,7 @@ class AffineGrid(Primitive):
     Refer to :func:`mindspore.ops.affine_grid` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> affinegrid = ops.AffineGrid(align_corners=False)
@@ -7691,7 +7691,7 @@ class SegmentMean(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-         ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [1, 2, 3], [7, 8, 9]], mstype.float64)
@@ -7745,7 +7745,7 @@ class SegmentProd(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-         ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)

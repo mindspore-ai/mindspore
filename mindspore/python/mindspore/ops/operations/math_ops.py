@@ -365,7 +365,7 @@ class AddV2(Primitive):
 
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.math_ops import AddV2
@@ -1346,7 +1346,7 @@ class Lcm(Primitive):
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([7, 8, 9]))
@@ -2712,7 +2712,7 @@ class Histogram(Primitive):
         ValueError: If attr `bins` <= 0.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> x = Tensor([1., 2, 1])
@@ -2847,7 +2847,7 @@ class Hypot(Primitive):
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([3., 5., 7.]))
@@ -2891,7 +2891,7 @@ class Heaviside(Primitive):
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1.5, 0., 2.]))
@@ -3719,7 +3719,7 @@ class Sinc(Primitive):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -4039,7 +4039,7 @@ class Gcd(Primitive):
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([7, 8, 9]))
@@ -4709,7 +4709,7 @@ class Sign(Primitive):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
          >>> x = Tensor(np.array([[2.0, 0.0, -1.0]]), mindspore.float32)
@@ -4754,7 +4754,7 @@ class Tan(Primitive):
     Refer to :func:`mindspore.ops.tan` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> tan = ops.Tan()
@@ -5588,7 +5588,7 @@ class LogMatrixDeterminant(Primitive):
     Refer to :func:`mindspore.ops.log_matrix_determinant` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -5805,7 +5805,7 @@ class ComplexAbs(Primitive):
        TypeError: If the input type is not complex64 or complex128.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(3+4j)), mindspore.complex64)
@@ -5868,7 +5868,7 @@ class Complex(Primitive):
        TypeError: If the dtypes of two inputs are not same.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> real = Tensor(np.array([1]), mindspore.float32)
@@ -5933,7 +5933,7 @@ class Angle(Primitive):
         TypeError: If the dtype of input is not one of: complex64, complex128.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> input = Tensor([-1.5 + 7.8j, 3 + 5.75j], mindspore.complex64)
@@ -6013,7 +6013,7 @@ class TridiagonalMatMul(Primitive):
                     are not same.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> tridiagonalmatmul = ops.TridiagonalMatMul()
@@ -6071,7 +6071,7 @@ class Igamma(Primitive):
         ValueError: If `a` could not be broadcast to a tensor with shape of `x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
@@ -6119,7 +6119,7 @@ class Igammac(Primitive):
         ValueError: If `a` could not be broadcast to a tensor with shape of `x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
@@ -6177,7 +6177,7 @@ class MatrixExp(Primitive):
     Refer to :func:`mindspore.ops.matrix_exp` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> matrix_exp = ops.MatrixExp()
@@ -6327,7 +6327,7 @@ class LuSolve(Primitive):
         ValueError: If `x` dimension less than 2, `lu_data` dimension less than 2 or `lu_pivots` dimension less than 1.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1], [3], [3]]), mindspore.float32)
@@ -6382,7 +6382,7 @@ class LuUnpack(Primitive):
         RuntimeError: On the Ascend platform, if the value of `LU_pivots` are out of range[1, LU_data.shape[-2]).
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> LU_data = Tensor(np.array([[[-0.3806, -0.4872,  0.5536],
@@ -6628,7 +6628,7 @@ class RaggedRange(Primitive):
         ValueError: If the shape of `starts`, `limits` and `deltas` are not same.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> raggedrange = ops.RaggedRange(Tsplits=mstype.int64)
@@ -6670,7 +6670,7 @@ class Trace(Primitive):
         ValueError: If the dimension of `x` is not equal to 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
@@ -6803,7 +6803,7 @@ class Zeta(Primitive):
         ValueError: If shape of `x` is not same as the `q`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([10.]), mindspore.float32)
@@ -6941,7 +6941,7 @@ class Cholesky(Primitive):
     Refer to :func:`mindspore.ops.cholesky` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[1.0, 1.0], [1.0, 2.0]]), mindspore.float32)
@@ -7044,7 +7044,7 @@ class CholeskySolve(Primitive):
         ValueError: If `x2` is not 2D or 3D square matrices.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]), mindspore.float32)
@@ -7248,7 +7248,7 @@ class NextAfter(Primitive):
         ValueError: If `x1`'s shape is not the same as `x2`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> nextafter = ops.NextAfter()
@@ -7470,7 +7470,7 @@ class Orgqr(Primitive):
     Refer to :func:`mindspore.ops.orgqr` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62.]]), mindspore.float32)

@@ -53,7 +53,7 @@ class NonDeterministicInts(Primitive):
         ValueError: If the number of elements of output is more than 1000000.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> shape = Tensor(np.array([2,2]), mstype.int32)
@@ -108,7 +108,7 @@ class TruncatedNormal(Primitive):
         ValueError: If the number of elements of output is more than 1000000.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> shape = Tensor(np.array([2, 2]), mstype.int32)
@@ -479,7 +479,7 @@ class ParameterizedTruncatedNormal(Primitive):
         ValueError: If `shape` is not a 1-D tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> shape = Tensor(np.array([2, 3]), mstype.int32)
@@ -848,7 +848,7 @@ class Multinomial(Primitive):
         ValueError: If `seed` or `seed2` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)

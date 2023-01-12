@@ -48,7 +48,7 @@ class AdjustSaturation(Primitive):
         ValueError: If the last dimension of the 'image' is not 3.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
       >>> x = Tensor([[[1.0, 2.0, 3.0],
@@ -96,7 +96,7 @@ class AdjustContrastv2(Primitive):
         ValueError: If the dimension of the 'images' is less than 3, or the last dimension of the 'images' is not 3.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
     >>> images = Tensor([[[1.0, 2.0, 3.0],
@@ -145,7 +145,7 @@ class AdjustHue(Primitive):
         ValueError: If the dimension of `image` is less than 3.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
          >>> class AdjustHue(nn.Cell):
@@ -225,7 +225,7 @@ class ExtractGlimpse(Primitive):
         ValueError: If the input is not Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[[[0.0], [1.0], [2.0]], [[3.0], [4.0], [5.0]], [[6.0], [7.0], [8.0]]]], dtype=mindspore.float32)
@@ -460,7 +460,7 @@ class NonMaxSuppressionWithOverlaps(Primitive):
         ValueError: If the shape of `scores` is not equal to the shape of the dim0 or dim1 of `overlaps`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> overlaps = Tensor(np.array([[0.6964692, 0.28613934, 0.22685145, 0.5513148],
@@ -569,7 +569,7 @@ class CropAndResizeGradBoxes(Primitive):
         ValueError: If the length of `box_index` is not equal to num_boxes.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> crop_and_resize_grad_boxes = ops.CropAndResizeGradBoxes(method = "bilinear")
@@ -616,7 +616,7 @@ class RGBToHSV(Primitive):
         ValueError: If the last value of shape of `images` is not 3.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> images =  np.array([0.25, 0.5, 0.5]).astype(np.float32).reshape([1, 1, 1, 3])
@@ -781,7 +781,7 @@ class ResizeBicubic(Primitive):
         ValueError: If `align_corners` and `half_pixel_centers` value are both True.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> class NetResizeBicubic(nn.Cell):
@@ -884,7 +884,7 @@ class ResizeArea(Primitive):
         ValueError: If any value of `size` is not positive.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> images = Tensor([[[[2], [4], [6], [8]], [[10], [12], [14], [16]]]], mindspore.float16)
@@ -956,7 +956,7 @@ class CropAndResizeGradImage(Primitive):
         ValueError: If the value of image_height or image_width of `image_size` is not positive.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> crop_and_resize_grad_image = ops.CropAndResizeGradImage(T = mindspore.float32, method = "bilinear")
@@ -1044,7 +1044,7 @@ class ScaleAndTranslate(Primitive):
         ValueError: If the shape of `translation`  is not :math:`(2,)`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> op = ops.ScaleAndTranslate()

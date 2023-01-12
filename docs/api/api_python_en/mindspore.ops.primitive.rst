@@ -221,7 +221,6 @@ Image Processing
     mindspore.ops.IOU
     mindspore.ops.L2Normalize
     mindspore.ops.NMSWithMask
-    mindspore.ops.NonMaxSuppressionV3
     mindspore.ops.NonMaxSuppressionWithOverlaps
     mindspore.ops.PSROIPooling
     mindspore.ops.RGBToHSV
