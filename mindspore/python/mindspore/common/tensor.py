@@ -2476,6 +2476,27 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('frac')(self)
 
+    def argwhere(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.argwhere`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('argwhere')(self)
+
+    def moveaxis(self, source, destination):
+        r"""
+        For details, please refer to :func:`mindspore.ops.moveaxis`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('moveaxis')(self, source, destination)
+
+    def movedim(self, source, destination):
+        r"""
+        For details, please refer to :func:`mindspore.ops.movedim`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('movedim')(self, source, destination)
+
     def digamma(self):
         r"""
         For details, please refer to :func:`mindspore.ops.digamma`.

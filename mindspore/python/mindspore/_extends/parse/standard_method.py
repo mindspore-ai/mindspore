@@ -4229,3 +4229,24 @@ def frac(x):
     For details, please refer to :func:`mindspore.ops.frac`.
     """
     return F.frac(x)
+
+
+def argwhere(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.argwhere`.
+    """
+    return F.argwhere(x)
+
+
+def moveaxis(x, source, destination):
+    r"""
+    For details, please refer to :func:`mindspore.ops.moveaxis`.
+    """
+    return F.moveaxis(x, source, destination)
+
+
+def movedim(x, source, destination):
+    r"""
+    For details, please refer to :func:`mindspore.ops.movedim`.
+    """
+    return F.movedim(x, source, destination)

@@ -146,6 +146,11 @@ from .array_func import (
     sequence_mask,
     repeat_elements,
     repeat_interleave,
+    argwhere,
+    column_stack,
+    hstack,
+    movedim,
+    moveaxis
 )
 from .parameter_func import (
     assign,
@@ -382,6 +387,7 @@ from .math_func import (
     orgqr,
     sum,
     matrix_exp,
+    logspace
 )
 from .nn_func import (
     adaptive_avg_pool1d,

@@ -418,6 +418,7 @@ Tensor创建
     mindspore.ops.full
     mindspore.ops.full_like
     mindspore.ops.linspace
+    mindspore.ops.logspace
     mindspore.ops.one_hot
     mindspore.ops.ones
     mindspore.ops.ones_like
@@ -459,6 +460,7 @@ Array操作
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.argwhere
     mindspore.ops.batch_to_space_nd
     mindspore.ops.bincount
     mindspore.ops.block_diag
@@ -466,6 +468,7 @@ Array操作
     mindspore.ops.cartesian_prod
     mindspore.ops.cat
     mindspore.ops.chunk
+    mindspore.ops.column_stack
     mindspore.ops.concat
     mindspore.ops.conj
     mindspore.ops.count_nonzero
@@ -485,6 +488,7 @@ Array操作
     mindspore.ops.gather_elements
     mindspore.ops.gather_nd
     mindspore.ops.hsplit
+    mindspore.ops.hstack
     mindspore.ops.index_add
     mindspore.ops.index_fill
     mindspore.ops.index_select
@@ -494,6 +498,8 @@ Array操作
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
     mindspore.ops.meshgrid
+    mindspore.ops.moveaxis
+    mindspore.ops.movedim
     mindspore.ops.narrow
     mindspore.ops.nan_to_num
     mindspore.ops.normal

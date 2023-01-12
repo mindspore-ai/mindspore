@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 
 import builtins
+import operator
 import numpy as np
 
 import mindspore.common.dtype as mstype
@@ -3702,14 +3703,14 @@ def nonzero(x):
     Return a Tensor of the positions of all non-zero values.
 
     Args:
-        x (Tensor): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number or Bool.
+        x (Tensor): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is int, float or bool.
 
     Returns:
         Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
 
     Raises:
         TypeError: If `x` is not Tensor.
-        ValueError: If 'x' dim equal to 0.
+        ValueError: If dim of `x` equals to 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6039,6 +6040,246 @@ def mvlgamma(input, p):
     return mvlgamma_op(input)
 
 
+def argwhere(x):
+    """
+    Return a Tensor of the positions of all non-zero values.
+
+    Args:
+        x (Tensor): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number or Bool.
+
+    Returns:
+        Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
+
+    Raises:
+        TypeError: If `x` is not Tensor.
+        ValueError: If dim of `x` equals to 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
+        >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
+        >>> output = ops.argwhere(x)
+        >>> print(output)
+        [[0 0 0]
+         [0 1 0]]
+    """
+    return nonzero_(x)
+
+
+def column_stack(x):
+    """
+    Stacks 1-D tensors as columns into a 2-D tensor. 2-D tensors are stacked as-is,
+    like ops.hstack.
+
+    Args:
+        x (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. All
+            of them must have the same shape except the axis to be concatenated.
+
+    Returns:
+        2-D Tensor, formed by stacking the given tensors.
+
+    Raises:
+        TypeError: If `x` is not Tensor, list or tuple.
+        ValueError: If `x` is empty.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> x1 = Tensor([1, 1, 1])
+        >>> x2 = Tensor([2, 2, 2])
+        >>> output = ops.column_stack((x1, x2))
+        >>> print(output)
+        [[1 2]
+         [1 2]
+         [1 2]]
+    """
+    if not isinstance(x, (list, tuple)):
+        raise TypeError(f"For column_stack, the input must be list or tuple or tensor, but got {type(x)}.")
+
+    trans_x = ()
+    _expand_dims = _get_cache_prim(P.ExpandDims)()
+    for tensor in x:
+        if tensor.ndim < 1:
+            tensor = _expand_dims(tensor, 0)
+        if tensor.ndim == 1:
+            tensor = _expand_dims(tensor, 1)
+        trans_x += (tensor,)
+    if not trans_x:
+        raise ValueError(f"For column_stack, the input must have at least 1 tensor, but got 0.")
+    _concat = _get_cache_prim(P.Concat)(-1)
+    return _concat(trans_x)
+
+
+def hstack(x):
+    """
+    Stacks tensors in sequence horizontally.
+    This is equivalent to concatenation along the second axis, except for 1-D tensors
+    where it concatenates along the first axis.
+
+    Args:
+        x (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. The
+            tensors must have the same shape along all but the second axis, except
+            1-D tensors which can be any length.
+
+    Returns:
+        Stacked Tensor, formed by stacking the given tensors.
+
+    Raises:
+        TypeError: If `x` is not Tensor, list or tuple.
+        ValueError: If `x` is empty.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> x1 = Tensor([1, 1, 1])
+        >>> x2 = Tensor([2, 2, 2])
+        >>> output = ops.hstack((x1, x2))
+        >>> print(output)
+        [1. 1. 1. 2. 2. 2.]
+    """
+    if not isinstance(x, (list, tuple)):
+        raise TypeError(f"For hstack, the input must be list or tuple, but got {type(x)}.")
+
+    tuple_of_tensor = ()
+    for tensor in x:
+        if tensor.ndim < 1:
+            tensor = expand_dims_(tensor, 0)
+        tuple_of_tensor += (tensor,)
+    if not tuple_of_tensor:
+        raise ValueError("For hstack, the input must have at least 1 tensor, but got 0.")
+    if tuple_of_tensor[0].ndim <= 1:
+        _concat = _get_cache_prim(P.Concat)(0)
+        return _concat(tuple_of_tensor)
+    _concat = _get_cache_prim(P.Concat)(1)
+    return _concat(tuple_of_tensor)
+
+
+@constexpr
+def _check_axis_valid(axis, ndim):
+    """
+    Checks axis are valid given ndim, and returns axis that can be passed
+    to the built-in operator (non-negative, int or tuple).
+    """
+    if axis is None:
+        axis = F.make_range(ndim)
+        return axis
+    if isinstance(axis, (tuple, list)):
+        axis = tuple(map(lambda x: _check_check_axis_in_range(x, ndim), axis))
+        return axis
+    return (_check_check_axis_in_range(axis, ndim),)
+
+
+@constexpr
+def _get_moved_perm(ndim, source, destination):
+    """
+    Helper function for movedim, returns permutation after moving axis
+    from source to destination.
+    """
+    dest_sorted_idx = [i for i, _ in sorted(enumerate(destination), key=operator.itemgetter(1))]
+    axis_orig = [i for i in np.arange(ndim) if i not in source]
+
+    k = 0
+    m = 0
+    perm = []
+    for i in dest_sorted_idx:
+        # inserts an axis that has been moved, denoted by n, and axis that remain
+        # in their original position, indexed from k to k + n - m, into index m in
+        # the list of permuted axis
+        n = destination[i]
+        j = k + n - m
+        perm += axis_orig[k:j]
+        perm.append(source[i])
+        k += n - m
+        m = n + 1
+    perm += axis_orig[k:]
+    return tuple(perm)
+
+
+def movedim(x, source, destination):
+    """
+    Moves axis of an array from source to destination.
+
+    Other axis remain in their original order.
+
+    Args:
+        x (Tensor): The tensor array whose axis should be reordered.
+        source (Union[int, sequence[int]]): Original positions of the
+            axis to move. These must be unique.
+        destination (Union[int, sequence[int]]): Destination positions
+            for each of the original axis. These must also be unique.
+
+    Returns:
+        Tensor, array with moved axis.
+
+    Raises:
+        ValueError: If axis are out of the range of `[-a.ndim, a.ndim)`, or
+            if the axis contain duplicates.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import ops, Tensor
+        >>> import numpy as np
+        >>> x = Tensor(np.zeros((3, 4, 5)))
+        >>> output = ops.movedim(x, 0, -1)
+        >>> print(output.shape)
+        (4, 5, 3)
+    """
+    ndim = F.rank(x)
+    source = _check_axis_valid(source, ndim)
+    destination = _check_axis_valid(destination, ndim)
+    if len(source) != len(destination):
+        raise ValueError(
+            f"For `source` and `destination` arguments, the number of elements must be the same, but got 'source':"
+            f" {len(source)} and 'destination': {len(destination)}.")
+    perm = _get_moved_perm(ndim, source, destination)
+    return _get_cache_prim(P.Transpose)()(x, perm)
+
+
+def moveaxis(x, source, destination):
+    """
+    Alias for `ops.movedim`. Moves axis of an array from source to destination.
+
+    Other axis remain in their original order.
+
+    Args:
+        x (Tensor): The array whose axis should be reordered.
+        source (Union[int, sequence[int]]): Original positions of the
+            axis to move. These must be unique.
+        destination (Union[int, sequence[int]]): Destination positions
+            for each of the original axis. These must also be unique.
+
+    Returns:
+        Tensor, array with moved axis.
+
+    Raises:
+        ValueError: If axis are out of the range of [-a.ndim, a.ndim), or
+            if the axis contain duplicates.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import ops, Tensor
+        >>> import numpy as np
+        >>> x = Tensor(np.zeros((3, 4, 5)))
+        >>> output = ops.moveaxis(x, 0, -1)
+        >>> print(output.shape)
+        (4, 5, 3)
+    """
+
+    return movedim(x, source, destination)
+
+
 def count_nonzero(x, dims=None):
     """
     Counts the number of non-zero values in the input tensor along the given dims.
@@ -6477,6 +6718,11 @@ __all__ = [
     'argsort',
     'sequence_mask',
     'repeat_elements',
-    'repeat_interleave'
+    'repeat_interleave',
+    'argwhere',
+    'column_stack',
+    'hstack',
+    'movedim',
+    'moveaxis'
 ]
 __all__.sort()

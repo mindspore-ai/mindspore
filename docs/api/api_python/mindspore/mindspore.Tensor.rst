@@ -49,6 +49,7 @@ mindspore.Tensor
     mindspore.Tensor.argmin
     mindspore.Tensor.argmin_with_value
     mindspore.Tensor.argsort
+    mindspore.Tensor.argwhere
     mindspore.Tensor.asin
     mindspore.Tensor.asinh
     mindspore.Tensor.asnumpy
@@ -193,6 +194,8 @@ mindspore.Tensor
     mindspore.Tensor.min
     mindspore.Tensor.minimum
     mindspore.Tensor.mm
+    mindspore.Tensor.movedim
+    mindspore.Tensor.moveaxis
     mindspore.Tensor.msort
     mindspore.Tensor.mT
     mindspore.Tensor.multiply
