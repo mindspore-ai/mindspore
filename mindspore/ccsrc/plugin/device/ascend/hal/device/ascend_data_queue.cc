@@ -189,6 +189,15 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 
+#if defined(ENABLE_PYTHON) && !defined(ENABLE_ANDROID)
+  // There is a python flag in MindSpore to recognize if the runtime env is python.
+  // If we only use MD feature, python_env_flag will not set to true,
+  // then init.cc will not call ClearResAtexit at the end of MindSpore to clean resource.
+  // The original case is [only MD + mbuf + device_queue + send], the ascend stream release
+  // failed if we don't call ClearResAtexit first.
+  mindspore::python_adapter::set_python_env_flag(true);
+#endif
+
   // create acl tdt handle
   if (!channel_name_.empty()) {
     // When "capacity" is too large, device memory will be exploded
