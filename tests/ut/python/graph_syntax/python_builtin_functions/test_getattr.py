@@ -702,3 +702,35 @@ def test_getattr_numpy_array_2():
     with pytest.raises(TypeError) as err:
         foo()
     assert "For 'getattr', the third input 'default' can not" in str(err.value)
+
+
+def test_getattr_for_fg_object():
+    """
+    Feature: Syntax getattr.
+    Description: Graph syntax getattr support function graph object.
+    Expectation: No Exception
+    """
+    @jit_class
+    class User:
+        def __init__(self):
+            self.value = 10
+
+        @jit
+        def func(self, t):
+            return 2 * t
+
+    class UserNet(nn.Cell):
+        def __init__(self):
+            super(UserNet, self).__init__()
+            self.inner_net = User()
+
+        def construct(self, x):
+            return self.inner_net.func(x), getattr(self.inner_net, "tmp", 1)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = UserNet()
+    x = Tensor([1, 2, 3])
+    net(x)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    net(x)

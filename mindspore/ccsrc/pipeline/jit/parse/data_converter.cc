@@ -298,6 +298,8 @@ ValuePtr ConvertMsClass(const py::object &obj) {
       MS_LOG(ERROR) << "Parse resolve function error.";
       return nullptr;
     }
+    PyObjectWrapperPtr python_obj = std::make_shared<PyObjectWrapper>(obj, "graph python obj");
+    func_graph->set_python_obj(python_obj);
     return func_graph;
   }
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
