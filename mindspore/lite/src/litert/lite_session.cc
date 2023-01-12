@@ -782,11 +782,11 @@ int LiteSession::ContextInit(const std::shared_ptr<InnerContext> &context) {
   this->context_ = context;
   std::string runner_id;
   if (config_info_ != nullptr) {
-    auto it_id = config_info_->find(kInnerModelParallelRunner);
+    auto it_id = config_info_->find(kInnerModelParallelRunnerSection);
     if (it_id != config_info_->end()) {
-      auto item_runner = it_id->second.find(kInnerRunnerID);
+      auto item_runner = it_id->second.find(kInnerRunnerIDKey);
       if (item_runner != it_id->second.end()) {
-        runner_id = it_id->second.at(kInnerRunnerID);
+        runner_id = it_id->second.at(kInnerRunnerIDKey);
       }
     }
   }
@@ -837,19 +837,19 @@ int LiteSession::CreateTensorRTDelegate() {
   size_t device_cache_size = 0;
   std::map<std::string, std::string> input_ranges;
   if (config_info_ != nullptr) {
-    auto input_ranges_iter = config_info_->find(kGPUContext);
+    auto input_ranges_iter = config_info_->find(kGPUContextSection);
     if (input_ranges_iter != config_info_->end()) {
       input_ranges = input_ranges_iter->second;
     }
-    auto ms_cache_iter = config_info_->find(kMSCache);
+    auto ms_cache_iter = config_info_->find(kMSCacheSection);
     if (ms_cache_iter != config_info_->end()) {
       auto ms_cache = ms_cache_iter->second;
-      auto model_path_iter = ms_cache.find(kMSCacheModelPath);
+      auto model_path_iter = ms_cache.find(kMSCacheModelPathKey);
       if (model_path_iter != ms_cache.end()) {
         cache_model_path = model_path_iter->second;
       }
 
-      auto vocab_size_iter = ms_cache.find(kMSCacheVocabSize);
+      auto vocab_size_iter = ms_cache.find(kMSCacheVocabSizeKey);
       if (vocab_size_iter != ms_cache.end()) {
         auto vocab_size_opt = GenericParseValue<size_t>(vocab_size_iter->second);
         if (!vocab_size_opt.IsNone()) {
@@ -857,7 +857,7 @@ int LiteSession::CreateTensorRTDelegate() {
         }
       }
 
-      auto device_cache_size_iter = ms_cache.find(kMSCacheDeviceSize);
+      auto device_cache_size_iter = ms_cache.find(kMSCacheDeviceSizeKey);
       if (device_cache_size_iter != ms_cache.end()) {
         auto device_cache_size_opt = GenericParseValue<size_t>(device_cache_size_iter->second);
         if (!device_cache_size_opt.IsNone()) {
@@ -865,7 +865,7 @@ int LiteSession::CreateTensorRTDelegate() {
         }
       }
 
-      auto serialize_path_iter = ms_cache.find(kMSCacheSerializePath);
+      auto serialize_path_iter = ms_cache.find(kMSCacheSerializePathKey);
       if (serialize_path_iter != ms_cache.end()) {
         serialize_path = serialize_path_iter->second;
       }
@@ -1705,11 +1705,11 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
 std::string lite::LiteSession::ParseWeightPath() {
   std::string weight_path = "";
   if (config_info_ != nullptr) {
-    auto ms_weight = config_info_->find(kWeight);
+    auto ms_weight = config_info_->find(kConfigModelFileSection);
     if (ms_weight != config_info_->end()) {
       auto ms_weight_iter = ms_weight->second;
-      if (ms_weight_iter.find(kWeightPath) != ms_weight_iter.end()) {
-        weight_path = ms_weight_iter[kWeightPath];
+      if (ms_weight_iter.find(kConfigMindIRPathKey) != ms_weight_iter.end()) {
+        weight_path = ms_weight_iter[kConfigMindIRPathKey];
       }
     }
   }

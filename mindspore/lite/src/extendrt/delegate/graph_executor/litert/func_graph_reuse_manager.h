@@ -19,11 +19,13 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <utility>
 #include <unordered_map>
 #include <map>
 #include "mindspore/core/base/base.h"
 #include "include/api/status.h"
 #include "backend/common/session/kernel_graph.h"
+#include "src/common/helper/infer_helpers.h"
 namespace mindspore {
 struct ModelBufPair {
   void *buf = nullptr;
@@ -37,9 +39,10 @@ class FuncGraphReuseManager {
   FuncGraphPtr GetSharedFuncGraph(std::map<std::string, std::map<std::string, std::string>> config_info);
   Status StoreFuncGraph(FuncGraphPtr func_graph, std::map<std::string, std::map<std::string, std::string>> config_info);
 
-  void *GetFbModelBuf(size_t *data_size, bool *is_shared_fb_buf,
-                      std::map<std::string, std::map<std::string, std::string>> config_info);
+  std::pair<void *, std::shared_ptr<mindspore::infer::helper::InferHelpers>> GetFbModelBuf(
+    size_t *data_size, bool *is_shared_fb_buf, std::map<std::string, std::map<std::string, std::string>> config_info);
   Status StoreFbModelBuf(void *model_buf, size_t data_size,
+                         std::shared_ptr<mindspore::infer::helper::InferHelpers> helper,
                          std::map<std::string, std::map<std::string, std::string>> config_info);
 
   KernelGraphPtr GetKernelGraph(std::map<std::string, std::map<std::string, std::string>> config_info);
@@ -64,6 +67,7 @@ class FuncGraphReuseManager {
   std::unordered_map<std::string, FuncGraphPtr> all_func_graphs_;
   std::unordered_map<std::string, ModelBufPair> all_fb_model_buf_;
   std::unordered_map<std::string, KernelGraphPtr> all_kernel_graph_;
+  std::unordered_map<std::string, std::shared_ptr<mindspore::infer::helper::InferHelpers>> all_infer_helpers_;
   std::unordered_map<std::string, std::vector<tensor::TensorPtr>> all_in_tensors_;
   std::unordered_map<std::string, std::vector<tensor::TensorPtr>> all_out_tensors_;
   std::unordered_map<std::string, std::vector<std::string>> all_in_names_;

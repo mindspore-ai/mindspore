@@ -175,7 +175,7 @@ void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
   if (!(ascend_string = FindInAscendMap("aoe_mode", ascend_map)).empty()) {
     param->aclModelOptionCfgParam.aoe_mode = ascend_string;
   }
-  if (!(ascend_string = FindInAscendMap(kDumpModelName, ascend_map)).empty()) {
+  if (!(ascend_string = FindInAscendMap(kDumpModelNameKey, ascend_map)).empty()) {
     param->aclModelOptionCfgParam.dump_model_name = ascend_string;
   }
 

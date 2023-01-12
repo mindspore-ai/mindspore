@@ -52,41 +52,42 @@ static const char CALIB_NORM[] = "NORM";
 
 // dims
 static const int32_t DIM_DEFAULT_SIZE = 4;
-// ms cache
-static const char *const kMSCache = "ms_cache";
-static const char *const kMSCacheModelPath = "cache_model_path";
-static const char *const kMSCacheVocabSize = "vocab_size";
-static const char *const kMSCacheDeviceSize = "device_cache_size";
-static const char *const kMSCacheSerializePath = "serialize_path";
-// weight path
-static const char *const kWeight = "weight";
-static const char *const kWeightPath = "weight_path";
-
-// shared parallel thread pool
-static const char *const kSharedThreadPool = "shared_thread_pool";
-static const char *const kEnable = "enable_shared_thread_pool";
-static const char *const kThreadNumLimitPerWorker = "thread_num_limit_per_worker";
-static const char *const kThreadNumRemainingPerWorker = "thread_num_remaining_per_worker";
-static const char *const kInnerRunnerID = "inner_runner_id";
-static const char *const kInnerNumaID = "inner_numa_id";
-static const char *const kInnerModelID = "inner_model_id";
-static const char *const kInnerModelParallelRunner = "inner_model_parallel_runner";
-static const char *const kInnerSharingWeightCopyBuf = "sharing_weight_copy_buf";
-
 static const char *const kIsOptimized = "isOptimized";
+// ms cache
+static const char *const kMSCacheSection = "ms_cache";
+static const char *const kMSCacheModelPathKey = "cache_model_path";
+static const char *const kMSCacheVocabSizeKey = "vocab_size";
+static const char *const kMSCacheDeviceSizeKey = "device_cache_size";
+static const char *const kMSCacheSerializePathKey = "serialize_path";
+// mindir weight path
+static const char *const kConfigModelFileSection = "model_file";
+static const char *const kConfigMindIRPathKey = "mindir_path";
+static const char *const kWeightSection = "weight";
+static const char *const kWeightPathKey = "weight_path";
+// shared parallel thread pool
+static const char *const kSharedThreadPoolSection = "shared_thread_pool";
+static const char *const kEnableSharedThreadPoolKey = "enable_shared_thread_pool";
+static const char *const kThreadNumLimitPerWorkerKey = "thread_num_limit_per_worker";
+static const char *const kThreadNumRemainingPerWorkerKey = "thread_num_remaining_per_worker";
+// model pool inner section and key
+static const char *const kInnerModelParallelRunnerSection = "inner_model_parallel_runner";
+static const char *const kInnerSharingWeightCopyBufKey = "sharing_weight_copy_buf";
+static const char *const kInnerModelIDKey = "inner_model_id";
+static const char *const kInnerRunnerIDKey = "inner_runner_id";
+static const char *const kInnerNumaIDKey = "inner_numa_id";
 // gpu context
-static const char *const kGPUContext = "gpu_context";
-static const char *const kInputShape = "input_shape";
-static const char *const kDynamicDims = "dynamic_dims";
-static const char *const kOptimizeDims = "opt_dims";
-static const char *const kPrecisionMode = "precision_mode";
-static const char *const kDumpOps = "dump_ops";
-static const char *const kDumpDir = "dump_dir";
+static const char *const kGPUContextSection = "gpu_context";
+static const char *const kInputShapeKey = "input_shape";
+static const char *const kDynamicDimsKey = "dynamic_dims";
+static const char *const kOptimizeDimsKey = "opt_dims";
+static const char *const kPrecisionModeKey = "precision_mode";
+static const char *const kDumpOpsKey = "dump_ops";
+static const char *const kDumpDirKey = "dump_dir";
 // ascend context
-static const char *const kAscendContext = "ascend_context";
-static const char *const kProfilingPath = "profiling_path";
-static const char *const kDumpPath = "dump_path";
-static const char *const kDumpModelName = "dump_model_name";
+static const char *const kAscendContextSection = "ascend_context";
+static const char *const kProfilingPathKey = "profiling_path";
+static const char *const kDumpPathKey = "dump_path";
+static const char *const kDumpModelNameKey = "dump_model_name";
 }  // namespace lite
 }  // namespace mindspore
 

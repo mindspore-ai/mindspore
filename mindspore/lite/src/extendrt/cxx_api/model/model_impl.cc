@@ -32,8 +32,6 @@
 namespace mindspore {
 namespace {
 const char *const kExecutionPlan = "execution_plan";
-const char *const kConfigModelFileSection = "model_file";
-const char *const kConfigMindIRPathKey = "mindir_path";
 constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
 }  // namespace
@@ -85,18 +83,22 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
                                     const std::shared_ptr<Context> &model_context, const std::string &model_path) {
   const void *model_buff = model_data;
   size_t model_size = data_size;
-  auto mindir_path = GetConfig(kConfigModelFileSection, kConfigMindIRPathKey);
-  if (mindir_path == "") {
+  auto mindir_path = GetConfig(lite::kConfigModelFileSection, lite::kConfigMindIRPathKey);
+  std::string weight_path = "";
+  if (!mindir_path.empty()) {
+    weight_path = mindir_path.substr(0, mindir_path.rfind(".")) + "_variables";
+  } else {
     // user does not set mindir_path, convert from model_path
-    mindir_path = model_path.substr(0, model_path.rfind("/"));
+    weight_path = model_path.substr(0, model_path.rfind(".")) + "_variables";
   }
-  auto dump_path = GetConfig(lite::kAscendContext, lite::kDumpPath);
+  auto dump_path = GetConfig(lite::kAscendContextSection, lite::kDumpPathKey);
   if (!dump_path.empty()) {
     auto dir_pos = model_path.find_last_of('/');
     auto mindir_name = dir_pos != std::string::npos ? model_path.substr(dir_pos + 1) : model_path;
     auto dot_pos = mindir_name.find_last_of('.');
     auto model_name = mindir_name.substr(0, dot_pos);
-    (void)UpdateConfig(lite::kAscendContext, std::pair<std::string, std::string>(lite::kDumpModelName, model_name));
+    (void)UpdateConfig(lite::kAscendContextSection,
+                       std::pair<std::string, std::string>(lite::kDumpModelNameKey, model_name));
   }
   SetMsContext();
   session_ = InferSession::CreateSession(model_context, config_info_);
@@ -118,9 +120,9 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
   }
 
   MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
-  func_graph = mindir_loader.LoadMindIR(model_buff, model_size, mindir_path);
+  func_graph = mindir_loader.LoadMindIR(model_buff, model_size, weight_path);
   if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << mindir_path;
+    MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << weight_path;
     return kLiteError;
   }
   // convert and optimize func graph to infer

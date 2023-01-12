@@ -30,11 +30,11 @@ std::string ParseNumaId(const std::map<std::string, std::map<std::string, std::s
   if (config_info == nullptr) {
     return numa_id;
   }
-  auto it_id = config_info->find(kInnerModelParallelRunner);
+  auto it_id = config_info->find(kInnerModelParallelRunnerSection);
   if (it_id != config_info->end()) {
-    auto item_numa = it_id->second.find(kInnerNumaID);
+    auto item_numa = it_id->second.find(kInnerNumaIDKey);
     if (item_numa != it_id->second.end()) {
-      numa_id = it_id->second.at(kInnerNumaID);
+      numa_id = it_id->second.at(kInnerNumaIDKey);
     }
   }
   return numa_id;
@@ -45,11 +45,11 @@ std::string ParseRunnerId(const std::map<std::string, std::map<std::string, std:
   if (config_info == nullptr) {
     return runner_id;
   }
-  auto it_id = config_info->find(kInnerModelParallelRunner);
+  auto it_id = config_info->find(kInnerModelParallelRunnerSection);
   if (it_id != config_info->end()) {
-    auto item_runner = it_id->second.find(kInnerRunnerID);
+    auto item_runner = it_id->second.find(kInnerRunnerIDKey);
     if (item_runner != it_id->second.end()) {
-      runner_id = it_id->second.at(kInnerRunnerID);
+      runner_id = it_id->second.at(kInnerRunnerIDKey);
     }
   }
   return runner_id;
@@ -62,11 +62,11 @@ bool ParseCopyBuf(const std::map<std::string, std::map<std::string, std::string>
     return need_copy;
   }
   std::string copy_buf = "";
-  auto inner_item = config_info->find(kInnerModelParallelRunner);
+  auto inner_item = config_info->find(kInnerModelParallelRunnerSection);
   if (inner_item != config_info->end()) {
-    auto item_copy_buf = inner_item->second.find(kInnerSharingWeightCopyBuf);
+    auto item_copy_buf = inner_item->second.find(kInnerSharingWeightCopyBufKey);
     if (item_copy_buf != inner_item->second.end()) {
-      copy_buf = inner_item->second.at(kInnerSharingWeightCopyBuf);
+      copy_buf = inner_item->second.at(kInnerSharingWeightCopyBufKey);
     }
   }
   if (copy_buf == "false") {

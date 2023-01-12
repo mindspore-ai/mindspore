@@ -91,8 +91,8 @@ Status HostCacheModel::LoadCache(const std::string &model_path) {
 
 size_t GetVocabSize(kernel::Kernel *kernel) {
   size_t vocab_size = 0;
-  auto cache_config = kernel->GetConfig(lite::kMSCache);
-  auto vocab_size_iter = cache_config.find(lite::kMSCacheVocabSize);
+  auto cache_config = kernel->GetConfig(lite::kMSCacheSection);
+  auto vocab_size_iter = cache_config.find(lite::kMSCacheVocabSizeKey);
   if (vocab_size_iter == cache_config.end()) {
     return vocab_size;
   }

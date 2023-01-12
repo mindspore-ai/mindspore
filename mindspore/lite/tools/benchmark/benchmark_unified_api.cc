@@ -299,8 +299,8 @@ void BenchmarkUnifiedApi::UpdateConfigInfo() {
     return;
   }
   if (env[0] == WIPE_DEEP_CONFIG_ENV) {
-    ms_model_.UpdateConfig(kMSCache, std::make_pair(kMSCacheVocabSize, WIPE_DEEP_CONFIG_VOCAB_SIZE));
-    ms_model_.UpdateConfig(kMSCache, std::make_pair(kMSCacheDeviceSize, WIPE_DEEP_CONFIG_DEVICE_CACHE_SIZE));
+    ms_model_.UpdateConfig(kMSCacheSection, std::make_pair(kMSCacheVocabSizeKey, WIPE_DEEP_CONFIG_VOCAB_SIZE));
+    ms_model_.UpdateConfig(kMSCacheSection, std::make_pair(kMSCacheDeviceSizeKey, WIPE_DEEP_CONFIG_DEVICE_CACHE_SIZE));
   }
   return;
 }
@@ -1105,17 +1105,17 @@ int BenchmarkUnifiedApi::AddConfigInfo(const std::shared_ptr<RunnerConfig> &runn
   }
   std::map<std::string, std::string> config;
   if (flags_->enable_shared_thread_pool_) {
-    config[kEnable] = "true";
+    config[kEnableSharedThreadPoolKey] = "true";
     if (!flags_->thread_num_limit_per_worker_.empty()) {
-      config[kThreadNumLimitPerWorker] = flags_->thread_num_limit_per_worker_;
+      config[kThreadNumLimitPerWorkerKey] = flags_->thread_num_limit_per_worker_;
     }
     if (!flags_->thread_num_remaining_per_worker_.empty()) {
-      config[kThreadNumRemainingPerWorker] = flags_->thread_num_remaining_per_worker_;
+      config[kThreadNumRemainingPerWorkerKey] = flags_->thread_num_remaining_per_worker_;
     }
   } else {
-    config[kEnable] = "false";
+    config[kEnableSharedThreadPoolKey] = "false";
   }
-  runner_config->SetConfigInfo(kSharedThreadPool, config);
+  runner_config->SetConfigInfo(kSharedThreadPoolSection, config);
   return RET_OK;
 }
 

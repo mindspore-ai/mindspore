@@ -352,7 +352,7 @@ bool TensorRTExecutor::Init() {
 }
 
 int TensorRTExecutor::ParseOptimizationProfile() {
-  auto gpu_context_it = config_infos_.find(kGPUContext);
+  auto gpu_context_it = config_infos_.find(kGPUContextSection);
   if (gpu_context_it == config_infos_.end()) {
     MS_LOG(INFO) << "do not have input ranges config.";
     return RET_OK;
@@ -360,11 +360,11 @@ int TensorRTExecutor::ParseOptimizationProfile() {
   auto &gpu_context = gpu_context_it->second;
   ProfileConfigs profile_configs;
   if (!ProfileParser::Parse(gpu_context, true, &profile_configs)) {
-    MS_LOG_WARNING << "Failed to parse profile info from '" << kGPUContext << "'";
+    MS_LOG_WARNING << "Failed to parse profile info from '" << kGPUContextSection << "'";
     return RET_FAILED;
   }
   trt_profile_configs_ = profile_configs;
-  auto precision_mode = ProfileParser::GetOption(gpu_context, lite::kPrecisionMode, "");
+  auto precision_mode = ProfileParser::GetOption(gpu_context, lite::kPrecisionModeKey, "");
   if (precision_mode == "force_fp16") {
     device_info_->SetEnableFP16(true);
     MS_LOG(INFO) << "Set precision mode to fp16 by config file";
@@ -373,10 +373,10 @@ int TensorRTExecutor::ParseOptimizationProfile() {
 }
 
 int TensorRTExecutor::ParseDumpOptions(const std::map<std::string, std::string> &gpu_context) {
-  auto dump_ops_str = ProfileParser::GetOption(gpu_context, lite::kDumpOps, "");
+  auto dump_ops_str = ProfileParser::GetOption(gpu_context, lite::kDumpOpsKey, "");
   if (!dump_ops_str.empty()) {
     dump_ops_ = ProfileParser::Split(dump_ops_str, ";");
-    dump_dir_ = ProfileParser::GetOption(gpu_context, lite::kDumpDir, "");
+    dump_dir_ = ProfileParser::GetOption(gpu_context, lite::kDumpDirKey, "");
     if (dump_dir_.empty()) {
       dump_dir_ = ".";
     }
