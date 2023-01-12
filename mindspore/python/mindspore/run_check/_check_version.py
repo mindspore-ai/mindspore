@@ -28,8 +28,6 @@ import numpy as np
 from mindspore import log as logger
 from mindspore._c_expression import MSContext, ms_ctx_param
 from ..version import __version__
-if platform.system().lower() == 'windows':
-    import win32api
 
 
 class EnvChecker(metaclass=ABCMeta):
@@ -75,10 +73,7 @@ class GPUEnvChecker(EnvChecker):
 
     def __init__(self, library_path):
         self.version = ["10.1", "11.1", "11.6"]
-        if platform.system().lower() == 'windows':
-            self.lib_key_to_lib_name = {'libcu': 'cudart64_110.dll', 'libcudnn': 'cudnn64_8.dll'}
-        else:
-            self.lib_key_to_lib_name = {'libcu': 'libcuda.so', 'libcudnn': 'libcudnn.so'}
+        self.lib_key_to_lib_name = {'libcu': 'libcuda.so', 'libcudnn': 'libcudnn.so'}
         self.library_path = library_path
         # env
         self.path = os.getenv("PATH")
@@ -127,23 +122,15 @@ class GPUEnvChecker(EnvChecker):
 
     def get_cudart_version(self):
         """Get cuda runtime version by libcudart.so."""
-        if platform.system().lower() == 'windows':
-            if os.getenv('CUDA_PATH'):
-                cuda_bin_path = os.path.join(os.environ['CUDA_PATH'], 'bin')
-                cudart_dll_path = glob.glob(os.path.join(cuda_bin_path, "cudart64_*.dll"))[0]
-                lang, codepage = win32api.GetFileVersionInfo(cudart_dll_path, '\\VarFileInfo\\Translation')[0]
-                desc_str = '\\StringFileInfo\\%04X%04X\\FileDescription' % (lang, codepage)
-                self.v = win32api.GetFileVersionInfo(cudart_dll_path, desc_str).strip().split(" ")[-1]
-        else:
-            for path in self.cuda_lib_path:
-                real_path = glob.glob(path + "/lib*/libcudart.so.*.*.*")
-                if real_path == []:
-                    continue
-                ls_cudart = subprocess.run(["ls", real_path[0]], timeout=10, text=True,
-                                           capture_output=True, check=False)
-                if ls_cudart.returncode == 0:
-                    self.v = ls_cudart.stdout.split('/')[-1].strip('libcudart.so.').strip()
-                    break
+        for path in self.cuda_lib_path:
+            real_path = glob.glob(path + "/lib*/libcudart.so.*.*.*")
+            if real_path == []:
+                continue
+            ls_cudart = subprocess.run(["ls", real_path[0]], timeout=10, text=True,
+                                       capture_output=True, check=False)
+            if ls_cudart.returncode == 0:
+                self.v = ls_cudart.stdout.split('/')[-1].strip('libcudart.so.').strip()
+                break
         return self.v
 
     def set_env(self):
@@ -176,14 +163,8 @@ class GPUEnvChecker(EnvChecker):
     def _get_nvcc_version(self, is_set_env):
         """Get cuda version by nvcc command."""
         try:
-            if platform.system().lower() == 'windows':
-                nvcc_result = subprocess.run(["nvcc", "--version"],
-                                             timeout=3, text=True, capture_output=True, check=False)
-                nvcc_result = subprocess.run(["findstr", "release"], input=nvcc_result.stdout,
-                                             timeout=3, text=True, capture_output=True, check=False)
-            else:
-                nvcc_result = subprocess.run(["nvcc", "--version | grep release"],
-                                             timeout=3, text=True, capture_output=True, check=False)
+            nvcc_result = subprocess.run(["nvcc", "--version | grep release"],
+                                         timeout=3, text=True, capture_output=True, check=False)
         except OSError:
             if not is_set_env:
                 for path in self.cuda_bin_path:
@@ -237,10 +218,7 @@ class GPUEnvChecker(EnvChecker):
                              "guidelines: https://www.mindspore.cn/install")
                 return path_list
             ldd_r = subprocess.Popen(['ldd', self.library_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if platform.system().lower() == 'windows':
-                ldd_result = subprocess.Popen(['findstr', lib_name], stdin=ldd_r.stdout, stdout=subprocess.PIPE)
-            else:
-                ldd_result = subprocess.Popen(['/bin/grep', lib_name], stdin=ldd_r.stdout, stdout=subprocess.PIPE)
+            ldd_result = subprocess.Popen(['/bin/grep', lib_name], stdin=ldd_r.stdout, stdout=subprocess.PIPE)
             result = ldd_result.communicate(timeout=5)[0].decode()
             for i in result.split('\n'):
                 path = i.partition("=>")[2]
