@@ -22,6 +22,13 @@
 #include <chrono>
 #include <string>
 #include <vector>
+#include <functional>
+
+#include "actor/log.h"
+#include "actor/msg.h"
+#include "utils/ms_utils.h"
+#include "utils/log_adapter.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
@@ -88,6 +95,22 @@ constexpr char kControlDstOpName[] = "ControlDst";
 // This macro the current timestamp in milliseconds.
 #define CURRENT_TIMESTAMP_MILLI \
   (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()))
+
+using MessageHandler = std::function<MessageBase *const(MessageBase *const)>;
+
+/**
+ * @description: The callback function type for allocating memory after receiving data for the peer.
+ * @param {size_t} size: Size of the memory to be allocated.
+ * @return {void *}: A pointer to the newly allocated memory.
+ */
+using MemAllocateCallback = std::function<void *(size_t size)>;
+
+/**
+ * @description: The callback function for releasing memory after sending it to the peer.
+ * @param {void} *data: The memory to be released, which should be allocated on heap.
+ * @return {bool}: Whether the memory is successfully released.
+ */
+using MemFreeCallback = std::function<bool(void *data)>;
 }  // namespace distributed
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DISTRIBUTED_CONSTANTS_H_

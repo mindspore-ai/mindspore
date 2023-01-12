@@ -24,29 +24,13 @@
 #include <memory>
 #include <functional>
 
-#include "actor/log.h"
-#include "actor/msg.h"
+#include "distributed/constants.h"
 
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-using MessageHandler = std::function<MessageBase *const(MessageBase *const)>;
 using DeleteCallBack = void (*)(const std::string &from, const std::string &to);
 using ConnectionCallBack = std::function<void(void *connection)>;
-
-/**
- * @description: The callback function type for allocating memory after receiving data for the peer.
- * @param {size_t} size: Size of the memory to be allocated.
- * @return {void *}: A pointer to the newly allocated memory.
- */
-using MemAllocateCallback = std::function<void *(size_t size)>;
-
-/**
- * @description: The callback function for releasing memory after sending it to the peer.
- * @param {void} *data: The memory to be released, which should be allocated on heap.
- * @return {bool}: Whether the memory is successfully released.
- */
-using MemFreeCallback = std::function<bool(void *data)>;
 
 constexpr int SEND_MSG_IO_VEC_LEN = 5;
 constexpr int RECV_MSG_IO_VEC_LEN = 4;

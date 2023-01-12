@@ -142,7 +142,7 @@ class MetaServerNode : public NodeBase {
 
   // All the handlers for compute graph node's system messages processing.
   // The `system` means the built-in messages used for cluster topology construction.
-  std::map<MessageName, rpc::MessageHandler> system_msg_handlers_;
+  std::map<MessageName, MessageHandler> system_msg_handlers_;
 
   // All the handlers for compute graph node's user-defined messages processing.
   // The `user-defined` means that this kind of message is user defined and has customized message handler.
