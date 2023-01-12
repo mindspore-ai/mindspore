@@ -21,6 +21,7 @@
 #include <set>
 #include <functional>
 #include "runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.h"
+#include "runtime/graph_scheduler/device_tensor_store.h"
 #include "distributed/embedding_cache/embedding_cache_utils.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/parallel_context.h"
@@ -32,6 +33,10 @@ namespace {
 bool CheckEnableEmbeddingCache() {
   return ps::PSContext::instance()->cache_enable() && distributed::cluster::ClusterContext::instance()->initialized() &&
          ps::PSContext::instance()->is_worker();
+}
+
+bool CheckEmbeddingCacheServer() {
+  return ps::PSContext::instance()->cache_enable() && ps::PSContext::instance()->is_server();
 }
 
 // Whether device address exist.
@@ -364,6 +369,41 @@ void EmbeddingCacheScheduler::SetDataSetChannel(const std::string &actor_id,
   }
 }
 
+void EmbeddingCacheScheduler::InitEmbeddingStorage(const std::vector<AnfNodePtr> &parameters) {
+  if (!CheckEmbeddingCacheServer()) {
+    return;
+  }
+
+  for (size_t i = 0; i < parameters.size(); i++) {
+    MS_EXCEPTION_IF_NULL(parameters[i]);
+    if (!parameters[i]->isa<Parameter>()) {
+      MS_LOG(EXCEPTION) << "The node with name: " << parameters[i]->fullname_with_scope() << "is not a Parameter.";
+    }
+
+    ParameterPtr param = parameters[i]->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param);
+    auto param_info = param->param_info();
+    // Check whether enable embedding storage for the parameter.
+    bool enable_embedding_storage =
+      param_info && param_info->key() != -1 && param_info->cache_enable() && param_info->use_persistent_storage();
+    if (!enable_embedding_storage) {
+      continue;
+    }
+
+    auto embed_storage = embedding_storage_manager.Get(param_info->key());
+    MS_EXCEPTION_IF_NULL(embed_storage);
+    std::vector<DeviceTensorPtr> device_tensors = DeviceTensorStore::GetInstance().Fetch(param.get());
+    if (device_tensors.size() != 1) {
+      MS_LOG(EXCEPTION)
+        << "The device tensor size for embedding table which enables embedding storage should be 1, but got:"
+        << device_tensors.size();
+    }
+
+    // Initialize embedding storage instance.
+    embed_storage->Initialize(device_tensors.front().get());
+  }
+}
+
 void EmbeddingCacheScheduler::Schedule() {
   if (!initialized_ || scheduled_) {
     return;
@@ -416,6 +456,8 @@ void EmbeddingCacheScheduler::Finalize(bool sync_embedding_table) {
   embedding_cache_prefetch_actor_->Finalize();
 
   embedding_cache_table_manager.Finalize();
+
+  embedding_storage_manager.Clear();
 
   initialized_ = false;
   finalized_ = true;

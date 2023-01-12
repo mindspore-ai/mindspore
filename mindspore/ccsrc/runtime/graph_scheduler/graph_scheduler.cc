@@ -547,6 +547,10 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
   EmbeddingCacheScheduler::GetInstance().SetDataSetChannel(actor_set->data_prepare_actor_->GetAID(),
                                                            graph_compiler_info.graphs_);
+
+  // Initialize all embedding storage instances.
+  EmbeddingCacheScheduler::GetInstance().InitEmbeddingStorage(graph_compiler_info.origin_parameters_order_);
+
   // Set rpc actors in order to update rpc actors status.
   RpcActorStatusUpdater::GetInstance().set_rpc_actors(actor_set->rpc_actors_);
 #endif

@@ -29,20 +29,28 @@ void DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(const Devi
   EmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(device_address);
   embedding_param_ptr_ = reinterpret_cast<ValueType *>(device_address->GetMutablePtr());
   MS_EXCEPTION_IF_NULL(embedding_param_ptr_);
-  empty_slots_.resize(this->capacity_);
+  empty_slots_.resize(this->cache_capacity_);
   std::iota(empty_slots_.rbegin(), empty_slots_.rend(), 0);
 }
 
 template <typename KeyType, typename ValueType, typename Allocator>
 void DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Finalize() {
+  EmbeddingStorage<KeyType, ValueType, Allocator>::Finalize();
   empty_slots_.clear();
   embedding_param_ptr_ = nullptr;
 }
 
 template <typename KeyType, typename ValueType, typename Allocator>
-bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Get(const KeyType *keys, size_t key_num, ValueType *values) {
-  MS_EXCEPTION_IF_NULL(keys);
-  MS_EXCEPTION_IF_NULL(values);
+bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Get(const ConstDataWithLen &keys,
+                                                               const DataWithLen &values) {
+  const KeyType *keys_data = reinterpret_cast<const KeyType *>(keys.data_);
+  ValueType *values_data = reinterpret_cast<ValueType *>(values.data_);
+  size_t key_num = keys.data_len_ / sizeof(KeyType);
+  if (values.data_len_ < key_num * this->embedding_dim_ * sizeof(ValueType)) {
+    MS_LOG(EXCEPTION) << "The value buffer length is insufficient.";
+  }
+  MS_EXCEPTION_IF_NULL(keys_data);
+  MS_EXCEPTION_IF_NULL(values_data);
   MS_EXCEPTION_IF_NULL(embedding_param_ptr_);
 
   // 1. Query cache to get the index of each key in the Tensor, update the positions of cache hit elements in the cache
@@ -52,14 +60,14 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Get(const KeyType *ke
   MS_EXCEPTION_IF_NULL(cache_miss_offsets);
   int *indices_in_cache = this->template AllocateMemory<int>(sizeof(int) * key_num);
   MS_EXCEPTION_IF_NULL(indices_in_cache);
-  QueryCache(keys, key_num, cache_miss_offsets, &cache_miss_cnt, indices_in_cache);
+  QueryCache(keys_data, key_num, cache_miss_offsets, &cache_miss_cnt, indices_in_cache);
 
   // 2. Copy the embeddings from cache to the returned values for cache hit keys.
   for (size_t i = 0; i < key_num; i++) {
     if (indices_in_cache[i] == kInvalidIndex) {
       continue;
     }
-    auto ret = memcpy_s(values + this->embedding_dim_ * i, this->embedding_dim_ * sizeof(ValueType),
+    auto ret = memcpy_s(values_data + this->embedding_dim_ * i, this->embedding_dim_ * sizeof(ValueType),
                         embedding_param_ptr_ + this->embedding_dim_ * indices_in_cache[i],
                         this->embedding_dim_ * sizeof(ValueType));
     if (ret != EOK) {
@@ -77,7 +85,7 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Get(const KeyType *ke
   RETURN_IF_FALSE_WITH_LOG(TryEvict(cache_miss_cnt), "Reserve space for miss keys failed.");
 
   // 4. Insert the cache miss elements into the cache from persistent storage, and copy them to the returned values.
-  RETURN_IF_FALSE_WITH_LOG(InsertMissCacheFromStorage(keys, cache_miss_offsets, cache_miss_cnt, values),
+  RETURN_IF_FALSE_WITH_LOG(InsertMissCacheFromStorage(keys_data, cache_miss_offsets, cache_miss_cnt, values_data),
                            "Insert the cache miss elements into the cache from persistent storage failed.");
 
   this->FreeMemory(indices_in_cache);
@@ -86,10 +94,17 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Get(const KeyType *ke
 }
 
 template <typename KeyType, typename ValueType, typename Allocator>
-bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Put(const KeyType *keys, size_t key_num,
-                                                               const ValueType *values) {
-  MS_EXCEPTION_IF_NULL(keys);
-  MS_EXCEPTION_IF_NULL(values);
+bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Put(const ConstDataWithLen &keys,
+                                                               const ConstDataWithLen &values) {
+  const KeyType *keys_data = reinterpret_cast<const KeyType *>(keys.data_);
+  const ValueType *values_data = reinterpret_cast<const ValueType *>(values.data_);
+  size_t key_num = keys.data_len_ / sizeof(KeyType);
+  if (values.data_len_ != key_num * this->embedding_dim_ * sizeof(ValueType)) {
+    MS_LOG(EXCEPTION) << "The value length is invalid, expected length["
+                      << key_num * this->embedding_dim_ * sizeof(ValueType) << "], but got[" << values.data_len_ << "]";
+  }
+  MS_EXCEPTION_IF_NULL(keys_data);
+  MS_EXCEPTION_IF_NULL(values_data);
   MS_EXCEPTION_IF_NULL(embedding_param_ptr_);
 
   // 1. Query cache to get the index of each key in the Tensor, update the positions of cache hit elements in the cache
@@ -99,7 +114,7 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Put(const KeyType *ke
   MS_EXCEPTION_IF_NULL(cache_miss_offsets);
   int *indices_in_cache = this->template AllocateMemory<int>(sizeof(int) * key_num);
   MS_EXCEPTION_IF_NULL(indices_in_cache);
-  QueryCache(keys, key_num, cache_miss_offsets, &cache_miss_cnt, indices_in_cache);
+  QueryCache(keys_data, key_num, cache_miss_offsets, &cache_miss_cnt, indices_in_cache);
 
   // 2. Update the embedding value to the cache for cache hit keys.
   for (size_t i = 0; i < key_num; i++) {
@@ -107,7 +122,7 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Put(const KeyType *ke
       continue;
     }
     auto ret = memcpy_s(embedding_param_ptr_ + this->embedding_dim_ * indices_in_cache[i],
-                        this->embedding_dim_ * sizeof(ValueType), values + this->embedding_dim_ * i,
+                        this->embedding_dim_ * sizeof(ValueType), values_data + this->embedding_dim_ * i,
                         this->embedding_dim_ * sizeof(ValueType));
     if (ret != EOK) {
       MS_LOG(ERROR) << "Memcpy for inserting embedding value failed, output index[" << i << "], errno[" << ret << "]";
@@ -124,7 +139,7 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Put(const KeyType *ke
   RETURN_IF_FALSE_WITH_LOG(TryEvict(cache_miss_cnt), "Reserve space for miss keys failed.");
 
   // 4. Insert the cache miss elements into the cache from host memory.
-  RETURN_IF_FALSE_WITH_LOG(InsertMissCacheFromMemory(keys, cache_miss_offsets, cache_miss_cnt, values),
+  RETURN_IF_FALSE_WITH_LOG(InsertMissCacheFromMemory(keys_data, cache_miss_offsets, cache_miss_cnt, values_data),
                            "Insert cache miss elements into cache from host memory failed.");
 
   this->FreeMemory(indices_in_cache);
@@ -158,10 +173,15 @@ void DenseEmbeddingStorage<KeyType, ValueType, Allocator>::QueryCache(const KeyT
 template <typename KeyType, typename ValueType, typename Allocator>
 bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::TryEvict(size_t reserve_size) {
   // 1. Try evict some non-hot data in cache to reserve space for elements that will be inserted into the cache.
+  if (reserve_size > this->cache_capacity_) {
+    MS_LOG(EXCEPTION) << "The evict number must be less or equal to cache capacity: " << this->cache_capacity_
+                      << ", but got: " << reserve_size << ", please enlarge cache capacity";
+  }
+
   MS_EXCEPTION_IF_NULL(this->cache_);
   std::vector<CacheElement> evicted_elements;
   this->cache_->TryEvict(reserve_size, &evicted_elements);
-  if (evicted_elements.size() > 0) {
+  if (evicted_elements.size() == 0) {
     return true;
   }
 
@@ -194,6 +214,7 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::TryEvict(size_t reser
       return false;
     }
   }
+
   // 4. Write evicted elements to persistent storage.
   MS_EXCEPTION_IF_NULL(this->storage_);
   this->storage_->Write({evicted_keys, evicted_keys_len}, {evicted_values, evicted_values_len});

@@ -165,10 +165,9 @@ bool EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   offset_ = static_cast<int64_t>(offset);
 
   if (enable_embedding_storage_) {
-    auto embedding_storage = embedding_storage_manager.Get<S, T>(parameter_key_);
+    auto embedding_storage = embedding_storage_manager.Get(parameter_key_);
     MS_ERROR_IF_NULL(embedding_storage);
-    if (!embedding_storage->Get(reinterpret_cast<S *>(input_indices_addr), input_indices_lens_,
-                                reinterpret_cast<T *>(output_addr))) {
+    if (!embedding_storage->Get({input_indices_addr, inputs[1]->size}, {output_addr, outputs[0]->size})) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', lookup embedding from embedding storage failed, parameter key: " << parameter_key_;
       return false;

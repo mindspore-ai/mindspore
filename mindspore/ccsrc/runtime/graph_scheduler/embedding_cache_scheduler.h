@@ -46,6 +46,9 @@ class BACKEND_EXPORT EmbeddingCacheScheduler {
   // Set data set channel name, used for multi dataset mode, such as predict after train.
   void SetDataSetChannel(const std::string &actor_id, const std::vector<KernelGraphPtr> &graphs);
 
+  // Initialize all embedding storage instances.
+  void InitEmbeddingStorage(const std::vector<AnfNodePtr> &parameters);
+
   // 1. Build network connection between local and remote cache for embedding cache prefetch actor.
   // 2. Schedule and Run embedding cache prefetch actor.
   // Since the embedding cache prefetch actor is spinning, and the actor is not in the actor set, start the actor in the

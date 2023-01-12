@@ -23,7 +23,7 @@
 #include <utility>
 #include "kernel/kernel.h"
 #include "distributed/embedding_cache/embedding_hash_map.h"
-#include "distributed/embedding_cache/embedding_storage/embedding_storage.h"
+#include "distributed/embedding_cache/embedding_storage/abstract_embedding_storage.h"
 #include "runtime/hardware/device_context.h"
 #include "include/backend/visible.h"
 
@@ -279,9 +279,11 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   friend class mindspore::runtime::DeviceSparseEmbeddingOperation;
 };
 
-// A single instance class used to manager all EmbeddingStorage instances, EmbeddingStorage is encapsulated within the
-// Huge Embedding Table's lookup and update. EmbeddingStorageManager provides Add and Get API to add, replace and
-// acquire EmbeddingStorage instances.
+/**
+ * @brief A single instance class used to manager all EmbeddingStorage instances, EmbeddingStorage is encapsulated
+ * within the Huge Embedding Table's lookup and update. EmbeddingStorageManager provides Add and Get API to add, replace
+ * and acquire EmbeddingStorage instances.
+ */
 class BACKEND_EXPORT EmbeddingStorageManager {
  public:
   static EmbeddingStorageManager &GetInstance();
@@ -292,8 +294,7 @@ class BACKEND_EXPORT EmbeddingStorageManager {
    * @param[in] `param_key`: The parameter key for embedding table which need to add.
    * @param[in] `embed_storage`: The embedding storage instance pointer which can not be nullptr.
    */
-  template <typename KeyType, typename ValueType>
-  void Add(int32_t param_key, const std::shared_ptr<storage::EmbeddingStorage<KeyType, ValueType>> &embed_storage) {
+  void Add(int32_t param_key, const std::shared_ptr<storage::AbstractEmbeddingStorage> &embed_storage) {
     MS_EXCEPTION_IF_NULL(embed_storage);
     embedding_storages_[param_key] = embed_storage;
   }
@@ -303,11 +304,10 @@ class BACKEND_EXPORT EmbeddingStorageManager {
    * @param[in] `param_key`: The parameter key for embedding table which need to acquire.
    * @return The embedding storage instance pointer if the embedding storage already exists, else throw exception.
    */
-  template <typename KeyType = int32_t, typename ValueType = float>
-  std::shared_ptr<storage::EmbeddingStorage<KeyType, ValueType>> Get(int32_t param_key) {
+  std::shared_ptr<storage::AbstractEmbeddingStorage> Get(int32_t param_key) {
     const auto &iter = embedding_storages_.find(param_key);
     if (iter != embedding_storages_.end()) {
-      return std::static_pointer_cast<storage::EmbeddingStorage<KeyType, ValueType>>(iter->second);
+      return iter->second;
     }
     MS_LOG(EXCEPTION) << "Can not find embedding storage for parameter key[" << param_key << "].";
   }
@@ -320,13 +320,26 @@ class BACKEND_EXPORT EmbeddingStorageManager {
    */
   bool Exists(int32_t param_key) const { return embedding_storages_.find(param_key) != embedding_storages_.end(); }
 
+  /**
+   * @brief Clear all embedding storage instances and release related resources.
+   */
+  void Clear() {
+    for (const auto &item : embedding_storages_) {
+      const auto &embedding_storage = item.second;
+      MS_EXCEPTION_IF_NULL(embedding_storage);
+      embedding_storage->Finalize();
+    }
+
+    embedding_storages_.clear();
+  }
+
  private:
   EmbeddingStorageManager() = default;
   ~EmbeddingStorageManager() = default;
   DISABLE_COPY_AND_ASSIGN(EmbeddingStorageManager);
 
   // Record all {parameter key -> embedding storage instance} pairs.
-  HashMap<int32_t, std::shared_ptr<void>> embedding_storages_;
+  HashMap<int32_t, std::shared_ptr<storage::AbstractEmbeddingStorage>> embedding_storages_;
 };
 
 /**
@@ -335,7 +348,7 @@ class BACKEND_EXPORT EmbeddingStorageManager {
  * @param[in] `key_value_types`: The specific key and value data type to determine the type of embedding storage
  * instance to create.
  * @param[in] `embedding_key`: The unique parameter key for embedding table.
- * @param[in] `embedding_dim`: The length of each embedding vector.
+ * @param[in] `embedding_dim`: The size of each embedding vector.
  * @param[in] `capacity`: The capacity for new embedding storage.
  */
 BACKEND_EXPORT void CreateEmbeddingStorage(std::pair<TypeId, TypeId> key_value_types, int32_t embedding_key,

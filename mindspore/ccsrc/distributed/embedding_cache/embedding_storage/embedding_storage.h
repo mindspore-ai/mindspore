@@ -19,27 +19,24 @@
 
 #include <memory>
 
+#include "distributed/embedding_cache/embedding_storage/abstract_embedding_storage.h"
 #include "distributed/embedding_cache/allocator.h"
 #include "distributed/embedding_cache/cache_strategy/cache.h"
-#include "distributed/persistent/storage/storage.h"
-#include "runtime/device/device_address.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
 namespace storage {
-using mindspore::device::DeviceAddress;
-
-// EmbeddingStorage is encapsulated within the Huge Embedding Table's lookup and update. It supports embeddingstorage
-// query and modification of Embeddings, interaction between the host cache(for hot spot data) and SSD disk(for non-hot
-// spot data), and preferential access to Embeddings in the host cache. If the corresponding element cannot be found in
-// the host cache, then read the element from the SSD. Otherwise, if the host cache has insufficient space, the expired
-// elements will automatically be evicted the to the SSD.
-//
-// It is stored in a key-value pair. For example, if the type of id of EmbeddingLookup is int and type of EmbeddingTable
-// is float, you can use the instance as follow: EmbeddingStorage<int, float>.
+/**
+ * @brief EmbeddingStorage It is a partial implementation of AbstractEmbeddingStorage, which implements the Initialize
+ * and Finalize interface and provides a general interface for allocating and deallocating memory and some common memory
+ * variable.
+ *
+ * It is stored in key-value pair. For example, if the type of id of EmbeddingLookup is int and type of EmbeddingTable
+ * is float, you can use the instance as follow: EmbeddingStorage<int, float>.
+ */
 template <typename KeyType, typename ValueType, typename Allocator = Allocator<uint8_t>>
-class BACKEND_EXPORT EmbeddingStorage {
+class BACKEND_EXPORT EmbeddingStorage : public AbstractEmbeddingStorage {
  public:
   // The general Allocator type used allocate host memory.
   using AllocatorType = typename std::allocator_traits<Allocator>::template rebind_alloc<uint8_t>;
@@ -47,52 +44,62 @@ class BACKEND_EXPORT EmbeddingStorage {
   // The host cache type.
   using CacheType = Cache<KeyType, int>;
 
-  EmbeddingStorage(int32_t embedding_key, size_t embedding_dim, size_t capacity, const Allocator &alloc = Allocator())
-      : embedding_key_(embedding_key), embedding_dim_(embedding_dim), capacity_(capacity), alloc_(alloc) {}
-  virtual ~EmbeddingStorage() = default;
+  EmbeddingStorage(int32_t embedding_key, size_t embedding_dim, size_t cache_capacity,
+                   const Allocator &alloc = Allocator())
+      : embedding_key_(embedding_key), embedding_dim_(embedding_dim), cache_capacity_(cache_capacity), alloc_(alloc) {}
+  ~EmbeddingStorage() override = default;
 
-  // Initialize the EmbeddingStorage, such as create cache and local file storage instance.
-  // Parameter[in] `device_address`: The device address of the Embedding Table corresponding to the EmbeddingStorage.
-  virtual void Initialize(const DeviceAddress *device_address);
+  /**
+   * @brief Initialize the EmbeddingStorage, such as create cache and local file storage instance.
+   * @param[in] `device_address`: The device address of the Embedding Table corresponding to the EmbeddingStorage.
+   */
+  void Initialize(const DeviceAddress *device_address) override;
 
-  // Finalize the EmbeddingStorage, release allocated resource.
-  virtual void Finalize() {}
+  /**
+   * @brief Finalize the AbstractEmbeddingStorage, release allocated resource.
+   */
+  void Finalize() override;
 
-  // Batch embeddings lookup operation.
-  // Query Embeddings in the host cache first, if the corresponding element cannot be found in the host cache, then read
-  // the element from the SSD and insert host cache.
-  // Access an element of the cache generally affects the location or order of the elements in the cache, depending
-  // on different cache strategies.
-  //
-  // Parameter[in] `keys`: The pointer pointing all keys which need to query.
-  // Parameter[in] `key_num`: The number of keys which need to query.
-  // Parameter[out] `values`: The output embeddings.
-  // Return whether the function was successfully executed.
-  virtual bool Get(const KeyType *keys, size_t key_num, ValueType *values) = 0;
+  /**
+   * @brief Batch embeddings lookup operation.
+   * Query Embeddings in the host cache first, if the corresponding element cannot be found in the host cache, then read
+   * the element from the persistent storage and insert host cache.
+   * Access an element of the cache generally affects the location or order of the elements in the cache, depending
+   * on different cache strategies.
+   * @param[in] `keys`: All keys which need to query, containing data pointer and data buffer length.
+   * @param[out] `values`: The output embeddings, containing data pointer and data buffer length.
+   * @return Whether the function was successfully executed.
+   */
+  bool Get(const ConstDataWithLen &keys, const DataWithLen &values) override { return true; }
 
-  // Batch embeddings update/insert operation.
-  // Update/Insert Embeddings in the host cache first, if the host cache has insufficient space, the expired elements
-  // will automatically be evicted the to the SSD.
-  // Update or Insert an element of the cache generally affects the location or order of the elements in the cache,
-  // depending on different cache strategies.
-  //
-  // Parameter[in] `keys`: The pointer pointing all keys whose emebedding need to update.
-  // Parameter[in] `key_num`: The number of keys whose emebedding need to update.
-  // Parameter[in] `values`: Embeddings corresponding to all keys need to be updated.
-  // Return whether the function was successfully executed.
-  virtual bool Put(const KeyType *keys, size_t key_num, const ValueType *values) = 0;
+  /**
+   * @brief Batch embeddings update/insert operation.
+   * Update/Insert Embeddings in the host cache first, if the host cache has insufficient space, the expired elements
+   * will automatically be evicted the to the persistent storage.
+   * Update or Insert an element of the cache generally affects the location or order of the elements in the cache,
+   * depending on different cache strategies.
+   * @param[in] `keys`: All keys whose emebedding need to update, containing data pointer and data buffer length.
+   * @param[in] `values`: Embeddings corresponding to all keys need to be updated, containing data pointer and data
+   * buffer length.
+   * @return Whether the function was successfully executed.
+   */
+  bool Put(const ConstDataWithLen &keys, const ConstDataWithLen &values) override { return true; }
 
  protected:
-  // Allocate host memory use alloc_.
-  // Parameter[in] `size`: The number of bytes to allocate for memory.
-  // Return the pointer to the allocated memory.
+  /**
+   * @brief Allocate host memory use alloc_.
+   * @param[in] `size`: The number of bytes to allocate for memory.
+   * @return The pointer to the allocated memory.
+   */
   template <typename T>
   T *AllocateMemory(size_t size) {
     return reinterpret_cast<T *>(std::allocator_traits<AllocatorType>::allocate(alloc_, size));
   }
 
-  // Free host memory use alloc_.
-  // Parameter[in] `ptr`: The pointer need to free.
+  /**
+   * @brief Free host memory use alloc_.
+   * @param[in] `ptr`: The pointer need to free.
+   */
   void FreeMemory(void *ptr) {
     MS_EXCEPTION_IF_NULL(ptr);
     std::allocator_traits<AllocatorType>::deallocate(alloc_, reinterpret_cast<uint8_t *>(ptr), 0);
@@ -110,8 +117,9 @@ class BACKEND_EXPORT EmbeddingStorage {
   // The embedding size of a embedding vector.
   size_t embedding_dim_;
 
-  // The capacity of embedding storage, the same as the maximum number of key-value pairs that can be saved.
-  size_t capacity_;
+  // The capacity of host cache for embedding storage, the same as the maximum number of key-value pairs that can be
+  // saved in host cache.
+  size_t cache_capacity_;
 
   // The common allocator used to alloacte host memory.
   AllocatorType alloc_;

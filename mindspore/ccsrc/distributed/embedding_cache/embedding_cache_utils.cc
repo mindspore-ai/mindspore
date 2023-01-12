@@ -238,7 +238,7 @@ namespace {
  */
 template <typename KeyType, typename ValueType>
 void CreateEmbeddingStorageFunc(int32_t embedding_key, size_t embedding_dim, size_t capacity) {
-  std::shared_ptr<storage::EmbeddingStorage<KeyType, ValueType>> embedding_storage = nullptr;
+  std::shared_ptr<storage::AbstractEmbeddingStorage> embedding_storage = nullptr;
   if (!EmbeddingCacheTableManager::GetInstance().is_sparse_format()) {
     embedding_storage =
       std::make_shared<storage::DenseEmbeddingStorage<KeyType, ValueType>>(embedding_key, embedding_dim, capacity);

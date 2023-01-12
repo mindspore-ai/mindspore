@@ -26,7 +26,9 @@
 namespace mindspore {
 namespace distributed {
 namespace storage {
-// A derived class for Sparse implementation to manage lookup and update of a huge Embedding Table for Hash Table type.
+/**
+ * A derived class for sparse implementation to manage lookup and update of a huge Embedding Table for Hash Table type.
+ */
 template <typename KeyType, typename ValueType, typename Allocator = Allocator<uint8_t>>
 class BACKEND_EXPORT SparseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Allocator> {
  public:
@@ -36,33 +38,41 @@ class BACKEND_EXPORT SparseEmbeddingStorage : public EmbeddingStorage<KeyType, V
   // The hash table type corresponding to the sparse embedding storage, and they have same key-value type.
   using HashTable = device::HashTable<KeyType, ValueType>;
 
-  SparseEmbeddingStorage(int32_t embedding_key, size_t embedding_dim, size_t capacity,
+  SparseEmbeddingStorage(int32_t embedding_key, size_t embedding_dim, size_t cache_capacity,
                          const Allocator &alloc = Allocator())
-      : EmbeddingStorage<KeyType, ValueType, Allocator>(embedding_key, embedding_dim, capacity, alloc) {}
+      : EmbeddingStorage<KeyType, ValueType, Allocator>(embedding_key, embedding_dim, cache_capacity, alloc) {}
   ~SparseEmbeddingStorage() override = default;
 
-  // Initialize the EmbeddingStorage, such as recording the hash table of the Embedding Table corresponding to the
-  // SparseEmbeddingStorage.
-  // Parameter[in] `device_address`: The device address of the Embedding Table parameter corresponding to the
-  // SparseEmbeddingStorage.
+  /**
+   * @brief Initialize the EmbeddingStorage, such as recording the hash table of the Embedding Table corresponding to
+   * the SparseEmbeddingStorage.
+   * @param[in] `device_address`: The device address of the Embedding Table parameter corresponding to the
+   * SparseEmbeddingStorage.
+   */
   void Initialize(const DeviceAddress *device_address) override {}
 
-  // Finalize the EmbeddingStorage, release allocated resource.
+  /**
+   * @brief Finalize the EmbeddingStorage, release allocated resource.
+   */
   void Finalize() override {}
 
-  // Batch embeddings lookup operation.
-  // Query Embeddings in the host cache first, if the corresponding element cannot be found in the host cache, then read
-  // the element from the SSD and insert host cache.
-  // Access an element of the cache generally affects the location or order of the elements in the cache, depending
-  // on different cache strategies.
-  bool Get(const KeyType *keys, size_t key_num, ValueType *values) override { return true; }
+  /**
+   * @brief Batch embeddings lookup operation.
+   * Query Embeddings in the host cache first, if the corresponding element cannot be found in the host cache, then read
+   * the element from the persistent storage and insert host cache.
+   * Access an element of the cache generally affects the location or order of the elements in the cache, depending
+   * on different cache strategies.
+   */
+  bool Get(const ConstDataWithLen &keys, const DataWithLen &) override { return true; }
 
-  // Batch embeddings update/insert operation.
-  // Update/Insert Embeddings in the host cache first, if the host cache has insufficient space, the expired elements
-  // will automatically be evicted the to the SSD.
-  // Update or Insert an element of the cache generally affects the location or order of the elements in the cache,
-  // depending on different cache strategies.
-  bool Put(const KeyType *keys, size_t key_num, const ValueType *values) override { return true; }
+  /**
+   * @brief Batch embeddings update/insert operation.
+   * Update/Insert Embeddings in the host cache first, if the host cache has insufficient space, the expired elements
+   * will automatically be evicted the to the persistent storage.
+   * Update or Insert an element of the cache generally affects the location or order of the elements in the cache,
+   * depending on different cache strategies.
+   */
+  bool Put(const ConstDataWithLen &keys, const ConstDataWithLen &values) override { return true; }
 
  private:
   // The base pointer to the hash table of the embedding table parameter.
