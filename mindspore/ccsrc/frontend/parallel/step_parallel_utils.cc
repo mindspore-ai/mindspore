@@ -112,22 +112,27 @@ TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info)
   return tensor_info;
 }
 
-AnfNodePtr GetRealKernelNode(const AnfNodePtr &node, int64_t get_item_index, CNodePtr *call_node) {
+std::pair<AnfNodePtr, int64_t> GetRealKernelNode(const AnfNodePtr &node, int64_t get_item_index, CNodePtr *call_node,
+                                                 bool ignore_get_item) {
   if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad) ||
-      IsPrimitiveCNode(node, prim::kPrimCast)) {
-    return GetRealKernelNode(node->cast<CNodePtr>()->input(1), get_item_index, call_node);
+      IsPrimitiveCNode(node, prim::kPrimCast) || IsPrimitiveCNode(node, prim::kPrimVirtualDiv)) {
+    return GetRealKernelNode(node->cast<CNodePtr>()->input(1), get_item_index, call_node, ignore_get_item);
   }
-  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem) && ignore_get_item) {
     auto cnode = node->cast<CNodePtr>();
     auto cur_get_item_index = LongToInt(GetTupleGetItemIndex(cnode));
     auto tuple_getitem_input = cnode->input(1);
-    auto pass_through_node = GetRealKernelNode(tuple_getitem_input, cur_get_item_index, call_node);
-    return GetRealKernelNode(pass_through_node, get_item_index, call_node);
+    return GetRealKernelNode(tuple_getitem_input, cur_get_item_index, call_node, ignore_get_item);
   }
   if (get_item_index != -1 && IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
     auto make_tuple_cnode = node->cast<CNodePtr>();
     auto make_tuple_input = make_tuple_cnode->input(LongToSize(get_item_index + 1));
-    return GetRealKernelNode(make_tuple_input, -1, call_node);
+    return GetRealKernelNode(make_tuple_input, -1, call_node, ignore_get_item);
+  }
+  if (IsControlFlowNode(node)) {
+    auto switch_cnode = node->cast<CNodePtr>()->input(0)->cast<CNodePtr>();
+    auto fg = GetValueNode<FuncGraphPtr>(switch_cnode->input(3));
+    return GetRealKernelNode(fg->output(), get_item_index, call_node, ignore_get_item);
   }
   if (node->isa<CNode>() && IsValueNode<FuncGraph>(node->cast<CNodePtr>()->input(0))) {
     if (call_node != nullptr && *call_node == nullptr) {
@@ -135,21 +140,33 @@ AnfNodePtr GetRealKernelNode(const AnfNodePtr &node, int64_t get_item_index, CNo
     }
     auto cnode = node->cast<CNodePtr>();
     auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
-    auto output = GetRealKernelNode(graph->output(), get_item_index, call_node);
+    auto output = GetRealKernelNode(graph->output(), get_item_index, call_node, ignore_get_item).first;
     MS_EXCEPTION_IF_NULL(output);
     if (output->isa<Parameter>()) {
       auto parameters = graph->parameters();
       auto pos_iter = std::find(parameters.begin(), parameters.end(), output);
       // If can't find in parameters, the parameter is a fv.
       if (pos_iter == parameters.end()) {
-        return output;
+        return std::make_pair(output, get_item_index);
       }
       auto pos = std::distance(parameters.begin(), pos_iter);
-      return GetRealKernelNode(cnode->input(LongToSize(pos + 1)), -1, call_node);
+      return GetRealKernelNode(cnode->input(LongToSize(pos + 1)), -1, call_node, ignore_get_item);
     }
-    return output;
+    return std::make_pair(output, get_item_index);
   }
-  return node;
+  return std::make_pair(node, get_item_index);
+}
+
+static bool IsWhileGraph(const FuncGraphPtr &cur_fg, const FuncGraphPtr &fg) {
+  auto cur_fg_map = cur_fg->func_graph_cnodes_index();
+  for (auto &cur_fg_use : cur_fg_map) {
+    auto temp_node = cur_fg_use.first->first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(temp_node);
+    if (temp_node->func_graph() == fg) {
+      return true;
+    }
+  }
+  return false;
 }
 
 AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
@@ -280,8 +297,13 @@ int64_t GetTupleGetItemIndex(const CNodePtr &cnode) {
   return tuple_index_value->cast<Int64ImmPtr>()->value();
 }
 
+static bool IsNoNeedRedistribution(const CNodePtr &use_cnode, int use_index) {
+  return (IsPrimitiveCNode(use_cnode, prim::kPrimDepend) && use_index != 1) || use_cnode->input(0)->isa<CNode>() ||
+         IsPrimitiveCNode(use_cnode, prim::kPrimUpdateState) || IsPrimitiveCNode(use_cnode, prim::kPrimSwitch);
+}
+
 void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
-                            const NodeUsersMap &node_users_map, int64_t get_item_index,
+                            const NodeUsersMap &node_users_map, int64_t get_item_index, int64_t make_tuple_index,
                             std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> *next_nodes) {
   MS_EXCEPTION_IF_NULL(node);
   if (node_users_map.count(node) == 0) {
@@ -292,30 +314,60 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
     auto use_cnode = node_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(use_cnode);
     if (IsValueNode<FuncGraph>(use_cnode->input(0))) {
+      auto cur_fg = use_cnode->func_graph();
       auto fg = GetValueNode<FuncGraphPtr>(use_cnode->input(0));
       MS_EXCEPTION_IF_NULL(fg);
+      if (IsWhileGraph(cur_fg, fg)) {
+        continue;
+      }
       auto fg_parameters = fg->parameters();
       auto param = fg_parameters[IntToSize(node_pair.second - 1)];
       MS_EXCEPTION_IF_NULL(param);
-      RedistributionNextNode(param, manager, node_users_map, get_item_index, next_nodes);
+      RedistributionNextNode(param, manager, node_users_map, get_item_index, make_tuple_index, next_nodes);
+      continue;
+    }
+    if (IsPrimitiveCNode(use_cnode, prim::kPrimMakeTuple)) {
+      make_tuple_index = node_pair.second - 1;
+      RedistributionNextNode(use_cnode, manager, node_users_map, get_item_index, make_tuple_index, next_nodes);
       continue;
     }
     if (IsPrimitiveCNode(use_cnode, prim::kPrimTupleGetItem)) {
-      get_item_index = LongToInt(GetTupleGetItemIndex(use_cnode));
+      auto temp = LongToInt(GetTupleGetItemIndex(use_cnode));
+      if (temp != make_tuple_index && make_tuple_index != -1) {
+        continue;
+      }
+      RedistributionNextNode(use_cnode, manager, node_users_map, temp, -1, next_nodes);
+      continue;
+    }
+    if (IsPrimitiveCNode(use_cnode, prim::kPrimReturn)) {
+      auto fg = use_cnode->func_graph();
+      auto fg_map = fg->func_graph_cnodes_index();
+      for (auto &fg_use : fg_map) {
+        auto fg_node = fg_use.first->first->cast<CNodePtr>();
+        constexpr int SWITCH_LAST_INPUT_INDEX = 3;
+        if (IsWhileGraph(fg, fg_node->func_graph()) && fg_use.first->second == SWITCH_LAST_INPUT_INDEX) {
+          RedistributionNextNode(fg_node, manager, node_users_map, get_item_index, make_tuple_index, next_nodes);
+        }
+      }
     }
     // depend, auto monad and control flow op don't need to jump over
-    if ((IsPrimitiveCNode(use_cnode, prim::kPrimDepend) && node_pair.second != 1) ||
-        IsPrimitiveCNode(use_cnode, prim::kPrimUpdateState) || IsPrimitiveCNode(use_cnode, prim::kPrimSwitch)) {
+    if (IsNoNeedRedistribution(use_cnode, node_pair.second)) {
       continue;
     }
     if (IsParallelCareNode(use_cnode) && use_cnode->has_user_data<OperatorInfo>()) {
+      if (make_tuple_index != -1) {
+        auto real_node = GetRealKernelNode(use_cnode->input(1), -1, nullptr);
+        if (IsPrimitiveCNode(real_node.first, prim::kPrimMakeTuple)) {
+          next_nodes->push_back(std::make_pair(std::make_pair(real_node.first, make_tuple_index + 1), get_item_index));
+          make_tuple_index = -1;
+          continue;
+        }
+      }
       next_nodes->push_back(std::make_pair(node_pair, get_item_index));
-    } else if (use_cnode->input(0)->isa<CNode>()) {
       continue;
-    } else {
-      // search recursively
-      RedistributionNextNode(use_cnode, manager, node_users_map, get_item_index, next_nodes);
     }
+    // search recursively
+    RedistributionNextNode(use_cnode, manager, node_users_map, get_item_index, make_tuple_index, next_nodes);
   }
 }
 
@@ -323,7 +375,7 @@ void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &man
                            std::vector<AnfNodePtr> *pre_nodes) {
   if (IsValueNode<FuncGraph>(cnode->input(0))) {
     auto fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
-    auto pre_node = GetRealKernelNode(fg->output(), -1, nullptr);
+    auto pre_node = GetRealKernelNode(fg->output(), -1, nullptr).first;
     if (!pre_node) {
       return;
     }

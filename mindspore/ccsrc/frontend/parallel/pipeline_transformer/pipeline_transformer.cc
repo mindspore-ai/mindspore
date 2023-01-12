@@ -590,7 +590,7 @@ static std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, con
 
 AnfNodePtr PipelineTransformer::FindPipelineCareNode(const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
-  auto real_node = GetRealKernelNode(node, -1);
+  auto real_node = GetRealKernelNode(node, -1).first;
   if (!real_node->isa<CNode>()) {
     return real_node;
   }
@@ -795,7 +795,7 @@ bool PipelineTransformer::IsParameterGraph(const AnfNodePtr &node) const {
   // ParameterGraph: graph which return a parameter
   MS_EXCEPTION_IF_NULL(node);
   CNodePtr call_node = nullptr;
-  auto real_kernel = GetRealKernelNode(node, -1, &call_node);
+  auto real_kernel = GetRealKernelNode(node, -1, &call_node).first;
   if (call_node != nullptr && real_kernel->isa<Parameter>()) {
     return true;
   }
@@ -806,7 +806,7 @@ AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, con
                                                      int64_t user_stage, const ValuePtr &micro, size_t pos,
                                                      const std::vector<AnfNodePtr> &ops) {
   CNodePtr call_node = nullptr;
-  auto argument = GetRealKernelNode(node, -1, &call_node);
+  auto argument = GetRealKernelNode(node, -1, &call_node).first;
 
   auto use_cnode = use_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(use_cnode);

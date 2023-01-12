@@ -174,8 +174,12 @@ ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)
     // the node is a ref key node
     return FindRefKeyNodeUsers(cnode_with_refkeys, IsCareNode);
   } else if (node->isa<Parameter>()) {
+    auto param_ptr = node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_ptr);
     // the node is a parameter node
-    return FindParameterNodeUsers(node);
+    if (param_ptr->has_default()) {
+      return FindParameterNodeUsers(node);
+    }
   }
 
   return parameter_users_info;
@@ -745,7 +749,7 @@ static std::pair<AnfNodePtr, bool> FindParameterByFuncGraph(const AnfNodePtr &no
   MS_EXCEPTION_IF_NULL(fg);
   auto fg_parameters = fg->parameters();
 
-  auto pre_node = GetRealKernelNode(fg->output(), -1, nullptr);
+  auto pre_node = GetRealKernelNode(fg->output(), -1, nullptr).first;
   auto pre_cnode = pre_node->cast<CNodePtr>();
   for (size_t index = 1; index < pre_cnode->inputs().size(); ++index) {
     auto res = FindParameter(pre_cnode->input(index), pre_cnode->func_graph());
