@@ -105,7 +105,10 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         hermitian (bool): An optional bool. x is assumed to be symmetric if real. Default: False.
 
     Outputs:
-        Tensor: same type as input. if input x(m, n), output(n, m).
+        output (Tensor): same type as input.
+        input x shape :math:`(*, M, N)`,
+        When hermitian is false, 2 and higher dimensions are supported, and the output shape is :math:`(*, N, M)`.
+        When hermitian is true, only 2 dimensions are supported, and the output shape is :math:`(N, M)`.
 
     Raises:
         TypeError: If `hermitian` is not a bool.
