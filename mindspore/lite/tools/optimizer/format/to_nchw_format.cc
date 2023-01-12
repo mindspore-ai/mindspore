@@ -21,10 +21,11 @@
 namespace mindspore {
 namespace opt {
 STATUS ToNCHWFormat::GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) {
-  MS_ASSERT(cnode != nullptr && trans_info != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(trans_info, lite::RET_ERROR);
   auto prim_node = cnode->input(0);
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
-  MS_ASSERT(prim != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(prim, lite::RET_ERROR);
   if (prim->GetAttr(ops::kFormat) != nullptr) {
     auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
     if (node_format == mindspore::NCHW || node_format == mindspore::KCHW) {
@@ -46,9 +47,11 @@ STATUS ToNCHWFormat::GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTyp
 
 STATUS ToNCHWFormat::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, schema::Format *src_format,
                                                      schema::Format *dst_format) {
-  MS_ASSERT(cnode != nullptr && src_format != nullptr && dst_format != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(src_format, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(dst_format, lite::RET_ERROR);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(prim != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(prim, lite::RET_ERROR);
   if (prim->GetAttr(ops::kFormat) != nullptr) {
     auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
     if (node_format == mindspore::NCHW) {

@@ -29,7 +29,6 @@ class FuncGraphUtils {
  public:
   static std::vector<std::string> GetFuncGraphOutputNames(const FuncGraphPtr &func_graph);
   static void SetFuncGraphOutputNames(const FuncGraphPtr &func_graph, const std::vector<std::string> &output_names);
-  static void SetFuncGraphInputNames(const FuncGraphPtr &func_graph);
   static AbstractBasePtr GetAbstractFromNode(const std::pair<AnfNodePtr, int64_t> &node);
   static void SetOutputName(const std::pair<AnfNodePtr, int64_t> &node, const std::string &name);
   static std::string GetOutputName(const std::pair<AnfNodePtr, int64_t> &node_index);

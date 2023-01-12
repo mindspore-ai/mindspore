@@ -90,8 +90,6 @@ STATUS UpdateFuncGraphInputsAndOutputsDtype(const FuncGraphPtr &func_graph);
 STATUS GetFuncGraphOutputsInfo(const FuncGraphPtr &func_graph, std::vector<std::pair<AnfNodePtr, int64_t>> *outputs,
                                std::vector<std::string> *output_names, std::vector<std::vector<int64_t>> *output_dims);
 
-STATUS UpdateFuncGraphInputAndOutputNames(const FuncGraphPtr &func_graph);
-
 STATUS UpdateGraphOutputName(schema::MetaGraphT *meta_graph);
 
 int TransferMetaGraph(const schema::MetaGraphT &graph, void **model_buf, size_t *size);

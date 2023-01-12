@@ -1051,6 +1051,9 @@ STATUS FetchShapeFromAbstract(const abstract::AbstractBasePtr &abstract, ShapeVe
 
 bool IsTrainOp(const CNodePtr &cnode) {
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (prim == nullptr) {
+    return false;
+  }
   auto cnode_type = prim->name();
   // optimizer op
   if (cnode_type == "Adam" || cnode_type == "SGD" || cnode_type == "ApplyMomentum") {
@@ -1354,7 +1357,7 @@ void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_fi
          << ", shape: " << GetAnfNodeOutputShape(input, 0) << std::endl;
     }
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    if (prim) {
+    if (prim != nullptr) {
       for (auto &attr : prim->attrs()) {
         fp << "---attr " << attr.first << ": " << attr.second->ToString() << std::endl;
       }

@@ -40,10 +40,11 @@ int CheckKFormat(const PrimitivePtr &prim, const std::string &node_name) {
 }  // namespace
 
 STATUS ToNHWCFormat::GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) {
-  MS_ASSERT(cnode != nullptr && trans_info != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(trans_info, lite::RET_ERROR);
   auto prim_node = cnode->input(0);
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
-  MS_ASSERT(prim != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(prim, lite::RET_ERROR);
   auto status = CheckKFormat(prim, cnode->fullname_with_scope());
   if (status == lite::RET_NO_CHANGE) {
     return lite::RET_OK;
@@ -59,8 +60,11 @@ STATUS ToNHWCFormat::GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTyp
 
 STATUS ToNHWCFormat::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, schema::Format *src_format,
                                                      schema::Format *dst_format) {
-  MS_ASSERT(cnode != nullptr && src_format != nullptr && dst_format != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(src_format, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(dst_format, lite::RET_ERROR);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_ERROR_IF_NULL_W_RET_VAL(prim, lite::RET_ERROR);
   auto status = CheckKFormat(prim, cnode->fullname_with_scope());
   if (status == lite::RET_NO_CHANGE) {
     return lite::RET_OK;

@@ -45,24 +45,6 @@ constexpr size_t kInvalidSize = SIZE_MAX;
 constexpr auto kMakeTuple = "MakeTuple";
 }  // namespace
 
-static AbstractBasePtr GetAbstractFromCNode(const std::pair<AnfNodePtr, int64_t> &node) {
-  auto cnode = node.first->cast<CNodePtr>();
-  MS_CHECK_TRUE_MSG(cnode != nullptr, nullptr, "cnode is nullptr.");
-  AbstractBasePtr abstract = cnode->abstract();
-  if (utils::isa<abstract::AbstractTuplePtr>(abstract)) {
-    auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract);
-    MS_CHECK_TRUE_MSG(abstract_tuple != nullptr, nullptr, "abstract tuple is nullptr.");
-    auto abstract_list = abstract_tuple->elements();
-    if (abstract_list.size() <= static_cast<size_t>(node.second)) {
-      MS_LOG(ERROR) << "AbstractTuple's size[" << abstract_list.size() << "] is smaller than expect size["
-                    << node.second << "]";
-      return nullptr;
-    }
-    abstract = abstract_list[node.second];
-  }
-  return abstract;
-}
-
 static STATUS GetAbstractfromTupleGetItem(const CNodePtr &cnode, AbstractBasePtr *abstract, size_t *idx) {
   MS_CHECK_TRUE_MSG(abstract != nullptr, lite::RET_ERROR, "Abstract is nullptr.");
   MS_CHECK_TRUE_MSG(idx != nullptr, lite::RET_ERROR, "idx is nullptr.");
@@ -614,43 +596,6 @@ STATUS GetFuncGraphOutputsInfo(const FuncGraphPtr &func_graph, std::vector<std::
   if (TraceOutput(return_input, outputs, output_names, output_dims) != lite::RET_OK) {
     MS_LOG(ERROR) << "Trace output failed.";
     return lite::RET_ERROR;
-  }
-  return lite::RET_OK;
-}
-
-STATUS UpdateFuncGraphInputAndOutputNames(const FuncGraphPtr &func_graph) {
-  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "Func graph is nullptr.");
-  // update graph input names
-  for (auto &input : func_graph->get_inputs()) {
-    auto abstract = input->abstract();
-    MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "Abstract is nullptr.");
-    if (abstract->name().empty()) {
-      abstract->set_name(input->fullname_with_scope());
-    }
-  }
-  // update graph output names
-  std::vector<std::pair<AnfNodePtr, int64_t>> outputs;
-  std::vector<std::string> output_names;
-  std::vector<std::vector<int64_t>> output_dims;
-  auto ret = GetFuncGraphOutputsInfo(func_graph, &outputs, &output_names, &output_dims);
-  if (ret != lite::RET_OK) {
-    MS_LOG(ERROR) << "Get outputs info of funcgraph failed.";
-    return lite::RET_ERROR;
-  }
-  auto updated_output_names = ConverterInnerContext::GetInstance()->GetGraphOutputTensorNames();
-  if (updated_output_names.size() > outputs.size()) {
-    MS_LOG(ERROR) << "The num of updated_output_names is greater than actual, " << updated_output_names.size() << " > "
-                  << outputs.size() << ".";
-    return lite::RET_ERROR;
-  }
-  for (size_t i = 0; i < updated_output_names.size(); ++i) {
-    auto abstract = GetAbstractFromCNode(outputs[i]);
-    if (abstract == nullptr) {
-      abstract = outputs[i].first->abstract();
-    }
-    if (abstract->name().empty()) {
-      abstract->set_name(updated_output_names[i]);
-    }
   }
   return lite::RET_OK;
 }
