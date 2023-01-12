@@ -460,6 +460,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"trunc", std::string("trunc")},                                    // trunc()
        {"where", std::string("where")},                                    // where()
        {"imag", std::string("imag")},                                      // imag()
+       {"diff", std::string("diff")},                                      // diff()
+       {"frac", std::string("frac")},                                      // frac()
      }},
     {kObjectTypeRowTensorType,
      {
