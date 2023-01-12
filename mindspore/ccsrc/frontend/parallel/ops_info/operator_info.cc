@@ -880,7 +880,7 @@ Status OperatorInfo::InitForCostModel(const StrategyPtr &in_strategy, const Stra
 Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_strategy,
                                                         const StrategyPtr &out_strategy) {
   if (in_strategy == nullptr) {
-    MS_LOG(ERROR) << name_ << ": The strategy is null.";
+    MS_LOG(ERROR) << name_ << ": The strategy is null, the inputs shape is " << inputs_shape_;
     return FAILED;
   }
 

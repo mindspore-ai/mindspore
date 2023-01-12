@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 import numpy as np
 import pytest
 
@@ -505,7 +506,7 @@ def test_kernel_size_larger_than_stride_and_left_pad_is_0():
 
 def test_conv2d_kernel_size_larger_than_stride_and_split_nchw():
     """
-    Feature: same mode, stride < kernel_size, need exchange
+    Feature: same mode, stride < kernel_size, need to exchange
     Description: split n/c-in/c-out/h/w
     Expectation: compile success
     """
@@ -514,3 +515,21 @@ def test_conv2d_kernel_size_larger_than_stride_and_split_nchw():
     strategy2 = ((2, 2, 2, 2),)
     net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
     compile_net(net)
+
+
+def test_conv2d_kernel_size_smaller_than_stride_and_split_hw():
+    """
+    Feature: same mode, kernel_size < stride, no need to exchange
+    Description: split h/w
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0,
+                                      search_mode="sharding_propagation")
+    strategy1 = ((1, 1, 4, 4), (1, 1, 1, 1))
+    strategy2 = None
+    net = Net(_w0, out_channel=8, kernel_size=1, pad_mode="same", stride=2, strategy1=strategy1, strategy2=strategy2)
+    _cell_graph_executor.compile(net, _x, _b, phase='train')
+    strategies = _cell_graph_executor._get_shard_strategy(net)
+    for (k, v) in strategies.items():
+        if re.search("ReLU", k) is not None:
+            assert v == [[1, 1, 4, 4],]
