@@ -1540,8 +1540,17 @@ class FillV2(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize FillV2"""
-        self.add_prim_attr("max_length", 1000000)
         self.init_prim_io_names(inputs=['shape', 'value'], outputs=['y'])
+
+    def infer_value(self, dims, x):
+        if dims is not None and None not in dims and x is not None:
+            if isinstance(dims, Tensor):
+                dims = dims.asnumpy()
+            if isinstance(x, Tensor):
+                x = x.asnumpy()
+            ret = np.full(dims, x)
+            return Tensor(ret)
+        return None
 
 
 class Ones(Primitive):
