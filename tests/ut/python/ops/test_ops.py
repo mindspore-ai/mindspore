@@ -3544,10 +3544,10 @@ test_case_nn_ops = [
         'skip': ['backward']}),
     ('SparseApplyCenteredRMSProp', {
         'block': SparseApplyCenteredRMSPropNet(),
-        'desc_inputs': [Tensor(np.array([[0.6, 0.4], [0.1, 0.5]]).astype(np.float32)),
-                        Tensor(np.array([[0.1, 0.3], [0.1, 0.5]]).astype(np.float32)),
-                        Tensor(np.array([[0.2, 0.1], [0.1, 0.2]]).astype(np.float32)),
-                        Tensor(np.array([[0.2, 0.1], [0.1, 0.2]]).astype(np.float32)),
+        'desc_inputs': [Parameter(Tensor(np.array([[0.6, 0.4], [0.1, 0.5]]).astype(np.float32))),
+                        Parameter(Tensor(np.array([[0.1, 0.3], [0.1, 0.5]]).astype(np.float32))),
+                        Parameter(Tensor(np.array([[0.2, 0.1], [0.1, 0.2]]).astype(np.float32))),
+                        Parameter(Tensor(np.array([[0.2, 0.1], [0.1, 0.2]]).astype(np.float32))),
                         Tensor(0.001, mstype.float32),
                         Tensor(1e-10, mstype.float32),
                         Tensor(0.001, mstype.float32),
@@ -3620,7 +3620,7 @@ test_case_nn_ops = [
         'skip': ['backward']}),
     ('SparseApplyProximalGradientDescent', {
         'block': SparseApplyProximalGradientDescentNet(),
-        'desc_inputs': [Tensor(np.array([[0.4, 0.5], [0.3, 0.1]]).astype(np.float32)),
+        'desc_inputs': [Parameter(Tensor(np.array([[0.4, 0.5], [0.3, 0.1]]).astype(np.float32))),
                         Tensor(0.01, mstype.float32),
                         Tensor(0.88, mstype.float32),
                         Tensor(0.3, mstype.float32),
