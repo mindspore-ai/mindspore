@@ -33,10 +33,8 @@ constexpr auto kIof = "iof";
 
 bool IOUCpuKernelMod::Init(const mindspore::kernel::BaseOperatorPtr &base_operator,
                            const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) {
-  constexpr size_t inputs_num = 2;
-  constexpr size_t outputs_num = 1;
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
-  CHECK_KERNEL_INPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIOUInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIOUOutputsNum, kernel_name_);
 
   auto mode_value_ptr = base_operator->GetAttr(kAttrMode);
   MS_EXCEPTION_IF_NULL(mode_value_ptr);
@@ -63,6 +61,8 @@ bool IOUCpuKernelMod::Init(const mindspore::kernel::BaseOperatorPtr &base_operat
 int IOUCpuKernelMod::Resize(const mindspore::kernel::BaseOperatorPtr &base_operator,
                             const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIOUInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIOUOutputsNum, kernel_name_);
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
@@ -90,8 +90,6 @@ int IOUCpuKernelMod::Resize(const mindspore::kernel::BaseOperatorPtr &base_opera
 template <typename T>
 bool IOUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIOUInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIOUOutputsNum, kernel_name_);
   auto anchor_boxes = reinterpret_cast<T *>(inputs[ANCHOR_BOXES]->addr);
   auto gt_boxes = reinterpret_cast<T *>(inputs[GT_BOXES]->addr);
   auto iou_score = reinterpret_cast<T *>(outputs[IOU_VALUE]->addr);

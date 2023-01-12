@@ -26,8 +26,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int64_t kIouInputNums = 2;
-constexpr size_t kIouInputDims = 2;
+constexpr int64_t kIOUInputNums = 2;
+constexpr size_t kIOUInputDims = 2;
 constexpr size_t kCoordinatesIndex = 1;
 constexpr int64_t kCoordinatesSize = 4;
 constexpr float kDefaultValue = 1.0;
@@ -40,10 +40,11 @@ class IOUInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
-                                             kIouInputNums, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kIOUInputNums,
+                                             prim_name);
     (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
     (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+
     if (primitive->GetAttr(kEpsName) == nullptr) {
       primitive->set_attr(kEpsName, MakeValue(kDefaultValue));
     }
@@ -55,12 +56,11 @@ class IOUInfer : public abstract::OpInferBase {
     auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(y_shape_ptr);
     auto x_shp = x_shape_map[kShape];
     auto y_shp = y_shape_map[kShape];
-
     if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
     }
 
-    if (x_shp.size() != kIouInputDims || y_shp.size() != kIouInputDims) {
+    if (x_shp.size() != kIOUInputDims || y_shp.size() != kIOUInputDims) {
       MS_EXCEPTION(ValueError) << "For '" << kNameIOU
                                << "', input x, y must have the same dimension size and must be 2. But got x size = "
                                << x_shp.size() << ", y size = " << y_shp.size() << ".";
@@ -80,12 +80,19 @@ class IOUInfer : public abstract::OpInferBase {
     return std::make_shared<abstract::Shape>(ret_shape);
   }
 
-  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kIOUInputNums,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
     std::map<std::string, TypePtr> types;
     (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
     (void)types.emplace("y", input_args[kInputIndex1]->BuildType());
-    return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+    return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   }
 };
 
@@ -93,8 +100,8 @@ abstract::AbstractBasePtr IouInferFunc(const abstract::AnalysisEnginePtr &, cons
                                        const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   IOUInfer io_infer;
-  auto type = io_infer.InferType(primitive, input_args);
   auto shape = io_infer.InferShape(primitive, input_args);
+  auto type = io_infer.InferType(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
 
