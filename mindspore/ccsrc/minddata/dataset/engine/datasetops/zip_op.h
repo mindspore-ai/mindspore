@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,18 +64,34 @@ class ZipOp : public PipelineOp {
   // @return Name of the current Op
   std::string Name() const override { return kZipOp; }
 
+  /// \brief Gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
   Status GetNextRow(TensorRow *row) override;
 
+  /// \brief In pull mode, gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRowPullMode(TensorRow *const row) override;
+
+ protected:
+  /// \brief Gets the implementation status for operator in pull mode
+  /// \return Implementation status
+  ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }
+
  private:
-  // Special handle case where an empty row has been received from child iterator
-  // @note - we need to drain eoe signals from all children connectors.
-  // @details - when this function is called, then we encountered eoe at child iterator
-  // we have to drain rows from other child iterators until we hit eoe from all other child iterators
-  Status drainPipeline(int32_t skip_child) const;
+  /// \brief Drain eoe signals from all children connectors.
+  /// \notes Handle special handle case where an empty row has been received from child iterator.
+  ///     When this function is called and encounters eoe at child iterator,
+  ///     we need to drain rows from other child iterators until we hit eoe from all other child iterators.
+  /// \param[in] skip_child - identifier for child to be skipped
+  /// \param[in] is_pull_mode - an indicator to identify if in pull mode or not
+  Status drainPipeline(int32_t skip_child, bool is_pull_mode) const;
 
   // Merges 1 row from each childIterator together
   // \param[in] new_zip_row - input and output, will be a non-empty row if all rows from childConnectors are non-empty
-  // \param[in] updateColumnMapping - generates a new column name to index mapping (mColNameIdMap) if set to true
+  // \param[in] skip_child - input and output, identifier for child to be skipped
+  // \param[in] is_pull_mode - an indicator to identify if in pull mode or not
   // @details merge rows from iterator together. This is the main functionality for ZipOp
   //          this function takes one row and fills it with tensors from rows fetched
   //          from childIterators.
@@ -84,7 +100,7 @@ class ZipOp : public PipelineOp {
   //       1    a     T
   //       \    |     /
   //         1, a, T
-  Status getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child) const;
+  Status getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child, bool is_pull_mode) const;
 
   // Computing the assignment of the column name map.
   // @return - Status

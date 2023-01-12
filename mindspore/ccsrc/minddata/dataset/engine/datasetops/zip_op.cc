@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,16 @@ ZipOp::ZipOp() : PipelineOp(0) {}
 ZipOp::~ZipOp() {}
 
 // fetches next zipped (merged) row
-Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child) const {
+Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child, bool is_pull_mode) const {
   *new_zip_row = {};
   // iterate over all iterators and generate a row
   for (size_t i = 0; i < child_.size(); ++i) {
     TensorRow new_row;
-    RETURN_IF_NOT_OK(child_[i]->GetNextRow(&new_row));
+    if (!is_pull_mode) {
+      RETURN_IF_NOT_OK(child_[i]->GetNextRow(&new_row));
+    } else {
+      RETURN_IF_NOT_OK(child_[i]->GetNextRowPullMode(&new_row));
+    }
     if (new_row.eoe() || new_row.eof()) {
       *new_zip_row = new_row;
       *skip_child = static_cast<int32_t>(i);
@@ -47,7 +51,7 @@ Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child
 }
 
 // drain end of epoch messages from iterator for this epoch
-Status ZipOp::drainPipeline(int32_t skip_child) const {
+Status ZipOp::drainPipeline(int32_t skip_child, bool is_pull_mode) const {
   for (size_t con = 0; con < child_.size(); ++con) {
     if (con == skip_child) {
       continue;
@@ -55,7 +59,11 @@ Status ZipOp::drainPipeline(int32_t skip_child) const {
     MS_LOG(DEBUG) << "Zip operator draining child at " << con << ".";
     TensorRow row;
     while (!row.eoe()) {
-      RETURN_IF_NOT_OK(child_[con]->GetNextRow(&row));
+      if (!is_pull_mode) {
+        RETURN_IF_NOT_OK(child_[con]->GetNextRow(&row));
+      } else {
+        RETURN_IF_NOT_OK(child_[con]->GetNextRowPullMode(&row));
+      }
     }
   }
   // at this point all connectors don't contain end of epoch messages. next iteration should be clean
@@ -120,11 +128,23 @@ Status ZipOp::operator()() { RETURN_STATUS_UNEXPECTED("[Internal ERROR] ZipOp is
 Status ZipOp::GetNextRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
   int32_t skip_child = -1;
-  RETURN_IF_NOT_OK(getNextZippedRow(row, &skip_child));
+  RETURN_IF_NOT_OK(getNextZippedRow(row, &skip_child, false));
   if (row->eoe()) {
     UpdateRepeatAndEpochCounter();
     MS_LOG(DEBUG) << "Zip operator is now draining child inputs.";
-    RETURN_IF_NOT_OK(drainPipeline(skip_child));
+    RETURN_IF_NOT_OK(drainPipeline(skip_child, false));
+  }
+  return Status::OK();
+}
+
+Status ZipOp::GetNextRowPullMode(TensorRow *row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
+  int32_t skip_child = -1;
+  RETURN_IF_NOT_OK(getNextZippedRow(row, &skip_child, true));
+  if (row->eoe()) {
+    UpdateRepeatAndEpochCounter();
+    MS_LOG(DEBUG) << "Zip operator in pull mode is now draining child inputs.";
+    RETURN_IF_NOT_OK(drainPipeline(skip_child, true));
   }
   return Status::OK();
 }

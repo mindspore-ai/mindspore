@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,10 +59,20 @@ class RenameOp : public PipelineOp {
   // @return Name of the current Op
   std::string Name() const override { return kRenameOp; }
 
-  // Gets a row from the child node and projects that row. The caller is typically our parent node.
-  // @param row - output pointer to the projected row.
-  // @param worker_id - The worker id
+  /// \brief Gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
   Status GetNextRow(TensorRow *row) override;
+
+  /// \brief In pull mode, gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRowPullMode(TensorRow *const row) override;
+
+ protected:
+  /// \brief Gets the implementation status for operator in pull mode
+  /// \return Implementation status
+  ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }
 
  protected:
   // Rename core functionality

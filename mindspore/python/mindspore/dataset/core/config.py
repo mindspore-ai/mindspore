@@ -842,8 +842,10 @@ def get_fast_recovery():
 
 def set_debug_mode(debug_mode_flag):
     """
-    Set the debug_mode flag of the dataset pipeline
-    Notes:
+    Set the debug_mode flag of the dataset pipeline. When enabled, the dataset pipeline is run synchronously and
+    sequentially with a single thread.
+
+    Note:
         1. If both debug_mode and auto_offload are enabled, then during runtime, auto_offload is forcibly disabled.
         2. If both debug_mode is enabled and a dataset pipeline has Map operation with offload set, then offload is
            ignored.
