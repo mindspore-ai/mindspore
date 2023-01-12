@@ -40,6 +40,9 @@ int ElementOptNotEqualFp32(const float *input0, const float *input1, uint8_t *ou
 int ElementNotEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
 int ElementOptNotEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
                             const ArithmeticParameter *param);
+int ElementNotEqualInt64(const int64_t *input0, const int64_t *input1, uint8_t *output, int element_size);
+int ElementOptNotEqualInt64(const int64_t *input0, const int64_t *input1, uint8_t *output, int element_size,
+                            const ArithmeticParameter *param);
 
 int ElementLessFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
 int ElementOptLessFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
