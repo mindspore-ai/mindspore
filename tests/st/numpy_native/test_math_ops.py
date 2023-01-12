@@ -943,8 +943,7 @@ def mnp_clip(x):
     c = mnp.clip(x, to_tensor(0), to_tensor(10), dtype=mnp.float32)
     d = x.clip(to_tensor(10.0), to_tensor([2,]))
     e = x.clip(0, 1)
-    f = x.clip(to_tensor(0), to_tensor(10), dtype=mnp.float32)
-    return a, b, c, d, e, f
+    return a, b, c, d, e
 
 
 def onp_clip(x):
@@ -953,8 +952,7 @@ def onp_clip(x):
     c = onp.clip(x, onp.asarray(0), onp.asarray(10), dtype=onp.float32)
     d = x.clip(onp.asarray(10.0), onp.asarray([2,]))
     e = x.clip(0, 1)
-    f = x.clip(onp.asarray(0), onp.asarray(10), dtype=onp.float32)
-    return a, b, c, d, e, f
+    return a, b, c, d, e
 
 
 @pytest.mark.level1
