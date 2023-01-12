@@ -277,7 +277,7 @@ class SparseSparseMaximum(Primitive):
         ValueError: If the `x1_shape` and `x2_shape` mismatch with each other.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x1_indices = Tensor([[0, 1], [1, 2]])
@@ -331,7 +331,7 @@ class SetSize(Primitive):
             parameter description.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> set_indices = Tensor(np.array([[0, 1], [1, 2]]).astype(np.int64))
@@ -379,7 +379,7 @@ class SparseReorder(Primitive):
         ValueError: If `shape` the first dimension length is not equal the second dimension length of 'indices'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.common.dtype as ms
@@ -525,7 +525,7 @@ class SparseSoftmax(Primitive):
         ValueError: If the size of shape < 2.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> indices = Tensor([[0,0], [0,3], [1,2], [1,5], [2,0], [2,5]])
@@ -799,7 +799,7 @@ class DenseToCSRSparseMatrix(Primitive):
         ValueError: If shape[1] of `indices` and rank of `dense_input` is not the same.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[[1., 0.], [0., 2.]]], dtype=mindspore.float32)
@@ -864,7 +864,7 @@ class DenseToDenseSetOperation(Primitive):
         ValueError: If the value of attr set_operation is not a valid value.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> x1 = Tensor([[2, 2, 0], [2, 2, 1], [0, 2, 2]], dtype=mstype.int32)
@@ -961,7 +961,7 @@ class Sspaddmm(Primitive):
         ValueError: If the shape of `alpha`, `beta` is not () or (1,).
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x1_indices = Tensor(np.array([[0, 1], [0, 1]]), mstype.int64)
@@ -1033,7 +1033,7 @@ class SparseAddmm(Primitive):
         RuntimeError: If `x1_shape`, shape of `x2`, shape of `x3` don't meet the parameter description.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
@@ -1088,7 +1088,7 @@ class SparseConcat(Primitive):
         Error: If input axis value is not in range [-rank, rank).
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> indices0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
@@ -1251,7 +1251,7 @@ class SparseSegmentSqrtN(Primitive):
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12]]).astype(np.float32))
@@ -1313,7 +1313,7 @@ class SparseSegmentSqrtNWithNumSegments(Primitive):
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[0, 1, 0, 0], [0, 1, 1, 0], [1, 0, 1, 0]], dtype=ms.float16)
@@ -1373,7 +1373,7 @@ class SparseMatrixNNZ(Primitive):
         ValueError: If shape[0] of `x_dense_shape` is not 2 or 3.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> dense_shape = Tensor([2,3], dtype=mstype.int32)
@@ -1487,7 +1487,7 @@ class SparseSegmentMeanWithNumSegments(Primitive):
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> x = Tensor([[0, 2, 0, 0], [0, 1, 1, 0], [2, 0, 2, 0]], dtype=ms.float16)
@@ -1675,7 +1675,7 @@ class CSRSparseMatrixToDense(Primitive):
         ValueError: If shape[0] of `x_dense_shape` is not 2 or 3.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> dense_shape = Tensor([2, 2], dtype=mindspore.int32)
@@ -1754,7 +1754,7 @@ class SparseMatrixTranspose(Primitive):
         TypeError: The input data should have the correct CSR form.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops import operations as ops
@@ -1827,7 +1827,7 @@ class SparseSparseMinimum(Primitive):
         ValueError: If shape[0] of `x1_shape` is not corresponding to shape[0] of `x2_shape`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.sparse_ops import SparseSparseMinimum

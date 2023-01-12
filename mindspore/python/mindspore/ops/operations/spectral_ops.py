@@ -53,7 +53,7 @@ class BlackmanWindow(Primitive):
     Refer to :func:`mindspore.ops.blackman_window` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> window_length = Tensor(10, mindspore.int32)

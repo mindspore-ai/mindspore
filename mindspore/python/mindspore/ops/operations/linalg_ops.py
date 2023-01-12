@@ -46,7 +46,7 @@ class Geqrf(Primitive):
         ValueError: If `x` dimension is less than 2
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))

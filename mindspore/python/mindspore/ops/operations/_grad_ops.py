@@ -1048,7 +1048,7 @@ class MaxPoolGradGrad(_PoolGrad):
         ValueError: If the shapes of `origin_input` and `grad` are not equal.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -1291,7 +1291,7 @@ class MaxPoolGradGradWithArgmax(_PoolGrad):
         ValueError: If the shapes of `x` and `grad` are not equal.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -1409,7 +1409,7 @@ class LayerNormGradGrad(Primitive):
         ValueError: If gamma, d_dg, d_db don't have the same shape.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -1942,7 +1942,7 @@ class UpsampleNearest3DGrad(Primitive):
         ValueError: If shape of `x` is not 5D.
 
     Supported Platforms:
-        ``GPU`` ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
     @prim_attr_register
     def __init__(self, input_size, output_size=None, scales=None):
@@ -2466,7 +2466,7 @@ class MvlgammaGrad(Primitive):
         ValueError: If all elements of `x` are not greater than (p-1)/2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
     """
 
     @prim_attr_register
@@ -2554,7 +2554,7 @@ class PdistGrad(Primitive):
         ValueError: If dimension of `x` is not 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -2686,7 +2686,7 @@ class Dilation2DBackpropInput(Primitive):
         ValueError: If `data_format` is not the str of 'NCHW'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         (pad_mode="SAME", data_format="NCHW")
@@ -2803,7 +2803,7 @@ class Dilation2DBackpropFilter(Primitive):
 
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         (pad_mode="SAME", data_format="NCHW")
@@ -2943,7 +2943,7 @@ class MultiMarginLossGrad(Primitive):
         ValueError: If rank of `x` is not 2 or rank of 'target' is not 1.
 
     Supported Platforms:
-        ``Ascend``  ``CPU``
+        ``CPU``
     """
 
     @prim_attr_register
@@ -3003,7 +3003,7 @@ class UpsampleTrilinear3DGrad(Primitive):
         ValueError: If elements number of `input_size` is not 5.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
     """
     @prim_attr_register
     def __init__(self, input_size, output_size=None, scales=None, align_corners=False):
@@ -3071,7 +3071,7 @@ class GridSampler3DGrad(Primitive):
         ValueError: If the shape of `grad` is inconsistent with the shape of the output result of forward calculation.
 
     Supported Platforms:
-        ``CPU````GPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -3280,7 +3280,7 @@ class IgammaGradA(Primitive):
         ValueError: If `a` could not be broadcast to a tensor with shape of `x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
@@ -3390,7 +3390,7 @@ class MedianGrad(Primitive):
         ValueError: If shape of `y_grad` is not the same as `y`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
     """
 
     @prim_attr_register
@@ -3479,7 +3479,7 @@ class SparseSegmentSqrtNGrad(Primitive):
         ValueError: If `indices` is bigger than or equal to `output_dim0`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -3525,7 +3525,7 @@ class GridSampler2DGrad(Primitive):
         ValueError: If the shape of `grad` is inconsistent with the shape of the output result of forward calculation.
 
     Supported Platforms:
-        ``CPU````GPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -3566,7 +3566,7 @@ class ResizeBicubicGrad(Primitive):
         ValueError: If `size` dim is not 4.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
     """
     @prim_attr_register
     def __init__(self, align_corners=False, half_pixel_centers=False):
@@ -3690,7 +3690,7 @@ class FractionalMaxPoolGradWithFixedKsize(Primitive):
         ValueError: If the second dimension size of `origin_input` and `out_backprop` is not equal.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
     """
 
     @prim_attr_register

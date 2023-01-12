@@ -908,7 +908,7 @@ class HSigmoid(Primitive):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> hsigmoid = ops.HSigmoid()
@@ -1421,7 +1421,7 @@ class DataFormatVecPermute(Primitive):
         ValueError: If input_x shape is not (4, ) or (4, 2).
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -3017,7 +3017,7 @@ class MultiMarginLoss(Primitive):
     Refer to :func:`mindspore.ops.multi_margin_loss` for more details.
 
     Supported Platforms:
-        ``Ascend``  ``CPU``
+        ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones(shape=[3, 3]), mindspore.float32)
@@ -3780,7 +3780,7 @@ class UpsampleTrilinear3D(Primitive):
         ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> ops = ops.UpsampleTrilinear3D(output_size=[4, 64, 48])
@@ -4409,7 +4409,7 @@ class PadV3(Primitive):
         ValueError: After padding, output's shape number is not greater than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> # case1: mode="reflect", paddings_contiguous=True
@@ -4492,7 +4492,7 @@ class MirrorPad(Primitive):
         ValueError: If paddings.size is not equal to 2 * rank of input_x.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor, nn, ops
@@ -8333,7 +8333,7 @@ class Dilation2D(Primitive):
         ValueError: If `data_format` is not the str of 'NCHW'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones([10, 5, 32, 32]), mindspore.float16)
@@ -8751,7 +8751,7 @@ class SparseApplyCenteredRMSProp(Primitive):
         ValueError: If shape of `grad` is not same as shape of `var` except first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -9112,7 +9112,7 @@ class FractionalMaxPool(Primitive):
         ValueError: If the first and last element of `pooling_ratio` is not equal to 1.0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]).reshape([1,4,4,1]).astype(np.int64)
@@ -9198,7 +9198,7 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
         ValueError: If the third dimension size of `random_samples` is not 3.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
@@ -9289,7 +9289,7 @@ class FractionalAvgPool(Primitive):
         ValueError: If the first and last element of `pooling_ratio` is not equal to 1.0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]).reshape([1,4,4,1]).astype(np.int64)
@@ -9345,7 +9345,7 @@ class NthElement(Primitive):
         ValueError**: If n is out of :math:`[0, input.shape[-1])`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.array([[1,2,3],[4,5,6]]) , mstype.int8)
@@ -9517,7 +9517,7 @@ class TripletMarginLoss(Primitive):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> loss = ops.TripletMarginLoss()
@@ -9748,7 +9748,7 @@ class UpsampleNearest3D(Primitive):
         ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
@@ -9849,7 +9849,7 @@ class SparseApplyAdagradDA(Primitive):
                       conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -9946,7 +9946,7 @@ class SparseApplyMomentum(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> import mindspore.ops.operations.nn_ops as nn_ops
@@ -10030,7 +10030,7 @@ class SparseApplyProximalGradientDescent(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> import mindspore.ops.operations.nn_ops as nn_ops
@@ -10109,7 +10109,7 @@ class NuclearNorm(Primitive):
                     x_rank is the dimension of Tensor `x`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],

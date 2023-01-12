@@ -287,7 +287,7 @@ class SampleDistortedBoundingBoxV2(Primitive):
         RuntimeError: If the value of `min_object_covered` is out of range [0.0, 1.0].
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> image_size = Tensor([640, 480, 3], mindspore.int32)
