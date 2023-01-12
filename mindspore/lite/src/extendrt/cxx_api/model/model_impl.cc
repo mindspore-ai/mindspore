@@ -119,6 +119,10 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
 
   MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
   func_graph = mindir_loader.LoadMindIR(model_buff, model_size, mindir_path);
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << mindir_path;
+    return kLiteError;
+  }
   // convert and optimize func graph to infer
   ret = ConvertGraphOnline(func_graph, model_context);
   if (ret != kSuccess) {
