@@ -72,6 +72,8 @@ class GeOpConvertor {
   static bool IsDynamicInput(const AnfNodePtr &node, const size_t idx);
   static size_t GetAclInputSize(const AnfNodePtr &node);
   static size_t GetAclOutputSize(const AnfNodePtr &node);
+  // TODO(lby): need fix
+  static OpAdapterPtr GetForReduceAdapter(const AnfNodePtr &node, const OpAdapterPtr &adapter);
 };
 
 class DfGraphConvertor {
