@@ -398,6 +398,7 @@ tensor_operator_registry.register('deg2rad', deg2rad)
 tensor_operator_registry.register('copysign', copysign)
 tensor_operator_registry.register('roll', Roll)
 tensor_operator_registry.register('rot90', rot90)
+tensor_operator_registry.register('swapaxes', swapaxes)
 tensor_operator_registry.register('repeat_elements', repeat_elements)
 
 __all__ = [name for name in dir() if name[0] != "_"]

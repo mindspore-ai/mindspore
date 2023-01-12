@@ -502,6 +502,8 @@ Array Operation
     mindspore.ops.stack
     mindspore.ops.strided_slice
     mindspore.ops.sum
+    mindspore.ops.swapaxes
+    mindspore.ops.swapdims
     mindspore.ops.tensor_scatter_add
     mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_max

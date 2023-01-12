@@ -141,6 +141,8 @@ from .array_func import (
     lstsq,
     mvlgamma,
     argsort,
+    swapaxes,
+    swapdims,
     sequence_mask,
     repeat_elements,
     repeat_interleave,

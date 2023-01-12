@@ -6046,6 +6046,94 @@ def count_nonzero(x, dims=None):
     return count_nonzero_(x)
 
 
+#TODO: remove comment
+@constexpr
+def _check_swapaxes_axis(axes, ndim):
+    return validator.check_swapaxes_axis(axes, ndim)
+
+
+def swapaxes(x, axis0, axis1):
+    '''
+    Interchange two axes of a tensor.
+
+    Args:
+        x(Tensor): Input tensor.
+        axis0 (int): First axis.
+        axis1 (int): Second axis.
+
+    Returns:
+        Transposed tensor, has the same data type as `x`.
+
+    Raises:
+        TypeError: If argument `x` is not Tensor.
+        TypeError: If `axis0` or `axis1` is not integer.
+        ValueError: If `axis0` or `axis1` is not in the range of :math:`[-ndim, ndim-1]`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
+        >>> output = ops.swapaxes(x, 0, 2)
+        >>> print(output.shape)
+        (4,3,2)
+    '''
+    if not isinstance(x, Tensor):
+        raise TypeError(f'For ops.swapaxes, parameter `x` must be Tensor, but got {type(x)}')
+
+    axis0, axis1 = _check_swapaxes_axis((axis0, axis1), x.ndim)
+    if axis0 == axis1:
+        return x
+    if axis0 > axis1:
+        axis0, axis1 = axis1, axis0
+
+    perm = tuple(builtins.range(0, x.ndim))
+    if axis1 + 1 < x.ndim:
+        new_perm = perm[0:axis0] + perm[axis1:axis1 + 1] + \
+                   perm[axis0 + 1:axis1] + perm[axis0:axis0 + 1] + perm[axis1 + 1:]
+    else:
+        new_perm = perm[0:axis0] + perm[axis1:axis1 + 1] + \
+                   perm[axis0 + 1:axis1] + perm[axis0:axis0 + 1]
+
+    return _get_cache_prim(P.Transpose)()(x, new_perm)
+
+
+def swapdims(x, dim0, dim1):
+    '''
+    Interchange two dims of a tensor.
+    This function is equivalent to :func:`mindspore.ops.swapaxes` function.
+
+    Args:
+        x(Tensor): Input tensor.
+        dim0 (int): First dim.
+        dim1 (int): Second dim.
+
+    Returns:
+        Transposed tensor, has the same data type as `x`.
+
+    Raises:
+        TypeError: If argument `x` is not Tensor.
+        TypeError: If `dim0` or `dim1` is not integer.
+        ValueError: If `dim0` or `dim1` is not in the range of :math:`[-ndim, ndim-1]`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
+        >>> output = ops.swapdims(x, 0, 2)
+        >>> print(output.shape)
+        (4,3,2)
+    '''
+    return F.swapaxes(x, dim0, dim1)
+
+
 @constexpr
 def _check_is_int(arg_value, arg_name, op_name):
     arg_value = validator.check_is_int(arg_value, arg_name, op_name)
@@ -6352,6 +6440,8 @@ __all__ = [
     'diagonal',
     'lstsq',
     'mvlgamma',
+    'swapaxes',
+    'swapdims',
     'argsort',
     'sequence_mask',
     'repeat_elements',
