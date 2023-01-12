@@ -18,6 +18,7 @@
 
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "pipeline/pynative/pynative_execute.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore {
 namespace opt {
@@ -49,6 +50,29 @@ AnfNodePtrList ExpandMultiJ(const FuncGraphVector &func_graphs, const OptimizerP
   return expanded_nodes;
 }
 }  // namespace internal
+
+void ExpandJPrim::CloneUsedPrimalGraph(const FuncGraphManagerPtr &manager, FuncGraphVector *func_graphs) {
+  MS_EXCEPTION_IF_NULL(func_graphs);
+  size_t func_graphs_size = func_graphs->size();
+  for (size_t i = 0; i < func_graphs_size; ++i) {
+    const auto &used_total = (*func_graphs)[i]->func_graphs_used_total();
+    for (size_t j = 0; j < func_graphs_size; ++j) {
+      auto fg_j = (*func_graphs)[j];
+      if (j == i || !used_total.contains(fg_j)) {
+        continue;
+      }
+      auto new_fg = BasicClone(fg_j);
+      for (auto &j_node : prim_nodes_) {
+        auto j_node_fg = GetValueNode<FuncGraphPtr>(j_node->input(1));
+        if (j_node_fg == nullptr || j_node_fg != fg_j) {
+          continue;
+        }
+        manager->Replace(j_node->input(1), NewValueNode(new_fg));
+      }
+      (*func_graphs)[j] = new_fg;
+    }
+  }
+}
 
 bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
   // Check whether need to eliminate forward cnodes in pynative mode.
@@ -85,6 +109,8 @@ bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr 
       change = true;
     }
   }
+  CloneUsedPrimalGraph(manager, &func_graphs);
+
   auto grad_func_graphs = internal::ExpandMultiJ(func_graphs, optimizer);
   for (const auto &j_node_index_iter : j_node_to_index_map) {
     const auto &j_node = j_node_index_iter.first;

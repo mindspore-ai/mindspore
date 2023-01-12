@@ -196,26 +196,10 @@ FuncGraphVector GradMultiFuncGraph(const FuncGraphVector &func_graphs, const opt
   const auto &resources = optimizer->resource();
   auto manager_ptr = resources->manager();
   MS_EXCEPTION_IF_NULL(manager_ptr);
-  // Graded func_graph should not call each other;
-  for (const auto &func_graph : func_graphs) {
-    const auto &used_total = func_graph->func_graphs_used_total();
-    FuncGraphPtr used_fg;
-    bool used = std::any_of(func_graphs.cbegin(), func_graphs.end(), [&used_total, &used_fg](const FuncGraphPtr &fg) {
-      if (used_total.contains(fg)) {
-        used_fg = fg;
-        return true;
-      }
-      return false;
-    });
-    if (used) {
-      MS_LOG(EXCEPTION) << "Grad func_graph: " << func_graph->ToString()
-                        << " use another will be graded func_graph: " << used_fg->ToString();
-    }
-  }
-
   for (const auto &func_graph : func_graphs) {
     manager_ptr->AddFuncGraph(func_graph);
   }
+
   FuncGraphVector before_grad_fgs;
   if (optimizer->is_first_order_j()) {
     lift_fv_before_grad = true;
