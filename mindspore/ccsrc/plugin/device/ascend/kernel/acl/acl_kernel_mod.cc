@@ -24,6 +24,7 @@
 #include "kernel/common_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime.h"
+#include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {
 namespace kernel {
@@ -73,18 +74,11 @@ void AclKernelMod::UpdateReduceAxisAttr(const AnfNodePtr &node) {
   if (!common::AnfAlgo::IsReduceOp(op_type_)) {
     return;
   }
-  if (!common::AnfAlgo::HasNodeAttr("axis", node->cast<CNodePtr>())) {
+  auto cnode = node->cast<CNodePtr>();
+  if (!common::AnfAlgo::HasNodeAttr(kAttrAxis, cnode)) {
     return;
   }
-  ShapeVector axes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "axis");
-  if (!axes.empty()) {
-    return;
-  }
-  auto in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  for (size_t i = 0; i < in_shape.size(); ++i) {
-    axes.push_back(i);
-  }
-  common::AnfAlgo::SetNodeAttr("axis", MakeValue(axes), node);
+  opt::NormalizeReduceAttrAxis(cnode);
 }
 
 void AclKernelMod::ProcessAttribute(const std::shared_ptr<AclOpDesc> &op_desc_ptr) {

@@ -696,5 +696,26 @@ ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &att
   }
   return ret;
 }
+
+void NormalizeReduceAttrAxis(const CNodePtr &cnode) {
+  std::vector<int64_t> axis;
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  auto axis_list = kernel::GetReduceAttrAxis(cnode);
+  if (axis_list.empty()) {
+    for (size_t i = 0; i < input_shape.size(); ++i) {
+      (void)axis.emplace_back(SizeToLong(i));
+    }
+    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);
+    return;
+  }
+  for (const auto &elem : axis_list) {
+    if (elem < 0) {
+      axis.emplace_back(SizeToLong(input_shape.size()) + elem);
+    } else {
+      axis.emplace_back(elem);
+    }
+  }
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);
+}
 }  // namespace opt
 }  // namespace mindspore

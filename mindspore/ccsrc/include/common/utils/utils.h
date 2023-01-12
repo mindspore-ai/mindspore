@@ -922,6 +922,7 @@ constexpr auto kAttrOutputIsDynamicShape = "output_is_dynamic_shape";
 constexpr auto kAttrPynativeNextOpName = "next_op";
 constexpr auto kAttrPynativeNextIndex = "next_index";
 constexpr auto kAttrMutableKernel = "mutable_kernel";
+constexpr auto kAttrAclHighPrecision = "acl_high_precision";
 constexpr auto kAttrCompileInfo = "compile_info";
 constexpr auto kAttrFusionType = "fusion_type";
 constexpr auto kAttrStride = "stride";

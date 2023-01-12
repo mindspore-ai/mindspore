@@ -1883,10 +1883,10 @@ bool AnfAlgo::HasDynamicTupleInput(const CNodePtr &node) {
 }
 
 bool AnfAlgo::IsReduceOp(const std::string &op_name) {
-  const std::set<std::string> reduce_op_type = {prim::kPrimReduceAll->name(),  prim::kPrimReduceAny->name(),
-                                                prim::kPrimReduceMean->name(), prim::kPrimReduceMax->name(),
-                                                prim::kPrimReduceMin->name(),  prim::kPrimReduceProd->name(),
-                                                prim::kPrimReduceSum->name(),  prim::kPrimSquareSumV1->name()};
+  static const std::set<std::string> reduce_op_type = {prim::kPrimReduceAll->name(),  prim::kPrimReduceAny->name(),
+                                                       prim::kPrimReduceMean->name(), prim::kPrimReduceMax->name(),
+                                                       prim::kPrimReduceMin->name(),  prim::kPrimReduceProd->name(),
+                                                       prim::kPrimReduceSum->name(),  prim::kPrimSquareSumV1->name()};
   return reduce_op_type.find(op_name) != reduce_op_type.end();
 }
 }  // namespace common

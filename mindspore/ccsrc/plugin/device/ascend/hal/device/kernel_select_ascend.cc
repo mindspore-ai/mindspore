@@ -71,8 +71,13 @@ static const std::unordered_set<std::string> kAclKernelSet = {kConv2DOpName,
 const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
   {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
 
-mindspore::HashSet<std::string> kHighPrecisionOp = {kConv2DOpName, kMatMulOpName, kBatchMatMulOpName,
-                                                    kConv2DBackpropInputOpName, kConv2DBackpropFilterOpName};
+mindspore::HashSet<std::string> kHighPrecisionOp = {kConv2DOpName,
+                                                    kMatMulOpName,
+                                                    kBatchMatMulOpName,
+                                                    kConv2DBackpropInputOpName,
+                                                    kConv2DBackpropFilterOpName,
+                                                    kBiasAddGradOpName,
+                                                    kSigmoidCrossEntropyWithLogitsV2OpName};
 
 bool MatchInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfo &kernel_build_info) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -803,6 +808,7 @@ void UpdateInputForHighPrecisionOp(const CNodePtr &kernel_node,
     for (auto type : input_dtypes) {
       if (type == TypeId::kNumberTypeFloat16) {
         new_input_types.push_back(TypeId::kNumberTypeFloat32);
+        common::AnfAlgo::SetNodeAttr(kAttrAclHighPrecision, MakeValue(true), kernel_node);
       } else {
         new_input_types.push_back(type);
       }
