@@ -99,12 +99,6 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   // Execute OpBuildTask and OpRunTask when the OpExecutor queue is full in PyNative mode.
   void BatchBuildCallback();
 
-  // Topo sort compare func graph. If func graph is dynamic then return true; otherwise return false.
-  bool TopoSortGraphCompare(const AnfNodePtr &root, const SuccFunc &succ, FuncGraphDynamicInfo *new_graph_info,
-                            bool is_first_sort, const FuncGraphDynamicInfo *old_graph_info);
-
-  bool IsFuncGraphDynamicShapeOrStruct(const FuncGraphPtr &func_graph, const std::string &cell_id) override;
-
   // Run op or dispatch  build task and run task.
   void RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
                  const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs);
@@ -140,9 +134,6 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   // Cache forward op output value node tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<std::string, size_t> forward_op_output_tensor_id_;
-
-  // Save the mapping between cell id and func graph infos.
-  mindspore::HashMap<std::string, FuncGraphDynamicInfo> func_graph_dynamic_infos_;
 };
 using MindRTBackendPtr = std::shared_ptr<compile::MindRTBackend>;
 }  // namespace compile
