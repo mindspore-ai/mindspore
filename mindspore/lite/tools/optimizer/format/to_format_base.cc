@@ -29,12 +29,13 @@ namespace mindspore {
 namespace opt {
 STATUS ToFormatBase::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm,
                                  bool before, size_t index) {
-  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(func_graph, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
   AnfNodePtr trans_input = before ? cnode->input(index) : cnode;
   std::string trans_name = before ? cnode->fullname_with_scope() + "_pre_" + std::to_string(index - 1)
                                   : cnode->fullname_with_scope() + "_post";
   auto trans_cnode = opt::GenTransposeNode(func_graph, trans_input, perm, trans_name);
-  MS_ASSERT(trans_cnode != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(trans_cnode, lite::RET_ERROR);
   if (DecideWhetherInferShapeForNewNode()) {
     auto status = node_infer_shape_->InferShape(trans_cnode);
     if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
@@ -48,13 +49,13 @@ STATUS ToFormatBase::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr 
     }
   }
   auto trans_prim = GetValueNode<PrimitivePtr>(trans_cnode->input(0));
-  MS_ASSERT(trans_prim != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(trans_prim, lite::RET_ERROR);
   if (perm == kNC2NH) {
     trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
   } else if (perm == kNH2NC) {
     trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
   }
-  MS_ASSERT(manager_ != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(manager_, lite::RET_ERROR);
   if (before) {
     manager_->SetEdge(cnode, index, trans_cnode);
   } else {
@@ -67,7 +68,7 @@ STATUS ToFormatBase::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr 
 }
 
 STATUS ToFormatBase::ModifyCNode(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (prim == nullptr) {
     MS_LOG(ERROR) << "current node's prim is nullptr, " << cnode->fullname_with_scope();
@@ -83,7 +84,7 @@ STATUS ToFormatBase::ModifyCNode(const CNodePtr &cnode) {
     }
   }
   auto abstract_base = cnode->abstract();
-  MS_ASSERT(abstract_base != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(abstract_base, lite::RET_ERROR);
   std::vector<AbstractBasePtr> abstracts;
   if (utils::isa<abstract::AbstractTuple>(abstract_base)) {
     auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract_base);
@@ -114,10 +115,11 @@ STATUS ToFormatBase::ModifyCNode(const CNodePtr &cnode) {
 
 STATUS ToFormatBase::InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                         const std::vector<int> &perm) {
-  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(func_graph, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
   auto prim_node = cnode->input(0);
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
-  MS_ASSERT(prim != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(prim, lite::RET_ERROR);
   if (sensitive_ops_.find(prim->name()) == sensitive_ops_.end()) {
     MS_LOG(ERROR) << "op don't meet condition.";
     return lite::RET_ERROR;
@@ -144,7 +146,8 @@ STATUS ToFormatBase::InsertPreTransNode(const FuncGraphPtr &func_graph, const CN
 
 STATUS ToFormatBase::InsertPostTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                          const std::vector<int> &perm) {
-  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(func_graph, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
   if (!cnode->abstract()->isa<abstract::AbstractTuple>()) {
     if (GenNewInput(func_graph, cnode, perm, false) != lite::RET_OK) {
       MS_LOG(ERROR) << "generate a new input failed.";
@@ -189,11 +192,12 @@ STATUS ToFormatBase::InsertPostTransNode(const FuncGraphPtr &func_graph, const C
 
 bool ToFormatBase::DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ParameterPtr &input,
                                                  const ShapeVector &shape) {
-  MS_ASSERT(func_graph != nullptr && input != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(func_graph, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(input, false);
   if (shape.size() != kInputSizeFour) {
     return false;
   }
-  MS_ASSERT(manager_ != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(manager_, false);
   auto node_users = manager_->node_users()[input];
   for (auto &node_user : node_users) {
     auto post_node = node_user.first;
@@ -202,7 +206,7 @@ bool ToFormatBase::DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph,
     }
     auto post_cnode = post_node->cast<CNodePtr>();
     auto prim = GetValueNode<PrimitivePtr>(post_cnode->input(0));
-    MS_ASSERT(prim != nullptr);
+    MS_ERROR_IF_NULL_W_RET_VAL(prim, false);
     if (prim->GetAttr(ops::kFormat) != nullptr) {
       auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
       if (node_format == format_) {
@@ -215,13 +219,13 @@ bool ToFormatBase::DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph,
 }
 
 STATUS ToFormatBase::HandleGraphInput(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(func_graph, lite::RET_ERROR);
   auto graph_input = func_graph->get_inputs();
   for (auto &input : graph_input) {
     auto input_param = input->cast<ParameterPtr>();
-    MS_ASSERT(input_param != nullptr);
+    MS_ERROR_IF_NULL_W_RET_VAL(input_param, lite::RET_ERROR);
     auto abstract = input_param->abstract();
-    MS_ASSERT(abstract != nullptr);
+    MS_ERROR_IF_NULL_W_RET_VAL(abstract, lite::RET_ERROR);
     ShapeVector shape;
     if (FetchShapeFromAbstract(abstract, &shape) != lite::RET_OK) {
       MS_LOG(ERROR) << "fetch shape failed." << input->fullname_with_scope();
@@ -247,7 +251,7 @@ STATUS ToFormatBase::HandleGraphInput(const FuncGraphPtr &func_graph) {
       return lite::RET_ERROR;
     }
     auto trans_prim = GetValueNode<PrimitivePtr>(trans_cnode->input(0));
-    MS_ASSERT(trans_prim != nullptr);
+    MS_ERROR_IF_NULL_W_RET_VAL(trans_prim, lite::RET_ERROR);
     if (format_ == mindspore::NCHW) {
       trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
     } else {
@@ -264,7 +268,8 @@ STATUS ToFormatBase::HandleGraphInput(const FuncGraphPtr &func_graph) {
 }
 
 STATUS ToFormatBase::HandleGraphNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(func_graph, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
   opt::TransTypePair trans_info;
   if (GetTransNodeFormatType(cnode, &trans_info) != lite::RET_OK) {
     MS_LOG(ERROR) << "obtain node's transferring format type failed, " << cnode->fullname_with_scope();
@@ -294,7 +299,7 @@ STATUS ToFormatBase::HandleGraphNode(const FuncGraphPtr &func_graph, const CNode
 }
 
 bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph) {
-  MS_ASSERT(func_graph != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(func_graph, false);
   manager_->AddFuncGraph(func_graph);
   auto node_list = TopoSort(func_graph->get_return());
   int status;
@@ -328,6 +333,11 @@ bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph)
       }
       continue;
     }
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim == nullptr) {
+      MS_LOG(INFO) << "this is a call cnode, which input[0] is fg, node " << cnode->fullname_with_scope();
+      continue;
+    }
     status = HandleGraphNode(func_graph, cnode);
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "handle node failed.";
@@ -345,7 +355,8 @@ bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph)
 }
 
 STATUS ToFormatBase::ConvWeightFormatTrans(const FuncGraphPtr &graph, std::set<AnfNodePtr> *has_visited) {
-  MS_ASSERT(graph != nullptr && has_visited != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(graph, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(has_visited, lite::RET_ERROR);
   manager_->AddFuncGraph(graph);
   auto node_list = TopoSort(graph->get_return());
   for (auto &node : node_list) {

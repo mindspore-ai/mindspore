@@ -24,8 +24,8 @@
 namespace mindspore {
 namespace opt {
 STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(manager_ != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(func_graph, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(manager_, lite::RET_ERROR);
   manager_->AddFuncGraph(func_graph);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
@@ -84,9 +84,51 @@ STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_g
   return lite::RET_OK;
 }
 
+STATUS DeleteRedundantTranspose::DoTransTransFusion(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  if (func_graph == nullptr || cnode == nullptr) {
+    return lite::RET_ERROR;
+  }
+  if (!CheckPrimitiveType(cnode, prim::kPrimTranspose)) {
+    return lite::RET_OK;
+  }
+  if (cnode->size() <= 1 || cnode->input(1) == nullptr) {
+    MS_LOG(INFO) << "Failed to get input 1 of cnode " << cnode->fullname_with_scope() << ", input size "
+                 << cnode->size();
+    return lite::RET_ERROR;
+  }
+  auto pre_cnode = cnode->input(1)->cast<CNodePtr>();
+  if (pre_cnode == nullptr) {
+    MS_LOG(INFO) << "node input 1 is not a cnode, node " << cnode->fullname_with_scope();
+    return lite::RET_OK;
+  }
+  if (!CheckPrimitiveType(pre_cnode, prim::kPrimTranspose) || IsMultiOutputTensors(func_graph, pre_cnode)) {
+    return lite::RET_OK;
+  }
+  std::vector<int> post_perm;
+  if (GetTransposePerm(cnode, &post_perm) != lite::RET_OK) {
+    MS_LOG(ERROR) << "transpose perm cannot be obtained, " << cnode->fullname_with_scope();
+    return lite::RET_ERROR;
+  }
+  std::vector<int> pre_perm;
+  if (GetTransposePerm(pre_cnode, &pre_perm) != lite::RET_OK) {
+    MS_LOG(ERROR) << "transpose perm cannot be obtained, " << pre_cnode->fullname_with_scope();
+    return lite::RET_ERROR;
+  }
+  if ((pre_perm == kNH2NC && post_perm == kNC2NH) || (pre_perm == kNC2NH && post_perm == kNH2NC)) {
+    if (!manager_->Replace(cnode, pre_cnode->input(1))) {
+      MS_LOG(ERROR) << "replace old node failed, please check.";
+      return lite::RET_ERROR;
+    } else {
+      func_graph->DropNode(cnode->input(kInputIndexTwo));
+      func_graph->DropNode(pre_cnode->input(kInputIndexTwo));
+    }
+  }
+  return lite::RET_OK;
+}
+
 STATUS DeleteRedundantTranspose::TransTransFusion(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(manager_ != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(func_graph, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(manager_, lite::RET_ERROR);
   manager_->AddFuncGraph(func_graph);
   auto node_lite = TopoSort(func_graph->get_return());
   for (auto &node : node_lite) {
@@ -110,41 +152,19 @@ STATUS DeleteRedundantTranspose::TransTransFusion(const FuncGraphPtr &func_graph
       }
       continue;
     }
-    MS_ASSERT(cnode->input(1));
-    auto pre_cnode = cnode->input(1)->cast<CNodePtr>();
-    MS_ASSERT(pre_cnode != nullptr);
-    if (!CheckPrimitiveType(cnode, prim::kPrimTranspose) || !CheckPrimitiveType(pre_cnode, prim::kPrimTranspose) ||
-        IsMultiOutputTensors(func_graph, pre_cnode)) {
-      continue;
-    }
-    std::vector<int> post_perm;
-    if (GetTransposePerm(cnode, &post_perm) != lite::RET_OK) {
-      MS_LOG(ERROR) << "transpose rm cannot be obtained, " << cnode->fullname_with_scope();
-      return lite::RET_ERROR;
-    }
-    std::vector<int> pre_perm;
-    if (GetTransposePerm(pre_cnode, &pre_perm) != lite::RET_OK) {
-      MS_LOG(ERROR) << "transpose rm cannot be obtained, " << pre_cnode->fullname_with_scope();
-      return lite::RET_ERROR;
-    }
-    if ((pre_perm == kNH2NC && post_perm == kNC2NH) || (pre_perm == kNC2NH && post_perm == kNH2NC)) {
-      if (!manager_->Replace(cnode, pre_cnode->input(1))) {
-        MS_LOG(ERROR) << "replace old node failed, please check.";
-        return lite::RET_ERROR;
-      } else {
-        func_graph->DropNode(cnode->input(kInputIndexTwo));
-        func_graph->DropNode(pre_cnode->input(kInputIndexTwo));
-      }
+    auto ret = DoTransTransFusion(func_graph, cnode);
+    if (ret != lite::RET_OK) {
+      return ret;
     }
   }
   return lite::RET_OK;
 }
 
 STATUS DeleteRedundantTranspose::UpdateNodeFormat(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-  MS_ASSERT(manager_ != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(manager_, lite::RET_ERROR);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(prim != nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(prim, lite::RET_ERROR);
   if (prim->GetAttr(ops::kFormat) == nullptr) {
     return lite::RET_OK;
   }
@@ -180,7 +200,7 @@ STATUS DeleteRedundantTranspose::UpdateNodeFormat(const CNodePtr &cnode) {
     }
     auto post_cnode = node_user.first->cast<CNodePtr>();
     auto post_prim = GetValueNode<PrimitivePtr>(post_cnode->input(0));
-    MS_ASSERT(post_prim != nullptr);
+    MS_ERROR_IF_NULL_W_RET_VAL(post_prim, lite::RET_ERROR);
     post_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(forward_format));
     if (prim->HasAttr(opt::kOutputsFormat)) {
       auto org_format = CastToInt(prim->GetAttr(opt::kOutputsFormat));

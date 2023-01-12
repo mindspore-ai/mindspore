@@ -104,17 +104,4 @@ void FuncGraphUtils::SetFuncGraphOutputNames(const FuncGraphPtr &func_graph,
   }
   return;
 }
-
-void FuncGraphUtils::SetFuncGraphInputNames(const FuncGraphPtr &func_graph) {
-  for (auto &input : func_graph->get_inputs()) {
-    auto parameter = input->cast<ParameterPtr>();
-    if (!parameter->has_default()) {
-      auto abstract = parameter->abstract();
-      MS_EXCEPTION_IF_CHECK_FAIL(abstract != nullptr, "Abstract is nullptr.");
-      if (abstract->name().empty()) {
-        abstract->set_name(parameter->name());
-      }
-    }
-  }
-}
 }  // namespace mindspore

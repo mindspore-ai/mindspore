@@ -773,7 +773,10 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForSingleOp(const FuncGraphPtr &fun
       continue;
     }
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    MS_CHECK_TRUE_MSG(prim != nullptr, false, "GetValueNode Failed");
+    if (prim == nullptr) {
+      MS_LOG(INFO) << "this is a call cnode, which input[0] is fg, node " << cnode->fullname_with_scope();
+      continue;
+    }
     if (!IsDynamicFormatOp(prim->name())) {
       continue;
     }
