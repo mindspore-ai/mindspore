@@ -121,6 +121,10 @@ class TestEnvEnableProfiler:
     @pytest.mark.env_onecard
     @security_off_wrap
     def test_gpu_profiler(self):
+        root_status = os.system("whoami | grep root")
+        cuda_status = os.system("nvcc -V | grep cuda_10")
+        if root_status and not cuda_status:
+            return
         status = os.system(
             """export MS_PROFILER_OPTIONS='{"start":true, "profile_memory":true, "sync_enable":true}';
                python ./run_net.py --target=GPU --mode=0;
@@ -139,6 +143,10 @@ class TestEnvEnableProfiler:
         Description: profiling l2 GPU pynative mode data, analyze performance issues.
         Expectation: No exception.
         """
+        root_status = os.system("whoami | grep root")
+        cuda_status = os.system("nvcc -V | grep cuda_10")
+        if root_status and not cuda_status:
+            return
         status = os.system(
             """export MS_PROFILER_OPTIONS='{"start":true, "sync_enable":true}';
                python ./run_net.py --target=GPU --mode=1;
