@@ -954,7 +954,6 @@ constexpr auto kAttrNeedInline = "need_inline";
 constexpr auto kAttrOriFusionName = "ori_fusion_name";
 
 // FuncGraph Flags
-constexpr auto kFlagIsDynamicStructure = "is_dynamic_structure";
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
 constexpr auto kFlagPyNativeRunInGraph = "pynative_run_in_graph";
 constexpr auto kFlagNeedRenormalize = "need_renormalize";

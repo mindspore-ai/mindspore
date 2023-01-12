@@ -373,10 +373,9 @@ bool GraphAdapter::PyNativeEnableTaskSink(const FuncGraphPtr &func_graph) {
   auto is_auto_parallel = IsAutoParallel();
 
   MS_LOG(INFO) << "JitLevel is " << jit_level << " is_auto_parallel " << is_auto_parallel << " has_comm_op "
-               << has_comm_op << " is_cut_graph " << is_cut_graph << " dynamic_structure "
-               << func_graph->has_flag(kFlagIsDynamicStructure);
+               << has_comm_op << " is_cut_graph " << is_cut_graph;
 
-  return !is_auto_parallel && !has_comm_op && !is_cut_graph && !func_graph->has_flag(kFlagIsDynamicStructure);
+  return !is_auto_parallel && !has_comm_op && !is_cut_graph;
 }
 
 void UpdateValueNodeAbstractFromTensor(const ValueNodePtr &value_node, const tensor::TensorPtr &tensor) {
