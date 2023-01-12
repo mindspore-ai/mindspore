@@ -372,8 +372,8 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
         raise TypeError(f"For array function 'hamming_window', 'beta' must be float, but got {type(beta)}.")
     if window_length <= 1:
         return Tensor(np.ones(window_length))
-    if dtype is not None and dtype not in mstype.all_types:
-        raise TypeError(f"For array function 'hamming_window', 'dtype' must be a MindSpore data type.")
+    if dtype is not None and dtype not in mstype.float_type:
+        raise TypeError(f"For array function 'hamming_window', 'dtype' must be floating pont dtypes, but got {dtype}.")
 
     if periodic:
         window_length += 1
@@ -566,6 +566,27 @@ def padding(x, pad_dim_size=8):
     """
     padding_ = _get_cache_prim(P.array_ops.Padding)(pad_dim_size)
     return padding_(x)
+
+
+@constexpr
+def _check_axis_type(axis, type_int=True, type_tuple=True, type_list=True, ops_name="ops"):
+    """Check axis argument type."""
+    if type_int and isinstance(axis, int):
+        return True
+    if (type_tuple and isinstance(axis, tuple)) or (type_list and isinstance(axis, list)):
+        for ax in axis:
+            if not isinstance(ax, int):
+                raise TypeError(f"For {ops_name}, each axis must be integer, but got {type(ax)} in {axis}.")
+        return True
+
+    type_str = ""
+    if type_int:
+        type_str += "int, "
+    if type_tuple:
+        type_str += "tuple, "
+    if type_list:
+        type_str += "list, "
+    raise TypeError(f"For {ops_name}, the axis should be {type_str}, but got {type(axis)}.")
 
 
 def one_hot(indices, depth, on_value, off_value, axis=-1):
@@ -815,7 +836,7 @@ def chunk(x, chunks, axis=0):
     """
     if not isinstance(x, Tensor):
         raise TypeError(f'For ops.chunk parameter `x` must be Tensor, but got {type(x)}')
-    _ = validator.check_axis_type(axis, True, False, False)
+    _check_axis_type(axis, True, False, False, "ops.chunk")
     axis = _canonicalize_axis(axis, x.ndim)
 
     if not isinstance(chunks, int):
