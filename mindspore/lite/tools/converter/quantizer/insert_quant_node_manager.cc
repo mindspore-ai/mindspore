@@ -297,7 +297,7 @@ int InsertQuantNodeManager::InsertForwardQuantCastNode(const FuncGraphPtr &graph
       return RET_ERROR;
     }
   } else {
-    MS_LOG(ERROR) << "input node abstract nullptr, input node name: " << input_node->fullname_with_scope();
+    MS_LOG(INFO) << "input node abstract nullptr, input node name: " << input_node->fullname_with_scope();
   }
   auto manager = graph->manager();
   if (manager == nullptr) {
