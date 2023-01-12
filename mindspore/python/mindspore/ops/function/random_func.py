@@ -192,10 +192,20 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
 
     Examples:
         >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)
-        >>> output = multinomialwithreplacement(x, 2, 5, 2, True)
+        >>> output = multinomial_with_replacement(x, 2, 5, 2, True)
         >>> print(output)
         [[1 1]]
     """
+    if not isinstance(seed, Tensor):
+        if not isinstance(seed, int):
+            raise TypeError("For multinomial_with_replacement,",
+                            "the input[seed] must be int, but got {}.".format(type(seed)))
+        seed = Tensor(seed, dtype=mstype.int64)
+    if not isinstance(offset, Tensor):
+        if not isinstance(offset, int):
+            raise TypeError("For multinomial_with_replacement,",
+                            "the input[offset] must be int, but got {}.".format(type(offset)))
+        offset = Tensor(offset, dtype=mstype.int64)
     multinomial_with_replacement_ = _get_cache_prim(P.MultinomialWithReplacement) \
         (numsamples=numsamples, replacement=replacement)
     return multinomial_with_replacement_(x, seed, offset)
