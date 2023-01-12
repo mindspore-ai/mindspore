@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,19 +166,23 @@ py::object PyExecuteCpuKernelMod::BuildLocalTupleParameters(const std::vector<Ad
     MS_EXCEPTION_IF_NULL(input_abstract);
     const auto &input_type = input_abstract->BuildType();
     MS_EXCEPTION_IF_NULL(input_type);
-    if (!tuple_input_start && input_abstract->isa<abstract::AbstractScalar>() && input_type->isa<String>()) {
-      const auto &value = input_abstract->BuildValue();
-      MS_EXCEPTION_IF_NULL(value);
-      const auto &str_value = dyn_cast<StringImm>(value);
-      MS_EXCEPTION_IF_NULL(str_value);
-      const auto &str = str_value->value();
-      if (str != internal_tuple_keys_str && str != internal_tuple_values_str) {
+    if (!tuple_input_start) {
+      if (input_abstract->isa<abstract::AbstractScalar>() && input_type->isa<String>()) {
+        const auto &value = input_abstract->BuildValue();
+        MS_EXCEPTION_IF_NULL(value);
+        const auto &str_value = dyn_cast<StringImm>(value);
+        MS_EXCEPTION_IF_NULL(str_value);
+        std::string str = str_value->value();
+        if (str != internal_tuple_keys_str && str != internal_tuple_values_str) {
+          return py::none();
+        }
+        tuple_key_str = str;
+        tuple_input_start = true;
+        MS_LOG(DEBUG) << "String, key input[" << i << "]: " << input_abstract->ToString();
+        continue;
+      } else {
         return py::none();
       }
-      tuple_key_str = str;
-      tuple_input_start = true;
-      MS_LOG(DEBUG) << "String, key input[" << i << "]: " << input_abstract->ToString();
-      continue;
     }
 
     // Rebuild the tuple with all left inputs.

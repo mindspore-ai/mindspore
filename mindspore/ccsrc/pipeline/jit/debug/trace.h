@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ namespace mindspore {
 namespace trace {
 using TraceGraphEvalStack = std::deque<std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>>;
 using TraceCNodeEvalStack = std::vector<abstract::AnfNodeConfigPtr>;
-DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr &info);
 void TraceGraphEval();
 void GetEvalStackInfo(std::ostringstream &oss);
 void TraceGraphEvalEnter(const abstract::AnalysisContextPtr &context, const abstract::AnfNodeConfigPtr &node);

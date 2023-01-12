@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,7 +297,8 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
   bool interpret_without_internal =
     (IsPrimitiveCNode(origin_node, prim::kPrimPyInterpret) && !origin_node->interpret_internal_type()) ||
     origin_node->interpret();
-  if (!interpret_without_internal && convert_result->isa<InterpretedObject>()) {
+  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+  if (!support_fallback_runtime && !interpret_without_internal && convert_result->isa<InterpretedObject>()) {
     auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);
     MS_EXCEPTION(TypeError) << "Do not support to convert " << py::str(type_str) << " object into graph node."
                             << ".\nFor more details, please refer to "

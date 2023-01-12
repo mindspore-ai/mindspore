@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -167,7 +167,11 @@ class Net1(nn.Cell):
 
 @non_graph_engine
 def test_call_other_object_method():
-    """ test_call_other_object_method """
+    """
+    Feature: getattr for custom class.
+    Description: Support getattr for custom class.
+    Expectation: No exception.
+    """
     log.debug("begin test_call_other_object_method")
 
     x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]).astype(np.int32))
@@ -176,7 +180,7 @@ def test_call_other_object_method():
     z = np.array([[8, 9, 12], [3, 4, 7]]).astype(np.int32)
 
     net = Net1(y, y1)
-    with pytest.raises(TypeError):
+    with pytest.raises(NotImplementedError):  # NotImplementedError: PyExecute, should move to ST.
         output = net.construct(x)
         result = output.asnumpy()
         print(result)
@@ -211,14 +215,18 @@ class Net2(nn.Cell):
 
 @non_graph_engine
 def test_call_no_self_other_object_method():
-    """ test_call_no_self_other_object_method """
+    """
+    Feature: getattr for custom class.
+    Description: Support getattr for custom class.
+    Expectation: No exception.
+    """
     log.debug("begin test_call_other_object_method")
     x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]).astype(np.int32))
     y = Tensor(np.array([[2, 3, 4], [1, 1, 2]]).astype(np.int32))
     z = np.array([[6, 9, 12], [3, 4, 7]]).astype(np.int32)
 
     net = Net2(y)
-    with pytest.raises(TypeError):
+    with pytest.raises(NotImplementedError):  # NotImplementedError: PyExecute, should move to ST.
         output = net.construct(x)
         result = output.asnumpy()
         print(result)
