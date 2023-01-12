@@ -30,6 +30,7 @@ class DeleteRedundantTranspose : public Pass {
 
  private:
   STATUS DeleteNot4DTranspose(const FuncGraphPtr &func_graph);
+  STATUS DeleteControlFlowTranspose(const CNodePtr &cnode);
   STATUS TransTransFusion(const FuncGraphPtr &func_graph);
   STATUS UpdateNodeFormat(const CNodePtr &node);
   FuncGraphManagerPtr manager_{nullptr};
