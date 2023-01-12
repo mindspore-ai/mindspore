@@ -289,6 +289,7 @@ INPUT_MAP(InplaceIndexAdd) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3
 ATTR_MAP(InplaceIndexAdd) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(InplaceIndexAdd) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(InplaceIndexAdd, prim::kPrimInplaceIndexAdd->name(), ADPT_DESC(InplaceIndexAdd))
+REG_ADPT_DESC(IndexAdd, prim::kPrimIndexAdd->name(), ADPT_DESC(InplaceIndexAdd))
 
 // UnsortedSegmentMax
 INPUT_MAP(UnsortedSegmentMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};

@@ -75,7 +75,7 @@ std::vector<int64_t> GetAxis(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto output_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
   if (output_shape.empty()) {
-    MS_LOG(EXCEPTION) << node->fullname_with_scope() << "'s output shape is empty" << trace::DumpSourceLines(node);
+    MS_LOG(INFO) << node->fullname_with_scope() << "'s output shape is empty";
   }
   std::vector<int64_t> range;
   for (size_t i = 0; i < output_shape.size(); i++) {
