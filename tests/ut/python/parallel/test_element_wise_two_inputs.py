@@ -45,6 +45,8 @@ class Net(Cell):
         self.next_after = P.NextAfter()
         self.zeta = P.Zeta()
         self.cast = P.Cast()
+        self.gcd = P.Gcd()
+        self.gcd_weight = Parameter(w1, "w8")
 
     def construct(self, x):
         out = self.hypot(x, self.hypot_w)
@@ -55,6 +57,7 @@ class Net(Cell):
         out = self.cast(out, ms.int32)
         out = self.left_shift(out, self.left_shift_w)
         out = self.right_shift(out, self.right_shift_w)
+        out = self.gcd(out, self.gcd_weight)
         return out
 
 
@@ -85,4 +88,6 @@ def test_element_wise_two_inputs_ops():
         elif re.search("LeftShift", k) is not None:
             assert v == [[1, 2, 4, 8], [1, 2, 1, 8]]
         elif re.search("RightShift", k) is not None:
+            assert v == [[1, 2, 4, 8], [1, 2, 1, 8]]
+        elif re.search("Gcd", k) is not None:
             assert v == [[1, 2, 4, 8], [1, 2, 1, 8]]

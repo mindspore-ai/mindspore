@@ -435,6 +435,7 @@ REGISTER(LeftShiftInfo);
 REGISTER(RightShiftInfo);
 REGISTER(NextAfterInfo);
 REGISTER(ZetaInfo);
+REGISTER(GcdInfo);
 REGISTER(LerpInfo);
 REGISTER(SquaredDifferenceInfo);
 REGISTER(MaskedFillInfo);

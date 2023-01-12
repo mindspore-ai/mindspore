@@ -292,6 +292,13 @@ class ZetaInfo : public XdivyInfo {
   ~ZetaInfo() = default;
 };
 
+class GcdInfo : public XdivyInfo {
+ public:
+  GcdInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
+      : XdivyInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~GcdInfo() = default;
+};
+
 class XlogyInfo : public ArithmeticBase {
  public:
   XlogyInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,

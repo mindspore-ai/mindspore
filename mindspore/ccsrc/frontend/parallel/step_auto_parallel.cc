@@ -162,7 +162,7 @@ bool IsElementWiseOperator(const std::string &op_name) {
                                                        SOFTSIGN,   LESS,         LESSEQUAL,
                                                        BESSELI1E,  GREATEREQUAL, APPROXIMATEEQUAL,
                                                        MOD,        REVERSEV2,    REPEAT_ELEMENTS,
-                                                       TRUNC,      LGAMMA};
+                                                       TRUNC,      LGAMMA,       CHOLESKY};
   // clang-format on
   auto iter = elementwise_op.find(op_name);
   return (iter != elementwise_op.cend());
