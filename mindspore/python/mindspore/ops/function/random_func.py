@@ -847,7 +847,7 @@ def rand(*size, dtype=None, seed=None):
     interval :math:`[0, 1)`.
 
     Args:
-        *size (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g. :math:`(2, 3)` or :math:`2`.
+        size (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g. :math:`(2, 3)` or :math:`2`.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
@@ -856,7 +856,7 @@ def rand(*size, dtype=None, seed=None):
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the uniform distribution on
-            the interval :math:`[0, 1)`.
+        the interval :math:`[0, 1)`.
 
     Raises:
         TypeError: `seed` is not a non-negative integer.
@@ -936,16 +936,16 @@ def randn(*size, dtype=None, seed=None):
     from the standard normal distribution.
 
     Args:
-        *size (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g., :math:`(2, 3)` or :math:`2`.
+        size (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g., :math:`(2, 3)` or :math:`2`.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
-            :class:`mindspore.float32` will be used. Default: None.
+            `mindspore.float32` will be used. Default: None.
         seed (int, optional): Random seed, must be greater or equal to 0. Default: None, and 0 will be used.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with a sample (or samples) from the
-            "standard normal" distribution.
+        "standard normal" distribution.
 
     Raises:
         TypeError: `seed` is not a non-negative integer.
@@ -985,11 +985,11 @@ def randn_like(x, seed=None, *, dtype=None):
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
-            :class:`mindspore.float32` will be used. Default: None.
+            `mindspore.float32` will be used. Default: None.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with a sample (or samples) from the
-            "standard normal" distribution.
+        "standard normal" distribution.
 
     Raises:
         TypeError: `seed` is not a non-negative integer.
@@ -1035,7 +1035,7 @@ def randint(low, high, size, seed=None, *, dtype=None):
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random integers from low (inclusive)
-            to high (exclusive).
+        to high (exclusive).
 
     Raises:
         TypeError: `seed` is not a non-negative integer.
@@ -1084,11 +1084,11 @@ def randint_like(x, low, high, seed=None, *, dtype=None):
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be int type. If None,
-            :class:`mindspore.int64` will be used. Default is :class:`mindspore.int64`.
+            `mindspore.int64` will be used. Default is `mindspore.int64`.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random integers from low (inclusive)
-            to high (exclusive).
+        to high (exclusive).
 
     Raises:
         TypeError: `seed` is not a non-negative integer.

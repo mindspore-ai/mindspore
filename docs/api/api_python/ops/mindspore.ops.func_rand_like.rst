@@ -6,7 +6,7 @@ mindspore.ops.rand_like
     返回一个Tensor，shape和dtype由输入决定，其元素为服从均匀分布的 :math:`[0, 1)` 区间的数字。
 
     参数：
-        - **x** (Tensor)：输入的Tensor，用来决定输出Tensor的shape和默认的dtype。
+        - **x** (Tensor) - 输入的Tensor，用来决定输出Tensor的shape和默认的dtype。
         - **seed** (int，可选) - 随机种子，必须大于或等于0。默认值：None，值将取0。
 
     关键字参数：

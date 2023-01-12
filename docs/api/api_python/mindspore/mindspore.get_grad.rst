@@ -18,5 +18,5 @@ mindspore.get_grad
         identifier所指定的求导输入位置的索引所对应的梯度值，或者网络变量所对应的梯度值。
 
     异常：
-        - **ValueError** - 无法找到identifier所对应的梯度值。
+        - **RuntimeError** - 无法找到identifier所对应的梯度值。
         - **TypeError** - 入参类型不符合要求。
