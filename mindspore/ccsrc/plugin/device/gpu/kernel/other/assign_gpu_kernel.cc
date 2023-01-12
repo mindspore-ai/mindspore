@@ -93,12 +93,6 @@ bool AssignGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   }
 
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-
-  int ret = Resize(kernel_ptr, inputs, outputs);
-  if (ret == KRET_RESIZE_FAILED) {
-    return false;
-  }
-
   return true;
 }
 

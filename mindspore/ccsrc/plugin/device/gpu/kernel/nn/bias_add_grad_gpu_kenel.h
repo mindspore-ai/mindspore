@@ -60,6 +60,7 @@ class BiasAddGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHel
                     const std::vector<kernel::AddressPtr> &outputs);
   void MethodSelection();
   void InitResource() override;
+  void SetResource();
   void InitSizeLists();
 
   size_t unit_size_{1};
