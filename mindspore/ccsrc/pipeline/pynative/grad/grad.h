@@ -119,6 +119,7 @@ class GradExecutor {
   AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node) const;
   void EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell);
   void SetBpropGraphJitLevel(const py::object &cell) const;
+  std::string GetFnInfoByPyObj(const py::object &obj) const;
 
   // grad graph id to identify grad graph cache
   std::string grad_position_;

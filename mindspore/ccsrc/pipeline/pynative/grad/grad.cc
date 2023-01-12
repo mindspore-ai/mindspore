@@ -83,8 +83,21 @@ TopCellInfoPtr GradExecutor::PopHighOrderGraphStack() {
   return top_cell;
 }
 
+std::string GradExecutor::GetFnInfoByPyObj(const py::object &obj) const {
+  std::string fn_info = obj.attr("__module__").cast<std::string>();
+  fn_info += "_" + obj.attr("__name__").cast<std::string>();
+  fn_info += "_" + obj.attr("__code__").attr("co_filename").cast<std::string>();
+  fn_info += "_" + py::str(obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
+  return fn_info;
+}
+
 std::string GradExecutor::GetCellId(const py::object &cell, const py::args &args) const {
-  auto cell_id = PyNativeAlgo::PyParser::GetIdByPyObj(cell);
+  std::string cell_id;
+  if (!py::isinstance<Cell>(cell)) {
+    cell_id = GetFnInfoByPyObj(cell);
+  } else {
+    cell_id = PyNativeAlgo::PyParser::GetIdByPyObj(cell);
+  }
   auto fn = [&cell_id](const abstract::AbstractBasePtr &abs) {
     MS_EXCEPTION_IF_NULL(abs);
     auto shape = abs->BuildShape();
