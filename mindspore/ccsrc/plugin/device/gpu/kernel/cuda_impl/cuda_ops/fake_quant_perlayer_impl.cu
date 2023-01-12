@@ -68,12 +68,12 @@ __global__ void NudgeMinMaxPerLayer(float *input_min, float *input_max, const fl
     min_data = abs(input_min[0]) < input_max[0] ? -input_max[0] : input_min[0];
   }
 
-  if ((quant_max - quant_min) == 0 || (max_data - max_data) == 0) {
+  if ((quant_max - quant_min) == 0 || (max_data - min_data) == 0) {
     scale[0] = 0.f;
     zp_from_min = 0.f;
   } else {
-    scale[0] = (max_data - max_data) / (quant_max - quant_min);
-    zp_from_min = quant_min - max_data / scale[0];
+    scale[0] = (max_data - min_data) / (quant_max - quant_min);
+    zp_from_min = quant_min - min_data / scale[0];
   }
 
   float nudge_zp = 0.f;
