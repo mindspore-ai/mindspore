@@ -14,7 +14,7 @@ function Run_Converter() {
     local ascend_cfg_file_list=("$models_ascend_config")
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile; $6:faile_not_return;
-    Convert "${ascend_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $x86_fail_not_return $compile_type
+    Convert "${ascend_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $ascend_fail_not_return $compile_type
 }
 
 # source ascend env
@@ -28,6 +28,7 @@ export PYTHONPATH=${TBE_IMPL_PATH}:${PYTHONPATH}
 backend=$1
 device_id=$2
 arch=$3
+ascend_fail_not_return=$4
 user_name=${USER}
 echo "Current user is ${USER}"
 benchmark_test=/home/${user_name}/benchmark_test/${device_id}
@@ -51,6 +52,9 @@ if [[ ${backend} =~ "lite" ]]; then
 elif [[ ${backend} =~ "cloud" ]]; then
     compile_type="cloud"
     models_ascend_config=${benchmark_test}/models_ascend_cloud.cfg
+    if [[ ${backend} =~ "_ge" ]]; then
+        models_ascend_config=${benchmark_test}/models_ascend_ge_cloud.cfg
+    fi
 fi
 
 # Write converter result to temp file
@@ -61,7 +65,6 @@ run_converter_result_file=${benchmark_test}/run_converter_result.txt
 echo ' ' > ${run_converter_result_file}
 
 # Run converter
-x86_fail_not_return="OFF" # This value could not be set to ON.
 source ${benchmark_test}/base_functions.sh
 echo "Start to run converter in ${backend}, device id ${device_id} ..."
 Run_Converter
@@ -76,6 +79,6 @@ else
 fi
 
 # Run Benchmark
-source ${benchmark_test}/run_benchmark_ascend.sh -v $version -b $backend -d $device_id -a ${arch} -c ${compile_type}
+source ${benchmark_test}/run_benchmark_ascend.sh -v $version -b $backend -d $device_id -a ${arch} -c ${compile_type} -p ${ascend_fail_not_return}
 Run_Benchmark_status=$?
 exit ${Run_Benchmark_status}

@@ -2,7 +2,7 @@
 source ${benchmark_test}/run_benchmark_python.sh
 
 # Example:sh run_remote_ascend.sh -v version -b backend
-while getopts "v:b:d:a:c:" opt; do
+while getopts "v:b:d:a:c:p:" opt; do
     case ${opt} in
         v)
             version=${OPTARG}
@@ -24,6 +24,10 @@ while getopts "v:b:d:a:c:" opt; do
             compile_type=${OPTARG}
             echo "compile type is ${compile_type}"
             ;;
+        p)
+            ascend_fail_not_return=${OPTARG}
+            echo "ascend_fail_not_return is ${OPTARG}"
+            ;;
         ?)
         echo "unknown para"
         exit 1;;
@@ -31,7 +35,9 @@ while getopts "v:b:d:a:c:" opt; do
 done
 
 export ASCEND_DEVICE_ID=${device_id}
-
+if [[ ${backend} =~ "_ge" ]]; then
+    export ASCEND_BACK_POLICY="ge"
+fi
 # Run Benchmark in Ascend platform:
 function Run_Benchmark() {
     cd ${benchmark_test}/mindspore-lite-${version}-linux-${arch} || exit 1
@@ -94,8 +100,6 @@ function Run_Benchmark() {
           output_file=${data_path}'output/'${model_name}'.out'
         fi
 
-
-
         # set accuracy limitation
         acc_limit="0.5"
         if [[ ${spec_acc_limit} != "" ]]; then
@@ -116,7 +120,10 @@ function Run_Benchmark() {
         if [ $? = 0 ]; then
             run_result=${backend}': '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result=${backend}': '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result=${backend}': '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            if [[ ${ascend_fail_not_return} != "ON" ]]; then
+                return 1
+            fi
         fi
 
     done < ${models_ascend_config}
@@ -129,6 +136,9 @@ if [[ ${backend} =~ "lite" ]]; then
     models_ascend_config=${benchmark_test}/models_ascend_lite.cfg
 elif [[ ${backend} =~ "cloud" ]]; then
     models_ascend_config=${benchmark_test}/models_ascend_cloud.cfg
+    if [[ ${backend} =~ "_ge" ]]; then
+        models_ascend_config=${benchmark_test}/models_ascend_ge_cloud.cfg
+    fi
 fi
 model_data_path=/home/workspace/mindspore_dataset/mslite
 
@@ -162,7 +172,7 @@ else
 fi
 
 # run python ST
-if [[ ${backend} =~ "cloud" ]]; then
+if [[ ${backend} =~ "cloud" &&! ${backend} =~ "ge" ]]; then
   models_python_config=${benchmark_test}/models_python_ascend.cfg
   models_python_cfg_file_list=("$models_python_config")
   Run_python_ST ${benchmark_test} ${benchmark_test} ${ms_models_path} ${model_data_path}'/models/hiai' "${models_python_cfg_file_list[*]}" "Ascend"
@@ -174,7 +184,7 @@ if [[ ${backend} =~ "cloud" ]]; then
   fi
 fi
 
-if [[ ${backend} =~ "cloud" ]]; then
+if [[ ${backend} =~ "cloud" &&! ${backend} =~ "ge" ]]; then
   export LITE_ST_MODEL=${model_data_path}/models/hiai/mindspore_uniir_mobilenetv2.mindir
   export LITE_ST_CPP_DIR=${benchmark_test}/cpp
   bash ${benchmark_test}/run_device_mem_test.sh > run_device_mem_test.log

@@ -86,7 +86,7 @@ function Convert() {
           if [[ ${extra_info} =~ "online_convert" ]]; then
             target_device=""
           fi
-          if [ ${model_fmk} != "TF" ]; then
+          if [[ ${model_fmk} != "TF" &&! ${cfg_file_name} =~ "_ge" ]]; then
             input_format="NHWC"
           fi
         elif [[ ${cfg_file_name} =~ "_cloud" ]]; then
@@ -102,8 +102,7 @@ function Convert() {
             do
               spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
             done
-        fi
-
+          fi
         elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
           quant_type="PostTraining"
           output_file=${output_file}"_posttraining"
@@ -116,6 +115,7 @@ function Convert() {
           in_dtype="FLOAT"
           out_dtype="FLOAT"
         fi
+
         if [[ ${extra_info} =~ "offline_resize" && ${input_shapes} != "" && ${input_names} != "" ]]; then
           if [[ ${input_num} == "" ]]; then
             input_num=1

@@ -12,7 +12,11 @@ function PrePareLocal() {
   cp -r ./cpp ${benchmark_test_path} || exit 1
   cp ./scripts/ascend/*.sh ${benchmark_test_path} || exit 1
   if [[ ${backend} =~ "_cloud" ]]; then
-      cp ./../${config_folder}/models_ascend_cloud.cfg ${benchmark_test_path} || exit 1
+      models_ascend_config=./../${config_folder}/models_ascend_cloud.cfg
+      if [[ ${backend} =~ "_ge" ]]; then
+          models_ascend_config=./../${config_folder}/models_ascend_ge_cloud.cfg
+      fi
+      cp ${models_ascend_config} ${benchmark_test_path} || exit 1
       cp ./../${config_folder}/models_python_ascend.cfg ${benchmark_test_path} || exit 1
   else
       cp ./../${config_folder}/models_ascend_lite.cfg ${benchmark_test_path} || exit 1
@@ -44,7 +48,11 @@ function PrePareRemote() {
   scp -r ./cpp ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp ./scripts/ascend/*.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   if [[ ${backend} =~ "_cloud" ]]; then
-      scp ./../${config_folder}/models_ascend_cloud.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+      models_ascend_config=./../${config_folder}/models_ascend_cloud.cfg
+      if [[ ${backend} =~ "_ge" ]]; then
+          models_ascend_config=./../${config_folder}/models_ascend_ge_cloud.cfg
+      fi
+      scp ${models_ascend_config} ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
       scp ./../${config_folder}/models_python_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   else
       scp ./../${config_folder}/models_ascend_lite.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
@@ -69,7 +77,7 @@ function PrePareRemote() {
 function Run_Ascend() {
   if [ ${is_local} = 0 ]; then
     cd ${benchmark_test_path} || exit 1
-    sh run_converter_ascend.sh ${backend} ${device_id} ${arch}
+    sh run_converter_ascend.sh ${backend} ${device_id} ${arch} ${ascend_fail_not_return}
   else
     ssh ${user_name}@${device_ip} "cd ${benchmark_test_path}; sh run_converter_ascend.sh ${backend} ${device_id} ${arch}"
   fi
@@ -81,7 +89,7 @@ function Run_Ascend() {
 }
 
 # Example:sh run_benchmark_nets.sh -r /home/temp_test -m /home/temp_test/models -e Ascend310 -d 10.92.9.100:2
-while getopts "r:m:d:e:l:" opt; do
+while getopts "r:m:d:e:l:p:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -102,6 +110,10 @@ while getopts "r:m:d:e:l:" opt; do
         l)
             level=${OPTARG}
             echo "level is ${OPTARG}"
+            ;;
+        p)
+            ascend_fail_not_return=${OPTARG}
+            echo "ascend_fail_not_return is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
