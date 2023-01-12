@@ -422,32 +422,6 @@ Status ModelPool::SetWorkersNumaId(std::vector<int> *numa_node_id) {
   return kSuccess;
 }
 
-ModelPoolConfig ModelPool::CreateGpuModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config,
-                                                    const std::shared_ptr<Context> &init_context) {
-  ModelPoolConfig model_pool_gpu_config;
-  auto worker_config = std::make_shared<WorkerConfig>();
-  if (worker_config == nullptr) {
-    MS_LOG(ERROR) << "new worker config failed.";
-    return {};
-  }
-  if (runner_config != nullptr) {
-    worker_config->config_info = runner_config->GetConfigInfo();
-    worker_config->config_path = runner_config->GetConfigPath();
-  }
-  worker_config->worker_id = 0;
-  worker_config->context = init_context;
-  worker_config->numa_id = -1;
-  used_numa_node_num_ = 1;
-  workers_num_ = 1;
-  if (worker_config->config_info.find(lite::kWeight) == worker_config->config_info.end()) {
-    std::map<std::string, std::string> config;
-    config[lite::kWeightPath] = model_path_;
-    worker_config->config_info[lite::kWeight] = config;
-  }
-  model_pool_gpu_config.push_back(worker_config);
-  return model_pool_gpu_config;
-}
-
 std::shared_ptr<Context> ModelPool::CopyContext(const std::shared_ptr<Context> &context) {
   auto new_context = std::make_shared<Context>();
   new_context->SetThreadNum(context->GetThreadNum());
@@ -518,10 +492,22 @@ ModelPoolConfig ModelPool::CreateCpuModelPoolConfig(const std::shared_ptr<Runner
     }
     worker_config->context = context;
     worker_config->worker_id = i;
-    if (worker_config->config_info.find(lite::kWeight) == worker_config->config_info.end()) {
+    if (worker_config->config_info.find(lite::kWeightSection) != worker_config->config_info.end()) {
+      MS_LOG(WARNING) << "It is not recommended to use the 'weigh' and 'weight_path' parameters. "
+                         "Please use the 'model_info' and 'mindir_path' parameters auto data_path";
+      auto ms_weight_iter = worker_config->config_info.find(lite::kWeightSection)->second;
+      if (ms_weight_iter.find(lite::kWeightPathKey) == ms_weight_iter.end()) {
+        MS_LOG(ERROR) << "The 'weight' parameter has been set. Please set the 'weight_path' parameter synchronously";
+        return {};
+      }
       std::map<std::string, std::string> config;
-      config[lite::kWeightPath] = model_path_;
-      worker_config->config_info[lite::kWeight] = config;
+      config[lite::kConfigMindIRPathKey] = ms_weight_iter[lite::kWeightPathKey];
+      worker_config->config_info[lite::kConfigModelFileSection] = config;
+    }
+    if (worker_config->config_info.find(lite::kConfigModelFileSection) == worker_config->config_info.end()) {
+      std::map<std::string, std::string> config;
+      config[lite::kConfigMindIRPathKey] = model_path_;
+      worker_config->config_info[lite::kConfigModelFileSection] = config;
     }
     model_pool_config.push_back(worker_config);
   }
@@ -718,12 +704,12 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
   for (size_t i = 0; i < workers_num_; i++) {
     int numa_node_id = model_pool_config[i]->numa_id;
     std::map<std::string, std::string> ids;
-    ids[lite::kInnerModelID] = std::to_string(i);
-    ids[lite::kInnerRunnerID] = runner_id_;
-    ids[lite::kInnerNumaID] = std::to_string(model_pool_config[i]->numa_id);
-    model_pool_config[i]->config_info[lite::kInnerModelParallelRunner] = ids;
+    ids[lite::kInnerModelIDKey] = std::to_string(i);
+    ids[lite::kInnerRunnerIDKey] = runner_id_;
+    ids[lite::kInnerNumaIDKey] = std::to_string(model_pool_config[i]->numa_id);
+    model_pool_config[i]->config_info[lite::kInnerModelParallelRunnerSection] = ids;
     if (!copy_model || model_pool_config[i]->numa_id == 0) {
-      ids[lite::kInnerSharingWeightCopyBuf] = "false";
+      ids[lite::kInnerSharingWeightCopyBufKey] = "false";
     }
 
     model_worker = std::make_shared<ModelWorker>();
@@ -854,38 +840,38 @@ Status ModelPool::InitByPath(const std::string &model_path, const std::shared_pt
 }
 
 Status ModelPool::ParseParamByConfigInfo(std::map<std::string, std::map<std::string, std::string>> config_info) {
-  auto shared_thread_pool = config_info.find(lite::kSharedThreadPool);
+  auto shared_thread_pool = config_info.find(lite::kSharedThreadPoolSection);
   if (shared_thread_pool == config_info.end()) {
     MS_LOG(INFO) << "not set shared thread pool.";
     return kSuccess;
   }
   auto shared_thread_pool_param = shared_thread_pool->second;
-  if (shared_thread_pool_param.find(lite::kEnable) == shared_thread_pool_param.end()) {
+  if (shared_thread_pool_param.find(lite::kEnableSharedThreadPoolKey) == shared_thread_pool_param.end()) {
     MS_LOG(INFO) << "not find key of enable_shared_thread_pool";
     return kLiteParamInvalid;
   }
-  if (shared_thread_pool_param[lite::kEnable] == "false") {
+  if (shared_thread_pool_param[lite::kEnableSharedThreadPoolKey] == "false") {
     MS_LOG(INFO) << "Not use shared thread pool";
     enable_shared_thread_pool_ = false;
     return kSuccess;
   }
-  if (shared_thread_pool_param[lite::kEnable] == "true") {
-    if (shared_thread_pool_param.find(lite::kThreadNumLimitPerWorker) != shared_thread_pool_param.end() &&
-        !shared_thread_pool_param[lite::kThreadNumLimitPerWorker].empty()) {
-      thread_num_limit_ = std::atoi(shared_thread_pool_param[lite::kThreadNumLimitPerWorker].c_str());
+  if (shared_thread_pool_param[lite::kEnableSharedThreadPoolKey] == "true") {
+    if (shared_thread_pool_param.find(lite::kThreadNumLimitPerWorkerKey) != shared_thread_pool_param.end() &&
+        !shared_thread_pool_param[lite::kThreadNumLimitPerWorkerKey].empty()) {
+      thread_num_limit_ = std::atoi(shared_thread_pool_param[lite::kThreadNumLimitPerWorkerKey].c_str());
       if (thread_num_limit_ <= 0) {
         MS_LOG(WARNING) << "thread_num_limit is invalid, thread_num_limit: " << thread_num_limit_;
         return kLiteParamInvalid;
       }
     }
   }
-  if (shared_thread_pool_param[lite::kEnable] == "true" &&
-      shared_thread_pool_param.find(lite::kThreadNumLimitPerWorker) != shared_thread_pool_param.end()) {
+  if (shared_thread_pool_param[lite::kEnableSharedThreadPoolKey] == "true" &&
+      shared_thread_pool_param.find(lite::kThreadNumLimitPerWorkerKey) != shared_thread_pool_param.end()) {
     MS_LOG(INFO) << "use shared thread pool";
     enable_shared_thread_pool_ = true;
-    if (shared_thread_pool_param.find(lite::kThreadNumRemainingPerWorker) != shared_thread_pool_param.end()) {
-      if (!shared_thread_pool_param[lite::kThreadNumRemainingPerWorker].empty()) {
-        remaining_thread_num_ = std::atoi(shared_thread_pool_param[lite::kThreadNumRemainingPerWorker].c_str());
+    if (shared_thread_pool_param.find(lite::kThreadNumRemainingPerWorkerKey) != shared_thread_pool_param.end()) {
+      if (!shared_thread_pool_param[lite::kThreadNumRemainingPerWorkerKey].empty()) {
+        remaining_thread_num_ = std::atoi(shared_thread_pool_param[lite::kThreadNumRemainingPerWorkerKey].c_str());
         if (remaining_thread_num_ < 0) {
           MS_LOG(WARNING) << "remaining_thread_num_ is invalid, remaining_thread_num_: " << remaining_thread_num_;
           return kLiteParamInvalid;
@@ -913,7 +899,7 @@ Status ModelPool::ParseSharedThreadPoolParam(const std::shared_ptr<RunnerConfig>
       return kLiteError;
     }
   }
-  if (config_file_info.find(lite::kSharedThreadPool) != config_file_info.end()) {
+  if (config_file_info.find(lite::kSharedThreadPoolSection) != config_file_info.end()) {
     MS_LOG(INFO) << "parse shared thread pool parm by config file.";
     if (ParseParamByConfigInfo(config_file_info) != kSuccess) {
       MS_LOG(WARNING) << "config file param is wrong.";

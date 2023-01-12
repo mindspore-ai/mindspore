@@ -93,9 +93,6 @@ class ModelPool {
 
   Status SetWorkersNumaId(std::vector<int> *numa_node_id);
 
-  ModelPoolConfig CreateGpuModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config,
-                                           const std::shared_ptr<Context> &init_context);
-
   ModelPoolConfig CreateCpuModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config,
                                            const std::shared_ptr<Context> &init_context,
                                            const std::vector<std::vector<int>> &all_worker_bind_list,

@@ -71,12 +71,12 @@ AclModelOptionsPtr CustomAscendKernelMod::GenAclOptions(const BaseOperatorPtr &b
     MS_LOG(ERROR) << "Get prim from custom op failed.";
     return nullptr;
   }
-  auto profiling_path_val = prim->GetAttr(lite::kProfilingPath);
+  auto profiling_path_val = prim->GetAttr(lite::kProfilingPathKey);
   if (profiling_path_val != nullptr) {
     auto val = GetValue<std::string>(profiling_path_val);
     acl_options_ptr->profiling_path = val;
   }
-  auto dump_path_val = prim->GetAttr(lite::kDumpPath);
+  auto dump_path_val = prim->GetAttr(lite::kDumpPathKey);
   if (dump_path_val != nullptr) {
     auto val = GetValue<std::string>(dump_path_val);
     acl_options_ptr->dump_path = val;

@@ -114,7 +114,7 @@ bool ProfileParser::ParseRangeStr(const std::string &range_str, int64_t *min_ptr
     return false;
   }
   if (min > max || min <= 0) {
-    MS_LOG(ERROR) << "Invalid dimension range string format of '" << lite::kDynamicDims << "': " << range_str;
+    MS_LOG(ERROR) << "Invalid dimension range string format of '" << lite::kDynamicDimsKey << "': " << range_str;
     return false;
   }
   return true;
@@ -132,7 +132,7 @@ bool ProfileParser::ParseOptDimStr(const std::string &opt_dim_str, int64_t *opt_
     return false;
   }
   if (opt <= 0) {
-    MS_LOG(ERROR) << "Invalid opt dim value range '" << lite::kOptimizeDims << "': " << opt_dim_str;
+    MS_LOG(ERROR) << "Invalid opt dim value range '" << lite::kOptimizeDimsKey << "': " << opt_dim_str;
     return false;
   }
   return true;
@@ -174,9 +174,9 @@ bool ProfileParser::ParseDynamicDims(const std::string &dynamic_dims_str, Profil
   auto &profile_configs = *profile_configs_ptr;
   auto inputs_of_str = Split(dynamic_dims_str, ";");
   if (inputs_of_str.size() != profile_configs.input_infos.size()) {
-    MS_LOG(ERROR) << "The input count " << inputs_of_str.size() << " in '" << lite::kDynamicDims
+    MS_LOG(ERROR) << "The input count " << inputs_of_str.size() << " in '" << lite::kDynamicDimsKey
                   << "' != the input count " << profile_configs.input_infos.size() << " '"
-                  << " in '" << lite::kInputShape;
+                  << " in '" << lite::kInputShapeKey;
     return false;
   }
   // for every input
@@ -185,7 +185,7 @@ bool ProfileParser::ParseDynamicDims(const std::string &dynamic_dims_str, Profil
     auto one_input_str = inputs_of_str[input_index];
     auto profiles_of_str = Split(one_input_str, "],[");
     if (profiles_of_str.empty()) {
-      MS_LOG(ERROR) << "The profile count of " << input_index << "th input in '" << lite::kDynamicDims << "' is 0";
+      MS_LOG(ERROR) << "The profile count of " << input_index << "th input in '" << lite::kDynamicDimsKey << "' is 0";
       return false;
     }
     if (profile_configs.profiles.empty()) {
@@ -196,7 +196,7 @@ bool ProfileParser::ParseDynamicDims(const std::string &dynamic_dims_str, Profil
     }
     if (profiles_of_str.size() != profile_configs.profiles.size()) {
       MS_LOG(ERROR) << "The profile count " << profiles_of_str.size() << " of " << input_index << "th input in '"
-                    << lite::kDynamicDims << "' != profile count " << profile_configs.profiles.size() << " of "
+                    << lite::kDynamicDimsKey << "' != profile count " << profile_configs.profiles.size() << " of "
                     << (input_index - 1) << " th input";
       return false;
     }
@@ -217,8 +217,8 @@ bool ProfileParser::ParseDynamicDims(const std::string &dynamic_dims_str, Profil
       auto &input_shape = info.input_shape;
       size_t dynamic_nbdims = std::count(input_shape.begin(), input_shape.end(), -1);
       if (dim_ranges.size() != dynamic_nbdims) {
-        MS_LOG(ERROR) << "Number of dynamic dims in config '" << lite::kDynamicDims << "' " << dim_ranges.size()
-                      << " != that in '" << lite::kInputShape << "' " << dynamic_nbdims << ".";
+        MS_LOG(ERROR) << "Number of dynamic dims in config '" << lite::kDynamicDimsKey << "' " << dim_ranges.size()
+                      << " != that in '" << lite::kInputShapeKey << "' " << dynamic_nbdims << ".";
         return false;
       }
       size_t range_index = 0;
@@ -240,15 +240,15 @@ bool ProfileParser::ParseDynamicDims(const std::string &dynamic_dims_str, Profil
 
 bool ProfileParser::ParseOptDims(const std::string &opt_dims_str, ProfileConfigs *profile_configs_ptr) {
   if (opt_dims_str.empty()) {
-    MS_LOG(ERROR) << "The option " << lite::kOptimizeDims << " cannot be empty in [gpu_context]";
+    MS_LOG(ERROR) << "The option " << lite::kOptimizeDimsKey << " cannot be empty in [gpu_context]";
     return false;
   }
   auto &profile_configs = *profile_configs_ptr;
   auto inputs_of_str = Split(opt_dims_str, ";");
   if (inputs_of_str.size() != profile_configs.input_infos.size()) {
-    MS_LOG(ERROR) << "The input count " << inputs_of_str.size() << " in '" << lite::kOptimizeDims
+    MS_LOG(ERROR) << "The input count " << inputs_of_str.size() << " in '" << lite::kOptimizeDimsKey
                   << "' != the input count " << profile_configs.input_infos.size() << " '"
-                  << " in '" << lite::kInputShape;
+                  << " in '" << lite::kInputShapeKey;
     return false;
   }
   // for every input
@@ -258,8 +258,8 @@ bool ProfileParser::ParseOptDims(const std::string &opt_dims_str, ProfileConfigs
     auto profiles_of_str = Split(one_input_str, "],[");
     if (profiles_of_str.size() != profile_configs.profiles.size()) {
       MS_LOG(ERROR) << "The profile count " << profiles_of_str.size() << " of " << input_index << "th input in '"
-                    << lite::kOptimizeDims << "' != profile count " << profile_configs.profiles.size() << " in '"
-                    << lite::kDynamicDims << "'";
+                    << lite::kOptimizeDimsKey << "' != profile count " << profile_configs.profiles.size() << " in '"
+                    << lite::kDynamicDimsKey << "'";
       return false;
     }
     // for every profile in one input, parse input range: min, max
@@ -279,8 +279,8 @@ bool ProfileParser::ParseOptDims(const std::string &opt_dims_str, ProfileConfigs
       auto &input_shape = info.input_shape;
       size_t dynamic_nbdims = std::count(input_shape.begin(), input_shape.end(), -1);
       if (opt_dims_vec.size() != dynamic_nbdims) {
-        MS_LOG(ERROR) << "Number of dynamic dims in config '" << lite::kOptimizeDims << "' " << opt_dims_vec.size()
-                      << " != that in '" << lite::kInputShape << "' " << dynamic_nbdims << ".";
+        MS_LOG(ERROR) << "Number of dynamic dims in config '" << lite::kOptimizeDimsKey << "' " << opt_dims_vec.size()
+                      << " != that in '" << lite::kInputShapeKey << "' " << dynamic_nbdims << ".";
         return false;
       }
       size_t dynamic_index = 0;
@@ -304,16 +304,16 @@ bool ProfileParser::Parse(const std::map<std::string, std::string> &context, boo
     return false;
   }
   auto &profile_configs = *profile_configs_ptr;
-  auto input_shapes = GetOption(context, lite::kInputShape, "");
-  auto dynamic_dims = GetOption(context, lite::kDynamicDims, "");
-  auto opt_dims = GetOption(context, lite::kOptimizeDims, "");
+  auto input_shapes = GetOption(context, lite::kInputShapeKey, "");
+  auto dynamic_dims = GetOption(context, lite::kDynamicDimsKey, "");
+  auto opt_dims = GetOption(context, lite::kOptimizeDimsKey, "");
   if (input_shapes.empty() && dynamic_dims.empty() && opt_dims.empty()) {
-    MS_LOG(INFO) << "Do not found config of input range('" << lite::kInputShape << "')";
+    MS_LOG(INFO) << "Do not found config of input range('" << lite::kInputShapeKey << "')";
     return true;
   }
   if (input_shapes.empty()) {
-    MS_LOG(ERROR) << "Config of '" << lite::kInputShape << " cannot be empty when '" << lite::kInputShape << "' or '"
-                  << lite::kOptimizeDims << "' is not empty";
+    MS_LOG(ERROR) << "Config of '" << lite::kInputShapeKey << " cannot be empty when '" << lite::kInputShapeKey
+                  << "' or '" << lite::kOptimizeDimsKey << "' is not empty";
     return false;
   }
   if (!ParseInputShape(input_shapes, &profile_configs)) {
@@ -324,7 +324,7 @@ bool ProfileParser::Parse(const std::map<std::string, std::string> &context, boo
     ProfileItem profile_item;
     for (size_t i = 0; i < profile_configs.input_infos.size(); i++) {
       if (profile_configs.input_infos[i].is_dynamic_shape) {
-        MS_LOG(ERROR) << "Config of '" << lite::kDynamicDims << "' cannot be empty when " << lite::kInputShape
+        MS_LOG(ERROR) << "Config of '" << lite::kDynamicDimsKey << "' cannot be empty when " << lite::kInputShapeKey
                       << " is dynamic";
         return false;
       }
@@ -374,7 +374,7 @@ bool ProfileParser::ReorderByInputNames(const std::vector<std::string> &input_na
       }
     }
     if (i >= input_infos.size()) {
-      MS_LOG_ERROR << "Cannot find input " << input_name << " in profile '" << lite::kInputShape << "' config";
+      MS_LOG_ERROR << "Cannot find input " << input_name << " in profile '" << lite::kInputShapeKey << "' config";
       return false;
     }
   }

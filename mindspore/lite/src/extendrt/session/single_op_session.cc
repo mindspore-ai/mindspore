@@ -74,7 +74,7 @@ Status SingleOpInferSession::Init(const std::shared_ptr<Context> &context) {
 }
 
 void SingleOpInferSession::SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr &op) {
-  if (config_infos_.find(lite::kAscendContext) == config_infos_.end()) {
+  if (config_infos_.find(lite::kAscendContextSection) == config_infos_.end()) {
     MS_LOG(DEBUG) << "There is no ascend context info in config infos.";
     return;
   }
@@ -89,19 +89,19 @@ void SingleOpInferSession::SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr 
     MS_LOG(ERROR) << "Get prim from custom op failed.";
     return;
   }
-  auto ascend_context = config_infos_[lite::kAscendContext];
+  auto ascend_context = config_infos_[lite::kAscendContextSection];
   std::string profiling_path;
-  if (ascend_context.find(lite::kProfilingPath) != ascend_context.end()) {
-    profiling_path = ascend_context[lite::kProfilingPath];
-    dst_prim->AddAttr(lite::kProfilingPath, MakeValue(profiling_path));
+  if (ascend_context.find(lite::kProfilingPathKey) != ascend_context.end()) {
+    profiling_path = ascend_context[lite::kProfilingPathKey];
+    dst_prim->AddAttr(lite::kProfilingPathKey, MakeValue(profiling_path));
   }
-  if (ascend_context.find(lite::kDumpPath) != ascend_context.end()) {
+  if (ascend_context.find(lite::kDumpPathKey) != ascend_context.end()) {
     if (!profiling_path.empty()) {
       MS_LOG(ERROR) << "Profiling and dump can't be set at the same time.";
       return;
     }
-    auto dump_path = ascend_context[lite::kDumpPath];
-    dst_prim->AddAttr(lite::kDumpPath, MakeValue(dump_path));
+    auto dump_path = ascend_context[lite::kDumpPathKey];
+    dst_prim->AddAttr(lite::kDumpPathKey, MakeValue(dump_path));
   }
   return;
 }

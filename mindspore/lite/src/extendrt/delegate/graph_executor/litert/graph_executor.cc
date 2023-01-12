@@ -93,7 +93,9 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
     return false;
   }
   size_t data_size;
-  fb_model_buf_ = FuncGraphReuseManager::GetInstance()->GetFbModelBuf(&data_size, &is_shared_fb_buf_, config_infos_);
+  auto pair_result = FuncGraphReuseManager::GetInstance()->GetFbModelBuf(&data_size, &is_shared_fb_buf_, config_infos_);
+  fb_model_buf_ = pair_result.first;
+  helpers_ = pair_result.second;
   schema::MetaGraphT *meta_graph = nullptr;
   if (fb_model_buf_ == nullptr) {
     auto param = std::make_shared<ConverterPara>();
@@ -115,7 +117,7 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
     auto buffer = lite::MetaGraphSerializer::GetMetaGraphPackedBuff(&builder, *meta_graph, &data_size);
     fb_model_buf_ = malloc(data_size);
     memcpy(fb_model_buf_, buffer, data_size);
-    FuncGraphReuseManager::GetInstance()->StoreFbModelBuf(fb_model_buf_, data_size, config_infos_);
+    FuncGraphReuseManager::GetInstance()->StoreFbModelBuf(fb_model_buf_, data_size, helpers_, config_infos_);
   } else {
     MS_LOG(INFO) << "the graph is the same as the last time. We do not need to convert, and we can directly use the "
                     "cached model buf.";

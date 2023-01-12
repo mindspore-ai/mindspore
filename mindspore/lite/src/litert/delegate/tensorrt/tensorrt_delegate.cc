@@ -276,14 +276,14 @@ int TensorRTDelegate::ParseOptimizationProfile() {
   std::string input_shapes;
   std::string dynamic_dims;
   std::string opt_dims;
-  if (input_ranges_.find(kInputShape) != input_ranges_.end()) {
-    input_shapes = input_ranges_.at(kInputShape);
+  if (input_ranges_.find(kInputShapeKey) != input_ranges_.end()) {
+    input_shapes = input_ranges_.at(kInputShapeKey);
   }
-  if (input_ranges_.find(kDynamicDims) != input_ranges_.end()) {
-    dynamic_dims = input_ranges_.at(kDynamicDims);
+  if (input_ranges_.find(kDynamicDimsKey) != input_ranges_.end()) {
+    dynamic_dims = input_ranges_.at(kDynamicDimsKey);
   }
-  if (input_ranges_.find(kOptimizeDims) != input_ranges_.end()) {
-    opt_dims = input_ranges_.at(kOptimizeDims);
+  if (input_ranges_.find(kOptimizeDimsKey) != input_ranges_.end()) {
+    opt_dims = input_ranges_.at(kOptimizeDimsKey);
   }
   if (input_shapes.empty() && dynamic_dims.empty() && opt_dims.empty()) {
     MS_LOG(WARNING) << "do not have gpu context in config and using msshape as optimization profile.";
