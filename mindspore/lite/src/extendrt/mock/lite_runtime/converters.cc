@@ -78,7 +78,7 @@ Status ContextUtils::AddAscendDevice(lite::InnerContext *inner_context, DeviceIn
   return kSuccess;
 }
 
-void ContextUtils::ResetDefaultThreadNum(Context *context) {
+void ContextUtils::ResetContextDefaultParam(Context *context) {
   if (context->GetInterOpParallelNum() == 0) {
     context->SetInterOpParallelNum(kDefaultInterOpParallelNum);
   }
@@ -108,10 +108,15 @@ std::shared_ptr<lite::InnerContext> ContextUtils::Convert(Context *context) {
     MS_LOG(ERROR) << "Invalid context pointers.";
     return nullptr;
   }
-  ResetDefaultThreadNum(context);
+  ResetContextDefaultParam(context);
   auto device_list = context->MutableDeviceInfo();
   if (device_list.size() == 0 || device_list.size() > kMaxNumOfDevices) {
     MS_LOG(ERROR) << "Device num, support min: 1, max: " << kMaxNumOfDevices;
+    return nullptr;
+  }
+  if (context->GetInterOpParallelNum() <= 0 || context->GetInterOpParallelNum() > context->GetThreadNum()) {
+    MS_LOG(ERROR) << "Invalid inter op parallel num : " << context->GetInterOpParallelNum()
+                  << " | thread num: " << context->GetThreadNum();
     return nullptr;
   }
   SetContextAttr(context->GetThreadNum(), context->GetInterOpParallelNum(), context->GetEnableParallel(),
