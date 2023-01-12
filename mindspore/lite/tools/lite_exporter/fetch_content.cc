@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/ms_utils_secure.h"
 #include "tools/optimizer/common/format_utils.h"
+#include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "nnacl/op_base.h"
 #include "tools/common/node_util.h"
 #include "src/common/ops/anf_utils.h"
@@ -314,7 +315,10 @@ int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::F
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_MSG(prim != nullptr, RET_ERROR, "GetValueNode failed");
   if (prim->GetAttr(mindspore::ops::kFormat) == nullptr && !param_node->has_default()) {
-    data_info->format_ = mindspore::NHWC;
+    auto func_graph = cnode->func_graph();
+    MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "The func graph is nullptr");
+    auto input_format = func_graph->get_attr(kInputFormat);
+    data_info->format_ = input_format != nullptr ? GetValue<int>(input_format) : static_cast<int>(Format::NHWC);
   }
   if (prim->GetAttr(mindspore::ops::kFormat) != nullptr) {
     auto value = prim->GetAttr(mindspore::ops::kFormat);

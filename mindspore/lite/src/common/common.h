@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ static const char CALIB_NORM[] = "NORM";
 // dims
 static const int32_t DIM_DEFAULT_SIZE = 4;
 static const char *const kIsOptimized = "isOptimized";
+static const char *const kInputFormat = "inputFormat";
 // ms cache
 static const char *const kMSCacheSection = "ms_cache";
 static const char *const kMSCacheModelPathKey = "cache_model_path";

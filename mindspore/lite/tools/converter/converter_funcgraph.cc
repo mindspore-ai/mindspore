@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,23 +204,22 @@ STATUS ConverterFuncGraph::UnifyFuncGraphForInfer(const std::shared_ptr<Converte
 
 STATUS ConverterFuncGraph::UnifyFuncGraphInputFormat(const std::shared_ptr<ConverterPara> &param,
                                                      FuncGraphPtr func_graph) {
-  auto spec_input_format = param->spec_input_format;
-  if (spec_input_format == DEFAULT_FORMAT) {
-    if (param->export_mindir == kMindIR) {
-      // if it saves to mindir, the input format must be the same as the original model
-      return RET_OK;
-    }
-    if (param->fmk_type != converter::kFmkTypeMs) {
-      // if it saves to mindir lite, the input format must be the same as the original model for 3rd model
-      return RET_OK;
-    }
-    spec_input_format = NHWC;
-  }
   mindspore::Format cur_input_format = DEFAULT_FORMAT;
   auto status = opt::SpecifyGraphInputFormat::GetCurGraphInputFormat(func_graph, param->fmk_type, &cur_input_format);
   if (!status) {
     MS_LOG(ERROR) << "Failed to get current format of graph input";
     return RET_ERROR;
+  }
+
+  auto spec_input_format = param->spec_input_format;
+  if (spec_input_format == DEFAULT_FORMAT) {
+    if (param->export_mindir == kMindIR || param->fmk_type != converter::kFmkTypeMs) {
+      // if it saves to mindir, the input format must be the same as the original model
+      // if it saves to mindir lite, the input format must be the same as the original model for 3rd model
+      func_graph->set_attr(kInputFormat, MakeValue(static_cast<int>(cur_input_format)));
+      return RET_OK;
+    }
+    spec_input_format = NHWC;
   }
   opt::SpecifyGraphInputFormat pass(spec_input_format, cur_input_format);
   status = pass.Run(func_graph);
@@ -228,6 +227,7 @@ STATUS ConverterFuncGraph::UnifyFuncGraphInputFormat(const std::shared_ptr<Conve
     MS_LOG(ERROR) << "Failed to Specify graph input format to " << spec_input_format;
     return RET_ERROR;
   }
+  func_graph->set_attr(kInputFormat, MakeValue(static_cast<int>(spec_input_format)));
   return RET_OK;
 }
 
