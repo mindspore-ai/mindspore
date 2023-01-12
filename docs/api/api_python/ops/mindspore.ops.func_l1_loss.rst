@@ -25,7 +25,7 @@ mindspore.ops.l1_loss
 
     参数：
         - **x** (Tensor) - 预测值，任意维度的Tensor。
-        - **target** (Tensor) - 目标值，与 `x` 的shape相同。
+        - **target** (Tensor) - 目标值，通常情况与 `x` 的shape相同。如果 `x` 和 `target` 的shape不同，需要保证他们之间可以互相广播。
         - **reduction** (str, optional) - 应用于loss的reduction类型。取值为"mean"，"sum"或"none"。默认值："mean"。
 
     返回：
@@ -35,4 +35,3 @@ mindspore.ops.l1_loss
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `target` 不是Tensor。
         - **ValueError** - `reduction` 不为"mean"、"sum"或"none"。
-        - **ValueError** - `x` 和 `target` 有不同的shape。
