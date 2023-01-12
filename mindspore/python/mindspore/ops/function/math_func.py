@@ -1969,7 +1969,7 @@ def cov(x, *, correction=1, fweights=None, aweights=None):
         TypeError: If the dtype of aweights is not a floating point type.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
