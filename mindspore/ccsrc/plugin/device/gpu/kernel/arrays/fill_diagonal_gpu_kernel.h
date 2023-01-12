@@ -59,6 +59,7 @@ class FillDiagonalGpuKernelMod : public NativeGpuKernelMod {
   void ResetResource() noexcept {
     is_null_input_ = false;
     input_elements_ = 0;
+    step_ = 0;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -77,9 +78,9 @@ class FillDiagonalGpuKernelMod : public NativeGpuKernelMod {
  private:
   float fill_value_{0.0};
   bool wrap_{false};
-  size_t num_diagonal_elements;
-  int64_t step{0};
-  int64_t input_dims{0};
+  size_t num_diagonal_elements_;
+  int64_t step_{0};
+  int64_t input_dims_{0};
   int64_t matrix_row_;
   int64_t matrix_col_;
   size_t unit_size_{1};

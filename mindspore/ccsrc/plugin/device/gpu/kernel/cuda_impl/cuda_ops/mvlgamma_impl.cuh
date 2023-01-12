@@ -19,6 +19,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-void CalMvlgamma(bool *valid, const size_t size, const T *input, const int p, T *output, const uint32_t &device_id,
+int CalMvlgamma(int *valid, const size_t size, const T *input, const int p, T *output, const uint32_t &device_id,
                  cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MVLGAMMA_IMPL_CUH_

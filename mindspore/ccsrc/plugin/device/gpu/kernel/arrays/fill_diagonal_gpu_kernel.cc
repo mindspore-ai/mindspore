@@ -19,13 +19,10 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-const size_t kFillDiagonalInputNum = 1;
-const size_t kFillDiagonalOutputNum = 1;
 const size_t kInputDimIndex0 = 0;
 const size_t kInputNull = 0;
 const size_t kInputDimIndex1 = 1;
 const int64_t kInputMinDim = 2;
-constexpr int64_t kParallelDataNums = 512 * 1024;
 }  // namespace
 
 bool FillDiagonalGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -73,33 +70,21 @@ int FillDiagonalGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (input_elements_ == kInputNull) {
     is_null_input_ = true;
   }
-  input_dims = input_shape.size();
-  if (input_dims < kInputMinDim) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x' should be at least 2-D, but got " << input_dims
-                  << "-D.";
-    return KRET_RESIZE_FAILED;
-  }
-
-  if (input_dims == kInputMinDim) {
-    for (int64_t i = (input_dims - 1); i >= 0; i--) {
-      step += pow(matrix_col_, i);
+  input_dims_ = input_shape.size();
+  if (input_dims_ == kInputMinDim) {
+    for (int64_t i = (input_dims_ - 1); i >= 0; i--) {
+      step_ += pow(matrix_col_, i);
     }
   } else {
-    int64_t prev_i = input_shape[kInputDimIndex0];
-    for (auto i : input_shape) {
-      if (i != prev_i) {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', all dimension of 'x' must be of equal length.";
-      }
-    }
-    std::vector<int64_t> cumprod(input_dims);
+    std::vector<int64_t> cumprod(input_dims_);
     auto dims = input_shape;
     std::partial_sum(dims.begin(), dims.end() - 1, cumprod.begin(), std::multiplies<int64_t>());
-    step = 1 + std::accumulate(cumprod.begin(), cumprod.end(), static_cast<int64_t>(0));
+    step_ = 1 + std::accumulate(cumprod.begin(), cumprod.end(), static_cast<int64_t>(0));
   }
-  if (wrap_ || input_dims > kInputMinDim || matrix_row_ < matrix_col_) {
-    num_diagonal_elements = ceil(static_cast<double>(input_elements_) / step);
+  if (wrap_ || input_dims_ > kInputMinDim || matrix_row_ < matrix_col_) {
+    num_diagonal_elements_ = ceil(static_cast<double>(input_elements_) / step_);
   } else {
-    num_diagonal_elements = ceil(static_cast<double>(min_size * min_size) / step);
+    num_diagonal_elements_ = ceil(static_cast<double>(min_size * min_size) / step_);
   }
   size_t input_size = input_elements_ * unit_size_;
   input_size_list_.push_back(input_size);
@@ -119,7 +104,7 @@ bool FillDiagonalGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
     cudaMemcpyAsync(output, input, input_elements_ * unit_size_, cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "cudaMemcpyAsync output 'output' from 'input' failed.");
-  CalFillDiagonal(num_diagonal_elements, fill_value_, step, output, device_id_,
+  CalFillDiagonal(num_diagonal_elements_, fill_value_, step_, output, device_id_,
                   reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;
 }
