@@ -83,7 +83,7 @@ class Converter:
     Args:
         fmk_type (:class:`mindspore_lite.FmkType`): Input model framework type. Options: FmkType.TF | FmkType.CAFFE |
             FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH. For details, see
-            `FmkType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.FmkType.html>`_ .
+            `FmkType <https://mindspore.cn/lite/api/en/r2.0.0-alpha/mindspore_lite/mindspore_lite.FmkType.html>`_ .
         model_file (str): Set the path of the input model when converter. For example, "/home/user/model.prototxt".
             Options:TF: "model.pb" | CAFFE: "model.prototxt" | ONNX: "model.onnx" | MINDIR: "model.mindir" |
             TFLITE: "model.tflite" | PYTORCH: "model.pt or model.pth".
@@ -100,9 +100,9 @@ class Converter:
             offline split op to parallel, disable op fusion ability and set plugin so path. `config_file` uses the
             `key = value` method to define the related parameters.
             For the configuration parameters related to post training quantization, please refer to
-            `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
+            `quantization <https://www.mindspore.cn/lite/docs/en/r2.0.0-alpha/use/post_training_quantization.html>`_ .
             For the configuration parameters related to extension, please refer to
-            `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
+            `extension  <https://www.mindspore.cn/lite/docs/en/r2.0.0-alpha/use/nnie.html#extension-configuration>`_ .
             For example, "/home/user/model.cfg". Default: "".
         weight_fp16 (bool, optional): If it is True, the const Tensor of the Float32 in the model will be saved as the
             Float16 data type during Converter, and the generated model size will be compressed. Then, according to
@@ -157,7 +157,7 @@ class Converter:
 
         export_mindir (ModelType, optional): Set the model type needs to be export. Options: ModelType.MINDIR |
             ModelType.MINDIR_LITE. Default: ModelType.MINDIR_LITE. For details, see
-            `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
+            `ModelType <https://mindspore.cn/lite/api/en/r2.0.0-alpha/mindspore_lite/mindspore_lite.ModelType.html>`_ .
         decrypt_key (str, optional): Set the key used to decrypt the encrypted MindIR file, expressed in hexadecimal
             characters. Only valid when fmk_type is FmkType.MINDIR. Default: "".
         decrypt_mode (str, optional): Set decryption mode for the encrypted MindIR file. Only valid when dec_key is
@@ -338,10 +338,12 @@ class Converter:
                 Default: "".
 
                 For the configuration parameters related to post training quantization, please refer to
-                `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
+                `quantization <https://www.mindspore.cn/lite/docs/en/r2.0.0-alpha/use/
+                post_training_quantization.html>`_ .
 
                 For the configuration parameters related to extension, please refer to
-                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
+                `extension  <https://www.mindspore.cn/lite/docs/en/r2.0.0-alpha/use/
+                nnie.html#extension-configuration>`_ .
 
                 - "common_quant_param": Common quantization parameter.
                 - "mixed_bit_weight_quant_param": Mixed bit weight quantization parameter.
@@ -355,10 +357,12 @@ class Converter:
                 Default: None, None is equivalent to {}.
 
                 For the configuration parameters related to post training quantization, please refer to
-                `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
+                `quantization <https://www.mindspore.cn/lite/docs/en/r2.0.0-alpha/use/
+                post_training_quantization.html>`_ .
 
                 For the configuration parameters related to extension, please refer to
-                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
+                `extension  <https://www.mindspore.cn/lite/docs/en/r2.0.0-alpha/use/
+                nnie.html#extension-configuration>`_ .
 
         Raises:
             TypeError: `section` is not a str.
