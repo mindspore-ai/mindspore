@@ -1101,6 +1101,23 @@ AbstractBasePtr InferImplStringGetItem(const AnalysisEnginePtr &, const Primitiv
   (void)res.append(1, str.at(num));
   return std::make_shared<AbstractScalar>(res);
 }
+
+bool PrimNeedFrontendInferValue(const PrimitivePtr &primitive) {
+  // The operators in this list are registered on the core/ops, which means operators are registered on both frontend
+  // and backend, affects the infer value of the frontend. We use this list to skip the registration of the backend, so
+  // that the optimization of the frontend like constant folding, can be carried out smoothly. We need to delete this
+  // list when the infer value can be mapped to the CPU backend operator.
+  static std::vector<PrimitivePtr> skip_frontend_registration_list{
+    prim::kPrimAdd, prim::kPrimMod,          prim::kPrimMul,   prim::kPrimRealDiv,
+    prim::kPrimSub, prim::kPrimStridedSlice, prim::kPrimStack, prim::kPrimTensorScatterUpdate,
+    prim::kPrimTile};
+  if (std::any_of(skip_frontend_registration_list.begin(), skip_frontend_registration_list.end(),
+                  [&primitive](const PrimitivePtr &item) { return IsPrimitiveEquals(primitive, item); })) {
+    return true;
+  }
+  return false;
+}
+
 // using R = PrimitiveEvalImplMap::mapped_type;
 static PrimitiveEvalImplMap frontend_prim_infer_map{
   // frontend
@@ -1113,16 +1130,8 @@ std::optional<StandardPrimitiveImplReg> GetFrontendPrimitiveInferImpl(const Prim
     return iter->second;
   }
 
-  // The operators in this list are registered on the core/ops, which means operators are registered on both frontend
-  // and backend, affects the infer value of the frontend. We use this list to skip the registration of the frontend, so
-  // that the optimization of the frontend like constant folding, can be carried out smoothly. We need to delete this
-  // list when the infer value can be mapped to the CPU backend operator.
-  std::vector<PrimitivePtr> skip_frontend_registration_list{
-    prim::kPrimAdd, prim::kPrimMod,          prim::kPrimMul,   prim::kPrimRealDiv,
-    prim::kPrimSub, prim::kPrimStridedSlice, prim::kPrimStack, prim::kPrimTensorScatterUpdate,
-    prim::kPrimTile};
-  if (std::any_of(skip_frontend_registration_list.begin(), skip_frontend_registration_list.end(),
-                  [&primitive](const PrimitivePtr &item) { return IsPrimitiveEquals(primitive, item); })) {
+  // We need to delete this when the infer value can be mapped to the CPU backend operator.
+  if (PrimNeedFrontendInferValue(primitive)) {
     return std::optional<StandardPrimitiveImplReg>();
   }
 
