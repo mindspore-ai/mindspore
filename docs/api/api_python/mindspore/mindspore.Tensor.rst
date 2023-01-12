@@ -82,6 +82,7 @@ mindspore.Tensor
     mindspore.Tensor.copysign
     mindspore.Tensor.cos
     mindspore.Tensor.cosh
+    mindspore.Tensor.cov
     mindspore.Tensor.cross
     mindspore.Tensor.cummax
     mindspore.Tensor.cummin

@@ -3727,6 +3727,13 @@ def cos(x):
     return F.cos(x)
 
 
+def cov(x, *, correction=1, fweights=None, aweights=None):
+    r"""
+    For details, please refer to :func:`mindspore.ops.cov`.
+    """
+    return F.cov(x, correction=correction, fweights=fweights, aweights=aweights)
+
+
 def acos(x):
     r"""
     Computes arccosine of input tensors element-wise.

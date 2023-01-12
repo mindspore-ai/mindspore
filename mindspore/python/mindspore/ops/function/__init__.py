@@ -159,6 +159,7 @@ from .math_func import (
     bincount,
     tensor_add,
     cosine_similarity,
+    cov,
     add,
     addcdiv,
     addcmul,

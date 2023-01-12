@@ -374,6 +374,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"top_k", std::string("top_k")},                                    // P.TopK()
        {"isfinite", std::string("isfinite")},                              // P.isfinite()
        {"cos", std::string("cos")},                                        // cos()
+       {"cov", std::string("cov")},                                        // cov()
        {"acos", std::string("acos")},                                      // acos()
        {"arccos", std::string("acos")},                                    // acos()
        {"acosh", std::string("acosh")},                                    // acosh()

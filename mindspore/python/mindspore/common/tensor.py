@@ -1232,6 +1232,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('cos')(self)
 
+    def cov(self, *, correction=1, fweights=None, aweights=None):
+        r"""
+        For details, please refer to :func:`mindspore.ops.cov`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('cov')(self, correction=correction, fweights=fweights, aweights=aweights)
+
     def acosh(self):
         r"""
         Computes inverse hyperbolic cosine of the inputs element-wise.
