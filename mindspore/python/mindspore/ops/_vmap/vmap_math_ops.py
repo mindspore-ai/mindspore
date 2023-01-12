@@ -25,7 +25,7 @@ from mindspore.ops.operations import math_ops
 from mindspore.ops.operations import linalg_ops
 from mindspore.ops.operations import _inner_ops
 from mindspore.ops.primitive import Primitive
-from mindspore.ops.composite import _VmapGeneralRule
+from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
     get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis, _handle_broadcasting, \
     _vmap_clone_prim, _bdim_at_any, _get_reduce_batch_axis, _get_reduce_out_dim

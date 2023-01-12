@@ -560,6 +560,8 @@ from .spectral_func import (
 )
 from .vmap_func import (
     vmap,
+    _VmapGeneralPreprocess,
+    _VmapGeneralRule,
 )
 from .sparse_unary_func import (
     csr_cos,
@@ -629,6 +631,7 @@ from .clip_func import (
     clip_by_value,
     clamp,
     clip,
+    clip_by_global_norm,
 )
 
 __all__ = []

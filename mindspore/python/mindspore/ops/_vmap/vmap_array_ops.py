@@ -34,7 +34,7 @@ from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_prepr
     _raise_value_error, _vmap_clone_prim, _handle_broadcasting, get_unsupported_dynamic_vmap_rule, _broadcast_by_axis, \
     get_unop_vmap_rule, _get_reduce_out_dim, _get_reduce_batch_axis, \
     _bdim_at_any
-from mindspore.ops.composite import _VmapGeneralRule
+from mindspore.ops.function import _VmapGeneralRule
 
 
 @vmap_rules_getters.register(P.NoRepeatNGram)

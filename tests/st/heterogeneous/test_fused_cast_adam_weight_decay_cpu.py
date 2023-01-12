@@ -26,7 +26,7 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim.optimizer import Optimizer
-from mindspore.ops.composite.clip_ops import get_square_sum
+from mindspore.ops.function.clip_func import get_square_sum
 
 
 class LeNet(nn.Cell):
