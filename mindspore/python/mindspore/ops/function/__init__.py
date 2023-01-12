@@ -396,6 +396,7 @@ from .nn_func import (
     bias_add,
     binary_cross_entropy,
     binary_cross_entropy_with_logits,
+    cosine_embedding_loss,
     dropout1d,
     dropout2d,
     dropout3d,
