@@ -4948,7 +4948,8 @@ def split(x, split_size_or_sections, axis=0):
     """
     if not isinstance(x, Tensor):
         raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
-    _ = validator.check_axis_type(axis, True, False, False)
+    if not isinstance(axis, int):
+        raise TypeError(f"Type of Argument `axis` should be integer but got {type(axis)}")
     axis = _canonicalize_axis(axis, x.ndim)
 
     if isinstance(split_size_or_sections, int):
@@ -5185,7 +5186,8 @@ def tensor_split(x, indices_or_sections, axis=0):
     if not isinstance(x, Tensor):
         raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
 
-    _ = validator.check_axis_type(axis, True, False, False)
+    if not isinstance(axis, int):
+        raise TypeError(f"Type of Argument `axis` should be integer but got {type(axis)}")
     axis = _canonicalize_axis(axis, x.ndim)
     if isinstance(indices_or_sections, int):
         res = _tensor_split_sub_int(x, indices_or_sections, axis)

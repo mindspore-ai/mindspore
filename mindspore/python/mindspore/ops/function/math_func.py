@@ -9724,9 +9724,9 @@ def sum(x, dim=None, keepdim=False, *, dtype=None):
 
     Args:
         x (Tensor): The input tensor.
-        dim (Union[None, int, tuple(int)]): Dimensions along which a sum is performed.
+        dim (Union[None, int, tuple(int), list(int)]): Dimensions along which a sum is performed.
             If None, sum all the elements of the input tensor.
-            If the `dim` is a tuple of ints, a sum is performed on all the dimensions specified in the tuple.
+            If the `dim` is a tuple or list of ints, a sum is performed on all the dimensions specified in the tuple.
             Must be in the range :math:`[-x.ndim, x.ndim)` . Default: None.
         keepdim (bool): Whether the output tensor has dim retained or not.
             If True, keep these reduced dimensions and the length is 1.
@@ -9740,9 +9740,12 @@ def sum(x, dim=None, keepdim=False, *, dtype=None):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If `dim` is not an int.
+        TypeError: If `dim` is not an int, tulpe(int), list(int) or None.
         ValueError: If `dim` is not in the range :math:`[-x.ndim, x.ndim)` .
         TypeError: If `keepdim` is not a bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
@@ -9771,15 +9774,13 @@ def sum(x, dim=None, keepdim=False, *, dtype=None):
     if not isinstance(x, Tensor):
         raise TypeError("For 'sum', 'x' must be Tensor.")
     if dim is not None:
-        if not isinstance(dim, int):
-            raise TypeError("For 'sum', 'dim' must be int or None.")
-        if dim < -x.ndim or dim >= x.ndim:
-            raise ValueError("For sum, 'dim' must be in :math:`[-x.ndim, x.ndim)` .")
+        if not isinstance(dim, (int, tuple, list)):
+            raise TypeError("For 'sum', 'dim' must be int, tuple(int), list(int) or None.")
     if not isinstance(keepdim, bool):
         raise TypeError("For 'sum', 'keepdim' must be bool.")
 
     reduce_sum = P.ReduceSum(keep_dims=keepdim)
-    if dim:
+    if dim is not None:
         out = reduce_sum(x, dim)
     else:
         out = reduce_sum(x)
