@@ -86,7 +86,7 @@ void CastSameTypeEliminater::Visit(const AnfNodePtr &node) {
   }
 }
 
-bool TwoCastEliminater::CheckTwoTypes(const std::map<TypeId, int> &type_map, TypeId type1, TypeId type2) {
+bool TwoCastEliminater::CheckTwoTypes(const std::map<TypeId, int> &type_map, TypeId type1, TypeId type2) const {
   auto type1_iter = type_map.find(type1);
   auto type2_iter = type_map.find(type2);
   if (type1_iter != type_map.end() && type2_iter != type_map.end()) {
@@ -96,7 +96,7 @@ bool TwoCastEliminater::CheckTwoTypes(const std::map<TypeId, int> &type_map, Typ
 }
 
 bool TwoCastEliminater::CheckThreeTypes(const std::map<TypeId, int> &type_map, TypeId type1, TypeId type2,
-                                        TypeId type3) {
+                                        TypeId type3) const {
   auto type1_iter = type_map.find(type1);
   auto type2_iter = type_map.find(type2);
   auto type3_iter = type_map.find(type3);
@@ -107,8 +107,8 @@ bool TwoCastEliminater::CheckThreeTypes(const std::map<TypeId, int> &type_map, T
 }
 
 // {prim::kPrimCast, {prim::kPrimCast, X, Y}, T}  -> {prim::kPrimCast, X, T}
-// x_type <= y_type <= t_type or x_type >= y_type >= t_type
-bool TwoCastEliminater::CheckTypesIsIncrementalOrDecreasing() {
+// y_type == t_type or x_type <= y_type or x_type >= y_type >= t_type
+bool TwoCastEliminater::CheckTypesIsIncreasingOrDecreasing() {
   auto x_type = x_->Type();
   if (x_type->isa<TensorType>()) {
     x_type = x_type->cast<TensorTypePtr>()->element();
@@ -128,18 +128,21 @@ bool TwoCastEliminater::CheckTypesIsIncrementalOrDecreasing() {
   auto x_type_id = x_type->type_id();
   auto y_type_id = y_type->type_id();
   auto t_type_id = t_type->type_id();
+  // y_type == t_type
   if (y_type_id == t_type_id) {
     return true;
   }
-  // If the precision is incremental or decreasing, the cast can be eliminated.
+  // If the precision is increasing or decreasing, the cast can be eliminated.
   // x_type <= y_type
-  bool incremental = CheckTwoTypes(int_map_, x_type_id, y_type_id) || CheckTwoTypes(uint_map_, x_type_id, y_type_id) ||
-                     CheckTwoTypes(float_map_, x_type_id, y_type_id);
+  bool increasing = CheckTwoTypes(int_map_, x_type_id, y_type_id) || CheckTwoTypes(uint_map_, x_type_id, y_type_id) ||
+                    CheckTwoTypes(float_map_, x_type_id, y_type_id);
+  if (increasing) {
+    return true;
+  }
   //  x_type >= y_type >= t_type
-  bool decreasing = CheckThreeTypes(int_map_, t_type_id, y_type_id, x_type_id) ||
-                    CheckThreeTypes(uint_map_, t_type_id, y_type_id, x_type_id) ||
-                    CheckThreeTypes(float_map_, t_type_id, y_type_id, x_type_id);
-  return incremental || decreasing;
+  return CheckThreeTypes(int_map_, t_type_id, y_type_id, x_type_id) ||
+         CheckThreeTypes(uint_map_, t_type_id, y_type_id, x_type_id) ||
+         CheckThreeTypes(float_map_, t_type_id, y_type_id, x_type_id);
 }
 
 // {prim::kPrimCast, {prim::kPrimCast, X, Y}, T}
@@ -150,7 +153,7 @@ AnfNodePtr TwoCastEliminater::operator()(const OptimizerPtr &, const AnfNodePtr 
   if (x_ == nullptr || t_ == nullptr || y_ == nullptr) {
     return nullptr;
   }
-  if (CheckTypesIsIncrementalOrDecreasing()) {
+  if (CheckTypesIsIncreasingOrDecreasing()) {
     auto cast_op = python_adapter::GetPyFn("mindspore.ops.operations", "Cast")();
     ValuePtr cast = parse::data_converter::PyDataToValue(cast_op);
     auto cnode = NewCNode({NewValueNode(cast), x_, t_}, node->func_graph());

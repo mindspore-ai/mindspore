@@ -51,9 +51,9 @@ class TwoCastEliminater : public AnfVisitor {
   }
 
  private:
-  bool CheckTypesIsIncrementalOrDecreasing();
-  bool CheckTwoTypes(const std::map<TypeId, int> &type_map, TypeId type1, TypeId type2);
-  bool CheckThreeTypes(const std::map<TypeId, int> &type_map, TypeId type1, TypeId type2, TypeId type3);
+  bool CheckTypesIsIncreasingOrDecreasing();
+  bool CheckTwoTypes(const std::map<TypeId, int> &type_map, TypeId type1, TypeId type2) const;
+  bool CheckThreeTypes(const std::map<TypeId, int> &type_map, TypeId type1, TypeId type2, TypeId type3) const;
   std::map<TypeId, int> int_map_ = {
     {kNumberTypeInt, 0}, {kNumberTypeInt8, 1}, {kNumberTypeInt16, 2}, {kNumberTypeInt32, 3}, {kNumberTypeInt64, 4}};
   std::map<TypeId, int> uint_map_ = {{kNumberTypeUInt, 0},

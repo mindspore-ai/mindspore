@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,7 @@ class MS_CORE_API MapTensor final : public Tensor {
     key_shape_ = {abstract::Shape::kShapeDimAny};
     shape_ = {abstract::Shape::kShapeDimAny};
     (void)shape_.insert(shape_.cend(), value_shape.cbegin(), value_shape.cend());
+    size_ = shape_[0];
     ShapeVector key_shape = {abstract::Shape::kShapeDimAny};
     key_tensor_ = std::make_shared<Tensor>(key_dtype, key_shape);
     value_tensor_ = std::make_shared<Tensor>(value_dtype, shape_);
@@ -90,13 +91,13 @@ class MS_CORE_API MapTensor final : public Tensor {
   MapTensor(const TensorPtr &key_tensor, const TensorPtr &value_tensor, const TensorPtr &status_tensor,
             const ValuePtr &default_value, const ValuePtr &permit_filter_value = nullptr,
             const ValuePtr &evict_filter_value = nullptr)
-      : default_value_(default_value) {
-    key_dtype_ = key_tensor->data_type();
+      : key_dtype_(key_tensor->data_type()), default_value_(default_value) {
     data_type_ = value_tensor->data_type();
     shape_ = value_tensor->shape();
     key_shape_ = key_tensor->shape();
     value_shape_.clear();
     (void)value_shape_.insert(value_shape_.cend(), shape_.cbegin() + 1, shape_.cend());
+    size_ = shape_.size() != 0 ? shape_[0] : (abstract::Shape::kShapeDimAny);
     key_tensor_ = key_tensor;
     value_tensor_ = value_tensor;
     status_tensor_ = status_tensor;

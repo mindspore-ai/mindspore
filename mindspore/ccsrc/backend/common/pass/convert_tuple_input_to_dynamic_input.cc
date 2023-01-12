@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
       MS_EXCEPTION_IF_NULL(dyn_input_node);
       // Handle tuple nested scenes.
       if (dyn_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple)) {
-        input_size += SplitTupleInputs(graph, dyn_input_node, plant_inputs);
+        input_size += LongToSize(SplitTupleInputs(graph, dyn_input_node, plant_inputs));
         continue;
       }
       (void)plant_inputs->emplace_back(dyn_input_node);
