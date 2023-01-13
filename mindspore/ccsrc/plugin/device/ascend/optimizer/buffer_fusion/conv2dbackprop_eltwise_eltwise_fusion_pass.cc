@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <unordered_set>
 #include "plugin/device/ascend/optimizer/buffer_fusion/conv2dbackprop_eltwise_eltwise_fusion_pass.h"
 #include "kernel/kernel_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
@@ -41,27 +42,21 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltw
   MS_EXCEPTION_IF_NULL(manager);
   auto input_cnode = eltwise_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(input_cnode);
-  auto double_in_eltwise_input = input_cnode->input(kIndex2);
-  MS_EXCEPTION_IF_NULL(double_in_eltwise_input);
-  if (!double_in_eltwise_input->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(double_in_eltwise_input)) {
-    return;
-  }
-  if (common::AnfAlgo::CheckPrimitiveType(double_in_eltwise_input, prim::kPrimConv2DBackpropInputD) &&
-      !fusion_id_allocator->HasFusionIdAttr(double_in_eltwise_input)) {
-    (void)record.insert(double_in_eltwise_input);
-    candidate_fusion->push_back(record);
-    SetRecordFusionId(record);
-  } else {
-    auto double_in_eltwise_input_1 = input_cnode->input(kIndex1);
-    MS_EXCEPTION_IF_NULL(double_in_eltwise_input_1);
-    if (!double_in_eltwise_input_1->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(double_in_eltwise_input_1)) {
+  std::vector candidate_cb_node{input_cnode->input(kIndex2), input_cnode->input(kIndex1)};
+  for (const auto &cb_node : candidate_cb_node) {
+    MS_EXCEPTION_IF_NULL(cb_node);
+    if (!cb_node->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(cb_node)) {
       return;
     }
-    if (common::AnfAlgo::CheckPrimitiveType(double_in_eltwise_input_1, prim::kPrimConv2DBackpropInputD) &&
-        !fusion_id_allocator->HasFusionIdAttr(double_in_eltwise_input_1)) {
-      (void)record.insert(double_in_eltwise_input_1);
+    // skip when output0 of conv2dbackpropinputd is fp32, it may be slower
+    const std::unordered_set<TypeId> fp32_types{TypeId::kNumberTypeFloat32, TypeId::kNumberTypeFloat};
+    if (common::AnfAlgo::CheckPrimitiveType(cb_node, prim::kPrimConv2DBackpropInputD) &&
+        fp32_types.find(AnfAlgo::GetOutputDeviceDataType(cb_node, kIndex0)) == fp32_types.cend() &&
+        !fusion_id_allocator->HasFusionIdAttr(cb_node)) {
+      (void)record.insert(cb_node);
       candidate_fusion->push_back(record);
       SetRecordFusionId(record);
+      return;
     }
   }
 }
