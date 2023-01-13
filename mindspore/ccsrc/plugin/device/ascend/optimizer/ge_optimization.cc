@@ -39,6 +39,7 @@
 namespace mindspore {
 namespace opt {
 void GeOptimization(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "GE optimization start, graph: " << func_graph->ToString() << ".";
 
 #ifdef ENABLE_DUMP_IR
