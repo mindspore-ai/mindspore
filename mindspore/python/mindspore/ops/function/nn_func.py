@@ -5272,7 +5272,7 @@ def gelu(input_x, approximate='none'):
     When `approximate` argument is `tanh`, GeLU is estimated with:
 
     .. math::
-        GELU(x_i) = 0.5 * x_i * (1 + tanh[\sqrt{\\frac{2}{pi}}(x + 0.044715 * x_{i}^{3})] )
+        GELU(x_i) = 0.5 * x_i * (1 + tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
 
     Args:
         input_x (Tensor): The input of the activation function GeLU, the data type is float16, float32 or float64.
