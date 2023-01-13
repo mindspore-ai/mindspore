@@ -8471,10 +8471,8 @@ def remainder(x, y):
         out_{i} = input_{i} \text{ % } other_{i}
 
     .. warning::
-        - The input data does not support 0.
-        - When the elements of input exceed 2048, the accuracy of operator cannot guarantee the requirement of
-          double thousandths in the mini form.
-        - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
+        - When the elements of input exceed 2048, there might be accuracy problems.
+        - The calculation results of this operator on Ascend and CPU might be inconsistent.
         - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
 
     Args:

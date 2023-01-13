@@ -327,3 +327,4 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/optimizer/mindir/aicpu_lib_select
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/multi_margin_loss_grad.cc:aicpu::MultiMarginLossGradCpuKernel::MultiMarginLossGradComputeFP16
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/multi_margin_loss_grad.cc:aicpu::MultiMarginLossGradCpuKernel::MultiMarginLossGradCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/multi_margin_loss.cc:aicpu::MultiMarginLossCpuKernel::MultiMarginLossComputeFP16
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/matrix_band_part.cc:aicpu::MatrixBandPartCpuKernel::BandCompute
