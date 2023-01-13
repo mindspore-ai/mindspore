@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/conv2dbackprop_eltwise_eltwise_fusion_pass.h"
-
-#include <set>
-#include <string>
 #include "kernel/kernel_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -73,18 +70,7 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchSingleFusionPattern(const sess
                                                                       FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   MS_CHECK_CUBE_VECTOR_SPLIT();
-  fe::PlatformInfo platform_info;
-  fe::OptionalInfo opti_compilation_info;
-  (void)fe::PlatformInfoManager::Instance().GetPlatformInfoWithOutSocVersion(platform_info, opti_compilation_info);
-  if (platform_info.ai_core_spec.cube_vector_split == 1) {
-    MS_LOG(INFO) << "Conv2DBackpropEltwiseEltwiseFusionPass not support cube vector split.";
-    return;
-  }
-  static const std::set<std::string> support_platform = {"Ascend910B", "Ascend910C"};
-  auto is_support = support_platform.count(platform_info.str_info.short_soc_version) > 0;
-  if (!is_support) {
-    return;
-  }
+
   const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
