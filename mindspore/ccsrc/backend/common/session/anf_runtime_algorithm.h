@@ -208,6 +208,8 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
 
   // Get the real output num(which can be build and run in device).
   static size_t GetOutputTensorNum(const AnfNodePtr &node);
+  // Get the real output num before kernel select.
+  static size_t GetOutputNumWithoutKernelInfo(const AnfNodePtr &node);
   // Get the expanded output element num(which the tuple is expanded to calculate num).
   static size_t GetOutputElementNum(const AnfNodePtr &node);
 
@@ -220,6 +222,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // Get all output infer data type.
   static std::vector<TypeId> GetAllOutputInferDataTypes(const AnfNodePtr &node);
   static size_t GetInputElementNum(const AnfNodePtr &node);
+  static bool IsRealSquenceOutput(const AnfNodePtr &node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

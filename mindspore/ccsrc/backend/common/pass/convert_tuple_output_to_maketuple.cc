@@ -59,6 +59,7 @@ bool IsKerenlGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
 
 bool IsNeedConvert(const FuncGraphPtr &func_graph, const AnfNodePtr &input) {
 #ifdef ENABLE_TUPLE_UNFOLD
+  MS_EXCEPTION_IF_NULL(input);
   return (input->Type() != nullptr && AnfUtils::IsRealKernel(input) && common::AnfAlgo::IsTupleOutput(input) &&
           !common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall) &&
           (input->isa<Parameter>() || input->isa<ValueNode>() || IsKerenlGraphOutput(func_graph, input)));
@@ -92,6 +93,12 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   if (IsPrimitiveCNode(cnode, prim::kPrimUpdateState)) {
     return nullptr;
   }
+
+  // Dynamic sequence does not need to be converted.
+  if (common::AnfAlgo::IsDynamicSequence(cnode)) {
+    return nullptr;
+  }
+
   bool cnode_input_changed = false;
   for (size_t i = 0; i < cnode->inputs().size(); ++i) {
     const auto &input = cnode->inputs()[i];

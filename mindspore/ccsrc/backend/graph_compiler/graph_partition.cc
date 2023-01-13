@@ -25,6 +25,7 @@
 #include <algorithm>
 #include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 #include "ps/ps_context.h"
 #include "utils/anf_utils.h"
@@ -603,7 +604,7 @@ void NodesToSegments(const std::vector<AnfNodePtr> &segment_nodes, std::vector<G
   for (auto &node : segment_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
-    if (AnfUtils::IsNodeOutputShapeDynamic(cnode)) {
+    if (common::AnfAlgo::IsNodeOutputDynamicShape(cnode)) {
       (void)dynamic_nodes_set.insert(node);
     }
   }

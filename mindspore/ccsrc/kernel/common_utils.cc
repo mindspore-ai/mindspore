@@ -1910,6 +1910,7 @@ void UpdateNodeShape(const CNodePtr &cnode) {
   if (!kernel_mod->IsNeedRetrieveOutputShape()) {
     return;
   }
+
   auto output_tensor = kernel_mod->RetrieveOutputShape();
   if (output_tensor.empty()) {
     return;
@@ -1923,7 +1924,7 @@ void UpdateNodeShape(const CNodePtr &cnode) {
     (void)shapes.emplace_back(std::move(out_shape));
     (void)type_ids.emplace_back(output_tensor[i]->GetDtype());
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get(), true);
 }
 
 void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr) {

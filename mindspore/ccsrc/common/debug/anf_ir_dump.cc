@@ -176,21 +176,9 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
   }
 
   gsub->buffer << "      : (";
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
-  for (size_t i = 0; i < input_num; ++i) {
-    if (i != 0) {
-      gsub->buffer << ", ";
-    }
-    gsub->buffer << AnfDumpHandler::PrintInputTypeShapeFormat(node, i);
-  }
+  gsub->buffer << AnfDumpHandler::PrintInputTypeShapeFormat(node);
   gsub->buffer << ") -> (";
-  size_t output_num = AnfUtils::GetOutputTensorNum(node);
-  for (size_t i = 0; i < output_num; ++i) {
-    if (i != 0) {
-      gsub->buffer << ", ";
-    }
-    gsub->buffer << AnfDumpHandler::PrintOutputTypeShapeFormat(node, i);
-  }
+  gsub->buffer << AnfDumpHandler::PrintOutputTypeShapeFormat(node);
   gsub->buffer << ")";
   gsub->buffer << std::endl;
   DumpKernelObjectType(node, gsub);
@@ -224,7 +212,7 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
     auto kernel_info = param->kernel_info();
     if (kernel_info != nullptr && kernel_info->has_build_info()) {
       buffer << "  :  ";
-      buffer << AnfDumpHandler::PrintOutputTypeShapeFormat(param, 0);
+      buffer << AnfDumpHandler::PrintOutputTypeShapeFormat(param);
       buffer << "  :  IsWeight: " << std::boolalpha << common::AnfAlgo::IsParameterWeight(parameter_ptr);
     }
     buffer << std::endl;

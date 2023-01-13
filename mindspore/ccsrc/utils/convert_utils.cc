@@ -495,4 +495,28 @@ tensor::MetaSparseTensorPtr TensorListToSparseTensor(const abstract::AbstractBas
   }
   return TensorListToCSRTensor(tensor_list);
 }
+
+std::vector<ShapeVector> TupleShapeToShapeVector(const abstract::BaseShapePtr &base_shape) {
+  MS_EXCEPTION_IF_NULL(base_shape);
+  if (base_shape->isa<abstract::Shape>()) {
+    const auto &shape = base_shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape);
+    return {shape->shape()};
+  } else if (base_shape->isa<abstract::TupleShape>()) {
+    const auto &tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+    if (tuple_shape->size() == 0) {
+      return {};
+    }
+    // If the shape is a tuple shape, all shapes need to be consistent.
+    auto element_base_shape = (*tuple_shape)[0];
+    if (element_base_shape->isa<abstract::Shape>()) {
+      const auto &element_shape = element_base_shape->cast<abstract::ShapePtr>();
+      MS_EXCEPTION_IF_NULL(element_shape);
+      return std::vector<ShapeVector>(tuple_shape->size(), element_shape->shape());
+    }
+  }
+  MS_LOG(WARNING) << "Invalid tuple shape:" << base_shape->ToString();
+  return {};
+}
 }  // namespace mindspore

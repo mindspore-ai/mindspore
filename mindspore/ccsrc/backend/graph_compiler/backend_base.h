@@ -84,7 +84,7 @@ class BACKEND_EXPORT Backend {
   bool is_multi_graph_sink_;
 };
 
-void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs);
+void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, const AnfNodePtr &node = nullptr);
 std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompilerInfo &graph_compiler_info,
                                                               const VectorRef &args);
 

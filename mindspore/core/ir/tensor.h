@@ -236,6 +236,12 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \param[in] data_type [TypeId] data type.
   explicit Tensor(const std::vector<int64_t> &input, const TypePtr &data_type = nullptr);
 
+  /// \brief Create 1 dimension tensor from an int vector.
+  ///
+  /// \param[in] input [std::vector<int32_t>] the data for tensor.
+  /// \param[in] data_type [TypeId] data type.
+  explicit Tensor(const std::vector<int32_t> &input, const TypePtr &data_type = nullptr);
+
   /// \brief Create 1 dimension tensor from a float vector.
   ///
   /// \param[in] input [std::vector<double>] the data for tensor.

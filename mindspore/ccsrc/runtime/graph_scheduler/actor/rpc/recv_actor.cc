@@ -250,6 +250,9 @@ void RecvActor::AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const Sh
     real_abs->set_value(out_tensor);
     real_abs->set_shape(updated_shape);
   } else if (real_abs->isa<abstract::AbstractTuple>()) {
+    if (common::AnfAlgo::IsDynamicSequence(real_input)) {
+      MS_LOG(EXCEPTION) << "Invalid dynamic sequence for actor:" << GetAID() << " node:" << real_input->DebugString();
+    }
     auto abstract_tuple = real_abs->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(abstract_tuple);
     MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abstract_tuple->elements().size()), "Index is out of range.");
