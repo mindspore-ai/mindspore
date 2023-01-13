@@ -111,6 +111,8 @@ MIND_API_OPERATOR_IMPL(CTCLoss, BaseOperator);
 AbstractBasePtr CTCLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  constexpr int64_t kInputNum = 4;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   for (auto item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
