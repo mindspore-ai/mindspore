@@ -307,6 +307,7 @@ void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
         enable = true;
       }
     }
+    // BpGraph contain bprop_cut node.
     if (common::AnfAlgo::IsControlOpExecInBackend(node) || enable) {
       graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
       break;
@@ -326,6 +327,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   KernelGraphPtr graph =
     session_->ConstructKernelGraph(nodes, outputs, device_terget, true, IsEnableZeroCopy(run_in_pynative));
   MS_EXCEPTION_IF_NULL(graph);
+  SetRunGraphBySingleOpFlag(graph);
   opt::EliminateIllegalDataTypePass(graph);
   SetGraphDependency(graph, segment);
 
@@ -381,8 +383,6 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   }
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
-  SetRunGraphBySingleOpFlag(graph);
-
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
 }
@@ -399,7 +399,9 @@ GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const
   KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs, device_terget, true, false);
   MS_EXCEPTION_IF_NULL(graph);
 
+  // Dynamic shape or dynamic graph structure flag.
   graph->set_flag(kAttrMutableKernel, true);
+  graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
 
   opt::EliminateIllegalDataTypePass(graph);
   // Unify the MindIR, must be before of the graph optimization.

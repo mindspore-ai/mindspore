@@ -811,38 +811,10 @@ void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const Graph
   bool enable_run_graph_by_single_op =
     std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
                 [](const KernelGraphPtr &graph) { return graph->has_flag(kFlagEnableRunGraphBySingleOp); });
-  MS_EXCEPTION_IF_NULL(root_graph_);
-  bool is_dynamic = true;
-
-  std::string func_graph_cell_id;
-  if (enable_backend_dynamic_detect_ && root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
-    func_graph_cell_id = GetValue<std::string>(root_graph_->get_attr(kAttrFuncGraphCellId));
-    auto graph_iter = func_graph_dynamic_infos_.find(func_graph_cell_id);
-    if (graph_iter == func_graph_dynamic_infos_.end()) {
-      MS_LOG(EXCEPTION) << "cell id[" << func_graph_cell_id << "] is not found in func_graph_dynamic_infos_";
-    }
-    is_dynamic = graph_iter->second.is_dynamic;
-  }
-
-  if (enable_run_graph_by_single_op || root_graph_->has_flag(kFlagIsDynamicStructure) ||
-      (enable_backend_dynamic_detect_ && root_graph_->has_flag(kFlagIsPynativeBpropGraph) && is_dynamic) ||
-      root_graph_->has_flag(kFlagUseDynamicShapeProcess)) {
+  if (enable_run_graph_by_single_op) {
     RunGraphBySingleOp(graph_compiler_info, args, outputs);
   } else {
     RunGraphByActors(actor_info, graph_compiler_info, args, outputs);
-  }
-
-  if (enable_backend_dynamic_detect_ && root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
-    auto graph_iter = func_graph_dynamic_infos_.find(func_graph_cell_id);
-    if (graph_iter == func_graph_dynamic_infos_.end()) {
-      MS_LOG(EXCEPTION) << "cell id[" << func_graph_cell_id << "] is not found in func_graph_dynamic_infos_";
-    }
-
-    auto tensor_list = graph_iter->second.value_node_tensor_list;
-    for (auto tensor_info : tensor_list) {
-      MS_EXCEPTION_IF_NULL(tensor_info.second);
-      tensor_info.second->set_device_address(nullptr);
-    }
   }
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
