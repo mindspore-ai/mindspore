@@ -784,11 +784,11 @@ def full_like(x, fill_value, *, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> output = ops.full((2, 2), 1)
+        >>> output = ops.full_like((2, 2), 1)
         >>> print(output)
         [[1. 1.]
          [1. 1.]]
-        >>> output = ops.full((3, 3), 0)
+        >>> output = ops.full_like((3, 3), 0)
         >>> print(output)
         [[0. 0. 0.]
          [0. 0. 0.]

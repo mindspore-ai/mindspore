@@ -33,8 +33,9 @@ class StudentT(Distribution):
     .. math::
         f(x, \nu, \mu, \sigma) = (1 + y^2 / \nu)^{(-0.5*(\nu + 1))} / Z
 
-    where :math:`y = (x-\mu)/\sigma`, :math:`Z = abs(\sigma)*\sqrt(\nu * \pi)*\Gamma(0.5 * \nu)/\Gamma(0.5*(\nu + 1))`,
-        :math:`\nu, \mu, \sigma` are the degrees of freedom , mean and scale of the laplace distribution respectively.
+    where :math:`y = (x-\mu)/\sigma`,
+    :math:`Z = abs(\sigma)*\sqrt{(\nu * \pi)}*\Gamma(0.5 * \nu)/\Gamma(0.5*(\nu + 1))`,
+    :math:`\nu, \mu, \sigma` are the degrees of freedom , mean and scale of the laplace distribution respectively.
 
     Args:
         df (int, float, list, numpy.ndarray, Tensor): The degrees of freedom. Default: None.
