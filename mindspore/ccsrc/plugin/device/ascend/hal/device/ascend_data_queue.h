@@ -68,7 +68,7 @@ class WingmanQueue : public DataQueue {
   DataQueueStatus Pop() override;
   bool IsEmpty() const override { return queue_.empty(); }
   bool IsFull() const override { return false; }
-  size_t Size() override { return queue_.size(); }
+  size_t Size() const override { return queue_.size(); }
 
  private:
   std::queue<std::vector<DataQueueItem>> queue_;

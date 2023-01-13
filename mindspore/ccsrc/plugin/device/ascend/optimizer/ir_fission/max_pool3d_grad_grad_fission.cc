@@ -98,7 +98,7 @@ ValueNodePtr CreateValueNode(const AnfNodePtr &node) {
 
 const BaseRef MaxPool3DGradGradFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
-  auto max_pool3d_grad_grad_prim = std::make_shared<Primitive>(kMaxPool3DGradGradOpName);
+  auto max_pool3d_grad_grad_prim = std::make_shared<Primitive>(kMaxPool3DGradGradDOpName);
   return VectorRef({max_pool3d_grad_grad_prim, Xs});
 }
 
@@ -113,7 +113,7 @@ const AnfNodePtr MaxPool3DGradGradFission::Process(const FuncGraphPtr &graph, co
     MS_LOG(INFO) << "The node " << cnode->DebugString() << " is not equal to " << kInputNum << " inputs";
     return nullptr;
   }
-  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kMaxPool3DGradGradOpName))};
+  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kMaxPool3DGradGradDOpName))};
   auto assist_const = CreateValueNode(cnode);
   (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
   (void)new_inputs.emplace_back(assist_const);
