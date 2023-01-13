@@ -1132,16 +1132,13 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  bool need_infer_value = !eval_impl_.IsInWhiteList();
-  if (need_infer_value == false) {
-    need_infer_value = ((context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode)) &&
-                       std::all_of(args.begin(), args.end(), [](const AbstractBasePtr &abs) -> bool {
-                         MS_EXCEPTION_IF_NULL(abs);
-                         auto value = abs->BuildValue();
-                         return (value != nullptr && !value->isa<AnyValue>() && !value->isa<None>() &&
-                                 !value->isa<Monad>() && !value->isa<FuncGraph>());
-                       });
-  }
+  bool need_infer_value = std::all_of(args.begin(), args.end(), [](const AbstractBasePtr &abs) -> bool {
+    MS_EXCEPTION_IF_NULL(abs);
+    auto value = abs->BuildValue();
+    return (value != nullptr && !value->isa<AnyValue>() && !value->isa<None>() && !value->isa<Monad>() &&
+            !value->isa<FuncGraph>());
+  });
+
   AbstractBasePtr abs_base = nullptr;
   ValuePtr value = nullptr;
   prim_->BeginRecordAddAttr();

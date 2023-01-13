@@ -57,9 +57,7 @@ AbstractBasePtr DTypeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   }
   auto value = DTypeInferValue(primitive, input_args);
   MS_EXCEPTION_IF_NULL(value);
-  auto type = value->cast<TypePtr>();
-  MS_EXCEPTION_IF_NULL(type);
-  return abstract::MakeAbstract(std::make_shared<abstract::NoShape>(), type);
+  return value->ToAbstract();
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(DType, prim::kPrimDType, DTypeInfer, DTypeInferValue, false);

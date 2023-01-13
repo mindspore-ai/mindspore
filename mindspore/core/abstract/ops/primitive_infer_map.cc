@@ -141,6 +141,7 @@ PrimShapeDependMap &GetInferDependsMap() {
   static const auto &kRandomGamma = prim::kPrimRandomGamma->name();
   static const auto &kAffineGrid = prim::kPrimAffineGrid->name();
   static const auto &kFillV2 = prim::kPrimFillV2->name();
+  static const auto &kFill = prim::kPrimFill->name();
   static const auto &kFractionalAvgPoolGrad = prim::kPrimFractionalAvgPoolGrad->name();
   static const auto &kTranspose = prim::kPrimTranspose->name();
   static const auto &kResizeLinear1D = prim::kPrimResizeLinear1D->name();
@@ -215,6 +216,7 @@ PrimShapeDependMap &GetInferDependsMap() {
                                     {prim::kPrimSparseTensorDenseMatmul->name(), ShapeSet{2}},
                                     {kSliceGrad, ShapeSet{2, 3}},
                                     {kFillV2, ShapeSet{0}},
+                                    {kFill, ShapeSet{0, 2}},
                                     {kRandomCategorical, ShapeSet{1}},
                                     {kRandomGamma, ShapeSet{0, 1}},
                                     {kDynamicBroadcastTo, ShapeSet{1}},

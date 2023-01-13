@@ -145,11 +145,12 @@ def vm_impl_split(self):
 def vm_impl_fill(self):
     """Generate vm_impl function for Fill"""
 
-    def vm_impl(dims, x):
+    def vm_impl(dtype, dims, x):
+        x_nptype = mstype.dtype_to_nptype(dtype)
         if isinstance(x, int):
-            ret = np.full(dims, x, np.int32)
+            ret = np.full(dims, x, x_nptype)
         else:
-            ret = np.full(dims, x, np.float32)
+            ret = np.full(dims, x, x_nptype)
         return Tensor(ret)
 
     return vm_impl

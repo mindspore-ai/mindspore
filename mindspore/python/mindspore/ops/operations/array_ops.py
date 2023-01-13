@@ -1436,7 +1436,7 @@ class MatrixBandPart(Primitive):
         self.init_prim_io_names(inputs=['x', 'lower', 'upper'], outputs=['y'])
 
 
-class Fill(PrimitiveWithCheck):
+class Fill(Primitive):
     """
     Create a Tensor of the specified shape and fill it with the specified value.
 
@@ -1462,17 +1462,6 @@ class Fill(PrimitiveWithCheck):
     def __init__(self):
         """Initialize Fill"""
         self.init_prim_io_names(inputs=['type', 'shape', 'value'], outputs=['y'])
-
-    def infer_value(self, dtype, dims, x):
-        x_nptype = mstype.dtype_to_nptype(dtype)
-        if dims is not None and None not in dims and x is not None:
-            if isinstance(dims, Tensor):
-                dims = dims.asnumpy()
-            if isinstance(x, Tensor):
-                x = x.asnumpy()
-            ret = np.full(dims, x, x_nptype)
-            return Tensor(ret)
-        return None
 
 
 class Fills(Primitive):
