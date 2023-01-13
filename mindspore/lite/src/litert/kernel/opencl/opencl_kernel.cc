@@ -24,6 +24,38 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::ImageSize;
 
 namespace mindspore::kernel {
+int CpuAxis2GpuAxis(size_t ndim, int cpu_axis, int *gpu_axis) {
+  static const std::vector<std::vector<int>> kCpuAxis2GpuAxisMapTable = {
+    // For 1D tensor, map the cpu axis [0] to gpu axis [kNHWC_C].
+    {kNHWC_C},
+    // For 2D tensor, map the cpu axis [0, 1] to gpu axis [kNHWC_N, kNHWC_C].
+    {kNHWC_N, kNHWC_C},
+    // For 3D tensor, map the cpu axis [0, 1, 2] to gpu axis [kNHWC_N, kNHWC_W, kNHWC_C].
+    {kNHWC_N, kNHWC_W, kNHWC_C},
+    // For 4D tensor, map the cpu axis [0, 1, 2, 3] to gpu axis [kNHWC_N, kNHWC_H, kNHWC_W, kNHWC_C].
+    {kNHWC_N, kNHWC_H, kNHWC_W, kNHWC_C},
+    // For 5D tensor, map the cpu axis [0, 1, 2, 3, 4] to gpu axis [kNDHWC_N, kNDHWC_D, kNDHWC_H, kNDHWC_W, kNDHWC_C].
+    {kNDHWC_N, kNDHWC_D, kNDHWC_H, kNDHWC_W, kNDHWC_C},
+  };
+  if (gpu_axis == nullptr) {
+    MS_LOG(WARNING) << "Input parameter gpu axis is null";
+    return RET_ERROR;
+  }
+
+  if ((ndim == 0) || (ndim > kCpuAxis2GpuAxisMapTable.size())) {
+    MS_LOG(WARNING) << "Only support ndim of 1D...5D, bad input ndim: " << ndim;
+    return RET_ERROR;
+  }
+
+  const auto &axis_map = kCpuAxis2GpuAxisMapTable[ndim - 1];
+  if ((cpu_axis < 0) || (cpu_axis >= axis_map.size())) {
+    MS_LOG(WARNING) << "Input cpu axis: " << cpu_axis << " is out of range [0," << axis_map.size() << "]";
+    return RET_ERROR;
+  }
+  *gpu_axis = axis_map[cpu_axis];
+  return RET_OK;
+}
+
 void OpenCLKernel::AlignGlobalLocal(const std::vector<size_t> &global, const std::vector<size_t> &local) {
   std::vector<size_t> internal_global_ws = global;
   for (size_t i = 0; i < local.size(); ++i) {

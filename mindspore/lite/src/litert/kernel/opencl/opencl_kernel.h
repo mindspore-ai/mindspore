@@ -107,6 +107,8 @@ int Broadcast2GpuShape(const SrcT *src, int src_num, DstT *dst, int dsc_num, Dst
   return Broadcast2GpuShape(src, src_num, dst, dsc_num);
 }
 
+int CpuAxis2GpuAxis(size_t ndim, int cpu_axis, int *gpu_axis);
+
 struct GpuTensorInfo {
   GpuTensorInfo() = default;
   explicit GpuTensorInfo(const lite::Tensor *tensor) {
