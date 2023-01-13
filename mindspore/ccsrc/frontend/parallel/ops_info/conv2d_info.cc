@@ -243,23 +243,47 @@ Status Conv2DInfo::CheckHWStrategyPadModeByDimension(int64_t strategy, int64_t d
     pad_all = pad_list_[2] + pad_list_[3];
   }
 
+  // kernel size <= stride, no need to exchange
+  if (h_or_w_kernel_size <= h_or_w_stride) {
+    if (pad_all != 0) {
+      FILTER_LOG(is_auto_parallel_) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
+                                    << "th dimension when kernel_size <= stride and pad != 0";
+      return FAILED;
+    }
+    if ((h_or_w_input_shape / strategy) % h_or_w_stride != 0) {
+      FILTER_LOG(is_auto_parallel_) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
+                                    << "th dimension when kernel_size <= stride and input's slice % stride != 0";
+      return FAILED;
+    }
+    return SUCCESS;
+  }
+
+  // kernel_size > stride, need to exchange
   if ((h_or_w_input_shape + pad_all - h_or_w_kernel_size) % h_or_w_stride != 0) {
-    FILTER_LOG(is_auto_parallel_) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
-                                  << "th dimension when input_shape + pad_all - k is not divisible by stride ";
+    FILTER_LOG(is_auto_parallel_)
+      << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
+      << "th dimension when kernel_size > stride and input_shape + pad_all - k is not divisible by stride";
     return FAILED;
   }
 
   if ((h_or_w_output_shape * h_or_w_stride - h_or_w_input_shape) % strategy != 0) {
-    FILTER_LOG(is_auto_parallel_) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
-                                  << "th dimension when output_shape * s - input_shape is not divisible by stride ";
+    FILTER_LOG(is_auto_parallel_)
+      << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
+      << "th dimension when kernel_size > stride and output_shape * s - input_shape is not divisible by stride";
     return FAILED;
+  }
+
+  // if the h/w dimension is split, and the pad mode is not "valid", need to exchange overlap
+  if (dimension_id == 2) {
+    h_dim_need_exchange_overlap_ = true;
+  } else if (dimension_id == 3) {
+    w_dim_need_exchange_overlap_ = true;
   }
   return SUCCESS;
 }
 
 Status Conv2DInfo::CheckHWStrategyPadMode(int64_t h_strategy, int64_t w_strategy) {
   AdjustPadList();
-
   if (CheckHWStrategyPadModeByDimension(h_strategy, 2) != SUCCESS) {
     return FAILED;
   }
@@ -352,14 +376,6 @@ Status Conv2DInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
-  // if the h/w dimension is split, and the pad mode is not "valid", need to exchange overlap
-  if (input_strategy[2] > 1 && pad_mode_ != 2) {
-    h_dim_need_exchange_overlap_ = true;
-  }
-
-  if (input_strategy[3] > 1 && pad_mode_ != 2) {
-    w_dim_need_exchange_overlap_ = true;
-  }
   return SUCCESS;
 }
 
