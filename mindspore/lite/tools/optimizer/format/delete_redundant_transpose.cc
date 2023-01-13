@@ -23,6 +23,28 @@
 
 namespace mindspore {
 namespace opt {
+STATUS DeleteRedundantTranspose::DeleteControlFlowTranspose(const CNodePtr &cnode) {
+  auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
+  if (sub_func_graph == nullptr) {
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return lite::RET_NULL_PTR;
+  }
+  if (DeleteNot4DTranspose(sub_func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "delete transpose failed.";
+    return lite::RET_ERROR;
+  }
+  sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
+  if (sub_func_graph == nullptr) {
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return lite::RET_NULL_PTR;
+  }
+  if (DeleteNot4DTranspose(sub_func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "delete transpose failed.";
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
 STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_graph) {
   MS_ERROR_IF_NULL_W_RET_VAL(func_graph, lite::RET_ERROR);
   MS_ERROR_IF_NULL_W_RET_VAL(manager_, lite::RET_ERROR);
@@ -35,22 +57,8 @@ STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_g
     }
     auto cnode = node->cast<CNodePtr>();
     if (CheckPrimitiveType(cnode, prim::kPrimIf) || CheckPrimitiveType(cnode, prim::kPrimWhile)) {
-      auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
-      if (sub_func_graph == nullptr) {
-        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return lite::RET_NULL_PTR;
-      }
-      if (DeleteNot4DTranspose(sub_func_graph) != lite::RET_OK) {
-        MS_LOG(ERROR) << "delete transpose failed.";
-        return lite::RET_ERROR;
-      }
-      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
-      if (sub_func_graph == nullptr) {
-        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return lite::RET_NULL_PTR;
-      }
-      if (DeleteNot4DTranspose(sub_func_graph) != lite::RET_OK) {
-        MS_LOG(ERROR) << "delete transpose failed.";
+      if (DeleteControlFlowTranspose(cnode) != RET_OK) {
+        MS_LOG(ERROR) << "DeleteControlFlowTranspose failed.";
         return lite::RET_ERROR;
       }
       continue;
@@ -68,6 +76,23 @@ STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_g
     if (GetTransposePerm(cnode, &perm) != lite::RET_OK) {
       MS_LOG(ERROR) << "fetch transpose perm failed.";
       return lite::RET_ERROR;
+    }
+    int start_dat = 0;
+    bool useless = true;
+    for (auto dat : perm) {
+      if (dat == start_dat) {
+        start_dat += 1;
+      } else {
+        useless = false;
+        break;
+      }
+    }
+    if (useless) {
+      if (!manager_->Replace(node, cnode->input(1))) {
+        MS_LOG(ERROR) << "replace old node failed, please check.";
+        return lite::RET_ERROR;
+      }
+      continue;
     }
     if (!shape.empty() && shape.size() != perm.size() && !(shape.size() == 1 && shape[0] == -1)) {
       MS_LOG(DEBUG) << "transpose node need to be deleted.";
