@@ -111,6 +111,24 @@ class Strategy {
     internal_size_++;
   }
 
+  std::string ToString() {
+    std::ostringstream oss;
+    for (size_t i = 0; i < this->GetInputNumber(); ++i) {
+      oss << "[";
+      for (size_t j = 0; j < this->GetInputDim()[i].size(); ++j) {
+        oss << std::to_string(this->GetInputDim()[i][j]);
+        if (j != this->GetInputDim()[i].size() - 1) {
+          oss << ", ";
+        }
+      }
+      oss << "]";
+      if (i != this->GetInputNumber() - 1) {
+        oss << ", ";
+      }
+    }
+    return oss.str();
+  }
+
  private:
   const int64_t stage_;
 

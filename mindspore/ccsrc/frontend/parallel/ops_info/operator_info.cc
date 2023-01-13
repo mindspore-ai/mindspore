@@ -30,6 +30,7 @@
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "utils/log_adapter.h"
 #include "include/common/debug/anf_dump_utils.h"
@@ -1177,27 +1178,6 @@ std::shared_ptr<Strategies> OperatorInfo::GenerateBatchStrategies() {
   return GenerateBatchStrategiesBySplitFlag(inputs_shape_, split_flag_list_);
 }
 
-void PrintStrategy(const StrategyPtr &strategy) {
-  if (strategy == nullptr) {
-    return;
-  }
-  std::string all_strategy = "";
-  for (size_t i = 0; i < strategy->GetInputNumber(); ++i) {
-    all_strategy += "[";
-    for (size_t j = 0; j < strategy->GetInputDim()[i].size(); ++j) {
-      all_strategy += std::to_string(strategy->GetInputDim()[i][j]);
-      if (j != strategy->GetInputDim()[i].size() - 1) {
-        all_strategy += ", ";
-      }
-    }
-    all_strategy += "]";
-    if (i != strategy->GetInputNumber() - 1) {
-      all_strategy += ", ";
-    }
-  }
-  MS_LOG(INFO) << "The strategy is: " << all_strategy;
-}
-
 // generate strategies for that each dimension of input0 and input1 is relevant, such as: ([a, b, c, d], [a, b, c, d])
 Status GenerateStrategiesForTwoEqualInputs(int64_t stage_id, const Shapes &inputs_shape,
                                            const Shapes &splittable_inputs, std::vector<StrategyPtr> *const sp_vector) {
@@ -2027,8 +2007,7 @@ void OperatorInfo::SetSelectedStrategy(const StrategyPtr &s_strategy, size_t cur
     MS_LOG(INFO) << name_ << " has already been set strategy.";
     return;
   }
-  MS_LOG(INFO) << name_ << ": Set strategy";
-  PrintStrategy(s_strategy);
+  MS_LOG(INFO) << name_ << ": Set strategy " << s_strategy->ToString();
   selected_strategy_ = s_strategy;
   selected_strategy_depth_ = SizeToLong(curr_depth);
 }
@@ -2048,10 +2027,9 @@ double OperatorInfo::GetForwardMemoryCostFromCNode() {
 void OperatorInfo::CheckSelectedStrategy(const StrategyPtr &s_strategy) {
   MS_EXCEPTION_IF_NULL(s_strategy);
   if (!s_strategy->IsEqual(selected_strategy_)) {
-    MS_LOG(INFO) << name_ << "'s strategy may cause suboptimal, the determined strategy:";
-    PrintStrategy(selected_strategy_);
-    MS_LOG(INFO) << name_ << ": The minimal strategy:";
-    PrintStrategy(s_strategy);
+    MS_LOG(INFO) << name_
+                 << "'s strategy may cause suboptimal, the determined strategy: " << selected_strategy_->ToString()
+                 << "The minimal strategy: " << s_strategy->ToString();
   }
 }
 
@@ -2069,11 +2047,12 @@ Status OperatorInfo::GenerateStrategies(int64_t stage_id) {
 
   size_t success = 0;
   for (auto &sp : sp_vector) {
-    PrintStrategy(sp);
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
+      MS_LOG(INFO) << name_ << ": Successfully generated the " << GetSerialNumberString(success)
+                   << " strategy: " << sp->ToString();
+    } else {
+      MS_LOG(INFO) << name_ << ": SetCostUnderStrategy failed, the strategy is " << sp->ToString();
     }
   }
   return SUCCESS;

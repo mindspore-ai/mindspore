@@ -217,7 +217,7 @@ void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
       } else {
         const auto &next_op_stra = edge->GetNextOpStrategyByPrevOpStrategyWithMiniComm(curr_op->selected_strategy());
         if (next_op_stra == nullptr) {
-          PrintStrategy(curr_op->selected_strategy());
+          MS_LOG(INFO) << "The strategy is: " << curr_op->selected_strategy()->ToString();
           MS_LOG(EXCEPTION) << next_op->name() << "'s strategy is null in the edge: " << edge->edge_name();
         }
         (void)next_level.emplace(std::make_pair(next_op, std::make_pair(next_op_stra, -1)), curr_depth + 1);
@@ -245,8 +245,9 @@ void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
       } else {
         const auto &prev_op_stra = edge->GetPrevOpStrategyByNextOpStrategyWithMiniComm(curr_op->selected_strategy());
         if (prev_op_stra == nullptr) {
-          PrintStrategy(curr_op->selected_strategy());
-          MS_LOG(EXCEPTION) << prev_op->name() << "'s strategy is null in the edge: " << edge->edge_name();
+          MS_LOG(EXCEPTION) << "Current op " << curr_op->name() << "'s strategy is "
+                            << curr_op->selected_strategy()->ToString() << ". " << prev_op->name()
+                            << "'s strategy is null in the edge: " << edge->edge_name();
         }
         (void)next_level.emplace(std::make_pair(prev_op, std::make_pair(prev_op_stra, -1)), curr_depth + 1);
       }

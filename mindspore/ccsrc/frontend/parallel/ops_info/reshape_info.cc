@@ -24,6 +24,7 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
@@ -391,8 +392,8 @@ void ReshapeInfo::SetCostForReshapeWithParameter() {
   for (auto &sp : sp_vector_) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
+      MS_LOG(INFO) << name_ << ": Successfully generated the " << GetSerialNumberString(success)
+                   << " strategy: " << sp->ToString();
     }
   }
 }
@@ -500,8 +501,7 @@ Status ReshapeInfo::GenerateStrategyCosts(
   }
   MS_LOG(INFO) << "Print " << name() << "'s 'strategy_cost':";
   for (auto &swc : strategy_cost_) {
-    MS_LOG(INFO) << name() << "'s strategy:";
-    PrintStrategy(swc->strategy_ptr);
+    MS_LOG(INFO) << name() << "'s strategy: " << swc->strategy_ptr->ToString();
     MS_LOG(INFO) << "The corresponding cost: " << swc->cost_list[0]->computation_cost_ << ", "
                  << swc->cost_list[0]->communication_cost_ << ", "
                  << swc->cost_list[0]->communication_without_parameter_;

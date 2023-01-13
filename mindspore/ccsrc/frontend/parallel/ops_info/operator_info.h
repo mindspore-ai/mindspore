@@ -362,7 +362,6 @@ int64_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const S
 std::shared_ptr<Strategies> GenerateBatchStrategiesBySplitFlag(const Shapes &shapes,
                                                                const std::vector<bool> &split_flag_list);
 std::string StrategyToString(const Strategies &strategy);
-void PrintStrategy(const StrategyPtr &strategy);
 Status GenerateStrategiesForIndependentInputsBase(int64_t stage_id, size_t dev_num, const Shapes &inputs_shape,
                                                   const Shapes &splittable_inputs, std::vector<StrategyPtr> *sp_vector);
 // generate strategies for that all inputs' dimensions are independent, such as: ([a, b, c, d])
