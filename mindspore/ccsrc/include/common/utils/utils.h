@@ -200,6 +200,7 @@ constexpr auto kConv3DTransposeOpName = "Conv3DTranspose";
 constexpr auto kDeformableOffsetsOpName = "DeformableOffsets";
 constexpr auto kCropAndResizeOpName = "CropAndResize";
 constexpr auto kCropAndResizeDOpName = "CropAndResizeD";
+constexpr auto kConjOpName = "Conj";
 constexpr auto kConvBN1OpName = "ConvBN1";
 constexpr auto kCOO2CSROpName = "COO2CSR";
 constexpr auto kCosOpName = "Cos";
@@ -414,6 +415,7 @@ constexpr auto kMaskedSelectOpName = "MaskedSelect";
 constexpr auto kMaskedSelectGradOpName = "MaskedSelectGrad";
 constexpr auto kMatMulOpName = "MatMul";
 constexpr auto kMatMulV2OpName = "MatMulV2";
+constexpr auto kMatrixBandPartOpName = "MatrixBandPart";
 constexpr auto kMatrixDeterminantOpName = "MatrixDeterminant";
 constexpr auto kMatrixDiagOpName = "MatrixDiag";
 constexpr auto kMatrixDiagDOpName = "MatrixDiagD";
@@ -717,6 +719,7 @@ constexpr auto kUpdateStateOpName = "UpdateState";
 constexpr auto kDynamicBroadcastToOpName = "DynamicBroadcastTo";
 constexpr auto kCheckValidOpName = "CheckValid";
 constexpr auto kSoftmaxGradFusionOpName = "SoftmaxGradFusion";
+constexpr auto kZerosLikeOpName = "ZerosLike";
 
 // Sequence ops
 constexpr auto kScalarToTensorOpName = "ScalarToTensor";
