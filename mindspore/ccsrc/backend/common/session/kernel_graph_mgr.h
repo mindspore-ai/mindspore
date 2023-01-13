@@ -112,7 +112,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph) const;
   void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph) const;
   void SetReturnNode(const AnfNodePtr &node, KernelGraph *graph);
-  void FlattenTuple(const CNodePtr &node, KernelGraph *graph);
+  void FlattenTuple(const CNodePtr &node);
 
  protected:
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
