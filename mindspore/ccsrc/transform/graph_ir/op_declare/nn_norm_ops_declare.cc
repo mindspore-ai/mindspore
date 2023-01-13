@@ -46,7 +46,8 @@ INPUT_MAP(SmoothL1LossV2) = {{1, INPUT_DESC(predict)}, {2, INPUT_DESC(label)}};
 ATTR_MAP(SmoothL1LossV2) = {{"beta", ATTR_DESC(sigma, AnyTraits<float>())},
                             {"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
 OUTPUT_MAP(SmoothL1LossV2) = {{0, OUTPUT_DESC(loss)}};
-REG_ADPT_DESC(SmoothL1LossV2, kNameSmoothL1Loss, ADPT_DESC(SmoothL1LossV2))
+REG_ADPT_DESC(SmoothL1Loss, kNameSmoothL1Loss, ADPT_DESC(SmoothL1LossV2))
+REG_ADPT_DESC(SmoothL1LossV2, prim::kPrimSmoothL1LossV2->name(), ADPT_DESC(SmoothL1LossV2))
 
 // SmoothL1LossGrad
 INPUT_MAP(SmoothL1LossGradV2) = {{1, INPUT_DESC(predict)}, {2, INPUT_DESC(label)}, {3, INPUT_DESC(dout)}};
