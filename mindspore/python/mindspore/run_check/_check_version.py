@@ -392,9 +392,10 @@ class AscendEnvChecker(EnvChecker):
             if Path(self.tbe_path).is_dir():
                 os.environ['LD_LIBRARY_PATH'] = self.tbe_path + ":" + os.environ['LD_LIBRARY_PATH']
             else:
-                raise EnvironmentError(
+                logger.error(
                     f"No such directory: {self.tbe_path}, Please check if Ascend AI software package (Ascend Data "
                     "Center Solution) is installed correctly.")
+                return
 
         # check te version after set te env
         self.check_deps_version()
@@ -410,34 +411,38 @@ class AscendEnvChecker(EnvChecker):
 
             os.environ['TBE_IMPL_PATH'] = self.op_impl_path
         else:
-            raise EnvironmentError(
+            logger.error(
                 f"No such directory: {self.op_impl_path}, Please check if Ascend AI software package (Ascend Data "
                 "Center Solution) is installed correctly.")
+            return
 
         if Path(self.cce_path).is_dir():
             os.environ['PATH'] = self.cce_path + ":" + os.environ['PATH']
         else:
-            raise EnvironmentError(
+            logger.error(
                 f"No such directory: {self.cce_path}, Please check if Ascend AI software package (Ascend Data Center "
                 "Solution) is installed correctly.")
+            return
 
         if self.op_path is None:
             pass
         elif Path(self.op_path).is_dir():
             os.environ['ASCEND_OPP_PATH'] = self.op_path
         else:
-            raise EnvironmentError(
+            logger.error(
                 f"No such directory: {self.op_path}, Please check if Ascend AI software package (Ascend Data Center "
                 "Solution) is installed correctly.")
+            return
 
         if self.aicpu_path is None:
             pass
         elif Path(self.aicpu_path).is_dir():
             os.environ['ASCEND_AICPU_PATH'] = self.aicpu_path
         else:
-            raise EnvironmentError(
+            logger.error(
                 f"No such directory: {self.aicpu_path}, Please check if Ascend AI software package (Ascend Data Center"
                 " Solution) is installed correctly.")
+            return
 
     def _check_env(self):
         """ascend dependence path check"""
@@ -478,6 +483,7 @@ def check_env(device, _):
     """callback function for checking environment variables"""
     if device.lower() == "ascend":
         env_checker = AscendEnvChecker(None)
+        env_checker.check_version()
     elif device.lower() == "gpu":
         env_checker = GPUEnvChecker(None)
     else:
