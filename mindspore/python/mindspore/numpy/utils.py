@@ -22,7 +22,7 @@ from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 
 from mindspore.numpy.utils_const import _tile_size, _add_unit_axes, _raise_type_error, _type_convert, \
-    _tuple_setitem, _callable_const, _check_is_float, _get_device
+    _tuple_setitem, _callable_const
 
 
 def _deep_list(array_like):
@@ -206,6 +206,4 @@ def _callable(tensor, obj):
 
 
 def _isnan(x):
-    if _get_device() == 'Ascend' or not _check_is_float(F.dtype(x)):
-        return F.fill(mstype.bool_, F.shape(x), False)
     return F.isnan(x)
