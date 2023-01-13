@@ -20,7 +20,7 @@ mindspore.ops.div
 
           - **None**: 默认行为。相当于Python中的 `true division` 或NumPy中的 `true_divide` 。
           - **"floor"**: 将除法的结果向下舍入。相当于Python中的 `floor division` 或NumPy中的 `floor_divide` 。
-          - **"trunc"**: 将除法的结果舍入到零。相当于C型整数除法。
+          - **"trunc"**: 将除法的结果舍入到零。相当于C语言风格的整数除法。
 
     返回：
         Tensor，输出的shape与广播后的shape相同，数据类型取两个输入中精度较高或数字较高的。
