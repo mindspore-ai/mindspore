@@ -67,7 +67,6 @@ bool CumProdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   exclusive_ = kernel_ptr->GetExclusive();
   reverse_ = kernel_ptr->GetReverse();
   is_dynamic_shape_ = inputs[kIndex0]->IsDynamicShape();
-  MS_LOG(ERROR) << "is_dynamic_shape_ = " << is_dynamic_shape_;
   auto input_num = inputs.size();
   if (input_num != kCumProdInputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
