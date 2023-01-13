@@ -256,6 +256,7 @@ Dropout层
     mindspore.nn.SmoothL1Loss
     mindspore.nn.SoftMarginLoss
     mindspore.nn.SoftmaxCrossEntropyWithLogits
+    mindspore.nn.TripletMarginLoss
 
 优化器
 -------

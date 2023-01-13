@@ -465,6 +465,7 @@ from .nn_func import (
     lp_pool1d,
     lp_pool2d,
     mse_loss,
+    triplet_margin_loss,
     msort
 )
 from .linalg_func import (
