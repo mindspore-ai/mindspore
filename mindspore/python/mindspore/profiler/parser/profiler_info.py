@@ -17,6 +17,7 @@ import json
 import os
 import stat
 
+from mindspore.version import __version__ as ms_version
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 
 
@@ -37,6 +38,7 @@ class ProfilerInfo:
         ProfilerInfo._profiler_info_dict = dict()
         ProfilerInfo._profiler_info_dict["context_mode"] = context_mode
         ProfilerInfo._profiler_info_dict["rank_id"] = rank_id
+        ProfilerInfo._profiler_info_dict["ms_version"] = ms_version
         ProfilerInfo._file_name = ProfilerInfo._file_name.format(rank_id)
 
     @staticmethod
