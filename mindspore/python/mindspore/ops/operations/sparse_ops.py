@@ -209,9 +209,10 @@ class SparseSlice(Primitive):
 
     Outputs:
         A `SparseTensor` objects resulting from splicing.
-        - *y_indices: A Tensor of type int64.
-        - *y_values: A Tensor. Has the same type as `values`.
-        - *y_shape: A Tensor of type int64. Has the same size as `size`.
+
+        - \*y_indices: A Tensor of type int64.
+        - \*y_values: A Tensor. Has the same type as `values`.
+        - \*y_shape: A Tensor of type int64. Has the same size as `size`.
 
     Raises:
         TypeError: If the dtype of `indices`, `shape`, `start`, `size` are not int64.
