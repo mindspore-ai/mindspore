@@ -29,7 +29,7 @@ constexpr auto kNameIOU = "IOU";
 class MIND_API IOU : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(IOU);
-  IOU() : BaseOperator(kNameIOU) { InitIOName({"x,y"}, {"output"}); }
+  IOU() : BaseOperator(kNameIOU) { InitIOName({"anchor_boxes", "gt_boxes"}, {"output"}); }
   void Init() const {}
 };
 

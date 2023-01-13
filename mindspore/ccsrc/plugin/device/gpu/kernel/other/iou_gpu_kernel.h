@@ -58,7 +58,6 @@ class IOUGpuKernelMod : public NativeGpuKernelMod {
 
   size_t anchor_boxes_len_{0};
   size_t gt_boxes_len_{0};
-  bool is_null_input_{false};
   enum input_list_ { ANCHOR_BOXES, GT_BOXES };
   enum output_list_ { IOU_VALUE };
   enum iou_mod_ { IOU_MODE, IOF_MODE };
