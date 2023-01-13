@@ -18,9 +18,17 @@
 
 namespace mindspore {
 namespace graph_bprop {
-PrimitiveBpropImplMap &GetPrimitiveBpropImplMap() {
-  static PrimitiveBpropImplMap prim_bprop_impl_map;
-  return prim_bprop_impl_map;
+PrimitiveBpropImplMap *GetPrimitiveBpropImplMapPtr() {
+  static PrimitiveBpropImplMap prim_bprop_impl_map{};
+  return &prim_bprop_impl_map;
+}
+
+const PrimitiveBpropImplMap &GetPrimitiveBpropImplMap() { return *GetPrimitiveBpropImplMapPtr(); }
+
+void RegBpropMetaFuncGraph() {
+  RegArrayOps();
+  RegMathOps();
+  RegNNOps();
 }
 }  // namespace graph_bprop
 }  // namespace mindspore
