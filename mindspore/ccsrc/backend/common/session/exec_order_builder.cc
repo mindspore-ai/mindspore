@@ -17,8 +17,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
-namespace mindspore {
-namespace session {
+namespace mindspore::session {
 namespace {
 std::string GetNodeGroup(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -108,8 +107,8 @@ void ExecOrderBuilder::BuildLinkInfo() {
       if (IsTrivialNode(input)) {
         continue;
       }
-      node_output_edges_[input].emplace_back(node);
-      node_input_edges_[node].emplace_back(input);
+      (void)node_output_edges_[input].emplace_back(node);
+      (void)node_input_edges_[node].emplace_back(input);
       node_input_num_[node] += 1;
       node_output_num_[input] += 1;
       if (visited.find(input) != visited.end()) {
@@ -126,7 +125,7 @@ void ExecOrderBuilder::FindIndependentNodes() {
   std::queue<AnfNodePtr> vnode_to_visit;
   vnode_to_visit.push(graph_->get_return());
   while (!to_visit.empty() || !vnode_to_visit.empty()) {
-    AnfNodePtr node = nullptr;
+    AnfNodePtr node;
     if (vnode_to_visit.empty()) {
       node = to_visit.front();
       to_visit.pop();
@@ -235,7 +234,7 @@ std::vector<CNodePtr> ExecOrderBuilder::Build() {
     }
     // comm descendant first, then common queue
     while (!to_visit.empty() || !high_priority_to_visit.empty()) {
-      AnfNodePtr node = nullptr;
+      AnfNodePtr node;
       if (!high_priority_to_visit.empty()) {
         handle_queue_ptr = &high_priority_to_visit;
         node = high_priority_to_visit.front();
@@ -344,5 +343,4 @@ void ExecOrderBuilder::CheckLoop() {
   }
   MS_LOG(EXCEPTION) << "Graph has unvisited nodes and the number is :" << unvisited_nodes.size();
 }
-}  // namespace session
-}  // namespace mindspore
+}  // namespace mindspore::session

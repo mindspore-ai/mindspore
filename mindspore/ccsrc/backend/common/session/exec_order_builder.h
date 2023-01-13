@@ -28,8 +28,7 @@
 #include "ir/func_graph.h"
 #include "utils/hash_map.h"
 
-namespace mindspore {
-namespace session {
+namespace mindspore::session {
 class ExecOrderBuilder {
  public:
   ExecOrderBuilder() = default;
@@ -64,6 +63,5 @@ class ExecOrderBuilder {
   mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> node_output_edges_;
   std::set<AnfNodePtr> trivial_nodes_;
 };
-}  // namespace session
-}  // namespace mindspore
+}  // namespace mindspore::session
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_SESSION_EXEC_ORDER_BUILDER_H
