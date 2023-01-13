@@ -158,7 +158,7 @@ void AscendGraphOptimization::InlineSubGraph(const KernelGraphPtr &graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
 #ifdef ENABLE_DUMP_IR
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  bool save_graphs = context_ptr->CanDump(kAdvanced);
   if (save_graphs) {
     std::string file_name = "hwopt_d_before_inline_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph, true, kWholeStack);
@@ -300,7 +300,7 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(advanced)) {
+  if (context->CanDump(kAdvanced)) {
     DumpIRProto(graph, "before_removeNop_" + std::to_string(graph->graph_id()));
   }
 #endif
@@ -318,7 +318,7 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
   device::KernelAdjust::GetInstance().InsertOverflowCheckOperations(NOT_NULL(graph));
 
 #ifdef ENABLE_DUMP_IR
-  if (context->CanDump(advanced)) {
+  if (context->CanDump(kAdvanced)) {
     DumpIR("after_adjust_kernel.ir", graph);
   }
 #endif
@@ -360,7 +360,7 @@ void AscendGraphOptimization::CommOpReuse(const KernelGraphPtr &graph) const {
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(advanced)) {
+  if (context->CanDump(kAdvanced)) {
     std::string file_name = "hwopt_comm_reuse_after_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph);
   }
@@ -442,7 +442,7 @@ void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &grap
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(introductory)) {
+  if (context->CanDump(kIntroductory)) {
     std::string file_name = "select_kernel_before_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph, true, kTopStack);
   }
@@ -451,7 +451,7 @@ void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &grap
   SetOperatorInfo(graph);
   MS_LOG(INFO) << "Status record: end select kernel info. graph id: " << graph->graph_id();
 #ifdef ENABLE_DUMP_IR
-  if (context->CanDump(introductory)) {
+  if (context->CanDump(kIntroductory)) {
     std::string file_name = "select_kernel_after_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph);
   }

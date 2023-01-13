@@ -52,7 +52,7 @@ FuncGraphVector PartialEliminateMulti(const pipeline::ResourceBasePtr &resource,
 #ifdef ENABLE_DUMP_IR
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    if (context->CanDump(advanced)) {
+    if (context->CanDump(kAdvanced)) {
       DumpIR("after_opt_" + opt_fg->ToString() + ".ir", opt_fg);
     }
 #endif
@@ -65,7 +65,7 @@ FuncGraphPtr LiftFv(const pipeline::ResourceBasePtr &resource, const FuncGraphPt
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  bool enable_save_graphs = context->CanDump(advanced);
+  bool enable_save_graphs = context->CanDump(kAdvanced);
   if (enable_save_graphs) {
     DumpIR("before_lift_" + func_graph->ToString() + ".ir", func_graph);
   }
@@ -93,7 +93,7 @@ FuncGraphVector LiftFvMulti(const pipeline::ResourceBasePtr &resource, const Fun
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(advanced)) {
+  if (context->CanDump(kAdvanced)) {
     for (const auto &func_graph : func_graphs) {
       DumpIR("before_lift_" + func_graph->ToString() + ".ir", func_graph);
     }
@@ -108,7 +108,7 @@ FuncGraphVector LiftFvMulti(const pipeline::ResourceBasePtr &resource, const Fun
   }
   FuncGraphVector new_fgs = LiftingCloneMulti(func_graphs);
 #ifdef ENABLE_DUMP_IR
-  if (context->CanDump(advanced)) {
+  if (context->CanDump(kAdvanced)) {
     for (const auto &new_fg : new_fgs) {
       DumpIR("after_lift_" + new_fg->ToString() + ".ir", new_fg);
     }

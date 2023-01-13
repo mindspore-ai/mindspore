@@ -1095,7 +1095,7 @@ void RecordIR(const size_t action_index, const size_t action_size, const std::st
               const FuncGraphPtr &graph, FuncGraphPtr *user_graph) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(introductory) && graph != nullptr) {
+  if (context->CanDump(kIntroductory) && graph != nullptr) {
     *user_graph = graph;
     std::string base_name = GetBaseNameForIR(SizeToLong(action_index), action_name);
 
@@ -1110,7 +1110,7 @@ void RecordIR(const size_t action_index, const size_t action_size, const std::st
         DumpIR(base_name + ".ir", graph, false, kTopStack);
       }
     }
-    if (context->CanDump(fully)) {
+    if (context->CanDump(kFully)) {
       draw::Draw(base_name + ".dot", graph);
     }
   }
@@ -1123,7 +1123,7 @@ void SaveGraphForReadability(const std::string &action_name, const FuncGraphPtr 
 #ifdef ENABLE_DUMP_IR
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    if (context->CanDump(advanced)) {
+    if (context->CanDump(kAdvanced)) {
       DumpIRProto(graph, action_name);
     }
 #endif
@@ -1196,8 +1196,8 @@ void Pipeline::Run() {
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(advanced) && (user_graph != nullptr)) {
-    if (context->CanDump(fully)) {
+  if (context->CanDump(kAdvanced) && (user_graph != nullptr)) {
+    if (context->CanDump(kFully)) {
       draw::DrawUserFuncGraph("ModelDigraph.dot", user_graph);
     }
   }
@@ -1685,7 +1685,7 @@ FuncGraphPtr LoadMindIR(const std::string &file_name, const char *dec_key, const
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(advanced)) {
+  if (context->CanDump(kAdvanced)) {
     DumpIR("load.ir", func_graph);
   }
 #endif

@@ -744,8 +744,8 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(advanced)) {
-    if (context->CanDump(fully)) {
+  if (context->CanDump(kAdvanced)) {
+    if (context->CanDump(kFully)) {
       draw::Draw("anf_graph.dot", anf_graph);  // for debug
     }
     DumpIR("anf_graph.ir", anf_graph, true);

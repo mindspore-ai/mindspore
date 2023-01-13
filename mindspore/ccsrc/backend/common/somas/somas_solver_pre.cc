@@ -197,12 +197,11 @@ void SomasSolverPre::Log(const session::KernelGraph &graph, const TensorsDescMap
                          const vector<vector<size_t>> &continuous_v) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->CanDump(advanced)) {
-    return;
+  if (context_ptr->CanDump(kAdvanced)) {
+    SolverInputLog(graph, tensors, continuous_v);
+    SolverOutputLog(graph, tensors);
+    TensorRelationLog(pConstraints, graph);
   }
-  SolverInputLog(graph, tensors, continuous_v);
-  SolverOutputLog(graph, tensors);
-  TensorRelationLog(pConstraints, graph);
 }
 
 void SomasSolverPre::TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints,
