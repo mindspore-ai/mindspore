@@ -16,7 +16,6 @@
 """Define the grad rules of linalg related operations."""
 from __future__ import absolute_import
 
-import numpy as np
 import mindspore
 
 from mindspore.ops import Tensor
@@ -81,11 +80,6 @@ def _safe_reciprocal(x, epsilon=1e-20):
 @constexpr
 def _make_tensor(value, dtype):
     return Tensor(value, dtype)
-
-
-@constexpr
-def _make_zero_matrix(shape, dtype):
-    return Tensor(np.zeros(shape), dtype)
 
 
 def _matrix_diag(diagonal):

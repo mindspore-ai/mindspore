@@ -1856,7 +1856,10 @@ def get_bprop_inplace_index_add(self):
 @constexpr
 def _fft_rank_offset(norm_shape, rank):
     """generate offset for fft with rank"""
-    return np.product(norm_shape[-rank:])
+    norm_shape_product = 1
+    for i in norm_shape[-rank:]:
+        norm_shape_product *= i
+    return norm_shape_product
 
 
 @constexpr
@@ -1908,19 +1911,28 @@ def _get_last_dim_slice_shape(tensor_shape, index):
 @constexpr
 def _rfft_reshape(shape_a, shape_b):
     """generate rfft shape for reshape"""
-    return tuple([int(x) for x in np.concatenate((np.ones(len(shape_a) - 2), shape_b), 0)])
+    new_shape = list(shape_b)
+    for i in range(len(shape_a) - 2):
+        new_shape.insert(i, 1)
+    return tuple(new_shape)
 
 
 @constexpr
 def _rfft_tile_reshape(shape_a):
     """generate rfft shape for tile"""
-    return tuple(int(x) for x in np.concatenate((shape_a[:-2], [1, 1]), 0))
+    reshape_a = list(shape_a)
+    reshape_a[-2] = 1
+    reshape_a[-1] = 1
+    return tuple(reshape_a)
 
 
 @constexpr
 def _rfft_last_term_shape(shape_a, shape_b):
     """generate rfft shape for last term"""
-    return tuple(int(x) for x in np.concatenate((np.ones(len(shape_a)-1), shape_b), 0))
+    new_shape = list(shape_b)
+    for i in range(len(shape_a) - 1):
+        new_shape.insert(i, 1)
+    return tuple(new_shape)
 
 
 @constexpr
