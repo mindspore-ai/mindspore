@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ class MatmulDynamicInt8CPUKernel : public MatmulDynamicBaseInt8CPUKernel {
  public:
   MatmulDynamicInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : MatmulDynamicBaseInt8CPUKernel(parameter, inputs, outputs, ctx) {}
+      : MatmulDynamicBaseInt8CPUKernel(parameter, inputs, outputs, ctx) {
+    param_->matmul_type_ = MatmulType::kMatmulDynamicInt8Cpu;
+  }
   ~MatmulDynamicInt8CPUKernel() override = default;
   int Run() override;
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,14 @@ typedef void (*MATMUL_OPT_DP_FUNC)(const int8_t *a, const int8_t *b, int8_t *dst
 
 typedef enum OutType { OutType_C8 = 0, OutType_Nhwc = 1, OutType_TileC8 = 2, OutType_NC4HW4 = 3 } OutType;
 
+typedef enum MatmulType {
+  // reserve 0 for base op
+  kNotImplemented = 0,
+  kMatmulInt8Cpu,
+  kMatmulDynamicInt8Cpu,
+  kMatmulDynamicSdotInt8Cpu,
+} MatmulType;
+
 typedef struct MatMulParameter {
   // Primitive parameter
   OpParameter op_parameter_;
@@ -63,6 +71,7 @@ typedef struct MatMulParameter {
   ActType act_type_;
   bool use_axis_;
   int axis_;
+  MatmulType matmul_type_;
 } MatMulParameter;
 
 typedef struct MatmulQuantParameter {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,12 @@ STATUS GetFuncGraphOutputsInfo(const FuncGraphPtr &func_graph, std::vector<std::
 STATUS UpdateGraphOutputName(schema::MetaGraphT *meta_graph);
 
 int TransferMetaGraph(const schema::MetaGraphT &graph, void **model_buf, size_t *size);
+
+STATUS GetShapeVectorAndIdxFromCNode(const CNodePtr &cnode, std::vector<int64_t> *shape_vector, size_t *idx = nullptr);
+
+STATUS GetShapeVectorFromParameter(const mindspore::ParameterPtr &param_node, std::vector<int64_t> *shape_vector);
+
+STATUS GetCNodeOrParameterShapeVec(const AnfNodePtr &anf_node, std::vector<int> *shape);
 }  // namespace lite
 }  // namespace mindspore
 

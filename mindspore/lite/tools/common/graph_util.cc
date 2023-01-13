@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,12 +68,31 @@ static STATUS GetAbstractfromTupleGetItem(const CNodePtr &cnode, AbstractBasePtr
   return lite::RET_OK;
 }
 
-static STATUS GetShapeVectorAndIdxFromCNode(const CNodePtr &cnode, std::vector<int64_t> *shape_vector, size_t *idx) {
+STATUS GetShapeVectorFromParameter(const mindspore::ParameterPtr &param_node, std::vector<int64_t> *shape_vector) {
+  MS_CHECK_TRUE_MSG(shape_vector != nullptr, RET_ERROR, "shape vector is nullptr.");
+  auto abstract_base = param_node->abstract();
+  if (abstract_base == nullptr) {
+    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << param_node->name();
+    return RET_ERROR;
+  }
+
+  if (!abstract_base->isa<abstract::AbstractTensor>()) {
+    MS_LOG(ERROR) << "Abstract of parameter should be abstract tensor, " << param_node->name();
+    return lite::RET_ERROR;
+  }
+  auto abstract_tensor = abstract_base->cast<abstract::AbstractTensorPtr>();
+  MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
+  *shape_vector = abstract_tensor->shape()->shape();
+  return lite::RET_OK;
+}
+
+STATUS GetShapeVectorAndIdxFromCNode(const CNodePtr &cnode, std::vector<int64_t> *shape_vector, size_t *idx) {
   MS_CHECK_TRUE_MSG(shape_vector != nullptr, lite::RET_ERROR, "shape is nullptr");
-  MS_CHECK_TRUE_MSG(idx != nullptr, lite::RET_ERROR, "idx is nullptr");
 
   AbstractBasePtr cnode_abstract = nullptr;
   if (opt::CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
+    // idx is only used when cnode is type of kPrimTupleGetItem.
+    MS_CHECK_TRUE_MSG(idx != nullptr, lite::RET_ERROR, "idx is nullptr");
     if (GetAbstractfromTupleGetItem(cnode, &cnode_abstract, idx) != lite::RET_OK) {
       MS_LOG(ERROR) << "Get abstract from tuple get item failed.";
       return lite::RET_ERROR;
@@ -107,6 +126,23 @@ static STATUS GetShapeVectorAndIdxFromCNode(const CNodePtr &cnode, std::vector<i
   }
   *shape_vector = shape_ptr->shape();
   return lite::RET_OK;
+}
+
+STATUS GetCNodeOrParameterShapeVec(const AnfNodePtr &anf_node, std::vector<int> *shape) {
+  auto int64_t_to_int_func = [](int64_t x) -> int { return static_cast<int>(x); };
+  std::vector<int64_t> in_shape;
+  if (anf_node->isa<CNode>()) {
+    GetShapeVectorAndIdxFromCNode(anf_node->cast<CNodePtr>(), &in_shape);
+  } else if (anf_node->isa<Parameter>()) {
+    auto param_node = anf_node->cast<ParameterPtr>();
+    GetShapeVectorFromParameter(param_node, &in_shape);
+  } else {
+    MS_LOG(ERROR) << "Node type is not recognized.";
+    return RET_ERROR;
+  }
+  shape->resize(in_shape.size());
+  std::transform(in_shape.begin(), in_shape.end(), shape->begin(), int64_t_to_int_func);
+  return RET_OK;
 }
 
 static STATUS TraceOutput(const AnfNodePtr &node, std::vector<std::pair<AnfNodePtr, int64_t>> *outputs,

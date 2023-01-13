@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,8 @@ int InsertQuantNodeManager::InsertDynamicQuantWithIndex(const FuncGraphPtr &grap
     return RET_NULL_PTR;
   }
   dynamic_quant_cnode->set_abstract(abstract);
-  auto ret = UpdateDataType(cnode, dst_type_);
+  abstract->set_shape(cnode->input(index)->Shape());
+  auto ret = UpdateDataType(dynamic_quant_cnode, dst_type_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " set new dtype failed.";
     return ret;

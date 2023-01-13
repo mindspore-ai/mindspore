@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,18 @@ std::unique_ptr<schema::PrimitiveT> GetPrimitiveT(const std::shared_ptr<mindspor
     MS_LOG(WARNING) << "can not find SingleOpRegistry for operator: " << op->name();
     return nullptr;
   }
+}
+
+schema::PrimitiveType GetSchemaPrimType(const schema::PrimitiveT *primitive_t) {
+  flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
+  auto primitive = ConvertToPrimitive(primitive_t, &fbb);
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "Failed to convert Primitive.";
+    return schema::PrimitiveType::PrimitiveType_NONE;
+  }
+  fbb.Clear();
+  int prim_type = GetPrimitiveType(primitive, static_cast<int>(SCHEMA_VERSION::SCHEMA_CUR));
+  return static_cast<schema::PrimitiveType>(prim_type);
 }
 }  // namespace lite
 }  // namespace mindspore

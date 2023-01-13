@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ class MatmulBaseInt8CPUKernel : public LiteKernel {
                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
+    param_->matmul_type_ = MatmulType::kNotImplemented;
   }
   ~MatmulBaseInt8CPUKernel() override;
   int Prepare() override;
