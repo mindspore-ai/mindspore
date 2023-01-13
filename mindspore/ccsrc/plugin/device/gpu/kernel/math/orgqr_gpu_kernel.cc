@@ -24,6 +24,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/real_to_complex_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_public/cusolver.h"
 
 namespace mindspore {
 namespace kernel {
@@ -141,49 +142,13 @@ template <typename T>
 void OrgqrGpuKernelMod::RunOrgqr(const size_t m, const size_t n, const size_t k, T *d_a, T *tau, int *dev_info,
                                  T *output_y) {
   int lwork = 0;
-  if constexpr (std::is_same_v<T, float>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnSorgqr_bufferSize(handle_, m, n, k, d_a, m, tau, &lwork),
-                                           "cusolver query orgqr work size failed.");
-  } else if constexpr (std::is_same_v<T, double>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnDorgqr_bufferSize(handle_, m, n, k, d_a, m, tau, &lwork),
-                                           "cusolver query orgqr work size failed.");
-  } else if constexpr (std::is_same_v<T, Complex<float>>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnCungqr_bufferSize(handle_, m, n, k, reinterpret_cast<cuComplex *>(d_a), m,
-                                  reinterpret_cast<cuComplex *>(tau), &lwork),
-      "cusolver query orgqr work size failed.");
-  } else if constexpr (std::is_same_v<T, Complex<double>>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnZungqr_bufferSize(handle_, m, n, k, reinterpret_cast<cuDoubleComplex *>(d_a), m,
-                                  reinterpret_cast<cuDoubleComplex *>(tau), &lwork),
-      "cusolver query orgqr work size failed.");
-  }
+  cusolver::orgqr_buffersize<T>(handle_, m, n, k, d_a, m, tau, &lwork);
 
   void *d_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(sizeof(T) * lwork);
   if (d_work == nullptr) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the memory of d_work alloc failed.";
   }
-  if constexpr (std::is_same_v<T, float>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnSorgqr(handle_, m, n, k, d_a, m, tau, static_cast<T *>(d_work), lwork, dev_info),
-      "cusolver orgqr failed.");
-  } else if constexpr (std::is_same_v<T, double>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnDorgqr(handle_, m, n, k, d_a, m, tau, static_cast<T *>(d_work), lwork, dev_info),
-      "cusolver orgqr failed.");
-  } else if constexpr (std::is_same_v<T, Complex<float>>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnCungqr(handle_, m, n, k, reinterpret_cast<cuComplex *>(d_a), m, reinterpret_cast<cuComplex *>(tau),
-                       reinterpret_cast<cuComplex *>(d_work), lwork, dev_info),
-      "cusolver orgqr failed.");
-  } else if constexpr (std::is_same_v<T, Complex<double>>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnZungqr(handle_, m, n, k, reinterpret_cast<cuDoubleComplex *>(d_a), m,
-                       reinterpret_cast<cuDoubleComplex *>(tau), reinterpret_cast<cuDoubleComplex *>(d_work), lwork,
-                       dev_info),
-      "cusolver orgqr failed.");
-  }
-
+  cusolver::orgqr<T>(handle_, m, n, k, d_a, m, tau, static_cast<T *>(d_work), lwork, dev_info);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(output_y, d_a, sizeof(T) * m_ * n_, cudaMemcpyDeviceToDevice,
                                                      reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                      "cuda memcpy output A failed!");

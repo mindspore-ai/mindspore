@@ -40,14 +40,11 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 class OrmqrGpuKernelMod : public NativeGpuKernelMod {
  public:
-  OrmqrGpuKernelMod() { ResetResource(); }
+  OrmqrGpuKernelMod() = default;
   ~OrmqrGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
     cuda_stream_ = stream_ptr;
     return launch_kernel_func_(this, inputs, workspace, outputs);
   }
@@ -55,57 +52,34 @@ class OrmqrGpuKernelMod : public NativeGpuKernelMod {
             const std::vector<KernelTensorPtr> &outputs) override;
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
-
-  void ResetResource() noexcept {
-    is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
   template <typename T>
-  void InitSizeLists();
-
-  template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-  bool CheckInputs();
   template <typename T>
-  void RunOrmqr(T *d_a, T *tau, T *other, size_t lda, int *dev_info, T *d_output_y);
-  template <typename T>
-  void LaunchOrmqr(T *d_input_x, T *input_tau, T *d_input_other, T *d_output_y, int *dev_info);
-  void CheckResult(int *dev_info);
+  void RunOrmqr(T *d_input_x, T *input_tau, T *d_input_other, int *dev_info);
 
   using LaunchKernelFunc =
     std::function<bool(OrmqrGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  using InitSizeListsFunc = std::function<void(OrmqrGpuKernelMod *)>;
   LaunchKernelFunc launch_kernel_func_{nullptr};
-  InitSizeListsFunc init_lists_func_{nullptr};
-  static std::vector<std::pair<KernelAttr, std::pair<LaunchKernelFunc, InitSizeListsFunc>>> func_list_;
+  static std::vector<std::pair<KernelAttr, LaunchKernelFunc>> func_list_;
 
   bool left_{true};
   bool transpose_{false};
-  std::vector<size_t> input_x_shape_;
-  std::vector<size_t> input_tau_shape_;
-  std::vector<size_t> input_other_shape_;
-  size_t input_x_dims_{0};
-  size_t input_tau_dims_{0};
-  size_t input_other_dims_{0};
-  size_t m_{0};
-  size_t n_{0};
-  size_t tau_n_{0};
-  size_t x_m_{0};
-  size_t x_n_{0};
-  size_t batch_size_{0};
-  bool is_null_input_;
-  size_t transpose_input_x_shape_[TRANSPOSE_MAX_DIMENSION] = {0};
-  size_t transpose_input_x_axis_[TRANSPOSE_MAX_DIMENSION] = {0};
-  size_t transpose_input_other_shape_[TRANSPOSE_MAX_DIMENSION] = {0};
-  size_t transpose_output_y_shape_[TRANSPOSE_MAX_DIMENSION] = {0};
+  int64_t m_{0};
+  int64_t n_{0};
+  int64_t tau_n_{0};
+  int64_t x_m_{0};
+  int64_t x_n_{0};
+  int64_t batch_size_{0};
+  int64_t unit_size_{0};
+  std::vector<int64_t> x_shape_;
+  std::vector<int64_t> transpose_x_axis_;
+  std::vector<int64_t> other_shape_;
+  std::vector<int64_t> transpose_output_shape_;
   cusolverDnHandle_t handle_{nullptr};
   cublasSideMode_t side_;
   cublasOperation_t trans_;
