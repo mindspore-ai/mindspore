@@ -431,12 +431,35 @@ class _TaylorOperation(TaylorOperation_):
         return self.grad_fn
 
 
-def _combine_with_ids(grad_position, weights, out):
-    """ Making resulting tuple, when return_ids is set to True. """
-    out_with_ids = []
-    position = 0
-    position_tuple = []
+def _combine_weight(grad_position, weights, out, out_with_ids):
+    """ Making resulting tuple for weight, when return_ids is set to True. """
     weight_tuple = []
+    position = 0
+    if isinstance(weights, (list, ParameterTuple, tuple)) and grad_position:
+        for weight in weights:
+            weight_tuple.append((weight.name, out[1][position]))
+            position += 1
+    elif isinstance(weights, (list, ParameterTuple, tuple)):
+        for weight in weights:
+            weight_tuple.append((weight.name, out[position]))
+            position += 1
+    elif grad_position:
+        weight_tuple.append(weights.name)
+        weight_tuple.append(out[1])
+    else:
+        weight_tuple.append(weights.name)
+        weight_tuple.append(out)
+    if grad_position:
+        out_with_ids.append(tuple(weight_tuple))
+    else:
+        out_with_ids = weight_tuple
+    return out_with_ids
+
+
+def _combine_position(grad_position, weights, out, out_with_ids):
+    """ Making resulting tuple for position, when return_ids is set to True. """
+    position_tuple = []
+    position = 0
     if grad_position == (0,) and weights is not None:
         position_tuple.append(0)
         position_tuple.append(out[0])
@@ -447,24 +470,26 @@ def _combine_with_ids(grad_position, weights, out):
         for index in grad_position:
             position_tuple.append((index, out[0][position]))
             position += 1
-        position = 0
     else:
         for index in grad_position:
             position_tuple.append((index, out[position]))
             position += 1
-        position = 0
-    out_with_ids.append(tuple(position_tuple))
-    if weights and isinstance(weights, (list, ParameterTuple)):
-        for weight in weights:
-            weight_tuple.append((weight.name, out[1][position]))
-            position += 1
-        out_with_ids.append(tuple(weight_tuple))
-    elif weights:
-        weight_tuple.append(weights.name)
-        weight_tuple.append(out[1])
-        out_with_ids.append(tuple(weight_tuple))
+    if weights:
+        out_with_ids.append(tuple(position_tuple))
     else:
         out_with_ids = position_tuple
+    return out_with_ids
+
+
+def _combine_with_ids(grad_position, weights, out):
+    """ Making resulting tuple, when return_ids is set to True. """
+    out_with_ids = []
+    if grad_position:
+        out_with_ids = _combine_position(
+            grad_position, weights, out, out_with_ids)
+    if weights is not None:
+        out_with_ids = _combine_weight(
+            grad_position, weights, out, out_with_ids)
     if not out_with_ids:
         raise ValueError(f"output tuple should not be a empty tuple.")
     return tuple(out_with_ids)

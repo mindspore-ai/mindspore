@@ -86,7 +86,19 @@ class GetGradEliminater : public AnfVisitor {
       grad_tuple_ = node;
     } else if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
       auto &input = node->inputs();
-      name_ = input[1]->ToString();
+      MS_EXCEPTION_IF_NULL(input[1]);
+      if (input[1]->isa<Parameter>()) {
+        auto para = dyn_cast<Parameter>(input[1]);
+        name_ = para->name();
+      } else if (IsValueNode<tensor::Tensor>(input[1])) {
+        auto tensor = GetValueNode<tensor::TensorPtr>(input[1]);
+        auto param_inf = tensor->param_info();
+        if (param_inf != nullptr) {
+          name_ = param_inf->name();
+        }
+      } else {
+        MS_LOG(EXCEPTION) << "suppose to get tensor or parameter, but got: " << input[1]->DebugString();
+      }
     }
   }
 
