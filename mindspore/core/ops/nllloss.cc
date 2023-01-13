@@ -40,13 +40,13 @@ class NLLLossInfer : public abstract::OpInferBase {
     auto weight_shape_ptr = input_args[kInputIndex2]->BuildShape();
     auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(weight_shape_ptr)[kShape];
 
-    const int64_t dims_2D = 2;
-    (void)CheckAndConvertUtils::CheckInteger("rank of logits", SizeToLong(logits_shape.size()), kEqual, dims_2D,
-                                             prim_name);
     (void)CheckAndConvertUtils::CheckInteger("rank of target", SizeToLong(target_shape.size()), kEqual, 1, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("rank of weight", SizeToLong(weight_shape.size()), kEqual, 1, prim_name);
 
     if (!logits_shape_ptr->IsDynamic()) {
+      const int64_t dims_2D = 2;
+      (void)CheckAndConvertUtils::CheckInteger("rank of logits", SizeToLong(logits_shape.size()), kEqual, dims_2D,
+                                               prim_name);
       if (!target_shape_ptr->IsDynamic() && logits_shape[kInputIndex0] != target_shape[kInputIndex0]) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name
                                  << "', the 'logits_dim0' and the shape of 'target' should be equal, but got "
