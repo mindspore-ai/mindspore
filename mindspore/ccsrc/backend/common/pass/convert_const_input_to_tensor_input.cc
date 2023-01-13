@@ -97,6 +97,7 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
     auto new_cnode = NewCNode(new_inputs, func_graph);
     MS_EXCEPTION_IF_NULL(new_cnode);
     new_cnode->set_primal_attrs(cnode->primal_attrs());
+    new_cnode->set_attrs(cnode->attrs());
     if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimDepend)) {
       new_cnode->set_abstract(new_inputs[1]->abstract());
     } else {
