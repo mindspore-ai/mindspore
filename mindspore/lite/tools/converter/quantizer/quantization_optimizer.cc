@@ -103,7 +103,12 @@ int DoDynamicQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<Converte
 
 std::shared_ptr<lite::Model> ParseLiteModel(const FuncGraphPtr &func_graph,
                                             const std::shared_ptr<ConverterPara> &param) {
-  auto meta_graph = Export(func_graph, true, true);
+  FuncGraphPtr func_graph_clone;
+  if (CloneFuncGraph(func_graph, param, &func_graph_clone) != RET_OK) {
+    MS_LOG(ERROR) << "Clone func_graph failed";
+    return nullptr;
+  }
+  auto meta_graph = Export(func_graph_clone, true, true);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta_graph failed";
     return nullptr;
