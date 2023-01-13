@@ -48,7 +48,9 @@ bool NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePt
 
 // Finalize ps cache module before throw an exception.
 void FinalizeEmbeddingCachePrefetch(const std::string &exception) {
-  EmbeddingCacheScheduler::GetInstance().Finalize();
+  MS_LOG(INFO) << "Begin finalize the EmbeddingCacheScheduler.";
+  EmbeddingCacheScheduler::GetInstance().Finalize(false);
+  MS_LOG(INFO) << "End finalize the EmbeddingCacheScheduler.";
   MS_LOG(EXCEPTION) << exception;
 }
 
@@ -399,15 +401,19 @@ void EmbeddingCacheScheduler::SyncEmbeddingTable() const {
   embedding_cache_prefetch_actor_->SyncEmbeddingTable();
 }
 
-void EmbeddingCacheScheduler::Finalize() {
+void EmbeddingCacheScheduler::Finalize(bool sync_embedding_table) {
+  std::lock_guard<std::mutex> lock(finalize_mutex_);
   if (!initialized_ || finalized_) {
     return;
+  }
+
+  if (sync_embedding_table) {
+    SyncEmbeddingTable();
   }
 
   MS_EXCEPTION_IF_NULL(embedding_cache_prefetch_actor_);
   // Stop the embedding cache prefetch_actor.
   embedding_cache_prefetch_actor_->Finalize();
-  // Note:SyncEmbeddingTable
 
   embedding_cache_table_manager.Finalize();
 

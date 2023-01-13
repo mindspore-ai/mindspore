@@ -1954,10 +1954,6 @@ bool PyIsCipherFile(const std::string &file_path) { return mindspore::IsCipherFi
 void FinalizeCluster() {
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
-    MS_LOG(INFO) << "Start finalize the EmbeddingCacheScheduler.";
-    runtime::EmbeddingCacheScheduler::GetInstance().Finalize();
-    MS_LOG(INFO) << "End finalize the EmbeddingCacheScheduler.";
-
     if (!distributed::cluster_exit_with_exception()) {
       MS_LOG(INFO) << "Start finalize the cluster instance.";
       // Finalize MindSpore cluster only when this process exits without any exception.

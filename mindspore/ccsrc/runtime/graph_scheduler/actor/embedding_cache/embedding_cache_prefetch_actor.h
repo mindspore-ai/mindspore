@@ -257,6 +257,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // The flag which indicates whether this actor is finalized.
   bool finalized_{false};
 
+  // Ensure that the Finalize function is multithreaded safe.
+  std::mutex finalize_mutex_;
+
   // The flag which indicates whether finish sync embedding table.
   bool finish_sync_embedding_table_{false};
   std::mutex sync_embedding_table_mutex_;

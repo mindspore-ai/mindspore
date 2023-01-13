@@ -170,15 +170,16 @@ void EmbeddingCachePrefetchActor::Initialize() {
 }
 
 void EmbeddingCachePrefetchActor::Finalize() {
+  std::lock_guard<std::mutex> lock(finalize_mutex_);
   if (!initialized_ || finalized_) {
     return;
   }
-  SyncEmbeddingTable();
+
+  PsDataPrefetch::GetInstance().NotifyFinalize();
 
   running_ = false;
   (void)FinalizeRemote();
 
-  PsDataPrefetch::GetInstance().NotifyFinalize();
   data_parser_.notify_all();
 
   if (emb_ops_ != nullptr) {
