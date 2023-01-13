@@ -7,8 +7,8 @@ mindspore.ops.sum
 
     参数：
         - **x** (Tensor) - 输入Tensor。
-        - **dim** (Union[None, int, tuple(int)]) - 求和的维度。如果 `dim` 为None，对Tensor中的所有元素求和。
-          如果 `dim` 为int组成的tuple，将对tuple中的所有维度求和，取值范围必须在 :math:`[-x.ndim, x.ndim)` 。默认值：None。
+        - **dim** (Union[None, int, tuple(int), list(int)]) - 求和的维度。如果 `dim` 为None，对Tensor中的所有元素求和。
+          如果 `dim` 为int组成的tuple或list，将对tuple中的所有维度求和，取值范围必须在 :math:`[-x.ndim, x.ndim)` 。默认值：None。
         - **keepdim** (bool) - 是否保持输出Tensor的维度，如果为True，保持对应的维度且长度为1。如果为False，不保持维度。默认值：False。
 
     关键字参数：
@@ -19,6 +19,6 @@ mindspore.ops.sum
 
     异常：
         - **TypeError** - `x` 不是Tensor类型。
-        - **TypeError** - `dim` 不是Tensor类型。
+        - **TypeError** - `dim` 类型不是int，tulpe(int)，list(int)或None。
         - **ValueError** - `dim` 取值不在 :math:`[-x.ndim, x.ndim)` 范围。
         - **TypeError** - `keepdim` 不是Tensor类型。

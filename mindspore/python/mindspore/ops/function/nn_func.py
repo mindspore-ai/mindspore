@@ -1185,6 +1185,14 @@ def dropout1d(x, p=0.5, training=True):
         >>> print(output.shape)
         (4, 3)
     """
+    if not isinstance(p, float):
+        raise TypeError(f"For dropout1d, 'p' must be float, but got type {type(p)}.")
+    if p < 0 or p > 1:
+        raise ValueError(f"For dropout1d, the 'p' must be a number in range [0, 1], but got {p}.")
+
+    if not isinstance(x, Tensor):
+        raise TypeError(f"For dropout1d, 'x' must be Tensor, but got type {type(x)}.")
+
     if not training:
         p = 0
     dropout_2d_op = NN_OPS.Dropout2D(1.0 - p)
@@ -1195,10 +1203,12 @@ def dropout1d(x, p=0.5, training=True):
         out, _ = dropout_2d_op(x)
         out = out.squeeze(-1)
         out = out.squeeze(0)
-    else:
+    elif len(x.shape) == 3:
         x = x.expand_dims(-1)
         out, _ = dropout_2d_op(x)
         out = out.squeeze(-1)
+    else:
+        raise ValueError(f"For dropout1d, x shape should be 2D or 3D, but got {len(x.shape)}.")
     return out
 
 
