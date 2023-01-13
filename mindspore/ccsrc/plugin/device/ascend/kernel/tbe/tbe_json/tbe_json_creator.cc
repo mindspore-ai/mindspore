@@ -356,6 +356,7 @@ void TbeJsonCreator::GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &o
   auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   for (const auto &attr_ptr : attrs_ptr) {
+    MS_EXCEPTION_IF_NULL(attr_ptr);
     std::string op_info_attr_name = attr_ptr->name();
     auto attr_name = SuperBar::GetSBMSAttrByKernelAttr(op_name, op_info_attr_name);
     nlohmann::json attr_obj;
@@ -431,6 +432,7 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
   MS_EXCEPTION_IF_NULL(cnode);
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
   auto func_name = op_info_ptr->kernel();
   (*compute_json)[kJFuncName] = func_name;
   auto python_module_path = op_info_ptr->impl_path();
@@ -593,6 +595,7 @@ void TbeJsonCreator::GenInputConstValue(const AnfNodePtr &anf_node, size_t real_
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   auto op_io_info = op_info_ptr->inputs_ptr().at(op_info_index);
+  MS_EXCEPTION_IF_NULL(op_io_info);
   auto value_depend = op_io_info->value_depend();
   if (value_depend.empty() || value_depend == kIgnored) {
     return;

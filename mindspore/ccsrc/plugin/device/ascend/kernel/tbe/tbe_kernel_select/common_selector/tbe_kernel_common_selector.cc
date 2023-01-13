@@ -28,6 +28,7 @@ void TbeKernelCommonSelector::GetSupportedFormatDType(SupportFormatDType *suppor
   MS_EXCEPTION_IF_NULL(op_info);
   auto is_dynamic_impl = IsKernelDynamicImpl(cnode_ptr_);
   for (const auto &input : op_info->inputs_ptr()) {
+    MS_EXCEPTION_IF_NULL(input);
     (void)support_format_dtype->input_dtypes.emplace_back(input->dtypes());
     if (is_dynamic_impl) {
       (void)support_format_dtype->input_formats.emplace_back(input->unknown_shape_formats());
@@ -36,6 +37,7 @@ void TbeKernelCommonSelector::GetSupportedFormatDType(SupportFormatDType *suppor
     }
   }
   for (const auto &output : op_info->outputs_ptr()) {
+    MS_EXCEPTION_IF_NULL(output);
     (void)support_format_dtype->output_dtypes.emplace_back(output->dtypes());
     if (is_dynamic_impl) {
       (void)support_format_dtype->output_formats.emplace_back(output->unknown_shape_formats());

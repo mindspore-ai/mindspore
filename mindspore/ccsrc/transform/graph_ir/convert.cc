@@ -2750,8 +2750,8 @@ void DfGraphConvertor::ConvertConv2D(const CNodePtr &node) {
   auto primitive = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   std::string pad_mode;
-  if (auto value = primitive->GetAttr("padding"); value != nullptr) {
-    pad_mode = GetValue<std::string>(value);
+  if (auto pad_value = primitive->GetAttr("padding"); pad_value != nullptr) {
+    pad_mode = GetValue<std::string>(pad_value);
   } else if (auto value = primitive->GetAttr("pad_mode"); value != nullptr) {
     // Get 'pad_mode' attr and set it to 'padding' attr for ge
     const mindspore::HashMap<int64_t, std::string> pad_mode_map{{1, "SAME"}, {2, "VALID"}};
