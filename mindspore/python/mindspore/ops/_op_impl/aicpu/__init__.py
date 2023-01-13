@@ -234,3 +234,8 @@ from .sinc import _sinc_aicpu
 from .sinh import _sinh_aicpu
 from .smooth_l1_loss_grad import _smooth_l1_loss_grad_aicpu
 from .smooth_l1_loss import _smooth_l1_loss_aicpu
+from .cumulative_logsumexp import _cumulative_logsumexp_aicpu
+from .nuclear_norm import _nuclear_norm_aicpu
+from .sparse_segment_sqrt_n import _sparse_segment_sqrt_n_aicpu
+from .unsorted_segment_prod import _unsorted_segment_prod_aicpu
+from .scale_and_translate import _scale_and_translate_aicpu
