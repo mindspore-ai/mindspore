@@ -98,8 +98,9 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     Args:
         x (Tensor): A matrix to be calculated. The matrix must be at least two dimensions.
             Only `float32`, `float64` are supported Tensor dtypes.
-        When hermitian is false, 2 and higher dimensions are supported, and the shape is :math:`(*, M, N)`.
-        When hermitian is true, only 2 dimensions are supported, and the shape is :math:`(M, N)`.
+
+            - When hermitian is false, 2 and higher dimensions are supported, and the shape is :math:`(*, M, N)`.
+            - When hermitian is true, only 2 dimensions are supported, and the shape is :math:`(M, N)`.
 
     Keyword args:
         atol (float, Tensor): absolute tolerance value. Default: None.
@@ -107,9 +108,10 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         hermitian (bool): An optional bool. x is assumed to be symmetric if real. Default: False.
 
     Outputs:
-        output (Tensor): same type as input.
-        When hermitian is false, the output shape is :math:`(*, N, M)`.
-        When hermitian is true, the output shape is :math:`(N, M)`.
+        - **output** (Tensor) - same type as input.
+
+          - When hermitian is false, the output shape is :math:`(*, N, M)`.
+          - When hermitian is true, the output shape is :math:`(N, M)`.
 
     Raises:
         TypeError: If `hermitian` is not a bool.

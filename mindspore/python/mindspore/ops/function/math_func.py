@@ -5571,10 +5571,10 @@ def frac(x):
     """
     Calculates the fractional part of each element in the input
 
-    Inputs:
-        - x (Tensor) - x is a tensor.
+    Args:
+        x (Tensor): x is a tensor.
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and type as input.
 
     Raises:
