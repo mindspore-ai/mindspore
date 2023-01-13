@@ -3120,7 +3120,8 @@ def l1_loss(x, target, reduction='mean'):
 
     Args:
         x (Tensor): Predicted value, Tensor of any dimension.
-        target (Tensor): Target value, same shape as the `x` .
+        target (Tensor): Target value, usually has the same shape as the `x`. If `x` and `target` have different shape,
+            make sure they can broadcast to each other.
         reduction (str, optional): Type of reduction to be applied to loss. The optional value is "mean", "sum" or
             "none". Default: "mean".
 
@@ -3131,7 +3132,6 @@ def l1_loss(x, target, reduction='mean'):
         TypeError: If `x` is not a Tensor.
         TypeError: If `target` is not a Tensor.
         ValueError: If `reduction` is not one of "none", "mean" or "sum".
-        ValueError: If `x` and `target` have different shapes.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3147,8 +3147,6 @@ def l1_loss(x, target, reduction='mean'):
     _check_is_tensor('target', target, "l1_loss")
     if reduction not in ('mean', 'sum', 'none'):
         raise ValueError(f"For l1_loss, the 'reduction' must be in ['mean', 'sum', 'none'], but got {reduction}.")
-    if x.shape != target.shape:
-        raise ValueError(f"For l1_loss, x and target must be the same shape, but got {x.shape} and {target.shape}")
     loss = _get_cache_prim(P.Abs)()(x - target)
     return _get_loss(loss, reduction, "l1_loss")
 
