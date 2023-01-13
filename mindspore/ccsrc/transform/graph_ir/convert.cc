@@ -40,6 +40,8 @@
 #include "ops/data_flow_ops.h"
 #include "transform/graph_ir/op_adapter.h"
 #include "transform/graph_ir/op_adapter_desc.h"
+#include "kernel/kernel.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace transform {
@@ -2910,6 +2912,7 @@ std::map<std::string, ValuePtr> GeOpConvertor::GetAttrAndValue(const AnfNodePtr 
   }
 
   OpAdapterPtr adpt = FindAdapter(node, training);
+  adpt = GetForReduceAdapter(node, adpt);
   if (adpt == nullptr) {
     MS_LOG(INFO) << "Current node can't find adpt! node info:" << node->DebugString();
     return attr_list;
@@ -2922,6 +2925,7 @@ std::map<std::string, ValuePtr> GeOpConvertor::GetAttrAndValue(const AnfNodePtr 
 std::string GeOpConvertor::GetOpType(const AnfNodePtr &node, const bool training = true) {
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adpt = FindAdapter(node, training);
+  adpt = GetForReduceAdapter(node, adpt);
   if (adpt == nullptr) {
     MS_LOG(INFO) << "Current node can't find adpt! node info:" << node->DebugString();
     return "";
@@ -2940,6 +2944,7 @@ std::shared_ptr<GeTensorDesc> GeOpConvertor::GetTensorDesc(const ShapeVector &de
 mindspore::HashSet<size_t> GeOpConvertor::GetNeedRemoveInput(const AnfNodePtr &node, const bool training) {
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adpt = FindAdapter(node, training);
+  adpt = GetForReduceAdapter(node, adpt);
   if (adpt == nullptr) {
     MS_LOG(INFO) << "Current node can't find adpt! node info:" << node->DebugString();
     return {};
@@ -2971,6 +2976,7 @@ mindspore::HashSet<size_t> GeOpConvertor::GetNeedRemoveInput(const AnfNodePtr &n
 std::map<std::string, unsigned int> GeOpConvertor::GetNeedAddInput(const AnfNodePtr &node, const bool training) {
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adpt = FindAdapter(node, training);
+  adpt = GetForReduceAdapter(node, adpt);
   if (adpt == nullptr) {
     MS_LOG(INFO) << "Current node can't find adpt! node info:" << node->DebugString();
     return {};
@@ -2982,6 +2988,7 @@ std::map<std::string, unsigned int> GeOpConvertor::GetNeedAddInput(const AnfNode
 bool GeOpConvertor::IsDynamicInput(const AnfNodePtr &node, const size_t idx) {
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adapterPtr = FindAdapter(node, true);
+  adapterPtr = GetForReduceAdapter(node, adapterPtr);
   if (adapterPtr == nullptr) {
     MS_LOG(INFO) << "Can't find a adapter for op:" << node->DebugString();
     return false;
@@ -2992,6 +2999,7 @@ bool GeOpConvertor::IsDynamicInput(const AnfNodePtr &node, const size_t idx) {
 size_t GeOpConvertor::GetAclInputSize(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adapterPtr = FindAdapter(node, true);
+  adapterPtr = GetForReduceAdapter(node, adapterPtr);
   if (adapterPtr == nullptr) {
     MS_LOG(EXCEPTION) << "Can't find a adapter for op:" << node->DebugString();
   }
@@ -3001,10 +3009,19 @@ size_t GeOpConvertor::GetAclInputSize(const AnfNodePtr &node) {
 size_t GeOpConvertor::GetAclOutputSize(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adapterPtr = FindAdapter(node, true);
+  adapterPtr = GetForReduceAdapter(node, adapterPtr);
   if (adapterPtr == nullptr) {
     MS_LOG(EXCEPTION) << "Can't find a adapter for op:" << node->DebugString();
   }
   return adapterPtr->getOutputMap().size();
+}
+
+OpAdapterPtr GeOpConvertor::GetForReduceAdapter(const AnfNodePtr &node, const OpAdapterPtr &adapter) {
+  auto op_name = common::AnfAlgo::GetCNodeName(node);
+  if (op_name == prim::kPrimReduceSum->name()) {
+    return FindAdapter("ReduceSumD", true);
+  }
+  return adapter;
 }
 }  // namespace transform
 }  // namespace mindspore

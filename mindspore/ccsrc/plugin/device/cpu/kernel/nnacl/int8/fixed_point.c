@@ -16,6 +16,8 @@
 
 #include "nnacl/int8/fixed_point.h"
 
+#define C31NUM 31
+
 // returns the high-32 bits of a * b with rounding
 // assume that a and b is divided by 2^31, who fall into [-1, 1]
 // so the mantissa of a * b is (a / 2^31) * (b / 2^31) * 2^31= (a * b) / 2^31
@@ -44,6 +46,9 @@ int16_t SaturatingRoundingDoublingHighMulInt16(int16_t a, int16_t b) {
 // division by a 2^exponent with rounding
 // or arithmetic right shift with rounding
 int RoundingDivideByPOT(int x, int exponent) {
+  if (exponent > C31NUM) {
+    exponent = C31NUM;
+  }
   const int mask = (1ll << exponent) - 1;
   const int remainder = x & mask;
   const int threshold = (mask >> 1) + (x < 0 ? 1 : 0);
