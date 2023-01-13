@@ -1,7 +1,7 @@
 mindspore.ops.ravel
 ======================
 
-.. py:method:: mindspore.ops.ravel(x)
+.. py:function:: mindspore.ops.ravel(x)
 
     返回一个展开的一维Tensor。
 

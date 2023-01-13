@@ -1,7 +1,7 @@
 mindspore.ops.cosine_embedding_loss
 ===================================
 
-.. py:class:: mindspore.ops.cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean")
+.. py:function:: mindspore.ops.cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean")
 
     余弦相似度损失函数，用于测量两个Tensor之间的相似性。
 
