@@ -78,6 +78,12 @@ def bprop_list_getitem(data, idx, out, dout):
     return F.list_setitem(zeros_like(data), idx, dout), zeros_like(idx)
 
 
+@bprops.register("dict_getitem")
+def bprop_dict_getitem(data, key, out, dout):
+    """Backpropagator for primitive `dict_getitem`."""
+    return F.dict_setitem(C.zeros_like(data), key, dout), key
+
+
 @bprops.register("identity")
 def bprop_identity(x, out, dout):
     """Backpropagator for primitive `identity`."""

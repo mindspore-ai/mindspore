@@ -21,6 +21,7 @@
 #include "ir/dtype.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#include "ir/value.h"
 
 namespace mindspore {
 static std::string DumpTypeVector(const std::vector<TypePtr> &elements, bool is_dumptext, bool is_dynamic = false,
@@ -249,26 +250,25 @@ TypePtr Dictionary::DeepCopy() const {
   if (IsGeneric()) {
     return std::make_shared<Dictionary>();
   } else {
-    std::vector<std::pair<TypePtr, TypePtr>> kv;
-    (void)std::transform(key_values_.cbegin(), key_values_.cend(), std::back_inserter(kv),
-                         [](const std::pair<TypePtr, TypePtr> &item) {
-                           return std::make_pair(item.first->DeepCopy(), item.second->DeepCopy());
-                         });
+    std::vector<std::pair<ValuePtr, TypePtr>> kv;
+    (void)std::transform(
+      key_values_.cbegin(), key_values_.cend(), std::back_inserter(kv),
+      [](const std::pair<ValuePtr, TypePtr> &item) { return std::make_pair(item.first, item.second->DeepCopy()); });
     return std::make_shared<Dictionary>(kv);
   }
 }
 
-std::string DumpKeyVector(std::vector<std::string> keys) {
+std::string DumpKeyVector(const std::vector<ValuePtr> &keys) {
   std::ostringstream buffer;
-  for (auto key : keys) {
-    buffer << key << ",";
+  for (const auto &key : keys) {
+    buffer << key->ToString() << ",";
   }
   return buffer.str();
 }
 
 std::string Dictionary::DumpContent(bool) const {
   std::ostringstream buffer;
-  std::vector<TypePtr> keys;
+  std::vector<ValuePtr> keys;
   std::vector<TypePtr> values;
   for (const auto &kv : key_values_) {
     keys.push_back(kv.first);
@@ -278,7 +278,7 @@ std::string Dictionary::DumpContent(bool) const {
     buffer << "Dictionary";
   } else {
     buffer << "Dictionary[";
-    buffer << "[" << DumpTypeVector(keys, false) << "],";
+    buffer << "[" << DumpKeyVector(keys) << "],";
     buffer << "[" << DumpTypeVector(values, false) << "]";
     buffer << "]";
   }

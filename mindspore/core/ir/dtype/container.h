@@ -200,7 +200,7 @@ class MS_CORE_API Dictionary final : public Object {
   /// \brief Constructor for Dictionary.
   ///
   /// \param[in] key_values The elements of Dictionary.
-  explicit Dictionary(const std::vector<std::pair<TypePtr, TypePtr>> &key_values)
+  explicit Dictionary(const std::vector<std::pair<ValuePtr, TypePtr>> &key_values)
       : Object(kObjectTypeDictionary, false), key_values_(key_values) {}
 
   /// \brief Destructor of Dictionary.
@@ -214,13 +214,18 @@ class MS_CORE_API Dictionary final : public Object {
   std::string ToString() const override { return DumpContent(false); }
   std::string DumpText() const override { return DumpContent(true); }
 
+  /// \brief Get the keys and values.
+  ///
+  /// \return A vector of pairs of ValuePtr and TypePtr.
+  const std::vector<std::pair<ValuePtr, TypePtr>> &key_values() const { return key_values_; }
+
  private:
   /// \brief Show each element.
   ///
   /// \param[in] is_dumptext whether to show each element DumpText
   /// \return The description of the Dictionary object.
   std::string DumpContent(bool) const;
-  std::vector<std::pair<TypePtr, TypePtr>> key_values_;
+  std::vector<std::pair<ValuePtr, TypePtr>> key_values_;
 };
 using DictionaryPtr = std::shared_ptr<Dictionary>;
 }  // namespace mindspore

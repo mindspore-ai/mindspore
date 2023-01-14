@@ -133,7 +133,7 @@ void RegTyping(py::module *m) {
     .def(py::init<std::vector<TypePtr>>(), py::arg("elements"));
   (void)py::class_<Dictionary, Type, std::shared_ptr<Dictionary>>(m_sub, "Dict")
     .def(py::init())
-    .def(py::init<std::vector<std::pair<TypePtr, TypePtr>>>(), py::arg("key_values"));
+    .def(py::init<std::vector<std::pair<ValuePtr, TypePtr>>>(), py::arg("key_values"));
   (void)py::class_<TensorType, Type, std::shared_ptr<TensorType>>(m_sub, "TensorType")
     .def(py::init())
     .def(py::init<TypePtr>(), py::arg("element"))

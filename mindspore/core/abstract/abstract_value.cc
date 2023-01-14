@@ -1320,11 +1320,11 @@ std::string AbstractTensor::ToString() const {
 }
 
 TypePtr AbstractDictionary::BuildType() const {
-  std::vector<std::pair<TypePtr, TypePtr>> key_values;
+  std::vector<std::pair<ValuePtr, TypePtr>> key_values;
   for (const auto &item : key_values_) {
     MS_EXCEPTION_IF_NULL(item.first);
     MS_EXCEPTION_IF_NULL(item.second);
-    TypePtr key_type = item.first->BuildType();
+    ValuePtr key_type = item.first->BuildValue();
     TypePtr value_type = item.second->BuildType();
     key_values.emplace_back(key_type, value_type);
   }
