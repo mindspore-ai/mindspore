@@ -11,6 +11,7 @@ function PrePareLocal() {
   cp -r ./python ${benchmark_test_path} || exit 1
   cp -r ./cpp ${benchmark_test_path} || exit 1
   cp ./scripts/ascend/*.sh ${benchmark_test_path} || exit 1
+  cp ./scripts/cloud_infer/run_benchmark_cloud_ascend.sh ${benchmark_test_path} || exit 1
   if [[ ${backend} =~ "_cloud" ]]; then
       models_ascend_config=./../${config_folder}/models_ascend_cloud.cfg
       if [[ ${backend} =~ "_ge" ]]; then
@@ -18,6 +19,7 @@ function PrePareLocal() {
       fi
       cp ${models_ascend_config} ${benchmark_test_path} || exit 1
       cp ./../${config_folder}/models_python_ascend.cfg ${benchmark_test_path} || exit 1
+      cp ./../${config_folder}/cloud_infer/models_mindir_cloud_ascend.cfg ${benchmark_test_path} || exit 1
   else
       cp ./../${config_folder}/models_ascend_lite.cfg ${benchmark_test_path} || exit 1
   fi
@@ -54,6 +56,7 @@ function PrePareRemote() {
       fi
       scp ${models_ascend_config} ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
       scp ./../${config_folder}/models_python_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+      scp ./../${config_folder}/cloud_infer/models_mindir_cloud_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   else
       scp ./../${config_folder}/models_ascend_lite.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   fi
