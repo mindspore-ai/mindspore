@@ -184,7 +184,8 @@ REG_ADPT_DESC(CeLU, prim::kPrimCeLU->name(), ADPT_DESC(CeluV2))
 INPUT_MAP(FastGelu) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(FastGelu) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(FastGelu) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(FastGelu, prim::kPrimFastGeLU->name(), ADPT_DESC(FastGelu))
+REG_ADPT_DESC(FastGeLU, prim::kPrimFastGeLU->name(), ADPT_DESC(FastGelu))
+REG_ADPT_DESC(FastGelu, prim::kPrimFastGelu->name(), ADPT_DESC(FastGelu))
 
 // FastGeLUGrad
 INPUT_MAP(FastGeluGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}};

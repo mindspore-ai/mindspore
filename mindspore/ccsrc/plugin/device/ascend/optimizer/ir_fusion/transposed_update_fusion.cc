@@ -30,7 +30,9 @@ constexpr size_t kInt32Len = 4;
 tensor::TensorPtr CreatePermTensor(const CNodePtr &transposed) {
   auto perm_attr = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(transposed, kAttrPerm);
   std::vector<int32_t> perm;
-  (void)std::transform(perm_attr.begin(), perm_attr.end(), std::back_inserter(perm), LongToInt);
+  (void)std::transform(perm_attr.begin(), perm_attr.end(), std::back_inserter(perm), [&perm_attr](auto v) {
+    return v < 0 ? SizeToInt(perm_attr.size()) + LongToInt(v) : LongToInt(v);
+  });
   std::vector<int64_t> perm_shape = {SizeToLong(perm.size())};
   TensorTypePtr tensor_type = std::make_shared<TensorType>(kInt32);
   tensor::DeviceInfo device_info{kOpFormat_DEFAULT, tensor_type};

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-
+import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -50,3 +50,26 @@ def test_net():
     input_ = np.random.randn(8, 24, 1, 1).astype(np.float16)
     perm = (0, 2, 3, 1)
     ms_transpose(input_, perm)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_transpose_dynamic(mode):
+    """
+    Feature: test transpose dynamic
+    Description: test transpose dynamic with graph and pynative mode
+    Expectation: none.
+    """
+    context.set_context(mode=mode)
+    perm = (1, 2, 3, 4, 5, -1, 0)
+    in_shape = (2, 4, 8, 16, 1, 16, 30)
+    np_value = np.random.uniform(0, 100, size=in_shape).astype(np.float16)
+    transpose = Net(perm)
+    real_input = Tensor(np_value)
+    dyn_input = Tensor(shape=[None for _ in real_input.shape], dtype=real_input.dtype)
+    transpose.set_inputs(dyn_input)
+    out = transpose(real_input)
+    return out

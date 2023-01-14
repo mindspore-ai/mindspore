@@ -137,6 +137,7 @@
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_hccl_op.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_cascade.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_pad_for_nms_with_mask.h"
+#include "plugin/device/ascend/optimizer/enhancer/transpose_optimizer.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_transdata_for_runop.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_transpose_for_sort.h"
 #include "plugin/device/ascend/optimizer/enhancer/getnext_tensor_move_elimination.h"
@@ -341,6 +342,7 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
   mixed_precision_pm->AddPass(std::make_shared<TransOpFormatRefine>());
   mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
   mixed_precision_pm->AddPass(std::make_shared<TransposedUpdateFusion>());
+  mixed_precision_pm->AddPass(std::make_shared<TransposeOptimizer>());
   mixed_precision_pm->AddPass(std::make_shared<ConvertUnSupportNodeToAICPU>());
   mixed_precision_pm->AddPass(std::make_shared<RemoveInternalOutputCast>());
   optimizer->AddPassManager(mixed_precision_pm);

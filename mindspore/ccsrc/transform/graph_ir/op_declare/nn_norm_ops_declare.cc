@@ -148,6 +148,7 @@ INPUT_MAP(DropOutDoMask) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}, {3, INPUT
 ATTR_MAP(DropOutDoMask) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(DropOutDoMask) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DropOutDoMask, kDropOutDoMaskOpName, ADPT_DESC(DropOutDoMask))
+REG_ADPT_DESC(DropoutDoMask, kDropoutDoMaskOpName, ADPT_DESC(DropOutDoMask))
 
 // BinaryCrossEntropy
 INPUT_MAP(BinaryCrossEntropy) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}, {3, INPUT_DESC(weight)}};
