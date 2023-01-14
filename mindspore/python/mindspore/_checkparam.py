@@ -848,18 +848,18 @@ class Validator:
 
     @staticmethod
     def check_swapaxes_axis(axes, ndim):
-        """Check all the axes argument for tensor.swapaxes"""
+        """Check all the axes argument for ops.swapaxes"""
         if isinstance(axes, int):
             Validator.check_axis_in_range(axes, ndim)
             return axes % ndim
         if isinstance(axes, (tuple, list)):
             for axis in axes:
                 if not isinstance(axis, int):
-                    raise TypeError(f"For Tensor.swapaxes, the axis argument must be integer, but got {type(axis)}.")
+                    raise TypeError(f"For ops.swapaxes, the axis argument must be integer, but got {type(axis)}.")
                 Validator.check_axis_in_range(axis, ndim)
             axes = tuple(map(lambda x: x % ndim, axes))
             return axes
-        raise TypeError(f"For Tensor.swapaxes, the argument 'axes' must be integer, list or tuple for check, "
+        raise TypeError(f"For ops.swapaxes, the argument 'axes' must be integer, list or tuple for check, "
                         f"but got {type(axes)}.")
 
     @staticmethod

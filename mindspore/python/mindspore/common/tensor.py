@@ -1819,22 +1819,7 @@ class Tensor(Tensor_):
             (4,3,2)
         """
         self._init_check()
-        axis1, axis2 = validator.check_swapaxes_axis((axis1, axis2), self.ndim)
-
-        if axis1 == axis2:
-            return self
-        if axis1 > axis2:
-            axis1, axis2 = axis2, axis1
-
-        perm = tuple(range(0, self.ndim))
-        if axis2 + 1 < self.ndim:
-            new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
-        else:
-            new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
-
-        return tensor_operator_registry.get('transpose')()(self, new_perm)
+        return tensor_operator_registry.get('swapaxes')(self, axis1, axis2)
 
     def squeeze(self, axis=None):
         """
