@@ -10,6 +10,6 @@ pandas >= 1.0.2             # for ut test
 packaging >= 20.0
 pycocotools >= 2.0.2        # for st test
 tables >= 3.6.1             # for st test
-easydict >= 1.9             # for st test
+easydict >= 1.9             #  for st test
 psutil >= 5.7.0
 astunparse >= 1.6.3
