@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,7 +174,8 @@ bool GRUCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
                   reinterpret_cast<float *>(inputs[kInputWeightIndex]->addr) + weight_size_ + weight_h_size_);
   } else {
     auto size = GetSize(bias_desc_);
-    if (memset_s(GetDataHandle(bias_memory_), size, 0, size)) {
+    auto ret = memset_s(GetDataHandle(bias_memory_), size, 0, size);
+    if (ret != EOK) {
       MS_LOG(EXCEPTION) << "Bias memset error";
     }
   }

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,7 +226,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
   }
 
   // DictGetItem --> PyExecute()
-  AnfNodePtr RebuidDictGetItem(const CNodePtr &node) const {
+  AnfNodePtr RebuildDictGetItem(const CNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     // Inputs should be [dict_setitem, dict, item]
     const size_t expect_inputs_size = 3;
@@ -291,7 +291,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
   AnfNodePtr ConvertDictGetItem(const CNodePtr &node) {
     static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
     if (support_fallback_runtime && is_dict_output_) {
-      return RebuidDictGetItem(node);
+      return RebuildDictGetItem(node);
     }
     return ConvertDictGetItemToTupleGetItem(node);
   }

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
     MS_LOG(EXCEPTION) << "The lists in HyperMap should have the same length. " << oss.str();
   }
 
-  // cannot use shared_from_base() also known as this, as it will make a reference cycle on
+  // Cannot use shared_from_base() also known as this, as it will make a reference cycle on
   // hypermap and graph generated, it will cause memory leak.
   auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
   constexpr size_t kPrimHoldLen = 1;
@@ -205,7 +205,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
     MS_LOG(EXCEPTION) << "The length of tuples in HyperMap must be the same. " << oss.str();
   }
 
-  // cannot use shared_from_base() also known as this, as it will make a reference cycle on
+  // Cannot use shared_from_base() also known as this, as it will make a reference cycle on
   // hypermap and graph generated, it will cause memory leak.
   auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
   constexpr size_t kPrimHoldLen = 1;
@@ -462,7 +462,7 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   // Make fprop first result, PyExecute's forward result.
   AnfNodePtr out = fg->NewCNodeInOrder(params);
 
-  // make fprop second result, PyExecute's backward function.
+  // Make fprop second result, PyExecute's backward function.
   FuncGraphPtr bprop = std::make_shared<FuncGraph>();
 
   ss.str(std::string());
@@ -1252,7 +1252,7 @@ FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   vmap_fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   vmap_fg->debug_info()->set_name(ss.str());
 
-  // add parameter for `fn`, `in_axes` and `out_axes` respectively.
+  // Add parameter for `fn`, `in_axes` and `out_axes` respectively.
   ParameterPtr param_graph = vmap_fg->add_parameter();
   (void)vmap_fg->add_parameter();
   (void)vmap_fg->add_parameter();
