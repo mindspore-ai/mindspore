@@ -227,6 +227,10 @@ RTS_API rtError_t rtGetEventID(rtEvent_t event, uint32_t *event_id) {
   return RT_ERROR_NONE;
 }
 
+RTS_API rtError_t rtGetDeviceInfo(uint32_t deviceId, int32_t moduleType, int32_t infoType, int64_t *val) {
+  return RT_ERROR_NONE;
+}
+
 int DlogReportInitialize(void) { return 0; }
 
 int DlogReportFinalize(void) { return 0; }
