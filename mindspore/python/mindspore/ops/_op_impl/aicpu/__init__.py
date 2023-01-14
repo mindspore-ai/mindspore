@@ -40,6 +40,7 @@ from .dynamic_stitch import _dynamic_stitch_aicpu
 from .get_next import _get_next_aicpu
 from .print_tensor import _print_aicpu
 from .topk import _top_k_aicpu
+from .tensor_scatter_update import _tensor_scatter_update_aicpu
 from .log1p import _log1p_aicpu
 from .asin import _asin_aicpu
 from .is_finite import _is_finite_aicpu
@@ -148,6 +149,8 @@ from .bias_add_grad import _bias_add_grad_aicpu
 from .grid_sampler_2d import _grid_sampler_2d_aicpu
 from .grid_sampler_2d_grad import _grid_sampler_2d_grad_aicpu
 from .sparse_segment_mean_grad import _sparse_segment_mean_grad_aicpu
+from .scatter_nd import _scatter_nd_aicpu
+from .scatter_nd_update import _scatter_nd_update_aicpu
 from .scatter_nd_max import _scatter_nd_max_aicpu
 from .conj import _conj_aicpu
 from .scatter_nd_min import _scatter_nd_min_aicpu
@@ -225,8 +228,6 @@ from .rgb_to_hsv import _rgb_to_hsv_aicpu
 from .rsqrt_grad import _rsqrt_grad_aicpu
 from .sample_distorted_bounding_box_v2 import _sample_distorted_bounding_box_v2_aicpu
 from .scale_and_translate_grad import _scale_and_translate_grad_aicpu
-from .scatter_nd import _scatter_nd_aicpu
-from .scatter_nd_update import _scatter_nd_update_aicpu
 from .select import _select_aicpu
 from .self_adjoint_eig import _self_adjoint_eig_aicpu
 from .sin import _sin_aicpu

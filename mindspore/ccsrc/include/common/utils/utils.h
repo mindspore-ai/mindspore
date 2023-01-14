@@ -324,6 +324,7 @@ constexpr auto kGammaOpName = "Gamma";
 constexpr auto kGatherDGradV2OpName = "GatherDGradV2";
 constexpr auto kGatherDOpName = "GatherD";
 constexpr auto kGatherOpName = "Gather";
+constexpr auto kGatherNdOpName = "GatherNd";
 constexpr auto kGatherV2OpName = "GatherV2";
 constexpr auto kGatherV2DOpName = "GatherV2D";
 constexpr auto kGeLUOpName = "GeLU";
