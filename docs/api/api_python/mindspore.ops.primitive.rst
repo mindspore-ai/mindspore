@@ -55,7 +55,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Conv3DTranspose
     mindspore.ops.CTCGreedyDecoder
     mindspore.ops.DataFormatVecPermute
-    mindspore.ops.Dilation2D
     mindspore.ops.Dropout
     mindspore.ops.Dropout2D
     mindspore.ops.Dropout3D
@@ -65,10 +64,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Flatten
     mindspore.ops.FractionalAvgPool
     mindspore.ops.FractionalMaxPool
-    mindspore.ops.FractionalMaxPoolWithFixedKsize
-    mindspore.ops.FractionalMaxPool3DWithFixedKsize
-    mindspore.ops.GridSampler2D
-    mindspore.ops.GridSampler3D
     mindspore.ops.LayerNorm
     mindspore.ops.LRN
     mindspore.ops.LSTM
@@ -78,10 +73,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.MaxPoolWithArgmax
     mindspore.ops.MaxUnpool2D
     mindspore.ops.MirrorPad
-    mindspore.ops.NthElement
-    mindspore.ops.NuclearNorm
     mindspore.ops.Pad
-    mindspore.ops.PadV3
     mindspore.ops.Padding
     mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.ResizeBilinear
@@ -99,11 +91,9 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.BCEWithLogitsLoss
     mindspore.ops.BinaryCrossEntropy
     mindspore.ops.CTCLoss
-    mindspore.ops.CTCLossV2
     mindspore.ops.KLDivLoss
     mindspore.ops.L2Loss
     mindspore.ops.MultilabelMarginLoss
-    mindspore.ops.MultiMarginLoss
     mindspore.ops.NLLLoss
     mindspore.ops.RNNTLoss
     mindspore.ops.SigmoidCrossEntropyWithLogits
@@ -111,7 +101,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.SoftMarginLoss
     mindspore.ops.SoftmaxCrossEntropyWithLogits
     mindspore.ops.SparseSoftmaxCrossEntropyWithLogits
-    mindspore.ops.TripletMarginLoss
 
 激活函数
 ^^^^^^^^^^
@@ -121,7 +110,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.CeLU
     mindspore.ops.Elu
     mindspore.ops.FastGeLU
     mindspore.ops.GeLU
@@ -152,8 +140,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Adam
     mindspore.ops.AdamWeightDecay
     mindspore.ops.AdaptiveAvgPool2D
-    mindspore.ops.AdaptiveAvgPool3D
-    mindspore.ops.AdaptiveMaxPool2D
     mindspore.ops.AdaptiveMaxPool3D
     mindspore.ops.ApplyAdadelta
     mindspore.ops.ApplyAdagrad
@@ -210,7 +196,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     :template: classtemplate.rst
     
     mindspore.ops.AdjustHue
-    mindspore.ops.AdjustSaturation
     mindspore.ops.BoundingBoxDecode
     mindspore.ops.BoundingBoxEncode
     mindspore.ops.CheckValid
@@ -222,11 +207,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.IOU
     mindspore.ops.L2Normalize
     mindspore.ops.NMSWithMask
-    mindspore.ops.NonMaxSuppressionWithOverlaps
-    mindspore.ops.PSROIPooling
     mindspore.ops.RGBToHSV
-    mindspore.ops.ResizeArea
-    mindspore.ops.ResizeBilinearV2
     mindspore.ops.ROIAlign
     mindspore.ops.SampleDistortedBoundingBoxV2
     mindspore.ops.ScaleAndTranslate
@@ -260,15 +241,8 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Betainc
     mindspore.ops.Bincount
     mindspore.ops.Bucketize
-    mindspore.ops.Cauchy
-    mindspore.ops.Cholesky
-    mindspore.ops.CholeskyInverse
-    mindspore.ops.CholeskySolve
     mindspore.ops.CompareAndBitpack
     mindspore.ops.Complex
-    mindspore.ops.ComplexAbs
-    mindspore.ops.Cross
-    mindspore.ops.CumulativeLogsumexp
     mindspore.ops.Gcd
 
 逐元素运算
@@ -301,7 +275,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Conj
     mindspore.ops.Cos
     mindspore.ops.Cosh
-    mindspore.ops.Digamma
     mindspore.ops.Div
     mindspore.ops.DivNoNan
     mindspore.ops.Einsum
@@ -313,7 +286,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Floor
     mindspore.ops.FloorDiv
     mindspore.ops.FloorMod
-    mindspore.ops.Geqrf
     mindspore.ops.Imag
     mindspore.ops.Inv
     mindspore.ops.Invert
@@ -349,7 +321,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.TruncateMod
     mindspore.ops.Xdivy
     mindspore.ops.Xlogy
-    mindspore.ops.Zeta
     
 
 Reduction算子
@@ -412,9 +383,6 @@ Reduction算子
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
     mindspore.ops.Orgqr
-    mindspore.ops.Qr
-    mindspore.ops.Svd
-    mindspore.ops.TridiagonalMatMul
 
 Tensor操作算子
 ----------------
@@ -446,18 +414,12 @@ Tensor创建
     :template: classtemplate.rst
 
     mindspore.ops.Gamma
-    mindspore.ops.LogNormalReverse
     mindspore.ops.Multinomial
-    mindspore.ops.NonDeterministicInts
-    mindspore.ops.ParameterizedTruncatedNormal
     mindspore.ops.RandomCategorical
     mindspore.ops.RandomChoiceWithMask
-    mindspore.ops.RandomGamma
-    mindspore.ops.RandomPoisson
     mindspore.ops.Randperm
     mindspore.ops.StandardLaplace
     mindspore.ops.StandardNormal
-    mindspore.ops.TruncatedNormal
     mindspore.ops.UniformInt
     mindspore.ops.UniformReal
 
@@ -469,77 +431,50 @@ Array操作
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.AffineGrid
     mindspore.ops.BatchToSpace
     mindspore.ops.BatchToSpaceND
     mindspore.ops.BroadcastTo
     mindspore.ops.Cast
-    mindspore.ops.CheckNumerics
-    mindspore.ops.Coalesce
-    mindspore.ops.Col2Im
     mindspore.ops.Concat
-    mindspore.ops.ConjugateTranspose
-    mindspore.ops.Cummax
-    mindspore.ops.Cummin
     mindspore.ops.CumProd
     mindspore.ops.CumSum
     mindspore.ops.DataFormatDimMap
     mindspore.ops.DepthToSpace
-    mindspore.ops.Diag
-    mindspore.ops.DiagPart
     mindspore.ops.DType
     mindspore.ops.Eig
     mindspore.ops.Expand
     mindspore.ops.ExpandDims
-    mindspore.ops.FFTWithSize
     mindspore.ops.FloatStatus
     mindspore.ops.FillDiagonal
     mindspore.ops.Gather
     mindspore.ops.GatherD
     mindspore.ops.GatherNd
     mindspore.ops.HammingWindow
-    mindspore.ops.Heaviside
     mindspore.ops.Histogram
     mindspore.ops.HistogramFixedWidth
-    mindspore.ops.Hypot
     mindspore.ops.Identity
-    mindspore.ops.IdentityN
-    mindspore.ops.Im2Col
     mindspore.ops.IndexAdd
-    mindspore.ops.IndexFill
     mindspore.ops.InplaceAdd
     mindspore.ops.InplaceSub
     mindspore.ops.InplaceUpdate
     mindspore.ops.InvertPermutation
-    mindspore.ops.IsClose
     mindspore.ops.Lcm
     mindspore.ops.LeftShift
     mindspore.ops.ListDiff
     mindspore.ops.LogSpace
-    mindspore.ops.LowerBound
     mindspore.ops.Lstsq
-    mindspore.ops.LuSolve
-    mindspore.ops.LuUnpack
     mindspore.ops.MaskedFill
     mindspore.ops.MaskedSelect
-    mindspore.ops.MatrixBandPart
     mindspore.ops.MatrixDiagPartV3
     mindspore.ops.MatrixDiagV3
     mindspore.ops.MatrixExp
     mindspore.ops.MatrixLogarithm
     mindspore.ops.MatrixPower
-    mindspore.ops.MatrixSetDiagV3
-    mindspore.ops.MatrixSolve
-    mindspore.ops.MatrixTriangularSolve
     mindspore.ops.Meshgrid
-    mindspore.ops.Mvlgamma
-    mindspore.ops.NonZero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
-    mindspore.ops.RaggedRange
     mindspore.ops.Range
     mindspore.ops.Rank
-    mindspore.ops.Renorm
     mindspore.ops.Reshape
     mindspore.ops.ResizeNearestNeighborV2
     mindspore.ops.ReverseSequence
@@ -550,14 +485,7 @@ Array操作
     mindspore.ops.ScatterNd
     mindspore.ops.ScatterNdDiv
     mindspore.ops.ScatterNdMax
-    mindspore.ops.ScatterNdMin
     mindspore.ops.ScatterNdMul
-    mindspore.ops.SearchSorted
-    mindspore.ops.SegmentMax
-    mindspore.ops.SegmentMean
-    mindspore.ops.SegmentMin
-    mindspore.ops.SegmentProd
-    mindspore.ops.SegmentSum
     mindspore.ops.Select
     mindspore.ops.Shape
     mindspore.ops.Size
@@ -567,7 +495,6 @@ Array操作
     mindspore.ops.SpaceToDepth
     mindspore.ops.SparseGatherV2
     mindspore.ops.Split
-    mindspore.ops.SplitV
     mindspore.ops.Squeeze
     mindspore.ops.Stack
     mindspore.ops.STFT
@@ -583,20 +510,13 @@ Array操作
     mindspore.ops.Tile
     mindspore.ops.Trace
     mindspore.ops.Transpose
-    mindspore.ops.Tril
-    mindspore.ops.TrilIndices
-    mindspore.ops.Triu
-    mindspore.ops.TriuIndices
     mindspore.ops.Unique
-    mindspore.ops.UniqueConsecutive
     mindspore.ops.UniqueWithPad
-    mindspore.ops.UnravelIndex
     mindspore.ops.UnsortedSegmentMax
     mindspore.ops.UnsortedSegmentMin
     mindspore.ops.UnsortedSegmentProd
     mindspore.ops.UnsortedSegmentSum
     mindspore.ops.Unstack
-    mindspore.ops.UpperBound
 
 类型转换
 ^^^^^^^^^^^^^^^^
@@ -693,7 +613,6 @@ Parameter操作算子
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.SparseTensorDenseAdd
     mindspore.ops.SparseTensorDenseMatmul
     mindspore.ops.SparseToDense
 
