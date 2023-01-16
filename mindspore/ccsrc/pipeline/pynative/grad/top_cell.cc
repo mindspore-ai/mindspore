@@ -83,7 +83,9 @@ void TopCellInfo::ClearDeviceMemory() const {
   std::vector<tensor::TensorPtr> tensors_in_bprop_graph;
   MS_EXCEPTION_IF_NULL(resource_);
   const auto &bprop_graph = resource_->func_graph();
-  MS_EXCEPTION_IF_NULL(bprop_graph);
+  if (bprop_graph == nullptr) {
+    return;
+  }
   const auto &value_node_list = bprop_graph->value_nodes();
   for (const auto &elem : value_node_list) {
     auto &node = elem.first;
