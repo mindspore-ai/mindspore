@@ -102,7 +102,6 @@ def tensor_asnumpy():
     return res
 
 
-@pytest.mark.skip(reason="Not supported by now")
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

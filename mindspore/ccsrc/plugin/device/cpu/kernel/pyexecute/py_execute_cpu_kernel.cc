@@ -87,36 +87,6 @@ void PyExecuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-void ArrayToRawMemory(const py::array &array, const AddressPtr &address) {
-  MS_EXCEPTION_IF_NULL(address);
-  if (static_cast<unsigned int>(array.flags()) &
-      static_cast<unsigned int>(pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_)) {
-    const py::buffer_info &buf_info = array.request();
-    const auto &res =
-      memcpy_s(address->addr, address->size, buf_info.ptr, LongToSize(buf_info.size * buf_info.itemsize));
-    if (res != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy failed. res: " << res << ", address->size: " << address->size
-                        << ", size: " << LongToSize(buf_info.size * buf_info.itemsize);
-    }
-  } else {
-    // Transform numpy array to contiguous data.
-    Py_buffer pybuf;
-    if (PyObject_GetBuffer(array.ptr(), &pybuf, PyBUF_ANY_CONTIGUOUS) != 0) {
-      MS_LOG(EXCEPTION) << "Failed to get buffer from the input!";
-    }
-    auto buffer = std::make_unique<char[]>(LongToSize(pybuf.len));
-    if (PyBuffer_ToContiguous(buffer.get(), &pybuf, pybuf.len, 'C')) {
-      PyBuffer_Release(&pybuf);
-      MS_LOG(EXCEPTION) << "Can't copy numpy.ndarray to a contiguous buffer.";
-    }
-    PyBuffer_Release(&pybuf);
-    const auto &res = memcpy_s(address->addr, address->size, buffer.get(), LongToSize(pybuf.len));
-    if (res != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy failed. res: " << res;
-    }
-  }
-}
-
 void PyExecuteCpuKernelMod::AttachPyOutputData(const py::object &py_res) {
   const auto &py_output = std::make_shared<PyExecuteOutputData>();
   py_output->obj = py_res;
@@ -346,34 +316,10 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   auto params = py::tuple(2);
   params[0] = global_dict;
   params[1] = local_dict;
-  MS_LOG(DEBUG) << "py_script: " << py_script << ", params: " << params;
-  const auto &py_res = CallPythonScript(py_script, params);
-  // Check Python result.
-  if (py::isinstance<py::none>(py_res)) {
-    MS_LOG(EXCEPTION) << "Real output is None.";
-  } else if (py::isinstance<py::array>(py_res)) {
-    MS_LOG(DEBUG) << "Real output is py::array, py_res: " << py_res;
-    ArrayToRawMemory(py_res.cast<py::array>(), outputs[0]);
-  } else if (py::isinstance<py::float_>(py_res)) {
-    MS_LOG(DEBUG) << "Real output is py::float_, py_res: " << py_res;
-  } else if (py::isinstance<py::int_>(py_res)) {
-    MS_LOG(DEBUG) << "Real output is py::int_, py_res: " << py_res;
-  } else if (py::isinstance<py::bool_>(py_res)) {
-    MS_LOG(DEBUG) << "Real output is py::bool_, py_res: " << py_res;
-  } else if (py::isinstance<py::str>(py_res)) {
-    MS_LOG(DEBUG) << "Real output is py::str, py_res: " << py_res;
-  } else if (py::isinstance<py::tuple>(py_res)) {
-    MS_LOG(DEBUG) << "Real output is py::tuple, py_res: " << py_res;
-  } else if (py::isinstance<py::list>(py_res)) {
-    MS_LOG(DEBUG) << "Real output is py::list, py_res: " << py_res;
-  } else if (py::isinstance<py::dict>(py_res)) {
-    MS_LOG(DEBUG) << "Real output is py::dict, py_res: " << py_res;
-  } else if (py::isinstance<py::set>(py_res)) {
-    MS_LOG(DEBUG) << "Real output is py::set, py_res: " << py_res;
-  } else {
-    MS_LOG(DEBUG) << "Real output is function or other type, py_res: " << py_res;
-  }
-  AttachPyOutputData(py_res);
+  MS_LOG(DEBUG) << "Python script: " << py_script << ", params: " << params;
+  const auto &output = CallPythonScript(py_script, params);
+  MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
+  AttachPyOutputData(output);
   return true;
 }
 

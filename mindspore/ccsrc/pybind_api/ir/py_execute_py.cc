@@ -80,34 +80,9 @@ class PyExecuteInitializer {
     auto params = py::tuple(2);
     params[0] = global_dict;
     params[1] = local_dict;
-    MS_LOG(DEBUG) << "py_script: " << py_script << ", params: " << params;
-    const auto &py_res = parse::data_converter::CallPythonScript(py_script, params);
-    MS_LOG(DEBUG) << "py_res: " << py_res;
-    if (py::isinstance<py::none>(py_res)) {
-      MS_LOG(EXCEPTION) << "py_res is none";
-    } else if (py::isinstance<py::array>(py_res)) {
-      MS_LOG(DEBUG) << "is py::array, py_res: " << py_res;
-      const auto &res_tensor = tensor::TensorPy::MakeTensorOfNumpy(py_res);
-      MS_LOG(DEBUG) << "res_tensor: " << res_tensor->ToString();
-    } else if (py::isinstance<py::float_>(py_res)) {
-      MS_LOG(DEBUG) << "is py::float_, py_res: " << py_res;
-    } else if (py::isinstance<py::int_>(py_res)) {
-      MS_LOG(DEBUG) << "is py::int_, py_res: " << py_res;
-    } else if (py::isinstance<py::bool_>(py_res)) {
-      MS_LOG(DEBUG) << "is py::bool_, py_res: " << py_res;
-    } else if (py::isinstance<py::str>(py_res)) {
-      MS_LOG(DEBUG) << "is py::str, py_res: " << py_res;
-    } else if (py::isinstance<py::tuple>(py_res)) {
-      MS_LOG(DEBUG) << "is py::tuple, py_res: " << py_res;
-    } else if (py::isinstance<py::list>(py_res)) {
-      MS_LOG(DEBUG) << "is py::list, py_res: " << py_res;
-    } else if (py::isinstance<py::dict>(py_res)) {
-      MS_LOG(DEBUG) << "is py::dict, py_res: " << py_res;
-    } else if (py::isinstance<py::set>(py_res)) {
-      MS_LOG(DEBUG) << "is py::set, py_res: " << py_res;
-    } else {
-      MS_LOG(EXCEPTION) << "py_res is invalid, py_res: " << py_res;
-    }
+    MS_LOG(DEBUG) << "Python script: " << py_script << ", params: " << params;
+    const auto &output = parse::data_converter::CallPythonScript(py_script, params);
+    MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
   }
 };
 
