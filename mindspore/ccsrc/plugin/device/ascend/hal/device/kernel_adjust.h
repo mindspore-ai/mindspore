@@ -73,6 +73,8 @@ class KernelAdjust {
   CNodePtr CreateStreamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id) const;
   CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id) const;
+  void SetDeviceLoopCtrlTensor(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const string name,
+                               int32_t value) const;
 
  private:
   KernelAdjust() = default;
@@ -162,8 +164,6 @@ class KernelAdjust {
   void InsertFpBpAndEosLoopStreamActive(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                         std::vector<CNodePtr> *exec_order,
                                         const std::vector<uint32_t> &fpbp_active_streams) const;
-  void SetDeviceLoopCtrlTensor(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const string name,
-                               int32_t value) const;
   void AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_graph, KernelRuntime *runtime_instance,
                                const string name) const;
   void InsertGradientOverflowCheckOperations(const AnfNodePtr &specify_para,

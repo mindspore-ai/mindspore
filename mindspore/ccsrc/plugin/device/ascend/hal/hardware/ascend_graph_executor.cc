@@ -251,7 +251,6 @@ void AscendGraphExecutor::PreprocessBeforeRun(const KernelGraphPtr &graph) const
   MS_EXCEPTION_IF_NULL(graph);
   device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
   UpdateExecOrder(graph);
-  device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(graph);
   device::KernelAdjust::GetInstance().ProcessLoopSink(graph);
   AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
 #ifndef ENABLE_SECURITY

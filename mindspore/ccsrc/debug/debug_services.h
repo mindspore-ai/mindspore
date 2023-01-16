@@ -312,7 +312,14 @@ class DebugServices {
                                  std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id,
                                  bool error_on_no_value = false);
 
-  void AddOpOverflowOpNames(const std::string &overflow_bin_path, std::vector<std::string> *op_names) const;
+  void GetOverflowTaskStreamId(const std::string &overflow_bin_path,
+                               std::vector<std::pair<uint64_t, uint64_t>> *task_stream_hits) const;
+
+  void GetTaskStreamIdNodeMap(const std::string &tensor_path,
+                              std::map<std::pair<uint64_t, uint64_t>, std::string> *task_stream_to_opnames) const;
+
+  void AddOpOverflowOpNames(const std::string &overflow_bin_path, const std::string &tensors_path,
+                            std::vector<std::string> *op_names) const;
 
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
                         std::vector<unsigned int> *const watchpoint_id,

@@ -1926,23 +1926,55 @@ std::string GetOnlineOpOverflowDir() {
   return overflow_bin_path;
 }
 
-void DebugServices::AddOpOverflowOpNames(const std::string &overflow_bin_path,
-                                         std::vector<std::string> *op_names) const {
-  MS_EXCEPTION_IF_NULL(op_names);
-  std::map<std::pair<uint64_t, uint64_t>, std::string> task_stream_to_opname;
-  std::vector<std::pair<uint64_t, uint64_t>> task_stream_hit;
+void DebugServices::GetOverflowTaskStreamId(const std::string &overflow_bin_path,
+                                            std::vector<std::pair<uint64_t, uint64_t>> *task_stream_hits) const {
+  MS_EXCEPTION_IF_NULL(task_stream_hits);
   const std::string overflow_file_prefix = "Opdebug.Node_OpDebug.";
-
-  MS_LOG(INFO) << "Processing bin file path " << overflow_bin_path;
-
+  MS_LOG(INFO) << "Processing debug_files path: " << overflow_bin_path;
   DIR *d = opendir(overflow_bin_path.c_str());
   if (d == nullptr) {
-    MS_LOG(INFO) << "OverFlow bin directory does not exist!";
+    MS_LOG(INFO) << "Overflow bin directory does not exist!";
   } else {
     struct dirent *dir = nullptr;
     while ((dir = readdir(d)) != nullptr) {
       std::string file_name = dir->d_name;
+      if (file_name.rfind(overflow_file_prefix, 0) != 0) {
+        continue;
+      }
       std::string file_path = overflow_bin_path + std::string("/") + file_name;
+      if (IsRegFile(file_path)) {
+        // detect overflow bin file
+        uint64_t task_id = 0;
+        uint64_t stream_id = 0;
+        if (!GetTaskIdStreamId(file_name, overflow_file_prefix, &task_id, &stream_id)) {
+          continue;
+        }
+        MS_LOG(INFO) << "Overflow bin file" << file_name << ", task_id " << task_id << ", stream_id " << stream_id
+                     << ".";
+        task_stream_hits->push_back(std::make_pair(task_id, stream_id));
+      }
+    }
+    (void)closedir(d);
+  }
+}
+
+void DebugServices::GetTaskStreamIdNodeMap(
+  const std::string &tensors_path, std::map<std::pair<uint64_t, uint64_t>, std::string> *task_stream_to_opnames) const {
+  MS_EXCEPTION_IF_NULL(task_stream_to_opnames);
+  MS_LOG(INFO) << "Processing debug_files path: " << tensors_path;
+  const std::string overflow_file_prefix = "Opdebug.Node_OpDebug.";
+  DIR *d = opendir(tensors_path.c_str());
+  if (d == nullptr) {
+    MS_LOG(INFO) << "Tensors directory does not exist!";
+  } else {
+    struct dirent *dir = nullptr;
+    while ((dir = readdir(d)) != nullptr) {
+      std::string file_name = dir->d_name;
+      if (file_name.rfind(overflow_file_prefix, 0) == 0) {
+        MS_LOG(INFO) << "File: " << file_name << "is not a tensor file, skip it.";
+        continue;
+      }
+      std::string file_path = tensors_path + std::string("/") + file_name;
       if (IsRegFile(file_path)) {
         // attempt to read the file
         std::ifstream infile;
@@ -1951,30 +1983,28 @@ void DebugServices::AddOpOverflowOpNames(const std::string &overflow_bin_path,
           MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name << " Errno:" << errno;
           continue;
         }
-
         std::string node_name;
         uint64_t task_id = 0;
         uint64_t stream_id = 0;
-        // detect overflow bin file
-        if (file_name.rfind(overflow_file_prefix, 0) == 0) {
-          if (!GetTaskIdStreamId(file_name, overflow_file_prefix, &task_id, &stream_id)) {
-            continue;
-          }
-          MS_LOG(INFO) << "Overflow bin file " << file_name << ", task_id " << task_id << ", stream_id " << stream_id
-                       << ".";
-          task_stream_hit.push_back(std::make_pair(task_id, stream_id));
-        } else {
-          // regular bin file or npy file
-          bool success_parse = GetAttrsFromFilename(file_name, &node_name, &task_id, &stream_id);
-          if (success_parse) {
-            task_stream_to_opname[std::make_pair(task_id, stream_id)] = node_name;
-          }
+        // detect overflow bin file, regular bin file or npy file
+        bool success_parse = GetAttrsFromFilename(file_name, &node_name, &task_id, &stream_id);
+        if (success_parse) {
+          task_stream_to_opnames->insert({std::make_pair(task_id, stream_id), node_name});
         }
         infile.close();
       }
     }
     (void)closedir(d);
   }
+}
+
+void DebugServices::AddOpOverflowOpNames(const std::string &overflow_bin_path, const std::string &tensors_path,
+                                         std::vector<std::string> *op_names) const {
+  MS_EXCEPTION_IF_NULL(op_names);
+  std::map<std::pair<uint64_t, uint64_t>, std::string> task_stream_to_opname;
+  std::vector<std::pair<uint64_t, uint64_t>> task_stream_hit;
+  GetOverflowTaskStreamId(overflow_bin_path, &task_stream_hit);
+  GetTaskStreamIdNodeMap(tensors_path, &task_stream_to_opname);
 
   // find the op_names with an overflow hit
   for (auto &task_stream : task_stream_hit) {
@@ -1999,15 +2029,24 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
     return false;
   }
   std::string overflow_bin_path = "";
+  std::string tensors_path = "";
 #ifdef ONLINE_DBG_MODE
   overflow_bin_path = GetOnlineOpOverflowDir();
+  tensors_path = overflow_bin_path;
 #else
-  overflow_bin_path = dump_dir_ + "/rank_" + std::to_string(device_id) + "/" + net_name_ + "/" +
-                      std::to_string(root_graph_id) + "/" + IterationString(iteration) + "/";
+  overflow_bin_path =
+    dump_dir_ + "/rank_" + std::to_string(device_id) + "/debug_files/" + IterationString(iteration) + "/";
   overflow_bin_path = RealPath(overflow_bin_path);
-#endif
+  MS_LOG(WARNING) << "overflow_bin_path: " << overflow_bin_path;
+  tensors_path = dump_dir_ + "/rank_" + std::to_string(device_id) + "/" + net_name_ + "/" +
+                 std::to_string(root_graph_id) + "/" + IterationString(iteration) + "/";
+  tensors_path = RealPath(tensors_path);
   if (overflow_bin_path.empty()) {
-    MS_LOG(INFO) << "Get real path failed for overflow_bin_path.";
+    overflow_bin_path = tensors_path;
+  }
+#endif
+  if (overflow_bin_path.empty() || tensors_path.empty()) {
+    MS_LOG(INFO) << "Get real path failed for overflow_bin_path or tensors path.";
     return false;
   }
   // remove kernel_graph_#
@@ -2026,13 +2065,13 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
 
   overflow_wp_lock_.lock();
 
-  MS_LOG(INFO) << "Searching for overflow in node " << node_name_to_find;
+  MS_LOG(WARNING) << "Searching for overflow in node " << node_name_to_find;
   auto found_overflows = overflow_ops_.find(overflow_bin_path);
   if (found_overflows != overflow_ops_.end()) {
     MS_LOG(INFO) << "Found already computed overflows for " << overflow_bin_path;
     op_names = overflow_ops_[overflow_bin_path];
   } else {
-    AddOpOverflowOpNames(overflow_bin_path, &op_names);
+    AddOpOverflowOpNames(overflow_bin_path, tensors_path, &op_names);
     overflow_ops_[overflow_bin_path] = op_names;
   }
 

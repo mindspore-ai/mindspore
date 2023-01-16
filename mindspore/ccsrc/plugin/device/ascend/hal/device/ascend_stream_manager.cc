@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
+#include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
 
 namespace mindspore {
 namespace device {
@@ -183,9 +184,13 @@ bool AscendStreamMng::SyncStream(size_t stream_id) const {
 
 bool AscendStreamMng::SyncStream(rtStream_t stream) const {
   MS_EXCEPTION_IF_NULL(stream);
-  if (rtStreamSynchronize(stream) != RT_ERROR_NONE) {  // o for switch stream
+  auto RET = rtStreamSynchronize(stream);
+  if (RET != RT_ERROR_NONE && RET != ACL_ERROR_RT_AICORE_OVER_FLOW) {  // o for switch stream
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return false;
+  }
+  if (RET == ACL_ERROR_RT_AICORE_OVER_FLOW) {
+    MS_LOG(WARNING) << "Call runtime rtStreamSynchronize, the stream get overflow.";
   }
   return true;
 }

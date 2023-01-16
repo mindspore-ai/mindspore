@@ -49,6 +49,7 @@
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/data_dump/e2e_dump.h"
+#include "plugin/device/ascend/hal/device/dump/kernel_dumper.h"
 #endif
 #include "toolchain/adx_datadump_server.h"
 #include "utils/trace_base.h"
@@ -199,6 +200,8 @@ void AscendKernelRuntime::ClearGraphModelMap() {
   graph_data_dumper_.clear();
   // tell users which dump kernel name not used
   DumpJsonParser::GetInstance().PrintUnusedKernel();
+  KernelDumper kernel_dumper;
+  kernel_dumper.OpDebugUnregisterForStream();
 #endif
 
   graph_kernel_events_map_.clear();
