@@ -13,17 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """test sparsify"""
-import platform
 import numpy as np
 import pytest
 import scipy
+import scipy.sparse.linalg
 from scipy.linalg import eigvals
 
 from mindspore import Tensor, CSRTensor, context, ops
 from mindspore import dtype as mstype
 from mindspore.nn import Cell
 from mindspore.rewrite import sparsify, ArgType
-import mindspore.scipy as msp
 
 
 def to_tensor(obj, tensor_type):
@@ -104,6 +103,12 @@ class CG(Cell):
         return x, ops.select(cond, k, ops.zeros_like(cond).astype(mstype.int32))
 
 
+def to_np(x):
+    if isinstance(x, CSRTensor):
+        return scipy.sparse.csr_matrix((x.values.asnumpy(), x.indices.asnumpy(), x.indptr.asnumpy()), shape=x.shape)
+    return x.asnumpy()
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
@@ -117,8 +122,6 @@ def test_cg(mode, tensor_type_a, tensor_type_m):
     Description: test case for sparsify using CG network.
     Expectation: the result matches mindspore.scipy
     """
-    if platform.system().lower() != "linux":
-        return
     context.set_context(mode=mode)
     shape = (7, 7)
     dtype = np.float32
@@ -129,7 +132,7 @@ def test_cg(mode, tensor_type_a, tensor_type_m):
     b = Tensor(np.random.random(shape[:1]).astype(dtype))
     x0 = ops.zeros_like(b)
     m = to_tensor(np.eye(shape[0], dtype=dtype), tensor_type_m)
-    msp_res = msp.sparse.linalg.cg(a, b, x0, M=m, maxiter=maxiter, atol=tol, tol=tol)
+    sp_res = scipy.sparse.linalg.cg(to_np(a), to_np(b), to_np(x0), M=to_np(m), maxiter=maxiter, atol=tol, tol=tol)
 
     func = CG()
     arg_types = {}
@@ -140,6 +143,6 @@ def test_cg(mode, tensor_type_a, tensor_type_m):
     sparse_func = sparsify(func, arg_types)
     sparsify_res = sparse_func(a, b, x0, m, maxiter, tol, tol)
 
-    assert len(msp_res) == len(sparsify_res)
-    for expect, actual in zip(msp_res, sparsify_res):
-        assert np.allclose(expect.asnumpy(), actual.asnumpy(), rtol=1e-3, atol=1e-5)
+    assert len(sp_res) == len(sparsify_res)
+    for expect, actual in zip(sp_res, sparsify_res):
+        assert np.allclose(expect, actual.asnumpy(), rtol=1e-3, atol=1e-5)
