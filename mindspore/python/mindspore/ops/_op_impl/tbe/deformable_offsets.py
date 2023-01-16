@@ -23,7 +23,6 @@ deformable_offsets_op_info = TBERegOp("DeformableOffsets") \
     .compute_cost(10) \
     .kernel_name("deformable_offsets") \
     .partial_flag(True) \
-    .need_check_supported(True) \
     .attr("strides", "required", "listInt", "all") \
     .attr("pads", "required", "listInt", "all") \
     .attr("ksize", "required", "listInt", "all") \
