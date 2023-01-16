@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -327,8 +327,10 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
   // Check if the operator input is PyExecute CNode.
   auto &func_node = inputs[0];
   MS_EXCEPTION_IF_NULL(func_node);
-  MS_LOG(DEBUG) << "Current CNode function: " << func_node->DebugString();
-  if (!IsPrimitiveCNode(func_node, prim::kPrimGetAttr)) {  // Optimize the performance.
+  constexpr auto debug_recursive_level = 2;
+  MS_LOG(DEBUG) << "Current CNode: " << cnode->DebugString(debug_recursive_level);
+  auto prim = GetCNodePrimitiveWithoutDoSignature(func_node);
+  if (!IsPrimitiveEquals(prim, prim::kPrimGetAttr)) {  // Optimize the performance.
     return nullptr;
   }
   AnfNodeConfigPtr func_conf = MakeConfig(func_node, conf->context(), conf->func_graph());
@@ -341,21 +343,37 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
   // Forward getattr CNode call to py_execute CNode.
   constexpr auto internal_getattr_callable_obj_str = "__internal_getattr_callable_obj__";
   std::stringstream script_buffer;
-  script_buffer << internal_getattr_callable_obj_str << "()";
-  const auto script_call_str = std::make_shared<StringImm>(script_buffer.str());
+  script_buffer << internal_getattr_callable_obj_str << "(";
 
   std::vector<ValuePtr> key_list;
   const auto callable_obj_name_str = std::make_shared<StringImm>(internal_getattr_callable_obj_str);
   (void)key_list.emplace_back(callable_obj_name_str);
+  constexpr auto internal_getattr_callable_input_str = "__internal_getattr_callable_obj_input__";
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    std::stringstream key_input_buffer;
+    key_input_buffer << internal_getattr_callable_input_str << i;
+    (void)key_list.emplace_back(std::make_shared<StringImm>(key_input_buffer.str()));
+    script_buffer << key_input_buffer.str();
+    if (i < inputs.size() - 1) {
+      script_buffer << ", ";
+    }
+  }
+  script_buffer << ")";
   const auto key_tuple = std::make_shared<ValueTuple>(key_list);
+  const auto script_call_str = std::make_shared<StringImm>(script_buffer.str());
 
   std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
   (void)value_list.emplace_back(func_node);
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    const auto &input = inputs[i];
+    (void)value_list.emplace_back(input);
+  }
   auto fg = cnode->func_graph();
   const auto value_tuple_node = fg->NewCNode(value_list);
 
   const auto getattr_obj_call_node = fg->NewCNode(
     {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_call_str), NewValueNode(key_tuple), value_tuple_node});
+  MS_LOG(DEBUG) << "getattr_obj_call_node: " << getattr_obj_call_node->DebugString();
 
   getattr_obj_call_node->set_debug_info(cnode->debug_info());
   fg->ReplaceInOrder(cnode, getattr_obj_call_node);

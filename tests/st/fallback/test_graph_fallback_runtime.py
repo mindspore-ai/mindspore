@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -93,6 +93,29 @@ def test_fallback_np_asnumpy():
     const_output = ConstNet()()
     print(f'const_output: {const_output}')
     np.testing.assert_almost_equal(output, const_output, 3)
+
+
+@ms.jit
+def tensor_asnumpy():
+    tensor = ms.Tensor(np.arange(0, 6).reshape(2, 3))
+    res = tensor.asnumpy()
+    return res
+
+
+@pytest.mark.skip(reason="Not supported by now")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_jit_tensor_asnumpy():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    res = tensor_asnumpy()
+    print(res)
 
 
 @pytest.mark.level1
@@ -331,3 +354,234 @@ def test_net_dict_2():
     assert outputs['conv1'].shape == (64, 6, 28, 28)
     assert outputs['conv2'].shape == (64, 16, 10, 10)
     assert outputs['fc'].shape == (64, 10)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_getattr_cust_class():
+    """
+    Feature: getattr for custom class.
+    Description: Support getattr for custom class.
+    Expectation: No exception.
+    """
+    class GetattrClass():
+        def __init__(self):
+            self.attr1 = 99
+            self.attr2 = 1
+
+        def method1(self, x):
+            return x + self.attr2
+
+    class GetattrClassNet(ms.nn.Cell):
+        def __init__(self):
+            super(GetattrClassNet, self).__init__()
+            self.cls = GetattrClass()
+
+        def construct(self):
+            return self.cls.method1(self.cls.attr1)
+
+    net = GetattrClassNet()
+    out = net()
+    print(f'out: {out}')
+    assert out == 100
+
+
+class ClassTest:
+    """ ClassTest definition """
+
+    def __init__(self, name, value1):
+        self.name = name
+        self.value = value1
+
+    def __call__(self, *args, **kwargs):
+        pass
+
+    def get_name(self):
+        return self.name
+
+    def get_value(self, inc):
+        ret = self.value + inc
+        return ret
+
+
+class SelfObjectGetattrNet(ms.nn.Cell):
+    """ SelfObjectGetattrNet definition """
+
+    def __init__(self, v1, v2):
+        super(SelfObjectGetattrNet, self).__init__()
+        self.relu = nn.ReLU()
+        self.softmax = nn.Softmax(0)
+        self.axis = 0
+        self.test_class = ClassTest("test_class", v1)
+        self.value = v2
+
+    @ms.jit
+    def construct(self, x):
+        x = x + self.test_class.get_value(self.value)
+        return x
+
+
+@pytest.mark.skip(reason="Stuck by ScopedLongRunning() invocation in forward.cc during JIT Fallback Python running.")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_call_other_object_method_runtime():
+    """
+    Feature: getattr for custom class.
+    Description: Support getattr for custom class.
+    Expectation: No exception.
+    """
+    x = ms.Tensor(np.array([[1, 2, 3], [1, 2, 3]]).astype(np.int32))
+    y = ms.Tensor(np.array([[2, 3, 4], [1, 1, 2]]).astype(np.int32))
+    y1 = ms.Tensor(np.array([[5, 4, 5], [1, 1, 2]]).astype(np.int32))
+    z = np.array([[8, 9, 12], [3, 4, 7]]).astype(np.int32)
+
+    net = SelfObjectGetattrNet(y, y1)
+    output = net.construct(x)
+    result = output.asnumpy()
+    print(result)
+    assert np.all(result == z)
+
+
+# Test: call global object method(not self) on parse graph code
+value = ms.Tensor(np.array([[3, 4, 5], [1, 1, 2]]).astype(np.int32))
+test_class = ClassTest("test_class", value)
+
+
+class GlobalObjectGetattrNet(ms.nn.Cell):
+    """ GlobalObjectGetattrNet definition """
+
+    def __init__(self, value1):
+        super(GlobalObjectGetattrNet, self).__init__()
+        self.value = value1
+
+    @ms.jit
+    def construct(self, x):
+        x = x + test_class.get_value(self.value)
+        return x
+
+    @ms.jit
+    def construct1(self, x):
+        x = x + test_class.value
+        x = x + self.value
+        return x
+
+
+@pytest.mark.skip(reason="Stuck by ScopedLongRunning() invocation in forward.cc during JIT Fallback Python running.")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_call_no_self_other_object_method_runtime():
+    """
+    Feature: getattr for custom class.
+    Description: Support getattr for custom class.
+    Expectation: No exception.
+    """
+    x = ms.Tensor(np.array([[1, 2, 3], [1, 2, 3]]).astype(np.int32))
+    y = ms.Tensor(np.array([[2, 3, 4], [1, 1, 2]]).astype(np.int32))
+    z = np.array([[6, 9, 12], [3, 4, 7]]).astype(np.int32)
+
+    net = GlobalObjectGetattrNet(y)
+    output = net.construct(x)
+    result = output.asnumpy()
+    print(result)
+    assert np.all(result == z)
+
+
+@pytest.mark.skip(reason="Not supported by now")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_getattr_tensor_with_wrong_attr():
+    """
+    Feature: Syntax getattr.
+    Description: Graph syntax getattr support tensor input.
+    Expectation: AttributeError.
+    """
+
+    @ms.jit
+    def foo(x):
+        abs_func = getattr(x, "abs2")
+        return abs_func()
+
+    with pytest.raises(AttributeError) as err:
+        foo(Tensor([-1, -2, -3]))  # Not throw error any more, should move to ST.
+    assert "object has no attribute" in str(err.value)
+
+
+@pytest.mark.skip(reason="Not supported by now")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_getattr_list_with_wrong_attr():
+    """
+    Feature: Syntax getattr.
+    Description: Graph syntax getattr support list input.
+    Expectation: AttributeError.
+    """
+
+    @ms.jit
+    def foo(x):
+        abs_func = getattr(x, "abs2")
+        return abs_func()
+
+    with pytest.raises(AttributeError) as err:
+        foo([1, 2, 3, 4])  # Not throw error any more, should move to ST.
+    assert "object has no attribute" in str(err.value)
+
+
+@pytest.mark.skip(reason="Not supported by now")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_getattr_tuple_with_wrong_attr():
+    """
+    Feature: Syntax getattr.
+    Description: Graph syntax getattr support tensor input.
+    Expectation: AttributeError.
+    """
+
+    @ms.jit
+    def foo(x):
+        abs_func = getattr(x, "shape")
+        return abs_func()
+
+    with pytest.raises(AttributeError) as err:
+        foo((1, 2, 3, 4))  # Not throw error any more, should move to ST.
+    assert "object has no attribute" in str(err.value)
+
+
+@pytest.mark.skip(reason="Not supported by now")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_getattr_dict_with_wrong_attr():
+    """
+    Feature: Syntax getattr.
+    Description: Graph syntax getattr support tensor input.
+    Expectation: AttributeError.
+    """
+
+    @ms.jit
+    def foo(x):
+        abs_func = getattr(x, "abs2")
+        return abs_func()
+
+    with pytest.raises(AttributeError) as err:
+        foo({"1": 1, "2": 2})  # Not throw error any more, should move to ST.
+    assert "object has no attribute" in str(err.value)

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,15 +34,16 @@
 #include "abstract/utils.h"
 #include "utils/log_adapter.h"
 #include "utils/symbolic.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/debug/trace.h"
+#include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/pipeline.h"
+#include "pipeline/jit/resource.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
-#include "pipeline/jit/debug/trace.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "utils/ms_context.h"
-#include "pipeline/jit/parse/data_converter.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "abstract/param_validator.h"
 #include "utils/ms_utils.h"
@@ -1307,6 +1308,119 @@ inline void AddToManager(const AnalysisEnginePtr &engine, const FuncGraphPtr fun
 
 enum class REQUIRE_TYPE { ATTR, METHOD };
 
+AnfNodePtr ConvertInterpretedNodeToCNode(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node) {
+  const auto &interpreted_value = dyn_cast<parse::InterpretedObject>(value);
+  if (interpreted_value == nullptr) {
+    return nullptr;
+  }
+  const auto &value_node_value = interpreted_value->obj();
+
+  auto value_node_key = interpreted_value->name();
+  (void)value_node_key.erase(
+    std::remove_if(value_node_key.begin(), value_node_key.end(),
+                   [](char c) { return std::isspace(c) || c == ':' || c == '\'' || c == '<' || c == '>' || c == '.'; }),
+    value_node_key.end());
+
+  // Set the value node into dict firstly.
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  constexpr auto set_local_variable = "set_local_variable";
+  (void)python_adapter::CallPyModFn(mod, set_local_variable, value_node_key, value_node_value);
+
+  // Get the value node from the dict in IR.
+  std::stringstream script_buffer;
+  script_buffer << "__import__('mindspore')._extends.parse.get_local_variable(" << value_node_key << ")";
+  const std::string &script = script_buffer.str();
+  const auto script_str = std::make_shared<StringImm>(script);
+
+  // Build new CNode for value node.
+  ValuePtrList keys({std::make_shared<StringImm>(value_node_key)});
+  ValuePtrList values({std::make_shared<StringImm>(value_node_key)});
+  const auto interpreted_cnode = fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str),
+                                               NewValueNode(std::make_shared<ValueTuple>(keys)),
+                                               NewValueNode(std::make_shared<ValueTuple>(values))});
+  constexpr auto debug_recursive_level = 2;
+  MS_LOG(DEBUG) << "interpreted_cnode: " << interpreted_cnode->DebugString(debug_recursive_level);
+  interpreted_cnode->set_debug_info(node->debug_info());
+  return interpreted_cnode;
+}
+
+EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
+  auto out_node = out_conf->node();
+  const auto cnode = dyn_cast<CNode>(out_node);
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto fg = cnode->func_graph();
+
+  const auto &debug_info = trace::GetSourceCodeDebugInfo(out_conf->node()->debug_info());
+  const auto &location = debug_info->location();
+  if (location == nullptr) {
+    MS_LOG(WARNING) << "Location info is null, node: " << out_conf->node()->DebugString();
+    return nullptr;
+  }
+  const auto expr = location->expr_src();
+  if (expr.empty()) {
+    MS_LOG(WARNING) << "Location's expr is empty, node: " << out_conf->node()->DebugString();
+    return nullptr;
+  }
+  auto owner_abs = args_abs_list[0];
+  auto owner_value = owner_abs->BuildValue();
+  auto owner_node = cnode->input(1);
+  constexpr auto debug_recursive_level = 2;
+  MS_LOG(DEBUG) << "expr: " << expr << ", for node: " << out_conf->node()->DebugString(debug_recursive_level)
+                << ", owner_value: " << owner_value->ToString();
+  if (owner_value->isa<parse::InterpretedObject>()) {
+    owner_node = ConvertInterpretedNodeToCNode(fg, owner_value, owner_node);
+  }
+
+  constexpr auto internal_getattr_owner_str = "__internal_getattr_owner__";
+  std::stringstream script_buffer;
+  script_buffer << internal_getattr_owner_str;
+  // Check "x.xxx"
+  auto pos = expr.rfind('.');
+  if (pos == std::string::npos) {
+    // Check "getattr(x, 'xxx')"
+    constexpr auto get_attr_expr = "getattr";
+    pos = expr.find(get_attr_expr);
+    if (pos == std::string::npos) {
+      MS_LOG(EXCEPTION) << "The expression is wrong: " << expr;
+    }
+    pos = expr.find(", ", pos);
+    if (pos == std::string::npos) {
+      MS_LOG(EXCEPTION) << "The expression is wrong: " << expr;
+    }
+    constexpr auto get_attr_call_input_sep_num = 3;
+    pos += get_attr_call_input_sep_num;
+    auto end_pos = expr.find(")", pos);
+    if (end_pos == std::string::npos) {
+      MS_LOG(EXCEPTION) << "The expression is wrong: " << expr;
+    }
+    script_buffer << "." << expr.substr(pos, end_pos - pos - 1);
+  } else {
+    script_buffer << expr.substr(pos);
+  }
+  MS_LOG(DEBUG) << "attr: " << script_buffer.str();
+
+  const auto script_getattr_str = std::make_shared<StringImm>(script_buffer.str());
+  std::vector<ValuePtr> key_list;
+  const auto owner_str = std::make_shared<StringImm>(internal_getattr_owner_str);
+  (void)key_list.emplace_back(owner_str);
+  const auto key_tuple = std::make_shared<ValueTuple>(key_list);
+
+  std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
+  (void)value_list.emplace_back(owner_node);
+  const auto value_tuple_node = fg->NewCNode(value_list);
+
+  const auto getattr_node = fg->NewCNode(
+    {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_getattr_str), NewValueNode(key_tuple), value_tuple_node});
+  getattr_node->set_debug_info(cnode->debug_info());
+  MS_LOG(DEBUG) << "getattr_node: " << getattr_node->DebugString();
+
+  fg->ReplaceInOrder(cnode, getattr_node);
+  auto eng = out_conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());
+  return eng->ForwardConfig(out_conf, fn_conf);
+}
+
 EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_conf, const AnfNodeConfigPtr &old_conf,
                                    REQUIRE_TYPE require_type = REQUIRE_TYPE::METHOD) {
   MS_EXCEPTION_IF_NULL(old_conf);
@@ -1413,18 +1527,31 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
   auto data_value = data->BuildValue();
   MS_EXCEPTION_IF_NULL(data_value);
   if (!data_value->isa<parse::NameSpace>()) {
+    auto item_value = item->BuildValue();
+    MS_EXCEPTION_IF_NULL(item_value);
     if (data_value->isa<parse::ClassType>()) {
       auto class_val = dyn_cast_ptr<parse::ClassType>(data_value);
       const auto &class_name = class_val->name();
-      auto item_value = item->BuildValue();
       MS_EXCEPTION(TypeError)
         << "Can not get attribute '" << item_value->ToString() << "' from " << class_name
         << " in graph mode. Try using jit_class to decorate the class? "
         << ".\nFor more details, please refer to "
         << "https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.jit_class.html \n";
     }
-    MS_EXCEPTION(TypeError) << "Not supported to get attribute for " << data_value->ToString()
-                            << "\nThe first argument should be a NameSpace, but got " << data->ToString();
+    static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+    if (!support_fallback_runtime) {
+      MS_EXCEPTION(TypeError) << "Do not support to get attribute from " << data_value->ToString()
+                              << "\nThe first argument should be a NameSpace, but got " << data->ToString();
+    }
+
+    MS_LOG(DEBUG) << "Evaluate " << data_value->ToString() << " attribute: " << item_value->ToString()
+                  << ".\nnode: " << out_conf->node()->DebugString() << "\n"
+                  << trace::GetDebugInfo(out_conf->node()->debug_info());
+    auto res = InterpretGetAttrNode(args_abs_list, out_conf);
+    if (res == nullptr) {
+      MS_EXCEPTION(AttributeError) << data_value->ToString() << " object has no attribute: " << item_value->ToString();
+    }
+    return res;
   }
 
   auto item_value = item->BuildValue();
@@ -1581,46 +1708,6 @@ EvalResultPtr GetEvaluatedValueForAdapterTensorAttrOrMethod(const AnalysisEngine
   return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
 }
 
-EvalResultPtr InterpretGetAttrNode(const AnfNodeConfigPtr &out_conf) {
-  auto out_node = out_conf->node();
-  const auto cnode = dyn_cast<CNode>(out_node);
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto fg = cnode->func_graph();
-
-  const auto &location = out_conf->node()->debug_info()->location();
-  if (location == nullptr) {
-    MS_LOG(WARNING) << "Location info is null, node: " << out_conf->node()->DebugString();
-    return nullptr;
-  }
-  const auto expr = location->expr_src();
-  if (expr.empty()) {
-    MS_LOG(WARNING) << "Location's expr is empty, node: " << out_conf->node()->DebugString();
-    return nullptr;
-  }
-  MS_LOG(INFO) << "expr: " << expr << ", for node: " << out_conf->node()->DebugString();
-  const auto script_getattr_str = std::make_shared<StringImm>(expr);
-  std::vector<ValuePtr> key_list;
-  const auto &owner_node = cnode->input(1);
-  const auto owner_str = std::make_shared<StringImm>(owner_node->debug_info()->name());
-  (void)key_list.emplace_back(owner_str);
-  const auto key_tuple = std::make_shared<ValueTuple>(key_list);
-
-  std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
-  (void)value_list.emplace_back(owner_node);
-  const auto value_tuple_node = fg->NewCNode(value_list);
-
-  const auto getattr_node = fg->NewCNode(
-    {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_getattr_str), NewValueNode(key_tuple), value_tuple_node});
-  getattr_node->set_debug_info(cnode->debug_info());
-  MS_LOG(DEBUG) << "getattr_node: " << getattr_node->DebugString();
-
-  fg->ReplaceInOrder(cnode, getattr_node);
-  auto eng = out_conf->engine();
-  MS_EXCEPTION_IF_NULL(eng);
-  auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());
-  return eng->ForwardConfig(out_conf, fn_conf);
-}
-
 EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine,
                                                           const AbstractBasePtrList &args_abs_list,
                                                           const ConfigPtr &data_conf,
@@ -1654,9 +1741,9 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
         }
 
         MS_LOG(DEBUG) << "Evaluate " << data_type->ToString() << " attribute: " << item_name
-                      << ".\nnode:" << out_conf->node()->DebugString() << "\n"
+                      << ".\nnode: " << out_conf->node()->DebugString() << "\n"
                       << trace::GetDebugInfo(out_conf->node()->debug_info());
-        auto res = InterpretGetAttrNode(out_conf);
+        auto res = InterpretGetAttrNode(args_abs_list, out_conf);
         if (res == nullptr) {
           MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
         }
@@ -1744,11 +1831,13 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     MS_LOG(EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
   }
 
-  if (data_args->isa<abstract::AbstractScalar>()) {
+  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+  if (!support_fallback_runtime && data_args->isa<abstract::AbstractScalar>()) {
     ValuePtr data_value = data_args->BuildValue();
     if (data_value->isa<parse::InterpretedObject>()) {
       auto obj = ValueToPyData(data_value);
       auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);
+
       MS_EXCEPTION(TypeError) << "Do not support to get attribute from " << py::str(type_str) << " object "
                               << py::str(obj) << ".\nFor more details, please refer to "
                               << "https://mindspore.cn/docs/zh-CN/master/faq/network_compilation.html?highlight=do"

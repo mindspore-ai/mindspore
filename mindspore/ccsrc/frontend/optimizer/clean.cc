@@ -285,6 +285,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
                     << ", shape: " << tensor_shape->ToString() << ", val: " << tensor_val->ToString();
     }
     MS_LOG(DEBUG) << "Made dict getitem node: " << dict_getitem_node->DebugString();
+    dict_getitem_node->set_debug_info(node->debug_info());
     return dict_getitem_node;
   }
 
@@ -410,6 +411,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     const auto dict_setitem_node = func_graph->NewCNode(
       {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
     MS_LOG(DEBUG) << "Made dict setitem node: " << dict_setitem_node->DebugString();
+    dict_setitem_node->set_debug_info(node->debug_info());
     return dict_setitem_node;
   }
 
@@ -444,16 +446,18 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
 
     // Local parameters values.
     // Pack the key tuple.
-    constexpr size_t values_input_index = 2;
     const auto script_key_tuple_str = std::make_shared<StringImm>(internal_tuple_keys_str);
     const auto make_key_tuple_node =
       fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_key_tuple_str),
-                    NewValueNode(script_key_tuple_str), node->input(values_input_index)});
+                    NewValueNode(script_key_tuple_str), node->input(1)});
+    make_key_tuple_node->set_debug_info(node->input(1)->debug_info());
     // Pack the value tuple.
+    constexpr size_t values_input_index = 2;
     const auto script_value_tuple_str = std::make_shared<StringImm>(internal_tuple_values_str);
     const auto make_value_tuple_node =
       fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_value_tuple_str),
-                    NewValueNode(script_value_tuple_str), node->input(1)});
+                    NewValueNode(script_value_tuple_str), node->input(values_input_index)});
+    make_value_tuple_node->set_debug_info(node->input(values_input_index)->debug_info());
     // Pack the local parameters values
     std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
     (void)key_value_list.emplace_back(make_key_tuple_node);
@@ -478,6 +482,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     const auto make_dict_node = fg->NewCNode(
       {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
     MS_LOG(DEBUG) << "Made dict node: " << make_dict_node->DebugString();
+    make_dict_node->set_debug_info(node->debug_info());
     return make_dict_node;
   }
 
@@ -568,7 +573,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
   }
 
   // dict(k0:v0, k1:v1, ...) --> PyExecute('dict(zip(keys, values))', ...)
-  AnfNodePtr RebuildValueDict(const ValueDictionaryPtr &dict) const {
+  AnfNodePtr RebuildValueDict(const ValueNodePtr &value_node, const ValueDictionaryPtr &dict) const {
     constexpr auto internal_tuple_keys_str = "__internal_tuple_keys__";
     constexpr auto internal_tuple_values_str = "__internal_tuple_values__";
     constexpr auto internal_dict_zip_keys_str = "__internal_dict_zip_keys__";
@@ -621,6 +626,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     const auto make_dict_node = root_graph_->NewCNode(
       {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
     MS_LOG(DEBUG) << "Made dict node: " << make_dict_node->DebugString();
+    make_dict_node->set_debug_info(value_node->debug_info());
     return make_dict_node;
   }
 
@@ -646,12 +652,12 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     return (this->*(iter->second))(cnode);
   }
 
-  AnfNodePtr ConvertValueNode(const ValueNodePtr &, const ValuePtr &value) override {
+  AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
     // Convert Dictionary value node.
     if (value->isa<ValueDictionary>()) {
       static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
       if (support_fallback_runtime && is_dict_output_) {
-        return RebuildValueDict(value->cast<ValueDictionaryPtr>());
+        return RebuildValueDict(value_node, value->cast<ValueDictionaryPtr>());
       }
       return DictToTuple(value->cast<ValueDictionaryPtr>());
     }

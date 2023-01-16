@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ namespace mindspore {
 namespace trace {
 constexpr auto kSectionPrefix = " - ";
 
+MS_CORE_API DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr &info);
 MS_CORE_API std::string GetDebugInfo(const DebugInfoPtr &info, SourceLineTip tip = kSourceLineTipNextLine);
 MS_CORE_API std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix,
                                      SourceLineTip tip = kSourceLineTipNextLine);

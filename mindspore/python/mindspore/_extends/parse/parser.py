@@ -126,6 +126,7 @@ _unsupported_convert_data_type = (
 )
 
 _global_params = {}
+_local_value_nodes = {}
 
 
 def _convert_map():
@@ -816,6 +817,14 @@ def merge_global_params(global_dict):
 def get_global_params():
     logger.debug(f'get global_dict: {_global_params}')
     return _global_params
+
+
+def set_local_variable(name, value):
+    _local_value_nodes[name] = value
+
+
+def get_local_variable(name):
+    return _local_value_nodes.get(name)
 
 
 class Parser:
