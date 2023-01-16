@@ -57,7 +57,7 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     return false;
   }
   uint32_t block_dim = DEFAULT_BLOCK_DIM;  // default blockdim equal to 1.
-  auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim);
+  auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim, nullptr);
   if (func_stub == 0) {
     MS_LOG(ERROR) << "GenFuncStub failed. Kernel name: " << kernel_name_;
     return false;
@@ -165,7 +165,7 @@ std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &in
   }
 
   uint32_t block_dim = DEFAULT_BLOCK_DIM;  // default blockdim equal to 1.
-  auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim);
+  auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim, nullptr);
   if (func_stub == 0) {
     MS_LOG(ERROR) << "GenFuncStub failed. Kernel name: " << kernel_name_;
   }

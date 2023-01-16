@@ -54,7 +54,7 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
   }
 
   uint32_t blockdim = 1;  // default blockdim equal to 1.
-  auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &blockdim);
+  auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &blockdim, nullptr);
   if (func_stub == 0) {
     MS_LOG(ERROR) << "GenFuncStub failed.";
     return false;
@@ -126,7 +126,7 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
   }
 
   stream_id_ = stream_id;
-  auto funcstub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_);
+  auto funcstub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_, nullptr);
   if (funcstub == 0) {
     MS_EXCEPTION(ArgumentError) << "GenFuncStub failed.";
   }
