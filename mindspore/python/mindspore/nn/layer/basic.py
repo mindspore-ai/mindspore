@@ -1942,12 +1942,12 @@ class Roll(Cell):
 class Unflatten(Cell):
     r"""
     Summary:
-        Unflattens a tensor dim according to axis and unflattened_size.
+        Unflattens a Tensor dim according to `axis` and `unflattened_size`.
 
     Args:
-        axis (int): specifies the dimension of the input tensor to be unflattened.
-        unflattened_size (Union(tuple[int], list[int])): is the new shape of the unflattened dimension of
-            the tensor and it can be a tuple of ints or a list of ints. The product of unflattened_size
+        axis (int): specifies the dimension of the input Tensor to be unflattened.
+        unflattened_size (Union(tuple[int], list[int])): the new shape of the unflattened dimension of
+            the Tensor and it can be a tuple of ints or a list of ints. The product of `unflattened_size`
             must equal to input_shape[axis].
 
     Inputs:
@@ -1959,7 +1959,7 @@ class Unflatten(Cell):
     Raises:
         TypeError: If `axis` is not int.
         TypeError: If `unflattened_size` is neither tuple of ints nor list of ints.
-        TypeError: If the value specified by `axis` is not equal to product of `unflattened_size`.
+        TypeError: The product of `unflattened_size` does not equal to input_shape[axis].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

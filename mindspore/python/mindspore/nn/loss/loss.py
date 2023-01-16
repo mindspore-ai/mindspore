@@ -1151,17 +1151,17 @@ class PoissonNLLLoss(LossBase):
     otherwise the last term will be approximated using Stirling formula:
 
     .. math::
-        n! \approx \sqrt{2\pi n}\left( \frac{n}{e} \right)^{n}.
+        n! \approx \sqrt{2\pi n}\left( \frac{n}{e} \right)^{n}
 
     Note:
         Calculating the logarithm of a negative number or the exponent of a large positive number under Ascend
         will have a different range of return values and results different from those under GPU and CPU.
 
     Args:
-        log_input (bool): Whether use log input. Default: True.
-        full (bool): Whether include the Stirling approximation term in the loss calculation. Default: False.
-        eps (float): Lower bound of `x` when calculating logarithms. Default: 1e-8.
-        reduction (str): Apply specific reduction method to the output:
+        log_input (bool, optional): Whether use log input. Default: True.
+        full (bool, optional): Whether include the Stirling approximation term in the loss calculation. Default: False.
+        eps (float, optional): Lower bound of `x` when calculating logarithms. Default: 1e-8.
+        reduction (str, optional): Apply specific reduction method to the output:
             'none', 'mean', 'sum'. Default: 'mean'.
 
     Inputs:

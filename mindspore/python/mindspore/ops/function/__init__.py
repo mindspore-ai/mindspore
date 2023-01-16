@@ -351,7 +351,6 @@ from .math_func import (
     combinations,
     dist,
     copysign,
-    chain_matmul,
     hann_window,
     log2,
     xlogy,
@@ -382,7 +381,7 @@ from .math_func import (
     roll,
     orgqr,
     sum,
-    matrix_exp
+    matrix_exp,
 )
 from .nn_func import (
     adaptive_avg_pool1d,

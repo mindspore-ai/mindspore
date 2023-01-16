@@ -522,15 +522,6 @@ class CopysignFunc(nn.Cell):
         return self.copysign(x, other)
 
 
-class ChainMatmulFunc(nn.Cell):
-    def __init__(self):
-        super(ChainMatmulFunc, self).__init__()
-        self.chain_matmul = ops.chain_matmul
-
-    def construct(self, x1, x2, x3):
-        return self.chain_matmul(x1, x2, x3)
-
-
 class HannWindowFunc(nn.Cell):
     def __init__(self):
         super(HannWindowFunc, self).__init__()
@@ -922,12 +913,6 @@ test_case_math_ops = [
         'block': CopysignFunc(),
         'desc_inputs': [Tensor(np.array([[0.3, -0.7], [0.5, 0.5]])),
                         Tensor(np.array([[-0.4, 0.6], [0.4, -0.6]]))]
-    }),
-    ('ChainMatmul', {
-        'block': ChainMatmulFunc(),
-        'desc_inputs': [Tensor(np.array([[1, 1], [1, 1]]), ms.float64),
-                        Tensor(np.array([[1], [1]]), ms.float64),
-                        Tensor(np.array([[1]]), ms.float64)]
     }),
     ('HannWindow', {
         'block': HannWindowFunc(),

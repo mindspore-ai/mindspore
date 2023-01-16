@@ -7170,7 +7170,7 @@ class FFTWithSize(Primitive):
         ValueError: If norm is none of "backward", "forward" or "ortho".
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> # case FFT: signal_ndim: 1, inverse: False, real: False.

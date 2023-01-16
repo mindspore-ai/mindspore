@@ -1174,7 +1174,7 @@ class Model:
         _device_number_check(self._parallel_mode, self._device_number)
 
         if not isinstance(valid_frequency, (int, list)):
-            raise TypeError(f"For 'Model.fit', the type of 'valid_frequency' must be a list or a integer, but got "
+            raise TypeError(f"For 'Model.fit', the type of 'valid_frequency' must be a list or an integer, but got "
                             f"type {type(valid_frequency)}.")
 
         if valid_dataset and not self._metric_fns:

@@ -1216,7 +1216,7 @@ def _expand_tuple(n_dimensions):
         for i in m:
             if not isinstance(i, int) or isinstance(i, bool):
                 raise TypeError(f"When expanding an int number to tuple, "
-                                f"the type of element in input tuple must be a integer, but got {type(i)}.")
+                                f"the type of element in input tuple must be an integer, but got {type(i)}.")
         return m
 
     return convert

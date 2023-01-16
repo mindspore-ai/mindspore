@@ -155,7 +155,7 @@ class SparseTensor(COOTensor_):
             the SparseTensor, respectively.
         values (Tensor): A 1-D tensor of any type and shape `[N]`, which
             supplies the values for each element in `indices`.
-        shape (tuple(int)): A integer tuple of size `ndims`,
+        shape (tuple(int)): An integer tuple of size `ndims`,
             which specifies the shape of the sparse tensor.
 
     Returns:
@@ -231,7 +231,7 @@ class COOTensor(COOTensor_):
             Please make sure that the indices are in range of the given shape.
         values (Tensor): A 1-D tensor of any type and shape `[N]`, which
             supplies the values for each element in `indices`.
-        shape (tuple(int)): A integer tuple of size `ndims`,
+        shape (tuple(int)): An integer tuple of size `ndims`,
             which specifies the dense_shape of the sparse tensor.
         coo_tensor (COOTensor): A COOTensor object.
 

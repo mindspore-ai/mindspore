@@ -251,6 +251,7 @@ Dropout层
     mindspore.nn.MultiClassDiceLoss
     mindspore.nn.MultiLabelSoftMarginLoss
     mindspore.nn.NLLLoss
+    mindspore.nn.PoissonNLLLoss
     mindspore.nn.RMSELoss
     mindspore.nn.SampledSoftmaxLoss
     mindspore.nn.SmoothL1Loss
@@ -373,6 +374,8 @@ Dynamic LR函数
 
     mindspore.nn.ChannelShuffle
     mindspore.nn.Flatten
+    mindspore.nn.Identity
+    mindspore.nn.Unflatten
 
 数学运算
 ----------

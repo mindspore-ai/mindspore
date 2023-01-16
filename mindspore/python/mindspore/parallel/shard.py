@@ -203,7 +203,7 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
             - If any key in `parameter_plan` is not a str.
             - If any value in `parameter_plan` is not a tuple.
             - If `device` is not a str.
-            - If `level` is not a integer.
+            - If `level` is not an integer.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
