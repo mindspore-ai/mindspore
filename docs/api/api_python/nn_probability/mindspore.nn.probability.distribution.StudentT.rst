@@ -7,7 +7,7 @@ mindspore.nn.probability.distribution.StudentT
     连续随机分布，取值范围为 :math:`(-\inf, \inf)` ，概率密度函数为
 
     .. math::
-        f(x, \nu, \mu, \sigma) = (1 + y^2 / \nu)^(-0.5*(\nu + 1)) / Z
+        f(x, \nu, \mu, \sigma) = (1 + y^2 / \nu)^{(-0.5*(\nu + 1))} / Z
 
 
     其中 :math:`y = (x - \mu) / \sigma`,  :math:`Z = abs(\sigma) * \sqrt(\nu * \pi) * \Gamma(0.5 * \nu) / \Gamma(0.5 * (\nu + 1))`, :math:`\nu, \mu, \sigma` 为分别为StudentT分布的自由度，期望与标准差。

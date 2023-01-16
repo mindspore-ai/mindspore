@@ -9157,11 +9157,9 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
         ksize (Union[float, tuple]): The target ksize is D x H x W.
             ksize can be a tuple, or a single K for K x K x K.
             specifying the window size (D, H, W) of the input tensor.
-
         output_shape (Union[int, tuple]): The target output_shape is D x H x W.
             output_shape can be a tuple, or a single H for H x H x H.
             specifying the size (D, H, W) of the output tensor.
-
         data_format (str) : The optional value for data format.
             Currently support 'NCDHW' and 'NHDWC'. Default: 'NCDHW'.
 
@@ -9169,19 +9167,16 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
         - **x** (Tensor) - The input of FractionalMaxPool3DWithFixedKsize, which is a 4D or 5D tensor.
           Tensor of data type : float16, float32, double, int32, int64.
           Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(N, D_{in}, H_{in}, W_{in}, C)`.
-
         - **random_samples** (Tensor) - The random step of FractionalMaxPool3DWithFixedKsize, which is a 3D tensor.
           Tensor of data type : float16, float32, double, and value is between (0, 1).
           Supported shape :math:`(N, C, 3)`
 
     Outputs:
-        Outputs:
         - **y** (Tensor) - A tensor, the output of FractionalMaxPool3DWithFixedKsize.
-        Has the same data type with `x`.
-        Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(N, D_{out}, H_{out}, W_{out}, C)`.
-
+          Has the same data type with `x`.
+          Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(N, D_{out}, H_{out}, W_{out}, C)`.
         - **argmax** (Tensor) - A tensor, the indices along with the outputs.
-        Has the same shape as the `y` and int32 or int64 data type.
+          Has the same shape as the `y` and int32 or int64 data type.
 
     Raises:
         TypeError: If `input_x` is not a 4D or 5D tensor.
