@@ -349,7 +349,7 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
   // If the shape of the tensor exists and is a tuple shape, it means that the tensor is a tuple type, and it needs
   // to be restored the shape to tuple type when infer shape.
   if (input_tensor->base_shape_ptr() != nullptr && input_tensor->base_shape_ptr()->isa<abstract::SequenceShape>()) {
-    shapes = TupleShapeToShapeVector(input_tensor->base_shape_ptr());
+    shapes = BaseShapeToShapeVector(input_tensor->base_shape_ptr());
     types = std::vector(shapes.size(), input_tensor->data_type());
     common::AnfAlgo::SetScalarTupleOutputInferType(types, input_node);
     return;

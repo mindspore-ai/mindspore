@@ -57,11 +57,9 @@ class GPUDeviceManager {
   bool CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size) const;
   bool CopyHostMemToDevice(const DeviceMemPtr &dst, const void *src, size_t size) const;
 
-  bool CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size,
-                                CudaDeviceStream stream) const;
+  bool CopyDeviceMemToHostAsync(const HostMemPtr &dst, const void *src, size_t size, CudaDeviceStream stream) const;
   bool CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size, CudaDeviceStream stream) const;
-  bool CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const DeviceMemPtr &src, size_t size,
-                                  CudaDeviceStream stream) const;
+  bool CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size, CudaDeviceStream stream) const;
   bool CopyHostMemToHost(const HostMemPtr &dst, const void *src, size_t size) const;
 
   static GPUDeviceManager &GetInstance();

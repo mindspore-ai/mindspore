@@ -622,7 +622,14 @@ void MindRTBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef
     auto &output_tensors = actor_set->output_actor_->outputs();
     if (!output_tensors.empty()) {
       size_t output_position = 0;
-      ConstructOutputs(root_graph->output(), output_tensors, &output_position, outputs);
+      std::vector<tensor::TensorPtr> tuple_tensors;
+      ConstructOutputs(root_graph->output(), output_tensors, &output_position, outputs, &tuple_tensors);
+
+      // The tensor may be repeated, so it needs to be set null last.
+      for (auto &tuple_tensor : tuple_tensors) {
+        MS_EXCEPTION_IF_NULL(tuple_tensor);
+        tuple_tensor->set_device_address(nullptr);
+      }
     }
   }
 }
@@ -683,38 +690,115 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
 
 BaseRef MindRTBackendBase::ConstructOutputByAbstract(const abstract::AbstractBasePtr &abstract,
                                                      const std::vector<tensor::TensorPtr> &output_tensors,
-                                                     size_t *output_position) {
+                                                     size_t *output_position,
+                                                     std::vector<tensor::TensorPtr> *tuple_tensors) {
   MS_EXCEPTION_IF_NULL(abstract);
   MS_EXCEPTION_IF_NULL(output_position);
+  MS_EXCEPTION_IF_NULL(tuple_tensors);
 
   size_t outputs_num = common::AnfAlgo::GetOutputNumByAbstract(abstract);
   if (*output_position + outputs_num > output_tensors.size()) {
     MS_LOG(EXCEPTION) << "The output position is out of range: " << *output_position << " need:" << outputs_num
                       << " total:" << output_tensors.size();
   }
-  VectorRef outputs;
 
-  if (!abstract->isa<abstract::AbstractTuple>()) {
+  if (!abstract->isa<abstract::AbstractSequence>()) {
     (*output_position)++;
     return output_tensors[(*output_position) - 1];
   }
 
-  auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
+  VectorRef outputs;
+  const auto &tuple_abstract = abstract->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(tuple_abstract);
+  // Dynamic len tuple.
+  if (tuple_abstract->dynamic_len()) {
+    auto &output_tensor = output_tensors[*output_position];
+    MS_EXCEPTION_IF_NULL(output_tensor);
+    auto &tensor_shape = output_tensor->base_shape_ptr();
+    // Restore the tuple output by the tensor of tuple.
+    if ((tensor_shape != nullptr) && tensor_shape->isa<abstract::SequenceShape>()) {
+      ConstructOutputByTupleTensor(output_tensor, tensor_shape->cast<abstract::SequenceShapePtr>(), &outputs,
+                                   tuple_tensors);
+      (*output_position)++;
+      return outputs;
+    }
+  }
+
   const auto &sub_abstracts = tuple_abstract->elements();
   for (const auto &sub_abstract : sub_abstracts) {
     MS_EXCEPTION_IF_NULL(sub_abstract);
-    outputs.emplace_back(ConstructOutputByAbstract(sub_abstract, output_tensors, output_position));
+    outputs.emplace_back(ConstructOutputByAbstract(sub_abstract, output_tensors, output_position, tuple_tensors));
   }
   return outputs;
 }
 
+void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_tensor,
+                                                     const abstract::SequenceShapePtr &tensor_shape, VectorRef *outputs,
+                                                     std::vector<tensor::TensorPtr> *tuple_tensors) {
+  MS_EXCEPTION_IF_NULL(output_tensor);
+  MS_EXCEPTION_IF_NULL(tensor_shape);
+  MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(tuple_tensors);
+  // No need split multi tensors when the tuple size is not greater than 1.
+  if (tensor_shape->size() <= 1) {
+    outputs->emplace_back(output_tensor);
+    return;
+  }
+
+  auto tensor_type_id = output_tensor->data_type();
+  auto device_tensor = std::dynamic_pointer_cast<device::DeviceAddress>(output_tensor->device_address());
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  auto tensor_device_ptr = device_tensor->GetMutablePtr();
+  auto tensor_device_size = device_tensor->GetSize();
+  MS_EXCEPTION_IF_NULL(tensor_device_ptr);
+  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {device_tensor->device_name(), device_tensor->device_id()});
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+
+  // Split the tensor of tuple to tensors.
+  tuple_tensors->emplace_back(output_tensor);
+  size_t copy_offset_size = 0;
+  for (size_t i = 0; i < tensor_shape->size(); ++i) {
+    // Create split tensor.
+    auto split_tensor_shape = BaseShapeToShape((*tensor_shape)[i]);
+    auto split_tensor_size = SizeOf(split_tensor_shape) * GetTypeByte(TypeIdToType(tensor_type_id));
+    auto split_tensor = std::make_shared<tensor::Tensor>(tensor_type_id, split_tensor_shape);
+    auto split_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
+      nullptr, split_tensor_size, device_tensor->format(), device_tensor->type_id(), split_tensor_shape);
+
+    // Copy data from origin tensor to the split tensor.
+    device::DynamicMemAllocatorDebugInfo::SetDebugInfo("Split tuple outputs", device::AllocatorType::kOther);
+    if (!device_context->device_res_manager_->AllocateMemory(split_device_tensor.get())) {
+      MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
+                        << ") memory isn't enough and alloc failed, kernel name: Split tuple outputs, alloc size: "
+                        << split_device_tensor->GetSize() << "B.";
+    }
+    if (copy_offset_size + split_tensor_size > tensor_device_size) {
+      MS_LOG(EXCEPTION) << "The copy size is out of range, copy size:" << split_tensor_size
+                        << ", copy offset size:" << copy_offset_size << ", total size:" << tensor_device_size;
+    }
+    if (!split_device_tensor->SyncDeviceToDevice(split_tensor_shape, split_tensor_size, device_tensor->type_id(),
+                                                 AddressOffset(tensor_device_ptr, copy_offset_size),
+                                                 device_tensor->format())) {
+      MS_LOG(EXCEPTION) << "Sync device to device failed, device type:" << split_device_tensor->GetDeviceType()
+                        << ", copy size:" << split_tensor_size << ", output node: Split tuple outputs.";
+    }
+    copy_offset_size += split_tensor_size;
+
+    // Fill the outputs.
+    split_tensor->set_device_address(split_device_tensor);
+    outputs->emplace_back(split_tensor);
+  }
+}
+
 void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
                                          const std::vector<tensor::TensorPtr> &output_tensors, size_t *output_position,
-                                         VectorRef *outputs) {
+                                         VectorRef *outputs, std::vector<tensor::TensorPtr> *tuple_tensors) {
   MS_EXCEPTION_IF_NULL(output_node);
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(output_position);
+  MS_EXCEPTION_IF_NULL(tuple_tensors);
   const PrimitiveSet expand_prims{
     prim::kPrimMakeTuple,
     prim::kPrimMakeCSRTensor,
@@ -727,7 +811,7 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
     MS_EXCEPTION_IF_NULL(make_tuple);
     VectorRef make_tuple_output;
     for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
-      ConstructOutputs(make_tuple->input(i), output_tensors, output_position, &make_tuple_output);
+      ConstructOutputs(make_tuple->input(i), output_tensors, output_position, &make_tuple_output, tuple_tensors);
     }
     outputs->emplace_back(std::move(make_tuple_output));
     return;
@@ -737,7 +821,8 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
   if (common::AnfAlgo::CheckPrimitiveType(output_node, prim::kPrimDepend)) {
     auto depend_node = output_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(depend_node);
-    ConstructOutputs(depend_node->input(kRealInputIndexInDepend), output_tensors, output_position, outputs);
+    ConstructOutputs(depend_node->input(kRealInputIndexInDepend), output_tensors, output_position, outputs,
+                     tuple_tensors);
     return;
   }
 
@@ -760,20 +845,29 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
   if (common::AnfAlgo::IsCallNode(output_node)) {
     auto abstract = output_node->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
-    outputs->emplace_back(ConstructOutputByAbstract(abstract, output_tensors, output_position));
+    outputs->emplace_back(ConstructOutputByAbstract(abstract, output_tensors, output_position, tuple_tensors));
     return;
   }
 
   auto &output_abstract = output_node->abstract();
   MS_EXCEPTION_IF_NULL(output_abstract);
   // Wrap output to VectorRef if the output is tuple.
-  if (output_abstract->isa<abstract::AbstractTuple>() && (!common::AnfAlgo::IsDynamicSequence(output_node))) {
+  if (output_abstract->isa<abstract::AbstractTuple>()) {
     VectorRef output_tuple;
     for (size_t i = 0; i < outputs_num; ++i) {
       if (*output_position >= output_tensors.size()) {
         MS_LOG(EXCEPTION) << "The output position is out of range: " << *output_position;
       }
-      output_tuple.emplace_back(output_tensors[*output_position]);
+      auto &output_tensor = output_tensors[*output_position];
+      MS_EXCEPTION_IF_NULL(output_tensor);
+      auto &tensor_shape = output_tensor->base_shape_ptr();
+      // Restore the tuple output by the tensor of tuple.
+      if ((tensor_shape != nullptr) && tensor_shape->isa<abstract::SequenceShape>()) {
+        ConstructOutputByTupleTensor(output_tensor, tensor_shape->cast<abstract::SequenceShapePtr>(), &output_tuple,
+                                     tuple_tensors);
+      } else {
+        output_tuple.emplace_back(output_tensor);
+      }
       ++(*output_position);
     }
     outputs->emplace_back(std::move(output_tuple));

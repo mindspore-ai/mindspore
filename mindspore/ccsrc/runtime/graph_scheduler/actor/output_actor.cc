@@ -240,6 +240,10 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   auto tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   MS_EXCEPTION_IF_NULL(tensor);
   tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
+  // Set tensor base shape for restoring the tuple output when output node is dynamic sequence.
+  if (common::AnfAlgo::IsDynamicSequence(output_node)) {
+    tensor->set_base_shape(output_node->Shape());
+  }
 
   if (output_position >= device_contexts_.size()) {
     MS_LOG(ERROR) << "The output position is of range: " << output_position;

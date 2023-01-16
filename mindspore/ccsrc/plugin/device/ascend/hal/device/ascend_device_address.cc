@@ -436,25 +436,6 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
   return sync_ok;
 }
 
-bool AscendDeviceAddress::SyncDeviceToDeviceWithSameFormatType(const ShapeVector &shape, size_t size, TypeId type,
-                                                               const void *src_ptr, const std::string &format) const {
-  if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
-    return true;
-  }
-
-  if (size_ < size) {
-    MS_LOG(ERROR) << "src size is greater than det size, src size is: " << size << ", dst size is: " << size_;
-    return false;
-  }
-  if (format_ != format || type_id_ != type) {
-    MS_LOG(ERROR) << "format or type is different, src(format:" << format << ", type_id:" << TypeIdLabel(type)
-                  << "), dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_);
-    return false;
-  }
-  BindDevice();
-  return AsyncDeviceToDevice(shape, size, type, src_ptr, format);
-}
-
 bool AscendDeviceAddress::SyncDeviceToDeviceWithDiffFormatType(const DeviceSync *src_device_addr) const {
   MS_EXCEPTION_IF_NULL(src_device_addr);
   if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
@@ -499,15 +480,13 @@ bool AscendDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) 
       MS_EXCEPTION_IF_NULL(temp_device_ptr);
       SyncMemory(temp_device_ptr, src_device_address->GetOffloadPtr(), src_device_address->GetSize(),
                  ACL_MEMCPY_HOST_TO_DEVICE);
-      const auto ret = SyncDeviceToDeviceWithSameFormatType(ShapeVector(), src_device_address->GetSize(),
-                                                            src_device_address->type_id(), temp_device_ptr,
-                                                            src_device_address->format());
+      const auto ret = SyncDeviceToDevice(ShapeVector(), src_device_address->GetSize(), src_device_address->type_id(),
+                                          temp_device_ptr, src_device_address->format());
       device_context->device_res_manager_->FreeMemory(temp_device_ptr);
       return ret;
     }
-    return SyncDeviceToDeviceWithSameFormatType(ShapeVector(), src_device_address->GetSize(),
-                                                src_device_address->type_id(), src_device_address->GetPtr(),
-                                                src_device_address->format());
+    return SyncDeviceToDevice(ShapeVector(), src_device_address->GetSize(), src_device_address->type_id(),
+                              src_device_address->GetPtr(), src_device_address->format());
   } else {
     MS_LOG(INFO) << "Can not copy from device to device directly, format or type is different, src(format:"
                  << src_device_address->format() << ", type_id:" << TypeIdLabel(src_device_address->type_id())
@@ -517,24 +496,40 @@ bool AscendDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) 
   }
 }
 
+bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
+                                             const std::string &format) const {
+  bool ret = AsyncDeviceToDevice(shape, size, type, src_ptr, format);
+  if (!ret) {
+    return ret;
+  }
+  SyncStream();
+  return true;
+}
+
 bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector & /* shape */, size_t size, TypeId type,
                                               const void *src_ptr, const std::string &format) const {
   MS_LOG(DEBUG) << "AsyncDeviceToDevice, dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                 << ", size:" << size_ << "), src(format:" << format << ", type_id:" << TypeIdLabel(type)
                 << ", size:" << size << ")";
+  if (ptr_ == src_ptr) {
+    MS_LOG(INFO) << "Dst addr is same with src addr, no need memcpy data.";
+    return true;
+  }
   if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
     return true;
   }
-  BindDevice();
-  if (format_ != format || type_id_ != type) {
-    MS_LOG(ERROR) << "format or type is different.";
+  if (size_ < size) {
+    MS_LOG(ERROR) << "Src size is greater than det size, src size is: " << size << ", dst size is: " << size_;
     return false;
   }
-  std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-  if (ptr_ == src_ptr) {
-    MS_LOG(INFO) << "dst addr is same with src addr, no need memcpy data.";
-    return true;
+  if (format_ != format || type_id_ != type) {
+    MS_LOG(ERROR) << "Format or type is different, src(format:" << format << ", type_id:" << TypeIdLabel(type)
+                  << "), dst(format:" << format_ << "), type_id:" << TypeIdLabel(type_id_);
+    return false;
   }
+
+  BindDevice();
+  std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
