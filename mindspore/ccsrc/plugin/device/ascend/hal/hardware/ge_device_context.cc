@@ -48,6 +48,7 @@ using mindspore::transform::OptionMap;
 
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
+const std::set<std::string> kIgnoreGEShapeMap = {kSoftMarginLossOpName};
 
 std::string GetGraphName(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -230,9 +231,12 @@ void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
   }
 }
 
-void UpdateOutputNodeShape(const AnfNodePtr &node, size_t index, bool is_dynamic_shape, TypeId output_type,
-                           const ShapeVector &output_shape) {
+void UpdateOutputNodeShape(const AnfNodePtr &node, size_t index, TypeId output_type, const ShapeVector &output_shape) {
   MS_EXCEPTION_IF_NULL(node);
+  std::string name;
+  if (node->isa<CNode>()) {
+    name = common::AnfAlgo::GetCNodeName(node);
+  }
   size_t total_output_num = AnfAlgo::GetOutputTensorNum(node);
   if (index >= total_output_num) {
     MS_LOG(EXCEPTION) << "Invalid output index " << index << ", node " << node->fullname_with_scope() << " has "
@@ -241,8 +245,9 @@ void UpdateOutputNodeShape(const AnfNodePtr &node, size_t index, bool is_dynamic
   std::vector<TypeId> types = {};
   std::vector<ShapeVector> shapes = {};
   for (size_t i = 0; i < total_output_num; ++i) {
-    // update dtype and shape when dynamic shape and index is same
-    if (is_dynamic_shape && i == index) {
+    if (i == index && kIgnoreGEShapeMap.count(name) == 0) {
+      // Using GE infer result to update shape
+      // TODO(hbhu_bin): when kIgnoreGEShapeMap's size > 5, you should refactor this code
       types.push_back(output_type);
       shapes.push_back(output_shape);
     } else {
@@ -359,9 +364,6 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
                                std::vector<tensor::Tensor> *outputs,
                                const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
-  KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
-  MS_EXCEPTION_IF_NULL(kg);
-  bool is_dynamic_shape = kg->is_dynamic_shape();
   auto graph_name = graph->ToString();
   MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
   // copy input from device to host
@@ -431,7 +433,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     // memcpy_s does not support data that more than 2GB
     (void)memcpy(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), tensor->GetData(), tensor->GetSize());
     auto actual_shapes = tensor->GetTensorDesc().GetShape().GetDims();
-    UpdateOutputNodeShape(output_node, idx, is_dynamic_shape, me_types[i], actual_shapes);
+    UpdateOutputNodeShape(output_node, idx, me_types[i], actual_shapes);
   }
   MS_LOG(INFO) << "GE run graph end.";
   return true;
