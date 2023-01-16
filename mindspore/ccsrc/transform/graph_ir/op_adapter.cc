@@ -41,7 +41,7 @@ Status OpAdapterImpl::GenerateCustomOpInputMap(const CusOperatorPtr &op, const P
   auto op_type = GetCustomOpType(prim);
   auto value = prim->GetAttr("input_names");
   if (value == nullptr) {
-    (*cus_output_map_)[op_type] = input_map;
+    (*cus_output_map_)[op_type] = std::map<int, std::string>{};
     return NOT_FOUND;
   }
 
@@ -62,7 +62,7 @@ Status OpAdapterImpl::GenerateCustomOpOutputMap(const CusOperatorPtr &op, const 
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(prim);
   // Create the map of custom op from output index to output name.
-  mindspore::HashMap<int, std::string> output_map;
+  std::map<int, std::string> output_map;
   auto op_type = GetCustomOpType(prim);
   auto value = prim->GetAttr("output_names");
   if (value == nullptr) {
@@ -290,7 +290,7 @@ OutHandler OpAdapterImpl::getCustomOutput(const OperatorPtr &op, int index) cons
     return OutHandler();
   }
 
-  mindspore::HashMap<int, std::string> &output_map = it->second;
+  std::map<int, std::string> &output_map = it->second;
 
   if ((output_map.find(index) != output_map.end())) {
     return OutHandler(op, output_map[index]);
@@ -366,7 +366,7 @@ Status OpAdapterImpl::UpdateSingleOutputDesc(const OperatorPtr &op, const abstra
     }
     auto cus_op = std::dynamic_pointer_cast<CustomOperator>(op);
     MS_EXCEPTION_IF_NULL(cus_op);
-    mindspore::HashMap<int, std::string> output_map = (*cus_output_map_)[op->GetOpType()];
+    std::map<int, std::string> output_map = (*cus_output_map_)[op->GetOpType()];
     (void)cus_op->UpdateOutputDesc(output_map[0], *desc);
   } else {
     if (!output_map_.empty()) {
