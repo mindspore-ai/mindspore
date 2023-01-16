@@ -58,13 +58,20 @@ class Queue {
   virtual ~Queue() { ResetQue(); }
 
   size_t size() const {
+    std::unique_lock<std::mutex> _lock(mux_);
     size_t v = tail_ - head_;
     return (v >= 0) ? v : 0;
   }
 
-  size_t capacity() const { return sz_; }
+  size_t capacity() const {
+    std::unique_lock<std::mutex> _lock(mux_);
+    return sz_;
+  }
 
-  bool empty() const { return head_ == tail_; }
+  bool empty() const {
+    std::unique_lock<std::mutex> _lock(mux_);
+    return head_ == tail_;
+  }
 
   void Reset() {
     std::unique_lock<std::mutex> _lock(mux_);
@@ -76,9 +83,10 @@ class Queue {
   Status Add(const_reference ele) noexcept {
     std::unique_lock<std::mutex> _lock(mux_);
     // Block when full
-    Status rc = full_cv_.Wait(&_lock, [this]() -> bool { return (size() != capacity()); });
+    Status rc =
+      full_cv_.Wait(&_lock, [this]() -> bool { return (SizeWhileHoldingLock() != CapacityWhileHoldingLock()); });
     if (rc.IsOk()) {
-      RETURN_IF_NOT_OK(AddWhileHoldingLock(ele));
+      RETURN_IF_NOT_OK(this->AddWhileHoldingLock(ele));
       empty_cv_.NotifyAll();
       _lock.unlock();
     } else {
@@ -90,9 +98,10 @@ class Queue {
   Status Add(T &&ele) noexcept {
     std::unique_lock<std::mutex> _lock(mux_);
     // Block when full
-    Status rc = full_cv_.Wait(&_lock, [this]() -> bool { return (size() != capacity()); });
+    Status rc =
+      full_cv_.Wait(&_lock, [this]() -> bool { return (SizeWhileHoldingLock() != CapacityWhileHoldingLock()); });
     if (rc.IsOk()) {
-      RETURN_IF_NOT_OK(AddWhileHoldingLock(std::forward<T>(ele)));
+      RETURN_IF_NOT_OK(this->AddWhileHoldingLock(std::forward<T>(ele)));
       empty_cv_.NotifyAll();
       _lock.unlock();
     } else {
@@ -105,7 +114,8 @@ class Queue {
   Status EmplaceBack(Ts &&... args) noexcept {
     std::unique_lock<std::mutex> _lock(mux_);
     // Block when full
-    Status rc = full_cv_.Wait(&_lock, [this]() -> bool { return (size() != capacity()); });
+    Status rc =
+      full_cv_.Wait(&_lock, [this]() -> bool { return (SizeWhileHoldingLock() != CapacityWhileHoldingLock()); });
     if (rc.IsOk()) {
       auto k = tail_++ % sz_;
       new (arr_[k]) T(std::forward<Ts>(args)...);
@@ -121,9 +131,9 @@ class Queue {
   virtual Status PopFront(pointer p) {
     std::unique_lock<std::mutex> _lock(mux_);
     // Block when empty
-    Status rc = empty_cv_.Wait(&_lock, [this]() -> bool { return !empty(); });
+    Status rc = empty_cv_.Wait(&_lock, [this]() -> bool { return !EmptyWhileHoldingLock(); });
     if (rc.IsOk()) {
-      RETURN_IF_NOT_OK(PopFrontWhileHoldingLock(p, true));
+      RETURN_IF_NOT_OK(this->PopFrontWhileHoldingLock(p, true));
       full_cv_.NotifyAll();
       _lock.unlock();
     } else {
@@ -146,7 +156,7 @@ class Queue {
     std::unique_lock<std::mutex> _lock(mux_);
     CHECK_FAIL_RETURN_UNEXPECTED(new_capacity > 0,
                                  "New capacity: " + std::to_string(new_capacity) + ", should be larger than 0");
-    RETURN_OK_IF_TRUE(new_capacity == static_cast<int32_t>(capacity()));
+    RETURN_OK_IF_TRUE(new_capacity == static_cast<int32_t>(CapacityWhileHoldingLock()));
     std::vector<T> queue;
     // pop from the original queue until the new_capacity is full
     for (int32_t i = 0; i < new_capacity; ++i) {
@@ -192,7 +202,7 @@ class Queue {
   size_t head_;
   size_t tail_;
   std::string my_name_;
-  std::mutex mux_;
+  mutable std::mutex mux_;
   CondVar empty_cv_;
   CondVar full_cv_;
 
@@ -232,6 +242,15 @@ class Queue {
     head_ = 0;
     tail_ = 0;
   }
+
+  size_t SizeWhileHoldingLock() const {
+    size_t v = tail_ - head_;
+    return (v >= 0) ? v : 0;
+  }
+
+  size_t CapacityWhileHoldingLock() const { return sz_; }
+
+  bool EmptyWhileHoldingLock() const { return head_ == tail_; }
 };
 
 // A container of queues with [] operator accessors.  Basically this is a wrapper over of a vector of queues
@@ -258,19 +277,30 @@ class QueueList {
     return Status::OK();
   }
 
-  auto size() const { return queue_list_.size(); }
+  auto size() const {
+    std::unique_lock<std::mutex> _lock(mux_);
+    return queue_list_.size();
+  }
 
-  std::unique_ptr<Queue<T>> &operator[](const int index) { return queue_list_[index]; }
+  std::unique_ptr<Queue<T>> &operator[](const int index) {
+    std::unique_lock<std::mutex> _lock(mux_);
+    return queue_list_[index];
+  }
 
-  const std::unique_ptr<Queue<T>> &operator[](const int index) const { return queue_list_[index]; }
+  const std::unique_ptr<Queue<T>> &operator[](const int index) const {
+    std::unique_lock<std::mutex> _lock(mux_);
+    return queue_list_[index];
+  }
 
   ~QueueList() = default;
 
   Status AddQueue(TaskGroup *vg) {
+    std::unique_lock<std::mutex> _lock(mux_);
     (void)queue_list_.emplace_back(std::make_unique<Queue<T>>(queue_list_[0]->capacity()));
     return queue_list_[queue_list_.size() - 1]->Register(vg);
   }
   Status RemoveLastQueue() {
+    std::unique_lock<std::mutex> _lock(mux_);
     CHECK_FAIL_RETURN_UNEXPECTED(queue_list_.size() > 1, "Cannot remove more than the current queues.");
     (void)queue_list_.pop_back();
     return Status::OK();
@@ -281,6 +311,8 @@ class QueueList {
   // requirement that objects must have copy semantics.  To resolve this, we use a vector of unique
   // pointers.  This allows us to provide dynamic creation of queues in a container.
   std::vector<std::unique_ptr<Queue<T>>> queue_list_;
+
+  mutable std::mutex mux_;
 };
 }  // namespace dataset
 }  // namespace mindspore

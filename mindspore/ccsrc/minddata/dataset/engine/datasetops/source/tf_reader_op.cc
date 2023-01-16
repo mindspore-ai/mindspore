@@ -169,7 +169,7 @@ Status TFReaderOp::HelperLoadNonCompFile(const std::string &filename, int64_t st
   int64_t rows_total = 0;
 
   while (reader.peek() != EOF) {
-    if (!load_jagged_connector_) {
+    if (!GetLoadJaggedConnector()) {
       break;
     }
     RETURN_IF_INTERRUPTED();
@@ -226,7 +226,7 @@ Status TFReaderOp::HelperLoadCompGZIPFile(const std::string &filename, int64_t s
       break;
     }
 
-    if (!load_jagged_connector_) {
+    if (!GetLoadJaggedConnector()) {
       break;
     }
     RETURN_IF_INTERRUPTED();
@@ -318,7 +318,7 @@ Status TFReaderOp::HelperLoadCompZLIBFile(const std::string &filename, int64_t s
       break;
     }
 
-    if (!load_jagged_connector_) {
+    if (!GetLoadJaggedConnector()) {
       break;
     }
     RETURN_IF_INTERRUPTED();
@@ -1086,8 +1086,7 @@ Status TFReaderOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
       // Iterate over all the keys and add one key to each block.
       for (auto it = i_keys.begin(); it != i_keys.end(); ++it) {
         {
-          std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);
-          if (load_io_block_queue_ == false) {
+          if (GetLoadIoBlockQueue() == false) {
             end_of_epoch = true;
             break;
           }
@@ -1104,8 +1103,7 @@ Status TFReaderOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
       // Iterate over all the keys and add one key to each block.
       for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
         {
-          std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);
-          if (load_io_block_queue_ == false) {
+          if (GetLoadIoBlockQueue() == false) {
             end_of_epoch = true;
             break;
           }

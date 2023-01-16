@@ -255,14 +255,14 @@ Status SQuADOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
     std::vector<std::pair<std::string, int64_t>> file_index;
     if (!i_keys.empty()) {
       for (auto it = i_keys.begin(); it != i_keys.end(); ++it) {
-        if (!load_io_block_queue_) {
+        if (!GetLoadIoBlockQueue()) {
           break;
         }
         file_index.emplace_back(std::pair<std::string, int64_t>((*filename_index_)[*it], *it));
       }
     } else {
       for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
-        if (!load_io_block_queue_) {
+        if (!GetLoadIoBlockQueue()) {
           break;
         }
         file_index.emplace_back(std::pair<std::string, int64_t>(it.value(), it.key()));
