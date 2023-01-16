@@ -172,7 +172,7 @@ else
 fi
 
 # Run Benchmark cloud inference
-if [[ ${backend} =~ "cloud" ]]; then
+if [[ ${backend} =~ "cloud" &&! ${backend} =~ "ge" ]]; then
     echo "Run cloud fusion inference benchmark"
     source ${benchmark_test}/run_benchmark_cloud_ascend.sh -v ${version} -b ${backend} -d ${device_id} -a ${arch} -c ${compile_type}
     Run_benchmark_status=$?
