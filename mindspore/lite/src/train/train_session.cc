@@ -231,9 +231,11 @@ static int ReshapeWeightTensor(Tensor *orig_tensor, lite::Tensor *new_tensor) {
     }
   }
 
-  orig_tensor->FreeData();
-  orig_tensor->set_data(nullptr);
-  orig_tensor->set_shape(new_tensor->shape());
+  if (orig_tensor->shape() != new_tensor->shape()) {
+    orig_tensor->FreeData();
+    orig_tensor->set_data(nullptr);
+    orig_tensor->set_shape(new_tensor->shape());
+  }
 
   uint8_t *dst_data = reinterpret_cast<uint8_t *>(orig_tensor->MutableData());
   if (dst_data == nullptr) {
