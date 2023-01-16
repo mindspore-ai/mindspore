@@ -27,7 +27,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t index3 = 3;
 constexpr size_t num4 = 4;
 abstract::ShapePtr ResizeBicubicGradInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
@@ -47,16 +46,18 @@ abstract::ShapePtr ResizeBicubicGradInferShape(const PrimitivePtr &primitive,
                                              prim_name);
   }
   if (!is_dynamic) {
-    if (grads_shape[0] != original_image_shape[0]) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[0] is " << grads_shape[0]
-                               << ", but the shape of original_image_shape[0] is " << original_image_shape[0]
-                               << ". The first dimension of the shape of grads_shape "
+    if (grads_shape[kInputIndex0] != original_image_shape[kInputIndex0]) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[0] is "
+                               << grads_shape[kInputIndex0] << ", but the shape of original_image_shape[0] is "
+                               << original_image_shape[kInputIndex0]
+                               << ". The batch dimension of the shape of grads_shape "
                                << "must be equal to that of original_image_shape.";
     }
-    if (grads_shape[index3] != original_image_shape[index3]) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[3] is "
-                               << grads_shape[index3] << ", but the shape of original_image_shape[3] is "
-                               << original_image_shape[index3] << ". The third dimension of the shape of grads_shape "
+    if (grads_shape[kInputIndex1] != original_image_shape[kInputIndex1]) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[1] is "
+                               << grads_shape[kInputIndex1] << ", but the shape of original_image_shape[1] is "
+                               << original_image_shape[kInputIndex1]
+                               << ". The channel dimension of the shape of grads_shape "
                                << "must be equal to that of original_image_shape.";
     }
   }

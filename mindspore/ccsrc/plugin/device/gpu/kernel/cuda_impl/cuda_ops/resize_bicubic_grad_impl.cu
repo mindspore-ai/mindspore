@@ -30,8 +30,8 @@ __device__ int Bounds(int access, int limit) {
 }
 
 template <typename T, typename S>
-__global__ void ResizeBicubicGradSame(const T *input, S *output, int nhwc) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nhwc; pos += gridDim.x * blockDim.x) {
+__global__ void ResizeBicubicGradSame(const T *input, S *output, int nchw) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nchw; pos += gridDim.x * blockDim.x) {
     S val = input[pos];
     output[pos] = val;
     return;
@@ -40,13 +40,13 @@ __global__ void ResizeBicubicGradSame(const T *input, S *output, int nhwc) {
 
 template <typename T, typename S>
 __global__ void ResizeBicubicGrad(const T *input, const S A, const int n, const int c, const int grad_h,
-                                  const int grad_w, const int origin_h, const int origin_w, const int nhwc,
-                                  const int hwc, const int wc, const float h_scale, const float w_scale, S *output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nhwc; pos += gridDim.x * blockDim.x) {
-    int posn = pos / hwc;
-    int posc = pos % c;
-    int posh = pos / wc % grad_h;
-    int posw = pos / c % grad_w;
+                                  const int grad_w, const int origin_h, const int origin_w, const int nchw,
+                                  const int chw, const int hw, const float h_scale, const float w_scale, S *output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nchw; pos += gridDim.x * blockDim.x) {
+    int posn = pos / chw;
+    int posc = pos / hw % c;
+    int posh = pos / grad_w % grad_h;
+    int posw = pos % grad_w;
     S posw_scaled = 0;
     S posh_scaled = 0;
     posw_scaled = w_scale * posw;
@@ -86,8 +86,8 @@ __global__ void ResizeBicubicGrad(const T *input, const S A, const int n, const 
       for (int m = 0; m < 4; m++) {
         access_h = Bounds(h_low - 1 + k, origin_h);
         access_w = Bounds(w_low - 1 + m, origin_w);
-        input_start = origin_w * c * (posn * origin_h + access_h);
-        temp = input_start + (access_w * c) + posc;
+        input_start = origin_w * origin_h * (c * posn + posc) + access_h * origin_w;
+        temp = input_start + access_w;
         MsAtomicAdd(&output[temp], value * y_coeffs[k] * x_coeffs[m]);
       }
     }
@@ -98,13 +98,13 @@ __global__ void ResizeBicubicGrad(const T *input, const S A, const int n, const 
 template <typename T, typename S>
 __global__ void ResizeBicubicGradHalfPixelCenters(const T *input, const S A, const int n, const int c, const int grad_h,
                                                   const int grad_w, const int origin_h, const int origin_w,
-                                                  const int nhwc, const int hwc, const int wc, const float h_scale,
+                                                  const int nchw, const int chw, const int hw, const float h_scale,
                                                   const float w_scale, S *output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nhwc; pos += gridDim.x * blockDim.x) {
-    int posn = pos / hwc;
-    int posc = pos % c;
-    int posh = pos / wc % grad_h;
-    int posw = pos / c % grad_w;
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nchw; pos += gridDim.x * blockDim.x) {
+    int posn = pos / chw;
+    int posc = pos / hw % c;
+    int posh = pos / grad_w % grad_h;
+    int posw = pos % grad_w;
     S posw_scaled = 0;
     S posh_scaled = 0;
     posw_scaled = (static_cast<S>(posw) + static_cast<S>(0.5)) * w_scale - static_cast<S>(0.5);
@@ -177,8 +177,8 @@ __global__ void ResizeBicubicGradHalfPixelCenters(const T *input, const S A, con
       for (int m = 0; m < 4; m++) {
         access_h = Bounds(h_low - 1 + k, origin_h);
         access_w = Bounds(w_low - 1 + m, origin_w);
-        input_start = origin_w * c * (posn * origin_h + access_h);
-        temp = input_start + (access_w * c) + posc;
+        input_start = origin_w * origin_h * (c * posn + posc) + access_h * origin_w;
+        temp = input_start + access_w;
         MsAtomicAdd(&output[temp], value * y_coeffs[k] * x_coeffs[m]);
       }
     }
@@ -186,38 +186,29 @@ __global__ void ResizeBicubicGradHalfPixelCenters(const T *input, const S A, con
   return;
 }
 
-template <typename S>
-__global__ void InitZero(S *output, const int origin_size) {
-  for (size_t pos = threadIdx.x + blockIdx.x * blockDim.x; pos < (origin_size); pos += gridDim.x * blockDim.x) {
-    output[pos] = static_cast<S>(0);
-  }
-}
-
 template <typename T, typename S>
 void CalResizeBicubicGrad(const T *input, const int n, const int c, const int grad_h, const int grad_w,
                           const int origin_h, const int origin_w, const float h_scale, const float w_scale, S *output,
                           bool half_pixel_centers, const uint32_t &device_id, cudaStream_t cuda_stream) {
-  const int wc = grad_w * c;
-  const int hwc = grad_h * wc;
-  const int nhwc = n * hwc;
+  const int hw = grad_w * grad_h;
+  const int chw = c * hw;
+  const int nchw = n * chw;
   const int origin_size = n * c * origin_h * origin_w;
+  cudaMemset(static_cast<void *>(output), 0, sizeof(S) * origin_size);
   if (origin_h == grad_h && origin_w == grad_w) {
-    InitZero<<<CUDA_BLOCKS(device_id, origin_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(output, origin_size);
-    ResizeBicubicGradSame<<<CUDA_BLOCKS(device_id, nhwc), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, output,
-                                                                                                     nhwc);
+    ResizeBicubicGradSame<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, output,
+                                                                                                     nchw);
     return;
   }
   S A = -0.75;
   if (half_pixel_centers == true) {
     A = -0.5;
-    InitZero<<<CUDA_BLOCKS(device_id, origin_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(output, origin_size);
-    ResizeBicubicGradHalfPixelCenters<<<CUDA_BLOCKS(device_id, nhwc), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-      input, A, n, c, grad_h, grad_w, origin_h, origin_w, nhwc, hwc, wc, h_scale, w_scale, output);
+    ResizeBicubicGradHalfPixelCenters<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      input, A, n, c, grad_h, grad_w, origin_h, origin_w, nchw, chw, hw, h_scale, w_scale, output);
     return;
   } else {
-    InitZero<<<CUDA_BLOCKS(device_id, origin_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(output, origin_size);
-    ResizeBicubicGrad<<<CUDA_BLOCKS(device_id, nhwc), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-      input, A, n, c, grad_h, grad_w, origin_h, origin_w, nhwc, hwc, wc, h_scale, w_scale, output);
+    ResizeBicubicGrad<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      input, A, n, c, grad_h, grad_w, origin_h, origin_w, nchw, chw, hw, h_scale, w_scale, output);
     return;
   }
 }

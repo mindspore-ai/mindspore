@@ -31,13 +31,13 @@ __device__ int Bound(int access, int limit) {
 
 template <typename T, typename S>
 __global__ void ResizeBicubic(const T *input, const float A, const int n, const int c, const int input_h,
-                              const int input_w, const int output_h, const int output_w, const int nhwc, const int hwc,
-                              const int wc, const S h_scale, const S w_scale, S *output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nhwc; pos += gridDim.x * blockDim.x) {
-    int posn = pos / hwc;
-    int posc = pos % c;
-    int posh = pos / wc % output_h;
-    int posw = pos / c % output_w;
+                              const int input_w, const int output_h, const int output_w, const int nchw, const int chw,
+                              const int hw, const S h_scale, const S w_scale, S *output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nchw; pos += gridDim.x * blockDim.x) {
+    int posn = pos / chw;
+    int posc = pos / hw % c;
+    int posh = pos / output_w % output_h;
+    int posw = pos % output_w;
     float posw_scaled = 0;
     float posh_scaled = 0;
     posw_scaled = w_scale * posw;
@@ -65,14 +65,14 @@ __global__ void ResizeBicubic(const T *input, const float A, const int n, const 
     for (int k = 0; k < 4; k++) {
       access_h = Bound(h_low - 1 + k, input_h);
       access_w = Bound(w_low - 1, input_w);
-      input_start = input_w * c * (posn * input_h + access_h);
-      temp0 = input[input_start + (access_w * c) + posc];
+      input_start = input_w * input_h * (c * posn + posc) + access_h * input_w;
+      temp0 = input[input_start + access_w];
       access_w = Bound(w_low, input_w);
-      temp1 = input[input_start + (access_w * c) + posc];
+      temp1 = input[input_start + access_w];
       access_w = Bound(w_low + 1, input_w);
-      temp2 = input[input_start + (access_w * c) + posc];
+      temp2 = input[input_start + access_w];
       access_w = Bound(w_low + 2, input_w);
-      temp3 = input[input_start + (access_w * c) + posc];
+      temp3 = input[input_start + access_w];
       coefficients[k] = coeffs0 * temp0 + coeffs1 * temp1 + coeffs2 * temp2 + coeffs3 * temp3;
     }
     const int64_t offset_h = lrintf(h_alpha * 1024);
@@ -95,13 +95,13 @@ __global__ void ResizeBicubic(const T *input, const float A, const int n, const 
 template <typename T, typename S>
 __global__ void ResizeBicubicHalfPixelCenters(const T *input, const float A, const int n, const int c,
                                               const int input_h, const int input_w, const int output_h,
-                                              const int output_w, const int nhwc, const int hwc, const int wc,
+                                              const int output_w, const int nchw, const int chw, const int hw,
                                               const S h_scale, const S w_scale, S *output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nhwc; pos += gridDim.x * blockDim.x) {
-    int posn = pos / hwc;
-    int posc = pos % c;
-    int posh = pos / wc % output_h;
-    int posw = pos / c % output_w;
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nchw; pos += gridDim.x * blockDim.x) {
+    int posn = pos / chw;
+    int posc = pos / hw % c;
+    int posh = pos / output_w % output_h;
+    int posw = pos % output_w;
     float posw_scaled = 0;
     float posh_scaled = 0;
     posw_scaled = (static_cast<float>(posw) + static_cast<float>(0.5)) * w_scale - static_cast<float>(0.5);
@@ -145,14 +145,14 @@ __global__ void ResizeBicubicHalfPixelCenters(const T *input, const float A, con
     for (int k = 0; k < 4; k++) {
       access_h = Bound(h_low - 1 + k, input_h);
       access_w = Bound(w_low - 1, input_w);
-      input_start = input_w * c * (posn * input_h + access_h);
-      temp0 = input[input_start + (access_w * c) + posc];
+      input_start = input_w * input_h * (c * posn + posc) + access_h * input_w;
+      temp0 = input[input_start + access_w];
       access_w = Bound(w_low, input_w);
-      temp1 = input[input_start + (access_w * c) + posc];
+      temp1 = input[input_start + access_w];
       access_w = Bound(w_low + 1, input_w);
-      temp2 = input[input_start + (access_w * c) + posc];
+      temp2 = input[input_start + access_w];
       access_w = Bound(w_low + 2, input_w);
-      temp3 = input[input_start + (access_w * c) + posc];
+      temp3 = input[input_start + access_w];
       coefficients[k] = coeffs0 * temp0 + coeffs1 * temp1 + coeffs2 * temp2 + coeffs3 * temp3;
     }
     const int64_t offset_h = lrintf(h_alpha * 1024);
@@ -189,8 +189,8 @@ __global__ void ResizeBicubicHalfPixelCenters(const T *input, const float A, con
 }
 
 template <typename T, typename S>
-__global__ void ResizeBicubicSame(const T *input, S *output, int nhwc) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nhwc; pos += gridDim.x * blockDim.x) {
+__global__ void ResizeBicubicSame(const T *input, S *output, int nchw) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nchw; pos += gridDim.x * blockDim.x) {
     S val = input[pos];
     output[pos] = val;
     return;
@@ -201,22 +201,22 @@ template <typename T, typename S>
 void CalResizeBicubic(const T *input, const int n, const int c, const int input_h, const int input_w,
                       const int output_h, const int output_w, const S h_scale, const S w_scale, S *output,
                       bool half_pixel_centers, const uint32_t &device_id, cudaStream_t cuda_stream) {
-  const int wc = output_w * c;
-  const int hwc = output_h * wc;
-  const int nhwc = n * hwc;
+  const int hw = output_h * output_w;
+  const int chw = c * hw;
+  const int nchw = n * chw;
   if (input_h == output_h && input_w == output_w) {
-    ResizeBicubicSame<<<CUDA_BLOCKS(device_id, nhwc), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, output, nhwc);
+    ResizeBicubicSame<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, output, nchw);
     return;
   }
   float A = -0.75;
   if (half_pixel_centers == true) {
     A = -0.5;
-    ResizeBicubicHalfPixelCenters<<<CUDA_BLOCKS(device_id, nhwc), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-      input, A, n, c, input_h, input_w, output_h, output_w, nhwc, hwc, wc, h_scale, w_scale, output);
+    ResizeBicubicHalfPixelCenters<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      input, A, n, c, input_h, input_w, output_h, output_w, nchw, chw, hw, h_scale, w_scale, output);
     return;
   } else {
-    ResizeBicubic<<<CUDA_BLOCKS(device_id, nhwc), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-      input, A, n, c, input_h, input_w, output_h, output_w, nhwc, hwc, wc, h_scale, w_scale, output);
+    ResizeBicubic<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      input, A, n, c, input_h, input_w, output_h, output_w, nchw, chw, hw, h_scale, w_scale, output);
     return;
   }
 }
@@ -269,8 +269,8 @@ template CUDA_LIB_EXPORT void CalResizeBicubic<float, float>(const float *input,
                                                              bool half_pixel_centers, const uint32_t &device_id,
                                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalResizeBicubic<double, float>(const double *input, const int n, const int c,
-                                                               const int input_h, const int input_w, const int output_h,
-                                                               const int output_w, const float h_scale,
-                                                               const float w_scale, float *output,
-                                                               bool half_pixel_centers, const uint32_t &device_id,
-                                                               cudaStream_t cuda_stream);
+                                                              const int input_h, const int input_w, const int output_h,
+                                                              const int output_w, const float h_scale,
+                                                              const float w_scale, float *output,
+                                                              bool half_pixel_centers, const uint32_t &device_id,
+                                                              cudaStream_t cuda_stream);

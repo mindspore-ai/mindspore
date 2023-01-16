@@ -54,6 +54,7 @@ bool ResizeBicubicGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
 bool ResizeBicubicGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_grad_ptr = std::dynamic_pointer_cast<ops::ResizeBicubicGrad>(base_operator);
   kernel_name_ = kernel_grad_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);

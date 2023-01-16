@@ -49,6 +49,10 @@ class ResizeBicubicCPUKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T1, typename T2>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
+  template <typename T1, typename T2>
+  inline void interpolate_with_caching(const T1 *input_data, const bool half_pixel_centers_, T2 *output_data);
+
   using ResizeBicubicFunc = std::function<bool(ResizeBicubicCPUKernelMod *, const std::vector<kernel::AddressPtr> &,
                                                const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, ResizeBicubicFunc>> func_list_;

@@ -757,14 +757,14 @@ class ResizeBicubic(Primitive):
 
 
     Inputs:
-        - **images** (Tensor) - The input image must be a 4-D tensor of shape :math:`(batch, height, width, channels)`.
+        - **images** (Tensor) - The input image must be a 4-D tensor of shape :math:`(batch, channels, height, width)`.
           The format must be NHWC.
           Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
         - **size** (Tensor) - A 1-D tensor of shape [2], with 2 elements: new_height, new_width.
           Types allowed: int32.
 
     Outputs:
-        A 4-D tensor of shape :math:`(batch, new\_height, new\_width, channels)` with type float32.
+        A 4-D tensor of shape :math:`(batch, channels, new\_height, new\_width)` with type float32.
 
     Raises:
         TypeError: If `images` type is not allowed.
@@ -806,7 +806,6 @@ class ResizeBicubic(Primitive):
     @prim_attr_register
     def __init__(self, align_corners=False, half_pixel_centers=False):
         """Initialize"""
-        self.add_prim_attr("max_length", 1000000)
         validator.check_value_type('align_corners', align_corners, bool, self.name)
         validator.check_value_type('half_pixel_centers', half_pixel_centers, bool, self.name)
         self.init_prim_io_names(inputs=['images', 'size'], outputs=['y'])
@@ -838,13 +837,12 @@ class ResizeBicubic(Primitive):
         validator.check("size[1]", size_value[1], "minimum", 0, Rel.GT, self.name)
 
         batch_size = images_shape[0]
+        channel = images_shape[1]
         height = size_value[0]
         width = size_value[1]
-        channel = images_shape[3]
-        out_shape = (batch_size, height, width, channel)
-        return {'shape': out_shape,
-                'dtype': mstype.float32,
-                'value': None}
+
+        out_shape = (batch_size, channel, height, width)
+        return {'shape': out_shape, 'dtype': mstype.float32, 'value': None}
 
 
 class ResizeArea(Primitive):

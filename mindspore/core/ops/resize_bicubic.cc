@@ -38,9 +38,6 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto max_length_ptr = primitive->GetAttr("max_length");
-  MS_EXCEPTION_IF_NULL(max_length_ptr);
-  const int64_t kMaxLen = GetValue<int64_t>(max_length_ptr);
   auto align_corners_ptr = primitive->GetAttr("align_corners");
   bool align_corners = GetValue<bool>(align_corners_ptr);
   auto half_pixel_centers_ptr = primitive->GetAttr("half_pixel_centers");
@@ -52,9 +49,9 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
   auto shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (!IsDynamicRank(shape0)) {
     (void)CheckAndConvertUtils::CheckInteger("images rank", SizeToLong(shape0.size()), kEqual, shape0_dim, prim_name);
-    constexpr int64_t indexid3 = 3;
+    constexpr int64_t indexid1 = 1;
     output_shape[0] = shape0[0];
-    output_shape[indexid3] = shape0[indexid3];
+    output_shape[indexid1] = shape0[indexid1];
   }
 
   auto shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
@@ -75,10 +72,8 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
     for (size_t i = 0; i < size_value.size(); ++i) {
       CheckAndConvertUtils::CheckInteger("size", size_value[i], kGreaterThan, kNumZero, prim_name);
     }
-    output_shape[kInputIndex1] = size_value[kInputIndex0];
-    output_shape[kInputIndex2] = size_value[kInputIndex1];
-    (void)CheckAndConvertUtils::CheckInteger("the number of elements of output", SizeToLong(SizeOf(output_shape)),
-                                             kLessEqual, kMaxLen, prim_name);
+    output_shape[kInputIndex2] = size_value[kInputIndex0];
+    output_shape[kInputIndex3] = size_value[kInputIndex1];
   }
 
   return std::make_shared<abstract::Shape>(output_shape);

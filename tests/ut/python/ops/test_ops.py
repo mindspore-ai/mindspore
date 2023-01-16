@@ -3386,14 +3386,14 @@ test_case_nn_ops = [
         'desc_bprop': []}),
     ('ResizeBicubic', {
         'block': ResizeBicubic(align_corners=False, half_pixel_centers=False),
-        'desc_inputs': [Tensor([[[[1.0], [2.0]], [[3.0], [4.0]]]]),
+        'desc_inputs': [Tensor([[[[1., 2.], [3., 4.]]]]),
                         Tensor(np.array([1, 4]).reshape(2).astype(np.int32))],
-        'desc_bprop': [Tensor([[[[1.], [1.5], [2.], [2.09375]]]], mstype.float32)]}),
+        'desc_bprop': [Tensor([[[[1., 1.5, 2., 2.09375]]]], mstype.float32)]}),
     ('ResizeBicubicGrad', {
         'block': ResizeBicubicGrad(),
-        'desc_inputs': [Tensor([[[[1.0], [2.0]], [[3.0], [4.0]]]], mstype.float32),
-                        Tensor([[[[1.], [4.], [6.], [4.]]]])],
-        'desc_bprop': [Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32)],
+        'desc_inputs': [Tensor([[[[1., 2.], [3., 4.]]]], mstype.float32),
+                        Tensor([[[[1., 4., 6., 4.]]]], mstype.float32)],
+        'desc_bprop': [Tensor([[[[1., 4., 6., 4.]]]], mstype.float32)],
         'skip': ['backward']}),
     ('ResizeBilinear', {
         'block': P.ResizeBilinear((5, 5)),
