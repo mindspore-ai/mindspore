@@ -101,6 +101,7 @@
 #include "tools/optimizer/fusion/expanddims_reshape_fusion.h"
 #include "tools/optimizer/fusion/reduce_same_op_in_horizon.h"
 #include "tools/optimizer/fusion/reshape_shape_fusion.h"
+#include "tools/optimizer/fusion/transpose_gather_fusion.h"
 #ifndef ENABLE_CLOUD_FUSION_INFERENCE
 #include "tools/converter/adapter/acl/acl_pass.h"
 #endif
@@ -342,7 +343,8 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
              std::make_shared<opt::AblateReshapeLikeOp>(),        std::make_shared<opt::MulReduceFusion>(),
              std::make_shared<opt::ConcatConcatFusion>(),         std::make_shared<opt::ReduceStackFusion>(),
              std::make_shared<opt::RemoveTransitivityOp>(),       std::make_shared<opt::StridedSliceFusion>(),
-             std::make_shared<opt::RemoveTransitivityOp>(),       std::make_shared<opt::ReshapeShapeFusion>()};
+             std::make_shared<opt::RemoveTransitivityOp>(),       std::make_shared<opt::ReshapeShapeFusion>(),
+             std::make_shared<opt::TransposeGatherFusion>()};
   for (auto &pass : fusions) {
     MS_CHECK_TRUE_MSG(pass != nullptr, RET_ERROR, "pass is a nullptr.");
     if (param->fusion_blacklists.find(pass->name()) != param->fusion_blacklists.end()) {
