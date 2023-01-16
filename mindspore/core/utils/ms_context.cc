@@ -57,6 +57,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR, "");
   set_param<bool>(MS_CTX_ENABLE_DUMP, false);
   set_param<std::string>(MS_CTX_SAVE_DUMP_PATH, ".");
+  set_param<std::string>(MS_CTX_DETERMINISTIC, "OFF");
   set_param<std::string>(MS_CTX_ENV_CONFIG_PATH, "");
   set_param<std::string>(MS_CTX_TUNE_MODE, "NO_TUNE");
   set_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS, "");

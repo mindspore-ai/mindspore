@@ -178,6 +178,7 @@ nlohmann::json TbeUtils::GenSocInfo() {
                          "permission, (3) whether the path is too long. ";
   }
   soc_info_json["mdl_bank_path"] = config_path;
+  soc_info_json["deterministic"] = context_ptr->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON";
   return soc_info_json;
 }
 

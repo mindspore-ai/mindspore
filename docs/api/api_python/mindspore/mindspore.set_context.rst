@@ -35,6 +35,8 @@ mindspore.set_context
     |                         +------------------------------+----------------------------+
     |                         |  save_dump_path              |  Ascend                    |
     |                         +------------------------------+----------------------------+
+    |                         |  deterministic               |  Ascend                    |
+    |                         +------------------------------+----------------------------+
     |                         |  print_file_path             |  Ascend                    |
     |                         +------------------------------+----------------------------+
     |                         |  env_config_path             |  CPU/GPU/Ascend            |
@@ -96,6 +98,12 @@ mindspore.set_context
         - **save_graphs_path** (str) - 表示保存计算图的路径。默认值："."。如果指定的目录不存在，系统将自动创建该目录。在分布式训练中，图形将被保存到 `save_graphs_path/rank_${rank_id}/` 目录下。 `rank_id` 为集群中当前设备的ID。
         - **enable_dump** (bool) - 此参数已弃用，将在下一版本中删除。
         - **save_dump_path** (str) - 此参数已弃用，将在下一版本中删除。
+        - **deterministic** (str) - 表示是否使能算子确定性运行模式。值必须在['ON','OFF']范围内，默认值：'OFF'。
+
+          - ON：开启算子确定性运行模式。
+          - OFF：关闭算子确定性运行模式。
+
+          当确定性开启时，模型中的算子将在Ascend中具有确定性。这意味着，如果算子在同一硬件上使用相同的输入运行多次，则每次都会有完全相同的输出。这对于调试模型很有用。
         - **print_file_path** (str) - 该路径用于保存打印数据。使用时 :class:`mindspore.ops.Print` 可以打印输入的张量或字符串信息，使用方法 :func:`mindspore.parse_print` 解析保存的文件。如果设置了此参数，打印数据保存到文件，未设置将显示到屏幕。如果保存的文件已经存在，则将添加时间戳后缀到文件中。将数据保存到文件解决了屏幕打印中的数据丢失问题，如果未设置，将报告错误:"prompt to set the upper absolute path"。
         - **env_config_path** (str) - 通过 `mindspore.set_context(env_config_path="./mindspore_config.json")` 来设置MindSpore环境配置文件路径。
 
