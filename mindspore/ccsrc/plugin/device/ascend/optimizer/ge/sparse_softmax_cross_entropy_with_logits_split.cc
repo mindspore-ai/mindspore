@@ -305,7 +305,6 @@ CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_no
   (void)y_shape.emplace_back(1);
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)}, {y_shape},
                                               expand_dims_node.get());
-
   return expand_dims_node;
 }
 
