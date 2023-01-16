@@ -124,20 +124,20 @@ std::vector<mindspore::TypePtrList> GetSortedCache(const TypeListMap<py::functio
     }
   }
 
-  auto comparator = [](const mindspore::TypePtrList &a, const mindspore::TypePtrList &b) {
+  auto comparator = [match_max_idx](const mindspore::TypePtrList &a, const mindspore::TypePtrList &b) {
     if (a.size() > b.size()) {
       return false;
     }
     if (a.size() < b.size()) {
       return true;
     }
-    for (size_t i = 0; i < a.size(); ++i) {
+    for (size_t i = match_max_idx; i < a.size(); ++i) {
       if (a[i]->type_id() == b[i]->type_id()) {
         continue;
       }
       return a[i]->type_id() < b[i]->type_id();
     }
-    return true;
+    return false;
   };
   std::sort(cache_vec.begin(), cache_vec.end(), comparator);
   return cache_vec;
