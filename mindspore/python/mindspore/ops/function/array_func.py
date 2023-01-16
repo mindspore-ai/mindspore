@@ -471,7 +471,7 @@ def ravel(x):
     Args:
         x (Tensor): A tensor to be flattened.
 
-    Outputs:
+    Returns:
         Tensor, a 1-D tensor, containing the same elements of the input.
 
     Raises:
