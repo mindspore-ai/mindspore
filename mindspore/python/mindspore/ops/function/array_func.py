@@ -5612,19 +5612,19 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
     return unsorted_segment_sum_(input_x, segment_ids, num_segments)
 
 
-def top_k(input_x, k, dim=None, sorted=True):
+def topk(input_x, k, dim=None, largest=True, sorted=True):
     r"""
-    Finds values and indices of the `k` largest entries along a given dimension.
+    Finds values and indices of the `k` largest or smallest entries along a given dimension.
 
     .. warning::
         - If sorted is set to 'False', it will use the aicpu operator, the performance may be reduced.
 
-    If the `input_x` is a one-dimensional Tensor, finds the `k` largest entries in the Tensor,
+    If the `input_x` is a one-dimensional Tensor, finds the `k` largest  or smallest entries in the Tensor,
     and outputs its value and index as a Tensor. Therefore, values[`k`] is the `k` largest item in `input_x`,
     and its index is indices [`k`].
 
     For a multi-dimensional matrix,
-    calculates the first `k` entries in a given dimension, therefore:
+    calculates the first or last `k` entries in a given dimension, therefore:
 
     .. math::
 
@@ -5634,15 +5634,16 @@ def top_k(input_x, k, dim=None, sorted=True):
 
     Args:
         input_x (Tensor): Input to be computed, data type must be float16, float32 or int32.
-        k (int): The number of top elements to be computed along the last dimension, constant input is needed.
+        k (int): The number of top or bottom elements to be computed along the last dimension, constant input is needed.
         dim (int, optional): The dimension to sort along. Default: None.
+        largest (bool, optional): If largest is False then the k smallest elements are returned. Default: True.
         sorted (bool, optional): If true, the obtained elements will be sorted by the values in descending order.
             Default: True.
 
     Returns:
         Tuple of 2 tensors, the values and the indices.
 
-        - values (Tensor): The `k` largest elements in each slice of the given dimension.
+        - values (Tensor): The `k` largest or smallest elements in each slice of the given dimension.
         - indices (Tensor): The indices of values within the last dimension of input.
 
     Raises:
@@ -5660,7 +5661,7 @@ def top_k(input_x, k, dim=None, sorted=True):
         >>> x = ms.Tensor([[0.5368, 0.2447, 0.4302, 0.9673],
         ...                [0.4388, 0.6525, 0.4685, 0.1868],
         ...                [0.3563, 0.5152, 0.9675, 0.8230]], dtype=ms.float32)
-        >>> output = ops.top_k(x, 2, dim=1)
+        >>> output = ops.topk(x, 2, dim=1)
         >>> print(output)
         (Tensor(shape=[3, 2], dtype=Float32, value=
         [[ 9.67299998e-01,  5.36800027e-01],
@@ -5669,15 +5670,33 @@ def top_k(input_x, k, dim=None, sorted=True):
         [[3, 0],
          [1, 2],
          [2, 3]]))
+        >>> output2 = ops.topk(x, 2, dim=1, largest=False)
+        >>> print(output2)
+        (Tensor(shape=[3, 2], dtype=Float32, value=
+        [[ 2.44700000e-01,  4.30200011e-01],
+         [ 1.86800003e-01,  4.38800007e-01],
+         [ 3.56299996e-01,  5.15200019e-01]]), Tensor(shape=[3, 2], dtype=Int32, value=
+        [[1, 2],
+         [3, 0],
+         [0, 1]]))
     """
     top_k_ = _get_cache_prim(P.TopK)(sorted)
+    if not largest:
+        input_x = -input_x
     if dim is None or dim == input_x.ndim - 1:
+        if not largest:
+            res = top_k_(input_x, k)
+            values, indices = -res[0], res[1]
+            return values, indices
         return top_k_(input_x, k)
     input_x = input_x.swapaxes(dim, input_x.ndim - 1)
     output = top_k_(input_x, k)
     values = output[0].swapaxes(dim, input_x.ndim - 1)
     indices = output[1].swapaxes(dim, input_x.ndim - 1)
-    res = (values, indices)
+    if not largest:
+        res = (-values, indices)
+    else:
+        res = (values, indices)
     return res
 
 
@@ -6469,7 +6488,7 @@ __all__ = [
     'min',
     'unsorted_segment_sum',
     'population_count',
-    'top_k',
+    'topk',
     'expand',
     'fold',
     'unfold',

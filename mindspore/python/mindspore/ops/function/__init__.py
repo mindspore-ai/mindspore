@@ -133,7 +133,7 @@ from .array_func import (
     argmax,
     min,
     population_count,
-    top_k,
+    topk,
     expand,
     fold,
     unfold,

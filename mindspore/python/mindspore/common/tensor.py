@@ -3465,12 +3465,12 @@ class Tensor(Tensor_):
         """
         return tensor_operator_registry.get('tile')()(self, multiples)
 
-    def top_k(self, k, dim=None, sorted=True):
+    def topk(self, k, dim=None, largest=True, sorted=True):
         r"""
         For details, please refer to :func:`mindspore.ops.top_k`.
         """
         self._init_check()
-        return tensor_operator_registry.get("top_k")(self, k, dim, sorted)
+        return tensor_operator_registry.get("topk")(self, k, dim, largest, sorted)
 
     def sigmoid(self):
         r"""
