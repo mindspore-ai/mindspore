@@ -1315,12 +1315,14 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get("negative")(self)
 
-    def norm(self, axis, p=2, keep_dims=False, epsilon=1e-12):
+    # pylint: disable=redefined-builtin
+    # pylint: disable=invalid-name
+    def norm(self, A, ord=None, dim=None, keepdim=False, *, dtype=None):
         """
         For details, please refer to :func:`mindspore.ops.norm`.
         """
         self._init_check()
-        return tensor_operator_registry.get('norm')(self, axis, p, keep_dims, epsilon)
+        return tensor_operator_registry.get('norm')(self, A, ord, dim, keepdim, dtype=dtype)
 
     def renorm(self, p, dim, maxnorm):
         """
