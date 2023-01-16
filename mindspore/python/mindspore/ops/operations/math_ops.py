@@ -7155,7 +7155,7 @@ class FFTWithSize(Primitive):
 
             - "backward" has the direct transforms unscaled and the inverse transforms scaled by 1/n,
               where n is the input x's element numbers.
-            - "ortho" has both direct and inverse transforms are scaled by 1/\sqrt(n).
+            - "ortho" has both direct and inverse transforms are scaled by :math:`1/\sqrt(n)`.
             - "forward" has the direct transforms scaled by 1/n and the inverse transforms unscaled.
 
         onesided (bool, optional): Controls whether the input is halved to avoid redundancy. Default: True.
