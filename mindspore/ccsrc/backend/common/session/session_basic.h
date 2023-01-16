@@ -149,6 +149,10 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
     debugger_->Init(device_id_, ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET));
   }
 #endif
+  static BaseRef CreateNodeOutputTensors(const AnfNodePtr &anf, const KernelGraphPtr &graph,
+                                         const std::vector<tensor::TensorPtr> &input_tensors,
+                                         std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
+                                         KernelMapTensor *node_to_tensor);
 
  private:
   void GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
