@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <unordered_set>
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/anf.h"
@@ -72,9 +73,28 @@ class FusionBasePass : public PassWithSwitch {
  protected:
   bool RunPass(const FuncGraphPtr &graph) override;
   void SetRecordFusionId(const mindspore::HashSet<AnfNodePtr> &record);
-  bool CheckEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
-  bool CheckDoubleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
-  bool CheckMultiOutputEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
+  bool CheckEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node,
+                        const std::unordered_set<std::string> &fusion_types, size_t input_size,
+                        size_t not_updatestate_size);
+
+  bool CheckSingleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
+    return CheckSingleInEltWiseNode(kernel_graph, node, {kernel::kPatternElemWise});
+  }
+  bool CheckSingleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node,
+                                const std::unordered_set<std::string> &fusion_types);
+
+  bool CheckDoubleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
+    return CheckDoubleInEltWiseNode(kernel_graph, node, {kernel::kPatternElemWise});
+  }
+  bool CheckDoubleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node,
+                                const std::unordered_set<std::string> &fusion_types);
+
+  bool CheckMultiOutputEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
+    return CheckMultiOutputEltWiseNode(kernel_graph, node, {kernel::kPatternElemWise});
+  }
+  bool CheckMultiOutputEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node,
+                                   const std::unordered_set<std::string> &fusion_types);
+
   size_t GetNotUpdateStateUserNums(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) const;
   FusionIdAllocatorPtr fusion_id_allocator;
 };

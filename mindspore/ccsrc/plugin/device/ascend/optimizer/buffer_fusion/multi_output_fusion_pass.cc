@@ -39,7 +39,7 @@ void MultiOutputFusionPass::MatchMultiOutputEltwise(const CNodePtr &cnode, const
   } else {
     return;
   }
-  while (CheckEltWiseNode(kernel_graph, eltwise_input)) {
+  while (CheckSingleInEltWiseNode(kernel_graph, eltwise_input)) {
     (void)record.insert(eltwise_input);
     if (record.size() == MULTI_ELTWISE_SIZE) {
       break;

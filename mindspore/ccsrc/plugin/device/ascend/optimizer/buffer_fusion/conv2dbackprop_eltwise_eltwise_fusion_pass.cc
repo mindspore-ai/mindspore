@@ -32,8 +32,9 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltw
   mindspore::HashSet<AnfNodePtr> record{cnode};
   auto eltwise_input = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(eltwise_input);
-  if (CheckDoubleInEltWiseNode(kernel_graph, eltwise_input) &&
-      common::AnfAlgo::GetCNodeName(eltwise_input) == kAddNOpName) {
+  const std::unordered_set<std::string> support_node_names{kAddNOpName, kAddOpName};
+  if (CheckDoubleInEltWiseNode(kernel_graph, eltwise_input, {kernel::kPatternElemWise, kernel::kPatternBroadcast}) &&
+      support_node_names.find(common::AnfAlgo::GetCNodeName(eltwise_input)) != support_node_names.cend()) {
     (void)record.insert(eltwise_input);
   } else {
     return;
@@ -42,8 +43,8 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltw
   MS_EXCEPTION_IF_NULL(manager);
   auto input_cnode = eltwise_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(input_cnode);
-  std::vector candidate_cb_node{input_cnode->input(kIndex2), input_cnode->input(kIndex1)};
-  for (const auto &cb_node : candidate_cb_node) {
+  std::vector candidate_cb_nodes{input_cnode->input(kIndex2), input_cnode->input(kIndex1)};
+  for (const auto &cb_node : candidate_cb_nodes) {
     MS_EXCEPTION_IF_NULL(cb_node);
     if (!cb_node->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(cb_node)) {
       return;
