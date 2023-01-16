@@ -5612,9 +5612,9 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
     return unsorted_segment_sum_(input_x, segment_ids, num_segments)
 
 
-def top_k(input_x, k, sorted=True):
+def top_k(input_x, k, dim=None, sorted=True):
     r"""
-    Finds values and indices of the `k` largest entries along the last dimension.
+    Finds values and indices of the `k` largest entries along a given dimension.
 
     .. warning::
         - If sorted is set to 'False', it will use the aicpu operator, the performance may be reduced.
@@ -5624,24 +5624,25 @@ def top_k(input_x, k, sorted=True):
     and its index is indices [`k`].
 
     For a multi-dimensional matrix,
-    calculates the first `k` entries in each row (corresponding vector along the last dimension), therefore:
+    calculates the first `k` entries in a given dimension, therefore:
 
     .. math::
 
-        values.shape = indices.shape = input.shape[:-1] + [k].
+        values.shape = indices.shape
 
     If the two compared elements are the same, the one with the smaller index value is returned first.
 
     Args:
         input_x (Tensor): Input to be computed, data type must be float16, float32 or int32.
         k (int): The number of top elements to be computed along the last dimension, constant input is needed.
+        dim (int, optional): The dimension to sort along. Default: None.
         sorted (bool, optional): If true, the obtained elements will be sorted by the values in descending order.
             Default: True.
 
     Returns:
         Tuple of 2 tensors, the values and the indices.
 
-        - values (Tensor): The `k` largest elements in each slice of the last dimension.
+        - values (Tensor): The `k` largest elements in each slice of the given dimension.
         - indices (Tensor): The indices of values within the last dimension of input.
 
     Raises:
@@ -5654,18 +5655,30 @@ def top_k(input_x, k, sorted=True):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import Tensor
+        >>> import mindspore as ms
         >>> from mindspore import ops
-        >>> import mindspore
-        >>> input_x = Tensor([1, 2, 3, 4, 5], mindspore.float16)
-        >>> k = 3
-        >>> values, indices = ops.top_k(input_x, k, sorted=True)
-        >>> print((values, indices))
-        (Tensor(shape=[3], dtype=Float16, value= [ 5.0000e+00,  4.0000e+00,  3.0000e+00]), Tensor(shape=[3],
-          dtype=Int32, value= [4, 3, 2]))
+        >>> x = ms.Tensor([[0.5368, 0.2447, 0.4302, 0.9673],
+        ...                [0.4388, 0.6525, 0.4685, 0.1868],
+        ...                [0.3563, 0.5152, 0.9675, 0.8230]], dtype=ms.float32)
+        >>> output = ops.top_k(x, 2, dim=1)
+        >>> print(output)
+        (Tensor(shape=[3, 2], dtype=Float32, value=
+        [[ 9.67299998e-01,  5.36800027e-01],
+         [ 6.52499974e-01,  4.68499988e-01],
+         [ 9.67499971e-01,  8.23000014e-01]]), Tensor(shape=[3, 2], dtype=Int32, value=
+        [[3, 0],
+         [1, 2],
+         [2, 3]]))
     """
     top_k_ = _get_cache_prim(P.TopK)(sorted)
-    return top_k_(input_x, k)
+    if dim is None or dim == input_x.ndim - 1:
+        return top_k_(input_x, k)
+    input_x = input_x.swapaxes(dim, input_x.ndim - 1)
+    output = top_k_(input_x, k)
+    values = output[0].swapaxes(dim, input_x.ndim - 1)
+    indices = output[1].swapaxes(dim, input_x.ndim - 1)
+    res = (values, indices)
+    return res
 
 
 def expand(input_x, size):
