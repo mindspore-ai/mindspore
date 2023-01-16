@@ -254,7 +254,7 @@ KernelPackPtr TbeUtils::InsertCache(const std::string &kernel_name, const std::s
 }
 
 int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buffer, void **module, const string &magic,
-                                  bool has_kernel_list) {
+                                  const std::string &func_name, bool has_kernel_list) {
   static std::map<string, uint32_t> magic_maps = {{"RT_DEV_BINARY_MAGIC_PLAIN", RT_DEV_BINARY_MAGIC_PLAIN},
                                                   {"RT_DEV_BINARY_MAGIC_PLAIN_AICPU", RT_DEV_BINARY_MAGIC_PLAIN_AICPU},
                                                   {"RT_DEV_BINARY_MAGIC_PLAIN_AIVEC", RT_DEV_BINARY_MAGIC_PLAIN_AIVEC},
@@ -267,7 +267,7 @@ int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buf
   dev_bin.data = kernel_buffer.contents;
   auto iter = magic_maps.find(magic);
   if (iter == magic_maps.end()) {
-    MS_LOG(INFO) << "Invalid magic number: " << magic;
+    MS_LOG(INFO) << "Invalid magic number: " << magic << ", kernel: " << func_name;
     return -1;
   }
   dev_bin.magic = iter->second;
@@ -279,14 +279,15 @@ int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buf
                  << "], error message: " << device::ascend::ErrorManagerAdapter::GetErrorMessage(true)
                  << ". Try to delete kernel compile cache files, and restart you project again.(These cache files in "
                     "the custom directory if you used the environment variable 'MS_COMPILER_CACHE_PATH', otherwise in "
-                    "the current directory).";
+                    "the current directory). Kernel: "
+                 << func_name;
     return -1;
   }
   return 0;
 }
 
 uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel_pack, bool force_reload,
-                                     uint32_t *block_dim, void **handle, std::string *origin_key) {
+                                     uint32_t *block_dim, void **handle) {
   MS_EXCEPTION_IF_NULL(block_dim);
   auto kernel = kernel_pack.GetKernel();
   if (kernel == nullptr) {
@@ -309,14 +310,15 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
     if (iter != info_table_.end()) {
       auto kernelmeta = iter->second;
       *block_dim = kernelmeta->block_dim_;
-      if (!kernel_json_info.has_kernel_list) {
-        return kernelmeta->func_stub_;
+      if (handle != nullptr) {
+        *handle = kernelmeta->handle_;
       }
+      return kernelmeta->result_;
     }
   }
   void *module = nullptr;
-  if (BinaryRegister((*kernel_pack.GetKernel()), &module, magic, kernel_json_info.has_kernel_list) != 0) {
-    MS_LOG(INFO) << "Call runtime BinaryRegister error.";
+  if (BinaryRegister((*kernel_pack.GetKernel()), &module, magic, func_name, kernel_json_info.has_kernel_list) != 0) {
+    MS_LOG(INFO) << "Call runtime BinaryRegister error. Register for : " << func_name;
     if (module != nullptr) {
       (void)rtDevBinaryUnRegister(module);
     }
@@ -324,9 +326,8 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
   }
   if (kernel_json_info.has_kernel_list) {
     MS_EXCEPTION_IF_NULL(handle);
-    MS_EXCEPTION_IF_NULL(origin_key);
     *handle = module;
-    *origin_key = func_name;
+    info_table_[func_name] = std::make_shared<KernelMetaInfo>(KernelMetaInfo{1, *block_dim, module});
     return 1;
   }
   // to diff different funcs.
@@ -337,12 +338,13 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
                  << device::ascend::ErrorManagerAdapter::GetErrorMessage(true)
                  << ". Try to delete kernel compile cache files, and restart you project again.(These cache files in "
                     "the custom directory if you used the environment variable 'MS_COMPILER_CACHE_PATH', otherwise in "
-                    "the current directory).";
+                    "the current directory). "
+                 << func_name;
     return 0;
   }
   // cache the registered kernelmeta.
   std::lock_guard<std::mutex> lock(info_table_mutex_);
-  info_table_[func_name] = std::make_shared<KernelMetaInfo>(KernelMetaInfo{func_stub, *block_dim});
+  info_table_[func_name] = std::make_shared<KernelMetaInfo>(KernelMetaInfo{func_stub, *block_dim, module});
   return func_stub;
 }
 

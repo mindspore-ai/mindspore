@@ -63,7 +63,6 @@ class DynamicTbeKernelMod : public TbeKernelMod {
   uint64_t tiling_key_{0};
   void *handle_ = nullptr;
   void *func_stub_ = nullptr;
-  std::string origin_key_{""};
   std::string op_compile_info_{};
   bool need_skip_execute_ = false;
 };
