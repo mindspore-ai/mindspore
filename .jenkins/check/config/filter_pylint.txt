@@ -75,6 +75,7 @@
 "mindspore/mindspore/python/mindspore/dataset/engine/__init__.py"                                                        "redefined-builtin"
 "mindspore/mindspore/python/mindspore/dataset/engine/datasets.py"                                                        "redefined-builtin"
 "mindspore/mindspore/python/mindspore/dataset/engine/datasets.py"                                                        "broad-except"
+"mindspore/mindspore/python/mindspore/dataset/engine/datasets_user_defined.py"                                           "bad-super-call"
 "mindspore/mindspore/python/mindspore/dataset/engine/graphdata.py"                                                       "super-init-not-called"
 "mindspore/mindspore/python/mindspore/dataset/transforms/py_transforms_util.py"                                          "broad-except"
 

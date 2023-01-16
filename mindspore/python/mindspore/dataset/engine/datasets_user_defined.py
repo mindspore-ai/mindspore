@@ -643,7 +643,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle, num_shards=num_shards, shard_id=shard_id)
         if isinstance(source, builtins.zip):
-            # Although zip is iteratable, it does not have the feature of repeated iteration, so pass it to the array.
+            # Although zip is iterable, it does not have the feature of repeated iteration, so pass it to the array.
             self.source = [item for item in source]
         else:
             self.source = source
@@ -734,6 +734,13 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         if self.sampler:
             return self.sampler.is_sharded()
         return False
+
+    def split(self, sizes, randomize=True):
+        if hasattr(self.source, "__getitem__"):
+            # If the source has __getitem__ attribute, call the split method of MappableDataset.
+            # Otherwise, call the split method of Dataset.
+            return super().split(sizes, randomize)
+        return super(MappableDataset, self).split(sizes, randomize)
 
     def parse(self, children=None):
         if self.schema is None:
