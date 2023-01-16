@@ -319,7 +319,7 @@ std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<R
       MS_LOG(ERROR) << "model pool only support cpu or gpu or ascend type.";
       return nullptr;
     }
-    if (device->GetDeviceType() == kGPU && device_list.size() == kNumDeviceInfo) {
+    if (device->GetDeviceType() == kGPU) {
       if (context->GetInterOpParallelNum() == 0) {
         context->SetInterOpParallelNum(1);  // do not use InterOpParallel
       }
@@ -336,8 +336,7 @@ std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<R
       }
       return context;
     } else {
-      MS_LOG(ERROR) << "context is invalid; If you want run in GPU, you must set gpu device first, and then set cpu "
-                       "device";
+      MS_LOG(ERROR) << "Please set the correct DeviceType";
       return nullptr;
     }
   }
