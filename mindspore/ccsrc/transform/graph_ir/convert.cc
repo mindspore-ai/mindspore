@@ -3020,6 +3020,8 @@ OpAdapterPtr GeOpConvertor::GetForReduceAdapter(const AnfNodePtr &node, const Op
   auto op_name = common::AnfAlgo::GetCNodeName(node);
   if (op_name == prim::kPrimReduceSum->name()) {
     return FindAdapter("ReduceSumD", true);
+  } else if (op_name == "Conv3DTranspose") {
+    return FindAdapter("Conv3DTransposeD", true);
   }
   return adapter;
 }
