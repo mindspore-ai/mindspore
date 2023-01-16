@@ -104,7 +104,7 @@ __global__ void CTCLossV2ShapeCheckKernel(const T *input_len_p, const T *target_
     CUDA_KERNEL_ASSERT(input_length >= target_length &&
                        "For 'CTCLossV2', input_length should be greater equal to target_length.")
     CUDA_KERNEL_ASSERT(input_length <= time_series &&
-                       "For 'CTCLossV2', input_length should be less equal to probs.shape[0].")
+                       "For 'CTCLossV2', input_length should be not greater than probs.shape[0].")
   }
 }
 
