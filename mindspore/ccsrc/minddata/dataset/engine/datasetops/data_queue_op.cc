@@ -568,7 +568,7 @@ Status DataQueueOp::PushDataToGPU() {
   }
 
   // now we use this flag to judge whether exception raised.
-  if (NoExceptionRaised()) {
+  if (stop_send_ || NoExceptionRaised()) {
     send_finished_ = true;
   }
   tree_->SetFinished();
