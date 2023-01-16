@@ -123,6 +123,21 @@ ATTR_MAP(Conv2DBackpropFilterD) = {
 OUTPUT_MAP(Conv2DBackpropFilterD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv2DBackpropFilterD, kNameConv2DBackpropFilterD, ADPT_DESC(Conv2DBackpropFilterD))
 
+// Conv3DTransposeD
+INPUT_MAP(Conv3DTransposeD) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(bias)}, {4, INPUT_DESC(offset_w)}};
+ATTR_MAP(Conv3DTransposeD) = {
+  {"input_size", ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"dilations", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"groups", ATTR_DESC(groups, AnyTraits<int64_t>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"output_padding", ATTR_DESC(output_padding, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+};
+OUTPUT_MAP(Conv3DTransposeD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Conv3DTransposeD, kNameConv3DTransposeD, ADPT_DESC(Conv3DTransposeD))
+
 // Conv3DTranspose
 INPUT_MAP(Conv3DTranspose) = {{1, INPUT_DESC(input_size)},
                               {2, INPUT_DESC(x)},
@@ -139,7 +154,7 @@ ATTR_MAP(Conv3DTranspose) = {
   {"offset_x", ATTR_DESC(offset_x, AnyTraits<int64_t>())}};
 ATTR_INPUT_MAP(Conv3DTranspose) = {{"input_size", 1}};
 OUTPUT_MAP(Conv3DTranspose) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Conv3DTranspose, kNameConv3DTransposeD, ADPT_DESC(Conv3DTranspose))
+REG_ADPT_DESC(Conv3DTranspose, "Conv3DTransposeD", ADPT_DESC(Conv3DTranspose))
 
 // Conv3D
 INPUT_MAP(Conv3D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(bias)}, {4, INPUT_DESC(offset_w)}};
