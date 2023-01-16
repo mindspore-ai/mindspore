@@ -59,14 +59,14 @@ using AnyListPtr = std::shared_ptr<AnyList>;
 
 struct BackendOpRunInfo {
   ~BackendOpRunInfo() = default;
-  BackendOpRunInfo(pynative::BaseOpRunInfo base_op_run_info, Primitive *prim, bool is_infer, bool is_gradient_out)
+  BackendOpRunInfo(pynative::BaseOpRunInfo base_op_run_info, PrimitivePtr prim, bool is_infer, bool is_gradient_out)
       : base_op_run_info(std::move(base_op_run_info)),
-        op_prim(prim),
+        op_prim(std::move(prim)),
         is_infer(is_infer),
         is_gradient_out(is_gradient_out) {}
 
   pynative::BaseOpRunInfo base_op_run_info;
-  Primitive *op_prim;
+  PrimitivePtr op_prim;
   bool is_infer = false;
   bool is_gradient_out = false;
 };

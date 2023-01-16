@@ -94,6 +94,7 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   std::vector<std::string> output_names = {"output"};
   one_hot_primitive->set_attr(kAttrInputNames, MakeValue(input_names));
   one_hot_primitive->set_attr(kAttrOutputNames, MakeValue(output_names));
+  one_hot_primitive->set_attr(kAttrAxis, MakeValue(static_cast<int64_t>(-1)));
 
   std::vector<AnfNodePtr> one_hot_inputs;
   if (is_convert_const_to_attr) {
@@ -183,6 +184,7 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
   std::vector<std::string> output_names = {"y"};
   reduce_primitive->set_attr(kAttrInputNames, MakeValue(input_names));
   reduce_primitive->set_attr(kAttrOutputNames, MakeValue(output_names));
+  reduce_primitive->set_attr(kAttrKeepDims, MakeValue(false));
 
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);

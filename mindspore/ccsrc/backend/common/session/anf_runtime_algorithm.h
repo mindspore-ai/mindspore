@@ -223,6 +223,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static std::vector<TypeId> GetAllOutputInferDataTypes(const AnfNodePtr &node);
   static size_t GetInputElementNum(const AnfNodePtr &node);
   static bool IsRealSquenceOutput(const AnfNodePtr &node);
+  static void SetDynamicAttrToPrim(const PrimitivePtr &prim);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

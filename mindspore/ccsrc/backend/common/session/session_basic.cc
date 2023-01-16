@@ -522,7 +522,7 @@ BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, cons
   base_op_run_info.input_tensor = tensor_info.input_tensors;
   base_op_run_info.input_mask = tensor_info.input_tensors_mask;
   base_op_run_info.abstract = abstract;
-  return std::make_shared<BackendOpRunInfo>(base_op_run_info, primitive.get(), false, is_gradient_out);
+  return std::make_shared<BackendOpRunInfo>(base_op_run_info, primitive, false, is_gradient_out);
 }
 
 void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
