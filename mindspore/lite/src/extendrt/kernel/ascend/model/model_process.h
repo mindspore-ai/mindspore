@@ -63,6 +63,8 @@ class ModelProcess {
   const std::vector<ShapeVector> GetOutputShape();
   const std::vector<ShapeVector> GetInputShape();
   const std::vector<TypeId> GetInputDataType();
+  const std::vector<TypeId> GetOutputDataType();
+  std::vector<Format> GetOutputFormat();
 
   bool Resize(const std::vector<ShapeVector> &new_shapes);
 

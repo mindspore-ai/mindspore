@@ -153,6 +153,34 @@ std::vector<Format> ModelProcess::GetInputFormat() {
   return input_formats;
 }
 
+std::vector<Format> ModelProcess::GetOutputFormat() {
+  if (model_desc_ == nullptr) {
+    MS_LOG(ERROR) << " Model desc is nullptr.";
+    return std::vector<Format>();
+  }
+  std::vector<Format> output_formats;
+  static const std::map<aclFormat, enum Format> acl_format_map = {
+    {ACL_FORMAT_NCHW, NCHW}, {ACL_FORMAT_NHWC, NHWC}, {ACL_FORMAT_ND, NCHW}};
+  for (size_t i = 0; i < output_infos_.size(); ++i) {
+    aclFormat format = aclmdlGetOutputFormat(model_desc_, i);
+    auto iter = acl_format_map.find(format);
+    if (iter != acl_format_map.end()) {
+      output_formats.emplace_back(iter->second);
+    }
+    MS_LOG(DEBUG) << "Format of Output " << i << " is " << static_cast<int32_t>(format);
+  }
+  return output_formats;
+}
+
+const std::vector<TypeId> ModelProcess::GetOutputDataType() {
+  std::vector<TypeId> data_types;
+  for (size_t i = 0; i < output_infos_.size(); ++i) {
+    TypeId data_type = TransToDataType(output_infos_[i].data_type);
+    data_types.emplace_back(data_type);
+  }
+  return data_types;
+}
+
 const std::vector<ShapeVector> ModelProcess::GetOutputShape() {
   std::vector<ShapeVector> shapes;
   for (size_t i = 0; i < output_infos_.size(); ++i) {
@@ -569,7 +597,7 @@ bool ModelProcess::CheckOutputTensors(const std::vector<KernelTensorPtr> &output
     if (tensor->GetShapeVector() != info.dims) {
       MS_LOG(WARNING) << "Note: output " << i << " shape not match, required " << ShapeToString(info.dims) << ", given "
                       << ShapeToString(tensor->GetShapeVector()) << "."
-                      << "Please check input shape has been modified by DVPP method.";
+                      << "Please check output shape.";
     }
     if (tensor->GetDtype() != TransToDataType(info.data_type)) {
       MS_LOG(ERROR) << "Note: output " << i << " data type not match, required "

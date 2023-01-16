@@ -143,6 +143,8 @@ std::vector<Format> ModelInfer::GetInputFormat() { return model_process_.GetInpu
 const std::vector<ShapeVector> ModelInfer::GetOutputShape() { return model_process_.GetOutputShape(); }
 const std::vector<ShapeVector> ModelInfer::GetInputShape() { return model_process_.GetInputShape(); }
 const std::vector<TypeId> ModelInfer::GetInputDataType() { return model_process_.GetInputDataType(); }
+const std::vector<TypeId> ModelInfer::GetOutputDataType() { return model_process_.GetOutputDataType(); }
+std::vector<Format> ModelInfer::GetOutputFormat() { return model_process_.GetOutputFormat(); }
 
 bool ModelInfer::Resize(const std::vector<ShapeVector> &new_shapes) {
   aclError rt_ret = aclrtSetCurrentContext(context_);
