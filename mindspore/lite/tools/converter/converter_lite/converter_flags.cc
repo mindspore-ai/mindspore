@@ -87,7 +87,7 @@ Flags::Flags() {
           "Avoid fusion optimization true|false. NoFusion is true when saveType is MINDIR.", "");
   AddFlag(&Flags::device, "device",
           "Set the target device, support Ascend, Ascend310 and Ascend310P will be deprecated.", "");
-  AddFlag(&Flags::saveTypeStr, "savetype", "The type of saved model. MINDIR | MINDIR_LITE", "MINDIR_LITE");
+  AddFlag(&Flags::saveTypeStr, "saveType", "The type of saved model. MINDIR | MINDIR_LITE", "MINDIR_LITE");
   AddFlag(&Flags::optimizeStr, "optimize", "The type of optimization. none | general | ascend_oriented", "");
 }
 
