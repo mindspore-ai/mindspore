@@ -64,12 +64,9 @@ void ValidateOperation(const AnfNodePtr &node) {
   if (prim->name() == "TensorMove") {
     return;
   }
-  if (prim->HasPyEvaluator()) {
+
+  if (prim->isa<PrimitivePy>()) {
     MS_LOG(DEBUG) << "Primitive " << prim->name() << " has python evaluator.";
-    return;
-  }
-  if (prim->prim_type() == PrimType::kPrimTypePyCheck) {
-    MS_LOG(DEBUG) << "Primitive " << prim->name() << " has python inference checking method.";
     return;
   }
   if (prim->name() == "fake_bprop") {
