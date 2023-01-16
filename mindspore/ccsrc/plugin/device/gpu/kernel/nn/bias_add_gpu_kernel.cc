@@ -22,6 +22,7 @@ namespace mindspore {
 namespace kernel {
 bool BiasAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->GetPrim()->name();
   constexpr size_t input_num = 2;
   constexpr size_t output_num = 1;
@@ -34,7 +35,6 @@ bool BiasAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  InitResource();
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex1]->GetDtype()));
   return true;
 }
