@@ -21,6 +21,7 @@
 #include <vector>
 #include "backend/common/optimizer/optimizer.h"
 #include "utils/check_convert_utils.h"
+#include "tools/optimizer/graph/preprocess_dynamic_shape.h"
 
 namespace mindspore {
 namespace opt {
@@ -31,13 +32,17 @@ class ReshapeReduceFusion : public Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  bool CheckCanFusion(const FuncGraphPtr &func_graph, const CNodePtr &reduce);
+  bool CheckReshapeReduceFusion(const FuncGraphPtr &func_graph, const CNodePtr &reduce);
+  bool CheckReduceReshapeFusion(const FuncGraphPtr &func_graph, const CNodePtr &reduce);
   bool CheckReduce(const CNodePtr &reduce);
+  bool CheckReshape(const CNodePtr &reshape);
   void FuseReshapeWithReduce(const FuncGraphPtr &func_graph, const CNodePtr &reduce);
+  void FuseReduceWithReshape(const FuncGraphPtr &func_graph, const CNodePtr &reduce);
   CNodePtr reshape_{nullptr};
   bool keep_dim_{false};
   int axis_{0};
   std::vector<int> shape_;
+  DynamicShapePreprocessor preprocessor_;
 };
 }  // namespace opt
 }  // namespace mindspore
