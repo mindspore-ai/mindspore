@@ -12,14 +12,8 @@ mindspore.ops
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.adaptive_avg_pool1d
     mindspore.ops.adaptive_avg_pool2d
-    mindspore.ops.adaptive_avg_pool3d
-    mindspore.ops.adaptive_max_pool1d
-    mindspore.ops.adaptive_max_pool2d
     mindspore.ops.adaptive_max_pool3d
-    mindspore.ops.avg_pool1d
-    mindspore.ops.avg_pool2d
     mindspore.ops.avg_pool3d
     mindspore.ops.batch_norm
     mindspore.ops.bias_add
@@ -27,7 +21,6 @@ mindspore.ops
     mindspore.ops.conv2d
     mindspore.ops.conv3d
     mindspore.ops.crop_and_resize
-    mindspore.ops.deformable_conv2d
     mindspore.ops.dropout
     mindspore.ops.dropout1d
     mindspore.ops.dropout2d
@@ -35,7 +28,6 @@ mindspore.ops
     mindspore.ops.flatten
     mindspore.ops.fractional_max_pool2d
     mindspore.ops.fractional_max_pool3d
-    mindspore.ops.interpolate
     mindspore.ops.lp_pool1d
     mindspore.ops.lp_pool2d
     mindspore.ops.lrn
@@ -44,7 +36,6 @@ mindspore.ops
     mindspore.ops.max_unpool1d
     mindspore.ops.max_unpool2d
     mindspore.ops.max_unpool3d
-    mindspore.ops.multi_margin_loss
     mindspore.ops.multi_label_margin_loss
     mindspore.ops.kl_div
     mindspore.ops.pad
@@ -64,10 +55,8 @@ mindspore.ops
 
     mindspore.ops.binary_cross_entropy
     mindspore.ops.binary_cross_entropy_with_logits
-    mindspore.ops.cross_entropy
     mindspore.ops.gaussian_nll_loss
     mindspore.ops.hinge_embedding_loss
-    mindspore.ops.mse_loss
     mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
 
@@ -79,7 +68,6 @@ mindspore.ops
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.celu
     mindspore.ops.elu
     mindspore.ops.fast_gelu
     mindspore.ops.gelu
@@ -126,15 +114,9 @@ mindspore.ops
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.bmm
-    mindspore.ops.cholesky
-    mindspore.ops.cholesky_inverse
     mindspore.ops.conj
-    mindspore.ops.cross
     mindspore.ops.cumprod
     mindspore.ops.erfinv
-    mindspore.ops.igamma
-    mindspore.ops.igammac
     mindspore.ops.is_floating_point
     mindspore.ops.less_equal
     mindspore.ops.matrix_exp
@@ -150,7 +132,6 @@ mindspore.ops
 
     mindspore.ops.abs
     mindspore.ops.absolute
-    mindspore.ops.accumulate_n
     mindspore.ops.acos
     mindspore.ops.arccos
     mindspore.ops.acosh
@@ -158,7 +139,6 @@ mindspore.ops
     mindspore.ops.addcdiv
     mindspore.ops.addcmul
     mindspore.ops.addn
-    mindspore.ops.addr
     mindspore.ops.angle
     mindspore.ops.arccosh
     mindspore.ops.arcsin
@@ -187,7 +167,6 @@ mindspore.ops
     mindspore.ops.bitwise_or
     mindspore.ops.bitwise_xor
     mindspore.ops.ceil
-    mindspore.ops.copysign
     mindspore.ops.cos
     mindspore.ops.cosh
     mindspore.ops.deg2rad
@@ -200,34 +179,26 @@ mindspore.ops
     mindspore.ops.floor
     mindspore.ops.floor_div
     mindspore.ops.floor_mod
-    mindspore.ops.heaviside
-    mindspore.ops.hypot
     mindspore.ops.i0
     mindspore.ops.inv
     mindspore.ops.invert
     mindspore.ops.lcm
-    mindspore.ops.ldexp
     mindspore.ops.lerp
     mindspore.ops.log
     mindspore.ops.log2
     mindspore.ops.log10
     mindspore.ops.log1p
-    mindspore.ops.logaddexp
-    mindspore.ops.logaddexp2
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or
-    mindspore.ops.logical_xor
     mindspore.ops.logit
     mindspore.ops.mul
     mindspore.ops.multiply
-    mindspore.ops.mvlgamma
     mindspore.ops.neg
     mindspore.ops.negative
     mindspore.ops.positive
     mindspore.ops.pow
     mindspore.ops.rad2deg
-    mindspore.ops.remainder
     mindspore.ops.roll
     mindspore.ops.round
     mindspore.ops.sin
@@ -236,7 +207,6 @@ mindspore.ops
     mindspore.ops.square
     mindspore.ops.sub
     mindspore.ops.subtract
-    mindspore.ops.svd
     mindspore.ops.tan
     mindspore.ops.true_divide
     mindspore.ops.trunc
@@ -257,15 +227,10 @@ Reduction函数
     mindspore.ops.amin
     mindspore.ops.argmax
     mindspore.ops.argmin
-    mindspore.ops.cummax
-    mindspore.ops.cummin
     mindspore.ops.cumsum
     mindspore.ops.logsumexp
     mindspore.ops.max
-    mindspore.ops.mean
     mindspore.ops.median
-    mindspore.ops.min
-    mindspore.ops.norm
     mindspore.ops.prod
     mindspore.ops.std
 
@@ -284,14 +249,12 @@ Reduction函数
     mindspore.ops.greater_equal
     mindspore.ops.gt
     mindspore.ops.intopk
-    mindspore.ops.isclose
     mindspore.ops.isfinite
     mindspore.ops.isinf
     mindspore.ops.isnan
     mindspore.ops.le
     mindspore.ops.less
     mindspore.ops.maximum
-    mindspore.ops.minimum
     mindspore.ops.ne
 
 线性代数函数
@@ -308,9 +271,7 @@ Reduction函数
     mindspore.ops.batch_dot
     mindspore.ops.dot
     mindspore.ops.matmul
-    mindspore.ops.matrix_solve
     mindspore.ops.ger
-    mindspore.ops.renorm
     mindspore.ops.tensor_dot
 
 Tensor操作函数
@@ -326,7 +287,6 @@ Tensor创建
 
     mindspore.ops.eye
     mindspore.ops.fill
-    mindspore.ops.fills
     mindspore.ops.linspace
     mindspore.ops.narrow
     mindspore.ops.one_hot
@@ -345,9 +305,7 @@ Tensor创建
     mindspore.ops.gamma
     mindspore.ops.laplace
     mindspore.ops.multinomial
-    mindspore.ops.random_poisson
     mindspore.ops.random_categorical
-    mindspore.ops.random_gamma
     mindspore.ops.shuffle
     mindspore.ops.standard_laplace
     mindspore.ops.standard_normal
@@ -361,16 +319,11 @@ Array操作
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.affine_grid
     mindspore.ops.arange
     mindspore.ops.batch_to_space_nd
     mindspore.ops.broadcast_to
-    mindspore.ops.col2im
     mindspore.ops.concat
     mindspore.ops.count_nonzero
-    mindspore.ops.diag
-    mindspore.ops.diagonal
-    mindspore.ops.dyn_shape
     mindspore.ops.expand
     mindspore.ops.expand_dims
     mindspore.ops.flip
@@ -382,37 +335,27 @@ Array操作
     mindspore.ops.gather_elements
     mindspore.ops.gather_nd
     mindspore.ops.index_add
-    mindspore.ops.index_fill
     mindspore.ops.inplace_add
     mindspore.ops.inplace_sub
     mindspore.ops.inplace_update
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
-    mindspore.ops.matrix_band_part
     mindspore.ops.matrix_diag
-    mindspore.ops.matrix_diag_part
-    mindspore.ops.matrix_set_diag
     mindspore.ops.meshgrid
-    mindspore.ops.normal
-    mindspore.ops.nonzero
     mindspore.ops.numel
     mindspore.ops.permute
     mindspore.ops.population_count
     mindspore.ops.range
     mindspore.ops.rank
-    mindspore.ops.repeat_elements
-    mindspore.ops.repeat_interleave
     mindspore.ops.reshape
     mindspore.ops.reverse
     mindspore.ops.reverse_sequence
     mindspore.ops.scatter_nd
     mindspore.ops.select
-    mindspore.ops.sequence_mask
     mindspore.ops.shape
     mindspore.ops.size
     mindspore.ops.slice
     mindspore.ops.space_to_batch_nd
-    mindspore.ops.sparse_segment_mean
     mindspore.ops.split
     mindspore.ops.squeeze
     mindspore.ops.stack
@@ -423,14 +366,12 @@ Array操作
     mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
-    mindspore.ops.tensor_scatter_elements
     mindspore.ops.tile
     mindspore.ops.top_k
     mindspore.ops.transpose
     mindspore.ops.unbind
     mindspore.ops.unfold
     mindspore.ops.unique
-    mindspore.ops.unique_consecutive
     mindspore.ops.unique_with_pad
     mindspore.ops.unsorted_segment_max
     mindspore.ops.unsorted_segment_min
@@ -532,7 +473,6 @@ CSR函数
     mindspore.ops.csr_isnan
     mindspore.ops.csr_log
     mindspore.ops.csr_log1p
-    mindspore.ops.csr_mm
     mindspore.ops.csr_neg
     mindspore.ops.csr_relu
     mindspore.ops.csr_relu6
@@ -577,7 +517,6 @@ Parameter操作函数
     mindspore.ops.scatter_nd_add
     mindspore.ops.scatter_nd_div
     mindspore.ops.scatter_nd_max
-    mindspore.ops.scatter_nd_min
     mindspore.ops.scatter_nd_mul
     mindspore.ops.scatter_nd_sub
     mindspore.ops.scatter_update
