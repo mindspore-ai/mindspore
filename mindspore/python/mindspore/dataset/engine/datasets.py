@@ -590,7 +590,7 @@ class Dataset:
             >>> # and drops the last incomplete batch if there is one.
             >>> dataset = dataset.batch(100, True)
             >>>
-            >>> # 2）resize image according to its batch number, if it's 5-th batch, resize to (5^2, 5^2) = (25, 25)
+            >>> # 2) resize image according to its batch number, if it's 5-th batch, resize to (5^2, 5^2) = (25, 25)
             >>> def np_resize(col, BatchInfo):
             ...     output = col.copy()
             ...     s = (BatchInfo.get_batch_num() + 1) ** 2
@@ -603,7 +603,7 @@ class Dataset:
             ...     return (output,)
             >>> dataset = dataset.batch(batch_size=8, input_columns=["image"], per_batch_map=np_resize)
             >>>
-            >>> # 3）Create a dataset where its batch size is dynamic
+            >>> # 3) Create a dataset where its batch size is dynamic
             >>> # Define a callable batch size function and let batch size increase 1 each time.
             >>> def add_one(BatchInfo):
             ...     return BatchInfo.get_batch_num() + 1
@@ -654,7 +654,7 @@ class Dataset:
             >>> # and drops the last incomplete batch if there is one.
             >>> dataset = dataset.padded_batch(100, True)
             >>>
-            >>> # 3）Create a dataset where its batch size is dynamic
+            >>> # 3) Create a dataset where its batch size is dynamic
             >>> # Define a callable batch size function and let batch size increase 1 each time.
             >>> def add_one(BatchInfo):
             ...     return BatchInfo.get_batch_num() + 1

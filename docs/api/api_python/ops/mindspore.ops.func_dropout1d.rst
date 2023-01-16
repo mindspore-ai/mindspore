@@ -22,5 +22,5 @@ mindspore.ops.dropout1d
     异常：
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `p` 的数据类型不是float。
-        - **ValueError** - `p` 值不在 `[0.0，1.0]` 之间。
+        - **ValueError** - `p` 值不在 `[0.0, 1.0]` 之间。
         - **ValueError** - `x` 的维度不是 `2D` 或 `3D`。
