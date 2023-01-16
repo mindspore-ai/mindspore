@@ -113,7 +113,7 @@ class LocalFile : public StorageBase {
   std::vector<system::WriteFilePtr> block_files_;
 
   // For key-value data storage, the value size (such as the number of floating values)for one key-value pair.
-  size_t element_size_{1};
+  size_t element_size_;
 
   // The number of elements that a block can hold.
   size_t block_size_{1};

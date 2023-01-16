@@ -15,6 +15,8 @@
  */
 
 #include "distributed/embedding_cache/embedding_storage/embedding_storage.h"
+#include <map>
+#include <string>
 #include "distributed/embedding_cache/cache_strategy/lru_cache.h"
 #include "distributed/persistent/storage/local_file.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -60,7 +62,7 @@ void EmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(const DeviceAdd
 #endif
 
   // 2. Create the host memory cache instance.
-  cache_ = std::make_unique<LRUCache<KeyType, int>>(capacity_);
+  cache_ = std::make_unique<LRUCache<KeyType, int>>(cache_capacity_);
   MS_EXCEPTION_IF_NULL(cache_);
 
   // 3. Create the persistent storage instance.
@@ -77,9 +79,18 @@ void EmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(const DeviceAdd
   std::string real_storage_file_path = ret.value();
 
   std::map<std::string, std::string> config_map;
-  config_map[kFileStoragePath] = real_storage_file_path;
+  (void)config_map.emplace(kFileStoragePath, real_storage_file_path);
+  (void)config_map.emplace(kElementSize, std::to_string(embedding_dim_));
+
   storage_ = std::make_unique<LocalFile<KeyType, ValueType>>(config_map);
   MS_EXCEPTION_IF_NULL(storage_);
+  storage_->Initialize();
+}
+
+template <typename KeyType, typename ValueType, typename Allocator>
+void EmbeddingStorage<KeyType, ValueType, Allocator>::Finalize() {
+  cache_ = nullptr;
+  storage_ = nullptr;
 }
 
 template class EmbeddingStorage<int32_t, bool>;

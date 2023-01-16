@@ -114,9 +114,9 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
     }
   } else {
     if (enable_embedding_storage_) {
-      auto embedding_storage = embedding_storage_manager.Get<S, T>(parameter_key_);
+      auto embedding_storage = embedding_storage_manager.Get(parameter_key_);
       MS_ERROR_IF_NULL(embedding_storage);
-      if (!embedding_storage->Put(indices, indices_size_, updates)) {
+      if (!embedding_storage->Put({indices, inputs[1]->size}, {updates, inputs[2]->size})) {
         MS_LOG(ERROR) << "For '" << kernel_name_
                       << "', Update embedding storage failed, parameter key: " << parameter_key_;
         return false;

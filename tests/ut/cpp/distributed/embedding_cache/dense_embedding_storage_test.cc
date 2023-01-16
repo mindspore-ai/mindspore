@@ -41,7 +41,7 @@ using device::cpu::CPUDeviceAddress;
 TEST_F(TestDenseEmbeddingStorage, test_dense_embedding_storage) {
   int32_t embedding_key = 0;
   size_t embedding_dim = 8;
-  size_t capacity = 100;
+  size_t capacity = 15;
   DenseEmbeddingStorage<int, float, std::allocator<uint8_t>> embed_storage(embedding_key, embedding_dim, capacity);
   std::unique_ptr<float[]> embedding_table = std::make_unique<float[]>(capacity * embedding_dim);
 
@@ -51,22 +51,50 @@ TEST_F(TestDenseEmbeddingStorage, test_dense_embedding_storage) {
   EXPECT_NO_THROW(embed_storage.Initialize(device_address.get()));
 
   size_t key_num = 10;
-  std::vector<int> keys(key_num);
-  std::iota(keys.begin(), keys.end(), 0);
-  std::vector<float> embeddings_to_put(key_num * embedding_dim);
+  std::vector<float> embeddings_to_get(key_num * embedding_dim);
+  std::vector<int> keys1(key_num);
+  std::iota(keys1.begin(), keys1.end(), 0);
+  std::vector<float> embeddings_to_put1(key_num * embedding_dim);
 
   for (size_t i = 0; i < key_num; i++) {
     for (size_t j = 0; j < embedding_dim; j++) {
-      embeddings_to_put[i * embedding_dim + j] = static_cast<float>(i);
+      embeddings_to_put1[i * embedding_dim + j] = static_cast<float>(i);
     }
   }
 
-  EXPECT_EQ(embed_storage.Put(keys.data(), key_num, embeddings_to_put.data()), true);
+  // First put and get.
+  EXPECT_EQ(embed_storage.Put({keys1.data(), key_num * sizeof(int)},
+                              {embeddings_to_put1.data(), embeddings_to_put1.size() * sizeof(float)}),
+            true);
+  EXPECT_EQ(embed_storage.Get({keys1.data(), key_num * sizeof(int)},
+                              {embeddings_to_get.data(), embeddings_to_get.size() * sizeof(float)}),
+            true);
+  EXPECT_EQ(embeddings_to_get, embeddings_to_put1);
 
-  std::vector<float> embeddings_to_get(key_num * embedding_dim);
-  EXPECT_EQ(embed_storage.Get(keys.data(), key_num, embeddings_to_get.data()), true);
+  // Second put and get, cache will update and interact with persistent storage.
+  std::vector<int> keys2(key_num);
+  std::iota(keys2.begin(), keys2.end(), keys2.size());
+  std::vector<float> embeddings_to_put2(key_num * embedding_dim);
 
-  EXPECT_EQ(embeddings_to_get, embeddings_to_put);
+  for (size_t i = 0; i < key_num; i++) {
+    for (size_t j = 0; j < embedding_dim; j++) {
+      embeddings_to_put2[i * embedding_dim + j] = static_cast<float>(i + key_num);
+    }
+  }
+
+  EXPECT_EQ(embed_storage.Put({keys2.data(), key_num * sizeof(int)},
+                              {embeddings_to_put2.data(), embeddings_to_put2.size() * sizeof(float)}),
+            true);
+  EXPECT_EQ(embed_storage.Get({keys2.data(), key_num * sizeof(int)},
+                              {embeddings_to_get.data(), embeddings_to_get.size() * sizeof(float)}),
+            true);
+  EXPECT_EQ(embeddings_to_get, embeddings_to_put2);
+
+  // Get the value first put into embedding storage and interact with persistent storage.
+  EXPECT_EQ(embed_storage.Get({keys1.data(), key_num * sizeof(int)},
+                              {embeddings_to_get.data(), embeddings_to_get.size() * sizeof(float)}),
+            true);
+  EXPECT_EQ(embeddings_to_get, embeddings_to_put1);
 
   EXPECT_NO_THROW(embed_storage.Finalize());
 }

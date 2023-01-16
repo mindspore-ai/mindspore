@@ -51,6 +51,8 @@ LocalFile<KeyType, ValueType>::LocalFile(const std::map<std::string, std::string
   auto element_size_iter = storage_config.find(kElementSize);
   if (element_size_iter != storage_config.end()) {
     element_size_ = std::stoul(element_size_iter->second);
+  } else {
+    element_size_ = 0;
   }
 }
 
