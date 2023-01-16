@@ -84,12 +84,16 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
   const void *model_buff = model_data;
   size_t model_size = data_size;
   auto mindir_path = GetConfig(lite::kConfigModelFileSection, lite::kConfigMindIRPathKey);
-  std::string weight_path = "";
+  std::string weight_path = "./";
+  std::string base_path = "";
   if (!mindir_path.empty()) {
-    weight_path = mindir_path.substr(0, mindir_path.rfind(".")) + "_variables";
+    base_path = mindir_path;
   } else {
     // user does not set mindir_path, convert from model_path
-    weight_path = model_path.substr(0, model_path.rfind(".")) + "_variables";
+    base_path = model_path;
+  }
+  if (base_path.find("/") != std::string::npos) {
+    weight_path = base_path.substr(0, base_path.rfind("/"));
   }
   auto dump_path = GetConfig(lite::kAscendContextSection, lite::kDumpPathKey);
   if (!dump_path.empty()) {
