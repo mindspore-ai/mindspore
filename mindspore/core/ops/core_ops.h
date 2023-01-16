@@ -1564,7 +1564,6 @@ GVAR_DEF(PrimitivePtr, kPrimNPUGetFloatStatus, std::make_shared<Primitive>("NPUG
 GVAR_DEF(PrimitivePtr, kPrimNPUAllocFloatStatus, std::make_shared<Primitive>("NPUAllocFloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimNPUClearFloatStatus, std::make_shared<Primitive>("NPUClearFloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimPyFunc, std::make_shared<Primitive>("PyFunc"));
-GVAR_DEF(PrimitivePtr, kPrimPyExecute, std::make_shared<Primitive>("PyExecute"));
 GVAR_DEF(PrimitivePtr, kPrimDynamicLossScale, std::make_shared<Primitive>("_DynamicLossScale"));
 GVAR_DEF(PrimitivePtr, kPrimScaleGrad, std::make_shared<Primitive>("ScaleGrad"));
 GVAR_DEF(PrimitivePtr, kPrimPopulationCount, std::make_shared<Primitive>("PopulationCount"));
@@ -1601,8 +1600,16 @@ GVAR_DEF(PrimitivePtr, kPrimEnvironAdd, std::make_shared<Primitive>(kEnvironAdd)
 GVAR_DEF(PrimitivePtr, kPrimEnvironDestroyAll, std::make_shared<Primitive>(kEnvironDestroyAll));
 GVAR_DEF(PrimitivePtr, kPrimSetSize, std::make_shared<Primitive>(kSetSize));
 
-// Python interpreter runner
-GVAR_DEF(PrimitivePtr, kPrimPyInterpret, std::make_shared<Primitive>("PyInterpret"));
+// JIT Fallback ops
+// We add IO side-effect for them in advance.
+GVAR_DEF(PrimitivePtr, kPrimPyInterpret,
+         std::make_shared<Primitive>("PyInterpret",
+                                     mindspore::HashMap<std::string, ValuePtr>({{std::string(GRAPH_FLAG_SIDE_EFFECT_IO),
+                                                                                 std::make_shared<BoolImm>(true)}})));
+GVAR_DEF(PrimitivePtr, kPrimPyExecute,
+         std::make_shared<Primitive>("PyExecute",
+                                     mindspore::HashMap<std::string, ValuePtr>({{std::string(GRAPH_FLAG_SIDE_EFFECT_IO),
+                                                                                 std::make_shared<BoolImm>(true)}})));
 
 // Other primitive not used by backend but used in core;
 GVAR_DEF(PrimitivePtr, kPrimStateSetItem, std::make_shared<Primitive>("state_setitem"));
