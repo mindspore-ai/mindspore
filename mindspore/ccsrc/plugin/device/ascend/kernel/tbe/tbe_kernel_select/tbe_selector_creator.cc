@@ -67,6 +67,7 @@ const std::map<OpPattern, GetSupportedFormatDTypeFunc> selector_funcs = {
 bool IsOpKernelEnable(const OpInfoPtr &op_info, bool is_dynamic_impl) {
   MS_EXCEPTION_IF_NULL(op_info);
   for (const auto &op_input_info : op_info->inputs_ptr()) {
+    MS_EXCEPTION_IF_NULL(op_input_info);
     auto &unknown_shape_formats = op_input_info->unknown_shape_formats();
     if (is_dynamic_impl && !unknown_shape_formats.empty() &&
         !std::any_of(unknown_shape_formats.begin(), unknown_shape_formats.end(),

@@ -63,8 +63,8 @@ class TbeKernelSelect {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetSupportFormatDTypesWithFilter();
 
   OpInfoPtr op_info_ = nullptr;
-  CNodePtr cnode_ptr_;
-  std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list_;
+  CNodePtr cnode_ptr_ = nullptr;
+  std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list_ = nullptr;
   std::string node_name_;
   std::string full_name_;
   nlohmann::json kernel_json_;

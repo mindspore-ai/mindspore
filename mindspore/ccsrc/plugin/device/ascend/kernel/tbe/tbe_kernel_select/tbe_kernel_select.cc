@@ -79,6 +79,7 @@ TbeKernelSelect::TbeKernelSelect(CNodePtr kernel_node, std::vector<std::shared_p
     : cnode_ptr_(std::move(kernel_node)), kernel_info_list_(kernel_info_list) {}
 
 bool TbeKernelSelect::CheckOpSupported() {
+  MS_EXCEPTION_IF_NULL(kernel_info_list_);
   (void)GetSupportFormatDTypes();
   if (common::AnfAlgo::IsDtypeFormatSensitiveOp(cnode_ptr_)) {
     kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
@@ -105,6 +106,7 @@ std::vector<std::shared_ptr<KernelBuildInfo>> TbeKernelSelect::GetSupportFormatD
   }
   // Step2: if kernel build info in cache, use cache return
   if (GetKernelBuildInfoFromCache()) {
+    MS_EXCEPTION_IF_NULL(kernel_info_list_);
     return *kernel_info_list_;
   }
   // Step3:
@@ -121,16 +123,20 @@ std::vector<std::shared_ptr<KernelBuildInfo>> TbeKernelSelect::GetSupportFormatD
   }
   FilterInvalidKernelInfo();
   AddKernelBuildInfoToCache();
+  MS_EXCEPTION_IF_NULL(kernel_info_list_);
   return *kernel_info_list_;
 }
 
 bool TbeKernelSelect::TbeCheckIsSupportedSpec(const CNodePtr &kernel_node,
                                               const KernelBuildInfoPtr &select_kernel_build_info) {
+  MS_EXCEPTION_IF_NULL(select_kernel_build_info);
   if (IsOpSupportDynamicImpl(kernel_node)) {
     common::AnfAlgo::SetNodeAttr(kAttrIsKernelDynamicImpl, MakeValue(true), kernel_node);
     auto format_dtypes = GetSupportFormatDTypes();
-    auto exist = std::any_of(format_dtypes.cbegin(), format_dtypes.cend(),
-                             [&](const auto &item) { return (*item == *select_kernel_build_info); });
+    auto exist = std::any_of(format_dtypes.cbegin(), format_dtypes.cend(), [&](const auto &item) {
+      MS_EXCEPTION_IF_NULL(item);
+      return (*item == *select_kernel_build_info);
+    });
     if (exist) {
       return true;
     }
@@ -141,8 +147,10 @@ bool TbeKernelSelect::TbeCheckIsSupportedSpec(const CNodePtr &kernel_node,
   }
   common::AnfAlgo::SetNodeAttr(kAttrIsKernelDynamicImpl, MakeValue(false), kernel_node);
   auto format_dtypes = GetSupportFormatDTypes();
-  auto exist = std::any_of(format_dtypes.cbegin(), format_dtypes.cend(),
-                           [&](const auto &item) { return (*item == *select_kernel_build_info); });
+  auto exist = std::any_of(format_dtypes.cbegin(), format_dtypes.cend(), [&](const auto &item) {
+    MS_EXCEPTION_IF_NULL(item);
+    return (*item == *select_kernel_build_info);
+  });
   if (exist) {
     return true;
   }
@@ -183,22 +191,26 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> TbeKernelSelect::GetSuppor
 }
 
 void TbeKernelSelect::AddKernelBuildInfoToCache() {
+  MS_EXCEPTION_IF_NULL(op_info_);
   if (op_info_->op_pattern() == kFormatAgnosticPattern) {
     return;
   }
 
   std::vector<std::shared_ptr<KernelBuildInfo>> cache_kernel_list;
+  MS_EXCEPTION_IF_NULL(kernel_info_list_);
   if (kernel_info_list_->empty()) {
     cache_kernel_list = {};
   } else {
     cache_kernel_list = *kernel_info_list_;
   }
   select_cache_[kernel_hash_name_] = cache_kernel_list;
+  MS_EXCEPTION_IF_NULL(cnode_ptr_);
   MS_LOG(INFO) << "Add select kernel cache " << kernel_hash_name_ << " from node " << cnode_ptr_->fullname_with_scope()
                << ", kernel info size: " << cache_kernel_list.size() << ", cache size: " << select_cache_.size();
 }
 
 void TbeKernelSelect::FilterInvalidKernelInfo() {
+  MS_EXCEPTION_IF_NULL(kernel_info_list_);
   if (kernel_info_list_->empty()) {
     MS_LOG(INFO) << "Warning: get kernel build info failed. Skip check supported. Op name: " << full_name_;
     return;
@@ -350,6 +362,7 @@ bool TbeKernelSelect::IsShapeMatchFormatRNN(const ShapeVector &shape, const std:
 
 bool TbeKernelSelect::TbeCheckSupported(const KernelBuildInfoPtr &kernel_build_info) {
   auto op_info = tbe::TbeDynamicShapeUtil::FindOp(cnode_ptr_);
+  MS_EXCEPTION_IF_NULL(op_info);
   if (!op_info->need_check_support()) {
     return true;
   }
@@ -452,6 +465,7 @@ bool TbeKernelSelect::Initialize() {
 
 bool TbeKernelSelect::GetKernelBuildInfoFromCache() {
   // Note: kFormatAgnosticPattern need select, like cast ...
+  MS_EXCEPTION_IF_NULL(op_info_);
   if (op_info_->op_pattern() == kFormatAgnosticPattern) {
     return false;
   }
@@ -459,10 +473,12 @@ bool TbeKernelSelect::GetKernelBuildInfoFromCache() {
   if (iter == select_cache_.end()) {
     return false;
   }
+  MS_EXCEPTION_IF_NULL(kernel_info_list_);
   for (const auto &cache_info : iter->second) {
     auto builder = KernelBuildInfo::KernelBuildInfoBuilder(cache_info);
     (void)kernel_info_list_->emplace_back(builder.Build());
   }
+  MS_EXCEPTION_IF_NULL(cnode_ptr_);
   MS_LOG(DEBUG) << "Select kernel cache hit " << kernel_hash_name_ << " for node " << cnode_ptr_->fullname_with_scope();
   return true;
 }
@@ -539,6 +555,7 @@ void TbeKernelSelect::ConstructIOKernelBuildInfo(const OpIOInfoPtr &op_io_info, 
                                                  const std::string &support_format, int64_t dynamic_num,
                                                  KernelBuildInfoItem *kernel_build_info_item, size_t *io_index,
                                                  size_t *real_put_index) const {
+  MS_EXCEPTION_IF_NULL(op_io_info);
   MS_EXCEPTION_IF_NULL(kernel_build_info_item);
   MS_EXCEPTION_IF_NULL(io_index);
   MS_EXCEPTION_IF_NULL(real_put_index);

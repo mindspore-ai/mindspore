@@ -106,8 +106,8 @@ constexpr auto kMS_BUILD_PROCESS_NUM = "MS_BUILD_PROCESS_NUM";
 constexpr auto kMS_PARA_DEBUG_PATH = "PARA_DEBUG_PATH";
 constexpr auto kTBE_IMPL_PATH = "TBE_IMPL_PATH";
 constexpr auto kTUNE_OPS_NAME = "TUNE_OPS_NAME";
-constexpr int KSleepUSeconds = 3000;
-constexpr int KSleepInterval = 1000;
+constexpr auto KSleepUSeconds = 3000;
+constexpr auto KSleepInterval = 1000;
 const uint64_t kUSecondInSecond = 1000000;
 
 namespace {
@@ -385,8 +385,12 @@ void TbeKernelCompileManager::SavePreBuildResult(const std::string &json_name, c
 }
 
 void TbeKernelCompileManager::SaveFailedTaskCompileResult(int task_id) {
-  auto task_info = task_map_[task_id];
-  auto json_name = task_info.json_name;
+  const auto task_iter = task_map_.find(task_id);
+  if (task_iter == task_map_.end()) {
+    MS_LOG(WARNING) << "Can not find pre-build task_id:" << task_id;
+    return;
+  }
+  auto json_name = task_iter->second.json_name;
   auto config_path = TbeUtils::GetOpDebugPath();
   auto cache_file = config_path + kNotSupportFusionOp;
   std::ofstream file_write;
