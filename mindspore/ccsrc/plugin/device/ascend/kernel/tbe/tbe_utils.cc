@@ -278,7 +278,7 @@ int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buf
 }
 
 uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel_pack, bool force_reload,
-                                     uint32_t *block_dim, void **handle, std::string *origin_key) {
+                                     uint32_t *block_dim, void **handle) {
   MS_EXCEPTION_IF_NULL(block_dim);
   auto kernel = kernel_pack.GetKernel();
   if (kernel == nullptr) {
@@ -303,12 +303,15 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
       *block_dim = kernelmeta->block_dim_;
       if (!kernel_json_info.has_kernel_list) {
         return kernelmeta->func_stub_;
+      } else {
+        *handle = kernelmeta->handle_;
+        return 1;
       }
     }
   }
   void *module = nullptr;
   if (BinaryRegister((*kernel_pack.GetKernel()), &module, magic, kernel_json_info.has_kernel_list) != 0) {
-    MS_LOG(INFO) << "Call runtime BinaryRegister error.";
+    MS_LOG(INFO) << "Call runtime BinaryRegister error. Register for : " << func_name;
     if (module != nullptr) {
       (void)rtDevBinaryUnRegister(module);
     }
@@ -316,9 +319,8 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
   }
   if (kernel_json_info.has_kernel_list) {
     MS_EXCEPTION_IF_NULL(handle);
-    MS_EXCEPTION_IF_NULL(origin_key);
     *handle = module;
-    *origin_key = func_name;
+    info_table_[func_name] = std::make_shared<KernelMetaInfo>(KernelMetaInfo{1, *block_dim, module});
     return 1;
   }
   // to diff different funcs.
@@ -334,7 +336,7 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
   }
   // cache the registered kernelmeta.
   std::lock_guard<std::mutex> lock(info_table_mutex_);
-  info_table_[func_name] = std::make_shared<KernelMetaInfo>(KernelMetaInfo{func_stub, *block_dim});
+  info_table_[func_name] = std::make_shared<KernelMetaInfo>(KernelMetaInfo{func_stub, *block_dim, module});
   return func_stub;
 }
 

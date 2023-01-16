@@ -90,13 +90,14 @@ class TbeUtils {
 struct KernelMetaInfo {
   uintptr_t func_stub_;
   uint32_t block_dim_;
+  void *handle_;
 };
 using KernelMetaPtr = std::shared_ptr<KernelMetaInfo>;
 
 class KernelManager {
  public:
   static uintptr_t GenFuncStub(const KernelPack &kernel_pack, bool force_reload, uint32_t *block_dim,
-                               void **handle = nullptr, std::string *origin_key = nullptr);
+                               void **handle = nullptr);
   static std::string GetStubFuncName(const KernelPackPtr &kernel_pack);
 
  private:
