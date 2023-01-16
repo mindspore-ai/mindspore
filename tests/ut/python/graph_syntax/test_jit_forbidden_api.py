@@ -189,3 +189,17 @@ def test_jit_forbidden_api_get_parameters2():
         foo()
     assert "Failed to compile in GRAPH_MODE" in str(ex.value)
     assert "the method or function 'mindspore.nn.cell.Cell.get_parameters'" in str(ex.value)
+
+
+def test_jit_forbidden_api_type():
+    """
+    Feature: Check JIT Forbidden API
+    Description: Test api does not has attribute '__module__' in graph mode.
+    Expectation: No Expectation
+    """
+    @jit
+    def foo():
+        x = type("C", (object,), {})
+        return x
+
+    foo()

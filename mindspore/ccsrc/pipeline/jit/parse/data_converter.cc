@@ -431,27 +431,30 @@ ValuePtr ConvertConstantNumpyNumber(const py::object &obj, ResolveTypeDef obj_ty
 
 void CheckJITForbiddenAPI(const py::object &obj) {
   auto module = python_adapter::GetPyModule(PYTHON_MOD_MODULE);
-  py::list obj_info = python_adapter::CallPyModFn(module, PYTHON_MOD_GET_MODULE_AND_NAME_INFO, obj);
-  std::ostringstream oss;
-  auto obj_module = py::cast<std::string>(obj_info[0]);
-  auto obj_name = py::cast<std::string>(obj_info[1]);
-  auto obj_type = py::cast<std::string>(obj_info[2]);
-  oss << "Failed to compile in GRAPH_MODE because the " << obj_type << " '" << obj_module << "." << obj_name
-      << "' is not supported in 'construct' or function with @jit decorator. "
-      << "Try to use the " << obj_type << " '" << obj_module << "." << obj_name << "' externally "
-      << "such as initialized in the method '__init__' before assigning"
-      << ".\nFor more details, please refer to "
-      << "https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html \n";
-  // Check if the API is decoratored by @jit_forbidden_register.
-  bool is_jit_forbidden_register = data_converter::IsJITForbiddenAPI(obj);
-  if (is_jit_forbidden_register) {
-    MS_LOG(EXCEPTION) << oss.str();
-  }
-  // Check if the API's module is in the JIT forbidden module set.
-  bool is_jit_forbidden_module =
-    py::cast<bool>(python_adapter::CallPyModFn(module, PYTHON_MOD_IS_JIT_FORBIDDEN_MODULE, obj_info[0]));
-  if (is_jit_forbidden_module) {
-    MS_LOG(EXCEPTION) << oss.str();
+  py::object res = python_adapter::CallPyModFn(module, PYTHON_MOD_GET_MODULE_AND_NAME_INFO, obj);
+  if (!py::isinstance<py::none>(res)) {
+    auto obj_info = py::cast<py::list>(res);
+    auto obj_module = py::cast<std::string>(obj_info[0]);
+    auto obj_name = py::cast<std::string>(obj_info[1]);
+    auto obj_type = py::cast<std::string>(obj_info[2]);
+    std::ostringstream oss;
+    oss << "Failed to compile in GRAPH_MODE because the " << obj_type << " '" << obj_module << "." << obj_name
+        << "' is not supported in 'construct' or function with @jit decorator. "
+        << "Try to use the " << obj_type << " '" << obj_module << "." << obj_name << "' externally "
+        << "such as initialized in the method '__init__' before assigning"
+        << ".\nFor more details, please refer to "
+        << "https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html \n";
+    // Check if the API is decoratored by @jit_forbidden_register.
+    bool is_jit_forbidden_register = data_converter::IsJITForbiddenAPI(obj);
+    if (is_jit_forbidden_register) {
+      MS_LOG(EXCEPTION) << oss.str();
+    }
+    // Check if the API's module is in the JIT forbidden module set.
+    bool is_jit_forbidden_module =
+      py::cast<bool>(python_adapter::CallPyModFn(module, PYTHON_MOD_IS_JIT_FORBIDDEN_MODULE, obj_info[0]));
+    if (is_jit_forbidden_module) {
+      MS_LOG(EXCEPTION) << oss.str();
+    }
   }
 }
 
