@@ -3368,7 +3368,7 @@ def ceil(x):
 
 def topk(input_x, k, dim=None, largest=True, sorted=True):
     r"""
-    For details, please refer to :func:`mindspore.ops.top_k`.
+    For details, please refer to :func:`mindspore.ops.topk`.
     """
     return F.topk(input_x, k, dim, largest=largest, sorted=sorted)
 
