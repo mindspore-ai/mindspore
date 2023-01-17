@@ -1028,6 +1028,7 @@ constexpr auto kCustomTypeHybrid = "hybrid";
 constexpr auto kPrimalAttrForwardNodeName = "forward_node_name";
 constexpr auto kPrimalAttrUniqueId = "unique_id";
 constexpr auto kPrimalAttrForwardUniqueId = "forward_unique_id";
+constexpr auto kPrimalAttrForwardCommNodeUniqueId = "forward_comm_node_unique_id";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";

@@ -544,6 +544,7 @@ void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes) {
       if (slice_prim->HasAttr(INTERLEAVED_NUM) &&
           GetValue<int64_t>(slice_prim->GetAttr(INTERLEAVED_NUM)) == MICRO_INTERLEAVED_SIZE) {
         ParallelContext::GetInstance()->set_enable_micro_interleaved(true);
+        cnode->AddAttr(INTERLEAVED_NUM, slice_prim->GetAttr(INTERLEAVED_NUM));
       }
       SetStridedSliceStrategy(cnode);
     }

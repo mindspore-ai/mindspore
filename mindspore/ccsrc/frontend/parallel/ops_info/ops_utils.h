@@ -559,6 +559,7 @@ constexpr char LIN_SPACE[] = "LinSpace";
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;
 constexpr char MICRO[] = "micro";
+constexpr auto MICRO_INTERLEAVED_TAG = "micro_interleaved_tag";
 constexpr char DEST_RANK[] = "dest_rank";
 constexpr char SRC_RANK[] = "src_rank";
 constexpr char PIPELINE_PARAM[] = "pipeline_param";
@@ -579,9 +580,9 @@ constexpr char PARAM_INDEX[] = "param_index";
 constexpr char PARAMETER[] = "parameter";
 constexpr char FUNC_GRAPH_FLAG_STRIDED_SLICE[] = "strided_slice_flag";
 constexpr char INTERLEAVED_NUM[] = "interleave_num";
-constexpr char FORWARD_NODE_UNIQUE_ID[] = "forward_node_unique_id";
 constexpr char MICRO_INTERLEAVED_INDEX[] = "micro_interleaved_index";
 constexpr char MICRO_INTERLEAVED_FORWARD_COMM_ORDER[] = "micro_interleaved_forward_comm_order";
+constexpr char SEND_REC_DEPEND[] = "send_receive_depend";
 
 // Parallel don't care
 constexpr char MAKE_TUPLE[] = "MakeTuple";

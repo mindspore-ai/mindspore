@@ -428,7 +428,11 @@ Status DeviceManager::CreateGroup(const std::string &group_name,
     MS_LOG(ERROR) << "Create communication group failed, the rank list is: " << rank_list;
     return FAILED;
   }
-  return gm_.CreateGroup(group_name, devices, comm_group);
+  if (gm_.CreateGroup(group_name, devices, comm_group) != SUCCESS) {
+    return FAILED;
+  }
+  group_to_rank_[group_name] = RankListName(rank_list);
+  return SUCCESS;
 }
 
 // Create the group with only the given devices' ranks.

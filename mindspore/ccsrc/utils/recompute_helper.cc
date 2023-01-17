@@ -332,6 +332,9 @@ CNodePtr CreateNewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &orig
   if (origin_node->HasPrimalAttr(kAttrMicro)) {
     recomputed_node->AddPrimalAttr(kAttrMicro, origin_node->GetPrimalAttr(kAttrMicro));
   }
+  if (origin_node->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId)) {
+    recomputed_node->AddPrimalAttr(kAttrMicro, origin_node->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
+  }
   static int64_t recompute_id = 0;
   ++recompute_id;
   recomputed_node->AddAttr(kAttrRecomputeId, MakeValue(recompute_id));

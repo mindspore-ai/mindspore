@@ -226,6 +226,12 @@ static void InsertNode(const Operator &op, const CNodePtr &node, size_t index, c
   }
   new_node->set_scope(scope);
   node_input[0]->set_scope(scope);
+  if (instance_name.find(REDISTRIBUTION_OP) != std::string::npos) {
+    new_node->AddPrimalAttr(kPrimalAttrForwardCommNodeUniqueId, MakeValue<std::string>(new_node->UniqueId()));
+    if (node->HasPrimalAttr(MICRO)) {
+      new_node->AddPrimalAttr(MICRO, node->GetPrimalAttr(MICRO));
+    }
+  }
   manager->SetEdge(node, SizeToInt(index), new_node);
   MS_LOG(INFO) << "Insert " << instance_name << " success";
 }
@@ -302,7 +308,7 @@ void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node) {
     MS_EXCEPTION_IF_NULL(scope);
     forward_node->set_scope(scope);
     forward_node->set_in_forward_flag(true);
-    forward_node->AddPrimalAttr(FORWARD_NODE_UNIQUE_ID, MakeValue<std::string>(forward_node->UniqueId()));
+    forward_node->AddPrimalAttr(kPrimalAttrForwardCommNodeUniqueId, MakeValue<std::string>(forward_node->UniqueId()));
     if (node_to_insert->HasPrimalAttr(MICRO)) {
       forward_node->AddPrimalAttr(MICRO, node_to_insert->GetPrimalAttr(MICRO));
     }
