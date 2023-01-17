@@ -721,6 +721,7 @@ constexpr auto kUpdateStateOpName = "UpdateState";
 constexpr auto kDynamicBroadcastToOpName = "DynamicBroadcastTo";
 constexpr auto kCheckValidOpName = "CheckValid";
 constexpr auto kSoftmaxGradFusionOpName = "SoftmaxGradFusion";
+constexpr auto kSoftMarginLossOpName = "SoftMarginLoss";
 constexpr auto kZerosLikeOpName = "ZerosLike";
 
 // Sequence ops
