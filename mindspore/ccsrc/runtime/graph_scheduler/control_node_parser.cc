@@ -1802,7 +1802,8 @@ void ControlNodeParser::ParseControlNodeParameter(const std::vector<AnfNodePtr> 
         if (base_shape == nullptr) {
           continue;
         }
-        if (base_shape->isa<abstract::Shape>() && base_shape->IsDynamic()) {
+        if ((base_shape->isa<abstract::Shape>() && base_shape->IsDynamic()) ||
+            base_shape->isa<abstract::DynamicSequenceShape>()) {
           MS_LOG(INFO) << "Set dynamic shape flag to parameter:" << parameter->DebugString();
           parameter->set_has_dynamic_shape(true);
         }

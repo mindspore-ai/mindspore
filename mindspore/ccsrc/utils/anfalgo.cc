@@ -785,17 +785,6 @@ void AnfAlgo::SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
   }
 }
 
-void AnfAlgo::SetScalarTupleOutputInferType(const std::vector<TypeId> &types, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  std::vector<abstract::AbstractBasePtr> abstract_list;
-  for (size_t i = 0; i < types.size(); ++i) {
-    abstract::AbstractScalarPtr abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(types[i]));
-    abstract_list.emplace_back(abstract);
-  }
-  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
-  node->set_abstract(abstract_tuple);
-}
-
 namespace {
 void DeleteDynamicLen(AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -808,6 +797,18 @@ void DeleteDynamicLen(AnfNode *node) {
   }
 }
 }  // namespace
+
+void AnfAlgo::SetScalarTupleOutputInferType(const std::vector<TypeId> &types, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  DeleteDynamicLen(node.get());
+  std::vector<abstract::AbstractBasePtr> abstract_list;
+  for (size_t i = 0; i < types.size(); ++i) {
+    abstract::AbstractScalarPtr abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(types[i]));
+    abstract_list.emplace_back(abstract);
+  }
+  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  node->set_abstract(abstract_tuple);
+}
 
 // set infer shapes and types of anf node
 void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
@@ -1841,7 +1842,7 @@ bool AnfAlgo::IsDynamicSequence(const AnfNodePtr &node) {
     return is_dynamic;
   } else if (node->isa<CNode>()) {
     if (IsCallNode(node)) {
-      return false;
+      return is_dynamic_len_func();
     }
     const auto &cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
