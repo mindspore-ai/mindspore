@@ -38,6 +38,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/parse/resolve.h"
+#include "pipeline/jit/fallback.h"
 #include "pipeline/jit/pipeline.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
@@ -1305,41 +1306,6 @@ inline void AddToManager(const AnalysisEnginePtr &engine, const FuncGraphPtr fun
 
 enum class REQUIRE_TYPE { ATTR, METHOD };
 
-AnfNodePtr ConvertInterpretedNodeToCNode(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node) {
-  const auto &interpreted_value = dyn_cast<parse::InterpretedObject>(value);
-  if (interpreted_value == nullptr) {
-    return nullptr;
-  }
-  const auto &value_node_value = interpreted_value->obj();
-
-  auto value_node_key = interpreted_value->name();
-  (void)value_node_key.erase(
-    std::remove_if(value_node_key.begin(), value_node_key.end(), [](char c) { return !std::isalnum(c); }),
-    value_node_key.end());
-
-  // Set the value node into dict firstly.
-  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  constexpr auto set_local_variable = "set_local_variable";
-  (void)python_adapter::CallPyModFn(mod, set_local_variable, value_node_key, value_node_value);
-
-  // Get the value node from the dict in IR.
-  std::stringstream script_buffer;
-  script_buffer << "__import__('mindspore')._extends.parse.get_local_variable(" << value_node_key << ")";
-  const std::string &script = script_buffer.str();
-  const auto script_str = std::make_shared<StringImm>(script);
-
-  // Build new CNode for value node.
-  ValuePtrList keys({std::make_shared<StringImm>(value_node_key)});
-  ValuePtrList values({std::make_shared<StringImm>(value_node_key)});
-  const auto interpreted_cnode = fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str),
-                                               NewValueNode(std::make_shared<ValueTuple>(keys)),
-                                               NewValueNode(std::make_shared<ValueTuple>(values))});
-  constexpr auto debug_recursive_level = 2;
-  MS_LOG(DEBUG) << "interpreted_cnode: " << interpreted_cnode->DebugString(debug_recursive_level);
-  interpreted_cnode->set_debug_info(node->debug_info());
-  return interpreted_cnode;
-}
-
 EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
   auto out_node = out_conf->node();
   const auto cnode = dyn_cast<CNode>(out_node);
@@ -1364,7 +1330,7 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   MS_LOG(DEBUG) << "expr: " << expr << ", for node: " << out_conf->node()->DebugString(debug_recursive_level)
                 << ", owner_value: " << owner_value->ToString();
   if (owner_value->isa<parse::InterpretedObject>()) {
-    owner_node = ConvertInterpretedNodeToCNode(fg, owner_value, owner_node);
+    owner_node = ConvertInterpretedObjectToPyExecute(fg, owner_value, owner_node);
   }
 
   constexpr auto internal_getattr_owner_str = "__internal_getattr_owner__";
@@ -2014,7 +1980,6 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   MS_EXCEPTION_IF_NULL(args_abs_list[0]);
   ValuePtr value_track = args_abs_list[0]->GetValueTrack();
   MS_EXCEPTION_IF_NULL(value_track);
-
   auto script_obj = dyn_cast_ptr<StringImm>(value_track);
   if (script_obj == nullptr) {
     MS_LOG(EXCEPTION) << "Cast value failed, not PyObjectWrapper:" << value_track->ToString() << ".";
