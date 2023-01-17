@@ -38,6 +38,13 @@ void Conv2DBackpropEltwiseFusionPass::MatchConv2DBackpropInputEltwise(const CNod
     return;
   }
   if (common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimConv2DBackpropInputD)) {
+    // if cnode is ReluGradV2, we need do further check
+    // skip when output0 of Conv2DBackpropInputD is fp32, it may be slower
+    const std::unordered_set<TypeId> fp32_types{TypeId::kNumberTypeFloat32, TypeId::kNumberTypeFloat};
+    if (common::AnfAlgo::GetCNodeName(cnode) == kReluGradV2OpName &&
+        fp32_types.count(AnfAlgo::GetOutputDeviceDataType(eltwise_input, kIndex0)) > 0) {
+      return;
+    }
     (void)record.insert(eltwise_input);
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);
@@ -57,8 +64,11 @@ void Conv2DBackpropEltwiseFusionPass::MatchSingleFusionPattern(const session::Ke
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    std::set<std::string> support_type = {kReluOpName, kPReluOpName, kLeakyReluOpName};
-    if (support_type.count(common::AnfAlgo::GetCNodeName(cnode)) > 0) {
+    std::set<std::string> support_node_names = {kReluGradV2OpName, kReluOpName, kPReluOpName, kLeakyReluOpName,
+                                                kAddOpName};
+    std::set<std::string> support_fusion_types = {kernel::kPatternElemWise, kernel::kPatternBroadcast};
+    if (support_node_names.count(common::AnfAlgo::GetCNodeName(cnode)) > 0 &&
+        support_fusion_types.count(AnfAlgo::GetFusionType(cnode)) > 0) {
       MatchConv2DBackpropInputEltwise(cnode, candidate_fusion);
     }
   }

@@ -30,7 +30,7 @@ void SegmentEltwiseFusionPass::MatchSegmentEltwise(const CNodePtr &cnode, const 
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   mindspore::HashSet<AnfNodePtr> record{cnode};
   auto eltwise_input = cnode->input(kIndex1);
-  while (CheckEltWiseNode(kernel_graph, eltwise_input)) {
+  while (CheckSingleInEltWiseNode(kernel_graph, eltwise_input)) {
     (void)record.insert(eltwise_input);
     auto input_cnode = eltwise_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(input_cnode);
@@ -51,7 +51,7 @@ void SegmentEltwiseFusionPass::MatchSegmentEltwise(const CNodePtr &cnode, const 
     MS_EXCEPTION_IF_NULL(previous_input_cnode);
     auto previous_eltwise_input = previous_input_cnode->input(kIndex1);
     auto previous_size = record.size();
-    while (CheckEltWiseNode(kernel_graph, previous_eltwise_input)) {
+    while (CheckSingleInEltWiseNode(kernel_graph, previous_eltwise_input)) {
       (void)record.insert(previous_eltwise_input);
       MS_EXCEPTION_IF_NULL(previous_eltwise_input);
       auto previous_node = previous_eltwise_input->cast<CNodePtr>();

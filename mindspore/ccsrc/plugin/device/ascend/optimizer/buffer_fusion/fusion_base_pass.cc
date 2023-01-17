@@ -22,49 +22,33 @@
 
 namespace mindspore {
 namespace opt {
-bool FusionBasePass::CheckEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
-  auto manager = kernel_graph.manager();
-  MS_EXCEPTION_IF_NULL(manager);
+bool FusionBasePass::CheckEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node,
+                                      const std::unordered_set<std::string> &fusion_types, size_t input_size,
+                                      size_t not_updatestate_size) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node)) {
     return false;
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
   return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
-         AnfAlgo::GetFusionType(node) == kernel::kPatternElemWise && not_updatestate_nums == ELTWISE_USE &&
-         cnode->inputs().size() == ELTWISE_INPUT_SIZE;
+         fusion_types.find(AnfAlgo::GetFusionType(node)) != fusion_types.cend() &&
+         GetNotUpdateStateUserNums(kernel_graph, node) == not_updatestate_size && cnode->inputs().size() == input_size;
 }
 
-bool FusionBasePass::CheckDoubleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
-  auto manager = kernel_graph.manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node)) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
-  return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
-         AnfAlgo::GetFusionType(node) == kernel::kPatternElemWise && not_updatestate_nums == ELTWISE_USE &&
-         cnode->inputs().size() == ELTWISE_DOUBLE_IN_INPUT_SIZE;
+bool FusionBasePass::CheckSingleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node,
+                                              const std::unordered_set<std::string> &fusion_types) {
+  return CheckEltWiseNode(kernel_graph, node, fusion_types, ELTWISE_INPUT_SIZE, ELTWISE_USE);
 }
 
-bool FusionBasePass::CheckMultiOutputEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
-  auto manager = kernel_graph.manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node)) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
-  return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
-         AnfAlgo::GetFusionType(node) == kernel::kPatternElemWise && not_updatestate_nums == ELTWISE_MULTI_USE &&
-         cnode->inputs().size() == ELTWISE_INPUT_SIZE;
+bool FusionBasePass::CheckDoubleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node,
+                                              const std::unordered_set<std::string> &fusion_types) {
+  return CheckEltWiseNode(kernel_graph, node, fusion_types, ELTWISE_DOUBLE_IN_INPUT_SIZE, ELTWISE_USE);
+}
+
+bool FusionBasePass::CheckMultiOutputEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node,
+                                                 const std::unordered_set<std::string> &fusion_types) {
+  return CheckEltWiseNode(kernel_graph, node, fusion_types, ELTWISE_INPUT_SIZE, ELTWISE_MULTI_USE);
 }
 
 size_t FusionBasePass::GetNotUpdateStateUserNums(const session::KernelGraph &kernel_graph,

@@ -30,7 +30,7 @@ void StridedReadConvStridedWriteFusionPass::MatchStridedReadConvStridedWrite(con
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   mindspore::HashSet<AnfNodePtr> record{cnode};
   auto write_input = cnode->input(kIndex1);
-  if (CheckEltWiseNode(kernel_graph, write_input)) {
+  if (CheckSingleInEltWiseNode(kernel_graph, write_input)) {
     (void)record.insert(write_input);
     auto input_cnode = write_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(input_cnode);
