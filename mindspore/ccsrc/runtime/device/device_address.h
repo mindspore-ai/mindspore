@@ -98,6 +98,20 @@ class DeviceAddress : public mindspore::DeviceSync {
         device_id_(device_id) {}
   virtual ~DeviceAddress() { ptr_ = nullptr; }
 
+  // Asynchronously copy host memory to device side.
+  virtual bool AsyncHostToDevice(const ShapeVector &, size_t, TypeId, const void *, size_t) const { return true; }
+  // Asynchronously copy device memory to host side.
+  virtual bool AsyncDeviceToHost(const ShapeVector &, size_t, TypeId, void *, size_t) const { return true; }
+  // Synchronously copy device memory to device side.
+  virtual bool SyncDeviceToDevice(const DeviceSync *) const { return true; }
+  virtual bool SyncDeviceToDevice(const ShapeVector &, size_t, TypeId, const void *, const std::string &) const {
+    return true;
+  }
+  // Asynchronously copy device memory to device side.
+  virtual bool AsyncDeviceToDevice(const ShapeVector &, size_t, TypeId, const void *, const std::string &) const {
+    return true;
+  }
+
   const void *GetPtr() const {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
     return ptr_;
@@ -195,12 +209,6 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   // Get offloaded host ptr
   virtual void *GetOffloadPtr() const { return nullptr; }
-
-  // Asynchronously copy host memory to device side.
-  virtual bool AsyncHostToDevice(const ShapeVector &, size_t, TypeId, const void *, size_t) const { return true; }
-
-  // Asynchronously copy device memory to host side.
-  virtual bool AsyncDeviceToHost(const ShapeVector &, size_t, TypeId, void *, size_t) const { return true; }
 
   // Free the ptr in user data when the ref count is 0.
   virtual void ClearUserData() {}

@@ -42,9 +42,9 @@ class CudaDriver {
 
   static bool CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size,
                                        CudaDeviceStream stream = 0);
-  static bool CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size,
+  static bool CopyDeviceMemToHostAsync(const HostMemPtr &dst, const void *src, size_t size,
                                        CudaDeviceStream stream = 0);
-  static bool CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const DeviceMemPtr &src, size_t size,
+  static bool CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size,
                                          CudaDeviceStream stream = 0);
 
   static size_t total_mem_size();

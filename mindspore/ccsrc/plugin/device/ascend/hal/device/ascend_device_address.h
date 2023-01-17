@@ -55,6 +55,8 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
                         const std::string &format) const override;
   bool AsyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
                            const std::string &format) const override;
+  bool SyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
+                          const std::string &format) const override;
   bool SyncDeviceToDevice(const DeviceSync *src_device_addr) const override;
   void ClearDeviceMemory() override;
   DeviceType GetDeviceType() const override { return DeviceType::kAscend; }
@@ -80,8 +82,6 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
   bool ConvertFormatAndSyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const;
   bool SyncDeviceToHostAndConvertFormatBasedOnTransData(const ShapeVector &host_shape, size_t size,
                                                         mindspore::TypeId type, void *host_ptr) const;
-  bool SyncDeviceToDeviceWithSameFormatType(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
-                                            const std::string &format) const;
   bool SyncDeviceToDeviceWithDiffFormatType(const DeviceSync *src_device_addr) const;
   void SyncStream() const;
   ShapeVector GetDeviceShape(ShapeVector *host_shape) const;

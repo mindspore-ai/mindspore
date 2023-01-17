@@ -180,34 +180,52 @@ bool CPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) con
   MS_EXCEPTION_IF_NULL(src_device_addr);
   auto src_cpu_device = dynamic_cast<const CPUDeviceAddress *>(src_device_addr);
   MS_EXCEPTION_IF_NULL(src_cpu_device);
-  auto src_size = src_cpu_device->GetSize();
-  auto src_ptr = src_cpu_device->GetMutablePtr();
-  auto src_type = src_cpu_device->type_id();
+  return SyncDeviceToDevice(src_cpu_device->host_shape(), src_cpu_device->GetSize(), src_cpu_device->type_id(),
+                            src_cpu_device->GetPtr(), src_cpu_device->format());
+}
 
-  // The input or output may be empty.
-  if ((src_size == 0) || (size_ == 0)) {
-    MS_LOG(INFO) << "No need sync, src device size: " << src_size << ", dst device size: " << size_;
+bool CPUDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, TypeId type, const void *src_ptr,
+                                          const std::string &format) const {
+  MS_LOG(DEBUG) << "SyncDeviceToDevice, dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
+                << ", size:" << size_ << "), src(format:" << format << ", type_id:" << TypeIdLabel(type)
+                << ", size:" << size << ")";
+  if (ptr_ == src_ptr) {
+    MS_LOG(INFO) << "Dst addr is same with src addr, no need memcpy data.";
     return true;
   }
+  // The input or output may be empty.
+  if ((size == 0) || (size_ == 0)) {
+    MS_LOG(INFO) << "No need sync, src device size: " << size << ", dst device size: " << size_;
+    return true;
+  }
+  if (size_ < size) {
+    MS_LOG(ERROR) << "Src size is greater than det size, src size is: " << size << ", dst size is: " << size_;
+    return false;
+  }
+  if (format_ != format) {
+    MS_LOG(ERROR) << "Format is different, src(format:" << format << "), dst(format:" << format_ << ").";
+    return false;
+  }
+
   MS_EXCEPTION_IF_NULL(src_ptr);
   MS_EXCEPTION_IF_NULL(ptr_);
-  if (src_type == type_id_) {
-    return CopySameTypeMem(ptr_, size_, src_ptr, src_size, src_type);
-  } else if (type_id_ == kNumberTypeFloat32 && src_type == kNumberTypeFloat16) {
-    HalfToFloat(ptr_, src_ptr, src_size >> 1);
-  } else if (type_id_ == kNumberTypeFloat16 && src_type == kNumberTypeFloat32) {
-    FloatToHalf(ptr_, src_ptr, src_size / sizeof(float));
-  } else if (type_id_ == kNumberTypeFloat32 && src_type == kNumberTypeFloat64) {
-    DoubleToFloat(ptr_, src_ptr, src_size / sizeof(double));
-  } else if (type_id_ == kNumberTypeFloat64 && src_type == kNumberTypeFloat32) {
-    FloatToDouble(ptr_, src_ptr, src_size / sizeof(float));
-  } else if (type_id_ == kNumberTypeInt64 && src_type == kNumberTypeInt32) {
-    IntToLong(ptr_, src_ptr, src_size / sizeof(int32_t));
-  } else if (type_id_ == kNumberTypeInt32 && src_type == kNumberTypeInt64) {
-    LongToInt(ptr_, src_ptr, src_size / sizeof(int64_t));
+  if (type == type_id_) {
+    return CopySameTypeMem(ptr_, size, src_ptr, size, type);
+  } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat16) {
+    HalfToFloat(ptr_, src_ptr, size >> 1);
+  } else if (type_id_ == kNumberTypeFloat16 && type == kNumberTypeFloat32) {
+    FloatToHalf(ptr_, src_ptr, size / sizeof(float));
+  } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
+    DoubleToFloat(ptr_, src_ptr, size / sizeof(double));
+  } else if (type_id_ == kNumberTypeFloat64 && type == kNumberTypeFloat32) {
+    FloatToDouble(ptr_, src_ptr, size / sizeof(float));
+  } else if (type_id_ == kNumberTypeInt64 && type == kNumberTypeInt32) {
+    IntToLong(ptr_, src_ptr, size / sizeof(int32_t));
+  } else if (type_id_ == kNumberTypeInt32 && type == kNumberTypeInt64) {
+    LongToInt(ptr_, src_ptr, size / sizeof(int64_t));
   } else {
-    MS_LOG(ERROR) << "Types not match. Device type: " << TypeIdLabel(type_id_)
-                  << ", host type: " << TypeIdLabel(src_type) << "!";
+    MS_LOG(ERROR) << "Types not match. Device type: " << TypeIdLabel(type_id_) << ", host type: " << TypeIdLabel(type)
+                  << "!";
     return false;
   }
   return true;

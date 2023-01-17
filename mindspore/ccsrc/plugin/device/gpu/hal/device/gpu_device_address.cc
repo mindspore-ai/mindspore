@@ -173,31 +173,47 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) con
   MS_EXCEPTION_IF_NULL(src_device_addr);
   auto src_gpu_device = dynamic_cast<const GPUDeviceAddress *>(src_device_addr);
   MS_EXCEPTION_IF_NULL(src_gpu_device);
-  auto src_size = src_gpu_device->GetSize();
-  auto src_ptr = src_gpu_device->GetMutablePtr();
+  return SyncDeviceToDevice(src_gpu_device->host_shape(), src_gpu_device->GetSize(), src_gpu_device->type_id(),
+                            src_gpu_device->GetPtr(), src_gpu_device->format());
+}
 
-  // The input or output may be empty.
-  if ((src_size == 0) || (size_ == 0)) {
-    MS_LOG(INFO) << "No need sync, src device size: " << src_size << ", dst device size: " << size_;
+bool GPUDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, TypeId type, const void *src_ptr,
+                                          const std::string &format) const {
+  MS_LOG(DEBUG) << "SyncDeviceToDevice, dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
+                << ", size:" << size_ << "), src(format:" << format << ", type_id:" << TypeIdLabel(type)
+                << ", size:" << size << ")";
+  if (ptr_ == src_ptr) {
+    MS_LOG(INFO) << "Dst addr is same with src addr, no need memcpy data.";
     return true;
   }
-
-  if (src_size != size_) {
-    MS_LOG(ERROR) << "The src device size is not equal of the dst device size, src device size: " << src_size
-                  << ", dst device size: " << size_;
+  if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
+    return true;
+  }
+  // The input or output may be empty.
+  if ((size == 0) || (size_ == 0)) {
+    MS_LOG(INFO) << "No need sync, src device size: " << size << ", dst device size: " << size_;
+    return true;
+  }
+  if (size_ < size) {
+    MS_LOG(ERROR) << "Src size is greater than det size, src size is: " << size << ", dst size is: " << size_;
     return false;
   }
+  if (format_ != format || type_id_ != type) {
+    MS_LOG(ERROR) << "Format or type is different, src(format:" << format << ", type_id:" << TypeIdLabel(type)
+                  << "), dst(format:" << format_ << "), type_id:" << TypeIdLabel(type_id_);
+    return false;
+  }
+
   MS_EXCEPTION_IF_NULL(src_ptr);
   MS_EXCEPTION_IF_NULL(ptr_);
-
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
   if (mem_offloaded()) {
-    if (!GPUDeviceManager::GetInstance().CopyDeviceMemToHostAsync(offload_ptr_, src_ptr, size_, stream)) {
+    if (!GPUDeviceManager::GetInstance().CopyDeviceMemToHostAsync(offload_ptr_, src_ptr, size, stream)) {
       MS_LOG(ERROR) << "CopyDeviceMemToDeviceAsync failed";
       return false;
     }
-  } else if (!GPUDeviceManager::GetInstance().CopyDeviceMemToDeviceAsync(ptr_, src_ptr, size_, stream)) {
+  } else if (!GPUDeviceManager::GetInstance().CopyDeviceMemToDeviceAsync(ptr_, src_ptr, size, stream)) {
     MS_LOG(ERROR) << "CopyDeviceMemToDeviceAsync failed";
     return false;
   }

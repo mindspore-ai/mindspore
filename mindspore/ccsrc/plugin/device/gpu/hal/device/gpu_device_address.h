@@ -48,6 +48,8 @@ class GPUDeviceAddress : public LoadableDeviceAddress {
   bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
                         const std::string &format) const override;
   bool SyncDeviceToDevice(const DeviceSync *src_device_addr) const override;
+  bool SyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
+                          const std::string &format) const override;
 
   void ClearDeviceMemory() override;
   void set_status(DeviceAddressStatus status) { status_ = status; }

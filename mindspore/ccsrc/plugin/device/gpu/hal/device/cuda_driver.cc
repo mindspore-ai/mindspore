@@ -116,7 +116,7 @@ bool CudaDriver::CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *s
   return true;
 }
 
-bool CudaDriver::CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size,
+bool CudaDriver::CopyDeviceMemToHostAsync(const HostMemPtr &dst, const void *src, size_t size,
                                           CudaDeviceStream stream) {
   auto ret = cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToHost, (cudaStream_t)stream);
   if (ret != cudaSuccess) {
@@ -126,7 +126,7 @@ bool CudaDriver::CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMem
   return true;
 }
 
-bool CudaDriver::CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const DeviceMemPtr &src, size_t size,
+bool CudaDriver::CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size,
                                             CudaDeviceStream stream) {
   auto ret = cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToDevice, (cudaStream_t)stream);
   if (ret != cudaSuccess) {
