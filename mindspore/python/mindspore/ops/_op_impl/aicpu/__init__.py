@@ -240,3 +240,5 @@ from .nuclear_norm import _nuclear_norm_aicpu
 from .sparse_segment_sqrt_n import _sparse_segment_sqrt_n_aicpu
 from .unsorted_segment_prod import _unsorted_segment_prod_aicpu
 from .scale_and_translate import _scale_and_translate_aicpu
+from .quant_dtype_cast import _quant_dtype_cast_aicpu
+from .fse_decode import _fse_decode_aicpu
