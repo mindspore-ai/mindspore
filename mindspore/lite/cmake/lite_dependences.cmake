@@ -11,7 +11,8 @@ if(MSLITE_DEPS_FLATBUFFERS)
 endif()
 
 if(MSLITE_DEPS_OPENCL)
-    include(${TOP_DIR}/cmake/external_libs/opencl.cmake)
+    include(${TOP_DIR}/cmake/external_libs/opencl-headers.cmake)
+    include(${TOP_DIR}/cmake/external_libs/opencl-clhpp.cmake)
 endif()
 
 if(MSLITE_DEPS_JSON)

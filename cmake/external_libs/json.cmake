@@ -7,7 +7,7 @@ else()
     set(nlohmann_json3101_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 endif()
 
-if(ENABLE_GITEE)
+if(ENABLE_GITEE OR ENABLE_GITEE_EULER) # Channel GITEE_EULER is NOT supported now, use GITEE instead.
     set(REQ_URL "https://gitee.com/mirrors/JSON-for-Modern-CPP/repository/archive/v3.10.1.zip")
     set(SHA256 "5c7d0a0542431fef628f8dc4c34fd022fe8747ccb577012d58f38672d8747e0d")
     set(INCLUDE "./include")
