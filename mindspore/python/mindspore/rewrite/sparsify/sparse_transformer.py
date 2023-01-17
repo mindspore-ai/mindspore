@@ -32,7 +32,6 @@ MAX_RECURSION_DEPTH = 10
 
 def sparsify_helper(f, arg_types, user_defined_rules=None, sparse_name="", full_sparse_rules=None, depth=0):
     """Calls sparse_transformer from raw function."""
-    # TODO sparsify cell as cell
     if isinstance(f, nn.Cell):
         tree = ast.parse(textwrap.dedent(inspect.getsource(f.construct)))
         # remove self
@@ -93,12 +92,23 @@ class SparseTransformer(ast.NodeTransformer):
         if full_sparse_rules:
             self.full_sparse_rules = full_sparse_rules
         else:
+            self.full_sparse_rules = {}
             user_defined_rules = user_defined_rules or {}
             self.get_sparse_rules(user_defined_rules)
 
+    @staticmethod
+    def make_call(node, name="", args=None):
+        """Returns a call node with given name and args, if provided."""
+        if name:
+            func = ast.Name(name, ast.Load())
+        else:
+            func = node.func
+        if args is None:
+            args = node.args
+        return ast.Call(func, args, node.keywords)
+
     def get_sparse_rules(self, user_defined_rules):
         """Generates sparse rules for the transformer from generic sparse rules and user-defined sparse rules."""
-        self.full_sparse_rules = {}
         for func, rules in {**sparse_rules, **user_defined_rules}.items():
             for r in rules:
                 sparse_func = get_sparse_func(r)
@@ -170,16 +180,6 @@ class SparseTransformer(ast.NodeTransformer):
             self._changed = True
         return sparse_func
 
-    def make_call(self, node, name="", args=None):
-        """Returns a call node with given name and args, if provided."""
-        if name:
-            func = ast.Name(name, ast.Load())
-        else:
-            func = node.func
-        if args is None:
-            args = node.args
-        return ast.Call(func, args, node.keywords)
-
     def get_sparse_node(self, node, args, func, arg_types):
         """
         Retrieves target from sparse rules if matches, otherwise sparsify the node by recursively expanding `func`
@@ -193,7 +193,6 @@ class SparseTransformer(ast.NodeTransformer):
                 if sparse_func.fn in self.global_vars:
                     func_node = ast.Name(sparse_func.fn, ast.Load())
                 else:
-                    # TODO extract namespace from sparse func
                     func_node = ast.Name("ops", ast.Load())
                     func_node = ast.Attribute(func_node, sparse_func.fn, ast.Load())
                 node = ast.Call(func_node, args, node.keywords)
@@ -203,7 +202,6 @@ class SparseTransformer(ast.NodeTransformer):
         if func.__module__[:len(OPS_MODULE)] == OPS_MODULE:
             raise ValueError(f"Sparse rules not registered for {func}!")
 
-        # TODO avoid conflicting declarations from different module
         if isinstance(func, nn.Cell):
             class_name = func.__class__.__name__
             func_name = class_name.lower()
@@ -217,7 +215,7 @@ class SparseTransformer(ast.NodeTransformer):
             self._changed = True
             # pylint: disable=get-dict-value-exception
             self.push_all_onto_frame(self.sparse_functiondef[(func_name, arg_types)][1])
-            return self.make_call(node, sparse_func_name, args)
+            return SparseTransformer.make_call(node, sparse_func_name, args)
         if (func_name, arg_types) in self.origin_functiondef:
             # pylint: disable=get-dict-value-exception
             self.push_all_onto_frame(self.origin_functiondef[(func_name, arg_types)])
@@ -231,9 +229,9 @@ class SparseTransformer(ast.NodeTransformer):
         if changed:
             self._changed = True
             self.sparse_functiondef[(func_name, arg_types)] = (functiondef, return_types)
-            return self.make_call(node, sparse_func_name, args)
+            return SparseTransformer.make_call(node, sparse_func_name, args)
         self.origin_functiondef[(func_name, arg_types)] = return_types
-        return self.make_call(node, args=args)
+        return SparseTransformer.make_call(node, args=args)
 
     def map_type_to_target(self, node_target, value_types):
         """Records arg_type for each target."""
@@ -366,7 +364,6 @@ class SparseTransformer(ast.NodeTransformer):
             raise ValueError(f"Call to undefined {func_name}!")
 
         if func_scope in self.global_vars:
-            # TODO deal with nested namespace
             namespace = self.global_vars[func_scope]
             func = getattr(namespace, func_name, None)
             if func is None:
