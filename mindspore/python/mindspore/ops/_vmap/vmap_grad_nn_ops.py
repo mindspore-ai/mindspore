@@ -23,7 +23,7 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from mindspore.ops.primitive import Primitive
-from mindspore.ops.composite import _VmapGeneralRule
+from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, \
     _bdim_at_front, _vmap_clone_prim, _vmap_update_prim_attr, _bdim_at_any, _handle_broadcasting
 

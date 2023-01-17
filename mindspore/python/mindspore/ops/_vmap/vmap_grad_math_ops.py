@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from mindspore.ops.operations import _grad_ops as G
-from mindspore.ops.composite import _VmapGeneralRule
+from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, \
     _handle_broadcasting, get_unary_grad_vmap_rule, _get_broadcasting_with_front_axis_additional_axis
 

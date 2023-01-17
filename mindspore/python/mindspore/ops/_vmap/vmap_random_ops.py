@@ -18,7 +18,7 @@ from __future__ import absolute_import
 
 from mindspore.ops.operations.random_ops import UniformCandidateSampler, RandomShuffle, Multinomial, \
     RandomChoiceWithMask
-from mindspore.ops.composite import _VmapGeneralRule
+from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, _bdim_at_front, _vmap_clone_prim, \
     vmap_general_preprocess, _raise_value_error
 

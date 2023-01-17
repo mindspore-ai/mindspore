@@ -23,14 +23,14 @@ from __future__ import absolute_import
 from mindspore.ops.composite.base import GradOperation, _Grad, HyperMap, Map, MultitypeFuncGraph, add_flags, \
     tail, zip_operation, _Vmap, _TaylorOperation
 from mindspore.ops.composite.env_ops import env_get
-from mindspore.ops.composite.clip_ops import clip_by_global_norm
+from mindspore.ops.function.clip_func import clip_by_global_norm
 from mindspore.ops.composite.multitype_ops.add_impl import hyper_add
 from mindspore.ops.composite.multitype_ops.ones_like_impl import ones_like
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.function.random_func import normal, laplace, uniform, gamma, poisson, multinomial
 from mindspore.ops.composite.math_ops import count_nonzero, tensor_dot, dot, batch_dot, matmul, cummin, mm
 from mindspore.ops.function.array_func import repeat_interleave, repeat_elements, sequence_mask
-from mindspore.ops.composite.vmap_ops import _VmapGeneralPreprocess, _VmapGeneralRule
+from mindspore.ops.function.vmap_func import _VmapGeneralPreprocess, _VmapGeneralRule
 from mindspore.ops.function.clip_func import clip_by_value
 
 
@@ -52,7 +52,6 @@ __all__ = [
     'gamma',
     'poisson',
     'multinomial',
-    'clip_by_global_norm',
     'count_nonzero',
     'cummin',
     'tensor_dot',
@@ -64,5 +63,4 @@ __all__ = [
     'matmul',
     'mm',
     '_Grad',
-    '_Vmap',
-    '_VmapGeneralPreprocess']
+    '_Vmap']
