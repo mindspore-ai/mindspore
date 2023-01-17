@@ -1492,7 +1492,7 @@ class Fills(Primitive):
         self.init_prim_io_names(inputs=['x', 'value'], outputs=['y'])
 
 
-class FillV2(Primitive):
+class FillV2(PrimitiveWithCheck):
     """
     Creates a tensor with shape described by `shape` and fills it with values in `value` .
 
@@ -1534,11 +1534,11 @@ class FillV2(Primitive):
         self.init_prim_io_names(inputs=['shape', 'value'], outputs=['y'])
 
     def infer_value(self, dims, x):
+        if isinstance(dims, Tensor_):
+            dims = dims.asnumpy()
+        if isinstance(x, Tensor_):
+            x = x.asnumpy()
         if dims is not None and None not in dims and x is not None:
-            if isinstance(dims, Tensor):
-                dims = dims.asnumpy()
-            if isinstance(x, Tensor):
-                x = x.asnumpy()
             ret = np.full(dims, x)
             return Tensor(ret)
         return None
