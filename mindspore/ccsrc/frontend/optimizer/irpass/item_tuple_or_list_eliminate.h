@@ -55,7 +55,8 @@ class TupleListConvertItemIndexToPositive : public AnfVisitor {
     FuncGraphPtr fg = node->func_graph();
     if (is_match_ && fg != nullptr) {
       auto inputs = node->cast<CNodePtr>()->inputs();
-      inputs[2] = NewValueNode(id_);
+      constexpr auto index_input = 2;
+      inputs[index_input] = NewValueNode(id_);
       return fg->NewCNode(inputs);
     }
     return nullptr;
@@ -493,7 +494,8 @@ class TupleListGetitemDependReorder : public AnfVisitor {
 
   void Visit(const CNodePtr &cnode) override {
     // {prim::kPrimDepend, X, Y}
-    if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && cnode->size() == 3) {
+    constexpr auto depend_input_size = 3;
+    if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && cnode->size() == depend_input_size) {
       x_ = cnode->input(1);
       y_ = cnode->input(2);
     }

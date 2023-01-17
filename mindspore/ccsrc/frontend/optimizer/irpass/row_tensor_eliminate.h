@@ -32,7 +32,9 @@ namespace irpass {
 class RowTensorEliminater : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    PatternNode x, y, z;
+    PatternNode x;
+    PatternNode y;
+    PatternNode z;
     auto slices = PPrimitive(prim::kPrimMakeRowTensor, x, y, z).MinExtraNodes(0);
     MATCH_REPLACE(node, PPrimitive(prim::kPrimRowTensorGetIndices, slices), x);
     MATCH_REPLACE(node, PPrimitive(prim::kPrimRowTensorGetValues, slices), y);
@@ -45,7 +47,8 @@ class RowTensorEliminater : public OptimizerCaller {
 class RowTensorAddZerosLike : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    PatternNode x, y;
+    PatternNode x;
+    PatternNode y;
     auto zeros_like = PPrimitive(prim::kPrimZerosLike, y);
     MATCH_REPLACE(node, PPrimitive(prim::kPrimRowTensorAdd, x, zeros_like), x);
     return nullptr;
