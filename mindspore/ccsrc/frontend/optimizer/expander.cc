@@ -44,6 +44,7 @@ const std::map<std::string, std::vector<std::string>> op2attrs = {
   {prim::kPrimSqueeze->name(), {kAttrAxis}},
   {prim::kPrimOneHot->name(), {kAttrAxis}},
   {prim::kPrimSoftmax->name(), {kAttrAxis}},
+  {prim::kPrimSplit->name(), {kAttrAxis}},
   {prim::kPrimLayerNorm->name(), {kAttrBeginNormAxis, kAttrBeginParamsAxis, kAttrEpsilon}},
   {prim::kPrimStridedSlice->name(),
    {kAttrBeginMask, kAttrEndMask, kAttrEllipsisMask, kAttrNewAxisMask, kAttrShrinkAxisMask}},
