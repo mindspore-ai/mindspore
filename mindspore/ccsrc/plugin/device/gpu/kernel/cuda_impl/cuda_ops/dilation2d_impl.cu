@@ -51,7 +51,7 @@ __global__ void Dilation2D(const T *input, const T *filter, T *output, const int
         }
       }
     }
-    output[(posn * Channel + posc) * inputHeight * inputWidth + pos] = max_val;
+    output[(posn * Channel + posc) * outputPlaneSize + pos] = max_val;
   }
   return;
 }
@@ -88,7 +88,7 @@ __global__ void Dilation2D(const half *input, const half *filter, half *output, 
         }
       }
     }
-    output[(posn * Channel + posc) * inputHeight * inputWidth + pos] = max_val;
+    output[(posn * Channel + posc) * outputPlaneSize + pos] = max_val;
   }
   return;
 }

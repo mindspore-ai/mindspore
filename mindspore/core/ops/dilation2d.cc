@@ -51,14 +51,17 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
   auto filter_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto x_shape = x_shape_map[kShape];
   auto filter_shape = filter_shape_map[kShape];
-
+  const uint64_t n_axis = 0;
+  ShapeVector output_shape = {x_shape[n_axis], -1, -1, -1};
+  if (IsDynamic(x_shape) || IsDynamic(filter_shape)) {
+    return std::make_shared<abstract::Shape>(output_shape);
+  }
   const int64_t x_shape_size = 4;
   const int64_t filter_shape_size = 3;
   (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, x_shape_size,
                                            primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("filter shape size", SizeToLong(filter_shape.size()), kEqual,
                                            filter_shape_size, primitive->name());
-  const uint64_t n_axis = 0;
   const uint64_t shapeIndex1 = 1;
   const uint64_t shapeIndex2 = 2;
   const uint64_t shapeIndex3 = 3;
@@ -71,34 +74,17 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
     h_axis = shapeIndex2;
     w_axis = shapeIndex3;
   }
+
   std::string pad_mode = GetValue<std::string>(primitive->GetAttr("pad_mode"));
   std::vector<int64_t> kernel_size{filter_shape[h_axis - 1], filter_shape[w_axis - 1]};
   int64_t depth = filter_shape[c_axis - 1];
   std::vector<int64_t> stride = GetValue<std::vector<int64_t>>(primitive->GetAttr("stride"));
   std::vector<int64_t> dilation = GetValue<std::vector<int64_t>>(primitive->GetAttr("dilation"));
-  int window_h = static_cast<int>((kernel_size[0] - 1) * dilation[h_axis] + 1);
-  int window_w = static_cast<int>((kernel_size[1] - 1) * dilation[w_axis] + 1);
-  const int64_t wLengthMaxLimit = 255;
-  const int64_t wSizeMaxLimit = 512;
-  if (window_h < 1 || window_h > wLengthMaxLimit || window_w < 1 || window_w > wLengthMaxLimit ||
-      window_h * window_w > wSizeMaxLimit) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name
-                             << ", size of window which is equal to (filter-1)*dilation+1 is not supported, "
-                             << "window should be in the range of [1, 255], "
-                             << "window_h * window_w should not be greater than 512, "
-                             << "but got window_h: " << window_h << ", window_w: " << window_w << ".";
-  }
-  if (stride[h_axis] < 1 || stride[h_axis] > wSizeMaxLimit || stride[w_axis] < 1 || stride[w_axis] > wSizeMaxLimit) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name
-                             << ", size of stride is not supported, the range of "
-                                "stride should be [1, 255], but stride_h is "
-                             << stride[h_axis] << " and stride_w is" << stride[w_axis];
-  }
-  if (window_h > x_shape[h_axis] || window_w > x_shape[w_axis]) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", size of window which is equal to (filter-1)*dilation+1, "
-                             << "window_h should not be greater than x_h, window_w should not be greater than x_w, "
-                             << "but got window_h: " << window_h << ", window_w: " << window_w
-                             << ", x_h: " << x_shape[h_axis] << ", x_w: " << x_shape[w_axis] << ".";
+
+  if (filter_shape[c_axis - 1] != x_shape[c_axis]) {
+    MS_EXCEPTION(ValueError)
+      << "For Dilation2D, the C dim value of `x` shape and `filter` shape must be equal, but got x_shape: " << x_shape
+      << ", filter_shape: " << filter_shape;
   }
   std::vector<int64_t> output_hw;
   if (pad_mode == "VALID") {
@@ -110,13 +96,17 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
     output_hw.push_back(static_cast<int64_t>(std::ceil((x_shape[h_axis] * 1.0) / stride[h_axis])));
     output_hw.push_back(static_cast<int64_t>(std::ceil((x_shape[w_axis] * 1.0) / stride[w_axis])));
   }
-  ShapeVector output_shape;
   if (data_format == Format::NHWC) {
     output_shape = {x_shape[n_axis], output_hw[0], output_hw[1], depth};
   } else {
     output_shape = {x_shape[n_axis], depth, output_hw[0], output_hw[1]};
   }
   CheckDilation2DShapeAnyAndPositive(prim_name + " output_shape", output_shape);
+  if (data_format == Format::NHWC) {
+    output_shape = {x_shape[n_axis], output_hw[0], output_hw[1], depth};
+  } else {
+    output_shape = {x_shape[n_axis], depth, output_hw[0], output_hw[1]};
+  }
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
