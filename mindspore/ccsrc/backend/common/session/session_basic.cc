@@ -823,6 +823,10 @@ void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t
     MS_LOG(DEBUG) << "Cannot get op_adaptation_info for " << op_name << " no need to convert input to attr.";
     return;
   }
+  // No need to convert input to attr for dynamic op.
+  if (op_adaptation_info->need_tbe_check_supported() && common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode)) {
+    return;
+  }
   auto input_to_attr_map = op_adaptation_info->input_attr_map();
   std::transform(input_to_attr_map.begin(), input_to_attr_map.end(), std::back_inserter(*const_input_attr_index),
                  [](auto iter) { return iter.first; });
@@ -837,8 +841,6 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
   MS_EXCEPTION_IF_NULL(input_tensor_info);
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  std::string device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  auto is_mutable = common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode);
   std::vector<size_t> const_input_attr_index = {};
   GetConstValueDepend(cnode, &const_input_attr_index);
   MS_LOG(DEBUG) << "const_input_attr_index " << const_input_attr_index;
@@ -866,13 +868,9 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
           is_forward_output = true;
         }
       }
-      if (is_mutable && device_target == kAscendDevice) {
-        input_tensor_info->input_tensors_mask.emplace_back(
-          (is_value_node && !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
-      } else {
-        input_tensor_info->input_tensors_mask.emplace_back(
-          (is_value_node || !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
-      }
+
+      input_tensor_info->input_tensors_mask.emplace_back(
+        (is_value_node && !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
     } else if (real_input->isa<Parameter>()) {
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
       input_tensor_info->input_tensors_mask.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask

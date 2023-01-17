@@ -286,6 +286,7 @@ class COMMON_EXPORT AnfAlgo {
   static bool IsDynamicSequence(const AnfNodePtr &node);
   static bool HasTupleInput(const CNodePtr &node);
   static bool HasDynamicTupleInput(const CNodePtr &node);
+  static bool IsReduceOp(const std::string &op_name);
 };
 }  // namespace common
 }  // namespace mindspore

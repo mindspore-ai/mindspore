@@ -94,6 +94,7 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
       return KRET_RESIZE_FAILED;
     }
 
+    input_shape_.clear();
     for (size_t i = 0; i < shape_size_; i++) {
       if (input_shape[i] == 0) {
         MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of input at " << i << " index cannot be 0, "
@@ -103,6 +104,8 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
       input_shape_.push_back(LongToInt(input_shape[i]));
     }
     input_size_ = sizeof(T) * SizeOf(input_shape);
+
+    output_shape_.clear();
     for (size_t i = 0; i < shape_size_; i++) {
       if (output_shape[i] == 0) {
         MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of output at " << i << " index cannot be 0, "
