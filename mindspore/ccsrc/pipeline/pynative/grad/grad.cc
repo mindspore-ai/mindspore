@@ -780,9 +780,10 @@ void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info
     // Function need compile every time.
     input_args_info->use_dynamic_shape_process ? MS_LOG(DEBUG) << "The graph is dynamic, need to compile graph again"
                                                : MS_LOG(DEBUG) << "Force outer graph compile graph";
-    {
-      py::gil_scoped_acquire acquire;
-      EraseTopCellFromTopCellList(pre_top_cell);
+    auto has_higher_order = std::any_of(top_cell_list_.begin(), top_cell_list_.end(),
+                                        [](const TopCellInfoPtr &value) { return value->is_high_order_top_cell(); });
+    EraseTopCellFromTopCellList(pre_top_cell);
+    if (input_args_info->is_grad_topest_cell && !has_higher_order) {
       pre_top_cell->ClearDeviceMemory();
     }
     already_run_top_cell_[already_top_cell_id] = new_top_cell;

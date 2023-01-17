@@ -48,20 +48,6 @@ enum SwitchCondStatus {
   kCondAlreadyRun,
 };
 
-struct TopoSortNodeInfo {
-  PrimitivePtr prim{nullptr};
-  AbstractBasePtr abs{nullptr};
-  bool is_func_graph{false};
-  std::string func_graph_cell_id;
-};
-
-struct FuncGraphDynamicInfo {
-  std::vector<TopoSortNodeInfo> topo_node_list;
-  std::vector<std::pair<size_t, size_t>> graph_edge_list;
-  std::vector<std::pair<std::string, tensor::TensorPtr>> value_node_tensor_list;
-  bool is_dynamic{false};
-};
-
 class BACKEND_EXPORT Backend {
  public:
   explicit Backend(const std::string &name);
@@ -110,9 +96,6 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
   virtual void WaitTaskFinish() const {}
   virtual void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                                    const VectorRef &args, VectorRef *outputs) {}
-  virtual bool IsFuncGraphDynamicShapeOrStruct(const FuncGraphPtr &func_graph, const std::string &cell_id) {
-    return true;
-  }
 
  protected:
   // The parameter func_graph is a graph, it can be either a root graph or a sub graph,
@@ -152,9 +135,6 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
   mindspore::HashMap<ActorInfo, std::shared_ptr<GraphCompilerInfo>> actor_to_graph_compiler_info_;
 
   // Save the mapping between cell id and actor info.
-  mindspore::HashMap<std::string, ActorInfo> graph_actor_infos_;
-  bool enable_backend_dynamic_detect_{false};
-  bool is_dynamic_{false};
   FuncGraphPtr root_graph_;
   GraphPartitionPtr graph_partition_;
   std::shared_ptr<GraphCompiler> graph_compiler_;
