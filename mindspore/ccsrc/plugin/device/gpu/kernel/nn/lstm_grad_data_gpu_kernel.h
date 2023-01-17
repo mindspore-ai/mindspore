@@ -134,7 +134,6 @@ class LstmGradDataGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void CreateTensorDescGrp() {
-    DestroyTensorDescGrp();
     int x_dims[3]{batch_size_, input_size_, 1};
     int y_dims[3]{batch_size_, hidden_size_ * (bidirectional_ ? 2 : 1), 1};
 
