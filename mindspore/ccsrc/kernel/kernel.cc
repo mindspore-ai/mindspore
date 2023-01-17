@@ -74,10 +74,16 @@ TypeId KernelTensor::GetDtype() const {
   } else if (meta_type_ == kObjectTypeTuple) {
     // Tuple
     const TupleInfo &info = std::get<TupleInfo>(meta_);
+    if (info.base_->dynamic_len()) {
+      return info.base_->dynamic_len_element_abs()->BuildType()->type_id();
+    }
     return info.base_->elements()[0]->BuildType()->type_id();
   } else if (meta_type_ == kObjectTypeList) {
     // List
     const ListInfo &info = std::get<ListInfo>(meta_);
+    if (info.base_->dynamic_len()) {
+      return info.base_->dynamic_len_element_abs()->BuildType()->type_id();
+    }
     return info.base_->elements()[0]->BuildType()->type_id();
   } else {
     // Tensor
@@ -97,27 +103,6 @@ TypeId KernelTensor::GetDtype() const {
     return elem->type_id();
   }
   return kTypeUnknown;
-}
-
-TypeId KernelTensor::GetScalarDtype() const {
-  if (meta_type_ != kObjectTypeNumber) {
-    MS_LOG(EXCEPTION) << "meta_type must be scalar, but got " << meta_type_;
-  }
-  const ScalarInfo &info = std::get<ScalarInfo>(meta_);
-  auto info_type = info.base_->BuildType();
-  MS_EXCEPTION_IF_NULL(info_type);
-  return info_type->type_id();
-}
-
-TypeId KernelTensor::GetTupleElementDtype() const {
-  if (meta_type_ != kObjectTypeTuple) {
-    MS_LOG(EXCEPTION) << "meta_type must be tuple , but got " << meta_type_;
-  }
-  const TupleInfo &info = std::get<TupleInfo>(meta_);
-  if (info.base_->dynamic_len()) {
-    return info.base_->dynamic_len_element_abs()->BuildType()->type_id();
-  }
-  return info.base_->elements()[0]->BuildType()->type_id();
 }
 
 ShapeVector KernelTensor::GetShapeVector() const {
@@ -226,6 +211,9 @@ void KernelTensor::SetShapeVector(const std::vector<int64_t> &shape) {
 }
 
 abstract::BaseShapePtr KernelTensor::GetBaseShape() const {
+  if (meta_type_ != kObjectTypeTensorType) {
+    return nullptr;
+  }
   const TensorInfo &info = std::get<TensorInfo>(meta_);
   if (info.base_ == nullptr) {
     return nullptr;

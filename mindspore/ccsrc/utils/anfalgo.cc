@@ -1849,7 +1849,7 @@ bool AnfAlgo::IsDynamicSequence(const AnfNodePtr &node) {
       return GetBooleanAttr(node, kAttrDynamicLenName);
     } else {
       bool is_dynamic = is_dynamic_len_func();
-      AnfAlgo::SetNodeAttrSafely(kAttrDynamicLenName, MakeValue(is_dynamic), cnode);
+      AnfAlgo::SetNodeAttr(kAttrDynamicLenName, MakeValue(is_dynamic), cnode);
       return is_dynamic;
     }
   }

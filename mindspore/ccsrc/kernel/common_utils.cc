@@ -185,12 +185,6 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
   auto output_obj_types = build_info->GetAllOutputKernelObjectTypes();
   for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
     bool is_real_tuple_output = CheckRealTupleFromCNode(output_obj_types, output_idx);
-    auto child_abs = GetChildAbstract(cur_abstract, output_idx);
-    if (child_abs->isa<abstract::AbstractMonad>()) {
-      MS_LOG(DEBUG) << "The " << output_idx << " output of " << cnode->fullname_with_scope()
-                    << " is monad: " << child_abs->ToString() << ", skip converting it.";
-      continue;
-    }
     auto real_output_type = real_output_types[output_idx];
     auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, output_idx);
     auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
@@ -1774,17 +1768,6 @@ KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
   }
   for (auto tensor : outputs) {
     (void)kernel_attr.AddOutputAttr(tensor->GetDtype(), GetFormatFromEnumToStr(tensor->GetFormat()));
-  }
-  return kernel_attr;
-}
-
-KernelAttr GetKernelAttrFromTypes(const std::vector<TypeId> &inputs, const std::vector<TypeId> &outputs) {
-  KernelAttr kernel_attr;
-  for (auto type_id : inputs) {
-    (void)kernel_attr.AddInputAttr(type_id);
-  }
-  for (auto type_id : outputs) {
-    (void)kernel_attr.AddOutputAttr(type_id);
   }
   return kernel_attr;
 }

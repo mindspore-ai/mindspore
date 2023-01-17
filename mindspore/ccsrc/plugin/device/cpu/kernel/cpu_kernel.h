@@ -143,14 +143,8 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
               const std::vector<AddressPtr> &outputs, void * /*stream_ptr*/) override {
     return Launch(inputs, workspace, outputs);
   }
-  bool Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-              const std::vector<AddressPtr> &workspace, void *) override {
-    return Launch(inputs, outputs, workspace);
-  }
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs) {
-    return false;
-  }
+                      const std::vector<AddressPtr> &outputs);
   virtual bool Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
                       const std::vector<AddressPtr> &workspace) {
     return false;

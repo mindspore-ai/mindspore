@@ -288,8 +288,6 @@ class BACKEND_EXPORT KernelTensor {
   // deprecated field for dynamic shape
   const ShapeVector &GetDeviceShapeAdaptively() const;
   void SetDeviceShapeAdaptively(const ShapeVector &device_shape_adaptively);
-  TypeId GetScalarDtype() const;
-  TypeId GetTupleElementDtype() const;
 
  private:
   TypeId meta_type_{kObjectTypeTensorType};
@@ -397,16 +395,16 @@ class BACKEND_EXPORT KernelMod {
   std::vector<size_t> output_size_list_;
   std::vector<std::vector<int64_t>> output_shapes_;
   std::vector<size_t> workspace_size_list_;
+  std::vector<KernelTensorPtr> inputs_;
+  std::vector<KernelTensorPtr> outputs_;
   bool is_need_retrieve_output_shape_ = false;
   uint32_t device_id_ = 0;
 
  private:
   std::vector<AddressPtr> inputs_addr_;
   std::vector<AddressPtr> workspaces_addr_;
-  std::vector<AddressPtr> outputs_addr_;
-  std::vector<KernelTensorPtr> inputs_;
   std::vector<KernelTensorPtr> workspace_;
-  std::vector<KernelTensorPtr> outputs_;
+  std::vector<AddressPtr> outputs_addr_;
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
 

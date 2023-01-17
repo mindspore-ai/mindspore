@@ -307,13 +307,7 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
 
   // Pynative mode is rely on the origin abstract of cnode, so cannot modify the abstract inplace, clone from old
   // abstract instead.
-  auto old_abs = cnode->abstract();
-  MS_EXCEPTION_IF_NULL(old_abs);
-  auto new_abs = old_abs->Clone();
-  opt::CppInferShape(primitive, args_spec_list, new_abs);
-  MS_LOG(DEBUG) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << old_abs << " to "
-                << new_abs;
-  cnode->set_abstract(new_abs);
+  opt::CppInferShape(primitive, args_spec_list, cnode);
 }
 
 inline bool IsDeprecatedCpuOrGpuKernelMod(kernel::KernelModType kernel_mod_type) {
