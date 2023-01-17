@@ -1314,8 +1314,7 @@ AnfNodePtr ConvertInterpretedNodeToCNode(const FuncGraphPtr &fg, const ValuePtr 
 
   auto value_node_key = interpreted_value->name();
   (void)value_node_key.erase(
-    std::remove_if(value_node_key.begin(), value_node_key.end(),
-                   [](char c) { return std::isspace(c) || c == ':' || c == '\'' || c == '<' || c == '>' || c == '.'; }),
+    std::remove_if(value_node_key.begin(), value_node_key.end(), [](char c) { return !std::isalnum(c); }),
     value_node_key.end());
 
   // Set the value node into dict firstly.
