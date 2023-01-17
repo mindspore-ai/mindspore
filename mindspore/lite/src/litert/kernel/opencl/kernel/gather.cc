@@ -40,52 +40,63 @@ int GatherOpenCLKernel::CheckSpecs() {
     MS_LOG(WARNING) << "GatherOpenCLKernel only supports 1 output Tensor but get " << out_tensors_.size();
     return RET_ERROR;
   }
-  enable_fp16_ = ocl_runtime_->GetFp16Enable();
-  if (!in_tensors_.at(1)->IsConst() && enable_fp16_) {
-    MS_LOG(WARNING) << "GatherOpenCLKernel Unsupportted intensor1 = tensor and datatype = fp16  ";
-    return RET_ERROR;
-  }
-  int input_ndim = in_tensors_.front()->shape().size();
+
+  auto input_tensor = in_tensors_.at(FIRST_INPUT);
+  auto indices_tensor = in_tensors_.at(SECOND_INPUT);
+  auto axis_tensor = in_tensors_.at(THIRD_INPUT);
+
+  int input_ndim = input_tensor->shape().size();
   if (input_ndim < 0 || input_ndim > DIMENSION_4D) {
     MS_LOG(WARNING) << "GatherOpenCLKernel only supports 1-4D input Tensor but get " << input_ndim << "D.";
     return RET_ERROR;
   }
-  int indices_ndim = in_tensors_.at(1)->shape().size();
-  if (indices_ndim > DIMENSION_1D) {
-    MS_LOG(WARNING) << "GatherOpenCLKernel only supports 1D indices Tensor but get " << indices_ndim << "D.";
+
+  is_fp16_enabled_ = ocl_runtime_->GetFp16Enable();
+  if (!indices_tensor->IsConst() && is_fp16_enabled_) {
+    MS_LOG(WARNING) << "GatherOpenCLKernel not support indices = tensor and datatype = fp16";
     return RET_ERROR;
   }
-
-  TypeId data_type = in_tensors_.at(1)->data_type();
-  if (data_type != kNumberTypeInt32 && data_type != kNumberTypeInt64 && data_type != kNumberTypeFloat32 &&
-      data_type != kNumberTypeFloat16) {
+  int indices_ndim = indices_tensor->shape().size();
+  if (indices_ndim > DIMENSION_1D) {
+    MS_LOG(WARNING) << "GatherOpenCLKernel only supports 1D or scalar indices Tensor but get " << indices_ndim << "D.";
+    return RET_ERROR;
+  }
+  TypeId indices_dtype = indices_tensor->data_type();
+  if (indices_dtype != kNumberTypeInt32 && indices_dtype != kNumberTypeInt64 && indices_dtype != kNumberTypeFloat32 &&
+      indices_dtype != kNumberTypeFloat16) {
     MS_LOG(WARNING) << "GatherOpenCLKernel only supports Int32/Int64/Float32/Float16 indices Tensor.";
     return RET_ERROR;
   }
 
-  if (CheckParamLikeTensor("Gather", "axis", in_tensors_.at(kNHWC_W), kNumberTypeInt32, {1}) != RET_OK) {
+  if (CheckParamLikeTensor("Gather", "axis", axis_tensor, kNumberTypeInt32, {1}) != RET_OK) {
     return RET_ERROR;
   }
-  axis_ = *reinterpret_cast<int32_t *>(in_tensors_.at(kNHWC_W)->data());
-  if (in_tensors_.at(kNHWC_W)->data() == nullptr) {
+  if (axis_tensor->data() == nullptr) {
     MS_LOG(WARNING) << "GatherOpenCLKernel need Axis.";
     return RET_ERROR;
   }
-  if (axis_ < 0) {
-    axis_ += input_ndim;
+  int cpu_axis = *reinterpret_cast<int *>(axis_tensor->data());
+  if (cpu_axis < 0) {
+    cpu_axis += input_ndim;
   }
-  if (axis_ < 0 || axis_ >= input_ndim) {
-    MS_LOG(WARNING) << "axis is invalid: axis=" << axis_ << ".";
+  if ((cpu_axis < 0) || (cpu_axis >= input_ndim)) {
+    MS_LOG(WARNING) << "axis is invalid: axis=" << cpu_axis << ".";
     return RET_ERROR;
-  } else {
-    return RET_OK;
   }
+
+  auto ret = CpuAxis2GpuAxis(input_ndim, cpu_axis, &axis_);
+  if (ret != RET_OK) {
+    MS_LOG(WARNING) << "convert cpu axis to gpu axis failed";
+    return RET_ERROR;
+  }
+
+  return RET_OK;
 }
 
 int GatherOpenCLKernel::SetConstArgs() {
   auto input = GpuTensorInfo(in_tensors_.front());
   auto output = GpuTensorInfo(out_tensors_.front());
-  int indices_num = in_tensors_.at(1)->ElementsNum();
+  int indices_num = in_tensors_.at(SECOND_INPUT)->ElementsNum();
   cl_int4 src_size = {static_cast<cl_int>(input.W), static_cast<cl_int>(input.H), static_cast<cl_int>(input.Slice),
                       static_cast<cl_int>(input.N)};
   cl_int4 dst_size = {static_cast<cl_int>(output.W), static_cast<cl_int>(output.H), static_cast<cl_int>(output.Slice),
@@ -135,7 +146,7 @@ int GatherOpenCLKernel::Prepare() {
     return ret;
   }
   if (in_tensors_.at(0)->IsConst()) {
-    intensor0_is_const_tensor_ = true;
+    is_input_tensor_const_ = true;
     ret = InitConstInput();
     if (ret != RET_OK) {
       return ret;
@@ -143,7 +154,7 @@ int GatherOpenCLKernel::Prepare() {
   }
 
   if (in_tensors_.at(1)->IsConst()) {
-    intensor1_is_tensor = false;
+    is_indices_tensor_const_ = false;
     ret = InitWeights();
     if (ret != RET_OK) {
       return ret;
@@ -320,11 +331,11 @@ int GatherOpenCLKernel::PreProcess() {
 
 int GatherOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  if (!intensor0_is_const_tensor_) {
+  if (!is_input_tensor_const_) {
     input_data_ = in_tensors_.front()->data();
   }
 
-  if (intensor1_is_tensor) {
+  if (is_indices_tensor_const_) {
     int ret = ConvertTensorToweight();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ConvertTensorToweight failed.";
