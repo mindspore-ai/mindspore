@@ -32,8 +32,8 @@ namespace mindspore {
 namespace kernel {
 class BiasAddGpuKernelMod : public NativeGpuKernelMod {
  public:
-  BiasAddGpuKernelMod() {}
-  ~BiasAddGpuKernelMod() override = default;
+  BiasAddGpuKernelMod() { InitResource(); }
+  ~BiasAddGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -53,6 +53,13 @@ class BiasAddGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&b_desc_), "cudnnCreateTensorDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateOpTensorDescriptor(&op_desc_),
                                         "cudnnCreateOpTensorDescriptor failed");
+  }
+
+  void DestroyResource() noexcept override {
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(x_desc_), "cudnnDestroyTensorDescriptor failed.");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(b_desc_), "cudnnDestroyTensorDescriptor failed.");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyOpTensorDescriptor(op_desc_),
+                                       "cudnnDestroyOpTensorDescriptor failed.");
   }
 
   std::vector<KernelAttr> GetOpSupport() override;
