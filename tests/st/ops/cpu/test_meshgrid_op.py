@@ -81,7 +81,7 @@ def test_meshgrid(dtype, indexing):
     assert np.array_equal(output[1].asnumpy(), np_output[1])
 
     # test functional interface
-    output = F.meshgrid((Tensor(x), Tensor(y)), indexing)
+    output = F.meshgrid(Tensor(x), Tensor(y), indexing=indexing)
     assert np.array_equal(output[0].asnumpy(), np_output[0])
     assert np.array_equal(output[1].asnumpy(), np_output[1])
 
@@ -93,7 +93,7 @@ def test_meshgrid(dtype, indexing):
     assert np.array_equal(output[2].asnumpy(), np_output[2])
 
     # test functional interface
-    output = F.meshgrid((Tensor(x), Tensor(y), Tensor(z)), indexing)
+    output = F.meshgrid(Tensor(x), Tensor(y), Tensor(z), indexing=indexing)
     assert np.array_equal(output[0].asnumpy(), np_output[0])
     assert np.array_equal(output[1].asnumpy(), np_output[1])
     assert np.array_equal(output[2].asnumpy(), np_output[2])
