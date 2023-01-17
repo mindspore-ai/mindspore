@@ -542,18 +542,18 @@ void PsEmbeddingCacheInserter::BuildEmbeddingStorages() {
 
     auto param_info = param->param_info();
     MS_EXCEPTION_IF_NULL(param_info);
-    const std::vector<int64_t> &origin_shape = param_info->parameter_shape();
-    size_t origin_capacity = LongToSize(origin_shape.front());
-    size_t origin_emb_dim = LongToSize(origin_shape.back());
-    MS_LOG(INFO) << "Get a parameter for embedding storage: " << param->name() << ", origin emb_dim: " << origin_emb_dim
-                 << ", origin capacity: " << origin_capacity;
-
     if (!param_info->use_persistent_storage()) {
       MS_LOG(INFO) << "No need to use embedding storage for this parameter(key): " << key;
       continue;
     }
 
-    const std::vector<int64_t> &slice_shape = param_info->parameter_persistent_slice_shape();
+    const std::vector<int64_t> &origin_shape = param_info->origin_shape();
+    size_t origin_capacity = LongToSize(origin_shape.front());
+    size_t origin_emb_dim = LongToSize(origin_shape.back());
+    MS_LOG(INFO) << "Get a parameter for embedding storage: " << param->name() << ", origin emb_dim: " << origin_emb_dim
+                 << ", origin capacity: " << origin_capacity;
+
+    const std::vector<int64_t> &slice_shape = param_info->parameter_shape();
     if (slice_shape.size() != kEmbeddingTableDims) {
       MS_LOG(EXCEPTION)
         << "When build embedding storage, Embedding table should be 2 dims for embedding cache mode, but got: "

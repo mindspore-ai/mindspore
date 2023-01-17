@@ -108,7 +108,7 @@ class BACKEND_EXPORT EmbeddingStorage : public AbstractEmbeddingStorage {
   // The host cache used to record all hot spot embeddings.
   std::unique_ptr<CacheType> cache_;
 
-  // The storage(such as local file) used to record all non-hot spot embeddings.
+  // The persistent storage(such as local file) used to record all non-hot spot embeddings.
   std::unique_ptr<StorageBase> storage_;
 
   // The unique key for embedding table.

@@ -116,7 +116,11 @@ class BACKEND_EXPORT DenseEmbeddingStorage : public EmbeddingStorage<KeyType, Va
   bool InsertMissCacheFromMemory(const KeyType *keys, const int *cache_miss_offsets, size_t cache_miss_cnt,
                                  const ValueType *values);
 
-  // The base pointer to embedding table parameter, all embeddings in host cache is recorded in embedding_param_ptr_.
+  // The base pointer to embedding table parameter, all embeddings in host cache is recorded in
+  // embedding_param_address_.
+  const DeviceAddress *embedding_param_address_{nullptr};
+
+  // For performance, keep the pointer snapshot for `embedding_param_address_`.
   ValueType *embedding_param_ptr_{nullptr};
 
   // Record all empty slot(idle slot or index) in embedding table tensor.

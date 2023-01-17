@@ -210,7 +210,7 @@ bool DeviceEmbeddingOperation::ParseHostDataHostToDevice(int id, size_t data_ste
       if (initialized_ids_.find(id) == initialized_ids_.end()) {
         int *new_id_index = embedding_cache_table_manager.embedding_host_cache_->new_id_index.get();
         MS_ERROR_IF_NULL(new_id_index);
-        new_id_index[statistics_info_->new_id_size_] = index;
+        new_id_index[statistics_info_->new_id_size_++] = index;
         initialized_ids_.insert(id);
         // This feature id has been initialized already, so it's latest value has been kept in the remote server.
       } else {

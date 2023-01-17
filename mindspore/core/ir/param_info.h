@@ -101,10 +101,8 @@ class ParamInfo {
   bool use_persistent_storage() const { return use_persistent_storage_; }
   void set_use_persistent_storage(bool use_persistent_storage) { use_persistent_storage_ = use_persistent_storage; }
 
-  const std::vector<int64_t> &parameter_persistent_slice_shape() const { return parameter_persistent_slice_shape_; }
-  void set_parameter_persistent_slice_shape(const std::vector<int64_t> &parameter_persistent_slice_shape) {
-    parameter_persistent_slice_shape_ = parameter_persistent_slice_shape;
-  }
+  const std::vector<int64_t> &origin_shape() const { return origin_shape_; }
+  void set_origin_shape(const std::vector<int64_t> &origin_shape) { origin_shape_ = origin_shape; }
 
   bool cache_enable() const { return cache_enable_; }
   void set_cache_enable(bool cache_enable) { cache_enable_ = cache_enable; }
@@ -138,9 +136,13 @@ class ParamInfo {
   ParameterWeakPtr parameter_;
   bool requires_aggr_{true};
   std::vector<int64_t> parameter_shape_;
-  // Used at embedding cache. The slice after cut huge parameter to a small one.
-  std::vector<int64_t> parameter_persistent_slice_shape_;
+
+  // Record the origin shape before cut huge parameter to a small one.
+  std::vector<int64_t> origin_shape_;
+  // This flag indicates whether the persistent storage capability is enabled, which is generally used in very large
+  // parameter scenarios.
   bool use_persistent_storage_{false};
+
   // Used to identify the same Parameter for Worker and Server in the embedding cache scenario.
   int32_t key_{-1};
   // Used to indicate parameter strategy, only take effect in cell shard
