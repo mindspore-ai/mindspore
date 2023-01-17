@@ -8,11 +8,11 @@ file(GLOB_RECURSE _PIPELINE_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "pipeline_split.cc"
     "compile_cache_manager.cc"
     "event_message_print.cc"
+    "fallback.cc"
     "parse/*.cc"
     "static_analysis/*.cc"
     "debug/*.cc"
 )
-
 
 file(GLOB PIPELINE_SRC_FILES "*.cc")
 set_property(SOURCE ${PIPELINE_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PIPELINE)

@@ -27,6 +27,7 @@
 #include "utils/anf_utils.h"
 #include "utils/symbolic.h"
 #include "pipeline/jit/parse/resolve.h"
+#include "pipeline/jit/fallback.h"
 
 namespace mindspore {
 /* namespace to support opt */
@@ -93,6 +94,22 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
       MS_LOG(EXCEPTION) << "The dictionary's keys and values should be a tuple, but got "
                         << local_dict_cnode->DebugString();
     }
+
+    // Handle values and convert InterpretedObject element.
+    const auto &make_tuple_cnode = dyn_cast<CNode>(local_dict_values);
+    MS_EXCEPTION_IF_NULL(make_tuple_cnode);
+    const auto fg = make_tuple_cnode->func_graph();
+    for (size_t i = 1; i < make_tuple_cnode->size(); ++i) {
+      // Convert InterpretedObject value node to PyExecute CNode.
+      const auto &input = make_tuple_cnode->input(i);
+      const auto &value = GetValueNode<parse::InterpretedObjectPtr>(input);
+      if (value != nullptr) {
+        const auto &interpreted_node = ConvertInterpretedObjectToPyExecute(fg, value, input);
+        interpreted_node->set_debug_info(input->debug_info());
+        (void)transact.Replace(input, interpreted_node);
+      }
+    }
+
     new_cnode->set_input(input_index_two, local_dict_keys);
     new_cnode->set_input(input_index_three, local_dict_values);
     (void)transact.Replace(cnode, new_cnode);
