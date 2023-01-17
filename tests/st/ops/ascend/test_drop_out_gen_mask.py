@@ -18,6 +18,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common import set_seed
@@ -165,3 +166,19 @@ def test_diff_seed():
            (np.allclose(net0_out1.asnumpy(), net1_out1.asnumpy(), 0, 0) is False)
     assert (np.allclose(net0_out0.asnumpy(), net2_out0.asnumpy(), 0, 0) is False) or \
            (np.allclose(net0_out1.asnumpy(), net2_out1.asnumpy(), 0, 0) is False)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fuzz():
+    """
+    Feature: test dropout gen mask fuzz input.
+    Description: dropout gen mask.
+    Expectation: ValueError.
+    """
+    test_op = ops.DropoutGenMask()
+    with pytest.raises(ValueError):
+        output = test_op(**{})
+        print(output)
