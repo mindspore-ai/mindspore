@@ -2019,7 +2019,8 @@ size_t Somas::CalcLowerBound() const {
     lifetime_lb[time] = 0;
   }
 
-  size_t lower, upper;
+  size_t lower;
+  size_t upper;
   for (const auto &tensor : tensors_list_) {
     MS_EXCEPTION_IF_NULL(tensor);
     if (tensor->lifelong_value_ == kLifeLongGraphAll) {

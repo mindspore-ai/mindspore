@@ -312,7 +312,9 @@ MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std
 }
 
 std::vector<std::vector<char>> MSTensor::TensorToStringChars(const MSTensor &tensor) {
-  if (tensor == nullptr || tensor.DataType() != DataType::kObjectTypeString || tensor.DataSize() < 4) {
+  constexpr auto minimum_tensor_size = 4;
+  if (tensor == nullptr || tensor.DataType() != DataType::kObjectTypeString ||
+      tensor.DataSize() < minimum_tensor_size) {
     MS_LOG(ERROR) << "Invalid tensor.";
     return {};
   }

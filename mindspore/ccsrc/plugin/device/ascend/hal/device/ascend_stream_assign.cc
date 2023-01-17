@@ -2411,7 +2411,8 @@ void AscendStreamAssign::CheckEventAssign(const NotNull<KernelGraphPtr> &graph_p
                         << ", max event id:" << max_event_id << ", event map is:" << event_map;
     }
     for (const auto &item : std::as_const(event_map)) {
-      if (item.second.size() != 2) {
+      constexpr auto pair_size = 2;
+      if (item.second.size() != pair_size) {
         MS_LOG(EXCEPTION) << "Send/recv should be in pair and share one event id, invalid event id is:" << item.first
                           << ", event size is:" << item.second.size();
       }

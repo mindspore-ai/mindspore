@@ -24,13 +24,16 @@ using MemcpyAsyncTaskInfoPtr = std::shared_ptr<MemcpyAsyncTaskInfo>;
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr auto kAssignInputSize = 2;
+}
 AssignKernel::AssignKernel() {}
 
 AssignKernel::~AssignKernel() {}
 
 bool AssignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                           const std::vector<AddressPtr> &, void *stream_ptr) {
-  if (inputs.size() != 2) {
+  if (inputs.size() != kAssignInputSize) {
     MS_LOG(ERROR) << "inputs size is not two";
     return false;
   }
@@ -52,7 +55,7 @@ bool AssignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vect
 
 std::vector<TaskInfoPtr> AssignKernel::GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &, uint32_t stream_id) {
-  if (inputs.size() != 2) {
+  if (inputs.size() != kAssignInputSize) {
     MS_LOG(EXCEPTION) << "Inputs size should be 2, but got " << inputs.size();
   }
   stream_id_ = stream_id;

@@ -48,6 +48,7 @@ constexpr int64_t kRankIdFive = 5;
 constexpr int64_t kRankIdSix = 6;
 constexpr int64_t kRankIdSeven = 7;
 constexpr size_t kSizeFour = 4;
+constexpr size_t kSizeEight = 8;
 constexpr int64_t kInvalidId = -1;
 constexpr size_t kMinSplitOutputSize = 2;
 
@@ -215,7 +216,7 @@ AnfNodePtr GetCenter(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchang
 std::vector<AnfNodePtr> CreateAllToAllvInputForGrad(const std::vector<int64_t> &send_rank_ids,
                                                     const std::vector<std::vector<AnfNodePtr>> &split_outputs,
                                                     const std::vector<CNodePtr> &split_nodes) {
-  if (send_rank_ids.size() != 8) {
+  if (send_rank_ids.size() != kSizeEight) {
     MS_LOG(EXCEPTION) << "Wrong send_rank_ids size: " << send_rank_ids.size() << ", expect size: 8.";
   }
   if (split_outputs.size() != kSizeFour) {

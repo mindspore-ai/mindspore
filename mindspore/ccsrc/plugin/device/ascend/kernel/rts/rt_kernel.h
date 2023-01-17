@@ -61,19 +61,19 @@ class RtKernelFactory {
   std::map<string, RtKernelCreater> fmap_;
 };
 
-class _RtKernelRegister {
+class RtKernelRegister {
  public:
-  _RtKernelRegister(const std::string &name, RtKernelCreater &&fun) {
+  RtKernelRegister(const std::string &name, RtKernelCreater &&fun) {
     RtKernelFactory::Get().Register(name, std::move(fun));
   }
-  ~_RtKernelRegister() = default;
+  ~RtKernelRegister() = default;
 };
 
-#define _MS_REG_RTKERNEL_REG(KNAME, clazz)                                             \
+#define MS_REG_RTKERNEL_REG(KNAME, clazz)                                              \
   static_assert(std::is_base_of<RtKernel, clazz>::value, " must be base of RtKernel"); \
-  static const _RtKernelRegister g_##KNAME##_##_RtKernel_reg(#KNAME, []() { return std::make_shared<clazz>(); });
+  static const RtKernelRegister g_##KNAME##_##_RtKernel_reg(#KNAME, []() { return std::make_shared<clazz>(); });
 
-#define MS_REG_RTKERNEL(KNAME, clazz) _MS_REG_RTKERNEL_REG(KNAME, clazz)
+#define MS_REG_RTKERNEL(KNAME, clazz) MS_REG_RTKERNEL_REG(KNAME, clazz)
 }  // namespace kernel
 }  // namespace mindspore
 

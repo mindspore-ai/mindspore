@@ -418,7 +418,8 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateSplitV(const FuncGraphPtr &func_graph,
   }
   auto split_v = NewCNode(splitv_input, func_graph);
   // Set infer data type and shape
-  ShapeVector shape1, shape2;
+  ShapeVector shape1;
+  ShapeVector shape2;
   if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
     shape1 = {(origin_input6_shape[kDim0] - 1) * origin_input6_shape[kDim1], origin_input6_shape[kDim2]};
     shape2 = {origin_input6_shape[kDim1], origin_input6_shape[kDim2]};

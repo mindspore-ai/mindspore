@@ -781,7 +781,8 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
 void TbeKernelCompileManager::TbePreBuild(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Single op pre build start.";
-  struct timeval start_time, end_time;
+  struct timeval start_time;
+  struct timeval end_time;
   (void)gettimeofday(&start_time, nullptr);
   std::vector<CNodePtr> node_list;
   GetAllTbeNodes(kernel_graph, &node_list);
