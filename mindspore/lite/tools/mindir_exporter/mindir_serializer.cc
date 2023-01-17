@@ -384,7 +384,7 @@ int MindIRSerializer::SplitSave() {
   }
 
   int index = 0;
-  std::string external_local = model_name_ + "_data_" + std::to_string(index);
+  std::string external_local = "data_" + std::to_string(index);
   auto external_local_path = CreateExternalPath(external_local);
   if (fs_->FileExist(external_local_path)) {
     if (!fs_->DeleteFile(external_local_path)) {
@@ -424,7 +424,7 @@ int MindIRSerializer::SplitSave() {
     parameter_size += ((append_size + data_length) / PARA_ROUND);
     if (parameter_size > static_cast<int64_t>(TOTAL_SAVE)) {
       index++;
-      external_local = model_name_ + "data_" + std::to_string(index);
+      external_local = "data_" + std::to_string(index);
       data_fs_->close();
       delete data_fs_;
       ret = ChangeParaDataFile(external_local);
@@ -434,7 +434,9 @@ int MindIRSerializer::SplitSave() {
       }
       parameter_size = OFFSET / PARA_ROUND;
     }
-    *(param_proto.mutable_external_data()->mutable_location()) = external_local;
+    std::string external_local_data = model_name_ + "_variables/" + external_local;
+    *(param_proto.mutable_external_data()->mutable_location()) = external_local_data;
+    MS_LOG(ERROR) << "external_local_data: " << external_local_data;
     param_proto.mutable_external_data()->set_length(data_length);
     param_proto.mutable_external_data()->set_offset(offset);
     data_fs_->write(static_cast<const char *>(data->data_c()), data_length);
@@ -446,8 +448,13 @@ int MindIRSerializer::SplitSave() {
     offset += (data_length + append_size);
     delete[] append_data;
   }
-
-  return SaveProtoToFile(&model_proto_, save_model_path_);
+  std::string split_model_file_name = "";
+#ifdef _WIN32
+  split_model_file_name = save_path_ + "\\" + model_name_ + "_graph.mindir";
+#else
+  split_model_file_name = save_path_ + "/" + model_name_ + "_graph.mindir";
+#endif
+  return SaveProtoToFile(&model_proto_, split_model_file_name);
 }
 
 int MindIRSerializer::ParserPath(const std::string &output_path) {
