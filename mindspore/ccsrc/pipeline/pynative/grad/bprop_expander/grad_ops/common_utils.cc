@@ -206,7 +206,16 @@ std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vecto
   return out;
 }
 
-int64_t GetIntValue(const NodePtr &node) { return AnfUtils::GetIntValue(node->get()); }
+int64_t GetIntValue(const NodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto real_node = node->get();
+  MS_EXCEPTION_IF_NULL(real_node);
+  if (real_node->isa<ValueNode>()) {
+    return AnfUtils::GetIntValue(real_node);
+  }
+  MS_EXCEPTION_IF_NULL(real_node->abstract());
+  return AnfUtils::GetIntValue(real_node->abstract()->BuildValue());
+}
 
 std::vector<int64_t> GetIntList(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);

@@ -24,6 +24,7 @@
 #include <tuple>
 #include "ir/func_graph.h"
 #include "ops/core_ops.h"
+#include "ops/shape_clac.h"
 #include "include/common/utils/utils.h"
 #include "expander/node.h"
 #include "expander/infer.h"
@@ -51,7 +52,8 @@ class MS_CORE_API Emitter {
   NodePtr Cast(const NodePtr &node, const TypePtr &type) const;
   NodePtr Cast(const NodePtr &node, TypeId type_id) const { return Cast(node, TypeIdToType(type_id)); }
 
-  NodePtr Reshape(const NodePtr &node, const ShapeVector &shape) const;
+  NodePtr Reshape(const NodePtr &node, const NodePtr &shape) const;
+  NodePtr Reshape(const NodePtr &node, const ShapeVector &shape) const { return Reshape(node, Value(shape)); }
   NodePtr ExpandDims(const NodePtr &node, int64_t axis) const { return Emit(kExpandDimsOpName, {node, Value(axis)}); }
   NodePtr Abs(const NodePtr &node) const { return Emit(prim::kAbs, {node}); }
   NodePtr Neg(const NodePtr &node) const { return Emit(prim::kNeg, {node}); }
@@ -60,14 +62,10 @@ class MS_CORE_API Emitter {
   NodePtr Sign(const NodePtr &node) const { return Emit(prim::kPrimSign->name(), {node}); }
   NodePtr Exp(const NodePtr &x) const;
   NodePtr Log(const NodePtr &x) const;
-  NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) const;
-  NodePtr Tile(const NodePtr &node, const ShapeVector &multiples) const {
-    bool is_all_one = std::all_of(multiples.begin(), multiples.end(), [](int64_t shp) { return shp == 1; });
-    if (is_all_one && node->shape().size() >= multiples.size()) {
-      return node;
-    }
-    return Emit(kTileOpName, {node, Value(multiples)});
-  }
+  NodePtr Transpose(const NodePtr &node, const NodePtr &perm) const;
+  NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) const { return Transpose(node, Value(perm)); }
+  NodePtr Tile(const NodePtr &node, const NodePtr &multiples) const;
+  NodePtr Tile(const NodePtr &node, const ShapeVector &multiples) const { return Tile(node, Value(multiples)); }
   NodePtr Concat(const NodePtrList &inputs, int64_t axis) const {
     return Emit(kConcatOpName, {MakeTuple(inputs)}, {{kAttrAxis, MakeValue(axis)}});
   }
@@ -116,11 +114,25 @@ class MS_CORE_API Emitter {
   NodePtr LogicalOr(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LogicalOr", {lhs, rhs}); }
   std::pair<bool, ShapeVector> NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis,
                                           bool keep_dim) const;
+  std::pair<bool, ShapeVector> NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim) const;
   NodePtr ReduceSum(const NodePtr &x, const ShapeVector &axis = {}, bool keep_dims = false) const;
 
   NodePtr ZerosLike(const NodePtr &node) const;
   NodePtr Fill(double value, const ShapeVector &shape, TypeId data_type) const;
   NodePtr Fill(int64_t value, const ShapeVector &shape, TypeId data_type) const;
+  template <typename T>
+  NodePtr Fill(const T &value, const NodePtr &shape, TypeId data_type) const {
+    MS_EXCEPTION_IF_NULL(shape);
+    if (shape->isa<ValueNode>()) {
+      auto value_node = shape->get<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      auto v = value_node->value();
+      MS_EXCEPTION_IF_NULL(v);
+      return Fill(value, GetValue<ShapeVector>(v), data_type);
+    }
+    auto value_tensor = Cast(Tensor(value), data_type);
+    return Emit("DynamicBroadcastTo", {value_tensor, shape});
+  }
 
   /// \brief Emit a value node
   template <typename T>
@@ -142,6 +154,19 @@ class MS_CORE_API Emitter {
   }
 
   ExpanderInferPtr infer() const { return infer_; }
+
+  /// \brief Shape calculation.
+  ///
+  /// \param[in] inputs The input tensors.
+  /// \param[in] shape_func The lambda function that encapsulated the shape calculation logic. Apply 'func' on input
+  ///     tensor's shape or value to get the calculated outputs shape.
+  /// \param[in] infer_func The lambda function that calculate the rank of each output shape, this function will be
+  ///     used in infer_shape of 'ShapeCalc' op.
+  /// \param[in] value_depend_indices If index i exists in 'value_depend', then the value of i'th input tensor instead
+  ///     of its shape will be passed to 'func'.
+  /// \return NodePtrList, the outputs shape list.
+  NodePtrList ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &shape_func, const ops::InferFunc &infer_func,
+                        const std::vector<int64_t> &value_depend_indices = {}) const;
 
  protected:
   NodePtr NewNode(const AnfNodePtr &anfnode) const { return std::make_shared<Node>(anfnode, this); }
