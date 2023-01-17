@@ -20,8 +20,8 @@ from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore import dtype as mstype
 from mindspore.nn import Cell
-from ....mindspore_test_framework.mindspore_test import mindspore_test
-from ....mindspore_test_framework.pipeline.forward.compile_forward \
+from ...mindspore_test_framework.mindspore_test import mindspore_test
+from ...mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config, \
     pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception
 

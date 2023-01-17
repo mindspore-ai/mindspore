@@ -19,11 +19,12 @@ import mindspore.numpy as mnp
 from mindspore import Tensor
 from mindspore.nn import Cell
 import mindspore.context as context
-from ....mindspore_test_framework.mindspore_test import mindspore_test
-from ....mindspore_test_framework.pipeline.forward.compile_forward \
+from ...mindspore_test_framework.mindspore_test import mindspore_test
+from ...mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 
 context.set_context(mode=context.GRAPH_MODE)
+
 
 class MeshGrid(Cell):
     def construct(self, a, b, c, d):

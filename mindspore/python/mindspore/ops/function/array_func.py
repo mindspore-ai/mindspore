@@ -4412,7 +4412,6 @@ def index_fill(x, axis, index, value):
     return index_fill_(x, axis, index, value)
 
 
-#TODO: remove comment
 @constexpr
 def _check_check_axis_in_range(axis, ndim):
     """Checks axes are with the bounds of ndim"""
