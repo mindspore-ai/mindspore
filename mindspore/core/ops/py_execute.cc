@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,17 +28,6 @@ MIND_API_OPERATOR_IMPL(PyExecute, BaseOperator);
 
 BaseShapePtr PyExecuteInfer::InferShape(const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) const {
-  ShapeVector out_shape = {1};
-  return std::make_shared<abstract::Shape>(out_shape);
-}
-
-TypePtr PyExecuteInfer::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  return kFloat64;
-}
-
-AbstractBasePtr PyExecuteInfer::InferShapeAndType(const abstract::AnalysisEnginePtr &engine,
-                                                  const PrimitivePtr &primitive,
-                                                  const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -48,12 +37,17 @@ AbstractBasePtr PyExecuteInfer::InferShapeAndType(const abstract::AnalysisEngine
   if (infer_handler_ == nullptr) {
     MS_LOG(EXCEPTION) << "infer_handler_ should not be null.";
   }
-  infer_handler_(input_args);
+  return infer_handler_(input_args);
+}
 
-  const auto &type = InferType(primitive, input_args);
-  const auto &shape = InferShape(primitive, input_args);
-  const auto &abstract = MakeAbstract(shape, type);
-  return abstract;
+TypePtr PyExecuteInfer::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  return kFloat64;
+}
+
+AbstractBasePtr PyExecuteInfer::InferShapeAndType(const abstract::AnalysisEnginePtr &engine,
+                                                  const PrimitivePtr &primitive,
+                                                  const std::vector<AbstractBasePtr> &input_args) const {
+  MS_LOG(EXCEPTION) << "Should not invoke InferShapeAndType.";
 }
 
 std::set<int64_t> PyExecuteInfer::GetValueDependArgIndices() const { return {-1}; }

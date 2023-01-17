@@ -24,6 +24,7 @@
 #include "abstract/utils.h"
 #include "plugin/device/cpu/hal/device/cpu_common.h"
 #include "include/common/utils/python_adapter.h"
+#include "include/common/utils/python_fallback_running.h"
 #include "plugin/factory/ms_factory.h"
 #include "mindspore/ccsrc/pipeline/jit/parse/resolve.h"
 
@@ -282,6 +283,15 @@ py::object PyExecuteCpuKernelMod::BuildLocalParameters(const std::vector<Address
   return local_dict;
 }
 
+void TensorToRawMemory(const tensor::TensorPtr &tensor, const AddressPtr &address) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(address);
+  const auto &res = memcpy_s(address->addr, address->size, tensor->data_c(), tensor->Size());
+  if (res != EOK) {
+    MS_LOG(EXCEPTION) << "memcpy failed. res: " << res;
+  }
+}
+
 bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs) {
   MS_LOG(DEBUG) << "Launch PyExecute(), inputs.size: " << inputs.size() << ", outputs: " << outputs.size();
@@ -317,8 +327,13 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   params[0] = global_dict;
   params[1] = local_dict;
   MS_LOG(DEBUG) << "Python script: " << py_script << ", params: " << params;
+  mindspore::ScopedFallbackRunning fallback_running;
   const auto &output = CallPythonScript(py_script, params);
-  MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
+  const auto &output_type = py::str(output.get_type());
+  MS_LOG(DEBUG) << "Python output type: " << output_type << ", output: " << output;
+  if (output_type.cast<std::string>() == "<class 'mindspore.common.tensor.Tensor'>") {  // It's Python Tensor type.
+    TensorToRawMemory(output.cast<tensor::TensorPtr>(), outputs[0]);
+  }
   AttachPyOutputData(output);
   return true;
 }

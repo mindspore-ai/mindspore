@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <vector>
 #include "pipeline/pynative/pynative_utils.h"
 #include "include/common/utils/scoped_long_running.h"
+#include "include/common/utils/python_fallback_running.h"
 #include "backend/graph_compiler/transform.h"
 #include "utils/ms_context.h"
 
@@ -415,9 +416,16 @@ void ForwardExecutor::Sync() {
 }
 
 ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
+  if (!ScopedFallbackRunning::on()) {
+    mindspore::ScopedLongRunning long_running;
+    return RunOpInMsInner(op_run_info);
+  }
+  return RunOpInMsInner(op_run_info);
+}
+
+ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info) {
   MS_LOG(DEBUG) << "RunOpInMs start";
-  mindspore::ScopedLongRunning long_running;
+  MS_EXCEPTION_IF_NULL(op_run_info);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
