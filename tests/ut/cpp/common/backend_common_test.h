@@ -16,7 +16,6 @@
 #ifndef TESTS_UT_CPP_COMMON_UT_BACKEND_COMMON_H_
 #define TESTS_UT_CPP_COMMON_UT_BACKEND_COMMON_H_
 #include "common/common_test.h"
-#include "utils/ms_context.h"
 #include "backend/common/session/kernel_graph.h"
 
 namespace mindspore {
@@ -30,6 +29,8 @@ class BackendCommon : public UT::Common {
                                                                const AbstractBasePtrList &args_spec_list,
                                                                bool need_infer = true);
   virtual FuncGraphPtr GetFuncGraph(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
+
+  virtual std::shared_ptr<session::KernelGraph> Compile(const FuncGraphPtr &func_graph);
 };
 }  // namespace mindspore
 #endif  // TESTS_UT_CPP_COMMON_UT_BACKEND_COMMON_H_
