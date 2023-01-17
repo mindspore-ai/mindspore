@@ -170,7 +170,7 @@ def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False):
         >>> print(aux)
         (Tensor(shape=[2], dtype=Float32, value= [ 5.00000000e+00,  5.00000000e+00]),)
         >>>
-        >>> # For given network to be differentiated with both inputs and weights, there are 3 cases.
+        >>> # For given network to be differentiated with both inputs and weights, there are 4 cases.
         >>> net = nn.Dense(10, 1)
         >>> loss_fn = nn.MSELoss()
         >>> def forward(inputs, labels):
@@ -366,9 +366,9 @@ def get_grad(gradients, identifier):
     As for gradient, three typical cases are included:
 
     1. gradient with respect to inputs. In this case, use return value of ops.grad as the first input and
-    the position of the tensor as the second input.
+       the position of the tensor as the second input.
     2. gradient with respect to weights. In this case, use return value of ops.grad as the first input and
-    the parameter as the second input.
+       the parameter as the second input.
 
     Args:
         gradients (Union[tuple[int, Tensor], tuple[tuple, tuple]]): The return value of mindspore.grad when return_ids
@@ -392,17 +392,17 @@ def get_grad(gradients, identifier):
         >>> import mindspore
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor, ops
-        >>> from mindspore import grad
+        >>> from mindspore import grad, get_grad
         >>>
         >>>  # Cell object to be differentiated
         >>> class Net(nn.Cell):
-        >>> def construct(self, x, y, z):
-        >>> return x * y * z
+        ...     def construct(self, x, y, z):
+        ...         return x * y * z
         >>> x = Tensor([1, 2], mindspore.float32)
         >>> y = Tensor([-2, 3], mindspore.float32)
         >>> z = Tensor([0, 3], mindspore.float32)
         >>> net = Net()
-        >>> out_grad = grad(net, grad_position=(1, 2), return_ids = True)(x, y, z)
+        >>> out_grad = grad(net, grad_position=(1, 2), return_ids=True)(x, y, z)
         >>> output = get_grad(out_grad, 1)
         >>> print(output)
         Tensor(shape=[2], dtype=Float32, value=[0.00000000e+00,  6.00000000e+00]

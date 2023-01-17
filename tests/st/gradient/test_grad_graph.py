@@ -1049,7 +1049,7 @@ def test_construct_get_grad_not_found_from_empty_tuple():
 @pytest.mark.env_onecard
 def test_get_grad_wrap_with_msfunction_graph():
     """
-    Features: Function grad.
+    Features: Function get_grad.
     Description: Test get_grad wrapped with @jit decorated function in graph mode.
     Expectation: No exception.
     """
@@ -1087,3 +1087,49 @@ def test_grad_primal_graph_call_others():
     expected = Tensor(np.array([4, 5]).astype(np.float32))
     output = net(x, y)
     assert np.allclose(output.asnumpy(), expected.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_get_grad_outer_list_weight():
+    """
+    Features: Function get_grad.
+    Description: Test get_grad with a list of parameter as input of the network in graph mode.
+    Expectation: No exception.
+    """
+    class InnerNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.w = Parameter([1, 2], name='w')
+            self.b = Parameter([1, 2], name='b')
+
+        def construct(self, x, y):
+            out = self.w * x + self.b + y
+            return out
+
+    class GradNet(nn.Cell):
+        def __init__(self, net, pos, param, get):
+            super().__init__()
+            self.net = net
+            self.pos = pos
+            self.param = param
+            self.get = get
+
+        def construct(self, x, y):
+            grad_net = grad(self.net, self.pos, self.param, return_ids=True)
+            out_grad = grad_net(x, y)
+            out = []
+            for i in self.get:
+                out.append(get_grad(out_grad, i))
+            return out
+
+    net = InnerNet()
+    grad_net = GradNet(net, (0, 1), (net.w, net.b), (0, net.w))
+    x = Tensor([1, 2], mstype.float32)
+    y = Tensor([1, 2], mstype.float32)
+    out = grad_net(x, y)
+    expect_value0 = Tensor([1, 2], mstype.float32)
+    expect_value1 = Tensor([1, 2], mstype.int64)
+    assert np.allclose(out[0].asnumpy(), expect_value0.asnumpy())
+    assert np.allclose(out[1].asnumpy(), expect_value1.asnumpy())

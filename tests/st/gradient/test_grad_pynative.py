@@ -810,3 +810,45 @@ def test_get_grad_not_found_pynative():
     res = grad(net, 0, weights, return_ids=True)(x)
     with pytest.raises(ValueError):
         get_grad(res, 1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_outer_list_weight():
+    """
+    Features: Function get_grad.
+    Description: Test get_grad with one weight and no position in pynative mode.
+    Expectation: No exception.
+    """
+    class InnerNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.w = Parameter([1, 2], name='w')
+            self.b = Parameter([1, 2], name='b')
+
+        def construct(self, x, y):
+            out = self.w * x + self.b + y
+            return out
+
+    class GradNet(nn.Cell):
+        def __init__(self, net, pos, param, get):
+            super().__init__()
+            self.net = net
+            self.pos = pos
+            self.param = param
+            self.get = get
+
+        def construct(self, x, y):
+            grad_net = grad(self.net, self.pos, self.param, return_ids=True)
+            out_grad = grad_net(x, y)
+            out = get_grad(out_grad, self.net.w)
+            return out
+
+    net = InnerNet()
+    grad_net = GradNet(net, (0, 1), (net.w, net.b), (0, net.w))
+    x = Tensor([2, 2], mstype.float32)
+    y = Tensor([1, 2], mstype.float32)
+    out = grad_net(x, y)
+    expect_value = Tensor([2, 2], mstype.int64)
+    assert np.allclose(out[0].asnumpy(), expect_value.asnumpy())
