@@ -81,8 +81,19 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
           delete runner;
           return (jlong) nullptr;
         }
-        auto enable_fp16 = origin_device_info->GetEnableFP16();
-        copy_device_info->SetEnableFP16(enable_fp16);
+        copy_device_info->SetEnableFP16(origin_device_info->GetEnableFP16());
+        copy_device_info->SetDeviceID(origin_device_info->GetDeviceID());
+        copy_device_list.push_back(copy_device_info);
+      } else if (origin_device->GetDeviceType() == mindspore::kAscend) {
+        auto origin_device_info = origin_device->Cast<mindspore::AscendDeviceInfo>();
+        auto copy_device_info = std::make_shared<mindspore::AscendDeviceInfo>();
+        if (copy_device_info == nullptr) {
+          delete runner;
+          return (jlong) nullptr;
+        }
+        copy_device_info->SetDeviceID(origin_device_info->GetDeviceID());
+        copy_device_info->SetInsertOpConfigPath(origin_device_info->GetInsertOpConfigPath());
+        copy_device_info->SetInputFormat(origin_device_info->GetInputFormat());
         copy_device_list.push_back(copy_device_info);
       }
     }
