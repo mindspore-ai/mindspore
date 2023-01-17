@@ -178,26 +178,7 @@ class Expand(Primitive):
     """
     Returns a new view of the self tensor with singleton dimensions expanded to a larger size.
 
-    Note:
-        Passing -1 as the size for a dimension means not changing the size of that dimension.
-        Tensor can be also expanded to a larger number of dimensions, and the new ones will be appended at the front.
-        For the new dimensions, the size cannot be set to -1.
-
-    Inputs:
-         - **x** (Tensor) - The shape of tensor is (x_1, x_2, ..., x_R).
-         - **shape** (Tensor) - The new shape of x.
-
-    Outputs:
-         - **y** (Tensor) - Tensor after expansion.
-
-    Raises:
-        TypeError: If any input is not Tensor.
-        TypeError: If the type of `shape` is not one of the following dtype: int16, int32, int64.
-        ValueError: If `shape` is not a 1-D tensor.
-        ValueError: If the size of `shape` is less than the size of `x.shape`.
-        ValueError: If the expanded `shape` is not equal to the existing shape of `x` at a dimension that is not 1.
-        ValueError: If the expanded size < 0 and it is in a leading, non-existing dimension.
-        ValueError: If the number of elements of output is more than 1000000.
+    Refer to :func:`mindspore.ops.expand` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -1803,24 +1784,6 @@ class Argmax(Primitive):
     Returns the indices of the maximum value of a tensor across the axis.
 
     Refer to :func:`mindspore.ops.argmax` for more details.
-
-    If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor will be
-    :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
-
-    Args:
-        axis (int): Axis where the Argmax operation applies to. Default: -1.
-        output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32` and
-            `mindspore.dtype.int64`. Default: `mindspore.dtype.int32`.
-
-    Inputs:
-        - **input_x** (Tensor) - Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, whose dtype is determined by `output_type`.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        TypeError: If `output_type` is neither int32 nor int64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4448,7 +4411,10 @@ class ScatterMul(_ScatterOpDynamic):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore import dtype as mstype
         >>> import mindspore.ops as ops
+        >>> import numpy as np
         >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mstype.float32), name="x")
         >>> indices = Tensor(np.array([0, 1]), mstype.int32)
         >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mstype.float32)
@@ -5719,11 +5685,11 @@ class Sort(Primitive):
             are sorted in descending order by value. Default: False.
 
     Inputs:
-        x(Tensor): The input tensor of any dimension, with a type of float16 or float32.
+        - **x** (Tensor) - The input tensor of any dimension, with a type of float16 or float32.
 
     Outputs:
-        y1(Tensor) - A tensor whose values are the sorted values, with the same shape and data type as input.
-        y2(Tensor) - The indices of the elements in the original input tensor. Data type is int32.
+        - **y1** (Tensor) - A tensor whose values are the sorted values, with the same shape and data type as input.
+        - **y2** (Tensor) - The indices of the elements in the original input tensor. Data type is int32.
 
     Raises:
         TypeError: If `axis` is not an int.

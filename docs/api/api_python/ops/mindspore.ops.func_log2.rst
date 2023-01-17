@@ -8,6 +8,9 @@ mindspore.ops.log2
     .. math::
         y_i = log_{2}(x_i)
 
+    .. warning::
+        如果log2的输入值范围在(0, 0.01]或[0.95, 1.05]区间，输出精度可能会受影响。
+
     .. note::
         Ascend上输入Tensor的维度要小于等于8，CPU上输入Tensor的维度要小于8。
 
@@ -19,5 +22,4 @@ mindspore.ops.log2
 
     异常：
         - **TypeError** - `x` 不是Tensor。
-        - **TypeError** - 在GPU和CPU平台上运行时，`x` 的数据类型不是float16、float32或float64。
-        - **TypeError** - 在Ascend平台上运行时，`x` 的数据类型不是float16或float32。
+        - **TypeError** - 在GPU和CPU平台上运行时，`x` 的数据类型不是float16、float32或float64；在Ascend平台上运行时，`x` 的数据类型不是float16或float32。

@@ -15,7 +15,7 @@
         - 如果 `segment_ids` 中不存在segment_id `i` ，则对输出 `output[i]` 填充0。
         - 在Ascend平台上，如果segment_id的值小于0或大于输入Tensor的shape的长度，将触发执行错误。
 
-    如果给定的segment_ids :math: `i` 的和为空，则 :math:`\text{output}[i] = 0` 。如果 `segment_ids` 元素为负数，将忽略该值。 `num_segments` 必须等于不同segment_id的数量。
+    如果给定的segment_ids :math:`i` 的和为空，则 :math:`\text{output}[i] = 0` 。如果 `segment_ids` 元素为负数，将忽略该值。 `num_segments` 必须等于不同segment_id的数量。
 
     参数：
         - **input_x** (Tensor) - shape为 :math:`(x_1, x_2, ..., x_R)` 。

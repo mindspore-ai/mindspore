@@ -1589,6 +1589,12 @@ class Pad(ImageTensorOperation, PyTensorOperation):
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
               value of edge.
 
+    Note:
+        The behavior when `padding` is a sequence of length 2 will change from padding left/top with
+        the first value and right/bottom with the second, to padding left/right with the first one
+        and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
+        left, top, right and bottom respectively.
+
     Raises:
         TypeError: If `padding` is not of type int or Sequence[int, int], Sequence[int, int, int, int]].
         TypeError: If `fill_value` is not of type int or tuple[int].
@@ -2428,6 +2434,12 @@ class RandomCropWithBBox(ImageTensorOperation):
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
 
               value of edge.
+
+    Note:
+        The behavior when `padding` is a sequence of length 2 will change from padding left/top with
+        the first value and right/bottom with the second, to padding left/right with the first one
+        and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
+        left, top, right and bottom respectively.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
