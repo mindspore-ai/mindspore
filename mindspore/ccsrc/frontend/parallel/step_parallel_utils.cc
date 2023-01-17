@@ -1201,7 +1201,7 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
     auto input = node_inputs[LongToSize(i)];
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
-      if (input_parameter->has_default() && ParameterRequireGrad(input_parameter)) {
+      if (input_parameter->has_default()) {
         (void)param_names.emplace_back(std::make_pair(input_parameter->name(), input_parameter));
       }
     } else if (input->isa<CNode>()) {

@@ -19,17 +19,16 @@
 #include <fstream>
 #include <vector>
 #include <utility>
-
 #include "include/common/utils/utils.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "include/common/debug/common.h"
-#include "proto/node_strategy.pb.h"
 #include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 namespace parallel {
+const uint32_t JSON_SUFFIX_LENGTH = 5;
 StrategyCheckpoint &StrategyCheckpoint::GetInstance() {
   static StrategyCheckpoint instance = StrategyCheckpoint();
   if (ParallelContext::GetInstance() != nullptr) {
@@ -39,6 +38,10 @@ StrategyCheckpoint &StrategyCheckpoint::GetInstance() {
     instance.save_checkpoint_on_ = !ParallelContext::GetInstance()->strategy_ckpt_save_file().empty();
     instance.group_info_save_file_ = ParallelContext::GetInstance()->group_ckpt_save_file();
     instance.group_info_save_on_ = !ParallelContext::GetInstance()->group_ckpt_save_file().empty();
+    instance.load_format_json_ = instance.load_file_.size() >= JSON_SUFFIX_LENGTH &&
+                                 instance.load_file_.substr(instance.load_file_.size() - JSON_SUFFIX_LENGTH) == ".json";
+    instance.save_format_json_ = instance.save_file_.size() >= JSON_SUFFIX_LENGTH &&
+                                 instance.save_file_.substr(instance.save_file_.size() - JSON_SUFFIX_LENGTH) == ".json";
   }
   return instance;
 }
@@ -110,96 +113,47 @@ Status StrategyCheckpoint::Load(StrategyMap *strategy_map) {
   if (!CheckPointExit(load_file_)) {
     MS_LOG(EXCEPTION) << "CheckPoint file is not found";
   }
-  straspb::ParallelStrategyMap parallel_strategy_map;
-  std::fstream input(load_file_, std::ios::in | std::ios::binary);
-  if (!parallel_strategy_map.ParseFromIstream(&input)) {
-    MS_LOG(ERROR) << "Load strategy file failed";
-    return FAILED;
-  }
-  input.close();
-  size_t node_num = LongToSize(parallel_strategy_map.parallel_strategy_item_size());
-  for (size_t i = 0; i < node_num; i++) {
-    straspb::ParallelStrategyItem parallel_strategy_item = parallel_strategy_map.parallel_strategy_item(SizeToInt(i));
-    std::string node_name = parallel_strategy_item.node_name();
-    straspb::ParallelStrategys parallel_strategys = parallel_strategy_item.parallel_strategys();
-    int64_t stage = SizeToLong(parallel_strategys.stage());
-    size_t strategys_num = LongToSize(parallel_strategys.parallel_strategy_size());
-    Strategies strategy_inputs;
-    for (size_t j = 0; j < strategys_num; j++) {
-      straspb::ParallelStrategy parallel_strategy = parallel_strategys.parallel_strategy(SizeToInt(j));
-      Dimensions dimension;
-      size_t dim_num = LongToSize(parallel_strategy.dim_size());
-      for (size_t k = 0; k < dim_num; k++) {
-        dimension.push_back(parallel_strategy.dim(SizeToInt(k)));
-      }
-      strategy_inputs.push_back(dimension);
+  if (load_format_json_) {
+    std::fstream input(load_file_, std::ios::in);
+    nlohmann::json stra_ckpt_info_j;
+    input >> stra_ckpt_info_j;
+    strategy_checkpoint_info_.from_json(stra_ckpt_info_j);
+  } else {
+    straspb::ParallelStrategyMap parallel_strategy_map;
+    std::fstream input(load_file_, std::ios::in | std::ios::binary);
+    if (!parallel_strategy_map.ParseFromIstream(&input)) {
+      MS_LOG(ERROR) << "Load strategy file failed";
+      return FAILED;
     }
-
-    StrategyPtr strategy = NewStrategy(stage, strategy_inputs);
-    (*strategy_map)[node_name] = strategy;
-    current_stage_ = SizeToLong(parallel_strategy_map.current_stage());
+    input.close();
+    strategy_checkpoint_info_.from_protobuf(parallel_strategy_map);
   }
+  *strategy_map = strategy_checkpoint_info_.strategy_map();
+  current_stage_ = SizeToLong(strategy_checkpoint_info_.current_stage());
   return SUCCESS;
 }
 
 Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInfoMap &tensor_info_map,
-                                ManualShapeMap *manual_shape_map) {
-  straspb::ParallelStrategyMap parallel_strategy_map;
-  parallel_strategy_map.set_current_stage(UlongToUint(LongToUlong(++current_stage_)));
-  for (auto &node_stra : strategy_map) {
-    straspb::ParallelStrategyItem *parallel_strategy_item = parallel_strategy_map.add_parallel_strategy_item();
-    MS_EXCEPTION_IF_NULL(parallel_strategy_item);
-    parallel_strategy_item->set_node_name(node_stra.first);
-    straspb::ParallelStrategys *parallel_strategys = parallel_strategy_item->mutable_parallel_strategys();
-    MS_EXCEPTION_IF_NULL(parallel_strategys);
-    MS_EXCEPTION_IF_NULL(node_stra.second);
-    parallel_strategys->set_stage(UlongToUint(LongToUlong(node_stra.second->GetInputStage())));
-    for (auto &dims : node_stra.second->GetInputDim()) {
-      straspb::ParallelStrategy *parallel_strategy = parallel_strategys->add_parallel_strategy();
-      MS_EXCEPTION_IF_NULL(parallel_strategy);
-      for (auto stra_dim : dims) {
-        parallel_strategy->add_dim(UlongToUint(LongToUlong(stra_dim)));
-      }
-    }
-  }
-  for (auto &node_tensor_info : tensor_info_map) {
-    TensorLayoutPtr tensor_layout = node_tensor_info.second;
-    MS_EXCEPTION_IF_NULL(tensor_layout);
-    straspb::ParallelLayoutItem *parallel_layout_item = parallel_strategy_map.add_parallel_layout_item();
-    MS_EXCEPTION_IF_NULL(parallel_layout_item);
-    parallel_layout_item->set_param_name(node_tensor_info.first);
-    straspb::ParallelLayouts *parallel_layouts = parallel_layout_item->mutable_parallel_layouts();
-    straspb::DevMatrix *dev_matrix = parallel_layouts->add_dev_matrix();
-    MS_EXCEPTION_IF_NULL(dev_matrix);
-    for (auto dev_dim : tensor_layout->device_arrangement().array()) {
-      dev_matrix->add_dim(UlongToUint(LongToUlong(dev_dim)));
-    }
-    straspb::TensorMap *tensor_map = parallel_layouts->add_tensor_map();
-    MS_EXCEPTION_IF_NULL(tensor_map);
-    for (auto map_dim : tensor_layout->tensor_map().array()) {
-      tensor_map->add_dim(LongToInt(map_dim));
-    }
-    straspb::ParamSplitShape *param_split_shape = parallel_layouts->add_param_split_shape();
-    straspb::IndicesOffset *indices_offset = parallel_layouts->add_indices_offset();
-    MS_EXCEPTION_IF_NULL(manual_shape_map);
-    auto manual_shape = (*manual_shape_map)[node_tensor_info.first];
-    for (auto dim_pair : manual_shape) {
-      param_split_shape->add_dim(dim_pair.first);
-      indices_offset->add_dim(dim_pair.second);
-    }
-    parallel_layouts->set_field(LongToInt(tensor_layout->get_field_size()));
-    parallel_layouts->set_opt_weight_shard_step(tensor_layout->opt_weight_shard_step());
-    parallel_layouts->set_opt_weight_shard_size(tensor_layout->opt_weight_shard_size());
-  }
+                                const ManualShapeMap &manual_shape_map) {
   if (!CheckPath(save_file_)) {
     MS_LOG(EXCEPTION) << "CheckPoint file in invalid";
   }
-  std::fstream output(save_file_, std::ios::out | std::ios::trunc | std::ios::binary);
-  if (!parallel_strategy_map.SerializeToOstream(&output)) {
-    MS_LOG(ERROR) << "Save strategy file failed";
-    return FAILED;
+  strategy_checkpoint_info_.Init(strategy_map, tensor_info_map, manual_shape_map, ++current_stage_);
+  if (save_format_json_) {
+    auto stra_ckpt_info_j = strategy_checkpoint_info_.to_json();
+    std::fstream output(save_file_, std::ios::out);
+    stra_ckpt_info_j >> output;
+    output.close();
+  } else {
+    auto parallel_strategy_map = strategy_checkpoint_info_.to_protobuf();
+    std::fstream output(save_file_, std::ios::out | std::ios::trunc | std::ios::binary);
+    if (!parallel_strategy_map.SerializeToOstream(&output)) {
+      MS_LOG(ERROR) << "Save strategy file failed";
+      return FAILED;
+    }
+    output.close();
   }
-  output.close();
+
   ChangeFileMode(save_file_, S_IRUSR | S_IWUSR);
   return SUCCESS;
 }

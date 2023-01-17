@@ -201,7 +201,7 @@ def test_six_matmul_save_auto():
             return out
 
     reset_auto_parallel_context()
-    set_auto_parallel_context(device_num=8, global_rank=0, strategy_ckpt_save_file="./strategy_stage1_auto.ckpt")
+    set_auto_parallel_context(device_num=8, global_rank=0, strategy_ckpt_save_file="./strategy_stage1_auto.json")
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel", dataset_strategy="full_batch")
     x1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
@@ -256,7 +256,7 @@ def six_matmul_load_auto():
             return out
 
     reset_auto_parallel_context()
-    set_auto_parallel_context(device_num=8, global_rank=0, strategy_ckpt_load_file="./strategy_stage1_auto.ckpt")
+    set_auto_parallel_context(device_num=8, global_rank=0, strategy_ckpt_load_file="./strategy_stage1_auto.json")
     strategy1 = ((2, 2), (2, 2))
     strategy3 = ((2, 2), (2, 2))
     strategy4 = ((2, 2), (2, 2))

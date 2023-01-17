@@ -7,6 +7,7 @@ endif()
 
 if(ENABLE_DUMP_PROTO)
     list(REMOVE_ITEM _PARALLEL_SRC_FILES "parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")
+    list(REMOVE_ITEM _PARALLEL_SRC_FILES "parallel/strategy_checkpoint/strategy_checkpoint_info.cc")
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
