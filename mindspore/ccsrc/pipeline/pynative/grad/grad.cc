@@ -935,8 +935,12 @@ void GradExecutor::CheckNeedCompileGraph() {
       // Increase top cell switches counts
       ++top_cell_switch_counts_;
     }
+    auto has_higher_order = std::any_of(top_cell_list_.begin(), top_cell_list_.end(),
+                                        [](const TopCellInfoPtr &value) { return !value->is_topest(); });
     EraseTopCellFromTopCellList(pre_top_cell);
-    pre_top_cell->ClearDeviceMemory();
+    if (pre_top_cell->is_topest() && !has_higher_order) {
+      pre_top_cell->ClearDeviceMemory();
+    }
     pre_top_cell->Clear();
     already_run_top_cell_[already_top_cell_id] = new_top_cell;
     top_cell()->set_is_real_dynamic_structure(true);
