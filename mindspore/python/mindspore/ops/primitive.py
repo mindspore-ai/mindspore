@@ -24,6 +24,7 @@ from mindspore.parallel._utils import _is_in_auto_parallel_mode, _is_in_data_par
 from mindspore.parallel._ps_context import _is_ps_mode, _is_role_sched
 from mindspore.common.parameter import Parameter
 from mindspore.common.api import _pynative_executor
+from mindspore.common._stub_tensor import _convert_stub
 from mindspore._c_expression import Primitive_, prim_type
 from mindspore._checkparam import Validator
 from mindspore.ops import signature as sig
@@ -804,8 +805,19 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
     return deco
 
 
-@_wrap_func
+_RUN_OP_ASYNC = False
+
+
 def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
+    if _RUN_OP_ASYNC:
+        stub_type, stub = _pynative_executor.run_op_async(obj, args)
+        return _convert_stub(stub_type, stub)
+    return _run_op_sync(obj, op_name, args)
+
+
+@_wrap_func
+def _run_op_sync(obj, op_name, args):
+    """Single op execution function in synchronous mode."""
     output = _pynative_executor.real_run_op(obj, op_name, args)
     return output
