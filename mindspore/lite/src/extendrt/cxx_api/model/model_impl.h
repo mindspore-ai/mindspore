@@ -178,6 +178,8 @@ class ModelImpl {
   /// \return value of config as string type.
   std::string GetConfig(const std::string &section, const std::string &key);
 
+  static bool CheckModelSupport(enum DeviceType device_type, ModelType model_type);
+
  private:
   /// \brief Model build by buffer implementation, unified model build flow.
   ///

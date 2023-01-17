@@ -34,11 +34,10 @@ AscendKernelPlugin::AscendKernelPlugin() : handle_(nullptr), create_kernel_map_(
 
 void AscendKernelPlugin::UpdateRegisterStatus(bool status) { is_registered_ = status; }
 
-void AscendKernelPlugin::Register() {
+Status AscendKernelPlugin::TryRegister() {
 #if !defined(_WIN32)
   if (is_registered_) {
-    MS_LOG(INFO) << "Create kernel map has been created.";
-    return;
+    return kSuccess;
   }
   Dl_info dl_info;
   dladdr(reinterpret_cast<void *>(this), &dl_info);
@@ -48,8 +47,7 @@ void AscendKernelPlugin::Register() {
     MS_LOG(DEBUG) << "Could not find libmindspore-lite so, cur so path: " << cur_so_path;
     auto c_lite_pos = cur_so_path.find("_c_lite");
     if (c_lite_pos == std::string::npos) {
-      MS_LOG(ERROR) << "Could not find _c_lite so, cur so path: " << cur_so_path;
-      return;
+      return {kLiteError, "Could not find _c_lite so, cur so path: " + cur_so_path};
     }
     pos = c_lite_pos;
   }
@@ -57,25 +55,21 @@ void AscendKernelPlugin::Register() {
   std::string ascend_kernel_plugin_path;
   auto ret = FindSoPath(parent_dir, "libascend_kernel_plugin.so", &ascend_kernel_plugin_path);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Get real path of libascend_kernel_plugin.so failed.";
-    return;
+    return {kLiteError, "Get real path of libascend_kernel_plugin.so failed."};
   }
   MS_LOG(INFO) << "Find ascend kernel plugin so success, path = " << ascend_kernel_plugin_path;
   void *function = nullptr;
   ret = DLSoOpen(ascend_kernel_plugin_path, "CreateCustomAscendKernel", &handle_, &function);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "DLSoOpen failed, so path: " << ascend_kernel_plugin_path;
-    return;
+    return {kLiteError, "DLSoOpen failed, so path: " + ascend_kernel_plugin_path};
   }
   auto create_kernel_func = reinterpret_cast<std::map<std::string, KernelModFunc> *(*)(void)>(function);
   if (create_kernel_func == nullptr) {
-    MS_LOG(ERROR) << "Cast CreateCustomAscendKernel failed.";
-    return;
+    return {kLiteError, "Cast CreateCustomAscendKernel failed."};
   }
   create_kernel_map_ = create_kernel_func();
   if (create_kernel_map_ == nullptr) {
-    MS_LOG(ERROR) << "Create custom ascend kernel failed.";
-    return;
+    return {kLiteError, "Create custom ascend kernel failed."};
   }
   // register
   for (auto &kernel : *create_kernel_map_) {
@@ -84,8 +78,18 @@ void AscendKernelPlugin::Register() {
     }
   }
   is_registered_ = true;
-  MS_LOG(INFO) << "Register ascend kernel plugin success.";
+  return kSuccess;
 #endif
+}
+
+bool AscendKernelPlugin::Register() {
+  auto status = TryRegister();
+  if (status.IsError()) {
+    MS_LOG(ERROR) << status.ToString();
+    return false;
+  }
+  MS_LOG(INFO) << "Register ascend kernel plugin success.";
+  return true;
 }
 
 void AscendKernelPlugin::DestroyAscendKernelMap() {

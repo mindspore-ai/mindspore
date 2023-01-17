@@ -52,7 +52,10 @@ Status SingleOpInferSession::AscendInit(const std::shared_ptr<Context> &context)
   for (const auto &device_info : device_list) {
     MS_EXCEPTION_IF_NULL(device_info);
     if (device_info->GetDeviceType() == DeviceType::kAscend) {
-      kernel::AscendKernelPlugin::GetInstance().Register();
+      if (!kernel::AscendKernelPlugin::GetInstance().Register()) {
+        MS_LOG(ERROR) << "Failed to Register Ascend plugin";
+        return kLiteError;
+      }
       auto ascend_device_info = device_info->Cast<mindspore::AscendDeviceInfo>();
       MS_EXCEPTION_IF_NULL(ascend_device_info);
       device_id_ = ascend_device_info->GetDeviceID();
