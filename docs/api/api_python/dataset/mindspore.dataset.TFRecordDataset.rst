@@ -12,8 +12,9 @@ mindspore.dataset.TFRecordDataset
         - **columns_list** (list[str], 可选) - 指定从TFRecord文件中读取的数据列。默认值：None，读取所有列。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本。
 
-          - 如果 `num_samples` 为None，并且numRows字段（由参数 `schema` 定义）不存在，则读取所有数据集；
-          - 如果 `num_samples` 为None，并且numRows字段（由参数 `schema` 定义）的值大于0，则读取numRows条数据；
+          - 如果 `num_samples` 为None，并且numRows字段（由参数 `schema` 定义）不存在，则读取所有数据集。
+          - 如果 `compression_type` 不是 None， `num_samples` 为None，并且numRows字段（由参数 `schema` 定义）的值大于0，则读取所有数据集。
+          - 如果 `compression_type` 为None， `num_samples` 为None，并且numRows字段（由参数 `schema` 定义）的值大于0，则读取numRows条数据。
           - 如果 `num_samples` 和numRows字段（由参数 `schema` 定义）的值都大于0，此时仅有参数 `num_samples` 生效且读取给定数量的数据。
           - 如果 `compression_type` 不是 None，并且提供了 `num_samples` ，那么 `num_samples` 将是为每个分片从压缩文件中读取的行数。
             强烈建议在 `compression_type` 为 "GZIP" 或 "ZLIB" 时提供 `num_samples` 以避免性能下降。

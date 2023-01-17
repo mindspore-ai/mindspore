@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -240,7 +240,7 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///    corresponds to the value to pad with. If a column is not specified, then that column will be padded to the
   ///    longest in the current batch, and 0 will be used as the padding value. Any unspecified dimensions will be
   ///    padded to the longest in the current batch, unless if pad_to_bucket_boundary is true. If no padding is
-  ///    wanted, set pad_info to None (default=empty dictionary).
+  ///    wanted, set pad_info to empty map (default=empty map).
   /// \param[in] pad_to_bucket_boundary If true, will pad each unspecified dimension in pad_info to the
   ///    bucket_boundary minus 1. If there are any elements that fall into the last bucket,
   ///    an error will occur (default=false).
@@ -777,7 +777,7 @@ class DATASET_API BucketBatchByLengthDataset : public Dataset {
   ///    corresponds to the value to pad with. If a column is not specified, then that column will be padded to the
   ///    longest in the current batch, and 0 will be used as the padding value. Any unspecified dimensions will be
   ///    padded to the longest in the current batch, unless if pad_to_bucket_boundary is true. If no padding is
-  ///    wanted, set pad_info to None (default=empty dictionary).
+  ///    wanted, set pad_info to empty map (default=empty map).
   /// \param[in] pad_to_bucket_boundary If true, will pad each unspecified dimension in pad_info to the
   ///    bucket_boundary minus 1. If there are any elements that fall into the last bucket,
   ///    an error will occur (default=false).
@@ -5729,10 +5729,13 @@ class DATASET_API TFRecordDataset : public Dataset {
   /// \param[in] columns_list List of columns to be read. (Default = {}, read all columns).
   /// \param[in] num_samples The number of samples to be included in the dataset.
   ///     (Default = 0 means all samples).
-  ///     If `num_samples` is 0 and numRows(parsed from schema) does not exist, read the full dataset;
-  ///     If `num_samples` is 0 and numRows(parsed from schema) is greater than 0, read numRows rows;
+  ///     If `num_samples` is 0 and numRows(parsed from `schema` ) does not exist, read the full dataset.
+  ///     If `compression_type` is not "" and `num_samples` is 0, and numRows(parsed from `schema` ) is
+  ///     greater than 0, read the full dataset.
+  ///     If `compression_type` is "", `num_samples` is 0, and numRows(parsed from `schema` ) is
+  ///     greater than 0, read numRows rows.
   ///     If both `num_samples` and numRows(parsed from schema) are greater than 0, read `num_samples` rows.
-  ///     If `compression_type` is not None and `num_samples` is provided, then `num_samples` will be
+  ///     If `compression_type` is not "" and `num_samples` is provided, then `num_samples` will be
   ///     interpreted as number of rows to be read per shard from the compressed files.
   ///     It is highly recommended to provide `num_samples` when `compression_type` is "GZIP" or "ZLIB"
   ///     to avoid performance degradation.
@@ -5756,8 +5759,6 @@ class DATASET_API TFRecordDataset : public Dataset {
   ///     "" - No compression is used.
   ///     "GZIP" - GZIP compression is used.
   ///     "ZLIB" - ZLIB compression is used.
-  ///     This will automatically get equal rows for all shards and thus cannot have the case
-  ///     where `num_samples` is None.
   TFRecordDataset(const std::vector<std::vector<char>> &dataset_files, const std::vector<char> &schema,
                   const std::vector<std::vector<char>> &columns_list, int64_t num_samples, ShuffleMode shuffle,
                   int32_t num_shards, int32_t shard_id, bool shard_equal_rows,
@@ -5771,10 +5772,13 @@ class DATASET_API TFRecordDataset : public Dataset {
   /// \param[in] columns_list List of columns to be read (Default = {}, read all columns).
   /// \param[in] num_samples The number of samples to be included in the dataset
   ///     (Default = 0 means all samples).
-  ///     If num_samples is 0 and numRows(parsed from schema) does not exist, read the full dataset;
-  ///     If num_samples is 0 and numRows(parsed from schema) is greater than 0, read numRows rows;
+  ///     If `num_samples` is 0 and numRows(parsed from `schema` ) does not exist, read the full dataset.
+  ///     If `compression_type` is not "", `num_samples` is 0, and numRows(parsed from `schema` ) is
+  ///     greater than 0, read the full dataset.
+  ///     If `compression_type` is "", `num_samples` is 0, and numRows(parsed from `schema` ) is
+  ///     greater than 0, read numRows rows.
   ///     If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
-  ///     If `compression_type` is not None and `num_samples` is provided, then `num_samples` will be
+  ///     If `compression_type` is not "" and `num_samples` is provided, then `num_samples` will be
   ///     interpreted as number of rows to be read per shard from the compressed files.
   ///     It is highly recommended to provide `num_samples` when `compression_type` is "GZIP" or "ZLIB"
   ///     to avoid performance degradation.
@@ -5798,9 +5802,6 @@ class DATASET_API TFRecordDataset : public Dataset {
   ///     "" - No compression is used.
   ///     "GZIP" - GZIP compression is used.
   ///     "ZLIB" - ZLIB compression is used.
-  ///     This will automatically get equal rows for all shards and thus cannot have the case
-  ///     where `num_samples` is None.
-
   TFRecordDataset(const std::vector<std::vector<char>> &dataset_files, const std::shared_ptr<SchemaObj> &schema,
                   const std::vector<std::vector<char>> &columns_list, int64_t num_samples, ShuffleMode shuffle,
                   int32_t num_shards, int32_t shard_id, bool shard_equal_rows,
@@ -5818,10 +5819,13 @@ class DATASET_API TFRecordDataset : public Dataset {
 /// \param[in] columns_list List of columns to be read (Default = {}, read all columns).
 /// \param[in] num_samples The number of samples to be included in the dataset
 ///     (Default = 0 means all samples).
-///     If num_samples is 0 and numRows(parsed from schema) does not exist, read the full dataset;
-///     If num_samples is 0 and numRows(parsed from schema) is greater than 0, read numRows rows;
+///     If `num_samples` is 0 and numRows(parsed from `schema` ) does not exist, read the full dataset.
+///     If `compression_type` is not "", `num_samples` is 0, and numRows(parsed from `schema` ) is
+///     greater than 0, read the full dataset.
+///     If `compression_type` is "", `num_samples` is 0, and numRows(parsed from `schema` ) is
+///     greater than 0, read numRows rows.
 ///     If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
-///     If `compression_type` is not None and `num_samples` is provided, then `num_samples` will be
+///     If `compression_type` is not "" and `num_samples` is provided, then `num_samples` will be
 ///     interpreted as number of rows to be read per shard from the compressed files.
 ///     It is highly recommended to provide `num_samples` when `compression_type` is "GZIP" or "ZLIB"
 ///     to avoid performance degradation.
@@ -5845,8 +5849,6 @@ class DATASET_API TFRecordDataset : public Dataset {
 ///     "" - No compression is used.
 ///     "GZIP" - GZIP compression is used.
 ///     "ZLIB" - ZLIB compression is used.
-///     This will automatically get equal rows for all shards and thus cannot have the case
-///     where `num_samples` is None.
 /// \return Shared pointer to the TFRecordDataset.
 /// \par Example
 /// \code
