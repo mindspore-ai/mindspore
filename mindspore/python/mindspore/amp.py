@@ -21,29 +21,26 @@ from ._checkparam import Validator as validator
 from .common import dtype as mstype
 from . import context
 from . import ops
+from .ops import constexpr
 from .common.api import jit_class
 from .common.parameter import Parameter
 from .common.tensor import Tensor
 from .train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager, FixedLossScaleManager
 from .train.amp import build_train_network, auto_mixed_precision
 
-_ascend_target = context.get_context("device_target") == "Ascend"
-_gpu_target = context.get_context("device_target") == "GPU"
-
-_gpu_float_status = ops.FloatStatus()
-
-_npu_alloc_float_status = ops.NPUAllocFloatStatus()
-_npu_clear_float_status = ops.NPUClearFloatStatus()
-_npu_get_float_status = ops.NPUGetFloatStatus()
-
-if _ascend_target:
-    _status = _npu_alloc_float_status()
-    _ = _npu_clear_float_status(_status)
-else:
-    _status = None
 
 _hypermap = ops.HyperMap()
 _partial = ops.Partial()
+
+
+@constexpr
+def _ascend_target():
+    return context.get_context("device_target") == "Ascend"
+
+
+@constexpr
+def _gpu_target():
+    return context.get_context("device_target") == "GPU"
 
 
 def _grad_unscale(scale, grad):
@@ -55,13 +52,40 @@ def _grad_scale(scale, grad):
 
 
 def _is_finite(inputs):
-    if _gpu_target:
-        return _gpu_float_status(inputs)[0] == 0
+    if _gpu_target():
+        return ops.FloatStatus()(inputs)[0] == 0
     status = ops.isfinite(inputs)
     return status.all()
 
 
-def all_finite(inputs):
+def init_status():
+    r"""
+    Returns a Tensor indicating initialized status for overflow detection.
+
+    Note:
+        Only Ascend need status to capture overflow status, you can also call
+        this function on GPU or CPU, but the return value is useless.
+
+    Returns:
+        Tensor, has the shape of `(8,)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> status = amp.init_status()
+    """
+    if _ascend_target():
+        status = ops.NPUAllocFloatStatus()()
+        clear_status = ops.NPUClearFloatStatus()(status)
+        status = ops.depend(status, clear_status)
+    else:
+        status = Tensor([0, 0, 0, 0, 0, 0, 0, 0], mstype.float32)
+
+    return status
+
+
+def all_finite(inputs, status=None):
     r"""
     Returns a scalar Tensor indicating whether the inputs are finite.
 
@@ -74,6 +98,8 @@ def all_finite(inputs):
 
     Args:
         inputs (Union(tuple(Tensor), list(Tensor))): a iterable Tensor.
+        status (Tensor): the status Tensor for overflow detection, only required on
+            Ascend. Default: None.
 
     Returns:
         Tensor, a scalar Tensor and the dtype is bool.
@@ -83,14 +109,16 @@ def all_finite(inputs):
 
     Examples:
         >>> x = (Tensor(np.array([np.log(-1), 1, np.log(0)])), Tensor(np.array([1.0]))
-        >>> output = all_finite(x)
+        >>> output = amp.all_finite(x)
     """
-    if _ascend_target:
-        status = ops.depend(_status, inputs)
-        get_status = _npu_get_float_status(status)
+    if _ascend_target():
+        if status is None:
+            raise ValueError("The status must be initialized on Ascend, but get 'None'.")
+        status = ops.depend(status, inputs)
+        get_status = ops.NPUGetFloatStatus()(status)
         status = ops.depend(status, get_status)
         status_finite = status.sum() == 0
-        _ = _npu_clear_float_status(status)
+        _ = ops.NPUClearFloatStatus()(status)
         return status_finite
     outputs = _hypermap(_partial(_is_finite), inputs)
     return ops.stack(outputs).all()
@@ -299,5 +327,5 @@ class DynamicLossScaler(LossScaler):
 __all__ = [
     "DynamicLossScaleManager", "LossScaleManager", "FixedLossScaleManager",
     "build_train_network", "DynamicLossScaler", "StaticLossScaler", "LossScaler",
-    "auto_mixed_precision", "all_finite"
+    "auto_mixed_precision", "init_status", "all_finite"
 ]

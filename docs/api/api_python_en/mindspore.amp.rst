@@ -1,7 +1,7 @@
 mindspore.amp
 ================
 
-Cell Management
+Loss Scale
 ----------------
 
 .. autosummary::
@@ -9,12 +9,14 @@ Cell Management
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.amp.DynamicLossScaleManager
+    mindspore.amp.LossScaler
+    mindspore.amp.DynamicLossScaler
+    mindspore.amp.StaticLossScaler
     mindspore.amp.LossScaleManager
+    mindspore.amp.DynamicLossScaleManager
     mindspore.amp.FixedLossScaleManager
-    mindspore.amp.build_train_network
 
-Functional Paradigm
+Dtype Autocast
 --------------------
 
 .. autosummary::
@@ -22,8 +24,16 @@ Functional Paradigm
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.amp.DynamicLossScaler
-    mindspore.amp.StaticLossScaler
-    mindspore.amp.LossScaler
     mindspore.amp.auto_mixed_precision
+    mindspore.amp.build_train_network
+
+Overflow Detection
+--------------------
+
+.. autosummary::
+    :toctree: amp
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.amp.init_status
     mindspore.amp.all_finite
