@@ -434,7 +434,7 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
 
 #if defined(__linux__) && defined(WITH_BACKEND)
   // Update rpc actors' status.
-  RpcActorStatusUpdater::GetInstance().UpdateRpcActorStatus();
+  RpcActorStatusUpdater::GetInstance().UpdateRpcActorStatus(graph_compiler_info_->name_);
 #endif
 
   try {
