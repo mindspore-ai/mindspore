@@ -16,6 +16,7 @@
 #include "conj.h"
 
 #include <complex>
+#include <functional>
 
 #include "cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
@@ -46,6 +47,17 @@ uint32_t ConjCpuKernel::Compute(CpuKernelContext &ctx) {
   switch (dataType) {
     CONJ_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     CONJ_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
+    CONJ_COMPUTE_CASE(DT_INT8, int8_t, ctx)
+    CONJ_COMPUTE_CASE(DT_INT16, int16_t, ctx)
+    CONJ_COMPUTE_CASE(DT_INT32, int32_t, ctx)
+    CONJ_COMPUTE_CASE(DT_INT64, int64_t, ctx)
+    CONJ_COMPUTE_CASE(DT_UINT8, uint8_t, ctx)
+    CONJ_COMPUTE_CASE(DT_UINT16, uint16_t, ctx)
+    CONJ_COMPUTE_CASE(DT_UINT32, uint32_t, ctx)
+    CONJ_COMPUTE_CASE(DT_UINT64, uint64_t, ctx)
+    CONJ_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
+    CONJ_COMPUTE_CASE(DT_FLOAT, float_t, ctx)
+    CONJ_COMPUTE_CASE(DT_DOUBLE, double_t, ctx)
     default:
       KERNEL_LOG_ERROR("Conj kernel data type [%s] not support.", DTypeStr(dataType).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
@@ -67,20 +79,26 @@ uint32_t ConjCpuKernel::ConjCompute(const CpuKernelContext &ctx) const {
   auto outputY = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   int64_t dataNum = ctx.Input(0)->NumElements();
   int64_t dataSize = dataNum * static_cast<int64_t>(sizeof(T));
+
+  std::function<void(T *, T *, T *)> conj_compute;
+  if constexpr ((std::is_same_v<T, std::complex<float>>) || (std::is_same_v<T, std::complex<double>>)) {
+    conj_compute = [](T *input1, T *last1, T *d_first) {
+      std::transform(input1, last1, d_first, [](T x) { return std::conj(x); });
+    };
+  } else {
+    conj_compute = [](T *input1, T *last1, T *d_first) { std::copy(input1, last1, d_first); };
+  }
+
   if (dataSize <= kParallelDataNums) {
-    for (int64_t i = 0; i < dataNum; i++) {
-      *(outputY + i) = std::conj(*(inputX + i));
-    }
+    conj_compute(inputX, inputX + dataNum, outputY);
   } else {
     uint32_t minCoreNum = 1;
     int64_t maxCoreNum = std::max(minCoreNum, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
     if (maxCoreNum > dataNum) {
       maxCoreNum = dataNum;
     }
-    auto shardConj = [&inputX, &outputY](size_t start, size_t end) {
-      for (size_t i = start; i < end; i++) {
-        *(outputY + i) = std::conj(*(inputX + i));
-      }
+    auto shardConj = [&inputX, &outputY, conj_compute](size_t start, size_t end) {
+      conj_compute(inputX + start, inputX + end, outputY + start);
     };
     KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, dataNum, dataNum / maxCoreNum, shardConj),
                         "Conj Compute failed.");
