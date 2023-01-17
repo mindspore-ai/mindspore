@@ -19,6 +19,10 @@
 #include <string>
 #include <memory>
 
+#include "backend/graph_compiler/backend.h"
+#include "backend/graph_compiler/transform.h"
+#include "common/device_common_test.h"
+#include "utils/ms_context.h"
 #include "utils/log_adapter.h"
 #include "frontend/operator/ops.h"
 #include "include/common/debug/anf_ir_dump.h"
@@ -121,5 +125,32 @@ FuncGraphPtr BackendCommon::GetFuncGraph(const FuncGraphPtr &func_graph, const A
   MS_LOG(INFO) << "New Function Graph infos:";
   PrintGraphNodeList(graph);
   return graph;
+}
+
+std::shared_ptr<session::KernelGraph> BackendCommon::Compile(const FuncGraphPtr &func_graph) {
+  auto new_manager = MakeManager({func_graph});
+  MS_EXCEPTION_IF_NULL(new_manager);
+  new_manager->AddFuncGraph(func_graph);
+  func_graph->set_manager(new_manager);
+
+  const std::string kDefaultDeviceName = "CPU";
+  auto graph_partition = std::make_shared<compile::GraphPartition>(compile::GetMsNonlinearOps(), kDefaultDeviceName);
+  bool multi_target = false;
+  auto segments = graph_partition->Partition(func_graph, &multi_target);
+  if (segments.empty()) {
+    return nullptr;
+  }
+  auto segment = segments[0];
+  FuncGraphPtr fg;
+  AnfNodePtrList inputs;
+  AnfNodePtrList outputs;
+  std::tie(fg, inputs, outputs) = compile::TransformSegmentToAnfGraph(segment->nodes_);
+  runtime::test::DeviceContextKey device_context_key{kDefaultDeviceName, 0};
+  auto device_context = std::make_shared<runtime::test::TestDeviceContext>(device_context_key);
+
+  auto compiler = std::make_shared<compile::GraphCompiler>();
+  auto graph_id =
+    compiler->CompileGraph(segment, outputs, device_context.get(), device::RunMode::kKernelMode, false);
+  return compiler->Fetch(graph_id);
 }
 }  // namespace mindspore

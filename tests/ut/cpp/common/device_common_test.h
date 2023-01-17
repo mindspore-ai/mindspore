@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_TEST_UT_CPP_RUNTIME_GRAPH_SCHEDULER_GRAPH_SCHEDULER_COMMON_TEST_H
-#define MINDSPORE_TEST_UT_CPP_RUNTIME_GRAPH_SCHEDULER_GRAPH_SCHEDULER_COMMON_TEST_H
+#ifndef TESTS_UT_CPP_COMMON_DEVICE_COMMON_TEST_H
+#define TESTS_UT_CPP_COMMON_DEVICE_COMMON_TEST_H
 
 #include "common/common_test.h"
 #include "abstract/abstract_function.h"
@@ -38,9 +38,9 @@ using device::DeviceAddressPtr;
 using device::DeviceContextKey;
 using device::DeviceContextRegister;
 using device::DeviceType;
+using device::UserDataPtr;
 using kernel::AddressPtr;
 using session::KernelGraph;
-using device::UserDataPtr;
 
 class TestDeviceAddress : public DeviceAddress {
  public:
@@ -93,20 +93,59 @@ class TestKernelExecutor : public device::KernelExecutor {
       MS_EXCEPTION_IF_NULL(node);
       if (node->kernel_info() == nullptr) {
         auto kernel_info = std::make_shared<device::KernelInfo>();
-        std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
-        kernel_info->set_select_kernel_build_info(builder->Build());
         node->set_kernel_info(kernel_info);
-      } else {
-        const auto &kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
-        if (kernel_info->select_kernel_build_info() == nullptr) {
-          std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
-          kernel_info->set_select_kernel_build_info(builder->Build());
-        }
       }
-      AnfAlgo::SetOutputAddr(std::make_shared<TestDeviceAddress>(nullptr, 0), 0, node.get());
+
+      const auto &kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+      if (kernel_info->select_kernel_build_info() == nullptr) {
+        std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
+
+        std::vector<std::string> inputs_format;
+        std::vector<TypeId> inputs_type;
+        size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
+        for (size_t input_index = 0; input_index < input_num; ++input_index) {
+          (void)inputs_format.emplace_back(kOpFormat_DEFAULT);
+          (void)inputs_type.emplace_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
+        }
+
+        std::vector<std::string> outputs_format;
+        std::vector<TypeId> outputs_type;
+        size_t output_num = AnfAlgo::GetOutputElementNum(node);
+        for (size_t output_index = 0; output_index < output_num; ++output_index) {
+          (void)outputs_format.emplace_back(kOpFormat_DEFAULT);
+          (void)outputs_type.emplace_back(common::AnfAlgo::GetOutputInferDataType(node, output_index));
+        }
+
+        builder->SetOriginDataFormat(kOpFormat_DEFAULT);
+        builder->SetInputsFormat(inputs_format);
+        builder->SetInputsDeviceType(inputs_type);
+        builder->SetOutputsFormat(outputs_format);
+        builder->SetOutputsDeviceType(outputs_type);
+        kernel_info->set_select_kernel_build_info(builder->Build());
+      }
+
+      std::vector<size_t> input_size_list;
+      std::vector<size_t> output_size_list;
+      size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
+      for (size_t input_index = 0; input_index < input_num; ++input_index) {
+        TypeId type_id = AnfAlgo::GetInputDeviceDataType(node, input_index);
+        size_t type_size = GetTypeByte(TypeIdToType(type_id));
+        auto shape = AnfAlgo::GetInputDeviceShape(node, input_index);
+        size_t tensor_size =
+          shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+        tensor_size = std::max(tensor_size, type_size);
+        (void)input_size_list.emplace_back(tensor_size);
+      }
+      size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+      for (size_t output_index = 0; output_index < output_num; ++output_index) {
+        size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(node, output_index);
+        (void)output_size_list.emplace_back(tensor_size);
+        AnfAlgo::SetOutputAddr(std::make_shared<TestDeviceAddress>(nullptr, tensor_size), output_index, node.get());
+      }
+
       auto kernel_mod_ptr = std::make_shared<TestKernelMod>();
-      kernel_mod_ptr->SetInputSizeList({4});
-      kernel_mod_ptr->SetOutputSizeList({4});
+      kernel_mod_ptr->SetInputSizeList(input_size_list);
+      kernel_mod_ptr->SetOutputSizeList(output_size_list);
       kernel_mod_ptr->SetWorkspaceSizeList({4});
       AnfAlgo::SetKernelMod(kernel_mod_ptr, node.get());
     }
@@ -125,4 +164,4 @@ class TestDeviceContext : public device::DeviceInterface<TestKernelExecutor, Tes
 }  // namespace test
 }  // namespace runtime
 }  // namespace mindspore
-#endif  // MINDSPORE_TEST_UT_CPP_RUNTIME_GRAPH_SCHEDULER_GRAPH_SCHEDULER_COMMON_TEST_H
+#endif  // TESTS_UT_CPP_COMMON_DEVICE_COMMON_TEST_H
