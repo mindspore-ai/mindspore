@@ -70,6 +70,9 @@ int SparseToDenseV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto output_shape = inputs.at(kIndex1)->GetShapeVector();
   output_shape_ = Convert2SizeT(output_shape);
   auto values_shape = inputs.at(kIndex2)->GetShapeVector();
+  if (values_shape.size() == 0) {
+    MS_EXCEPTION(ValueError) << "For the third input parameter, the size of it should not be empty.";
+  }
   values_size_ = LongToSize(values_shape[0]);
   if (indices_shape_.size() == 0) {
     if (values_shape.size() != 0 && values_shape[0] != 1) {
