@@ -626,18 +626,18 @@ def coo_concat(sp_input, concat_dim=0):
         ``CPU``
 
     Examples:
-        >>> indices0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int32)
+        >>> indices0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values0 = Tensor([1, 2], dtype=mstype.int32)
         >>> shape0 = (3, 4)
         >>> input0 = COOTensor(indices0, values0, shape0)
-        >>> indices1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int32)
+        >>> indices1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int64)
         >>> values1 = Tensor([3, 4], dtype=mstype.int32)
         >>> shape1 = (3, 4)
         >>> input1 = COOTensor(indices1, values1, shape1)
         >>> concat_dim = 1
         >>> out = ops.coo_concat((input0, input1), concat_dim)
         >>> print(out)
-        COOTensor(shape=[3, 8], dtype=Int32, indices=Tensor(shape=[4, 2], dtype=Int32, value=
+        COOTensor(shape=[3, 8], dtype=Int32, indices=Tensor(shape=[4, 2], dtype=Int64, value=
         [[0 1]
          [0 4]
          [1 2]
