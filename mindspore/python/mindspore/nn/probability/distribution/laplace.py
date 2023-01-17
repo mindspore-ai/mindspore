@@ -50,7 +50,7 @@ class Laplace(Distribution):
         TypeError: When the input `dtype` is not a subclass of float.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore

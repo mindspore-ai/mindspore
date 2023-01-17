@@ -3366,7 +3366,7 @@ def nonzero(x):
         ValueError: If 'x' dim equal to 0.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
