@@ -95,24 +95,24 @@ def test_top_k_functional():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     x_np = np.random.rand(3, 4).astype(np.float32)
     k = 4
-    ms_output = F.top_k(Tensor(x_np), k, sorted=True)
+    ms_output = F.topk(Tensor(x_np), k, sorted=True)
     np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
     x_np = np.random.rand(3, 4).astype(np.float32)
     k = 4
-    ms_output = F.top_k(Tensor(x_np), k, sorted=False)
+    ms_output = F.topk(Tensor(x_np), k, sorted=False)
     assert np.allclose(ms_output[0].asnumpy(), x_np)
 
     x_np = np.random.rand(2, 3, 4).astype(np.float32)
     k = 2
-    ms_output = F.top_k(Tensor(x_np), k, sorted=True)
+    ms_output = F.topk(Tensor(x_np), k, sorted=True)
     np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
     x_np = np.random.rand(512, 1024).astype(np.float32)
     k = 512
-    ms_output = F.top_k(Tensor(x_np), k, sorted=True)
+    ms_output = F.topk(Tensor(x_np), k, sorted=True)
     np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
@@ -129,23 +129,23 @@ def test_top_k_tensor():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     x_np = np.random.rand(3, 4).astype(np.float32)
     k = 4
-    ms_output = Tensor(x_np).top_k(k, sorted=True)
+    ms_output = Tensor(x_np).topk(k, sorted=True)
     np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
     x_np = np.random.rand(3, 4).astype(np.float32)
     k = 4
-    ms_output = Tensor(x_np).top_k(k, sorted=False)
+    ms_output = Tensor(x_np).topk(k, sorted=False)
     assert np.allclose(ms_output[0].asnumpy(), x_np)
 
     x_np = np.random.rand(2, 3, 4).astype(np.float32)
     k = 2
-    ms_output = Tensor(x_np).top_k(k, sorted=True)
+    ms_output = Tensor(x_np).topk(k, sorted=True)
     np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
     x_np = np.random.rand(512, 1024).astype(np.float32)
     k = 512
-    ms_output = Tensor(x_np).top_k(k, sorted=True)
+    ms_output = Tensor(x_np).topk(k, sorted=True)
     np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
     assert np.allclose(ms_output[0].asnumpy(), np_output)

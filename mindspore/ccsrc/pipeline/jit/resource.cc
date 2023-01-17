@@ -371,7 +371,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"argmax_with_value", std::string("argmax_with_value")},            // P.ArgMaxWithValue
        {"argmin_with_value", std::string("argmin_with_value")},            // P.ArgMinWithValue
        {"tile", std::string("tile")},                                      // P.Tile
-       {"top_k", std::string("top_k")},                                    // P.TopK()
+       {"topk", std::string("topk")},                                      // P.TopK()
        {"isfinite", std::string("isfinite")},                              // P.isfinite()
        {"cos", std::string("cos")},                                        // cos()
        {"cov", std::string("cov")},                                        // cov()
