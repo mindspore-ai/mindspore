@@ -66,7 +66,7 @@ bool LiteRTExecutorPlugin::Register() {
   }
   auto plugin_impl = create_kernel_func();
   if (plugin_impl == nullptr) {
-    MS_LOG(ERROR) << "Create custom TensorRT kernel failed.";
+    MS_LOG(ERROR) << "Create custom litert kernel failed.";
     return false;
   }
   is_registered_ = true;

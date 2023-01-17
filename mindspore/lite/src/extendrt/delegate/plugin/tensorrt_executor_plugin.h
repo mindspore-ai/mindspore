@@ -24,6 +24,7 @@ class MS_API TensorRTExecutorPlugin {
  public:
   static TensorRTExecutorPlugin &GetInstance();
   bool Register();
+  Status TryRegister();
 
   int GetGPUGroupSize();
   int GetRankID();

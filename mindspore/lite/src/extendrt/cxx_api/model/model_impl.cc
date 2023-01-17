@@ -29,6 +29,9 @@
 #include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
 #include "mindspore/core/load_mindir/load_model.h"
 #include "src/common/common.h"
+#include "src/extendrt/delegate/plugin/tensorrt_executor_plugin.h"
+#include "src/extendrt/kernel/ascend/plugin/ascend_kernel_plugin.h"
+
 namespace mindspore {
 namespace {
 const char *const kExecutionPlan = "execution_plan";
@@ -479,4 +482,20 @@ std::string ModelImpl::GetConfig(const std::string &section, const std::string &
 }
 
 ModelImpl::~ModelImpl() { FuncGraphReuseManager::GetInstance()->ReleaseSharedFuncGraph(config_info_); }
+
+bool ModelImpl::CheckModelSupport(enum DeviceType device_type, ModelType model_type) {
+  if (model_type != kMindIR) {
+    return false;
+  }
+  if (device_type == kCPU) {
+    return true;
+  }
+  if (device_type == kGPU) {
+    return lite::TensorRTExecutorPlugin::GetInstance().TryRegister().IsOk();
+  }
+  if (device_type == kAscend) {
+    return kernel::AscendKernelPlugin::GetInstance().TryRegister().IsOk();
+  }
+  return false;
+}
 }  // namespace mindspore

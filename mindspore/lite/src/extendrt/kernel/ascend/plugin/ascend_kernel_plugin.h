@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include "kernel/kernel.h"
+#include "include/api/status.h"
 
 namespace mindspore::kernel {
 using KernelModFunc = std::function<std::shared_ptr<kernel::KernelMod>()>;
@@ -29,7 +30,8 @@ class AscendKernelPlugin {
  public:
   static AscendKernelPlugin &GetInstance();
 
-  void Register();
+  Status TryRegister();
+  bool Register();
   void UpdateRegisterStatus(bool status);
   void DestroyAscendKernelMap();
 

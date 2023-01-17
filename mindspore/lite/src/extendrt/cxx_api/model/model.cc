@@ -263,4 +263,8 @@ Status Model::UpdateConfig(const std::vector<char> &section,
   MS_LOG(ERROR) << "Model implement is null!";
   return kLiteFileError;
 }
+
+bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type) {
+  return ModelImpl::CheckModelSupport(device_type, model_type);
+}
 }  // namespace mindspore
