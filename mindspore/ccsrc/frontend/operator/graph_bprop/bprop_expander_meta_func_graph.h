@@ -37,34 +37,31 @@ class BpropExpanderMetaFuncGraph : public BpropMetaFuncGraph {
   MS_DECLARE_PARENT(BpropExpanderMetaFuncGraph, BpropMetaFuncGraph);
   FuncGraphPtr BpropExpanderFunc(const AbstractBasePtrList &args_spec_list) {
     int64_t list_size = SizeToLong(args_spec_list.size());
-    auto bprop_fg = std::make_shared<FuncGraph>();
+    auto fg = std::make_shared<FuncGraph>();
     std::vector<AnfNodePtr> grads;
     grads.push_back(NewValueNode(primal_));
     for (int64_t i = 0; i < list_size - TWO; ++i) {
       auto abs_i = args_spec_list[i];
-      auto x = bprop_fg->add_parameter();
+      auto x = fg->add_parameter();
       x->set_abstract(args_spec_list[i]);
       x->abstract()->set_value(args_spec_list[i]->BuildValue());
       (void)grads.emplace_back(x);
     }
-    auto out = bprop_fg->add_parameter();
-
+    auto out = fg->add_parameter();
     out->set_abstract(args_spec_list[list_size - TWO]);
     (void)grads.emplace_back(out);
-
-    auto dout = bprop_fg->NewCNode({NewValueNode(prim::kPrimZerosLike), out});
+    auto dout = fg->NewCNode({NewValueNode(prim::kPrimZerosLike), out});
     dout->set_abstract(args_spec_list[list_size - ONE]);
     (void)grads.emplace_back(dout);
-    auto newcnode = bprop_fg->NewCNode(grads);
+    auto newcnode = fg->NewCNode(grads);
     expander::bprop::BpropExpanderInGraphMode be;
+    FuncGraphPtr bprop_fg = nullptr;
     if (be.Run(newcnode)) {
       bprop_fg = be.GetGraph();
+      (void)mindspore::opt::ConvertPrimToPrimPy(bprop_fg);
     } else {
-      MS_LOG(WARNING) << "Bprop FuncGraph Create Failed!";
+      MS_LOG(DEBUG) << "Expander failed. Prim is: " << primal_->name();
     }
-
-    (void)mindspore::opt::ConvertPrimToPrimPy(bprop_fg);
-
     return bprop_fg;
   }
   FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &input_abs) override {
