@@ -342,7 +342,7 @@ Comparison Functions
     mindspore.ops.ne
     mindspore.ops.not_equal
     mindspore.ops.msort
-    mindspore.ops.top_k
+    mindspore.ops.topk
 
 Linear Algebraic Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

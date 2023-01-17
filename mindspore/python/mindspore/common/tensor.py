@@ -3467,7 +3467,7 @@ class Tensor(Tensor_):
 
     def topk(self, k, dim=None, largest=True, sorted=True):
         r"""
-        For details, please refer to :func:`mindspore.ops.top_k`.
+        For details, please refer to :func:`mindspore.ops.topk`.
         """
         self._init_check()
         return tensor_operator_registry.get("topk")(self, k, dim, largest, sorted)

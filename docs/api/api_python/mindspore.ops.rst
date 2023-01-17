@@ -342,7 +342,7 @@ Reduction函数
     mindspore.ops.ne
     mindspore.ops.not_equal
     mindspore.ops.msort
-    mindspore.ops.top_k
+    mindspore.ops.topk
 
 线性代数函数
 ^^^^^^^^^^^^^
