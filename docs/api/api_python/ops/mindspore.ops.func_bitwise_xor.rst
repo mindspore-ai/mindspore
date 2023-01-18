@@ -13,7 +13,7 @@ mindspore.ops.bitwise_xor
     如果 `x` 和 `y` 数据类型不同，低精度数据类型将自动转换成高精度数据类型。
 
     参数：
-        - **x** (Tensor) - 第一个输入Tensor，其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。支持的数据类型有：int8、uint8、int16、uint16、int32、uint32、int64和uint64。
+        - **x** (Tensor) - 第一个输入Tensor，其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
         - **y** (Tensor) - 第二个输入Tensor，数据类型与 `x` 一致。
 
     返回：
