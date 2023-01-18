@@ -26,6 +26,10 @@ STATUS ToNCHWFormat::GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTyp
   auto prim_node = cnode->input(0);
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
   MS_ERROR_IF_NULL_W_RET_VAL(prim, lite::RET_ERROR);
+  if (sensitive_ops_.find(prim->name()) == sensitive_ops_.end()) {
+    MS_LOG(DEBUG) << "node " << prim->name() << " do not need to change format !";
+    return lite::RET_OK;
+  }
   if (prim->GetAttr(ops::kFormat) != nullptr) {
     auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
     if (node_format == mindspore::NCHW || node_format == mindspore::KCHW) {
@@ -38,10 +42,8 @@ STATUS ToNCHWFormat::GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTyp
       return lite::RET_ERROR;
     }
   }
-  if (sensitive_ops_.find(prim->name()) != sensitive_ops_.end()) {
-    trans_info->pre_ = opt::kNHWC2NCHW;
-    trans_info->post_ = opt::kNCHW2NHWC;
-  }
+  trans_info->pre_ = opt::kNHWC2NCHW;
+  trans_info->post_ = opt::kNCHW2NHWC;
   return lite::RET_OK;
 }
 
