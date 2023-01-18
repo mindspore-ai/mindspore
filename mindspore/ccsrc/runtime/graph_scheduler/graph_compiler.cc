@@ -563,7 +563,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
   // Kernels that are not supported by other device can be backed off and rebuilt on the CPU.
 #ifdef WITH_BACKEND
-  if (!run_in_pynative) {
+  if (!graph->is_from_single_op()) {
     auto cpu_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
       {kCPUDevice, device_context->device_context_key().device_id_});
     MS_EXCEPTION_IF_NULL(cpu_device_context);
