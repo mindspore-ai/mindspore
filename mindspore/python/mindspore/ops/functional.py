@@ -290,8 +290,6 @@ tensor_operator_registry.register('expand_dims', expand_dims)
 # support GE backend for no compare operators
 tensor_operator_registry.register('cast', cast)
 tensor_operator_registry.register('shape_mul', shape_mul)
-tensor_operator_registry.register('fill', fill)
-tensor_operator_registry.register('fills', fills)
 tensor_operator_registry.register('concatenate', P.Concat)
 tensor_operator_registry.register('eye', eye)
 tensor_operator_registry.register('reduce_sum', reduce_sum)
