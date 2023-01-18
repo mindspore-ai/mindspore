@@ -31,6 +31,10 @@ void Attention::set_head_size(int64_t head_size) {
 
 void Attention::set_cross(bool cross) { (void)this->AddAttr(kCross, api::MakeValue(cross)); }
 
+void Attention::set_position_bias(bool position_bias) {
+  (void)this->AddAttr(kPositionBias, api::MakeValue(position_bias));
+}
+
 int64_t Attention::get_head_num() const {
   auto value_ptr = this->GetAttr(kAttentionNumHeads);
   return GetValue<int64_t>(value_ptr);
@@ -46,10 +50,16 @@ bool Attention::get_cross() const {
   return GetValue<bool>(value_ptr);
 }
 
-void Attention::Init(int64_t head_num, int64_t head_size, bool cross) {
+bool Attention::get_position_bias() const {
+  auto value_ptr = this->GetAttr(kPositionBias);
+  return GetValue<bool>(value_ptr);
+}
+
+void Attention::Init(int64_t head_num, int64_t head_size, bool position_bias, bool cross) {
   this->set_head_num(head_num);
   this->set_head_size(head_size);
   this->set_cross(cross);
+  this->set_position_bias(position_bias);
 }
 REGISTER_PRIMITIVE_C(kNameAttention, Attention);
 }  // namespace mindspore::ops

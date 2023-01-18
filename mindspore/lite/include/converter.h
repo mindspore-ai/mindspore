@@ -83,6 +83,9 @@ class MS_API Converter {
   void SetNoFusion(bool no_fusion);
   bool GetNoFusion();
 
+  void SetOptimizeTransformer(bool optimize_transformer);
+  bool GetOptimizeTransformer();
+
   inline void SetDevice(const std::string &device);
   inline std::string GetDevice();
 

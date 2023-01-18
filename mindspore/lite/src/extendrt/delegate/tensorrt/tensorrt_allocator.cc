@@ -106,7 +106,8 @@ int TensorRTAllocator::SyncMemDeviceToHost(tensor::Tensor *host_tensor, const st
   return SyncMemInHostAndDevice(host_tensor->data_c(), device_tensor_name, host_tensor->Size(), false, sync);
 }
 
-int TensorRTAllocator::SyncMemDeviceToHost(void *dst_data, size_t data_size, const std::string &device_tensor_name) {
+int TensorRTAllocator::SyncMemDeviceToHost(void *dst_data, size_t data_size, const std::string &device_tensor_name,
+                                           bool sync) {
   if (dst_data == nullptr) {
     MS_LOG(ERROR) << " dst host data cannot be nullptr.";
     return RET_ERROR;
@@ -124,7 +125,11 @@ int TensorRTAllocator::SyncMemDeviceToHost(void *dst_data, size_t data_size, con
     MS_LOG(ERROR) << "device_ptr is null for " << device_tensor_name;
     return RET_ERROR;
   }
-  auto cuda_ret = cudaMemcpy(dst_data, device_ptr, data_size, cudaMemcpyDeviceToHost);
+  cudaError_t cuda_ret;
+  if (sync)
+    cuda_ret = cudaMemcpy(dst_data, device_ptr, data_size, cudaMemcpyDeviceToHost);
+  else
+    cuda_ret = cudaMemcpyAsync(dst_data, device_ptr, data_size, cudaMemcpyDeviceToHost, stream_);
   if (cuda_ret != cudaSuccess) {
     MS_LOG(ERROR) << "copy mem failed,ret " << cudaGetErrorName(cuda_ret);
     return RET_ERROR;
@@ -176,7 +181,11 @@ int TensorRTAllocator::SyncMemInHostAndDevice(void *host_data, const std::string
   void *src_ptr = is_host2device ? host_data : device_ptr;
   void *dst_ptr = is_host2device ? device_ptr : host_data;
   cudaMemcpyKind kind = is_host2device ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToHost;
-  auto cuda_ret = cudaMemcpy(dst_ptr, src_ptr, data_size, kind);
+  cudaError_t cuda_ret;
+  if (sync)
+    cuda_ret = cudaMemcpy(dst_ptr, src_ptr, data_size, kind);
+  else
+    cuda_ret = cudaMemcpyAsync(dst_ptr, src_ptr, data_size, kind, stream_);
   if (cuda_ret != cudaSuccess) {
     MS_LOG(ERROR) << "copy mem failed,ret " << cudaGetErrorName(cuda_ret);
     return RET_ERROR;

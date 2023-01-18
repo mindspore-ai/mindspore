@@ -125,7 +125,7 @@ static BaseRef GetVar(const BaseRef &x) {
 EquivPtr MatchOnVar(const BaseRef &pattern, const BaseRef &expr, EquivPtr equiv) {
   MS_LOG(DEBUG) << "MatchOnVar pattern " + pattern.ToString() + " expr: " + expr.ToString();
 
-  if (equiv == nullptr) MS_EXCEPTION_IF_NULL(equiv);
+  MS_EXCEPTION_IF_NULL(equiv);
   if (utils::isa<VarPtr>(pattern)) {
     VarPtr var = utils::cast<VarPtr>(pattern);
     if (var->matches(expr)) {
@@ -222,7 +222,9 @@ EquivPtr PatternEngine::AlignSVar(const VectorRef &values_pattern, const VectorR
       return nullptr;
     }
   }
-  if ((values_expr_len == 0) && (values_pattern_len == 0)) return equiv;
+  if ((values_expr_len == 0) && (values_pattern_len == 0)) {
+    return equiv;
+  }
   if (values_expr_len < values_pattern_len - 1) {
     MS_LOG(DEBUG) << "invalid size: pattern len " << values_pattern_len << ", expr len " << values_expr_len;
     return nullptr;

@@ -89,6 +89,7 @@ Flags::Flags() {
           "Set the target device, support Ascend, Ascend310 and Ascend310P will be deprecated.", "");
   AddFlag(&Flags::saveTypeStr, "saveType", "The type of saved model. MINDIR | MINDIR_LITE", "MINDIR_LITE");
   AddFlag(&Flags::optimizeStr, "optimize", "The type of optimization. none | general | ascend_oriented", "");
+  AddFlag(&Flags::optimizeTransformerStr, "optimizeTransformer", "Enable Fast-Transformer fusion true|false", "false");
 }
 
 int Flags::InitInputOutputDataType() {
@@ -274,7 +275,7 @@ int Flags::InitExportMindIR() {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->exportMindIR == "MINDIR") {
+  if ((this->exportMindIR == "MINDIR") && (this->optimizeTransformer == false)) {
     this->disableFusion = true;
   }
   return RET_OK;
@@ -307,6 +308,18 @@ int Flags::InitSaveType() {
 
   if (this->saveTypeStr == "MINDIR") {
     this->disableFusion = true;
+  }
+  return RET_OK;
+}
+
+int Flags::InitOptimizeTransformer() {
+  if (this->optimizeTransformerStr == "true") {
+    this->optimizeTransformer = true;
+  } else if (this->optimizeTransformerStr == "false") {
+    this->optimizeTransformer = false;
+  } else {
+    std::cerr << "INPUT ILLEGAL:  optimizeTransformer must be true|false " << std::endl;
+    return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;
 }
@@ -383,6 +396,13 @@ int Flags::Init(int argc, const char **argv) {
     std::cerr << "Init encrypt failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
+
+  ret = InitOptimizeTransformer();
+  if (ret != RET_OK) {
+    std::cerr << "Init optimize transformers failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+
   ret = InitPreInference();
   if (ret != RET_OK) {
     std::cerr << "Init pre inference failed." << std::endl;

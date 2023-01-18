@@ -97,6 +97,16 @@ OpParameter *PopulateCustomParameter(const void *prim) {
 
     param->op_parameter_.type_ = PrimType_Inner_SplitReduceConcatFusion;
     return reinterpret_cast<OpParameter *>(param);
+  } else if (type == "EncoderLayer") {
+    std::cout << "EncoderLayer populate" << std::endl;
+    auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+    if (param == nullptr) {
+      MS_LOG(ERROR) << "malloc EncoderLayer failed.";
+      return nullptr;
+    }
+    memset(param, 0, sizeof(OpParameter));
+    param->type_ = PrimType_Inner_EncoderLayer;
+    return reinterpret_cast<OpParameter *>(param);
   } else {
     MS_LOG(ERROR) << "Unsupported custom type: " << type;
   }

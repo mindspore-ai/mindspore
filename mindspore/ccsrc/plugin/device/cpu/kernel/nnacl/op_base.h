@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_OP_BASE_H_
-#define MINDSPORE_NNACL_OP_BASE_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_OP_BASE_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_OP_BASE_H_
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -37,8 +37,10 @@
 #define C8NUM 8
 #define C9NUM 9
 #define C10NUM 10
+#define C11NUM 11
 #define C12NUM 12
 #define C13NUM 13
+#define C14NUM 14
 #define C16NUM 16
 #define C20NUM 20
 #define C21NUM 21
@@ -533,6 +535,7 @@ enum PrimType {
   PrimType_Inner_ShapeFusion = 10003,
   PrimType_Inner_GraphKernel = 10004,
   PrimType_Inner_SplitReduceConcatFusion = 10005,
+  PrimType_Inner_EncoderLayer = 10006,
   PrimType_InnerOpMax,
   PrimType_InnerOpMin = PrimType_Inner_ToFormat
 };
@@ -660,4 +663,4 @@ typedef enum CalFixedMultiplierMode {
   Method_DoublePrecision
 } CalFixedMultiplierMode;
 
-#endif  // MINDSPORE_NNACL_OP_BASE_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_OP_BASE_H_

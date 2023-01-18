@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_MHA_TENSORRT_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_MHA_TENSORRT_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_ENCODER_TENSORRT_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_ENCODER_TENSORRT_H_
 
 #include <string>
 #include <vector>
@@ -23,49 +23,52 @@
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cudnn_utils.h"
 #include "src/fastertransformer/layers/encoder_layers/encoder.h"
-
 namespace mindspore::lite {
-class MhaTensorRT : public TensorRTOp {
+class EncoderTensorRT : public TensorRTOp {
  public:
-  MhaTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
-              const std::vector<TensorInfo> &out_tensors, std::string name)
+  EncoderTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                  const std::vector<TensorInfo> &out_tensors, std::string name)
       : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
-  ~MhaTensorRT() override = default;
-
-  // bool IsWeightInputHanledInner() const override { return true; }
+  ~EncoderTensorRT() override = default;
+  bool IsWeightInputHanledInner() const override { return is_ffn_fp16_; }
   int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                 const std::vector<TensorInfo> &out_tensors) override;
+
+ private:
+  nvinfer1::ITensor *castTensor(TensorRTContext *ctx, const TensorInfo &ms_tensor, const std::string &op_name);
+  bool is_ffn_fp16_ = false;
 };
 
-constexpr auto MHA_PLUGIN_NAME{"AttentionPlugin"};
-class MhaPlugin : public TensorRTPlugin {
+constexpr auto ENCODER_PLUGIN_NAME{"EncoderPlugin"};
+class EncoderPlugin : public TensorRTPlugin {
  public:
-  MhaPlugin(const std::string name, int compute_type, fastertransformer::encoderParamT params,
-            cublasLtHandle_t cublaslt_handle, uint32_t device_id)
-      : TensorRTPlugin(name, std::string(MHA_PLUGIN_NAME), device_id),
+  EncoderPlugin(const std::string name, int compute_type, fastertransformer::encoderParamT params,
+                cublasLtHandle_t cublaslt_handle, uint32_t device_id)
+      : TensorRTPlugin(name, std::string(ENCODER_PLUGIN_NAME), device_id),
         compute_type_(compute_type),
         params_(params),
         cublaslt_handle_(cublaslt_handle) {}
 
-  MhaPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
-      : TensorRTPlugin(std::string(name), std::string(MHA_PLUGIN_NAME)) {
+  EncoderPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
+      : TensorRTPlugin(std::string(name), std::string(ENCODER_PLUGIN_NAME)) {
     const nvinfer1::PluginField *fields = fc->fields;
     compute_type_ = static_cast<const int *>(fields[0].data)[0];
     params_ = static_cast<const fastertransformer::encoderParamT *>(fields[1].data)[0];
+    cublaslt_handle_ = static_cast<const cublasLtHandle_t *>(fields[2].data)[0];
   }
 
-  MhaPlugin(const char *name, const void *serialData, size_t serialLength)
-      : TensorRTPlugin(std::string(name), std::string(MHA_PLUGIN_NAME)) {
+  EncoderPlugin(const char *name, const void *serialData, size_t serialLength)
+      : TensorRTPlugin(std::string(name), std::string(ENCODER_PLUGIN_NAME)) {
     DeserializeValue(&serialData, &serialLength, &compute_type_, sizeof(int));
     DeserializeValue(&serialData, &serialLength, &params_, sizeof(fastertransformer::encoderParamT));
   }
 
-  MhaPlugin() = delete;
+  EncoderPlugin() = delete;
 
-  ~MhaPlugin() override {}
+  ~EncoderPlugin() override {}
 
   nvinfer1::IPluginV2DynamicExt *clone() const noexcept override;
   int enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
@@ -80,14 +83,8 @@ class MhaPlugin : public TensorRTPlugin {
                        const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept override;
   bool supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
                                  int nbOutputs) noexcept override;
-  void terminate() noexcept override;
-  int initialize() noexcept override;
 
  private:
-  template <typename T>
-  int RunCudaMha(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
-                 const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream,
-                 cublasGemmAlgo_t algoId);
   const std::string layer_name_;
   std::string name_space_;
   int compute_type_;
@@ -95,10 +92,15 @@ class MhaPlugin : public TensorRTPlugin {
   cublasLtHandle_t cublaslt_handle_;
   int num_of_inputs_;
   int num_of_outputs_;
+
+  template <typename T>
+  int RunCudaEncoder(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
+                     const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream,
+                     cublasGemmAlgo_t algoId);
 };
-class MhaPluginCreater : public TensorRTPluginCreater<MhaPlugin> {
+class EncoderPluginCreater : public TensorRTPluginCreater<EncoderPlugin> {
  public:
-  MhaPluginCreater() : TensorRTPluginCreater(std::string(MHA_PLUGIN_NAME)) {}
+  EncoderPluginCreater() : TensorRTPluginCreater(std::string(ENCODER_PLUGIN_NAME)) {}
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_MHA_TENSORRT_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_ENCODER_TENSORRT_H_

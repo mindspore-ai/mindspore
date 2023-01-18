@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_ATTENTION_H_
-#define LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_ATTENTION_H_
+#ifndef MINDSPORE_CORE_OPS_ATTENTION_H_
+#define MINDSPORE_CORE_OPS_ATTENTION_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -40,14 +40,17 @@ class MIND_API Attention : public BaseOperator {
   /// \param[in] head_num Define head number.
   /// \param[in] head_size Define size per head.
   /// \param[in] cross Define is cross attention. Default false.
-  void Init(int64_t head_num, int64_t head_size, bool cross = false);
+  /// \param[in] position_bias Define is position bias attention.
+  void Init(int64_t head_num, int64_t head_size, bool position_bias, bool cross = false);
   void set_head_num(int64_t head_num);
   void set_head_size(int64_t head_size);
   void set_cross(bool cross);
+  void set_position_bias(bool position_bias);
   int64_t get_head_num() const;
   int64_t get_head_size() const;
   bool get_cross() const;
+  bool get_position_bias() const;
 };
 }  // namespace ops
 }  // namespace mindspore
-#endif  // LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_ATTENTION_H_
+#endif  // MINDSPORE_CORE_OPS_ATTENTION_H_

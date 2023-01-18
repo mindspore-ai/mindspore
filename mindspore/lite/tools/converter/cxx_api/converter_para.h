@@ -58,6 +58,7 @@ struct ConverterPara {
   bool pre_infer = false;
   bool train_model = false;
   bool no_fusion = false;
+  bool optimize_transformer = false;
   bool is_runtime_converter = false;
   std::set<std::string> fusion_blacklists;
 

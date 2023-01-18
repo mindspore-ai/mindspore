@@ -90,8 +90,9 @@ class TensorRTSubGraph {
   nvinfer1::Dims SetInputDimsProfile(const TensorInfo &in_tensor, int index);
   int ParseInputsProfile();
 
-  int PreExecute(const std::vector<tensor::Tensor> &inputs, const std::vector<tensor::Tensor> &outputs);
-  int PostExecute(std::vector<tensor::Tensor> *outputs);
+  int PreExecute(const std::vector<tensor::Tensor> &inputs, const std::vector<tensor::Tensor> &outputs,
+                 bool sync = true);
+  int PostExecute(std::vector<tensor::Tensor> *outputs, bool sync = true);
 
   int OnNewInputShapes(const std::vector<ShapeVector> &inputs);
 
