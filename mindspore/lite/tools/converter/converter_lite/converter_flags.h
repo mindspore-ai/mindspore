@@ -40,7 +40,9 @@ class Flags : public virtual mindspore::lite::FlagParser {
   int InitPreInference();
   int InitSaveFP16();
   int InitNoFusion();
+  int InitOptimize();
   int InitExportMindIR();
+  int InitSaveType();
   int Init(int argc, const char **argv);
   int PreInit(int argc, const char **argv);
 
@@ -72,6 +74,9 @@ class Flags : public virtual mindspore::lite::FlagParser {
   bool infer = false;
   std::string exportMindIR;
   ModelType export_mindir = kMindIR_Lite;
+  std::string saveTypeStr;
+  ModelType save_type = kMindIR_Lite;
+  std::string optimizeStr;
 #ifdef ENABLE_OPENSSL
   std::string encryptionStr = "true";
   bool encryption = true;
