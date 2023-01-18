@@ -908,7 +908,7 @@ class HSigmoid(Primitive):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> hsigmoid = ops.HSigmoid()
@@ -3070,7 +3070,7 @@ class SoftMarginLoss(Primitive):
         ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> loss = ops.SoftMarginLoss()
@@ -6220,7 +6220,7 @@ class SparseApplyProximalAdagrad(Primitive):
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -7137,7 +7137,7 @@ class CTCGreedyDecoder(Primitive):
 
     Examples:
         >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]],
-        >>>                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
+        ...                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
         >>> decoded_indices, decoded_values, decoded_shape, log_probability = ops.CTCGreedyDecoder()(inputs,
         ...                                                                                          sequence_length)

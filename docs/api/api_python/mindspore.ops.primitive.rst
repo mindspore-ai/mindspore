@@ -468,7 +468,6 @@ Array操作
     mindspore.ops.MatrixDiagPartV3
     mindspore.ops.MatrixDiagV3
     mindspore.ops.MatrixExp
-    mindspore.ops.MatrixLogarithm
     mindspore.ops.MatrixPower
     mindspore.ops.Meshgrid
     mindspore.ops.ParallelConcat

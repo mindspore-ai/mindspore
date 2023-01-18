@@ -1212,7 +1212,7 @@ def inplace_add(x, v, indices):
         ValueError: If the values of `indices` are not in range of `[0, x.shape[0])`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -2515,7 +2515,7 @@ def matrix_exp(x):
         ValueError: If the last two dimensions of `x` are not equal.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 2], [0, 1]]), mindspore.float32)
@@ -4156,7 +4156,7 @@ def lcm(x1, x2):
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([7, 8, 9]))
@@ -7246,7 +7246,7 @@ def isinf(input):
         TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)

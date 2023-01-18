@@ -467,7 +467,6 @@ Array Operation
     mindspore.ops.MaskedFill
     mindspore.ops.MaskedSelect
     mindspore.ops.MatrixExp
-    mindspore.ops.MatrixLogarithm
     mindspore.ops.MatrixPower
     mindspore.ops.Meshgrid
     mindspore.ops.ParallelConcat

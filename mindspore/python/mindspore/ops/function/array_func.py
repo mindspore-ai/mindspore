@@ -1847,7 +1847,7 @@ def scatter_mul(input_x, indices, updates):
                       is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
@@ -3267,7 +3267,7 @@ def space_to_batch_nd(input_x, block_size, paddings):
         TypeError: If `paddings` is neither list nor tuple.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> block_size = [2, 2]
@@ -3942,7 +3942,7 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
         ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor
