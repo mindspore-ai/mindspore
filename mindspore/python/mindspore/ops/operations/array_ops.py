@@ -7802,7 +7802,41 @@ class TopK(Primitive):
     """
     Finds values and indices of the `k` largest entries along the last dimension.
 
-    Refer to :func:`mindspore.ops.top_k` for more details.
+    .. warning::
+        - If sorted is set to False, it will use the aicpu operator, the performance may be reduced.
+
+    If the `input_x` is a one-dimensional Tensor, finds the `k` largest entries in the Tensor,
+    and outputs its value and index as a Tensor. values[`k`] is the `k` largest item in `input_x`,
+    and its index is indices [`k`].
+
+    For a multi-dimensional matrix,
+    calculates the first `k` entries in each row (corresponding vector along the last dimension), therefore:
+
+    .. math::
+
+        values.shape = indices.shape = input.shape[:-1] + [k].
+
+    If the two compared elements are the same, the one with the smaller index value is returned first.
+
+    Args:
+        sorted (bool): If True, the obtained elements will be sorted by the values in descending order.
+            If False, the obtained elements will be sorted by the values in ascending order. Default: True.
+
+    Inputs:
+        - **input_x** (Tensor) - Input to be computed, data type must be float16, float32 or int32.
+        - **k** (int) - The number of top elements to be computed along the last dimension, constant input is needed.
+
+    Outputs:
+        A tuple consisting of `values` and `indexes`.
+
+        - **values** (Tensor) - The `k` largest elements in each slice of the last dimension.
+        - **indices** (Tensor) - The indices of values within the last dimension of input.
+
+    Raises:
+        TypeError: If `sorted` is not a bool.
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `k` is not an int.
+        TypeError: If dtype of `input_x` is not one of the following: float16, float32 or int32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
