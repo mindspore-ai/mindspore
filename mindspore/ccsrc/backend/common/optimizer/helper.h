@@ -237,7 +237,7 @@ BACKEND_EXPORT void TransferDependOrUpdateState(const CNodePtr &old_node, const 
                                                 const CNodePtr &new_node);
 
 // Infer the shape and write to out abstract.
-void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list, const AbstractBasePtr &out_abs);
+void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list, const CNodePtr &cnode);
 
 // Infer the shape and type.
 BACKEND_EXPORT AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim,

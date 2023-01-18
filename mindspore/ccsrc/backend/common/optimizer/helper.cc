@@ -1004,10 +1004,19 @@ void GetPrimitiveChangeInfo(const PrimitivePtr &prim, std::string *me_name, bool
   }
 }
 
-void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list,
-                   const AbstractBasePtr &out_abs) {
+void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(prim);
-  MS_EXCEPTION_IF_NULL(out_abs);
+  MS_EXCEPTION_IF_NULL(cnode);
+  AbstractBasePtr out_abs;
+  auto old_abs = cnode->abstract();
+  MS_EXCEPTION_IF_NULL(old_abs);
+
+  MS_LOG(DEBUG) << "Infer name = " << cnode->fullname_with_scope();
+  for (size_t i = 0; i < args_spec_list.size(); i++) {
+    MS_LOG(DEBUG) << "Infer name '" << cnode->fullname_with_scope() << "', The input[" << i
+                  << "] abs is : " << args_spec_list[i]->ToString();
+  }
+
   PrimitivePtr prim_clone = prim;
   std::string me_name;
   std::string ori_name;
@@ -1023,15 +1032,23 @@ void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spe
     auto infer = found.value();
     MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-shape implement for backend!");
     auto infer_spec_list = RectifyAbstract(prim_clone, args_spec_list);
-    auto shape = infer.InferShape(prim_clone, infer_spec_list);
-    if (shape == nullptr) {
-      MS_LOG(EXCEPTION) << "Infer shape with backend function failed";
+    if (common::AnfAlgo::IsDynamicSequence(cnode)) {
+      out_abs = infer.InferShapeAndType(nullptr, prim_clone, infer_spec_list);
+    } else {
+      out_abs = old_abs->Clone();
+      auto shape = infer.InferShape(prim_clone, infer_spec_list);
+      if (shape == nullptr) {
+        MS_LOG(EXCEPTION) << "Infer shape with backend function failed";
+      }
+      out_abs->set_shape(shape);
     }
-    out_abs->set_shape(shape);
     if (prim_clone != prim) {
       *prim = *prim_clone;
       prim->set_name(ori_name);
     }
+    cnode->set_abstract(out_abs);
+    MS_LOG(DEBUG) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << old_abs << " to "
+                  << out_abs;
     return;
   }
 
