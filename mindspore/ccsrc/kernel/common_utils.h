@@ -434,7 +434,7 @@ inline std::map<uint32_t, tensor::TensorPtr> GetKernelDepends(const CNodePtr &cn
   return std::map<uint32_t, tensor::TensorPtr>();
 }
 
-std::string FetchPrintInfoByKernelAttr(KernelAttr selected_kernel_attr);
+BACKEND_EXPORT std::string FetchPrintInfoByKernelAttr(KernelAttr selected_kernel_attr);
 // The related interfaces of kernel object type.
 BACKEND_EXPORT void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
                                                  const std::vector<KernelObjectType> &input_kernel_object_types,
@@ -455,6 +455,7 @@ BACKEND_EXPORT TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_ty
 KernelObjectType StringToKernelObjectType(const std::string &object_type);
 BACKEND_EXPORT void UnfoldKernelBuildInfo(const CNodePtr &kernel_node);
 BACKEND_EXPORT void SetDynamicInputSizeAttr(const CNodePtr &cnode);
+BACKEND_EXPORT bool IsDynamicParamKernel(const std::string &op_name);
 
 template <typename Derived>
 class MatchKernelHelper {

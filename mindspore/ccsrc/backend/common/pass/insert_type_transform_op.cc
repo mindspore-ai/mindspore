@@ -93,6 +93,8 @@ AnfNodePtr CreateNewNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &i
   auto origin_prim = GetValueNode<PrimitivePtr>(origin_node->input(kIndex0));
   if (!IsPrimitiveEquals(new_prim, origin_prim)) {
     SetKernelInfoForNewCNode(new_cnode, true);
+  } else if (kernel::IsDynamicParamKernel(origin_prim->name())) {
+    SetKernelInfoForDynamicParamKernel(new_cnode);
   } else {
     SetKernelInfoForNewCNodeByOrigNode(new_cnode, origin_node);
   }
@@ -227,6 +229,42 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
   }
 
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode.get());
+}
+
+void SetKernelInfoForDynamicParamKernel(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  cnode->set_kernel_info(kernel_info);
+  auto builder = std::make_shared<KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(builder);
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode.get());
+  std::vector<KernelObjectType> input_obj_type =
+    kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(cnode));
+  std::vector<KernelObjectType> output_obj_type =
+    kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllOutputObjectType(cnode));
+  builder->SetInputsKernelObjectType(input_obj_type);
+  builder->SetOutputsKernelObjectType(output_obj_type);
+  // Set input and output format.
+  std::vector<std::string> inputs_format;
+  std::vector<TypeId> inputs_type;
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
+    auto input_node = common::AnfAlgo::GetInputNode(cnode, input_index);
+    inputs_format.emplace_back(kOpFormat_DEFAULT);
+    inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
+  }
+  std::vector<std::string> outputs_format;
+  std::vector<TypeId> outputs_type;
+  size_t output_num = AnfAlgo::GetOutputElementNum(cnode);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
+    outputs_format.emplace_back(kOpFormat_DEFAULT);
+    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(cnode, output_index));
+  }
+  builder->SetInputsFormat(inputs_format);
+  builder->SetInputsDeviceType(inputs_type);
+  builder->SetOutputsFormat(outputs_format);
+  builder->SetOutputsDeviceType(outputs_type);
 }
 
 void SetKernelInfoForValueNode(const ValueNodePtr &value_node) {

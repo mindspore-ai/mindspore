@@ -668,6 +668,9 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     kernel::SetDynamicInputSizeAttr(kernel_node);
   }
 #endif
+  MS_LOG(INFO) << kernel_node->fullname_with_scope() << " kernel attr info: "
+               << kernel::FetchPrintInfoByKernelAttr(kernel::GetKernelAttrFromBuildInfo(builder->Build()));
+
   std::vector<std::tuple<size_t, TypeId, TypeId>> input_reduce_index;
   bool result = GetSelectKernelResult(kernel_node, builder, &kernel_type, &input_reduce_index);
   SetTensorDeviceInfo(*(builder->Build()), kernel_node, input_reduce_index);

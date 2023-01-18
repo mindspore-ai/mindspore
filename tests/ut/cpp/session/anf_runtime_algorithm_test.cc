@@ -229,6 +229,13 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputTensorNum) {
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract, x_abstract, x_abstract};
   bn->set_abstract(std::make_shared<abstract::AbstractTuple>(args_spec_list));
+  KernelBuildInfoBuilder builder;
+  builder.SetOutputsFormat(
+    {kOpFormat_DEFAULT, kOpFormat_DEFAULT, kOpFormat_DEFAULT, kOpFormat_DEFAULT, kOpFormat_DEFAULT});
+  builder.SetOutputsDeviceType(
+    {kFloat32->type_id(), kFloat32->type_id(), kFloat32->type_id(), kFloat32->type_id(), kFloat32->type_id()});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TUPLE_UNFOLD});
+  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), bn.get());
   EXPECT_EQ(AnfAlgo::GetOutputTensorNum(bn), 5);
   EXPECT_THROW(AnfAlgo::GetOutputTensorNum(nullptr), std::runtime_error);
   // test add as input

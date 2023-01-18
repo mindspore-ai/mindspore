@@ -382,11 +382,20 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
     types.push_back(is_weight ? kTypeUnknown : common::AnfAlgo::GetOutputInferDataType(parameter, 0));
   }
   // set parameter initaial device data type
-  auto abs_type = AnfAlgo::GetAbstractObjectType(node->abstract());
-  kernel_build_info_builder->SetOutputsKernelObjectType({kernel::TypeIdToKernelObjectType(abs_type)});
+  auto abs = node->abstract();
+  auto abs_type = AnfAlgo::GetAbstractObjectType(abs);
+  auto kernel_object_type = kernel::TypeIdToKernelObjectTypeForTupleUnfold(abs_type);
+  if (common::AnfAlgo::IsDynamicSequence(node)) {
+    kernel_object_type = kernel::KernelObjectType::TUPLE;
+  } else if (abs_type == kObjectTypeTuple) {
+    auto tuple_len = AnfAlgo::GetOutputElementNum(node);
+    formats = std::vector<std::string>(tuple_len, formats[0]);
+    types = std::vector<TypeId>(tuple_len, types[0]);
+  }
+  kernel_build_info_builder->SetOutputsKernelObjectType({kernel_object_type});
   kernel_build_info_builder->SetOutputsFormat(formats);
   kernel_build_info_builder->SetOutputsDeviceType(types);
-  MS_LOG(DEBUG) << "Kernel object type is:" << TypeIdToString(abs_type)
+  MS_LOG(DEBUG) << "Kernel object type is:" << TypeIdLabel(abs_type)
                 << " for parameter or value node:" << node->fullname_with_scope()
                 << ", debug name:" << node->DebugString();
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), node.get());
