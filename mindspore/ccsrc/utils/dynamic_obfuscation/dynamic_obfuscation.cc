@@ -81,7 +81,8 @@ TypeId get_node_dtype(const AnfNodePtr &input_node) {
   return data_type;
 }
 
-std::vector<std::string> name_split(std::string &node_name, const std::string &split_sign) {
+std::vector<std::string> name_split(const std::string &node_name_, const std::string &split_sign) {
+  std::string node_name = node_name_;
   node_name += split_sign;
   unsigned int name_len = node_name.size();
   std::string::size_type split_pos;
@@ -445,13 +446,36 @@ CNodePtr DynamicObfuscator::GetControlNode(const FuncGraphPtr &func_graph, const
   return nullptr;
 }
 
-mindspore::PrimitivePtr DynamicObfuscator::get_random_prim(std::string obf_type) {
+mindspore::PrimitivePtr DynamicObfuscator::get_random_prim(const std::string &obf_type,
+                                                           const mindspore::CNodePtr &node) {
   std::vector<string> split_words = name_split(obf_type, "-");
   if (split_words.empty()) {
     MS_LOG(WARNING) << "obf_type is empty.";
     return nullptr;
   }
   std::string prim_name_ori = split_words[0];
+  mindspore::PrimitivePtr poolptr = nullptr;
+  if (prim_name_ori == kMaxPoolOpName || prim_name_ori == kAvgPoolOpName) {
+    if (prim_name_ori == kMaxPoolOpName) {
+      poolptr = std::make_shared<Primitive>("AvgPool");
+    } else {
+      poolptr = std::make_shared<Primitive>("MaxPool");
+    }
+    auto primitive = GetCNodePrimitive(node);
+    MS_EXCEPTION_IF_NULL(primitive);
+    MS_EXCEPTION_IF_NULL(primitive->GetAttr("input_names"));
+    MS_EXCEPTION_IF_NULL(primitive->GetAttr("output_names"));
+    MS_EXCEPTION_IF_NULL(primitive->GetAttr("format"));
+    MS_EXCEPTION_IF_NULL(primitive->GetAttr("kernel_size"));
+    MS_EXCEPTION_IF_NULL(primitive->GetAttr("strides"));
+    poolptr->set_attr("input_names", primitive->GetAttr("input_names"));
+    poolptr->set_attr("output_names", primitive->GetAttr("output_names"));
+    poolptr->set_attr("format", primitive->GetAttr("format"));
+    poolptr->set_attr("pad_mode", primitive->GetAttr("pad_mode"));
+    poolptr->set_attr("kernel_size", primitive->GetAttr("kernel_size"));
+    poolptr->set_attr("strides", primitive->GetAttr("strides"));
+    return poolptr;
+  }
   mindspore::PrimitivePtr prim_node = one_input_prim_[0];
   do {
     int random = rand() % one_input_prim_.size();
@@ -717,7 +741,7 @@ FuncGraphPtr DynamicObfuscator::BuildFakeGraph(const FuncGraphPtr &fg, const std
     mindspore::ObfCase obf_case = ObfuscateOpCase(obf_type);
     switch (static_cast<mindspore::ObfCase>(obf_case)) {
       case ObfCase::OneInputNoWeightNode: {
-        mindspore::PrimitivePtr prim_node = get_random_prim(obf_type);
+        mindspore::PrimitivePtr prim_node = get_random_prim(obf_type, node);
         last_node = BuildOneInputNoWeightNode(fg_fake, last_node, prim_node);
         if (last_node == nullptr) {
           MS_LOG(ERROR) << "Last node after build is nullptr.";
