@@ -859,14 +859,28 @@ OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs 
                                  const std::vector<Shapes> &shape_list) {
   MS_EXCEPTION_IF_NULL(prim);
   OperatorInfoPtr operator_ = OperatorInstanceByName(prim->name(), attrs, shape_list);
-  if (operator_ == nullptr) {
-    if (IsInBatchParallelBlackList(prim)) {
-      MS_LOG(EXCEPTION) << "Operator " << prim->name() << " is not supported yet in auto parallel mode.";
-    }
-    MS_LOG(INFO) << "Create " << prim->name() << " failed, use batch parallel";
-    operator_ = OperatorInstanceByName(BATCH_PARALLEL, attrs, shape_list);
-    MS_EXCEPTION_IF_NULL(operator_);
+  if (operator_) {
+    return operator_;
   }
+  if (IsInBatchParallelBlackList(prim)) {
+    operator_ = OperatorInstanceByName(STAND_ALONE, attrs, shape_list);
+    prim->AddAttr(STAND_ALONE, MakeValue<bool>(true));
+    MS_LOG(INFO) << "Operator " << prim->name() << " is not supported yet in auto parallel mode. Use Stand Alone";
+    return operator_;
+  }
+  auto input_shape = shape_list.at(0);
+  MS_EXCEPTION_IF_NULL(g_device_manager);
+  auto device_num = g_device_manager->stage_device_num();
+  MS_EXCEPTION_IF_ZERO("device_num", device_num);
+  if (input_shape[0].empty() || input_shape[0][0] % device_num != 0) {
+    MS_LOG(INFO) << "Operator " << prim->name() << " use Stand Alone";
+    operator_ = OperatorInstanceByName(STAND_ALONE, attrs, shape_list);
+    prim->AddAttr(STAND_ALONE, MakeValue<bool>(true));
+    return operator_;
+  }
+  MS_LOG(INFO) << "Operator " << prim->name() << " use Batch Parallel";
+  operator_ = OperatorInstanceByName(BATCH_PARALLEL, attrs, shape_list);
+  prim->AddAttr(BATCH_PARALLEL, MakeValue<bool>(true));
   return operator_;
 }
 
@@ -1424,6 +1438,23 @@ StrategyPtr GenerateBatchParallelStrategy(const OperatorInfoPtr operator_, const
   (void)prim->SetAttrs(attrs);
   MS_LOG(INFO) << "prim " << prim->name() << " batch parallel strategy is " << attrs[GEN_STRATEGY]->ToString();
   return strategyPtr;
+}
+
+StrategyPtr GenerateStandAloneStrategy(const Shapes &inputs_shape) {
+  Strategies strategy_v;
+  for (size_t i = 0; i != inputs_shape.size(); i++) {
+    if (inputs_shape[i].empty()) {
+      MS_LOG(INFO) << "Elements of shapes is empty.";
+      Dimensions empty_element;
+      strategy_v.push_back(empty_element);
+    } else {
+      Dimensions element(inputs_shape[i].size(), 1);
+      strategy_v.push_back(element);
+    }
+  }
+  auto stage_id = g_device_manager->stage_id();
+  auto stra_ptr = NewStrategy(stage_id, strategy_v);
+  return stra_ptr;
 }
 
 bool IsInsertVirtualOutput(const FuncGraphPtr &root) {

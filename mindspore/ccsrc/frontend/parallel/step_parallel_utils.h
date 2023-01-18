@@ -103,6 +103,7 @@ Status ParallelInit();
 std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &name, const FuncGraphPtr &func_graph,
                                     size_t max_depth);
 void SetSharedParameterFlag(const FuncGraphPtr &root, const AnfNodePtr &parameter);
+StrategyPtr GenerateStandAloneStrategy(const Shapes &inputs_shape);
 StrategyPtr GenerateBatchParallelStrategy(const OperatorInfoPtr operator_, const PrimitivePtr prim);
 bool IsInsertVirtualOutput(const FuncGraphPtr &root);
 TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_pair);

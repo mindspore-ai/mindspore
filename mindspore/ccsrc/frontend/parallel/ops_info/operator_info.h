@@ -108,6 +108,7 @@ class OperatorInfo {
   virtual void ReComputeBatchSplitFlagList();
   std::shared_ptr<Strategies> GenerateBatchStrategiesWithCheck();
   void ComputeBatchSplitFlagList();
+  Shapes inputs_shape() const { return inputs_shape_; }
 
   double GetForwardMemoryCostFromCNode();
   // This is a common method for setting operator cost for a given strategy, in which the validity of this strategy
