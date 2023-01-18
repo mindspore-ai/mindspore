@@ -1556,28 +1556,14 @@ class BatchMatMul(Primitive):
         >>> y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
         >>> batmatmul = ops.BatchMatMul()
         >>> output = batmatmul(x, y)
-        >>> print(output)
-        [[[[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]]
-         [[[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]]]
+        >>> print(output.shape)
+        (2, 4, 1, 4)
         >>> x = Tensor(np.ones(shape=[2, 4, 3, 1]), mindspore.float32)
         >>> y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
         >>> batmatmul = ops.BatchMatMul(transpose_a=True)
         >>> output = batmatmul(x, y)
-        >>> print(output)
-        [[[[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]]
-         [[[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]]]
+        >>> print(output.shape)
+        (2, 4, 1, 4)
     """
 
     @prim_attr_register

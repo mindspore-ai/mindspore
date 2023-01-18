@@ -86,12 +86,18 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   constexpr size_t x_dim_limit = 3;
   constexpr size_t y_dim_limit = 2;
 
-  bool not_dynamic_shape = (!IsDynamic(x_shp)) && !(IsDynamic(y_shp));
-  if (not_dynamic_shape && (x_shp.size() < x_dim_limit || y_shp.size() < y_dim_limit)) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << prim_name
-      << "', input 'x' must be greater or equal to 3, input 'y' must be greater or equal to 2. But got 'x': "
-      << x_shp.size() << ", 'y': " << y_shp.size() << ".";
+  bool dynamic_shape = IsDynamic(x_shp) || IsDynamic(y_shp);
+  if (!dynamic_shape) {
+    if (x_shp.size() < x_dim_limit) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', the input 'x' must be a 3D or higher dimensional Tensor, but got " << x_shp.size()
+                               << "D shape " << x_shp;
+    }
+    if (y_shp.size() < y_dim_limit) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', the input 'y' must be a 2D or higher dimensional Tensor, but got " << y_shp.size()
+                               << "D shape " << y_shp;
+    }
   }
 
   constexpr size_t offset = 2;
@@ -105,18 +111,18 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   int64_t y_row = y_last[static_cast<size_t>(transpose_b)];
   if (std::find(x_shp.begin(), x_shp.end(), -1) == x_shp.end() &&
       std::find(y_shp.begin(), y_shp.end(), -1) == y_shp.end()) {
-    if (not_dynamic_shape && x_col != y_row) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << " evaluator shapes of inputs can not do this operator, "
-                               << "got " << x_col << " and " << y_row << " , with x1 shape " << x_shp
-                               << "(transpose_a=" << transpose_a << "})"
-                               << ", x2 shape " << y_shp << "(transpose_b=" << transpose_b << "})";
+    if (!dynamic_shape && x_col != y_row) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name
+                               << ", the row of the input 'y' should be same as the col of the input 'x', with x shape "
+                               << x_shp << "(transpose_a=" << transpose_a << "), y shape " << y_shp
+                               << "(transpose_b=" << transpose_b << ")";
     }
   }
   (void)primitive->AddAttr("transpose_x1", transpose_a_ptr);
   (void)primitive->AddAttr("transpose_x2", transpose_b_ptr);
   // Additional check for dynamic shape
   // Last infer will be real shape values
-  if (not_dynamic_shape) {
+  if (!dynamic_shape) {
     size_t x_offset = x_shp.size() - offset;
     size_t y_offset = y_shp.size() - offset;
     auto x_c = x_shp[x_offset + (transpose_a ? 0 : 1)];
