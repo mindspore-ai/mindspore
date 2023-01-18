@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -587,8 +587,8 @@ def check_tfrecorddataset(method):
 
         compression_type = param_dict.get('compression_type')
         if compression_type is not None and compression_type not in ['', 'ZLIB', 'GZIP']:
-            raise ValueError("Input compression_type can only be either '' (no compression), 'ZLIB', or 'GZIP', \
-                             but got '" + str(compression_type) + "'.")
+            raise ValueError("Input compression_type can only be either '' (no compression), 'ZLIB', or 'GZIP', " +
+                             "but got '" + str(compression_type) + "'.")
         if compression_type is not None and compression_type in ['ZLIB', 'GZIP'] and \
             param_dict.get('num_samples') is not None:
             if param_dict.get('num_shards') is not None and ((isinstance(dataset_files, str) and \

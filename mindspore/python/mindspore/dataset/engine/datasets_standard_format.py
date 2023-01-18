@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -253,8 +253,11 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             Default: None.
         columns_list (list[str], optional): List of columns to be read. Default: None, read all columns.
         num_samples (int, optional): The number of samples (rows) to be included in the dataset. Default: None.
-            If `num_samples` is None and numRows(parsed from `schema` ) does not exist, read the full dataset;
-            If `num_samples` is None and numRows(parsed from `schema` ) is greater than 0, read numRows rows;
+            If `num_samples` is None and numRows(parsed from `schema` ) does not exist, read the full dataset.
+            If `compression_type` is not None, `num_samples` is None, and numRows(parsed from `schema` ) is
+            greater than 0, read the full dataset.
+            If `compression_type` is None, `num_samples` is None, and numRows(parsed from `schema` ) is
+            greater than 0, read numRows rows.
             If both `num_samples` and numRows(parsed from `schema` ) are greater than 0, read `num_samples` rows.
             If `compression_type` is not None and `num_samples` is provided, then `num_samples` will be
             interpreted as the number of rows to be read per shard from the compressed files.
