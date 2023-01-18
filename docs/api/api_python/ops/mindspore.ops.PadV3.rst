@@ -24,8 +24,8 @@ mindspore.ops.PadV3
         - **ValueError** - `mode` 是"constant"的同时 `paddings` 元素个数不是偶数。
         - **ValueError** - `mode` 是"constant"的同时 `paddings` 元素个数大于输入维度乘以2。
         - **ValueError** - `mode` 是"edge"或"reflect"的同时 `paddings` 元素个数不是2、4或6。
-        - **ValueError** - `mode` 是"edge"或"reflect"， `x` 的维度是3， `paddings` 元素个数是2。
-        - **ValueError** - `mode` 是"edge"或"reflect"， `x` 的维度是4， `paddings` 元素个数是4。
+        - **ValueError** - `mode` 是"edge"或"reflect"， `x` 的维度是3， `paddings` 元素个数不是2。
+        - **ValueError** - `mode` 是"edge"或"reflect"， `x` 的维度是4， `paddings` 元素个数不是4。
         - **ValueError** - `mode` 是"edge"或"reflect"的同时 `x` 的维度小于3。
         - **ValueError** - `mode` 是"edge"的同时 `x` 的维度大于5。
         - **ValueError** - `mode` 是"reflect"的同时 `x` 的维度大于4。
