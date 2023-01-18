@@ -33,7 +33,6 @@ static PrimitiveEvalImplMap prim_backend_eval_implement_map{
   {prim::kPrimApplyAdaMaxD, R{ops::ApplyAdaMaxInfer, nullptr, true}},
   {prim::kPrimApplyAddSignD, R{ops::ApplyAddSignInfer, nullptr, true}},
   {prim::kPrimApplyPowerSignD, R{ops::ApplyPowerSignInfer, nullptr, true}},
-  {prim::kPrimBNInfer, R{ops::BatchNormInferFunc, nullptr, true}},
   {prim::kPrimFastGelu, R{ops::FastGeLUInfer, nullptr, true}},
   {prim::kPrimFastGeluGrad, R{ops::FastGeLUGradInfer, nullptr, true}},
   {prim::kPrimGelu, R{ops::GeLUInfer, nullptr, true}},
