@@ -16,7 +16,6 @@
 """convolution vmap impl"""
 from __future__ import absolute_import
 
-import numpy as np
 import mindspore.numpy as mnp
 from mindspore.ops import constexpr
 from mindspore.ops import operations as P
@@ -174,10 +173,7 @@ def _reshape_merge_dims(src_dim, dst_dim, target):
 @constexpr
 def _get_expand_shape(src_dim, dst_size, shape, prim_name):
     """Get new shape for splitting src_dim into dst_size parts."""
-    dst_size2, remainder = np.divmod(shape[src_dim], dst_size)
-    if remainder != 0:
-        _raise_value_error("The remainder of {} / {} should be 0, "
-                           "but got {} in {}.".format(shape[src_dim], dst_size, remainder, prim_name))
+    dst_size2 = shape[src_dim] // dst_size
     new_shape = list(shape)
     new_shape[src_dim:(src_dim + 1)] = [dst_size, dst_size2]
     return tuple(new_shape)

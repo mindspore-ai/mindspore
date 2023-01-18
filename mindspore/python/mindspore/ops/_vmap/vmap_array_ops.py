@@ -16,7 +16,6 @@
 """array_ops vmap impl."""
 from __future__ import absolute_import
 
-import numpy as np
 import mindspore
 import mindspore.numpy as mnp
 from mindspore import ops
@@ -147,14 +146,13 @@ def _get_prefix(indices_shape, axis_size, indices_dtype):
     the generated prefix is a Tensor([[[0], [0]],
                                       [[1], [1]]])
     """
-    if not indices_shape:
-        raise ValueError("indices_shape is empty in _get_prefix.")
 
     indices_len = len(indices_shape)
 
     if indices_len == 1:
-        prefix = np.arange(axis_size)
-        return Tensor(prefix, indices_dtype)
+        prefix = P.Range()(Tensor(0, indices_dtype), P.Fill()(
+            indices_dtype, (), axis_size), Tensor(1, indices_dtype))
+        return prefix
 
     indices_end = indices_len - 1
     prefix_shape = ()
@@ -169,8 +167,9 @@ def _get_prefix(indices_shape, axis_size, indices_dtype):
         else:
             expand_shape = expand_shape + (1,)
 
-    prefix = np.broadcast_to(np.arange(axis_size).reshape(expand_shape), prefix_shape)
-    return Tensor(prefix, indices_dtype)
+    prefix = P.BroadcastTo(prefix_shape)(P.Reshape()(P.Range()(Tensor(
+        0, indices_dtype), Tensor(axis_size, indices_dtype), Tensor(1, indices_dtype)), expand_shape))
+    return prefix
 
 
 @vmap_rules_getters.register(P.Transpose)
@@ -352,6 +351,7 @@ def get_unstack_vmap_rule(prim, axis_size):
 def get_reshape_vmap_rule(prim, axis_size):
     """VmapRule for `Reshape` operation."""
 
+
     @constexpr
     def get_batch_shape(x_shape, x_dim, target_shape, axis_size):
         if x_dim == 0:
@@ -364,19 +364,20 @@ def get_reshape_vmap_rule(prim, axis_size):
         dim_prod = 1
         for i, shp_i in enumerate(target_shape):
             if shp_i == -1:
-                if neg_index != -1:
-                    raise ValueError(f'The shape can only has one -1 at most, but {target_shape}.')
                 neg_index = i
             else:
                 dim_prod *= shp_i
-        arr_prod = np.prod(x_shape)
+        arr_prod = 1
+        for i in x_shape:
+            arr_prod *= i
         target_shape_list = list(target_shape)
         if neg_index != -1:
             neg_index_size = int(arr_prod // (dim_prod * axis_size))
             target_shape_list[neg_index] = neg_index_size
 
-        arr_prod_before_dim = np.prod(x_shape[:x_dim])
-
+        arr_prod_before_dim = 1
+        for i in x_shape[:x_dim]:
+            arr_prod_before_dim *= i
         dim_prod = 1
         for i, shp_i in enumerate(target_shape_list, start=1):
             dim_prod *= shp_i
@@ -565,12 +566,11 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
     @constexpr
     def _gen_indices_offset(shape, offset):
         # original rank(indices.shape) is required >= 2, so indices with batch dim's rank >= 3.
-        shape = [shape[0]] + [1] * (len(shape) - 2) + [shape[-1]]
-        val = np.zeros(shape, np.int32)  # the dtype will be changed when creating Tensor
-        val = np.reshape(val, (shape[0], shape[-1]))
+        shape = (shape[0],) + (1,) * (len(shape) - 2) + (shape[-1],)
+        val = P.Zeros()((shape[0], shape[-1]), mindspore.int32)
         for i in range(shape[0]):
             val[i, 0] = i * offset
-        return np.reshape(val, shape)
+        return P.Reshape()(val, shape)
 
     if isinstance(prim, str):
         prim = Primitive(prim)
@@ -591,7 +591,7 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
         indices_shape = F.shape(indices)
         indices_dtype = F.dtype(indices)
         offset_val = _gen_indices_offset(indices_shape, offset)
-        indices_offset = Tensor(offset_val, indices_dtype)
+        indices_offset = P.Cast()(offset_val, indices_dtype)
         new_indices = P.Add()(indices, indices_offset)
         out = prim(new_indices, updates, new_shape)
         real_out = P.Reshape()(out, out_shape)
