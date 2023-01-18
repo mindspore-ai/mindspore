@@ -199,9 +199,8 @@ AbstractBasePtr InferOperation::GetAbstractByValue(const ValuePtr &value, size_t
   MS_EXCEPTION_IF_NULL(value);
   const auto &abs = value->ToAbstract();
   if (!marked_const) {
-    SetAnyValue(abs);
     if (value->isa<tensor::Tensor>() || value->isa<mindspore::Type>()) {
-      node_abs_cache_[input_id] = abs;
+      SetNodeAbsCacheById(input_id, abs);
     }
   }
   return abs;
@@ -303,8 +302,7 @@ std::vector<bool> InferOperation::CheckPrimitiveConstFlag(const FrontendOpRunInf
 }
 
 void InferOperation::SetNodeAbsCacheByValue(const ValuePtr &value, const abstract::AbstractBasePtr &abs) {
-  SetAnyValue(abs);
-  node_abs_cache_[PyNativeAlgo::Common::GetIdByValue(value)] = abs;
+  SetNodeAbsCacheById(PyNativeAlgo::Common::GetIdByValue(value), abs);
   // If value is a `value tuple` or `value list`, cache the abstract of each element value.
   if (value->isa<ValueSequence>()) {
     const auto &seq_value = value->cast<ValueSequencePtr>();
@@ -316,17 +314,18 @@ void InferOperation::SetNodeAbsCacheByValue(const ValuePtr &value, const abstrac
     size_t num = value_elems.size();
     MS_EXCEPTION_IF_CHECK_FAIL(num == abs_elems.size(), "The size of value is not equal to the size of abstract.");
     for (size_t i = 0; i < num; ++i) {
-      node_abs_cache_[PyNativeAlgo::Common::GetIdByValue(value_elems[i])] = abs_elems[i];
+      SetNodeAbsCacheById(PyNativeAlgo::Common::GetIdByValue(value_elems[i]), abs_elems[i]);
     }
   }
+}
+
+void InferOperation::SetNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs) {
   // If Just call run op and have no cell or function running, node_abs_cache_ will not be clear.
   // So, set a threshold for clear it.
   if (only_single_op_run_ && node_abs_cache_.size() > kCacheThreshold) {
     node_abs_cache_.clear();
   }
-}
-
-void InferOperation::SetNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs) {
+  SetAnyValue(abs);
   node_abs_cache_[id] = abs;
 }
 
