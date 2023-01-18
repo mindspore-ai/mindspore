@@ -5,7 +5,7 @@ set(MODEL_LOADER_FRAMEWORK_SRC
 
 set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
     ${MODEL_LOADER_FRAMEWORK_SRC})
-if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     if(PLATFORM_ARM64)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions")
@@ -16,6 +16,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
+    add_compile_definitions(ENABLE_CLOUD_INFERENCE)
     remove_definitions(-DBUILD_LITE_INFERENCE)
     set(MINDIR_MODEL_SRC
         ${MINDIR_MODEL_SRC}
@@ -204,6 +205,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
 
     if(MSLITE_ENABLE_CONVERTER)
         add_subdirectory(convert)
+        target_link_libraries(mindspore-extendrt mindspore_converter)
     endif()
 
     set(TEST_CLOUD_INFER on)
