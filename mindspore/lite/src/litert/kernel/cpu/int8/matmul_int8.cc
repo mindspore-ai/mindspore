@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ kernel::LiteKernel *MatmulInt8CPUKernelCreator(const std::vector<lite::Tensor *>
       MS_LOG(ERROR) << "kernel: " << parameter->name_ << " is unsupported A is const.";
       return nullptr;
     }
-    if (lite::IsSupportSDot()) {
+    if (lite::IsSupportSDot() || ctx->instructions_ctx_.support_sdot) {
       kernel = new (std::nothrow) MatMulDynamicSdotInt8Kernel(parameter, inputs, outputs, ctx);
     } else {
       kernel = new (std::nothrow) MatmulDynamicInt8CPUKernel(parameter, inputs, outputs, ctx);

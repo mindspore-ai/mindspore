@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,14 @@ struct DeviceContext {
   AllocatorPtr allocator_ = nullptr;
 };
 
+typedef struct InstructionsContext {
+  // Instructions should be checked in the beginning.
+  bool support_fp16 = false;
+  bool support_sdot = false;
+  bool support_sse = false;
+  bool support_avx512 = false;
+} InstructionsContext;
+
 struct InnerContext {
  public:
   InnerContext();
@@ -97,6 +105,7 @@ struct InnerContext {
   inline void SetBindRunnerId(std::string runner_id) { runner_id_ = runner_id; }
 
   std::string vendor_name_;
+  InstructionsContext instructions_ctx_;
   int thread_num_ = 2; /**< thread number config for thread pool */
   int inter_op_parallel_num_ = 1;
   bool enable_parallel_ = false;
