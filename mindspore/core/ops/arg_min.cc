@@ -103,7 +103,9 @@ abstract::AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, input_num,
                                            primitive->name());
-  return abstract::MakeAbstract(ArgMinInferShape(primitive, input_args), ArgMinInferType(primitive, input_args));
+  auto type = ArgMinInferType(primitive, input_args);
+  auto shape = ArgMinInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
 }
 
 using Argmin = ArgMin;
