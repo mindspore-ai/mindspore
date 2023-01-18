@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,6 +145,8 @@ Status RepeatOp::GetNextRowPullMode(TensorRow *const row) {
     if (state_ == OpState::kDeOpIdle) {
       return Status::OK();
     }
+    // Reset TensorRow (both vector and flags)
+    row->reset();
     RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
   }
   // Check if the last buf is next eof

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,6 +189,12 @@ class TensorRow {
   void push_back(value_type t) { row_.push_back(t); }
 
   void clear() noexcept { row_.clear(); }
+
+  // Reset both the tensor row vector and flags
+  void reset() noexcept {
+    row_.clear();
+    tensor_row_flag_ = kFlagNone;
+  }
 
   size_type size() const noexcept { return row_.size(); }
 

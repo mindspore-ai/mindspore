@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,13 +74,18 @@ Status TreeAdapterLite::BuildTree(std::shared_ptr<DatasetNode> root_ir) {
 }
 
 Status TreeAdapterLite::GetNextRow(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   RETURN_UNEXPECTED_IF_NULL(root_);
+  row->reset();  // Ensure TensorRow is empty and flags are initialized
   RETURN_IF_NOT_OK(root_->GetNextRowPullMode(row));
+  if (row->eoe()) {  // return empty tensor if 1st buf is a ctrl buf (no rows)
+    MS_LOG(INFO) << "End of data iteration.";
+    return Status::OK();
+  }
   if (row->eof()) {
     std::string err = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs.";
     RETURN_STATUS_UNEXPECTED(err);
   }
-  RETURN_UNEXPECTED_IF_NULL(row);
   return Status::OK();
 }
 

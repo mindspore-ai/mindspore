@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ Status EpochCtrlOp::GetNextRow(TensorRow *row) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] EpochCtrlOp can't be the leaf node(first operator) of pipeline.");
   }
 
-  // `retry_if_eoe` is false because EpochCtrlOp does not eat EOE.
   RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
 
   // Only intercept EOE for EoeReceived processing, after that the EOE is forwarded to next op.
@@ -62,6 +61,12 @@ Status EpochCtrlOp::GetNextRow(TensorRow *row) {
 Status EpochCtrlOp::EoeReceived(int32_t worker_id) {
   UpdateRepeatAndEpochCounter();
   repeat_count_++;
+  if ((num_repeats_ != kInfiniteRepeat) && (repeat_count_ > num_repeats_)) {
+    std::string err_msg = "Epoch Control operator at EoeReceived: Epoch count: " + std::to_string(repeat_count_) +
+                          " exceeds maximum epochs: " + std::to_string(num_repeats_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
   MS_LOG(DEBUG) << "Epoch Control operator received end of epoch. Epoch count is now: " << repeat_count_
                 << ". Max epochs: " << num_repeats_;
 
@@ -80,13 +85,14 @@ Status EpochCtrlOp::EoeReceived(int32_t worker_id) {
 
 int64_t EpochCtrlOp::GetTreeRepeatCount() { return child_[0]->GetTreeRepeatCount(); }
 
-Status EpochCtrlOp::GetNextRowPullMode(TensorRow *row) {
+Status EpochCtrlOp::GetNextRowPullMode(TensorRow *const row) {
   RETURN_UNEXPECTED_IF_NULL(row);
   if (child_.empty()) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] EpochCtrlOp can't be the leaf node(first operator) of pipeline.");
   }
 
-  // `retry_if_eoe` is false because EpochCtrlOp does not eat EOE.
+  // Reset TensorRow (both vector and flags)
+  row->reset();
   RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
 
   // Only intercept EOE for EoeReceived processing, after that the EOE is forwarded to next op.

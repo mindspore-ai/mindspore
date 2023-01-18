@@ -613,206 +613,57 @@ def test_cifar100ops():
 def test_pipeline_debug_mode_cifar10_rename_zip(plot=False):
     """
     Feature: Pipeline debug mode.
-    Description: Test Cifar10Dataset with rename op and zip op
+    Description: Test Cifar10Dataset with rename op and zip op for 2 datasets
     Expectation: Output is the same as expected output
     """
-    # Apply dataset operations
-    data1 = ds.Cifar10Dataset(DATA_DIR_10, num_samples=6)
-    data2 = ds.Cifar10Dataset(DATA_DIR_10, num_samples=6)
 
-    # Rename dataset2 for no conflict
-    data2 = data2.rename(input_columns=["image", "label"], output_columns=["image2", "label2"])
+    def test_config(num_samples1, num_samples2, plot):
+        # Apply dataset operations
+        data1 = ds.Cifar10Dataset(DATA_DIR_10, num_samples=num_samples1)
+        data2 = ds.Cifar10Dataset(DATA_DIR_10, num_samples=num_samples2)
 
-    data3 = ds.zip((data1, data2))
+        # Rename dataset2 for no conflict
+        data2 = data2.rename(input_columns=["image", "label"], output_columns=["image2", "label2"])
 
-    num_iter = 0
-    image_list, image_list2, label_list, label_list2 = [], [], [], []
-    for item in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
-        image = item["image"]
-        label = item["label"]
-        image_list.append(image)
-        label_list.append("label {}".format(label))
-        assert isinstance(image, np.ndarray)
-        assert image.shape == (32, 32, 3)
-        assert image.dtype == np.uint8
-        assert label.dtype == np.uint32
+        data3 = ds.zip((data1, data2))
 
-        image2 = item["image2"]
-        label2 = item["label2"]
-        image_list2.append(image2)
-        label_list2.append("label {}".format(label2))
-        assert isinstance(image2, np.ndarray)
-        assert image2.shape == (32, 32, 3)
-        assert image2.dtype == np.uint8
-        assert label2.dtype == np.uint32
+        num_iter = 0
+        image_list, image_list2, label_list, label_list2 = [], [], [], []
+        for item in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
+            image = item["image"]
+            label = item["label"]
+            image_list.append(image)
+            label_list.append("label {}".format(label))
+            assert isinstance(image, np.ndarray)
+            assert image.shape == (32, 32, 3)
+            assert image.dtype == np.uint8
+            assert label.dtype == np.uint32
 
-        assert label == label2
-        np.testing.assert_equal(image, image2)
+            image2 = item["image2"]
+            label2 = item["label2"]
+            image_list2.append(image2)
+            label_list2.append("label {}".format(label2))
+            assert isinstance(image2, np.ndarray)
+            assert image2.shape == (32, 32, 3)
+            assert image2.dtype == np.uint8
+            assert label2.dtype == np.uint32
 
-        num_iter += 1
-    assert num_iter == 6
+            assert label == label2
+            np.testing.assert_equal(image, image2)
 
-    if plot:
-        visualize_dataset(image_list, label_list)
-        visualize_dataset(image_list2, label_list2)
+            num_iter += 1
+        assert num_iter == min(num_samples1, num_samples2)
 
+        if plot:
+            visualize_dataset(image_list, label_list)
+            visualize_dataset(image_list2, label_list2)
 
-def test_pipeline_debug_mode_multi_epoch_cifar10():
-    """
-    Feature: Pipeline debug mode.
-    Description: Test creating tuple iterator in cifar10 dataset with multi epochs.
-    Expectation: Output is equal to the expected output
-    """
-    logger.info("test_pipeline_debug_mode_multi_epoch_cifar10")
-    data_dir_10 = "../data/dataset/testCifar10Data"
-    num_repeat = 2
-    batch_size = 32
-    limit_dataset = 100
-    # apply dataset operations
-    data1 = ds.Cifar10Dataset(data_dir_10, num_samples=limit_dataset)
-    data1 = data1.repeat(num_repeat)
-    data1 = data1.batch(batch_size, True)
-    num_epoch = 5
-    iter1 = data1.create_tuple_iterator(num_epochs=num_epoch)
-    epoch_count = 0
-    sample_count = 0
-    for _ in range(num_epoch):
-        row_count = 0
-        for _ in iter1:
-            # in this example, each row has columns "image" and "label"
-            row_count += 1
-        assert row_count == int(limit_dataset * num_repeat / batch_size)
-        logger.debug("row_count: ", row_count)
-        epoch_count += 1
-        sample_count += row_count
-    assert epoch_count == num_epoch
-    logger.debug("total epochs: ", epoch_count)
-    assert sample_count == int(limit_dataset * num_repeat / batch_size) * num_epoch
-    logger.debug("total samples: ", sample_count)
-
-
-# Note: Pull mode has issue this scenario with batch followed by repeat
-@pytest.mark.skip(reason="Unsupported in pull mode")
-def test_pipeline_debug_mode_multi_epoch_cifar10_batch_repeat():
-    """
-    Feature: Pipeline debug mode.
-    Description: Test creating tuple iterator in cifar10 dataset with batch then repeat and with multi epochs.
-    Expectation: Output is equal to the expected output
-    """
-    logger.info("test_pipeline_debug_mode_multi_epoch_cifar10")
-    data_dir_10 = "../data/dataset/testCifar10Data"
-    num_repeat = 2
-    batch_size = 20
-    limit_dataset = 100
-    # apply dataset operations
-    data1 = ds.Cifar10Dataset(data_dir_10, num_samples=limit_dataset)
-    # Add batch then repeat
-    data1 = data1.batch(batch_size, True)
-    data1 = data1.repeat(num_repeat)
-
-    num_epoch = 5
-    iter1 = data1.create_tuple_iterator(num_epochs=num_epoch)
-    epoch_count = 0
-    sample_count = 0
-    for _ in range(num_epoch):
-        row_count = 0
-        for _ in iter1:
-            # in this example, each row has columns "image" and "label"
-            row_count += 1
-        assert row_count == int(limit_dataset * num_repeat / batch_size)
-        logger.debug("row_count: ", row_count)
-        epoch_count += 1
-        sample_count += row_count
-    assert epoch_count == num_epoch
-    logger.debug("total epochs: ", epoch_count)
-    assert sample_count == int(limit_dataset * num_repeat / batch_size) * num_epoch
-    logger.debug("total samples: ", sample_count)
-
-
-def test_pipeline_debug_mode_multi_epoch_cifar10_zip():
-    """
-    Feature: Pipeline debug mode.
-    Description: Test creating tuple iterator in cifar10 dataset with zip op and multi epochs.
-    Expectation: Output is equal to the expected output
-    """
-    logger.info("test_pipeline_debug_mode_multi_epoch_cifar10_zip")
-    data_dir_10 = "../data/dataset/testCifar10Data"
-    num_repeat = 5
-    batch_size = 10
-    limit_dataset = 20
-    # apply dataset operations
-    data1 = ds.Cifar10Dataset(data_dir_10, num_samples=limit_dataset)
-
-    data2 = ds.Cifar10Dataset(data_dir_10, num_samples=limit_dataset)
-    # Rename dataset2 for no conflict
-    data2 = data2.rename(input_columns=["image", "label"], output_columns=["image2", "label2"])
-
-    data3 = ds.zip((data1, data2))
-    # Add batch after repeat
-    data3 = data3.repeat(num_repeat)
-    data3 = data3.batch(batch_size, True)
-
-    num_epoch = 2
-    iter1 = data3.create_tuple_iterator(num_epochs=num_epoch)
-    epoch_count = 0
-    sample_count = 0
-    for _ in range(num_epoch):
-        row_count = 0
-        for _ in iter1:
-            # in this example, each row has columns "image" and "label"
-            row_count += 1
-        assert row_count == int(limit_dataset * num_repeat / batch_size)
-        logger.debug("row_count: ", row_count)
-        epoch_count += 1
-        sample_count += row_count
-    assert epoch_count == num_epoch
-    logger.debug("total epochs: ", epoch_count)
-    assert sample_count == int(limit_dataset * num_repeat / batch_size) * num_epoch
-    logger.debug("total samples: ", sample_count)
-
-
-# Note: Pull mode has issue this scenario with batch followed by repeat
-@pytest.mark.skip(reason="Unsupported in pull mode")
-def test_pipeline_debug_mode_multi_epoch_cifar10_zip_batch_repeat():
-    """
-    Feature: Pipeline debug mode.
-    Description: Test creating tuple iterator in cifar10 dataset with zip op, then batch and repeat and multi epochs.
-    Expectation: Output is equal to the expected output
-    """
-    logger.info("test_pipeline_debug_mode_multi_epoch_cifar10_zip")
-    data_dir_10 = "../data/dataset/testCifar10Data"
-    num_repeat = 5
-    batch_size = 10
-    limit_dataset = 20
-    # apply dataset operations
-    data1 = ds.Cifar10Dataset(data_dir_10, num_samples=limit_dataset)
-
-    data2 = ds.Cifar10Dataset(data_dir_10, num_samples=limit_dataset)
-    # Rename dataset2 for no conflict
-    data2 = data2.rename(input_columns=["image", "label"], output_columns=["image2", "label2"])
-
-    data3 = ds.zip((data1, data2))
-    # Add batch then repeat
-    data3 = data3.batch(batch_size, True)
-    data3 = data3.repeat(num_repeat)
-
-    num_epoch = 2
-    iter1 = data3.create_tuple_iterator(num_epochs=num_epoch)
-    epoch_count = 0
-    sample_count = 0
-    for _ in range(num_epoch):
-        row_count = 0
-        for _ in iter1:
-            # in this example, each row has columns "image" and "label"
-            row_count += 1
-        assert row_count == int(limit_dataset * num_repeat / batch_size)
-        logger.debug("row_count: ", row_count)
-        epoch_count += 1
-        sample_count += row_count
-    assert epoch_count == num_epoch
-    logger.debug("total epochs: ", epoch_count)
-    assert sample_count == int(limit_dataset * num_repeat / batch_size) * num_epoch
-    logger.debug("total samples: ", sample_count)
+    # Test zip with sample number of samples for both datasets
+    test_config(6, 6, plot)
+    # Test zip with more samples for 2nd dataset (child 1)
+    test_config(4, 7, plot)
+    # Test zip with more samples for 1st dataset (child 0)
+    test_config(13, 8, plot)
 
 
 if __name__ == '__main__':
@@ -834,8 +685,4 @@ if __name__ == '__main__':
     test_cifar10_pk_sampler_get_dataset_size()
     test_cifar100ops()
     test_pipeline_debug_mode_cifar10_rename_zip(plot=False)
-    test_pipeline_debug_mode_multi_epoch_cifar10()
-    test_pipeline_debug_mode_multi_epoch_cifar10_batch_repeat()
-    test_pipeline_debug_mode_multi_epoch_cifar10_zip()
-    test_pipeline_debug_mode_multi_epoch_cifar10_zip_batch_repeat()
     teardown_function()

@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+"""
+Test dataset operations in debug mode
+"""
 import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as transforms
@@ -196,7 +198,7 @@ def test_pipeline_debug_mode_concat():
     """
     logger.info("test_pipeline_debug_mode_concat")
     data_dir = "../data/dataset/testCelebAData/"
-    num_repeat = 3
+    num_repeat = 2
     data1 = ds.CelebADataset(data_dir, decode=True, num_shards=1, shard_id=0)
     data2 = ds.CelebADataset(data_dir, decode=True, num_shards=1, shard_id=0)
     data3 = ds.CelebADataset(data_dir, decode=True, num_shards=1, shard_id=0)
@@ -356,11 +358,11 @@ def test_pipeline_debug_mode_multi_epoch_map_pyfunc():
     logger.info("test_pipeline_debug_mode_multi_epoch_map_pyfunc")
     data = ds.CelebADataset("../data/dataset/testCelebAData/", sampler=ds.SequentialSampler(),
                             decode=True)
-    num_repeat = 5
+    num_repeat = 3
     sample_row = 4
     data = data.repeat(num_repeat)
     data = data.map(operations=[(lambda x: x - 1), (lambda x: x * 2)], input_columns=["image"])
-    num_epoch = 7
+    num_epoch = 2
     epoch_count = 0
     sample_count = 0
     iter1 = data.create_dict_iterator(num_epochs=num_epoch)

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,12 @@ class TakeOp : public PipelineOp {
   // @return Name of the current Op
   std::string Name() const override { return kTakeOp; }
 
+  /// \brief Gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
   Status GetNextRow(TensorRow *row) override;
 
-  /// \brief Gets the next row
+  /// \brief In pull mode, gets the next row
   /// \param row[out] - Fetched TensorRow
   /// \return Status The status code returned
   Status GetNextRowPullMode(TensorRow *const row) override;
@@ -75,6 +78,12 @@ class TakeOp : public PipelineOp {
   int32_t take_count_;  // A counter for the current number of executed takes
 
   std::unique_ptr<ChildIterator> child_iterator_;  // An iterator for fetching.
+
+  /// \brief Common non-pull mode and pull mode function to get the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \param is_pull_mode[in] - an indicator to identify if in pull mode or not
+  /// \return Status The status code returned
+  Status CommonGetNextRow(TensorRow *row, bool is_pull_mode);
 };
 }  // namespace dataset
 }  // namespace mindspore
