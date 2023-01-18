@@ -156,6 +156,12 @@ bool BroadcastOpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
       ElewiseArith(output_num_, op_type_, lhs, rhs, output, cuda_stream_);
     }
   }
+
+  cudaError_t err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    MS_LOG(ERROR) << "Cuda calculate error for " << kernel_name_ << ", error desc:" << cudaGetErrorString(err);
+    return false;
+  }
   return true;
 }
 
