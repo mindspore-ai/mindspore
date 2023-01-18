@@ -58,7 +58,8 @@ void CppInfer::Infer(const NodePtr &node) {
       MS_EXCEPTION_IF_CHECK_FAIL(iter2->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
       result = iter2->second.InferShapeAndType(nullptr, prim, abs_list);
     } else {
-      MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
+      // manually throw an exception to avoid the critical log.
+      throw std::runtime_error("The infer function of [" + prim->name() + "] is not defined.");
     }
   }
   cnode->set_abstract(result);
