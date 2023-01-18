@@ -376,15 +376,15 @@ def jet(fn, primals, series):
         >>> import numpy as np
         >>> import mindspore.nn as nn
         >>> import mindspore as ms
-        >>> import mindspore.ops as P
+        >>> import mindspore.ops as ops
         >>> from mindspore import Tensor
-        >>> from mindspore.ops.functional import jet
+        >>> from mindspore.ops import jet
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
-        ...         self.sin = P.Sin()
-        ...         self.exp = P.Exp()
+        ...         self.sin = ops.Sin()
+        ...         self.exp = ops.Exp()
         ...     def construct(self, x):
         ...         out1 = self.sin(x)
         ...         out2 = self.exp(out1)
@@ -487,15 +487,15 @@ def derivative(fn, primals, order):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as P
+        >>> import mindspore.ops as ops
         >>> from mindspore import Tensor
-        >>> from mindspore.ops.functional import derivative
+        >>> from mindspore.ops import derivative
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
-        ...         self.sin = P.Sin()
-        ...         self.exp = P.Exp()
+        ...         self.sin = ops.Sin()
+        ...         self.exp = ops.Exp()
         ...     def construct(self, x):
         ...         out1 = self.sin(x)
         ...         out2 = self.exp(out1)
@@ -564,6 +564,7 @@ def jvp(fn, inputs, v):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
@@ -690,6 +691,7 @@ def vjp(fn, inputs, v):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):

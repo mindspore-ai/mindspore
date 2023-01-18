@@ -103,7 +103,7 @@ class SummaryCollector(Callback):
               training computational graph is collected. Default: True.
             - collect_train_lineage (bool): Whether to collect lineage data for the training phase,
               this field will be displayed on the `lineage page \
-              <https://www.mindspore.cn/mindinsight/docs/en/r1.10/lineage_and_scalars_comparison.html>`_
+              <https://www.mindspore.cn/mindinsight/docs/en/r1.9/lineage_and_scalars_comparison.html>`_
               of MindInsight. Default: True.
             - collect_eval_lineage (bool): Whether to collect lineage data for the evaluation phase,
               this field will be displayed on the lineage page of MindInsight. Default: True.

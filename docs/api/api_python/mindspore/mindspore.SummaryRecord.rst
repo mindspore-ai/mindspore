@@ -7,7 +7,7 @@ mindspore.SummaryRecord
 
     该方法将在一个指定的目录中创建summary文件和lineage文件，并将数据写入文件。
 
-    它通过执行 `record` 方法将数据写入文件。除了通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.10/summary_record.html#方式二-结合summary算子和summarycollector自定义收集网络中的数据>`_ 记录网络的数据外，SummaryRecord还支持通过 `自定义回调函数和自定义训练循环 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.10/summary_record.html#方式三-自定义callback记录数据>`_ 记录数据。
+    它通过执行 `record` 方法将数据写入文件。除了通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.9/summary_record.html#方式二-结合summary算子和summarycollector自定义收集网络中的数据>`_ 记录网络的数据外，SummaryRecord还支持通过 `自定义回调函数和自定义训练循环 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.9/summary_record.html#方式三-自定义callback记录数据>`_ 记录数据。
 
     .. note::
         - 使用SummaryRecord时，需要将代码放置到 `if __name__ == "__main__"` 中运行。

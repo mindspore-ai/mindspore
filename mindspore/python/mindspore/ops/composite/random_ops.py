@@ -312,6 +312,7 @@ def poisson(shape, mean, seed=None):
     Examples:
         >>> from mindspore import Tensor, ops
         >>> import mindspore
+        >>> import numpy as np
         >>> # case 1: It can be broadcast.
         >>> shape = (4, 1)
         >>> mean = Tensor(np.array([5.0, 10.0]), mindspore.float32)

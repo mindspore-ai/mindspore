@@ -3394,9 +3394,9 @@ def std(input_x, axis=(), unbiased=True, keep_dims=False):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
+        >>> import mindspore.ops as ops
         >>> input_x = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
-        >>> output = F.std(input_x, 1, True, False)
+        >>> output = ops.std(input_x, 1, True, False)
         >>> output_std, output_mean = output[0], output[1]
         >>> print(output_std)
         [1.        2.5166116]

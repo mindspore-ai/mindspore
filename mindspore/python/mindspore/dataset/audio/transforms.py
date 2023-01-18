@@ -123,15 +123,13 @@ class AmplitudeToDB(AudioTensorOperation):
             ScaleType.POWER or ScaleType.MAGNITUDE. Default: ScaleType.POWER.
         ref_value (float, optional): Multiplier reference value for generating
             `db_multiplier`. Default: 1.0. The formula is
-
             :math:`\text{db_multiplier} = Log10(max(\text{ref_value}, amin))`.
-
         amin (float, optional): Lower bound to clamp the input waveform, which must
             be greater than zero. Default: 1e-10.
         top_db (float, optional): Minimum cut-off decibels, which must be non-negative. Default: 80.0.
 
     Raises:
-        TypeError: If `stype` is not of type :class:`mindspore.dataset.audio.utils.ScaleType`.
+        TypeError: If `stype` is not of type :class:`mindspore.dataset.audio.ScaleType`.
         TypeError: If `ref_value` is not of type float.
         ValueError: If `ref_value` is not a positive number.
         TypeError: If `amin` is not of type float.

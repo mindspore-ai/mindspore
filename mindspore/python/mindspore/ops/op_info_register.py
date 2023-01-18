@@ -42,7 +42,7 @@ def op_info_register(op_info):
         op_info (Union[str, dict]): operator information in json format.
 
     Examples:
-        >>> from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+        >>> from mindspore.ops import op_info_register, TBERegOp, DataType
         >>> abs_op_info = TBERegOp("Abs") \
         ...    .fusion_type("ELEMWISE") \
         ...    .async_flag(False) \
