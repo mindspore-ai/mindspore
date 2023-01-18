@@ -40,3 +40,28 @@ void Unique(const float *input, int input_len, float *output0, int *output0_len,
     }
   }
 }
+
+int FindInt(const int *array, int len, int target) {
+  if (array == NULL) {
+    return -1;
+  }
+  for (int i = 0; i < len; ++i) {
+    if (array[i] == target) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+void UniqueInt(const int *input, int input_len, int *output0, int *output0_len, int *output1) {
+  *output0_len = 0;
+  for (int i = 0; i < input_len; i++) {
+    int idx = FindInt(output0, *output0_len, input[i]);
+    if (idx != -1) {
+      *output1++ = idx;
+    } else {
+      output0[(*output0_len)++] = input[i];
+      *output1++ = *output0_len - 1;
+    }
+  }
+}
