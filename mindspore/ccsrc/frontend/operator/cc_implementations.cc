@@ -216,6 +216,10 @@ bool InnerScalarGe(T x, U y) {
       int64_t sum = InnerScalar##op_t(IntToLong(GetValue<int>(x)), GetValue<int64_t>(y));                       \
       return MakeValue(sum);                                                                                    \
     }                                                                                                           \
+    if (x->isa<BoolImm>() && y->isa<BoolImm>()) {                                                               \
+      int sum = InnerScalar##op_t(static_cast<int>(GetValue<bool>(x)), static_cast<int>(GetValue<bool>(y)));    \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
     MS_EXCEPTION(TypeError) << "Unsupported input type for Scalar" << #op_t << ", type of x:" << x->type_name() \
                             << ", value of x:" << x->ToString() << ", type of y:" << y->type_name()             \
                             << ", value of y:" << y->ToString();                                                \
