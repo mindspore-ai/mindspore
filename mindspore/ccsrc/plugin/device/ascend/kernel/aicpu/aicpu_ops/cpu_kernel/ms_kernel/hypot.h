@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef AICPU_KERNELS_NORMALIZED_RECIPROCAL_H_
-#define AICPU_KERNELS_NORMALIZED_RECIPROCAL_H_
+#ifndef AICPU_KERNELS_NORMALIZED_HYPOT_H_
+#define AICPU_KERNELS_NORMALIZED_HYPOT_H_
 
 #include "cpu_ops_kernel.h"
-
+#include "utils/bcast.h"
 namespace aicpu {
-class ReciprocalCpuKernel : public CpuKernel {
+class HypotCpuKernel : public CpuKernel {
  public:
-  ~ReciprocalCpuKernel() = default;
+  HypotCpuKernel() = default;
+  ~HypotCpuKernel() override = default;
+
+ protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
+  uint32_t HypotParamCheck(CpuKernelContext &ctx);
+
   template <typename T>
-  uint32_t ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
+  uint32_t NoBcastCompute(CpuKernelContext &ctx);
+
   template <typename T>
-  uint32_t ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
+  uint32_t BcastCompute(CpuKernelContext &ctx, Bcast &bcast);
+
+  template <typename T>
+  uint32_t HypotCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef AICPU_KERNELS_NORMALIZED_RECIPROCAL_H_
-#define AICPU_KERNELS_NORMALIZED_RECIPROCAL_H_
+#ifndef AICPU_KERNELS_NORMALIZED_IDENTITY_N_H_
+#define AICPU_KERNELS_NORMALIZED_IDENTITY_N_H_
 
 #include "cpu_ops_kernel.h"
 
 namespace aicpu {
-class ReciprocalCpuKernel : public CpuKernel {
+class IdentityNCpuKernel : public CpuKernel {
  public:
-  ~ReciprocalCpuKernel() = default;
+  IdentityNCpuKernel() = default;
+  ~IdentityNCpuKernel() = default;
+
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  template <typename T>
-  uint32_t ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
-  template <typename T>
-  uint32_t ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
+  uint32_t IdentityNParamCheck(CpuKernelContext &ctx);
+  const std::vector<DataType> support_data_type = {DT_FLOAT, DT_FLOAT16, DT_INT8,   DT_INT16,  DT_UINT16, DT_UINT8,
+                                                   DT_INT32, DT_INT64,   DT_UINT32, DT_UINT64, DT_BOOL,   DT_DOUBLE};
 };
 }  // namespace aicpu
 #endif

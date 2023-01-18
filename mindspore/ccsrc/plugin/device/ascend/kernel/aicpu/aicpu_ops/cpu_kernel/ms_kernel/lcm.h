@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef AICPU_KERNELS_NORMALIZED_RECIPROCAL_H_
-#define AICPU_KERNELS_NORMALIZED_RECIPROCAL_H_
+#ifndef AICPU_KERNELS_NORMALIZED_LCM_H_
+#define AICPU_KERNELS_NORMALIZED_LCM_H_
 
 #include "cpu_ops_kernel.h"
+#include "utils/bcast.h"
 
 namespace aicpu {
-class ReciprocalCpuKernel : public CpuKernel {
+class LcmCpuKernel : public CpuKernel {
  public:
-  ~ReciprocalCpuKernel() = default;
-  uint32_t Compute(CpuKernelContext &ctx) override;
+  ~LcmCpuKernel() override = default;
 
- private:
-  template <typename T>
-  uint32_t ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
-  template <typename T>
-  uint32_t ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
+ protected:
+  uint32_t Compute(CpuKernelContext &ctx) override;
 };
 }  // namespace aicpu
 #endif

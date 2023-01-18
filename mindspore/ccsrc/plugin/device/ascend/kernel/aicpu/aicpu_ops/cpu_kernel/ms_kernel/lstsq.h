@@ -1,3 +1,4 @@
+
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -13,23 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef AICPU_KERNELS_NORMALIZED_RECIPROCAL_H_
-#define AICPU_KERNELS_NORMALIZED_RECIPROCAL_H_
+#ifndef AICPU_KERNELS_NORMALIZED_LSTSQ_H_
+#define AICPU_KERNELS_NORMALIZED_LSTSQ_H_
 
 #include "cpu_ops_kernel.h"
 
 namespace aicpu {
-class ReciprocalCpuKernel : public CpuKernel {
+
+class LstsqCpuKernel : public CpuKernel {
  public:
-  ~ReciprocalCpuKernel() = default;
+  LstsqCpuKernel() = default;
+  ~LstsqCpuKernel() override = default;
+
+ protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  template <typename T>
-  uint32_t ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
-  template <typename T>
-  uint32_t ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
+  template <typename T1, typename T2>
+  static uint32_t LstsqCompute(CpuKernelContext &ctx);
 };
-}  // namespace aicpu
+}  // namespace  aicpu
 #endif
