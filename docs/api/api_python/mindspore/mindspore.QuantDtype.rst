@@ -11,7 +11,7 @@ mindspore.QuantDtype
 
         from mindspore import QuantDtype
 
-    .. py:method:: value(self)
+    .. py:method:: value()
 
         获取当前 `QuantDtype` 的值。
 
