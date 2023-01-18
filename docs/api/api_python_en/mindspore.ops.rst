@@ -473,6 +473,7 @@ Array Operation
     mindspore.ops.gather_elements
     mindspore.ops.gather_nd
     mindspore.ops.hsplit
+    mindspore.ops.index_add
     mindspore.ops.index_fill
     mindspore.ops.index_select
     mindspore.ops.inplace_add

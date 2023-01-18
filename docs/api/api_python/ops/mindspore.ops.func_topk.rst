@@ -1,7 +1,7 @@
 mindspore.ops.topk
 ===================
 
-.. py:function:: mindspore.ops.topk(input_x, k, dim=None, largest=True, sorted=True):
+.. py:function:: mindspore.ops.topk(input_x, k, dim=None, largest=True, sorted=True)
 
     沿给定维度查找 `k` 个最大或最小元素和对应的索引。
 

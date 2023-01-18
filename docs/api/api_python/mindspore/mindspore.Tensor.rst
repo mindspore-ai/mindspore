@@ -109,7 +109,6 @@ mindspore.Tensor
     mindspore.Tensor.expand_dims
     mindspore.Tensor.expm1
     mindspore.Tensor.fill
-    mindspore.Tensor.fills
     mindspore.Tensor.flatten
     mindspore.Tensor.flip
     mindspore.Tensor.fliplr
