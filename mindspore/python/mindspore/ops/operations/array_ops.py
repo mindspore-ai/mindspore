@@ -2592,7 +2592,7 @@ class Stack(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.stack` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))

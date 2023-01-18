@@ -2598,7 +2598,7 @@ def prelu(x, weight):
         ValueError: If the `weight` is not a 1-D Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)), mindspore.float32)
@@ -3474,6 +3474,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
         >>> target = Tensor(arr2, mstype.float32)
         >>> output = ops.gaussian_nll_loss(x, target, var)
         >>> print(output)
+        1.4374993
 
     Reference:
         Nix, D. A. and Weigend, A. S., "Estimating the mean and variance of the
@@ -4591,7 +4592,7 @@ def multi_label_margin_loss(inputs, target, reduction='mean'):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
        >>> inputs = Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), mindspore.float32)

@@ -60,7 +60,7 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
         ValueError: If the dimension of `window_length` is not 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> window_length = Tensor(10, mindspore.int32)

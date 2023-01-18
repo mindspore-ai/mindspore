@@ -158,7 +158,7 @@ class ProximalAdagrad(Optimizer):
         ValueError: If `accum`, `l1`, `l2` or `weight_decay` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
