@@ -176,6 +176,7 @@ if(MSLITE_ENABLE_MODEL_ENCRYPTION)
     set(LITE_SRC
             ${LITE_SRC}
             ${CMAKE_CURRENT_SOURCE_DIR}/common/decrypt.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
             )
 endif()
 
