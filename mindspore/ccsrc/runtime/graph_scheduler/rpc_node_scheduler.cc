@@ -281,28 +281,34 @@ RpcActorStatusUpdater &RpcActorStatusUpdater::GetInstance() {
   return instance;
 }
 
-void RpcActorStatusUpdater::set_rpc_actors(const RpcActorSetPtr &rpc_actors) {
+void RpcActorStatusUpdater::set_rpc_actors(const std::string &graph_name, const RpcActorSetPtr &rpc_actors) {
   if (rpc_actors != nullptr) {
-    rpc_actors_ = rpc_actors;
+    graph_to_rpc_actors_[graph_name] = rpc_actors;
   }
 }
 
-void RpcActorStatusUpdater::UpdateRpcActorStatus() const {
+void RpcActorStatusUpdater::UpdateRpcActorStatus(const std::string &graph_name) {
   // Update status for recv actors to control their execution orders.
-  if (rpc_actors_.lock() != nullptr) {
-    for (auto &recv_actor : rpc_actors_.lock()->recv_actors_) {
-      MS_EXCEPTION_IF_NULL(recv_actor);
-      recv_actor->UpdateStatus();
+  if (graph_to_rpc_actors_.count(graph_name) != 0) {
+    auto rpc_actors = graph_to_rpc_actors_[graph_name];
+    if (rpc_actors.lock() != nullptr) {
+      for (auto &recv_actor : rpc_actors.lock()->recv_actors_) {
+        MS_EXCEPTION_IF_NULL(recv_actor);
+        recv_actor->UpdateStatus();
+      }
     }
   }
 }
 
-void RpcActorStatusUpdater::FlushRpcData() const {
+void RpcActorStatusUpdater::FlushRpcData(const std::string &graph_name) {
   // Flush data for send actors.
-  if (rpc_actors_.lock() != nullptr) {
-    for (auto &send_actor : rpc_actors_.lock()->send_actors_) {
-      MS_EXCEPTION_IF_NULL(send_actor);
-      send_actor->FlushData();
+  if (graph_to_rpc_actors_.count(graph_name) != 0) {
+    auto rpc_actors = graph_to_rpc_actors_[graph_name];
+    if (rpc_actors.lock() != nullptr) {
+      for (auto &send_actor : rpc_actors.lock()->send_actors_) {
+        MS_EXCEPTION_IF_NULL(send_actor);
+        send_actor->FlushData();
+      }
     }
   }
 }

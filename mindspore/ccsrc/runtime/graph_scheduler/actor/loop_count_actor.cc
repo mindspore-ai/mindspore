@@ -109,7 +109,7 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
 
 #if defined(__linux__) && defined(WITH_BACKEND)
   // Flush sent data after each step is done.
-  RpcActorStatusUpdater::GetInstance().FlushRpcData();
+  RpcActorStatusUpdater::GetInstance().FlushRpcData(graph_name_);
 #endif
 
   // The LoopCountActor exits.

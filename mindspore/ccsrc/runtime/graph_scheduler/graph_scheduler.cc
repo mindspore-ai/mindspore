@@ -552,7 +552,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   EmbeddingCacheScheduler::GetInstance().InitEmbeddingStorage(graph_compiler_info.origin_parameters_order_);
 
   // Set rpc actors in order to update rpc actors status.
-  RpcActorStatusUpdater::GetInstance().set_rpc_actors(actor_set->rpc_actors_);
+  RpcActorStatusUpdater::GetInstance().set_rpc_actors(graph_compiler_info.name_, actor_set->rpc_actors_);
 #endif
 
   return actor_set.get();
@@ -1191,9 +1191,9 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
   auto loop_count = GetLoopCount(graph_compiler_info);
   auto actor_name = graph_compiler_info.name_ + kLoopCountActorNameSuffix;
   auto is_need_sync_stream = GetNeedSyncStream(graph_compiler_info);
-  auto loop_count_actor = std::make_shared<LoopCountActor>(actor_name, loop_count, memory_manager_aid_, debug_aid_,
-                                                           recorder_aid_, graph_compiler_info.strategy_,
-                                                           graph_compiler_info.device_contexts_, is_need_sync_stream);
+  auto loop_count_actor = std::make_shared<LoopCountActor>(
+    actor_name, graph_compiler_info.name_, loop_count, memory_manager_aid_, debug_aid_, recorder_aid_,
+    graph_compiler_info.strategy_, graph_compiler_info.device_contexts_, is_need_sync_stream);
   MS_LOG(INFO) << "Create loop count actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(loop_count_actor);
 
