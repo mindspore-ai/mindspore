@@ -3110,7 +3110,7 @@ def csr_to_dense(x):
     return F.csr_to_dense(x)
 
 
-def random_categorical_(x, num_sample, seed=0, dtype=mstype.int64):
+def random_categorical(x, num_sample, seed=0, dtype=mstype.int64):
     r"""
     Generates random samples from a given categorical distribution tensor.
     Refer to :func:`mindspore.ops.random_categorical` for more detail.
