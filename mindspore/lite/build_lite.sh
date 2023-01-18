@@ -188,7 +188,7 @@ build_python_wheel_package() {
     if [[ "$1" == "x86_64" ]]; then
       local pkg_name=mindspore-lite-${VERSION_STR}-linux-x64
     fi
-    if [[ "${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on" ]]; then
+    if [[ ("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on") ]]; then
       cp src/extendrt/*.so package/mindspore_lite/lib/
       find src/extendrt/delegate/graph_executor/litert/ -name "*.so" -exec cp '{}' package/mindspore_lite/lib/ \;
       find src/extendrt/convert/ -name "*.so" -exec cp '{}' package/mindspore_lite/lib/ \;

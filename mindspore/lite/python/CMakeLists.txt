@@ -23,7 +23,7 @@ if(Python3_FOUND)
     endif()
     pybind11_add_module(_c_lite_wrapper NO_EXTRAS ${PY_SRC_LIST})
 
-    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
       add_dependencies(mindspore-extendrt_static fbs_inner_src)
       target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--whole-archive mindspore-extendrt -Wl,--no-whole-archive)
     else()

@@ -406,7 +406,7 @@ if(PLATFORM_ARM64)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/lite/build/schema/ops_types_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
             COMPONENT ${RUNTIME_COMPONENT_NAME})
-    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/${MINDSPORE_LITE_EXTENDRT_LIB_NAME}.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${EXTENDRT_BUILD_DIR}/delegate/graph_executor/litert/${MINDSPORE_GE_LITERT_LIB_NAME}.so
@@ -649,7 +649,7 @@ elseif(PLATFORM_ARM32)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/lite/build/schema/ops_types_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
             COMPONENT ${RUNTIME_COMPONENT_NAME})
-    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/${MINDSPORE_LITE_EXTENDRT_LIB_NAME}.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${EXTENDRT_BUILD_DIR}/delegate/graph_executor/litert/${MINDSPORE_GE_LITERT_LIB_NAME}.so
@@ -747,7 +747,7 @@ elseif(WIN32)
                 ${opencv_LIBPATH}/../bin/libopencv_imgproc*
                 )
         install(FILES ${OPENCV_LIB_LIST} DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
-        if(NOT MSVC AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+        if(NOT MSVC AND NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
             __install_micro_wrapper()
             __install_micro_codegen()
         endif()
@@ -843,7 +843,7 @@ else()
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
     install(DIRECTORY ${TOP_DIR}/include/c_api/ DESTINATION ${RUNTIME_INC_DIR}/c_api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/${MINDSPORE_LITE_EXTENDRT_LIB_NAME}.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${EXTENDRT_BUILD_DIR}/delegate/graph_executor/litert/${MINDSPORE_GE_LITERT_LIB_NAME}.so
@@ -984,7 +984,7 @@ else()
                     DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgproc.so.4.5
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
-        if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+        if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
             __install_micro_wrapper()
             __install_micro_codegen()
         endif()
@@ -998,7 +998,7 @@ else()
             install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR} COMPONENT
                     ${RUNTIME_COMPONENT_NAME})
         endif()
-        if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+        if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
             install(TARGETS cropper RUNTIME DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_cpu.cfg
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})

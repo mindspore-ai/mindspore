@@ -99,7 +99,7 @@ else()
     set_target_properties(mindspore_core PROPERTIES INSTALL_RPATH $ORIGIN)
 endif()
 
-if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR NOT(BUILD_LITE))
+if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE OR NOT(BUILD_LITE))
     target_link_libraries(mindspore_core PRIVATE mindrt_mid)
 endif()
 
