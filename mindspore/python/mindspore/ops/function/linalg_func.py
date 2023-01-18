@@ -92,15 +92,39 @@ def svd(a, full_matrices=False, compute_uv=True):
 
 
 def pinv(x, *, atol=None, rtol=None, hermitian=False):
-    """
+    r"""
     Computes the (Moore-Penrose) pseudo-inverse of a matrix.
+    This function is computed using SVD. If :math:`x=U*S*V^{T}` ,Than the pseudo-inverse of x is:
+    :math:`x^{T}=V*S^{+}*U^{T}` , :math:`S^{+}` is the reciprocal of each non-zero element on
+    the diagonal of S, and zero remains in place.
+    Batch matrices are supported. If x is a batch matrix, the output has the same batch dimension when
+    atol or rtol is float.
+    If atol or rtol is a Tensor, its shape must be broadcast to the singular value returned by
+    `x.svd <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.svd.html>`_ .
+    If x.shape is :math:`(B, M, N)`, and the shape of atol or rtol is :math: `(K, B)`, the output
+    shape is :math:`(K, B, N, M)`.
+    When the Hermitian is True, temporary support only real domain, x is treated as a real symmetric, so x is
+    not checked internally, and only use the lower triangular part in the computations.
+    When the singular value of x (or the norm of the eigenvalues when hermitian = True) that are below
+    threshold (:math:`Max(atol, \sigma \cdot rtol)`, :math:`\sigma` as the largest singular value or
+    characteristic value), it is set to zero, and is not used in the computations.
+    If rtol is not specified and x is a matrix of dimensions (M, N), then rtol is set to
+    be :math:`rtol=max(M, N)\varepsilon`, :math:`\varepsilon` is the
+    `eps <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.Eps.html>`_ value of x.dtype.
+    If rtol is not specified and atol specifies a value larger than zero, rtol is set to zero.
+
+    .. note::
+        This function uses
+        `svd <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.svd.html>`_ internally,
+        (or `eigh <https://www.mindspore.cn/docs/en/master/api_python/scipy/mindspore.scipy.linalg.eigh.html>`_ ,
+        when hermitian = True). So it has the same problem as these functions. For details,
+        see the warnings in svd() and eigh().
 
     Args:
-        x (Tensor): A matrix to be calculated. The matrix must be at least two dimensions.
-            Only `float32`, `float64` are supported Tensor dtypes.
+        x (Tensor): A matrix to be calculated. Only `float32`, `float64` are supported Tensor dtypes.
+            shape is :math:`(*, M, N)`, * is zero or more batch dimensions.
 
-            - When hermitian is false, 2 and higher dimensions are supported, and the shape is :math:`(*, M, N)`.
-            - When hermitian is true, only 2 dimensions are supported, and the shape is :math:`(M, N)`.
+            - When hermitian is true, batch dimensions are not supported temporarily.
 
     Keyword args:
         atol (float, Tensor): absolute tolerance value. Default: None.
@@ -108,10 +132,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         hermitian (bool): An optional bool. x is assumed to be symmetric if real. Default: False.
 
     Outputs:
-        - **output** (Tensor) - same type as input.
-
-          - When hermitian is false, the output shape is :math:`(*, N, M)`.
-          - When hermitian is true, the output shape is :math:`(N, M)`.
+        - **output** (Tensor) - same type as input. Shape is :math:`(*, N, M)`, * is zero or more batch dimensions.
 
     Raises:
         TypeError: If `hermitian` is not a bool.
