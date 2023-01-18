@@ -436,7 +436,6 @@ int MindIRSerializer::SplitSave() {
     }
     std::string external_local_data = model_name_ + "_variables/" + external_local;
     *(param_proto.mutable_external_data()->mutable_location()) = external_local_data;
-    MS_LOG(ERROR) << "external_local_data: " << external_local_data;
     param_proto.mutable_external_data()->set_length(data_length);
     param_proto.mutable_external_data()->set_offset(offset);
     data_fs_->write(static_cast<const char *>(data->data_c()), data_length);
