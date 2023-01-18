@@ -18,109 +18,109 @@
 #include <algorithm>
 #include <cmath>
 
-struct RgbTuple {
-  float cu_r;
-  float cu_g;
-  float cu_b;
-};
-
-struct HsvTuple {
-  float cu_h;
-  float cu_s;
-  float cu_v;
-};
-
-__device__ __forceinline__ HsvTuple rgb2hsv_cuda(const float cu_r, const float cu_g,
-                                                 const float cu_b) {
-  HsvTuple tuple;
-  const float cu_M = max(cu_r, max(cu_g, cu_b));
-  const float cu_m = min(cu_r, min(cu_g, cu_b));
-  const float cu_chroma = cu_M - cu_m;
-  float cu_h = 0.0f;
-  float cu_s = 0.0f;
-  if (cu_chroma > 0.0f) {
-    if (cu_M == cu_r) {
-      const float cu_num = (cu_g - cu_b) / cu_chroma;
-      const float cu_sign = copysignf(1.0f, cu_num);
-      cu_h = ((cu_sign < 0.0f) * 6.0f + cu_sign * fmodf(cu_sign * cu_num, 6.0f)) / 6.0f;
-    } else if (cu_M == cu_g) {
-      cu_h = ((cu_b - cu_r) / cu_chroma + 2.0f) / 6.0f;
+template <typename T>
+__device__ __forceinline__ void rgb2hsv_cuda(const T cu_r, const T cu_g, const T cu_b, T *cu_h, T *cu_s, T *cu_v) {
+  *cu_v = max(cu_r, max(cu_g, cu_b));
+  const T cu_m = min(cu_r, min(cu_g, cu_b));
+  const T cu_chroma = (*cu_v) - cu_m;
+  if (cu_chroma > 0.0) {
+    if ((*cu_v) == cu_r) {
+      const T cu_num = (cu_g - cu_b) / cu_chroma;
+      const T cu_sign = copysign(static_cast<T>(1), cu_num);
+      *cu_h =
+        ((cu_sign < 0.0) * 6.0 + cu_sign * fmodf(static_cast<float>(cu_sign * cu_num), static_cast<float>(6.0))) / 6.0;
+    } else if ((*cu_v) == cu_g) {
+      *cu_h = ((cu_b - cu_r) / cu_chroma + 2.0) / 6.0;
     } else {
-      cu_h = ((cu_r - cu_g) / cu_chroma + 4.0f) / 6.0f;
+      *cu_h = ((cu_r - cu_g) / cu_chroma + 4.0) / 6.0;
     }
   } else {
-    cu_h = 0.0f;
+    *cu_h = 0.0;
   }
-  if (cu_M > 0.0f) {
-    cu_s = cu_chroma / cu_M;
+  if ((*cu_v) > 0.0) {
+    *cu_s = cu_chroma / (*cu_v);
   } else {
-    cu_s = 0.0f;
+    *cu_s = 0.0;
   }
-  tuple.cu_h = cu_h;
-  tuple.cu_s = cu_s;
-  tuple.cu_v = cu_M;
-  return tuple;
+  return;
 }
 
-__device__ __forceinline__ RgbTuple hsv2rgb_cuda(const float cu_h, const float cu_s,
-                                                 const float cu_v) {
-  RgbTuple tuple;
-  const float cu_new_h = cu_h * 6.0f;
-  const float cu_chroma = cu_v * cu_s;
-  const float cu_x = cu_chroma * (1.0f - fabsf(fmodf(cu_new_h, 2.0f) - 1.0f));
-  const float cu_new_m = cu_v - cu_chroma;
+template <typename T>
+__device__ __forceinline__ void hsv2rgb_cuda(const T cu_h, const T cu_s, const T cu_v, T *cu_r, T *cu_g, T *cu_b) {
+  const T cu_new_h = cu_h * 6.0;
+  const T cu_chroma = cu_v * cu_s;
+  const T cu_x = cu_chroma * (1.0f - abs(fmodf(static_cast<float>(cu_new_h), static_cast<float>(2.0)) - 1.0));
+  const T cu_new_m = cu_v - cu_chroma;
   const bool cu_between_0_and_1 = cu_new_h >= 0.0f && cu_new_h < 1.0f;
   const bool cu_between_1_and_2 = cu_new_h >= 1.0f && cu_new_h < 2.0f;
   const bool cu_between_2_and_3 = cu_new_h >= 2.0f && cu_new_h < 3.0f;
   const bool cu_between_3_and_4 = cu_new_h >= 3.0f && cu_new_h < 4.0f;
   const bool cu_between_4_and_5 = cu_new_h >= 4.0f && cu_new_h < 5.0f;
   const bool cu_between_5_and_6 = cu_new_h >= 5.0f && cu_new_h < 6.0f;
-  tuple.cu_r = cu_chroma * static_cast<float>(cu_between_0_and_1 || cu_between_5_and_6) +
-            cu_x * static_cast<float>(cu_between_1_and_2 || cu_between_4_and_5) + cu_new_m;
-  tuple.cu_g = cu_chroma * static_cast<float>(cu_between_1_and_2 || cu_between_2_and_3) +
-            cu_x * static_cast<float>(cu_between_0_and_1 || cu_between_3_and_4) + cu_new_m;
-  tuple.cu_b = cu_chroma * static_cast<float>(cu_between_3_and_4 || cu_between_4_and_5) +
-            cu_x * static_cast<float>(cu_between_2_and_3 || cu_between_5_and_6) + cu_new_m;
-  return tuple;
+  *cu_r = cu_chroma * (cu_between_0_and_1 || cu_between_5_and_6) + cu_x * (cu_between_1_and_2 || cu_between_4_and_5) +
+         cu_new_m;
+  *cu_g = cu_chroma * (cu_between_1_and_2 || cu_between_2_and_3) + cu_x * (cu_between_0_and_1 || cu_between_3_and_4) +
+         cu_new_m;
+  *cu_b = cu_chroma * (cu_between_3_and_4 || cu_between_4_and_5) + cu_x * (cu_between_2_and_3 || cu_between_5_and_6) +
+         cu_new_m;
+  return;
 }
 
 template <typename T>
-__global__ void CalAdjustSaturationKernel(const size_t cu_input_elements, const T* cu_input, T* cu_output,
-                                          const float* cu_saturation_scale) {
-  for (int idx = (blockIdx.x * blockDim.x + threadIdx.x)*3;
-       idx < cu_input_elements; idx += gridDim.x * blockDim.x*3) {
-    const HsvTuple hsv = rgb2hsv_cuda(static_cast<float>(cu_input[idx]),
-                                      static_cast<float>(cu_input[idx + 1]),
-                                      static_cast<float>(cu_input[idx + 2]));
-    T cu_new_h = hsv.cu_h;
-    T cu_new_s = hsv.cu_s;
-    T cu_new_v = hsv.cu_v;
+__global__ void CalAdjustSaturationKernel(const size_t tuple_elements, const int channel_num, const T *cu_input,
+                                          T *cu_output, const float *cu_saturation_scale) {
+  for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < tuple_elements; idx += gridDim.x * blockDim.x) {
+    T cu_new_h = 0;
+    T cu_new_s = 0;
+    T cu_new_v = 0;
+    rgb2hsv_cuda(cu_input[channel_num * idx], cu_input[channel_num * idx + 1], cu_input[channel_num * idx + 2],
+                 &cu_new_h, &cu_new_s, &cu_new_v);
     const float cu_scale = *cu_saturation_scale;
-    cu_new_s = min(1.0f, max(0.0f, hsv.cu_s * cu_scale));
-    const RgbTuple rgb = hsv2rgb_cuda(cu_new_h, cu_new_s, cu_new_v);
-    cu_output[idx] = static_cast<T>(rgb.cu_r);
-    cu_output[idx + 1] = static_cast<T>(rgb.cu_g);
-    cu_output[idx + 2] = static_cast<T>(rgb.cu_b);
+    cu_new_s = min(1.0f, max(0.0f, cu_new_s * cu_scale));
+    hsv2rgb_cuda(cu_new_h, cu_new_s, cu_new_v, &cu_output[channel_num * idx], &cu_output[channel_num * idx + 1],
+                 &cu_output[channel_num * idx + 2]);
+  }
+}
+
+template <>
+__global__ void CalAdjustSaturationKernel(const size_t tuple_elements, const int channel_num, const half *cu_input,
+                                          half *cu_output, const float *cu_saturation_scale) {
+  for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < tuple_elements; idx += gridDim.x * blockDim.x) {
+    float cu_new_h = 0;
+    float cu_new_s = 0;
+    float cu_new_v = 0;
+    rgb2hsv_cuda(__half2float(cu_input[channel_num * idx]), __half2float(cu_input[channel_num * idx + 1]),
+                 __half2float(cu_input[channel_num * idx + 2]), &cu_new_h, &cu_new_s, &cu_new_v);
+    const float cu_scale = *cu_saturation_scale;
+    cu_new_s = min(1.0f, max(0.0f, cu_new_s * cu_scale));
+    float cu_r = 0;
+    float cu_g = 0;
+    float cu_b = 0;
+    hsv2rgb_cuda(cu_new_h, cu_new_s, cu_new_v, &cu_r, &cu_g, &cu_b);
+    cu_output[channel_num * idx] = __float2half(cu_r);
+    cu_output[channel_num * idx + 1] = __float2half(cu_g);
+    cu_output[channel_num * idx + 2] = __float2half(cu_b);
   }
 }
 
 template <typename T>
-void CalAdjustSaturation(const int input_elements, const T* input, T* output,
-                         const float* saturation_scale, const uint32_t &device_id, cudaStream_t cuda_stream) {
-  CalAdjustSaturationKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    input_elements, input, output, saturation_scale);
+void CalAdjustSaturation(const int input_elements, const T *input, T *output, const float *saturation_scale,
+                         const uint32_t &device_id, cudaStream_t cuda_stream) {
+  const int channel_num = 3;
+  int tuple_element = input_elements / channel_num;
+  int thread_num = tuple_element > 256 ? 256 : tuple_element;
+  CalAdjustSaturationKernel<<<CUDA_BLOCKS_CAL(device_id, tuple_element, thread_num), thread_num, 0, cuda_stream>>>(
+    tuple_element, channel_num, input, output, saturation_scale);
 }
 
 template CUDA_LIB_EXPORT void CalAdjustSaturation<float>(const int input_elements, const float *input, float *output,
-                                                         const float *saturation_scale,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+                                                         const float *saturation_scale, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalAdjustSaturation<half>(const int input_elements, const half* input, half* output,
-                                                        const float *saturation_scale,
-                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalAdjustSaturation<half>(const int input_elements, const half *input, half *output,
+                                                        const float *saturation_scale, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalAdjustSaturation<double>(const int input_elements, const double* input,
-                                                          double* output,
-                                                          const float *saturation_scale,
-                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT void CalAdjustSaturation<double>(const int input_elements, const double *input, double *output,
+                                                          const float *saturation_scale, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);

@@ -28,13 +28,7 @@ namespace mindspore {
 namespace kernel {
 class AdjustSaturationGpuKernelMod : public NativeGpuKernelMod {
  public:
-  AdjustSaturationGpuKernelMod() {
-    KernelMod::kernel_name_ = "AdjustSaturation";
-    input_elements = 1;
-    is_null_input_ = false;
-    data_unit_size_ = 0;
-    stream_ptr_ = nullptr;
-  }
+  AdjustSaturationGpuKernelMod() = default;
   ~AdjustSaturationGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -58,15 +52,6 @@ class AdjustSaturationGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
   AdjustSaturationFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, AdjustSaturationFunc>> func_list_;
-
- private:
-  void ResetResource();
-  void InitSizeLists();
-  void *stream_ptr_;
-  int input_elements;
-  bool is_null_input_;
-  size_t data_unit_size_;
-  std::vector<KernelTensorPtr> outputs_ = {};
 };
 }  // namespace kernel
 }  // namespace mindspore
