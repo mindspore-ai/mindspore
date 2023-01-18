@@ -132,7 +132,6 @@ class AllReduce(Primitive):
     Raises:
         TypeError: If any of `op` and `group` is not a str,
                    or fusion is not an integer, or the input's dtype is bool.
-        ValueError: If the `op` is "prod".
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
