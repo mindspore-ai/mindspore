@@ -99,12 +99,12 @@ int NMSwithmaskPlugin::RunCudaNMSwithmask(const nvinfer1::PluginTensorDesc *inpu
   void *index_buff = nullptr;
   cudaMalloc(&index_buff, NmsRoundUpPower2(num_input_) * sizeof(int));
   void *row_mask = nullptr;
-  cudaMalloc(&row_mask, NmsRoundUpPower2(num_input_) * sizeof(bool));
+  cudaMalloc(&row_mask, num_input_ * num_input_ * sizeof(bool));
 
   CalSort(static_cast<const int>(num_input_), static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]),
           static_cast<int *>(index_buff), static_cast<float *>(data_buff), box_size_, device_id_, stream);
   CalPreprocess(static_cast<const int>(num_input_), static_cast<int *>(outputs[1]),
-                static_cast<bool *>(outputs[INPUT_SIZE2]), static_cast<const float *>(inputs[0]),
+                static_cast<int *>(outputs[INPUT_SIZE2]), static_cast<const float *>(inputs[0]),
                 static_cast<float *>(outputs[0]), static_cast<int *>(index_buff), box_size_,
                 static_cast<bool *>(row_mask), device_id_, stream);
   CalNms(static_cast<const int>(num_input_), iou_value_, static_cast<float *>(outputs[0]),

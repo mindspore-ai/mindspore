@@ -63,6 +63,10 @@ class LogicalPlugin : public TensorRTPlugin {
   void serialize(void *buffer) const noexcept override;
   bool supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
                                  int nbOutputs) noexcept override;
+  nvinfer1::DataType getOutputDataType(int index, const nvinfer1::DataType *inputTypes, int nbInputs) const
+    noexcept override {
+    return nvinfer1::DataType::kINT32;
+  }
 
  private:
   int RunCudaLogical(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs, void *const *outputs,

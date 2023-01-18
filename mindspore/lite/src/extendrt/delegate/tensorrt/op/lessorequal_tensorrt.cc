@@ -101,6 +101,12 @@ nvinfer1::IPluginV2DynamicExt *LessorequalPlugin::clone() const noexcept {
   return plugin;
 }
 
+bool LessorequalPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
+                                                  int nbOutputs) noexcept {
+  return tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR &&
+         (tensorsDesc[pos].type == nvinfer1::DataType::kFLOAT || tensorsDesc[pos].type == nvinfer1::DataType::kINT32);
+}
+
 size_t LessorequalPlugin::getSerializationSize() const noexcept { return sizeof(schema::PrimitiveType); }
 
 void LessorequalPlugin::serialize(void *buffer) const noexcept {

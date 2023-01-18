@@ -102,6 +102,12 @@ nvinfer1::IPluginV2DynamicExt *GreaterorequalPlugin::clone() const noexcept {
   return plugin;
 }
 
+bool GreaterorequalPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc,
+                                                     int nbInputs, int nbOutputs) noexcept {
+  return tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR &&
+         (tensorsDesc[pos].type == nvinfer1::DataType::kFLOAT || tensorsDesc[pos].type == nvinfer1::DataType::kINT32);
+}
+
 size_t GreaterorequalPlugin::getSerializationSize() const noexcept { return sizeof(schema::PrimitiveType); }
 
 void GreaterorequalPlugin::serialize(void *buffer) const noexcept {

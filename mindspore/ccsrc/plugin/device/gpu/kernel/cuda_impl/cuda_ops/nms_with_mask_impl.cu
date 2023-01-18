@@ -104,6 +104,14 @@ __global__ void Preprocess(const int num, int *sel_idx, bool *sel_boxes, T *outp
   }
 }
 
+template <typename T>
+__global__ void Preprocess(const int num, int *sel_idx, int *sel_boxes, T *output, int box_size) {
+  for (int box_num = blockIdx.x * blockDim.x + threadIdx.x; box_num < num; box_num += blockDim.x * gridDim.x) {
+    sel_idx[box_num] = box_num;
+    sel_boxes[box_num] = true;
+  }
+}
+
 // Run parallel NMS pass
 // Every position in the row_mask array is updated wit correct IOU decision after being init to all True
 template <typename T>
@@ -197,6 +205,18 @@ void CalPreprocess(const int num, int *sel_idx, bool *sel_boxes, const T *input,
 }
 
 template <typename T>
+void CalPreprocess(const int num, int *sel_idx, int *sel_boxes, const T *input, T *output, int *index_buff,
+                   int box_size, bool *row_mask, const uint32_t &device_id, cudaStream_t cuda_stream) {
+  int total_val = num * num;
+  MaskInit<<<CUDA_BLOCKS(device_id, total_val), CUDA_THREADS(device_id), 0, cuda_stream>>>(total_val, row_mask);
+  // default for flipping boxes -> false (provision available to flip if API updated)
+  PopulateOutput<<<CUDA_BLOCKS(device_id, num), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, output, index_buff,
+                                                                                           num, box_size, false);
+  Preprocess<<<CUDA_BLOCKS(device_id, num), CUDA_THREADS(device_id), 0, cuda_stream>>>(num, sel_idx, sel_boxes, output,
+                                                                                       box_size);
+}
+
+template <typename T>
 void CalSort(const int &num, const T *data_in, T *data_out, int *index_buff, T *data_buff, int box_size,
              const uint32_t &device_id, cudaStream_t stream) {
   int ceil_p_2 = NmsRoundUpPower2(num);
@@ -229,6 +249,10 @@ template CUDA_LIB_EXPORT void CalSort<float>(const int &inner, const float *data
                                              cudaStream_t stream);
 
 template CUDA_LIB_EXPORT void CalPreprocess<float>(const int num, int *sel_idx, bool *sel_boxes, const float *input,
+                                                   float *output, int *index_buff, int box_size, bool *row_mask,
+                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalPreprocess<float>(const int num, int *sel_idx, int *sel_boxes, const float *input,
                                                    float *output, int *index_buff, int box_size, bool *row_mask,
                                                    const uint32_t &device_id, cudaStream_t cuda_stream);
 
