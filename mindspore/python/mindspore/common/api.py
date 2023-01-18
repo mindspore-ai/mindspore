@@ -410,7 +410,7 @@ class _MindsporeFunctionExecutor:
         # Case: If the shape of input args is dynamic, get dynamic shape tensor from context and use it to compile.
         compile_args = args_list
         # Case: The `set_inputs()` of Cell object has been set, using these dynamic shape args as compile args.
-        if isinstance(self.obj, ms.nn.Cell) and self.obj.get_inputs():
+        if self.fn.__name__ == 'construct' and isinstance(self.obj, ms.nn.Cell) and self.obj.get_inputs():
             compile_args = self.obj.get_inputs()
             for args in compile_args:
                 Validator.check_isinstance("args set in `set_inputs()` of Cell", args, PythonTensor)

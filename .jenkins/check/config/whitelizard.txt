@@ -282,6 +282,14 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/multinomial.cc:aicpu::Generate     
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/matrix_set_diag_v3.cc:aicpu::MatrixSetDiagV3CpuKernel::DoCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/max_unpool_2d.cc:aicpu::MaxUnpool2DCpuKernel::MaxUnpool2DCompute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/sparseaddmm.cc:aicpu::SparseAddmmCpuKernel::SparseAddmmCompute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/triplet_margin_loss.cc:aicpu::TripletMarginLossCpuKernel::Compute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/triplet_margin_loss.cc:aicpu::TripletMarginLossCpuKernel::TripletMarginLossComputeRealType
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/triplet_margin_loss.cc:aicpu::TripletMarginLossCpuKernel::TripletMarginLossComputeComplexType
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/triplet_margin_loss.cc:aicpu::TripletMarginLossCpuKernel::TripletMarginLossComputeRealTypeFloat16
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/sparse_matrix_transpose.cc:aicpu::SparseMatrixTransposeCpuKernel::Compute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/sparse_reshape.cc:aicpu::SparseReshapeCpuKernel::Compute
+mindspore/mindspore/ccsrc/plugin/device/ascend/optimizer/mindir/aicpu_lib_select.cc:mindspore::opt::AICpuLibSelectPass::Process
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/matrix_solve_ls.cc:aicpu::MatrixSolveLsCpuKernel::Compute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/tensor_scatter_update.cc:aicpu::TensorScatterUpdateCpuKernel::Compute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/scatter_nd.cc:aicpu::ScatterNdCpuKernel::Compute
