@@ -43,6 +43,7 @@ constexpr char const *sortingNames[6] = {"size(>), index(<)",
 constexpr char const *branchingNames[4] = {"bestfit", "smallest", "largest", "worstfit"};
 constexpr char const *algorithmTypeNames[2] = {"Shared Objects", "Single Object"};
 constexpr auto kParallelComputeSizeThreshold = 2000;
+constexpr auto kHalfByteSize = 4;
 enum Status { FAILED, SUCCESS };
 enum AlgorithmType { kManyObjects = 0, kSingleObject, kNumAlgorithmTypes };
 enum SortingType {
@@ -117,7 +118,7 @@ class DynamicBitSet {
       auto *char_value = reinterpret_cast<unsigned char *>(&value);
       for (size_t j = 0; j < bit_width_ / CHAR_BIT; j++) {
         ret += ones_num_in_hex[static_cast<int>(char_value[j] & 0xF)];
-        char_value[j] >>= 4;
+        char_value[j] >>= kHalfByteSize;
         ret += ones_num_in_hex[static_cast<int>(char_value[j] & 0xF)];
       }
     }

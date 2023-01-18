@@ -45,8 +45,9 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-const int FLOAT_LEN = sizeof(float);
-const int FLOAT16_LEN = 2;
+const auto kFloat16Bytes = 2;
+const auto kFloatBytes = sizeof(float);
+const auto kFloat64Bytes = 8;
 
 bool IsUseTransDataTypeFormat(const std::pair<std::string, std::string> &type_format) {
   static const std::set<std::pair<std::string, std::string>> use_trans_data = {
@@ -107,8 +108,8 @@ void SyncMemory(void *dst, const void *src, uint64_t size, aclrtMemcpyKind kind)
 }
 
 bool FloatToHalfAndSyncHostToDevice(void *dst, size_t dst_size, const void *src, size_t src_size) {
-  auto elem_num = src_size / FLOAT_LEN;
-  if (elem_num != (dst_size / FLOAT16_LEN)) {
+  auto elem_num = src_size / kFloatBytes;
+  if (elem_num != (dst_size / kFloat16Bytes)) {
     MS_EXCEPTION(ArgumentError) << "FloatToHalf failed. size not match src_size[" << src_size << "], dst_size["
                                 << dst_size << "]";
   }
@@ -119,7 +120,7 @@ bool FloatToHalfAndSyncHostToDevice(void *dst, size_t dst_size, const void *src,
 }
 
 bool Float64ToFloatAndSyncHostToDevice(void *dst, size_t dst_size, const void *src, size_t src_size) {
-  if (src_size / 2 != dst_size) {
+  if (src_size / kFloat64Bytes != dst_size / kFloatBytes) {
     MS_EXCEPTION(ArgumentError) << "src_size[" << src_size << "], dst_size[" << dst_size << "]";
   }
   size_t elem_num = dst_size / sizeof(float);
@@ -130,8 +131,8 @@ bool Float64ToFloatAndSyncHostToDevice(void *dst, size_t dst_size, const void *s
 }
 
 bool SyncDeviceToHostAndHalfToFloat(void *dst, size_t dst_size, const void *src, size_t src_size) {
-  auto elem_num = src_size / FLOAT16_LEN;
-  if (elem_num != (dst_size / FLOAT_LEN)) {
+  auto elem_num = src_size / kFloat16Bytes;
+  if (elem_num != (dst_size / kFloatBytes)) {
     MS_EXCEPTION(ArgumentError) << "HalfToFloat failed. size not match src_size[" << src_size << "], dst_size["
                                 << dst_size << "]";
   }
@@ -142,7 +143,7 @@ bool SyncDeviceToHostAndHalfToFloat(void *dst, size_t dst_size, const void *src,
 }
 
 bool SyncDeviceToHostAndFloatToFloat64(void *dst, size_t dst_size, const void *src, size_t src_size) {
-  if (src_size != dst_size / 2) {
+  if (src_size / kFloatBytes != dst_size / kFloat64Bytes) {
     MS_EXCEPTION(ArgumentError) << "src_size[" << src_size << "], dst_size[" << dst_size << "]";
   }
   size_t elem_num = src_size / sizeof(float);

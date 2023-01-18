@@ -54,19 +54,19 @@ class RtKerDescFactory {
   std::map<std::string, RtKerDescCreater> fmap_;
 };
 
-class _RtKerDescRegister {
+class RtKerDescRegister {
  public:
-  _RtKerDescRegister(const std::string &name, RtKerDescCreater &&fun) {
+  RtKerDescRegister(const std::string &name, RtKerDescCreater &&fun) {
     RtKerDescFactory::Get().Register(name, std::move(fun));
   }
-  ~_RtKerDescRegister() = default;
+  ~RtKerDescRegister() = default;
 };
 
-#define _MS_REG_RTKERNEL_DESC_REG(KNAME, clazz)                                          \
+#define MS_REG_RTKERNEL_DESC_REG(KNAME, clazz)                                           \
   static_assert(std::is_base_of<RtKerDesc, clazz>::value, " must be base of RtKerDesc"); \
-  static const _RtKerDescRegister g_##KNAME##_##_rtkernel_desc_reg(#KNAME, []() { return std::make_shared<clazz>(); });
+  static const RtKerDescRegister g_##KNAME##_##_rtkernel_desc_reg(#KNAME, []() { return std::make_shared<clazz>(); });
 
-#define MS_REG_RTKERNEL_DESC(KNAME, clazz) _MS_REG_RTKERNEL_DESC_REG(KNAME, clazz)
+#define MS_REG_RTKERNEL_DESC(KNAME, clazz) MS_REG_RTKERNEL_DESC_REG(KNAME, clazz)
 
 void GetRtKelInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list);
 }  // namespace kernel

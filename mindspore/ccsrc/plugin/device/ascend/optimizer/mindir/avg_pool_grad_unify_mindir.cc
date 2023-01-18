@@ -111,7 +111,10 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const Anf
                       << x_shape << ", kernel_size:" << k_size << ", strides:" << stride
                       << trace::DumpSourceLines(node);
   }
-  int64_t pad_top, pad_bottom, pad_left, pad_right;
+  int64_t pad_top;
+  int64_t pad_bottom;
+  int64_t pad_left;
+  int64_t pad_right;
   int64_t h_output =
     windowed_output_size(node, x_shape[kDim2], k_size[kDim2], stride[kDim2], pad_mode, &pad_top, &pad_bottom);
   int64_t w_output =

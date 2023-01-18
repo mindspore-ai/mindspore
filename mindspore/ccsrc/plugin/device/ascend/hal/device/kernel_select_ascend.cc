@@ -859,7 +859,8 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
                                                                                    KernelType kernel_type) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> aicpu_kernel_info_list;
-  std::ostringstream aicore_in_out_info, aicpu_in_out_info;
+  std::ostringstream aicore_in_out_info;
+  std::ostringstream aicpu_in_out_info;
   std::tuple<KernelSelectStatus, std::string, ExceptionType> result =
     std::make_tuple(kStatusAllMatched, "", NoExceptionType);
   MS_EXCEPTION_IF_NULL(kernel_node);

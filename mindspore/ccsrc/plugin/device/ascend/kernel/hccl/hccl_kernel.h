@@ -93,24 +93,24 @@ class HcclKernelFactory {
   std::map<string, HcclKernelCreater> hccl_kernel_map_;
 };
 
-class _HcclKernelRegister {
+class HcclKernelRegister {
  public:
-  _HcclKernelRegister(const string &name, HcclKernelCreater &&fun) {
+  HcclKernelRegister(const string &name, HcclKernelCreater &&fun) {
     HcclKernelFactory::Get().Register(name, std::move(fun));
   }
-  ~_HcclKernelRegister() = default;
+  ~HcclKernelRegister() = default;
 };
 
-#define _MS_HCCL_REG_KERNEL_REG(KNAME, clazz)                                              \
+#define MS_HCCL_REG_KERNEL_REG(KNAME, clazz)                                               \
   static_assert(std::is_base_of<HcclKernel, clazz>::value, " must be base of HcclKernel"); \
-  static const _HcclKernelRegister g_##KNAME##_##_kernel_reg(#KNAME, []() {                \
+  static const HcclKernelRegister g_##KNAME##_##_kernel_reg(#KNAME, []() {                 \
     std::shared_ptr<clazz> ptr = nullptr;                                                  \
     ptr = std::make_shared<clazz>();                                                       \
     MS_EXCEPTION_IF_NULL(ptr);                                                             \
     return ptr;                                                                            \
   });
 
-#define MS_HCCL_REG_KERNEL(KNAME, clazz) _MS_HCCL_REG_KERNEL_REG(KNAME, clazz)
+#define MS_HCCL_REG_KERNEL(KNAME, clazz) MS_HCCL_REG_KERNEL_REG(KNAME, clazz)
 }  // namespace kernel
 }  // namespace mindspore
 #endif

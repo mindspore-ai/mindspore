@@ -41,6 +41,8 @@ using std::vector;
 
 namespace mindspore {
 namespace somas {
+constexpr auto kDefaultAlignmentSize = 512;
+
 class Interval {
  public:
   Interval() : m_a_(0), m_b_(0) {}
@@ -180,7 +182,7 @@ class FootPrint : public std::enable_shared_from_this<FootPrint> {
 
 class FastHeuristic {
  public:
-  FastHeuristic() : m_alignment_(512), m_tensors_allocated_(0) {}
+  FastHeuristic() : m_alignment_(kDefaultAlignmentSize), m_tensors_allocated_(0) {}
   ~FastHeuristic() = default;
 
   void setAlignment(const size_t &a) { m_alignment_ = a; }

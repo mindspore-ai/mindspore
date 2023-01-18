@@ -58,17 +58,17 @@ class HostKernelFactory {
   std::map<string, HostKernelCreater> hostKernelMap_;
 };
 
-class _HostKernelRegister {
+class HostKernelRegister {
  public:
-  _HostKernelRegister(const string &name, HostKernelCreater &&fun) {
+  HostKernelRegister(const string &name, HostKernelCreater &&fun) {
     HostKernelFactory::Get().Register(name, std::move(fun));
   }
-  ~_HostKernelRegister() = default;
+  ~HostKernelRegister() = default;
 };
 
 #define MS_HOST_REG_KERNEL_REG(KNAME, clazz)                                                     \
   static_assert(std::is_base_of<HostKernelMod, clazz>::value, " must be base of HostKernelMod"); \
-  static const _HostKernelRegister g_##KNAME##_##_kernel_reg(#KNAME, []() {                      \
+  static const HostKernelRegister g_##KNAME##_##_kernel_reg(#KNAME, []() {                       \
     std::shared_ptr<clazz> ptr = nullptr;                                                        \
     ptr = std::make_shared<clazz>();                                                             \
     MS_EXCEPTION_IF_NULL(ptr);                                                                   \

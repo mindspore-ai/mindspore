@@ -210,7 +210,8 @@ struct AsymmetricFunc {
 template <typename T>
 struct HalfPixelFunc {
   T operator()(const T &new_x, const int &old_length, const int &new_length) const {
-    return new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0;
+    constexpr auto half_pixel = 0.5;
+    return new_length > 1 ? (new_x + half_pixel) * old_length / new_length - half_pixel : 0;
   }
 };
 
