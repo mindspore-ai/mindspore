@@ -3,7 +3,7 @@ mindspore.ops.TruncateDiv
 
 .. py:class:: mindspore.ops.TruncateDiv
 
-    对于整数类型，将第一个输入Tensor与第二个输入Tensor逐元素相除，结果将向0取整。
+    将第一个输入Tensor与第二个输入Tensor逐元素相除，结果将向0取整。相当于C语言风格的整数除法。
 
     输入 `x` 和 `y` 应能遵循隐式类型转换规则使数据类型一致。
     输入必须为两个Tensor或一个Tensor和一个标量。

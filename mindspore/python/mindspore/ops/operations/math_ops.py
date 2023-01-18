@@ -3233,8 +3233,8 @@ class FloorDiv(Primitive):
 
 class TruncateDiv(Primitive):
     """
-    Divides the first input tensor by the second input tensor element-wise for integer types, negative numbers will
-    round fractional quantities towards zero.
+    Divides the first input tensor by the second input tensor element-wise and rounds the results
+    of division towards zero. Equivalent to C-style integer division.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
