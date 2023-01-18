@@ -65,7 +65,8 @@ class PartialEliminater : public AnfVisitor {
     }
     // {X, Ys, Xs} if Xs has monad
     if (!IsValueNode<FuncGraph>(X_)) {
-      MS_LOG(EXCEPTION) << "not support yet as X_ is not a funcgraph. node: " << node->DebugString(2);
+      constexpr auto recursive_level = 2;
+      MS_LOG(EXCEPTION) << "not support yet as X_ is not a funcgraph. node: " << node->DebugString(recursive_level);
     }
     auto fg = GetValueNode<FuncGraphPtr>(X_);
     MS_EXCEPTION_IF_NULL(fg);
@@ -108,7 +109,9 @@ class PartialEliminater : public AnfVisitor {
 
     X_ = inputs[1];
     // fill Xs
-    (void)std::copy(inputs.begin() + 2, inputs.end(), std::back_inserter(Xs_));
+    // {Partial, Function, Args....}
+    constexpr auto args_index = 2;
+    (void)std::copy(inputs.begin() + args_index, inputs.end(), std::back_inserter(Xs_));
   }
 
  private:
@@ -137,7 +140,9 @@ class ChoicePartialEliminater : public AnfVisitor {
     if (IsValueNode<FuncGraph>(inputs[1])) {
       fg_list_.push_back(inputs[1]);
       AnfNodePtrList args;
-      (void)std::copy(inputs.begin() + 2, inputs.end(), std::back_inserter(args));
+      // {Partial, Function, Args....}
+      constexpr auto args_index = 2;
+      (void)std::copy(inputs.begin() + args_index, inputs.end(), std::back_inserter(args));
       args_list_.push_back(args);
     }
     return;

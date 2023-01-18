@@ -176,7 +176,8 @@ class AddNZeroFilter : public AnfVisitor {
     }
 
     // if only two node in filtered_nodes, {make_tuple, x}. return x.
-    if (filtered_Xs_.size() == 2) {
+    constexpr auto input_size = 2;
+    if (filtered_Xs_.size() == input_size) {
       return filtered_Xs_[1];
     }
 

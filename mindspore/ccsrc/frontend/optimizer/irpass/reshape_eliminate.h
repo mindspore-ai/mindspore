@@ -108,7 +108,8 @@ class TwoReshapeEliminater : public AnfVisitor {
       if (IsPrimitiveCNode(node, prim::kPrimReshape)) {
         auto &inputs = node->cast<CNodePtr>()->inputs();
         // {PrimReshape, X, Y}
-        if (inputs.size() != 3) {
+        constexpr auto reshape_input_size = 3;
+        if (inputs.size() != reshape_input_size) {
           return;
         }
         prim_ = GetValueNode<PrimitivePtr>(inputs[0]);
