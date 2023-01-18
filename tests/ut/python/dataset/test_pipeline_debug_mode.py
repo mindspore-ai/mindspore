@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -79,11 +79,12 @@ def test_pipeline_debug_mode_dict():
     center_crop = vision.CenterCrop(crop_size)
     resize_op = vision.Resize(resize_size, Inter.LINEAR)  # Bilinear mode
     data = data.map(operations=[center_crop, resize_op], input_columns=["image"])
+    data = data.rename(input_columns=["image"], output_columns=["image_out"])
     data = data.batch(2)
     num_row = 0
     for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         assert len(item) == 2
-        assert item["image"].shape == (2, 24, 24, 3)
+        assert item["image_out"].shape == (2, 24, 24, 3)
         assert item["attr"].shape == (2, 40)
         num_row += 1
     assert num_row == 2
@@ -93,7 +94,7 @@ def test_pipeline_debug_mode_minddata():
     """
     Feature: Pipeline debug mode.
     Description: Test iterator with MindDataset in debug mode.
-    Expectation:Successful.
+    Expectation: Successful.
     """
     logger.info("test_pipeline_debug_mode_minddata")
     data = ds.MindDataset("../data/mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0")
@@ -108,13 +109,15 @@ def test_pipeline_debug_mode_not_support():
     """
     Feature: Pipeline debug mode.
     Description: Test creating tuple iterator with op not supported in pull mode.
-    Expectation: raise exception for debug mode.
+    Expectation: Exception raised for unsupported op in debug mode.
     """
     logger.info("test_pipeline_debug_mode_not_support")
     data = ds.NumpySlicesDataset(data=[[0, 1, 2]], column_names=["data"])
+
     with pytest.raises(RuntimeError) as error_info:
         data.create_tuple_iterator(num_epochs=1, output_numpy=True)
     assert "dataset pipeline" in str(error_info.value)
+    assert "Leaf node GeneratorOp is not implemented yet in pull mode." in str(error_info.value)
 
 
 def test_pipeline_debug_mode_map_pyfunc():
@@ -154,6 +157,37 @@ def test_pipeline_debug_mode_batch_pyfunc():
     assert num_rows == 5
 
 
+def generator_md():
+    """
+    Create a dataset with [0, 1, 2, 3, 4]
+    """
+    for i in range(5):
+        yield (np.array([i]),)
+
+
+# Note: Generator op is not yet supported in pull mode
+@pytest.mark.skip(reason="Unsupported in pull mode")
+def test_pipeline_debug_mode_skip_take():
+    """
+    Feature: Pipeline debug mode.
+    Description: Test skip op followed by a take op
+    Expectation: Output is equal to the expected output
+    """
+    ds1 = ds.GeneratorDataset(generator_md, ["data"])
+
+    # Here ds1 should be [2, 3, 4]
+    ds1 = ds1.skip(2)
+
+    # Here ds1 should be [2, 3]
+    ds1 = ds1.take(2)
+
+    buf = []
+    for data in ds1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+        buf.append(data[0][0])
+    assert len(buf) == 2
+    assert buf == [2, 3]
+
+
 def test_pipeline_debug_mode_concat():
     """
     Feature: Pipeline debug mode.
@@ -184,6 +218,63 @@ def test_pipeline_debug_mode_concat():
         assert num_rows == sample_row * num_repeat
     assert epoch_count == num_epoch
     assert sample_count == num_repeat * num_epoch * sample_row
+
+
+# Note: TFRecordDataset op is not yet supported in pull mode
+@pytest.mark.skip(reason="Unsupported in pull mode")
+def test_pipeline_debug_mode_tfrecord_rename_zip():
+    """
+    Feature: Pipeline debug mode.
+    Description: Test rename op and zip op followed by repeat
+    Expectation: Output is the same as expected output
+    """
+    tf_data_dir = ["../data/dataset/testTFBert5Rows2/5TFDatas.data"]
+    tf_schema_dir = "../data/dataset/testTFBert5Rows2/datasetSchema.json"
+
+    data1 = ds.TFRecordDataset(tf_data_dir, tf_schema_dir, shuffle=False)
+    data2 = ds.TFRecordDataset(tf_data_dir, tf_schema_dir, shuffle=False)
+
+    data2 = data2.rename(input_columns=["input_ids", "segment_ids"], output_columns=["masks", "seg_ids"])
+
+    data = ds.zip((data1, data2))
+    data = data.repeat(3)
+
+    num_iter = 0
+    for _, item in enumerate(data.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        logger.info("item[mask] is {}".format(item["masks"]))
+        np.testing.assert_equal(item["masks"], item["input_ids"])
+        logger.info("item[seg_ids] is {}".format(item["seg_ids"]))
+        np.testing.assert_equal(item["segment_ids"], item["seg_ids"])
+        # need to consume the data in the buffer
+        num_iter += 1
+    logger.info("Number of data in data: {}".format(num_iter))
+    assert num_iter == 15
+
+
+def test_pipeline_debug_mode_imagefolder_rename_zip():
+    """
+    Feature: Pipeline debug mode.
+    Description: Test ImageFolderDataset with rename op and zip op
+    Expectation: Output is the same as expected output
+    """
+    # Apply dataset operations
+    data1 = ds.ImageFolderDataset("../data/dataset/testPK/data", num_samples=6)
+    data2 = ds.ImageFolderDataset("../data/dataset/testPK/data", num_samples=10)
+
+    # Rename dataset2 for no conflict
+    data2 = data2.rename(input_columns=["image", "label"], output_columns=["image1", "label1"])
+    data2 = data2.skip(4)
+
+    data3 = ds.zip((data1, data2))
+
+    num_iter = 0
+    for item in data3.create_dict_iterator(num_epochs=1):  # each data is a dictionary
+        # in this example, each dictionary has keys "image" and "label"
+        logger.info("image is {}".format(item["image"]))
+        logger.info("label is {}".format(item["label"]))
+        num_iter += 1
+    logger.info("Number of data in data: {}".format(num_iter))
+    assert num_iter == 6
 
 
 def test_pipeline_debug_mode_map_random():
@@ -298,7 +389,10 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_not_support()
     test_pipeline_debug_mode_map_pyfunc()
     test_pipeline_debug_mode_batch_pyfunc()
+    test_pipeline_debug_mode_skip_take()
     test_pipeline_debug_mode_concat()
+    test_pipeline_debug_mode_tfrecord_rename_zip()
+    test_pipeline_debug_mode_imagefolder_rename_zip()
     test_pipeline_debug_mode_shuffle()
     test_pipeline_debug_mode_map_random()
     test_pipeline_debug_mode_imdb_shuffle()

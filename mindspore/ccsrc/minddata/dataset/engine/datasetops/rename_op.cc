@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,20 @@ RenameOp::RenameOp(const std::vector<std::string> &in_col_names, const std::vect
 // destructor
 RenameOp::~RenameOp() {}
 
-// Gets a row from the child operator and projects the row.
+// Gets a row from the child operator
 Status RenameOp::GetNextRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
   RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
+  if (row->eoe()) {
+    UpdateRepeatAndEpochCounter();
+  }
+  return Status::OK();
+}
+
+// For Pullmode, gets a row from the child operator
+Status RenameOp::GetNextRowPullMode(TensorRow *row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
+  RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
   if (row->eoe()) {
     UpdateRepeatAndEpochCounter();
   }

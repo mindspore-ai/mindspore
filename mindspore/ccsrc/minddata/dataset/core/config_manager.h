@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -296,7 +296,8 @@ class ConfigManager {
   bool fast_recovery() const { return fast_recovery_; }
 
   // setter function
-  // @param debug_mode_flag - Indicate whether the debug mode is on
+  // @param debug_mode_flag - Set whether debug mode is on. When enabled, the dataset pipeline runs synchronously and
+  //    sequentially.
   void set_debug_mode(const bool debug_mode_flag) { debug_mode_flag_ = debug_mode_flag; }
 
   // getter function
