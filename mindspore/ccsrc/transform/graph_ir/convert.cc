@@ -82,6 +82,7 @@ const std::map<TypeId, TypeId> kReduceRaiseMap = {{kNumberTypeInt64, kNumberType
 const std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputDTypeMap = {
   {kResizeNearestNeighborGradOpName, {{2, kNumberTypeInt32}}},
   {kTileOpName, {{1, kNumberTypeInt32}}},
+  {kConv2DBackpropFilterOpName, {{3, kNumberTypeInt32}}},
   {kOneHotOpName, {{2, kNumberTypeInt32}}},
   {kLinSpaceOpName, {{3, kNumberTypeInt32}}}};
 
