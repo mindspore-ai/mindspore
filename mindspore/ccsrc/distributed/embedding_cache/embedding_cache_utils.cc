@@ -149,10 +149,10 @@ void EmbeddingCacheTableManager::AllocMemForEmbedding(const device::DeviceContex
   for (auto &item : hash_tables_) {
     auto *device_address = item.second.device_address;
     MS_EXCEPTION_IF_NULL(device_address);
-    auto addr = device_context->device_res_manager_->AllocateMemory(device_address->GetSize());
-    MS_EXCEPTION_IF_NULL(addr);
-    device_address->set_ptr(addr);
-    item.second.address = Address(addr, device_address->GetSize());
+    if (device_address->GetPtr() == nullptr) {
+      device_context->device_res_manager_->AllocateMemory(device_address);
+    }
+    item.second.address = Address(device_address->GetMutablePtr(), device_address->GetSize());
 
     size_t embedding_size = item.second.embedding_size;
     auto &host_address = item.second.host_address;
