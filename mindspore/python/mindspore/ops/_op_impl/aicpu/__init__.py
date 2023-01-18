@@ -277,3 +277,5 @@ from .lstsq import _lstsq_aicpu
 from .lu_unpack import _lu_unpack_aicpu
 from .lu_unpack_grad import _lu_unpack_grad_aicpu
 from .matrix_exp import _matrix_exp_aicpu
+from .pad_v3_grad import _pad_v3_grad_aicpu
+from .pad_v3 import _pad_v3_aicpu

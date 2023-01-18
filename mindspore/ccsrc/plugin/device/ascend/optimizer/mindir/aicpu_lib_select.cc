@@ -75,8 +75,6 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                                mindspore::kFillOpName,
                                                                mindspore::kLogMatrixDeterminantOpName,
                                                                mindspore::kMatrixSolveLsOpName,
-                                                               mindspore::kMaskedSelectOpName,
-                                                               mindspore::kMaskedSelectGradOpName,
                                                                mindspore::kMedianOpName,
                                                                mindspore::kMedianGradOpName,
                                                                mindspore::kNMSWithMaskOpName,
@@ -178,7 +176,11 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                                mindspore::kLuUnpackOpName,
                                                                mindspore::kLuUnpackGradOpName,
                                                                mindspore::kMatMulOpName,
-                                                               mindspore::kMatrixExpOpName};
+                                                               mindspore::kMatrixExpOpName,
+                                                               mindspore::kPadV3GradOpName,
+                                                               mindspore::kPadV3OpName,
+                                                               mindspore::kLogicalXorOpName,
+                                                               mindspore::kLogNormalReverseOpName};
 
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
   static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";
