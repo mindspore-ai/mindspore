@@ -12,9 +12,6 @@ mindspore.ops.coo_log
 
         如果算子Log的输入值在(0，0.01]或[0.95，1.05]范围内，则输出精度可能会存在误差。
 
-    .. note::
-        Ascend上输入COOTensor的维度要小于等于8，CPU上输入COOTensor的维度要小于8。
-
     参数：
         - **x** (COOTensor) - 任意维度的输入COOTensor。该值必须大于0。
 

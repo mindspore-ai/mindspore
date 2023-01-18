@@ -3965,7 +3965,7 @@ class Tensor(Tensor_):
 
     def multiply(self, value):
         r"""
-        Refer to :func:`mindspore.ops.multiply` for more details.
+        For details, please refer to :func:`mindspore.ops.multiply`.
         """
         self._init_check()
         return tensor_operator_registry.get('multiply')(self, value)

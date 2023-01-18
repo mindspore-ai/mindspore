@@ -81,6 +81,9 @@ class Randperm(Primitive):
         TypeError: If `n` is not a Tensor.
         TypeError: If `n` has non-Int elements.
         TypeError: If `n` has negative elements.
+        TypeError: If `dtype` is not supported.
+        ValueError: If `n` is out of range of `dtype`.
+        ValueError: If `n` is larger than `max_length`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

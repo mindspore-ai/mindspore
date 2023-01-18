@@ -8,6 +8,9 @@ mindspore.ops.log10
     .. math::
         y_i = log_{10}(x_i)
 
+    .. warning::
+        如果log10的输入值范围在(0, 0.01]或[0.95, 1.05]区间，输出精度可能会受影响。
+
     .. note::
         Ascend上输入Tensor的维度要小于等于8，CPU上输入Tensor的维度要小于8。
 

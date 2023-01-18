@@ -3112,7 +3112,7 @@ class L2Loss(Primitive):
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
-        >>> l2_loss = L2Loss()
+        >>> l2_loss = ops.L2Loss()
         >>> output = l2_loss(input_x)
         >>> print(output)
         7.0
