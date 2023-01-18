@@ -215,6 +215,22 @@ struct ReciprocalFunctor {
   }
 };
 
+template <>
+struct ReciprocalFunctor<half> {
+  half zero_ = half(0);
+  half one_ = half(1);
+  ReciprocalFunctor() {}
+  __device__ __forceinline__ half operator()(half x) const {
+    if (x != zero_) {
+      return one_ / x;
+    }
+    if (std::numeric_limits<half>::infinity()) {
+      return std::numeric_limits<half>::infinity() + one_;
+    }
+    return std::numeric_limits<half>::max() + one_;
+  }
+};
+
 template <typename T>
 void ReciprocalOpt(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   ReciprocalFunctor<T> functor;
