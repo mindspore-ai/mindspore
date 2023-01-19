@@ -25,12 +25,6 @@ REG_BPROP_BUILDER("ResizeBicubic").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib
   auto images = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto images_type_id = ib->GetDtypeId(images);
-  std::set<TypeId> type_id_list = {kNumberTypeInt8,  kNumberTypeInt16,  kNumberTypeInt32,  kNumberTypeInt64,
-                                   kNumberTypeUInt8, kNumberTypeUInt16, kNumberTypeFloat16};
-  if (type_id_list.count(images_type_id) != 0) {
-    images = ib->Cast(images, kNumberTypeFloat64);
-  }
   auto dx = ib->Emit(
     "ResizeBicubicGrad", {dout, images},
     {{"align_corners", ib->GetAttr("align_corners")}, {"half_pixel_centers", ib->GetAttr("half_pixel_centers")}});
