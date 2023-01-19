@@ -87,7 +87,10 @@ const std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputD
 
 // {node name | {{attr_name, dst_type}...}}
 const std::map<std::string, std::vector<std::pair<std::string, TypeId>>> kTransAttrDTypeMap = {
-  {kResizeNearestNeighborOpName, {{"size", kNumberTypeInt32}}}, {kResizeBilinearOpName, {{"size", kNumberTypeInt32}}}};
+  {kResizeNearestNeighborOpName, {{"size", kNumberTypeInt32}}},
+  {kResizeBilinearOpName, {{"size", kNumberTypeInt32}}},
+  {kSpaceToBatchNDOpName, {{"block_shape", kNumberTypeInt32}}},
+  {kBatchToSpaceNDOpName, {{"block_shape", kNumberTypeInt32}}}};
 
 bool IsValidConversion(TypeId src_type, TypeId dst_type) {
   if (src_type == dst_type) {
@@ -667,8 +670,6 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
   restore_checkpoint_sout_ << "digraph {" << endl;
   // Trans data_type for some specific nodes' inputs and attr.
   TransDataType(anf_graph_);
-  // Convert SpaceBatch attr to input
-  ConvertSpaceBatchNd(anf_graph_);
   // Convert all anf node to Operator
   MS_LOG(INFO) << "Convert all node, graph: " << anf_graph_->ToString();
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_, while_cond_node_);
@@ -2467,70 +2468,6 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
   auto op = adpt->generate(value_ptr);
   (void)adpt->setAttr(op, "value", static_cast<int32_t>(int64_value));
   op_cache_[value_ptr.get()] = op;
-}
-
-void DfGraphConvertor::ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) const {
-  std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
-  for (auto &it : nodes) {
-    if (it->isa<CNode>()) {
-      auto node = it->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(node);
-      std::string name = GetCNodeTargetFuncName(node);
-      if (name == prim::kPrimSpaceToBatchND->name() || name == prim::kPrimBatchToSpaceND->name()) {
-        AnfNodePtr op = node->input(0);
-        if (IsValueNode<Primitive>(op)) {
-          auto prim = GetValueNode<PrimitivePtr>(op);
-          MS_EXCEPTION_IF_NULL(prim);
-          ValuePtr block_shape = prim->GetAttr("block_shape");
-          auto int64_value = GetValue<std::vector<int64_t>>(block_shape);
-          std::vector<int32_t> int32_value;
-          (void)std::transform(int64_value.begin(), int64_value.end(), std::back_inserter(int32_value), LongToInt);
-          auto new_value = NewValueNode(int32_value);
-          new_value->set_abstract(block_shape->ToAbstract());
-          node->add_input(new_value);
-          ValuePtr attr_value = nullptr;
-          if (name == prim::kPrimSpaceToBatchND->name()) {
-            attr_value = prim->GetAttr("paddings");
-          } else {
-            attr_value = prim->GetAttr("crops");
-          }
-          std::vector<int64_t> attr_list;
-          std::vector<int64_t> attr_size;
-          if (attr_value->isa<ValueList>()) {
-            const ValueListPtr &value = dyn_cast<ValueList>(attr_value);
-            bool already_record = false;
-            attr_size.push_back(value->size());
-            for (const auto &item : value->value()) {
-              if (item->isa<ValueList>()) {
-                auto value_list = GetValue<std::vector<int64_t>>(item);
-                (void)std::copy(value_list.begin(), value_list.end(), std::back_inserter(attr_list));
-                if (!already_record) {
-                  attr_size.push_back(value_list.size());
-                  already_record = true;
-                }
-              }
-            }
-          }
-          tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, attr_size);
-          MS_EXCEPTION_IF_NULL(tensor);
-          if (!attr_size.empty()) {
-            auto data_ptr = tensor->data_c();
-            MS_EXCEPTION_IF_NULL(data_ptr);
-            auto elem_length =
-              std::accumulate(attr_size.begin(), attr_size.end(), 1, std::multiplies<int64_t>()) * sizeof(int64_t);
-            auto ret_code =
-              memcpy_s(data_ptr, static_cast<size_t>(tensor->data().nbytes()), &attr_list[0], elem_length);
-            if (ret_code != EOK) {
-              MS_LOG(EXCEPTION) << "Failed to copy data into tensor, memcpy_s errorno: " << ret_code;
-            }
-          }
-          auto new_value_attr = NewValueNode(tensor);
-          new_value_attr->set_abstract(attr_value->ToAbstract());
-          node->add_input(new_value_attr);
-        }
-      }
-    }
-  }
 }
 
 AnfNodePtr DfGraphConvertor::CreateCast(const AnfNodePtr &input, const TypePtr &dst_type) const {

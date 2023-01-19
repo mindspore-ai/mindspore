@@ -92,9 +92,10 @@ REG_ADPT_DESC(SpaceToBatchD, kNameSpaceToBatch, ADPT_DESC(SpaceToBatchD))
 
 // SpaceToBatchND
 INPUT_MAP(SpaceToBatchND) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(block_shape)}, {3, INPUT_DESC(paddings)}};
+ATTR_INPUT_MAP(SpaceToBatchND) = {{"block_shape", "block_shape"}, {"paddings", "paddings"}};
 ATTR_MAP(SpaceToBatchND) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(SpaceToBatchND) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(SpaceToBatchND, kNameSpaceToBatchNDD, ADPT_DESC(SpaceToBatchND))
+REG_ADPT_DESC(SpaceToBatchND, kNameSpaceToBatchND, ADPT_DESC(SpaceToBatchND))
 REG_ADPT_DESC(SpaceToBatchTF, kNameSpaceToBatchTF, ADPT_DESC(SpaceToBatchND))
 
 // BatchToSpaceD
@@ -130,6 +131,7 @@ REG_ADPT_DESC(ExtractVolumePatches, prim::kPrimExtractVolumePatches->name(), ADP
 
 // BatchToSpaceND
 INPUT_MAP(BatchToSpaceND) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(block_shape)}, {3, INPUT_DESC(crops)}};
+ATTR_INPUT_MAP(BatchToSpaceND) = {{"block_shape", "block_shape"}, {"crops", "crops"}};
 ATTR_MAP(BatchToSpaceND) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(BatchToSpaceND) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BatchToSpaceND, kNameBatchToSpaceNd, ADPT_DESC(BatchToSpaceND))
