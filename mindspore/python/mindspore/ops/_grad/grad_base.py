@@ -21,6 +21,9 @@ from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
+from mindspore.ops import functional as F
+from mindspore.ops.operations import _sequence_ops as seq_op
+import mindspore as ms
 dyn_shape = P.TensorShape()
 cast = P.Cast()
 
@@ -90,6 +93,26 @@ def convert_to_tensor(data):
     if isinstance(data, Tensor):
         return True, data
 
+    if isinstance(data, list):
+        if F.is_sequence_value_unknown(data):
+            data_tensor = seq_op.ListToTensor()(data, ms.int64)
+            return True, data_tensor
+        return False, data
+    if isinstance(data, tuple):
+        if F.is_sequence_value_unknown(data):
+            data_tensor = seq_op.TupleToTensor()(data, ms.int64)
+            return True, data_tensor
+        return False, data
+    if isinstance(data, int):
+        if not F.isconstant(data):
+            data_tensor = F.scalar_to_tensor(data, ms.int64)
+            return True, data_tensor
+        return False, data
+    if isinstance(data, float):
+        if not F.isconstant(data):
+            data_tensor = F.scalar_to_tensor(data, ms.float32)
+            return True, data_tensor
+        return False, data
     return False, data
 
 
