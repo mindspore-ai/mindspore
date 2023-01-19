@@ -56,6 +56,7 @@ int RandomChoiceWithMaskGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   input_shape_size_ = input_shape_with_batch.size() - batch_rank_;
   input_shape_5D_.clear();
   // convert size_t to int
+  batch_size_ = 1;
   for (size_t i = 0; i < batch_rank_; i++) {
     batch_size_ *= input_shape_with_batch[i];
   }
@@ -70,6 +71,7 @@ int RandomChoiceWithMaskGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   }
 
   // init memory
+  input_size_ = 1;
   input_size_ *= SizeOf(input_shape_without_batch);
   // upper ceiling for input for ceil_power2
   if (count_ > kSmallK || input_shape_size_ > 1) {
