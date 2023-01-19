@@ -227,8 +227,11 @@ class OpAdapter : public BaseOpAdapter {
   }
 
   std::string getOpType() override {
-    auto op = std::make_unique<OpType>();
-    return op->GetOpType();
+    if (op_type_.empty()) {
+      auto op = std::make_unique<OpType>();
+      op_type_ = op->GetOpType();
+    }
+    return op_type_;
   }
   const mindspore::HashMap<int, InputDesc> &getInputMap() override { return input_map_; }
   const mindspore::HashMap<unsigned int, AttrDesc> &getInputAttrMap() override { return input_attr_map_; }
@@ -529,6 +532,7 @@ class OpAdapter : public BaseOpAdapter {
   mindspore::HashMap<std::string, ValuePtr> extra_attr_;
   mindspore::HashMap<std::string, int> name_counts_;
   const std::shared_ptr<OpAdapterImpl> impl_;
+  std::string op_type_;
 };
 
 template <typename T>
