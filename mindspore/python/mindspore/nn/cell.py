@@ -2137,8 +2137,10 @@ class Cell(Cell_):
                            The rank is unique in processes with the same role.
 
         Examples:
+            >>> from mindspore import context
             >>> import mindspore.nn as nn
-            >>> fc = nn.Dense()
+            >>> context.set_context(mode=context.GRAPH_MODE)
+            >>> fc = nn.Dense(2, 3)
             >>> fc.place('MS_WORKER', 0)
         """
         all_ops = self._get_prims_recursively()
