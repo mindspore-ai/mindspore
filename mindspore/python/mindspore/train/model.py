@@ -431,7 +431,7 @@ class Model:
         if dataset_sink_mode:
             network = connect_network_with_dataset(network, dataset_helper)
 
-        if is_train:
+        if self.enable_recovery and is_train:
             _set_training_dataset(dataset_helper)
 
 
