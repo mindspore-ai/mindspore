@@ -31,6 +31,7 @@ from mindspore.ops.operations.sparse_ops import SparseSlice
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseMul
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseDiv
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
+from mindspore.ops.operations.sparse_ops import Sspaddmm
 from mindspore.ops.operations._inner_ops import IsSubClass
 import mindspore as ms
 from mindspore.ops.operations import _map_tensor_ops
@@ -335,6 +336,18 @@ def get_bprop_sparse_slice(self):
         grad_op = sparse_slice_grad(dout[1], indices, start, out[0])
         result_all = (zeros_like(indices), grad_op, zeros_like(shape), zeros_like(start), zeros_like(size))
         return result_all
+
+    return bprop
+
+
+@bprop_getters.register(Sspaddmm)
+def get_bprop_sspaddmm(self):
+    """Grad definition for `Sspaddmm` operation."""
+    def bprop(x1_indices, x1_values, x1_shape, x2_indices, x2_values, x2_shape, x3_dense, alpha, beta, out, dout):
+        dx_all = (zeros_like(x1_indices), zeros_like(x1_values), zeros_like(x1_shape),
+                  zeros_like(x2_indices), zeros_like(x2_values), zeros_like(x2_shape),
+                  zeros_like(x3_dense), zeros_like(alpha), zeros_like(beta))
+        return dx_all
 
     return bprop
 
