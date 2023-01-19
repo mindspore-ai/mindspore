@@ -158,9 +158,28 @@ class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>
   // @return Status - the error code returned.
   virtual Status FillIOBlockQueue(const std::vector<int64_t> &i_keys) = 0;
 
+  virtual bool GetLoadIoBlockQueue() {
+    bool ret_load_io_block_queue = false;
+    {
+      std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);
+      ret_load_io_block_queue = load_io_block_queue_;
+    }
+    return ret_load_io_block_queue;
+  }
+
+  virtual bool GetLoadJaggedConnector() {
+    bool ret_load_jagged_connector = false;
+    {
+      std::unique_lock<std::mutex> lock(load_jagged_connector_mutex_);
+      ret_load_jagged_connector = load_jagged_connector_;
+    }
+    return ret_load_jagged_connector;
+  }
+
   int32_t device_id_;
   int32_t num_devices_;
   bool load_jagged_connector_;
+  std::mutex load_jagged_connector_mutex_;
   std::unique_ptr<StringIndex> filename_index_;
 
   QueueList<std::unique_ptr<FilenameBlock>> io_block_queues_;

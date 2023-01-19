@@ -54,7 +54,7 @@ Status IntrpService::Register(std::string *name, IntrpResource *res) {
       while (it.second == false) {
         uuid = Services::GetUniqueID();
         it = all_intrp_resources_.emplace(uuid, res);
-        MS_LOG(WARNING) << "The name(" << *name << ") of register resource is duplicate, get new uuid: " << uuid;
+        MS_LOG(INFO) << "The name(" << *name << ") of register resource is duplicate, get new uuid: " << uuid;
         std::this_thread::sleep_for(std::chrono::milliseconds(kServiceRetryGetUniqueIdInterVal));
       }
       if (!uuid.empty()) {

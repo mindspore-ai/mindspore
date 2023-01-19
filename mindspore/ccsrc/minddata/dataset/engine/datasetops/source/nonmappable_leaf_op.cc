@@ -110,10 +110,14 @@ Status NonMappableLeafOp::operator()() {
         // -keep pulling until EOE
 
         // don't think we need a lock for now
-        load_jagged_connector_ = false;
-
-        std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);
-        load_io_block_queue_ = false;
+        {
+          std::unique_lock<std::mutex> lock(load_jagged_connector_mutex_);
+          load_jagged_connector_ = false;
+        }
+        {
+          std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);
+          load_io_block_queue_ = false;
+        }
       }
     }
 
@@ -148,7 +152,7 @@ Status NonMappableLeafOp::WorkerEntry(int32_t worker_id) {
 
   while (!io_block->eof()) {
     if (!io_block->eoe()) {
-      if (load_jagged_connector_) {
+      if (GetLoadJaggedConnector()) {
         std::string filename;
         RETURN_IF_NOT_OK(io_block->GetFilename(&filename, *filename_index_));
         int64_t start_offset = io_block->GetStartOffset();
@@ -209,7 +213,10 @@ Status NonMappableLeafOp::PushIoBlockQueue(int32_t index, std::unique_ptr<Filena
 Status NonMappableLeafOp::Reset() {
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   // start workers first, otherwise IOBlocks will fall through if workers see it before this is set to true
-  load_jagged_connector_ = true;
+  {
+    std::unique_lock<std::mutex> lock(load_jagged_connector_mutex_);
+    load_jagged_connector_ = true;
+  }
 
   {
     std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);

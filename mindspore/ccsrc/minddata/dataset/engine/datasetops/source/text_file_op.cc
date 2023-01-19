@@ -129,7 +129,7 @@ Status TextFileOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
     if (!i_keys.empty()) {
       for (auto it = i_keys.begin(); it != i_keys.end(); ++it) {
         {
-          if (!load_io_block_queue_) {
+          if (!GetLoadIoBlockQueue()) {
             break;
           }
         }
@@ -138,7 +138,7 @@ Status TextFileOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
     } else {
       for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
         {
-          if (!load_io_block_queue_) {
+          if (!GetLoadIoBlockQueue()) {
             break;
           }
         }
