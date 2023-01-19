@@ -694,6 +694,10 @@ AscendDeviceAddress::~AscendDeviceAddress() {
  */
 bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::string &host_fmt,
                                         const ShapeVector &host_shape, TypeId host_type, bool trans_flag) const {
+  if (size_ == 0) {
+    MS_LOG(INFO) << "the operator in filepath: " << filepath << ", size_ = 0";
+    return true;
+  }
   bool ret = false;
   if (filepath.empty()) {
     MS_LOG(ERROR) << "Dump file path is null!";
