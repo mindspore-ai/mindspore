@@ -114,7 +114,7 @@ bool Dilation2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
     pad_left = pad_width / kValue2;
   }
 
-  size_t output_plane_size = input_height * input_width;
+  size_t output_plane_size = output_height * output_width;
 
   for (size_t n = 0; n < num_batch; ++n) {
     for (size_t c = 0; c < channel; ++c) {
