@@ -40,6 +40,17 @@ bool Common::NeedMapping(const std::string &origin_name) {
   return false;
 }
 
+std::string Common::GetRandomStr(size_t str_len) {
+  std::random_device rd;
+  std::mt19937 generator(rd());
+  std::uniform_int_distribution<int> distribution{'a', 'z'};
+
+  std::string rand_str(str_len, '\0');
+  std::generate(rand_str.begin(), rand_str.end(), [&distribution, &generator]() { return distribution(generator); });
+
+  return rand_str;
+}
+
 std::string Common::GetRandomStr() {
   std::string npy_suffix = ".npy";
 #ifndef _MSC_VER
