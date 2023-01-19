@@ -19,7 +19,7 @@
         - **amp_level** (str) - `mindspore.build_train_network` 的可选参数 `level` ， `level` 为混合精度等级，该参数支持["O0", "O1", "O2", "O3", "auto"]。默认值："O0"。
 
           - "O0": 不变化。
-          - "O1": 将白名单中的算子转为float16，剩余算子保持float32。
+          - "O1": 将白名单中的算子转为float16，剩余算子保持float32。白名单中的算子如下列表：[Conv1d, Conv2d, Conv3d, Conv1dTranspose, Conv2dTranspose, Conv3dTranspose, Dense, LSTMCell, RNNCell, GRUCell, MatMul, BatchMatMul, PReLU, ReLU, Ger]。
           - "O2": 将网络精度转为float16，BatchNorm保持float32精度，使用动态调整损失缩放系数（loss scale）的策略。
           - "O3": 将网络精度（包括BatchNorm）转为float16，不使用损失缩放策略。
           - auto: 为不同处理器设置专家推荐的混合精度等级，如在GPU上设为"O2"，在Ascend上设为"O3"。该设置方式可能在部分场景下不适用，建议用户根据具体的网络模型自定义设置 `amp_level` 。

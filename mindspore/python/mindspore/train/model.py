@@ -132,6 +132,8 @@ class Model:
 
             - "O0": Do not change.
             - "O1": Cast the operators in white_list to float16, the remaining operators are kept in float32.
+              The operators in the whitelist: [Conv1d, Conv2d, Conv3d, Conv1dTranspose, Conv2dTranspose,
+              Conv3dTranspose, Dense, LSTMCell, RNNCell, GRUCell, MatMul, BatchMatMul, PReLU, ReLU, Ger].
             - "O2": Cast network to float16, keep BatchNorm run in float32, using dynamic loss scale.
             - "O3": Cast network to float16, the BatchNorm is also cast to float16, loss scale will not be used.
             - auto: Set level to recommended level in different devices. Set level to "O2" on GPU, set
