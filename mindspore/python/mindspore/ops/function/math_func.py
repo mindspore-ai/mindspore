@@ -1911,12 +1911,12 @@ def _check_cov_weights(weights, weights_name, num_observations, valid_type, vali
 
 def cov(x, *, correction=1, fweights=None, aweights=None):
     r"""
-    Estimates the covariance matrix of the variables given by the input matrix,
-    where rows are the variables and columns are the observations.
+    Given the input 'x' and weight, estimate the covariance matrix of the input 'x', where the input row is the variable
+    and the column is the observation value.
 
-    A covariance matrix is a square matrix giving the covariance of each pair of variables. The diagonal contains
-    the variance of each variable (covariance of a variable with itself). By definition, if `x` represents
-    a single variable (Scalar or 1D) then its variance is returned.
+    The covariance matrix is the square matrix of the covariance of each pair of variables. The diagonal contains the
+    covariance of each variable and its own. If 'x' represents a single variable (scalar or 1D),
+    its variance is returned.
 
     The unbiased sample covariance of the variables :math:`a` and :math:`b` is given by:
 
@@ -1939,24 +1939,23 @@ def cov(x, *, correction=1, fweights=None, aweights=None):
         The values of `fweights` and `aweights` cannot be negative, and the negative weight scene result is undefined.
 
     Args:
-        x (Tensor): A 2D matrix containing multiple variables and observations, or a
-            Scalar or 1D vector representing a single variable.
+        x (Tensor): A 2D matrix, or a scalar or 1D vector of a single variable
 
     Keyword Args:
         correction (int, optional): difference between the sample size and sample degrees of freedom.
             Defaults to Bessel's correction, `correction = 1` which returns the unbiased estimate,
             even if both `fweights` and `aweights` are specified. `correction = 0`
             will return the simple average. Default: 1.
-        fweights (Tensor, optional): A Scalar or 1D tensor of observation vector frequencies representing the number of
-            times each observation should be repeated. Its numel must equal the number of columns of `x`.
-            Must have integer dtype. Ignored if `None`. Default: None.
-        aweights (Tensor, optional): A Scalar or 1D array of observation vector weights.
-            These relative weights are typically large for observations considered "important" and smaller for
-            observations considered less "important". Its numel must equal the number of columns of `x`.
-            Must have floating point dtype. Ignored if `None`. Default: None.
+        fweights (Tensor, optional): A scalar or 1D Tensor containing integer frequency weights represents
+            the number of repeats of each observation vector. Its numel must equal the number of columns of `x`.
+            Ignored if `None`. Default: None.
+        aweights (Tensor, optional): A scalar or 1D Tensor containing float observation weights represents
+            the importance of each observation vector. The higher the importance, the greater the corresponding value.
+            Its numel must equal the number of columns of `x`. Must have floating point dtype. Ignored if `None`.
+            Default: None.
 
     Returns:
-        Tensor, the covariance matrix of the variables.
+        Tensor, The covariance matrix Tensor of `x`.
 
     Raises:
         ValueError: If the dimensions of input is greater than 2.
@@ -1974,21 +1973,21 @@ def cov(x, *, correction=1, fweights=None, aweights=None):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
-        >>> x = ms.Tensor([[0, 2], [1, 1], [2, 0]]).T
+        >>> x = ms.Tensor([[0, 3], [5, 5], [7, 0]]).T
         >>> print(x)
-        [[0 1 2]
-         [2 1 0]]
+        [[0 5 7]
+         [3 5 0]]
         >>> print(ops.cov(x))
-        [[ 1. -1.]
-         [-1.  1.]]
+        [[13.        -3.5      ]
+         [-3.5        6.3333335]]
         >>> print(ops.cov(x, correction=0))
-        [[ 0.6666667 -0.6666667]
-         [-0.6666667  0.6666667]]
+        [[ 8.666667  -2.3333333]
+         [-2.3333333  4.2222223]]
         >>> fw = ms.Tensor([5, 2, 4], dtype=ms.int64)
         >>> aw = ms.Tensor([0.4588, 0.9083, 0.7616], ms.float32)
         >>> print(ops.cov(x, fweights=fw, aweights=aw))
-        [[ 0.81504613 -0.81504613]
-         [-0.81504613  0.81504613]]
+        [[10.146146 -3.47241 ]
+         [-3.47241   4.716825]]
     """
     if x.ndim > 2:
         raise ValueError(f"For cov, the input must have two or fewer dimensions, but got {x.ndim} dimensions.")
@@ -6332,9 +6331,8 @@ def vstack(inputs):
         >>> x2 = np.array([4, 5, 6])
         >>> out = ops.vstack([x1, x2])
         >>> print(out)
-        Tensor(shape=[2, 3], dtype=Int32, value=
-        [[1, 2, 3],
-         [4, 5, 6]])
+        [[1 2 3]
+         [4 5 6]]
     """
     if not isinstance(inputs, (tuple, list)):
         msg = f"List or tuple of tensors are required, but got {type(inputs)}"
@@ -7250,11 +7248,11 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         keepdim (bool): whether the output Tensor retains the original dimension. Default: False.
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional):If this parameter is set, A will be converted to the specified type
-            before execution, and the returned Tensor type will also be the specified type. Default: None.
+        dtype (:class:`mindspore.dtype`, optional): When set, `A` will be converted to the specified type,
+            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: None.
 
     Returns:
-        Tensor, the result of norm calculation on the specified dimension, is the same as the input data type.
+        Tensor, the result of norm calculation on the specified dimension, `dim`, has the same dtype as `A`.
 
     Raises:
         ValueError: If `dim` is out of range.
