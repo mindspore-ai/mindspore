@@ -358,7 +358,8 @@ size_t AnfAlgo::GetOutputNumByAbstract(const AbstractBasePtr &node_abstract) {
   size_t result = 0;
 
   if (!node_abstract->isa<abstract::AbstractSequence>() ||
-      node_abstract->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
+      node_abstract->cast<abstract::AbstractSequencePtr>()->dynamic_len() ||
+      node_abstract->cast<abstract::AbstractSequencePtr>()->dynamic_len_element_abs() != nullptr) {
     return 1;
   }
 
@@ -1824,7 +1825,7 @@ bool AnfAlgo::IsDynamicSequence(const AnfNodePtr &node) {
 
     const auto &sequence_abstract = abstract->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(sequence_abstract);
-    return sequence_abstract->dynamic_len();
+    return sequence_abstract->dynamic_len() || sequence_abstract->dynamic_len_element_abs() != nullptr;
   };
 
   // Check if the node is dynamic sequence by sign in node, in cnode it is an attr in primitive, in parameter, it is
