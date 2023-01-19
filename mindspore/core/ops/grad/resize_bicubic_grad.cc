@@ -83,13 +83,13 @@ TypePtr ResizeBicubicGradInferType(const PrimitivePtr &primitive, const std::vec
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-  const std::set<TypePtr> valid0_types = {kFloat32, kFloat64};
-  const std::set<TypePtr> valid1_types = {kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads_type", input_args[0]->BuildType(), valid0_types,
-                                                   primitive->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("original_image_type", input_args[1]->BuildType(), valid1_types,
-                                                   primitive->name());
-  return input_args[1]->BuildType();
+  auto grads_type = input_args[0]->BuildType();
+  auto original_image_type = input_args[1]->BuildType();
+  const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
+  const std::map<std::string, TypePtr> types = {{"grads_type", grads_type},
+                                                {"original_image_type", original_image_type}};
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
+  return grads_type;
 }
 }  // namespace
 MIND_API_OPERATOR_IMPL(ResizeBicubicGrad, BaseOperator);

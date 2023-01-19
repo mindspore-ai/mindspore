@@ -21,7 +21,7 @@
 
 template <typename T, typename S>
 CUDA_LIB_EXPORT void CalResizeBicubic(const T *input, const int n, const int c, const int input_h, const int input_w,
-                                      const int output_h, const int output_w, const S h_scale, const S w_scale,
+                                      const int output_h, const int output_w, const float h_scale, const float w_scale,
                                       S *output, bool half_pixel_centers_, const uint32_t &device_id,
                                       cudaStream_t cuda_stream);
 

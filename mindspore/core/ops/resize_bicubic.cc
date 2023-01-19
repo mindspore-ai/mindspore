@@ -101,11 +101,13 @@ TypePtr ResizeBicubicInferType(const PrimitivePtr &primitive, const std::vector<
     MS_LOG(EXCEPTION) << "nullptr";
   }
   auto prim_name = primitive->name();
-  const std::set<TypePtr> valid0_types = {kInt8, kUInt8, kInt16, kUInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
+  auto x_type = input_args[0]->BuildType();
+  auto size_type = input_args[1]->BuildType();
+  const std::set<TypePtr> valid0_types = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid1_types = {kInt32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_args[0]->BuildType(), valid0_types, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->BuildType(), valid1_types, prim_name);
-  return kFloat32;
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("images", x_type, valid0_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", size_type, valid1_types, prim_name);
+  return x_type;
 }
 }  // namespace
 
@@ -155,10 +157,13 @@ class MIND_API AGResizeBicubicInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return ResizeBicubicInferType(primitive, input_args);
   }
+
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return ResizeBicubicInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ResizeBicubic, prim::kPrimResizeBicubic, AGResizeBicubicInfer, false);

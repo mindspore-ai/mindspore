@@ -300,8 +300,8 @@ void ResizeBicubicCPUKernelMod::interpolate_with_caching(const T1 *input_data, c
       for (int64_t x = 0; x < RS.out_width; ++x) {
         const WeightsAndIndices &x_wai = x_wais[static_cast<size_t>(x)];
         cached_value = CalSwitch(x_wai, cached_value, RS, y_wai, y_ptr_0, y_ptr_1, y_ptr_2, y_ptr_3);
-        output_y_ptr[x] =
-          Compute_1D(cached_value.data(), x_wai.weight_0, x_wai.weight_1, x_wai.weight_2, x_wai.weight_3);
+        output_y_ptr[x] = static_cast<T2>(
+          Compute_1D(cached_value.data(), x_wai.weight_0, x_wai.weight_1, x_wai.weight_2, x_wai.weight_3));
       }
     }
   };
@@ -348,10 +348,6 @@ template <typename T1, typename T2>
 bool ResizeBicubicCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &outputs) {
   auto output_addr = static_cast<T2 *>(outputs[0]->addr);
-  size_t output_size = outputs[0]->size;
-  if (memset_s(output_addr, output_size, 0, output_size) != EOK) {
-    MS_EXCEPTION(ValueError) << "Memset Failed!";
-  }
   auto input0_addr = static_cast<T1 *>(inputs[0]->addr);
   sta.CalculateSize_inputs(inputs);
   if (sta.out_height == sta.in_height && sta.out_width == sta.in_width) {
@@ -369,24 +365,12 @@ bool ResizeBicubicCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 }
 
 std::vector<std::pair<KernelAttr, ResizeBicubicCPUKernelMod::ResizeBicubicFunc>> ResizeBicubicCPUKernelMod::func_list_ =
-  {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-    &ResizeBicubicCPUKernelMod::LaunchKernel<float16, float>},
-   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-    &ResizeBicubicCPUKernelMod::LaunchKernel<int8_t, float>},
-   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-    &ResizeBicubicCPUKernelMod::LaunchKernel<uint8_t, float>},
-   {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-    &ResizeBicubicCPUKernelMod::LaunchKernel<int16_t, float>},
-   {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-    &ResizeBicubicCPUKernelMod::LaunchKernel<uint16_t, float>},
-   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-    &ResizeBicubicCPUKernelMod::LaunchKernel<int32_t, float>},
-   {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-    &ResizeBicubicCPUKernelMod::LaunchKernel<int64_t, float>},
+  {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+    &ResizeBicubicCPUKernelMod::LaunchKernel<float16, float16>},
    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
     &ResizeBicubicCPUKernelMod::LaunchKernel<float, float>},
-   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-    &ResizeBicubicCPUKernelMod::LaunchKernel<double, float>}};
+   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+    &ResizeBicubicCPUKernelMod::LaunchKernel<double, double>}};
 
 std::vector<KernelAttr> ResizeBicubicCPUKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
