@@ -67,6 +67,14 @@ class SparseTensor {
    * sparse eigen tensor indices valid
    * @return uint32_t: 0->success other->failed
    */
+  int dims() const { return dims_; }
+
+  std::shared_ptr<EigenTensor> indices() const { return ix_; }
+
+  std::shared_ptr<EigenTensor> values() const { return vals_; }
+
+  std::vector<int64_t> shape() const { return shape_; }
+
   template <typename T>
   uint32_t EigenTensorIndicesValidCheck(int64_t dims_size) const {
     const auto ix_t = ix_->matrix<T>();
