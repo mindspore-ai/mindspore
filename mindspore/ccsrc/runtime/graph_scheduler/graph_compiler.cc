@@ -545,7 +545,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(kAdvanced)) {
+  if (context->CanDump(kIntroductory)) {
     // Dump .pb graph before graph optimization.
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
   }
@@ -576,7 +576,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   if (!run_in_pynative) {
     OptimizeNopNode(graph.get());
 #ifdef ENABLE_DUMP_IR
-    if (context->CanDump(kAdvanced)) {
+    if (context->CanDump(kIntroductory)) {
       DumpIR("hwopt_comm_after_eliminate_nopnode_" + graph->ToString() + ".ir", graph, true);
     }
 #endif
@@ -615,7 +615,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   SetSummaryNodesRefCount(graph.get());
 #ifdef ENABLE_DUMP_IR
   // Dump .pb graph after graph optimization.
-  if (context->CanDump(kAdvanced)) {
+  if (context->CanDump(kIntroductory)) {
     DumpIRProto(graph, "after_opt_" + std::to_string(graph->graph_id()));
   }
 #endif

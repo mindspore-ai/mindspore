@@ -197,7 +197,7 @@ void SomasSolverPre::Log(const session::KernelGraph &graph, const TensorsDescMap
                          const vector<vector<size_t>> &continuous_v) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->CanDump(kAdvanced)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     SolverInputLog(graph, tensors, continuous_v);
     SolverOutputLog(graph, tensors);
     TensorRelationLog(pConstraints, graph);

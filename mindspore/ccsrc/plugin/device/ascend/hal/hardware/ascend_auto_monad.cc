@@ -63,7 +63,7 @@ constexpr size_t kFirstIndex = 1;
 bool IsSaveGraph() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  return context->CanDump(kAdvanced);
+  return context->CanDump(kIntroductory);
 }
 
 void DumpAllGraphs(NotNull<KernelGraphPtr> kg, std::set<KernelGraphPtr> *memo) {

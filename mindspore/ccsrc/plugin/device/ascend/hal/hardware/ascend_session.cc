@@ -448,7 +448,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   // dump graph before remove nop nodes
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(kAdvanced)) {
+  if (context->CanDump(kIntroductory)) {
     DumpIRProto(root_graph, "before_removeNop_" + std::to_string(graph_sum_));
   }
 #endif
@@ -914,7 +914,7 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(kAdvanced)) {
+  if (context->CanDump(kIntroductory)) {
     DumpIR("after_adjust_kernel.ir", kernel_graph);
   }
 #endif

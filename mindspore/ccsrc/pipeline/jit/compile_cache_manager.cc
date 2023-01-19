@@ -274,7 +274,7 @@ FuncGraphPtr CompileCacheManager::GetCachedFuncGraph(const FuncGraphManagerPtr &
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(kAdvanced)) {
+  if (context->CanDump(kIntroductory)) {
     DumpIR("cache_loaded_graph_" + std::to_string(compile_cache_id_) + ".ir", fg);
   }
   return fg;

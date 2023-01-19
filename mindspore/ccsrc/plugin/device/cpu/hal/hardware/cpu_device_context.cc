@@ -185,7 +185,7 @@ void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
 #ifdef ENABLE_DUMP_IR
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    if (context->CanDump(kAdvanced)) {
+    if (context->CanDump(kIntroductory)) {
       DumpIR("hwopt_comm_after_kernel_select_" + graph->ToString() + ".ir", graph, true);
     }
 #endif
