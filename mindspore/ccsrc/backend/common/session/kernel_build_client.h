@@ -36,7 +36,8 @@ constexpr inline static int kBufferSize = 4096;
 constexpr inline static auto kEnv = "python";
 // The TAG as prefix of real command from remote.
 constexpr inline static auto kTag = "[~]";
-std::string GetPyExe();
+BACKEND_EXPORT std::string GetPyExe();
+BACKEND_EXPORT std::string GetCmdResult();
 
 class BACKEND_EXPORT KernelBuildClient {
  public:
@@ -132,17 +133,7 @@ class BACKEND_EXPORT KernelBuildClient {
   std::shared_ptr<DuplexPipe> dp_;
 };
 
-static std::string GetScriptFilePath(const std::string &cmd_env, const std::string &cmd_script,
-                                     const std::string &server_script) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto server_dir = ms_context->get_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR);
-  if (!server_dir.empty()) {
-    return server_dir + server_script;
-  }
-
-  std::string cmd = cmd_env;
-  (void)cmd.append(1, ' ').append(cmd_script);
+static std::string GetCmdResult(const std::string &cmd) {
 #ifdef _MSC_VER
   FILE *fpipe = _popen(cmd.c_str(), "r");
 #else
@@ -178,6 +169,21 @@ static std::string GetScriptFilePath(const std::string &cmd_env, const std::stri
 #else
   (void)pclose(fpipe);
 #endif
+  return result;
+}
+
+static std::string GetScriptFilePath(const std::string &cmd_env, const std::string &cmd_script,
+                                     const std::string &server_script) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto server_dir = ms_context->get_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR);
+  if (!server_dir.empty()) {
+    return server_dir + server_script;
+  }
+
+  std::string cmd = cmd_env;
+  (void)cmd.append(1, ' ').append(cmd_script);
+  auto result = GetCmdResult(cmd);
   const std::string py_suffix = ".py";
   if (result.empty() || result.rfind(py_suffix) != (result.length() - py_suffix.length())) {
     MS_LOG(EXCEPTION) << "py file seems incorrect, result: {" << result << "}";

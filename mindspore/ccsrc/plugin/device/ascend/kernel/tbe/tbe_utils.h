@@ -60,6 +60,12 @@ class TbeUtils {
 
   static void GenLicInfo(nlohmann::json *lic_info_json);
 
+  static std::string GetOpDebugConfig();
+
+  static std::string GetOpDebugLevel();
+
+  static std::vector<std::string> SplitAndRemoveSpace(const std::string &s, char delim);
+
   static nlohmann::json GenSocInfo();
 
   static std::string GetOpDebugPath();

@@ -45,5 +45,8 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
   return json_name_map;
 }
 }  // namespace ascend
+std::string GetPyTeVersion() {
+  return "";
+}
 }  // namespace kernel
 }  // namespace mindspore

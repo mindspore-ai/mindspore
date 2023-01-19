@@ -44,6 +44,7 @@ bool SingleTbeJsonCreator::GenJson(const AnfNodePtr &anf_node, nlohmann::json *k
   }
   auto core_type = GetCoreType(anf_node);
   soc_info_json[kJCoreType] = core_type;
+  soc_info_json[kJOpDebugConfig] = tbe::TbeUtils::GetOpDebugConfig();
   (*kernel_json)[kJSocInfo] = soc_info_json;
   (*kernel_json)[kJOpList] = op_list;
   GenFusionOpName(kernel_json);

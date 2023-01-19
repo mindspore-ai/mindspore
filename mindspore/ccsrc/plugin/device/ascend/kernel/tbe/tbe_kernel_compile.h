@@ -103,7 +103,7 @@ class TbeKernelCompileManager {
   // load tbe prebuild result from cached json file
   void LoadPreBuildResult();
   // load not support op
-  void LoadNotSupportOp();
+  void LoadNotSupportFusionOp();
   // query all build task
   void Query(const std::string &type);
   // single op build/pre-build
@@ -131,8 +131,6 @@ class TbeKernelCompileManager {
   static bool tbe_init_flag_;
   // tune flag
   static bool is_tune_flag_;
-  // need rebuild when is_tune_flag_ is true, or op_debug_level_ is one of [1, 2, 4]
-  static bool is_need_rebuild_;
   // single op had build
   std::set<std::string> single_processed_kernels_;
   // single op had pre build
@@ -141,6 +139,8 @@ class TbeKernelCompileManager {
   std::set<std::string> fusion_processed_kernels_;
   // if op_debug_level is one of [1, 2, 4], skip tbe compile cache and rebuild again.
   std::string op_debug_level_;
+  // if op_debug_config is not empty, skip tbe compile cache and rebuild again.
+  std::string op_debug_config_;
   // id_node pair for node trace
   std::map<int, CNodePtr> job_id_to_node_;
   // id_task, all build jobs
