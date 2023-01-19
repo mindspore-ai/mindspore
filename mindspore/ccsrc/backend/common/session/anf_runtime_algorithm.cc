@@ -274,7 +274,7 @@ bool IsTupleHasDynamicSequence(const abstract::AbstractBasePtr &abstract) {
   }
   const auto &sequence_abs = abstract->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(sequence_abs);
-  if (sequence_abs->dynamic_len()) {
+  if (sequence_abs->dynamic_len() || sequence_abs->dynamic_len_element_abs() != nullptr) {
     return true;
   }
   if (std::any_of(sequence_abs->elements().begin(), sequence_abs->elements().end(),
