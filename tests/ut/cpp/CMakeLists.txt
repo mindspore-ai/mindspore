@@ -77,6 +77,7 @@ if(ENABLE_MINDDATA)
             ./tbe/*.cc
             ./mindapi/*.cc
             ./runtime/graph_scheduler/*.cc
+            ./runtime/device/gsm/*.cc
             ./plugin/device/cpu/hal/*.cc
             ./place/*.cc
             ./ops/test_ops_fake_quant_param.cc
