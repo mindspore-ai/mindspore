@@ -57,11 +57,9 @@ class GatherNdCpuKernelMod : public NativeCpuKernelMod {
 
   ShapeVector input_shapes_;
   ShapeVector indices_shapes_;
-  ShapeVector output_shapes_;
 
   std::vector<size_t> dims_;
   std::vector<int> batch_indices_;
-  std::vector<int> batch_strides_;
 
   TypeId dtype_{kTypeUnknown};
   std::string kernel_type_{kUnknown};

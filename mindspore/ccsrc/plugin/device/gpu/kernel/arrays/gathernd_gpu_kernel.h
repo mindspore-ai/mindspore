@@ -31,38 +31,34 @@ namespace kernel {
 template <typename T, typename S>
 class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  GatherNdFwdGpuKernelMod() : dev_batch_strides_(nullptr), dev_batch_indices_(nullptr), memcpy_flag_(false) {}
-  ~GatherNdFwdGpuKernelMod() {
-    if (dev_batch_strides_ != nullptr) {
-      device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(dev_batch_strides_));
-    }
-    if (dev_batch_indices_ != nullptr) {
-      device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(dev_batch_indices_));
-    }
-  }
+  GatherNdFwdGpuKernelMod() = default;
+  ~GatherNdFwdGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     S *indices_addr = GetDeviceAddress<S>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
+    S *dev_batch_strides = GetDeviceAddress<S>(workspace, 0);
+    S *dev_batch_indices = GetDeviceAddress<S>(workspace, 1);
+    int *device_flag = GetDeviceAddress<int>(workspace, 2);
+    const size_t strides_len = sizeof(S) * batch_strides_.size();
+    const size_t indices_len = sizeof(S) * batch_indices_.size();
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(dev_batch_strides, &batch_strides_[0], strides_len, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cudaMemcpyAsync failed in GatherNdFwdGpuKernelMod::Launch.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(dev_batch_indices, &batch_indices_[0], indices_len, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cudaMemcpyAsync failed in GatherNdFwdGpuKernelMod::Launch.");
 
-    if (!memcpy_flag_) {
-      const size_t strides_len = sizeof(S) * batch_strides_.size();
-      const size_t indices_len = sizeof(S) * batch_indices_.size();
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(dev_batch_strides_, &batch_strides_[0], strides_len, cudaMemcpyHostToDevice,
-                        reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "cudaMemcpyAsync failed in GatherNdFwdGpuKernelMod::Launch.");
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(dev_batch_indices_, &batch_indices_[0], indices_len, cudaMemcpyHostToDevice,
-                        reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "cudaMemcpyAsync failed in GatherNdFwdGpuKernelMod::Launch.");
-      memcpy_flag_ = true;
+    auto ret = GatherNd(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], dev_batch_strides,
+                        dev_batch_indices, device_flag, reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (ret.first >= 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the indices[" << ret.first << "]: " << ret.second
+                        << ", does not index into input_shape: " << input_shapes_ << ".";
     }
-
-    GatherNd(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], dev_batch_strides_,
-             dev_batch_indices_, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -84,12 +80,23 @@ class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
       return ret;
     }
     input_shapes_ = inputs[0]->GetShapeVector();
-    indices_shapes_ = inputs[1]->GetShapeVector();
-    output_shapes_ = outputs[0]->GetShapeVector();
-    ResetResource();
-    Reshape();
+    ShapeVector indices_shapes = inputs[1]->GetShapeVector();
+    // make a scalar to tensor whose shape is (1,)
+    if (indices_shapes.size() == 0) {
+      indices_shapes.emplace_back(1);
+    }
+    int64_t dim_of_indices = 1;
+    for (size_t i = 0; i < indices_shapes.size() - IntToSize(1); i++) {
+      dim_of_indices *= indices_shapes[i];
+    }
 
-    size_t dim_indices_last = dims_[dims_.size() - 1];
+    int64_t dim_after_indices = 1;
+    size_t dim_indices_last = indices_shapes[indices_shapes.size() - IntToSize(1)];
+    for (size_t i = dim_indices_last; i < input_shapes_.size(); i++) {
+      dim_after_indices *= input_shapes_[i];
+    }
+    dims_ = {LongToSize(dim_of_indices), LongToSize(dim_after_indices), dim_indices_last};
+
     batch_strides_.resize(dim_indices_last, 0);
     batch_indices_.resize(dim_indices_last, 0);
 
@@ -101,68 +108,17 @@ class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
       batch_strides_[i - 1] = input_shapes_[i - 1];
       batch_indices_[i - 1] = batch_indices_[i] * input_shapes_[i];
     }
-
-    const size_t strides_len = sizeof(S) * batch_strides_.size();
-    void *dev_batch_strides_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(strides_len);
-    if (dev_batch_strides_work == nullptr) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the memory alloc of dev_batch_strides_work must be successful, but failed, got size: "
-                        << strides_len;
-    }
-    dev_batch_strides_ = static_cast<S *>(dev_batch_strides_work);
-
-    const size_t indices_len = sizeof(S) * batch_indices_.size();
-    void *dev_batch_indices_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(indices_len);
-    if (dev_batch_indices_work == nullptr) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the memory alloc of dev_batch_indices_work must be successful, but failed, got size: "
-                        << indices_len;
-    }
-    dev_batch_indices_ = static_cast<S *>(dev_batch_indices_work);
-
+    const size_t strides_size = sizeof(S) * batch_strides_.size();
+    const size_t indices_size = sizeof(S) * batch_indices_.size();
+    workspace_size_list_ = {strides_size, indices_size, sizeof(int)};
     return ret;
   }
 
-  void ResetResource() noexcept {
-    memcpy_flag_ = false;
-    dims_.clear();
-    batch_indices_.clear();
-    batch_strides_.clear();
-    dev_batch_indices_ = nullptr;
-    dev_batch_strides_ = nullptr;
-  }
-
  private:
-  void Reshape() {
-    int64_t dim_of_indices = 1;
-    for (size_t i = 0; i < indices_shapes_.size() - IntToSize(1); i++) {
-      dim_of_indices *= indices_shapes_[i];
-    }
-
-    int64_t dim_after_indices = 1;
-    size_t dim_indices_last = indices_shapes_[indices_shapes_.size() - IntToSize(1)];
-    for (size_t i = dim_indices_last; i < input_shapes_.size(); i++) {
-      dim_after_indices *= input_shapes_[i];
-    }
-    dims_.emplace_back(LongToSize(dim_of_indices));
-    dims_.emplace_back(LongToSize(dim_after_indices));
-    dims_.emplace_back(dim_indices_last);
-    return;
-  }
-
-  ShapeVector input_shapes_;
-  ShapeVector indices_shapes_;
-  ShapeVector output_shapes_;
-
   std::vector<size_t> dims_;
-
+  std::vector<int64_t> input_shapes_;
   std::vector<S> batch_strides_;
   std::vector<S> batch_indices_;
-
-  S *dev_batch_strides_;
-  S *dev_batch_indices_;
-  bool memcpy_flag_;
-  std::string kernel_name_;
   void *cuda_stream_{nullptr};
 };
 }  // namespace kernel

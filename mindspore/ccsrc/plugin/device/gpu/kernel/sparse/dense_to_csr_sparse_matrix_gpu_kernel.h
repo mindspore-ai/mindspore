@@ -38,7 +38,6 @@ class DenseToCSRSparseMatrixKernelMod : public NativeGpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override {
     auto kernel_name = base_operator->GetPrim()->name();
-    memcpy_flag_ = false;
     auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
     auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
     if (!is_match) {
@@ -72,7 +71,6 @@ class DenseToCSRSparseMatrixKernelMod : public NativeGpuKernelMod {
   size_t dim_indices_last_;
 
   bool is_batch_csr_{false};
-  bool memcpy_flag_{false};
   int nnz_;
   int m_;
   int rank_;
@@ -88,9 +86,7 @@ class DenseToCSRSparseMatrixKernelMod : public NativeGpuKernelMod {
     for (size_t i = dim_indices_last; i < input_shapes_.size(); i++) {
       dim_after_indices *= input_shapes_[i];
     }
-    dims_.emplace_back(dim_of_indices);
-    dims_.emplace_back(dim_after_indices);
-    dims_.emplace_back(dim_indices_last);
+    dims_ = {dim_of_indices, dim_after_indices, dim_indices_last};
   }
 
   template <typename T, typename S>

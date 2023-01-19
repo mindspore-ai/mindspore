@@ -35,6 +35,10 @@ abstract::ShapePtr GatherNdInferShape(const PrimitivePtr &primitive, const std::
   if (IsDynamicRank(input_shape) || IsDynamic(indices_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
+  // make a scalar to tensor whose shape is (1,)
+  if (indices_shape.size() == 0) {
+    indices_shape.emplace_back(1);
+  }
   auto input_rank = input_shape.size();
   auto indices_rank = indices_shape.size();
   (void)CheckAndConvertUtils::CheckInteger("Input of indices data", SizeToLong(input_rank), kGreaterEqual,
