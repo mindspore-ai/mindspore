@@ -22,9 +22,39 @@
 #include <utility>
 #include "ops/primitive_c.h"
 #include "utils/anf_utils.h"
+#include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace expander {
+namespace {
+std::pair<bool, std::vector<int64_t>> GetIntList(const NodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->get());
+  ValuePtr value_ptr = nullptr;
+  if (node->isa<ValueNode>()) {
+    value_ptr = node->get<ValueNodePtr>()->value();
+    MS_EXCEPTION_IF_NULL(value_ptr);
+    if (value_ptr->isa<ValueSequence>() || value_ptr->isa<Scalar>()) {
+      return std::make_pair(true, CheckAndConvertUtils::CheckIntOrTupleInt("value", value_ptr, "GetIntList"));
+    }
+  } else {
+    auto abstract = node->get()->abstract();
+    if (abstract != nullptr) {
+      value_ptr = abstract->BuildValue();
+    }
+  }
+  if (value_ptr != nullptr && value_ptr->isa<tensor::Tensor>()) {
+    auto tensor = value_ptr->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    // In pynative mode, need data sync before get tensor value, otherwise the tensor value may be undefined.
+    tensor->data_sync();
+    return std::make_pair(true, CheckAndConvertUtils::CheckTensorIntValue("value", value_ptr, "GetIntList"));
+  }
+  return std::make_pair(false, std::vector<int64_t>{});
+}
+}  // namespace
+
 NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs) const {
   const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   const auto iter = op_primc_fns.find(op_name);
@@ -82,15 +112,19 @@ NodePtr Emitter::Cast(const NodePtr &node, const TypePtr &type) const {
   return Emit("Cast", {node, EmitValue(type)});
 }
 
-NodePtr Emitter::Reshape(const NodePtr &node, const ShapeVector &shape) const {
+NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) const {
   MS_EXCEPTION_IF_NULL(node);
-  auto node_shape = node->shape();
-  if (shape.size() != node_shape.size()) {
-    return Emit(prim::kReshape, {node, Value(shape)});
+  auto [success, dst_shape] = GetIntList(shape);
+  if (!success) {
+    return Emit(prim::kReshape, {node, shape});
   }
-  for (size_t i = 0; i < shape.size(); ++i) {
-    if (shape[i] != node_shape[i] && shape[i] != -1) {
-      return Emit(prim::kReshape, {node, Value(shape)});
+  auto node_shape = node->shape();
+  if (dst_shape.size() != node_shape.size()) {
+    return Emit(prim::kReshape, {node, shape});
+  }
+  for (size_t i = 0; i < dst_shape.size(); ++i) {
+    if (dst_shape[i] != node_shape[i] && dst_shape[i] != -1) {
+      return Emit(prim::kReshape, {node, shape});
     }
   }
   return node;
@@ -112,17 +146,33 @@ NodePtr Emitter::BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_
                             {"transpose_b", MakeValue(transpose_b)}});
 }
 
-NodePtr Emitter::Transpose(const NodePtr &node, const ShapeVector &perm) const {
+NodePtr Emitter::Transpose(const NodePtr &node, const NodePtr &perm) const {
+  auto [success, perm_list] = GetIntList(perm);
+  if (!success) {
+    return Emit(kTransposeOpName, {node, perm});
+  }
   // perm like [0, 1, 2, 3] does not need transpose.
-  auto n = SizeToLong(perm.size());
-  for (size_t i = 0; i < perm.size(); ++i) {
+  auto n = SizeToLong(perm_list.size());
+  for (size_t i = 0; i < perm_list.size(); ++i) {
     // perm value may be negative, e.g. [0, -3, 2, 3] is equal to [0, 1, 2, 3]
-    auto perm_i = perm[i] < 0 ? (perm[i] + n) : perm[i];
+    auto perm_i = perm_list[i] < 0 ? (perm_list[i] + n) : perm_list[i];
     if (perm_i != static_cast<int64_t>(i)) {
-      return Emit(kTransposeOpName, {node, Value(perm)});
+      return Emit(kTransposeOpName, {node, perm});
     }
   }
   return node;
+}
+
+NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &multiples) const {
+  auto [success, multiples_list] = GetIntList(multiples);
+  if (!success) {
+    return Emit(kTileOpName, {node, multiples});
+  }
+  bool is_all_one = std::all_of(multiples_list.begin(), multiples_list.end(), [](int64_t shp) { return shp == 1; });
+  if (is_all_one && node->shape().size() >= multiples_list.size()) {
+    return node;
+  }
+  return Emit(kTileOpName, {node, multiples});
 }
 
 NodePtr Emitter::ZerosLike(const NodePtr &node) const {
@@ -233,6 +283,24 @@ std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const
   return std::make_pair(need_reduce, out_shape);
 }
 
+std::pair<bool, ShapeVector> Emitter::NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim) const {
+  if (shape->isa<ValueNode>() && axis->isa<ValueNode>()) {
+    auto shape_node = shape->get<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(shape_node);
+    auto shape_v = shape_node->value();
+    MS_EXCEPTION_IF_NULL(shape_v);
+    auto shape_value = GetValue<ShapeVector>(shape_v);
+    auto axis_node = shape->get<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(axis_node);
+    auto axis_v = axis_node->value();
+    MS_EXCEPTION_IF_NULL(axis_v);
+    auto axis_value = GetValue<ShapeVector>(axis_v);
+    return NeedReduce(shape_value, axis_value, keep_dim);
+  }
+  ShapeVector v;
+  return std::make_pair(true, v);
+}
+
 NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_dims) const {
   MS_EXCEPTION_IF_NULL(x);
   auto need_reduce = NeedReduce(x->shape(), axis, keep_dims);
@@ -241,6 +309,76 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_
   }
   return Emit(prim::kPrimReduceSum->name(), {x, Value<ShapeVector>(axis)}, {{"keep_dims", MakeValue(keep_dims)}});
 }
+
+NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &shape_func,
+                               const ops::InferFunc &infer_func,
+                               const std::vector<int64_t> &value_depend_indices) const {
+  MS_EXCEPTION_IF_NULL(shape_func);
+  MS_EXCEPTION_IF_NULL(infer_func);
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "ShapeCalc got empty inputs";
+  }
+  std::unordered_set<int64_t> indices(value_depend_indices.begin(), value_depend_indices.end());
+  std::unordered_set<int64_t> const_args_indices;
+  ShapeArray const_args(inputs.size());
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(inputs[i]);
+    if (indices.find(static_cast<int64_t>(i)) == indices.end()) {
+      // input[i]'s shape is used
+      auto input_shape = inputs[i]->shape();
+      if (!IsDynamic(input_shape)) {
+        const_args_indices.insert(i);
+        const_args[i] = input_shape;
+      }
+    } else {
+      // input[i]'s value is used
+      auto [success, vec] = GetIntList(inputs[i]);
+      if (success) {
+        const_args_indices.insert(i);
+        const_args[i] = vec;
+      }
+    }
+  }
+
+  NodePtrList res;
+  if (const_args_indices.size() == inputs.size()) {
+    // Directly execute the lambda function only when all inputs are static
+    auto out = shape_func(const_args);
+    (void)std::transform(out.begin(), out.end(), std::back_inserter(res),
+                         [this](const ShapeVector &sh) { return Value(sh); });
+    return res;
+  }
+
+  NodePtrList args(inputs.size());
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (const_args_indices.find(i) != indices.end()) {
+      args[i] = Value(const_args[i]);
+    } else if (indices.find(static_cast<int64_t>(i)) == indices.end()) {
+      args[i] = Emit("TensorShape", {inputs[i]});
+    } else {
+      args[i] = inputs[i];
+    }
+  }
+  auto out = Emit(ops::kNameShapeCalc, args,
+                  {{ops::kAttrShapeFunc, std::make_shared<ops::ShapeFunction>(shape_func)},
+                   {ops::kAttrInferFunc, std::make_shared<ops::InferFunction>(infer_func)},
+                   {ops::kAttrValueDependIndices, MakeValue(value_depend_indices)},
+                   {kAttrPrimitiveTarget, MakeValue("CPU")}});
+  MS_EXCEPTION_IF_NULL(out);
+  MS_EXCEPTION_IF_NULL(out->get());
+  auto abstract = out->get()->abstract();
+  MS_EXCEPTION_IF_NULL(abstract);
+  if (abstract->isa<abstract::AbstractTuple>()) {
+    auto abstract_tuple = abstract->cast<abstract::AbstractTuplePtr>();
+    MS_EXCEPTION_IF_NULL(abstract_tuple);
+    for (size_t i = 0; i < abstract_tuple->size(); ++i) {
+      res.push_back(TupleGetItem(out, i));
+    }
+  } else {
+    res.push_back(out);
+  }
+  return res;
+}  // namespace expander
 
 std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs) const {
   auto it1 = type_map_.find(lhs->dtype()->type_id());
