@@ -1661,39 +1661,7 @@ class Tensor(Tensor_):
 
     def rot90(self, k, dims):
         r"""
-        Rotate a n-D tensor by 90 degrees in the plane specified by dims axis.
-        Rotation direction is from the first towards the second axis if k > 0,
-        and from the second towards the first for k < 0.
-
-        Args:
-            k (int): Number of times to rotate.
-            dims (Union[list(int), tuple(int)]): Axis to rotate.
-
-        Returns:
-            Tensor.
-
-        Raises:
-            TypeError: If `x` is not a Tensor.
-            TypeError: If `k` is not an integer.
-            TypeError: If `dims` is not a list or a tuple of integers.
-            ValueError: If the length of `dims` is not `2`.
-            ValueError: If any dims is out of range of [-self.ndim, self.ndim).
-            RuntimeError: If rotation dims are not different.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU``
-
-        Examples:
-            >>> import numpy as np
-            >>> import mindspore as ms
-            >>> from mindspore import Tensor
-            >>> x = Tensor(np.array([[0, 1], [2, 3]])).astype(np.float32)
-            >>> k = 1
-            >>> dims = [0, 1]
-            >>> output = x.rot90(k, dims)
-            >>> print(output)
-            [[1. 3.]
-            [0. 2.]]
+        For details, please refer to :func:`mindspore.ops.rot90`.
         """
         self._init_check()
         return tensor_operator_registry.get('rot90')(self, k, dims)
@@ -3488,44 +3456,7 @@ class Tensor(Tensor_):
 
     def addmv(self, mat, vec, beta=1, alpha=1):
         r"""
-        Multiplies matrix `mat` and vector `vec`. Input vector is added to the final result.
-
-        If `mat` is a :math:`(N, M)` tensor, `vec` is a 1-D tensor of size :math:`M`, then `x` must be broadcastable
-        with a 1-D tensor of size :math:`N` and `out` will be 1-D tensor of size :math:`N`.
-
-        The optional values `beta` and `alpha` are the matrix-vector product between `mat` and `vec` and the scale
-        factor for the added tensor `x` respectively. If `beta` is 0, then `x` will be ignored.
-
-        .. math::
-            output = β x + α (mat @ vec)
-
-        Args:
-            mat (Tensor): The first tensor to be multiplied. The shape of the tensor is :math:`(N, M)`.
-            vec (Tensor): The second tensor to be multiplied. The shape of the tensor is :math:`(M,)`.
-            beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
-                float or bool, Default: 1.
-            alpha (scalar[int, float, bool], optional): Multiplier for `mat` @ `vec` (α). The `alpha` must
-                be int or float or bool, Default: 1.
-
-        Returns:
-            Tensor, the shape of the output tensor is :math:`(N,)`, has the same dtype as `x`.
-
-        Raises:
-            TypeError: If `mat`, `vec`, `x` is not a Tensor.
-            TypeError: If input tensor and `x`, `mat`, 'vec' are not the same dtype.
-            ValueError: If `mat` is not a 2-D Tensor.
-                If `x`, `vec` is not a 1-D Tensor.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([2., 3.]).astype(np.float32))
-            >>> mat = Tensor(np.array([[2., 5., 3.], [4., 2., 2.]]).astype(np.float32))
-            >>> vec = Tensor(np.array([3., 2., 4.]).astype(np.float32))
-            >>> output = x.addmv(mat, vec)
-            >>> print(output)
-            [30. 27.]
+        For details, please refer to :func:`mindspore.ops.addmv`.
         """
         self._init_check()
         return tensor_operator_registry.get('addmv')(self, mat, vec, beta=beta, alpha=alpha)

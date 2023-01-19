@@ -172,6 +172,7 @@ mindspore.ops
     mindspore.ops.add
     mindspore.ops.addcdiv
     mindspore.ops.addcmul
+    mindspore.ops.addmv
     mindspore.ops.addn
     mindspore.ops.angle
     mindspore.ops.arccosh
@@ -262,6 +263,7 @@ mindspore.ops
     mindspore.ops.reciprocal
     mindspore.ops.remainder
     mindspore.ops.roll
+    mindspore.ops.rot90
     mindspore.ops.round
     mindspore.ops.rsqrt
     mindspore.ops.sgn
