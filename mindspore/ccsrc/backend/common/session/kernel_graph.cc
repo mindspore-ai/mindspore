@@ -512,7 +512,13 @@ AnfNodePtr KernelGraph::TransParameterTuple(const AbstractBasePtr &abstract) {
   std::vector<AnfNodePtr> make_tuple_inputs = {
     mindspore::NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
   for (size_t index = 0; index < tuple_abstract->size(); ++index) {
-    make_tuple_inputs.push_back(TransParameterTuple((*tuple_abstract)[index]));
+    const auto &abs = (*tuple_abstract)[index];
+    if (abs != nullptr && abs->isa<abstract::AbstractSequence>() &&
+        abs->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
+      make_tuple_inputs.push_back(NewParameter(abs));
+      continue;
+    }
+    make_tuple_inputs.push_back(TransParameterTuple(abs));
   }
   auto make_tuple = NewCNode(std::move(make_tuple_inputs));
   make_tuple->set_abstract(tuple_abstract);

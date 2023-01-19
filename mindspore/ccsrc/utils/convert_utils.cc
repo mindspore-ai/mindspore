@@ -514,6 +514,8 @@ std::vector<ShapeVector> BaseShapeToShapeVector(const abstract::BaseShapePtr &ba
       const auto &element_shape = element_base_shape->cast<abstract::ShapePtr>();
       MS_EXCEPTION_IF_NULL(element_shape);
       return std::vector<ShapeVector>(tuple_shape->size(), element_shape->shape());
+    } else if (element_base_shape->isa<abstract::NoShape>()) {
+      return std::vector<ShapeVector>(tuple_shape->size(), {1});
     }
   } else if (base_shape->isa<abstract::NoShape>()) {
     return {};
