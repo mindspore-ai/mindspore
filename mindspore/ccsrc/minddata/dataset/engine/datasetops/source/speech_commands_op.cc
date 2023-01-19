@@ -177,9 +177,11 @@ Status SpeechCommandsOp::GetFileInfo(const std::string &file_path, std::string *
   std::string label_string = file_path.substr(0, split_index);
   *label = label_string.substr(label_string.find_last_of(kSplitSymbol) + 1);  // plus "1" for index start from 0.
   std::string filename = file_path.substr(split_index + 1);
-  std::regex pattern = std::regex("(.*)_nohash_(\\d+)\\.wav");
   std::smatch result;
-  regex_match(filename, result, pattern);
+  {
+    std::unique_lock<std::mutex> _lock(mux_);
+    regex_match(filename, result, std::regex("(.*)_nohash_(\\d+)\\.wav"));
+  }
   CHECK_FAIL_RETURN_UNEXPECTED(!(result[0] == "" || result[1] == ""),
                                "Invalid file name, failed to get file info: " + filename);
   *speaker_id = result[1];

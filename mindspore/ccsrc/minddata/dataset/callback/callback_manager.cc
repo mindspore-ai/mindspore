@@ -85,6 +85,10 @@ Status CallbackManager::EpochBegin(const CallbackParam &cb_param) {
   for (size_t ind : epoch_begin_indices_) {
     RETURN_IF_NOT_OK(callbacks_[ind]->DSEpochBegin(cb_param));
   }
+
+  // wakeup all the workers threads and collector thread
+  RETURN_IF_NOT_OK(op_->PostForWorkers());
+
   return Status::OK();
 }
 

@@ -204,5 +204,19 @@ MSTensorVec Predicate3(MSTensorVec in) {
 
   return RowToVec(output);
 }
+
+cv::Mat BGRToRGB(const cv::Mat &img) {
+  cv::Mat image(img.rows, img.cols, CV_8UC3);
+  for (int i=0; i<img.rows; ++i) {
+    auto p1 = img.ptr<cv::Vec3b>(i);
+    auto p2 = image.ptr<cv::Vec3b>(i);
+    for (int j=0; j<img.cols; ++j) {
+      p2[j][2] = p1[j][0];
+      p2[j][1] = p1[j][1];
+      p2[j][0] = p1[j][2];
+    }
+  }
+  return image;
+}
 }  // namespace dataset
 }  // namespace mindspore

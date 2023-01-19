@@ -37,8 +37,12 @@ TEST_F(MindDataTestRandomCropOp, TestOp1) {
   unsigned int crop_width = 128;
   auto op = std::make_unique<RandomCropOp>(crop_height, crop_width, 0, 0, 0, 0, false, BorderType::kConstant);
   TensorRow input_tensor_row;
-  input_tensor_row.push_back(input_tensor_);
-  input_tensor_row.push_back(input_tensor_);
+  std::shared_ptr<Tensor> input1;
+  Tensor::CreateFromTensor(input_tensor_, &input1);
+  input_tensor_row.push_back(input1);
+  std::shared_ptr<Tensor> input2;
+  Tensor::CreateFromTensor(input_tensor_, &input2);
+  input_tensor_row.push_back(input2);
   Status s = op->Compute(input_tensor_row, &output_tensor_row);
   for (size_t i = 0; i < input_tensor_row.size(); i++) {
     size_t actual = 0;
@@ -59,8 +63,12 @@ TEST_F(MindDataTestRandomCropOp, TestOp2) {
   unsigned int crop_height = 1280;
   unsigned int crop_width = 1280;
   TensorRow input_tensor_row;
-  input_tensor_row.push_back(input_tensor_);
-  input_tensor_row.push_back(input_tensor_);
+  std::shared_ptr<Tensor> input1;
+  Tensor::CreateFromTensor(input_tensor_, &input1);
+  input_tensor_row.push_back(input1);
+  std::shared_ptr<Tensor> input2;
+  Tensor::CreateFromTensor(input_tensor_, &input2);
+  input_tensor_row.push_back(input2);
   auto op = std::make_unique<RandomCropOp>(
     crop_height, crop_width, 513, 513, 513, 513, false, BorderType::kConstant);
   Status s = op->Compute(input_tensor_row, &output_tensor_row);

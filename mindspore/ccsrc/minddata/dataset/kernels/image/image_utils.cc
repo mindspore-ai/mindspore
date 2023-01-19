@@ -1164,10 +1164,13 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     auto mean_img = cv::mean(gray).val[0];
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
-    output_img = cv::Mat::zeros(input_img.rows, input_img.cols, input_img.depth());
+    // thread safe: change cv::Mat::zeros to cv::Mat + setTo
+    output_img = cv::Mat(input_img.rows, input_img.cols, input_img.depth());
+    output_img.setTo(cv::Scalar::all(0));
     output_img = output_img + mean_img;
     cv::cvtColor(output_img, output_img, CV_GRAY2RGB);
-    output_cv->mat() = output_img * (1.0 - alpha) + input_img * alpha;
+    output_img = output_img * (1.0 - alpha) + input_img * alpha;
+    output_img.copyTo(output_cv->mat());
     *output = std::static_pointer_cast<Tensor>(output_cv);
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("AdjustContrast: " + std::string(e.what()));
@@ -1335,7 +1338,8 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     cv::Mat gray;
     cv::cvtColor(input_img, gray, CV_RGB2GRAY);
     cv::cvtColor(gray, output_img, CV_GRAY2RGB);
-    output_cv->mat() = output_img * (1.0 - alpha) + input_img * alpha;
+    output_img = output_img * (1.0 - alpha) + input_img * alpha;
+    output_img.copyTo(output_cv->mat());
     *output = std::static_pointer_cast<Tensor>(output_cv);
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("AdjustSaturation: " + std::string(e.what()));

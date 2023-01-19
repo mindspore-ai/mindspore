@@ -135,6 +135,8 @@ MSTensorVec Predicate1(MSTensorVec in);
 MSTensorVec Predicate2(MSTensorVec in);
 
 MSTensorVec Predicate3(MSTensorVec in);
+
+cv::Mat BGRToRGB(const cv::Mat &img);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // TESTS_UT_CPP_DATASET_COMMON_COMMON_H_

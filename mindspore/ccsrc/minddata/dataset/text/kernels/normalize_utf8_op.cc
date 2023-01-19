@@ -23,6 +23,9 @@
 
 namespace mindspore {
 namespace dataset {
+// global lock for icu::Normalizer2 *normalize
+std::mutex icu_normalizer2_mux_;
+
 const NormalizeForm NormalizeUTF8Op::kDefNormalizeForm = NormalizeForm::kNfkc;
 Status NormalizeUTF8Op::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
@@ -64,7 +67,10 @@ Status NormalizeUTF8Op::Compute(const std::shared_ptr<Tensor> &input, std::share
   int i = 0;
   for (auto iter = input->begin<std::string_view>(); iter != input->end<std::string_view>(); iter++) {
     icu::StringByteSink<std::string> sink(&strs[i++]);
-    normalize->normalizeUTF8(0, icu::StringPiece((*iter).data(), (*iter).size()), sink, nullptr, error);
+    {
+      std::unique_lock<std::mutex> _lock(icu_normalizer2_mux_);
+      normalize->normalizeUTF8(0, icu::StringPiece((*iter).data(), (*iter).size()), sink, nullptr, error);
+    }
     CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "NormalizeUTF8: NormalizeUTF8 failed.");
   }
   return Tensor::CreateFromVector(strs, input->shape(), output);

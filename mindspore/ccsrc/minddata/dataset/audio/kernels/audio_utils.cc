@@ -25,6 +25,9 @@
 
 namespace mindspore {
 namespace dataset {
+// global lock for cyl_bessel_i and cyl_bessel_if function
+std::mutex cyl_bessel_mux_;
+
 /// \brief Calculate complex tensor angle.
 /// \param[in] input - Input tensor, must be complex, <channel, freq, time, complex=2>.
 /// \param[out] output - Complex tensor angle.
@@ -1225,9 +1228,12 @@ Status Kaiser(std::shared_ptr<Tensor> *output, int len, float beta = 12.0) {
   // Kaiser window function.
   auto iter = (*output)->begin<float>();
   float twice = 2.0;
-  for (ptrdiff_t i = 0; i < len; ++i) {
-    *(iter + i) =
-      std::cyl_bessel_i(0, beta * std::sqrt(1 - std::pow(i * twice / (len)-1.0, TWO))) / std::cyl_bessel_i(0, beta);
+  {
+    std::unique_lock<std::mutex> _lock(cyl_bessel_mux_);
+    for (ptrdiff_t i = 0; i < len; ++i) {
+      *(iter + i) =
+        std::cyl_bessel_i(0, beta * std::sqrt(1 - std::pow(i * twice / (len)-1.0, TWO))) / std::cyl_bessel_i(0, beta);
+    }
   }
   return Status::OK();
 #endif
@@ -2206,10 +2212,13 @@ Status GetSincResampleKernel(const int32_t orig_freq, const int32_t des_freq, Re
                         "Resample: ResampleMethod of Kaiser Window is not "
                         "supported on MacOS yet.");
 #else
-    T beta_bessel = std::cyl_bessel_if(0, beta);
-    window.noalias() = kernel_matrix.unaryExpr([=](T x) -> T {
-      return std::cyl_bessel_i(0, beta * sqrt(1 - pow((x / lowpass_filter_width), TWO))) / beta_bessel;
-    });
+    {
+      std::unique_lock<std::mutex> _lock(cyl_bessel_mux_);
+      T beta_bessel = std::cyl_bessel_if(0, beta);
+      window.noalias() = kernel_matrix.unaryExpr([=](T x) -> T {
+        return std::cyl_bessel_i(0, beta * sqrt(1 - pow((x / lowpass_filter_width), TWO))) / beta_bessel;
+      });
+    }
 #endif
   }
   kernel_matrix *= PI;

@@ -59,6 +59,7 @@ Status TaskManager::CreateAsyncTask(const std::string &my_name, const std::funct
   RETURN_IF_NOT_OK((*task)->Run());
   // Wait for the thread to initialize successfully.
   RETURN_IF_NOT_OK((*task)->Wait());
+  (*task)->Clear();
   return Status::OK();
 }
 

@@ -35,7 +35,9 @@ TEST_F(MindDataTestRandomColorAdjustOp, TestOp1) {
   std::shared_ptr<Tensor> output_tensor;
   auto op = std::make_unique<RandomColorAdjustOp>(0.7, 1.3, 0.8, 1.2, 0.8, 1.2, -0.2, 0.2);
   EXPECT_TRUE(op->OneToOne());
-  Status s = op->Compute(input_tensor_, &output_tensor);
+  std::shared_ptr<Tensor> input1;
+  Tensor::CreateFromTensor(input_tensor_, &input1);
+  Status s = op->Compute(input1, &output_tensor);
   EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(input_tensor_->shape()[0], output_tensor->shape()[0]);
   EXPECT_EQ(input_tensor_->shape()[1], output_tensor->shape()[1]);
@@ -50,7 +52,9 @@ TEST_F(MindDataTestRandomColorAdjustOp, TestOp2) {
   std::shared_ptr<Tensor> output_tensor;
   auto op = std::make_unique<RandomColorAdjustOp>(0.7, 1.3, 0.8, 1.2, 0.8, 1.2, -0.2, 0.2);
 
-  Status s = op->Compute(input_tensor_, &output_tensor);
+  std::shared_ptr<Tensor> input1;
+  Tensor::CreateFromTensor(input_tensor_, &input1);
+  Status s = op->Compute(input1, &output_tensor);
   EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(input_tensor_->shape()[0], output_tensor->shape()[0]);
   EXPECT_EQ(input_tensor_->shape()[1], output_tensor->shape()[1]);
@@ -65,7 +69,9 @@ TEST_F(MindDataTestRandomColorAdjustOp, TestOp3) {
   std::shared_ptr<Tensor> output_tensor;
   auto op = std::make_unique<RandomColorAdjustOp>(0.8, 0.8, 0, 0, 0, 0, 0, 0);
 
-  Status s = op->Compute(input_tensor_, &output_tensor);
+  std::shared_ptr<Tensor> input1;
+  Tensor::CreateFromTensor(input_tensor_, &input1);
+  Status s = op->Compute(input1, &output_tensor);
   EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(input_tensor_->shape()[0], output_tensor->shape()[0]);
   EXPECT_EQ(input_tensor_->shape()[1], output_tensor->shape()[1]);
@@ -80,7 +86,9 @@ TEST_F(MindDataTestRandomColorAdjustOp, TestOp4) {
   std::shared_ptr<Tensor> output_tensor;
   auto op = std::make_unique<RandomColorAdjustOp>(0.8, 0.8, 0, 0, 0, 0, 0.2, 0.2);
 
-  Status s = op->Compute(input_tensor_, &output_tensor);
+  std::shared_ptr<Tensor> input1;
+  Tensor::CreateFromTensor(input_tensor_, &input1);
+  Status s = op->Compute(input1, &output_tensor);
   EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(input_tensor_->shape()[0], output_tensor->shape()[0]);
   EXPECT_EQ(input_tensor_->shape()[1], output_tensor->shape()[1]);

@@ -1,10 +1,10 @@
 include(GoogleTest)
 
 SET(DE_UT_SRCS
-        affine_op_test.cc
+        lite_affine_op_test.cc
         execute_test.cc
         arena_test.cc
-        auto_contrast_op_test.cc
+        eager_auto_contrast_op_test.cc
         batch_op_test.cc
         bit_functions_test.cc
         bounding_box_augment_op_test.cc

@@ -148,6 +148,8 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
   while (io_block != nullptr) {
     if (io_block->wait()) {
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagWait)));
+      TaskManager::FindMe()->Wait();  // wait for auto tune update workers successful
+      TaskManager::FindMe()->Clear();
     } else if (io_block->eoe()) {
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOE)));
     } else if (io_block->eof()) {
@@ -290,6 +292,15 @@ Status MindRecordOp::Reset() {
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   RETURN_IF_NOT_OK(WaitForWorkers());
   RETURN_IF_NOT_OK(MappableLeafOp::Reset());  // Call our super class reset first.
+
+  // wakeup workers
+  for (auto &item : worker_tasks_) {
+    item->Post();
+  }
+
+  // wakeup the collector thread
+  wait_for_collector_.Set();
+
   return Status::OK();
 }
 
@@ -331,9 +342,14 @@ Status MindRecordOp::AddNewWorkers(int32_t num_new_workers) {
   RETURN_IF_NOT_OK(shard_reader_->ExtendRandomFileStreams(num_new_workers));
   num_mind_record_workers_ += num_new_workers;
 
+  // create queue first
   for (int32_t i = 0; i < num_new_workers; i++) {
     RETURN_IF_NOT_OK(worker_in_queues_.AddQueue(tree_->AllTasks()));
     RETURN_IF_NOT_OK(worker_out_queues_.AddQueue(tree_->AllTasks()));
+  }
+
+  // launch new workers
+  for (int32_t i = 0; i < num_new_workers; i++) {
     Task *new_task;
     RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
       Name() + "::WorkerEntry", std::bind(&MindRecordOp::WorkerEntry, this, num_workers_), &new_task, id()));
@@ -342,6 +358,14 @@ Status MindRecordOp::AddNewWorkers(int32_t num_new_workers) {
     num_workers_++;
     MS_LOG(INFO) << "A new worker has been added to op: " << Name() << "::" << id() << " num_workers=" << num_workers_;
   }
+
+  // wakeup old workers
+  for (auto &item : worker_tasks_) {
+    item->Post();
+  }
+
+  // wakeup the collector thread
+  wait_for_collector_.Set();
 
   return Status::OK();
 }
@@ -355,6 +379,7 @@ Status MindRecordOp::RemoveWorkers(int32_t num_workers) {
 
   for (int32_t i = 0; i < num_workers; i++) {
     RETURN_IF_NOT_OK(SendQuitFlagToWorker(num_workers_ - 1));
+    worker_tasks_[num_workers_ - 1]->Post();
     RETURN_IF_NOT_OK(worker_tasks_[num_workers_ - 1]->Join());
     RETURN_IF_NOT_OK(worker_in_queues_.RemoveLastQueue());
     worker_tasks_.pop_back();
@@ -362,6 +387,14 @@ Status MindRecordOp::RemoveWorkers(int32_t num_workers) {
     MS_LOG(INFO) << "Worker ID " << num_workers_ << " is requested to be removed in operator: " << NameWithID()
                  << " num_workers=" << num_workers_;
   }
+
+  // wakeup left workers
+  for (auto &item : worker_tasks_) {
+    item->Post();
+  }
+
+  // wakeup the collector thread
+  wait_for_collector_.Set();
 
   return Status::OK();
 }

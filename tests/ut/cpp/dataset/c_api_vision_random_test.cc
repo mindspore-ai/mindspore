@@ -182,6 +182,10 @@ TEST_F(MindDataTestPipeline, TestRandomAffineSuccess2) {
 TEST_F(MindDataTestPipeline, TestRandomColor) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomColor with non-default parameters.";
 
+  std::shared_ptr<mindspore::dataset::ConfigManager> cfg = mindspore::dataset::GlobalContext::config_manager();
+  uint32_t original_num_parallel_workers = cfg->num_parallel_workers();
+  cfg->set_num_parallel_workers(1);
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
@@ -229,6 +233,8 @@ TEST_F(MindDataTestPipeline, TestRandomColor) {
 
   // Manually terminate the pipeline
   iter->Stop();
+
+  cfg->set_num_parallel_workers(original_num_parallel_workers);
 }
 
 /// Feature: RandomColorAdjust op
@@ -236,6 +242,10 @@ TEST_F(MindDataTestPipeline, TestRandomColor) {
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomColorAdjust.";
+
+  std::shared_ptr<mindspore::dataset::ConfigManager> cfg = mindspore::dataset::GlobalContext::config_manager();
+  uint32_t original_num_parallel_workers = cfg->num_parallel_workers();
+  cfg->set_num_parallel_workers(1);
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -300,6 +310,8 @@ TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
 
   // Manually terminate the pipeline
   iter->Stop();
+
+  cfg->set_num_parallel_workers(original_num_parallel_workers);
 }
 
 /// Feature: RandomCrop op
