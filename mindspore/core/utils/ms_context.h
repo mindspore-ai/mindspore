@@ -136,6 +136,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_TUNE_MODE,
   MS_CTX_GRAPH_KERNEL_FLAGS,
   MS_CTX_INFER_PRECISION_MODE,  // GPU inference precision mode configured by Serving or Unify API.
+  MS_CTX_DETERMINISTIC,
   MS_CTX_TYPE_STRING_END,
 
   // parameter numbers of each type

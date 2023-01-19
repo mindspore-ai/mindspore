@@ -1,4 +1,4 @@
- # Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -231,6 +231,19 @@ class _Context:
         else:
             self.set_param(ms_ctx_param.memory_offload, False)
 
+    def set_deterministic(self, deterministic):
+        """
+        Enable model run in deterministic, and support the values "ON" and "OFF".
+
+        Args:
+            deterministic (str): "ON", "OFF"
+        """
+        deterministic_options = ["ON", "OFF"]
+        if deterministic not in deterministic_options:
+            raise ValueError(f"For 'context.set_context', the argument 'deterministic' must be one of "
+                             f"{deterministic_options}, but got {deterministic}.")
+        self.set_param(ms_ctx_param.deterministic, deterministic)
+
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
         if not success:
@@ -368,8 +381,8 @@ class _Context:
                 json.load(f)
         except (TypeError, ValueError) as exo:
             raise ValueError(str(exo) + "\nFor 'context.set_context', open or load the 'env_config_path' file {} "
-                             "failed, please check whether 'env_config_path' is json file and correct, or may not "
-                             "have permission to read it.".format(env_config_path))
+                                        "failed, please check whether 'env_config_path' is json file and correct, "
+                                        "or may not have permission to read it.".format(env_config_path))
         self.set_param(ms_ctx_param.env_config_path, env_config_path)
 
     def set_runtime_num_threads(self, runtime_num_threads):
@@ -383,6 +396,7 @@ class _Context:
         if op_timeout < 0:
             raise ValueError("The num of op exe timeout must bigger than or equal to 0.")
         self.set_param(ms_ctx_param.op_timeout, op_timeout)
+
     def set_inter_op_parallel_num(self, inter_op_parallel_num):
         """Check and set inter_op_parallel_num."""
         if inter_op_parallel_num < 0:
@@ -406,7 +420,8 @@ class _Context:
         'runtime_num_threads': set_runtime_num_threads,
         'memory_optimize_level': set_memory_optimize_level,
         'op_timeout': set_op_timeout,
-        'memory_offload': set_memory_offload
+        'memory_offload': set_memory_offload,
+        'deterministic': set_deterministic
     }
 
     @property
@@ -445,7 +460,6 @@ class _Context:
         if not isinstance(support, bool):
             raise TypeError(f"The attribute 'support_binary' should be a bool, but got {type(support)}.")
         self._support_binary = support
-
 
 
 def _context():
@@ -712,7 +726,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
                  grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
-                 op_timeout=int)
+                 op_timeout=int, deterministic=str)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -749,6 +763,8 @@ def set_context(**kwargs):
     |                         |  enable_dump                 |  Ascend                    |
     |                         +------------------------------+----------------------------+
     |                         |  save_dump_path              |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  deterministic               |  Ascend                    |
     |                         +------------------------------+----------------------------+
     |                         |  print_file_path             |  Ascend                    |
     |                         +------------------------------+----------------------------+
@@ -823,6 +839,15 @@ def set_context(**kwargs):
             If the specified directory does not exist, the system will automatically create the directory.
             During distributed training, graphs will be saved to the directory of
             `save_graphs_path/rank_${rank_id}/`. `rank_id` is the ID of the current device in the cluster.
+        deterministic (str): Whether to enable op run in deterministic mode. The value must be in the
+            range of ['ON', 'OFF'], and the default value is 'OFF'.
+
+            - "ON": Enable operator deterministic running mode.
+            - "OFF": Disable operator deterministic running mode.
+
+            When deterministic mode is on, model ops will be deterministic in Ascend. This means that if op run multiple
+            times with the same inputs on the same hardware, it will have the exact same outputs each time. This is
+            useful for debugging models.
         enable_dump (bool): This parameters is deprecated, and will be deleted in the next version.
         save_dump_path (str): This parameters is deprecated, and will be deleted in the next version.
         print_file_path (str): The path of saving print data. If this parameter is set, print data is saved to
@@ -986,6 +1011,7 @@ def set_context(**kwargs):
         >>> ms.set_context(disable_format_transform=True)
         >>> ms.set_context(memory_optimize_level='O0')
         >>> ms.set_context(memory_offload='ON')
+        >>> ms.set_context(deterministic='ON')
     """
     ctx = _context()
     # set device target first
