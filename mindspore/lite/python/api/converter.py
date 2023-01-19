@@ -81,7 +81,7 @@ class Converter:
         of MindSpore Lite's encryption exported models in version 1.6 and earlier.
 
     Args:
-        fmk_type (:class:`mindspore_lite.FmkType`): Input model framework type. Options: FmkType.TF | FmkType.CAFFE |
+        fmk_type (FmkType): Input model framework type. Options: FmkType.TF | FmkType.CAFFE |
             FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH. For details, see
             `FmkType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.FmkType.html>`_ .
         model_file (str): Set the path of the input model when converter. For example, "/home/user/model.prototxt".
@@ -130,7 +130,8 @@ class Converter:
               code generation.
 
         input_format (Format, optional): Set the input format of exported model. Only Valid for 4-dimensional input. The
-            following 2 input formats are supported: Format.NCHW | Format.NHWC. Default: Format.NHWC.
+            following 2 input formats are supported: Format.NCHW | Format.NHWC. Default: Format.NHWC. For details, see
+            `Format <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.Format.html>`_ .
 
             - Format.NCHW: Store tensor data in the order of batch N, channel C, height H and width W.
             - Format.NHWC: Store tensor data in the order of batch N, height H, width W and channel C.
@@ -138,7 +139,8 @@ class Converter:
         input_data_type (DataType, optional): Set the data type of the quantization model input Tensor. It is only valid
             when the quantization parameters ( `scale` and `zero point` ) of the model input tensor are available.
             The following 4 DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 |
-            DataType.UNKNOWN. Default: DataType.FLOAT32.
+            DataType.UNKNOWN. Default: DataType.FLOAT32. For details, see
+            `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
 
             - DataType.FLOAT32: 32-bit floating-point number.
             - DataType.INT8:    8-bit integer.
@@ -148,7 +150,8 @@ class Converter:
         output_data_type (DataType, optional): Set the data type of the quantization model output Tensor. It is only
             valid when the quantization parameters ( `scale` and `zero point` ) of the model output tensor are
             available. The following 4 DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 |
-            DataType.UNKNOWN. Default: DataType.FLOAT32.
+            DataType.UNKNOWN. Default: DataType.FLOAT32. For details, see
+            `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
 
             - DataType.FLOAT32: 32-bit floating-point number.
             - DataType.INT8:    8-bit integer.
@@ -168,10 +171,13 @@ class Converter:
             characters. Only support when `decrypt_mode` is "AES-GCM", the key length is 16. Default: "".
         infer (bool, optional): Whether to do pre-inference after Converter. Default: False.
         train_model (bool, optional):   Whether the model is going to be trained on device. Default: False.
-        no_fusion(bool, optional): Whether avoid fusion optimization, fusion optimization is allowed by default.
-            Default: False.
-        device (str, optional): Set target device when converter model. Only valid for ascend. The following device
-            are supported: "Ascend". Default: "".
+        no_fusion(bool, optional): Whether avoid fusion optimization. Default: None. when export_mindir is
+            ModelType.MINDIR, None is True, which means avoid fusion optimizatio. when export_mindir is not
+            ModelType.MINDIR, None is False, which means fusion optimization is allowed.
+        device (str, optional): Set target device when converter model. Only valid for Ascend. The use case is when on
+            the Ascend device, if you need to the converted model to have the ability to use Ascend backend to perform
+            inference, you can set the parameter. If it is not set, the converted model will use CPU backend to perform
+            inference by default. Options: "Ascend". Default: "".
     Raises:
         TypeError: `fmk_type` is not a FmkType.
         TypeError: `model_file` is not a str.
@@ -197,7 +203,7 @@ class Converter:
         TypeError: `device` is not a str.
         ValueError: `input_format` is neither Format.NCHW nor Format.NHWC when it is a Format.
         ValueError: `decrypt_mode` is neither "AES-GCM" nor "AES-CBC" when it is a str.
-        ValueError: `device` is "Ascend" when it is a str.
+        ValueError: `device` is not "Ascend" when it is a str.
         RuntimeError: `model_file` does not exist.
         RuntimeError: `weight_file` is not "", but `weight_file` does not exist.
         RuntimeError: `config_file` is not "", but `config_file` does not exist.
