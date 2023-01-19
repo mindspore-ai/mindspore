@@ -74,7 +74,11 @@ void LuSolveCpuKernelMod::LuSolve(const std::vector<kernel::AddressPtr> &inputs,
   MatrixXd matrix_b = Eigen::Map<MatrixXd>(b_working_ptr, lu_maxtrix_sizes, b_m);
   MatrixXd matrix_A = Eigen::Map<MatrixXd>(lu_working_ptr, lu_maxtrix_sizes, lu_maxtrix_sizes);
   for (size_t i = 0; i < LongToSize(input_0_shape_[b_dim - kDimNum]); i++) {
-    matrix_b.row(i).swap(matrix_b.row(*(pivots_working_ptr + i) - 1));
+    size_t pivots_i = *(pivots_working_ptr + i) - 1;
+    if (pivots_i > LongToSize(input_0_shape_[b_dim - kDimNum])) {
+      MS_EXCEPTION(ValueError) << "lu_pivots values out of index of lu_data. ";
+    }
+    matrix_b.row(i).swap(matrix_b.row(pivots_i));
   }
   MatrixXd result = matrix_A.template triangularView<Eigen::UnitLower>().solve(matrix_b);
   result.noalias() = matrix_A.template triangularView<Eigen::Upper>().solve(result);
