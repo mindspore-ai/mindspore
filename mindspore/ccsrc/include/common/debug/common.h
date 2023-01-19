@@ -73,7 +73,7 @@ inline std::string GetSaveGraphsPathName(const std::string &file_name, const std
   if (save_path.empty()) {
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
-    save_graphs_path = ms_context->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
+    save_graphs_path = ms_context->GetSaveGraphsPath();
     if (save_graphs_path.empty()) {
       save_graphs_path = ".";
     }

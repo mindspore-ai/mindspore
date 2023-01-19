@@ -209,7 +209,7 @@ void SomasSolverPre::TensorRelationLog(const std::vector<DynamicBitSet> *pConstr
   MS_LOG(INFO) << "SomasSolver::Log Writing somas_tensor_relation.ir..";
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
+  auto save_graphs_path = context_ptr->GetSaveGraphsPath();
   std::string filename =
     GetSaveGraphsPathName("somas_tensor_relation_" + std::to_string(graph.graph_id()) + ".ir", save_graphs_path);
   std::ostringstream oss;
@@ -229,7 +229,7 @@ void SomasSolverPre::SolverInputLog(const session::KernelGraph &graph, const Ten
   MS_LOG(INFO) << "SomasSolver::Log Writing somas_solver_input..";
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
+  auto save_graphs_path = context_ptr->GetSaveGraphsPath();
   std::string filename =
     GetSaveGraphsPathName("somas_solver_input_" + std::to_string(graph.graph_id()) + ".ir", save_graphs_path);
   std::ostringstream oss;
@@ -252,7 +252,7 @@ void SomasSolverPre::SolverOutputLog(const session::KernelGraph &graph, const Te
   MS_LOG(INFO) << "SomasSolver::Log Writing somas_solver_output_..";
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
+  auto save_graphs_path = context_ptr->GetSaveGraphsPath();
   std::string out_filename =
     GetSaveGraphsPathName("somas_solver_output_" + std::to_string(graph.graph_id()) + ".ir", save_graphs_path);
   std::ostringstream oss;
