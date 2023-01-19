@@ -26,6 +26,13 @@
 #include "ops/relu.h"
 #include "ops/relu6.h"
 #include "ops/sigmoid.h"
+#include "ops/hsigmoid.h"
+#include "ops/abs.h"
+#include "ops/softsign.h"
+#include "ops/softplus.h"
+#include "ops/selu.h"
+#include "ops/hswish.h"
+#include "ops/sign.h"
 #include "ops/tanh.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
@@ -40,6 +47,13 @@ STATUS ActivationMapper::Mapper(const CNodePtr &cnode) {
     {mindspore::RELU, std::make_shared<ops::ReLU>()},
     {mindspore::RELU6, std::make_shared<ops::ReLU6>()},
     {mindspore::SIGMOID, std::make_shared<ops::Sigmoid>()},
+    {mindspore::HSIGMOID, std::make_shared<ops::HSigmoid>()},
+    {mindspore::ABS, std::make_shared<ops::Abs>()},
+    {mindspore::SOFTSIGN, std::make_shared<ops::Softsign>()},
+    {mindspore::SOFTPLUS, std::make_shared<ops::Softplus>()},
+    {mindspore::SELU, std::make_shared<ops::SeLU>()},
+    {mindspore::HSWISH, std::make_shared<ops::HSwish>()},
+    {mindspore::SIGN, std::make_shared<ops::Sign>()},
     {mindspore::TANH, std::make_shared<ops::Tanh>()},
     {mindspore::LEAKY_RELU, std::make_shared<ops::LeakyRelu>()}};
   ValueNodePtr value_node = nullptr;
