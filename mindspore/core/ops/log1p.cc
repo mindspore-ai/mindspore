@@ -52,6 +52,8 @@ MIND_API_OPERATOR_IMPL(Log1p, BaseOperator);
 AbstractBasePtr Log1pInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kLog1pInputsNum = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kLog1pInputsNum, primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

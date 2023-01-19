@@ -24,6 +24,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr auto kAttrNum = "num";
+constexpr int64_t kUnstackInputsNum = 1;
 }  // namespace
 MIND_API_OPERATOR_IMPL(Unstack, BaseOperator);
 
@@ -35,6 +36,8 @@ class UnstackInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kUnstackInputsNum, primitive->name());
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
 
     auto output_num = GetValue<int64_t>(primitive->GetAttr(kAttrNum));
@@ -64,6 +67,8 @@ class UnstackInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kUnstackInputsNum, primitive->name());
     auto name = primitive->name();
     auto type = input_args[kInputIndex0]->BuildType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", type, common_valid_types_with_complex_and_bool, name);
