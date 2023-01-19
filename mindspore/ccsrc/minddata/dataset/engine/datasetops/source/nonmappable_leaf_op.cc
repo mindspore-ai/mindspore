@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,9 @@ NonMappableLeafOp::NonMappableLeafOp(int32_t num_workers, int32_t worker_connect
       compression_type_(compression_type),
       num_rows_(0),
       shuffled_keys_({}),
+      prepared_data_{false},
+      curr_row_{0},
+      workers_done_{0},
       seed_(0) {
   worker_connector_size_ = worker_connector_size;
 }
@@ -52,23 +55,7 @@ NonMappableLeafOp::NonMappableLeafOp(int32_t num_workers, int32_t worker_connect
 // All dataset operators operate by launching a thread (see ExecutionTree). This class functor will
 // provide the master loop that drives the logic for performing the work
 Status NonMappableLeafOp::operator()() {
-  RETURN_IF_NOT_OK(CalculateNumRowsPerShard());
-
-  // Put here to avoid register failed when Worker_Entry thread exits unexpected
-  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
-
-  // launch one thread, responsible for filling mIOBlockQueue
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&NonMappableLeafOp::WaitToFillIOBlockQueue, this), "", id()));
-
-  // launch num_workers_ worker threads, responsible for pulling from the IOBlockQueue and reading
-  // data from disk into TensorRows
-  RETURN_IF_NOT_OK(RegisterAndLaunchThreads());
-
-  // must be called after launching workers. workers can't be spawned after this post,
-  // so workers have to be kept alive until the end of the program
-  TaskManager::FindMe()->Post();
-
-  NotifyToFillIOBlockQueue();
+  RETURN_IF_NOT_OK(PrepareData());
   while (!finished_reading_dataset_) {
     int32_t workers_done = 0;
     int64_t rows_read = 0;
@@ -106,7 +93,7 @@ Status NonMappableLeafOp::operator()() {
         //
         // Master thread needs to:
         // -tell IOBlockQueue thread to stop pushing
-        // -tell worker threads to stop reading the file tey are currently reading
+        // -tell worker threads to stop reading the file they are currently reading
         // -keep pulling until EOE
 
         // don't think we need a lock for now
@@ -124,15 +111,7 @@ Status NonMappableLeafOp::operator()() {
     // all workers finished reading for this epoch, and we have read all the data from all workers
     RETURN_IF_NOT_OK(out_connector_->SendEOE());
 
-    if (IsLastIteration()) {
-      finished_reading_dataset_ = true;
-      NotifyToFillIOBlockQueue();
-    } else {
-      jagged_rows_connector_->DoReset();
-      // Self-reset to start a new iteration
-      RETURN_IF_NOT_OK(Reset());
-    }
-    UpdateRepeatAndEpochCounter();
+    RETURN_IF_NOT_OK(ResetAndUpdateRepeat());
   }
 
   RETURN_IF_NOT_OK(out_connector_->SendEOF());
@@ -212,6 +191,8 @@ Status NonMappableLeafOp::PushIoBlockQueue(int32_t index, std::unique_ptr<Filena
 // reinitializes itself so that it can be executed again, as if it was just created.
 Status NonMappableLeafOp::Reset() {
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
+  curr_row_ = 0;
+  workers_done_ = 0;
   // start workers first, otherwise IOBlocks will fall through if workers see it before this is set to true
   {
     std::unique_lock<std::mutex> lock(load_jagged_connector_mutex_);
@@ -297,13 +278,135 @@ Status NonMappableLeafOp::PrepareOperator() {
     for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
       shuffled_keys_.push_back(it.key());
     }
-    // in reset mode, shuffled_keys needs to be ordered in the rsetting epoch
+    // in reset mode, shuffled_keys needs to be ordered in the resetting epoch
     if (GlobalContext::config_manager()->fast_recovery() && op_current_repeats_ > 0) {
       for (auto i = 0; i < op_current_repeats_; i++) {
         ShuffleKeys();
       }
     }
   }
+  return Status::OK();
+}
+
+Status NonMappableLeafOp::PrepareOperatorPullBased() {
+  // Run any common code from super class first before adding our own
+  RETURN_IF_NOT_OK(DatasetOp::PrepareOperatorPullBased());
+
+  if (shuffle_files_) {
+    for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
+      shuffled_keys_.push_back(it.key());
+    }
+    // Please note that this code is added for future use. Resetting dataset is only used in sink mode and pull mode
+    // doesn't support sink mode.
+    if (GlobalContext::config_manager()->fast_recovery() && op_current_repeats_ > 0) {
+      // In reset mode, shuffled_keys needs to be ordered in the resetting epoch
+      for (auto i = 0; i < op_current_repeats_; i++) {
+        ShuffleKeys();
+      }
+    }
+  }
+  return Status::OK();
+}
+
+Status NonMappableLeafOp::PrepareData() {
+  RETURN_IF_NOT_OK(CalculateNumRowsPerShard());
+
+  // Put here to avoid register failed when Worker_Entry thread exits unexpected
+  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
+
+  // launch one thread, responsible for filling mIOBlockQueue
+  RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&NonMappableLeafOp::WaitToFillIOBlockQueue, this), "", id()));
+
+  // launch num_workers_ worker threads, responsible for pulling from the IOBlockQueue and reading
+  // data from disk into TensorRows
+  RETURN_IF_NOT_OK(RegisterAndLaunchThreads());
+
+  // must be called after launching workers. workers can't be spawned after this post,
+  // so workers have to be kept alive until the end of the program
+  TaskManager::FindMe()->Post();
+
+  NotifyToFillIOBlockQueue();
+
+  return Status::OK();
+}
+
+Status NonMappableLeafOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
+  row->reset();
+
+  // IOBlockQueue threads keep filling IOBlockQueue, and worker threads keep pulling files from IOBlockQueue, reading
+  // and then pushing tensors into jagged_rows_connector queue. This Preparation process is done asynchronously. Please
+  // note that even when num_parallel_workers is set to 1, there still be 3 async threads alive in the source op: 1
+  // main thread, 1 worker thread and 1 IOBlockQueue thread.
+  if (!prepared_data_) {
+    RETURN_IF_NOT_OK(PrepareData());
+    prepared_data_ = true;
+  }
+  if (finished_reading_dataset_) {
+    *row = TensorRow(TensorRow::kFlagEOF);
+    return Status::OK();
+  }
+  TensorRow new_row;
+  RETURN_IF_NOT_OK(jagged_rows_connector_->Pop(0, &new_row));
+  // Pull tensor from jagged_rows_connector queue. It has 4 cases:
+  // 1) If eoe signal reaches and all workers have finished reading, propagate eoe to the next op and do a self-reset.
+  // 2) If eoe signal reaches but not all the workers finishes reading, consume eoe and pull the next non-eoe tensor
+  //    from the jagged_rows_connector queue.
+  // 3) If maximum count of rows to be read doesn't reach, returns the tensor data and increments curr_row_.
+  // 4) If maximum count of rows to be read reaches, notify IOBlockQueue thread and worker thread by setting
+  //    load_jagged_connector_ and load_io_block_queue_ to false. Then, drain data from jagged_rows_connector queue
+  //    until eoe is hit so that no data remains in all queues and they can be reset properly for the new iteration.
+  while (new_row.eoe()) {
+    workers_done_++;
+    if (workers_done_ == num_workers_) {
+      RETURN_IF_NOT_OK(ResetAndUpdateRepeat());
+      *row = TensorRow(TensorRow::kFlagEOE);
+      return Status::OK();
+    } else {
+      RETURN_IF_NOT_OK(jagged_rows_connector_->Pop(0, &new_row));
+    }
+  }
+
+  if (((compression_type_ == CompressionType::NONE || compression_type_ == CompressionType::GZIP_WITH_COUNT ||
+        compression_type_ == CompressionType::ZLIB_WITH_COUNT) &&
+       (total_rows_ == 0 || curr_row_ < total_rows_)) ||
+      ((compression_type_ == CompressionType::GZIP || compression_type_ == CompressionType::ZLIB) &&
+       (curr_row_ < total_rows_ * num_devices_))) {
+    curr_row_++;
+  } else {
+    {
+      std::unique_lock<std::mutex> lock(load_jagged_connector_mutex_);
+      load_jagged_connector_ = false;
+    }
+    {
+      std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);
+      load_io_block_queue_ = false;
+    }
+    // drain data in jagged_rows_connector_ until eoe is hit.
+    while (workers_done_ < num_workers_) {
+      TensorRow next_row;
+      jagged_rows_connector_->Pop(0, &next_row);
+      if (next_row.eoe()) {
+        workers_done_++;
+      }
+    }
+    RETURN_IF_NOT_OK(ResetAndUpdateRepeat());
+    new_row = TensorRow(TensorRow::kFlagEOE);
+  }
+  *row = std::move(new_row);
+  return Status::OK();
+}
+
+Status NonMappableLeafOp::ResetAndUpdateRepeat() {
+  if (IsLastIteration()) {
+    finished_reading_dataset_ = true;
+    NotifyToFillIOBlockQueue();
+  } else {
+    jagged_rows_connector_->DoReset();
+    // Self-reset to start a new iteration
+    RETURN_IF_NOT_OK(Reset());
+  }
+  UpdateRepeatAndEpochCounter();
   return Status::OK();
 }
 }  // namespace dataset
