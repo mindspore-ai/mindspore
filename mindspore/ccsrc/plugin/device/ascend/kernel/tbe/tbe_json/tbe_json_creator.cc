@@ -32,6 +32,7 @@
 #include "include/common/utils/json_operation_utils.h"
 #include "include/common/utils/convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_select_utils.h"
 #include "kernel/oplib/super_bar.h"
 

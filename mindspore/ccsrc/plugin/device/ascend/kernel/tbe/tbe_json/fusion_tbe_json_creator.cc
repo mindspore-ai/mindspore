@@ -36,6 +36,7 @@ bool FusionBuildTbeJsonCreator::GenJson(const FusionScopeInfo &fusion_scope_info
   MS_LOG(DEBUG) << "Start Generate Fusion Json, Fusion Node: " << fusion_scope_info.full_name;
   nlohmann::json soc_info_json = kernel::tbe::TbeUtils::GenSocInfo();
   soc_info_json[kJCoreType] = GetCoreType(fusion_scope_info.compute_nodes.front());
+  soc_info_json[kJOpDebugConfig] = tbe::TbeUtils::GetOpDebugConfig();
   (*fusion_json)[kJSocInfo] = soc_info_json;
 
   std::vector<nlohmann::json> op_list_json;

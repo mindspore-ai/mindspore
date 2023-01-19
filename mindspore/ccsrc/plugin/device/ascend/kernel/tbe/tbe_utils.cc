@@ -35,6 +35,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_version.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_creator.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
 #include "include/common/utils/json_operation_utils.h"
@@ -50,6 +51,7 @@ constexpr auto kCceKernelMeta = "kernel_meta/";
 constexpr auto kTbePrebuildRes = "kernel_meta/tbe_prebuild_res/";
 constexpr auto kJsonSuffix = ".json";
 constexpr auto kInfoSuffix = ".info";
+constexpr auto kMemCheck = "oom";
 constexpr auto kBuildRes = "build_result";
 constexpr auto kTUNE_BANK_PATH = "TUNE_BANK_PATH";
 constexpr auto kTUNE_DUMP_PATH = "TUNE_DUMP_PATH";
@@ -59,6 +61,7 @@ constexpr auto kJOpTuneSwitch = "op_tune_switch";
 constexpr auto kJOpTuneList = "op_tune_list";
 constexpr auto kJPassList = "pass_list";
 constexpr auto kCOMPILER_OP_LEVEL = "MS_COMPILER_OP_LEVEL";
+constexpr auto kCOMPILER_OP_DEBUG_CONFIG = "MS_COMPILER_OP_DEBUG_CONFIG";
 
 std::atomic<uintptr_t> KernelManager::kernel_stub_gen_ = 0;
 std::unordered_map<string, KernelMetaPtr> KernelManager::info_table_ = {};
@@ -123,7 +126,7 @@ std::string TbeUtils::GetKernelMetaTempDir() {
   return debug_path;
 }
 
-std::string GetOpDebugLevel() {
+std::string TbeUtils::GetOpDebugLevel() {
   static const std::set<size_t> value_ranges = {OP_DEBUG_LEVEL_0, OP_DEBUG_LEVEL_1, OP_DEBUG_LEVEL_2, OP_DEBUG_LEVEL_3,
                                                 OP_DEBUG_LEVEL_4};
   std::string op_debug_level = std::to_string(OP_DEBUG_LEVEL_3);
@@ -139,6 +142,45 @@ std::string GetOpDebugLevel() {
     }
   }
   return op_debug_level;
+}
+
+std::vector<std::string> TbeUtils::SplitAndRemoveSpace(const std::string &s, char delim) {
+  std::string item;
+  std::istringstream is(s);
+  std::vector<std::string> ret;
+  while (std::getline(is, item, delim)) {
+    auto end_pos = std::remove(item.begin(), item.end(), ' ');
+    item.erase(end_pos, item.end());
+    ret.push_back(item);
+  }
+  return ret;
+}
+
+std::string TbeUtils::GetOpDebugConfig() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  bool is_sink = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) &&
+                 (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode);
+  auto op_debug_config = common::GetEnv(kCOMPILER_OP_DEBUG_CONFIG);
+  std::string ret_op_debug_config;
+  auto val_vec = TbeUtils::SplitAndRemoveSpace(op_debug_config, ',');
+  bool is_first = true;
+  for (auto &it : val_vec) {
+    if (it == kMemCheck && is_sink) {
+      if (is_first) {
+        is_first = false;
+      } else {
+        ret_op_debug_config += ", ";
+      }
+      ret_op_debug_config += it;
+    }
+  }
+  return ret_op_debug_config;
+}
+
+std::string GetTeVersion() {
+  static auto result = GetPyTeVersion();
+  return result;
 }
 
 nlohmann::json TbeUtils::GenSocInfo() {
@@ -163,6 +205,7 @@ nlohmann::json TbeUtils::GenSocInfo() {
   soc_info_json["op_debug_dir"] = GetOpDebugPath();
   soc_info_json["kernel_meta_temp_dir"] = GetKernelMetaTempDir();
   soc_info_json["op_debug_level"] = GetOpDebugLevel();
+  soc_info_json["op_debug_config"] = GetOpDebugConfig();
   soc_info_json["autoTilingMode"] = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
   soc_info_json["deviceId"] = std::to_string(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   std::string config_path;
@@ -179,6 +222,7 @@ nlohmann::json TbeUtils::GenSocInfo() {
   }
   soc_info_json["mdl_bank_path"] = config_path;
   soc_info_json["deterministic"] = context_ptr->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON";
+  soc_info_json["te_version"] = GetTeVersion();
   return soc_info_json;
 }
 

@@ -107,6 +107,7 @@ constexpr auto kPyPath = "/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/
 constexpr auto kJMaxKernelIDValue = 10;
 constexpr auto kJConstValue = "const_value";
 constexpr auto kJConstValueDtype = "const_value_dtype";
+constexpr auto kJOpDebugConfig = "op_debug_config";
 
 class TbeJsonUtils {
  public:

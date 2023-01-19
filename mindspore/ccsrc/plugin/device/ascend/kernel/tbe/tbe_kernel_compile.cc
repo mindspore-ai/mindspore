@@ -393,6 +393,10 @@ void TbeKernelCompileManager::SaveFailedTaskCompileResult(int task_id) {
   auto json_name = task_iter->second.json_name;
   auto config_path = TbeUtils::GetOpDebugPath();
   auto cache_file = config_path + kNotSupportFusionOp;
+  if (cache_file.size() > PATH_MAX) {
+    MS_LOG(WARNING) << "File path length should be smaller than " << PATH_MAX << ", but got " << cache_file;
+    return;
+  }
   std::ofstream file_write;
   file_write.open(cache_file, std::ios::app);
   if (!file_write.is_open()) {
@@ -751,7 +755,7 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
     }
     // save all task io size info for gen kernel mod
     SaveIOSizeInfo(kernel_json, json_name);
-    if (tbe::TbeUtils::SearchCache(json_name, false) != nullptr && !is_need_rebuild_) {
+    if (tbe::TbeUtils::SearchCache(json_name, false) != nullptr) {
       // cache exist, no need compile
       continue;
     }
@@ -833,7 +837,7 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
     // save all fusion ops to filter those compile succeed ops
     all_fusion_ops_[fusion_scope_iter.scope_id] = full_name;
     SaveIOSizeInfo(fusion_op, json_name, fusion_scope_iter.output_nodes);
-    if (tbe::TbeUtils::SearchCache(json_name, false) != nullptr && !is_need_rebuild_) {
+    if (tbe::TbeUtils::SearchCache(json_name, false) != nullptr) {
       // cache exist, no need compile
       continue;
     }
@@ -908,7 +912,7 @@ bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann
   return false;
 }
 
-void TbeKernelCompileManager::LoadNotSupportOp() {
+void TbeKernelCompileManager::LoadNotSupportFusionOp() {
   static bool has_load = false;
   if (!has_load) {
     auto config_path = TbeUtils::GetOpDebugPath();
@@ -986,10 +990,10 @@ void TbeKernelCompileManager::TbeInitialize() {
   JsonAssemble(kInitialize, soc_info, &init_json);
   auto offline_tune = (init_json[kJobContent][kSocInfo][kOfflineTune]).get<bool>();
   op_debug_level_ = (init_json[kJobContent][kSocInfo]["op_debug_level"]).get<std::string>();
+  op_debug_config_ = (init_json[kJobContent][kSocInfo]["op_debug_config"]).get<std::string>();
   auto auto_tiling_mode = (init_json[kJobContent][kSocInfo]["autoTilingMode"]).get<std::string>();
   tbe_init_flag_ = true;
   is_tune_flag_ = offline_tune || (auto_tiling_mode != "NO_TUNE");
-  is_need_rebuild_ = is_tune_flag_ || TbeUtils::IsOneOf({"1", "2", "4"}, op_debug_level_);
 
   auto init_str = init_json.dump();
   MS_LOG(INFO) << "TbeInitialize json file : " << init_str;
@@ -1000,7 +1004,7 @@ void TbeKernelCompileManager::TbeInitialize() {
   // load cache before kernel build
   LoadPreBuildResult();
   // load not support op
-  LoadNotSupportOp();
+  LoadNotSupportFusionOp();
   TbeUtils::LoadCache();
 }
 
@@ -1011,6 +1015,7 @@ void TbeKernelCompileManager::TbeFinalize() {
     return;
   }
   op_debug_level_ = "";
+  op_debug_config_ = "";
   tbe_init_flag_ = false;
   is_tune_flag_ = false;
   ClearOldTask();
@@ -1031,7 +1036,6 @@ void TbeKernelCompileManager::ClearOldTask() {
 TbeKernelCompileManager::~TbeKernelCompileManager() { TbeFinalize(); }
 bool TbeKernelCompileManager::tbe_init_flag_ = false;
 bool TbeKernelCompileManager::is_tune_flag_ = false;
-bool TbeKernelCompileManager::is_need_rebuild_ = false;
 }  // namespace ascend
 }  // namespace kernel
 }  // namespace mindspore

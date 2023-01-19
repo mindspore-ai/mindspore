@@ -47,6 +47,7 @@ namespace {
 using mindspore::transform::OptionMap;
 
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
+constexpr auto kOpDebugConfigFile = "ge_op_debug_config.ini";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
 const std::set<std::string> kIgnoreGEShapeMap = {kSoftMarginLossOpName};
 
@@ -535,6 +536,38 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
   return;
 }
 
+void UseOpDebugConfig(std::map<std::string, std::string> *ge_options) {
+  auto op_debug_config = common::GetEnv("MS_COMPILER_OP_DEBUG_CONFIG");
+  if (!op_debug_config.empty()) {
+    auto config_path = kernel::tbe::TbeUtils::GetOpDebugPath();
+    DIR *dir = opendir(config_path.c_str());
+    if (dir == nullptr) {
+      auto ret = mkdir(config_path.c_str(), S_IRWXG | S_IRWXU);
+      if (ret != 0) {
+        MS_LOG(INFO) << "kernel dir: " << config_path << "not exist";
+        return;
+      }
+    }
+    auto ge_op_debug_config_file = config_path + kOpDebugConfigFile;
+    if (ge_op_debug_config_file.size() > PATH_MAX) {
+      MS_LOG(WARNING) << "File path length should be smaller than " << PATH_MAX << ", but got "
+                      << ge_op_debug_config_file;
+      return;
+    }
+    (*ge_options)["op_debug_config"] = ge_op_debug_config_file;
+    std::string ge_op_debug_config = "op_debug_config = " + op_debug_config;
+    std::ofstream file_write;
+    file_write.open(ge_op_debug_config_file, std::ios::out | std::ios::trunc);
+    if (!file_write.is_open()) {
+      MS_LOG(WARNING) << "Create ge op debug config file failed. [" << ge_op_debug_config_file << "]";
+      return;
+    }
+    file_write << ge_op_debug_config << std::endl;
+    file_write.close();
+    MS_LOG(INFO) << "Use MS_COMPILER_OP_DEBUG_CONFIG:" << ge_op_debug_config;
+  }
+}
+
 void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr,
                                    std::map<std::string, std::string> *ge_options) {
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
@@ -642,6 +675,8 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
     (*ge_options)["ge.socVersion"] = "Ascend310P3";
   }
+
+  UseOpDebugConfig(ge_options);
 }
 
 void GeDeviceContext::SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const {
