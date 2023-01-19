@@ -49,7 +49,7 @@ using mindspore::transform::OptionMap;
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 constexpr auto kOpDebugConfigFile = "ge_op_debug_config.ini";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
-const std::set<std::string> kIgnoreGEShapeMap = {kSoftMarginLossOpName};
+const std::set<std::string> kIgnoreGEShapeOps = {kSoftMarginLossOpName};
 
 std::string GetGraphName(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -246,9 +246,9 @@ void UpdateOutputNodeShape(const AnfNodePtr &node, size_t index, TypeId output_t
   std::vector<TypeId> types = {};
   std::vector<ShapeVector> shapes = {};
   for (size_t i = 0; i < total_output_num; ++i) {
-    if (i == index && kIgnoreGEShapeMap.count(name) == 0) {
+    if (i == index && kIgnoreGEShapeOps.count(name) == 0) {
       // Using GE infer result to update shape
-      // TODO(hbhu_bin): when kIgnoreGEShapeMap's size > 5, you should refactor this code
+      // TODO(hbhu_bin): when kIgnoreGEShapeOps's size > 5, you should refactor this code
       types.push_back(output_type);
       shapes.push_back(output_shape);
     } else {

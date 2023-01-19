@@ -518,6 +518,7 @@ class OpAdapter : public BaseOpAdapter {
 
   static const mindspore::HashMap<int, InputDesc> input_map_;
   static const mindspore::HashMap<int, DynInputDesc> dyn_input_map_;
+  // note: To keep the outputs in order, the 'output_map_' and 'cus_output_map_' must be std::map instead of Hashmap.
   static const std::map<int, OutputDesc> output_map_;
   static const mindspore::HashMap<int, DynOutputDesc> dyn_output_map_;
   static const mindspore::HashMap<int, SubGraphDesc> subgraph_map_;
