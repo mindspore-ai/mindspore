@@ -32,6 +32,7 @@ __all__ = ['ReduceLogSumExp',
            'DiGamma',
            'IGamma',
            'LBeta',
+           'CosineSimilarity',
            'MatMul',
            'Moments',
            'MatInverse',
@@ -857,6 +858,69 @@ class MatMul(Cell):
             matmul_broadcast = self.squeeze_right_op(matmul_broadcast)
 
         return matmul_broadcast
+
+
+class CosineSimilarity(Cell):
+    r"""
+    Computes cosine similarity.
+
+    .. math::
+        \mathcal{K} = \frac{\textbf{x}\textbf{y}^{\top}}{\parallel \textbf{x} \parallel \parallel \textbf{y} \parallel},
+
+    where :math:`\mathcal{K}` is the similarity, :math:`\textbf{x}` is the first tensor `x1`,
+    :math:`\textbf{y}` is the second tensor `x2`.
+
+    To avoid numerical errors when dividing by small numbers,
+    the lower bound of :math:`\parallel \textbf{x} \parallel \parallel \textbf{y} \parallel` is set to `eps`.
+
+    Args:
+        dim (int, optional): Dimension. Default: 1.
+        eps (float, optional): Small value. Default: 1e-08.
+
+    Inputs:
+        - **x1** (Tensor) - The first tensor :math:`\textbf{x}`.
+          Shape: :math:`(\ast_1, D, \ast_2)` where :math:`D` is at position `dim`.
+        - **x2** (Tensor) - The second tensor :math:`\textbf{y}`. The shape is the same as `x1`.
+
+    Outputs:
+        Tensor, with shape :math:`(\ast_1, \ast_2)`, the data type will be inferred automatically.
+
+    Raises:
+        TypeError: If `x1` or `x2` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor([[1.0, 3.0, 4.0, 7.0], [2.0, 4.0, 2.0, 5.0], [3.0, 1.0, 5.0, 8.0]])
+        >>> x2 = Tensor([[2.0, 4.0, 2.0, 5.0], [3.0, 1.0, 5.0, 8.0], [1.0, 3.0, 4.0, 7.0]])
+        >>> func = nn.layer.CosineSimilarity()
+        >>> out = func(x1, x2)
+        >>> print(out.asnumpy())
+        [0.9402562 0.8614609 0.9516245]
+    """
+
+    def __init__(self, dim=1, eps=1e-08):
+        """Initialize CosineSimilarity."""
+        super().__init__()
+        self.dim = dim
+        self.eps = eps
+        self.mul = P.Mul()
+        self.div = P.DivNoNan()
+        self.maximum = P.Maximum()
+        self.cast = P.Cast()
+
+    def construct(self, x1, x2):
+        if not isinstance(x1, Tensor):
+            raise TypeError(f"For 'CosineSimilarity', 'x1' must be a tensor, but got {type(x1)}")
+        if not isinstance(x2, Tensor):
+            raise TypeError(f"For 'CosineSimilarity', 'x2' must be a tensor, but got {type(x2)}")
+        w12 = self.mul(x1, x2).sum(self.dim)
+        w1 = self.mul(x1, x1).sum(self.dim)
+        w2 = self.mul(x2, x2).sum(self.dim)
+        n12 = self.maximum(self.mul(w1, w2), self.eps * self.eps).sqrt()
+        out = self.div(w12, n12)
+        return out
 
 
 class Moments(Cell):
