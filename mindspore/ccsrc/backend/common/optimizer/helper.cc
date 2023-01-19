@@ -1008,10 +1008,10 @@ void GetPrimitiveChangeInfo(const PrimitivePtr &prim, std::string *me_name, bool
     *ir_change = GetValue<bool>(prim->GetAttr(kAttrIRChange));
   }
   if (*ir_change || !me_name->empty()) {
-    MS_LOG(INFO) << "Note: primitive(" << prim->ToString() << ", me_name:" << *me_name << ", ori_name: " << prim->name()
-                 << ", ir_change" << *ir_change << ") "
-                 << "has been changed in ascend vm pass, it should been rectify abstract before infer or provide a "
-                    "new infer func";
+    MS_LOG(DEBUG) << "Note: primitive(" << prim->ToString() << ", me_name:" << *me_name
+                  << ", ori_name: " << prim->name() << ", ir_change" << *ir_change << ") "
+                  << "has been changed in ascend vm pass, it should been rectify abstract before infer or provide a "
+                     "new infer func";
   }
 }
 

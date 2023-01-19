@@ -59,7 +59,7 @@ TypeId GetInputXDataType(const AnfNodePtr &node) {
       dropout_input_type != kNumberTypeFloat16) {
     dropout_input_type = kNumberTypeFloat16;
   }
-  MS_LOG(INFO) << "Dropout input data type: " << TypeIdLabel(dropout_input_type);
+  MS_LOG(DEBUG) << "Dropout input data type: " << TypeIdLabel(dropout_input_type);
   return dropout_input_type;
 }
 
@@ -78,7 +78,7 @@ ValueNodePtr CreateKeepPorbValueNode(const FuncGraphPtr &func_graph, const AnfNo
     }
   }
   auto keep_prob = common::AnfAlgo::GetNodeAttr<float>(node, kAttrKeepProb);
-  MS_LOG(INFO) << "Keep_prob value: " << keep_prob;
+  MS_LOG(DEBUG) << "Keep_prob value: " << keep_prob;
 
   std::vector<int64_t> keep_prob_shape = {};
   auto keep_prob_tensor = std::make_shared<tensor::Tensor>(type_id, keep_prob_shape);
@@ -109,7 +109,7 @@ std::vector<int64_t> CalGenMaskOutputShape(const std::vector<int64_t> &shape) {
     output_count++;
   }
   auto ret = output_count * kMaskMultiNum;
-  MS_LOG(INFO) << "Output_size: " << ret;
+  MS_LOG(DEBUG) << "Output_size: " << ret;
   return {ret};
 }
 

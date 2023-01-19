@@ -136,7 +136,7 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     return false;
   }
 
-  MS_LOG(INFO) << "Start aclopCompileAndExecute of node: " << node->fullname_with_scope() << " op_type_:" << op_type_;
+  MS_LOG(DEBUG) << "Start aclopCompileAndExecute of node: " << node->fullname_with_scope() << " op_type_:" << op_type_;
   bool ret = aclopCompileAndExecute(const_cast<char *>(op_type_.c_str()), op_desc_ptr->input_tensor_desc().size(),
                                     op_desc_ptr->input_tensor_desc().data(), op_desc_ptr->input_tensor_data().data(),
                                     op_desc_ptr->output_tensor_desc().size(), op_desc_ptr->output_tensor_desc().data(),
@@ -147,7 +147,7 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     return false;
   }
 
-  MS_LOG(INFO) << "Success launch of node: " << node->fullname_with_scope();
+  MS_LOG(DEBUG) << "Success launch of node: " << node->fullname_with_scope();
   return true;
 }
 
