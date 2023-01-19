@@ -20,12 +20,12 @@ from mindspore import log as logger
 from tests.st.model_zoo_tests import utils
 
 
-def run_yolov5_dynamic_case(device_target, mode="GRAPH"):
+def init_files():
     cur_path = os.getcwd()
     model_path = "{}/../../../../tests/models/official/cv".format(cur_path)
     model_name = "yolov5"
     utils.copy_files(model_path, cur_path, model_name)
-    cur_model_path = os.path.join(cur_path, "yolov5")
+    cur_model_path = os.path.join(cur_path, model_name)
     # pylint: disable=anomalous-backslash-in-string
     old_list = ["gt_shape\[1\]"]
     # pylint: disable=anomalous-backslash-in-string
@@ -33,6 +33,10 @@ def run_yolov5_dynamic_case(device_target, mode="GRAPH"):
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/yolo.py"))
     os.system("""sed -i '1i\mode_name: "GRAPH"' {}""".format(os.path.join(cur_model_path, "default_config.yaml")))
     os.system("cp -r {} {}".format(os.path.join(cur_path, "run_yolov5_dynamic.py"), cur_model_path))
+    return cur_model_path
+
+
+def run_yolov5_dynamic_case(cur_model_path, device_target, mode="GRAPH"):
     exec_network_shell = "cd {}; python run_yolov5_dynamic.py --device_target={} --mode_name={} > log &".format(
         cur_model_path, device_target, mode)
     logger.warning("cmd [{}] is running...".format(exec_network_shell))
@@ -50,23 +54,7 @@ def run_yolov5_dynamic_case(device_target, mode="GRAPH"):
     return loss_list
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_yolov5_dynamic_gpu_pynative():
-    """
-    Feature: yolov5_dynamic
-    Description: test yolov5_dynamic run
-    Expectation: loss is same with the expect on PYNATIVE_MODE
-    """
-    loss_list = run_yolov5_dynamic_case("GPU", "PYNATIVE")
-    expect_loss = [7200.505, 544.873, 600.88]
-    # Different gpu device (such as V100 and 3090) lead to some differences
-    # in the calculation results, so atol and rtol is large
-    assert np.allclose(loss_list, expect_loss, 1e-2, 1e-2)
-
-
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_yolov5_dynamic_gpu():
@@ -75,11 +63,14 @@ def test_yolov5_dynamic_gpu():
     Description: test yolov5_dynamic run
     Expectation: loss is same with the expect
     """
-    loss_list = run_yolov5_dynamic_case("GPU")
+    cur_model_path = init_files()
+    loss_list = run_yolov5_dynamic_case(cur_model_path, "GPU")
     expect_loss = [7200.505, 544.873, 600.88]
     # Different gpu device (such as V100 and 3090) lead to some differences
     # in the calculation results, so only the first step is compared
     assert np.allclose(loss_list[0], expect_loss[0], 1e-3, 1e-3)
+    loss_list_pynative = run_yolov5_dynamic_case(cur_model_path, "GPU", "PYNATIVE")
+    assert np.allclose(loss_list_pynative, expect_loss, 1e-2, 1e-2)
 
 
 @pytest.mark.level0
@@ -92,7 +83,8 @@ def test_yolov5_dynamic_ascend():
     Description: test yolov5_dynamic run
     Expectation: loss is same with the expect
     """
-    loss_list = run_yolov5_dynamic_case("Ascend")
+    cur_model_path = init_files()
+    loss_list = run_yolov5_dynamic_case(cur_model_path, "Ascend")
     expect_loss = [7200.35, 530]
     # Currently, the rtol/atol of loss of network running for many times exceeds
     # 1e-3, so only compare the first step
