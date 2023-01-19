@@ -16,12 +16,11 @@
 
 #include "pipeline/pynative/forward/do_infer.h"
 #include "pipeline/pynative/pynative_utils.h"
+#include "frontend/operator/ops_front_infer_function.h"
 
 namespace mindspore {
 namespace pynative {
 namespace {
-const mindspore::HashSet<std::string> kForceInferPrim = {prim::kTopK, prim::kDropoutGenMask,
-                                                         prim::kStatelessDropOutGenMask};
 constexpr size_t kCacheThreshold = 10000;
 
 ValuePtr GetInferValueFromAbstract(const AbstractBasePtr &abs) {
@@ -61,22 +60,67 @@ ValuePtr GetInferValueFromAbstract(const AbstractBasePtr &abs) {
   }
 }
 
-void PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) {
+void CallPyInferFunc(const PrimitivePtr &primitive, const FrontendOpRunInfoPtr &op_run_info) {
+  const AbstractBasePtrList &arg_spec = op_run_info->input_abs;
+  auto py_infer_args = PreparePyInputs(arg_spec);
+  auto prim_py = dyn_cast<PrimitivePy>(primitive);
+  MS_EXCEPTION_IF_NULL(prim_py);
+  if (primitive->prim_type() == kPrimTypePyCheck) {
+    prim_py->RunCheck(py_infer_args);
+    return;
+  }
+  auto py_infer_result = prim_py->RunInfer(py_infer_args);
+  auto abs = abstract::PyInferRes2Abstract(prim_py, py_infer_result);
+  primitive->EndRecordAddAttr();
+  op_run_info->base_op_run_info.abstract = abs;
+}
+}  // namespace
+void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name
                 << " infer input: " << mindspore::ToString(op_run_info->input_abs);
   const auto &prim = op_run_info->op_prim;
   MS_EXCEPTION_IF_NULL(prim);
+  op_run_info->base_op_run_info.abstract = nullptr;
+  auto eval_impl = abstract::GetFrontendPrimitiveInferImpl(prim);
+  bool need_call_python_code = false;
+  // Charge if the primitive should call the python code, when infer abstract.
+  if (prim->prim_type() == kPrimTypePyCheck || !eval_impl.has_value()) {
+    need_call_python_code = true;
+  }
+  // Only cache the abstract when the primitive should call the python code.
+  if (need_call_python_code && GetOutputAbstractByCache(op_run_info)) {
+    return;
+  }
+  // Cache miss to call the infer function
   prim->BeginRecordAddAttr();
-  auto eval_ret = EvalOnePrim(prim, op_run_info->input_abs);
-  MS_EXCEPTION_IF_NULL(eval_ret);
-  const auto &infer_res = eval_ret->abstract();
+
+  // Call Python func
+  if (need_call_python_code) {
+    CallPyInferFunc(prim, op_run_info);
+    if (op_run_info->base_op_run_info.abstract != nullptr) {
+      return;
+    }
+  }
+
+  // the WhileList ops should be constant fold in Pynative mode.
+  if (!eval_impl->IsInWhiteList() && eval_impl->IsImplInferValue()) {
+    auto value = eval_impl->InferValue(prim, op_run_info->input_abs);
+    if (value != nullptr && !value->isa<AnyValue>()) {
+      op_run_info->base_op_run_info.abstract = value->ToAbstract();
+      prim->EndRecordAddAttr();
+      return;
+    }
+  }
+
+  // Call Cpp infer
+  auto infer_res = eval_impl->InferShapeAndType(nullptr, prim, op_run_info->input_abs);
   MS_EXCEPTION_IF_NULL(infer_res);
-  prim->EndRecordAddAttr();
   op_run_info->base_op_run_info.abstract = infer_res;
+
+  prim->EndRecordAddAttr();
   MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name << " infer result: " << infer_res->ToString();
 }
-}  // namespace
 
 void InferOperation::DoInfer(const FrontendOpRunInfoPtr &op_run_info) {
   SetInputAbstract(op_run_info);
@@ -165,33 +209,30 @@ AbstractBasePtr InferOperation::GetAbstractByValue(const ValuePtr &value, size_t
 }
 
 void InferOperation::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) {
-  // Step 1 : Get output abstract from cache.
-  bool abs_cache_hit = GetOutputAbstractByCache(op_run_info);
-
-  // Step 2 : Infer output abstract when cache not hit.
+  // Step 1 : Infer output abstract.
   MS_EXCEPTION_IF_NULL(op_run_info);
-  if (!abs_cache_hit || kForceInferPrim.find(op_run_info->base_op_run_info.op_name) != kForceInferPrim.end()) {
-    PynativeInfer(op_run_info);
-  }
-
-  // Step 3: Check whether output shape is dynamic.
+  PynativeInfer(op_run_info);
+  // Step 2: Check whether output shape is dynamic.
+  MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
   const auto &shape = op_run_info->base_op_run_info.abstract->BuildShape();
   MS_EXCEPTION_IF_NULL(shape);
   op_run_info->base_op_run_info.has_dynamic_output = shape->IsDynamic();
   MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name << " is dynamic "
                 << op_run_info->base_op_run_info.has_dynamic_output;
 
-  // Step 4: Get infer value from output abstract.
+  // Step 3: Get infer value from output abstract.
   auto infer_value = GetInferValueFromAbstract(op_run_info->base_op_run_info.abstract);
   MS_EXCEPTION_IF_NULL(infer_value);
   if (!infer_value->isa<AnyValue>()) {
     MS_LOG(DEBUG) << "Get output by constant folding, output is " << infer_value->ToString();
     op_run_info->output_get_by_infer_value = true;
+    op_run_info->should_be_cache = false;
   } else if (op_run_info->op_prim->is_const_prim()) {
     MS_LOG(DEBUG) << "Get output by const prim.";
     op_run_info->output_get_by_infer_value = true;
+    op_run_info->should_be_cache = false;
     infer_value = MakeValue("");
-  } else if (!abs_cache_hit) {
+  } else if (op_run_info->should_be_cache) {
     // Cache output abstract, the const infer value needs to infer every step.
     SaveOutputAbstractToCache(op_run_info);
   }
@@ -214,9 +255,11 @@ bool InferOperation::GetOutputAbstractByCache(const FrontendOpRunInfoPtr &op_run
       MS_LOG(DEBUG) << "From output abstract cache get output abs " << abs_iter->second.abs->ToString();
       op_run_info->base_op_run_info.abstract = abs_iter->second.abs;
       prim->set_evaluate_added_attrs(abs_iter->second.attrs);
+      op_run_info->should_be_cache = false;
       return true;
     }
   }
+  op_run_info->should_be_cache = true;
   return false;
 }
 

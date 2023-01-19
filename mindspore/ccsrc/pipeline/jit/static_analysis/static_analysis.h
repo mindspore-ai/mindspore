@@ -417,7 +417,6 @@ AbstractBasePtr FromValue(const T &value, bool broaden = false) {
   return FromValueInside(MakeValue(value), broaden);
 }
 EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &engine);
-EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs);
 
 EvalResultPtr ObtainEvalResultFromCache(const AnfNodeConfigPtr &conf);
 // If the config of CNode(funcgraph/metafuncgraph) can be found in the cache, evaluation of the config of that CNode

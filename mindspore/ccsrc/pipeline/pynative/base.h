@@ -58,6 +58,7 @@ struct FrontendOpRunInfo {
   bool run_in_vm = false;
   bool grad_flag = false;
   bool output_get_by_infer_value = false;
+  bool should_be_cache = false;
   int mix_type{0};
   size_t op_index = 0;
   size_t input_size = 0;

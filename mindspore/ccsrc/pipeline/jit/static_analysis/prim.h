@@ -210,6 +210,8 @@ bool IsSubtype(const AbstractBasePtr x, const TypePtr model);
 void ClearPrimEvaluatorMap();
 
 py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_convert_value = false);
+py::tuple PreparePyInputs(const AbstractBasePtrList &args);
+AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dict &output);
 }  // namespace abstract
 }  // namespace mindspore
 

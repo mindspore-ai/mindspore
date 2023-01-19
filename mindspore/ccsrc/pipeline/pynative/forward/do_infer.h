@@ -44,6 +44,7 @@ class InferOperation {
   void set_only_single_op_run(bool only_single_op_run) { only_single_op_run_ = only_single_op_run; }
 
  private:
+  void PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) const;
   // Set abstract for each input value.
   void SetInputAbstract(const FrontendOpRunInfoPtr &op_run_info);
   AbstractBasePtr GetInputValueAbs(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &input_value,
