@@ -115,6 +115,9 @@ class BACKEND_EXPORT KernelBuildInfo {
 
   std::string fusion_type() const { return fusion_type_; }
 
+  bool valid() const { return valid_; }
+  void set_valid(bool valid) { valid_ = valid; }
+
   Processor processor() const { return processor_; }
   void set_processor(Processor processor) { processor_ = processor; }
 
@@ -150,6 +153,8 @@ class BACKEND_EXPORT KernelBuildInfo {
   std::vector<nlohmann::json> output_data_desc_;
   std::string fusion_type_{kernel::kPatternOpaque};
   Processor processor_{AICORE};
+  // Indicates whether buildinfo is valid, the invalid buildinfo needs to select kernel again.
+  bool valid_{true};
 };
 using KernelBuildInfoPtr = std::shared_ptr<KernelBuildInfo>;
 
@@ -224,6 +229,8 @@ class BACKEND_EXPORT KernelBuildInfo::KernelBuildInfoBuilder {
   void SetInputDeviceType(const TypeId &input_device_type, size_t index);
 
   void SetOutputDeviceType(const TypeId &output_device_type, size_t index);
+
+  void SetValid(bool valid);
 
   std::shared_ptr<KernelBuildInfo> Build();
 

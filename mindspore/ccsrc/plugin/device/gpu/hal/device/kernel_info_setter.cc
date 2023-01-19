@@ -590,7 +590,16 @@ bool GetSelectKernelResult(const CNodePtr &kernel_node,
 #ifdef ENABLE_TUPLE_UNFOLD
 bool GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node) {
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto kernel_attrs = kernel::NativeGpuKernelMod::GetGpuSupportedList(kernel_name);
+  // Kernel that is not supported by device can try to backed off on CPU and use the real object type.
+  if (!kernel::NativeGpuKernelModFactory::GetInstance().IsRegistered(kernel_name)) {
+    auto input_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(kernel_node));
+    auto output_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllOutputObjectType(kernel_node));
+    kernel::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types);
+    return true;
+  }
+
+  // Skip check only supports the tuple fold.
+  auto kernel_attrs = kernel::NativeGpuKernelModFactory::GetInstance().GetGpuSupportedList(kernel_name);
   if (kernel_attrs.empty() || kernel_attrs[0].GetSkipCheck()) {
     auto input_object_types =
       kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllInputObjectType(kernel_node));
@@ -599,11 +608,13 @@ bool GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node) {
     kernel::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types);
     return true;
   }
+
   std::vector<kernel::KernelAttr> object_selected_kernel_attrs;
   if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, true) &&
       !kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, false)) {
     return false;
   }
+
   kernel::SetKernelObjectTypeWithSelectedAttr(kernel_node, object_selected_kernel_attrs[0]);
   return true;
 }

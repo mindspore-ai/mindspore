@@ -362,5 +362,10 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetInputDeviceType(const TypeId &i
   }
   kernel_build_info_->inputs_device_type_[index] = input_device_type;
 }
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetValid(bool valid) {
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  kernel_build_info_->valid_ = valid;
+}
 }  // namespace kernel
 }  // namespace mindspore
