@@ -150,7 +150,8 @@ class Tensor(Tensor_):
     def __init__(self, input_data=None, dtype=None, shape=None, init=None, internal=False, const_arg=False):
         self.init_finished = False
         if internal:
-            Tensor_.__init__(self, input_data)
+            if input_data is not None:
+                Tensor_.__init__(self, input_data)
         else:
             # If input data is numpy number, convert it to np array
             if isinstance(input_data, np_types):

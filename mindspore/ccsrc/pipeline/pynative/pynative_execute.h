@@ -28,6 +28,13 @@
 namespace mindspore::pynative {
 namespace py = pybind11;
 
+struct StubNode {
+  enum { TENSOR = 0, CSR_TENSOR, COO_TENSOR, ROW_TENSOR, TUPLE };
+  AbstractBasePtr abs;
+  ValuePtr value;
+};
+using StubPtr = std::shared_ptr<StubNode>;
+
 class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
  public:
   static std::shared_ptr<PyNativeExecutor> GetInstance() {
@@ -50,6 +57,11 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
     MS_EXCEPTION_IF_NULL(forward_executor_);
     return forward_executor_;
   }
+
+  py::object RunOpAsync(const py::object &prim, const py::tuple &args) const;
+  py::object GetStubValue(const StubPtr &stub) const;
+  py::object GetStubShape(const StubPtr &stub) const;
+  py::object GetStubDtype(const StubPtr &stub) const;
 
   py::object RealRunOp(const py::args &args) const;
   py::object CallConstantFolding(const py::args &args) const;

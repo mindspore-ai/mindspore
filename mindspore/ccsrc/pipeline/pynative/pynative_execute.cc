@@ -82,6 +82,52 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
 }
 }  // namespace
 
+py::object PyNativeExecutor::RunOpAsync(const py::object &prim, const py::tuple &args) const {
+  const auto &adapter = prim.cast<PrimitivePyAdapterPtr>();
+  py::list val_args;
+  for (auto &arg : args) {
+    auto attr = py::getattr(arg, "stub", nullptr);
+    if (attr && py::isinstance<StubNode>(attr)) {
+      StubPtr node = py::cast<StubPtr>(attr);
+      val_args.append(PyNativeAlgo::DataConvert::ValueToPyObj(node->value));
+    } else {
+      val_args.append(arg);
+    }
+  }
+  auto run_args = py::make_tuple(prim, adapter->name(), val_args);
+  FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(run_args);
+  PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
+  auto stub = std::make_shared<StubNode>();
+  stub->value = op_run_info->out_value;
+  if (!stub->value->isa<tensor::Tensor>()) {
+    MS_LOG(EXCEPTION) << "Only Tensor output is supported by RunOpAsync now: " << stub->value->type_name();
+  }
+  stub->abs = stub->value->ToAbstract();
+  return py::make_tuple(static_cast<int>(StubNode::TENSOR), py::cast(stub));
+}
+
+py::object PyNativeExecutor::GetStubValue(const StubPtr &stub) const {
+  return PyNativeAlgo::DataConvert::ValueToPyObj(stub->value);
+}
+
+py::object PyNativeExecutor::GetStubShape(const StubPtr &stub) const {
+  auto base = stub->abs->BuildShape();
+  auto shape = base->cast<abstract::ShapePtr>();
+  if (!shape) {
+    MS_LOG(EXCEPTION) << "Only Tensor shape is supported by Stub now: " << base->ToString();
+  }
+  return py::cast(shape->shape());
+}
+
+py::object PyNativeExecutor::GetStubDtype(const StubPtr &stub) const {
+  auto base = stub->abs->BuildType();
+  auto type = base->cast<TensorTypePtr>();
+  if (!type) {
+    MS_LOG(EXCEPTION) << "Only Tensor dtype is supported by Stub now: " << base->ToString();
+  }
+  return py::cast(type->element());
+}
+
 py::object PyNativeExecutor::RealRunOp(const py::args &args) const {
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args);
   PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
@@ -217,6 +263,7 @@ void PyNativeExecutor::SetDynamicInput(const py::object &cell, const py::args &a
 }
 
 void RegPyNativeExecutor(const py::module *m) {
+  (void)py::class_<StubNode, std::shared_ptr<StubNode>>(*m, "StubNode");
   (void)py::class_<PyNativeExecutor, std::shared_ptr<PyNativeExecutor>>(*m, "PyNativeExecutor_")
     .def_static("get_instance", &PyNativeExecutor::GetInstance, "PyNativeExecutor get_instance.")
     .def("is_first_cell", &PyNativeExecutor::IsFirstCell, "check if the first cell.")
@@ -242,6 +289,10 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("set_ms_function_compile_status", &PyNativeExecutor::SetMsFunctionCompileStatus,
          "set ms_funciton compile status.")
     .def("real_run_op", &PyNativeExecutor::RealRunOp, "Run op pynatively.")
+    .def("run_op_async", &PyNativeExecutor::RunOpAsync, "run op asynchronously")
+    .def("get_stub_value", &PyNativeExecutor::GetStubValue, "get output value of async stub")
+    .def("get_stub_shape", &PyNativeExecutor::GetStubShape, "get output shape of async stub")
+    .def("get_stub_dtype", &PyNativeExecutor::GetStubDtype, "get output dtype of async stub")
     .def("constant_folding", &PyNativeExecutor::CallConstantFolding, "Call Constant Folding Primitive");
 }
 }  // namespace mindspore::pynative
