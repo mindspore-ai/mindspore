@@ -1317,12 +1317,12 @@ class Tensor(Tensor_):
 
     # pylint: disable=redefined-builtin
     # pylint: disable=invalid-name
-    def norm(self, A, ord=None, dim=None, keepdim=False, *, dtype=None):
+    def norm(self, ord=None, dim=None, keepdim=False, *, dtype=None):
         """
         For details, please refer to :func:`mindspore.ops.norm`.
         """
         self._init_check()
-        return tensor_operator_registry.get('norm')(self, A, ord, dim, keepdim, dtype=dtype)
+        return tensor_operator_registry.get('norm')(self, ord, dim, keepdim, dtype=dtype)
 
     def renorm(self, p, dim, maxnorm):
         """

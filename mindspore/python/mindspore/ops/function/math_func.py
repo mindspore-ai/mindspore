@@ -7214,49 +7214,47 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     r"""
     Returns the matrix norm or vector norm of a given tensor.
 
-    Whether this function computes a vector or matrix norm is determined as follows:
+    `ord` is the calculation mode of norm. The following norm modes are supported.
 
-    - If `dim` is an integer, the vector norm will be computed.
-
-    - If `dim` is a 2-tuple, the matrix norm will be computed.
-
-    - If `dim` = None and `ord` = None, A will be flattened to 1D and the 2-norm of the resulting vector
-          will be computed.
-
-    - If `dim` = None and `ord` != None, A must be 1D or 2D.
-
-    `ord` defines the norm that is computed. The following norms are supported:
-
-    ======================     =========================  ========================================================
-    `ord`                      norm for matrices          norm for vectors
-    ======================     =========================  ========================================================
-    `None` (default)           Frobenius norm             `2`-norm (see below)
-    `'fro'`                    Frobenius norm             -- not supported --
-    `'nuc'`                    nuclear norm               -- not supported --
-    `inf`                      `max(sum(abs(x), dim=1))`  `max(abs(x))`
-    `-inf`                     `min(sum(abs(x), dim=1))`  `min(abs(x))`
-    `0`                        -- not supported --        `sum(x != 0)`
-    `1`                        `max(sum(abs(x), dim=0))`  as below
-    `-1`                       `min(sum(abs(x), dim=0))`  as below
-    `2`                         largest singular value    as below
-    `-2`                       smallest singular value    as below
-    other `int` or `float`     -- not supported --        `sum(abs(x)^{ord})^{(1 / ord)}`
-    ======================     =========================  ========================================================
+    ======================     =========================        ========================================================
+    `ord`                      norm for matrices                norm for vectors
+    ======================     =========================        ========================================================
+    `None` (default)           Frobenius norm                   `2`-norm (see below)
+    `'fro'`                    Frobenius norm                   -- not supported --
+    `'nuc'`                    nuclear norm                     -- not supported --
+    `inf`                      :math:`max(sum(abs(x), dim=1))`  :math:`max(abs(x))`
+    `-inf`                     :math:`min(sum(abs(x), dim=1))`  :math:`min(abs(x))`
+    `0`                        -- not supported --              :math:`sum(x != 0)`
+    `1`                        :math:`max(sum(abs(x), dim=0))`  as below
+    `-1`                       :math:`min(sum(abs(x), dim=0))`  as below
+    `2`                         largest singular value          as below
+    `-2`                       smallest singular value          as below
+    other `int` or `float`     -- not supported --              :math:`sum(abs(x)^{ord})^{(1 / ord)}`
+    ======================     =========================        ========================================================
 
     Args:
-        A (Tensor): Tensor of shape (*, n) or (*, m, n) where * is zero or more batch dimensions.
-        ord (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): order of norm. refer to the table above for
+        A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.
+        ord (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): norm's mode. refer to the table above for
             behavior. Default: None.
-        dim (Union[int, Tuple(int)], optional): dimensions over which to compute the vector or matrix norm.
-            See above for the behavior when `dim` = None. Default: None.
-        keepdim (bool): Whether the output tensors have dim retained or not. Default: False.
+        dim (Union[int, Tuple(int)], optional): calculate the dimension of vector norm or matrix norm. Default: None.
+
+            - When `dim` is int, it will be calculated by vector norm.
+
+            - When `dim` is a 2-tuple, it will be calculated by matrix norm.
+
+            - If `dim` is None and `ord` is None, `A` will be flattened to 1D and the 2-norm
+              of the vector will be calculated.
+
+            - If `dim` is None and `ord` is not None, `A` must be 1D or 2D.
+
+        keepdim (bool): whether the output Tensor retains the original dimension. Default: False.
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): If specified, the input tensor is cast to dtype before performing
-            the operation, and the returned tensor’s type will be dtype. Default: None.
+        dtype (:class:`mindspore.dtype`, optional):If this parameter is set, A will be converted to the specified type
+            before execution, and the returned Tensor type will also be the specified type. Default: None.
 
     Returns:
-        A real-valued tensor.
+        Tensor, the result of norm calculation on the specified dimension, is the same as the input data type.
 
     Raises:
         ValueError: If `dim` is out of range.
@@ -7273,52 +7271,56 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
-        >>> a = ops.arange(9, dtype=ms.float32) - 4
-        >>> b = a.reshape((3, 3))
-        >>>print(ops.norm(a))
-        7.745967
-        >>>print(ops.norm(b))
-        7.745967
-        >>>print(ops.norm(b, 'fro'))
-        7.745967
-        >>>print(ops.norm(a, float('inf')))
-        4.0
-        >>>print(ops.norm(b, float('inf')))
-        9.0
-        >>>print(ops.norm(a, -float('inf')))
+        >>> x = ops.arange(-12, 13, dtype=ms.float32)
+        >>> y = x.reshape(5, 5)
+        >>> print(ops.norm(x))
+        36.05551
+        >>> print(ops.norm(x, float('inf')))
+        12.0
+        >>> print(ops.norm(x, float('-inf')))
         0.0
-        >>>print(ops.norm(b, -float('inf')))
-        2.0
-        >>>print(ops.norm(a, 1))
-        20.0
-        >>>print(ops.norm(b, 1))
-        7.0
-        >>>print(ops.norm(a, -1))
+        >>> print(ops.norm(x, 0))
+        24.0
+        >>> print(ops.norm(x, 1))
+        156.0
+        >>> print(ops.norm(x, -1))
         0.0
-        >>>print(ops.norm(b, -1))
+        >>> print(ops.norm(x, 2))
+        36.05551
+        >>> print(ops.norm(x, -2))
+        0.0
+        >>> print(ops.norm(x, 3))
+        23.000631
+        >>> print(ops.norm(x, -3))
+        0.0
+        >>> print(ops.norm(y))
+        36.05551
+        >>> print(ops.norm(y, 'fro'))
+        36.05551
+        >>> print(ops.norm(y, 'nuc'))
+        42.42641
+        >>> print(ops.norm(y, float('inf')))
+        50.0
+        >>> print(ops.norm(y, float('-inf')))
         6.0
-        >>>print(ops.norm(a, 2))
-        7.745967
-        >>>print(ops.norm(b, 2))
-        7.3484707
-        >>>print(ops.norm(a, -2))
-        0.0
-        >>>print(ops.norm(a, 3))
-        5.848036
-        >>>print(ops.norm(a, -3))
-        0.0
-        >>> c = ms.Tensor([[1., 2., 3.], [-1, 1, 4]])
-        >>> print(ops.norm(c, dim=0))
-        [1.4142135 2.236068  5.       ]
-        >>> print(ops.norm(c, dim=1))
-        [3.7416575 4.2426405]
-        >>> print(ops.norm(c, ord=1, dim=1))
-        [6. 6.]
-        >>> d = ops.arange(8, dtype=ms.float32).reshape(2, 2, 2)
-        >>> print(ops.norm(d, dim=(1,2)))
-        [ 3.7416575 11.224972 ]
-        >>> print(ops.norm(d[0, :, :]), norm(d[1, :, :]))
-        3.7416575 11.224972
+        >>> print(ops.norm(y, 1))
+        32.0
+        >>> print(ops.norm(y, -1))
+        30.0
+        >>> print(ops.norm(y, 2))
+        35.355343
+        >>> m = ms.Tensor([[1., -1., 2.], [-2., 3., -4.]])
+        >>> print(ops.norm(m, dim=0))
+        [2.236068  3.1622777 4.472136 ]
+        >>> print(ops.norm(m, dim=1))
+        [2.4494898 5.3851647]
+        >>> print(ops.norm(m, ord=1, dim=1))
+        [4. 9.]
+        >>> n = ops.arange(27, dtype=ms.float32).reshape(3, 3, 3)
+        >>> print(ops.norm(n, dim=(1, 2)))
+        [14.282857 39.76179  66.45299 ]
+        >>> print(ops.norm(n[0, :, :]), ops.norm(n[1, :, :]), ops.norm(n[2, :, :]))
+        14.282857 39.76179 66.45299
     """
     ndim = A.ndim
     dim, immediate = _check_axis(dim, ord, ndim)

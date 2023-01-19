@@ -5618,10 +5618,10 @@ def topk(input_x, k, dim=None, largest=True, sorted=True):
     Finds values and indices of the `k` largest or smallest entries along a given dimension.
 
     .. warning::
-        - If sorted is set to 'False', it will use the aicpu operator, the performance may be reduced.
+        - If sorted is set to False, it will use the aicpu operator, the performance may be reduced.
 
     If the `input_x` is a one-dimensional Tensor, finds the `k` largest  or smallest entries in the Tensor,
-    and outputs its value and index as a Tensor. Therefore, values[`k`] is the `k` largest item in `input_x`,
+    and outputs its value and index as a Tensor. values[`k`] is the `k` largest item in `input_x`,
     and its index is indices [`k`].
 
     For a multi-dimensional matrix,
@@ -5638,11 +5638,11 @@ def topk(input_x, k, dim=None, largest=True, sorted=True):
         k (int): The number of top or bottom elements to be computed along the last dimension, constant input is needed.
         dim (int, optional): The dimension to sort along. Default: None.
         largest (bool, optional): If largest is False then the k smallest elements are returned. Default: True.
-        sorted (bool, optional): If true, the obtained elements will be sorted by the values in descending order.
-            Default: True.
+        sorted (bool): If True, the obtained elements will be sorted by the values in descending order.
+            If False, the obtained elements will be sorted by the values in ascending order. Default: True.
 
     Returns:
-        Tuple of 2 tensors, the values and the indices.
+        A tuple consisting of `values` and `indexes`.
 
         - values (Tensor): The `k` largest or smallest elements in each slice of the given dimension.
         - indices (Tensor): The indices of values within the last dimension of input.
