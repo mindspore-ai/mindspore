@@ -3599,8 +3599,6 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
     if margin_f > 1.0 or margin_f < -1.0:
         raise ValueError(f"For ops.cosine_embedding_loss, the value of 'margin' should be in [-1, 1],"
                          f"but got {margin_f}.")
-    # if target > 0, 1-cosine(input1, input2)
-    # else, max(0, cosine(input1, input2)-margin)
     prod_sum = _get_cache_prim(P.ReduceSum)()(input1 * input2, (1,))
     square1 = _get_cache_prim(P.ReduceSum)()(ops.square(input1), (1,))
     square2 = _get_cache_prim(P.ReduceSum)()(ops.square(input2), (1,))

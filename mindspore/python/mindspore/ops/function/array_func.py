@@ -373,7 +373,7 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
     if window_length <= 1:
         return Tensor(np.ones(window_length))
     if dtype is not None and dtype not in mstype.float_type:
-        raise TypeError(f"For array function 'hamming_window', 'dtype' must be floating pont dtypes, but got {dtype}.")
+        raise TypeError(f"For array function 'hamming_window', 'dtype' must be floating point dtypes, but got {dtype}.")
 
     if periodic:
         window_length += 1
@@ -638,7 +638,7 @@ def one_hot(indices, depth, on_value, off_value, axis=-1):
     return onehot(indices, depth, on_value, off_value)
 
 
-def fill(type, shape, value):
+def fill(type, shape, value):  # pylint: disable=redefined-outer-name
     """
     Create a Tensor of the specified shape and fill it with the specified value.
 
@@ -724,17 +724,18 @@ def full(size, fill_value, *, dtype=None): # pylint: disable=redefined-outer-nam
 
     Args:
         size (Union(tuple[int], list[int])): The specified shape of output tensor.
-        fill_value (number.Number): Value to fill the returned tensor.
-        dtype (mindspore.dtype): The specified type of output tensor. The data type only supports
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ and
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+        fill_value (number.Number): Value to fill the returned tensor. Complex numbers are not supported for now.
+
+    Keyword Args:
+        dtype (mindspore.dtype): The specified type of output tensor. `bool_` and `number` are supported, for details,
+            please refer to :class:`mindspore.dtype` . Default: None.
 
     Returns:
         Tensor.
 
     Raises:
         TypeError: If `size` is not a tuple or list.
-        TypeError: The element in `size` is less than 0.
+        ValueError: The element in `size` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -768,11 +769,11 @@ def full_like(x, fill_value, *, dtype=None):
 
     Args:
         x (Tensor): The shape of `x` will determine shape of the output Tensor.
-        fill_value (number.Number): Value to fill the returned Tensor.
+        fill_value (number.Number): Value to fill the returned Tensor. Complex numbers are not supported for now.
 
     Keyword Args:
-        dtype (mindspore.dtype, optional): The specified type of output tensor. The data type only supports
-            `bool_` and `number` , for details, please refer to :class:`mindspore.dtype` . Default: None.
+        dtype (mindspore.dtype, optional): The specified type of output tensor. `bool_` and `number` are supported,
+            for details, please refer to :class:`mindspore.dtype` . Default: None.
 
     Returns:
         Tensor.
@@ -860,8 +861,9 @@ def chunk(x, chunks, axis=0):
         size1 = _tuple_setitem(arr_shape, axis, length1)
         start2 = _tuple_setitem(start1, axis, length1)
         size2 = _tuple_setitem(arr_shape, axis, length2)
-        res = P.Split(axis, true_chunks)(tensor_slice(x, start1, size1)) + \
-              P.Split(axis, 1)(tensor_slice(x, start2, size2))
+        res = P.Split(axis, true_chunks)(tensor_slice(x, start1, size1))
+        if length2:
+            res += P.Split(axis, 1)(tensor_slice(x, start2, size2))
     return res
 
 
