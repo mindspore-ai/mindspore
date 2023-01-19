@@ -147,7 +147,7 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
 
   auto is_dynamic_rank = IsDynamicRank(x_shape) || IsDynamicRank(output_size_value);
   if (is_dynamic_rank) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-1, -1, -1, -1});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_size, abstract::Shape::kShapeDimAny));
   }
 
   if (!(IsDynamic(x_shape) || IsDynamic(output_size_value))) {

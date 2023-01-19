@@ -519,6 +519,35 @@ def get_bprop_col2im(self):
     return bprop
 
 
+@bprop_getters.register(Im2Col)
+def get_bprop_im2col(self):
+    """
+    Generate bprop for Im2Col
+
+    Im2Col, corresponding to torch's UnFold operator.
+    The Unfold operator has no `padding_mode` attribute,
+    and it's implementation corresponds to the mindspore
+    implementation when `padding_mode=CALCULATED` .
+    So, currently the bprop function of Im2Col only supports
+    the CALCULATED mode.
+    """
+    kernel_size = self.ksizes
+    dilation = self.dilations
+    stride = self.strides
+    padding = self.pads
+    col2im = Col2Im(kernel_size=kernel_size,
+                    dilation=dilation,
+                    stride=stride,
+                    padding=padding)
+
+    def bprop(x, out, dout):
+        x_shape = Tensor(x.shape, dtype=mstype.int32)
+        dx = col2im(dout, x_shape)
+        return dx
+
+    return bprop
+
+
 @bprop_getters.register(P.ExtractVolumePatches)
 def get_bprop_extract_volume_patches(self):
     """Generate bprop for ExtractVolumePatches"""

@@ -103,6 +103,8 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
       }
       input_shape_.push_back(LongToInt(input_shape[i]));
     }
+
+    output_shape_.clear();
     input_size_ = sizeof(T) * SizeOf(input_shape);
 
     output_shape_.clear();

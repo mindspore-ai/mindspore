@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <functional>
 #include <string>
+#include <complex>
 #include "ops/col2im.h"
 #include "plugin/device/cpu/kernel/col2im_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
@@ -33,12 +34,21 @@ bool Col2ImCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
                               const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  y_type_ = outputs.at(kIndex0)->GetDtype();
+
   PrimitivePtr prim = base_operator->GetPrim();
   kernel_size_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrKernelSize));
   dilation_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrDilation));
   padding_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrPadding));
   stride_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrStride));
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+
   return true;
 }
 
@@ -53,30 +63,12 @@ int Col2ImCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   return KRET_OK;
 }
 
-bool Col2ImCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCol2ImInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCol2ImOutputsNum, kernel_name_);
-  bool res = false;
-  switch (y_type_) {
-    case kNumberTypeFloat16: {
-      res = LaunchKernel<float16>(inputs, outputs);
-      break;
-    }
-    case kNumberTypeFloat32: {
-      res = LaunchKernel<float>(inputs, outputs);
-      break;
-    }
-    default:
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'x' should be float16, float32, but got "
-                        << TypeIdLabel(y_type_) << ".";
-  }
-  return res;
-}
-
 template <typename T>
 bool Col2ImCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCol2ImInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCol2ImOutputsNum, kernel_name_);
+
   auto x_data_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto output_size_ptr = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
   auto y_data_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
@@ -143,12 +135,24 @@ bool Col2ImCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
 
   return true;
 }
+
+#define COL2IM_CPU_REG(T, S) \
+  KernelAttr().AddInputAttr(T).AddInputAttr(kNumberTypeInt32).AddOutputAttr(T), &Col2ImCpuKernelMod::LaunchKernel<S>
+
+std::vector<std::pair<KernelAttr, Col2ImCpuKernelMod::Col2ImFunc>> Col2ImCpuKernelMod::func_list_ = {
+  {COL2IM_CPU_REG(kNumberTypeFloat16, float16)},
+  {COL2IM_CPU_REG(kNumberTypeFloat32, float)},
+  {COL2IM_CPU_REG(kNumberTypeFloat64, double)},
+  {COL2IM_CPU_REG(kNumberTypeComplex64, std::complex<float>)},
+  {COL2IM_CPU_REG(kNumberTypeComplex128, std::complex<double>)}};
+
 std::vector<KernelAttr> Col2ImCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)};
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, Col2ImCpuKernelMod::Col2ImFunc> &pair) { return pair.first; });
   return support_list;
 }
+
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Col2Im, Col2ImCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

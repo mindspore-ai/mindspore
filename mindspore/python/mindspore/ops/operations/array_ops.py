@@ -455,7 +455,7 @@ class Im2Col(Primitive):
         ValueError: If `pads` value is not greater than zero.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(input_data=np.random.rand(4, 4, 32, 32), dtype=mstype.float64)
@@ -564,7 +564,7 @@ class Col2Im(Primitive):
         ValueError: If x.shape[3] does not match the calculated number of sliding blocks.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> import numpy as np
