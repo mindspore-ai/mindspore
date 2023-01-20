@@ -84,8 +84,11 @@ Flags::Flags() {
           "false");
   AddFlag(&Flags::exportMindIR, "exportMindIR", "MINDIR | MINDIR_LITE", "MINDIR_LITE");
   AddFlag(&Flags::noFusionStr, "NoFusion",
-          "Avoid fusion optimization true|false. NoFusion is true when exportMindIR is MINDIR.", "");
-  AddFlag(&Flags::device, "device", "Set the target device, support Ascend310 or Ascend310P", "");
+          "Avoid fusion optimization true|false. NoFusion is true when saveType is MINDIR.", "");
+  AddFlag(&Flags::device, "device",
+          "Set the target device, support Ascend, Ascend310 and Ascend310P will be deprecated.", "");
+  AddFlag(&Flags::saveTypeStr, "saveType", "The type of saved model. MINDIR | MINDIR_LITE", "MINDIR_LITE");
+  AddFlag(&Flags::optimizeStr, "optimize", "The type of optimization. none | general | ascend_oriented", "");
 }
 
 int Flags::InitInputOutputDataType() {
@@ -242,6 +245,25 @@ int Flags::InitNoFusion() {
   return RET_OK;
 }
 
+int Flags::InitOptimize() {
+  // For compatibility of interface, the check will be removed when nofusion is deleted
+  if (!this->noFusionStr.empty() || !this->device.empty()) {
+    return RET_OK;
+  }
+  if (this->optimizeStr == "none") {
+    this->disableFusion = true;
+  } else if (this->optimizeStr == "general") {
+    this->disableFusion = false;
+  } else if (this->optimizeStr == "ascend_oriented") {
+    this->disableFusion = false;
+    this->device = "Ascend";
+  } else if (!this->optimizeStr.empty()) {
+    std::cerr << "INPUT ILLEGAL: optimize must be none|general|ascend_oriented " << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
 int Flags::InitExportMindIR() {
   // value check not here, it is in converter c++ API's CheckValueParam method.
   std::map<std::string, ModelType> StrToEnumModelTypeMap = {{"MINDIR", kMindIR}, {"MINDIR_LITE", kMindIR_Lite}};
@@ -266,6 +288,25 @@ int Flags::InitEncrypt() {
   } else {
     std::cerr << "INPUT ILLEGAL: encryption must be true|false " << std::endl;
     return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int Flags::InitSaveType() {
+  // For compatibility of interface, the check will be removed when exportMindIR is deleted
+  if (this->exportMindIR == "MINDIR") {
+    return RET_OK;
+  }
+  std::map<std::string, ModelType> StrToEnumModelTypeMap = {{"MINDIR", kMindIR}, {"MINDIR_LITE", kMindIR_Lite}};
+  if (StrToEnumModelTypeMap.find(this->saveTypeStr) != StrToEnumModelTypeMap.end()) {
+    this->export_mindir = StrToEnumModelTypeMap.at(this->saveTypeStr);
+  } else {
+    std::cerr << "INPUT ILLEGAL: saveType must be MINDIR|MINDIR_LITE " << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  if (this->saveTypeStr == "MINDIR") {
+    this->disableFusion = true;
   }
   return RET_OK;
 }
@@ -354,9 +395,21 @@ int Flags::Init(int argc, const char **argv) {
     return RET_INPUT_PARAM_INVALID;
   }
 
+  ret = InitSaveType();
+  if (ret != RET_OK) {
+    std::cerr << "Init save type failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+
   ret = InitNoFusion();
   if (ret != RET_OK) {
     std::cerr << "Init no fusion failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = InitOptimize();
+  if (ret != RET_OK) {
+    std::cerr << "Init optimize failed" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 

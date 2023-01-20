@@ -11,8 +11,8 @@ function Convert() {
   for ((i = 0; i < ${max_converter_jobs}; i++)); do echo; done >&6
   fail=0
   local cfg_file_list model_info model_name extra_info model_type cfg_file_name model_file weight_file output_file \
-        quant_type config_file train_model in_dtype out_dtype converter_result cfg_file calib_size target_device \
-        encryption_flag input_format no_fusion
+        quant_type config_file train_model in_dtype out_dtype converter_result cfg_file calib_size save_type optimize\
+        encryption_flag input_format
   cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
@@ -68,9 +68,9 @@ function Convert() {
         in_dtype="DEFAULT"
         out_dtype="DEFAULT"
         fp16_weight="off"
-        target_device=""
         encryption_flag="false"
-        no_fusion="false"
+        save_type="MINDIR_LITE"
+        optimize="general"
         if [[ ${cfg_file_name} =~ "weightquant" ]]; then
           # models_weightquant_${suffix}.cfg
           suffix=${cfg_file_name: 19: -4}
@@ -85,13 +85,13 @@ function Convert() {
           if [ -f "$option_file" ]; then
             config_file=""
           fi
-          export_mindir="MINDIR"
-          target_device="Ascend310"
+          save_type="MINDIR"
+          optimize="ascend_oriented"
           if [ ${model_fmk} != "TF" ]; then
             input_format="NHWC"
           fi
         elif [[ ${cfg_file_name} =~ "_cloud" ]]; then
-          export_mindir="MINDIR"
+          save_type="MINDIR"
           encryption_flag="false"
           if [[ ${input_shapes} != "" && ${input_names} != "" ]]; then
             if [[ ${input_num} == "" ]]; then
@@ -135,13 +135,13 @@ function Convert() {
         echo ${model_name} >> "$4"
         echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
              ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape="'${spec_shapes}'" --fp16='${fp16_weight}\
-             ' --configFile='${config_file}' --trainModel='${train_model}' --exportMindIR='${export_mindir} ' --device='${target_device}\
-             ' --encryption='${encryption_flag} ' --inputDataFormat='${input_format} '--NoFusion='${no_fusion}
+             ' --configFile='${config_file}' --trainModel='${train_model}' --saveType='${save_type} ' --optimize='${optimize}\
+             ' --encryption='${encryption_flag} ' --inputDataFormat='${input_format}
         if [[ ${cfg_file_name} =~ "_cloud" ]]; then
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
-              --configFile=${config_file} --exportMindIR=${export_mindir} --NoFusion=${no_fusion} --encryption=${encryption_flag}\
-              --trainModel=${train_model} --device=${target_device} --inputDataFormat=${input_format} >> "$4" 
+              --configFile=${config_file} --saveType=${save_type} --optimize=${optimize} --encryption=${encryption_flag}\
+              --trainModel=${train_model} --inputDataFormat=${input_format} >> "$4" 
         else
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
@@ -151,7 +151,7 @@ function Convert() {
         if [ $? = 0 ]; then
             converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
             local model_size
-            if [ "${export_mindir}"x == "MINDIR"x ]; then
+            if [ "${save_type}"x == "MINDIR"x ]; then
               model_size=`ls ${output_file}.mindir  -l|awk -F ' ' '{print $5}'`
             else
               model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
