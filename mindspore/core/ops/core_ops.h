@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1604,13 +1604,12 @@ GVAR_DEF(PrimitivePtr, kPrimSetSize, std::make_shared<Primitive>(kSetSize));
 // JIT Fallback ops
 // We add IO side-effect for them in advance.
 GVAR_DEF(PrimitivePtr, kPrimPyInterpret,
-         std::make_shared<Primitive>("PyInterpret",
-                                     mindspore::HashMap<std::string, ValuePtr>({{std::string(GRAPH_FLAG_SIDE_EFFECT_IO),
-                                                                                 std::make_shared<BoolImm>(true)}})));
+         std::make_shared<Primitive>("PyInterpret", mindspore::HashMap<std::string, ValuePtr>(
+                                                      {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)}})));
 GVAR_DEF(PrimitivePtr, kPrimPyExecute,
-         std::make_shared<Primitive>("PyExecute",
-                                     mindspore::HashMap<std::string, ValuePtr>({{std::string(GRAPH_FLAG_SIDE_EFFECT_IO),
-                                                                                 std::make_shared<BoolImm>(true)}})));
+         std::make_shared<Primitive>("PyExecute", mindspore::HashMap<std::string, ValuePtr>(
+                                                    {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)},
+                                                     {std::string("primitive_target"), MakeValue("CPU")}})));
 
 // Other primitive not used by backend but used in core;
 GVAR_DEF(PrimitivePtr, kPrimStateSetItem, std::make_shared<Primitive>("state_setitem"));

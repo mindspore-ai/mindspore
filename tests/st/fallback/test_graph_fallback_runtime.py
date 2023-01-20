@@ -45,7 +45,7 @@ class Net(ms.nn.Cell):
         return self.np_function(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -59,9 +59,7 @@ def test_fallback_np():
     a = ms.Tensor(np.array(4), ms.int32)
     b = ms.Tensor(np.array(5), ms.int32)
     output = Net()(a, b)
-    print(f'output: {output}')
     const_output = ConstNet()()
-    print(f'const_output: {const_output}')
     np.testing.assert_almost_equal(output, const_output, 3)
 
 
@@ -75,7 +73,7 @@ class Net1(ms.nn.Cell):
         return self.np_function(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -89,9 +87,7 @@ def test_fallback_np_asnumpy():
     a = ms.Tensor(np.array(4), ms.int32)
     b = ms.Tensor(np.array(5), ms.int32)
     output = Net1()(a, b)
-    print(f'output: {output}')
     const_output = ConstNet()()
-    print(f'const_output: {const_output}')
     np.testing.assert_almost_equal(output, const_output, 3)
 
 
@@ -102,7 +98,7 @@ def tensor_asnumpy():
     return res
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -117,7 +113,7 @@ def test_jit_tensor_asnumpy():
     print(res)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -136,11 +132,10 @@ def test_dict_return_1():
         return z
 
     out = dict_net_1()
-    print(f'out: {out}')
     assert out == {'y': 'a'}
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -160,11 +155,11 @@ def test_dict_return_2():
         return z
 
     out = dict_net_2()
-    print(f'out: {out}')
+    assert out == {'a': ms.Tensor(np.array(1), ms.int64)}
 
 
 @pytest.mark.skip(reason="No support None and Scalar in dict.")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -183,11 +178,10 @@ def test_dict_return_3():
         return z
 
     out = dict_net_3()
-    print(f'out: {out}')
     assert out == {'y': 'a', 'u': 9, 'v': False, 'w': None}
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -207,10 +201,10 @@ def test_dict_get_2():
         return z
 
     out = dict_net_2()
-    print(f'out: {out}')
+    assert out == {'a': ms.Tensor(np.array(1), ms.int64), 'b': 'hello', 'c': 'world'}
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -230,7 +224,7 @@ def test_dict_get_3():
         return z
 
     out = dict_net_3()
-    print(f'out: {out}')
+    assert out == {'y': ms.Tensor(np.array(1), ms.int64), 'a': 'a', 'b': 'c'}
 
 
 def weight_variable():
@@ -253,7 +247,7 @@ def fc_with_initialize(input_channels, out_channels):
     return ms.nn.Dense(input_channels, out_channels, weight, bias)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -298,13 +292,12 @@ def test_net_dict_1():
     net = DictLeNetNet()
     x = ms.Tensor(np.random.rand(64, 1, 32, 32).astype(np.float32))
     outputs = net(x)
-    print(f'outputs: {outputs}')
     assert outputs['conv1'].shape == (64, 6, 28, 28)
     assert outputs['conv2'].shape == (64, 16, 10, 10)
     assert outputs['fc'].shape == (64, 10)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -349,13 +342,12 @@ def test_net_dict_2():
     net = DictLeNetNet()
     x = ms.Tensor(np.random.rand(64, 1, 32, 32).astype(np.float32))
     outputs = net(x)
-    print(f'outputs: {outputs}')
     assert outputs['conv1'].shape == (64, 6, 28, 28)
     assert outputs['conv2'].shape == (64, 16, 10, 10)
     assert outputs['fc'].shape == (64, 10)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -384,7 +376,6 @@ def test_getattr_cust_class():
 
     net = GetattrClassNet()
     out = net()
-    print(f'out: {out}')
     assert out == 100
 
 
@@ -411,8 +402,8 @@ class SelfObjectGetattrNet(ms.nn.Cell):
 
     def __init__(self, v1, v2):
         super(SelfObjectGetattrNet, self).__init__()
-        self.relu = nn.ReLU()
-        self.softmax = nn.Softmax(0)
+        self.relu = ms.nn.ReLU()
+        self.softmax = ms.nn.Softmax(0)
         self.axis = 0
         self.test_class = ClassTest("test_class", v1)
         self.value = v2
@@ -424,7 +415,7 @@ class SelfObjectGetattrNet(ms.nn.Cell):
 
 
 @pytest.mark.skip(reason="Stuck by ScopedLongRunning() invocation in forward.cc during JIT Fallback Python running.")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -443,7 +434,6 @@ def test_call_other_object_method_runtime():
     net = SelfObjectGetattrNet(y, y1)
     output = net.construct(x)
     result = output.asnumpy()
-    print(result)
     assert np.all(result == z)
 
 
@@ -472,7 +462,7 @@ class GlobalObjectGetattrNet(ms.nn.Cell):
 
 
 @pytest.mark.skip(reason="Stuck by ScopedLongRunning() invocation in forward.cc during JIT Fallback Python running.")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -490,12 +480,11 @@ def test_call_no_self_other_object_method_runtime():
     net = GlobalObjectGetattrNet(y)
     output = net.construct(x)
     result = output.asnumpy()
-    print(result)
     assert np.all(result == z)
 
 
 @pytest.mark.skip(reason="Not supported by now")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -518,7 +507,7 @@ def test_getattr_tensor_with_wrong_attr():
 
 
 @pytest.mark.skip(reason="Not supported by now")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -541,7 +530,7 @@ def test_getattr_list_with_wrong_attr():
 
 
 @pytest.mark.skip(reason="Not supported by now")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -564,7 +553,7 @@ def test_getattr_tuple_with_wrong_attr():
 
 
 @pytest.mark.skip(reason="Not supported by now")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

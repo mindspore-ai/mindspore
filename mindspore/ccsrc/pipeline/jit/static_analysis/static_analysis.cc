@@ -632,7 +632,6 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     return std::make_shared<MixedPrecisionCastEvaluator>(prim);
   }
   if (IsPrimitiveEquals(prim, prim::kPrimPyExecute)) {
-    prim::kPrimPyExecute->AddAttr("primitive_target", MakeValue("CPU"));
     return std::make_shared<PyExecuteEvaluator>();
   }
 

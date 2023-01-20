@@ -42,6 +42,7 @@ AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const Val
   // Set the value node into dict firstly.
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   constexpr auto set_local_variable = "set_local_variable";
+  MS_LOG(DEBUG) << set_local_variable << "(" << value_node_key << ", " << value_node_value << ")";
   (void)python_adapter::CallPyModFn(mod, set_local_variable, value_node_key, value_node_value);
 
   // Get the value node from the dict in IR.

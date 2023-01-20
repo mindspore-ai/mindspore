@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,7 @@ class ForwardExecutor {
   }
   ValuePtr RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) const;
   ValuePtr RunOpInMs(const FrontendOpRunInfoPtr &op_run_info);
+  ValuePtr RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info);
   ValuePtr RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_run_info);
   void GetOutput(const FrontendOpRunInfoPtr &op_run_info);
   // Mix precision and Implicit transform

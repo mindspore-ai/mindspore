@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@
 #include "kernel/common_utils.h"
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 
 namespace mindspore {
 namespace opt::dynamic_shape {
@@ -197,6 +198,12 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
   if (abs->isa<abstract::AbstractTensor>()) {
     new_abs = abs->Clone();
     new_abs->set_value(depended_value);
+
+    // Set user data for PyExecute infer.
+    if (input->has_user_data<kernel::PyExecuteOutputData>()) {
+      const auto &output_data = input->user_data<kernel::PyExecuteOutputData>();
+      new_abs->set_user_data<kernel::PyExecuteOutputData>(output_data);
+    }
   } else if (abs->isa<abstract::AbstractScalar>()) {
     auto type = depended_value->Dtype()->type_id();
     if (type == kNumberTypeInt32) {

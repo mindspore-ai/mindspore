@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include "utils/any.h"
 #include "utils/hash_map.h"
 #include "base/base.h"
+#include "base/user_data.h"
 #include "ir/dtype.h"
 #include "ir/value.h"
 #include "ir/tensor.h"
@@ -199,6 +200,59 @@ class MS_CORE_API AbstractBase : public Base {
   /// \return A pointer to the broadened abstract.
   virtual AbstractBasePtr PartialBroaden() const;
 
+  /// \brief Set user data.
+  ///
+  /// \param[in] key The key of user data.
+  /// \param[in] value The value of user data.
+  template <typename T>
+  void set_user_data(const std::string &key, const std::shared_ptr<T> &value) {
+    user_data_.set<T>(key, value);
+  }
+
+  /// \brief Set user data.
+  ///
+  /// \param[in] value The value of user data.
+  template <typename T>
+  void set_user_data(const std::shared_ptr<T> &value) {
+    user_data_.set<T>(T::key, value);
+  }
+
+  /// \brief Get user data.
+  ///
+  /// \param[in] key The key of user data.
+  /// \return Pointer to user data.
+  template <typename T>
+  std::shared_ptr<T> user_data(const std::string &key) const {
+    return user_data_.get<T>(key);
+  }
+
+  /// \brief Set user data.
+  ///
+  /// \return Pointer to user data.
+  template <typename T>
+  std::shared_ptr<T> user_data() const {
+    return user_data_.get<T>(T::key);
+  }
+
+  /// \brief Check whether there is corresponding user data by the given key.
+  ///
+  /// \param[in] key The key of user data.
+  /// \return True if it exists, otherwise false.
+  bool has_user_data(const std::string &key) const { return user_data_.has(key); }
+
+  /// \brief Check if there is user data.
+  ///
+  /// \return True if it exists, otherwise false.
+  template <typename T>
+  bool has_user_data() const {
+    return user_data_.has(T::key);
+  }
+
+  /// \brief Clone user data.
+  ///
+  /// \param[in] abstract Abstract used to copy user data.
+  void CloneUserData(const AbstractBasePtr &abstract) { user_data_ = abstract->user_data_; }
+
   /// \brief Process the abstract with InterpretedObject.
   using InterpretBoolChecker = std::pair<bool, bool> (*)(const AbstractBasePtr &cond);
   static inline InterpretBoolChecker interpret_bool_checker_ = nullptr;
@@ -221,6 +275,7 @@ class MS_CORE_API AbstractBase : public Base {
   TypePtr type_;
   BaseShapePtr shape_;
   std::string value_desc_;  // store initial value description for error report
+  UserData user_data_;
 };
 
 /// \brief Class AbstractScalar describes a scalar's type and value.
