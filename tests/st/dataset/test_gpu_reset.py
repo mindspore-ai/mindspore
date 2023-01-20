@@ -91,7 +91,7 @@ def test_dataset_reset_sink(fast_recovery, num_parallel_workers, python_multipro
     num_epochs = 3
     reset_point = 2  # 2nd epoch
     cb = MyCallback(dataset_size=data.get_dataset_size(), reset_point=reset_point)
-    model.train(num_epochs, data, callbacks=[cb])
+    model.train(num_epochs, data, callbacks=[cb], dataset_sink_mode=True)
     ds.config.set_fast_recovery(original_fast_recovery)
 
 
