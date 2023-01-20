@@ -22,6 +22,7 @@ from typing import Tuple
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
+from mindspore.common._utils import is_stub_tensor
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import COOTensor as COOTensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
@@ -271,6 +272,10 @@ class COOTensor(COOTensor_):
             validator.check_coo_tensor_shape(indices.shape, values.shape, shape)
             validator.check_coo_tensor_dtype(indices.dtype)
             indices = tensor_operator_registry.get('stop_gradient')(indices)
+            if is_stub_tensor(indices):
+                indices.stub_sync()
+            if is_stub_tensor(values):
+                values.stub_sync()
             COOTensor_.__init__(self, indices, values, shape)
         self.init_finished = True
 
@@ -604,6 +609,12 @@ class CSRTensor(CSRTensor_):
             validator.check_csr_tensor_dtype(indptr.dtype, indices.dtype)
             indptr = tensor_operator_registry.get('stop_gradient')(indptr)
             indices = tensor_operator_registry.get('stop_gradient')(indices)
+            if is_stub_tensor(indptr):
+                indptr.stub_sync()
+            if is_stub_tensor(values):
+                values.stub_sync()
+            if is_stub_tensor(indices):
+                indices.stub_sync()
             CSRTensor_.__init__(self, indptr, indices, values, shape)
         self.init_finished = True
 

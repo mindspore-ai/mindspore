@@ -1026,42 +1026,6 @@ class _PyNativeExecutor:
         """
         return self._executor.run_op_async(prim, args)
 
-    def get_stub_value(self, stub):
-        """
-        Get output value of stub node.
-
-        Args:
-            stub(StubNode): stub node
-
-        Return:
-            Value, result of run op.
-        """
-        return self._executor.get_stub_value(stub)
-
-    def get_stub_shape(self, stub):
-        """
-        Get output shape of stub node.
-
-        Args:
-            stub(StubNode): stub node
-
-        Return:
-            output shape.
-        """
-        return self._executor.get_stub_shape(stub)
-
-    def get_stub_dtype(self, stub):
-        """
-        Get output dtype of stub node.
-
-        Args:
-            stub(StubNode): stub node
-
-        Return:
-            output dtype.
-        """
-        return self._executor.get_stub_dtype(stub)
-
     def new_graph(self, obj, *args, **kwargs):
         """
         Initialize resources for building forward and backward graph.

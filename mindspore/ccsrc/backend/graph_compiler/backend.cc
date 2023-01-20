@@ -33,6 +33,7 @@
 #include "pybind_api/pybind_patch.h"
 #include "include/common/utils/callbacks.h"
 #include "include/common/utils/convert_utils.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "runtime/hardware/device_context_manager.h"
@@ -457,7 +458,7 @@ void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePt
   MS_EXCEPTION_IF_NULL(tensors);
   ValuePtr tensor_ptr = nullptr;
   if (py::isinstance<tensor::Tensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
+    tensor_ptr = PyTensorCast(input_object);
   } else if (py::isinstance<py::float_>(input_object)) {
     double input_value = py::cast<py::float_>(input_object);
     tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);

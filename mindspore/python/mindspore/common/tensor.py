@@ -21,11 +21,12 @@ import numbers
 import numpy as np
 
 from mindspore.communication.management import get_rank, get_group_size
-from mindspore.common._utils import is_shape_unknown
+from mindspore.common._utils import is_shape_unknown, is_stub_tensor
 from mindspore.common.seed import get_seed
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
+
 from mindspore.common._utils import get_slice_num
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore._c_expression import Tensor as Tensor_
@@ -153,6 +154,9 @@ class Tensor(Tensor_):
             if input_data is not None:
                 Tensor_.__init__(self, input_data)
         else:
+            if is_stub_tensor(input_data):
+                input_data.stub_sync()
+
             # If input data is numpy number, convert it to np array
             if isinstance(input_data, np_types):
                 input_data = np.array(input_data)
@@ -396,6 +400,8 @@ class Tensor(Tensor_):
 
     def __setitem__(self, index, value):
         out = tensor_operator_registry.get('__setitem__')(self, index, value)
+        if is_stub_tensor(out):
+            out.stub_sync()
         self.assign_value(out)
         if self.parent_tensor_ is not None and self.index_of_parent_ is not None:
             self.parent_tensor_.__setitem__(self.index_of_parent_, self)
@@ -1328,7 +1334,6 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('log1p')(self)
 
     def logit(self, eps=None):
-
         r"""
         For details, please refer to :func:`mindspore.ops.logit`.
         """

@@ -25,6 +25,7 @@
 #include "base/base_ref.h"
 #include "base/base.h"
 #include "ir/anf.h"
+#include "ir/tensor.h"
 #include "include/common/visible.h"
 
 namespace py = pybind11;
@@ -33,7 +34,8 @@ namespace mindspore {
 py::object AnyToPyData(const Any &value);
 COMMON_EXPORT py::object BaseRefToPyData(const BaseRef &value, const AbstractBasePtr &abs = nullptr);
 COMMON_EXPORT py::object ValueToPyData(const ValuePtr &value, const AbstractBasePtr &abs = nullptr);
-
+// Convert python (stub) tensor to c++ tensor.
+COMMON_EXPORT tensor::TensorPtr PyTensorCast(const py::handle &obj);
 COMMON_EXPORT bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
                                                      const std::shared_ptr<py::object> &ret_val);
 }  // namespace mindspore
