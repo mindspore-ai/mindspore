@@ -20,6 +20,7 @@
 #include <deque>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -80,12 +81,21 @@ class ParallelOp : public DatasetOp {
     return out;
   }
 
-  int32_t NumWorkers() const override { return num_workers_; }
+  int32_t NumWorkers() const override {
+    int32_t num_workers = 1;
+    {
+      std::unique_lock<std::mutex> _lock(mux_);
+      num_workers = num_workers_;
+    }
+    return num_workers;
+  }
 
+  // pause all the worker thread and collector thread
   Status WaitForWorkers() override {
     // reset num_paused workers to 0
     num_workers_paused_ = 0;
-    for (int32_t wkr_id = 0; wkr_id < num_workers_; wkr_id++) {
+    uint32_t num_workers = NumWorkers();
+    for (int32_t wkr_id = 0; wkr_id < num_workers; wkr_id++) {
       RETURN_IF_NOT_OK(SendWaitFlagToWorker(NextWorkerID()));
     }
     // wait until all workers are done processing their work in local_queue_
@@ -93,6 +103,19 @@ class ParallelOp : public DatasetOp {
     next_worker_id_ = 0;
     // clear the WaitPost for the next Wait()
     wait_for_workers_post_.Clear();
+    return Status::OK();
+  }
+
+  // wakeup all the worker threads and collector thread
+  Status PostForWorkers() override {
+    // wakeup old workers
+    for (auto &item : worker_tasks_) {
+      item->Post();
+    }
+
+    // wakeup the collector thread
+    wait_for_collector_.Set();
+
     return Status::OK();
   }
 
@@ -107,15 +130,25 @@ class ParallelOp : public DatasetOp {
     for (int32_t i = 0; i < num_new_workers; i++) {
       RETURN_IF_NOT_OK(worker_in_queues_.AddQueue(tree_->AllTasks()));
       RETURN_IF_NOT_OK(worker_out_queues_.AddQueue(tree_->AllTasks()));
+    }
+
+    for (int32_t i = 0; i < num_new_workers; i++) {
       Task *new_task;
       RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
         Name() + "::WorkerEntry", std::bind(&ParallelOp::WorkerEntry, this, num_workers_), &new_task, id()));
       CHECK_FAIL_RETURN_UNEXPECTED(new_task != nullptr, "Cannot create a new worker.");
       worker_tasks_.push_back(new_task);
-      num_workers_++;
+      {
+        std::unique_lock<std::mutex> _lock(mux_);
+        num_workers_++;
+      }
       MS_LOG(INFO) << "A new worker has been added to op: " << Name() << "::" << id()
                    << " num_workers=" << num_workers_;
     }
+
+    // wakeup all the workers threads and collector thread
+    RETURN_IF_NOT_OK(PostForWorkers());
+
     return Status::OK();
   }
 
@@ -129,13 +162,21 @@ class ParallelOp : public DatasetOp {
     RETURN_IF_NOT_OK(WaitForWorkers());
     for (size_t i = 0; i < num_workers; i++) {
       RETURN_IF_NOT_OK(SendQuitFlagToWorker(static_cast<size_t>(num_workers_) - 1));
+      worker_tasks_[num_workers_ - 1]->Post();  // wakeup the worker
       RETURN_IF_NOT_OK(worker_tasks_[static_cast<size_t>(num_workers_) - 1]->Join());
       RETURN_IF_NOT_OK(worker_in_queues_.RemoveLastQueue());
       worker_tasks_.pop_back();
-      num_workers_--;
+      {
+        std::unique_lock<std::mutex> _lock(mux_);
+        num_workers_--;
+      }
       MS_LOG(INFO) << "Worker ID " << num_workers_ << " is requested to be removed in operator: " << NameWithID()
                    << " num_workers=" << num_workers_;
     }
+
+    // wakeup all the workers threads and collector thread
+    RETURN_IF_NOT_OK(PostForWorkers());
+
     return Status::OK();
   }
 
@@ -321,12 +362,14 @@ class ParallelOp : public DatasetOp {
     ep_step_ = 0, total_step_ = 0;
     do {
       TensorRow row;
-      RETURN_IF_NOT_OK(worker_out_queues_[static_cast<const int>(num_rows++ % num_workers_)]->PopFront(&row));
+      RETURN_IF_NOT_OK(worker_out_queues_[static_cast<const int>(num_rows++ % NumWorkers())]->PopFront(&row));
       if (row.wait()) {
         // When collector receives the signal from worker thread, it increments an atomic int
         // If num_worker signals are received, wakes up the main thread
         if (++num_workers_paused_ == num_workers_) {
           wait_for_workers_post_.Set();
+          wait_for_collector_.Wait();
+          wait_for_collector_.Clear();
           num_rows = 0;
         }
         continue;
@@ -349,6 +392,9 @@ class ParallelOp : public DatasetOp {
   // Wait post used to perform the pausing logic
   WaitPost wait_for_workers_post_;
 
+  // Wait post used to perform the collector thread
+  WaitPost wait_for_collector_;
+
   // Count number of workers that have signaled master
   std::atomic_int num_workers_paused_;
 
@@ -367,7 +413,14 @@ class ParallelOp : public DatasetOp {
   }
 
  public:
-  int32_t NumWorkers() override { return num_workers_; }
+  int32_t NumWorkers() override {
+    int32_t num_workers = 1;
+    {
+      std::unique_lock<std::mutex> _lock(mux_);
+      num_workers = num_workers_;
+    }
+    return num_workers;
+  }
 
  private:
   void SetStrategy() {
@@ -395,6 +448,9 @@ class ParallelOp : public DatasetOp {
   QueueList<T> worker_in_queues_;
   /// queues to hold the output from workers
   QueueList<S> worker_out_queues_;
+
+  // lock for num_workers_ read and write
+  mutable std::mutex mux_;
 
  private:
   std::unique_ptr<RowHandlingStrategy> strategy_;

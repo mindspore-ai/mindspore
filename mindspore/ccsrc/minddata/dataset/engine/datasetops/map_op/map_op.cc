@@ -213,6 +213,10 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
         break;
       }
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(in_row)));
+      if (in_row.wait()) {
+        TaskManager::FindMe()->Wait();  // wait for auto tune update workers successful
+        TaskManager::FindMe()->Clear();
+      }
     } else {
       CHECK_FAIL_RETURN_UNEXPECTED(in_row.size() != 0, "[Internal ERROR] MapOp got an empty TensorRow.");
       TensorRow out_row;

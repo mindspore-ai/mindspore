@@ -34,9 +34,6 @@ class MindDataTestRandomCropAndResizeOp : public UT::CVOP::CVOpCommon {
 TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest1) {
   MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
   TensorShape s_in = input_tensor_->shape();
-  TensorRow input_tensor_row;
-  input_tensor_row.push_back(input_tensor_);
-  input_tensor_row.push_back(input_tensor_);
   TensorRow output_tensor_row;
   std::shared_ptr<Tensor> output_tensor;
   int h_out = 1024;
@@ -51,6 +48,13 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest1) {
   auto op = std::make_unique<RandomCropAndResizeOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
   Status s;
   for (auto i = 0; i < 100; i++) {
+    TensorRow input_tensor_row;
+    std::shared_ptr<Tensor> input1;
+    Tensor::CreateFromTensor(input_tensor_, &input1);
+    input_tensor_row.push_back(input1);
+    std::shared_ptr<Tensor> input2;
+    Tensor::CreateFromTensor(input_tensor_, &input2);
+    input_tensor_row.push_back(input2);
     s = op->Compute(input_tensor_row, &output_tensor_row);
     EXPECT_TRUE(s.IsOk());
   }
@@ -64,9 +68,6 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest1) {
 TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest2) {
   MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
   TensorShape s_in = input_tensor_->shape();
-  TensorRow input_tensor_row;
-  input_tensor_row.push_back(input_tensor_);
-  input_tensor_row.push_back(input_tensor_);
   TensorRow output_tensor_row;
   std::shared_ptr<Tensor> output_tensor;
   int h_out = 1024;
@@ -81,6 +82,13 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest2) {
   auto op = std::make_unique<RandomCropAndResizeOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
   Status s;
   for (auto i = 0; i < 100; i++) {
+    TensorRow input_tensor_row;
+    std::shared_ptr<Tensor> input1;
+    Tensor::CreateFromTensor(input_tensor_, &input1);
+    input_tensor_row.push_back(input1);
+    std::shared_ptr<Tensor> input2;
+    Tensor::CreateFromTensor(input_tensor_, &input2);
+    input_tensor_row.push_back(input2);
     s = op->Compute(input_tensor_row, &output_tensor_row);
     EXPECT_TRUE(s.IsOk());
   }
@@ -94,9 +102,6 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest2) {
 TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest3) {
   MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
   TensorShape s_in = input_tensor_->shape();
-  TensorRow input_tensor_row;
-  input_tensor_row.push_back(input_tensor_);
-  input_tensor_row.push_back(input_tensor_);
   TensorRow output_tensor_row;
   std::shared_ptr<Tensor> output_tensor;
   int h_out = 1024;
@@ -111,6 +116,13 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest3) {
   auto op = std::make_unique<RandomCropAndResizeOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
   Status s;
   for (auto i = 0; i < 100; i++) {
+    TensorRow input_tensor_row;
+    std::shared_ptr<Tensor> input1;
+    Tensor::CreateFromTensor(input_tensor_, &input1);
+    input_tensor_row.push_back(input1);
+    std::shared_ptr<Tensor> input2;
+    Tensor::CreateFromTensor(input_tensor_, &input2);
+    input_tensor_row.push_back(input2);
     s = op->Compute(input_tensor_row, &output_tensor_row);
     EXPECT_TRUE(s.IsOk());
   }

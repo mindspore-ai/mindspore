@@ -34,7 +34,9 @@ TEST_F(MindDataTestPadOp, TestOp) {
   MS_LOG(INFO) << "Doing testPad.";
   auto op = std::make_unique<PadOp>(10, 20, 30, 40, BorderType::kConstant);
   EXPECT_TRUE(op->OneToOne());
-  Status s = op->Compute(input_tensor_, &output_tensor_);
+  std::shared_ptr<Tensor> input1;
+  Tensor::CreateFromTensor(input_tensor_, &input1);
+  Status s = op->Compute(input1, &output_tensor_);
   size_t actual = 0;
   if (s == Status::OK()) {
     actual = output_tensor_->shape()[0] * output_tensor_->shape()[1] * output_tensor_->shape()[2];

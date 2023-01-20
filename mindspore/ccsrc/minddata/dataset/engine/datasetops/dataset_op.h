@@ -345,6 +345,8 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // \return Status
   virtual Status WaitForWorkers() { return Status::OK(); }
 
+  virtual Status PostForWorkers() { return Status::OK(); }
+
   virtual int32_t NumWorkers() { return 0; }
 
   virtual Status SendQuitFlagToWorker(int32_t worker_id) { return Status::OK(); }

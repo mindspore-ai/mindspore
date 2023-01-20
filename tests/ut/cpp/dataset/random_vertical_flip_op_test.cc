@@ -32,8 +32,12 @@ TEST_F(MindDataTestRandomVerticalFlipOp, TestOp) {
   MS_LOG(INFO) << "Doing testVerticalFlip.";
   // flip
   TensorRow input_tensor_row;
-  input_tensor_row.push_back(input_tensor_);
-  input_tensor_row.push_back(input_tensor_);
+  std::shared_ptr<Tensor> input1;
+  Tensor::CreateFromTensor(input_tensor_, &input1);
+  input_tensor_row.push_back(input1);
+  std::shared_ptr<Tensor> input2;
+  Tensor::CreateFromTensor(input_tensor_, &input2);
+  input_tensor_row.push_back(input2);
   TensorRow output_tensor_row;
   auto op = std::make_unique<RandomVerticalFlipOp>(0.5);
   Status s = op->Compute(input_tensor_row, &output_tensor_row);

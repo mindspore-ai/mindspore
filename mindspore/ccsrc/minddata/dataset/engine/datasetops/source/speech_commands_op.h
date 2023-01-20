@@ -105,6 +105,8 @@ class SpeechCommandsOp : public MappableLeafOp {
   std::set<std::string> all_wave_files;         // all wave files in dataset_dir.
   std::set<std::string> loaded_names;           // loaded file names from txt files.
   std::vector<std::string> selected_files_vec;  // vector of filenames for sequential loading.
+
+  std::mutex mux_;
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -52,13 +52,17 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp2) {
   auto crop_and_decode_copy = crop_and_decode;
   auto decode_and_crop = static_cast<RandomCropAndResizeOp>(crop_and_decode_copy);
   GlobalContext::config_manager()->set_seed(42);
-  TensorRow input_tensor_row_decode;
-  TensorRow output_tensor_row_decode;
-  input_tensor_row_decode.push_back(raw_input_tensor_);
-  TensorRow input_tensor_row;
-  TensorRow output_tensor_row;
-  input_tensor_row.push_back(input_tensor_);
   for (int k = 0; k < 10; k++) {
+    TensorRow input_tensor_row_decode;
+    TensorRow output_tensor_row_decode;
+    std::shared_ptr<Tensor> input1;
+    Tensor::CreateFromTensor(raw_input_tensor_, &input1);
+    input_tensor_row_decode.push_back(input1);
+    TensorRow input_tensor_row;
+    TensorRow output_tensor_row;
+    std::shared_ptr<Tensor> input2;
+    Tensor::CreateFromTensor(input_tensor_, &input2);
+    input_tensor_row.push_back(input2);
     (void)crop_and_decode.Compute(input_tensor_row_decode, &output_tensor_row_decode);
     (void)decode_and_crop.Compute(input_tensor_row, &output_tensor_row);
     cv::Mat output1 = CVTensor::AsCVTensor(output_tensor_row_decode[0])->mat().clone();
@@ -103,7 +107,9 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp1) {
   std::uniform_real_distribution<float> rd_scale(scale_lb, scale_ub);
   std::uniform_real_distribution<float> rd_aspect(aspect_lb, aspect_ub);
   DecodeOp op(true);
-  op.Compute(raw_input_tensor_, &decoded);
+  std::shared_ptr<Tensor> raw_input1;
+  Tensor::CreateFromTensor(raw_input_tensor_, &raw_input1);
+  op.Compute(raw_input1, &decoded);
   Status crop_and_decode_status, decode_and_crop_status;
   float scale, aspect;
   int crop_width, crop_height;
@@ -137,9 +143,13 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp1) {
     int x = rd_x(rd);
     int y = rd_y(rd);
 
-    op.Compute(raw_input_tensor_, &decoded);
+    std::shared_ptr<Tensor> raw_input2;
+    Tensor::CreateFromTensor(raw_input_tensor_, &raw_input2);
+    op.Compute(raw_input2, &decoded);
     crop_and_decode_status = Crop(decoded, &decoded_and_cropped, x, y, crop_width, crop_height);
-    decode_and_crop_status = JpegCropAndDecode(raw_input_tensor_, &cropped_and_decoded, x, y, crop_width, crop_height);
+    std::shared_ptr<Tensor> raw_input3;
+    Tensor::CreateFromTensor(raw_input_tensor_, &raw_input3);
+    decode_and_crop_status = JpegCropAndDecode(raw_input3, &cropped_and_decoded, x, y, crop_width, crop_height);
     {
       cv::Mat M1 = CVTensor::AsCVTensor(decoded_and_cropped)->mat().clone();
       cv::Mat M2 = CVTensor::AsCVTensor(cropped_and_decoded)->mat().clone();

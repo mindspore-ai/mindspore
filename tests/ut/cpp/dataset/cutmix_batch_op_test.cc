@@ -119,7 +119,9 @@ TEST_F(MindDataTestCutMixBatchOp, TestFail2) {
   Tensor::CreateEmpty(TensorShape({2, input_tensor_->shape()[0], input_tensor_->shape()[1], input_tensor_->shape()[2]}),
                       input_tensor_->type(), &batched_tensor);
   for (int i = 0; i < 2; i++) {
-    batched_tensor->InsertTensor({i}, input_tensor_);
+    std::shared_ptr<Tensor> input1;
+    Tensor::CreateFromTensor(input_tensor_, &input1);
+    batched_tensor->InsertTensor({i}, input1);
   }
   Tensor::CreateFromVector(std::vector<uint32_t>({0, 1, 1, 0}), TensorShape({2, 2}), &batched_labels);
   std::shared_ptr<CutMixBatchOp> op = std::make_shared<CutMixBatchOp>(ImageBatchFormat::kNCHW, 1.0, 1.0);

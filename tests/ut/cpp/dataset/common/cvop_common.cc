@@ -51,14 +51,15 @@ void CVOpCommon::GetInputImage(std::string filename) {
   try {
     Tensor::CreateFromFile(filename, &raw_input_tensor_);
     raw_cv_image_ = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
-    std::shared_ptr<CVTensor> input_cv_tensor;
-    CVTensor::CreateFromMat(raw_cv_image_, 3, &input_cv_tensor);
-    input_tensor_ = std::dynamic_pointer_cast<Tensor>(input_cv_tensor);
-    SwapRedAndBlue(input_tensor_, &input_tensor_);
     if (raw_cv_image_.data) {
       MS_LOG(INFO) << "Reading was successful. Height:" << raw_cv_image_.rows << " Width: " << raw_cv_image_.cols
                    << " Channels:" << raw_cv_image_.channels() << ".";
     }
+
+    // fix: data race by SwapRedAndBlue
+    std::shared_ptr<Tensor> file_bytes;
+    Tensor::CreateFromFile(filename, &file_bytes);
+    Decode(file_bytes, &input_tensor_);
   } catch (...) {
     MS_LOG(INFO) << "Error in GetInputImage.";
   }

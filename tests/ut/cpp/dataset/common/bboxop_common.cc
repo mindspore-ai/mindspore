@@ -97,7 +97,9 @@ void BBoxOpCommon::GetInputImagesAndAnnotations(const std::string &dir, std::siz
     // load image
     GetInputImage(image_file);
     // add image and annotation to the tensor table
-    TensorRow row_data({std::move(input_tensor_), std::move(annotation_tensor)});
+    std::shared_ptr<Tensor> input1;
+    Tensor::CreateFromTensor(input_tensor_, &input1);
+    TensorRow row_data({std::move(input1), std::move(annotation_tensor)});
     images_and_annotations_.push_back(row_data);
     files_fetched++;
     if (files_fetched == num_of_samples) {
@@ -111,12 +113,11 @@ void BBoxOpCommon::SaveImagesWithAnnotations(BBoxOpCommon::FileType type, const 
   int i = 0;
   for (auto &row : table) {
     std::shared_ptr<Tensor> row_to_save;
-    Status swap_status = SwapRedAndBlue(row[0], &row_to_save);
-    if (!swap_status.IsOk()) {
-      MS_LOG(ERROR) << "Swapping red and blue channels failed in SaveImagesWithAnnotations.";
-      EXPECT_TRUE(swap_status.IsOk());
-    }
-    cv::Mat image = std::static_pointer_cast<CVTensor>(row_to_save)->mat();
+    // fix: data race by SwapRedAndBlue
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(row[0]);
+    cv::Mat rgb = BGRToRGB(input_cv->mat());
+    cv::Mat image;
+    rgb.copyTo(image);
     uint32_t num_of_boxes = row[1]->shape()[0];
     bool passing_data_fetch = true;
     // For each bounding box draw on the image.

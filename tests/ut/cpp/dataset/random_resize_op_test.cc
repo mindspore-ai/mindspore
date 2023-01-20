@@ -35,8 +35,12 @@ TEST_F(MindDataTestRandomResize, TestOp) {
   int output_h = 0.5 * s[0];
   int output_w = 0.5 * s[1];
   TensorRow input_tensor_row;
-  input_tensor_row.push_back(input_tensor_);
-  input_tensor_row.push_back(input_tensor_);
+  std::shared_ptr<Tensor> input1;
+  Tensor::CreateFromTensor(input_tensor_, &input1);
+  input_tensor_row.push_back(input1);
+  std::shared_ptr<Tensor> input2;
+  Tensor::CreateFromTensor(input_tensor_, &input2);
+  input_tensor_row.push_back(input2);
   TensorRow output_tensor_row;
   // Resizing
   auto op = std::make_unique<RandomResizeOp>(output_h, output_w);

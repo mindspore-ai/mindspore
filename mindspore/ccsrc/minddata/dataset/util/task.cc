@@ -92,14 +92,16 @@ void Task::ShutdownGroup() {  // Wake up watch dog and shutdown the engine.
   TaskGroup *vg = MyTaskGroup();
   // If multiple threads hit severe errors in the same group. Keep the first one and
   // discard the rest.
-  if (vg->rc_.IsOk()) {
-    std::unique_lock<std::mutex> rcLock(vg->rc_mux_);
-    // Check again after we get the lock
+  std::unique_lock<std::mutex> rcLock(vg->rc_mux_);
+  {
     if (vg->rc_.IsOk()) {
-      vg->rc_ = rc_;
-      rcLock.unlock();
-      TaskManager::InterruptMaster(rc_);
-      TaskManager::InterruptGroup(*this);
+      // Check again after we get the lock
+      if (vg->rc_.IsOk()) {
+        vg->rc_ = rc_;
+        rcLock.unlock();
+        TaskManager::InterruptMaster(rc_);
+        TaskManager::InterruptGroup(*this);
+      }
     }
   }
 }

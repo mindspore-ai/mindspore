@@ -105,6 +105,8 @@ class Task : public IntrpResource {
 
   Status Wait() { return (wp_.Wait()); }
 
+  void Clear() { wp_.Clear(); }
+
   static Status OverrideInterruptRc(const Status &rc);
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
