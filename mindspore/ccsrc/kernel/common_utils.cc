@@ -1683,13 +1683,15 @@ std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
     const auto &cur_kernel_attr = kernel_attr_list[index];
     auto cur_input_num = cur_kernel_attr.GetInputSize();
     auto cur_output_num = cur_kernel_attr.GetOutputSize();
-    if ((input_num != cur_input_num) || (output_num != cur_output_num)) {
+    // The num must be equal when not all same.
+    if (!cur_kernel_attr.GetAllSame() && (input_num != cur_input_num || output_num != cur_output_num)) {
       continue;
     }
 
     bool mis_match = false;
     // Check the input attrs.
-    for (size_t i = 0; i < input_num; ++i) {
+    for (size_t i = 0; i < cur_input_num; ++i) {
+      MS_EXCEPTION_IF_CHECK_FAIL((kernel_attr.GetInputSize() > i), "The input num is out of range.");
       auto &input_attr = kernel_attr.GetInputAttr(i);
       auto &cur_input_attr = cur_kernel_attr.GetInputAttr(i);
       if ((input_attr.dtype != cur_input_attr.dtype) ||
@@ -1705,7 +1707,8 @@ std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
     }
 
     // Check the output attrs.
-    for (size_t i = 0; i < output_num; ++i) {
+    for (size_t i = 0; i < cur_output_num; ++i) {
+      MS_EXCEPTION_IF_CHECK_FAIL((kernel_attr.GetOutputSize() > i), "The output num is out of range.");
       auto &output_attr = kernel_attr.GetOutputAttr(i);
       auto &cur_output_attr = cur_kernel_attr.GetOutputAttr(i);
       if ((output_attr.dtype != cur_output_attr.dtype) ||
