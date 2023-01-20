@@ -7822,7 +7822,7 @@ class TopK(Primitive):
     If the two compared elements are the same, the one with the smaller index value is returned first.
 
     Args:
-        sorted (bool): If True, the obtained elements will be sorted by the values in descending order.
+        sorted (bool, optional): If True, the obtained elements will be sorted by the values in descending order.
             If False, the obtained elements will be sorted by the values in ascending order. Default: True.
 
     Inputs:

@@ -20,7 +20,6 @@
 
     异常：
         - **TypeError** - `op` 或 `group` 不是str，或者输入的数据类型是bool。
-        - **ValueError** - `op` 为"prod"。
 
     样例：
 
