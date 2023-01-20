@@ -483,18 +483,29 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
 // Before creating the kernel, check whether the node has completed the operator selection. If not, the operator
 // selection needs to be performed to set kernel info.
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
-  // Check whether the node has completed operator selection.
   for (const auto &node : nodes) {
-    if (AnfAlgo::GetSelectKernelBuildInfo(node) != nullptr) {
-      continue;
-    }
-
+    auto build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
     // Kernel selection process.
-    const auto &failure_info = SetKernelInfoWithMsg(node);
-    if (!failure_info.first.empty()) {
-      const auto &kernel_graph = AnfAlgo::FetchKernelGraph(node.get());
-      HandleKernelSelectFailure(kernel_graph, node, failure_info);
-      continue;
+    if (build_info == nullptr) {
+      const auto &failure_info = SetKernelInfoWithMsg(node);
+      if (!failure_info.first.empty()) {
+        const auto &kernel_graph = AnfAlgo::FetchKernelGraph(node.get());
+        HandleKernelSelectFailure(kernel_graph, node, failure_info);
+      }
+    } else if (!build_info->valid()) {
+      // Judge whether match strictly between kernel build info and supported kernel attrs.
+      const auto &kernel_attr = kernel::GetKernelAttrFromBuildInfo(build_info);
+      const auto &supported_kernel_attrs =
+        kernel::NativeGpuKernelModFactory::GetInstance().GetGpuSupportedList(common::AnfAlgo::GetCNodeName(node));
+      const auto &match_result = kernel::MatchKernelAttrStrict(kernel_attr, supported_kernel_attrs);
+      if (!match_result.first) {
+        auto attr_info = kernel::FetchPrintInfoByKernelAttr(kernel_attr);
+        std::string error_info =
+          "Unsupported op [" + common::AnfAlgo::GetCNodeName(node) + "] on GPU, node attr: " + attr_info;
+        const auto &kernel_graph = AnfAlgo::FetchKernelGraph(node.get());
+        HandleKernelSelectFailure(kernel_graph, node, {error_info, NotSupportError});
+      }
+      build_info->set_valid(true);
     }
   }
 }

@@ -163,6 +163,10 @@ void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
       MS_EXCEPTION_IF_NULL(value);
       if (value->isa<tensor::Tensor>()) {
         (void)flatted_value->emplace_back(value);
+      } else if (value->isa<Scalar>()) {
+        auto scalar = value->cast<ScalarPtr>();
+        MS_EXCEPTION_IF_NULL(scalar);
+        (void)flatted_value->emplace_back(ScalarToTensor(scalar));
       } else {
         FlattenValue(value, flatted_value);
       }
@@ -176,6 +180,10 @@ void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
       MS_EXCEPTION_IF_NULL(value);
       if (value->isa<tensor::Tensor>()) {
         (void)flatted_value->emplace_back(value);
+      } else if (value->isa<Scalar>()) {
+        auto scalar = value->cast<ScalarPtr>();
+        MS_EXCEPTION_IF_NULL(scalar);
+        (void)flatted_value->emplace_back(ScalarToTensor(scalar));
       } else {
         FlattenValue(value, flatted_value);
       }

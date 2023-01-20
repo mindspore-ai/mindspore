@@ -46,6 +46,9 @@ class NativeGpuKernelModFactory {
 
   std::vector<KernelAttr> GetGpuSupportedList(const std::string &kernel_name);
 
+  // Judge whether is registered kernel.
+  bool IsRegistered(const std::string &kernel_name);
+
   bool ReducePrecision(const std::string &kernel_name,
                        std::shared_ptr<mindspore::kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder);
 

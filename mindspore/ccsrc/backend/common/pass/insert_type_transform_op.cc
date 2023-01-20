@@ -168,6 +168,8 @@ void SetKernelInfoForNewCNodeByOrigNode(const CNodePtr &new_cnode, const CNodePt
   auto kernel_info = std::make_shared<device::KernelInfo>();
   MS_EXCEPTION_IF_NULL(kernel_info);
   new_cnode->set_kernel_info(kernel_info);
+  // The node may not be supported in the current device.
+  new_kernel_builder->SetValid(false);
   AnfAlgo::SetSelectKernelBuildInfo(new_kernel_builder->Build(), new_cnode.get());
 
   auto new_prim = GetValueNode<PrimitivePtr>(new_cnode->input(kIndex0));
@@ -228,6 +230,8 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
     builder->SetOutputsDeviceType(outputs_type);
   }
 
+  // The node may not be supported in the current device.
+  builder->SetValid(false);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode.get());
 }
 

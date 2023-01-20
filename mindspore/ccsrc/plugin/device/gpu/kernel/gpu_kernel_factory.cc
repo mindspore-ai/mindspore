@@ -91,6 +91,20 @@ std::vector<KernelAttr> NativeGpuKernelModFactory::GetGpuSupportedList(const std
   }
 }
 
+bool NativeGpuKernelModFactory::IsRegistered(const std::string &kernel_name) {
+  // New kernel mod registered.
+  if (kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
+    return true;
+  }
+
+  // Old kernel mod registered.
+  if (map_kernel_name_to_creater_.find(kernel_name) != map_kernel_name_to_creater_.end()) {
+    return true;
+  }
+
+  return false;
+}
+
 bool NativeGpuKernelModFactory::ReducePrecision(
   const std::string &kernel_name, std::shared_ptr<mindspore::kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder) {
   MS_EXCEPTION_IF_NULL(builder);
