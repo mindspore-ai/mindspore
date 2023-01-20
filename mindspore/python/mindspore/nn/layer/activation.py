@@ -619,7 +619,7 @@ class SiLU(Cell):
     `SiLU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Swish.svg>`_ .
 
     Inputs:
-        - **x** (Tensor) - Input with the data type float16 or float32. Tensor of arbitrary dimensions.
+        - **x** (Tensor) - Input with the data type float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `x`.

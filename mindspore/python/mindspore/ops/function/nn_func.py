@@ -2210,8 +2210,6 @@ def soft_shrink(x, lambd=0.5):
 
 def silu(x):
     r"""
-    Sigmoid Linear Unit.
-
     Computes Sigmoid Linear Unit of input element-wise. The SiLU function is defined as:
 
     .. math::

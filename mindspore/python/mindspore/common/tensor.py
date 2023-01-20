@@ -2548,12 +2548,12 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('matrix_determinant')(self)
 
-    def diff(self):
+    def diff(self, n=1, axis=-1, prepend=None, append=None):
         r"""
         For details, please refer to :func:`mindspore.ops.diff`.
         """
         self._init_check()
-        return tensor_operator_registry.get('diff')(self)
+        return tensor_operator_registry.get('diff')(self, n, axis, prepend, append)
 
     def frac(self):
         r"""
