@@ -765,8 +765,12 @@ def resize_nearest_neighbor(input_x, size, align_corners=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> input_tensor = Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), mindspore.float32)
-        >>> output = ops.ResizeNearestNeighbor(input_tensor, (2, 2))
+        >>> size = (2, 2)
+        >>> output = ops.ResizeNearestNeighbor(size=size)(input_tensor)
         >>> print(output)
         [[[[-0.1  0.3]
            [ 0.4  0.5]]]]
