@@ -101,7 +101,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     atol or rtol is float.
     If atol or rtol is a Tensor, its shape must be broadcast to the singular value returned by
     `x.svd <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.svd.html>`_ .
-    If x.shape is :math:`(B, M, N)`, and the shape of atol or rtol is :math: `(K, B)`, the output
+    If x.shape is :math:`(B, M, N)`, and the shape of atol or rtol is :math:`(K, B)`, the output
     shape is :math:`(K, B, N, M)`.
     When the Hermitian is True, temporary support only real domain, x is treated as a real symmetric, so x is
     not checked internally, and only use the lower triangular part in the computations.

@@ -7214,21 +7214,21 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
 
     `ord` is the calculation mode of norm. The following norm modes are supported.
 
-    ======================     =========================        ========================================================
-    `ord`                      norm for matrices                norm for vectors
-    ======================     =========================        ========================================================
-    `None` (default)           Frobenius norm                   `2`-norm (see below)
-    `'fro'`                    Frobenius norm                   -- not supported --
-    `'nuc'`                    nuclear norm                     -- not supported --
-    `inf`                      :math:`max(sum(abs(x), dim=1))`  :math:`max(abs(x))`
-    `-inf`                     :math:`min(sum(abs(x), dim=1))`  :math:`min(abs(x))`
-    `0`                        -- not supported --              :math:`sum(x != 0)`
-    `1`                        :math:`max(sum(abs(x), dim=0))`  as below
-    `-1`                       :math:`min(sum(abs(x), dim=0))`  as below
-    `2`                         largest singular value          as below
-    `-2`                       smallest singular value          as below
-    other `int` or `float`     -- not supported --              :math:`sum(abs(x)^{ord})^{(1 / ord)}`
-    ======================     =========================        ========================================================
+    ====================== ================================ ==========================================
+    `ord`                   norm for matrices               norm for vectors
+    ====================== ================================ ==========================================
+    `None` (default)        Frobenius norm                   `2`-norm (see below)
+    `'fro'`                 Frobenius norm                   -- not supported --
+    `'nuc'`                 nuclear norm                     -- not supported --
+    `inf`                   :math:`max(sum(abs(x), dim=1))`  :math:`max(abs(x))`
+    `-inf`                  :math:`min(sum(abs(x), dim=1))`  :math:`min(abs(x))`
+    `0`                     -- not supported --              :math:`sum(x != 0)`
+    `1`                     :math:`max(sum(abs(x), dim=0))`  as below
+    `-1`                    :math:`min(sum(abs(x), dim=0))`  as below
+    `2`                     largest singular value           as below
+    `-2`                    smallest singular value          as below
+    other `int` or `float`  -- not supported --              :math:`sum(abs(x)^{ord})^{(1 / ord)}`
+    ====================== ================================ ==========================================
 
     Args:
         A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.

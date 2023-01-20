@@ -5640,7 +5640,7 @@ def topk(input_x, k, dim=None, largest=True, sorted=True):
         k (int): The number of top or bottom elements to be computed along the last dimension, constant input is needed.
         dim (int, optional): The dimension to sort along. Default: None.
         largest (bool, optional): If largest is False then the k smallest elements are returned. Default: True.
-        sorted (bool): If True, the obtained elements will be sorted by the values in descending order.
+        sorted (bool, optional): If True, the obtained elements will be sorted by the values in descending order.
             If False, the obtained elements will be sorted by the values in ascending order. Default: True.
 
     Returns:
