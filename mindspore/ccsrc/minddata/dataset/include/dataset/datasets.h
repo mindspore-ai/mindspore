@@ -5729,18 +5729,14 @@ class DATASET_API TFRecordDataset : public Dataset {
   /// \param[in] columns_list List of columns to be read. (Default = {}, read all columns).
   /// \param[in] num_samples The number of samples to be included in the dataset.
   ///     (Default = 0 means all samples).
-  ///     If `num_samples` is 0 and numRows(parsed from `schema` ) does not exist, read the full dataset.
-  ///     If `compression_type` is not "" and `num_samples` is 0, and numRows(parsed from `schema` ) is
-  ///     greater than 0, read the full dataset.
-  ///     If `compression_type` is "", `num_samples` is 0, and numRows(parsed from `schema` ) is
-  ///     greater than 0, read numRows rows.
-  ///     If both `num_samples` and numRows(parsed from schema) are greater than 0, read `num_samples` rows.
-  ///     If `compression_type` is not "" and `num_samples` is provided, then `num_samples` will be
-  ///     interpreted as number of rows to be read per shard from the compressed files.
-  ///     It is highly recommended to provide `num_samples` when `compression_type` is "GZIP" or "ZLIB"
-  ///     to avoid performance degradation.
-  ///     If `num_samples` is not provided, then multiple decompressions of the same file is required to
-  ///     obtain the file size.
+  ///     Processing priority for `num_samples` is as the following:
+  ///     1. If `num_samples` is greater than 0, read `num_samples` rows.
+  ///     2. Otherwise, if numRows (parsed from `schema` ) is greater than 0, read numRows rows.
+  ///     3. Otherwise, read the full dataset.
+  ///     `num_samples` or numRows (parsed from `schema` ) will be interpreted as number of rows per shard.
+  ///     It is highly recommended to provide `num_samples` or numRows (parsed from `schema` )
+  ///     when `compression_type` is "GZIP" or "ZLIB" to avoid performance degradation due to multiple
+  ///     decompressions of the same file to obtain the file size.
   /// \param[in] shuffle The mode for shuffling data every epoch. (Default = ShuffleMode::kGlobal).
   ///     Can be any of:
   ///     ShuffleMode::kFalse - No shuffling is performed.
@@ -5772,18 +5768,14 @@ class DATASET_API TFRecordDataset : public Dataset {
   /// \param[in] columns_list List of columns to be read (Default = {}, read all columns).
   /// \param[in] num_samples The number of samples to be included in the dataset
   ///     (Default = 0 means all samples).
-  ///     If `num_samples` is 0 and numRows(parsed from `schema` ) does not exist, read the full dataset.
-  ///     If `compression_type` is not "", `num_samples` is 0, and numRows(parsed from `schema` ) is
-  ///     greater than 0, read the full dataset.
-  ///     If `compression_type` is "", `num_samples` is 0, and numRows(parsed from `schema` ) is
-  ///     greater than 0, read numRows rows.
-  ///     If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
-  ///     If `compression_type` is not "" and `num_samples` is provided, then `num_samples` will be
-  ///     interpreted as number of rows to be read per shard from the compressed files.
-  ///     It is highly recommended to provide `num_samples` when `compression_type` is "GZIP" or "ZLIB"
-  ///     to avoid performance degradation.
-  ///     If `num_samples` is not provided, then multiple decompressions of the same file is required to
-  ///     obtain the file size.
+  ///     Processing priority for `num_samples` is as the following:
+  ///     1. If `num_samples` is greater than 0, read `num_samples` rows.
+  ///     2. Otherwise, if numRows (parsed from `schema` ) is greater than 0, read numRows rows.
+  ///     3. Otherwise, read the full dataset.
+  ///     `num_samples` or numRows (parsed from `schema` ) will be interpreted as number of rows per shard.
+  ///     It is highly recommended to provide `num_samples` or numRows (parsed from `schema` )
+  ///     when `compression_type` is "GZIP" or "ZLIB" to avoid performance degradation due to multiple
+  ///     decompressions of the same file to obtain the file size.
   /// \param[in] shuffle The mode for shuffling data every epoch. (Default = ShuffleMode::kGlobal).
   ///     Can be any of:
   ///     ShuffleMode::kFalse - No shuffling is performed.
@@ -5819,18 +5811,14 @@ class DATASET_API TFRecordDataset : public Dataset {
 /// \param[in] columns_list List of columns to be read (Default = {}, read all columns).
 /// \param[in] num_samples The number of samples to be included in the dataset
 ///     (Default = 0 means all samples).
-///     If `num_samples` is 0 and numRows(parsed from `schema` ) does not exist, read the full dataset.
-///     If `compression_type` is not "", `num_samples` is 0, and numRows(parsed from `schema` ) is
-///     greater than 0, read the full dataset.
-///     If `compression_type` is "", `num_samples` is 0, and numRows(parsed from `schema` ) is
-///     greater than 0, read numRows rows.
-///     If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
-///     If `compression_type` is not "" and `num_samples` is provided, then `num_samples` will be
-///     interpreted as number of rows to be read per shard from the compressed files.
-///     It is highly recommended to provide `num_samples` when `compression_type` is "GZIP" or "ZLIB"
-///     to avoid performance degradation.
-///     If `num_samples` is not provided, then multiple decompressions of the same file is required to
-///     obtain the file size.
+///     Processing priority for `num_samples` is as the following:
+///     1. If `num_samples` is greater than 0, read `num_samples` rows.
+///     2. Otherwise, if numRows (parsed from `schema` ) is greater than 0, read numRows rows.
+///     3. Otherwise, read the full dataset.
+///     `num_samples` or numRows (parsed from `schema` ) will be interpreted as number of rows per shard.
+///     It is highly recommended to provide `num_samples` or numRows (parsed from `schema` )
+///     when `compression_type` is "GZIP" or "ZLIB" to avoid performance degradation due to multiple
+///     decompressions of the same file to obtain the file size.
 /// \param[in] shuffle The mode for shuffling data every epoch. (Default = ShuffleMode::kGlobal).
 ///     Can be any of:
 ///     ShuffleMode::kFalse - No shuffling is performed.
