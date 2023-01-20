@@ -54,7 +54,7 @@ class TensorRTAllocator {
 
   int SyncMemHostToDevice(const tensor::Tensor &host_tensor, const std::string &device_tensor_name, bool sync = true);
   int SyncMemDeviceToHost(tensor::Tensor *host_tensor, const std::string &device_tensor_name, bool sync = true);
-  int SyncMemDeviceToHost(void *dst_data, size_t data_size, const std::string &device_tensor_name);
+  int SyncMemDeviceToHost(void *dst_data, size_t data_size, const std::string &device_tensor_name, bool sync = true);
 
   int ClearDeviceMem();
 

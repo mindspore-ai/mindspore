@@ -51,6 +51,7 @@
 #include "tools/optimizer/fusion/tf_bidirection_gru_fusion.h"
 #include "tools/optimizer/fusion/tensor_dot_fusion.h"
 #include "tools/optimizer/fusion/multi_head_attention_fusion.h"
+#include "tools/optimizer/fusion/encoder_layer_fusion.h"
 #include "tools/optimizer/fusion/glu_fusion.h"
 #include "tools/optimizer/fusion/tflite_rel_pos_multi_head_attention_fusion.h"
 #include "tools/optimizer/fusion/matmul_add_fusion.h"
@@ -319,9 +320,10 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
                                     std::make_shared<opt::AddActivationFusion>(),
                                     std::make_shared<opt::ExpandDimsReshapeFusion>(),
                                     std::make_shared<opt::SqueezeExpandDimsFusion>()};
-#ifdef ENABLE_CLOUD_FUSION_INFERENCE
-  fusions.push_back(std::make_shared<opt::MultiHeadAttentionFusion>());
-#endif
+  if (param->optimize_transformer) {
+    fusions.push_back(std::make_shared<opt::MultiHeadAttentionFusion>());
+    fusions.push_back(std::make_shared<opt::EncoderLayerFusion>());
+  }
   for (size_t index = 0; index < fusions.size(); index++) {
     auto pass_ptr = fusions.at(index);
     MS_CHECK_TRUE_RET(pass_ptr != nullptr, RET_ERROR);

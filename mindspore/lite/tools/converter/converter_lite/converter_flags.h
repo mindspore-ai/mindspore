@@ -43,6 +43,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
   int InitOptimize();
   int InitExportMindIR();
   int InitSaveType();
+  int InitOptimizeTransformer();
+
   int Init(int argc, const char **argv);
   int PreInit(int argc, const char **argv);
 
@@ -85,6 +87,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
   bool encryption = false;
 #endif
   std::string device;
+  std::string optimizeTransformerStr;
+  bool optimizeTransformer = false;
 };
 }  // namespace converter
 }  // namespace mindspore

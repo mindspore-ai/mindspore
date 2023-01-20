@@ -57,10 +57,10 @@ class DelegateRegistrar {
   ~DelegateRegistrar() = default;
 };
 
-#define REG_DELEGATE(device_type, provider, creator)                                                            \
-  static DelegateCreator func = [=](const std::shared_ptr<Context> &context, const ConfigInfos &config_infos) { \
-    return creator(context, config_infos);                                                                      \
-  };                                                                                                            \
+#define REG_DELEGATE(device_type, provider, creator)                                                           \
+  static DelegateCreator func = [](const std::shared_ptr<Context> &context, const ConfigInfos &config_infos) { \
+    return creator(context, config_infos);                                                                     \
+  };                                                                                                           \
   static DelegateRegistrar g_##device_type##provider##Delegate(device_type, provider, &func);
 }  // namespace mindspore
 

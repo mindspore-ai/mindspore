@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OP_NAME_H
-#define MINDSPORE_CORE_OPS_OP_NAME_H
+#ifndef MINDSPORE_CORE_OPS_OP_NAME_H_
+#define MINDSPORE_CORE_OPS_OP_NAME_H_
 #include <cstddef>
 
 namespace mindspore::ops {
@@ -378,6 +378,13 @@ constexpr auto kSampleNum = "sample_num";
 constexpr auto kRoiEndMode = "roi_end_mode";
 constexpr auto kUpper = "upper";
 constexpr auto kConjugate = "conjugate";
+constexpr auto kEncoderLayerNumHeads = "head_num";
+constexpr auto kEncoderLayerSizePerHead = "head_size";
+constexpr auto kEncoderLayerPostLayernorm = "post_layernorm";
+constexpr auto kEncoderLayerFfnHiddenSize = "ffn_hidden_size";
+constexpr auto kEncoderLayerEpsLayerNorm1 = "eps_layernorm1";
+constexpr auto kEncoderLayerEpsLayerNorm2 = "eps_layernorm2";
+constexpr auto kPositionBias = "position_bias";
 constexpr auto KExclusive = "exclusive";
 constexpr auto KReverse = "reverse";
 constexpr auto KComputeEigenvectors = "compute_eigenvectors";
@@ -414,4 +421,4 @@ constexpr size_t kFormatNC1HWC0IndexW = 3;
 constexpr size_t kFormatNC1HWC0IndexC0 = 4;
 enum Dims : size_t { kDim0 = 0, kDim1, kDim2, kDim3, kDim4, kDim5, kDim6, kDim7, kDim8 };
 }  // namespace mindspore::ops
-#endif  // MINDSPORE_CORE_OPS_OP_NAME_H
+#endif  // MINDSPORE_CORE_OPS_OP_NAME_H_

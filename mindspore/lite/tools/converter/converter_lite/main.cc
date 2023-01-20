@@ -68,6 +68,7 @@ int main(int argc, const char **argv) {
     converter.SetTrainModel(flags.trainModel);
     converter.SetNoFusion(flags.disableFusion);
     converter.SetDevice(flags.device);
+    converter.SetOptimizeTransformer(flags.optimizeTransformer);
 
     auto status = converter.Convert();
     if (status != mindspore::kSuccess) {

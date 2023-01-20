@@ -50,9 +50,11 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   VectorRef DefineMPWithMaskPattern(bool mask = true) const;
   VectorRef DefineMPWithMaskPatternPA() const;
   VectorRef DefineMPWithMaskPatternT5() const;
-  VectorRef DefineMPWithMaskPatternT5New(bool transpose = true) const;
+  VectorRef DefineMPWithMaskPatternT5New(bool transpose = true, bool no_div_flag = false) const;
+  VectorRef DefineMPPatternSwin(bool flag = true) const;
   VectorRef DefineEmbedding(const BaseRef &input, const BaseRef &weight, const BaseRef &bias, const BaseRef &axis,
-                            const BaseRef &transpose_var, bool test_div = false, bool transpose = true) const;
+                            const BaseRef &transpose_var, bool test_div = false, bool transpose = true,
+                            bool mul = false) const;
   VectorRef DefineEmbedding(const BaseRef &input, const BaseRef &weight, const BaseRef &axis,
                             const BaseRef &transpose_var, bool test_div, bool transpose) const;
 
@@ -85,21 +87,28 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   const std::string kMPAPatternName = "MPAPattern";
   const std::string kMPAWithMaskPatternNameT5 = "MPAWithMaskPatternT5";
   const std::string kMPAWithMaskPatternNameT5New = "MPAWithMaskPatternT5New";
+  const std::string kMPAWithMaskPatternNameT5New2 = "MPAWithMaskPatternT5New2";
   const std::string kMPAWithMaskTransposePatternNameT5New = "MPAWithMaskTransposePatternT5New";
+  const std::string kMPAPatternNameSwin1 = "MPAPatternNameSwin1";
+  const std::string kMPAPatternNameSwin2 = "MPAPatternNameSwin2";
 
   mutable VarPtr input_q_{nullptr};
   mutable VarPtr input_k_{nullptr};
   mutable VarPtr input_v_{nullptr};
+  mutable VarPtr input1_{nullptr};
+  mutable VarPtr input2_{nullptr};
   mutable VarPtr position_bias_{nullptr};
 
   mutable VarPtr weight_q_{nullptr};
   mutable VarPtr weight_k_{nullptr};
   mutable VarPtr weight_v_{nullptr};
   mutable VarPtr weight_o_{nullptr};
+  mutable VarPtr weight_o2_{nullptr};
   mutable VarPtr bias_q_{nullptr};
   mutable VarPtr bias_k_{nullptr};
   mutable VarPtr bias_v_{nullptr};
   mutable VarPtr bias_o_{nullptr};
+  mutable VarPtr bias_o2_{nullptr};
 
   mutable VarPtr mask_{nullptr};
 

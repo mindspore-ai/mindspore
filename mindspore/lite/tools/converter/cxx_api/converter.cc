@@ -270,6 +270,20 @@ bool Converter::GetNoFusion() {
   }
 }
 
+void Converter::SetOptimizeTransformer(bool optimizeTransformer) {
+  if (data_ != nullptr) {
+    data_->optimize_transformer = optimizeTransformer;
+  }
+}
+
+bool Converter::GetOptimizeTransformer() {
+  if (data_ != nullptr) {
+    return data_->optimize_transformer;
+  } else {
+    return false;
+  }
+}
+
 void Converter::SetDevice(const std::vector<char> &device) {
   if (data_ != nullptr) {
     data_->device = CharToString(device);

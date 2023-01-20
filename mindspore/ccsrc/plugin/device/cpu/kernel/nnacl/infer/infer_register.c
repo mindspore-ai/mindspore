@@ -31,6 +31,7 @@
 #include "nnacl/infer/assign_add_infer.h"
 #include "nnacl/infer/assign_infer.h"
 #include "nnacl/infer/attention_infer.h"
+#include "nnacl/infer/encoder_layer_infer.h"
 #include "nnacl/infer/audio_spectrogram_infer.h"
 #include "nnacl/infer/batch_to_space_infer.h"
 #include "nnacl/infer/bias_grad_infer.h"
@@ -402,6 +403,8 @@ void RegAllInferFunc5() {
   g_inner_op_infer_func[PrimType_Inner_Identity - PrimType_InnerOpMin] = NULL;
 #ifndef RUNTIME_PASS_CLIP
   g_inner_op_infer_func[PrimType_Inner_ShapeFusion - PrimType_InnerOpMin] = ShapeFusionInferShape;
+  g_inner_op_infer_func[PrimType_Inner_EncoderLayer - PrimType_InnerOpMin] = EncoderLayerInferShape;
+
 #endif
   g_inner_op_infer_func[PrimType_Inner_ToFormat - PrimType_InnerOpMin] = NULL;
 }

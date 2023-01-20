@@ -26,6 +26,7 @@
 #include <fstream>
 #include <limits>
 #include <unordered_map>
+#include <iomanip>
 #include "src/extendrt/delegate/delegate_utils.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/common/utils.h"
@@ -719,8 +720,8 @@ int TensorRTSubGraph::OnNewInputShapes(const std::vector<ShapeVector> &new_shape
   return RET_OK;
 }
 
-int TensorRTSubGraph::PreExecute(const std::vector<tensor::Tensor> &inputs,
-                                 const std::vector<tensor::Tensor> &outputs) {
+int TensorRTSubGraph::PreExecute(const std::vector<tensor::Tensor> &inputs, const std::vector<tensor::Tensor> &outputs,
+                                 bool sync) {
   if (inputs_.size() != inputs.size()) {
     MS_LOG(ERROR) << "Graph inputs size " << inputs_.size() << " != execute inputs size " << inputs.size();
     return RET_ERROR;
@@ -748,7 +749,7 @@ int TensorRTSubGraph::PreExecute(const std::vector<tensor::Tensor> &inputs,
         MS_LOG(ERROR) << "realloc for input tensor device memory failed.";
         return RET_ERROR;
       }
-      ret = runtime_->GetAllocator()->SyncMemHostToDevice(inputs[i], trt_tensor_name);
+      ret = runtime_->GetAllocator()->SyncMemHostToDevice(inputs[i], trt_tensor_name, sync);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "sync mem from host to device failed for " << trt_tensor_name;
         return RET_ERROR;
@@ -788,7 +789,7 @@ int TensorRTSubGraph::PreExecute(const std::vector<tensor::Tensor> &inputs,
   return RET_OK;
 }
 
-int TensorRTSubGraph::PostExecute(std::vector<tensor::Tensor> *outputs) {
+int TensorRTSubGraph::PostExecute(std::vector<tensor::Tensor> *outputs, bool sync) {
   if (!outputs->empty() && outputs->size() != outputs_.size()) {
     MS_LOG(ERROR) << "Graph outputs size " << outputs_.size() << " != execute outputs size " << outputs->size();
     return RET_ERROR;
@@ -819,8 +820,8 @@ int TensorRTSubGraph::PostExecute(std::vector<tensor::Tensor> *outputs) {
           MS_LOG(ERROR) << "Specified output device or host address cannot be nullptr";
           return RET_ERROR;
         }
-        int sync_ret =
-          runtime_->GetAllocator()->SyncMemDeviceToHost(host_address, outputs_[i].DataSize(), trt_out_tensor_name);
+        int sync_ret = runtime_->GetAllocator()->SyncMemDeviceToHost(host_address, outputs_[i].DataSize(),
+                                                                     trt_out_tensor_name, sync);
         if (sync_ret != RET_OK) {
           MS_LOG(ERROR) << "sync mem from device to host failed for " << trt_out_tensor_name;
           return sync_ret;
@@ -828,7 +829,7 @@ int TensorRTSubGraph::PostExecute(std::vector<tensor::Tensor> *outputs) {
       }
     } else {
       tensor::Tensor output_tensor(static_cast<enum TypeId>(outputs_[i].DataType()), new_shape);
-      int sync_ret = runtime_->GetAllocator()->SyncMemDeviceToHost(&output_tensor, trt_out_tensor_name);
+      int sync_ret = runtime_->GetAllocator()->SyncMemDeviceToHost(&output_tensor, trt_out_tensor_name, sync);
       if (sync_ret != RET_OK) {
         MS_LOG(ERROR) << "sync mem from device to host failed for " << trt_out_tensor_name;
         return sync_ret;
@@ -854,19 +855,38 @@ bool TensorRTSubGraph::ValidInputResizeDims(const nvinfer1::Dims &construct_dims
 }
 
 int TensorRTSubGraph::Execute(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
+#ifdef ASYNC_INFER
+  bool sync = false;
+#else
+  bool sync = true;
+#endif
   int ret = lite::SetCudaDevice(device_info_);
   if (ret != RET_OK) {
     return ret;
   }
-  ret = PreExecute(inputs, *outputs);
+  ret = PreExecute(inputs, *outputs, sync);
   if (ret != RET_OK) {
     return ret;
   }
-  if (!this->trt_context_->executeV2(tensor_bindings_)) {
-    MS_LOG(ERROR) << "TensorRT execute failed.";
-    return RET_ERROR;
+  if (sync) {
+    if (!this->trt_context_->executeV2(tensor_bindings_)) {
+      MS_LOG(ERROR) << "TensorRT execute failed.";
+      return RET_ERROR;
+    }
+  } else {
+    if (!this->trt_context_->enqueueV2(tensor_bindings_, stream_, nullptr)) {
+      MS_LOG(ERROR) << "TensorRT execute failed.";
+      return RET_ERROR;
+    }
   }
-  return PostExecute(outputs);
+  ret = PostExecute(outputs, sync);
+  if (ret != RET_OK) {
+    return ret;
+  }
+  if (!sync) {
+    cudaStreamSynchronize(stream_);
+  }
+  return RET_OK;
 }
 
 int TensorRTSubGraph::Resize(const std::vector<tensor::Tensor> &, const std::vector<ShapeVector> &new_shapes) {
