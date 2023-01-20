@@ -39,9 +39,11 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
 
   for (auto &device_tensor : *alloc_list) {
     MS_EXCEPTION_IF_NULL(device_tensor);
-    if (device_tensor->IsPtrValid()) {
+    // Unused device address need skip to reduce memory use.
+    if (device_tensor->IsPtrValid() || TEST_FLAG(device_tensor->flag(), device::kDeviceAddressFlagNotUsed)) {
       continue;
     }
+
     try {
       // Allocate memory through the device context.
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
@@ -139,7 +141,8 @@ void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *
     auto &device_context = (*device_contexts)[i];
     MS_EXCEPTION_IF_NULL(device_tensor);
     MS_EXCEPTION_IF_NULL(device_context);
-    if (device_tensor->GetPtr() != nullptr) {
+    // Unused device address need skip to reduce memory use.
+    if (device_tensor->IsPtrValid() || TEST_FLAG(device_tensor->flag(), device::kDeviceAddressFlagNotUsed)) {
       continue;
     }
 

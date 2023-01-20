@@ -23,9 +23,10 @@ namespace runtime {
 void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
-  if (!input_data->data_->IsPtrValid()) {
+  // The unused data may be invalid ptr.
+  if (!input_data->data_->IsPtrValid() && !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed)) {
     MS_LOG(EXCEPTION) << "The input_data does not have a valid ptr of actor:" << GetAID().Name()
-                      << " with index:" << input_data->index_;
+                      << " with index:" << input_data->index_ << ", flag:" << input_data->data_->flag();
   }
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
@@ -36,7 +37,8 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
                 << ", sequential num:" << sequential_num
                 << ", the input data origin ref count:" << input_data->data_->original_ref_count()
                 << ", current ref count:" << input_data->data_->ref_count()
-                << ", dynamic ref count:" << input_data->data_->dynamic_ref_count();
+                << ", dynamic ref count:" << input_data->data_->dynamic_ref_count()
+                << ", flag:" << input_data->data_->flag();
   if (is_run) {
     Run(context);
   }

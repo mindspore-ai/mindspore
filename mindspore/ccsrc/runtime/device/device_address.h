@@ -72,6 +72,8 @@ using UserDataPtr = std::shared_ptr<UserData>;
 constexpr size_t kDeviceAddressFlagInit = 0;
 // Indicates that it is the device address of ref node.
 constexpr size_t kDeviceAddressFlagRefNode = 1;
+// Indicates that it is the device address of node which has no user.
+constexpr size_t kDeviceAddressFlagNotUsed = 2;
 
 class DeviceAddress : public mindspore::DeviceSync {
  public:
@@ -213,9 +215,11 @@ class DeviceAddress : public mindspore::DeviceSync {
   // Free the ptr in user data when the ref count is 0.
   virtual void ClearUserData() {}
 
-  // Flag.
+  // The interface of flag.
   size_t flag() const { return flag_; }
   void set_flag(size_t flag) { flag_ = flag; }
+  void UpdateFlag(size_t flag) { SET_FLAG(flag_, flag); }
+  void ClearFlag(size_t flag) { CLEAR_FLAG(flag_, flag); }
 
  protected:
   const void *ptr() const { return ptr_; }

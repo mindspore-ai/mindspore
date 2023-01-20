@@ -181,17 +181,8 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
     std::string error_info = "Copy the input data failed, graph id: " + std::to_string(graph_->graph_id());
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
-  try {
-    const auto input_nodes = graph_->input_nodes();
-    for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-      auto node_device_tensor = AnfAlgo::GetMutableOutputAddr(input_nodes[i], 0, false);
-      if (node_device_tensor != nullptr && (!node_device_tensor->is_ptr_persisted()) &&
-          input_device_tensors_[i] != nullptr) {
-        node_device_tensor->set_ptr(input_device_tensors_[i]->GetMutablePtr());
-        node_device_tensor->set_from_mem_pool(false);
-      }
-    }
 
+  try {
     const std::vector<tensor::Tensor> inputs;
     std::vector<tensor::Tensor> outputs;
     const std::map<string, string> compile_options;
@@ -241,72 +232,74 @@ void SuperKernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
 bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph_);
+  auto &input_nodes = graph_->input_nodes();
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-    auto src_device_tensor = input_device_tensors_[i];
-    if (src_device_tensor == nullptr) {
-      continue;
-    }
-
-    auto &input_nodes = graph_->input_nodes();
     if (i >= input_nodes.size()) {
       MS_LOG(ERROR) << "The input index:" << i << "is out of range:" << input_nodes.size() << ".";
       return false;
     }
-    auto dst_node = input_nodes[i];
-    MS_EXCEPTION_IF_NULL(dst_node);
-
-    auto dst_param = dst_node->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(dst_param);
-    if (!dst_param->IsUsedByRealKernelInGraph(graph_->graph_id())) {
-      continue;
-    }
-    auto dst_device_tensor = AnfAlgo::GetMutableOutputAddr(dst_node, 0, false);
-    MS_EXCEPTION_IF_NULL(dst_device_tensor);
-    if (src_device_tensor->GetPtr() == dst_device_tensor->GetPtr()) {
+    auto input_node = input_nodes[i];
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto node_device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
+    MS_EXCEPTION_IF_NULL(node_device_tensor);
+    auto input_device_tensor = input_device_tensors_[i];
+    if (TEST_FLAG(node_device_tensor->flag(), device::kDeviceAddressFlagNotUsed) || (input_device_tensor == nullptr) ||
+        (input_device_tensor->GetPtr() == node_device_tensor->GetPtr())) {
       continue;
     }
 
+    // Copy.
+    DeviceTensorPtr copy_device_tensor = nullptr;
     // If the input is not a persist device address, in a heterogeneous scenario, a new device address needs to
-    // be created.
-    if (!dst_device_tensor->is_ptr_persisted()) {
-      if ((src_device_tensor->GetDeviceType() == dst_device_tensor->GetDeviceType()) &&
-          AnfAlgo::IsEquivalentFormat(src_device_tensor->format(), dst_device_tensor->format())) {
-        MS_LOG(DEBUG) << "Disable copy for device tensor:" << dst_device_tensor;
+    // be created. And set ptr to node device address to support the zero copy of graph input nodes.
+    if (!node_device_tensor->is_ptr_persisted()) {
+      if ((input_device_tensor->GetDeviceType() == node_device_tensor->GetDeviceType()) &&
+          AnfAlgo::IsEquivalentFormat(input_device_tensor->format(), node_device_tensor->format())) {
+        MS_LOG(DEBUG) << "Not need copy for device tensor:" << node_device_tensor
+                      << " ptr:" << node_device_tensor->GetPtr() << " index:" << i << " for actor:" << GetAID();
+        // Set the ptr from input_device_tensor and set mem pool false to avoid memory double management for supporting
+        // zero copy.
+        node_device_tensor->set_ptr(input_device_tensor->GetMutablePtr());
+        node_device_tensor->set_from_mem_pool(false);
         continue;
       }
 
       if (copy_input_device_tensors_[i] == nullptr) {
         copy_input_device_tensors_[i] = device_contexts_[0]->device_res_manager_->CreateDeviceAddress(
-          nullptr, dst_device_tensor->GetSize(), dst_device_tensor->format(), dst_device_tensor->type_id(),
-          dst_device_tensor->host_shape());
+          nullptr, node_device_tensor->GetSize(), node_device_tensor->format(), node_device_tensor->type_id(),
+          node_device_tensor->host_shape());
         MS_LOG(DEBUG) << "Create new device tensor:" << copy_input_device_tensors_[i] << " index:" << i
                       << " for actor:" << GetAID();
       }
-      dst_device_tensor = copy_input_device_tensors_[i];
-      MS_EXCEPTION_IF_NULL(dst_device_tensor);
+      copy_device_tensor = copy_input_device_tensors_[i];
+      MS_EXCEPTION_IF_NULL(copy_device_tensor);
       MS_EXCEPTION_IF_NULL(device_contexts_[0]);
-      if ((dst_device_tensor->GetPtr() == nullptr) &&
-          (!device_contexts_[0]->device_res_manager_->AllocateMemory(dst_device_tensor.get()))) {
+      if ((copy_device_tensor->GetPtr() == nullptr) &&
+          (!device_contexts_[0]->device_res_manager_->AllocateMemory(copy_device_tensor.get()))) {
         MS_LOG(ERROR) << "Device(id:" << std::to_string((device_contexts_[0])->device_context_key().device_id_)
                       << ") memory isn't enough and alloc failed, kernel name: " << GetAID()
-                      << ", alloc size: " + std::to_string(dst_device_tensor->GetSize()) << "B.";
+                      << ", alloc size: " + std::to_string(copy_device_tensor->GetSize()) << "B.";
         continue;
       }
-      MS_LOG(DEBUG) << "Alloc memory for device tensor:" << dst_device_tensor << " ptr:" << dst_device_tensor->GetPtr()
-                    << " index:" << i << " for actor:" << GetAID();
+      MS_LOG(DEBUG) << "Alloc memory for device tensor:" << copy_device_tensor
+                    << " ptr:" << copy_device_tensor->GetPtr() << " index:" << i << " for actor:" << GetAID();
+      node_device_tensor->set_ptr(copy_device_tensor->GetMutablePtr());
+      node_device_tensor->set_from_mem_pool(false);
+    } else {
+      copy_device_tensor = node_device_tensor;
     }
-
-    MS_LOG(INFO) << "The input data of node:" << dst_node->DebugString()
-                 << " need copy from address:" << src_device_tensor->GetPtr()
-                 << ", type:" << src_device_tensor->GetDeviceType() << " to address:" << dst_device_tensor->GetPtr()
-                 << ", type:" << dst_device_tensor->GetDeviceType() << ".";
-    if (!Copy(dst_device_tensor.get(), src_device_tensor)) {
+    MS_EXCEPTION_IF_NULL(copy_device_tensor);
+    MS_LOG(INFO) << "The input data of node:" << input_node->DebugString()
+                 << " need copy from address:" << input_device_tensor->GetPtr()
+                 << ", type:" << input_device_tensor->GetDeviceType() << " to address:" << copy_device_tensor->GetPtr()
+                 << ", type:" << copy_device_tensor->GetDeviceType() << ".";
+    if (!Copy(copy_device_tensor.get(), input_device_tensor)) {
       MS_LOG(ERROR) << "Copy data failed.";
       continue;
     }
-    input_device_tensors_[i] = dst_device_tensor.get();
-    if (is_parameters_need_copy_[i] && ref_node_addr_map_.count(dst_node) == 0) {
-      ref_node_addr_map_[dst_node] = src_device_tensor;
+
+    if (is_parameters_need_copy_[i] && ref_node_addr_map_.count(input_node) == 0) {
+      ref_node_addr_map_[input_node] = input_device_tensor;
     }
   }
   return true;

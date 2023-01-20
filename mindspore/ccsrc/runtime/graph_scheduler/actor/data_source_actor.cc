@@ -280,6 +280,11 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
     auto &device_tensor = device_tensors[i];
     MS_EXCEPTION_IF_NULL(device_tensor);
     MS_EXCEPTION_IF_NULL(host_tensor);
+    // No used device address need skip.
+    if (TEST_FLAG(device_tensor->flag(), device::kDeviceAddressFlagNotUsed)) {
+      MS_LOG(DEBUG) << GetAID().Name() << " input index " << i << " is not used.";
+      continue;
+    }
     auto tensor_device_address = std::dynamic_pointer_cast<DeviceTensor>(host_tensor->device_address());
     // Sync data from host_tensor_device_address to device_tensor.
     if (tensor_device_address != nullptr) {
@@ -352,6 +357,7 @@ void HostQueueDataSourceActor::ReleaseDataNodeAddress() {
       MS_EXCEPTION_IF_NULL(new_address);
       new_address->set_original_ref_count(old_address->original_ref_count());
       new_address->ResetRefCount();
+      new_address->set_flag(old_address->flag());
       auto [node, index] = old_address->GetNodeIndex();
       new_address->SetNodeIndex(node, index);
       AnfAlgo::SetOutputAddr(new_address, data_node_with_index.second, data_node_with_index.first.get());

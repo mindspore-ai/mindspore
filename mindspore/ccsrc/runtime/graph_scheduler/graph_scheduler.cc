@@ -2636,7 +2636,7 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
         MS_EXCEPTION_IF_NULL(device_tensor);
         ofs << "\t\t\tdevice tensor value:" << device_tensor << "\tptr:" << device_tensor->GetPtr()
             << "\tsize:" << device_tensor->GetSize() << "\toriginal_ref_count:" << device_tensor->original_ref_count()
-            << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count()
+            << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\tflag:" << device_tensor->flag()
             << "\tdevice_type:" << device_tensor->GetDeviceType()
             << "\tis_ptr_persisted:" << device_tensor->is_ptr_persisted() << "\n ";
       }
@@ -2661,7 +2661,7 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
         MS_EXCEPTION_IF_NULL(device_tensor);
         ofs << "\t\t\tdevice tensor value:" << device_tensor << "\tptr:" << device_tensor->GetPtr()
             << "\tsize:" << device_tensor->GetSize() << "\toriginal_ref_count:" << device_tensor->original_ref_count()
-            << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count()
+            << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\tflag:" << device_tensor->flag()
             << "\tdevice_type:" << device_tensor->GetDeviceType()
             << "\tis_ptr_persisted:" << device_tensor->is_ptr_persisted() << "\n ";
       }

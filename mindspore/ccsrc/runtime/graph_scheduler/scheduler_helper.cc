@@ -131,6 +131,7 @@ void SchedulerHelper::AddDeviceTensorStore(const AnfNode *anf_node, const Device
   MS_EXCEPTION_IF_NULL(device_tensor);
   MS_LOG(DEBUG) << "Add device tensor store:" << device_tensor << " for node:" << anf_node->DebugString();
   DeviceTensorStore::GetInstance().Insert(const_cast<AnfNode *>(anf_node), device_tensor);
+  device_tensor->ClearFlag(device::kDeviceAddressFlagNotUsed);
   UpdateRefCount(device_tensor.get(), true);
 }
 
@@ -170,6 +171,7 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
   // Update the reference count of from_kernel.
   auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_kernel, from_output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
+  device_tensor->ClearFlag(device::kDeviceAddressFlagNotUsed);
   // The device address of super kernel actor can't be changed, so set the max reference count.
   if (IsControlFlowActor(to_actor->type()) || (from_actor->type_ == KernelTransformType::kSuperKernelActor) ||
       (to_actor->type_ == KernelTransformType::kSuperKernelActor)) {
@@ -203,6 +205,7 @@ void SchedulerHelper::AddResultArrow(AbstractActor *const from_actor, OutputActo
   }
   auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_kernel, from_output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
+  device_tensor->ClearFlag(device::kDeviceAddressFlagNotUsed);
   // The output actor need use the relevant information of node to create output tensor.
   device_tensor->SetNodeIndex(from_kernel, from_output_index);
   // The device tensor of graph out need be taken over by host tensor, so set the max reference count.
@@ -346,6 +349,7 @@ void SchedulerHelper::AddFormalParameterDeviceTensor(ControlActor *const from_ac
     (void)from_actor->ref_node_formal_parameter_device_tensors_[from_index].insert(device_tensor);
   }
 
+  device_tensor->ClearFlag(device::kDeviceAddressFlagNotUsed);
   UpdateRefCount(device_tensor.get(), true);
   device_tensor->SetNodeIndex(input_node, 0);
 }
