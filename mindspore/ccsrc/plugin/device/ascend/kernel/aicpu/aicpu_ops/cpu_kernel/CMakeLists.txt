@@ -17,7 +17,6 @@ set(CPU_SRC
     ${UTILS_LISTS}
     ${FORMAT_TRANSFER_LISTS}
     ${CMAKE_CURRENT_SOURCE_DIR}/../aicpu_sharder/aicpu_context.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../common/kernel_log.cc
 )
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/ms_kernel MS_KERNELS)

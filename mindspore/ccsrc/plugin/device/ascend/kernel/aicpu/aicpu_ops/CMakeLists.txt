@@ -23,7 +23,6 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
     set(AICPU_SRC
         ${PROTO_SRCS}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/kernel_base.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/kernel_log.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_async_event.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_pulse.cc
