@@ -773,7 +773,7 @@ class Dense(Cell):
         if self.activation_flag:
             x = self.activation(x)
         if len(x_shape) != 2:
-            out_shape = x_shape[:-1] + (-1,)
+            out_shape = x_shape[:-1] + (F.shape(x)[-1],)
             x = self.reshape(x, out_shape)
         return x
 
