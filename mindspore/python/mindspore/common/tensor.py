@@ -4300,7 +4300,7 @@ class Tensor(Tensor_):
              [0, 1, 2]]))
         """
         self._init_check()
-        return tensor_operator_registry.get('sort')(axis=dim, descending=descending)(self)
+        return tensor_operator_registry.get('sort')(self, axis=dim, descending=descending)
 
     def argsort(self, axis=-1, descending=False):
         """

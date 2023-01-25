@@ -152,7 +152,8 @@ from .array_func import (
     hstack,
     movedim,
     moveaxis,
-    searchsorted
+    searchsorted,
+    sort
 )
 from .parameter_func import (
     assign,
