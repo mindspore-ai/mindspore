@@ -110,6 +110,7 @@ Status ShardReader::Init(const std::vector<std::string> &file_paths, bool load_d
 
   if (num_rows_ > LAZY_LOAD_THRESHOLD) {
     lazy_load_ = true;
+    tasks_.lazy_load_ = true;
     MS_LOG(WARNING)
       << "The number of samples is larger than " << LAZY_LOAD_THRESHOLD
       << ", enable lazy load mode. If you want to speed up data loading, "

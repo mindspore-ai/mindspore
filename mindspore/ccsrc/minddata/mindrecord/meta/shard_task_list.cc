@@ -20,13 +20,15 @@
 
 namespace mindspore {
 namespace mindrecord {
-ShardTaskList::ShardTaskList() : categories(1) {}
+ShardTaskList::ShardTaskList() : categories(1), lazy_load_(false) {}
 
 ShardTaskList::ShardTaskList(const ShardTaskList &other)
     : categories(other.categories),
       permutation_(other.permutation_),
       sample_ids_(other.sample_ids_),
-      task_list_(other.task_list_) {}
+      task_list_(other.task_list_),
+      sample_meta_list_(other.sample_meta_list_),
+      lazy_load_(other.lazy_load_) {}
 
 ShardTaskList &ShardTaskList::operator=(const ShardTaskList &other) {
   ShardTaskList tmp(other);
@@ -34,6 +36,8 @@ ShardTaskList &ShardTaskList::operator=(const ShardTaskList &other) {
   permutation_.swap(tmp.permutation_);
   sample_ids_.swap(tmp.sample_ids_);
   task_list_.swap(tmp.task_list_);
+  sample_meta_list_.swap(tmp.sample_meta_list_);
+  lazy_load_ = tmp.lazy_load_;
   return *this;
 }
 
@@ -68,22 +72,39 @@ void ShardTaskList::TaskListSwap(ShardTaskList &orig_tasks, ShardTaskList &new_t
   std::swap(orig_tasks.sample_ids_, new_tasks.sample_ids_);
 }
 
-void ShardTaskList::PopBack() { task_list_.pop_back(); }
+void ShardTaskList::PopBack() {
+  task_list_.pop_back();
+  if (lazy_load_ == false) {
+    sample_meta_list_.pop_back();
+  }
+}
 
 int64_t ShardTaskList::Size() const { return static_cast<int64_t>(task_list_.size()); }
 
 int64_t ShardTaskList::SizeOfRows() const {
+  int64_t size_of_rows = 0;
   if (task_list_.size() == 0) {
-    return static_cast<int64_t>(0);
+    return size_of_rows;
   }
 
-  // 1 task is 1 page,blob index start from 2
-  auto sum_num_rows = [](int64_t x, ShardTask y) { return x + std::get<2>(y)[0]; };
-  int64_t nRows = std::accumulate(task_list_.begin(), task_list_.end(), 0, sum_num_rows);
-  return nRows;
+  if (lazy_load_ == false) {
+    // 1 task is 1 page,blob index start from 2
+    auto sum_num_rows = [](int64_t x, SampleMeta y) { return x + std::get<0>(y)[0]; };
+    size_of_rows = std::accumulate(sample_meta_list_.begin(), sample_meta_list_.end(), 0, sum_num_rows);
+  } else {
+    MS_LOG(WARNING) << "In lazy load mode, size of rows will be " << size_of_rows << " which is not correctly.";
+  }
+  return size_of_rows;
 }
 
-ShardTask &ShardTaskList::GetTaskByID(int64_t id) { return task_list_[id]; }
+ShardTask ShardTaskList::GetTaskByID(int64_t id) {
+  if (lazy_load_ == false) {
+    return {std::get<0>(task_list_[id]), std::get<1>(task_list_[id]), std::get<0>(sample_meta_list_[id]),
+            std::get<1>(sample_meta_list_[id])};
+  } else {
+    return {std::get<0>(task_list_[id]), std::get<1>(task_list_[id]), {}, json()};
+  }
+}
 
 int64_t ShardTaskList::GetTaskSampleByID(int64_t id) { return sample_ids_[id]; }
 
@@ -93,10 +114,16 @@ int64_t ShardTaskList::GetRandomTaskID() {
   return dis(gen);
 }
 
-ShardTask &ShardTaskList::GetRandomTask() {
+ShardTask ShardTaskList::GetRandomTask() {
   std::mt19937 gen = GetRandomDevice();
   std::uniform_int_distribution<> dis(0, task_list_.size() - 1);
-  return task_list_[dis(gen)];
+  size_t random = dis(gen);
+  if (lazy_load_ == false) {
+    return {std::get<0>(task_list_[random]), std::get<1>(task_list_[random]), std::get<0>(sample_meta_list_[random]),
+            std::get<1>(sample_meta_list_[random])};
+  } else {
+    return {std::get<0>(task_list_[random]), std::get<1>(task_list_[random]), {}, json()};
+  }
 }
 
 ShardTaskList ShardTaskList::Combine(std::vector<ShardTaskList> &category_tasks, bool replacement, int64_t num_elements,
