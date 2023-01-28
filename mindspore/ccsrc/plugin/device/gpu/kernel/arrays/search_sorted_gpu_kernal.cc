@@ -97,7 +97,10 @@ bool SearchSortedGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   MS_EXCEPTION_IF_NULL(value_ptr);
   int sequence_len1 = sequence_shape_.size();
   int value_len1 = value_shape_.size();
-  if (sequence_len1 != value_len1) {
+  if (sequence_len1 == 1) {
+    should_last_repeat_ = False;
+  }
+  if (should_last_repeat_ && sequence_len1 != value_len1) {
     MS_EXCEPTION(ValueError)
       << "For '" << kernel_name_
       << "' sequence and value's dimemsion must be the same except the last dimension of 'values";
@@ -121,6 +124,9 @@ bool SearchSortedGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   size_t input_elements_ = sequence_size_;
   size_t search_repeat = static_cast<size_t>(value_shape_.back());
   size_t search_len = static_cast<size_t>(sequence_shape_.back());
+  if (!should_last_repeat_) {
+    search_repeat = value_size_;
+  }
   CalSearchSorted(input_elements_, sequence, values, output, seq_dim, search_repeat, search_len, right, device_id_,
                   cuda_stream_, count1);
   return true;
