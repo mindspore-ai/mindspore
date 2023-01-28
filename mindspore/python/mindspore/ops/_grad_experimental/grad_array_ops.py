@@ -33,6 +33,7 @@ from mindspore.ops.operations.array_ops import Mvlgamma
 from mindspore.ops.operations.array_ops import Triu
 from mindspore.ops.operations.array_ops import IdentityN
 from mindspore.ops.operations.array_ops import IndexFill
+from mindspore.ops.operations.array_ops import IndexPut
 from mindspore.ops.operations.array_ops import CheckNumerics
 from mindspore.ops.operations.array_ops import ConjugateTranspose
 from mindspore.ops.operations.array_ops import SegmentMax
@@ -47,6 +48,7 @@ from mindspore.ops.operations.array_ops import Im2Col
 from mindspore.ops.operations.array_ops import Col2Im
 from mindspore.ops.operations.array_ops import StridedSliceV2
 from mindspore.ops.operations.array_ops import MaskedScatter
+from mindspore.ops.operations.array_ops import MaskedSelect
 from mindspore.ops.operations.array_ops import CountNonZero
 from mindspore.ops.operations._grad_ops import StridedSliceV2Grad
 from mindspore.ops.operations.random_ops import LogNormalReverse
@@ -254,6 +256,43 @@ def get_bprop_index_fill(self):
                 value_grad = gather(dout, indices, dim).sum()
         result = (x_grad, zeros_like(dim), zeros_like(indices), value_grad)
         return result
+
+    return bprop
+
+
+@bprop_getters.register(IndexPut)
+def get_bprop_index_put(self):
+    """Generate bprop for IndexPut"""
+    gather_nd = P.GatherNd()
+    stack = P.Stack()
+    tile = P.Tile()
+    masked_select = MaskedSelect()
+    masked_scatter = MaskedScatter()
+    accumulate_grad = self.accumulate
+    index_put = IndexPut(accumulate=accumulate_grad)
+    is_ascend = context.get_context("device_target") == 'Ascend'
+
+    # Negative value are not supported for GatherNd indices when Ascend, so convert it to positive value.
+    def convert_idx_positive(indices_i, x_shape_i):
+        mask = indices_i < 0
+        idx_pos = masked_select(indices_i + x_shape_i, mask)
+        idx = masked_scatter(indices_i, mask, idx_pos)
+        return idx
+
+    def bprop(x1, x2, indices, out, dout):
+        maxsize = max(x.shape[0] for x in indices)
+        indices_ms = [tile(x, (maxsize,)) if x.shape[0] == 1 else x for x in indices]
+        if is_ascend:
+            indices_ms = [convert_idx_positive(indices_ms[i], x1.shape[i]) for i in range(len(indices_ms))]
+        indices_grad = stack(indices_ms).T
+        values_grad = gather_nd(dout, indices_grad)
+        if x2.shape[0] == 1:
+            values_grad = values_grad.sum().reshape(1)
+        if values_grad.shape != x2.shape and len(indices) < len(x1.shape):
+            _, values_grad = binop_grad_common(x1, x2, dout, values_grad)
+        if accumulate_grad == 0:
+            dout = index_put(dout, zeros_like(x2), indices)
+        return dout, values_grad, [zeros_like(item) for item in indices]
 
     return bprop
 

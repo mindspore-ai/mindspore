@@ -66,6 +66,7 @@ constexpr auto kGather = "Gather";
 constexpr auto kHistogram = "Histogram";
 constexpr auto kIdentity = "Identity";
 constexpr auto kIdentityN = "IdentityN";
+constexpr auto kIndexPut = "IndexPut";
 constexpr auto kConcatOffset = "ConcatOffset";
 constexpr auto kConcatOffsetV1 = "ConcatOffsetV1";
 constexpr auto kRandomChoiceWithMask = "RandomChoiceWithMask";
@@ -298,6 +299,7 @@ const std::set<std::string> kDynamicInputOps{kRaggedTensorToTensor,
                                              kReservoirReplayBufferPush,
                                              kReservoirReplayBufferSample,
                                              kIdentityN,
+                                             kIndexPut,
                                              kSparseConcat,
                                              kConcatOffsetV1};
 const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
