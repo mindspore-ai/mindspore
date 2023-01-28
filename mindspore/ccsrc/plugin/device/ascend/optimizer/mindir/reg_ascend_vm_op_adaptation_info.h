@@ -277,11 +277,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kFillV2OpName)
   .set_input_attr_info(0, "listInt");
 
 // In hisi code, first check dynamic impl in GatherV2
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kGatherOpName)
-  .set_backend_op_name(kGatherV2OpName)
-  .set_target_op_name(kGatherV2DOpName)
-  .set_need_tbe_check_supported(true)
-  .set_input_attr_info(2, "int");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kGatherOpName).set_backend_op_name(kGatherV2OpName);
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseGatherV2OpName)
   .set_backend_op_name(kGatherV2OpName)
