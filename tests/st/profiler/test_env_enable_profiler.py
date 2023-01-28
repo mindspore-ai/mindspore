@@ -122,7 +122,7 @@ class TestEnvEnableProfiler:
     @security_off_wrap
     def test_gpu_profiler(self):
         root_status = os.system("whoami | grep root")
-        cuda_status = os.system("nvcc -V | grep cuda_10")
+        cuda_status = os.system("nvcc -V | grep 'release 10'")
         if root_status and not cuda_status:
             return
         status = os.system(
@@ -144,7 +144,7 @@ class TestEnvEnableProfiler:
         Expectation: No exception.
         """
         root_status = os.system("whoami | grep root")
-        cuda_status = os.system("nvcc -V | grep cuda_10")
+        cuda_status = os.system("nvcc -V | grep 'release 10'")
         if root_status and not cuda_status:
             return
         status = os.system(

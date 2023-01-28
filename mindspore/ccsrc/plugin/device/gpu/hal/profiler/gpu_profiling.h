@@ -125,6 +125,7 @@ class GPU_EXPORT GPUProfiler : public Profiler {
   void StopCUPTI();
   void StepProfilingEnable(const bool enable_flag) override;
   bool GetSyncEnableFlag() const { return sync_enable_flag_; }
+  bool GetDataProcessEnableFlag() const { return data_process_enable_; }
   void EventHandleProcess(CUpti_CallbackId cbid, const CUpti_CallbackData *cbdata, const std::string &typestring,
                           uint64_t startTimestamp, uint64_t endTimestamp);
   void CUPTIAPI AllocBuffer(uint8_t **buffer, size_t *size, size_t *maxNumRecords);
