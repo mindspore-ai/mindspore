@@ -3900,6 +3900,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
         >>> target = Tensor(arr2, mstype.float32)
         >>> output = ops.gaussian_nll_loss(x, target, var)
         >>> print(output)
+        1.4374993
 
     Reference:
         Nix, D. A. and Weigend, A. S., "Estimating the mean and variance of the

@@ -615,7 +615,7 @@ def positive(x):
         >>> from mindspore import dtype as mstype
         >>> x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), mstype.float32)
         >>> print(ops.positive(x))
-        [-5.0, 1.5, 3.0, 100.0]
+        [ -5.    1.5   3.  100. ]
     """
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError(f"For positive, the input must be a Tensor, but got {type(x)}")
