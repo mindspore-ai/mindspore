@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for linalg function."""
+from __future__ import absolute_import
 
 import mindspore.ops as ops
 from mindspore.common import dtype as mstype
@@ -95,7 +96,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     r"""
     Computes the (Moore-Penrose) pseudo-inverse of a matrix.
     This function is computed using SVD. If :math:`x=U*S*V^{T}` ,Than the pseudo-inverse of x is:
-    :math:`x^{T}=V*S^{+}*U^{T}` , :math:`S^{+}` is the reciprocal of each non-zero element on
+    :math:`x^{+}=V*S^{+}*U^{T}` , :math:`S^{+}` is the reciprocal of each non-zero element on
     the diagonal of S, and zero remains in place.
     Batch matrices are supported. If x is a batch matrix, the output has the same batch dimension when
     atol or rtol is float.
@@ -109,7 +110,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     threshold (:math:`Max(atol, \sigma \cdot rtol)`, :math:`\sigma` as the largest singular value or
     characteristic value), it is set to zero, and is not used in the computations.
     If rtol is not specified and x is a matrix of dimensions (M, N), then rtol is set to
-    be :math:`rtol=max(M, N)\varepsilon`, :math:`\varepsilon` is the
+    be :math:`rtol=max(M, N)*\varepsilon`, :math:`\varepsilon` is the
     `eps <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.Eps.html>`_ value of x.dtype.
     If rtol is not specified and atol specifies a value larger than zero, rtol is set to zero.
 
