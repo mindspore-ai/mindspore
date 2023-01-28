@@ -115,7 +115,7 @@ void MemOperator::AddGarbageBlock(const int64_t index) {
 
 // malloc memory for data storage
 void *MemOperator::Malloc(size_t size) {
-  auto rounded_size = Rounded(size);
+  auto rounded_size = size == 0 ? 1 : Rounded(size);
   std::lock_guard<std::mutex> locker(mutex_);
   auto iter = free_blocks_.lower_bound(rounded_size);
   if (iter != free_blocks_.end()) {
