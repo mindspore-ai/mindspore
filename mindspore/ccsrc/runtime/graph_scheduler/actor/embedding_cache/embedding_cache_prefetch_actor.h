@@ -327,10 +327,7 @@ class RpcOperator {
 class Sender : public RpcOperator {
  public:
   explicit Sender(device::DeviceContext *cpu_device_context)
-      : server_url_(""),
-        client_(nullptr),
-        cpu_device_context_(cpu_device_context),
-        use_void_(!common::GetEnv("use_void").empty()) {}
+      : server_url_(""), client_(nullptr), cpu_device_context_(cpu_device_context) {}
   ~Sender() override;
 
   // Send buffer to peer.
@@ -372,9 +369,6 @@ class Sender : public RpcOperator {
 
   // The CPU device context used for allocating rpc message data.
   device::DeviceContext *cpu_device_context_;
-
-  // Whether use void * protocol.
-  bool use_void_;
 };
 
 // Receiver is used to receive data from other process.
@@ -386,8 +380,7 @@ class Receiver : public RpcOperator {
         server_(nullptr),
         received_buffer_(nullptr),
         received_msg_(false),
-        cpu_device_context_(cpu_device_context),
-        use_void_(!common::GetEnv("use_void").empty()) {}
+        cpu_device_context_(cpu_device_context) {}
   ~Receiver() override;
 
   // Receive message from the peer sender, this interface is a synchronous interface and will wait for the message
@@ -431,9 +424,6 @@ class Receiver : public RpcOperator {
 
   // The CPU device context used for allocating rpc message data.
   device::DeviceContext *cpu_device_context_;
-
-  // Whether use void * protocol.
-  bool use_void_;
 };
 
 using EmbeddingCachePrefetchActorPtr = std::shared_ptr<EmbeddingCachePrefetchActor>;

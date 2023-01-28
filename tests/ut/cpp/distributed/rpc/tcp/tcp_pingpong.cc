@@ -40,7 +40,6 @@ int pingpong_count = 20;
 std::string server_ip = distributed::kLocalHost;
 std::string server_port = "12345";
 std::string server_url = server_ip + ":" + server_port;
-bool use_void = false;
 
 static size_t data_msg_num = 0;
 std::vector<size_t> send_counts = {
@@ -59,8 +58,6 @@ static void Init() {
   server_ip = user_set_server.empty() ? distributed::kLocalHost : user_set_server;
   server_url = server_ip + ":" + server_port;
   MS_LOG(INFO) << "Server url is " << server_url;
-
-  use_void = false;
 }
 
 static bool WaitForDataMsg(size_t expected_msg_num, int timeout_in_sec) {
@@ -103,14 +100,11 @@ std::unique_ptr<MessageBase> TCPPingPongTest::CreateMessage(const std::string &s
   message->name = "testname";
   message->from = AID("client", "");
   message->to = AID("server", server_url);
-  if (use_void) {
-    void *data = malloc(msg_size);
-    message->data = data;
-    message->size = msg_size;
-  } else {
-    std::string data(msg_size, 'A');
-    message->body = data;
-  }
+
+  void *data = malloc(msg_size);
+  (void)memset_s(data, msg_size, 'A', msg_size);
+  message->data = data;
+  message->size = msg_size;
   return message;
 }
 

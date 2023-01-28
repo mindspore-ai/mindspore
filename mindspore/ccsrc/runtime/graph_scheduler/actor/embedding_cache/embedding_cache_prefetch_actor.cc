@@ -1124,7 +1124,7 @@ bool Sender::ConnectServer() {
   auto free_callback = std::bind(&Sender::FreeMessage, this, std::placeholders::_1);
   size_t retry_count = 60;
 
-  bool ret = use_void_ ? client_->Connect(server_url_, retry_count, free_callback) : client_->Connect(server_url_);
+  bool ret = client_->Connect(server_url_, retry_count, free_callback);
   if (!ret) {
     MS_LOG(ERROR) << "Failed to connect to server of edge: " << inter_process_edge_ << ", server_url: " << server_url_;
     return false;
@@ -1156,17 +1156,12 @@ std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVect
 
   RpcDataPtr rpc_data = nullptr;
   size_t data_size = CalDataSize(shapes, data_types, data_list, finalize_remote);
-  if (use_void_) {
-    MS_EXCEPTION_IF_NULL(cpu_device_context_);
-    MS_EXCEPTION_IF_NULL(cpu_device_context_->device_res_manager_);
-    rpc_data = static_cast<RpcDataPtr>(cpu_device_context_->device_res_manager_->AllocateMemory(data_size));
-    MS_EXCEPTION_IF_NULL(rpc_data);
-    message->data = rpc_data;
-    message->size = data_size;
-  } else {
-    message->body.resize(data_size);
-    rpc_data = message->body.data();
-  }
+  MS_EXCEPTION_IF_NULL(cpu_device_context_);
+  MS_EXCEPTION_IF_NULL(cpu_device_context_->device_res_manager_);
+  rpc_data = static_cast<RpcDataPtr>(cpu_device_context_->device_res_manager_->AllocateMemory(data_size));
+  MS_EXCEPTION_IF_NULL(rpc_data);
+  message->data = rpc_data;
+  message->size = data_size;
 
   size_t offset = 0;
   for (size_t i = 0; i < data_list.size(); i++) {
@@ -1292,12 +1287,8 @@ bool Receiver::StartServer() {
   server_ = std::make_unique<TCPServer>();
   MS_EXCEPTION_IF_NULL(server_);
 
-  std::function<void *(size_t size)> allocate_callback;
-  if (use_void_) {
-    allocate_callback = std::bind(&Receiver::AllocateMessage, this, std::placeholders::_1);
-  } else {
-    allocate_callback = {};
-  }
+  std::function<void *(size_t size)> allocate_callback =
+    std::bind(&Receiver::AllocateMessage, this, std::placeholders::_1);
   if (!server_->Initialize(allocate_callback)) {
     MS_LOG(EXCEPTION) << "Failed to initialize tcp server for recv actor";
   }
@@ -1382,8 +1373,8 @@ MessageBase *Receiver::HandleMessage(MessageBase *const msg) {
     return distributed::rpc::NULL_MSG;
   }
 
-  RpcDataPtr data = use_void_ ? static_cast<RpcDataPtr>(msg->data) : msg->body.data();
-  size_t data_size = use_void_ ? msg->size : msg->body.size();
+  RpcDataPtr data = static_cast<RpcDataPtr>(msg->data);
+  size_t data_size = msg->size;
   // The data pair: <addr of data, size of data>.
   std::pair<const void *, size_t> real_data;
   // Get real data addr and size.
@@ -1404,11 +1395,10 @@ MessageBase *Receiver::HandleMessage(MessageBase *const msg) {
   received_msg_ = true;
   received_msg_cv_.notify_one();
 
-  if (use_void_) {
-    MS_EXCEPTION_IF_NULL(cpu_device_context_);
-    MS_EXCEPTION_IF_NULL(cpu_device_context_->device_res_manager_);
-    cpu_device_context_->device_res_manager_->FreeMemory(data);
-  }
+  MS_EXCEPTION_IF_NULL(cpu_device_context_);
+  MS_EXCEPTION_IF_NULL(cpu_device_context_->device_res_manager_);
+  cpu_device_context_->device_res_manager_->FreeMemory(data);
+
   delete msg;
   return distributed::rpc::NULL_MSG;
 }

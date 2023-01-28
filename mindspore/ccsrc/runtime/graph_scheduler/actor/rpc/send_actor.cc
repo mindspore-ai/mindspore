@@ -62,8 +62,6 @@ bool SendActor::ConnectServer() {
     peer_actor_urls_[peer_actor_id] = server_url_;
   }
 
-  size_t use_void_msg = common::GetEnv("use_void").empty() ? false : true;
-  MS_LOG(INFO) << "Recv actor use void* message: " << use_void_msg;
   return true;
 }
 
@@ -137,8 +135,7 @@ std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const kernel::AddressPtr
     SerializeCommonMessage(message.get(), data_list, workspace_addr);
   }
 
-  size_t data_size = common::GetEnv("use_void").empty() ? message->body.size() : message->size;
-  MS_LOG(DEBUG) << "RpcSend message size is " << data_size;
+  MS_LOG(DEBUG) << "RpcSend message size is " << message->size;
   return message;
 }
 
@@ -147,6 +144,16 @@ bool SendActor::FreeMessage(void *data) {
   ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list,
                             device_contexts_[0], context_, GetAID());
   return true;
+}
+
+void SendActor::Flush() {
+  MS_EXCEPTION_IF_NULL(client_);
+  for (const auto &url : peer_actor_urls_) {
+    MS_LOG(DEBUG) << "Flush for url " << url.second;
+    if (!client_->Flush(url.second)) {
+      MS_LOG(EXCEPTION) << "Failed to flush for url " << url.second;
+    }
+  }
 }
 
 std::vector<DeviceTensor *> SendActor::FindDeviceTensorNeedsFree(const void *data) const {
@@ -159,27 +166,6 @@ std::vector<DeviceTensor *> SendActor::FindDeviceTensorNeedsFree(const void *dat
     }
   }
   return free_list;
-}
-
-void SendActor::SerializeDynamicShapeMessgae(std::string *msg_body, const ShapeVector &shape_vec,
-                                             const TypeId &data_type, const kernel::AddressPtr &addr) const {
-  MS_EXCEPTION_IF_NULL(msg_body);
-  MS_EXCEPTION_IF_NULL(addr);
-
-  rpc::DynamicShapeMessage pb_msg;
-  pb_msg.set_type_id(static_cast<int>(data_type));
-  *pb_msg.mutable_shape_vector() = {shape_vec.begin(), shape_vec.end()};
-  std::string pb_msg_str = pb_msg.SerializeAsString();
-
-  // 1. Magic header for dynamic shape.
-  (void)msg_body->append(kRpcDynamicShapeData);
-  // 2. The size of the protobuf message DynamicShapeMessage.
-  size_t pb_msg_size = pb_msg_str.size();
-  (void)msg_body->append(reinterpret_cast<RpcDataPtr>(&pb_msg_size), sizeof(pb_msg_size));
-  // 3. Protobuf message DynamicShapeMessage.
-  (void)msg_body->append(pb_msg_str);
-  // 4. The real data buffer of the input.
-  (void)msg_body->append(static_cast<RpcDataPtr>(addr->addr), addr->size);
 }
 
 size_t SendActor::SerializeSingleDynamicShapeInput(RpcDataPtr rpc_data, const ShapeVector &shape_vec,
@@ -240,22 +226,15 @@ void SendActor::SerializeDynamicShapeMessage(MessageBase *message, const kernel:
     auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
     TypeId data_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
 
-    if (common::GetEnv("use_void").empty()) {
-      SerializeDynamicShapeMessgae(&message->body, shapes, data_type, data_list[i]);
-    } else {
-      size_t serialized_data_size =
-        SerializeSingleDynamicShapeInput(rpc_data + offset, shapes, data_type, data_list[i]);
-      offset += serialized_data_size;
-    }
+    size_t serialized_data_size = SerializeSingleDynamicShapeInput(rpc_data + offset, shapes, data_type, data_list[i]);
+    offset += serialized_data_size;
   }
 
-  if (!common::GetEnv("use_void").empty()) {
-    if (workspace_addr->size != offset) {
-      MS_LOG(EXCEPTION) << "Send void data size is not the same as workspace size.";
-    }
-    message->data = workspace_addr->addr;
-    message->size = workspace_addr->size;
+  if (workspace_addr->size != offset) {
+    MS_LOG(EXCEPTION) << "Send void data size is not the same as workspace size.";
   }
+  message->data = workspace_addr->addr;
+  message->size = workspace_addr->size;
 }
 
 void SendActor::SerializeCommonMessage(MessageBase *message, const kernel::AddressPtrList &data_list,
@@ -268,28 +247,21 @@ void SendActor::SerializeCommonMessage(MessageBase *message, const kernel::Addre
     std::accumulate(data_list.begin(), data_list.end(), total_size,
                     [](size_t total_size, const kernel::AddressPtr &output) { return total_size + output->size; });
 
-  if (common::GetEnv("use_void").empty()) {
-    message->body.reserve(total_size);
-    for (const auto &data : data_list) {
-      (void)message->body.append(static_cast<RpcDataPtr>(data->addr), data->size);
-    }
-  } else {
-    if (workspace_addr->size != total_size) {
-      MS_LOG(EXCEPTION) << "Workspace size should be the same as inputs size. But got " << workspace_addr->size
-                        << " and " << total_size;
-    }
-
-    RpcDataPtr rpc_data = static_cast<RpcDataPtr>(workspace_addr->addr);
-    MS_EXCEPTION_IF_NULL(rpc_data);
-    for (size_t i = 0; i < data_list.size(); i++) {
-      MS_EXCEPTION_IF_NULL(data_list[i]);
-      if (!CopyRpcDataWithOffset(&rpc_data, data_list[i]->addr, data_list[i]->size)) {
-        MS_LOG(EXCEPTION) << "Failed to copy data for rpc send input " << i;
-      }
-    }
-    message->data = workspace_addr->addr;
-    message->size = workspace_addr->size;
+  if (workspace_addr->size != total_size) {
+    MS_LOG(EXCEPTION) << "Workspace size should be the same as inputs size. But got " << workspace_addr->size << " and "
+                      << total_size;
   }
+
+  RpcDataPtr rpc_data = static_cast<RpcDataPtr>(workspace_addr->addr);
+  MS_EXCEPTION_IF_NULL(rpc_data);
+  for (size_t i = 0; i < data_list.size(); i++) {
+    MS_EXCEPTION_IF_NULL(data_list[i]);
+    if (!CopyRpcDataWithOffset(&rpc_data, data_list[i]->addr, data_list[i]->size)) {
+      MS_LOG(EXCEPTION) << "Failed to copy data for rpc send input " << i;
+    }
+  }
+  message->data = workspace_addr->addr;
+  message->size = workspace_addr->size;
 }
 
 }  // namespace runtime

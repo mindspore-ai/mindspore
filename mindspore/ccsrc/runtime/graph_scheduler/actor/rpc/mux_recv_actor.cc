@@ -55,14 +55,9 @@ void MuxRecvActor::ParseFinalizeReqData(size_t data_len, const MessageBase *cons
 
   size_t req_data_size = 0;
   RpcDataPtr finaliz_req_data;
-  if (common::GetEnv("use_void").empty()) {
-    req_data_size = msg->body.size();
-    finaliz_req_data = const_cast<RpcDataPtr>(msg->body.c_str());
-  } else {
-    MS_EXCEPTION_IF_NULL(msg->data);
-    req_data_size = msg->size;
-    finaliz_req_data = static_cast<RpcDataPtr>(msg->data);
-  }
+  MS_EXCEPTION_IF_NULL(msg->data);
+  req_data_size = msg->size;
+  finaliz_req_data = static_cast<RpcDataPtr>(msg->data);
   if (data_len == req_data_size) {
     return;
   }
