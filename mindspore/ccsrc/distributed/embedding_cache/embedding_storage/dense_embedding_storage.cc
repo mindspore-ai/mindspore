@@ -27,16 +27,18 @@ template <typename KeyType, typename ValueType, typename Allocator>
 void DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(const DeviceAddress *device_address) {
   MS_EXCEPTION_IF_NULL(device_address);
   EmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(device_address);
-  embedding_param_ptr_ = reinterpret_cast<ValueType *>(device_address->GetMutablePtr());
-  MS_EXCEPTION_IF_NULL(embedding_param_ptr_);
+  // Allow embedding_param_address_'s ptr_ to be nullptr at this time, but it must be set valid address before call
+  // `Get` or `Put` methods.
+  embedding_param_address_ = device_address;
+  MS_EXCEPTION_IF_NULL(embedding_param_address_);
   empty_slots_.resize(this->cache_capacity_);
   std::iota(empty_slots_.rbegin(), empty_slots_.rend(), 0);
 }
 
 template <typename KeyType, typename ValueType, typename Allocator>
 void DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Finalize() {
-  EmbeddingStorage<KeyType, ValueType, Allocator>::Finalize();
   empty_slots_.clear();
+  embedding_param_address_ = nullptr;
   embedding_param_ptr_ = nullptr;
 }
 
@@ -51,6 +53,11 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Get(const ConstDataWi
   }
   MS_EXCEPTION_IF_NULL(keys_data);
   MS_EXCEPTION_IF_NULL(values_data);
+  MS_EXCEPTION_IF_NULL(embedding_param_address_);
+  if (!embedding_param_ptr_) {
+    // The embedding_param_address_'s ptr_ can not be nullptr.
+    embedding_param_ptr_ = reinterpret_cast<ValueType *>(embedding_param_address_->GetMutablePtr());
+  }
   MS_EXCEPTION_IF_NULL(embedding_param_ptr_);
 
   // 1. Query cache to get the index of each key in the Tensor, update the positions of cache hit elements in the cache
@@ -105,6 +112,11 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Put(const ConstDataWi
   }
   MS_EXCEPTION_IF_NULL(keys_data);
   MS_EXCEPTION_IF_NULL(values_data);
+  MS_EXCEPTION_IF_NULL(embedding_param_address_);
+  if (!embedding_param_ptr_) {
+    // The embedding_param_address_'s ptr_ can not be nullptr.
+    embedding_param_ptr_ = reinterpret_cast<ValueType *>(embedding_param_address_->GetMutablePtr());
+  }
   MS_EXCEPTION_IF_NULL(embedding_param_ptr_);
 
   // 1. Query cache to get the index of each key in the Tensor, update the positions of cache hit elements in the cache
@@ -168,6 +180,9 @@ void DenseEmbeddingStorage<KeyType, ValueType, Allocator>::QueryCache(const KeyT
     // Record cache miss key's offset in all query keys.
     cache_miss_offsets[(*cache_miss_cnt)++] = i;
   }
+
+  MS_LOG(DEBUG) << "Total keys number: " << key_num << ", cache hit number: " << (key_num - *cache_miss_cnt)
+                << ", cache hit rate: " << static_cast<float>(key_num - *cache_miss_cnt) / static_cast<float>(key_num);
 }
 
 template <typename KeyType, typename ValueType, typename Allocator>

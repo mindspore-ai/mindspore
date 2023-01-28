@@ -693,13 +693,15 @@ class Model:
                 train_network = self._check_network_mode(train_network, True)
                 outputs = train_network(*inputs)
                 cb_params.net_outputs = outputs
+
+                if _is_role_sched():
+                    os._exit(0)
+
                 # In disaster recovery scenarios, need not to execute callbacks if this step executes failed.
                 need_exec_callback_step_end = not (self.enable_recovery and _get_recovery_context("need_reset"))
                 if need_exec_callback_step_end:
                     list_callback.on_train_step_end(run_context)
 
-                if _is_role_sched():
-                    os._exit(0)
                 # Embedding cache server only run one step.
                 if is_embedding_cache_server:
                     break

@@ -36,8 +36,7 @@ void RegParamInfo(py::module *m) {
     .def_property("parallel_optimizer_comm_recompute", &ParamInfo::parallel_optimizer_comm_recompute,
                   &ParamInfo::set_parallel_optimizer_comm_recompute)
     .def_property("parameter_shape", &ParamInfo::parameter_shape, &ParamInfo::set_parameter_shape)
-    .def_property("parameter_persistent_slice_shape", &ParamInfo::parameter_persistent_slice_shape,
-                  &ParamInfo::set_parameter_persistent_slice_shape)
+    .def_property("origin_shape", &ParamInfo::origin_shape, &ParamInfo::set_origin_shape)
     .def_property("use_persistent_storage", &ParamInfo::use_persistent_storage, &ParamInfo::set_use_persistent_storage)
     .def_property("cache_enable", &ParamInfo::cache_enable, &ParamInfo::set_cache_enable)
     .def_property("cache_shape", &ParamInfo::cache_shape, &ParamInfo::set_cache_shape)

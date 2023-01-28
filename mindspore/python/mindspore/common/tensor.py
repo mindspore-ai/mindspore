@@ -26,7 +26,7 @@ from mindspore.common.seed import get_seed
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
-from mindspore.common._utils import split_to_slice_if_need
+from mindspore.common._utils import get_slice_num
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._checkparam import Rel, check_is_number
@@ -2389,7 +2389,7 @@ class Tensor(Tensor_):
         # At embedding cache scenes, we need limit the size of memory for tensor.
         # And save out of range data to persistent storage to support TB-Level size of tensor.
         data_shape = list(shape)
-        slice_num_of_persistent_data = split_to_slice_if_need(self.dtype, shape)
+        slice_num_of_persistent_data = get_slice_num(self.dtype, shape)
         if slice_num_of_persistent_data > 1:
             slice_first_dim = math.ceil(shape[0] / slice_num_of_persistent_data)
             data_shape[0] = slice_first_dim

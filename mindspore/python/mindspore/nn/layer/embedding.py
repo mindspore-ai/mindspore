@@ -340,13 +340,15 @@ class EmbeddingLookup(Cell):
                                      f"But got full_batch: {full_batch} and 'slice_mode': \"{slice_mode}\".")
                 self.vocab_cache_size = self.vocab_cache_size * rank_size
                 _set_rank_id(rank_id)
+
             self.cache_enable = True
+            _set_cache_enable(True)
+
             if _is_role_worker():
                 self.vocab_size = self.vocab_cache_size
 
     def _set_voacb_cache_enable_for_ps(self, vocab_cache_size, embedding_size, vocab_size, param_init):
         """PS embeddingLookup cache enable set."""
-        _set_cache_enable(True)
         if self.sparse:
             self.forward_unique = True
         param_key = _get_unique_parameter_key()

@@ -175,9 +175,9 @@ void EmbeddingCachePrefetchActor::Finalize() {
     return;
   }
 
+  running_ = false;
   PsDataPrefetch::GetInstance().NotifyFinalize();
 
-  running_ = false;
   (void)FinalizeRemote();
 
   data_parser_.notify_all();

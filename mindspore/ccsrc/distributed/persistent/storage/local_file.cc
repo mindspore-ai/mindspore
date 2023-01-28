@@ -409,7 +409,7 @@ void LocalFile<KeyType, ValueType>::Read(const ConstDataWithLen &keys, const Dat
     // 1. Find the position offset measured in bytes from the beginning of this file by keys.
     auto iter = keys_to_locations_.find(keys_data[i]);
     if (iter == keys_to_locations_.end()) {
-      MS_LOG(EXCEPTION) << "Can not find key[" << keys_data[i] << "] to locate the position in file.";
+      MS_LOG(EXCEPTION) << "Can not find key: " << keys_data[i] << " to locate the position in file.";
     }
     const std::pair<size_t, size_t> &offset = iter->second;
 

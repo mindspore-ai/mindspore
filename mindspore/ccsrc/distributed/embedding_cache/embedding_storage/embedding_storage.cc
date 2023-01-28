@@ -67,8 +67,9 @@ void EmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(const DeviceAdd
 
   // 3. Create the persistent storage instance.
   std::string storage_file_root_path = GetEmbeddingRemoteStoragePath();
-  std::string storage_file_path =
-    storage_file_root_path + "/rank_" + std::to_string(rank_id) + "/" + std::to_string(embedding_key_);
+  const std::string kEmbeddingStorageFilePrefix = "embedding_table_";
+  std::string storage_file_path = storage_file_root_path + "/rank_" + std::to_string(rank_id) + "/" +
+                                  kEmbeddingStorageFilePrefix + std::to_string(embedding_key_);
   if (!FileIOUtils::IsFileOrDirExist(storage_file_path)) {
     FileIOUtils::CreateDirRecursive(storage_file_path);
   }
@@ -76,10 +77,10 @@ void EmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(const DeviceAdd
   if (!ret.has_value()) {
     MS_LOG(EXCEPTION) << "Cannot get real path of persistent storage file for parameter.";
   }
-  std::string real_storage_file_path = ret.value();
+  std::string storage_file_real_path = ret.value();
 
   std::map<std::string, std::string> config_map;
-  (void)config_map.emplace(kFileStoragePath, real_storage_file_path);
+  (void)config_map.emplace(kFileStoragePath, storage_file_real_path);
   (void)config_map.emplace(kElementSize, std::to_string(embedding_dim_));
 
   storage_ = std::make_unique<LocalFile<KeyType, ValueType>>(config_map);
