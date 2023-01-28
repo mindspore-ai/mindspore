@@ -893,7 +893,7 @@ bool FormatTransfer::TransDataForwardCore(const FormatArgs &args, void *result, 
     return false;
   }
   if (groups > 1 && args.device_format == kOpFormat_FRAC_Z) {
-    return NCHW_TO_FRAC_Z_WITH_GROPUS(args, result, true, groups);
+    return NCHW_TO_FRAC_Z_WITH_GROUPS(args, result, true, groups);
   }
   auto iter = format_trans_fp_map.find(args.device_format);
   if (iter == format_trans_fp_map.end()) {
@@ -1392,7 +1392,7 @@ bool FormatTransfer::NCDHW_TO_FRAC_Z3D(const FormatArgs &args, void *result) {
   return true;
 }
 
-bool FormatTransfer::NCHW_TO_FRAC_Z_WITH_GROPUS(const FormatArgs &args, void *result, bool to_device, int64_t groups) {
+bool FormatTransfer::NCHW_TO_FRAC_Z_WITH_GROUPS(const FormatArgs &args, void *result, bool to_device, int64_t groups) {
   MS_EXCEPTION_IF_NULL(result);
   auto size = Common4DCheck(args);
   auto n_dim = args.host_shape[kN];
@@ -1765,7 +1765,7 @@ bool FormatTransfer::NDC1HWC0_TO_NCDHW(const FormatArgs &args, void *result) {
 
 bool FormatTransfer::FRAC_Z_TO_NCHW_WITH_GROUPS(const FormatArgs &args, void *result, int64_t groups) {
   MS_LOG(DEBUG) << "Trans format from frac_z to nchw with groups=" << groups;
-  return NCHW_TO_FRAC_Z_WITH_GROPUS(args, result, false, groups);
+  return NCHW_TO_FRAC_Z_WITH_GROUPS(args, result, false, groups);
 }
 
 int64_t FormatTransfer::Common4DCheck(const FormatArgs &args) {

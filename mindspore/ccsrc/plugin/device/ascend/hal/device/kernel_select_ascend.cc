@@ -27,6 +27,7 @@
 #include <algorithm>
 #include "plugin/device/ascend/kernel/kernel_query.h"
 #include "kernel/oplib/oplib.h"
+#include "kernel/oplib/super_bar.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_input_to_attr_registry.h"
@@ -80,6 +81,25 @@ mindspore::HashSet<std::string> kHighPrecisionOp = {kConv2DOpName,
                                                     kConv2DBackpropFilterOpName,
                                                     kBiasAddGradOpName,
                                                     kSigmoidCrossEntropyWithLogitsV2OpName};
+
+void FallbackOps(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto inputs = kernel_node->inputs();
+  const auto &fallback_idx = kernel::SuperBar::GetSBFallbackOpIndex(op_name);
+  if (fallback_idx.empty() || inputs.empty()) {
+    return;
+  }
+  AnfNodePtrList new_inputs = {inputs[0]};
+  for (const auto &idx : fallback_idx) {
+    if (idx >= inputs.size()) {
+      MS_LOG(EXCEPTION) << "Invalid idx: " << idx << ", node: " << kernel_node->fullname_with_scope()
+                        << ", total input size: " << inputs.size();
+    }
+    (void)new_inputs.emplace_back(inputs[idx]);
+  }
+  kernel_node->set_inputs(new_inputs);
+}
 
 bool MatchUnfoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfoPtr &kernel_build_info) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -1221,6 +1241,7 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
       ConvertConstInputToAttr(kernel_node, input_to_attr_info);
     }
 
+    FallbackOps(kernel_node);
     kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
     select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);
     common::AnfAlgo::SetNodeAttr(kAttrIsAiCpuKernel, MakeValue(true), kernel_node);

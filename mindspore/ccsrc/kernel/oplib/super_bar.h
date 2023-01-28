@@ -36,12 +36,14 @@ class BACKEND_EXPORT SuperBar {
   static std::optional<std::map<size_t, size_t>> GetGraphIdxToKernelIdx(const std::string &op_name);
   static bool IsSkipNode(const std::string &op_name);
   static bool IsSkipDynamicCompileStaticNode(const std::string &op_name);
+  static std::vector<size_t> GetSBFallbackOpIndex(const std::string &op_name);
 
  private:
   static bool LoadSBNodeAttr(const nlohmann::json &js);
   static bool LoadSBNodeAttrDefaultValue(const nlohmann::json &js);
   static bool LoadSBNodeInput(const nlohmann::json &js);
   static bool LoadSBSkipNodes(const nlohmann::json &js);
+  static bool LoadSBFallbackOps(const nlohmann::json &js);
   static bool LoadSBSkipDynamicCompileStaticNode(const nlohmann::json &js);
   inline static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> node_input_order_ =
     {};
@@ -49,6 +51,7 @@ class BACKEND_EXPORT SuperBar {
   inline static std::map<std::string, std::map<std::string, std::string>> node_attr_ms_to_kernel_;
   inline static std::map<std::string, std::map<std::string, std::string>> node_attr_default_value_map_ = {};
   inline static std::vector<std::string> skip_nodes_;
+  inline static std::map<std::string, std::vector<size_t>> fallback_ops_;
   inline static std::vector<std::string> skip_dynamic_compile_static_nodes_;
 };
 }  // namespace mindspore::kernel
