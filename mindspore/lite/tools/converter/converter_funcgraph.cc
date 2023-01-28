@@ -109,6 +109,10 @@ FuncGraphPtr ConverterFuncGraph::Load(const std::shared_ptr<ConverterPara> &para
     MindIRLoader mindir_loader;
     func_graph = mindir_loader.LoadMindIR(param->model_file);
   }
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Load MindIR file failed. Please check model file and decrypt key.";
+    return nullptr;
+  }
   bool is_original = IsOriginalFuncGraph(func_graph);
   if (is_original) {
     func_graph->set_attr("graph_name", MakeValue("main_graph"));
