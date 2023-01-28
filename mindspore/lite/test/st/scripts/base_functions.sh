@@ -26,6 +26,7 @@ function Convert() {
         model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
         input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
         input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+        input_format=`echo ${model_info} | awk -F ';' '{print $4}'`
         extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
         input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
         input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
@@ -85,7 +86,7 @@ function Convert() {
           if [[ ${extra_info} =~ "online_convert" ]]; then
             optimize="none"
           fi
-          if [[ ${model_fmk} != "TF" &&! ${cfg_file_name} =~ "_ge" ]]; then
+          if [[ ${model_fmk} != "TF" &&! ${cfg_file_name} =~ "_ge" &&  -z ${input_format} ]]; then
             input_format="NHWC"
           fi
         elif [[ ${cfg_file_name} =~ "_cloud" ]]; then
