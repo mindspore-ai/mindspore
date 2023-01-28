@@ -8,7 +8,7 @@ mindspore.set_context
     在运行程序之前，应配置context。如果没有配置，默认情况下将根据设备目标进行自动设置。
 
     .. note::
-        设置属性时，必须输入属性名称。net初始化后不建议更改模式，因为一些操作的实现在Graph模式和PyNative模式下是不同的。默认值：GRAPH_MODE。
+        设置属性时，必须输入属性名称。net初始化后不建议更改模式，因为一些操作的实现在Graph模式和PyNative模式下是不同的。默认值：PYNATIVE_MODE。
 
     某些配置适用于特定的设备，有关详细信息，请参见下表：
 
