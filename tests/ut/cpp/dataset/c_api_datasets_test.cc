@@ -48,7 +48,7 @@ TEST_F(MindDataTestPipeline, TestCelebADataset) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   // Check if CelebA() read correct images/attr
-  std::string expect_file[] = {"1.JPEG", "2.jpg"};
+  std::string expect_file[] = {"1_apple.JPEG", "2_banana.jpg"};
   std::vector<std::vector<uint32_t>> expect_attr_vector = {
      {0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1,
       0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1},

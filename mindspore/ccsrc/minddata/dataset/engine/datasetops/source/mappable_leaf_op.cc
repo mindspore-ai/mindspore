@@ -183,15 +183,16 @@ Status MappableLeafOp::GetNextRowPullMode(TensorRow *const row) {
     RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
     CHECK_FAIL_RETURN_UNEXPECTED(sample_row.size() > 0, "GetNextRowPullMode: Expect at least one sample in sampler.");
     sample_ids_ = sample_row[0];
+    MS_LOG(DEBUG) << "Set sample_ids_=" << (*sample_ids_);
   }
   if (curr_row_ + 1 > sample_ids_->Size()) {
     *row = TensorRow(TensorRow::kFlagEOE);
     RETURN_IF_NOT_OK(ResetAndUpdateRepeat());
-    RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
     return Status::OK();
   }
   int64_t key;
   RETURN_IF_NOT_OK(sample_ids_->GetItemAt(&key, {curr_row_}));
+  MS_LOG(DEBUG) << "Got key=" << key << " with curr_row_=" << curr_row_;
   RETURN_IF_NOT_OK(LoadTensorRowPullMode(key, row));
   curr_row_++;
   return Status::OK();
@@ -200,6 +201,12 @@ Status MappableLeafOp::GetNextRowPullMode(TensorRow *const row) {
 Status MappableLeafOp::ResetAndUpdateRepeat() {
   if (!IsLastIteration()) {
     RETURN_IF_NOT_OK(Reset());
+    TensorRow sample_row;
+    RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
+    CHECK_FAIL_RETURN_UNEXPECTED(sample_row.size() > 0, "GetNextRowPullMode: Expect at least one sample in sampler.");
+    // Get sample_ids
+    sample_ids_ = sample_row[0];
+    MS_LOG(DEBUG) << "Set sample_ids_=" << (*sample_ids_);
     UpdateRepeatAndEpochCounter();
   } else {
     eof_handled_ = true;

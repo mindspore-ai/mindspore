@@ -1,0 +1,16 @@
+{
+  "datasetType": "IMAGENET",
+  "numRows": 7,
+  "columns": {
+    "image": {
+      "type": "uint8",
+      "rank": 1,
+      "t_impl": "cvmat"
+    },
+    "label" : {
+      "type": "uint32",
+      "rank": 0,
+      "t_impl" : "flex"
+    }
+  }
+}
