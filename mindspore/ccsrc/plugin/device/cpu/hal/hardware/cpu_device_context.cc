@@ -22,6 +22,7 @@
 #include "plugin/device/cpu/optimizer/reg_cpu_const_input_to_attr.h"
 #include "plugin/device/cpu/optimizer/print_value_type.h"
 #include "plugin/device/cpu/hal/hardware/cpu_somas.h"
+#include "plugin/device/cpu/hal/device/cpu_hash_table_util.h"
 #ifdef ENABLE_AKG
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
 #endif
@@ -120,6 +121,36 @@ std::vector<void *> CPUDeviceResManager::AllocateContinuousMemory(const std::vec
   return mem_manager_->MallocContinuousMemFromMemPool(size_list);
 }
 
+namespace {
+// Create user data content(such as CPU hash table) and set user data reference into device_address.
+void FillUserData(const UserDataPtr &user_data, DeviceAddress *device_address) {
+  MS_EXCEPTION_IF_NULL(user_data);
+  MS_EXCEPTION_IF_NULL(device_address);
+
+  const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
+  MS_EXCEPTION_IF_NULL(user_data_type);
+  if (*user_data_type == UserDataType::kUserTypeHashTable) {
+    auto key_type = user_data->get<TypeId>(kHashTableKeyType);
+    auto value_type = user_data->get<TypeId>(kHashTableValueType);
+    MS_EXCEPTION_IF_NULL(key_type);
+    MS_EXCEPTION_IF_NULL(value_type);
+    const auto &iter = cpu_hash_table_funcs.find({*key_type, *value_type});
+    if (iter != cpu_hash_table_funcs.end()) {
+      // Create CPU hash table and set into `user_data`.
+      return std::get<kCreateFuncIndex>(iter->second)(user_data);
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported hash table type, key type:" << TypeIdLabel(*key_type)
+                        << ", value type:" << TypeIdLabel(*value_type);
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid user data type:" << *user_data_type;
+  }
+
+  // Save reference of user data in device address.
+  device_address->set_user_data(user_data);
+}
+}  // namespace
+
 DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(void *const device_ptr, size_t device_size,
                                                           const string &format, TypeId type_id,
                                                           const ShapeVector &shape,
@@ -128,6 +159,9 @@ DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(void *const device_ptr
                                                            device_context_->device_context_key().device_name_,
                                                            device_context_->device_context_key().device_id_);
   device_address->set_host_shape(shape);
+  if (user_data != nullptr) {
+    FillUserData(user_data, device_address.get());
+  }
   return device_address;
 }
 

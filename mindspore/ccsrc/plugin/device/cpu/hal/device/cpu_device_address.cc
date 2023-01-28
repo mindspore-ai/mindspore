@@ -18,6 +18,7 @@
 #include <memory>
 #include "runtime/device/convert_tensor_utils.h"
 #include "plugin/device/cpu/hal/hardware/cpu_memory_pool.h"
+#include "plugin/device/cpu/hal/device/cpu_hash_table_util.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
@@ -45,6 +46,30 @@ bool CopySameTypeMem(void *dst_ptr, size_t dst_size, const void *src_ptr, size_t
     return true;
   }
 }
+
+// Synchronize user data from host to device.
+bool SyncUserDataToDevice(const UserDataPtr &user_data, const void *host_ptr, size_t size) {
+  MS_EXCEPTION_IF_NULL(user_data);
+  MS_EXCEPTION_IF_NULL(host_ptr);
+  const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
+  MS_EXCEPTION_IF_NULL(user_data_type);
+
+  if (*user_data_type == UserDataType::kUserTypeHashTable) {
+    auto key_type = user_data->get<TypeId>(kHashTableKeyType);
+    auto value_type = user_data->get<TypeId>(kHashTableValueType);
+    MS_EXCEPTION_IF_NULL(key_type);
+    MS_EXCEPTION_IF_NULL(value_type);
+    const auto &iter = cpu_hash_table_funcs.find({*key_type, *value_type});
+    if (iter != cpu_hash_table_funcs.end()) {
+      // Import key, value, status tensors to CPU hash table.
+      return std::get<kImportFuncIndex>(iter->second)(user_data, host_ptr, size);
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported hash table type, key type:" << TypeIdLabel(*key_type)
+                        << ", value type:" << TypeIdLabel(*value_type);
+    }
+  }
+  return true;
+}
 }  // namespace
 CPUDeviceAddress::~CPUDeviceAddress() { DoClearDeviceMemory(); }
 
@@ -59,6 +84,28 @@ void CPUDeviceAddress::DoClearDeviceMemory() {
 }
 
 void CPUDeviceAddress::ClearDeviceMemory() { DoClearDeviceMemory(); }
+
+void CPUDeviceAddress::ClearUserData() {
+  if (user_data_ == nullptr) {
+    return;
+  }
+
+  auto user_data_type = user_data_->get<UserDataType>(kUserDataType);
+  MS_EXCEPTION_IF_NULL(user_data_type);
+  if (*user_data_type == UserDataType::kUserTypeHashTable) {
+    auto key_type = user_data_->get<TypeId>(kHashTableKeyType);
+    auto value_type = user_data_->get<TypeId>(kHashTableValueType);
+    MS_EXCEPTION_IF_NULL(key_type);
+    MS_EXCEPTION_IF_NULL(value_type);
+    const auto &iter = cpu_hash_table_funcs.find({*key_type, *value_type});
+    if (iter != cpu_hash_table_funcs.end()) {
+      // Clear CPU hash table.
+      return std::get<kClearFuncIndex>(iter->second)(user_data_);
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported hash table type:" << *key_type << " and:" << *value_type;
+    }
+  }
+}
 
 bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::string &, const ShapeVector &host_shape,
                                      TypeId host_type, bool) const {
@@ -125,6 +172,10 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
 
 bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId type, const void *host_ptr,
                                         const std::string &) const {
+  if (user_data_ != nullptr) {
+    return SyncUserDataToDevice(user_data_, host_ptr, size);
+  }
+
   // The input or output may be empty.
   if ((size == 0) || (size_ == 0)) {
     MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
