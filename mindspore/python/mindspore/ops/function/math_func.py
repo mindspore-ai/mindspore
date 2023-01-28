@@ -538,7 +538,7 @@ def positive(x):
         >>> from mindspore import dtype as mstype
         >>> x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), ms.float32)
         >>> print(ops.positive(x))
-        [-5.0, 1.5, 3.0, 100.0]
+        [ -5.    1.5   3.  100. ]
     """
     if x.dtype == mstype.bool_:
         raise TypeError("For positive, the type of tensor can not be bool.")
@@ -4895,9 +4895,8 @@ def vstack(inputs):
         >>> x2 = np.array([4, 5, 6])
         >>> out = ops.vstack([x1, x2])
         >>> print(out)
-        Tensor(shape=[2, 3], dtype=Int32, value=
-        [[1, 2, 3],
-         [4, 5, 6]])
+        [[1 2 3]
+         [4 5 6]]
     """
     if not isinstance(inputs, (tuple, list)):
         msg = f"List or tuple of tensors are required, but got {type(inputs)}"

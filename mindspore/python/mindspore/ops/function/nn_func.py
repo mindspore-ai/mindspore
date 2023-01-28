@@ -4405,7 +4405,7 @@ def pixel_unshuffle(x, downscale_factor):
         >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
         >>> output = ops.pixel_unshuffle(input_x, 3)
         >>> print(output.shape)
-        >>> (1, 9, 4, 4)
+        (1, 9, 4, 4)
     """
     _check_positive_int(downscale_factor, "downscale_factor")
     idx = x.shape

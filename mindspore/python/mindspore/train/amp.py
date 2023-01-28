@@ -227,7 +227,7 @@ def auto_mixed_precision(network, amp_level="O0"):
         ValueError: If amp level is not supported.
 
     Examples:
-        >>> from mindpsore import amp, nn
+        >>> from mindspore import amp, nn
         >>> network = LeNet5()
         >>> amp_level = "O1"
         >>> net = amp.auto_mixed_precision(network, amp_level)
@@ -402,7 +402,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
             (with property `drop_overflow_update=False` ).
 
     Examples:
-        >>> from mindpsore import amp, nn
+        >>> from mindspore import amp, nn
         >>> network = LeNet5()
         >>> net_loss = nn.SoftmaxCrossEntropyWithLogits(reduction="mean")
         >>> net_opt = nn.Momentum(network.trainable_params(), learning_rate=0.01, momentum=0.9)
