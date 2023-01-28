@@ -29,6 +29,10 @@
 #include "runtime/pynative/op_executor.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "kernel/common_utils.h"
+#ifndef ENABLE_SECURITY
+#include "profiler/device/profiling.h"
+using mindspore::profiler::ProfilerManager;
+#endif
 
 namespace mindspore::runtime {
 namespace {
@@ -468,6 +472,11 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     if (is_dynamic_shape) {
       InferNodeRealShape(node);
       ResizeNodeInput(node);
+#ifndef ENABLE_SECURITY
+      if (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName) {
+        ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
+      }
+#endif
     }
 
     auto workspaces = CreateKernelWorkspaceAddress(runtime_info, device_context, node, is_dynamic_shape);

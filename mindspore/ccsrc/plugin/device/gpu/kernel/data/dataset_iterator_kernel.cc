@@ -104,7 +104,7 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataQueueItem> *data) {
   int repeat = 0;
   while (true) {
 #ifndef ENABLE_SECURITY
-    profiling_enable_ = profiler_inst->GetEnableFlag();
+    profiling_enable_ = profiler_inst->GetDataProcessEnableFlag();
     if (profiling_enable_) {
       start_time_stamp = profiling_op_->GetTimeStamp();
       queue_size = DataQueueMgr::GetInstance().Size(queue_name_);

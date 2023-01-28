@@ -27,6 +27,7 @@
 #include <ctime>
 #include <thread>
 #include <sstream>
+#include "backend/common/session/kernel_graph.h"
 #include "plugin/device/gpu/hal/profiler/cupti_interface.h"
 #include "plugin/device/gpu/hal/profiler/gpu_data_saver.h"
 #include "include/common/pybind_api/api_register.h"
@@ -74,6 +75,7 @@ int posix_memalign(void **ptr, size_t align, size_t size) {
 namespace mindspore {
 namespace profiler {
 namespace gpu {
+using KernelGraph = mindspore::session::KernelGraph;
 namespace {
 PROFILER_REG(kGPUDevice, GPUProfiler);
 }  // namespace
@@ -590,6 +592,8 @@ void GPUProfiler::RecordFrameWorkInfo(const CNodePtr &kernel) {
   if (begin_iter != std::string::npos && end_iter != std::string::npos && begin_iter < end_iter) {
     cur_kernel_info_.op_type = op_name.substr(begin_iter, end_iter - begin_iter);
     cur_kernel_info_.op_name = op_name.substr(begin_iter, op_name.length() - begin_iter);
+    auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(kernel->func_graph());
+    cur_kernel_info_.graph_id = kernel_graph->graph_id();
   }
   for (uint32_t i = 0; i < (uint32_t)kernel->inputs().size(); i++) {
     if (kernel->input(i)->Shape() != nullptr) {
@@ -613,6 +617,7 @@ void GPUProfiler::ClearInst() {
   is_init_ = false;
   enable_flag_ = false;
   sync_enable_flag_ = true;
+  data_process_enable_ = false;
   init_flag_ = false;
   enable_flag_ = false;
   has_find_ = false;

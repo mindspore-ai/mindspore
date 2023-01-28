@@ -45,8 +45,10 @@ std::map<std::string, aclprofAicoreMetrics> kAicMetrics{
   {"ArithmeticUtilization", ACL_AICORE_ARITHMETIC_UTILIZATION},
   {"PipeUtilization", ACL_AICORE_PIPE_UTILIZATION},
   {"Memory", ACL_AICORE_MEMORY_BANDWIDTH},
-  {"MemoryLO", ACL_AICORE_L0B_AND_WIDTH},
+  {"MemoryL0", ACL_AICORE_L0B_AND_WIDTH},
   {"ResourceConflictRatio", ACL_AICORE_RESOURCE_CONFLICT_RATIO},
+  {"MemoryUB", ACL_AICORE_MEMORY_UB},
+  {"None", ACL_AICORE_NONE},
 };
 
 std::shared_ptr<AscendProfiler> AscendProfiler::GetInstance() {
@@ -87,8 +89,9 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
     MS_LOG(WARNING) << "[Internal Error] Failed to init ErrorManager class.";
   }
 
-  (void)ProfilingManager::GetInstance().InitProfiling(profiling_path, device_id);
-
+  if (options["op_time"] == "on") {
+    (void)ProfilingManager::GetInstance().InitProfiling(profiling_path, device_id);
+  }
   MemoryProfiling::GetInstance().SetMemoryProfilingInitialize(profiling_options_);
 
   aclError aclRet = aclprofInit(profile_data_path_.c_str(), profile_data_path_.length());
@@ -112,6 +115,10 @@ uint64_t AscendProfiler::GetOptionsMask() const {
 
   if (options_json["task_trace"] == "on") {
     mask |= ACL_PROF_TASK_TIME;
+  }
+
+  if (options_json["training_trace"] == "on") {
+    mask |= ACL_PROF_TRAINING_TRACE;
   }
 
   if (options_json["aicpu"] == "on") {
