@@ -785,7 +785,8 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
   size_t counter = 0;
   for (auto &pass : passes) {
     ProcessStatus::GetInstance().RecordStart(pass.first);
-    WITH(MsProfile::GetProfile()->Step(pass.first))[&pass, &resource, &counter]() {
+    auto profile_context = MsProfile::GetProfile()->Step(pass.first);
+    auto pass_func = [&pass, &resource, &counter]() {
       MS_LOG(DEBUG) << "Pass " << pass.first << " start ...";
       auto result = pass.second(resource);
       if (!result) {
@@ -813,6 +814,7 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
       counter++;
       MS_LOG(DEBUG) << "Pass " << pass.first << " end.";
     };
+    ProfileExecute(profile_context, pass_func);
     ProcessStatus::GetInstance().RecordEnd();
   }
 

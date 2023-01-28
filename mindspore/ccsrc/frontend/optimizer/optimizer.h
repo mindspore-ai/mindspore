@@ -200,7 +200,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
               changes_since_last_renorm = true;
             }
           };
-          use_profile ? (WITH(MsProfile::GetProfile()->Step(pass_names_[i])) opt_func) : opt_func();
+          use_profile ? ProfileExecute(MsProfile::GetProfile()->Step(pass_names_[i]), opt_func) : opt_func();
 #ifdef ENABLE_DUMP_IR
           static const auto enable_dump_pass_ir = GetDumpConfig().enable_dump_pass_ir;
           auto context = MsContext::GetInstance();
@@ -223,7 +223,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
 #endif
         }
       };
-      use_profile ? (WITH(MsProfile::GetProfile()->Lap(counter)) run_runc) : run_runc();
+      use_profile ? (ProfileExecute(MsProfile::GetProfile()->Lap(counter), run_runc)) : run_runc();
       counter++;
 
       if (run_only_once_) {

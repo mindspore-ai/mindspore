@@ -1136,7 +1136,7 @@ void Pipeline::Run() {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
   FuncGraphPtr user_graph = nullptr;
-  WITH(MsProfile::GetProfile())[&user_graph, this]() {
+  ProfileExecute(MsProfile::GetProfile(), [&user_graph, this]() {
     size_t i = 0;
     for (auto &action : actions_) {
 #ifdef ENABLE_TIMELINE
@@ -1145,11 +1145,11 @@ void Pipeline::Run() {
 #endif
       ProcessStatus::GetInstance().RecordStart(action.first);
       bool result = true;
-      WITH(MsProfile::GetProfile()->Step(action.first))[&result, &action, this]() {
+      ProfileExecute(MsProfile::GetProfile()->Step(action.first), [&result, &action, this]() {
         MS_LOG(INFO) << "Status record: start " << action.first << " action.";
         result = action.second(resource_);
         MS_LOG(INFO) << "Status record: end " << action.first << " action.";
-      };
+      });
       ProcessStatus::GetInstance().RecordEnd();
       if (action.first == "task_emit") {
         SetLoopCount(resource_);
@@ -1187,7 +1187,7 @@ void Pipeline::Run() {
       dump_time.Record(action.first, GetTime(), false);
 #endif
     }
-  };
+  });
 #ifdef ENABLE_PROFILE
   MsProfile::Print();
   MsProfile::Reset();

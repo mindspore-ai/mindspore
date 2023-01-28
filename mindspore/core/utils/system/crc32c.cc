@@ -283,7 +283,7 @@ static inline void CRC32T8(uint32 *crc, const uint8 **p) {
 
 // calc the crc32c value
 uint32 Crc32c::MakeCrc32c(uint32 init_crc, const char *data, size_t size) {
-  MS_EXCEPT_CHECK_NULL(data);
+  MS_EXCEPTION_IF_NULL(data);
   uint32_t crc = init_crc ^ 0xffffffffu;
   const int OFFSET = 8;
 
@@ -295,7 +295,7 @@ uint32 Crc32c::MakeCrc32c(uint32 init_crc, const char *data, size_t size) {
   // Make x point to the first 4-byte aligned byte in the string.
   // This may just exceed the length of the string.
   auto pval = reinterpret_cast<uintptr_t>(bp);
-  auto *bp_align = reinterpret_cast<const uint8_t *>(MEM_ALIGN(pval, 2));
+  auto *bp_align = reinterpret_cast<const uint8_t *>(MemAlign(pval, 2));
 
   // process the not alignment bits when size < 4 byte
   if (bp_align <= ep) {

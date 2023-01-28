@@ -109,7 +109,7 @@ class MS_CORE_API ProfTransaction {
   ~ProfTransaction();
 
   template <class Function>
-  void operator-(const Function &func) {
+  void Execute(const Function &func) {
     double start_time = GetTime();
     func();
     double end_time = GetTime();
@@ -129,7 +129,7 @@ class NoProfTransaction {
   ~NoProfTransaction() = default;
 
   template <class Function>
-  void operator-(const Function &func) {
+  void Execute(const Function &func) {
     func();
   }
 };
@@ -247,12 +247,23 @@ class MS_CORE_API ProcessStatus {
   std::vector<MemoryInfo> stack_;
   std::vector<MemoryInfo> memory_used_;
 };
-}  // namespace mindspore
 
 #ifdef ENABLE_PROFILE
-#define WITH(x) ProfTransaction(x) -
+using ImplementationProfTransaction = ProfTransaction;
 #else
-#define WITH(x) NoProfTransaction(x) -
+using ImplementationProfTransaction = NoProfTransaction;
 #endif
 
+template <typename Function>
+void ProfileExecute(ProfileBase *profile, const Function &func) {
+  auto prof_transaction = ImplementationProfTransaction(profile);
+  prof_transaction.Execute(func);
+}
+
+template <typename Function>
+void ProfileExecute(ProfContext *profile_ctx, const Function &func) {
+  auto prof_transaction = ImplementationProfTransaction(profile_ctx);
+  prof_transaction.Execute(func);
+}
+}  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_PROFILE_H_

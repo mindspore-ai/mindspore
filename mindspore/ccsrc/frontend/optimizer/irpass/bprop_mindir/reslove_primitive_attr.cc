@@ -33,7 +33,7 @@ inline CNode *GetCallNode(const AnfNodePtr &node) {
     return nullptr;
   }
   const auto &func_node = apply_node->input(0);
-  MS_EXCEPT_CHECK_NULL(func_node);
+  MS_EXCEPTION_IF_NULL(func_node);
   auto func_c_node = dyn_cast_ptr<CNode>(func_node);
   if (func_c_node == nullptr) {
     return nullptr;
@@ -42,7 +42,7 @@ inline CNode *GetCallNode(const AnfNodePtr &node) {
 }
 
 inline bool IsGetAttrPrimNode(const AnfNodePtr &node) {
-  MS_EXCEPT_CHECK_NULL(node);
+  MS_EXCEPTION_IF_NULL(node);
   auto primitive = GetValuePtr<Primitive>(node);
   if (primitive == nullptr) {
     return false;
@@ -51,7 +51,7 @@ inline bool IsGetAttrPrimNode(const AnfNodePtr &node) {
 }
 
 inline Primitive *GetPrimNode(const AnfNodePtr &node) {
-  MS_EXCEPT_CHECK_NULL(node);
+  MS_EXCEPTION_IF_NULL(node);
   auto primitive = GetValuePtr<Primitive>(node);
   return primitive;
 }

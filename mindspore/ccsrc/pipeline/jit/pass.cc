@@ -157,9 +157,9 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
 
   auto prim_bprop_opt_step_1 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_1", resource, map);
   FuncGraphPtr func_graph = resource->func_graph();
-  WITH(MsProfile::GetProfile()->Step("prim_bprop_opt_step_1"))[&prim_bprop_opt_step_1, &func_graph]() {
+  ProfileExecute(MsProfile::GetProfile()->Step("prim_bprop_opt_step_1"), [&prim_bprop_opt_step_1, &func_graph]() {
     func_graph = prim_bprop_opt_step_1->step(func_graph, true);
-  };
+  });
   return func_graph;
 }
 
@@ -199,9 +199,9 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
 
   auto prim_bprop_opt_step_2 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_2", resource, map);
   FuncGraphPtr func_graph = resource->func_graph();
-  WITH(MsProfile::GetProfile()->Step("prim_bprop_opt_step_2"))[&prim_bprop_opt_step_2, &func_graph]() {
+  ProfileExecute(MsProfile::GetProfile()->Step("prim_bprop_opt_step_2"), [&prim_bprop_opt_step_2, &func_graph]() {
     func_graph = prim_bprop_opt_step_2->step(func_graph, true);
-  };
+  });
   return func_graph;
 }
 
@@ -231,9 +231,9 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  WITH(MsProfile::GetProfile()->Step("bprop_graph_final_opt"))[&bprop_graph_final_opt, &func_graph]() {
+  ProfileExecute(MsProfile::GetProfile()->Step("bprop_graph_final_opt"), [&bprop_graph_final_opt, &func_graph]() {
     func_graph = bprop_graph_final_opt->step(func_graph, true);
-  };
+  });
   //  Validate(func_graph);
   return func_graph;
 }
@@ -264,9 +264,9 @@ FuncGraphPtr OptGradGraphPass(const ResourcePtr &resource) {
   auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("grad_graph_opt", resource, map);
   auto func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  WITH(MsProfile::GetProfile()->Step("bprop_graph_final_opt"))[&bprop_graph_final_opt, &func_graph]() {
+  ProfileExecute(MsProfile::GetProfile()->Step("bprop_graph_final_opt"), [&bprop_graph_final_opt, &func_graph]() {
     func_graph = bprop_graph_final_opt->step(func_graph, true);
-  };
+  });
   func_graph = LiftingClone(func_graph);
   //  Validate(func_graph);
   return func_graph;

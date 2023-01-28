@@ -599,13 +599,13 @@ void AscendGraphOptimization::GetAllGraphs(const KernelGraphPtr &root_graph) {
     auto child_graph = GetValueNode<FuncGraphPtr>(node);
     MS_EXCEPTION_IF_NULL(child_graph);
     auto child_kernel_graph = child_graph->cast<KernelGraphPtr>();
-    MS_EXCEPT_CHECK_NULL(child_kernel_graph);
+    MS_EXCEPTION_IF_NULL(child_kernel_graph);
     GetAllGraphs(child_kernel_graph);
   }
 }
 
 void AscendGraphOptimization::CheckControlFlowDynamicShape(const KernelGraphPtr &root_graph) {
-  MS_EXCEPT_CHECK_NULL(root_graph);
+  MS_EXCEPTION_IF_NULL(root_graph);
   memo_.clear();
   GetAllGraphs(root_graph);
   if (memo_.size() <= 1) {
