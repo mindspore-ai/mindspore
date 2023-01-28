@@ -100,7 +100,8 @@ class Model:
                 MindSpore model: "model.mindir" | MindSpore Lite model: "model.ms". For details, see
                 `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
             model_type (ModelType): Define The type of input model file. Options: ModelType.MINDIR |
-                ModelType.MINDIR_LITE.
+                ModelType.MINDIR_LITE. For details, see
+                `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
             context (Context): Define the context used to transfer options during execution.
             config_path (str, optional): Define the config file path. the config file is used to transfer user defined
                 options during build model. In the following scenarios, users may need to set the parameter.

@@ -79,7 +79,7 @@ mindspore_lite.Tensor
         设置Tensor的数据类型。
 
         参数：
-            - **data_type** (DataType) - Tensor的数据类型。
+            - **data_type** (DataType) - Tensor的数据类型。有关详细信息，请参见 `DataType <https://mindspore.cn/lite/api/zh-CN/master/mindspore_lite/mindspore_lite.DataType.html>`_ 。
 
         异常：
             - **TypeError** - `data_type` 不是DataType类型。
@@ -89,7 +89,7 @@ mindspore_lite.Tensor
         设置Tensor的格式。
 
         参数：
-            - **tensor_format** (Format) - Tensor的格式。
+            - **tensor_format** (Format) - Tensor的格式。有关详细信息，请参见 `Format <https://mindspore.cn/lite/api/zh-CN/master/mindspore_lite/mindspore_lite.Format.html>`_ 。
 
         异常：
             - **TypeError** - `tensor_format` 不是Format类型。
