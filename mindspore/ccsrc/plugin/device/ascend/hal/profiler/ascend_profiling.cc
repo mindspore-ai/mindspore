@@ -47,6 +47,8 @@ std::map<std::string, aclprofAicoreMetrics> kAicMetrics{
   {"Memory", ACL_AICORE_MEMORY_BANDWIDTH},
   {"MemoryLO", ACL_AICORE_L0B_AND_WIDTH},
   {"ResourceConflictRatio", ACL_AICORE_RESOURCE_CONFLICT_RATIO},
+  {"MemoryUB", ACL_AICORE_MEMORY_UB},
+  {"None", ACL_AICORE_NONE},
 };
 
 std::shared_ptr<AscendProfiler> AscendProfiler::GetInstance() {
