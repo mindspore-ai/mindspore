@@ -837,7 +837,7 @@ class Conv3dTranspose(_Conv):
             \end{array}
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.

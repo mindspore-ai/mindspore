@@ -8290,7 +8290,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
         where :math:`group` is the Args parameter.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Raises:
         TypeError: If `in_channel`, `out_channel` or `group` is not an int.
