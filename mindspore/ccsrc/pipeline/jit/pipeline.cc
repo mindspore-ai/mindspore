@@ -274,18 +274,71 @@ std::string ToOrdinal(const size_t &i) {
   return std::to_string(i) + suffix;
 }
 
-py::object GetPyExecuteOutput(const AnfNodePtr &output) {
+AnfNodePtr GetRealOutput(const AnfNodePtr &node) {
+  constexpr size_t real_node_index = 1;
+  if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    const auto cnode = dyn_cast<CNode>(node);
+    MS_EXCEPTION_IF_NULL(cnode);
+    return GetRealOutput(cnode->input(real_node_index));
+  }
+  return node;
+}
+
+bool ContainPyExecuteOutputData(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->has_user_data<kernel::PyExecuteOutputData>()) {
+    return true;
+  }
+  auto abs = node->abstract();
+  if (abs == nullptr || !abs->isa<abstract::AbstractSequence>()) {
+    return false;
+  }
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  auto inputs = cnode->inputs();
+  if (std::any_of(inputs.begin(), inputs.end(),
+                  [](const AnfNodePtr &input) { return ContainPyExecuteOutputData(input); })) {
+    return true;
+  }
+  return false;
+}
+
+py::object GetVectorRefOutputDataWithPyExecuteObject(const AnfNodePtr &node, const BaseRef &value) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto real_node = GetRealOutput(node);
+  MS_EXCEPTION_IF_NULL(real_node);
+  auto abs = real_node->abstract();
+  if (!abs->isa<abstract::AbstractSequence>() || !real_node->isa<CNode>()) {
+    if (real_node->has_user_data<kernel::PyExecuteOutputData>()) {
+      // None case will consider later.
+      const auto &output_data = real_node->user_data<kernel::PyExecuteOutputData>();
+      return output_data->obj;
+    }
+    return BaseRefToPyData(value, abs);
+  }
+  auto abs_seq = utils::cast<abstract::AbstractSequencePtr>(abs);
+  auto value_seq = utils::cast<VectorRef>(value);
+  if (abs_seq->size() != value_seq.size()) {
+    MS_LOG(EXCEPTION) << "abs size and value size not match. abs size: " << abs_seq->size()
+                      << ", value size: " << value_seq.size();
+  }
+
+  size_t seq_size = abs_seq->size();
+  // List output will be convert to PyExecute real_node, only need to consider tuple here.
+  py::tuple ret = py::tuple(seq_size);
+  auto real_cnode = real_node->cast<CNodePtr>();
+  for (size_t i = 0; i < seq_size; ++i) {
+    ret[i] = GetVectorRefOutputDataWithPyExecuteObject(real_cnode->input(i + 1), value_seq[i]);
+  }
+  return ret;
+}
+
+py::object GetPyExecuteOutput(const AnfNodePtr &output, const BaseRef &value) {
   static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
   if (support_fallback_runtime) {
-    std::function<AnfNodePtr(const AnfNodePtr &)> get_real_output = [&get_real_output](const AnfNodePtr &node) {
-      if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
-        const auto cnode = dyn_cast<CNode>(node);
-        MS_EXCEPTION_IF_NULL(cnode);
-        return get_real_output(cnode->input(1));
-      }
-      return node;
-    };
-    const auto &real_output = get_real_output(output);
+    const auto &real_output = GetRealOutput(output);
     MS_LOG(INFO) << "Real output: " << real_output << ", " << real_output->DebugString()
                  << ", has \'PyExecuteOutputData\': " << real_output->has_user_data<kernel::PyExecuteOutputData>();
     if (real_output->has_user_data<kernel::PyExecuteOutputData>()) {
@@ -296,6 +349,16 @@ py::object GetPyExecuteOutput(const AnfNodePtr &output) {
       if (!py::isinstance<py::none>(res_obj)) {
         return res_obj;
       }
+    }
+    // Handle multiple input case.
+    auto real_output_abs = real_output->abstract();
+    MS_EXCEPTION_IF_NULL(real_output_abs);
+    if (real_output_abs->isa<AbstractTuple>() && ContainPyExecuteOutputData(real_output)) {
+      MS_LOG(DEBUG) << "Contains PyExecute output data.";
+      if (!utils::isa<VectorRef>(value)) {
+        MS_LOG(EXCEPTION) << "When the output is tuple, value should be vector ref.";
+      }
+      return GetVectorRefOutputDataWithPyExecuteObject(real_output, value);
     }
   }
   return py::none();
@@ -1347,15 +1410,16 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
   MS_LOG(DEBUG) << "Eval run" << ms_context->backend_policy();
   const auto &output = execute_info->func_graph->output();
   MS_EXCEPTION_IF_NULL(output);
+
   const auto &output_abs = output->abstract();
   MS_EXCEPTION_IF_NULL(output_abs);
+  BaseRef value;
   for (int64_t i = 0; i < vm_loop; i++) {
-    BaseRef value = (*run)(execute_info->arg_list);
+    value = (*run)(execute_info->arg_list);
     res = BaseRefToPyData(value, output_abs);
   }
-
   // Replace the output if it's not Tensor, but Python data.
-  const auto &py_res = GetPyExecuteOutput(output);
+  const auto &py_res = GetPyExecuteOutput(output, value);
   if (py_res != py::none()) {
     return py_res;
   }

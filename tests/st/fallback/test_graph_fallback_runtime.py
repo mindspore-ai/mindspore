@@ -227,6 +227,56 @@ def test_dict_get_3():
     assert out == {'y': ms.Tensor(np.array(1), ms.int64), 'a': 'a', 'b': 'c'}
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multiple_return_contains_dict():
+    """
+    Feature: Return multiple outputs including dict.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def dict_net_2():
+        x = {'a': 1, 'b': 2}
+        y = x.get('a')
+        y_tensor = ms.Tensor([y])
+        z = dict(a=y_tensor)
+        return y, z, (1, 2)
+
+    out = dict_net_2()
+    assert len(out) == 3
+    assert out[0] == 1
+    assert out[1] == {'a': ms.Tensor(np.array(1), ms.int64)}
+    assert out[2] == (1, 2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multiple_return_contains_dict_2():
+    """
+    Feature: Return multiple outputs including dict.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def dict_net_2(a):
+        x = {'a': a, 'b': 2}
+        return a, (x, (1, 2))
+
+    out = dict_net_2(ms.Tensor([1]))
+    assert len(out) == 2
+    assert out[0] == ms.Tensor([1])
+    assert len(out[1]) == 2
+    assert out[1][0] == {'a': ms.Tensor([1], ms.int64), 'b': 2}
+    assert out[1][1] == (1, 2)
+
+
 def weight_variable():
     """weight initial"""
     return TruncatedNormal(0.02)
