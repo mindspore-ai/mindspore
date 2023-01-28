@@ -100,34 +100,62 @@ mindspore::PadMode OnnxNodeParser::GetOnnxPadMode(const onnx::AttributeProto &on
   }
 }
 
-STATUS OnnxNodeParser::CopyOnnxTensorData(const onnx::TensorProto &onnx_const_tensor,
-                                          const tensor::TensorPtr &tensor_info) {
+tensor::TensorPtr OnnxNodeParser::CopyOnnxTensorData(const onnx::TensorProto &onnx_const_tensor) {
+  auto onnx_data_type = static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type());
+  auto data_type = OnnxNodeParser::GetDataTypeFromOnnx(onnx_data_type);
+  if (data_type == kTypeUnknown) {
+    MS_LOG(ERROR) << "not support onnx data type " << onnx_data_type;
+    return nullptr;
+  }
+  std::vector<int64_t> shape_vector(onnx_const_tensor.dims().begin(), onnx_const_tensor.dims().end());
+  auto tensor_info = std::make_shared<tensor::Tensor>(data_type, shape_vector);
   if (tensor_info == nullptr) {
-    MS_LOG(ERROR) << "tensor_info is nullptr.";
-    return RET_NULL_PTR;
+    MS_LOG(ERROR) << "new a tensor::Tensor failed, data type: " << data_type << ", shape: " << shape_vector;
+    return nullptr;
   }
   bool overflow = false;
   auto data_count = GetOnnxElementNum(onnx_const_tensor, &overflow);
   if (overflow) {
-    MS_LOG(ERROR) << "data count overflow";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "data count overflow, tensor shape: " << shape_vector;
+    return nullptr;
   }
-  size_t data_size = 0;
-  auto data_type = GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type()));
-  const void *onnx_data = GetOnnxRawData(onnx_const_tensor, data_type, data_count, &data_size);
-  if (data_size == 0) {
-    return RET_OK;
+  if (data_count == 0) {
+    return tensor_info;
   }
-  if (onnx_data == nullptr) {
-    MS_LOG(ERROR) << "origin data in onnx model is nullptr";
-    return RET_MEMORY_FAILED;
+  auto type_size = lite::DataTypeSize(data_type);
+  if (type_size == 0) {
+    MS_LOG(ERROR) << "Unsupported data type: " << data_type;
+    return nullptr;
   }
-  auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-  if (memcpy_s(tensor_data, tensor_info->data().nbytes(), onnx_data, data_size) != EOK) {
-    MS_LOG(ERROR) << "memcpy_s failed";
-    return RET_ERROR;
+  if (INT_MUL_OVERFLOW_THRESHOLD(data_count, type_size, SIZE_MAX)) {
+    MS_LOG(ERROR) << "data_size overflow";
+    return nullptr;
   }
-  return RET_OK;
+  auto data_size = data_count * type_size;
+  auto tensor_data = tensor_info->data_c();
+  if (tensor_data == nullptr) {
+    MS_LOG(ERROR) << "Dst tensor cannot be nullptr";
+    return nullptr;
+  }
+  auto dst_bytes_size = tensor_info->data().nbytes();
+  if (dst_bytes_size != SizeToLong(data_size)) {
+    MS_LOG(ERROR) << "Calculated data size " << data_size << " != tensor bytes size " << dst_bytes_size;
+    return nullptr;
+  }
+  if (onnx_const_tensor.raw_data().size() != 0) {
+    auto ret = GetOnnxRawData(onnx_const_tensor, data_count, tensor_info);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Failed to get tensor data, data count " << data_count << ", data type " << data_type;
+      return nullptr;
+    }
+  } else {
+    auto ret = GetOnnxListData(onnx_const_tensor, data_count, tensor_info);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Failed to get tensor data, data count " << data_count << ", data type " << data_type;
+      return nullptr;
+    }
+  }
+  return tensor_info;
 }
 
 TypeId OnnxNodeParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type) {
@@ -221,20 +249,22 @@ size_t OnnxNodeParser::GetOnnxElementNum(const onnx::TensorProto &onnx_tensor, b
 }
 
 STATUS OnnxNodeParser::LoadOnnxExternalTensorData(const onnx::TensorProto &onnx_const_tensor,
-                                                  const tensor::TensorPtr &tensor_info, const std::string &model_file) {
+                                                  const tensor::TensorPtr &tensor_info, const std::string &model_file,
+                                                  std::map<std::string, std::pair<size_t, uint8_t *>> *external_datas) {
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "tensor_info is nullptr.";
     return RET_NULL_PTR;
   }
   size_t data_size = 0;
-  const void *onnx_data = LoadOnnxRawData(onnx_const_tensor, &data_size, model_file);
+  const void *onnx_data = LoadOnnxRawData(onnx_const_tensor, &data_size, model_file, external_datas);
   if (onnx_data == nullptr) {
     MS_LOG(ERROR) << "origin data from external data is nullptr.";
     return RET_MEMORY_FAILED;
   }
   auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   if (memcpy_s(tensor_data, tensor_info->data().nbytes(), onnx_data, data_size) != EOK) {
-    MS_LOG(ERROR) << "memcpy_s from onnx tensor data to mindspore tensor data failed.";
+    MS_LOG(ERROR) << "memcpy_s from onnx tensor data to mindspore tensor data failed, dst size "
+                  << tensor_info->data().nbytes() << ", src size " << data_size;
     return RET_ERROR;
   }
   return RET_OK;
@@ -253,95 +283,173 @@ STATUS OnnxNodeParser::SetExternalTensorFile(const std::string &model_file, std:
   return RET_OK;
 }
 
-const void *OnnxNodeParser::GetOnnxRawData(const onnx::TensorProto &onnx_const_tensor, TypeId data_type,
-                                           size_t data_count, size_t *data_size) {
-  MS_ASSERT(data_size != nullptr);
+template <class DstT, class SrcT>
+static int CopyOnnxData(void *dst_v, const void *src_v, size_t data_count) {
+  if (dst_v == nullptr || src_v == nullptr) {
+    MS_LOG(ERROR) << "Dst or src data cannot be nullptr";
+    return RET_ERROR;
+  }
+  if (sizeof(DstT) == sizeof(SrcT)) {
+    if (memcpy_s(dst_v, data_count * sizeof(DstT), src_v, data_count * sizeof(SrcT)) != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed, data size " << data_count * sizeof(DstT);
+      return RET_ERROR;
+    }
+    return RET_OK;
+  }
+  auto src = reinterpret_cast<const SrcT *>(src_v);
+  auto dst = reinterpret_cast<DstT *>(dst_v);
+  for (size_t i = 0; i < data_count; i++) {
+    dst[i] = static_cast<DstT>(src[i]);
+  }
+  return RET_OK;
+}
+
+int OnnxNodeParser::GetOnnxRawData(const onnx::TensorProto &onnx_const_tensor, size_t data_count,
+                                   const tensor::TensorPtr &tensor_info) {
+  auto data_size = LongToSize(tensor_info->data().nbytes());
+  auto tensor_data = tensor_info->data_c();
+  auto onnx_data = onnx_const_tensor.raw_data().data();
+  if (onnx_const_tensor.raw_data().size() != data_size) {
+    MS_LOG(ERROR) << "Tensor raw data size " << onnx_const_tensor.raw_data().size() << " != expected size "
+                  << data_size;
+    return RET_ERROR;
+  }
+  return CopyOnnxData<uint8_t, uint8_t>(tensor_data, onnx_data, data_size);
+}
+
+int OnnxNodeParser::GetOnnxListData(const onnx::TensorProto &onnx_const_tensor, size_t data_count,
+                                    const tensor::TensorPtr &tensor_info) {
   const void *onnx_data = nullptr;
+  auto tensor_data = tensor_info->data_c();
+  TypeId data_type = tensor_info->Dtype()->type_id();
+  auto type_size = lite::DataTypeSize(data_type);
   switch (data_type) {
     case kNumberTypeFloat32:
-      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(float), SIZE_MAX)) {
-        MS_LOG(ERROR) << "data_size overflow";
-        return nullptr;
-      }
-      *data_size = data_count * sizeof(float);
-      if (onnx_const_tensor.float_data_size() == 0) {
-        onnx_data = onnx_const_tensor.raw_data().data();
-      } else {
-        onnx_data = onnx_const_tensor.float_data().data();
-      }
-      break;
+      MS_CHECK_EQ(onnx_const_tensor.float_data_size(), SizeToLong(data_count), RET_ERROR);
+      onnx_data = onnx_const_tensor.float_data().data();
+      return CopyOnnxData<float, float>(tensor_data, onnx_data, data_count);
     case kNumberTypeFloat64:
-      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(double), SIZE_MAX)) {
-        MS_LOG(ERROR) << "data_size overflow";
-        return nullptr;
-      }
-      *data_size = data_count * sizeof(double);
-      if (onnx_const_tensor.double_data_size() == 0) {
-        onnx_data = onnx_const_tensor.raw_data().data();
-      } else {
-        onnx_data = onnx_const_tensor.double_data().data();
-      }
-      break;
-    case kNumberTypeInt32:
-      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(int), SIZE_MAX)) {
-        MS_LOG(ERROR) << "data_size overflow";
-        return nullptr;
-      }
-      *data_size = data_count * sizeof(int);
-      if (onnx_const_tensor.int32_data_size() == 0) {
-        onnx_data = onnx_const_tensor.raw_data().data();
-      } else {
-        onnx_data = onnx_const_tensor.int32_data().data();
-      }
-      break;
+      MS_CHECK_EQ(onnx_const_tensor.double_data_size(), SizeToLong(data_count), RET_ERROR);
+      onnx_data = onnx_const_tensor.double_data().data();
+      return CopyOnnxData<double, double>(tensor_data, onnx_data, data_count);
     case kNumberTypeInt64:
-      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(int64_t), SIZE_MAX)) {
-        MS_LOG(ERROR) << "data_size overflow";
-        return nullptr;
-      }
-      *data_size = data_count * sizeof(int64_t);
-      if (onnx_const_tensor.int64_data_size() == 0) {
-        onnx_data = onnx_const_tensor.raw_data().data();
+      MS_CHECK_EQ(onnx_const_tensor.int64_data_size(), SizeToLong(data_count), RET_ERROR);
+      onnx_data = onnx_const_tensor.int64_data().data();
+      return CopyOnnxData<int64_t, int64_t>(tensor_data, onnx_data, data_count);
+    case kNumberTypeUInt64:
+    case kNumberTypeUInt32:
+      MS_CHECK_EQ(onnx_const_tensor.uint64_data_size(), SizeToLong(data_count), RET_ERROR);
+      onnx_data = onnx_const_tensor.uint64_data().data();
+      if (data_type == kNumberTypeUInt32) {
+        return CopyOnnxData<uint32_t, uint64_t>(tensor_data, onnx_data, data_count);
       } else {
-        onnx_data = onnx_const_tensor.int64_data().data();
+        return CopyOnnxData<uint64_t, uint64_t>(tensor_data, onnx_data, data_count);
       }
-      break;
-    case kNumberTypeUInt8:
+    case kNumberTypeInt32:
+    case kNumberTypeInt16:
     case kNumberTypeInt8:
+    case kNumberTypeUInt16:
+    case kNumberTypeUInt8:
     case kNumberTypeBool:
-      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(uint8_t), SIZE_MAX)) {
-        MS_LOG(ERROR) << "data_size overflow";
-        return nullptr;
+    case kNumberTypeFloat16:
+      MS_CHECK_EQ(onnx_const_tensor.int32_data_size(), SizeToLong(data_count), RET_ERROR);
+      onnx_data = onnx_const_tensor.int32_data().data();
+      if (type_size == sizeof(int32_t)) {
+        return CopyOnnxData<int32_t, int32_t>(tensor_data, onnx_data, data_count);
+      } else if (type_size == sizeof(uint16_t)) {
+        return CopyOnnxData<uint16_t, int32_t>(tensor_data, onnx_data, data_count);
+      } else if (type_size == sizeof(uint8_t)) {
+        return CopyOnnxData<uint8_t, int32_t>(tensor_data, onnx_data, data_count);
       }
-      *data_size = data_count * sizeof(uint8_t);
-      onnx_data = onnx_const_tensor.raw_data().data();
       break;
     default:
-      MS_LOG(ERROR) << "unsupported data type " << data_type;
-      return nullptr;
+      break;
   }
-  return onnx_data;
+  MS_LOG(ERROR) << "unsupported data type " << data_type;
+  return RET_ERROR;
 }
 
 const void *OnnxNodeParser::LoadOnnxRawData(const onnx::TensorProto &onnx_const_tensor, size_t *data_size,
-                                            const std::string &model_file) {
-  MS_ASSERT(data_size != nullptr);
+                                            const std::string &model_file,
+                                            std::map<std::string, std::pair<size_t, uint8_t *>> *external_datas) {
+  MS_ERROR_IF_NULL_W_RET_VAL(data_size, nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(external_datas, nullptr);
   ExternalDataInfo external_data_info;
   if (ExternalDataInfo::Create(onnx_const_tensor.external_data(), &external_data_info) != RET_OK) {
     MS_LOG(ERROR) << "Create ExternalDataInfo failed.";
     return nullptr;
   }
-  std::string external_tensor_dir;
-  if (SetExternalTensorFile(model_file, &external_tensor_dir) != RET_OK) {
-    MS_LOG(ERROR) << "Failed to set external tensor file.";
+  auto data_path = external_data_info.GetRelativePath();
+  auto it = external_datas->find(data_path);
+  size_t external_data_size = 0;
+  uint8_t *external_data = nullptr;
+  if (it == external_datas->end()) {
+    std::string external_tensor_dir;
+    if (SetExternalTensorFile(model_file, &external_tensor_dir) != RET_OK) {
+      MS_LOG(ERROR) << "Failed to set external tensor file.";
+      return nullptr;
+    }
+#ifdef _WIN32
+    std::string external_data_file = external_tensor_dir + "\\" + data_path;
+#else
+    std::string external_data_file = external_tensor_dir + "/" + data_path;
+#endif
+    external_data = reinterpret_cast<uint8_t *>(ReadFile(external_data_file.c_str(), &external_data_size));
+    if (external_data == nullptr || external_data_size == 0) {
+      MS_LOG(ERROR) << "Failed to read external tensor file " << external_data_file;
+      return nullptr;
+    }
+    external_datas->emplace(data_path, std::make_pair(external_data_size, external_data));
+  } else {
+    external_data_size = it->second.first;
+    external_data = it->second.second;
+  }
+  auto offset = external_data_info.GetOffset();
+  auto length = external_data_info.GetLength();
+  if (length == 0 && offset == 0) {  // not set length and offset
+    *data_size = external_data_size;
+    return external_data;
+  }
+  if (length == 0 || external_data_size < offset || external_data_size - offset < length) {
+    MS_LOG(ERROR) << "Invalid external data info, data path " << data_path << ", offset " << offset << ", length "
+                  << length << ", file length " << external_data_size;
     return nullptr;
   }
-#ifdef _WIN32
-  std::string external_data_file = external_tensor_dir + "\\" + external_data_info.GetRelativePath();
-#else
-  std::string external_data_file = external_tensor_dir + "/" + external_data_info.GetRelativePath();
-#endif
-  return ReadFile(external_data_file.c_str(), data_size);
+  *data_size = length;
+  return external_data + offset;
+}
+
+const onnx::TensorProto *OnnxNodeParser::GetConstantTensorData(const onnx::GraphProto &onnx_graph,
+                                                               const std::string &input_name) {
+  auto &initializer = onnx_graph.initializer();
+  auto init_iter = std::find_if(initializer.begin(), initializer.end(),
+                                [input_name](const onnx::TensorProto &proto) { return proto.name() == input_name; });
+  if (init_iter != initializer.end()) {
+    return &(*init_iter);
+  }
+  auto &nodes = onnx_graph.node();
+  auto node_iter = std::find_if(nodes.begin(), nodes.end(), [input_name](const onnx::NodeProto &proto) {
+    if (proto.op_type() != "Constant" || proto.output_size() != 1) {
+      return false;
+    }
+    return proto.output(0) == input_name;
+  });
+  if (node_iter == nodes.end()) {
+    MS_LOG(ERROR) << "Cannot find const input " << input_name;
+    return nullptr;
+  }
+  auto &onnx_node = *node_iter;
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    const auto &attribute_name = onnx_node_attr.name();
+    if (attribute_name == "value") {
+      if (onnx_node_attr.has_t()) {
+        return &onnx_node_attr.t();
+      }
+      break;
+    }
+  }
+  MS_LOG(ERROR) << "Failed to find const value from input " << input_name;
+  return nullptr;
 }
 }  // namespace lite
 }  // namespace mindspore

@@ -38,13 +38,12 @@ PrimitiveCPtr OnnxUnSqueezeParser::Parse(const onnx::GraphProto &onnx_graph, con
   } else {
     MS_CHECK_GE(onnx_node.input_size(), kInputSize1, nullptr);
     const auto &input_name = onnx_node.input(1);
-    auto node_iter = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
-                                  [input_name](const onnx::TensorProto &proto) { return proto.name() == input_name; });
-    if (node_iter == onnx_graph.initializer().end()) {
-      MS_LOG(ERROR) << "not find initializer node: " << input_name.c_str();
+    auto slope_data = OnnxNodeParser::GetConstantTensorData(onnx_graph, input_name);
+    if (slope_data == nullptr) {
+      MS_LOG(ERROR) << "Failed to find const axis input, input name " << input_name << ", current node "
+                    << onnx_node.name();
       return nullptr;
     }
-    const onnx::TensorProto *slope_data = &(*node_iter);
     const auto slope_raw_data = reinterpret_cast<const int64_t *>(slope_data->raw_data().data());
     MS_CHECK_TRUE_RET(slope_raw_data != nullptr, nullptr);
     const int64_t slope_size = slope_data->raw_data().size() / sizeof(int64_t);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_QUANTIZE_LINEAR_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_QUANTIZE_LINEAR_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_TRILU_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_TRILU_PARSER_H_
 
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
-#include <string>
-#include <memory>
-#include <utility>
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {
-class OnnxQuantizeLinearParser : public OnnxNodeParser {
+class OnnxTriluParser : public OnnxNodeParser {
  public:
-  OnnxQuantizeLinearParser() : OnnxNodeParser("QuantizeLinear") {}
-  ~OnnxQuantizeLinearParser() override = default;
+  OnnxTriluParser() : OnnxNodeParser("Trilu") {}
+  ~OnnxTriluParser() override = default;
 
   PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
-
- private:
-  tensor::TensorPtr GetConstData(const onnx::GraphProto &onnx_graph, const std::string &input_name);
 };
 }  // namespace lite
 }  // namespace mindspore
-
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_QUANTIZE_LINEAR_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_TRILU_PARSER_H_
