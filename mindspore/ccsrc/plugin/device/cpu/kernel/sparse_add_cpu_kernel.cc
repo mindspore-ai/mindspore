@@ -128,7 +128,8 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   const int64_t b_indices_num = SizeToLong(inputs[kBIndicesIdx]->size) / SizeToLong((sizeof(T)) * indices_column_);
 
   // Use double pointer to calculate the sum of two inputs
-  T i = 0, j = 0;
+  T i = 0;
+  T j = 0;
   S sum_ab = 0;
   std::vector<std::pair<bool, T>> whole_indices;
   std::vector<S> whole_values;
