@@ -4264,11 +4264,11 @@ def imag(input):
     return F.imag(input)
 
 
-def diff(x):
+def diff(x, n=1, axis=-1, prepend=None, append=None):
     r"""
     For details, please refer to :func:`mindspore.ops.diff`.
     """
-    return F.diff(x)
+    return F.diff(x, n, axis, prepend, append)
 
 
 def frac(x):

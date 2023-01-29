@@ -22,7 +22,7 @@ import mindspore.nn as nn
 
 class Net(nn.Cell):
     def construct(self, x):
-        return x.diff()
+        return x.diff(n=1, axis=-1, prepend=None, append=None)
 
 
 @pytest.mark.level0
