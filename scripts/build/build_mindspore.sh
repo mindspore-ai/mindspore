@@ -95,8 +95,8 @@ build_mindspore()
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DEBUGGER=ON"
     fi
 
-    if [[ "X$ENABLE_IBVERBS" = "Xon" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_IBVERBS=ON"
+    if [[ "X$ENABLE_RDMA" = "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_RDMA=ON"
     fi
     if [[ "X$ENABLE_HIDDEN" = "Xoff" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_HIDDEN=OFF"

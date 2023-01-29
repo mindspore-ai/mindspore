@@ -47,7 +47,7 @@ init_default_options()
   export ENABLE_ACL="off"
   export ENABLE_D="off"
   export ENABLE_DEBUGGER="on"
-  export ENABLE_IBVERBS="off"
+  export ENABLE_RDMA="off"
   export ENABLE_PYTHON="on"
   export ENABLE_GPU="off"
   export ENABLE_VERBOSE="off"

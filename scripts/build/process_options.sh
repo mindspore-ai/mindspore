@@ -20,7 +20,7 @@ set -e
 process_options()
 {
   # Process the options
-  while getopts 'drvj:c:t:hb:s:a:g:p:ie:l:I:RP:D:zM:V:K:B:En:A:S:k:W:F:H:L:yG:f' opt
+  while getopts 'drvj:c:t:hb:s:a:g:p:ie:l:I:RP:D:zM:V:K:B:E:n:A:S:k:W:F:H:L:yG:f' opt
   do
     CASE_SENSIVE_ARG=${OPTARG}
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
@@ -89,8 +89,9 @@ process_options()
       B)
         build_option_proc_upper_b ;;
       E)
-        export ENABLE_IBVERBS="on"
-        echo "enable IBVERBS for parameter server" ;;
+        check_on_off $OPTARG E
+        export ENABLE_RDMA="$OPTARG"
+        echo "enable RDMA for RPC $ENABLE_RDMA" ;;
       A)
         build_option_proc_upper_a ;;
       W)
