@@ -51,6 +51,43 @@ void CheckPaddingParam(const std::vector<int64_t> &paddings_shape, const std::ve
   return;
 }
 
+void CheckPaddingValue(const std::vector<std::pair<int64_t, int64_t>> &paddings_attr,
+                       const std::vector<int64_t> &x_shape, const std::string &mode, const std::string &prim_name) {
+  int64_t size = static_cast<int64_t>(x_shape.size());
+  if (size < 0 || size > MAX_PADDINGS) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', the dimension of input only supports less than or equal to 5 dims, but got " << size
+                             << " dims";
+  }
+  for (int64_t i = 0; i < size; i++) {
+    if (x_shape[i] == abstract::Shape::kShapeDimAny) {
+      continue;
+    }
+    if (paddings_attr[i].first < 0 || paddings_attr[i].second < 0) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', all elements of paddings must be >= 0.";
+    }
+    if (mode == "SYMMETRIC") {
+      if (paddings_attr[i].first > static_cast<int64_t>(x_shape[i]) ||
+          paddings_attr[i].second > static_cast<int64_t>(x_shape[i])) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "', paddings must be no greater "
+                                    "than the dimension size: ["
+                                 << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] greater than ["
+                                 << static_cast<int64_t>(x_shape[i]) << "]";
+      }
+    } else if (mode == "REFLECT") {
+      if (paddings_attr[i].first >= static_cast<int64_t>(x_shape[i]) ||
+          paddings_attr[i].second >= static_cast<int64_t>(x_shape[i])) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "', paddings must be no greater "
+                                    "than the dimension size: ["
+                                 << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] not less than ["
+                                 << static_cast<int64_t>(x_shape[i]) << "]";
+      }
+    }
+  }
+}
+
 MIND_API_OPERATOR_IMPL(MirrorPad, BaseOperator);
 class MirrorPadInfer : public abstract::OpInferBase {
  public:
@@ -58,6 +95,9 @@ class MirrorPadInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
+    for (const auto &item : input_args) {
+      MS_EXCEPTION_IF_NULL(item);
+    }
     auto input_x_shape_ptr = input_args[0]->BuildShape();
     MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
     auto input_x_shape = input_x_shape_ptr->cast<abstract::ShapePtr>();
@@ -83,39 +123,7 @@ class MirrorPadInfer : public abstract::OpInferBase {
     }
     (void)CheckAndConvertUtils::CheckInteger(kPaddingsSize, SizeToLong(paddings_attr.size()), kEqual,
                                              SizeToLong(x_shape.size()), prim_name);
-    int64_t size = static_cast<int64_t>(x_shape.size());
-    if (size < 0 || size > MAX_PADDINGS) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name
-                               << "', the dimension of input only supports less than or equal to 5 dims, but got "
-                               << size << " dims";
-    }
-    for (int64_t i = 0; i < size; i++) {
-      if (x_shape[i] == abstract::Shape::kShapeDimAny) {
-        continue;
-      }
-      if (paddings_attr[i].first < 0 || paddings_attr[i].second < 0) {
-        MS_EXCEPTION(ValueError) << "For '" << prim_name << "', all elements of paddings must be >= 0.";
-      }
-      if (mode == "SYMMETRIC") {
-        if (paddings_attr[i].first > static_cast<int64_t>(x_shape[i]) ||
-            paddings_attr[i].second > static_cast<int64_t>(x_shape[i])) {
-          MS_EXCEPTION(ValueError) << "For '" << prim_name
-                                   << "', paddings must be no greater "
-                                      "than the dimension size: ["
-                                   << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] greater than ["
-                                   << static_cast<int64_t>(x_shape[i]) << "]";
-        }
-      } else if (mode == "REFLECT") {
-        if (paddings_attr[i].first >= static_cast<int64_t>(x_shape[i]) ||
-            paddings_attr[i].second >= static_cast<int64_t>(x_shape[i])) {
-          MS_EXCEPTION(ValueError) << "For '" << prim_name
-                                   << "', paddings must be no greater "
-                                      "than the dimension size: ["
-                                   << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] not less than ["
-                                   << static_cast<int64_t>(x_shape[i]) << "]";
-        }
-      }
-    }
+    CheckPaddingValue(paddings_attr, x_shape, mode, prim_name);
     std::vector<int64_t> out_shape;
     for (size_t i = 0; i < x_shape.size(); i++) {
       // In dynamic situation , if input axis is dynamic, output axis is dynamic too.

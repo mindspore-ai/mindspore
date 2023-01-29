@@ -4298,9 +4298,9 @@ class PadV3(Primitive):
         ValueError: If `mode` is "constant", the element's number of `paddings` large than input dim * 2.
         ValueError: If `mode` is "edge" or "reflect", the element's number of `paddings` is not 2, 4 or 6.
         ValueError: If `mode` is "edge" or "reflect", `x` dims equals 3,
-            the element's number of `paddings` is 2.
+            the element's number of `paddings` is not 2.
         ValueError: If `mode` is "edge" or "reflect", `x` dims equals 4,
-            the element's number of `paddings` is 4.
+            the element's number of `paddings` is not 4.
         ValueError: If `mode` is "edge" or "reflect", `x` dims smaller than 3.
         ValueError: If `mode` is "edge", x dims bigger than 5.
         ValueError: If `mode` is "reflect", x dims bigger than 4.
