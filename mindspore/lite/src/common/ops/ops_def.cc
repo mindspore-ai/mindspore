@@ -234,6 +234,9 @@ OP_TYPE(TensorScatterAdd)
 OP_TYPE(ScatterElements)
 OP_TYPE(Triu)
 OP_TYPE(Tril)
+OP_TYPE(SparseFillEmptyRows)
+OP_TYPE(SparseReshape)
+OP_TYPE(SparseSegmentSum)
 OP_TYPE_DEF_END(PrimitiveType)
 
 OP_SCHEMA_DEF(Abs)
@@ -1314,3 +1317,12 @@ OP_SCHEMA_DEF_END(Triu)
 
 OP_SCHEMA_DEF(Tril)
 OP_SCHEMA_DEF_END(Tril)
+
+OP_SCHEMA_DEF(SparseFillEmptyRows)
+OP_SCHEMA_DEF_END(SparseFillEmptyRows)
+
+OP_SCHEMA_DEF(SparseReshape)
+OP_SCHEMA_DEF_END(SparseReshape)
+
+OP_SCHEMA_DEF(SparseSegmentSum)
+OP_SCHEMA_DEF_END(SparseSegmentSum)

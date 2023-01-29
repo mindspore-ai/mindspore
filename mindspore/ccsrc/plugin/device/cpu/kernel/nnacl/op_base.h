@@ -535,8 +535,11 @@ enum PrimType {
   PrimType_ScatterElements = 214,
   PrimType_Triu = 215,
   PrimType_Tril = 216,
+  PrimType_SparseFillEmptyRows = 217,
+  PrimType_SparseReshape = 218,
+  PrimType_SparseSegmentSum = 219,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_Tril + 1,
+  PrimType_MAX = PrimType_SparseSegmentSum + 1,
 
   // inner operators.
   PrimType_Inner_ToFormat = 10000,

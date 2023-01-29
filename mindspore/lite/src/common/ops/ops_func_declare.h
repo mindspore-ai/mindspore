@@ -147,6 +147,9 @@
 #include "ops/space_to_depth.h"
 #include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "ops/sparse_to_dense.h"
+#include "ops/sparse_fill_empty_rows.h"
+#include "ops/sparse_reshape.h"
+#include "ops/sparse_segment_sum.h"
 #include "ops/split.h"
 #include "ops/square.h"
 #include "ops/squeeze.h"
@@ -494,6 +497,9 @@ FUNC_MSOP2SCHEMAOP_DECLARE(TensorScatterAdd)
 FUNC_MSOP2SCHEMAOP_DECLARE(ScatterElements)
 FUNC_MSOP2SCHEMAOP_DECLARE(Triu)
 FUNC_MSOP2SCHEMAOP_DECLARE(Tril)
+FUNC_MSOP2SCHEMAOP_DECLARE(SparseFillEmptyRows)
+FUNC_MSOP2SCHEMAOP_DECLARE(SparseReshape)
+FUNC_MSOP2SCHEMAOP_DECLARE(SparseSegmentSum)
 #endif
 }  // namespace mindspore::lite::ops
 #else
