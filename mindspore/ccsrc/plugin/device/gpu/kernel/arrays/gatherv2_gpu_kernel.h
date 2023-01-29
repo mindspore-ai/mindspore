@@ -102,7 +102,7 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
  private:
   using GatherV2Func = std::function<bool(GatherV2FwdGpuKernelMod *, const std::vector<AddressPtr> &,
                                           const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
-  static std::map<std::string, std::vector<std::pair<KernelAttr, GatherV2Func>>> func_map_;
+  static std::vector<std::pair<KernelAttr, GatherV2Func>> func_list_;
   GatherV2Func kernel_func_;
 
   std::vector<int64_t> input_shapes_;
