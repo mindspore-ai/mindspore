@@ -26,6 +26,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr HSigmoidInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -34,6 +35,8 @@ abstract::ShapePtr HSigmoidInferShape(const PrimitivePtr &primitive, const std::
 }
 
 TypePtr HSigmoidInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, prim->name());
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
     MS_LOG(EXCEPTION) << "For '" << prim->name()
                       << "', the input args used for infer shape and type is necessary, but missing it.";
