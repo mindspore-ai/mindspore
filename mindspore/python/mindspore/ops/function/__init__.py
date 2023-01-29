@@ -82,6 +82,7 @@ from .array_func import (
     gather_d,
     gather_elements,
     gather_nd,
+    is_tensor,
     scalar_cast,
     masked_fill,
     narrow,
