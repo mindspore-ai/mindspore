@@ -610,6 +610,7 @@ void GPUProfiler::ClearInst() {
   is_init_ = false;
   enable_flag_ = false;
   sync_enable_flag_ = true;
+  data_process_enable_ = false;
   init_flag_ = false;
   enable_flag_ = false;
   has_find_ = false;

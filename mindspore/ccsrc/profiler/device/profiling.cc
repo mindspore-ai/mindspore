@@ -36,6 +36,11 @@ std::shared_ptr<Profiler> Profiler::GetInstance(const std::string &name) noexcep
   return nullptr;
 }
 
+void Profiler::DataProcessEnable(const bool enable_flag) {
+  MS_LOG(INFO) << "Profiler data process enable flag:" << enable_flag;
+  data_process_enable_ = enable_flag;
+}
+
 bool Profiler::Register(const std::string &name, const std::shared_ptr<Profiler> &instance) {
   if (GetInstanceMap().find(name) != GetInstanceMap().end()) {
     MS_LOG(WARNING) << name << " has been registered.";
