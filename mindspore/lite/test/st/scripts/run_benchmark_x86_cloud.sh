@@ -2,6 +2,41 @@
 source ./scripts/base_functions.sh
 source ./scripts/run_benchmark_python.sh
 
+# Run on x86 java platform:
+function Run_x86_java() {
+    cd ${x86_path} || exit 1
+    mkdir java || exit 1
+    cp ${x86_path}/mindspore-lite-${version}-linux-x64.tar.gz ./java/ || exit 1
+    cd ./java || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    # compile benchmark
+    cd mindspore-lite-${version}-linux-x64 || exit 1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./runtime/third_party/glog
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./runtime/third_party/glog
+    echo "javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d ."
+    javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d .
+
+    # Run tflite converted models:
+    while read line; do
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_x86_java_log_file}"
+        echo "java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms '${models_path}'/input_output/input/${model_name}.ms.bin '${models_path}'/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
+        java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.mindir ${models_path}/input_output/input/${model_name}.bin ${models_path}/input_output/output/${model_name}.out 1 "Runner"
+        if [ $? = 0 ]; then
+            run_result='x86_java: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86_java: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            cat ${run_x86_java_log_file}
+            cat ${run_benchmark_result_file}
+            exit 1
+        fi
+    done < ${models_java_config}
+}
+
+
 # Run converter on x86 platform:
 function Run_Converter() {
     # Unzip x86 runtime and converter
@@ -167,5 +202,20 @@ if [[ $backend == "all" || $backend == "x86_cloud_onnx" ]]; then
       isFailed=1
   fi
 fi
+
+# run Java ST
+if [[ $backend == "all" || $backend == "x86_cloud_onnx" ]]; then
+  run_x86_java_log_file=${basepath}/run_x86_java_log.txt
+  echo 'run x86 java logs: ' > ${run_x86_java_log_file}
+  models_java_config=${basepath}/../config_level0/models_java_cpu_cloud.cfg
+  Run_x86_java
+  Run_java_status=$?
+  if [[ ${Run_java_status} != 0 ]];then
+    cat $run_x86_java_log_file
+    echo "Run_java_status failed"
+    isFailed=1
+  fi
+fi
+
 
 exit ${isFailed}
