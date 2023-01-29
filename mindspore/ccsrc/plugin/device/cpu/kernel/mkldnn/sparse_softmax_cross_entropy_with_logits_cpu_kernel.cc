@@ -53,26 +53,38 @@ int SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPt
     return ret;
   }
 
-  auto shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  auto logits_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
   auto label_shape = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
-  size_t tensor_size = std::accumulate(shape.begin(), shape.end(), sizeof(float), std::multiplies<size_t>());
+  size_t tensor_size =
+    std::accumulate(logits_shape.begin(), logits_shape.end(), sizeof(float), std::multiplies<size_t>());
   (void)workspace_size_list_.emplace_back(tensor_size);
-  if (label_shape.size() > 1) {
+  auto logits_dims = logits_shape.size();
+  if (logits_dims <= 1) {
+    MS_LOG(EXCEPTION) << "Labels shape length must be greater to 1";
+  }
+  auto labels_dims = label_shape.size();
+  if (labels_dims + 1 != logits_dims) {
     MS_LOG(EXCEPTION) << "Labels shape length must be equal to Logits shape length minus 1";
   }
-
-  dnnl::memory::dims mem_dims;
-  (void)mem_dims.insert(mem_dims.end(), shape.begin(), shape.end());
-  if (mem_dims.size() != 2) {
-    MS_LOG(EXCEPTION) << "SparseSoftmaxCrossEntropyWithLogits kernel dims invalid " << mem_dims.size();
+  auto is_same_shape_value = std::equal(label_shape.begin(), label_shape.end(), logits_shape.begin());
+  if (!is_same_shape_value) {
+    MS_LOG(EXCEPTION) << "Labels shape value must be equal to the Logits except the last dimension of Logits";
   }
 
-  batch_size_ = static_cast<size_t>(shape[0]);
-  class_num_ = static_cast<size_t>(shape[1]);
+  batch_size_ =
+    static_cast<size_t>(std::accumulate(label_shape.begin(), label_shape.end(), 1, std::multiplies<size_t>()));
+  class_num_ = static_cast<size_t>(logits_shape.back());
   if (batch_size_ == 0 || class_num_ == 0) {
     MS_LOG(EXCEPTION) << "Invalid batch size or class num input!";
   }
 
+  ShapeVector tiled_logits_shape = {static_cast<ShapeValueDType>(batch_size_),
+                                    static_cast<ShapeValueDType>(class_num_)};
+  dnnl::memory::dims mem_dims;
+  (void)mem_dims.insert(mem_dims.end(), tiled_logits_shape.begin(), tiled_logits_shape.end());
+  if (mem_dims.size() != 2) {
+    MS_LOG(EXCEPTION) << "SparseSoftmaxCrossEntropyWithLogits kernel dims invalid " << mem_dims.size();
+  }
   auto mem_desc = CreateDesc<dnnl::memory::desc>(mem_dims, dnnl::memory::data_type::f32, dnnl::memory::format_tag::nc);
   auto desc = CreateDesc<dnnl::softmax_forward::desc>(dnnl::prop_kind::forward_training, mem_desc, 1);
   auto prim_desc = CreateDesc<dnnl::softmax_forward::primitive_desc>(desc, engine_);

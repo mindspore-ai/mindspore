@@ -28,12 +28,22 @@ namespace ops {
 namespace {
 abstract::ShapePtr SparseSoftmaxCrossEntropyWithLogitsInferShape(const PrimitivePtr &primitive,
                                                                  const std::vector<AbstractBasePtr> &input_args) {
-  auto op_name = primitive->name();
   auto features_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto labels_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   if (!IsDynamic(features_shape) && !IsDynamic(labels_shape)) {
-    (void)CheckAndConvertUtils::CheckInteger("batch of logits(features)", features_shape[kInputIndex0], kEqual,
-                                             labels_shape[kInputIndex0], op_name);
+    auto features_dims = features_shape.size();
+    auto labels_dims = labels_shape.size();
+    if (features_dims <= 1) {
+      MS_EXCEPTION(ValueError) << "Features shape length must be greater than 1";
+    }
+    if (labels_dims + 1 != features_dims) {
+      MS_EXCEPTION(ValueError) << "Features shape length must be equal to Labels shape length plus 1";
+    }
+    auto is_same_shape_value = std::equal(labels_shape.begin(), labels_shape.end(), features_shape.begin());
+    if (!is_same_shape_value) {
+      MS_EXCEPTION(ValueError)
+        << "Labels shape value must be equal to the Features except the last dimension of Features";
+    }
   }
   auto is_grad = false;
   if (primitive->HasAttr(kIsGrad)) {
