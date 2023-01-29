@@ -16,39 +16,32 @@
 #include "backend/common/session/kernel_graph_mgr.h"
 
 #include <algorithm>
-#include <set>
 #include <queue>
 #include <utility>
 #include <functional>
 #include <unordered_map>
-
 #include "include/common/debug/anf_ir_dump.h"
-#include "utils/hash_map.h"
-#include "ir/manager.h"
-#include "abstract/utils.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "utils/ms_utils.h"
 #include "utils/trace_base.h"
-#include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/data_dump/e2e_dump.h"
-
 #endif
 
 namespace mindspore {
 namespace session {
 namespace {
-constexpr size_t max_depth = 128;
+constexpr size_t kMaxDepth = 128;
 constexpr size_t kFirstIndex = 1;
+constexpr int64_t kPairIdx1 = 1;
 
 bool RecursiveCheck(const FuncGraphManagerPtr &manager, const std::pair<AnfNodePtr, int64_t> &kernel, size_t *idx) {
   auto node = kernel.first;
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(node);
-  if (kernel.second > 1 && (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) ||
-                            common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad))) {
+  if (kernel.second > kPairIdx1 && (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) ||
+                                    common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad))) {
     return false;
   }
   if (AnfUtils::IsRealKernel(node) && !common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
@@ -56,7 +49,7 @@ bool RecursiveCheck(const FuncGraphManagerPtr &manager, const std::pair<AnfNodeP
   }
   (*idx) += 1;
   // max recursion depth
-  if (*idx <= max_depth) {
+  if (*idx <= kMaxDepth) {
     auto users = manager->node_users()[node];
     if (std::any_of(users.begin(), users.end(), [&](const std::pair<AnfNodePtr, int64_t> &kernel) {
           return RecursiveCheck(manager, kernel, idx);
@@ -74,6 +67,7 @@ bool IsUsedByRealKernel(const FuncGraphManagerPtr &manager, const AnfNodePtr &no
   // filter nodes not in current graph
   for (auto iter = node_users.begin(); iter != node_users.end();) {
     auto func_graph = iter->first->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
     auto kernel_graph = func_graph->cast<KernelGraphPtr>();
     if (kernel_graph == nullptr) {
       MS_LOG(EXCEPTION) << "func graph cast kernel graph failed, related node is: " << iter->first->DebugString();
@@ -200,6 +194,8 @@ void KernelGraphMgr::ClearGraph() {
 }
 
 void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter) const {
+  MS_EXCEPTION_IF_NULL(out_node);
+  MS_EXCEPTION_IF_NULL(parameter);
   auto graph_id = GetGraphIdByNode(out_node);
   if (graph_id == kInvalidGraphId) {
     return;
@@ -221,6 +217,7 @@ void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, con
   }
   auto real_kernel = common::AnfAlgo::VisitKernel(ref_node, output_idx);
   auto ref_real_node = real_kernel.first;
+  MS_EXCEPTION_IF_NULL(ref_real_node);
   auto ref_real_node_index = real_kernel.second;
   if (ref_real_node->isa<CNode>() && node_graph->IsUniqueTargetInternalOutput(ref_real_node, ref_real_node_index)) {
     auto kernel_info = ref_real_node->kernel_info();
@@ -479,6 +476,7 @@ CNodePtr KernelGraphMgr::CreateNewCNode(const CNodePtr &cnode, KernelGraph *grap
   CreateCNodeInputs(cnode, graph, &cnode_inputs);
   TraceGuard trace_guard(std::make_shared<TraceCopy>(cnode->debug_info()));
   auto new_cnode = graph->NewCNodeWithInfos(cnode_inputs, cnode);
+  MS_EXCEPTION_IF_NULL(new_cnode);
   // if the cnode is call switch, remove call
   if (new_cnode->inputs().size() > 1) {
     auto first_input = new_cnode->input(kFirstDataInputIndex);
@@ -504,6 +502,7 @@ CNodePtr KernelGraphMgr::CreateSwitchInput(const CNodePtr &cnode, const AnfNodeP
   std::vector<AnfNodePtr> partial_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimPartial->name()))};
   if (common::AnfAlgo::CheckPrimitiveType(node_input, prim::kPrimPartial)) {
     auto backend_node = graph->GetBackendAnfByFrontAnf(node_input);
+    MS_EXCEPTION_IF_NULL(backend_node);
     return backend_node->cast<CNodePtr>();
   } else if (node_input->isa<ValueNode>() && IsValueNode<FuncGraph>(node_input)) {
     partial_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(node_input));
@@ -512,9 +511,11 @@ CNodePtr KernelGraphMgr::CreateSwitchInput(const CNodePtr &cnode, const AnfNodeP
     MS_EXCEPTION_IF_NULL(kernel_graph);
     auto parameter = CreateNewParameterFromCNode(cnode, kernel_graph.get());
     MS_EXCEPTION_IF_NULL(parameter);
+    MS_EXCEPTION_IF_NULL(cnode);
     parameter->set_abstract(cnode->abstract());
     auto primitive = NewValueNode(std::make_shared<Primitive>(prim::kPrimReturn->name()));
     auto return_node = kernel_graph->NewCNode({primitive, parameter});
+    MS_EXCEPTION_IF_NULL(return_node);
     return_node->set_abstract(cnode->abstract());
     kernel_graph->set_return(return_node);
     partial_inputs.emplace_back(std::make_shared<ValueNode>(kernel_graph));
@@ -532,6 +533,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchInputs(const CNodePtr &c
   auto attr_input = cnode->input(kAnfPrimitiveIndex);
   MS_EXCEPTION_IF_NULL(attr_input);
   auto cnode_input = graph->GetBackendAnfByFrontAnf(attr_input);
+  MS_EXCEPTION_IF_NULL(cnode_input);
   auto switch_cnode = cnode_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(switch_cnode);
   if (cnode->inputs().size() <= 1) {
@@ -542,6 +544,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchInputs(const CNodePtr &c
                                            switch_cnode->input(kFirstDataInputIndex)};
   for (size_t index = kSwitchTrueBranchIndex; index < switch_cnode->inputs().size(); index++) {
     auto node = switch_cnode->input(index);
+    MS_EXCEPTION_IF_NULL(node);
     // there is real input in call, should put it to true and false branch in switch
     if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
       auto partial_node = node->cast<CNodePtr>();
@@ -582,12 +585,14 @@ void KernelGraphMgr::ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *grap
     graph->NewValueNode(NewValueNode(std::make_shared<Primitive>(prim::kPrimCall->name())))};
   if (common::AnfAlgo::CheckPrimitiveType(return_input, prim::kPrimPartial)) {
     auto return_input_cnode = return_input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(return_input_cnode);
     auto partial_inputs = return_input_cnode->inputs();
     (void)call_inputs.insert(call_inputs.cend(), partial_inputs.cbegin() + kFirstDataInputIndex, partial_inputs.cend());
   } else if (IsValueNode<KernelGraph>(return_input)) {  // return node is kernel graph
     call_inputs.emplace_back(return_input);
   } else {  // return node is value node
     KernelGraphPtr kernel_graph = NewKernelGraph();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
     auto valid_inputs = kernel_graph->MutableValidInputs();
     MS_EXCEPTION_IF_NULL(valid_inputs);
     auto graph_inputs = kernel_graph->MutableInputs();
@@ -616,6 +621,7 @@ void KernelGraphMgr::ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *grap
   }
 
   auto call_node = graph->NewCNode(call_inputs);
+  MS_EXCEPTION_IF_NULL(call_node);
   call_node->set_abstract(cnode->abstract());
   // update return input
   ret->set_input(kFirstDataInputIndex, call_node);
@@ -629,6 +635,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchLayerInputs(const CNodeP
   auto attr_input = cnode->input(kAnfPrimitiveIndex);
   MS_EXCEPTION_IF_NULL(attr_input);
   auto cnode_input = graph->GetBackendAnfByFrontAnf(attr_input);
+  MS_EXCEPTION_IF_NULL(cnode_input);
   auto switch_layer_cnode = cnode_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(switch_layer_cnode);
   std::vector<AnfNodePtr> switch_layer_inputs = {switch_layer_cnode->input(kAnfPrimitiveIndex),
@@ -721,6 +728,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateSwitchOrPartialNode(const CNodePtr
     auto tuple_get_node = cnode_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(tuple_get_node);
     auto get_from_node = tuple_get_node->input(kFirstIndex);
+    MS_EXCEPTION_IF_NULL(get_from_node);
     if (common::AnfAlgo::CheckPrimitiveType(get_from_node, prim::kPrimCall)) {
       auto call_node = get_from_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(call_node);
@@ -801,6 +809,7 @@ void KernelGraphMgr::CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
                                        std::vector<AnfNodePtr> *cnode_inputs) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(cnode_inputs);
   if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
     (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(kFirstDataInputIndex)));
     for (size_t index = kSwitchTrueBranchIndex; index < cnode->inputs().size(); index++) {
@@ -837,12 +846,15 @@ ValueNodePtr KernelGraphMgr::CreateValueNodeKernelGraph(const AnfNodePtr &anf, K
   auto sub_kernel_graph = front_backend_graph_map_[sub_func_graph.get()];
 
   ValueNodePtr new_value_node = std::make_shared<ValueNode>(sub_kernel_graph);
+  MS_EXCEPTION_IF_NULL(new_value_node);
   new_value_node->set_abstract(value_node->abstract());
   // create new kernel_info of new value_node
   auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
   new_value_node->set_kernel_info(kernel_info);
   // create kernel_build_info for new value node
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(kernel_build_info_builder);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
   AnfAlgo::SetGraphId(graph->graph_id(), new_value_node.get());
 
@@ -878,7 +890,8 @@ ParameterPtr KernelGraphMgr::CreateNewParameter(const AnfNodePtr &anf, KernelGra
   return new_parameter;
 }
 
-void KernelGraphMgr::FlattenTuple(const CNodePtr &node, KernelGraph *graph) {
+void KernelGraphMgr::FlattenTuple(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall)) {
     auto call_graph = node->input(kFirstIndex);
     auto sub_kernel_graph = GetValueNodeKernelGraph(call_graph);
@@ -919,7 +932,7 @@ bool KernelGraphMgr::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGrap
   new_cnode->set_scope(cnode->scope());
   graph->FrontBackendMapAdd(node, new_cnode);
   SetReturnNode(new_cnode, graph);
-  FlattenTuple(new_cnode, graph);
+  FlattenTuple(new_cnode);
   return true;
 }
 
@@ -949,10 +962,10 @@ void KernelGraphMgr::AddParameterToGraphInputs(const std::vector<AnfNodePtr> &pa
 void KernelGraphMgr::SetReturnNode(const AnfNodePtr &node, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-
   if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
     constexpr auto kReturnInputIdx = 1;
     auto return_node = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(return_node);
     graph->set_return(return_node);
     auto graph_output = return_node->input(kReturnInputIdx);
     MS_EXCEPTION_IF_NULL(graph_output);
@@ -986,6 +999,7 @@ void KernelGraphMgr::SetReturnNode(const AnfNodePtr &node, KernelGraph *graph) {
         for (size_t i = 0; i < tuple_input_num - 1; i++) {
           auto input = common::AnfAlgo::GetInputNode(make_tuple, i);
           auto node_abs = input->abstract();
+          MS_EXCEPTION_IF_NULL(node_abs);
           if (node_abs->isa<abstract::AbstractTuple>()) {
             MS_EXCEPTION_IF_CHECK_FAIL(
               i == 0, "Input index: " + std::to_string(i) + " is a make tuple, input node: " + input->DebugString());
@@ -1014,9 +1028,8 @@ void KernelGraphMgr::SetReturnNode(const AnfNodePtr &node, KernelGraph *graph) {
         for (size_t i = kFirstIndex; i < partial_input_num; i++) {
           make_tuple_inputs.emplace_back(common::AnfAlgo::GetInputNode(partial_node, i));
         }
-        MS_EXCEPTION_IF_NULL(graph);
         auto g_output = graph->NewCNode(make_tuple_inputs);
-
+        MS_EXCEPTION_IF_NULL(g_output);
         std::vector<AbstractBasePtr> abstract_list;
         for (size_t i = kFirstIndex; i < make_tuple_inputs.size(); ++i) {
           auto inputs_node = make_tuple_inputs[i];
@@ -1345,6 +1358,7 @@ bool IsNeedAddPartialParameter(const AnfNodePtr &user, const std::string &kernel
 void KernelGraphMgr::HandleInternalOutput(const AnfNodePtr &input_front_node, const AnfNodePtr &backend_node,
                                           const FuncGraphManagerPtr &front_func_graph_manager,
                                           const std::shared_ptr<KernelGraph> &backend_graph) {
+  MS_EXCEPTION_IF_NULL(backend_graph);
   if (device::KernelRuntime::UseMemScheduler()) {
     return;
   }
@@ -1430,7 +1444,7 @@ CNodePtr KernelGraphMgr::ConstructOutput(const AnfNodePtrList &outputs, const st
   (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(output_args),
                        [&](const AnfNodePtr &out) -> AnfNodePtr { return FindEqu(out); });
   auto output_node = graph->NewCNode(output_args);
-
+  MS_EXCEPTION_IF_NULL(output_node);
   // Create abstract for output maketuple node.
   AbstractBasePtrList output_abs_list;
   const auto &inputs = output_node->inputs();
@@ -1446,6 +1460,7 @@ CNodePtr KernelGraphMgr::ConstructOutput(const AnfNodePtrList &outputs, const st
 
 KernelGraphPtr KernelGraphMgr::NewKernelGraph() {
   auto graph = std::make_shared<KernelGraph>();
+  MS_EXCEPTION_IF_NULL(graph);
   graph->set_graph_id(graph_sum_);
   graphs_[graph_sum_++] = graph;
   return graph;

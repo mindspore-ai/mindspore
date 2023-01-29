@@ -21,14 +21,15 @@
 #include <memory>
 #include <algorithm>
 #include "ops/op_utils.h"
-#include "abstract/ops/op_infer.h"
 #include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ops {
+namespace {
+constexpr size_t kInputNum = 2;
+}  // namespace
 std::vector<int64_t> Transpose::get_perm() {
   PrimitivePtr prim = this->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
@@ -48,8 +49,7 @@ MIND_API_OPERATOR_IMPL(Transpose, BaseOperator);
 
 ShapeVector CheckAndGetPermValue(const std::vector<AbstractBasePtr> &input_args, const PrimitivePtr &primitive) {
   const std::string &op_name = primitive->name();
-  const size_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, op_name);
   auto input_value = input_args[kInputIndex1]->BuildValue();
   if (input_args[kInputIndex1]->isa<abstract::AbstractTuple>()) {
     if (IsValueKnown(input_value)) {
@@ -78,7 +78,8 @@ class TransposeInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    auto op_name = primitive->name();
+    const std::string &op_name = primitive->name();
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, op_name);
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("input_x size", SizeToLong(x_shape.size()), kGreaterThan, 0, op_name);
     ShapeVector p_value;
@@ -125,6 +126,7 @@ class TransposeInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(prim);
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim->name());
     return CheckAndConvertUtils::CheckSubClass("input_x", input_args[0]->BuildType(), {kTensorType}, prim->name());
   }
 
