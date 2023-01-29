@@ -54,5 +54,9 @@ class CustomActorNodeManager {
   DISABLE_COPY_AND_ASSIGN(CustomActorNodeManager)
   OrderedMap<AnfNodePtr, RelatedCustomActorNode> custom_nodes_map_;
 };
+
+using InfPyHandler = abstract::AbstractBasePtr (*)(const CNodePtr &, const PrimitivePtr &, const AbstractBasePtrList &);
+extern InfPyHandler cpp_infer_py_handler_;
+BACKEND_EXPORT void set_cpp_infer_py_handler(const InfPyHandler &infer_handler);
 }  // namespace mindspore::opt::dynamic_shape
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_DYNAMIC_SHAPE_HELPER_H

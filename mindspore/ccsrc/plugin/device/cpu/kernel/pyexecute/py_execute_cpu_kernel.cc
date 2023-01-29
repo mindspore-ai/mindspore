@@ -27,6 +27,7 @@
 #include "include/common/utils/python_fallback_running.h"
 #include "plugin/factory/ms_factory.h"
 #include "mindspore/ccsrc/pipeline/jit/parse/resolve.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -327,14 +328,28 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   params[0] = global_dict;
   params[1] = local_dict;
   MS_LOG(DEBUG) << "Python script: " << py_script << ", params: " << params;
-  mindspore::ScopedFallbackRunning fallback_running;
-  const auto &output = CallPythonScript(py_script, params);
-  const auto &output_type = py::str(output.get_type());
-  MS_LOG(DEBUG) << "Python output type: " << output_type << ", output: " << output;
-  if (output_type.cast<std::string>() == "<class 'mindspore.common.tensor.Tensor'>") {  // It's Python Tensor type.
-    TensorToRawMemory(output.cast<tensor::TensorPtr>(), outputs[0]);
+  try {
+    mindspore::ScopedFallbackRunning fallback_running;
+    const auto &output = CallPythonScript(py_script, params);
+    const auto &output_type = py::str(output.get_type());
+    MS_LOG(DEBUG) << "Python output type: " << output_type << ", output: " << output;
+    if (py::isinstance<tensor::Tensor>(output)) {
+      TensorToRawMemory(output.cast<tensor::TensorPtr>(), outputs[0]);
+    }
+    AttachPyOutputData(output);
+  } catch (const py::error_already_set &e) {
+    auto error_type_name = py::cast<std::string>(python_adapter::GetPyObjAttr(e.type(), "__name__"));
+    auto error_iter = exception_types_map.find(error_type_name);
+    if (error_iter != exception_types_map.end()) {
+      auto &handler = LogWriter::GetExceptionHandler();
+      if (handler != nullptr) {
+        std::stringstream ss;
+        ss << py::str(e.value()) << ".\n\n" << trace::GetDebugInfo(kernel_node_->debug_info());
+        handler(error_iter->second, ss.str());
+      }
+    }
+    throw std::runtime_error(py::str(e.value()));
   }
-  AttachPyOutputData(output);
   return true;
 }
 
