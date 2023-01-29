@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+from mindspore import dtype as mstype
 from mindspore.ops.operations import _inner_ops as inner
 
 class MatMulNet(nn.Cell):
