@@ -181,6 +181,7 @@ constexpr auto kCeLUOpName = "CeLU";
 constexpr auto kCeluV2OpName = "CeluV2";
 constexpr auto kChannelShuffleOpName = "ChannelShuffle";
 constexpr auto kCheckNumericsOpName = "CheckNumerics";
+constexpr auto kCholeskyOpName = "Cholesky";
 constexpr auto kCholeskyGradOpName = "CholeskyGrad";
 constexpr auto kCholeskyInverseOpName = "CholeskyInverse";
 constexpr auto kCholeskySolveOpName = "CholeskySolve";
