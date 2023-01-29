@@ -24,11 +24,12 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace kernel {
 template <class C>
-class Factory {
+class BACKEND_EXPORT Factory {
   using CreatorFunc = std::function<std::shared_ptr<C>()>;
 
  public:
@@ -76,7 +77,7 @@ class Factory {
 };
 
 template <class C>
-class KernelRegistrar {
+class BACKEND_EXPORT KernelRegistrar {
  public:
   explicit KernelRegistrar(const std::string &name, std::function<std::shared_ptr<C>()> creator) noexcept {
     Factory<C>::Instance().Register(name, std::move(creator));

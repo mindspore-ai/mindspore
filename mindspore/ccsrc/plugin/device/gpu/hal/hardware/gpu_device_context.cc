@@ -64,6 +64,7 @@
 #ifdef ENABLE_AKG
 #include "common/graph_kernel/value_graph_binder.h"
 #endif
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 
 namespace mindspore {
 namespace device {
@@ -474,8 +475,14 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
     MS_EXCEPTION(failure_info.second) << failure_info.first;
   }
 
-  MS_LOG(INFO) << "GPU doesn't support the kernel " << common::AnfAlgo::GetCNodeName(node)
-               << " and will try to backoff on CPU.";
+  const auto &kernel_name = common::AnfAlgo::GetCNodeName(node);
+  const auto &kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(kernel_name);
+  // CPU also doesn't support the kernel.
+  if (kernel_attrs.empty()) {
+    MS_EXCEPTION(failure_info.second) << failure_info.first;
+  }
+
+  MS_LOG(INFO) << "GPU doesn't support the kernel " << kernel_name << " and will try to backoff on CPU.";
   // Mark kernel selection backoff info.
   AnfAlgo::SetKernelSelectBackoffInfo(node, failure_info);
 }

@@ -36,6 +36,7 @@
 #include "include/common/utils/utils.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "mindspore/core/ops/op_name.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 
 namespace mindspore {
 namespace device {
@@ -590,16 +591,19 @@ bool GetSelectKernelResult(const CNodePtr &kernel_node,
 #ifdef ENABLE_TUPLE_UNFOLD
 bool GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node) {
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  // Kernel that is not supported by device can try to backed off on CPU and use the real object type.
+  std::vector<kernel::KernelAttr> kernel_attrs;
+  // Kernel that is not supported can try to backed off on CPU and use the CPU kernel attrs to set object type.
   if (!kernel::NativeGpuKernelModFactory::GetInstance().IsRegistered(kernel_name)) {
-    auto input_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(kernel_node));
-    auto output_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllOutputObjectType(kernel_node));
-    kernel::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types);
-    return true;
+    kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(kernel_name);
+    // CPU also doesn't support the kernel.
+    if (kernel_attrs.empty()) {
+      return false;
+    }
+  } else {
+    kernel_attrs = kernel::NativeGpuKernelModFactory::GetInstance().GetGpuSupportedList(kernel_name);
   }
 
-  // Skip check only supports the tuple fold.
-  auto kernel_attrs = kernel::NativeGpuKernelModFactory::GetInstance().GetGpuSupportedList(kernel_name);
+  // Some dynamic kernels may not set the kernel attrs on GPU. Skip check only supports the tuple fold.
   if (kernel_attrs.empty() || kernel_attrs[0].GetSkipCheck()) {
     auto input_object_types =
       kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllInputObjectType(kernel_node));
