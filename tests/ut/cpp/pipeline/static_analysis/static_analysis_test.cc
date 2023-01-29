@@ -395,34 +395,6 @@ TEST_F(TestInferUniform, test_inferred_scalar_add) {
   ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeInt64);
 }
 
-class TestEvalOnePrim : public UT::Common {
- public:
-  TestEvalOnePrim() : getPyFun("gtest_input.pipeline.infer.infer_test", true), engine_(nullptr) {}
-  void SetUp();
-  void TearDown();
-
-  UT::PyFuncGraphFetcher getPyFun;
-  AnalysisEnginePtr engine_;
-};
-
-void TestEvalOnePrim::SetUp() { engine_ = SetupAnalysisEngineStub(); }
-
-void TestEvalOnePrim::TearDown() {
-  // destroy resource
-}
-TEST_F(TestEvalOnePrim, test_scalar_add) {
-  float x1 = 1.1;
-  float x2 = 1.1;
-  float x3 = 2.2;
-  AbstractBasePtr base1 = FromValue(x1, false);
-  AbstractBasePtr base2 = FromValue(x2, false);
-  AbstractBasePtrList base_list = {base1, base2};
-  auto res = EvalOnePrim(std::make_shared<Primitive>(prim::kScalarAdd), base_list)->abstract();
-  MS_LOG(INFO) << "result spec: " << res->ToString();
-  AbstractBasePtr exp = FromValue(x3, false);
-  MS_LOG(INFO) << "result exp: " << exp->ToString();
-  ASSERT_EQ(*res, *exp);
-}
 
 class TestGraphEval : public UT::Common {
  public:

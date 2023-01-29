@@ -457,7 +457,6 @@ def tensor_index_by_tuple(data, tuple_index):
 
     min_data_dim, max_data_dim = 1, 8
     const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
-
     indexes_types = hyper_map(toptypeof, tuple_index)
     contain_type = const_utils.tuple_index_type_cnt(indexes_types, op_name)
     if contain_type == const_utils.ALL_BASIC:
@@ -995,7 +994,6 @@ def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
     if len(tuple_index) == 1:
         data[tuple_index[0]] = value
         return data
-
     indexes_types = hyper_map(toptypeof, tuple_index)
     contain_type = const_utils.tuple_index_type_cnt(indexes_types, op_name)
 

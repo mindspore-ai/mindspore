@@ -2049,21 +2049,22 @@ class TopTypeof(Primitive):
     def __init__(self):
         self.prim = Primitive('TopTypeof')
         self.typeof_cache = {
-            'slice': _pynative_executor.constant_folding(self.prim, slice(None, None, None)),
-            'list': _pynative_executor.constant_folding(self.prim, []),
-            'tuple': _pynative_executor.constant_folding(self.prim, ()),
-            'Tensor': _pynative_executor.constant_folding(self.prim, Tensor(np.ones([1], dtype=np.float32))),
-            'NoneType': _pynative_executor.constant_folding(self.prim, None),
-            'int': _pynative_executor.constant_folding(self.prim, 0),
-            'bool': _pynative_executor.constant_folding(self.prim, False),
-            'ellipsis': _pynative_executor.constant_folding(self.prim, ...)
+            'slice': mstype.Slice(),
+            'list': mstype.List(),
+            'tuple': mstype.Tuple(),
+            'Tensor': mstype.tensor,
+            'NoneType': mstype.none_type,
+            'int': mstype.Int(),
+            'bool': mstype.Bool(),
+            'ellipsis': mstype.Ellipsis_(),
+            'dict': mstype.Dict()
         }
 
     def __call__(self, x):
         index_type = type(x).__name__
         if 'Tensor' in index_type:
             index_type = 'Tensor'
-        if index_type in ('slice', 'list', 'tuple', 'Tensor', 'NoneType', 'int', 'bool', 'ellipsis'):
+        if index_type in self.typeof_cache:
             return self.typeof_cache.get(index_type)
         return _pynative_executor.constant_folding(self.prim, x)
 

@@ -794,17 +794,6 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
 }
 
 namespace {
-py::tuple PreparePyInputs(const PrimitivePyPtr &, const AbstractBasePtrList &args) {
-  // The monad parameter is defined at the end of the parameter and needs to be ignored
-  std::size_t size_args = args.size() - GetAbstractMonadNum(args);
-  py::tuple py_args(size_args);
-  for (size_t i = 0; i < size_args; i++) {
-    auto arg_i = (args)[i];
-    py_args[i] = ConvertAbstractToPython(arg_i);
-  }
-  return py_args;
-}
-
 void CheckCustomPrimOutputInferResult(const PrimitivePtr &prim, const AbstractBasePtr &res_spec) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(res_spec);
@@ -943,6 +932,17 @@ AbstractBasePtr MakePyInferRes2Abstract(const py::object &output) {
     MS_LOG(EXCEPTION) << "Python evaluator return invalid shape or type. " << py::str(type_obj);
   }
 }
+}  // namespace
+py::tuple PreparePyInputs(const AbstractBasePtrList &args) {
+  // The monad parameter is defined at the end of the parameter and needs to be ignored
+  std::size_t size_args = args.size() - GetAbstractMonadNum(args);
+  py::tuple py_args(size_args);
+  for (size_t i = 0; i < size_args; i++) {
+    auto arg_i = (args)[i];
+    py_args[i] = ConvertAbstractToPython(arg_i);
+  }
+  return py_args;
+}
 
 AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dict &output) {
   // Convert to AbstractValue based on type and shape
@@ -969,7 +969,6 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
   CheckCustomPrimOutputInferResult(prim_py, res_spec);
   return res_spec;
 }
-}  // namespace
 
 EvalResultPtr StandardPrimEvaluator::RunPyInferValue(const AnalysisEnginePtr &, const AbstractBasePtr &abs_base,
                                                      const AbstractBasePtrList &args) {
@@ -979,7 +978,7 @@ EvalResultPtr StandardPrimEvaluator::RunPyInferValue(const AnalysisEnginePtr &, 
   }
   // Call checking method 'infer_value' for python primitive
   MS_LOG(DEBUG) << "Begin input args checking for: " << prim_py->ToString();
-  auto py_args = PreparePyInputs(prim_py, args);
+  auto py_args = PreparePyInputs(args);
   py::tuple py_vals(py_args.size());
   auto added_attrs = prim_->evaluate_added_attrs();
   for (size_t i = 0; i < py_args.size(); ++i) {
@@ -1043,7 +1042,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   // since they may be changed during check and infer.
   auto input_attrs = prim_py->attrs();
   prim_py->BeginRecordAddAttr();
-  auto py_args = PreparePyInputs(prim_py, args);
+  auto py_args = PreparePyInputs(args);
   // Call checking method '__check__' for subclass of 'PrimitiveWithCheck'.
   prim_py->RunCheck(py_args);
   auto abs = eval_impl_.InferShapeAndType(engine, prim_py, args);
@@ -1193,7 +1192,7 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   // Cache miss, run infer. We should copy attributes before
   // running infer, since they may be changed during infer.
   auto input_attrs = prim_py_->attrs();
-  auto py_args = PreparePyInputs(prim_py_, args);
+  auto py_args = PreparePyInputs(args);
   prim_py_->BeginRecordAddAttr();
   py::dict output = prim_py_->RunInfer(py_args);
   prim_py_->EndRecordAddAttr();
@@ -1854,7 +1853,7 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
   // Consider all primitive implemented python infer() real use the tuple/list arguments.
   CheckSequenceArgumentForPythonPrimitive(prim_py_, args_spec_list);
   MS_EXCEPTION_IF_NULL(prim_py_);
-  auto py_args = PreparePyInputs(prim_py_, args_spec_list);
+  auto py_args = PreparePyInputs(args_spec_list);
   prim_py_->BeginRecordAddAttr();
   py::dict output = prim_py_->RunInfer(py_args);
   prim_py_->EndRecordAddAttr();
