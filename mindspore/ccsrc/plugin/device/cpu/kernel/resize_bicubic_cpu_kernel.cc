@@ -27,10 +27,6 @@ namespace kernel {
 namespace {
 constexpr size_t kResizeBicubicInputsNum = 2;
 constexpr size_t kResizeBicubicOutputsNum = 1;
-constexpr size_t kResizeBicubicInputs0ShapeSize = 4;
-constexpr size_t kResizeBicubicInputs1ShapeSize = 1;
-constexpr size_t kResizeBicubicInputs1Dim = 2;
-constexpr size_t kResizeBicubicAttrSize = 2;
 constexpr int64_t cached_values_hand_max = 4;
 constexpr size_t caseid2 = 2;
 constexpr size_t caseid3 = 3;
@@ -47,10 +43,10 @@ bool half_pixel_centers = false;
 struct ResizerState {
   void CalculateSize_kernel_node(const std::vector<KernelTensorPtr> &inputs) {
     shape0 = inputs[kIndex0]->GetDeviceShapeAdaptively();
-    batch_size = shape0[0];
-    in_height = shape0[1];
-    in_width = shape0[kIndex2];
-    channels = shape0[kIndex3];
+    batch_size = shape0[kIndex0];
+    channels = shape0[kIndex1];
+    in_height = shape0[kIndex2];
+    in_width = shape0[kIndex3];
   }
   void CalculateSize_inputs(const std::vector<kernel::AddressPtr> &inputs) {
     auto *input_addr = static_cast<int32_t *>(inputs[1]->addr);
@@ -59,7 +55,7 @@ struct ResizerState {
 
     out_hw_size = out_height * out_width;
     in_hw_size = in_height * in_width;
-    bhwc_size = in_hw_size * channels * batch_size;
+    bchw_size = in_hw_size * channels * batch_size;
     height_scale = Scaling(in_height, out_height, align_corners);
     width_scale = Scaling(in_width, out_width, align_corners);
   }
@@ -73,7 +69,7 @@ struct ResizerState {
   float width_scale;
   int64_t out_hw_size;
   int64_t in_hw_size;
-  int64_t bhwc_size;
+  int64_t bchw_size;
 };
 ResizerState sta;
 }  // namespace
@@ -210,13 +206,6 @@ static void ComputeXWeightsAndIndices(const ResizerState &resizer_state, const b
       x_wai.advance = calc.Advance(x_wai.index_0, x_wai.index_1, x_wai.index_2, x_wai.index_3);
     }
   }
-
-  for (int64_t x = 0; x < resizer_state.out_width; ++x) {
-    (*x_wais)[static_cast<size_t>(x)].index_0 *= resizer_state.channels;
-    (*x_wais)[static_cast<size_t>(x)].index_1 *= resizer_state.channels;
-    (*x_wais)[static_cast<size_t>(x)].index_2 *= resizer_state.channels;
-    (*x_wais)[static_cast<size_t>(x)].index_3 *= resizer_state.channels;
-  }
 }
 
 template <typename T>
@@ -227,10 +216,9 @@ inline float Interpolate1D(const float weight_0, const float weight_1, const flo
 }
 
 template <typename T>
-static float ComputeYInterpolation(int which, int channel_num, const WeightsAndIndices &y_wai, const T *y_ptr_0,
-                                   const T *y_ptr_1, const T *y_ptr_2, const T *y_ptr_3,
-                                   const WeightsAndIndices &x_wai) {
-  int x_index;
+static float ComputeYInterpolation(int which, const WeightsAndIndices &y_wai, const T *y_ptr_0, const T *y_ptr_1,
+                                   const T *y_ptr_2, const T *y_ptr_3, const WeightsAndIndices &x_wai) {
+  int x_index;  // w
   switch (which) {
     case 0:
       x_index = x_wai.index_0;
@@ -245,103 +233,80 @@ static float ComputeYInterpolation(int which, int channel_num, const WeightsAndI
       x_index = x_wai.index_3;
       break;
   }
-  const int64_t pt_index = x_index + channel_num;
-  return Interpolate1D<T>(y_wai.weight_0, y_wai.weight_1, y_wai.weight_2, y_wai.weight_3, y_ptr_0[pt_index],
-                          y_ptr_1[pt_index], y_ptr_2[pt_index], y_ptr_3[pt_index]);
+  return Interpolate1D<T>(y_wai.weight_0, y_wai.weight_1, y_wai.weight_2, y_wai.weight_3, y_ptr_0[x_index],
+                          y_ptr_1[x_index], y_ptr_2[x_index], y_ptr_3[x_index]);
 }
 
 static float Compute_1D(const float values_[4], const float xw_0, const float xw_1, const float xw_2,
                         const float xw_3) {
   return Interpolate1D<float>(xw_0, xw_1, xw_2, xw_3, values_[0], values_[1], values_[2], values_[3]);
 }
+
 template <typename T1>
 std::vector<float> CalSwitch(const WeightsAndIndices &x_wai, std::vector<float> cached_value, const ResizerState &RS,
                              const WeightsAndIndices &y_wai, const T1 *y_ptr_0, const T1 *y_ptr_1, const T1 *y_ptr_2,
                              const T1 *y_ptr_3) {
   switch (x_wai.advance) {
     case caseid3:
-      for (int64_t c = 0; c < RS.channels; ++c) {
-        cached_value[static_cast<size_t>(calnum4 * c + 0)] = cached_value[static_cast<size_t>(calnum4 * c + 1)];
-        cached_value[static_cast<size_t>(calnum4 * c + 1)] = cached_value[static_cast<size_t>(calnum4 * c + calnum2)];
-        cached_value[static_cast<size_t>(calnum4 * c + calnum2)] =
-          cached_value[static_cast<size_t>(calnum4 * c + calnum3)];
-      }
+      cached_value[static_cast<size_t>(0)] = cached_value[static_cast<size_t>(1)];
+      cached_value[static_cast<size_t>(1)] = cached_value[static_cast<size_t>(calnum2)];
+      cached_value[static_cast<size_t>(calnum2)] = cached_value[static_cast<size_t>(calnum3)];
       break;
     case caseid2:
-      for (int64_t c = 0; c < RS.channels; ++c) {
-        cached_value[static_cast<size_t>(calnum4 * c + 0)] = cached_value[static_cast<size_t>(calnum4 * c + calnum2)];
-        cached_value[static_cast<size_t>(calnum4 * c + 1)] = cached_value[static_cast<size_t>(calnum4 * c + calnum3)];
-      }
+      cached_value[static_cast<size_t>(0)] = cached_value[static_cast<size_t>(calnum2)];
+      cached_value[static_cast<size_t>(1)] = cached_value[static_cast<size_t>(calnum3)];
       break;
-    case 1: {
-      for (int64_t c = 0; c < RS.channels; ++c) {
-        cached_value[static_cast<size_t>(calnum4 * c + 0)] = cached_value[static_cast<size_t>(calnum4 * c + calnum3)];
-      }
+    case 1:
+      cached_value[static_cast<size_t>(0)] = cached_value[static_cast<size_t>(calnum3)];
       break;
-    }
   }
   // Set the remaining '4-advance' values by computing.
-  switch (x_wai.advance) {
-    case 0:
-      for (int64_t c = 0; c < RS.channels; ++c) {
-        cached_value[static_cast<size_t>(calnum4 * c + 0)] =
-          ComputeYInterpolation(0, c, y_wai, y_ptr_0, y_ptr_1, y_ptr_2, y_ptr_3, x_wai);
-      }
-    case 1:
-      for (int64_t c = 0; c < RS.channels; ++c) {
-        cached_value[static_cast<size_t>(calnum4 * c + 1)] =
-          ComputeYInterpolation(1, c, y_wai, y_ptr_0, y_ptr_1, y_ptr_2, y_ptr_3, x_wai);
-      }
-    case caseid2:
-      for (int64_t c = 0; c < RS.channels; ++c) {
-        cached_value[static_cast<size_t>(calnum4 * c + calnum2)] =
-          ComputeYInterpolation(calnum2, c, y_wai, y_ptr_0, y_ptr_1, y_ptr_2, y_ptr_3, x_wai);
-      }
-    case caseid3:
-      for (int64_t c = 0; c < RS.channels; ++c) {
-        cached_value[static_cast<size_t>(calnum4 * c + calnum3)] =
-          ComputeYInterpolation(calnum3, c, y_wai, y_ptr_0, y_ptr_1, y_ptr_2, y_ptr_3, x_wai);
-      }
-      break;
+  for (size_t i = x_wai.advance; i <= caseid3; i++) {
+    cached_value[i] = ComputeYInterpolation(i, y_wai, y_ptr_0, y_ptr_1, y_ptr_2, y_ptr_3, x_wai);
   }
+
   return cached_value;
 }
 
 template <typename T1, typename T2>
-inline void interpolate_with_caching(const T1 *input_data, const ResizerState &RS, const bool half_pixel_centers_,
-                                     T2 output_data) {
+void ResizeBicubicCPUKernelMod::interpolate_with_caching(const T1 *input_data, const bool half_pixel_centers_,
+                                                         T2 *output_data) {
+  const ResizerState &RS = sta;
   std::vector<WeightsAndIndices> x_wais(RS.out_width);
   ComputeXWeightsAndIndices(RS, half_pixel_centers_, &x_wais);
-  const int64_t in_row_width = RS.in_width * RS.channels;
-  const int64_t in_batch_width = RS.in_height * in_row_width;
-  const T1 *input_b_ptr = input_data;
-  float *output_y_ptr = output_data;
-  // std::vector<float> cached_value(RS.channels == calnum3 ? 0 : calnum4 * RS.channels, 0);
-  std::vector<float> cached_value(calnum4 * RS.channels, 0);
-  for (int64_t b = 0; b < RS.batch_size; ++b, input_b_ptr += in_batch_width) {
-    for (int64_t y = 0; y < RS.out_height; ++y, output_y_ptr += RS.out_width * RS.channels) {
+  const int64_t in_row_width = RS.in_width * RS.in_height;    // hw
+  const int64_t in_batch_width = RS.channels * in_row_width;  // chw
+  const int64_t out_ch = RS.out_height * RS.channels;
+  const int64_t out_chw = out_ch * RS.out_width;
+  const int64_t out_hw = RS.out_height * RS.out_width;
+  const size_t parallel_num = static_cast<size_t>(out_ch * RS.batch_size);
+  std::vector<float> cached_value(calnum4, 0);
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {  // nch
+      const int64_t b = i / out_ch, c = i % out_ch / RS.out_height, y = i % RS.out_height;
       WeightsAndIndices y_wai;
       if (half_pixel_centers_) {
         GetWeightsAndIndices<HalfPixelScaler, true>(RS.height_scale, y, RS.in_height, &y_wai);
       } else {
         GetWeightsAndIndices<LegacyScaler, false>(RS.height_scale, y, RS.in_height, &y_wai);
       }
-      // Make pointers represent offsets of data in input_b_ptr.
-      const T1 *y_ptr_0 = input_b_ptr + y_wai.index_0 * in_row_width;
-      const T1 *y_ptr_1 = input_b_ptr + y_wai.index_1 * in_row_width;
-      const T1 *y_ptr_2 = input_b_ptr + y_wai.index_2 * in_row_width;
-      const T1 *y_ptr_3 = input_b_ptr + y_wai.index_3 * in_row_width;
+      const T1 *input_b_ptr = input_data + b * in_batch_width + c * in_row_width;
+      T2 *output_y_ptr = output_data + b * out_chw + c * out_hw + y * RS.out_width;
+      // Make pointers represent offsets of data in input_b_ptr
+      const T1 *y_ptr_0 = input_b_ptr + y_wai.index_0 * RS.in_width;
+      const T1 *y_ptr_1 = input_b_ptr + y_wai.index_1 * RS.in_width;
+      const T1 *y_ptr_2 = input_b_ptr + y_wai.index_2 * RS.in_width;
+      const T1 *y_ptr_3 = input_b_ptr + y_wai.index_3 * RS.in_width;
       for (int64_t x = 0; x < RS.out_width; ++x) {
         const WeightsAndIndices &x_wai = x_wais[static_cast<size_t>(x)];
         cached_value = CalSwitch(x_wai, cached_value, RS, y_wai, y_ptr_0, y_ptr_1, y_ptr_2, y_ptr_3);
-        for (int64_t c = 0; c < RS.channels; ++c) {
-          output_y_ptr[x * RS.channels + c] =
-            Compute_1D(&cached_value[static_cast<size_t>(calnum4 * c)], x_wai.weight_0, x_wai.weight_1, x_wai.weight_2,
-                       x_wai.weight_3);
-        }
+        output_y_ptr[x] =
+          Compute_1D(cached_value.data(), x_wai.weight_0, x_wai.weight_1, x_wai.weight_2, x_wai.weight_3);
       }
     }
-  }
+  };
+  ParallelLaunchAutoSearch(task, parallel_num, this, &parallel_search_info_);
+  return;
 }
 
 bool ResizeBicubicCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -390,11 +355,16 @@ bool ResizeBicubicCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   auto input0_addr = static_cast<T1 *>(inputs[0]->addr);
   sta.CalculateSize_inputs(inputs);
   if (sta.out_height == sta.in_height && sta.out_width == sta.in_width) {
-    for (int64_t i = 0; i < sta.bhwc_size; ++i) {
-      output_addr[i] = static_cast<float>(input0_addr[i]);
-    }
+    auto task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; ++i) {
+        output_addr[i] = static_cast<T2>(input0_addr[i]);
+      }
+    };
+    ParallelLaunchAutoSearch(task, static_cast<size_t>(sta.bchw_size), this, &parallel_search_info_);
+  } else {
+    interpolate_with_caching(input0_addr, half_pixel_centers, output_addr);
   }
-  interpolate_with_caching(input0_addr, sta, half_pixel_centers, output_addr);
+
   return true;
 }
 

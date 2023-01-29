@@ -56,9 +56,9 @@ class ResizeBicubicGradHelperGpuKernel : public GpuKernelHelperBase {
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     constexpr size_t INPUT_NUM = 1;
     constexpr size_t OUTPUT_NUM = 1;
-    constexpr int INPUT_W_ORDER = 2;
-    constexpr int OUTPUT_W_ORDER = 2;
-    constexpr int INPUT_C_ORDER = 3;
+    constexpr int INPUT_C_ORDER = 1;
+    constexpr int INPUT_H_ORDER = 2;
+    constexpr int INPUT_W_ORDER = 3;
     ResetResource();
     align_corners_ = false;
     is_null_resizebicubic_grad_input_ = false;
@@ -86,11 +86,11 @@ class ResizeBicubicGradHelperGpuKernel : public GpuKernelHelperBase {
       return inp_flag;
     }
     batch_ = input_grad_shape_[0];
-    input_grad_height_ = input_grad_shape_[1];
-    input_grad_width_ = input_grad_shape_[INPUT_W_ORDER];
     channel_ = input_grad_shape_[INPUT_C_ORDER];
-    origin_height_ = origin_shape_[1];
-    origin_width_ = origin_shape_[OUTPUT_W_ORDER];
+    input_grad_height_ = input_grad_shape_[INPUT_H_ORDER];
+    input_grad_width_ = input_grad_shape_[INPUT_W_ORDER];
+    origin_height_ = origin_shape_[INPUT_H_ORDER];
+    origin_width_ = origin_shape_[INPUT_W_ORDER];
     int out_flag =
       CalShapesSizeInBytes<S>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
     if (out_flag == -1) {

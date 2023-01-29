@@ -519,15 +519,13 @@ class Upsample(Cell):
                 raise ValueError(
                     "For 'Upsample', bicubic mode needs 4D input, but got 5D input"
                 )
-            transpose = P.Transpose()
             align_corners = self.align_corners if self.has_align_corners else False
             upsample = P.image_ops.ResizeBicubic(
                 align_corners=align_corners,
                 half_pixel_centers=not align_corners,
             )
-            tensor = transpose(tensor, (0, 2, 3, 1))
             tensor = upsample(tensor, Tensor(size, dtype=mstype.int32))
-            return transpose(tensor, (0, 3, 1, 2))
+            return tensor
 
         def run_trilinear(tensor, ndim, size):
             if ndim == 3:
