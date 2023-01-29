@@ -4941,7 +4941,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float64)
+        >>> x = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float16)
         >>> output = ops.unfold(x, kernel_size=3, dilation=1, stride=1)
         >>> print(output.shape)
         (4, 36, 30, 30)
