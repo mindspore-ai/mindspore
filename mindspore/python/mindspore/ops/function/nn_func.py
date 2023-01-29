@@ -3564,9 +3564,9 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         >>> arr2 = np.array([1, 1, -1, 1, -1, 1, -1, 1, 1]).reshape((3, 3))
         >>> logits = Tensor(arr1, mstype.float32)
         >>> labels = Tensor(arr2, mstype.float32)
-        >>> loss = ops.hinge_embedding_loss(logits, targets, margin=1.0, reduction='mean')
+        >>> loss = ops.hinge_embedding_loss(logits, labels, margin=1.0, reduction='mean')
         >>> print(loss)
-        Tensor(shape=[], dtype=Float32, value= 1.6666667)
+        0.16666666
     """
     _shape = inputs.shape
     _dtype = inputs.dtype
