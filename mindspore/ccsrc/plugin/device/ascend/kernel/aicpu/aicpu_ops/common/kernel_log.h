@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,50 +21,32 @@
 #include <iostream>
 #include <utility>
 #include "common/kernel_errcode.h"
+#include "toolchain/slog.h"
 
 inline int64_t GetTid(void) {
   thread_local static const int64_t tid = syscall(__NR_gettid);
   return tid;
 }
-static const int LOG_COUNT = 0;
 
 namespace aicpu {
-#define AICPU_LOG_DEBUG 0
-#define AICPU_LOG_INFO 1
-#define AICPU_LOG_WARN 2
-#define AICPU_LOG_ERROR 3
-#define AICPU_LOG_EVENT 0x10
+#define AICPU_MODULE_NAME static_cast<int32_t>(AICPU)
+#define KERNEL_MODULE "AICPU"
 
-inline void PrintLog(const int level) { std::cerr << level << std::endl; }
-
-template <typename T, typename... Args>
-inline void PrintLog(const int level, T &&head, Args &&... tail) {
-  std::cerr << std::forward<T>(head) << " ";
-  PrintLog(level, std::forward<Args>(tail)...);
-}
-
-int LogSetLevel(int level);
-
-int LogGetLevel(void);
-
-bool CheckLogLevel(int log_level_check);
-
-#define AICPU_LOGD(fmt, ...) \
-  AICPU_LOG(AICPU_LOG_DEBUG, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
-#define AICPU_LOGI(fmt, ...) \
-  AICPU_LOG(AICPU_LOG_INFO, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
-#define AICPU_LOGW(fmt, ...) \
-  AICPU_LOG(AICPU_LOG_WARN, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
-#define AICPU_LOGE(fmt, ...) \
-  AICPU_LOG(AICPU_LOG_ERROR, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
-#define AICPU_LOGEVENT(fmt, ...) \
-  AICPU_LOG(AICPU_LOG_EVENT, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
-#define AICPU_LOG(level, fmt, ...)                                              \
-  do {                                                                          \
-    if (aicpu::CheckLogLevel(level)) {                                          \
-      aicpu::PrintLog(level, "[%s:%d]" fmt, __FILE__, __LINE__, ##__VA_ARGS__); \
-    }                                                                           \
-  } while (LOG_COUNT != 0)
+#define AICPU_LOGD(fmt, ...)                                                                                  \
+  dlog_debug(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
+             ##__VA_ARGS__);
+#define AICPU_LOGI(fmt, ...)                                                                                 \
+  dlog_info(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
+            ##__VA_ARGS__);
+#define AICPU_LOGW(fmt, ...)                                                                                 \
+  dlog_warn(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
+            ##__VA_ARGS__);
+#define AICPU_LOGE(fmt, ...)                                                                                  \
+  dlog_error(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
+             ##__VA_ARGS__);
+#define AICPU_LOGEVENT(fmt, ...)                                                                              \
+  dlog_event(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
+             ##__VA_ARGS__);
 
 #define AICPU_CHK_STATUS_RET(expr...)        \
   do {                                       \
@@ -92,22 +74,21 @@ bool CheckLogLevel(int log_level_check);
     return errorCode;                                     \
   }
 
-#define KERNEL_LOG_DEBUG(fmt, ...) \
-  AICPU_LOG(AICPU_LOG_DEBUG, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
-#define KERNEL_LOG_INFO(fmt, ...) \
-  AICPU_LOG(AICPU_LOG_INFO, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
-#define KERNEL_LOG_WARN(fmt, ...) \
-  AICPU_LOG(AICPU_LOG_WARN, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
-#define KERNEL_LOG_ERROR(fmt, ...) \
-  AICPU_LOG(AICPU_LOG_ERROR, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
-#define KERNEL_LOG_EVENT(fmt, ...) \
-  AICPU_LOG(AICPU_LOG_EVENT, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
-#define AICPU_LOG(level, fmt, ...)                                              \
-  do {                                                                          \
-    if (aicpu::CheckLogLevel(level)) {                                          \
-      aicpu::PrintLog(level, "[%s:%d]" fmt, __FILE__, __LINE__, ##__VA_ARGS__); \
-    }                                                                           \
-  } while (LOG_COUNT != 0)
+#define KERNEL_LOG_DEBUG(fmt, ...)                                                                            \
+  dlog_debug(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
+             ##__VA_ARGS__);
+#define KERNEL_LOG_INFO(fmt, ...)                                                                            \
+  dlog_info(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
+            ##__VA_ARGS__);
+#define KERNEL_LOG_WARN(fmt, ...)                                                                            \
+  dlog_warn(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
+            ##__VA_ARGS__);
+#define KERNEL_LOG_ERROR(fmt, ...)                                                                            \
+  dlog_error(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
+             ##__VA_ARGS__);
+#define KERNEL_LOG_EVENT(fmt, ...)                                                                            \
+  dlog_event(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
+             ##__VA_ARGS__);
 
 #define KERNEL_CHECK_NULLPTR_VOID(value, logText...) \
   if (value == nullptr) {                            \
