@@ -59,7 +59,7 @@ class COMMON_EXPORT DynamicObfuscator {
   CNodePtr BuildOneInputWithWeightNode(const FuncGraphPtr &fg, const AnfNodePtr &input_node, const CNodePtr &conv_node,
                                        const AnfNodePtr &weights);
   CNodePtr AddPartialBranch(FuncGraphPtr fg, FuncGraphPtr fg_sub, const std::vector<mindspore::CNodePtr> &nodes);
-  PrimitivePtr get_random_prim(std::string obf_type);
+  PrimitivePtr get_random_prim(const std::string &obf_type, const mindspore::CNodePtr &node);
   const float obf_ratio_ = 0.01;
   const int obf_password_;
   const int append_password_;
@@ -71,9 +71,9 @@ class COMMON_EXPORT DynamicObfuscator {
   int used_control_node_ = 0;
   int subgraph_obf_num_ = 0;
   bool switch_branch_ = true;
-  const std::vector<std::string> single_input_target_op_ = {"ReLU-op",     "Sigmoid-op",  "ReLU6-op",  "Softplus-op",
-                                                            "HSigmoid-op", "FastGeLU-op", "HSwish-op", "Softsign-op",
-                                                            "SeLU-op",     "Tanh-op",     "Square-op"};
+  const std::vector<std::string> single_input_target_op_ = {
+    "ReLU-op",     "Sigmoid-op", "ReLU6-op", "Softplus-op", "HSigmoid-op", "FastGeLU-op", "HSwish-op",
+    "Softsign-op", "SeLU-op",    "Tanh-op",  "Square-op",   "AvgPool-op",  "MaxPool-op"};
   const std::vector<std::string> single_input_with_weight_target_op_ = {"Conv2D-op", "MatMul-op"};
   const std::vector<PrimitivePtr> one_input_prim_ = {
     mindspore::prim::kPrimReLU,     mindspore::prim::kPrimSigmoid,  mindspore::prim::kPrimReLU6,
