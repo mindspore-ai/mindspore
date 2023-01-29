@@ -36,7 +36,7 @@ class Assign(Primitive):
         >>> value = Tensor([2.0], mindspore.float32)
         >>> variable = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="variable")
         >>> assign = ops.Assign()
-        >>> assign(variable, value)
+        >>> x = assign(variable, value)
         >>> print(variable.asnumpy())
         [2.]
     """
