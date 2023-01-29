@@ -49,6 +49,10 @@ const AnfNodePtr MulActivationFusion::Process(const FuncGraphPtr &func_graph, co
   MS_CHECK_TRUE_RET(act_cnode != nullptr, nullptr);
   auto act_prim = ops::GetOperator<ops::Activation>(act_cnode->input(0));
   MS_CHECK_TRUE_RET(act_prim != nullptr, nullptr);
+  if (IsQuantParameterNode(act_prim->GetPrim())) {
+    MS_LOG(INFO) << "node is a quant-node";
+    return nullptr;
+  }
   if (act_prim->get_activation_type() != ActivationType::RELU && act_prim->get_activation_type() != RELU6) {
     MS_LOG(INFO) << "activation is not relu or relu6";
     return nullptr;
@@ -57,8 +61,16 @@ const AnfNodePtr MulActivationFusion::Process(const FuncGraphPtr &func_graph, co
   MS_CHECK_TRUE_RET(mul_node != nullptr, nullptr);
   auto mul_cnode = mul_node->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(mul_cnode != nullptr, nullptr);
+  if (IsMultiOutputTensors(func_graph, mul_cnode)) {
+    MS_LOG(INFO) << "mul has multiple out-nodes";
+    return nullptr;
+  }
   auto mul_prim = ops::GetOperator<ops::MulFusion>(mul_cnode->input(0));
   MS_CHECK_TRUE_RET(mul_prim != nullptr, nullptr);
+  if (IsQuantParameterNode(mul_prim->GetPrim())) {
+    MS_LOG(INFO) << "node is a quant-node";
+    return nullptr;
+  }
   if (mul_prim->get_activation_type() != NO_ACTIVATION) {
     MS_LOG(INFO) << "Mul already has activaton fusion, fusion type: " << mul_prim->get_activation_type();
     return nullptr;
