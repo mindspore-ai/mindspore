@@ -58,7 +58,7 @@ Status CifarOp::LoadTensorRow(row_id_type index, TensorRow *trow) {
   std::shared_ptr<Tensor> fine_label;
   std::shared_ptr<Tensor> ori_image = cifar_image_label_pairs_[index].first;
   std::shared_ptr<Tensor> copy_image;
-  uint64_t path_index = std::ceil(index / kCifarBlockImageNum);
+  uint64_t path_index = static_cast<uint64_t>(std::ceil(index / kCifarBlockImageNum));
   RETURN_IF_NOT_OK(Tensor::CreateFromTensor(ori_image, &copy_image));
   RETURN_IF_NOT_OK(Tensor::CreateScalar(cifar_image_label_pairs_[index].second[0], &label));
 

@@ -1104,7 +1104,7 @@ Status ShardWriter::SerializeRawData(std::map<uint64_t, std::vector<json>> &raw_
     thread_num = kThreadNumber;
   }
   // Set the number of samples processed by each thread
-  int group_num = ceil(row_count * 1.0 / thread_num);
+  int group_num = static_cast<int>(ceil(row_count * 1.0 / thread_num));
   std::vector<std::thread> thread_set(thread_num);
   int work_thread_num = 0;
   for (uint32_t x = 0; x < thread_num; ++x) {

@@ -214,7 +214,7 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
       }
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(in_row)));
       if (in_row.wait()) {
-        TaskManager::FindMe()->Wait();  // wait for auto tune update workers successful
+        RETURN_IF_NOT_OK(TaskManager::FindMe()->Wait());  // wait for auto tune update workers successful
         TaskManager::FindMe()->Clear();
       }
     } else {

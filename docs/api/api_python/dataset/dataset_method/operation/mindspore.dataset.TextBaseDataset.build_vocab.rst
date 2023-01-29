@@ -8,6 +8,8 @@ mindspore.dataset.TextBaseDataset.build_vocab
 
     收集数据集中所有的不重复单词。返回 `top_k` 个最常见的单词组成的词汇表（如果指定了 `top_k` ）。
 
+    .. note:: mindspore.dataset.Dataset.build_vocab 从2.0版本开始弃用。请使用mindspore.dataset.text.Vocab.from_dataset代替。
+
     参数：
         - **columns** (Union[str, list[str]]) - 指定 `build_vocab` 操作的输入列，会从该列获取数据构造词汇表。
         - **freq_range** (tuple[int]) - 由(min_frequency, max_frequency)组成的整数元组，代表词汇出现的频率范围，在这个频率范围的词汇会被保存下来。

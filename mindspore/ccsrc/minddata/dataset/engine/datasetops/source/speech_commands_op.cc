@@ -180,7 +180,7 @@ Status SpeechCommandsOp::GetFileInfo(const std::string &file_path, std::string *
   std::smatch result;
   {
     std::unique_lock<std::mutex> _lock(mux_);
-    regex_match(filename, result, std::regex("(.*)_nohash_(\\d+)\\.wav"));
+    (void)regex_match(filename, result, std::regex("(.*)_nohash_(\\d+)\\.wav"));
   }
   CHECK_FAIL_RETURN_UNEXPECTED(!(result[0] == "" || result[1] == ""),
                                "Invalid file name, failed to get file info: " + filename);

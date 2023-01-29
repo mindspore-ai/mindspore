@@ -263,7 +263,7 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
       RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOF)));
     } else if (table_pair.second.ctrl_ == batchCtrl::kWait) {
       RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagWait)));
-      TaskManager::FindMe()->Wait();  // wait for auto tune update workers successful
+      RETURN_IF_NOT_OK(TaskManager::FindMe()->Wait());  // wait for auto tune update workers successful
       TaskManager::FindMe()->Clear();
     } else if (table_pair.second.ctrl_ == batchCtrl::kNoCtrl) {
       TensorRow new_row;

@@ -151,7 +151,9 @@ bool MaxPoolWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   MS_EXCEPTION_IF_NULL(output);
   auto *mask = reinterpret_cast<int32_t *>(outputs.at(kIndex1)->addr);
   MS_EXCEPTION_IF_NULL(mask);
-  int cWeight, hWeight, wWeight;
+  int cWeight;
+  int hWeight;
+  int wWeight;
   if (data_format_ == Format::NHWC) {
     cWeight = 1;
     wWeight = channel_ * cWeight;

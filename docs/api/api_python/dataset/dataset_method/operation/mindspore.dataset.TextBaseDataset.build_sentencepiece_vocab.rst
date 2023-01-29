@@ -6,6 +6,8 @@ mindspore.dataset.TextBaseDataset.build_sentencepiece_vocab
     迭代源数据集对象获取数据并构建SentencePiece词汇表。
     源数据集要求的是文本类数据集。
 
+    .. note:: mindspore.dataset.Dataset.build_sentencepiece_vocab 从2.0版本开始弃用。请使用mindspore.dataset.text.SentencePieceVocab.from_dataset代替。
+
     参数：
         - **columns** (list[str]) - 指定 `build_sentencepiece_vocab` 操作的输入列，会从该列获取数据构造词汇表。
         - **vocab_size** (int) - 词汇表的容量。

@@ -368,7 +368,7 @@ class ParallelOp : public DatasetOp {
         // If num_worker signals are received, wakes up the main thread
         if (++num_workers_paused_ == num_workers_) {
           wait_for_workers_post_.Set();
-          wait_for_collector_.Wait();
+          RETURN_IF_NOT_OK(wait_for_collector_.Wait());
           wait_for_collector_.Clear();
           num_rows = 0;
         }
