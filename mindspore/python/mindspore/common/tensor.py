@@ -3167,39 +3167,6 @@ class Tensor(Tensor_):
         validator.check_is_int(seed, 'seed')
         return tensor_operator_registry.get('bernoulli')(self, p, seed)
 
-    def as_strided(self, shape=None, strides=None, subok=False, writeable=True):
-        r"""
-        as_strided(input, size, stride, storage_offset=0) -> Tensor
-        Create a view of an existing `mindspore.Tensor` :attr:`x` with specified
-        :attr:`shape`, :attr:`stride` and :attr:`subok`.
-
-        Args:
-            x (Tensor): the input tensor.
-            shape (tuple or ints): the shape of the output tensor
-            stride (tuple or ints): the stride of the output tensor
-            subok (int, optional): the offset in the underlying storage of the output tensor
-
-        Returns:
-            Tensor viewed by strides and subok.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> import numpy as np
-            >>> from mindspore import Tensor
-            >>> X = np.arange(9, dtype=np.int32).reshape(3,3)
-            >>> output = Tensor(X).as_strided((2, 2), (1, 1))
-            >>> print(output)
-            [[0 1]
-             [1 2]]
-        """
-        dtype_ = self.dtype
-        x = self.asnumpy()
-        n = x.strides[1]
-        strides = tuple(np.array(strides) * n)
-        return Tensor(np.lib.stride_tricks.as_strided(x, shape, strides, subok, writeable), dtype=dtype_)
-
     def random_categorical(self, num_sample, seed=0, dtype=mstype.int64):
         r"""
         For details, please refer to :func:`mindspore.ops.random_categorical`.

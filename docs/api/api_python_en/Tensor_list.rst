@@ -58,7 +58,6 @@
     mindspore.Tensor.asin
     mindspore.Tensor.asinh
     mindspore.Tensor.asnumpy
-    mindspore.Tensor.as_strided
     mindspore.Tensor.assign_value
     mindspore.Tensor.astype
     mindspore.Tensor.atan
