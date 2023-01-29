@@ -192,23 +192,23 @@ def arange(start=0, end=None, step=1, *, dtype=None):
         >>> from mindspore import Tensor, ops
         >>> output = ops.arange(1, 6)
         >>> print(output)
-        >>> print(output.dtype)
         [1 2 3 4 5]
+        >>> print(output.dtype)
         Int64
         >>> output = ops.arange(0, 3, 1.2)
         >>> print(output)
-        >>> print(output.dtype)
         [0.  1.2 2.4]
+        >>> print(output.dtype)
         Float32
         >>> output = ops.arange(7, 1, -2)
         >>> print(output)
-        >>> print(output.dtype)
         [7 5 3]
+        >>> print(output.dtype)
         Int64
         >>> output = ops.arange(ms.Tensor(12.0, dtype=ms.float64), 2, ms.Tensor(-1.0, dtype=ms.float32))
         >>> print(output)
-        >>> print(output.dtype)
         [12. 11. 10.  9.  8.  7.  6.  5.  4.  3.]
+        >>> print(output.dtype)
         Float64
     """
     if end is None:

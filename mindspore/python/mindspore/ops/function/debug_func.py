@@ -55,11 +55,11 @@ def print_(*input_x):
         >>> result = ops.print_('Print Tensor x and Tensor y:', x, y)
         Print Tensor x and Tensor y:
         Tensor(shape=[2, 1], dtype=Int32, value=
-        [[1]
+        [[1],
          [1]])
         Tensor(shape=[2, 2], dtype=Int32, value=
-        [[1 1]
-         [1 1]])
+        [[1, 1],
+         [1, 1]])
     """
     print_op = _get_cache_prim(Print)()
     return print_op(*input_x)
