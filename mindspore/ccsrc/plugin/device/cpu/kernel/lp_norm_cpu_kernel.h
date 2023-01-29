@@ -34,7 +34,7 @@ class LpNormCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return is_null_input_ ? true : kernel_func_(this, inputs, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -54,6 +54,7 @@ class LpNormCpuKernelMod : public NativeCpuKernelMod {
                                         const std::vector<kernel::AddressPtr> &)>;
   LpNromFunc kernel_func_;
   bool is_p_zero_{false};
+  bool is_null_input_{false};
   bool is_scalar_input_{false};
   size_t input_elements_{1};
   size_t reduce_size_{1};

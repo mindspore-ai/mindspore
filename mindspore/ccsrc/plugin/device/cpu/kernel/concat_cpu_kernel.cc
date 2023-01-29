@@ -84,6 +84,9 @@ bool ConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
     auto *tmp_addr = reinterpret_cast<T *>(inputs[j]->addr);
     (void)input_addr_list.emplace_back(tmp_addr);
   }
+  if (input_flat_shape_list.size() == 0 || input_flat_shape_list[0].size() == 0) {
+    return true;
+  }
   // each input's row of shape after flat are same
   auto before_axis = LongToSize(input_flat_shape_list[0][0]);
   auto task = [&](size_t start, size_t end) {

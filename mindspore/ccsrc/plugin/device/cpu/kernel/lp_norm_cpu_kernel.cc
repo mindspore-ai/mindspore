@@ -93,6 +93,10 @@ int LpNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   }
   // For Scalar Tensor, input shape is empty.
   auto input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
+  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input shape");
+  if (is_null_input_) {
+    return KRET_OK;
+  }
   is_scalar_input_ = input_shape.empty();
   if (is_scalar_input_ || is_p_zero_) {
     return KRET_OK;
