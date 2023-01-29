@@ -1319,35 +1319,6 @@ def custom_vjp(fn=None):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore.ops import custom_vjp
-        >>> from mindspore.ops import vjp
-        >>> from mindspore import Tensor
-        >>> def bprop_fn(x, y, out, dout):
-        ...     dx = x + 1
-        ...     dy = y + 2
-        ...     return dx, dy
-        >>> @custom_vjp
-        ... def fn(x, y):
-        ...     return x**3 + y
-        >>> fn.defbwd(bprop_fn)
-        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-        >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-        >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
-        >>> output, grad_fn = vjp(fn, x, y)
-        >>> print(output)
-        (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 2.00000000e+00,  1.00000000e+01],
-         [ 3.00000000e+01,  6.80000000e+01]])
-        >>> grads = grad_fn(v)
-        >>> print(grads)
-        (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 2.00000000e+00,  3.00000000e+00],
-         [ 4.00000000e+00,  5.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 3.00000000e+00,  4.00000000e+00],
-         [ 5.00000000e+00,  6.00000000e+00]]))
     """
 
     def deco(fn):
@@ -1424,7 +1395,6 @@ __all__ = [
     'derivative',
     'jvp',
     'vjp',
-    'custom_vjp',
     'linearize',
     'stop_gradient',
     'get_grad'
