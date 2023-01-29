@@ -1,5 +1,6 @@
 #!/bin/bash
 source ./scripts/base_functions.sh
+source ./scripts/run_benchmark_server_inference_python.sh
 
 # Run converter on x86 platform:
 function Run_Converter() {
@@ -190,6 +191,18 @@ if [[ $backend == "all" || $backend == "server_inference_arm" ]]; then
         cat ${run_server_inference_arm64_log_file}
         isFailed=1
     fi
+fi
+
+# run python ST
+if [[ $backend == "all" || $backend == "server_inference_x86" || $backend == "server_inference_arm" ]]; then
+  models_python_config=${basepath}/../config_level0/models_server_inference_python.cfg
+  models_python_cfg_file_list=("$models_python_config")
+  Run_server_python_ST ${basepath} ${path}/server ${ms_models_path} ${models_path} "${models_python_cfg_file_list[*]}" "CPU"
+  Run_python_status=$?
+  if [[ ${Run_python_status} != 0 ]];then
+      echo "Run_python_status failed"
+      isFailed=1
+  fi
 fi
 
 echo "run x86_server_inference and arm_server_inference is ended"

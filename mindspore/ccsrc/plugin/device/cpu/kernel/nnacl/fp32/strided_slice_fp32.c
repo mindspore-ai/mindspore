@@ -99,6 +99,8 @@ int DoStridedSliceIntFp64Bool(const void *in_data, void *out_data, StridedSliceP
                     *((bool *)out_data + out_offset) = *((bool *)in_data + in_offset);
                   } else if (param->data_type == kNumberTypeFloat64) {
                     *((double *)out_data + out_offset) = *((double *)in_data + in_offset);
+                  } else if (param->data_type == kNumberTypeInt64) {
+                    *((int64_t *)out_data + out_offset) = *((int64_t *)in_data + in_offset);
                   } else {
                     return NNACL_ERR;
                   }
