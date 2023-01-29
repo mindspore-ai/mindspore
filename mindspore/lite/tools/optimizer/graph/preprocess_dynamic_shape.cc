@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,48 @@
 namespace mindspore {
 namespace opt {
 namespace {
+int DoStack(const CNodePtr &cnode, const ShapeVector &out_shape, ShapeVector *out_data) {
+  MS_ASSERT(cnode != nullptr && out_data != nullptr);
+  if (!CheckPrimitiveType(cnode, prim::kPrimStack)) {
+    return lite::RET_NOT_SUPPORT;
+  }
+  if (out_shape.size() != 1 || out_shape.front() <= 0) {
+    return lite::RET_NOT_SUPPORT;
+  }
+  auto origin_inputs = cnode->inputs();
+  if (lite::RemoveIfDepend(cnode) != RET_OK) {
+    cnode->set_inputs(origin_inputs);
+    return lite::RET_NOT_SUPPORT;
+  }
+  if (lite::RemoveIfMakeTuple(cnode) != RET_OK) {
+    cnode->set_inputs(origin_inputs);
+    return lite::RET_NOT_SUPPORT;
+  }
+  RemoveIfMonad(cnode);
+  auto current_inputs = cnode->inputs();
+  for (size_t i = 1; i < current_inputs.size(); ++i) {
+    if (utils::isa<CNode>(current_inputs[i])) {
+      out_data->push_back(-1);
+      continue;
+    }
+    lite::DataInfo data_info;
+    if (lite::FetchConstData(cnode, i, converter::kFmkTypeMs, &data_info, false) != lite::RET_OK) {
+      cnode->set_inputs(origin_inputs);
+      MS_LOG(ERROR) << "etch stack's const data failed.";
+      return lite::RET_ERROR;
+    }
+    if (data_info.data_ptr_ == nullptr ||
+        (data_info.data_type_ != kNumberTypeInt && data_info.data_type_ != kNumberTypeInt32) ||
+        std::accumulate(data_info.shape_.begin(), data_info.shape_.end(), 1, std::multiplies<>()) != 1) {
+      cnode->set_inputs(origin_inputs);
+      return lite::RET_NOT_SUPPORT;
+    }
+    out_data->push_back(*static_cast<int *>(data_info.data_ptr_));
+  }
+  cnode->set_inputs(origin_inputs);
+  return lite::RET_OK;
+}
+
 int ArithmeticInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_shapes,
                          std::vector<ShapeVector> *out_shapes) {
   MS_ASSERT(cnode != nullptr);
@@ -327,6 +369,7 @@ int ReshapeInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_
     MS_LOG(ERROR) << "Reshape should have two inputs.";
     return lite::RET_ERROR;
   }
+  out_shapes->clear();
   auto second_input = cnode->input(kInputIndexTwo);
   MS_CHECK_TRUE_MSG(second_input != nullptr, lite::RET_ERROR, "Reshape's second input is a nullptr.");
   if (second_input->isa<CNode>()) {
@@ -334,8 +377,14 @@ int ReshapeInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_
     if (second_in_shape.size() != 1 || second_in_shape.front() <= 0) {
       return lite::RET_NOT_SUPPORT;
     }
-    ShapeVector out_shape(second_in_shape.front(), -1);
-    out_shapes->clear();
+    ShapeVector out_shape;
+    auto ret = DoStack(second_input->cast<CNodePtr>(), second_in_shape, &out_shape);
+    if (ret == lite::RET_NOT_SUPPORT) {
+      out_shape = ShapeVector(second_in_shape.front(), -1);
+    } else if (ret != lite::RET_OK) {
+      MS_LOG(ERROR) << "Do stack failed.";
+      return ret;
+    }
     out_shapes->push_back(out_shape);
     return lite::RET_OK;
   }
@@ -366,7 +415,6 @@ int ReshapeInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_
       out_shape[i] = in_shape[i];
     }
   }
-  out_shapes->clear();
   out_shapes->push_back(out_shape);
   return lite::RET_OK;
 }
@@ -421,15 +469,124 @@ int SplitInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_sh
   return lite::RET_OK;
 }
 
+int SqueezeInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_shapes,
+                      std::vector<ShapeVector> *out_shapes) {
+  MS_ASSERT(cnode != nullptr);
+  if (in_shapes.empty()) {
+    MS_LOG(ERROR) << "Squeeze should have one input at least.";
+    return lite::RET_ERROR;
+  }
+  auto prim = GetCNodePrimitive(cnode);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Squeeze's primitive is a nullptr.";
+    return lite::RET_ERROR;
+  }
+  auto axes = prim->GetAttr(ops::kAxis) != nullptr ? GetValue<std::vector<int64_t>>(prim->GetAttr(ops::kAxis))
+                                                   : std::vector<int64_t>();
+  auto &in_shape = in_shapes.front();
+  ShapeVector out_shape;
+  if (axes.empty()) {
+    for (size_t i = 0; i < in_shape.size(); ++i) {
+      if (in_shape[i] < 0) {
+        return lite::RET_NOT_SUPPORT;
+      }
+      if (in_shape[i] != 1) {
+        out_shape.push_back(in_shape[i]);
+      }
+    }
+  } else {
+    auto dims = static_cast<int64_t>(in_shape.size());
+    std::vector<int> flags(dims, 0);
+    for (auto axis : axes) {
+      axis = axis < 0 ? axis + dims : axis;
+      if (axis < 0 || axis >= dims) {
+        MS_LOG(ERROR) << "Squeeze's axis is invalid. node name is " << cnode->fullname_with_scope();
+        return lite::RET_ERROR;
+      }
+      flags[axis] = 1;
+    }
+    for (int64_t i = 0; i < dims; ++i) {
+      if (flags[i] == 0) {
+        out_shape.push_back(in_shape[i]);
+      }
+    }
+  }
+  out_shapes->clear();
+  out_shapes->push_back(out_shape);
+  return lite::RET_OK;
+}
+
+int StackInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_shapes,
+                    std::vector<ShapeVector> *out_shapes) {
+  MS_ASSERT(cnode != nullptr);
+  if (in_shapes.empty()) {
+    MS_LOG(ERROR) << "Stack should have one input at least.";
+    return lite::RET_ERROR;
+  }
+  auto dims = in_shapes.front().size();
+  if (std::any_of(in_shapes.begin(), in_shapes.end(),
+                  [dims](const ShapeVector &in_shape) { return in_shape.size() != dims; })) {
+    MS_LOG(ERROR) << "Stack all-inputs should hava same rank.";
+    return lite::RET_INPUT_TENSOR_ERROR;
+  }
+  if (std::any_of(in_shapes.begin(), in_shapes.end(), [](const ShapeVector &in_shape) {
+        return std::any_of(in_shape.begin(), in_shape.end(), [](int64_t val) { return val == 0; });
+      })) {
+    return lite::RET_NOT_SUPPORT;
+  }
+  auto prim = GetCNodePrimitive(cnode);
+  auto axis = prim->GetAttr(ops::kAxis) == nullptr ? 0 : GetValue<int64_t>(prim->GetAttr(ops::kAxis));
+  if (axis < 0) {
+    axis += static_cast<int64_t>(dims);
+  }
+  if (axis < 0 || axis > static_cast<int64_t>(dims)) {
+    MS_LOG(ERROR) << "stack's axis is invalid.";
+    return lite::RET_PARAM_INVALID;
+  }
+  ShapeVector out_shape;
+  auto FillShape = [&out_shape, &in_shapes](int64_t start, int64_t end) mutable {
+    for (; start < end; ++start) {
+      ShapeVector vertical;
+      for (const auto &in_shape : in_shapes) {
+        if (in_shape[start] >= 0) {
+          vertical.push_back(in_shape[start]);
+        } else if (in_shape[start] != -1) {
+          MS_LOG(ERROR) << "Stack's input-shape must not have a dim-value less than -1.";
+          return lite::RET_INPUT_TENSOR_ERROR;
+        }
+      }
+      out_shape.push_back(vertical.size() < in_shapes.size() ? -1 : vertical.front());
+      if (!vertical.empty()) {
+        int64_t dim = vertical.front();
+        if (std::any_of(vertical.begin(), vertical.end(), [dim](const int64_t value) { return value != dim; })) {
+          MS_LOG(ERROR) << "Stack's input-shape must be same each other.";
+          return lite::RET_INPUT_TENSOR_ERROR;
+        }
+      }
+    }
+    return lite::RET_OK;
+  };
+  if (FillShape(0, axis) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Stack do fillShape failed.";
+    return lite::RET_ERROR;
+  }
+  out_shape.push_back(static_cast<int64_t>(in_shapes.size()));
+  if (FillShape(axis, dims) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Stack do fillShape failed.";
+    return lite::RET_ERROR;
+  }
+  out_shapes->clear();
+  out_shapes->push_back(out_shape);
+  return lite::RET_OK;
+}
+
 int CheckStridedSlice(const CNodePtr &cnode, int64_t in_rank, lite::DataInfo *begins, lite::DataInfo *ends) {
   MS_ASSERT(cnode != nullptr);
   auto prim = GetCNodePrimitive(cnode);
   MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "StridedSlice's primitive is a nullptr.");
   int64_t ellipsis_mask = prim->GetAttr(ops::kEllipsisMask) ? GetValue<int64_t>(prim->GetAttr(ops::kEllipsisMask)) : 0;
   int64_t new_axis_mask = prim->GetAttr(ops::kNewAxisMask) ? GetValue<int64_t>(prim->GetAttr(ops::kNewAxisMask)) : 0;
-  int64_t shrink_mask =
-    prim->GetAttr(ops::kShrinkAxisMask) ? GetValue<int64_t>(prim->GetAttr(ops::kShrinkAxisMask)) : 0;
-  if (((ellipsis_mask | new_axis_mask) | shrink_mask) != 0) {
+  if ((ellipsis_mask | new_axis_mask) != 0) {
     return lite::RET_NOT_SUPPORT;
   }
   for (size_t i = C2NUM; i < kInputSizeFive; ++i) {
@@ -483,10 +640,15 @@ int StridedSliceInferShape(const CNodePtr &cnode, const std::vector<ShapeVector>
   auto prim = GetCNodePrimitive(cnode);
   int64_t begin_mask = prim->GetAttr(ops::kBeginMask) ? GetValue<int64_t>(prim->GetAttr(ops::kBeginMask)) : 0;
   int64_t end_mask = prim->GetAttr(ops::kEndMask) ? GetValue<int64_t>(prim->GetAttr(ops::kEndMask)) : 0;
+  int64_t shrink_mask =
+    prim->GetAttr(ops::kShrinkAxisMask) ? GetValue<int64_t>(prim->GetAttr(ops::kShrinkAxisMask)) : 0;
   const auto &in_shape = in_shapes.front();
   ShapeVector out_shape;
   int index = 0;
   for (; index < begins.shape_.front(); ++index) {
+    if (shrink_mask & (1 << index)) {
+      continue;
+    }
     int b_mask = begin_mask & (1 << index);
     int e_mask = end_mask & (1 << index);
     if (b_mask && e_mask) {
@@ -512,6 +674,53 @@ int StridedSliceInferShape(const CNodePtr &cnode, const std::vector<ShapeVector>
   }
   (void)out_shape.insert(out_shape.end(), in_shape.begin() + index, in_shape.end());
   out_shapes->clear();
+  out_shapes->push_back(out_shape);
+  return lite::RET_OK;
+}
+
+int TransposeInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_shapes,
+                        std::vector<ShapeVector> *out_shapes) {
+  MS_ASSERT(cnode != nullptr);
+  out_shapes->clear();
+  if (in_shapes.size() == 1) {
+    auto in_shape = in_shapes.front();
+    ShapeVector out_shape(in_shape.rbegin(), in_shape.rend());
+    out_shapes->push_back(out_shape);
+    return lite::RET_OK;
+  }
+  if (in_shapes.size() != C2NUM) {
+    MS_LOG(ERROR) << "Transpose's input should be 1 or 2, now is " << in_shapes.size();
+    return lite::RET_INPUT_TENSOR_ERROR;
+  }
+  if (utils::isa<CNode>(cnode->input(ops::kInputIndex2))) {
+    return lite::RET_NOT_SUPPORT;
+  }
+  lite::DataInfo data_info;
+  if (lite::FetchConstData(cnode, ops::kInputIndex2, converter::kFmkTypeMs, &data_info, false)) {
+    MS_LOG(ERROR) << "Fetch constant info failed, " << cnode->fullname_with_scope();
+    return lite::RET_ERROR;
+  }
+  if (data_info.data_ptr_ == nullptr ||
+      (data_info.data_type_ != kNumberTypeInt && data_info.data_type_ != kNumberTypeInt32)) {
+    return lite::RET_NOT_SUPPORT;
+  }
+  auto num = std::accumulate(data_info.shape_.begin(), data_info.shape_.end(), 1, std::multiplies<>());
+  auto in_shape = in_shapes.front();
+  if (num != static_cast<int>(in_shape.size())) {
+    MS_LOG(ERROR) << "Transpose's perm doesn't match with input.";
+    return lite::RET_INPUT_TENSOR_ERROR;
+  }
+  std::vector<int> visit_flags(num, 0);
+  ShapeVector out_shape;
+  for (int i = 0; i < num; ++i) {
+    auto dim_index = static_cast<int *>(data_info.data_ptr_)[i];
+    if (dim_index < 0 || dim_index >= num || visit_flags[dim_index]) {
+      MS_LOG(ERROR) << "Transpose's perm is invalid.";
+      return lite::RET_INPUT_TENSOR_ERROR;
+    }
+    visit_flags[dim_index] = 1;
+    out_shape.push_back(in_shape[dim_index]);
+  }
   out_shapes->push_back(out_shape);
   return lite::RET_OK;
 }
@@ -557,11 +766,12 @@ int DynamicShapePreprocessor::ProcessOps(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(ops_can_infer != nullptr);
   std::set<std::string> support_ops = {
-    prim::kPrimAddFusion->name(),    prim::kPrimActivation->name(),  prim::kPrimCast->name(),
-    prim::kPrimConcat->name(),       prim::kPrimExpandDims->name(),  prim::kPrimGather->name(),
-    prim::kPrimMatMulFusion->name(), prim::kPrimMulFusion->name(),   prim::kPrimNotEqual->name(),
-    prim::kPrimReduceFusion->name(), prim::kPrimReshape->name(),     prim::kPrimShape->name(),
-    prim::kPrimSplit->name(),        prim::kPrimStridedSlice->name()};
+    prim::kPrimAddFusion->name(),    prim::kPrimActivation->name(), prim::kPrimCast->name(),
+    prim::kPrimConcat->name(),       prim::kPrimExpandDims->name(), prim::kPrimGather->name(),
+    prim::kPrimMatMulFusion->name(), prim::kPrimMulFusion->name(),  prim::kPrimNotEqual->name(),
+    prim::kPrimReduceFusion->name(), prim::kPrimReshape->name(),    prim::kPrimShape->name(),
+    prim::kPrimSplit->name(),        prim::kPrimSqueeze->name(),    prim::kPrimStack->name(),
+    prim::kPrimStridedSlice->name(), prim::kPrimTranspose->name()};
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (!utils::isa<CNode>(node)) {
@@ -581,7 +791,7 @@ int DynamicShapePreprocessor::ProcessOps(const FuncGraphPtr &func_graph) {
       cnode->set_inputs(origin_inputs);
       continue;
     }
-    if (lite::RemoveIfMakeTuple(cnode)) {
+    if (lite::RemoveIfMakeTuple(cnode) != RET_OK) {
       cnode->set_inputs(origin_inputs);
       continue;
     }
@@ -615,7 +825,9 @@ int DynamicShapePreprocessor::DoInfer(const CNodePtr &cnode, const std::string &
       {prim::kPrimMatMulFusion->name(), MatMulInferShape},   {prim::kPrimMulFusion->name(), ArithmeticInferShape},
       {prim::kPrimNotEqual->name(), CommonInferShape},       {prim::kPrimReduceFusion->name(), ReduceInferShape},
       {prim::kPrimReshape->name(), ReshapeInferShape},       {prim::kPrimShape->name(), ShapeInferShape},
-      {prim::kPrimSplit->name(), SplitInferShape},           {prim::kPrimStridedSlice->name(), StridedSliceInferShape}};
+      {prim::kPrimSplit->name(), SplitInferShape},           {prim::kPrimSqueeze->name(), SqueezeInferShape},
+      {prim::kPrimStack->name(), StackInferShape},           {prim::kPrimStridedSlice->name(), StridedSliceInferShape},
+      {prim::kPrimTranspose->name(), TransposeInferShape}};
   if (infer_func.find(op_type) == infer_func.end()) {
     MS_LOG(ERROR) << "Current op: " << op_type << " doesn't support infer.";
     return lite::RET_ERROR;
