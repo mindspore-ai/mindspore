@@ -342,18 +342,18 @@ def test_canonicalize_axis():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_top_k():
+def test_topk():
     """
-    Feature: top_k func
-    Description: Verify the result of top_k
+    Feature: topk func
+    Description: Verify the result of topk
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import top_k
+    from mindspore._extends.parse.standard_method import topk
 
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.func = top_k
+            self.func = topk
 
         def construct(self, x, k):
             return self.func(x, k)
