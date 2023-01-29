@@ -78,6 +78,7 @@ from mindspore.ops.operations.array_ops import SegmentMin
 from mindspore.ops.operations.array_ops import SegmentSum
 from mindspore.ops.operations.array_ops import IdentityN
 from mindspore.ops.operations.array_ops import IndexFill
+from mindspore.ops.operations.array_ops import IndexPut
 from mindspore.ops.operations.array_ops import SegmentMean
 from mindspore.ops.operations.array_ops import SegmentProd
 from mindspore.ops.operations.array_ops import ScatterAddWithAxis
@@ -4031,6 +4032,12 @@ test_case_array_ops = [
                         Tensor(4.0, mstype.float32)],
         'desc_bprop': [Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mstype.float32)],
     }),
+    ('IndexPut', {
+        'block': IndexPut(1),
+        'desc_inputs': [(Tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], mstype.float32)),
+                        (Tensor([3.0], mstype.float32)),
+                        (Tensor([0, 1], mstype.int32),)],
+        'desc_bprop': [Tensor([[1, 1, 1], [1, 1, 1]], mstype.float32)]}),
     ('MaskedScatter', {
         'block': MaskedScatter(),
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0]]), mstype.float32),
