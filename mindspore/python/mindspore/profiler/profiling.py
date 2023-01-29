@@ -48,6 +48,16 @@ from mindspore.profiler.parser.msadvisor_analyzer import Msadvisor
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
+AICORE_METRICS_DICT = {
+    0: "ArithmeticUtilization",
+    1: "PipeUtilization",
+    2: "Memory",
+    3: "MemoryL0",
+    4: "ResourceConflictRatio",
+    5: "MemoryUB",
+    -1: "None"
+}
+
 
 def _environment_check():
     if c_expression.security.enable_security():
@@ -136,6 +146,7 @@ class Profiler:
             raise RuntimeError(msg)
         Profiler._has_initialized = True
         self._timeline_size_limit_byte = 500 * 1024 * 1024  # 500MB
+        self._parallel_strategy = True
         self._dev_id = None
         self._cpu_profiler = None
         self._gpu_profiler = None
@@ -150,6 +161,10 @@ class Profiler:
         self._rank_size = 0
         self._ascend_profiler = None
         _environment_check()
+        # default aicore_metrics type is ArithmeticUtilization
+        self._aicore_metrics_id = 0
+        self._data_process = True
+        self._parser_kwargs(kwargs)
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()
         self._get_output_path(kwargs)
@@ -339,10 +354,12 @@ class Profiler:
         self._cpu_profiler.step_profiling_enable(True)
 
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
-            self._md_profiler.start()
+            if self._data_process:
+                self._md_profiler.start()
             self._gpu_profiler.step_profiling_enable(True)
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
-            self._md_profiler.start()
+            if self._data_process:
+                self._md_profiler.start()
             if context.get_context("mode") == context.PYNATIVE_MODE:
                 self._ascend_pynative_start()
             else:
@@ -387,9 +404,9 @@ class Profiler:
         # No need to stop anything if parse profiling data offline
         if self._is_offline_parser():
             return
-
-        self._md_profiler.stop()
-        self._md_profiler.save(self._output_path)
+        if self._data_process:
+            self._md_profiler.stop()
+            self._md_profiler.save(self._output_path)
 
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
             self._gpu_profiler.stop()
@@ -432,8 +449,9 @@ class Profiler:
     def _gpu_profiler_init(self, kwargs):
         """Gpu profiler init."""
         # Setup and start MindData Profiling
-        self._md_profiler = cde.GlobalContext.profiling_manager()
-        self._md_profiler.init()
+        if self._data_process:
+            self._md_profiler = cde.GlobalContext.profiling_manager()
+            self._md_profiler.init()
         if context.get_context("mode") == context.PYNATIVE_MODE:
             raise RuntimeError("Pynative mode is not supported on GPU currently.")
         self._parse_parameter_for_gpu(kwargs)
@@ -448,8 +466,9 @@ class Profiler:
     def _ascend_profiler_init(self, kwargs):
         """Ascend profiler init."""
         # Setup and start MindData Profiling
-        self._md_profiler = cde.GlobalContext.profiling_manager()
-        self._md_profiler.init()
+        if self._data_process:
+            self._md_profiler = cde.GlobalContext.profiling_manager()
+            self._md_profiler.init()
         self._init_time = int(time.time() * 10000000)
         logger.info("Profiling: profiling init time: %d", self._init_time)
         self._parse_parameter_for_ascend(kwargs)
@@ -492,11 +511,11 @@ class Profiler:
             "bp_point": bp_point,
             "training_trace": "on",
             "task_trace": "on",
-            "aic_metrics": "ArithmeticUtilization",
+            "aic_metrics": AICORE_METRICS_DICT.get(self._aicore_metrics_id, "ArithmeticUtilization"),
             "aicpu": "on",
             "profile_memory": profile_memory,
             "hccl": profiler_communication,
-            "parallel_strategy": "on"
+            "parallel_strategy": "on" if self._parallel_strategy else "off",
         }
 
         return profiling_options
@@ -547,6 +566,19 @@ class Profiler:
                             f"but got type '{type(self._profile_memory)}'")
         if kwargs:
             logger.warning("There are invalid params which don't work.")
+
+        self._aicore_metrics_id = kwargs.pop("aicore_metrics", 0)
+        if not isinstance(self._aicore_metrics_id, int):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter aicore_metrics must be int, "
+                            f"but got type {type(self._aicore_metrics_id)}")
+        if self._aicore_metrics_id not in AICORE_METRICS_DICT:
+            raise ValueError(f"For '{self.__class__.__name__}', the parameter aicore_metrics must be in "
+                             f"[-1, 0, 1, 2, 3, 4, 5], but got {self._aicore_metrics_id}")
+
+        self._parallel_strategy = kwargs.pop("parallel_strategy", True)
+        if not isinstance(self._parallel_strategy, bool):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter parallel_strategy must be bool, "
+                            f"but got type {type(self._parallel_strategy)}")
 
         task_sink = os.getenv("GRAPH_OP_RUN")
         if task_sink and task_sink == "1":
@@ -1177,6 +1209,19 @@ class Profiler:
         else:
             logger.warning("The target dir already exists. "
                            "There may be some old profiling data, and they will be rewritten in the end.")
+
+    def _parser_kwargs(self, kwargs):
+        """Parse kwargs vale."""
+        self._data_process = kwargs.pop("data_process", True)
+        if not isinstance(self._data_process, bool):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter data_process must be bool, "
+                            f"but got type {type(self._data_process)}")
+
+        timeline_limit = kwargs.pop("timeline_limit", 500)
+        if not isinstance(timeline_limit, int):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter timeline_limit must be int, "
+                            f"but got type {type(timeline_limit)}")
+        self._timeline_size_limit_byte = timeline_limit * 1024 * 1024
 
     def _analyse_hccl_info(self):
         """Analyse hccl info."""
