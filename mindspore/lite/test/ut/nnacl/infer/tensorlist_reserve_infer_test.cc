@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
+#include "src/common/tensor_util.h"
 #include "nnacl/infer/control/tensorlist_reserve_infer.h"
 
 namespace mindspore {
@@ -41,11 +42,12 @@ TEST_F(TensorlistReserveInferTest, TensorlistReserveInferTest0) {
   inputs[1]->data_type_ = kNumberTypeInt32;
 
   std::vector<TensorC *> outputs(1, NULL);
-  outputs[0] = reinterpret_cast<TensorC *>(new TensorListC);
-  OpParameter *parameter = new OpParameter;
+  auto out = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
+  out->tensors_ = nullptr;
+  outputs[0] = reinterpret_cast<TensorC *>(out);
+  auto *parameter = new OpParameter;
   int ret = TensorListReserveInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                         reinterpret_cast<OpParameter *>(parameter));
-  TensorListC *out = reinterpret_cast<TensorListC *>(outputs[0]);
   ASSERT_EQ(ret, NNACL_OK);
   ASSERT_EQ(out->element_num_, 5);
   ASSERT_EQ(out->data_type_, kObjectTypeTensorType);
@@ -56,15 +58,14 @@ TEST_F(TensorlistReserveInferTest, TensorlistReserveInferTest0) {
   ASSERT_EQ(out->tensors_data_type_, kTypeUnknown);
   // ASSERT_EQ(outputs[0]->format_, Format_NHWC);
   for (size_t i = 0; i < out->element_num_; i++) {
-    ASSERT_EQ(out->tensors_[i].shape_size_, 0);
+    ASSERT_EQ(out->tensors_[i]->shape_size_, 0);
   }
   delete parameter;
   for (size_t i = 0; i < inputs_size; i++) {
     delete inputs[i];
   }
-  for (size_t i = 0; i < outputs.size(); i++) {
-    delete outputs[i];
-  }
+  lite::FreeOutTensorC(&outputs);
+  delete out;
 }
 
 }  // namespace mindspore

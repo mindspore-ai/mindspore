@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,28 +27,29 @@ class TensorlistStackInferTest : public mindspore::CommonTest {
 TEST_F(TensorlistStackInferTest, TensorlistStackInferTest0) {
   size_t inputs_size = 2;
   std::vector<TensorC *> inputs(inputs_size, NULL);
-  TensorListC *input0 = new TensorListC;
+  auto *input0 = new TensorListC;
   input0->element_num_ = 3;
-  input0->tensors_ = reinterpret_cast<TensorC *>(malloc(input0->element_num_ * sizeof(TensorC)));
+  auto in_tensors_c = reinterpret_cast<TensorC *>(malloc(input0->element_num_ * sizeof(TensorC)));
+  input0->tensors_ = &in_tensors_c;
   input0->element_shape_size_ = 2;
   input0->element_shape_[0] = 2;
   input0->element_shape_[1] = 4;
   input0->tensors_data_type_ = kNumberTypeInt32;
 
-  input0->tensors_[0].shape_size_ = 2;
-  input0->tensors_[0].shape_[0] = 2;
-  input0->tensors_[0].shape_[1] = 4;
-  input0->tensors_[0].data_type_ = kNumberTypeInt32;
+  in_tensors_c[0].shape_size_ = 2;
+  in_tensors_c[0].shape_[0] = 2;
+  in_tensors_c[0].shape_[1] = 4;
+  in_tensors_c[0].data_type_ = kNumberTypeInt32;
 
-  input0->tensors_[1].shape_size_ = 2;
-  input0->tensors_[1].shape_[0] = 2;
-  input0->tensors_[1].shape_[1] = 4;
-  input0->tensors_[1].data_type_ = kNumberTypeInt32;
+  in_tensors_c[1].shape_size_ = 2;
+  in_tensors_c[1].shape_[0] = 2;
+  in_tensors_c[1].shape_[1] = 4;
+  in_tensors_c[1].data_type_ = kNumberTypeInt32;
 
-  input0->tensors_[2].shape_size_ = 2;
-  input0->tensors_[2].shape_[0] = 2;
-  input0->tensors_[2].shape_[1] = 4;
-  input0->tensors_[2].data_type_ = kNumberTypeInt32;
+  in_tensors_c[2].shape_size_ = 2;
+  in_tensors_c[2].shape_[0] = 2;
+  in_tensors_c[2].shape_[1] = 4;
+  in_tensors_c[2].data_type_ = kNumberTypeInt32;
   // input0->tensors_[2]->format_ = Format_NHWC;
   inputs[0] = reinterpret_cast<TensorC *>(input0);
   inputs[0]->data_type_ = kObjectTypeTensorType;
@@ -61,7 +62,7 @@ TEST_F(TensorlistStackInferTest, TensorlistStackInferTest0) {
 
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
-  OpParameter *parameter = new OpParameter;
+  auto *parameter = new OpParameter;
   int ret = TensorListStackInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                       reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -74,6 +75,10 @@ TEST_F(TensorlistStackInferTest, TensorlistStackInferTest0) {
 
   delete parameter;
   for (size_t i = 0; i < inputs_size; i++) {
+    if (inputs[i]->data_type_ == kObjectTypeTensorType) {
+      auto *tensorList_c = reinterpret_cast<TensorListC *>(inputs[i]);
+      free(*tensorList_c->tensors_);
+    }
     delete inputs[i];
   }
   for (size_t i = 0; i < outputs.size(); i++) {

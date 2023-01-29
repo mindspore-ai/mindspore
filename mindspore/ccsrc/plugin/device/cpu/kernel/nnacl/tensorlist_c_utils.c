@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use tensor file except in compliance with the License.
@@ -28,16 +28,21 @@ int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector 
     return NNACL_ERR;
   }
   tensor_list->tensors_data_type_ = dtype;
-  tensor_list->tensors_ = (TensorC *)malloc(tensor_list->element_num_ * sizeof(TensorC));  // free in infer_manager
-  if (tensor_list->tensors_ == NULL) {
+  void *addr = malloc(tensor_list->element_num_ * sizeof(void *) +
+                      tensor_list->element_num_ * sizeof(TensorC));  // free in infer_manager
+  if (addr == NULL) {
+    free(tensor_list->tensors_);
     return NNACL_NULL_PTR;
   }
-  memset(tensor_list->tensors_, 0, tensor_list->element_num_ * sizeof(TensorC));
+  memset(addr, 0, tensor_list->element_num_ * sizeof(void *) + tensor_list->element_num_ * sizeof(TensorC));
+  tensor_list->tensors_ = (TensorC **)addr;
+  TensorC *tensors = (TensorC *)(tensor_list->tensors_ + tensor_list->element_num_);
   for (size_t i = 0; i < tensor_list->element_num_; ++i) {
-    tensor_list->tensors_[i].format_ = Format_NHWC;
-    tensor_list->tensors_[i].data_type_ = dtype;
-    ShapeSet(tensor_list->tensors_[i].shape_, &(tensor_list->tensors_[i].shape_size_), tensor_shape->shape_[i],
-             (size_t)tensor_shape->shape_size_[i]);
+    TensorC *tensor = tensors + i;
+    tensor_list->tensors_[i] = tensor;
+    tensor->format_ = Format_NHWC;
+    tensor->data_type_ = dtype;
+    ShapeSet(tensor->shape_, &(tensor->shape_size_), tensor_shape->shape_[i], (size_t)tensor_shape->shape_size_[i]);
   }
   return NNACL_OK;
 }

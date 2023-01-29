@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,11 +43,12 @@ TEST_F(TensorlistFromtensorInferTest, TensorlistFromtensorInferTest0) {
   inputs[1]->shape_[1] = 2;
 
   std::vector<TensorC *> outputs(1, NULL);
-  outputs[0] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorListC)));
-  OpParameter *parameter = new OpParameter;
+  auto out = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
+  out->tensors_ = nullptr;
+  outputs[0] = reinterpret_cast<TensorC *>(out);
+  auto *parameter = new OpParameter;
   int ret = TensorListFromTensorInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(),
                                            outputs.size(), reinterpret_cast<OpParameter *>(parameter));
-  TensorListC *out = reinterpret_cast<TensorListC *>(outputs[0]);
   ASSERT_EQ(ret, NNACL_OK);
   ASSERT_EQ(out->element_num_, 4);
   ASSERT_EQ(out->data_type_, kObjectTypeTensorType);
@@ -57,22 +58,16 @@ TEST_F(TensorlistFromtensorInferTest, TensorlistFromtensorInferTest0) {
   ASSERT_EQ(out->tensors_data_type_, kNumberTypeInt32);
   // ASSERT_EQ(outputs[0]->format_, Format_NHWC);
   for (size_t i = 0; i < out->element_num_; i++) {
-    ASSERT_EQ(out->tensors_[i].shape_size_, 2);
-    ASSERT_EQ(out->tensors_[i].shape_[0], 6);
-    ASSERT_EQ(out->tensors_[i].shape_[1], 5);
+    ASSERT_EQ(out->tensors_[i]->shape_size_, 2);
+    ASSERT_EQ(out->tensors_[i]->shape_[0], 6);
+    ASSERT_EQ(out->tensors_[i]->shape_[1], 5);
   }
   delete parameter;
   for (size_t i = 0; i < inputs_size; i++) {
     delete inputs[i];
   }
-  for (size_t i = 0; i < outputs.size(); i++) {
-    if (outputs[i]->data_type_ == kObjectTypeTensorType) {
-      TensorListC *tensorListC = reinterpret_cast<TensorListC *>(outputs[i]);
-      lite::FreeTensorListC(tensorListC);
-    } else {
-      delete outputs[i];
-    }
-  }
+  lite::FreeOutTensorC(&outputs);
+  delete out;
 }
 
 }  // namespace mindspore

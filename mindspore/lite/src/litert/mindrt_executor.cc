@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -270,7 +270,7 @@ int MindrtExecutor::TransferGraphOutput() {
       }
       if (src_tensor->allocator() != nullptr) {
         dst_tensor->set_data(src_tensor->data());
-        dst_tensor->set_own_data(src_tensor->own_data());
+        dst_tensor->set_own_data(src_tensor->IsConst() ? false : src_tensor->own_data());
       } else {
         dst_tensor->set_data(src_tensor->data());
         src_tensor->set_data(nullptr);

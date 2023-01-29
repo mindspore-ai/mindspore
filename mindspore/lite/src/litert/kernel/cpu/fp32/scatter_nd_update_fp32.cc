@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ int ScatterNdUpdateCPUKernel::ScatterNdUpdate(int task_id) {
     MS_LOG(ERROR) << "Execute ScatterNDUpdate failed, ret: " << ret;
     return RET_ERROR;
   }
-  in_tensors_.at(kScatterUpdateInputIndex)->IncRefCount();
   return RET_OK;
 }
 
@@ -55,7 +54,7 @@ int ScatterNdUpdateCPUKernel::Run() {
   auto in_tensor = in_tensors().front();
   auto out_tensor = out_tensors().front();
   if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
-      in_tensor->own_data() == false || op_parameter_->is_train_session_) {
+      in_tensor->own_data() == false || in_tensor->IsConst() || op_parameter_->is_train_session_) {
     (void)memcpy(out_tensor->data(), in_tensor->data(), in_tensor->Size());
   } else {
     out_tensor->FreeData();

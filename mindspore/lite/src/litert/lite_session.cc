@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1491,7 +1491,7 @@ void LiteSession::RuntimeAllocatorInitSubgraph() {
     for (auto kernel : kernel_list) {
       /* malloc for output */
       for (auto tensor : kernel->out_tensors()) {
-        if (tensor->allocator() != default_allocator) {
+        if (tensor->allocator() != default_allocator || tensor->IsConst()) {
           continue;
         }
         tensor->set_allocator(runtime_allocator_);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 #include "include/errorcode.h"
+#include "nnacl/tensorlist_c.h"
 #include "src/common/log_adapter.h"
 #include "schema/model_generated.h"
 #include "src/tensor.h"
@@ -57,7 +58,7 @@ namespace mindspore::lite {
  */
 class TensorList : public Tensor {
  public:
-  TensorList() = default;
+  TensorList() { tensor_list_c_ = {kObjectTypeTensorType, DEFAULT_FORMAT, 0, kTypeUnknown, -1, nullptr, 0, 0}; }
 
   TensorList(std::vector<int> shape, std::vector<int> element_shape, Category category = VAR);
 
@@ -67,13 +68,27 @@ class TensorList : public Tensor {
 
   TensorList &operator=(const TensorList &tl) = delete;
 
-  void set_element_shape(const std::vector<int> &shape) { element_shape_ = shape; }
+  void set_element_shape(const std::vector<int> &shape) {
+    if (shape.size() > MAX_SHAPE_SIZE) {
+      FreeData();
+      tensor_list_c_.element_shape_size_ = 0;
+      MS_LOG(WARNING) << "The shape-size has exceeded the limit 8, now is " << shape.size();
+      return;
+    }
+    tensor_list_c_.element_shape_size_ = shape.size();
+    for (size_t i = 0; i < shape.size(); ++i) {
+      tensor_list_c_.element_shape_[i] = shape[i];
+    }
+  }
 
-  std::vector<int> element_shape() const { return element_shape_; }
+  std::vector<int> element_shape() const {
+    return std::vector<int>(tensor_list_c_.element_shape_,
+                            tensor_list_c_.element_shape_ + tensor_list_c_.element_shape_size_);
+  }
 
-  void set_max_elements_num(int ele_num) { max_elements_num_ = ele_num; }
+  void set_max_elements_num(int ele_num) { tensor_list_c_.max_elements_num_ = ele_num; }
 
-  int max_elements_num() const { return max_elements_num_; }
+  int max_elements_num() const { return tensor_list_c_.max_elements_num_; }
 
   static TensorList *CopyTensorList(const TensorList &src, bool copy_data = false,
                                     const AllocatorPtr &allocator = nullptr);
@@ -90,9 +105,9 @@ class TensorList : public Tensor {
 
   Tensor *GetTensor(int index);
 
-  void set_tensors_data_type(TypeId type) { tensors_data_type_ = type; }
+  void set_tensors_data_type(TypeId type) { tensor_list_c_.tensors_data_type_ = type; }
 
-  TypeId tensors_data_type() const { return tensors_data_type_; }
+  TypeId tensors_data_type() const { return static_cast<TypeId>(tensor_list_c_.tensors_data_type_); }
 
   std::vector<Tensor *> tensors() { return tensors_; }
 
@@ -174,15 +189,21 @@ class TensorList : public Tensor {
     }
   }
 
+  TensorListC *ConvertToTensorListC() {
+    tensor_list_c_.format_ = tensor_c_.format_;
+    tensor_list_c_.shape_value_ = tensor_c_.shape_size_ == 0 ? 0 : tensor_c_.shape_[0];
+    tensor_list_c_.element_num_ = tensor_c_.shape_size_ == 0 ? 0 : tensors_.size();
+    tensor_list_c_.tensors_ = nullptr;
+    return &tensor_list_c_;
+  }
+
  protected:
   // The following functions must be masked.
   void *data() const override { return nullptr; }
   void *MutableData() override { return nullptr; }
   size_t Size() const override { return 0; }
+  TensorListC tensor_list_c_;
   std::vector<Tensor *> tensors_{};
-  TypeId tensors_data_type_ = kTypeUnknown;
-  std::vector<int> element_shape_{};
-  int max_elements_num_ = -1;
 };
 
 #else

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,12 @@
 typedef enum TensorCFormat { NCHW, NHWC, NC4HW4, NUM_OF_FORMAT } TensorCFormat;
 
 typedef struct TensorC {
-  bool is_ready_;
   int data_type_;
   int format_;
   void *data_;
   size_t shape_size_;
   int shape_[MAX_SHAPE_SIZE];
-  char *name_;
+  char *name_;  // only used in micro now.
 } TensorC;
 
 #endif  // MINDSPORE_NNACL_TENSOR_C_H_

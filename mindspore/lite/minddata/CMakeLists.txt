@@ -123,6 +123,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
     include_directories("${MINDDATA_DIR}/kernels/image")
     include_directories("${MINDDATA_DIR}/liteapi")
     include_directories("${TOP_DIR}")
+    include_directories("${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel")
 
     set(MINDDATA_FULL_SRC
         ${TOP_DIR}/mindspore/lite/src/litert/cxx_api/types.cc
