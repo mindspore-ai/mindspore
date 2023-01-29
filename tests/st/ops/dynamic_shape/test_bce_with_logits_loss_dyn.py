@@ -34,12 +34,12 @@ class Net(nn.Cell):
 
 
 def net_run():
-    predict = Tensor(np.arange(6).reshape(2, 3).astype(np.float32))
-    target = Tensor(np.arange(34, 40).reshape(2, 3).astype(np.float32))
-    weight = Tensor(np.array([2, 3, 1]).astype(np.float32))
-    pos_weight = Tensor(np.array([6, 3, 4]).astype(np.float32))
+    predict = Tensor(np.arange(6).reshape(2, 3).astype(np.float16))
+    target = Tensor(np.arange(34, 40).reshape(2, 3).astype(np.float16))
+    weight = Tensor(np.array([2, 3, 1]).astype(np.float16))
+    pos_weight = Tensor(np.array([6, 3, 4]).astype(np.float16))
     net = Net("mean")
-    net.set_inputs(Tensor(shape=[None, None], dtype=mstype.float32),
+    net.set_inputs(Tensor(shape=[None, None], dtype=mstype.float16),
                    Tensor(target), Tensor(weight), Tensor(pos_weight))
     output = net(predict, target, weight, pos_weight)
     expected = -113.55404

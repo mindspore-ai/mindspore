@@ -126,6 +126,8 @@ inline bool NeedInsertTransData(const ShapeVector &origin_shape, const std::stri
     origin_shape.size() > 1 || (origin_shape.size() == 1 && origin_shape[0] % SizeToLong(kCubeSize) != 0);
   return kCommonFormatSet.find(format) == kCommonFormatSet.end() && (shape_check || format == kOpFormat_ND_RNN_BIAS);
 }
+
+void NormalizeReduceAttrAxis(const CNodePtr &cnode);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ASCEND_HELPER_H_

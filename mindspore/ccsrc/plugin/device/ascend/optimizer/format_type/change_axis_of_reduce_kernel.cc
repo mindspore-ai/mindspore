@@ -25,6 +25,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
+#include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore::opt {
 namespace {
@@ -156,27 +157,6 @@ const BaseRef ChangeAxisOfReduceKernel::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
   VarPtr Xs = std::make_shared<SeqVar>();
   return VectorRef({X, Xs});
-}
-
-void ChangeAxisOfReduceKernel::NormalizeReduceAttrAxis(const CNodePtr &cnode) {
-  std::vector<int64_t> axis;
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
-  auto axis_list = kernel::GetReduceAttrAxis(cnode);
-  if (axis_list.empty()) {
-    for (size_t i = 0; i < input_shape.size(); ++i) {
-      (void)axis.emplace_back(SizeToLong(i));
-    }
-    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);
-    return;
-  }
-  for (const auto &elem : axis_list) {
-    if (elem < 0) {
-      axis.emplace_back(SizeToLong(input_shape.size()) + elem);
-    } else {
-      axis.emplace_back(elem);
-    }
-  }
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);
 }
 
 const AnfNodePtr ChangeAxisOfReduceKernel::Process(const FuncGraphPtr &, const AnfNodePtr &node,

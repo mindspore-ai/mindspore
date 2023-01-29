@@ -145,6 +145,12 @@ void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size
   }
 }
 
+static bool IsCastFp16ToFp32(const CNodePtr &cast_node) {
+  auto input_type_id = AnfAlgo::GetInputDeviceDataType(cast_node, 0);
+  auto output_type_id = AnfAlgo::GetOutputDeviceDataType(cast_node, 0);
+  return input_type_id == TypeId::kNumberTypeFloat16 && output_type_id == TypeId::kNumberTypeFloat32;
+}
+
 AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, const KernelQueryPtr kernel_query) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(kernel_query);
@@ -160,6 +166,9 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
   auto next_cnode = next_node->cast<CNodePtr>();
   auto next_op_name = common::AnfAlgo::GetCNodeName(next_cnode);
   if (next_op_name == prim::kPrimSend->name() || next_op_name == kStackPushOpName) {
+    return nullptr;
+  }
+  if (common::AnfAlgo::HasNodeAttr(kAttrAclHighPrecision, next_cnode) && IsCastFp16ToFp32(node)) {
     return nullptr;
   }
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
