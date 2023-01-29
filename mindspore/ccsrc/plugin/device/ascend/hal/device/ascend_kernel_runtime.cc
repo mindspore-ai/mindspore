@@ -767,7 +767,7 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph & /* 
       MS_LOG(WARNING) << "    3) You can create iterator by interface create_dict_iterator() of dataset class to "
                       << "independently verify the performance of data processing without training. "
                       << "Refer to the link for data processing optimization suggestions: "
-                      << "https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/optimize_data_processing.html";
+                      << "https://mindspore.cn/tutorials/experts/zh-CN/master/dataset/optimize.html";
     }
 
     E2eDump::DumpInputData(node, false, path, &full_scope_name);
