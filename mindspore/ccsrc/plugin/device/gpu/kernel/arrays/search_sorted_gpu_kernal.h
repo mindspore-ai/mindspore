@@ -85,6 +85,7 @@ class SearchSortedGpuKernelMod : public NativeGpuKernelMod {
   size_t output_elements_ = 0;
   int status1 = 0;
   int count12 = 0;
+  bool should_last_repeat_ = True;
   std::vector<int64_t> sequence_shape_;
   std::vector<int64_t> value_shape_;
   std::vector<int64_t> output_shape_;
