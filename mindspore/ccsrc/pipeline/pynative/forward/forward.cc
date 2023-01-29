@@ -437,7 +437,7 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   // get graph info for checking it whether existing in the cache
   GetSingleOpGraphInfo(op_run_info, cur_target);
   auto backend_op_run_info =
-    std::make_shared<BackendOpRunInfo>(op_run_info->base_op_run_info, op_run_info->op_prim.get(), true, false);
+    std::make_shared<BackendOpRunInfo>(op_run_info->base_op_run_info, op_run_info->op_prim, true, false);
 #if defined(__APPLE__)
   backend_op_run_info->base_op_run_info.lazy_build = false;
 #endif
@@ -447,9 +447,7 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
   bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
   if (use_dynamic_shape_process) {
-    backend_op_run_info->op_prim->AddAttr(kAttrMutableKernel, MakeValue(true));
-    backend_op_run_info->op_prim->AddAttr(kAttrInputIsDynamicShape, MakeValue(true));
-    backend_op_run_info->op_prim->AddAttr(kAttrOutputIsDynamicShape, MakeValue(true));
+    AnfAlgo::SetDynamicAttrToPrim(backend_op_run_info->op_prim);
     cur_mind_rt_backend->RunOpDynamic(backend_op_run_info, &outputs);
   } else {
     cur_mind_rt_backend->RunOp(backend_op_run_info, &outputs);

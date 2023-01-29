@@ -243,7 +243,7 @@ void AscendGraphOptimization::AclOpOptimize(const KernelGraphPtr &graph) {
 
   auto nodes = graph->execution_order();
   for (auto &node : nodes) {
-    common::AnfAlgo::SetNodeAttr(kAttrMutableKernel, MakeValue(true), node);
+    AnfAlgo::SetDynamicAttrToPrim(common::AnfAlgo::GetCNodePrimitive(node));
   }
 
   SelectKernel(graph);

@@ -1752,4 +1752,10 @@ size_t AnfAlgo::GetInputElementNum(const AnfNodePtr &node) {
   }
   return element_num;
 }
+
+void AnfAlgo::SetDynamicAttrToPrim(const PrimitivePtr &prim) {
+  prim->AddAttr(kAttrMutableKernel, MakeValue(true));
+  prim->AddAttr(kAttrInputIsDynamicShape, MakeValue(true));
+  prim->AddAttr(kAttrOutputIsDynamicShape, MakeValue(true));
+}
 }  // namespace mindspore::session
