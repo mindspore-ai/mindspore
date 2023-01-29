@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
   auto inputs = cnode->inputs();
   new_inputs.push_back(inputs[0]);
   bool need_update = false;
+  std::vector<int64_t> fake_tensor_pos;
   // the first input is primitive node which is not the real input
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
@@ -87,6 +88,7 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
         continue;
       }
       new_inputs.push_back(tensor_input);
+      fake_tensor_pos.push_back(i);
       need_update = true;
     } else {
       new_inputs.push_back(input_node);
@@ -106,6 +108,9 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
     common::AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
     if (kernel_graph != nullptr) {
       kernel_graph->FrontBackendlMapUpdate(cnode, new_cnode);
+    }
+    if (common::AnfAlgo::CheckPrimitiveType(new_cnode, prim::kPrimPrint) && fake_tensor_pos.size() > 0) {
+      common::AnfAlgo::SetNodeAttr("fake_tensor", MakeValue<std::vector<int64_t>>(fake_tensor_pos), new_cnode);
     }
     return new_cnode;
   }

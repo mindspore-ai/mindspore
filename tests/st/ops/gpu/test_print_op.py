@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import pytest
 
 from mindspore import Tensor, jit
 import mindspore.nn as nn
+import mindspore.numpy as ms_np
 from mindspore.ops import operations as P
 import mindspore.context as context
 import mindspore as ms
@@ -253,3 +254,41 @@ def test_print_abs():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     out = function()
     print("out:", out)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+def test_print_tensor():
+    """
+    Feature: Print op.
+    Description: Print tensor.
+    Expectation: success.
+    """
+    class ReLUDynamicNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = nn.ReLU()
+            self.reduce = P.ReduceSum(keep_dims=False)
+            self.shape = P.TensorShape()
+
+        def construct(self, x, y, z):
+            rand_axis = ms_np.randint(1, 3, (3,))
+            axis = ms_np.unique(rand_axis)
+            print("the input y is:", y)
+            print("the input z is:", z)
+            print("the input z is:", z, " the shape of x:", self.shape(x))
+            print("before reduce the shape of x is: ", self.shape(x))
+            x = self.reduce(x, axis)
+            x_shape = self.shape(x)
+            print("after reduce the shape of x is: ", self.shape(x))
+            return self.relu(x), axis, x_shape
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    relu_net = ReLUDynamicNet()
+    input_x = Tensor(np.random.randn(8, 3, 5, 8, 5, 6).astype(np.float32))
+    input_y = [1, 2, 3, 4]
+    input_z = (5, 6, 7, 8, 9)
+    _, _, x_shape = relu_net(input_x, input_y, input_z)
+    print(x_shape)
+    print("test end")
