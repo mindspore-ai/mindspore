@@ -46,6 +46,8 @@ def get_jit_forbidden_module(jit_forbidden_module):
 
 def get_obj_module_and_name_info(obj):
     """Return the description of the object whose type is class, function or method."""
+    if not hasattr(obj, "__module__"):
+        return None
     if isinstance(obj, (types.FunctionType, types.MethodType)):
         return obj.__module__, obj.__qualname__, "method or function"
     return obj.__module__, obj.__name__, "class"
