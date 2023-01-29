@@ -67,7 +67,8 @@ void ApplyAdagradDACpuKernelMod::CheckDType(const std::vector<KernelTensorPtr> &
                       << " .";
   }
   if (StepDtype != kNumberTypeInt32 && StepDtype != kNumberTypeInt64) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' should be int32 or int64, but got " << LRDtype << " .";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'step' should be int32 or int64, but got " << StepDtype
+                      << " .";
   }
 }
 int ApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
