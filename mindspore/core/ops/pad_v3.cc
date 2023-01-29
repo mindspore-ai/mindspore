@@ -136,14 +136,15 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   std::vector<int64_t> paddings_val;
   auto mode = GetValue<std::string>(primitive->GetAttr(kAttrMode));
   if (mode != kConstant) {
-    (void)CheckAndConvertUtils::CheckInteger("input dims for edge or reflect mode", size, kGreaterEqual, kOtherMinDims,
-                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input dims for edge, reflect or circular mode", size, kGreaterEqual,
+                                             kOtherMinDims, prim_name);
+    if (mode == kReflect) {
+      ReflectModeCheck(prim_name, paddings_size, x_shape, paddings_arg, size);
+    } else {
+      (void)CheckAndConvertUtils::CheckInteger("input dims for edge mode", size, kLessEqual, kEdgeMaxDims, prim_name);
+    }
   }
-  if (mode == kReflect) {
-    ReflectModeCheck(prim_name, paddings_size, x_shape, paddings_arg, size);
-  } else if (mode == kEdge) {
-    (void)CheckAndConvertUtils::CheckInteger("input dims for edge mode", size, kLessEqual, kEdgeMaxDims, prim_name);
-  }
+
   PaddingsSizeCheck(primitive, paddings_size, size);
   for (int64_t i = 0; i < paddings_size; ++i) {
     paddings_val.push_back(int64_t(paddings_arg[LongToSize(i)]));

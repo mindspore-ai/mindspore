@@ -4275,7 +4275,7 @@ class PadV3(Primitive):
 
     Args:
         mode (str, optional): An optional string indicates padding mode,
-            support "constant", "reflect", "edge". Default: "constant".
+            support "constant", "reflect", "edge", "circular". Default: "constant".
         paddings_contiguous (bool, optional): An optional bool value indicates if the padding is paddings_contiguous.
             If true, paddings is arranged as [begin0, end0, begin1, end1, ...]
             If false, paddings is arranged as [begin0, begin1, ..., end1, end2, ...]
@@ -4296,13 +4296,14 @@ class PadV3(Primitive):
         ValueError: If `mode` is not a str or not in support modes.
         ValueError: If `mode` is "constant", the element's number of `paddings` not be even.
         ValueError: If `mode` is "constant", the element's number of `paddings` large than input dim * 2.
-        ValueError: If `mode` is "edge" or "reflect", the element's number of `paddings` is not 2, 4 or 6.
-        ValueError: If `mode` is "edge" or "reflect", `x` dims equals 3,
+        ValueError: If `mode` is "edge" "reflect" or "circular", the element's number of `paddings` is not 2, 4 or 6.
+        ValueError: If `mode` is "edge" "reflect" or "circular", `x` dims equals 3,
             the element's number of `paddings` is not 2.
-        ValueError: If `mode` is "edge" or "reflect", `x` dims equals 4,
+        ValueError: If `mode` is "edge" "reflect" or "circular", `x` dims equals 4,
             the element's number of `paddings` is not 4.
-        ValueError: If `mode` is "edge" or "reflect", `x` dims smaller than 3.
-        ValueError: If `mode` is "edge", x dims bigger than 5.
+        ValueError: If `mode` is "circular", `x` dims equals 5, the element's number of `paddings` is not 6.
+        ValueError: If `mode` is "edge", "reflect" or "circular", `x` dims smaller than 3.
+        ValueError: If `mode` is "edge" or "circular", x dims bigger than 5.
         ValueError: If `mode` is "reflect", x dims bigger than 4.
         ValueError: If `mode` is "reflect", padding size bigger than the corresponding `x` dimension.
         ValueError: After padding, output's shape number is not greater than 0.
@@ -4346,7 +4347,7 @@ class PadV3(Primitive):
     def __init__(self, mode='constant', paddings_contiguous=True):
         """Initialize PadV3"""
         self.init_prim_io_names(inputs=['x', 'paddings', 'constant_value'], outputs=['y'])
-        validator.check_string(mode, ['constant', 'reflect', 'edge'], 'mode', self.name)
+        validator.check_string(mode, ['constant', 'reflect', 'edge', 'circular'], 'mode', self.name)
         validator.check_bool(paddings_contiguous, "paddings_contiguous", self.name)
         self.mode = mode
         self.paddings_contiguous = paddings_contiguous

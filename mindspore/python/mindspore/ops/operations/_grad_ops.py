@@ -2211,7 +2211,7 @@ class PadV3Grad(Primitive):
         """Initialize Padv3Grad"""
         self.add_prim_attr("cust_aicpu", self.name)
         self.init_prim_io_names(inputs=['x', 'paddings'], outputs=['y'])
-        validator.check_string(mode, ['reflect', 'edge'], 'mode', self.name)
+        validator.check_string(mode, ['reflect', 'edge', 'circular'], 'mode', self.name)
         validator.check_bool(paddings_contiguous, "paddings_contiguous", self.name)
         self.set_const_input_indexes([1])
         self.mode = mode

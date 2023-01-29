@@ -340,6 +340,7 @@ constexpr auto kHalfPixelCenters = "half_pixel_centers";
 constexpr auto kConstant = "constant";
 constexpr auto kReflect = "reflect";
 constexpr auto kEdge = "edge";
+constexpr auto kCircular = "circular";
 constexpr auto kLr = "lr";
 constexpr auto kL1 = "l1";
 constexpr auto kL2 = "l2";

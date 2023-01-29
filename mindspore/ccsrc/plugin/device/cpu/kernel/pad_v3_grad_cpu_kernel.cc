@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/pad_v3_grad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/op_name.h"
 #include "mindspore/core/ops/grad/pad_v3_grad.h"
 
 namespace mindspore {
@@ -30,6 +31,9 @@ constexpr int64_t k1DNum = 2;
 constexpr int64_t kpad_l = 0;
 constexpr int64_t kpad_t = 2;
 constexpr int64_t kpad_f = 4;
+constexpr int64_t kpad_r = 1;
+constexpr int64_t kpad_d = 3;
+constexpr int64_t kpad_b = 5;
 constexpr int64_t kwidth = 1;
 constexpr int64_t kheight = 2;
 constexpr int64_t kchannel = 3;
@@ -40,7 +44,7 @@ constexpr int64_t k2Num = 2;
 constexpr int64_t padding_pos_2 = 2;
 constexpr int64_t padding_pos_3 = 3;
 constexpr int64_t padding_pos_4 = 4;
-const std::vector<std::string> mode_list = {"reflect", "edge"};
+const std::vector<std::string> mode_list = {ops::kReflect, ops::kEdge, ops::kCircular};
 }  // namespace
 
 bool PadV3GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -55,7 +59,7 @@ bool PadV3GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   mode_ = kernel_ptr->get_mode();
   const bool is_mode_available = std::find(mode_list.begin(), mode_list.end(), mode_) != mode_list.end();
   if (is_mode_available == false) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'mode' should be 'constant', 'reflect' or 'edge', but got "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'mode' should be 'reflect', 'edge' or 'circular', but got "
                   << mode_;
     return false;
   }
@@ -148,7 +152,7 @@ void PadV3GradCpuKernelMod::PadV3GradCompute(T *input, T *output, int64_t p) con
 template <typename T>
 void PadV3GradCpuKernelMod::PadV3GradCompute1D(T *input, T *output, int64_t p) const {
   for (int j = 0; j < input_w_; j++) {
-    auto ip_x = IndexCalculate(pad_l_, j, output_w_, o_start_x_, i_start_x_);
+    auto ip_x = IndexCalculate(pad_l_, pad_r_, j, output_w_, o_start_x_, i_start_x_);
     T *src_p = input + p * input_w_ + j;
     T *dest_p = output + p * output_w_ + ip_x;
     *dest_p += *src_p;
@@ -158,8 +162,8 @@ void PadV3GradCpuKernelMod::PadV3GradCompute1D(T *input, T *output, int64_t p) c
 template <typename T>
 void PadV3GradCpuKernelMod::PadV3GradCompute2D(T *input, T *output, int64_t p, int64_t i) const {
   for (int j = 0; j < input_w_; j++) {
-    auto ip_x = IndexCalculate(pad_l_, j, output_w_, o_start_x_, i_start_x_);
-    auto ip_y = IndexCalculate(pad_t_, i, output_h_, o_start_y_, i_start_y_);
+    auto ip_x = IndexCalculate(pad_l_, pad_r_, j, output_w_, o_start_x_, i_start_x_);
+    auto ip_y = IndexCalculate(pad_t_, pad_d_, i, output_h_, o_start_y_, i_start_y_);
     T *src_p = input + p * input_w_ * input_h_ + i * input_w_ + j;
     T *dest_p = output + p * output_w_ * output_h_ + ip_y * output_w_ + ip_x;
     *dest_p += *src_p;
@@ -170,9 +174,9 @@ template <typename T>
 void PadV3GradCpuKernelMod::PadV3GradCompute3D(T *input, T *output, int64_t p, int64_t z) const {
   for (int i = 0; i < input_h_; i++) {
     for (int j = 0; j < input_w_; j++) {
-      auto ip_x = IndexCalculate(pad_l_, j, output_w_, o_start_x_, i_start_x_);
-      auto ip_y = IndexCalculate(pad_t_, i, output_h_, o_start_y_, i_start_y_);
-      auto ip_z = IndexCalculate(pad_f_, z, output_c_, o_start_z_, i_start_z_);
+      auto ip_x = IndexCalculate(pad_l_, pad_r_, j, output_w_, o_start_x_, i_start_x_);
+      auto ip_y = IndexCalculate(pad_t_, pad_d_, i, output_h_, o_start_y_, i_start_y_);
+      auto ip_z = IndexCalculate(pad_f_, pad_b_, z, output_c_, o_start_z_, i_start_z_);
       T *src_p = input + p * input_w_ * input_h_ * input_c_ + z * input_w_ * input_h_ + i * input_w_ + j;
       T *dest_p =
         output + p * output_w_ * output_h_ * output_c_ + ip_z * output_w_ * output_h_ + ip_y * output_w_ + ip_x;
@@ -181,22 +185,26 @@ void PadV3GradCpuKernelMod::PadV3GradCompute3D(T *input, T *output, int64_t p, i
   }
 }
 
-int64_t PadV3GradCpuKernelMod::IndexCalculate(int64_t pad_value, int64_t now, int64_t output_value, int64_t o_start,
-                                              int64_t i_start) const {
+int64_t PadV3GradCpuKernelMod::IndexCalculate(int64_t pad_value, int64_t pad_end, int64_t now, int64_t output_value,
+                                              int64_t o_start, int64_t i_start) const {
   int64_t ip = 0;
   if (now < pad_value) {
-    if (mode_ == "reflect") {
+    if (mode_ == ops::kReflect) {
       ip = pad_value + pad_value - now;
-    } else if (mode_ == "edge") {
+    } else if (mode_ == ops::kEdge) {
       ip = pad_value;
+    } else if (mode_ == ops::kCircular) {
+      ip = output_value + now + std::min(int64_t(0), pad_end);
     }
   } else if (now >= pad_value && now < output_value + pad_value) {
     ip = now;
   } else {
-    if (mode_ == "reflect") {
+    if (mode_ == ops::kReflect) {
       ip = (output_value + pad_value - 1) + (output_value + pad_value - 1) - now;
-    } else if (mode_ == "edge") {
+    } else if (mode_ == ops::kEdge) {
       ip = output_value + pad_value - 1;
+    } else if (mode_ == ops::kCircular) {
+      ip = now - output_value - std::min(int64_t(0), pad_value);
     }
   }
   ip = ip - o_start + i_start;
@@ -209,7 +217,6 @@ bool PadV3GradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
   if (!GetPaddings<S>(inputs)) {
     MS_LOG(EXCEPTION) << "get paddings failed";
   }
-
   output_w_ = output_shape_.end()[-kwidth];
   output_h_ = output_shape_.end()[-kheight];
   output_c_ = output_shape_.end()[-kchannel];
@@ -227,6 +234,9 @@ bool PadV3GradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
   pad_l_ = paddings_[kpad_l];
   pad_t_ = paddings_[kpad_t];
   pad_f_ = paddings_[kpad_f];
+  pad_r_ = paddings_[kpad_r];
+  pad_d_ = paddings_[kpad_d];
+  pad_b_ = paddings_[kpad_b];
 
   int64_t output_num_ = 1;
   for (int64_t i = 0; i < input_dim_; i++) {
