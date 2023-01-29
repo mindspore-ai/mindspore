@@ -167,7 +167,8 @@ def __get_compile_cache_dep_files(file_path, compile_cache_dep_files, pkg):
     for node in ast.iter_child_nodes(root):
         module_name = ""
         if isinstance(node, ast.ImportFrom):
-            module_name = node.module
+            if node.module is not None:
+                module_name = node.module
             if node.level == 1:
                 module_name = "." + module_name
         elif not isinstance(node, ast.Import):
