@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,6 @@ class BufferCPUSampleKernelMod : public DeprecatedNativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) {
     auto count_addr = GetDeviceAddress<int>(inputs, element_nums_);
     auto head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
-
     if ((head_addr[0] > 0 && SizeToLong(batch_size_) > capacity_) ||
         (head_addr[0] == 0 && SizeToLong(batch_size_) > count_addr[0])) {
       MS_LOG(ERROR) << "The batch size " << batch_size_ << " is larger than total buffer size "
