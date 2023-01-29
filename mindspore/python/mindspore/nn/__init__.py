@@ -31,9 +31,6 @@ from mindspore.nn.wrap import *
 from mindspore.nn.grad import Jvp, Vjp
 from mindspore.nn.sparse import *
 from mindspore.nn.reinforcement import *
-from mindspore.nn.transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, \
-    TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer,\
-    TransformerOpParallelConfig, EmbeddingOpParallelConfig, TransformerRecomputeConfig, MoEConfig, OpParallelConfig
 
 __all__ = ["Cell", "GraphCell"]
 __all__.extend(layer.__all__)
@@ -46,6 +43,5 @@ __all__.extend(sparse.__all__)
 __all__.extend(learning_rate_schedule.__all__)
 __all__.extend(dynamic_lr.__all__)
 __all__.extend(reinforcement.__all__)
-__all__.extend(transformer.__all__)
 
 __all__.sort()

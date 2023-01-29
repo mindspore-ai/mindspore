@@ -35,12 +35,12 @@ from mindspore import log as logger
 from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
 from mindspore.context import ParallelMode
 from mindspore.log import _LogActionOnce
-from mindspore.nn.transformer.layers import _LayerNorm, _Linear, \
+from mindspore.parallel._transformer.layers import _LayerNorm, _Linear, \
     _args_type_validator_check, _valid_type_checks, _valid_value_checks, \
     _check_past_none_input_none, _check_input_dtype
-from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, _PipeLineConfig, OpParallelConfig, \
+from mindspore.parallel._transformer.op_parallel_config import default_dpmp_config, _PipeLineConfig, OpParallelConfig, \
     _Config, _check_config, MoEParallelConfig
-from mindspore.nn.transformer.moe import default_moe_config, MoE, _check_moe_config
+from mindspore.parallel._transformer.moe import default_moe_config, MoE, _check_moe_config
 
 __all__ = [
     "AttentionMask",

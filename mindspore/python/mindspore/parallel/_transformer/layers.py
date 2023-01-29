@@ -37,7 +37,7 @@ from mindspore._checkparam import Validator
 from mindspore.ops.primitive import constexpr
 from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
 from mindspore.context import ParallelMode
-from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, OpParallelConfig, MoEParallelConfig
+from mindspore.parallel._transformer.op_parallel_config import default_dpmp_config, OpParallelConfig, MoEParallelConfig
 from mindspore import log as logger
 
 __all__ = [

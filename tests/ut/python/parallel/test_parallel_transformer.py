@@ -24,7 +24,7 @@ from mindspore import context
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 import mindspore.ops as P
-from mindspore.parallel.nn import TransformerEncoder, TransformerDecoder, Transformer, TransformerOpParallelConfig, \
+from mindspore.parallel._transformer import TransformerEncoder, TransformerDecoder, Transformer, TransformerOpParallelConfig, \
     VocabEmbedding, CrossEntropyLoss, OpParallelConfig, EmbeddingOpParallelConfig, FixedSparseAttention,\
     TransformerRecomputeConfig
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell

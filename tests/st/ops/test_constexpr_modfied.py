@@ -223,7 +223,7 @@ def test_calculate_expert_capacity():
     Description: Verify the result of calculate_expert_capacity
     Expectation: success
     """
-    from mindspore.nn.transformer.moe import calculate_expert_capacity
+    from mindspore.parallel._transformer.moe import calculate_expert_capacity
 
     class Net(nn.Cell):
         def __init__(self):

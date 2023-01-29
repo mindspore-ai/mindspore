@@ -31,7 +31,7 @@ from mindspore.nn.cell import Cell
 from mindspore.nn.layer import Dense
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
-from mindspore.nn.transformer.op_parallel_config import default_moeparallel_config
+from mindspore.parallel._transformer.op_parallel_config import default_moeparallel_config
 
 __all__ = [
     "MoEConfig"]
@@ -188,7 +188,7 @@ class MoE(Cell):
             self.group_wise_a2a = moe_config.group_wise_a2a
             if not (self.mp > 1 and self.dp == self.ep):
                 self.group_wise_a2a = False
-            from mindspore.nn.transformer import FeedForward
+            from mindspore.parallel._transformer import FeedForward
 
             self.ffn = FeedForward(hidden_size=hidden_size,
                                    ffn_hidden_size=ffn_hidden_size,
@@ -233,7 +233,7 @@ class MoE(Cell):
             self.group_wise_a2a = moe_config.group_wise_a2a
             if not (self.mp > 1 and self.dp == self.ep):
                 self.group_wise_a2a = False
-            from mindspore.nn.transformer import FeedForward
+            from mindspore.parallel._transformer import FeedForward
 
             self.ffn = FeedForward(hidden_size=hidden_size,
                                    ffn_hidden_size=ffn_hidden_size,
