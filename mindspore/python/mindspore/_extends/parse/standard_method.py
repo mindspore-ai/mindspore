@@ -1076,7 +1076,7 @@ def max(x, axis=None, keepdims=False, initial=None,  # pylint: disable=redefined
         TypeError: if the input is not a tensor.
 
     Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
