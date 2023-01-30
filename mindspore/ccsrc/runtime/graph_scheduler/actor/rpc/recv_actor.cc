@@ -66,16 +66,9 @@ bool RecvActor::StartServer() {
   server_ = std::make_unique<TCPServer>();
   MS_EXCEPTION_IF_NULL(server_);
 
-  // Only set the memory allocating callback when using void* message.
-  bool use_void_msg = common::GetEnv("use_void").empty() ? false : true;
-  MS_LOG(INFO) << "Recv actor use void* message: " << use_void_msg;
-
-  std::function<void *(size_t size)> allocate_callback;
-  if (use_void_msg) {
-    allocate_callback = std::bind(&RecvActor::AllocateMessage, this, std::placeholders::_1);
-  } else {
-    allocate_callback = {};
-  }
+  // Set the memory allocating callback using void* message.
+  std::function<void *(size_t size)> allocate_callback =
+    std::bind(&RecvActor::AllocateMessage, this, std::placeholders::_1);
   if (!server_->Initialize(allocate_callback)) {
     MS_LOG(EXCEPTION) << "Failed to initialize tcp server for recv actor";
   }
@@ -338,19 +331,12 @@ void RecvActor::PreprocessRemoteInput(const MessageBase *const msg, bool *need_f
   MS_EXCEPTION_IF_NULL(msg);
   MS_EXCEPTION_IF_NULL(need_finalize);
 
-  size_t data_size = 0;
-  std::string msg_magic_header;
-  RpcDataPtr dynamic_shape_data;
-  if (common::GetEnv("use_void").empty()) {
-    data_size = msg->body.size();
-    msg_magic_header = msg->body.substr(0, strlen(kRpcDynamicShapeData));
-    dynamic_shape_data = const_cast<RpcDataPtr>(msg->body.c_str());
-  } else {
-    MS_EXCEPTION_IF_NULL(msg->data);
-    data_size = msg->size;
-    msg_magic_header = std::string(static_cast<RpcDataPtr>(msg->data), strlen(kRpcDynamicShapeData));
-    dynamic_shape_data = static_cast<RpcDataPtr>(msg->data);
-  }
+  // Parse the void * data.
+  size_t data_size = msg->size;
+  MS_EXCEPTION_IF_NULL(msg->data);
+  std::string msg_magic_header = std::string(static_cast<RpcDataPtr>(msg->data), strlen(kRpcDynamicShapeData));
+  RpcDataPtr dynamic_shape_data = static_cast<RpcDataPtr>(msg->data);
+
   if (data_size <= strlen(kRpcDynamicShapeData)) {
     MS_LOG(DEBUG) << "This is not a dynamic shape data. No need to preprocess.";
     return;

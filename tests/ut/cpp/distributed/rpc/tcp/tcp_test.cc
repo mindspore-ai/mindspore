@@ -85,11 +85,17 @@ class TCPTest : public UT::Common {
 std::unique_ptr<MessageBase> TCPTest::CreateMessage(const std::string &serverUrl, const std::string &clientUrl,
                                                     size_t msg_size) {
   std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
-  std::string data(msg_size, 'A');
   message->name = "testname";
   message->from = AID("client", clientUrl);
   message->to = AID("server", serverUrl);
-  message->body = data;
+
+  if (msg_size == 0) {
+    MS_LOG(EXCEPTION) << "msg_size should be greater than 0.";
+  }
+  void *data = malloc(msg_size);
+  (void)memset_s(data, msg_size, 'A', msg_size);
+  message->data = data;
+  message->size = msg_size;
   return message;
 }
 
@@ -264,7 +270,7 @@ TEST_F(TCPTest, SendSyncMessage) {
 
   // Create the message.
   auto message = CreateMessage(server_url, client_url);
-  auto msg_size = message->body.size();
+  auto msg_size = message->size;
 
   // Send the message.
   client->Connect(server_url);
