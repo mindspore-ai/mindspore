@@ -26,6 +26,16 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 template <typename Key, typename Value>
+CPUHashTable<Key, Value>::CPUHashTable(size_t value_dim) : value_dim_(value_dim), value_size_(0) {
+  Initialize();
+}
+
+template <typename Key, typename Value>
+CPUHashTable<Key, Value>::~CPUHashTable() {
+  Finalize();
+}
+
+template <typename Key, typename Value>
 bool CPUHashTable<Key, Value>::Initialize() {
   const uint32_t device_id = 0;
   device_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kCPUDevice, device_id});
@@ -49,7 +59,7 @@ bool CPUHashTable<Key, Value>::Find(const Key *keys, size_t key_num, bool, Value
   for (size_t i = 0; i < key_num; ++i) {
     const auto &key = keys[i];
     if (values_.find(key) != values_.end()) {
-      size_t offset = i * value_size_;
+      size_t offset = i * value_dim_;
       size_t src_size = value_size_;
       size_t dst_size = value_size_;
 
@@ -71,6 +81,7 @@ bool CPUHashTable<Key, Value>::Find(const Key *keys, size_t key_num, bool, Value
 template <typename Key, typename Value>
 bool CPUHashTable<Key, Value>::Insert(const Key *keys, size_t key_num, const Value *value, void *) {
   std::unique_lock<std::shared_mutex> lock(mutex_);
+  MS_EXCEPTION_IF_NULL(device_ctx_);
   MS_EXCEPTION_IF_NULL(device_ctx_->device_res_manager_);
 
   for (size_t i = 0; i < key_num; ++i) {
@@ -84,7 +95,7 @@ bool CPUHashTable<Key, Value>::Insert(const Key *keys, size_t key_num, const Val
     }
 
     // Do the insertion copy.
-    size_t offset = i * value_size_;
+    size_t offset = i * value_dim_;
     size_t src_size = value_size_;
     size_t dst_size = value_size_;
     auto ret = memcpy_s(values_[key], dst_size, value + offset, src_size);
@@ -100,6 +111,7 @@ bool CPUHashTable<Key, Value>::Insert(const Key *keys, size_t key_num, const Val
 template <typename Key, typename Value>
 bool CPUHashTable<Key, Value>::Erase(const Key *keys, size_t key_num, void *) {
   std::unique_lock<std::shared_mutex> lock(mutex_);
+  MS_EXCEPTION_IF_NULL(device_ctx_);
   MS_EXCEPTION_IF_NULL(device_ctx_->device_res_manager_);
 
   // Erase all the keys in the hash table.
@@ -137,7 +149,7 @@ bool CPUHashTable<Key, Value>::GetKeysAndValues(Key *keys, Value *values, void *
     keys[index] = key;
 
     // Copy the value.
-    size_t offset = index * value_size_;
+    size_t offset = index * value_dim_;
     size_t src_size = value_size_;
     size_t dst_size = value_size_;
     auto ret = memcpy_s(values + offset, dst_size, value, src_size);
@@ -170,7 +182,7 @@ HashTableExportData CPUHashTable<Key, Value>::Export(bool) {
     // Export the key and value.
     (*host_keys)[index] = key;
 
-    size_t offset = index * value_size_;
+    size_t offset = index * value_dim_;
     size_t src_size = value_size_;
     size_t dst_size = value_size_;
     auto ret = memcpy_s(value_data + offset, dst_size, value, src_size);
@@ -202,6 +214,7 @@ bool CPUHashTable<Key, Value>::is_dirty() const {
 template <typename Key, typename Value>
 bool CPUHashTable<Key, Value>::Clear() {
   std::unique_lock<std::shared_mutex> lock(mutex_);
+  MS_EXCEPTION_IF_NULL(device_ctx_);
   MS_EXCEPTION_IF_NULL(device_ctx_->device_res_manager_);
   // Return all the memory of values in hash table to the memory pool.
   for (auto iter = values_.begin(); iter != values_.end(); iter++) {

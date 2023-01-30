@@ -127,6 +127,9 @@ void FillUserData(const UserDataPtr &user_data, DeviceAddress *device_address) {
   MS_EXCEPTION_IF_NULL(user_data);
   MS_EXCEPTION_IF_NULL(device_address);
 
+  // Save reference of user data in device address.
+  device_address->set_user_data(user_data);
+
   const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
   MS_EXCEPTION_IF_NULL(user_data_type);
   if (*user_data_type == UserDataType::kUserTypeHashTable) {
@@ -145,9 +148,6 @@ void FillUserData(const UserDataPtr &user_data, DeviceAddress *device_address) {
   } else {
     MS_LOG(EXCEPTION) << "Invalid user data type:" << *user_data_type;
   }
-
-  // Save reference of user data in device address.
-  device_address->set_user_data(user_data);
 }
 }  // namespace
 
