@@ -93,8 +93,8 @@ int64_t Padding::get_pad_dim_size() const {
 
 AbstractBasePtr PaddingInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
-  TypePtr output_type = PaddingInferType(primitive, input_args);
   abstract::ShapePtr output_shape = PaddingInferShape(primitive, input_args);
+  TypePtr output_type = PaddingInferType(primitive, input_args);
   return abstract::MakeAbstract(output_shape, output_type);
 }
 

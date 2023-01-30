@@ -104,6 +104,9 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   }
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr)[kShape];
   auto dim_size = x_shape.size();
+  if (dim_size == 0) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of 'x' must bigger than 0.";
+  }
   if (input_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>(dim_size, abstract::Shape::kShapeDimAny));
   }

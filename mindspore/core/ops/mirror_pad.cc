@@ -28,6 +28,7 @@ namespace ops {
 namespace {
 constexpr int64_t kPaddingsSecondDimSize = 2;
 constexpr int64_t MAX_PADDINGS = 5;
+constexpr int64_t kMirrorPadInputNum = 2;
 }  // namespace
 
 void MirrorPad::set_mode(const std::string &mode) { (void)AddAttr(kMode, api::MakeValue(mode)); }
@@ -93,6 +94,7 @@ class MirrorPadInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMirrorPadInputNum, primitive->name());
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
     for (const auto &item : input_args) {
@@ -137,6 +139,7 @@ class MirrorPadInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMirrorPadInputNum, prim->name());
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
