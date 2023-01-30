@@ -836,14 +836,6 @@ class Tensor(Tensor_):
 
         Returns:
             True or False
-
-        Examples:
-            >>> from mindspore import Tensor
-            >>> import numpy as np
-            >>> x = Tensor(np.array([2000000000, 256], dtype=np.float32))
-            >>> ret = x.is_persistent_data()
-            >>> print(ret)
-            True
         """
         return Tensor_.is_persistent_data(self)
 
@@ -855,15 +847,6 @@ class Tensor(Tensor_):
 
         Returns:
             A numpy ndarray which shares the same underlying storage with the slice of tensor data.
-
-        Examples:
-            >>> from mindspore import Tensor
-            >>> import numpy as np
-            >>> x = Tensor(np.array([2000000000, 256], dtype=np.float32))
-            >>> y = x.asnumpy_of_slice_persistent_data(0, 0)
-            >>> y[0] = 11
-            >>> print(x[0])
-            11
         """
         return Tensor_.asnumpy_of_slice_persistent_data(self, param_key, slice_index)
 
@@ -873,14 +856,6 @@ class Tensor(Tensor_):
 
         Returns:
             Num of slice.
-
-        Examples:
-            >>> from mindspore import Tensor
-            >>> import numpy as np
-            >>> x = Tensor(np.array([2000000000, 256], dtype=np.float32))
-            >>> y = x.slice_num_of_persistent_data()
-            >>> print(y)
-            5
         """
         return self.slice_num_of_persistent_data_
 
@@ -890,14 +865,6 @@ class Tensor(Tensor_):
 
         Returns:
             The slice shape of tensor.
-
-        Examples:
-            >>> from mindspore import Tensor
-            >>> import numpy as np
-            >>> x = Tensor(np.array([2000000000, 256], dtype=np.float32))
-            >>> y = x.slice_shape_of_persistent_data()
-            >>> print(y)
-            [400000000, 256]
         """
         return self.slice_shape_of_persistent_data_
 
