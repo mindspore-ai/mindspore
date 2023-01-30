@@ -25,6 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+inline bool IsComplex(cudaDataType_t type) { return type == CUDA_C_32F || type == CUDA_C_64F; }
+}  // namespace
+
 bool MatMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
@@ -65,6 +69,12 @@ bool MatMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 
   transpose_x1_ = kernel_ptr->get_transpose_a() ? CUBLAS_OP_T : CUBLAS_OP_N;
   transpose_x2_ = kernel_ptr->get_transpose_b() ? CUBLAS_OP_T : CUBLAS_OP_N;
+  if (transpose_x1_ != CUBLAS_OP_N && IsComplex(dtype_a_)) {
+    transpose_x1_ = CUBLAS_OP_C;
+  }
+  if (transpose_x2_ != CUBLAS_OP_N && IsComplex(dtype_b_)) {
+    transpose_x2_ = CUBLAS_OP_C;
+  }
   if (kernel_name_ == kFusedMatMulBiasAddName) {
     is_fused_matmul_biasadd_ = true;
   }
@@ -97,9 +107,9 @@ int MatMulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     batch_ *= output_shape[i];
   }
 
-  if (transpose_x1_ == CUBLAS_OP_T && input1_shape.size() > (dims - kDimOffset2)) {
+  if (transpose_x1_ != CUBLAS_OP_N && input1_shape.size() > (dims - kDimOffset2)) {
     k_ = input1_shape[dims - kDimOffset2];
-  } else if (transpose_x1_ == CUBLAS_OP_N && input1_shape.size() > (dims - 1)) {
+  } else if (input1_shape.size() > (dims - 1)) {
     k_ = input1_shape[dims - 1];
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', init k_ via input1_shape failed.";
@@ -137,8 +147,8 @@ bool MatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   // The kernel registration is responsible for types consistency.
   S alpha = static_cast<S>(1.0f);
   S beta = static_cast<S>(0.0f);
-  const int lda = (transpose_x1_ == CUBLAS_OP_T) ? SizeToInt(m_) : SizeToInt(k_);
-  const int ldb = (transpose_x2_ == CUBLAS_OP_T) ? SizeToInt(k_) : SizeToInt(n_);
+  const int lda = (transpose_x1_ != CUBLAS_OP_N) ? SizeToInt(m_) : SizeToInt(k_);
+  const int ldb = (transpose_x2_ != CUBLAS_OP_N) ? SizeToInt(k_) : SizeToInt(n_);
   const int ldc = n_;
 
   try {
