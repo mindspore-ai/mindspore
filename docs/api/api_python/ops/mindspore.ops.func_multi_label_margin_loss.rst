@@ -32,7 +32,6 @@ mindspore.ops.multi_label_margin_loss
     返回：
         - **outputs** (Union[Tensor, Scalar]) - MultilabelMarginLoss损失。如果 `reduction` 的值为 "none"，
           那么返回shape为 :math:`(N)` 的Tensor类型数据。否则返回一个标量。
-        - **is_target** (Tensor) - 基于反向输入数据，返回Tensor类型的数据，shape和 `target` 相同，类型为int32。
 
     异常：
         - **TypeError** - 当 `inputs` 或者 `target` 数据不是Tensor时。
