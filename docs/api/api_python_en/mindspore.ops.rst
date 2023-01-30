@@ -294,8 +294,10 @@ Reduction Functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.all
     mindspore.ops.amax
     mindspore.ops.amin
+    mindspore.ops.any
     mindspore.ops.argmax
     mindspore.ops.argmin
     mindspore.ops.cummax
