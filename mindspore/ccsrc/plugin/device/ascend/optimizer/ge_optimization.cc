@@ -76,7 +76,9 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
   optimizer->AddPassManager(pm);
 
   (void)optimizer->Optimize(func_graph);
-
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
   if (context->CanDump(kAdvanced)) {
     std::string file_name = "hwopt_d_after_ge_optimization_graph_" + func_graph->ToString() + ".ir";
