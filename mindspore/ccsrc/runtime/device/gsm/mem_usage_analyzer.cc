@@ -18,6 +18,10 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 namespace mindspore {
+namespace {
+auto constexpr kInplaceNodeTypeSkip = "skip";
+auto constexpr kInplaceNodeTypeAlgo = "inplace_algo";
+}  // namespace
 namespace device {
 size_t MemUsageAnalyzer::AddTensorInfo(const AnfNodePtr &node, size_t index, bool is_workspace) {
   auto add_to_container = [this](const AnfNodePtr &node, size_t index,
@@ -149,8 +153,10 @@ void MemUsageAnalyzer::AddKernelAndTensorInfo(const KernelGraphPtr &graph) {
   auto real_kernel_num = exec_order.size();
   kernel_infos_.resize(real_kernel_num);
 
-  auto add_tensor_usage = [this](size_t tensor_id, size_t kernel_id, size_t *kernel_mem) {
+  auto add_tensor_usage = [this](size_t tensor_id, size_t kernel_id, size_t *kernel_mem, bool inplace) {
     auto tensor_info = GetMemUsageTensorInfo(tensor_id);
+    MS_EXCEPTION_IF_NULL(tensor_info);
+    tensor_info->is_inplace_tensor_ = inplace;
     (void)tensor_info->used_by_kernels_.emplace_back(kernel_id);
     *kernel_mem += tensor_info->tensor_size_;
   };
@@ -162,6 +168,8 @@ void MemUsageAnalyzer::AddKernelAndTensorInfo(const KernelGraphPtr &graph) {
     auto kernel_info = std::make_shared<MemUsageKernelInfo>();
     kernel_info->is_comm_ = common::AnfAlgo::IsCommunicationOp(node);
     kernel_info->update_input_ = common::AnfAlgo::IsUpdateParameterKernel(node);
+    bool inplace_node = common::AnfAlgo::IsInplaceNode(node, kInplaceNodeTypeSkip) ||
+                        common::AnfAlgo::IsInplaceNode(node, kInplaceNodeTypeAlgo);
 
     // Memory used by this kernel
     size_t kernel_mem = 0;
@@ -169,18 +177,30 @@ void MemUsageAnalyzer::AddKernelAndTensorInfo(const KernelGraphPtr &graph) {
     // Add input tensors
     const auto input_num = kernel_mod->GetInputSizeList().size();
     for (size_t index = 0; index < input_num; ++index) {
-      const auto &prev_node_output = common::AnfAlgo::GetPrevNodeOutput(node, index, true);
+      auto prev_node_output = common::AnfAlgo::GetPrevNodeOutput(node, index, true);
+      if (graph->IsInRefOutputMap(prev_node_output)) {
+        prev_node_output = graph->GetRefCorrespondOutput(prev_node_output);
+      }
       auto tensor_id = AddTensorInfo(prev_node_output.first, prev_node_output.second);
       (void)kernel_info->input_tensors_.emplace_back(tensor_id);
-      add_tensor_usage(tensor_id, i, &kernel_mem);
+      add_tensor_usage(tensor_id, i, &kernel_mem, false);
     }
 
     // Add output tensors
     const auto output_num = kernel_mod->GetOutputSizeList().size();
     for (size_t index = 0; index < output_num; ++index) {
-      auto tensor_id = AddTensorInfo(node, index);
-      (void)kernel_info->output_tensors_.emplace_back(tensor_id);
-      add_tensor_usage(tensor_id, i, &kernel_mem);
+      if (graph->IsInRefOutputMap({node, index})) {
+        auto real_node_pair = graph->GetRefCorrespondOutput({node, index});
+        if (real_node_pair.first != node) {
+          auto tensor_id = AddTensorInfo(real_node_pair.first, real_node_pair.second);
+          (void)kernel_info->input_tensors_.emplace_back(tensor_id);
+          add_tensor_usage(tensor_id, i, &kernel_mem, inplace_node);
+        }
+      } else {
+        auto tensor_id = AddTensorInfo(node, index);
+        (void)kernel_info->output_tensors_.emplace_back(tensor_id);
+        add_tensor_usage(tensor_id, i, &kernel_mem, inplace_node);
+      }
     }
 
     // Add workspace tensors
@@ -188,7 +208,7 @@ void MemUsageAnalyzer::AddKernelAndTensorInfo(const KernelGraphPtr &graph) {
     for (size_t index = 0; index < workspace_num; ++index) {
       auto tensor_id = AddTensorInfo(node, index, true);
       (void)kernel_info->workspace_tensors_.emplace_back(tensor_id);
-      add_tensor_usage(tensor_id, i, &kernel_mem);
+      add_tensor_usage(tensor_id, i, &kernel_mem, false);
     }
 
     if (kernel_mem > least_mem_) {

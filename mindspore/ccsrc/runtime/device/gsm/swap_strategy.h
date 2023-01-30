@@ -31,6 +31,7 @@ struct MemUsageTensorInfo {
   bool is_workspace_{false};
   bool is_graph_output_{false};
   bool is_graph_input_{false};
+  bool is_inplace_tensor_{false};
   std::vector<size_t> used_by_kernels_;
   std::vector<size_t> fused_tensor_ids_;
 };
@@ -80,6 +81,17 @@ struct SwapStrategy {
   std::vector<std::shared_ptr<SwapLink>> links_;
   std::vector<std::shared_ptr<MemUsageTensorInfo>> tensor_infos_;
   std::vector<std::shared_ptr<MemUsageKernelInfo>> kernel_infos_;
+};
+
+class SwapContext {
+ public:
+  size_t hbm_mem_size_{0};
+  size_t ddr_mem_size_{0};
+  size_t disk_mem_size_{0};
+  bool offload_param_to_ddr_{false};
+  bool offload_param_to_disk_{false};
+  bool offload_checkpoint_to_ddr_{false};
+  bool offload_checkpoint_to_disk_{false};
 };
 }  // namespace device
 }  // namespace mindspore
