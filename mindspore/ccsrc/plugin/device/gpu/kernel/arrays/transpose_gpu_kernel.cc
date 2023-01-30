@@ -116,6 +116,7 @@ bool TransposeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 }
 
 void TransposeGpuKernelMod::GetPermValue(const std::vector<int64_t> &perm) {
+  input_perm_.clear();
   for (size_t j = 0; j < perm.size(); j++) {
     auto p = (perm[j] >= 0) ? perm[j] : (perm.size() + perm[j]);
     if (p < 0) {
