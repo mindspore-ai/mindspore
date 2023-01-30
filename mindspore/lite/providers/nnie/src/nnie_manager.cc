@@ -274,7 +274,8 @@ int NNIEManager::GetOutputData(std::vector<mindspore::MSTensor> *outputs,
     return RET_ERROR;
   }
 
-  int i, j;
+  int i;
+  int j;
   if (run_box) {
     for (i = 0; i < output_size; i++) {
       auto input_data_type = (*outputs)[i].DataType();
@@ -375,7 +376,9 @@ int NNIEManager::SetAllocatorTensor(mindspore::MSTensor *tensor, SVP_SRC_BLOB_S 
 
 int NNIEManager::SetAllocatorInputs(std::vector<mindspore::MSTensor> *inputs, bool run_box,
                                     std::shared_ptr<Allocator> allocator, unsigned int seg_id) {
-  size_t i, j, input_size = inputs->size();
+  size_t i;
+  size_t j;
+  size_t input_size = inputs->size();
   if (seg_id >= nnie_cfg_.param_.model_->u32NetSegNum) {
     LOGE("seg num err!");
     return RET_ERROR;
@@ -414,7 +417,8 @@ int NNIEManager::SetAllocatorInputs(std::vector<mindspore::MSTensor> *inputs, bo
 
 int NNIEManager::SetAllocatorOutputs(std::vector<mindspore::MSTensor> *outputs, bool run_box,
                                      std::shared_ptr<Allocator> allocator, unsigned int seg_id) {
-  size_t i, j;
+  size_t i;
+  size_t j;
   size_t output_size = outputs->size();
   if (output_size != nnie_cfg_.param_.model_->astSeg[seg_id].u16DstNum) {
     LOGE("seg%d: %d output tensors are required.", seg_id, nnie_cfg_.param_.model_->astSeg[seg_id].u16DstNum);
