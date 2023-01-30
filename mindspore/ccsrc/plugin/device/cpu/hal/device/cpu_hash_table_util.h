@@ -83,9 +83,9 @@ bool ImportCPUHashTable(const UserDataPtr &user_data, const void *tensor_data, s
 template <typename KeyType, typename ValueType>
 void ClearCPUHashTable(const UserDataPtr &user_data) {
   MS_EXCEPTION_IF_NULL(user_data);
-  const auto &user_data_data = user_data->get<CPUHashTable<KeyType, ValueType>>(kUserDataData);
-  MS_EXCEPTION_IF_NULL(user_data_data);
-  if (!user_data_data->Clear()) {
+  const auto &cpu_hash_table = user_data->get<CPUHashTable<KeyType, ValueType>>(kUserDataData);
+  MS_EXCEPTION_IF_NULL(cpu_hash_table);
+  if (!cpu_hash_table->Clear()) {
     MS_LOG(EXCEPTION) << "Clear user data failed.";
   }
 }

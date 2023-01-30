@@ -31,8 +31,8 @@ using mindspore::HashTableExportData;
 template <typename Key, typename Value>
 class CPUHashTable : public HashTable<Key, Value> {
  public:
-  explicit CPUHashTable(size_t value_dim) : value_dim_(value_dim), value_size_(0) {}
-  ~CPUHashTable() override = default;
+  explicit CPUHashTable(size_t value_dim);
+  ~CPUHashTable() override;
 
   // Initialize the resources (e.g. device context) needed by this hash table.
   bool Initialize();
