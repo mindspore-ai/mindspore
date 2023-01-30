@@ -5113,8 +5113,6 @@ def multi_label_margin_loss(inputs, target, reduction='mean'):
     Returns:
         - **outputs** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
           is :math:`(N)`. Otherwise, a scalar value will be returned.
-        - **is_target** (Tensor) - Output tensor for backward input, with the same shape as `target`,
-          data type must be int32.
 
     Raises:
         TypeError: If `inputs` or `target` is not a Tensor.
@@ -5136,7 +5134,7 @@ def multi_label_margin_loss(inputs, target, reduction='mean'):
        [[1, 1, 1, 1], [0, 0, 1, 1]]))
     """
 
-    loss = _get_cache_prim(P.MultiLabelMarginLoss)(reduction)
+    loss = _get_cache_prim(P.MultilabelMarginLoss)(reduction)
     outputs, _ = loss(inputs, target)
     return outputs
 
