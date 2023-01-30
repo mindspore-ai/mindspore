@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,8 @@ class IncorporateCall : public AnfVisitor {
     if (it != node_users_map.end()) {
       AnfNodePtr update_state_node = nullptr;
       auto &node_users = it->second;
-      if (node_users.size() == 2) {
+      constexpr size_t users_size = 2;
+      if (node_users.size() == users_size) {
         for (auto &node_user : node_users) {
           if (IsPrimitiveCNode(node_user.first, prim::kPrimUpdateState)) {
             update_state_node = node_user.first;
@@ -148,7 +149,8 @@ class IncorporateCall : public AnfVisitor {
         // double check;
         const size_t attach_index = 2;
         if (update_state_cnode->input(attach_index) == fg_call_cnode_) {
-          MS_LOG(DEBUG) << "Replace UpdateState node: " << update_state_cnode->DebugString(2)
+          constexpr int recursive_level = 2;
+          MS_LOG(DEBUG) << "Replace UpdateState node: " << update_state_cnode->DebugString(recursive_level)
                         << ", input 2 with: " << new_node->DebugString();
           manager->SetEdge(update_state_cnode, attach_index, new_node);
         }

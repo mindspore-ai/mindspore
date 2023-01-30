@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,9 @@ AnfNodePtr GetIndexedEnvironValueNode(const FuncGraphPtr &fg, const AnfNodePtr &
 class EnvironGetEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    PatternNode c1, c2, y;
+    PatternNode c1;
+    PatternNode c2;
+    PatternNode y;
     MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimEnvironGet, c1, c2, y), y,
                      (IsNewEnvironNode(c1.GetNode(node)) && IsVNode(c2.GetNode(node))));
     return nullptr;
@@ -198,7 +200,10 @@ class EnvironGetDependSwap : public OptimizerCaller {
     ScopePtr scope = node->cast<CNodePtr>()->scope();
     ScopeGuard scope_guard(scope);
 
-    PatternNode x1, x2, item, dflt;
+    PatternNode x1;
+    PatternNode x2;
+    PatternNode item;
+    PatternNode dflt;
     MATCH_REPLACE(node, PPrimitive(prim::kPrimEnvironGet, PPrimitive(prim::kPrimDepend, x1, x2), item, dflt),
                   PPrimitive(prim::kPrimDepend, PPrimitive(prim::kPrimEnvironGet, x1, item, dflt), x2));
     return nullptr;
@@ -210,7 +215,8 @@ class EnvironGetDependSwap : public OptimizerCaller {
 class EnvironAddConstEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    PatternNode c1, x;
+    PatternNode c1;
+    PatternNode x;
     MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimEnvironAdd, c1, x), x, (IsNewEnvironNode(c1.GetNode(node))));
     MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimEnvironAdd, x, c1), x, (IsNewEnvironNode(c1.GetNode(node))));
     return nullptr;
