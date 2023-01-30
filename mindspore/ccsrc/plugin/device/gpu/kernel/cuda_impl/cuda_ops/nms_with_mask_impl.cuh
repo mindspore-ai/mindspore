@@ -28,6 +28,11 @@ CUDA_LIB_EXPORT void CalPreprocess(const int num, int *sel_idx, bool *sel_boxes,
                                    cudaStream_t cuda_stream);
 
 template <typename T>
+CUDA_LIB_EXPORT void CalPreprocess(const int num, int *sel_idx, int *sel_boxes, const T *input, T *output,
+                                   int *index_buff, int box_size_, bool *row_mask, const uint32_t &device_id,
+                                   cudaStream_t cuda_stream);
+
+template <typename T>
 CUDA_LIB_EXPORT void CalNms(const int num, const float IOU_value, T *output, bool *sel_boxes, int box_size_,
                             bool *row_mask, const uint32_t &device_id, cudaStream_t cuda_stream);
 

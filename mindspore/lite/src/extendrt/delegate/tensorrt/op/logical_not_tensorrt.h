@@ -61,6 +61,8 @@ class LogicalNotPlugin : public TensorRTPlugin {
               const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream) noexcept override;
   size_t getSerializationSize() const noexcept override;
   void serialize(void *buffer) const noexcept override;
+  bool supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
+                                 int nbOutputs) noexcept override;
 
  private:
   int RunCudaLogical(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs, void *const *outputs,
