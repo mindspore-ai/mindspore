@@ -131,7 +131,8 @@ std::vector<std::pair<KernelAttr, ApplyProximalGradientDescentGpuKernelMod::Kern
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32),
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutInRef(0, 0),
      &ApplyProximalGradientDescentGpuKernelMod::LaunchKernel<float>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat16)
@@ -139,7 +140,8 @@ std::vector<std::pair<KernelAttr, ApplyProximalGradientDescentGpuKernelMod::Kern
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16),
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutInRef(0, 0),
      &ApplyProximalGradientDescentGpuKernelMod::LaunchKernel<half>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat64)
@@ -147,7 +149,8 @@ std::vector<std::pair<KernelAttr, ApplyProximalGradientDescentGpuKernelMod::Kern
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeFloat64)
-       .AddOutputAttr(kNumberTypeFloat64),
+       .AddOutputAttr(kNumberTypeFloat64)
+       .AddOutInRef(0, 0),
      &ApplyProximalGradientDescentGpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> ApplyProximalGradientDescentGpuKernelMod::GetOpSupport() {

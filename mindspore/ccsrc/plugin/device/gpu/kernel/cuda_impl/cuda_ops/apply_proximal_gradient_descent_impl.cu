@@ -66,7 +66,7 @@ __global__ void CalApplyProximalGradientDescentKernel(const size_t input_element
          pos += gridDim.x * blockDim.x) {
       auto prox_v = var[pos];
       prox_v -= delta[pos] * alpha[0];
-      output[pos] = SgnFunc(prox_v) * MaxFunc(AbsFunc(prox_v) - alpha[0] * l1[0], static_cast<T>(0.0)) /
+      var[pos] = SgnFunc(prox_v) * MaxFunc(AbsFunc(prox_v) - alpha[0] * l1[0], static_cast<T>(0.0)) /
                  (static_cast<T>(1) + l2[0] * alpha[0]);
     }
   } else {
@@ -74,7 +74,7 @@ __global__ void CalApplyProximalGradientDescentKernel(const size_t input_element
          pos += gridDim.x * blockDim.x) {
       auto prox_v = var[pos];
       prox_v -= delta[pos] * alpha[0];
-      output[pos] = prox_v / (static_cast<T>(1) + l2[0] * alpha[0]);
+      var[pos] = prox_v / (static_cast<T>(1) + l2[0] * alpha[0]);
     }
   }
 }
