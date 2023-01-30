@@ -25,7 +25,8 @@ from mindspore.common.api import jit
 from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.ops.functional import vjp, custom_vjp
+from mindspore.ops.functional import vjp
+from mindspore.ops.function.grad.grad_func import custom_vjp
 
 context.set_context(mode=context.GRAPH_MODE)
 

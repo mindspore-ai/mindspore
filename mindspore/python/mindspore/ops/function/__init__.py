@@ -543,7 +543,6 @@ from .grad import (
     derivative,
     jvp,
     vjp,
-    custom_vjp,
     linearize,
     stop_gradient,
     get_grad
