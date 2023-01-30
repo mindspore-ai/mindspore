@@ -574,6 +574,38 @@ KernelWithIndex AnfAlgo::GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t in
   return res;
 }
 
+// if the prev_node is MakeTuple, get all the input_nodes recursively, else use the ori GetPrevNodeOutput function
+std::vector<KernelWithIndex> AnfAlgo::GetRealPrevNodesOutput(const AnfNodePtr &anf_node, size_t input_idx,
+                                                             bool skip_nop_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  std::vector<KernelWithIndex> res;
+  auto input_node = AnfAlgo::GetInputNode(cnode, input_idx);
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
+    auto maketuple_input_num = GetInputTensorNum(input_node);
+    for (size_t i = 0; i < maketuple_input_num; ++i) {
+      auto inputs_i = GetRealPrevNodesOutput(input_node, i, skip_nop_node);
+      res.insert(res.end(), inputs_i.begin(), inputs_i.end());
+    }
+  } else {
+    res.emplace_back(GetPrevNodeOutput(cnode, input_idx, skip_nop_node));
+  }
+  return res;
+}
+
+std::vector<TypeId> AnfAlgo::GetRealPrevNodesOutputInferDataType(const AnfNodePtr &node, size_t input_idx) {
+  std::vector<KernelWithIndex> kernels_with_index = AnfAlgo::GetRealPrevNodesOutput(node, input_idx);
+  std::vector<TypeId> res;
+  (void)std::transform(kernels_with_index.begin(), kernels_with_index.end(), std::back_inserter(res),
+                       [](auto kernel_with_index) {
+                         return AnfAlgo::GetOutputInferDataType(kernel_with_index.first, kernel_with_index.second);
+                       });
+  return res;
+}
+
 inline ShapeVector GetShape(const abstract::BaseShapePtr &base_shape) {
   auto shape_ptr = base_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_ptr);
@@ -763,8 +795,8 @@ void AnfAlgo::SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
     node_name = GetCNodeName(node_ptr);
   }
   if (types.size() != shapes.size()) {
-    MS_LOG(EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size() << "."
-                      << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
+                      << " for node " << node->fullname_with_scope() << "." << trace::DumpSourceLines(node);
   }
 
   auto tuple_node = kNodeTupleOutSet.find(node_name);

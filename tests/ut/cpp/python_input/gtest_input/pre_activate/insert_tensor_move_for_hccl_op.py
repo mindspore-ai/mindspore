@@ -138,9 +138,7 @@ def test_insert_tensor_move_for_hccl_op_cond5(tag):
         m1 = tensor_move(b)
         m2 = tensor_move(c)
         y = broadcast(m1, m2)
-        y0 = tuple_getitem(y, 0)
-        y1 = tuple_getitem(y, 1)
-        res = depend(x, make_tuple(y0, y1))
+        res = depend(x, y)
         return make_tuple(res)
 
     return fns[tag]

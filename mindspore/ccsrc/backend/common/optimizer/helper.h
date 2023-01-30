@@ -257,6 +257,11 @@ BACKEND_EXPORT int64_t GetNodeOutputTotalUsedNum(const session::KernelGraph &ker
 BACKEND_EXPORT void GetCustomOpAttrIndex(const PrimitivePtr &primitive, mindspore::HashSet<size_t> *indexes);
 
 BACKEND_EXPORT size_t GetInputNodeIndex(const AnfNodePtr &input, const CNodePtr &user_node);
+
+BACKEND_EXPORT int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
+                                        std::vector<AnfNodePtr> *plant_inputs);
+
+BACKEND_EXPORT AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_

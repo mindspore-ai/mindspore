@@ -106,40 +106,6 @@ size_t GetFusionSize(const AnfNodePtr &node) {
   return 0;
 }
 
-int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
-                         std::vector<AnfNodePtr> *plant_inputs) {
-  if (!common::AnfAlgo::IsTupleOutput(tuple_input)) {
-    auto abs = tuple_input->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    MS_LOG(WARNING) << "The Function only split the output type is tuple type but got" << abs->ToString();
-    return -1;
-  }
-  MS_EXCEPTION_IF_NULL(plant_inputs);
-  auto input_size = AnfAlgo::GetOutputTensorNum(tuple_input);
-  if (tuple_input->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(tuple_input, prim::kPrimMakeTuple)) {
-    auto make_tuple = tuple_input->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(make_tuple);
-    size_t tuple_input_num = common::AnfAlgo::GetInputTensorNum(make_tuple);
-    for (size_t j = 0; j < tuple_input_num; ++j) {
-      // using for graph kernel
-      auto dyn_input_node = common::AnfAlgo::GetInputNode(make_tuple, j);
-      MS_EXCEPTION_IF_NULL(dyn_input_node);
-      // Handle tuple nested scenes.
-      if (dyn_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple)) {
-        input_size += SplitTupleInputs(graph, dyn_input_node, plant_inputs);
-        continue;
-      }
-      (void)plant_inputs->emplace_back(dyn_input_node);
-    }
-    return input_size;
-  }
-  for (size_t index = 0; index < input_size; ++index) {
-    auto dynamic_input_node = CreatTupleGetItemNode(graph, tuple_input, index);
-    (void)plant_inputs->emplace_back(dynamic_input_node);
-  }
-  return input_size;
-}
-
 void ExpandFlattenConcatTupleInput(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);

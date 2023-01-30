@@ -268,6 +268,8 @@ void AscendGraphOptimization::OptimizeGraphWithoutDeviceInfo(const KernelGraphPt
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   CommOpReuse(graph);
+  opt::AscendUnfoldInputsForSpecialNodes(graph);
+
   if (context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
     HandleControlFlow(NOT_NULL(graph));
   }
@@ -448,6 +450,7 @@ void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &grap
   }
 #endif
   MS_LOG(INFO) << "Status record: start select kernel info. graph id: " << graph->graph_id();
+  graph->SetKernelObjectTypesForUnrealNodes();
   SetOperatorInfo(graph);
   MS_LOG(INFO) << "Status record: end select kernel info. graph id: " << graph->graph_id();
 #ifdef ENABLE_DUMP_IR

@@ -589,18 +589,18 @@ bool GetSelectKernelResult(const CNodePtr &kernel_node,
 }
 
 #ifdef ENABLE_TUPLE_UNFOLD
-bool GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node) {
+bool GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node, KernelType kernel_type) {
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  // Only the kernel nodes that register kernel attr can support the backoff.
+  bool backoff_support_condition =
+    ((kernel_type == UNKNOWN_KERNEL_TYPE) && !IsPrimitiveCNode(kernel_node, prim::kPrimCustom) &&
+     !common::AnfAlgo::IsGraphKernel(kernel_node));
   std::vector<kernel::KernelAttr> kernel_attrs;
-  // Kernel that is not supported can try to backed off on CPU and use the CPU kernel attrs to set object type.
-  if (!kernel::NativeGpuKernelModFactory::GetInstance().IsRegistered(kernel_name)) {
+  if (kernel::NativeGpuKernelModFactory::GetInstance().IsRegistered(kernel_name)) {
+    kernel_attrs = kernel::NativeGpuKernelMod::GetGpuSupportedList(kernel_name);
+  } else if (backoff_support_condition) {
+    // Kernel that is not supported can try to backed off on CPU and use the CPU kernel attrs to set object type.
     kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(kernel_name);
-    // CPU also doesn't support the kernel.
-    if (kernel_attrs.empty()) {
-      return false;
-    }
-  } else {
-    kernel_attrs = kernel::NativeGpuKernelModFactory::GetInstance().GetGpuSupportedList(kernel_name);
   }
 
   // Some dynamic kernels may not set the kernel attrs on GPU. Skip check only supports the tuple fold.
@@ -635,7 +635,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   auto builder = std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
 #ifdef ENABLE_TUPLE_UNFOLD
-  bool selected = GetSelectKernelObjectTypeResult(kernel_node);
+  bool selected = GetSelectKernelObjectTypeResult(kernel_node, kernel_type);
   if (!selected) {
     std::stringstream ss;
     ss << "kernel object types are not supported for " << common::AnfAlgo::GetCNodeName(kernel_node)

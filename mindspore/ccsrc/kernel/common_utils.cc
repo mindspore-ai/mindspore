@@ -505,8 +505,8 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
                    std::vector<std::shared_ptr<KernelBuildInfo>> *const kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
-  size_t real_input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t real_output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t real_input_num = AnfAlgo::GetInputElementNum(kernel_node);
+  size_t real_output_num = AnfAlgo::GetOutputElementNum(kernel_node);
   std::vector<std::shared_ptr<OpIOInfo>> inputs = op_info_ptr->inputs_ptr();
   std::vector<std::shared_ptr<OpIOInfo>> outputs = op_info_ptr->outputs_ptr();
   std::vector<int64_t> dyn_input_sizes;
@@ -729,7 +729,7 @@ bool IsWeightBoundary(const AnfNodePtr &node) {
 }
 
 std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
-  if (common::AnfAlgo::GetInputTensorNum(cnode) != 1 || AnfAlgo::GetOutputTensorNum(cnode) != 1) {
+  if (common::AnfAlgo::GetInputTensorNum(cnode) != 1 || AnfAlgo::GetOutputElementNum(cnode) != 1) {
     MS_LOG(EXCEPTION) << "The reduce node [" << cnode->DebugString() << "] is not single input or single output."
                       << trace::DumpSourceLines(cnode);
   }
@@ -1278,7 +1278,10 @@ std::vector<KernelObjectType> CalKernelObjectTypes(const std::vector<TypeId> &ob
     for (size_t i = 0; i < selected_object_types.size(); ++i) {
       // Allsame/skip_check doesn't support the backoff.
       bool not_backoff = ((all_same || skip_check) && (selected_object_types[i] != object_types[i]));
-      if (not_backoff) {
+      // Ops which support tensor also support scalar.
+      bool scalar_compact =
+        ((selected_object_types[i] == kObjectTypeTensorType) && (object_types[i] == kObjectTypeNumber));
+      if (not_backoff || scalar_compact) {
         (void)ret.emplace_back(TypeIdToKernelObjectTypeForTupleUnfold(object_types[i]));
       } else {
         (void)ret.emplace_back(TypeIdToKernelObjectType(selected_object_types[i]));
@@ -1722,6 +1725,22 @@ std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
   }
 
   return std::make_pair(false, 0);
+}
+
+bool IsFoldKernelBuildInfo(const KernelBuildInfoPtr &kernel_build_info) {
+  auto inputs_object_type = kernel_build_info->GetAllInputKernelObjectTypes();
+  if (std::find(inputs_object_type.begin(), inputs_object_type.end(), KernelObjectType::TUPLE) !=
+      inputs_object_type.end()) {
+    return true;
+  }
+
+  auto outputs_object_type = kernel_build_info->GetAllOutputKernelObjectTypes();
+  if (std::find(outputs_object_type.begin(), outputs_object_type.end(), KernelObjectType::TUPLE) !=
+      outputs_object_type.end()) {
+    return true;
+  }
+
+  return false;
 }
 
 KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info) {

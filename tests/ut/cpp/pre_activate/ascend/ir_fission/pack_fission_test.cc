@@ -19,6 +19,7 @@
 #define private public
 #define protected public
 #include "plugin/device/ascend/optimizer/ir_fission/pack_fission.h"
+#include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #undef private
 #undef protected
 
@@ -45,6 +46,7 @@ TEST_F(TestHWPackFission, test_stack_fission_divided_by_3) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>());
   auto pack_fission = std::make_shared<opt::PackFission>();
   pack_fission->inputs_divisor_ = 3;
   pm->AddPass(pack_fission);
@@ -69,6 +71,7 @@ TEST_F(TestHWPackFission, test_stack_fission_divided_by_4) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>());
   auto pack_fission = std::make_shared<opt::PackFission>();
   pack_fission->inputs_divisor_ = 4;
   pm->AddPass(pack_fission);

@@ -48,6 +48,11 @@ void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<Ke
   if (op_info_ptr == nullptr) {
     return;
   }
+
+  if (common::AnfAlgo::HasDynamicTupleInput(kernel_node)) {
+    return;
+  }
+
   if (IsKernelDynamicImpl(kernel_node)) {
     common::AnfAlgo::SetNodeAttr(kAttrIsKernelDynamicImpl, MakeValue(true), kernel_node);
     if (tbe_selector.CheckOpSupported()) {
@@ -486,7 +491,7 @@ bool TbeKernelSelect::GetKernelBuildInfoFromCache() {
 void TbeKernelSelect::GenerateKernelBuildInfo(const SupportFormatDType &support_format_dtype) {
   auto dyn_input_sizes = GetNodeDynamicInputs();
   // get real input/output num
-  size_t real_input_num = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
+  size_t real_input_num = AnfAlgo::GetInputElementNum(cnode_ptr_);
   size_t real_output_num = AnfAlgo::GetOutputElementNum(cnode_ptr_);
   auto op_info_input_num = support_format_dtype.input_dtypes.size();
   auto op_info_output_num = support_format_dtype.output_dtypes.size();

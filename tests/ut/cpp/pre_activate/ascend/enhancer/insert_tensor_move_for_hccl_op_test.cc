@@ -28,6 +28,7 @@
 #define private public
 #define protected public
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_hccl_op.h"
+#include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #undef private
 #undef protected
 namespace mindspore {
@@ -168,6 +169,8 @@ TEST_F(TestHWInsertTensorMoveForHccl, test_cond5) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+  // This pass run before hccl_pass to unfold inputs of hccl node
+  pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>());
   auto pass = std::make_shared<opt::InsertTensorMoveForHcclOp>();
   pass->kernel_query_ = std::make_shared<MockInsertTensorMoveForHcclKernelQuery>();
   pm->AddPass(pass);

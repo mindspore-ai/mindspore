@@ -59,6 +59,7 @@ ValueNodePtr CreateValueNode(const ValuePtr &value_ptr, TypeId output_type) {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder1;
   builder1.SetOutputsFormat({kOpFormat_DEFAULT});
   builder1.SetOutputsDeviceType({output_type});
+  builder1.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), new_node.get());
   return new_node;
 }

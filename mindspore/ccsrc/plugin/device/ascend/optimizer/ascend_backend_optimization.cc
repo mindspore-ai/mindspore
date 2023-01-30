@@ -184,6 +184,8 @@
 #include "include/common/debug/draw.h"
 #include "plugin/device/ascend/optimizer/optimizer_factory.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "backend/common/pass/insert_type_transform_op.h"
+#include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 
 namespace mindspore {
 namespace opt {
@@ -221,6 +223,7 @@ void AddAscendIRFusionRulesPass(PassManager *ir_fusion_pm) {
 
 void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   MS_EXCEPTION_IF_NULL(ir_fusion_pm);
+  ir_fusion_pm->AddPass(std::make_shared<AscendConvertTupleInputToDynamicInput>());
   ir_fusion_pm->AddPass(std::make_shared<UnsortedSegmentSumReplace>());
   ir_fusion_pm->AddPass(std::make_shared<SingleBatchNormFission>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
@@ -289,6 +292,7 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto data_layout_pm = std::make_shared<PassManager>("transop_pm");
+  data_layout_pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
   data_layout_pm->AddPass(std::make_shared<ReselectCallInlineFormat>());
   data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
   data_layout_pm->AddPass(std::make_shared<DynamicRNNGradReformat>());
@@ -735,6 +739,35 @@ void AscendOpAdaptation(const std::shared_ptr<session::KernelGraph> &kernel_grap
 #ifdef ENABLE_DUMP_IR
   if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_after_op_adaptation_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true, kWholeStack);
+  }
+#endif
+}
+
+void AscendUnfoldInputsForSpecialNodes(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name =
+      "hwopt_d_before_unfold_inputs_for_special_nodes_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true, kWholeStack);
+    DumpIRProto(kernel_graph,
+                "before_unfold_inputs_for_special_nodes_hwopt_" + std::to_string(kernel_graph->graph_id()));
+  }
+#endif
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto unfold_inputs_pm = std::make_shared<opt::PassManager>("unfold_inputs_for_special_nodes_pm");
+  unfold_inputs_pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>());
+
+  optimizer->AddPassManager(unfold_inputs_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name =
+      "hwopt_d_after_unfold_inputs_for_special_nodes_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph, true, kWholeStack);
   }
 #endif

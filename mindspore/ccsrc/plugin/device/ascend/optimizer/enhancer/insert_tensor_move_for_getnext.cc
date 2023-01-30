@@ -28,7 +28,7 @@ AnfNodePtr InsertTensorMoveForGetNextOutputs(const FuncGraphPtr &func_graph, con
     return nullptr;
   }
 
-  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = AnfAlgo::GetOutputElementNum(node);
   if (output_num == 0) {
     MS_LOG(DEBUG) << "Output number is zero, no need to insert tensor_move!";
     return node;

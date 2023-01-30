@@ -17,6 +17,7 @@
 #include "common/py_func_graph_fetcher.h"
 #include "backend/common/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/confusion_mul_grad_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
@@ -42,6 +43,7 @@ TEST_F(TestHWOptimizeConfusionMulGradFusion, test_fusion) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>());
   pm->AddPass(std::make_shared<opt::ConfusionMulGradFusion>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(fg);

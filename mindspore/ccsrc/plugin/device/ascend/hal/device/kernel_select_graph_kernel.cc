@@ -72,6 +72,7 @@ void ResetKernelBuildInfo(const CNodePtr &kernel_node) {
     kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
     builder.SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
     builder.SetOutputsDeviceType(std::vector<TypeId>{kTypeUnknown});
+    builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), input_kernel_node.get());
   }
 }
@@ -283,6 +284,7 @@ void UpdateInputsKernelInfo(const CNodePtr &kernel_node, const std::vector<AnfNo
     std::vector<TypeId> outputs_device_type = {(*graph_input_type)[i]};
     builder.SetOutputsFormat(outputs_format);
     builder.SetOutputsDeviceType(outputs_device_type);
+    builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), input_list[i].get());
   }
 }
@@ -403,6 +405,7 @@ void UpdateFormatsAndDtypes(const CNodePtr &kernel_node, const std::vector<AnfNo
     std::vector<TypeId> outputs_device_type = {graph_input_type[i]};
     builder.SetOutputsFormat(outputs_format);
     builder.SetOutputsDeviceType(outputs_device_type);
+    builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), input_list[i].get());
   }
 
@@ -436,6 +439,7 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const std::vector<std::pair
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<std::string> graph_output_format;
   std::vector<TypeId> graph_output_type;
+  std::vector<kernel::KernelObjectType> graph_output_object_type;
   for (size_t i = 0; i < output_index.size(); ++i) {
     auto const &output = output_index[i];
     graph_output_format.push_back(AnfAlgo::GetOutputFormat(output.first, output.second));
@@ -447,13 +451,21 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const std::vector<std::pair
       output_type = AnfAlgo::GetOutputDeviceDataType(output.first, output.second);
     }
     graph_output_type.push_back(output_type);
+    graph_output_object_type.push_back(kernel::KernelObjectType::TENSOR);
+  }
+
+  std::vector<kernel::KernelObjectType> graph_input_object_type;
+  for (size_t i = 0; i < graph_input_type.size(); ++i) {
+    graph_input_object_type.push_back(kernel::KernelObjectType::TENSOR);
   }
 
   kernel::KernelBuildInfo::KernelBuildInfoBuilder graph_info_builder;
   graph_info_builder.SetInputsFormat(graph_input_format);
   graph_info_builder.SetInputsDeviceType(graph_input_type);
+  graph_info_builder.SetInputsKernelObjectType(graph_input_object_type);
   graph_info_builder.SetOutputsFormat(graph_output_format);
   graph_info_builder.SetOutputsDeviceType(graph_output_type);
+  graph_info_builder.SetOutputsKernelObjectType(graph_output_object_type);
   graph_info_builder.SetProcessor(kernel::Processor::AICORE);
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
   graph_info_builder.SetFusionType(kernel::kPatternOpaque);

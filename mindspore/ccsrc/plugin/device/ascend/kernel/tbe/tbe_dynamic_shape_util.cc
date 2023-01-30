@@ -124,7 +124,8 @@ RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node,
     kernel_info->select_kernel_build_info() == nullptr ? def_format : AnfAlgo::GetOutputFormat(anf_node, index);
   auto data_type =
     kernel_info->select_kernel_build_info() == nullptr ? type : AnfAlgo::GetOutputDeviceDataType(anf_node, index);
-  std::string reshape_type = AnfAlgo::GetOutputReshapeType(anf_node, index);
+  std::string reshape_type =
+    kernel_info->select_kernel_build_info() == nullptr ? "" : AnfAlgo::GetOutputReshapeType(anf_node, index);
   trans::ShapeRangeTransfer shapeRangeTransfer;
   RangePair ret;
 

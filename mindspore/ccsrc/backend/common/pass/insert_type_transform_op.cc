@@ -26,8 +26,8 @@
 
 namespace mindspore {
 namespace opt {
-int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
-                         std::vector<AnfNodePtr> *plant_inputs) {
+int64_t SplitTupleInputsForInsertType(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
+                                      std::vector<AnfNodePtr> *plant_inputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(tuple_input);
   MS_EXCEPTION_IF_NULL(plant_inputs);
@@ -50,7 +50,7 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
       MS_EXCEPTION_IF_NULL(dyn_input_node);
       // Handle tuple nested scenes.
       if (dyn_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple)) {
-        int64_t dyn_input_size = SplitTupleInputs(graph, dyn_input_node, plant_inputs);
+        int64_t dyn_input_size = SplitTupleInputsForInsertType(graph, dyn_input_node, plant_inputs);
         input_size += LongToSize(dyn_input_size);
         continue;
       }
@@ -169,7 +169,7 @@ void SetKernelInfoForNewCNodeByOrigNode(const CNodePtr &new_cnode, const CNodePt
   MS_EXCEPTION_IF_NULL(kernel_info);
   new_cnode->set_kernel_info(kernel_info);
   // The node may not be supported in the current device.
-  new_kernel_builder->SetValid(false);
+  new_kernel_builder->SetValid(true);
   AnfAlgo::SetSelectKernelBuildInfo(new_kernel_builder->Build(), new_cnode.get());
 
   auto new_prim = GetValueNode<PrimitivePtr>(new_cnode->input(kIndex0));
@@ -198,6 +198,7 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
   std::vector<KernelObjectType> input_obj_type;
   std::vector<KernelObjectType> output_obj_type;
   GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
+  builder->SetKernelType(CPU_KERNEL);
   builder->SetInputsKernelObjectType(input_obj_type);
   builder->SetOutputsKernelObjectType(output_obj_type);
 
@@ -231,7 +232,7 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
   }
 
   // The node may not be supported in the current device.
-  builder->SetValid(false);
+  builder->SetValid(true);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode.get());
 }
 
@@ -568,7 +569,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTupleUnfold(const Func
   }
 
   AnfNodePtrList plant_inputs;
-  int64_t unfold_num = SplitTupleInputs(func_graph, input, &plant_inputs);
+  int64_t unfold_num = SplitTupleInputsForInsertType(func_graph, input, &plant_inputs);
   MS_LOG(DEBUG) << "Transform tuple unfold input: " << input->fullname_with_scope() << " to " << unfold_num
                 << " inputs.";
   return plant_inputs;

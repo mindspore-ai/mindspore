@@ -76,8 +76,8 @@ using ProcessTypeTransformFunc = std::function<AnfNodePtrList(const FuncGraphPtr
 
 // SplitTupleInputs methods refer to the pass ConvertTupleInputToDynamicInput. It unfolds tuple inputs and returns the
 // unfolded inputs nodes.
-int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
-                         std::vector<AnfNodePtr> *plant_inputs);
+int64_t SplitTupleInputsForInsertType(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
+                                      std::vector<AnfNodePtr> *plant_inputs);
 
 // Create the new cnode which will replace the original cnode.
 // This method is called at the last step of this pass specifically.

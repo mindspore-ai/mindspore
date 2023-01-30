@@ -638,8 +638,10 @@ void SelectCallInlineKernelInfo(const CNodePtr &node) {
   auto sub_ret = sub_graph->output();
   std::vector<std::string> input_formats;
   std::vector<TypeId> input_types;
+  std::vector<kernel::KernelObjectType> input_object_types;
   std::vector<std::string> output_formats;
   std::vector<TypeId> output_types;
+  std::vector<kernel::KernelObjectType> output_object_types;
   for (auto &param : sub_graph->inputs()) {
     TypeId type_id = AnfAlgo::GetOutputDeviceDataType(param, 0);
     if (type_id == kTypeUnknown) {
@@ -650,17 +652,25 @@ void SelectCallInlineKernelInfo(const CNodePtr &node) {
     }
     input_types.push_back(type_id);
     input_formats.push_back(AnfAlgo::GetOutputFormat(param, 0));
+    input_object_types.push_back(kernel::KernelObjectType::TENSOR);
   }
   for (size_t i = 0; i < AnfUtils::GetOutputTensorNum(node); ++i) {
     output_formats.push_back(AnfAlgo::GetOutputFormat(sub_ret, i));
     output_types.push_back(common::AnfAlgo::GetOutputInferDataType(sub_ret, i));
+    if (AnfAlgo::GetOutputObjectType(node, i) == TypeId::kObjectTypeTuple) {
+      output_object_types.push_back(kernel::KernelObjectType::TUPLE_UNFOLD);
+    } else {
+      output_object_types.push_back(kernel::KernelObjectType::TENSOR);
+    }
   }
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   MS_EXCEPTION_IF_NULL(builder);
   builder->SetInputsFormat(input_formats);
   builder->SetInputsDeviceType(input_types);
+  builder->SetInputsKernelObjectType(input_object_types);
   builder->SetOutputsFormat(output_formats);
   builder->SetOutputsDeviceType(output_types);
+  builder->SetOutputsKernelObjectType(output_object_types);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
 }
 

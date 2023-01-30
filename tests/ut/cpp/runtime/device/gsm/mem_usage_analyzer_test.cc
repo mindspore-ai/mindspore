@@ -48,7 +48,7 @@ TEST_F(TestMemUsageAnalyzer, test_mem_usage_analyzer) {
   auto tensor_infos = analyzer->GetMemUsageTensorInfos();
 
   ASSERT_EQ(5, kernel_infos.size());
-  ASSERT_EQ(15, tensor_infos.size());
+  ASSERT_EQ(16, tensor_infos.size());
   for (size_t i = 0; i < kernel_infos.size(); ++i) {
     ASSERT_NE(nullptr, analyzer->GetMemUsageKernelInfo(i));
   }
@@ -57,6 +57,6 @@ TEST_F(TestMemUsageAnalyzer, test_mem_usage_analyzer) {
     ASSERT_NE(nullptr, analyzer->GetMemUsageTensorInfo(i));
   }
 
-  ASSERT_EQ(132, analyzer->LeastMemNeeded());
+  ASSERT_EQ(100, analyzer->LeastMemNeeded());
 }
 }  // namespace mindspore::device
