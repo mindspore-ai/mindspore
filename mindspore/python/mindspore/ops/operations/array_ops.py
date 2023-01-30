@@ -999,6 +999,7 @@ class Gather(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize Gather"""
+        self.add_prim_attr("batch_dims", 0)
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
 
 
