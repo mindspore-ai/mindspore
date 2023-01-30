@@ -185,7 +185,7 @@ HashTableExportData CPUHashTable<Key, Value>::Export(bool) {
 template <typename Key, typename Value>
 size_t CPUHashTable<Key, Value>::capacity() const {
   std::unique_lock<std::shared_mutex> lock(mutex_);
-  return values_.capacity();
+  return values_.size();
 }
 
 template <typename Key, typename Value>
@@ -214,6 +214,9 @@ bool CPUHashTable<Key, Value>::Clear() {
   }
   return true;
 }
+
+template class CPUHashTable<int32_t, float>;
+template class CPUHashTable<int64_t, float>;
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

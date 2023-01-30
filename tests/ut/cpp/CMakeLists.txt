@@ -182,6 +182,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/cpu/hal/hardware/ms_collective_topo.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/hal/hardware/cpu_memory_pool.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/hal/device/cpu_device_address.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/hal/device/cpu_hash_table.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/optimizer/softmax_grad_fusion.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/kernel/cpu_kernel.cc"
         "../../../mindspore/ccsrc/plugin/factory/ms_factory.h"
