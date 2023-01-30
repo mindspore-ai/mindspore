@@ -23,8 +23,8 @@
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #include "nnacl/activation_grad_simd.h"
 
-int ReluGrad(const float *src0, const float *src1, size_t length, float *dst) {
-  size_t i = 0;
+int ReluGrad(const float *src0, const float *src1, int length, float *dst) {
+  int i = 0;
 #ifdef ENABLE_ARM
   float32x4_t zero_4 = vdupq_n_f32(0.0f);
   for (; i < length - C4NUM; i += C4NUM) {

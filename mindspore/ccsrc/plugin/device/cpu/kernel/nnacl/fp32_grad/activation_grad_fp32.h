@@ -30,7 +30,7 @@ typedef struct ActivationGradParameter {
 extern "C" {
 #endif
 
-int ReluGrad(const float *src0, const float *src1, size_t length, float *dst);
+int ReluGrad(const float *src0, const float *src1, int length, float *dst);
 int Relu6Grad(const float *src0, const float *src1, size_t length, float *dst);
 int LReluGrad(const float *src0, const float *src1, size_t length, float *dst, float alpha);
 int SigmoidGrad(const float *src0, const float *src1, size_t length, float *dst);
