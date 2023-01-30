@@ -84,13 +84,16 @@ Status TFReaderOp::Init() {
     RETURN_IF_NOT_OK(CreateSchema(dataset_files_list_[0], columns_to_load_));
   }
 
-  if (compression_type_ == CompressionType::NONE && total_rows_ == 0) {
+  if (total_rows_ == 0) {
     total_rows_ = data_schema_->NumRows();
   }
   if (total_rows_ < 0) {
     RETURN_STATUS_UNEXPECTED(
       "[Internal ERROR] num_samples or num_rows for TFRecordDataset must be greater than 0, but got: " +
       std::to_string(total_rows_));
+  } else if (compression_type_ == CompressionType::NONE && total_rows_ == 0) {
+    MS_LOG(WARNING) << "Since compression_type is set, but neither num_samples nor numRows (from schema file) "
+                    << "is provided, performance might be degraded.";
   }
 
   // Build the index with our files such that each file corresponds to a key id.
