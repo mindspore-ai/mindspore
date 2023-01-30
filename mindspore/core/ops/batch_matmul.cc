@@ -99,7 +99,7 @@ void CheckBatchMatmulInputWhetherCanBeBroadcast(const std::string &name, const S
     if (x != 1 && y != 1 && x != y) {
       MS_EXCEPTION(ValueError) << "For " << name
                                << ", one of the input's batch dim must be equal to another input's peer batch dim, or "
-                                  "be equal to 1, or be empty, but are "
+                                  "be equal to 1, or be empty, but got "
                                << x << " and " << y << ", with x shape " << x_shape << ", y shape " << y_shape;
     }
   }
