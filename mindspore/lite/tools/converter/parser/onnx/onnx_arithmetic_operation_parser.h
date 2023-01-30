@@ -245,6 +245,14 @@ class OnnxReciprocalParser : public OnnxNodeParser {
 
   PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
+
+class OnnxModParser : public OnnxNodeParser {
+ public:
+  OnnxModParser() : OnnxNodeParser("Mod") {}
+  ~OnnxModParser() override = default;
+
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+};
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_ARITHMETIC_OPERATION_PARSER_H_

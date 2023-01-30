@@ -44,6 +44,7 @@
 #include "ops/eltwise.h"
 #include "ops/sin.h"
 #include "ops/reciprocal.h"
+#include "ops/mod.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -233,6 +234,12 @@ PrimitiveCPtr OnnxReciprocalParser::Parse(const onnx::GraphProto &onnx_graph, co
   return prim->GetPrim();
 }
 
+PrimitiveCPtr OnnxModParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Mod>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
 OnnxNodeRegistrar g_onnxAddParser("Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxInt8AddParser("Int8Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxSubParser("Sub", new OnnxSubParser());
@@ -262,5 +269,6 @@ OnnxNodeRegistrar g_onnxOrParser("Or", new OnnxOrParser());
 OnnxNodeRegistrar g_onnxNotParser("Not", new OnnxNotParser());
 OnnxNodeRegistrar g_onnxRoundParser("Round", new OnnxRoundParser());
 OnnxNodeRegistrar g_onnxReciprocalParser("Reciprocal", new OnnxReciprocalParser());
+OnnxNodeRegistrar g_onnxModParser("Mod", new OnnxModParser());
 }  // namespace lite
 }  // namespace mindspore
