@@ -367,10 +367,14 @@ void ModelProcess::DestroyOutputsBuffer() {
   outputs_ = nullptr;
 }
 
-bool ModelProcess::Load(const Buffer &om_data) {
+bool ModelProcess::Load(const void *om_data, size_t om_data_size) {
+  if (loaded_) {
+    MS_LOG(INFO) << "Model has been loaded";
+    return true;
+  }
   MS_LOG(INFO) << "Start load model model.";
   // model load model
-  auto acl_ret = aclmdlLoadFromMem(om_data.Data(), om_data.DataSize(), &model_id_);
+  auto acl_ret = aclmdlLoadFromMem(om_data, om_data_size, &model_id_);
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclmdlLoadFromMem failed, ret = " << acl_ret;
     return false;
@@ -388,8 +392,8 @@ bool ModelProcess::Load(const Buffer &om_data) {
 
 bool ModelProcess::UnLoad() {
   if (!loaded_) {
-    MS_LOG(ERROR) << "Model has not been loaded";
-    return false;
+    MS_LOG(INFO) << "Model has not been loaded or has been unloaded";
+    return true;
   }
   loaded_ = false;
   auto ret = aclmdlUnload(model_id_);

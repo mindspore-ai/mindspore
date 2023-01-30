@@ -50,7 +50,7 @@ class ModelProcess {
   explicit ModelProcess(const AclModelOptionsPtr &options) : options_(options) {}
   ~ModelProcess() {}
 
-  bool Load(const Buffer &om_data);
+  bool Load(const void *om_data, size_t om_data_size);
   bool UnLoad();
   bool PredictFromHost(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
 

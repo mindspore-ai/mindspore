@@ -15,6 +15,7 @@
  */
 
 #include <algorithm>
+#include <shared_mutex>
 #include "extendrt/cxx_api/model/model_impl.h"
 #include "extendrt/cxx_api/dlutils.h"
 #include "extendrt/cxx_api/file_utils.h"
@@ -37,7 +38,9 @@ namespace {
 const char *const kExecutionPlan = "execution_plan";
 constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
+std::shared_mutex g_model_converter_lock;
 }  // namespace
+
 void ModelImpl::SetMsContext() {
   if (MsContext::GetInstance() != nullptr) {
     auto back_policy_env = std::getenv("ASCEND_BACK_POLICY");
@@ -46,6 +49,9 @@ void ModelImpl::SetMsContext() {
     }
   }
 }
+
+std::mutex ConverterPlugin::mutex_;
+ConverterPlugin::ConverterPlugin() = default;
 
 ConverterPlugin::~ConverterPlugin() {
 #ifndef _WIN32
@@ -56,12 +62,13 @@ ConverterPlugin::~ConverterPlugin() {
 #endif
 }
 
-ConverterPlugin &ConverterPlugin::Instance() {
+ConverterPlugin::ConverterFunc ConverterPlugin::GetConverterFunc() {
+  std::lock_guard<std::mutex> lock(mutex_);
   static ConverterPlugin instance;
-  return instance;
+  return instance.GetConverterFuncInner();
 }
 
-ConverterFunc ConverterPlugin::GetConverterFunc() {
+ConverterPlugin::ConverterFunc ConverterPlugin::GetConverterFuncInner() {
 #ifndef _WIN32
   if (converter_func_ == nullptr) {
     std::string plugin_path;
@@ -76,19 +83,22 @@ ConverterFunc ConverterPlugin::GetConverterFunc() {
       MS_LOG(WARNING) << "DLSoOpen RuntimeConvert failed, so path: " << plugin_path;
       return nullptr;
     }
-    converter_func_ = reinterpret_cast<ConverterFunc>(function);
+    converter_func_ = reinterpret_cast<ConverterPlugin::ConverterFunc>(function);
   }
-#endif
   return converter_func_;
+#else
+  MS_LOG(ERROR) << "Not support libruntime_convert_plugin.so in Windows";
+  return nullptr;
+#endif
 }
 
-Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, ModelType model_type,
+Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, ModelType model_type,
                                     const std::shared_ptr<Context> &model_context, const std::string &model_path) {
-  if (model_data == nullptr) {
+  if (model_buff == nullptr) {
     MS_LOG(ERROR) << "The input model buffer is nullptr.";
     return kLiteNullptr;
   }
-  if (data_size == 0) {
+  if (model_size == 0) {
     MS_LOG(ERROR) << "The input model buffer size is 0.";
     return kLiteInputParamInvalid;
   }
@@ -96,8 +106,11 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
     MS_LOG(ERROR) << "Invalid model type";
     return kLiteError;
   }
-  const void *model_buff = model_data;
-  size_t model_size = data_size;
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (session_) {
+    MS_LOG(ERROR) << "Model has been called Build";
+    return kLiteError;
+  }
   auto mindir_path = GetConfig(lite::kConfigModelFileSection, lite::kConfigMindIRPathKey);
   std::string weight_path = "./";
   std::string base_path = "";
@@ -155,12 +168,12 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
     MS_LOG(ERROR) << "convert graph failed.";
     return ret;
   }
-
   ret = FuncGraphReuseManager::GetInstance()->StoreFuncGraph(func_graph, config_info_);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "store function graph failed.";
     return ret;
   }
+  std::shared_lock<std::shared_mutex> build_lock(g_model_converter_lock);
   return session_->CompileGraph(func_graph);
 }
 
@@ -202,12 +215,13 @@ Status ModelImpl::ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::
     }
   }
 
-  auto convert = ConverterPlugin::Instance().GetConverterFunc();
+  auto convert = ConverterPlugin::GetConverterFunc();
   if (convert == nullptr) {
     MS_LOG(ERROR) << "get Converter func failed";
     return kLiteError;
   }
   auto api_graph = mindspore::api::MakeShared<mindspore::api::FuncGraph>(func_graph);
+  std::unique_lock<std::shared_mutex> build_lock(g_model_converter_lock);
   auto status = convert(api_graph, model_context, config_info_);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "Failed to converter graph";
@@ -218,8 +232,11 @@ Status ModelImpl::ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::
 }  // namespace mindspore
 
 Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
-  MS_EXCEPTION_IF_NULL(session_);
-
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+    return kLiteError;
+  }
   if (inputs.empty()) {
     MS_LOG(ERROR) << "Inputs is null.";
     return kLiteInputParamInvalid;
@@ -256,32 +273,35 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
 }
 
 std::vector<MSTensor> ModelImpl::GetInputs() {
-  MS_EXCEPTION_IF_NULL(session_);
-  std::vector<MSTensor> inputs;
-
-  auto graph_inputs = session_->GetInputs();
-
-  for (size_t i = 0; i < graph_inputs.size(); i++) {
-    auto tensor_impl = graph_inputs[i];
-    inputs.push_back(MSTensor(tensor_impl));
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+    return {};
   }
+  auto graph_inputs = session_->GetInputs();
+  std::vector<MSTensor> inputs;
+  std::transform(graph_inputs.begin(), graph_inputs.end(), std::back_inserter(inputs),
+                 [](auto &impl) { return MSTensor(impl); });
   return inputs;
 }
 
 std::vector<MSTensor> ModelImpl::GetOutputs() {
-  MS_EXCEPTION_IF_NULL(session_);
-  std::vector<MSTensor> outputs;
-  auto graph_outputs = session_->GetOutputs();
-  for (size_t i = 0; i < graph_outputs.size(); i++) {
-    auto tensor_impl = graph_outputs[i];
-    outputs.push_back(MSTensor(tensor_impl));
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+    return {};
   }
+  auto graph_outputs = session_->GetOutputs();
+  std::vector<MSTensor> outputs;
+  std::transform(graph_outputs.begin(), graph_outputs.end(), std::back_inserter(outputs),
+                 [](auto &impl) { return MSTensor(impl); });
   return outputs;
 }
 
 MSTensor ModelImpl::GetInputByTensorName(const std::string &name) {
+  std::lock_guard<std::mutex> lock(mutex_);
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Session is null.";
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
     return MSTensor(nullptr);
   }
   auto tensor_impl = session_->GetInputByTensorName(name);
@@ -293,17 +313,18 @@ MSTensor ModelImpl::GetInputByTensorName(const std::string &name) {
 }
 
 std::vector<std::string> ModelImpl::GetOutputTensorNames() {
+  std::lock_guard<std::mutex> lock(mutex_);
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Session is null.";
-    std::vector<std::string> empty;
-    return empty;
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+    return {};
   }
   return session_->GetOutputNames();
 }
 
 MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
+  std::lock_guard<std::mutex> lock(mutex_);
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Session is null.";
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
     return MSTensor(nullptr);
   }
   auto tensor_impl = session_->GetOutputByTensorName(name);
@@ -316,7 +337,11 @@ MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
 
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  MS_EXCEPTION_IF_NULL(session_);
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+    return kLiteError;
+  }
   MS_EXCEPTION_IF_NULL(outputs);
   std::vector<mindspore::tensor::Tensor> graph_inputs = TensorUtils::MSTensorToTensor(inputs);
   std::vector<mindspore::tensor::Tensor> graph_outputs;
@@ -349,14 +374,14 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     }
     *outputs = TensorUtils::TensorToMSTensor(graph_outputs, session_outputs);
   }
-  auto session_outputs = GetOutputs();
+  auto session_outputs = session_->GetOutputs();
   if (graph_outputs.size() != session_outputs.size()) {
     MS_LOG(ERROR) << "Outputs count get from session " << session_outputs.size() << " != outputs count of RunGraph "
                   << graph_outputs.size();
     return kCoreFailed;
   }
   for (size_t i = 0; i < session_outputs.size(); i++) {
-    auto &session_output = session_outputs[i];
+    MSTensor session_output(session_outputs[i]);
     auto &execute_output = outputs->at(i);
     session_output.SetShape(execute_output.Shape());
     if (session_output.Data().get() != execute_output.Data().get()) {
@@ -378,10 +403,20 @@ Status ModelImpl::Predict() {
   auto outputs = GetOutputs();
   return Predict(inputs, &outputs);
 }
-bool ModelImpl::HasPreprocess() { return graph_->graph_data_->GetPreprocess().empty() ? false : true; }
+bool ModelImpl::HasPreprocess() {
+  if (!graph_ || !graph_->graph_data_) {
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+    return false;
+  }
+  return graph_->graph_data_->GetPreprocess().empty() ? false : true;
+}
 
 Status ModelImpl::Preprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs) {
 #if !defined(_WIN32) && !defined(_WIN64)
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+    return kLiteError;
+  }
   // Config preprocessor, temporary way to let mindspore.so depends on _c_dataengine
   std::string dataengine_so_path;
   Status dlret = DLSoPath({"libmindspore.so"}, "_c_dataengine", &dataengine_so_path);
@@ -447,6 +482,10 @@ Status ModelImpl::Preprocess(const std::vector<std::vector<MSTensor>> &inputs, s
 Status ModelImpl::PredictWithPreprocess(const std::vector<std::vector<MSTensor>> &inputs,
                                         std::vector<MSTensor> *outputs) {
 #if !defined(_WIN32) && !defined(_WIN64)
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+    return kLiteError;
+  }
   // Run preprocess
   std::vector<MSTensor> preprocess_outputs;
   Status ret = Preprocess(inputs, &preprocess_outputs);
@@ -468,6 +507,11 @@ Status ModelImpl::PredictWithPreprocess(const std::vector<std::vector<MSTensor>>
 }
 
 Status ModelImpl::LoadConfig(const std::string &config_path) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (session_) {
+    MS_LOG(ERROR) << "Model has been called Build, please call LoadConfig before Build.";
+    return kLiteError;
+  }
   ConfigInfos all_config_info;
   int ret = lite::GetAllSectionInfoFromConfigFile(config_path, &all_config_info);
   if (ret != kSuccess) {
@@ -479,6 +523,11 @@ Status ModelImpl::LoadConfig(const std::string &config_path) {
 }
 
 Status ModelImpl::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (session_) {
+    MS_LOG(ERROR) << "Model has been called Build, please call UpdateConfig before Build.";
+    return kLiteError;
+  }
   auto iter = config_info_.find(section);
   if (iter == config_info_.end()) {
     if (config_info_.size() >= kMaxSectionNum) {
@@ -508,7 +557,11 @@ std::string ModelImpl::GetConfig(const std::string &section, const std::string &
   return elem_iter->second;
 }
 
-ModelImpl::~ModelImpl() { FuncGraphReuseManager::GetInstance()->ReleaseSharedFuncGraph(config_info_); }
+ModelImpl::~ModelImpl() {
+  std::lock_guard<std::mutex> lock(mutex_);
+  FuncGraphReuseManager::GetInstance()->ReleaseSharedFuncGraph(config_info_);
+  session_ = nullptr;
+}
 
 bool ModelImpl::CheckModelSupport(enum DeviceType device_type, ModelType model_type) {
   if (model_type != kMindIR) {
@@ -521,7 +574,7 @@ bool ModelImpl::CheckModelSupport(enum DeviceType device_type, ModelType model_t
     return lite::TensorRTExecutorPlugin::GetInstance().TryRegister().IsOk();
   }
   if (device_type == kAscend) {
-    return kernel::AscendKernelPlugin::GetInstance().TryRegister().IsOk();
+    return kernel::AscendKernelPlugin::TryRegister().IsOk();
   }
   return false;
 }

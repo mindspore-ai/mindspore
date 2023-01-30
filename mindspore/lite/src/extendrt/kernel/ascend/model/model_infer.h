@@ -34,12 +34,12 @@ using mindspore::lite::STATUS;
 
 class ModelInfer {
  public:
-  ModelInfer(const Buffer &om_data, const AclModelOptionsPtr &options);
+  explicit ModelInfer(const AclModelOptionsPtr &options);
   ~ModelInfer() = default;
 
   bool Init();
   bool Finalize();
-  bool Load();
+  bool Load(const void *om_data, size_t om_data_size);
   bool Inference(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
   std::vector<Format> GetInputFormat();
   const std::vector<ShapeVector> GetOutputShape();
@@ -52,10 +52,8 @@ class ModelInfer {
 
  private:
   bool init_flag_;
-  bool load_flag_;
   std::string device_type_;
   aclrtContext context_;
-  Buffer om_data_;
   AclModelOptionsPtr options_;
   ModelProcess model_process_;
   std::shared_ptr<AclEnvGuard> acl_env_;

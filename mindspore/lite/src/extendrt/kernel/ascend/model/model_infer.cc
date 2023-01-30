@@ -20,12 +20,13 @@
 
 namespace mindspore::kernel {
 namespace acl {
-ModelInfer::ModelInfer(const Buffer &om_data, const AclModelOptionsPtr &options)
+namespace {
+std::mutex g_context_mutex;
+}
+ModelInfer::ModelInfer(const AclModelOptionsPtr &options)
     : init_flag_(false),
-      load_flag_(false),
       device_type_("AscendCL"),
       context_(nullptr),
-      om_data_(om_data),
       options_(options),
       model_process_(options),
       acl_env_(nullptr) {}
@@ -47,6 +48,7 @@ bool ModelInfer::Init() {
     MS_LOG(ERROR) << "Acl init failed.";
     return false;
   }
+  std::lock_guard<std::mutex> lock(g_context_mutex);
   int32_t device_id = options_->device_id;
   aclError ret = aclrtSetDevice(device_id);
   if (ret != ACL_ERROR_NONE) {
@@ -82,18 +84,15 @@ bool ModelInfer::Finalize() {
     MS_LOG(INFO) << "Init is not ok, no need to finalize.";
     return true;
   }
-
   aclError rt_ret = aclrtSetCurrentContext(context_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set the ascend device context failed.";
     return false;
   }
-  if (load_flag_) {
-    if (!model_process_.UnLoad()) {
-      MS_LOG(ERROR) << "Unload model inner failed.";
-      return false;
-    }
+  if (!model_process_.UnLoad()) {
+    MS_LOG(ERROR) << "Unload model inner failed.";
   }
+  std::lock_guard<std::mutex> lock(g_context_mutex);
   if (context_ != nullptr) {
     rt_ret = aclrtDestroyContext(context_);
     if (rt_ret != ACL_ERROR_NONE) {
@@ -109,33 +108,28 @@ bool ModelInfer::Finalize() {
   }
   MS_LOG(INFO) << "End to reset device " << options_->device_id;
   init_flag_ = false;
-  load_flag_ = false;
   return true;
 }
 
-bool ModelInfer::Load() {
-  if (!load_flag_) {
-    if (!model_process_.Load(om_data_)) {
-      MS_LOG(ERROR) << "Load model model failed.";
-      return false;
-    }
-    load_flag_ = true;
-  }
-
+bool ModelInfer::Load(const void *om_data, size_t om_data_size) {
   aclError rt_ret = aclrtSetCurrentContext(context_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set the ascend device context failed, ret = " << rt_ret;
+    return false;
+  }
+  if (!model_process_.Load(om_data, om_data_size)) {
+    MS_LOG(ERROR) << "Load model model failed.";
     return false;
   }
   return true;
 }
 
 bool ModelInfer::Inference(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) {
-  if (!Load()) {
-    MS_LOG(ERROR) << "Prepare model resource failed.";
+  aclError rt_ret = aclrtSetCurrentContext(context_);
+  if (rt_ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Set the ascend device context failed, ret = " << rt_ret;
     return false;
   }
-
   return model_process_.PredictFromHost(inputs, outputs);
 }
 

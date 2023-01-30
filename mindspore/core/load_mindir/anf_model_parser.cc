@@ -43,6 +43,7 @@ using std::string;
 
 namespace mindspore {
 std::map<std::string, tensor::TensorPtr> MSANFModelParser::load_tensor_map_;
+std::mutex MSANFModelParser::load_tensor_map_mutex_;
 namespace {
 static constexpr char kConstantValueNode[] = "Constant";
 static constexpr char kDoSignaturePrimitivePrefix[] = "S-Prim-";
@@ -330,6 +331,25 @@ ValuePtr MSANFModelParser::GetValueFromAttributeProto(const mind_ir::AttributePr
   return nullptr;
 }
 
+tensor::TensorPtr MSANFModelParser::GetIncTensor(const std::string &tensor_name) {
+  std::lock_guard<std::mutex> lock(load_tensor_map_mutex_);
+  auto it = load_tensor_map_.find(tensor_name);
+  if (it != load_tensor_map_.end()) {
+    return it->second;
+  }
+  return nullptr;
+}
+
+void MSANFModelParser::SetIncTensor(const std::string &tensor_name, const tensor::TensorPtr &tensor) {
+  std::lock_guard<std::mutex> lock(load_tensor_map_mutex_);
+  load_tensor_map_[tensor_name] = tensor;
+}
+
+void MSANFModelParser::LoadTensorMapClear() {
+  std::lock_guard<std::mutex> lock(load_tensor_map_mutex_);
+  load_tensor_map_.clear();
+}
+
 tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_ir::TensorProto &attr_tensor) {
   ShapeVector shape;
   const int attr_tensor_type = attr_tensor.data_type();
@@ -356,8 +376,8 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
   if (!quantization_param_vector.empty()) {
     tensor->set_quant_param(quantization_param_vector);
   }
-  if (!IsIncLoad() || load_tensor_map_.find(attr_tensor.name()) == load_tensor_map_.end()) {
-    load_tensor_map_[attr_tensor.name()] = tensor;
+  if (!IsIncLoad() || !GetIncTensor(attr_tensor.name())) {
+    SetIncTensor(attr_tensor.name(), tensor);
   }
 
   MS_EXCEPTION_IF_NULL(tensor);
@@ -566,15 +586,16 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
   param_info->set_name(debug_info_name);
 
   MS_LOG(DEBUG) << "Load parameter name: " << parameter_proto.name();
-  if (IsIncLoad() && load_tensor_map_.find(parameter_proto.name()) != load_tensor_map_.end()) {
-    MS_LOG(DEBUG) << "Parameter: " << parameter_proto.name() << " has been already loaded, use it again.";
-    auto load_tensor_info = load_tensor_map_[parameter_proto.name()];
-    MS_EXCEPTION_IF_NULL(load_tensor_info);
-    load_tensor_info->set_param_info(param_info);
-    node->set_default_param(load_tensor_info);
-    node->set_abstract(load_tensor_info->ToAbstract());
-    anfnode_build_map_[parameter_proto.name()] = node;
-    return true;
+  if (IsIncLoad()) {
+    auto load_tensor_info = GetIncTensor(parameter_proto.name());
+    if (load_tensor_info) {
+      MS_LOG(DEBUG) << "Parameter: " << parameter_proto.name() << " has been already loaded, use it again.";
+      load_tensor_info->set_param_info(param_info);
+      node->set_default_param(load_tensor_info);
+      node->set_abstract(load_tensor_info->ToAbstract());
+      anfnode_build_map_[parameter_proto.name()] = node;
+      return true;
+    }
   }
   auto tensor = GenerateTensorPtrFromTensorProto(parameter_proto);
   if (tensor == nullptr) {
@@ -670,7 +691,7 @@ bool MSANFModelParser::BuildMapParameterFromMapTensorProto(const ParameterPtr &n
   param_info->set_name(debug_info_name);
 
   MS_LOG(DEBUG) << "Load map parameter name: " << map_parameter_proto.name();
-  if (IsIncLoad() && load_tensor_map_.find(map_parameter_proto.name()) != load_tensor_map_.end()) {
+  if (IsIncLoad() && GetIncTensor(map_parameter_proto.name()) != nullptr) {
     MS_LOG(ERROR) << "MapParameter dose not support incremental loading, param_name: " << map_parameter_proto.name();
     return false;
   }

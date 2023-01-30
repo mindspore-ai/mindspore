@@ -28,12 +28,9 @@ extern "C" {
 extern void mindspore_log_init();
 }
 #endif
-
-std::mutex g_build_mutex;
 }  // namespace
-std::mutex g_impl_init_lock;
 
-Model::Model() : impl_(nullptr) {
+Model::Model() {
 #ifdef USE_GLOG
 #if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
 #ifdef _MSC_VER
@@ -43,6 +40,10 @@ Model::Model() : impl_(nullptr) {
   mindspore::mindspore_log_init();
 #endif
 #endif
+  impl_ = std::make_shared<ModelImpl>();
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Failed to create ModelImpl";
+  }
 }
 
 Model::~Model() {}
@@ -67,14 +68,9 @@ Status DecryptModel(const std::string &cropto_lib_path, const void *model_buf, s
 
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
-  std::unique_lock<std::mutex> build_lock(g_build_mutex);
   if (impl_ == nullptr) {
-    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    impl_ = std::make_shared<ModelImpl>();
-    if (impl_ == nullptr) {
-      MS_LOG(ERROR) << "Model implement is null.";
-      return kLiteFileError;
-    }
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
   }
   try {
     Status ret = impl_->Build(model_data, data_size, model_type, model_context);
@@ -90,16 +86,10 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
 
 Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
-  std::unique_lock<std::mutex> build_lock(g_build_mutex);
   if (impl_ == nullptr) {
-    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    impl_ = std::make_shared<ModelImpl>();
-    if (impl_ == nullptr) {
-      MS_LOG(ERROR) << "Model implement is null.";
-      return kLiteFileError;
-    }
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
   }
-
   try {
     Status ret = impl_->Build(CharToString(model_path), model_type, model_context);
     if (ret != kSuccess) {
@@ -244,8 +234,8 @@ Status BuildTransferLearning(GraphCell backbone, GraphCell head, const std::shar
 
 Status Model::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Failed because this model has not been built.";
-    return kMCFailed;
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
   }
   try {
     return impl_->Resize(inputs, dims);
@@ -268,8 +258,8 @@ Status Model::RunStep(const MSKernelCallBack &before, const MSKernelCallBack &af
 Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                       const MSKernelCallBack &before, const MSKernelCallBack &after) {
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Failed because this model has not been built.";
-    return kMCFailed;
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
   }
   try {
     return impl_->Predict(inputs, outputs, before, after);
@@ -302,7 +292,7 @@ bool Model::HasPreprocess() {
 
 std::vector<MSTensor> Model::GetInputs() {
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Failed because this model has not been built.";
+    MS_LOG(ERROR) << "Model implement is null.";
     return {};
   }
   try {
@@ -315,7 +305,7 @@ std::vector<MSTensor> Model::GetInputs() {
 
 std::vector<MSTensor> Model::GetOutputs() {
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Failed because this model has not been built.";
+    MS_LOG(ERROR) << "Model implement is null.";
     return {};
   }
   try {
@@ -342,8 +332,7 @@ MSTensor Model::GetInputByTensorName(const std::vector<char> &name) {
 std::vector<std::vector<char>> Model::GetOutputTensorNamesChar() {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
-    std::vector<std::vector<char>> empty;
-    return empty;
+    return {};
   }
   return VectorStringToChar(impl_->GetOutputTensorNames());
 }
@@ -368,13 +357,6 @@ Status Model::BindGLTexture2DMemory(const std::map<std::string, unsigned int> &i
 }
 
 Status Model::LoadConfig(const std::vector<char> &config_path) {
-  std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-  if (impl_ != nullptr) {
-    MS_LOG(ERROR) << "impl_ illegal in LoadConfig.";
-    return Status(kLiteFileError, "Illegal operation.");
-  }
-
-  impl_ = std::make_shared<ModelImpl>();
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return Status(kLiteFileError, "Fail to load config file.");
@@ -382,7 +364,7 @@ Status Model::LoadConfig(const std::vector<char> &config_path) {
 
   auto ret = impl_->LoadConfig(CharToString(config_path));
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "impl_ LoadConfig failed,";
+    MS_LOG(ERROR) << "Fail to load config file.";
     return Status(kLiteFileError, "Invalid config file.");
   }
   return kSuccess;
@@ -390,15 +372,16 @@ Status Model::LoadConfig(const std::vector<char> &config_path) {
 
 Status Model::UpdateConfig(const std::vector<char> &section,
                            const std::pair<std::vector<char>, std::vector<char>> &config) {
-  std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
   if (impl_ == nullptr) {
-    impl_ = std::make_shared<ModelImpl>();
+    MS_LOG(ERROR) << "Model implement is null.";
+    return Status(kLiteFileError, "Fail to update config file.");
   }
-  if (impl_ != nullptr) {
-    return impl_->UpdateConfig(CharToString(section), {CharToString(config.first), CharToString(config.second)});
+  auto ret = impl_->UpdateConfig(CharToString(section), {CharToString(config.first), CharToString(config.second)});
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Fail to update config file.";
+    return Status(kLiteFileError, "Fail to update config file.");
   }
-  MS_LOG(ERROR) << "Model implement is null!";
-  return kLiteFileError;
+  return kSuccess;
 }
 
 bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type) {

@@ -42,22 +42,23 @@ namespace mindspore {
 const size_t tensor_max_size = 0x1000000;
 constexpr auto kNameCustomAscend = "CustomAscend";
 
-SingleOpInferSession::~SingleOpInferSession() {
-  kernel::Factory<kernel::KernelMod>::Instance().UnRegister(kNameCustomAscend);
-  kernel::AscendKernelPlugin::GetInstance().UpdateRegisterStatus(false);
-}
-
 Status SingleOpInferSession::AscendInit(const std::shared_ptr<Context> &context) {
   auto device_list = context->MutableDeviceInfo();
   for (const auto &device_info : device_list) {
-    MS_EXCEPTION_IF_NULL(device_info);
+    if (device_info == nullptr) {
+      MS_LOG(ERROR) << "Device info get from Context cannot be nullptr";
+      return kLiteError;
+    }
     if (device_info->GetDeviceType() == DeviceType::kAscend) {
-      if (!kernel::AscendKernelPlugin::GetInstance().Register()) {
-        MS_LOG(ERROR) << "Failed to Register Ascend plugin";
+      if (!kernel::AscendKernelPlugin::Register()) {
+        MS_LOG(ERROR) << "Failed to register Ascend plugin";
         return kLiteError;
       }
       auto ascend_device_info = device_info->Cast<mindspore::AscendDeviceInfo>();
-      MS_EXCEPTION_IF_NULL(ascend_device_info);
+      if (ascend_device_info == nullptr) {
+        MS_LOG(ERROR) << "Failed to cast device info to AscendDeviceInfo";
+        return kLiteError;
+      }
       device_id_ = ascend_device_info->GetDeviceID();
       return kSuccess;
     }
@@ -68,7 +69,10 @@ Status SingleOpInferSession::AscendInit(const std::shared_ptr<Context> &context)
 
 Status SingleOpInferSession::Init(const std::shared_ptr<Context> &context) {
   MS_LOG(INFO) << "SingleOpInferSession::Init";
-  MS_EXCEPTION_IF_NULL(context);
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "Input argument context cannot be nullptr";
+    return kLiteError;
+  }
   if (AscendInit(context) != kSuccess) {
     MS_LOG(ERROR) << "Init ascend failed.";
     return kLiteError;
@@ -106,7 +110,6 @@ void SingleOpInferSession::SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr 
     auto dump_path = ascend_context[lite::kDumpPathKey];
     dst_prim->AddAttr(lite::kDumpPathKey, MakeValue(dump_path));
   }
-  return;
 }
 
 Status SingleOpInferSession::BuildCustomAscendKernel(const CNodePtr &cnode) {

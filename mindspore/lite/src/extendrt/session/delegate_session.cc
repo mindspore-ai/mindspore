@@ -32,6 +32,7 @@ namespace mindspore {
 namespace {
 constexpr auto kAscendProviderGe = "ge";
 std::mutex kernel_graph_mutex;
+std::mutex g_build_graph_mutex;
 }  // namespace
 GraphSinkSession::~GraphSinkSession() {
   graph_executor_ = nullptr;
@@ -70,6 +71,8 @@ Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
 
 Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
   MS_LOG(INFO) << "GraphSinkSession::CompileGraph";
+  // This lock can be removed when LiteRT supports concurrent multithreading compilation.
+  std::lock_guard<std::mutex> lock(g_build_graph_mutex);
   // kernel graph will be removed from GraphSinkSession, and this code will be moved to TensorRT plugin
   if (context_ && !context_->MutableDeviceInfo().empty()) {
     auto device_info = context_->MutableDeviceInfo()[0];

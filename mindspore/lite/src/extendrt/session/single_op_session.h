@@ -28,7 +28,7 @@ namespace mindspore {
 class SingleOpInferSession : public InferSession {
  public:
   SingleOpInferSession() = default;
-  ~SingleOpInferSession() override;
+  ~SingleOpInferSession() override = default;
   Status Init(const std::shared_ptr<Context> &context) override;
   Status AscendInit(const std::shared_ptr<Context> &context);
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
@@ -42,7 +42,7 @@ class SingleOpInferSession : public InferSession {
   std::vector<std::string> GetInputNames() override;
   MutableTensorImplPtr GetOutputByTensorName(const std::string &tensorName) override;
   MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
-  void SetConfigInfo(ConfigInfos config_infos) { config_infos_ = config_infos; }
+  void SetConfigInfo(const ConfigInfos &config_infos) { config_infos_ = config_infos; }
   void SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr &op);
 
  private:

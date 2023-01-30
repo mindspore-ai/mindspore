@@ -27,7 +27,9 @@
 #include "extendrt/utils/tensor_utils.h"
 
 namespace mindspore {
-const size_t tensor_max_size = 0x1000000;
+namespace {
+std::mutex g_build_graph_mutex;
+}
 
 Status LiteInferSession::Init(const std::shared_ptr<Context> &context) {
   MS_LOG(INFO) << "LiteInferSession::Init";
@@ -38,8 +40,10 @@ Status LiteInferSession::Init(const std::shared_ptr<Context> &context) {
 }
 
 Status LiteInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
-  // Lite infer session do not use graph, just use data and size
   MS_LOG(INFO) << "LiteInferSession::CompileGraph";
+  // This lock can be removed when LiteRT supports concurrent multithreading compilation.
+  std::lock_guard<std::mutex> lock(g_build_graph_mutex);
+  // Lite infer session do not use graph, just use data and size
   MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_ZERO("size", size);
   lite_session_ = CreateLiteSession(ContextUtils::Convert(context_.get()));

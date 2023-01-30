@@ -37,8 +37,11 @@ bool AclPass::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Acl pass impl run failed.";
     return false;
   }
-#endif
   return true;
+#else
+  MS_LOG(ERROR) << "Failed to run AclPass, ENABLE_LITE_ACL is not defined";
+  return false;
+#endif
 }
 }  // namespace opt
 }  // namespace mindspore
