@@ -66,7 +66,7 @@ def train_and_eval(device_id, epoch_size, model, dataset, loss_cb, eval_dataset)
     acc = 0.0
     time_cost = 0.0
     for epoch_idx in range(0, int(epoch_size / eval_interval)):
-        model.train(1, dataset, callbacks=loss_cb)
+        model.train(1, dataset, callbacks=loss_cb, dataset_sink_mode=True)
         eval_start = time.time()
         output = model.eval(eval_dataset)
         eval_cost = (time.time() - eval_start) * 1000
