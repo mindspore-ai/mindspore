@@ -5012,7 +5012,7 @@ def addmv(x, mat, vec, beta=1, alpha=1):
     with a 1-D tensor of size :math:`N` and `out` will be 1-D tensor of size :math:`N`.
 
     The optional values `beta` and `alpha` are the matrix-vector product between `mat` and `vec` and the scale
-    factor for the added tensor `x` respectively. If `beta` is 0, then `x` will be ignored.
+    factor for the added Tensor `x` respectively. If `beta` is 0, then `x` will be ignored.
 
     .. math::
         output = β x + α (mat @ vec)
@@ -5022,9 +5022,9 @@ def addmv(x, mat, vec, beta=1, alpha=1):
         mat (Tensor): The first tensor to be multiplied. The shape of the tensor is :math:`(N, M)`.
         vec (Tensor): The second tensor to be multiplied. The shape of the tensor is :math:`(M,)`.
         beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
-            float or bool, Default: 1.
+            float or bool. Default: 1.
         alpha (scalar[int, float, bool], optional): Multiplier for `mat` @ `vec` (α). The `alpha` must
-            be int or float or bool, Default: 1.
+            be int or float or bool. Default: 1.
 
     Returns:
         Tensor, the shape of the output tensor is :math:`(N,)`, has the same dtype as `x`.
@@ -8274,8 +8274,8 @@ def rot90(x, k, dims):
 
     Args:
         x (Tensor): Input tensor.
-        k (int): Number of times to rotate.
-        dims (a list or tuple): Axis to rotate.
+        k (int): Number of times to rotate. Default: 1.
+        dims (a list or tuple): Axis to rotate. Default: [0，1].
 
     Returns:
         Tensor.
@@ -8285,7 +8285,7 @@ def rot90(x, k, dims):
         TypeError: If `k` is not integer.
         TypeError: If `dims` is not tuple of integers or list of ints.
         ValueError: If the length of `dims` is not `2`.
-        ValueError: If any dims is out of range.
+        ValueError: If any dims is out of tensor's range [-x.ndim, x.ndim).
         RuntimeError: If rotation dims are not different.
 
     Supported Platforms:
