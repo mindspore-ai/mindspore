@@ -46,6 +46,18 @@ int GreaterorequalTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   nvinfer1::ITensor *inputTensors[] = {input(ctx, 0).trt_tensor_, input(ctx, 1).trt_tensor_};
+  for (size_t i = 0; i != in_tensors_.size(); ++i) {
+    ITensorHelper input_helper = input(ctx, i);
+    if (input_helper.trt_tensor_->getType() != nvinfer1::DataType::kINT32) {
+      auto cast_layer = ctx->network()->addIdentity(*input_helper.trt_tensor_);
+      if (cast_layer == nullptr) {
+        MS_LOG(ERROR) << "create cast layer failed for: " << op_name_;
+        return RET_ERROR;
+      }
+      cast_layer->setOutputType(0, nvinfer1::DataType::kINT32);
+      inputTensors[i] = cast_layer->getOutput(0);
+    }
+  }
   auto plugin = std::make_shared<GreaterorequalPlugin>(op_name_, schema::PrimitiveType_GreaterEqual);
   if (plugin == nullptr) {
     MS_LOG(ERROR) << "create GreaterorequalPlugin failed for " << op_name_;
@@ -104,8 +116,19 @@ nvinfer1::IPluginV2DynamicExt *GreaterorequalPlugin::clone() const noexcept {
 
 bool GreaterorequalPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc,
                                                      int nbInputs, int nbOutputs) noexcept {
-  return tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR &&
-         (tensorsDesc[pos].type == nvinfer1::DataType::kFLOAT || tensorsDesc[pos].type == nvinfer1::DataType::kINT32);
+  if (tensorsDesc[pos].format != nvinfer1::TensorFormat::kLINEAR) {
+    return false;
+  }
+  if (pos == 0) {
+    return tensorsDesc[pos].type == nvinfer1::DataType::kFLOAT || tensorsDesc[pos].type == nvinfer1::DataType::kINT32;
+  }
+  if (pos < nbInputs) {
+    return tensorsDesc[pos].type == tensorsDesc[pos - 1].type;
+  }
+  if (pos < nbInputs + nbOutputs) {
+    return tensorsDesc[pos].type == nvinfer1::DataType::kINT32;
+  }
+  return false;
 }
 
 size_t GreaterorequalPlugin::getSerializationSize() const noexcept { return sizeof(schema::PrimitiveType); }

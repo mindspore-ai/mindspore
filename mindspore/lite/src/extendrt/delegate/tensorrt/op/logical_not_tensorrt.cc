@@ -113,7 +113,7 @@ nvinfer1::IPluginV2DynamicExt *LogicalNotPlugin::clone() const noexcept {
 bool LogicalNotPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
                                                  int nbOutputs) noexcept {
   return tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR &&
-         (tensorsDesc[pos].type == nvinfer1::DataType::kFLOAT || tensorsDesc[pos].type == nvinfer1::DataType::kINT32);
+         tensorsDesc[pos].type == nvinfer1::DataType::kINT32;
 }
 
 size_t LogicalNotPlugin::getSerializationSize() const noexcept { return sizeof(schema::PrimitiveType); }

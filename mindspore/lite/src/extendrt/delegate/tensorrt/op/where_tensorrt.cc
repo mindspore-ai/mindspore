@@ -170,7 +170,18 @@ nvinfer1::DataType WherePlugin::getOutputDataType(int index, const nvinfer1::Dat
 
 bool WherePlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
                                             int nbOutputs) noexcept {
-  return tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR;
+  if (tensorsDesc[pos].format != nvinfer1::TensorFormat::kLINEAR) {
+    return false;
+  }
+  if (pos == 0) {
+    return tensorsDesc[pos].type == nvinfer1::DataType::kINT32;
+  } else if (pos == 1) {
+    return tensorsDesc[pos].type == nvinfer1::DataType::kFLOAT || tensorsDesc[pos].type == nvinfer1::DataType::kINT32;
+  } else {
+    return tensorsDesc[pos].type == tensorsDesc[pos - 1].type;
+  }
+  MS_LOG(ERROR) << tensorsDesc[pos].type << " " << tensorsDesc[pos].format;
+  return false;
 }
 
 size_t WherePlugin::getSerializationSize() const noexcept { return sizeof(schema::PrimitiveType); }

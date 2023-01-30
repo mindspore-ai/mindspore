@@ -38,11 +38,6 @@ int OneslikeTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
-  int input_nbdims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
-  if (input_nbdims == -1) {
-    MS_LOG(ERROR) << "oneslike op failed for " << op_name_;
-    return RET_ERROR;
-  }
   int ret = RunAsTrtOps(ctx);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "oneslike op failed for " << op_name_;
@@ -51,50 +46,42 @@ int OneslikeTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return ret;
 }
 
-template <typename T>
-void *CreatConstTensorMem(int64_t element_num, const T value) {
-  void *ptr = malloc(element_num * sizeof(T));
-  if (ptr == nullptr) {
-    MS_LOG(ERROR) << "malloc fail";
-    return nullptr;
-  }
-  const T *begin = &(std::vector<T>(element_num, value))[0];
-  memcpy(ptr, reinterpret_cast<const void *>(begin), element_num * sizeof(T));
-  return ptr;
-}
-
 int OneslikeTensorRT::RunAsTrtOps(TensorRTContext *ctx) {
   if (ctx == nullptr || ctx->network() == nullptr) {
     MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
   auto input_trt_tensor = input(ctx, 0).trt_tensor_;
-  auto dims = input_trt_tensor->getDimensions();
-  auto dtype = input_trt_tensor->getType();
-  auto ms_shape = ConvertMSShape(dims);
-  auto element_num = std::accumulate(ms_shape.begin(), ms_shape.end(), 1, std::multiplies<size_t>());
-  void *ptr;
-  if (dtype == nvinfer1::DataType::kFLOAT) {
-    const float value = 1.0;
-    ptr = CreatConstTensorMem(element_num, value);
-  } else if (dtype == nvinfer1::DataType::kINT32) {
+  nvinfer1::ITensor *value_tensor;
+  if (in_tensors_[0].DataType() == DataType::kNumberTypeFloat32) {
+    const float value = 1.f;
+    value_tensor = ctx->ConvertTo1DTensor(value);
+  } else if (in_tensors_[0].DataType() == DataType::kNumberTypeInt32) {
     const int value = 1;
-    ptr = CreatConstTensorMem(element_num, value);
+    value_tensor = ctx->ConvertTo1DTensor(value);
   } else {
-    MS_LOG(ERROR) << "dtype not implement: " << dtype;
+    MS_LOG(ERROR) << "dtype not implement: " << in_tensors_[0].DataType();
     return RET_ERROR;
   }
-  nvinfer1::Weights weights{dtype, ptr, element_num};
-  nvinfer1::IConstantLayer *oneslike_layer = ctx->network()->addConstant(dims, weights);
+  CHECK_NULL_RETURN(value_tensor);
+  auto unsqueeze_layer = ctx->network()->addShuffle(*value_tensor);
+  CHECK_NULL_RETURN(unsqueeze_layer);
 
-  CHECK_NULL_RETURN(oneslike_layer);
-  auto out_tensor = oneslike_layer->getOutput(0);
+  auto shape_tensor = ctx->network()->addShape(*input_trt_tensor)->getOutput(0);
+  CHECK_NULL_RETURN(shape_tensor);
+  int rank = shape_tensor->getDimensions().d[0];
+  nvinfer1::Dims unsqueeze{rank};
+  std::fill(unsqueeze.d, unsqueeze.d + rank, 1);
+  unsqueeze_layer->setReshapeDimensions(unsqueeze);
+  unsqueeze_layer->setZeroIsPlaceholder(false);
+  value_tensor = unsqueeze_layer->getOutput(0);
+  CHECK_NULL_RETURN(value_tensor);
+
+  auto out_tensor = Broadcast(ctx, value_tensor, shape_tensor);
+
   CHECK_NULL_RETURN(out_tensor);
   ctx->RegisterTensor(ITensorHelper{out_tensor, input(ctx, 0).format_, input(ctx, 0).same_format_},
                       out_tensors_[0].Name());
-  oneslike_layer->setName(op_name_.c_str());
-  this->layer_ = oneslike_layer;
-  ctx->RegisterLayer(oneslike_layer, op_name_);
   return RET_OK;
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameOnesLike, OneslikeTensorRT)

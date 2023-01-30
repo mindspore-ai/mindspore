@@ -63,10 +63,6 @@ std::unordered_map<std::string, nvinfer1::ElementWiseOperation> NOT_BOOL_PRIM2NV
 
 int ElementWiseTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                                    const std::vector<TensorInfo> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "invalid input tensort size: " << in_tensors.size();
     return RET_ERROR;
@@ -109,11 +105,21 @@ int ElementWiseTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const s
   return RET_OK;
 }
 
-int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  if (ctx == nullptr || ctx->network() == nullptr) {
-    MS_LOG(ERROR) << "network or input tensor size is invalid";
-    return RET_ERROR;
+void ElementWiseTensorRT::LogicalOpChangeInputType(TensorRTContext *ctx, ITensorHelper *x_input,
+                                                   ITensorHelper *y_input) {
+  if (type_ == ops::kNameGreater || type_ == ops::kNameLess) {
+    if (x_input->trt_tensor_->getType() != nvinfer1::DataType::kINT32) {
+      x_input->trt_tensor_ =
+        TRTTensorCast(ctx, x_input->trt_tensor_, nvinfer1::DataType::kINT32, op_name_ + "_input_cast_to_int_0");
+    }
+    if (y_input->trt_tensor_->getType() != nvinfer1::DataType::kINT32) {
+      y_input->trt_tensor_ =
+        TRTTensorCast(ctx, y_input->trt_tensor_, nvinfer1::DataType::kINT32, op_name_ + "_input_cast_to_int_1");
+    }
   }
+}
+
+int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
   ITensorHelper x_input;
   ITensorHelper y_input;
   int ret = PreprocessInputTensors(ctx, &x_input, &y_input);
@@ -125,6 +131,7 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
   if (type_ == ops::kNameFloorMod) {
     cal_layer = AddFoorMod(ctx, x_input.trt_tensor_, y_input.trt_tensor_);
   } else {
+    LogicalOpChangeInputType(ctx, &x_input, &y_input);
     cal_layer = ctx->network()->addElementWise(*x_input.trt_tensor_, *y_input.trt_tensor_, element_wise_op_);
   }
 
