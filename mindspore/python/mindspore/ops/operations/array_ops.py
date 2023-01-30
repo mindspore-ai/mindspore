@@ -458,7 +458,7 @@ class Im2Col(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> x = Tensor(input_data=np.random.rand(4, 4, 32, 32), dtype=mstype.float64)
+        >>> x = Tensor(input_data=np.random.rand(4, 4, 32, 32), dtype=mstype.float16)
         >>> im2col = ops.Im2Col(ksizes=3, strides=1, dilations=1)
         >>> y = im2col(x)
         >>> print(y.shape)
@@ -484,7 +484,10 @@ class Im2Col(Primitive):
         if isinstance(pads, (list, tuple)):
             if len(pads) == 2:
                 self.pads = (pads[0], pads[0], pads[1], pads[1])
-        self.pads = (pads, pads, pads, pads) if isinstance(pads, int) else pads
+            else:
+                self.pads = pads
+        if isinstance(pads, int):
+            self.pads = (pads, pads, pads, pads)
 
         validator.check("ksizes size", len(self.ksizes), "", [1, 2], Rel.IN, self.name)
         validator.check_positive_int_sequence(self.ksizes, "ksizes", self.name)
