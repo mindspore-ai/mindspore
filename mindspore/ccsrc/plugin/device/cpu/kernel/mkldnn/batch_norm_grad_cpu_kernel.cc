@@ -25,27 +25,27 @@ namespace kernel {
 namespace {
 constexpr size_t kBatchNormGradInputsNum = 6;
 constexpr size_t kBatchNormGradOutputsNum = 3;
-constexpr size_t kBatchNormGradInputShapeSize = 4;
-constexpr size_t kBatchNormGradInputShapeSize2 = 2;
+constexpr size_t kBatchNormGradInputShapeMaxSize = 4;
+constexpr size_t kBatchNormGradInputShapeMinSize = 2;
 constexpr size_t kScaleShiftNum = 2;
 }  // namespace
 bool BatchNormGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   base_operator_ = base_operator;
   auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchNormGrad>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast BatchNormGrad ops failed!";
     return false;
   }
-  auto kernel_name = kernel_ptr->GetPrim()->name();
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-
   is_train_ = kernel_ptr->get_is_training();
   epsilon_ = kernel_ptr->get_epsilon();
+  kernel_name_ = kernel_ptr->GetPrim()->name();
 
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   bool is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
-    MS_LOG(EXCEPTION) << kernel_name << " does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
   return true;
 }
@@ -59,11 +59,9 @@ int BatchNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
 
   auto x_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  if (x_shape.size() == NC_LEN) {
-    (void)x_shape.insert(x_shape.end(), (SHAPE_4D - NC_LEN), 1);
-  } else if (x_shape.size() != SHAPE_4D) {
-    MS_LOG(EXCEPTION) << "Fused batchnorm support nc or nchw input!";
-  }
+  const size_t x_shape_size = x_shape.size();
+  (void)x_shape.insert(x_shape.end(), kBatchNormGradInputShapeMaxSize - x_shape_size, 1);
+
   batch_size_ = x_shape[N];
   channel_ = x_shape[C];
   hw_size_ = x_shape[H] * x_shape[W];

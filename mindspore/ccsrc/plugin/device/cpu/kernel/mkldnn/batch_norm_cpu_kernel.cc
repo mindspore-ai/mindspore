@@ -25,23 +25,23 @@ namespace kernel {
 namespace {
 constexpr size_t kBatchNormInputsNum = 5;
 constexpr size_t kBatchNormOutputsNum = 5;
-constexpr size_t kBatchNormInputShapeSize = 4;
-constexpr size_t kBatchNormInputShapeSize2 = 2;
+constexpr size_t kBatchNormInputShapeMaxSize = 4;
 }  // namespace
 
 bool BatchNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchNorm>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast BatchNorm ops failed!";
     return false;
   }
-  auto kernel_name = kernel_ptr->GetPrim()->name();
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
 
+  kernel_name_ = kernel_ptr->GetPrim()->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   bool is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
-    MS_LOG(EXCEPTION) << kernel_name << " does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
 
   base_operator_ = base_operator;
@@ -60,11 +60,7 @@ int BatchNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
 
   auto x_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  if (x_shape.size() == kBatchNormInputShapeSize2) {
-    (void)x_shape.insert(x_shape.end(), kBatchNormInputShapeSize - kBatchNormInputShapeSize2, 1);
-  } else if (x_shape.size() != kBatchNormInputShapeSize) {
-    MS_LOG(EXCEPTION) << "Batchnorm only support nchw input!";
-  }
+  (void)x_shape.insert(x_shape.end(), kBatchNormInputShapeMaxSize - x_shape.size(), 1);
 
   batch_size_ = x_shape[0];
   channel_ = x_shape[1];

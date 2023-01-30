@@ -746,9 +746,6 @@ class ResizeBicubic(Primitive):
     r"""
     Resize images to size using bicubic interpolation.
 
-    .. warning::
-        The max output length is 1000000.
-
     Args:
         align_corners (bool, optional):If true, the centers of the 4 corner pixels of the input
             and output tensors are aligned, preserving the values at the corner pixels.Default: False.
@@ -758,7 +755,7 @@ class ResizeBicubic(Primitive):
 
     Inputs:
         - **images** (Tensor) - The input image must be a 4-D tensor of shape :math:`(batch, channels, height, width)`.
-          The format must be NHWC.
+          The format must be NCHW.
           Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
         - **size** (Tensor) - A 1-D tensor of shape [2], with 2 elements: new_height, new_width.
           Types allowed: int32.

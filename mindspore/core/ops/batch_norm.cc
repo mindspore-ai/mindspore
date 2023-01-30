@@ -137,6 +137,8 @@ class BatchNormInfer : public abstract::OpInferBase {
 
     if (!x_shape_ptr->IsDynamic() && !scale_shape_ptr->IsDynamic()) {
       // auto format = GetValue<std::string>(primitive->GetAttr(kFormat));
+      (void)CheckAndConvertUtils::CheckInRange("rank of images", SizeToLong(x_shape.size()), kIncludeBoth, {2, 4},
+                                               prim_name);
       auto format = get_format_in_infer(primitive);
       auto channel = format == "NHWC" ? x_shape.back() : x_shape[1];
       if (scale_shape[kInputIndex0] != channel) {

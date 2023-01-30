@@ -159,7 +159,7 @@ class _BatchNorm(Cell):
 class BatchNorm1d(_BatchNorm):
     r"""
     This layer
-    applies Batch Normalization over a 2D input (a mini-batch of 1D inputs) to
+    applies Batch Normalization over a 2D or 3D input (a mini-batch of 1D or 2D inputs) to
     reduce internal covariate shift. Batch Normalization is widely used in convolutional networks.
     For the setailed contents, refer to `Batch Normalization: Accelerating Deep Network Training by
     Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It
@@ -174,7 +174,7 @@ class BatchNorm1d(_BatchNorm):
         recommended to be changed after net was initialized.
 
     Args:
-        num_features (int): `C` from an expected input of size (N, C).
+        num_features (int): number of features or channels `C` of the input `x` .
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
         momentum (float): A floating hyperparameter of the momentum for the
             running_mean and running_var computation. Default: 0.9.
@@ -195,10 +195,11 @@ class BatchNorm1d(_BatchNorm):
             Default: 'NCHW'.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C)` or :math:`(N, C, L)` ,
+          where `N` is the batch size, `C` is the number of features or channels, and `L` is the sequence length.
 
     Outputs:
-        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out})`.
+        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C)` or :math:`(N, C, L)` .
 
     Raises:
         TypeError: If `num_features` is not an int.
@@ -276,10 +277,10 @@ class BatchNorm2d(_BatchNorm):
             Default: 'NCHW'.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, H, W)`.
 
     Outputs:
-        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C, H, W)`.
 
     Raises:
         TypeError: If `num_features` is not an int.

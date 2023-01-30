@@ -100,6 +100,11 @@ class BatchNormGradInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
     auto x_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+    if (!IsDynamicRank(x_shape)) {
+      (void)CheckAndConvertUtils::CheckInRange("rank of x", SizeToLong(x_shape.size()), kIncludeBoth, {2, 4},
+                                               prim_name);
+    }
     auto scale_shape_ptr = input_args[kInputIndex2]->BuildShape();
     if (prim_name == kNameBatchNormGradWithAddAndActivation) {
       return std::make_shared<abstract::TupleShape>(
