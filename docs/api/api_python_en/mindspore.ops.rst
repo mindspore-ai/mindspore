@@ -18,7 +18,6 @@ Neural Network
     mindspore.ops.adaptive_max_pool1d
     mindspore.ops.adaptive_max_pool2d
     mindspore.ops.adaptive_max_pool3d
-    mindspore.ops.addmv
     mindspore.ops.avg_pool1d
     mindspore.ops.avg_pool2d
     mindspore.ops.avg_pool3d
@@ -44,7 +43,6 @@ Neural Network
     mindspore.ops.max_unpool1d
     mindspore.ops.max_unpool2d
     mindspore.ops.max_unpool3d
-    mindspore.ops.rot90
 
 
 Loss Functions
@@ -174,6 +172,7 @@ Element-wise Operations
     mindspore.ops.add
     mindspore.ops.addcdiv
     mindspore.ops.addcmul
+    mindspore.ops.addmv
     mindspore.ops.addn
     mindspore.ops.angle
     mindspore.ops.arccosh
@@ -264,6 +263,7 @@ Element-wise Operations
     mindspore.ops.reciprocal
     mindspore.ops.remainder
     mindspore.ops.roll
+    mindspore.ops.rot90
     mindspore.ops.round
     mindspore.ops.rsqrt
     mindspore.ops.sgn
