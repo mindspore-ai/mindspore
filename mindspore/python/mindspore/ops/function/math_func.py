@@ -7931,8 +7931,8 @@ def matmul(x1, x2):
 
 def inner(x, other):
     r"""
-    Computes the dot product of 1D tensors. For higher dimensions, the result will be the summation of the element-wise
-    production along their last dimension.
+    Computes the dot product of 1D tensors. For higher dimensions, the result will be the summation of the elemental
+    wise production along their last dimension.
 
     Note:
         If either `x` or `other` is a Tensor scalar, the result is equivalent to mindspore.mul(x, other).
@@ -7975,19 +7975,20 @@ def inner(x, other):
     """
     x_dim = x.ndim
     other_dim = other.ndim
+    x_dtype = x.dtype
 
     if x_dim == 0 or other_dim == 0:
-        return x * other
-
-    if x_dim == 1 or other_dim == 1:
-        return matmul(x, other)
+        output = x * other
+        if output.dtype != x.dtype:
+            return output.astype(x_dtype)
+        return output
 
     x_shape = x.shape
     other_shape = other.shape
     if x_shape[-1] != other_shape[-1]:
         raise ValueError(f"For 'inner', the last dimension of 'x' and 'other' must be the same, \
                          but got x.shape: {x_shape} and other.shape: {other_shape}.")
-    return matmul(x, other.swapaxes(-2, -1))
+    return C.tensor_dot(x, other, axes=(-1, -1))
 
 
 def bmm(input_x, mat2):
