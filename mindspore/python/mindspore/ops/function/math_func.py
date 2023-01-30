@@ -6133,7 +6133,8 @@ def roll(x, shifts, dims=None):
             positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
             in the opposite direction.
         dims (Union[list(int), tuple(int), int], optional): Specifies the dimension indexes of shape to be rolled.
-            Default: None.
+            Default: None. If `dims` is None, the Tensor will be flattened before rolling and then restored to the
+            original shape.
 
     Returns:
         Tensor, has the same shape and type as `x`.
@@ -6155,7 +6156,10 @@ def roll(x, shifts, dims=None):
         >>> print(output)
         [3. 4. 0. 1. 2.]
     """
-    dims = dims if dims is not None else 0
+    _shape = x.shape
+    if dims is None:
+        flatten_x = x.reshape(-1)
+        return Roll(shifts, 0)(flatten_x).reshape(_shape)
     return Roll(shifts, dims)(x)
 
 
