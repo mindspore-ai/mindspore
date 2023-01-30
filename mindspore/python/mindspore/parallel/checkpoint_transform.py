@@ -174,7 +174,7 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
         >>>         checkpoint_files_map[rank] = "./origin_checkpoint_rank{}/pangu{}-100_2.ckpt".format(rank)
         >>>     save_checkpoint_file_name = "./new_checkpoint_rank{}/pangu{}-100_2.ckpt".format(rank_id)
         >>>     transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_file_name,
-        >>>                                  "./src_strategy.ckpt", "./dst_strategy.ckpt")
+        ...                                  "./src_strategy.ckpt", "./dst_strategy.ckpt")
 
     """
     if not isinstance(checkpoint_files_map, dict):
