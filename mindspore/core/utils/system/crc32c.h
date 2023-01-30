@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace system {
 // Align n to (1 << m) byte boundary
-#define MEM_ALIGN(n, m) (((n) + ((1 << (m)) - 1)) & (~((1 << (m)) - 1)))
+inline uintptr_t MemAlign(uintptr_t n, size_t m) { return ((n) + ((1 << (m)) - 1)) & (~((1 << (m)) - 1)); }
 
 // Masked for crc.
 static constexpr uint32 kMaskDelta = 0xa282ead8ul;

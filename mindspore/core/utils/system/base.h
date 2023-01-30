@@ -91,14 +91,6 @@ class Platform {
   PlatformDefine platform_;
 };
 
-// check the null point
-#define MS_EXCEPT_CHECK_NULL(value)              \
-  do {                                           \
-    if ((value) == nullptr) {                    \
-      MS_LOG(EXCEPTION) << "The value is null."; \
-    }                                            \
-  } while (0)
-
 // define the big or little endian type
 constexpr bool kLittleEndian = true;
 

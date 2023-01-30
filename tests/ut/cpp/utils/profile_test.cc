@@ -32,11 +32,11 @@ class TestProfile : public UT::Common {
   virtual void TearDown() {}
 };
 
-static void test_lap(Profile* prof) {
+static void test_lap(Profile *prof) {
   int nums[] = {30, 20, 70};
   int cnt = 0;
   for (auto elem : nums) {
-    WITH(prof->Lap(cnt))[elem]()->void { usleep(elem); };
+    ProfileExecute(prof->Lap(cnt), [elem]() -> void { usleep(elem); });
     cnt += 1;
   }
 }
@@ -44,19 +44,19 @@ static void test_lap(Profile* prof) {
 TEST_F(TestProfile, Test01) {
   int step_cnt = 0;
   Profile prof;
-  Profile* ptr_prof = &prof;
+  Profile *ptr_prof = &prof;
   DumpTime::GetInstance().Record("Test01", GetTime(), true);
-  WITH(ptr_prof)[&ptr_prof, &step_cnt]()->void {
-    WITH(ptr_prof->Step("Step01"))[&step_cnt]()->void {
+  ProfileExecute(ptr_prof, [&ptr_prof, &step_cnt]() -> void {
+    ProfileExecute(ptr_prof->Step("Step01"), [&step_cnt]() -> void {
       usleep(20);
       step_cnt += 1;
-    };
-    WITH(ptr_prof->Step("Step02"))[&ptr_prof, &step_cnt]()->void {
+    });
+    ProfileExecute(ptr_prof->Step("Step02"), [&ptr_prof, &step_cnt]() -> void {
       usleep(10);
       test_lap(ptr_prof);
       step_cnt += 1;
-    };
-  };
+    });
+  });
   DumpTime::GetInstance().Record("Test01", GetTime(), false);
 
   prof.Print();

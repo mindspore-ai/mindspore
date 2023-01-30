@@ -35,9 +35,8 @@ FuncGraphPtr PartialEliminateOptPass(const pipeline::ResourcePtr &resource, cons
   auto after_lift_opt = opt::Optimizer::MakeOptimizer("partial_eliminate", resource, map);
 
   FuncGraphPtr opt_fg = nullptr;
-  WITH(MsProfile::GetProfile()->Step("partial_eliminate_before_grad"))[&after_lift_opt, func_graph, &opt_fg]() {
-    opt_fg = after_lift_opt->step(func_graph, true);
-  };
+  ProfileExecute(MsProfile::GetProfile()->Step("partial_eliminate_before_grad"),
+                 [&after_lift_opt, func_graph, &opt_fg]() { opt_fg = after_lift_opt->step(func_graph, true); });
   return opt_fg;
 }
 

@@ -60,8 +60,6 @@ class MSLogTime {
 
 namespace mindspore {
 namespace common {
-// TODO(lzlang): delete
-constexpr auto kEnableAscendKernelByKernel = false;
 inline const char *SafeCStr(const std::string &str) { return str.c_str(); }
 MS_CORE_API const char *SafeCStr(const std::string &&str);
 
