@@ -58,8 +58,22 @@ void CloneGraphInputs(const FuncGraphPtr &origin, const FuncGraphPtr &mirror, No
   }
 }
 
+bool CheckTupleGetItemSharedWeight(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
+                                   const DataInfo &data_info) {
+  if (!utils::isa<ValueNode>(node)) {
+    return false;
+  }
+  for (auto &node_user : manager->node_users()[node]) {
+    auto user = node_user.first;
+    if (opt::CheckPrimitiveType(user, prim::kPrimTupleGetItem) && data_info.data_.size() >= sizeof(int)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const FuncGraphPtr &mirror_graph,
-                                      const std::shared_ptr<ConverterPara> &param) {
+                                      const FuncGraphManagerPtr &manager, const std::shared_ptr<ConverterPara> &param) {
   MS_ASSERT(cnode != nullptr && mirror_graph != nullptr);
   MS_CHECK_TRUE_RET(index < cnode->size(), nullptr);
   auto node = cnode->input(index);
@@ -99,7 +113,7 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
     MS_LOG(ERROR) << "fetch data failed.";
     return nullptr;
   }
-  if (opt::CheckPrimitiveType(cnode, prim::kPrimTupleGetItem) && data_info.data_.size() >= sizeof(int)) {
+  if (CheckTupleGetItemSharedWeight(node, manager, data_info)) {
     return NewValueNode(MakeValue<int>(*reinterpret_cast<int *>(data_info.data_.data())));
   }
   ShapeVector shape_vec(data_info.shape_.begin(), data_info.shape_.end());
@@ -181,6 +195,8 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const std::shared_ptr<Con
   NodesMap mirror_nodes;
   CloneGraphInputs(graph, mirror_graph, &origin_nodes, &mirror_nodes);
   auto node_list = TopoSort(graph->get_return());
+  auto manager = graph->manager();
+  MS_CHECK_TRUE_RET(manager != nullptr, nullptr);
   for (auto &node : node_list) {
     if (!utils::isa<mindspore::CNode>(node)) {
       continue;
@@ -208,7 +224,7 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const std::shared_ptr<Con
           auto mirror_sub_graph = CloneFuncGraph(sub_func_graph, param, cloned_func_graph);
           mirror_input = NewValueNode(mirror_sub_graph);
         } else {
-          mirror_input = CloneParameterAndValueNode(cnode, i, mirror_graph, param);
+          mirror_input = CloneParameterAndValueNode(cnode, i, mirror_graph, manager, param);
         }
         if (mirror_input == nullptr) {
           MS_LOG(ERROR) << "node input cannot be found.";
