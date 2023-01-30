@@ -1334,3 +1334,14 @@ def test_tensor_slice_reduce_out_of_bounds_positive():
     net = NetWork()
     with pytest.raises(IndexError):
         net(input_tensor)
+
+
+def test_tensor_slice_none_in_pynative():
+    """
+    Feature: Test Tensor slice None
+    Description: test tensor slice success
+    Expectation: success
+    """
+    x_np = np.array([[1, 2], [3, 4]], dtype=np.float32)
+    x = Tensor(x_np)
+    np.allclose(x[..., None].asnumpy(), x_np)
