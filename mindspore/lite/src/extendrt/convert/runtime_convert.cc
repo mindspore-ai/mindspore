@@ -48,29 +48,50 @@ int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_
         std::map<std::string, std::string> ascend_map = config_info.at("ascend_context");
         mindspore::lite::ConfigFileParser config_parser;
         config_parser.SetParamByConfigfile(param, ascend_map);
-      } else {
-        auto ascend_info = device->Cast<mindspore::AscendDeviceInfo>();
-        std::string dynamic_batch_size = ascend_info->GetDynamicBatchSize();
-        if (!dynamic_batch_size.empty()) {
-          std::vector<std::string> batch_size_string = mindspore::lite::SplitStringToVector(dynamic_batch_size, ',');
-          for (const auto &item : batch_size_string) {
-            int32_t val;
-            if (mindspore::lite::ConvertIntNum(item, &val)) {
-              size_t tmp_val = static_cast<size_t>(val);
-              param->aclModelOptionCfgParam.dynamic_batch_size.push_back(tmp_val);
-            }
+      }
+      auto ascend_info = device->Cast<mindspore::AscendDeviceInfo>();
+      std::string dynamic_batch_size = ascend_info->GetDynamicBatchSize();
+      if (!dynamic_batch_size.empty()) {
+        std::vector<std::string> batch_size_string = mindspore::lite::SplitStringToVector(dynamic_batch_size, ',');
+        for (const auto &item : batch_size_string) {
+          int32_t val;
+          if (mindspore::lite::ConvertIntNum(item, &val)) {
+            size_t tmp_val = static_cast<size_t>(val);
+            param->aclModelOptionCfgParam.dynamic_batch_size.push_back(tmp_val);
           }
         }
+      }
+      if (ascend_info->GetDeviceID() >= 0) {
         param->aclModelOptionCfgParam.device_id = ascend_info->GetDeviceID();
+      }
+      if (ascend_info->GetOutputType() != mindspore::DataType::kTypeUnknown) {
         param->aclModelOptionCfgParam.output_type = ascend_info->GetOutputType();
+      }
+      if (!ascend_info->GetInputShapeMap().empty()) {
         param->aclModelOptionCfgParam.input_shape_map = ascend_info->GetInputShapeMap();
+      }
+      if (!ascend_info->GetInputFormat().empty()) {
         param->aclModelOptionCfgParam.input_format = ascend_info->GetInputFormat();
+      }
+      if (!ascend_info->GetInputShape().empty()) {
         param->aclModelOptionCfgParam.input_shape = ascend_info->GetInputShape();
+      }
+      if (!ascend_info->GetPrecisionMode().empty()) {
         param->aclModelOptionCfgParam.precision_mode = ascend_info->GetPrecisionMode();
+      }
+      if (!ascend_info->GetOpSelectImplMode().empty()) {
         param->aclModelOptionCfgParam.op_select_impl_mode = ascend_info->GetOpSelectImplMode();
+      }
+      if (!ascend_info->GetFusionSwitchConfigPath().empty()) {
         param->aclModelOptionCfgParam.fusion_switch_config_file_path = ascend_info->GetFusionSwitchConfigPath();
+      }
+      if (!ascend_info->GetBufferOptimizeMode().empty()) {
         param->aclModelOptionCfgParam.buffer_optimize = ascend_info->GetBufferOptimizeMode();
+      }
+      if (!ascend_info->GetInsertOpConfigPath().empty()) {
         param->aclModelOptionCfgParam.insert_op_config_file_path = ascend_info->GetInsertOpConfigPath();
+      }
+      if (!ascend_info->GetDynamicImageSize().empty()) {
         param->aclModelOptionCfgParam.dynamic_image_size = ascend_info->GetDynamicImageSize();
       }
     } else {

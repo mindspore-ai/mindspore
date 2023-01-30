@@ -365,10 +365,7 @@ int TensorRTExecutor::ParseOptimizationProfile() {
   }
   trt_profile_configs_ = profile_configs;
   auto precision_mode = ProfileParser::GetOption(gpu_context, lite::kPrecisionModeKey, "");
-  if (precision_mode == "force_fp16") {
-    device_info_->SetEnableFP16(true);
-    MS_LOG(INFO) << "Set precision mode to fp16 by config file";
-  }
+  device_info_->SetPrecisionMode(precision_mode);
   return RET_OK;
 }
 

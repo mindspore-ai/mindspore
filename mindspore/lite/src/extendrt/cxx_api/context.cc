@@ -28,12 +28,10 @@ namespace mindspore {
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
 constexpr auto kModelOptionGPUEnableFP16 = "mindspore.option.gpu.enable_fp16";
 constexpr auto kModelOptionNPUEnableFP16 = "mindspore.option.npu.enable_fp16";
-constexpr auto kModelOptionGPUEnableGLTexture = "mindspore.option.gpu.enable_gl_texture_";
-constexpr auto kModelOptionGPUGLContext = "mindspore.option.gpu.gl_context_";
-constexpr auto kModelOptionGPUGLDisplay = "mindspore.option.gpu.gl_display_";
 constexpr auto kModelOptionGPUDeviceID = "mindspore.option.gpu.device_id";
 constexpr auto kModelOptionGPURankID = "mindspore.option.gpu.rank_id";
 constexpr auto kModelOptionGPUGroupSize = "mindspore.option.gpu.group_size";
+constexpr auto kModelOptionGPUPrecisionMode = "mindspore.option.gpu.precision_mode";
 constexpr auto kModelOptionKirinNpuFrequency = "mindspore.option.kirin_npu.frequency";
 constexpr auto kModelOptionProvider = "mindspore.option.provider";
 constexpr auto kModelOptionProviderDevice = "mindspore.option.provider.device";
@@ -50,19 +48,6 @@ constexpr auto KModelOptionAscendFusionSwitchCfgPath = "mindspore.option.ascend.
 constexpr auto kModelOptionAscendDynamicBatchSize = "mindspore.option.ascend.dynamic_batch_size";
 constexpr auto kModelOptionAscendDynamicImageSize = "mindspore.option.ascend.dynamic_image_size";
 constexpr auto kModelOptionAscendBufferOptimize = "mindspore.option.ascend.buffer_optimize";
-constexpr auto kModelOptionGPUPrecisionMode = "mindspore.option.gpu.precision_mode";
-constexpr auto kModelOptionAscend910DeviceID = kModelOptionDeviceID;
-constexpr auto kModelOptionAscend310DeviceID = kModelOptionDeviceID;
-constexpr auto kModelOptionAscend310InsertOpCfgPath = "mindspore.option.ascend310.insert_op_config_file_path";
-constexpr auto kModelOptionAscend310InputFormat = "mindspore.option.ascend310.input_format";
-constexpr auto kModelOptionAscend310InputShapeMap = "mindspore.option.ascend310.input_shape_map";
-constexpr auto kModelOptionAscend310InputShape = "mindspore.option.ascend310.input_shape";
-constexpr auto kModelOptionAscend310OutputType = "mindspore.option.ascend310.output_type";
-constexpr auto kModelOptionAscend310PrecisionMode = "mindspore.option.ascend310.precision_mode";
-constexpr auto kModelOptionAscend310OpSelectImplMode = "mindspore.option.ascend310.op_select_impl_mode";
-constexpr auto KModelOptionAscend310FusionSwitchCfgPath = "mindspore.option.ascend310.fusion_switch_config_file_path";
-constexpr auto kModelOptionAscend310DynamicBatchSize = "mindspore.option.ascend310.dynamic_batch_size";
-constexpr auto kModelOptionAscend310BufferOptimize = "mindspore.option.ascend310.buffer_optimize";
 
 Context::Context() : data_(std::make_shared<Data>()) {}
 
@@ -93,6 +78,14 @@ void Context::SetThreadNum(int32_t thread_num) {
   data_->thread_num = thread_num;
 }
 
+int32_t Context::GetThreadNum() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return 0;
+  }
+  return data_->thread_num;
+}
+
 void Context::SetInterOpParallelNum(int32_t parallel_num) {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -109,50 +102,18 @@ int32_t Context::GetInterOpParallelNum() const {
   return data_->inter_op_parallel_num_;
 }
 
-int32_t Context::GetThreadNum() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return 0;
-  }
-  return data_->thread_num;
-}
-
-void Context::SetEnableParallel(bool is_parallel) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->enable_parallel_ = is_parallel;
-}
+void Context::SetEnableParallel(bool is_parallel) { MS_LOG(ERROR) << "Unsupported Feature."; }
 
 bool Context::GetEnableParallel() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return false;
-  }
-  return data_->enable_parallel_;
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return false;
 }
 
-void Context::SetThreadAffinity(int mode) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  if (mode < lite::NO_BIND || mode > lite::MID_CPU) {
-    MS_LOG(WARNING) << "Invalid thread affinity mode: " << mode << ", change to NO_BIND mode.";
-    data_->affinity_mode_ = lite::NO_BIND;
-    return;
-  }
-  data_->affinity_mode_ = mode;
-  return;
-}
+void Context::SetThreadAffinity(int mode) { MS_LOG(ERROR) << "Unsupported Feature."; }
 
 int Context::GetThreadAffinityMode() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return -1;
-  }
-  return data_->affinity_mode_;
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return 0;
 }
 
 void Context::SetThreadAffinity(const std::vector<int> &core_list) {
@@ -173,42 +134,39 @@ std::vector<int32_t> Context::GetThreadAffinityCoreList() const {
   return data_->affinity_core_list_;
 }
 
+void Context::SetBuiltInDelegate(DelegateMode mode) { MS_LOG(ERROR) << "Unsupported Feature."; }
+
+DelegateMode Context::GetBuiltInDelegate() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return kNoDelegate;
+}
+
 void Context::set_delegate(const std::shared_ptr<AbstractDelegate> &delegate) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->delegate = std::dynamic_pointer_cast<GraphSinkDelegate>(delegate);
+  MS_LOG(ERROR) << "Unsupported Feature.";
 }
 
 std::shared_ptr<AbstractDelegate> Context::get_delegate() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return nullptr;
-  }
-  return data_->delegate;
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return nullptr;
 }
 
 // deprecated
-void Context::SetDelegate(const std::shared_ptr<Delegate> &delegate) { return; }
+void Context::SetDelegate(const std::shared_ptr<Delegate> &delegate) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return;
+}
 
 // deprecated
-std::shared_ptr<Delegate> Context::GetDelegate() const { return nullptr; }
-
-void Context::SetMultiModalHW(bool float_mode) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->float_mode = float_mode;
+std::shared_ptr<Delegate> Context::GetDelegate() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return nullptr;
 }
+
+void Context::SetMultiModalHW(bool float_mode) { MS_LOG(ERROR) << "Unsupported Feature."; }
 
 bool Context::GetMultiModalHW() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return false;
-  }
-  return data_->float_mode;
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return false;
 }
 
 std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
@@ -293,6 +251,11 @@ void GPUDeviceInfo::SetEnableFP16(bool is_fp16) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
+  if (is_fp16) {
+    data_->params[kModelOptionGPUPrecisionMode] = std::string("preferred_fp16");
+  } else {
+    data_->params[kModelOptionGPUPrecisionMode] = std::string("enforce_fp32");
+  }
   data_->params[kModelOptionGPUEnableFP16] = is_fp16;
 }
 
@@ -304,77 +267,50 @@ bool GPUDeviceInfo::GetEnableFP16() const {
   return GetValue<bool>(data_, kModelOptionGPUEnableFP16);
 }
 
-void GPUDeviceInfo::SetEnableGLTexture(bool is_enable_gl_texture) {
+void GPUDeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode) {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionGPUEnableGLTexture] = is_enable_gl_texture;
+  if (precision_mode == StringToChar("enforce_fp32")) {
+    data_->params[kModelOptionGPUEnableFP16] = false;
+  } else if (precision_mode == StringToChar("preferred_fp16")) {
+    data_->params[kModelOptionGPUEnableFP16] = true;
+  } else {
+    MS_LOG(ERROR) << "GPU only support mode enforce_fp32 and preferred_fp16.";
+    return;
+  }
+  data_->params[kModelOptionGPUPrecisionMode] = CharToString(precision_mode);
 }
+
+std::vector<char> GPUDeviceInfo::GetPrecisionModeChar() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return std::vector<char>();
+  }
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionGPUPrecisionMode);
+  return StringToChar(ref);
+}
+
+void GPUDeviceInfo::SetEnableGLTexture(bool is_enable_gl_texture) { MS_LOG(ERROR) << "Unsupported Feature."; }
 
 bool GPUDeviceInfo::GetEnableGLTexture() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return false;
-  }
-  return GetValue<bool>(data_, kModelOptionGPUEnableGLTexture);
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return false;
 }
 
-void GPUDeviceInfo::SetGLContext(void *gl_context) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->params[kModelOptionGPUGLContext] = gl_context;
-}
+void GPUDeviceInfo::SetGLContext(void *gl_context) { MS_LOG(ERROR) << "Unsupported Feature."; }
 
 void *GPUDeviceInfo::GetGLContext() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return nullptr;
-  }
-  return GetValue<void *>(data_, kModelOptionGPUGLContext);
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return nullptr;
 }
 
-void GPUDeviceInfo::SetGLDisplay(void *gl_display) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->params[kModelOptionGPUGLDisplay] = gl_display;
-}
+void GPUDeviceInfo::SetGLDisplay(void *gl_display) { MS_LOG(ERROR) << "Unsupported Feature."; }
 
 void *GPUDeviceInfo::GetGLDisplay() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return nullptr;
-  }
-  return GetValue<void *>(data_, kModelOptionGPUGLDisplay);
-}
-
-void KirinNPUDeviceInfo::SetEnableFP16(bool is_fp16) {
-  MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionNPUEnableFP16] = is_fp16;
-}
-bool KirinNPUDeviceInfo::GetEnableFP16() const {
-  MS_EXCEPTION_IF_NULL(data_);
-  return GetValue<bool>(data_, kModelOptionNPUEnableFP16);
-}
-
-void KirinNPUDeviceInfo::SetFrequency(int frequency) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->params[kModelOptionKirinNpuFrequency] = frequency;
-}
-
-int KirinNPUDeviceInfo::GetFrequency() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return 0;
-  }
-  return GetValue<int>(data_, kModelOptionKirinNpuFrequency);
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return nullptr;
 }
 
 void GPUDeviceInfo::SetDeviceID(uint32_t device_id) {
@@ -403,16 +339,6 @@ int GPUDeviceInfo::GetGroupSize() const {
   return GetValue<int>(data_, kModelOptionGPUGroupSize);
 }
 
-void GPUDeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode) {
-  MS_LOG(ERROR) << "Unsupported Feature.";
-}
-
-std::vector<char> GPUDeviceInfo::GetPrecisionModeChar() const {
-  MS_LOG(ERROR) << "Unsupported Feature.";
-  std::vector<char> ret;
-  return ret;
-}
-
 void AscendDeviceInfo::SetDeviceID(uint32_t device_id) {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -436,6 +362,7 @@ void AscendDeviceInfo::SetInsertOpConfigPath(const std::vector<char> &cfg_path) 
   }
   data_->params[kModelOptionAscendInsertOpCfgPath] = CharToString(cfg_path);
 }
+
 std::vector<char> AscendDeviceInfo::GetInsertOpConfigPathChar() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -469,6 +396,7 @@ void AscendDeviceInfo::SetInputShape(const std::vector<char> &shape) {
   }
   data_->params[kModelOptionAscendInputShape] = CharToString(shape);
 }
+
 std::vector<char> AscendDeviceInfo::GetInputShapeChar() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -476,6 +404,22 @@ std::vector<char> AscendDeviceInfo::GetInputShapeChar() const {
   }
   const std::string &ref = GetValue<std::string>(data_, kModelOptionAscendInputShape);
   return StringToChar(ref);
+}
+
+void AscendDeviceInfo::SetInputShapeMap(const std::map<int, std::vector<int>> &shape) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionAscendInputShapeMap] = shape;
+}
+
+std::map<int, std::vector<int>> AscendDeviceInfo::GetInputShapeMap() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return std::map<int, std::vector<int>>();
+  }
+  return GetValue<std::map<int, std::vector<int>>>(data_, kModelOptionAscendInputShapeMap);
 }
 
 void AscendDeviceInfo::SetDynamicBatchSize(const std::vector<size_t> &dynamic_batch_size) {
@@ -524,6 +468,12 @@ void AscendDeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode)
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
+  if (precision_mode != StringToChar("enforce_fp32") && precision_mode != StringToChar("preferred_fp32") &&
+      precision_mode != StringToChar("enforce_fp16") && precision_mode != StringToChar("enforce_origin") &&
+      precision_mode != StringToChar("preferred_optimal")) {
+    MS_LOG(ERROR) << "Ascend can not support " << CharToString(precision_mode) << " mode.";
+    return;
+  }
   data_->params[kModelOptionAscendPrecisionMode] = CharToString(precision_mode);
 }
 
@@ -560,6 +510,7 @@ void AscendDeviceInfo::SetFusionSwitchConfigPath(const std::vector<char> &cfg_pa
   }
   data_->params[KModelOptionAscendFusionSwitchCfgPath] = CharToString(cfg_path);
 }
+
 std::vector<char> AscendDeviceInfo::GetFusionSwitchConfigPathChar() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -567,22 +518,6 @@ std::vector<char> AscendDeviceInfo::GetFusionSwitchConfigPathChar() const {
   }
   const std::string &ref = GetValue<std::string>(data_, KModelOptionAscendFusionSwitchCfgPath);
   return StringToChar(ref);
-}
-
-void AscendDeviceInfo::SetInputShapeMap(const std::map<int, std::vector<int>> &shape) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->params[kModelOptionAscendInputShapeMap] = shape;
-}
-
-std::map<int, std::vector<int>> AscendDeviceInfo::GetInputShapeMap() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return std::map<int, std::vector<int>>();
-  }
-  return GetValue<std::map<int, std::vector<int>>>(data_, kModelOptionAscendInputShapeMap);
 }
 
 void AscendDeviceInfo::SetOutputType(enum DataType output_type) {
