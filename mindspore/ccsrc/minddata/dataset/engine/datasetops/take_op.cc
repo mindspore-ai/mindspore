@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,11 +40,14 @@ void TakeOp::Print(std::ostream &out, bool show_all) const {
 
 Status TakeOp::operator()() { RETURN_STATUS_UNEXPECTED("[Internal ERROR] TakeOp is an inlined operator."); }
 
-Status TakeOp::GetNextRow(TensorRow *row) {
-  RETURN_UNEXPECTED_IF_NULL(row);
+Status TakeOp::CommonGetNextRow(TensorRow *row, bool is_pull_mode) {
   bool eoe_received = false;
   if (take_count_ < max_takes_) {
-    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
+    if (!is_pull_mode) {
+      RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
+    } else {
+      RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
+    }
     if (row->eoe()) {
       eoe_received = true;
     } else {
@@ -55,7 +58,11 @@ Status TakeOp::GetNextRow(TensorRow *row) {
   if (take_count_ == max_takes_) {
     // drain
     while (!row->eoe()) {
-      RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
+      if (!is_pull_mode) {
+        RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
+      } else {
+        RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
+      }
     }
     eoe_received = true;
   }
@@ -67,17 +74,15 @@ Status TakeOp::GetNextRow(TensorRow *row) {
   return Status::OK();
 }
 
-Status TakeOp::GetNextRowPullMode(TensorRow *row) {
+Status TakeOp::GetNextRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
-  if (take_count_ < max_takes_) {
-    RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
-  }
-  if (take_count_ == max_takes_ || row->eoe()) {
-    UpdateRepeatAndEpochCounter();
-    take_count_ = 0;
-  } else {
-    take_count_++;
-  }
+  RETURN_IF_NOT_OK(CommonGetNextRow(row, false));
+  return Status::OK();
+}
+
+Status TakeOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
+  RETURN_IF_NOT_OK(CommonGetNextRow(row, true));
   return Status::OK();
 }
 }  // namespace dataset

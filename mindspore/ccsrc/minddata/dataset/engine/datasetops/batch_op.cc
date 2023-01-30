@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -694,12 +694,12 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
     TensorRow new_row;
     RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
     if (new_row.eoe()) {
-      if (!drop_) {
-        eoe_received_ = true;
-      } else {
-        *row = new_row;
+      if (drop_ || table->empty()) {
+        *row = TensorRow(TensorRow::kFlagEOE);
         UpdateRepeatAndEpochCounter();
         return Status::OK();
+      } else {
+        eoe_received_ = true;
       }
       break;
     }
