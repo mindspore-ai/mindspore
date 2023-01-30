@@ -16,6 +16,7 @@
 #include "backend/common/session/exec_order_builder.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::session {
 namespace {
@@ -123,7 +124,14 @@ void ExecOrderBuilder::BuildLinkInfo() {
 void ExecOrderBuilder::FindIndependentNodes() {
   std::queue<AnfNodePtr> to_visit;
   std::queue<AnfNodePtr> vnode_to_visit;
+  mindspore::HashSet<AnfNodePtr> visited;
   vnode_to_visit.push(graph_->get_return());
+  bool visit_with_refcount = true;
+  auto ms_context = MsContext::GetInstance();
+  auto target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (target == kGPUDevice) {
+    visit_with_refcount = false;
+  }
   while (!to_visit.empty() || !vnode_to_visit.empty()) {
     AnfNodePtr node;
     if (vnode_to_visit.empty()) {
@@ -154,16 +162,25 @@ void ExecOrderBuilder::FindIndependentNodes() {
         continue;
       }
       independent = false;
-      auto output_iter = node_output_num_.find(input);
-      if (output_iter != node_output_num_.end()) {
-        output_iter->second--;
-        if (output_iter->second != 0) {
+
+      if (visit_with_refcount) {
+        auto output_iter = node_output_num_.find(input);
+        if (output_iter != node_output_num_.end()) {
+          output_iter->second--;
+          if (output_iter->second != 0) {
+            continue;
+          }
+        }
+      } else {
+        if (visited.find(input) != visited.end()) {
           continue;
         }
+        visited.insert(input);
       }
+
       if (AnfUtils::IsRealKernel(node)) {
         to_visit.push(input);
-        if (!independent_nodes_.empty()) {
+        if (!independent_nodes_.empty() && visit_with_refcount) {
           auto inode = independent_nodes_.top();
           node_output_edges_[input].emplace_back(inode);
           node_input_edges_[inode].emplace_back(input);
