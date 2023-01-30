@@ -198,10 +198,6 @@ ValuePtr FillInferValue(const PrimitivePtr &prim, const std::vector<AbstractBase
   MS_EXCEPTION_IF_NULL(infered_type);
   auto input_value_ptr = input_args[2]->BuildValue();
   auto input_value_type_id = input_args[2]->BuildType()->type_id();
-  if (input_value_type_id != infered_type->type_id()) {
-    MS_LOG(WARNING) << "value type is not same as given dtype, value type id is " << input_value_type_id
-                    << " and given dtype id is " << infered_type->type_id();
-  }
   auto tmp_shape = FillInferShape(prim, input_args);
   if (tmp_shape->IsDynamic()) {
     return kAnyValue;
