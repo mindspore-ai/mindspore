@@ -103,8 +103,19 @@ nvinfer1::IPluginV2DynamicExt *LessorequalPlugin::clone() const noexcept {
 
 bool LessorequalPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
                                                   int nbOutputs) noexcept {
-  return tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR &&
-         (tensorsDesc[pos].type == nvinfer1::DataType::kFLOAT || tensorsDesc[pos].type == nvinfer1::DataType::kINT32);
+  if (tensorsDesc[pos].format != nvinfer1::TensorFormat::kLINEAR) {
+    return false;
+  }
+  if (pos == 0) {
+    return tensorsDesc[pos].type == nvinfer1::DataType::kFLOAT || tensorsDesc[pos].type == nvinfer1::DataType::kINT32;
+  }
+  if (pos < nbInputs) {
+    return tensorsDesc[pos].type == tensorsDesc[pos - 1].type;
+  }
+  if (pos < nbInputs + nbOutputs) {
+    return tensorsDesc[pos].type == nvinfer1::DataType::kINT32;
+  }
+  return false;
 }
 
 size_t LessorequalPlugin::getSerializationSize() const noexcept { return sizeof(schema::PrimitiveType); }

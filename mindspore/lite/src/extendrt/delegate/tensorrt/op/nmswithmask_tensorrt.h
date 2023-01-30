@@ -56,10 +56,19 @@ class NMSwithmaskPlugin : public TensorRTPlugin {
                                           nvinfer1::IExprBuilder &exprBuilder) noexcept override;
   nvinfer1::DataType getOutputDataType(int index, const nvinfer1::DataType *inputTypes, int nbInputs) const
     noexcept override;
-  int getNbOutputs() const noexcept override { return 3; }
+  int getNbOutputs() const noexcept override { return INPUT_SIZE3; }
   bool supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
                                  int nbOutputs) noexcept override {
-    return tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR;
+    if (tensorsDesc[pos].format != nvinfer1::TensorFormat::kLINEAR) {
+      return false;
+    }
+    if (pos <= nbInputs) {
+      return tensorsDesc[pos].type == nvinfer1::DataType::kFLOAT;
+    }
+    if (pos < nbInputs + nbOutputs) {
+      return tensorsDesc[pos].type == nvinfer1::DataType::kINT32;
+    }
+    return false;
   }
 
  private:
