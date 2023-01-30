@@ -436,7 +436,7 @@ def exp2(x):
     return exp2_(tensor_2, x)
 
 
-def argmin(x, axis=-1, keepdims=False):
+def argmin(x, axis=None, keepdims=False):
     """
     Returns the indices of the minimum value of a tensor across the axis.
 
