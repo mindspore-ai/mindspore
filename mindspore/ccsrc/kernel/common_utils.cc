@@ -1278,10 +1278,7 @@ std::vector<KernelObjectType> CalKernelObjectTypes(const std::vector<TypeId> &ob
     for (size_t i = 0; i < selected_object_types.size(); ++i) {
       // Allsame/skip_check doesn't support the backoff.
       bool not_backoff = ((all_same || skip_check) && (selected_object_types[i] != object_types[i]));
-      // Ops which support tensor also support scalar.
-      bool scalar_compat =
-        ((selected_object_types[i] == kObjectTypeTensorType) && (object_types[i] == kObjectTypeNumber));
-      if (not_backoff || scalar_compat) {
+      if (not_backoff) {
         (void)ret.emplace_back(TypeIdToKernelObjectTypeForTupleUnfold(object_types[i]));
       } else {
         (void)ret.emplace_back(TypeIdToKernelObjectType(selected_object_types[i]));
