@@ -262,4 +262,5 @@ mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::RegMetaT
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/eltwise_grad_cpu_kernel.cc:mindspore::kernel::EltWiseGradCpuTypeFunc<T>::InitFunc
 mindspore/mindspore/lite/tools/converter/quantizer/weight_quantizer.cc:mindspore::lite::quant::WeightQuantizer::LinearQuant
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:conv3d
+mindspore/mindspore/python/mindspore/ops/function/nn_func.py:max_unpool3d
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/matmul_avx512_mask_fp32.c:GemmRowxColMaskKernelFp32
