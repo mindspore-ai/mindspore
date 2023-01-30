@@ -1732,29 +1732,7 @@ class Tensor(Tensor_):
 
     def swapaxes(self, axis1, axis2):
         """
-        Interchange two axes of a tensor.
-
-        Args:
-            axis1 (int): First axis.
-            axis2 (int): Second axis.
-
-        Returns:
-            Transposed tensor, has the same data type as the input.
-
-        Raises:
-            TypeError: If `axis1` or `axis2` is not integer.
-            ValueError: If `axis1` or `axis2` is not in the range of :math:`[-ndim, ndim-1]`.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> import numpy as np
-            >>> from mindspore import Tensor
-            >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
-            >>> output = x.swapaxes(0, 2)
-            >>> print(output.shape)
-            (4,3,2)
+        For details, please refer to :func:`mindspore.ops.swapaxes`.
         """
         self._init_check()
         return tensor_operator_registry.get('swapaxes')(self, axis1, axis2)
@@ -2457,10 +2435,10 @@ class Tensor(Tensor_):
 
     def det(self):
         r"""
-        Refer to :func:`mindspore.Tensor.matrix_determinant`.
+        Refer to :func:`mindspore.ops.det`.
         """
         self._init_check()
-        return tensor_operator_registry.get('matrix_determinant')(self)
+        return tensor_operator_registry.get('det')(self)
 
     def diff(self, n=1, axis=-1, prepend=None, append=None):
         r"""
