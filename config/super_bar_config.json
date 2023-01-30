@@ -29,6 +29,9 @@
       "dilations": "dilation",
       "data_format": "format"
     },
+    "Dilation2D": {
+      "strides": "stride"
+    },
     "Conv3DTransposeD": {
       "pads": "pad_list",
       "data_format": "format"
