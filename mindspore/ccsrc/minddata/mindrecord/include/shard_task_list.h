@@ -32,8 +32,19 @@ namespace mindrecord {
 // The data struct is as below:
 // 1. TaskType: kCommonTask / kPaddedTask
 // 2. std::tuple<int, int> : shard_id, group_id(fast load) / sample_id(lazy load)
-// 3. std::vector<uint64_t>, json>> : [blob_start, blob_end], scalar_variable_fields
+// 3. std::vector<uint64_t> : [blob_start, blob_end]
+// 4. json : scalar_variable_fields
 using ShardTask = std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json>;
+
+// The data struct is as below:
+// 1. TaskType: kCommonTask / kPaddedTask
+// 2. std::tuple<int, int> : shard_id, group_id(fast load) / sample_id(lazy load)
+using TaskInfo = std::tuple<TaskType, std::tuple<int, int>>;
+
+// The data struct is as below: contain the meta info
+// 3. std::vector<uint64_t> : [blob_start, blob_end]
+// 4. json : scalar_variable_fields
+using SampleMeta = std::tuple<std::vector<uint64_t>, json>;
 
 class MINDRECORD_API ShardTaskList {
  public:
@@ -72,9 +83,9 @@ class MINDRECORD_API ShardTaskList {
 
   int64_t SizeOfRows() const;
 
-  ShardTask &GetTaskByID(int64_t id);
+  ShardTask GetTaskByID(int64_t id);
 
-  ShardTask &GetRandomTask();
+  ShardTask GetRandomTask();
 
   int64_t GetTaskSampleByID(int64_t id);
 
@@ -91,7 +102,16 @@ class MINDRECORD_API ShardTaskList {
 
   std::vector<int64_t> sample_ids_;  // The list of actual ids that were sampled
 
-  std::vector<ShardTask> task_list_;  // The full list of tasks
+  // fast mode: [{TaskType, (shard_id, group_id(fast load))}, ...]
+  // lazy mode: [{TaskType, (shard_id, sample_id(lazy load))}, ...]
+  std::vector<TaskInfo> task_list_;
+
+  // fast mode: [{[blob_start, blob_end], json}, ...]
+  // lazy mode: none
+  std::vector<SampleMeta> sample_meta_list_;
+
+  // load type: fast mode or lazy mode
+  bool lazy_load_;
 };
 
 inline void ShardTaskList::AssignTask(ShardTaskList &sourceTasks, int64_t id) {
@@ -106,27 +126,45 @@ inline void ShardTaskList::InsertTask(TaskType task_type, int shard_id, int grou
                                       const std::vector<uint64_t> &offset, const json &label) {
   MS_LOG(DEBUG) << "Insert task into task list, shard_id: " << shard_id << ", group_id: " << group_id
                 << ", label: " << label.dump() << ", size of task_list_: " << task_list_.size() << ".";
-  task_list_.emplace_back(task_type, std::make_tuple(shard_id, group_id), offset, label);
+  task_list_.emplace_back(task_type, std::make_tuple(shard_id, group_id));
+  if (lazy_load_ == false) {
+    sample_meta_list_.emplace_back(offset, label);
+  }
 }
 
 inline void ShardTaskList::InsertTask(const int64_t &i, TaskType task_type, int shard_id, int group_id,
                                       const std::vector<uint64_t> &offset, const json &label) {
   MS_LOG(DEBUG) << "Insert task into task list, shard_id: " << shard_id << ", group_id: " << group_id
                 << ", label: " << label.dump() << ", size of task_list_: " << task_list_.size() << ".";
-  task_list_[i] = {task_type, std::make_tuple(shard_id, group_id), offset, label};
+  task_list_[i] = {task_type, std::make_tuple(shard_id, group_id)};
+  if (lazy_load_ == false) {
+    sample_meta_list_[i] = {offset, label};
+  }
 }
 
 inline void ShardTaskList::InsertTask(ShardTask task) {
   MS_LOG(DEBUG) << "Insert task into task list, shard_id: " << std::get<0>(std::get<1>(task))
                 << ", group_id: " << std::get<1>(std::get<1>(task)) << ", label: " << std::get<3>(task).dump()
                 << ", size of task_list_: " << task_list_.size() << ".";
-
-  task_list_.push_back(std::move(task));
+  task_list_.push_back({std::get<0>(task), std::get<1>(task)});
+  if (lazy_load_ == false) {
+    sample_meta_list_.push_back({std::get<2>(task), std::get<3>(task)});
+  }
 }
 
-inline void ShardTaskList::InsertTask(const int64_t &i, ShardTask task) { task_list_[i] = std::move(task); }
+inline void ShardTaskList::InsertTask(const int64_t &i, ShardTask task) {
+  task_list_[i] = {std::get<0>(task), std::get<1>(task)};
+  if (lazy_load_ == false) {
+    sample_meta_list_[i] = {std::get<2>(task), std::get<3>(task)};
+  }
+}
 
-inline void ShardTaskList::ResizeTask(const int64_t &size) { task_list_.resize(size); }
+inline void ShardTaskList::ResizeTask(const int64_t &size) {
+  task_list_.resize(size);
+  if (lazy_load_ == false) {
+    sample_meta_list_.resize(size);
+  }
+}
 }  // namespace mindrecord
 }  // namespace mindspore
 
