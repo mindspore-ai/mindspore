@@ -565,8 +565,8 @@ int CheckEncrypt(const std::shared_ptr<ConverterPara> &param) {
   if (param != nullptr) {
     if (param->enable_encryption) {
       if (param->encrypt_key.empty()) {
-        MS_LOG(ERROR) << "If you don't need to use model encryption, please set --encryption=false"
-                      << " or param->enable_encryption=false.";
+        MS_LOG(ERROR) << "encryption param is true and encrypt_key param must be set. If you don't "
+                         "need to use model encryption, please set encryption param to false.";
         return RET_INPUT_PARAM_INVALID;
       }
     }
