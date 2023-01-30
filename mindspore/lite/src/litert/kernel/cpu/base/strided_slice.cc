@@ -53,6 +53,8 @@ void StridedSliceCPUKernel::InitFastRunParam() {
   for (size_t i = static_cast<size_t>(split_axis_ + 1); i < in_shape.size(); i++) {
     inner_ *= in_shape[i];
   }
+  parallel_on_split_axis_ = false;
+  parallel_on_outer_ = false;
   outer_ == 1 ? (parallel_on_split_axis_ = true) : (parallel_on_outer_ = true);
 
   if (UpdateThreadNumPass(TC_TYPE(PrimitiveType_StridedSlice, parallel_on_outer_), 1, 1,
