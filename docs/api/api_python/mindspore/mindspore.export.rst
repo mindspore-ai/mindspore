@@ -31,7 +31,7 @@ mindspore.export
 
             - 对于 'AIR'和 'ONNX'格式的模型，当前仅支持自定义加密导出。
             - 对于 'MINDIR'格式的模型，支持的加密选项有： 'AES-GCM'， 'AES-CBC'， 'SM4-CBC'和用户自定义加密算法。默认值："AES-GCM"。
-            - 关于使用自定义加密导出的详情，请查看 `教程 <https://www.mindspore.cn/mindarmour/docs/zh-CN/r2.0.0-alpha/model_encrypt_protection.html>`_。
+            - 关于使用自定义加密导出的详情，请查看 `教程 <https://www.mindspore.cn/mindarmour/docs/zh-CN/r1.9/model_encrypt_protection.html>`_。
           
           - **dataset** (Dataset) - 指定数据集的预处理方法，用于将数据集的预处理导入MindIR。
 
