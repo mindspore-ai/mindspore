@@ -90,6 +90,8 @@ class MSANFModelParser {
   void CorrectFuncGraph(const FuncGraphPtr &root);
   bool BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool BuildAttrForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
+  bool BuildAttrForCNode(const CNodePtr &cnode, const mind_ir::NodeProto &node_proto);
+  ValuePtr GetValueFromAttributeProto(const mind_ir::AttributeProto &attr_proto);
   bool ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool ImportMapParametersForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
@@ -127,7 +129,6 @@ class MSANFModelParser {
   bool GetAttrValueForValueNodeWithType(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const mind_ir::TensorProto &attr_tensor);
   bool ObtainValueNodeInNoneForm(const std::string &value_node_name);
-  bool ObtainValueNodeInTypeNullForm(const std::string &value_node_name);
   bool ObtainValueNodeInMonadForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   ValuePtr ObtainValueInSequenceForm(const mind_ir::AttributeProto &attr_proto);
   ValuePtr ObtainValueInDictionaryForm(const mind_ir::AttributeProto &attr_proto);

@@ -130,7 +130,7 @@ class IrExportBuilder {
   bool BuildCNode(const CNodePtr &node, mind_ir::GraphProto *const graph_proto);
   bool BuildValueNode(const ValueNodePtr &node, const std::string &node_name, mind_ir::GraphProto *const graph_proto);
   std::string BuildInputNode(const AnfNodePtr &node, mind_ir::GraphProto *const graph_proto);
-
+  bool BuildCNodeAttr(const CNodePtr &node, mind_ir::NodeProto *const node_proto);
   bool SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueInfoProto *const value_proto);
   bool SetParamToTensorProto(const ParameterPtr &param, mind_ir::TensorProto *const tensor_proto);
   bool ConvertMapParameterToMapTensorProto(const ParameterPtr &map_parameter,
@@ -1006,6 +1006,11 @@ bool IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
 
   (void)std::for_each(input_names.begin(), input_names.end(),
                       [&node_proto](const string &name) { node_proto->add_input(name); });
+
+  if (!BuildCNodeAttr(node, node_proto)) {
+    MS_LOG(ERROR) << "Set value to node attr to node proto failed.";
+    return false;
+  }
   return true;
 }
 
@@ -1492,6 +1497,29 @@ bool IrExportBuilder::SetDictToAttributeProto(const ValueDictionaryPtr &value_di
     } else {
       MS_LOG(EXCEPTION) << "Unsupported type while converting ValueDictionary to AttributeProto: "
                         << value->type_name();
+    }
+  }
+  return true;
+}
+
+bool IrExportBuilder::BuildCNodeAttr(const CNodePtr &node, mind_ir::NodeProto *const node_proto) {
+  for (const auto &attr : node->attrs()) {
+    mind_ir::AttributeProto *attr_proto = node_proto->add_node_attr();
+    attr_proto->set_name(attr.first);
+    if (!SetValueToAttributeProto(attr.second, attr_proto)) {
+      MS_LOG(ERROR) << "Set value to node attr to node proto failed.";
+      MS_LOG(ERROR) << "node :" << node->DebugString() << "attr:{" << attr.first << "," << attr.second << "}";
+      return false;
+    }
+  }
+
+  for (const auto &attr : node->primal_attrs()) {
+    mind_ir::AttributeProto *attr_proto = node_proto->add_primal_attr();
+    attr_proto->set_name(attr.first);
+    if (!SetValueToAttributeProto(attr.second, attr_proto)) {
+      MS_LOG(ERROR) << "Set value to node primal attr to node proto failed.";
+      MS_LOG(ERROR) << "node :" << node->DebugString() << "attr:{" << attr.first << "," << attr.second << "}";
+      return false;
     }
   }
   return true;

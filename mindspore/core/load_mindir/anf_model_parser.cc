@@ -267,6 +267,68 @@ AnfNodePtr NewValueNodeWithAbstract(const T &value) {
   return node;
 }
 }  // namespace
+ValuePtr MSANFModelParser::GetValueFromAttributeProto(const mind_ir::AttributeProto &attr_proto) {
+  auto attr_name = attr_proto.name();
+  switch (attr_proto.type()) {
+    case mind_ir::AttributeProto_AttributeType_TENSORS: {
+      mind_ir::TensorProto tensor_proto = attr_proto.tensors(0);
+      if (tensor_proto.has_raw_data()) {
+        // For real tensor.
+        tensor::TensorPtr tensor_info = GenerateTensorPtrFromTensorProto(tensor_proto);
+        if (tensor_info == nullptr) {
+          MS_LOG(ERROR) << "Failed to get the tensor for ValueNode.";
+          return nullptr;
+        }
+        return tensor_info;
+      } else if (tensor_proto.name() == kQuantParam) {
+        auto quantization_param_vector = GenerateQuantizationParam(tensor_proto);
+        if (!quantization_param_vector.empty()) {
+          return quantization_param_vector[0];
+        }
+      } else {
+        // For data type.
+        const int attr_tensor_type = tensor_proto.data_type();
+        auto iter = kDefaultValueSwitchMap.find(attr_tensor_type);
+        if (iter == kDefaultValueSwitchMap.end()) {
+          MS_LOG(ERROR) << "Obtain ValueNode attr in type-form has not support input type: " << attr_tensor_type;
+          return nullptr;
+        }
+        return TypeIdToType(iter->second);
+      }
+      MS_LOG(ERROR) << "Failed to get the tensor for value.";
+      return nullptr;
+    }
+    case mind_ir::AttributeProto_AttributeType_NONE: {
+      return kNone;
+    }
+    case mind_ir::AttributeProto_AttributeType_TUPLE:
+    case mind_ir::AttributeProto_AttributeType_LIST: {
+      auto sequence_value = ObtainValueInSequenceForm(attr_proto);
+      if (sequence_value == nullptr) {
+        MS_LOG(ERROR) << "Failed to get sequence value for " << attr_name;
+        return nullptr;
+      }
+      return sequence_value;
+    }
+    case mind_ir::AttributeProto_AttributeType_DICT: {
+      auto dict_value = ObtainValueInDictionaryForm(attr_proto);
+      if (dict_value == nullptr) {
+        MS_LOG(ERROR) << "Failed to get dictionary value for " << attr_name;
+        return nullptr;
+      }
+      return dict_value;
+    }
+    default: {
+      ValuePtr value = ObtainCNodeAttrInSingleScalarForm(attr_proto);
+      if (value == nullptr) {
+        MS_LOG(ERROR) << "Can not get the value for attr: " << attr_name;
+        return nullptr;
+      }
+      return value;
+    }
+  }
+  return nullptr;
+}
 
 tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_ir::TensorProto &attr_tensor) {
   ShapeVector shape;
@@ -981,79 +1043,25 @@ bool MSANFModelParser::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim,
 bool MSANFModelParser::SetPrimitiveAttrWithType(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto) {
   MS_EXCEPTION_IF_NULL(prim);
   const std::string &attr_name = attr_proto.name();
-  switch (attr_proto.type()) {
-    case mind_ir::AttributeProto_AttributeType_TENSORS: {
-      mind_ir::TensorProto tensor_proto = attr_proto.tensors(0);
-      if (tensor_proto.has_raw_data()) {
-        // For real tensor.
-        tensor::TensorPtr tensor_info = GenerateTensorPtrFromTensorProto(tensor_proto);
-        if (tensor_info == nullptr) {
-          MS_LOG(ERROR) << "Failed to get the tensor for ValueNode.";
-          return false;
-        }
-        (void)prim->AddAttr(attr_name, tensor_info);
-      } else if (tensor_proto.name() == kQuantParam) {
-        auto quantization_param_vector = GenerateQuantizationParam(tensor_proto);
-        if (!quantization_param_vector.empty()) {
-          (void)prim->AddAttr(kQuantParam, quantization_param_vector[0]);
-        }
-      } else {
-        // For data type.
-        const int attr_tensor_type = tensor_proto.data_type();
-        auto iter = kDefaultValueSwitchMap.find(attr_tensor_type);
-        if (iter == kDefaultValueSwitchMap.end()) {
-          MS_LOG(ERROR) << "Obtain ValueNode attr in type-form has not support input type: " << attr_tensor_type;
-          return false;
-        }
-        (void)prim->AddAttr(attr_name, TypeIdToType(iter->second));
-      }
-      break;
-    }
-    case mind_ir::AttributeProto_AttributeType_NONE: {
-      (void)prim->AddAttr(attr_name, kNone);
-      break;
-    }
-    case mind_ir::AttributeProto_AttributeType_TUPLE:
-    case mind_ir::AttributeProto_AttributeType_LIST: {
-      auto sequence_value = ObtainValueInSequenceForm(attr_proto);
-      if (sequence_value == nullptr) {
-        MS_LOG(ERROR) << "Failed to get sequence value for " << attr_name;
-        return false;
-      }
-      (void)prim->AddAttr(attr_name, sequence_value);
-      break;
-    }
-    case mind_ir::AttributeProto_AttributeType_DICT: {
-      auto dict_value = ObtainValueInDictionaryForm(attr_proto);
-      if (dict_value == nullptr) {
-        MS_LOG(ERROR) << "Failed to get dictionary value for " << attr_name;
-        return false;
-      }
-      (void)prim->AddAttr(attr_name, dict_value);
-      break;
-    }
-    default: {
-      ValuePtr value = ObtainCNodeAttrInSingleScalarForm(attr_proto);
-      if (value == nullptr) {
-        MS_LOG(ERROR) << "Can not get the value for attr: " << attr_name;
-        return false;
-      }
-      const std::string &op_type = prim->name();
-      CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &value);
-      if (op_type == "HistogramFixedWidth" && attr_name == "dtype" && value->isa<StringImm>()) {
-        auto str_dtype = GetValue<std::string>(value);
-        if (str_dtype == "int32") {
-          int64_t index = 3;
-          (void)prim->AddAttr(attr_name, MakeValue<int64_t>(index));
-          break;
-        }
-        MS_EXCEPTION(NotSupportError)
-          << "The primtive[HistogramFixedWidth] not supported only support attribute[dtype] is 'int32',but got"
-          << value->ToString();
-      }
-      (void)prim->AddAttr(attr_name, value);
-    }
+  auto value = GetValueFromAttributeProto(attr_proto);
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "Failed to get value from proto.\n proto info:" << attr_proto.name();
+    return false;
   }
+  const std::string &op_type = prim->name();
+  CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &value);
+  // Compatible with older versions.
+  if (op_type == "HistogramFixedWidth" && attr_name == "dtype" && value->isa<StringImm>()) {
+    auto str_dtype = GetValue<std::string>(value);
+    if (str_dtype == "int32") {
+      int64_t index = 3;
+      (void)prim->AddAttr(attr_name, MakeValue<int64_t>(index));
+    }
+    MS_EXCEPTION(NotSupportError)
+      << "The primtive[HistogramFixedWidth] not supported only support attribute[dtype] is 'int32',but got"
+      << value->ToString();
+  }
+  (void)prim->AddAttr(attr_name, value);
   return true;
 }
 
@@ -1655,6 +1663,7 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
 
   // Set Abstract and prim attr for CNode
   SetCNodePrimAttrAndAbstract(node_proto, cnode_ptr);
+  BuildAttrForCNode(cnode_ptr, node_proto);
   return cnode_ptr;
 }
 
@@ -1739,39 +1748,12 @@ bool MSANFModelParser::BuildAttrForFuncGraph(const FuncGraphPtr &outputFuncGraph
                                              const mind_ir::GraphProto &importProto) {
   for (auto i = 0; i < importProto.attribute_size(); ++i) {
     const mind_ir::AttributeProto &attr_proto = importProto.attribute(i);
-    const int attr_type = attr_proto.type();
-    switch (attr_type) {
-      case mind_ir::AttributeProto_AttributeType_STRING: {
-        outputFuncGraph->set_attr(attr_proto.name(), ParseAttrInSingleScalar_string_string(attr_proto));
-        break;
-      }
-      case mind_ir::AttributeProto_AttributeType_BOOL: {
-        outputFuncGraph->set_attr(attr_proto.name(), ParseAttrInSingleScalar_int32_t_bool(attr_proto));
-        break;
-      }
-      case mind_ir::AttributeProto_AttributeType_INT32: {
-        outputFuncGraph->set_attr(attr_proto.name(), ParseAttrInSingleScalar_int32_t_int32_t(attr_proto));
-        break;
-      }
-      case mind_ir::AttributeProto_AttributeType_INT64: {
-        outputFuncGraph->set_attr(attr_proto.name(), ParseAttrInSingleScalar_int64_t_int64_t(attr_proto));
-        break;
-      }
-      case mind_ir::AttributeProto_AttributeType_TUPLE:
-      case mind_ir::AttributeProto_AttributeType_LIST: {
-        auto sequence_value = ObtainValueInSequenceForm(attr_proto);
-        if (sequence_value == nullptr) {
-          MS_LOG(ERROR) << "Failed to get sequence value for " << attr_proto.name();
-          return false;
-        }
-        outputFuncGraph->set_attr(attr_proto.name(), sequence_value);
-        break;
-      }
-      default:
-        MS_LOG(ERROR) << "Obtain attr for graph has not support input type: " << attr_type
-                      << ", attr name: " << attr_proto.name();
-        return false;
+    auto value = GetValueFromAttributeProto(attr_proto);
+    if (value == nullptr) {
+      MS_LOG(ERROR) << "Failed set func_graph attr to func_graph";
+      return false;
     }
+    outputFuncGraph->set_attr(attr_proto.name(), value);
   }
   return true;
 }
@@ -1876,16 +1858,9 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
   if (IsLite()) {
     abstract_valid_ = true;
   }
-  FuncGraphPtr dstGraph = std::make_shared<FuncGraph>();
+
   if (!MSANFParseModelConfigureInfo(model_proto)) {
     MS_LOG(ERROR) << "Parse configuration info for pb file failed!";
-  }
-
-  for (int i = 0; i < model_proto.primitives_size(); ++i) {
-    if (!BuildPrimitiveNode(model_proto.primitives(i))) {
-      MS_LOG(ERROR) << "Parse primitives info for pb file failed! " << model_proto.primitives(i).DebugString();
-      return nullptr;
-    }
   }
 
   if (model_proto.has_little_endian()) {
@@ -1894,6 +1869,16 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
       return nullptr;
     }
   }
+
+  FuncGraphPtr dstGraph = std::make_shared<FuncGraph>();
+
+  for (int i = 0; i < model_proto.primitives_size(); ++i) {
+    if (!BuildPrimitiveNode(model_proto.primitives(i))) {
+      MS_LOG(ERROR) << "Parse primitives info for pb file failed! " << model_proto.primitives(i).DebugString();
+      return nullptr;
+    }
+  }
+
   const mind_ir::GraphProto &graphBuild = model_proto.graph();
 
   // Forward declare FuncGraph name
@@ -2125,5 +2110,27 @@ void MSANFModelParser::CorrectFuncGraph(const FuncGraphPtr &root) {
     MS_LOG(INFO) << "There are some nullptr of abstract in the top function graph parameters." << root->DumpText();
   }
   MS_LOG(DEBUG) << "End to correct the funcgraph.";
+}
+
+bool MSANFModelParser::BuildAttrForCNode(const CNodePtr &cnode, const mind_ir::NodeProto &node_proto) {
+  for (auto i = 0; i < node_proto.node_attr_size(); ++i) {
+    const auto &attr_proto = node_proto.node_attr(i);
+    auto value = GetValueFromAttributeProto(attr_proto);
+    if (value == nullptr) {
+      MS_LOG(ERROR) << "Failed set func_graph attr to func_graph";
+      return false;
+    }
+    cnode->AddAttr(attr_proto.name(), value);
+  }
+  for (auto i = 0; i < node_proto.primal_attr_size(); ++i) {
+    const auto &attr_proto = node_proto.primal_attr(i);
+    auto value = GetValueFromAttributeProto(attr_proto);
+    if (value == nullptr) {
+      MS_LOG(ERROR) << "Failed set func_graph attr to func_graph";
+      return false;
+    }
+    cnode->AddPrimalAttr(attr_proto.name(), value);
+  }
+  return true;
 }
 }  // namespace mindspore

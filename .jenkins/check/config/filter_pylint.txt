@@ -89,6 +89,7 @@
 "mindspore/tests/vm_impl/array_ops_vm_impl.py"                                                          "unused-variable"
 "mindspore/tests/ut/cpp/python_input/gtest_input/pipeline/parse/parse_compile.py"                       "unused-import"
 "mindspore/tests/ut/cpp/python_input/gtest_input/pipeline/infer/primitive_test.py"                      "super-init-not-called"
+"mindspore/tests/ut/cpp/python_input/gtest_input/mindir/mindir_test.py"                                 "unused-variable"
 "mindspore/tests/ut/cpp/python_input/gtest_input/pipeline/parse/parse_primitive.py"                     "super-init-not-called"
 "mindspore/tests/ut/cpp/python_input/gtest_input/pre_activate"                                          "unused-variable"
 "mindspore/tests/ut/cpp/python_input/gtest_input/tbe"                                                   "unused-variable"

@@ -84,6 +84,8 @@ message NodeProto {
   repeated AttributeProto attribute = 5;
   optional string doc_string = 6;
   optional string domain = 7;
+  repeated AttributeProto node_attr = 8;
+  repeated AttributeProto primal_attr = 9;
 }
 
 
