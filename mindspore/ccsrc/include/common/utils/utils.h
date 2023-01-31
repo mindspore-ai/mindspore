@@ -210,6 +210,7 @@ constexpr auto kFusionOpConv2DBackpropInputReluGradV2Name = "FusionOp_Conv2DBack
 constexpr auto kGammaOpName = "Gamma";
 constexpr auto kGatherDGradV2OpName = "GatherDGradV2";
 constexpr auto kGatherDOpName = "GatherD";
+constexpr auto kGatherNdOpName = "GatherNd";
 constexpr auto kGatherOpName = "Gather";
 constexpr auto kGatherV2OpName = "Gather";
 constexpr auto kDeformableOffsetsGradOpName = "DeformableOffsetsGrad";

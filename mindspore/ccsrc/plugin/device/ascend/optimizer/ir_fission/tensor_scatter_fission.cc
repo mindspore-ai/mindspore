@@ -50,6 +50,9 @@ const AnfNodePtr TensorScatterFission::Process(const FuncGraphPtr &graph, const 
   scatter_nd_node->set_scope(node->scope());
   scatter_nd_node->set_abstract(node->abstract());
   common::AnfAlgo::SetNodeAttr(kAttrUseLocking, MakeValue(false), scatter_nd_node);
+  if (common::AnfAlgo::HasNodeAttr(kAttrCustAicpu, cnode)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrCustAicpu, cnode, scatter_nd_node);
+  }
   return scatter_nd_node;
 }
 

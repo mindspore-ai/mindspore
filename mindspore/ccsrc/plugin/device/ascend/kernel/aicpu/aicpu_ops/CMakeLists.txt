@@ -23,7 +23,6 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
     set(AICPU_SRC
         ${PROTO_SRCS}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/kernel_base.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/kernel_log.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_async_event.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_pulse.cc
@@ -76,4 +75,12 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
         LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR}
     )
 
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/common)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/inc)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/common)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/cpu_proto)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/utils)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/)
+    add_subdirectory(cpu_kernel)
 endif()

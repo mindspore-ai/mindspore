@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/kernel_log.h"
+#ifndef AICPU_CONTEXT_COMMON_DEVICE_CPU_KERNEL_H
+#define AICPU_CONTEXT_COMMON_DEVICE_CPU_KERNEL_H
+#include <cstdint>
 
-namespace aicpu {
-static int log_level = AICPU_LOG_ERROR;
+struct BlkDimInfo {
+  uint32_t blockNum;  // blockdim_num
+  uint32_t blockId;   // blockid
+};
 
-int LogSetLevel(int level) {
-  log_level = level;
-  return log_level;
+extern "C" {
+uint32_t RunCpuKernel(void *param);
+uint32_t RunCpuKernelWithBlock(void *param, struct BlkDimInfo *blkdim_info);
 }
-
-int LogGetLevel(void) { return log_level; }
-
-bool CheckLogLevel(int log_level_check) { return log_level >= log_level_check; }
-}  // namespace aicpu
+#endif  // AICPU_CONTEXT_COMMON_DEVICE_CPU_KERNEL_H

@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include <set>
 #include <string>
 #include "include/common/utils/utils.h"
@@ -44,16 +45,26 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                       kReservoirReplayBufferSample,
                                                       kReservoirReplayBufferDestroy,
                                                       kGatherDGradV2OpName,
-                                                      kRandomShuffle,
-                                                      kDeformableOffsetsGradOpName};
+                                                      kSliceGradOpName};
+  static const std::set<std::string> kMigrateAicpuKernelOps = {
+    mindspore::kScatterNdOpName, mindspore::kScatterNdUpdateOpName, mindspore::kTensorScatterUpdateOpName,
+    mindspore::kGatherNdOpName};
+
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
+  static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";
 
   if (!node->isa<CNode>()) {
     return node;
   }
   auto kernel_name = common::AnfAlgo::GetCNodeName(node);
+  if (kernel::kOpNameToAicpuOpNameMap.find(kernel_name) != kernel::kOpNameToAicpuOpNameMap.end()) {
+    kernel_name = kernel::kOpNameToAicpuOpNameMap.at(kernel_name);
+  }
   if (kAICpuOpNames.find(kernel_name) != kAICpuOpNames.end()) {
     common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kEnvOpSoNames), node);
+  }
+  if (kMigrateAicpuKernelOps.find(kernel_name) != kMigrateAicpuKernelOps.end()) {
+    common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kCpuKernelSoName), node);
   }
 
   return node;
