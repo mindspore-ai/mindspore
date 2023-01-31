@@ -49,23 +49,6 @@ int ScatterNdTensorRT::AddInnerOp(TensorRTContext *ctx) {
     scatter_input.format_ = Format::NCHW;
     ctx->RegisterTensor(scatter_input, in_tensors_[0].Name());
   }
-  if (type_ == ops::kNameTensorScatterAdd) {
-    nvinfer1::ITensor *value_tensor = ctx->ConvertTo1DTensor(0.f);
-    if (in_tensors_[0].DataType() == DataType::kNumberTypeInt32) {
-      value_tensor = ctx->ConvertTo1DTensor(0);
-    }
-    auto unsqueeze_layer = ctx->network()->addShuffle(*value_tensor);
-    CHECK_NULL_RETURN(unsqueeze_layer);
-    auto shape = ctx->network()->addShape(*input(ctx, 0).trt_tensor_)->getOutput(0);
-    int rank = shape->getDimensions().d[0];
-    nvinfer1::Dims unsqueeze{rank};
-    std::fill(unsqueeze.d, unsqueeze.d + rank, 1);
-    unsqueeze_layer->setReshapeDimensions(unsqueeze);
-    unsqueeze_layer->setZeroIsPlaceholder(false);
-    value_tensor = unsqueeze_layer->getOutput(0);
-    CHECK_NULL_RETURN(value_tensor);
-    scatter_input.trt_tensor_ = Broadcast(ctx, value_tensor, shape);
-  }
   ITensorHelper indices_helper;
   int ret = PreprocessInputs2SameDim(ctx, input(ctx, 1), &indices_helper);
   if (ret != RET_OK || indices_helper.trt_tensor_ == nullptr) {
@@ -87,11 +70,6 @@ int ScatterNdTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
 
   nvinfer1::ITensor *out_tensor = scatter_layer->getOutput(0);
-  if (type_ == ops::kNameTensorScatterAdd) {
-    out_tensor = ctx->network()
-                   ->addElementWise(*out_tensor, *input(ctx, 0).trt_tensor_, nvinfer1::ElementWiseOperation::kSUM)
-                   ->getOutput(0);
-  }
   ctx->RegisterTensor(ITensorHelper{out_tensor, scatter_input.format_, scatter_input.same_format_},
                       out_tensors_[0].Name());
   this->layer_ = scatter_layer;
@@ -103,5 +81,4 @@ int ScatterNdTensorRT::AddInnerOp(TensorRTContext *ctx) {
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameScatterNdUpdate, ScatterNdTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameTensorScatterUpdate, ScatterNdTensorRT)
-REGISTER_TENSORRT_CREATOR(ops::kNameTensorScatterAdd, ScatterNdTensorRT)
 }  // namespace mindspore::lite
