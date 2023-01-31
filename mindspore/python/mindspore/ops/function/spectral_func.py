@@ -81,7 +81,7 @@ def bartlett_window(window_length, periodic=True, *, dtype=None):
     r"""
     Bartlett window function.
 
-    The input `window_length` is a tensor that datatype must be a integer, which controlling the returned window size.
+    The input `window_length` is a tensor that datatype must be an integer, which controlling the returned window size.
     In particular, if `window_length` = 1, the returned window contains a single value 1.
 
     Attr `periodic` determines whether the returned window trims off the last duplicate value from the symmetric

@@ -115,6 +115,7 @@ Distance Functions
     :template: classtemplate.rst
 
     mindspore.ops.cdist
+    mindspore.ops.dist
     mindspore.ops.pdist
 
 Sampling Functions
@@ -220,6 +221,7 @@ Element-wise Operations
     mindspore.ops.erfc
     mindspore.ops.erfinv
     mindspore.ops.exp
+    mindspore.ops.exp2
     mindspore.ops.expm1
     mindspore.ops.floor
     mindspore.ops.floor_div
@@ -279,6 +281,7 @@ Element-wise Operations
     mindspore.ops.t
     mindspore.ops.tan
     mindspore.ops.tanhshrink
+    mindspore.ops.trapz
     mindspore.ops.true_divide
     mindspore.ops.trunc
     mindspore.ops.truncate_div
@@ -367,6 +370,7 @@ Linear Algebraic Functions
     mindspore.ops.inner
     mindspore.ops.inverse
     mindspore.ops.ger
+    mindspore.ops.kron
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
     mindspore.ops.matrix_exp
@@ -375,6 +379,8 @@ Linear Algebraic Functions
     mindspore.ops.matrix_diag_part
     mindspore.ops.matrix_set_diag
     mindspore.ops.mm
+    mindspore.ops.mv
+    mindspore.ops.outer
     mindspore.ops.orgqr
     mindspore.ops.pinv
     mindspore.ops.svd
@@ -393,6 +399,8 @@ Spectral Functions
     mindspore.ops.bartlett_window
     mindspore.ops.blackman_window
     mindspore.ops.hamming_window
+    mindspore.ops.hann_window
+    mindspore.ops.kaiser_window
 
 Tensor Operation Functions
 --------------------------
@@ -453,7 +461,9 @@ Array Operation
 
     mindspore.ops.batch_to_space_nd
     mindspore.ops.bincount
+    mindspore.ops.block_diag
     mindspore.ops.broadcast_to
+    mindspore.ops.cartesian_prod
     mindspore.ops.cat
     mindspore.ops.chunk
     mindspore.ops.concat

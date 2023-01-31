@@ -483,15 +483,20 @@ def bincount(x, weights=None, minlength=0):
 
 def exp2(x):
     """
-    Computes the base two exponential function of input.
+    Computes base two exponential of Tensor `x` element-wise.
 
-    Calculates ``2^x``.
+    .. math::
+        out_i = 2^{x_i}
 
     Args:
         x (Tensor): Input tensor.
 
     Returns:
-        Tensor.
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1455,7 +1460,7 @@ def inplace_index_add(var, indices, updates, axis):
             The shape must be the same as `var` except the `axis` th dimension.
         axis (int): The dimension along which to index.
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and dtype as `var`.
 
     Raises:
@@ -2189,7 +2194,7 @@ def polar(abs, angle):  # pylint: disable=redefined-outer-name
             :math:`(N,*)`, where :math:`*` means additional dimensions of size less than 8.
             Must be one of the following types: float32, float64.
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and data type as `abs`.
 
     Raises:
@@ -4816,14 +4821,12 @@ def outer(x1, x2):
         x1 (Tensor): 1-D input vector.
         x2 (Tensor): 1-D input vector.
 
-    Outputs:
-        out (Tensor, optional) : optional output matrix.
+    Returns:
+        out (Tensor, optional) : 2-D matrix, the outer product of two vectors.
 
     Raises:
-        TypeError: If `x1` is not a Tensor.
-        TypeError: If `x2` is not a Tensor.
-        ValueError: Expected 1-D input `x1`, but got n-D.
-        ValueError: Expected 1-D input `x2`, but got n-D.
+        TypeError: If `x1` or `x2` is not a Tensor.
+        ValueError: If `x1` or `x2` is not an 1-D Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4860,19 +4863,19 @@ def mv(mat, vec):
     """
     Multiplies matrix `mat` and vector `vec`.
 
-    If mat is a :math:`(N, M)` tensor, vec is a 1-D tensor of size :math:`M`, out will be 1-D of size :math:`N`.
+    If `mat` is a Tensor with :math:`(N, M)`, `vec` is a 1-D Tensor of size :math:`M`,
+    out will be 1-D of size :math:`N`.
 
     Args:
-        mat (Tensor): Input matrix of the tensor. The shape of the tensor is :math:`(N, M)`.
-        vec (Tensor): Input vector of the tensor. The shape of the tensor is :math:`(M,)`.
+        mat (Tensor): Input matrix of shape :math:`(N, M)`.
+        vec (Tensor): Input vector of shape :math:`(M,)`.
 
     Returns:
-        Tensor, the shape of the output tensor is :math:`(N,)`.
+        Tensor, the shape of the output Tensor is :math:`(N,)`.
 
     Raises:
-        TypeError: If `mat`, `vec` is not a Tensor.
-        ValueError: If `mat` is not a 2-D Tensor.
-            If `vec` is not a 1-D Tensor.
+        TypeError: If `mat` or `vec` is not a Tensor.
+        ValueError: If `mat` is not a 2-D Tensor or `vec` is not a 1-D Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5256,7 +5259,7 @@ def gcd(x1, x2):
         - **x1** (Tensor) - The first input tensor.
         - **x2** (Tensor) - The second input tensor.
 
-    Outputs:
+    Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is one
         with higher digits in the two inputs.
 
@@ -6001,13 +6004,12 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
             match `x` except along `axis`. Default: None.
 
     Returns:
-        Tensor, the n-th differences. The shape of the output is the same as a except along
-        `axis` where the dimension is smaller by `n`. The type of the output is the same
-        as the type of the difference between any two elements of `x`. This is the same
-        as the type of `x` in most cases.
+        Tensor, the n-th differences of input. The shape of the output is the same as `x`
+        except along `axis` where the size is reduced by `n`. The type of the output
+        is the same as `x`.
 
     Raises:
-        TypeError: If the data type of the elementes in 'x' is uint16, uint32 or uint64.
+        TypeError: If the data type of the elementes in `x` is uint16, uint32 or uint64.
         TypeError: If `x` is not a tensor.
         TypeError: If the dimension 'x' is less than 1.
         RuntimeError: If `n` is not 1.
@@ -6060,7 +6062,7 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
         dtype (:class:`mindspore.dtype`): The specified type of output tensor.
             An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int32`.
 
-    Outputs:
+    Returns:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type is specified by `dtype`.
           The shape of output is :math:`(2, tril\_size)`, where :math:`tril\_size` is the number of elements in the
           lower triangular matrix.
@@ -6104,7 +6106,7 @@ def triu_indices(row, col, offset=0, dtype=mstype.int64):
         dtype (:class:`mindspore.dtype`): The specified type of output tensor.
             An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int32`.
 
-    Outputs:
+    Returns:
         - **y** (Tensor) - indices of the elements in upper triangular part of matrix. The type is specified by `dtype`.
           The shape of output is :math:`(2, triu\_size)`, where :math:`triu\_size` is the number of elements in the
           upper triangular matrix.
@@ -6465,10 +6467,9 @@ def dist(input_x, input_y, p=2):
         a type error will be raised if :math:`p` is not an integer.
 
     Args:
-        input_x (Tensor): The first input tensor. The dtype must be float32 or float16.
-        input_y (Tensor): The second input tensor. The dtype must be float32 or float16.
-        p (int, optional): The order of norm. `p` is greater than or equal to 0.
-            Default: 2. Currently only normalization for integer p-normal form is supported.
+        input_x (Tensor): The first input tensor. The dtype must be float16 or float32.
+        input_y (Tensor): The second input tensor. The dtype must be float16 or float32.
+        p (int, optional): The order of norm. `p` is greater than or equal to 0. Default: 2.
 
     Returns:
         Tensor, has the same dtype as `input_x`, which shape is :math:`(1)`.
@@ -6573,139 +6574,14 @@ def copysign(x, other):
     return P.Select()(less_zero, P.Neg()(pos_tensor), pos_tensor)
 
 
-def chain_matmul(*inputs):
-    r"""
-    Computes the dot product of two or more 2-D arrays in a single function call, while automatically
-    selecting the fastest evaluation order.
-    multi_dot chains numpy.dot and uses optimal parenthesization of the matrices. For more
-    information, refer to the `wiki page <https://en.wikipedia.org/wiki/Matrix_chain_multiplication>`_.
-    Depending on the shapes of the matrices, this can speed up the multiplication a lot.
-    All the arguments must be 2-D.
-
-    Note:
-        Numpy argument `out` is not supported.
-
-    Args:
-        inputs (List[Tensor]): All the arguments must be 2-D.
-
-    Returns:
-        Tensor, the dot product of the supplied arrays.
-
-    Raises:
-        TypeError: inputs are empty or not tensors.
-        ValueError: inputs are not 2-D.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> x1 = Tensor(np.ones((2, 2)))
-        >>> x2 = Tensor(np.ones((2, 1)))
-        >>> x3 = Tensor(np.ones((1, 1)))
-        >>> out = ops.chain_matmul(x1, x2, x3)
-        >>> print(out.asnumpy())
-        [[2.]
-         [2.]]
-        >>> x1 = Tensor(np.ones((10000, 100)))
-        >>> x2 = Tensor(np.ones((100, 1000)))
-        >>> x3 = Tensor(np.ones((1000, 5)))
-        >>> x4 = Tensor(np.ones((5, 333)))
-        >>> out = ops.chain_matmul(x1, x2, x3, x4)
-        >>> print(out.asnumpy())
-        [[500000. 500000. 500000. ... 500000. 500000. 500000.]
-         [500000. 500000. 500000. ... 500000. 500000. 500000.]
-         [500000. 500000. 500000. ... 500000. 500000. 500000.]
-         ...
-         [500000. 500000. 500000. ... 500000. 500000. 500000.]
-         [500000. 500000. 500000. ... 500000. 500000. 500000.]
-         [500000. 500000. 500000. ... 500000. 500000. 500000.]]
-    """
-
-    def _min_cost_chain_matmul(dims):
-        """
-        Returns indices of splits that has the minimal cost for matmul.
-        s[i, j] holds the index of the split with minimal cost for
-        arrays[i, i + 1, ... j]
-        """
-        dims = tuple(dims)
-        n = len(dims) - 1
-        m = [[0] * n for _ in range(n)]
-        s = [[0] * n for _ in range(n)]
-        for pos in range(1, n):
-            for i in range(n - pos):
-                j = i + pos
-                m[i][j] = float("inf")
-                for k in range(i, j):
-                    cost = m[i][k] + m[k + 1][j]
-                    cost = cost + dims[i] * dims[k + 1] * dims[j + 1]
-                    if cost < m[i][j]:
-                        m[i][j] = cost
-                        s[i][j] = k
-        return s
-
-    def _get_dims(shapes):
-        """
-        Returns the chain of the dimensions in arrays.
-        dims[i] == arrays[i - 1].shape[1] == arrays[i].shape[0]
-        """
-        shapes = tuple(shapes)
-        dims = tuple(map(lambda a: a[0], shapes))
-        return dims + (shapes[-1][1],)
-
-    def _multi_dot(arrays, i, j, order):
-        """Computes multi dot recursively using minimal cost."""
-        if i == j:
-            return arrays[i]
-        return matmul(
-            _multi_dot(arrays, i, order[i][j], order),
-            _multi_dot(arrays, order[i][j] + 1, j, order),
-        )
-
-    if not inputs:
-        raise TypeError(f"For 'chain_matmul', 'inputs' can not be empty, but got {inputs}")
-    for tensor in inputs:
-        if not isinstance(tensor, Tensor):
-            msg = "For 'chain_matmul', each element of 'inputs' must be a tensor, but got " + f"{type(tensor)}"
-            raise TypeError(msg)
-        if P.Rank()(tensor) != 2:
-            raise ValueError(
-                "For 'chain_matmul', the dimension of each elements in 'inputs' must be 2, but got "
-                f"{P.Rank()(tensor)}"
-            )
-    if len(inputs) == 2:
-        return matmul(inputs[0], inputs[1])
-
-    shape_out = ()
-    arrs = []
-    for arr in inputs:
-        arrs.append(arr)
-
-    shape_out += (P.Shape()(arrs[0])[0],)
-    shape_out += (P.Shape()(arrs[-1])[1],)
-
-    shapes = []
-    for arr in arrs:
-        shapes.append(P.Shape()(arr))
-    last_shape = shapes[0][0]
-    for shape in shapes:
-        if last_shape != shape[0]:
-            raise ValueError(f"For 'chain_matmul', shapes of each element of 'inputs' must be aligned")
-        last_shape = shape[1]
-    dims = _get_dims(shapes)
-    order = _min_cost_chain_matmul(dims)
-    res = _multi_dot(arrs, 0, len(arrs) - 1, order)
-    return P.Reshape()(res, shape_out)
-
-
 def hann_window(window_length, periodic=True):
     r"""
-    Generates Hann Window. It is a window that approximates the prolate sphere,
-    for which the ratio of the main sphere energy to the sidelobe energy is maximum.
+    Generates a Hann Window.
 
     The Hann window is defined as
 
     .. math::
-        w(n) = \frac{1}{2} - \frac{1}{2} \cos\left(\frac{2\pi{n}}{M-1}\right) \qquad 0 \leq n \leq M-1.
+        w(n) = \frac{1}{2} - \frac{1}{2} \cos\left(\frac{2\pi{n}}{M-1}\right) \qquad 0 \leq n \leq M-1
 
     Args:
         window_length (int): Length of window.
@@ -6716,9 +6592,9 @@ def hann_window(window_length, periodic=True):
         Tensor, a Hann window.
 
     Raises:
-        TypeError: If `window_length` is not a integer.
-        ValueError: If `window_length` is negative.
+        TypeError: If `window_length` is not an integer.
         TypeError: If `periodic` is not a variable of Boolean type.
+        ValueError: If `window_length` is negative.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7611,9 +7487,7 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
 
 def kaiser_window(window_length, periodic=True, beta=12.0):
     r"""
-    Generates a Kaiser window.
-    It is also known as the Kaiser-Bessel window, which is an approximate window of the prolate sphere.
-    The ratio of the main sphere energy to the side wave energy is maximum for it.
+    Generates a Kaiser window, which is also known as the Kaiser-Bessel window.
 
     The Kaiser window is defined as
 
@@ -7631,16 +7505,15 @@ def kaiser_window(window_length, periodic=True, beta=12.0):
         window_length (int): Length of window.
         periodic (bool, optional): When set to True, generates a periodic window for spectral analysis.
             When set to False, generates a symmetric window for filter design. Default: True.
-        beta (float, optional): Shape parameter, determines trade-off between main-lobe width and side lobe level.
-            When `beta` gets large, the window narrows. Default: 12.0.
+        beta (float, optional): Shape parameter, when `beta` gets large, the window narrows. Default: 12.0.
 
     Returns:
         Tensor, a Kaiser window.
 
     Raises:
-        TypeError: If `window_length` is not a integer.
-        ValueError: If `window_length` is negative.
+        TypeError: If `window_length` or `beta` is not an integer.
         TypeError: If `periodic` is not a variable of Boolean type.
+        ValueError: If `window_length` is negative.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8512,32 +8385,28 @@ def kron(x, y):
     """
     Computes the Kronecker product, denoted by ⊗, of `x` and `y`.
 
-    If `x` is a :math:`(a_{0}` x :math:`a_{1}` x ... x :math:`a_{n})` tensor
-    and `y` is a :math:`(b_{0}` x :math:`b_{1}` x ... x :math:`b_{n})` tensor,
+    If `x` is a :math:`(a_{0}` x :math:`a_{1}` x ... x :math:`a_{n})` Tensor
+    and `y` is a :math:`(b_{0}` x :math:`b_{1}` x ... x :math:`b_{n})` Tensor,
     the result will be a :math:`(a_{0}*b_{0}` x :math:`a_{1}*b_{1}` x ... x :math:`a_{n}*b_{n})`
-    tensor with the following entries:
+    Tensor with the following entries:
 
     .. math::
             (x ⊗ y)_{k_{0},k_{1},...k_{n}} =
             x_{i_{0},i_{1},...i_{n}} * y_{j_{0},j_{1},...j_{n}},
 
     where :math:`k_{t} = i_{t} * b_{t} + j_{t}` for 0 ≤ `t` ≤ `n`. If one
-    tensor has fewer dimensions than the other it is unsqueezed
+    Tensor has fewer dimensions than the other it is unsqueezed
     until it has the same number of dimensions.
 
     Note:
         Supports real-valued and complex-valued inputs.
-        This function generalizes the typical definition of the Kronecker product
-        for two matrices to two tensors, as described above.
-        When x is a (m x n) matrix and y is a (p x q) matrix, the result
-        be a (p * m x q * n) block matrix.
 
     Args:
-        x (Tensor): Input tensor, has the shape (r0, r1, ... , rN).
-        y (Tensor): Input tensor, has the shape (s0, s1, ... , sN).
+        x (Tensor): Input Tensor, has the shape :math:`(r0, r1, ... , rN)`.
+        y (Tensor): Input Tensor, has the shape :math:`(s0, s1, ... , sN)`.
 
     Returns:
-        Tensor, has the shape (r0 * s0, r1 * s1, ... , rN * sN).
+        Tensor, has the shape :math:`(r0 * s0, r1 * s1, ... , rN * sN)`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -8955,46 +8824,45 @@ def select_(feat, dim, index):
 
 def trapz(y, x=None, dx=1.0, dim=-1):
     r"""
-        Computes the trapezoidal rule along dim.
+    Integrates `y` (x) along given dim using trapezoidal rule.
+    By default x-dim distances between points will be 1.0,
+    alternatively they can be provided with `x` array or with `dx` scalar.
 
-        Integrates `y` (x) along given dim. By default x-dim distances between points will be 1.0,
-        alternatively they can be provided with x array or with dx scalar.
+    .. math::
 
-        .. math::
+        \mathop{ \int }\nolimits_{{}}^{{}}{y}{ \left( {x} \right) } \text{d} x
 
-            \mathop{ \int }\nolimits_{{}}^{{}}{y}{ \left( {x} \right) } \text{d} x
+    Args:
+        y (Tensor): Input tensor to integrate.
+        x (Tensor, optional): The sample points corresponding to the `y` values. If `x` is None,
+            the sample points are assumed to be evenly spaced `dx` apart. Default: None.
+            If `x` is not None, after subtracting 1 from the axis specified by `dim`, the shape of `x`
+            should be same as `y` or can broadcast to `y`.
+        dx (float, optional): The spacing between sample points when `x` is None. Default: 1.0.
+        dim (int, optional): The dim along which to integrate. Default: -1.
 
-        Args:
-            y (Tensor): Input tensor to integrate.
-            x (Tensor, optional): The sample points corresponding to the `y` values. If `x` is None,
-            the sample points are assumed to be evenly spaced `dx` apart. The default is None.
-            If x is not None, after subtracting 1 from the axis specified by dim, the shape of x should be same
-            or can be broadcast to y.
-            dx (float, optional): The spacing between sample points when `x` is None. The default is 1.0.
-            dim (int, optional): The dim along which to integrate. Defaults to -1.
+    Returns:
+        Tensor of float, definite integral as approximated by trapezoidal rule.
+        If `y` is a one-dimensional array, the result is a floating-point number. If `y` is
+        an n-dimensional array, the result is an N-1 dimensional array.
 
-        Returns:
-            Tensor of float, definite integral as approximated by trapezoidal rule.
-            If y is a one-dimensional array, the result is a floating-point number. If y is an n-dimensional array,
-            the result is an N-1-dimensional array because the dimension associated with the axis has been deleted.
+    Raises:
+        RuntimeError: If dim of `x` is 1, and x.shape[0] is not equal to y.shape[dim].
+        ValueError: If `dim` is out of range of :math:`[-y.ndim, y.ndim)`.
+        TypeError: If `y` is not a Tensor.
+        TypeError: If `x` is not None and is not a Tensor.
+        TypeError: If `dx` is not a float number.
+        TypeError: If `dim` is not a Integer.
 
-        Raises:
-            ValueError: If dim is out of range of ``[-y.ndim, y.ndim)``.
-            RuntimeError: If x's ndim is 1, and x's shape[0] is not equal to y's shape[dim].
-            TypeError: If y is not a Tensor.
-            TypeError: If x is not None and is not a Tensor.
-            TypeError: If dx is not a float number.
-            TypeError: If dim is not a Integer.
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> y = Tensor(np.array([[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]]).astype(np.float32))
-            >>> x = Tensor(np.array([[1, 2, 3], [1, 3, 5], [1, 4, 7]]).astype(np.float32))
-            >>> output = ops.trapz(y, x)
-            >>> print(output)
-            [2. 4. 6.]
+    Examples:
+        >>> y = Tensor(np.array([[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]]).astype(np.float32))
+        >>> x = Tensor(np.array([[1, 2, 3], [1, 3, 5], [1, 4, 7]]).astype(np.float32))
+        >>> output = ops.trapz(y, x)
+        >>> print(output)
+        [2. 4. 6.]
     """
 
     if not isinstance(y, (Tensor, Tensor_)):
@@ -10249,7 +10117,6 @@ __all__ = [
     'combinations',
     'dist',
     'copysign',
-    'chain_matmul',
     'hann_window',
     'log2',
     'slogdet',
@@ -10289,6 +10156,6 @@ __all__ = [
     'roll',
     'sum',
     'matrix_exp',
-    'orgqr'
+    'orgqr',
 ]
 __all__.sort()

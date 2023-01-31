@@ -33,7 +33,7 @@ typedef struct {
  *  1.time_step_: step num only for rnn or lstm model. Default is 1.
  *  2.max_roi_num_: maximum number of ROI area, which is single picture supports, must be greater than 0.Default is 300.
  *  3.core_ids_: running kernels' id, support multi-core, separated by commas when setting, such as {0, 1, 2}.
- *               each element must be a integer, wch meet such inequality 0 <= val < 8.
+ *               each element must be an integer, wch meet such inequality 0 <= val < 8.
  *               Default is {0}.
  */
 class Flags {

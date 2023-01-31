@@ -11,7 +11,7 @@ mindspore.ops.remainder
         out_{i} = input_{i} \text{ % } other_{i}
 
     .. warning::
-        - 当输入元素超过2048时，可能会有京精度问题。
+        - 当输入元素超过2048时，可能会有精度问题。
         - 在Ascend和CPU上的计算结果可能不一致。
         - 如果shape表示为(D1,D2…Dn)，那么D1 \ * D2……\ * DN <= 1000000，n <= 8。
 
