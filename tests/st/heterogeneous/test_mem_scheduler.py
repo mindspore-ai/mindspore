@@ -26,7 +26,7 @@ from mindspore import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
-from tests.st.tbe_networks.resnet import resnet50
+from tests.st.networks.models.resnetv1_5 import resnet50
 
 context.set_context(mode=context.GRAPH_MODE, memory_optimize_level='O0')
 
