@@ -2053,7 +2053,7 @@ class TopTypeof(Primitive):
             'list': mstype.List(),
             'tuple': mstype.Tuple(),
             'Tensor': mstype.tensor,
-            'NoneType': mstype.none_type,
+            'NoneType': mstype.none_type(),
             'int': mstype.Int(),
             'bool': mstype.Bool(),
             'ellipsis': mstype.Ellipsis_(),
