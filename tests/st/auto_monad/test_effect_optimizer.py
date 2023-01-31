@@ -724,7 +724,7 @@ def test_sparse_apply_adagrad():
     net = SparseApplyAdagradNet(var, accum)
 
     grad = Tensor(np.random.rand(3, 3).astype(np.float32))
-    indices = Tensor(np.ones((3,), np.int32))
+    indices = Tensor([0, 1, 2], mstype.int32)
     new_var, _ = net(grad, indices)
     # new_accum is equal to accum.
     assert (new_var != var).any(), "The results should be different!"
@@ -759,7 +759,7 @@ def test_sparse_apply_adagrad_v2():
     net = SparseApplyAdagradV2Net(var, accum)
 
     grad = grad = Tensor(np.random.rand(3, 3).astype(np.float32))
-    indices = Tensor(np.ones((3,), np.int32))
+    indices = Tensor([0, 1, 2], mstype.int32)
     new_var, new_accum = net(grad, indices)
     assert ((new_var != var).any() and (new_accum != accum).any()), \
         "The results should be different!"
