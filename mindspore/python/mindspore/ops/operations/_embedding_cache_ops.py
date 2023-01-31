@@ -269,10 +269,10 @@ class PadAndShift(PrimitiveWithCheck):
 
     Inputs:
         - **input_x** (Tensor) - The input Tensor, which will be copied
-            to `output`.
+          to `output`.
         - **cum_sum_arr** (Tensor) - The last value of cum_sum_arr is
-            the pad length of output tensor, `cum_sum_arr[shift_idx]` is
-            the start to shift, and `cum_sum_arr[shift_idx+1]` is the end.
+          the pad length of output tensor, `cum_sum_arr[shift_idx]` is
+          the start to shift, and `cum_sum_arr[shift_idx+1]` is the end.
         - **shift_idx** (int) - The idx of `cum_sum_arr` .
 
     Outputs:
@@ -281,7 +281,7 @@ class PadAndShift(PrimitiveWithCheck):
     Raises:
         TypeError: `input_x` or `cum_sum_arr` is not Tensor.
         TypeError: `shift_idx` is not int.
-        ValueError: Value of `shift_idx` is larger than or equal to the length of  `cum_sum_arr` .
+        ValueError: Value of `shift_idx` is larger than or equal to the length of `cum_sum_arr` .
 
     Supported Platforms:
         `CPU`
