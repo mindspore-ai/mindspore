@@ -520,6 +520,12 @@ bool CastCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
+std::vector<KernelAttr> CastCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list;
+  (void)std::transform(kernel_attr_lists.begin(), kernel_attr_lists.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, CastCpuKernelFuncCreator> &pair) { return pair.first; });
+  return support_list;
+}
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Cast, CastCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
