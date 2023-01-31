@@ -155,11 +155,12 @@ int FixedBitWeightQuantization::ComputeBiasDataAndQuantParam(const std::vector<d
         return RET_ERROR;
       }
       if (std::abs(raw_datas[i] / bias_scale_tmp) >= quanted_bias_abs_limit) {
-        MS_LOG(WARNING) << "quanted bias over flow, maybe the scale of weight: " << weight_quant_params[i].scale
-                        << " is too small, need to update";
         // update filter scale and zp
         double activate_scale = input_scales[0];
         double filter_scale = std::abs(raw_datas[i]) / (activate_scale * quanted_bias_abs_limit);
+        MS_LOG(WARNING) << "quant bias over flow"
+                        << " ,activation scale is:" << input_scales[i] << " and weight scale will be update from "
+                        << weight_quant_params[i].scale << " to " << filter_scale;
         weight_quant_params[i].scale = filter_scale;
         weight_quant_params[i].zeroPoint = 0;
         quant_param_holder->set_input_quant_param(1, weight_quant_params);

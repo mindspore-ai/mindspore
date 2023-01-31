@@ -77,7 +77,13 @@ class AclPassImpl {
   STATUS ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager,
                                  const CNodePtr &custom_node);
 
+ private: /* Quantization */
+  STATUS Quantization(const FuncGraphPtr &func_graph);
+  STATUS PreQuantization(const FuncGraphPtr &func_graph);
+  STATUS PostQuantization(const FuncGraphPtr &func_graph);
+
  private:
+  std::shared_ptr<ConverterPara> param_;
   FmkType fmk_type_;
   ModelType export_mindir_;
   lite::acl::AclModelOptionCfg user_options_cfg_;

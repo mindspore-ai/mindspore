@@ -30,6 +30,12 @@ PrimitiveCPtr OnnxQuantizeParser::Parse(const onnx::GraphProto &onnx_graph, cons
   } else if (onnx_node.op_type() == "Int8Dequantize") {
     prim->set_src_t(kNumberTypeUInt8);
     prim->set_dst_t(kNumberTypeFloat32);
+  } else if (onnx_node.op_type() == "AscendDequant") {
+    prim->set_src_t(kNumberTypeInt32);
+    prim->set_dst_t(kNumberTypeFloat32);
+  } else if (onnx_node.op_type() == "AscendQuant") {
+    prim->set_src_t(kNumberTypeFloat32);
+    prim->set_dst_t(kNumberTypeInt8);
   } else {
     MS_LOG(ERROR) << "Unsupported nodeType: " << onnx_node.op_type().c_str();
     return nullptr;
@@ -40,5 +46,7 @@ PrimitiveCPtr OnnxQuantizeParser::Parse(const onnx::GraphProto &onnx_graph, cons
 
 OnnxNodeRegistrar g_onnxInt8QuantizeParser("Int8Quantize", new OnnxQuantizeParser());
 OnnxNodeRegistrar g_onnxInt8DequantizeParser("Int8Dequantize", new OnnxQuantizeParser());
+OnnxNodeRegistrar g_onnxInt8AscendDequantParser("AscendDequant", new OnnxQuantizeParser());
+OnnxNodeRegistrar g_onnxInt8AscendQuantParser("AscendQuant", new OnnxQuantizeParser());
 }  // namespace lite
 }  // namespace mindspore

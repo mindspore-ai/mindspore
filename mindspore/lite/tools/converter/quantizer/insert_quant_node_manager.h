@@ -52,6 +52,10 @@ class InsertQuantNodeManager {
 
   int InsertFSEDecodeNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index, TypeId dst_dtype);
 
+  int InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+
+  int InsertAscendDeQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+
  private:
   int CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const;
 
@@ -63,14 +67,15 @@ class InsertQuantNodeManager {
 
   int SetCastNodeAbstract(const CNodePtr &cnode, const AnfNodePtr &input_node, const CNodePtr &cast_cnode);
 
-  int InsertForwardQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index,
-                                 CastNodeType cast_node_type);
+  int InsertForwardQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index,
+                             CastNodeType cast_node_type);
 
-  int InsertBackwardDeQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index,
-                                    const AnfNodePtr &output_node);
+  int InsertBackwardDeQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index,
+                                const AnfNodePtr &output_node);
 
-  int InserQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, InsertDirection insert_direction,
-                         TypeId cast_dtype, CastNodeType cast_node_type, size_t index, const AnfNodePtr &output_node);
+  int InsertQuantDtypeCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, InsertDirection insert_direction,
+                               TypeId cast_dtype, CastNodeType cast_node_type, size_t index,
+                               const AnfNodePtr &output_node);
 
   int CreateFSEInputs(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, std::vector<AnfNodePtr> *op_inputs,
                       TypeId dst_dtype);

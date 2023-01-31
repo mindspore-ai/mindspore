@@ -1041,9 +1041,36 @@ STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, o
       idx++;
     }
   }
+  schema::QuantParamT quant_param;
+  bool has_quant = false;
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    if (onnx_node_attr.name() == "scale") {
+      float scale = onnx_node_attr.f();
+      quant_param.scale = scale;
+      MS_LOG(INFO) << onnx_node.name() << " scale is " << quant_param.scale;
+      has_quant = true;
+    } else if (onnx_node_attr.name() == "offset") {
+      float offset = onnx_node_attr.f();
+      quant_param.zeroPoint = static_cast<int>(offset);
+      MS_LOG(INFO) << onnx_node.name() << " offset is " << quant_param.zeroPoint;
+      has_quant = true;
+    } else if (onnx_node_attr.name() == "quant_bit") {
+      int64_t quant_bit = onnx_node_attr.i();
+      quant_param.numBits = static_cast<int>(quant_bit);
+      MS_LOG(INFO) << onnx_node.name() << " quant_bit is " << quant_param.numBits;
+      has_quant = true;
+    }
+  }
+  if (has_quant) {
+    std::vector<schema::QuantParamT> quant_params;
+    quant_param.inited = true;
+    quant_params.push_back(quant_param);
+    input_quant_params.insert({0, quant_params});
+    output_quant_params.insert({0, quant_params});
+  }
   if (!input_quant_params.empty() || !output_quant_params.empty()) {
     auto quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
-    MSLITE_CHECK_PTR(quant_params_holder);
+    CHECK_NULL_RETURN(quant_params_holder);
     for (auto &iter : input_quant_params) {
       quant_params_holder->set_input_quant_param(iter.first, iter.second);
     }

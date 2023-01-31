@@ -34,6 +34,7 @@ static std::unordered_map<int, mindspore::TypeId> kOnnxTypeTransferMap = {
   {onnx::TensorProto_DataType_INT32, mindspore::kNumberTypeInt32},
   {onnx::TensorProto_DataType_UINT32, mindspore::kNumberTypeUInt32},
   {onnx::TensorProto_DataType_INT64, mindspore::kNumberTypeInt64},
+  {onnx::TensorProto_DataType_UINT64, mindspore::kNumberTypeUInt64},
   {onnx::TensorProto_DataType_FLOAT16, mindspore::kNumberTypeFloat16},
   {onnx::TensorProto_DataType_FLOAT, mindspore::kNumberTypeFloat32},
   {onnx::TensorProto_DataType_DOUBLE, mindspore::kNumberTypeFloat64},
