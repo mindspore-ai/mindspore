@@ -277,7 +277,9 @@ static int NnieSetBlobAddr(HI_U64 *phy_addr, HI_U8 **vir_addr, NnieParam *nnie_p
 
 static int NnieParamInit(NnieCfg *nnie_cfg, NnieParam *nnie_param) {
   HI_U32 i;
-  HI_U32 total_size = 0, total_task_buf_size = 0, tmp_buf_size_ = 0;
+  HI_U32 total_size = 0;
+  HI_U32 total_task_buf_size = 0;
+  HI_U32 tmp_buf_size_ = 0;
   HI_S32 ret = HI_SUCCESS;
   HI_U32 off_set = 0;
   HI_U64 phy_addr = 0;
