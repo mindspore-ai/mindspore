@@ -243,7 +243,9 @@
       "axes": "axis"
     },
     "MaxPool3DGradGradD": {
-      "ksize": "kernel_size"
+      "ksize": "kernel_size",
+      "pads": "pad_list",
+      "data_format": "format"
     }
   },
   "AttrDefaultValue": {

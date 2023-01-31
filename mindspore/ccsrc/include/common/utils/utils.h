@@ -488,6 +488,7 @@ constexpr auto kMaximumGradGradOpName = "MaximumGradGrad";
 constexpr auto kMaximumGradOpName = "MaximumGrad";
 constexpr auto kMaximumOpName = "Maximum";
 constexpr auto kMaxPool3DGradGradOpName = "MaxPool3DGradGrad";
+constexpr auto kMaxPool3DGradGradDOpName = "MaxPool3DGradGradD";
 constexpr auto kMaxPool3DGradOpName = "MaxPool3DGrad";
 constexpr auto kMaxPool3DOpName = "MaxPool3D";
 constexpr auto kMaxPoolGradOpName = "MaxPoolGrad";
