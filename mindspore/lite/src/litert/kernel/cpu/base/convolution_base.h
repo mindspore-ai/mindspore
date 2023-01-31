@@ -82,6 +82,7 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   std::unordered_map<uintptr_t, void *> addr_map;
   void *packed_weight_ = nullptr;
   bool weight_is_packed_ = false;
+  bool is_sharing_pack_ = true;
   void *bias_data_ = nullptr;
   const InnerContext *ctx_ = nullptr;
   ConvParameter *conv_param_ = nullptr;

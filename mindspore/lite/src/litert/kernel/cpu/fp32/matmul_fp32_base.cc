@@ -54,10 +54,18 @@ MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
     matrix_c_.pack_ptr = nullptr;
   }
   if (params_->a_const_) {
-    lite::PackWeightManager::GetInstance()->Free(matrix_a_.pack_ptr);
+    if (is_sharing_pack_) {
+      lite::PackWeightManager::GetInstance()->Free(matrix_a_.pack_ptr);
+    } else {
+      free(matrix_a_.pack_ptr);
+    }
   }
   if (params_->b_const_) {
-    lite::PackWeightManager::GetInstance()->Free(matrix_b_.pack_ptr);
+    if (is_sharing_pack_) {
+      lite::PackWeightManager::GetInstance()->Free(matrix_b_.pack_ptr);
+    } else {
+      free(matrix_b_.pack_ptr);
+    }
   }
 }
 
@@ -172,8 +180,13 @@ int MatmulFp32BaseCPUKernel::PackMatrixA() {
     }
   } else {
     bool is_packed = false;
-    void *data = lite::PackWeightManager::GetInstance()->GetPackData(
-      in_tensors()[FIRST_INPUT]->data(), static_cast<size_t>(matrix_a_.pack_size) * sizeof(float), &is_packed);
+    void *data = nullptr;
+    if (is_sharing_pack_) {
+      data = lite::PackWeightManager::GetInstance()->GetPackData(
+        in_tensors()[FIRST_INPUT]->data(), static_cast<size_t>(matrix_a_.pack_size) * sizeof(float), &is_packed);
+    } else {
+      data = malloc(static_cast<size_t>(matrix_a_.pack_size) * sizeof(float));
+    }
     matrix_a_.pack_ptr = reinterpret_cast<float *>(data);
     if (matrix_a_.pack_ptr == nullptr) {
       MS_LOG(ERROR) << "matrix a pack ptr is nullptr.";
@@ -228,8 +241,13 @@ int MatmulFp32BaseCPUKernel::PackMatrixB() {
     }
   } else {
     bool is_packed = false;
-    void *data = lite::PackWeightManager::GetInstance()->GetPackData(
-      in_tensors()[SECOND_INPUT]->data(), static_cast<size_t>(matrix_b_.pack_size) * sizeof(float), &is_packed);
+    void *data = nullptr;
+    if (is_sharing_pack_) {
+      data = lite::PackWeightManager::GetInstance()->GetPackData(
+        in_tensors()[SECOND_INPUT]->data(), static_cast<size_t>(matrix_b_.pack_size) * sizeof(float), &is_packed);
+    } else {
+      data = malloc(static_cast<size_t>(matrix_b_.pack_size) * sizeof(float));
+    }
     matrix_b_.pack_ptr = reinterpret_cast<float *>(data);
     if (matrix_b_.pack_ptr == nullptr) {
       MS_LOG(ERROR) << "matrix b pack ptr is nullptr.";

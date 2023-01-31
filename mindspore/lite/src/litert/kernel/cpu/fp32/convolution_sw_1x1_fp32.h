@@ -33,6 +33,7 @@ class ConvolutionSW1x1CPUKernel : public LiteKernel {
                             float *origin_weight, float *origin_bias)
       : LiteKernel(parameter, inputs, outputs, ctx), origin_weight_(origin_weight), origin_bias_(origin_bias) {
     matmul_base_ = CreateMatmulFp32CPUKernel(parameter, inputs, outputs, ctx);
+    matmul_base_->SetSharingPack(false);
   }
   ~ConvolutionSW1x1CPUKernel() {
     if (matmul_base_ != nullptr) {
