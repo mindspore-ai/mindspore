@@ -27,6 +27,7 @@
 #include "load_mindir/load_model.h"
 #include "utils/crypto.h"
 #include "utils/os.h"
+#include "include/common/debug/common.h"
 
 using std::string;
 using std::vector;
@@ -234,7 +235,7 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
   _fullpath(abs_path_buff, file_name.c_str(), PATH_MAX);
 #else
   if (!realpath(file_name.c_str(), abs_path_buff)) {
-    MS_LOG(ERROR) << "Load MindIR get absolute path of " << file_name << " failed";
+    MS_LOG(ERROR) << "Load MindIR get absolute path of " << file_name << " failed, errno is: " << ErrnoToString(errno);
   }
 #endif
   // Read graph
