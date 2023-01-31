@@ -381,6 +381,7 @@ from .math_func import (
     roll,
     orgqr,
     sum,
+    matrix_power,
     matrix_exp,
 )
 from .nn_func import (

@@ -9929,6 +9929,45 @@ def tanhshrink(x):
     return x - tanh_op(x)
 
 
+def matrix_power(x, n):
+    """
+    Raises a square matrix to the (integer) power `n` .
+
+    - When :math:`n=0` , returns the identity matrix, which has the same shape as `x` .
+    - When :math:`n<0` and `x` is invertible, returns the inverse of `x` to the power of :math:`-n` .
+
+    Args:
+        x (Tensor): A 3-D Tensor. Supported data types are float16 and float32.
+            The shape is :math:`(b, m, m)` , represents b m-D square matrices.
+        n (int): The exponent, a required int.
+
+    Returns:
+        A 3-D Tensor. Data type and shape are the same as `x` 's.
+
+    Raises:
+        TypeError: If the data type of `n` is not int.
+        TypeError: If the data type of `x` is neither float32 nor float16.
+        TypeError: If `x` is not a Tensor.
+        ValueError: If `x` is not a 3-D tensor.
+        ValueError: If shape[1] and shape[2] of `x` are not the same.
+        ValueError: If `n` is negative but got input `x` has singular matrices.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor([[[0, 1], [-1, 0]], [[1, 0], [0, -1]]], dtype=ms.float32)
+        >>> y = ops.matrix_power(x, 2)
+        >>> print(y)
+        [[[-1.  0.]
+          [-0. -1.]]
+         [[ 1.  0.]
+          [ 0.  1.]]]
+    """
+    matrix_power_ops = _get_cache_prim(P.MatrixPower)(n=n)
+    return matrix_power_ops(x)
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -10156,6 +10195,7 @@ __all__ = [
     'roll',
     'sum',
     'matrix_exp',
+    'matrix_power',
     'orgqr',
 ]
 __all__.sort()
