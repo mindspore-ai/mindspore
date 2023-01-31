@@ -11,8 +11,9 @@ function Run_x86_java() {
     tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
     # compile benchmark
     cd mindspore-lite-${version}-linux-x64 || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./runtime/third_party/glog
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./runtime/third_party/glog
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./tools/converter/lib/
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/third_party/glog
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/third_party/dnnl
     echo "javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d ."
     javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d .
 
@@ -60,8 +61,9 @@ function Run_x86() {
     # $1:framework;
     echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-*' >> "${run_x86_log_file}"
     cd ${x86_path}/mindspore-lite-${version}-linux-*/ || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./runtime/third_party/glog
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./runtime/third_party/glog
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./tools/converter/lib/
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/third_party/glog
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/third_party/dnnl
     cp tools/benchmark/benchmark ./ || exit 1
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;

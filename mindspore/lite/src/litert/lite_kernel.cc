@@ -108,7 +108,8 @@ int LiteKernel::Execute() {
     return ret;
   }
 
-  if (op_parameter_->is_zero_shape_ == false) {
+  /* op_parameter_ is null : run in kernel mod */
+  if (op_parameter_ == nullptr || op_parameter_->is_zero_shape_ == false) {
     ret = Run();
     if (lite::RET_OK != ret) {
       MS_LOG(ERROR) << "run kernel failed, name: " << this->name();

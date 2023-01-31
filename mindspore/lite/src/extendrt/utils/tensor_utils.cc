@@ -152,4 +152,55 @@ std::vector<mindspore::tensor::Tensor> TensorUtils::TensorPtrToTensor(
                  [](mindspore::tensor::TensorPtr tensor_ptr) { return mindspore::tensor::Tensor(*tensor_ptr); });
   return tensors;
 }
+
+kernel::AddressPtr CloudTensorUtils::LiteTensorToAddressPtr(const lite::Tensor *lite_tensor) {
+  kernel::AddressPtr address_ptr = std::make_shared<kernel::Address>(lite_tensor->data(), lite_tensor->Size());
+  return address_ptr;
+}
+
+std::vector<mindspore::kernel::AddressPtr> CloudTensorUtils::LiteTensorToAddressPtrVec(
+  const std::vector<lite::Tensor *> &lite_tensors) {
+  kernel::AddressPtrList address_list;
+
+  for (auto lite_tensor : lite_tensors) {
+    kernel::AddressPtr address = LiteTensorToAddressPtr(lite_tensor);
+    address_list.push_back(address);
+  }
+
+  return address_list;
+}
+
+kernel::KernelTensorPtr CloudTensorUtils::LiteTensorToKernelTensorPtr(const lite::Tensor *lite_tensor) {
+  kernel::AddressPtr address = LiteTensorToAddressPtr(lite_tensor);
+  kernel::KernelTensorPtr kernel_tensor_ptr = std::make_shared<kernel::KernelTensor>();
+  kernel_tensor_ptr->SetData(address);
+  kernel_tensor_ptr->SetFormat(lite_tensor->format());
+
+  auto lite_shape = lite_tensor->shape();
+  std::vector<int64_t> shape;
+  for (size_t i = 0; i < lite_shape.size(); i++) {
+    shape.push_back(lite_shape[i]);
+  }
+
+  auto kernel_tensor_abstract_ptr = std::make_shared<mindspore::abstract::AbstractTensor>(
+    mindspore::TypeIdToType(lite_tensor->data_type()), std::make_shared<abstract::Shape>(shape));
+  kernel::TensorInfo info;
+  info.format = lite_tensor->format();
+  info.base_ = kernel_tensor_abstract_ptr;
+
+  kernel_tensor_ptr->SetTensorInfo(info);
+  return kernel_tensor_ptr;
+}
+
+std::vector<kernel::KernelTensorPtr> CloudTensorUtils::LiteTensorToKernelTensorPtrVec(
+  const std::vector<lite::Tensor *> &lite_tensors) {
+  std::vector<kernel::KernelTensorPtr> kernel_tensor_list;
+
+  for (auto lite_tensor : lite_tensors) {
+    auto kernel_tensor_ptr = LiteTensorToKernelTensorPtr(lite_tensor);
+    kernel_tensor_list.push_back(kernel_tensor_ptr);
+  }
+
+  return kernel_tensor_list;
+}
 }  // namespace mindspore
