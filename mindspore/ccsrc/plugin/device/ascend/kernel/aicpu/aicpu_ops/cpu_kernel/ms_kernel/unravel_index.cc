@@ -70,7 +70,7 @@ uint32_t UnravelIndexCpuKernel::DataAndTypeCheck(CpuKernelContext &ctx) {
   }
   for (auto i = 0; i < indices_number; i++) {
     KERNEL_CHECK_FALSE((*(indices_data + i) >= 0), KERNEL_STATUS_PARAM_INVALID, "Indice number must be more than 0.")
-    KERNEL_CHECK_FALSE((*(indices_data + i) <= dims_multi), KERNEL_STATUS_PARAM_INVALID,
+    KERNEL_CHECK_FALSE((*(indices_data + i) < dims_multi), KERNEL_STATUS_PARAM_INVALID,
                        "Index is out of bound as with dims");
   }
 
@@ -97,7 +97,7 @@ uint32_t UnravelIndexCpuKernel ::UnravelCompute(CpuKernelContext &ctx) {
       for (auto j = start; j < end; j++) {
         T Quotient = *(indices_data + j);
         for (auto i = (dims_number - 1); i >= 0; i--) {
-          *(output_data + i + j * dims_number) = Quotient % *(dims_data + i);
+          *(output_data + i * indices_number + j) = Quotient % *(dims_data + i);
           Quotient = Quotient / *(dims_data + i);
         }
       }
@@ -108,7 +108,7 @@ uint32_t UnravelIndexCpuKernel ::UnravelCompute(CpuKernelContext &ctx) {
     for (auto j = 0; j < indices_number; j++) {
       T Quotient = *(indices_data + j);
       for (auto i = (dims_number - 1); i >= 0; i--) {
-        *(output_data + i + j * dims_number) = Quotient % *(dims_data + i);
+        *(output_data + i * indices_number + j) = Quotient % *(dims_data + i);
         Quotient = Quotient / *(dims_data + i);
       }
     }
