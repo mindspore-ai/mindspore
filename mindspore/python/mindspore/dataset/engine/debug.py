@@ -17,6 +17,7 @@ This module defines the class for minddata pipeline debugger.
 class DebugWrapper is not exposed to users as an external API.
 """
 
+import collections
 import numpy as np
 from PIL import Image
 from mindspore import log as logger
@@ -51,7 +52,7 @@ class DebugWrapper:
             log_message += " The shape is [{}].".format(x.shape)
         elif isinstance(x, Image.Image):
             log_message += " The shape is [{}].".format(x.size)
-        else:
+        elif isinstance(x, collections.abc.Sized):
             log_message += " The size is [{}].".format(len(x))
 
         ######################## NOTE ########################

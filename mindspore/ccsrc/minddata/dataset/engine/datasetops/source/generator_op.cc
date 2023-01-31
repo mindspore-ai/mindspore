@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,8 @@ GeneratorOp::GeneratorOp(py::function generator_function, std::vector<std::strin
       column_types_(std::move(column_types)),
       prefetch_size_(prefetch_size),
       generator_counter_(0),
-      num_parallel_workers_(num_parallel_workers) {}
+      num_parallel_workers_(num_parallel_workers),
+      num_rows_sampled_{0} {}
 
 void GeneratorOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {
@@ -136,6 +137,22 @@ Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) 
   return Status::OK();
 }
 
+Status GeneratorOp::CheckNumSamples() {
+  if (num_rows_sampled_ != -1 && num_rows_sampled_ != generator_counter_) {
+    if (generator_counter_ == 0) {
+      std::string msg =
+        "Unable to fetch data from GeneratorDataset, try iterate the source function of GeneratorDataset or check"
+        " value of num_epochs when create iterator.";
+      RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, msg);
+    }
+    std::stringstream ss;
+    ss << "The actual amount of data read from generator " << generator_counter_ << " is different from generator.len "
+       << num_rows_sampled_ << ", you should adjust generator.len to make them match.";
+    RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, ss.str());
+  }
+  return Status::OK();
+}
+
 // Entry point for Generator, called by launch()
 // Note that this function is very easy to break because of the Python GIL mechanism
 // The master thread has the following workflow
@@ -173,7 +190,7 @@ Status GeneratorOp::operator()() {
   // Handshake with TaskManager to synchronize thread creation
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
-  int64_t num_rows_sampled = sampler_ ? sampler_->CalculateNumSamples(num_rows_) : num_rows_;
+  num_rows_sampled_ = sampler_ ? sampler_->CalculateNumSamples(num_rows_) : num_rows_;
   RETURN_IF_NOT_OK(Init());
 
   bool eof = false;
@@ -229,18 +246,8 @@ Status GeneratorOp::operator()() {
         e.restore();
 
         // Check whether the number of samples is sufficient only when the first epoch
-        if (num_rows_sampled != -1 && num_rows_sampled != generator_counter_ && op_current_epochs_ == 0) {
-          if (generator_counter_ == 0) {
-            std::string msg =
-              "Unable to fetch data from GeneratorDataset, try iterate the source function of GeneratorDataset or check"
-              " value of num_epochs when create iterator.";
-            RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, msg);
-          }
-          std::stringstream ss;
-          ss << "The actual amount of data read from generator " << generator_counter_
-             << " is different from generator.len " << num_rows_sampled
-             << ", you should adjust generator.len to make them match.";
-          RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, ss.str());
+        if (op_current_repeats_ == 0) {
+          RETURN_IF_NOT_OK(CheckNumSamples());
         }
       }
     }
@@ -300,6 +307,77 @@ Status GeneratorOp::ComputeColMap() {
     }
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";
+  }
+  return Status::OK();
+}
+
+Status GeneratorOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
+  if (!prepared_data_) {
+    RETURN_IF_NOT_OK(Init());
+    num_rows_sampled_ = sampler_ ? sampler_->CalculateNumSamples(num_rows_) : num_rows_;
+    MS_LOG(DEBUG) << "num_rows_sampled: " << num_rows_sampled_;
+    prepared_data_ = true;
+  }
+
+  if (eof_received_) {
+    *row = TensorRow(TensorRow::kFlagEOF);
+    return Status::OK();
+  }
+
+  bool eoe = false;
+  TensorRow new_row;
+  {
+    py::gil_scoped_acquire gil_acquire;
+    if (Py_IsInitialized() == 0) {
+      RETURN_STATUS_ERROR(StatusCode::kMDPythonInterpreterFailure, "[Internal ERROR] Python Interpreter is finalized");
+    }
+    try {
+      RETURN_IF_NOT_OK(PyRowToTensorRow(generator_.attr("__next__")(), &new_row));
+      generator_counter_++;
+    } catch (py::error_already_set &e) {
+      eoe = e.matches(PyExc_StopIteration);
+      // Pop up non StopIteration Python Exception
+      if (!eoe) {
+        std::string traceback;
+        try {
+          // Construct python-like traceback
+          py::list tb = py::module::import("traceback").attr("format_tb")(e.trace());
+          traceback = "Traceback (most recent call last):\n";
+          for (auto t : tb) {
+            traceback += py::reinterpret_borrow<py::str>(t);
+          }
+          traceback += e.what();
+        } catch (std::exception &) {
+          // Back to original exception
+          traceback = e.what();
+        }
+
+        // Restore exception to python
+        e.restore();
+        RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, traceback);
+      }
+
+      // Check whether the number of samples is sufficient only when the first epoch
+      if (op_current_repeats_ == 0) {
+        RETURN_IF_NOT_OK(CheckNumSamples());
+      }
+    }
+  }
+  if (!new_row.empty()) {
+    *row = std::move(new_row);
+    return Status::OK();
+  }
+
+  if (eoe) {
+    *row = TensorRow(TensorRow::kFlagEOE);
+    if (IsLastIteration()) {
+      eof_received_ = true;
+    } else {
+      // Self-reset to start a new iteration
+      RETURN_IF_NOT_OK(Reset());
+      UpdateRepeatAndEpochCounter();
+    }
   }
   return Status::OK();
 }
