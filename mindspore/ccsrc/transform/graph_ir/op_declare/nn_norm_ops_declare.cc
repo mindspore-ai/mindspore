@@ -54,7 +54,8 @@ INPUT_MAP(SmoothL1LossGradV2) = {{1, INPUT_DESC(predict)}, {2, INPUT_DESC(label)
 ATTR_MAP(SmoothL1LossGradV2) = {{"beta", ATTR_DESC(sigma, AnyTraits<float>())},
                                 {"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
 OUTPUT_MAP(SmoothL1LossGradV2) = {{0, OUTPUT_DESC(gradient)}};
-REG_ADPT_DESC(SmoothL1LossGradV2, kNameSmoothL1LossGrad, ADPT_DESC(SmoothL1LossGradV2))
+REG_ADPT_DESC(SmoothL1LossGrad, kNameSmoothL1LossGrad, ADPT_DESC(SmoothL1LossGradV2))
+REG_ADPT_DESC(SmoothL1LossGradV2, prim::kPrimSmoothL1LossGradV2->name(), ADPT_DESC(SmoothL1LossGradV2))
 
 // SigmoidCrossEntropyWithLogits
 INPUT_MAP(SigmoidCrossEntropyWithLogits) = {{1, INPUT_DESC(predict)}, {2, INPUT_DESC(target)}};

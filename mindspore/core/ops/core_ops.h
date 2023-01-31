@@ -947,6 +947,7 @@ GVAR_DEF(PrimitivePtr, kPrimBinaryCrossEntropyGrad, std::make_shared<Primitive>(
 GVAR_DEF(PrimitivePtr, kPrimSmoothL1Loss, std::make_shared<Primitive>("SmoothL1Loss"));
 GVAR_DEF(PrimitivePtr, kPrimSmoothL1LossV2, std::make_shared<Primitive>("SmoothL1LossV2"));
 GVAR_DEF(PrimitivePtr, kPrimSmoothL1LossGrad, std::make_shared<Primitive>("SmoothL1LossGrad"));
+GVAR_DEF(PrimitivePtr, kPrimSmoothL1LossGradV2, std::make_shared<Primitive>("SmoothL1LossGradV2"));
 GVAR_DEF(PrimitivePtr, kPrimSoftMarginLoss, std::make_shared<Primitive>("SoftMarginLoss"));
 GVAR_DEF(PrimitivePtr, kPrimSoftMarginLossGrad, std::make_shared<Primitive>("SoftMarginLossGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSoftmaxCrossEntropyWithLogits,
