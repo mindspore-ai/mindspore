@@ -1920,8 +1920,11 @@ void Somas::DumpTensors(std::ostringstream &oss) const {
     MS_EXCEPTION_IF_NULL(node);
     auto scope_name = node->scope_full_name_;
     std::string split_name = GetSplitName(scope_name);
-    oss << "%" << tensor->GetId() << "T"
-        << "\t"
+    std::string dump_tensor_str = "T";
+    if (tensor->GetTypeString() == "Control") {
+      dump_tensor_str = "CT";
+    }
+    oss << "%" << tensor->GetId() << dump_tensor_str << "\t"
         << "#" << tensor->GetAlignedSize() << "S"
         << "\t"
         << "#" << tensor->GetOriginalSize() << "S"
