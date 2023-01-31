@@ -160,7 +160,6 @@ public class Benchmark {
                 runner.free();
                 return;
             }
-            System.out.println("========== model parallel runner predict success ==========");
             config.free();
             for (int i = 0; i < inputs.size(); i++) {
                 inputs.get(i).free();
@@ -169,7 +168,7 @@ public class Benchmark {
                 outputs.get(i).free();
             }
             runner.free();
-            return;
+            System.out.println("========== model parallel runner predict success ==========");
         }
 
         MSContext context = new MSContext();
