@@ -173,19 +173,7 @@ status_t SetThreadLocalCtx(const std::string &key, const std::string &value) {
   return AICPU_ERROR_NONE;
 }
 
-status_t GetThreadLocalCtx(const std::string &key, std::string *value) {
-  if (key.empty()) {
-    AICPU_LOGE("get thread local context failed, key is empty");
-    return AICPU_ERROR_FAILED;
-  }
-  auto iter = g_thread_local_ctx.find(key);
-  if (iter != g_thread_local_ctx.end()) {
-    *value = iter->second;
-    return AICPU_ERROR_NONE;
-  }
-  AICPU_LOGW("get thread local context failed, no such key[%s]", key.c_str());
-  return AICPU_ERROR_FAILED;
-}
+status_t GetThreadLocalCtx(const std::string &key, std::string *value) { return AICPU_ERROR_NONE; }
 
 status_t RemoveThreadLocalCtx(const std::string &key) {
   auto iter = g_thread_local_ctx.find(key);
