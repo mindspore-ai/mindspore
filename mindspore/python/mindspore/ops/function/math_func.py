@@ -8285,7 +8285,7 @@ def rot90(x, k, dims):
         TypeError: If `k` is not integer.
         TypeError: If `dims` is not tuple of integers or list of ints.
         ValueError: If the length of `dims` is not `2`.
-        ValueError: If any dims is out of tensor's range [-x.ndim, x.ndim).
+        ValueError: If any dims is out of Tensor's range [-x.ndim, x.ndim).
         RuntimeError: If rotation dims are not different.
 
     Supported Platforms:

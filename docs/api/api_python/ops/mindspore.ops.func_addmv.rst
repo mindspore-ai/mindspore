@@ -14,6 +14,7 @@ mindspore.ops.addmv
         output = β x + α (mat @ vec)
 
     参数：
+        - **x** (Tensor) - 被加的向量，Tensor的shape大小为 :math:`(N,)`。
         - **mat** (Tensor) - 第一个需要相乘的Tensor，shape大小为 :math:`(N, M)` 。
         - **vec** (Tensor) - 第二个需要相乘的Tensor，shape大小为 :math:`(M,)` 。
         - **beta** (scalar[int, float, bool], 可选) - `x` (β)的乘法器。 `beta` 必须是int或float或bool类型，默认值：1。
