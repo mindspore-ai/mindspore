@@ -62,7 +62,7 @@ BaseShapePtr UniformIntInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(maxval_shape);
   if (maxval_shape->IsDimUnknown() || maxval_shape->shape().size() != 0) {
     MS_EXCEPTION(ValueError) << "The max value should be a scalar tensor, while the shape is: "
-                             << minval_shape->ToString();
+                             << maxval_shape->ToString();
   }
 
   ShapeVector shape;
