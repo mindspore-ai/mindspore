@@ -476,7 +476,7 @@ class MarginRankingLoss(LossBase):
           of additional dimensions.
         - **input2** (Tensor) - Tensor of shape :math:`(N, *)`, same shape and dtype as `input1`.
         - **target** (Tensor) - Contains value 1 or -1. Suppose the shape of `input1` is
-          :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `labels` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
+          :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_2, x_3, ..., x_R)`.
 
     Outputs:
         Tensor or Scalar. if `reduction` is "none", its shape is the same as `labels`.
