@@ -103,6 +103,6 @@ def test_randperm_uint64():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_randperm_n_too_large():
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(ValueError) as info:
         randperm(1, 0, mindspore.int32, 2)
-    assert "n (2) cannot exceed max_length_ (1)" in str(info.value)
+    assert "For 'Randperm', input 'n' (2) cannot exceed 'max_length' (1)." in str(info.value)
