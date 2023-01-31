@@ -7797,7 +7797,11 @@ class Roll(Primitive):
         """Initialize Roll"""
         if context.get_context("device_target") == "GPU":
             validator.check_value_type("shift", shift, [int, tuple, list], self.name)
+            if not isinstance(shift, (list, tuple)):
+                self.add_prim_attr('shift', [shift])
             validator.check_value_type("axis", axis, [int, tuple, list], self.name)
+            if not isinstance(axis, (list, tuple)):
+                self.add_prim_attr('axis', [axis])
         else:
             if isinstance(shift, (tuple, list)) and isinstance(axis, (tuple, list)):
                 validator.check_equal_int(len(shift), 1, "shift size", self.name)
