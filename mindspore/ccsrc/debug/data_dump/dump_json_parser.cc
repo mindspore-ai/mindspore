@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@
 
 namespace {
 constexpr auto kCommonDumpSettings = "common_dump_settings";
-constexpr auto kAsyncDumpSettings = "async_dump_settings";
 constexpr auto kE2eDumpSettings = "e2e_dump_settings";
 constexpr auto kDumpMode = "dump_mode";
 constexpr auto kPath = "path";
@@ -176,7 +175,11 @@ void DumpJsonParser::CopyDumpJsonToDir(uint32_t rank_id) {
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed in CopyDumpJsonToDir.";
     } else {
-      WriteJsonFile(realpath.value(), json_file);
+      if (!Common::FileExists(realpath.value())) {
+        WriteJsonFile(realpath.value(), json_file);
+      } else {
+        MS_LOG(WARNING) << "The file: " << realpath.value() << " is already exist, skip copy it.";
+      }
     }
   }
 }
@@ -223,6 +226,10 @@ void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t rank_id) {
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed in CopyMSConfigJsonToDir.";
   } else {
+    if (Common::FileExists(realpath.value())) {
+      MS_LOG(WARNING) << "The file: " << realpath.value() << " is already exist, skip copy it.";
+      return;
+    }
     nlohmann::json ms_info;
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
@@ -584,6 +591,7 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
       ret = kernel_types_.try_emplace({kernel_str, 0}).second;
     } else {
       ret = kernels_.try_emplace({kernel_str, 0}).second;
+      dump_layer_ += kernel_str + " ";
     }
     if (!ret) {
       MS_LOG(WARNING) << "Duplicate dump kernel name:" << kernel_str;

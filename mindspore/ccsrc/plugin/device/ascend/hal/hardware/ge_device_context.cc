@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -586,6 +586,10 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     // DumpStep is set to "all" by default
     if (dump_parser.iteration_string() != "all") {
       (*ge_options)["ge.exec.dumpStep"] = dump_parser.iteration_string();
+    }
+    if (dump_parser.dump_mode() == 1) {
+      (*ge_options)["ge.exec.dumpLayer"] = dump_parser.dump_layer();
+      MS_LOG(INFO) << "Set dumplayer to: " << (*ge_options)["ge.exec.dumpLayer"];
     }
     MS_LOG(INFO) << "The enable dump state is " << (*ge_options)["ge.exec.enableDump"] << ", save dump path is "
                  << (*ge_options)["ge.exec.dumpPath"] << ", dump mode is " << kGeDumpMode[dump_parser.input_output()]

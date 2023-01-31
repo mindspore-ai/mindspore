@@ -307,9 +307,8 @@ void DebugServices::AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, 
     // if recheck, ignore the cache results and reanalyze everything.
     // if not a recheck, check only unanalyzed tensors
     if (!recheck) {
-      wp_lock_.lock();
+      std::lock_guard<std::mutex> lg(wp_lock_);
       bool wp_cache_hit = wp_id_cache_[tensor_name].count(wp.id);
-      wp_lock_.unlock();
       if (wp_cache_hit) {
         continue;
       }
@@ -331,9 +330,8 @@ void DebugServices::AddAnalyzedTensorToCache(const bool recheck, const unsigned 
                                              const std::string &tensor_name) {
   // add analyzed tensor to cache
   if (!recheck) {
-    wp_lock_.lock();
+    std::lock_guard<std::mutex> lg(wp_lock_);
     (void)wp_id_cache_[tensor_name].insert(id);
-    wp_lock_.unlock();
   }
 }
 
@@ -2063,8 +2061,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
   std::replace(node_name_to_find.begin(), node_name_to_find.end(), '/', '_');
   std::vector<std::string> op_names;
 
-  overflow_wp_lock_.lock();
-
+  std::lock_guard<std::mutex> lg(overflow_wp_lock_);
   MS_LOG(WARNING) << "Searching for overflow in node " << node_name_to_find;
   auto found_overflows = overflow_ops_.find(overflow_bin_path);
   if (found_overflows != overflow_ops_.end()) {
@@ -2074,8 +2071,6 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
     AddOpOverflowOpNames(overflow_bin_path, tensors_path, &op_names);
     overflow_ops_[overflow_bin_path] = op_names;
   }
-
-  overflow_wp_lock_.unlock();
 
   // determine if overflow wp has been triggered for the op name with path (from bin file)
   if (find(op_names.begin(), op_names.end(), op_name_find_with_path) != op_names.end()) {

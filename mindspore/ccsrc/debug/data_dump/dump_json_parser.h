@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ class BACKEND_EXPORT DumpJsonParser {
   bool IsFullDump() const;
   bool IsNpyFormat() const;
   bool IsDumpIter(uint32_t iteration) const;
-
+  std::string dump_layer() const { return dump_layer_; }
   bool async_dump_enabled() const { return async_dump_enabled_; }
   bool e2e_dump_enabled() const { return e2e_dump_enabled_; }
   uint32_t dump_mode() const { return dump_mode_; }
@@ -111,6 +111,7 @@ class BACKEND_EXPORT DumpJsonParser {
   uint32_t cur_dump_iter_{0};
   bool already_parsed_{false};
   bool dump_enabled_warning_printed_{false};
+  std::string dump_layer_;
 
   // Save graphs for dump.
   std::vector<session::KernelGraph *> graphs_;
