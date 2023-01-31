@@ -20,7 +20,7 @@
 
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
-#include "abstract/param_validator.h"
+#include "abstract/abstract_function.h"
 
 namespace mindspore {
 namespace abstract {
@@ -326,6 +326,68 @@ AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type
     MS_LOG(EXCEPTION) << "Evaluator return invalid shape " << base_shape->ToString() << " or type. "
                       << type->ToString();
   }
+}
+
+namespace {
+FuncGraphPtr GetFuncGraphFromAbs(const abstract::AbstractBasePtr &abs, const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  if (abs == nullptr) {
+    MS_LOG(ERROR) << "Null abstract, current node: " << anf_node->DebugString();
+    return nullptr;
+  }
+  if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
+    auto abs_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+    MS_EXCEPTION_IF_NULL(abs_func_graph);
+    if (!abs_func_graph->specialized()) {
+      MS_LOG(INFO) << "Unspecilized func graph abstract: " << abs_func_graph->ToString()
+                   << ", node: " << anf_node->DebugString();
+    }
+    return abs_func_graph->func_graph();
+  }
+
+  if (abs->isa<abstract::PartialAbstractClosure>()) {
+    auto abs_partial_closure = abs->cast<abstract::PartialAbstractClosurePtr>();
+    MS_EXCEPTION_IF_NULL(abs_partial_closure);
+    auto abs_func = abs_partial_closure->fn();
+    return GetFuncGraphFromAbs(abs_func, anf_node);
+  }
+  MS_LOG(ERROR) << "Unexpected abs: " << abs->ToString();
+  return nullptr;
+}
+}  // namespace
+
+std::vector<FuncGraphPtr> GetFuncGraphsFromAbs(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  if (IsValueNode<FuncGraph>(anf_node)) {
+    return {GetValueNode<FuncGraphPtr>(anf_node)};
+  }
+  auto abs = anf_node->abstract();
+  if (abs == nullptr) {
+    MS_LOG(ERROR) << "Null abstract, current node: " << anf_node->DebugString();
+    return {};
+  }
+  if (!abs->isa<abstract::AbstractFunction>()) {
+    MS_LOG(ERROR) << "Unexpected abs: " << abs->ToString() << ", anf_node: " << anf_node->DebugString();
+    return {};
+  }
+  auto abs_func = abs->cast<abstract::AbstractFunctionPtr>();
+  MS_EXCEPTION_IF_NULL(abs_func);
+  std::vector<FuncGraphPtr> func_graphs;
+  if (abs->isa<abstract::AbstractFuncUnion>()) {
+    auto visit_func = [&func_graphs, &anf_node](const abstract::AbstractFuncAtomPtr &poss) {
+      (void)func_graphs.emplace_back(GetFuncGraphFromAbs(poss, anf_node));
+    };
+    abs_func->Visit(visit_func);
+  } else {
+    (void)func_graphs.emplace_back(GetFuncGraphFromAbs(abs_func, anf_node));
+  }
+  bool exist_null_fg =
+    std::any_of(func_graphs.cbegin(), func_graphs.cend(), [](const FuncGraphPtr &fg) { return fg == nullptr; });
+  if (exist_null_fg) {
+    MS_LOG(ERROR) << "Get func graphs from abstract failed!";
+    return {};
+  }
+  return func_graphs;
 }
 }  // namespace abstract
 }  // namespace mindspore

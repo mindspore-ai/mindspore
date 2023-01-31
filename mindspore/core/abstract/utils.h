@@ -56,6 +56,7 @@ T ShapeSize(const std::vector<T> &shape) {
 MS_CORE_API AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type);
 MS_CORE_API AbstractBasePtr MakeMonadAbstract(const MonadTypePtr &type);
 MS_CORE_API AbstractBasePtr MakeAbstractTensor(const ShapePtr &shape, const TypePtr &type);
+MS_CORE_API std::vector<FuncGraphPtr> GetFuncGraphsFromAbs(const AnfNodePtr &anf_node);
 
 class MS_CORE_API EnvSetSparseResultMgr {
  public:

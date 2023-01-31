@@ -118,8 +118,8 @@ bool BackendCSE::CheckEqualCnodeInputs(const AnfNodePtr &main, const AnfNodePtr 
     return false;
   }
   for (size_t j = 0; j < inp1.size(); j++) {
-    auto inp1_j = inp1[j];
-    auto inp2_j = inp2[j];
+    auto inp1_j = GetReplicatedNode(inp1[j]);
+    auto inp2_j = GetReplicatedNode(inp2[j]);
     MS_EXCEPTION_IF_NULL(inp1_j);
     MS_EXCEPTION_IF_NULL(inp2_j);
     if (!(*inp1_j == *inp2_j)) {
@@ -145,7 +145,7 @@ bool BackendCSE::CheckValueNode(const ValueNodePtr &main, const ValueNodePtr &no
   return (AbsOf(main) == AbsOf(node)) && (*main_value == *node_value);
 }
 
-bool BackendCSE::CheckCNode(const CNodePtr &main, const CNodePtr &node) const {
+bool BackendCSE::CheckCNode(const CNodePtr &main, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(main);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -163,7 +163,7 @@ bool BackendCSE::CheckCNode(const CNodePtr &main, const CNodePtr &node) const {
   return CheckEqualCnodeInputs(main, node);
 }
 
-bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) const {
+bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(main);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -182,10 +182,12 @@ bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) co
   return false;
 }
 
-bool BackendCSE::Cse(const FuncGraphPtr graph, const FuncGraphManagerPtr manager) const {
+bool BackendCSE::Cse(const FuncGraphPtr graph, const FuncGraphManagerPtr manager) {
   MS_EXCEPTION_IF_NULL(manager);
-  auto ret = BuildOrderGroupAndDoReplaceForOneGraph(graph, manager);
+  Init();
+  auto ret = BuildOrderGroupForOneGraph(graph, manager);
   if (ret) {
+    DoReplace(manager);
     EliminateDuplicatedTupleGetItem(graph, manager);
   }
   return ret;

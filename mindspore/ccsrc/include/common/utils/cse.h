@@ -20,6 +20,8 @@
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CSE_H_
 
 #include <vector>
+#include <utility>
+#include <map>
 #include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "ir/manager.h"
@@ -34,19 +36,28 @@ class COMMON_EXPORT CSE {
   CSE() = default;
   virtual ~CSE() = default;
 
-  virtual bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) const;
+  virtual bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node);
 
-  virtual bool Cse(const FuncGraphPtr root, const FuncGraphManagerPtr manager) const;
+  virtual bool Cse(const FuncGraphPtr root, const FuncGraphManagerPtr manager);
 
-  static bool HasHiddenSideEffect(const AnfNodePtr &node);
+  bool HasHiddenSideEffect(const AnfNodePtr &node);
 
  protected:
-  bool BuildOrderGroupAndDoReplaceForOneGraph(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) const;
+  void Init();
+  bool BuildOrderGroupForOneGraph(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager);
+  void DoReplace(const FuncGraphManagerPtr &manager);
+  AnfNodePtr GetReplicatedNode(const AnfNodePtr &node) const;
 
  private:
-  bool BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager) const;
-  bool DoReplace(const FuncGraphManagerPtr manager, const std::vector<std::size_t> &order_group,
-                 mindspore::HashMap<std::size_t, std::vector<AnfNodePtr>> *groups) const;
+  bool BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager);
+  bool CalReplaceNodes(const FuncGraphManagerPtr manager, const std::vector<std::size_t> &order_group,
+                       mindspore::HashMap<std::size_t, std::vector<AnfNodePtr>> *groups);
+  void AddReplicatedNode(const AnfNodePtr &node, const AnfNodePtr &main);
+  bool IsHiddenSideEffectCall(const AnfNodePtr &node);
+  // Record func graphs having hidden_side_effect cnode.
+  HashSet<FuncGraphPtr> hidden_side_effect_func_graphs_;
+  // Record all node need to be replaced
+  OrderedMap<AnfNodePtr, AnfNodePtr> replicated_nodes_;
 };
 
 COMMON_EXPORT BasePtr AbsOf(const AnfNodePtr &node, bool ignore_fg_abs_tracking_id = false);

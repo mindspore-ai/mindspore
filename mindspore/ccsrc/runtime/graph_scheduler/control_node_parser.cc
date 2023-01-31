@@ -1899,52 +1899,6 @@ void ControlNodeParser::ParseFrontToBackendParameter(const std::vector<KernelGra
   }
 }
 
-FuncGraphPtr GetFuncGraph(const abstract::AbstractBasePtr &abs, const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_CHECK_FAIL(abs != nullptr, "Null abstract, current node: " + anf_node->DebugString());
-  if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
-    auto abs_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
-    MS_EXCEPTION_IF_NULL(abs_func_graph);
-    if (!abs_func_graph->specialized()) {
-      MS_LOG(INFO) << "Unspecilized func graph abstract: " << abs_func_graph->ToString()
-                   << ", node: " << anf_node->DebugString();
-    }
-    return abs_func_graph->func_graph();
-  }
-
-  if (abs->isa<abstract::PartialAbstractClosure>()) {
-    auto abs_partial_closure = abs->cast<abstract::PartialAbstractClosurePtr>();
-    MS_EXCEPTION_IF_NULL(abs_partial_closure);
-    auto abs_func = abs_partial_closure->fn();
-    return GetFuncGraph(abs_func, anf_node);
-  }
-  MS_LOG(EXCEPTION) << "Unexpected abs: " << abs->ToString();
-}
-
-std::vector<FuncGraphPtr> GetFuncGraphs(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  if (IsValueNode<FuncGraph>(anf_node)) {
-    return {GetValueNode<FuncGraphPtr>(anf_node)};
-  }
-  auto abs = anf_node->abstract();
-  MS_EXCEPTION_IF_CHECK_FAIL(abs != nullptr, "Null abstract of node: " + anf_node->DebugString());
-  if (!abs->isa<abstract::AbstractFunction>()) {
-    MS_LOG(EXCEPTION) << "Unexpected abs: " << abs->ToString() << ", anf_node: " << anf_node->DebugString();
-  }
-  auto abs_func = abs->cast<abstract::AbstractFunctionPtr>();
-  MS_EXCEPTION_IF_NULL(abs_func);
-  std::vector<FuncGraphPtr> ret;
-  if (abs->isa<abstract::AbstractFuncUnion>()) {
-    auto visit_func = [&ret, &anf_node](const abstract::AbstractFuncAtomPtr &poss) {
-      (void)ret.emplace_back(GetFuncGraph(poss, anf_node));
-    };
-    abs_func->Visit(visit_func);
-  } else {
-    (void)ret.emplace_back(GetFuncGraph(abs_func, anf_node));
-  }
-  return ret;
-}
-
 void ControlNodeParser::ParseCallNodeToFuncGraph(const std::vector<AnfNodePtr> &control_nodes) {
   for (const auto &control_node : control_nodes) {
     MS_EXCEPTION_IF_NULL(control_node);
@@ -1954,7 +1908,10 @@ void ControlNodeParser::ParseCallNodeToFuncGraph(const std::vector<AnfNodePtr> &
 
     const auto &cnode = control_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    const auto &func_graphs = GetFuncGraphs(cnode->input(0));
+    const auto &func_graphs = abstract::GetFuncGraphsFromAbs(cnode->input(0));
+    if (func_graphs.empty()) {
+      MS_LOG(EXCEPTION) << "Get func graphs from abstract failed.";
+    }
     for (auto func_graph : func_graphs) {
       (void)call_node_to_func_graphs_[control_node].emplace(func_graph);
     }

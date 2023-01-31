@@ -35,7 +35,7 @@ class CSEPass : public CSE {
   explicit CSEPass(bool report_changes = true) : CSE(), report_changes_(report_changes) {}
   virtual ~CSEPass() = default;
 
-  bool operator()(const FuncGraphPtr &root, const OptimizerPtr &optimizer) const {
+  bool operator()(const FuncGraphPtr &root, const OptimizerPtr &optimizer) {
     bool chg = Cse(root, optimizer->resource()->manager());
     return chg && report_changes_;
   }
