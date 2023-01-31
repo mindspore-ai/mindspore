@@ -3364,7 +3364,7 @@ def true_divide(divident, divisor):
     r"""
     Computes the element-wise division of input tensors.
     """
-    return F.div(divident, divisor, None)
+    return F.div(divident, divisor, rounding_mode=None)
 
 
 # pylint: disable=redefined-outer-name
@@ -4011,11 +4011,11 @@ def multiply(input, other):
     return F.multiply(input, other)
 
 
-def div(input, other, rounding_mode=None):
+def div(input, value, *, rounding_mode=None):
     r"""
-    Divides the tensor `input` by the given input tensor `other` in floating-point type element-wise.
+    Divides the tensor `input` by the given input tensor `value` in floating-point type element-wise.
     """
-    return F.div(input, other, rounding_mode)
+    return F.div(input, value, rounding_mode=rounding_mode)
 
 
 def equal(x, y):

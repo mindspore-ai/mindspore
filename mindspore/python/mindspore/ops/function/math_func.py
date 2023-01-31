@@ -883,7 +883,7 @@ def multiply(input, other):
     return tensor_mul(input, other)
 
 
-def div(input, other, rounding_mode=None):
+def div(input, other, *, rounding_mode=None):
     """
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
@@ -948,7 +948,7 @@ def divide(x, other, *, rounding_mode=None):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return div(x, other, rounding_mode)
+    return div(x, other, rounding_mode=rounding_mode)
 
 
 def float_power(x, exponent):

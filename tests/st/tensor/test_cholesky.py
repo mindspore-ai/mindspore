@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,57 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
 import pytest
+import numpy as np
 
-import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import jit
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
+import mindspore.context as context
 from mindspore.common import dtype as mstype
 
-context.set_context(device_target="Ascend")
 
-
-class Net(nn.Cell):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.argmax = P.Argmax(axis=1)
-
-    @jit
+class CholeskyTensorNet(nn.Cell):
     def construct(self, x):
-        return self.argmax(x)
-
-
-def test_net():
-    x = np.random.randn(32, 10).astype(np.float32)
-    argmax = Net()
-    output = argmax(Tensor(x))
-    print(x)
-    print(output.asnumpy())
-
-
-class ArgmaxFuncNet(nn.Cell):
-    def construct(self, x):
-        return F.argmax(x, dim=-1)
+        return x.cholesky(upper=False)
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_functional_argmax(mode):
+def test_tensor_cholesky(mode):
     """
-    Feature: Test argmax functional api.
-    Description: Test argmax functional api for Graph and PyNative modes.
+    Feature: Test cholesky tensor api.
+    Description: Test cholesky tensor api for Graph and PyNative modes.
     Expectation: the result match with expected result.
     """
-    context.set_context(mode=mode, device_target="Ascend")
-    x = Tensor([[1, 20, 5], [67, 8, 9], [130, 24, 15]], mstype.float32)
-    net = ArgmaxFuncNet()
+    context.set_context(mode=mode)
+    x = Tensor([[1.0, 1.0], [1.0, 2.0]], mstype.float32)
+    net = CholeskyTensorNet()
     output = net(x)
-    expect_output = np.array([1, 0, 0]).astype(np.int32)
+    expect_output = np.array([[1., 0.], [1., 1.]])
     assert np.allclose(output.asnumpy(), expect_output)

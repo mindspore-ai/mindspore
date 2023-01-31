@@ -49,7 +49,8 @@ from mindspore.ops.operations.array_ops import (
     Lstsq,
     Mvlgamma,
     CountNonZero,
-    Tril
+    Tril,
+    Argmax
 )
 from mindspore.ops.operations.array_ops import TensorScatterElements
 from mindspore.common import Tensor
@@ -5477,43 +5478,42 @@ def max(x, axis=0, keep_dims=False):
     return argmax_with_value_op(x)
 
 
-def argmax(x, axis=None, keepdims=False):
+def argmax(input, dim=None, keepdim=False):
     """
     Return the indices of the maximum values of a tensor across a dimension.
 
     Args:
-        x (Tensor): Input tensor.
-        axis (Union[int, None], optional): The dimension to reduce. If `axis` is None,
-            the indices of the maximum value within the flattened input will be returned.
-            Default: None.
-        keepdims (bool, optional): Whether the output tensor retains the specified
-            dimension. Ignored if `axis` is None. Default: False.
+        input (Tensor): Input tensor.
+        dim (Union[int, None]): The dimension to reduce. If `dim` is None, the indices of the maximum
+            value within the flattened input will be returned. Default: None.
+        keepdim (bool): Whether the output tensor retains the specified
+            dimension. Ignored if `dim` is None. Default: False.
 
     Returns:
         Tensor, indices of the maximum values across a dimension.
 
     Raises:
-        ValueError: If `axis` is out of range.
+        ValueError: If `dim` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
-        >>> output = ops.argmax(x, axis=-1)
+        >>> output = ops.argmax(x, dim=-1)
         >>> print(output)
         [1 0 0]
     """
-    if x.shape == ():
+    if input.shape == ():
         return Tensor(0)
-    is_axis_none = False
-    if axis is None:
-        x = reshape_(x, (-1,))
-        axis = 0
-        is_axis_none = True
-    out = P.Argmax(axis, mstype.int64)(x)
-    if keepdims and not is_axis_none:
-        out = expand_dims_(out, axis)
+    is_dim_none = False
+    if dim is None:
+        input = reshape_(input, (-1,))
+        dim = 0
+        is_dim_none = True
+    out = _get_cache_prim(Argmax)(dim, mstype.int64)(input)
+    if keepdim and not is_dim_none:
+        out = expand_dims_(out, dim)
     return out
 
 
