@@ -2223,7 +2223,7 @@ def silu(x):
 
     where :math:`x_i` is an element of the x.
 
-    For more details, please refer to mindspore.nn.SiLU.
+    For more details, please refer to :class:`mindspore.nn.SiLU`.
     """
     return sigmoid_(x)*x
 
