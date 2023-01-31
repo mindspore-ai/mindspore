@@ -5747,7 +5747,8 @@ class DATASET_API TFRecordDataset : public Dataset {
   ///     when num_shards is also specified. (Default = 0).
   /// \param[in] shard_equal_rows Get equal rows for all shards.
   ///     (Default = false, number of rows of each shard may be not equal).
-  ///     When `compression_type` and `num_samples` are provided, `shard_equal_rows` will be implied as true.
+  ///     When `compression_type` is "GZIP" or "ZLIB", and `num_samples` or numRows (parsed from `schema` ) is
+  ///     provided, shard_equal_rows` will be implied as true.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] compression_type Compression type to use.
   ///     (Default = "", which means no compression is used).
@@ -5786,7 +5787,8 @@ class DATASET_API TFRecordDataset : public Dataset {
   ///     when num_shards is also specified. (Default = 0).
   /// \param[in] shard_equal_rows Get equal rows for all shards.
   ///     (Default = false, number of rows of each shard may be not equal).
-  ///     When `compression_type` and `num_samples` are provided, `shard_equal_rows` will be implied as true.
+  ///     When `compression_type` is "GZIP" or "ZLIB", and `num_samples` or numRows (parsed from `schema` ) is
+  ///     provided, shard_equal_rows` will be implied as true.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] compression_type Compression type to use.
   ///     (Default = "", which means no compression is used).
@@ -5829,7 +5831,8 @@ class DATASET_API TFRecordDataset : public Dataset {
 ///     when num_shards is also specified. (Default = 0).
 /// \param[in] shard_equal_rows Get equal rows for all shards.
 ///     (Default = false, number of rows of each shard may be not equal).
-///     When `compression_type` and `num_samples` are provided, `shard_equal_rows` will be implied as true.
+///     When `compression_type` is "GZIP" or "ZLIB", and `num_samples` or numRows (parsed from `schema` ) is
+///     provided, shard_equal_rows` will be implied as true.
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \param[in] compression_type Compression type to use.
 ///     (Default = "", which means no compression is used).

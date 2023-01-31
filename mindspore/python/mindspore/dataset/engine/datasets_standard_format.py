@@ -291,8 +291,6 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             Default: None, which means no cache is used.
         compression_type (str, optional): The type of compression used for all files, must be either '', 'GZIP', or
             'ZLIB'. Default: None, as in empty string.
-            This will automatically get equal rows for all shards (`shard_equal_rows` considered to be True) when
-            `num_samples` or numRows (parsed from `schema` ) is provided.
 
     Raises:
         ValueError: If dataset_files are not valid or do not exist.
