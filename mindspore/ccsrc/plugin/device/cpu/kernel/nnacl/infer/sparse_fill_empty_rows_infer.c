@@ -19,18 +19,27 @@
 
 int SparseFillEmptyRowsInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                   size_t outputs_size, OpParameter *parameter) {
-  int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, C4NUM, C3NUM);
+  int check_ret = CheckAugmentNullInputSize(inputs, inputs_size, outputs, outputs_size, parameter, C4NUM);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
 
-  const TensorC *input = inputs[0];
+  const TensorC *input0 = inputs[0];
   TensorC *output0 = outputs[0];
+  SetDataTypeFormat(output0, input0);
+
+  const TensorC *input1 = inputs[1];
   TensorC *output1 = outputs[1];
+  SetDataTypeFormat(output1, input1);
+
   TensorC *output2 = outputs[C2NUM];
-  SetDataTypeFormat(output0, input);
-  SetDataTypeFormat(output1, input);
-  SetDataTypeFormat(output2, input);
+  SetDataTypeFormat(output2, input0);
+  output2->data_type_ = kNumberTypeBool;
+
+  if (outputs_size == C4NUM) {
+    TensorC *output3 = outputs[C3NUM];
+    SetDataTypeFormat(output3, input0);
+  }
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
