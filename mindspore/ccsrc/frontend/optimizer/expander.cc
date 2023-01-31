@@ -43,45 +43,63 @@ const std::map<std::string, std::vector<std::string>> op2attrs = {
   {prim::kPrimMatMul->name(), {kTransposeA, kTransposeB}}};
 }
 
-bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto todos = TopoSort(graph->get_return());
-  auto mng = Manage({graph}, false);
-  for (const auto &node : todos) {
-    if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
-      continue;
-    }
-    auto primitive = GetCNodePrimitive(node);
-    if (primitive == nullptr || primitive->isa<PrimitivePy>()) {
-      continue;
-    }
-    if (abstract::GetFrontendPrimitiveInferImpl(primitive).has_value()) {
-      continue;
-    }
-    if (primitive->isa<prim::DoSignaturePrimitive>()) {
-      continue;
-    }
-    parallel::OperatorAttrs attrs;
-    const auto iter = op2attrs.find(primitive->name());
-    if (iter != op2attrs.end()) {
-      for (auto &attr : iter->second) {
-        if (primitive->HasAttr(attr)) {
-          (void)attrs.emplace_back(std::pair{attr, primitive->GetAttr(attr)});
-        } else {
-          MS_LOG(WARNING) << primitive->name() << " op do not have attr: " << attr;
-          return false;
+class PrimpyConverter {
+ public:
+  bool Run(const FuncGraphPtr &graph) {
+    MS_EXCEPTION_IF_NULL(graph);
+    (void)visited_graphs_.insert(graph);
+    auto todos = TopoSort(graph->get_return());
+    auto mng = Manage({graph}, false);
+    for (const auto &node : todos) {
+      if (node->isa<ValueNode>()) {
+        auto sub_graph = node->cast<ValueNodePtr>()->value()->cast<FuncGraphPtr>();
+        if (sub_graph != nullptr && visited_graphs_.count(sub_graph) == 0) {
+          (void)Run(sub_graph);
+          continue;
         }
       }
+      if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
+        continue;
+      }
+      auto primitive = GetCNodePrimitive(node);
+      if (primitive == nullptr || primitive->isa<PrimitivePy>()) {
+        continue;
+      }
+      if (abstract::GetFrontendPrimitiveInferImpl(primitive).has_value()) {
+        continue;
+      }
+      if (primitive->isa<prim::DoSignaturePrimitive>()) {
+        continue;
+      }
+      parallel::OperatorAttrs attrs;
+      const auto iter = op2attrs.find(primitive->name());
+      if (iter != op2attrs.end()) {
+        for (auto &attr : iter->second) {
+          if (primitive->HasAttr(attr)) {
+            (void)attrs.emplace_back(std::pair{attr, primitive->GetAttr(attr)});
+          } else {
+            MS_LOG(WARNING) << primitive->name() << " op do not have attr: " << attr;
+            return false;
+          }
+        }
+      }
+      auto new_prim = parallel::CreateOpInstance(attrs, primitive->name(), "");
+      (void)new_prim->cast_ptr<Primitive>()->SetAttrs(primitive->attrs());
+      AnfNodePtrList inputs = {NewValueNode(new_prim)};
+      auto cnode = dyn_cast_ptr<CNode>(node);
+      (void)inputs.insert(inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
+      auto new_cnode = graph->NewCNodeInOrder(inputs);
+      (void)mng->Replace(node, new_cnode);
     }
-    auto new_prim = parallel::CreateOpInstance(attrs, primitive->name(), "");
-    (void)new_prim->cast_ptr<Primitive>()->SetAttrs(primitive->attrs());
-    AnfNodePtrList inputs = {NewValueNode(new_prim)};
-    auto cnode = dyn_cast_ptr<CNode>(node);
-    (void)inputs.insert(inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
-    auto new_cnode = graph->NewCNodeInOrder(inputs);
-    (void)mng->Replace(node, new_cnode);
+    return true;
   }
-  return true;
+
+ private:
+  std::set<FuncGraphPtr> visited_graphs_;
+};
+bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
+  PrimpyConverter c;
+  return c.Run(graph);
 }
 
 #ifdef ENABLE_AKG

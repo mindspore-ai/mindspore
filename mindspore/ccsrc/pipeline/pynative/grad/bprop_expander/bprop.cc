@@ -247,6 +247,18 @@ void BpropExpanderInGraphMode::PostProcess() const {
   auto mt = fg_->NewCNode(new_outputs);
   mt->set_abstract(std::make_shared<abstract::AbstractTuple>(abs));
   fg_->set_output(mt);
+
+  // clear all abstract, to let the specializer re-infer the subgraph of controlflow graphs.
+  auto todos = TopoSort(fg_->get_return(), SuccDeeperSimple, AlwaysInclude);
+  for (auto &no : todos) {
+    no->set_abstract(nullptr);
+    if (IsValueNode<FuncGraph>(no)) {
+      auto fg = GetValueNode<FuncGraphPtr>(no);
+      for (auto &p : fg->parameters()) {
+        p->set_abstract(nullptr);
+      }
+    }
+  }
 }
 
 void BpropExpanderInGraphMode::DumpResult(const std::string &name) const {

@@ -35,6 +35,7 @@ class MS_CORE_API Emitter {
  public:
   Emitter(const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer, const ScopePtr &scope = nullptr)
       : func_graph_(func_graph), infer_(infer), scope_(scope) {
+    MS_EXCEPTION_IF_NULL(func_graph);
     MS_EXCEPTION_IF_NULL(infer);
   }
 
@@ -153,6 +154,7 @@ class MS_CORE_API Emitter {
     return EmitValue(tensor_ptr);
   }
 
+  /// \brief get the ExpanderInferPtr
   ExpanderInferPtr infer() const { return infer_; }
 
   /// \brief Shape calculation.
@@ -168,6 +170,29 @@ class MS_CORE_API Emitter {
   NodePtrList ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &shape_func, const ops::InferFunc &infer_func,
                         const std::vector<int64_t> &value_depend_indices = {}) const;
 
+  using BlockFunc = std::function<NodePtrList(const Emitter *)>;
+  /// \brief Generate a conditional block.
+  ///
+  /// \param[in] cond condition node, it should be a tensor of Bool.
+  /// \param[in] true_case  the true branch.
+  /// \param[in] false_case the false branch.
+  /// \return node of tuple or single value, which is depends on the output list of two branches.
+  /// \note The overloaded operators (like a+b) should not be used for captured variables in the true_case/false_case
+  /// functions, use the function argument `Emitter` instead, like `emitter->Add(a, b)`. The output list of two branches
+  /// should match the join rules of control flow.
+  NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) const;
+
+  /// \brief Generate a while-loop block.
+  ///
+  /// \param[in] cond condition node, it should be a tensor of Bool.
+  /// \param[in] body  the loop body.
+  /// \param[in] init_list the initial variables that would be modified in body.
+  /// \return node of tuple or single value, which is depends on the init_list.
+  /// \note The overloaded operators (like `a+b`) should not be used for captured variables in the body function, use
+  /// the function argument `Emitter` instead, like `emitter->Add(a, b)`. The length and node order of the output list
+  /// of the body function should match init_list.
+  NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) const;
+
  protected:
   NodePtr NewNode(const AnfNodePtr &anfnode) const { return std::make_shared<Node>(anfnode, this); }
   NodePtr CmpOpWithCast(const std::string &op, const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type) const {
@@ -179,6 +204,8 @@ class MS_CORE_API Emitter {
     auto [lhs, rhs] = UnifyDtype2(a, b);
     return Emit(op, {lhs, rhs}, attrs);
   }
+
+  class CtrlFlowBlock;
 
   FuncGraphPtr func_graph_;
   ExpanderInferPtr infer_{nullptr};
