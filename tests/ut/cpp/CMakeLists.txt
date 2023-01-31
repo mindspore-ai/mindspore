@@ -95,6 +95,10 @@ if(ENABLE_MINDDATA)
                 ./distributed/cluster/topology/*.cc
                 ./distributed/recovery/*.cc
                 ./distributed/embedding_cache/*.cc)
+        if(${ENABLE_RDMA} STREQUAL "ON")
+            include_directories(/usr/include/umdk)
+            file(GLOB_RECURSE UT_DISTRIBUTED_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./distributed/rpc/rdma/*.cc)
+        endif()
         list(APPEND UT_SRCS ${UT_DISTRIBUTED_SRCS})
     endif()
     if(NOT ENABLE_PYTHON)
@@ -229,6 +233,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/cpu/kernel/rpc/rpc_recv_kernel.cc"
         "../../../mindspore/ccsrc/distributed/persistent/*.cc"
         "../../../mindspore/ccsrc/distributed/rpc/tcp/*.cc"
+        "../../../mindspore/ccsrc/distributed/rpc/rdma/*.cc"
         "../../../mindspore/ccsrc/distributed/cluster/topology/*.cc"
         "../../../mindspore/ccsrc/distributed/embedding_cache/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/profiler/*.cc"
@@ -241,6 +246,11 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ext_info_handle.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_util.cc"
         )
+if(${ENABLE_RDMA} STREQUAL "OFF")
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST
+    "../../../mindspore/ccsrc/distributed/rpc/rdma/rdma_client.cc"
+    "../../../mindspore/ccsrc/distributed/rpc/rdma/rdma_server.cc")
+endif()
 
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/ps/util.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/create_node_helper.cc")
