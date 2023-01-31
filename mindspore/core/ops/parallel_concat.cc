@@ -86,6 +86,7 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
   }
   auto ret_shape = element0_shape;
   ret_shape[axis] = all_shp;
+  (void)primitive->AddAttr("shape", MakeValue(ret_shape));
   return std::make_shared<abstract::Shape>(ret_shape);
 }
 
