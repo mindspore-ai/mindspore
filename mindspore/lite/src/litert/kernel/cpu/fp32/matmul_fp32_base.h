@@ -55,6 +55,7 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   static int InitBroadcastParams(const std::vector<int> &a_shape_const, const std::vector<int> &b_shape_const,
                                  MatMulParameter *params, std::vector<int> *a_offsets, std::vector<int> *b_offsets);
   int PackMatrixBParallelRunByBatch(int task_id) const;
+  inline void SetSharingPack(bool is_sharing) { is_sharing_pack_ = is_sharing; }
 
   using ParallelRun = int (MatmulFp32BaseCPUKernel::*)(int task_id) const;
   ParallelRun parallel_fun_ = nullptr;
@@ -138,6 +139,7 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   MatrixPackFun matrix_b_pack_fun_ = nullptr;
   float *conv1x1_origin_weight_ = nullptr;
   float *conv1x1_origin_bias_ = nullptr;
+  bool is_sharing_pack_ = true;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_MATMUL_FP32_BASE_H_

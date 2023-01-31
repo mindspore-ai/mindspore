@@ -50,7 +50,11 @@ ConvolutionBaseCPUKernel::~ConvolutionBaseCPUKernel() {
   if (addr_map.find(reinterpret_cast<uintptr_t>(packed_weight_)) != addr_map.end()) {
     FreeAlignedData(reinterpret_cast<void **>(&packed_weight_));
   } else if (!op_parameter_->is_train_session_) {
-    lite::PackWeightManager::GetInstance()->Free(packed_weight_);
+    if (!is_sharing_pack_) {
+      free(packed_weight_);
+    } else {
+      lite::PackWeightManager::GetInstance()->Free(packed_weight_);
+    }
     packed_weight_ = nullptr;
   }
   if (addr_map.find(reinterpret_cast<uintptr_t>(bias_data_)) != addr_map.end()) {
