@@ -54,7 +54,7 @@ def run_yolov5_dynamic_case(cur_model_path, device_target, mode="GRAPH"):
     return loss_list
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_yolov5_dynamic_gpu():
@@ -67,10 +67,10 @@ def test_yolov5_dynamic_gpu():
     loss_list = run_yolov5_dynamic_case(cur_model_path, "GPU")
     expect_loss = [7200.505, 544.873, 600.88]
     # Different gpu device (such as V100 and 3090) lead to some differences
-    # in the calculation results, so only the first step is compared
-    assert np.allclose(loss_list[0], expect_loss[0], 1e-3, 1e-3)
+    # in the calculation results, so only the first 2 steps is compared
+    assert np.allclose(loss_list[:2], expect_loss[:2], 1e-2, 1e-2)
     loss_list_pynative = run_yolov5_dynamic_case(cur_model_path, "GPU", "PYNATIVE")
-    assert np.allclose(loss_list_pynative, expect_loss, 1e-2, 1e-2)
+    assert np.allclose(loss_list_pynative[:2], expect_loss[:2], 1e-2, 1e-2)
 
 
 @pytest.mark.level0
