@@ -73,7 +73,8 @@ class PadV3GradCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void PadV3GradCompute3D(T *input, T *output, int64_t p, int64_t z) const;
 
-  int64_t IndexCalculate(int64_t pad_value, int64_t now, int64_t output_value, int64_t o_start, int64_t i_start) const;
+  int64_t IndexCalculate(int64_t pad_value, int64_t pad_end, int64_t now, int64_t output_value, int64_t o_start,
+                         int64_t i_start) const;
 
   using SelectFunc =
     std::function<bool(PadV3GradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
@@ -103,6 +104,9 @@ class PadV3GradCpuKernelMod : public NativeCpuKernelMod {
   int64_t pad_l_{0};
   int64_t pad_t_{0};
   int64_t pad_f_{0};
+  int64_t pad_r_{0};
+  int64_t pad_d_{0};
+  int64_t pad_b_{0};
   int64_t parallelSliceNum_{1};
   int64_t paddings_num_{0};
   int64_t input_dim_{0};

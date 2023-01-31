@@ -77,7 +77,8 @@ class PadV3CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Pa
   template <typename T>
   void OtherModeCompute3D(T *input_ptr, T *output_ptr, int64_t p) const;
 
-  int64_t IndexCalculate(int64_t pad_value, int64_t now, int64_t input_value, int64_t o_start, int64_t i_start) const;
+  int64_t IndexCalculate(int64_t pad_value, int64_t pad_end, int64_t now, int64_t input_value, int64_t o_start,
+                         int64_t i_start) const;
 
   bool paddings_contiguous_;
   int64_t parallelSliceNum_{1};
