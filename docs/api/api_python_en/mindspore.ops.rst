@@ -507,6 +507,7 @@ Array Operation
     mindspore.ops.reshape
     mindspore.ops.reverse
     mindspore.ops.reverse_sequence
+    mindspore.ops.scatter
     mindspore.ops.scatter_nd
     mindspore.ops.select
     mindspore.ops.sequence_mask
