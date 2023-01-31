@@ -18,9 +18,11 @@
 #include <cstring>
 #include <string>
 #include <algorithm>
+#include <set>
 #include "src/litert/kernel_registry.h"
 #include "src/litert/kernel/opencl/utils.h"
-#include "src/litert/kernel/opencl/cl/concat.cl.inc"
+
+const std::vector<std::string> cl_index_str = {".x", ".y", ".z", ".w"};
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -29,7 +31,8 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::ImageSize;
 using mindspore::schema::PrimitiveType_Concat;
 
-namespace mindspore::kernel {
+namespace mindspore {
+namespace kernel {
 int ConcatOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   ImageSize img_size;
@@ -76,18 +79,34 @@ void ConcatGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *
 }
 
 int ConcatOpenCLKernel::CheckSpecs() {
-  if ((in_tensors_.size() < INPUT_TENSOR_SIZE_2 || in_tensors_.size() > INPUT_TENSOR_SIZE_6) ||
-      out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
+  if (in_tensors_.size() < INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
+  std::set<lite::opencl::GpuType> mali_devices = {lite::opencl::MALI, lite::opencl::MALI_T, lite::opencl::MALI_G,
+                                                  lite::opencl::MALI_G78};
+  auto cur_gpu_type = ocl_runtime_->GetGpuInfo().type;
+  if ((mali_devices.find(cur_gpu_type) != mali_devices.end()) && (in_tensors_.size() > INPUT_TENSOR_SIZE_16)) {
+    MS_LOG(WARNING) << "For MALI serial, the size of inputs should be no more than 16, but got " << in_tensors_.size()
+                    << "in Concat kernel.";
     return RET_ERROR;
   }
   auto param = reinterpret_cast<ConcatParameter *>(this->op_parameter_);
   auto out_tensors_shape_size = out_tensors_[0]->shape().size();
-  MS_LOG(DEBUG) << " concat at axis=:  " << param->axis_;
+  MS_LOG(DEBUG) << " concat at axis = " << param->axis_;
   if (out_tensors_shape_size > DIMENSION_4D) {
     MS_LOG(WARNING) << " GPU Unsupported shape.size > 4 ";
     return RET_ERROR;
   }
+
+  auto out_tensor_info = GpuTensorInfo(out_tensors_[0]);
+  auto height = out_tensor_info.N * out_tensor_info.D * out_tensor_info.H;
+  auto width = out_tensor_info.W * out_tensor_info.Slice;
+  if ((height > ocl_runtime_->GetMaxImage2DHeight()) || (width > ocl_runtime_->GetMaxImage2DWidth())) {
+    MS_LOG(WARNING) << "Output tensor is too larger to use OpenCL in Concat kernel.";
+    return RET_ERROR;
+  }
+
   for (auto &in_tensor : in_tensors_) {
     auto in_tensors_shape_size = in_tensor->shape().size();
     if (in_tensors_shape_size > DIMENSION_4D) {
@@ -113,59 +132,136 @@ int ConcatOpenCLKernel::CheckSpecs() {
       return RET_ERROR;
     }
   }
-  if (in_tensors_.size() < INPUT_TENSOR_SIZE_2 || in_tensors_.size() > INPUT_TENSOR_SIZE_6) {
-    MS_LOG(WARNING) << "unsupported input size :" << in_tensors_.size();
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
-int ConcatOpenCLKernel::SetConstArgs() {
-  GpuTensorInfo img_info(out_tensors_[0]);
-  size_t dtype = ocl_runtime_->GetFp16Enable() ? sizeof(cl_half) : sizeof(cl_float);
-  stride_w = img_info.RowPitch() / dtype;
-  cl_int4 output_shape_ = {};
-  for (size_t i = 0; i < out_tensors_[0]->shape().size(); ++i) {
-    output_shape_.s[i] = out_tensors_[0]->shape()[i];
+std::string ConcatOpenCLKernel::GenMainCodeAxis3UnAlign() {
+  std::stringstream code;
+  int result_index = 0;
+  int temp_index = 0;
+  int output_index = 0;
+  code << "DTYPE4 result = (DTYPE4)(0);\n";
+  for (int j = 0; j < in_tensors_.size(); j++) {
+    std::vector<int> in_shape(DIMENSION_4D);
+    Broadcast2GpuShape(in_tensors_[j]->shape().data(), in_tensors_[j]->shape().size(), in_shape.data(), DIMENSION_4D,
+                       1);
+    auto align_num = UP_DIV(in_shape[CLIDX_W], C4NUM);
+
+    for (int k = 0; k < align_num; k++) {
+      code << "DTYPE4 t" << temp_index << " = READ_IMAGE(input" << j << ", smp_zero, (int2)(((Y) * (" << align_num
+           << ") + (" << k << ")), (X)));\n";
+      for (int m = 0; (m < C4NUM) && (m < in_shape[CLIDX_W] - k * C4NUM); m++) {
+        code << "result" << cl_index_str[result_index++ % C4NUM] << " = t" << temp_index << cl_index_str[m] << ";\n";
+        if (result_index % C4NUM == 0) {
+          code << "WRITE_IMAGE(output, (int2)(((Y) * (" << out_shape_.s[CLIDX_W] << ") + (" << output_index++
+               << ")), (X)), result);\n";
+        }
+      }
+      temp_index++;
+    }
   }
-  Broadcast2GpuShape(output_shape_.s, out_tensors_[0]->shape().size(), out_shape_.s, DIMENSION_4D, 1);
-  int arg_cn = in_tensors_.size() + 1;
+  if (out_shape_.s[CLIDX_W] > output_index) {
+    code << "WRITE_IMAGE(output, (int2)(((Y) * (" << out_shape_.s[CLIDX_W] << ") + (" << output_index++
+         << ")), (X)), result);\n";
+  }
+  return code.str();
+}
+
+std::string ConcatOpenCLKernel::GenMainCodeOthers() {
+  std::stringstream code;
+  code << "DTYPE4 result;\n";
+  if (axis_ == kNHWC_H) {
+    code << "int IN = X / " << out_shape_.s[CLIDX_Y] << ";\n"
+         << "int IH = X - IN * " << out_shape_.s[CLIDX_Y] << ";\n";
+  }
+
+  for (int j = 0; j < in_tensors_.size(); j++) {
+    std::vector<int> in_shape(DIMENSION_4D);
+    Broadcast2GpuShape(in_tensors_[j]->shape().data(), in_tensors_[j]->shape().size(), in_shape.data(), DIMENSION_4D,
+                       1);
+    in_shape[CLIDX_W] = UP_DIV(in_shape[CLIDX_W], C4NUM);
+    std::string variable_name;
+    std::string function_y;
+    if (axis_ == kNHWC_H) {
+      variable_name = "IH";
+      function_y = "IN * " + std::to_string(in_shape[CLIDX_Y]) + " + IH";
+    } else if (axis_ == kNHWC_C) {
+      variable_name = "Z";
+      function_y = "X";
+    } else {
+      variable_name = "Y";
+      function_y = "X";
+    }
+    if (j == 0) {
+      code << "int boundary0 = " << in_shape[axis_] << ";\n";
+      code << "if (" << variable_name << " < boundary0) {\n";
+      code << "int coordinate_x = Y * " << in_shape[CLIDX_W] << " + Z;\n";
+      code << "int coordinate_y = " << function_y << ";\n";
+      code << "result = READ_IMAGE(input0, smp_none, (int2)(coordinate_x, coordinate_y));\n";
+      code << "}\n";
+    } else {
+      code << "int boundary" << j << " = boundary" << (j - 1) << " + " << in_shape[axis_] << ";\n";
+      code << "if (" << variable_name << " >= boundary" << (j - 1) << " && " << variable_name << " < boundary" << j
+           << ") {\n";
+      if (axis_ == kNHWC_H) {
+        code << "int coordinate_x = Y * " << in_shape[CLIDX_W] << " + Z;\n";
+        code << "int coordinate_y = " << function_y << " - boundary" << (j - 1) << ";\n";
+      } else if (axis_ == kNHWC_W) {
+        code << "int coordinate_x = (Y - boundary" << (j - 1) << ") * " << in_shape[CLIDX_W] << " + Z;\n";
+        code << "int coordinate_y = X;\n";
+      } else if (axis_ == kNHWC_C) {
+        code << "int coordinate_x = Y * " << in_shape[CLIDX_W] << " + Z - boundary" << (j - 1) << ";\n";
+        code << "int coordinate_y = X;\n";
+      }
+
+      code << "result = READ_IMAGE(input" << j << ", smp_none, (int2)(coordinate_x, coordinate_y));\n";
+      code << "}\n";
+    }
+  }
+  code << "WRITE_IMAGE(output, (int2)((Y) * " << out_shape_.s[CLIDX_W] << " + Z, (X)), result);\n";
+  return code.str();
+}
+
+std::string ConcatOpenCLKernel::GenCode() {
+  std::vector<int> out_shape(DIMENSION_4D);
+  Broadcast2GpuShape(out_tensors_[0]->shape().data(), out_tensors_[0]->shape().size(), out_shape.data(), DIMENSION_4D,
+                     1);
+  for (size_t i = 0; i < out_shape.size(); i++) {
+    out_shape_.s[i] = out_shape[i];
+  }
+  out_shape_.s[CLIDX_W] = UP_DIV(out_shape_.s[CLIDX_W], C4NUM);
+
+  std::stringstream code;
+  auto header = OpenCLKernelHeader();
+  if (header.empty()) {
+    MS_LOG(ERROR) << "Generate OpenCL kernel header failed.";
+    return "";
+  }
+  code << header;
+  code << "__kernel void Concat(\n";
+  for (int i = 0; i < in_tensors_.size(); i++) {
+    code << "__read_only image2d_t input" << i << ",\n";
+  }
+  code << "__write_only image2d_t output\n) {\n";
+
   if (axis_ == 3 && !Align_) {
-    for (auto &in_tensor : in_tensors_) {
-      cl_int4 temp = {};
-      for (size_t j = 0; j < in_tensor->shape().size(); ++j) {
-        temp.s[j] = in_tensor->shape()[j];
-      }
-      Broadcast2GpuShape(temp.s, in_tensor->shape().size(), in_shape_.s, DIMENSION_4D, 1);
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_) != CL_SUCCESS) {
-        MS_LOG(ERROR) << "SetKernelArg failed.";
-        return RET_ERROR;
-      }
-    }
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_w) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    code << "int X = get_global_id(0);\n"
+         << "int Y = get_global_id(1);\n"
+         << "if (X >= " << out_shape[CLIDX_X] * out_shape[CLIDX_Y] << " || Y >= " << out_shape[CLIDX_Z]
+         << ") return;\n";
+
+    code << GenMainCodeAxis3UnAlign();
   } else {
-    for (auto &in_tensor : in_tensors_) {
-      cl_int4 temp = {};
-      for (size_t j = 0; j < in_tensor->shape().size(); ++j) {
-        temp.s[j] = in_tensor->shape()[j];
-      }
-      Broadcast2GpuShape(temp.s, in_tensor->shape().size(), in_shape_.s, DIMENSION_4D, 1);
-      in_shape_.s[3] = UP_DIV(in_shape_.s[3], C4NUM);
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_) != CL_SUCCESS) {
-        MS_LOG(ERROR) << "SetKernelArg failed.";
-        return RET_ERROR;
-      }
-    }
+    code << "int X = get_global_id(0);\n"
+         << "int Y = get_global_id(1);\n"
+         << "int Z = get_global_id(2);\n"
+         << "if (X >= " << out_shape_.s[CLIDX_X] * out_shape_.s[CLIDX_Y] << " || Y >= " << out_shape_.s[CLIDX_Z]
+         << " || Z >= " << out_shape_.s[CLIDX_W] << ") return;\n";
+
+    code << GenMainCodeOthers();
   }
-  out_shape_.s[3] = UP_DIV(out_shape_.s[3], C4NUM);
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
+  code << "}\n";
+  return code.str();
 }
 
 int ConcatOpenCLKernel::SetGlobalLocal() {
@@ -248,42 +344,27 @@ int ConcatOpenCLKernel::Prepare() {
     }
   }
 
-  std::string kernel_name = "Concat";
-  if (axis_ == 3 && !Align_) {
-    kernel_name += "Input" + std::to_string(in_tensors_.size()) + "UnAlign";
-  } else {
-    kernel_name += std::to_string(in_tensors_.size()) + "inputaxis" + std::to_string(axis_);
+  std::string source = GenCode();
+  // For debug.
+  dump_code_ = "[" + this->name() + "]\n" + source;
+
+  if (source.empty()) {
+    MS_LOG(ERROR) << "Failed to generate source code for " << this->name();
+    return RET_ERROR;
   }
 
-  kernel_name += "_NHWC4";
-  MS_LOG(DEBUG) << "kernel_name=: " << kernel_name;
-  std::string source = concat_source;
-  const std::string program_name = "Concat";
+  std::string program_name = "Concat\n" + source;
+  std::string kernel_name = "Concat";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
   }
-  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  GpuTensorInfo out_image_info(out_tensors_.front());
-  if (out_image_info.C <= 4) {  // outC <= 4
-    build_options_ext.emplace_back(" -DOUTCTMPSIZE=4");
-  } else if (out_image_info.C <= 128) {  // outC <= 128
-    build_options_ext.emplace_back(" -DOUTCTMPSIZE=128");
-  } else if (out_image_info.C <= 1024) {  // outC <= 1024
-    build_options_ext.emplace_back(" -DOUTCTMPSIZE=1024");
-  } else {
-    build_options_ext.emplace_back(" -DOUTCTMPSIZE=" + std::to_string(out_image_info.C));
-  }
 
+  std::vector<std::string> build_options_ext{};
   ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
-  }
-  MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
   }
   (void)SetGlobalLocal();
   return RET_OK;
@@ -318,4 +399,5 @@ int ConcatOpenCLKernel::Run() {
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Concat, OpenCLKernelCreator<ConcatOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Concat, OpenCLKernelCreator<ConcatOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeInt32, PrimitiveType_Concat, OpenCLKernelCreator<ConcatOpenCLKernel>)
-}  // namespace mindspore::kernel
+}  // namespace kernel
+}  // namespace mindspore

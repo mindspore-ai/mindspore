@@ -41,6 +41,7 @@ constexpr int INPUT_TENSOR_SIZE_3 = 3;
 constexpr int INPUT_TENSOR_SIZE_4 = 4;
 constexpr int INPUT_TENSOR_SIZE_5 = 5;
 constexpr int INPUT_TENSOR_SIZE_6 = 6;
+constexpr int INPUT_TENSOR_SIZE_16 = 16;
 constexpr int OUTPUT_TENSOR_SIZE_1 = 1;
 constexpr int OUTPUT_TENSOR_SIZE_2 = 2;
 constexpr int OUTPUT_TENSOR_SIZE_3 = 3;
@@ -286,6 +287,7 @@ class OpenCLKernel : public LiteKernel {
   int PostProcess() override { return RET_OK; }
 
   bool MallocDataDone();
+  std::string OpenCLKernelHeader();
 
   virtual int CheckSpecs();
   virtual int CheckSpecsWithoutShape() { return RET_OK; }
@@ -300,6 +302,7 @@ class OpenCLKernel : public LiteKernel {
   virtual int AssignTuningParam(const BaseTuningParameter &param);
   virtual int Tune();
   virtual int StoreConstData() { return RET_OK; }
+  virtual std::string DumpCode() { return "No source code generated!"; }
 
   int GetImageSize(size_t idx, lite::opencl::ImageSize *img_size);
   void PrintOutput(int print_num = 10, const std::string &out_file = "");

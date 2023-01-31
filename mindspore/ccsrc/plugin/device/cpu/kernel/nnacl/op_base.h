@@ -162,6 +162,7 @@
 #define CLIDX_X 0
 #define CLIDX_Y 1
 #define CLIDX_Z 2
+#define CLIDX_W 3
 
 #define RELU6_MIN_VAL 0
 #define RELU6_MAX_VAL 6

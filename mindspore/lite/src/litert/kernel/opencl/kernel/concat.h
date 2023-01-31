@@ -18,10 +18,12 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONCAT_H_
 
 #include <vector>
+#include <string>
 #include "src/litert/kernel/opencl/opencl_kernel.h"
 #include "nnacl/concat_parameter.h"
 
-namespace mindspore::kernel {
+namespace mindspore {
+namespace kernel {
 class ConcatOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;
@@ -31,9 +33,11 @@ class ConcatOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
 
   int CheckSpecs() override;
-  int SetConstArgs() override;
+  int SetConstArgs() override { return RET_OK; }
   int SetGlobalLocal() override;
   int Run() override;
+
+  std::string DumpCode() override { return dump_code_; }
 
  private:
   std::vector<size_t> local;
@@ -47,11 +51,16 @@ class ConcatOpenCLKernel : public OpenCLKernel {
   cl_int4 in_shape_{};
   cl_int4 out_shape_{};
   int axis_{0};
+  std::string dump_code_;
 
  private:
   int RunAxis0();
   int ConvertWeightToTensor();
+  std::string GenMainCodeAxis3UnAlign();
+  std::string GenMainCodeOthers();
+  std::string GenCode();
 };
 
-}  // namespace mindspore::kernel
+}  // namespace kernel
+}  // namespace mindspore
 #endif
