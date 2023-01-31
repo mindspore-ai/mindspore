@@ -57,6 +57,7 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                                mindspore::kCacheSwapTableOpName,
                                                                mindspore::kCauchyOpName,
                                                                mindspore::kChannelShuffleOpName,
+                                                               mindspore::kCholeskyOpName,
                                                                mindspore::kCholeskyGradOpName,
                                                                mindspore::kCholeskyInverseOpName,
                                                                mindspore::kCholeskySolveOpName,
