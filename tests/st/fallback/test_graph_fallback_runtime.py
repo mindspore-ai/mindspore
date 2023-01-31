@@ -483,7 +483,6 @@ def test_call_no_self_other_object_method_runtime():
     assert np.all(result == z)
 
 
-@pytest.mark.skip(reason="Not supported by now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -502,11 +501,10 @@ def test_getattr_tensor_with_wrong_attr():
         return abs_func()
 
     with pytest.raises(AttributeError) as err:
-        foo(Tensor([-1, -2, -3]))  # Not throw error any more, should move to ST.
+        foo(ms.Tensor([-1, -2, -3]))  # Not throw error any more, should move to ST.
     assert "object has no attribute" in str(err.value)
 
 
-@pytest.mark.skip(reason="Not supported by now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

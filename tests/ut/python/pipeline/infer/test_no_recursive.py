@@ -14,6 +14,7 @@
 # ============================================================================
 import numpy as np
 import mindspore as ms
+from mindspore.common.api import _no_recursive as no_recursive
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -32,7 +33,7 @@ def test_cell_no_recursive():
     Description: test no_recursive flag.
     Expectation: No exception.
     """
-    @ms.no_recursive
+    @no_recursive
     class Net(ms.nn.Cell):
         def __init__(self):
             super().__init__()
@@ -48,7 +49,7 @@ def test_cell_no_recursive():
 
 
 @ms.jit
-@ms.no_recursive
+@no_recursive
 def func(x, y):
     res = double(x) + double(y)
     print(res)

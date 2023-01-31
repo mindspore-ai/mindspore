@@ -736,7 +736,7 @@ def _add_flags(fn=None, **flags):
     return ret
 
 
-def no_recursive(callable_obj):
+def _no_recursive(callable_obj):
     """
     Method or function decorator for ignoring recursive check.
 

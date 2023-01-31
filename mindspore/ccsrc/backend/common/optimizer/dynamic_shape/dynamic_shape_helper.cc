@@ -35,6 +35,8 @@
 
 namespace mindspore {
 namespace opt::dynamic_shape {
+InfPyHandler cpp_infer_py_handler_{nullptr};
+void set_cpp_infer_py_handler(const InfPyHandler &infer_handler) { cpp_infer_py_handler_ = infer_handler; }
 namespace {
 constexpr int64_t kInvalidShape = -2;
 
@@ -279,6 +281,7 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
   auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
   auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
   bool skip_nop_node = !context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
+  bool has_py_execute_data = false;
   for (size_t i = 0; i < input_size; i++) {
     auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i, false);
     auto real_input = input_node_with_index.first;
@@ -297,6 +300,9 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
       }
 
       auto updated_abs = MakeNewAbstract(real_input, depended_value, real_input_index);
+      if (updated_abs->has_user_data<kernel::PyExecuteOutputData>()) {
+        has_py_execute_data = true;
+      }
       (void)args_spec_list.emplace_back(updated_abs);
     } else {
       auto abs = real_input->abstract();
@@ -312,9 +318,17 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
     }
   }
 
-  // Pynative mode is rely on the origin abstract of cnode, so cannot modify the abstract inplace, clone from old
-  // abstract instead.
-  opt::CppInferShape(primitive, args_spec_list, cnode);
+  if (!has_py_execute_data && !IsPrimitiveCNode(cnode, prim::kPrimPyExecute)) {
+    // Pynative mode is rely on the origin abstract of cnode, so cannot modify the abstract inplace, clone from old
+    // abstract instead.
+    opt::CppInferShape(primitive, args_spec_list, cnode);
+  } else {
+    if (cpp_infer_py_handler_ == nullptr) {
+      MS_LOG(EXCEPTION) << "\'cpp_infer_py_handler_\' should not be null.";
+    }
+    const auto &abs = cpp_infer_py_handler_(cnode, primitive, args_spec_list);
+    cnode->set_abstract(abs);
+  }
 }
 
 inline bool IsDeprecatedCpuOrGpuKernelMod(kernel::KernelModType kernel_mod_type) {

@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(PyExecute, BaseOperator);
 
-BaseShapePtr PyExecuteInfer::InferShape(const PrimitivePtr &primitive,
+AbstractBasePtr PyExecuteInfer::InferPy(const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   for (const auto &item : input_args) {
@@ -37,17 +37,24 @@ BaseShapePtr PyExecuteInfer::InferShape(const PrimitivePtr &primitive,
   if (infer_handler_ == nullptr) {
     MS_LOG(EXCEPTION) << "infer_handler_ should not be null.";
   }
-  return infer_handler_(input_args);
+  const auto &abs = infer_handler_(input_args);
+  return abs;
+}
+
+BaseShapePtr PyExecuteInfer::InferShape(const PrimitivePtr &primitive,
+                                        const std::vector<AbstractBasePtr> &input_args) const {
+  const auto &abs = InferPy(primitive, input_args);
+  return abs->BuildShape();
 }
 
 TypePtr PyExecuteInfer::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  return kFloat64;
+  MS_LOG(EXCEPTION) << "Should not invoke InferType().";
 }
 
-AbstractBasePtr PyExecuteInfer::InferShapeAndType(const abstract::AnalysisEnginePtr &engine,
-                                                  const PrimitivePtr &primitive,
+AbstractBasePtr PyExecuteInfer::InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) const {
-  MS_LOG(EXCEPTION) << "Should not invoke InferShapeAndType.";
+  const auto &abs = infer_handler_(input_args);
+  return abs;
 }
 
 std::set<int64_t> PyExecuteInfer::GetValueDependArgIndices() const { return {-1}; }
