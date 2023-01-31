@@ -22,7 +22,7 @@ from mindspore.ops.function import *
 from mindspore.ops.function.array_func import narrow
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import Primitive
-from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops
+from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _scalar_ops
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive, Triu
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
@@ -55,6 +55,17 @@ partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()
 identity = P.identity()
+# tuple/list/scalar ops
+scalar_div = _scalar_ops.ScalarDiv()
+scalar_mod = _scalar_ops.ScalarMod()
+scalar_add = _scalar_ops.ScalarAdd()
+scalar_mul = _scalar_ops.ScalarMul()
+scalar_sub = _scalar_ops.ScalarSub()
+scalar_gt = _scalar_ops.ScalarGreater()
+scalar_ge = _scalar_ops.ScalarGreaterEqual()
+scalar_le = _scalar_ops.ScalarLessEqual()
+scalar_lt = _scalar_ops.ScalarLess()
+scalar_eq = _scalar_ops.ScalarEqual()
 
 tuple_setitem = Primitive('tuple_setitem')
 tuple_getitem = Primitive(_constants.kTupleGetItem)
@@ -73,22 +84,12 @@ make_list = Primitive('make_list')
 make_slice = Primitive('make_slice')
 tuple_equal = Primitive("tuple_equal")
 list_equal = Primitive("list_equal")
-scalar_add = Primitive(_constants.kScalarAdd)
-scalar_mul = Primitive(_constants.kScalarMul)
-scalar_sub = Primitive(_constants.kScalarSub)
-scalar_div = Primitive(_constants.kScalarDiv)
 scalar_floordiv = Primitive(_constants.kScalarFloordiv)
 scalar_log = Primitive('scalar_log')
 scalar_pow = Primitive(_constants.kScalarPow)
-scalar_gt = Primitive('scalar_gt')
-scalar_ge = Primitive('scalar_ge')
-scalar_le = Primitive('scalar_le')
-scalar_lt = Primitive('scalar_lt')
-scalar_eq = Primitive('scalar_eq')
 scalar_ne = Primitive('scalar_ne')
 scalar_uadd = Primitive(_constants.kScalarUadd)
 scalar_usub = Primitive(_constants.kScalarUsub)
-scalar_mod = Primitive(_constants.kScalarMod)
 string_eq = Primitive('string_eq')
 string_concat = Primitive('string_concat')
 bool_not = Primitive("bool_not")

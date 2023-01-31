@@ -114,7 +114,7 @@ def _adasum_opt_forward_process(left_send, allreduce, parameter_divisibility, al
     if parameter_divisibility:
         delta_w = P.Squeeze()(delta_w)
         ori_len = F.shape(delta_w)[0]
-        divide_len = ori_len / 2
+        divide_len = ori_len // 2
         left_part = delta_w[:divide_len]
         right_part = delta_w[divide_len:]
     else:

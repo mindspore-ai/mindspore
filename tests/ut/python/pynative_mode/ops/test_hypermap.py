@@ -17,8 +17,6 @@ import numpy as np
 
 from mindspore import Tensor
 from mindspore.common.api import jit
-from mindspore.ops import Primitive
-from mindspore.ops import _constants
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -29,7 +27,7 @@ from ...ut_filter import non_graph_engine
 
 
 tensor_add = P.Add()
-scala_add = Primitive(_constants.kScalarAdd)
+scala_add = F.scalar_add
 add = C.MultitypeFuncGraph('add')
 
 

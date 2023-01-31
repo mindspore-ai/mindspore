@@ -164,7 +164,7 @@ TEST_F(TestInfer, test_inferred_scalar_add) {
   auto prim_scalar_add = std::make_shared<Primitive>(prim::kScalarAdd);
   FuncGraphPtr func_graph = MakeFuncGraph(prim_scalar_add);
   AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).eval_result->abstract();
-  ASSERT_TRUE(abs_base_got.get() == abstract_v1.get());
+  ASSERT_TRUE(*abs_base_got->BuildValue() == *MakeValue(static_cast<int64_t>(3)));
 }
 
 class TestInferGraph : public UT::Common {
@@ -273,7 +273,7 @@ TEST_F(TestInferGraph, test_inferred) {
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
   abs_base_got = engine_->Run(graph_alpha_, args_spec_list).eval_result->abstract();
-  ASSERT_TRUE(abs_base_got.get() == abstract_v1.get());
+  ASSERT_TRUE(*abs_base_got->BuildValue() == *MakeValue(static_cast<int64_t>(3)));
 }
 
 TEST_F(TestInferGraph, test_context) {
@@ -352,6 +352,7 @@ void TestInferMetaGraph::TearDown() {
 TEST_F(TestInferMetaGraph, test_inferred) {
   AbstractBasePtrList args_spec_list;
   int64_t v1 = 1;
+  int64_t res = 2;
   std::cout << "Begin TestInferGraph." << std::endl;
   std::cout << func_graph_->get_return()->ToString() << std::endl;
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
@@ -359,7 +360,7 @@ TEST_F(TestInferMetaGraph, test_inferred) {
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
   AbstractBasePtr abs_base_got = engine_->Run(func_graph_, args_spec_list).eval_result->abstract();
-  ASSERT_TRUE(abs_base_got.get() == abstract_v1.get());
+  ASSERT_TRUE(*abs_base_got->BuildValue() == *MakeValue(res));
 }
 
 class TestInferUniform : public UT::Common {

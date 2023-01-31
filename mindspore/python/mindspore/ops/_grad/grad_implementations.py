@@ -20,6 +20,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.composite import multitype_ops as C
 from mindspore.ops._grad.grad_base import bprops
 from mindspore.common import dtype as mstype
+from mindspore.ops.operations import _scalar_ops
 
 get_dtype = P.DType()
 # Unused parameters are placeholders.
@@ -35,25 +36,25 @@ def bprop_max_and_minimum_grad_grad(x, y, z, out, dout):
     return F.zeros_like(x), F.zeros_like(y), dz
 
 
-@bprops.register(_constants.kScalarAdd)
+@bprops.register(_scalar_ops.ScalarAdd)
 def bprop_scalar_add(x, y, out, dout):
     """Backpropagator for primitive `scalar_add`."""
     return dout, dout
 
 
-@bprops.register(_constants.kScalarMul)
+@bprops.register(_scalar_ops.ScalarMul)
 def bprop_scalar_mul(x, y, out, dout):
     """Backpropagator for primitive `scalar_mul`."""
     return dout * y, dout * x
 
 
-@bprops.register(_constants.kScalarSub)
+@bprops.register(_scalar_ops.ScalarSub)
 def bprop_scalar_sub(x, y, out, dout):
     """Backpropagator for primitive `scalar_sub`."""
     return dout, -dout
 
 
-@bprops.register(_constants.kScalarDiv)
+@bprops.register(_scalar_ops.ScalarDiv)
 def bprop_scalar_div(x, y, out, dout):
     """Backpropagator for primitive `scalar_div`."""
     return dout / y, (-dout) * (out / y)
@@ -187,16 +188,16 @@ def bprop_mutable(x, out, dout):
     return (dout,)
 
 
-@bprops.register("scalar_gt")
-@bprops.register("scalar_lt")
-@bprops.register("scalar_ge")
-@bprops.register("scalar_le")
-@bprops.register("scalar_eq")
+@bprops.register(_scalar_ops.ScalarGreater)
+@bprops.register(_scalar_ops.ScalarLess)
+@bprops.register(_scalar_ops.ScalarGreaterEqual)
+@bprops.register(_scalar_ops.ScalarLessEqual)
+@bprops.register(_scalar_ops.ScalarEqual)
 @bprops.register("scalar_ne")
 @bprops.register("bool_and")
 @bprops.register("bool_or")
-@bprops.register("bit_and")
-@bprops.register("bit_or")
+@bprops.register(_scalar_ops.ScalarBitwiseAnd)
+@bprops.register(_scalar_ops.ScalarBitwiseOr)
 @bprops.register("bit_xor")
 @bprops.register("bit_left_shift")
 @bprops.register("bit_right_shift")

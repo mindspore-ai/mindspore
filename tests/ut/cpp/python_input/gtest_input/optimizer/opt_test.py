@@ -29,8 +29,8 @@ from mindspore.ops.operations import _grad_ops as G
 # pylint: disable=unused-argument
 # pylint: disable=redefined-outer-name
 
-scalar_add = Primitive(Constants.kScalarAdd)
-scalar_mul = Primitive(Constants.kScalarMul)
+scalar_add = F.scalar_add
+scalar_mul = F.scalar_mul
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 switch = Primitive('Switch')
 
@@ -354,7 +354,7 @@ def test_inline_while(tag):
 def test_cse(tag):
     """ test_cse """
     fns = FnDict()
-    scalar_div = Primitive(Constants.kScalarDiv)
+    scalar_div = F.scalar_div
 
     @fns
     def test_f1(x, y):
@@ -774,7 +774,7 @@ def test_incorporate_getitem(tag):
 def test_incorporate_getitem_through_switch(tag):
     """ test_incorporate_getitem_through_switch """
     fns = FnDict()
-    scalar_gt = Primitive('scalar_gt')
+    scalar_gt = F.scalar_gt
 
     @fns
     def before(x, y):
@@ -834,7 +834,7 @@ def test_incorporate_call_through_switch(tag):
     fns = FnDict()
     f1 = Primitive('f1')
     f2 = Primitive('f2')
-    scalar_gt = Primitive('scalar_gt')
+    scalar_gt = F.scalar_gt
     identity = Primitive('identity')
 
     @fns
@@ -869,7 +869,7 @@ def test_incorporate_call_through_switch(tag):
 def test_float_tuple_getitem_through_switch(tag):
     """ test_float_tuple_getitem_through_switch """
     fns = FnDict()
-    scalar_gt = Primitive('scalar_gt')
+    scalar_gt = F.scalar_gt
 
     @fns
     def before(x, y):
@@ -931,7 +931,7 @@ def test_convert_switch_ops(tag):
     fns = FnDict()
     ge_switch = Primitive('GeSwitch')
     merge = Primitive('Merge')
-    add = Primitive(Constants.kScalarAdd)
+    add = F.scalar_add
     neg = Primitive('Neg')
     tuple_getitem = Primitive(Constants.kTupleGetItem)
     make_tuple = Primitive('MakeTuple')

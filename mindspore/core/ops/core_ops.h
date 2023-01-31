@@ -76,6 +76,14 @@ constexpr auto kScalarTrunc = "ScalarTrunc";
 constexpr auto kScalarFloor = "ScalarFloor";
 constexpr auto kScalarUadd = "ScalarUadd";
 constexpr auto kScalarUsub = "ScalarUsub";
+constexpr auto kScalarEq = "ScalarEqual";
+constexpr auto kScalarLt = "ScalarLess";
+constexpr auto kScalarGt = "ScalarGreater";
+constexpr auto kScalarLe = "ScalarLessEqual";
+constexpr auto kScalarGe = "ScalarGreaterEqual";
+constexpr auto kScalarBool = "ScalarBool";
+constexpr auto kScalarBitwiseAnd = "ScalarBitwiseAnd";
+constexpr auto kScalarBitwiseOr = "ScalarBitwiseOr";
 constexpr auto kExp = "Exp";
 constexpr auto kEqual = "Equal";
 constexpr auto kNotEqual = "NotEqual";
@@ -505,12 +513,15 @@ GVAR_DEF(PrimitivePtr, kPrimStringMul, std::make_shared<Primitive>(kStringMul));
 GVAR_DEF(PrimitivePtr, kPrimStringGetItem, std::make_shared<Primitive>(kStringGetItem));
 
 // Comparisons
-GVAR_DEF(PrimitivePtr, kPrimScalarEq, std::make_shared<Primitive>("scalar_eq"));
-GVAR_DEF(PrimitivePtr, kPrimScalarLt, std::make_shared<Primitive>("scalar_lt"));
-GVAR_DEF(PrimitivePtr, kPrimScalarGt, std::make_shared<Primitive>("scalar_gt"));
+GVAR_DEF(PrimitivePtr, kPrimScalarEq, std::make_shared<Primitive>(kScalarEq));
+GVAR_DEF(PrimitivePtr, kPrimScalarLt, std::make_shared<Primitive>(kScalarLt));
+GVAR_DEF(PrimitivePtr, kPrimScalarGt, std::make_shared<Primitive>(kScalarGt));
 GVAR_DEF(PrimitivePtr, kPrimScalarNe, std::make_shared<Primitive>("scalar_ne"));
-GVAR_DEF(PrimitivePtr, kPrimScalarLe, std::make_shared<Primitive>("scalar_le"));
-GVAR_DEF(PrimitivePtr, kPrimScalarGe, std::make_shared<Primitive>("scalar_ge"));
+GVAR_DEF(PrimitivePtr, kPrimScalarLe, std::make_shared<Primitive>(kScalarLe));
+GVAR_DEF(PrimitivePtr, kPrimScalarGe, std::make_shared<Primitive>(kScalarGe));
+GVAR_DEF(PrimitivePtr, kPrimScalarBool, std::make_shared<Primitive>(kScalarBool));
+GVAR_DEF(PrimitivePtr, kPrimScalarBitwiseAnd, std::make_shared<Primitive>(kScalarBitwiseAnd));
+GVAR_DEF(PrimitivePtr, kPrimScalarBitwiseOr, std::make_shared<Primitive>(kScalarBitwiseOr));
 GVAR_DEF(PrimitivePtr, kPrimBoolNot, std::make_shared<Primitive>("bool_not"));
 GVAR_DEF(PrimitivePtr, kPrimBoolAnd, std::make_shared<Primitive>("bool_and"));
 GVAR_DEF(PrimitivePtr, kPrimBoolOr, std::make_shared<Primitive>("bool_or"));
@@ -1502,9 +1513,7 @@ GVAR_DEF(PrimitivePtr, kPrimTileShape, std::make_shared<Primitive>("tile_shape")
 GVAR_DEF(PrimitivePtr, kPrimGenerateShapeIndex, std::make_shared<Primitive>("generate_shape_index"));
 GVAR_DEF(PrimitivePtr, kPrimGenerateInverseIndex, std::make_shared<Primitive>("generate_inverse_index"));
 
-GVAR_DEF(PrimitivePtr, kPrimRealMakeList, std::make_shared<Primitive>(kRealMakeList));
 GVAR_DEF(PrimitivePtr, kPrimRealTupleGetItem, std::make_shared<Primitive>(kRealTupleGetItem));
-GVAR_DEF(PrimitivePtr, kPrimRealListGetItem, std::make_shared<Primitive>(kRealListGetItem));
 GVAR_DEF(PrimitivePtr, kPrimListToTensor, std::make_shared<Primitive>(kListToTensor));
 GVAR_DEF(PrimitivePtr, kPrimScalarToTensor, std::make_shared<Primitive>(kScalarToTensor));
 GVAR_DEF(PrimitivePtr, kPrimTensorToTuple, std::make_shared<Primitive>(kTensorToTuple));

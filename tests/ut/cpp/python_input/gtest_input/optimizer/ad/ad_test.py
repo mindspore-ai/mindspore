@@ -17,11 +17,11 @@ import numpy as np
 import mindspore as ms
 from mindspore.common.tensor import Tensor
 from mindspore.ops import Primitive
-from mindspore.ops import _constants as Constants
+from mindspore.ops import functional as F
 from tests.ut.python.model.resnet import resnet50
 
 
-scala_add = Primitive(Constants.kScalarAdd)
+scala_add = F.scalar_add
 
 
 def scalar_add(x, y):

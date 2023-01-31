@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 #include "ops/tuple_get_item.h"
 #include "ops/list_getitem.h"
 #include "ops/real_tuple_getitem.h"
-#include "ops/real_list_getitem.h"
 #include "ops/op_utils.h"
 #include "abstract/param_validator.h"
 #include "abstract/ops/op_infer.h"
@@ -104,10 +103,8 @@ class SequenceGetItemInfer : public abstract::OpInferBase {
 MIND_API_OPERATOR_IMPL(TupleGetItem, BaseOperator);
 MIND_API_OPERATOR_IMPL(RealTupleGetItem, BaseOperator);
 MIND_API_OPERATOR_IMPL(ListGetItem, BaseOperator);
-MIND_API_OPERATOR_IMPL(RealListGetItem, BaseOperator);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(TupleGetItem, prim::kPrimTupleGetItem, SequenceGetItemInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(RealTupleGetItem, prim::kPrimRealTupleGetItem, SequenceGetItemInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ListGetItem, prim::kPrimListGetItem, SequenceGetItemInfer, false);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(RealListGetItem, prim::kPrimRealListGetItem, SequenceGetItemInfer, false);
 }  // namespace ops
 }  // namespace mindspore

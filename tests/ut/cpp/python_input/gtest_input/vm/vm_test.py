@@ -13,12 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """ vm_test """
-from mindspore.ops import Primitive
-from mindspore.ops import _constants as Constants
+from mindspore.ops import functional as F
 
-scala_add = Primitive(Constants.kScalarAdd)
-scala_mul = Primitive(Constants.kScalarMul)
-scalar_gt = Primitive('scalar_gt')
+scala_add = F.scalar_add
+scala_mul = F.scalar_mul
+scalar_gt = F.scalar_gt
 
 
 def ScalarAdd(x, y):

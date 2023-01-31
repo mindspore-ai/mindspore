@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "ops/op_utils.h"
-#include "ops/real_makelist.h"
 #include "abstract/ops/op_infer.h"
 #include "utils/check_convert_utils.h"
 #include "include/common/utils/utils.h"
@@ -29,7 +28,6 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MakeList, BaseOperator);
-MIND_API_OPERATOR_IMPL(RealMakeList, BaseOperator);
 AbstractBasePtr MakeListInnerInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractList>(input_args);
 }
@@ -51,6 +49,5 @@ class MakeListInfer : public abstract::OpInferBase {
   }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(MakeList, prim::kPrimMakeList, MakeListInfer, false);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(RealMakeList, prim::kPrimRealMakeList, MakeListInfer, false);
 }  // namespace ops
 }  // namespace mindspore

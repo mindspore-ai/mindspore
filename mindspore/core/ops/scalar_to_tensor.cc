@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,10 +88,8 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(attr);
     }
     if (!attr->isa<Type>()) {
-      MS_EXCEPTION(TypeError)
-        << "For '" << prim_name
-        << "', the supported data type is ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16','uint32', "
-           "'uint64','float16', 'float32', 'float64'], but got an invalid dtype!";
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "the second input must be a `Type`, but got "
+                              << attr->type_name();
     }
     auto output_dtype = attr->cast<TypePtr>();
 
@@ -128,5 +126,6 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
   }
 };
 MIND_API_OPERATOR_IMPL(ScalarToTensor, BaseOperator);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarToTensor, prim::kPrimScalarToTensor, ScalarToTensorInfer, true);
 }  // namespace ops
 }  // namespace mindspore

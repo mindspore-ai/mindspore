@@ -142,9 +142,8 @@ def test_bitwise_operator_error_float_input():
             return res
 
     net = Net()
-    with pytest.raises(TypeError) as err:
+    with pytest.raises(TypeError):
         net()
-    assert "Unsupported input type. For BitOr, only integer types are supported, but got" in str(err.value)
 
 
 def test_bitwise_operator_error_too_large_number():

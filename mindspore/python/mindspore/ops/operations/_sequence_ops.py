@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ class ListAppend(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize ListAppend"""
-        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['input_data', 'target'], outputs=['output_data'])
 
 
@@ -75,7 +74,6 @@ class SequenceSlice(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SequenceSlice"""
-        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['seq', 'start', 'stop', 'step'], outputs=['output_data'])
 
 
@@ -107,7 +105,6 @@ class SequenceSliceSetItem(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SequenceSliceSetItem"""
-        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['seq', 'target', 'start', 'stop', 'step'], outputs=['output_data'])
 
 
@@ -136,7 +133,6 @@ class SequenceAdd(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SequenceAdd"""
-        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['input_1', 'input_2'], outputs=['output_data'])
 
 
@@ -168,7 +164,6 @@ class TupleToTensor(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize TupleToTensor"""
-        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['input_tuple', 'dtype'], outputs=['output_data'])
 
 
@@ -200,7 +195,6 @@ class ListToTensor(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize ListToTensor"""
-        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['input_list', 'dtype'], outputs=['output_data'])
 
 
@@ -228,7 +222,6 @@ class TensorToTuple(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize TensorToTuple"""
-        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['input_tensor'], outputs=['output_data'])
 
 
@@ -256,7 +249,6 @@ class TensorToList(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize TensorToList"""
-        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['input_tensor'], outputs=['output_data'])
 
 
@@ -284,7 +276,6 @@ class TensorToScalar(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize TensorToScalar"""
-        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['input_tensor'], outputs=['output_data'])
 
 
@@ -312,7 +303,6 @@ class SequenceCount(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SequenceCount"""
-        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['sequence', 'target'], outputs=['output_data'])
 
 
@@ -341,5 +331,4 @@ class SequenceMul(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SequenceMul"""
-        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['sequence', 'scalar'], outputs=['output_data'])

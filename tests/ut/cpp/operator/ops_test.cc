@@ -112,17 +112,17 @@ TEST_F(TestOps, ScalarTanTest) {
 
 // Comparisons
 TEST_F(TestOps, ScalarEqTest) {
-  auto prim = std::make_shared<Primitive>("scalar_eq");
+  auto prim = std::make_shared<Primitive>(prim::kScalarEq);
   ASSERT_EQ(prim->name(), kPrimScalarEq->name());
 }
 
 TEST_F(TestOps, ScalarLtTest) {
-  auto prim = std::make_shared<Primitive>("scalar_lt");
+  auto prim = std::make_shared<Primitive>(prim::kScalarLt);
   ASSERT_EQ(prim->name(), kPrimScalarLt->name());
 }
 
 TEST_F(TestOps, ScalarGtTest) {
-  auto prim = std::make_shared<Primitive>("scalar_gt");
+  auto prim = std::make_shared<Primitive>(prim::kScalarGt);
   ASSERT_EQ(prim->name(), kPrimScalarGt->name());
 }
 
@@ -132,12 +132,12 @@ TEST_F(TestOps, ScalarNeTest) {
 }
 
 TEST_F(TestOps, ScalarLeTest) {
-  auto prim = std::make_shared<Primitive>("scalar_le");
+  auto prim = std::make_shared<Primitive>(prim::kScalarLe);
   ASSERT_EQ(prim->name(), kPrimScalarLe->name());
 }
 
 TEST_F(TestOps, ScalarGeTest) {
-  auto prim = std::make_shared<Primitive>("scalar_ge");
+  auto prim = std::make_shared<Primitive>(prim::kScalarGe);
   ASSERT_EQ(prim->name(), kPrimScalarGe->name());
 }
 
