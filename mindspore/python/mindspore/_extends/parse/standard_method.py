@@ -1773,53 +1773,6 @@ def searchsorted(x, v, side='left', sorter=None):
     return j
 
 
-def fill(x, value):
-    """
-    Fills the array with a scalar value.
-
-    Note:
-        Unlike Numpy, tensor.fill() will always returns a new tensor, instead of
-        filling the original tensor.
-
-    Args:
-        value (Union[None, int, float, bool]): All elements of a will be assigned this value.
-
-    Returns:
-        Tensor, with the original dtype and shape as input tensor.
-
-    Raises:
-        TypeError: If input arguments have types not specified above.
-        ValueError: If `shape` has entries < 0.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> a = Tensor(np.arange(4).reshape((2,2)).astype('float32'))
-        >>> print(a.fill(1.0))
-        [[1. 1.]
-        [1. 1.]]
-    """
-    if value is None:
-        if x.dtype not in (mstype.float16, mstype.float32, mstype.float64):
-            const_utils.raise_type_error(
-                "If None is used as value, the original Tensor's dtype must be float.")
-        value = nan_tensor
-        return F.tile(value, x.shape).astype(x.dtype)
-    if not isinstance(value, (int, float, bool)):
-        const_utils.raise_type_error("input value must be a scalar.")
-    return F.fill(x.dtype, x.shape, value)
-
-
-def fills(x, value):
-    """
-    Create a tensor of the same shape and type as the input tensor and fill it with specified value.
-    """
-    return F.fills(x, value)
-
-
 def ptp(x, axis=None, keepdims=False):
     """
     The name of the function comes from the acronym for "peak to peak".
