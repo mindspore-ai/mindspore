@@ -65,7 +65,7 @@ Loss Functions
     mindspore.ops.margin_ranking_loss
     mindspore.ops.mse_loss
     mindspore.ops.multi_margin_loss
-    mindspore.ops.multi_label_margin_loss
+    mindspore.ops.multilabel_margin_loss
     mindspore.ops.multilabel_soft_margin_loss
     mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
