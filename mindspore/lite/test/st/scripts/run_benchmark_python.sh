@@ -19,6 +19,8 @@ function Run_python_ST() {
   echo "Run_python st..."
   echo "-----------------------------------------------------------------------------------------"
   cd ${base_path}/python/ || exit 1
+  run_python_log=./run_python_log.txt
+  result_python_log=./result_python_log.txt
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
       line_info=${line}
@@ -41,15 +43,18 @@ function Run_python_ST() {
         done
       fi
       model_file=${model_path}'/'${model_name}'.mindir'
-      python test_inference_cloud.py ${model_file} ${input_files} ${input_shapes} ${target}
+      python test_inference_cloud.py ${model_file} ${input_files} ${input_shapes} ${target} >> ${run_python_log}
       Run_python_st_status=$?
       if [[ ${Run_python_st_status} != 0 ]];then
-        echo "run python model name:     ${model_name}     failed.";
+        echo "run python model name:     ${model_name}                    failed." >> ${result_python_log}
+        cat ${run_python_log}
+        cat ${result_python_log}
         echo "Run_python_st_status failed"
         exit 1
       fi
-      echo "run python model name:     ${model_name}     pass.";
+      echo "run python model name:     ${model_name}                    pass." >> ${result_python_log}
     done < ${cfg_file}
   done
+  cat ${result_python_log}
   echo "-----------------------------------------------------------------------------------------"
 }
