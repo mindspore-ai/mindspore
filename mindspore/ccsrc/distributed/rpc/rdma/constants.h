@@ -37,13 +37,13 @@ inline void *LoadURPC() {
   }
   return urpc_handle;
 }
-static void *kURPCHandle = LoadURPC();
+inline const void *kURPCHandle = LoadURPC();
 
 #define REG_URPC_METHOD(name, return_type, ...)                 \
   constexpr const char *k##name##Name = #name;                  \
   using name##FunObj = std::function<return_type(__VA_ARGS__)>; \
   using name##FunPtr = return_type (*)(__VA_ARGS__);            \
-  const name##FunPtr name##_func = DlsymFuncObj(name, kURPCHandle);
+  const name##FunPtr name##_func = DlsymFuncObj(name, const_cast<void *> kURPCHandle);
 
 // The symbols of liburpc.so to be dynamically loaded.
 REG_URPC_METHOD(urpc_init, int, struct urpc_config *)
