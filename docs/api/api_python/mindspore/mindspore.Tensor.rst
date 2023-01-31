@@ -200,6 +200,7 @@ mindspore.Tensor
     mindspore.Tensor.mT
     mindspore.Tensor.multiply
     mindspore.Tensor.nan_to_num
+    mindspore.Tensor.nansum
     mindspore.Tensor.narrow
     mindspore.Tensor.nbytes
     mindspore.Tensor.ndim

@@ -861,33 +861,9 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('adjoint')(self)
 
     def all(self, axis=(), keep_dims=False):
+        r"""
+        For details, please refer to :func:`mindspore.ops.all`.
         """
-        Check all tensor elements along a given axis evaluate to True.
-
-        Args:
-            axis (Union[None, int, tuple(int)]): Dimensions of reduction.
-                When the axis is None or empty tuple, reduce all dimensions. When the axis is int or
-                tuple(int), if the dimension of Tensor is dim, the value range is [-dim, dim). Default: ().
-            keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
-
-        Returns:
-            Tensor, if all tensor elements along the given axis evaluate to True, its value is True,
-            otherwise its value is False. If the axis is None or empty tuple, reduce all dimensions.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        See also:
-            :func:`mindspore.Tensor.any`: Check any tensor element along a given axis evaluate to True.
-
-        Examples:
-            >>> from mindspore import Tensor
-            >>> a = Tensor([True, True, False])
-            >>> output = a.all()
-            >>> print(output)
-            False
-        """
-
         self._init_check()
         if axis is None:
             axis = ()
@@ -901,33 +877,9 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('angle')(self)
 
     def any(self, axis=(), keep_dims=False):
+        r"""
+        For details, please refer to :func:`mindspore.ops.any`.
         """
-        Check any tensor element along a given axis evaluate to True.
-
-        Args:
-            axis (Union[None, int, tuple(int)]): Dimensions of reduction.
-                When the axis is None or empty tuple, reduce all dimensions. When the axis is int or
-                tuple(int), if the dimension of Tensor is dim, the value range is [-dim, dim). Default: ().
-            keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
-
-        Returns:
-            Tensor, if any tensor element along the given axis evaluates to True, its value is True,
-            otherwise its value is False. If the axis is None or empty tuple, reduce all dimensions.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        See also:
-            :func:`mindspore.Tensor.all`: Check all tensor elements along a given axis evaluate to True.
-
-        Examples:
-            >>> from mindspore import Tensor
-            >>> a = Tensor([True, True, False])
-            >>> output = a.any()
-            >>> print(output)
-            True
-        """
-
         self._init_check()
         if axis is None:
             axis = ()
@@ -1347,18 +1299,21 @@ class Tensor(Tensor_):
         r"""
         For details, please refer to :func:`mindspore.ops.logaddexp`.
         """
+        self._init_check()
         return tensor_operator_registry.get('logaddexp')(self, other)
 
     def logaddexp2(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.logaddexp2`.
         """
+        self._init_check()
         return tensor_operator_registry.get('logaddexp2')(self, other)
 
     def logsumexp(self, dim, keepdim=False):
         r"""
         For details, please refer to :func:`mindspore.ops.logsumexp`.
         """
+        self._init_check()
         return tensor_operator_registry.get('logsumexp')(self, dim, keepdim)
 
     def logdet(self):
@@ -1393,18 +1348,21 @@ class Tensor(Tensor_):
         r"""
         For details, please refer to :func:`mindspore.ops.isneginf`.
         """
+        self._init_check()
         return tensor_operator_registry.get('isneginf')(self)
 
     def isposinf(self):
         r"""
         For details, please refer to :func:`mindspore.ops.isposinf`.
         """
+        self._init_check()
         return tensor_operator_registry.get('isposinf')(self)
 
     def isreal(self):
         r"""
         For details, please refer to :func:`mindspore.ops.isreal`.
         """
+        self._init_check()
         return tensor_operator_registry.get('isreal')(self)
 
     def isfinite(self):
@@ -2993,6 +2951,13 @@ class Tensor(Tensor_):
         if axes:
             return x.sum(tuple(axes), keepdims=True)
         return x
+
+    def nansum(self, axis=None, keepdims=False, dtype=None):
+        """
+        For details, please refer to :func:`mindspore.ops.nansum`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('nansum')(self, axis=axis, keepdims=keepdims, dtype=dtype)
 
     def repeat(self, repeats, axis=None):
         """

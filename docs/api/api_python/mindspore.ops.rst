@@ -505,6 +505,7 @@ Array操作
     mindspore.ops.movedim
     mindspore.ops.narrow
     mindspore.ops.nan_to_num
+    mindspore.ops.nansum
     mindspore.ops.normal
     mindspore.ops.nonzero
     mindspore.ops.numel
