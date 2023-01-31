@@ -664,7 +664,29 @@ typedef struct QuantMulArg {
 } QuantMulArg;
 
 typedef enum ReductionType { Reduction_Sum, Reduction_Mean, Reduction_None } ReductionType;
-typedef enum ActType { ActType_No, ActType_Relu, ActType_Sigmod, ActType_Relu6, ActType_Prelu } ActType;
+typedef enum ActType {
+  ActType_No = 0,
+  ActType_Relu = 1,
+  ActType_Sigmoid = 2,
+  ActType_Relu6 = 3,
+  ActType_Elu = 4,
+  ActType_LeakyRelu = 5,
+  ActType_Abs = 6,
+  ActType_Relu1 = 7,
+  ActType_Softsign = 8,
+  ActType_Softplus = 9,
+  ActType_Tanh = 10,
+  ActType_Selu = 11,
+  ActType_HSwish = 12,
+  ActType_HSigmoid = 13,
+  ActType_ThresholdRelu = 14,
+  ActType_Linear = 15,
+  ActType_HardTanh = 16,
+  ActType_Sign = 17,
+  ActType_Swish = 18,
+  ActType_Gelu = 19,
+  ActType_Unknown = 20
+} ActType;
 typedef enum PadMode { Pad_pad, Pad_same, Pad_valid } PadMode;
 typedef enum RoundingMode { Rounding_No, Rounding_Away_from_zero, Rounding_Up } RoundingMode;
 typedef enum CalFixedMultiplierMode {

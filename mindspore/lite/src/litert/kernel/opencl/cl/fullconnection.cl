@@ -34,6 +34,8 @@ __kernel void FullConnection(__read_only image2d_t input, __write_only image2d_t
       result = clamp(result, (FLT4)(0.0f), (FLT4)(6.0f));
     } else if (act_type == ActivationType_TANH) {
       result = tanh(clamp(result, (FLT)(-10.0f), (FLT)(10.0f)));
+    } else if (act_type == ActivationType_SIGMOID) {
+      result = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-result));
     }
     WRITE_IMAGE(output, (int2)(gidx, gidz), result);
   }
@@ -74,6 +76,8 @@ __kernel void FullConnectionWeightVar(__read_only image2d_t input, __write_only 
       result = clamp(result, (FLT4)(0.0f), (FLT4)(6.0f));
     } else if (act_type == ActivationType_TANH) {
       result = tanh(clamp(result, (FLT)(-10.0f), (FLT)(10.0f)));
+    } else if (act_type == ActivationType_SIGMOID) {
+      result = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-result));
     }
     WRITE_IMAGE(output, (int2)(gidx, gidz), result);
   }

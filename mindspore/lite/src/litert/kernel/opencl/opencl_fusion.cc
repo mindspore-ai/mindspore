@@ -40,6 +40,7 @@ using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_NO_ACTIVATION;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
+using mindspore::schema::ActivationType_SIGMOID;
 using mindspore::schema::ActivationType_TANH;
 using mindspore::schema::PrimitiveType;
 using mindspore::schema::PrimitiveType_Activation;
@@ -374,6 +375,8 @@ void TryMergeXxxActivation(KernelExec *act, std::set<KernelExec *> *removed_set)
       act_name = "RELU6";
     } else if (act_param->type_ == ActivationType_TANH) {
       act_name = "TANH";
+    } else if (act_param->type_ == ActivationType_SIGMOID) {
+      act_name = "SIGMOID";
     } else {
       MS_LOG(DEBUG) << "Merge " + GetTypeName(node) + "(NO_ACTIVATION) and Activation(" + act_name +
                          ") is not supported";
@@ -659,7 +662,8 @@ void DoSpecificFusion(KernelExec *node, std::set<KernelExec *> *removed_set, std
       // try merge Arithmetic(without act) + RELU/RELU6
       if (PredIs(node, schema::PrimitiveType_Conv2DFusion, nodes)) {
         TryMergeXxxActivation<ConvParameter>(node, removed_set);
-      } else if (PredIs(node, schema::PrimitiveType_FullConnection, nodes)) {
+      } else if (PredIs(node, schema::PrimitiveType_FullConnection, nodes) ||
+                 PredIs(node, schema::PrimitiveType_MatMulFusion, nodes)) {
         TryMergeXxxActivation<MatMulParameter>(node, removed_set);
       } else if (std::any_of(ArithmeticPrimitives.begin(), ArithmeticPrimitives.end(),
                              [&](schema::PrimitiveType type) { return PredIs(node, type, nodes); })) {
@@ -719,13 +723,13 @@ int OpenCLSubGraph::FusionPass() {
       }
     }
 
+    // do specific fusion, like pad+conv2d, fc+reshape, etc.
+    DoSpecificFusion(node, &removed_set, &nodes_);
+
     // do element-wise fusion, like mul+add, mul+add+relu
     if (TryMergeEltwiseEltwise(node, &removed_set, &nodes_) == RET_OK) {
       continue;
     }
-
-    // do specific fusion, like pad+conv2d, fc+reshape, etc.
-    DoSpecificFusion(node, &removed_set, &nodes_);
   }
 
   for (auto kernel : removed_set) {
