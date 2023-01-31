@@ -154,6 +154,11 @@ class TopCellInfo {
   void ClearDeviceMemory() const;
   void Clear();
 
+  inline bool use_dynamic_shape_process() { return use_dynamic_shape_process_; }
+  inline void set_use_dynamic_shape_process(bool use_dynamic_shape_process) {
+    use_dynamic_shape_process_ = use_dynamic_shape_process;
+  }
+
  private:
   void SetMultipleOutputToGraphInfoMap(const string &id, const AnfNodePtr &node) const;
   void SetNestedMultipleOutputToGraphInfoMap(const string &id, const AnfNodePtr &node,
@@ -191,6 +196,7 @@ class TopCellInfo {
   TensorIdWithTensorObject tensor_id_with_tensor_object_;
   OpInfoWithMsFuncForwardTensors op_info_with_ms_func_forward_tensors_;
   mindspore::HashMap<size_t, size_t> cnode_hash_with_op_index_;
+  bool use_dynamic_shape_process_{false};
 };
 using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;
 }  // namespace pynative

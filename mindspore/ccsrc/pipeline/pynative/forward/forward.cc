@@ -366,6 +366,7 @@ void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::arg
   }
   PrintPyObjInfo(obj, kBegin, is_cell);
   infer_operation()->set_only_single_op_run(false);
+  grad()->SetTopCellDynamicAttr(obj);
 }
 
 void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell) {

@@ -195,6 +195,7 @@ void MsFunction::UpdateMsFunctionForwardTensors(const GradExecutor *grad_executo
   MS_EXCEPTION_IF_NULL(grad_executor);
   for (size_t i = 0; i < new_tensors.size(); ++i) {
     grad_executor->UpdatePreTensorInfo(new_tensors[i], {old_tensors[i]});
+    MS_EXCEPTION_IF_NULL(old_tensors[i]);
     old_tensors[i]->set_sync_status(kNeedSyncDeviceToHost);
   }
 }
@@ -366,7 +367,7 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
 
   auto grad_exec_ptr = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor();
   MS_EXCEPTION_IF_NULL(grad_exec_ptr);
-  (void)grad_exec_ptr->CheckGraphDynamic(ms_function_cnode, true, op_run_info->base_op_run_info.op_name);
+  grad_exec_ptr->CheckGraphDynamic(ms_function_cnode, true, op_run_info->base_op_run_info.op_name);
 }
 
 void MsFunction::SetMsFuncGraphParameters(const FuncGraphPtr &ms_func_graph) {

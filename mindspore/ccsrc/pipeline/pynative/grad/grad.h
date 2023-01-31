@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <stack>
+#include <set>
 #include <vector>
 #include <map>
 #include "pipeline/pynative/base.h"
@@ -76,9 +77,6 @@ class GradExecutor {
     MS_EXCEPTION_IF_NULL(ms_function_);
     return ms_function_;
   }
-  inline void set_use_dynamic_shape_process(bool use_dynamic_shape_process) {
-    use_dynamic_shape_process_ = use_dynamic_shape_process;
-  }
   inline InputArgsInfoPtr top_input_args_info() const {
     MS_EXCEPTION_IF_NULL(top_input_args_info_);
     return top_input_args_info_;
@@ -92,7 +90,6 @@ class GradExecutor {
   inline bool eliminate_forward() const { return eliminate_forward_; }
   inline void set_eliminate_forward(bool eliminate_forward) { eliminate_forward_ = eliminate_forward; }
   inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
-  inline bool use_dynamic_shape_process() const { return use_dynamic_shape_process_; }
   inline std::shared_ptr<AsyncQueue> async_executor() const { return async_executor_; }
   void SetHookChanged(const py::object &cell) const;
   void GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
@@ -112,8 +109,23 @@ class GradExecutor {
                            const std::vector<tensor::TensorPtr> &pre_tensors) const;
   void ClearRes();
   void WorkerJoin() { async_executor_->WorkerJoin(); }
-  bool CheckGraphDynamic(const AnfNodePtr &anf_node, bool is_ms_function_node = false,
+  void CheckGraphDynamic(const AnfNodePtr &anf_node, bool is_ms_function_node = false,
                          const std::string &graph_phase = "") const;
+  void SaveDynamicInputsCells(const py::object &cell);
+  void SetTopCellDynamicAttr(const py::object &cell);
+  bool use_dynamic_shape_process() const {
+    if (top_cell_ == nullptr) {
+      return false;
+    }
+    return top_cell()->use_dynamic_shape_process();
+  }
+
+  void set_use_dynamic_shape_process(bool use_dynamic_shape_process) {
+    if (top_cell_ == nullptr) {
+      return;
+    }
+    return top_cell()->set_use_dynamic_shape_process(use_dynamic_shape_process);
+  }
 
  private:
   ForwardExecutorPtr forward() const;
@@ -145,7 +157,7 @@ class GradExecutor {
   inline bool is_high_order_top_cell() const {
     return !input_args_info_stack_.empty() && IsNestedGrad() && top_cell()->grad_order() != grad_order_;
   }
-
+  bool GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info);
   void SwitchTopCell();
   TopCellInfoPtr GetTopCell(const std::string &already_run_cell_id);
   void DoParameterReplace(const FuncGraphPtr &first_grad_fg, const std::vector<ValuePtr> &forward_args,
@@ -202,7 +214,6 @@ class GradExecutor {
   bool grad_is_running_{false};
   bool need_renormalize_{false};
   bool eliminate_forward_{true};
-  mutable bool use_dynamic_shape_process_{false};
   mutable bool is_cell_id_in_dynamic_detect_nodes_map_{false};
   size_t custom_bprop_cell_count_{0};
   size_t obj_order_{0};
@@ -226,6 +237,7 @@ class GradExecutor {
   MsFunctionPtr ms_function_;
   std::shared_ptr<AsyncQueue> async_executor_;
   mutable mindspore::HashMap<std::string, std::vector<DynamicDetectNodeInfoPtr>> cell_id_with_dynamic_detect_nodes_;
+  std::set<std::string> dynamic_inputs_cells_;
 };
 }  // namespace pynative
 }  // namespace mindspore
