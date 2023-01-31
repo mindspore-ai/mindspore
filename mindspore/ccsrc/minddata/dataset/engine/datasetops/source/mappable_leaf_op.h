@@ -128,9 +128,8 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
   virtual Status LoadTensorRowPullMode(row_id_type row_id, TensorRow *row) { return LoadTensorRow(row_id, row); }
 
   /// reset the op and update repeat and epoch number if the condition is met.
-  /// \param row[out] - Fetched EOF if it is the last iteration for epoch
   /// \return Status The status code returned
-  virtual Status ResetAndUpdateRepeat();
+  Status ResetAndUpdateRepeat();
 
   /// \brief Gets the implementation status for operator in pull mode
   /// \return implementation status

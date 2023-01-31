@@ -15,6 +15,8 @@
 """
 Test dataset operations in debug mode
 """
+
+import numpy as np
 import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as transforms
@@ -28,6 +30,14 @@ pytestmark = pytest.mark.forked
 
 DEBUG_MODE = False
 SEED_VAL = 0  # seed will be set internally in debug mode, save original seed value to restore.
+
+
+
+TF_FILES = ["../data/dataset/tf_file_dataset/test1.data",
+            "../data/dataset/tf_file_dataset/test2.data",
+            "../data/dataset/tf_file_dataset/test3.data",
+            "../data/dataset/tf_file_dataset/test4.data",
+            "../data/dataset/tf_file_dataset/test5.data"]
 
 
 def setup_function():
@@ -222,8 +232,6 @@ def test_pipeline_debug_mode_concat():
     assert sample_count == num_repeat * num_epoch * sample_row
 
 
-# Note: TFRecordDataset op is not yet supported in pull mode
-@pytest.mark.skip(reason="Unsupported in pull mode")
 def test_pipeline_debug_mode_tfrecord_rename_zip():
     """
     Feature: Pipeline debug mode.
@@ -383,6 +391,88 @@ def test_pipeline_debug_mode_multi_epoch_map_pyfunc():
         iter1.__next__()
 
 
+def test_pipeline_debug_mode_tfrecord_multi_epochs():
+    """
+    Feature: Pipeline debug mode
+    Description: Test TFRecordDataset in multi epochs scenario in debug mode
+    Expectation: The dataset is processed as expected
+    """
+    logger.info("test_pipeline_debug_mode_tfrecord_multi_epochs")
+
+    num_samples = 15
+    data1 = ds.TFRecordDataset(TF_FILES, num_samples=num_samples, shuffle=ds.Shuffle.FILES)
+    num_epoch = 3
+    iter1 = data1.create_dict_iterator(num_epochs=num_epoch)
+    epoch_count = 0
+    sample_count = 0
+    for _ in range(num_epoch):
+        row_count = 0
+        for _ in iter1:
+            row_count += 1
+        assert row_count == num_samples
+        epoch_count += 1
+        sample_count += row_count
+    assert epoch_count == num_epoch
+    assert sample_count == num_samples * num_epoch
+
+
+def test_pipeline_debug_mode_tfrecord_shard():
+    """
+    Feature: Pipeline debug mode
+    Description: Test TFRecordDataset shard
+    Expectation: The dataset is processed as expected
+    """
+    logger.info("test_pipeline_debug_mode_tfrecord_shard")
+
+    def get_res(shard_id, num_repeats):
+        data1 = ds.TFRecordDataset(TF_FILES[:-1], num_shards=2, shard_id=shard_id, num_samples=3,
+                                   shuffle=ds.Shuffle.GLOBAL)
+        data1 = data1.repeat(num_repeats)
+        res = list()
+        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            res.append(item["scalars"][0])
+        return res
+    worker1_res = get_res(0, 8)
+    worker2_res = get_res(1, 8)
+    assert len(worker1_res) == 3 * 8
+    assert len(worker1_res) == len(worker2_res)
+    for i, _ in enumerate(worker1_res):
+        assert worker1_res[i] != worker2_res[i]
+    assert set(worker2_res) == set(worker1_res)
+
+
+def test_pipeline_debug_mode_tfrecord_shard_equal_rows():
+    """
+    Feature: Pipeline debug mode
+    Description: Test TFRecordDataset shard with equal rows in debug mode
+    Expectation: The dataset is processed as expected
+    """
+    logger.info("test_pipeline_debug_mode_tfrecord_shard_equal_rows")
+
+    def get_res(num_shards, shard_id, num_repeats):
+        ds1 = ds.TFRecordDataset(TF_FILES[:-1], num_shards=num_shards, shard_id=shard_id, shard_equal_rows=True)
+        ds1 = ds1.repeat(num_repeats)
+        res = list()
+        for data in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            res.append(data["scalars"][0])
+        return res
+
+    worker1_res = get_res(3, 0, 2)
+    worker2_res = get_res(3, 1, 2)
+    worker3_res = get_res(3, 2, 2)
+    assert len(worker1_res) == 28
+    assert len(worker2_res) == 28
+    assert len(worker3_res) == 28
+
+    # Confirm different workers get different results in the same epoch
+    for i, _ in enumerate(worker1_res):
+        assert worker1_res[i] != worker2_res[i]
+        assert worker2_res[i] != worker3_res[i]
+
+    worker4_res = get_res(1, 0, 1)
+    assert len(worker4_res) == 40
+
+
 if __name__ == '__main__':
     setup_function()
     test_pipeline_debug_mode_tuple()
@@ -399,4 +489,7 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_map_random()
     test_pipeline_debug_mode_imdb_shuffle()
     test_pipeline_debug_mode_multi_epoch_map_pyfunc()
+    test_pipeline_debug_mode_tfrecord_multi_epochs()
+    test_pipeline_debug_mode_tfrecord_shard()
+    test_pipeline_debug_mode_tfrecord_shard_equal_rows()
     teardown_function()

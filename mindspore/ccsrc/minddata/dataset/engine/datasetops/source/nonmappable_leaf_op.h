@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,18 @@ class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>
   // @return Status The status code returned
   Status PrepareOperator() override;
 
+  // \brief During tree prepare phase, operators may have specific post-operations to perform depending on
+  //     their role. This is the implementation for pull mode.
+  // \notes Derived versions of this function should always call its superclass version first
+  //     before providing their own implementations.
+  // \return Status The status code returned
+  Status PrepareOperatorPullBased() override;
+
+  /// \brief In pull mode, gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRowPullMode(TensorRow *const row) override;
+
  protected:
   // The entry point for when workers are launched.
   // @param worker_id - the id of the worker that is executing this function.
@@ -176,6 +188,18 @@ class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>
     return ret_load_jagged_connector;
   }
 
+  /// \brief Prepare data by reading from disk and caching tensors into the jagged_row_connector queue.
+  /// \return Status The status code returned
+  Status PrepareData();
+
+  /// \brief Gets the implementation status for operator in pull mode
+  /// \return implementation status
+  ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }
+
+  /// \brief reset the op and update repeat and epoch number if the condition is met.
+  /// \return Status The status code returned
+  Status ResetAndUpdateRepeat();
+
   int32_t device_id_;
   int32_t num_devices_;
   bool load_jagged_connector_;
@@ -196,6 +220,9 @@ class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>
   bool shuffle_files_;
   int64_t num_rows_per_shard_;
   int64_t num_rows_;
+  bool prepared_data_;     // flag to indicate whether the data is prepared before taking for pull mode
+  uint32_t curr_row_;      // current row number count for pull mode
+  uint32_t workers_done_;  // how many workers have done the tensors reading work for pull mode
 
  private:
   std::vector<int64_t> shuffled_keys_;  // to store shuffled filename indices
