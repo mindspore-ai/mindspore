@@ -16,4 +16,4 @@ mindspore.ops.silu
 
     其中，:math:`x_i` 是输入x的元素。
 
-    更多详情请参考 `mindspore.nn.SiLU`。
+    更多详情请参考 :class:`mindspore.nn.SiLU`。

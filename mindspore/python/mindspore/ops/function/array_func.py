@@ -1856,7 +1856,7 @@ def slice(input_x, begin, size):
 
 
 def concat(input_x, axis=0):
-    """Alias of :func:`mindspore.ops.cat()`"""
+    """Alias for :func:`mindspore.ops.cat()`"""
     return cat(input_x, axis)
 
 

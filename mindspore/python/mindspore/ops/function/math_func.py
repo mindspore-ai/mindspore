@@ -5045,7 +5045,7 @@ def addmv(x, mat, vec, beta=1, alpha=1):
         >>> x = Tensor(np.array([2., 3.]).astype(np.float32))
         >>> mat = Tensor(np.array([[2., 5., 3.], [4., 2., 2.]]).astype(np.float32))
         >>> vec = Tensor(np.array([3., 2., 4.]).astype(np.float32))
-        >>> output = addmv(x, mat, vec)
+        >>> output = ops.addmv(x, mat, vec)
         >>> print(output)
         [30. 27.]
     """
