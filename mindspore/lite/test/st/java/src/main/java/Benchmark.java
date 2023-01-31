@@ -18,7 +18,11 @@ import com.mindspore.MSTensor;
 import com.mindspore.config.DeviceType;
 import com.mindspore.config.MSContext;
 import com.mindspore.config.DataType;
+import com.mindspore.config.RunnerConfig;
 import com.mindspore.Model;
+import com.mindspore.ModelParallelRunner;
+import java.util.List;
+import java.util.ArrayList;
 
 import java.io.*;
 
@@ -112,6 +116,61 @@ public class Benchmark {
         String[] inDataFile = args[1].split(",");
         String benchmarkDataFile = args[2];
         float accuracy = Float.parseFloat(args[3]);
+        if (args.length == 5 && args[4].equals("Runner")) {
+            // use default param init context
+            MSContext context = new MSContext();
+            context.init(1,0);
+            boolean ret = context.addDeviceInfo(DeviceType.DT_CPU, false, 0);
+            if (!ret) {
+                System.err.println("init context failed");
+                context.free();
+                return ;
+            }
+            // init runner config
+            RunnerConfig config = new RunnerConfig();
+            config.init(context);
+            config.setWorkersNum(2);
+            // init ModelParallelRunner
+            ModelParallelRunner runner = new ModelParallelRunner();
+            ret = runner.init(modelPath, config);
+            if (!ret) {
+                System.err.println("ModelParallelRunner init failed.");
+                runner.free();
+                return;
+            }
+            List<MSTensor> inputs = runner.getInputs();
+            for (int index = 0; index < inputs.size(); index++) {
+                MSTensor msTensor = inputs.get(index);
+                if (msTensor.getDataType() != DataType.kNumberTypeFloat32) {
+                    System.err.println("Input tensor data type is not float, the data type is " + msTensor.getDataType());
+                    runner.free();
+                    return;
+                }
+                // Set Input Data.
+                byte[] data = readBinFile(inDataFile[index], (int) msTensor.size());
+                msTensor.setData(data);
+            }
+            // init output
+            List<MSTensor> outputs = new ArrayList<>();
+
+            // runner do predict
+            ret = runner.predict(inputs,outputs);
+            if (!ret) {
+                System.err.println("MindSpore Lite predict failed.");
+                runner.free();
+                return;
+            }
+            System.out.println("========== model parallel runner predict success ==========");
+            config.free();
+            for (int i = 0; i < inputs.size(); i++) {
+                inputs.get(i).free();
+            }
+            for (int i = 0; i < outputs.size(); i++) {
+                outputs.get(i).free();
+            }
+            runner.free();
+            return;
+        }
 
         MSContext context = new MSContext();
         context.init(1, 0);
