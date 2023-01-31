@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,8 @@ class PrintTupleWrapper : public AnfVisitor {
 
     // already be {prim::kPrimPrint, {prim::kPrinMakeTuple, Xs}}
     auto cnode = node->cast<CNodePtr>();
-    if (cnode->size() == 2 && IsPrimitiveCNode(cnode->input(1), prim::kPrimMakeTuple)) {
+    constexpr size_t cnode_input_size = 2;
+    if (cnode->size() == cnode_input_size && IsPrimitiveCNode(cnode->input(1), prim::kPrimMakeTuple)) {
       return nullptr;
     }
 
