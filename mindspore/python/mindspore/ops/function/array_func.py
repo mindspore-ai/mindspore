@@ -4502,6 +4502,28 @@ def population_count(input_x):
 ##############################
 
 
+def is_tensor(obj):
+    r"""
+    Check whether the input object is a :class:`mindspore.Tensor` .
+
+    Args:
+        obj (Object): input object.
+
+    Returns:
+        Bool. Return True if `obj` is a Tensor, otherwise, return False.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> a = Tensor([1.9, 2.2, 3.1])
+        >>> ops.is_tensor(a)
+        True
+    """
+    return isinstance(obj, Tensor)
+
+
 def scalar_cast(input_x, input_y):
     """
     Casts the input scalar to another type.
@@ -6424,6 +6446,7 @@ __all__ = [
     'stack',
     'unbind',
     'unstack',
+    'is_tensor',
     'scalar_cast',
     'scalar_to_tensor',
     'space_to_batch_nd',

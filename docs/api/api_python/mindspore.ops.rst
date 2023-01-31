@@ -549,6 +549,7 @@ Array操作
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.is_tensor
     mindspore.ops.scalar_cast
     mindspore.ops.scalar_to_tensor
     mindspore.ops.tuple_to_array
