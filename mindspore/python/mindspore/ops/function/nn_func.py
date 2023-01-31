@@ -4897,12 +4897,12 @@ def pixel_shuffle(x, upscale_factor):
                          "by `upscale_factor` squared.")
     c = c // upscale_factor ** 2
     input_perm = (pre + (c, upscale_factor, upscale_factor, h, w))
-    reshape = ops.Reshape()
+    reshape = _get_cache_prim(P.Reshape)()
+    transpose = _get_cache_prim(P.Transpose)()
     x = reshape(x, input_perm)
     input_perm = [i for i in range(length - 2)]
     input_perm = input_perm + [length, length - 2, length + 1, length - 1]
     input_perm = tuple(input_perm)
-    transpose = ops.Transpose()
     x = transpose(x, input_perm)
     x = reshape(x, (pre + (c, upscale_factor * h, upscale_factor * w)))
     return x
@@ -4953,12 +4953,12 @@ def pixel_unshuffle(x, downscale_factor):
     h = h // downscale_factor
     w = w // downscale_factor
     input_perm = (pre + (c, h, downscale_factor, w, downscale_factor))
-    reshape = ops.Reshape()
+    reshape = _get_cache_prim(P.Reshape)()
+    transpose = _get_cache_prim(P.Transpose)()
     x = reshape(x, input_perm)
     input_perm = [i for i in range(length - 2)]
     input_perm = input_perm + [length - 1, length + 1, length - 2, length]
     input_perm = tuple(input_perm)
-    transpose = ops.Transpose()
     x = transpose(x, input_perm)
     x = reshape(x, (pre + (c * downscale_factor * downscale_factor, h, w)))
     return x
