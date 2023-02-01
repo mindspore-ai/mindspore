@@ -12,7 +12,7 @@ mindspore.nn.GaussianNLLLoss
         \ \text{eps}\right)\right) + \frac{\left(\text{logits} - \text{labels}\right)^2}
         {\text{max}\left(\text{var}, \ \text{eps}\right)}\right) + \text{const.}
 
-    其中，:math:`eps` 用于 :math:`log` 的稳定性。在默认情况下，常数部分被忽略，除非 :math:`full=True`。如果 :math:`var` 和 :math:`logits` 的shape不一致（出于同方差性的假设），那么它必须最后一个维度是1，或者具有更少的维度（其他维度相同），来获得正确的广播。
+    其中，:math:`eps` 用于 :math:`log` 的稳定性。当 :math:`full=True` 时，一个常数会被添加到loss中。如果 :math:`var` 和 :math:`logits` 的shape不一致（出于同方差性的假设），那么它们必须能够正确地广播。
 
     参数：
         - **full** (bool) - 指定损失函数中的常数部分。如果为True，则常数为 :math:`const = 0.5*log(2*pi)`。默认值：False。
