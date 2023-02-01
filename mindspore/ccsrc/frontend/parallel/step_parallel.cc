@@ -1311,7 +1311,7 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
                                     const std::string &opt_shard_group) {
   int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
   auto enable_opt_shard = ParallelContext::GetInstance()->enable_parallel_optimizer();
-  if ((opt_shard_group.empty() && split_stage_num <= 1) || (!enable_opt_shard)) {
+  if ((opt_shard_group.empty() && split_stage_num <= 1) || (!enable_opt_shard) || (!ParameterRequireGrad(parameter))) {
     return;
   }
 
