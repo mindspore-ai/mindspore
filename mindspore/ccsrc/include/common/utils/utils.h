@@ -310,6 +310,7 @@ constexpr auto kEmbeddingLookupOpName = "EmbeddingLookup";
 constexpr auto kEmbeddingLookupProxyOpName = "EmbeddingLookupProxy";
 constexpr auto kMapTensorPutOpName = "MapTensorPut";
 constexpr auto kMapTensorGetOpName = "MapTensorGet";
+constexpr auto kMapTensorEraseOpName = "MapTensorErase";
 constexpr auto kEndGraph = "EndGraph";
 constexpr auto kEndOfSequence = "EndOfSequence";
 constexpr auto kEnvironCreateOpName = "EnvironCreate";
