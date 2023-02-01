@@ -21,8 +21,6 @@
 #include <set>
 #include <vector>
 #include <string>
-#include <memory>
-#include <algorithm>
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
@@ -31,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameVmapStackAssign = "VmapStackAssign";
 constexpr auto kNameVmapUnstackAssign = "VmapUnstackAssign";
-constexpr size_t kInputLowerLimit = 4;
+constexpr int64_t kInputLowerLimit = 4;
 constexpr size_t kNumber2 = 2;
 
 // Assign value from a batch of parameters to a stacked parameter in the model ensembling scenario of vmap.
