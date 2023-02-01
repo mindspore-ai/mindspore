@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 
 namespace mindspore {
 namespace opt {
+using mindspore::tensor::Tensor;
 kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   std::vector<std::string> inputs_format;
   std::vector<std::string> outputs_format;
@@ -68,6 +69,13 @@ bool GetOptList(const std::vector<AnfNodePtr> &node_list, std::vector<AnfNodePtr
     std::vector<std::string> string_value;
     std::vector<std::pair<int64_t, int64_t>> value_type;
     if (IsPrimitiveCNode(node, prim::kPrimPrint)) {
+      auto prim = common::AnfAlgo::GetCNodePrimitive(node);
+      MS_EXCEPTION_IF_NULL(prim);
+      std::vector<int64_t> fake_tensor_pos;
+      if (prim->HasAttr("fake_tensor")) {
+        auto value_ptr = prim->GetAttr("fake_tensor");
+        fake_tensor_pos = GetValue<std::vector<int64_t>>(value_ptr);
+      }
       size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
       for (size_t i = 0; i < input_num; i++) {
         auto current_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i);
@@ -80,7 +88,8 @@ bool GetOptList(const std::vector<AnfNodePtr> &node_list, std::vector<AnfNodePtr
         auto shape = value_node->abstract();
         MS_EXCEPTION_IF_NULL(shape);
         auto shape_node = dyn_cast<abstract::Shape>(shape->GetShapeTrack());
-        if (shape_node != nullptr) {
+        bool is_fake_tensor = (std::find(fake_tensor_pos.begin(), fake_tensor_pos.end(), i) != fake_tensor_pos.end());
+        if ((!IsValueNode<Tensor>(value_node) || is_fake_tensor) && shape_node != nullptr) {
           // a scalar or tuple
           auto shape_size = shape_node->shape().size();
           if (shape_size != 0) {
