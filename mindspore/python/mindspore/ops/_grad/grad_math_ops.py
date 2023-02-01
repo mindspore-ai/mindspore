@@ -1634,3 +1634,13 @@ def get_bprop_index_add(self):
         return dout, zeros_like(indices), gather(dout, indices, _axis)
 
     return bprop
+
+
+@bprop_getters.register(P.InplaceUpdate)
+def get_bprop_inplace_update(self):
+    """Grad definition for `InplaceUpdate` operation."""
+
+    def bprop(x, v, out, dout):
+        return zeros_like(x), zeros_like(v)
+
+    return bprop
