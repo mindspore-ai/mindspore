@@ -14,7 +14,7 @@ mindspore.ops.lp_pool2d
         - **x** (Tensor) - shape为 :math:`(N, C, H_{in}, W_{in})` 的Tensor。
         - **norm_type** (Union[int, float]) - 标准化类型，代表公式里的p，不能为0，
 
-          - 如果 p = 1，得到的结果为池化核内元素之和（与平均池化成比例），
+          - 如果 p = 1，得到的结果为池化核内元素之和（与平均池化成比例）；
           - 如果 p = :math:`\infty`，得到的结果为最大池化的结果。
 
         - **kernel_size** (Union[int, tuple[int]]) - 池化核尺寸大小。如果为整数，则代表池化核的高和宽。如果为tuple，其值必须包含两个整数值分别表示池化核的高和宽。
