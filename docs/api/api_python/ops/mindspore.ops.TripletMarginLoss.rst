@@ -8,7 +8,7 @@ mindspore.ops.TripletMarginLoss
     创建一个标准，用于计算输入Tensor :math:`x` 、 :math:`x2` 和 :math:`x3` 与大于 :math:`0` 的 `margin` 之间的三元组损失值。
     可以用来测量样本之间的相似度。一个三元组包含 `a` 、 `p` 和 `n` （即分别代表示  `anchor` 、 `positive examples` 和 `negative examples` ）。
     所有输入Tensor的shape都应该为 :math:`(N, D)` 。
-    距离交换在V. Balntas、E. Riba等人在论文 `Learning local feature descriptors with triplets and shallow convolutional neural networks <http://158.109.8.37/files/BRP2016.pdf>`_ 中有详细的阐述。
+    距离交换在V. Balntas、E. Riba等人的论文 `Learning local feature descriptors with triplets and shallow convolutional neural networks <http://158.109.8.37/files/BRP2016.pdf>`_ 中有详细的阐述。
 
     对于每个小批量样本，损失值为：
 

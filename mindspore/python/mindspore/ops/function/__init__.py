@@ -234,6 +234,7 @@ from .math_func import (
     log_matrix_determinant,
     slogdet,
     matrix_determinant,
+    det,
     linspace,
     matrix_solve,
     maximum,

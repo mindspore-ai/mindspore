@@ -1321,7 +1321,7 @@ def resize(x, *new_shape):
 
 def det(x):
     """Computes the determinant of one or more square matrices."""
-    return F.matrix_determinant(x)
+    return F.det(x)
 
 
 def diagonal(x, offset=0, axis1=0, axis2=1):

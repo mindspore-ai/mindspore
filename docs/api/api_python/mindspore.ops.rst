@@ -250,8 +250,6 @@ mindspore.ops
     mindspore.ops.logical_or
     mindspore.ops.logical_xor
     mindspore.ops.logit
-    mindspore.ops.log_matrix_determinant
-    mindspore.ops.matrix_determinant
     mindspore.ops.mul
     mindspore.ops.multiply
     mindspore.ops.mvlgamma
@@ -368,15 +366,18 @@ Reduction函数
     mindspore.ops.cholesky
     mindspore.ops.cholesky_inverse
     mindspore.ops.batch_dot
+    mindspore.ops.det
     mindspore.ops.dot
     mindspore.ops.inner
     mindspore.ops.inverse
     mindspore.ops.ger
     mindspore.ops.kron
+    mindspore.ops.log_matrix_determinant
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
     mindspore.ops.matrix_exp
     mindspore.ops.matrix_band_part
+    mindspore.ops.matrix_determinant
     mindspore.ops.matrix_diag
     mindspore.ops.matrix_diag_part
     mindspore.ops.matrix_set_diag

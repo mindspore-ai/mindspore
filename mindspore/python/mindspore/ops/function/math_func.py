@@ -1307,8 +1307,8 @@ def logdet(x):
         >>> print(output)
         [1.9459091 0.6931454]
     """
-    det = matrix_determinant(x)
-    return log_(det)
+    det_x = matrix_determinant(x)
+    return log_(det_x)
 
 
 def floor(x):
@@ -3223,7 +3223,17 @@ def matrix_determinant(x):
         >>> print(output)
         [-16.5 21. ]
     """
-    return matrix_determinant_(x)
+    return _get_cache_prim(P.MatrixDeterminant)()(x)
+
+
+def det(x):
+    """
+    Alias for :func:`mindspore.ops.matrix_determinant` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return matrix_determinant(x)
 
 
 def matrix_exp(x):
@@ -10018,6 +10028,7 @@ __all__ = [
     'logdet',
     'log_matrix_determinant',
     'matrix_determinant',
+    'det',
     'linspace',
     'matrix_solve',
     'std',
