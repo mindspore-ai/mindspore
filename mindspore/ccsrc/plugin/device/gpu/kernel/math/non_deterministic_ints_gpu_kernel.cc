@@ -73,19 +73,11 @@ int NonDeterministicIntsGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
                                              const std::vector<KernelTensorPtr> &inputs,
                                              const std::vector<KernelTensorPtr> &outputs,
                                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  for (const auto &input : inputs) {
-    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
 
-  input_num_ = 1;
-  output_num_ = 1;
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
+  ResetResource();
 
   std::vector<int64_t> input_shape_ = inputs[0]->GetShapeVector();
   std::vector<int64_t> output_shape_ = outputs[0]->GetShapeVector();

@@ -113,6 +113,7 @@ TypePtr NonDeterministicIntsInferType(const PrimitivePtr &prim, const std::vecto
   const std::set<TypePtr> valid_input_types = {kInt32, kInt64, kUInt32, kUInt64};
   (void)CheckAndConvertUtils::CheckTypeValid("shape", input_args[0]->BuildType(), valid_input_types, prim_name);
   auto dtype_value = prim->GetAttr("dtype");
+  MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {
     MS_EXCEPTION(TypeError) << "The dtype of NonDeterministicInts is invalid!";
   }
