@@ -62,7 +62,6 @@ void ModelWorker::InitModelWorker(const char *model_buf, size_t size,
     }
     create_work_done_condition_.notify_one();
   }
-  Run();
 }
 
 void ModelWorker::Run() {

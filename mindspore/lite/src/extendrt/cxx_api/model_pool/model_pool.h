@@ -170,6 +170,7 @@ class ModelPool {
   char *graph_buf_ = nullptr;
   // malloc for graph_buf_
   std::shared_ptr<Allocator> allocator_ = nullptr;
+  std::thread thread_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_POOL_H_

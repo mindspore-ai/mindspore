@@ -65,9 +65,9 @@ class ModelWorker {
 
   inline int GetWorkerID() { return worker_id_; }
 
- private:
   void Run();
 
+ private:
   std::pair<std::vector<std::vector<int64_t>>, bool> GetModelResize(const std::vector<MSTensor> &model_inputs,
                                                                     const std::vector<MSTensor> &inputs);
 
