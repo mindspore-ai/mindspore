@@ -101,7 +101,7 @@ AnfNodePtr InsertForOutput(const FuncGraphPtr &func_graph, const CNodePtr &orig_
   }
 
   std::vector<AnfNodePtr> tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-  auto out_num = AnfAlgo::GetOutputTensorNum(node);
+  auto out_num = AnfAlgo::GetOutputElementNum(node);
 
   for (size_t output_idx = 0; output_idx < out_num; output_idx++) {
     auto tuple_getitem = CreatTupleGetItemNode(func_graph, node, output_idx);

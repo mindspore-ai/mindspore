@@ -70,6 +70,7 @@ ValueNodePtr CreateValueNode(T seed) {
   } else {
     builder.SetOutputsDeviceType({kNumberTypeUInt64});
   }
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), value_node.get());
   return value_node;
 }

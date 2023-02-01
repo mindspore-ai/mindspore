@@ -70,7 +70,7 @@ TypeId KernelBuildInfo::GetOutputDeviceType(size_t output_index) const {
 KernelObjectType KernelBuildInfo::GetInputKernelObjectType(size_t input_index) const {
   if (input_index >= inputs_kernel_object_type_.size()) {
 #ifdef ENABLE_TUPLE_UNFOLD
-    MS_LOG(ERROR) << "The input index [" << input_index
+    MS_LOG(DEBUG) << "The input index [" << input_index
                   << "] is exceed the number of input:" << inputs_kernel_object_type_.size();
 #endif
     return KernelObjectType::UNKNOWN_TYPE;
@@ -81,7 +81,7 @@ KernelObjectType KernelBuildInfo::GetInputKernelObjectType(size_t input_index) c
 KernelObjectType KernelBuildInfo::GetOutputKernelObjectType(size_t output_index) const {
   if (output_index >= outputs_kernel_object_type_.size()) {
 #ifdef ENABLE_TUPLE_UNFOLD
-    MS_LOG(ERROR) << "The output index [" << output_index
+    MS_LOG(DEBUG) << "The output index [" << output_index
                   << "] is exceed the number of output:" << outputs_kernel_object_type_.size();
 #endif
     return KernelObjectType::UNKNOWN_TYPE;
@@ -182,18 +182,33 @@ std::string KernelBuildInfo::ToString() const {
     if (index != 0) {
       output_buffer << ", ";
     }
-    output_buffer << "<" << TypeIdLabel(GetInputDeviceType(index)) << "x" << GetInputFormat(index) << "x"
-                  << KernelObjectTypeLabel(GetInputKernelObjectType(index)) << ">";
+    output_buffer << "<" << TypeIdLabel(GetInputDeviceType(index)) << "x" << GetInputFormat(index) << ">";
   }
-  output_buffer << ") -> (";
+  output_buffer << ", object_type: [";
+  auto input_object_types = GetAllInputKernelObjectTypes();
+  for (size_t index = 0; index < input_object_types.size(); ++index) {
+    if (index != 0) {
+      output_buffer << ",";
+    }
+    output_buffer << KernelObjectTypeLabel(input_object_types[index]);
+  }
+
+  output_buffer << "]) -> (";
   for (size_t index = 0; index < GetOutputNum(); ++index) {
+    if (index != 0) {
+      output_buffer << ",";
+    }
+    output_buffer << "<" << TypeIdLabel(GetOutputDeviceType(index)) << "x" << GetOutputFormat(index) << ">";
+  }
+  output_buffer << ", object_type: [";
+  auto output_object_types = GetAllOutputKernelObjectTypes();
+  for (size_t index = 0; index < output_object_types.size(); ++index) {
     if (index != 0) {
       output_buffer << ", ";
     }
-    output_buffer << "<" << TypeIdLabel(GetOutputDeviceType(index)) << "x" << GetOutputFormat(index) << "x"
-                  << KernelObjectTypeLabel(GetOutputKernelObjectType(index)) << ">";
+    output_buffer << KernelObjectTypeLabel(output_object_types[index]);
   }
-  output_buffer << ")";
+  output_buffer << "])";
   return output_buffer.str();
 }
 

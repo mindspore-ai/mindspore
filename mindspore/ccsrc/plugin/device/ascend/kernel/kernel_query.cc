@@ -25,8 +25,10 @@
 #include "plugin/device/ascend/kernel/akg/akg_kernel_metadata.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "backend/common/optimizer/helper.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -38,36 +40,91 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
     return;
   }
   MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t output_tensor_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  size_t input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t unfold_output_tensor_num = AnfAlgo::GetOutputElementNum(kernel_node);
+  size_t unfold_input_tensor_num = AnfAlgo::GetInputElementNum(kernel_node);
+  size_t fold_output_tensor_num = 1;
+  size_t fold_input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> filtered_list;
-  (void)std::copy_if(
-    kernel_info_list->begin(), kernel_info_list->end(), std::back_inserter(filtered_list),
-    [output_tensor_num, input_tensor_num](const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build_info) {
-      MS_EXCEPTION_IF_NULL(kernel_build_info);
-      return kernel_build_info->GetOutputNum() == output_tensor_num &&
-             kernel_build_info->GetInputNum() == input_tensor_num;
-    });
+  std::ostringstream buffer;
+  size_t info_index = 0;
+  for (const auto &kernel_info : *kernel_info_list) {
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    bool is_fold = kernel::IsFoldKernelBuildInfo(kernel_info);
+    if (is_fold) {
+      bool is_match = true;
+      if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
+        is_match = false;
+      } else {
+        // compare input num
+        std::vector<int64_t> dyn_input_sizes =
+          common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrDynInputSizes);
+        size_t real_input_num = 0;
+        for (size_t i = 0; i < fold_input_tensor_num; ++i) {
+          if (kernel_info->GetInputKernelObjectType(i) == kernel::KernelObjectType::TUPLE || dyn_input_sizes[i] == -1) {
+            ++real_input_num;
+          } else {
+            real_input_num += dyn_input_sizes[i];
+          }
+        }
+        if (kernel_info->GetInputNum() != real_input_num) {
+          is_match = false;
+        }
+      }
+
+      if (is_match) {
+        // compare output num
+        size_t real_output_num = unfold_output_tensor_num;
+        if (kernel_info->GetOutputKernelObjectType(0) == kernel::KernelObjectType::TUPLE) {
+          real_output_num = 1;
+        }
+
+        if (kernel_info->GetOutputNum() != real_output_num) {
+          is_match = false;
+        }
+      }
+
+      if (is_match) {
+        (void)filtered_list.emplace_back(kernel_info);
+      } else {
+        buffer << "Kernel [ " << info_index << " ] [Fold]:";
+        if (kernel_info->GetOutputNum() != fold_output_tensor_num) {
+          buffer << "Kernel build info's output size [" << kernel_info->GetOutputNum() << "]"
+                 << " cannot match the node's output size [" << fold_output_tensor_num << "]\n";
+        } else {
+          buffer << "Kernel build info's input size [" << kernel_info->GetInputNum() << "]"
+                 << " cannot match the node's input size [" << fold_input_tensor_num << "]\n";
+        }
+        buffer << "\n kernel info:" << kernel_info->ToString();
+      }
+    } else {
+      if ((kernel_info->GetInputNum() == unfold_input_tensor_num) &&
+          (kernel_info->GetOutputNum() == unfold_output_tensor_num)) {
+        (void)filtered_list.emplace_back(kernel_info);
+      } else {
+        buffer << "Kernel [ " << info_index << " ] [Unfold]:";
+        if (kernel_info->GetOutputNum() != unfold_output_tensor_num) {
+          buffer << "Kernel build info's output size [" << kernel_info->GetOutputNum() << "]"
+                 << " cannot match the node's output size [" << unfold_output_tensor_num << "]\n";
+        } else {
+          buffer << "Kernel build info's input size [" << kernel_info->GetInputNum() << "]"
+                 << " cannot match the node's input size [" << unfold_input_tensor_num << "]\n";
+        }
+        buffer << "\n kernel info:" << kernel_info->ToString();
+      }
+    }
+    info_index++;
+  }
+
   if (!filtered_list.empty()) {
     kernel_info_list->clear();
     (void)std::copy(filtered_list.begin(), filtered_list.end(), std::back_inserter(*kernel_info_list));
   } else {
-    for (size_t index = 0; index < kernel_info_list->size(); ++index) {
-      std::ostringstream buffer;
-      auto &kernel_info = kernel_info_list->at(index);
-      MS_EXCEPTION_IF_NULL(kernel_info);
-      if (kernel_info->GetOutputNum() != output_tensor_num) {
-        buffer << "Kernel node's output size [" << output_tensor_num << "]"
-               << " cannot match the kernel's output size [" << kernel_info->GetOutputNum() << "]";
-      } else {
-        buffer << "Kernel node's input size [" << input_tensor_num << "]"
-               << " cannot match the kernel's input size [" << kernel_info->GetInputNum() << "]";
-      }
-      MS_LOG(INFO) << "Kernel [ " << index << " ] :" << kernel_info->ToString() << buffer.str();
-    }
+    MS_LOG(INFO) << buffer.str();
     kernel_info_list->clear();
-    MS_LOG(INFO) << "Node: " << kernel_node->DebugString() << "'s output size : [" << output_tensor_num << "]"
-                 << "input size : [" << input_tensor_num << "] can not match any kernelInfo !";
+    MS_LOG(INFO) << "Node: " << kernel_node->DebugString() << "'s fold output size : [" << fold_output_tensor_num << "]"
+                 << ", fold input size : [" << fold_input_tensor_num << "], unfold output size : ["
+                 << unfold_output_tensor_num << "]"
+                 << ", unfold input size : [" << unfold_input_tensor_num << "] can not match any kernelInfo !";
   }
 }
 
@@ -99,21 +156,36 @@ void KernelQueryAll(const CNodePtr &kernel_node,
                     std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
-  TbeMetadataInfo(kernel_node, kernel_info_list);
+  auto select_cnode = kernel_node;
+  auto tuple_unfold_node = opt::ConvertMakeTupleInputToPlantInputs(kernel_node->func_graph(), kernel_node);
+  if (tuple_unfold_node != nullptr) {
+    auto tuple_unfold_cnode = tuple_unfold_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_unfold_cnode);
+    select_cnode = tuple_unfold_cnode;
+    select_cnode->set_fullname_with_scope(kernel_node->fullname_with_scope());
+    MS_LOG(INFO) << "Create tuple unfold node " << tuple_unfold_node->fullname_with_scope() << ", debug string ["
+                 << tuple_unfold_node->DebugString() << "] from " << kernel_node->fullname_with_scope()
+                 << ", debug string [" << kernel_node->DebugString() << "].";
+  }
+
+  TbeMetadataInfo(select_cnode, kernel_info_list);
   if (kernel_info_list->empty()) {
-    GetRtKelInfo(kernel_node, kernel_info_list);
+    GetRtKelInfo(select_cnode, kernel_info_list);
     CheckKernelInfoListEmpty(kernel_info_list, "RT_Kernel");
   }
   if (kernel_info_list->empty()) {
-    HcclMetadataInfo(kernel_node, kernel_info_list);
+    HcclMetadataInfo(select_cnode, kernel_info_list);
     CheckKernelInfoListEmpty(kernel_info_list, "HCCL_Kernel");
   }
-  if (SelectAicpuReshapeInTaskSink(kernel_node)) {
+  if (SelectAicpuReshapeInTaskSink(select_cnode)) {
     return;
   }
   if (kernel_info_list->empty()) {
-    HostMetadataInfo(kernel_node, kernel_info_list);
+    HostMetadataInfo(select_cnode, kernel_info_list);
     CheckKernelInfoListEmpty(kernel_info_list, "HOST_Kernel");
+  }
+  if (!kernel_info_list->empty()) {
+    common::AnfAlgo::CopyNodeAttrs(select_cnode, kernel_node);
   }
 }
 

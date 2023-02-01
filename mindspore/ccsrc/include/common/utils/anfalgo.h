@@ -115,6 +115,10 @@ class COMMON_EXPORT AnfAlgo {
   static size_t GetInputTensorNum(const AnfNodePtr &node);
   // get prev node output width output index
   static KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx, bool skip_nop_node = false);
+  // get all the untuple real prev_nodes output
+  static std::vector<KernelWithIndex> GetRealPrevNodesOutput(const AnfNodePtr &anf_node, size_t input_idx,
+                                                             bool skip_nop_node = false);
+
   // get output shapes inferred by ME from input nodes.
   static ShapeVector GetOutputInferShape(const AnfNodePtr &node, size_t output_idx);
   static ShapeVector GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,
@@ -126,6 +130,8 @@ class COMMON_EXPORT AnfAlgo {
   static TypeId GetOutputInferDataType(const TypePtr &type, size_t output_idx);
   // get output original data type from prev node,input_index is the input index of current node related to prev node
   static TypeId GetPrevNodeOutputInferDataType(const AnfNodePtr &node, size_t input_idx);
+  // for tuple condition
+  static std::vector<TypeId> GetRealPrevNodesOutputInferDataType(const AnfNodePtr &node, size_t input_idx);
   // set infer shapes and types of anf node
   static void SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
                                          AnfNode *node, bool disable_dynamic_len = false);

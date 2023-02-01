@@ -84,7 +84,10 @@ std::vector<KernelAttr> NativeGpuKernelModFactory::GetGpuSupportedList(const std
 
     for (size_t attr_index = 0; attr_index < (iter->second).size(); ++attr_index) {
       auto attr = (iter->second)[attr_index].first;
-      kernel_attr_list.push_back(attr);
+      // Skip the invalid attr.
+      if (attr.GetInputSize() > 0 || attr.GetOutputSize() > 0) {
+        kernel_attr_list.push_back(attr);
+      }
     }
 
     return kernel_attr_list;

@@ -123,7 +123,7 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
   std::vector<int64_t> new_output_size{output_h, output_w};
   common::AnfAlgo::SetNodeAttr(kAttrOutputSize, MakeValue(new_output_size), adaptive_max_pool2d);
 
-  if (AnfAlgo::GetOutputTensorNum(adaptive_max_pool2d) > 1) {
+  if (AnfAlgo::GetOutputElementNum(adaptive_max_pool2d) > 1) {
     return nullptr;
   }
 

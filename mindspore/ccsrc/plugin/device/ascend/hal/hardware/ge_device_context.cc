@@ -238,7 +238,7 @@ void UpdateOutputNodeShape(const AnfNodePtr &node, size_t index, TypeId output_t
   if (node->isa<CNode>()) {
     name = common::AnfAlgo::GetCNodeName(node);
   }
-  size_t total_output_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t total_output_num = AnfAlgo::GetOutputElementNum(node);
   if (index >= total_output_num) {
     MS_LOG(EXCEPTION) << "Invalid output index " << index << ", node " << node->fullname_with_scope() << " has "
                       << total_output_num << " outputs.";

@@ -400,6 +400,7 @@ BACKEND_EXPORT std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &k
                                                              const std::vector<KernelAttr> &kernel_attr_list);
 BACKEND_EXPORT KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info);
 BACKEND_EXPORT KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node);
+BACKEND_EXPORT bool IsFoldKernelBuildInfo(const KernelBuildInfoPtr &kernel_build_info);
 
 struct KernelArgs {
   BaseOperatorPtr op;
@@ -455,6 +456,7 @@ BACKEND_EXPORT std::vector<KernelObjectType> TypeIdToKernelObjectTypeForTupleUnf
 BACKEND_EXPORT TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_type);
 KernelObjectType StringToKernelObjectType(const std::string &object_type);
 BACKEND_EXPORT void UnfoldKernelBuildInfo(const CNodePtr &kernel_node);
+BACKEND_EXPORT int64_t CalOutputTupleSize(const AnfNodePtr &node);
 BACKEND_EXPORT void SetDynamicInputSizeAttr(const CNodePtr &cnode);
 BACKEND_EXPORT bool IsDynamicParamKernel(const std::string &op_name);
 

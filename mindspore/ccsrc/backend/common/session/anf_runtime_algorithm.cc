@@ -397,9 +397,9 @@ std::string AnfRuntimeAlgorithm::GetOriginDataFormat(const AnfNodePtr &node) {
 
 std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
-  if (output_idx > AnfAlgo::GetOutputTensorNum(node)) {
+  if (output_idx > AnfAlgo::GetOutputElementNum(node)) {
     MS_LOG(EXCEPTION) << "Output index:" << output_idx
-                      << " is out of the node output range :" << AnfAlgo::GetOutputTensorNum(node) << " #node ["
+                      << " is out of the node output range :" << AnfAlgo::GetOutputElementNum(node) << " #node ["
                       << node->DebugString() << "]" << trace::DumpSourceLines(node);
   }
   if (common::AnfAlgo::CheckAbsSparseTensor(node)) {
@@ -635,9 +635,9 @@ std::string AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, siz
 
 std::string AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
-  if (output_idx > AnfAlgo::GetOutputTensorNum(node)) {
+  if (output_idx > AnfAlgo::GetOutputElementNum(node)) {
     MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
-                      << AnfAlgo::GetOutputTensorNum(node) << "#node[ " << node->DebugString() << "]"
+                      << AnfAlgo::GetOutputElementNum(node) << "#node[ " << node->DebugString() << "]"
                       << trace::DumpSourceLines(node);
   }
   if (!AnfUtils::IsRealKernel(node)) {
@@ -1728,7 +1728,7 @@ std::vector<TypeId> AnfRuntimeAlgorithm::GetAllOutputObjectType(const AnfNodePtr
 std::vector<TypeId> AnfAlgo::GetAllOutputInferDataTypes(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<TypeId> outputs;
-  auto out_nums = AnfAlgo::GetOutputTensorNum(node);
+  auto out_nums = AnfAlgo::GetOutputElementNum(node);
   for (size_t i = 0; i < out_nums; i++) {
     auto type = common::AnfAlgo::GetOutputInferDataType(node, i);
     outputs.push_back(type);
@@ -1736,20 +1736,31 @@ std::vector<TypeId> AnfAlgo::GetAllOutputInferDataTypes(const AnfNodePtr &node) 
   return outputs;
 }
 
+// if input node is MakeTuple, find the PrevNodeNum recursively;
+// The monad node in the end is not included in the num;
 size_t AnfAlgo::GetInputElementNum(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   size_t element_num = 0;
   size_t input_num = cnode->inputs().size() - 1;
-  for (size_t i = 0; i < input_num; ++i) {
-    auto input_node = common::AnfAlgo::GetInputNode(cnode, i);
-    if (common::AnfAlgo::IsTupleOutput(input_node)) {
-      element_num += AnfUtils::GetOutputTensorNum(input_node);
+  bool cal_monad_flag = false;
+  for (size_t i = input_num; i > 0; --i) {
+    auto input_node = common::AnfAlgo::GetInputNode(cnode, i - 1);
+    if (!cal_monad_flag && HasAbstractMonad(input_node)) {
+      continue;
+    } else if (common::AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
+      element_num += GetInputElementNum(input_node);
+      cal_monad_flag = true;
+    } else if (common::AnfAlgo::IsTupleOutput(input_node)) {
+      element_num += AnfAlgo::GetOutputElementNum(input_node);
+      cal_monad_flag = true;
     } else {
       ++element_num;
+      cal_monad_flag = true;
     }
   }
+
   return element_num;
 }
 

@@ -27,6 +27,7 @@
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "utils/ms_context.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore::kernel {
 namespace {
@@ -56,7 +57,7 @@ bool HostCheck::CheckValidDeviceShape(const AnfNodePtr &node) {
     }
   }
 
-  size_t real_output_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t real_output_num = AnfAlgo::GetOutputElementNum(node);
   for (size_t i = 0; i < real_output_num; i++) {
     auto format = AnfAlgo::GetOutputFormat(node, i);
     if (!CheckValidInOutDeviceShape(node, i, true, format)) {
@@ -165,8 +166,8 @@ bool IsKernelDynamicImpl(const AnfNodePtr &node) {
 void GetSupportOriFormat(const CNodePtr &cnode, SupportFormat *support_format) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(support_format);
-  auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  auto input_num = AnfAlgo::GetInputElementNum(cnode);
+  auto output_num = AnfAlgo::GetOutputElementNum(cnode);
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   auto op_info = tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
   MS_EXCEPTION_IF_NULL(op_info);
@@ -266,35 +267,109 @@ bool CheckHitTargetDtype(const std::map<TypeId, TypeId> &type_map, const TypeId 
 
   return true;
 }
-
-bool TagRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build_info, const CNodePtr &cnode,
-                    const std::map<TypeId, TypeId> &type_map) {
-  // filte kernel info that unsupported raise or reduce datatype
+bool TagUnfoldRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build_info, const CNodePtr &cnode,
+                          const std::map<TypeId, TypeId> &type_map) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(kernel_build_info);
-  for (size_t input_index = 0; input_index < kernel_build_info->GetInputNum(); ++input_index) {
-    auto in_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index);
-    auto device_dtype = kernel_build_info->GetInputDeviceType(input_index);
-    if (device_dtype == kNumberTypeFloat) {
-      device_dtype = kNumberTypeFloat32;
-    }
-    if (!CheckHitTargetDtype(type_map, in_dtype, device_dtype)) {
-      return false;
+
+  // Check input data type
+  size_t kernel_input_index = 0;
+  size_t fold_input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t input_index = 0; input_index < fold_input_tensor_num; ++input_index) {
+    std::vector<TypeId> inputs_type = common::AnfAlgo::GetRealPrevNodesOutputInferDataType(cnode, input_index);
+    for (size_t i = 0; i < inputs_type.size(); ++i) {
+      if (kernel_input_index >= kernel_build_info->GetInputNum()) {
+        return false;
+      }
+
+      auto device_dtype = kernel_build_info->GetInputDeviceType(kernel_input_index);
+      if (device_dtype == kNumberTypeFloat) {
+        device_dtype = kNumberTypeFloat32;
+      }
+      if (!CheckHitTargetDtype(type_map, inputs_type[i], device_dtype)) {
+        return false;
+      }
+
+      ++kernel_input_index;
     }
   }
-
+  // Check output data type
   for (size_t output_index = 0; output_index < kernel_build_info->GetOutputNum(); ++output_index) {
     auto in_dtype = common::AnfAlgo::GetOutputInferDataType(cnode, output_index);
     auto device_dtype = kernel_build_info->GetOutputDeviceType(output_index);
     if (device_dtype == kNumberTypeFloat) {
       device_dtype = kNumberTypeFloat32;
     }
-
     if (!CheckHitTargetDtype(type_map, in_dtype, device_dtype)) {
       return false;
     }
   }
   return true;
+}
+
+bool TagFoldRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build_info, const CNodePtr &cnode,
+                        const std::map<TypeId, TypeId> &type_map) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(kernel_build_info);
+
+  // Check input data type
+  size_t kernel_input_index = 0;
+  for (size_t input_index = 0; input_index < common::AnfAlgo::GetInputTensorNum(cnode); ++input_index) {
+    if (kernel_build_info->GetInputKernelObjectType(kernel_input_index) == kernel::KernelObjectType::TUPLE) {
+      auto input_node = cnode->inputs()[input_index + 1];
+      TypeId in_dtype = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
+      auto device_dtype = kernel_build_info->GetInputDeviceType(kernel_input_index);
+      if (device_dtype == kNumberTypeFloat) {
+        device_dtype = kNumberTypeFloat32;
+      }
+      if (!CheckHitTargetDtype(type_map, in_dtype, device_dtype)) {
+        return false;
+      }
+      ++kernel_input_index;
+    } else {
+      std::vector<TypeId> inputs_type = common::AnfAlgo::GetRealPrevNodesOutputInferDataType(cnode, input_index);
+      for (size_t i = 0; i < inputs_type.size(); ++i) {
+        if (kernel_input_index >= kernel_build_info->GetInputNum()) {
+          return false;
+        }
+        auto device_dtype = kernel_build_info->GetInputDeviceType(kernel_input_index);
+        if (device_dtype == kNumberTypeFloat) {
+          device_dtype = kNumberTypeFloat32;
+        }
+        if (!CheckHitTargetDtype(type_map, inputs_type[i], device_dtype)) {
+          return false;
+        }
+
+        ++kernel_input_index;
+      }
+    }
+  }
+  // Check output data type
+  for (size_t output_index = 0; output_index < kernel_build_info->GetOutputNum(); ++output_index) {
+    auto in_dtype = common::AnfAlgo::GetOutputInferDataType(cnode, output_index);
+    auto device_dtype = kernel_build_info->GetOutputDeviceType(output_index);
+    if (device_dtype == kNumberTypeFloat) {
+      device_dtype = kNumberTypeFloat32;
+    }
+    if (!CheckHitTargetDtype(type_map, in_dtype, device_dtype)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool TagRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build_info, const CNodePtr &cnode,
+                    const std::map<TypeId, TypeId> &type_map) {
+  // filte kernel info that unsupported raise or reduce datatype
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(kernel_build_info);
+
+  bool is_fold = kernel::IsFoldKernelBuildInfo(kernel_build_info);
+  if (is_fold) {
+    return TagFoldRaiseReduce(kernel_build_info, cnode, type_map);
+  } else {
+    return TagUnfoldRaiseReduce(kernel_build_info, cnode, type_map);
+  }
 }
 
 std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecisionMatchedKernelInfo(

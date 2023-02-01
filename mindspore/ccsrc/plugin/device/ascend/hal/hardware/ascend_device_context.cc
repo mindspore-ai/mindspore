@@ -35,12 +35,12 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 void AscendDeviceContext::Initialize() {
-  MS_LOG(INFO) << "Start Initialize...";
   if (initialized_) {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     runtime_instance_->SetContext();
     return;
   } else {
+    MS_LOG(INFO) << "Start Initialize...";
 #ifndef ENABLE_SECURITY
     AscendProfiler::GetInstance()->MsprofInitProfiler();
 #endif

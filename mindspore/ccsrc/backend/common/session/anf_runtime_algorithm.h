@@ -221,6 +221,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static std::vector<TypeId> GetAllOutputObjectType(const AnfNodePtr &node);
   // Get all output infer data type.
   static std::vector<TypeId> GetAllOutputInferDataTypes(const AnfNodePtr &node);
+  // Get unfold input num
   static size_t GetInputElementNum(const AnfNodePtr &node);
   static bool IsRealSquenceOutput(const AnfNodePtr &node);
   static void SetDynamicAttrToPrim(const PrimitivePtr &prim);

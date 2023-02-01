@@ -117,6 +117,7 @@ ValueNodePtr CreateAssistNode(const std::vector<int64_t> &input_shape, int32_t k
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder1;
   builder1.SetOutputsFormat({kOpFormat_DEFAULT});
   builder1.SetOutputsDeviceType({common::AnfAlgo::GetOutputInferDataType(assist_const, 0)});
+  builder1.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), assist_const.get());
   return assist_const;
 }
@@ -130,6 +131,8 @@ kernel::KernelBuildInfoPtr CreateKernelBuildInfo() {
   builder.SetOutputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
   builder.SetInputsDeviceType({kNumberTypeFloat16, kNumberTypeFloat16});
   builder.SetOutputsDeviceType({kNumberTypeFloat16, kNumberTypeInt32});
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   return builder.Build();
 }
 

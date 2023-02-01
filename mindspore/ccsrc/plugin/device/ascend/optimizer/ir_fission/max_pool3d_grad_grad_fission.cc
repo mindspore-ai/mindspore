@@ -91,6 +91,7 @@ ValueNodePtr CreateValueNode(const AnfNodePtr &node) {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder op_builder;
   op_builder.SetOutputsFormat({kOpFormat_NDC1HWC0});
   op_builder.SetOutputsDeviceType({kNumberTypeFloat16});
+  op_builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   AnfAlgo::SetSelectKernelBuildInfo(op_builder.Build(), assist_const.get());
   return assist_const;
 }

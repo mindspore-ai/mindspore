@@ -257,7 +257,7 @@ bool SingleTbeJsonCreator::GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::
 
   size_t sum_outputs_num =
     std::accumulate(outputs_tensor_num.begin(), outputs_tensor_num.end(), static_cast<size_t>(0));
-  size_t real_output_num = AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t real_output_num = AnfAlgo::GetOutputElementNum(anf_node);
   std::vector<nlohmann::json> outputs_desc;
   for (size_t i = 0; i < real_output_num; i++) {
     nlohmann::json output_desc;

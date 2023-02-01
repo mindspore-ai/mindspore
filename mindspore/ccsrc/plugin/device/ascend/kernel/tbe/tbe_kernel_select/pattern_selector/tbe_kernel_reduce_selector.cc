@@ -51,7 +51,7 @@ void TbeKernelReduceSelector::GetSupportedFormatDType(SupportFormatDType *suppor
 
 void TbeKernelReduceSelector::GetReduceNodeInfo() {
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
-  auto output_num = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
+  auto output_num = AnfAlgo::GetOutputElementNum(cnode_ptr_);
   if (input_num != 1 || output_num != 1) {
     MS_LOG(INFO) << "Reduce operator input/output is not 1, input num: " << input_num << ", output num: " << output_num
                  << ", node info: " << cnode_ptr_->DebugString();

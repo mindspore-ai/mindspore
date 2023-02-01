@@ -59,7 +59,7 @@ void TbeKernelBroadcastSelector::GetBroadCastNodeInfo() {
     (void)input_shapes_.emplace_back(dynamic_input_shape0_);
     input_num_ = 1;
   } else {
-    input_num_ = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
+    input_num_ = AnfAlgo::GetInputElementNum(cnode_ptr_);
     for (size_t i = 0; i < input_num_; ++i) {
       auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, i);
       PadScalarShape(&input_shape);
@@ -67,7 +67,7 @@ void TbeKernelBroadcastSelector::GetBroadCastNodeInfo() {
     }
   }
 
-  output_num_ = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
+  output_num_ = AnfAlgo::GetOutputElementNum(cnode_ptr_);
   for (size_t i = 0; i < output_num_; ++i) {
     auto output = common::AnfAlgo::GetOutputInferShape(cnode_ptr_, i);
     PadScalarShape(&output);

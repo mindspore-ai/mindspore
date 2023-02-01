@@ -37,7 +37,7 @@ void HostMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   std::vector<std::string> inputs_format{};
   std::vector<TypeId> inputs_type{};
   std::vector<KernelObjectType> inputs_object_type{};
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = AnfAlgo::GetInputElementNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     inputs_format.emplace_back(kOpFormat_DEFAULT);
     inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
@@ -46,7 +46,7 @@ void HostMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
   std::vector<KernelObjectType> outputs_object_type{};
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_format.emplace_back(kOpFormat_DEFAULT);
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
