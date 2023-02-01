@@ -648,7 +648,7 @@ def test_gmres_grad(tensor_type, dtype, error, preconditioner, solve_method, a, 
     assert onp.allclose(expect_grad_b, to_ndarray(grad_b), rtol=error, atol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
