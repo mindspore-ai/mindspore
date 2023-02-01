@@ -5348,7 +5348,7 @@ def channel_shuffle(x, groups):
 
 def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     r"""
-    Applies a 1D power lp pooling over an input signal composed of several input planes.
+    Applying 1D LPPooling operation on an input Tensor can be regarded as forming a 1D input plane.
 
     Typically the input is of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`, the output is of shape
     :math:`(N, C, L_{out})` or :math:`(C, L_{out})`.
@@ -5365,8 +5365,8 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         x (Tensor): Tensor of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`.
         norm_type (Union[int, float]): Type of normalization, represents p in the formula, can not be 0,
 
-            - if p = 1, one gets Sum Pooling (which is proportional to Average Pooling),
-            - if p = :math:`\infty`, one gets Max Pooling.
+            - if p = 1, the result obtained is the sum of elements in the pool nucleus(Proportional to average pooling).
+            - if p = :math:`\infty`, the result is the result of maximum pooling.
 
         kernel_size (int): The size of kernel window.
         stride (int): The distance of kernel moving, an int number that represents
@@ -5429,7 +5429,7 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
 def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     r"""
-    Applies a 2D power lp pooling over an input signal composed of several input planes.
+    Applying 2D LPPooling operation on an input Tensor can be regarded as forming a 1D input plane.
 
     Typically the input is of shape :math:`(N, C, H_{in}, W_{in})`, the output is of shape
     :math:`(N, C, H_{in}, W_{in})`, with the same shape as input, the operation is as follows.
@@ -5441,8 +5441,8 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         x (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`.
         norm_type (Union[int, float]): Type of normalization, represents p in the formula, can not be 0,
 
-            - if p = 1, one gets Sum Pooling (which is proportional to Average Pooling),
-            - if p = :math:`\infty`, one gets Max Pooling.
+            - if p = 1, the result obtained is the sum of elements in the pool nucleus(Proportional to average pooling).
+            - if p = :math:`\infty`, the result is the result of maximum pooling.
 
         kernel_size (Union[int, tuple[int]]): The size of kernel window.
             The data type of kernel_size must be int and the value represents the height and width,
