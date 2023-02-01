@@ -44,7 +44,8 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
+constexpr int kRequestTimeout = 300;
+constexpr int32_t kBacklog = 1024;
 class HttpServer {
  public:
   // Server address only support IPV4 now, and should be in format of "x.x.x.x"
@@ -52,9 +53,9 @@ class HttpServer {
       : server_address_(address),
         server_port_(port),
         is_stop_(true),
-        request_timeout_(300),
+        request_timeout_(kRequestTimeout),
         thread_num_(thread_num),
-        backlog_(1024),
+        backlog_(kBacklog),
         fd_(-1) {}
 
   ~HttpServer();

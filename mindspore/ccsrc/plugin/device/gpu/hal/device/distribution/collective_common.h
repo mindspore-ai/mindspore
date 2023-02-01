@@ -38,7 +38,7 @@ struct NcclGroupInfo {
 };
 #ifndef LITE_CUDA_DISTRIBUTION
 #define CHECK_RET(expression, result, message)                                                                         \
-  {                                                                                                                    \
+  do {                                                                                                                 \
     auto ret = (expression);                                                                                           \
     if (ret != result) {                                                                                               \
       std::ostringstream oss;                                                                                          \
@@ -46,10 +46,10 @@ struct NcclGroupInfo {
           << " | Error Number " << ret;                                                                                \
       pybind11::pybind11_fail(oss.str());                                                                              \
     }                                                                                                                  \
-  }
+  } while (0)
 #else
 #define CHECK_RET(expression, result, message)                                                                         \
-  {                                                                                                                    \
+  do {                                                                                                                 \
     auto ret = (expression);                                                                                           \
     if (ret != result) {                                                                                               \
       std::ostringstream oss;                                                                                          \
@@ -58,7 +58,7 @@ struct NcclGroupInfo {
       printf("%s", oss.str().c_str());                                                                                 \
       exit(EXIT_FAILURE);                                                                                              \
     }                                                                                                                  \
-  }
+  } while (0)
 #endif
 }  // namespace gpu
 }  // namespace device
