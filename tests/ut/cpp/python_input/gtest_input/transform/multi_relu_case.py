@@ -13,8 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ multi_relu_case """
-from mindspore.ops import Primitive
-from mindspore.ops import _constants as Constants
+from mindspore.ops import functional as F
 
 
 # Test user define ops
@@ -22,7 +21,7 @@ def get_test_ops_fn():
     return test_ops_f
 
 
-scalar_mul = Primitive(Constants.kScalarMul)
+scalar_mul = F.scalar_mul
 
 
 def test_ops_f(x, y):

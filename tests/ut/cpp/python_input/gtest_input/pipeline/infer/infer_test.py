@@ -13,12 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import mindspore.nn as nn
-from mindspore.ops import Primitive
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.ops import _constants as Constants
 
-scala_add = Primitive(Constants.kScalarAdd)
+scala_add = F.scalar_add
 
 
 class AddNet(nn.Cell):

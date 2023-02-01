@@ -112,6 +112,11 @@ std::shared_ptr<T> InferSparseAttr(const PrimitivePtr &primitive, const Abstract
 template <typename T>
 AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 
+template <typename T>
+T GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+
+TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std::string &op_name);
+
 bool IsValueKnown(const ValuePtr &value);
 
 constexpr auto kCSRAvgRows = "csr_avg_rows";

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_REAL_LIST_GETITEM_H_
-#define MINDSPORE_CORE_OPS_REAL_LIST_GETITEM_H_
+#ifndef MINDSPORE_CORE_OPS_SCALAR_GE_H_
+#define MINDSPORE_CORE_OPS_SCALAR_GE_H_
 #include "ops/base_operator.h"
 #include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief RealListGetItem op is used to get list[index] value, list is a dynamic length list or index is variable
-class MIND_API RealListGetItem : public BaseOperator {
+/// \brief ScalarGreaterEqual op is used to judge greaterEqual between variable scalar.
+class MIND_API ScalarGreaterEqual : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(RealListGetItem);
+  MIND_API_BASE_MEMBER(ScalarGreaterEqual);
   /// \brief Constructor.
-  RealListGetItem() : BaseOperator(prim::kRealListGetItem) { InitIOName({"input", "index"}, {"output"}); }
+  ScalarGreaterEqual() : BaseOperator(prim::kScalarGe) {}
+  /// \brief Init.
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_REAL_LIST_GETITEM_H_
+#endif  // MINDSPORE_CORE_OPS_SCALAR_GE_H_

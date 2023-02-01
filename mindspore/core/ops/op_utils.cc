@@ -15,6 +15,7 @@
  */
 
 #include <string>
+#include <map>
 #include <set>
 #include <vector>
 #include <algorithm>
@@ -681,6 +682,57 @@ template AbstractBasePtr TensorToSequenceInfer<abstract::AbstractList>(const Pri
 
 template AbstractBasePtr TensorToSequenceInfer<abstract::AbstractTuple>(const PrimitivePtr &primitive,
                                                                         const std::vector<AbstractBasePtr> &input_args);
+
+template <typename T>
+T GetScalarValue(const std::string &op_name, const ValuePtr &elem) {
+  T res;
+  MS_EXCEPTION_IF_NULL(elem);
+  if (elem->isa<Int64Imm>()) {
+    auto elem_value = GetValue<int64_t>(elem);
+    res = static_cast<T>(elem_value);
+  } else if (elem->isa<Int32Imm>()) {
+    auto elem_value = GetValue<int32_t>(elem);
+    res = static_cast<T>(elem_value);
+  } else if (elem->isa<FP64Imm>()) {
+    auto elem_value = GetValue<double>(elem);
+    res = static_cast<T>(elem_value);
+  } else if (elem->isa<FP32Imm>()) {
+    auto elem_value = GetValue<float>(elem);
+    res = static_cast<T>(elem_value);
+  } else if (elem->isa<BoolImm>()) {
+    auto elem_value = GetValue<bool>(elem);
+    res = static_cast<T>(elem_value);
+  } else {
+    MS_EXCEPTION(TypeError) << "For op '" << op_name
+                            << "' input must be [int32, int64, float32, float64, bool], but got " << elem->ToString();
+  }
+  return res;
+}
+
+template int64_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+template int32_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+template double GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+template float GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+template bool GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+
+TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std::string &op_name) {
+  static std::map<TypeId, size_t> prio_map = {{kNumberTypeFloat64, 1},
+                                              {kNumberTypeFloat32, 2},
+                                              {kNumberTypeInt64, 3},
+                                              {kNumberTypeInt32, 4},
+                                              {kNumberTypeBool, 5}};
+  auto x_iter = prio_map.find(x_type->type_id());
+  auto y_iter = prio_map.find(y_type->type_id());
+  if (x_iter == prio_map.end() || y_iter == prio_map.end()) {
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', the x and y type should be int or float, but got x type: " << x_type
+                             << " y type: " << y_type;
+  }
+  if (x_iter->second < y_iter->second) {
+    return x_type;
+  }
+  return y_type;
+}
 
 bool IsValueKnown(const ValuePtr &value) {
   // For now if the Abstract is a container of elements such as AbstractSequence and AbstractDictionary,

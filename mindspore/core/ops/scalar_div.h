@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_LIST_TO_TENSOR_H_
-#define MINDSPORE_CORE_OPS_LIST_TO_TENSOR_H_
+#ifndef MINDSPORE_CORE_OPS_SCALAR_DIV_H_
+#define MINDSPORE_CORE_OPS_SCALAR_DIV_H_
 #include "ops/base_operator.h"
 #include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief ListToTensor op is used to convert list to tensor.
-class MIND_API ListToTensor : public BaseOperator {
+/// \brief ScalarDiv op is used to div between variable scalar.
+class MIND_API ScalarDiv : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(ListToTensor);
+  MIND_API_BASE_MEMBER(ScalarDiv);
   /// \brief Constructor.
-  ListToTensor() : BaseOperator(prim::kListToTensor) {}
+  ScalarDiv() : BaseOperator(prim::kScalarDiv) {}
   /// \brief Init.
   void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_LIST_TO_TENSOR_H_
+#endif  // MINDSPORE_CORE_OPS_SCALAR_DIV_H_
