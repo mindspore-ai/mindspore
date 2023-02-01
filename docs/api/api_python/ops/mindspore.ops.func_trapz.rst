@@ -1,7 +1,7 @@
 mindspore.ops.trapz
 ====================
 
-.. py:function:: mindspore.ops.trapz(y, x, dx, dim)
+.. py:function:: mindspore.ops.trapz(y, x=None, dx=1.0, dim=-1)
 
     使用梯形法则沿给定轴对 `y` (x)进行积分。
     默认情况下，点之间的x轴距离将为1，或者它们可以由数组 `x` 或者标量 `dx` 提供。

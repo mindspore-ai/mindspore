@@ -497,11 +497,10 @@ def exp2(x):
     Raises:
         TypeError: If `x` is not a Tensor.
 
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-     Examples:
+    Examples:
         >>> x = Tensor(np.array([2, 3, 4]), mindspore.float32)
         >>> output = ops.exp2(x)
         >>> print(output)
@@ -4822,7 +4821,7 @@ def outer(x1, x2):
         x2 (Tensor): 1-D input vector.
 
     Returns:
-        out (Tensor, optional) : 2-D matrix, the outer product of two vectors.
+        out (Tensor, optional), 2-D matrix, the outer product of two vectors.
 
     Raises:
         TypeError: If `x1` or `x2` is not a Tensor.
@@ -4883,7 +4882,7 @@ def mv(mat, vec):
     Examples:
         >>> mat = Tensor(np.array([[3., 4.], [1., 6.], [1., 3.]]).astype(np.float32))
         >>> vec = Tensor(np.array([1., 2.]).astype(np.float32))
-        >>> output = mv(mat, vec)
+        >>> output = ops.mv(mat, vec)
         >>> print(output)
         [11. 13. 7.]
     """
@@ -8148,7 +8147,7 @@ def rot90(x, k, dims):
     Args:
         x (Tensor): Input tensor.
         k (int): Number of times to rotate. Default: 1.
-        dims (a list or tuple): Axis to rotate. Default: [0，1].
+        dims (Union[list(int), tuple(int)]): Axis to rotate. Default: [0,1].
 
     Returns:
         Tensor.
