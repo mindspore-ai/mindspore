@@ -109,30 +109,30 @@ enum class KernelTransformType {
 };
 
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR(op_context, message) \
-  {                                                            \
+  do {                                                         \
     (op_context).error_info_ = message;                        \
     (op_context).SetFailed(kFailure);                          \
     return;                                                    \
-  }
+  } while (0);
 
 #define SET_OPCONTEXT_SUCCESS_RET(op_context) \
-  {                                           \
+  do {                                        \
     (op_context).SetSuccess(kSuccess);        \
     return;                                   \
-  }
+  } while (0);
 
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy, op_context, message) \
-  {                                                                                  \
+  do {                                                                               \
     if ((strategy) == GraphExecutionStrategy::kStep) {                               \
       MS_LOG(EXCEPTION) << (message);                                                \
     }                                                                                \
     (op_context).error_info_ = message;                                              \
     (op_context).SetFailed(kFailure);                                                \
     return;                                                                          \
-  }
+  } while (0);
 
 #define SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy, op_context, device_context, kernel_name, alloc_size) \
-  {                                                                                                                \
+  do {                                                                                                             \
     std::string message = "";                                                                                      \
     if ((device_context).device_context_key().device_name_ == "CPU") {                                             \
       message = "Memory isn't enough and alloc failed, kernel name: " + (kernel_name) +                            \
@@ -148,7 +148,7 @@ enum class KernelTransformType {
     (op_context).error_info_ = message;                                                                            \
     (op_context).SetFailed(kFailure);                                                                              \
     return;                                                                                                        \
-  }
+  } while (0);
 
 // Encapsulate the actor APIs associated with execution.
 class ActorDispatcher {
