@@ -36,7 +36,7 @@ def test_list_getitem_eliminate():
     Description: Test list_getitem not be replaced as TupleGetItem in pass 'item_tuple_or_list_eliminate'
     Expectation: No exception.
     """
-    max_iter = Tensor([2])
+    max_iter = Tensor([1])
     k = Tensor([0])
     inputs = [Tensor([4]), Tensor([5])]
     net = NetWork()

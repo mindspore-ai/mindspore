@@ -57,6 +57,8 @@ class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod,
   void FreeResource();
   bool GetOpType(const BaseOperatorPtr &base_operator);
   void UpdateSize();
+  template <typename S>
+  void CheckIndicesValid(S *indices);
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
@@ -81,6 +83,11 @@ class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod,
   void *indices_stride_{nullptr};
   void *work_shape_{nullptr};
   void *stream_ptr_{nullptr};
+  size_t slice_size_{1};
+  size_t batch_size_{1};
+  size_t inner_size_{1};
+  size_t total_batch_size_{1};
+  std::vector<size_t> batch_strides_;
 };
 }  // namespace kernel
 }  // namespace mindspore
