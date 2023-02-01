@@ -77,6 +77,7 @@ void RegProfiler(py::module *m) {
     .def("start", &Profiler::Start, "start")
     .def("stop", &Profiler::Stop, "stop")
     .def("finalize", &Profiler::Finalize, "finalize")
+    .def("data_process_enable", &Profiler::DataProcessEnable, py::arg("enable_flag"))
     .def("step_profiling_enable", &Profiler::StepProfilingEnable, py::arg("enable_flag"),
          "enable or disable step profiling");
 }
