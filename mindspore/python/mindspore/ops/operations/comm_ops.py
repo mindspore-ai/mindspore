@@ -114,7 +114,6 @@ class AllReduce(Primitive):
     Reduces the tensor data across all devices in such a way that all devices will get the same final result.
 
     Note:
-        The operation of AllReduce does not support "prod" currently.
         The tensors must have the same shape and format in all processes of the collection.
 
     Args:
