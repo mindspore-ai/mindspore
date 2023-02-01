@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.ops.operations as P
+import mindspore.ops.operations.sparse_ops as P
 from mindspore import Tensor
 
 
@@ -66,11 +66,11 @@ def test_net(data_type, index_type, error):
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     ms_out_py = Net()(Tensor(x), Tensor(indices),
-                      Tensor(segment_ids), Tensor(num_segments))
+                      Tensor(segment_ids, dtype=Tensor(indices).dtype), Tensor(num_segments))
     np.testing.assert_allclose(ms_out_py.asnumpy(), np_out, error)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     ms_out_graph = Net()(Tensor(x), Tensor(indices),
-                         Tensor(segment_ids), Tensor(num_segments))
+                         Tensor(segment_ids, dtype=Tensor(indices).dtype), Tensor(num_segments))
     np.testing.assert_allclose(
         ms_out_graph.asnumpy(), np_out, error)
