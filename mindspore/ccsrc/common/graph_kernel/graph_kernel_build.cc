@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "kernel/akg/akg_kernel_build_manager.h"
 
@@ -125,7 +126,15 @@ void GraphKernelBuild::Init() {
   } else if (Callback::Instance()->GetTargetFromContext() == kAscendDevice) {
     kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kAscendDevice);
   } else {
-    kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kCPUDevice);
+    const auto kernel_generator = GraphKernelFlags::GetInstance().kernel_generator;
+    if (kernel_generator == "AKG") {
+      kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kCPUDevice);
+    } else if (kernel_generator == "BISHENG") {
+      kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kernel_generator);
+    } else {
+      MS_EXCEPTION(UnknownError) << "Kernel generator only supports AKG and BISHENG but got " << kernel_generator
+                                 << ".";
+    }
   }
 }
 

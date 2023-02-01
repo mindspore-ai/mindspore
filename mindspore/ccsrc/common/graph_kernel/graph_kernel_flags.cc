@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -289,6 +289,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("cpu_arch", &cpu_arch);
   reg.AddFlag("cpu_feature", &cpu_feature);
   reg.AddFlag("cpu_type", &cpu_type);
+  reg.AddFlag("kernel_generator", &kernel_generator);
 
   // String list flags
   reg.AddFlag("enable_expand_ops", &enable_expand_ops);
@@ -334,6 +335,8 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["cpu_arch"] = cpu_arch;
   json["cpu_feature"] = cpu_feature;
   json["cpu_type"] = cpu_type;
+
+  json["kernel_generator"] = kernel_generator;
 
   json["enable_expand_ops"] = enable_expand_ops;
   json["enable_expand_ops_only"] = enable_expand_ops_only;
