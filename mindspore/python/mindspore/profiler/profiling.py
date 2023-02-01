@@ -165,16 +165,6 @@ class Profiler:
     _ascend_job_id = ""
 
     def __init__(self, **kwargs):
-        self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
-        if self._msprof_enable:
-            return
-        if kwargs.get("env_enable"):
-            self._profiler_init(kwargs)
-            return
-        if Profiler._has_initialized:
-            msg = "Do not init twice in the profiler."
-            raise RuntimeError(msg)
-        Profiler._has_initialized = True
         self._dev_id = None
         self._cpu_profiler = None
         self._gpu_profiler = None
@@ -187,7 +177,7 @@ class Profiler:
         self._job_id_env = None
         self._filt_optype_names = ''
         self._output_path = ''
-        self._rank_size = 0
+        self._rank_size = 1
         self._rank_id = 0
         self._ascend_profiler = None
         self._timeline_size_limit_byte = 500 * 1024 * 1024  # 500MB
@@ -197,10 +187,7 @@ class Profiler:
         self._aicore_metrics_id = 0
         self._l2_cache = "off"
         self._data_process = True
-        self._parser_kwargs(kwargs)
-        # get device_id and device_target
-        self._get_devid_rankid_and_devtarget()
-        self._get_output_path(kwargs)
+        self._op_time = True
         self._profile_communication = False
         self._has_started = False
         self._has_started_twice = False
@@ -209,6 +196,20 @@ class Profiler:
         self._sync_enable = True
         self._stop_time = 0
         self._dynamic_status = False
+        self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
+        if self._msprof_enable:
+            return
+        if kwargs.get("env_enable"):
+            self._profiler_init(kwargs)
+            return
+        if Profiler._has_initialized:
+            msg = "Do not init twice in the profiler."
+            raise RuntimeError(msg)
+        Profiler._has_initialized = True
+        self._parser_kwargs(kwargs)
+        # get device_id and device_target
+        self._get_devid_rankid_and_devtarget()
+        self._get_output_path(kwargs)
         self._decide_device_target(kwargs)
         if self.start_profile:
             self.start()
@@ -402,7 +403,9 @@ class Profiler:
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
             if self._data_process:
                 self._md_profiler.start()
-            self._gpu_profiler.step_profiling_enable(True)
+                self._gpu_profiler.data_process_enable(True)
+            if self._op_time:
+                self._gpu_profiler.step_profiling_enable(True)
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             if self._data_process:
                 self._md_profiler.start()
@@ -466,11 +469,7 @@ class Profiler:
     def _profiler_init(self, kwargs):
         """Initialize variables when profiler is enabled by environment variables."""
         options = kwargs.get("env_enable")
-        self._filt_optype_names = ''
         self._has_started = True
-        self._stop_time = 0
-        self._is_heterogeneous = False
-        self._rank_size = 1
         self._start_time = options.get("start_time")
         self._output_path = options.get('file_output_path')
         self._profile_memory = options.get('profile_memory')
@@ -593,14 +592,15 @@ class Profiler:
             "output": self._output_path,
             "fp_point": fp_point,
             "bp_point": bp_point,
-            "training_trace": "on",
-            "task_trace": "on",
+            "training_trace": "on" if self._op_time else "off",
+            "task_trace": "on" if self._op_time else "off",
             "aic_metrics": AICORE_METRICS_DICT.get(self._aicore_metrics_id, "ArithmeticUtilization"),
-            "aicpu": "on",
+            "aicpu": "on" if self._data_process or self._op_time else "off",
             "profile_memory": profile_memory,
             "hccl": profiler_communication,
             "l2_cache": self._l2_cache,
             "parallel_strategy": "on" if self._parallel_strategy else "off",
+            "op_time": "on" if self._op_time else "off"
         }
 
         return profiling_options
@@ -742,18 +742,45 @@ class Profiler:
             logger.info("No need to stop profiler because profiler has been stopped.")
         self._ascend_graph_analyse()
 
-        # Call MSAdvisor function
+    def _ascend_timeline_analyse(self, aicpu_data_parser, optime_parser, source_path):
+        """Analyse timeline info."""
         try:
-            msadvisor = Msadvisor(self._get_profiling_job_id(), self._rank_id, self._output_path)
-            logger.info("MSAdvisor starts running.")
-            msadvisor.analyse()
-        except (ProfilerFileNotFoundException, ValueError, FileNotFoundError, OSError) as err:
-            if context.get_context("mode") == context.PYNATIVE_MODE:
-                logger.warning("Pynative mode does not support MSAdvisor analyzer currently.")
-            else:
-                logger.warning("MSAdvisor running failed. %s", err)
+            self._analyse_timeline(aicpu_data_parser, optime_parser, source_path)
+        except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
+            logger.warning('Fail to write timeline data: %s', err)
         finally:
             pass
+
+    def _ascend_step_trace_analyse(self, source_path, framework_parser):
+        """Analyse step trace info."""
+        points, is_training_mode_flag = None, False
+        try:
+            if self._is_support_step_info_collect() and not self._dynamic_status:
+                points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
+        except ProfilerException as err:
+            logger.warning(err.message)
+        finally:
+            pass
+        return points, is_training_mode_flag
+
+    def _ascend_dynamic_net_analyse(self):
+        """Analyse dynamic shape network info."""
+        if self._profile_communication:
+            raise RuntimeError(
+                "The profile_communication parameter cannot be set on the dynamic shape network.")
+        if self._profile_memory:
+            raise RuntimeError("The profile_memory parameter cannot be set on the dynamic shape network.")
+        logger.warning(
+            "[Profiler]Dynamic Shape network does not support collecting step trace performance data currently.")
+        dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
+        dynamic_parser.write_dynamic_shape_data()
+
+    def _ascend_flops_analyse(self, source_path, op_task_dict, is_training_mode_flag):
+        """Get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt."""
+        flops_parser = FlopsParser(source_path, self._output_path, op_task_dict, self._dev_id, self._rank_id,
+                                   is_training_mode_flag)
+        logger.info("Profiling: analyzing the operation FLOPs.")
+        flops_parser.execute()
 
     def _ascend_graph_memory_analyse(self, points):
         """Analyse memory usage info."""
@@ -782,6 +809,20 @@ class Profiler:
             self._analyse_hccl_info()
         except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
             logger.warning(err.message)
+        finally:
+            pass
+
+    def _ascend_graph_msadvisor_analyse(self, job_id):
+        """Call MSAdvisor function."""
+        try:
+            msadvisor = Msadvisor(job_id, self._rank_id, self._output_path)
+            logger.info("MSAdvisor starts running.")
+            msadvisor.analyse()
+        except (ProfilerFileNotFoundException, ValueError, FileNotFoundError, OSError) as err:
+            if context.get_context("mode") == context.PYNATIVE_MODE:
+                logger.warning("Pynative mode does not support MSAdvisor analyzer currently.")
+            else:
+                logger.warning("MSAdvisor running failed. %s", err)
         finally:
             pass
 
@@ -828,17 +869,28 @@ class Profiler:
         logger.info("Profiling: analyzing the data preprocess data.")
         aicpu_data_parser.execute()
 
+        # analyse op compute time info
+        try:
+            self._analyser_op_info()
+        except ProfilerException as err:
+            logger.warning(err.message)
+        finally:
+            pass
         return [framework_parser, aicpu_data_parser, optime_parser, op_task_dict]
 
-    def _ascend_graph_minddata_analyse(self, source_path):
+    def _minddata_analyse(self, source_path):
         """Analyse mindadata for ascend graph model."""
+        if not self._data_process:
+            return
+        store_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
         # Parsing minddata AICPU profiling
-        logger.info("Profiling: analyzing the minddata AICPU data.")
-        MinddataParser.execute(source_path, self._output_path, self._rank_id)
+        if self._device_target == DeviceTarget.ASCEND.value:
+            logger.info("Profiling: analyzing the minddata AICPU data.")
+            MinddataParser.execute(source_path, self._output_path, store_id)
 
         # parse minddata pipeline operator and queue
         try:
-            pipeline_parser = MinddataPipelineParser(self._output_path, self._rank_id, self._output_path)
+            pipeline_parser = MinddataPipelineParser(self._output_path, store_id, self._output_path)
             logger.info("Profiling: analyzing the minddata pipeline operator and queue.")
             pipeline_parser.parse()
         except ProfilerException as err:
@@ -848,7 +900,7 @@ class Profiler:
 
         # Analyze minddata information
         try:
-            md_analyzer = MinddataProfilingAnalyzer(self._output_path, self._rank_id, self._output_path)
+            md_analyzer = MinddataProfilingAnalyzer(self._output_path, store_id, self._output_path)
             logger.info("Profiling: analyzing the minddata information.")
             md_analyzer.analyze()
         except ProfilerException as err:
@@ -865,59 +917,18 @@ class Profiler:
 
         self._check_output_path(output_path=self._output_path)
         source_path = os.path.join(self._output_path, job_id)
-        framework_parser, aicpu_data_parser, optime_parser, op_task_dict = self._ascend_graph_op_analyse(source_path)
-        self._ascend_graph_minddata_analyse(source_path)
-
-        # analyse op compute time info
-        try:
-            logger.info("Profiling: analyzing the operation compute time.")
-            self._analyser_op_info()
-        except ProfilerException as err:
-            logger.warning(err.message)
-        finally:
-            pass
-
-        if self._dynamic_status and self._profile_communication:
-            raise RuntimeError("The profile_communication parameter cannot be set on the dynamic shape network.")
-        if self._dynamic_status and self._profile_memory:
-            raise RuntimeError("The profile_memory parameter cannot be set on the dynamic shape network.")
-        if self._dynamic_status:
-            logger.warning(
-                "[Profiler]Dynamic Shape network does not support collecting step trace performance data currently.")
-
-        # analyse step trace info
-        points = None
-        is_training_mode_flag = False
-
-        try:
-            if self._is_support_step_info_collect() and not self._dynamic_status:
-                points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
-        except ProfilerException as err:
-            logger.warning(err.message)
-        finally:
-            pass
-
-        # analyse timeline info
-        try:
-            logger.info("Profiling: analyzing the timeline data.")
-            self._analyse_timeline(aicpu_data_parser, optime_parser, source_path)
-        except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
-            logger.warning('Fail to write timeline data: %s', err)
-        finally:
-            pass
-
-        if self._dynamic_status:
-            dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
-            dynamic_parser.write_dynamic_shape_data()
-
-        # Get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
-        flops_parser = FlopsParser(source_path, self._output_path, op_task_dict, self._dev_id, self._rank_id,
-                                   is_training_mode_flag)
-        logger.info("Profiling: analyzing the operation FLOPs.")
-        flops_parser.execute()
-
-        self._ascend_graph_memory_analyse(points)
-        self._ascend_graph_hccl_analyse()
+        self._minddata_analyse(source_path)
+        if self._op_time:
+            framework_parser, aicpu_data_parser, optime_parser, op_task_dict = self._ascend_graph_op_analyse(
+                source_path)
+            points, is_training_mode_flag = self._ascend_step_trace_analyse(source_path, framework_parser)
+            self._ascend_timeline_analyse(aicpu_data_parser, optime_parser, source_path)
+            if self._dynamic_status:
+                self._ascend_dynamic_net_analyse()
+            self._ascend_flops_analyse(source_path, op_task_dict, is_training_mode_flag)
+            self._ascend_graph_memory_analyse(points)
+            self._ascend_graph_hccl_analyse()
+            self._ascend_graph_msadvisor_analyse(job_id)
 
     def _ascend_graph_start(self):
         """Ascend graph mode start profiling."""
@@ -940,27 +951,10 @@ class Profiler:
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
 
-        reduce_op_type = self._get_step_reduce_op_type()
-        timeline_generator = self._generate_timeline(reduce_op_type)
-
-        # parse minddata pipeline operator and queue for GPU
-        try:
-            pipeline_parser = MinddataPipelineParser(self._output_path, self._dev_id, self._output_path)
-            logger.info("Profiling: analyzing the minddata pipeline operator and queue for GPU.")
-            pipeline_parser.parse()
-        except ProfilerException as err:
-            logger.warning(err.message)
-
-        # Analyze minddata information
-        try:
-            md_analyzer = MinddataProfilingAnalyzer(self._output_path, self._dev_id, self._output_path)
-            logger.info("Profiling: analyzing the minddata information.")
-            md_analyzer.analyze()
-        except ProfilerException as err:
-            logger.warning(err.message)
+        self._minddata_analyse(self._output_path)
 
         try:
-            self._analyse_step_relation_info(timeline_generator)
+            self._analyse_step_relation_info()
         except ProfilerException as err:
             logger.warning(err.message)
         finally:
@@ -985,8 +979,12 @@ class Profiler:
                 "scenarios currently.")
         return analyse_step_trace
 
-    def _analyse_step_relation_info(self, timeline_generator):
+    def _analyse_step_relation_info(self):
         """Parse iteration related information."""
+        if not self._op_time:
+            return
+        reduce_op_type = self._get_step_reduce_op_type()
+        timeline_generator = self._generate_timeline(reduce_op_type)
         parser = GpuFrameWorkParser(self._output_path, self._dev_id)
         graph_ids = parser.get_graph_ids()
         ProfilerInfo.set_graph_ids(graph_ids)
@@ -1091,6 +1089,7 @@ class Profiler:
             optime_parser (OPComputeTimeParserParser): The parser instance for AI Core
                 operator execution time calculation.
         """
+        logger.info("Profiling: analyzing the timeline data.")
         timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id,
                                                     self._rank_size, context.get_context("mode"))
         # Get framework info
@@ -1216,6 +1215,7 @@ class Profiler:
 
     def _analyser_op_info(self):
         """Analyse the operator information."""
+        logger.info("Profiling: analyzing the operation compute time.")
         integrator = Integrator(self._output_path, self._rank_id)
         integrator.integrate()
 
@@ -1339,6 +1339,11 @@ class Profiler:
         if not isinstance(self._data_process, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter data_process must be bool, "
                             f"but got type {type(self._data_process)}")
+
+        self._op_time = kwargs.pop("op_time", True)
+        if not isinstance(self._op_time, bool):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter op_time must be bool, "
+                            f"but got type {type(self._op_time)}")
 
         timeline_limit = kwargs.pop("timeline_limit", 500)
         if not isinstance(timeline_limit, int):
