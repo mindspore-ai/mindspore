@@ -177,7 +177,7 @@ def test_bfgs6(dtype, func_x0):
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -301,7 +301,7 @@ def _line_func_2(np, *args):
     return f, fprime
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
