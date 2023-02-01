@@ -24,5 +24,5 @@ mindspore.ops.BatchToSpace
 
     异常：
         - **TypeError** - 如果 `block_size` 或 `crops` 的元素不是int。
-        - **TypeError** - 如果 `ccrops` 既不是list也不是tuple。
+        - **TypeError** - 如果 `crops` 既不是list也不是tuple。
         - **ValueError** - 如果 `block_size` 的值小于2。
