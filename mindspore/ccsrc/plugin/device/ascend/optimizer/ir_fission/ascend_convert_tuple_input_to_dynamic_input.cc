@@ -38,9 +38,9 @@ const AnfNodePtr AscendConvertTupleInputToDynamicInput::Process(const FuncGraphP
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  // this pass should be in front of concat_fission, pack_fission, addn_fission, since the input should be unfold before
-  // this passes.
-  // the auto_monad pass should before this pass
+  // since the input should be unfold before sone function, this pass should be in front of concat_fission,
+  // pack_fission, addn_fission, and HandleControlFlow
+
   bool is_communication_op = common::AnfAlgo::IsCommunicationOp(node);
   static const PrimitiveSet need_unfold_node = {prim::kPrimAddN,        prim::kPrimConcatD,    prim::kPrimPack,
                                                 prim::kPrimStack,       prim::kPrimCallInline, prim::kPrimPrint,

@@ -15,7 +15,7 @@
 from mindspore.ops import operations as P
 
 add = P.Add()
-addn = P.AddN()
+mul = P.Mul()
 
 
 def add_net(x1, x2, x3, x4, x5):
@@ -23,5 +23,5 @@ def add_net(x1, x2, x3, x4, x5):
     sum2 = add(sum1, x3)
     sum3 = add(sum2, x4)
     sum4 = add(sum3, x5)
-    ret = addn((sum4, sum1, sum2))
+    ret = mul(sum4, sum1)
     return ret

@@ -657,11 +657,7 @@ void SelectCallInlineKernelInfo(const CNodePtr &node) {
   for (size_t i = 0; i < AnfUtils::GetOutputTensorNum(node); ++i) {
     output_formats.push_back(AnfAlgo::GetOutputFormat(sub_ret, i));
     output_types.push_back(common::AnfAlgo::GetOutputInferDataType(sub_ret, i));
-    if (AnfAlgo::GetOutputObjectType(node, i) == TypeId::kObjectTypeTuple) {
-      output_object_types.push_back(kernel::KernelObjectType::TUPLE_UNFOLD);
-    } else {
-      output_object_types.push_back(kernel::KernelObjectType::TENSOR);
-    }
+    output_object_types.push_back(kernel::KernelObjectType::TENSOR);
   }
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   MS_EXCEPTION_IF_NULL(builder);

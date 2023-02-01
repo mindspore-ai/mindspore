@@ -320,8 +320,7 @@ bool MatchObjectType(const kernel::KernelObjectType &node_object, const kernel::
     return true;
   }
 
-  if ((node_object == kernel::TUPLE || node_object == kernel::TUPLE_UNFOLD || node_object == kernel::SCALAR) &&
-      (kernel_object == kernel::TENSOR)) {
+  if (node_object == kernel::SCALAR && kernel_object == kernel::TENSOR) {
     return true;
   }
 
@@ -392,7 +391,7 @@ bool MatchObjectType(const CNodePtr &cnode, const std::shared_ptr<kernel::Kernel
   auto node_output_object_type = AnfAlgo::GetAbstractObjectType(cnode->abstract());
   std::vector<kernel::KernelObjectType> new_output_object_types = {};
 
-  if (node_output_object_type == kObjectTypeTuple) {
+  if (node_output_object_type == kObjectTypeTuple && kernel_outputs_object_type[0] != kernel::KernelObjectType::TUPLE) {
     auto tuple_abs = cnode->abstract()->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_abs);
     auto items = tuple_abs->elements();
