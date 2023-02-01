@@ -53,7 +53,9 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
     if (is_fold) {
       bool is_match = true;
       if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
-        is_match = false;
+        if (kernel_info->GetInputNum() != fold_input_tensor_num) {
+          is_match = false;
+        }
       } else {
         // compare input num
         std::vector<int64_t> dyn_input_sizes =

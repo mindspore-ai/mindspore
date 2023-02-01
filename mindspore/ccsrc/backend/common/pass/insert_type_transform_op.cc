@@ -198,7 +198,7 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
   std::vector<KernelObjectType> input_obj_type;
   std::vector<KernelObjectType> output_obj_type;
   GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
-  builder->SetKernelType(CPU_KERNEL);
+  builder->SetKernelType(UNKNOWN_KERNEL_TYPE);
   builder->SetInputsKernelObjectType(input_obj_type);
   builder->SetOutputsKernelObjectType(output_obj_type);
 
