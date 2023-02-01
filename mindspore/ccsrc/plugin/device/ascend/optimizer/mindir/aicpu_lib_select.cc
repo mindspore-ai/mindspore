@@ -247,7 +247,9 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                                mindspore::kPadV3GradOpName,
                                                                mindspore::kPadV3OpName,
                                                                mindspore::kLogicalXorOpName,
-                                                               mindspore::kLogNormalReverseOpName};
+                                                               mindspore::kLogNormalReverseOpName,
+                                                               mindspore::kBetaincOpName,
+                                                               mindspore::kLessEqualOpName};
 
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
   static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";
