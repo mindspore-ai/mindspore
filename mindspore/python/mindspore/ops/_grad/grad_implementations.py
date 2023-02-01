@@ -20,7 +20,6 @@ from mindspore.ops import operations as P
 from mindspore.ops.composite import multitype_ops as C
 from mindspore.ops._grad.grad_base import bprops
 from mindspore.common import dtype as mstype
-from mindspore.ops.operations import _scalar_ops
 
 get_dtype = P.DType()
 # Unused parameters are placeholders.
@@ -34,30 +33,6 @@ def bprop_max_and_minimum_grad_grad(x, y, z, out, dout):
     out1 = F.cast(out[1] != 0, get_dtype(dout[1]))
     dz = out0 * dout[0] + out1 * dout[1]
     return F.zeros_like(x), F.zeros_like(y), dz
-
-
-@bprops.register(_scalar_ops.ScalarAdd)
-def bprop_scalar_add(x, y, out, dout):
-    """Backpropagator for primitive `scalar_add`."""
-    return dout, dout
-
-
-@bprops.register(_scalar_ops.ScalarMul)
-def bprop_scalar_mul(x, y, out, dout):
-    """Backpropagator for primitive `scalar_mul`."""
-    return dout * y, dout * x
-
-
-@bprops.register(_scalar_ops.ScalarSub)
-def bprop_scalar_sub(x, y, out, dout):
-    """Backpropagator for primitive `scalar_sub`."""
-    return dout, -dout
-
-
-@bprops.register(_scalar_ops.ScalarDiv)
-def bprop_scalar_div(x, y, out, dout):
-    """Backpropagator for primitive `scalar_div`."""
-    return dout / y, (-dout) * (out / y)
 
 
 @bprops.register(_constants.kScalarPow)
@@ -96,7 +71,7 @@ def bprop_tuple_getitem(data, idx, out, dout):
     return F.tuple_setitem(C.zeros_like(data), idx, dout), C.zeros_like(idx)
 
 
-@bprops.register("list_getitem")
+@bprops.register("ListGetItem")
 def bprop_list_getitem(data, idx, out, dout):
     """Backpropagator for primitive `list_getitem`."""
     return F.list_setitem(C.zeros_like(data), idx, dout), C.zeros_like(idx)
@@ -188,16 +163,9 @@ def bprop_mutable(x, out, dout):
     return (dout,)
 
 
-@bprops.register(_scalar_ops.ScalarGreater)
-@bprops.register(_scalar_ops.ScalarLess)
-@bprops.register(_scalar_ops.ScalarGreaterEqual)
-@bprops.register(_scalar_ops.ScalarLessEqual)
-@bprops.register(_scalar_ops.ScalarEqual)
 @bprops.register("scalar_ne")
 @bprops.register("bool_and")
 @bprops.register("bool_or")
-@bprops.register(_scalar_ops.ScalarBitwiseAnd)
-@bprops.register(_scalar_ops.ScalarBitwiseOr)
 @bprops.register("bit_xor")
 @bprops.register("bit_left_shift")
 @bprops.register("bit_right_shift")

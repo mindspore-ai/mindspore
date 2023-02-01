@@ -3063,7 +3063,6 @@ PrimitiveToImplMap &GetUniformPrimitiveToImplMap() {
   using R = PrimitiveToImplMap::mapped_type;
   static PrimitiveToImplMap uniform_prim_implement_map{
     {prim::kPrimScalarPow, R{prim::ScalarPow, true, nullptr, true}},
-    {prim::kPrimScalarFloordiv, R{prim::ScalarFloordiv, true, nullptr, true}},
     {prim::kPrimScalarUadd, R{prim::ScalarUAdd, true, nullptr, true}},
     {prim::kPrimScalarUsub, R{prim::ScalarUSub, true, nullptr, true}},
     {prim::kPrimScalarLog, R{prim::ScalarLog, true, nullptr, true}},

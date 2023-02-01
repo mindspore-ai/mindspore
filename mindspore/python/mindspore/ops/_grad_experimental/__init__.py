@@ -24,5 +24,6 @@ from mindspore.ops._grad_experimental import grad_math_ops
 from mindspore.ops._grad_experimental import grad_linalg_ops
 from mindspore.ops._grad_experimental import grad_sparse
 from mindspore.ops._grad_experimental import grad_sparse_ops
+from mindspore.ops._grad_experimental import grad_scalar_ops
 
 __all__ = ['get_bprop_fn']

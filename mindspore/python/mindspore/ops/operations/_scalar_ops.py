@@ -48,6 +48,38 @@ class ScalarDiv(Primitive):
         """Initialize ScalarDiv"""
 
 
+class ScalarFloorDiv(Primitive):
+    r"""
+    Computes the quotient of dividing the first input scalar by the second input scalar element-wise.
+
+    .. math::
+
+        out_{i} = \frac{x_i}{y_i}
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '//' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, the type of scalar is float.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+        ValueError: If `y` is 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarFloorDiv"""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+
+
 class ScalarAdd(Primitive):
     r"""
     Adds two input scalar.

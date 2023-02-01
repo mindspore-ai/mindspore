@@ -27,6 +27,7 @@
 #include "ops/scalar_sub.h"
 #include "ops/scalar_mul.h"
 #include "ops/scalar_div.h"
+#include "ops/scalar_floordiv.h"
 #include "ops/scalar_mod.h"
 #include "ops/scalar_eq.h"
 #include "ops/scalar_lt.h"
@@ -117,6 +118,27 @@ ValuePtr DivImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::st
 }
 
 template <typename T>
+ValuePtr FloorDivImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
+  MS_EXCEPTION_IF_NULL(x_value);
+  MS_EXCEPTION_IF_NULL(y_value);
+  auto x = GetScalarValue<T>(op_name, x_value);
+  auto y = GetScalarValue<T>(op_name, y_value);
+  T zero = 0;
+  if (y == zero) {
+    MS_EXCEPTION(ValueError) << "The divisor could not be zero. But the divisor is zero now.";
+  }
+  if constexpr (std::is_signed<T>::value) {
+    if (x == std::numeric_limits<T>::min() && static_cast<int64_t>(y) == -1) {
+      MS_EXCEPTION(ValueError) << "For prim '" << op_name
+                               << "' Overflow of the mod of two signed number x: " << std::to_string(x)
+                               << ", y: " << std::to_string(y) << ".";
+    }
+  }
+  T res = std::floor(x / y);
+  return MakeValue(res);
+}
+
+template <typename T>
 ValuePtr ModImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
@@ -192,11 +214,17 @@ using MathImplFunc = std::function<ValuePtr(const ValuePtr &, const ValuePtr &, 
 
 template <typename T>
 MathImplFunc ChooseFunc(const std::string &prim_name) {
-  std::map<std::string, MathImplFunc> infer_value_func_map = {
-    {prim::kScalarAdd, AddImpl<T>}, {prim::kScalarSub, SubImpl<T>}, {prim::kScalarMul, MulImpl<T>},
-    {prim::kScalarDiv, DivImpl<T>}, {prim::kScalarMod, ModImpl<T>}, {prim::kScalarEq, EqImpl<T>},
-    {prim::kScalarGt, GtImpl<T>},   {prim::kScalarLt, LtImpl<T>},   {prim::kScalarGe, GeImpl<T>},
-    {prim::kScalarLe, LeImpl<T>}};
+  std::map<std::string, MathImplFunc> infer_value_func_map = {{prim::kScalarAdd, AddImpl<T>},
+                                                              {prim::kScalarSub, SubImpl<T>},
+                                                              {prim::kScalarMul, MulImpl<T>},
+                                                              {prim::kScalarDiv, DivImpl<T>},
+                                                              {prim::kScalarMod, ModImpl<T>},
+                                                              {prim::kScalarEq, EqImpl<T>},
+                                                              {prim::kScalarGt, GtImpl<T>},
+                                                              {prim::kScalarLt, LtImpl<T>},
+                                                              {prim::kScalarGe, GeImpl<T>},
+                                                              {prim::kScalarLe, LeImpl<T>},
+                                                              {prim::kScalarFloorDiv, FloorDivImpl<T>}};
   auto iter = infer_value_func_map.find(prim_name);
   if (iter == infer_value_func_map.end()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
@@ -305,6 +333,7 @@ MIND_API_OPERATOR_IMPL(ScalarAdd, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarSub, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarMul, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarDiv, BaseOperator);
+MIND_API_OPERATOR_IMPL(ScalarFloorDiv, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarMod, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarEqual, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarGreater, BaseOperator);
@@ -315,6 +344,7 @@ REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarAdd, prim::kPrimScalarAdd, ScalarArithmet
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarSub, prim::kPrimScalarSub, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarMul, prim::kPrimScalarMul, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarDiv, prim::kPrimScalarDiv, ScalarArithmeticInfer, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarFloorDiv, prim::kPrimScalarFloorDiv, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarMod, prim::kPrimScalarMod, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarEqual, prim::kPrimScalarEq, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarGreater, prim::kPrimScalarGt, ScalarArithmeticInfer, true);

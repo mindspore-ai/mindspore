@@ -117,7 +117,7 @@ def Switch(c, x, y):
     return x if c else y
 
 
-def list_getitem(data, item):
+def ListGetItem(data, item):
     """Implement `list_getitem`."""
     return data[item]
 
