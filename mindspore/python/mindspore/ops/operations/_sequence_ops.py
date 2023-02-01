@@ -306,6 +306,33 @@ class SequenceCount(Primitive):
         self.init_prim_io_names(inputs=['sequence', 'target'], outputs=['output_data'])
 
 
+class SequenceIndex(Primitive):
+    r"""
+    Support sequence index operation 'seq.index(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **sequence** (Union[List, Tuple]) - The sequence to find the index value of the first occurrence.
+        - **target** (Any Object) - The target element to find in sequence.
+
+    Outputs:
+        Integer, the index value of the first occurrence of the target element.
+
+    Raises:
+        TypeError: The 'sequence' is not list or tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SequenceIndex"""
+        self.init_prim_io_names(inputs=['sequence', 'target'], outputs=['output_data'])
+
+
 class SequenceMul(Primitive):
     r"""
     Support sequence multiplication operation 'seq.mul(scalar)'.
