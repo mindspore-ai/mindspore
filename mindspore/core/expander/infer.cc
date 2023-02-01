@@ -84,10 +84,8 @@ void CppInfer::Infer(const NodePtr &node) {
                        });
   AbstractBasePtr result = nullptr;
   auto found = abstract::GetPrimitiveInferImpl(prim);
-  if (found.has_value()) {
-    auto infer = found.value();
-    MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-    result = infer.InferShapeAndType(nullptr, prim, abs_list);
+  if (found.has_value() && found.value().IsImplInferShapeAndType()) {
+    result = found.value().InferShapeAndType(nullptr, prim, abs_list);
   } else {
     auto iter = unreg_infer_map.find(prim);
     if (iter != unreg_infer_map.end()) {
