@@ -1293,7 +1293,7 @@ def logdet(x):
 
     Returns:
         Tensor, the log determinant of `x`. If the matrix determinant is smaller than 0, nan will be returned. If the
-            matrix determinant is 0, -inf will be returned.
+        matrix determinant is 0, -inf will be returned.
 
     Raises:
         TypeError: If dtype of `x` is not float32, float64, Complex64 or Complex128.
@@ -4503,11 +4503,11 @@ def heaviside(x, values):
 
     Args:
         x (Tensor): The input tensor. With real number data type.
-        values (Tensor): The values to use where x is zero. Values can be broadcast with x.
-            'x' should have the same dtype with 'values'.
+        values (Tensor): The values to use where `x` is zero. Values can be broadcast with `x` .
+            `x` should have the same dtype with 'values'.
 
     Returns:
-        Tensor, has the same type as 'x' and 'values'.
+        Tensor, has the same type as `x` and `values`.
 
     Raises:
         TypeError: If `x` or `values` is not Tensor.

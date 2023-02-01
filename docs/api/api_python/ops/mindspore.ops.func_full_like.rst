@@ -3,7 +3,7 @@ mindspore.ops.full_like
 
 .. py:function:: mindspore.ops.full_like(x, fill_value, *, dtype=None)
 
-    返回一个与输入相同大小的Tensor，填充 `fill_value`。'ops.full_like(x, fill_value)'相当于'ops.full(x.shape, fill_value, dtype=x.dtype)'。
+    返回一个与输入相同大小的Tensor，填充 `fill_value` 。 `ops.full_like(x, fill_value)` 相当于 `ops.full(x.shape, fill_value, dtype=x.dtype)` 。
 
     参数：
         - **x** (Tensor) - `x` 的shape决定输出Tensor的shape。

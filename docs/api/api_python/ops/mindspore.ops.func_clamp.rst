@@ -3,9 +3,9 @@ mindspore.ops.clamp
 
 .. py:function:: mindspore.ops.clamp(x, min=None, max=None)
 
-    将输入Tensor值裁剪到指定的最小值和最大值之间。
+    将输入Tensor的值裁剪到指定的最小值和最大值之间。
 
-    限制 :math:`x` 的范围，其 :math:`x` 的最小值为 `min` ，最大值为 `max` 。
+    限制 :math:`x` 的范围，其最小值为 `min` ，最大值为 `max` 。
 
     .. math::
         out_i= \left\{

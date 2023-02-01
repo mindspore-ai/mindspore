@@ -717,8 +717,8 @@ def full(size, fill_value, *, dtype=None): # pylint: disable=redefined-outer-nam
 
 def full_like(x, fill_value, *, dtype=None):
     """
-    Returns  a Tensor with the same size as `x` filled with `fill_value`. 'ops.full_like(x, fill_value)' is
-    equivalent to 'ops.full(x.shape, fill_value, dtype=x.dtype)'.
+    Returns  a Tensor with the same size as `x` filled with `fill_value`. `ops.full_like(x, fill_value)` is
+    equivalent to `ops.full(x.shape, fill_value, dtype=x.dtype)` .
 
     Args:
         x (Tensor): The shape of `x` will determine shape of the output Tensor.
@@ -5860,7 +5860,7 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     Returns specified diagonals of `input`.
 
     If `input` is 2-D, returns the diagonal of `input` with the given offset.
-    If `a` has more than two
+    If `input` has more than two
     dimensions, then the axes specified by `dim1` and `dim2` are used to determine
     the 2-D sub-array whose diagonal is returned. The shape of the resulting
     array can be determined by removing `dim1` and `dim2` and appending an index
