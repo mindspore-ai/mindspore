@@ -4529,6 +4529,68 @@ def heaviside(x, values):
     return heaviside_(x, values)
 
 
+def _type_checking_for_xspace(start, end, steps):
+    """utility parameter checking function for linspace, logspace, geomspace."""
+    array_types = (int, float, bool, list, tuple, Tensor)
+    def _get_type(x):
+        """get the dtype of input"""
+        if isinstance(x, Tensor):
+            return x.dtype
+        return type(x)
+    if not isinstance(start, array_types):
+        raise TypeError(f"For 'logspace', 'start' should be int, float, bool, list, tuple, Tensor, but got"
+                        f" {_get_type(start)}.")
+    if not isinstance(end, array_types):
+        raise TypeError(f"For 'logspace', 'end' should be int, float, bool, list, tuple, Tensor, but got"
+                        f" {_get_type(end)}.")
+    if not isinstance(steps, int):
+        raise TypeError(f"For 'logspace', steps should be an integer, but got {_get_type(steps)}.")
+    return start, end, steps
+
+
+def logspace(start, end, steps, base=10.0, dtype=None):
+    """
+    Returns numbers spaced evenly on a log scale.
+
+    In linear space, the sequence starts at base ** start (base to the power of
+    start) and ends with base ** end (see endpoint below).
+
+    Args:
+        start (Union[int, list(int), tuple(int), tensor]): ``base ** start`` is the starting
+            value of the sequence.
+        end (Union[int, list(int), tuple(int), tensor]): ``base ** end`` is the final value of
+            the sequence.
+        steps (int): Number of samples to generate.
+        base (Union[int, float], optional): The base of the log space. The step size
+            between the elements in :math:`ln(samples) / ln(base)` (or :math:`log_{base}(samples)`)
+            is uniform. Default is 10.0.
+        dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype.
+            If `dtype` is None, infer the data type from other input arguments. Default is None.
+
+    Returns:
+        Tensor, equally spaced on a log scale.
+
+    Raises:
+        TypeError: If input arguments have types not specified above.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import ops
+        >>> print(ops.logspace(0, 5, 6, base=2.0))
+        [ 1.  2.  4.  8. 16. 32.]
+    """
+    start, end, steps = _type_checking_for_xspace(start, end, steps)
+    if not isinstance(base, (int, float, bool)):
+        raise TypeError(f"For 'logspace', 'base' should be a number, but got {base}.")
+    if dtype is None:
+        dtype = mstype.float32
+    linspace_res = linspace_(start, end, steps)
+    _tensor_pow = _get_cache_prim(P.Pow)()
+    return _tensor_pow(base, linspace_res).astype(dtype)
+
+
 def logaddexp(x1, x2):
     """
     Computes the logarithm of the sum of exponentiations of the inputs.
@@ -10030,6 +10092,7 @@ __all__ = [
     'matrix_determinant',
     'det',
     'linspace',
+    'logspace',
     'matrix_solve',
     'std',
     'maximum',

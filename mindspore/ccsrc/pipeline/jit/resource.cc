@@ -462,6 +462,9 @@ BuiltInTypeMap &GetMethodMap() {
        {"imag", std::string("imag")},                                      // imag()
        {"diff", std::string("diff")},                                      // diff()
        {"frac", std::string("frac")},                                      // frac()
+       {"argwhere", std::string("argwhere")},                              // argwhere()
+       {"moveaxis", std::string("moveaxis")},                              // moveaxis()
+       {"movedim", std::string("movedim")},                                // movedim()
      }},
     {kObjectTypeRowTensorType,
      {

@@ -421,6 +421,7 @@ Tensor Creation
     mindspore.ops.full
     mindspore.ops.full_like
     mindspore.ops.linspace
+    mindspore.ops.logspace
     mindspore.ops.one_hot
     mindspore.ops.ones
     mindspore.ops.ones_like
@@ -462,6 +463,7 @@ Array Operation
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.argwhere
     mindspore.ops.batch_to_space_nd
     mindspore.ops.bincount
     mindspore.ops.block_diag
@@ -469,6 +471,7 @@ Array Operation
     mindspore.ops.cartesian_prod
     mindspore.ops.cat
     mindspore.ops.chunk
+    mindspore.ops.column_stack
     mindspore.ops.concat
     mindspore.ops.conj
     mindspore.ops.count_nonzero
@@ -487,6 +490,7 @@ Array Operation
     mindspore.ops.gather_d
     mindspore.ops.gather_elements
     mindspore.ops.gather_nd
+    mindspore.ops.hstack
     mindspore.ops.hsplit
     mindspore.ops.index_add
     mindspore.ops.index_fill
@@ -498,6 +502,8 @@ Array Operation
     mindspore.ops.masked_select
     mindspore.ops.meshgrid
     mindspore.ops.narrow
+    mindspore.ops.moveaxis
+    mindspore.ops.movedim
     mindspore.ops.nan_to_num
     mindspore.ops.normal
     mindspore.ops.nonzero
