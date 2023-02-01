@@ -164,7 +164,6 @@ constexpr const char kNameBNTrainingUpdateGrad[] = "BNTrainingUpdateGrad";
 constexpr const char kNameErf[] = "Erf";
 constexpr const char kNameErfc[] = "Erfc";
 constexpr const char kNameExpm1[] = "Expm1";
-constexpr const char kNameFillD[] = "Fill";
 constexpr const char kNameInplaceAddD[] = "InplaceAdd";
 constexpr const char kNameInplaceSubD[] = "InplaceSub";
 constexpr const char kNameInplaceUpdateD[] = "InplaceUpdate";
