@@ -8,7 +8,7 @@ mindspore.ops.silu
     .. math::
         \text{SiLU}(x) = x * \sigma(x),
 
-    其中，math:`\sigma(x)` 是Logistic Sigmoid函数。
+    其中，:math:`\sigma(x)` 是Logistic Sigmoid函数。
 
     .. math::
 

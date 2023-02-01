@@ -1,7 +1,7 @@
 mindspore.nn.PoissonNLLLoss
 ============================
 
-.. py:class:: class PoissonNLLLoss(log_input=True, full=False, eps=1e-8, reduction='mean')
+.. py:class:: mindspore.nn.PoissonNLLLoss(log_input=True, full=False, eps=1e-8, reduction='mean')
 
     计算泊松负对数似然损失。
 

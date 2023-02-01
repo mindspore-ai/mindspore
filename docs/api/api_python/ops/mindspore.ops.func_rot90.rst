@@ -7,9 +7,9 @@ mindspore.ops.rot90
     如果k>0，旋转方向是从第一轴朝向第二轴，如果k<0，旋转方向从第二轴朝向第一轴。
 
     参数：
-        - **x** (Tensor): 所输入的Tensor。
+        - **x** (Tensor) - 所输入的Tensor。
         - **k** (int) - 旋转的次数。默认值：1。
-        - **dims** (Union[list(int), tuple(int)]) - 要旋转的轴。默认值：[0，1]。
+        - **dims** (Union[list(int), tuple(int)]) - 要旋转的轴。默认值：[0,1]。
 
     返回：
         Tensor。
