@@ -338,7 +338,7 @@ FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_g
   return res;
 }
 
-void SetLoadFlag(const ResourcePtr &resource) {
+void SetMindIRLoadFlag(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -749,7 +749,7 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
     MS_LOG(EXCEPTION) << "AbstractSpecialize error";
   }
 
-  SetLoadFlag(resource);
+  SetMindIRLoadFlag(resource);
 
   // Abstract analyze
   auto engine = resource->engine();

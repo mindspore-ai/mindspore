@@ -48,7 +48,7 @@ class ClassTypeResolve : public AnfVisitor {
   }
 
  private:
-  ValuePtr ConvertValueSequence(const ValuePtr &value, bool *need_convert);
+  ValuePtr ConvertValueSequence(const ValueSequencePtr &value, bool *need_convert);
   ValuePtr ConvertValue(const ValuePtr &value, bool *need_convert);
 };
 ValuePtr ClassTypeResolve::ConvertValue(const ValuePtr &value, bool *need_convert) {
@@ -62,6 +62,7 @@ ValuePtr ClassTypeResolve::ConvertValue(const ValuePtr &value, bool *need_conver
     (*need_convert) = true;
     return std::make_shared<MindIRNameSpace>(name_space);
   }
+
   if (value->isa<ValueDictionary>()) {
     auto dic = value->cast<ValueDictionaryPtr>();
     auto dic_pairs = dic->value();
@@ -73,26 +74,24 @@ ValuePtr ClassTypeResolve::ConvertValue(const ValuePtr &value, bool *need_conver
       return std::make_shared<ValueDictionary>(convert_dict);
     }
   }
+
   if (value->isa<ValueSequence>()) {
-    return ConvertValueSequence(value, need_convert);
+    MS_EXCEPTION_IF_NULL(value);
+    auto seq_value = value->cast<ValueSequencePtr>();
+    return ConvertValueSequence(seq_value, need_convert);
   }
   return value;
 }
 
-ValuePtr ClassTypeResolve::ConvertValueSequence(const ValuePtr &value, bool *need_convert) {
-  MS_EXCEPTION_IF_NULL(value);
-  auto seq_value = value->cast<ValueSequencePtr>();
-  if (seq_value == nullptr) {
-    return nullptr;
-  }
+ValuePtr ClassTypeResolve::ConvertValueSequence(const ValueSequencePtr &seq_value, bool *need_convert) {
   auto vec_seq = std::vector<ValuePtr>();
   for (size_t i = 0; i < seq_value->size(); ++i) {
     (void)vec_seq.emplace_back(ConvertValue((*seq_value)[i], need_convert));
   }
   if (!need_convert) {
-    return value;
+    return seq_value;
   }
-  if (value->isa<ValueTuple>()) {
+  if (seq_value->isa<ValueTuple>()) {
     return std::make_shared<ValueTuple>(vec_seq);
   }
   return std::make_shared<ValueList>(vec_seq);

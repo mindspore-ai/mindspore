@@ -170,6 +170,7 @@ class IrExportBuilder {
  private:
   bool SetAbstractFuncToAttributeProto(const abstract::AbstractBasePtr &abstract,
                                        mind_ir::AttributeProto *const attr_proto);
+  bool ExportWeight(const ParameterPtr &param, const std::string &param_name, mind_ir::GraphProto *const graph_proto);
   std::string GetPrimitiveUniqueName(const PrimitivePtr &primitive_ptr);
   bool BuildPrimitives();
 
@@ -443,52 +444,54 @@ bool IrExportBuilder::BuildFuncGraphAttrs(const FuncGraphPtr &func_graph, mind_i
   return true;
 }
 
+bool IrExportBuilder::ExportWeight(const ParameterPtr &param, const std::string &param_name,
+                                   mind_ir::GraphProto *const graph_proto) {
+  MS_LOG(DEBUG) << "Parameter: '" << param->DebugString();
+  auto param_abs = param->abstract();
+  MS_EXCEPTION_IF_NULL(param_abs);
+  if (param_abs->isa<abstract::AbstractMapTensor>()) {
+    auto *map_parameter_proto = graph_proto->add_map_parameter();
+    if (!ConvertMapParameterToMapTensorProto(param, map_parameter_proto)) {
+      MS_LOG(ERROR) << "Convert MapParameter " << param->ToString() << " to MapTensorProto failed.";
+      return false;
+    }
+    return true;
+  }
+  if (param_abs->isa<abstract::AbstractTensor>()) {
+    mind_ir::TensorProto *parameter_proto = graph_proto->add_parameter();
+    parameter_proto->set_name(param_name);
+    if (!SetParamToTensorProto(param, parameter_proto)) {
+      MS_LOG(ERROR) << "Set parameter " << param->DebugString() << " to TensorProto failed.";
+      return false;
+    }
+    return true;
+  }
+  MS_LOG(ERROR) << "Only support MapTensor or Tensor as default param of Parameter, got: "
+                << param->default_param()->ToString();
+  return false;
+}
+
 bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(graph_proto);
-  for (auto &item : func_graph->parameters()) {
+  auto param_size = func_graph->parameters().size();
+  MS_LOG(DEBUG) << "func graph parameter num:" << param_size << ", fv param num:" << func_graph->fv_param_count();
+  for (size_t param_counter = 0; param_counter < param_size; ++param_counter) {
+    auto &item = func_graph->parameters()[param_counter];
     MS_EXCEPTION_IF_NULL(item);
     auto param = item->cast<ParameterPtr>();
     if (param == nullptr) {
       MS_LOG(ERROR) << "Parameter: '" << item->ToString() << "' could not cast to parameter.";
       return false;
     }
+
     std::string param_name = GetUniqueNodeName(param);
-    if (top_graph && param->has_default()) {
-      MS_LOG(DEBUG) << "Parameter: '" << item->DebugString();
-      if (param->abstract()->isa<abstract::AbstractMapTensor>()) {
-        auto *map_parameter_proto = graph_proto->add_map_parameter();
-        if (!ConvertMapParameterToMapTensorProto(param, map_parameter_proto)) {
-          MS_LOG(ERROR) << "Convert MapParameter " << param->ToString() << " to MapTensorProto failed.";
-          return false;
-        }
-      } else if (param->abstract()->isa<abstract::AbstractTensor>()) {
-        mind_ir::TensorProto *parameter_proto = graph_proto->add_parameter();
-        parameter_proto->set_name(param_name);
-        if (!SetParamToTensorProto(param, parameter_proto)) {
-          MS_LOG(ERROR) << "Set parameter " << param->DebugString() << " to TensorProto failed.";
-          return false;
-        }
-        auto tensor = param->default_param()->cast<tensor::TensorPtr>();
-        if (tensor != nullptr) {
-          parameter_proto->set_compression_type(
-            static_cast<mind_ir::TensorProto_CompressionType>(tensor->compression_type()));
-        }
-        auto quant_params = tensor->quant_params();
-        for (size_t i = 0; i < quant_params.size(); i++) {
-          auto quant_param_proto = parameter_proto->add_quant_params();
-          auto ret = SetQuantizationParamToAttrProto(quant_params[i], quant_param_proto);
-          if (ret != true) {
-            MS_LOG(ERROR) << "QuantizationParam Set Value to AttributeProto Error";
-            return false;
-          }
-        }
-      } else {
-        MS_LOG(ERROR) << "Only support MapTensor or Tensor as default param of Parameter, got: "
-                      << param->default_param()->ToString();
-        return false;
+    if (top_graph && param_counter >= param_size - func_graph->fv_param_count()) {
+      if (!ExportWeight(param, param_name, graph_proto)) {
+        MS_LOG(ERROR) << "Failed to export parameter weight:" << param->DebugString();
       }
     } else {
+      // export graph input
       mind_ir::ValueInfoProto *input_proto = graph_proto->add_input();
       input_proto->set_name(param_name);
       if (!SetValueInfoProto(param, input_proto)) {
@@ -694,7 +697,25 @@ bool IrExportBuilder::SetParamToTensorProto(const ParameterPtr &param, mind_ir::
     MS_LOG(EXCEPTION) << "Parameter or TensorProto is null!";
   }
   MS_LOG(DEBUG) << "SetParamToTensorProto: " << param->DebugString();
-  return SetTensorProto(param->abstract(), tensor_proto);
+  if (!SetTensorProto(param->abstract(), tensor_proto)) {
+    MS_LOG(ERROR) << "Export Parameter to tensor proto failed.";
+    return false;
+  }
+  // export quant parameter info
+  auto tensor = param->default_param()->cast<tensor::TensorPtr>();
+  if (tensor != nullptr) {
+    tensor_proto->set_compression_type(static_cast<mind_ir::TensorProto_CompressionType>(tensor->compression_type()));
+  }
+  auto quant_params = tensor->quant_params();
+  for (const auto &quant_param : quant_params) {
+    auto quant_param_proto = tensor_proto->add_quant_params();
+    auto ret = SetQuantizationParamToAttrProto(quant_param, quant_param_proto);
+    if (ret != true) {
+      MS_LOG(ERROR) << "QuantizationParam Set Value to AttributeProto Error";
+      return false;
+    }
+  }
+  return true;
 }
 
 bool IrExportBuilder::ConvertMapParameterToMapTensorProto(const ParameterPtr &map_parameter,

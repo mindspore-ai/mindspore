@@ -1534,8 +1534,8 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
             param_data = net_dict[param_name].data.asnumpy().tobytes()
             param_proto.raw_data = param_data
         else:
-            logger.warning("The parameter '{}' is not belongs to any cell,the data of parameter cannot be exported."
-                           .format(param_proto.name))
+            raise ValueError("The parameter '{}' is not belongs to any cell,"
+                             "the data of parameter cannot be exported.".format(param_proto.name))
     incremental = kwargs.get('incremental', False)
     for map_param_proto in model.graph.map_parameter:
         map_param_name = map_param_proto.name[map_param_proto.name.find(":") + 1:]
@@ -1546,8 +1546,8 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
             map_param_proto.value_tensor.raw_data = value_nparr.tobytes()
             map_param_proto.status_tensor.raw_data = status_nparr.tobytes()
         else:
-            logger.warning("The map_parameter '{}' is not belongs to any cell,the data of parameter cannot be exported."
-                           .format(map_param_proto.name))
+            raise ValueError("The map_parameter '{}' is not belongs to any cell,"
+                             "the data of parameter cannot be exported.".format(map_param_proto.name))
     if not file_name.endswith('.mindir'):
         file_name += ".mindir"
     current_path = os.path.abspath(file_name)
@@ -1577,8 +1577,8 @@ def _save_together(net_dict, model):
         if name in net_dict.keys():
             data_total += sys.getsizeof(net_dict[name].data.asnumpy().tobytes()) / 1024
         else:
-            logger.info("The parameter '{}' is not belongs to any cell,the data of parameter cannot be exported."
-                        .format(param_proto.name))
+            raise ValueError("The parameter '{}' is not belongs to any cell,"
+                             "the data of parameter cannot be exported.".format(param_proto.name))
         if data_total > TOTAL_SAVE:
             return False
     return True

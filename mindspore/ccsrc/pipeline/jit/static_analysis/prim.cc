@@ -935,11 +935,10 @@ AbstractBasePtr MakePyInferRes2Abstract(const py::object &output) {
 }  // namespace
 py::tuple PreparePyInputs(const AbstractBasePtrList &args) {
   // The monad parameter is defined at the end of the parameter and needs to be ignored
-  std::size_t size_args = args.size() - GetAbstractMonadNum(args);
-  py::tuple py_args(size_args);
-  for (size_t i = 0; i < size_args; i++) {
-    auto arg_i = (args)[i];
-    py_args[i] = ConvertAbstractToPython(arg_i);
+  std::size_t args_size = args.size() - GetAbstractMonadNum(args);
+  py::tuple py_args(args_size);
+  for (size_t i = 0; i < args_size; i++) {
+    py_args[i] = ConvertAbstractToPython(args[i]);
   }
   return py_args;
 }
