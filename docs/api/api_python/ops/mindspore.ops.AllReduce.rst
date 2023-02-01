@@ -6,7 +6,7 @@
     使用指定方式对通信组内的所有设备的Tensor数据进行规约操作，所有设备都得到相同的结果。
 
     .. note::
-        AllReduce操作暂不支持"prod"。集合中的所有进程的Tensor必须具有相同的shape和格式。
+        集合中的所有进程的Tensor必须具有相同的shape和格式。
 
     参数：
         - **op** (str) - 规约的具体操作，如"sum"、"max"、和"min"。默认值：ReduceOp.SUM。
