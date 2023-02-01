@@ -466,7 +466,7 @@ class TensorGetItemByMixedTensorsIndexError(Cell):
         return ret
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -476,7 +476,7 @@ def test_getitem_by_mixed_tensor_exception():
     index_0 = Tensor(np.random.randint(3, size=(3, 4, 5)), mstype.int32)
     index_1 = Tensor(np.random.randint(4, size=(3, 4, 5)), mstype.int32)
     net1 = TensorGetItemByMixedTensorsIndexError()
-    with pytest.raises(IndexError):
+    with pytest.raises(ValueError):
         net1(input_ms, index_0, index_1)
 
 
