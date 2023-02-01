@@ -443,36 +443,38 @@ class Cell(Cell_):
             output = self._run_forward_hook(cast_inputs, output)
         return output
 
-    def _check_construct_args(self, *inputs, **kwargs):
+    def _check_construct_args(self, *args):
         """Check the args needed by the function construct"""
-        if kwargs:
-            raise ValueError(f"For 'Cell', expect no kwargs here, maybe you pass wrong arguments, "
-                             f"or there is a key in kwargs that is not used as a function argument. "
-                             f"args: {inputs}, kwargs: {kwargs}")
         positional_args = 0
         default_args = 0
+        has_var = False
         for value in inspect.signature(self.construct).parameters.values():
             if value.kind is inspect.Parameter.VAR_POSITIONAL or value.kind is inspect.Parameter.VAR_KEYWORD:
-                return
+                has_var = True
+            if value.kind is inspect.Parameter.KEYWORD_ONLY:
+                raise TypeError(f"For the method 'construct', MindSpore does not support keyword-only arg: {value}.")
             if value.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD:
                 if value.default is inspect.Parameter.empty:
                     positional_args += 1
                 else:
                     default_args += 1
 
-        if len(inputs) < positional_args:
+        if has_var:
+            return
+
+        if len(args) < positional_args:
             raise TypeError(f"For 'Cell', the function construct requires {positional_args} positional argument, "
-                            f"but got {len(inputs)}. When using set_inputs, please make sure that all networks "
+                            f"but got {len(args)}. When using set_inputs, please make sure that all networks "
                             f"and loss functions are configured with set_inputs.")
 
-        if len(inputs) > positional_args + default_args:
+        if len(args) > positional_args + default_args:
             construct_inputs_names = self.construct.__code__.co_varnames
             if 'self' not in construct_inputs_names:
                 raise TypeError(f"For 'Cell', the method 'construct' must have parameter 'self'. ")
 
             raise TypeError(f"For 'Cell', the function construct requires {positional_args} positional argument and "
                             f"{default_args} default argument, total {positional_args + default_args}, "
-                            f"but got {len(inputs)}.")
+                            f"but got {len(args)}.")
 
     def _hook_fn_registered(self):
         '''Hook function in graph mode'''
@@ -615,7 +617,7 @@ class Cell(Cell_):
 
     def __call__(self, *args, **kwargs):
         if self.__class__.construct is Cell.construct:
-            raise AttributeError("For 'Cell', the method 'construct' is not defined. ")
+            raise AttributeError("For 'Cell', the method 'construct' is not defined.")
 
         if kwargs:
             bound_arguments = inspect.signature(self.construct).bind(*args, **kwargs)
@@ -625,11 +627,11 @@ class Cell(Cell_):
 
         # Run in Graph mode.
         if os.getenv("MS_JIT") != '0' and context._get_mode() == context.GRAPH_MODE:
-            self._check_construct_args(*args, **kwargs)
+            self._check_construct_args(*args)
             if self._hook_fn_registered():
                 logger.warning(f"For 'Cell', it's not support hook function in graph mode. If you want to use hook "
                                f"function, please use context.set_context to set pynative mode.")
-            out = self.compile_and_run(*args)
+            out = self.compile_and_run(*args, **kwargs)
             return out
 
         # Run in PyNative mode.
@@ -919,24 +921,25 @@ class Cell(Cell_):
 
         return self._dynamic_shape_inputs
 
-    def compile(self, *inputs):
+    def compile(self, *args, **kwargs):
         """
         Compile Cell as a computation graph, the input must be consistent with the input defined in construct.
 
         Args:
-            inputs (tuple): Inputs of the Cell object.
+            args (tuple): Args of the Cell object.
+            kwargs (dict): Kwargs of the Cell object.
         """
         if self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None:
-            _cell_graph_executor.compile(self, *inputs, phase=self.phase,
-                                         jit_config_dict=self._jit_config_dict)
+            _cell_graph_executor.compile(self, phase=self.phase,
+                                         jit_config_dict=self._jit_config_dict, *args, **kwargs)
         else:
-            self._check_compile_dynamic_shape(*inputs)
+            self._check_compile_dynamic_shape(*args)
             self.saved_dynamic_shape = self._dynamic_shape_inputs
             _cell_graph_executor.compile(self, *self._dynamic_shape_inputs, phase=self.phase,
-                                         jit_config_dict=self._jit_config_dict)
+                                         jit_config_dict=self._jit_config_dict, **kwargs)
             logger.debug("Compiled Graph with dynamic shape")
 
-    def compile_and_run(self, *inputs):
+    def compile_and_run(self, *args, **kwargs):
         """
         Compile and run Cell, the input must be consistent with the input defined in construct.
 
@@ -944,15 +947,16 @@ class Cell(Cell_):
             It is not recommended to call directly.
 
         Args:
-            inputs (tuple): Inputs of the Cell object.
+            args (tuple): Args of the Cell object.
+            kwargs (dict): Kwargs of the Cell object.
 
         Returns:
             Object, the result of executing.
         """
-        self.compile(*inputs)
+        self.compile(*args, **kwargs)
 
-        new_inputs = _get_args_for_run(self, inputs)
-        return _cell_graph_executor(self, *new_inputs, phase=self.phase)
+        new_args = _get_args_for_run(self, args, kwargs)
+        return _cell_graph_executor(self, *new_args, phase=self.phase)
 
     def auto_parallel_compile_and_run(self):
         """
@@ -1047,7 +1051,7 @@ class Cell(Cell_):
                             f"but got type {type(child_cell)}.")
         self._cells[child_name] = child_cell
 
-    def construct(self, *inputs, **kwargs):
+    def construct(self, *args, **kwargs):
         """
         Defines the computation to be performed. This method must be overridden by all subclasses.
 
@@ -1055,7 +1059,7 @@ class Cell(Cell_):
             It is not supported currently that inputs contain both tuple and non-tuple types at same time.
 
         Args:
-            inputs (tuple): Tuple of variable parameters.
+            args (tuple): Tuple of variable parameters.
             kwargs (dict): Dictionary of variable keyword parameters.
 
         Returns:
@@ -2304,13 +2308,13 @@ class GraphCell(Cell):
     def construct(self, *inputs):
         return self.graph(*inputs)
 
-    def __call__(self, *inputs):
+    def __call__(self, *args, **kwargs):
         self.phase = "graph_load_from_mindir"
         self._add_attr("graph_load_from_mindir", self.graph)
         if not self.obf_random_seed:
-            return self.compile_and_run(*inputs)
+            return self.compile_and_run(*args, **kwargs)
         append_input = Tensor((numpy.ones((1, 1)) * self._branch_control_input).astype(numpy.int32))
-        return self.compile_and_run(*inputs, append_input)
+        return self.compile_and_run(*args, append_input, **kwargs)
 
 
 def _check_param_list_tuple(value):

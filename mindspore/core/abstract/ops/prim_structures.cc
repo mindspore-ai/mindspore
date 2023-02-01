@@ -209,10 +209,11 @@ AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitiveP
     return *key_value == *item.first->BuildValue();
   });
   if (it == dict_elems.end()) {
-    // For dict[key], if key is not exist, will raise a KeyError exception.
+    // For dict[key], if key is not exist, will raise a ValueError exception.
     // For dict.get('key', default=None), if key is not exist, will return the default value during dict_get.
-    MS_EXCEPTION(KeyError) << "The key " << key_value->ToString()
-                           << " does not exist in the dict:" << args_spec_list[0]->BuildValue()->ToString();
+    // Python KeyError will print escape character. So use ValueError instead of KeyError here.
+    MS_EXCEPTION(ValueError) << "The key " << key_value->ToString()
+                             << " does not exist in the dict:" << args_spec_list[0]->BuildValue()->ToString();
   }
   return it->second;
 }

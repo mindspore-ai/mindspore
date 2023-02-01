@@ -38,7 +38,7 @@ std::string Keyword::ToString() const {
     MS_EXCEPTION_IF_NULL(value_);
     buffer << "Keyword[";
     buffer << "key : " << key_;
-    buffer << "value : " << value_->ToString();
+    buffer << ", value : " << value_->ToString();
     buffer << "]";
   }
   return buffer.str();

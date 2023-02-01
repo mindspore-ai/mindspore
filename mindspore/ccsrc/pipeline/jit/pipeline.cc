@@ -76,6 +76,7 @@
 #include "include/backend/data_queue/data_queue_mgr.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#include "abstract/abstract_value.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/constants.h"
@@ -403,25 +404,38 @@ void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
   }
 }
 
-py::object GraphExecutorPy::GenerateArgumentsKey(const py::object &obj, const py::tuple &args,
+py::object GraphExecutorPy::GenerateArgumentsKey(const py::object &obj, const py::tuple &args, const py::dict &kwargs,
                                                  bool enable_tuple_broaden) {
   MS_LOG(DEBUG) << "GenerateArgumentsKey args size: " << args.size()
                 << ", enable_tuple_broaden: " << enable_tuple_broaden;
 
   abstract::AbstractBasePtrList args_abs;
-  cur_convert_input_.clear();
-  std::size_t size = args.size();
-  for (std::size_t i = 0; i < size; i++) {
+  ClearCurConvertInput();
+  for (std::size_t i = 0; i < args.size(); i++) {
     ValuePtr converted = nullptr;
     if (!parse::ConvertData(args[i], &converted)) {
-      MS_EXCEPTION(TypeError) << "parse::ConvertData for " << i << "th argument failed, the argument type is "
-                              << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.";
+      MS_LOG(EXCEPTION) << "parse::ConvertData for " << i << "th argument failed, the argument type is "
+                        << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.";
     }
     AbstractBasePtr abs = ArgsToAbstract(args[i], converted, enable_tuple_broaden);
     (void)args_abs.emplace_back(abs);
     // The 'converted' maybe a Parameter, we need connect it to the Parameter of func graph,
     // so we keep all inputs for subsequent procedure.
     (void)cur_convert_input_.emplace(args[i].ptr(), std::make_pair(converted, abs));
+  }
+  for (const auto &item : kwargs) {
+    ValuePtr key = nullptr;
+    ValuePtr value = nullptr;
+    bool success = parse::ConvertData(py::cast<py::object>(item.first), &key) &&
+                   parse::ConvertData(py::cast<py::object>(item.second), &value);
+    if (!success) {
+      MS_LOG(EXCEPTION) << "parse::ConvertData for argument (" << py::str(item.first) << ": " << py::str(item.second)
+                        << ") failed.";
+    }
+    AbstractBasePtr value_abs = ArgsToAbstract(py::cast<py::object>(item.second), value, enable_tuple_broaden);
+    auto keyword_arg_abs = std::make_shared<abstract::AbstractKeywordArg>(GetValue<std::string>(key), value_abs);
+    (void)args_abs.emplace_back(keyword_arg_abs);
+    (void)cur_convert_input_.emplace(item.first.ptr(), std::make_pair(value, keyword_arg_abs));
   }
 
   // If cache matched no need CheckArgsValid
@@ -867,8 +881,8 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   MS_LOG(INFO) << "Clean compile resource end";
 }
 
-bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj,
-                                   bool use_vm) {
+bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple &args, const py::dict &kwargs,
+                                   const py::object &phase_obj, bool use_vm) {
   // Check if the phase is valid.
   if ((!py::isinstance<py::str>(phase_obj))) {
     MS_LOG(ERROR) << "The `phase` must be string.";
@@ -887,7 +901,8 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   phase_ = phase;
   auto obj_desc = GetObjDesc(source_obj);
   MS_LOG(INFO) << "Start compiling, phase: " << phase;
-  MS_LOG(DEBUG) << "source: {" << py::str(source_obj) << "}\nargs: " << py::str(const_cast<py::tuple &>(args));
+  MS_LOG(DEBUG) << "source: {" << py::str(source_obj) << "}\nargs: " << py::str(const_cast<py::tuple &>(args))
+                << "\nkwargs: " << py::str(const_cast<py::dict &>(kwargs));
   EventMessage::PrintCompileStartMsg(phase, obj_desc);
 
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
@@ -914,42 +929,15 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   // Get the parameters items and add the value to args_abs.
   abstract::AbstractBasePtrList args_abs;
   std::vector<ValuePtr> arguments;
-  std::size_t size = args.size();
   MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
   bool is_parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kSemiAutoParallel ||
                           parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kAutoParallel;
   bool is_auto_parallel = is_parallel_mode && !py::hasattr(source_obj, parallel::kSkipAutoParallelCompile) &&
                           !py::hasattr(source_obj, parallel::kKeepInputUnchanged);
-  for (std::size_t i = 0; i < size; i++) {
-    ValuePtr converted = nullptr;
-    // In some parallel mode need full_tensor which cause the args of GenerateArgumentsKey not same to compile,
-    // So can't use cur_convert_input_ directly.
-    auto iter = cur_convert_input_.find(args[i].ptr());
-    if (iter != cur_convert_input_.end()) {
-      (void)arguments.emplace_back(iter->second.first);
-      if (is_auto_parallel) {
-        auto abs_item = iter->second.second->Clone();
-        (void)parallel::ExtendInputArgsAbstractShape(abs_item, i);
-        (void)args_abs.emplace_back(abs_item);
-        continue;
-      }
-      (void)args_abs.emplace_back(iter->second.second);
-      continue;
-    }
-    bool succ = parse::ConvertData(args[i], &converted);
-    if (!succ) {
-      MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(args[i]);
-    }
-    (void)arguments.emplace_back(converted);
-    auto args_abstract_item = ArgsToAbstract(args[i], converted, enable_tuple_broaden_);
-    if (is_auto_parallel) {
-      (void)parallel::ExtendInputArgsAbstractShape(args_abstract_item, i);
-    }
-    (void)args_abs.emplace_back(args_abstract_item);
-  }
+  ConvertArgs(args, kwargs, is_auto_parallel, &args_abs, &arguments);
   resource->set_arguments(arguments);
   resource->set_args_abs(args_abs);
-  executor_info->arg_list_size = size;
+  executor_info->arg_list_size = args.size() + kwargs.size();
   executor_info->resource = resource;
   info_[phase] = executor_info;
   pip->Run();
@@ -967,6 +955,59 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   PhaseManager::GetInstance().ClearPhase();
   MS_LOG(INFO) << "Finish compiling.";
   return true;
+}
+
+void GraphExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs, bool is_auto_parallel,
+                                  abstract::AbstractBasePtrList *args_abs, std::vector<ValuePtr> *arguments) {
+  MS_EXCEPTION_IF_NULL(args_abs);
+  MS_EXCEPTION_IF_NULL(arguments);
+  for (std::size_t i = 0; i < args.size(); i++) {
+    // In some parallel mode need full_tensor which cause the args of GenerateArgumentsKey not same to compile,
+    // So can't use cur_convert_input_ directly.
+    auto iter = cur_convert_input_.find(args[i].ptr());
+    if (iter != cur_convert_input_.end()) {
+      (void)arguments->emplace_back(iter->second.first);
+      if (is_auto_parallel) {
+        auto abs_item = iter->second.second->Clone();
+        (void)parallel::ExtendInputArgsAbstractShape(abs_item, i);
+        (void)args_abs->emplace_back(abs_item);
+        continue;
+      }
+      (void)args_abs->emplace_back(iter->second.second);
+      continue;
+    }
+    ValuePtr converted = nullptr;
+    bool success = parse::ConvertData(args[i], &converted);
+    if (!success) {
+      MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(args[i]);
+    }
+    (void)arguments->emplace_back(converted);
+    auto args_abstract_item = ArgsToAbstract(args[i], converted, enable_tuple_broaden_);
+    if (is_auto_parallel) {
+      (void)parallel::ExtendInputArgsAbstractShape(args_abstract_item, i);
+    }
+    (void)args_abs->emplace_back(args_abstract_item);
+  }
+  for (const auto &item : kwargs) {
+    auto iter = cur_convert_input_.find(item.first.ptr());
+    if (iter != cur_convert_input_.end()) {
+      (void)arguments->emplace_back(iter->second.first);
+      (void)args_abs->emplace_back(iter->second.second);
+      continue;
+    }
+    ValuePtr key = nullptr;
+    ValuePtr value = nullptr;
+    bool success = parse::ConvertData(py::cast<py::object>(item.first), &key) &&
+                   parse::ConvertData(py::cast<py::object>(item.second), &value);
+    if (!success) {
+      MS_LOG(EXCEPTION) << "Fail to convert the argument (" << py::str(item.first) << ": " << py::str(item.second)
+                        << ").";
+    }
+    AbstractBasePtr value_abs = ArgsToAbstract(py::cast<py::object>(item.second), value, enable_tuple_broaden_);
+    auto keyword_arg_abs = std::make_shared<abstract::AbstractKeywordArg>(GetValue<std::string>(key), value_abs);
+    (void)arguments->emplace_back(value);
+    (void)args_abs->emplace_back(keyword_arg_abs);
+  }
 }
 
 std::vector<ActionItem> GraphExecutorPy::FilterActions(const std::vector<ActionItem> &actions,
@@ -1002,12 +1043,12 @@ void GraphExecutorPy::ReleaseResource(const py::object &phase) {
   }
 }
 
-bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase,
-                              bool use_vm) {
+bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &args, const py::dict &kwargs,
+                              const py::object &phase, bool use_vm) {
   bool ret_value = false;
   try {
     ProcessStatus::GetInstance().RecordStart("CompileInner");
-    ret_value = CompileInner(source_obj, args, phase, use_vm);
+    ret_value = CompileInner(source_obj, args, kwargs, phase, use_vm);
     ProcessStatus::GetInstance().RecordEnd();
     ProcessStatus::GetInstance().Print();
   } catch (const py::error_already_set &ex) {
@@ -1277,9 +1318,8 @@ bool Pipeline::NeedCreateBackend() {
 
 void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *const arg_list) {
   MS_EXCEPTION_IF_NULL(arg_list);
-  std::size_t size = args.size();
   bool arg_list_inited = !arg_list->empty();
-  for (std::size_t i = 0; i < size; i++) {
+  for (std::size_t i = 0; i < args.size(); i++) {
     py::object arg = args[i];
     ValuePtr converted = nullptr;
     bool succ = parse::ConvertData(arg, &converted);

@@ -303,7 +303,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
   void GenerateKwParams(const FuncGraphPtr &specialized_graph,
-                        const std::vector<abstract::AbstractKeywordArgPtr> &kwarg_list,
+                        const std::vector<abstract::AbstractKeywordArgPtr> &kwarg_list, int pos_args_input_count,
                         std::vector<AnfNodePtr> *specialized_parameter_list,
                         mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 

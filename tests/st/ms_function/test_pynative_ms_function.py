@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ from mindspore.nn.optim import Momentum
 from mindspore.common.api import jit
 from mindspore.common import Parameter, ParameterTuple
 import mindspore.context as context
+
 context.set_context(mode=context.PYNATIVE_MODE)
+
 
 @jit
 def ConvBnReLU(x):
@@ -35,6 +37,7 @@ def ConvBnReLU(x):
     x = relu(x)
 
     return x
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -262,6 +265,7 @@ def test_pynative_ms_function():
     assert np.allclose(out_a[0][0].asnumpy(), out_b[0][0].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(out_a[1][0].asnumpy(), out_b[1][0].asnumpy(), 0.0001, 0.0001)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
@@ -289,6 +293,7 @@ def test_pynative_ms_function_mix_execute():
     b = Tensor(2)
     output = net(a, b)
     assert output == 8
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -323,6 +328,7 @@ def test_pynative_ms_function_empty_graph():
     net = Net(Tensor(5, ms.float32), Tensor(10, ms.float32))
     output = net()
     assert output.asnumpy() == 10
+
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -362,6 +368,7 @@ def test_pynative_ms_function_control_flow_if_break():
     z = Tensor(np.ones([4, 4, 4]), ms.float32)
     output = net(x, y, z)
     assert (output.asnumpy() == z.asnumpy() * 4).all()
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -409,7 +416,6 @@ def test_pynative_ms_function_with_tuple_inputs():
             for grad in grads:
                 new_grads.append(grad + 1)
             return new_grads
-
 
     x = Tensor(np.ones([2, 2]), dtype=ms.int32)
     y = Tensor(np.ones([2, 2]), dtype=ms.int32)
@@ -480,7 +486,6 @@ def test_pynative_ms_function_with_kwargs_inputs():
     def foo(x, **kwargs):
         return x + kwargs.get('y')
 
-    with pytest.raises(ValueError):
-        x = Tensor(3, dtype=ms.int32)
-        data = {"y": 1}
-        foo(x, **data)
+    x = Tensor(3, dtype=ms.int32)
+    data = {"y": 1}
+    assert foo(x, **data).asnumpy() == [4]

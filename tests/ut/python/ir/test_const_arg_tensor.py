@@ -83,20 +83,20 @@ def test_ms_function_tensor_compile_phase1():
     ms_create_time = int(time.time() * 1e9)
     _ms_function_executor = _MindsporeFunctionExecutor(fn, ms_create_time)
     # The ms_function makes the tensor inputs mutable by default
-    phase1 = _ms_function_executor.compile((x, y), "fn")
-    phase2 = _ms_function_executor.compile((p, q), "fn")
+    phase1 = _ms_function_executor.compile("fn", x, y)
+    phase2 = _ms_function_executor.compile("fn", p, q)
     assert phase1 != phase2
     # mutable api
-    phase1 = _ms_function_executor.compile((mutable(x), mutable(y)), "fn")
-    phase2 = _ms_function_executor.compile((mutable(p), mutable(q)), "fn")
+    phase1 = _ms_function_executor.compile("fn", mutable(x), mutable(y))
+    phase2 = _ms_function_executor.compile("fn", mutable(p), mutable(q))
     assert phase1 == phase2
     # set_mutable api of Tensor
     x.set_const_arg(False)
     y.set_const_arg(False)
     p.set_const_arg(False)
     q.set_const_arg(False)
-    phase1 = _ms_function_executor.compile((x, y), "fn")
-    phase2 = _ms_function_executor.compile((p, q), "fn")
+    phase1 = _ms_function_executor.compile("fn", x, y)
+    phase2 = _ms_function_executor.compile("fn", p, q)
     assert phase1 == phase2
 
 
@@ -157,20 +157,20 @@ def test_ms_function_tensor_compile_phase2():
     q = Tensor([[0.01, 3.0, 1.1], [1.0, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
     ms_create_time = int(time.time() * 1e9)
     _ms_function_executor = _MindsporeFunctionExecutor(fn, ms_create_time)
-    phase1 = _ms_function_executor.compile((x, y), "fn")
-    phase2 = _ms_function_executor.compile((p, q), "fn")
+    phase1 = _ms_function_executor.compile("fn", x, y)
+    phase2 = _ms_function_executor.compile("fn", p, q)
     assert phase1 == phase2
     # Set const arg.
     x.set_const_arg()
     y.set_const_arg()
     p.set_const_arg()
     q.set_const_arg()
-    phase1 = _ms_function_executor.compile((x, y), "fn")
-    phase2 = _ms_function_executor.compile((p, q), "fn")
+    phase1 = _ms_function_executor.compile("fn", x, y)
+    phase2 = _ms_function_executor.compile("fn", p, q)
     assert phase1 != phase2
     # mutable api
-    phase1 = _ms_function_executor.compile((mutable(x), mutable(y)), "fn")
-    phase2 = _ms_function_executor.compile((mutable(p), mutable(q)), "fn")
+    phase1 = _ms_function_executor.compile("fn", mutable(x), mutable(y))
+    phase2 = _ms_function_executor.compile("fn", mutable(p), mutable(q))
     assert phase1 == phase2
 
 
