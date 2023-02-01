@@ -25,7 +25,8 @@ namespace lite {
 PrimitiveCPtr TFRaggedRangeParser::Parse(const tensorflow::NodeDef &tf_op,
                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                          std::vector<std::string> *inputs, int *output_size) {
-  *output_size = 2;
+  constexpr int kTFRaggedRangeOutputSize = 2;
+  *output_size = kTFRaggedRangeOutputSize;
   for (int i = 0; i < 3; i++) {
     if (AddOpInput(tf_op, i, inputs) != RET_OK) {
       MS_LOG(ERROR) << "add op input " << i << " failed!";
