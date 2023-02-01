@@ -65,6 +65,12 @@ size_t GetOutputTensorNumForTuple(const CNodePtr &make_tuple) {
         output_num += GetOutputTensorNumForTuple(cnode);
       } else if (input_i->isa<Parameter>()) {
         output_num += 1;
+      } else if (input_i->isa<ValueNode>()) {
+        auto v = input_i->cast<ValueNodePtr>();
+        MS_EXCEPTION_IF_NULL(v->value());
+        if (v->value()->isa<tensor::Tensor>()) {
+          output_num += 1;
+        }
       }
     }
   } else {
