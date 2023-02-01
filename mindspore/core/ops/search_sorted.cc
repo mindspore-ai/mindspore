@@ -40,6 +40,12 @@ abstract::ShapePtr SearchSortedInferShape(const PrimitivePtr &primitive,
   ShapeVector values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
   ShapeVector sequence_shape_c = sequence_shape;
   ShapeVector values_shape_c = values_shape;
+  if (sequence_shape_c.empty() || values_shape_c.empty()) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', empty tensor is not permitted in 'sorted_sequence' inputs. "
+                             << "The shape of 'sorted_sequence': " << sequence_shape_ptr->ToString()
+                             << " and shape of 'values': " << values_shape_ptr->ToString() << ".";
+  }
   sequence_shape_c.pop_back();
   values_shape_c.pop_back();
   if (!(IsDynamic(sequence_shape) || IsDynamic(values_shape)) && sequence_shape.size() != 1 &&
