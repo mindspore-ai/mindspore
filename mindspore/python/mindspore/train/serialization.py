@@ -221,6 +221,10 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
                     if value[0] == "mapparameter":
                         _write_mapparameter(name, value, f)
                         continue
+                    if isinstance(value[2], Tensor):
+                        _write_hugeparameter(name, value, f)
+                        continue
+
                     data_size = value[2].nbytes / 1024
                     if data_size > SLICE_SIZE:
                         slice_count = math.ceil(data_size / SLICE_SIZE)
@@ -270,6 +274,27 @@ def _write_mapparameter(name, value, f):
         tensor.tensor_type = v[1]
         tensor.tensor_content = v[2].tobytes()
         f.write(checkpoint_list.SerializeToString())
+
+
+def _write_hugeparameter(name, value, f):
+    """Write huge parameter into protobuf file."""
+    slice_num = value[2].slice_num
+    offset = 0
+    max_size = value[0][0]
+    for param_slice in range(slice_num):
+        checkpoint_list = Checkpoint()
+        param_value = checkpoint_list.value.add()
+        param_value.tag = name
+        param_tensor = param_value.tensor
+        param_tensor.dims.extend(value[0])
+        param_tensor.tensor_type = value[1]
+        param_key = value[3]
+        numpy_data = value[2].asnumpy_of_slice_persistent_data(param_key, param_slice)
+        if offset + numpy_data.shape[0] > max_size:
+            numpy_data = numpy_data[:max_size - offset]
+        param_tensor.tensor_content = numpy_data.tobytes()
+        f.write(checkpoint_list.SerializeToString())
+        offset += numpy_data.shape[0]
 
 
 def _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name):
@@ -348,7 +373,15 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                     param_list.append(each_param)
                 continue
 
-            param_data = Tensor(value.data.asnumpy())
+            if value.data.is_persistent_data():
+                # list save persistent_data: [Tensor, shape, type, param.key]
+                param_data = ["persistent_data"]
+                param_data.append(value.data)
+                param_data.append(value.param_info.origin_shape)
+                param_data.append(str(value.dtype))
+                param_data.append(value.key)
+            else:
+                param_data = Tensor(value.data.asnumpy())
 
             # in automatic model parallel scenario, some parameters were split to all the devices,
             # which should be combined before saving
@@ -367,13 +400,17 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             append_info_list.append({"name": k_name, "data": value})
             save_obj.extend(append_info_list)
 
+    # data_dict format as {"key1": [shape, type, data], "key2": [shape, type, data]}
     data_list = OrderedDict()
     with _ckpt_mutex:
         for param in save_obj:
             key = param["name"]
             data_list[key] = []
             if isinstance(param["data"], list):
-                _save_mapparameter(data_list, param)
+                if param["data"][0] == "persistent_data":
+                    _save_persistent_data(data_list, key, param)
+                else:
+                    _save_mapparameter(data_list, param)
                 continue
             if isinstance(param["data"], str):
                 data_list[key].append([0])
@@ -419,6 +456,18 @@ def _save_mapparameter(data_list, param):
         data = value.asnumpy().reshape(-1)
         tmp_list.append(data)
         data_list[param["name"]].append(tmp_list)
+
+
+def _save_persistent_data(data_list, key, param):
+    """Save persistent data into save_obj."""
+    dims = []
+    # persistent_data shape can not be ()
+    for dim in param['data'][2]:
+        dims.append(dim)
+    data_list[key].append(dims)
+    data_list[key].append(param['data'][3])
+    data_list[key].append(param['data'][1])
+    data_list[key].append(param['data'][4])
 
 
 def _check_append_dict(append_dict):
