@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 
 import os
+import json
 import numpy as np
 import mindspore as ms
 from mindspore.parallel._tensor import _get_tensor_strategy, _construct_from_to_tensor_layout, \
@@ -81,7 +82,7 @@ def _convert_to_layout(param_name, tensor_layout):
     return strategy
 
 
-def _load_strategy_file(strategy_filename):
+def _check_strategy_file(strategy_filename):
     """load parallel strategy file"""
     if not isinstance(strategy_filename, str):
         raise TypeError(f"For 'build_searched_strategy', the argument 'strategy_filename' should be string, "
@@ -94,18 +95,25 @@ def _load_strategy_file(strategy_filename):
     if os.path.getsize(strategy_filename) == 0:
         raise ValueError(f"For 'build_searched_strategy', the strategy file {strategy_filename} should not "
                          f"be empty. Please check whether the 'strategy_filename' is correct.")
-    parallel_strategy_map = ms.train.node_strategy_pb2.ParallelStrategyMap()
 
+
+def _load_protobuf_strategy(strategy_filename):
+    """load strategy from protobuf file"""
+    parallel_strategy_map = ms.train.node_strategy_pb2.ParallelStrategyMap()
     with open(strategy_filename, 'rb') as f:
         pb_content = f.read()
-    parallel_strategy_map.ParseFromString(pb_content)
+    try:
+        parallel_strategy_map.ParseFromString(pb_content)
+    except BaseException as e:
+        raise TypeError("The strategy file type should be one of json or protobuf. "
+                        "When the file name extension is not '.json', "
+                        "the file is considered as a protobuf file.") from e
     return parallel_strategy_map
 
 
-def _build_searched_strategy(strategy_filename):
-    """build searched strategy"""
-    parallel_strategy_map = _load_strategy_file(strategy_filename)
-
+def _build_protobuf_strategy(strategy_filename):
+    """build strategy from protobuf file"""
+    parallel_strategy_map = _load_protobuf_strategy(strategy_filename)
     layout_items = parallel_strategy_map.parallel_layout_item
     if not layout_items:
         raise ValueError(f"For 'build_searched_strategy', the strategy file {strategy_filename} has no sliced "
@@ -116,8 +124,92 @@ def _build_searched_strategy(strategy_filename):
         parameter_name = layout_item.param_name
         layout = layout_item.parallel_layouts
         strategy[parameter_name] = layout
-
     return strategy
+
+
+def _build_json_strategy(strategy_filename):
+    """build strategy from json file"""
+    with open(strategy_filename, 'r') as f:
+        json_content = json.load(f)
+    layout_items = json_content.get("parallel_layout_item")
+    strategy = {}
+    for parameter_name, layout_item in layout_items.items():
+        layout = ms.train.node_strategy_pb2.ParallelLayouts()
+        layout.field = layout_item.get("field")
+        layout.opt_weight_shard_size = layout_item.get("opt_weight_shard_size")
+        layout.opt_weight_shard_step = layout_item.get("opt_weight_shard_step")
+        dev_matrix = layout.dev_matrix.add()
+        for item in layout_item.get("dev_matrix"):
+            dev_matrix.dim.append(item)
+        tensor_map = layout.tensor_map.add()
+        for item in layout_item.get("tensor_map"):
+            tensor_map.dim.append(item)
+        param_split_shape = layout.param_split_shape.add()
+        if "param_split_shape" in layout_item:
+            for item in layout_item.get("param_split_shape"):
+                param_split_shape.dim.append(item)
+        indices_offset = layout.indices_offset.add()
+        if "indices_offset" in layout_item:
+            for item in layout_item.get("indices_offset"):
+                indices_offset.dim.append(item)
+        strategy[parameter_name] = layout
+    return strategy
+
+
+def _build_searched_strategy(strategy_filename):
+    """build searched strategy"""
+    _check_strategy_file(strategy_filename)
+    if strategy_filename[-5:] != ".json":
+        return _build_protobuf_strategy(strategy_filename)
+    return _build_json_strategy(strategy_filename)
+
+
+def _merge_protobuf_strategy(src_strategy_files, dst_strategy_file):
+    """merge protobuf strategy"""
+    dst_parallel_strategy_map = ms.train.node_strategy_pb2.ParallelStrategyMap()
+    merged_stage = []
+    for src_strategy_file in src_strategy_files:
+        src_parallel_strategy_map = _load_protobuf_strategy(src_strategy_file)
+        strategy_items = src_parallel_strategy_map.parallel_strategy_item
+        layout_items = src_parallel_strategy_map.parallel_layout_item
+        if not strategy_items or not layout_items:
+            raise ValueError("The strategy file {} is empty".format(src_strategy_file))
+        pipeline_stage = strategy_items[0].parallel_strategys.stage
+        if pipeline_stage in merged_stage:
+            continue
+        for layout_item in layout_items:
+            layout_item.param_name = "-".join([str(pipeline_stage), layout_item.param_name])
+        dst_parallel_strategy_map.parallel_strategy_item.extend(strategy_items)
+        dst_parallel_strategy_map.parallel_layout_item.extend(layout_items)
+        merged_stage.append(pipeline_stage)
+    dst_parallel_strategy_map.current_stage = 1
+    with open(dst_strategy_file, "wb") as f:
+        f.write(dst_parallel_strategy_map.SerializeToString())
+
+
+def _merge_json_strategy(src_strategy_files, dst_strategy_file):
+    """merge protobuf strategy"""
+    dst_parallel_strategy_map = {"current_stage": 1, "parallel_strategy_item": {}, "parallel_layout_item": {}}
+    merged_stage = []
+    for src_strategy_file in src_strategy_files:
+        with open(src_strategy_file, 'r') as f:
+            json_content = json.load(f)
+        layout_items = json_content.get("parallel_layout_item")
+        strategy_items = json_content.get("parallel_strategy_item")
+        if not strategy_items or not layout_items:
+            raise ValueError("The strategy file {} is empty".format(src_strategy_file))
+        pipeline_stage = strategy_items.get(list(strategy_items.keys())[0]).get('stage')
+        if pipeline_stage in merged_stage:
+            continue
+        for param_name, layout_item in layout_items.items():
+            new_layout_item = {}
+            new_param_name = "-".join([str(pipeline_stage), param_name])
+            new_layout_item[new_param_name] = layout_item
+            dst_parallel_strategy_map.get("parallel_layout_item").update(new_layout_item)
+        dst_parallel_strategy_map.get("parallel_strategy_item").update(strategy_items)
+        merged_stage.append(pipeline_stage)
+    with open(dst_strategy_file, "w") as f:
+        json.dump(dst_parallel_strategy_map, f)
 
 
 def _parameter_not_in_local_stage(param_name, origin_strategy_list, strategy_list):

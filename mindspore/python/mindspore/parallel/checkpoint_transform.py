@@ -22,8 +22,9 @@ from collections import defaultdict
 import numpy as np
 import mindspore as ms
 from mindspore.parallel._parallel_serialization import _rank_list_for_transform_parallel_checkpoint, \
-    _transform_parallel_checkpoint, _get_device_num_from_strategy, _make_dir, _load_strategy_file, \
-    _extract_layout_map, _extract_src_dst_layout_map, _parameter_not_in_local_stage, _extract_pipeline_stage_num
+    _transform_parallel_checkpoint, _get_device_num_from_strategy, _make_dir, \
+    _extract_layout_map, _extract_src_dst_layout_map, _parameter_not_in_local_stage, _extract_pipeline_stage_num, \
+    _merge_protobuf_strategy, _merge_json_strategy
 
 
 __all__ = ["merge_pipeline_strategys", "rank_list_for_transform", "transform_checkpoint_by_rank",
@@ -55,26 +56,16 @@ def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
         _make_dir(dst_strategy_dir, "path")
     if not os.path.isdir(src_strategy_dirs):
         raise NotADirectoryError("src_strategy_dirs {} is not a directory.".format(src_strategy_dirs))
-    src_strategy_files = os.path.join(src_strategy_dirs, "*.ckpt")
-    dst_parallel_strategy_map = ms.train.node_strategy_pb2.ParallelStrategyMap()
-    merged_stage = []
-    for src_strategy_file in glob.glob(src_strategy_files):
-        src_parallel_strategy_map = _load_strategy_file(src_strategy_file)
-        strategy_items = src_parallel_strategy_map.parallel_strategy_item
-        layout_items = src_parallel_strategy_map.parallel_layout_item
-        if not strategy_items or not layout_items:
-            raise ValueError("The strategy file {} is empty".format(src_strategy_file))
-        pipeline_stage = strategy_items[0].parallel_strategys.stage
-        if pipeline_stage in merged_stage:
-            continue
-        for layout_item in layout_items:
-            layout_item.param_name = "-".join([str(pipeline_stage), layout_item.param_name])
-        dst_parallel_strategy_map.parallel_strategy_item.extend(strategy_items)
-        dst_parallel_strategy_map.parallel_layout_item.extend(layout_items)
-        merged_stage.append(pipeline_stage)
-    dst_parallel_strategy_map.current_stage = 1
-    with open(dst_strategy_file, "wb") as f:
-        f.write(dst_parallel_strategy_map.SerializeToString())
+    src_strategy_files_protobuf = glob.glob(os.path.join(src_strategy_dirs, "*.ckpt"))
+    src_strategy_files_json = glob.glob(os.path.join(src_strategy_dirs, "*.json"))
+    if src_strategy_files_protobuf and src_strategy_files_json:
+        raise ValueError("The strategys format should be all '.ckpt' or all '.json'")
+    is_protobuf = len(src_strategy_files_protobuf) > 0
+    if is_protobuf:
+        _merge_protobuf_strategy(src_strategy_files_protobuf, dst_strategy_file)
+    else:
+        _merge_json_strategy(src_strategy_files_json, dst_strategy_file)
+
 
 
 def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=None):
@@ -106,7 +97,7 @@ def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=N
         >>> rank_list = rank_list_for_transform(rank_id, "./src_strategy.ckpt", "./dst_strategy.ckpt")
         >>> checkpoint_files_map = {}
         >>> for rank in rank_list:
-        >>>     checkpoint_files_map[rank] = "./pangu{}-100_2.ckpt".format(rank)
+        ...     checkpoint_files_map[rank] = "./pangu{}-100_2.ckpt".format(rank)
 
     """
     if not isinstance(rank_id, int):
@@ -167,14 +158,14 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
 
     Examples:
         >>> dst_device_num = 8
-        >>> for rank_id in range(dst_device_num)
-        >>>     rank_list = rank_list_for_transform(rank_id, "./src_strategy.ckpt", "./dst_strategy.ckpt")
-        >>>     checkpoint_files_map = {}
-        >>>     for rank in rank_list:
-        >>>         checkpoint_files_map[rank] = "./origin_checkpoint_rank{}/pangu{}-100_2.ckpt".format(rank)
-        >>>     save_checkpoint_file_name = "./new_checkpoint_rank{}/pangu{}-100_2.ckpt".format(rank_id)
-        >>>     transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_file_name,
-        >>>                                  "./src_strategy.ckpt", "./dst_strategy.ckpt")
+        >>> for rank_id in range(dst_device_num):
+        ...     rank_list = rank_list_for_transform(rank_id, "./src_strategy.ckpt", "./dst_strategy.ckpt")
+        ...     checkpoint_files_map = {}
+        ...     for rank in rank_list:
+        ...         checkpoint_files_map[rank] = "./origin_checkpoint_rank{}/pangu{}-100_2.ckpt".format(rank)
+        ...     save_checkpoint_file_name = "./new_checkpoint_rank{}/pangu{}-100_2.ckpt".format(rank_id)
+        ...     transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_file_name,
+        ...                                  "./src_strategy.ckpt", "./dst_strategy.ckpt")
 
     """
     if not isinstance(checkpoint_files_map, dict):

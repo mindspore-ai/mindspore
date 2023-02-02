@@ -22,20 +22,14 @@
 #include <memory>
 #include <utility>
 #include "utils/hash_map.h"
-#include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/strategy.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
+#include "frontend/parallel/strategy_checkpoint/strategy_checkpoint_info.h"
 
 namespace mindspore {
 namespace parallel {
-using StrategyMap = mindspore::HashMap<std::string, StrategyPtr>;
-using TensorLayoutPtr = std::shared_ptr<TensorLayout>;
-using TensorInfoMap = mindspore::HashMap<std::string, TensorLayoutPtr>;
-using ParameterMap = std::vector<std::pair<std::string, ParameterPtr>>;
-using ManualShapeMap = mindspore::HashMap<std::string, std::vector<std::pair<int64_t, int64_t>>>;
-using GroupInfoMap = std::vector<std::pair<std::string, std::vector<uint32_t>>>;
 class StrategyCheckpoint {
  public:
   StrategyCheckpoint() {
@@ -47,7 +41,8 @@ class StrategyCheckpoint {
 
   Status Load(StrategyMap *strategy_map);
   Status LoadGroupInfo(const std::string &file, GroupInfoMap *group_info_map) const;
-  Status Save(const StrategyMap &strategy_map, const TensorInfoMap &tensor_info_map, ManualShapeMap *manual_shape_map);
+  Status Save(const StrategyMap &strategy_map, const TensorInfoMap &tensor_info_map,
+              const ManualShapeMap &manual_shape_map);
   Status SaveGroupInfo(const GroupInfoMap &group_info_map, const RankList &restore_rank_list);
   bool group_info_save_on() const { return group_info_save_on_; }
 
@@ -65,6 +60,9 @@ class StrategyCheckpoint {
   int64_t current_stage_ = 0;
   std::string group_info_save_file_;
   bool group_info_save_on_ = false;
+  bool load_format_json_ = true;
+  bool save_format_json_ = true;
+  StrategyCheckpointInfo strategy_checkpoint_info_;
 };
 }  // namespace parallel
 }  // namespace mindspore

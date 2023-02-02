@@ -2239,7 +2239,7 @@ static void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const F
     }
     tensor_info_map[cloned_param_name] = cloned_param_layout;
   }
-  if (StrategyCheckpoint::GetInstance().Save(stra_map, tensor_info_map, &manual_shape_map) != SUCCESS) {
+  if (StrategyCheckpoint::GetInstance().Save(stra_map, tensor_info_map, manual_shape_map) != SUCCESS) {
     MS_LOG(EXCEPTION) << "Save strategy checkpoint failed";
   }
 }
