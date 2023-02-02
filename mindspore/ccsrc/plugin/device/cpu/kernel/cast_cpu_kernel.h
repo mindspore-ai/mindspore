@@ -48,6 +48,8 @@ class CastCpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_->RunFunc(inputs, workspace, outputs);
   }
 
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
   TypeId source_dtype_{kTypeUnknown};
   TypeId target_dtype_{kTypeUnknown};

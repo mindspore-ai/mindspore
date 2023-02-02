@@ -597,7 +597,7 @@ bool GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node, KernelType ker
      !common::AnfAlgo::IsGraphKernel(kernel_node));
   std::vector<kernel::KernelAttr> kernel_attrs;
   if (kernel::NativeGpuKernelModFactory::GetInstance().IsRegistered(kernel_name)) {
-    kernel_attrs = kernel::NativeGpuKernelMod::GetGpuSupportedList(kernel_name);
+    kernel_attrs = kernel::NativeGpuKernelModFactory::GetInstance().GetGpuSupportedList(kernel_name);
   } else if (backoff_support_condition) {
     // Kernel that is not supported can try to backed off on CPU and use the CPU kernel attrs to set object type.
     kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(kernel_name);
