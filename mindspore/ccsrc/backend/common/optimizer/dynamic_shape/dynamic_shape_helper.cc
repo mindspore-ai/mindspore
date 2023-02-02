@@ -74,30 +74,6 @@ void InferShapeForNopNode(const AnfNodePtr &input_node) {
   }
 }
 
-bool InferShapeForDefiniteOutputNode(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimShape)) {
-    return false;
-  }
-  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
-  if (input_size != 1) {
-    MS_LOG(EXCEPTION) << "Node only has one input: " << cnode->fullname_with_scope();
-  }
-  auto cur_shape = dynamic_cast<mindspore::abstract::Shape *>(cnode->Shape().get())->shape();
-  if (std::any_of(cur_shape.begin(), cur_shape.end(), [](int64_t x) { return x == kInvalidShape; })) {
-    return false;
-  }
-  std::vector<int64_t> output_shape = {static_cast<int64_t>(cur_shape.size())};
-  mindspore::abstract::BaseShapePtr shape = std::make_shared<mindspore::abstract::Shape>(output_shape);
-
-  // cppcheck-suppress unreadVariable
-  auto lock = AnfUtils::GetAbstractLock(cnode.get());
-  auto abstract = cnode->abstract();
-  MS_EXCEPTION_IF_NULL(abstract);
-  abstract->set_shape(shape);
-  return true;
-}
-
 TypeId GetSequenceType(const abstract::AbstractSequencePtr &seq_abs) {
   auto elems = seq_abs->elements();
   if (!elems[0]->isa<abstract::AbstractScalar>()) {
@@ -265,10 +241,6 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
   MS_EXCEPTION_IF_NULL(depend_tensor_map);
   MS_LOG(DEBUG) << "InferShape start, node:" << cnode->fullname_with_scope();
   std::set<int64_t> depend_list = abstract::GetValueDependArgIndices(cnode);
-  auto ret = InferShapeForDefiniteOutputNode(cnode);
-  if (ret) {
-    return;
-  }
 
   depend_tensor_map->clear();
   auto &inputs = cnode->inputs();
