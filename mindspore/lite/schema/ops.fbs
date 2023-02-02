@@ -231,12 +231,12 @@ union PrimitiveType {
     GroupNormFusion,
     Log1p,
     TensorScatterAdd,
-    ScatterElements,
-    Triu,
-    Tril,
     SparseFillEmptyRows,
     SparseReshape,
     SparseSegmentSum,
+    ScatterElements,
+    Triu,
+    Tril,
 }
 
 table Abs {
@@ -1304,6 +1304,15 @@ table Log1p {
 table TensorScatterAdd {
 }
 
+table SparseFillEmptyRows {
+}
+
+table SparseReshape {
+}
+
+table SparseSegmentSum {
+}
+
 table ScatterElements {
     axis: long;
 }
@@ -1312,13 +1321,4 @@ table Triu {
 }
 
 table Tril {
-}
-
-table SparseFillEmptyRows {
-}
-
-table SparseReshape {
-}
-
-table SparseSegmentSum {
 }

@@ -231,12 +231,12 @@ OP_TYPE(GatherD)
 OP_TYPE(GroupNormFusion)
 OP_TYPE(Log1p)
 OP_TYPE(TensorScatterAdd)
-OP_TYPE(ScatterElements)
-OP_TYPE(Triu)
-OP_TYPE(Tril)
 OP_TYPE(SparseFillEmptyRows)
 OP_TYPE(SparseReshape)
 OP_TYPE(SparseSegmentSum)
+OP_TYPE(ScatterElements)
+OP_TYPE(Triu)
+OP_TYPE(Tril)
 OP_TYPE_DEF_END(PrimitiveType)
 
 OP_SCHEMA_DEF(Abs)
@@ -1308,6 +1308,15 @@ OP_SCHEMA_DEF_END(Log1p)
 OP_SCHEMA_DEF(TensorScatterAdd)
 OP_SCHEMA_DEF_END(TensorScatterAdd)
 
+OP_SCHEMA_DEF(SparseFillEmptyRows)
+OP_SCHEMA_DEF_END(SparseFillEmptyRows)
+
+OP_SCHEMA_DEF(SparseReshape)
+OP_SCHEMA_DEF_END(SparseReshape)
+
+OP_SCHEMA_DEF(SparseSegmentSum)
+OP_SCHEMA_DEF_END(SparseSegmentSum)
+
 OP_SCHEMA_DEF(ScatterElements)
 OP_ATTR(axis, long)
 OP_SCHEMA_DEF_END(ScatterElements)
@@ -1317,12 +1326,3 @@ OP_SCHEMA_DEF_END(Triu)
 
 OP_SCHEMA_DEF(Tril)
 OP_SCHEMA_DEF_END(Tril)
-
-OP_SCHEMA_DEF(SparseFillEmptyRows)
-OP_SCHEMA_DEF_END(SparseFillEmptyRows)
-
-OP_SCHEMA_DEF(SparseReshape)
-OP_SCHEMA_DEF_END(SparseReshape)
-
-OP_SCHEMA_DEF(SparseSegmentSum)
-OP_SCHEMA_DEF_END(SparseSegmentSum)

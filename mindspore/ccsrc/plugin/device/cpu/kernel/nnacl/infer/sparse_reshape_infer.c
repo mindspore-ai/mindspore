@@ -24,18 +24,30 @@ int SparseReshapeInferShape(const TensorC *const *inputs, size_t inputs_size, Te
     return check_ret;
   }
 
-  const TensorC *input = inputs[0];
-  TensorC *output0 = outputs[0];
-  TensorC *output1 = outputs[1];
-  SetDataTypeFormat(output0, input);
-  SetDataTypeFormat(output1, input);
+  const TensorC *in_indices_tensor = inputs[0];
+  TensorC *out_indices_tensor = outputs[0];
+  SetDataTypeFormat(out_indices_tensor, in_indices_tensor);
+
+  const TensorC *in_out_shape_tensor = inputs[C2NUM];
+  TensorC *out_shape_tensor = outputs[C1NUM];
+  SetDataTypeFormat(out_shape_tensor, in_out_shape_tensor);
 
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 
-  // return NNACL_OK;
-  return NNACL_INFER_INVALID;
+  SetShapeArray(out_shape_tensor, in_out_shape_tensor->shape_, in_out_shape_tensor->shape_size_);
+
+  int out_indices_shape[MAX_SHAPE_SIZE] = {0};
+  out_indices_shape[0] = in_indices_tensor->shape_[0];
+  size_t out_indices_shape_size = 1;
+
+  for (int i = 0; i < in_out_shape_tensor->shape_size_; ++i) {
+    out_indices_shape[i + 1] = in_out_shape_tensor->shape_[i];
+    out_indices_shape_size++;
+  }
+  SetShapeArray(out_indices_tensor, out_indices_shape, out_indices_shape_size);
+  return NNACL_OK;
 }
 
 REG_INFER(SparseReshape, PrimType_SparseReshape, SparseReshapeInferShape)
