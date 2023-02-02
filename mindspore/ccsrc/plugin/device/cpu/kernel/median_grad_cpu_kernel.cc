@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/median_grad_cpu_kernel.h"
 
+#include <functional>
 #include <algorithm>
 #include <type_traits>
 
@@ -55,7 +56,16 @@ int MedianGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  std::vector<size_t> src_shape;
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(src_shape), LongToSize);
+  size_t input_element_num = std::accumulate(src_shape.begin(), src_shape.end(), size_t(1), std::multiplies<size_t>());
+  is_null_input_ = (input_element_num == 0);
+  if (is_null_input_) {
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', input tensor[0] got 'shapes[" << kIndex0 << "]' is "
+                    << input_element_num;
+    return KRET_OK;
+  }
   input0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
   input1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
   input2_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
@@ -138,6 +148,9 @@ template <typename T1, typename T2>
 bool MedianGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &workspace,
                                           const std::vector<AddressPtr> &outputs) {
+  if (is_null_input_) {
+    return true;
+  }
   if (global_median_ == false) {
     return MedianGradCompute<T1, T2>(inputs, outputs);
   } else {
