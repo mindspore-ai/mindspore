@@ -275,6 +275,9 @@ REG_MINDSPORE_OPERATOR(TensorScatterAdd)
 REG_MINDSPORE_OPERATOR(ScatterElements)
 REG_MINDSPORE_OPERATOR(Triu)
 REG_MINDSPORE_OPERATOR(Tril)
+REG_MINDSPORE_OPERATOR(SparseFillEmptyRows)
+REG_MINDSPORE_OPERATOR(SparseReshape)
+REG_MINDSPORE_OPERATOR(SparseSegmentSum)
 }  // namespace lite
 }  // namespace mindspore
 

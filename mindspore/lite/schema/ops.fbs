@@ -234,6 +234,9 @@ union PrimitiveType {
     ScatterElements,
     Triu,
     Tril,
+    SparseFillEmptyRows,
+    SparseReshape,
+    SparseSegmentSum,
 }
 
 table Abs {
@@ -1309,4 +1312,13 @@ table Triu {
 }
 
 table Tril {
+}
+
+table SparseFillEmptyRows {
+}
+
+table SparseReshape {
+}
+
+table SparseSegmentSum {
 }
