@@ -1113,11 +1113,6 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
     return RET_ERROR;
   }
 
-  if (ResetAbstractTensorToInt64(op_type, input_names, tf_node_map, *anf_node_map) != RET_OK) {
-    MS_LOG(ERROR) << "ResetAbstractTensorToInt64 failed.";
-    return RET_ERROR;
-  }
-
   std::vector<AnfNodePtr> inputs = {value_node};
   std::vector<std::string> input_name_not_found{};
   status = ConvertInputNodes(node_def, input_names, tf_node_map, *anf_node_map, &inputs, &input_name_not_found);
