@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/kernel/math/qr_gpu_kernel.h"
 #include <type_traits>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_public/cusolver.h"
 
 namespace mindspore {
 namespace kernel {
@@ -23,7 +24,6 @@ template <typename R>
 using Complex = mindspore::utils::Complex<R>;
 
 constexpr size_t kNum2 = 2;
-
 bool QrGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                           const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Qr>(base_operator);
@@ -113,64 +113,28 @@ int QrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vect
 
 template <typename T>
 void QrGpuKernelMod::RunQr(T *d_input, T *d_A, T *d_tau, int *dev_info, T *d_output_q, T *d_output_r) {
-  int lwork = 10000;
   const size_t lda = m_;
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(d_A, d_input, sizeof(T) * m_ * n_, cudaMemcpyDeviceToDevice, stream),
     "copy device A result to host failed");
+  int geqrf_work_size = 0;
+  cusolver::geqrf_buffersize<T>(cusolverH_, m_, n_, d_A, lda, &geqrf_work_size);
+  int orgqr_work_size = 0;
+  cusolver::orgqr_buffersize<T>(cusolverH_, m_, p_, p_, d_A, lda, d_tau, &orgqr_work_size);
+  int lwork = geqrf_work_size > orgqr_work_size ? geqrf_work_size : orgqr_work_size;
 
   void *d_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(sizeof(T) * lwork);
   if (d_work == nullptr) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the memory of d_work alloc failed.";
   }
-
   // compute QR factorization
-  if constexpr (std::is_same_v<T, float>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnSgeqrf(cusolverH_, m_, n_, d_A, lda, d_tau, static_cast<T *>(d_work), lwork, dev_info),
-      "cusolver geqrf fail");
-  } else if constexpr (std::is_same_v<T, double>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnDgeqrf(cusolverH_, m_, n_, d_A, lda, d_tau, static_cast<T *>(d_work), lwork, dev_info),
-      "cusolver geqrf fail");
-  } else if constexpr (std::is_same_v<T, Complex<float>>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnCgeqrf(cusolverH_, m_, n_, reinterpret_cast<cuComplex *>(d_A), lda,
-                       reinterpret_cast<cuComplex *>(d_tau), reinterpret_cast<cuComplex *>(d_work), lwork, dev_info),
-      "cusolver geqrf fail");
-  } else if constexpr (std::is_same_v<T, Complex<double>>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnZgeqrf(cusolverH_, m_, n_, reinterpret_cast<cuDoubleComplex *>(d_A), lda,
-                       reinterpret_cast<cuDoubleComplex *>(d_tau), reinterpret_cast<cuDoubleComplex *>(d_work), lwork,
-                       dev_info),
-      "cusolver geqrf fail");
-  }
+  cusolver::geqrf<T>(cusolverH_, m_, n_, d_A, lda, d_tau, static_cast<T *>(d_work), lwork, dev_info);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(d_output_r, d_A, sizeof(T) * m_ * n_, cudaMemcpyDeviceToDevice, stream),
     "Copy to QR factorization device result failed");
-
   // compute Q=H(1)*H(2)*...*H(K)
-  if constexpr (std::is_same_v<T, float>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnSorgqr(cusolverH_, m_, p_, p_, d_A, lda, d_tau, static_cast<T *>(d_work), lwork, dev_info),
-      "cusolver orgqr failed.");
-  } else if constexpr (std::is_same_v<T, double>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnDorgqr(cusolverH_, m_, p_, p_, d_A, lda, d_tau, static_cast<T *>(d_work), lwork, dev_info),
-      "cusolver orgqr failed.");
-  } else if constexpr (std::is_same_v<T, Complex<float>>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnCungqr(cusolverH_, m_, p_, p_, reinterpret_cast<cuComplex *>(d_A), lda,
-                       reinterpret_cast<cuComplex *>(d_tau), reinterpret_cast<cuComplex *>(d_work), lwork, dev_info),
-      "cusolver orgqr failed.");
-  } else if constexpr (std::is_same_v<T, Complex<double>>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnZungqr(cusolverH_, m_, p_, p_, reinterpret_cast<cuDoubleComplex *>(d_A), lda,
-                       reinterpret_cast<cuDoubleComplex *>(d_tau), reinterpret_cast<cuDoubleComplex *>(d_work), lwork,
-                       dev_info),
-      "cusolver orgqr failed.");
-  }
+  cusolver::orgqr<T>(cusolverH_, m_, p_, p_, d_A, lda, d_tau, static_cast<T *>(d_work), lwork, dev_info);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(d_output_q, d_A, sizeof(T) * m_ * p_, cudaMemcpyDeviceToDevice, stream),
     "copy device Q result to host failed");
