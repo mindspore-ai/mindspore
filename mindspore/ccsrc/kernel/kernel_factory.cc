@@ -14,11 +14,23 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/bisheng/bisheng_kernel_factory.h"
+#include "kernel/kernel_factory.h"
 
 namespace mindspore::kernel {
-BiShengKernelFactory &BiShengKernelFactory::GetInstance() {
-  static BiShengKernelFactory instance;
-  return instance;
+FactoryBase *FactoryBase::GetInstance(const std::string &name) {
+  auto iter = Map().find(name);
+  if (iter != Map().end()) {
+    return iter->second.get();
+  }
+  return nullptr;
+}
+
+void FactoryBase::CreateFactory(const std::string &name, std::unique_ptr<FactoryBase> &&factory) {
+  Map().emplace(name, std::move(factory));
+}
+
+std::map<std::string, std::unique_ptr<FactoryBase>> &FactoryBase::Map() {
+  static std::map<std::string, std::unique_ptr<FactoryBase>> map;
+  return map;
 }
 }  // namespace mindspore::kernel

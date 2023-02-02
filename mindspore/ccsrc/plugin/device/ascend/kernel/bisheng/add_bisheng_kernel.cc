@@ -16,7 +16,6 @@
 
 #include "plugin/device/ascend/kernel/bisheng/add_bisheng_kernel.h"
 #include <algorithm>
-#include "plugin/device/ascend/kernel/bisheng/bisheng_kernel_factory.h"
 #include "plugin/device/ascend/kernel/bisheng/bisheng_op_info.h"
 #include "plugin/device/ascend/kernel/bisheng/impl/add.h"
 

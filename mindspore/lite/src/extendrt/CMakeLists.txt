@@ -113,6 +113,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CCSRC_DIR}/runtime/hardware/device_type.cc
         ${CCSRC_DIR}/kernel/kernel_build_info.cc
         ${CCSRC_DIR}/kernel/common_utils.cc
+        ${CCSRC_DIR}/kernel/kernel_factory.cc
         ${CCSRC_DIR}/kernel/kernel.cc
         ${CCSRC_DIR}/kernel/kash/kernel_pack.cc
         ${CCSRC_DIR}/kernel/oplib/oplib.cc

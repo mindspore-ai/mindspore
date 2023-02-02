@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,32 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ASCEND_BISHENG_KERNEL_FACTORY_H
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ASCEND_BISHENG_KERNEL_FACTORY_H
+#ifndef MINDSPORE_CCSRC_KERNEL_KERNEL_FACTORY_H_
+#define MINDSPORE_CCSRC_KERNEL_KERNEL_FACTORY_H_
 
-#include <string>
+#include <algorithm>
 #include <functional>
-#include <vector>
 #include <map>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 #include "include/backend/visible.h"
-#include "plugin/factory/ms_factory.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace kernel {
-class BiShengKernelMod;
-
-class BACKEND_EXPORT BiShengKernelFactory : public Factory<BiShengKernelMod> {
+class BACKEND_EXPORT FactoryBase {
  public:
-  static BiShengKernelFactory &GetInstance();
+  virtual ~FactoryBase() = default;
+
+ protected:
+  static FactoryBase *GetInstance(const std::string &name);
+  static void CreateFactory(const std::string &name, std::unique_ptr<FactoryBase> &&factory);
+
+ private:
+  static std::map<std::string, std::unique_ptr<FactoryBase>> &Map();
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ASCEND_BISHENG_KERNEL_FACTORY_H
+#endif  // MINDSPORE_CCSRC_KERNEL_KERNEL_FACTORY_H_

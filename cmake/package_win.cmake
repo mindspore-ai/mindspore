@@ -199,10 +199,9 @@ if(ENABLE_GPU)
     COMPONENT mindspore
   )
   install(
-    TARGETS mindspore_gpu LIBRARY
+    TARGETS mindspore_gpu
     DESTINATION ${INSTALL_PLUGIN_DIR}
     COMPONENT mindspore
-    NAMELINK_SKIP
   )
 endif()
 
