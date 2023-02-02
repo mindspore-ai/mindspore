@@ -234,6 +234,7 @@ void InitWorkerThread::Run() {
       continue;
     }
     model_worker_->InitModelWorker(model_buf_, size_, worker_config_, predict_task_queue_, create_success_);
+    model_worker_->Run();
     model_worker_ = nullptr;
     is_idle_ = true;
     is_launch_ = false;

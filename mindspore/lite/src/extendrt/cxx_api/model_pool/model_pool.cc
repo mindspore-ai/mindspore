@@ -723,10 +723,13 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
                  << " | worker bind core list: " << model_pool_config[i]->context->GetThreadAffinityCoreList()
                  << " | worker thread num: " << model_pool_config[i]->context->GetThreadNum()
                  << " | inter op parallel num: " << model_pool_config[i]->context->GetInterOpParallelNum();
-    InitWorkerManager::GetInstance()->InitModelWorker(model_worker, graph_buf, size, model_pool_config[i],
-                                                      predict_task_queue_, &create_worker_success);
     if (i == 0) {
+      model_worker->InitModelWorker(graph_buf, size, model_pool_config[i], predict_task_queue_, &create_worker_success);
+      thread_ = std::thread(&ModelWorker::Run, model_worker);
       model_worker->WaitCreateWorkerDone();
+    } else {
+      InitWorkerManager::GetInstance()->InitModelWorker(model_worker, graph_buf, size, model_pool_config[i],
+                                                        predict_task_queue_, &create_worker_success);
     }
     if (all_model_workers_.find(task_queue_id) != all_model_workers_.end()) {
       all_model_workers_[task_queue_id].push_back(model_worker);
@@ -1127,6 +1130,9 @@ ModelPool::~ModelPool() {
         std::this_thread::yield();
       }
     }
+  }
+  if (thread_.joinable()) {
+    thread_.join();
   }
   if (enable_shared_thread_pool_) {
     ParallelThreadPoolManager::GetInstance()->ResetParallelThreadPoolManager(runner_id_);
