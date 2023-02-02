@@ -151,6 +151,7 @@ constexpr char DIVISOR[] = "divisor";
 constexpr char NONE[] = "None";
 constexpr char DEPEND[] = "Depend";
 constexpr char BATCH_PARALLEL[] = "BatchParallel";
+constexpr char STAND_ALONE[] = "StandAlone";
 
 constexpr char ACTIVATION_TYPE[] = "activation_type";
 constexpr char TARGET[] = "primitive_target";

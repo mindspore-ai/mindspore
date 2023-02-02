@@ -1550,18 +1550,23 @@ static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &pr
   }
   bool load_strategy_from_ckpt =
     StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map.find(strategy_key_name) != stra_map.end();
-  if ((!StrategyFound(attrs) && !load_strategy_from_ckpt) && !cnode->HasPrimalAttr(IN_STRATEGY)) {
-    MS_LOG(INFO) << "ExtractInformation: the strategy of node " << cnode->ToString() << " prim " << prim->name()
-                 << " is empty, using batch parallel";
-    in_strategy = GenerateBatchParallelStrategy(op_info, prim);
-  } else if (cnode->HasPrimalAttr(IN_STRATEGY)) {
-    in_strategy = ExtractStrategy(cnode->GetPrimalAttr(IN_STRATEGY));
-    out_strategy = ExtractStrategy(cnode->GetPrimalAttr(OUT_STRATEGY));
-  } else if (StrategyFound(attrs)) {
-    in_strategy = ExtractStrategy(attrs[IN_STRATEGY]);
-    out_strategy = ExtractStrategy(attrs[OUT_STRATEGY]);
+  if (!prim->HasAttr(STAND_ALONE)) {
+    if (((!StrategyFound(attrs) && !load_strategy_from_ckpt) && !cnode->HasPrimalAttr(IN_STRATEGY)) ||
+        prim->HasAttr(BATCH_PARALLEL)) {
+      MS_LOG(INFO) << "ExtractInformation: the strategy of node " << cnode->ToString() << " prim " << prim->name()
+                   << " is empty, using batch parallel";
+      in_strategy = GenerateBatchParallelStrategy(op_info, prim);
+    } else if (cnode->HasPrimalAttr(IN_STRATEGY)) {
+      in_strategy = ExtractStrategy(cnode->GetPrimalAttr(IN_STRATEGY));
+      out_strategy = ExtractStrategy(cnode->GetPrimalAttr(OUT_STRATEGY));
+    } else if (StrategyFound(attrs)) {
+      in_strategy = ExtractStrategy(attrs[IN_STRATEGY]);
+      out_strategy = ExtractStrategy(attrs[OUT_STRATEGY]);
+    } else {
+      in_strategy = stra_map[strategy_key_name];
+    }
   } else {
-    in_strategy = stra_map[strategy_key_name];
+    in_strategy = GenerateStandAloneStrategy(op_info->inputs_shape());
   }
 
   MS_EXCEPTION_IF_NULL(in_strategy);
