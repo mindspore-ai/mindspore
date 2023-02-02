@@ -343,3 +343,7 @@ from .matrix_exp import _matrix_exp_aicpu
 from .pad_v3_grad import _pad_v3_grad_aicpu
 from .pad_v3 import _pad_v3_aicpu
 from .cholesky import _cholesky_aicpu
+from .hsv_to_rgb import _hsv_to_rgb_aicpu
+from .im2col import _im2col_aicpu
+from .lu_solve import _lu_solve_aicpu
+from .relu_grad_v3 import _relu_grad_v3_aicpu

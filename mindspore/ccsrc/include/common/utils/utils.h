@@ -144,6 +144,7 @@ constexpr auto kBatchToSpaceNDOpName = "BatchToSpaceND";
 constexpr auto kBatchToSpaceNDV2OpName = "BatchToSpaceNDV2";
 constexpr auto kBatchToSpaceOpName = "BatchToSpace";
 constexpr auto kBatchToSpaceDOpName = "BatchToSpaceD";
+constexpr auto kBetaincOpName = "Betainc";
 constexpr auto kBiasAddOpName = "BiasAdd";
 constexpr auto kBiasAddGradOpName = "BiasAddGrad";
 constexpr auto kIndexAddOpName = "IndexAdd";
