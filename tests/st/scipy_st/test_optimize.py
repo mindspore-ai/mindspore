@@ -51,7 +51,7 @@ def matyas(np):
     return func
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -72,7 +72,7 @@ def test_bfgs1(dtype, func_x0):
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -93,7 +93,7 @@ def test_bfgs2(dtype, func_x0):
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -114,7 +114,7 @@ def test_bfgs3(dtype, func_x0):
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -135,7 +135,7 @@ def test_bfgs4(dtype, func_x0):
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -156,7 +156,7 @@ def test_bfgs5(dtype, func_x0):
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -373,7 +373,7 @@ def test_line_search_graph(maxiter, func, x, p):
     os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -397,7 +397,7 @@ def test_lbfgs1(dtype, func_x0):
     os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -421,7 +421,7 @@ def test_lbfgs2(dtype, func_x0):
     os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -445,7 +445,7 @@ def test_lbfgs3(dtype, func_x0):
     os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -469,7 +469,7 @@ def test_lbfgs4(dtype, func_x0):
     os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -493,7 +493,7 @@ def test_lbfgs5(dtype, func_x0):
     os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -517,7 +517,7 @@ def test_lbfgs6(dtype, func_x0):
     os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
