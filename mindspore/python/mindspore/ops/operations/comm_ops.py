@@ -117,7 +117,7 @@ class AllReduce(Primitive):
         The tensors must have the same shape and format in all processes of the collection.
 
     Args:
-        op (str): Specifies an operation used for element-wise reductions, like sum, max, and min.
+        op (str): Specifies an operation used for element-wise reductions, like sum, prod, max, and min.
                   On the CPU, only 'sum' is supported. Default: ReduceOp.SUM.
         group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
 
