@@ -4476,7 +4476,7 @@ def hypot(x, other):
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([3., 5., 7.]))
