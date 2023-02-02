@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -130,6 +131,40 @@ def test_op1():
     assert mask1.shape == mask2.shape
     assert np.allclose(output1.asnumpy(), output2.asnumpy())
     assert np.allclose(mask1.asnumpy(), mask2.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_op2():
+    """
+    Feature: test Dropout2D.
+    Description: dropout.
+    Expectation: No exception.
+    """
+    input_np = np.ones((1000, 1000, 20, 5)).astype(np.float32)
+    input_x = Tensor(input_np, mindspore.float32)
+    data_size = 1000 * 1000 * 20 * 5
+
+    dropout = ops.Dropout2D(keep_prob=0.0)
+    output_ms, _ = dropout(input_x)
+    ans = np.sum(np.where(output_ms.asnumpy(), 0, 1))
+    assert ans == data_size
+
+    dropout = ops.Dropout2D(keep_prob=0.2)
+    output_ms, _ = dropout(input_x)
+    ans = np.sum(np.where(output_ms.asnumpy(), 0, 1))
+    assert data_size * 0.75 <= ans <= data_size * 0.85
+
+    dropout = ops.Dropout2D(keep_prob=0.8)
+    output_ms, _ = dropout(input_x)
+    ans = np.sum(np.where(output_ms.asnumpy(), 0, 1))
+    assert data_size * 0.15 <= ans <= data_size * 0.25
+
+    dropout = ops.Dropout2D(keep_prob=1.0)
+    output_ms, _ = dropout(input_x)
+    ans = np.sum(np.where(output_ms.asnumpy(), 0, 1))
+    assert ans == 0
 
 
 if __name__ == '__main__':
