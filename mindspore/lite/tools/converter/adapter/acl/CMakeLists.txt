@@ -18,8 +18,6 @@ file(GLOB ACL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mapper/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer/*.cc
-        ${TOP_DIR}/mindspore/lite/src/extendrt/utils/serialization.cc
-        ${TOP_DIR}/mindspore/lite/src/extendrt/cxx_api/serialization.cc
         )
 
 set(ACL_SRC ${ACL_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/acl_pass.cc)
