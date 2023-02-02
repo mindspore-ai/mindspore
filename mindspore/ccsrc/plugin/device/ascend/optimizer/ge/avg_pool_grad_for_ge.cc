@@ -60,7 +60,7 @@ const AnfNodePtr AvgPoolGradForGE::Process(const FuncGraphPtr &graph, const AnfN
   std::string pad_mode;
   if (pad_mode_type == TypeId::kNumberTypeInt64) {
     auto pad_value = GetValue<int64_t>(pad_mode_value);
-    pad_mode = pad_value != 0 ? "SAME" : "VALID";
+    pad_mode = pad_value == 1 ? "SAME" : "VALID";
   } else {
     pad_mode = GetValue<std::string>(pad_mode_value);
   }
