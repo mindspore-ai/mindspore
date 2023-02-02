@@ -81,7 +81,7 @@ def test_reduce_lr_on_plateau_patience_and_cooldown(mode):
          "lrs": [1.0, 1.0, 0.1, 0.1, 0.1, 0.01]}
     ]
 
-    for case_i, current_case in enumerate(cases):
+    for _, current_case in enumerate(cases):
         cb_params.optimizer = Momentum(net.trainable_params(), learning_rate=1.0, momentum=0.9)
 
         losses, patience, cooldown, lrs_results = current_case["losses"], current_case["patience"], \
@@ -98,7 +98,7 @@ def test_reduce_lr_on_plateau_patience_and_cooldown(mode):
                 callbacklist.on_train_epoch_end(run_context)
                 cur_lr = cb_params.optimizer.learning_rate.asnumpy()
                 lrs.append(copy.deepcopy(cur_lr))
-        assert np.allclose(lrs, lrs_results[case_i], atol=1e-7)
+        assert np.allclose(lrs, lrs_results)
 
 
 @pytest.mark.level1
