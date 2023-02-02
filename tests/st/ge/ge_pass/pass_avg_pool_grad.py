@@ -33,10 +33,21 @@ class AvgPoolNet(nn.Cell):
         return self.avgpool(input_x)
 
 
+class GradNet(nn.Cell):
+    def __init__(self, net):
+        super().__init__()
+        self.net = net
+        self.grad = GradOperation(sens_param=True)
+
+    def construct(self, *inputs):
+        grad_fn = self.grad(self.net)
+        return grad_fn(*inputs)
+
+
 def ge_avg_pool_grad_ksize2_stride2_same():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     net = AvgPoolNet(ksize=2, stride=2, padmode="SAME")
-    grad_net = GradOperation(sens_param=True)(net)
+    grad_net = GradNet(net)
     x = Tensor(np.array([[[[10, 1, 2, 3, -4, -5],
                            [6, 7, 8, 9, -10, -11],
                            [12, 13, 24, -15, -16, -17],
