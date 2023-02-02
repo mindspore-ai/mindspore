@@ -838,6 +838,21 @@ class MultinomialWithReplacement(Primitive):
         The rows of input do not need to sum to one (in which case we use the values as weights),
         but must be non-negative, finite and have a non-zero sum.
 
+    Args:
+        - **num_samples** (int) - number of samples to draw, must be a nonnegative number.
+        - **replacement** (bool) - Whether to draw with replacement or not. Defaults to false.
+
+    Inputs:
+        - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2
+          dimensions. CPU and GPU supports x 1 or 2 dimensions and Ascend only supports 2 dimensions.
+        - **seed** (Tensor) - If seed is set to be -1, and offset is set to be 0, the random number
+          generator is seeded by a random seed. Otherwise, it is seeded by the given seed.
+          Supported dtype: int64.
+        - **offset** (Tensor) -To avoid seed collision. Supported dtype: int64.
+
+    Outputs:
+        Tensor with the same rows as `x`, each row has num_samples sampled indices.
+
     Refer to :func:`mindspore.ops.multinomial_with_replacement` for more details.
 
     Supported Platforms:
@@ -845,8 +860,10 @@ class MultinomialWithReplacement(Primitive):
 
     Examples:
         >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)
+        >>> seed = Tensor(2, mstype.int64)
+        >>> offset = Tensor(5, mstype.int64)
         >>> multinomialwithreplacement = ops.MultinomialWithReplacement(numsamples=2,replacement=True)
-        >>> output = multinomialwithreplacement(x, 2, 5)
+        >>> output = multinomialwithreplacement(x, seed, offset)
         >>> print(output)
         [[1 1]]
     """
