@@ -2702,6 +2702,9 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   FuncGraphManagerPtr manager = res->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  if (IsTraining(manager)) {
+    root->set_flag(kTraining, true);
+  }
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode

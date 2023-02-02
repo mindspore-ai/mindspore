@@ -852,6 +852,9 @@ AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &targe
   if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
     target_func_graph->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
   }
+  if (func_graph->has_flag(kTraining)) {
+    target_func_graph->set_flag(kTraining, true);
+  }
   return cloner[func_graph->output()];
 }
 
