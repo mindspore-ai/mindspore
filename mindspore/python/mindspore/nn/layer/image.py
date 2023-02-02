@@ -78,7 +78,6 @@ class ImageGradients(Cell):
         super(ImageGradients, self).__init__()
 
     def construct(self, images):
-        images = F.depend(images, check)
         batch_size, depth, height, width = P.Shape()(images)
         if height == 1:
             dy = P.Fill()(P.DType()(images), (batch_size, depth, 1, width), 0)
