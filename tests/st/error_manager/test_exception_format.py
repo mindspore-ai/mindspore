@@ -20,7 +20,7 @@ from subprocess import Popen
 import pytest
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
@@ -32,9 +32,13 @@ def test_alloc_memory_fail():
     """
     cur_path = os.path.split(os.path.realpath(__file__))[0]
     proc = Popen(["pytest", "-sv", os.path.join(cur_path, "alloc_memory_fail.py")],
-                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    proc.wait()
-    stdout_log = proc.stdout.read().decode()
+                 stdout=subprocess.PIPE)
+    try:
+        outs, _ = proc.communicate(timeout=90)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        outs, _ = proc.communicate()
+    stdout_log = outs.decode()
     assert proc.returncode != 0
     pattern = re.compile(r"\nE\s+\-{20,}\nE\s+\- .+\nE\s+\-{20,}\nE\s+.+")
     matches = pattern.findall(stdout_log)
