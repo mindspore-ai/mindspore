@@ -408,7 +408,7 @@ void CreateTensorPrintThread(const PrintThreadCrt &ctr) {
   uint32_t device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   std::string channel_name = "_npu_log";
 
-  const size_t capacity_size = 16;
+  const size_t capacity_size = 128;
   if (!AclHandle::GetInstance().CreateChannel(device_id, channel_name, capacity_size)) {
     MS_LOG(EXCEPTION) << "create acl channel failed";
   }
