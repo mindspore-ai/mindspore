@@ -196,7 +196,8 @@ build_python_wheel_package() {
         cp src/extendrt/kernel/ascend/*.so package/mindspore_lite/lib/
         local dvpp_utils=minddata/kernels-dvpp-image/utils/libdvpp_utils.so
         if [ -f ${dvpp_utils} ]; then
-          cp ${dvpp_utils} package/mindspore_lite/lib/
+          mkdir -pv package/mindspore_lite/lib/lib/plugin/ascend
+          cp ${dvpp_utils} package/mindspore_lite/lib/lib/plugin/ascend
         fi
       fi
       if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libtransformer-shared.so" ]; then

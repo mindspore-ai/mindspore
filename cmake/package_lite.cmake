@@ -16,6 +16,7 @@ set(EXTENDRT_BUILD_DIR ${TOP_DIR}/mindspore/lite/build/src/extendrt)
 set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/runtime)
 set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/runtime/include)
 set(RUNTIME_LIB_DIR ${RUNTIME_PKG_NAME}/runtime/lib)
+set(RUNTIME_LIB_ACL_PLUGIN_DIR ${RUNTIME_PKG_NAME}/runtime/lib/lib/plugin/ascend)
 set(PROVIDERS_LIB_DIR ${RUNTIME_PKG_NAME}/providers)
 set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/runtime/include/dataset)
 set(TURBO_DIR ${RUNTIME_PKG_NAME}/runtime/third_party/libjpeg-turbo)
@@ -269,7 +270,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
             install(FILES ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_ascend.h
                     DESTINATION ${MIND_DATA_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/kernels-dvpp-image/utils/libdvpp_utils.so
-                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    DESTINATION ${RUNTIME_LIB_ACL_PLUGIN_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
                 ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -291,7 +292,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
                 install(FILES ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_ascend.h
                         DESTINATION ${MIND_DATA_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
                 install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/kernels-dvpp-image/utils/libdvpp_utils.so
-                        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                        DESTINATION ${RUNTIME_LIB_ACL_PLUGIN_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
                 ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
