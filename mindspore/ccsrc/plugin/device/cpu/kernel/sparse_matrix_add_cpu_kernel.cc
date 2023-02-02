@@ -152,12 +152,11 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   size_t c_idx = 0;
   S a_v = 0;
   S b_v = 0;
-  size_t tmp_batch = 0;
   size_t a_v_idx = 0;
   size_t b_v_idx = 0;
   for (size_t s = 0; s < batch_size; s++) {  // loop for all batches
     auto task = [this, &a_indptr, &a_indices, &a_values, &b_indptr, &b_indices, &b_values, &alpha, &beta, &c_indptr,
-                 &c_indices, &c_values, &index_set, &c_idx, &a_v, &b_v, &a_v_idx, &b_v_idx, &tmp_batch,
+                 &c_indices, &c_values, &index_set, &c_idx, &a_v, &b_v, &a_v_idx, &b_v_idx,
                  &s](size_t start, size_t end) {
       for (size_t x = start; x < end; x++) {  // one batch
         auto i = x + s;
@@ -191,16 +190,12 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
           b_v = 0;  // Reset the tmp value, real number or zero.
           a_v = 0;
         }
-        tmp_batch += index_set.size();
         index_set.clear();
       }
     };
     ParallelLaunchAutoSearch(task, row_, this, &parallel_search_info_);
-    if (s < batch_size - 1) {
-      c_batch[s + 1] = static_cast<T>(tmp_batch) + c_batch[s];
-    }
-    tmp_batch = 0;
   }
+  c_batch[1] = c_idx;
   // Update output shape and type
   std::vector<int64_t> out_indptr_shape;
   std::vector<int64_t> out_indices_shape;
