@@ -151,7 +151,7 @@ inline BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
 bool CheckRealTupleFromCNode(const std::vector<mindspore::kernel::KernelObjectType> &input_obj_types,
                              const size_t input_idx) {
   // if input_obj_types is empty, regard it as a Tensor by default.
-  if (input_obj_types.size() != 0 && input_obj_types[input_idx] == KernelObjectType::TUPLE) {
+  if (input_obj_types.size() > input_idx && input_obj_types[input_idx] == KernelObjectType::TUPLE) {
     return true;
   }
   return false;
