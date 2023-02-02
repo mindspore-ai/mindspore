@@ -90,8 +90,8 @@ AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const 
 AnfNodePtr CreateRealMakeTupleByTupleUnfoldInput(const FuncGraphPtr &func_graph,
                                                  const AnfNodePtr &node_with_tuple_unfold_output);
 
-// Inherit new cnode's kernel build info from the original cnode.
-void SetKernelInfoForNewCNodeByOrigNode(const CNodePtr &new_cnode, const CNodePtr &origin_node);
+// Set kernel info validation flag according to white list.
+void SetBackOffFlag(const KernelBuildInfoPtr &build_info, const CNodePtr &cnode);
 
 // Set kernel info for newly created cnodes. The kernel info will be generated from scratch.
 // In some cases, there's no need to set input/output format and type for the node.

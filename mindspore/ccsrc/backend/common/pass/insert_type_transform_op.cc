@@ -87,16 +87,34 @@ AnfNodePtr CreateNewNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &i
     kernel_graph->FrontBackendlMapUpdate(origin_node, new_cnode);
   }
 
+  // Inherit from origin kernel build info.
+  KernelBuildInfoPtr origin_kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(origin_node);
+  MS_EXCEPTION_IF_NULL(origin_kernel_build_info);
+  auto new_kernel_builder = std::make_shared<KernelBuildInfoBuilder>(origin_kernel_build_info);
+  MS_EXCEPTION_IF_NULL(new_kernel_builder);
+
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  new_cnode->set_kernel_info(kernel_info);
+  AnfAlgo::SetSelectKernelBuildInfo(new_kernel_builder->Build(), new_cnode.get());
+
   // Need to reset new cnode's kernel build info because the inputs type and number could be changed after processing
   // methods. Only reset input types.
   auto new_prim = GetValueNode<PrimitivePtr>(new_cnode->input(kIndex0));
   auto origin_prim = GetValueNode<PrimitivePtr>(origin_node->input(kIndex0));
-  if (!IsPrimitiveEquals(new_prim, origin_prim)) {
-    SetKernelInfoForNewCNode(new_cnode, true);
-  } else if (kernel::IsDynamicParamKernel(origin_prim->name())) {
+  if (kernel::IsDynamicParamKernel(origin_prim->name())) {
     SetKernelInfoForDynamicParamKernel(new_cnode);
   } else {
-    SetKernelInfoForNewCNodeByOrigNode(new_cnode, origin_node);
+    SetKernelInfoForNewCNode(new_cnode, true);
+  }
+
+  // If the primitive is not changed, this means only inputs are updated. So inherit output from origin node.
+  if (IsPrimitiveEquals(new_prim, origin_prim)) {
+    KernelBuildInfoPtr new_node_build_info = AnfAlgo::GetSelectKernelBuildInfo(new_cnode);
+    KernelBuildInfoPtr origin_node_build_info = AnfAlgo::GetSelectKernelBuildInfo(origin_node);
+    new_node_build_info->SetOutputsFormat(origin_node_build_info->GetAllOutputFormats());
+    new_node_build_info->SetOutputsDeviceType(origin_node_build_info->GetAllOutputDeviceTypes());
+    new_node_build_info->SetOutputsKernelObjectType(origin_node_build_info->GetAllOutputKernelObjectTypes());
   }
   return new_cnode;
 }
@@ -155,52 +173,38 @@ AnfNodePtr CreateRealMakeTupleByTupleUnfoldInput(const FuncGraphPtr &func_graph,
   return real_make_tuple;
 }
 
-void SetKernelInfoForNewCNodeByOrigNode(const CNodePtr &new_cnode, const CNodePtr &origin_node) {
-  MS_EXCEPTION_IF_NULL(new_cnode);
-  MS_EXCEPTION_IF_NULL(origin_node);
-
-  // Inherit from origin kernel build info.
-  KernelBuildInfoPtr origin_kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(origin_node);
-  MS_EXCEPTION_IF_NULL(origin_kernel_build_info);
-  auto new_kernel_builder = std::make_shared<KernelBuildInfoBuilder>(origin_kernel_build_info);
-  MS_EXCEPTION_IF_NULL(new_kernel_builder);
-
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  new_cnode->set_kernel_info(kernel_info);
-  // The node may not be supported in the current device.
-  new_kernel_builder->SetValid(true);
-  AnfAlgo::SetSelectKernelBuildInfo(new_kernel_builder->Build(), new_cnode.get());
-
-  auto new_prim = GetValueNode<PrimitivePtr>(new_cnode->input(kIndex0));
-  auto origin_prim = GetValueNode<PrimitivePtr>(origin_node->input(kIndex0));
-  if (!IsPrimitiveEquals(new_prim, origin_prim)) {
-    // If primitive changed, maybe input/output object types should be updated as well.
-    std::vector<KernelObjectType> input_obj_type;
-    std::vector<KernelObjectType> output_obj_type;
-    GenerateKernelObjectTypeForNewCNode(new_cnode, &input_obj_type, &output_obj_type);
-
-    new_kernel_builder->SetInputsKernelObjectType(input_obj_type);
-    new_kernel_builder->SetOutputsKernelObjectType(output_obj_type);
+void SetBackOffFlag(const KernelBuildInfoPtr &build_info, const CNodePtr &cnode) {
+  std::vector<std::string> back_off_op_list = {prim::kTupleToTensor,  prim::kScalarToTensor,  prim::kTensorToTuple,
+                                               prim::kTensorToScalar, prim::kRealMakeTuple,   prim::kRealTupleGetItem,
+                                               prim::kRealMakeList,   prim::kRealListGetItem, prim::kTupleSetItem,
+                                               prim::kListToTensor,   prim::kTensorToList};
+  if (std::find(back_off_op_list.begin(), back_off_op_list.end(), common::AnfAlgo::GetCNodeName(cnode)) !=
+      back_off_op_list.end()) {
+    build_info->set_valid(false);
   }
 }
 
 void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
   MS_EXCEPTION_IF_NULL(cnode);
-
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  cnode->set_kernel_info(kernel_info);
-  auto builder = std::make_shared<KernelBuildInfoBuilder>();
-  MS_EXCEPTION_IF_NULL(builder);
+  // In some cases cnode is newly created and has no kernel info.
+  if (cnode->kernel_info() == nullptr ||
+      (!dynamic_cast<device::KernelInfo *>(cnode->kernel_info())->has_build_info())) {
+    auto kernel_info = std::make_shared<device::KernelInfo>();
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    cnode->set_kernel_info(kernel_info);
+    auto builder = std::make_shared<KernelBuildInfoBuilder>();
+    MS_EXCEPTION_IF_NULL(builder);
+    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode.get());
+  }
+  KernelBuildInfoPtr build_info = AnfAlgo::GetSelectKernelBuildInfo(cnode);
+  MS_EXCEPTION_IF_NULL(build_info);
 
   // Set input and output object type for subsequent type matching process.
   std::vector<KernelObjectType> input_obj_type;
   std::vector<KernelObjectType> output_obj_type;
   GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
-  builder->SetKernelType(UNKNOWN_KERNEL_TYPE);
-  builder->SetInputsKernelObjectType(input_obj_type);
-  builder->SetOutputsKernelObjectType(output_obj_type);
+  build_info->SetInputsKernelObjectType(input_obj_type);
+  build_info->SetOutputsKernelObjectType(output_obj_type);
 
   if (set_format_type) {
     // Set input and output format.
@@ -216,24 +220,25 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
       }
       inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
     }
+
     std::vector<std::string> outputs_format;
     std::vector<TypeId> outputs_type;
-    // The output number should be 1 before object type is set.
-    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+    size_t output_num = AnfAlgo::GetOutputElementNum(cnode);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       outputs_format.emplace_back(GenerateOutputFormatForNewCNode(cnode));
       outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(cnode, output_index));
     }
 
-    builder->SetInputsFormat(inputs_format);
-    builder->SetInputsDeviceType(inputs_type);
-    builder->SetOutputsFormat(outputs_format);
-    builder->SetOutputsDeviceType(outputs_type);
+    build_info->SetInputsFormat(inputs_format);
+    build_info->SetInputsDeviceType(inputs_type);
+    build_info->SetOutputsFormat(outputs_format);
+    build_info->SetOutputsDeviceType(outputs_type);
   }
 
   // The node may not be supported in the current device.
-  builder->SetValid(true);
-  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode.get());
+  SetBackOffFlag(build_info, cnode);
+  MS_LOG(INFO) << "Set kernel info for cnode " << cnode->DebugString() << " " << cnode->fullname_with_scope() << " "
+               << build_info->ToString();
 }
 
 void SetKernelInfoForDynamicParamKernel(const CNodePtr &cnode) {
@@ -341,7 +346,8 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
       auto input_node = cnode->input(i);
       MS_EXCEPTION_IF_NULL(input_node);
       // Set input kernel object type as input node's output kernel object type.
-      if (input_node->kernel_info() == nullptr) {
+      if (input_node->kernel_info() == nullptr ||
+          (!dynamic_cast<device::KernelInfo *>(input_node->kernel_info())->has_build_info())) {
         auto abs_type = AnfAlgo::GetAbstractObjectType(input_node->abstract());
         input_obj_type->push_back(kernel::TypeIdToKernelObjectType(abs_type));
       } else {
