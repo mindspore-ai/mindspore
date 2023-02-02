@@ -24,12 +24,6 @@ static const TraceLabelType global_trace_type = (common::GetEnv("MS_DEV_TRACE_LA
                                                   ? TraceLabelType::kWithUniqueId
                                                   : TraceLabelType::kShortSymbol;
 TraceLabelType GetGlobalTraceLabelType() { return global_trace_type; }
-TraceLabelType GetCurrentTraceLabelType() {
-  if (common::GetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID") == "1") {
-    return TraceLabelType::kWithUniqueId;
-  }
-  return TraceLabelType::kShortSymbol;
-}
 
 struct NameWithTrace {
   std::string name;
@@ -112,8 +106,7 @@ std::string CombineUniqueID(const DebugInfoPtr &debug_info) {
 std::string LabelStringUnique(const DebugInfoPtr &debug_info) { return CombineUniqueID(debug_info); }
 
 std::string Label(const DebugInfoPtr &debug_info, TraceLabelType trace_label) {
-  if ((GetGlobalTraceLabelType() == TraceLabelType::kWithUniqueId) ||
-      (GetCurrentTraceLabelType() == TraceLabelType::kWithUniqueId)) {
+  if (GetGlobalTraceLabelType() == TraceLabelType::kWithUniqueId) {
     return LabelStringUnique(debug_info);
   }
   return LabelString(debug_info, trace_label);

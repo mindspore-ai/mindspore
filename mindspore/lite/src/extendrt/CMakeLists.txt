@@ -184,7 +184,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
 
     if(MSLITE_ENABLE_CONVERTER)
         add_subdirectory(convert)
-        target_link_libraries(mindspore-extendrt -Wl,--no-as-needed mindspore_converter)
+        target_link_libraries(mindspore-extendrt mindspore_converter)
     endif()
 
     set(TEST_CLOUD_INFER off)
