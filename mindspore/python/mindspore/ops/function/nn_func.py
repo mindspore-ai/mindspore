@@ -735,19 +735,7 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         [[0, 2, 0, 4, 0, 6, 0, 8]]
     """
     if stride is None:
-        stride = 0
-    if output_size is None:
-        output_size = ()
-    else:
-        if not isinstance(output_size, tuple):
-            raise ValueError(f"For max_unpool1d, output_size must be tuple, but type {type(output_size)}.")
-        if len(output_size) not in [0, 2, 3]:
-            raise ValueError(f"For max_unpool1d, length of output_size with tuple must be 0, 2, 3, "
-                             f"but got type {len(output_size)}.")
-        if len(output_size) == 2:
-            output_size = (1,) + output_size + (1,)
-        if len(output_size) == 3:
-            output_size = output_size + (1,)
+        stride = kernel_size
 
     shape = P.Shape()
     x_shape = shape(x)
@@ -759,8 +747,37 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     if x_dim not in (2, 3):
         raise ValueError(f"For max_unpool1d, the x shape must have 2 or 3 dims, but got {x_dim}.")
 
-    max_unpool_2d = _get_cache_prim(MaxUnpool2D)(ksize=(kernel_size, 1), strides=(stride, 1),
-                                                 pads=(padding, 0), output_shape=output_size, data_format="NCHW")
+    if output_size is None:
+        output_size = ()
+    else:
+        if not isinstance(output_size, tuple):
+            raise ValueError(f"For max_unpool1d, output_size must be tuple, but type {type(output_size)}.")
+        if len(output_size) not in [0, 1, 2, 3]:
+            raise ValueError(f"For max_unpool1d, length of output_size with tuple must be 0, 1, 2, 3, "
+                             f"but got type {len(output_size)}.")
+        if not output_size:
+            output_size = ()
+        elif x_dim == 2:
+            output_size = (1,) + x_shape[:1] + output_size[-1:] + (1,)
+        else:
+            output_size = x_shape[:2] + output_size[-1:] + (1,)
+    if isinstance(kernel_size, tuple):
+        kernel_size = kernel_size + (1,)
+    elif isinstance(kernel_size, int):
+        kernel_size = (kernel_size, 1)
+
+    if isinstance(stride, tuple):
+        stride = stride + (1,)
+    elif isinstance(stride, int):
+        stride = (stride, 1)
+
+    if isinstance(padding, tuple):
+        padding = padding + (0,)
+    elif isinstance(padding, int):
+        padding = (padding, 0)
+
+    max_unpool_2d = _get_cache_prim(MaxUnpool2D)(ksize=kernel_size, strides=stride,
+                                                 pads=padding, output_shape=output_size, data_format="NCHW")
     if x_dim == 2:
         x = x.expand_dims(axis=0)
         indices = indices.expand_dims(axis=0)
@@ -844,17 +861,7 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
            [8. 9.]]]]
     """
     if stride is None:
-        stride = 0
-    if output_size is None:
-        output_size = ()
-    else:
-        if not isinstance(output_size, tuple):
-            raise ValueError(f"For max_unpool2d, output_size must be tuple, but type {type(output_size)}.")
-        if len(output_size) not in [0, 3, 4]:
-            raise ValueError(f"For max_unpool2d, length of output_size with tuple must be 0, 3, 4, "
-                             f"but got type {len(output_size)}.")
-        if len(output_size) == 3:
-            output_size = (1,) + output_size
+        stride = kernel_size
 
     shape = P.Shape()
     x_shape = shape(x)
@@ -865,6 +872,21 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
                          f"shape {x_shape} and indices shape {indices_shape}.")
     if x_dim not in (3, 4):
         raise ValueError(f"For max_unpool2d, the x shape must have 3 or 4 dims, but got {x_dim}.")
+
+    if output_size is None:
+        output_size = ()
+    else:
+        if not isinstance(output_size, tuple):
+            raise ValueError(f"For max_unpool2d, output_size must be tuple, but type {type(output_size)}.")
+        if len(output_size) not in [0, 2, 3, 4]:
+            raise ValueError(f"For max_unpool2d, length of output_size with tuple must be 0, 2, 3, 4, "
+                             f"but got type {len(output_size)}.")
+        if not output_size:
+            output_size = ()
+        elif x_dim == 3:
+            output_size = (1,) + x_shape[:1] + output_size[-2:]
+        else:
+            output_size = x_shape[:2] + output_size[-2:]
 
     max_unpool_2d = MaxUnpool2D(ksize=kernel_size, strides=stride, pads=padding, output_shape=output_size,
                                 data_format="NCHW")
@@ -950,18 +972,8 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
             [0. 0. 0.]]]]]
     """
     if stride is None:
-        stride = 0
-    if output_size is None:
-        output_size = ()
-    elif not isinstance(output_size, tuple):
-        raise ValueError(f"For max_unpool3d, output_size must be tuple, but type {type(output_size)}.")
-    elif len(output_size) not in [0, 4, 5]:
-        raise ValueError(f"For max_unpool3d, length of output_size with tuple must be 0, 4, 5, "
-                         f"but got type {len(output_size)}.")
-    elif len(output_size) == 4:
-        output_size = (1,) + output_size
-    max_unpool_3d = MaxUnpool3D(ksize=kernel_size, strides=stride, pads=padding, output_shape=output_size,
-                                data_format="NCDHW")
+        stride = kernel_size
+
     x_shape = P.Shape()(x)
     indices_shape = P.Shape()(indices)
     x_dim = len(x_shape)
@@ -970,6 +982,23 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
                          f"shape {x_shape} and indices shape {indices_shape}.")
     if x_dim not in (4, 5):
         raise ValueError(f"For max_unpool3d, the x shape must have 4 or 5 dims, but got {x_dim}.")
+
+    if output_size is None:
+        output_size = ()
+    elif not isinstance(output_size, tuple):
+        raise ValueError(f"For max_unpool3d, output_size must be tuple, but type {type(output_size)}.")
+    elif len(output_size) not in [0, 3, 4, 5]:
+        raise ValueError(f"For max_unpool3d, length of output_size with tuple must be 0, 3, 4, 5, "
+                         f"but got type {len(output_size)}.")
+    if not output_size:
+        output_size = ()
+    elif x_dim == 5:
+        output_size = x_shape[:2] + output_size[-3:]
+    else:
+        output_size = (1,) + x_shape[:1] + output_size[-3:]
+    max_unpool_3d = MaxUnpool3D(ksize=kernel_size, strides=stride, pads=padding, output_shape=output_size,
+                                data_format="NCDHW")
+
     if x_dim == 4:
         x = x.expand_dims(axis=0)
         indices = indices.expand_dims(axis=0)
@@ -2225,7 +2254,7 @@ def silu(x):
 
     For more details, please refer to :class:`mindspore.nn.SiLU`.
     """
-    return sigmoid_(x)*x
+    return sigmoid_(x) * x
 
 
 def selu(input_x):

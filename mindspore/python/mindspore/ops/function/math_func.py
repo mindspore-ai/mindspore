@@ -9975,7 +9975,7 @@ def sum(x, dim=None, keepdim=False, *, dtype=None):
         out = reduce_sum(x, dim)
     else:
         out = reduce_sum(x)
-    if dtype:
+    if dtype is not None:
         out = out.astype(dtype)
     return out
 
