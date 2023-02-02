@@ -173,7 +173,7 @@ def test_resnet_imagenet_8p_mpi():
     acc = 0.0
     time_cost = 0.0
     for _ in range(0, int(epoch_size / eval_interval)):
-        model.train(1, dataset, callbacks=loss_cb)
+        model.train(1, dataset, callbacks=loss_cb, dataset_sink_mode=True)
         output = model.eval(eval_dataset)
         acc = float(output.get('acc', 0.0))
         time_cost = loss_cb.get_per_step_time()
