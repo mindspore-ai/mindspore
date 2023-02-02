@@ -200,8 +200,10 @@ void AscendKernelRuntime::ClearGraphModelMap() {
   graph_data_dumper_.clear();
   // tell users which dump kernel name not used
   DumpJsonParser::GetInstance().PrintUnusedKernel();
-  KernelDumper kernel_dumper;
-  kernel_dumper.OpDebugUnregisterForStream();
+  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
+    KernelDumper kernel_dumper;
+    kernel_dumper.OpDebugUnregisterForStream();
+  }
 #endif
 
   graph_kernel_events_map_.clear();

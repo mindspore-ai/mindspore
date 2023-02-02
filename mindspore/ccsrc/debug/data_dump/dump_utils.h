@@ -18,6 +18,7 @@
 #define MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_DUMP_UTILS_H_
 
 #include <map>
+#include <vector>
 #include <string>
 #include <memory>
 
@@ -30,6 +31,7 @@ using DeviceTensorPtr = std::shared_ptr<DeviceTensor>;
 namespace mindspore {
 static const size_t PARAMETER_OUTPUT_INDEX = 0;
 static const size_t VALUE_NODE_OUTPUT_INDEX = 0;
+static std::vector<std::string> overflowOperators;
 
 std::string GenerateDumpPath(uint32_t graph_id, uint32_t rank_id = 0, bool is_cst = false);
 
@@ -43,6 +45,12 @@ const DeviceTensorPtr GetParameterInfo(const AnfNodePtr &node, NotNull<ShapeVect
 
 void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &addr, const ShapeVector &int_shapes,
                    const TypeId &type, bool trans_flag = false);
+
+void RemoveEmptyDir(const std::string &dir_path);
+
+void SaveOverflowOperator(const std::string &iterator, const std::string &dump_rank_path);
+
+void DeleteNoOverflowFile(uint32_t rank_id, uint32_t graph_id);
 BACKEND_EXPORT std::string GetOpNameWithoutScope(const std::string &fullname_with_scope,
                                                  const std::string &separator = "--");
 

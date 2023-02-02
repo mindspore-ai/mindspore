@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "debug/data_dump/dump_utils.h"
+#include <dirent.h>
 #include <map>
 #include <vector>
 #include <algorithm>
@@ -173,5 +174,82 @@ void DumpToFile(const std::string &file_name, const std::string &dump_str) {
   }
   file.close();
   ChangeFileMode(real_path_str, S_IRUSR);
+}
+
+void RemoveEmptyDir(const std::string &dir_path) {
+  uint32_t dir_count = 0;
+  DIR *d = opendir(dir_path.c_str());
+  struct dirent *dir = nullptr;
+  while ((dir = readdir(d)) != nullptr) {
+    std::string name = dir->d_name;
+    if (name == "." || name == "..") {
+      continue;
+    } else {
+      dir_count++;
+    }
+  }
+  (void)closedir(d);
+  if (dir_count == 0) {
+    auto ret = remove(dir_path.c_str());
+    if (ret == 0) {
+      MS_LOG(INFO) << "Delete empty dir successfully, dir path is:" << dir_path;
+    }
+  }
+}
+
+void SaveOverflowOperator(const std::string &iterator, const std::string &dump_rank_path) {
+  const std::string overflow_dump_dir = "debug_files";
+  const std::string overflow_file_prefix = "Opdebug.Node_OpDebug.";
+  const std::string cur_step_overflow_path = dump_rank_path + "/" + overflow_dump_dir + "/" + iterator;
+  DIR *d = opendir(cur_step_overflow_path.c_str());
+  overflowOperators.clear();
+  if (d == nullptr) {
+    MS_LOG(WARNING) << "Overflow file directory does not exist!";
+  } else {
+    struct dirent *dir = nullptr;
+    while ((dir = readdir(d)) != nullptr) {
+      std::string filename = dir->d_name;
+      if (filename.find(overflow_file_prefix) != std::string::npos) {
+        uint32_t pos_start = overflow_file_prefix.size();
+        uint32_t n = filename.rfind(".") - pos_start + 2;
+        std::string stream_task_name = filename.substr(pos_start - 1, n);
+        overflowOperators.emplace_back(stream_task_name);
+      }
+    }
+    (void)closedir(d);
+  }
+}
+
+void DeleteNoOverflowFile(uint32_t rank_id, uint32_t graph_id) {
+  auto &json_parser = DumpJsonParser::GetInstance();
+  if (!(json_parser.async_dump_enabled() || json_parser.e2e_dump_enabled())) {
+    return;
+  }
+  std::string cur_dump_path = json_parser.path() + "/rank_" + std::to_string(rank_id);
+  std::string net_name_ = json_parser.net_name();
+  std::string iterator = std::to_string(json_parser.cur_dump_iter());
+  SaveOverflowOperator(iterator, cur_dump_path);
+  std::string overflow_operator_dump_path =
+    cur_dump_path + "/" + net_name_ + "/" + std::to_string(graph_id) + "/" + iterator;
+  DIR *d = opendir(overflow_operator_dump_path.c_str());
+  if (d == nullptr) {
+    MS_LOG(WARNING) << "Overflow iterator file directory does not exist!";
+  } else {
+    struct dirent *dir = nullptr;
+    while ((dir = readdir(d)) != nullptr) {
+      std::string filename = dir->d_name;
+      bool is_exist =
+        std::any_of(std::begin(overflowOperators), std::end(overflowOperators),
+                    [&](std::string stream_task_str) { return filename.find(stream_task_str) != std::string::npos; });
+      if (!is_exist) {
+        auto ret = remove((overflow_operator_dump_path + "/" + filename).c_str());
+        if (ret == 0) {
+          MS_LOG(INFO) << "Delete file successfully, filename is:" << filename.c_str();
+        }
+      }
+    }
+    (void)closedir(d);
+    RemoveEmptyDir(overflow_operator_dump_path);
+  }
 }
 }  // namespace mindspore

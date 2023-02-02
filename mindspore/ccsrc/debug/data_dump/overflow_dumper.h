@@ -34,6 +34,7 @@ class BACKEND_EXPORT OverflowDumper {
 
   static std::shared_ptr<OverflowDumper> GetInstance(const std::string &name) noexcept;
   static bool Register(const std::string &name, const std::shared_ptr<OverflowDumper> &instance);
+  static void Clear();
   virtual void OpLoadDumpInfo(const CNodePtr &kernel) = 0;
   virtual void Init() = 0;
   virtual void OpDebugRegisterForStream(const CNodePtr &kernel) = 0;

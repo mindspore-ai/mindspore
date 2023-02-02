@@ -436,18 +436,14 @@ void KernelDumper::OpDebugRegisterForStream(const CNodePtr &kernel) {
 }
 
 void KernelDumper::OpDebugUnregisterForStream() {
-  uint32_t op_debug_mode = DumpJsonParser::GetInstance().op_debug_mode();
-  if (op_debug_mode == kNoOverflow) {
-    return;
-  }
-
   for (auto iter = KernelDumper::op_debug_tasks.begin(); iter != KernelDumper::op_debug_tasks.end(); iter++) {
     rtError_t rt_ret = rtDebugUnRegisterForStream(iter->first);
     if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "[KernelDumperr] Call rtDebugUnRegisterForStream failed, ret = " << rt_ret;
+      MS_LOG(EXCEPTION) << "[KernelDumper] Call rtDebugUnRegisterForStream failed, ret = " << rt_ret;
     }
   }
   KernelDumper::op_debug_tasks.clear();
+  OverflowDumper::Clear();
 }
 #endif
 }  // namespace ascend
