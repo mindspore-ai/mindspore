@@ -81,6 +81,9 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kHSigmoidGradOpName).set_backend_op_name(kHardS
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kHSwishOpName).set_backend_op_name(kHardSwishOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kHSwishGradOpName).set_backend_op_name(kHardSwishGradOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kIndexAddOpName).set_backend_op_name(kInplaceIndexAddOpName);
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kInplaceAddOpName).set_backend_op_name(kInplaceAddDOpName);
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kInplaceSubOpName).set_backend_op_name(kInplaceSubDOpName);
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kInplaceUpdateOpName).set_backend_op_name(kInplaceUpdateDOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kIOUOpName).set_backend_op_name(kIouOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kKLDivLossOpName).set_backend_op_name(kKLDivOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kLARSUpdateOpName).set_backend_op_name(kLarsV2UpdateOpName);
@@ -290,21 +293,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kHistogramFixedWidthOpName)
   .set_target_op_name(kHistogramFixedWidthDOpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(2, "int");
-
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kInplaceAddOpName)
-  .set_target_op_name(kInplaceAddDOpName)
-  .set_need_tbe_check_supported(true)
-  .set_input_attr_info(1, "listInt");
-
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kInplaceSubOpName)
-  .set_target_op_name(kInplaceSubDOpName)
-  .set_need_tbe_check_supported(true)
-  .set_input_attr_info(1, "listInt");
-
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kInplaceUpdateOpName)
-  .set_target_op_name(kInplaceUpdateDOpName)
-  .set_need_tbe_check_supported(true)
-  .set_input_attr_info(1, "listInt");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kInTopKOpName).set_backend_op_name(kInTopKDOpName);
 
