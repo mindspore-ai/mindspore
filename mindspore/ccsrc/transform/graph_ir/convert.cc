@@ -2236,7 +2236,7 @@ void DfGraphConvertor::RemoveIdentity(::ge::GNode identity_node) {
 void DfGraphConvertor::IdentityOptimization() {
   MS_LOG(INFO) << "Start IdentityOptimization, graph: " << anf_graph_->ToString();
   MS_EXCEPTION_IF_NULL(df_graph_);
-  auto all_nodes = df_graph_->GetAllNodes();
+  auto all_nodes = df_graph_->GetDirectNode();
   for (const auto &node : all_nodes) {
     if (IsIdentityRedundant(node)) {
       RemoveIdentity(node);
@@ -2248,7 +2248,7 @@ void DfGraphConvertor::IdentityOptimization() {
 void DfGraphConvertor::NoOpOptimization() {
   MS_LOG(INFO) << "Start NoOpOptimization, graph:" << anf_graph_->ToString();
   MS_EXCEPTION_IF_NULL(df_graph_);
-  auto all_nodes = df_graph_->GetAllNodes();
+  auto all_nodes = df_graph_->GetDirectNode();
   for (const auto &node : all_nodes) {
     if (IsNoOpRedundant(node)) {
       RemoveNoOp(node);
