@@ -472,6 +472,22 @@ py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr 
   }
   auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(seq_abs);
+  bool dynamic_len = seq_abs->dynamic_len();
+  auto dynamic_len_element_abs = seq_abs->dynamic_len_element_abs();
+  if (dynamic_len || dynamic_len_element_abs != nullptr) {
+    if (dynamic_len_element_abs == nullptr) {
+      MS_LOG(INFO) << "Dynamic length sequence with no specified element abstract convert to empty tuple.";
+      return ref_tuple;
+    }
+    if (dynamic_len_element_abs->isa<abstract::AbstractNone>()) {
+      MS_LOG(INFO) << "Dynamic length sequence with element None convert to empty tuple.";
+      return ref_tuple;
+    }
+    for (size_t i = 0; i < value_size; ++i) {
+      ref_tuple[i] = BaseRefToPyData(value_list[i], dynamic_len_element_abs);
+    }
+    return ref_tuple;
+  }
   // The size of seq_abs may be larger than the size of value_list, because the backend will eliminate None.
   size_t ref_idx = 0;
   for (size_t i = 0; i < seq_abs->size(); i++) {
