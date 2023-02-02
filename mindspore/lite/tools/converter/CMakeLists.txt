@@ -178,6 +178,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/common/ops/anf_utils.cc
         ${SRC_DIR}/common/utils.cc
         ${SRC_DIR}/common/file_utils.cc
+        ${SRC_DIR}/common/mmap_utils.cc
         ${SRC_DIR}/common/context_util.cc
         ${SRC_DIR}/common/graph_util.cc
         ${SRC_DIR}/common/string_util.cc

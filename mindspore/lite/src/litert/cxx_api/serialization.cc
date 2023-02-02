@@ -116,7 +116,7 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
 
   size_t model_size;
   lite::LiteSession session;
-  auto model_buf = session.LoadModelByPath(filename, model_type, &model_size);
+  auto model_buf = session.LoadModelByPath(filename, model_type, &model_size, false);
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "Read model file failed";
     return kLiteNullptr;
