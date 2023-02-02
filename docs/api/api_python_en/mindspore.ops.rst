@@ -344,9 +344,10 @@ Comparison Functions
     mindspore.ops.lt
     mindspore.ops.maximum
     mindspore.ops.minimum
+    mindspore.ops.msort
     mindspore.ops.ne
     mindspore.ops.not_equal
-    mindspore.ops.msort
+    mindspore.ops.searchsorted
     mindspore.ops.topk
 
 Linear Algebraic Functions

@@ -344,9 +344,10 @@ Reduction函数
     mindspore.ops.lt
     mindspore.ops.maximum
     mindspore.ops.minimum
+    mindspore.ops.msort
     mindspore.ops.ne
     mindspore.ops.not_equal
-    mindspore.ops.msort
+    mindspore.ops.searchsorted
     mindspore.ops.topk
 
 线性代数函数
