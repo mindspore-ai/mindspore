@@ -74,11 +74,6 @@ void SSLHTTP::InitSSL() {
   server_cert = path;
 
   // 2. Parse the server password.
-  std::string server_password = PSContext::instance()->server_password();
-  if (server_password.empty()) {
-    MS_LOG(EXCEPTION) << "The client password's value is empty.";
-  }
-
   EVP_PKEY *pkey = nullptr;
   X509 *cert = nullptr;
   STACK_OF(X509) *ca_stack = nullptr;
@@ -91,7 +86,7 @@ void SSLHTTP::InitSSL() {
     MS_LOG(EXCEPTION) << "Create PKCS12 cert failed, please check whether the certificate is correct.";
   }
   BIO_free_all(bio);
-  if (!PKCS12_parse(p12, server_password.c_str(), &pkey, &cert, &ca_stack)) {
+  if (!PKCS12_parse(p12, PSContext::instance()->server_password(), &pkey, &cert, &ca_stack)) {
     MS_LOG(EXCEPTION) << "PKCS12_parse failed.";
   }
   PKCS12_free(p12);

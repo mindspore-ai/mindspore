@@ -69,7 +69,7 @@ bool CommUtil::CheckHttpUrl(const std::string &http_url) {
 }
 
 bool CommUtil::CheckPort(const uint16_t &port) {
-  if (port > 65535) {
+  if (port > kMaxPort) {
     MS_LOG(ERROR) << "The range of port should be 1 to 65535.";
     return false;
   }
@@ -620,7 +620,7 @@ Time CommUtil::GetNowTime() {
   auto ms_stamp = mill_time_stamp - second_time_stamp;
   time_mill_oss << "." << std::setfill('0') << std::setw(kMillSecondLength) << ms_stamp.count();
 
-  time.time_stamp = mill_time_stamp.count();
+  time.time_stamp = LongToSize(mill_time_stamp.count());
   time.time_str_mill = time_mill_oss.str();
   return time;
 }

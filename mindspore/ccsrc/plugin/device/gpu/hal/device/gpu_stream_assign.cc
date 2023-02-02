@@ -88,7 +88,8 @@ bool FindAllReduceStreamSwitchPos(const std::shared_ptr<session::KernelGraph> &k
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(send_recv_pairs);
   auto execution_kernels = kernel_graph->execution_order();
-  std::vector<CNodePtr>::iterator iter, iter_begin;
+  std::vector<CNodePtr>::iterator iter;
+  std::vector<CNodePtr>::iterator iter_begin;
   iter = iter_begin = execution_kernels.begin();
   std::vector<CNodePtr>::iterator iter_end = execution_kernels.end();
   for (; iter != execution_kernels.end(); ++iter) {

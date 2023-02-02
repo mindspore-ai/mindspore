@@ -29,6 +29,12 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+constexpr uint32_t kHearbeatInterval = 3;
+constexpr uint32_t kHearbeatTimeout = 30;
+constexpr uint32_t kPersistentInterval = 300;
+constexpr uint32_t kClusterAvailableTimeout = 900;
+constexpr uint32_t kConnectInterval = 3000;
+constexpr int64_t kSchedTimeout = 30;
 /*
  * Configuration information read through environment variables and configuration files, generally immutable
  */
@@ -36,14 +42,14 @@ struct ClusterConfig {
   explicit ClusterConfig(const uint32_t &worker_num, const uint32_t &server_num, std::string host, const uint16_t &port)
       : initial_worker_num(worker_num),
         initial_server_num(server_num),
-        heartbeat_interval(3),
-        persistent_interval(300),
+        heartbeat_interval(kHearbeatInterval),
+        persistent_interval(kPersistentInterval),
         scheduler_host(host),
         scheduler_port(port),
-        heartbeat_timeout(30),
-        cluster_available_timeout(900),
-        connect_interval(3000),
-        scheduler_timeout(30),
+        heartbeat_timeout(kHearbeatTimeout),
+        cluster_available_timeout(kClusterAvailableTimeout),
+        connect_interval(kConnectInterval),
+        scheduler_timeout(kSchedTimeout),
         initial_total_node_num(0),
         initial_next_worker_rank_id(0),
         initial_next_server_rank_id(0),

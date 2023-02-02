@@ -262,17 +262,19 @@ constexpr char kJobNotAvailable[] = "The server's training job is disabled or fi
 enum class UserDefineEvent { kIterationRunning = 0, kIterationCompleted, kNodeTimeout };
 
 #define EXC_IF_VEC_IDX_OOB(vec, idx)                                                            \
-  {                                                                                             \
+  do {                                                                                          \
     size_t vec_size = vec.size();                                                               \
     if (idx >= vec_size) {                                                                      \
       MS_LOG(EXCEPTION) << "Vector " << #vec << " size is " << vec_size << ". So index " << idx \
                         << " is out of bound.";                                                 \
     }                                                                                           \
-  }
+  } while (0)
 
-#define ERROR_STATUS(result, code, message) \
-  MS_LOG(ERROR) << message;                 \
-  result = RequestProcessResult(code, message)
+#define ERROR_STATUS(result, code, message)       \
+  do {                                            \
+    MS_LOG(ERROR) << message;                     \
+    result = RequestProcessResult(code, message); \
+  } while (0)
 
 #define CHECK_RETURN_TYPE(_condition)                    \
   do {                                                   \
