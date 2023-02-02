@@ -241,3 +241,16 @@ def test_reducescatter_fusion_invalid_value_failed():
     with pytest.raises(KeyError):
         comm_fusion_dict = {"reducescatter": {"mode": "size"}}
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+
+
+def test_openstate_comm_fusion():
+    """
+    Feature: test_openstate_comm_fusion
+    Description: test openstate in comm_fusion
+    Expectation: success
+    """
+    comm_fusion_dict = {"openstate": False}
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+    assert auto_parallel_context().get_enable_all_reduce_fusion() is False
+    assert auto_parallel_context().get_enable_all_gather_fusion() is False
+    assert auto_parallel_context().get_enable_reduce_scatter_fusion() is False
