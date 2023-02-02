@@ -83,11 +83,11 @@ void Crop4DNoParallel(const float *input, float *output, const int *in_shape, co
   size_t in_dim1_end = offset_pad[1] + out_shape[1];
   size_t in_dim2_end = offset_pad[2] + out_shape[2];
   for (int i = offset_pad[0]; i < in_dim0_end; ++i) {
-    size_t dim0_offset = i * in_dim0_stride + offset_3;
+    size_t dim0_offset = (size_t)i * in_dim0_stride + offset_3;
     for (int j = offset_pad[1]; j < in_dim1_end; ++j) {
-      size_t dim1_offset = j * in_dim1_stride + dim0_offset;
+      size_t dim1_offset = (size_t)j * in_dim1_stride + dim0_offset;
       for (int k = offset_pad[2]; k < in_dim2_end; ++k) {
-        size_t in_offset = dim1_offset + k * in_dim2_stride;
+        size_t in_offset = dim1_offset + (size_t)k * in_dim2_stride;
         memcpy(output + out_offset, input + in_offset, copy_size);
         out_offset += copy_num;
       }

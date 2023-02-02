@@ -357,8 +357,9 @@ void QWithPosition(RelativePositionAttentionParameter *param, Matrix *q_mat, con
     }
     // Q_WITH_U perm [0,2,1,3]
     float *q_with_pu_trans = q2wq_with_pu_trans_mat->data_;
-    size_t q_with_pu_trans_data_size =
-      q2wq_with_pu_trans_mat->batch_ * q2wq_with_pu_trans_mat->row_ * q2wq_with_pu_trans_mat->col_ * sizeof(float);
+    size_t q_with_pu_trans_data_size = (size_t)(q2wq_with_pu_trans_mat->batch_) *
+                                       (size_t)(q2wq_with_pu_trans_mat->row_) * (size_t)(q2wq_with_pu_trans_mat->col_) *
+                                       sizeof(float);
     memset(q_with_pu_trans, 0, q_with_pu_trans_data_size);
     TransposeDimsFp32(q_with_pu, q_with_pu_trans, q_with_pos_trans_out_shape, &q_with_pos_trans_param, 0, 1);
   }
@@ -375,8 +376,9 @@ void QWithPosition(RelativePositionAttentionParameter *param, Matrix *q_mat, con
     }
     // Q_WITH_V perm [0,2,1,3]
     float *q_with_pv_trans = q2wq_with_pv_trans_mat->data_;
-    size_t q_with_pv_trans_data_size =
-      q2wq_with_pv_trans_mat->batch_ * q2wq_with_pv_trans_mat->row_ * q2wq_with_pv_trans_mat->col_ * sizeof(float);
+    size_t q_with_pv_trans_data_size = (size_t)(q2wq_with_pv_trans_mat->batch_) *
+                                       (size_t)(q2wq_with_pv_trans_mat->row_) * (size_t)(q2wq_with_pv_trans_mat->col_) *
+                                       sizeof(float);
     memset(q_with_pv_trans, 0, q_with_pv_trans_data_size);
     TransposeDimsFp32(q_with_pv, q_with_pv_trans, q_with_pos_trans_out_shape, &q_with_pos_trans_param, 0, 1);
   }
