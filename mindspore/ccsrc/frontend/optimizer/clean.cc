@@ -66,6 +66,24 @@ std::shared_ptr<T> GetAbstract(const AnfNodePtr &node) {
   return dyn_cast<T>(node->abstract());
 }
 
+bool CheckContainsDict(const AbstractBasePtr &abs) {
+  if (abs == nullptr) {
+    return false;
+  }
+  if (abs->isa<AbstractDictionary>()) {
+    return true;
+  }
+  if (abs->isa<AbstractSequence>()) {
+    auto abs_seq = abs->cast<AbstractSequencePtr>();
+    const auto &elements = abs_seq->elements();
+    if (std::any_of(elements.begin(), elements.end(),
+                    [](const AbstractBasePtr &element) { return CheckContainsDict(element); })) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // ===========================================================================
 // BaseRewriter provides a common framework for data struct simplify.
 // ===========================================================================
@@ -164,7 +182,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
  public:
   using ThisClass = SimplifyDataStructuresRewriter;
   SimplifyDataStructuresRewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager)
-      : BaseRewriter(root_graph, manager), is_dict_output_{IsDictOutput()} {}
+      : BaseRewriter(root_graph, manager), is_dict_output_{HasDictOutput()} {}
   ~SimplifyDataStructuresRewriter() override = default;
 
  protected:
@@ -347,13 +365,9 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     return new_node;
   }
 
-  bool IsDictOutput() const {
+  bool HasDictOutput() const {
     const AnfNodePtr &output = root_graph_->output();
-    auto abs_dict = GetAbstract<AbstractDictionary>(output);
-    if (abs_dict != nullptr) {
-      return true;
-    }
-    return false;
+    return CheckContainsDict(output->abstract());
   }
 
   // DictSetItem --> PyExecute()
