@@ -96,7 +96,8 @@ REG_ADPT_DESC(Acos, kNameACos, ADPT_DESC(Acos))
 INPUT_MAP(AcosGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
 ATTR_MAP(AcosGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(AcosGrad) = {{0, OUTPUT_DESC(z)}};
-REG_ADPT_DESC(AcosGrad, kNameACosGrad, ADPT_DESC(AcosGrad))
+REG_ADPT_DESC(ACosGrad, kNameACosGrad, ADPT_DESC(AcosGrad))
+REG_ADPT_DESC(AcosGrad, kNameAcosGrad, ADPT_DESC(AcosGrad))
 
 // Acosh
 INPUT_MAP(Acosh) = {{1, INPUT_DESC(x)}};

@@ -238,6 +238,7 @@ constexpr const char kNameCos[] = "Cos";
 constexpr const char kNameCosh[] = "Cosh";
 constexpr const char kNameACos[] = "ACos";
 constexpr const char kNameACosGrad[] = "ACosGrad";
+constexpr const char kNameAcosGrad[] = "AcosGrad";
 constexpr const char kNameFloorDiv[] = "FloorDiv";
 constexpr const char kNameSin[] = "Sin";
 constexpr const char kNameSinh[] = "Sinh";
