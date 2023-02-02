@@ -682,7 +682,7 @@ TEST_F(TestPrim, test_list_getitem) {
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
 
-  auto prim = std::make_shared<Primitive>("list_getitem");
+  auto prim = std::make_shared<Primitive>("ListGetItem");
   FuncGraphPtr func_graph = MakeFuncGraph(prim, 2);
 
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).eval_result->abstract();

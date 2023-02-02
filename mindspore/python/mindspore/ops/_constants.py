@@ -18,7 +18,6 @@
 """ Define constants"""
 
 # Arithmetic
-kScalarFloordiv = "ScalarFloordiv"
 kScalarPow = "ScalarPow"
 kScalarTrunc = "ScalarTrunc"
 kScalarFloor = "ScalarFloor"
