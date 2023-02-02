@@ -133,6 +133,10 @@ class TrtLogger : public nvinfer1::ILogger {
       {Severity::kERROR, {MsLogLevel::kError, google::GLOG_ERROR, "ERROR"}},
       {Severity::kINTERNAL_ERROR, {MsLogLevel::kError, google::GLOG_ERROR, "INTERNAL ERROR"}}};
 
+    static const size_t kMsLogLevelIndex = 0;
+    static const size_t kGoogleLogLevelIndex = 1;
+    static const size_t kLogLevelDescriptionIndex = 2;
+
     auto iter = logger_map.find(severity);
     if (iter == logger_map.end()) {
       google::LogMessage("", 0, google::GLOG_WARNING).stream() << "Unrecognized severity type: " << msg << std::endl;
@@ -141,12 +145,12 @@ class TrtLogger : public nvinfer1::ILogger {
 
     auto level = iter->second;
     // discard log
-    if (std::get<0>(level) < log_level_) {
+    if (std::get<kMsLogLevelIndex>(level) < log_level_) {
       return;
     }
 
-    google::LogMessage("", 0, std::get<1>(level)).stream()
-      << "[TensorRT " << std::get<2>(level) << "] " << msg << std::endl;
+    google::LogMessage("", 0, std::get<kGoogleLogLevelIndex>(level)).stream()
+      << "[TensorRT " << std::get<kLogLevelDescriptionIndex>(level) << "] " << msg << std::endl;
 #undef google
 #endif  // USE_GLOG
   }
