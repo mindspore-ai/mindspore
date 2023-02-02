@@ -25,3 +25,16 @@ def add_net(x1, x2, x3, x4, x5):
     sum4 = add(sum3, x5)
     ret = mul(sum4, sum1)
     return ret
+
+
+all_reduce = P.AllReduce().add_prim_attr("fusion", 1)
+mul = P.Mul()
+
+
+def all_reduce_net(x1, x2, x3):
+    product = mul(x1, x2)
+    sum1 = add(x2, x3)
+    reduce1 = all_reduce(product)
+    reduce2 = all_reduce(sum1)
+    res = add(reduce1, reduce2)
+    return res
