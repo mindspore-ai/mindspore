@@ -32,37 +32,37 @@ namespace mindspore {
 namespace device {
 namespace gpu {
 #define CHECK_OP_RET_WITH_EXCEPT(expression, message)                                 \
-  {                                                                                   \
+  do {                                                                                \
     bool success = (expression);                                                      \
     if (!success) {                                                                   \
       MS_LOG(EXCEPTION) << "Op Error: " << message << " | Error Number: " << success; \
     }                                                                                 \
-  }
+  } while (0);
 
 #define CHECK_OP_RET_WITH_EXCEPT_TRANCE(node, expression, message)                                  \
-  {                                                                                                 \
+  do {                                                                                              \
     bool success = (expression);                                                                    \
     if (!success) {                                                                                 \
       MS_LOG(EXCEPTION) << "Op Error: " << message << " | " << trace::DumpSourceLines(node.lock()); \
     }                                                                                               \
-  }
+  } while (0);
 
 #define CHECK_OP_RET_WITH_ERROR(expression, message)                              \
-  {                                                                               \
+  do {                                                                            \
     bool success = (expression);                                                  \
     if (!success) {                                                               \
       MS_LOG(ERROR) << "Op Error: " << message << " | Error Number: " << success; \
     }                                                                             \
-  }
+  } while (0);
 
 #define CHECK_RET_WITH_RETURN_ERROR(expression, message) \
-  {                                                      \
+  do {                                                   \
     bool success = (expression);                         \
     if (!success) {                                      \
       MS_LOG(ERROR) << message;                          \
       return false;                                      \
     }                                                    \
-  }
+  } while (0);
 
 #define CHECK_CUDA_RET_WITH_ERROR(node, expression, message)                                                           \
   do {                                                                                                                 \
@@ -305,13 +305,13 @@ inline const char *cuBlasGetErrorString(cublasStatus_t status) {
 }
 
 #define CHECK_CURAND_RET_WITH_EXCEPT(expression, message)                                           \
-  {                                                                                                 \
+  do {                                                                                              \
     curandStatus_t status = (expression);                                                           \
     if (status != CURAND_STATUS_SUCCESS) {                                                          \
       MS_LOG(EXCEPTION) << "CUDA curand Error: " << message << " | curandStatus: " << status << " " \
                         << mindspore::device::gpu::CurandGetErrorString(status);                    \
     }                                                                                               \
-  }
+  } while (0);
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
