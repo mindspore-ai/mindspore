@@ -228,8 +228,11 @@ int QuantParamParser::ParseTargetDevice(const std::string &target_device_str, qu
   } else if (target_device_str == "DSP") {
     (*target_device) = quant::DSP;
     return RET_OK;
+  } else if (target_device_str == "ASCEND") {
+    (*target_device) = quant::ASCEND;
+    return RET_OK;
   } else {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: target_device must be KIRIN, NVGPU or DSP.";
+    MS_LOG(ERROR) << "INPUT ILLEGAL: target_device must be KIRIN|NVGPU|DSP|ASCEND.";
     return RET_INPUT_PARAM_INVALID;
   }
 }

@@ -279,10 +279,6 @@ int PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<Convert
 
 int DoSingleGraphQuantize(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
   CHECK_NULL_RETURN(param);
-  if (param->commonQuantParam.quant_type == quant::QUANT_NONE) {
-    return RET_OK;
-  }
-
   int status = PrepareQuantize(func_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "PrepareQuantize failed.";
@@ -334,16 +330,18 @@ int DoSingleGraphQuantize(const FuncGraphPtr &func_graph, const std::shared_ptr<
     }
   }
 
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  CHECK_NULL_RETURN(optimizer);
-  auto fusion_pm = std::make_shared<opt::LitePassManager>("fusion pass manager after quant", false);
-  CHECK_NULL_RETURN(fusion_pm);
-  fusion_pm->AddPass(std::make_shared<opt::QuantDtypeCastFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
-  optimizer->AddPassManager(fusion_pm);
-  if (optimizer->Optimize(func_graph) == nullptr) {
-    MS_LOG(ERROR) << "run cast node fusion failed.";
-    return RET_ERROR;
+  if (param->fullQuantParam.target_device != ASCEND) {
+    auto optimizer = std::make_shared<opt::GraphOptimizer>();
+    CHECK_NULL_RETURN(optimizer);
+    auto fusion_pm = std::make_shared<opt::LitePassManager>("fusion pass manager after quant", false);
+    CHECK_NULL_RETURN(fusion_pm);
+    fusion_pm->AddPass(std::make_shared<opt::QuantDtypeCastFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
+    optimizer->AddPassManager(fusion_pm);
+    if (optimizer->Optimize(func_graph) == nullptr) {
+      MS_LOG(ERROR) << "run cast node fusion failed.";
+      return RET_ERROR;
+    }
   }
 
   if (param->commonQuantParam.is_debug) {
@@ -357,6 +355,9 @@ int DoSingleGraphQuantize(const FuncGraphPtr &func_graph, const std::shared_ptr<
 }
 
 int QuantizationOptimizer::Run(const mindspore::FuncGraphPtr &func_graph) {
+  if (param_->commonQuantParam.quant_type == quant::QUANT_NONE || param_->fullQuantParam.target_device == ASCEND) {
+    return RET_OK;
+  }
   std::set<FuncGraphPtr> all_func_graphs{};
   quant::GetFuncGraphs(func_graph, &all_func_graphs);
   // Support for multi-subgraph models

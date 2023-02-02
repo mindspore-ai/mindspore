@@ -104,6 +104,8 @@ class FullQuantQuantizer : public Quantizer {
 
   void InitDSPConfig();
 
+  void InitAscendConfig();
+
   int MarkQuantNode(const FuncGraphPtr &func_graph);
 
   int QuantWithKL();

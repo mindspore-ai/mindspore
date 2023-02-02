@@ -660,14 +660,13 @@ MSKernelCallBack BiasCorrectionStrategy::GetNVGPUInt8AfterCallBack() {
 int BiasCorrectionStrategy::DoBiasCorrection(const FuncGraphPtr &quant_func_graph) {
   int status;
   switch (param_->fullQuantParam.target_device) {
+    case DSP:
+    case ASCEND:
     case CPU:
       status = DoCPUBiasCorrection(quant_func_graph);
       break;
     case NVGPU:
       status = DoNVGPUBiasCorrection(quant_func_graph);
-      break;
-    case DSP:
-      status = DoCPUBiasCorrection(quant_func_graph);
       break;
     default:
       MS_LOG(ERROR) << "Unsupported target device " << param_->fullQuantParam.target_device << " for bias correction.";

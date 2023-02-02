@@ -506,6 +506,18 @@ void FullQuantQuantizer::InitDSPConfig() {
   support_activation_ = {RELU, RELU6, SIGMOID, TANH};
 }
 
+void FullQuantQuantizer::InitAscendConfig() {
+  // `kTypeUnknown` represents the original data type
+  init_param_.activation_quant_data_type_ = kNumberTypeInt8;
+  init_param_.activation_target_data_type_ = kNumberTypeInt8;  // It will update to Int32 in acl pass
+  init_param_.weight_data_type_ = kNumberTypeInt8;
+  init_param_.activation_symmetric_ = false;
+  init_param_.weight_channel_symmetric_ = true;
+  init_param_.weight_layer_symmetric_ = false;
+  support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimFullConnection};
+  per_channel_ops_ = {prim::kPrimConv2DFusion};
+}
+
 void FullQuantQuantizer::InitQMinMax() {
   MS_ASSERT(init_param_.activation_quant_data_type_ == kNumberTypeInt8 ||
             init_param_.activation_quant_data_type_ == kNumberTypeUInt8);
@@ -571,6 +583,9 @@ int FullQuantQuantizer::InitDeviceConfig(const FuncGraphPtr &func_graph) {
       break;
     case DSP:
       InitDSPConfig();
+      break;
+    case ASCEND:
+      InitAscendConfig();
       break;
     default:
       MS_LOG(ERROR) << " Unsupported device " << param_->fullQuantParam.target_device;
@@ -693,7 +708,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   }
 
   if (init_param_.activation_target_data_type_ == kNumberTypeInt8 ||
-      init_param_.activation_target_data_type_ == kNumberTypeUInt8) {
+      init_param_.activation_target_data_type_ == kNumberTypeUInt8) {  // ASCEND bias correction also need it.
     // add quant_cast
     for (auto &cnode : func_graph->GetOrderedCnodes()) {
       quant::QuantType curr_quant_type;

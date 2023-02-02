@@ -39,6 +39,16 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "mindspore/core/utils/ms_utils_secure.h"
+#include "mindspore/ccsrc/backend/common/optimizer/graph_optimizer.h"
+#include "tools/optimizer/fusion/conv_biasadd_fusion.h"
+#include "tools/optimizer/fusion/conv_bn_fusion.h"
+#include "tools/optimizer/fusion/conv_scale_fusion.h"
+#include "tools/optimizer/common/pass_manager_extends.h"
+#include "tools/optimizer/graph/clip_convert_activation_pass.h"
+#include "tools/optimizer/fusion/transpose_fusion.h"
+#include "tools/converter/quantizer/full_quant_quantizer.h"
+#include "tools/converter/quantizer/insert_quant_node_manager.h"
+#include "tools/converter/parser/unify_format.h"
 
 namespace mindspore {
 namespace opt {
@@ -137,7 +147,8 @@ STATUS PreProcForOnnx(const FuncGraphPtr &func_graph, bool offline) {
 }  // namespace
 
 AclPassImpl::AclPassImpl(const std::shared_ptr<ConverterPara> &param)
-    : fmk_type_(param->fmk_type),
+    : param_(param),
+      fmk_type_(param->fmk_type),
       export_mindir_(param->export_mindir),
       user_options_cfg_(std::move(param->aclModelOptionCfgParam)),
       om_parameter_(nullptr),
@@ -678,6 +689,128 @@ STATUS AclPassImpl::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, cons
   return lite::RET_OK;
 }
 
+STATUS AclPassImpl::PreQuantization(const FuncGraphPtr &func_graph) {
+  auto value = func_graph->get_attr(ops::kFormat);
+  if (value == nullptr) {
+    auto unify_format = std::make_shared<lite::UnifyFormatToNHWC>(fmk_type_, false, param_->export_mindir);
+    CHECK_NULL_RETURN(unify_format);
+    if (!unify_format->Run(func_graph)) {
+      MS_LOG(ERROR) << "Run insert transpose failed.";
+      return lite::RET_ERROR;
+    }
+    if (!lite::RunOptimizerPass(func_graph, {"DecreaseTransposeAlgo"})) {
+      MS_LOG(ERROR) << "Run ToNCHWFormat pass failed";
+      return lite::RET_ERROR;
+    }
+  }
+  if (value == nullptr || GetValue<int64_t>(value) == mindspore::NCHW) {
+    if (!lite::RunOptimizerPass(func_graph, {kToNHWCFormatPass, "DecreaseTransposeAlgo"})) {
+      MS_LOG(ERROR) << "Run ToNCHWFormat pass failed";
+      return lite::RET_ERROR;
+    }
+  }
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  CHECK_NULL_RETURN(optimizer);
+  auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
+  CHECK_NULL_RETURN(fusion_pm);
+  std::vector<opt::PassPtr> fusions{
+    std::make_shared<opt::ClipConvertActivationPass>(),
+    std::make_shared<opt::ConvBiasaddFusion>(),
+    std::make_shared<opt::ConvBatchNormFusion>(param_->fmk_type),
+    std::make_shared<opt::ConvScaleFusion>(param_->fmk_type),
+    std::make_shared<opt::TransposeFusion>(),
+  };
+  for (size_t index = 0; index < fusions.size(); index++) {
+    auto pass_ptr = fusions.at(index);
+    fusion_pm->AddPass(pass_ptr);
+  }
+  optimizer->AddPassManager(fusion_pm);
+  if (optimizer->Optimize(func_graph) == nullptr) {
+    MS_LOG(ERROR) << "run op fusion failed.";
+    return RET_ERROR;
+  }
+  if (!lite::RunOptimizerPass(func_graph, {kInferShapePass})) {
+    MS_LOG(ERROR) << "Infer shape pass failed.";
+    return lite::RET_ERROR;
+  }
+  return RET_OK;
+}
+
+STATUS AclPassImpl::PostQuantization(const FuncGraphPtr &func_graph) {
+  // Remove QuantDtypeCast & unused format
+  for (auto &cnode : func_graph->GetOrderedCnodes()) {
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+      auto manager = func_graph->manager();
+      if (manager == nullptr) {
+        manager = Manage(func_graph, true);
+      }
+      CHECK_NULL_RETURN(manager);
+      auto node_users = manager->node_users()[cnode];
+      for (auto &node_user : node_users) {
+        manager->SetEdge(node_user.first, node_user.second, cnode->input(1));
+      }
+    }
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    CHECK_NULL_RETURN(prim);
+    prim->DelAttr("io_format");
+  }
+  auto value = func_graph->get_attr(ops::kFormat);
+  if (value == nullptr || GetValue<int64_t>(value) == mindspore::NHWC) {
+    if (!lite::RunOptimizerPass(func_graph, {kToNCHWFormatPass, "DecreaseTransposeAlgo"})) {
+      MS_LOG(ERROR) << "To nchw format failed.";
+      return lite::RET_ERROR;
+    }
+  }
+  // Insert QuantDtypeCast for conv & fc
+  for (auto &cnode : func_graph->GetOrderedCnodes()) {
+    lite::quant::QuantType curr_quant_type;
+    if (GetQuantType(cnode, &curr_quant_type) != RET_OK) {
+      MS_LOG(ERROR) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
+      return RET_ERROR;
+    }
+    if (curr_quant_type != lite::quant::QUANT_ALL) {
+      continue;
+    }
+    lite::quant::InsertQuantNodeManager insert_node_manager;
+    auto ret = insert_node_manager.InsertAscendQuantNode(func_graph, cnode);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Insert AscendQuant node failed, cnode name: " << cnode->fullname_with_scope();
+      return ret;
+    }
+    ret = insert_node_manager.InsertAscendDeQuantNode(func_graph, cnode);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Insert AscendDeQuant node failed, cnode name: " << cnode->fullname_with_scope();
+      return ret;
+    }
+    ret = lite::UpdateDataType(cnode, kNumberTypeInt32);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Update datatype failed, cnode name: " << cnode->fullname_with_scope();
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+
+STATUS AclPassImpl::Quantization(const FuncGraphPtr &func_graph) {
+  auto ret = PreQuantization(func_graph);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Pre quantization execution failed.";
+    return ret;
+  }
+  lite::quant::FullQuantQuantizer quantizer(param_);
+  ret = quantizer.DoQuantize(func_graph);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Ascend full quant execution failed.";
+    return ret;
+  }
+  ret = PostQuantization(func_graph);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Post quantization execution failed..";
+    return ret;
+  }
+  return lite::RET_OK;
+}
+
 bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Acl pass run start.";
   MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "func_graph is nullptr.");
@@ -686,6 +819,13 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
 
   if (PreProcGraph(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Pre proc graph failed.";
+    return false;
+  }
+
+  bool is_ascend_quant = param_->commonQuantParam.quant_type == lite::quant::QUANT_ALL &&
+                         param_->fullQuantParam.target_device == lite::quant::ASCEND;
+  if (is_ascend_quant && Quantization(func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Quantization failed.";
     return false;
   }
 
