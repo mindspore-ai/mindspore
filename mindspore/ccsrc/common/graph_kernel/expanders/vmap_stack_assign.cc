@@ -25,7 +25,7 @@ constexpr size_t kInputLowerLimit = 4;
 constexpr size_t kStackedParamIndex = 0;
 constexpr size_t kFirstParamIndex = 1;
 constexpr size_t kStackAxis = 0;
-constexpr size_t kNumber1 = 1;
+constexpr int64_t kNumber1 = 1;
 constexpr size_t kNumber2 = 2;
 
 class VmapStackAssign : public OpDesc {
@@ -37,7 +37,7 @@ class VmapStackAssign : public OpDesc {
   bool CheckInputs() override {
     inputs_size_ = inputs_info_.size();
     if (inputs_size_ <= kInputLowerLimit) {
-      MS_LOG(INFO) << "In VmapUnstackAssign, inputs size must be greater than 4, but got " << inputs_size_ << ".";
+      MS_LOG(INFO) << "In VmapStackAssign, inputs size must be greater than 4, but got " << inputs_size_ << ".";
       return false;
     }
 
