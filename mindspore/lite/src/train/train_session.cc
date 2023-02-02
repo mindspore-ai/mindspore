@@ -606,7 +606,7 @@ int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &a
     return ret;
   }
 
-  if (train_mode_ && virtual_batch_multiplier_) {
+  if (train_mode_ && (virtual_batch_multiplier_ != 0)) {
     virtual_batch_idx_++;
     if (virtual_batch_idx_ >= virtual_batch_multiplier_) {
       virtual_batch_idx_ = 0;

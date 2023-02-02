@@ -30,7 +30,7 @@ int ResizeNearestNeighborGrad(const float *in_addr, float *out_addr, int batch_s
       for (size_t i = 0; i < in_hw_size; ++i) {
         size_t in_y = i / param->in_width_;
         size_t in_x = i % param->in_width_;
-        for (int32_t c = 0; c < channel; ++c) {
+        for (size_t c = 0; c < (size_t)channel; ++c) {
           size_t out_y = MSMIN(
             (align_corners) ? (size_t)roundf(in_y * param->height_scale_) : (size_t)floorf(in_y * param->height_scale_),
             param->out_height_ - 1);
@@ -42,12 +42,12 @@ int ResizeNearestNeighborGrad(const float *in_addr, float *out_addr, int batch_s
           out_addr[out_offset] += in_addr[in_offset];
         }
       }
-      out_addr += out_hw_size * (size_t)channel;
-      in_addr += in_hw_size * (size_t)channel;
+      out_addr += out_hw_size * channel;
+      in_addr += in_hw_size * channel;
     }
   } else if (format == Format_NCHW) {
     for (int32_t b = 0; b < batch_size; ++b) {
-      for (int32_t c = 0; c < channel; ++c) {
+      for (size_t c = 0; c < (size_t)channel; ++c) {
         for (size_t h = 0; h < param->in_height_; ++h) {
           size_t out_y =
             MSMIN((align_corners) ? (size_t)roundf(h * param->height_scale_) : (size_t)floorf(h * param->height_scale_),
@@ -78,7 +78,7 @@ int ResizeBiLinearGrad(const float *in_addr, float *out_addr, int batch_size, in
       for (size_t i = 0; i < in_hw_size; ++i) {
         size_t h = i / param->in_width_;
         size_t w = i % param->in_width_;
-        for (int32_t c = 0; c < channel; ++c) {
+        for (size_t c = 0; c < (size_t)channel; ++c) {
           float in_y = (float)h * param->height_scale_;
           size_t top_y_index = MSMAX((size_t)(floorf(in_y)), (size_t)(0));
           size_t bottom_y_index = MSMIN((size_t)(ceilf(in_y)), param->out_height_ - 1);
@@ -105,8 +105,8 @@ int ResizeBiLinearGrad(const float *in_addr, float *out_addr, int batch_size, in
           out_addr[out_offset_bottom_y_right_x] += in_addr[in_offset] * (float)(y_lerp * x_lerp);
         }
       }
-      out_addr += out_hw_size * (size_t)channel;
-      in_addr += in_hw_size * (size_t)channel;
+      out_addr += out_hw_size * channel;
+      in_addr += in_hw_size * channel;
     }
   } else if (format == Format_NCHW) {
     size_t in_height = param->in_height_;
