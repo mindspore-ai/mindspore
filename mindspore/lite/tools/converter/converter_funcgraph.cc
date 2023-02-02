@@ -317,26 +317,6 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
 int ConverterFuncGraph::Save(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph, void **buff,
                              size_t *size) {
   mindspore::lite::MindIRSerializer serializer;
-  auto fv_count = 0;
-  std::vector<AnfNodePtr> params;
-  std::vector<AnfNodePtr> reorder_param;
-  reorder_param.reserve(func_graph->parameters().size());
-  for (const auto &node : func_graph->parameters()) {
-    auto param_node = node->cast<ParameterPtr>();
-    if (param_node == nullptr) {
-      MS_LOG(ERROR) << "The parameters() in func graph should be all Parameter Node. but got " << node->DebugString();
-      return RET_ERROR;
-    }
-    if (param_node->has_default()) {
-      (void)params.emplace_back(param_node);
-      ++fv_count;
-      continue;
-    }
-    (void)reorder_param.emplace_back(param_node);
-  }
-  std::copy(params.begin(), params.end(), std::back_inserter(reorder_param));
-  func_graph->set_parameters(reorder_param);
-  func_graph->set_fv_param_count(fv_count);
   auto ret = serializer.Save(param, func_graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MindIR serialize fail";
