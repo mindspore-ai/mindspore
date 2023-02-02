@@ -119,7 +119,7 @@ def test_bitwise_operator_error_list_input():
     net = Net()
     with pytest.raises(RuntimeError) as err:
         net()
-    assert "For operation 'bitwise_and'" in str(err.value)
+    assert "For operation 'MetaFuncGraph-bitwise_and'" in str(err.value)
     assert "The 1-th argument type 'List' is not supported now." in str(err.value)
     assert "<Tensor, Number>" in str(err.value)
 

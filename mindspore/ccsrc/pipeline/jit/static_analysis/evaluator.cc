@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "frontend/operator/graph_bprop/bprop_meta_func_graph.h"
+#include "frontend/optimizer/ad/dfunctor.h"
 
 namespace mindspore {
 namespace abstract {
@@ -158,6 +159,10 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
     current_stack_frame = stack_frames.top();
     if (current_stack_frame->Done()) {
       MS_EXCEPTION_IF_NULL(abstract);
+      if (current_stack_frame->func_graph()->has_flag(FUNC_GRAPH_FLAG_PRIMAL_OF_BPROP)) {
+        // Set all fprop outputs as used.
+        SetSequenceElementsUseFlagsRecursively(abstract, true);
+      }
       MS_LOG(DEBUG) << "[" << this << "/StackFrame] Leave from func graph, " << current_stack_frame;
       stack_frames.pop();
       if (stack_frames.empty()) {
@@ -237,6 +242,10 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
     MS_LOG(DEBUG) << GetInferThread() << "Eval ( " << node_conf->ToString() << ") = " << abstract->ToString();
   }
   MS_EXCEPTION_IF_NULL(abstract);
+  if (fg->has_flag(FUNC_GRAPH_FLAG_PRIMAL_OF_BPROP)) {
+    // Set all fprop outputs as used.
+    SetSequenceElementsUseFlagsRecursively(abstract, true);
+  }
   return abstract;
 }
 
@@ -433,6 +442,7 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   if (iter != func_graph_cache_.end()) {
     return iter->second;
   }
+  meta_func_graph_->GetChecker("check_infer_inputs").Execute(args_abs_list);
 
   MS_EXCEPTION_IF_NULL(meta_func_graph_);
   FuncGraphPtr generated_func_graph;
@@ -464,7 +474,6 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
   AbstractBasePtrList args_abs_list = EvaluateArguments(args_conf_list);
   args_abs_list = NormalizeArgs(args_abs_list);
   args_abs_list = BroadenUndeterminedArgs(args_abs_list, engine);
-
   MS_LOG(DEBUG) << EvalEntryLogging(shared_from_base<Evaluator>(), args_abs_list, out_conf);
   EvalResultPtr eval_result = nullptr;
   const std::string &evaluator_name = ToString();

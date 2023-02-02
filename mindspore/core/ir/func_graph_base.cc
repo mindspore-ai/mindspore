@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,20 @@ FuncGraphLoopBreaker::~FuncGraphLoopBreaker() {
 FuncGraphLoopBreaker &FuncGraphLoopBreaker::Inst() {
   static FuncGraphLoopBreaker mgr;
   return mgr;
+}
+
+MS_CORE_API const FuncGraphChecker &FuncGraphBase::GetChecker(const std::string &checker_name) {
+  auto it = checkers_.find(checker_name);
+  if (it == checkers_.cend()) {
+    static FuncGraphChecker empty_checker;
+    return empty_checker;
+  }
+  return *(it->second);
+}
+
+MS_CORE_API void FuncGraphBase::AddChecker(const std::string &checker_name,
+                                           const std::shared_ptr<FuncGraphChecker> &new_checker) {
+  (void)checkers_.emplace(checker_name, new_checker);
 }
 
 void FuncGraphLoopBreaker::BreakLoop() {
