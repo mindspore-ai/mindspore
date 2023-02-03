@@ -75,11 +75,17 @@ std::string GetCellId(const py::object &obj, const py::args &args, const InputAr
 }
 
 std::string GetFnInfoByPyObj(const py::object &obj) {
-  auto module_name = obj.attr("__module__").cast<std::string>();
-  auto fn_name = obj.attr("__name__").cast<std::string>();
-  auto filename = obj.attr("__code__").attr("co_filename").cast<std::string>();
-  auto code_lineno = py::str(obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
-  return (module_name + "_" + fn_name + "_" + filename + "_" + code_lineno);
+  std::string fn_info = obj.attr("__module__").cast<std::string>();
+  fn_info += "_" + obj.attr("__name__").cast<std::string>();
+  fn_info += "_" + obj.attr("__code__").attr("co_filename").cast<std::string>();
+  fn_info += "_" + py::str(obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
+  if (py::hasattr(obj, "__warpped__")) {
+    auto warpped_obj = obj.attr("__warpped__");
+    fn_info += "_" + warpped_obj.attr("__name__").cast<std::string>();
+    fn_info += "_" + warpped_obj.attr("__code__").attr("co_filename").cast<std::string>();
+    fn_info += "_" + py::str(warpped_obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
+  }
+  return fn_info;
 }
 
 InputArgsInfoPtr ParsePyArgsToInputArgsInfo(const py::object &obj, const py::args &args, size_t obj_order,
