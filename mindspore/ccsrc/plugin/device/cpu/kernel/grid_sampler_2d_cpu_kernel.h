@@ -67,12 +67,25 @@ class GridSampler2DCpuKernelMod : public NativeCpuKernelMod {
                    const size_t &seq);
 
   template <typename T>
-  T GridSamplerComputerSourceIndex(T coord, int64_t size, const std::string &padding_mode, bool align_corners) const;
+  T GridSamplerComputeSourceIndex(T coord, int64_t size, const std::string &padding_mode, bool align_corners) const;
 
   template <typename T>
   T ReflectCoordinates(T coord, int64_t twice_low, int64_t twice_high) const;
 
   bool WithinBounds2D(int64_t h, int64_t w, int64_t H, int64_t W) const;
+
+  void Call2Half(const float16 *x_data_addr, float16 *y_data_addr, const float16 *grid_data_addr,
+                 std::vector<int64_t> x_dims, std::vector<int64_t> y_dims, int64_t *y_stride, int64_t *x_stride,
+                 const int64_t *grid_stride, std::string interpolation_mode, std::string padding_mode,
+                 bool align_corners);
+
+  void NearestHalf(float x, float y, const float16 *x_data_addr, float16 *y_data_addr, int64_t y_c,
+                   std::vector<int64_t> x_dims, int64_t *y_stride, const int64_t *x_stride, int64_t x_ptr_NC,
+                   int64_t y_ptr_NCHW);
+
+  void BilinearHalf(float x, float y, const float16 *x_data_addr, float16 *y_data_addr, int64_t y_c,
+                    std::vector<int64_t> x_dims, int64_t *y_stride, int64_t *x_stride, int64_t x_ptr_NC,
+                    int64_t y_ptr_NCHW);
 };
 }  // namespace kernel
 }  // namespace mindspore
