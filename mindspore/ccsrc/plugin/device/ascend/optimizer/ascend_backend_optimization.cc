@@ -505,6 +505,7 @@ void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> 
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
+  other_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -548,6 +549,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
   other_pm->AddPass(std::make_shared<SplitOpOptimizer>());
   other_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
+  other_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -690,7 +692,6 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AllToAllUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
 
   optimizer->AddPassManager(unify_mindir_pm);
   (void)optimizer->Optimize(kernel_graph);
