@@ -38,7 +38,7 @@ constexpr size_t kMaxTransposeSerialSize = 50331648;
 void TransposeFwdCpuKernelMod::CheckPermValue() {
   for (auto &p : perm_) {
     p = (p >= 0) ? p : (SizeToLong(perm_.size()) + p);
-    if (p < 0) {
+    if (std::abs(p) >= SizeToLong(input_shape_.size())) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value must be in [-" << perm_.size() << ", "
                         << (perm_.size() - 1) << "], but got " << p;
     }

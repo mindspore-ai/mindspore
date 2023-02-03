@@ -99,6 +99,10 @@ class TransposeInfer : public abstract::OpInferBase {
 
     for (auto p : p_value_raw) {
       p = (p >= 0) ? p : (p_value_raw.size() + p);
+      if (std::abs(p) >= SizeToLong(x_shape.size())) {
+        MS_EXCEPTION(ValueError) << "Perm value can not exceed shape range, must be in [0, " << (x_shape.size() - 1)
+                                 << "], but got perm:" << p;
+      }
       p_value.emplace_back(p);
     }
     if (x_shape.size() != p_value.size()) {
