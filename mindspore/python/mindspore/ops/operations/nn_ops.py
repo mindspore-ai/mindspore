@@ -5397,7 +5397,7 @@ class KLDivLoss(Primitive):
         elif device_target == "GPU":
             support_mode = ['none', 'mean', 'sum']
         elif device_target == "Ascend":
-            support_mode = ['none', 'batchmean', 'sum']
+            support_mode = ['none', 'batchmean', 'sum', 'mean']
         else:
             raise ValueError(f"'{self.name}' unknown device target: '{device_target}'")
 
@@ -8689,10 +8689,10 @@ class SparseApplyCenteredRMSProp(Primitive):
     """
 
     __mindspore_signature__ = (
-        sig.make_sig('var', dtype=sig.sig_dtype.T),
-        sig.make_sig('mg', dtype=sig.sig_dtype.T),
-        sig.make_sig('ms', dtype=sig.sig_dtype.T),
-        sig.make_sig('mom', dtype=sig.sig_dtype.T),
+        sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('mg', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('ms', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('mom', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('lr', dtype=sig.sig_dtype.T),
         sig.make_sig('rho', dtype=sig.sig_dtype.T),
         sig.make_sig('momentum', dtype=sig.sig_dtype.T),
@@ -9957,7 +9957,7 @@ class SparseApplyProximalGradientDescent(Primitive):
     """
 
     __mindspore_signature__ = (
-        sig.make_sig('var', dtype=sig.sig_dtype.T),
+        sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('alpha', dtype=sig.sig_dtype.T),
         sig.make_sig('l1', dtype=sig.sig_dtype.T),
         sig.make_sig('l2', dtype=sig.sig_dtype.T),
