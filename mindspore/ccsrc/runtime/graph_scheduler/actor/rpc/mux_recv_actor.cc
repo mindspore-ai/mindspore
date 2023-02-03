@@ -89,12 +89,27 @@ void MuxRecvActor::ParseFinalizeReqData(size_t data_len, const MessageBase *cons
   }
 }
 
+void MuxRecvActor::Clear() {
+  Finalize();
+  RecvActor::Clear();
+}
+
 void MuxRecvActor::Finalize() {
   std::unique_lock<std::mutex> lock(context_mtx_);
+  if (finalized_) {
+    return;
+  }
+
   finalized_ = true;
   is_context_valid_ = true;
 
   op_context_ = nullptr;
+  context_cv_.notify_all();
+}
+
+void MuxRecvActor::StopRpcAtException() {
+  std::unique_lock<std::mutex> lock(context_mtx_);
+  is_exception_thrown_ = true;
   context_cv_.notify_all();
 }
 }  // namespace runtime

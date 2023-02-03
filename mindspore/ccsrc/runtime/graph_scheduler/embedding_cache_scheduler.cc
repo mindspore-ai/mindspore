@@ -453,7 +453,8 @@ void EmbeddingCacheScheduler::Finalize(bool sync_embedding_table) {
 
   MS_EXCEPTION_IF_NULL(embedding_cache_prefetch_actor_);
   // Stop the embedding cache prefetch_actor.
-  embedding_cache_prefetch_actor_->Finalize();
+  bool finalize_remote = sync_embedding_table;
+  embedding_cache_prefetch_actor_->Finalize(finalize_remote);
 
   embedding_cache_table_manager.Finalize();
 
