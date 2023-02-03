@@ -95,6 +95,8 @@ uint32_t ScatterNdUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 
   switch (data_type_var) {
+    case DT_BOOL:
+      return DTYPE_CHOOSE<bool>(ctx);
     case DT_INT8:
       return DTYPE_CHOOSE<int8_t>(ctx);
     case DT_INT16:
