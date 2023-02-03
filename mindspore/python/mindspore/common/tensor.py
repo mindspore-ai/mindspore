@@ -2521,11 +2521,11 @@ class Tensor(Tensor_):
         elif offset != 0:
             e = e.astype(mstype.float32)
             if offset > 0:
-                e_left = tensor_operator_registry.get('fill')(dtype, (n, offset), 0)
+                e_left = tensor_operator_registry.get('fill')(mstype.float32, (n, offset), 0)
                 e_right = e[..., 0:m - offset:1]
                 e = tensor_operator_registry.get('concatenate')(1)((e_left, e_right)).astype(dtype)
             elif offset < 0:
-                e_upper = tensor_operator_registry.get('fill')(dtype, (-offset, m), 0)
+                e_upper = tensor_operator_registry.get('fill')(mstype.float32, (-offset, m), 0)
                 e_lower = e[0:n + offset:1, ...]
                 e = tensor_operator_registry.get('concatenate')(0)((e_upper, e_lower)).astype(dtype)
         e = tensor_operator_registry.get('broadcast_to')(shape)(e)
