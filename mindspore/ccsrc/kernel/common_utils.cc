@@ -1989,7 +1989,6 @@ static const mindspore::HashMap<std::string, std::set<int64_t>> try_get_value_in
   {kTileOpName, ShapeSet{1}},
   {kConv2DBackpropFilterOpName, ShapeSet{2}},
   {kConv2DBackpropInputOpName, ShapeSet{2}},
-  {kMatrixDiagPartV3OpName, ShapeSet{1, 2}},
 };
 
 std::set<int64_t> GetShapeSetFromResizeMap(const CNodePtr &node) {
