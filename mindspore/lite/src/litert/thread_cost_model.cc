@@ -26,6 +26,8 @@ const std::map<int32_t, float> kernel_compute_cost_map_ = {
   {TC_TYPE(schema::PrimitiveType_Activation, schema::ActivationType_RELU6), 1.806f},       // dataNum about 100k
   {TC_TYPE(schema::PrimitiveType_Activation, schema::ActivationType_LEAKY_RELU), 1.806f},  // dataNum about 100k
   {TC_TYPE(schema::PrimitiveType_Activation, schema::ActivationType_TANH), 41.65625},      // dataNum about 5k
+  {TC_TYPE(schema::PrimitiveType_Activation, schema::ActivationType_SIGMOID), 59.65625f},  // dataNum about 3.5k
+  {TC_TYPE(schema::PrimitiveType_Activation, schema::ActivationType_GELU), 83.65625f},     // dataNum about 2.5k
 
   {TC_TYPE(schema::PrimitiveType_Sqrt, 0), 1.806f},    // dataNum about 100k
   {TC_TYPE(schema::PrimitiveType_Split, 0), 21.573f},  // dataNum about 8k
