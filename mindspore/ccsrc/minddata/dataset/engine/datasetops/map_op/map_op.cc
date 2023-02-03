@@ -251,7 +251,15 @@ Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
   for (size_t i = 0; i < job_list.size(); i++) {
     RETURN_IF_INTERRUPTED();
     // Execute MapWorkerJob.
-    RETURN_IF_NOT_OK(job_list[i]->Run(job_input_table, &result_table));
+    Status rc = job_list[i]->Run(job_input_table, &result_table);
+    if (rc.IsError()) {
+      // if thread had been interrupted, don't care the error
+      if (TaskManager::FindMe()->Interrupted()) {
+        MS_LOG(WARNING) << "Current thread had been interrupted by TaskManager, so ignore the error.";
+        return Status::OK();
+      }
+      return rc;
+    }
     // Assign the processed data as an input for the next job processing, except for the last TensorOp in the list.
     if (i + 1 < job_list.size()) {
       job_input_table = std::move(result_table);
