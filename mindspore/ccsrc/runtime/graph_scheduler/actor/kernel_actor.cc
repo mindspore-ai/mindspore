@@ -479,7 +479,7 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
   auto &new_device_tensor = copy_input_device_tensors_[input_data_index];
   MS_EXCEPTION_IF_NULL(new_device_tensor);
   // Dynamic shape need update size.
-  if (IsDynamic(real_input_info->shape_)) {
+  if (IsDynamic(real_input_info->shape_) || common::AnfAlgo::IsDynamicSequence(kernel_)) {
     new_device_tensor->SetSize(input_data->data_->GetSize());
   }
   // Update the input device tensor.
