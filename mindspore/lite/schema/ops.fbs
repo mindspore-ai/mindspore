@@ -230,6 +230,7 @@ union PrimitiveType {
     GatherD,
     GroupNormFusion,
     Log1p,
+    TensorScatterAdd,
     SparseFillEmptyRows,
     SparseReshape,
     SparseSegmentSum,
@@ -1290,6 +1291,9 @@ table GroupNormFusion {
 }
 
 table Log1p {
+}
+
+table TensorScatterAdd {
 }
 
 table SparseFillEmptyRows {
