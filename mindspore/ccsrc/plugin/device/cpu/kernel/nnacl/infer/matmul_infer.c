@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,12 @@ int SetShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs
   int b_shape[MAX_SHAPE_SIZE] = {0};
   size_t b_shape_size = 0;
   ShapeSet(b_shape, &b_shape_size, input1->shape_, input1->shape_size_);
+  int *shape_align = a_shape_size > b_shape_size ? b_shape : a_shape;
+  size_t *shape_size_align = a_shape_size > b_shape_size ? &b_shape_size : &a_shape_size;
+  int diff = abs((int)a_shape_size - (int)b_shape_size);
+  for (int i = 0; i < diff; ++i) {
+    ShapeInsert(shape_align, shape_size_align, 0, 1);
+  }
   int bias_shape[MAX_AXIS_SIZE] = {0};
   size_t bias_shape_size = 0;
   if (inputs_size == kInputSize2) {
@@ -85,12 +91,10 @@ int SetShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs
     if (insert_ret != NNACL_OK) {
       return NNACL_ERR;
     }
-    SetShapeArray(input0, a_shape, a_shape_size);
     del_start = true;
   }
   if (b_shape_size == 1) {
     ShapePush(b_shape, &b_shape_size, 1);
-    SetShapeArray(input1, b_shape, b_shape_size);
     del_end = true;
   }
   int ret = CheckMatmulInputShape(a_shape, a_shape_size, b_shape, b_shape_size, bias_shape, bias_shape_size, param);
@@ -130,11 +134,6 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   TensorC *input1 = (TensorC *)inputs[1];
   TensorC *output = outputs[0];
 
-  int diff = abs((int)input0->shape_size_ - (int)input1->shape_size_);
-  TensorC *in = input0->shape_size_ > input1->shape_size_ ? input1 : input0;
-  for (int i = 0; i < diff; ++i) {
-    ShapeInsert(in->shape_, &in->shape_size_, 0, 1);
-  }
   TensorC *input = input1->data_ == NULL ? input1 : input0;  // transfer the input which comes from the other node.
   SetDataTypeFormat(output, input);
   if (input->data_type_ == kNumberTypeInt8 && parameter->quant_type_ == QuantType_QUANT_DYNAMIC) {

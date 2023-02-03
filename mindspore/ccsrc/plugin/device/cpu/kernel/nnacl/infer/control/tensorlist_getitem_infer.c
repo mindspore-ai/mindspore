@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
   if (index < 0 || index > ((int)(input0->element_num_ - 1))) {
     return NNACL_ERR;
   }
-  TensorC *tensor_index = &input0->tensors_[index];
+  TensorC *tensor_index = input0->tensors_[index];
   NNACL_CHECK_NULL_RETURN_ERR(tensor_index);
 
   if (tensor_index->data_type_ != kTypeUnknown) {
@@ -52,7 +52,7 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
   } else {
     output->data_type_ = input0->tensors_data_type_;
   }
-  output->format_ = input0->tensors_[index].format_;
+  output->format_ = input0->tensors_[index]->format_;
 
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
@@ -78,7 +78,7 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     }
     if (!TensorListIsFullyDefined(element_shape, element_shape_size)) {
       for (size_t i = 0; i < input0->element_num_; ++i) {
-        TensorC *input = &input0->tensors_[i];
+        TensorC *input = input0->tensors_[i];
         NNACL_CHECK_NULL_RETURN_ERR(input);
         if (input->data_type_ != kTypeUnknown) {
           status = TensorListMergeShape(element_shape, &element_shape_size, input->shape_, input->shape_size_);

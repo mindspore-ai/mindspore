@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, 
   }
   if (!TensorListIsFullyDefined(input0->element_shape_, input0->element_shape_size_)) {
     for (size_t i = 0; i < input0->element_num_; ++i) {
-      TensorC *tensor_ele = &input0->tensors_[i];
+      TensorC *tensor_ele = input0->tensors_[i];
       if (tensor_ele->data_type_ != kTypeUnknown) {
         status = TensorListMergeShape(output_shape, &output_shape_size, tensor_ele->shape_, tensor_ele->shape_size_);
         if (status == NNACL_ERR) {

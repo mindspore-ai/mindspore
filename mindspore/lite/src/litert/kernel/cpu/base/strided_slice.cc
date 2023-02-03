@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,7 +288,11 @@ int StridedSliceCPUKernel::SoftCopyInputToOutput() {
   output_tensor->FreeData();
   output_tensor->ResetRefCount();
   output_tensor->set_data(input_tensor->data());
-  output_tensor->set_own_data(input_tensor->own_data());
+  if (input_tensor->IsConst()) {
+    output_tensor->set_own_data(false);
+  } else {
+    output_tensor->set_own_data(input_tensor->own_data());
+  }
   return RET_OK;
 }
 

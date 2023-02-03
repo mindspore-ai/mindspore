@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
+#include "src/common/tensor_util.h"
 #include "nnacl/infer/control/tensorlist_setitem_infer.h"
 
 namespace mindspore {
@@ -27,29 +28,30 @@ class TensorlistSetItemInferTest : public mindspore::CommonTest {
 TEST_F(TensorlistSetItemInferTest, TensorlistSetItemInferTest0) {
   size_t inputs_size = 3;
   std::vector<TensorC *> inputs(inputs_size, NULL);
-  TensorListC *input0 = new TensorListC;
+  auto *input0 = new TensorListC;
   input0->element_num_ = 3;
-  input0->tensors_ = reinterpret_cast<TensorC *>(malloc(input0->element_num_ * sizeof(TensorC)));
+  auto in_tensors_c = reinterpret_cast<TensorC *>(malloc(input0->element_num_ * sizeof(TensorC)));
+  input0->tensors_ = &in_tensors_c;
   input0->element_shape_size_ = 2;
   input0->element_shape_[0] = 2;
   input0->element_shape_[1] = 4;
   input0->tensors_data_type_ = kNumberTypeInt32;
   input0->data_type_ = kObjectTypeTensorType;
 
-  input0->tensors_[0].shape_size_ = 2;
-  input0->tensors_[0].shape_[0] = 2;
-  input0->tensors_[0].shape_[1] = 4;
-  input0->tensors_[0].data_type_ = kNumberTypeInt32;
+  in_tensors_c[0].shape_size_ = 2;
+  in_tensors_c[0].shape_[0] = 2;
+  in_tensors_c[0].shape_[1] = 4;
+  in_tensors_c[0].data_type_ = kNumberTypeInt32;
 
-  input0->tensors_[1].shape_size_ = 2;
-  input0->tensors_[1].shape_[0] = 2;
-  input0->tensors_[1].shape_[1] = 4;
-  input0->tensors_[1].data_type_ = kNumberTypeInt32;
+  in_tensors_c[1].shape_size_ = 2;
+  in_tensors_c[1].shape_[0] = 2;
+  in_tensors_c[1].shape_[1] = 4;
+  in_tensors_c[1].data_type_ = kNumberTypeInt32;
 
-  input0->tensors_[2].shape_size_ = 2;
-  input0->tensors_[2].shape_[0] = 2;
-  input0->tensors_[2].shape_[1] = 4;
-  input0->tensors_[2].data_type_ = kNumberTypeInt32;
+  in_tensors_c[2].shape_size_ = 2;
+  in_tensors_c[2].shape_[0] = 2;
+  in_tensors_c[2].shape_[1] = 4;
+  in_tensors_c[2].data_type_ = kNumberTypeInt32;
   // input0->tensors_[2]->format_ = Format_NHWC;
   inputs[0] = reinterpret_cast<TensorC *>(input0);
 
@@ -69,11 +71,13 @@ TEST_F(TensorlistSetItemInferTest, TensorlistSetItemInferTest0) {
   inputs[2]->data_ = inputs2_data.data();
 
   std::vector<TensorC *> outputs(1, NULL);
-  outputs[0] = reinterpret_cast<TensorC *>(new TensorListC);
-  OpParameter *parameter = new OpParameter;
+  auto out = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
+  out->tensors_ = nullptr;
+  outputs[0] = reinterpret_cast<TensorC *>(out);
+  auto *parameter = new OpParameter;
   int ret = TensorListSetItemInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                         reinterpret_cast<OpParameter *>(parameter));
-  TensorListC *res = reinterpret_cast<TensorListC *>(outputs[0]);
+  auto *res = reinterpret_cast<TensorListC *>(outputs[0]);
   ASSERT_EQ(ret, NNACL_OK);
   ASSERT_EQ(res->element_num_, 3);
   ASSERT_EQ(res->element_shape_size_, 2);
@@ -81,25 +85,28 @@ TEST_F(TensorlistSetItemInferTest, TensorlistSetItemInferTest0) {
   ASSERT_EQ(res->element_shape_[1], 4);
   ASSERT_EQ(res->tensors_data_type_, kNumberTypeInt32);
   ASSERT_EQ(res->data_type_, kObjectTypeTensorType);
-  ASSERT_EQ(res->tensors_[0].shape_size_, 2);
-  ASSERT_EQ(res->tensors_[0].shape_[0], 2);
-  ASSERT_EQ(res->tensors_[0].shape_[1], 4);
-  ASSERT_EQ(res->tensors_[1].shape_size_, 2);
-  ASSERT_EQ(res->tensors_[1].shape_[0], 2);
-  ASSERT_EQ(res->tensors_[1].shape_[1], 4);
-  ASSERT_EQ(res->tensors_[2].shape_size_, 2);
-  ASSERT_EQ(res->tensors_[2].shape_[0], 5);
-  ASSERT_EQ(res->tensors_[2].shape_[1], 6);
+  ASSERT_EQ(res->tensors_[0]->shape_size_, 2);
+  ASSERT_EQ(res->tensors_[0]->shape_[0], 2);
+  ASSERT_EQ(res->tensors_[0]->shape_[1], 4);
+  ASSERT_EQ(res->tensors_[1]->shape_size_, 2);
+  ASSERT_EQ(res->tensors_[1]->shape_[0], 2);
+  ASSERT_EQ(res->tensors_[1]->shape_[1], 4);
+  ASSERT_EQ(res->tensors_[2]->shape_size_, 2);
+  ASSERT_EQ(res->tensors_[2]->shape_[0], 5);
+  ASSERT_EQ(res->tensors_[2]->shape_[1], 6);
 
   // ASSERT_EQ(outputs[0]->format_, Format_NHWC);
 
   delete parameter;
   for (size_t i = 0; i < inputs_size; i++) {
+    if (inputs[i]->data_type_ == kObjectTypeTensorType) {
+      auto *tensorList_c = reinterpret_cast<TensorListC *>(inputs[i]);
+      free(*tensorList_c->tensors_);
+    }
     delete inputs[i];
   }
-  for (size_t i = 0; i < outputs.size(); i++) {
-    delete outputs[i];
-  }
+  lite::FreeOutTensorC(&outputs);
+  delete out;
 }
 
 // retest mergeshape

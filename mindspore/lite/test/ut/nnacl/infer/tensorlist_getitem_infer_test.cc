@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,24 +28,25 @@ class TensorlistGetItemInferTest : public mindspore::CommonTest {
 TEST_F(TensorlistGetItemInferTest, TensorlistGetItemInferTest0) {
   size_t inputs_size = 3;
   std::vector<TensorC *> inputs(inputs_size, NULL);
-  TensorListC *input0 = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
+  auto *input0 = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
   input0->element_num_ = 3;
-  input0->tensors_ = reinterpret_cast<TensorC *>(malloc(input0->element_num_ * sizeof(TensorC)));
-  input0->tensors_[0].shape_size_ = 2;
-  input0->tensors_[0].shape_[0] = 1;
-  input0->tensors_[0].shape_[1] = 2;
-  input0->tensors_[0].data_type_ = kNumberTypeInt32;
-  input0->tensors_[1].shape_size_ = 3;
-  input0->tensors_[1].shape_[0] = 3;
-  input0->tensors_[1].shape_[1] = 4;
-  input0->tensors_[1].shape_[2] = 5;
-  input0->tensors_[1].data_type_ = kNumberTypeInt32;
-  input0->tensors_[2].shape_size_ = 4;
-  input0->tensors_[2].shape_[0] = 6;
-  input0->tensors_[2].shape_[1] = 7;
-  input0->tensors_[2].shape_[2] = 8;
-  input0->tensors_[2].shape_[3] = 9;
-  input0->tensors_[2].data_type_ = kNumberTypeInt32;
+  auto in_tensors_c = reinterpret_cast<TensorC *>(malloc(input0->element_num_ * sizeof(TensorC)));
+  input0->tensors_ = &in_tensors_c;
+  in_tensors_c[0].shape_size_ = 2;
+  in_tensors_c[0].shape_[0] = 1;
+  in_tensors_c[0].shape_[1] = 2;
+  in_tensors_c[0].data_type_ = kNumberTypeInt32;
+  in_tensors_c[1].shape_size_ = 3;
+  in_tensors_c[1].shape_[0] = 3;
+  in_tensors_c[1].shape_[1] = 4;
+  in_tensors_c[1].shape_[2] = 5;
+  in_tensors_c[1].data_type_ = kNumberTypeInt32;
+  in_tensors_c[2].shape_size_ = 4;
+  in_tensors_c[2].shape_[0] = 6;
+  in_tensors_c[2].shape_[1] = 7;
+  in_tensors_c[2].shape_[2] = 8;
+  in_tensors_c[2].shape_[3] = 9;
+  in_tensors_c[2].data_type_ = kNumberTypeInt32;
   // input0->tensors_[2]->format_ = Format_NHWC;
   inputs[0] = reinterpret_cast<TensorC *>(input0);
   inputs[0]->data_type_ = kObjectTypeTensorType;
@@ -60,7 +61,7 @@ TEST_F(TensorlistGetItemInferTest, TensorlistGetItemInferTest0) {
 
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
-  OpParameter *parameter = new OpParameter;
+  auto *parameter = new OpParameter;
   int ret = TensorListGetItemInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                         reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -75,11 +76,10 @@ TEST_F(TensorlistGetItemInferTest, TensorlistGetItemInferTest0) {
   delete parameter;
   for (size_t i = 0; i < inputs_size; i++) {
     if (inputs[i]->data_type_ == kObjectTypeTensorType) {
-      TensorListC *tensorListC = reinterpret_cast<TensorListC *>(inputs[i]);
-      lite::FreeTensorListC(tensorListC);
-    } else {
-      free(inputs[i]);
+      auto *tensorList_c = reinterpret_cast<TensorListC *>(inputs[i]);
+      free(*tensorList_c->tensors_);
     }
+    free(inputs[i]);
   }
   for (size_t i = 0; i < outputs.size(); i++) {
     free(outputs[i]);

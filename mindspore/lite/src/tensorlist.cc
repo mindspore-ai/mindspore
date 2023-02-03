@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,21 @@
 
 namespace mindspore::lite {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
+namespace {
+constexpr int kOffset = 2;
+}  // namespace
 TensorList::TensorList(std::vector<int> shape, std::vector<int> element_shape, Category category)
-    : Tensor(kObjectTypeTensorType, std::move(shape), mindspore::NHWC, category),
-      element_shape_(std::move(element_shape)) {}
+    : Tensor(kObjectTypeTensorType, std::move(shape), mindspore::NHWC, category) {
+  tensor_list_c_ = {kObjectTypeTensorType, Format_NHWC, 0, kTypeUnknown, -1, nullptr, 0, element_shape.size()};
+  if (shape.size() > MAX_SHAPE_SIZE) {
+    tensor_list_c_.element_shape_size_ = 0;
+    MS_LOG(WARNING) << "The shape-size has exceeded the limit 8, now is " << element_shape.size();
+    return;
+  }
+  for (size_t i = 0; i < element_shape.size(); ++i) {
+    tensor_list_c_.element_shape_[i] = element_shape[i];
+  }
+}
 
 TensorList::~TensorList() {
   if (!this->tensors_.empty()) {
@@ -90,7 +102,7 @@ int TensorList::MallocTensorListData(TypeId dtype, const std::vector<std::vector
                   << " must be equal to param2:tensor_shape.size():" << tensor_shape.size();
     return RET_ERROR;
   }
-  this->tensors_data_type_ = dtype;
+  this->tensor_list_c_.tensors_data_type_ = dtype;
   for (int i = 0; i < this->ElementsNum(); ++i) {
     auto tensor_ptr = new (std::nothrow) Tensor(dtype, tensor_shape[i]);
     if (tensor_ptr == nullptr) {
@@ -136,9 +148,9 @@ int TensorList::MallocData(const AllocatorPtr allocator) {
 int TensorList::SetTensor(int index, const Tensor *src_tensor) {
   MS_CHECK_TRUE_MSG(src_tensor != nullptr, RET_ERROR, "src tensor cannot null");
   // your can use this fun to modify tensor[index] value
-  if (src_tensor->data_type() != this->tensors_data_type_) {
+  if (src_tensor->data_type() != this->tensor_list_c_.tensors_data_type_) {
     MS_LOG(ERROR) << "src_tensor->data_type()：" << src_tensor->data_type()
-                  << " must be equal to tensors_data_type_:" << this->tensors_data_type_;
+                  << " must be equal to tensors_data_type_:" << this->tensor_list_c_.tensors_data_type_;
     return RET_ERROR;
   }
   auto element_num = this->ElementsNum();
@@ -165,9 +177,9 @@ int TensorList::CheckTensorListParam() {
       MS_LOG(ERROR) << "CheckTensorListParam: tensors_[" << i << "] is nullptr";
       return RET_ERROR;
     }
-    if (this->tensors_[i]->data_type() != this->tensors_data_type_) {
+    if (this->tensors_[i]->data_type() != this->tensor_list_c_.tensors_data_type_) {
       MS_LOG(ERROR) << "CheckTensorListParam: tensors_[i] data_type:" << this->tensors_[i]->data_type()
-                    << " is not equal to tensors_data_type_:" << this->tensors_data_type_;
+                    << " is not equal to tensors_data_type_:" << this->tensor_list_c_.tensors_data_type_;
       return RET_ERROR;
     }
   }
@@ -184,14 +196,15 @@ Tensor *TensorList::GetTensor(int index) {
 }
 
 bool TensorList::IsCompatibleShape(const std::vector<int> &shape) {
-  if (this->tensors_.empty() && this->element_shape_.empty()) {
+  if (this->tensors_.empty() && this->tensor_list_c_.element_shape_size_ == 0) {
     return true;
   }
-  if (shape.size() != this->element_shape_.size()) {
+  if (shape.size() != this->tensor_list_c_.element_shape_size_) {
     return false;
   }
   for (size_t i = 0; i < shape.size(); ++i) {
-    if (this->element_shape_[i] >= 0 && shape[i] >= 0 && this->element_shape_[i] != shape[i]) {
+    if (this->tensor_list_c_.element_shape_[i] >= 0 && shape[i] >= 0 &&
+        this->tensor_list_c_.element_shape_[i] != shape[i]) {
       return false;
     }
   }
@@ -201,7 +214,7 @@ bool TensorList::IsCompatibleShape(const std::vector<int> &shape) {
 bool TensorList::IsCompatibleShape(const Tensor *src) {
   MS_CHECK_TRUE_MSG(src != nullptr, false, "src tensor cannot null");
   // shape is store in Tensor.
-  if (static_cast<size_t>(src->ElementsNum()) != this->element_shape_.size()) {
+  if (static_cast<size_t>(src->ElementsNum()) != this->tensor_list_c_.element_shape_size_) {
     return false;
   }
   if (src->data_type() != kNumberTypeInt && src->data_type() != kNumberTypeInt32) {
@@ -209,8 +222,9 @@ bool TensorList::IsCompatibleShape(const Tensor *src) {
     return false;
   }
   auto src_ptr = reinterpret_cast<int *>(src->data());
-  for (size_t i = 0; i < this->element_shape_.size(); ++i) {
-    if (this->element_shape_[i] >= 0 && src_ptr[i] >= 0 && this->element_shape_[i] != src_ptr[i]) {
+  for (size_t i = 0; i < this->tensor_list_c_.element_shape_size_; ++i) {
+    if (this->tensor_list_c_.element_shape_[i] >= 0 && src_ptr[i] >= 0 &&
+        this->tensor_list_c_.element_shape_[i] != src_ptr[i]) {
       return false;
     }
   }
@@ -223,21 +237,22 @@ STATUS TensorList::Decode(const int *data, size_t length) {
     return RET_ERROR;
   }
   MS_CHECK_LT(1, length, RET_ERROR);
-  tensors_data_type_ = TypeId(data[0]);
-  if (tensors_data_type_ < kTypeUnknown || tensors_data_type_ > kMonadTypeEnd) {
+  tensor_list_c_.tensors_data_type_ = TypeId(data[0]);
+  if (tensor_list_c_.tensors_data_type_ < kTypeUnknown || tensor_list_c_.tensors_data_type_ > kMonadTypeEnd) {
     MS_LOG(ERROR) << "TypeId illegal.";
     return RET_ERROR;
   }
-  if (data[1] < 0) {
-    MS_LOG(ERROR) << "element shape size illegal.";
+  if (data[1] < 0 || data[1] > MAX_SHAPE_SIZE) {
+    MS_LOG(WARNING) << "The shape-size must be in [0, 8], now is " << data[1];
     return RET_ERROR;
   }
+  tensor_list_c_.element_shape_size_ = data[1];
   constexpr int kShapeIndexStart = 2;
   MS_CHECK_LT(static_cast<size_t>(data[1] + kShapeIndexStart), length, RET_ERROR);
   for (int j = 0; j < data[1]; ++j) {
-    element_shape_.push_back(data[2 + j]);
+    tensor_list_c_.element_shape_[j] = data[kOffset + j];
   }
-  int tensors_num = data[2 + data[1]];
+  int tensors_num = data[kOffset + data[1]];
   if (tensors_num < 0) {
     MS_LOG(WARNING) << "not able to create tensors, need infer shape.";
     return RET_OK;
@@ -249,7 +264,7 @@ STATUS TensorList::Decode(const int *data, size_t length) {
     MS_LOG(WARNING) << "tensor name: " << this->tensor_name_;
   }
   tensors_.reserve(tensors_num);
-  int tensor_index = 2 + data[1] + 1;
+  int tensor_index = kOffset + data[1] + 1;
   for (int i = 0; i < tensors_num; i++) {
     MS_CHECK_LT(static_cast<size_t>(tensor_index), length, RET_ERROR);
     int tensor_dims_size = data[tensor_index++];
@@ -258,7 +273,7 @@ STATUS TensorList::Decode(const int *data, size_t length) {
       MS_CHECK_LT(static_cast<size_t>(tensor_index), length, RET_ERROR);
       shape[j] = data[tensor_index++];
     }
-    auto tensor = new (std::nothrow) Tensor(tensors_data_type_, shape);
+    auto tensor = new (std::nothrow) Tensor(static_cast<TypeId>(tensor_list_c_.tensors_data_type_), shape);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "new Tensor failed";
       return RET_NULL_PTR;
@@ -276,15 +291,13 @@ TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, co
     MS_LOG(ERROR) << "New tensor failed";
     return result;
   }
-  result->data_type_ = src.data_type_;
-  result->shape_ = src.shape_;
+  (void)memcpy(&result->tensor_c_, &src.tensor_c_, sizeof(TensorC));
+  result->tensor_c_.data_ = nullptr;
+  (void)memcpy(&result->tensor_list_c_, &src.tensor_list_c_, sizeof(TensorListC));
+  result->tensor_list_c_.tensors_ = nullptr;
   result->category_ = src.category_;
-  result->format_ = src.format_;
-  result->tensors_data_type_ = src.tensors_data_type_;
-  result->element_shape_ = src.element_shape_;
   result->set_allocator(allocator);
   result->set_tensor_name(src.tensor_name() + "_duplicate");
-  auto src_tensor_dtype = src.tensors_data_type_;
   std::vector<std::vector<int> > tensor_shape{};
   (void)std::transform(src.tensors_.begin(), src.tensors_.end(), std::back_inserter(tensor_shape),
                        [](const Tensor *tensor_item) { return tensor_item->shape(); });
@@ -296,7 +309,7 @@ TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, co
   if (result->shape().empty()) {
     return result;
   }
-  result->MallocTensorListData(src_tensor_dtype, tensor_shape);
+  result->MallocTensorListData(static_cast<TypeId>(src.tensor_list_c_.tensors_data_type_), tensor_shape);
   if (copy_data) {
     for (size_t i = 1; i < src.tensors_.size(); ++i) {
       auto ret = Tensor::CopyTensorData(*(src.tensors_[i]), result->tensors_[i]);
