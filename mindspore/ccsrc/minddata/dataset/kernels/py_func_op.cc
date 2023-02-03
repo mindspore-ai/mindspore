@@ -65,7 +65,13 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
       if (output_type_ != DataType::DE_UNKNOWN) {
         RETURN_IF_NOT_OK(CastOutput(ret_py_obj, output));
       } else {
-        if (py::isinstance<py::tuple>(ret_py_obj)) {
+        // scenario 1: map multi-processing, subprocess stop first and will get none
+        // scenario 2: thread mode, user pyfunc return none
+        if (ret_py_obj.is_none()) {
+          MS_LOG(INFO) << "Expect pyfunc to return numpy array(s), but got None. If python_multiprocessing is "
+                          "True, it maybe due to pyfunc execution timeout.";
+          goto TimeoutError;
+        } else if (py::isinstance<py::tuple>(ret_py_obj)) {
           // In case of a n-m mapping, the return value will be a tuple of numpy arrays
           auto ret_py_tuple = ret_py_obj.cast<py::tuple>();
           // Iterate over two containers simultaneously for memory copy
@@ -73,8 +79,8 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
             py::object ret_py_ele = ret_py_tuple[i];
             // Object is none if pyfunc timeout
             if (ret_py_ele.is_none()) {
-              MS_LOG(INFO) << "Expected that PyFunc should return numpy array, got None. If python_multiprocessing is "
-                              "True, PyFunc may execute time out.";
+              MS_LOG(INFO) << "Expect pyfunc to return numpy array(s), but got None. If python_multiprocessing is "
+                              "True, it maybe due to pyfunc execution timeout.";
               goto TimeoutError;
             }
             RETURN_IF_NOT_OK(ConvertNumpyToTensor(ret_py_ele, output));
@@ -94,8 +100,8 @@ ComputeReturn:
 
 TimeoutError:
   ret = STATUS_ERROR(StatusCode::kMDTimeOut,
-                     "Expected that PyFunc should return numpy array, got None. If \'python_multiprocessing\' is True, "
-                     "PyFunc may execute time out.");
+                     "Expect pyfunc to return numpy array(s), but got None. If python_multiprocessing is "
+                     "True, it maybe due to pyfunc execution timeout.");
   goto ComputeReturn;
 }
 
