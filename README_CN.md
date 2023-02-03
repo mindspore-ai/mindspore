@@ -274,10 +274,11 @@ MindSpore的版本分支有以下几种维护阶段：
 
 | **分支名** | **当前状态**  | **上线时间**          | **后续状态**                           | **EOL 日期**|
 |------------|--------------|----------------------|----------------------------------------|------------|
+| **r1.10**  | Maintained   | 2023-02-02           | Unmaintained <br> 2024-02-02 estimated |            |
 | **r1.9**   | Maintained   | 2022-10-26           | Unmaintained <br> 2023-10-26 estimated |            |
 | **r1.8**   | Maintained   | 2022-07-29           | Unmaintained <br> 2023-07-29 estimated |            |
 | **r1.7**   | Maintained   | 2022-04-29           | Unmaintained <br> 2023-04-29 estimated |            |
-| **r1.6**   | Maintained   | 2022-01-29           | Unmaintained <br> 2023-01-29 estimated |            |
+| **r1.6**   | End Of Life  | 2022-01-29           |                                        | 2023-01-29 |
 | **r1.5**   | End Of Life  | 2021-10-15           |                                        | 2022-10-15 |
 | **r1.4**   | End Of Life  | 2021-08-15           |                                        | 2022-08-15 |
 | **r1.3**   | End Of Life  | 2021-07-15           |                                        | 2022-07-15 |
