@@ -104,17 +104,13 @@ AnfNodePtr CreateNewNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &i
   auto origin_prim = GetValueNode<PrimitivePtr>(origin_node->input(kIndex0));
   if (kernel::IsDynamicParamKernel(origin_prim->name())) {
     SetKernelInfoForDynamicParamKernel(new_cnode);
+  } else if (IsPrimitiveEquals(new_prim, origin_prim)) {
+    // If the primitive is not changed, inherit input and output from origin node.
+    SetKernelInfoForNewCNode(new_cnode, false);
+    // Reset output object type.
+    new_kernel_builder->SetOutputsKernelObjectType(origin_kernel_build_info->GetAllOutputKernelObjectTypes());
   } else {
     SetKernelInfoForNewCNode(new_cnode, true);
-  }
-
-  // If the primitive is not changed, this means only inputs are updated. So inherit output from origin node.
-  if (IsPrimitiveEquals(new_prim, origin_prim)) {
-    KernelBuildInfoPtr new_node_build_info = AnfAlgo::GetSelectKernelBuildInfo(new_cnode);
-    KernelBuildInfoPtr origin_node_build_info = AnfAlgo::GetSelectKernelBuildInfo(origin_node);
-    new_node_build_info->SetOutputsFormat(origin_node_build_info->GetAllOutputFormats());
-    new_node_build_info->SetOutputsDeviceType(origin_node_build_info->GetAllOutputDeviceTypes());
-    new_node_build_info->SetOutputsKernelObjectType(origin_node_build_info->GetAllOutputKernelObjectTypes());
   }
   return new_cnode;
 }
@@ -223,7 +219,12 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
 
     std::vector<std::string> outputs_format;
     std::vector<TypeId> outputs_type;
-    size_t output_num = AnfAlgo::GetOutputElementNum(cnode);
+    size_t output_num;
+    if (output_obj_type[kIndex0] == KernelObjectType::TUPLE_UNFOLD) {
+      output_num = AnfAlgo::GetOutputElementNum(cnode);
+    } else {
+      output_num = kSizeOne;
+    }
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       outputs_format.emplace_back(GenerateOutputFormatForNewCNode(cnode));
       outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(cnode, output_index));
