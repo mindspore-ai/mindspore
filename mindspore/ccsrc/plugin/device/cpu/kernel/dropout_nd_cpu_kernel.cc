@@ -135,9 +135,9 @@ bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
     auto per_output = output + start * inner_size;
     auto per_mask = mask + start * inner_size;
     for (size_t i = start; i < end; ++i) {
-      bool drop = static_cast<float>(distribution_(generator_)) <= keep_prob_;
-      if (drop) {
-        std::fill(per_mask, per_mask + inner_size, drop);
+      bool keep = distribution_(generator_);
+      if (keep) {
+        std::fill(per_mask, per_mask + inner_size, keep);
         if constexpr (std::is_same<T, float>::value) {
           DropoutFp32(per_input, scale_, SizeToInt(inner_size), per_output);
         } else {
