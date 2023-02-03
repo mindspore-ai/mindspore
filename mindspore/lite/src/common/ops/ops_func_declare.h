@@ -259,6 +259,7 @@
 #include "ops/grad/nllloss_grad.h"
 #include "ops/format_transpose.h"
 #include "ops/gather_d.h"
+#include "ops/tensor_scatter_add.h"
 #include "ops/sparse_fill_empty_rows.h"
 #include "ops/sparse_reshape.h"
 #include "ops/sparse_segment_sum.h"
@@ -489,6 +490,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(FormatTranspose)
 FUNC_MSOP2SCHEMAOP_DECLARE(GatherD)
 FUNC_MSOP2SCHEMAOP_DECLARE(GroupNormFusion)
 FUNC_MSOP2SCHEMAOP_DECLARE(Log1p)
+FUNC_MSOP2SCHEMAOP_DECLARE(TensorScatterAdd)
 FUNC_MSOP2SCHEMAOP_DECLARE(SparseFillEmptyRows)
 FUNC_MSOP2SCHEMAOP_DECLARE(SparseReshape)
 FUNC_MSOP2SCHEMAOP_DECLARE(SparseSegmentSum)

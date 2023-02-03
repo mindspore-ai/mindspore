@@ -230,6 +230,7 @@ OP_TYPE(FormatTranspose)
 OP_TYPE(GatherD)
 OP_TYPE(GroupNormFusion)
 OP_TYPE(Log1p)
+OP_TYPE(TensorScatterAdd)
 OP_TYPE(SparseFillEmptyRows)
 OP_TYPE(SparseReshape)
 OP_TYPE(SparseSegmentSum)
@@ -1291,6 +1292,9 @@ OP_SCHEMA_DEF_END(GroupNormFusion)
 
 OP_SCHEMA_DEF(Log1p)
 OP_SCHEMA_DEF_END(Log1p)
+
+OP_SCHEMA_DEF(TensorScatterAdd)
+OP_SCHEMA_DEF_END(TensorScatterAdd)
 
 OP_SCHEMA_DEF(SparseFillEmptyRows)
 OP_SCHEMA_DEF_END(SparseFillEmptyRows)
