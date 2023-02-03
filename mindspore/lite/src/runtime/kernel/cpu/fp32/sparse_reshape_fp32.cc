@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/cpu/fp32/sparse_reshape_fp32.h"
 #include <vector>
 #include "schema/model_generated.h"
-// #include "nnacl/fp32/sparse_reshape_fp32.h"
+#include "nnacl/fp32/sparse_reshape_fp32.h"
 #include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/common_func.h"
@@ -98,55 +98,9 @@ int SparseReshapeCPUKernel::Run() {
 
   auto input_rank = in_tensors_[kInput_inshape]->ElementsNum();
   auto output_rank = in_tensors_[kInput_outshape]->ElementsNum();
-  //   const int64_t nnz = SizeToLong(indices_shape_[0]);
 
-  int64_t dense_size = 1;
-  int64_t dividend = 1;
-  int64_t out_num = 1;
-  int64_t ui = -1;
-  for (int64_t i = 0; i < input_rank; i++) {
-    dense_size *= *(in_inshape_ptr + i);
-  }
+  SparseReshapeInferOutputShapeFp32(in_inshape_ptr, in_outshape_ptr, out_outshape_ptr, input_rank, output_rank);
 
-  for (int64_t d = 0; d < output_rank; d++) {
-    const int32_t size = *(in_outshape_ptr + d);
-    if (size == -1) {
-      if (ui != -1) {
-        MS_LOG(ERROR) << "For '" << this->name_
-                      << "', there should be at most one '-1' dimension in 'newshape' tensor, but got two or more.";
-        return RET_ERROR;
-      }
-      ui = d;
-    } else {
-      if (size < 0) {
-        MS_LOG(ERROR) << "For '" << this->name_ << "', the size of newshape rank-" << d
-                      << " should be a non-negative number, but got " << size << ".";
-        return RET_ERROR;
-      }
-      dividend *= size;
-      *(out_outshape_ptr + d) = size;
-      out_num *= size;
-    }
-  }
-  if (ui != -1) {
-    // (void)CheckAndConvertUtils::CheckInteger("divident", dividend, kGreaterThan, 0, this->name_);
-    const int64_t missing = dense_size / dividend;
-    if (dividend * missing != dense_size) {
-      MS_LOG(ERROR) << "For '" << this->name_ << "', the requested shape should be a multiple of " << dividend
-                    << " and " << missing << ", but got a SparseTensor with " << dense_size << " dense values.";
-      return RET_ERROR;
-    }
-    out_num *= missing;
-    *(out_outshape_ptr + ui) = missing;
-  }
-
-  if (out_num != dense_size) {
-    MS_LOG(ERROR) << "For '" << this->name_ << "', the requested shape has the dense shape of " << out_num
-                  << ", but got the input newshape is a tensor with " << dense_size;
-    return RET_ERROR;
-  }
-
-  auto in_indices_shape = in_tensors_[kInput_indices]->shape();
   bool inshape_same_to_outshape = (input_rank == output_rank);
   if (inshape_same_to_outshape) {
     for (int i = 0; i < input_rank; i++) {
@@ -161,29 +115,11 @@ int SparseReshapeCPUKernel::Run() {
     return SoftCopyInputToOutput(in_tensors_[kInput_indices], out_tensors_[kOutput_indices]);
   }
 
-  std::vector<int64_t> in_stride(input_rank);
-  std::vector<int64_t> out_stride(output_rank);
-  in_stride[input_rank - 1] = 1;
-  for (int64_t d = input_rank - 2; d >= 0; d--) {
-    in_stride[d] = in_stride[d + 1] * in_inshape_ptr[d + 1];
-  }
-
-  out_stride[output_rank - 1] = 1;
-  for (int64_t d = output_rank - 2; d >= 0; d--) {
-    out_stride[d] = out_stride[d + 1] * out_outshape_ptr[d + 1];
-  }
-
-  for (int i = 0; i < in_indices_shape[0]; i++) {
-    int ori_index = 0;
-    for (int32_t j = 0; j < input_rank; j++) {
-      ori_index += in_indices_ptr[i * input_rank + j] * in_stride[j];
-    }
-
-    for (int32_t j = 0; j < output_rank; j++) {
-      out_indices_ptr[i * output_rank + j] = ori_index / out_stride[j];
-      ori_index %= out_stride[j];
-    }
-  }
+  std::vector<int32_t> in_stride(input_rank);
+  std::vector<int32_t> out_stride(output_rank);
+  auto in_indices_shape = in_tensors_[kInput_indices]->shape()[0];
+  SparseReshapeInOutCoordTrans(in_indices_ptr, in_inshape_ptr, out_outshape_ptr, in_indices_shape, out_indices_ptr,
+                               in_stride.data(), out_stride.data(), input_rank, output_rank);
 
   return RET_OK;
 }
