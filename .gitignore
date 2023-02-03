@@ -9,6 +9,10 @@ somas_meta/
 trace_code_graph_*
 
 # mindspore lite java
+mindspore/lite/java/.gradle/
+mindspore/lite/java/gradle
+mindspore/lite/java/gradlew
+mindspore/lite/java/gradlew.bat
 mindspore/lite/java/java/.gradle
 mindspore/lite/java/java/build
 mindspore/lite/java/java/gradle
