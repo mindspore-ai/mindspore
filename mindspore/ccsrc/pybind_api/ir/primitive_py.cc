@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include "include/common/utils/primitive_utils.h"
 #include "utils/check_convert_utils.h"
 #include "pipeline/pynative/pynative_execute.h"
+#include "pybind_api/utils/stub_tensor_py.h"
 
 namespace mindspore {
 namespace {
@@ -313,8 +314,8 @@ void PrimitivePy::CheckHookConsistency(const py::object &grad_out, const py::obj
       MS_EXCEPTION(TypeError) << "The output type of:" << py::str(co_name) << " should be a tensor but got "
                               << py::cast<std::string>(grad_out.attr("__class__").attr("__name__")) << ".";
     }
-    auto actual_out_tensor = py::cast<tensor::TensorPtr>(grad_out);
-    auto expected_out_tensor = py::cast<tensor::TensorPtr>(expected_grad_out);
+    tensor::TensorPtr actual_out_tensor = mindspore::PyTensorCast(grad_out);
+    tensor::TensorPtr expected_out_tensor = mindspore::PyTensorCast(expected_grad_out);
     MS_EXCEPTION_IF_NULL(actual_out_tensor);
     MS_EXCEPTION_IF_NULL(expected_out_tensor);
     if (actual_out_tensor->GetShapeAndDataTypeInfo() != expected_out_tensor->GetShapeAndDataTypeInfo()) {

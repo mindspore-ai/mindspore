@@ -28,6 +28,7 @@
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/convert_utils_py.h"
 
 namespace mindspore {
 namespace parse {
@@ -597,7 +598,7 @@ static const std::vector<DataConverterPtr> &GetDataConverters() {
   static const std::vector<DataConverterPtr> data_converters{
     // AdapterTensor needs to be processed before Tensor because it inherits from Tensor.
     std::make_shared<ByFuncDataConverter>(IsAdapterTensor, ConvertAdapterTensor),
-    std::make_shared<ByTypeDataConverter<Tensor>>(ObjCast<TensorPtr>),
+    std::make_shared<ByTypeDataConverter<Tensor>>(PyTensorCast),
     std::make_shared<ByTypeDataConverter<MetaTensor>>(ObjCast<MetaTensorPtr>),
     std::make_shared<ByTypeDataConverter<CSRTensor>>(ObjCast<CSRTensorPtr>),
     std::make_shared<ByTypeDataConverter<COOTensor>>(ObjCast<COOTensorPtr>),

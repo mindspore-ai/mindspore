@@ -80,3 +80,7 @@ def get_slice_shape(dtype, shape):
 def dict_setitem(dic, key, val):
     dic.__setitem__(key, val)
     return dic
+
+
+def is_stub_tensor(tensor):
+    return getattr(tensor, "stub", False)

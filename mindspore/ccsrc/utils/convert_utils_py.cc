@@ -33,6 +33,7 @@
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "pybind_api/ir/base_ref_py.h"
+#include "pybind_api/utils/stub_tensor_py.h"
 #include "ir/dtype/tensor_type.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/convert_utils.h"
@@ -676,5 +677,22 @@ py::object MakeCOOTensor(const VectorRef &value_list) {
   auto ret = py::tuple(1);
   ret[0] = std::make_shared<tensor::COOTensor>(indices, values, shape);
   return ret[0];
+}
+
+tensor::TensorPtr PyTensorCast(const py::handle &obj) {
+  if (!py::isinstance<tensor::Tensor>(obj)) {
+    return nullptr;
+  }
+  auto is_stub_tensor = py::hasattr(obj, stub::PY_ATTR_STUB);
+  if (!is_stub_tensor) {
+    return py::cast<tensor::TensorPtr>(obj);
+  }
+  auto stub_node = py::getattr(obj, stub::PY_ATTR_STUB);
+  auto is_stub_tensor_sync = !py::isinstance<StubNode>(stub_node);
+  if (is_stub_tensor_sync) {
+    return py::cast<tensor::TensorPtr>(obj);
+  }
+  auto stub = py::getattr(obj, stub::PY_ATTR_STUB).cast<StubNodePtr>();
+  return stub->value->cast<tensor::TensorPtr>();
 }
 }  // namespace mindspore

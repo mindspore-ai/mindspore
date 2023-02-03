@@ -92,6 +92,8 @@
 #include "ir/cell.h"
 #endif
 
+#include "pybind_api/utils/stub_tensor_py.h"
+
 namespace mindspore {
 // namespace to support intermediate representation definition
 namespace pipeline {
@@ -204,7 +206,7 @@ bool CheckArgValid(const py::handle &arg) {
   }
 
   if (py::isinstance<Tensor>(arg)) {
-    auto tensor = py::cast<TensorPtr>(arg);
+    TensorPtr tensor = PyTensorCast(arg);
     if (tensor->data_type() == kNumberTypeBool) {
       MS_LOG(INFO) << "It is not recommended to use a tensor of bool data type as network input, which may cause "
                    << "operator compilation failure. For more details, please refer to the FAQ at "
@@ -458,7 +460,7 @@ py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple 
   for (auto arg_obj : inputs) {
     if (py::isinstance<Tensor>(arg_obj)) {
       MS_LOG(DEBUG) << "Verify Tensor";
-      auto m_tensor = arg_obj.cast<std::shared_ptr<Tensor>>();
+      std::shared_ptr<Tensor> m_tensor = PyTensorCast(arg_obj);
       if (m_tensor == nullptr) {
         MS_LOG(ERROR) << "Verify Tensor error, get ptr is null";
         return false;

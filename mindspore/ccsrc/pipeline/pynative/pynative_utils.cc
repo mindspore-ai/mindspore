@@ -25,6 +25,7 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/parse/data_converter.h"
+#include "pybind_api/utils/stub_tensor_py.h"
 
 namespace mindspore {
 namespace pynative {
@@ -199,7 +200,7 @@ std::string PyParser::GetPyObjId(const py::handle &obj) {
 
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
   if (py::isinstance<tensor::Tensor>(obj)) {
-    return obj.cast<tensor::TensorPtr>()->id();
+    return PyTensorCast(obj)->id();
   } else if (py::isinstance<Cell>(obj)) {
     return obj.cast<CellPtr>()->id();
   } else if (py::isinstance<mindspore::Type>(obj)) {

@@ -22,18 +22,12 @@
 #include <vector>
 #include "pipeline/pynative/forward/forward.h"
 #include "pipeline/pynative/grad/grad.h"
+
 #include "pybind11/pybind11.h"
 #include "frontend/operator/composite/composite.h"
 
 namespace mindspore::pynative {
 namespace py = pybind11;
-
-struct StubNode {
-  enum { TENSOR = 0, CSR_TENSOR, COO_TENSOR, ROW_TENSOR, TUPLE };
-  AbstractBasePtr abs;
-  ValuePtr value;
-};
-using StubPtr = std::shared_ptr<StubNode>;
 
 class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
  public:
@@ -58,11 +52,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
     return forward_executor_;
   }
 
-  py::object RunOpAsync(const py::object &prim, const py::tuple &args) const;
-  py::object GetStubValue(const StubPtr &stub) const;
-  py::object GetStubShape(const StubPtr &stub) const;
-  py::object GetStubDtype(const StubPtr &stub) const;
-
+  py::object RunOpAsync(const py::args &args) const;
   py::object RealRunOp(const py::args &args) const;
   py::object CallConstantFolding(const py::args &args) const;
   bool grad_flag() const;
