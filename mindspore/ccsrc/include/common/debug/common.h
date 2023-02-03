@@ -37,6 +37,7 @@ class COMMON_EXPORT Common {
   ~Common() = default;
   static bool NeedMapping(const std::string &origin_name);
   static std::string GetRandomStr();
+  static std::string GetRandomStr(size_t str_len);
   static bool MappingName(const std::string &input_path, std::optional<std::string> *prefix_path,
                           std::optional<std::string> *origin_name, std::optional<std::string> *mapped_name);
   static std::optional<std::string> CreatePrefixPath(const std::string &input_path,
