@@ -438,7 +438,7 @@ int MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorl
   auto dst_tensorlist_tensors_size = dst_tensorlist->tensors().size();
   if (src_tensorlist_tensors_size != dst_tensorlist_tensors_size) {
     MS_LOG(ERROR) << "src tensorlist: " << src_tensorlist->tensor_name()
-                  << " tesnors size: " << src_tensorlist_tensors_size
+                  << " tensors size: " << src_tensorlist_tensors_size
                   << " vs dst tensorlist: " << dst_tensorlist->tensor_name()
                   << " tensors size: " << dst_tensorlist_tensors_size;
     return RET_ERROR;
