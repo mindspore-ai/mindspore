@@ -33,7 +33,7 @@ namespace py = pybind11;
 namespace mindspore::device::ascend {
 namespace {
 std::thread g_acl_tdt_print = {};
-const size_t kMbufCapacitySize = 16;
+const size_t kMbufCapacitySize = 128;
 const int32_t kMbufDestroyDelayTime = 500;
 
 const std::map<aclDataType, TypeId> kPrintAclDataTypeMap = {
