@@ -42,7 +42,7 @@ def test_single_for_1():
     assert res == 21
 
 
-@case_register.level1
+@case_register.level0
 @case_register.target_gpu
 @case_register.target_ascend
 def test_single_for_2():
@@ -59,9 +59,8 @@ def test_single_for_2():
             y += x
         return y
 
-    with pytest.raises(RuntimeError, match="The type of inputs in range operator only support int64 number."):
-        res = control_flow_for()
-        assert res == 21
+    with pytest.raises(TypeError, match="the 0th input should be a int64 scalar"):
+        control_flow_for()
 
 
 @case_register.level1
