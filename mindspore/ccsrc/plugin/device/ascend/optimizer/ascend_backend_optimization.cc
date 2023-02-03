@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,6 +173,7 @@
 #include "plugin/device/ascend/optimizer/mindir/ascend_vm_op_adapter.h"
 #include "plugin/device/ascend/optimizer/mindir/quant_dtype_cast_adjust.h"
 #include "plugin/device/ascend/optimizer/mindir/fse_decode_adjust.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/padd_update_fusion.h"
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include "backend/common/pass/gradients_allreduce_depend_last_send.h"
 #include "backend/common/pass/optimize_gradients_allreduce_overlap.h"
@@ -510,6 +511,7 @@ void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> 
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
+  other_pm->AddPass(std::make_shared<PaddUpdateFusion>());
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -562,6 +564,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
   other_pm->AddPass(std::make_shared<SplitOpOptimizer>());
   other_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
+  other_pm->AddPass(std::make_shared<PaddUpdateFusion>());
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

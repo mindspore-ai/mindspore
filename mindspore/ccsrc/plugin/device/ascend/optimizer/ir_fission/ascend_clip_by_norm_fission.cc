@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,6 @@ AnfNodePtr AscendClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func
   MS_EXCEPTION_IF_NULL(clip_by_norm_prim);
   auto axis_value = clip_by_norm_prim->GetAttr(kAttrAxis);
   MS_EXCEPTION_IF_NULL(axis_value);
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, axis_value, reduce_sum);
   common::AnfAlgo::SetNodeAttr(kAttrKeepDims, MakeValue(true), reduce_sum);
   // Get `axis` vector
   const auto dim = shape_vec.size();
@@ -115,6 +114,7 @@ AnfNodePtr AscendClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func
     MS_EXCEPTION(TypeError) << "For `" << prim::kPrimClipByNorm->name()
                             << "`, the type of attribute `axis` is invalid.";
   }
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), reduce_sum);
   // Set abstract to `reduce_sum` op
   int64_t ddim = SizeToLong(dim);
   ShapeVector reduce_sum_output_shape = shape_vec;
