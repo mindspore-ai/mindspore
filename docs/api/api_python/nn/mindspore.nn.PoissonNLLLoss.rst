@@ -13,7 +13,7 @@ mindspore.nn.PoissonNLLLoss
     其中 :math:`\mathcal{L}_{D}` 为损失值， :math:`y_{i}` 为 `target` ， :math:`x_{i}` 为 `x` 。
 
     如果 `log_input` 为True，使用 :math:`e^{x_{i}} - y_{i} x_{i}` 而不是 :math:`x_{i} - y_{i}\ln x_{i}` 进行计算。
-    计算对数时，`x` 的下界设置为`eps`，以避免数值误差。
+    计算对数时，`x` 的下界设置为 `eps`，以避免数值误差。
     如果 `full` 为False，则最后一项：:math:`\ln{y_{i}!}` 将被省略。否则，最后一项将使用斯特林公式近似：
 
     .. math::

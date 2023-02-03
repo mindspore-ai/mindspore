@@ -10,9 +10,9 @@ mindspore.ops.column_stack
         - **x** (Union[Tensor, tuple, list]) - 多个1-D 或 2-D的Tensor。除了需要拼接的轴外，所有的
           Tensors必须有相同的shape。
 
-    返回:
+    返回：
         将输入Tensor堆叠后的2-D Tensor。
 
-    异常:
+    异常：
         - **TypeError** - 如果 `x` 不是 Tensor、list或tuple。
         - **ValueError** - 如果 `x` 为空。
