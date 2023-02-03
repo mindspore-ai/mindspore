@@ -244,6 +244,8 @@ void UpdateDeviceAddressByRefInputNode(const std::vector<KernelGraphPtr> &graphs
         input_addr = AnfAlgo::GetMutableOutputAddr(input_pair.first, input_pair.second, false);
       }
       MS_EXCEPTION_IF_NULL(input_addr);
+      MS_EXCEPTION_IF_CHECK_FAIL((ref_node_output_addr->GetDeviceType() == input_addr->GetDeviceType()),
+                                 "The device type of ref node is not equal.");
       ref_node_output_addr->set_ptr(input_addr->GetMutablePtr());
       ref_node_output_addr->set_original_ref_count(SIZE_MAX);
       ref_node_output_addr->ResetRefCount();

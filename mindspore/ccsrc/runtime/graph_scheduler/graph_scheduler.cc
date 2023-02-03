@@ -1726,6 +1726,7 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
 
     // Set the member output_ of the copy actor.
     if (to_actor->type_ == KernelTransformType::kSuperKernelActor) {
+      // Use address of to_kernel directly to avoid data copy in the subgraph sink.
       copy_actor->output_ = AnfAlgo::GetMutableOutputAddr(to_kernel_with_input_idx.first, 0, false);
     } else {
       const auto &pre_device_tensor =
@@ -1748,6 +1749,7 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
 
   // If the copy actor already exists, only need link between copy actor and to actor.
   SchedulerHelper::AddDataArrow(copy_actor, to_actor, 0, to_kernel_with_input_idx.second, nullptr);
+  copy_actor->output_->ClearFlag(device::kDeviceAddressFlagNotUsed);
   if (to_actor->type_ == KernelTransformType::kSuperKernelActor) {
     UpdateRefCount(copy_actor->output_.get(), true);
   } else {

@@ -17,6 +17,7 @@
 #include <algorithm>
 #include "runtime/graph_scheduler/actor/control_flow/exit_actor.h"
 #include "runtime/graph_scheduler/actor/output_actor.h"
+#include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
 namespace runtime {
@@ -145,6 +146,12 @@ void ExitActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context)
     if ((input_device_tensors_[i] != nullptr) && (input_device_tensors_[i]->dynamic_ref_count() == 0) &&
         (device_contexts_[i] != nullptr)) {
       MS_LOG(INFO) << GetAID().Name() << " input index:" << i << " has no user and free the memory.";
+      // Update the real used device context by the input data.
+      if (device_contexts_[i]->GetDeviceType() != input_device_tensors_[i]->GetDeviceType()) {
+        device_contexts_[i] = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+          {input_device_tensors_[i]->device_name(), input_device_tensors_[i]->device_id()});
+        MS_LOG(INFO) << "Update device context type to:" << device_contexts_[i]->GetDeviceType();
+      }
       device_contexts_[i]->device_res_manager_->FreeMemory(input_device_tensors_[i]);
     }
   }
@@ -167,7 +174,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
 
   std::vector<DeviceTensor *> new_device_tensors;
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-    auto input_device_tensor = input_device_tensors_[i];
+    auto &input_device_tensor = input_device_tensors_[i];
     if ((input_device_tensor == nullptr) || (!is_need_copy_device_tensors_[i])) {
       (void)new_device_tensors.emplace_back(input_device_tensor);
       continue;
@@ -179,7 +186,15 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
       (void)new_device_tensors.emplace_back(input_device_tensor);
       continue;
     }
-    MS_EXCEPTION_IF_NULL(device_contexts_[i]);
+
+    // Update the real used device context by the input data.
+    auto &device_context = device_contexts_[i];
+    MS_EXCEPTION_IF_NULL(device_context);
+    if (device_context->GetDeviceType() != input_device_tensor->GetDeviceType()) {
+      device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+        {input_device_tensor->device_name(), input_device_tensor->device_id()});
+      MS_LOG(INFO) << "Update device context type to:" << device_context->GetDeviceType();
+    }
 
     auto host_shape = input_device_tensor->host_shape();
     if (common::AnfAlgo::IsDynamicShape(node_with_index.first)) {
@@ -189,7 +204,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
       host_shape = common::AnfAlgo::GetOutputInferShape(node_with_index.first, node_with_index.second);
     }
     // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
-    auto new_device_tensor = device_contexts_[i]->device_res_manager_->CreateDeviceAddress(
+    auto new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
       nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id(),
       host_shape);
     MS_EXCEPTION_IF_NULL(new_device_tensor);
@@ -205,8 +220,8 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     // If the address ptr can't be changed, then alloc the new device memory and copy the data.
     if (input_device_tensor->is_ptr_persisted()) {
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther);
-      if (!device_contexts_[i]->device_res_manager_->AllocateMemory(new_device_tensor.get())) {
-        SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_contexts_[i],
+      if (!device_context->device_res_manager_->AllocateMemory(new_device_tensor.get())) {
+        SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
                                                     GetAID().Name(), new_device_tensor->GetSize());
       }
       if (!new_device_tensor->SyncDeviceToDevice(input_device_tensor)) {
