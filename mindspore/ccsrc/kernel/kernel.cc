@@ -137,6 +137,9 @@ ShapeVector KernelTensor::GetShapeVector() const {
 }
 
 ShapeVector KernelTensor::GetMaxShape() const {
+  if (meta_type_ != kObjectTypeTensorType) {
+    return {};
+  }
   auto base_shape_ptr = GetBaseShape();
   if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::Shape>()) {
     return {};

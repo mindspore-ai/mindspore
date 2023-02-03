@@ -289,11 +289,6 @@ AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractList>(items);
 }
 
-AbstractBasePtr InferImplSequenceLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
-  return InferTupleOrListOrDictLen<AbstractSequence>(primitive->name(), args_spec_list);
-}
-
 AbstractBasePtr InferImplArrayLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();

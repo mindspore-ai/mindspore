@@ -676,6 +676,84 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
   auto abs = std::make_shared<T>(abs_list);
   return abs;
 }
+void CheckDynamicLengthSequenceSetItem(const std::string &op_name, const abstract::AbstractSequencePtr &queue,
+                                       const AbstractBasePtr &target) {
+  auto element_abs = queue->dynamic_len_element_abs();
+  if (element_abs == nullptr) {
+    MS_LOG(EXCEPTION) << "Empty variable len sequence can not setitem.";
+  }
+  const auto precondition_log = "For " + op_name + ", when the queue is dynamic length";
+  const auto standard_abs_description = "element within dynamic length sequence";
+  const auto differ_abs_description = "target element";
+  CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(std::vector<AbstractBasePtr>{element_abs, target},
+                                                      precondition_log, standard_abs_description,
+                                                      differ_abs_description);
+}
+
+template <typename T>
+AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a tuple or list, a scalar whose value is an int64 number and an object of a subclass of AbstractBase.
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  constexpr int args_spec_size = 3;
+  constexpr size_t kIndex2 = 2;
+  abstract::CheckArgsSize(op_name, args_spec_list, args_spec_size);
+  auto queue = abstract::CheckArg<T>(op_name, args_spec_list, 0);
+  auto index = abstract::CheckArg<abstract::AbstractScalar>(op_name, args_spec_list, 1);
+
+  auto index_type = index->BuildType();
+  MS_EXCEPTION_IF_NULL(index_type);
+  if (index_type->type_id() != kInt64->type_id()) {
+    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got a "
+                             << index_type->ToString() << " number.";
+  }
+  ValuePtr index_value = index->BuildValue();
+  MS_EXCEPTION_IF_NULL(index_value);
+  auto target = args_spec_list[kIndex2];
+  MS_EXCEPTION_IF_NULL(target);
+  if (queue->dynamic_len()) {
+    CheckDynamicLengthSequenceSetItem(op_name, queue, target);
+    return queue->Clone();
+  }
+  if (index_value == kAnyValue) {
+    // If the index is variable and the sequence is constant length, then all of the element within the sequence
+    // should have the same type and shape with the target input. The element within the return sequence should
+    // be all broadened.
+    const auto &elements = queue->elements();
+    if (elements.size() == 0) {
+      MS_LOG(EXCEPTION) << "Empty sequence can not setitem.";
+    }
+    const auto precondition_log = "For " + op_name + ", when the index is variable and the queue is constant length";
+    CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(elements, precondition_log);
+    auto first_element = elements[0];
+    const auto standard_abs_description = "element within constant length sequence";
+    const auto differ_abs_description = "target element";
+    CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(std::vector<AbstractBasePtr>{first_element, target},
+                                                        precondition_log, standard_abs_description,
+                                                        differ_abs_description);
+    return CheckAndConvertUtils::BroadenAllSequenceElements(queue);
+  }
+  auto index_int64_value = GetValue<int64_t>(index_value);
+  AbstractBasePtrList elements = queue->elements();
+  std::size_t nelems = elements.size();
+  if (nelems == 0) {
+    MS_EXCEPTION(IndexError) << "Can not setitem for an empty sequence.";
+  }
+  int64_t index_positive_value = index_int64_value >= 0 ? index_int64_value : index_int64_value + SizeToLong(nelems);
+  if (index_positive_value < 0 || index_positive_value >= SizeToLong(nelems)) {
+    MS_EXCEPTION(IndexError) << op_name << " evaluator the index: " << index_int64_value << " to set out of range: [-"
+                             << nelems << "," << (nelems - 1) << "].";
+  }
+  size_t index_unsigned_value = LongToSize(index_positive_value);
+  elements[index_unsigned_value] = args_spec_list[kIndex2];
+  MS_LOG(DEBUG) << "SetItem use flags, index: " << index_unsigned_value << ", for " << queue->ToString();
+  return std::make_shared<T>(elements, queue->sequence_nodes());
+}
+
+template AbstractBasePtr InferSequenceSetItem<abstract::AbstractList>(const PrimitivePtr &primitive,
+                                                                      const AbstractBasePtrList &args_spec_list);
+template AbstractBasePtr InferSequenceSetItem<abstract::AbstractTuple>(const PrimitivePtr &primitive,
+                                                                       const AbstractBasePtrList &args_spec_list);
 
 template AbstractBasePtr TensorToSequenceInfer<abstract::AbstractList>(const PrimitivePtr &primitive,
                                                                        const std::vector<AbstractBasePtr> &input_args);

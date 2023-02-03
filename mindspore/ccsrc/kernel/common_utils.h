@@ -460,14 +460,14 @@ BACKEND_EXPORT int64_t CalOutputTupleSize(const AnfNodePtr &node);
 BACKEND_EXPORT void SetDynamicInputSizeAttr(const CNodePtr &cnode);
 BACKEND_EXPORT bool IsDynamicParamKernel(const std::string &op_name);
 
-template <typename Derived>
+template <typename Derived, typename AddressType = AddressPtr>
 class MatchKernelHelper {
  public:
   MatchKernelHelper() = default;
   virtual ~MatchKernelHelper() = default;
 
-  using KernelRunFunc = std::function<bool(Derived *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &)>;
+  using KernelRunFunc = std::function<bool(Derived *, const std::vector<AddressType> &,
+                                           const std::vector<AddressType> &, const std::vector<AddressPtr> &)>;
   virtual const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const = 0;
 
  protected:
