@@ -412,6 +412,83 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_resize(JNIEnv *en
   return (jboolean)(ret.IsOk());
 }
 
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_loadConfig(JNIEnv *env, jobject thiz, jstring model_ptr,
+                                                                          jstring config_path) {
+  auto *model_pointer = reinterpret_cast<void *>(model_ptr);
+  if (model_pointer == nullptr) {
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
+    return (jboolean) false;
+  }
+  auto *lite_model_ptr = static_cast<mindspore::Model *>(model_pointer);
+  const char *c_config_path = env->GetStringUTFChars(config_path, nullptr);
+  std::string str_config_path(c_config_path, env->GetStringLength(config_path));
+  env->ReleaseStringUTFChars(config_path, c_config_path);
+  auto ret = lite_model_ptr->LoadConfig(str_config_path);
+  return (jboolean)(ret.IsOk());
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_updateConfig(JNIEnv *env, jobject thiz,
+                                                                            jstring model_ptr, jstring section,
+                                                                            jobject hashMapConfig) {
+  auto *model_pointer = reinterpret_cast<void *>(model_ptr);
+  if (model_pointer == nullptr) {
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
+    return (jboolean) false;
+  }
+  auto *lite_model_ptr = static_cast<mindspore::Model *>(model_pointer);
+
+  const char *c_section = env->GetStringUTFChars(section, nullptr);
+  std::string str_section(c_section, env->GetStringLength(section));
+  jclass classHashMap = env->FindClass("java/util/HashMap");
+  jclass ClassSet = env->FindClass("java/util/Set");
+  jmethodID methodIDSet = env->GetMethodID(classHashMap, "entrySet", "()Ljava/util/Set;");
+  jmethodID methodIDIterator = env->GetMethodID(ClassSet, "iterator", "()Ljava/util/Iterator;");
+  jobject objectMethodSet = env->CallObjectMethod(hashMapConfig, methodIDSet);
+  jobject iteratorObject = env->CallObjectMethod(objectMethodSet, methodIDIterator);
+  jclass classIterator = env->FindClass("java/util/Iterator");
+  jmethodID nextMethodID = env->GetMethodID(classIterator, "next", "()Ljava/lang/Object;");
+  jmethodID hasNextMethodID = env->GetMethodID(classIterator, "hasNext", "()Z");
+  jclass classMapEntry = env->FindClass("java/util/Map$Entry");
+  jmethodID keyMethodID = env->GetMethodID(classMapEntry, "getKey", "()Ljava/lang/Object;");
+  jmethodID valueMethodID = env->GetMethodID(classMapEntry, "getValue", "()Ljava/lang/Object;");
+  std::map<std::string, std::string> configInfo;
+  while (env->CallBooleanMethod(iteratorObject, hasNextMethodID)) {
+    jobject objectEntry = env->CallObjectMethod(iteratorObject, nextMethodID);
+    jstring keyObjectMethod = (jstring)env->CallObjectMethod(objectEntry, keyMethodID);
+    if (keyObjectMethod == nullptr) {
+      continue;
+    }
+    const char *c_keyConfigInfo = env->GetStringUTFChars(keyObjectMethod, nullptr);
+    std::string str_keyConfigInfo(c_keyConfigInfo, env->GetStringLength(keyObjectMethod));
+    jstring valueObjectMethod = (jstring)env->CallObjectMethod(objectEntry, valueMethodID);
+    if (valueObjectMethod == nullptr) {
+      continue;
+    }
+    const char *c_valueConfigInfo = env->GetStringUTFChars(valueObjectMethod, nullptr);
+    std::string str_valueConfigInfo(c_valueConfigInfo, env->GetStringLength(valueObjectMethod));
+    configInfo.insert(std::make_pair(str_keyConfigInfo, str_valueConfigInfo));
+    env->ReleaseStringUTFChars(keyObjectMethod, c_keyConfigInfo);
+    env->ReleaseStringUTFChars(valueObjectMethod, c_valueConfigInfo);
+    env->DeleteLocalRef(objectEntry);
+    env->DeleteLocalRef(keyObjectMethod);
+    env->DeleteLocalRef(valueObjectMethod);
+  }
+  env->DeleteLocalRef(classHashMap);
+  env->DeleteLocalRef(objectMethodSet);
+  env->DeleteLocalRef(ClassSet);
+  env->DeleteLocalRef(iteratorObject);
+  env->DeleteLocalRef(classIterator);
+  env->DeleteLocalRef(classMapEntry);
+  env->ReleaseStringUTFChars(section, c_section);
+  for (auto &item : configInfo) {
+    auto ret = lite_model_ptr->UpdateConfig(str_section, item);
+    if (ret.IsError()) {
+      return (jboolean) false;
+    }
+  }
+  return (jboolean) true;
+}
+
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_export(JNIEnv *env, jobject thiz, jlong model_ptr,
                                                                       jstring model_name, jint quantization_type,
                                                                       jboolean export_inference_only,

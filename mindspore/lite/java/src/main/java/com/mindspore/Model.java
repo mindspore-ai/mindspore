@@ -16,6 +16,7 @@
 
 package com.mindspore;
 
+import java.util.HashMap;
 import com.mindspore.config.MSContext;
 import com.mindspore.config.MindsporeLite;
 import com.mindspore.config.TrainCfg;
@@ -249,6 +250,29 @@ public class Model {
     }
 
     /**
+     * Load config file.
+     *
+     * @param config_path          config file path.
+     *
+     * @return Whether the LoadConfig is successful.
+     */
+    public boolean loadConfig(String configPath){
+        return loadConfig(modelPtr, configPath);
+    }
+
+    /**
+     * Update config.
+     *
+     * @param section define the config section.
+     * @param config define the config will be updated.
+     *
+     * @return Whether the updateConfig is successful.
+     */
+    public boolean updateConfig(String section, HashMap<String, String> config) {
+        return updateConfig(modelPtr, section, config);
+    }
+
+    /**
      * Export the model.
      *
      * @param fileName          Name Model file name.
@@ -380,6 +404,10 @@ public class Model {
     private native boolean getTrainMode(long modelPtr);
 
     private native boolean resize(long modelPtr, long[] inputs, int[][] dims);
+
+    private native boolean loadConfig(long modelPtr, String configPath);
+
+    private native boolean updateConfig(long modelPtr, String section, HashMap<String, String> config);
 
     private native boolean export(long modelPtr, String fileName, int quantizationType, boolean isOnlyExportInfer, String[] outputTensorNames);
 
