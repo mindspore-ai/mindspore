@@ -26,6 +26,7 @@ constexpr auto kAttrDefaultValue = "AttrDefaultValue";
 constexpr auto kNodeName = "NodeName";
 constexpr auto kInputOrders = "InputOrders";
 constexpr auto kSkipNodes = "SkipNodes";
+constexpr auto kFallbackOps = "FallbackOps";
 constexpr auto kSkipDynamicCompileStatic = "SkipDynamicCompileStatic";
 bool SuperBar::LoadSBConfig(const nlohmann::json &js) {
   if (!LoadSBNodeAttr(js)) {
@@ -41,6 +42,9 @@ bool SuperBar::LoadSBConfig(const nlohmann::json &js) {
     return false;
   }
   if (!LoadSBSkipNodes(js)) {
+    return false;
+  }
+  if (!LoadSBFallbackOps(js)) {
     return false;
   }
   return true;
@@ -100,6 +104,14 @@ std::optional<std::map<size_t, size_t>> SuperBar::GetGraphIdxToKernelIdx(const s
 
 bool SuperBar::IsSkipNode(const std::string &op_name) {
   return (std::find(skip_nodes_.begin(), skip_nodes_.end(), op_name) != skip_nodes_.end());
+}
+
+std::vector<size_t> SuperBar::GetSBFallbackOpIndex(const std::string &op_name) {
+  auto iter = fallback_ops_.find(op_name);
+  if (iter == fallback_ops_.end()) {
+    return {};
+  }
+  return iter->second;
 }
 
 bool SuperBar::IsSkipDynamicCompileStaticNode(const std::string &op_name) {
@@ -162,6 +174,21 @@ bool SuperBar::LoadSBNodeInput(const nlohmann::json &js) {
       (void)graph_idx_to_kernel_idx.insert({orders[i], i});
     }
     node_input_order_[node_type] = {kernel_idx_to_graph_idx, graph_idx_to_kernel_idx};
+  }
+  return true;
+}
+
+bool SuperBar::LoadSBFallbackOps(const nlohmann::json &js) {
+  // some ops like "DeformableOffsets", need delete assist input before AI_CPU kernel select
+  auto js_iter = js.find(kFallbackOps);
+  if (js_iter == js.end()) {
+    MS_LOG(ERROR) << "Find fallback node failed, json: " << js.dump();
+    return false;
+  }
+  const auto &fallback_nodes = js_iter->get<nlohmann::json>();
+  for (auto iter = fallback_nodes.begin(); iter != fallback_nodes.end(); ++iter) {
+    const auto &node_name = iter.key();
+    fallback_ops_[node_name] = iter->get<std::vector<size_t>>();
   }
   return true;
 }

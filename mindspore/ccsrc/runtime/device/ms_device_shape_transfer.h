@@ -241,7 +241,7 @@ class FormatTransfer {
   static bool NCHW_TO_C1HWNCOC0(const FormatArgs &args, void *result);
   static bool NCDHW_TO_NDC1HWC0(const FormatArgs &args, void *result);
   static bool NCDHW_TO_FRAC_Z3D(const FormatArgs &args, void *result);
-  static bool NCHW_TO_FRAC_Z_WITH_GROPUS(const FormatArgs &args, void *result, bool to_device, int64_t groups);
+  static bool NCHW_TO_FRAC_Z_WITH_GROUPS(const FormatArgs &args, void *result, bool to_device, int64_t groups);
 
   // DEVICE TO HOST
   static bool TO_NCHW(const FormatArgs &args, void *result);
