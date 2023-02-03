@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,11 @@ DynamicMemPoolBestFit::~DynamicMemPoolBestFit() {
 
 DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persistent_mem) {
   size_t align_size = AlignMemorySize(size);
+#ifdef __APPLE__
+  std::lock_guard<SpinLock> spin_lock(spin_lock_);
+#else
   std::lock_guard<std::mutex> locker(mutex_);
+#endif
   // Find the idle memory buf by tensor size, if not find, then add new memory block and memory buf.
   DeviceMemPtr device_addr = FindIdleMemBuf(align_size, from_persistent_mem);
   if (!device_addr) {
@@ -78,7 +82,11 @@ std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(const 
   if (!device_addr) {
     return device_addr_list;
   }
+#ifdef __APPLE__
+  std::lock_guard<SpinLock> spin_lock(spin_lock_);
+#else
   std::lock_guard<std::mutex> locker(mutex_);
+#endif
   // Remove the pre-alloc memory.
   auto mem_block = FindMemBlock(device_addr, common_mem_);
   if (mem_block == nullptr) {
@@ -317,7 +325,11 @@ DynamicMemBlockPtr DynamicMemPoolBestFit::FindMemBlock(const DeviceMemPtr &devic
 
 void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
   MS_EXCEPTION_IF_NULL(device_addr);
+#ifdef __APPLE__
+  std::lock_guard<SpinLock> spin_lock(spin_lock_);
+#else
   std::lock_guard<std::mutex> locker(mutex_);
+#endif
   auto fn = [this](const MemStatusManagerPtr &mem_mng, const DeviceMemPtr &device_addr) -> DynamicMemBlockPtr {
     auto mem_block = FindMemBlock(device_addr, mem_mng);
     if (mem_block != nullptr) {
@@ -421,7 +433,11 @@ void DynamicMemPoolBestFit::EraseIdleMemBuf(size_t size, const DeviceMemPtr &dev
 }
 
 void DynamicMemPoolBestFit::ReleaseDeviceRes() {
+#ifdef __APPLE__
+  std::lock_guard<SpinLock> spin_lock(spin_lock_);
+#else
   std::lock_guard<std::mutex> locker(mutex_);
+#endif
   DumpDynamicMemPoolStateInfo();
 
   auto fn = [this](const MemStatusManagerPtr &mem_mng) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@
 namespace mindspore {
 class SpinLock {
  public:
-  void Lock() {
+  void lock() {
     while (locked.test_and_set(std::memory_order_acquire)) {
     }
   }
 
-  void Unlock() { locked.clear(std::memory_order_release); }
+  void unlock() { locked.clear(std::memory_order_release); }
 
  private:
   std::atomic_flag locked = ATOMIC_FLAG_INIT;

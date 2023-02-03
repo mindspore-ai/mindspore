@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,14 +152,14 @@ class Future : public FutureBase {
   const Future<T> &OnComplete(CompleteCallback &&callback) const {
     bool call = false;
 
-    data->lock.Lock();
+    data->lock.lock();
     if (data->status.IsInit()) {
       // using move to make callback execute once
       data->onCompleteCallbacks.push_back(std::move(callback));
     } else {
       call = true;
     }
-    data->lock.Unlock();
+    data->lock.unlock();
 
     if (call) {
       std::move(callback)(*this);
@@ -171,14 +171,14 @@ class Future : public FutureBase {
   const Future<T> &OnAbandoned(AbandonedCallback &&callback) const {
     bool call = false;
 
-    data->lock.Lock();
+    data->lock.lock();
     if (data->abandoned) {
       call = true;
     } else if (data->status.IsInit()) {
       // using move to make callback execute once
       data->onAbandonedCallbacks.push_back(std::move(callback));
     }
-    data->lock.Unlock();
+    data->lock.unlock();
 
     if (call) {
       std::move(callback)(*this);
@@ -194,13 +194,13 @@ class Future : public FutureBase {
   void SetOK() const {
     bool call = false;
 
-    data->lock.Lock();
+    data->lock.lock();
     if (data->status.IsInit()) {
       data->status.SetOK();
       data->promise.set_value(T());
       call = true;
     }
-    data->lock.Unlock();
+    data->lock.unlock();
 
     if (call) {
       RunCallbacks();
@@ -212,13 +212,13 @@ class Future : public FutureBase {
 
     bool call = false;
 
-    data->lock.Lock();
+    data->lock.lock();
     if (data->status.IsInit()) {
       data->status.SetCode(errCode);
       data->promise.set_value(T());
       call = true;
     }
-    data->lock.Unlock();
+    data->lock.unlock();
 
     if (call) {
       RunCallbacks();
@@ -232,12 +232,12 @@ class Future : public FutureBase {
     bool call = false;
 
     std::list<AbandonedCallback> callbacks;
-    data->lock.Lock();
+    data->lock.lock();
     if (!data->abandoned && data->status.IsInit() && (!data->associated || abandon)) {
       call = data->abandoned = true;
       callbacks.swap(data->onAbandonedCallbacks);
     }
-    data->lock.Unlock();
+    data->lock.unlock();
 
     if (call) {
       internal::Run(std::move(callbacks), *this);
@@ -362,13 +362,13 @@ class Future : public FutureBase {
   void Set(V &&value) const {
     bool call = false;
 
-    data->lock.Lock();
+    data->lock.lock();
     if (data->status.IsInit()) {
       data->status.SetOK();
       data->promise.set_value(std::forward<V>(value));
       call = true;
     }
-    data->lock.Unlock();
+    data->lock.unlock();
 
     if (call) {
       RunCallbacks();
@@ -415,11 +415,11 @@ class Promise {
   void Associate(const Future<T> &f) const {
     bool associated = false;
 
-    future.data->lock.Lock();
+    future.data->lock.lock();
     if (future.IsInit() && !future.data->associated) {
       associated = (future.data->associated = true);
     }
-    future.data->lock.Unlock();
+    future.data->lock.unlock();
 
     if (associated) {
       f.OnComplete(std::bind(&internal::Complete<T>, future, std::placeholders::_1))
