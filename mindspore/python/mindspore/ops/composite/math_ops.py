@@ -249,10 +249,7 @@ def tensor_dot(x1, x2, axes):
     # input validity checks
     x1_shape = shape_op(x1)
     x2_shape = shape_op(x2)
-    x1_type = F.dtype(x1)
-    x2_type = F.dtype(x2)
     axes = _check_axes(axes, 'tensor_dot')
-    _typecheck_input(x1_type, x2_type, 'tensor_dot')
     # input compatibility check & axes format update
     axes = _axes_int_check(x1_shape, x2_shape, axes, 'tensor_dot')
     x1_reshape_fwd, x1_transpose_fwd, x1_ret = _calc_new_shape(x1_shape, axes, 0)
