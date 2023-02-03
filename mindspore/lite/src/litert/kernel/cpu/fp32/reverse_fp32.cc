@@ -91,7 +91,10 @@ int ReverseCPUKernel::ReSize() {
     }
   }
 
-  int out, in, C, m;
+  int out;
+  int in;
+  int C;
+  int m;
   for (int i = 0; i < data_size_; ++i) {
     int tmp = i;
     for (int j = 0; j < param->num_axis_; ++j) {

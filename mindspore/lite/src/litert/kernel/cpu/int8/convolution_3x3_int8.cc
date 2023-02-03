@@ -34,7 +34,8 @@ int ProcessFilterUint8(const int8_t *origin_weight, int16_t *dst_weight, const C
   auto kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
   int iC8 = UP_DIV(input_channel, C8NUM);
 
-  size_t tmp_size = output_channel * iC8 * C8NUM * kernel_plane * sizeof(int16_t);
+  size_t tmp_size =
+    static_cast<size_t>(output_channel) * static_cast<size_t>(iC8) * C8NUM * kernel_plane * sizeof(int16_t);
   auto tmp_addr = reinterpret_cast<int16_t *>(malloc(tmp_size));
   if (tmp_addr == nullptr) {
     return RET_ERROR;
@@ -96,13 +97,16 @@ int Convolution3x3Int8CPUKernel::InitWeightBias() {
   int iC8 = UP_DIV(input_channel, C8NUM);
   int oC4 = UP_DIV(output_channel, C4NUM);
   // init weight
-  size_t transformed_size = iC8 * C8NUM * oC4 * C4NUM * kUnitBufferMultipler * sizeof(int16_t);
-  transformed_filter_addr_ = reinterpret_cast<int16_t *>(malloc(transformed_size));
-  if (transformed_filter_addr_ == nullptr) {
-    MS_LOG(ERROR) << "malloc transformed_filter_addr_ failed.";
-    return RET_ERROR;
+  size_t transformed_size =
+    static_cast<size_t>(iC8) * C8NUM * static_cast<size_t>(oC4) * C4NUM * kUnitBufferMultipler * sizeof(int16_t);
+  if (transformed_size > 0) {
+    transformed_filter_addr_ = reinterpret_cast<int16_t *>(malloc(transformed_size));
+    if (transformed_filter_addr_ == nullptr) {
+      MS_LOG(ERROR) << "malloc transformed_filter_addr_ failed.";
+      return RET_ERROR;
+    }
+    memset(transformed_filter_addr_, 0, transformed_size);
   }
-  memset(transformed_filter_addr_, 0, transformed_size);
   auto weight_data = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->MutableData());
   CHECK_NULL_RETURN(weight_data);
   auto ret = ProcessFilterUint8(weight_data, transformed_filter_addr_, conv_param_);
@@ -112,13 +116,15 @@ int Convolution3x3Int8CPUKernel::InitWeightBias() {
   }
 
   // init bias
-  size_t new_bias_size = oC4 * C4NUM * sizeof(int32_t);
-  bias_data_ = reinterpret_cast<int32_t *>(malloc(new_bias_size));
-  if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc bias_data_ failed.";
-    return RET_ERROR;
+  size_t new_bias_size = static_cast<size_t>(oC4) * C4NUM * sizeof(int32_t);
+  if (new_bias_size > 0) {
+    bias_data_ = reinterpret_cast<int32_t *>(malloc(new_bias_size));
+    if (bias_data_ == nullptr) {
+      MS_LOG(ERROR) << "malloc bias_data_ failed.";
+      return RET_ERROR;
+    }
+    memset(bias_data_, 0, new_bias_size);
   }
-  memset(bias_data_, 0, new_bias_size);
   if (in_tensors_.size() == kInputSize2) {
     CHECK_NULL_RETURN(in_tensors_.at(kBiasIndex));
     auto ori_bias_addr = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->MutableData());
@@ -138,8 +144,9 @@ int Convolution3x3Int8CPUKernel::InitTmpBuffer() {
   int ic8 = UP_DIV(conv_param_->input_channel_, C8NUM);
   MS_ASSERT(ctx_->allocator != nullptr);
 
-  size_t c8_input_size =
-    conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * ic8 * C8NUM * sizeof(int16_t);
+  size_t c8_input_size = static_cast<size_t>(conv_param_->input_batch_) * static_cast<size_t>(conv_param_->input_h_) *
+                         static_cast<size_t>(conv_param_->input_w_) * static_cast<size_t>(ic8) * C8NUM *
+                         sizeof(int16_t);
   input_data_ = reinterpret_cast<int16_t *>(ctx_->allocator->Malloc(c8_input_size));
   if (input_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc input_data_ failed.";
