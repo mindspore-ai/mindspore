@@ -3992,7 +3992,8 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     neg_index = targets < 0
     pos = pos_index * inputs
     neg = neg_index * inputs
-    margin_matrix = margin * neg_index
+    m = ops.cast(margin, _dtype)
+    margin_matrix = m * neg_index
     neg = margin_matrix - neg
     neg = ops.clip_by_value(neg, min_val)
     loss = pos + neg
