@@ -374,7 +374,7 @@ void EmbeddingCachePrefetchActor::LookupEmbeddingTable(size_t indices_num, size_
   for (size_t i = 0; i < indices_num; ++i) {
     int index = indices_addr[i];
     if (index >= 0 && index < SizeToInt(first_dim_size)) {
-      size_t pos = index * embedding_size;
+      size_t pos = IntToSize(index) * embedding_size;
       auto ret = memcpy_s(output_addr, (indices_num - i) * lens, input_addr + pos, lens);
       if (ret != EOK) {
         MS_LOG(ERROR) << "Memcpy failed, errno[" << ret << "]";

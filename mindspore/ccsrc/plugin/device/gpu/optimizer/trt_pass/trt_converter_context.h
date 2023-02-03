@@ -32,6 +32,9 @@
 
 namespace mindspore {
 namespace opt {
+// The const number 4GB in bytes.
+constexpr size_t kFourGBytes = 4UL << 30;
+
 // Class transform ANF graph to Tensor-RT network.
 // It converts the operators in ANF graph to Tensor-RT layer according to the topological order.
 // During the conversion, the cache keep the map between ANF node outputs and Tensor-RT layer outputs.
@@ -43,7 +46,7 @@ class TrtConverterContext : public std::enable_shared_from_this<TrtConverterCont
   explicit TrtConverterContext(FuncGraphPtr fg)
       : func_graph_(fg),
         batch_size_(1),
-        workspace_size_(4UL << 30),
+        workspace_size_(kFourGBytes),
         builder_(nullptr),
         network_(nullptr),
         config_(nullptr),

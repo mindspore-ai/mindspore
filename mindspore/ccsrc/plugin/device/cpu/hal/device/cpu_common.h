@@ -23,12 +23,12 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 #define CHECK_RET_WITH_EXCEPT(expression, status, message) \
-  {                                                        \
+  do {                                                     \
     auto ret = (expression);                               \
     if (ret != (status)) {                                 \
       MS_LOG(EXCEPTION) << (message);                      \
     }                                                      \
-  }
+  } while (0);
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
