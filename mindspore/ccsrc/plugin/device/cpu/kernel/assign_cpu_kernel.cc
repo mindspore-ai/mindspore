@@ -68,22 +68,23 @@ int AssignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   std::vector<int64_t> input_x_shape = inputs[kIndex0]->GetShapeVector();
   std::vector<int64_t> input_y_shape = inputs[kIndex1]->GetShapeVector();
   if (input_x_shape.size() != input_y_shape.size()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the 'x' and 'y' must have the same dimension, but got the dimension of 'x': "
-                  << input_x_shape.size() << " and the dimension of 'y': " << input_y_shape.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'x' and 'y' must have the same dimension, but got the dimension of 'x': "
+                      << input_x_shape.size() << " and the dimension of 'y': " << input_y_shape.size();
   }
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     if (input_x_shape[i] != input_y_shape[i]) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the 'x' and 'y' must have the same shape, but got the shape of 'x': "
-                    << Vector2Str(input_x_shape) << " and the shape of 'y': " << Vector2Str(input_y_shape);
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the 'x' and 'y' must have the same shape, but got the shape of 'x': "
+                        << Vector2Str(input_x_shape) << " and the shape of 'y': " << Vector2Str(input_y_shape);
     }
     batch_size_ *= LongToSize(input_x_shape[i]);
   }
   auto type_len = input_x_dtype_size_map.find(input_x_dtype_);
   if (type_len == input_x_dtype_size_map.end()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the dtype of 'input_x' must be bool, int, uint, float, complex, but got " << input_x_dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'input_x' must be bool, int, uint, float, complex, but got "
+                      << input_x_dtype_;
   }
   input_x_dtype_size_ = type_len->second;
 
@@ -152,7 +153,7 @@ bool AssignCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
     }
     default:
       ret = false;
-      MS_LOG(ERROR) << "For 'Assign', unsupported input data type: " << TypeIdToString(input_x_dtype_);
+      MS_LOG(EXCEPTION) << "For 'Assign', unsupported input data type: " << TypeIdToString(input_x_dtype_);
   }
   return ret;
 }
@@ -162,9 +163,9 @@ bool AssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   auto max_size = inputs[0]->size;
   size_t total_size = input_x_dtype_size_ * batch_size_;
   if (total_size > max_size) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', memcpy size must be less than or equal to max size, but got memcpy size: " << total_size
-                  << ", and max size: " << max_size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', memcpy size must be less than or equal to max size, but got memcpy size: " << total_size
+                      << ", and max size: " << max_size;
   }
 
   auto input0_addr = reinterpret_cast<int8_t *>(inputs[0]->addr);
