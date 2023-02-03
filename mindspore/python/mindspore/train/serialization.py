@@ -399,7 +399,7 @@ def load(file_name, **kwargs):
 
               - Option: 'AES-GCM', 'AES-CBC' or customized decryption. Default: 'AES-GCM'.
               - For details of using the customized decryption, please check the `tutorial
-                <https://mindspore.cn/mindarmour/docs/en/r1.10/model_encrypt_protection.html>`_.
+                <https://mindspore.cn/mindarmour/docs/en/r1.9/model_encrypt_protection.html>`_.
     Returns:
         GraphCell, a compiled graph that can executed by `GraphCell`.
 
@@ -881,7 +881,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
               - For 'MINDIR', all options are supported. Option: 'AES-GCM', 'AES-CBC' or Customized encryption.
                 Default: 'AES-GCM'.
               - For details of using the customized encryption, please check the `tutorial
-                <https://mindspore.cn/mindarmour/docs/en/r1.10/model_encrypt_protection.html>`_.
+                <https://mindspore.cn/mindarmour/docs/en/r1.9/model_encrypt_protection.html>`_.
 
     Examples:
         >>> import mindspore as ms

@@ -10,7 +10,7 @@ mindspore.ops.print\_
     .. note::
         在PyNative模式下，请使用Python print函数。在Ascend平台上的Graph模式下，bool、int和float将被转换为Tensor进行打印，str保持不变。
         该方法用于代码调试。当同时print大量数据时，为了保证主进程不受影响，可能会丢失一些数据。如果需要记录完整数据，推荐使用 `Summary` 功能，具体可查看
-        `Summary <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.10/summary_record.html?highlight=summary#>`_ 。
+        `Summary <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.9/summary_record.html?highlight=summary#>`_ 。
 
     参数：
         - **input_x** (Union[Tensor, bool, int, float, str]) - print_的输入。支持多个输入，用'，'分隔。

@@ -57,6 +57,7 @@ class ReduceOp:
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor, ops, nn
         >>> from mindspore.ops import ReduceOp

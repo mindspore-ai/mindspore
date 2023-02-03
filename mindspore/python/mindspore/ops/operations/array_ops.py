@@ -3213,11 +3213,11 @@ class StridedSlice(PrimitiveWithInfer):
 
       If the ith bit of `shrink_axis_mask` is 1, `begin`, `end` and `strides`
       are ignored and dimension i will be shrunk to 0. For a 5*6*7 Tensor `input_x`,
-      if `shrink_axis_mask` is 0b010`, it is equivalent to slice `x[:, 5, :]`
+      if `shrink_axis_mask` is 0b010, it is equivalent to slice `x[:, 5, :]`
       and results in an output shape of :math:`(5, 7)`.
 
     Note:
-        `new_axis_mask` and  `shrink_axis_mask` are not recommended to
+        `new_axis_mask` and `shrink_axis_mask` are not recommended to
         use at the same time, it might incur unexpected result.
 
     Args:

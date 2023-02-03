@@ -16,7 +16,7 @@ mindspore.dataset.audio.AmplitudeToDB
         - **top_db** (float, 可选) - 最小截止分贝值，取值为非负数，默认值：80.0。
 
     异常：
-        - **TypeError** - 当 `stype` 的类型不为 :class:`mindspore.dataset.audio.utils.ScaleType` 。
+        - **TypeError** - 当 `stype` 的类型不为 :class:`mindspore.dataset.audio.ScaleType` 。
         - **TypeError** - 当 `ref_value` 的类型不为float。
         - **ValueError** - 当 `ref_value` 不为正数。
         - **TypeError** - 当 `amin` 的类型不为float。

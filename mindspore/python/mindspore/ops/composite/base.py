@@ -90,7 +90,7 @@ def core(fn=None, **flags):
 
     Examples:
         >>> net = Net()
-        >>> net = core(net, predit=True)
+        >>> net = ops.core(net, predit=True)
         >>> print(hasattr(net, '_func_graph_flags'))
         True
     """
@@ -641,7 +641,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         >>> from mindspore import Tensor
         >>> from mindspore import ops
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.ops.composite import MultitypeFuncGraph
+        >>> from mindspore.ops import MultitypeFuncGraph
         >>>
         >>> tensor_add = ops.Add()
         >>> add = MultitypeFuncGraph('add')
@@ -747,7 +747,7 @@ class HyperMap(HyperMap_):
 
     Examples:
         >>> from mindspore import Tensor, ops
-        >>> from mindspore.ops.composite.base import MultitypeFuncGraph, HyperMap
+        >>> from mindspore.ops import MultitypeFuncGraph, HyperMap
         >>> from mindspore import dtype as mstype
         >>> nest_tensor_list = ((Tensor(1, mstype.float32), Tensor(2, mstype.float32)),
         ...                     (Tensor(3, mstype.float32), Tensor(4, mstype.float32)))

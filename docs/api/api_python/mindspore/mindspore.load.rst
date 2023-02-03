@@ -14,7 +14,7 @@ mindspore.load
           - **dec_key** (bytes) - 用于解密的字节类型密钥。有效长度为 16、24 或 32。
           - **dec_mode** (Union[str, function]) - 指定解密模式，设置dec_key时生效。可选项：'AES-GCM' | 'AES-CBC' ｜ 自定义解密函数。默认值："AES-GCM"。
 
-            - 关于使用自定义解密加载的详情，请查看 `教程 <https://www.mindspore.cn/mindarmour/docs/zh-CN/r1.10/model_encrypt_protection.html>`_。
+            - 关于使用自定义解密加载的详情，请查看 `教程 <https://www.mindspore.cn/mindarmour/docs/zh-CN/r1.9/model_encrypt_protection.html>`_。
 
     返回：
         GraphCell，一个可以由 `GraphCell` 构成的可执行的编译图。

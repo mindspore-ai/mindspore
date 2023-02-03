@@ -34,7 +34,7 @@ def print_(*input_x):
         This function is used for debugging. When too much data is printed at the same time,
         in order not to affect the main process, the framework may discard some data. If you need to record the
         data completely, you are recommended to use the `Summary` function, and can check
-        `Summary <https://www.mindspore.cn/mindinsight/docs/en/r1.10/summary_record.html?highlight=summary#>`_.
+        `Summary <https://www.mindspore.cn/mindinsight/docs/en/r1.9/summary_record.html?highlight=summary#>`_.
 
     Args:
         input_x (Union[Tensor, bool, int, float, str]): The inputs of print_.

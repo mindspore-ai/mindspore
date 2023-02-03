@@ -6,7 +6,7 @@ mindspore.SummaryCollector
     SummaryCollector可以收集一些常用信息。
 
     它可以帮助收集loss、学习率、计算图等。
-    SummaryCollector还可以允许通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.10/summary_record.html#方式二-结合summary算子和summarycollector自定义收集网络中的数据>`_ 将数据收集到summary文件中。
+    SummaryCollector还可以允许通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.9/summary_record.html#方式二-结合summary算子和summarycollector自定义收集网络中的数据>`_ 将数据收集到summary文件中。
 
     .. note::
         - 使用SummaryCollector时，需要将代码放置到 `if __name__ == "__main__"` 中运行。
@@ -23,7 +23,7 @@ mindspore.SummaryCollector
 
           - **collect_metric** (bool) - 表示是否收集训练metrics，目前只收集loss。把第一个输出视为loss，并且算出其平均数。默认值：True。
           - **collect_graph** (bool) - 表示是否收集计算图。目前只收集训练计算图。默认值：True。
-          - **collect_train_lineage** (bool) - 表示是否收集训练阶段的lineage数据，该字段将显示在MindInsight的 `lineage页面 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.10/lineage_and_scalars_comparison.html>`_ 上。默认值：True。
+          - **collect_train_lineage** (bool) - 表示是否收集训练阶段的lineage数据，该字段将显示在MindInsight的 `lineage页面 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.9/lineage_and_scalars_comparison.html>`_ 上。默认值：True。
           - **collect_eval_lineage** (bool) - 表示是否收集评估阶段的lineage数据，该字段将显示在MindInsight的lineage页面上。默认值：True。
           - **collect_input_data** (bool) - 表示是否为每次训练收集数据集。目前仅支持图像数据。如果数据集中有多列数据，则第一列应为图像数据。默认值：True。
           - **collect_dataset_graph** (bool) - 表示是否收集训练阶段的数据集图。默认值：True。

@@ -319,6 +319,7 @@ class Custom(ops.PrimitiveWithInfer):
     Examples:
         >>> import mindspore.ops as ops
         >>> import numpy as np
+        >>> from mindspore import Tensor
         >>> from mindspore.ops import CustomRegOp, custom_info_register, DataType, ms_kernel
         >>> from mindspore.common import dtype as mstype
         >>> from mindspore.nn import Cell

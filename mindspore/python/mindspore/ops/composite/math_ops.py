@@ -358,6 +358,7 @@ def dot(x1, x2):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> input_x1 = Tensor(np.ones(shape=[2, 3]), mindspore.float32)
