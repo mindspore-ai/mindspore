@@ -643,7 +643,7 @@ class ResizeLinear1D(Primitive):
         This is an experimental feature and is subjected to change.
 
     Args:
-        coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate
+        coordinate_transformation_mode (str): Default is 'align_corners'. Describes how to transform the coordinate
             in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel', 'asymmetric'.
 
     Inputs:

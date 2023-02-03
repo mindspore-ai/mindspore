@@ -2435,7 +2435,7 @@ class Tensor(Tensor_):
 
     def det(self):
         r"""
-        Refer to :func:`mindspore.ops.det`.
+        For details, please refer to :func:`mindspore.ops.det`.
         """
         self._init_check()
         return tensor_operator_registry.get('det')(self)

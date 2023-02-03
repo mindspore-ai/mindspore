@@ -3,4 +3,4 @@ mindspore.Tensor.det
 
 .. py:method:: mindspore.Tensor.det()
 
-    :func:`mindspore.Tensor.matrix_determinant` 的别名。
+    详情请参考 :func:`mindspore.ops.det`。
