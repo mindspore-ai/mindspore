@@ -61,6 +61,7 @@ mindspore.set_auto_parallel_context
 
         - **comm_fusion** (dict) - 用于设置通信算子的融合配置。可以同一类型的通信算子按梯度张量的大小或者顺序分块传输。输入格式为{"通信类型": {"mode":str, "config": None int 或者 list}},每种通信算子的融合配置有两个键："mode"和"config"。支持以下通信类型的融合类型和配置：
 
+          - openstate：是否开启通信融合功能。通过 True 或 False 来开启或关闭通信融合功能。默认值：True。
           - allreduce：进行AllReduce算子的通信融合。"mode"包含："auto"、"size"和"index"。在"auto"模式下，融合的是梯度变量的大小，默认值阈值为"64"MB，"config"对应的值为None。在"size"模式下，需要用户在config的字典中指定梯度大小阈值，这个值必须大于"0"MB。在"mode"为"index"时，它与"all_reduce_fusion_config"相同，用户需要给"config"传入一个列表，里面每个值表示梯度的索引。
           - allgather：进行AllGather算子的通信融合。"mode"包含："auto"、"size"。"auto" 和 "size"模式的配置方式与AllReduce相同。
           - reducescatter：进行ReduceScatter算子的通信融合。"mode"包含："auto"、"size"。"auto" 和 "size"模式的配置方式与AllReduce相同。

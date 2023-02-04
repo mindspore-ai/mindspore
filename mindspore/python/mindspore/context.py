@@ -606,6 +606,9 @@ def set_auto_parallel_context(**kwargs):
                         communication fusion config has two keys: "mode" and "config".
                         It supports following communication fusion types and configurations:
 
+                        - openstate: Whether turn on the communication fusion or not. If `openstate` is `True`, turn on
+                          the communication fusion, otherwise, turn off the communication fusion. Default: `True`.
+
                         - allreduce: If communication fusion type is `allreduce`. The `mode` contains: `auto`, `size`
                           and `index`. In `auto` mode, AllReduce fusion is configured by gradients size and the default
                           fusion threshold is `64` MB. In 'size' mode, AllReduce fusion is configured by gradients size
