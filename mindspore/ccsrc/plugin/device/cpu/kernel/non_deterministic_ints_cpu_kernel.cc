@@ -71,14 +71,41 @@ bool NonDeterministicIntsCPUKernelMod::LaunchKernel(const std::vector<AddressPtr
 
 std::vector<std::pair<KernelAttr, NonDeterministicIntsCPUKernelMod::NonDeterministicIntsFunc>>
   NonDeterministicIntsCPUKernelMod::func_list_ = {
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<uint32_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<uint32_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<uint32_t, uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt64),
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<uint32_t, uint64_t>},
+
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32),
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<uint64_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt64),
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<uint64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt32),
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<uint64_t, uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<uint64_t, uint64_t>},
+
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      &NonDeterministicIntsCPUKernelMod::LaunchKernel<int32_t, int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
      &NonDeterministicIntsCPUKernelMod::LaunchKernel<int32_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<int32_t, uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<int32_t, uint64_t>},
+
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
      &NonDeterministicIntsCPUKernelMod::LaunchKernel<int64_t, int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-     &NonDeterministicIntsCPUKernelMod::LaunchKernel<int64_t, int64_t>}};
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<int64_t, uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+     &NonDeterministicIntsCPUKernelMod::LaunchKernel<int64_t, uint64_t>}};
 
 std::vector<KernelAttr> NonDeterministicIntsCPUKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
