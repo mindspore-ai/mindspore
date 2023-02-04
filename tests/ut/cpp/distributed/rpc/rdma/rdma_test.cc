@@ -38,23 +38,51 @@ class RDMATest : public UT::Common {
  public:
   RDMATest() = default;
   ~RDMATest() = default;
+
+  std::unique_ptr<MessageBase> CreateMessage(const std::string &msg);
 };
+
+std::unique_ptr<MessageBase> RDMATest::CreateMessage(const std::string &msg) {
+  std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
+  size_t msg_size = msg.size();
+  ASSERT_TRUE(msg_size != 0);
+  void *data = malloc(msg_size + 1);
+  (void)memcpy_s(data, msg_size, msg.c_str(), msg_size);
+  message->data = data;
+  message->size = msg_size;
+  return message;
+}
 
 /// Feature: RDMA communication.
 /// Description: test basic connection function between RDMA client and server.
 /// Expectation: RDMA client successfully connects to RDMA server and sends a simple message.
 TEST_F(RDMATest, TestRDMAConnection) {
+  std::string url = "127.0.0.1:10969";
   size_t server_pid = fork();
   if (server_pid == 0) {
     std::shared_ptr<RDMAServer> rdma_server = std::make_shared<RDMAServer>();
-    (void)rdma_server->Initialize(kLocalHost);
+    MS_EXCEPTION_IF_NULL(rdma_server);
+    ASSERT_TRUE(rdma_server->Initialize(url));
+
+    auto msg_handler = [](MessageBase *const msg) {
+      MS_LOG(INFO) << "Receive message from client: " << static_cast<char *>(msg->data);
+      return nullptr;
+    };
+    rdma_server->SetMessageHandler(msg_handler);
+    sleep(3);
     return;
   }
-  sleep(2);
+  sleep(1);
   size_t client_pid = fork();
   if (client_pid == 0) {
     std::shared_ptr<RDMAClient> rdma_client = std::make_shared<RDMAClient>();
-    (void)rdma_client->Initialize();
+    MS_EXCEPTION_IF_NULL(rdma_client);
+    ASSERT_TRUE(rdma_client->Initialize());
+    ASSERT_TRUE(rdma_client->Connect(url));
+
+    auto message = CreateMessage("Hello server!");
+    ASSERT_TRUE(rdma_client->SendSync(std::move(message)));
+    rdma_client->Finalize();
     return;
   }
 

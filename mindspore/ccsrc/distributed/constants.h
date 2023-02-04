@@ -92,6 +92,9 @@ constexpr char kDataSyncDstOpName[] = "DataSyncDst";
 constexpr char kControlSrcOpName[] = "ControlSrc";
 constexpr char kControlDstOpName[] = "ControlDst";
 
+static const char URL_PROTOCOL_IP_SEPARATOR[] = "://";
+static const char URL_IP_PORT_SEPARATOR[] = ":";
+
 // This macro the current timestamp in milliseconds.
 #define CURRENT_TIMESTAMP_MILLI \
   (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()))

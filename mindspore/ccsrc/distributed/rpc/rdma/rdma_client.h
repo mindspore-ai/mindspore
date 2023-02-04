@@ -30,7 +30,13 @@ namespace distributed {
 namespace rpc {
 class BACKEND_EXPORT RDMAClient : public RPCClientBase {
  public:
-  explicit RDMAClient(bool enable_ssl = false) : RPCClientBase(enable_ssl) {}
+  explicit RDMAClient(bool enable_ssl = false)
+      : RPCClientBase(enable_ssl),
+        dev_name_(const_cast<char *>(kDefaultIfName)),
+        ip_addr_(const_cast<char *>(kDefaultIP)),
+        port_(kDefaultPort),
+        urpc_allocator_(urpc_get_default_allocator_func()),
+        urpc_session_(nullptr) {}
   ~RDMAClient() override = default;
 
   bool Initialize() override;
@@ -49,7 +55,16 @@ class BACKEND_EXPORT RDMAClient : public RPCClientBase {
 
   bool Flush(const std::string &dst_url) override;
 
+  // The callback after server responding.
+  static void urpc_rsp_cb(struct urpc_sgl *rsp, int err, void *arg);
+
  private:
+  char *dev_name_;
+  char *ip_addr_;
+  uint16_t port_;
+
+  struct urpc_buffer_allocator *urpc_allocator_;
+  urpc_session_t *urpc_session_;
 };
 }  // namespace rpc
 }  // namespace distributed
