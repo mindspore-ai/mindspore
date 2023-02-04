@@ -167,6 +167,34 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
                     << node->fullname_with_scope();
 }
 
+tensor::TensorPtr GetDependValueTensor(const std::vector<device::DeviceAddressPtr> &device_address_list,
+                                       const std::vector<tensor::TensorPtr> &input_tensors, size_t index) {
+  if (index >= input_tensors.size()) {
+    MS_LOG(EXCEPTION) << "Input index: " << index << "is large than the input tensor's size " << input_tensors.size();
+  }
+
+  if (input_tensors[index] != nullptr) {
+    return input_tensors[index];
+  }
+
+  if (index >= device_address_list.size()) {
+    MS_LOG(EXCEPTION) << "Input index: " << index << "is large than the input device addresses's size "
+                      << device_address_list.size();
+  }
+
+  auto output_addr = device_address_list[index];
+  if (output_addr != nullptr && output_addr->IsPtrValid()) {
+    auto type = output_addr->type_id();
+    auto shape = output_addr->host_shape();
+    auto tensor = std::make_shared<tensor::Tensor>(type, shape);
+    tensor->set_device_address(output_addr, false);
+    tensor->data_sync();
+    return tensor;
+  }
+
+  MS_LOG(EXCEPTION) << "There is no valid data for depend value";
+}
+
 abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor::TensorPtr &depended_value,
                                           const size_t &input_index) {
   auto abs = input->abstract();
@@ -436,6 +464,108 @@ void InferOp(const CNodePtr &cnode, void *args) {
 
   kernel::KernelArgs kernel_args;
   InferShape(cnode, &kernel_args.depend_tensor_map, args);
+
+  if (auto kernel_mod_type = kernel_mod->GetKernelModType(); IsCpuGpuKernelMod(kernel_mod_type)) {
+    auto update = kernel::AbstractArgsFromCNode(cnode, IsKernelModWithoutOperator(kernel_mod_type));
+    update.depend_tensor_map = std::move(kernel_args.depend_tensor_map);
+    kernel::SetInputsByDependMap(update.depend_tensor_map, &update.inputs, IsCpuKernelMod(kernel_mod_type));
+    kernel::SetArgsToCNode(cnode, update);
+  } else {
+    kernel::SetArgsToCNode(cnode, kernel_args);
+  }
+}
+
+void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *depend_tensor_map,
+                const std::vector<device::DeviceAddressPtr> &device_address_list,
+                const std::vector<tensor::TensorPtr> &input_tensors) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(depend_tensor_map);
+  MS_LOG(DEBUG) << "InferShape start, node:" << cnode->fullname_with_scope();
+  std::set<int64_t> depend_list = abstract::GetValueDependArgIndices(cnode);
+
+  depend_tensor_map->clear();
+  auto &inputs = cnode->inputs();
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs.";
+  }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  AbstractBasePtrList args_spec_list;
+  auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
+  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t i = 0; i < input_size; i++) {
+    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i, false);
+    auto real_input = input_node_with_index.first;
+    auto real_input_index = input_node_with_index.second;
+
+    MS_EXCEPTION_IF_NULL(real_input);
+    if (depend_list.find(i) != depend_list.end()) {
+      auto depended_value = GetDependValueTensor(device_address_list, input_tensors, i);
+      auto ret2 = depend_tensor_map->try_emplace(i, depended_value);
+      if (!ret2.second) {
+        MS_LOG(EXCEPTION) << "Insert map failed.";
+      }
+
+      auto updated_abs = MakeNewAbstract(real_input, depended_value, real_input_index);
+      (void)args_spec_list.emplace_back(updated_abs);
+    } else {
+      auto abs = real_input->abstract();
+      if (abs->isa<abstract::AbstractSequence>() && !AnfAlgo::IsRealSquenceOutput(real_input)) {
+        auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+        MS_EXCEPTION_IF_NULL(abs_seq);
+        MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abs_seq->elements().size()), "Index is out of range.");
+        auto abs_index = abs_seq->elements()[real_input_index];
+        (void)args_spec_list.emplace_back(abs_index);
+      } else {
+        (void)args_spec_list.emplace_back(abs);
+      }
+    }
+  }
+
+  opt::CppInferShape(primitive, args_spec_list, cnode);
+}
+
+void InferOp(const CNodePtr &cnode, const std::vector<device::DeviceAddressPtr> &device_address_list,
+             const std::vector<tensor::TensorPtr> &input_tensors) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+
+  kernel::KernelArgs kernel_args;
+  InferShape(cnode, &kernel_args.depend_tensor_map, device_address_list, input_tensors);
+
+  if (auto kernel_mod_type = kernel_mod->GetKernelModType(); IsCpuGpuKernelMod(kernel_mod_type)) {
+    auto update = kernel::AbstractArgsFromCNode(cnode, IsKernelModWithoutOperator(kernel_mod_type));
+    update.depend_tensor_map = std::move(kernel_args.depend_tensor_map);
+    kernel::SetInputsByDependMap(update.depend_tensor_map, &update.inputs, IsCpuKernelMod(kernel_mod_type));
+    kernel::SetArgsToCNode(cnode, update);
+  } else {
+    kernel::SetArgsToCNode(cnode, kernel_args);
+  }
+}
+
+void SetOpArgs(const CNodePtr &cnode, const std::vector<device::DeviceAddressPtr> &device_address_list,
+               const std::vector<tensor::TensorPtr> &input_tensors) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (session::AnfRuntimeAlgorithm::GetKernelType(cnode) == KernelType::AKG_KERNEL) {
+    MS_LOG(EXCEPTION) << "Akg kernel do not support dynamic shape: " << cnode->fullname_with_scope();
+  }
+
+  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  kernel::KernelArgs kernel_args;
+  std::set<int64_t> depend_list = abstract::GetValueDependArgIndices(cnode);
+  kernel_args.depend_tensor_map.clear();
+  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t i = 0; i < input_size; i++) {
+    if (depend_list.find(i) != depend_list.end()) {
+      auto depended_value = GetDependValueTensor(device_address_list, input_tensors, i);
+      auto ret2 = kernel_args.depend_tensor_map.try_emplace(i, depended_value);
+      if (!ret2.second) {
+        MS_LOG(EXCEPTION) << "Insert map failed.";
+      }
+    }
+  }
 
   if (auto kernel_mod_type = kernel_mod->GetKernelModType(); IsCpuGpuKernelMod(kernel_mod_type)) {
     auto update = kernel::AbstractArgsFromCNode(cnode, IsKernelModWithoutOperator(kernel_mod_type));

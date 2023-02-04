@@ -293,6 +293,104 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
   }
 }
 
+device::DeviceAddressPtr GetInputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info) {
+  auto graph = op_compiler_info->graph_;
+  MS_EXCEPTION_IF_NULL(graph);
+  for (size_t index = 0; index < graph->inputs().size(); ++index) {
+    if (node == graph->inputs()[index]) {
+      return op_compiler_info->inputs_[index];
+    }
+  }
+  return nullptr;
+}
+
+device::DeviceAddressPtr GetOutputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info,
+                                                size_t output_index) {
+  auto execute_kernel_list = op_compiler_info->execute_kernel_list_;
+  auto execute_kernel_list_size = execute_kernel_list.size();
+  for (size_t i = 0; i < execute_kernel_list_size; ++i) {
+    if (node == execute_kernel_list[i].kernel_) {
+      return execute_kernel_list[i].outputs_device_address_[output_index];
+    }
+  }
+  MS_LOG(EXCEPTION) << "Can't find the node in ExecuteKernelList.";
+}
+
+void UpdateOutputAddressForRef(const OpCompilerInfoPtr &op_compiler_info,
+                               vector<device::DeviceAddressPtr> *device_address_list) {
+  const auto &graph = op_compiler_info->graph_;
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &ref_node_map = graph->GetRefMap();
+  for (const auto &iter : ref_node_map) {
+    auto &output_pair = iter.first;
+    auto &input_pair = iter.second;
+    auto &ref_node = output_pair.first;
+    auto output_index = output_pair.second;
+    auto input_address = GetInputAddressForRef(input_pair.first, op_compiler_info);
+    if (input_address == nullptr) {
+      continue;
+    }
+    auto output_address = GetOutputAddressForRef(ref_node, op_compiler_info, output_index);
+    MS_EXCEPTION_IF_NULL(output_address);
+    for (size_t index = 0; index < op_compiler_info->outputs_.size(); ++index) {
+      if (output_address == op_compiler_info->outputs_[index]) {
+        (*device_address_list)[index] = input_address;
+      }
+    }
+  }
+}
+
+vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateGraphOutputDeviceAddress(
+  const OpCompilerInfoPtr &op_compiler_info, const abstract::AbstractBasePtr &out_abstract) {
+  MS_LOG(DEBUG) << "CreateGraphOutputDeviceAddress";
+  MS_EXCEPTION_IF_NULL(out_abstract);
+  MS_EXCEPTION_IF_NULL(op_compiler_info);
+  const auto &graph = op_compiler_info->graph_;
+  MS_EXCEPTION_IF_NULL(graph);
+  auto device_context = op_compiler_info->device_context_;
+  MS_EXCEPTION_IF_NULL(device_context);
+  const auto &output_nodes = op_compiler_info->graph_output_nodes_;
+  auto outputs_address = op_compiler_info->outputs_;
+  if (outputs_address.size() != output_nodes.size()) {
+    MS_LOG(EXCEPTION) << "outputs_address size:" << outputs_address.size()
+                      << ",not equal to output_nodes size:" << output_nodes.size();
+  }
+  vector<device::DeviceAddressPtr> real_output_address_list(output_nodes.size(), nullptr);
+  // ref
+  UpdateOutputAddressForRef(op_compiler_info, &real_output_address_list);
+  for (size_t i = 0; i < output_nodes.size(); ++i) {
+    if (real_output_address_list[i] == nullptr) {
+      auto output_node = output_nodes[i].first;
+      auto index = output_nodes[i].second;
+
+      auto real_abstract = out_abstract;
+      if (out_abstract->isa<abstract::AbstractTuple>()) {
+        auto abstract_tuple = out_abstract->cast<abstract::AbstractTuplePtr>();
+        if (i >= abstract_tuple->elements().size()) {
+          MS_LOG(EXCEPTION) << "abstract_tuple size is " << abstract_tuple->elements().size() << " ,but get index is"
+                            << i;
+        }
+        real_abstract = abstract_tuple->elements()[i];
+      }
+      auto output_shape_ptr = real_abstract->BuildShape();
+      MS_EXCEPTION_IF_NULL(output_shape_ptr);
+      auto shape_vector = output_shape_ptr->cast<abstract::ShapePtr>();
+      MS_EXCEPTION_IF_NULL(shape_vector);
+      auto shape = shape_vector->shape();
+
+      auto address_size = AnfAlgo::GetOutputTensorMemSize(output_node, index, shape);
+      auto output_format = AnfAlgo::GetOutputFormat(output_node, index);
+      auto output_type = common::AnfAlgo::GetOutputInferDataType(output_node, index);
+      auto device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, address_size,
+                                                                                     output_format, output_type, shape);
+      MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(output_node)
+                    << " addr:" << device_address;
+      real_output_address_list[i] = device_address;
+    }
+  }
+  return real_output_address_list;
+}
+
 void DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context,
                                                             const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(device_context);
@@ -443,6 +541,21 @@ void DeviceAddressUtils::UpdateDeviceAddressForRefNode(const KernelGraphPtr &gra
       }
     }
   }
+}
+
+device::DeviceAddressPtr DeviceAddressUtils::CloneEmptyDeviceAddress(const device::DeviceAddressPtr &old_device_address,
+                                                                     const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(old_device_address);
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
+    nullptr, old_device_address->GetSize(), old_device_address->format(), old_device_address->type_id(),
+    old_device_address->host_shape());
+  MS_EXCEPTION_IF_NULL(new_device_address);
+  new_device_address->set_original_ref_count(old_device_address->original_ref_count());
+  new_device_address->ResetRefCount();
+  auto node = old_device_address->GetNodeIndex();
+  new_device_address->SetNodeIndex(node.first, node.second);
+  return new_device_address;
 }
 }  // namespace runtime
 }  // namespace mindspore

@@ -24,6 +24,7 @@
 
 #include "runtime/pynative/async/task.h"
 #include "backend/common/session/session_basic.h"
+#include "runtime/pynative/op_compiler.h"
 
 namespace mindspore {
 namespace pynative {
@@ -45,6 +46,12 @@ class OpTaskContext {
   const session::BackendOpRunInfoPtr &op_run_info() const { return op_run_info_; }
   device::DeviceContext *device_context() const { return device_context_; }
   bool is_pynative_infer() const { return is_pyantive_infer_; }
+  void set_op_compiler_info(const OpCompilerInfoPtr &op_compiler_info) { op_compiler_info_ = op_compiler_info; }
+  OpCompilerInfoPtr op_compiler_info() const { return op_compiler_info_; }
+  void set_device_address_list(const vector<device::DeviceAddressPtr> &device_address_list) {
+    device_address_list_ = device_address_list;
+  }
+  vector<device::DeviceAddressPtr> &device_address_list() { return device_address_list_; }
 
  private:
   GraphId graph_id_;
@@ -53,6 +60,8 @@ class OpTaskContext {
   session::BackendOpRunInfoPtr op_run_info_;
   device::DeviceContext *device_context_;
   bool is_pyantive_infer_{false};
+  OpCompilerInfoPtr op_compiler_info_;
+  vector<device::DeviceAddressPtr> device_address_list_;
 };
 
 class BackendOpTask : public AsyncTask {

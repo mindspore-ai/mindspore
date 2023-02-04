@@ -19,6 +19,7 @@
 #include <utility>
 #include <vector>
 #include <memory>
+#include <map>
 #include <string>
 #include "utils/ms_utils.h"
 #include "include/backend/kernel_graph.h"
@@ -29,6 +30,13 @@ namespace mindspore {
 using device::DeviceContext;
 using session::KernelWithIndex;
 namespace pynative {
+struct ExecuteKernelInfo {
+  std::vector<device::DeviceAddressPtr> inputs_device_address_;
+  std::vector<device::DeviceAddressPtr> outputs_device_address_;
+  CNodePtr kernel_;
+};
+using ExecuteKernelInfoList = std::vector<ExecuteKernelInfo>;
+
 struct OpCompilerInfo {
   OpCompilerInfo(GraphInfo graph_info, GraphId graph_id, KernelGraphPtr graph,
                  std::vector<KernelWithIndex> graph_output_nodes, DeviceContext *device_context, bool need_erase)
@@ -45,6 +53,10 @@ struct OpCompilerInfo {
   std::vector<KernelWithIndex> graph_output_nodes_;
   DeviceContext *device_context_;
   bool need_erase_;
+  std::vector<device::DeviceAddressPtr> inputs_;
+  std::vector<device::DeviceAddressPtr> outputs_;
+  std::map<device::DeviceAddressPtr, tensor::TensorPtr> value_map_to_tensor_;
+  ExecuteKernelInfoList execute_kernel_list_;
 };
 using OpCompilerInfoPtr = std::shared_ptr<OpCompilerInfo>;
 
@@ -67,7 +79,7 @@ class BACKEND_EXPORT OpCompiler {
 
   // Accumulate a certain number of operators,
   // and then compile the operators in parallel to improve compilation efficiency.
-  static void BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context);
+  void BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context);
 
   std::string GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim);
 
@@ -78,10 +90,10 @@ class BACKEND_EXPORT OpCompiler {
   OpCompiler();
   ~OpCompiler() = default;
   DISABLE_COPY_AND_ASSIGN(OpCompiler);
-
   KernelGraphPtr GenerateKernelGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                      device::DeviceContext *device_context) const;
 
+  void ConvertGraphToExecuteInfo(const OpCompilerInfoPtr &op_compiler_info);
   // All operators shared the same session.
   session::SessionPtr session_;
   mindspore::HashMap<GraphInfo, OpCompilerInfoPtr> op_compiler_infos_;

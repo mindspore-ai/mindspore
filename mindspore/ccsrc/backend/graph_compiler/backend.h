@@ -108,6 +108,9 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   // Dispatch task and execute the task in another thread.
   void DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs, const OpCompilerInfoPtr &op_compiler_info,
                       const session::BackendOpRunInfoPtr &op_run_info);
+  void DispatchOpTaskDynamic(bool single_op_cache_hit, VectorRef *outputs, const OpCompilerInfoPtr &op_compiler_info,
+                             const session::BackendOpRunInfoPtr &op_run_info,
+                             const vector<device::DeviceAddressPtr> &device_address_list);
 
   void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                            const VectorRef &args, VectorRef *outputs) override;
@@ -122,9 +125,15 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) const;
 
+  void UpdateOutputDynamic(const OpCompilerInfoPtr &op_compiler_info, VectorRef *const outputs,
+                           const vector<device::DeviceAddressPtr> &device_address_list,
+                           const abstract::AbstractBasePtr &out_abstract) const;
+
   void ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors);
 
   void OpRunCallback(const std::shared_ptr<pynative::OpTaskContext> &context);
+
+  void OpRunCallbackDynamic(const std::shared_ptr<pynative::OpTaskContext> &context);
 
   // Clean the compilation cache to avoid memory leakage in dynamic shape scenarios.
   void ClearResource();

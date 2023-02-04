@@ -17,7 +17,10 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_GRAPH_SCHEDULER_COMMON_UTILS_H_
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_GRAPH_SCHEDULER_COMMON_UTILS_H_
 
+#include <vector>
+
 #include "runtime/hardware/device_context.h"
+#include "runtime/pynative/op_compiler.h"
 
 namespace mindspore {
 using device::DeviceContext;
@@ -31,6 +34,8 @@ class DeviceAddressUtils {
   static void CreateValueNodeDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
   static void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph,
                                               bool is_gradient_out);
+  static vector<device::DeviceAddressPtr> CreateGraphOutputDeviceAddress(const OpCompilerInfoPtr &op_compiler_info,
+                                                                         const abstract::AbstractBasePtr &out_abstract);
   static void CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
   static void CreateDeviceAddressByMapTensorNode(const DeviceContext *device_context, const AnfNodePtr &node,
                                                  size_t index);
@@ -38,7 +43,12 @@ class DeviceAddressUtils {
   static void UpdateDeviceAddress(const session::AnfWithOutIndex &cur_pair,
                                   const session::AnfWithOutIndex &origin_pair);
   static void UpdateDeviceAddressForRefNode(const KernelGraphPtr &graph);
+  static device::DeviceAddressPtr CloneEmptyDeviceAddress(const device::DeviceAddressPtr &old_device_address,
+                                                          const DeviceContext *device_context);
 };
+device::DeviceAddressPtr GetInputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info);
+device::DeviceAddressPtr GetOutputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info,
+                                                size_t output_index);
 }  // namespace runtime
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_GRAPH_SCHEDULER_COMMON_UTILS_H_

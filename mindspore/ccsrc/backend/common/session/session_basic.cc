@@ -460,11 +460,17 @@ BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, cons
   const auto &shape = abstract->BuildShape();
   MS_EXCEPTION_IF_NULL(shape);
 
+  std::vector<size_t> output_indexes;
   bool is_gradient_out = false;
   if (graph_output_info != nullptr) {
-    auto lb_iter = graph_output_info->output_indexes.lower_bound({cnode, 0});
-    is_gradient_out = lb_iter != graph_output_info->output_indexes.end() && lb_iter->first.first == cnode;
+    for (auto &item : graph_output_info->output_indexes) {
+      if (item.first.first == cnode) {
+        is_gradient_out = true;
+        output_indexes.push_back(item.first.second);
+      }
+    }
   }
+
   pynative::BaseOpRunInfo base_op_run_info;
   base_op_run_info.is_mixed_precision_cast = false;
   base_op_run_info.lazy_build = !shape->IsDynamic();
@@ -476,6 +482,7 @@ BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, cons
   base_op_run_info.input_tensor = tensor_info.input_tensors;
   base_op_run_info.input_mask = tensor_info.input_tensors_mask;
   base_op_run_info.abstract = abstract;
+  base_op_run_info.output_indexes = output_indexes;
   return std::make_shared<BackendOpRunInfo>(base_op_run_info, primitive, false, is_gradient_out);
 }
 

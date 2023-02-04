@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-void TensorShapeKernelMod::Execute(void *stream_ptr) const {
+void TensorShapeKernelMod::Execute(void *stream_ptr, const std::vector<AddressPtr> &outputs) const {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -63,7 +63,7 @@ void TensorShapeKernelMod::Execute(void *stream_ptr) const {
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
     auto status =
-      rtMemcpyAsync(const_cast<void *>(output_addr->GetPtr()), output_addr->GetSize(), output_tensor_for_sync->data_c(),
+      rtMemcpyAsync(const_cast<void *>(outputs[0]->addr), outputs[0]->size, output_tensor_for_sync->data_c(),
                     LongToSize(output_tensor_for_sync->data().nbytes()), RT_MEMCPY_HOST_TO_DEVICE_EX, stream_ptr);
     if (status != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Execute TensorShapeKernel rtMemcpyAsync failed!";
@@ -72,13 +72,13 @@ void TensorShapeKernelMod::Execute(void *stream_ptr) const {
 }
 
 bool TensorShapeKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                  const std::vector<AddressPtr> &, void *stream_ptr) {
+                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   try {
-    Execute(stream_ptr);
+    Execute(stream_ptr, outputs);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "TensorShapeKernelMod Launch failed. node: " << cnode->fullname_with_scope()
                   << ", Error message is " << e.what();
