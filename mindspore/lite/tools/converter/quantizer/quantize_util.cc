@@ -47,6 +47,8 @@ namespace mindspore::lite::quant {
 namespace {
 constexpr size_t kGatherAxisIndex = 3;
 constexpr int kDefaultThreadNum = 4;
+constexpr size_t kEncMaxLen = 16;
+constexpr size_t kModelSizeLimit = static_cast<size_t>(2) * 1024 * 1024 * 1024;
 }  // namespace
 
 int GetQuantType(const CNodePtr &cnode, quant::QuantType *quant_type) {
@@ -204,6 +206,27 @@ std::string NodePrimitiveType(const CNodePtr &cnode) {
   return primitive_c->name();
 }
 
+Status LargeModelBuildModel(const schema::MetaGraphT &meta_graph, const std::shared_ptr<ConverterPara> &param,
+                            const std::shared_ptr<mindspore::Model> &model, const std::shared_ptr<Context> &context,
+                            size_t *size) {
+  if (param->mixedBitWeightQuantParam.workspace.empty()) {
+    MS_LOG(ERROR) << "The model is larger than 2G, mixedBitWeightQuant config needs to set workspace to save tmp model";
+    return kLiteError;
+  }
+  std::string tmp_save_file_path = param->mixedBitWeightQuantParam.workspace + "/tmp.ms";
+  unsigned char encKey[kEncMaxLen] = {0};
+  size_t keyLen = 0;
+  auto status = MetaGraphSerializer::Save(meta_graph, tmp_save_file_path, size, encKey, keyLen, param->encrypt_mode);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Save Large Model Failed: " << status << " " << GetErrorInfo(status);
+    return kLiteError;
+  }
+
+  mindspore::ModelType model_type = kMindIR_Lite;
+  auto ret = model->Build(tmp_save_file_path, model_type, context);
+  return ret;
+}
+
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
                              const std::shared_ptr<ConverterPara> &param, size_t *size) {
   FuncGraphPtr func_graph_clone;
@@ -236,17 +259,6 @@ Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, con
     return kLiteError;
   }
 
-  flatbuffers::FlatBufferBuilder builder(kMaxNum1024);
-  auto offset = schema::MetaGraph::Pack(builder, meta_graph);
-  builder.Finish(offset);
-  schema::FinishMetaGraphBuffer(builder, offset);
-  *size = builder.GetSize();
-  auto *content = reinterpret_cast<const char *>(builder.GetBufferPointer());
-  if (content == nullptr) {
-    MS_LOG(ERROR) << "GetBufferPointer return null";
-    delete meta_graph;
-    return kLiteNullptr;
-  }
   auto context = std::make_shared<mindspore::Context>();
   if (context == nullptr) {
     MS_LOG(ERROR) << "New context failed while running.";
@@ -264,6 +276,30 @@ Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, con
   }
   auto &device_list = context->MutableDeviceInfo();
   device_list.push_back(device_info);
+
+  size_t tensors_size = 0;
+  for (auto &tensor : meta_graph->allTensors) {
+    tensors_size += tensor->data.size();
+  }
+
+  if (tensors_size >= kModelSizeLimit) {
+    auto ret = LargeModelBuildModel(*meta_graph, param, model, context, size);
+    delete meta_graph;
+    return ret;
+  }
+
+  flatbuffers::FlatBufferBuilder builder(kMaxNum1024);
+  auto offset = schema::MetaGraph::Pack(builder, meta_graph);
+  builder.Finish(offset);
+  schema::FinishMetaGraphBuffer(builder, offset);
+  *size = builder.GetSize();
+  auto *content = reinterpret_cast<const char *>(builder.GetBufferPointer());
+  if (content == nullptr) {
+    MS_LOG(ERROR) << "GetBufferPointer return null";
+    delete meta_graph;
+    return kLiteNullptr;
+  }
+
   auto ret = model->Build(content, *size, kMindIR, context);
   delete meta_graph;
   return ret;

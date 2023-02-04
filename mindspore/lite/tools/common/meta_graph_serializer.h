@@ -33,6 +33,8 @@ class MetaGraphSerializer {
   // save serialized fb model
   static int Save(const schema::MetaGraphT &graph, const std::string &output_path, const Byte *key = {},
                   const size_t key_len = 0, const std::string &enc_mode = "");
+  static int Save(const schema::MetaGraphT &graph, const std::string &output_path, size_t *size, const Byte *key = {},
+                  const size_t key_len = 0, const std::string &enc_mode = "");
 
  private:
   MetaGraphSerializer() = default;
@@ -48,7 +50,7 @@ class MetaGraphSerializer {
   bool ExtraAndSerializeModelWeight(const schema::MetaGraphT &graph);
 
   bool SerializeModelAndUpdateWeight(const schema::MetaGraphT &meta_graphT, const Byte *key, const size_t key_len,
-                                     const std::string &enc_mode);
+                                     const std::string &enc_mode, size_t *size = 0);
 
   bool SerializeModel(const void *content, size_t size, const Byte *key, const size_t key_len,
                       const std::string &enc_mode);

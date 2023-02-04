@@ -53,6 +53,7 @@ struct MixedBitWeightQuantString {
   std::string auto_tune;
   std::string use_cv_data;
   std::string max_iterations;
+  std::string workspace;
 };
 
 struct WeightQuantString {
