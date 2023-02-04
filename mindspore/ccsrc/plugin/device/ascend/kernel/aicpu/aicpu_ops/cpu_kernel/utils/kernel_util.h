@@ -33,6 +33,7 @@ constexpr uint32_t kThreadNum = 32;
 constexpr uint32_t kFirstInputIndex = 0;
 constexpr uint32_t kSecondInputIndex = 1;
 constexpr uint32_t kThirdInputIndex = 2;
+constexpr uint32_t kFourthInputIndex = 3;
 constexpr uint32_t kFirstOutputIndex = 0;
 constexpr uint32_t kSecondOutputIndex = 1;
 constexpr uint32_t kDynamicInput = -1;

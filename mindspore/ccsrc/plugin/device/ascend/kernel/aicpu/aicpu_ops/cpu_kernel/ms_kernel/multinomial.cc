@@ -47,18 +47,25 @@ bool isfinite(Eigen::half &data) { return Eigen::half_impl::isfinite(data); }
 namespace aicpu {
 
 template <typename T_in, typename T_out>
-uint32_t Generate(Tensor *&input_0, Tensor *&input_1, Tensor *&output, CpuKernelContext &ctx) {
+uint32_t Generate(Tensor *&input_0, Tensor *&input_1, Tensor *&input_count, Tensor *&input_state, Tensor *&output,
+                  CpuKernelContext &ctx) {
   int64_t num_classes = input_0->GetTensorShape()->GetDimSize(1);
   int64_t batch_size = input_0->GetTensorShape()->GetDimSize(0);
   int32_t num_samples = *(reinterpret_cast<int32_t *>(input_1->GetData()));
+  // count the execution times of the op
+  uint64_t count = *(reinterpret_cast<uint64_t *>(input_count->GetData()));
+  // seed of the op, passed between executions, which make op stateful
+  int64_t state = *(reinterpret_cast<int64_t *>(input_state->GetData()));
 
   // setup seed
   int64_t final_seed = 0;
   auto attr_seed = ctx.GetAttr("seed");
   auto attr_seed2 = ctx.GetAttr("seed2");
-  if (attr_seed2 != nullptr) {
+  if (count != 0) {
+    final_seed = state;
+  } else if (attr_seed2 != nullptr && attr_seed2->GetInt() != 0) {
     final_seed = attr_seed2->GetInt();
-  } else if (attr_seed != nullptr) {
+  } else if (attr_seed != nullptr && attr_seed->GetInt() != 0) {
     final_seed = attr_seed->GetInt();
   } else {
     std::random_device r;
@@ -67,6 +74,13 @@ uint32_t Generate(Tensor *&input_0, Tensor *&input_1, Tensor *&output, CpuKernel
   // setup random engine
   RNG_Engine rng;
   rng.seed(final_seed);
+  auto count_ptr = reinterpret_cast<uint64_t *>(input_count->GetData());
+  ++count_ptr[0];
+  if (count_ptr[0] == 0) {
+    ++count_ptr[0];
+  }
+  auto state_ptr = reinterpret_cast<int64_t *>(input_state->GetData());
+  state_ptr[0] = rng();
 
   auto input_0_data = reinterpret_cast<T_in *>(input_0->GetData());
   auto output_data = reinterpret_cast<T_out *>(output->GetData());
@@ -168,6 +182,8 @@ uint32_t MultinomialCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Multinomial check input and output number failed.");
   Tensor *input_0 = ctx.Input(kFirstInputIndex);
   Tensor *input_1 = ctx.Input(kSecondInputIndex);
+  Tensor *input_count = ctx.Input(kThirdInputIndex);
+  Tensor *input_state = ctx.Input(kFourthInputIndex);
   Tensor *output = ctx.Output(kFirstOutputIndex);
 
   // check input datatype
@@ -219,7 +235,7 @@ uint32_t MultinomialCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 
   SetMap();
-  calls_[input0_datatype][data_type](input_0, input_1, output, ctx);
+  calls_[input0_datatype][data_type](input_0, input_1, input_count, input_state, output, ctx);
   calls_.clear();
   return KERNEL_STATUS_OK;
 }
