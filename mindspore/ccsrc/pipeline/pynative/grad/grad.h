@@ -44,6 +44,8 @@ struct DynamicDetectNodeInfo {
   std::string graph_phase;
 };
 using DynamicDetectNodeInfoPtr = std::shared_ptr<DynamicDetectNodeInfo>;
+using CellIdWithDynamicNodesMap =
+  mindspore::HashMap<std::string, mindspore::HashMap<std::string, std::vector<DynamicDetectNodeInfoPtr>>>;
 
 class GradExecutor {
  public:
@@ -99,7 +101,7 @@ class GradExecutor {
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &grad_hash_id,
                              const py::args &args);
   TopCellInfoPtr GetAlreadyRunTopCell(const std::string &already_run_cell_id) const;
-  void GetPreRunTopCell(const py::object &obj);
+  void GetPreRunTopCell(const std::string &cell_id);
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   void AsyncProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   AnfNodePtr GetInput(const ValuePtr &v, const string &obj_id) const;
@@ -157,7 +159,8 @@ class GradExecutor {
   inline bool is_high_order_top_cell() const {
     return !input_args_info_stack_.empty() && IsNestedGrad() && top_cell()->grad_order() != grad_order_;
   }
-  bool GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info);
+  void ClearPreTopCell(const TopCellInfoPtr &new_top_cell, bool is_need_clear_device_mem);
+  bool GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info, const std::string &obj_id_with_grad_order);
   void SwitchTopCell();
   TopCellInfoPtr GetTopCell(const std::string &already_run_cell_id);
   void DoParameterReplace(const FuncGraphPtr &first_grad_fg, const std::vector<ValuePtr> &forward_args,
@@ -204,7 +207,7 @@ class GradExecutor {
   AnfNodePtr GetValueSequenceInput(const ValuePtr &v, const std::string &obj_id) const;
   AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id,
                                     const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
-
+  bool IsNeedSaveDynamicDetectNodes(const TopCellInfoPtr &top_cell, bool use_dynamic_shape_process);
   void SaveDynamicDetectNodeInfoInFirstTime(const AnfNodePtr &anf_node, size_t node_idx, bool is_ms_function_node,
                                             const std::string &graph_phase) const;
   bool IsGraphDynamic(const AnfNodePtr &anf_node, size_t node_idx, bool is_ms_function_node,
@@ -236,7 +239,7 @@ class GradExecutor {
   ForwardExecutorWeakPtr forward_executor_;
   MsFunctionPtr ms_function_;
   std::shared_ptr<AsyncQueue> async_executor_;
-  mutable mindspore::HashMap<std::string, std::vector<DynamicDetectNodeInfoPtr>> cell_id_with_dynamic_detect_nodes_;
+  mutable CellIdWithDynamicNodesMap cell_id_with_dynamic_detect_nodes_;
   std::set<std::string> dynamic_inputs_cells_;
 };
 }  // namespace pynative

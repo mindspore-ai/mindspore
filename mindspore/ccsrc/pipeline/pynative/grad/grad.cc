@@ -35,6 +35,7 @@ namespace pynative {
 namespace {
 const mindspore::HashSet<std::string> kHookOp = {"HookBackward", "CellBackwardHook"};
 const char kGrad[] = "grad";
+const size_t kMaxCacheDynamicShapeCellNum = 2;
 
 void ClearDeviceAddress(const ValuePtr &value) {
   std::vector<tensor::TensorPtr> tensors;
@@ -45,8 +46,26 @@ void ClearDeviceAddress(const ValuePtr &value) {
   }
 }
 
+std::string GetFnInfoByPyObj(const py::object &obj) {
+  std::string fn_info = obj.attr("__module__").cast<std::string>();
+  fn_info += "_" + obj.attr("__name__").cast<std::string>();
+  fn_info += "_" + obj.attr("__code__").attr("co_filename").cast<std::string>();
+  fn_info += "_" + py::str(obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
+  if (py::hasattr(obj, "__warpped__")) {
+    auto warpped_obj = obj.attr("__warpped__");
+    fn_info += "_" + warpped_obj.attr("__name__").cast<std::string>();
+    fn_info += "_" + warpped_obj.attr("__code__").attr("co_filename").cast<std::string>();
+    fn_info += "_" + py::str(warpped_obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
+  }
+  return fn_info;
+}
+
+std::string GetCellObjId(const py::object &obj) {
+  return py::isinstance<Cell>(obj) ? PyNativeAlgo::PyParser::GetIdByPyObj(obj) : GetFnInfoByPyObj(obj);
+}
+
 std::string GetCellId(const py::object &obj, const py::args &args, const InputArgsInfoPtr &input_args_info) {
-  auto cell_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
+  auto cell_id = GetCellObjId(obj);
   auto fn = [&cell_id](const abstract::AbstractBasePtr &abs) {
     MS_EXCEPTION_IF_NULL(abs);
     auto shape = abs->BuildShape();
@@ -74,29 +93,10 @@ std::string GetCellId(const py::object &obj, const py::args &args, const InputAr
   return cell_id;
 }
 
-std::string GetFnInfoByPyObj(const py::object &obj) {
-  std::string fn_info = obj.attr("__module__").cast<std::string>();
-  fn_info += "_" + obj.attr("__name__").cast<std::string>();
-  fn_info += "_" + obj.attr("__code__").attr("co_filename").cast<std::string>();
-  fn_info += "_" + py::str(obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
-  if (py::hasattr(obj, "__warpped__")) {
-    auto warpped_obj = obj.attr("__warpped__");
-    fn_info += "_" + warpped_obj.attr("__name__").cast<std::string>();
-    fn_info += "_" + warpped_obj.attr("__code__").attr("co_filename").cast<std::string>();
-    fn_info += "_" + py::str(warpped_obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
-  }
-  return fn_info;
-}
-
 InputArgsInfoPtr ParsePyArgsToInputArgsInfo(const py::object &obj, const py::args &args, size_t obj_order,
                                             bool is_grad_top_cell, bool is_high_order_top_cell) {
   bool has_custom_bprop = py::hasattr(obj, parse::CUSTOM_BPROP_NAME);
-  std::string obj_id;
-  if (!py::isinstance<Cell>(obj) && (is_grad_top_cell || is_high_order_top_cell)) {
-    obj_id = GetFnInfoByPyObj(obj);
-  } else {
-    obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
-  }
+  std::string obj_id = GetCellObjId(obj);
 
   const auto &input_args_info =
     std::make_shared<InputArgsInfo>(is_grad_top_cell, is_high_order_top_cell, has_custom_bprop, args.size(), obj_id);
@@ -535,7 +535,7 @@ InputArgsInfoPtr GradExecutor::GetInputArgsInfo(const py::object &obj, const py:
     if (grad_order_ == 0) {
       IncreaseGradOrder();
     }
-    input_args_info->already_run_cell_id = GetAlreadyRunCellId(input_args_info->obj_id);
+    input_args_info->already_run_cell_id = GetAlreadyRunCellId(input_args_info->cell_id);
   }
   input_args_info->grad_order = grad_order_;
   input_args_info->grad_is_running = grad_is_running_;
@@ -559,13 +559,56 @@ void GradExecutor::AsyncNewGraphImpl(const InputArgsInfoPtr &input_args_info) {
   async_executor_->Push(task);
 }
 
-bool GradExecutor::GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info) {
+bool GradExecutor::GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info,
+                                         const std::string &obj_id_with_grad_order) {
   MS_EXCEPTION_IF_NULL(input_args_info);
-  auto pre_top_cell = GetAlreadyRunTopCell(input_args_info->already_run_cell_id);
-  if (pre_top_cell != nullptr && pre_top_cell->use_dynamic_shape_process()) {
+  if (dynamic_inputs_cells_.count(input_args_info->obj_id) > 0) {
     return true;
   }
-  return dynamic_inputs_cells_.count(input_args_info->obj_id);
+
+  auto pre_top_cell = GetAlreadyRunTopCell(input_args_info->already_run_cell_id);
+  if (pre_top_cell != nullptr) {
+    return pre_top_cell->use_dynamic_shape_process();
+  }
+
+  return std::any_of(already_run_top_cell_.begin(), already_run_top_cell_.end(),
+                     [obj_id_with_grad_order](const auto &item) {
+                       if (item.second != nullptr && item.second->obj_id_with_grad_order() == obj_id_with_grad_order) {
+                         return item.second->use_dynamic_shape_process();
+                       }
+                       return false;
+                     });
+}
+
+bool GradExecutor::IsNeedSaveDynamicDetectNodes(const TopCellInfoPtr &top_cell, bool use_dynamic_shape_process) {
+  if (use_dynamic_shape_process) {
+    // top cell is already dynamic shape, no need save nodes.
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(top_cell);
+  auto cell_iter = cell_id_with_dynamic_detect_nodes_.find(top_cell->obj_id_with_grad_order());
+  if (cell_iter == cell_id_with_dynamic_detect_nodes_.end()) {
+    // Cell is not found in cell_id_with_dynamic_detect_nodes_, need save nodes first.
+    return true;
+  }
+
+  const auto &cell_infos = cell_iter->second;
+  if (cell_infos.size() == 1) {
+    // top_cell->cell_id() is cell id with inputs shape, if cell id in cell_id_with_dynamic_detect_nodes_
+    // id same with top_cell->cell_id(), no need save nodes.
+    return cell_infos.begin()->first != top_cell->cell_id();
+  } else if (cell_infos.size() == kMaxCacheDynamicShapeCellNum) {
+    auto cell_infos_iter = cell_infos.find(top_cell->cell_id());
+    if (cell_infos_iter == cell_infos.end()) {
+      // cell_id_with_dynamic_detect_nodes_ has two cell id already, current cell is is different
+      // with them. So set_use_dynamic_shape_process for top cell.
+      top_cell->set_use_dynamic_shape_process(true);
+      (void)cell_id_with_dynamic_detect_nodes_.erase(top_cell->obj_id_with_grad_order());
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "cell_info.size():" << cell_infos.size() << " is invalid";
+  }
+  return false;
 }
 
 void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
@@ -573,15 +616,15 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
   fg->debug_info()->set_name("pynative_forward_graph");
   auto resource = std::make_shared<pipeline::Resource>();
   MS_EXCEPTION_IF_NULL(input_args_info);
-  const auto &obj_id_with_grad_order = input_args_info->obj_id + "_" + std::to_string(input_args_info->grad_order);
+  const auto &obj_id_with_grad_order = GetAlreadyRunCellId(input_args_info->obj_id);
   top_cell_ = std::make_shared<TopCellInfo>(input_args_info->is_high_order_top_cell, input_args_info->grad_order,
                                             obj_id_with_grad_order, input_args_info->cell_id,
                                             input_args_info->already_run_cell_id, resource, fg);
   top_cell_->set_forward_already_run(true);
   top_cell_->set_input_args_id(input_args_info->input_args_id);
-  top_cell_->set_is_cell_id_in_dynamic_detect_nodes_map(
-    cell_id_with_dynamic_detect_nodes_.find(obj_id_with_grad_order) != cell_id_with_dynamic_detect_nodes_.end());
-  top_cell_->set_use_dynamic_shape_process(GetTopCellDynamicFlag(input_args_info));
+  auto use_dynamic_shape_process = GetTopCellDynamicFlag(input_args_info, obj_id_with_grad_order);
+  top_cell_->set_use_dynamic_shape_process(use_dynamic_shape_process);
+  top_cell_->set_need_save_dynamic_detect_nodes(IsNeedSaveDynamicDetectNodes(top_cell_, use_dynamic_shape_process));
   PushHighOrderGraphStack(top_cell_);
   (void)top_cell_list_.emplace_back(top_cell_);
   MS_LOG(DEBUG) << "New top graph, fg ptr " << fg.get() << " resource ptr " << resource.get();
@@ -776,15 +819,52 @@ void GradExecutor::GetCustomBpropPrim(const py::object &obj, const py::args &arg
   input_args_info->custom_bprop_prim = fake_prim;
 }
 
+void GradExecutor::ClearPreTopCell(const TopCellInfoPtr &new_top_cell, bool is_need_clear_device_mem) {
+  MS_EXCEPTION_IF_NULL(new_top_cell);
+  // Clear top cell list
+  top_cell_list_.erase(std::remove_if(top_cell_list_.begin(), top_cell_list_.end(),
+                                      [new_top_cell](const auto &elem) {
+                                        return elem != nullptr && elem.get() != new_top_cell.get() &&
+                                               elem->obj_id_with_grad_order() == new_top_cell->obj_id_with_grad_order();
+                                      }),
+                       top_cell_list_.end());
+
+  // Clear already run top cell and device mem
+  for (auto iter = already_run_top_cell_.begin(); iter != already_run_top_cell_.end();) {
+    if (iter->second == nullptr) {
+      iter++;
+      continue;
+    }
+
+    if (iter->second->obj_id_with_grad_order() == new_top_cell->obj_id_with_grad_order()) {
+      iter->second->ClearDeviceMemory();
+      iter = already_run_top_cell_.erase(iter);
+    } else {
+      iter++;
+    }
+  }
+}
+
 void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info) {
   const auto &new_top_cell = top_cell();
   const auto &already_top_cell_id = new_top_cell->already_run_cell_id();
   // Update top cell by current cell op info
   auto pre_top_cell = GetAlreadyRunTopCell(already_top_cell_id);
   if (pre_top_cell == nullptr) {
-    MS_LOG(DEBUG) << "Cell " << already_top_cell_id << " has never been ran, need compile graph";
-    already_run_top_cell_[already_top_cell_id] = new_top_cell;
-    return;
+    bool is_dynamic_cell_already_run = false;
+    if (new_top_cell->use_dynamic_shape_process()) {
+      // The dynamic cell of set_inputs needs to be saved for the first run.
+      is_dynamic_cell_already_run =
+        std::any_of(already_run_top_cell_.begin(), already_run_top_cell_.end(), [new_top_cell](const auto &item) {
+          MS_EXCEPTION_IF_NULL(item.second);
+          return item.second->obj_id_with_grad_order() == new_top_cell->obj_id_with_grad_order();
+        });
+    }
+    if (!new_top_cell->use_dynamic_shape_process() || !is_dynamic_cell_already_run) {
+      MS_LOG(DEBUG) << "Cell " << already_top_cell_id << " has never been ran, need compile graph";
+      already_run_top_cell_[already_top_cell_id] = new_top_cell;
+      return;
+    }
   }
 
   MS_EXCEPTION_IF_NULL(input_args_info);
@@ -798,10 +878,7 @@ void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info
       MS_EXCEPTION_IF_NULL(value);
       return value->is_high_order_top_cell();
     });
-    EraseTopCellFromTopCellList(pre_top_cell);
-    if (input_args_info->is_grad_topest_cell && !has_higher_order) {
-      pre_top_cell->ClearDeviceMemory();
-    }
+    ClearPreTopCell(new_top_cell, input_args_info->is_grad_topest_cell && !has_higher_order);
     already_run_top_cell_[already_top_cell_id] = new_top_cell;
     new_top_cell->set_force_top_cell_compile(false);
     MS_LOG(DEBUG) << "Top cell " << already_top_cell_id << " has been ran";
@@ -844,7 +921,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
                 << ", input args info ptr " << top_input_args_info_.get();
 
   SetSensValue(grad, top_input_args_info_, args);
-  GetPreRunTopCell(obj);
+  GetPreRunTopCell(top_input_args_info_->cell_id);
 
   // For async, top can not be change when run SetForwardLastNodeInfo; Change top cell after sync
   auto already_run_top_cell = already_run_top_cell_.at(top_cell()->already_run_cell_id());
@@ -882,7 +959,7 @@ std::string GradExecutor::GetAlreadyRunCellId(const std::string &cell_id) const 
   return already_run_cell_id;
 }
 
-void GradExecutor::GetPreRunTopCell(const py::object &obj) {
+void GradExecutor::GetPreRunTopCell(const std::string &cell_id) {
   // @wrap_op
   // class A():
   //     def construct(self):
@@ -901,9 +978,8 @@ void GradExecutor::GetPreRunTopCell(const py::object &obj) {
   if (top_cell_ != nullptr) {
     return;
   }
-  const auto &obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
-  MS_LOG(DEBUG) << "Get top cell by obj id " << obj_id;
-  const auto &check_already_run_cell_id = GetAlreadyRunCellId(obj_id);
+  MS_LOG(DEBUG) << "Get pre run top cell cell id:" << cell_id;
+  const auto &check_already_run_cell_id = GetAlreadyRunCellId(cell_id);
   top_cell_ = GetTopCell(check_already_run_cell_id);
 }
 
@@ -1098,7 +1174,7 @@ void GradExecutor::SetGradOrder(const std::string &obj_id) {
 
 py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj,
                                          const py::object &grad_hash_id, const py::args &args) {
-  const auto &obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
+  const auto &obj_id = GetCellObjId(obj);
 
   // Check current cell grad order and erase it if in current top cell list
   SetGradOrder(obj_id);
@@ -1118,7 +1194,8 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
   // check whether need to run forward process
   bool forward_run = false;
   if (input_args_info_stack_.empty() && top_cell_ != nullptr) {
-    const auto &check_already_run_cell_id = GetAlreadyRunCellId(obj_id);
+    auto cell_id = GetCellId(obj, args, nullptr);
+    const auto &check_already_run_cell_id = GetAlreadyRunCellId(cell_id);
     auto find_top_cell = GetTopCell(check_already_run_cell_id);
     if (find_top_cell != nullptr) {
       MS_LOG(DEBUG) << "Find already run top cell";
@@ -1540,7 +1617,7 @@ void GradExecutor::SetHookChanged(const py::object &cell) const {
   if (top_cell_ == nullptr) {
     return;
   }
-  const auto &cell_id = PyNativeAlgo::PyParser::GetIdByPyObj(cell);
+  const auto &cell_id = GetCellObjId(cell);
   if (top_cell_->cell_id().find(cell_id) != std::string::npos) {
     top_cell_->set_hook_changed(true);
   }
@@ -1901,9 +1978,12 @@ void GradExecutor::SaveDynamicDetectNodeInfoInFirstTime(const AnfNodePtr &anf_no
     top_cell()->set_cnode_hash_with_op_index(anf_node->hash(), node_idx);
   }
 
-  (void)cell_id_with_dynamic_detect_nodes_[top_cell()->obj_id_with_grad_order()].emplace_back(node_info);
+  (void)cell_id_with_dynamic_detect_nodes_[top_cell()->obj_id_with_grad_order()][top_cell()->cell_id()].emplace_back(
+    node_info);
   MS_LOG(DEBUG) << "Save node " << anf_node->DebugString() << " firstly, node_idx: " << node_idx
-                << ", is_ms_function_node: " << is_ms_function_node << ", graph_phase:" << graph_phase;
+                << ", is_ms_function_node: " << is_ms_function_node << ", graph_phase:" << graph_phase
+                << " obj_id_with_grad_order:" << top_cell()->obj_id_with_grad_order()
+                << ", cell id:" << top_cell()->cell_id();
 }
 
 void GradExecutor::SaveDynamicInputsCells(const py::object &cell) {
@@ -1927,21 +2007,23 @@ void GradExecutor::SetTopCellDynamicAttr(const py::object &cell) {
 bool GradExecutor::IsGraphDynamic(const AnfNodePtr &anf_node, const size_t node_idx, bool is_ms_function_node,
                                   const std::string &graph_phase) const {
   MS_EXCEPTION_IF_NULL(anf_node);
-  if (!top_cell()->is_cell_id_in_dynamic_detect_nodes_map()) {
+  if (top_cell()->is_need_save_dynamic_detect_nodes()) {
     SaveDynamicDetectNodeInfoInFirstTime(anf_node, node_idx, is_ms_function_node, graph_phase);
     // The net is regarded as a static net by default in the first time.
     return false;
   }
 
   MS_LOG(DEBUG) << "Check node " << anf_node->DebugString() << " node_idx: " << node_idx
-                << ", is_ms_function_node: " << is_ms_function_node << ", graph_phase:" << graph_phase;
-  const auto &dynamic_nodes = cell_id_with_dynamic_detect_nodes_[top_cell()->obj_id_with_grad_order()];
+                << ", is_ms_function_node: " << is_ms_function_node << ", graph_phase:" << graph_phase
+                << " obj_id_with_grad_order:" << top_cell()->obj_id_with_grad_order()
+                << ", cell id:" << top_cell()->cell_id();
+  const auto &dynamic_nodes =
+    cell_id_with_dynamic_detect_nodes_[top_cell()->obj_id_with_grad_order()][top_cell()->cell_id()];
   if (node_idx >= dynamic_nodes.size()) {
     MS_LOG(DEBUG) << "Old dynamic_nodes size: " << dynamic_nodes.size() << ", cur node_idx is: " << node_idx
                   << ", graph is dynamic.";
     return true;
   }
-
   if (anf_node->isa<CNode>()) {
     top_cell()->set_cnode_hash_with_op_index(anf_node->hash(), node_idx);
   }
