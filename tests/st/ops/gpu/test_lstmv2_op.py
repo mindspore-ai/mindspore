@@ -60,7 +60,6 @@ def get_weights_from_lstm(lstm_nn, has_bias):
     return weights
 
 
-@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("has_bias", [True, False])
@@ -97,7 +96,6 @@ def test_lstmv2_op(has_bias, is_train, dtype):
     assert np.allclose(me_cy.asnumpy(), expect_cy.asnumpy(), rtol, atol)
 
 
-@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lstmv2_op_float64_exception():
