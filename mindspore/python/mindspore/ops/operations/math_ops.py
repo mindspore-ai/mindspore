@@ -7298,33 +7298,10 @@ class NextAfter(Primitive):
 
 class TrilIndices(Primitive):
     r"""
-    Returns the indices of the lower triangular part of a `row` -by- `col` matrix in a Tensor.
-    The Tensor has a shape :math:`(2, tril\_size)` where :math:`tril\_size` is the number of
-    elements in the lower triangular matrix. The first row contains row coordinates of
-    all indices and the second row contains column coordinates.
-    Indices are ordered based on rows and then columns.
+    Calculates the indices of the lower triangular elements in a `row` * `col` matrix
+    and returns them as a 2-by-N Tensor.
 
-    The lower triangular part of the matrix is defined as the elements on and below the diagonal.
-
-    Note:
-        When running on CUDA, row * col must be less than 2^59 to prevent overflow during calculation.
-
-    Args:
-        row (int): number of rows in the 2-D matrix.
-        col (int): number of columns in the 2-D matrix.
-        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
-        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mstype.int32` and `mstype.int64`. Default: `mstype.int32`.
-
-    Outputs:
-        - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
-          The shape of output is :math:`(2, tril\_size)`, where :math:`tril\_size` is the number of elements in the
-          lower triangular matrix.
-
-    Raises:
-        TypeError: If `row`, `col` or `offset` is not an int.
-        TypeError: If `dtype` is neither int32 nor int64.
-        ValueError: If `row` or `col` < 0.
+    Refer to :func:`mindspore.ops.tril_indices` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -7527,33 +7504,10 @@ class Orgqr(Primitive):
 
 class TriuIndices(Primitive):
     r"""
-    Returns the indices of the upper triangular part of a `row` -by- `col` matrix in a Tensor.
-    The Tensor has a shape :math:`(2, tril\_size)` where :math:`tril\_size` is the number of
-    elements in the upper triangular matrix. The first row contains row coordinates of
-    all indices and the second row contains column coordinates.
-    Indices are ordered based on rows and then columns.
+    Calculates the indices of the upper triangular elements in a `row` * `col` matrix
+    and returns them as a 2-by-N Tensor.
 
-    The upper triangular part of the matrix is defined as the elements on and above the diagonal.
-
-    Note:
-        When running on CUDA, row * col must be less than 2^59 to prevent overflow during calculation.
-
-    Args:
-        row (int): number of rows in the 2-D matrix.
-        col (int): number of columns in the 2-D matrix.
-        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
-        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mstype.int32` and `mstype.int64`. Default: `mstype.int32`.
-
-    Outputs:
-        - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
-          The shape of output is :math:`(2, tril\_size)`, where :math:`tril\_size` is the number of elements in the
-          lower triangular matrix.
-
-    Raises:
-        TypeError: If `row`, `col` or `offset` is not an int.
-        TypeError: If `dtype` is neither int32 nor int64.
-        ValueError: If `row` or `col` < 0.
+    Refer to :func:`mindspore.ops.triu_indices` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``

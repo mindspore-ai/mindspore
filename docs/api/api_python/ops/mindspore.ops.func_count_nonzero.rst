@@ -3,18 +3,19 @@ mindspore.ops.count_nonzero
 
 .. py:function:: mindspore.ops.count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32)
 
-    计算输入Tensor指定轴上的非零元素的数量。
+    计算输入Tensor指定轴上的非零元素的数量。如果没有指定维度，则计算Tensor中所有非零元素的数量。
+
+    .. note::
+        `dims` 的值范围是[-x_dims，x_dims）。其中， `x_dims` 是输入 `x` 的维度。
 
     参数：
-        - **x** (Tensor) - 输入数据用于统计非零元素。 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。
-        - **axis** (Union[int, tuple(int), list(int)]) - 指定计算的维度。只允许为常量。默认值：()，在所有维度进行计算。
-        - **keep_dims** (bool) - 如果为True，则保留计算的维度，且长度为1。如果为False，则不要保留这些维度。默认值：False。
-        - **dtype** (Union[Number, mindspore.bool\_]) - 输出Tensor的数据类型。只允许为常量。默认值：mindspore.int32。
+        - **x** (Tensor) - 要计算的输入，可以是任意维度的Tensor。将输入张量的shape设为 :math:`(x_1, x_2, ..., x_N)` 。
+        - **dims** (Union[int, list(int), tuple(int)]，可选) - 要沿其计算非零值数量的维度。默认值：None。
 
     返回：
-        Tensor，非零元素的数量。数据类型由 `dtype` 所指定。
+        一个N维Tensor，表示输入Tensor在 `dims` 上的非零元素数量。 `dims` 指定的维度将被规约掉。例如，如果 `x` 的大小为 :math:`(2, 3, 4)` ， `dims` 为 :math:`[0, 1]` ，则y_shape将为 :math:`(4,)` 。
 
     异常：
-        - **TypeError** - `axis` 不是int、tuple或者list。
-        - **ValueError** - `axis` 不在[-x.ndim, x.ndim)范围内。
-
+        - **TypeError** - 如果 `x` 的数据类型不受支持。
+        - **TypeError** - 如果 `dims` 的数据类型不是int。
+        - **ValueError** - 如果 `dims` 中的任何值不在 :math:`[-x_dims，x_dims)` 范围内。

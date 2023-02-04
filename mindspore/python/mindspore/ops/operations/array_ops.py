@@ -7996,10 +7996,10 @@ class Bincount(Primitive):
 
 class CountNonZero(Primitive):
     """
-    Counts the number of non-zero values in the input tensor along the given dims.
-    If no dim is specified then all non-zeros in the tensor are counted.
+    Calculates the total number of non-zero entries in the input tensor along the
+    specified dimensions.
 
-    Refer to :func:`mindspore.ops.count_nonzero` for more detail.
+    Refer to :func:`mindspore.ops.count_nonzero` for more details.
 
     Supported Platforms:
          ``CPU``

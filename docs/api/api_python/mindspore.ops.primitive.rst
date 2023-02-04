@@ -481,6 +481,7 @@ Array操作
     mindspore.ops.Col2Im
     mindspore.ops.Concat
     mindspore.ops.ConjugateTranspose
+    mindspore.ops.CountNonZero
     mindspore.ops.Cummax
     mindspore.ops.Cummin
     mindspore.ops.CumProd

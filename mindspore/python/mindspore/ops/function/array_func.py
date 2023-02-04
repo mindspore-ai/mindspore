@@ -3072,23 +3072,23 @@ def sort(input_x, axis=-1, descending=False):
     Args:
         input_x(Tensor): The input tensor to sort.
             The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        axis (int): The dimension to sort along. Default: -1.
-        descending (bool): Controls the sort order. If descending is True then the elements
-            are sorted in descending order by value. Default: False.
+        axis (int, optional): The dimension to sort along. Default: -1.
+        descending (bool, optional): Controls the sort order. If `descending` is True, the elements
+            are sorted in descending order, or else sorted in ascending order. Default: False.
 
     .. warning::
-        Currently, the data types of Float16, UInt8, Int8, Int16, Int32, Int64 are supported.
+        Currently, the data types of Float16, UInt8, Int8, Int16, Int32, Int64 are well supported.
         If use Float32, it may cause loss of accuracy.
 
     Returns:
-        y1(Tensor) - A tensor whose values are the sorted values, with the same shape and data type as input.
-        y2(Tensor) - The indices of the elements in the original input tensor. Data type is int32.
+        y1(Tensor): A tensor whose values are the sorted values, with the same shape and data type as input.
+        y2(Tensor): The indices of the elements in the original input tensor. Data type is int32.
 
     Raises:
         TypeError: If `axis` is not an int.
         TypeError: If `descending` is not a bool.
-        TypeError: If dtype of `x` is neither float16, float32, uint8, int8, int16, int32, int64.
-        ValueError: If `axis` is not in range of [-len(x.shape), len(x.shape)).
+        TypeError: If dtype of `input_x` is neither float16, float32, uint8, int8, int16, int32, int64.
+        ValueError: If `axis` is not in range of [-len(input_x.shape), len(input_x.shape)).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5543,27 +5543,24 @@ def min(x, axis=0, keep_dims=False):
 
 def aminmax(x, *, axis=0, keepdims=False):
     """
-    Calculates the minimum value and maximum values.
-
-    Calculates the minimum value and maximum values along with the given axis for the input tensor.
-    It returns the minimum values and maximum values.
-
-    .. warning::
-        - The value range of "axis" is [-rank, rank). "rank" is the dimension length of "x".
+    It returns the minimum and maximum value along the given axis of input tensor.
 
     Args:
         x (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)` .
-        axis (int): The dimension to reduce. Default: 0.
-        keepdims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
-                          the output will reduce dimension if false. Default: False.
+
+    Keyword Args:
+        axis (int, optional): The dimension to reduce. The value range of `axis` is [-rank, rank),
+            where "rank" is the dimension of `x`. Default: 0.
+        keepdims (bool, optional): Whether to maintain dimension. When set to True, the output will keep the same
+            dimension as the input, or the dimension specified by `axis` is reduced. Default: False.
 
     Returns:
-        tuple (Tensor), tuple of 2 tensors, containing the minimum value and maximum value of the input tensor.
+        tuple (Tensor), containing the minimum value and maximum value of the input tensor.
 
-        - If `keepdims` is true, the shape of output tensors is
+        - If `keepdims` is True, the shape of output tensors is
           :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
-          Otherwise, the shape is
+        - If `keepdims` is False, the shape of output tensors is
           :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
 
     Raises:
@@ -6369,27 +6366,28 @@ def moveaxis(x, source, destination):
 
 def count_nonzero(x, dims=None):
     """
-    Counts the number of non-zero values in the input tensor along the given dims.
-    If no dim is specified then all non-zeros in the tensor are counted.
+    Calculates the total number of non-zero entries in the input tensor along the
+    specified dimensions. If no dimensions are given, then the function will
+    count all non-zero entries in the tensor.
 
     Note:
-        The value range of "dims" is [-x_dims, x_dims). "x_dims" is the dimension length of input "x".
+        The value range of `dims` is [-x_dims, x_dims), `x_dims` is the dimension length of input "x".
 
     Args:
-        x (Tensor): Input to be computed, a N-D Tensor, can be any dimension. Set the shape of input tensor as
+        x (Tensor): Input to be computed, Tensor of any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)` .
-        dims (int, list[int], tuple[int]): The dimension to count the number of non-zero values along.
+        dims (Union[int, list(int), tuple(int)], optional): The dimension to count the number of non-zero values along.
             Default: None.
 
     Returns:
-        A N-D Tensor, represents the number of the nonzero elements of the input tensor along the dims.
-        Reduces x_shape along the dimensions given in dims. For example, if the size of x is (2, 3, 4),
-        dims is [0, 1], y_shape will be (4,).
+        A N-D Tensor, represents the number of the nonzero elements of the input tensor along the `dims`.
+        Reduces x_shape along the dimensions given in `dims`. For example, if the size of `x` is :math:`(2, 3, 4)`,
+        `dims` is :math:`[0, 1]`, y_shape will be :math:`(4,)`.
 
     Raises:
-        TypeError: If the data type of `x` is not support.
+        TypeError: If the data type of `x` is not supported.
         TypeError: If the data type of `dims` is not int.
-        ValueError: If any of the values of `dims` is not in [-x_dims, x_dims).
+        ValueError: If any of the values of `dims` is not in range :math:`[-x_dims, x_dims)`.
 
     Supported Platforms:
         ``CPU``
