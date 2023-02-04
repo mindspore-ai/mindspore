@@ -310,7 +310,7 @@ def test_pynative_forward_hook():
     """
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    inputs = Tensor(np.ones([2, 2, 2, 2]).astype(np.float32) * 3)
+    inputs = Tensor(np.ones([2, 2, 2, 2]).astype(np.float32) * 2)
     grad_op = GradOperation(get_all=True, get_by_list=True, sens_param=False)
     # case 1: calling remove() of handle to remove some hook function.
     net = SingleNet()
@@ -443,7 +443,7 @@ def test_pynative_forward_hook_with_ms_func():
     Expectation: The calculation result is correct.
     """
 
-    inputs = Tensor(np.ones([2, 2, 2, 2]).astype(np.float32) * 3)
+    inputs = Tensor(np.ones([2, 2, 2, 2]).astype(np.float32) * 2)
     grad_op = GradOperation(get_all=True, get_by_list=True, sens_param=False)
     # case: ms_funciton in pynative mode.
     context.set_context(mode=context.PYNATIVE_MODE)

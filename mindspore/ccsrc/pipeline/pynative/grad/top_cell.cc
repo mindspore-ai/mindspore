@@ -81,6 +81,7 @@ void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) {
   op_run_info->op_info +=
     op_run_info->base_op_run_info.op_name + "-" + std::to_string(op_index_) + "-" + input_args_info;
   const auto &out_abs = op_run_info->base_op_run_info.abstract;
+  MS_EXCEPTION_IF_NULL(out_abs);
   auto shape = out_abs->BuildShape();
   MS_EXCEPTION_IF_NULL(shape);
   if (!shape->isa<abstract::NoShape>() && !shape->IsDimZero()) {

@@ -702,6 +702,7 @@ void MindRTBackend::RunMsGradGraph(const CNodePtr &kernel, const VectorRef &args
     MS_LOG(EXCEPTION) << "kernel:" << kernel->ToString() << ", is not func graph.";
   }
   auto func_graph = GetValueNode<FuncGraphPtr>(kernel);
+  MS_EXCEPTION_IF_NULL(func_graph);
   func_graph->set_flag(kFlagIsPynativeBpropGraph, true);
 
   auto old_root_graph = root_graph_;
