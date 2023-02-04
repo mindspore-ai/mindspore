@@ -74,6 +74,8 @@ class AclOpDesc {
                                                        const ValuePtrList &value_sequence);
   std::vector<std::vector<int64_t>> GetListListAttrFloat(const std::string &attr_name,
                                                          const ValuePtrList &value_sequence);
+
+  void ListListToListInt(const std::vector<std::vector<int64_t>> &value_list, std::vector<int64_t> *array_list);
   aclError AclSetAttrListListInt(const std::string &attr_name, const std::vector<std::vector<int64_t>> &value_list);
   aclError AclSetAttrListString(const std::string &attr_name, const std::vector<std::string> &value_list);
 
