@@ -159,6 +159,7 @@ constexpr auto kAcosh = "Acosh";
 constexpr auto kAsin = "Asin";
 constexpr auto kAsinh = "Asinh";
 constexpr auto kAtanh = "Atanh";
+constexpr auto kAdaptiveMaxPool3DGrad = "AdaptiveMaxPool3DGrad";
 constexpr auto kCosh = "Cosh";
 constexpr auto kTan = "Tan";
 constexpr auto kTanhGrad = "TanhGrad";
@@ -348,7 +349,8 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kStridedSliceV2, "StridedSlice"},
   {kAdaptiveMaxPool3D, "AdaptiveMaxPool3d"},
   {kRandpermV2, "StatelessRandperm"},
-  {kStridedSliceV2Grad, "StridedSliceGrad"}};
+  {kStridedSliceV2Grad, "StridedSliceGrad"},
+  {kAdaptiveMaxPool3DGrad, "AdaptiveMaxPool3dGrad"}};
 
 class AicpuOpUtil {
  public:

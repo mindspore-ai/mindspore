@@ -346,3 +346,4 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/sparse_dense_cwise_utils.cc:aicpu::SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/sparse_dense_cwise_utils.cc:aicpu::SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialComputeComplex
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/sparse_dense_cwise_utils.cc:aicpu::SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastComputeComplex
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/resize_bicubic_grad.cc:aicpu::ResizeBicubicGrad
