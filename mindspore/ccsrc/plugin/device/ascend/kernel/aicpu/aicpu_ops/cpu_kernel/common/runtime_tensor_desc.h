@@ -19,6 +19,7 @@
 
 namespace ge {
 constexpr int64_t kMaxDimSize = 32;
+constexpr int64_t DIM_SIZE2 = 2;
 
 #pragma pack(push, 1)
 struct RuntimeTensorDesc {

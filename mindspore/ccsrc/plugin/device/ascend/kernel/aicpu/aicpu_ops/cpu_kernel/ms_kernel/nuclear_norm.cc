@@ -21,7 +21,6 @@
 #include <iomanip>
 #include <iostream>
 #include <unsupported/Eigen/CXX11/Tensor>
-#include "kernel_util.h"
 #include "utils/kernel_util.h"
 #define NoneN 1000
 using namespace Eigen;

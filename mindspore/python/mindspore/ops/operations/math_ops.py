@@ -260,6 +260,7 @@ class Addcdiv(Primitive):
 
     Raises:
         TypeError: If dtype of `x1`, `x2`, `value`, `input_data` is not tensor.
+        TypeError: If dtype of `x1`, `x2`, `value`, `input_data` are not the same.
         ValueError: If `x1` could not be broadcast to `x2`.
         ValueError: If `value` could not be broadcast to `x1/x2`.
         ValueError: If `input_data` could not be broadcast to `value*(x1/x2)`.
@@ -303,9 +304,7 @@ class Addcmul(Primitive):
 
     Raises:
         TypeError: If dtype of `x1`, `x2`, `value`, `input_data` is not tensor.
-        TypeError: If dtype of `input_data` is not one of: float32, float16, int32.
-        TypeError: If dtype of `x1` or `x2` is not one of: float32, float16, int32.
-        TypeError: If dtype of `value` is not one of: float32, float16, int32.
+        TypeError: If dtype of `x1`, `x2`, `value`, `input_data` are not the same.
         ValueError: If `x1` could not be broadcast to `x2`.
         ValueError: If `value` could not be broadcast to `x1` * `x2`.
         ValueError: If `input_data` could not be broadcast to `value*(x1*x2)`.

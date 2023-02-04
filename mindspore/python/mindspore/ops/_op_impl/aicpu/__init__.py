@@ -350,3 +350,5 @@ from .hsv_to_rgb import _hsv_to_rgb_aicpu
 from .im2col import _im2col_aicpu
 from .lu_solve import _lu_solve_aicpu
 from .relu_grad_v3 import _relu_grad_v3_aicpu
+from .resize_bicubic import _resize_bicubic_aicpu
+from .extract_glimpse import _extract_glimpse_aicpu

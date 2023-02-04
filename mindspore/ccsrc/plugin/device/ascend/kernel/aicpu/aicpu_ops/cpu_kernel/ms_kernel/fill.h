@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2020-2021. All rights reserved.
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef AICPU_KERNELS_NORMALIZED_FILL_H
-#define AICPU_KERNELS_NORMALIZED_FILL_H
+#ifndef AICPU_KERNELS_NORMALIZED_FILL_H_
+#define AICPU_KERNELS_NORMALIZED_FILL_H_
 
 #include "cpu_ops_kernel.h"
 
@@ -23,21 +23,18 @@ namespace aicpu {
 class FillCpuKernel : public CpuKernel {
  public:
   FillCpuKernel() = default;
-  ~FillCpuKernel() override = default;
+  ~FillCpuKernel() = default;
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t GetDimsByType(CpuKernelContext &ctx);
-  /**
-   * @brief calc dims from input dims tensor
-   * @param dims_tensor input dims tensor
-   * @param dims output shape dims
-   * @return status if success
-   */
   template <typename T>
-  uint32_t CalcDims(const Tensor *dims_tensor, std::vector<int64_t> &dims);
+  uint32_t CalculateDims(const Tensor *dims_tensor, std::vector<int64_t> &dims);
 
-  std::vector<int64_t> dims;
+  template <typename T>
+  void FillOutput(CpuKernelContext &ctx, const Tensor *value_tensor, Tensor *output);
+
+  template <typename T>
+  void SpecialFillOutput(int64_t start, int64_t end, T *output_data, const T *value);
 };
 }  // namespace aicpu
-#endif  // AICPU_KERNELS_NORMALIZED_FILL_H_
+#endif
