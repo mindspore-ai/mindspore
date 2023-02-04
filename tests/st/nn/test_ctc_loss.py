@@ -38,7 +38,6 @@ class CTCLossNet(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.skip(reason="has bug, already record by 30032396")
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('reduct', ["none", "mean", "sum"])
 def test_ctc_loss_tnc(mode, reduct):
