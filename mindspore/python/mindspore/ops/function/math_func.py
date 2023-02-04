@@ -1542,7 +1542,7 @@ def logical_not(x):
         out_{i} = \\neg x_{i}
 
     Args:
-        x (Tensor): The input tensor whose dtype is bool.
+        x (Tensor): The input tensor.
             :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
 
     Returns:
@@ -1550,7 +1550,6 @@ def logical_not(x):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not a bool on CPU and Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1561,6 +1560,8 @@ def logical_not(x):
         >>> print(output)
         [False  True False]
     """
+    if isinstance(x, Tensor) and x.dtype != mstype.bool_:
+        x = x.astype(mstype.bool_)
     return logical_not_(x)
 
 
@@ -1583,9 +1584,10 @@ def logical_or(x, y):
         LogicalOr supports broadcasting.
 
     Args:
-        x (Union[Tensor, bool]): The first input is a bool or a tensor whose data type is bool.
+        x (Union[Tensor, bool]): The first input is a bool or a tensor whose data type can be implicitly
+            converted to bool.
         y (Union[Tensor, bool]): The second input is a bool when the first input is a tensor or
-            a tensor whose data type is bool.
+            a tensor whose data type can be implicitly converted to bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
@@ -1603,6 +1605,10 @@ def logical_or(x, y):
         >>> print(output)
         [ True  True  True]
     """
+    if isinstance(x, Tensor) and x.dtype != mstype.bool_:
+        x = x.astype(mstype.bool_)
+    if isinstance(y, Tensor) and y.dtype != mstype.bool_:
+        y = y.astype(mstype.bool_)
     return logical_or_(x, y)
 
 
@@ -1625,9 +1631,10 @@ def logical_and(x, y):
         LogicalAnd supports broadcasting.
 
     Args:
-        x (Union[Tensor, bool]): The first input is a bool or a tensor whose data type is bool.
+        x (Union[Tensor, bool]): The first input is a bool or a tensor whose data type can be implicitly
+            converted to bool.
         y (Union[Tensor, bool]): The second input is a bool when the first input is a tensor or
-            a tensor whose data type is bool.
+            a tensor whose data type can be implicitly converted to bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
@@ -1645,6 +1652,10 @@ def logical_and(x, y):
         >>> print(output)
         [ True False False]
     """
+    if isinstance(x, Tensor) and x.dtype != mstype.bool_:
+        x = x.astype(mstype.bool_)
+    if isinstance(y, Tensor) and y.dtype != mstype.bool_:
+        y = y.astype(mstype.bool_)
     return logical_and_(x, y)
 
 
@@ -2108,8 +2119,7 @@ def xlogy(x, y):
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
+    When the inputs are two tensors, the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -2144,6 +2154,9 @@ def xlogy(x, y):
         >>> print(output)
         [-3.465736   0.        2.7725887]
     """
+    if isinstance(x, Tensor) and isinstance(y, Tensor) and x.dtype == mstype.bool_ and y.dtype == mstype.bool_:
+        x = x.astype(mstype.float32)
+        y = y.astype(mstype.float32)
     return xlogy_(x, y)
 
 
@@ -9688,9 +9701,9 @@ def logical_xor(input, other):
         out_{i} = x_{i} \oplus y_{i}
 
     Args:
-        input (Tensor): The first input is a tensor whose data type is bool.
-        other (Tensor): The second input is a tensor to compute XOR with the first input.
-          Datatype must be bool.
+        input (Tensor): The first input is a tensor whose data type can be implicitly converted to bool.
+        other (Tensor): The second input is a tensor whose data type can be implicitly converted to bool
+            to compute XOR with the first input.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
@@ -9709,6 +9722,10 @@ def logical_xor(input, other):
         >>> print(output)
         [False True True]
     """
+    if isinstance(input, Tensor) and input.dtype != mstype.bool_:
+        input = input.astype(mstype.bool_)
+    if isinstance(other, Tensor) and other.dtype != mstype.bool_:
+        other = other.astype(mstype.bool_)
     logical_xor_op = _get_cache_prim(P.LogicalXor)()
     return logical_xor_op(input, other)
 
