@@ -41,8 +41,14 @@ class MuxRecvActor : public RecvActor {
   // Get the from actor aid of received message.
   const AID &from_actor_aid() const { return from_actor_aid_; }
 
-  // Finalize mux recv actor gracefully.
+  // Clear resource of mux recv actor.
+  void Clear() override;
+
+  // Stop mux recv actor gracefully.
   void Finalize() override;
+
+  // Stop rpc communication to avoid dead lock after exception is thrown.
+  void StopRpcAtException() override;
 
  private:
   // Set the message handler of the server.

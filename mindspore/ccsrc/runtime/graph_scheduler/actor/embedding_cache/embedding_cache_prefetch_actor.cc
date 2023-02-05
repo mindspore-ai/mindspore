@@ -169,7 +169,7 @@ void EmbeddingCachePrefetchActor::Initialize() {
   initialized_ = true;
 }
 
-void EmbeddingCachePrefetchActor::Finalize() {
+void EmbeddingCachePrefetchActor::Finalize(bool finalize_remote) {
   std::lock_guard<std::mutex> lock(finalize_mutex_);
   if (!initialized_ || finalized_) {
     return;
@@ -178,7 +178,9 @@ void EmbeddingCachePrefetchActor::Finalize() {
   running_ = false;
   PsDataPrefetch::GetInstance().NotifyFinalize();
 
-  (void)FinalizeRemote();
+  if (finalize_remote) {
+    (void)FinalizeRemote();
+  }
 
   data_parser_.notify_all();
 

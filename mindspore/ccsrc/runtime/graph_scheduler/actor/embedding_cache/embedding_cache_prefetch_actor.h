@@ -99,7 +99,7 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   void SyncEmbeddingTable();
 
   // Finalize embedding cache prefetch actor and push latest embedding from local cache to remote cache.
-  void Finalize();
+  void Finalize(bool finalize_remote);
 
   // Wait the computed graph finish current step when there is not enough free memory space in the cache, in order to
   // delete the feature vector used by the current step from the cache.
