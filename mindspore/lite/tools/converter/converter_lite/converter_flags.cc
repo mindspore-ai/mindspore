@@ -88,7 +88,7 @@ Flags::Flags() {
   AddFlag(&Flags::device, "device",
           "Set the target device, support Ascend, Ascend310 and Ascend310P will be deprecated.", "");
   AddFlag(&Flags::saveTypeStr, "saveType", "The type of saved model. MINDIR | MINDIR_LITE", "MINDIR_LITE");
-  AddFlag(&Flags::optimizeStr, "optimize", "The type of optimization. none | general | ascend_oriented", "");
+  AddFlag(&Flags::optimizeStr, "optimize", "The type of optimization. none | general | ascend_oriented", "general");
   AddFlag(&Flags::optimizeTransformerStr, "optimizeTransformer", "Enable Fast-Transformer fusion true|false", "false");
 }
 
@@ -306,9 +306,6 @@ int Flags::InitSaveType() {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->saveTypeStr == "MINDIR") {
-    this->disableFusion = true;
-  }
   return RET_OK;
 }
 

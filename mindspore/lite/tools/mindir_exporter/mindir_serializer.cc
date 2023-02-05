@@ -20,11 +20,13 @@
 #include <fstream>
 #include <set>
 #include <algorithm>
+#include "utils/crypto.h"
 #include "mindspore/ccsrc/include/common/debug/dump_proto.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "src/common/file_utils.h"
 #include "src/common/common.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "tools/common/graph_util.h"
 #include "mindspore/core/utils/file_utils.h"
 #include "mindspore/core/ir/quantization_param.h"
 #include "mindspore/lite/tools/converter/quantizer/quant_param_holder.h"
@@ -32,12 +34,13 @@
 #include "mindspore/lite/tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite {
+namespace {
 // unit is byte. model size more than 1G need split.
 constexpr const size_t TOTAL_SAVE = 1024 * 1024 * 1024;
 constexpr const size_t PARA_ROUND = 1024;
 constexpr const int64_t OFFSET = 64;
+constexpr size_t kEncMaxLen = 16;
 
-namespace {
 bool DeleteDirRecursively(const std::string &dir_name) {
   DIR *dir = opendir(dir_name.c_str());
   dirent *dirent = nullptr;
@@ -203,9 +206,9 @@ int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const Fu
   }
 
   if (save_together_) {
-    ret = SaveMindIRTogether();
+    ret = SaveMindIRTogether(param);
   } else {
-    ret = SplitSave();
+    ret = SplitSave(param);
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "save mindir weight failed.";
@@ -308,7 +311,7 @@ std::shared_ptr<mindspore::QuantizationParam> MindIRSerializer::ConvertQuantPara
   return std::make_shared<mindspore::QuantizationParam>(quantization);
 }
 
-int MindIRSerializer::SaveMindIRTogether() {
+int MindIRSerializer::SaveMindIRTogether(const std::shared_ptr<ConverterPara> &param) {
   for (auto &param_proto : *(model_proto_.mutable_graph()->mutable_parameter())) {
     std::string proto_name = param_proto.name();
     auto para = GetFgParaAccordingToProtoName(proto_name);
@@ -323,7 +326,7 @@ int MindIRSerializer::SaveMindIRTogether() {
     param_proto.set_raw_data(data->data_c(), static_cast<size_t>(data->data().nbytes()));
   }
 
-  return SaveProtoToFile(&model_proto_, save_model_path_);
+  return SaveProtoToFile(&model_proto_, save_model_path_, param);
 }
 
 int MindIRSerializer::CreateParameterDir() {
@@ -426,7 +429,7 @@ std::string MindIRSerializer::CreateExternalPath(const std::string &external_fil
   return external_local_path;
 }
 
-int MindIRSerializer::SplitSave() {
+int MindIRSerializer::SplitSave(const std::shared_ptr<ConverterPara> &param) {
   MS_LOG(DEBUG) << "Parameters in the net capacity exceeds 1G, save MindIR model and parameters separately.";
   int ret = CreateParameterDir();
   if (ret != RET_OK) {
@@ -504,7 +507,7 @@ int MindIRSerializer::SplitSave() {
 #else
   split_model_file_name = save_path_ + "/" + model_name_ + "_graph.mindir";
 #endif
-  return SaveProtoToFile(&model_proto_, split_model_file_name);
+  return SaveProtoToFile(&model_proto_, split_model_file_name, param);
 }
 
 int MindIRSerializer::ParserPath(const std::string &output_path) {
@@ -562,7 +565,12 @@ int MindIRSerializer::IfSaveTogether(bool *save_together) {
   return RET_OK;
 }
 
-int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file) {
+int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file,
+                                      const std::shared_ptr<ConverterPara> &param) {
+  if (!is_export_model_) {
+    MS_LOG(INFO) << "No need to save proto to file";
+    return RET_OK;
+  }
   auto realpath = Common::CreatePrefixPath(output_file, true);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path of file " << output_file << " failed.";
@@ -575,12 +583,48 @@ int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const st
     MS_LOG(ERROR) << "Open the file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
     return RET_ERROR;
   }
-
-  if (!model_proto->SerializeToOstream(&fout)) {
-    MS_LOG(ERROR) << "Failed to write the mindir proto to file " << realpath.value();
+  unsigned char enc_key[kEncMaxLen] = {0};
+  size_t key_len = 0;
+  auto ret = InitEncryptKey(param, enc_key, &key_len);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init encrypt key failed";
     fout.close();
-    return RET_ERROR;
+    return ret;
   }
+  if (key_len > 0) {
+    void *buffer = nullptr;
+    size_t size = 0;
+    ret = GetBuffAndSize(&buffer, &size);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Get buffer and size failed";
+      fout.close();
+      return ret;
+    }
+    size_t encrypt_len = 0;
+    auto encrypt_content =
+      Encrypt(&encrypt_len, reinterpret_cast<Byte *>(buffer), size, enc_key, key_len, param->encrypt_mode);
+    if (encrypt_content == nullptr || encrypt_len == 0) {
+      MS_LOG(ERROR) << "Encrypt failed.";
+      free(buffer);
+      fout.close();
+      return RET_ERROR;
+    }
+    fout.write(reinterpret_cast<const char *>(encrypt_content.get()), encrypt_len);
+    if (fout.bad()) {
+      MS_LOG(ERROR) << "Write model file failed: " << save_model_path_;
+      free(buffer);
+      fout.close();
+      return RET_ERROR;
+    }
+    free(buffer);
+  } else {
+    if (!model_proto->SerializeToOstream(&fout)) {
+      MS_LOG(ERROR) << "Failed to write the mindir proto to file " << realpath.value();
+      fout.close();
+      return RET_ERROR;
+    }
+  }
+
   fout.close();
   ChangeFileMode(realpath.value(), S_IRUSR);
   return RET_OK;
