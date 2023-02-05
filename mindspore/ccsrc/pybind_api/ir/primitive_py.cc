@@ -30,7 +30,6 @@
 #include "include/common/utils/primitive_utils.h"
 #include "utils/check_convert_utils.h"
 #include "pipeline/pynative/pynative_execute.h"
-#include "pybind_api/utils/stub_tensor_py.h"
 
 namespace mindspore {
 namespace {
@@ -314,8 +313,8 @@ void PrimitivePy::CheckHookConsistency(const py::object &grad_out, const py::obj
       MS_EXCEPTION(TypeError) << "The output type of:" << py::str(co_name) << " should be a tensor but got "
                               << py::cast<std::string>(grad_out.attr("__class__").attr("__name__")) << ".";
     }
-    tensor::TensorPtr actual_out_tensor = mindspore::PyTensorCast(grad_out);
-    tensor::TensorPtr expected_out_tensor = mindspore::PyTensorCast(expected_grad_out);
+    auto actual_out_tensor = PyTensorCast(grad_out);
+    auto expected_out_tensor = PyTensorCast(expected_grad_out);
     MS_EXCEPTION_IF_NULL(actual_out_tensor);
     MS_EXCEPTION_IF_NULL(expected_out_tensor);
     if (actual_out_tensor->GetShapeAndDataTypeInfo() != expected_out_tensor->GetShapeAndDataTypeInfo()) {

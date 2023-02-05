@@ -90,7 +90,6 @@
 #include "include/common/debug/rdr/recorder_manager.h"
 #include "ir/cell.h"
 #endif
-#include "pybind_api/utils/stub_tensor_py.h"
 
 #include "pybind_api/ir/log_adapter_py.h"  // Only include one-time in the whole project.
 #include "pybind_api/ir/py_execute_py.h"   // Only include one-time in the whole project.

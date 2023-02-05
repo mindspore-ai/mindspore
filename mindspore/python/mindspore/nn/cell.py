@@ -2208,7 +2208,7 @@ class Cell(Cell_):
                 if not isinstance(net_input, Tensor):
                     raise TypeError(
                         f"The {index + 1}th input type of 'set_inputs' must be Tensor, but got {type(net_input)}.")
-                if set_input.dtype is not net_input.dtype:
+                if set_input.dtype != net_input.dtype:
                     raise ValueError(
                         f"The {index + 1}th input type of 'set_inputs' must be the same as network's input, "
                         f"but got 'set_inputs': {set_input.dtype} and network's input: {net_input.dtype}.")

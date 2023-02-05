@@ -805,7 +805,7 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
     return deco
 
 
-_RUN_OP_ASYNC = False
+_RUN_OP_ASYNC = True
 
 
 def _run_op(obj, op_name, args):

@@ -25,7 +25,6 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/parse/data_converter.h"
-#include "pybind_api/utils/stub_tensor_py.h"
 
 namespace mindspore {
 namespace pynative {

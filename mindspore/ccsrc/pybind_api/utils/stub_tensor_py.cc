@@ -38,11 +38,10 @@ ShapeVector StubNode::GetShapeVector() {
 
 TypePtr StubNode::GetTypePtr() {
   auto base = abs->BuildType();
-  auto type = base->cast<TensorTypePtr>();
-  if (!type) {
-    MS_LOG(EXCEPTION) << "Only Tensor dtype is supported by Stub now: " << base->ToString();
+  if (base->isa<TensorType>()) {
+    return base->cast<TensorTypePtr>()->element();
   }
-  return type->element();
+  return base;
 }
 
 py::object StubNode::GetValue() { return pynative::PyNativeAlgo::DataConvert::ValueToPyObj(value); }
@@ -60,8 +59,9 @@ py::object StubNode::GetDtype() { return py::cast(GetTypePtr()); }
 
 py::object StubOutConverter::Convert(const abstract::AbstractBasePtr &abs, const ValuePtr &value) {
   py::object result;
-  if (abs->isa<abstract::AbstractTensor>()) {
-    result = ConvertTensor(abs->cast<abstract::AbstractTensorPtr>(), value);
+  if (abs->isa<abstract::AbstractTensor>() || (value && value->isa<tensor::Tensor>())) {
+    // In `TensorArray` case, abstract is AbstractScalar and value is Tensor.
+    result = ConvertTensor(abs, value);
     root_type_ = static_cast<int>(StubNode::TENSOR);
   } else if (abs->isa<abstract::AbstractTuple>()) {
     result = ConvertTuple(abs->cast<abstract::AbstractTuplePtr>(), value);
@@ -81,7 +81,7 @@ py::object StubOutConverter::Convert(const abstract::AbstractBasePtr &abs, const
   return result;
 }
 
-py::object StubOutConverter::ConvertTensor(const abstract::AbstractTensorPtr &tensor_abs, const ValuePtr &value) {
+py::object StubOutConverter::ConvertTensor(const abstract::AbstractBasePtr &tensor_abs, const ValuePtr &value) {
   auto stub = std::make_shared<StubNode>();
   stub->value = value;
   stub->abs = tensor_abs;
@@ -90,18 +90,18 @@ py::object StubOutConverter::ConvertTensor(const abstract::AbstractTensorPtr &te
 
 py::object StubOutConverter::ConvertTuple(const abstract::AbstractTuplePtr &seq_abs, const ValuePtr &value) {
   auto elements = seq_abs->elements();
-  py::tuple out(elements.size());
   MS_EXCEPTION_IF_NULL(value);
   if (!value->isa<ValueTuple>()) {
     MS_LOG(EXCEPTION) << "value and abs not match: value " << value->ToString() << " vs abstract "
                       << seq_abs->ToString();
   }
   auto seq_value = value->cast<ValueTuplePtr>();
-  if (seq_value->size() != seq_abs->size()) {
-    MS_LOG(EXCEPTION) << "value and abs size not match: value " << seq_value->size() << " vs abstract "
-                      << seq_abs->size();
+  if (seq_value->size() > seq_abs->size()) {
+    MS_LOG(EXCEPTION) << "Cannot convert, abstract size must greater or equal to value size: " << seq_value->size()
+                      << " vs " << seq_abs->size();
   }
-  for (size_t i = 0; i < elements.size(); ++i) {
+  py::tuple out(seq_value->size());
+  for (size_t i = 0; i < seq_value->size(); ++i) {
     out[i] = Convert(elements[i], seq_value->value()[i]);
   }
   return out;
@@ -115,12 +115,12 @@ py::object StubOutConverter::ConvertList(const abstract::AbstractListPtr &seq_ab
                       << seq_abs->ToString();
   }
   auto seq_value = value->cast<ValueListPtr>();
-  if (seq_value->size() != seq_abs->size()) {
-    MS_LOG(EXCEPTION) << "value and abs size not match: value " << seq_value->size() << " vs abstract "
-                      << seq_abs->size();
+  if (seq_value->size() > seq_abs->size()) {
+    MS_LOG(EXCEPTION) << "Cannot convert, abstract size must greater or equal to value size: " << seq_value->size()
+                      << " vs " << seq_abs->size();
   }
-  py::list out(elements.size());
-  for (size_t i = 0; i < elements.size(); ++i) {
+  py::list out(seq_value->size());
+  for (size_t i = 0; i < seq_value->size(); ++i) {
     out[i] = Convert(elements[i], seq_value->value()[i]);
   }
   return out;

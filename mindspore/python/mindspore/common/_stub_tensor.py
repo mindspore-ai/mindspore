@@ -86,6 +86,13 @@ class StubTensor(Tensor):
         self.stub_sync()
         return super().has_init
 
+    @property
+    def adapter_flag(self):
+        """adapter_flag stub."""
+        if self.stub:
+            return False
+        return super().adapter_flag
+
     def stub_sync(self):
         """data sync to get real tensor"""
         if self.stub:
@@ -98,6 +105,13 @@ class StubTensor(Tensor):
         Alias for :func:`mindspore.Tensor.ndim`.
         """
         return self.ndim
+
+    def dim(self):
+        r"""
+        Alias for :func:`mindspore.Tensor.ndim`.
+        """
+        return self.ndim
+
 
     def asnumpy(self):
         """api stub."""
