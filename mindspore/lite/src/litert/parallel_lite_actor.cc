@@ -33,7 +33,12 @@ void ParallelLiteActor::RunOpData(OpData<lite::Tensor> *inputs, mindspore::OpCon
   if (input_op_datas_[op_uuid].size() < kernel_->in_tensors().size()) {
     return;
   }
-  InitInputData();
+  auto ret = InitInputData();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "run kernel failed, name: " << kernel_->name();
+    context->SetFailed(ret);
+    return;
+  }
   SetOpContext(context);
   auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
   if (MS_UNLIKELY(subgraph_kernel->GetGraphChanged())) {
