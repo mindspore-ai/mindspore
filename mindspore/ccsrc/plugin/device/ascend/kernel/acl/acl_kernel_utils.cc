@@ -251,6 +251,15 @@ void AclOpDesc::ProcessAclAttrs(const std::string &attr_name, const ValuePtr &va
   }
 }
 
+void AclOpDesc::ListListToListInt(const std::vector<std::vector<int64_t>> &value_list,
+                                  std::vector<int64_t> *array_list) {
+  MS_EXCEPTION_IF_NULL(array_list);
+  auto list_size = value_list.size();
+  for (size_t i = 0; i < list_size; i++) {
+    (void)array_list->insert(array_list->end(), value_list[i].begin(), value_list[i].end());
+  }
+}
+
 std::vector<std::vector<int64_t>> AclOpDesc::GetListListAttrBool(const std::string &attr_name,
                                                                  const ValuePtrList &value_sequence) {
   std::vector<std::vector<int64_t>> value_lists;
@@ -360,6 +369,7 @@ void AclOpDesc::AddConstDescAndBuf(const T &val, const TypeId type, const std::s
   ShapeVector shape;
   aclError ret = ACL_SUCCESS;
   std::vector<int> value_list_int;
+  std::vector<int64_t> value_list_long;
   TypeId new_type = type;
   void *current_addr = static_cast<void *>(static_cast<int *>(attr_to_input_) + attr_data_offset_ / sizeof(int));
   if constexpr (is_vector<T>) {
@@ -368,6 +378,9 @@ void AclOpDesc::AddConstDescAndBuf(const T &val, const TypeId type, const std::s
         real_size = sizeof(typename T::value_type::value_type) * val.size() * val[0].size();
         shape.push_back(SizeToLong(val.size()));
         shape.push_back(SizeToLong(val[0].size()));
+        if constexpr (std::is_same_v<T, std::vector<std::vector<int64_t>>>) {
+          ListListToListInt(val, &value_list_long);
+        }
       }
     } else {
       constexpr size_t min_byte = 1;
@@ -382,6 +395,9 @@ void AclOpDesc::AddConstDescAndBuf(const T &val, const TypeId type, const std::s
     }
     if (!value_list_int.empty()) {
       ret = aclrtMemcpy(current_addr, kMaxAttrToInputSize - attr_data_offset_, value_list_int.data(), real_size,
+                        ACL_MEMCPY_HOST_TO_HOST);
+    } else if (!value_list_long.empty()) {
+      ret = aclrtMemcpy(current_addr, kMaxAttrToInputSize - attr_data_offset_, value_list_long.data(), real_size,
                         ACL_MEMCPY_HOST_TO_HOST);
     } else if (!val.empty()) {
       ret = aclrtMemcpy(current_addr, kMaxAttrToInputSize - attr_data_offset_, val.data(), real_size,
