@@ -74,10 +74,6 @@ MIND_API AbstractBasePtr InferImplMakeKeywordArg(const AnalysisEnginePtr &, cons
                                                  const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplExtractKeywordArg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                     const AbstractBasePtrList &args_spec_list);
-MIND_API AbstractBasePtr InferImplTupleSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const AbstractBasePtrList &args_spec_list);
-MIND_API AbstractBasePtr InferImplListSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                               const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplDictSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -88,8 +84,6 @@ MIND_API AbstractBasePtr InferImplDictGetValues(const AnalysisEnginePtr &, const
                                                 const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const AbstractBasePtrList &args_spec_list);
-MIND_API AbstractBasePtr InferImplSequenceLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplArrayLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

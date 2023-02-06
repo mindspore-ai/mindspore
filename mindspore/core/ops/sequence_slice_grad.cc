@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-#include "ops/sequence_slice.h"
+#include "ops/sequence_slice_grad.h"
 
 #include <vector>
-#include <string>
 #include <set>
-#include <memory>
 
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -29,16 +27,16 @@
 namespace mindspore {
 namespace ops {
 namespace {
-AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr SliceGradInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  constexpr size_t input_num = 4;
-  constexpr size_t seq_index = 0;
-  constexpr size_t start_index = 1;
-  constexpr size_t end_index = 2;
-  constexpr size_t step_index = 3;
+  constexpr size_t input_num = 5;
+  constexpr size_t x_index = 1;
+  constexpr size_t start_index = 2;
+  constexpr size_t end_index = 3;
+  constexpr size_t step_index = 4;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  auto first_abs = input_args[seq_index];
+  auto first_abs = input_args[x_index];
   MS_EXCEPTION_IF_NULL(first_abs);
   if (!first_abs->isa<abstract::AbstractSequence>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
@@ -56,21 +54,9 @@ AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector
   MS_EXCEPTION_IF_NULL(end_abs);
   auto step_abs = input_args[step_index];
   MS_EXCEPTION_IF_NULL(step_abs);
-
-  // all value is known
   if (start_abs->BuildValue() != kAnyValue && end_abs->BuildValue() != kAnyValue &&
       step_abs->BuildValue() != kAnyValue) {
-    auto start_v = GetValue<int64_t>(start_abs->BuildValue());
-    auto end_v = GetValue<int64_t>(end_abs->BuildValue());
-    auto step_v = GetValue<int64_t>(step_abs->BuildValue());
-    int64_t len = seq_abs->elements().size();
-    auto output_size = SequenceSliceGetOutputSize(start_v, end_v, step_v, len);
-    abstract::AbstractBasePtrList abs{};
-    for (int64_t i = 0; i < output_size; i++) {
-      abs.push_back(std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64));
-    }
-    auto ret = std::make_shared<abstract::AbstractTuple>(abs);
-    return ret;
+    return seq_abs->Clone();
   }
   auto ret = seq_abs->Clone()->cast<abstract::AbstractSequencePtr>();
   ret->CheckAndConvertToDynamicLenSequence();
@@ -78,24 +64,24 @@ AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(SequenceSlice, BaseOperator);
-class SequenceSliceInfer : public abstract::OpInferBase {
+MIND_API_OPERATOR_IMPL(SequenceSliceGrad, BaseOperator);
+class SequenceSliceGradInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SliceInferInner(primitive, input_args)->BuildShape();
+    return SliceGradInferInner(primitive, input_args)->BuildShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SliceInferInner(prim, input_args)->BuildType();
+    return SliceGradInferInner(prim, input_args)->BuildType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    return SliceInferInner(primitive, input_args);
+    return SliceGradInferInner(primitive, input_args);
   }
-  std::set<int64_t> GetValueDependArgIndices() const override { return {1, 2, 3}; }
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2, 3, 4}; }
 };
-REGISTER_PRIMITIVE_OP_INFER_IMPL(SequenceSlice, prim::kPrimSequenceSlice, SequenceSliceInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SequenceSliceGrad, prim::kPrimSequenceSliceGrad, SequenceSliceGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

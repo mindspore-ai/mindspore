@@ -59,12 +59,24 @@ AbstractBasePtr SequenceAddInferInner(const PrimitivePtr &primitive, const std::
                             << "the first input is: " << input_1->ToString()
                             << " and the second input is: " << input_2->ToString();
   }
-  if (!input_1->dynamic_len() && !input_2->dynamic_len()) {
-    MS_EXCEPTION(TypeError) << "For operator 'SequenceAdd', at least one of the input should be dynamic length.";
-  }
+
   // All elements of sequence add should have same element type.
   auto abs_1 = CheckAndGetElementType(input_1, prim_name);
   auto abs_2 = CheckAndGetElementType(input_2, prim_name);
+
+  // all of elements is known
+  if (!input_1->dynamic_len() && !input_2->dynamic_len()) {
+    abstract::AbstractBasePtrList abs;
+    for (size_t i = 0; i < input_1->size(); i++) {
+      abs.push_back(input_1->elements()[i]);
+    }
+    for (size_t i = 0; i < input_2->size(); i++) {
+      abs.push_back(input_2->elements()[i]);
+    }
+    auto ret = std::make_shared<abstract::AbstractTuple>(abs);
+    return ret;
+  }
+
   // abs_1 is nullptr represents that the input_1 is empty.
   // input_1 can be either dynamic length sequence or constant length sequence.
   if (abs_1 == nullptr) {

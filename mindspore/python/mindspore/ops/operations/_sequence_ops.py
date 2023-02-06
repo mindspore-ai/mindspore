@@ -108,6 +108,15 @@ class SequenceSliceSetItem(Primitive):
         self.init_prim_io_names(inputs=['seq', 'target', 'start', 'stop', 'step'], outputs=['output_data'])
 
 
+class SequenceSliceGrad(Primitive):
+    """Reverse of slice."""
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SequenceSliceGrad"""
+        self.init_prim_io_names(inputs=['dy', 'x', 'start', 'stop', 'step'], outputs=['dx'])
+
+
 class SequenceAdd(Primitive):
     r"""
     Add elements of two sequence together.
@@ -134,6 +143,33 @@ class SequenceAdd(Primitive):
     def __init__(self):
         """Initialize SequenceAdd"""
         self.init_prim_io_names(inputs=['input_1', 'input_2'], outputs=['output_data'])
+
+
+class SequenceAddOffset(Primitive):
+    r"""
+    Get offsets of SequenceAdd inputs within its output, refs to ConcatOffset.
+
+    .. note::
+        This it is only for internal used. At least one of the sequence should be dynamic length sequence.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_0** (List, Tuple) - A Tuple/List.
+        - **input_1** (List, Tuple) - A Tuple/List.
+
+    Outputs:
+        A tuple of offsets of SequenceAdd inputs within its output.
+
+    Raises:
+        TypeError: The data in 'input_0' and 'input_1' are not both list or tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SequenceAddOffset"""
+        self.init_prim_io_names(inputs=['shape_0', 'shape_1'], outputs=['output'])
 
 
 class TupleToTensor(Primitive):
@@ -359,3 +395,87 @@ class SequenceMul(Primitive):
     def __init__(self):
         """Initialize SequenceMul"""
         self.init_prim_io_names(inputs=['sequence', 'scalar'], outputs=['output_data'])
+
+
+class SequenceZerosLike(Primitive):
+    r"""
+    Returns a Sequence with a value of 0 and its shape and data type is the same as the input.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **sequence** (Union[List, Tuple]) - The sequence to count elements.
+
+    Outputs:
+        List or tuple filled with zeros.
+
+    Raises:
+        TypeError: The 'sequence' is not list or tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SequenceZerosLike"""
+        self.init_prim_io_names(inputs=['sequence'], outputs=['output_data'])
+
+
+class make_range(Primitive):
+    r"""
+    Creates a sequence of numbers in range [start, limit) with step size delta.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **start** (Union[int, float]) - Start of interval.
+        - **limit** (Union[int, float]) - End of interval.
+        - **delta** (Union[int, float]) - Spacing between values.
+
+    Outputs:
+        A 1-D Sequence, with the same type as the inputs.
+
+    Raises:
+        TypeError: If datatype of `start`, `limit` or `delta` is not same.
+        TypeError: If datatype of `start`, `limit` or `delta` is not supported.
+        ValueError: If `delta` = 0.
+        ValueError: If `start` >= `limit` when `delta` > 0.
+        ValueError: If `start` <= `limit` when `delta` < 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize make_range"""
+        self.init_prim_io_names(inputs=['start', 'limit', 'delta'], outputs=['output_data'])
+
+
+class sequence_len(Primitive):
+    r"""
+    Returns length of Sequence.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **sequence** (Union[List, Tuple]) - The sequence.
+
+    Outputs:
+        Integer, length of Sequence.
+
+    Raises:
+        TypeError: The 'sequence' is not list or tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize sequence_len"""
+        self.init_prim_io_names(inputs=['sequence'], outputs=['output_data'])

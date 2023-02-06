@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""sequence_ops"""
+"""grad_sequence_ops"""
 
 from mindspore.ops.operations import _sequence_ops as seq
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
@@ -31,6 +31,48 @@ def get_bprop_count(self):
     return bprop
 
 
+@bprop_getters.register(seq.sequence_len)
+def get_bprop_sequence_len(self):
+    """Generate bprop for sequence_len"""
+    def bprop(x, out, dout):
+        return (zeros_like(x),)
+
+    return bprop
+
+
+@bprop_getters.register(seq.make_range)
+def get_bprop_range(self):
+    """Generate bprop for make_range"""
+    def bprop(start, limit, delta, out, dout):
+        return (zeros_like(start), zeros_like(limit), zeros_like(delta))
+
+    return bprop
+
+
+@bprop_getters.register(seq.SequenceAdd)
+def get_bprop_sequence_add(self):
+    """Generate bprop for SequenceAdd"""
+    def bprop(x, y, out, dout):
+        out_offset = seq.SequenceAddOffset()(x, y)
+        dx = seq.SequenceSlice()(dout, out_offset[0], len(x), 1)
+        dy = seq.SequenceSlice()(dout, out_offset[1], len(x) + len(y), 1)
+
+        return (dx, dy)
+
+    return bprop
+
+
+@bprop_getters.register(seq.SequenceSlice)
+def get_bprop_slice(self):
+    """Generate bprop for SequenceSlice"""
+
+    def bprop(x, start, stop, step, out, dout):
+        dx = seq.SequenceSliceGrad()(dout, x, start, stop, step)
+        return (dx, zeros_like(start), zeros_like(stop), zeros_like(step))
+
+    return bprop
+
+
 @bprop_getters.register(seq.SequenceIndex)
 def get_bprop_index(self):
     """Generate bprop for SequenceIndex"""
@@ -41,15 +83,31 @@ def get_bprop_index(self):
     return bprop
 
 
+@bprop_getters.register("tuple_setitem")
+@bprop_getters.register("list_setitem")
+def get_bprop_setitem(self):
+    """Generate bprop for TupleSetItem and ListSetItem"""
+
+    tuple_setitem = Primitive('tuple_setitem')
+
+    def bprop(x, idx, value, out, dout):
+        d_x = tuple_setitem(dout, idx, 0)
+        d_value = dout[idx]
+        d_idx = 0
+        return d_x, zeros_like(d_idx), d_value
+
+    return bprop
+
+
 @bprop_getters.register(seq.SequenceMul)
 def get_bprop_mul(self):
     """Generate bprop for SequenceMul"""
-    tuple_set_item = Primitive("TupleSetItem")
+    tuple_setitem = Primitive("tuple_setitem")
 
     def bprop(x, y, out, dout):
         dx = x
         for i in range(len(x)):
-            dx = tuple_set_item(dx, i, dout[i])
+            dx = tuple_setitem(dx, i, dout[i])
         return (dx, zeros_like(y))
 
     return bprop

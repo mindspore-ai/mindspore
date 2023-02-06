@@ -802,108 +802,6 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
                                          slice_args[kMakeSliceInput2]);
 }
 
-bool CheckMakeRangeInput(const std::vector<AbstractBasePtr> &input_args, const std::string &prim_name) {
-  constexpr size_t max_args_size = 3;
-  constexpr size_t min_args_size = 1;
-  auto inputs_size = input_args.size();
-  if (inputs_size > max_args_size || inputs_size < min_args_size) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', the input size should within [" << min_args_size << ", "
-                      << max_args_size << "] but got" << inputs_size;
-  }
-  bool has_variable = false;
-  for (size_t i = 0; i < input_args.size(); ++i) {
-    auto element = input_args[i];
-    MS_EXCEPTION_IF_NULL(element);
-    auto element_type = element->BuildType();
-    if (element_type->type_id() != kInt64->type_id()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int64 scalar but got "
-                              << element->ToString();
-    }
-    if (!has_variable && element->BuildValue() == kAnyValue) {
-      has_variable = true;
-    }
-  }
-  return has_variable;
-}
-
-abstract::AbstractTuplePtr CalcSlidePara(const std::vector<int64_t> &values, const std::string &prim_name) {
-  SlideInfo slide = {0, 1, 0};
-  auto values_size = values.size();
-  if (values_size == kDim3) {
-    slide.start = values[kIndex0];
-    slide.stop = values[kIndex1];
-    slide.step = values[kIndex2];
-  } else if (values_size == kDim2) {
-    slide.start = values[kIndex0];
-    slide.stop = values[kIndex1];
-  } else {
-    slide.stop = values[kIndex0];
-  }
-
-  if (slide.step == 0) {
-    MS_LOG(EXCEPTION) << "For 'range', the argument 'step' could not be 0.";
-  }
-
-  AbstractBasePtrList args;
-  if (slide.start <= slide.stop) {
-    if (slide.step <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << prim_name << "', when the argument 'start' " << slide.start
-                        << " is less than or equal to the argument 'stop' " << slide.stop << ", "
-                        << "the argument 'step' must be greater than 0, but the argument 'step' is " << slide.step
-                        << ".";
-    }
-
-    for (int64_t i = slide.start; i < slide.stop; i += slide.step) {
-      args.push_back(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(i)));
-      if (i > 0 && INT_MAX - i < slide.step) {
-        MS_EXCEPTION(ValueError) << "Integer overflow error occurred when traversing the range. "
-                                 << "Please check the inputs of range.";
-      }
-    }
-  } else {
-    if (slide.step >= 0) {
-      MS_LOG(EXCEPTION) << "For '" << prim_name << "', while the argument 'start' " << slide.start
-                        << " is greater than the argument "
-                        << "'stop' " << slide.stop << ", the argument 'step' must be less than 0, "
-                        << "but the argument 'step' is " << slide.step << ".";
-    }
-
-    for (int64_t i = slide.start; i > slide.stop; i += slide.step) {
-      args.push_back(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(i)));
-      if (i < 0 && INT_MIN - i > slide.step) {
-        MS_EXCEPTION(ValueError) << "Integer overflow error occurred when traversing the range. "
-                                 << "Please check the inputs of range.";
-      }
-    }
-  }
-  return std::make_shared<abstract::AbstractTuple>(args);
-}
-
-AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_spec_list) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  bool has_variable = CheckMakeRangeInput(args_spec_list, prim_name);
-  if (has_variable) {
-    // If the input to make_range has variable input, the output abs should be dynamic length sequence.
-    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64);
-    auto ret = std::make_shared<abstract::AbstractTuple>(AbstractBasePtrList{element});
-    ret->CheckAndConvertToDynamicLenSequence();
-    return ret;
-  }
-  std::vector<int64_t> values;
-  for (size_t i = 0; i < args_spec_list.size(); ++i) {
-    auto element = args_spec_list[i];
-    auto element_val = element->BuildValue();
-    if (!element_val->isa<Int64Imm>()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int64 scalar but got "
-                              << element->ToString();
-    }
-    values.push_back(element_val->cast<Int64ImmPtr>()->value());
-  }
-  return CalcSlidePara(values, prim_name);
-}
-
 AbstractBasePtr InferImplStopGradient(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const AbstractBasePtrList &args_spec_list) {
   // Inputs: any value;
@@ -1210,7 +1108,6 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(J, prim::kPrimJ, InferImplJ, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(BroadcastGradientArgs, prim::kPrimBroadcastGradientArgs,
                                    InferImplBroadcastGradientArgs, nullptr);
 // Other
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeRange, prim::kPrimMakeRange, InferImplMakeRange, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Taylor, prim::kPrimTaylor, InferImplTaylor, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Shard, prim::kPrimShard, InferImplShard, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Vmap, prim::kPrimVmap, InferImplVmap, nullptr);
@@ -1273,8 +1170,6 @@ void RegPrimitiveFrontEval() {
                                                 prim::kPrimBroadcastGradientArgs, InferImplBroadcastGradientArgs,
                                                 nullptr);
   // Other
-  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimMakeRange,
-                                                InferImplMakeRange, nullptr);
   abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimTaylor,
                                                 InferImplTaylor, nullptr);
   abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimShard,

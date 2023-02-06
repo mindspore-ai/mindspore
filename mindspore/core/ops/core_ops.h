@@ -266,6 +266,11 @@ constexpr auto kSequenceCount = "SequenceCount";
 constexpr auto kSequenceIndex = "SequenceIndex";
 constexpr auto kSequenceMul = "SequenceMul";
 constexpr auto kSequenceSlice = "SequenceSlice";
+constexpr auto kSequenceLen = "sequence_len";
+constexpr auto kSequenceZerosLike = "SequenceZerosLike";
+constexpr auto kMakeRange = "make_range";
+constexpr auto kSequenceAddOffset = "SequenceAddOffset";
+constexpr auto kSequenceSliceGrad = "SequenceSliceGrad";
 constexpr auto kSequenceSliceSetItem = "SequenceSliceSetItem";
 
 // NN
@@ -1603,6 +1608,9 @@ GVAR_DEF(PrimitivePtr, kPrimSequenceIndex, std::make_shared<Primitive>(kSequence
 GVAR_DEF(PrimitivePtr, kPrimSequenceMul, std::make_shared<Primitive>(kSequenceMul));
 GVAR_DEF(PrimitivePtr, kPrimSequenceSlice, std::make_shared<Primitive>(kSequenceSlice));
 GVAR_DEF(PrimitivePtr, kPrimSequenceSliceSetItem, std::make_shared<Primitive>(kSequenceSliceSetItem));
+GVAR_DEF(PrimitivePtr, kPrimSequenceZerosLike, std::make_shared<Primitive>(kSequenceZerosLike));
+GVAR_DEF(PrimitivePtr, kPrimSequenceAddOffset, std::make_shared<Primitive>(kSequenceAddOffset));
+GVAR_DEF(PrimitivePtr, kPrimSequenceSliceGrad, std::make_shared<Primitive>(kSequenceSliceGrad));
 
 // Other miscellaneous
 GVAR_DEF(PrimitivePtr, kPrimSampleDistortedBoundingBoxV2, std::make_shared<Primitive>(kSampleDistortedBoundingBoxV2));

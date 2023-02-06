@@ -18,6 +18,7 @@ from mindspore.ops import _constants
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.composite import multitype_ops as C
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops._grad.grad_base import bprops
 from mindspore.common import dtype as mstype
 
@@ -68,13 +69,13 @@ def bprop_scalar_cast(x, t, out, dout):
 @bprops.register(_constants.kTupleGetItem)
 def bprop_tuple_getitem(data, idx, out, dout):
     """Backpropagator for primitive `tuple_getitem`."""
-    return F.tuple_setitem(C.zeros_like(data), idx, dout), C.zeros_like(idx)
+    return F.tuple_setitem(zeros_like(data), idx, dout), zeros_like(idx)
 
 
 @bprops.register("ListGetItem")
 def bprop_list_getitem(data, idx, out, dout):
     """Backpropagator for primitive `list_getitem`."""
-    return F.list_setitem(C.zeros_like(data), idx, dout), C.zeros_like(idx)
+    return F.list_setitem(zeros_like(data), idx, dout), zeros_like(idx)
 
 
 @bprops.register("identity")
