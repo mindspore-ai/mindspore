@@ -463,7 +463,12 @@ AbstractBasePtr DoInferReduceShape(const AbstractTuplePtr &x_shape, const ValueP
   }
 
   for (auto &elem : axis_data) {
-    int64_t e_value = CheckAxis(primitive->name(), "axis", elem, -SizeToLong(x_rank), SizeToLong(x_rank), "input_x");
+    auto x_rank_tmp = x_rank;
+    if (x_rank_tmp == 0) {
+      x_rank_tmp = 1;
+    }
+    int64_t e_value =
+      CheckAxis(primitive->name(), "axis", elem, -SizeToLong(x_rank_tmp), SizeToLong(x_rank_tmp), "input_x");
     (void)axis_set.insert(e_value);
   }
   MS_EXCEPTION_IF_NULL(x_shp_value->cast<ValueTuplePtr>());
