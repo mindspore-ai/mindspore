@@ -706,8 +706,8 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0.
         output_size (tuple[int], optional): The output shape. Default: None.
             If output_size == (), then the shape of output computed by `kernel_size`, `stride` and `padding`.
-            If output_size != (), then output_size must be :math:`(N, C, H)` or
-            :math:`(C, H)` and output_size must belong to
+            If output_size != (), then output_size must be :math:`(N, C, H)` , :math:`(C, H)` or
+            :math:`(H)` and output_size must belong to
             :math:`[(N, C, H_{out} - stride[0]), (N, C, H_{out} + stride[0])]`.
 
     Returns:
@@ -830,7 +830,8 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
             integers, the padding of height and width equal to padding[0] and padding[1] correspondingly.
         output_size (tuple[int], optional): The target output size. Default: None.
             If output_size == (), then the shape of output computed by `kernel_size`, `stride` and `padding`.
-            If output_size != (), then output_size must be :math:`(N, C, H, W)` and output_size must belong to
+            If output_size != (), then output_size must be :math:`(N, C, H, W)` , :math:`(C, H, W)` or :math:`(H, W)`
+            and output_size must belong to
             :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]),
             (N, C, H_{out} + stride[0], W_{out} + stride[1])]`.
 
@@ -937,7 +938,7 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
             correspondingly.
         output_size (tuple[int], optional): The output size. Default: None. If output_size == (), then the shape of
             output computed by `kernel_size`, `stride` and `padding`. If output_size != (), then output_size must be
-            :math:`(N, C, D, H, W)` or :math:`(C, D, H, W)` and output_size must belong to
+            :math:`(N, C, D, H, W)` or :math:`(C, D, H, W)` or :math:`(D, H, W)` and output_size must belong to
             :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]),
             (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]`.
 

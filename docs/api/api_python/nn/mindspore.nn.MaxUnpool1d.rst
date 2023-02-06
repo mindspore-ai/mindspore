@@ -25,7 +25,7 @@ mindspore.nn.MaxUnpool1d
           数据类型必须是int32或int64。
         - **output_size** (tuple[int], 可选) - 输出shape。默认值：None。
           如果output_size为()，那么输出shape根据 `kernel_size` 、 `stride` 和 `padding` 计算得出。
-          如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, H)` 或 :math:`(C, H)` ，取值范围需满足：
+          如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, H)` ， :math:`(C, H)` 或 :math:`(H)` ，取值范围需满足：
           :math:`[(N, C, H_{out} - stride[0]), (N, C, H_{out} + stride[0])]` 。
 
     输出：

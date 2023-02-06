@@ -1438,8 +1438,8 @@ class MaxUnpool1d(Cell):
           Data type must be in int32 or int64.
         - **output_size** (tuple[int], optional) - The output size. Default: None.
           If output_size == (), then the shape of output computed by kernel_size, stride and padding.
-          If output_size != (), then output_size must be :math:`(N, C, H)` or
-          :math:`(C, H)` and output_size must belong to
+          If output_size != (), then output_size must be :math:`(N, C, H)` , :math:`(C, H)` or
+          :math:`(H)` and output_size must belong to
           :math:`[(N, C, H_{out} - stride[0]), (N, C, H_{out} + stride[0])]`.
 
     Outputs:
@@ -1470,8 +1470,8 @@ class MaxUnpool1d(Cell):
     def __init__(self, kernel_size, stride=None, padding=0):
         """Initialize MaxUnpool1d."""
         super(MaxUnpool1d, self).__init__()
-        if not stride:
-            stride = 0
+        if stride is None:
+            stride = kernel_size
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
@@ -1525,7 +1525,8 @@ class MaxUnpool2d(Cell):
           Data type must be in int32 or int64.
         - **output_size** (tuple[int], optional) - The output size. Default: None.
           If output_size == (), then the shape of output computed by kernel_size, stride and padding.
-          If output_size != (), then output_size must be :math:`(N, C, H, W)` and output_size must belong to
+          If output_size != (), then output_size must be :math:`(N, C, H, W)`, :math:`(C, H, W)` or
+          :math:`(H, W)` and output_size must belong to
           :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]),
           (N, C, H_{out} + stride[0], W_{out} + stride[1])]`.
 
@@ -1559,8 +1560,8 @@ class MaxUnpool2d(Cell):
     def __init__(self, kernel_size, stride=None, padding=0):
         """Initialize MaxUnpool2d."""
         super(MaxUnpool2d, self).__init__()
-        if not stride:
-            stride = 0
+        if stride is None:
+            stride = kernel_size
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
@@ -1617,8 +1618,8 @@ class MaxUnpool3d(Cell):
           Data type must be in int32 or int64.
         - **output_size** (tuple[int], optional) - The output size. Default: None.
           If output_size == (), then the shape of output computed by kernel_size, stride and padding.
-          If output_size != (), then output_size must be :math:`(N, C, D, H, W)` or :math:`(C, D, H, W)` and
-          output_size must belong to
+          If output_size != (), then output_size must be :math:`(N, C, D, H, W)` , :math:`(C, D, H, W)` or
+          :math:`(D, H, W)` and output_size must belong to
           :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]),
           (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]`.
 
@@ -1651,8 +1652,8 @@ class MaxUnpool3d(Cell):
     """
     def __init__(self, kernel_size, stride=None, padding=0):
         super(MaxUnpool3d, self).__init__()
-        if not stride:
-            stride = 0
+        if stride is None:
+            stride = kernel_size
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
