@@ -31,54 +31,51 @@
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_func.cuh"
 
 namespace mindspore {
 namespace kernel {
 constexpr int MAX_DIMS = 7;
 
-static const std::map<std::string, BroadcastOpType> kBroadcastCmpTypeMap = {
-  {"Greater", BROADCAST_TYPE_GREATER},
-  {"Less", BROADCAST_TYPE_LESS},
-  {"Equal", BROADCAST_TYPE_EQUAL},
-  {"GreaterEqual", BROADCAST_TYPE_GREATER_EQUAL},
-  {"LessEqual", BROADCAST_TYPE_LESS_EQUAL},
-  {"NotEqual", BROADCAST_TYPE_NOT_EQUAL},
-  {"LogicalAnd", BROADCAST_TYPE_LOGICAL_AND},
-  {"LogicalOr", BROADCAST_TYPE_LOGICAL_OR},
+static const std::map<std::string, BinaryOpType> kBroadcastCmpTypeMap = {
+  {"Greater", BinaryOpType::kGreater},       {"Less", BinaryOpType::kLess},
+  {"Equal", BinaryOpType::kEqual},           {"GreaterEqual", BinaryOpType::kGreaterEqual},
+  {"LessEqual", BinaryOpType::kLessEqual},   {"NotEqual", BinaryOpType::kNotEqual},
+  {"LogicalAnd", BinaryOpType::kLogicalAnd}, {"LogicalOr", BinaryOpType::kLogicalOr},
 };
 
-static const std::map<std::string, BroadcastOpType> kBroadcastArithmetricTypeMap = {
-  {"Maximum", BROADCAST_TYPE_MAXIMUM},
-  {"Minimum", BROADCAST_TYPE_MINIMUM},
-  {"Pow", BROADCAST_TYPE_POWER},
-  {"RealDiv", BROADCAST_TYPE_REALDIV},
-  {"Mul", BROADCAST_TYPE_MUL},
-  {"Sub", BROADCAST_TYPE_SUB},
-  {"Add", BROADCAST_TYPE_ADD},
-  {"FloorDiv", BROADCAST_TYPE_FLOORDIV},
-  {"AbsGrad", BROADCAST_TYPE_ABSGRAD},
-  {"Div", BROADCAST_TYPE_DIV},
-  {"DivNoNan", BROADCAST_TYPE_DIVNONAN},
-  {"MulNoNan", BROADCAST_TYPE_MULNONAN},
-  {"Mod", BROADCAST_TYPE_MOD},
-  {"FloorMod", BROADCAST_TYPE_FLOORMOD},
-  {"Atan2", BROADCAST_TYPE_ATAN2},
-  {"TruncateDiv", BROADCAST_TYPE_TRUNCATEDIV},
-  {"TruncateMod", BROADCAST_TYPE_TRUNCATEMOD},
-  {"BitwiseAnd", BROADCAST_TYPE_BITWISEAND},
-  {"BitwiseOr", BROADCAST_TYPE_BITWISEOR},
-  {"BitwiseXor", BROADCAST_TYPE_BITWISEXOR},
-  {"Xdivy", BROADCAST_TYPE_XDIVY},
-  {"Xlogy", BROADCAST_TYPE_XLOGY},
+static const std::map<std::string, BinaryOpType> kBroadcastArithmetricTypeMap = {
+  {"Maximum", BinaryOpType::kMaximum},
+  {"Minimum", BinaryOpType::kMinimum},
+  {"Pow", BinaryOpType::kPower},
+  {"RealDiv", BinaryOpType::kRealDiv},
+  {"Mul", BinaryOpType::kMul},
+  {"Sub", BinaryOpType::kSub},
+  {"Add", BinaryOpType::kAdd},
+  {"FloorDiv", BinaryOpType::kFloorDiv},
+  {"AbsGrad", BinaryOpType::kAbsGrad},
+  {"Div", BinaryOpType::kDiv},
+  {"DivNoNan", BinaryOpType::kDivNoNan},
+  {"MulNoNan", BinaryOpType::kMulNoNan},
+  {"Mod", BinaryOpType::kMod},
+  {"FloorMod", BinaryOpType::kFloorMod},
+  {"Atan2", BinaryOpType::kAtan2},
+  {"TruncateDiv", BinaryOpType::kTruncateDiv},
+  {"TruncateMod", BinaryOpType::kTruncateMod},
+  {"BitwiseAnd", BinaryOpType::kBitwiseAnd},
+  {"BitwiseOr", BinaryOpType::kBitwiseOr},
+  {"BitwiseXor", BinaryOpType::kBitwiseXor},
+  {"Xdivy", BinaryOpType::kXdivy},
+  {"Xlogy", BinaryOpType::kXlogy},
 };
 
-static const std::map<std::string, BroadcastOpType> kBroadcastComplexAndRealTypeMap = {
-  {"RealDiv", BROADCAST_TYPE_REALDIV}, {"Mul", BROADCAST_TYPE_MUL},     {"Sub", BROADCAST_TYPE_SUB},
-  {"Add", BROADCAST_TYPE_ADD},         {"Div", BROADCAST_TYPE_DIV},     {"MulNoNan", BROADCAST_TYPE_MULNONAN},
-  {"Pow", BROADCAST_TYPE_POWER},       {"Xdivy", BROADCAST_TYPE_XDIVY}, {"Xlogy", BROADCAST_TYPE_XLOGY}};
+static const std::map<std::string, BinaryOpType> kBroadcastComplexAndRealTypeMap = {
+  {"RealDiv", BinaryOpType::kRealDiv}, {"Mul", BinaryOpType::kMul},     {"Sub", BinaryOpType::kSub},
+  {"Add", BinaryOpType::kAdd},         {"Div", BinaryOpType::kDiv},     {"MulNoNan", BinaryOpType::kMulNoNan},
+  {"Pow", BinaryOpType::kPower},       {"Xdivy", BinaryOpType::kXdivy}, {"Xlogy", BinaryOpType::kXlogy}};
 
-static const std::map<std::string, BroadcastOpType> kBroadcastComplexOnlyTypeMap = {
-  {"Complex", BROADCAST_TYPE_COMPLEX},
+static const std::map<std::string, BinaryOpType> kBroadcastComplexOnlyTypeMap = {
+  {"Complex", BinaryOpType::kComplex},
 };
 
 class BroadcastOpGpuKernelMod : public NativeGpuKernelMod {
@@ -117,7 +114,7 @@ class BroadcastOpGpuKernelMod : public NativeGpuKernelMod {
 
   std::string GetValidKernelTypes();
 
-  BroadcastOpType op_type_;
+  BinaryOpType op_type_;
   bool need_broadcast_;
   bool is_compare_op_;
   bool support_complex_{true};

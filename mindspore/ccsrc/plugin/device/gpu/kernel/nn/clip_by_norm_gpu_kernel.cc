@@ -148,7 +148,7 @@ bool ClipByNormGpuKernelMod<T, S>::DoLaunch(const std::vector<AddressPtr> &input
   GetMaxWithEpsAndValue(l2_norm_output_size_ / sizeof(float), epsilon_, l2norm_output_addr,
                         reinterpret_cast<cudaStream_t>(stream_ptr));
   // Running `x/l2_norm(x)` and broadcast output shape to `input_x` shape
-  BroadcastArith(l2_norm_lhs_shape_size, l2_norm_rhs_shap_size, l2_norm_ouths_shape_size, BROADCAST_TYPE_REALDIV,
+  BroadcastArith(l2_norm_lhs_shape_size, l2_norm_rhs_shap_size, l2_norm_ouths_shape_size, BinaryOpType::kRealDiv,
                  x_float_addr, l2norm_output_addr, div_output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   // Running `cast(clip_norm)` to the data type of `input_x`
   Cast(clip_norm_size_ / sizeof(S), clip_norm_addr, clip_norm_float_addr, reinterpret_cast<cudaStream_t>(stream_ptr),
@@ -156,10 +156,10 @@ bool ClipByNormGpuKernelMod<T, S>::DoLaunch(const std::vector<AddressPtr> &input
   // Running '(x/l2_norm(x)) * clip_norm' and broadcast output shape to `input_x` shape
   if (clip_norm_need_broadcast_) {
     BroadcastArith(l2_norm_ouths_shape_size, Convert2SizeTClipNeg(clip_norm_rhs_shape_), l2_norm_ouths_shape_size,
-                   BROADCAST_TYPE_MUL, div_output_addr, clip_norm_float_addr, clip_norm_mul_output_addr,
+                   BinaryOpType::kMul, div_output_addr, clip_norm_float_addr, clip_norm_mul_output_addr,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
-    ElewiseArith(output_size_ / sizeof(float), BROADCAST_TYPE_MUL, div_output_addr, clip_norm_float_addr,
+    ElewiseArith(output_size_ / sizeof(float), BinaryOpType::kMul, div_output_addr, clip_norm_float_addr,
                  clip_norm_mul_output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   }
   // Running compare between `input_x` and `upper output` and cast final output to float type.

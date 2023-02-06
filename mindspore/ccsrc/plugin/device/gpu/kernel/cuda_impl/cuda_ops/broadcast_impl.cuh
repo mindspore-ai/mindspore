@@ -19,68 +19,33 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-
-enum BroadcastOpType {
-  BROADCAST_TYPE_GREATER = 0,
-  BROADCAST_TYPE_LESS = 1,
-  BROADCAST_TYPE_MAXIMUM = 2,
-  BROADCAST_TYPE_MINIMUM = 3,
-  BROADCAST_TYPE_POWER = 4,
-  BROADCAST_TYPE_REALDIV = 5,
-  BROADCAST_TYPE_MUL = 6,
-  BROADCAST_TYPE_SUB = 7,
-  BROADCAST_TYPE_ADD = 8,
-  BROADCAST_TYPE_FLOORDIV = 9,
-  BROADCAST_TYPE_ABSGRAD = 10,
-  BROADCAST_TYPE_DIV = 11,
-  BROADCAST_TYPE_DIVNONAN = 12,
-  BROADCAST_TYPE_EQUAL = 13,
-  BROADCAST_TYPE_SQUARED_DIFFERENCE = 14,
-  BROADCAST_TYPE_MOD = 15,
-  BROADCAST_TYPE_FLOORMOD = 16,
-  BROADCAST_TYPE_ATAN2 = 17,
-  BROADCAST_TYPE_GREATER_EQUAL = 18,
-  BROADCAST_TYPE_LESS_EQUAL = 19,
-  BROADCAST_TYPE_NOT_EQUAL = 20,
-  BROADCAST_TYPE_LOGICAL_AND = 21,
-  BROADCAST_TYPE_LOGICAL_OR = 22,
-  BROADCAST_TYPE_TRUNCATEDIV = 23,
-  BROADCAST_TYPE_TRUNCATEMOD = 24,
-  BROADCAST_TYPE_COMPLEX = 25,
-  BROADCAST_TYPE_XDIVY = 26,
-  BROADCAST_TYPE_BITWISEAND = 27,
-  BROADCAST_TYPE_BITWISEOR = 28,
-  BROADCAST_TYPE_BITWISEXOR = 29,
-  BROADCAST_TYPE_MULNONAN = 30,
-  BROADCAST_TYPE_INVALID = 0xffffffff,
-  BROADCAST_TYPE_XLOGY = 31,
-};
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_func.cuh"
 
 template <typename T>
-CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const T *x0, const T *x1, bool *y,
+CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const T *x0, const T *x1, bool *y,
                                 cudaStream_t stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const T *x0, const T *x1, T *y,
+CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const T *x0, const T *x1, T *y,
                                   cudaStream_t stream);
 
 template <typename T1, typename T2, typename T3>
-CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const T1 *x0, const T2 *x1,
+CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BinaryOpType op, const T1 *x0, const T2 *x1,
                                          Complex<T3> *y, cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                  const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0, const T *x1,
+                                  const std::vector<size_t> &y_dims, enum BinaryOpType op, const T *x0, const T *x1,
                                   bool *y, cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0,
-                                    const T *x1, T *y, cudaStream_t stream);
+                                    const std::vector<size_t> &y_dims, enum BinaryOpType op, const T *x0, const T *x1,
+                                    T *y, cudaStream_t stream);
 
 template <typename T1, typename T2, typename T3>
 CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T1 *x0,
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const T1 *x0,
                                            const T2 *x1, Complex<T3> *y, cudaStream_t stream);
 
 template <typename T>

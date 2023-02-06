@@ -159,7 +159,7 @@ bool PoolingGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
       CalRealKernelSize(input_shape_, kernel_size_, edge_kernel_, work_addr, device_id_,
                         reinterpret_cast<cudaStream_t>(cuda_stream_));
     }
-    ElewiseArith(output_num, BROADCAST_TYPE_MUL, dy_work_addr, work_addr, dy_work_addr,
+    ElewiseArith(output_num, BinaryOpType::kMul, dy_work_addr, work_addr, dy_work_addr,
                  reinterpret_cast<cudaStream_t>(cuda_stream_));
     if (cudnn_data_type_ == CUDNN_DATA_DOUBLE) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(

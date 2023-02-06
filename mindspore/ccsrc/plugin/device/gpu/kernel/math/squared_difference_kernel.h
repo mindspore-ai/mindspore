@@ -61,7 +61,7 @@ class SquaredDifferenceOpGpuKernelMod : public NativeGpuKernelMod,
   template <typename T>
   bool LaunchComplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                            const std::vector<AddressPtr> &outputs);
-  BroadcastOpType op_type_{BROADCAST_TYPE_SQUARED_DIFFERENCE};
+  BinaryOpType op_type_{BinaryOpType::kSquaredDifference};
   bool need_broadcast_;
   size_t output_num_;
   std::vector<size_t> lhs_shape_;

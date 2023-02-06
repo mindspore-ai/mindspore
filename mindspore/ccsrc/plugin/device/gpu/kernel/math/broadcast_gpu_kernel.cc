@@ -92,17 +92,17 @@ std::string BroadcastOpGpuKernelMod::GetValidKernelTypes() {
   std::ostringstream valid_types;
   valid_types << "Valid Compare Types: ";
   std::for_each(kBroadcastCmpTypeMap.cbegin(), kBroadcastCmpTypeMap.cend(),
-                [&valid_types](const std::map<std::string, BroadcastOpType>::value_type &p) {
+                [&valid_types](const std::map<std::string, BinaryOpType>::value_type &p) {
                   valid_types << p.first << std::string(", ");
                 });
   valid_types << "; Valid Arithmetric Types: ";
   std::for_each(kBroadcastArithmetricTypeMap.cbegin(), kBroadcastArithmetricTypeMap.cend(),
-                [&valid_types](const std::map<std::string, BroadcastOpType>::value_type &p) {
+                [&valid_types](const std::map<std::string, BinaryOpType>::value_type &p) {
                   valid_types << p.first << std::string(", ");
                 });
   valid_types << "; Valid Complex Types: ";
   std::for_each(kBroadcastComplexOnlyTypeMap.cbegin(), kBroadcastComplexOnlyTypeMap.cend(),
-                [&valid_types](const std::map<std::string, BroadcastOpType>::value_type &p) {
+                [&valid_types](const std::map<std::string, BinaryOpType>::value_type &p) {
                   valid_types << p.first << std::string(", ");
                 });
   return valid_types.str();
