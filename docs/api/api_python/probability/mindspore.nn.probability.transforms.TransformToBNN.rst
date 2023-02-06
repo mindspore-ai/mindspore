@@ -23,7 +23,7 @@ mindspore.nn.probability.transforms.TransformToBNN
         返回：
             Cell，由 TrainOneStepCell 包裹的可训练模型，其特定类型的层被转换为对应的贝叶斯层。
 
-    .. py:method:: transform_to_bnn_model(get_dense_args=lambda dp: {"in_channels": dp.in_channels, "has_bias": dp.has_bias, "out_channels": dp.out_channels, "activation": dp.activation}, get_conv_args=lambda dp: {"in_channels": dp.in_channels, "out_channels": dp.out_channels, "pad_mode": dp.pad_mode, "kernel_size": dp.kernel_size, "stride": dp.stride, "has_bias": dp.has_bias, "padding": dp.padding, "dilation": dp.dilation, "group": dp.group}, add_dense_args=None, add_conv_args=None)    
+    .. py:method:: transform_to_bnn_model(get_dense_args=lambda dp: {"in_channels": dp.in_channels, "has_bias": dp.has_bias, "out_channels": dp.out_channels, "activation": dp.activation}, get_conv_args=lambda dp: {"in_channels": dp.in_channels, "out_channels": dp.out_channels, "pad_mode": dp.pad_mode, "kernel_size": dp.kernel_size, "stride": dp.stride, "has_bias": dp.has_bias, "padding": dp.padding, "dilation": dp.dilation, "group": dp.group}, add_dense_args=None, add_conv_args=None)
 
         将整个DNN模型转换为BNN模型，并通过TrainOneStepCell封装BNN模型。
 

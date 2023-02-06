@@ -18,7 +18,7 @@ mindspore.ops.split
     异常：
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `axis` 不是int类型。
-        - **ValueError** - 参数 `axis` 超出 :math:`-x.dim, x.dim)` 范围。
+        - **ValueError** - 参数 `axis` 超出 :math:`[-x.dim, x.dim)` 范围。
         - **TypeError** - `split_size_or_sections` 中的每个元素不是int类型
         - **TypeError** - `split_size_or_sections` 不是int，tuple(int)或list(int)。
         - **ValueError** - `split_size_or_sections` 的和不等于x.shape[axis]。

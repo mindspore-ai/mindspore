@@ -4556,9 +4556,9 @@ def logspace(start, end, steps, base=10.0, dtype=None):
     start) and ends with base ** end (see endpoint below).
 
     Args:
-        start (Union[int, list(int), tuple(int), tensor]): ``base ** start`` is the starting
+        start (Union[int, list(int), tuple(int), Tensor]): ``base ** start`` is the starting
             value of the sequence.
-        end (Union[int, list(int), tuple(int), tensor]): ``base ** end`` is the final value of
+        end (Union[int, list(int), tuple(int), Tensor]): ``base ** end`` is the final value of
             the sequence.
         steps (int): Number of samples to generate.
         base (Union[int, float], optional): The base of the log space. The step size
