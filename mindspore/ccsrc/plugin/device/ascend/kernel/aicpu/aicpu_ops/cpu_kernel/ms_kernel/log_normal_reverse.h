@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_KERNELS_NORMALIZED_RESIZE_BICUBIC_GRAD_H_
-#define AICPU_KERNELS_NORMALIZED_RESIZE_BICUBIC_GRAD_H_
 
-#include <string>
+#ifndef AICPU_KERNELS_NORMALIZED_LOGNORMALREVERSE_H_
+#define AICPU_KERNELS_NORMALIZED_LOGNORMALREVERSE_H_
 
-#include "Eigen/Core"
 #include "cpu_ops_kernel.h"
 
 namespace aicpu {
-
-template <typename T>
-uint32_t DoCompute(CpuKernelContext &ctx);
-
-class ResizeBicubicGradCpuKernel : public CpuKernel {
+class LogNormalReverseCpuKernel : public CpuKernel {
  public:
-  ~ResizeBicubicGradCpuKernel() = default;
+  LogNormalReverseCpuKernel() = default;
+  ~LogNormalReverseCpuKernel() override = default;
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
+  template <typename T>
+  uint32_t DoCompute(CpuKernelContext &ctx);
   uint32_t GetInputAndCheck(CpuKernelContext &ctx);
+
+  std::vector<Tensor *> inputs_;
+  std::vector<Tensor *> outputs_;
 };
 }  // namespace aicpu
-#endif
+#endif  // AICPU_KERNELS_NORMALIZED_LOGNORMALREVERSE_H_

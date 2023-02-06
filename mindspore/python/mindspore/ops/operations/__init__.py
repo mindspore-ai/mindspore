@@ -86,7 +86,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        MatrixLogarithm, MatrixPower, MatrixSolve, MatrixTriangularSolve, ReduceStd, STFT,
                        NextAfter, Orgqr, Qr, RaggedRange, Digamma, Eig, EuclideanNorm, CompareAndBitpack, ComplexAbs,
                        CumulativeLogsumexp, Gcd, Trace, TridiagonalMatMul, TrilIndices, TriuIndices, Zeta,
-                       Roll, Lgamma, Logit)
+                       Roll, Lgamma, Logit, MatrixSolveLs)
 from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
                      ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
                      DepthwiseConv2dNative,
@@ -647,7 +647,8 @@ __all__ = [
     "SparseSlice",
     "ResizeLinear1D",
     "ResizeBicubic",
-    "Logit"
+    "Logit",
+    "MatrixSolveLs"
 ]
 
 __custom__ = [

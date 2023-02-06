@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_KERNELS_NORMALIZED_RESIZE_BICUBIC_GRAD_H_
-#define AICPU_KERNELS_NORMALIZED_RESIZE_BICUBIC_GRAD_H_
 
-#include <string>
+#ifndef AICPU_IMPL_EXTRACT_GLIMPSE_H_
+#define AICPU_IMPL_EXTRACT_GLIMPSE_H_
 
-#include "Eigen/Core"
 #include "cpu_ops_kernel.h"
 
 namespace aicpu {
-
-template <typename T>
-uint32_t DoCompute(CpuKernelContext &ctx);
-
-class ResizeBicubicGradCpuKernel : public CpuKernel {
+class ExtractGlimpseCpuKernel : public CpuKernel {
  public:
-  ~ResizeBicubicGradCpuKernel() = default;
+  ExtractGlimpseCpuKernel() = default;
+  ~ExtractGlimpseCpuKernel() override = default;
+
+ protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t GetInputAndCheck(CpuKernelContext &ctx);
+  static uint32_t ExtractGlimpseCheck(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

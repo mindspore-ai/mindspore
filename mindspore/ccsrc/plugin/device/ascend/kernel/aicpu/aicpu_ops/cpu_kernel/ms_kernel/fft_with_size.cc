@@ -124,27 +124,6 @@ double FFTWithSizeCpuKernel::Getnormalized(int64_t n, std::string normalized, bo
     if (normalized == "backward") result = 1.0 / n;
     if (normalized == "ortho") result = 1.0 / sqrt((double)n);
   }
-  // if (signal_ndim == 1) {
-  //   result = sqrt((double)out_shape[out_shape.size() - 1]);
-  // } else if (signal_ndim == 2) {
-  //   result = sqrt((double)(out_shape[out_shape.size() - 1] *
-  //                          out_shape[out_shape.size() - 2]));
-  // } else {
-  //   result = sqrt((double)(out_shape[out_shape.size() - 1] *
-  //                          out_shape[out_shape.size() - 2] *
-  //                          out_shape[out_shape.size() - 3]));
-  // }
-  // if (is_reverse) {
-  //   if (result == 0) {
-  //       KERNEL_LOG_ERROR("DivideByZeroExcepiton");
-  //   }
-  //   result = 1.0 / result;
-  // }
-  // KERNEL_LOG_DEBUG(
-  //     "FFTWithSizeCpuKernel[GetNormalized], "
-  //     "input_shape[%s]  normalize[%s]. "
-  //     "is_reverse: [%d]. norm_:[%lf]",
-  //     VectorToString(out_shape).c_str(), normalized, is_reverse, result);
   std::cout << "result = " << result << std::endl;
   return result;
 }
@@ -350,14 +329,7 @@ uint32_t FFTWithSizeCpuKernel::FFTWithSizeCompute(CpuKernelContext &ctx, bool on
   if (is_real) {
     inverse = real_inverse;
   }
-  std::cout << out;
-  std::cout << "===========";
-  // if
-  //  std::vector<int64_t> out_shape(out.dimensions().begin(),
-  //                                out.dimensions().end());
-  //  if (is_real && !inverse) {
-  //    out_shape.back() = x_shape.back();
-  //  }
+
   std::cout << out;
   auto cout = x_shape_ptr->NumElements();
   auto norm = Getnormalized(cout, normalized, inverse);

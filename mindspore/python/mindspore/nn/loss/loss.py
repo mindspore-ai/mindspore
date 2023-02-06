@@ -1160,7 +1160,7 @@ class PoissonNLLLoss(LossBase):
     Args:
         log_input (bool, optional): Whether use log input. Default: True.
         full (bool, optional): Whether include the Stirling approximation term in the loss calculation. Default: False.
-        eps (float, optional): Lower bound of `x` when calculating logarithms. Default: 1e-8.
+        eps (float, optional): Lower bound of `x` when calculating logarithms. Default: 1e-08.
         reduction (str, optional): Apply specific reduction method to the output:
             'none', 'mean', 'sum'. Default: 'mean'.
 

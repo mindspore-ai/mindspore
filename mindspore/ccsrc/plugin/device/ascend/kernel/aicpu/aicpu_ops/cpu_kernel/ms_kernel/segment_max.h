@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_KERNELS_NORMALIZED_RESIZE_BICUBIC_GRAD_H_
-#define AICPU_KERNELS_NORMALIZED_RESIZE_BICUBIC_GRAD_H_
+#ifndef AICPU_KERNELS_NORMALIZED_SEGMENTMAX_H_
+#define AICPU_KERNELS_NORMALIZED_SEGMENTMAX_H_
 
-#include <string>
-
-#include "Eigen/Core"
 #include "cpu_ops_kernel.h"
 
 namespace aicpu {
-
-template <typename T>
-uint32_t DoCompute(CpuKernelContext &ctx);
-
-class ResizeBicubicGradCpuKernel : public CpuKernel {
+class SegmentMaxCpuKernel : public CpuKernel {
  public:
-  ~ResizeBicubicGradCpuKernel() = default;
+  SegmentMaxCpuKernel() = default;
+  ~SegmentMaxCpuKernel() override = default;
+
+ protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t GetInputAndCheck(CpuKernelContext &ctx);
+  template <typename T1, typename T2>
+  static uint32_t SegmentMaxCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif
