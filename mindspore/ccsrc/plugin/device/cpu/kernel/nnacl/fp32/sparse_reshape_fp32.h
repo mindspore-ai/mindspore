@@ -32,4 +32,4 @@ int SparseReshapeInOutCoordTrans(int32_t *in_indices_ptr, int32_t *in_inshape_pt
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_WHERE_FP32_H_
+#endif  // MINDSPORE_NNACL_FP32_SPARSE_RESHAPE_FP32_H_
