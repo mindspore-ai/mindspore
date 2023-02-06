@@ -686,8 +686,8 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
 
     max_unpool1d takes the output of maxpool1d as input including the indices of the maximal values
     and computes a partial inverse in which all non-maximal values are set to zero. Typically the input
-    is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape :math:`(N, C, H_{out}`
-    or :math:`(C, H_{out}`. The operation is as follows.
+    is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape :math:`(N, C, H_{out})`
+    or :math:`(C, H_{out})`. The operation is as follows.
 
     .. math::
         \begin{array}{ll} \\
@@ -4607,7 +4607,7 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
 
     .. warning::
         - If this operation is used for inferring and output "reserve_space_1" and "reserve_space_2" are usable,
-            then "reserve_space_1" and "reserve_space_2" have the same value as "mean" and "variance" respectively.
+          then "reserve_space_1" and "reserve_space_2" have the same value as "mean" and "variance" respectively.
         - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
 
     Note:
@@ -5480,7 +5480,7 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively, if the value is None,
-            the default value `kernel_size` is used;
+            the default value `kernel_size` is used.
         ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
 
     Returns:

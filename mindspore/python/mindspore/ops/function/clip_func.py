@@ -153,7 +153,7 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
 
 def clamp(x, min=None, max=None):
     r"""
-    Clamps tensor values to a specified min and max.
+    Clamps tensor values between the specified minimum value and maximum value.
 
     Limits the value of :math:`x` to a range, whose lower limit is `min` and upper limit is `max` .
 
@@ -181,7 +181,7 @@ def clamp(x, min=None, max=None):
           max (Union(Tensor, float, int)): The maximum value. Default: None.
 
     Returns:
-          (Union(Tensor, tuple[Tensor], list[Tensor])), a clipped Tensor or a tuple or a list of clipped Tensor.
+          Union(Tensor, tuple[Tensor], list[Tensor]), a clipped Tensor or a tuple or a list of clipped Tensor.
           The data type and shape are the same as x.
 
     Raises:
