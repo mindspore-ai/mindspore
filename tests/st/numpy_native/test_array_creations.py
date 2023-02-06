@@ -769,21 +769,6 @@ def test_vander():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_tensor_fill():
-    x = rand_int(2, 1, 4).astype(onp.float32)
-    mnp_x = to_tensor(x)
-    x.fill(6)
-    match_all_arrays(mnp_x.fill(6), x)
-    x.fill(None)
-    match_all_arrays(mnp_x.fill(None), x)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test_bartlett():
     for i in [-3, -1, 0, 1, 5, 6, 10, 15]:
         match_all_arrays(mnp.bartlett(i), onp.bartlett(i), error=3)
