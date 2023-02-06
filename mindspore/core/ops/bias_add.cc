@@ -80,7 +80,7 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
                              << (input_shape.size() - 1) << "] shape when data_format is " << attr_value_str << ".";
   }
   if ((data_format == static_cast<int64_t>(Format::NCHW) || data_format == static_cast<int64_t>(Format::NCDHW)) &&
-      bias_shape[0] != input_shape[1]) {
+      input_shape[1] != abstract::Shape::kShapeDimAny && bias_shape[0] != input_shape[1]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', bias[0] shape should be equal to input_x[1] "
                                 "shape when data_format is "
