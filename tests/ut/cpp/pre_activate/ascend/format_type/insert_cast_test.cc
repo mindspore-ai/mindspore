@@ -61,6 +61,8 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_single_output) {
   builder.SetFusionType(kernel::kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::AKG_KERNEL);
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR, kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder1;
   builder1.SetInputsFormat({"NC1HWC0"});
   builder1.SetInputsDeviceType({kFloat32->type_id()});
@@ -69,6 +71,8 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_single_output) {
   builder1.SetFusionType(kernel::kPatternElemWise);
   builder1.SetProcessor(kernel::Processor::AICORE);
   builder1.SetKernelType(KernelType::AKG_KERNEL);
+  builder1.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  builder1.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (node == nullptr) {
@@ -115,6 +119,8 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_multiple_output) {
   builder.SetOutputsFormat({"NC1HWC0", "NC1HWC0"});
   builder.SetInputsDeviceType({kFloat16->type_id()});
   builder.SetOutputsDeviceType({kFloat16->type_id(), kFloat16->type_id()});
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR, kernel::KernelObjectType::TENSOR});
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder1;
   builder1.SetInputsFormat({"NC1HWC0"});
   builder1.SetInputsDeviceType({kFloat32->type_id()});
@@ -123,6 +129,8 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_multiple_output) {
   builder1.SetFusionType(kernel::kPatternElemWise);
   builder1.SetProcessor(kernel::Processor::AICORE);
   builder1.SetKernelType(KernelType::AKG_KERNEL);
+  builder1.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  builder1.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (node == nullptr) {

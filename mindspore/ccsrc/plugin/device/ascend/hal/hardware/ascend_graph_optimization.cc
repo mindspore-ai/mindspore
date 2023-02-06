@@ -32,6 +32,8 @@
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
+#include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
+#include "backend/common/pass/insert_type_transform_op.h"
 
 #ifndef ENABLE_SECURITY
 #include "include/common/debug/anf_ir_dump.h"
@@ -430,6 +432,26 @@ void AscendGraphOptimization::RootGraphExecutorValidate(const NotNull<KernelGrap
   MS_LOG(INFO) << "Status record: end graph executor validate. graph id: " << graph->graph_id();
 }
 
+void AscendGraphOptimization::AscendInsertTypeTransformOps(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto insert_type_transform_ops_pm = std::make_shared<opt::PassManager>();
+  insert_type_transform_ops_pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
+
+  optimizer->AddPassManager(insert_type_transform_ops_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "insert_type_transform_op_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true, kWholeStack);
+  }
+#endif
+  device::ascend::SelectKernelInfoAfterKernelSelect(kernel_graph->execution_order());
+}
+
 void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   if (memo_.find(graph) != memo_.end()) {
@@ -485,6 +507,7 @@ void AscendGraphOptimization::SelectKernel(const KernelGraphPtr &graph) {
                    << " node/nodes used reduce precision to selected the kernel!";
     }
   }
+  AscendInsertTypeTransformOps(graph);
   PROF_END(select_kernel);
   MS_LOG(INFO) << "Status record: end select kernel info. graph id: " << graph->graph_id();
 }
@@ -569,13 +592,8 @@ void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
       };
       auto cnode = graphkernel::TryExpandCNode(node, f);
       if (cnode == nullptr) {
-        if (graph == nullptr || graph->is_from_single_op() || graph->is_graph_run_mode()) {
-          MS_EXCEPTION(etype) << msg;
-        }
-        MS_LOG(INFO) << "Try to use backoff CPU kernel, node:" << node->fullname_with_scope();
         std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
-        AnfAlgo::SetKernelSelectBackoffInfo(node, failure_info);
-        continue;
+        device::ascend::HandleKernelSelectFailure(graph, node, failure_info);
       }
       (void)mng->Replace(node, cnode);
       MS_LOG(INFO) << msg << " but expand success.";

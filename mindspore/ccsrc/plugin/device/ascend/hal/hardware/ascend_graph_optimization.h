@@ -61,6 +61,7 @@ class AscendGraphOptimization {
   void AddGraphToManager(const NotNull<KernelGraphPtr> graph, const NotNull<FuncGraphManagerPtr> manager,
                          bool is_root = true);
   void SelectKernel(const KernelGraphPtr &graph);
+  void AscendInsertTypeTransformOps(const KernelGraphPtr &kernel_graph);
   void RecurseSelectKernelInfo(const KernelGraphPtr &graph);
   void HardWareOptimization(const KernelGraphPtr &graph);
   void HandleControlFlow(const NotNull<KernelGraphPtr> graph) const;

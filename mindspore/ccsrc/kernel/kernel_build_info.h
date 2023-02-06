@@ -41,6 +41,7 @@ enum KernelObjectType : int {
 };
 
 std::string KernelObjectTypeLabel(const KernelObjectType &obj_type);
+std::string KernelTypeLabel(const KernelType &kernel_type);
 
 class BACKEND_EXPORT KernelBuildInfo {
  public:

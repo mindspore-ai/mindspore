@@ -35,6 +35,24 @@ std::string KernelObjectTypeLabel(const KernelObjectType &obj_type) {
   return trans_map[obj_type];
 }
 
+std::string KernelTypeLabel(const KernelType &kernel_type) {
+  std::unordered_map<KernelType, std::string> trans_map{{KernelType::UNKNOWN_KERNEL_TYPE, "UNKNOWN_KERNEL_TYPE"},
+                                                        {KernelType::AKG_KERNEL, "AKG_KERNEL"},
+                                                        {KernelType::AICPU_KERNEL, "AICPU_KERNEL"},
+                                                        {KernelType::RT_KERNEL, "RT_KERNEL"},
+                                                        {KernelType::HCCL_KERNEL, "HCCL_KERNEL"},
+                                                        {KernelType::TBE_KERNEL, "TBE_KERNEL"},
+                                                        {KernelType::HOST_KERNEL, "HOST_KERNEL"},
+                                                        {KernelType::CPU_KERNEL, "CPU_KERNEL"},
+                                                        {KernelType::GPU_KERNEL, "GPU_KERNEL"},
+                                                        {KernelType::BISHENG_KERNEL, "BISHENG_KERNEL"},
+                                                        {KernelType::ACL_KERNEL, "ACL_KERNEL"}};
+  if (trans_map.find(kernel_type) == trans_map.end()) {
+    return "UNKNOWN_KERNEL_TYPE";
+  }
+  return trans_map[kernel_type];
+}
+
 std::string KernelBuildInfo::GetInputFormat(size_t input_index) const {
   if (input_index >= inputs_format_.size()) {
     MS_LOG(ERROR) << "The index [" << input_index << "] is exceed the number of input node";
@@ -208,7 +226,8 @@ std::string KernelBuildInfo::ToString() const {
     }
     output_buffer << KernelObjectTypeLabel(output_object_types[index]);
   }
-  output_buffer << "])";
+  output_buffer << "], kernel_type: " << KernelTypeLabel(kernel_type());
+  output_buffer << ")";
   return output_buffer.str();
 }
 

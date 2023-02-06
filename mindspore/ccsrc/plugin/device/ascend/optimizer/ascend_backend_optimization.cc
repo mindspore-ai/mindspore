@@ -184,7 +184,6 @@
 #include "include/common/debug/draw.h"
 #include "plugin/device/ascend/optimizer/optimizer_factory.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
-#include "backend/common/pass/insert_type_transform_op.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 
 namespace mindspore {
@@ -291,7 +290,6 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto data_layout_pm = std::make_shared<PassManager>("transop_pm");
-  data_layout_pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
   data_layout_pm->AddPass(std::make_shared<ReselectCallInlineFormat>());
   data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
   data_layout_pm->AddPass(std::make_shared<DynamicRNNGradReformat>());

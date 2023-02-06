@@ -54,6 +54,8 @@ class TestHWInsertTransOp : public BackendCommon {
     builder.SetOutputsReshapeType({""});
     builder.SetOutputsFormat({format});
     builder.SetOutputsDeviceType({kFloat16->type_id()});
+    builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR, kernel::KernelObjectType::TENSOR});
+    builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
     add->set_kernel_info(std::make_shared<device::KernelInfo>());
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), add.get());
     return fg;
@@ -78,6 +80,8 @@ class TestHWInsertTransOp : public BackendCommon {
     builder.SetInputsDeviceType({kFloat16->type_id()});
     builder.SetOutputsFormat({format, format});
     builder.SetOutputsDeviceType({kFloat16->type_id(), kFloat16->type_id()});
+    builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+    builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR, kernel::KernelObjectType::TENSOR});
     max_pool->set_kernel_info(std::make_shared<device::KernelInfo>());
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), max_pool.get());
     return fg;

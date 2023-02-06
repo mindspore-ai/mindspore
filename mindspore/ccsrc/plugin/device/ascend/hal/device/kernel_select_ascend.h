@@ -19,10 +19,13 @@
 #include <utility>
 #include <string>
 #include <tuple>
+#include <vector>
 #include "ir/anf.h"
 #include "utils/ms_context.h"
 #include "kernel/kernel_build_info.h"
 #include "kernel/graph_kernel_info.h"
+#include "backend/common/session/kernel_graph.h"
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -39,6 +42,13 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
 void SetTensorDeviceInfo(const CNodePtr &kernel_node);
 void SelectGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_graph);
 void SetAscendKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type);
+// After operator selection in graph optimization, new nodes will be added, select kernel info for those nodes
+// check whether the node has completed the operator selection. If not, the operator
+// selection needs to be performed to set kernel info.
+void SelectKernelInfoAfterKernelSelect(const std::vector<CNodePtr> &nodes);
+// Mark the kernel backoff with failure info when setting operator info fails.
+void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
+                               const std::pair<std::string, ExceptionType> &failure_info);
 
 class AscendGraphKernelInfo : public GraphKernelInfo {
  public:

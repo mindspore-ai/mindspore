@@ -159,6 +159,11 @@ void KernelQueryAll(const CNodePtr &kernel_node,
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   auto select_cnode = kernel_node;
+  std::vector<int64_t> dyn_input_sizes = {};
+  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, select_cnode)) {
+    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(select_cnode, kAttrDynInputSizes);
+  }
+
   auto tuple_unfold_node = opt::ConvertMakeTupleInputToPlantInputs(kernel_node->func_graph(), kernel_node);
   if (tuple_unfold_node != nullptr) {
     auto tuple_unfold_cnode = tuple_unfold_node->cast<CNodePtr>();
@@ -188,6 +193,12 @@ void KernelQueryAll(const CNodePtr &kernel_node,
   }
   if (!kernel_info_list->empty()) {
     common::AnfAlgo::CopyNodeAttrs(select_cnode, kernel_node);
+  }
+  // recover the kAttrDynInputSizes of origin kernel_node
+  if (!dyn_input_sizes.empty()) {
+    common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), kernel_node);
+  } else if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
+    common::AnfAlgo::EraseNodeAttr(kAttrDynInputSizes, kernel_node);
   }
 }
 
