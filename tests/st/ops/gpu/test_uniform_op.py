@@ -24,7 +24,7 @@ import numpy as np
 class Net(nn.Cell):
     def __init__(self, min_val=0.0, max_val=1.0):
         super(Net, self).__init__()
-        self.uniform = Uniform(min_val=min_val, max_val=max_val)
+        self.uniform = Uniform(minval=min_val, maxval=max_val)
 
     def construct(self, x):
         return self.uniform(x)
