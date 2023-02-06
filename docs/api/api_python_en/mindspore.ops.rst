@@ -381,6 +381,7 @@ Linear Algebraic Functions
     mindspore.ops.matrix_determinant
     mindspore.ops.matrix_diag
     mindspore.ops.matrix_diag_part
+    mindspore.ops.matrix_power
     mindspore.ops.matrix_set_diag
     mindspore.ops.mm
     mindspore.ops.mv
