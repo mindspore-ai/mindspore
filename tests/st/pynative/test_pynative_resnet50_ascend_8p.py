@@ -25,5 +25,7 @@ def test_pynative_resnet50_ascend_8p_mpi():
     Description: test PyNative ResNet50 8p with mpirun
     Expectation: success, return_code==0
     """
-    return_code = os.system("mpirun -n 8 pytest -s test_pynative_resnet50_ascend.py::test_pynative_resnet50_with_mpi")
+    os.system("mpirun -n 8 pytest -s test_pynative_resnet50_ascend.py::test_pynative_resnet50_with_mpi"
+              " >stdout.log 2>&1")
+    return_code = os.system(r"grep '1 passed' stdout.log")
     assert return_code == 0
