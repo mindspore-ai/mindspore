@@ -134,7 +134,7 @@ int Convolution1x1CPUKernel::Prepare() {
     auto output_channel = filter_tensor->Batch();
     int output_tile_size = UP_ROUND(output_channel, col_tile_);
     MS_CHECK_INT_MUL_NOT_OVERFLOW(input_channel, output_tile_size, RET_ERROR);
-    int size = input_channel * output_tile_size * sizeof(float);
+    size_t size = static_cast<size_t>(input_channel * output_tile_size) * sizeof(float);
     set_workspace_size(size);
   }
   int error_code = InitConvWeightBias();
@@ -343,7 +343,7 @@ int Convolution1x1CPUKernel::MallocWeightBiasData() {
   auto output_channel = filter_tensor->Batch();
   MS_CHECK_TRUE_RET(input_channel > 0 && output_channel > 0, RET_ERROR);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(input_channel, UP_ROUND(output_channel, col_tile_), RET_ERROR);
-  int size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float);
+  size_t size = static_cast<size_t>(input_channel * UP_ROUND(output_channel, col_tile_)) * sizeof(float);
   if (!op_parameter_->is_train_session_) {
     CHECK_LESS_RETURN(MAX_MALLOC_SIZE, size);
     packed_weight_ =

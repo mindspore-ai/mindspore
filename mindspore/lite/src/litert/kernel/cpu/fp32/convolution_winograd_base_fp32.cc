@@ -52,7 +52,7 @@ int ConvolutionWinogradBaseCPUKernel::InitTmpBuffer() {
   MS_CHECK_INT_MUL_NOT_OVERFLOW(tile_num_, thread_input_plane, RET_ERROR);
   int total_thread_input_plane = tile_num_ * thread_input_plane;
   MS_CHECK_INT_MUL_NOT_OVERFLOW(total_thread_input_plane, conv_param_->input_channel_, RET_ERROR);
-  size_t tile_buffer_size = total_thread_input_plane * conv_param_->input_channel_ * sizeof(float);
+  size_t tile_buffer_size = static_cast<size_t>(total_thread_input_plane * conv_param_->input_channel_) * sizeof(float);
   trans_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tile_buffer_size));
   if (trans_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc trans_input_ failed.";
@@ -61,14 +61,16 @@ int ConvolutionWinogradBaseCPUKernel::InitTmpBuffer() {
 
   int oc8 = UP_ROUND(conv_param_->output_channel_, C8NUM);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(total_thread_input_plane, oc8, RET_ERROR);
-  gemm_out_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(total_thread_input_plane * oc8 * sizeof(float)));
+  gemm_out_ = reinterpret_cast<float *>(
+    ctx_->allocator->Malloc(static_cast<size_t>(total_thread_input_plane * oc8) * sizeof(float)));
   if (gemm_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc gemm_out_ failed.";
     return RET_ERROR;
   }
 
   MS_CHECK_INT_MUL_NOT_OVERFLOW(tmp_data_tile_, thread_input_plane, RET_ERROR);
-  tmp_data_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tmp_data_tile_ * thread_input_plane * sizeof(float)));
+  tmp_data_ = reinterpret_cast<float *>(
+    ctx_->allocator->Malloc(static_cast<size_t>(tmp_data_tile_ * thread_input_plane) * sizeof(float)));
   if (tmp_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_data_ failed.";
     return RET_MEMORY_FAILED;
@@ -83,8 +85,8 @@ int ConvolutionWinogradBaseCPUKernel::InitTmpBuffer() {
 
   auto tile = UP_ROUND(conv_param_->input_channel_, tmp_data_tile_);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(total_thread_input_plane, tile, RET_ERROR);
-  opt_input_trans_ =
-    reinterpret_cast<float *>(ctx_->allocator->Malloc(total_thread_input_plane * tile * sizeof(float)));
+  opt_input_trans_ = reinterpret_cast<float *>(
+    ctx_->allocator->Malloc(static_cast<size_t>(total_thread_input_plane * tile) * sizeof(float)));
   if (opt_input_trans_ == nullptr) {
     MS_LOG(ERROR) << "malloc opt_input_trans_ failed.";
     return RET_ERROR;
@@ -133,7 +135,7 @@ int ConvolutionWinogradBaseCPUKernel::Prepare() {
     MS_CHECK_INT_MUL_NOT_OVERFLOW(input_plane, in_channel, RET_ERROR);
     int in_chw = input_plane * in_channel;
     MS_CHECK_INT_MUL_NOT_OVERFLOW(in_chw, UP_ROUND(out_channel, oc_block_), RET_ERROR);
-    auto trans_matrix_data_size = in_chw * UP_ROUND(out_channel, oc_block_) * sizeof(float);
+    auto trans_matrix_data_size = static_cast<size_t>(in_chw * UP_ROUND(out_channel, oc_block_)) * sizeof(float);
     set_workspace_size(trans_matrix_data_size);
   }
   auto ret = InitConvWeightBias();
@@ -256,7 +258,7 @@ int ConvolutionWinogradBaseCPUKernel::MallocWeightBiasData() {
 
   // set data
   auto trans_matrix_data_size =
-    input_unit_ * input_unit_ * in_channel * UP_ROUND(out_channel, oc_block_) * sizeof(float);
+    static_cast<size_t>(input_unit_ * input_unit_ * in_channel * UP_ROUND(out_channel, oc_block_)) * sizeof(float);
   if (!op_parameter_->is_train_session_) {
     if (packed_weight_ == nullptr) {
       CHECK_LESS_RETURN(MAX_MALLOC_SIZE, trans_matrix_data_size);
@@ -291,7 +293,7 @@ int ConvolutionWinogradBaseCPUKernel::MallocWeightBiasData() {
   }
 
   // init bias
-  size_t new_bias_size = UP_ROUND(out_channel, C4NUM) * sizeof(float);
+  size_t new_bias_size = static_cast<size_t>(UP_ROUND(out_channel, C4NUM)) * sizeof(float);
   if (bias_data_ == nullptr) {
     CHECK_LESS_RETURN(MAX_MALLOC_SIZE, new_bias_size);
     bias_data_ = malloc(new_bias_size);
