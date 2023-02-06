@@ -31,7 +31,7 @@ mindspore.nn.MaxUnpool3d
           :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]` 。数据类型必须是int32或int64。
         - **output_size** (tuple[int], 可选) - 输出shape。默认值：None。
           如果output_size为()，那么输出shape根据 `kernel_size` 、 `stride` 和 `padding` 计算得出。
-          如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, D, H, W)` 或 :math:`(C, D, H, W)` ，
+          如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, D, H, W)` ， :math:`(C, D, H, W)` 或 :math:`(D, H, W)` ，
           取值范围需满足：
           :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]), (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]` 。
 

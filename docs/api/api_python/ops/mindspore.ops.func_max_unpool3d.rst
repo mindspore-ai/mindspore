@@ -29,7 +29,7 @@ mindspore.ops.max_unpool3d
           若为tuple类型，则tuple中的三个值分别代表深度、长和宽方向填充的大小。
         - **output_size** (tuple[int], 可选) - 输出shape。默认值：None。
           如果output_size为()，那么输出shape根据 `kernel_size` 、 `stride` 和 `padding` 计算得出。
-          如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, D, H, W)` 或 :math:`(C, D, H, W)` ，
+          如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, D, H, W)` ， :math:`(C, D, H, W)` 或 :math:`(D, H, W)` ，
           取值范围需满足：
           :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]), (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]` 。
 
