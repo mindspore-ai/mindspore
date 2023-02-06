@@ -249,9 +249,9 @@ void AscendGraphOptimization::AclOpOptimize(const KernelGraphPtr &graph) {
   SelectKernel(graph);
 
   bool need_change_format = SetDefaultFormatForSpecialAclOp(graph);
-  bool has_aicpu = std::any_of(nodes.begin(), nodes.end(),
-                               [](const CNodePtr &node) { return AnfAlgo::GetKernelType(node) == AICPU_KERNEL; });
-  if (has_aicpu || need_change_format) {
+  bool has_non_acl_kernel = std::any_of(
+    nodes.begin(), nodes.end(), [](const CNodePtr &node) { return AnfAlgo::GetKernelType(node) != ACL_KERNEL; });
+  if (has_non_acl_kernel || need_change_format) {
     // Insert Cast and TransData.
     opt::RunOpAscendBackendOptimization(graph);
   } else {

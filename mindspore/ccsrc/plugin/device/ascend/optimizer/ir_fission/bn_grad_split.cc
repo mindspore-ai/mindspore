@@ -120,6 +120,18 @@ CNodePtr BnGradSplit::BNGradSplitForTBE(const FuncGraphPtr &func_graph, const CN
 
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), bn_reduce_grad_outputs[0],
                                                bn_update_grad_outputs[0], bn_update_grad_outputs[1]};
+  if (func_graph->has_flag(kAttrMutableKernel)) {
+    // The output number of the BatchNormGrad op is 5, so if it runs
+    // in a single op graph, the output number needs to be 5.
+    auto none1 = NewValueNode(std::make_shared<None>());
+    MS_EXCEPTION_IF_NULL(none1);
+    auto none2 = NewValueNode(std::make_shared<None>());
+    MS_EXCEPTION_IF_NULL(none2);
+    none1->set_abstract(std::make_shared<abstract::AbstractNone>());
+    none2->set_abstract(std::make_shared<abstract::AbstractNone>());
+    make_tuple_inputs.push_back(none1);
+    make_tuple_inputs.push_back(none2);
+  }
   auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
   MS_EXCEPTION_IF_NULL(make_tuple);
   return make_tuple;
