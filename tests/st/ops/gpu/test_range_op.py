@@ -233,6 +233,7 @@ def range_fn(x, y, z, a):
     return ops.range(x, y, z) + a
 
 
+@pytest.mark.skip(reason="vmap not support dynamic rank input.")
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
