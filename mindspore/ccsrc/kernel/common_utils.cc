@@ -1845,8 +1845,10 @@ void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<Ke
 
   auto [is_match, index] = match_result;
   if (!is_match) {
+    constexpr auto recursive_level = 2;
     MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(apply_kernel)
-                      << " does not support this kernel data type: " << kernel_attr;
+                      << " does not support this kernel data type: " << kernel_attr
+                      << "\nnode: " << apply_kernel->DebugString(recursive_level);
   }
 
   MS_EXCEPTION_IF_NULL(apply_kernel);

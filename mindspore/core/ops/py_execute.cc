@@ -53,8 +53,7 @@ TypePtr PyExecuteInfer::InferType(const PrimitivePtr &primitive, const std::vect
 
 AbstractBasePtr PyExecuteInfer::InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) const {
-  const auto &abs = infer_handler_(input_args);
-  return abs;
+  return InferPy(primitive, input_args);
 }
 
 std::set<int64_t> PyExecuteInfer::GetValueDependArgIndices() const { return {-1}; }

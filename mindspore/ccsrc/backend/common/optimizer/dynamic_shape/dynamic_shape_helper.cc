@@ -296,7 +296,13 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
     opt::CppInferShape(primitive, args_spec_list, cnode);
   } else {
     if (cpp_infer_py_handler_ == nullptr) {
-      MS_LOG(EXCEPTION) << "\'cpp_infer_py_handler_\' should not be null.";
+      // If run without Python.
+      MS_LOG(WARNING) << "\'cpp_infer_py_handler_\' should not be null.";
+      const auto &abs = opt::CppInferShapeAndType(primitive, args_spec_list);
+      MS_LOG(DEBUG) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << cnode->abstract()
+                    << " to " << abs;
+      cnode->set_abstract(abs);
+      return;
     }
     const auto &abs = cpp_infer_py_handler_(cnode, primitive, args_spec_list);
     cnode->set_abstract(abs);

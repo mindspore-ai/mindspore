@@ -339,7 +339,8 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
       };
       auto cnode = graphkernel::TryExpandCNode(node, f);
       if (cnode == nullptr) {
-        MS_EXCEPTION(etype) << msg;
+        constexpr auto recursive_level = 2;
+        MS_EXCEPTION(etype) << msg << "\nnode: " << node->DebugString(recursive_level);
       }
       (void)mng->Replace(node, cnode);
       MS_LOG(INFO) << msg << " but expand success.";

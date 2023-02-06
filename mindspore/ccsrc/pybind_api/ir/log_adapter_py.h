@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PYBINDAPI_IR_LOGADAPTERPY_H_
-#define MINDSPORE_CCSRC_PYBINDAPI_IR_LOGADAPTERPY_H_
+
+// NOTICE: This header file should only be included once in the whole project.
+// We change the cpp file to header file, to avoid MSVC compiler problem.
+#ifndef MINDSPORE_CCSRC_PYBINDAPI_IR_LOG_ADAPTER_PY_H_
+#define MINDSPORE_CCSRC_PYBINDAPI_IR_LOG_ADAPTER_PY_H_
 
 #include "utils/log_adapter.h"
 
@@ -101,4 +104,4 @@ class PyExceptionInitializer {
 
 static PyExceptionInitializer py_exception_initializer;
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PYBINDAPI_IR_LOGADAPTERPY_H_
+#endif  // MINDSPORE_CCSRC_PYBINDAPI_IR_LOG_ADAPTER_PY_H_
