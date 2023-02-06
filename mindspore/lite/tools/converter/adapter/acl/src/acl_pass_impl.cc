@@ -30,6 +30,7 @@
 #include "ops/custom.h"
 #include "ops/op_utils.h"
 #include "ops/transpose.h"
+#include "ops/standard_normal.h"
 #include "ops/tuple_get_item.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "cxx_api/model/acl/model_converter.h"
@@ -274,7 +275,7 @@ STATUS AclPassImpl::MapperForOrgMindIR(const FuncGraphPtr &func_graph) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   lite::GetAllFuncGraph(func_graph, &all_func_graphs);
 
-  std::set<std::string> mindir_mapper = {ops::kNameTranspose};
+  std::set<std::string> mindir_mapper = {ops::kNameTranspose, ops::kNameStandardNormal};
   for (auto graph : all_func_graphs) {
     auto node_list = TopoSort(graph->get_return());
     for (auto &node : node_list) {

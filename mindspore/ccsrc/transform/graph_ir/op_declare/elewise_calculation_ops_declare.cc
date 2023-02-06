@@ -651,9 +651,9 @@ REG_ADPT_DESC(Erfinv, prim::kPrimErfinv->name(), ADPT_DESC(Erfinv))
 // ArgMin
 INPUT_MAP(ArgMin) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
 ATTR_INPUT_MAP(ArgMin) = {{"axis", "dimension"}};
-ATTR_MAP(ArgMin) = {{"output_dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+ATTR_MAP(ArgMin) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMin) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ArgMin, kArgMinOpName, ADPT_DESC(ArgMin))
+REG_ADPT_DESC(ArgMin, kArgminOpName, ADPT_DESC(ArgMin))
 REG_ADPT_DESC(ArgMinD, kArgMinDOpName, ADPT_DESC(ArgMin))
 
 // Threshold
