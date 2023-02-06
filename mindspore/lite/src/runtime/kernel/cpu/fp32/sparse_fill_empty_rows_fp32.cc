@@ -90,6 +90,7 @@ int SparseFillEmptyRowsCPUKernel::RunInferOutputShape() {
     reinterpret_cast<bool *>(out_tensors_[kOutput_empty_row_indicator]->MutableData());
 
   auto indices_ptr = reinterpret_cast<int32_t *>(in_tensors_[kInput_indices]->data());
+  scratch_.clear();
   scratch_.resize(dense_rows_, 0);
   for (int32_t i = 0; i < N_; ++i) {
     const int32_t row = indices_ptr[i * rank_];
