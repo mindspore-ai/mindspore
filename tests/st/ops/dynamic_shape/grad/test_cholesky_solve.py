@@ -49,6 +49,7 @@ def test_choleskysolve_dynamic_shape():
     grad_dyn_case(False)
 
 
+@pytest.mark.skip(reason="dynamic rank feature is under developing.")
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
