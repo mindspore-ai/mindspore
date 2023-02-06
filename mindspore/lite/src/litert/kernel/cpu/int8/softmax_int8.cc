@@ -96,7 +96,8 @@ int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
   auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   MS_ASSERT(output_ptr);
 
-  int outter_size = 1, inner_size = 1;
+  int outter_size = 1;
+  int inner_size = 1;
   for (int i = 0; i < softmax_param_->axis_; i++) {
     outter_size *= softmax_param_->input_shape_[i];
   }
