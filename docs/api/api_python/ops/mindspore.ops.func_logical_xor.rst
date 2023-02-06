@@ -9,8 +9,8 @@ mindspore.ops.logical_xor
         out_{i} = x_{i} \oplus y_{i}
 
     参数：
-        - **input** (Tensor) - 第一个输入是数据类型为bool的Tensor。
-        - **other** (Tensor) - 第二个输入是Tesor，与第一个输入进行异或计算，其中数据类型为bool。
+        - **input** (Tensor) - 第一个输入是数据类型可被隐式转换为bool的Tensor。
+        - **other** (Tensor) - 第二个输入是数据类型可被隐式转换为bool的Tesor，与第一个输入进行异或计算.
 
     返回：
         Tensor，其shape与广播后的shape相同，数据类型为bool。
