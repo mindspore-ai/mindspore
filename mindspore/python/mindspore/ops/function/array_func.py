@@ -3572,6 +3572,65 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
     return _tensor_scatter_elements(input_x, indices, updates)
 
 
+def scatter(x, axis, index, src):
+    """
+    Update the value in `src` to `x` according to the specified index.
+    Refer to :func:`mindspore.ops.tensor_scatter_elements` for more details.
+
+    Args:
+        x (Tensor): The target tensor.
+            The shape is :math:`(N,*)` where :math:`*` means any number of additional dimensions.
+        axis (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(x).
+        index (Tensor): The index to do update operation whose data type must be mindspore.int32 or
+            mindspore.int64. Same rank as `x` . And accepted range is [-s, s) where s is the size along axis.
+        src (Tensor): The tensor doing the update operation with `x` , has the same type as `x` ,
+            and the shape of `src` should be equal to the shape of `index` .
+
+    Returns:
+        Tensor, has the same shape and type as `x` .
+
+    Raises:
+        TypeError: If `index` is neither int32 nor int64.
+        ValueError: If anyone of the rank among `x` , `index` and `src` less than 1.
+        ValueError: If the shape of `src` is not equal to the shape of `index` .
+        ValueError: If the rank of `src` is not equal to the rank of `x` .
+        RuntimeError: If the data type of `x` and `src` conversion of Parameter
+            is required when data type conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 2, 3, 4, 5]]), dtype=ms.float32)
+        >>> src = Tensor(np.array([[8, 8]]), dtype=ms.float32)
+        >>> index = Tensor(np.array([[2, 4]]), dtype=ms.int64)
+        >>> out = ops.scatter(x=x, axis=1, index=index, src=src)
+        >>> print(out)
+        [[1. 2. 8. 4. 8.]]
+        >>> x = Tensor(np.zeros((5, 5)), dtype=ms.float32)
+        >>> src = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
+        >>> index = Tensor(np.array([[0, 0, 0], [2, 2, 2], [4, 4, 4]]), dtype=ms.int64)
+        >>> out = ops.scatter(x=x, axis=0, index=index, src=src)
+        >>> print(out)
+        [[1. 2. 3. 0. 0.]
+        [0. 0. 0. 0. 0.]
+        [4. 5. 6. 0. 0.]
+        [0. 0. 0. 0. 0.]
+        [7. 8. 9. 0. 0.]]
+        >>> x = Tensor(np.zeros((5, 5)), dtype=ms.float32)
+        >>> src = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
+        >>> index = Tensor(np.array([[0, 2, 4], [0, 2, 4], [0, 2, 4]]), dtype=ms.int64)
+        >>> out = ops.scatter(x=x, axis=1, index=index, src=src)
+        >>> print(out)
+        [[1. 0. 2. 0. 3.]
+        [4. 0. 5. 0. 6.]
+        [7. 0. 8. 0. 9.]
+        [0. 0. 0. 0. 0.]
+        [0. 0. 0. 0. 0.]]
+    """
+    return F.tensor_scatter_elements(input_x=x, indices=index, updates=src, axis=axis)
+
+
 def space_to_batch_nd(input_x, block_size, paddings):
     r"""
     Divides a tensor's spatial dimensions into blocks and combines the block sizes with the original batch.
@@ -6664,6 +6723,7 @@ __all__ = [
     'tensor_scatter_max',
     'tensor_scatter_min',
     'tensor_scatter_elements',
+    'scatter',
     'unsorted_segment_min',
     'unsorted_segment_max',
     'unsorted_segment_prod',
