@@ -83,6 +83,10 @@ void AddHandle(acltdtChannelHandle **handle, std::thread *use_thread) {
   }
 
   g_acl_handle_map.emplace_back(void_handle, use_thread);
+  {
+    std::lock_guard<std::mutex> lock(g_acl_destroy_all_mutex);
+    g_acl_destroy_all = false;
+  }
 }
 
 void DelHandle(acltdtChannelHandle **handle) {
