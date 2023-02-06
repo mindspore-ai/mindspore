@@ -353,3 +353,5 @@ from .relu_grad_v3 import _relu_grad_v3_aicpu
 from .resize_bicubic import _resize_bicubic_aicpu
 from .extract_glimpse import _extract_glimpse_aicpu
 from .real_div import _real_div_aicpu
+from .multinomial_with_replacement import _multinomial_with_replacement_aicpu
+from .matrix_inverse import _matrix_inverse_aicpu

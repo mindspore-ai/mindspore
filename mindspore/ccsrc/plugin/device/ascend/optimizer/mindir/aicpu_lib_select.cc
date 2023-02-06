@@ -72,7 +72,7 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                                mindspore::kCSRSparseMatrixToDenseOpName,
                                                                mindspore::kCSRSparseMatrixToSparseTensorOpName,
                                                                mindspore::kDataFormatVecPermuteOpName,
-                                                               mindspore::kFillOpName,
+                                                               mindspore::kFillV2OpName,
                                                                mindspore::kLogMatrixDeterminantOpName,
                                                                mindspore::kMatrixSolveLsOpName,
                                                                mindspore::kMedianOpName,
@@ -256,7 +256,14 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                                mindspore::kLessEqualOpName,
                                                                mindspore::kHSVToRGBOpName,
                                                                mindspore::kLuSolveOpName,
-                                                               mindspore::kExtractGlimpseOpName};
+                                                               mindspore::kExtractGlimpseOpName,
+                                                               mindspore::kMatrixSolveOpName,
+                                                               mindspore::kIsInfOpName,
+                                                               mindspore::kMultinomialWithReplacementOpName,
+                                                               mindspore::kMaskedSelectOpName,
+                                                               mindspore::kMaskedSelectGradOpName,
+                                                               mindspore::kMultiMarginLossOpName,
+                                                               mindspore::kMatrixInverseOpName};
 
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
   static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";
