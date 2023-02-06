@@ -23,11 +23,16 @@
 #include "nnacl/fp32_grad/optimizer.h"
 
 namespace mindspore::kernel {
+constexpr int kSgdLrIndex = 2;
+constexpr int kSgdGradIndex = 1;
+
 class SgdCPUKernel : public OptimizerKernel {
  public:
   explicit SgdCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : OptimizerKernel(parameter, inputs, outputs, ctx, 2, 1), thread_count_(ctx->thread_num_), sgd_param_(nullptr) {
+      : OptimizerKernel(parameter, inputs, outputs, ctx, kSgdLrIndex, kSgdGradIndex),
+        thread_count_(ctx->thread_num_),
+        sgd_param_(nullptr) {
     sgd_param_ = reinterpret_cast<SgdParameter *>(parameter);
   }
   ~SgdCPUKernel() override {
