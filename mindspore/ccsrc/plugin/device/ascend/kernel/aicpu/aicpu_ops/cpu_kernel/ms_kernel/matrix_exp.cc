@@ -124,8 +124,8 @@ uint32_t MatrixExpCpuKernel::MatrixExpCheck(CpuKernelContext &ctx) {
 }
 
 template <typename Derived1, typename Derived2, typename Derived3>
-void MatrixExpCpuKernel::MTaylorApproximant(const Eigen::MatrixBase<Derived1> &A, const Eigen::MatrixBase<Derived2> &I,
-                                            int order, Eigen::MatrixBase<Derived3> &E) {
+void MatrixExpCpuKernel::MTaylorApproximant(Eigen::MatrixBase<Derived1> &A, Eigen::MatrixBase<Derived2> &I, int order,
+                                            Eigen::MatrixBase<Derived3> &E) {
   constexpr int expension_order_1 = 1;
   constexpr int expension_order_2 = 2;
   constexpr int expension_order_4 = 4;
@@ -167,7 +167,7 @@ void MatrixExpCpuKernel::MTaylorApproximant(const Eigen::MatrixBase<Derived1> &A
 }
 
 template <typename Derived1, typename Derived2>
-void MatrixExpCpuKernel::MexpImpl(const Eigen::MatrixBase<Derived1> &A, const Eigen::MatrixBase<Derived2> &I,
+void MatrixExpCpuKernel::MexpImpl(Eigen::MatrixBase<Derived1> &A, Eigen::MatrixBase<Derived2> &I,
                                   Eigen::MatrixBase<Derived1> &mexp, CpuKernelContext &ctx) {
   const auto norm = A.cwiseAbs().colwise().sum().maxCoeff();
   constexpr std::array<int, total_n_degs> m_vals = {1, 2, 4, 8, 12, 18};
@@ -203,8 +203,8 @@ void MatrixExpCpuKernel::MexpImpl(const Eigen::MatrixBase<Derived1> &A, const Ei
   }
   if (s >= 0) {
     const auto pow2s = pow(2, s);
-    const auto A_scaled = A / pow2s;
-    MTaylorApproximant(A_scaled, I, m_vals[total_n_degs - 1], mexp);
+    A /= pow2s;
+    MTaylorApproximant(A, I, m_vals[total_n_degs - 1], mexp);
     for (int k = 0; k < s; k++) {
       mexp = mexp * mexp;
     }

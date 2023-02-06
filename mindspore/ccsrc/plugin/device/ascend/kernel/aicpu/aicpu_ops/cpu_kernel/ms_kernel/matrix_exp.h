@@ -31,12 +31,12 @@ class MatrixExpCpuKernel : public CpuKernel {
   uint32_t MatrixExpCheck(CpuKernelContext &ctx);
 
   template <typename Derived1, typename Derived2, typename Derived3>
-  void MTaylorApproximant(const Eigen::MatrixBase<Derived1> &A, const Eigen::MatrixBase<Derived2> &I, int order,
+  void MTaylorApproximant(Eigen::MatrixBase<Derived1> &A, Eigen::MatrixBase<Derived2> &I, int order,
                           Eigen::MatrixBase<Derived3> &E);
 
   template <typename Derived1, typename Derived2>
-  void MexpImpl(const Eigen::MatrixBase<Derived1> &A, const Eigen::MatrixBase<Derived2> &I,
-                Eigen::MatrixBase<Derived1> &mexp, CpuKernelContext &ctx);
+  void MexpImpl(Eigen::MatrixBase<Derived1> &A, Eigen::MatrixBase<Derived2> &I, Eigen::MatrixBase<Derived1> &mexp,
+                CpuKernelContext &ctx);
 
   template <typename T>
   uint32_t MatrixExpCompute(CpuKernelContext &ctx);

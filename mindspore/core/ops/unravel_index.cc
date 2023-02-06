@@ -79,8 +79,11 @@ TypePtr UravelIndexInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 MIND_API_OPERATOR_IMPL(UnravelIndex, BaseOperator);
 AbstractBasePtr UnravelIndexInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(UravelIndexInferType(primitive, input_args),
-                                                    UravelIndexInferShape(primitive, input_args));
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto infer_type = UravelIndexInferType(primitive, input_args);
+  auto infer_shape = UravelIndexInferShape(primitive, input_args);
+  return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape);
 }
 
 // AG means auto generated
