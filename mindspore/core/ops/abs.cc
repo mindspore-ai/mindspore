@@ -41,6 +41,10 @@ class AbsInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
+    auto prim_name = prim->name();
+    const int64_t input_num = 1;
+    CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
     auto x_type = input_args[0]->BuildType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim->name());
     return x_type;
