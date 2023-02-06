@@ -1207,53 +1207,53 @@ __global__ void ElewiseCmpKernel(const int nums, const T *x0, const T *x1, bool 
 }
 
 template <typename T>
-void ElewiseCmp(const int &nums, enum BroadcastOpType op, const T *x0, const T *x1, bool *y, cudaStream_t stream) {
+void ElewiseCmp(const int &nums, enum BinaryOpType op, const T *x0, const T *x1, bool *y, cudaStream_t stream) {
   switch (op) {
-    case BROADCAST_TYPE_GREATER:
+    case BinaryOpType::kGreater:
       return ElewiseCmpKernel<T, GreaterFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_LESS:
+    case BinaryOpType::kLess:
       return ElewiseCmpKernel<T, LessFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_EQUAL:
+    case BinaryOpType::kEqual:
       return ElewiseCmpKernel<T, EqualFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_GREATER_EQUAL:
+    case BinaryOpType::kGreaterEqual:
       return ElewiseCmpKernel<T, GreaterEqualFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_LESS_EQUAL:
+    case BinaryOpType::kLessEqual:
       return ElewiseCmpKernel<T, LessEqualFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_NOT_EQUAL:
+    case BinaryOpType::kNotEqual:
       return ElewiseCmpKernel<T, NotEqualFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_LOGICAL_AND:
+    case BinaryOpType::kLogicalAnd:
       return ElewiseCmpKernel<T, LogicalAndFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_LOGICAL_OR:
+    case BinaryOpType::kLogicalOr:
       return ElewiseCmpKernel<T, LogicalOrFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     default:
       break;
   }
 }
 
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const double *x0, const double *x1,
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const double *x0, const double *x1,
                                          bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const float *x0, const float *x1,
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const float *x0, const float *x1,
                                          bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const half *x0, const half *x1,
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const half *x0, const half *x1, bool *y,
+                                         cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const int *x0, const int *x1, bool *y,
+                                         cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const int8_t *x0, const int8_t *x1,
                                          bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const int *x0, const int *x1,
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const uint8_t *x0, const uint8_t *x1,
                                          bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const int8_t *x0, const int8_t *x1,
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const int64_t *x0, const int64_t *x1,
                                          bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const uint8_t *x0, const uint8_t *x1,
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const int16_t *x0, const int16_t *x1,
                                          bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const int64_t *x0, const int64_t *x1,
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const uint16_t *x0, const uint16_t *x1,
                                          bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const int16_t *x0, const int16_t *x1,
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const uint32_t *x0, const uint32_t *x1,
                                          bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const uint16_t *x0,
-                                         const uint16_t *x1, bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const uint32_t *x0,
-                                         const uint32_t *x1, bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const uint64_t *x0,
-                                         const uint64_t *x1, bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const bool *x0, const bool *x1,
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const uint64_t *x0, const uint64_t *x1,
                                          bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BinaryOpType op, const bool *x0, const bool *x1, bool *y,
+                                         cudaStream_t stream);
 // Element-wise ArithMetic
 template <typename T, typename Func>
 __global__ void ElewiseArithKernel(const int nums, const T *x0, const T *x1, T *y) {
@@ -1270,112 +1270,94 @@ __global__ void ElewiseArithComplexKernel(const int nums, const T1 *x0, const T2
 }
 
 template <typename T>
-void ElewiseArithKernel(const int &nums, enum BroadcastOpType op, const T *x0, const T *x1, T *y, cudaStream_t stream) {
+void ElewiseArithKernel(const int &nums, enum BinaryOpType op, const T *x0, const T *x1, T *y, cudaStream_t stream) {
   switch (op) {
-    case BROADCAST_TYPE_MINIMUM:
+    case BinaryOpType::kMinimum:
       return ElewiseArithKernel<T, MinimumFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_MAXIMUM:
+    case BinaryOpType::kMaximum:
       return ElewiseArithKernel<T, MaximumFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_POWER:
+    case BinaryOpType::kPower:
       return ElewiseArithKernel<T, PowerFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_REALDIV:
+    case BinaryOpType::kRealDiv:
       return ElewiseArithKernel<T, RealDivFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_BITWISEAND:
+    case BinaryOpType::kBitwiseAnd:
       return ElewiseArithKernel<T, BitwiseAnd<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_BITWISEOR:
+    case BinaryOpType::kBitwiseOr:
       return ElewiseArithKernel<T, BitwiseOr<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_BITWISEXOR:
+    case BinaryOpType::kBitwiseXor:
       return ElewiseArithKernel<T, BitwiseXor<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_MUL:
+    case BinaryOpType::kMul:
       return ElewiseArithKernel<T, MulFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_SUB:
+    case BinaryOpType::kSub:
       return ElewiseArithKernel<T, SubFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_ADD:
+    case BinaryOpType::kAdd:
       return ElewiseArithKernel<T, AddFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_FLOORDIV:
+    case BinaryOpType::kFloorDiv:
       return ElewiseArithKernel<T, FloorDivFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_ABSGRAD:
+    case BinaryOpType::kAbsGrad:
       return ElewiseArithKernel<T, AbsGradFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_DIV:
+    case BinaryOpType::kDiv:
       return ElewiseArithKernel<T, DivFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_DIVNONAN:
+    case BinaryOpType::kDivNoNan:
       return ElewiseArithKernel<T, DivNoNanFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_SQUARED_DIFFERENCE:
+    case BinaryOpType::kSquaredDifference:
       return ElewiseArithKernel<T, SquaredDifferenceFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_TRUNCATEDIV:
+    case BinaryOpType::kTruncateDiv:
       return ElewiseArithKernel<T, TruncateDivFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_TRUNCATEMOD:
+    case BinaryOpType::kTruncateMod:
       return ElewiseArithKernel<T, TruncateModFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_MOD:
+    case BinaryOpType::kMod:
       return ElewiseArithKernel<T, ModFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_FLOORMOD:
+    case BinaryOpType::kFloorMod:
       return ElewiseArithKernel<T, FloorModFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_ATAN2:
+    case BinaryOpType::kAtan2:
       return ElewiseArithKernel<T, Atan2Func<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_XDIVY:
+    case BinaryOpType::kXdivy:
       return ElewiseArithKernel<T, XDivyFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_MULNONAN:
+    case BinaryOpType::kMulNoNan:
       return ElewiseArithKernel<T, MulNoNanFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_XLOGY:
+    case BinaryOpType::kXlogy:
       return ElewiseArithKernel<T, XLogyFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     default:
       break;
   }
 }
 
-// template <typename T>
-// void ElewiseArithComplexKernel(const int &nums, enum BroadcastOpType op, const Complex<T> *x0, const Complex<T> *x1,
-//                                Complex<T> *y,   cudaStream_t stream) {
-//   switch (op) {
-//     case BROADCAST_TYPE_MULNONAN:
-//       return ElewiseArithComplexKernel<T, MulNoNanFunc<Complex<T>>>
-//             <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-//     case BROADCAST_TYPE_XDIVY:
-//       return ElewiseArithComplexKernel<T, XDivyFunc<Complex<T>>>
-//             <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-//     case BROADCAST_TYPE_XLOGY:
-//       return ElewiseArithComplexKernel<T, XLogyFunc<Complex<T>>>
-//             <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-//     default:
-//       break;
-//   }
-// }
-
 template <typename T1, typename T2, typename T3>
-void ElewiseArithComplexKernel(const int &nums, enum BroadcastOpType op, const T1 *x0, const T2 *x1, Complex<T3> *y,
+void ElewiseArithComplexKernel(const int &nums, enum BinaryOpType op, const T1 *x0, const T2 *x1, Complex<T3> *y,
                                cudaStream_t stream) {
   switch (op) {
-    case BROADCAST_TYPE_ADD:
+    case BinaryOpType::kAdd:
       return ElewiseArithComplexKernel<T1, T2, T3, AddFunc<T3>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_SUB:
+    case BinaryOpType::kSub:
       return ElewiseArithComplexKernel<T1, T2, T3, SubFunc<T3>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_MUL:
+    case BinaryOpType::kMul:
       return ElewiseArithComplexKernel<T1, T2, T3, MulFunc<T3>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_DIV:
+    case BinaryOpType::kDiv:
       return ElewiseArithComplexKernel<T1, T2, T3, DivFunc<T3>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_REALDIV:
+    case BinaryOpType::kRealDiv:
       return ElewiseArithComplexKernel<T1, T2, T3, RealDivFunc<T3>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_COMPLEX:
+    case BinaryOpType::kComplex:
       return ElewiseArithComplexKernel<T1, T2, T3, ComplexFunc<T3>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_MULNONAN:
+    case BinaryOpType::kMulNoNan:
       return ElewiseArithComplexKernel<T1, T2, T3, MulNoNanFunc<Complex<T3>>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_POWER:
+    case BinaryOpType::kPower:
       return ElewiseArithComplexKernel<T1, T2, T3, PowerFunc<Complex<T3>>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_XDIVY:
+    case BinaryOpType::kXdivy:
       return ElewiseArithComplexKernel<T1, T2, T3, XDivyFunc<Complex<T3>>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_XLOGY:
+    case BinaryOpType::kXlogy:
       return ElewiseArithComplexKernel<T1, T2, T3, XLogyFunc<Complex<T3>>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_SQUARED_DIFFERENCE:
+    case BinaryOpType::kSquaredDifference:
       return ElewiseArithComplexKernel<T1, T2, T3, SquaredDifferenceFunc<Complex<T3>>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     default:
@@ -1384,15 +1366,14 @@ void ElewiseArithComplexKernel(const int &nums, enum BroadcastOpType op, const T
 }
 
 template <typename T>
-void ElewiseArith(const int &nums, enum BroadcastOpType op, const T *x0, const T *x1, T *y, cudaStream_t stream) {
+void ElewiseArith(const int &nums, enum BinaryOpType op, const T *x0, const T *x1, T *y, cudaStream_t stream) {
   return ElewiseArithKernel(nums, op, x0, x1, y, stream);
 }
 
 template <>
-void ElewiseArith(const int &nums, enum BroadcastOpType op, const half *x0, const half *x1, half *y,
-                  cudaStream_t stream) {
+void ElewiseArith(const int &nums, enum BinaryOpType op, const half *x0, const half *x1, half *y, cudaStream_t stream) {
   // `>` return true iff both half result are true. fallback to half
-  if (nums % 2 == 0 && op != BROADCAST_TYPE_MINIMUM && op != BROADCAST_TYPE_MAXIMUM && op != BROADCAST_TYPE_ABSGRAD) {
+  if (nums % 2 == 0 && op != BinaryOpType::kMinimum && op != BinaryOpType::kMaximum && op != BinaryOpType::kAbsGrad) {
     ElewiseArithKernel<half2>(nums / 2, op, reinterpret_cast<const half2 *>(x0), reinterpret_cast<const half2 *>(x1),
                               reinterpret_cast<half2 *>(y), stream);
   } else {
@@ -1401,50 +1382,50 @@ void ElewiseArith(const int &nums, enum BroadcastOpType op, const half *x0, cons
 }
 
 template <typename T1, typename T2, typename T3>
-void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const T1 *x0, const T2 *x1, Complex<T3> *y,
+void ElewiseComplexArith(const int &nums, enum BinaryOpType op, const T1 *x0, const T2 *x1, Complex<T3> *y,
                          cudaStream_t stream) {
   return ElewiseArithComplexKernel(nums, op, x0, x1, y, stream);
 }
 
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const double *x0, const double *x1,
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const double *x0, const double *x1,
                                            double *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const float *x0, const float *x1,
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const float *x0, const float *x1,
                                            float *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const half *x0, const half *x1,
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const half *x0, const half *x1,
                                            half *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const int *x0, const int *x1,
-                                           int *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const int8_t *x0, const int8_t *x1,
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const int *x0, const int *x1, int *y,
+                                           cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const int8_t *x0, const int8_t *x1,
                                            int8_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint8_t *x0,
-                                           const uint8_t *x1, uint8_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const int64_t *x0,
-                                           const int64_t *x1, int64_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const int16_t *x0,
-                                           const int16_t *x1, int16_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint16_t *x0,
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const uint8_t *x0, const uint8_t *x1,
+                                           uint8_t *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const int64_t *x0, const int64_t *x1,
+                                           int64_t *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const int16_t *x0, const int16_t *x1,
+                                           int16_t *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const uint16_t *x0,
                                            const uint16_t *x1, uint16_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint32_t *x0,
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const uint32_t *x0,
                                            const uint32_t *x1, uint32_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint64_t *x0,
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const uint64_t *x0,
                                            const uint64_t *x1, uint64_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const bool *x0, const bool *x1,
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BinaryOpType op, const bool *x0, const bool *x1,
                                            bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const Complex<float> *x0,
+template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BinaryOpType op, const Complex<float> *x0,
                                                   const Complex<float> *x1, Complex<float> *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const Complex<float> *x0,
+template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BinaryOpType op, const Complex<float> *x0,
                                                   const float *x1, Complex<float> *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const float *x0,
+template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BinaryOpType op, const float *x0,
                                                   const Complex<float> *x1, Complex<float> *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const Complex<double> *x0,
+template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BinaryOpType op, const Complex<double> *x0,
                                                   const Complex<double> *x1, Complex<double> *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const Complex<double> *x0,
+template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BinaryOpType op, const Complex<double> *x0,
                                                   const double *x1, Complex<double> *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const double *x0,
+template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BinaryOpType op, const double *x0,
                                                   const Complex<double> *x1, Complex<double> *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const float *x0,
+template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BinaryOpType op, const float *x0,
                                                   const float *x1, Complex<float> *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const double *x0,
+template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BinaryOpType op, const double *x0,
                                                   const double *x1, Complex<double> *y, cudaStream_t stream);
 
 // Broadcast comparison
@@ -1486,7 +1467,7 @@ __global__ void BroadcastCmpKernel(const size_t l0, const size_t l1, const size_
 
 template <typename T>
 void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                  const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0, const T *x1, bool *y,
+                  const std::vector<size_t> &y_dims, enum BinaryOpType op, const T *x0, const T *x1, bool *y,
                   cudaStream_t stream) {
   size_t size = 1;
   for (auto d : y_dims) {
@@ -1494,42 +1475,42 @@ void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> 
   }
 
   switch (op) {
-    case BROADCAST_TYPE_GREATER:
+    case BinaryOpType::kGreater:
       return BroadcastCmpKernel<T, GreaterFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_LESS:
+    case BinaryOpType::kLess:
       return BroadcastCmpKernel<T, LessFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_EQUAL:
+    case BinaryOpType::kEqual:
       return BroadcastCmpKernel<T, EqualFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_GREATER_EQUAL:
+    case BinaryOpType::kGreaterEqual:
       return BroadcastCmpKernel<T, GreaterEqualFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_LESS_EQUAL:
+    case BinaryOpType::kLessEqual:
       return BroadcastCmpKernel<T, LessEqualFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_NOT_EQUAL:
+    case BinaryOpType::kNotEqual:
       return BroadcastCmpKernel<T, NotEqualFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_LOGICAL_AND:
+    case BinaryOpType::kLogicalAnd:
       return BroadcastCmpKernel<T, LogicalAndFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_LOGICAL_OR:
+    case BinaryOpType::kLogicalOr:
       return BroadcastCmpKernel<T, LogicalOrFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
@@ -1540,40 +1521,40 @@ void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> 
 }
 
 template CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const double *x0,
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const double *x0,
                                            const double *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const float *x0,
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const float *x0,
                                            const float *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const half *x0,
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const half *x0,
                                            const half *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const int *x0,
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const int *x0,
                                            const int *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const int8_t *x0,
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const int8_t *x0,
                                            const int8_t *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                           const uint8_t *x0, const uint8_t *x1, bool *y, cudaStream_t stream);
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const uint8_t *x0,
+                                           const uint8_t *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                           const int64_t *x0, const int64_t *x1, bool *y, cudaStream_t stream);
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const int64_t *x0,
+                                           const int64_t *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                           const int16_t *x0, const int16_t *x1, bool *y, cudaStream_t stream);
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const int16_t *x0,
+                                           const int16_t *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                           const uint16_t *x0, const uint16_t *x1, bool *y, cudaStream_t stream);
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const uint16_t *x0,
+                                           const uint16_t *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                           const uint32_t *x0, const uint32_t *x1, bool *y, cudaStream_t stream);
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const uint32_t *x0,
+                                           const uint32_t *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                           const uint64_t *x0, const uint64_t *x1, bool *y, cudaStream_t stream);
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const uint64_t *x0,
+                                           const uint64_t *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const bool *x0,
+                                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const bool *x0,
                                            const bool *x1, bool *y, cudaStream_t stream);
 // Broadcast Arithmetic
 template <typename T, typename Func>
@@ -1648,124 +1629,124 @@ __global__ void BroadcastComplexArithKernel(const size_t l0, const size_t l1, co
 
 template <typename T>
 void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                    const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0, const T *x1, T *y,
+                    const std::vector<size_t> &y_dims, enum BinaryOpType op, const T *x0, const T *x1, T *y,
                     cudaStream_t stream) {
   size_t size = 1;
   for (auto d : y_dims) {
     size *= d;
   }
   switch (op) {
-    case BROADCAST_TYPE_MAXIMUM:
+    case BinaryOpType::kMaximum:
       return BroadcastArithKernel<T, MaximumFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_MINIMUM:
+    case BinaryOpType::kMinimum:
       return BroadcastArithKernel<T, MinimumFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_POWER:
+    case BinaryOpType::kPower:
       return BroadcastArithKernel<T, PowerFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_REALDIV:
+    case BinaryOpType::kRealDiv:
       return BroadcastArithKernel<T, RealDivFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_BITWISEAND:
+    case BinaryOpType::kBitwiseAnd:
       return BroadcastArithKernel<T, BitwiseAnd<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_BITWISEOR:
+    case BinaryOpType::kBitwiseOr:
       return BroadcastArithKernel<T, BitwiseOr<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_BITWISEXOR:
+    case BinaryOpType::kBitwiseXor:
       return BroadcastArithKernel<T, BitwiseXor<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_MUL:
+    case BinaryOpType::kMul:
       return BroadcastArithKernel<T, MulFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_SUB:
+    case BinaryOpType::kSub:
       return BroadcastArithKernel<T, SubFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_ADD:
+    case BinaryOpType::kAdd:
       return BroadcastArithKernel<T, AddFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_FLOORDIV:
+    case BinaryOpType::kFloorDiv:
       return BroadcastArithKernel<T, FloorDivFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_ABSGRAD:
+    case BinaryOpType::kAbsGrad:
       return BroadcastArithKernel<T, AbsGradFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_DIV:
+    case BinaryOpType::kDiv:
       return BroadcastArithKernel<T, DivFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_DIVNONAN:
+    case BinaryOpType::kDivNoNan:
       return BroadcastArithKernel<T, DivNoNanFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_SQUARED_DIFFERENCE:
+    case BinaryOpType::kSquaredDifference:
       return BroadcastArithKernel<T, SquaredDifferenceFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_TRUNCATEDIV:
+    case BinaryOpType::kTruncateDiv:
       return BroadcastArithKernel<T, TruncateDivFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_TRUNCATEMOD:
+    case BinaryOpType::kTruncateMod:
       return BroadcastArithKernel<T, TruncateModFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_MOD:
+    case BinaryOpType::kMod:
       return BroadcastArithKernel<T, ModFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_FLOORMOD:
+    case BinaryOpType::kFloorMod:
       return BroadcastArithKernel<T, FloorModFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_ATAN2:
+    case BinaryOpType::kAtan2:
       return BroadcastArithKernel<T, Atan2Func<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_XDIVY:
+    case BinaryOpType::kXdivy:
       return BroadcastArithKernel<T, XDivyFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_MULNONAN:
+    case BinaryOpType::kMulNoNan:
       return BroadcastArithKernel<T, MulNoNanFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_XLOGY:
+    case BinaryOpType::kXlogy:
       return BroadcastArithKernel<T, XLogyFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
@@ -1777,64 +1758,64 @@ void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t
 
 template <typename T1, typename T2, typename T3>
 void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T1 *x0, const T2 *x1,
+                           const std::vector<size_t> &y_dims, enum BinaryOpType op, const T1 *x0, const T2 *x1,
                            Complex<T3> *y, cudaStream_t stream) {
   size_t size = 1;
   for (auto d : y_dims) {
     size *= d;
   }
   switch (op) {
-    case BROADCAST_TYPE_ADD:
+    case BinaryOpType::kAdd:
       return BroadcastComplexArithKernel<T1, T2, T3, AddFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_SUB:
+    case BinaryOpType::kSub:
       return BroadcastComplexArithKernel<T1, T2, T3, SubFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_MUL:
+    case BinaryOpType::kMul:
       return BroadcastComplexArithKernel<T1, T2, T3, MulFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_DIV:
+    case BinaryOpType::kDiv:
       return BroadcastComplexArithKernel<T1, T2, T3, DivFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_REALDIV:
+    case BinaryOpType::kRealDiv:
       return BroadcastComplexArithKernel<T1, T2, T3, RealDivFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_MULNONAN:
+    case BinaryOpType::kMulNoNan:
       return BroadcastComplexArithKernel<T1, T2, T3, MulNoNanFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_POWER:
+    case BinaryOpType::kPower:
       return BroadcastComplexArithKernel<T1, T2, T3, PowerFunc<Complex<T3>>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_XDIVY:
+    case BinaryOpType::kXdivy:
       return BroadcastComplexArithKernel<T1, T2, T3, XDivyFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_XLOGY:
+    case BinaryOpType::kXlogy:
       return BroadcastComplexArithKernel<T1, T2, T3, XLogyFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_SQUARED_DIFFERENCE:
+    case BinaryOpType::kSquaredDifference:
       return BroadcastComplexArithKernel<T1, T2, T3, SquaredDifferenceFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_COMPLEX:
+    case BinaryOpType::kComplex:
       return BroadcastComplexArithKernel<T1, T2, T3, ComplexFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
@@ -1845,79 +1826,79 @@ void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector
 }
 
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                             const double *x0, const double *x1, double *y, cudaStream_t stream);
+                                             const std::vector<size_t> &y_dims, enum BinaryOpType op, const double *x0,
+                                             const double *x1, double *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                             const float *x0, const float *x1, float *y, cudaStream_t stream);
+                                             const std::vector<size_t> &y_dims, enum BinaryOpType op, const float *x0,
+                                             const float *x1, float *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op, const half *x0,
+                                             const std::vector<size_t> &y_dims, enum BinaryOpType op, const half *x0,
                                              const half *x1, half *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                             const int8_t *x0, const int8_t *x1, int8_t *y, cudaStream_t stream);
+                                             const std::vector<size_t> &y_dims, enum BinaryOpType op, const int8_t *x0,
+                                             const int8_t *x1, int8_t *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                             const uint8_t *x0, const uint8_t *x1, uint8_t *y, cudaStream_t stream);
+                                             const std::vector<size_t> &y_dims, enum BinaryOpType op, const uint8_t *x0,
+                                             const uint8_t *x1, uint8_t *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                             const int16_t *x0, const int16_t *x1, int16_t *y, cudaStream_t stream);
+                                             const std::vector<size_t> &y_dims, enum BinaryOpType op, const int16_t *x0,
+                                             const int16_t *x1, int16_t *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                             const std::vector<size_t> &y_dims, enum BinaryOpType op,
                                              const uint16_t *x0, const uint16_t *x1, uint16_t *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                             const int32_t *x0, const int32_t *x1, int32_t *y, cudaStream_t stream);
+                                             const std::vector<size_t> &y_dims, enum BinaryOpType op, const int32_t *x0,
+                                             const int32_t *x1, int32_t *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                             const std::vector<size_t> &y_dims, enum BinaryOpType op,
                                              const uint32_t *x0, const uint32_t *x1, uint32_t *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                             const int64_t *x0, const int64_t *x1, int64_t *y, cudaStream_t stream);
+                                             const std::vector<size_t> &y_dims, enum BinaryOpType op, const int64_t *x0,
+                                             const int64_t *x1, int64_t *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                             const std::vector<size_t> &y_dims, enum BinaryOpType op,
                                              const uint64_t *x0, const uint64_t *x1, uint64_t *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op, const bool *x0,
+                                             const std::vector<size_t> &y_dims, enum BinaryOpType op, const bool *x0,
                                              const bool *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
                                                     const std::vector<size_t> &x1_dims,
-                                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                                    const std::vector<size_t> &y_dims, enum BinaryOpType op,
                                                     const Complex<float> *x0, const float *x1, Complex<float> *y,
                                                     cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
                                                     const std::vector<size_t> &x1_dims,
-                                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                                    const std::vector<size_t> &y_dims, enum BinaryOpType op,
                                                     const float *x0, const Complex<float> *x1, Complex<float> *y,
                                                     cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
                                                     const std::vector<size_t> &x1_dims,
-                                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                                    const std::vector<size_t> &y_dims, enum BinaryOpType op,
                                                     const Complex<double> *x0, const double *x1, Complex<double> *y,
                                                     cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
                                                     const std::vector<size_t> &x1_dims,
-                                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                                    const std::vector<size_t> &y_dims, enum BinaryOpType op,
                                                     const double *x0, const Complex<double> *x1, Complex<double> *y,
                                                     cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
                                                     const std::vector<size_t> &x1_dims,
-                                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                                    const std::vector<size_t> &y_dims, enum BinaryOpType op,
                                                     const Complex<double> *x0, const Complex<double> *x1,
                                                     Complex<double> *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
                                                     const std::vector<size_t> &x1_dims,
-                                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                                    const std::vector<size_t> &y_dims, enum BinaryOpType op,
                                                     const Complex<float> *x0, const Complex<float> *x1,
                                                     Complex<float> *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
                                                     const std::vector<size_t> &x1_dims,
-                                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                                    const std::vector<size_t> &y_dims, enum BinaryOpType op,
                                                     const double *x0, const double *x1, Complex<double> *y,
                                                     cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
                                                     const std::vector<size_t> &x1_dims,
-                                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                                    const std::vector<size_t> &y_dims, enum BinaryOpType op,
                                                     const float *x0, const float *x1, Complex<float> *y,
                                                     cudaStream_t stream);
 

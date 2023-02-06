@@ -91,7 +91,7 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
     auto lhs_shape_size = Convert2SizeTClipNeg(lhs_shape_);
     auto rhs_shape_size = Convert2SizeTClipNeg(rhs_shape_);
     auto output_shape_size = Convert2SizeTClipNeg(output_shape_);
-    BroadcastArith(lhs_shape_size, rhs_shape_size, output_shape_size, BROADCAST_TYPE_REALDIV, input_addr,
+    BroadcastArith(lhs_shape_size, rhs_shape_size, output_shape_size, BinaryOpType::kRealDiv, input_addr,
                    reduce_workspace_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
 
     return true;

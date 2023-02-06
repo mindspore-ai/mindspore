@@ -137,7 +137,7 @@ bool L2NormalizeGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   }
   GetMaxWithEpsAndValue(workspace_size_list_[0] / sizeof(T), epsilon_, reduce_workspace_addr,
                         reinterpret_cast<cudaStream_t>(stream_ptr));
-  BroadcastArith(output_shape_, output_shape_, output_shape_, BROADCAST_TYPE_MUL, y_addr, dy_addr, dx_addr,
+  BroadcastArith(output_shape_, output_shape_, output_shape_, BinaryOpType::kMul, y_addr, dy_addr, dx_addr,
                  reinterpret_cast<cudaStream_t>(stream_ptr));
   if (all_match_) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
@@ -161,11 +161,11 @@ bool L2NormalizeGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
         kernel_name_ + " cudnnReduceTensor failed.");
     }
   }
-  BroadcastArith(rhs_shape_, lhs_shape_, output_shape_, BROADCAST_TYPE_MUL, reduce_y_dy_workspace_addr, y_addr, dx_addr,
+  BroadcastArith(rhs_shape_, lhs_shape_, output_shape_, BinaryOpType::kMul, reduce_y_dy_workspace_addr, y_addr, dx_addr,
                  reinterpret_cast<cudaStream_t>(stream_ptr));
-  BroadcastArith(output_shape_, output_shape_, output_shape_, BROADCAST_TYPE_SUB, dy_addr, dx_addr, dx_addr,
+  BroadcastArith(output_shape_, output_shape_, output_shape_, BinaryOpType::kSub, dy_addr, dx_addr, dx_addr,
                  reinterpret_cast<cudaStream_t>(stream_ptr));
-  BroadcastArith(output_shape_, rhs_shape_, output_shape_, BROADCAST_TYPE_REALDIV, dx_addr, reduce_workspace_addr,
+  BroadcastArith(output_shape_, rhs_shape_, output_shape_, BinaryOpType::kRealDiv, dx_addr, reduce_workspace_addr,
                  dx_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
 
   return true;

@@ -61,10 +61,10 @@ bool AddNFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   for (size_t i = 0; i < num_input_; i++) {
     T *input_addr = GetDeviceAddress<T>(inputs, i);
     if constexpr (std::is_same<T, Complex<float>>::value || std::is_same<T, Complex<double>>::value) {
-      ElewiseComplexArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, work_addr, work_addr,
+      ElewiseComplexArith(outputs[0]->size / sizeof(T), BinaryOpType::kAdd, input_addr, work_addr, work_addr,
                           reinterpret_cast<cudaStream_t>(stream_ptr_));
     } else {
-      ElewiseArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, work_addr, work_addr,
+      ElewiseArith(outputs[0]->size / sizeof(T), BinaryOpType::kAdd, input_addr, work_addr, work_addr,
                    reinterpret_cast<cudaStream_t>(stream_ptr_));
     }
   }

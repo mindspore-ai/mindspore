@@ -128,7 +128,7 @@ bool MeshgridGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
     if (swap_indexing_ && i <= 1) {
       std::swap(broadcasted_input_shape[0], broadcasted_input_shape[1]);
     }
-    BroadcastArith(broadcasted_input_shape, broadcasted_ones_shape, output_shape_, BROADCAST_TYPE_MUL, input_device,
+    BroadcastArith(broadcasted_input_shape, broadcasted_ones_shape, output_shape_, BinaryOpType::kMul, input_device,
                    ones_device, output_device, reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
   return true;
@@ -158,7 +158,7 @@ bool MeshgridGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> &in
     if (swap_indexing_ && i <= 1) {
       std::swap(broadcasted_input_shape[0], broadcasted_input_shape[1]);
     }
-    BroadcastComplexArith(broadcasted_input_shape, broadcasted_ones_shape, output_shape_, BROADCAST_TYPE_MUL,
+    BroadcastComplexArith(broadcasted_input_shape, broadcasted_ones_shape, output_shape_, BinaryOpType::kMul,
                           input_device, ones_device, output_device, reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
   return true;

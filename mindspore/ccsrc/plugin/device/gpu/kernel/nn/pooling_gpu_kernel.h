@@ -102,7 +102,7 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
         CalRealKernelSize(output_shape_exclude_nc_, kernel_size_, edge_kernel_, work_addr, 0,
                           reinterpret_cast<cudaStream_t>(stream_ptr));
       }
-      ElewiseArith(output_num, BROADCAST_TYPE_MUL, output_addr, work_addr, output_addr,
+      ElewiseArith(output_num, BinaryOpType::kMul, output_addr, work_addr, output_addr,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
     }
     return true;

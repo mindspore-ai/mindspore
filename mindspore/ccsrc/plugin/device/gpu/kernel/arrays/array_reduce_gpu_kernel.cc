@@ -399,7 +399,7 @@ void ArrayReduceGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> 
     cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
                       inputA_descriptor_, input_imag, &beta, outputC_descriptor_, output_imag),
     "cudnnReduceTensor failed.");
-  ElewiseComplexArith(output_count, BROADCAST_TYPE_COMPLEX, output_real, output_imag, output_addr,
+  ElewiseComplexArith(output_count, BinaryOpType::kComplex, output_real, output_imag, output_addr,
                       reinterpret_cast<cudaStream_t>(stream_ptr));
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(input_real);
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(input_imag);
