@@ -30,6 +30,10 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr int kMinDimNeedToTransform = 3;
+constexpr int64_t kNumLong1 = 1;
+constexpr int64_t kNumLong2 = 2;
+constexpr size_t kNumSize1 = 1;
+constexpr size_t kNumSize2 = 2;
 enum FormatTransformDir { ChannelFirst2ChannelLast = 0, ChannelLast2ChannelFirst };
 
 // get perm between channel-first shape and channel-last shape.
@@ -39,10 +43,10 @@ std::vector<int64_t> TransposeAxis(const int dim, FormatTransformDir dir) {
   std::vector<int64_t> axis;
   axis.resize(dim);
   if (dir == ChannelFirst2ChannelLast) {
-    std::iota(axis.begin() + 1, axis.end(), 2);
+    std::iota(axis.begin() + kNumSize1, axis.end(), kNumLong2);
     axis[dim - 1] = 1;
   } else {
-    std::iota(axis.begin() + 2, axis.end(), 1);
+    std::iota(axis.begin() + kNumSize2, axis.end(), kNumLong1);
     axis[1] = dim - 1;
   }
   return axis;
