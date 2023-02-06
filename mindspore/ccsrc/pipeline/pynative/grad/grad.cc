@@ -88,6 +88,12 @@ std::string GradExecutor::GetFnInfoByPyObj(const py::object &obj) const {
   fn_info += "_" + obj.attr("__name__").cast<std::string>();
   fn_info += "_" + obj.attr("__code__").attr("co_filename").cast<std::string>();
   fn_info += "_" + py::str(obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
+  if (py::hasattr(obj, "__warpped__")) {
+    auto warpped_obj = obj.attr("__warpped__");
+    fn_info += "_" + warpped_obj.attr("__name__").cast<std::string>();
+    fn_info += "_" + warpped_obj.attr("__code__").attr("co_filename").cast<std::string>();
+    fn_info += "_" + py::str(warpped_obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
+  }
   return fn_info;
 }
 
@@ -515,7 +521,7 @@ void GradExecutor::DoGradForCustomBprop(const py::object &cell, const py::args &
     }
   }
 
-  auto bprop_func_cellid = PyNativeAlgo::PyParser::GetIdByPyObj(bprop_func);
+  auto bprop_func_cellid = GetFnInfoByPyObj(bprop_func);
   (void)bprop_cell_list_.emplace_back(bprop_func_cellid);
   auto fake_prim = std::make_shared<PrimitivePy>(prim::kPrimHookBackward->name());
   if (py::isinstance<Cell>(cell)) {
