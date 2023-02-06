@@ -123,10 +123,11 @@ int InnerContext::Init() {
 }
 
 InnerContext::~InnerContext() {
-  if (this->thread_pool_ != nullptr) {
-    delete thread_pool_;
-    this->thread_pool_ = nullptr;
-  }
+  MS_LOG(INFO) << "delete InnerContext.";
+  ThreadPoolReuseManager::GetInstance()->RetrieveThreadPool(actor_thread_num_, inter_op_parallel_num_, thread_num_,
+                                                            bind_mode_, affinity_core_list_, thread_pool_);
+  thread_pool_ = nullptr;
+  MS_LOG(INFO) << "delete InnerContext done.";
 }
 
 int InnerContext::IsValid() {
