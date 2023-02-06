@@ -44,9 +44,14 @@ namespace {
 const char *const kExecutionPlan = "execution_plan";
 constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
-constexpr auto kSharingWorkspaceSection = "inner_common";
+constexpr auto kSharingWorkspaceSection = "inner_common";  // don't support external user configuration
 constexpr auto kSharingWorkspaceKey = "inner_sharing_workspace";
 constexpr auto kSharingWorkspaceValue = "true";
+#if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
+constexpr auto kCommonSection = "common";  // support external user configuration
+constexpr auto kEnablePreInferenceKey = "enable_pre_inference";
+constexpr auto kEnablePreInferenceValue = "true";
+#endif
 }  // namespace
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -144,6 +149,17 @@ Status ModelImpl::BuildAndRun() {
     return ret;
   }
   return kSuccess;
+}
+
+bool ModelImpl::IsEnablePreInference() {
+  if (config_info_.find(kCommonSection) == config_info_.end()) {
+    return true;
+  }
+  auto common_config = config_info_.at(kCommonSection);
+  if (common_config.find(kEnablePreInferenceKey) == common_config.end()) {
+    return true;
+  }
+  return common_config.at(kEnablePreInferenceKey) == kEnablePreInferenceValue;
 }
 #endif
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
