@@ -81,6 +81,9 @@ bool HistogramCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
 template <typename T, typename InterType>
 void HistogramCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
+  if (inputs[kIndex0]->size == 0) {
+    return;
+  }
   auto x_data = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto y_data = reinterpret_cast<int32_t *>(outputs[kIndex0]->addr);
   size_t x_num = inputs[kIndex0]->size / sizeof(T);
