@@ -1219,23 +1219,25 @@ def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
 
 def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
     """
-    Find the indices from the innermost dimension of `sorted_sequence` such that the order of the innermost dimension
-    within `sorted_sequence` would be preserved when the corresponding values in `values` were inserted before the
-    indices.
+    Return the position indices such that after inserting the values into the `sorted_sequence`, the order of innermost
+    dimension of the `sorted_sequence` remains unchanged.
 
     Args:
         sorted_sequence (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_R)` or `(x_1)`.
             It must contain a monotonically increasing sequence on the innermost dimension.
-        values (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_S)`.
+        values (Tensor): The value that should be inserted.
+            The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_S)`.
+
+    Keyword Args:
         out_int32 (bool, optional): Output datatype. If True, the output datatype will be int32;
             if False, the output datatype will be int64. Default: False.
         right (bool, optional): Search Strategy. If True, return the last suitable index found;
             if False, return the first such index. Default: False.
 
     Returns:
-        Tensor containing the indices from the innermost dimension of the input sequence such that,
-        if insert the corresponding value in the values tensor, the order of the tensor sequence would be preserved,
-        whose datatype is int32 if out_int32 is True, otherwise int64, and shape is the same as the shape of values.
+        Tensor containing the indices from the innermost dimension of `sorted_sequence` such that,
+        if insert the corresponding value in the `values` tensor, the order of `sorted_sequence` would be preserved,
+        whose datatype is int32 if out_int32 is True, otherwise int64, and shape is the same as the shape of `values`.
 
     Raises:
         ValueError: If the dimension of `sorted_sequence` isn't 1 and all dimensions except the last dimension of
@@ -1247,7 +1249,7 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
     Examples:
         >>> sorted_sequence = Tensor(np.array([[0, 1, 3, 5, 7], [2, 4, 6, 8, 10]]), mindspore.float32)
         >>> values = Tensor(np.array([[3, 6, 9], [3, 6, 9]]), mindspore.float32)
-        >>> output = ops.SearchSorted()(sorted_sequence, values)
+        >>> output = ops.searchsorted(sorted_sequence, values)
         >>> print(output)
         [[2 4 5]
          [1 2 4]]
@@ -6715,6 +6717,7 @@ __all__ = [
     'mvlgamma',
     'swapaxes',
     'swapdims',
+    'searchsorted',
     'argsort',
     'sequence_mask',
     'repeat_elements',
