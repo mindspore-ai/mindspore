@@ -75,6 +75,7 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     input_size_ = 0;
     output_size_ = 0;
     workspace_size_ = 0;
+    int_op_type = 0;
     kernel_name_ = "ArrayReduce";
     axis_.clear();
   }
