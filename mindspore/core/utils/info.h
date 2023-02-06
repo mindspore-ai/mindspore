@@ -172,8 +172,6 @@ class MS_CORE_API DebugInfo {
     if (top != nullptr) {
       trace_info_ = top->trace_info();
       location_ = top->location();
-    } else {
-      MS_LOG(DEBUG) << "\'" << name << "\' has no trace info.";
     }
   }
 
@@ -271,8 +269,6 @@ class MS_CORE_API NodeDebugInfo : public DebugInfo {
     auto top = TraceManager::CurrentContextInfo();
     if (top != nullptr) {
       py_func_belonged_ = top->func_name();
-    } else {
-      MS_LOG(INFO) << "The node has no trace info.";
     }
   }
 
@@ -283,8 +279,6 @@ class MS_CORE_API NodeDebugInfo : public DebugInfo {
     auto top = TraceManager::CurrentContextInfo();
     if (top != nullptr) {
       py_func_belonged_ = top->func_name();
-    } else {
-      MS_LOG(INFO) << "The node \'" << name << "\' has no trace info.";
     }
   }
 
@@ -328,8 +322,6 @@ class MS_CORE_API GraphDebugInfo : public DebugInfo {
     auto top = TraceManager::CurrentContextInfo();
     if (top != nullptr) {
       py_func_name_ = top->func_name();
-    } else {
-      MS_LOG(INFO) << "The func graph has no trace info.";
     }
   }
 
@@ -337,8 +329,6 @@ class MS_CORE_API GraphDebugInfo : public DebugInfo {
     auto top = TraceManager::CurrentContextInfo();
     if (top != nullptr) {
       py_func_name_ = top->func_name();
-    } else {
-      MS_LOG(INFO) << "The func graph \'" << name << "\' has no trace info.";
     }
   }
 
