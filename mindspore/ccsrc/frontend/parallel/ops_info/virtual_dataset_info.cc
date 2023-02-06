@@ -57,7 +57,7 @@ Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
         current_stra_shard_num = dim;
       }
     }
-    if (i == 0) {
+    if (shard_num_ == 1) {
       shard_num_ = current_stra_shard_num;
     } else if (current_stra_shard_num != 1 && current_stra_shard_num != shard_num_) {
       MS_LOG(ERROR) << name_

@@ -505,9 +505,24 @@ std::vector<StrategyPtr> MatMulBase::GenerateOpStrategies(int64_t stage_id) {
 }
 
 std::shared_ptr<Strategies> BatchMatMulInfo::GenerateBatchStrategies() {
-  Dimensions batch_strategy(inputs_shape_[1].size() - 1, 1);
-  (void)batch_strategy.insert(batch_strategy.cbegin(), stage_device_size_);
-  Strategies strategy_v = {batch_strategy, batch_strategy};
+  Dimensions batch_strategy_a(inputs_shape_[0].size(), 1);
+  Dimensions batch_strategy_b(inputs_shape_[1].size(), 1);
+  MS_EXCEPTION_IF_ZERO("device_num", stage_device_size_);
+  Strategies strategy_v;
+  // input's shape equals to weight's shape
+  if (inputs_shape_[0].size() == inputs_shape_[1].size()) {
+    batch_strategy_a[0] = stage_device_size_;
+    if (inputs_shape_[0].size() > MATMUL_INPUTS_SIZE) {
+      batch_strategy_b[0] = stage_device_size_;
+    }
+  }
+  if (inputs_shape_[0].size() > inputs_shape_[1].size()) {
+    batch_strategy_a[0] = stage_device_size_;
+  }
+  if (inputs_shape_[0].size() < inputs_shape_[1].size()) {
+    batch_strategy_b[0] = stage_device_size_;
+  }
+  strategy_v = {batch_strategy_a, batch_strategy_b};
   return std::make_shared<Strategies>(strategy_v);
 }
 

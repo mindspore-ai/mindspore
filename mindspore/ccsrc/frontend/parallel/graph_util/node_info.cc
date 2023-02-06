@@ -432,6 +432,7 @@ void SetUserAttrs(const mindspore::HashMap<std::string, ValuePtr> &origin_prim_a
 // Convert ValueTuple/ValueList to vector
 Status TransValueSequeueToVector(const ValuePtr &input_value, std::vector<int64_t> *input) {
   MS_EXCEPTION_IF_NULL(input_value);
+  input->clear();
   if (!input_value->isa<ValueSequeue>()) {
     MS_LOG(ERROR) << "Input value must be ValueTuplePtr.";
     return FAILED;

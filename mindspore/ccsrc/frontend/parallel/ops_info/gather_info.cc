@@ -335,14 +335,13 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  // param slice shape need 32Byte aligned
+  // param slice shape preferably 32Byte aligned
   auto param_shape = inputs_shape_.at(0);
   auto input_dim = strategy->GetInputDim();
   auto param_strategy = input_dim.at(0);
   auto slice_shape = param_shape.at(param_shape.size() - 1) / param_strategy.at(param_strategy.size() - 1);
   if ((target_ != CPU) && (slice_shape % 8 != 0) && (slice_shape != 1)) {
-    ReportError(name_ + ": Last dim of param slice shape need 32Byte aligned.");
-    return FAILED;
+    MS_LOG(WARNING) << "Gather: Last dim of param slice shape is not 32Byte aligned.";
   }
 
   if (manual_split_) {
@@ -350,6 +349,11 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     }
     // when using manual_split, no need to check belowings.
+    return SUCCESS;
+  }
+
+  // parameter not split axis
+  if (param_strategy.at(LongToSize(axis_)) == 1) {
     return SUCCESS;
   }
 
