@@ -45,17 +45,18 @@ class ActorWorker : public Worker {
 
     bool terminate = false;
     int count = 0;
-    do {
+    while (local_task_queue_ && !terminate && count++ < kMaxCount) {
       terminate = local_task_queue_->Empty();
       if (!terminate) {
         auto task_split = local_task_queue_->Dequeue();
         (void)TryRunTask(task_split);
       }
-    } while (!terminate && count++ < kMaxCount);
+    }
 
     if (thread_.joinable()) {
       thread_.join();
     }
+    local_task_queue_ = nullptr;
   };
 
  private:
