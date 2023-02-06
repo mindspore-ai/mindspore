@@ -1,4 +1,4 @@
-1.JPEG 0
-2.jpeg 1
-2.jpeg 2 
-2.jpeg 0 
+1_apple.JPEG 0
+2_banana.jpg 1
+3_lemon.jpg 2
+4_avacado.JPEG 0
