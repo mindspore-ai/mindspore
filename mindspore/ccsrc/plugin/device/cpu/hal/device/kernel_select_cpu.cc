@@ -260,6 +260,7 @@ void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std
                         AnfNode *kernel_node) {
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   MS_EXCEPTION_IF_NULL(builder);
+  builder->SetProcessor(kernel::Processor::CPU);
   builder->SetInputsFormat(input_formats);
   builder->SetInputsDeviceType(input_types);
   builder->SetOutputsFormat(output_formats);
