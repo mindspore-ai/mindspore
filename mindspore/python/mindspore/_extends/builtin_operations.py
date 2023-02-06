@@ -65,7 +65,7 @@ def TupleGetItem(x, index):
     return x[index]
 
 
-def ScalarGreater(x, y):
+def scalar_gt(x, y):
     """Implement `scalar_gt`."""
     return x > y
 
@@ -75,17 +75,17 @@ def scalar_ne(x, y):
     return x != y
 
 
-def ScalarEqual(x, y):
+def scalar_eq(x, y):
     """Implement `scalar_eq`."""
     return x == y
 
 
-def ScalarLessEqual(x, y):
+def scalar_le(x, y):
     """Implement `scalar_le`."""
     return x <= y
 
 
-def ScalarLess(x, y):
+def scalar_lt(x, y):
     """Implement `scalar_lt`."""
     return x < y
 
@@ -117,7 +117,7 @@ def Switch(c, x, y):
     return x if c else y
 
 
-def ListGetItem(data, item):
+def list_getitem(data, item):
     """Implement `list_getitem`."""
     return data[item]
 

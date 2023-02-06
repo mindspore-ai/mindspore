@@ -189,7 +189,7 @@ TEST_F(TestOps, TupleGetItemTest) {
 }
 
 TEST_F(TestOps, ListGetItemTest) {
-  auto prim = std::make_shared<Primitive>("ListGetItem");
+  auto prim = std::make_shared<Primitive>("list_getitem");
   ASSERT_EQ(prim->name(), kPrimListGetItem->name());
 }
 

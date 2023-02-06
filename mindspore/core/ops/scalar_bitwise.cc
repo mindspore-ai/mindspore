@@ -115,9 +115,9 @@ class ScalarBitwiseInfer : public abstract::OpInferBase {
     return res;
   }
 };
-MIND_API_OPERATOR_IMPL(ScalarBitwiseOr, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarBitwiseAnd, BaseOperator);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarBitwiseOr, prim::kPrimScalarBitwiseOr, ScalarBitwiseInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarBitwiseAnd, prim::kPrimScalarBitwiseAnd, ScalarBitwiseInfer, true);
+MIND_API_OPERATOR_IMPL(bit_or, BaseOperator);
+MIND_API_OPERATOR_IMPL(bit_and, BaseOperator);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(bit_or, prim::kPrimScalarBitwiseOr, ScalarBitwiseInfer, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(bit_and, prim::kPrimScalarBitwiseAnd, ScalarBitwiseInfer, true);
 }  // namespace ops
 }  // namespace mindspore

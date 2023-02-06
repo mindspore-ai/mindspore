@@ -151,7 +151,6 @@ int TransposeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   std::vector<int64_t> perm;
   if (TryGetIntValue(inputs, kAxisIndex1st, kernel_name_, &perm)) {
     GetPermValue(perm);
-    get_dynamic_perm_value_ = true;
   }
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;

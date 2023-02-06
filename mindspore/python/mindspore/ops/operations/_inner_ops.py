@@ -21,7 +21,7 @@ import numpy as np
 from mindspore.common import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops.operations.array_ops import Cast
-from mindspore.ops.operations._scalar_ops import ScalarBitwiseOr, ScalarBitwiseAnd
+from mindspore.ops.operations._scalar_ops import bit_or, bit_and
 from mindspore.ops import signature as sig
 from mindspore.ops.operations.math_ops import _infer_shape_reduce
 from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive, _run_op
@@ -36,8 +36,8 @@ from mindspore.common._register_for_adapter import ms_adapter_registry
 
 
 # Bit operation
-bit_and = ScalarBitwiseAnd()
-bit_or = ScalarBitwiseOr()
+bit_and = bit_and()
+bit_or = bit_or()
 bit_xor = Primitive("bit_xor")
 bit_left_shift = Primitive("bit_left_shift")
 bit_right_shift = Primitive("bit_right_shift")

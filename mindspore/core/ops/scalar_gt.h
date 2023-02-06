@@ -21,12 +21,12 @@
 
 namespace mindspore {
 namespace ops {
-/// \brief ScalarGreater op is used to judge greater between variable scalar.
-class MIND_API ScalarGreater : public BaseOperator {
+/// \brief scalar_gt op is used to judge greater between variable scalar.
+class MIND_API scalar_gt : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(ScalarGreater);
+  MIND_API_BASE_MEMBER(scalar_gt);
   /// \brief Constructor.
-  ScalarGreater() : BaseOperator(prim::kScalarGt) {}
+  scalar_gt() : BaseOperator(prim::kScalarGt) {}
   /// \brief Init.
   void Init() const {}
 };

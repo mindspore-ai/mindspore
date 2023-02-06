@@ -102,9 +102,9 @@ class SequenceGetItemInfer : public abstract::OpInferBase {
 };
 MIND_API_OPERATOR_IMPL(TupleGetItem, BaseOperator);
 MIND_API_OPERATOR_IMPL(RealTupleGetItem, BaseOperator);
-MIND_API_OPERATOR_IMPL(ListGetItem, BaseOperator);
+MIND_API_OPERATOR_IMPL(list_getitem, BaseOperator);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(TupleGetItem, prim::kPrimTupleGetItem, SequenceGetItemInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(RealTupleGetItem, prim::kPrimRealTupleGetItem, SequenceGetItemInfer, false);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ListGetItem, prim::kPrimListGetItem, SequenceGetItemInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(list_getitem, prim::kPrimListGetItem, SequenceGetItemInfer, false);
 }  // namespace ops
 }  // namespace mindspore

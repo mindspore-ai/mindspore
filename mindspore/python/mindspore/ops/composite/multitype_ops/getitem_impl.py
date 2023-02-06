@@ -73,7 +73,7 @@ class _ListSlice(base.SequenceSliceGetItem_):
 
     def __init__(self, name):
         """Initialize _TupleSlice."""
-        base.SequenceSliceGetItem_.__init__(self, name, "make_list", "ListGetItem")
+        base.SequenceSliceGetItem_.__init__(self, name, "make_list", "list_getitem")
 
     def __call__(self, *args):
         pass

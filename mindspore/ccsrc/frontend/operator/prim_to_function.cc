@@ -35,7 +35,7 @@ PrimToFunction::PrimToFunction()
                            {kScalarLt, kPrimTypeNumTwoArgs},        {"scalar_ne", kPrimTypeNumTwoArgs},
                            {kScalarMod, kPrimTypeNumTwoArgs},       {kScalarMul, kPrimTypeNumTwoArgs},
                            {kScalarPow, kPrimTypeNumTwoArgs},       {kScalarSub, kPrimTypeNumTwoArgs},
-                           {kScalarFloorDiv, kPrimTypeNumTwoArgs},  {kScalarBitwiseAnd, kPrimTypeNumTwoArgs},
+                           {kScalarFloordiv, kPrimTypeNumTwoArgs},  {kScalarBitwiseAnd, kPrimTypeNumTwoArgs},
                            {kScalarBitwiseOr, kPrimTypeNumTwoArgs}, {"bit_xor", kPrimTypeNumTwoArgs},
                            {"bit_left_shift", kPrimTypeNumTwoArgs}, {"bit_right_shift", kPrimTypeNumTwoArgs},
                            {kStringNot, kPrimTypeStrOneArg},        {kStringConcat, kPrimTypeStrTwoArgs},

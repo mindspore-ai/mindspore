@@ -22,11 +22,11 @@
 namespace mindspore {
 namespace ops {
 /// \brief ScalarFloorDiv op is used to div between variable scalar.
-class MIND_API ScalarFloorDiv : public BaseOperator {
+class MIND_API ScalarFloordiv : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(ScalarFloorDiv);
+  MIND_API_BASE_MEMBER(ScalarFloordiv);
   /// \brief Constructor.
-  ScalarFloorDiv() : BaseOperator(prim::kScalarFloorDiv) {}
+  ScalarFloordiv() : BaseOperator(prim::kScalarFloordiv) {}
   /// \brief Init.
   void Init() const {}
 };

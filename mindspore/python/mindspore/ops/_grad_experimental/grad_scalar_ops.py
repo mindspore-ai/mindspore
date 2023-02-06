@@ -64,7 +64,7 @@ def get_bprop_scalar_div(self):
     return bprop
 
 
-@bprop_getters.register(_scalar_ops.ScalarFloorDiv)
+@bprop_getters.register(_scalar_ops.ScalarFloordiv)
 def get_bprop_scalar_floordiv(self):
     """Grad definition for `ScalarFloorDiv` operation."""
 
@@ -86,13 +86,13 @@ def get_bprop_scalar_mod(self):
     return bprop
 
 
-@bprop_getters.register(_scalar_ops.ScalarEqual)
-@bprop_getters.register(_scalar_ops.ScalarLessEqual)
-@bprop_getters.register(_scalar_ops.ScalarLess)
-@bprop_getters.register(_scalar_ops.ScalarGreaterEqual)
-@bprop_getters.register(_scalar_ops.ScalarGreater)
-@bprop_getters.register(_scalar_ops.ScalarBitwiseAnd)
-@bprop_getters.register(_scalar_ops.ScalarBitwiseOr)
+@bprop_getters.register(_scalar_ops.scalar_eq)
+@bprop_getters.register(_scalar_ops.scalar_le)
+@bprop_getters.register(_scalar_ops.scalar_lt)
+@bprop_getters.register(_scalar_ops.scalar_ge)
+@bprop_getters.register(_scalar_ops.scalar_gt)
+@bprop_getters.register(_scalar_ops.bit_and)
+@bprop_getters.register(_scalar_ops.bit_or)
 def get_bprop_scalar_logic(self):
     """Grad definition for `ScalarLogicOps` operation."""
 

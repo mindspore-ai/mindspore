@@ -21,12 +21,12 @@
 
 namespace mindspore {
 namespace ops {
-/// \brief ScalarLessEqual op is used to judge lessEqual between variable scalar.
-class MIND_API ScalarLessEqual : public BaseOperator {
+/// \brief scalar_le op is used to judge lessEqual between variable scalar.
+class MIND_API scalar_le : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(ScalarLessEqual);
+  MIND_API_BASE_MEMBER(scalar_le);
   /// \brief Constructor.
-  ScalarLessEqual() : BaseOperator(prim::kScalarLe) {}
+  scalar_le() : BaseOperator(prim::kScalarLe) {}
   /// \brief Init.
   void Init() const {}
 };

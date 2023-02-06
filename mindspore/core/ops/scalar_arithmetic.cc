@@ -224,7 +224,7 @@ MathImplFunc ChooseFunc(const std::string &prim_name) {
                                                               {prim::kScalarLt, LtImpl<T>},
                                                               {prim::kScalarGe, GeImpl<T>},
                                                               {prim::kScalarLe, LeImpl<T>},
-                                                              {prim::kScalarFloorDiv, FloorDivImpl<T>}};
+                                                              {prim::kScalarFloordiv, FloorDivImpl<T>}};
   auto iter = infer_value_func_map.find(prim_name);
   if (iter == infer_value_func_map.end()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
@@ -333,23 +333,23 @@ MIND_API_OPERATOR_IMPL(ScalarAdd, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarSub, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarMul, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarDiv, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarFloorDiv, BaseOperator);
+MIND_API_OPERATOR_IMPL(ScalarFloordiv, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarMod, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarEqual, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarGreater, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarGreaterEqual, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarLess, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarLessEqual, BaseOperator);
+MIND_API_OPERATOR_IMPL(scalar_eq, BaseOperator);
+MIND_API_OPERATOR_IMPL(scalar_gt, BaseOperator);
+MIND_API_OPERATOR_IMPL(scalar_ge, BaseOperator);
+MIND_API_OPERATOR_IMPL(scalar_lt, BaseOperator);
+MIND_API_OPERATOR_IMPL(scalar_le, BaseOperator);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarAdd, prim::kPrimScalarAdd, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarSub, prim::kPrimScalarSub, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarMul, prim::kPrimScalarMul, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarDiv, prim::kPrimScalarDiv, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarFloorDiv, prim::kPrimScalarFloorDiv, ScalarArithmeticInfer, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarFloordiv, prim::kPrimScalarFloorDiv, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarMod, prim::kPrimScalarMod, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarEqual, prim::kPrimScalarEq, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarGreater, prim::kPrimScalarGt, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarGreaterEqual, prim::kPrimScalarGe, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarLess, prim::kPrimScalarLt, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarLessEqual, prim::kPrimScalarLe, ScalarArithmeticInfer, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_eq, prim::kPrimScalarEq, ScalarArithmeticInfer, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_gt, prim::kPrimScalarGt, ScalarArithmeticInfer, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_ge, prim::kPrimScalarGe, ScalarArithmeticInfer, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_lt, prim::kPrimScalarLt, ScalarArithmeticInfer, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_le, prim::kPrimScalarLe, ScalarArithmeticInfer, true);
 }  // namespace ops
 }  // namespace mindspore
