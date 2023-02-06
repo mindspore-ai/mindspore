@@ -97,6 +97,10 @@ int ComplexCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 
 template <typename T>
 bool ComplexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+  if (out_shape_.size() == 0) {
+    return true;
+  }
+
   auto real_need_broadcast = NeedBroadcast(real_bcast_);
   auto image_need_broadcast = NeedBroadcast(image_bcast_);
   if (!real_need_broadcast && !image_need_broadcast) {
