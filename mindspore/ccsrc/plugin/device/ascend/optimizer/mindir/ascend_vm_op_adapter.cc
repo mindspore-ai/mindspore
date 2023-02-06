@@ -23,7 +23,7 @@ namespace mindspore::opt {
 const AnfNodePtr AscendVmOpAdapter::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   // There are other UnifyMindIR pass before AscendVmOpAdapter which may create new nodes.
-  if (graph->has_flag(kAttrMutableKernel)) {
+  if (graph->has_flag(kAttrMutableKernel) && AnfUtils::IsRealCNodeKernel(node)) {
     AnfAlgo::SetDynamicAttrToPrim(common::AnfAlgo::GetCNodePrimitive(node));
   }
   return CreateNodeHelper::CreateNodeWithCheck(node);
