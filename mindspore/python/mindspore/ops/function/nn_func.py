@@ -1777,13 +1777,13 @@ def flip(x, dims):
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> x = ms.Tensor(np.arange(8).reshape((2, 2, 2)))
+        >>> x = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
         >>> output = ops.flip(x, (0, 2))
         >>> print(output)
-        [[[5. 4.]
-        [7. 6.]]
-        [[1. 0.]
-        [3. 2.]]]
+        [[[6 5]
+          [8 7]]
+         [[2 1]
+          [4 3]]]
     """
     _check_input_tensor("flip", x)
     ndim = ops.rank(x)
@@ -1819,13 +1819,13 @@ def flipud(x):
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> x = ms.Tensor(np.arange(8).reshape((2, 2, 2)))
+        >>> x = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
         >>> output = ops.flipud(x)
         >>> print(output)
-        [[[4. 5.]
-        [6. 7.]]
-        [[0. 1.]
-        [2. 3.]]]
+        [[[5 6]
+          [7 8]]
+         [[1 2]
+          [3 4]]]
     """
     return flip(x, (0,))
 
@@ -1851,13 +1851,13 @@ def fliplr(x):
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> x = ms.Tensor(np.arange(8).reshape((2, 2, 2)))
+        >>> x = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
         >>> output = ops.fliplr(x)
         >>> print(output)
-        [[[2. 3.]
-        [0. 1.]]
-        [[6. 7.]
-        [4. 5.]]]
+        [[[3 4]
+          [1 2]]
+         [[7 8]
+          [5 6]]]
     """
     return flip(x, (1,))
 
