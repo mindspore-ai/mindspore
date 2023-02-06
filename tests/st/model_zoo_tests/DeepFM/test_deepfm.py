@@ -69,7 +69,7 @@ def test_deepfm():
     callback_list.append(eval_callback)
 
     print("train_config.train_epochs:", train_config.train_epochs)
-    model.train(train_config.train_epochs, ds_train, callbacks=callback_list)
+    model.train(train_config.train_epochs, ds_train, callbacks=callback_list, dataset_sink_mode=True)
 
     export_loss_value = 0.52
     print("loss_callback.loss:", loss_callback.loss)
