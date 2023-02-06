@@ -702,7 +702,7 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
           Data type must be in int32 or int64.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value.
         stride (Union[int, tuple[int]]): The distance of kernel moving,
-            If stride is 0, (0) or None, then stride equal to kernel_size. Default: None.
+            If stride is None, then stride equal to kernel_size. Default: None.
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0.
         output_size (tuple[int], optional): The output shape. Default: None.
             If output_size == (), then the shape of output computed by `kernel_size`, `stride` and `padding`.
@@ -824,7 +824,7 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively.
-            If stride is 0, (0, 0) or None, then stride equal to kernel_size. Default: None.
+            If stride is None, then stride equal to kernel_size. Default: None.
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `padding` is an integer,
             the paddings of height and width are the same, equal to padding. If `padding` is a tuple of two
             integers, the padding of height and width equal to padding[0] and padding[1] correspondingly.
@@ -931,7 +931,7 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both stride, or a tuple of three int numbers that
             represent depth, height and width of movement respectively.
-            If stride is 0, (0, 0, 0) or None, then stride equal to kernel_size. Default: None.
+            If stride is None, then stride equal to kernel_size. Default: None.
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `padding` is an integer,
             the paddings of depth, height and width are the same, equal to padding. If `padding` is a tuple of three
             integers, the padding of depth, height and width equal to padding[0], padding[1] and padding[2]
