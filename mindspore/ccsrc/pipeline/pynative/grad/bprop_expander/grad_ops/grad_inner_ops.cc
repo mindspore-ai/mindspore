@@ -178,7 +178,11 @@ REG_BPROP_BUILDER("FillV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   if (type_list.count(dout_type) > 0) {
     dout = ib->Cast(dout, kFloat32);
   }
-  auto dvalue = ib->ReduceSum(dout);
+  std::vector<int64_t> axis{};
+  for (int64_t i = 0; i < static_cast<int64_t>(dout->shape().size()); ++i) {
+    axis.push_back(i);
+  }
+  auto dvalue = ib->ReduceSum(dout, axis);
   return {ib->ZerosLike(shape), ib->Cast(dvalue, dout_typeptr)};
 });
 

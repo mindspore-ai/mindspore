@@ -290,7 +290,7 @@ std::pair<bool, ShapeVector> Emitter::NeedReduce(const NodePtr &shape, const Nod
     auto shape_v = shape_node->value();
     MS_EXCEPTION_IF_NULL(shape_v);
     auto shape_value = GetValue<ShapeVector>(shape_v);
-    auto axis_node = shape->get<ValueNodePtr>();
+    auto axis_node = axis->get<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(axis_node);
     auto axis_v = axis_node->value();
     MS_EXCEPTION_IF_NULL(axis_v);

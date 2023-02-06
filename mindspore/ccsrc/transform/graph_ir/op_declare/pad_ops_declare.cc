@@ -42,17 +42,12 @@ ATTR_MAP(Diag) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Diag) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Diag, kNameDiag, ADPT_DESC(Diag))
 
-// FillD
-INPUT_MAP(FillD) = {{1, INPUT_DESC(value)}};
-ATTR_MAP(FillD) = {{"dims", ATTR_DESC(dims, AnyTraits<std::vector<int64_t>>())}};
-OUTPUT_MAP(FillD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(FillD, kNameFillD, ADPT_DESC(FillD))
-
 // Fill
 INPUT_MAP(Fill) = {{1, INPUT_DESC(dims)}, {2, INPUT_DESC(value)}};
 ATTR_MAP(Fill) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Fill) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Fill, kNameFillV1, ADPT_DESC(Fill))
+REG_ADPT_DESC(FillV2, "Fill", ADPT_DESC(Fill))
 
 // PadV3
 INPUT_MAP(PadV3) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}, {3, INPUT_DESC(constant_values)}};
