@@ -94,14 +94,31 @@ bool AsyncQueue::Empty() {
   return tasks_.empty();
 }
 
-void AsyncQueue::Reset() {
+void AsyncQueue::Clear() {
   {
     std::lock_guard<std::mutex> lock(task_mutex_);
+    if (tasks_.empty()) {
+      return;
+    }
     std::queue<std::shared_ptr<AsyncTask>> empty;
     std::swap(tasks_, empty);
+    auto task = std::make_shared<WaitTask>();
+    tasks_.push(task);
+    task_cond_var_.notify_all();
   }
   // There is still one task in progress
   Wait();
+}
+
+void AsyncQueue::Reset() {
+  {
+    std::lock_guard<std::mutex> lock(task_mutex_);
+    if (tasks_.empty()) {
+      return;
+    }
+    std::queue<std::shared_ptr<AsyncTask>> empty;
+    std::swap(tasks_, empty);
+  }
 }
 
 void AsyncQueue::WorkerJoin() {

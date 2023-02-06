@@ -43,6 +43,9 @@ class BACKEND_EXPORT AsyncQueue {
   // Check if the queue is empty.
   bool Empty();
 
+  // clear tasks of queue, and wait last task.
+  void Clear();
+
   // When an exception occurs, the state needs to be reset.
   void Reset();
 
