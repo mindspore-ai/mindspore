@@ -9,7 +9,7 @@ mindspore.nn.CTCLoss
 
     参数：
         - **blank** (int) - 空白标签。默认值：0。
-        - **reduction** (str) - 指定输出结果的计算方式。可选值为"none"、"mean"或"sum"。默认值："mean"。
+        - **reduction** (str) - 对输出应用归约方法。可选值为"none"、"mean"或"sum"。默认值："mean"。
         - **zero_infinity** (bool) - 是否设置无限损失和相关梯度为零。默认值：False。
 
     输入：

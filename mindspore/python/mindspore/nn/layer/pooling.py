@@ -1190,12 +1190,11 @@ class AdaptiveMaxPool3d(Cell):
 
 class FractionalMaxPool2d(Cell):
     r"""
-    Applies a 2D fractional max pooling to an input signal composed of multiple input planes.
-    The max-pooling operation is applied in kH × kW regions by a stochastic step size determined by
-    the target output size. For any input size, the size of the specified output is H x W. The number
-    of output features is equal to the number of input planes.
+    Applies the 2D FractionalMaxPool operatin over `input_x`. The output Tensor shape can be determined by either
+    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
+    `output_size` or `output_ratio` cannot be used at the same time.
 
-    Fractional MaxPooling is described in the paper `Fractional Max-Pooling <https://arxiv.org/pdf/1412.6071>`_.
+    Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
@@ -1211,8 +1210,7 @@ class FractionalMaxPool2d(Cell):
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type : float16, float32, double, and value is between (0, 1).
             Default: None.
-        return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output.
-            Default: False.
+        return_indices (bool, optional): Whether to return the indices of max value. Default: False.
         _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, which is a 3D tensor.
             Tensor of data type : float16, float32, double, and value is between (0, 1).
             Supported shape :math:`(N, C, 2)`.
@@ -1293,9 +1291,9 @@ class FractionalMaxPool2d(Cell):
 
 class FractionalMaxPool3d(Cell):
     r"""
-    This operator applies a 3D fractional max pooling over an input signal composed of several input planes.
-    The max-pooling operation is applied in kD x kH x kW regions by a stochastic step size determined
-    by the target output size.The number of output features is equal to the number of input planes.
+    Applies the 3D FractionalMaxPool operatin over `input_x`. The output Tensor shape can be determined by either
+    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
+    `output_size` or `output_ratio` cannot be used at the same time.
 
     Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
 
@@ -1316,8 +1314,7 @@ class FractionalMaxPool3d(Cell):
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type : float16, float32, double, and value is between (0, 1).
             Default: None.
-        return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output.
-            Default: False.
+        return_indices (bool, optional): Whether to return the indices of max value. Default: False.
         _random_samples (Tensor, optional): The random step of FractionalMaxPool3d, which is a 3D tensor.
             Tensor of data type : float16, float32, double, and value is between (0, 1).
             Supported shape :math:`(N, C, 3)`

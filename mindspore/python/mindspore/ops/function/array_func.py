@@ -502,7 +502,7 @@ def ravel(x):
         >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> output = ops.ravel(x)
         >>> print(output)
-        [0. 1. 2. 1]
+        [0. 1. 2. 1.]
         >>> print(output.shape)
         (4,)
     """
@@ -4887,18 +4887,18 @@ def diag(input_x):
 
 def diagflat(x, offset=0):
     r"""
-    Creates a two-dimensional Tensor with the flattened input as a diagonal.
+    Create a 2-D Tensor which diagonal is the flattened `x` .
 
     Args:
         x (Tensor): Input Tensor, which is flattened and set as the diagonal of the output.
-        offset (int, optional): `offset` controls which diagonal to consider. Default: 0.
+        offset (int, optional): `offset` controls which diagonal to choose. Default: 0.
 
             - When `offset` is zero, the diagonal chosen is the main diagonal.
-            - When `offset` is greater than zero, the diagonal chosen is above the main diagonal.
-            - When `offset` is less than zero, the diagonal chosen is below the main diagonal.
+            - When `offset` is a positive integer, the diagonal chosen is up the main diagonal.
+            - When `offset` is a negative integer, the diagonal chosen is down the main diagonal.
 
     Returns:
-        The 2-D Tensor.
+        The 2-D Tensor, whose diagonal is the flattened `x`.
 
     Raises:
         TypeError: If `x` is not a tensor.

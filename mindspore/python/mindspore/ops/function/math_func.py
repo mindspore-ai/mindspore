@@ -9717,9 +9717,10 @@ def isposinf(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> output = ops.isposinf(Tensor([-float("inf"), float("inf"), 1.2], mstype.float32))
+        >>> output = ops.isposinf(Tensor([[-float("inf"), float("inf")], [1, float("inf")]], mstype.float32))
         >>> print(output)
-        [False  True False]
+        [[False  True]
+         [False  True]]
     """
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError(f"For isposinf, the input x must be a Tensor, but got {type(x)}")
@@ -9743,9 +9744,10 @@ def isneginf(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> output = ops.isneginf(Tensor([-float("inf"), float("inf"), 1.2], mstype.float32))
+        >>> output = ops.isneginf(Tensor([[-float("inf"), float("inf")], [1, -float("inf")]], mstype.float32))
         >>> print(output)
-        [ True False False]
+        [[ True False]
+         [False  True]]
     """
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError(f"For isneginf, the input x must be a Tensor, but got {type(x)}")

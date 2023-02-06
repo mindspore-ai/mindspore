@@ -3,7 +3,7 @@ mindspore.nn.FractionalMaxPool3d
 
 .. py:class:: mindspore.nn.FractionalMaxPool3d(kernel_size, output_size=None, output_ratio=None, return_indices=False, _random_samples=None)
 
-    对多个输入平面组成的输入上应用3D分数最大池化。在 :math:`(kD_{in}, kH_{in}, kW_{in})` 区域上应用最大池化操作，由输出shape决定随机步长。输出特征的数量等于输入平面的数量。
+    在输入 `input_x` 上应用三维分数最大池化。输出Tensor的shape可以由 `output_size` 和 `output_ratio` 其中之一确定，步长由 `_random_samples` 决定。 `output_size` 和 `output_ratio` 不能同时使用。
 
     分数最大池化的详细描述在 `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_ 。
 
@@ -13,7 +13,7 @@ mindspore.nn.FractionalMaxPool3d
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，如果为int，则代表池化核的深度，高和宽。如果为tuple，其值必须包含三个正整数值分别表示池化核的深度，高和宽。取值必须为正整数。
         - **output_size** (Union[int, tuple[int]]，可选) - 目标输出大小。如果是整数，则表示输出目标的深、高和宽。如果是tuple，其值必须包含三个整数值分别表示目标输出的深、高和宽。默认值：None。
         - **output_ratio** (Union[float, tuple[float]]，可选) - 目标输出shape与输入shape的比率。通过输入shape和 `output_ratio` 确定输出shape。支持数据类型：float16、float32、double，数值介于0到1之间。默认值：None。
-        - **return_indices** (bool，可选) - 如果为 `True` ，返回分数最大池化的最大值的的索引值。默认值：False。
+        - **return_indices** (bool，可选) - 是否返回最大值的的索引值。默认值：False。
         - **_random_samples** (Tensor，可选) - 随机步长。支持的数据类型：float16、float32、double。shape为 :math:`(N, C, 3)` 的Tensor。数值介于0到1之间。默认值：None。
 
     输入：
