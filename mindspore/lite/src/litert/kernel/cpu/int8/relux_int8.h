@@ -23,6 +23,9 @@
 #include "nnacl/int8/relux_int8.h"
 
 namespace mindspore::kernel {
+constexpr size_t kRelu6Min = 0;
+constexpr size_t kRelu6Max = 6;
+
 class ReluXInt8CPUKernel : public LiteKernel {
  public:
   ReluXInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -69,8 +72,10 @@ class Relu6Int8CPUKernel : public ReluXInt8CPUKernel {
 
   int Prepare() override {
     auto ret = ReluXInt8CPUKernel::Prepare();
-    quant_arg_.quantized_output_min = QuantizeToInt8(0, quant_arg_.output_arg.scale_, quant_arg_.output_arg.zp_);
-    quant_arg_.quantized_output_max = QuantizeToInt8(6, quant_arg_.output_arg.scale_, quant_arg_.output_arg.zp_);
+    quant_arg_.quantized_output_min =
+      QuantizeToInt8(kRelu6Min, quant_arg_.output_arg.scale_, quant_arg_.output_arg.zp_);
+    quant_arg_.quantized_output_max =
+      QuantizeToInt8(kRelu6Max, quant_arg_.output_arg.scale_, quant_arg_.output_arg.zp_);
     return ret;
   };
 };
