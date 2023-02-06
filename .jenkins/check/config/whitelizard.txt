@@ -350,3 +350,8 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/resize_bicubic_grad.cc:aicpu::ResizeBicubicGrad
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/segment_max.cc:aicpu::SegmentMaxCpuKernel::SegmentMaxCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/extract_glimpse.cc:aicpu::ExtractGlimpseCpuKernel::Compute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/max_pool_3d_grad_with_argmax.cc:aicpu::MaxPool3DGradWithArgmaxCpuKernel::MaxPool3DGradWithArgmaxCompute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/matrix_power.cc:aicpu::MatrixPowerCpuKernel::ComputeKernel
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/max_unpool_2d_grad.cc:aicpu::MaxUnpool2DGradCpuKernel::MaxUnpool2DGradCompute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/max_pool_3d_with_argmax.cc:aicpu::MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxCompute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/layer_norm_grad_grad.cc:aicpu::LayerNormGradGradCpuKernel::LayerNormGradGradCompute
