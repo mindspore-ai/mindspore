@@ -186,7 +186,7 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
   }
   if (dec_key.len > 0) {
     size_t model_size;
-    auto model_buf = lite::ReadFile(model_path.data(), &model_size);
+    auto model_buf = lite::ReadFile(CharToString(model_path).c_str(), &model_size);
     if (model_buf == nullptr) {
       MS_LOG(ERROR) << "Read model file failed";
       return kLiteError;
