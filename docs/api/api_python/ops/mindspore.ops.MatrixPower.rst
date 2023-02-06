@@ -1,7 +1,7 @@
 mindspore.ops.MatrixPower
 =========================
 
-.. py:class:: mindspore.ops.MatrixPower
+.. py:class:: mindspore.ops.MatrixPower(n)
 
     计算一个batch的方阵的n次幂。
     如果 :math:`n=0` ，则返回一个batch的单位矩阵。

@@ -11,7 +11,7 @@ mindspore.ops.multi_margin_loss
     对于每个小批量样本，1D输入的损失 :math:`x` 和标量输出 :math:`y` 是：
 
     .. math::
-        \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p)}{\text{x.size}(0)}
+        \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p}{\text{x.size}(0)}
 
     其中 :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`
     并且 :math:`i \neq y`。
