@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
+// NOTICE: This header file should only be included once in the whole project.
+// We change the cpp file to header file, to avoid MSVC compiler problem.
+#ifndef MINDSPORE_CCSRC_PYBINDAPI_IR_PY_EXECUTE_PY_H_
+#define MINDSPORE_CCSRC_PYBINDAPI_IR_PY_EXECUTE_PY_H_
+
+#include <vector>
+#include <string>
+#include <memory>
+
 #include "pybind11/pybind11.h"
 #include "pybind_api/pybind_patch.h"
 
@@ -28,14 +37,12 @@
 
 namespace py = pybind11;
 namespace mindspore {
-namespace {
-py::object CallPythonGetGlobalParams() {
+static py::object CallPythonGetGlobalParams() {
   constexpr auto python_mod_parse = "mindspore._extends.parse";  // The same as PYTHON_MOD_PARSE_MODULE[]
   py::module mod = python_adapter::GetPyModule(python_mod_parse);
   constexpr auto python_get_dict = "get_global_params";
   return python_adapter::CallPyModFn(mod, python_get_dict);
 }
-}  // namespace
 
 class PyExecuteInitializer {
  public:
@@ -60,7 +67,8 @@ class PyExecuteInitializer {
       const auto &infer_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
       return abstract::MakeAbstract(infer_shape, kFloat64);
     }
-    const auto &values_tuple_abs = input_args[2];
+    constexpr auto number_two = 2;
+    const auto &values_tuple_abs = input_args[number_two];
     const auto &values_tuple = values_tuple_abs->BuildValue();
     if (values_tuple == kAnyValue) {
       MS_LOG(EXCEPTION) << "Value tuple should not be anyvalue.";
@@ -102,10 +110,10 @@ class PyExecuteInitializer {
     }
     const auto &global_dict = CallPythonGetGlobalParams();
     const auto &py_script = py::str(script_str->value());
-    auto params = py::tuple(2);
+    auto params = py::tuple(number_two);
     params[0] = global_dict;
     params[1] = local_dict;
-    MS_LOG(DEBUG) << "Python script: " << py_script << ", params: " << params;
+    MS_LOG(DEBUG) << "Python script: " << py_script << ", local_dict: " << local_dict;
     try {
       mindspore::ScopedFallbackRunning fallback_running;
       const auto &output = parse::data_converter::CallPythonScript(py_script, params);
@@ -230,3 +238,4 @@ class PyExecuteInitializer {
 
 static PyExecuteInitializer py_execute_initializer;
 }  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_PYBINDAPI_IR_PY_EXECUTE_PY_H_

@@ -308,10 +308,10 @@ std::pair<std::string, ExceptionType> KernelNotSupportWarning(const CNodePtr &ke
   operator_info << "Operator[" << kernel_name << "] ";
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num > 0) {
-    operator_info << " input(";
+    operator_info << "input(";
     for (size_t i = 0; i < input_num; ++i) {
-      operator_info << TypeIdLabel(input_types[i]);
-      operator_info << "(" << TypeIdLabel(input_object_types[i]) << ")";
+      operator_info << TypeIdLabel(input_object_types[i]);
+      operator_info << "(" << TypeIdLabel(input_types[i]) << ")";
       if (i != input_num - 1) {
         operator_info << ",";
       }
@@ -322,8 +322,8 @@ std::pair<std::string, ExceptionType> KernelNotSupportWarning(const CNodePtr &ke
   if (output_num > 0) {
     operator_info << "output(";
     for (size_t i = 0; i < output_num; ++i) {
-      operator_info << TypeIdLabel(infer_output_types[i]);
-      operator_info << "(" << TypeIdLabel(output_object_types[i]) << ")";
+      operator_info << TypeIdLabel(output_object_types[i]);
+      operator_info << "(" << TypeIdLabel(infer_output_types[i]) << ")";
       if (i != output_num - 1) {
         operator_info << ",";
       }

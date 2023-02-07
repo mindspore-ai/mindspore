@@ -74,7 +74,6 @@
 #include "kernel/akg/akg_kernel_build_manager.h"
 #include "kernel/graph_kernel_info.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
-#include "pybind_api/ir/log_adapter_py.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
@@ -91,8 +90,10 @@
 #include "include/common/debug/rdr/recorder_manager.h"
 #include "ir/cell.h"
 #endif
-
 #include "pybind_api/utils/stub_tensor_py.h"
+
+#include "pybind_api/ir/log_adapter_py.h"  // Only include one-time in the whole project.
+#include "pybind_api/ir/py_execute_py.h"   // Only include one-time in the whole project.
 
 namespace mindspore {
 // namespace to support intermediate representation definition

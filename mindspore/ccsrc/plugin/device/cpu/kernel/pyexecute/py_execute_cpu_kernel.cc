@@ -289,7 +289,8 @@ void TensorToRawMemory(const tensor::TensorPtr &tensor, const AddressPtr &addres
   MS_EXCEPTION_IF_NULL(address);
   const auto &res = memcpy_s(address->addr, address->size, tensor->data_c(), tensor->Size());
   if (res != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy failed. res: " << res;
+    MS_LOG(EXCEPTION) << "memcpy failed. res: " << res << ", dest size: " << address->size
+                      << ", src size: " << tensor->Size();
   }
 }
 
@@ -324,10 +325,11 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   // To call the script with global and local parameters.
   const auto &global_dict = CallPythonGetGlobalParams();
   const auto &py_script = py::str(script);
-  auto params = py::tuple(2);
+  constexpr auto number_two = 2;
+  auto params = py::tuple(number_two);
   params[0] = global_dict;
   params[1] = local_dict;
-  MS_LOG(DEBUG) << "Python script: " << py_script << ", params: " << params;
+  MS_LOG(DEBUG) << "Python script: " << py_script << ", local_dict: " << local_dict;
   try {
     mindspore::ScopedFallbackRunning fallback_running;
     const auto &output = CallPythonScript(py_script, params);
