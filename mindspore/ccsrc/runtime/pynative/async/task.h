@@ -19,13 +19,7 @@
 
 namespace mindspore {
 namespace pynative {
-enum TaskType {
-  kUnknownTask = 0,
-  kOpRunTask,
-  kOpBuildTask,
-  kBpropTask,
-  kExitTask,
-};
+enum TaskType { kUnknownTask = 0, kOpRunTask, kOpBuildTask, kBpropTask, kExitTask, kWaitTask };
 class AsyncTask {
  public:
   explicit AsyncTask(TaskType task_type) : task_type_(task_type) {}
@@ -42,6 +36,13 @@ class ExitTask : public AsyncTask {
  public:
   ExitTask() : AsyncTask(kExitTask) {}
   ~ExitTask() override = default;
+  void Run() override {}
+};
+
+class WaitTask : public AsyncTask {
+ public:
+  WaitTask() : AsyncTask(kWaitTask) {}
+  ~WaitTask() override = default;
   void Run() override {}
 };
 }  // namespace pynative

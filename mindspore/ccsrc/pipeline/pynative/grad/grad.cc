@@ -851,7 +851,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
   if (!already_run_top_cell->need_compile_graph()) {
     MS_LOG(DEBUG) << "No need compile graph";
     // If no need compile, we can finish construct left bprop
-    async_executor_->Reset();
+    async_executor_->Clear();
     top_cell_list_.pop_back();
     set_top_cell(already_run_top_cell);
     top_cell()->UpdateTopCellInfo(false, false, false);
