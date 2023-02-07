@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@
 #include <string>
 #include "utils/ms_utils.h"
 #include "include/backend/visible.h"
+#ifdef __APPLE__
+#include "mindrt/include/async/spinlock.h"
+#endif
 
 namespace mindspore {
 namespace device {
@@ -217,8 +220,13 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   // Erase the idle memory buf by size and device address when idle memory buf is combined.
   void EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mng) const;
 
+#ifdef __APPLE__
+  // There are some problems with using mutex on Mac, use spinlocks instead.
+  SpinLock spin_lock_;
+#else
   // Support multi-thread.
   std::mutex mutex_;
+#endif
   MemStatusManagerPtr persistent_mem_{nullptr};
   MemStatusManagerPtr common_mem_{nullptr};
   // In the graph mode, the unit size set in the context will be modified through the FetchMemUnitSize function, so it
