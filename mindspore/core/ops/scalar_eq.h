@@ -21,12 +21,12 @@
 
 namespace mindspore {
 namespace ops {
-/// \brief ScalarEqual op is used to judge equal between variable scalar.
-class MIND_API ScalarEqual : public BaseOperator {
+/// \brief scalar_eq op is used to judge equal between variable scalar.
+class MIND_API scalar_eq : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(ScalarEqual);
+  MIND_API_BASE_MEMBER(scalar_eq);
   /// \brief Constructor.
-  ScalarEqual() : BaseOperator(prim::kScalarEq) {}
+  scalar_eq() : BaseOperator(prim::kScalarEq) {}
   /// \brief Init.
   void Init() const {}
 };

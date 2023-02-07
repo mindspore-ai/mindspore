@@ -178,6 +178,17 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kBatchToSpaceOpName)
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kBatchToSpaceNDOpName).set_backend_op_name(kBatchToSpaceNDDOpName);
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kCastOpName).set_target_op_name(kCastOpName).set_input_attr_info(1, "int");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kScalarToTensorOpName)
+  .set_target_op_name(kScalarToTensorOpName)
+  .set_input_attr_info(1, "int");
+
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kTupleToTensorOpName)
+  .set_target_op_name(kTupleToTensorOpName)
+  .set_input_attr_info(1, "int");
+
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kListToTensorOpName)
+  .set_target_op_name(kListToTensorOpName)
+  .set_input_attr_info(1, "int");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kCentralizationOpName)
   .set_target_op_name(kCentralizationOpName)

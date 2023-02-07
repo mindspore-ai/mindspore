@@ -781,7 +781,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
   }
 
   // From:
-  //   ListGetItem(list, key)
+  //   list_getitem(list, key)
   // To:
   //   TupleGetItem(list, key)
   AnfNodePtr ConvertListGetItemToTupleGetItem(const CNodePtr &node) {

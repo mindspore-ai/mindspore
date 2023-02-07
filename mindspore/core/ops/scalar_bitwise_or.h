@@ -22,11 +22,11 @@
 namespace mindspore {
 namespace ops {
 /// \brief
-class MIND_API ScalarBitwiseOr : public BaseOperator {
+class MIND_API bit_or : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(ScalarBitwiseOr);
+  MIND_API_BASE_MEMBER(bit_or);
   /// \brief Constructor.
-  ScalarBitwiseOr() : BaseOperator(prim::kScalarBitwiseOr) {}
+  bit_or() : BaseOperator(prim::kScalarBitwiseOr) {}
   /// \brief Init.
   void Init() const {}
 };

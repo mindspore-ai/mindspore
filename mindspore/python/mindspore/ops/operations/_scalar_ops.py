@@ -48,7 +48,7 @@ class ScalarDiv(Primitive):
         """Initialize ScalarDiv"""
 
 
-class ScalarFloorDiv(Primitive):
+class ScalarFloordiv(Primitive):
     r"""
     Computes the quotient of dividing the first input scalar by the second input scalar element-wise.
 
@@ -76,7 +76,7 @@ class ScalarFloorDiv(Primitive):
     """
     @prim_attr_register
     def __init__(self):
-        """Initialize ScalarFloorDiv"""
+        """Initialize ScalarFloordiv"""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
 
@@ -158,7 +158,7 @@ class ScalarMul(Primitive):
         """Initialize ScalarMul"""
 
 
-class ScalarEqual(Primitive):
+class scalar_eq(Primitive):
     r"""
     Computes the equivalence between two Scalars.
 
@@ -184,7 +184,7 @@ class ScalarEqual(Primitive):
         """Initialize ScalarMul"""
 
 
-class ScalarGreater(Primitive):
+class scalar_gt(Primitive):
     r"""
     Compare the value of the input scalars :math:`x,y`, and the output result is a bool value.
 
@@ -207,10 +207,10 @@ class ScalarGreater(Primitive):
     """
     @prim_attr_register
     def __init__(self):
-        """Initialize ScalarGreater"""
+        """Initialize scalar_gt"""
 
 
-class ScalarLess(Primitive):
+class scalar_lt(Primitive):
     r"""
     Computes the boolean value of :math:`x < y`.
 
@@ -233,10 +233,10 @@ class ScalarLess(Primitive):
     """
     @prim_attr_register
     def __init__(self):
-        """Initialize ScalarLess"""
+        """Initialize scalar_lt"""
 
 
-class ScalarGreaterEqual(Primitive):
+class scalar_ge(Primitive):
     r"""
     Compare the value of the input scalars :math:`x,y`, and the output result is a bool value.
 
@@ -259,10 +259,10 @@ class ScalarGreaterEqual(Primitive):
     """
     @prim_attr_register
     def __init__(self):
-        """Initialize ScalarGreaterEqual"""
+        """Initialize scalar_ge"""
 
 
-class ScalarLessEqual(Primitive):
+class scalar_le(Primitive):
     r"""
     Compare the value of the input scalars :math:`x,y`, and the output result is a bool value.
 
@@ -285,7 +285,7 @@ class ScalarLessEqual(Primitive):
     """
     @prim_attr_register
     def __init__(self):
-        """Initialize ScalarLessEqual"""
+        """Initialize scalar_le"""
 
 
 class ScalarMod(Primitive):
@@ -343,7 +343,7 @@ class ScalarBool(Primitive):
         """Initialize ScalarBool"""
 
 
-class ScalarBitwiseAnd(Primitive):
+class bit_and(Primitive):
     r"""
     Returns bitwise `and` of two scalars.
 
@@ -373,7 +373,7 @@ class ScalarBitwiseAnd(Primitive):
         """Initialize ScalarMod"""
 
 
-class ScalarBitwiseOr(Primitive):
+class bit_or(Primitive):
     r"""
     Returns bitwise `or` of two scalars.
 

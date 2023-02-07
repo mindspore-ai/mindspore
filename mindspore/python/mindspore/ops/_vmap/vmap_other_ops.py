@@ -50,7 +50,7 @@ def get_identity_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register("ListGetItem")
+@vmap_rules_getters.register("list_getitem")
 @vmap_rules_getters.register("TupleGetItem")
 def get_seq_get_item_vmap_rule(prim, axis_size):
     """VmapRule for `list_getitem` or `TupleGetItem` operation."""

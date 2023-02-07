@@ -26,8 +26,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr auto kScalarBitwiseAnd = "ScalarBitwiseAnd";
-constexpr auto kScalarBitwiseOr = "ScalarBitwiseOr";
+constexpr auto kScalarBitwiseAnd = "bit_and";
+constexpr auto kScalarBitwiseOr = "bit_or";
 constexpr size_t kInputNum = 2;
 constexpr size_t kInputx = 0;
 constexpr size_t kInputy = 1;
@@ -54,9 +54,6 @@ bool ScalarBitwiseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
                                      const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  if (kernel_name_ != kernel_type_) {
-    MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
-  }
   if (inputs.size() != kInputNum) {
     MS_LOG(EXCEPTION) << "For kernel '" << kernel_type_ << "' input_num must be 2, but got " << inputs.size();
   }
@@ -127,9 +124,9 @@ std::vector<KernelAttr> ScalarBitwiseCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarBitwiseAnd,
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, bit_and,
                                  []() { return std::make_shared<ScalarBitwiseCpuKernelMod>(kScalarBitwiseAnd); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarBitwiseOr,
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, bit_or,
                                  []() { return std::make_shared<ScalarBitwiseCpuKernelMod>(kScalarBitwiseOr); });
 }  // namespace kernel
 }  // namespace mindspore

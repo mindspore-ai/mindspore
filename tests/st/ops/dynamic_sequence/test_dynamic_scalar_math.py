@@ -20,8 +20,9 @@ from tuple_help import TupleFactory
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_add():
     """
@@ -45,8 +46,9 @@ def test_scalar_add():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_sub():
     """
@@ -71,8 +73,9 @@ def test_scalar_sub():
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_mul():
     """
@@ -98,6 +101,7 @@ def test_scalar_mul():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_div():
     """
@@ -121,8 +125,9 @@ def test_scalar_div():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_mod():
     """
@@ -146,8 +151,9 @@ def test_scalar_mod():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_floordiv():
     """
@@ -171,12 +177,13 @@ def test_scalar_floordiv():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_eq():
     """
-    Feature: test ScalarEqual.
+    Feature: test scalar_eq.
     Description: inputs is dynamic scalar.
     Expectation: the result match with numpy result
     """
@@ -196,12 +203,13 @@ def test_scalar_eq():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_ge():
     """
-    Feature: test ScalarGreaterEqual.
+    Feature: test scalar_ge.
     Description: inputs is dynamic scalar.
     Expectation: the result match with numpy result
     """
@@ -223,10 +231,11 @@ def test_scalar_ge():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_gt():
     """
-    Feature: test ScalarGreater.
+    Feature: test scalar_gt.
     Description: inputs is dynamic scalar.
     Expectation: the result match with numpy result
     """
@@ -248,10 +257,11 @@ def test_scalar_gt():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_le():
     """
-    Feature: test ScalarLessEqual.
+    Feature: test scalar_le.
     Description: inputs is dynamic scalar.
     Expectation: the result match with numpy result
     """
@@ -273,10 +283,11 @@ def test_scalar_le():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_lt():
     """
-    Feature: test ScalarLess.
+    Feature: test scalar_lt.
     Description: inputs is dynamic scalar.
     Expectation: the result match with numpy result
     """

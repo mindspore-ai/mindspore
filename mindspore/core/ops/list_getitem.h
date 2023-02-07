@@ -21,13 +21,13 @@
 
 namespace mindspore {
 namespace ops {
-/// \brief ListGetItem op is added to the multi-output node to describe which output of the node, which is only used
+/// \brief list_getitem op is added to the multi-output node to describe which output of the node, which is only used
 /// in FuncGraph.
-class MIND_API ListGetItem : public BaseOperator {
+class MIND_API list_getitem : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(ListGetItem);
+  MIND_API_BASE_MEMBER(list_getitem);
   /// \brief Constructor.
-  ListGetItem() : BaseOperator(prim::kListGetItem) { InitIOName({"input", "index"}, {"output"}); }
+  list_getitem() : BaseOperator(prim::kListGetItem) { InitIOName({"input", "index"}, {"output"}); }
 };
 }  // namespace ops
 }  // namespace mindspore

@@ -64,7 +64,6 @@ class TransposeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
   size_t workspace_size_{0};
   bool is_null_input_;
   bool is_dynamic_perm_{false};
-  bool get_dynamic_perm_value_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
