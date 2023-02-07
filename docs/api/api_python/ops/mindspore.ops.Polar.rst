@@ -1,11 +1,11 @@
 mindspore.ops.Polar
 ====================
 
-.. py:class:: mindspore.ops.Polar(abs, angle)
+.. py:class:: mindspore.ops.Polar
 
     将极坐标转化为笛卡尔坐标。
 
-    返回一个复数Tensor，其元素是与输入极坐标对应的笛卡尔坐标。
+    返回一个复数Tensor，其元素是由输入极坐标构造的笛卡尔坐标。其中极坐标由极径 `abs` 和极角 `angle` 给定。
 
     .. math::
 

@@ -7216,8 +7216,8 @@ class Polar(Primitive):
     r"""
     Converts polar coordinates to Cartesian coordinates.
 
-    Returns a complex tensor whose elements are Cartesian coordinates corresponding to the polar
-    coordinates with absolute value and angle.
+    Returns a complex tensor, its elements are Cartesian coordinates constructed with the polar
+    coordinates which is specified by radial distance `abs` and polar angle `angle`.
 
     .. math::
 
