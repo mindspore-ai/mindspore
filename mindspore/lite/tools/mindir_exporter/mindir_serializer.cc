@@ -19,6 +19,7 @@
 #include <dirent.h>
 #include <fstream>
 #include <set>
+#include <algorithm>
 #include "mindspore/ccsrc/include/common/debug/dump_proto.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "src/common/file_utils.h"
@@ -100,6 +101,81 @@ int MindIRSerializer::RemoveQuantParameterHolder(FuncGraphPtr func_graph) {
   return RET_OK;
 }
 
+int MindIRSerializer::UpdateParamCount(const FuncGraphPtr &func_graph) {
+  auto fv_count = 0;
+  std::vector<AnfNodePtr> params;
+  std::vector<AnfNodePtr> reorder_param;
+  reorder_param.reserve(func_graph->parameters().size());
+  for (const auto &node : func_graph->parameters()) {
+    auto param_node = node->cast<ParameterPtr>();
+    if (param_node == nullptr) {
+      MS_LOG(ERROR) << "The parameters() in func graph should be all Parameter Node. but got " << node->DebugString();
+      return RET_ERROR;
+    }
+    if (param_node->has_default()) {
+      (void)params.emplace_back(param_node);
+      ++fv_count;
+      continue;
+    }
+    (void)reorder_param.emplace_back(param_node);
+  }
+  std::copy(params.begin(), params.end(), std::back_inserter(reorder_param));
+  func_graph->set_parameters(reorder_param);
+  func_graph->set_fv_param_count(fv_count);
+  return RET_OK;
+}
+
+int MindIRSerializer::PreProcSaveTogether(const FuncGraphPtr &func_graph) {
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "func_graph is nullptr.";
+    return RET_ERROR;
+  }
+
+  auto ret = UpdateParamCount(func_graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Update parameter count failed.";
+    return ret;
+  }
+
+  ret = ConvertQuantHolderToQuantizationParam(func_graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "add quant parameter holder failed.";
+    return ret;
+  }
+
+  ret = RemoveQuantParameterHolder(func_graph);
+  if (ret != RET_OK && ret != RET_NO_CHANGE) {
+    MS_LOG(ERROR) << "remove quant parameter holder failed.";
+    return ret;
+  }
+
+  // Parse func_graph as model proto
+  std::string proto_string = GetBinaryProtoString(func_graph);
+  if (proto_string.empty()) {
+    MS_LOG(ERROR) << "parse proto string failed.";
+    return RET_ERROR;
+  }
+
+  if (!model_proto_.ParseFromString(proto_string)) {
+    MS_LOG(ERROR) << "parse model proto from string failed.";
+    return RET_ERROR;
+  }
+
+  ret = ParamDict(func_graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "parse param form funcgraph failed.";
+    return ret;
+  }
+
+  ret = IfSaveTogether(&save_together_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "error occur when check condition of saving together.";
+    return ret;
+  }
+
+  return RET_OK;
+}
+
 int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func_graph is nullptr.";
@@ -116,38 +192,13 @@ int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const Fu
     return ret;
   }
 
-  ret = ConvertQuantHolderToQuantizationParam(func_graph);
+  // Serialize to protobuf using unique parameter name label.
+  common::SetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID", "1", 0);
+
+  // Do preprocess on func_graph and check conditions for saving together.
+  ret = PreProcSaveTogether(func_graph);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "add quant parameter holder failed.";
-    return ret;
-  }
-
-  ret = RemoveQuantParameterHolder(func_graph);
-  if (ret != RET_OK && ret != RET_NO_CHANGE) {
-    MS_LOG(ERROR) << "remove quant parameter holder failed.";
-    return ret;
-  }
-
-  auto proto_string = GetBinaryProtoString(func_graph);
-  if (proto_string.empty()) {
-    MS_LOG(ERROR) << "parse proto string failed.";
-    return RET_NULL_PTR;
-  }
-
-  if (!model_proto_.ParseFromString(proto_string)) {
-    MS_LOG(ERROR) << "parse model proto from string failed.";
-    return RET_NULL_PTR;
-  }
-
-  ret = ParamDict(func_graph);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "parse param form funcgraph failed.";
-    return ret;
-  }
-
-  ret = IfSaveTogether(&save_together_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "error occur when check condition of saving together.";
+    MS_LOG(ERROR) << "PreProcSaveTogether failed";
     return ret;
   }
 
@@ -550,14 +601,17 @@ int MindIRSerializer::GetBuffAndSize(void **buff, size_t *size) {
   return RET_OK;
 }
 
-int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph, void **buff,
-                    size_t *size) {
+int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph, bool need_buff,
+                    void **buff, size_t *size) {
   mindspore::lite::MindIRSerializer serializer;
   auto ret = serializer.Save(param, func_graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MindIR serialize fail";
     return ret;
   }
-  return serializer.GetBuffAndSize(buff, size);
+  if (need_buff) {
+    return serializer.GetBuffAndSize(buff, size);
+  }
+  return RET_OK;
 }
 }  // namespace mindspore::lite

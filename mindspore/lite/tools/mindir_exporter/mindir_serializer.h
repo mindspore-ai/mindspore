@@ -42,6 +42,7 @@ class MindIRSerializer {
   }
   int Save(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph);
   int GetBuffAndSize(void **buff, size_t *size);
+  int PreProcSaveTogether(const FuncGraphPtr &func_graph);
 
  private:
   int ParserPath(const std::string &output_path);
@@ -52,6 +53,7 @@ class MindIRSerializer {
   int ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &func_graph);
   std::shared_ptr<mindspore::QuantizationParam> ConvertQuantParamTToQuantizationParam(
     std::vector<schema::QuantParamT> quant_param);
+  int UpdateParamCount(const FuncGraphPtr &func_graph);
 
  private:
   int ParamDict(const FuncGraphPtr &func_graph);
@@ -77,7 +79,7 @@ class MindIRSerializer {
   std::shared_ptr<system::FileSystem> fs_{};
 };
 // export func_graph
-int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph, void **buff,
-                    size_t *size);
+int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph, bool need_buff,
+                    void **buff, size_t *size);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_MINDIR_EXPORTER_MINDIR_SERIALIZER_H_
