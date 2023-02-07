@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,9 @@ int64_t GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<Abs
       auto n_value_ptr = n_value->BuildValue();
       MS_EXCEPTION_IF_NULL(n_value_ptr);
       auto n_value_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue("num_segments", n_value_ptr, op_name);
+      if (n_value_ptr_tensor.empty()) {
+        MS_EXCEPTION(ValueError) << "For '" << op_name << "' the third input should be an int value, but got empty.";
+      }
       num_segments_v = n_value_ptr_tensor.back();
     } else {
       num_segments_v = abstract::Shape::kShapeDimAny;
