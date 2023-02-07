@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -747,7 +747,8 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   }
   (*kernel_json)[kJsonKeyId] = 0;  // unused key
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
-  (*kernel_json)[kJsonKeyPlatform] = "AKG";
+  const auto &flags = GraphKernelFlags::GetInstance();
+  (*kernel_json)[kJsonKeyPlatform] = flags.kernel_generator;
   (*kernel_json)[kJsonKeyComposite] = false;
 
   GetIOSize(*kernel_json, &input_size_list_, &output_size_list_);
@@ -856,7 +857,8 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   }
   (*kernel_json)[kJsonKeyId] = 0;  // unused key
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
-  (*kernel_json)[kJsonKeyPlatform] = "AKG";
+  const auto &flags = GraphKernelFlags::GetInstance();
+  (*kernel_json)[kJsonKeyPlatform] = flags.kernel_generator;
   (*kernel_json)[kJsonKeyComposite] = true;
   (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString();
   if (fg->has_attr(kAttrNodeName)) {

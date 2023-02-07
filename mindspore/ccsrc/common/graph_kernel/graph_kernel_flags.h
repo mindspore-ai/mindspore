@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,6 +197,12 @@ class BACKEND_EXPORT GraphKernelFlags {
   std::string cpu_arch;
   std::string cpu_feature;
   std::string cpu_type;
+
+  /**
+   * Kernel Generator.
+   * The generator used to compile kernels, AKG or BISHENG.
+   */
+  std::string kernel_generator{"AKG"};
 
   /**
    * Additional expanding operators (case sensitive).

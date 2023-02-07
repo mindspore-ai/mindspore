@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@
 namespace mindspore {
 namespace kernel {
 constexpr auto kAkgKernelMeta = "akg_kernel_meta/";
+constexpr auto kBishengKernelMeta = "bisheng_kernel_meta/";
 constexpr auto kProcessorAiCore = "aicore";
 constexpr auto kProcessorAiCpu = "aicpu";
 constexpr auto kProcessorCuda = "cuda";
