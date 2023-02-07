@@ -179,7 +179,6 @@ void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     // Update Graph Dynamic Shape Attr.
     opt::AddDynamicShapeAttrPass(kernel_graph);
 
-    kernel_graph->SetKernelObjectTypesForUnrealNodes();
     SetOperatorInfo(kernel_graph);
     // SetOperatorInfo may generate new node, so need set kernel object type again.
     kernel_graph->SetKernelObjectTypesForUnrealNodes();

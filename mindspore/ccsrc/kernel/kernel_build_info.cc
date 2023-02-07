@@ -69,10 +69,14 @@ TypeId KernelBuildInfo::GetOutputDeviceType(size_t output_index) const {
 
 KernelObjectType KernelBuildInfo::GetInputKernelObjectType(size_t input_index) const {
   if (input_index >= inputs_kernel_object_type_.size()) {
-#ifdef ENABLE_TUPLE_UNFOLD
-    MS_LOG(DEBUG) << "The input index [" << input_index
-                  << "] is exceed the number of input:" << inputs_kernel_object_type_.size();
-#endif
+    bool has_tuple_unfold =
+      std::any_of(inputs_kernel_object_type_.begin(), inputs_kernel_object_type_.end(),
+                  [](const KernelObjectType &obj_type) { return obj_type == KernelObjectType::TUPLE_UNFOLD; });
+    // tuple unfold may correspond to many formats or dtypes
+    if (!has_tuple_unfold) {
+      MS_LOG(ERROR) << "The input index [" << input_index
+                    << "] is exceed the number of input:" << inputs_kernel_object_type_.size();
+    }
     return KernelObjectType::UNKNOWN_TYPE;
   }
   return inputs_kernel_object_type_[input_index];
@@ -80,10 +84,14 @@ KernelObjectType KernelBuildInfo::GetInputKernelObjectType(size_t input_index) c
 
 KernelObjectType KernelBuildInfo::GetOutputKernelObjectType(size_t output_index) const {
   if (output_index >= outputs_kernel_object_type_.size()) {
-#ifdef ENABLE_TUPLE_UNFOLD
-    MS_LOG(DEBUG) << "The output index [" << output_index
-                  << "] is exceed the number of output:" << outputs_kernel_object_type_.size();
-#endif
+    bool has_tuple_unfold =
+      std::any_of(outputs_kernel_object_type_.begin(), outputs_kernel_object_type_.end(),
+                  [](const KernelObjectType &obj_type) { return obj_type == KernelObjectType::TUPLE_UNFOLD; });
+    // tuple unfold may correspond to many formats or dtypes
+    if (!has_tuple_unfold) {
+      MS_LOG(ERROR) << "The output index [" << output_index
+                    << "] is exceed the number of output:" << outputs_kernel_object_type_.size();
+    }
     return KernelObjectType::UNKNOWN_TYPE;
   }
   return outputs_kernel_object_type_[output_index];

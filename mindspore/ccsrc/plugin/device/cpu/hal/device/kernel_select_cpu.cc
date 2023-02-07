@@ -360,6 +360,10 @@ void UpdateDynamicKernelBuildInfo(const CNodePtr &kernel_node) {
   auto output_object_types =
     kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(kernel_node));
   kernel::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types);
+  kernel::UnfoldKernelBuildInfo(kernel_node);
+  if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
+    kernel::SetDynamicInputSizeAttr(kernel_node);
+  }
 }
 
 bool CheckKernelInfo(const std::shared_ptr<KernelBuildInfo> &alternative_kernel_info,
