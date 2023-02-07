@@ -104,7 +104,8 @@ int RemoveTransitivityOp::HandleConcat(const FuncGraphPtr &func_graph, const CNo
     return lite::RET_OK;
   }
   if (concat->size() != kInputSizeTwo || CheckPrimitiveType(concat->input(1), prim::kPrimMakeTuple) ||
-      CheckPrimitiveType(concat->input(1), kPrimMakeTupleV2)) {
+      CheckPrimitiveType(concat->input(1), kPrimMakeTupleV2) ||
+      CheckPrimitiveType(concat->input(1), prim::kPrimSplit)) {
     return lite::RET_OK;
   }
   return DoReplace(func_graph, concat);

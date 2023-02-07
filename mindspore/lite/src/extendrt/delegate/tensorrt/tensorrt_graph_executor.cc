@@ -260,6 +260,8 @@ TensorRTExecutor::TensorRTExecutor(const std::shared_ptr<mindspore::Context> &co
     : context_(context), config_infos_(config_infos) {}
 
 TensorRTExecutor::~TensorRTExecutor() {
+  // delete tensorrt_graph_ before delete runtime
+  tensorrt_graph_.reset();
   if (runtime_ != nullptr) {
     delete runtime_;
   }
