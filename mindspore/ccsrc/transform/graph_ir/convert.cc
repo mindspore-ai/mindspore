@@ -1796,15 +1796,6 @@ OutHandler DfGraphConvertor::GetNormalOpInput(const AnfNodePtr &node, const AnfN
     return out_handler;
   }
 
-  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
-    uint64_t output_index = 0;
-    TraceTupleGetItem(node->cast<CNodePtr>(), &output_index);
-    auto adpt = FindAdapter(pred, training_);
-    MS_EXCEPTION_IF_NULL(adpt);
-    out_handler = adpt->getOutput(Convert(pred), static_cast<int32_t>(output_index));
-    return out_handler;
-  }
-
   if (out_handle_cache_.find(pred.get()) != out_handle_cache_.end()) {
     return out_handle_cache_[pred.get()];
   }
@@ -1851,8 +1842,7 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
     MS_EXCEPTION_IF_NULL(pred_adpt);
     // When node's output is dynamic or node has multiple output, it need to get all handles.
     // TupleGetItem's input is dynamic output(eg:MakeTuple), but it only need to get one handle.
-    if ((pred_adpt->IsDyOutputOp(0) || pred_adpt->IsMultipleOutputOp()) &&
-        !IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    if ((pred_adpt->IsDyOutputOp(0) || pred_adpt->IsMultipleOutputOp())) {
       MS_EXCEPTION_IF_NULL(Convert(input));
       handles = pred_adpt->getOutputs(Convert(input));
     } else {
@@ -1862,6 +1852,20 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
       }
     }
   }
+
+  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    uint64_t output_index = 0;
+    std::vector<OutHandler> return_handles;
+    TraceTupleGetItem(node->cast<CNodePtr>(), &output_index);
+    if (output_index >= handles.size()) {
+      MS_LOG(EXCEPTION) << "Node output index " << output_index << "is out of range [0," << handles.size()
+                        << "), node: " << node->fullname_with_scope()
+                        << ", input node: " << input->fullname_with_scope();
+    }
+    return_handles.emplace_back(handles[output_index]);
+    return return_handles;
+  }
+
   return handles;
 }
 
