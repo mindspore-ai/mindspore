@@ -1229,7 +1229,7 @@ void SessionBasic::Summary(KernelGraph *graph) {
 
 void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph) const {
   std::vector<AnfNodePtr> make_tuple_inputs;
-  make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
+  make_tuple_inputs.push_back(NewValueNode(std::make_shared<Primitive>(*prim::kPrimMakeTuple)));
   MS_EXCEPTION_IF_NULL(graph);
   if (AnfAlgo::GetOutputElementNum(cnode) > 1) {
     for (size_t output_index = 0; output_index < AnfAlgo::GetOutputElementNum(cnode); output_index++) {
@@ -1237,7 +1237,7 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
       MS_EXCEPTION_IF_NULL(idx);
       auto imm = std::make_shared<Int64Imm>(output_index);
       idx->set_abstract(std::make_shared<abstract::AbstractScalar>(imm));
-      auto getitem = graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode, idx});
+      auto getitem = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(*prim::kPrimTupleGetItem)), cnode, idx});
       std::vector<TypeId> types = {common::AnfAlgo::GetOutputInferDataType(cnode, output_index)};
       auto shapes = {common::AnfAlgo::GetOutputInferShape(cnode, output_index)};
       common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, getitem.get());
