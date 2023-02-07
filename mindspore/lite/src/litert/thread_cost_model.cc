@@ -54,6 +54,9 @@ const std::map<int32_t, float> kernel_compute_cost_map_ = {
   {TC_TYPE(schema::PrimitiveType_RealDiv, schema::ActivationType_RELU6), 13.65625f},         // dataNum about 15k
   {TC_TYPE(schema::PrimitiveType_RealDiv, schema::ActivationType_NO_ACTIVATION), 6.65625f},  // dataNum about 30k
 
+  {TC_TYPE(schema::PrimitiveType_Minimum, schema::ActivationType_NO_ACTIVATION), 6.65625f},  // dataNum about 30k
+  {TC_TYPE(schema::PrimitiveType_Maximum, schema::ActivationType_NO_ACTIVATION), 6.65625f},  // dataNum about 30k
+
   {TC_TYPE(schema::PrimitiveType_StridedSlice, 0), 38.027f},  // type 0 : parallel on outer tile, dataNum about 5.2k
   {TC_TYPE(schema::PrimitiveType_StridedSlice, 1), 42.042f},  // type 1 : parallel on split axis, dataNum about 4.5k
 
