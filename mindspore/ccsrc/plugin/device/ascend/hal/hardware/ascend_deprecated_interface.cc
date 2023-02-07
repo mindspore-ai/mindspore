@@ -31,6 +31,7 @@
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"
+#include "graph/utils/graph_utils_ex.h"
 
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
@@ -166,7 +167,7 @@ void AscendDeprecatedInterface::ExportDFGraph(const std::string &file_name, cons
     }
     // get model stream
     ::ge::Model model("", "");
-    model.SetGraph(*ge_graph);
+    model.SetGraph(::ge::GraphUtilsEx::GetComputeGraph(*ge_graph));
     ::ge::Buffer model_data;
     auto ge_ret = model.Save(model_data);
     if (ge_ret != ::ge::SUCCESS) {

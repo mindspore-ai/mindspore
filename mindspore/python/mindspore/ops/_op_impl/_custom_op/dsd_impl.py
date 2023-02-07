@@ -15,7 +15,7 @@
 """ dense sparse to densne matmul"""
 from __future__ import absolute_import
 from te import tik
-from topi.cce import util
+from tbe.tvm.topi.cce import util
 from mindspore.ops.op_info_register import DataType, TBERegOp, op_info_register
 
 dsd_matmul_info = TBERegOp('DSDMatmul') \

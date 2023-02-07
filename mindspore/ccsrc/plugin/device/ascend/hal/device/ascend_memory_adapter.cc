@@ -254,7 +254,7 @@ size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
 
 uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
   uint8_t *ptr = nullptr;
-  auto ret = rtMalloc(reinterpret_cast<void **>(&ptr), size, RT_MEMORY_HBM);
+  auto ret = rtMalloc(reinterpret_cast<void **>(&ptr), size, RT_MEMORY_HBM, 0);
   if (ret != ACL_RT_SUCCESS) {
     if (ret == ACL_ERROR_RT_MEMORY_ALLOCATION) {
       auto context_ptr = MsContext::GetInstance();

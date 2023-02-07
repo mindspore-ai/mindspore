@@ -224,14 +224,14 @@ bool AicpuOpKernelLoad::CacheBinaryFileToDevice(const uintptr_t &resource_id, st
     void *d_aicpu_data = nullptr;
     void *d_so_name = nullptr;
 
-    status = rtMalloc(&d_aicpu_data, aicpu_data_length, RT_MEMORY_HBM);
+    status = rtMalloc(&d_aicpu_data, aicpu_data_length, RT_MEMORY_HBM, 0);
     if (status != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "Call rtMalloc failed, size:" << aicpu_data_length << ", ret = 0x" << status;
       return false;
     }
     allocated_mem->emplace_back(d_aicpu_data);
 
-    status = rtMalloc(&d_so_name, so_name.size(), RT_MEMORY_HBM);
+    status = rtMalloc(&d_so_name, so_name.size(), RT_MEMORY_HBM, 0);
     if (status != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "Call rtMalloc failed, size:" << so_name.size() << ", ret = 0x" << status;
       return false;
@@ -267,7 +267,7 @@ bool AicpuOpKernelLoad::CacheBinaryFileToDevice(const uintptr_t &resource_id, st
 
   void *args = nullptr;
   uint32_t args_size = sizeof(CustAicpuSoBuf) * v_cust_so.size();
-  status = rtMalloc(&args, args_size, RT_MEMORY_HBM);
+  status = rtMalloc(&args, args_size, RT_MEMORY_HBM, 0);
   if (status != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtMalloc failed, size:" << args_size << ", ret = 0x" << status;
     return false;

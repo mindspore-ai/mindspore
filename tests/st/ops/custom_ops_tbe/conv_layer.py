@@ -15,9 +15,9 @@
 import te.lang.cce
 from te import tvm
 from te.platform import CUBE_MKN
-from topi import generic
-from topi.cce import util
-from topi.cce.util import is_v200_version
+from tbe.tvm.topi import generic
+from tbe.tvm.topi.cce import util
+from tbe.tvm.topi.cce.util import is_v200_version
 
 # pylint: disable=R0912,R0913,R0914,R0915,E1101
 # the dim of shape in conv must be 4

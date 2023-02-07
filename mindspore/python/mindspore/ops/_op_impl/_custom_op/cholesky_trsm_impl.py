@@ -17,7 +17,7 @@ from __future__ import absolute_import
 import logging
 
 from te import tik
-from topi.cce import util
+from tbe.tvm.topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")

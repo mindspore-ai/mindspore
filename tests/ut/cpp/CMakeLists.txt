@@ -34,6 +34,10 @@ include_directories(${CMAKE_BINARY_DIR}/proto/metadef_protos)
 include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
+# graphengine include directories
+if(ENABLE_D OR ENABLE_ACL OR ENABLE_TESTCASES)
+    include(${CMAKE_SOURCE_DIR}/cmake/graphengine_variables.cmake)
+endif()
 MESSAGE("check  ut_test ${CMAKE_BINARY_DIR}")
 
 link_directories(${MS_CCSRC_BUILD_PATH})

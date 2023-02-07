@@ -184,7 +184,7 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
   }
   std::string proto_json;
   (void)google::protobuf::util::MessageToJsonString(op_mapping_info, &proto_json);
-  rtError_t rt_ret = rtMalloc(&proto_dev_mem_, proto_size, RT_MEMORY_HBM);
+  rtError_t rt_ret = rtMalloc(&proto_dev_mem_, proto_size, RT_MEMORY_HBM, 0);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "[KernelDumper] Call rt api rtMalloc failed, ret = " << rt_ret;
     return;
@@ -196,7 +196,7 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
     return;
   }
 
-  rt_ret = rtMalloc(&proto_size_dev_mem_, sizeof(size_t), RT_MEMORY_HBM);
+  rt_ret = rtMalloc(&proto_size_dev_mem_, sizeof(size_t), RT_MEMORY_HBM, 0);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "[KernelDumper] Call rt api rtMalloc failed, ret = " << rt_ret;
     return;
@@ -372,7 +372,7 @@ void KernelDumper::MallocP2PDebugMem(const void *const op_debug_addr) {
     MS_LOG(EXCEPTION) << "[KernelDumper] Call rt api rtGetRtCapability failed, ret = " << rt_ret;
   }
   auto memory_type = (value == static_cast<int64_t>(RT_CAPABILITY_SUPPORT)) ? RT_MEMORY_TS : RT_MEMORY_HBM;
-  rtMalloc(&p2p_debug_addr_, kDebugP2pSize, memory_type);
+  rtMalloc(&p2p_debug_addr_, kDebugP2pSize, memory_type, 0);
   rtMemcpy(p2p_debug_addr_, sizeof(uint64_t), &debug_addrs_tmp, sizeof(uint64_t), RT_MEMCPY_HOST_TO_DEVICE);
 }
 
@@ -416,7 +416,7 @@ void KernelDumper::OpDebugRegisterForStream(const CNodePtr &kernel) {
       MS_LOG(EXCEPTION) << "[KernelDumper] Call rt api rtGetRtCapability failed, ret = " << rt_ret;
     }
     auto memory_type = (value == static_cast<int64_t>(RT_CAPABILITY_SUPPORT)) ? RT_MEMORY_TS : RT_MEMORY_HBM;
-    rt_ret = rtMalloc(&op_debug_task->op_debug_addr, kOpDebugMemorySize, memory_type);
+    rt_ret = rtMalloc(&op_debug_task->op_debug_addr, kOpDebugMemorySize, memory_type, 0);
     if (rt_ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "[KernelDumper] Call rt api rtMalloc failed, ret = " << rt_ret;
     }

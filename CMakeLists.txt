@@ -110,17 +110,17 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 set(MS_CCSRC_PATH ${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
 set(MS_CCSRC_BUILD_PATH ${BUILD_PATH}/mindspore/mindspore/ccsrc)
 
-if(ENABLE_D OR ENABLE_ACL OR ENABLE_TESTCASES)
-    include(${CMAKE_SOURCE_DIR}/cmake/dependency_graphengine.cmake)
-endif()
-
 if(NOT MSVC)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/init.cmake)
-add_subdirectory_with_faster_option(mindspore/ccsrc)
 add_subdirectory(mindspore/core)
+if(ENABLE_D OR ENABLE_ACL OR ENABLE_TESTCASES)
+    include(${CMAKE_SOURCE_DIR}/cmake/dependency_graphengine.cmake)
+endif()
+
+add_subdirectory_with_faster_option(mindspore/ccsrc)
 
 if(ENABLE_TESTCASES OR ENABLE_CPP_ST)
     add_subdirectory(tests)

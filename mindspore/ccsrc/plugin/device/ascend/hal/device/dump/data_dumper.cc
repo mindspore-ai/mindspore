@@ -277,12 +277,12 @@ void DataDumper::OpDebugRegister() {
     MS_LOG(EXCEPTION) << "[DataDump] Call rt api rtGetRtCapability failed, ret = " << rt_ret;
   }
   auto memory_type = (value == static_cast<int64_t>(RT_CAPABILITY_SUPPORT)) ? RT_MEMORY_TS : RT_MEMORY_HBM;
-  rt_ret = rtMalloc(&op_debug_buffer_addr_, kOpDebugHostMemSize, memory_type);
+  rt_ret = rtMalloc(&op_debug_buffer_addr_, kOpDebugHostMemSize, memory_type, 0);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "[DataDump] Call rt api rtMalloc failed, ret = " << rt_ret;
   }
 
-  rt_ret = rtMalloc(&op_debug_dump_args_, kOpDebugDevMemSize, RT_MEMORY_HBM);
+  rt_ret = rtMalloc(&op_debug_dump_args_, kOpDebugDevMemSize, RT_MEMORY_HBM, 0);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "[DataDump] Call rtMalloc failed, ret = " << rt_ret;
   }

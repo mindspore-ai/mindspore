@@ -415,7 +415,8 @@
     "TransData ": "support boll",
     "ScatterNdD ": "Accuracy issues",
     "Trace": "Hadn't adapted tbe implementation",
-    "AssignAdd": "Frac_nz in pangu not support"
+    "AssignAdd": "Frac_nz in pangu not support",
+    "Range": "not support dynamic shape with tiling failed"
   },
   "SkipNodes": [
     "BroadcastTo",
@@ -444,7 +445,8 @@
     "ACos",
     "TransData",
     "ScatterNdD",
-    "AssignAdd"
+    "AssignAdd",
+    "Range"
   ],
   "FallbackOps": {
     "DeformableOffsets": [
