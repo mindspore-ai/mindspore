@@ -265,6 +265,7 @@ void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std
   builder->SetInputsDeviceType(input_types);
   builder->SetOutputsFormat(output_formats);
   builder->SetOutputsDeviceType(output_types);
+  builder->SetKernelType(KernelType::CPU_KERNEL);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node);
 }
 

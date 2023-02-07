@@ -54,6 +54,8 @@ class MockInsertTransOpKernelSelectTrans4Dto5D : public KernelSelect {
       builder.SetOutputsDeviceType({kFloat16->type_id()});
       builder.SetInputsReshapeType({""});
       builder.SetOutputsReshapeType({""});
+      builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+      builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
     } else {
       KernelBuildInfoBuilder builder;
@@ -63,8 +65,9 @@ class MockInsertTransOpKernelSelectTrans4Dto5D : public KernelSelect {
       builder.SetOutputsDeviceType({kFloat16->type_id()});
       builder.SetInputsReshapeType({""});
       builder.SetOutputsReshapeType({""});
+      builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+      builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
-
     }
   }
 };
@@ -82,6 +85,8 @@ class MockTransdataSplitKernelSelect : public KernelSelect {
       builder.SetOutputsDeviceType({kFloat16->type_id()});
       builder.SetInputsReshapeType({""});
       builder.SetOutputsReshapeType({""});
+      builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+      builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
     } else {
       KernelBuildInfoBuilder builder;
@@ -91,6 +96,8 @@ class MockTransdataSplitKernelSelect : public KernelSelect {
       builder.SetOutputsDeviceType({kFloat16->type_id()});
       builder.SetInputsReshapeType({""});
       builder.SetOutputsReshapeType({""});
+      builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+      builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
     }
   }
@@ -128,6 +135,8 @@ TEST_F(TestHWTransdataSplit, test_transdata_split_fraz_nchw) {
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetInputsReshapeType({""});
   builder.SetOutputsReshapeType({""});
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   auto kernel_info = std::make_shared<device::KernelInfo>();
   kernel_info->set_select_kernel_build_info(builder.Build());
   transpose->set_kernel_info(kernel_info);
@@ -176,6 +185,8 @@ TEST_F(TestHWTransdataSplit, test_transdata_split_nchw_fraz) {
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetInputsReshapeType({""});
   builder.SetOutputsReshapeType({""});
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   auto kernel_info = std::make_shared<device::KernelInfo>();
   kernel_info->set_select_kernel_build_info(builder.Build());
   transpose->set_kernel_info(kernel_info);

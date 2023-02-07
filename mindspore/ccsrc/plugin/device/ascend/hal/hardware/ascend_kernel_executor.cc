@@ -116,32 +116,8 @@ void AscendKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   }
 }
 
-// Before creating the kernel, check whether the node has completed the operator selection. If not, the operator
-// selection needs to be performed to set kernel info.
-void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
-  // Check whether the node has completed kernel selection.
-  for (const auto &node : nodes) {
-    if (AnfAlgo::GetSelectKernelBuildInfo(node) != nullptr) {
-      continue;
-    }
-
-    // Kernel selection process.
-    auto [status, msg, etype] = SelectKernelInfoWithMsg(node);
-    if (status == device::ascend::kNoMatched) {
-      auto graph = AnfAlgo::FetchKernelGraph(node.get());
-      if (graph == nullptr || graph->is_from_single_op() || graph->is_graph_run_mode()) {
-        MS_EXCEPTION(etype) << msg;
-      }
-      MS_LOG(INFO) << "Try to use backoff CPU kernel, node:" << node->fullname_with_scope();
-      std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
-      AnfAlgo::SetKernelSelectBackoffInfo(node, failure_info);
-      continue;
-    }
-  }
-}
-
 void AscendKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
-  SetKernelInfoBeforeCreateKernel(nodes);
+  SelectKernelInfoAfterKernelSelect(nodes);
 
   MS_LOG(INFO) << "Status record: start create kernel.";
   PROF_START(create_kernel);

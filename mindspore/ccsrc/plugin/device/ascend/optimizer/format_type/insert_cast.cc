@@ -94,7 +94,15 @@ AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &o
   }
   MS_EXCEPTION_IF_NULL(cnode->Type());
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  // Single output
+  // Single output, output is TUPLE
+  if (AnfUtils::IsRealKernel(cnode) &&
+      AnfAlgo::GetOutputKernelObjectType(cnode, 0) == kernel::KernelObjectType::TUPLE) {
+    // output is real tuple
+    MS_LOG(INFO) << "The output's ObjectType is TUPLE, can not insert cast yet, skip it. Node: "
+                 << cnode->fullname_with_scope();
+    return cnode;
+  }
+  // Single output, output is not TUPLE
   if (!cnode->Type()->isa<Tuple>()) {
     const std::string dev_fmt = AnfAlgo::GetOutputFormat(cnode, 0);
     const abstract::BaseShapePtr origin_shape = common::AnfAlgo::GetOutputDetailShape(cnode, 0);

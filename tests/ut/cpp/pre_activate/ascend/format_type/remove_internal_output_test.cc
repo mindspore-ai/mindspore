@@ -54,9 +54,11 @@ class TestHWRemoveInternalOutput : public BackendCommon {
     builder.SetInputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
     builder.SetInputsDeviceType({kFloat32->type_id(), kFloat32->type_id()});
     builder.SetInputsReshapeType({"", ""});
+    builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR, kernel::KernelObjectType::TENSOR});
     builder.SetOutputsReshapeType({""});
     builder.SetOutputsFormat({kOpFormat_NC1HWC0});
     builder.SetOutputsDeviceType({kFloat16->type_id()});
+    builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
     add->set_kernel_info(std::make_shared<device::KernelInfo>());
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), add.get());
     return kg;
@@ -84,8 +86,10 @@ class TestHWRemoveInternalOutput : public BackendCommon {
     builder.SetOutputsReshapeType({"", ""});
     builder.SetInputsFormat({kOpFormat_DEFAULT});
     builder.SetInputsDeviceType({kFloat32->type_id()});
+    builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
     builder.SetOutputsFormat({kOpFormat_NC1HWC0, kOpFormat_NC1HWC0});
     builder.SetOutputsDeviceType({kFloat16->type_id(), kFloat16->type_id()});
+    builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR, kernel::KernelObjectType::TENSOR});
     max_pool->set_kernel_info(std::make_shared<device::KernelInfo>());
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), max_pool.get());
     return kg;

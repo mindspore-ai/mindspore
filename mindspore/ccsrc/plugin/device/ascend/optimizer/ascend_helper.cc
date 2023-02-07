@@ -471,13 +471,24 @@ AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(func_graph);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   // Single output
-  if (outputs_num == 1 && (!common::AnfAlgo::IsTupleOutput(node))) {
-    auto new_node = InsertTransOpForSingleOutput(func_graph, node, kernel_select);
-    if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node, 0)) {
-      kernel_graph->ReplaceInternalOutput(node, new_node);
+
+  if (outputs_num == 1) {
+    if (AnfUtils::IsRealKernel(node) &&
+        AnfAlgo::GetOutputKernelObjectType(node, 0) == kernel::KernelObjectType::TUPLE) {
+      // output is real tuple
+      MS_LOG(INFO) << "The output's ObjectType is TUPLE, can not insert transdata yet, skip it. Node: "
+                   << node->fullname_with_scope();
+      return node;
+    } else {
+      // output is tensor/scalar, not real tuple
+      auto new_node = InsertTransOpForSingleOutput(func_graph, node, kernel_select);
+      if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node, 0)) {
+        kernel_graph->ReplaceInternalOutput(node, new_node);
+      }
+      return new_node;
     }
-    return new_node;
   }
+
   // Multiple output
   return InsertTransOpForMultipleOutput(func_graph, orig_node, node, kernel_select);
 }
@@ -517,11 +528,21 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
   for (size_t input_index = 0; input_index < in_num; ++input_index) {
     auto cur_input = common::AnfAlgo::GetInputNode(cnode, input_index);
     MS_EXCEPTION_IF_NULL(cur_input);
+
     if (HasAbstractMonad(cur_input)) {
       // No cast for monad inputs.
       new_inputs.push_back(cur_input);
       continue;
     }
+    // If input is TUPLE, skip insert cast
+    if (AnfUtils::IsRealKernel(cnode) &&
+        AnfAlgo::GetInputKernelObjectType(cnode, input_index) == kernel::KernelObjectType::TUPLE) {
+      MS_LOG(INFO) << "The node's InputObjectType is TUPLE, can not insert cast yet, skip it. Node: "
+                   << cnode->fullname_with_scope();
+      new_inputs.push_back(cur_input);
+      continue;
+    }
+
     auto prev_node = common::AnfAlgo::GetPrevNodeOutput(cnode, input_index);
     const auto infer_type = common::AnfAlgo::GetOutputInferDataType(prev_node.first, prev_node.second);
     TypeId origin_type(kTypeUnknown);

@@ -62,6 +62,8 @@ class MockEliminate5To4And4To5KernelSelect : public KernelSelect {
     builder.SetInputsDeviceType({kFloat16->type_id()});
     builder.SetOutputsFormat({"NC1HWC0"});
     builder.SetOutputsDeviceType({kFloat16->type_id()});
+    builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+    builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
   }
 };
@@ -106,6 +108,8 @@ TEST_F(TestHWEliminateRedundantOp, test_eliminate_5to4_4to5) {
   builder.SetOutputsDeviceType({kFloat16->type_id()});
   builder.SetInputsReshapeType({"", ""});
   builder.SetOutputsReshapeType({""});
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR, kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   sub->set_kernel_info(std::make_shared<device::KernelInfo>());
   add->set_kernel_info(std::make_shared<device::KernelInfo>());
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), sub.get());
@@ -173,6 +177,8 @@ TEST_F(TestHWEliminateRedundantOp, test_eliminate_cast) {
   builder.SetOutputsDeviceType({kFloat16->type_id()});
   builder.SetInputsReshapeType({"", ""});
   builder.SetOutputsReshapeType({"", ""});
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR, kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR, kernel::KernelObjectType::TENSOR});
   sub->set_kernel_info(std::make_shared<device::KernelInfo>());
   add->set_kernel_info(std::make_shared<device::KernelInfo>());
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), sub.get());
@@ -250,6 +256,8 @@ TEST_F(TestHWEliminateRedundantOp, test_eliminate_cast_depend_cast) {
   builder.SetOutputsDeviceType({kFloat16->type_id()});
   builder.SetInputsReshapeType({"", ""});
   builder.SetOutputsReshapeType({""});
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR, kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   sub->set_kernel_info(std::make_shared<device::KernelInfo>());
   add->set_kernel_info(std::make_shared<device::KernelInfo>());
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), sub.get());

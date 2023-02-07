@@ -72,6 +72,8 @@ TEST_F(TestHWTransposeTransdataFusion, test_transpose_transdata_fusion) {
   builder.SetKernelType(KernelType::TBE_KERNEL);
   builder.SetFusionType(kernel::kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   auto kernel_info = std::make_shared<device::KernelInfo>();
   kernel_info->set_select_kernel_build_info(builder.Build());
   transpose->set_kernel_info(kernel_info);
@@ -95,6 +97,8 @@ TEST_F(TestHWTransposeTransdataFusion, test_transpose_transdata_fusion) {
       builder2.SetOutputsDeviceType({kFloat16->type_id()});
       builder2.SetInputsReshapeType({""});
       builder2.SetOutputsReshapeType({""});
+      builder2.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+      builder2.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
       AnfAlgo::SetSelectKernelBuildInfo(builder2.Build(), node.get());
     }
   }

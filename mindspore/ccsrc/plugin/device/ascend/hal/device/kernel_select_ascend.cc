@@ -39,6 +39,7 @@
 #include "mindspore/core/ops/op_name.h"
 #include "kernel/common_utils.h"
 #include "kernel/kernel_build_info.h"
+#include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
 
 namespace mindspore {
 namespace device {
@@ -1244,7 +1245,9 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
     FallbackOps(kernel_node);
     kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
     select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);
-    common::AnfAlgo::SetNodeAttr(kAttrIsAiCpuKernel, MakeValue(true), kernel_node);
+    if (select_status != kNoMatched) {
+      common::AnfAlgo::SetNodeAttr(kAttrIsAiCpuKernel, MakeValue(true), kernel_node);
+    }
   }
 
   // The kernel info can not find in ai_cpu kernel lists and ai_core kernel lists
@@ -1325,6 +1328,51 @@ void SetAscendKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   builder->SetProcessor(new_processor);
   kernel_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
+}
+
+// After operator selection in graph optimization, new nodes will be added, select kernel info for those nodes
+// check whether the node has completed the operator selection. If not, the operator
+// selection needs to be performed to set kernel info.
+void SelectKernelInfoAfterKernelSelect(const std::vector<CNodePtr> &nodes) {
+  // Check whether the node has completed kernel selection.
+  for (const auto &node : nodes) {
+    auto kernel_info = AnfAlgo::GetSelectKernelBuildInfo(node);
+    if (kernel_info != nullptr && kernel_info->valid() == true) {
+      continue;
+    }
+
+    // Kernel selection process.
+    auto [status, msg, etype] = SelectKernelInfoWithMsg(node);
+    if (status == device::ascend::kNoMatched) {
+      auto graph = AnfAlgo::FetchKernelGraph(node.get());
+      std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
+      HandleKernelSelectFailure(graph, node, failure_info);
+    }
+  }
+}
+
+void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
+                               const std::pair<std::string, ExceptionType> &failure_info) {
+  // The Pynative_mode and task_sink does not support the backoff ability.
+  if (!AnfAlgo::IsEnableKernelSelectBackoff() || (graph == nullptr) || graph->is_from_single_op() ||
+      graph->is_graph_run_mode()) {
+    MS_EXCEPTION(failure_info.second) << failure_info.first;
+  }
+  MS_LOG(INFO) << "Try to use backoff CPU kernel, node:" << node->fullname_with_scope();
+  // Erease  kAttrDynInputSizes before cpu kernel select, since cpu may expand it according to kAttrDynInputSizes
+  // and make wrong choose, for example, the TupleToTensor op
+  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, node)) {
+    common::AnfAlgo::EraseNodeAttr(kAttrDynInputSizes, node);
+  }
+  auto [cpu_msg, cpu_etype] = device::cpu::SetKernelInfoWithMsg(node);
+  if (cpu_msg.empty()) {
+    SetTensorDeviceInfo(node);
+    AnfAlgo::SetKernelSelectBackoffInfo(node, failure_info);
+  } else {
+    MS_EXCEPTION(failure_info.second) << "Ascend operator selection failed info: " << failure_info.first
+                                      << "\nCPU operator selection failed type: " << cpu_etype
+                                      << ". failed info: " << cpu_msg;
+  }
 }
 }  // namespace ascend
 }  // namespace device
