@@ -34,7 +34,7 @@ rtEvent_t AscendStreamMng::ApplyRtEvent() {
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "rtEventCreate failed, ret:" << ret;
   }
-  events_.emplace_back(*rt_resource);
+  (void)events_.emplace_back(*rt_resource);
   return *rt_resource;
 }
 
@@ -44,7 +44,7 @@ rtEvent_t AscendStreamMng::ApplyRtEventWithFlag(uint32_t flag) {
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rtEventCreateWithFlag failed, ret:" << ret;
   }
-  events_.emplace_back(rt_event);
+  (void)events_.emplace_back(rt_event);
   return rt_event;
 }
 
