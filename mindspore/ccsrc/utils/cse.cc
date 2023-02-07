@@ -87,6 +87,14 @@ BasePtr AbsOf(const AnfNodePtr &node, bool ignore_fg_abs_tracking_id) {
   return node_abs;
 }
 
+bool IsFuncGraphCallNode(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  return !IsValueNode<Primitive>(cnode->input(kAnfPrimitiveIndex));
+}
+
 bool CSE::BuildOrderGroupForOneGraph(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(fg);
   std::vector<std::size_t> order_group;
@@ -102,6 +110,12 @@ bool CSE::BuildOrderGroupForOneGraph(const FuncGraphPtr &fg, const FuncGraphMana
     if (IsHiddenSideEffectNode(node) && node->func_graph() != nullptr) {
       MS_LOG(DEBUG) << "Add hidden func graph:" << node->func_graph()->ToString();
       (void)hidden_side_effect_func_graphs_.insert(node->func_graph());
+    }
+    if (IsFuncGraphCallNode(node)) {
+      auto func_graphs = abstract::GetFuncGraphsFromAbs(node->cast<CNodePtr>()->input(0));
+      for (const auto &called_fg : func_graphs) {
+        (void)call_nodes_[called_fg].insert(node->cast<CNodePtr>());
+      }
     }
     std::size_t h = 0;
     if (node->isa<ValueNode>()) {
@@ -138,8 +152,28 @@ bool CSE::BuildOrderGroupForOneGraph(const FuncGraphPtr &fg, const FuncGraphMana
   return CalReplaceNodes(manager, order_group, &groups);
 }
 
+void CSE::UpdateSideHiddenEffectGraph(const FuncGraphPtr &fg) {
+  MS_EXCEPTION_IF_NULL(fg);
+  (void)hidden_side_effect_func_graphs_.insert(fg);
+  // Get call node and add call node's belonged graph to hidden_side_effect_func_graphs_.
+  auto it = call_nodes_.find(fg);
+  if (it == call_nodes_.cend()) {
+    return;
+  }
+  for (const auto &call_node : it->second) {
+    if (hidden_side_effect_func_graphs_.find(call_node->func_graph()) == hidden_side_effect_func_graphs_.cend()) {
+      UpdateSideHiddenEffectGraph(call_node->func_graph());
+    }
+  }
+}
+
 void CSE::DoReplace(const FuncGraphManagerPtr &manager) {
   auto transact = manager->Transact();
+  // Update hidden_side_effect_func_graphs_ by original graphs.
+  auto copy_hidden_side_effect_func_graphs = hidden_side_effect_func_graphs_;
+  for (const auto &fg : copy_hidden_side_effect_func_graphs) {
+    UpdateSideHiddenEffectGraph(fg);
+  }
   // if A is a hidden_side_effect node, then A's user B can't be replaced by main, then B's user C can't be replaced by
   // main.
   HashSet<AnfNodePtr> cannot_replace_nodes;
@@ -175,16 +209,11 @@ bool CSE::BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager) {
 
 // Check whether is a func graph call node and func graph has hidden side effect node.
 bool CSE::IsHiddenSideEffectCall(const AnfNodePtr &node) {
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  // Check weather it is a func graph call.
-  if (IsValueNode<Primitive>(cnode->input(kAnfPrimitiveIndex))) {
+  if (!IsFuncGraphCallNode(node)) {
     return false;
   }
   // If it is a func graph call node, get all graphs  from abstract.
-  auto func_graphs = abstract::GetFuncGraphsFromAbs(cnode->input(0));
+  auto func_graphs = abstract::GetFuncGraphsFromAbs(node->cast<CNodePtr>()->input(0));
   auto is_hidden_side_effect_graph = [this](const FuncGraphPtr &fg) -> bool {
     return hidden_side_effect_func_graphs_.find(fg) != hidden_side_effect_func_graphs_.end();
   };
@@ -315,6 +344,7 @@ bool CSE::CalReplaceNodes(const FuncGraphManagerPtr manager, const std::vector<s
 }
 
 void CSE::Init() {
+  call_nodes_.clear();
   hidden_side_effect_func_graphs_.clear();
   replicated_nodes_.clear();
 }
