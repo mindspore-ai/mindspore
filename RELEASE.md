@@ -2,6 +2,122 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.0.0-alpha Release Notes
+
+### Major Features and Improvements
+
+#### PyNative
+
+- The default mode of MindSpore is switched to PyNative. If you want to manually set the mode, please refer to https://www.mindspore.cn/tutorials/zh-CN/master/advanced/compute_graph.html.
+- Support dynamic shape without padding, three networks are supported as demos: Transformer-GPU, YOLOV5-GPU, ASR-Ascend. Transformer-GPU and YOLOV5-GPU can be downloaded from https://gitee.com/mindspore/models/tree/dynamic_shape. Only the following operators are available on Ascend backend：Add、Assign、BatchMatMul、BiasAdd、BiasAddGrad、Cast、Conv2D、Conv2DBackpropFilter、Conv2DBackpropInput、CTCLoss、Div、Dropout、DropoutDoMask、Equal、ExpandDims、Gather、GetNext、LayerNorm、LayerNormGrad、LessEqual、Load、Log、LogicalAnd、LogicalNot、LogicalOr、LogSoftmax、LogSoftmaxGrad、MatMul、Maximum、Mul、Neg、NotEqual、NPUAllocFloatStatus、NPUClearFloatStatus、OneHot、RealDiv、Reciprocal、ReduceMean、ReduceSum、ReLU、ReluGrad、Reshape、Select、Softmax、StridedSlice、Sub、Tile、Transpose、UnsortedSegmentSum、ZerosLike。The remaining operators have not been fully verified, please use them as appropriate.
+
+#### DataSet
+
+- The TFRecordDataset API can directly read TFRecord files compressed by GZIP or ZLIB.
+- The NumpySliceDataset API can process data of different dimensions at the same time.
+- Optimize the structure of error log to display more clear call stack information for debugging.
+- Fixed `mindspore.dataset.config.set_seed` does not take effect for random seeds in distributed training scenarios.
+
+#### AutoParallel
+
+- Supports more operators with distributed implements.
+
+  Element Wise Operators:AddN, BitwiseAnd, BitwiseOr, BitwiseXor, CumProd, HShrink, HSigmoid, IsFinite, Mish, MulNoNan, Rint, SeLU, SoftShrink, TruncateDiv, TruncateMod, Xdivy Xlogy, InplaceAdd, InplacSub, InplaceUpdate, Cdist, L2Loss, Lerp.
+
+  Math Operators:SquaredDifference, Erfinv, MaskedFill, SplitV, Gamma, KLDivLoss, LinSpace.
+
+  Scatter Operators:ScatterAdd,ScatterDiv,ScatterMax,ScatterMul,ScatterNdAdd,ScatterNdSub,ScatterNdUpdate,ScatterSub,TensorScatterAdd,TensorScatterDiv,TensorScatterMax,TensorScatterMax,TensorScatterMul,TensorScatterAdd,TensorScatterUpdate.
+
+- Add new apis `transform_checkpoints` and `transform_checkpoint_by_rank` to transfer the distributed checkpoint files by strategy files. Please refer to https://www.mindspore.cn/tutorials/experts/en/master/parallel/resilience_train_and_predict.html。
+
+### API Change
+
+#### operator
+
+- [STABLE] Add operator primitive for `mindspore.ops.AdaptiveMaxPool3D`.
+- [STABLE] Add operator primitive for `mindspore.ops.AdjustHue`.
+- [STABLE] Add operator primitive for `mindspore.ops.BartlettWindow`.
+- [STABLE] Add operator primitive for `mindspore.ops.BesselJ0`.
+- [STABLE] Add operator primitive for `mindspore.ops.BesselJ1`.
+- [STABLE] Add operator primitive for `mindspore.ops.BesselK0`.
+- [STABLE] Add operator primitive for `mindspore.ops.BesselK0e`.
+- [STABLE] Add operator primitive for `mindspore.ops.BesselK1`.
+- [STABLE] Add operator primitive for `mindspore.ops.BesselK1e`.
+- [STABLE] Add operator primitive for `mindspore.ops.BesselY0`.
+- [STABLE] Add operator primitive for `mindspore.ops.BesselY1`.
+- [STABLE] Add operator primitive for `mindspore.ops.Betainc`.
+- [STABLE] Add operator primitive for `mindspore.ops.Bincount`.
+- [STABLE] Add operator primitive for `mindspore.ops.BlackmanWindow`.
+- [STABLE] Add operator primitive for `mindspore.ops.Bucketize`.
+- [STABLE] Add operator primitive for `mindspore.ops.CombinedNonMaxSuppression`.
+- [STABLE] Add operator primitive for `mindspore.ops.CompareAndBitpack`.
+- [STABLE] Add operator primitive for `mindspore.ops.Complex`.
+- [STABLE] Add operator primitive for `mindspore.ops.DataFormatVecPermute`.
+- [STABLE] Add operator primitive for `mindspore.ops.Eig`.
+- [STABLE] Add operator primitive for `mindspore.ops.EuclideanNorm`.
+- [STABLE] Add operator primitive for `mindspore.ops.Expand`.
+- [STABLE] Add operator primitive for `mindspore.ops.ExtractGlimpse`.
+- [STABLE] Add operator primitive for `mindspore.ops.FillDiagonal`.
+- [STABLE] Add operator primitive for `mindspore.ops.FractionalAvgPool`.
+- [STABLE] Add operator primitive for `mindspore.ops.FractionalMaxPool`.
+- [STABLE] Add operator primitive for `mindspore.ops.Gcd`.
+- [STABLE] Add operator primitive for `mindspore.ops.HammingWindow`.
+- [STABLE] Add operator primitive for `mindspore.ops.Histogram`.
+- [STABLE] Add operator primitive for `mindspore.ops.HSVToRGB`.
+- [STABLE] Add operator primitive for `mindspore.ops.Lcm`.
+- [STABLE] Add operator primitive for `mindspore.ops.LeftShift`.
+- [STABLE] Add operator primitive for `mindspore.ops.ListDiff`.
+- [STABLE] Add operator primitive for `mindspore.ops.LogSpace`.
+- [STABLE] Add operator primitive for `mindspore.ops.Lstsq`.
+- [STABLE] Add operator primitive for `mindspore.ops.MatrixDiagPartV3`.
+- [STABLE] Add operator primitive for `mindspore.ops.MatrixDiagV3`.
+- [STABLE] Add operator primitive for `mindspore.ops.MatrixExp`.
+- [STABLE] Add operator primitive for `mindspore.ops.MatrixPower`.
+- [STABLE] Add operator primitive for `mindspore.ops.MaxPool3DWithArgmax`.
+- [STABLE] Add operator primitive for `mindspore.ops.MaxUnpool2D`.
+- [STABLE] Add operator primitive for `mindspore.ops.MultilabelMarginLoss`.
+- [STABLE] Add operator primitive for `mindspore.ops.NextAfter`.
+- [STABLE] Add operator primitive for `mindspore.ops.Orgqr`.
+- [STABLE] Add operator primitive for `mindspore.ops.ReduceStd`.
+- [STABLE] Add operator primitive for `mindspore.ops.ResizeNearestNeighborV2`.
+- [STABLE] Add operator primitive for `mindspore.ops.RGBToHSV`.
+- [STABLE] Add operator primitive for `mindspore.ops.RightShift`.
+- [STABLE] Add operator primitive for `mindspore.ops.Roll`.
+- [STABLE] Add operator primitive for `mindspore.ops.SampleDistortedBoundingBoxV2`.
+- [STABLE] Add operator primitive for `mindspore.ops.ScaleAndTranslate`.
+- [STABLE] Add operator primitive for `mindspore.ops.ScatterAddWithAxis`.
+- [STABLE] Add operator primitive for `mindspore.ops.ScatterNdDiv`.
+- [STABLE] Add operator primitive for `mindspore.ops.ScatterNdMax`.
+- [STABLE] Add operator primitive for `mindspore.ops.ScatterNdMul`.
+- [STABLE] Add operator primitive for `mindspore.ops.STFT`.
+- [STABLE] Add operator primitive for `mindspore.ops.Trace`.
+- [STABLE] Add operator primitive for `mindspore.ops.UpsampleNearest3D`.
+- [STABLE] Add operator primitive for `mindspore.ops.UpsampleTrilinear3D`.
+- [STABLE] Add distributed weight conversion interface `mindspore.parallel.transform_checkpoints`.
+- [STABLE] Add distributed weight conversion interface `mindspore.parallel.transform_checkpoint_by_rank`.
+
+#### Backwards Incompatible Change
+
+##### Python API
+
+- The `mindspore.ms_function` interface is renamed to `mindspore.jit`, and `mindspore.ms_function` will be deprecated and removed in a future version.
+- The `mindspore.ms_class` interface is renamed to `mindspore.jit_class`, and `mindspore.ms_class` will be deprecated and removed in a future version.
+- The `mindspore.dataset.map` interface parameter `column_order` does not take effect, use`mindspore.dataset.project`.
+- The `mindspore.dataset.close_pool` and `mindspore.dataset.to_device` and `mindspore.dataset.set_dynamic_columns` are deprecated and removed in this version.
+
+### Bug fixes
+
+- Fixed an issue where the mixed precision functional interface could not modify the backend driver in graph mode
+- Fixed the problem that users can automatically transfer device_id in the single-P scenario for the following networks:（mobilenetv1/fasterrcnn/yolov3/yolov4/yolov5/unet/openpose/simplepose/crnn/gnmtv2/faceattribute/facequality/facedetection）
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+AGroupofProbiotocs, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bingyaweng, BowenK, buxue, caifubi, CaoJian, caojian05, caozhou, Cathy, changzherui, chenbo116, chenfei, chengxianbin, chenhaozhe, chenjianping, chenzomi, chenzupeng, chujinjin, cj, cjh9368, Corleone, damon0626, danish, Danish, davidmc, dayschan, doitH, dong-li001, fary86, fuzhiye, Gaoxiong, GAO_HYP_XYJ, gengdongjie, Gogery, gongdaguo, gray0v0, gukecai, guoqi, gzhcv, hangq, hanhuifeng2020, Harshvardhan, He, heleiwang, hesham, hexia, Hoai, HuangBingjian, huangdongrun, huanghui, huangxinjing, huqi, huzhifeng, hwjiaorui, Jiabin Liu, jianghui58, Jiaqi, jin-xiulang, jinyaohui, jjfeing, John, jonyguo, JulyAi, jzg, kai00, kingfo, kingxian, kpy, kswang, liuyongqi, laiyongqiang, leonwanghui, liangchenghui, liangzelang, lichen_101010, lichenever, lihongkang, lilei, limingqi107, ling, linqingke, Lin Xh, liubuyu, liuwenhao4, liuxiao78, liuxiao93, liuyang_655, liuzhongkai, Lixia, lixian, liyanliu, liyong, lizhenyu, luopengting, lvchangquan, lvliang, lz, maning202007, Margaret_wangrui, mengyuanli, Ming_blue, ms_yan, ougongchang, panfengfeng, panyifeng, Payne, Peilin, peixu_ren, Pengyongrong, qianlong, qianjiahong, r1chardf1d0, riemann_penn, rmdyh, Sheng, shenwei41, simson, Simson, Su, sunsuodong, tao_yunhao, tinazhang, VectorSL, , Wan, wandongdong, wangdongxu, wangmin,  wangyue01, wangzhe, wanyiming, Wei, wenchunjiang, wilfChen, WilliamLian, wsc, wudenggang, wukesong, wuweikang, wuxuejian, Xiao Tianci, Xiaoda, xiefangqi, xinyunfan, xuanyue, xuyongfei, yanghaitao, yanghaitao1, yanghaoran, YangLuo, yangruoqi713, yankai, yanzhenxiang2020, yao_yf, yepei6, yeyunpeng, Yi, yoni, yoonlee666, yuchaojie, yujianfeng, yuximiao, zengzitao, Zhang,  zhanghuiyao, zhanghui_china, zhangxinfeng3, zhangyihui, zhangz0911gm, zhanke, zhanyuan, zhaodezan, zhaojichen, zhaoting, zhaozhenlong, zhengjun10, zhiqwang, zhoufeng, zhousiyi, zhouyaqiang, zhouyifengCode, Zichun, Ziyan, zjun, ZPaC, wangfengwfwf, zymaa, gerayking, shu-kun-zhang.
+
+Contributions of any kind are welcome!
+
 ## MindSpore 1.9.0 Release Notes
 
 ### Major Features and Improvements
