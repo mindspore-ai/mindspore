@@ -62,7 +62,7 @@ class AscendGraphOptimization {
   void RecurseSelectKernelInfo(const KernelGraphPtr &graph);
   void HardWareOptimization(const KernelGraphPtr &graph);
   void HandleControlFlow(const NotNull<KernelGraphPtr> graph) const;
-  void RootGraphExecutorValidate(const NotNull<KernelGraphPtr> graph);
+  void RootGraphExecutorValidate(const NotNull<KernelGraphPtr> graph) const;
 
   void GetAllGraphs(const KernelGraphPtr &root_graph);
   void CheckControlFlowDynamicShape(const KernelGraphPtr &root_graph);
