@@ -2,6 +2,120 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.0.0-alpha Release Notes
+
+### 主要特性和增强
+
+#### PyNative
+
+- MindSpore默认模式切换成PyNative模式。需要手动设置模式可以参考文档:https://www.mindspore.cn/tutorials/zh-CN/master/advanced/compute_graph.html
+- 完成动态shape执行方案重构，提升反向构图性能，支持非padding方案的动态shape网络编程，当前主要验证网络Transformer-GPU、YOLOV5-GPU、ASR-Ascend。Transformer-GPU和YOLOV5-GPU可以从以下链接获取：https://gitee.com/mindspore/models/tree/dynamic_shape 。Ascend后端受算子适配度限制，只支持下列算子：Add、Assign、BatchMatMul、BiasAdd、BiasAddGrad、Cast、Conv2D、Conv2DBackpropFilter、Conv2DBackpropInput、CTCLoss、Div、Dropout、DropoutDoMask、Equal、ExpandDims、Gather、GetNext、LayerNorm、LayerNormGrad、LessEqual、Load、Log、LogicalAnd、LogicalNot、LogicalOr、LogSoftmax、LogSoftmaxGrad、MatMul、Maximum、Mul、Neg、NotEqual、NPUAllocFloatStatus、NPUClearFloatStatus、OneHot、RealDiv、Reciprocal、ReduceMean、ReduceSum、ReLU、ReluGrad、Reshape、Select、Softmax、StridedSlice、Sub、Tile、Transpose、UnsortedSegmentSum、ZerosLike。其余算子未经过完整验证, 请酌情使用。
+
+#### DataSet
+
+- TFRecordDataset API支持直接读取通过GZIP或ZLIB压缩后的TFRecord文件。
+- NumpySliceDataset API支持同时处理不同维度的数据。
+- 优化错误日志信息的结构，展示更清晰的调用栈信息便于调试、定位问题。
+- 修复分布式训练场景下 `mindspore.dataset.config.set_seed` 对随机种子设置不生效的问题。
+
+#### AutoParallel
+
+- 支持更多算子分布式能力。
+
+  Element Wise类算子：AddN、 BitwiseAnd、 BitwiseOr、 BitwiseXor、 CumProd、 HShrink、 HSigmoid、 IsFinite、 Mish、 MulNoNan、 Rint、 SeLU、 SoftShrink、 TruncateDiv、 TruncateMod、 Xdivy Xlogy、 InplaceAdd、 InplacSub、 InplaceUpdate、 Cdist、 L2Loss、 Lerp。
+
+  Math类算子：SquaredDifference、 Erfinv、 MaskedFill、 SplitV、 Gamma、 KLDivLoss、 LinSpace。Scatter类算子：ScatterAdd、ScatterDiv、ScatterMax、ScatterMul、ScatterNdAdd、ScatterNdSub、ScatterNdUpdate、ScatterSub、TensorScatterAdd、TensorScatterDiv、TensorScatterMax、TensorScatterMax、TensorScatterMul、TensorScatterAdd、TensorScatterUpdate。
+
+- 增加`transform_checkpoints`和`transform_checkpoint_by_rank`接口。给定转换前后的策略文件，即可实现对分布式权重转换。详情可以参考：https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/resilience_train_and_predict.html 。
+
+### API变更
+
+#### 算子
+
+- [STABLE] `mindspore.ops.AdaptiveMaxPool3D` 新增算子原语。
+- [STABLE] `mindspore.ops.AdjustHue` 新增算子原语。
+- [STABLE] `mindspore.ops.BartlettWindow` 新增算子原语。
+- [STABLE] `mindspore.ops.BesselJ0` 新增算子原语。
+- [STABLE] `mindspore.ops.BesselJ1` 新增算子原语。
+- [STABLE] `mindspore.ops.BesselK0` 新增算子原语。
+- [STABLE] `mindspore.ops.BesselK0e` 新增算子原语。
+- [STABLE] `mindspore.ops.BesselK1` 新增算子原语。
+- [STABLE] `mindspore.ops.BesselK1e` 新增算子原语。
+- [STABLE] `mindspore.ops.BesselY0` 新增算子原语。
+- [STABLE] `mindspore.ops.BesselY1` 新增算子原语。
+- [STABLE] `mindspore.ops.Betainc` 新增算子原语。
+- [STABLE] `mindspore.ops.Bincount` 新增算子原语。
+- [STABLE] `mindspore.ops.BlackmanWindow` 新增算子原语。
+- [STABLE] `mindspore.ops.Bucketize` 新增算子原语。
+- [STABLE] `mindspore.ops.CombinedNonMaxSuppression` 新增算子原语。
+- [STABLE] `mindspore.ops.CompareAndBitpack` 新增算子原语。
+- [STABLE] `mindspore.ops.Complex` 新增算子原语。
+- [STABLE] `mindspore.ops.DataFormatVecPermute` 新增算子原语。
+- [STABLE] `mindspore.ops.Eig` 新增算子原语。
+- [STABLE] `mindspore.ops.EuclideanNorm` 新增算子原语。
+- [STABLE] `mindspore.ops.Expand` 新增算子原语。
+- [STABLE] `mindspore.ops.ExtractGlimpse` 新增算子原语。
+- [STABLE] `mindspore.ops.FillDiagonal` 新增算子原语。
+- [STABLE] `mindspore.ops.FractionalAvgPool` 新增算子原语。
+- [STABLE] `mindspore.ops.FractionalMaxPool` 新增算子原语。
+- [STABLE] `mindspore.ops.Gcd` 新增算子原语。
+- [STABLE] `mindspore.ops.HammingWindow` 新增算子原语。
+- [STABLE] `mindspore.ops.Histogram` 新增算子原语。
+- [STABLE] `mindspore.ops.HSVToRGB` 新增算子原语。
+- [STABLE] `mindspore.ops.Lcm` 新增算子原语。
+- [STABLE] `mindspore.ops.LeftShift` 新增算子原语。
+- [STABLE] `mindspore.ops.ListDiff` 新增算子原语。
+- [STABLE] `mindspore.ops.LogSpace` 新增算子原语。
+- [STABLE] `mindspore.ops.Lstsq` 新增算子原语。
+- [STABLE] `mindspore.ops.MatrixDiagPartV3` 新增算子原语。
+- [STABLE] `mindspore.ops.MatrixDiagV3` 新增算子原语。
+- [STABLE] `mindspore.ops.MatrixExp` 新增算子原语。
+- [STABLE] `mindspore.ops.MatrixPower` 新增算子原语。
+- [STABLE] `mindspore.ops.MaxPool3DWithArgmax` 新增算子原语。
+- [STABLE] `mindspore.ops.MaxUnpool2D` 新增算子原语。
+- [STABLE] `mindspore.ops.MultilabelMarginLoss` 新增算子原语。
+- [STABLE] `mindspore.ops.NextAfter` 新增算子原语。
+- [STABLE] `mindspore.ops.Orgqr` 新增算子原语。
+- [STABLE] `mindspore.ops.ReduceStd` 新增算子原语。
+- [STABLE] `mindspore.ops.ResizeNearestNeighborV2` 新增算子原语。
+- [STABLE] `mindspore.ops.RGBToHSV` 新增算子原语。
+- [STABLE] `mindspore.ops.RightShift` 新增算子原语。
+- [STABLE] `mindspore.ops.Roll` 新增算子原语。
+- [STABLE] `mindspore.ops.SampleDistortedBoundingBoxV2` 新增算子原语。
+- [STABLE] `mindspore.ops.ScaleAndTranslate` 新增算子原语。
+- [STABLE] `mindspore.ops.ScatterAddWithAxis` 新增算子原语。
+- [STABLE] `mindspore.ops.ScatterNdDiv` 新增算子原语。
+- [STABLE] `mindspore.ops.ScatterNdMax` 新增算子原语。
+- [STABLE] `mindspore.ops.ScatterNdMul` 新增算子原语。
+- [STABLE] `mindspore.ops.STFT` 新增算子原语。
+- [STABLE] `mindspore.ops.Trace` 新增算子原语。
+- [STABLE] `mindspore.ops.UpsampleNearest3D` 新增算子原语。
+- [STABLE] `mindspore.ops.UpsampleTrilinear3D` 新增算子原语。
+- [STABLE]`mindspore.parallel.transform_checkpoints` 新增分布式权重转换接口。
+- [STABLE]`mindspore.parallel.transform_checkpoint_by_rank` 新增分布式权重转换接口。
+
+#### 非兼容性变更
+
+##### Python API
+
+- `mindspore.ms_function`接口名替换为`mindspore.jit`，`mindspore.ms_function` 将在未来版本中弃用并删除。
+- `mindspore.ms_class`接口名替换为`mindspore.jit_class`，`mindspore.ms_class` 将在未来版本中弃用并删除。
+- `mindspore.dataset.map`接口参数 `column_order` 不再生效，使用`mindspore.dataset.project`替换。
+- `mindspore.dataset.close_pool`、`mindspore.dataset.to_device`、`mindspore.dataset.set_dynamic_columns` 接口在之前版本已废弃，当前版本正式删除。
+
+### Bug fixes
+
+- 修复混合精度函数式接口在图模式下不能修改后端驱动的问题。
+- 修复以下网络在单P场景下用户可自动传入device_id（mobilenetv1/fasterrcnn/yolov3/yolov4/yolov5/unet/openpose/simplepose/crnn/gnmtv2/faceattribute/facequality/facedetection） 。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+AGroupofProbiotocs, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bingyaweng, BowenK, buxue, caifubi, CaoJian, caojian05, caozhou, Cathy, changzherui, chenbo116, chenfei, chengxianbin, chenhaozhe, chenjianping, chenzomi, chenzupeng, chujinjin, cj, cjh9368, Corleone, damon0626, danish, Danish, davidmc, dayschan, doitH, dong-li001, fary86, fuzhiye, Gaoxiong, GAO_HYP_XYJ, gengdongjie, Gogery, gongdaguo, gray0v0, gukecai, guoqi, gzhcv, hangq, hanhuifeng2020, Harshvardhan, He, heleiwang, hesham, hexia, Hoai, HuangBingjian, huangdongrun, huanghui, huangxinjing, huqi, huzhifeng, hwjiaorui, Jiabin Liu, jianghui58, Jiaqi, jin-xiulang, jinyaohui, jjfeing, John, jonyguo, JulyAi, jzg, kai00, kingfo, kingxian, kpy, kswang, liuyongqi, laiyongqiang, leonwanghui, liangchenghui, liangzelang, lichen_101010, lichenever, lihongkang, lilei, limingqi107, ling, linqingke, Lin Xh, liubuyu, liuwenhao4, liuxiao78, liuxiao93, liuyang_655, liuzhongkai, Lixia, lixian, liyanliu, liyong, lizhenyu, luopengting, lvchangquan, lvliang, lz, maning202007, Margaret_wangrui, mengyuanli, Ming_blue, ms_yan, ougongchang, panfengfeng, panyifeng, Payne, Peilin, peixu_ren, Pengyongrong, qianlong, qianjiahong, r1chardf1d0, riemann_penn, rmdyh, Sheng, shenwei41, simson, Simson, Su, sunsuodong, tao_yunhao, tinazhang, VectorSL, , Wan, wandongdong, wangdongxu, wangmin,  wangyue01, wangzhe, wanyiming, Wei, wenchunjiang, wilfChen, WilliamLian, wsc, wudenggang, wukesong, wuweikang, wuxuejian, Xiao Tianci, Xiaoda, xiefangqi, xinyunfan, xuanyue, xuyongfei, yanghaitao, yanghaitao1, yanghaoran, YangLuo, yangruoqi713, yankai, yanzhenxiang2020, yao_yf, yepei6, yeyunpeng, Yi, yoni, yoonlee666, yuchaojie, yujianfeng, yuximiao, zengzitao, Zhang,  zhanghuiyao, zhanghui_china, zhangxinfeng3, zhangyihui, zhangz0911gm, zhanke, zhanyuan, zhaodezan, zhaojichen, zhaoting, zhaozhenlong, zhengjun10, zhiqwang, zhoufeng, zhousiyi, zhouyaqiang, zhouyifengCode, Zichun, Ziyan, zjun, ZPaC, wangfengwfwf, zymaa, gerayking, shu-kun-zhang.
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 1.10.0 Release Notes
 
 ### 主要特性和增强
