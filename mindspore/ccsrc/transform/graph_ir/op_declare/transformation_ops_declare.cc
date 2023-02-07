@@ -135,6 +135,7 @@ ATTR_INPUT_MAP(BatchToSpaceND) = {{"block_shape", "block_shape"}, {"crops", "cro
 ATTR_MAP(BatchToSpaceND) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(BatchToSpaceND) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BatchToSpaceND, kNameBatchToSpaceNd, ADPT_DESC(BatchToSpaceND))
+REG_ADPT_DESC(BatchToSpaceNDD, kBatchToSpaceNDDOpName, ADPT_DESC(BatchToSpaceND))
 REG_ADPT_DESC(BatchToSpaceTF, kNameBatchToSpaceTF, ADPT_DESC(BatchToSpaceND))
 REG_ADPT_DESC(kNameBatchToSpaceNdV2, kNameBatchToSpaceNdV2, ADPT_DESC(BatchToSpaceND))
 }  // namespace mindspore::transform
