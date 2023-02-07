@@ -144,7 +144,7 @@ class Worker {
   int spin_count_{0};
   int max_spin_count_{kMinSpinCount};
   ThreadPool *pool_{nullptr};
-  HQueue<TaskSplit> *local_task_queue_;
+  HQueue<TaskSplit> *local_task_queue_{nullptr};
   size_t worker_id_{0};
   std::vector<int> core_list_;
 
