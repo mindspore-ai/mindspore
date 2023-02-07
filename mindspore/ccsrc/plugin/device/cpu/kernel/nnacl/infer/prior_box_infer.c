@@ -34,7 +34,7 @@ int PriorBoxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   }
   float different_aspect_ratios[MAX_SHAPE_SIZE * 2 + 1];  // NOTE: flip double the number
   different_aspect_ratios[0] = 1.0;
-  size_t different_aspect_ratios_size = 1;
+  int32_t different_aspect_ratios_size = 1;
 
   PriorBoxParameter *param = (PriorBoxParameter *)parameter;
   float *aspect_ratios = param->aspect_ratios;
@@ -50,7 +50,7 @@ int PriorBoxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
     }
 
     bool exist = false;
-    for (size_t j = 0; j < different_aspect_ratios_size; j++) {
+    for (int32_t j = 0; j < different_aspect_ratios_size; j++) {
       if (fabsf(ratio - different_aspect_ratios[j]) < EPSILON) {
         exist = true;
         break;
