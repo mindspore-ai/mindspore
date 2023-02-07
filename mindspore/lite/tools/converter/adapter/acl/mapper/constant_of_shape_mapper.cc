@@ -38,14 +38,24 @@ STATUS ConstantOfShapeMapper::Mapper(const CNodePtr &cnode) {
   switch (data_type) {
     case kNumberTypeFloat:
     case kNumberTypeFloat32:
-      value_param = opt::BuildFloatVecParameterNode(func_graph, values, cnode->fullname_with_scope() + "_values");
+      if (values.size() == 1) {
+        value_param =
+          opt::BuildFloatValueParameterNode(func_graph, values[0], cnode->fullname_with_scope() + "_value", true);
+      } else {
+        value_param = opt::BuildFloatVecParameterNode(func_graph, values, cnode->fullname_with_scope() + "_values");
+      }
       break;
     case kNumberTypeInt:
     case kNumberTypeInt32: {
-      std::vector<int> dst_values;
-      std::transform(values.begin(), values.end(), std::back_inserter(dst_values),
-                     [](float ele) { return static_cast<int>(ele); });
-      value_param = opt::BuildIntVecParameterNode(func_graph, dst_values, cnode->fullname_with_scope() + "_values");
+      if (values.size() == 1) {
+        value_param =
+          opt::BuildIntValueParameterNode(func_graph, values[0], cnode->fullname_with_scope() + "_value", true);
+      } else {
+        std::vector<int> dst_values;
+        std::transform(values.begin(), values.end(), std::back_inserter(dst_values),
+                       [](float ele) { return static_cast<int>(ele); });
+        value_param = opt::BuildIntVecParameterNode(func_graph, dst_values, cnode->fullname_with_scope() + "_values");
+      }
     } break;
     default:
       MS_LOG(ERROR) << "Unsupported data type: " << data_type;
