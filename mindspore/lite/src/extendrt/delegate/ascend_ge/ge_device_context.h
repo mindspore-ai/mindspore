@@ -39,6 +39,7 @@ class GeDeviceContext {
   void InitGe(const std::shared_ptr<MsContext> &inst_context);
   bool FinalizeGe(const std::shared_ptr<MsContext> &inst_context);
   void GetGeOptions(const std::shared_ptr<MsContext> &inst_context, std::map<std::string, std::string> *ge_options);
+  void SetHcclOptions(std::map<std::string, std::string> *ge_options);
   void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const;
 };
 }  // namespace mindspore

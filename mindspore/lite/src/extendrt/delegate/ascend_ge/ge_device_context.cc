@@ -102,6 +102,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   }
 
   SetDisableReuseMemoryFlag(ge_options);
+  SetHcclOptions(ge_options);
 
   auto env_job_id = common::GetEnv("JOB_ID");
   if (!env_job_id.empty()) {
@@ -152,6 +153,42 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   // ge heterogeneous mode
   if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
     (*ge_options)["ge.socVersion"] = "Ascend310P3";
+  }
+}
+
+void GeDeviceContext::SetHcclOptions(std::map<std::string, std::string> *ge_options) {
+  auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
+  auto env_rank_id = common::GetEnv("RANK_ID");
+  auto env_device_id = common::GetEnv("ASCEND_DEVICE_ID");
+  auto env_cluster_info = common::GetEnv("HELP_CLUSTER");
+  if (!(env_table_file.empty() || env_rank_id.empty()) || !(env_cluster_info.empty() || env_rank_id.empty())) {
+    MS_LOG(INFO) << "Initialize Ge for distribute parameter";
+    if (!env_table_file.empty()) {
+      MS_LOG(INFO) << "Use hccl, make sure hccl lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
+      (*ge_options)["ge.exec.rankTableFile"] = env_table_file;
+    }
+    auto env_hccl_flag = common::GetEnv("HCCL_FLAG");
+    if (!env_hccl_flag.empty()) {
+      (*ge_options)["ge.exec.hcclFlag"] = env_hccl_flag;
+    }
+    (*ge_options)["ge.exec.isUseHcom"] = "1";
+    (*ge_options)["ge.exec.deviceId"] = env_device_id;
+    (*ge_options)["ge.exec.rankId"] = env_rank_id;
+    (*ge_options)["ge.exec.podName"] = env_rank_id;
+    (*ge_options)["ge.graphRunMode"] = "1";
+  } else {
+    // device id is still needed for non-distribute case
+    (*ge_options)["ge.exec.deviceId"] = env_device_id;
+    MS_LOG(INFO) << "No hccl mode. "
+                 << "If use hccl, make sure [RANK_TABLE_FILE,RANK_ID,DEVICE_ID,DEPLOY_MODE] all be set in ENV.";
+  }
+
+  auto env_deploy_mode = common::GetEnv("DEPLOY_MODE");
+  if (!env_deploy_mode.empty()) {
+    (*ge_options)["ge.exec.deployMode"] = env_deploy_mode;
+  } else {
+    (*ge_options)["ge.exec.deployMode"] = "0";
+    MS_LOG(WARNING) << "DEPLOY_MODE is not set in ENV. Now set to default value 0";
   }
 }
 
