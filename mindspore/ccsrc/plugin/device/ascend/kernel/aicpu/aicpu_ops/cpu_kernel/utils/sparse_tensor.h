@@ -37,6 +37,66 @@ const T SubtleMustCopy(const T &x) {
 }  // namespace aicpu
 
 namespace aicpu {
+class DimComparator {
+ public:
+  DimComparator(const TTypes<int64_t>::Matrix &ix, const std::vector<int64_t> &order, const std::vector<int64_t> &shape)
+      : ix_(ix), order_(order), dims_(shape.size()) {}
+
+  inline bool operator()(const int64_t i, const int64_t j) const {
+    for (int di = 0; di < dims_; ++di) {
+      const int64_t d = order_[di];
+      if (ix_(i, d) < ix_(j, d)) return true;
+      if (ix_(i, d) > ix_(j, d)) return false;
+    }
+    return false;
+  }
+
+  // Compares two indices taken from corresponding index matrices, using the
+  // standard, row-major (or lexicographic) order.  Useful for cases that need
+  // to distinguish between all three orderings (<, ==, >).
+  inline static int cmp(const TTypes<int64_t>::ConstMatrix &a_idx, const TTypes<int64_t>::ConstMatrix &b_idx,
+                        const int64_t a_row, const int64_t b_row, const int dims) {
+    for (int d = 0; d < dims; ++d) {
+      const int64_t a = a_idx(a_row, d);
+      const int64_t b = b_idx(b_row, d);
+      if (a < b) {
+        return -1;
+      } else if (a > b) {
+        return 1;
+      }
+    }
+    return 0;
+  }
+
+ protected:
+  const TTypes<int64_t>::Matrix ix_;
+  const std::vector<int64_t> order_;
+  const int64_t dims_;
+  const std::vector<int64_t> *ix_order_;
+};
+
+template <int ORDER_DIM>
+class FixedDimComparator : DimComparator {
+ public:
+  FixedDimComparator(const TTypes<int64_t>::Matrix &ix, const std::vector<int64_t> &order,
+                     const std::vector<int64_t> &shape)
+      : DimComparator(ix, order, shape) {}
+  inline bool operator()(const int64_t i, const int64_t j) const {
+    bool value = false;
+    for (int di = 0; di < ORDER_DIM; ++di) {
+      const int64_t d = order_[di];
+      if (ix_(i, d) < ix_(j, d)) {
+        value = true;
+        break;
+      }
+      if (ix_(i, d) > ix_(j, d)) break;
+    }
+    return value;
+  }
+};
+}  // namespace aicpu
+
+namespace aicpu {
 class SparseTensor {
  public:
   SparseTensor() : dims_(0) {}
@@ -57,6 +117,61 @@ class SparseTensor {
    * @return uint32_t: 0->success other->failed
    */
   uint32_t IndicesValid(CpuKernelContext &ctx) const;
+
+  template <typename T>
+  void Reorder(const std::vector<int64_t> &order) {
+    int32_t order_size = static_cast<int32_t>(order.size());
+    if (order_size != dims_) {
+      KERNEL_LOG_ERROR("Order length must be SparseTensor rank");
+    }
+    auto ix_t = ix_->matrix<int64_t>();
+    auto vals_t = vals_->vec<T>();
+    std::vector<int64_t> reorder(dims_);
+    std::iota(reorder.begin(), reorder.end(), 0);
+    // Sort to get order of indices
+    switch (order.size()) {
+#define CASE_SORT(ORDER_SIZE)                                     \
+  case (ORDER_SIZE): {                                            \
+    FixedDimComparator<(ORDER_SIZE)> sorter(ix_t, order, shape_); \
+    std::sort(reorder.begin(), reorder.end(), sorter);            \
+    break;                                                        \
+  }
+      CASE_SORT(0);
+      CASE_SORT(1);
+      CASE_SORT(2);
+      CASE_SORT(3);
+      CASE_SORT(4);
+      CASE_SORT(5);
+#undef CASE_SORT
+      default: {
+        DimComparator sorter(ix_t, order, shape_);
+        std::sort(reorder.begin(), reorder.end(), sorter);
+      }
+    }
+    // We have a forward reordering, but what we'll need is a
+    // permutation (the inverse).  This can be calculated with O(1)
+    // additional
+    // and O(n) time (INVPERM) but we just do the simple thing here.
+    std::vector<size_t> permutation(reorder.size());
+    for (std::size_t n = 0; n < reorder.size(); ++n) {
+      permutation[reorder[n]] = n;
+    }
+    // Update indices & values by converting the permutations to
+    // a product of transpositions.  Iterate over the cycles in the
+    // permutation, and convert each of those into a product of
+    // transpositions (swaps):
+    //   https://en.wikipedia.org/wiki/Cyclic_permutation
+    // This is N swaps, 2*N comparisons.
+    for (std::size_t n = 0; n + 1 < permutation.size(); ++n) {
+      while (n != permutation[n]) {
+        std::size_t r = permutation[n];
+        std::swap_ranges(&(ix_t(n, 0)), &(ix_t(n + 1, 0)), &(ix_t(r, 0)));
+        std::swap(vals_t(n), vals_t(r));
+        std::swap(permutation[n], permutation[r]);
+      }
+    }
+    order_.assign(order.begin(), order.end());
+  }
 
   /*
    * group sparse tensor
