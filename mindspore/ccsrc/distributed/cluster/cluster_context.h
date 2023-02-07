@@ -43,7 +43,7 @@ constexpr char kDetailedFailureReason[] =
   "Maybe you are trying to call 'mindspore.communication.init()' without using 'mpirun', which will make MindSpore "
   "load several environment variables and check their validation. Please use 'mpirun' to launch this process to fix "
   "this issue, or refer to this link if you want to run distributed training without using 'mpirun': "
-  "https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/distributed_training_gpu.html#openmpi.";
+  "https://www.mindspore.cn/tutorials/experts/zh-CN/r1.8/parallel/train_gpu.html.";
 
 // Node role based cluster built by MindSpore communication framework.
 class BACKEND_EXPORT ClusterContext {
