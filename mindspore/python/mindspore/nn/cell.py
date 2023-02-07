@@ -43,6 +43,29 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.parallel._tensor import _load_tensor_by_layout
 
 
+def _check_args(args):
+    """Check the input args's type"""
+    index = 1
+    for item in args:
+        if isinstance(item, Tensor) and item.has_init:
+            item.init_data()
+        elif isinstance(item, numpy.ndarray):
+            suffix = "th"
+            if index == 1:
+                suffix = "st"
+            elif index == 2:
+                suffix = "nd"
+            elif index == 3:
+                suffix = "rd"
+
+            input_index = str(index) + suffix
+            raise TypeError(f"For 'Cell', inputs should not be numpy array. Only support bool, int, float, None, "
+                            f"Tensor, Parameter, mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint"
+                            f"), and tuple or list containing only these types, and dict whose values are these "
+                            f"types, but the {input_index} arg type is {type(item)}.")
+        index += 1
+
+
 class Cell(Cell_):
     """
     The basic building block of neural networks in MindSpore. The model or neural network layer should inherit this
@@ -577,28 +600,6 @@ class Cell(Cell_):
 
         return cast_inputs
 
-    def _check_args(self, args):
-        """Check the input args's type"""
-        index = 1
-        for item in args:
-            if isinstance(item, Tensor) and item.has_init:
-                item.init_data()
-            elif isinstance(item, numpy.ndarray):
-                suffix = "th"
-                if index == 1:
-                    suffix = "st"
-                elif index == 2:
-                    suffix = "nd"
-                elif index == 3:
-                    suffix = "rd"
-
-                input_index = str(index) + suffix
-                raise TypeError(f"For 'Cell', inputs should not be numpy array. Only support bool, int, float, None, "
-                                f"Tensor, Parameter, mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint"
-                                f"), and tuple or list containing only these types, and dict whose values are these "
-                                f"types, but the {input_index} arg type is {type(item)}.")
-            index += 1
-
     def __call__(self, *args, **kwargs):
         if self.__class__.construct is Cell.construct:
             logger.warning(f"The '{self.__class__}' does not override the method 'construct', "
@@ -626,7 +627,7 @@ class Cell(Cell_):
             # There many Casts in parameter_broadcast. Enable lazy_build and build faster.
             self._do_parameter_broadcast()
 
-        self._check_args(args)
+        _check_args(args)
 
         if self.requires_grad:
             _pynative_executor.set_grad_flag(True)
