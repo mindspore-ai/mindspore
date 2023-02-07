@@ -211,7 +211,7 @@ class GPUEnvChecker(EnvChecker):
         mindspore_path = os.path.join(current_path, "../lib/plugin")
         try:
             real_path = self.library_path
-            if real_path == []:
+            if real_path is None or real_path == []:
                 logger.error(f"{self.lib_key_to_lib_name[lib_name]} (need by mindspore-gpu) is not found, please "
                              f"confirm that libmindspore_gpu.so is in directory:{mindspore_path} and the correct cuda "
                              "version has been installed, you can refer to the installation "
