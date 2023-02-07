@@ -193,6 +193,21 @@ std::string GetSocVersion() {
   return version;
 }
 
+std::string GetAscendPath() {
+  Dl_info info;
+  if (dladdr(reinterpret_cast<void *>(rtGetSocVersion), &info) == 0) {
+    MS_LOG(INFO) << "Get dladdr failed, skip.";
+    return "";
+  }
+  auto path_tmp = std::string(info.dli_fname);
+  const std::string kLib64 = "lib64";
+  auto pos = path_tmp.find(kLib64);
+  if (pos == std::string::npos) {
+    MS_EXCEPTION(ValueError) << "Get ascend path failed, please check the run package.";
+  }
+  return path_tmp.substr(0, pos);
+}
+
 std::string GetAICoreNumber() {
   constexpr int32_t kModelTypeAiCore = 4;  // enum DEV_MODULE_TYPE { MODULE_TYPE_AICORE = 4 }
   constexpr int32_t kInfoTypeCoreNum = 3;  // enum DEV_INFO_TYPE { INFO_TYPE_CORE_NUM = 3 }

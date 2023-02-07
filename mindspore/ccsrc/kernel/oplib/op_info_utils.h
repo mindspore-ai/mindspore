@@ -23,12 +23,12 @@
 namespace mindspore::kernel {
 class BACKEND_EXPORT OpInfoUtils {
  public:
-  static bool GenerateOpInfos(const std::string &version);
+  static bool GenerateOpInfos(const std::string &version, const std::string &ascend_path);
 
  private:
   OpInfoUtils() = default;
   ~OpInfoUtils() = default;
-  static bool LoadOpInfoJson(const std::string &version, nlohmann::json *js_);
+  static bool LoadOpInfoJson(const std::string &version, const std::string &ascend_path, nlohmann::json *js_);
   static bool ParseCommonItem(const nlohmann::json &item, const OpInfoPtr &op_info_ptr);
   static bool ParseAttrs(const nlohmann::json &item, const OpInfoPtr &op_info_ptr);
   static bool ParseOpIOInfo(const nlohmann::json &item, const OpInfoPtr &op_info_ptr);

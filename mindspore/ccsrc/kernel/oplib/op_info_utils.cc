@@ -31,30 +31,16 @@
 
 namespace mindspore::kernel {
 namespace {
-constexpr auto kVersion910A = "Ascend910A";
-constexpr auto kVersion910ProA = "Ascend910ProA";
-constexpr auto kVersion910PremiumA = "Ascend910PremiumA";
-constexpr auto kVersion920A = "Ascend920A";
-constexpr auto kVersion910APath =
-  "/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/config/ascend910/aic-ascend910-ops-info.json";
-constexpr auto kVersion920APath =
-  "/usr/local/Ascend/opp/built-in/op_impl/ai_core/tbe/config/ascend920/aic-ascend920-ops-info.json";
-constexpr auto kVersion910ATPath =
-  "/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/config/ascend910/"
-  "aic-ascend910-ops-info.json";
-
-static const std::map<std::string, std::string> kVersionPathMap = {{kVersion910A, kVersion910APath},
-                                                                   {kVersion910ProA, kVersion910APath},
-                                                                   {kVersion910PremiumA, kVersion910APath},
-                                                                   {kVersion920A, kVersion920APath}};
-static const std::map<std::string, std::string> kVersionPathTMap = {
-  {kVersion910A, kVersion910ATPath}, {kVersion910ProA, kVersion910ATPath}, {kVersion910PremiumA, kVersion910ATPath}};
-
-static const std::map<std::string, OpPattern> kPatternMap = {
-  {kFormatAgnostic, kFormatAgnosticPattern},
-  {kBroadcast, kBroadcastPattern},
-  {kReduce, kReducePattern},
-};
+constexpr auto kAscend910A = "Ascend910A";
+constexpr auto kAscend910ProA = "Ascend910ProA";
+constexpr auto kAscend910PremiumA = "Ascend910PremiumA";
+constexpr auto kAscend920A = "Ascend920A";
+constexpr auto kAscend910SuffixPath = "/opp/built-in/op_impl/ai_core/tbe/config/ascend910/aic-ascend910-ops-info.json";
+constexpr auto kAscend920SuffixPath = "/opp/built-in/op_impl/ai_core/tbe/config/ascend920/aic-ascend920-ops-info.json";
+const std::map<std::string, std::string> kAscendSuffixPathMap = {{kAscend910A, kAscend910SuffixPath},
+                                                                 {kAscend910ProA, kAscend910SuffixPath},
+                                                                 {kAscend910PremiumA, kAscend910SuffixPath},
+                                                                 {kAscend920A, kAscend920SuffixPath}};
 
 #define MAKE_SHARE_CHECK(expr1)                                 \
   try {                                                         \
@@ -112,10 +98,10 @@ bool LoadSuperBarFile(nlohmann::json *super_bar) {
 #endif
 }  // namespace
 
-bool OpInfoUtils::GenerateOpInfos(const std::string &version) {
+bool OpInfoUtils::GenerateOpInfos(const std::string &version, const std::string &ascend_path) {
   // Step1: Load json file
   nlohmann::json js;
-  if (!LoadOpInfoJson(version, &js)) {
+  if (!LoadOpInfoJson(version, ascend_path, &js)) {
     MS_LOG(ERROR) << "Load op info json failed, version: " << version;
     return false;
   }
@@ -166,7 +152,7 @@ bool OpInfoUtils::GenerateOpInfos(const std::string &version) {
   return true;
 }
 
-bool OpInfoUtils::LoadOpInfoJson(const std::string &version, nlohmann::json *js_) {
+bool OpInfoUtils::LoadOpInfoJson(const std::string &version, const std::string &ascend_path, nlohmann::json *js_) {
 #if !defined(_WIN32) && !defined(_WIN64)
   nlohmann::json super_bar;
   if (!LoadSuperBarFile(&super_bar)) {
@@ -175,29 +161,18 @@ bool OpInfoUtils::LoadOpInfoJson(const std::string &version, nlohmann::json *js_
   }
   SuperBar::LoadSBConfig(super_bar);
 #endif
-  std::string dir = common::GetEnv("MINDSPORE_OP_INFO_JSON_PATH");
-  if (dir.empty()) {
-    // normal path
-    auto iter = kVersionPathMap.find(version);
-    if (iter != kVersionPathMap.end()) {
-      dir = iter->second;
-    } else {
-      MS_LOG(ERROR) << "Can not find the json config, version: " << version;
-      return false;
-    }
+  auto ascend_suffix_path = kAscendSuffixPathMap.find(version);
+  if (ascend_suffix_path == kAscendSuffixPathMap.end()) {
+    MS_LOG(ERROR) << "Get op info json suffix path failed, soc_version: " << version;
+    return false;
   }
-  auto real_path = FileUtils::GetRealPath(dir.c_str());
+  auto op_info_json_path = ascend_path + ascend_suffix_path->second;
+  auto real_path = FileUtils::GetRealPath(op_info_json_path.c_str());
   if (!real_path.has_value()) {
-    // ascend tool path
-    auto iter = kVersionPathTMap.find(version);
-    if (iter != kVersionPathTMap.end()) {
-      real_path = FileUtils::GetRealPath(iter->second.c_str());
-    }
-  }
-  if (!real_path.has_value()) {
-    MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_OP_INFO_JSON_PATH', the path is: " << dir
-                  << ". Please check (1) whether the path exists, (2) whether the path has the access permission, "
-                  << "(3) whether the path is too long. ";
+    MS_LOG(ERROR)
+      << "Get the path:" << op_info_json_path
+      << "failed. Please check (1) whether the path exists, (2) whether the path has the access permission, "
+      << "(3) whether the path is too long. ";
     return false;
   }
   std::ifstream file(real_path.value());
