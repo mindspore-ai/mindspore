@@ -584,7 +584,8 @@ int LiteSession::CompileGraph(Model *model) {
 
   // scheduler kernels
   Scheduler scheduler(context_.get(), ms_context_, model, &tensors_, &inputs_, &outputs_, is_train_session_,
-                      &is_infershape_, &is_control_flow_, execution_plan_, delegate_, delegate_device_type_);
+                      &is_infershape_, &is_control_flow_, &infer_along_running_, execution_plan_, delegate_,
+                      delegate_device_type_);
   scheduler.SetupSchedulerCb(std::move(sched_cb_));
   scheduler.SetConfig(config_info_);
   ret = scheduler.Schedule(&kernels_);
@@ -593,6 +594,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
+  infer_along_running_ = infer_along_running_ && !is_control_flow_ && !is_train_session_;
   InitGraphInOutTensorsMap(model);
 
   non_tail_call_kernels_ = scheduler.NonTailCallNodes();
@@ -625,7 +627,10 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-
+  infer_along_running_ = infer_along_running_ && !is_control_flow_ && !is_train_session_;
+  if (infer_along_running_) {
+    this->context_->set_infer_checker(InferCheckerAll);
+  }
   is_running_.store(false);
   return RET_OK;
 }
@@ -769,6 +774,12 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
   ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, before, after);
   if (MS_UNLIKELY(ret != RET_OK)) {
     MS_LOG(ERROR) << "RunGraph failed : " << ret;
+  }
+  if (infer_along_running_) {
+    this->context_->set_infer_checker(InferCheckerInput);
+    for (auto input : inputs_) {
+      input->set_shape_changed(false);
+    }
   }
   is_running_.store(false);
   return ret;
@@ -1140,6 +1151,9 @@ int LiteSession::ResizeInputs(const std::vector<mindspore::lite::Tensor *> &inpu
       return RET_PARAM_INVALID;
     }
     inputs_[i]->FreeData();
+    if (infer_along_running_ && !inputs_[i]->get_shape_changed()) {
+      inputs_[i]->set_shape_changed(dims[i] != inputs_[i]->shape());
+    }
     inputs_[i]->set_shape(dims[i]);
   }
   if (!is_train_session_) {
@@ -1152,6 +1166,7 @@ void LiteSession::ResetInputsShape(const std::vector<std::vector<int>> &dims) {
   for (size_t i = 0; i < inputs_.size(); ++i) {
     inputs_[i]->FreeData();
     inputs_[i]->set_shape(dims[i]);
+    inputs_[i]->set_shape_changed(false);
   }
 }
 
@@ -1283,6 +1298,15 @@ int LiteSession::Resize(const std::vector<mindspore::lite::Tensor *> &inputs,
     is_running_.store(false);
     return ret;
   }
+  ret = UpdateInputShapeMap();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "update input shape map failed.";
+    return RET_ERROR;
+  }
+  if (infer_along_running_) {
+    is_running_.store(false);
+    return ret;
+  }
 
   ret = ReSizeKernels(kernels_, isolate_input_map_);
   if (ret != RET_OK) {
@@ -1308,11 +1332,6 @@ int LiteSession::Resize(const std::vector<mindspore::lite::Tensor *> &inputs,
   }
 
   is_running_.store(false);
-  ret = UpdateInputShapeMap();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "update input shape map failed.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 

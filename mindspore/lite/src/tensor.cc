@@ -46,7 +46,7 @@ static const size_t max_malloc_size_ = GetMaxMallocSize();
 
 Tensor::Tensor(const TypeId data_type, std::vector<int> shape, const mindspore::Format &format, Category category)
     : category_(category) {
-  tensor_c_ = {data_type, static_cast<int>(format), nullptr, shape.size()};
+  tensor_c_ = {false, data_type, static_cast<int>(format), nullptr, shape.size()};
   if (shape.size() > MAX_SHAPE_SIZE) {
     tensor_c_.shape_size_ = 0;
     MS_LOG(WARNING) << "The shape-size has exceeded the limit 8, now is " << shape.size();
@@ -484,11 +484,15 @@ void *Tensor::MutableData() {
 }
 
 void Tensor::DecRefCount() {
-  if (this->IsConst() || this->IsGraphInput()) {
+  if (this->IsGraphInput()) {
     return;
   }
   int tensor_ref_count = --ref_count_;
   if (tensor_ref_count <= 0) {
+    tensor_c_.shape_changed_ = false;
+    if (this->IsConst()) {
+      return;
+    }
     FreeData();
   }
 }

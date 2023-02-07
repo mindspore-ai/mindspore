@@ -1,6 +1,6 @@
 #ifdef ENABLE_ARM64
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 
 namespace mindspore::kernel {
 namespace {
-constexpr int64_t kPackAMinUnitNum = 1 << 14;
+constexpr int64_t kPackAMinUnitNum = 1 << 13;
 }  // namespace
 void MatmulFp32ARM64CPUKernel::InitGlobalVariable() {
   matrix_a_.need_pack = true;

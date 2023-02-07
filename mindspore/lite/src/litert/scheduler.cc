@@ -723,6 +723,7 @@ int Scheduler::InferNodeShape(const lite::LiteGraph::Node *node) {
   FindNodeInoutTensors(*node, &inputs, &outputs);
   auto ret = KernelInferShape(inputs, outputs, node->primitive_, context_->GetProviders(), schema_version_);
   if (ret != RET_NOT_SUPPORT) {
+    *infer_along_running_ = false;
     return ret;
   }
 
@@ -768,7 +769,9 @@ int Scheduler::InferNodeShape(const lite::LiteGraph::Node *node) {
     FreeOpParameters();
     return RET_ERROR;
   }
-
+  for (auto &output : outputs) {
+    output->set_shape_changed(false);
+  }
   if (*is_control_flow_) {
     for (auto &output : outputs) {
       output->set_shape({-1});
@@ -1705,18 +1708,24 @@ int Scheduler::ConstructNormalSubGraphs(const std::vector<kernel::KernelExec *> 
     dst_kernel->emplace_back(subgraph);
   }
   for (auto *subgraph : *dst_kernel) {
-    if (subgraph->desc().arch != kernel::kDelegate) {
-      auto subgraph_kernel = static_cast<kernel::SubGraphKernel *>(subgraph);
-      if (subgraph_kernel == nullptr) {
-        MS_LOG(ERROR) << "kernel: " << subgraph->name() << " not is subgraph kernel.";
-        return RET_ERROR;
-      }
-      // this is for train session cpu fp16, should be removed in the future.
-      auto ret = subgraph_kernel->SetFp16Attr();
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Init SubGraph failed: " << ret;
-        return ret;
-      }
+    if (subgraph->desc().arch == kernel::kDelegate) {
+      *infer_along_running_ = false;
+      continue;
+    }
+    if (subgraph->subgraph_type() != kernel::kCpuFP32SubGraph &&
+        subgraph->subgraph_type() != kernel::kCpuFP16SubGraph) {
+      *infer_along_running_ = false;
+    }
+    auto subgraph_kernel = static_cast<kernel::SubGraphKernel *>(subgraph);
+    if (subgraph_kernel == nullptr) {
+      MS_LOG(ERROR) << "kernel: " << subgraph->name() << " not is subgraph kernel.";
+      return RET_ERROR;
+    }
+    // this is for train session cpu fp16, should be removed in the future.
+    auto ret = subgraph_kernel->SetFp16Attr();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Init SubGraph failed: " << ret;
+      return ret;
     }
   }
   return RET_OK;

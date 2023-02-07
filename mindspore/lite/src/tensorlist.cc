@@ -28,7 +28,7 @@ constexpr int kOffset = 2;
 }  // namespace
 TensorList::TensorList(std::vector<int> shape, std::vector<int> element_shape, Category category)
     : Tensor(kObjectTypeTensorType, std::move(shape), mindspore::NHWC, category) {
-  tensor_list_c_ = {kObjectTypeTensorType, Format_NHWC, 0, kTypeUnknown, -1, nullptr, 0, element_shape.size()};
+  tensor_list_c_ = {false, kObjectTypeTensorType, Format_NHWC, 0, kTypeUnknown, -1, nullptr, 0, element_shape.size()};
   if (shape.size() > MAX_SHAPE_SIZE) {
     tensor_list_c_.element_shape_size_ = 0;
     MS_LOG(WARNING) << "The shape-size has exceeded the limit 8, now is " << element_shape.size();

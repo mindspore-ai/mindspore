@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,6 +222,15 @@ class LiteSession {
 #if GPU_OPENCL
   opencl::OpenCLRuntimeInnerWrapper *opencl_runtime_wrapper_{nullptr};
 #endif
+
+  // In the dynamic shape scene, the flag is to indicate when to do shape-infer for kernel. If true, the shape-infer
+  // will not be called when calling 'Resize', but be done along with running. And we will decide whether to call
+  // shape-infer by judging whether existing input has changed. If false, the shape-infer will be pre-called when
+  // calling 'Resize'. And we will judge the outputs to decide whether to call shape-infer when running. Currently, the
+  // value is true only in the pure CPU scenario, at the meantime, both of 'is_control_flow_' and 'is_train_session_'
+  // are false and 'runtime_allocator_' is a nullptr.
+  bool infer_along_running_{true};
+
   int is_infershape_{RET_ERROR};
   bool is_control_flow_ = false;
   bool keep_model_buf_ = false;
