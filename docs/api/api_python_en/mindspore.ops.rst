@@ -507,6 +507,7 @@ Array Operation
     mindspore.ops.moveaxis
     mindspore.ops.movedim
     mindspore.ops.nan_to_num
+    mindspore.ops.nansum
     mindspore.ops.normal
     mindspore.ops.nonzero
     mindspore.ops.numel

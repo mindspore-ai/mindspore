@@ -247,6 +247,7 @@ from .math_func import (
     maximum,
     median,
     nan_to_num,
+    nansum,
     logaddexp,
     logaddexp2,
     logit,

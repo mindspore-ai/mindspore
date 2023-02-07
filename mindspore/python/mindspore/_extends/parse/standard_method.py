@@ -2024,6 +2024,13 @@ def sum_to_size(x, *size):
     return x
 
 
+def nansum(x, axis=None, keepdims=False, *, dtype=None):
+    """
+    Computes sum of all elements, treating NaNs as zero.
+    """
+    return F.nansum(x, axis=axis, keepdims=keepdims, dtype=dtype)
+
+
 def repeat(x, repeats, axis=None):
     """
     Repeat elements of an array.

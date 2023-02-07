@@ -446,6 +446,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"mul", std::string("mul")},                                        // mul()
        {"multiply", std::string("multiply")},                              // multiply()
        {"nan_to_num", std::string("nan_to_num")},                          // nan_to_num()
+       {"nansum", std::string("nansum")},                                  // nansum()
        {"neg", std::string("neg")},                                        // neg()
        {"ne", std::string("ne")},                                          // ne()
        {"not_equal", std::string("not_equal")},                            // not_equal()
