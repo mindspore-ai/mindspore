@@ -20,31 +20,22 @@ Neural Network
     mindspore.ops.conv2d
     mindspore.ops.conv3d
     mindspore.ops.ctc_greedy_decoder
-    mindspore.ops.crop_and_resize
     mindspore.ops.dropout
     mindspore.ops.dropout1d
     mindspore.ops.dropout2d
     mindspore.ops.dropout3d
     mindspore.ops.flatten
+    mindspore.ops.unfold
+    mindspore.ops.fold
     mindspore.ops.fractional_max_pool2d
     mindspore.ops.fractional_max_pool3d
     mindspore.ops.lp_pool1d
     mindspore.ops.lp_pool2d
     mindspore.ops.lrn
-    mindspore.ops.margin_ranking_loss
     mindspore.ops.max_pool3d
     mindspore.ops.max_unpool1d
     mindspore.ops.max_unpool2d
     mindspore.ops.max_unpool3d
-    mindspore.ops.multi_label_margin_loss
-    mindspore.ops.kl_div
-    mindspore.ops.pad
-    mindspore.ops.padding
-    mindspore.ops.pdist
-    mindspore.ops.prelu
-    mindspore.ops.relu
-    mindspore.ops.relu6
-
 
 Loss Functions
 ^^^^^^^^^^^^^^
@@ -58,6 +49,9 @@ Loss Functions
     mindspore.ops.binary_cross_entropy_with_logits
     mindspore.ops.gaussian_nll_loss
     mindspore.ops.hinge_embedding_loss
+    mindspore.ops.kl_div
+    mindspore.ops.margin_ranking_loss
+    mindspore.ops.multi_label_margin_loss
     mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
 
@@ -78,6 +72,9 @@ Activation Functions
     mindspore.ops.hardswish
     mindspore.ops.log_softmax
     mindspore.ops.mish
+    mindspore.ops.prelu
+    mindspore.ops.relu
+    mindspore.ops.relu6
     mindspore.ops.selu
     mindspore.ops.sigmoid
     mindspore.ops.softsign
@@ -93,7 +90,8 @@ Sampling Functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.grid_sample
+    mindspore.ops.choice_with_mask
+    mindspore.ops.random_categorical
     mindspore.ops.log_uniform_candidate_sampler
     mindspore.ops.uniform_candidate_sampler
 
@@ -106,22 +104,7 @@ Distance Functions
     :template: classtemplate.rst
 
     mindspore.ops.cdist
-
-Mathematical Functions
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.conj
-    mindspore.ops.cumprod
-    mindspore.ops.erfinv
-    mindspore.ops.is_floating_point
-    mindspore.ops.less_equal
-    mindspore.ops.matrix_exp
-    mindspore.ops.pinv
+    mindspore.ops.pdist
 
 Element-by-Element Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -150,8 +133,6 @@ Element-by-Element Operations
     mindspore.ops.atan
     mindspore.ops.atan2
     mindspore.ops.atanh
-    mindspore.ops.baddbmm
-    mindspore.ops.bernoulli
     mindspore.ops.bessel_i0
     mindspore.ops.bessel_i0e
     mindspore.ops.bessel_i1
@@ -175,6 +156,7 @@ Element-by-Element Operations
     mindspore.ops.divide
     mindspore.ops.erf
     mindspore.ops.erfc
+    mindspore.ops.erfinv
     mindspore.ops.exp
     mindspore.ops.expm1
     mindspore.ops.floor
@@ -252,10 +234,13 @@ Comparison Functions
     mindspore.ops.isfinite
     mindspore.ops.isinf
     mindspore.ops.isnan
+    mindspore.ops.is_floating_point
     mindspore.ops.le
     mindspore.ops.less
+    mindspore.ops.less_equal
     mindspore.ops.maximum
     mindspore.ops.ne
+    mindspore.ops.top_k
 
 Linear Algebraic Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -267,12 +252,27 @@ Linear Algebraic Functions
 
     mindspore.ops.addbmm
     mindspore.ops.addmm
+    mindspore.ops.baddbmm
     mindspore.ops.adjoint
     mindspore.ops.batch_dot
     mindspore.ops.dot
-    mindspore.ops.matmul
     mindspore.ops.ger
+    mindspore.ops.matmul
+    mindspore.ops.matrix_exp
+    mindspore.ops.matrix_diag
+    mindspore.ops.pinv
     mindspore.ops.tensor_dot
+
+Spectral Functions
+------------------
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.bartlett_window
+    mindspore.ops.blackman_window
 
 Tensor Operation Functions
 --------------------------
@@ -288,10 +288,11 @@ Tensor Building
     mindspore.ops.eye
     mindspore.ops.fill
     mindspore.ops.linspace
-    mindspore.ops.narrow
     mindspore.ops.one_hot
     mindspore.ops.ones
     mindspore.ops.ones_like
+    mindspore.ops.arange
+    mindspore.ops.range
 
 Randomly Generating Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -301,12 +302,10 @@ Randomly Generating Functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.choice_with_mask
+    mindspore.ops.bernoulli
     mindspore.ops.gamma
     mindspore.ops.laplace
     mindspore.ops.multinomial
-    mindspore.ops.random_categorical
-    mindspore.ops.shuffle
     mindspore.ops.standard_laplace
     mindspore.ops.standard_normal
     mindspore.ops.uniform
@@ -319,17 +318,16 @@ Array Operation
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.arange
     mindspore.ops.batch_to_space_nd
     mindspore.ops.broadcast_to
     mindspore.ops.concat
+    mindspore.ops.conj
     mindspore.ops.count_nonzero
     mindspore.ops.expand
     mindspore.ops.expand_dims
     mindspore.ops.flip
     mindspore.ops.fliplr
     mindspore.ops.flipud
-    mindspore.ops.fold
     mindspore.ops.gather
     mindspore.ops.gather_d
     mindspore.ops.gather_elements
@@ -340,12 +338,11 @@ Array Operation
     mindspore.ops.inplace_update
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
-    mindspore.ops.matrix_diag
     mindspore.ops.meshgrid
+    mindspore.ops.narrow
     mindspore.ops.numel
     mindspore.ops.permute
     mindspore.ops.population_count
-    mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.reshape
     mindspore.ops.reverse
@@ -353,6 +350,7 @@ Array Operation
     mindspore.ops.scatter_nd
     mindspore.ops.select
     mindspore.ops.shape
+    mindspore.ops.shuffle
     mindspore.ops.size
     mindspore.ops.slice
     mindspore.ops.space_to_batch_nd
@@ -361,16 +359,14 @@ Array Operation
     mindspore.ops.stack
     mindspore.ops.strided_slice
     mindspore.ops.tensor_scatter_add
-    mindspore.ops.tensor_scatter_min
-    mindspore.ops.tensor_scatter_max
     mindspore.ops.tensor_scatter_div
+    mindspore.ops.tensor_scatter_max
+    mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
     mindspore.ops.tile
-    mindspore.ops.top_k
     mindspore.ops.transpose
     mindspore.ops.unbind
-    mindspore.ops.unfold
     mindspore.ops.unique
     mindspore.ops.unique_with_pad
     mindspore.ops.unsorted_segment_max
@@ -379,6 +375,7 @@ Array Operation
     mindspore.ops.unsorted_segment_sum
     mindspore.ops.unsqueeze
     mindspore.ops.unstack
+    mindspore.ops.cumprod
 
 Type Conversion
 ^^^^^^^^^^^^^^^
@@ -511,8 +508,8 @@ Parameter Operation Functions
     mindspore.ops.assign_sub
     mindspore.ops.scatter_add
     mindspore.ops.scatter_div
-    mindspore.ops.scatter_min
     mindspore.ops.scatter_max
+    mindspore.ops.scatter_min
     mindspore.ops.scatter_mul
     mindspore.ops.scatter_nd_add
     mindspore.ops.scatter_nd_div
@@ -554,17 +551,10 @@ Image Functions
     mindspore.ops.bounding_box_decode
     mindspore.ops.bounding_box_encode
     mindspore.ops.check_valid
+    mindspore.ops.crop_and_resize
+    mindspore.ops.grid_sample
     mindspore.ops.iou
+    mindspore.ops.pad
+    mindspore.ops.padding
     mindspore.ops.pixel_shuffle
     mindspore.ops.pixel_unshuffle
-
-Spectral Functions
-------------------
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.bartlett_window
-    mindspore.ops.blackman_window

@@ -75,8 +75,9 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.MirrorPad
     mindspore.ops.Pad
     mindspore.ops.Padding
-    mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.ResizeBilinear
+    mindspore.ops.ResizeLinear1D
+    mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.UpsampleNearest3D
     mindspore.ops.UpsampleTrilinear3D
 
@@ -209,6 +210,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.NMSWithMask
     mindspore.ops.RGBToHSV
     mindspore.ops.ROIAlign
+    mindspore.ops.ResizeBicubic
     mindspore.ops.SampleDistortedBoundingBoxV2
     mindspore.ops.ScaleAndTranslate
 
@@ -295,6 +297,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.LogicalAnd
     mindspore.ops.LogicalNot
     mindspore.ops.LogicalOr
+    mindspore.ops.Logit
     mindspore.ops.Mod
     mindspore.ops.Mul
     mindspore.ops.MulNoNan

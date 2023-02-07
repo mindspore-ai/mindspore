@@ -414,7 +414,7 @@ def load(file_name, **kwargs):
 
               - Option: 'AES-GCM', 'AES-CBC', 'SM4-CBC' or customized decryption. Default: 'AES-GCM'.
               - For details of using the customized decryption, please check the `tutorial
-                <https://mindspore.cn/mindarmour/docs/en/r2.0.0-alpha/model_encrypt_protection.html>`_.
+                <https://mindspore.cn/mindarmour/docs/en/r1.9/model_encrypt_protection.html>`_.
 
             - obf_func (function): A python function used for loading obfuscated MindIR model, which can refer to
               `obfuscate_model()
@@ -1076,7 +1076,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
                 or Customized encryption.
                 Default: 'AES-GCM'.
               - For details of using the customized encryption, please check the `tutorial
-                <https://mindspore.cn/mindarmour/docs/en/r2.0.0-alpha/model_encrypt_protection.html>`_.
+                <https://mindspore.cn/mindarmour/docs/en/r1.9/model_encrypt_protection.html>`_.
 
             - dataset (Dataset): Specifies the preprocessing method of the dataset, which is used to import the
               preprocessing of the dataset into MindIR.
