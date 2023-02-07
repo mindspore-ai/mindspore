@@ -98,23 +98,33 @@ uint32_t MaskedSelectGradCpuKernel::MaskedSelectGradCompute(CpuKernelContext &ct
   std::vector<int64_t> output_shape;
   auto ret = GetBroadcastShape(input_shape_a, input_shape_b, output_shape);
   KERNEL_CHECK_FALSE(ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID, "Shape of x and mask can't be broadcast.");
-  int64_t tensor_size = 1;
+  uint64_t tensor_size = 1;
   for (const int64_t &d : output_shape) {
-    tensor_size *= d;
+    tensor_size *= static_cast<uint64_t>(d);
   }
   const T NUM_ZERO = static_cast<T>(0);
-  for (int k = 0; k < tensor_size; ++k) {
+  for (uint64_t k = 0; k < tensor_size; ++k) {
     dx[k] = NUM_ZERO;
   }
-  int64_t j = 0;
-  BroadcastIterator iter(input_shape_a, input_shape_b, output_shape);
-  iter.SetPos(0);
-  for (int64_t i = 0; i < tensor_size; ++i) {
-    if (mask[iter.GetInputPosB()]) {
-      dx[iter.GetInputPosA()] += grad[j++];
+
+  uint64_t j = 0;
+  if (input_shape_a == input_shape_b) {
+    for (uint64_t l = 0; l < tensor_size; ++l) {
+      if (mask[l]) {
+        dx[l] += grad[j++];
+      }
     }
-    iter.GenNextPos();
+  } else {
+    BroadcastIterator iter(input_shape_a, input_shape_b, output_shape);
+    iter.SetPos(0);
+    for (uint64_t i = 0; i < tensor_size; ++i) {
+      if (mask[iter.GetInputPosB()]) {
+        dx[iter.GetInputPosA()] += grad[j++];
+      }
+      iter.GenNextPos();
+    }
   }
+
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
 REGISTER_CPU_KERNEL(kMaskedSelectGrad, MaskedSelectGradCpuKernel);

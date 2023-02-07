@@ -209,6 +209,8 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                                mindspore::kFloorDivOpName,
                                                                mindspore::kLog1pOpName,
                                                                mindspore::kMulOpName,
+                                                               mindspore::kMaskedSelectOpName,
+                                                               mindspore::kMaskedSelectGradOpName,
                                                                mindspore::kConjOpName,
                                                                mindspore::kZerosLikeOpName,
                                                                mindspore::kMatrixBandPartOpName,
