@@ -73,8 +73,6 @@ static const int SOCKET_KEEPINTERVAL = 5;
 static const int SOCKET_KEEPCOUNT = 3;
 
 static const char RPC_MAGICID[] = "RPC0";
-static const char URL_PROTOCOL_IP_SEPARATOR[] = "://";
-static const char URL_IP_PORT_SEPARATOR[] = ":";
 static const char TCP_RECV_EVLOOP_THREADNAME[] = "RECV_EVENT_LOOP";
 static const char TCP_SEND_EVLOOP_THREADNAME[] = "SEND_EVENT_LOOP";
 
