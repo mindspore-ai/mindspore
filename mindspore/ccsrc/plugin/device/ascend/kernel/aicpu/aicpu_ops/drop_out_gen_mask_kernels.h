@@ -21,7 +21,8 @@
 namespace aicpu {
 class DropOutGenMaskKernel : public KernelBase {
  public:
-  DropOutGenMaskKernel() : KernelBase("DropOutGenMask") {}
+  DropOutGenMaskKernel()
+      : KernelBase("DropOutGenMask"), seed0_(0), seed1_(0), keep_prob_(0), count_(0), out_(nullptr) {}
 
   ~DropOutGenMaskKernel() = default;
 
