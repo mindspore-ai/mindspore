@@ -50,7 +50,7 @@ abstract::ShapePtr OrmqrInferShape(const PrimitivePtr &primitive, const std::vec
 
   if ((x_rank - kColIndex) != tau_rank) {
     MS_EXCEPTION(ValueError) << "For Ormqr,  tau should have one dimension less than x"
-                             << ", while rank of x is" << x_shape.size() << " and "
+                             << ", while rank of x is " << x_shape.size() << " and "
                              << "rank of tau is " << tau_shape.size() << ".";
   }
   if (x_rank != other_rank) {
