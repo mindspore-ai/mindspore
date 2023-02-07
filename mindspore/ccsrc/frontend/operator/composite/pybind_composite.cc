@@ -25,7 +25,7 @@
 #include "frontend/operator/composite/zip_operation.h"
 namespace mindspore {
 namespace prim {
-void RegCompositeOpsGroup(py::module *m) {
+void RegCompositeOpsGroup(const py::module *m) {
   //  Reg HyperMap
   (void)py::class_<HyperMapPy, MetaFuncGraph, std::shared_ptr<HyperMapPy>>(*m, "HyperMap_")
     .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"), py::arg("ops"))

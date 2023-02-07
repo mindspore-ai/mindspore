@@ -20,7 +20,7 @@
 
 namespace mindspore {
 // Define python 'CNode' class.
-void RegCNode(py::module *m) {
+void RegCNode(const py::module *m) {
   (void)py::class_<CNode, CNodePtr>(*m, "CNode")
     .def("expanded_str", (std::string(CNode::*)(int32_t) const) & CNode::DebugString,
          "Get CNode string representation with specified expansion level.");

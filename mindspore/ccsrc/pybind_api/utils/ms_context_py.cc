@@ -72,7 +72,7 @@ py::object MsCtxGetParameter(const std::shared_ptr<MsContext> &ctx, MsCtxParam p
 }  // namespace
 
 // Note: exported python enum variables beginning with '_' are for internal use
-void RegMsContext(py::module *m) {
+void RegMsContext(const py::module *m) {
   (void)py::enum_<MsCtxParam>(*m, "ms_ctx_param", py::arithmetic())
     .value("check_bprop", MsCtxParam::MS_CTX_CHECK_BPROP_FLAG)
     .value("enable_dump", MsCtxParam::MS_CTX_ENABLE_DUMP)

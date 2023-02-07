@@ -95,7 +95,7 @@ void PyPassManager::ClearRes() {
   phase_to_group_.clear();
 }
 
-void RegPyPassManager(py::module *m) {
+void RegPyPassManager(const py::module *m) {
   (void)py::enum_<Phase>(*m, "phase", py::arithmetic()).value("pre_ad", Phase::PREAD).value("opt", Phase::OPT);
   (void)py::class_<PyPassManager, std::shared_ptr<PyPassManager>>(*m, "PyPassManager_")
     .def(py::init([]() { return PyPassManager::GetInstance(); }))

@@ -60,7 +60,7 @@ py::dict UpdateFuncGraphHyperParams(const FuncGraphPtr &func_graph, const py::di
   return hyper_params;
 }
 
-void RegFuncGraph(py::module *m) {
+void RegFuncGraph(const py::module *m) {
   // Define python "FuncGraph" class
   (void)py::class_<FuncGraph, FuncGraphPtr>(*m, "FuncGraph")
     .def(py::init())
@@ -68,7 +68,7 @@ void RegFuncGraph(py::module *m) {
     .def("get_return", &FuncGraph::get_return, "Get return node of FuncGraph");
 }
 
-void RegMetaFuncGraph(py::module *m) {
+void RegMetaFuncGraph(const py::module *m) {
   // Define python "MetaFuncGraph_" class
   (void)py::class_<MetaFuncGraph, std::shared_ptr<MetaFuncGraph>>(*m, "MetaFuncGraph_")
     .def("set_signatures", &MetaFuncGraph::set_signatures, "Set primitive inputs signature.");
