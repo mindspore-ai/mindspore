@@ -28,6 +28,8 @@ std::map<std::string, std::shared_ptr<OverflowDumper>> &OverflowDumper::GetInsta
   return instance_map;
 }
 
+void OverflowDumper::Clear() { GetInstanceMap().clear(); }
+
 std::shared_ptr<OverflowDumper> OverflowDumper::GetInstance(const std::string &name) noexcept {
   if (auto iter = GetInstanceMap().find(name); iter != GetInstanceMap().end()) {
     return iter->second;

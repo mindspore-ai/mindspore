@@ -21,7 +21,6 @@
 #include <set>
 #include <memory>
 #include <string>
-#include <vector>
 #include <functional>
 #include "runtime/dev.h"
 #include "runtime/mem.h"
@@ -88,7 +87,7 @@ class KernelDumper : public debug::OverflowDumper {
   bool is_op_debug_;
   uint32_t op_debug_mode_;
 
-  void *dev_load_mem_;
+  void *dev_load_mem_ = nullptr;
   void *proto_dev_mem_ = nullptr;
   void *proto_size_dev_mem_ = nullptr;
   std::mutex register_mutex_;

@@ -658,7 +658,8 @@ bool E2eDump::DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32
 void E2eDump::DumpParametersData(uint32_t rank_id, const Debugger *debugger) {
   uint32_t root_graph_id = debugger->GetCurrentRootGraphId();
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  if (dump_json_parser.async_dump_enabled() && !debugger->GetAscendKernelByKernelFlag()) {
+  if ((dump_json_parser.async_dump_enabled() && !debugger->GetAscendKernelByKernelFlag()) ||
+      (dump_json_parser.async_dump_enabled() && dump_json_parser.op_debug_mode() > 0)) {
     // Dump parameters for mindRT in async dump only for kernel by kernel mode.
     return;
   }
