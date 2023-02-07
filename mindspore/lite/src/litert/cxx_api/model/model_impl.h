@@ -81,6 +81,8 @@ class ModelImpl {
   Status BuildAndRun(const std::string &model_path, ModelType model_type,
                      const std::shared_ptr<Context> &model_context);
   Status BuildAndRun();
+
+  bool IsEnablePreInference();
 #endif
   lite::LiteSession *CreateLiteSession(const std::shared_ptr<lite::InnerContext> &context);
 
