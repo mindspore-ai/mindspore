@@ -139,6 +139,17 @@ AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const 
   real_make_tuple->set_abstract(make_tuple_node->abstract());
 
   SetKernelInfoForNewCNode(real_make_tuple);
+
+  // RealMakeTuple's inputs must be scalar. To avoid failing to select kernel, we must override RealMakeTuple's
+  // KernelObjectTypes, which is created from MakeTuple.
+  KernelBuildInfoPtr real_make_tuple_build_info = AnfAlgo::GetSelectKernelBuildInfo(real_make_tuple);
+  MS_EXCEPTION_IF_NULL(real_make_tuple_build_info);
+  auto inputs_obj_types = real_make_tuple_build_info->GetAllInputKernelObjectTypes();
+  auto new_obj_types = inputs_obj_types;
+  std::transform(new_obj_types.begin(), new_obj_types.end(), new_obj_types.begin(),
+                 [](const auto &obj_type) { return KernelObjectType::SCALAR; });
+  real_make_tuple_build_info->SetInputsKernelObjectType(new_obj_types);
+  MS_LOG(DEBUG) << "Override RealMakeTuple input kernel object types from " << inputs_obj_types << " " << new_obj_types;
   return real_make_tuple;
 }
 

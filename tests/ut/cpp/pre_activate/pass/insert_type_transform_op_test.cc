@@ -45,8 +45,8 @@ class TestInsertTypeTransformOp : public BackendCommon {
  public:
   void SetTupleUnfoldToTupleUnfoldKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *split1_ptr, AnfNodePtr *addn1_ptr,
                                                   AnfNodePtr *split2_ptr, AnfNodePtr *addn2_ptr);
-  void SetTupleUnfoldToTupleKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *make_tuple_ptr, AnfNodePtr *split_ptr,
-                                            AnfNodePtr *seq_add1_ptr, AnfNodePtr *seq_add2_ptr);
+  void SetTupleUnfoldToTupleKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *make_tuple_ptr,
+                                            AnfNodePtr *seq_add1_ptr);
   void SetTupleUnfoldToTensorKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *make_tuple, AnfNodePtr *reshape_ptr);
   void SetTupleToTupleUnfoldKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *shape_ptr);
   void SetTupleToTensorKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *reshape_ptr);
@@ -126,23 +126,10 @@ void TestInsertTypeTransformOp::SetTupleUnfoldToTupleUnfoldKernelBuildInfo(
 }
 
 void TestInsertTypeTransformOp::SetTupleUnfoldToTupleKernelBuildInfo(const FuncGraphPtr &g, AnfNodePtr *make_tuple_ptr,
-                                                                     AnfNodePtr *split_ptr, AnfNodePtr *seq_add1_ptr,
-                                                                     AnfNodePtr *seq_add2_ptr) {
+                                                                     AnfNodePtr *seq_add1_ptr) {
   auto ret = g->get_return();
   EXPECT_NE(ret->input(1), nullptr);
-  auto seq_add2 = ret->input(1)->cast<CNodePtr>();
-  *seq_add2_ptr = seq_add2;
-  SetKernelBuildInfo(seq_add2, {"NCHW", "NCHW"}, {kNumberTypeFloat32, kNumberTypeFloat32}, {"NCHW"},
-                     {kNumberTypeFloat32}, {KernelObjectType::TUPLE, KernelObjectType::TUPLE},
-                     {KernelObjectType::TENSOR});
-
-  auto split = seq_add2->input(1)->cast<CNodePtr>();
-  *split_ptr = split;
-  MS_LOG(INFO) << "split is " << split->fullname_with_scope();
-  SetKernelBuildInfo(split, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW", "NCHW"}, {kNumberTypeFloat32, kNumberTypeFloat32},
-                     {KernelObjectType::TENSOR}, {KernelObjectType::TUPLE_UNFOLD});
-
-  auto seq_add1 = split->input(1)->cast<CNodePtr>();
+  auto seq_add1 = ret->input(1)->cast<CNodePtr>();
   *seq_add1_ptr = seq_add1;
   SetKernelBuildInfo(seq_add1, {"NCHW", "NCHW"}, {kNumberTypeFloat32, kNumberTypeFloat32}, {"NCHW"},
                      {kNumberTypeFloat32}, {KernelObjectType::TUPLE, KernelObjectType::TUPLE},
@@ -336,9 +323,9 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_unfold_transform) {
 TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_transform) {
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tuple_transform", "before");
   ASSERT_TRUE(g != nullptr);
-  std::vector<int64_t> shp_1{2, 4};
+  std::vector<int64_t> shp_1{};
   auto abstract_1 = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_1);
-  std::vector<int64_t> shp_2{2, 4};
+  std::vector<int64_t> shp_2{};
   auto abstract_2 = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_2);
   std::vector<int64_t> shp_x{1, 3};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
@@ -347,8 +334,8 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_transform) {
   AbstractBasePtrList args_spec_list{abstract_1, abstract_2, x_tuple_abs};
   auto func_graph = GetFuncGraph(g, args_spec_list);
   ASSERT_TRUE(func_graph != nullptr);
-  AnfNodePtr make_tuple, split, seq_add1, seq_add2;
-  SetTupleUnfoldToTupleKernelBuildInfo(func_graph, &make_tuple, &split, &seq_add1, &seq_add2);
+  AnfNodePtr make_tuple, seq_add1;
+  SetTupleUnfoldToTupleKernelBuildInfo(func_graph, &make_tuple, &seq_add1);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
@@ -374,9 +361,9 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_transform) {
 TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tensor_transform) {
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tensor_transform", "before");
   ASSERT_TRUE(g != nullptr);
-  std::vector<int64_t> shp_x{4};
+  std::vector<int64_t> shp_x{};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
-  std::vector<int64_t> shp_y{2};
+  std::vector<int64_t> shp_y{};
   auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
   std::vector<int64_t> shp_z{2, 4};
   auto z_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_z);
