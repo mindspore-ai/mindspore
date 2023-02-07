@@ -1049,6 +1049,13 @@ class Tensor(Tensor_):
         other = _cast(other, self.dtype)
         return tensor_operator_registry.get('bitwise_right_shift')(self, other)
 
+    def scatter(self, axis, index, src):
+        """
+        For details, please refer to :func:`mindspore.ops.scatter` .
+        """
+        self._init_check()
+        return tensor_operator_registry.get('scatter')(self, axis, index, src)
+
     def scatter_mul(self, indices, updates):
         """
         For details, please refer to :func:`mindspore.ops.scatter_mul`.
@@ -1735,12 +1742,19 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('narrow')(self, axis, start, length)
 
-    def swapaxes(self, axis1, axis2):
+    def swapaxes(self, axis0, axis1):
         """
-        For details, please refer to :func:`mindspore.ops.swapaxes`.
+        For details, please refer to :func:`mindspore.ops.swapaxes` .
         """
         self._init_check()
-        return tensor_operator_registry.get('swapaxes')(self, axis1, axis2)
+        return tensor_operator_registry.get('swapaxes')(self, axis0, axis1)
+
+    def swapdims(self, dim0, dim1):
+        """
+        For details, please refer to :func:`mindspore.ops.swapdims` .
+        """
+        self._init_check()
+        return tensor_operator_registry.get('swapdims')(self, dim0, dim1)
 
     def squeeze(self, axis=None):
         """
@@ -3986,6 +4000,13 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('inner')(self, other)
+
+    def matrix_power(self, n):
+        r"""
+        For details, please refer to :func:`mindspore.ops.matrix_power` .
+        """
+        self._init_check()
+        return tensor_operator_registry.get('matrix_power')(self, n)
 
     def maximum(self, other):
         r"""

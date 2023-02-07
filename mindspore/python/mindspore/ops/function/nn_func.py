@@ -5684,9 +5684,11 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
         0.8881968
     """
     if not isinstance(margin, Tensor):
-        margin = Tensor(margin, mstype.float32)
+        margin_tensor = Tensor(margin, mstype.float32)
+    else:
+        margin_tensor = margin
     triplet_margin_loss_op = _get_cache_prim(TripletMarginLoss)(p=p, eps=eps, swap=swap, reduction=reduction)
-    return triplet_margin_loss_op(anchor, positive, negative, margin)
+    return triplet_margin_loss_op(anchor, positive, negative, margin_tensor)
 
 
 __all__ = [

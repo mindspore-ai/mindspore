@@ -10015,6 +10015,12 @@ def tanhshrink(x):
         >>> print(output)
         [0.2383 1.036  2.004  1.036  0.2383]
     '''
+    if not isinstance(x, Tensor):
+        raise TypeError(f"For tanhshrink, the input must be a Tensor, but got {type(x)}.")
+
+    if x.dtype in mstype.int_type + mstype.uint_type:
+        x = x.astype(mstype.float64)
+
     tanh_op = _get_cache_prim(P.Tanh)()
     return x - tanh_op(x)
 

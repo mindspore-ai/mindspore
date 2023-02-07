@@ -6380,7 +6380,6 @@ def count_nonzero(x, dims=None):
     return count_nonzero_(x)
 
 
-#TODO: remove comment
 @constexpr
 def _check_swapaxes_axis(axes, ndim):
     return validator.check_swapaxes_axis(axes, ndim)
@@ -6424,7 +6423,7 @@ def swapaxes(x, axis0, axis1):
     if axis0 > axis1:
         axis0, axis1 = axis1, axis0
 
-    perm = tuple(builtins.range(0, x.ndim))
+    perm = F.make_range(0, x.ndim)
     if axis1 + 1 < x.ndim:
         new_perm = perm[0:axis0] + perm[axis1:axis1 + 1] + \
                    perm[axis0 + 1:axis1] + perm[axis0:axis0 + 1] + perm[axis1 + 1:]
