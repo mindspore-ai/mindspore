@@ -36,10 +36,10 @@ mindspore.nn.BatchNorm2d
         - **data_format** (str) - 数据格式可为'NHWC'或'NCHW'。默认值：'NCHW'。
 
     输入：
-        - **x** (Tensor) - 输入shape为 :math:`(N,C_{in},H_{in},W_{in})` 的Tensor。
+        - **x** (Tensor) - 输入shape为 :math:`(N, C, H, W)` 的Tensor。
 
     输出：
-        Tensor，归一化后的Tensor，shape为 :math:`(N,C_{out},H_{out},W_{out})` 。
+        Tensor，归一化后的Tensor，shape为 :math:`(N, C, H, W)` 。
 
     异常：
         - **TypeError** - `num_features` 不是整数。

@@ -1232,8 +1232,8 @@ class BatchNorm(PrimitiveWithInfer):
         momentum (float): The hyper parameter to compute moving average for running_mean and running_var
             (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
             Momentum value must be [0, 1]. Default: 0.1.
-        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
-            Default: "NCHW".
+        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW', and the 'NHWC' format
+            is only supported in GPU target. Default: "NCHW".
 
     Inputs:
         If `is_training` is False, inputs are Tensors.

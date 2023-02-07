@@ -24,11 +24,12 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-size_t kInputSize2 = 2;
-size_t kInputSize4 = 4;
+constexpr size_t kBatchNormGradInputShapeMaxSize = 4;
+constexpr size_t kBatchNormGradInputShapeMinSize = 2;
 }  // namespace
 bool BatchNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchNormGrad>(base_operator);
   if (kernel_ptr == nullptr) {
@@ -86,30 +87,35 @@ int BatchNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     return ret;
   }
 
-  auto shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  if (shape.size() != kInputSize2 && shape.size() != kInputSize4) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 2 or 4, but got "
-                      << shape.size();
+  beta_data_diff_ = 0;
+
+  auto x_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  const size_t x_shape_size = x_shape.size();
+
+  auto format = inputs[kIndex0]->GetFormat();
+  if (x_shape_size == kBatchNormGradInputShapeMinSize) {
+    format = Format::NCHW;
+  } else if (format_ == Format::NHWC) {
+    format = Format::NHWC;
   }
 
-  is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
+  (void)x_shape.insert(x_shape.begin() + (format == Format::NHWC ? kIndex1 : x_shape_size),
+                       kBatchNormGradInputShapeMaxSize - x_shape_size, 1);
+
+  is_null_input_ = CHECK_SHAPE_NULL(x_shape, kernel_name_, "input");
   if (is_null_input_) {
     InitSizeLists();
     return true;
   }
-  if (shape.size() == kInputSize2) {
+
+  if (x_shape_size == kBatchNormGradInputShapeMinSize) {
     mode_ = CUDNN_BATCHNORM_PER_ACTIVATION;
   } else {
     mode_ = CUDNN_BATCHNORM_SPATIAL_PERSISTENT;
   }
 
-  beta_data_diff_ = 0;
-  CheckTensorSize({shape});
-  auto format = inputs[kIndex0]->GetFormat();
-  if (format_ == Format::NHWC) {
-    format = Format::NHWC;
-  }
-  SetTensorDescriptor(format, shape);
+  CheckTensorSize({x_shape});
+  SetTensorDescriptor(format, x_shape);
   InitSizeLists();
   return KRET_OK;
 }
@@ -217,13 +223,7 @@ bool BatchNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 
 void BatchNormGradGpuKernelMod::SetTensorDescriptor(const Format &format, const ShapeVector &shape) {
   cudnnTensorFormat_t cudnn_format;
-  if (shape.size() == kInputSize2) {
-    batch_ = LongToInt(shape[kIndex0]);
-    channel_ = LongToInt(shape[kIndex1]);
-    height_ = 1;
-    width_ = 1;
-    cudnn_format = CUDNN_TENSOR_NCHW;
-  } else if (format == Format::NHWC) {
+  if (format == Format::NHWC) {
     batch_ = LongToInt(shape[kIndex0]);
     height_ = LongToInt(shape[kIndex1]);
     width_ = LongToInt(shape[kIndex2]);

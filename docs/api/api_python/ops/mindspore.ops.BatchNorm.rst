@@ -20,7 +20,7 @@ mindspore.ops.BatchNorm
         - **is_training** (bool) - 如果 `is_training` 为True，则在训练期间计算 `mean` 和 `variance`。如果 `is_training` 为False，则在推理期间从checkpoint加载。默认值：False。
         - **epsilon** (float) - 添加到分母上的值，以确保数值稳定性。默认值：1e-5。
         - **momentum** (float) - 动态均值和动态方差所使用的动量。（例如 :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`）。动量值必须为[0, 1]。默认值：0.1。
-        - **data_format** (str) - 输入数据格式，可选值有：'NHWC'或'NCHW'。默认值：'NCHW'。
+        - **data_format** (str) - 输入数据格式，可选值有：'NHWC'或'NCHW'，'NHWC'仅在GPU上支持。默认值：'NCHW'。
 
     输入：
         如果 `is_training` 为False，则输入为多个Tensor。
