@@ -17,6 +17,22 @@
 #ifndef MINDSPORE_LITE_NNACL_INTRINSICS_SSE_SSE_COMMON_H_
 #define MINDSPORE_LITE_NNACL_INTRINSICS_SSE_SSE_COMMON_H_
 
+#define SSE_ROW_NUM_1 1
+#define SSE_ROW_NUM_2 2
+#define SSE_ROW_NUM_3 3
+
+#define SSE_INDEX_1 1
+#define SSE_INDEX_2 2
+#define SSE_INDEX_3 3
+#define SSE_INDEX_4 4
+#define SSE_INDEX_5 5
+#define SSE_INDEX_6 6
+
+#define SSE_SHUFFLE_0321 (_MM_SHUFFLE(0, 3, 2, 1))
+
+#define SSE_ACT_RELU 1
+#define SSE_ACT_RELU6 3
+
 static inline void ActBlock1(__m128 *v1, size_t relu, size_t relu6) {
   __m128 zero_ma = _mm_setzero_ps();
   if (relu || relu6) {
@@ -98,7 +114,7 @@ static inline void ActBlock8(__m128 *v1, __m128 *v2, __m128 *v3, __m128 *v4, __m
   __m128 relu6 = _mm_set_ps1(6.0);
   __m128 zero = _mm_setzero_ps();
   switch (relu_type) {
-    case 3:
+    case SSE_ACT_RELU6:
       *v1 = _mm_min_ps(*v1, relu6);
       *v2 = _mm_min_ps(*v2, relu6);
       *v3 = _mm_min_ps(*v3, relu6);
@@ -107,7 +123,7 @@ static inline void ActBlock8(__m128 *v1, __m128 *v2, __m128 *v3, __m128 *v4, __m
       *v6 = _mm_min_ps(*v6, relu6);
       *v7 = _mm_min_ps(*v7, relu6);
       *v8 = _mm_min_ps(*v8, relu6);
-    case 1:
+    case SSE_ACT_RELU:
       *v1 = _mm_max_ps(*v1, zero);
       *v2 = _mm_max_ps(*v2, zero);
       *v3 = _mm_max_ps(*v3, zero);
@@ -124,15 +140,15 @@ static inline void ActBlock8(__m128 *v1, __m128 *v2, __m128 *v3, __m128 *v4, __m
 static inline void WriteCol1(float **dst, __m128 *dst1, __m128 *dst2, __m128 *dst3, __m128 *dst4, __m128 *dst5,
                              __m128 *dst6, __m128 *dst7, __m128 *dst8, int stride, int extra_stride, int r) {
   _mm_store_ss(*dst, *dst1);
-  if (r > 1) {
+  if (r > SSE_ROW_NUM_1) {
     *dst += stride;
     _mm_store_ss(*dst, *dst3);
   }
-  if (r > 2) {
+  if (r > SSE_ROW_NUM_2) {
     *dst += stride;
     _mm_store_ss(*dst, *dst5);
   }
-  if (r > 3) {
+  if (r > SSE_ROW_NUM_3) {
     *dst += stride;
     _mm_store_ss(*dst, *dst7);
     *dst += stride;
@@ -143,24 +159,24 @@ static inline void WriteCol1(float **dst, __m128 *dst1, __m128 *dst2, __m128 *ds
 static inline void WriteCol2(float **dst, __m128 *dst1, __m128 *dst2, __m128 *dst3, __m128 *dst4, __m128 *dst5,
                              __m128 *dst6, __m128 *dst7, __m128 *dst8, int stride, int r) {
   _mm_store_ss(*dst, *dst1);
-  *dst1 = _mm_shuffle_ps(*dst1, *dst1, _MM_SHUFFLE(0, 3, 2, 1));
+  *dst1 = _mm_shuffle_ps(*dst1, *dst1, SSE_SHUFFLE_0321);
   _mm_store_ss(*dst, *dst1);
-  if (r > 1) {
+  if (r > SSE_ROW_NUM_1) {
     *dst += stride;
     _mm_store_ss(*dst, *dst3);
-    *dst3 = _mm_shuffle_ps(*dst3, *dst3, _MM_SHUFFLE(0, 3, 2, 1));
+    *dst3 = _mm_shuffle_ps(*dst3, *dst3, SSE_SHUFFLE_0321);
     _mm_store_ss(*dst, *dst3);
   }
-  if (r > 2) {
+  if (r > SSE_ROW_NUM_2) {
     *dst += stride;
     _mm_store_ss(*dst, *dst5);
-    *dst5 = _mm_shuffle_ps(*dst5, *dst5, _MM_SHUFFLE(0, 3, 2, 1));
+    *dst5 = _mm_shuffle_ps(*dst5, *dst5, SSE_SHUFFLE_0321);
     _mm_store_ss(*dst, *dst5);
   }
-  if (r > 3) {
+  if (r > SSE_ROW_NUM_3) {
     *dst += stride;
     _mm_store_ss(*dst, *dst7);
-    *dst7 = _mm_shuffle_ps(*dst7, *dst7, _MM_SHUFFLE(0, 3, 2, 1));
+    *dst7 = _mm_shuffle_ps(*dst7, *dst7, SSE_SHUFFLE_0321);
     _mm_store_ss(*dst, *dst7);
   }
 }
@@ -168,55 +184,55 @@ static inline void WriteCol2(float **dst, __m128 *dst1, __m128 *dst2, __m128 *ds
 static inline void WriteCol2Opt(float **dst, __m128 *dst1, __m128 *dst2, __m128 *dst3, __m128 *dst4, __m128 *dst5,
                                 __m128 *dst6, __m128 *dst7, __m128 *dst8, int stride, int r) {
   _mm_store_ss(*dst, *dst1);
-  *dst1 = _mm_shuffle_ps(*dst1, *dst1, _MM_SHUFFLE(0, 3, 2, 1));
-  _mm_store_ss(*dst + 1, *dst1);
-  if (r > 1) {
+  *dst1 = _mm_shuffle_ps(*dst1, *dst1, SSE_SHUFFLE_0321);
+  _mm_store_ss(*dst + SSE_INDEX_1, *dst1);
+  if (r > SSE_ROW_NUM_1) {
     *dst += stride;
     _mm_store_ss(*dst, *dst3);
-    *dst3 = _mm_shuffle_ps(*dst3, *dst3, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 1, *dst3);
+    *dst3 = _mm_shuffle_ps(*dst3, *dst3, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_1, *dst3);
   }
-  if (r > 2) {
+  if (r > SSE_ROW_NUM_2) {
     *dst += stride;
     _mm_store_ss(*dst, *dst5);
-    *dst5 = _mm_shuffle_ps(*dst5, *dst5, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 1, *dst5);
+    *dst5 = _mm_shuffle_ps(*dst5, *dst5, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_1, *dst5);
   }
-  if (r > 3) {
+  if (r > SSE_ROW_NUM_3) {
     *dst += stride;
     _mm_store_ss(*dst, *dst7);
-    *dst7 = _mm_shuffle_ps(*dst7, *dst7, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 1, *dst7);
+    *dst7 = _mm_shuffle_ps(*dst7, *dst7, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_1, *dst7);
     *dst += stride;
-    *dst += 2;
+    *dst += SSE_INDEX_2;
   }
 }
 
 static inline void WriteCol3(float **dst, __m128 *dst1, __m128 *dst2, __m128 *dst3, __m128 *dst4, __m128 *dst5,
                              __m128 *dst6, __m128 *dst7, __m128 *dst8, int stride, int extra_stride, int r) {
-  if (r > 1) {
+  if (r > SSE_ROW_NUM_1) {
     *dst += stride;
     _mm_store_ss(*dst, *dst3);
-    *dst3 = _mm_shuffle_ps(*dst3, *dst3, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 1, *dst3);
-    *dst3 = _mm_shuffle_ps(*dst3, *dst3, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 2, *dst3);
+    *dst3 = _mm_shuffle_ps(*dst3, *dst3, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_1, *dst3);
+    *dst3 = _mm_shuffle_ps(*dst3, *dst3, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_2, *dst3);
   }
-  if (r > 2) {
+  if (r > SSE_ROW_NUM_2) {
     *dst += stride;
     _mm_store_ss(*dst, *dst5);
-    *dst5 = _mm_shuffle_ps(*dst5, *dst5, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 1, *dst5);
-    *dst5 = _mm_shuffle_ps(*dst5, *dst5, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 2, *dst5);
+    *dst5 = _mm_shuffle_ps(*dst5, *dst5, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_1, *dst5);
+    *dst5 = _mm_shuffle_ps(*dst5, *dst5, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_2, *dst5);
   }
-  if (r > 3) {
+  if (r > SSE_ROW_NUM_3) {
     *dst += stride;
     _mm_store_ss(*dst, *dst7);
-    *dst7 = _mm_shuffle_ps(*dst7, *dst7, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 1, *dst7);
-    *dst7 = _mm_shuffle_ps(*dst7, *dst7, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 2, *dst7);
+    *dst7 = _mm_shuffle_ps(*dst7, *dst7, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_1, *dst7);
+    *dst7 = _mm_shuffle_ps(*dst7, *dst7, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_2, *dst7);
     *dst += stride;
     *dst += extra_stride;
   }
@@ -225,15 +241,15 @@ static inline void WriteCol3(float **dst, __m128 *dst1, __m128 *dst2, __m128 *ds
 static inline void WriteCol4(float **dst, __m128 *dst1, __m128 *dst2, __m128 *dst3, __m128 *dst4, __m128 *dst5,
                              __m128 *dst6, __m128 *dst7, __m128 *dst8, int stride, int extra_stride, int r) {
   _mm_storeu_ps(*dst, *dst1);
-  if (r > 1) {
+  if (r > SSE_ROW_NUM_1) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst3);
   }
-  if (r > 2) {
+  if (r > SSE_ROW_NUM_2) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst5);
   }
-  if (r > 3) {
+  if (r > SSE_ROW_NUM_3) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst7);
     *dst += stride;
@@ -244,21 +260,21 @@ static inline void WriteCol4(float **dst, __m128 *dst1, __m128 *dst2, __m128 *ds
 static inline void WriteCol5(float **dst, __m128 *dst1, __m128 *dst2, __m128 *dst3, __m128 *dst4, __m128 *dst5,
                              __m128 *dst6, __m128 *dst7, __m128 *dst8, int stride, int extra_stride, int r) {
   _mm_storeu_ps(*dst, *dst1);
-  _mm_store_ss(*dst + 4, *dst2);
-  if (r > 1) {
+  _mm_store_ss(*dst + SSE_INDEX_4, *dst2);
+  if (r > SSE_ROW_NUM_1) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst3);
-    _mm_store_ss(*dst + 4, *dst4);
+    _mm_store_ss(*dst + SSE_INDEX_4, *dst4);
   }
-  if (r > 2) {
+  if (r > SSE_ROW_NUM_2) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst5);
-    _mm_store_ss(*dst + 4, *dst6);
+    _mm_store_ss(*dst + SSE_INDEX_4, *dst6);
   }
-  if (r > 3) {
+  if (r > SSE_ROW_NUM_3) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst7);
-    _mm_store_ss(*dst + 4, *dst8);
+    _mm_store_ss(*dst + SSE_INDEX_4, *dst8);
     *dst += stride;
     *dst += extra_stride;
   }
@@ -267,29 +283,29 @@ static inline void WriteCol5(float **dst, __m128 *dst1, __m128 *dst2, __m128 *ds
 static inline void WriteCol6(float **dst, __m128 *dst1, __m128 *dst2, __m128 *dst3, __m128 *dst4, __m128 *dst5,
                              __m128 *dst6, __m128 *dst7, __m128 *dst8, int stride, int extra_stride, int r) {
   _mm_storeu_ps(*dst, *dst1);
-  _mm_store_ss(*dst + 4, *dst2);
-  *dst2 = _mm_shuffle_ps(*dst2, *dst2, _MM_SHUFFLE(0, 3, 2, 1));
-  _mm_store_ss(*dst + 5, *dst2);
-  if (r > 1) {
+  _mm_store_ss(*dst + SSE_INDEX_4, *dst2);
+  *dst2 = _mm_shuffle_ps(*dst2, *dst2, SSE_SHUFFLE_0321);
+  _mm_store_ss(*dst + SSE_INDEX_5, *dst2);
+  if (r > SSE_ROW_NUM_1) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst3);
-    _mm_store_ss(*dst + 4, *dst4);
-    *dst4 = _mm_shuffle_ps(*dst4, *dst4, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 5, *dst4);
+    _mm_store_ss(*dst + SSE_INDEX_4, *dst4);
+    *dst4 = _mm_shuffle_ps(*dst4, *dst4, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_5, *dst4);
   }
-  if (r > 2) {
+  if (r > SSE_ROW_NUM_2) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst5);
-    _mm_store_ss(*dst + 4, *dst6);
-    *dst6 = _mm_shuffle_ps(*dst6, *dst6, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 5, *dst6);
+    _mm_store_ss(*dst + SSE_INDEX_4, *dst6);
+    *dst6 = _mm_shuffle_ps(*dst6, *dst6, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_5, *dst6);
   }
-  if (r > 3) {
+  if (r > SSE_ROW_NUM_3) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst7);
-    _mm_store_ss(*dst + 4, *dst8);
-    *dst8 = _mm_shuffle_ps(*dst8, *dst8, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 5, *dst8);
+    _mm_store_ss(*dst + SSE_INDEX_4, *dst8);
+    *dst8 = _mm_shuffle_ps(*dst8, *dst8, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_5, *dst8);
     *dst += stride;
     *dst += extra_stride;
   }
@@ -298,37 +314,37 @@ static inline void WriteCol6(float **dst, __m128 *dst1, __m128 *dst2, __m128 *ds
 static inline void WriteCol7(float **dst, __m128 *dst1, __m128 *dst2, __m128 *dst3, __m128 *dst4, __m128 *dst5,
                              __m128 *dst6, __m128 *dst7, __m128 *dst8, int stride, int extra_stride, int r) {
   _mm_storeu_ps(*dst, *dst1);
-  _mm_store_ss(*dst + 4, *dst2);
-  *dst2 = _mm_shuffle_ps(*dst2, *dst2, _MM_SHUFFLE(0, 3, 2, 1));
-  _mm_store_ss(*dst + 5, *dst2);
-  *dst2 = _mm_shuffle_ps(*dst2, *dst2, _MM_SHUFFLE(0, 3, 2, 1));
-  _mm_store_ss(*dst + 6, *dst2);
-  if (r > 1) {
+  _mm_store_ss(*dst + SSE_INDEX_4, *dst2);
+  *dst2 = _mm_shuffle_ps(*dst2, *dst2, SSE_SHUFFLE_0321);
+  _mm_store_ss(*dst + SSE_INDEX_5, *dst2);
+  *dst2 = _mm_shuffle_ps(*dst2, *dst2, SSE_SHUFFLE_0321);
+  _mm_store_ss(*dst + SSE_INDEX_6, *dst2);
+  if (r > SSE_ROW_NUM_1) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst3);
-    _mm_store_ss(*dst + 4, *dst4);
-    *dst4 = _mm_shuffle_ps(*dst4, *dst4, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 5, *dst4);
-    *dst4 = _mm_shuffle_ps(*dst4, *dst4, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 6, *dst4);
+    _mm_store_ss(*dst + SSE_INDEX_4, *dst4);
+    *dst4 = _mm_shuffle_ps(*dst4, *dst4, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_5, *dst4);
+    *dst4 = _mm_shuffle_ps(*dst4, *dst4, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_6, *dst4);
   }
-  if (r > 2) {
+  if (r > SSE_ROW_NUM_2) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst5);
-    _mm_store_ss(*dst + 4, *dst6);
-    *dst6 = _mm_shuffle_ps(*dst6, *dst6, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 5, *dst6);
-    *dst6 = _mm_shuffle_ps(*dst6, *dst6, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 6, *dst6);
+    _mm_store_ss(*dst + SSE_INDEX_4, *dst6);
+    *dst6 = _mm_shuffle_ps(*dst6, *dst6, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_5, *dst6);
+    *dst6 = _mm_shuffle_ps(*dst6, *dst6, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_6, *dst6);
   }
-  if (r > 3) {
+  if (r > SSE_ROW_NUM_3) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst7);
-    _mm_store_ss(*dst + 4, *dst8);
-    *dst8 = _mm_shuffle_ps(*dst8, *dst8, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 5, *dst8);
-    *dst8 = _mm_shuffle_ps(*dst8, *dst8, _MM_SHUFFLE(0, 3, 2, 1));
-    _mm_store_ss(*dst + 6, *dst8);
+    _mm_store_ss(*dst + SSE_INDEX_4, *dst8);
+    *dst8 = _mm_shuffle_ps(*dst8, *dst8, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_5, *dst8);
+    *dst8 = _mm_shuffle_ps(*dst8, *dst8, SSE_SHUFFLE_0321);
+    _mm_store_ss(*dst + SSE_INDEX_6, *dst8);
     *dst += stride;
     *dst += extra_stride;
   }
@@ -337,21 +353,21 @@ static inline void WriteCol7(float **dst, __m128 *dst1, __m128 *dst2, __m128 *ds
 static inline void WriteCol8(float **dst, __m128 *dst1, __m128 *dst2, __m128 *dst3, __m128 *dst4, __m128 *dst5,
                              __m128 *dst6, __m128 *dst7, __m128 *dst8, int stride, int extra_stride, int r) {
   _mm_storeu_ps(*dst, *dst1);
-  _mm_storeu_ps(*dst + 4, *dst2);
-  if (r > 1) {
+  _mm_storeu_ps(*dst + SSE_INDEX_4, *dst2);
+  if (r > SSE_ROW_NUM_1) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst3);
-    _mm_storeu_ps(*dst + 4, *dst4);
+    _mm_storeu_ps(*dst + SSE_INDEX_4, *dst4);
   }
-  if (r > 2) {
+  if (r > SSE_ROW_NUM_2) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst5);
-    _mm_storeu_ps(*dst + 4, *dst6);
+    _mm_storeu_ps(*dst + SSE_INDEX_4, *dst6);
   }
-  if (r > 3) {
+  if (r > SSE_ROW_NUM_3) {
     *dst += stride;
     _mm_storeu_ps(*dst, *dst7);
-    _mm_storeu_ps(*dst + 4, *dst8);
+    _mm_storeu_ps(*dst + SSE_INDEX_4, *dst8);
     *dst += stride;
     *dst += extra_stride;
   }

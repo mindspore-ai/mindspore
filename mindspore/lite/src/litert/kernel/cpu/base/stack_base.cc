@@ -103,7 +103,7 @@ int StackBaseCPUKernel::StackExecute(int task_id) {
   auto end = MSMIN(start + step, outer_size_);
   auto input_num = in_tensors_.size();
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(input_num * static_cast<size_t>(start), copy_size_), RET_ERROR);
-  auto output = reinterpret_cast<char *>(output_data) + input_num * start * copy_size_;
+  auto output = reinterpret_cast<char *>(output_data) + input_num * static_cast<size_t>(start) * copy_size_;
   Stack(all_inputs_, reinterpret_cast<void *>(output), input_num, copy_size_, start, end);
   return RET_OK;
 }
