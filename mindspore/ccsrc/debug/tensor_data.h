@@ -188,7 +188,12 @@ class TensorData {
 
   void SetDataPtr(char *data_ptr) { this->data_ptr_ = data_ptr; }
 
-  uint64_t GetNumElements() const { return size_ / data_type_size_; }
+  uint64_t GetNumElements() const {
+    if (data_type_size_ == 0) {
+      return 0;
+    }
+    return size_ / data_type_size_;
+  }
 
   uint64_t GetByteSize() const { return this->size_; }
 

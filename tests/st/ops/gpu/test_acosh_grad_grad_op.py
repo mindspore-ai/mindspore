@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,12 +54,9 @@ def acosh_grad_grad_base(dtype, loss):
     grad_np = (np.random.rand(*shape) * 20 - 10).astype(dtype)
     dout_np = (np.random.rand(*shape) * 20 - 10).astype(dtype)
 
-    y_np_32 = y_np.astype(np.float32)
-    grad_np_32 = grad_np.astype(np.float32)
-    dout_np_32 = dout_np.astype(np.float32)
-    out_np_32 = grad_np_32 / np.sinh(y_np_32)
-    dy_np = (dout_np_32 * out_np_32 * (-1.0) / np.tanh(y_np_32)).astype(dtype)
-    dgrad_np = (dout_np_32 / np.sinh(y_np_32)).astype(dtype)
+    out_np = grad_np / np.sinh(y_np)
+    dy_np = dout_np * out_np * (-1.0) / np.tanh(y_np)
+    dgrad_np = dout_np / np.sinh(y_np)
 
     y_ms = Tensor(y_np)
     grad_ms = Tensor(grad_np)
