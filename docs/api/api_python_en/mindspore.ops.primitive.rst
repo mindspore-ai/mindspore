@@ -332,6 +332,7 @@ Element-wise Operator
     mindspore.ops.Neg
     mindspore.ops.NextAfter
     mindspore.ops.Pow
+    mindspore.ops.Polar
     mindspore.ops.Real
     mindspore.ops.RealDiv
     mindspore.ops.Reciprocal
