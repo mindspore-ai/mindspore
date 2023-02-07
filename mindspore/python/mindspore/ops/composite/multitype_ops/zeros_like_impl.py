@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _sequence_ops as seq
 
 zeros_like_leaf = base.MultitypeFuncGraph('zeros_like_leaf', True)
 """
@@ -57,6 +58,12 @@ def _zeros_like_func(x):
 def _zeros_like_tensor(x):
     """Returns a tensor with the same shape and dtype as x and all elements are 0."""
     return F.zeros_like(x)
+
+
+@zeros_like_leaf.register("Tuple")
+def _zeros_like_tuple(x):
+    """Returns a Tuple with the same shape and dtype as x and all elements are 0."""
+    return seq.SequenceZerosLike()(x)
 
 
 @zeros_like_leaf.register("COOTensor")

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,25 +76,20 @@ bool SequenceAddOffsetCpuKernelMod::Launch(const std::vector<KernelTensorPtr> &i
 
 std::vector<std::pair<KernelAttr, SequenceAddOffsetCpuKernelMod::SequenceAddOffsetFunc>>
   SequenceAddOffsetCpuKernelMod::func_list_ = {{KernelAttr()
+                                                  .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
+                                                  .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
+                                                  .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
+                                                &SequenceAddOffsetCpuKernelMod::LaunchKernel<float>},
+                                               {KernelAttr()
                                                   .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat64)
                                                   .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat64)
                                                   .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
                                                 &SequenceAddOffsetCpuKernelMod::LaunchKernel<double>},
                                                {KernelAttr()
-                                                  .AddInputAttr(kObjectTypeList, kNumberTypeInt32)
-                                                  .AddInputAttr(kObjectTypeList, kNumberTypeInt32)
-                                                  .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
-                                                &SequenceAddOffsetCpuKernelMod::LaunchKernel<int>},
-                                               {KernelAttr()
                                                   .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
                                                   .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
                                                   .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
                                                 &SequenceAddOffsetCpuKernelMod::LaunchKernel<int>},
-                                               {KernelAttr()
-                                                  .AddInputAttr(kObjectTypeList, kNumberTypeInt64)
-                                                  .AddInputAttr(kObjectTypeList, kNumberTypeInt64)
-                                                  .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
-                                                &SequenceAddOffsetCpuKernelMod::LaunchKernel<int64_t>},
                                                {KernelAttr()
                                                   .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
                                                   .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
