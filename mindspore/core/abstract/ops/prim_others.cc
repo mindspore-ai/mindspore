@@ -460,6 +460,23 @@ AbstractBasePtr InferImplIsShapeUnknown(const AnalysisEnginePtr &, const Primiti
   return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(is_shape_unknown), kBool);
 }
 
+AbstractBasePtr InferImplIsElementUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const AbstractBasePtrList &args_spec_list) {
+  constexpr size_t input_size = 1;
+  const std::string &op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, input_size);
+  auto abs = args_spec_list[0];
+  if (!abs->isa<AbstractSequence>()) {
+    MS_EXCEPTION(TypeError) << "The input of " << op_name << " should be tuple or list but got " << abs->ToString();
+  }
+  auto abs_seq = abs->cast<AbstractSequencePtr>();
+  if (!abs_seq->dynamic_len()) {
+    MS_EXCEPTION(TypeError) << "The input of " << op_name << " should be variable length sequence.";
+  }
+  bool is_element_unknown = (abs_seq->dynamic_len_element_abs() == nullptr);
+  return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(is_element_unknown), kBool);
+}
+
 AbstractBasePtr InferImplLoad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const AbstractBasePtrList &args_spec_list) {
   // Inputs: Ref/Tensor, universal
