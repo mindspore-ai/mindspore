@@ -279,5 +279,39 @@ STATUS PrimitiveMapper::AdjustAttrFormat(const PrimitivePtr &prim, const std::st
   prim->AddAttr(name, MakeValue(format_str));
   return lite::RET_OK;
 }
+
+CNodePtr PrimitiveMapper::NewCNode(const CNodePtr &cnode, const PrimitivePtr &primitive,
+                                   const std::vector<AnfNodePtr> &inputs, const abstract::AbstractBasePtr &abstract,
+                                   const std::string &name) const {
+  auto func_graph = cnode->func_graph();
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Failed to NewCNode, funcGraph cannot be nullptr";
+    return nullptr;
+  }
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    MS_LOG(ERROR) << "Failed to NewCNode, FuncGraph manager cannot be nullptr";
+    return nullptr;
+  }
+  auto new_node = func_graph->NewCNode(primitive, inputs);
+  if (new_node == nullptr) {
+    MS_LOG(ERROR) << "Failed to create node " << name << " for node " << cnode->fullname_with_scope();
+    return nullptr;
+  }
+  new_node->set_fullname_with_scope(name);
+  for (size_t i = 0; i < inputs.size(); i++) {
+    manager->SetEdge(new_node, i + 1, inputs[i]);
+  }
+  new_node->set_abstract(abstract);
+  return new_node;
+}
+
+CNodePtr PrimitiveMapper::NewCNode(const CNodePtr &cnode, const PrimitivePtr &primitive,
+                                   const std::vector<AnfNodePtr> &inputs, const ShapeVector &shape, TypeId type_id,
+                                   const std::string &name) const {
+  auto abstract =
+    std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), std::make_shared<abstract::Shape>(shape));
+  return NewCNode(cnode, primitive, inputs, abstract, name);
+}
 }  // namespace lite
 }  // namespace mindspore

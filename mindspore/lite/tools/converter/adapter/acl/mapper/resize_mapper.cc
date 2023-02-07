@@ -24,11 +24,14 @@
 #include "ops/op_utils.h"
 #include "src/common/log_util.h"
 #include "mindspore/core/ops/op_name.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
 constexpr auto kNameInputNum = 3;
+constexpr auto kResizeDataInputIndex = 1;
+constexpr auto kResizeShapeInputIndex = 2;
 constexpr auto kShapeFirstIdx = 0;
 constexpr auto kShapeSecondIdx = 1;
 constexpr auto kShapeThirdIdx = 2;
@@ -108,8 +111,9 @@ STATUS ResizeMapper::ProcScaleInput(const CNodePtr &cnode, const PrimitivePtr &p
         new_width = static_cast<int32_t>(shape_vector[kShapeForthIdx]);
       }
     } else {
-      MS_LOG(ERROR) << "Size of shape must be two or four, real size: " << shape_vector.size();
-      return RET_ERROR;
+      MS_LOG(INFO) << "Failed to get shape of resize node " << cnode->fullname_with_scope()
+                   << ", shape value size: " << shape_vector.size();
+      return CalResizeShape(cnode, prim);
     }
     std::vector<int32_t> new_tensor_size = {new_height, new_width};
     auto func_graph = cnode->func_graph();
@@ -117,6 +121,51 @@ STATUS ResizeMapper::ProcScaleInput(const CNodePtr &cnode, const PrimitivePtr &p
     cnode->set_input(kNameInputNum - 1, param_node);
   }
   return lite::RET_OK;
+}
+
+STATUS ResizeMapper::CalResizeShape(const CNodePtr &cnode, const PrimitivePtr &prim) {
+  auto data_input = cnode->input(kResizeDataInputIndex);
+  CHECK_NULL_RETURN(data_input);
+  auto scale_input = cnode->input(kResizeShapeInputIndex);
+  CHECK_NULL_RETURN(scale_input);
+  auto func_graph = cnode->func_graph();
+  CHECK_NULL_RETURN(func_graph);
+  auto manager = func_graph->manager();
+  CHECK_NULL_RETURN(manager);
+  auto shape_node = NewCNode(cnode, prim::kPrimShape, {data_input}, {DIMENSION_4D}, kNumberTypeInt32,
+                             cnode->fullname_with_scope() + "_shape_shape");
+  if (!shape_node) {
+    MS_LOG(ERROR) << "Failed to create shape node for node " << cnode->fullname_with_scope();
+    return RET_ERROR;
+  }
+  std::vector<int> gather_indices = {kNCHW_H, kNCHW_W};  // fetch H and W dimension
+  auto gather_cnode =
+    opt::GenGatherNode(func_graph, shape_node, gather_indices, cnode->fullname_with_scope() + "_shape_gather");
+  if (gather_cnode == nullptr) {
+    MS_LOG(ERROR) << "Failed to create gather node for node " << cnode->fullname_with_scope();
+    return RET_ERROR;
+  }
+  auto gather_shape = std::make_shared<abstract::Shape>(ShapeVector{DIMENSION_2D});
+  auto gather_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeInt32), gather_shape);
+  gather_cnode->set_abstract(gather_abstract);
+
+  auto cast_fp32_node = NewCNode(cnode, prim::kPrimCast, {gather_cnode, NewValueNode(TypeIdToType(kNumberTypeFloat32))},
+                                 {DIMENSION_2D}, kNumberTypeFloat32, cnode->fullname_with_scope() + "_shape_cast_fp32");
+  if (!cast_fp32_node) {
+    MS_LOG(ERROR) << "Failed to create cast node for node " << cnode->fullname_with_scope();
+    return RET_ERROR;
+  }
+
+  auto mul_node = NewCNode(cnode, prim::kPrimMul, {cast_fp32_node, scale_input}, {DIMENSION_2D}, kNumberTypeFloat32,
+                           cnode->fullname_with_scope() + "_shape_mul");
+  if (!mul_node) {
+    MS_LOG(ERROR) << "Failed to create mul node for node " << cnode->fullname_with_scope();
+    return RET_ERROR;
+  }
+  auto cast_int32_node = NewCNode(cnode, prim::kPrimCast, {mul_node, NewValueNode(TypeIdToType(kNumberTypeInt32))},
+                                  {DIMENSION_2D}, kNumberTypeInt32, cnode->fullname_with_scope() + "_shape_cast_int32");
+  manager->Replace(scale_input, cast_int32_node);
+  return RET_OK;
 }
 
 REGISTER_PRIMITIVE_MAPPER(kNameResize, ResizeMapper)

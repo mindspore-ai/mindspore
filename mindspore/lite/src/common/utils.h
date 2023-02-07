@@ -184,6 +184,8 @@ std::vector<std::string> StrSplit(const std::string &str, const std::string &pat
 
 bool ConvertStrToInt(const std::string &str, int *value);
 
+bool ParseShapeStr(const std::string &shape_str, std::vector<int64_t> *shape_ptr);
+
 // tokenize string
 std::vector<std::string> Tokenize(const std::string &src, const std::string &delimiters,
                                   const Option<size_t> &max_token_num = Option<size_t>(None()));

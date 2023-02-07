@@ -45,11 +45,17 @@ std::string GenResultStr(const std::vector<int64_t> &input_vec) {
   return res;
 }
 
-bool DynShapeProcess::Init(const AclDynamicShapeOptions &options, size_t input_data_idx) {
+bool DynShapeProcess::Init(const AclDynamicShapeOptions &options) {
   acl_options_ = options;
-  input_data_idx_ = input_data_idx;
-  if (input_data_idx >= acl_options_.input_shapes.size()) {
-    MS_LOG(ERROR) << "Input data index " << input_data_idx
+  for (size_t i = 0; i < options.input_shapes.size(); i++) {
+    auto &shape = options.input_shapes[i];
+    if (std::any_of(shape.begin(), shape.end(), [](auto dim) { return dim < 0; })) {
+      input_data_idx_ = i;
+      break;
+    }
+  }
+  if (input_data_idx_ >= acl_options_.input_shapes.size()) {
+    MS_LOG(ERROR) << "Input data index " << input_data_idx_
                   << " is invalid, inputs count: " << acl_options_.input_shapes.size();
     return false;
   }

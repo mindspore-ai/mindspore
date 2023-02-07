@@ -28,7 +28,7 @@ namespace mindspore::kernel {
 namespace acl {
 class DynShapeProcess {
  public:
-  bool Init(const AclDynamicShapeOptions &options, size_t input_data_idx);
+  bool Init(const AclDynamicShapeOptions &options);
   bool CheckAndGetBatchSize(const std::vector<ShapeVector> &new_shapes, int32_t *batch_size);
   bool CheckAndGetImageSize(const std::vector<ShapeVector> &new_shapes, int32_t *height, int32_t *width);
 
@@ -39,7 +39,7 @@ class DynShapeProcess {
   bool GetRealImageSize(const std::vector<ShapeVector> &new_shapes, int32_t *height, int32_t *width);
 
   AclDynamicShapeOptions acl_options_;
-  size_t input_data_idx_;
+  size_t input_data_idx_ = 0;
 };
 
 using DynShapeProcPtr = std::shared_ptr<DynShapeProcess>;

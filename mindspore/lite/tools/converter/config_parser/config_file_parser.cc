@@ -59,25 +59,40 @@ const size_t kIndex1 = 1;
 const size_t kIndex2 = 2;
 const size_t kIndex3 = 3;
 const int64_t kdynDim = -1;
-int DynBatchOrDynImage(const ShapeVector &shape) {
-  if (shape.size() != 4) {
-    MS_LOG(ERROR) << "Do not support input shape which is not equal to 4 (N C H W)";
-    return -1;
+int DynBatchOrDynImage(const mindspore::ProfileConfigs &profile, size_t dynamic_input_index) {
+  int dynamic_type = -1;
+  for (auto &info : profile.input_infos) {
+    if (!info.is_dynamic_shape) {
+      continue;
+    }
+    const auto &shape = info.input_shape;
+    if (shape.size() != kNCHWDimNumber) {
+      MS_LOG(ERROR) << "Dynamic input whose shape is not 4-dimensional is not supported, input shape: " << shape;
+      return -1;
+    }
+    size_t dynamic_dims_count = std::count_if(shape.begin(), shape.end(), [](int64_t dim) { return dim == kdynDim; });
+    if (shape[kIndex0] != kdynDim && dynamic_dims_count == kHWDimNumber) {
+      if (dynamic_type != -1 && dynamic_type != kDynImgSize) {
+        MS_LOG(ERROR) << "Only dynamic batch or dynamic image size is supported, hybrid scenarios are not supported";
+        return -1;
+      }
+      dynamic_type = kDynImgSize;
+    } else if (shape[kIndex0] == kdynDim && dynamic_dims_count == 1) {
+      if (dynamic_type != -1 && dynamic_type != kDynBatchSize) {
+        MS_LOG(ERROR) << "Only dynamic batch or dynamic image size is supported, hybrid scenarios are not supported";
+        return -1;
+      }
+      dynamic_type = kDynBatchSize;
+    } else {
+      MS_LOG(ERROR) << "Only dynamic batch or dynamic image size is supported, input shape: " << shape;
+      return -1;
+    }
   }
-  if (shape[kIndex0] != -1 && ((shape[kIndex1] == kdynDim && shape[kIndex2] == kdynDim && shape[kIndex3] != kdynDim) ||
-                               (shape[kIndex1] == kdynDim && shape[kIndex2] != kdynDim && shape[kIndex3] == kdynDim) ||
-                               (shape[kIndex1] != kdynDim && shape[kIndex2] == kdynDim && shape[kIndex3] == kdynDim))) {
-    return kDynImgSize;
-  }
-  if (shape[kIndex0] == kdynDim && shape[kIndex1] != kdynDim && shape[kIndex2] != kdynDim &&
-      shape[kIndex3] != kdynDim) {
-    return kDynBatchSize;
-  }
-  return -1;
+  return dynamic_type;
 }
 
-std::string CombineDynImgString(const struct mindspore::ProfileConfigs &profile) {
-  ShapeVector shape = profile.input_infos[kIndex0].input_shape;
+std::string CombineDynamicImageString(const struct mindspore::ProfileConfigs &profile, size_t dynamic_input) {
+  ShapeVector shape = profile.input_infos[dynamic_input].input_shape;
   std::string ret = "";
   size_t first_dim = kIndex0, second_dim = kIndex0;
   if (shape[kIndex1] == kdynDim && shape[kIndex2] == kdynDim) {
@@ -91,10 +106,11 @@ std::string CombineDynImgString(const struct mindspore::ProfileConfigs &profile)
     second_dim = kIndex3;
   }
   for (size_t dim_idx = 0; dim_idx < profile.profiles.size(); ++dim_idx) {
-    int64_t min_first = profile.profiles[dim_idx].inputs[kIndex0].min_dims[first_dim];
-    int64_t max_first = profile.profiles[dim_idx].inputs[kIndex0].max_dims[first_dim];
-    int64_t min_second = profile.profiles[dim_idx].inputs[kIndex0].min_dims[second_dim];
-    int64_t max_second = profile.profiles[dim_idx].inputs[kIndex0].max_dims[second_dim];
+    auto &dynamic_item = profile.profiles[dim_idx].inputs[dynamic_input];
+    int64_t min_first = dynamic_item.min_dims[first_dim];
+    int64_t max_first = dynamic_item.max_dims[first_dim];
+    int64_t min_second = dynamic_item.min_dims[second_dim];
+    int64_t max_second = dynamic_item.max_dims[second_dim];
     for (int64_t i = min_first; i <= max_first; ++i) {
       for (int64_t j = min_second; j <= max_second; ++j) {
         ret += std::to_string(i) + "," + std::to_string(j) + ";";
@@ -102,6 +118,20 @@ std::string CombineDynImgString(const struct mindspore::ProfileConfigs &profile)
     }
   }
   ret = ret.substr(0, ret.size() - 1);  // discard the final ";"
+  return ret;
+}
+
+std::vector<size_t> CombineDynamicBatchList(const struct mindspore::ProfileConfigs &profile, size_t dynamic_input) {
+  std::vector<size_t> ret;
+  size_t batch_dim = 0;
+  for (size_t dim_idx = 0; dim_idx < profile.profiles.size(); ++dim_idx) {
+    auto &dynamic_item = profile.profiles[dim_idx].inputs[dynamic_input];
+    int64_t min = dynamic_item.min_dims[batch_dim];
+    int64_t max = dynamic_item.max_dims[batch_dim];
+    for (int64_t i = min; i <= max; ++i) {
+      ret.push_back(LongToSize(i));
+    }
+  }
   return ret;
 }
 
@@ -126,26 +156,50 @@ std::string FindInAscendMap(const std::string &key, const std::map<std::string, 
 
 void SetDynParams(const std::shared_ptr<mindspore::ConverterPara> &param,
                   const std::map<std::string, std::string> &ascend_map) {
-  struct mindspore::ProfileConfigs tmp_profile;
-  if (!mindspore::ProfileParser::Parse(ascend_map, false, &tmp_profile)) {
-    MS_LOG(ERROR) << "Parse dynamic_dims failed";
+  struct mindspore::ProfileConfigs profile_configs;
+  if (!mindspore::ProfileParser::Parse(ascend_map, false, &profile_configs)) {
+    MS_LOG(ERROR) << "Parse input_shape and dynamic_dims failed";
+    return;
   }
-  ShapeVector input_shape_vec = tmp_profile.input_infos[0].input_shape;
-  switch (DynBatchOrDynImage(input_shape_vec)) {
+  const auto &input_infos = profile_configs.input_infos;
+  auto it = ascend_map.find("dynamic_dims");
+  if (it == ascend_map.end()) {
+    MS_LOG(INFO) << "Inputs are not dynamic";
+    return;
+  }
+  std::vector<std::string> dynamic_dims_strs = mindspore::lite::SplitStringToVector(it->second, ';');
+  if (dynamic_dims_strs.size() != input_infos.size()) {
+    MS_LOG(ERROR) << "Invalid dynamic_dims, size " << dynamic_dims_strs.size() << " != input size "
+                  << input_infos.size();
+    return;
+  }
+  std::string one_dym_dims;
+  size_t dynamic_input_index = 0;
+  for (size_t i = 0; i < input_infos.size(); i++) {
+    auto &info = input_infos[i];
+    if (!info.is_dynamic_shape) {
+      continue;
+    }
+    if (one_dym_dims.empty()) {
+      one_dym_dims = dynamic_dims_strs[i];
+      dynamic_input_index = i;
+    } else if (one_dym_dims != dynamic_dims_strs[i]) {
+      MS_LOG(ERROR) << "Do not support different dynamic_dims, one " << one_dym_dims << ", other "
+                    << dynamic_dims_strs[i];
+      return;
+    }
+  }
+  int dynamic_type = DynBatchOrDynImage(profile_configs, dynamic_input_index);
+  switch (dynamic_type) {
     case kDynImgSize:
-      param->aclModelOptionCfgParam.dynamic_image_size = CombineDynImgString(tmp_profile);
+      param->aclModelOptionCfgParam.dynamic_image_size =
+        CombineDynamicImageString(profile_configs, dynamic_input_index);
       break;
     case kDynBatchSize:
-      for (size_t i = 0; i < tmp_profile.profiles.size(); ++i) {  // dynamic batch size
-        int64_t min_batch = tmp_profile.profiles[i].inputs[0].min_dims[kBatchDim];
-        int64_t max_batch = tmp_profile.profiles[i].inputs[0].max_dims[kBatchDim];
-        for (int64_t batch = min_batch; batch <= max_batch; ++batch) {
-          param->aclModelOptionCfgParam.dynamic_batch_size.push_back(batch);
-        }
-      }
+      param->aclModelOptionCfgParam.dynamic_batch_size = CombineDynamicBatchList(profile_configs, dynamic_input_index);
       break;
     default:
-      MS_LOG(ERROR) << "Do not support input shape which is not equal to 4 (N C H W)";
+      MS_LOG(ERROR) << "Do not support input shape";
   }
 }
 
@@ -204,16 +258,7 @@ void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
       MS_LOG(ERROR) << "Convert output_type failed";
     }
   }
-
-  it = ascend_map.find("dynamic_dims");
-  if (it != ascend_map.end()) {
-    std::vector<std::string> batch_size_string = mindspore::lite::SplitStringToVector(it->second, ';');
-    if (!CheckBatchStringSupport(batch_size_string)) {
-      MS_LOG(ERROR) << "Do not support different dynamic_dims!";
-      return;
-    }
-    SetDynParams(param, ascend_map);
-  }
+  SetDynParams(param, ascend_map);
 }
 
 int ConfigFileParser::ParseConfigFile(const std::string &config_file_path) {

@@ -35,6 +35,7 @@
 #include "mindspore/core/ops/core_ops.h"
 #include "cxx_api/model/acl/model_converter.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
+#include "src/common/utils.h"
 #include "src/common/log_util.h"
 #include "src/common/file_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -163,10 +164,6 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
   if (!lite::RunOptimizerPass(func_graph, {kRemoveRedundantOpPass})) {
     MS_LOG(ERROR) << "Remove redundant op pass failed.";
     return lite::RET_ERROR;
-  }
-  if (IsDynamicInput()) {
-    MS_LOG(INFO) << "Dynamic input no need to run const fold pass.";
-    return lite::RET_OK;
   }
   if (fmk_type_ == converter::kFmkTypeMs) {
     MS_LOG(INFO) << "Ms model no need to run const fold pass.";
@@ -326,6 +323,56 @@ STATUS AclPassImpl::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraph
   return lite::RET_OK;
 }
 
+STATUS AclPassImpl::SetGraphInputShape(const FuncGraphPtr &func_graph) {
+  if (options_ == nullptr || func_graph == nullptr) {
+    MS_LOG(ERROR) << "Options or func_graph cannot be nullptr";
+    return lite::RET_ERROR;
+  }
+  const auto &input_shape = options_->GetInputShape();
+  if (input_shape.empty()) {
+    MS_LOG(INFO) << "Input shape option is empty";
+    return lite::RET_OK;
+  }
+  auto input_shape_strs = lite::StrSplit(input_shape, ";");
+  auto inputs = func_graph->get_inputs();
+  if (inputs.size() != input_shape_strs.size()) {
+    MS_LOG(ERROR) << "FuncGraph input size " << inputs.size() << " != input size in input_shape "
+                  << input_shape_strs.size() << ", input_shape " << input_shape;
+    return lite::RET_ERROR;
+  }
+  std::map<std::string, ShapeVector> input_shapes;
+  for (auto &input_shape_str : input_shape_strs) {
+    auto split_pos = input_shape_str.rfind(":");
+    if (split_pos == std::string::npos) {
+      MS_LOG(ERROR) << "The input_shape should be in format of name:shape;name:shape, but got [" << input_shape_str
+                    << "]";
+      return lite::RET_ERROR;
+    }
+    std::string name = input_shape_str.substr(0, split_pos);
+    std::string shape_str = input_shape_str.substr(split_pos + 1);
+    ShapeVector shape;
+    if (!lite::ParseShapeStr(shape_str, &shape)) {
+      MS_LOG(ERROR) << "Invalid input shape dims: " << shape_str << ", input_shape: " << input_shape;
+      return false;
+    }
+    input_shapes[name] = shape;
+  }
+  for (auto node : inputs) {
+    CHECK_NULL_RETURN(node);
+    auto para = node->cast<ParameterPtr>();
+    CHECK_NULL_RETURN(para);
+    auto it = input_shapes.find(para->name());
+    if (it == input_shapes.end()) {
+      MS_LOG(ERROR) << "Failed to find input " << para->name() << " in input_shape " << input_shape;
+      return lite::RET_ERROR;
+    }
+    auto abstract = para->abstract();
+    CHECK_NULL_RETURN(abstract);
+    abstract->set_shape(std::make_shared<abstract::Shape>(it->second));
+  }
+  return lite::RET_OK;
+}
+
 STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data) {
   if (om_data == nullptr) {
     MS_LOG(ERROR) << "Om data is nullptr.";
@@ -334,6 +381,11 @@ STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_
   auto ret = SetAclModelOptions(func_graph);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Set acl model options error!";
+    return lite::RET_ERROR;
+  }
+  ret = SetGraphInputShape(func_graph);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Failed to set graph input shape";
     return lite::RET_ERROR;
   }
   // call interface of cloud

@@ -83,7 +83,7 @@ bool ModelProcess::PreInitModelResource() {
   dynamic_shape_options_.input_format = GetInputFormat();
   dynamic_shape_options_.input_shapes = GetInputShape();
 
-  if (!dyn_shape_proc_.Init(dynamic_shape_options_, 0)) {
+  if (!dyn_shape_proc_.Init(dynamic_shape_options_)) {
     MS_LOG(ERROR) << "Init DynShapeProcess failed.";
     return false;
   }

@@ -78,25 +78,46 @@ std::string RemoveSubStr(const std::string &from, const std::string &sub_str, Re
   return result;
 }
 
-std::vector<std::string> StrSplit(const std::string &str, const std::string &pattern) {
+std::vector<std::string> StrSplit(const std::string &str, const std::string &delim) {
   if (str.empty()) {
-    MS_LOG(ERROR) << "string is empty";
     return {};
   }
-  std::string::size_type pos;
-  std::vector<std::string> result;
-  std::string tmpStr(str + pattern);
-  std::string::size_type size = tmpStr.size();
-
-  for (std::string::size_type i = 0; i < size; i++) {
-    pos = tmpStr.find(pattern, i);
-    if (pos < size) {
-      std::string s = tmpStr.substr(i, pos - i);
-      result.push_back(s);
-      i = pos + pattern.size() - 1;
-    }
+  auto start = 0U;
+  auto end = str.find(delim);
+  std::vector<std::string> substrs;
+  while (end != std::string::npos) {
+    substrs.push_back(str.substr(start, end - start));
+    start = end + delim.length();
+    end = str.find(delim, start);
   }
-  return result;
+  substrs.push_back(str.substr(start, end));
+  return substrs;
+}
+
+bool ParseShapeStr(const std::string &shape_str, std::vector<int64_t> *shape_ptr) {
+  if (shape_ptr == nullptr) {
+    return false;
+  }
+  auto str_dims = lite::StrSplit(shape_str, ",");
+  if (str_dims.empty()) {
+    MS_LOG_ERROR << "Invalid input shape dim, dims number cannot be 0";
+    return false;
+  }
+  auto &shape = *shape_ptr;
+  shape.resize(str_dims.size());
+  for (size_t i = 0; i != str_dims.size(); ++i) {
+    int32_t dim = 0;
+    if (!ConvertStrToInt(str_dims[i], &dim)) {
+      MS_LOG_ERROR << "Invalid input shape dim, dim value range or format is invalid: " << str_dims[i];
+      return false;
+    }
+    if (dim <= 0 && dim != -1) {
+      MS_LOG_ERROR << "Invalid input shape dim, dim can only be -1 when dim < 0： " << str_dims[i];
+      return false;
+    }
+    shape[i] = dim;
+  }
+  return true;
 }
 
 bool ConvertStrToInt(const std::string &str, int *value) {
@@ -104,10 +125,21 @@ bool ConvertStrToInt(const std::string &str, int *value) {
     MS_LOG(ERROR) << "Value is nullptr";
     return false;
   }
+  if (str.empty()) {
+    return false;
+  }
   char *ptr = nullptr;
   constexpr int kBase = 10;
-  *value = static_cast<int32_t>(strtol(str.c_str(), &ptr, kBase));
-  return ptr == (str.c_str() + str.size());
+  auto int_val = std::strtol(str.c_str(), &ptr, kBase);
+  if (ptr != (str.c_str() + str.size())) {
+    return false;
+  }
+  if (int_val > INT32_MAX || int_val < INT32_MIN || errno == ERANGE) {
+    MS_LOG(WARNING) << "The range of value is beyond the range of int32";
+    return false;
+  }
+  *value = static_cast<int32_t>(int_val);
+  return true;
 }
 
 std::vector<std::string> Tokenize(const std::string &src, const std::string &delimiters,

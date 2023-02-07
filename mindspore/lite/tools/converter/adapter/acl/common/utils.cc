@@ -102,7 +102,7 @@ STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int
   auto shape_ptr = mindspore::utils::cast<mindspore::abstract::ShapePtr>(cnode_abstract_tensor->BuildShape());
   CHECK_NULL_RETURN(shape_ptr);
   if (shape_ptr->shape().empty()) {
-    MS_LOG(WARNING) << "Shape is empty " << cnode->fullname_with_scope();
+    MS_LOG(INFO) << "Shape is empty " << cnode->fullname_with_scope();
   }
 
   *shape_vector = shape_ptr->shape();
