@@ -89,10 +89,10 @@ class TopCellInfo {
   inline bool is_high_order_top_cell() const { return is_high_order_top_cell_; }
   inline void set_need_do_final_opt(bool need_do_final_opt) { need_do_final_opt_ = need_do_final_opt; }
   inline bool need_do_final_opt() const { return need_do_final_opt_; }
-  inline void set_is_cell_id_in_dynamic_detect_nodes_map(bool is_cell_id_in_dynamic_detect_nodes_map) {
-    is_cell_id_in_dynamic_detect_nodes_map_ = is_cell_id_in_dynamic_detect_nodes_map;
+  inline void set_need_save_dynamic_detect_nodes(bool is_need_save_dynamic_detect_nodes) {
+    is_need_save_dynamic_detect_nodes_ = is_need_save_dynamic_detect_nodes;
   }
-  inline bool is_cell_id_in_dynamic_detect_nodes_map() const { return is_cell_id_in_dynamic_detect_nodes_map_; }
+  inline bool is_need_save_dynamic_detect_nodes() const { return is_need_save_dynamic_detect_nodes_; }
   inline pipeline::ResourcePtr resource() const { return resource_; }
   inline FuncGraphPtr fg() const {
     MS_EXCEPTION_IF_NULL(fg_);
@@ -174,7 +174,7 @@ class TopCellInfo {
   bool force_top_cell_compile_{false};
   bool is_high_order_top_cell_{false};
   bool need_do_final_opt_{false};
-  bool is_cell_id_in_dynamic_detect_nodes_map_{false};
+  bool is_need_save_dynamic_detect_nodes_{false};
   size_t grad_order_{0};
   size_t op_index_{0};
   std::string obj_id_with_grad_order_;
