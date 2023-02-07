@@ -164,12 +164,14 @@ template <typename T>
 ValuePtr EqImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
-  if (std::isinf(static_cast<double>(x)) && std::isinf(static_cast<double>(y))) {
+  auto x_tmp = GetScalarValue<T>(op_name, x_value);
+  auto y_tmp = GetScalarValue<T>(op_name, y_value);
+  auto x = static_cast<double>(x_tmp);
+  auto y = static_cast<double>(y_tmp);
+  if (std::isinf(x) && std::isinf(y)) {
     return MakeValue((x > 0 && y > 0) || (x < 0 && y < 0));
   }
-  double error = static_cast<double>(x) - static_cast<double>(y);
+  double error = x - y;
   error = fabs(error);
   return MakeValue(error < DBL_EPSILON);
 }
@@ -255,7 +257,7 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     auto x_type = input_args[0]->BuildType();
     auto y_type = input_args[kIndex1]->BuildType();
-    std::set<TypePtr> check_types = {kInt32, kInt64, kFloat32, kFloat64};
+    std::set<TypePtr> check_types = {kInt32, kInt64, kFloat32, kFloat64, kBool};
     std::set<std::string> compare_ops = {prim::kScalarEq, prim::kScalarGe, prim::kScalarGt, prim::kScalarLt,
                                          prim::kScalarLe};
     (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_type, check_types, prim_name);
@@ -314,6 +316,11 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
       }
       case kNumberTypeFloat64: {
         auto func = ChooseFunc<double>(op_name);
+        result = func(x_value, y_value, op_name);
+        break;
+      }
+      case kNumberTypeBool: {
+        auto func = ChooseFunc<bool>(op_name);
         result = func(x_value, y_value, op_name);
         break;
       }

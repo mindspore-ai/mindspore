@@ -39,6 +39,23 @@ def test_constant_scalar_div_and_mod():
     assert np.abs(ret2 - 1) < tol
 
 
+def test_constant_scalar_div_and_mod_bool():
+    """
+    Feature: Constant scalar div and mod operation.
+    Description:
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo():
+        return False/True, True%True
+
+    ret1, ret2 = foo()
+    tol = 1e-6
+    assert np.abs(ret1 - 0) < tol
+    assert np.abs(ret2 - 0) < tol
+
+
 def test_constant_scalar_bitwise():
     """
     Feature: Constant scalar bitwise operation.
