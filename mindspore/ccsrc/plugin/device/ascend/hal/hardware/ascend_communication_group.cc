@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/hal/hardware/ascend_communication_group.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 
 namespace mindspore {
@@ -31,13 +32,13 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   if (initialized_) {
     return false;
   }
-
   unique_id_ = *(static_cast<HcclRootInfo *>(root_info));
   uint32_t group_rank = GetGroupRank(global_rank_);
-  RETURN_IF_FALSE_WITH_LOG(
-    HcclCommInitRootInfo(static_cast<uint32_t>(size_), &unique_id_, static_cast<uint32_t>(group_rank), &comm_) ==
-      static_cast<int32_t>(HCCL_SUCCESS),
-    "Initializing HCCL communicator failed.");
+  if (HcclCommInitRootInfo(static_cast<uint32_t>(size_), &unique_id_, static_cast<uint32_t>(group_rank), &comm_) !=
+      static_cast<int32_t>(HCCL_SUCCESS)) {
+    const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+    MS_LOG(ERROR) << "HcclCommInitRootInfo failed. " + error_message;
+  }
   initialized_ = true;
   return true;
 }
