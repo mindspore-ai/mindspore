@@ -23,7 +23,7 @@ from mindspore import ParameterTuple
 
 class NetResizeBilinear(nn.Cell):
     def construct(self, inputs, size):
-        return ops.interpolate(inputs, None, None, size, "asymmetric", "bilinear")
+        return ops.ResizeBilinearV2(align_corners=False, half_pixel_centers=False)(inputs, size)
 
 
 def case():

@@ -44,8 +44,8 @@ class ResizeBilinearGradAlignCornerF(nn.Cell):
 class NetResizeBilinearFunc(nn.Cell):
     def construct(self, inputs, size, align_corner=False, half_pixel_centers=False):
         if align_corner and not half_pixel_centers:
-            return ops.interpolate(inputs, None, None, size, "align_corners", "bilinear")
-        return ops.interpolate(inputs, None, None, size, "half_pixel", "bilinear")
+            return ops.ResizeBilinearV2(align_corners=True, half_pixel_centers=False)(inputs, size)
+        return ops.ResizeBilinearV2(align_corners=False, half_pixel_centers=True)(inputs, size)
 
 
 def test_resize_bilinear_grad_align_corner():

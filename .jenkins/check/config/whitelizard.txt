@@ -29,6 +29,7 @@ mindspore/model_zoo/official/recommend/wide_and_deep_multitable/src/wide_and_dee
 mindspore/mindspore/ccsrc/pipeline/jit/resource.cc:mindspore::pipeline::GetMethodMap
 mindspore/mindspore/python/mindspore/ops/operations/array_ops.py:_compute_slicing_shape
 mindspore/mindspore/python/mindspore/ops/function/array_func.py:scatter_nd
+mindspore/mindspore/python/mindspore/ops/function/nn_func.py:interpolate
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:max_unpool3d
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:max_unpool2d
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:max_unpool1d
