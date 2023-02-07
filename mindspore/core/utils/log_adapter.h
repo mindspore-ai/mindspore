@@ -228,10 +228,10 @@ MS_EXPORT extern int g_ms_submodule_log_levels[];
 #if defined(_WIN32) || defined(_WIN64)
 /// \brief The max log level of current thread.
 MS_EXPORT extern enum MsLogLevel this_thread_max_log_level;
-#define MS_LOG_TRY_CATCH_SCOPE
 #else
 /// \brief The max log level of current thread.
 MS_EXPORT extern thread_local enum MsLogLevel this_thread_max_log_level;
+#endif
 class TryCatchGuard {
  public:
   TryCatchGuard() : origin_log_level_(this_thread_max_log_level) { this_thread_max_log_level = MsLogLevel::kWarning; }
@@ -241,7 +241,6 @@ class TryCatchGuard {
   enum MsLogLevel origin_log_level_;
 };
 #define MS_LOG_TRY_CATCH_SCOPE mindspore::TryCatchGuard mindspore_log_try_catch_guard
-#endif
 
 /// \brief LogWriter defines interface to write log.
 class MS_CORE_API LogWriter {
