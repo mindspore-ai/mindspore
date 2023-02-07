@@ -2262,14 +2262,6 @@ bool DfGraphConvertor::IsNoOpRedundant(const ::ge::GNode &node) const {
   if (node_type != kTypeNoOp) {
     return false;
   }
-  auto out_control_node = node.GetOutControlNodes();
-  auto in_control_node = node.GetInControlNodes();
-  if (out_control_node.size() == 1 || in_control_node.size() == 1) {
-    return true;
-  }
-  if (out_control_node.size() > kNoOpOptThreshold || in_control_node.size() > kNoOpOptThreshold) {
-    return false;
-  }
   return true;
 }
 void DfGraphConvertor::RemoveNoOp(::ge::GNode noop) {
