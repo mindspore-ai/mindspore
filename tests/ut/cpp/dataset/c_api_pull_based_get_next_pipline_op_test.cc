@@ -195,7 +195,7 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetError1CreatePullBasedIterator) {
   EXPECT_NE(ds1, nullptr);
 
   // Create an iterator over the result of the above dataset
-  std::shared_ptr<Iterator> iter = ds1->CreatePullBasedIterator();
+  std::shared_ptr<PullIterator> iter = ds1->CreatePullBasedIterator();
   // Expect failure: invalid Op input
   EXPECT_EQ(iter, nullptr);
 
@@ -211,34 +211,59 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetError1CreatePullBasedIterator) {
 }
 
 /// Feature: PullBasedIterator GetNextRowPullMode
-/// Description: Test PullBasedIterator on TakeOp with invalid count = -5
-/// Expectation: Error message is logged, and CreatePullBasedIterator() for invalid pipeline returns nullptr
-TEST_F(MindDataTestPipeline, TestGetNextPullBasedPipelineTakeOpError) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetNextPullBasedPipelineTakeOpError.";
+/// Description: Test PullBasedIterator with non-mappable TFRecordDataset basic pipeline
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestPipeline, TestGetNextPullBasedTFRecordPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetNextPullBasedTFRecordPipeline.";
 
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+  // Create a TFRecord Dataset
+  std::string file_path = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
+  std::string schema_path = datasets_root_path_ + "/test_tf_file_3_images2/datasetSchema.json";
+  std::shared_ptr<Dataset> ds = TFRecord({file_path}, schema_path, {"image"}, 0);
   EXPECT_NE(ds, nullptr);
 
-  // Create a Take operation on ds with invalid count input
-  int32_t count = -5;
-  auto ds1 = ds->Take(count);
-  EXPECT_NE(ds1, nullptr);
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
 
-  // Create an iterator over the result of the above dataset
-  std::shared_ptr<PullIterator> iter = ds1->CreatePullBasedIterator();
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
+  std::shared_ptr<TensorTransform> random_horizontal_flip_op = std::make_shared<vision::RandomHorizontalFlip>(0.5);
+  EXPECT_NE(random_horizontal_flip_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({decode_op, random_horizontal_flip_op}, {}, {});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Pull Based iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<PullIterator> iter = ds->CreatePullBasedIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
   std::vector<mindspore::MSTensor> row;
-  // Expect failure: invalid Op input
-  EXPECT_EQ(iter, nullptr);
+  ASSERT_OK(iter->GetNextRow(&row));
 
-  // Create a Take operation on ds with invalid count input
-  count = 0;
-  auto ds2 = ds->Take(count);
-  EXPECT_NE(ds2, nullptr);
+  // Check column
+  EXPECT_EQ(row.size(), 1);
 
-  // Create an iterator over the result of the above dataset
-  iter = ds2->CreatePullBasedIterator();
-  // Expect failure: invalid Op input
-  EXPECT_EQ(iter, nullptr);
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto image = row[0];
+
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
 }
