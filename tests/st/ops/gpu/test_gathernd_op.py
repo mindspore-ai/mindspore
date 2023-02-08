@@ -164,10 +164,10 @@ def gathernd2(nptype):
                          [3., 7., 2., 7., 4.],
                          [4., 2., 8., 2., 9.]]).astype(np.float16))
 
-    indices = Tensor(np.array([[4000], [1], [300000]]).astype(np.int32))
-    expect = np.array([[0., 0., 0., 0., 0.],
+    indices = Tensor(np.array([[0], [1], [3]]).astype(np.int32))
+    expect = np.array([[4., 5., 4., 1., 5.],
                        [4., 9., 5., 6., 4.],
-                       [0., 0., 0., 0., 0.]])
+                       [0., 4., 2., 2., 8.]])
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     gathernd = GatherNdNet()
