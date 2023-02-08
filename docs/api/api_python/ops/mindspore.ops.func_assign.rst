@@ -8,7 +8,7 @@ mindspore.ops.assign
     `variable` 和 `value` 遵循隐式类型转换规则，使数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为相对最高精度的数据类型。
 
     参数：
-        - **variable** (Parameter) - 网路参数。 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度，其秩应小于8。
+        - **variable** (Parameter) - 网络参数。 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度，其秩应小于8。
         - **value** (Tensor) - 要分配的值，shape与 `variable` 相同。
 
     返回：
