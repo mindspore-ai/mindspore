@@ -241,6 +241,10 @@ int TransposeFusion::AdjustAxis(const mindspore::AnfNodePtr &node) const {
   if (IsMarkedTrainOp(cnode)) {
     return lite::RET_ERROR;
   }
+  bool has_inferred{false};
+  if (DetermineCertainVarInputHasInferred(cnode, 1, &has_inferred) != RET_OK || !has_inferred) {
+    return lite::RET_ERROR;
+  }
   auto transpose_node = cnode->input(1);
   auto transpose_cnode = transpose_node->cast<CNodePtr>();
   if (transpose_cnode == nullptr) {

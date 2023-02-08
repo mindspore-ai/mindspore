@@ -143,6 +143,9 @@ std::vector<common::KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node) {
     if (CheckPrimitiveType(pre_node, prim::kPrimMakeTuple) || CheckPrimitiveType(pre_node, kPrimMakeTupleV2)) {
       auto tuple_inputs = GetNodeInputs(pre_node);
       std::copy(tuple_inputs.begin(), tuple_inputs.end(), std::back_inserter(inputs));
+    } else if (CheckPrimitiveType(pre_node, prim::kPrimSplit) &&
+               CheckPrimitiveType(cnode->input(1), prim::kPrimSplit)) {
+      inputs = common::AnfAlgo::GetAllOutputWithIndex(pre_node);
     } else {
       inputs.push_back(pre_node_output);
     }
