@@ -1938,9 +1938,9 @@ void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const siz
                  const size_t &o2, const size_t &o3, const size_t &o4, const size_t &o5, const size_t &o6,
                  const size_t &o7, const T *input_addr, T *output_addr, cudaStream_t stream) {
   size_t nums = o0 * o1 * o2 * o3 * o4 * o5 * o6 * o7;
-  BroadcastToKernel<<<GET_BLOCKS(nums), GET_THREADS, 0, stream>>>(i0, i1, i2, i3, i4, i5, i6, i7,
-                                                                  o0, o1, o2, o3, o4, o5, o6, o7,
-                                                                  input_addr, output_addr);
+  int block_num = 256 > nums ? nums : 256;
+  BroadcastToKernel<<<CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, nums, block_num), block_num, 0, stream>>>(
+    i0, i1, i2, i3, i4, i5, i6, i7, o0, o1, o2, o3, o4, o5, o6, o7, input_addr, output_addr);
 }
 
 template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
