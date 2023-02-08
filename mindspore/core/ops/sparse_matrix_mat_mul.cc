@@ -48,6 +48,11 @@ void SparseMatrixMatMulCheckShape(const std::vector<AbstractBasePtr> &input_args
   if (!is_dynamic) {
     const int kInputNoBatch = 2;
     const int kInputWithBatch = 3;
+    auto x1_dense_shape_size = x1_dense_shape.size();
+    if (x1_dense_shape_size == 0) {
+      MS_EXCEPTION(ValueError) << "For SparseMatrixMatMul, x1_dense_shape.size() = " << x1_dense_shape_size
+                               << ", which is invalid";
+    }
     const int64_t rank_x1 = x1_dense_shape[0];
     const int64_t rank_x2 = (SizeToLong)(x2_dense_shape.size());
     if (rank_x1 != rank_x2) {
