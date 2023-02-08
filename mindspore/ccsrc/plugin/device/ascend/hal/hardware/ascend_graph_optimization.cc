@@ -252,7 +252,7 @@ void AscendGraphOptimization::HandleControlFlow(const NotNull<KernelGraphPtr> gr
   MS_LOG(INFO) << "Status record: end handle control flow. graph id: " << graph->graph_id();
 }
 
-void AscendGraphOptimization::RootGraphExecutorValidate(const NotNull<KernelGraphPtr> graph) {
+void AscendGraphOptimization::RootGraphExecutorValidate(const NotNull<KernelGraphPtr> graph) const {
   MS_LOG(INFO) << "Status record: start graph executor validate. graph id: " << graph->graph_id();
   AscendAutoMonad auto_monad(graph);
   auto_monad.GenerateExecuteOrder();
