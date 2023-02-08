@@ -296,7 +296,8 @@ FuncGraphPtr ConvertGraph(api::FuncGraphPtr func_graph) {
 }
 }  // namespace
 
-STATUS TFModelParser::SetInt64TensorInfoMap(const tensorflow::TensorProto &tensor_proto, const std::string &node_name) {
+STATUS TFModelParser::SetInt64TensorToInt64Tensor(const tensorflow::TensorProto &tensor_proto,
+                                                  tensor::TensorPtr *tensor_info) {
   auto &tensor_shape = tensor_proto.tensor_shape();
   ShapeVector shape_vector{};
   for (int i = 0; i < tensor_shape.dim_size(); i++) {
@@ -327,77 +328,13 @@ STATUS TFModelParser::SetInt64TensorInfoMap(const tensorflow::TensorProto &tenso
       return RET_ERROR;
     }
   }
-  auto abstract_tensor = tensor_info_int64->ToAbstract();
-  if (abstract_tensor == nullptr) {
-    MS_LOG(ERROR) << "create abstract tensor failed.";
-    return RET_ERROR;
-  }
-  int64_tensor_info_map_[node_name] = std::make_pair(tensor_info_int64, abstract_tensor);
-  int64_tensor_info_map_[node_name + ":0"] = std::make_pair(tensor_info_int64, abstract_tensor);
+  *tensor_info = tensor_info_int64;
   return RET_OK;
 }
 
 STATUS TFModelParser::SetInt64TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info,
                                          const std::string &node_name) {
-  auto shape_size = GetShapeSize(tensor_proto);
-  auto &tensor_shape = tensor_proto.tensor_shape();
-  ShapeVector shape_vector{};
-  for (int i = 0; i < tensor_shape.dim_size(); i++) {
-    shape_vector.push_back(tensor_shape.dim(i).size());
-  }
-  *tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kNumberTypeInt32);
-  if (*tensor_info == nullptr) {
-    MS_LOG(ERROR) << "create tensor data failed.";
-    return RET_ERROR;
-  }
-  auto tensor_data = reinterpret_cast<int *>((*tensor_info)->data_c());
-  if (tensor_data == nullptr) {
-    MS_LOG(ERROR) << "new data failed";
-    return RET_ERROR;
-  }
-  if (shape_size == 0) {
-    return RET_OK;
-  }
-  if (tensor_proto.tensor_content().empty()) {
-    const auto &origin_data = tensor_proto.int64_val();
-    if (tensor_proto.int64_val_size() == 1) {
-      auto dim_val = origin_data[0];
-      if (dim_val > static_cast<int64_t>(INT32_MAX) || dim_val < static_cast<int64_t>(INT32_MIN)) {
-        MS_LOG(ERROR) << "int64 data " << dim_val << "too big to fit into int32";
-        return RET_ERROR;
-      }
-      for (int i = 0; i < shape_size; ++i) {
-        tensor_data[i] = static_cast<int>(dim_val);
-      }
-    } else {
-      MS_CHECK_GE(tensor_proto.int64_val_size(), shape_size, RET_ERROR);
-      for (int i = 0; i < shape_size; ++i) {
-        auto dim_val = origin_data[i];
-        if (dim_val > static_cast<int64_t>(INT32_MAX) || dim_val < static_cast<int64_t>(INT32_MIN)) {
-          MS_LOG(ERROR) << "int64 data " << dim_val << "too big to fit into int32";
-          return RET_ERROR;
-        }
-        tensor_data[i] = static_cast<int>(dim_val);
-      }
-    }
-  } else {
-    const auto origin_data = reinterpret_cast<const int64_t *>(tensor_proto.tensor_content().data());
-    if (INT_MUL_OVERFLOW_THRESHOLD(shape_size, sizeof(int64_t), SIZE_MAX)) {
-      MS_LOG(ERROR) << "data_size overflow.";
-      return RET_ERROR;
-    }
-    MS_CHECK_GE(tensor_proto.tensor_content().size(), shape_size * sizeof(int64_t), RET_ERROR);
-    for (int i = 0; i < shape_size; ++i) {
-      if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
-        MS_LOG(WARNING) << "int64 data " << origin_data[i] << "too big to fit into int32";
-        tensor_data[i] = origin_data[i] > 0 ? INT32_MAX : INT32_MIN;
-      } else {
-        tensor_data[i] = static_cast<int>(origin_data[i]);
-      }
-    }
-  }
-
-  if (SetInt64TensorInfoMap(tensor_proto, node_name) != RET_OK) {
+  if (SetInt64TensorToInt64Tensor(tensor_proto, tensor_info) != RET_OK) {
     MS_LOG(ERROR) << "SetInt64TensorInfoMap failed.";
     return RET_ERROR;
   }
@@ -566,16 +503,6 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
     }
   }
 
-  if (type == kNumberTypeInt64) {
-    auto abstract_tensor_int64 = CreateTensorAbstract(shape, type);
-    if (abstract_tensor_int64 == nullptr) {
-      MS_LOG(ERROR) << "Create tensor abstarct failed";
-      return RET_ERROR;
-    }
-    int64_abstract_map_[node.name()] = abstract_tensor_int64;
-    int64_abstract_map_[node.name() + ":0"] = abstract_tensor_int64;
-    type = kNumberTypeInt32;
-  }
   auto abstract_tensor = CreateTensorAbstract(shape, type);
   if (abstract_tensor == nullptr) {
     MS_LOG(ERROR) << "Create tensor abstarct failed";
@@ -1083,41 +1010,6 @@ STATUS TFModelParser::ConnectNullInput() {
   return RET_OK;
 }
 
-STATUS TFModelParser::ResetAbstractTensorToInt64(const std::string &op_type,
-                                                 const std::vector<std::string> &input_names,
-                                                 const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
-                                                 const std::unordered_map<std::string, AnfNodePtr> &anf_node_map) {
-  if (!(op_type == "SplitV" || op_type == "GatherV2" || op_type == "NotEqual")) {
-    return RET_OK;
-  }
-  for (auto &input_name : input_names) {
-    // subgraph input name x:output:index,need flatten
-    auto flatten_input_name = TensorFlowUtils::GetFlattenNodeName(input_name);
-    if (tf_node_map.find(flatten_input_name) != tf_node_map.end()) {
-      auto input_node = tf_node_map.at(flatten_input_name);
-      flatten_input_name = GetOriginInputName(*input_node, tf_node_map);
-    }
-    if (int64_abstract_map_.count(flatten_input_name)) {
-      auto input = GetAnfNode(flatten_input_name, anf_node_map);
-      if (input == nullptr) {
-        MS_LOG(ERROR) << "GetAnfNode failed:" << flatten_input_name;
-        return RET_ERROR;
-      }
-      input->set_abstract(int64_abstract_map_[flatten_input_name]);
-      if (int64_tensor_info_map_.count(flatten_input_name)) {
-        if (!utils::isa<Parameter>(input)) {
-          MS_LOG(ERROR) << "input must be a parameter node.";
-          return RET_ERROR;
-        }
-        auto parameter = input->cast<ParameterPtr>();
-        parameter->set_abstract(int64_tensor_info_map_[flatten_input_name].second);
-        parameter->set_default_param(int64_tensor_info_map_[flatten_input_name].first);
-      }
-    }
-  }
-  return RET_OK;
-}
-
 STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
                                  const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
                                  const FuncGraphPtr &func_graph_ptr,
@@ -1161,11 +1053,6 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   auto value_node = NewValueNode(primitive_c);
   if (value_node == nullptr) {
     MS_LOG(ERROR) << "value_node is nullptr";
-    return RET_ERROR;
-  }
-
-  if (ResetAbstractTensorToInt64(op_type, input_names, tf_node_map, *anf_node_map) != RET_OK) {
-    MS_LOG(ERROR) << "ResetAbstractTensorToInt64 failed.";
     return RET_ERROR;
   }
 

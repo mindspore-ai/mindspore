@@ -48,6 +48,10 @@ STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
 STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   auto &graph_in_idxes = graph->inputIndex;
+  if ((this->input_data_dtype == TypeId::kNumberTypeInt32) || (this->input_data_dtype == TypeId::kNumberTypeInt64)) {
+    MS_LOG(INFO) << "Unsupported inputDataType: " << this->input_data_dtype;
+    return RET_OK;
+  }
   if (this->input_data_dtype != TypeId::kNumberTypeFloat32 && this->input_data_dtype != TypeId::kNumberTypeUInt8 &&
       this->input_data_dtype != TypeId::kNumberTypeInt8 && this->input_data_dtype != TypeId::kTypeUnknown) {
     MS_LOG(ERROR) << "Invalid inputDataType: " << this->input_data_dtype;
