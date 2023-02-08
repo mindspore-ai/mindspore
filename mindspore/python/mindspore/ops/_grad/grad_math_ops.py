@@ -920,6 +920,8 @@ def get_bprop_reduceprod(self):
         """Grad definition for `Product` operation."""
         # Expand dout to full input shape
         input_shape = shape_op(x)
+        if input_shape == ():
+            return Tensor(1, x.dtype), zeros_like(axis)
         if F.is_sequence_value_unknown(input_shape):
             input_shape = dyn_shape_op(x)
             input_shape = P.Cast()(input_shape, ms.int64)
