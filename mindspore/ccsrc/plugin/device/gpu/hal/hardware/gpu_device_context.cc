@@ -361,6 +361,8 @@ void GPUKernelExecutor::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph)
 #ifdef ENABLE_TUPLE_UNFOLD
   pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>("insert_type_transform_op"));
 #endif
+  // ReplaceAddNFusion depends on the input expansion of AddN, so must be after the operator select.
+  pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
@@ -415,7 +417,6 @@ void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
     }
     pm->AddPass(std::make_shared<opt::CombineMomentumFusion>("combine_momentum"));
     pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
-    pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
     pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
     pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
     pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
