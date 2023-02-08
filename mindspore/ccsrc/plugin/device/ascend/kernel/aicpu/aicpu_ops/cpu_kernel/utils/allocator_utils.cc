@@ -152,4 +152,72 @@ uint32_t CpuKernelAllocatorUtils::DeleteOutputDataPtr(const uint64_t data_ptr) {
 
   return KERNEL_STATUS_OK;
 }
+
+uint32_t CpuKernelAllocatorUtils::AllocateOutputTensorDataMemory(const std::vector<uint64_t> &shape, DataType type,
+                                                                 Tensor *&outputResultTensor) {
+  KERNEL_CHECK_NULLPTR(outputResultTensor, KERNEL_STATUS_PARAM_INVALID, "outputResultTensor nullptr");
+  KERNEL_LOG_INFO("AllocateOutputTensorDataMemory::START!!");
+  if (shape.empty()) {
+    KERNEL_LOG_ERROR("AllocateOutputTensorDataMemory shape size == 0.");
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
+  int64_t num_elements = 1;
+  int64_t dim_size = 0;
+  for (size_t i = 0; i < shape.size(); i++) {
+    dim_size = shape[i];
+    KERNEL_CHECK_ASSIGN_64S_MULTI(num_elements, dim_size, num_elements, KERNEL_STATUS_PARAM_INVALID);
+  }
+
+  uint64_t data_size = 0;
+  int32_t element_size = GetSizeByDataType(type);
+  KERNEL_CHECK_ASSIGN_64S_MULTI(num_elements, element_size, data_size, KERNEL_STATUS_PARAM_INVALID);
+  if (data_size < 0) {
+    KERNEL_LOG_ERROR("AllocateOutputTensorDataMemory data_size[%u].", data_size);
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
+
+  uint64_t shape_buffer_size = 0;
+  KERNEL_CHECK_ASSIGN_64S_MULTI(shape.size(), sizeof(int64_t), shape_buffer_size, KERNEL_STATUS_PARAM_INVALID);
+
+  void *output_shape_ptr = malloc(shape_buffer_size);
+  KERNEL_CHECK_NULLPTR(output_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "malloc error, size[%llu]!", shape_buffer_size);
+  int32_t ret = memcpy_s(output_shape_ptr, shape_buffer_size, shape.data(), shape_buffer_size);
+  if (ret != EOK) {
+    free(output_shape_ptr);
+    KERNEL_LOG_ERROR("memcpy error, size[%llu], ret[%d]!", shape_buffer_size, ret);
+    return KERNEL_STATUS_INNER_ERROR;
+  }
+  aicpu::FWKAdapter::ResultSummary *result_summary =
+    reinterpret_cast<aicpu::FWKAdapter::ResultSummary *>(outputResultTensor->GetData());
+  if (data_size == 0) {
+    result_summary->raw_data_ptr = reinterpret_cast<uint64_t>(nullptr);
+    result_summary->raw_data_size = 0;
+    result_summary->shape_data_ptr = reinterpret_cast<uint64_t>(output_shape_ptr);
+    result_summary->shape_data_size = shape_buffer_size;
+    (void)g_allocated_ptr.insert(result_summary->shape_data_ptr);
+    KERNEL_LOG_INFO("AllocateOutputTensorDataMemory:: empty tensor END!!");
+    return KERNEL_STATUS_OK;
+  }
+  void *output_data_ptr = malloc(data_size);
+  if (output_data_ptr == nullptr) {
+    KERNEL_LOG_ERROR("malloc error, size[%lu]!", data_size);
+    free(output_shape_ptr);
+    return KERNEL_STATUS_INNER_ERROR;
+  }
+
+  result_summary->raw_data_size = data_size;
+  result_summary->raw_data_ptr = reinterpret_cast<uint64_t>(output_data_ptr);
+  result_summary->shape_data_size = shape_buffer_size;
+  result_summary->shape_data_ptr = reinterpret_cast<uint64_t>(output_shape_ptr);
+
+  KERNEL_LOG_INFO("raw_data_ptr [%llu]", output_data_ptr);
+  KERNEL_LOG_INFO("shape_data_ptr [%llu]", output_shape_ptr);
+
+  (void)g_allocated_ptr.insert(result_summary->raw_data_ptr);
+  (void)g_allocated_ptr.insert(result_summary->shape_data_ptr);
+  KERNEL_LOG_INFO("AllocateOutputTensorDataMemory :: END!!");
+
+  return KERNEL_STATUS_OK;
+}
+
 }  // namespace aicpu
