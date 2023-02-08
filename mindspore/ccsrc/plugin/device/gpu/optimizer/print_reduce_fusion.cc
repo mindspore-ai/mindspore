@@ -72,8 +72,8 @@ bool GetOptList(const std::vector<AnfNodePtr> &node_list, std::vector<AnfNodePtr
       auto prim = common::AnfAlgo::GetCNodePrimitive(node);
       MS_EXCEPTION_IF_NULL(prim);
       std::vector<int64_t> fake_tensor_pos;
-      if (prim->HasAttr("fake_tensor")) {
-        auto value_ptr = prim->GetAttr("fake_tensor");
+      if (prim->HasAttr(kFakeTensorPos)) {
+        auto value_ptr = prim->GetAttr(kFakeTensorPos);
         fake_tensor_pos = GetValue<std::vector<int64_t>>(value_ptr);
       }
       size_t input_num = common::AnfAlgo::GetInputTensorNum(node);

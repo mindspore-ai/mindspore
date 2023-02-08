@@ -111,7 +111,7 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
       kernel_graph->FrontBackendlMapUpdate(cnode, new_cnode);
     }
     if (common::AnfAlgo::CheckPrimitiveType(new_cnode, prim::kPrimPrint) && fake_tensor_pos.size() > 0) {
-      common::AnfAlgo::SetNodeAttr("fake_tensor", MakeValue<std::vector<int64_t>>(fake_tensor_pos), new_cnode);
+      common::AnfAlgo::SetNodeAttr(kFakeTensorPos, MakeValue<std::vector<int64_t>>(fake_tensor_pos), new_cnode);
     }
     return new_cnode;
   }
