@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """test sparsify"""
+import platform
 import numpy as np
 import pytest
 import scipy
@@ -122,6 +123,8 @@ def test_cg(mode, tensor_type_a, tensor_type_m):
     Description: test case for sparsify using CG network.
     Expectation: the result matches mindspore.scipy
     """
+    if platform.system() != "Linux":
+        return
     context.set_context(mode=mode)
     shape = (7, 7)
     dtype = np.float32

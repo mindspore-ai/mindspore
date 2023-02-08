@@ -9,7 +9,7 @@ mindspore.ops.csr_acos
         out_i = cos^{-1}(x_i)
 
     参数：
-        - **x** (CSRTensor) - CSRTensor的shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。数据类型应该是以下类型之一：float16、float32、float64。
+        - **x** (CSRTensor) - 输入CSRTensor。
 
     返回：
         CSRTensor，shape和数据类型与 `x` 相同。
