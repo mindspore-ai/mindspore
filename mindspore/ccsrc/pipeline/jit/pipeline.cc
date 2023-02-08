@@ -1769,22 +1769,9 @@ FuncGraphPtr DynamicObfuscateMindIR(const std::string &file_name, float obf_rati
   mindspore::DynamicObfuscator dynamic_obfuscator(obf_ratio, obf_password, append_password);
   MindIRLoader mindir_loader(false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode, false);
   FuncGraphPtr func_graph = mindir_loader.LoadMindIR(file_name);
-  int repeat_max_count = 10;
-  int repeat_count = 0;
-  while (func_graph == nullptr) {
-#if defined(__linux__) && defined(WITH_BACKEND)
-    (void)sleep(1);
-#endif
-    try {
-      func_graph = mindir_loader.LoadMindIR(file_name);
-    } catch (const std::exception &e) {
-      MS_LOG(ERROR) << "Load MindIR file failed, error msg is: " << e.what();
-    }
-    repeat_count += 1;
-    if (repeat_count >= repeat_max_count) {
-      MS_LOG(ERROR) << "[DynamicObfuscateMindIR] load mindir failed, please check the mindir file.";
-      return nullptr;
-    }
+  if (func_graph == nullptr) {
+    MS_LOG(EXCEPTION) << "[DynamicObfuscateMindIR] load mindir failed, please check the mindir file.";
+    return nullptr;
   }
   mindspore::FuncGraphPtr obfuscated_graph = dynamic_obfuscator.ObfuscateMindIR(func_graph);
   if (obfuscated_graph == nullptr) {
