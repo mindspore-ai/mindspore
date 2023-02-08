@@ -41,7 +41,6 @@ constexpr char kDynamicProgramming[] = "dynamic_programming";
 constexpr char kRecursiveProgramming[] = "recursive_programming";
 constexpr char kShardingPropagation[] = "sharding_propagation";
 
-constexpr char kTraining[] = "training";
 constexpr char kAccumulation[] = "accumulation";
 
 constexpr char kAllGroupParallel[] = "all_group_parallel";
