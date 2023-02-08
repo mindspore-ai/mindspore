@@ -479,12 +479,12 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
   AicpuTaskInfoPtr task_info_ptr = std::make_shared<mindspore::ge::model_runner::AicpuTaskInfo>(
     unique_name_, stream_id, node_so_, node_name_, node_def_str_, ext_info_, input_data_addrs, output_data_addrs,
     NeedDump(), cust_kernel_, is_blocking, ms_event_id, unknow_type_);
-  ret_task_info.emplace_back(task_info_ptr);
+  (void)ret_task_info.emplace_back(task_info_ptr);
 
   if (is_blocking) {
     EventWaitTaskInfoPtr wait_task_info_ptr =
       std::make_shared<mindspore::ge::model_runner::EventWaitTaskInfo>(unique_name_ + "_wait", stream_id, ms_event_id);
-    ret_task_info.emplace_back(wait_task_info_ptr);
+    (void)ret_task_info.emplace_back(wait_task_info_ptr);
   }
 
   MS_LOG(INFO) << "AicpuOpKernelMod GenTask end";
