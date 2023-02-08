@@ -6245,7 +6245,7 @@ def _get_moved_perm(ndim, source, destination):
     from source to destination.
     """
     dest_sorted_idx = [i for i, _ in sorted(enumerate(destination), key=operator.itemgetter(1))]
-    axis_orig = [i for i in np.arange(ndim) if i not in source]
+    axis_orig = [i for i in builtins.range(0, ndim) if i not in source]
 
     k = 0
     m = 0
@@ -6310,21 +6310,7 @@ def moveaxis(x, source, destination):
     """
     Alias for `ops.movedim`. Moves axis of an array from source to destination.
 
-    Other axis remain in their original order.
-
-    Args:
-        x (Tensor): The array whose axis should be reordered.
-        source (Union[int, sequence[int]]): Original positions of the
-            axis to move. These must be unique.
-        destination (Union[int, sequence[int]]): Destination positions
-            for each of the original axis. These must also be unique.
-
-    Returns:
-        Tensor, array with moved axis.
-
-    Raises:
-        ValueError: If axis are out of the range of [-a.ndim, a.ndim), or
-            if the axis contain duplicates.
+    Refer to :func:`mindspore.ops.movedim` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

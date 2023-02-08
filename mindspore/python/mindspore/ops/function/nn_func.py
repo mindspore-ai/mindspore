@@ -2254,6 +2254,17 @@ def silu(x):
     where :math:`x_i` is an element of the x.
 
     For more details, please refer to :class:`mindspore.nn.SiLU`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
+        >>> output = ops.silu(x)
+        >>> print(output)
+        [-0.269  1.762  -0.1423  1.762  -0.269]
     """
     return sigmoid_(x) * x
 
