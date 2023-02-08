@@ -18,9 +18,10 @@ from mindspore import context
 from mindspore.nn import Cell
 from mindspore.common import mutable
 from mindspore.ops.composite import GradOperation
-from tuple_help import TupleFactory
+from sequence_help import TupleFactory, context_prepare
 
 context.set_context(mode=context.GRAPH_MODE)
+context_prepare()
 
 
 class Net(Cell):
@@ -34,6 +35,8 @@ class Net(Cell):
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_seqence_make_range():
     """
@@ -55,6 +58,8 @@ def test_seqence_make_range():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_seqence_make_range_grad():
     """

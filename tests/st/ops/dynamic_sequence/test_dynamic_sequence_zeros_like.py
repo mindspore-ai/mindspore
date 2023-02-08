@@ -17,13 +17,16 @@ import numpy as np
 from mindspore.ops.operations import _sequence_ops as seq
 from mindspore import context
 from mindspore.nn import Cell
-from tuple_help import TupleFactory
+from sequence_help import TupleFactory, context_prepare
 
 context.set_context(mode=context.GRAPH_MODE)
+context_prepare()
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_seqence_zeros_like():
     """

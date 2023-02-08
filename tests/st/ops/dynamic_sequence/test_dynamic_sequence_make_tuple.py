@@ -19,8 +19,10 @@ from mindspore.ops.operations import _sequence_ops as seq
 from mindspore import context
 from mindspore.common import mutable
 from mindspore.ops.composite import GradOperation
+from sequence_help import context_prepare
 
 context.set_context(mode=context.GRAPH_MODE)
+context_prepare()
 
 
 @pytest.mark.level1

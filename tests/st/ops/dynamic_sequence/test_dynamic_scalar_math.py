@@ -15,14 +15,17 @@
 import pytest
 from mindspore import context
 from mindspore.nn import Cell
-from tuple_help import TupleFactory
+from sequence_help import TupleFactory, context_prepare
 
 context.set_context(mode=context.GRAPH_MODE)
+context_prepare()
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_add():
     """
@@ -40,7 +43,6 @@ def test_scalar_add():
     net_ms = Net()
     input_x = 3
     input_y = 4
-    context.set_context(mode=context.GRAPH_MODE)
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()
@@ -49,6 +51,8 @@ def test_scalar_add():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_sub():
     """
@@ -66,7 +70,6 @@ def test_scalar_sub():
     net_ms = Net()
     input_x = 3
     input_y = 4
-    context.set_context(mode=context.GRAPH_MODE)
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()
@@ -76,6 +79,8 @@ def test_scalar_sub():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_mul():
     """
@@ -93,7 +98,6 @@ def test_scalar_mul():
     net_ms = Net()
     input_x = 3
     input_y = 4
-    context.set_context(mode=context.GRAPH_MODE)
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()
@@ -102,6 +106,8 @@ def test_scalar_mul():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_div():
     """
@@ -119,7 +125,6 @@ def test_scalar_div():
     net_ms = Net()
     input_x = 3
     input_y = 4
-    context.set_context(mode=context.GRAPH_MODE)
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()
@@ -128,6 +133,8 @@ def test_scalar_div():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_mod():
     """
@@ -145,7 +152,6 @@ def test_scalar_mod():
     net_ms = Net()
     input_x = 3
     input_y = 4
-    context.set_context(mode=context.GRAPH_MODE)
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()
@@ -154,6 +160,8 @@ def test_scalar_mod():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_floordiv():
     """
@@ -171,7 +179,6 @@ def test_scalar_floordiv():
     net_ms = Net()
     input_x = 3
     input_y = 4
-    context.set_context(mode=context.GRAPH_MODE)
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()
@@ -180,6 +187,8 @@ def test_scalar_floordiv():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_eq():
     """
@@ -197,7 +206,6 @@ def test_scalar_eq():
     net_ms = Net()
     input_x = 3
     input_y = 4
-    context.set_context(mode=context.GRAPH_MODE)
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()
@@ -206,6 +214,8 @@ def test_scalar_eq():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_ge():
     """
@@ -223,7 +233,6 @@ def test_scalar_ge():
     net_ms = Net()
     input_x = 3
     input_y = 4
-    context.set_context(mode=context.GRAPH_MODE)
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()
@@ -232,6 +241,8 @@ def test_scalar_ge():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_gt():
     """
@@ -249,7 +260,6 @@ def test_scalar_gt():
     net_ms = Net()
     input_x = 3
     input_y = 4
-    context.set_context(mode=context.GRAPH_MODE)
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()
@@ -258,6 +268,8 @@ def test_scalar_gt():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_le():
     """
@@ -275,7 +287,6 @@ def test_scalar_le():
     net_ms = Net()
     input_x = 3
     input_y = 4
-    context.set_context(mode=context.GRAPH_MODE)
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()
@@ -284,6 +295,8 @@ def test_scalar_le():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_lt():
     """
@@ -301,7 +314,6 @@ def test_scalar_lt():
     net_ms = Net()
     input_x = 3
     input_y = 4
-    context.set_context(mode=context.GRAPH_MODE)
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()

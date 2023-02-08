@@ -18,13 +18,16 @@ from mindspore import context
 from mindspore.ops.operations import _sequence_ops as S
 from mindspore.common import mutable
 from mindspore.ops.composite import GradOperation
-from tuple_help import TupleFactory
+from sequence_help import TupleFactory, context_prepare
 
 context.set_context(mode=context.GRAPH_MODE)
+context_prepare()
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_seq_slice():
     """
@@ -54,6 +57,8 @@ def test_seq_slice():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_seq_slice_grad():
     """

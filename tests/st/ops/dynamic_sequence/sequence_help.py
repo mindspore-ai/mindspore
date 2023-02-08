@@ -12,10 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
+import mindspore
 from mindspore.common import mutable
 from mindspore.nn import Cell
 from mindspore.ops.composite import GradOperation
 from mindspore.common import ParameterTuple
+
+
+def context_prepare():
+    if mindspore.get_context("device_target") == "Ascend":
+        os.environ["GRAPH_OP_RUN"] = "1"
 
 
 class _Grad(Cell):
@@ -31,6 +38,7 @@ class _Grad(Cell):
 
     def construct(self, *inputs):
         return self.grad(self.network)(*inputs)
+
 
 
 class GradOfFirstInput(_Grad):

@@ -20,8 +20,10 @@ from mindspore import context
 from mindspore.common import mutable
 from mindspore.nn import Cell
 from mindspore.ops.composite import GradOperation
+from sequence_help import context_prepare
 
 context.set_context(mode=context.GRAPH_MODE)
+context_prepare()
 
 
 class NetAdd(nn.Cell):
@@ -44,6 +46,8 @@ class NetAddOffset(nn.Cell):
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_seq_add():
     """
@@ -61,6 +65,8 @@ def test_seq_add():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_seq_add_offset():
     """
@@ -78,6 +84,8 @@ def test_seq_add_offset():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_seq_add_grad():
     """
@@ -99,6 +107,8 @@ def test_seq_add_grad():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_seq_add_grad_other():
     """
