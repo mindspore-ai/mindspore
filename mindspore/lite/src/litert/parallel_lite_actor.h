@@ -66,8 +66,8 @@ class KernelsActor : public ActorBase {
       : ActorBase(op_name), parallel_lite_actor_(parallel_lite_actor), nodes_(nodes) {}
   ~KernelsActor() override = default;
   void Run();
-  void AddOutputDataArrows(DataArrowPtr data_arrow) { output_data_arrows_.push_back(data_arrow); }
-  void AddOutputData(OpDataPtr<Tensor> data) { outputs_data_.push_back(data); }
+  void AddOutputDataArrows(const DataArrowPtr &data_arrow) { output_data_arrows_.push_back(data_arrow); }
+  void AddOutputData(const OpDataPtr<Tensor> &data) { outputs_data_.push_back(data); }
   void AddResultsIndex(size_t result) { results_index_.push_back(result); }
   void SetInActorIndexs(const std::vector<size_t> &in_indexs) {
     in_actors_indexs_ = in_indexs;
