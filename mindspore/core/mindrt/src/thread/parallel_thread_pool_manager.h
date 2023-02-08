@@ -81,6 +81,9 @@ class ParallelThreadPoolManager {
   std::shared_mutex pool_manager_mutex_;
   std::map<std::string, bool> has_idle_pool_;
   std::map<std::string, bool> enable_shared_thread_pool_;
+  std::map<std::string, int> runner_worker_num_;
+  std::map<std::string, int> worker_init_num_;
+  std::map<std::string, int> idle_pool_num_;
   std::map<std::string, int> remaining_thread_num_;
   std::map<std::string, int> thread_num_limit_;
 #endif

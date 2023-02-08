@@ -758,6 +758,7 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
     MS_LOG(ERROR) << "Not support multi-threading";
     return RET_ERROR;
   }
+  ParallelThreadPoolManager::GetInstance()->ActivatePool(runner_id_, worker_id_);
   STATUS ret = CheckTensorsInvalid(inputs_);
   if (MS_UNLIKELY(ret != RET_OK)) {
     is_running_.store(false);
@@ -781,8 +782,40 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
       input->set_shape_changed(false);
     }
   }
+  ParallelThreadPoolManager::GetInstance()->SetFreePool(runner_id_, worker_id_);
   is_running_.store(false);
   return ret;
+}
+
+int LiteSession::InitSharedThreadPool() {
+  int workers_num = -1;
+  int remaining_thread_num = -1;
+  int thread_num_limit = -1;
+  bool enable_shared_pool = false;
+  if (config_info_ != nullptr) {
+    auto runner_info_item = config_info_->find(kInnerModelParallelRunnerSection);
+    if (runner_info_item != config_info_->end()) {
+      auto item_runner = runner_info_item->second.find(kInnerRunnerIDKey);
+      if (item_runner != runner_info_item->second.end()) {
+        runner_id_ = runner_info_item->second.at(kInnerRunnerIDKey);
+      }
+      auto shared_pool_item = runner_info_item->second.find(kEnableSharedThreadPoolKey);
+      if (shared_pool_item != runner_info_item->second.end() &&
+          runner_info_item->second.at(kEnableSharedThreadPoolKey) == "true") {
+        workers_num = std::atoi(runner_info_item->second.at(kInnerWorkerNumKey).c_str());
+        remaining_thread_num = std::atoi(runner_info_item->second.at(kThreadNumRemainingPerWorkerKey).c_str());
+        thread_num_limit = std::atoi(runner_info_item->second.at(kThreadNumLimitPerWorkerKey).c_str());
+        worker_id_ = std::atoi(runner_info_item->second.at(kInnerModelIDKey).c_str());
+        enable_shared_pool = true;
+      }
+    }
+  }
+  MS_LOG(INFO) << "runner id: " << runner_id_ << "  enable_shared_pool: " << enable_shared_pool
+               << "  workers_num: " << workers_num << "  thread_num_limit: " << thread_num_limit
+               << "  remaining_thread_num: " << remaining_thread_num;
+  ParallelThreadPoolManager::GetInstance()->Init(enable_shared_pool, runner_id_, workers_num, remaining_thread_num,
+                                                 thread_num_limit);
+  return RET_OK;
 }
 
 int LiteSession::ContextInit(const std::shared_ptr<InnerContext> &context) {
@@ -791,17 +824,7 @@ int LiteSession::ContextInit(const std::shared_ptr<InnerContext> &context) {
     return RET_NULL_PTR;
   }
   this->context_ = context;
-  std::string runner_id;
-  if (config_info_ != nullptr) {
-    auto it_id = config_info_->find(kInnerModelParallelRunnerSection);
-    if (it_id != config_info_->end()) {
-      auto item_runner = it_id->second.find(kInnerRunnerIDKey);
-      if (item_runner != it_id->second.end()) {
-        runner_id = it_id->second.at(kInnerRunnerIDKey);
-      }
-    }
-  }
-  context_->SetBindRunnerId(runner_id);
+  context_->SetBindRunnerId(runner_id_);
   auto ret = this->context_->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
@@ -819,8 +842,8 @@ int LiteSession::ContextInit(const std::shared_ptr<InnerContext> &context) {
   context_->thread_pool_->SetMinSpinCount(kDefaulLiteIosSpinCount);
 #endif
 
-  if (context_->inter_op_parallel_num_ > 1 && !runner_id.empty() &&
-      ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool(runner_id)) {
+  if (context_->inter_op_parallel_num_ > 1 && !runner_id_.empty() &&
+      ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool(runner_id_)) {
     MS_LOG(INFO) << "Enable subgraph parallelism and enable thread pool sharing";
     ParallelThreadPoolManager::GetInstance()->BindPoolToRunner(context_->thread_pool_, config_info_);
   }
@@ -982,6 +1005,12 @@ int LiteSession::Init(const std::shared_ptr<InnerContext> &context) {
     return RET_NOT_SUPPORT;
   }
 
+  auto status = InitSharedThreadPool();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init Shared thread pool failed";
+    is_running_.store(false);
+    return status;
+  }
   auto ret = ContextInit(context);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
@@ -1077,6 +1106,7 @@ LiteSession::~LiteSession() {
 #endif
   delete ms_context_;
   ms_context_ = nullptr;
+  ParallelThreadPoolManager::GetInstance()->ResetParallelThreadPoolManager(runner_id_);
   lite::PackWeightManager::GetInstance()->FreePackWeight(runner_id_, model_id_);
   if (model_ != nullptr && is_shared_weight_) {
     model_->buf = nullptr;
