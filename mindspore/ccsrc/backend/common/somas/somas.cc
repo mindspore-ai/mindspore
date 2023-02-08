@@ -198,7 +198,7 @@ std::pair<bool, std::string> Somas::GetDebugConfig() const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto enable_save_graphs = context_ptr->CanDump(kAdvanced);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
+  auto save_graphs_path = context_ptr->GetSaveGraphsPath();
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }

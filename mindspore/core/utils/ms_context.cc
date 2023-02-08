@@ -351,8 +351,29 @@ void MsContext::CheckEnv(const std::string &device) {
   check_env_(device, "");
 }
 
+std::string MsContext::GetSaveGraphsPath() {
+  std::string path = common::GetEnv("MS_DEV_SAVE_GRAPHS_PATH");
+  if (!path.empty()) {
+    return path;
+  } else {
+    return MsContext::GetInstance()->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
+  }
+}
+
 bool MsContext::CanDump(const int &level) {
   int save_graphs = MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
+  std::string save_env = common::GetEnv("MS_DEV_SAVE_GRAPHS");
+  if (save_env.size() == 1) {
+    int save_graphs_by_env = std::stoi(save_env);
+    if (save_graphs_by_env < 0 || save_graphs_by_env > kFully) {
+      MS_LOG(EXCEPTION) << "Dump level can only be from 0 to 3";
+    }
+    if (save_graphs_by_env >= level) {
+      return true;
+    }
+  } else if (save_env.size() > 1) {
+    MS_LOG(EXCEPTION) << "MS_DEV_SAVE_GRAPHS should be a single number with one digit.";
+  }
   if (save_graphs >= level) {
     return true;
   }

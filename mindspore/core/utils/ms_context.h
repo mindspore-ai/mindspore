@@ -36,7 +36,7 @@ enum MsBackendPolicy {
   kMsBackendUnknown = 5,
 };
 
-enum level {
+enum level : int {
   kIntroductory = 1,
   kAdvanced,
   kFully,
@@ -163,6 +163,7 @@ class MS_CORE_API MsContext {
   void Refresh();
 
   bool enable_dump_ir() const;
+  std::string GetSaveGraphsPath();
   bool CanDump(const int &level);
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
