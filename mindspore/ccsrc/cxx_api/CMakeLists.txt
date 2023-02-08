@@ -179,7 +179,7 @@ if(MODE_ASCEND_ACL OR MSLITE_ENABLE_ACL)
 
     target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--no-as-needed graph ${ge_compiler}
             ${acl_retr} ${acl_cblas} ${acl_dvpp} ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel}
-            ${libaicore_utils} ${libaicpu_engine_common} ${acl} ${GE_RUNNER} stdc++fs)
+            ${libaicore_utils} ${libaicpu_engine_common} ${acl} ${GE_RUNNER})
     add_dependencies(mindspore_shared_lib_obj graph)
     add_dependencies(mindspore_shared_lib graph)
 endif()
