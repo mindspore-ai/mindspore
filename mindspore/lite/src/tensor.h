@@ -66,7 +66,7 @@ enum CompressType {
 
 class Tensor {
  public:
-  Tensor() { tensor_c_ = {kTypeUnknown, NHWC, nullptr, 0}; }
+  Tensor() { tensor_c_ = {false, kTypeUnknown, NHWC, nullptr, 0}; }
 
   Tensor(TypeId data_type, std::vector<int> shape, const mindspore::Format &format = mindspore::NHWC,
          Category category = VAR);
@@ -250,6 +250,10 @@ class Tensor {
   void set_compressed_size(size_t compressed_size) { this->compressed_size_ = compressed_size; }
 
   bool IsScale() const { return (std::fabs(this->scale_ - 1.0f) > 1.0e-05); }
+
+  void set_shape_changed(bool shape_changed) { tensor_c_.shape_changed_ = shape_changed; }
+
+  bool get_shape_changed() const { return tensor_c_.shape_changed_; }
 
   TensorC *ConvertToTensorC() { return &tensor_c_; }
 

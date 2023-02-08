@@ -31,6 +31,7 @@
 #include "src/litert/cpu_info.h"
 #endif
 #include "include/lite_types.h"
+#include "src/litert/infer_manager.h"
 
 namespace mindspore::lite {
 typedef struct CpuDeviceInfo {
@@ -103,6 +104,8 @@ struct InnerContext {
   void ReplaceLinkInfoReceiverWithNewOne(void *new_receiver, void *old_receiver);
   void ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_sender);
   inline void SetBindRunnerId(std::string runner_id) { runner_id_ = runner_id; }
+  inline void set_infer_checker(const InferChecker checker) { infer_checker_ = checker; }
+  inline const InferChecker get_infer_checker() const { return infer_checker_; }
 
   std::string vendor_name_;
   InstructionsContext instructions_ctx_;
@@ -118,6 +121,7 @@ struct InnerContext {
 
   bool device_and_pkg_support_fp16_ = false;
   ThreadPool *thread_pool_ = nullptr;
+  InferChecker infer_checker_{InferCheckerOutput};
   // key is the precursor tensor's pointer, value is the group of successors' pointer.
   std::unordered_map<void *, std::set<void *>> link_info_{};
 

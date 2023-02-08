@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@
 #include <string>
 #include <memory>
 #include "src/common/prim_util.h"
-#include "src/common/common.h"
 #include "src/tensor.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/infer/infer.h"
@@ -36,6 +35,10 @@ int KernelInferShape(const std::vector<lite::Tensor *> &tensors_in, const std::v
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      const void *primitive, std::set<std::string> &&providers, int schema_version,
                      const kernel::Kernel *kernel = nullptr);
+typedef bool (*InferChecker)(const std::vector<Tensor *> &, const std::vector<Tensor *> &);
+bool InferCheckerAll(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs);
+bool InferCheckerInput(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs);
+bool InferCheckerOutput(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs);
 class InferManager {
  public:
   static InferManager *GetInstance() {

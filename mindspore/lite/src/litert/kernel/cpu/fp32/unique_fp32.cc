@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ int UniqueCPUKernel::Run() {
   }
 
   std::vector<int> out_shape = out_tensors_[0]->shape();
+  out_tensors_[0]->set_shape_changed(out_shape.back() != output0_len);
   out_shape[out_shape.size() - 1] = output0_len;
   out_tensors_[0]->set_shape(out_shape);
   return RET_OK;

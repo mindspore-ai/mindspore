@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ class TensorListSetItemCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int IncrementOutputSize(int origin_size);
+  bool InferShapeDone() const override { return false; }
 
  private:
   int CheckParam() const;

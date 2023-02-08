@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,9 @@ class Scheduler {
  public:
   Scheduler(InnerContext *ctx, const mindspore::Context *ms_ctx, Model *src_model, std::vector<Tensor *> *src_tensors,
             std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *output_tensors, bool is_train_session,
-            int *is_infershape, bool *is_control_flow, std::map<std::string, TypeId> *executions,
-            std::shared_ptr<Delegate> delegate = nullptr, int delegate_device_type = -1)
+            int *is_infershape, bool *is_control_flow, bool *infer_along_running,
+            std::map<std::string, TypeId> *executions, std::shared_ptr<Delegate> delegate = nullptr,
+            int delegate_device_type = -1)
       : context_(ctx),
         ms_context_(ms_ctx),
         src_model_(src_model),
@@ -49,6 +50,7 @@ class Scheduler {
         outputs_(output_tensors),
         is_train_session_(is_train_session),
         is_control_flow_(is_control_flow),
+        infer_along_running_(infer_along_running),
         is_infershape_(is_infershape),
         delegate_(delegate),
         delegate_device_type_(delegate_device_type),
@@ -156,6 +158,7 @@ class Scheduler {
   std::map<int, OpParameter *> op_parameters_;
   bool is_train_session_ = false;
   bool *is_control_flow_ = nullptr;
+  bool *infer_along_running_ = nullptr;
   int *is_infershape_ = nullptr;
   std::unique_ptr<SchedulerCb> sched_cb_;
   std::map<kernel::Kernel *, const schema::Primitive *> primitives_;
