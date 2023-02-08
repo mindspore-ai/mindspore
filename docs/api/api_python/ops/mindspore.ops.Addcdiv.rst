@@ -19,6 +19,7 @@ mindspore.ops.Addcdiv
 
     异常：
         - **TypeError** - 如果 `x1` 、 `x2` 、 `value` 、 `input_data` 不是Tensor。
+        - **TypeError** - 如果 `x1` 、 `x2` 、 `value` 、 `input_data` 的dtype不一致。
         - **ValueError** - 如果无法将 `x1` 广播到 `x2` 。
         - **ValueError** - 如果无法将 `value` 广播到 `x1/x2` 。
         - **ValueError** - 如果无法将 `input_data` 广播到 `value*(x1/x2)` 。
