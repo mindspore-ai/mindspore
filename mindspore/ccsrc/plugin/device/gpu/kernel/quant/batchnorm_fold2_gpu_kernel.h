@@ -21,6 +21,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batchnorm_fold2_impl.cuh"
+#include "plugin/device/gpu/kernel/quant/quant_op_const.h"
 
 namespace mindspore {
 namespace kernel {
@@ -45,15 +46,15 @@ class BatchNormFold2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
 
-    auto *input = GetDeviceAddress<T>(inputs, 0);
-    auto *beta = GetDeviceAddress<T>(inputs, 1);
-    auto *gamma = GetDeviceAddress<T>(inputs, 2);
-    auto *batch_std = GetDeviceAddress<T>(inputs, 3);
-    auto *batch_mean = GetDeviceAddress<T>(inputs, 4);
-    auto *running_std = GetDeviceAddress<T>(inputs, 5);
-    auto *running_mean = GetDeviceAddress<T>(inputs, 6);
-    auto *global_step = GetDeviceAddress<int32_t>(inputs, 7);
-    auto *output = GetDeviceAddress<T>(outputs, 0);
+    auto *input = GetDeviceAddress<T>(inputs, kIndex0);
+    auto *beta = GetDeviceAddress<T>(inputs, kIndex1);
+    auto *gamma = GetDeviceAddress<T>(inputs, kIndex2);
+    auto *batch_std = GetDeviceAddress<T>(inputs, kIndex3);
+    auto *batch_mean = GetDeviceAddress<T>(inputs, kIndex4);
+    auto *running_std = GetDeviceAddress<T>(inputs, kIndex5);
+    auto *running_mean = GetDeviceAddress<T>(inputs, kIndex6);
+    auto *global_step = GetDeviceAddress<int32_t>(inputs, kIndex7);
+    auto *output = GetDeviceAddress<T>(outputs, kIndex0);
 
     BatchNormFold2Forward(input, beta, gamma, batch_std, batch_mean, running_std, running_mean, global_step, output,
                           freeze_bn_, batch_size_, channel_, height_, width_,
@@ -83,14 +84,14 @@ class BatchNormFold2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
 
-    if (input_shape.size() != 4) {
+    if (input_shape.size() != kSize4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 4, but got "
                         << input_shape.size();
     }
-    batch_size_ = input_shape[0];
-    channel_ = input_shape[1];
-    height_ = input_shape[2];
-    width_ = input_shape[3];
+    batch_size_ = input_shape[kIndex0];
+    channel_ = input_shape[kIndex1];
+    height_ = input_shape[kIndex2];
+    width_ = input_shape[kIndex3];
     auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     freeze_bn_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("freeze_bn")));

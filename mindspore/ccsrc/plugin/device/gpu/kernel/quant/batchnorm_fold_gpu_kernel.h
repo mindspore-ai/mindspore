@@ -22,6 +22,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batchnorm_fold_impl.cuh"
+#include "plugin/device/gpu/kernel/quant/quant_op_const.h"
 
 namespace mindspore {
 namespace kernel {
@@ -53,21 +54,21 @@ class BatchNormFoldGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
     (void)workspace;
-    auto x = GetDeviceAddress<T>(inputs, 0);
-    auto mean = GetDeviceAddress<T>(inputs, 1);
-    auto variance = GetDeviceAddress<T>(inputs, 2);
-    int *current_step = GetDeviceAddress<int>(inputs, 3);
+    auto x = GetDeviceAddress<T>(inputs, kIndex0);
+    auto mean = GetDeviceAddress<T>(inputs, kIndex1);
+    auto variance = GetDeviceAddress<T>(inputs, kIndex2);
+    int *current_step = GetDeviceAddress<int>(inputs, kIndex3);
     int current_step_host[1];
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(current_step_host, current_step, sizeof(int), cudaMemcpyDeviceToHost,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memoy failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
-    auto batch_mean = GetDeviceAddress<T>(outputs, 0);
-    auto batch_std = GetDeviceAddress<T>(outputs, 1);
-    auto running_mean = GetDeviceAddress<T>(outputs, 2);
-    auto running_std = GetDeviceAddress<T>(outputs, 3);
-    auto y = GetDeviceAddress<T>(workspace, 0);
+    auto batch_mean = GetDeviceAddress<T>(outputs, kIndex0);
+    auto batch_std = GetDeviceAddress<T>(outputs, kIndex1);
+    auto running_mean = GetDeviceAddress<T>(outputs, kIndex2);
+    auto running_std = GetDeviceAddress<T>(outputs, kIndex3);
+    auto y = GetDeviceAddress<T>(workspace, kIndex0);
 
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(running_mean, mean, output_size_, cudaMemcpyDeviceToDevice,
@@ -99,12 +100,12 @@ class BatchNormFoldGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     InitResource();
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 4) {
+    if (input_num != kSize4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 4, but got " << input_num;
     }
 
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 4) {
+    if (output_num != kSize4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 4, but got " << output_num;
     }
 
@@ -122,15 +123,15 @@ class BatchNormFoldGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    if (input_shape.size() != 4) {
+    if (input_shape.size() != kSize4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 4, but got "
                         << input_shape.size();
     }
     CheckTensorSize({input_shape});
-    batch_ = LongToInt(input_shape[0]);
-    channel_ = LongToInt(input_shape[1]);
-    height_ = LongToInt(input_shape[2]);
-    width_ = LongToInt(input_shape[3]);
+    batch_ = LongToInt(input_shape[kIndex0]);
+    channel_ = LongToInt(input_shape[kIndex1]);
+    height_ = LongToInt(input_shape[kIndex2]);
+    width_ = LongToInt(input_shape[kIndex3]);
 
     input_size_ = sizeof(T) * batch_ * channel_ * height_ * width_;
     output_size_ = sizeof(T) * channel_;
