@@ -59,7 +59,7 @@ class AicpuExtInfoHandler {
   [[nodiscard]] bool GetOutputShapeAndType(uint32_t output_index, NotNull<std::vector<int64_t> *> shape,
                                            NotNull<TypeId *> data_type);
 
-  [[nodiscard]] bool UpdateEventId(const uint32_t event_id);
+  [[nodiscard]] bool UpdateEventId(const uint32_t event_id) const;
   [[nodiscard]] bool UpdateSessionInfoId(const uint64_t session_id) const;
 
  private:

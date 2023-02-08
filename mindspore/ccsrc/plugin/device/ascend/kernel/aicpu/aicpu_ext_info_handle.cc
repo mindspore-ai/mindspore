@@ -284,7 +284,7 @@ void AicpuExtInfoHandler::GetShapeAndType(const NotNull<const AicpuShapeAndType 
   *data_type = static_cast<TypeId>(ms_type);
 }
 
-bool AicpuExtInfoHandler::UpdateEventId(const uint32_t event_id) {
+bool AicpuExtInfoHandler::UpdateEventId(const uint32_t event_id) const {
   if (async_wait_ == nullptr) {
     MS_LOG(ERROR) << "async_wait_ is nullptr";
     return false;
@@ -296,7 +296,8 @@ bool AicpuExtInfoHandler::UpdateEventId(const uint32_t event_id) {
 
 bool AicpuExtInfoHandler::UpdateSessionInfoId(const uint64_t session_id) const {
   if (session_info_ == nullptr) {
-    MS_LOG(DEBUG) << "There is no session info in ext_info, no need update.";
+    MS_LOG(INFO) << "There is no session info in ext_info, no need update.";
+    return false;
   }
 
   session_info_->sessionId = session_id;
