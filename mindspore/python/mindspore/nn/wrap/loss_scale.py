@@ -308,8 +308,11 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         super(TrainOneStepWithLossScaleCell, self).__init__(network, optimizer, sens=None)
         self.hyper_map = C.HyperMap()
         self.base = Tensor(1, mstype.float32)
+        self.base0 = Tensor(0, mstype.int32)
         self.reduce_sum = P.ReduceSum(keep_dims=False)
+        self.reduce_all = P.ReduceAll(keep_dims=False)
         self.less_equal = P.LessEqual()
+        self.equal = P.Equal()
         self.allreduce = P.AllReduce()
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.gpu_target = (context.get_context("device_target") == "GPU")
@@ -389,13 +392,11 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
             The second value is the same as the input of `compute_input`, but contains some information about the
             execution order.
         """
-        status = False
+        status = Tensor([0, 0, 0, 0, 0, 0, 0, 0], mstype.int32)
         if not self.gpu_target:
-            # init overflow buffer
-            status = P.NPUAllocFloatStatus()()
             status = F.depend(status, pre_cond)
             # clear overflow buffer
-            clear_status = P.NPUClearFloatStatus()(status)
+            clear_status = P.NPUClearFloatStatusV2()(status)
             compute_input = F.depend(compute_input, clear_status)
         return status, compute_input
 
@@ -418,22 +419,36 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         """
         if not self.gpu_target:
             status = F.depend(status, compute_output)
-            get_status = P.NPUGetFloatStatus()(status)
-            status = F.depend(status, get_status)
-            # sum overflow buffer elements, 0:not overflow , >0:overflow
-            flag_sum = self.reduce_sum(status, (0,))
+            get_status = P.NPUGetFloatStatusV2()(status)
+
+            if self.is_distributed:
+                # sum overflow flag over devices
+                flag_reduce = self.allreduce(get_status)
+                # get_status not equal to [0,]*8 means overflow
+                flag = self.equal(self.base0, flag_reduce)
+                status = F.depend(status, flag)
+                clear_status = P.NPUClearFloatStatusV2()(status)
+                flag = F.depend(flag, clear_status)
+                overall_finite = self.reduce_all(flag)
+            else:
+                status = F.depend(status, get_status)
+                clear_status = P.NPUClearFloatStatusV2()(status)
+                get_status = F.depend(get_status, clear_status)
+                flag = self.equal(self.base0, get_status)
+                overall_finite = self.reduce_all(flag)
+            overflow = not overall_finite
         else:
             flag_sum = self.hyper_map(F.partial(_grad_overflow), compute_output)
             flag_sum = P.AddN()(flag_sum)
             # convert flag_sum to scalar
             flag_sum = P.Reshape()(flag_sum, (()))
 
-        if self.is_distributed:
-            # sum overflow flag over devices
-            flag_reduce = self.allreduce(flag_sum)
-            overflow = self.less_equal(self.base, flag_reduce)
-        else:
-            overflow = self.less_equal(self.base, flag_sum)
+            if self.is_distributed:
+                # sum overflow flag over devices
+                flag_reduce = self.allreduce(flag_sum)
+                overflow = self.less_equal(self.base, flag_reduce)
+            else:
+                overflow = self.less_equal(self.base, flag_sum)
         return overflow
 
     def process_loss_scale(self, overflow):

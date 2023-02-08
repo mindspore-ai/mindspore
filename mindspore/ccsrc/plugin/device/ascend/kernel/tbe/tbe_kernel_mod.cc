@@ -21,6 +21,7 @@
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "runtime/device/kernel_runtime.h"
+#include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 
 namespace mindspore {
 namespace kernel {
@@ -59,14 +60,23 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
     return false;
   }
 
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  std::vector<mindspore::kernel::AddressPtr> real_inputs;
+  std::vector<mindspore::kernel::AddressPtr> real_outputs;
+  GetRealIOAddress(cnode, inputs, outputs, &real_inputs, &real_outputs);
+
   // pack all addresses into a vector.
   std::vector<void *> runtimeargs;
-  (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
+  (void)std::transform(std::begin(real_inputs), std::end(real_inputs), std::back_inserter(runtimeargs),
                        [](const AddressPtr &input) -> void * {
                          MS_EXCEPTION_IF_NULL(input);
                          return input->addr;
                        });
-  (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
+  (void)std::transform(std::begin(real_outputs), std::end(real_outputs), std::back_inserter(runtimeargs),
                        [](const AddressPtr &output) -> void * {
                          MS_EXCEPTION_IF_NULL(output);
                          return output->addr;
@@ -77,6 +87,13 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
                            MS_EXCEPTION_IF_NULL(addr);
                            return addr->addr;
                          });
+  }
+
+  AddressPtr overflow_address_ptr = GetOverflowAddress();
+  if (overflow_address_ptr != nullptr) {
+    runtimeargs.emplace_back(overflow_address_ptr->addr);
+    MS_LOG(DEBUG) << "Assign overflow memory for node " << cnode->fullname_with_scope() << ", addr is "
+                  << overflow_address_ptr->addr;
   }
   rtL2Ctrl_t *l2ctrl = nullptr;
   const void *stubFunc = reinterpret_cast<void *>(func_stub);
@@ -105,13 +122,22 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
   std::vector<void *> output_data_addrs;
   std::vector<void *> workspace_addrs;
 
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  std::vector<mindspore::kernel::AddressPtr> real_inputs;
+  std::vector<mindspore::kernel::AddressPtr> real_outputs;
+  GetRealIOAddress(cnode, inputs, outputs, &real_inputs, &real_outputs);
+
   // pack all addresses into a vector.
-  (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
+  (void)std::transform(std::begin(real_inputs), std::end(real_inputs), std::back_inserter(input_data_addrs),
                        [](const AddressPtr &input) -> void * {
                          MS_EXCEPTION_IF_NULL(input);
                          return input->addr;
                        });
-  (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_data_addrs),
+  (void)std::transform(std::begin(real_outputs), std::end(real_outputs), std::back_inserter(output_data_addrs),
                        [](const AddressPtr &output) -> void * {
                          MS_EXCEPTION_IF_NULL(output);
                          return output->addr;
@@ -122,6 +148,13 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
                            MS_EXCEPTION_IF_NULL(workspace);
                            return workspace->addr;
                          });
+  }
+
+  AddressPtr overflow_address_ptr = GetOverflowAddress();
+  if (overflow_address_ptr != nullptr) {
+    workspace_addrs.emplace_back(overflow_address_ptr->addr);
+    MS_LOG(DEBUG) << "Assign overflow memory for node " << cnode->fullname_with_scope() << ", addr is "
+                  << overflow_address_ptr->addr;
   }
 
   stream_id_ = stream_id;
@@ -144,6 +177,47 @@ vector<size_t> TbeKernelMod::GenParameters() {
   MS_EXCEPTION_IF_NULL(kernel_pack_);
   auto kernel_json_info = kernel_pack_->kernel_json_info();
   return kernel_json_info.parameters;
+}
+
+bool TbeKernelMod::GetKernelOverflowStatus() {
+  MS_EXCEPTION_IF_NULL(kernel_pack_);
+  auto kernel_json_info = kernel_pack_->kernel_json_info();
+  return kernel_json_info.global_workspace.is_overflow;
+}
+
+AddressPtr TbeKernelMod::GetOverflowAddress() {
+  AddressPtr overflow_address_ptr = nullptr;
+  auto is_overflow = GetKernelOverflowStatus();
+  if (is_overflow) {
+    constexpr size_t size = 32;
+    auto overflow_memory_ptr = device::ascend::AscendMemAdapter::GetInstance().MallocOverflowMem();
+    MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
+    overflow_address_ptr = std::make_shared<kernel::Address>();
+    overflow_address_ptr->addr = overflow_memory_ptr;
+    overflow_address_ptr->size = size;
+  }
+  return overflow_address_ptr;
+}
+
+void TbeKernelMod::GetRealIOAddress(const AnfNodePtr &cnode, const vector<AddressPtr> &inputs,
+                                    const vector<AddressPtr> &outputs,
+                                    vector<mindspore::kernel::AddressPtr> *real_inputs,
+                                    vector<mindspore::kernel::AddressPtr> *real_outputs) const {
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
+  MS_EXCEPTION_IF_NULL(real_inputs);
+  MS_EXCEPTION_IF_NULL(real_outputs);
+  *real_inputs = inputs;
+  *real_outputs = outputs;
+  if (op_name == kNPUClearFloatStatusV2OpName) {
+    // NPUClearFloatStatusV2 has no input output.
+    real_inputs->clear();
+    real_outputs->clear();
+    MS_LOG(INFO) << "Clear Node " << cnode->fullname_with_scope() << "'s inputs and outputs";
+  } else if (op_name == kNPUGetFloatStatusV2OpName) {
+    // NPUGetFloatStatusV2 has no input
+    real_inputs->clear();
+    MS_LOG(INFO) << "Clear Node " << cnode->fullname_with_scope() << "'s inputs";
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore
