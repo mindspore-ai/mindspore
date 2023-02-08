@@ -2102,7 +2102,6 @@ def repeat_interleave(x, repeats, dim=None):
     """
     For details, please refer to :func:`mindspore.ops.repeat_interleave`.
     """
-    dim = dim if dim is not None else 0
     return F.repeat_interleave(x, repeats, dim)
 
 

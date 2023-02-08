@@ -6508,7 +6508,8 @@ def repeat_interleave(x, repeats, dim=None):
         x (Tensor): The tensor to repeat values for. Must be of type: float16,
             float32, int8, uint8, int16, int32, or int64.
         repeats (int): The number of times to repeat, must be positive.
-        dim (int, optional): The axis along which to repeat, if None, defaults to 0.
+        dim (int, optional): The axis along which to repeat, default: None. if dims is None, the input Tensor will be
+            flattened and the output will alse be flattened.
 
     Returns:
         One tensor with values repeated along the specified axis. If x has shape
@@ -6527,6 +6528,9 @@ def repeat_interleave(x, repeats, dim=None):
          [3 4 5]
          [3 4 5]]
     """
+    if dim is None:
+        x = x.reshape(-1)
+        dim = 0
     return repeat_elements(x, repeats, dim)
 
 

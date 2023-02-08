@@ -3038,7 +3038,6 @@ class Tensor(Tensor_):
         For details, please refer to :func:`mindspore.ops.repeat_interleave`.
         """
         self._init_check()
-        dim = dim if dim is not None else 0
         return tensor_operator_registry.get('repeat_interleave')(self, repeats, dim)
 
     def bernoulli(self, p=0.5, seed=-1):
