@@ -50,14 +50,14 @@ def test_resize_bicubic_graph():
     ]
     for type_i in types:
         img = np.array([1, 2, 3, 4])
-        img = img.reshape([1, 2, 2, 1])
+        img = img.reshape([1, 1, 2, 2])
         images = Tensor(img.astype(type_i))
         size = Tensor([1, 4], mstype.int32)
         net = NetResizeBicubic()
         output = net(images, size)
         expect_type = output.asnumpy().dtype
         expect = np.array([1, 1.5, 2, 2.09375])
-        expect = expect.reshape([1, 1, 4, 1])
+        expect = expect.reshape([1, 1, 1, 4])
 
         expect = expect.astype(np.float32)
         assert expect_type == 'float32'
@@ -80,14 +80,14 @@ def test_resize_bicubic_pynative():
     ]
     for type_i in types_2:
         img = np.array([1, 2, 3, 4])
-        img = img.reshape([1, 2, 2, 1])
+        img = img.reshape([1, 1, 2, 2])
         images = Tensor(img.astype(type_i))
         size = Tensor([1, 4], mstype.int32)
         net = NetResizeBicubic()
         output = net(images, size)
         expect_type_2 = output.asnumpy().dtype
         expect = np.array([1, 1.5, 2, 2.09375])
-        expect = expect.reshape([1, 1, 4, 1])
+        expect = expect.reshape([1, 1, 1, 4])
 
         expect = expect.astype(np.float32)
         assert expect_type_2 == 'float32'
