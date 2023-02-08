@@ -53,7 +53,7 @@ AbstractBasePtr LogicalNotInfer(const abstract::AnalysisEnginePtr &, const Primi
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto infer_type = LogicalNotInferType(primitive, input_args);
   auto infer_shape = LogicalNotInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  return abstract::MakeAbstractTensor(infer_shape, infer_type);
 }
 
 // AG means auto generated

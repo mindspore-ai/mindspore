@@ -292,6 +292,12 @@ AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type
   if ((base_shape->isa<Shape>())) {
     auto shape = base_shape->cast<ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
+    auto shape_vec = shape->shape();
+    // if the size of shape list is empty, return an scalar abstract
+    if (shape_vec.empty() && (!type->isa<TensorType>())) {
+      abstract::AbstractScalarPtr abs_scalar = std::make_shared<abstract::AbstractScalar>(kAnyValue, type);
+      return abs_scalar;
+    }
     return MakeAbstractTensor(shape, type);
   } else if (base_shape->isa<NoShape>() && type->isa<Number>()) {
     return std::make_shared<abstract::AbstractScalar>(kAnyValue, type);
