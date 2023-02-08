@@ -5,10 +5,6 @@ mindspore.nn.thor
 
     通过二阶算法THOR更新参数。
 
-    基于跟踪的、硬件驱动层定向的自然梯度下降计算（THOR）算法论文地址为：
-
-    `THOR: Trace-based Hardware-driven layer-ORiented Natural Gradient Descent Computation <https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf>`_
-
     更新公式如下：
 
     .. math::

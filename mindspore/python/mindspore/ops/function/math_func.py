@@ -9761,10 +9761,10 @@ def nansum(x, axis=None, keepdims=False, *, dtype=None):
     Computes sum of `x` over a given dimension, treating NaNs as zero.
 
     Args:
-        x (Tensor) - The input Tensor.
-        axis (Union[int, tuple(int)], optional) - The dimensions to reduce. Supposed the rank of `x` is r,
+        x (Tensor): The input Tensor.
+        axis (Union[int, tuple(int)], optional): The dimensions to reduce. Supposed the rank of `x` is r,
             axis must be in the range [-rank(x), rank(x)). Default: None, all dimensions are reduced.
-        keepdims (bool, optional) - Whether the output Tensor keeps dimensions or not. Default: False.
+        keepdims (bool, optional): Whether the output Tensor keeps dimensions or not. Default: False.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The dtype of output Tensor. Default: None.

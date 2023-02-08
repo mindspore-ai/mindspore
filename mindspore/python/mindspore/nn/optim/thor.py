@@ -254,10 +254,6 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
     r"""
     Updates gradients by second-order algorithm--THOR.
 
-    Trace-based Hardware-driven layer-ORiented Natural Gradient Descent Computation (THOR) algorithm is proposed in:
-
-    `THOR: Trace-based Hardware-driven layer-ORiented Natural Gradient Descent Computation`_
-
     The updating formulas are as follows,
 
     .. math::
