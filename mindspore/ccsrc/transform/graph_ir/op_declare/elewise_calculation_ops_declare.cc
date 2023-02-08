@@ -42,6 +42,12 @@ REG_ADPT_DESC(Add, prim::kPrimAdd->name(),
                 std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}})),
                 std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}}))))
 
+// AddV2
+INPUT_MAP(AddV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(AddV2) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AddV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AddV2, prim::kPrimAddV2->name(), ADPT_DESC(AddV2))
+
 // AccumulateNV2
 INPUT_MAP(AccumulateNV2) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(AccumulateNV2) = {{1, DYN_INPUT_DESC(x)}};

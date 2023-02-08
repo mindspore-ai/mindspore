@@ -73,8 +73,8 @@ REG_ADPT_DESC(TopKV2, kNameTopKV2, ADPT_DESC(TopK))
 INPUT_MAP(InTopKD) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(InTopKD) = {{"k", ATTR_DESC(k, AnyTraits<int64_t>())}};
 OUTPUT_MAP(InTopKD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InTopK, kNameInTopK, ADPT_DESC(InTopKD))
 REG_ADPT_DESC(InTopKD, kNameInTopKD, ADPT_DESC(InTopKD))
-
 // OneHot
 INPUT_MAP(OneHot) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(depth)}, {3, INPUT_DESC(on_value)}, {4, INPUT_DESC(off_value)}};
 ATTR_INPUT_MAP(OneHot) = {{"depth", "depth"}};

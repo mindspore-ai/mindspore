@@ -142,6 +142,7 @@ INPUT_MAP(DiagPart) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(DiagPart) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(DiagPart) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DiagPart, kNameDiagPart, ADPT_DESC(DiagPart))
+REG_ADPT_DESC(DiagPartD, kNameDiagPartD, ADPT_DESC(DiagPart))
 
 // BatchMatMul
 INPUT_MAP(BatchMatMul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
