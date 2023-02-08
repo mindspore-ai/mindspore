@@ -301,7 +301,7 @@ def test_sort_onnx():
     sort_net = SortNet(0, True)
     ms_output = sort_net(input_x)
     file = 'sort.onnx'
-    export(sort_net, input_x, file_name=file, file_format="onnx")
+    export(sort_net, input_x, file_name=file, file_format="ONNX")
     assert os.path.exists(file)
 
     import onnxruntime as ort
