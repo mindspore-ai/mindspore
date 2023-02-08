@@ -50,6 +50,7 @@ mixed_precision_cast = _inner_ops.MixedPrecisionCast()
 # Dynamic shape
 is_sequence_value_unknown = Primitive("IsShapeUnKnown")
 is_sequence_shape_unknown = Primitive("IsDimUnKnown")
+is_dynamic_sequence_element_unknown = Primitive("IsElementUnknown")
 
 partial = P.Partial()
 # depend: mount a node to another node

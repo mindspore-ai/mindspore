@@ -181,6 +181,8 @@ MIND_API AbstractBasePtr InferImplIsDimUnknown(const AnalysisEnginePtr &, const 
                                                const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplIsShapeUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                  const AbstractBasePtrList &args_spec_list);
+MIND_API AbstractBasePtr InferImplIsElementUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const AbstractBasePtrList &args_spec_list);
 MIND_API AbstractBasePtr InferImplMapUniform(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

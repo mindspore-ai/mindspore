@@ -17,6 +17,8 @@ import operator
 import pytest
 import numpy as np
 from mindspore import jit, context, Tensor
+from mindspore.common import mutable
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -145,6 +147,74 @@ def test_fallback_tuple_with_input_tuple():
     out = foo()
     assert isinstance(out, tuple)
     assert operator.eq(out, (1, 2, 3))
+
+
+def test_fallback_tuple_with_input_variable_len_list():
+    """
+    Feature: tuple() function
+    Description: Test tuple() in graph mode with variable length list input.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        a = mutable([1, 2, 3, 4], True)
+        x = tuple(a)
+        return isinstance(x, tuple), F.is_sequence_shape_unknown(x)
+    out = foo()
+    assert len(out) == 2
+    assert out[0]
+    assert out[1]
+
+
+def test_fallback_tuple_with_input_variable_len_list_2():
+    """
+    Feature: tuple() function
+    Description: Test tuple() in graph mode with variable length list input.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        a = mutable([], True)
+        x = tuple(a)
+        return isinstance(x, tuple), F.is_sequence_shape_unknown(x)
+    out = foo()
+    assert len(out) == 2
+    assert out[0]
+    assert out[1]
+
+
+def test_fallback_list_with_input_variable_len_tuple():
+    """
+    Feature: list() function
+    Description: Test list() in graph mode with variable length tuple input.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        a = mutable((1, 2, 3, 4), True)
+        x = list(a)
+        return isinstance(x, list), F.is_sequence_shape_unknown(x)
+    out = foo()
+    assert len(out) == 2
+    assert out[0]
+    assert out[1]
+
+
+def test_fallback_list_with_input_variable_len_tuple_2():
+    """
+    Feature: list() function
+    Description: Test tuple() in graph mode with list input.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        a = mutable((), True)
+        x = list(a)
+        return isinstance(x, list), F.is_sequence_shape_unknown(x)
+    out = foo()
+    assert len(out) == 2
+    assert out[0]
+    assert out[1]
 
 
 def test_fallback_tuple_with_input_dict():

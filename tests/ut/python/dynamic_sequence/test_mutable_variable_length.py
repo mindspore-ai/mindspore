@@ -301,3 +301,53 @@ def test_dynamic_sequence_list_append_4():
     with pytest.raises(TypeError) as ex:
         foo()
     assert "is not same with the new added item" in str(ex.value)
+
+
+def test_is_dynamic_sequence_element_unknown():
+    """
+    Feature: is_dynamic_sequence_element_unknown function.
+    Description: is_dynamic_sequence_element_unknown will return True if the input dynamic length sequence does not
+                 determine the input element abstract yet.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    @jit
+    def foo():
+        x = mutable([], True)
+        return F.is_dynamic_sequence_element_unknown(x)
+
+    assert foo()
+
+
+def test_is_dynamic_sequence_element_unknown_2():
+    """
+    Feature: is_dynamic_sequence_element_unknown function.
+    Description: is_dynamic_sequence_element_unknown will return True if the input dynamic length sequence does not
+                 determine the input element abstract yet.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    @jit
+    def foo():
+        x = mutable([1], True)
+        return F.is_dynamic_sequence_element_unknown(x)
+
+    assert not foo()
+
+
+def test_is_dynamic_sequence_element_unknown_3():
+    """
+    Feature: is_dynamic_sequence_element_unknown function.
+    Description: is_dynamic_sequence_element_unknown will return True if the input dynamic length sequence does not
+                 determine the input element abstract yet.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    @jit
+    def foo():
+        x = []
+        return F.is_dynamic_sequence_element_unknown(x)
+
+    with pytest.raises(TypeError) as ex:
+        foo()
+    assert "should be variable length sequence" in str(ex.value)

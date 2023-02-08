@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from mindspore import Tensor, CSRTensor, COOTensor
 from mindspore import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore.common import mutable
 import mindspore.common._monad as monad
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
@@ -2358,7 +2359,12 @@ def list_func(*data):
             str(data_type) + " object is not iterable.")
     if isinstance(data, dict):
         data = data.keys()
-    ret = F.make_list()
+    if isinstance(data, (tuple, list)) and F.is_sequence_shape_unknown(data):
+        ret = mutable([], True)
+        if F.is_dynamic_sequence_element_unknown(data):
+            return ret
+    else:
+        ret = F.make_list()
     for i in range(len(data)):
         ret = ret + F.make_list(data[i])
     return ret
@@ -2381,7 +2387,12 @@ def tuple_func(*data):
             str(data_type) + " object is not iterable.")
     if isinstance(data, dict):
         data = data.keys()
-    ret = F.make_tuple()
+    if isinstance(data, (tuple, list)) and F.is_sequence_shape_unknown(data):
+        ret = mutable((), True)
+        if F.is_dynamic_sequence_element_unknown(data):
+            return ret
+    else:
+        ret = F.make_tuple()
     for i in range(len(data)):
         ret = ret + F.make_tuple(data[i])
     return ret
