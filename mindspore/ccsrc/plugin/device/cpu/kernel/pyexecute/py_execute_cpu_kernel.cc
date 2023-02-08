@@ -23,6 +23,7 @@
 #include "Eigen/Core"
 #include "abstract/utils.h"
 #include "plugin/device/cpu/hal/device/cpu_common.h"
+#include "include/common/fallback.h"
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/python_fallback_running.h"
 #include "plugin/factory/ms_factory.h"
@@ -56,13 +57,13 @@ void PyExecuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = 1; i < kernel_node->size(); ++i) {
     const auto &input = kernel_node->inputs()[i];
 
-    // Check if PyExecuteOutputData exists.
+    // Check if PyExecuteOutputUserData exists.
     py::object obj = py::none();
-    if (input->has_user_data<PyExecuteOutputData>()) {
+    if (input->has_user_data<PyExecuteOutputUserData>()) {
       py::gil_scoped_acquire gil_acquire;
-      const auto &output_data = input->user_data<PyExecuteOutputData>();
+      const auto &output_data = input->user_data<PyExecuteOutputUserData>();
       obj = output_data->obj;
-      MS_LOG(DEBUG) << "Has \'PyExecuteOutputData\', obj: " << obj;
+      MS_LOG(DEBUG) << "Has \'PyExecuteOutputUserData\', obj: " << obj;
     }
 
     // Record the inputs' information by their abstract types.
@@ -90,10 +91,10 @@ void PyExecuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 void PyExecuteCpuKernelMod::AttachPyOutputData(const py::object &py_res) {
-  const auto &py_output = std::make_shared<PyExecuteOutputData>();
+  const auto &py_output = std::make_shared<PyExecuteOutputUserData>();
   py_output->obj = py_res;
   // Set Python data for kernel node.
-  kernel_node_->set_user_data<PyExecuteOutputData>(py_output);
+  kernel_node_->set_user_data<PyExecuteOutputUserData>(py_output);
 
   // Set Python data for front node.
   const auto &kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(kernel_node_->func_graph());
@@ -104,7 +105,7 @@ void PyExecuteCpuKernelMod::AttachPyOutputData(const py::object &py_res) {
   if (iter != graph_output_map.cend()) {
     const auto &front_node = iter->second.first;
     MS_LOG(INFO) << "Found front output for " << kernel_node_ << ", " << kernel_node_->DebugString();
-    front_node->set_user_data<PyExecuteOutputData>(py_output);
+    front_node->set_user_data<PyExecuteOutputUserData>(py_output);
   } else {
     MS_LOG(DEBUG) << "Not found, kernel node is not output, " << kernel_node_ << ", " << kernel_node_->DebugString();
     if (!IS_OUTPUT_ON(mindspore::kDebug)) {
@@ -297,16 +298,29 @@ void TensorToRawMemory(const tensor::TensorPtr &tensor, const AddressPtr &addres
 bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs) {
   MS_LOG(DEBUG) << "Launch PyExecute(), inputs.size: " << inputs.size() << ", outputs: " << outputs.size();
-  if (Py_IsInitialized() != true) {
+  if (Py_IsInitialized() == 0) {
     MS_LOG(ERROR) << "Py_IsInitialized failed.";
     return false;
   }
   if (outputs.size() != 1) {
     MS_LOG(EXCEPTION) << "The output num is 1, but got " << outputs.size();
   }
+  py::gil_scoped_acquire gil_acquire;
+
+  // Check if output exists created by 'CppInferShapeAndType'.
+  if (HasPyExecuteOutput()) {
+    const auto &output = PopPyExecuteOutput();
+    const auto &output_type = py::str(output.get_type());
+    MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
+    if (py::isinstance<tensor::Tensor>(output)) {
+      TensorToRawMemory(output.cast<tensor::TensorPtr>(), outputs[0]);
+    }
+    AttachPyOutputData(output);
+    return true;
+  }
+  MS_LOG(ERROR) << "Prebuilt output result not exists.";
 
   // Build the script.
-  py::gil_scoped_acquire gil_acquire;
   const auto &input0_info = inputs_info_[0];
   const auto &input0_abstract = input0_info.abstract;
   const auto &input0_abstract_scalar = dyn_cast<abstract::AbstractScalar>(input0_abstract);

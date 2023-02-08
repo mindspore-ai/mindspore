@@ -781,9 +781,9 @@ def eval_script(exp_str, params):
         raise ValueError(f"eval_script(), params tuple length is wrong, params: {params}")
 
     # Eval function parses the expression argument and evaluates it as a python expression.
-    logger.debug(f"exp_str: '{exp_str}', params: '{params}'")
     global_params = params[0]
     local_params = params[1]
+    logger.debug(f"exp_str: '{exp_str}', params: '{params}'")
     try:
         local_params = _convert_python_data(local_params)
         res = eval(exp_str, global_params, local_params)
