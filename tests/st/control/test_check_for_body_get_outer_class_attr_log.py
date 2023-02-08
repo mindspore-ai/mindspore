@@ -23,7 +23,7 @@ def test_catch_exception_stack_trace_log():
     """
     Feature: Resolve.
     Description: execute the testcase 'for_body_get_outer_class_attr.py::test_catch_exception_of_get_outer_class_attr'
-        and check the log info.
+        when MS_DEV_ENABLE_FALLBACK_RUNTIME is set, check the log info.
     Expectation: the error code exist in log info.
     """
     file_name = "for_body_get_outer_class_attr.py"
@@ -37,9 +37,11 @@ def test_catch_exception_stack_trace_log():
     if os.path.exists(log_file_name):
         os.remove(log_file_name)
     assert not os.path.exists(log_file_name)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     cmd_first = f"GLOG_v=2 pytest -s " + file_name + function_name + " > " + log_file_name + " 2>&1"
     out = os.popen(cmd_first)
     out.read()
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
     assert os.path.exists(log_file_name)
     with open(log_file_name, "r") as f_first:
         data_first = f_first.read()
