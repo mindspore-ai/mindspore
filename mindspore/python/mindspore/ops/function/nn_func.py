@@ -15,14 +15,14 @@
 
 """Defines nn operators with functional form."""
 from __future__ import absolute_import
-from math import pi, log
+from math import pi, log, floor
 import numpy as np
 
 import mindspore.ops as ops
+import mindspore.nn as nn
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN_OPS
-from mindspore.ops.operations import image_ops as IMG
 import mindspore.common.dtype as mstype
 from mindspore.ops.function.math_func import logsumexp
 from mindspore.common.tensor import Tensor
@@ -1927,160 +1927,249 @@ def hardswish(x):
 
 
 @constexpr
-def _check_interpolate_inputs(input_dims, roi, scales, sizes, coordinate_transformation_mode, mode,
-                              prim_name):
-    """Check input"""
-    msg_prefix = f"For '{prim_name}', the"
-    validator.check_value_type("coordinate_transformation_mode", coordinate_transformation_mode, [str], prim_name)
-    support_coordinate_mode_list = ["align_corners", "half_pixel", "asymmetric"]
-    if coordinate_transformation_mode not in support_coordinate_mode_list:
-        raise TypeError(f"{msg_prefix} coordinate_transformation_mode must be in {support_coordinate_mode_list},"
-                        f" but got {coordinate_transformation_mode}")
-    validator.check_value_type("mode", mode, [str], prim_name)
-    if mode == "linear":
-        validator.check_int(input_dims, 3, Rel.EQ, "input dims", prim_name)
-    elif mode == "bilinear":
-        validator.check_int(input_dims, 4, Rel.EQ, "input dims", prim_name)
-    else:
-        raise ValueError(f"{msg_prefix} mode must be 'linear' or 'bilinear', but got {mode}")
-
-    if sizes is None and scales is None:
-        raise ValueError(f"{msg_prefix} 'sizes' and 'scale' both none.")
-    if sizes is not None and scales is not None:
-        raise ValueError(f"{msg_prefix} 'sizes' and 'scale' both not none.")
-    if sizes is not None:
-        if not isinstance(sizes, tuple):
-            raise TypeError(
-                f"{msg_prefix} 'sizes' must be tuple or None, but got {type(sizes).__name__}.")
-        for item in sizes:
-            validator.check_positive_int(item, 'sizes item', prim_name)
-            validator.check_value_type("sizes item", item, int, prim_name)
-        validator.check_int(len(sizes), input_dims - 2, Rel.EQ, "sizes", prim_name)
-        return
-    if not isinstance(scales, tuple):
-        raise TypeError(
-            f"{msg_prefix} 'scales' must be tuple or None, but got {type(scales).__name__}.")
-    for item in scales:
-        validator.check_positive_float(item, 'scales item', prim_name)
-        validator.check_value_type("scales item", item, float, prim_name)
-    scales_dims = len(scales)
-    validator.check_int(scales_dims, input_dims, Rel.EQ, "scales dims", prim_name)
-    validator.check_float(scales[0], 1.0, Rel.EQ, "scales[0]", prim_name)
-    validator.check_float(scales[1], 1.0, Rel.EQ, "scales[1]", prim_name)
+def _scale_factor_convert_size(shape, scale_factor, dim):
+    return [int(floor(float(shape[i + 2]) * scale_factor[i])) for i in range(dim)]
 
 
-def _interpolate_output_shape(shape, scales, sizes, mode):
-    """calculate output shape"""
-    if sizes is not None:
-        if mode == "bilinear":
-            return sizes
-        return Tensor(sizes)
-    ret = ()
-    for i in range(2, len(shape)):
-        ret = ret + (int(scales[i] * shape[i]),)
-    if mode == "bilinear":
-        return ret
-    return Tensor(ret)
-
-
-def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_mode="align_corners", mode="linear"):
+def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):
     r"""
-    Using the interpolate method specified by `mode` resize the input tensor `x`.
-
-    .. warning::
-        - This is an experimental prototype that is subject to change.
-        - The `roi` is reserved interface for 'crop_and_resize' coordinate transformation mode,
-          which is not support now.
-        - The Ascend platforms is currently not supported when `mode` is "linear".
+    Samples the input Tensor to the given size or scale_factor by using one of the interpolate algorithms.
 
     Args:
-        x (Tensor): a tensor which to resize. `x` is a 3-D tensor when `mode` is "linear". `x` is a 4-D tensor when
-            `mode` is "bilinear".
-        roi (tuple[float], optional): a tuple of float. Only takes effect when attr coordinate_transformation_mode is
-            'crop_and_resize'.
-        scales (tuple[float], optional): a tuple of float. Describe the scale along each dimension.
-            Its length is the same as that of shape of `x`. The numbers in `scales` must all be positive. Only one of
-            `scales` and `sizes` can be specified.
-        sizes (tuple[int], optional): a tuple of int, describes the shape of the output tensor. The numbers in `sizes`
-            must all be positive. Only one of `scales` and `sizes` can be specified.  If `sizes` is specified, then set
-            `scales` to 'None' in this operator's input list. It is 1 int elements :math:`(new\_width,)` when `mode`
-            is "linear". It is 2 int elements :math:`(new\_height, new\_width)` when `mode` is "bilinear".
-        coordinate_transformation_mode (str): Default is 'align_corners'. Describes how to transform the coordinate
-            in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel', 'asymmetric'.
-            For example, we want to resize the original tensor along axis x. Let's denote `new_i` as the i-th coordinate
-            of the resized tensor along axis x, `old_i` as the coordinate of the original tensor along axis x,
-            `new_length` as the length of the resized tensor along axis x, `old_length` as the length of the original
-            tensor along axis x. We compute the `old_i` via the following formula:
+        x (Tensor): Tensor to be resized.
+            Input tensor must be a 3-D, 4-D, or 5-D tensor with shape
+            `(batch, channels, [optional depth], [optional height], width)`, with data type of float.
+        size (Union[int, tuple[int], list[int]], optional)): The target size.
+            If size is a tuple or list, size must have the same dimensions as x.
+            One and only one of size and scale_factor can be set to None. Default: None.
+        scale_factor (Union[float, tuple[float], list[float]], optional): The scale factor of new size of the tensor.
+            If size is a tuple or list, size must have the same dimensions as x.
+            One and only one of size and scale_factor can be set to None. Default: None.
+        mode (str): The sampling algorithm.
+            One of 'nearest', 'linear' (3D only), 'bilinear' (4D only), 'bicubic' (4D only), 'trilinear' (5D only),
+            'area', 'nearest-exact'(3D and 4D). Default: 'nearest'.
+        align_corners (bool): If True, rescale input by `(new\_height - 1) / (height - 1)`, which exactly
+            aligns the corners of data and resized data. If False, rescale by `new\_height / height`.
 
             .. code-block::
 
-                old_i = new_length != 1 ? new_i * (old_length - 1) / (new_length - 1) : 0  # if set to 'align_corners'
+                old_i = new_length != 1 ? new_i * (old_length - 1) / (new_length - 1) : 0  # 'align_corners' = True
+                old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # 'align_corners' = False
 
-                old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # if set to 'half_pixel'
+            This is only valid for 'linear', 'bilinear', 'bicubic', or 'trilinear' modes. Default: False.
+        recompute_scale_factor (bool, optional): Recalculate `scale_factor`.
+            If True, the parameter `size` will be calculated using the value of the `scale_factor`,
+            and finally scaled using the value of `size`.
+            If False, the value of `size` or `scale_factor` will be used for direct interpolation. Default: None.
 
-                old_i = new_length != 0 ? new_i * old_length / new_length : 0  # if set to 'asymmetric'
+    Args Support List and Supported Platforms:
 
-        mode (str): The method used to interpolate: 'linear' | 'bilinear'. Default is 'linear'.
+    +----------------+------+----------------+---------------+------------------+
+    | mode           | dim  | align_corners  | scale_factor  | device           |
+    +================+======+================+===============+==================+
+    | nearest        | 3    | \-             | ×             | Ascend,GPU,CPU   |
+    +----------------+------+----------------+---------------+------------------+
+    |                | 4    | \-             | ×             | Ascend,GPU,CPU   |
+    +----------------+------+----------------+---------------+------------------+
+    |                | 5    | \-             | √             | GPU,CPU          |
+    +----------------+------+----------------+---------------+------------------+
+    | linear         | 3    | √              | ×             | GPU,CPU          |
+    +----------------+------+----------------+---------------+------------------+
+    | bilinear       | 4    | √              | ×             | Ascend,GPU,CPU   |
+    +----------------+------+----------------+---------------+------------------+
+    | trilinear      | 5    | √              | √             | GPU,CPU          |
+    +----------------+------+----------------+---------------+------------------+
+    | bicubic        | 4    | √              | ×             | GPU,CPU          |
+    +----------------+------+----------------+---------------+------------------+
+    | area           | 3    | \-             | √             | Ascend,GPU,CPU   |
+    +----------------+------+----------------+---------------+------------------+
+    |                | 4    | \-             | √             | GPU              |
+    +----------------+------+----------------+---------------+------------------+
+    |                | 5    | \-             | √             | GPU,CPU          |
+    +----------------+------+----------------+---------------+------------------+
+    | nearest-exact  | 3    | \-             | ×             | Ascend,CPU       |
+    +----------------+------+----------------+---------------+------------------+
+    |                | 4    | \-             | ×             | Ascend,CPU       |
+    +----------------+------+----------------+---------------+------------------+
 
-    Returns:
-        Resized tensor, with the same data type as input `x`.
+    - `-` indicates that there is no such parameter.
+    - `×` indicates that this parameter is not currently supported.
+    - `√` indicates that this parameter is supported.
+
+    Outputs:
+        Tensor, resized, whose dimensions and dtype are the same as `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If the data type of `x` is not supported.
-        TypeError: If `scales` is not a float tuple.
-        ValueError: If not all numbers in `scales` are positive.
-        TypeError: If `sizes` is not an int tuple.
-        ValueError: If not all numbers in `sizes` are positive.
-        TypeError: If `coordinate_transformation_mode` is not a string.
-        ValueError: If `coordinate_transformation_mode` is not in the support list.
-        TypeError: If `mode` is not a string.
-        ValueError: If `mode` is not in the support list.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        TypeError: If `x` is not Tensor.
+        TypeError: If `mode` is not one of 'nearest', 'linear', 'bilinear', 'bicubic',
+            'trilinear', 'area', nor 'nearest-exact'.
+        TypeError: If `size` is not one of tuple, list, None.
+        TypeError: If `scale_factor` is neither int nor None.
+        TypeError: If `align_corners` is not a bool.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `size` and `scale_factor` are both None or not None.
+        ValueError: If shape of `x` or `size` and `mode` are not match.
+        ValueError: If `scale_factor` is an int which is less than 0.
+        ValueError: If `size` is a list or tuple whose length is not match `mode`.
 
     Examples:
-        >>> # case 1: linear mode
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
-        >>> output = ops.interpolate(x, None, None, (6,), "align_corners")
+        >>> output = ops.interpolate(x, size=(6,), mode='nearest')
         >>> print(output)
-        [[[1. 1.4 1.8 2.2 2.6 3.]
-          [4. 4.4 4.8 5.2 5.6 6.]]]
-        >>> # case 2: bilinear mode
-        >>> x = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
-        >>> output = ops.interpolate(x, None, None, (5, 5), "asymmetric", "bilinear")
-        >>> print(output)
-        [[[[1. 2. 3. 4. 5.]
-           [1. 2. 3. 4. 5.]
-           [1. 2. 3. 4. 5.]
-           [1. 2. 3. 4. 5.]
-           [1. 2. 3. 4. 5.]]]]
+            [[[1. 1. 2. 2. 3. 3.]
+              [4. 4. 5. 5. 6. 6.]]]
     """
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError("For interpolate, the input x must be tensor")
-    input_shape = x.shape
-    input_dims = len(input_shape)
-    _check_interpolate_inputs(input_dims, roi, scales, sizes, coordinate_transformation_mode, mode,
-                              "interpolate")
-    output_size = _interpolate_output_shape(input_shape, scales, sizes, mode)
 
-    if mode == "linear":
-        resize_linear_inner = _get_cache_prim(IMG.ResizeLinear1D)(
-            coordinate_transformation_mode=coordinate_transformation_mode)
-        return resize_linear_inner(x, output_size)
-    if mode == "bilinear":
+    def run_nearest(x, size, align_corners=None, scale_factor=None):
+        # 3D 4D use ResizeNearestNeighborV2, 5D use UpsampleNearest3D
+        if x.ndim == 3:
+            size = Tensor((size[0], 1), dtype=mstype.int32)
+            x = x.unsqueeze(-1)
+            x = _get_cache_prim(P.ResizeNearestNeighborV2)(data_format="NCHW")(x, size)
+            x = x.squeeze(-1)
+        elif x.ndim == 4:
+            size = Tensor(size, dtype=mstype.int32)
+            x = _get_cache_prim(P.ResizeNearestNeighborV2)(data_format="NCHW")(x, size)
+        else:
+            x = _get_cache_prim(P.UpsampleNearest3D)(size, scales=scale_factor)(x)
+        return x
+
+    def run_linear(x, size, align_corners=None, scale_factor=None):
+        coordinate_transformation_mode = "align_corners" if align_corners else "half_pixel"
+        resize = _get_cache_prim(P.image_ops.ResizeLinear1D)(
+            coordinate_transformation_mode
+        )
+        return resize(x, Tensor(size, dtype=mstype.int32))
+
+    def run_bilinear(x, size, align_corners=None, scale_factor=None):
+        resize = _get_cache_prim(P.ResizeBilinearV2)(align_corners, not align_corners)
+        return resize(x, size)
+
+    def run_trilinear(x, size, align_corners=None, scale_factor=None):
+        resize = _get_cache_prim(P.nn_ops.UpsampleTrilinear3D)(
+            output_size=size, scales=scale_factor, align_corners=align_corners
+        )
+        return resize(x)
+
+    def run_bicubic(x, size, align_corners=None, scale_factor=None):
+        resize = _get_cache_prim(P.image_ops.ResizeBicubic)(
+            align_corners=align_corners, half_pixel_centers=not align_corners
+        )
+        x = resize(x, Tensor(size, dtype=mstype.int32))
+        return x
+
+    def run_area(x, size, align_corners=None, scale_factor=None):
+        if x.ndim == 3:
+            resize = nn.AdaptiveAvgPool1d(output_size=size[0])
+            x = resize(x)
+        elif x.ndim == 4:
+            x = ops.adaptive_avg_pool2d(x, tuple(size))
+        else:
+            x = ops.adaptive_avg_pool3d(x, tuple(size))
+        return x
+
+    def run_nearest_exact(x, size, align_corners=None, scale_factor=None):
+        if x.ndim == 3:
+            size = Tensor((size[0], 1), dtype=mstype.int32)
+            # For impl of nearest 3D use 4D.
+            x = x.unsqueeze(-1)
+            resize = _get_cache_prim(P.ResizeNearestNeighborV2)(
+                data_format="NCHW", align_corners=False, half_pixel_centers=True
+            )
+            x = resize(x, size)
+            x = x.squeeze(-1)
+        if x.ndim == 4:
+            size = Tensor(size, dtype=mstype.int32)
+            resize = _get_cache_prim(P.ResizeNearestNeighborV2)(
+                data_format="NCHW", align_corners=False, half_pixel_centers=True
+            )
+            x = resize(x, size)
+        return x
+
+    # support_dict "mode":{dim:{"scale_factor", "align_corners"}}
+    supported_dict = {
+        "nearest": {3: (), 4: (), 5: ("scale_factor",)},
+        "linear": {3: ("align_corners",)},
+        "bilinear": {4: ("align_corners",)},
+        "bicubic": {4: ("align_corners",)},
+        "trilinear": {5: ("scale_factor", "align_corners")},
+        "area": {3: ("scale_factor",), 4: ("scale_factor",), 5: ("scale_factor",)},
+        "nearest-exact": {3: (), 4: ()},
+    }
+    resize_func = {
+        "nearest": run_nearest,
+        "linear": run_linear,
+        "bilinear": run_bilinear,
+        "bicubic": run_bicubic,
+        "trilinear": run_trilinear,
+        "area": run_area,
+        "nearest-exact": run_nearest_exact,
+    }
+    if not isinstance(x, Tensor):
+        raise TypeError(f"For 'interpolate', 'x' must be a tensor, but got {type(x)}")
+    if size is not None and scale_factor is not None:
+        raise ValueError(
+            "For 'interpolate', only one of size or scale_factor should be defined"
+        )
+    if size is not None:
+        if isinstance(size, (list, tuple)):
+            if len(size) != x.ndim - 2:
+                raise ValueError(
+                    f"For 'interpolate', 'x' and 'size' must have same number of spatial dimensions, "
+                    f"but got 'x' is {x.ndim - 2}D, 'size' is {len(size)}D"
+                )
+        else:
+            size = [size for _ in range(x.ndim - 2)]
+    elif scale_factor is not None:
+        if isinstance(scale_factor, (list, tuple)):
+            if len(scale_factor) != x.ndim - 2:
+                raise ValueError(
+                    f"For 'interpolate', 'x' and 'scale_factor' must have same number of spatial dimensions, "
+                    f"but got 'x' is {x.ndim - 2}D, 'scale_factor' is {len(size)}D"
+                )
+        else:
+            scale_factor = [scale_factor for _ in range(x.ndim - 2)]
+    else:
+        raise ValueError(
+            "For 'interpolate', either 'size' or 'scale_factor' should be defined"
+        )
+
+    if mode not in supported_dict:
+        raise ValueError(
+            f"For 'interpolate', 'mode' must be in '{list(supported_dict)}', but got {mode}"
+        )
+    if x.ndim not in supported_dict.get(mode):
+        raise ValueError(
+            f"For 'interpolate', {mode} only support '{list(supported_dict.get(mode, {}))}'D, but got {x.ndim}D"
+        )
+    # "area" mode always requires an explicit size rather than scale factor.
+    if mode == "area" and size is None:
+        recompute_scale_factor = True
+    if recompute_scale_factor is not None and recompute_scale_factor:
+        # todo: check bool type
+        if size is not None:
+            raise ValueError(
+                "For 'interpolate', 'recompute_scale_factor' is not meaningful with an explicit size"
+            )
+        size = _scale_factor_convert_size(x.shape, scale_factor, x.ndim - 2)
+        scale_factor = None
+    else:
+        if scale_factor is not None and "scale_factor" not in supported_dict.get(mode, {}).get(x.ndim):
+            raise ValueError(
+                f"For 'interpolate', 'scale_factor' option cannot currently be set with the "
+                f"mode = {mode} and dim = {x.ndim}D."
+            )
+    if align_corners is not None:
+        if "align_corners" not in supported_dict.get(mode, {}).get(x.ndim):
+            raise ValueError(
+                f"For 'interpolate', 'align_corners' option cannot currently be set with the "
+                f"mode = {mode}, and dim = {x.ndim}D"
+            )
+    else:
         align_corners = False
-        half_pixel_centers = False
-        if coordinate_transformation_mode == "align_corners":
-            align_corners = True
-        elif coordinate_transformation_mode == "half_pixel":
-            half_pixel_centers = True
-        resize_bilinear_inner = _get_cache_prim(IMG.ResizeBilinearV2)(align_corners, half_pixel_centers)
-        return resize_bilinear_inner(x, output_size)
-
-    raise TypeError(
-        "Input Error: For interpolate,  {} mode is not support now".format(mode))
+    return resize_func.get(mode)(x, size, align_corners, scale_factor)
 
 
 def softsign(x):
