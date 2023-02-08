@@ -59,6 +59,8 @@ class ComplexCpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<int64_t> real_bcast_;
   std::vector<int64_t> image_bcast_;
+
+  bool is_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
