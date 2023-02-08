@@ -31,8 +31,12 @@ pytestmark = pytest.mark.forked
 DEBUG_MODE = False
 SEED_VAL = 0  # seed will be set internally in debug mode, save original seed value to restore.
 
-
-
+# tf_file_dataset description:
+# test1.data: 10 samples - [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+# test2.data: 10 samples - [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+# test3.data: 10 samples - [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+# test4.data: 10 samples - [31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+# test5.data: 10 samples - [41, 42, 43, 44, 45, 46, 47, 48, 49, 50]
 TF_FILES = ["../data/dataset/tf_file_dataset/test1.data",
             "../data/dataset/tf_file_dataset/test2.data",
             "../data/dataset/tf_file_dataset/test3.data",
@@ -207,23 +211,23 @@ def test_pipeline_debug_mode_concat():
     Expectation: Successful.
     """
     logger.info("test_pipeline_debug_mode_concat")
-    data_dir = "../data/dataset/testCelebAData/"
+    data_dir = "../data/dataset/testImageNetData4/train"
     num_repeat = 2
-    data1 = ds.CelebADataset(data_dir, decode=True, num_shards=1, shard_id=0)
-    data2 = ds.CelebADataset(data_dir, decode=True, num_shards=1, shard_id=0)
-    data3 = ds.CelebADataset(data_dir, decode=True, num_shards=1, shard_id=0)
+    data1 = ds.ImageFolderDataset(data_dir, decode=True, num_shards=1, shard_id=0)
+    data2 = ds.ImageFolderDataset(data_dir, decode=True, num_shards=1, shard_id=0)
+    data3 = ds.ImageFolderDataset(data_dir, decode=True, num_shards=1, shard_id=0)
     data4 = data1.concat(data2)
     data5 = data3 + data4
     data5 = data5.repeat(num_repeat)
-    num_epoch = 2
+    num_epoch = 3
     epoch_count = 0
-    sample_row = 12
+    sample_row = 21
     sample_count = 0
     for _ in range(num_epoch):
         num_rows = 0
         for item1 in data5.create_tuple_iterator(num_epochs=1):
             assert len(item1) == 2
-            assert item1[0].shape == (2268, 4032, 3)
+            assert item1[0].shape == (384, 682, 3)
             num_rows += 1
         epoch_count += 1
         sample_count += num_rows
@@ -357,65 +361,6 @@ def test_pipeline_debug_mode_imdb_shuffle():
     assert num_iter == 8
 
 
-def test_pipeline_debug_mode_multi_epoch_map_pyfunc():
-    """
-    Feature: Pipeline debug mode.
-    Description: Test creating dict iterator with map(PyFunc) with num_epochs > 1.
-    Expectation: Successful.
-    """
-    logger.info("test_pipeline_debug_mode_multi_epoch_map_pyfunc")
-    data = ds.CelebADataset("../data/dataset/testCelebAData/", sampler=ds.SequentialSampler(),
-                            decode=True)
-    num_repeat = 3
-    sample_row = 4
-    data = data.repeat(num_repeat)
-    data = data.map(operations=[(lambda x: x - 1), (lambda x: x * 2)], input_columns=["image"])
-    num_epoch = 2
-    epoch_count = 0
-    sample_count = 0
-    iter1 = data.create_dict_iterator(num_epochs=num_epoch)
-    for _ in range(num_epoch):
-        num_rows = 0
-        for item in iter1:
-            assert len(item) == 2
-            assert item["image"].shape == (2268, 4032, 3)
-            num_rows += 1
-        assert num_rows == sample_row * num_repeat
-        sample_count += num_rows
-        epoch_count += 1
-    assert epoch_count == num_epoch
-    assert sample_count == num_repeat * num_epoch * sample_row
-
-    err_msg = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs."
-    with pytest.raises(RuntimeError, match=err_msg):
-        iter1.__next__()
-
-
-def test_pipeline_debug_mode_tfrecord_multi_epochs():
-    """
-    Feature: Pipeline debug mode
-    Description: Test TFRecordDataset in multi epochs scenario in debug mode
-    Expectation: The dataset is processed as expected
-    """
-    logger.info("test_pipeline_debug_mode_tfrecord_multi_epochs")
-
-    num_samples = 15
-    data1 = ds.TFRecordDataset(TF_FILES, num_samples=num_samples, shuffle=ds.Shuffle.FILES)
-    num_epoch = 3
-    iter1 = data1.create_dict_iterator(num_epochs=num_epoch)
-    epoch_count = 0
-    sample_count = 0
-    for _ in range(num_epoch):
-        row_count = 0
-        for _ in iter1:
-            row_count += 1
-        assert row_count == num_samples
-        epoch_count += 1
-        sample_count += row_count
-    assert epoch_count == num_epoch
-    assert sample_count == num_samples * num_epoch
-
-
 def test_pipeline_debug_mode_tfrecord_shard():
     """
     Feature: Pipeline debug mode
@@ -432,6 +377,7 @@ def test_pipeline_debug_mode_tfrecord_shard():
         for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
             res.append(item["scalars"][0])
         return res
+
     worker1_res = get_res(0, 8)
     worker2_res = get_res(1, 8)
     assert len(worker1_res) == 3 * 8
@@ -473,6 +419,25 @@ def test_pipeline_debug_mode_tfrecord_shard_equal_rows():
     assert len(worker4_res) == 40
 
 
+def test_pipeline_debug_mode_clue_shuffle():
+    """
+    Feature: Pipeline debug mode
+    Description: Test CLUEDataset with Shuffle.GLOBAL parameter versus shuffle op
+    Expectation: The dataset is processed as expected
+    """
+    clue_train_file = '../data/dataset/testCLUE/afqmc/train.json'
+    # data1 - CLUEDataset with global shuffle should produce a ShuffleOp over CLUEOp.
+    data1 = ds.CLUEDataset(clue_train_file, task='AFQMC', usage='train', shuffle=ds.Shuffle.GLOBAL)
+    # data2 - Add explicit shuffle op to pipeline
+    data2 = ds.CLUEDataset(clue_train_file, task='AFQMC', usage='train', shuffle=ds.Shuffle.FILES)
+    data2 = data2.shuffle(20000)
+
+    for d1, d2 in zip(data1.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                      data2.create_tuple_iterator(num_epochs=1, output_numpy=True)):
+        for t1, t2 in zip(d1, d2):
+            np.testing.assert_array_equal(t1, t2)
+
+
 if __name__ == '__main__':
     setup_function()
     test_pipeline_debug_mode_tuple()
@@ -488,8 +453,7 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_shuffle()
     test_pipeline_debug_mode_map_random()
     test_pipeline_debug_mode_imdb_shuffle()
-    test_pipeline_debug_mode_multi_epoch_map_pyfunc()
-    test_pipeline_debug_mode_tfrecord_multi_epochs()
     test_pipeline_debug_mode_tfrecord_shard()
     test_pipeline_debug_mode_tfrecord_shard_equal_rows()
+    test_pipeline_debug_mode_clue_shuffle()
     teardown_function()

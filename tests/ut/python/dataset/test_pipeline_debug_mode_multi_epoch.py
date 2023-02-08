@@ -24,6 +24,18 @@ from util import config_get_set_seed, visualize_list, config_get_set_num_paralle
 
 pytestmark = pytest.mark.forked
 
+# tf_file_dataset description:
+# test1.data: 10 samples - [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+# test2.data: 10 samples - [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+# test3.data: 10 samples - [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+# test4.data: 10 samples - [31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+# test5.data: 10 samples - [41, 42, 43, 44, 45, 46, 47, 48, 49, 50]
+TF_FILES = ["../data/dataset/tf_file_dataset/test1.data",
+            "../data/dataset/tf_file_dataset/test2.data",
+            "../data/dataset/tf_file_dataset/test3.data",
+            "../data/dataset/tf_file_dataset/test4.data",
+            "../data/dataset/tf_file_dataset/test5.data"]
+
 
 @pytest.mark.parametrize("my_debug_mode", (False, True))
 def test_pipeline_debug_mode_multi_epoch_celaba(my_debug_mode, plot=False):
@@ -602,6 +614,55 @@ def test_pipeline_debug_mode_multi_epoch_imagefolder_repeat(my_debug_mode, plot=
         ds.config.set_debug_mode(debug_mode_original)
 
 
+@pytest.mark.parametrize("my_debug_mode", (False, True))
+def test_pipeline_debug_mode_multi_epoch_imagefolder_map_pyfunc(my_debug_mode):
+    """
+    Feature: Pipeline debug mode.
+    Description: Test multiple epoch scenario using ImageFolderDataset with map(PyFunc).
+    Expectation: Output is equal to the expected output
+    """
+    logger.info("test_pipeline_debug_mode_multi_epoch_imagefolder_map_pyfunc")
+
+    # Set configuration
+    original_seed = config_get_set_seed(899)
+    original_num_workers = config_get_set_num_parallel_workers(1)
+    if my_debug_mode:
+        debug_mode_original = ds.config.get_debug_mode()
+        ds.config.set_debug_mode(True)
+
+    data = ds.ImageFolderDataset("../data/dataset/testImageNetData4/train",
+                                 sampler=ds.SequentialSampler(), decode=True)
+    num_repeat = 3
+    sample_row = 7
+    data = data.repeat(num_repeat)
+    data = data.map(operations=[(lambda x: x - 1), (lambda x: x * 2)], input_columns=["image"])
+    num_epoch = 2
+    epoch_count = 0
+    sample_count = 0
+    iter1 = data.create_dict_iterator(num_epochs=num_epoch)
+    for _ in range(num_epoch):
+        num_rows = 0
+        for row_item in iter1:
+            assert len(row_item) == 2
+            assert row_item["image"].shape == (384, 682, 3)
+            num_rows += 1
+        assert num_rows == sample_row * num_repeat
+        sample_count += num_rows
+        epoch_count += 1
+    assert epoch_count == num_epoch
+    assert sample_count == num_repeat * num_epoch * sample_row
+
+    err_msg = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs."
+    with pytest.raises(RuntimeError, match=err_msg):
+        iter1.__next__()
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_workers)
+    if my_debug_mode:
+        ds.config.set_debug_mode(debug_mode_original)
+
+
 @pytest.mark.parametrize("my_debug_mode, my_drop, my_num_samples",
                          [(False, False, 6), (True, False, 6), (True, True, 7)])
 def test_pipeline_debug_mode_multi_ep_im_batch_no_remainder(my_debug_mode, my_drop, my_num_samples, plot=False):
@@ -723,6 +784,232 @@ def test_pipeline_debug_mode_multi_ep_im_batch_with_remainders(my_debug_mode, my
         ds.config.set_debug_mode(debug_mode_original)
 
 
+@pytest.mark.parametrize("my_debug_mode", (False, True))
+def test_pipeline_debug_mode_multi_epoch_tfrecord_shuffle(my_debug_mode):
+    """
+    Feature: Pipeline debug mode
+    Description: Test multiple epoch scenario using (non-mappable) TFRecordDataset with various shuffle parameter values
+    Expectation: The dataset is processed as expected
+    """
+    logger.info("test_pipeline_debug_mode_multi_epoch_tfrecord_shuffle")
+
+    def test_config(seed, shuffle, my_num_samples, num_epoch):
+        # Set seed configuration
+        original_seed = config_get_set_seed(seed)
+
+        # Set num_samples for calculations
+        num_samples = my_num_samples if my_num_samples is not None else 50
+
+        data1 = ds.TFRecordDataset(TF_FILES, num_samples=my_num_samples, shuffle=shuffle)
+        iter1 = data1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+        epoch_count = 0
+        sample_count = 0
+        res_list = []
+
+        for _ in range(num_epoch):
+            row_count = 0
+            res_list_per_epoch = []
+            for row_item in iter1:
+                scalar = row_item["scalars"][0]
+                res_list.append(scalar)
+                res_list_per_epoch.append(scalar)
+                row_count += 1
+            logger.info("epoch_count is {}, res_list_per_epoch is {}".format(epoch_count, res_list_per_epoch))
+            epoch_count += 1
+            sample_count += row_count
+        assert epoch_count == num_epoch
+        assert sample_count == num_samples * num_epoch
+
+        # Restore seed configuration
+        ds.config.set_seed(original_seed)
+
+        # Return results list
+        return res_list
+
+    # Enable debug mode
+    if my_debug_mode:
+        debug_mode_original = ds.config.get_debug_mode()
+        ds.config.set_debug_mode(True)
+
+    # Test various configurations
+
+    # Test shuffle=False with all samples
+    shuffle_false_golden = ([1, 11, 21, 31, 41, 2, 12, 22, 32, 42, 3, 13, 23, 33, 43, 4, 14, 24, 34, 44] + \
+                            [5, 15, 25, 35, 45, 6, 16, 26, 36, 46, 7, 17, 27, 37, 47, 8, 18, 28, 38, 48] + \
+                            [9, 19, 29, 39, 49, 10, 20, 30, 40, 50]) * 2
+    assert test_config(1001, False, None, 2) == shuffle_false_golden
+
+    # Test ds.Shuffle.INFILE (same as shuffle=False) with 12 samples
+    shuffle_false_golden = [1, 11, 21, 31, 41, 2, 12, 22, 32, 42, 3, 13] * 2
+    assert test_config(1001, ds.Shuffle.INFILE, 12, 2) == shuffle_false_golden
+
+    # Test shuffle=FILES
+    shuffle_files_golden = [11, 1, 21, 31, 41, 12, 2, 22, 32, 42, 13, 3] + \
+                           [1, 11, 21, 31, 41, 2, 12, 22, 32, 42, 3, 13] + \
+                           [11, 1, 21, 31, 41, 12, 2, 22, 32, 42, 13, 3] + \
+                           [1, 11, 21, 31, 41, 2, 12, 22, 32, 42, 3, 13] + \
+                           [11, 1, 21, 31, 41, 12, 2, 22, 32, 42, 13, 3]
+    assert test_config(1, ds.Shuffle.FILES, 12, 5) == shuffle_files_golden
+    assert test_config(1, ds.Shuffle.FILES, 12, 3) == shuffle_files_golden[0:36]
+
+    shuffle_files_golden = [11, 31, 41, 21, 1, 12, 32, 42, 22, 2, 13, 33] + \
+                           [31, 21, 1, 41, 11, 32, 22, 2, 42, 12, 33, 23] + \
+                           [21, 41, 11, 1, 31, 22, 42, 12, 2, 32, 23, 43] + \
+                           [41, 1, 31, 11, 21, 42, 2, 32, 12, 22, 43, 3] + \
+                           [1, 11, 21, 31, 41, 2, 12, 22, 32, 42, 3, 13]
+    assert test_config(1001, ds.Shuffle.FILES, 12, 5) == shuffle_files_golden
+
+    # Test shuffle=GLOBAL
+    shuffle_global_golden = [32, 1, 11, 42, 3, 22, 21, 2, 41, 13, 31, 12] + \
+                            [1, 41, 22, 2, 3, 32, 11, 13, 21, 31, 42, 12] + \
+                            [3, 1, 12, 22, 42, 2, 32, 31, 21, 13, 11, 41] + \
+                            [31, 21, 3, 2, 13, 22, 32, 41, 1, 11, 12, 42] + \
+                            [13, 3, 11, 22, 41, 21, 31, 32, 42, 1, 12, 2]
+    result = test_config(1, ds.Shuffle.GLOBAL, 12, 5)
+    if not my_debug_mode:
+        # Temporarily do not verify results when debug mode is enabled.
+        # Note: Currently, in debug mode, ds.Shuffle.GLOBAL behaves like ds.Shuffle.FILES
+        assert result == shuffle_global_golden
+
+    # Restore debug mode configuration
+    if my_debug_mode:
+        ds.config.set_debug_mode(debug_mode_original)
+
+
+@pytest.mark.parametrize("my_debug_mode", (False, True))
+def test_pipeline_debug_mode_multi_epoch_tfrecord_ops(my_debug_mode):
+    """
+    Feature: Pipeline debug mode
+    Description: Test multiple epoch scenario using (non-mappable) TFRecordDataset with various ops in data pipeline
+    Expectation: The dataset is processed as expected
+    """
+    logger.info("test_pipeline_debug_mode_multi_epoch_tfrecord_ops")
+
+    def test_config(seed, my_pipeline, num_epoch):
+        # Set seed configuration
+        original_seed = config_get_set_seed(seed)
+
+        iter1 = my_pipeline.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+        epoch_count = 0
+        res_list = []
+
+        for _ in range(num_epoch):
+            res_list_per_epoch = []
+            for row_item in iter1:
+                scalars = row_item["scalars"]
+                res_list.append(scalars)
+                res_list_per_epoch.append(scalars)
+            logger.info("epoch_count is {}, res_list_per_epoch is {}".format(epoch_count, res_list_per_epoch))
+            epoch_count += 1
+        assert epoch_count == num_epoch
+
+        # Restore seed configuration
+        ds.config.set_seed(original_seed)
+
+        # Return results list
+        return res_list
+
+    # Set configuration
+    if my_debug_mode:
+        debug_mode_original = ds.config.get_debug_mode()
+        ds.config.set_debug_mode(True)
+
+    # Test various configurations
+
+    # Test pipeline with just non-mappable source op
+    data1 = ds.TFRecordDataset(TF_FILES, num_samples=16, shuffle=ds.Shuffle.FILES)
+    golden1 = [21, 11, 41, 31, 1, 22, 12, 42, 32, 2, 23, 13, 43, 33, 3, 24] + \
+              [41, 11, 1, 31, 21, 42, 12, 2, 32, 22, 43, 13, 3, 33, 23, 44] + \
+              [1, 11, 21, 31, 41, 2, 12, 22, 32, 42, 3, 13, 23, 33, 43, 4]
+    assert test_config(1202, data1, 3) == golden1
+
+    # Test with repeat op
+    data1 = ds.TFRecordDataset(TF_FILES, num_samples=8, shuffle=ds.Shuffle.FILES)
+    data1 = data1.repeat(2)
+    golden1 = [21, 11, 41, 31, 1, 22, 12, 42, 41, 11, 1, 31, 21, 42, 12, 2] + \
+              [1, 11, 21, 31, 41, 2, 12, 22, 21, 11, 41, 31, 1, 22, 12, 42] + \
+              [41, 11, 1, 31, 21, 42, 12, 2, 1, 11, 21, 31, 41, 2, 12, 22]
+    assert test_config(1202, data1, 3) == golden1
+
+    # Test with shuffle op
+    data1 = ds.TFRecordDataset(TF_FILES, num_samples=16, shuffle=False)
+    data1 = data1.shuffle(buffer_size=8)
+    golden1 = [1, 2, 42, 21, 22, 31, 33, 32, 3, 43, 12, 11, 23, 4, 41, 13] + \
+              [11, 41, 31, 32, 1, 2, 22, 23, 33, 13, 42, 4, 43, 12, 21, 3] + \
+              [2, 41, 11, 3, 42, 1, 22, 43, 12, 21, 13, 23, 33, 31, 32, 4]
+    result = test_config(1202, data1, 3)
+    if not my_debug_mode:
+        # Temporarily do not verify results when debug mode is enabled (until shuffle op is supported)
+        assert result == golden1
+
+    # Test with batch op
+    data1 = ds.TFRecordDataset(TF_FILES, num_samples=16, shuffle=ds.Shuffle.FILES)
+    data1 = data1.batch(batch_size=8)
+    golden1 = [[[21], [11], [41], [31], [1], [22], [12], [42]], [[32], [2], [23], [13], [43], [33], [3], [24]],
+               [[41], [11], [1], [31], [21], [42], [12], [2]], [[32], [22], [43], [13], [3], [33], [23], [44]],
+               [[1], [11], [21], [31], [41], [2], [12], [22]], [[32], [42], [3], [13], [23], [33], [43], [4]]]
+    np.testing.assert_array_equal(test_config(1202, data1, 3), np.array(golden1))
+
+    # Test with repeat op then batch
+    data1 = ds.TFRecordDataset(TF_FILES, num_samples=8, shuffle=ds.Shuffle.FILES)
+    data1 = data1.repeat(2)
+    data1 = data1.batch(batch_size=8)
+    golden1 = [[[21], [11], [41], [31], [1], [22], [12], [42]],
+               [[41], [11], [1], [31], [21], [42], [12], [2]],
+               [[1], [11], [21], [31], [41], [2], [12], [22]],
+               [[21], [11], [41], [31], [1], [22], [12], [42]],
+               [[41], [11], [1], [31], [21], [42], [12], [2]],
+               [[1], [11], [21], [31], [41], [2], [12], [22]]]
+    np.testing.assert_array_equal(test_config(1202, data1, 3), np.array(golden1))
+
+    # Test with batch then repeat
+    data1 = ds.TFRecordDataset(TF_FILES, num_samples=8, shuffle=ds.Shuffle.FILES)
+    data1 = data1.batch(batch_size=8)
+    data1 = data1.repeat(2)
+    golden1 = [[[21], [11], [41], [31], [1], [22], [12], [42]],
+               [[41], [11], [1], [31], [21], [42], [12], [2]],
+               [[1], [11], [21], [31], [41], [2], [12], [22]],
+               [[21], [11], [41], [31], [1], [22], [12], [42]],
+               [[41], [11], [1], [31], [21], [42], [12], [2]],
+               [[1], [11], [21], [31], [41], [2], [12], [22]]]
+    np.testing.assert_array_equal(test_config(1202, data1, 3), np.array(golden1))
+
+    # Test with map op
+    data1 = ds.TFRecordDataset(TF_FILES, num_samples=16, shuffle=ds.Shuffle.FILES)
+    data1 = data1.map(operations=[(lambda x: x + 1)], input_columns=["scalars"])
+    golden1 = [22, 12, 42, 32, 2, 23, 13, 43, 33, 3, 24, 14, 44, 34, 4, 25] + \
+              [42, 12, 2, 32, 22, 43, 13, 3, 33, 23, 44, 14, 4, 34, 24, 45] + \
+              [2, 12, 22, 32, 42, 3, 13, 23, 33, 43, 4, 14, 24, 34, 44, 5]
+    assert test_config(1202, data1, 3) == golden1
+
+    # Test common pipeline: map -> batch
+    data1 = ds.TFRecordDataset(TF_FILES, num_samples=16, shuffle=ds.Shuffle.FILES)
+    data1 = data1.map(operations=[(lambda x: x + 1)], input_columns=["scalars"])
+    data1 = data1.batch(batch_size=4)
+    golden1 = [[[22], [12], [42], [32]], [[2], [23], [13], [43]], [[33], [3], [24], [14]], [[44], [34], [4], [25]],
+               [[42], [12], [2], [32]], [[22], [43], [13], [3]], [[33], [23], [44], [14]], [[4], [34], [24], [45]],
+               [[2], [12], [22], [32]], [[42], [3], [13], [23]], [[33], [43], [4], [14]], [[24], [34], [44], [5]]]
+    np.testing.assert_array_equal(test_config(1202, data1, 3), np.array(golden1))
+
+    # Test common pipeline: map -> repeat -> shuffle -> batch
+    data1 = ds.TFRecordDataset(TF_FILES, num_samples=8, shuffle=False)
+    data1 = data1.map(operations=[(lambda x: x + 1)], input_columns=["scalars"])
+    data1 = data1.repeat(2)
+    data1 = data1.shuffle(buffer_size=16)
+    data1 = data1.batch(batch_size=8)
+    golden1 = [[[2], [13], [3], [32], [2], [23], [3], [23]], [[22], [12], [13], [12], [42], [22], [42], [32]],
+               [[12], [13], [3], [2], [2], [42], [32], [42]], [[23], [22], [12], [23], [3], [13], [22], [32]],
+               [[3], [3], [13], [13], [23], [22], [32], [32]], [[42], [22], [12], [2], [12], [2], [42], [23]]]
+    result = test_config(1202, data1, 3)
+    if not my_debug_mode:
+        # Temporarily do not verify results when debug mode is enabled (until shuffle op is supported)
+        np.testing.assert_array_equal(result, np.array(golden1))
+
+    # Restore configuration
+    if my_debug_mode:
+        ds.config.set_debug_mode(debug_mode_original)
+
+
 if __name__ == '__main__':
     test_pipeline_debug_mode_multi_epoch_celaba(True, plot=True)
     test_pipeline_debug_mode_multi_epoch_celaba_take(True)
@@ -734,5 +1021,8 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_multi_epoch_imagefolder(True, plot=True)
     test_pipeline_debug_mode_multi_epoch_imagefolder_shuffle(True, True, plot=True)
     test_pipeline_debug_mode_multi_epoch_imagefolder_repeat(True, plot=True)
+    test_pipeline_debug_mode_multi_epoch_imagefolder_map_pyfunc(True)
     test_pipeline_debug_mode_multi_ep_im_batch_no_remainder(True, True, 7, plot=True)
     test_pipeline_debug_mode_multi_ep_im_batch_with_remainder(True, False, 7, plot=True)
+    test_pipeline_debug_mode_multi_epoch_tfrecord_shuffle(True)
+    test_pipeline_debug_mode_multi_epoch_tfrecord_ops(True)
