@@ -5,8 +5,6 @@ Neural Network Cell
 
 For building predefined building blocks or computational units in neural networks.
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.nn` operators in MindSpore, please refer to the link `<https://gitee.com/mindspore/docs/blob/r1.10/resource/api_updates/nn_api_updates.md>`_.
-
 Basic Block
 -----------
 
