@@ -7214,6 +7214,8 @@ class FFTWithSize(Primitive):
 
 class Polar(Primitive):
     r"""
+    Converts polar coordinates to Cartesian coordinates.
+
     Returns a complex tensor whose elements are Cartesian coordinates corresponding to the polar
     coordinates with absolute value and angle.
 
@@ -7222,14 +7224,12 @@ class Polar(Primitive):
         y_{i} =  abs_{i} * cos(angle_{i}) + abs_{i} * sin(angle_{i}) * j
 
     Inputs:
-        - **abs** (Tensor) - The shape of tensor is
+        - **abs** (Tensor) - Radial distance. The shape of tensor is
           :math:`(N,*)` where :math:`N` means the batchsize of the input tensor,
-          math:`*` means, any number of additional dimensions.
+          :math:`*` means, any number of additional dimensions.
           Must be one of the following types: float32, float64.
 
-        - **angle** (Tensor) - The shape of tensor is
-          the same as the input tensor abs.
-          Must be the same type as the input tensor abs.
+        - **angle** (Tensor) - Polar angle. It has the same shape and dtype as `abs`.
 
     Outputs:
         Tensor, has the same shape and data type as `abs`.
@@ -7237,7 +7237,7 @@ class Polar(Primitive):
     Raises:
         TypeError: If neither `abs` nor `angle` is a Tensor.
         TypeError: If the dtype of input is not one of: float32, float64.
-        TypeError: If the dtypes of two inputs are not the same.
+        TypeError: If the dtypes of `abs` and `angle` are not the same.
         ValueError: If `abs`'s shape is not the same as `angle`.
 
     Supported Platforms:

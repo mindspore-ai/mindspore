@@ -332,6 +332,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.MulNoNan
     mindspore.ops.Neg
     mindspore.ops.NextAfter
+    mindspore.ops.Polar
     mindspore.ops.Pow
     mindspore.ops.Real
     mindspore.ops.RealDiv
