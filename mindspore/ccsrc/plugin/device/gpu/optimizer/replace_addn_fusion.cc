@@ -19,6 +19,7 @@
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
@@ -45,6 +46,7 @@ AnfNodePtr BuildAdd(const PatternMap &m, const AnfNodePtr &default_node) {
   outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(m.Get(A), 0));
   outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(m.Get(A), 0));
   common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, default_node.get());
+  AnfAlgo::SetSelectKernelBuildInfo(AnfAlgo::GetSelectKernelBuildInfo(m.Get(m_addn)), default_node.get());
   return default_node;
 }
 
