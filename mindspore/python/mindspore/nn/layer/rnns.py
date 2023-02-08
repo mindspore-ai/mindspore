@@ -31,7 +31,6 @@ from mindspore import log as logger
 from mindspore._checkparam import Validator as validator
 from mindspore.ops.operations._rl_inner_ops import CudnnGRU
 from mindspore.nn.layer.rnn_cells import _rnn_relu_cell, _rnn_tanh_cell, _gru_cell, _lstm_cell
-from mindspore.nn.layer.rnn_utils import _Reverse, _ReverseSequence
 
 __all__ = ['LSTM', 'GRU', 'RNN']
 
@@ -403,12 +402,8 @@ class _RNNBase(Cell):
             raise ValueError(f"For '{self.cls_name}', the 'mode' must be in ['RNN_RELU', 'RNN_TANH', 'LSTM', 'GRU'], "
                              f"but got {mode}.")
 
-        if context.get_context("device_target") == "CPU":
-            self.reverse = _Reverse(0)
-            self.reverse_sequence = _ReverseSequence(0, 1)
-        else:
-            self.reverse = P.ReverseV2([0])
-            self.reverse_sequence = P.ReverseSequence(0, 1)
+        self.reverse = P.ReverseV2([0])
+        self.reverse_sequence = P.ReverseSequence(0, 1)
         self.hidden_size = hidden_size
         self.batch_first = batch_first
         self.num_layers = num_layers
