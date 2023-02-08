@@ -217,3 +217,19 @@ def get_bprop_convert_to_ms_tensor(self):
         return (dout,)
 
     return bprop
+
+
+@bprop_getters.register(inner.SiLU)
+def get_bprop_silu(self):
+    """Generate bprop for SiLU"""
+    sigmoid_grad = G.SigmoidGrad()
+    mul_func = P.Mul()
+
+    def bprop(x, out, dout):
+        sigmoid_input = P.Sigmoid()(x)
+        bc_dx = mul_func(x, dout)
+        bc_dy = mul_func(sigmoid_input, dout)
+        dx = sigmoid_grad(sigmoid_input, bc_dx)
+        return (dx+bc_dy,)
+
+    return bprop
