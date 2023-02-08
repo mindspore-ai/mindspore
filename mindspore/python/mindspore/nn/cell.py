@@ -1473,7 +1473,7 @@ class Cell(Cell_):
         Add cast on all inputs of cell and child cells to run with certain float type.
 
         If `dst_type` is `mindspore.dtype.float16`, all the inputs of Cell, including input, Parameter and Tensor, will
-        be cast to float16. Please refer to the usage in source code of :func:`mindspore.build_train_network`.
+        be cast to float16. Please refer to the usage in source code of :func:`mindspore.amp.build_train_network`.
 
         Note:
             Multiple calls will overwrite.
