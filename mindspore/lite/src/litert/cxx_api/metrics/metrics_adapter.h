@@ -30,9 +30,7 @@ class MetricsAdapter : public session::Metrics {
   void Clear() override { metrics_->Clear(); }
 
   float Eval() override { return metrics_->Eval(); }
-  void Update(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) override {
-    // metrics_->Update(inputs, outputs); TODO need to implement
-  }
+  void Update(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) override {}
 
  private:
   mindspore::Metrics *metrics_;
