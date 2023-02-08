@@ -23,6 +23,7 @@
 #include <string>
 #include <functional>
 #include <mutex>
+#include <vector>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 
@@ -209,7 +210,10 @@ class MS_CORE_API MsContext {
   void RefreshExecutionMode();
   void RefreshMemoryOffload();
 
- private:
+  void MarkReadStatus(MsCtxParam param) const;  // record status to mutable member params_read_status_
+  template <typename T>
+  void CheckReadStatus(MsCtxParam param, const T &value) const;
+
   static DeviceSeter seter_;
   static std::shared_ptr<MsContext> inst_context_;
   static LoadPluginError load_plugin_error_;
@@ -219,6 +223,8 @@ class MS_CORE_API MsContext {
   uint32_t uint32_params_[MsCtxParam::NUM_UINT32_PARAMS];
   float float_params_[MsCtxParam::NUM_FLOAT_PARAMS];
   std::string string_params_[MsCtxParam::NUM_STRING_PARAMS];
+
+  mutable std::vector<bool> params_read_status_;
   MsBackendPolicy backend_policy_;
   bool default_device_target_ = true;
 
@@ -232,6 +238,7 @@ class MS_CORE_API MsContext {
 // set method implementation for type bool/int/uint32_t/float/std::string
 template <>
 inline void MsContext::set_param<bool>(MsCtxParam param, const bool &value) {
+  CheckReadStatus<bool>(param, value);
 #ifdef ENABLE_SECURITY
   if (param == MS_CTX_SAVE_GRAPHS_FLAG) {
     MS_EXCEPTION(ValueError) << "The save_graphs is not supported, please without '-s on' and recompile source.";
@@ -242,21 +249,25 @@ inline void MsContext::set_param<bool>(MsCtxParam param, const bool &value) {
 
 template <>
 inline void MsContext::set_param<int>(MsCtxParam param, const int &value) {
+  CheckReadStatus<int>(param, value);
   int_params_[param - MS_CTX_TYPE_INT_BEGIN] = value;
 }
 
 template <>
 inline void MsContext::set_param<uint32_t>(MsCtxParam param, const uint32_t &value) {
+  CheckReadStatus<uint32_t>(param, value);
   uint32_params_[param - MS_CTX_TYPE_UINT32_BEGIN] = value;
 }
 
 template <>
 inline void MsContext::set_param<float>(MsCtxParam param, const float &value) {
+  CheckReadStatus<float>(param, value);
   float_params_[param - MS_CTX_TYPE_FLOAT_BEGIN] = value;
 }
 
 template <>
 inline void MsContext::set_param<std::string>(MsCtxParam param, const std::string &value) {
+  CheckReadStatus<std::string>(param, value);
 #ifdef ENABLE_SECURITY
   if (param == MS_CTX_SAVE_GRAPHS_PATH) {
     MS_EXCEPTION(ValueError) << "The save_graphs is not supported, please without '-s on' and recompile source.";
@@ -272,26 +283,31 @@ inline void MsContext::set_param<std::string>(MsCtxParam param, const std::strin
 // get method implementation for type bool/int/uint32_t/float/std::string
 template <>
 inline const bool &MsContext::get_param<bool>(MsCtxParam param) const {
+  MarkReadStatus(param);
   return bool_params_[param - MS_CTX_TYPE_BOOL_BEGIN];
 }
 
 template <>
 inline const int &MsContext::get_param<int>(MsCtxParam param) const {
+  MarkReadStatus(param);
   return int_params_[param - MS_CTX_TYPE_INT_BEGIN];
 }
 
 template <>
 inline const uint32_t &MsContext::get_param<uint32_t>(MsCtxParam param) const {
+  MarkReadStatus(param);
   return uint32_params_[param - MS_CTX_TYPE_UINT32_BEGIN];
 }
 
 template <>
 inline const float &MsContext::get_param<float>(MsCtxParam param) const {
+  MarkReadStatus(param);
   return float_params_[param - MS_CTX_TYPE_FLOAT_BEGIN];
 }
 
 template <>
 inline const std::string &MsContext::get_param<std::string>(MsCtxParam param) const {
+  MarkReadStatus(param);
   return string_params_[param - MS_CTX_TYPE_STRING_BEGIN];
 }
 
