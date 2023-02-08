@@ -41,6 +41,7 @@ INPUT_MAP(Diag) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Diag) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Diag) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Diag, kNameDiag, ADPT_DESC(Diag))
+REG_ADPT_DESC(DiagD, prim::kPrimDiagD->name(), ADPT_DESC(Diag))
 
 // Fill
 INPUT_MAP(Fill) = {{1, INPUT_DESC(dims)}, {2, INPUT_DESC(value)}};

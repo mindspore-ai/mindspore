@@ -99,11 +99,12 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const AclKernelModPtr &
   }
   // process output
   for (size_t i = 0; i < output_num; i++) {
-    if (AclUtils::GetOutputKernelIdxByGraphIdx(anf_node, i) < 0) {
+    auto idx = AclUtils::GetOutputKernelIdxByGraphIdx(anf_node, i);
+    if (idx < 0) {
       continue;
     }
-    if (i >= output_size_list.size()) {
-      MS_LOG(EXCEPTION) << "Invalid index: " << i << ", vector length: " << output_size_list.size()
+    if (idx >= SizeToInt(output_size_list.size())) {
+      MS_LOG(EXCEPTION) << "Invalid index: " << idx << ", vector length: " << output_size_list.size()
                         << ", node: " << anf_node->fullname_with_scope();
     }
     auto shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
@@ -113,7 +114,7 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const AclKernelModPtr &
       MS_LOG(INFO) << "Empty output " << i << " with node " << anf_node->DebugString();
       continue;
     }
-    output_size_list[i] = LongToSize(size_i);
+    output_size_list[idx] = LongToSize(size_i);
   }
   kernel_mod_ptr->SetOutputSizeList(output_size_list);
   return true;

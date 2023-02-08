@@ -200,6 +200,10 @@ abstract::ShapePtr MaxPool3DInferShape(const PrimitivePtr &primitive, const std:
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', output shape's all elements must be positive, but got shape: " << out_shape << ".";
   }
+  if (!primitive->HasAttr("dilation")) {
+    const std::vector<int> def_dilation = {1, 1, 1, 1, 1};
+    primitive->AddAttr("dilation", MakeValue(def_dilation));
+  }
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

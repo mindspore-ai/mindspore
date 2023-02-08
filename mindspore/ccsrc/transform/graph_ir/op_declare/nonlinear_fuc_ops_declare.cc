@@ -171,7 +171,8 @@ REG_ADPT_DESC(Gelu, kGeluOpName, ADPT_DESC(Gelu))
 INPUT_MAP(GeluGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(y)}};
 ATTR_MAP(GeluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GeluGrad) = {{0, OUTPUT_DESC(z)}};
-REG_ADPT_DESC(GeluGrad, prim::kPrimGeLUGrad->name(), ADPT_DESC(GeluGrad))
+REG_ADPT_DESC(GeLUGrad, prim::kPrimGeLUGrad->name(), ADPT_DESC(GeluGrad))
+REG_ADPT_DESC(GeluGrad, prim::kPrimGeluGrad->name(), ADPT_DESC(GeluGrad))
 
 // CeluV2
 INPUT_MAP(CeluV2) = {{1, INPUT_DESC(x)}};

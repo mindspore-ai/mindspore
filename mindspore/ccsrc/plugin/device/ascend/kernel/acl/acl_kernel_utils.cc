@@ -64,7 +64,8 @@ static const std::map<std::string, std::vector<int>> kOutputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
   {prim::kPrimApplyMomentum->name(), {0, -1}},          {prim::kPrimApplyFtrlD->name(), {0, -1, -1}},
   {prim::kPrimSparseApplyFtrlV2D->name(), {0, -1, -1}}, {prim::kPrimApplyAdam->name(), {0, -1, -1}},
-  {prim::kPrimApplyAdamD->name(), {0, -1, -1}},         {prim::kPrimApplyMomentumD->name(), {0, -1}}};
+  {prim::kPrimApplyAdamD->name(), {0, -1, -1}},         {prim::kPrimApplyMomentumD->name(), {0, -1}},
+  {prim::kPrimApplyFtrl->name(), {0, -1, -1}}};
 }  // namespace
 
 AclOpDesc::AclOpDesc(const std::string &op_type, const AnfNodePtr &anf_node_ptr) {
@@ -192,17 +193,18 @@ void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vec
   output_tensor_data_.clear();
   output_tensor_data_.resize(output_names.size(), aclCreateDataBuffer(nullptr, 0));
   for (size_t i = 0; i < outputs.size(); ++i) {
-    if (AclUtils::GetOutputKernelIdxByGraphIdx(node, i) < 0) {
+    auto idx = AclUtils::GetOutputKernelIdxByGraphIdx(node, i);
+    if (idx < 0) {
       continue;
     }
-    if (i >= output_size_list.size()) {
-      MS_LOG(EXCEPTION) << "Invalid output index: " << i << ", node:" << node->fullname_with_scope();
+    if (idx >= SizeToInt(output_size_list.size())) {
+      MS_LOG(EXCEPTION) << "Invalid output index: " << idx << ", node:" << node->fullname_with_scope();
     }
-    if (output_size_list[i] == kSizeMax) {
-      CreateNullAclTensor(i, false);
+    if (output_size_list[idx] == kSizeMax) {
+      CreateNullAclTensor(idx, false);
       continue;
     }
-    output_tensor_data_[i] = CreateDataBuf(outputs[i], output_size_list[i]);
+    output_tensor_data_[idx] = CreateDataBuf(outputs[i], output_size_list[idx]);
   }
 }
 
@@ -406,10 +408,11 @@ void AclOpDesc::AddConstDescAndBuf(const T &val, const TypeId type, const std::s
       is_empty_vec = true;
     }
   } else {
+    real_size = sizeof(T);
     if constexpr (std::is_same_v<T, int64_t>) {
       new_type = kNumberTypeInt32;
+      real_size = sizeof(int32_t);
     }
-    real_size = sizeof(T);
     shape.push_back(1);
     ret = aclrtMemcpy(current_addr, kMaxAttrToInputSize - attr_data_offset_, &val, real_size, ACL_MEMCPY_HOST_TO_HOST);
   }
@@ -630,9 +633,6 @@ std::vector<std::string> AclUtils::GetOpOutputAnchorNames(const AnfNodePtr &node
 }
 
 ShapeVector AclUtils::UpdateShape(const ShapeVector &shape, const std::string &format, const AnfNodePtr &node) {
-  if (common::AnfAlgo::GetCNodeName(node) != kTransDataOpName) {
-    return shape;
-  }
   if (!IsOneOfNoPaddingFormat(format) && shape.size() < kDim4) {
     return trans::PaddingShape(shape, format);
   }

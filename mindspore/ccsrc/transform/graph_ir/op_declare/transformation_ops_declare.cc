@@ -123,7 +123,7 @@ REG_ADPT_DESC(SpaceToBatch, kSpaceToBatchDOpName, ADPT_DESC(SpaceToBatch))
 // ExtractVolumePatches
 INPUT_MAP(ExtractVolumePatches) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(ExtractVolumePatches) = {
-  {"ksizes", ATTR_DESC(ksizes, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"kernel_size", ATTR_DESC(ksizes, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
   {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
   {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
 OUTPUT_MAP(ExtractVolumePatches) = {{0, OUTPUT_DESC(y)}};
@@ -137,4 +137,5 @@ OUTPUT_MAP(BatchToSpaceND) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BatchToSpaceND, kNameBatchToSpaceNd, ADPT_DESC(BatchToSpaceND))
 REG_ADPT_DESC(BatchToSpaceTF, kNameBatchToSpaceTF, ADPT_DESC(BatchToSpaceND))
 REG_ADPT_DESC(kNameBatchToSpaceNdV2, kNameBatchToSpaceNdV2, ADPT_DESC(BatchToSpaceND))
+REG_ADPT_DESC(kNameBatchToSpaceNDD, kBatchToSpaceNDDOpName, ADPT_DESC(BatchToSpaceND))
 }  // namespace mindspore::transform
