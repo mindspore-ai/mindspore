@@ -63,7 +63,7 @@ class StubOutConverter {
   int GetRootType() { return root_type_; }
 
  private:
-  py::object ConvertTensor(const abstract::AbstractTensorPtr &tensor_abs, const ValuePtr &value);
+  py::object ConvertTensor(const abstract::AbstractBasePtr &tensor_abs, const ValuePtr &value);
   py::object ConvertScalar(const abstract::AbstractBasePtr &scalar_abs);
   py::object ConvertTuple(const abstract::AbstractTuplePtr &seq_abs, const ValuePtr &value);
   py::object ConvertList(const abstract::AbstractListPtr &seq_abs, const ValuePtr &value);

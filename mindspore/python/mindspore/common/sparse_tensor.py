@@ -48,6 +48,8 @@ class RowTensorInner(RowTensor_):
             RowTensor_.__init__(self, row_tensor)
         # Init a RowTensor from indices, values and shape
         else:
+            if is_stub_tensor(values):
+                values.stub_sync()
             RowTensor_.__init__(self, indices, values, shape)
         self.init_finished = True
 
@@ -122,6 +124,7 @@ class RowTensor(RowTensorInner):
         >>> print(x.dense_shape)
         (3, 2)
     """
+
     def __init__(self, indices=None, values=None, shape=None, row_tensor=None):
         """Init RowTensor"""
         logger.warning("'RowTensor' is deprecated from version 1.7 and will be removed in a future version.")
