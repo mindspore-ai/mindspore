@@ -97,9 +97,6 @@ void SetBackOffFlag(const KernelBuildInfoPtr &build_info, const CNodePtr &cnode)
 // In some cases, there's no need to set input/output format and type for the node.
 void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type = true);
 
-// Set kernel info for dynamic param kernel.
-void SetKernelInfoForDynamicParamKernel(const CNodePtr &cnode);
-
 // Set kernel info for some value nodes manually.
 void SetKernelInfoForValueNode(const ValueNodePtr &value_node);
 
