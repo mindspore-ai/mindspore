@@ -26,8 +26,13 @@
 #include "Eigen/Core"
 
 namespace aicpu {
+namespace {
 std::random_device e;
-size_t kIndexOutput = 4;
+const size_t kIndexOutput = 4;
+const size_t kOffsetIndex2 = 2;
+const size_t kOffsetIndex3 = 3;
+const size_t kAlign = 127;
+}  // namespace
 
 #if (defined __ARM_ARCH) || (defined PLATFORM_AARCH64)  // compiled on arm arch
 #define CONFIG_ENABLE_PERIOD_64BIT
@@ -324,7 +329,7 @@ uint32_t DropOutGenMaskKernel::DoCompute() {
 
   uint64_t bit_count = static_cast<uint64_t>(count_);
   // align to 128 and around up
-  bit_count = (bit_count + 127) & (~127);
+  bit_count = (bit_count + kAlign) & (~kAlign);
   // transfer bit count to byte count
   uint64_t byte_count = bit_count >> 3;
 
@@ -377,7 +382,7 @@ uint32_t DropOutGenMaskKernel::DoCompute() {
     out_[i] = 0x00;
     for (const auto &m : mask) {
       if (b(te)) {
-        out_[i] = out_[i] | m;
+        out_[i] = static_cast<uint8_t>(out_[i] | m);
       }
     }
   }
@@ -395,35 +400,35 @@ uint32_t DropOutGenMaskKernel::ParseKernelParam() {
 
   aicpuops::AttrValue seed0 = nodedef_map["seed"];
   aicpuops::AttrValue seed1 = nodedef_map["seed2"];
-  seed0_ = seed0.i();
-  seed1_ = seed1.i();
+  seed0_ = static_cast<uint64_t>(seed0.i());
+  seed1_ = static_cast<uint64_t>(seed1.i());
   if (seed0_ == 0 && seed1_ == 0) {
     seed0_ = e();
     seed1_ = e();
   }
   g_key[0] = static_cast<uint64_t>(seed1_);
   g_key[1] = static_cast<uint64_t>(seed0_);
-  g_offset[0] = *reinterpret_cast<uint64_t *>(io_addrs_[2]);
-  g_offset[1] = *reinterpret_cast<uint64_t *>(io_addrs_[3]);
+  g_offset[0] = *reinterpret_cast<uint64_t *>(io_addrs_[kOffsetIndex2]);
+  g_offset[1] = *reinterpret_cast<uint64_t *>(io_addrs_[kOffsetIndex3]);
 
   uint64_t tmp_count = 1;
   aicpuops::Tensor shape_tensor = node_def_.inputs(0);
   aicpuops::TensorShape input_shape = shape_tensor.tensor_shape();
   aicpuops::DataType shape_dt = static_cast<::aicpuops::DataType>(shape_tensor.tensor_type());
   for (int j = 0; j < input_shape.dim_size(); j++) {
-    tmp_count *= input_shape.dim(j).size();
+    tmp_count *= static_cast<uint64_t>(input_shape.dim(j).size());
   }
   if (shape_dt == aicpuops::MS_INT32) {
     auto input0 = reinterpret_cast<int32_t *>(io_addrs_[0]);
     count_ = 1;
     for (uint64_t index = 0; index < tmp_count; index++) {
-      count_ *= input0[index];
+      count_ *= static_cast<uint64_t>(input0[index]);
     }
   } else {
     auto input0 = reinterpret_cast<int64_t *>(io_addrs_[0]);
     count_ = 1;
     for (uint64_t index = 0; index < tmp_count; index++) {
-      count_ *= input0[index];
+      count_ *= static_cast<uint64_t>(input0[index]);
     }
   }
 
