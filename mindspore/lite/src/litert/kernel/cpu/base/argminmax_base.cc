@@ -43,9 +43,9 @@ int ArgMinMaxCPUKernel::ReSize() {
   auto in_shape = in_tensors_.at(0)->shape();
   auto dims_size = in_shape.size();
   MS_CHECK_TRUE_MSG(dims_size >= 0, RET_ERROR, "The input shape is invalid.");
-  int axis = arg_param_->axis_ < 0 ? arg_param_->axis_ + dims_size : arg_param_->axis_;
-  arg_param_->axis_ = axis;
   arg_param_->dims_size_ = static_cast<int>(dims_size);
+  int axis = arg_param_->axis_ < 0 ? (arg_param_->axis_ + arg_param_->dims_size_) : arg_param_->axis_;
+  arg_param_->axis_ = axis;
   MS_CHECK_TRUE_MSG(axis >= 0 && axis < static_cast<int>(in_shape.size()), RET_ERROR, "The axis is invalid.");
   if (arg_param_->topk_ <= 0 || arg_param_->topk_ > in_shape.at(axis)) {
     MS_LOG(ERROR) << "Invalid topk " << arg_param_->topk_;

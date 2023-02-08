@@ -141,10 +141,11 @@ int StridedSliceCPUKernel::FastRunImpl(int task_id) {
   auto out_shape = out_tensors_.front()->shape();
   int begin_index = param_->begins_[split_axis_];
   int caled_num = task_id * cal_num_per_thread_;
+  int64_t inner_size = static_cast<int64_t>(inner_size_);
   if (parallel_on_outer_) {
-    uint8_t *cur_in_ptr = input_ptr_ + (caled_num * in_shape[split_axis_] + begin_index) * inner_size_;
-    uint8_t *cur_out_ptr = output_ptr_ + caled_num * out_shape[split_axis_] * inner_size_;
-    int cur_outer = outer_ - caled_num;
+    uint8_t *cur_in_ptr = input_ptr_ + (caled_num * in_shape[split_axis_] + begin_index) * inner_size;
+    uint8_t *cur_out_ptr = output_ptr_ + caled_num * out_shape[split_axis_] * inner_size;
+    int cur_outer = static_cast<int>(outer_) - caled_num;
     if (cur_outer <= 0) {
       return RET_OK;
     }
@@ -152,12 +153,12 @@ int StridedSliceCPUKernel::FastRunImpl(int task_id) {
       cur_outer = cal_num_per_thread_;
     }
     FastStride(cur_in_ptr, cur_out_ptr, out_shape[split_axis_], param_->strides_[split_axis_], cur_outer, inner_size_,
-               in_shape[split_axis_] * inner_size_);
+               static_cast<size_t>(in_shape[split_axis_]) * inner_size_);
   } else {
     MS_CHECK_TRUE_MSG(parallel_on_split_axis_ == true, RET_ERROR,
                       "Stride slice op should be parallel on axis or outer size.");
-    uint8_t *cur_in_ptr = input_ptr_ + (caled_num * param_->strides_[split_axis_] + begin_index) * inner_size_;
-    uint8_t *cur_out_ptr = output_ptr_ + caled_num * inner_size_;
+    uint8_t *cur_in_ptr = input_ptr_ + (caled_num * param_->strides_[split_axis_] + begin_index) * inner_size;
+    uint8_t *cur_out_ptr = output_ptr_ + caled_num * inner_size;
     int cal_axis_num = out_shape[split_axis_] - caled_num;
     if (cal_axis_num <= 0) {
       return RET_OK;

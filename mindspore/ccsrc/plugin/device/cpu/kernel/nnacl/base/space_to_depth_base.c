@@ -34,14 +34,14 @@ int SpaceToDepthForNHWC(const void *input, void *output, const int *in_shape, co
   ComputeStrides(in_shape, in_strides, shape_size);
   ComputeStrides(out_shape, out_strides, shape_size);
   for (int i = 0; i < out_shape[0]; ++i) {
-    size_t in_offset_n = i * in_strides[0];
-    size_t out_offset_n = i * out_strides[0];
+    int64_t in_offset_n = i * in_strides[0];
+    int64_t out_offset_n = i * out_strides[0];
     for (int j = h_start; j < h_end; ++j) {
-      size_t in_offset_h = in_offset_n + j * block_size * in_strides[1];
-      size_t out_offset_h = out_offset_n + j * out_strides[1];
+      int64_t in_offset_h = in_offset_n + j * block_size * in_strides[1];
+      int64_t out_offset_h = out_offset_n + j * out_strides[1];
       for (int k = 0; k < out_shape[2]; ++k) {
-        size_t in_offset_w = in_offset_h + k * block_size * in_strides[2];
-        size_t out_offset_w = out_offset_h + k * out_strides[2];
+        int64_t in_offset_w = in_offset_h + k * block_size * in_strides[2];
+        int64_t out_offset_w = out_offset_h + k * out_strides[2];
         for (int l = 0; l < block_size; ++l) {
           memcpy((int8_t *)output + (out_offset_w + l * block_size * in_strides[DIMENSION_2D]) * param->date_type_len,
                  (const int8_t *)input + (in_offset_w + l * in_strides[DIMENSION_1D]) * param->date_type_len,
