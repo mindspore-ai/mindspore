@@ -501,7 +501,7 @@ def test_dynamic_maxpool1():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
