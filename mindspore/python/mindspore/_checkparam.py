@@ -1208,31 +1208,3 @@ def args_type_check(*type_args, **type_kwargs):
 
 
 _set_record = {}
-
-
-def args_unreset_check(*unreset_args, **unreset_kwargs):
-    """Check the entered non repeatable setting properties."""
-
-    def unreset_check(func):
-        sig = inspect.signature(func)
-        bound_unreset = sig.bind_partial(*unreset_args, **unreset_kwargs).arguments
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            nonlocal bound_unreset
-            bound_values = sig.bind(*args, **kwargs)
-            argument_dict = bound_values.arguments
-            if "kwargs" in bound_unreset:
-                bound_unreset = bound_unreset["kwargs"]
-            if "kwargs" in argument_dict:
-                argument_dict = argument_dict["kwargs"]
-            for name, value in argument_dict.items():
-                if name in _set_record.keys():
-                    raise TypeError("For 'set_context', the parameter '{}' can not be set repeatedly.".format(name))
-                if name in bound_unreset:
-                    _set_record[name] = value
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return unreset_check
