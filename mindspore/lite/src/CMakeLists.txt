@@ -54,6 +54,11 @@ if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
         endif()
     endif()
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT MSLITE_ENABLE_TESTCASES)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility-inlines-hidden -fvisibility=hidden")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility-inlines-hidden -fvisibility=hidden")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--gc-sections")
+    endif()
 elseif(NOT MSVC)
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
@@ -300,16 +305,6 @@ set(LITE_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/litert/weight_decoder.cc
     )
 
-if(MSLITE_GPU_BACKEND STREQUAL opencl)
-    file(GLOB_RECURSE OPENCL_RUNTIME_SRC
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/kernel/gpu/opencl/*.cc
-            )
-    set(LITE_SRC
-            ${LITE_SRC}
-            ${OPENCL_RUNTIME_SRC}
-            )
-endif()
-
 if(MSLITE_GPU_BACKEND STREQUAL cuda)
     file(GLOB CUDA_RUNTIME_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/litert/gpu/*.cc
@@ -533,7 +528,7 @@ if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
 endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
-    add_subdirectory(litert/kernel/opencl)
+    add_subdirectory(litert/kernel/gpu/opencl)
     target_link_libraries(mindspore-lite opencl_kernel_mid)
     target_link_libraries(mindspore-lite_static opencl_kernel_mid)
 endif()

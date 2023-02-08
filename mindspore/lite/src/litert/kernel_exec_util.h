@@ -24,7 +24,7 @@
 
 namespace mindspore::kernel {
 
-class KernelExecUtil {
+class MS_API KernelExecUtil {
  public:
   static std::vector<KernelExec *> SubgraphInputNodes(const std::vector<KernelExec *> &kernels);
   static std::vector<KernelExec *> SubgraphOutputNodes(const std::vector<KernelExec *> &kernels);

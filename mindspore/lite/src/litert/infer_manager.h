@@ -30,11 +30,11 @@
 #include "include/api/allocator.h"
 
 namespace mindspore::lite {
-int KernelInferShape(const std::vector<lite::Tensor *> &tensors_in, const std::vector<lite::Tensor *> &outputs,
-                     OpParameter *parameter, std::shared_ptr<Allocator> allocator = nullptr);
-int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                     const void *primitive, std::set<std::string> &&providers, int schema_version,
-                     const kernel::Kernel *kernel = nullptr);
+MS_API int KernelInferShape(const std::vector<lite::Tensor *> &tensors_in, const std::vector<lite::Tensor *> &outputs,
+                            OpParameter *parameter, std::shared_ptr<Allocator> allocator = nullptr);
+MS_API int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                            const void *primitive, std::set<std::string> &&providers, int schema_version,
+                            const kernel::Kernel *kernel = nullptr);
 typedef bool (*InferChecker)(const std::vector<Tensor *> &, const std::vector<Tensor *> &);
 bool InferCheckerAll(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs);
 bool InferCheckerInput(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs);

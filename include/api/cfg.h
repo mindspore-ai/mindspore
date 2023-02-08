@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 
 namespace mindspore {
 constexpr int iter_th = 1000;
-class MixPrecisionCfg {
+class MS_API MixPrecisionCfg {
  public:
   MixPrecisionCfg() {
     this->dynamic_loss_scale_ = false;
@@ -49,7 +49,7 @@ class MixPrecisionCfg {
   bool is_raw_mix_precision_ = false; /**< Is mix precision model export from mindspore  */
 };
 
-class TrainCfg {
+class MS_API TrainCfg {
  public:
   TrainCfg() = default;
   TrainCfg(const TrainCfg &rhs) {

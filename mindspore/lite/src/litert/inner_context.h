@@ -94,7 +94,7 @@ typedef struct InstructionsContext {
   bool support_avx512 = false;
 } InstructionsContext;
 
-struct InnerContext {
+struct MS_API InnerContext {
  public:
   InnerContext();
   virtual ~InnerContext();

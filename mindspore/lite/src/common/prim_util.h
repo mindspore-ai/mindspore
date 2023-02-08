@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@
 #define MINDSPORE_LITE_SRC_COMMON_PRIM_UTIL_H_
 
 #include "src/common/version_manager.h"
+#include "include/api/visible.h"
 
 namespace mindspore {
 namespace lite {
-int GetPrimitiveType(const void *primitive, int schema_version = SCHEMA_CUR);
+MS_API int GetPrimitiveType(const void *primitive, int schema_version = SCHEMA_CUR);
 const char *GetPrimitiveTypeName(const void *primitive, int schema_version);
 const char *PrimitiveCurVersionTypeName(int type);
-int GenPrimVersionKey(int primitive_type, int schema_version);
+MS_API int GenPrimVersionKey(int primitive_type, int schema_version);
 bool IsPartialNode(const void *primitive, int schema_version);
 bool IsCallNode(const void *primitive, int schema_version);
 bool IsSwitchNode(const void *primitive, int schema_version);

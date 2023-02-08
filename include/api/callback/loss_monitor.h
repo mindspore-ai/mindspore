@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 
 namespace mindspore {
 
-class LossMonitor: public TrainCallBack {
+class MS_API LossMonitor : public TrainCallBack {
  public:
   explicit LossMonitor(int print_every_n_steps = INT_MAX);
   virtual ~LossMonitor();

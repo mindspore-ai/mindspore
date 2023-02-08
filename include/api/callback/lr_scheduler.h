@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,18 +30,18 @@ constexpr int UPDATE_LR = 1;
 using LR_Lambda = std::function<int(float *lr, int epoch, void *cb_data)>;
 
 /// \brief Multiply the LR by a factor of gamma every epoch
-int MultiplicativeLRLambda(float *lr, int epoch, void *multiplication);
+MS_API int MultiplicativeLRLambda(float *lr, int epoch, void *multiplication);
 
 /// \brief Multiply the LR by a factor of gamma every step_size
-int StepLRLambda(float *lr, int epoch, void *step_size);
-struct StepLRLambda {
+MS_API int StepLRLambda(float *lr, int epoch, void *step_size);
+struct MS_API StepLRLambda {
   StepLRLambda(int step, float g) : step_size(step), gamma(g) {}
 
   int step_size;  // period of LR decay
   float gamma;    // LR decay factor
 };
 
-class LRScheduler: public TrainCallBack {
+class MS_API LRScheduler : public TrainCallBack {
  public:
   explicit LRScheduler(LR_Lambda lambda_func, void *lr_cb_data = nullptr, int step = 1);
   virtual ~LRScheduler();

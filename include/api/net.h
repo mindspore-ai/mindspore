@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,14 +36,14 @@ class NodeSet;
 class Graph;
 class NetData;
 
-class NetBase {
+class MS_API NetBase {
  public:
   NetBase() = default;
   virtual std::vector<Expr *> operator()(const std::vector<Expr *> &inputs) = 0;
   virtual uint32_t type() = 0;
 };
 
-class Node : public NetBase {
+class MS_API Node : public NetBase {
  public:
   Node();
   virtual ~Node();
@@ -65,7 +65,7 @@ class Node : public NetBase {
   std::shared_ptr<NodeImpl> impl_ = nullptr;
 };
 
-class Net : public NetBase, public std::enable_shared_from_this<Net> {
+class MS_API Net : public NetBase, public std::enable_shared_from_this<Net> {
  public:
   Net();
   virtual ~Net();
@@ -116,12 +116,12 @@ class Net : public NetBase, public std::enable_shared_from_this<Net> {
   std::shared_ptr<NetImpl> impl_;
 };
 
-class SoftMaxCrossEntropyCfg {
+class MS_API SoftMaxCrossEntropyCfg {
  public:
   std::string reduction = "mean"; /**<  Specifies reduction mode. The optional values are "none", "mean", "sum" */
 };
 
-class AdamConfig {
+class MS_API AdamConfig {
  public:
   float learning_rate_ = 1e-3;
   float beta1_ = 0.9;
@@ -131,11 +131,12 @@ class AdamConfig {
 };
 
 namespace NN {
-Net *NetWithLoss(Net *net, Node *loss);
-Graph *GraphWithLoss(Graph *g, Node *loss);
-Node *Adam(std::shared_ptr<NodeSet> learn, const AdamConfig &cfg);
-Node *SoftmaxCrossEntropy(const SoftMaxCrossEntropyCfg &cfg);
-std::unique_ptr<Node> Input(std::vector<int> dims, DataType data_type = DataType::kNumberTypeFloat32, int fmt = NHWC);
+MS_API Net *NetWithLoss(Net *net, Node *loss);
+MS_API Graph *GraphWithLoss(Graph *g, Node *loss);
+MS_API Node *Adam(std::shared_ptr<NodeSet> learn, const AdamConfig &cfg);
+MS_API Node *SoftmaxCrossEntropy(const SoftMaxCrossEntropyCfg &cfg);
+MS_API std::unique_ptr<Node> Input(std::vector<int> dims, DataType data_type = DataType::kNumberTypeFloat32,
+                                   int fmt = NHWC);
 };  // namespace NN
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_NET_H

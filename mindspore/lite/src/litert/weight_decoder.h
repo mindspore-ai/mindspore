@@ -40,7 +40,7 @@ static constexpr int kBitNum32 = 32;
 
 namespace mindspore::lite {
 
-class WeightDecoder {
+class MS_API WeightDecoder {
  public:
   static int DequantNode(const OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type,
                          const std::string &model_version, bool float_mode);

@@ -44,7 +44,7 @@
 
 namespace mindspore {
 namespace lite {
-class LiteSession {
+class MS_API LiteSession {
  public:
   LiteSession();
   virtual ~LiteSession();

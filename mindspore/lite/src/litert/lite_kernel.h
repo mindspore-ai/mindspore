@@ -37,7 +37,7 @@
 using mindspore::infer::Abstractkernel;
 
 namespace mindspore::kernel {
-class LiteKernel : public Abstractkernel {
+class MS_API LiteKernel : public Abstractkernel {
  public:
   LiteKernel() = default;
 

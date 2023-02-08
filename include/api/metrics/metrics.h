@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,17 @@ class MetricsImpl;
 class ModelImpl;
 class MSTensor;
 
-class Metrics {
+class MS_API Metrics {
  public:
   virtual ~Metrics() = default;
   virtual void Clear() {}
   virtual float Eval() { return 0.0; }
   virtual void Update(std::vector<MSTensor *> inputs, std::vector<MSTensor *> outputs) {}
+
  protected:
   friend class Model;
   friend class ModelImpl;
-  MetricsImpl* metrics_impl_;
+  MetricsImpl *metrics_impl_;
 };
 
 }  // namespace mindspore
