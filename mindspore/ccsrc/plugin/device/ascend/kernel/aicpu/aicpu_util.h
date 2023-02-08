@@ -198,6 +198,7 @@ constexpr auto kSparseCross = "SparseCross";
 constexpr auto kChannelShuffle = "ChannelShuffle";
 constexpr auto kQuantDTypeCast = "QuantDTypeCast";
 constexpr auto kFSEDecode = "FSEDecode";
+constexpr auto kRealDiv = "RealDiv";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kGather,
@@ -257,7 +258,8 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kOnesLike,
                                           kStatelessDropOutGenMask,
                                           kTopK,
-                                          kSign};
+                                          kSign,
+                                          kRealDiv};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
                                             kDropout2D,   kNonMaxSuppressionV3, kGetNext,      kInitData,    kPrint};
 const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
