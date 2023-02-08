@@ -201,8 +201,6 @@ constexpr auto kFSEDecode = "FSEDecode";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kGather,
-                                          kMaskedSelect,
-                                          kMaskedSelectGrad,
                                           kDynamicStitch,
                                           kSearchSorted,
                                           kResizeBilinear,
