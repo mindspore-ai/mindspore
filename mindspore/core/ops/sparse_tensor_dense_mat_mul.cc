@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-bool checkType(std::string name, TypePtr dtype, std::set<TypePtr> vtypes, const PrimitivePtr &primitive) {
+bool checkType(std::string name, const TypePtr dtype, std::set<TypePtr> vtypes, const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   std::map<std::string, TypePtr> types;
   (void)types.emplace(name, dtype);
@@ -160,7 +160,7 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
 }
 TypePtr SparseTensorDenseMatmulInferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
+  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
   std::map<std::string, TypePtr> types;

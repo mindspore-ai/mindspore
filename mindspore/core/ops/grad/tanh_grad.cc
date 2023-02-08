@@ -57,7 +57,7 @@ MIND_API_OPERATOR_IMPL(TanhGrad, BaseOperator);
 AbstractBasePtr TanhGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, SizeToLong(input_num), primitive->name());
   auto types = TanhGradInferType(primitive, input_args);
   auto shapes = TanhGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

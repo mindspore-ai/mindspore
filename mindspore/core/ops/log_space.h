@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_CORE_OPS_LOG_SPACE_H_
 #define MINDSPORE_CORE_OPS_LOG_SPACE_H_
-#include <stdint.h>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <set>

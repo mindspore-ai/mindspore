@@ -35,7 +35,7 @@ class MIND_API SparseSliceGrad : public BaseOperator {
   SparseSliceGrad() : BaseOperator(kNameSparseSliceGrad) {
     InitIOName({"backprop_val_grad", "indices", "start", "new_indices"}, {"y_grad"});
   }
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr SparseSliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args);

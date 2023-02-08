@@ -83,7 +83,7 @@ AbstractBasePtr SparseSoftmaxInfer(const abstract::AnalysisEnginePtr &, const Pr
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infertype = SparseSoftmaxInferType(primitive, input_args);
   auto infershape = SparseSoftmaxInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);

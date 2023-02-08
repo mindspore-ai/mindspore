@@ -58,7 +58,7 @@ abstract::ShapePtr ResizeBicubicGradInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr ResizeBicubicGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
+  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
   const std::set<TypePtr> valid0_types = {kFloat32, kFloat64};

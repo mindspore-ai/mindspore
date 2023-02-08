@@ -71,9 +71,15 @@ void RaggedRangeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   broadcast_starts_ = starts_dim == 0;
   broadcast_limits_ = limits_dim == 0;
   broadcast_deltas_ = deltas_dim == 0;
-  if (!broadcast_starts_) in_sizes_.push_back(starts_shape[0]);
-  if (!broadcast_limits_) in_sizes_.push_back(limits_shape[0]);
-  if (!broadcast_deltas_) in_sizes_.push_back(deltas_shape[0]);
+  if (!broadcast_starts_) {
+    in_sizes_.push_back(starts_shape[0]);
+  }
+  if (!broadcast_limits_) {
+    in_sizes_.push_back(limits_shape[0]);
+  }
+  if (!broadcast_deltas_) {
+    in_sizes_.push_back(deltas_shape[0]);
+  }
   input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   tsplits_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
   if (starts_type != limits_type || starts_type != deltas_type || limits_type != deltas_type) {

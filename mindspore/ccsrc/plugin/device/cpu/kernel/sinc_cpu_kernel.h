@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SINC_CPU_KERNEL_H_
 
 #include <map>
-#include <utility>
 #include <vector>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"

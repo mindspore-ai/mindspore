@@ -119,7 +119,6 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
   void InitInpOutSizeLists() {
     size_t size = 0;
-    // if (T == float16) { reduce_sum_work_size = size * 2; } else { reduce_sum_work_size = size; }
     size_t mul_val = (type_id_ == kNumberTypeFloat16) ? HALF_TYPE_WORK_SIZE_MUL : 1;
     for (auto &op_vec : single_op_) {
       auto &inp_shape = std::get<IDX_INP_SHAPE>(op_vec[0]);

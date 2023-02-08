@@ -44,13 +44,13 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
   auto output_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(output_shape_shape_ptr)[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
   auto default_value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(default_value_shape_ptr)[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kLessEqual,
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kLessEqual,
                                            SizeToLong(Indiceselement), prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("outshape dimension", output_shape_shape.size(), kEqual,
+  (void)CheckAndConvertUtils::CheckInteger("outshape dimension", SizeToLong(output_shape_shape.size()), kEqual,
                                            SizeToLong(OutShapeSize), prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("values dimension", values_shape.size(), kLessEqual, SizeToLong(ValuesSize),
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("default_value dimension", default_value_shape.size(), kEqual,
+  (void)CheckAndConvertUtils::CheckInteger("values dimension", SizeToLong(values_shape.size()), kLessEqual,
+                                           SizeToLong(ValuesSize), prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("default_value dimension", SizeToLong(default_value_shape.size()), kEqual,
                                            SizeToLong(DefaultSize), prim_name);
   size_t output_shape_numelement = LongToSize(output_shape_shape[0]);
   auto output_shape = input_args[1]->cast<abstract::AbstractTensorPtr>();
@@ -156,7 +156,7 @@ AbstractBasePtr SparseToDenseV2Infer(const abstract::AnalysisEnginePtr &, const 
     MS_EXCEPTION_IF_NULL(item);
   }
   const int64_t input_num = 4;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto infertype = SparseToDenseV2InferType(primitive, input_args);
   auto infershape = SparseToDenseV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);

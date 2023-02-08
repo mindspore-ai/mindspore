@@ -94,7 +94,7 @@ AbstractBasePtr SparseDenseCwiseMulInfer(const abstract::AnalysisEnginePtr &, co
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 4;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   auto infer_type = SparseDenseCwiseMulInferType(primitive, input_args);
   auto infer_shape = SparseDenseCwiseMulInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
