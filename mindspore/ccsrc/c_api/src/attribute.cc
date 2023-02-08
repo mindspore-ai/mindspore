@@ -240,8 +240,8 @@ int64_t MSOpGetScalarAttrInt64(ResMgrHandle res_mgr, NodeHandle op, const char *
   }
 }
 
-STATUS MSOpGetAttrsInt64(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, int64_t values[],
-                         size_t value_num) {
+STATUS MSOpGetAttrArrayInt64(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, int64_t values[],
+                             size_t value_num) {
   if (res_mgr == nullptr || op == nullptr || attr_name == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] is nullptr.";
     return RET_NULL_PTR;
@@ -285,6 +285,15 @@ AttrHandle MSNewAttrFloat32(ResMgrHandle res_mgr, const float v) {
     return nullptr;
   }
   auto value = std::make_shared<Float32ImmImpl>(v);
+  return GetRawPtr(res_mgr, value);
+}
+
+AttrHandle MSNewAttrBool(ResMgrHandle res_mgr, const bool v) {
+  if (res_mgr == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
+    return nullptr;
+  }
+  auto value = std::make_shared<BoolImmImpl>(v);
   return GetRawPtr(res_mgr, value);
 }
 

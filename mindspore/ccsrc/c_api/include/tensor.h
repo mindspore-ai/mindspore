@@ -42,6 +42,18 @@ extern "C" {
 MIND_C_API TensorHandle MSNewTensor(ResMgrHandle res_mgr, void *data, TypeId type, const int64_t shape[],
                                     size_t shape_size, size_t data_len);
 
+/// \brief Create a tensor with path to a space-sperated txt file.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] type [TypeId] Data type of the tensor.
+/// \param[in] shape The shape arary of the tensor.
+/// \param[in] shape_size The size of shape array, i.e., the rank of the tensor.
+/// \param[in] path path to the file.
+///
+/// \return The pointer of the created tensor instance.
+MIND_C_API TensorHandle MSNewTensorFromFile(ResMgrHandle res_mgr, TypeId type, const int64_t shape[], size_t shape_size,
+                                            const char *path);
+
 /// \brief Create a tensor with input data buffer and given source data type.
 ///
 /// \param[in] res_mgr Resource manager that saves allocated instance resources.
