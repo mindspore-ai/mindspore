@@ -15,6 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/bias_add_cpu_kernel.h"
+#ifdef ENABLE_AVX
+#include <immintrin.h>
+#endif
 #include "ops/bias_add.h"
 #include <map>
 #include <complex>

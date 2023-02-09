@@ -34,6 +34,17 @@ if(ENABLE_CPU)
     endif()
 endif()
 
+if(BUILD_LITE)
+    # mslite do not support python op
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx ")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -maxv ")
+    string(REPLACE "-Wall" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+    string(REPLACE "-Wall" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    list(REMOVE_ITEM CPU_SRC_LIST "pyexecute/py_execute_cpu_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "pyfunc/py_func_cpu_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "opaque_predicate_kernel.cc")
+endif()
+
 if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM CPU_SRC_LIST "ps/apply_momentum_ps_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "ps/embedding_look_up_proxy_kernel.cc")

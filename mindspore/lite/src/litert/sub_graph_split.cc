@@ -33,6 +33,7 @@
 
 namespace {
 constexpr const int kMaxDepth = 2048;
+constexpr const int kInitBufferSize = 1024;
 constexpr int kOperatorMaxThreadNum = 16;
 }  // namespace
 
@@ -200,7 +201,7 @@ SearchSubGraph::CostModel SearchSubGraph::CalculateConv2DFusion(const LiteGraph:
 }
 
 const schema::Primitive *SearchSubGraph::CreatePartialPrimitive(int64_t subgraph_index) {
-  flatbuffers::FlatBufferBuilder fbb(1024);
+  flatbuffers::FlatBufferBuilder fbb(kInitBufferSize);
   auto val_offset = schema::CreatePartialFusion(fbb, subgraph_index);
   auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_PartialFusion, val_offset.o);
   fbb.Finish(prim_offset);

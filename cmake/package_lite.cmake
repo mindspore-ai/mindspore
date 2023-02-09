@@ -21,6 +21,7 @@ set(PROVIDERS_LIB_DIR ${RUNTIME_PKG_NAME}/providers)
 set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/runtime/include/dataset)
 set(TURBO_DIR ${RUNTIME_PKG_NAME}/runtime/third_party/libjpeg-turbo)
 set(GLOG_DIR ${RUNTIME_PKG_NAME}/runtime/third_party/glog)
+set(DNNL_DIR ${RUNTIME_PKG_NAME}/runtime/third_party/dnnl)
 set(SECUREC_DIR ${RUNTIME_PKG_NAME}/runtime/third_party/securec)
 set(MINDSPORE_LITE_LIB_NAME libmindspore-lite)
 set(MINDSPORE_LITE_EXTENDRT_LIB_NAME libmindspore-lite)
@@ -845,6 +846,10 @@ else()
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${onednn_LIBPATH}/libdnnl.so.2.2 DESTINATION ${RUNTIME_LIB_DIR}
+                RENAME libdnnl.so.2 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${onednn_LIBPATH}/libdnnl.so.2.2 DESTINATION ${DNNL_DIR}
+                RENAME libdnnl.so.2 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/convert/libruntime_convert_plugin.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
