@@ -91,7 +91,7 @@ Status TFReaderOp::Init() {
     RETURN_STATUS_UNEXPECTED(
       "[Internal ERROR] num_samples or num_rows for TFRecordDataset must be greater than 0, but got: " +
       std::to_string(total_rows_));
-  } else if (compression_type_ == CompressionType::NONE && total_rows_ == 0) {
+  } else if (compression_type_ != CompressionType::NONE && total_rows_ == 0) {
     MS_LOG(WARNING) << "Since compression_type is set, but neither num_samples nor numRows (from schema file) "
                     << "is provided, performance might be degraded.";
   }
