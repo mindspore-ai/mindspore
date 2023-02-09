@@ -810,11 +810,13 @@ AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &prim,
   for (auto item : dynamic_inputs_index) {
     if (item == kNotDynamicFlag) {
       if (input_index >= input_abstract.size()) {
-        // Not to check for PyExecute.
         if ((prim->Hash() == prim::kPrimPyExecute->Hash() && prim->name() == prim::kPrimPyExecute->name())) {
+          MS_LOG(WARNING) << "For primitive \'PyExecute\', index " << input_index
+                          << " is out of range in input abstract " << input_abstract.size();
           continue;
         }
-        MS_LOG(EXCEPTION) << "Index " << input_index << " is out of range in input abstract " << input_abstract.size();
+        MS_LOG(EXCEPTION) << "For primitive \'" << prim->name() << "\', index " << input_index
+                          << " is out of range in input abstract " << input_abstract.size();
       }
       (void)rectifyed_abs_list.emplace_back(input_abstract[input_index++]);
     } else {
@@ -825,12 +827,13 @@ AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &prim,
       AbstractBasePtrList dynamic_inputs_abs;
       for (auto index = item; index > 0; --index) {
         if (input_index >= input_abstract.size()) {
-          // Not to check for PyExecute.
           if ((prim->Hash() == prim::kPrimPyExecute->Hash() && prim->name() == prim::kPrimPyExecute->name())) {
+            MS_LOG(WARNING) << "For primitive \'PyExecute\', index " << input_index
+                            << " is out of range in input abstract " << input_abstract.size();
             continue;
           }
-          MS_LOG(EXCEPTION) << "Index " << input_index << " is out of range in input abstract "
-                            << input_abstract.size();
+          MS_LOG(EXCEPTION) << "For primitive \'" << prim->name() << "\', index " << input_index
+                            << " is out of range in input abstract " << input_abstract.size();
         }
         (void)dynamic_inputs_abs.emplace_back(input_abstract[input_index++]);
       }

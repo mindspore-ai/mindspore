@@ -178,9 +178,9 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
     new_abs->set_value(depended_value);
 
     // Set user data for PyExecute infer.
-    if (input->has_user_data<kernel::PyExecuteOutputData>()) {
-      const auto &output_data = input->user_data<kernel::PyExecuteOutputData>();
-      new_abs->set_user_data<kernel::PyExecuteOutputData>(output_data);
+    if (input->has_user_data<kernel::PyExecuteOutputUserData>()) {
+      const auto &output_data = input->user_data<kernel::PyExecuteOutputUserData>();
+      new_abs->set_user_data<kernel::PyExecuteOutputUserData>(output_data);
     }
   } else if (abs->isa<abstract::AbstractScalar>()) {
     auto type = depended_value->Dtype()->type_id();
@@ -272,7 +272,7 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
       }
 
       auto updated_abs = MakeNewAbstract(real_input, depended_value, real_input_index);
-      if (updated_abs->has_user_data<kernel::PyExecuteOutputData>()) {
+      if (updated_abs->has_user_data<kernel::PyExecuteOutputUserData>()) {
         has_py_execute_data = true;
       }
       (void)args_spec_list.emplace_back(updated_abs);

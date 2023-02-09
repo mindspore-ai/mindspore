@@ -38,6 +38,7 @@ AbstractBasePtr PyExecuteInfer::InferPy(const PrimitivePtr &primitive,
     MS_LOG(EXCEPTION) << "infer_handler_ should not be null.";
   }
   const auto &abs = infer_handler_(input_args);
+  MS_LOG(DEBUG) << "output abstract: " << abs;
   return abs;
 }
 

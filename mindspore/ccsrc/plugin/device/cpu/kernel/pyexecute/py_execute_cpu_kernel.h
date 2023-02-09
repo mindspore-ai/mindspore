@@ -35,9 +35,9 @@ struct PyExecuteInputInfo {
   std::vector<int64_t> shape;
 };
 
-struct PyExecuteOutputData {
+struct PyExecuteOutputUserData {
   py::object obj;
-  constexpr static char key[] = "PyExecuteOutputData";
+  constexpr static char key[] = "PyExecuteOutputUserData";
 };
 
 class PyExecuteCpuKernelMod : public DeprecatedNativeCpuKernelMod {

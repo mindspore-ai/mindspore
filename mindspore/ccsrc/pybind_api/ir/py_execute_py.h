@@ -26,6 +26,7 @@
 #include "pybind11/pybind11.h"
 #include "pybind_api/pybind_patch.h"
 
+#include "include/common/fallback.h"
 #include "mindspore/core/ops/py_execute.h"
 #include "mindspore/ccsrc/include/common/utils/convert_utils_py.h"
 #include "mindspore/ccsrc/include/common/utils/python_adapter.h"
@@ -92,20 +93,25 @@ class PyExecuteInitializer {
       const auto &tuple_abs = values_tuple_abs->cast<abstract::AbstractSequencePtr>();
       const auto &value_abs = (*tuple_abs)[i];
       if (value->isa<tensor::Tensor>()) {
-        if (value_abs->has_user_data<kernel::PyExecuteOutputData>()) {
-          const auto &output_data = value_abs->user_data<kernel::PyExecuteOutputData>();
+        if (value_abs->has_user_data<kernel::PyExecuteOutputUserData>()) {
+          const auto &output_data = value_abs->user_data<kernel::PyExecuteOutputUserData>();
           auto obj = output_data->obj;
+          MS_LOG(DEBUG) << "input[" << i << "], obj: " << obj;
           local_dict[py::str(key_str->value())] = obj;
         } else {
           const auto &py_tensor = ValueToPyData(value);
+          MS_LOG(DEBUG) << "input[" << i << "], py_tensor: " << py_tensor;
           local_dict[py::str(key_str->value())] = py_tensor;
         }
         continue;
       } else if (value->isa<StringImm>()) {
         const auto &str_imm = value->cast<StringImmPtr>();
-        local_dict[py::str(key_str->value())] = py::str(str_imm->value());
+        const auto &py_str = py::str(str_imm->value());
+        MS_LOG(DEBUG) << "input[" << i << "], py_str: " << py_str;
+        local_dict[py::str(key_str->value())] = py_str;
         continue;
       }
+      MS_LOG(DEBUG) << "input[" << i << "], value: " << value;
       local_dict[py::str(key_str->value())] = value;
     }
     const auto &global_dict = CallPythonGetGlobalParams();
@@ -118,6 +124,7 @@ class PyExecuteInitializer {
       mindspore::ScopedFallbackRunning fallback_running;
       const auto &output = parse::data_converter::CallPythonScript(py_script, params);
       MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
+      PushPyExecuteOutput(output);
       if (py::isinstance<tensor::Tensor>(output)) {
         const auto &tensor = output.cast<tensor::TensorPtr>();
         const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());

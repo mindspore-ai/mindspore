@@ -2024,7 +2024,7 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   // Call python script string.
   MS_LOG(DEBUG) << "Call script: " << script << ", args: " << args_abs_list;
 
-  TypePtr type = kFloat32;
+  TypePtr type = kFloat64;
   if (current_interpret_node->has_user_data("__py_execute_tensor_type__")) {
     type = current_interpret_node->user_data<Type>("__py_execute_tensor_type__");
     MS_LOG(DEBUG) << "type: " << type->ToString();

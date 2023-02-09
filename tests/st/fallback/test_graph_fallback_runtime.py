@@ -533,8 +533,7 @@ def test_call_no_self_other_object_method_runtime():
     assert np.all(result == z)
 
 
-@pytest.mark.skip(reason="Not supported by now")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -556,8 +555,7 @@ def test_getattr_tensor_with_wrong_attr():
     assert "object has no attribute" in str(err.value)
 
 
-@pytest.mark.skip(reason="Not supported by now")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -623,3 +621,38 @@ def test_getattr_dict_with_wrong_attr():
     with pytest.raises(AttributeError) as err:
         foo({"1": 1, "2": 2})  # Not throw error any more, should move to ST.
     assert "object has no attribute" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_parser_fallback_nested_class_outer():
+    """
+    Feature: Syntax getattr.
+    Description: Graph syntax getattr support custom class input.
+    Expectation: AttributeError.
+    """
+    class Inner:
+        def __init__(self):
+            self.number = ms.Tensor(2, dtype=ms.int32)
+
+        def act(self, x, y):
+            return self.number * (x + y)
+
+    @ms.jit_class
+    class InnerNet:
+        def __init__(self):
+            self.inner = Inner()
+
+    class NestedNet(ms.nn.Cell):
+        @ms.jit
+        def construct(self, x, y):
+            out = InnerNet().inner.act(x, y)
+            return out
+
+    x = 2
+    y = 4
+    net = NestedNet()
+    assert net(x, y) == 12
