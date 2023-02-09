@@ -29,7 +29,7 @@ void BCEWithLogitLoss(const float *logits, const float *label, const float *weig
     float weight_value = weight[i];
     float post_weight_value = pos_weight[i];
     float max_value = -logits_value;
-    max_value = max_value > 0.f ? 0.f : max_value;
+    max_value = max_value > 0.f ? max_value : 0.f;
     float log_weight = (post_weight_value - 1.0f) * label_value + 1.0f;
     float log_exp_value = logf(expf(-max_value) + expf(-logits_value - max_value));
     float loss = (1.0f - label_value) * logits_value + log_weight * (log_exp_value + max_value);

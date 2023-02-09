@@ -37,7 +37,7 @@ static inline int BCEWithLogitLoss@SIMD_INSTRUCTION@(int index, const float *log
       SIMD_F32 pos_weight_tmp = SIMD_LD_F32(pos_weight + index);
       SIMD_F32 neg_logits_tmp = SIMD_SUB_F32(zero, logits_tmp);
       SIMD_F32 max_value = neg_logits_tmp;
-      max_value = SIMD_MIN_F32(max_value, zero);
+      max_value = SIMD_MAX_F32(max_value, zero);
       SIMD_F32 neg_max_value = SIMD_SUB_F32(zero, max_value);
       SIMD_F32 log_weight = SIMD_ADD_F32(SIMD_MUL_F32(SIMD_SUB_F32(pos_weight_tmp, ones), label_tmp), ones);
       SIMD_F32 log_exp_value =
