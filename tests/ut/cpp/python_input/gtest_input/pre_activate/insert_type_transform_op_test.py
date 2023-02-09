@@ -18,6 +18,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
+from mindspore.ops.operations import _sequence_ops as seq
 
 tuple_get_item = Primitive(Constants.kTupleGetItem)
 
@@ -76,25 +77,22 @@ def test_tuple_unfold_to_tuple_transform(tag):
     """
     fns = FnDict()
     # Need to change AddN to SequenceAdd in later version. This case is just used to cover this pattern.
-    seq_add1 = P.AddN()
-    seq_add2 = P.AddN()
+    seq_add1 = seq.SequenceAdd()
+    tensor_to_scalar = Primitive('TensorToScalar')
     real_make_tuple = Primitive('RealMakeTuple')
 
     @fns
     def before(input_1, input_2, x):
         res = make_tuple(input_1, input_2)
         res = seq_add1(res, x)
-        res = split1(res)
-        res = seq_add2(res, x)
         return res
 
     @fns
     def after(input_1, input_2, x):
+        input_1 = tensor_to_scalar(input_1)
+        input_2 = tensor_to_scalar(input_2)
         res = real_make_tuple(input_1, input_2)
         res = seq_add1(res, x)
-        res = split1(res)
-        res = real_make_tuple(tuple_get_item(res, 0), tuple_get_item(res, 1))
-        res = seq_add2(res, x)
         return res
 
     return fns[tag]
@@ -110,6 +108,7 @@ def test_tuple_unfold_to_tensor_transform(tag):
     reshape = P.Reshape()
     real_make_tuple = Primitive('RealMakeTuple')
     tuple_to_tensor = Primitive('TupleToTensor')
+    tensor_to_scalar = Primitive('TensorToScalar')
 
     @fns
     def before(input_1, input_2, input_3):
@@ -119,6 +118,8 @@ def test_tuple_unfold_to_tensor_transform(tag):
 
     @fns
     def after(input_1, input_2, input_3):
+        input_1 = tensor_to_scalar(input_1)
+        input_2 = tensor_to_scalar(input_2)
         res = real_make_tuple(input_1, input_2)
         res = tuple_to_tensor(res)
         res = reshape(input_3, res)
