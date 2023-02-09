@@ -43,7 +43,7 @@ class SoftplusInfer : public abstract::OpInferBase {
     auto prim_name = prim->name();
     // check
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    std::set<TypePtr> valid_index_types = {kFloat16, kFloat32};
+    std::set<TypePtr> valid_index_types = {kFloat16, kFloat32, kFloat64};
     auto x_type = input_args[0]->BuildType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_index_types, prim_name);
     return x_type;
