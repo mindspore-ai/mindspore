@@ -108,6 +108,11 @@ const std::map<std::string, std::string> kProcessorMap = {
   {kCtxAscend, kImplyTBEStr}, {kCtxGPU, kImplyCUDAStr}, {kCtxCPU, kImplyCPUStr}};
 enum OpImplyType { kImplyAKG = 0, kImplyTBE, kImplyAICPU, kImplyCPU, kImplyGPU, kImplyBISHENG };
 enum OpPattern { kCommonPattern = 0, kFormatAgnosticPattern, kBroadcastPattern, kReducePattern, kDynamicFormatPattern };
+static const std::map<std::string, OpPattern> kPatternMap = {
+  {kFormatAgnostic, kFormatAgnosticPattern},
+  {kBroadcast, kBroadcastPattern},
+  {kReduce, kReducePattern},
+};
 const std::map<std::string, OpImplyType> kImplyTypeStrToEnumMap = {{kImplyTBEStr, kImplyTBE},
                                                                    {kImplyAKGStr, kImplyAKG},
                                                                    {kImplyCPUStr, kImplyCPU},

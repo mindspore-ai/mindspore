@@ -367,7 +367,8 @@ bool AscendKernelRuntime::Init() {
   }
 
   auto soc_version = device::ascend::GetSocVersion();
-  if (!mindspore::kernel::OpInfoUtils::GenerateOpInfos(soc_version)) {
+  auto ascend_path = device::ascend::GetAscendPath();
+  if (!mindspore::kernel::OpInfoUtils::GenerateOpInfos(soc_version, ascend_path)) {
     MS_LOG(EXCEPTION) << "Load op info form json config failed, version: " << soc_version;
   }
   if (!ErrorManagerAdapter::Init()) {
