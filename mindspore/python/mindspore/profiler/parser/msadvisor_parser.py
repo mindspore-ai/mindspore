@@ -25,7 +25,6 @@ from mindspore import log as logger
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 
-
 MIN_TO_US = 60000000  # 1 min to us
 MS_TO_US = 1000  # 1 ms to us
 AICPU_STREAM_ID = 9000  # aicpu stream id in profiler
@@ -85,9 +84,7 @@ class MsadvisorParser:
         task_type = "AI_CORE"
 
         try:
-            ts = float(op[2]) * MS_TO_US
-            dur = float(op[3]) * MS_TO_US
-            sid = float(op[1])
+            ts, dur, sid = float(op[2]) * MS_TO_US, float(op[3]) * MS_TO_US, float(op[1])
         except ValueError as err:
             logger.warning("The aicore timeline file content is abnormal. Failed to format aicore timeline file")
             raise err
@@ -192,7 +189,7 @@ class MsadvisorParser:
                     if tid == 1:
                         self._time_start = op.get("ts")
                     total_duration = op.get("ts") - self._time_start
-                    if total_duration > 1*MIN_TO_US or tid > 10000:
+                    if total_duration > 1 * MIN_TO_US or tid > 10000:
                         self._time_end = op.get("ts")
                         break
                     if tid > 1:

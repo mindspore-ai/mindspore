@@ -765,11 +765,11 @@ class BaseTimelineGenerator:
                 )
 
         # merged_display_list data used for ui page.
-        merged_display_list = [
-            [display_name, tid, time_merged_segment_list[i * 2],
-             (time_merged_segment_list[i * 2 + 1] - time_merged_segment_list[i * 2]) * factor, pid] for i in \
-            range(len(time_merged_segment_list) // 2)
-        ]
+        merged_display_list = []
+        for i in range(len(time_merged_segment_list) // 2):
+            merged_display_list.append([display_name, tid, time_merged_segment_list[i * 2],
+                                        (time_merged_segment_list[i * 2 + 1] - time_merged_segment_list[
+                                            i * 2]) * factor, pid])
 
         if get_interval_time:
             time_merged_segment_list = time_merged_segment_list[1:-1]
