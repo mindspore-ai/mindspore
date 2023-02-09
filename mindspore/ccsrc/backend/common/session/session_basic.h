@@ -316,7 +316,6 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
   virtual std::string GetCommWorldGroup() { return std::string(); }
   void DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const;
   void GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t> *const_input_attr_index) const;
-  // TODO(caifubi): refactor and remove bucket.
   std::map<uint32_t, std::vector<std::shared_ptr<device::Bucket>>> bucket_map_;
   std::map<uint32_t, uint32_t> free_bucket_id_map_;
   // Bucket for the entire actor_set.
