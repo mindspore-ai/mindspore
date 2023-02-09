@@ -950,6 +950,30 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
   return shape_all;
 }
 
+std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesWithFilter(const AnfNodePtr &node,
+                                                                 std::function<bool(const AnfNodePtr &)> filter) {
+  auto func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  std::vector<std::pair<AnfNodePtr, int>> res;
+  std::queue<AnfNodePtr> anf_queue;
+  anf_queue.push(node);
+  while (!anf_queue.empty()) {
+    auto queue_end = anf_queue.back();
+    anf_queue.pop();
+    auto user_set = manager->node_users()[queue_end];
+    for (auto &pair : user_set) {
+      if (filter(pair.first)) {
+        anf_queue.push(pair.first);
+        continue;
+      }
+      res.push_back(pair);
+    }
+  }
+  return res;
+}
+
 void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const std::string &backward_comm_name,
                        int32_t fusion_id) {
   if (fusion_id <= 0) {
@@ -958,25 +982,26 @@ void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const st
   if (GetValueNode<PrimitivePtr>(comm_node->input(0))->HasAttr(GROUP)) {
     auto comm_group = GetValue<std::string>(GetValueNode<PrimitivePtr>(comm_node->input(0))->GetAttr(GROUP));
     std::string fusion_key = backward_comm_name + "_" + comm_group + "_" + std::to_string(fusion_id);
-    if (!IsPrimitiveCNode(node, prim::kPrimLoad)) {
+    if (!IsPrimitiveCNode(node, prim::kPrimLoad) && !IsPrimitiveCNode(node, prim::kPrimCast)) {
       node->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
       node->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
       node->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
       return;
     }
-    auto func_graph = node->func_graph();
-    MS_EXCEPTION_IF_NULL(func_graph);
-    auto manager = func_graph->manager();
-    MS_EXCEPTION_IF_NULL(manager);
-    auto user_set = manager->node_users()[node];
-    for (auto &pair : user_set) {
+    auto next_nodes = GetOutputNodesWithFilter(node, [&](const AnfNodePtr &anode) {
+      return IsPrimitiveCNode(anode, prim::kPrimLoad) || IsPrimitiveCNode(anode, prim::kPrimCast) ||
+             IsPrimitiveCNode(anode, prim::kPrimAllGather) || IsPrimitiveCNode(anode, prim::kPrimMirror) ||
+             IsPrimitiveCNode(anode, prim::kPrimMicroStepAllGather) ||
+             IsPrimitiveCNode(anode, prim::kPrimMirrorMicroStep) || IsPrimitiveCNode(anode, prim::kPrimMakeTuple);
+    });
+    for (auto &pair : next_nodes) {
       if (!IsPrimitiveCNode(pair.first)) {
         continue;
       }
       auto next_cnode = pair.first->cast<CNodePtr>();
       next_cnode->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
       next_cnode->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
-      node->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
+      next_cnode->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
     }
   }
 }

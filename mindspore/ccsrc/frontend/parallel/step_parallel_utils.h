@@ -68,6 +68,10 @@ bool IsControlFlowNode(const AnfNodePtr &node);
 int64_t GetTupleGetItemIndex(const CNodePtr &cnode);
 std::pair<AnfNodePtr, int64_t> GetRealKernelNode(const AnfNodePtr &node, int64_t get_item_index,
                                                  CNodePtr *call_node = nullptr, bool ignore_get_item = true);
+
+std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesWithFilter(const AnfNodePtr &node,
+                                                                 std::function<bool(const AnfNodePtr &)> filter);
+
 void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager,
                            std::vector<AnfNodePtr> *pre_nodes);
 void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
