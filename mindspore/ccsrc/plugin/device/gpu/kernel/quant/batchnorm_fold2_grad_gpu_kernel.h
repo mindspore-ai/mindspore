@@ -21,6 +21,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batchnorm_fold2_impl.cuh"
+#include "plugin/device/gpu/kernel/quant/quant_op_const.h"
 
 namespace mindspore {
 namespace kernel {
@@ -45,23 +46,23 @@ class BatchNormFold2GradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
 
-    auto *dout = GetDeviceAddress<T>(inputs, 0);
-    auto *x = GetDeviceAddress<T>(inputs, 1);
-    auto *gamma = GetDeviceAddress<T>(inputs, 2);
-    auto *batch_std = GetDeviceAddress<T>(inputs, 3);
-    auto *batch_mean = GetDeviceAddress<T>(inputs, 4);
-    auto *running_std = GetDeviceAddress<T>(inputs, 5);
-    auto *running_mean = GetDeviceAddress<T>(inputs, 6);
-    auto *global_step = GetDeviceAddress<int32_t>(inputs, 7);
-    auto *d_batch_std = GetDeviceAddress<T>(outputs, 0);
-    auto *d_batch_mean = GetDeviceAddress<T>(outputs, 1);
-    auto *d_beta = GetDeviceAddress<T>(outputs, 2);
-    auto *d_gamma = GetDeviceAddress<T>(outputs, 3);
-    auto *d_x = GetDeviceAddress<T>(outputs, 4);
-    auto *tmp = GetDeviceAddress<T>(workspace, 0);
-    auto *tmp2 = GetDeviceAddress<T>(workspace, 1);
-    auto *reduce_x = GetDeviceAddress<T>(workspace, 2);
-    auto *tmp_x = GetDeviceAddress<T>(workspace, 3);
+    auto *dout = GetDeviceAddress<T>(inputs, kIndex0);
+    auto *x = GetDeviceAddress<T>(inputs, kIndex1);
+    auto *gamma = GetDeviceAddress<T>(inputs, kIndex2);
+    auto *batch_std = GetDeviceAddress<T>(inputs, kIndex3);
+    auto *batch_mean = GetDeviceAddress<T>(inputs, kIndex4);
+    auto *running_std = GetDeviceAddress<T>(inputs, kIndex5);
+    auto *running_mean = GetDeviceAddress<T>(inputs, kIndex6);
+    auto *global_step = GetDeviceAddress<int32_t>(inputs, kIndex7);
+    auto *d_batch_std = GetDeviceAddress<T>(outputs, kIndex0);
+    auto *d_batch_mean = GetDeviceAddress<T>(outputs, kIndex1);
+    auto *d_beta = GetDeviceAddress<T>(outputs, kIndex2);
+    auto *d_gamma = GetDeviceAddress<T>(outputs, kIndex3);
+    auto *d_x = GetDeviceAddress<T>(outputs, kIndex4);
+    auto *tmp = GetDeviceAddress<T>(workspace, kIndex0);
+    auto *tmp2 = GetDeviceAddress<T>(workspace, kIndex1);
+    auto *reduce_x = GetDeviceAddress<T>(workspace, kIndex2);
+    auto *tmp_x = GetDeviceAddress<T>(workspace, kIndex3);
 
     int32_t current_step_host[1];
     size_t x_size = batch_size_ * channel_ * height_ * width_ * sizeof(T);
@@ -110,14 +111,14 @@ class BatchNormFold2GradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
 
-    if (input_shape.size() != 4) {
+    if (input_shape.size() != kSize4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 4, but got "
                         << input_shape.size();
     }
-    batch_size_ = input_shape[0];
-    channel_ = input_shape[1];
-    height_ = input_shape[2];
-    width_ = input_shape[3];
+    batch_size_ = input_shape[kIndex0];
+    channel_ = input_shape[kIndex1];
+    height_ = input_shape[kIndex2];
+    width_ = input_shape[kIndex3];
     auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     freeze_bn_ = GetValue<int64_t>(prim->GetAttr("freeze_bn"));

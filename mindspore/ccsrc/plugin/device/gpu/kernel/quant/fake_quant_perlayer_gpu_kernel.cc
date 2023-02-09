@@ -15,11 +15,12 @@
  */
 
 #include "plugin/device/gpu/kernel/quant/fake_quant_perlayer_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fake_quant_perlayer_impl.cuh"
 #include <thrust/extrema.h>
 #include <thrust/pair.h>
 #include <thrust/device_vector.h>
 #include <cuda_runtime_api.h>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fake_quant_perlayer_impl.cuh"
+#include "plugin/device/gpu/kernel/quant/quant_op_const.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,12 +41,12 @@ bool FakeQuantPerLayerGpuKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 3) {
+  if (input_num != kSize3) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
+  if (output_num != kSize1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
   }
 
@@ -57,7 +58,7 @@ bool FakeQuantPerLayerGpuKernelMod::Init(const CNodePtr &kernel_node) {
   symmetric_ = GetValue<bool>(prim->GetAttr("symmetric"));
   narrow_range_ = GetValue<bool>(prim->GetAttr("narrow_range"));
 
-  if (num_bits_ <= 2 || num_bits_ >= 16) {
+  if (num_bits_ <= kMinQuantBit || num_bits_ >= kMaxQuantBit) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of num_bits should be in (2, 16), but got "
                       << num_bits_;
   }
@@ -74,7 +75,7 @@ bool FakeQuantPerLayerGpuKernelMod::Init(const CNodePtr &kernel_node) {
   }
 
   // init size
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
   if (is_null_input_) {
     InitSizeLists();
@@ -103,13 +104,13 @@ bool FakeQuantPerLayerGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
   if (is_null_input_) {
     return true;
   }
-  float *output = GetDeviceAddress<float>(outputs, 0);
-  float *input = GetDeviceAddress<float>(inputs, 0);
-  float *input_min = GetDeviceAddress<float>(inputs, 1);
-  float *input_max = GetDeviceAddress<float>(inputs, 2);
-  float *scale = GetDeviceAddress<float>(workspace, 0);
-  float *nudge_min = GetDeviceAddress<float>(workspace, 1);
-  float *nudge_max = GetDeviceAddress<float>(workspace, 2);
+  float *output = GetDeviceAddress<float>(outputs, kIndex0);
+  float *input = GetDeviceAddress<float>(inputs, kIndex0);
+  float *input_min = GetDeviceAddress<float>(inputs, kIndex1);
+  float *input_max = GetDeviceAddress<float>(inputs, kIndex2);
+  float *scale = GetDeviceAddress<float>(workspace, kIndex0);
+  float *nudge_min = GetDeviceAddress<float>(workspace, kIndex1);
+  float *nudge_max = GetDeviceAddress<float>(workspace, kIndex2);
 
   if (training_) {
     // control flow for quant_delay

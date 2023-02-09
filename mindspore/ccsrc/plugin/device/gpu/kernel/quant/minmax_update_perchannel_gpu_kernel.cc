@@ -15,11 +15,12 @@
  */
 
 #include "plugin/device/gpu/kernel/quant/minmax_update_perchannel_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/minmax_update_impl.cuh"
 #include <thrust/extrema.h>
 #include <thrust/pair.h>
 #include <thrust/device_vector.h>
 #include <cuda_runtime_api.h>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/minmax_update_impl.cuh"
+#include "plugin/device/gpu/kernel/quant/quant_op_const.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,12 +31,12 @@ bool MinMaxUpdatePerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   kernel_node_ = kernel_node;
-  if (input_num != 3) {
+  if (input_num != kSize3) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 2) {
+  if (output_num != kSize2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_num;
   }
 
@@ -45,7 +46,7 @@ bool MinMaxUpdatePerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
   ema_decay_ = GetValue<float>(prim->GetAttr("ema_decay"));
 
   // init size
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
   if (is_null_input_) {
     InitSizeLists();
@@ -75,11 +76,11 @@ bool MinMaxUpdatePerChannelGpuKernelMod::Launch(const std::vector<AddressPtr> &i
   if (is_null_input_) {
     return true;
   }
-  float *output_min = GetDeviceAddress<float>(outputs, 0);
-  float *output_max = GetDeviceAddress<float>(outputs, 1);
-  float *input = GetDeviceAddress<float>(inputs, 0);
-  float *input_min = GetDeviceAddress<float>(inputs, 1);
-  float *input_max = GetDeviceAddress<float>(inputs, 2);
+  float *output_min = GetDeviceAddress<float>(outputs, kIndex0);
+  float *output_max = GetDeviceAddress<float>(outputs, kIndex1);
+  float *input = GetDeviceAddress<float>(inputs, kIndex0);
+  float *input_min = GetDeviceAddress<float>(inputs, kIndex1);
+  float *input_max = GetDeviceAddress<float>(inputs, kIndex2);
 
   // calculate the input min and max according by the parameter ema and ema_decay.
   CalMinMaxPerChannel(input, input_min, input_max, output_min, output_max, input_size_ / sizeof(float), num_channels_,

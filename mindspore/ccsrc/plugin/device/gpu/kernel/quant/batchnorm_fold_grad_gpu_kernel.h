@@ -21,6 +21,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batchnorm_fold_impl.cuh"
+#include "plugin/device/gpu/kernel/quant/quant_op_const.h"
 
 namespace mindspore {
 namespace kernel {
@@ -50,19 +51,19 @@ class BatchNormFoldGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
     // 'd_batch_mean', 'd_batch_std', 'x', 'batch_mean', 'batch_std', 'current_step'
-    T *d_batch_mean = GetDeviceAddress<T>(inputs, 0);
-    T *d_batch_std = GetDeviceAddress<T>(inputs, 1);
-    T *x = GetDeviceAddress<T>(inputs, 2);
-    T *batch_mean = GetDeviceAddress<T>(inputs, 3);
-    T *batch_std = GetDeviceAddress<T>(inputs, 4);
-    int *current_step = GetDeviceAddress<int>(inputs, 5);
+    T *d_batch_mean = GetDeviceAddress<T>(inputs, kIndex0);
+    T *d_batch_std = GetDeviceAddress<T>(inputs, kIndex1);
+    T *x = GetDeviceAddress<T>(inputs, kIndex2);
+    T *batch_mean = GetDeviceAddress<T>(inputs, kIndex3);
+    T *batch_std = GetDeviceAddress<T>(inputs, kIndex4);
+    int *current_step = GetDeviceAddress<int>(inputs, kIndex5);
     int current_step_host[1];
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(current_step_host, current_step, sizeof(int), cudaMemcpyDeviceToHost,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memoy failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
-    T *dx = GetDeviceAddress<T>(outputs, 0);
+    T *dx = GetDeviceAddress<T>(outputs, kIndex0);
 
     if (!is_training_ || current_step_host[0] >= freeze_bn_) {
       ThrustFillWith(dx, batch_ * channel_ * height_ * width_, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -99,14 +100,14 @@ class BatchNormFoldGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    if (input_shape.size() != 4) {
+    if (input_shape.size() != kSize4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 4, but got "
                         << input_shape.size();
     }
-    batch_ = input_shape[0];
-    channel_ = input_shape[1];
-    height_ = input_shape[2];
-    width_ = input_shape[3];
+    batch_ = input_shape[kIndex0];
+    channel_ = input_shape[kIndex1];
+    height_ = input_shape[kIndex2];
+    width_ = input_shape[kIndex3];
 
     input_size_ = sizeof(T) * batch_ * channel_ * height_ * width_;
     channel_size_ = sizeof(T) * channel_;

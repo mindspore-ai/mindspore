@@ -21,6 +21,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/correction_mul_impl.cuh"
+#include "plugin/device/gpu/kernel/quant/quant_op_const.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,13 +36,13 @@ class CorrectionMulGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    auto *d_out = GetDeviceAddress<T>(inputs, 0);
-    auto *weight = GetDeviceAddress<T>(inputs, 1);
-    auto *gamma = GetDeviceAddress<T>(inputs, 2);
-    auto *running_std = GetDeviceAddress<T>(inputs, 3);
-    auto *d_weight = GetDeviceAddress<T>(outputs, 0);
-    auto *d_gamma = GetDeviceAddress<T>(outputs, 1);
-    auto *tmp = GetDeviceAddress<T>(workspace, 0);
+    auto *d_out = GetDeviceAddress<T>(inputs, kIndex0);
+    auto *weight = GetDeviceAddress<T>(inputs, kIndex1);
+    auto *gamma = GetDeviceAddress<T>(inputs, kIndex2);
+    auto *running_std = GetDeviceAddress<T>(inputs, kIndex3);
+    auto *d_weight = GetDeviceAddress<T>(outputs, kIndex0);
+    auto *d_gamma = GetDeviceAddress<T>(outputs, kIndex1);
+    auto *tmp = GetDeviceAddress<T>(workspace, kIndex0);
 
     CalCorrectionMul(d_out, gamma, running_std, batch_size_, channel_, height_, width_, d_weight,
                      reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -56,11 +57,11 @@ class CorrectionMulGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     InitResource();
 
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 4) {
+    if (input_num != kSize4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 4, but got " << input_num;
     }
 
-    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
     if (IsDynamic(shape_signed)) {
       return true;
     }
@@ -70,14 +71,14 @@ class CorrectionMulGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    if (input_shape.size() != 4) {
+    if (input_shape.size() != kSize4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 4, but got "
                         << input_shape.size();
     }
-    batch_size_ = input_shape[0];
-    channel_ = input_shape[1];
-    height_ = input_shape[2];
-    width_ = input_shape[3];
+    batch_size_ = input_shape[kIndex0];
+    channel_ = input_shape[kIndex1];
+    height_ = input_shape[kIndex2];
+    width_ = input_shape[kIndex3];
 
     InitSizeLists();
     return true;

@@ -15,6 +15,7 @@
  */
 #include "plugin/device/gpu/kernel/quant/fake_learned_scale_quant_perchannel_grad_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fake_learned_scale_quant_perchannel_impl.cuh"
+#include "plugin/device/gpu/kernel/quant/quant_op_const.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,12 +32,12 @@ bool FakeLearnedScaleQuantPerChannelGradGpuKernelMod::Init(const CNodePtr &kerne
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 4) {
+  if (input_num != kSize4) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 4, but got " << input_num;
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 2) {
+  if (output_num != kSize2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_num;
   }
 
@@ -50,7 +51,7 @@ bool FakeLearnedScaleQuantPerChannelGradGpuKernelMod::Init(const CNodePtr &kerne
   neg_trunc_ = GetValue<bool>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("neg_trunc"));
 
   // init size
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
   num_channels_ = LongToInt(input_shape[0]);
   for (size_t i = 0; i < input_shape.size(); ++i) {
     quant_num_ *= LongToInt(input_shape[i]);
@@ -74,14 +75,14 @@ void FakeLearnedScaleQuantPerChannelGradGpuKernelMod::InitSizeLists() {
 bool FakeLearnedScaleQuantPerChannelGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
                                                              const std::vector<AddressPtr> &workspace,
                                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  float *grad_input = GetDeviceAddress<float>(outputs, 0);
-  float *grad_alpha = GetDeviceAddress<float>(outputs, 1);
-  float *gradient = GetDeviceAddress<float>(inputs, 0);
-  float *input = GetDeviceAddress<float>(inputs, 1);
-  float *input_alpha = GetDeviceAddress<float>(inputs, 2);
-  float *input_quant_max = GetDeviceAddress<float>(inputs, 3);
-  float *input_div_alpha = GetDeviceAddress<float>(workspace, 0);
-  float *input_quant = GetDeviceAddress<float>(workspace, 1);
+  float *grad_input = GetDeviceAddress<float>(outputs, kIndex0);
+  float *grad_alpha = GetDeviceAddress<float>(outputs, kIndex1);
+  float *gradient = GetDeviceAddress<float>(inputs, kIndex0);
+  float *input = GetDeviceAddress<float>(inputs, kIndex1);
+  float *input_alpha = GetDeviceAddress<float>(inputs, kIndex2);
+  float *input_quant_max = GetDeviceAddress<float>(inputs, kIndex3);
+  float *input_div_alpha = GetDeviceAddress<float>(workspace, kIndex0);
+  float *input_quant = GetDeviceAddress<float>(workspace, kIndex1);
 
   MS_EXCEPTION_IF_NULL(grad_input);
   MS_EXCEPTION_IF_NULL(grad_alpha);
