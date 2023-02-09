@@ -1130,7 +1130,7 @@ std::vector<DShape> MatMulOp::InferShape(const NodePtrList &inputs, const DAttrs
   if (inputs[0]->shape.size() > kMatMulRank || inputs[1]->shape.size() > kMatMulRank) {
     NodePtrList new_inputs = inputs;
     std::vector<DShape> batches(inputs.size());
-    auto cut_batches = [&new_inputs, &batches](size_t i) -> void {
+    auto cut_batches = [&new_inputs, &batches, kMatMulRank](size_t i) -> void {
       const auto &shape_i = new_inputs[i]->shape;
       if (shape_i.size() > kMatMulRank) {
         DShape real_shape(shape_i.cend() - kMatMulRank, shape_i.cend());

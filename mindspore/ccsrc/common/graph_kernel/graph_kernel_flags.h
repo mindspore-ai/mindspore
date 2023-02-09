@@ -44,8 +44,12 @@ class BACKEND_EXPORT GraphKernelFlags {
   // Dump all flags to json-format string
   std::string DumpAllFlags() const;
 
+#ifdef ENABLE_AKG
   // Check whether graph_kernel is enabled
   bool IsEnableGraphKernel() const { return opt_level > OptLevel_0; }
+#else
+  bool IsEnableGraphKernel() const { return false; }
+#endif
 
   // Check whether GraphKernel supports current situation.
   void CheckSupport() const;

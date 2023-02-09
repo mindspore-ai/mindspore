@@ -18,7 +18,7 @@
 #include <memory>
 #include "common/graph_kernel/core/expander.h"
 #include "ir/func_graph.h"
-#include "include/common/visible.h"
+#include "include/backend/visible.h"
 #include <nlohmann/json.hpp>
 
 namespace mindspore::graphkernel {
@@ -73,7 +73,7 @@ class SetDynamicShapeAttrDeco : public ExpanderDecorator {
   AnfNodePtr Run(const AnfNodePtr &node) override;
 };
 
-class COMMON_EXPORT AttrToInputDeco : public ExpanderDecorator {
+class BACKEND_EXPORT AttrToInputDeco : public ExpanderDecorator {
  public:
   explicit AttrToInputDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
   ~AttrToInputDeco() override = default;
@@ -86,23 +86,23 @@ class COMMON_EXPORT AttrToInputDeco : public ExpanderDecorator {
 /**
  * Get the Expander which is used to expand a cnode to a funcgraph which composite same function with core ops.
  */
-COMMON_EXPORT ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract = true);
+BACKEND_EXPORT ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract = true);
 
 /**
  * Inline the expanded func graph to main graph.
  */
-COMMON_EXPORT void InlineExpandFuncGraph(const AnfNodePtr &expanding_node, const FuncGraphPtr &expanded_graph);
+BACKEND_EXPORT void InlineExpandFuncGraph(const AnfNodePtr &expanding_node, const FuncGraphPtr &expanded_graph);
 
 /**
  * Try Expand cnode with check func.
  */
-COMMON_EXPORT AnfNodePtr TryExpandCNode(const AnfNodePtr &node,
-                                        const std::function<bool(const CNodePtr &kernel_node)> &func);
+BACKEND_EXPORT AnfNodePtr TryExpandCNode(const AnfNodePtr &node,
+                                         const std::function<bool(const CNodePtr &kernel_node)> &func);
 
 /**
  * Check if node can be expanded fallback.
  */
-COMMON_EXPORT bool CanExpandFallback(const AnfNodePtr &node);
+BACKEND_EXPORT bool CanExpandFallback(const AnfNodePtr &node);
 
 bool IsComplexOp(const AnfNodePtr &node);
 }  // namespace mindspore::graphkernel

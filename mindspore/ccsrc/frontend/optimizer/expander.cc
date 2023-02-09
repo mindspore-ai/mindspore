@@ -115,7 +115,6 @@ bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
   return c.Run(graph);
 }
 
-#ifdef ENABLE_AKG
 using graphkernel::ExpanderDecorator;
 using graphkernel::ExpanderPtr;
 class PrimToPrimPyDecorator : public ExpanderDecorator {
@@ -139,10 +138,8 @@ class PrimToPrimPyDecorator : public ExpanderDecorator {
     return new_cnode;
   }
 };
-#endif
 
 AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node) {
-#ifdef ENABLE_AKG
   if (!graphkernel::CanExpandFallback(node)) {
     return nullptr;
   }
@@ -179,9 +176,6 @@ AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node) {
   }
 #endif
   return new_node;
-#else
-  return nullptr;
-#endif
 }
 }  // namespace opt
 }  // namespace mindspore

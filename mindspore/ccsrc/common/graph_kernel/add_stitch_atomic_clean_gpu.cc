@@ -75,9 +75,8 @@ CNodePtr StitchAtomicCleanInserter::CreateAssignNode(const FuncGraphPtr &sub_gra
   // add assign
   AnfNodePtr out_node = info.op_node;  // Use result data itself
 
-  auto assign_node =
-    CreateCNode({NewValueNode(prim::kPrimAssign), new_parameter, out_node}, sub_graph,
-                {.format = GetFormat(out_node), .shape = GetShape(out_node), .type = GetType(out_node)});
+  auto assign_node = CreateCNode({NewValueNode(prim::kPrimAssign), new_parameter, out_node}, sub_graph,
+                                 {GetFormat(out_node), GetShape(out_node), GetType(out_node)});
   common::AnfAlgo::EraseNodeAttr(kAttrStitch, out_node);
   SetNodeAttrSafely(kAttrStitch, MakeValue("common"), assign_node);
   return assign_node;

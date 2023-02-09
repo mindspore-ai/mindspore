@@ -227,13 +227,11 @@ void GPUSession::RunOpHardwareOptimize(const std::shared_ptr<KernelGraph> &kerne
 }
 
 void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
-#ifdef ENABLE_AKG
   if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     return;
   }
   graphkernel::GraphKernelOptimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
-#endif
 }
 
 void GPUSession::AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph) {

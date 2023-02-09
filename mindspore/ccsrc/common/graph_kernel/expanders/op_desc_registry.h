@@ -22,10 +22,10 @@
 
 #include "utils/hash_map.h"
 #include "common/graph_kernel/expanders/utils.h"
-#include "include/common/visible.h"
+#include "include/backend/visible.h"
 
 namespace mindspore::graphkernel::expanders {
-class COMMON_EXPORT OpDescFactory {
+class BACKEND_EXPORT OpDescFactory {
  public:
   static OpDescFactory &Instance() {
     static OpDescFactory instance = OpDescFactory();

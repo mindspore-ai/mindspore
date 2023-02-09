@@ -21,7 +21,7 @@
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 
 namespace mindspore::graphkernel {
-class COMMON_EXPORT CallbackImpl : public Callback {
+class BACKEND_EXPORT CallbackImpl : public Callback {
  public:
   virtual ~CallbackImpl() = default;
   ShapeVector GetInputShape(const AnfNodePtr &node, size_t i) override;
@@ -45,7 +45,7 @@ class COMMON_EXPORT CallbackImpl : public Callback {
   void CollectInputTypesAndFormats(const AnfNodePtr &node, std::vector<TypeId> *input_types,
                                    std::vector<std::string> *input_formats, bool is_basic_node = false);
 };
-class COMMON_EXPORT CallbackImplWithInferShape : public CallbackImpl {
+class BACKEND_EXPORT CallbackImplWithInferShape : public CallbackImpl {
  public:
   ShapeVector GetInputShape(const AnfNodePtr &node, size_t i) override;
   ShapeVector GetOutputShape(const AnfNodePtr &node, size_t i) override;

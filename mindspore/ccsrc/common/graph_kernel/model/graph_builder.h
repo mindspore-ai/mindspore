@@ -104,13 +104,24 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
       case kNumberTypeBool:
         const_input = std::make_shared<tensor::Tensor>(static_cast<bool>(input), TypeIdToType(type_id));
         break;
-      case kNumberTypeInt ... kNumberTypeInt64:
+      case kNumberTypeInt:
+      case kNumberTypeInt8:
+      case kNumberTypeInt16:
+      case kNumberTypeInt32:
+      case kNumberTypeInt64:
         const_input = std::make_shared<tensor::Tensor>(static_cast<int64_t>(input), TypeIdToType(type_id));
         break;
-      case kNumberTypeUInt ... kNumberTypeUInt64:
+      case kNumberTypeUInt:
+      case kNumberTypeUInt8:
+      case kNumberTypeUInt16:
+      case kNumberTypeUInt32:
+      case kNumberTypeUInt64:
         const_input = std::make_shared<tensor::Tensor>(static_cast<uint64_t>(input), TypeIdToType(type_id));
         break;
-      case kNumberTypeFloat ... kNumberTypeFloat64:
+      case kNumberTypeFloat:
+      case kNumberTypeFloat16:
+      case kNumberTypeFloat32:
+      case kNumberTypeFloat64:
         const_input = std::make_shared<tensor::Tensor>(static_cast<double>(input), TypeIdToType(type_id));
         break;
       default:
