@@ -283,6 +283,9 @@ class OpenCLKernel : public LiteKernel {
   int PreProcess() override;
   int ReSize() override;
   int Run() override { return RET_ERROR; }
+  int PostProcess() override { return RET_OK; }
+
+  bool MallocDataDone();
 
   virtual int CheckSpecs();
   virtual int CheckSpecsWithoutShape() { return RET_OK; }
