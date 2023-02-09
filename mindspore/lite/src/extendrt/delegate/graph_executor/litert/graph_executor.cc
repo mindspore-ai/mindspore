@@ -122,6 +122,10 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
     MS_LOG(INFO) << "the graph is the same as the last time. We do not need to convert, and we can directly use the "
                     "cached model buf.";
   }
+  if (lite_session_ == nullptr) {
+    MS_LOG(ERROR) << "lite session is nullptr.";
+    return false;
+  }
   int ret = lite_session_->LoadModelAndCompileByBuf(reinterpret_cast<char *>(fb_model_buf_), kMindIR_Lite, data_size,
                                                     helpers_.get());
   delete meta_graph;
