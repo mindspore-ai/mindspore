@@ -575,7 +575,7 @@ class FixedSparseAttention(nn.Cell):
           queries to query the context.
         - **k** (Tensor) - Tensor key ( `mstype.fp16` [batch_size, seq_length, hidden_size]): Sequence of
           queries to query the context.
-        - **v** (Tensor) - Tensor value  `mstype.fp16` [batch size, sequence length, Embedding Size]):
+        - **v** (Tensor) - Tensor value ( `mstype.fp16` [batch size, sequence length, Embedding Size]):
           Sequence of queries to query the context.
         - **attention_mask** (Tensor) - Float Tensor the mask of ( `mstype.fp32`,  `mstype.fp16`
           [batch_size, seq_length, seq_length]): Lower triangular matrix to pass masked information.
