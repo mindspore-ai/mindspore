@@ -28,7 +28,8 @@ abstract::ShapePtr AvgPoolGradV1InferShape(const PrimitivePtr &primitive,
   std::vector<int64_t> kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
 
   auto pad_mode_value = (primitive->GetAttr(kPadMode));
-  auto pad_mode = PadMode(GetValue<int64_t>(pad_mode_value));
+  int64_t pad_mode;
+  CheckAndConvertUtils::GetPadModEnumValue(pad_mode_value, &pad_mode, true);
   if (format == NHWC) {
     std::vector<int64_t> ksize_NHWC = {kernel_size[0], kernel_size[1], kernel_size[2], kernel_size[3]};
     (void)primitive->AddAttr("ksize", MakeValue(ksize_NHWC));
@@ -46,16 +47,10 @@ abstract::ShapePtr AvgPoolGradV1InferShape(const PrimitivePtr &primitive,
     (void)primitive->AddAttr("padding", MakeValue("SAME"));
   }
 
-  auto orig_input_shape = input_args[0]->BuildValue();
-  auto orig_input_shape_tensor = orig_input_shape->cast<tensor::TensorPtr>();
-  auto orig_input_shape_tensor_data_ptr = orig_input_shape_tensor->data_c();
-  int32_t *orig_input_shape_ptr = static_cast<int32_t *>(orig_input_shape_tensor_data_ptr);
-
-  std::vector<int64_t> orig_shape = {orig_input_shape_ptr[0], orig_input_shape_ptr[1], orig_input_shape_ptr[2],
-                                     orig_input_shape_ptr[3]};
-
+  auto orig_shape = GetShapeValue(primitive, input_args[0]);
   return std::make_shared<abstract::Shape>(orig_shape);
 }
+
 TypePtr AvgPoolGradV1InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto name = prim->name();
   auto orig_input_shape_type = input_args[0]->BuildType();

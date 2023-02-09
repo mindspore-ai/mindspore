@@ -104,6 +104,7 @@ PrimShapeDependMap &GetInferDependsMap() {
   static const auto &kMirrorPad = prim::kPrimMirrorPad->name();
   static const auto &kAdaptiveAvgPool3D = prim::kPrimAdaptiveAvgPool3D->name();
   static const auto &kAdaptiveAvgPool3DGrad = prim::kPrimAdaptiveAvgPool3DGrad->name();
+  static const auto &kAvgPoolGradV1 = prim::kPrimAvgPoolGradV1->name();
   static const auto &kOneHot = prim::kPrimOneHot->name();
   static const auto &kDropoutGenMask = prim::kPrimDropoutGenMask->name();
   static const auto &kStridedSlice = prim::kPrimStridedSlice->name();
@@ -198,6 +199,7 @@ PrimShapeDependMap &GetInferDependsMap() {
                                     {kConv2DBackpropFilter, ShapeSet{2}},
                                     {kConv2DBackpropInput, ShapeSet{2}},
                                     {kCol2Im, ShapeSet{1}},
+                                    {kAvgPoolGradV1, ShapeSet{0}},
                                     {kOneHot, ShapeSet{1, 3}},
                                     {kDropoutGenMask, ShapeSet{0}},
                                     {prim::kStatelessDropOutGenMask, ShapeSet{0}},

@@ -46,6 +46,7 @@ constexpr auto kShapes = "shapes";
 constexpr auto kTypes = "types";
 constexpr auto kQueueName = "queue_name";
 constexpr auto kNameRangeV2 = "RangeV2";
+constexpr auto kSparseTensorDenseMatmul = "SparseTensorDenseMatmul";
 constexpr auto kSeed = "seed";
 constexpr auto kSeed0 = "Seed0";
 constexpr auto kSeed1 = "Seed1";
@@ -322,6 +323,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kUpsampleNearest3DGrad, "UpsampleNearest3dGrad"},
   {kNameRangeV2, "Range"},
   {kReLUV3, "Relu"},
+  {kSparseTensorDenseMatmul, "SparseTensorDenseMatMul"},
   {kFillV2, "Fill"},
   {kUpsampleTrilinear3D, "UpsampleTrilinear3d"},
   {kUpsampleTrilinear3DGrad, "UpsampleTrilinear3dGrad"},
