@@ -8666,10 +8666,6 @@ class SparseApplyCenteredRMSProp(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> import mindspore.common.dtype as mstype
-        >>> import mindspore.ops.operations.nn_ops as nn_ops
         >>> var = Tensor(np.array([[0.6, 0.4], [0.1, 0.5]]).astype(np.float32))
         >>> mg = Tensor(np.array([[0.1, 0.3], [0.1, 0.5]]).astype(np.float32))
         >>> ms = Tensor(np.array([[0.2, 0.1], [0.1, 0.2]]).astype(np.float32))
@@ -9760,10 +9756,6 @@ class SparseApplyAdagradDA(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> import mindspore.common.dtype as mstype
-        >>> import mindspore.ops.operations.nn_ops as nn_ops
         >>> var = Parameter(Tensor(np.array([[1,2], [1,2]]).astype(np.float32)))
         >>> grad_accum = Parameter(Tensor(np.array([[2,1], [3,1]]).astype(np.float32)))
         >>> grad_square_accum = Parameter(Tensor(np.array([[4,1], [5,1]]).astype(np.float32)))
