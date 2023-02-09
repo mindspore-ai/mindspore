@@ -36,6 +36,11 @@ abstract::ShapePtr ChannelShuffleInferShape(const PrimitivePtr &primitive,
   int64_t group = GetValue<int64_t>(primitive->GetAttr("group"));
   auto input_shape_ = shape_map[kShape];
   auto dims = input_shape_.size();
+
+  if (IsDynamic(input_shape_)) {
+    return std::make_shared<abstract::Shape>(input_shape_);
+  }
+
   if (dims <= min_dims) {
     MS_EXCEPTION(TypeError) << "For ChannelShuffle, expect input with > 3 dims, "
                             << "but got " << input_shape_.size() << ".";
