@@ -63,6 +63,7 @@ class MedianCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<M
   size_t input_num_elements_;
   size_t output_num_elements_;
   size_t input_dim_;
+  bool is_null_input_;
   template <typename T>
   bool GlobalMedianCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>

@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/median_cpu_kernel.h"
 
+#include <functional>
 #include <algorithm>
 #include <type_traits>
 
@@ -57,6 +58,16 @@ int MedianCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
   input_dim_ = input_shape_.size();
   input_num_elements_ = 1;
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  std::vector<size_t> src_shape;
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(src_shape), LongToSize);
+  size_t input_element_num = std::accumulate(src_shape.begin(), src_shape.end(), size_t(1), std::multiplies<size_t>());
+  is_null_input_ = (input_element_num == 0);
+  if (is_null_input_) {
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', input tensor[0] got 'shapes[" << kIndex0 << "]' is "
+                    << input_element_num;
+    return KRET_OK;
+  }
   if (global_median_) {
     if (axis_ != 0) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', when 'global_median' is True, the 'axis' must be 0, but got "
@@ -107,6 +118,9 @@ const std::vector<std::pair<KernelAttr, MedianCpuKernelMod::KernelRunFunc>> &Med
 template <typename T>
 bool MedianCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) {
+  if (is_null_input_) {
+    return true;
+  }
   if (global_median_ == false) {
     return MedianCompute<T>(inputs, outputs);
   } else {
