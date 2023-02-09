@@ -28,7 +28,7 @@
 namespace mindspore::lite::micro {
 class CoderContext {
  public:
-  CoderContext();
+  explicit CoderContext(int model_index);
 
   ~CoderContext() = default;
 
@@ -103,6 +103,8 @@ class CoderContext {
 
   std::vector<std::string> GetInitWeightSizeCode() const;
 
+  int GetCurModelIndex() { return model_index_; }
+
   std::set<std::string> c_files() const { return c_files_; }
   void set_c_files(const std::set<std::string> &files) { c_files_.insert(files.begin(), files.end()); }
 
@@ -153,6 +155,7 @@ class CoderContext {
   std::vector<std::string> after_inference_code_blocks_;
   std::vector<std::string> weight_buffer_size_code_blocks_;
   std::size_t weight_buffer_size_ = 0;
+  int model_index_;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_CONTEXT_H_

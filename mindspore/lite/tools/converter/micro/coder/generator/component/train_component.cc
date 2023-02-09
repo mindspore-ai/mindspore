@@ -49,8 +49,8 @@ MSStatus MSModelSetTrainMode(MSModelHandle model, bool train) {
     return kMSStatusLiteNullptr;
   }
   micro_model->train_mode = train;
-  MSTensorHandleArrayDestroy(micro_model->outputs);
 )RAW";
+  ofs << "MSTensorHandleArrayDestroy(micro_model->outputs);\n";
   ofs << "  if (train) {\n"
       << "    MSTensorHandleArray model_outputs;\n"
       << "    model_outputs.handle_num = " << train_outputs_size << ";\n"
@@ -95,9 +95,9 @@ MSStatus MSModelRunStep(MSModelHandle model, const MSKernelCallBackC before, con
       << "  for (int i = 0; i < " << inputs_size << "; i++) {\n"
       << "    inputs_data_array[i] = ((MicroTensor *)(micro_model->inputs.handle_list[i]))->data;\n"
       << "  }\n"
-      << "  SetInputs(inputs_data_array, " << inputs_size << ");\n"
+      << "  SetInputs" << ctx->GetCurModelIndex() << "(inputs_data_array, " << inputs_size << ");\n"
       << "\n"
-      << "  Execute(train_mode);\n\n"
+      << "  Execute" << ctx->GetCurModelIndex() << "(train_mode);\n\n"
       << "  // copy data to outputs handle\n"
       << "  if (train_mode) {\n"
       << "    if (micro_model->outputs.handle_num != " << train_outputs_size << ") {\n"
@@ -107,7 +107,8 @@ MSStatus MSModelRunStep(MSModelHandle model, const MSKernelCallBackC before, con
       << "    for (int i = 0; i < " << train_outputs_size << "; i++) {\n"
       << "      outputs_data_array[i] = MSTensorGetMutableData(micro_model->outputs.handle_list[i]);\n"
       << "    }\n"
-      << "    if (CopyOutputsDataWithFlag(outputs_data_array, " << train_outputs_size << ", true) != RET_OK) {\n"
+      << "    if (CopyOutputsDataWithFlag" << ctx->GetCurModelIndex() << "(outputs_data_array, " << train_outputs_size
+      << ", true) != RET_OK) {\n"
       << "      return kMSStatusLiteError;\n"
       << "    }\n"
       << "  } else {\n"
@@ -118,7 +119,8 @@ MSStatus MSModelRunStep(MSModelHandle model, const MSKernelCallBackC before, con
       << "    for (int i = 0; i < " << eval_outputs_size << "; i++) {\n"
       << "      outputs_data_array[i] = MSTensorGetMutableData(micro_model->outputs.handle_list[i]);\n"
       << "    }\n"
-      << "    if (CopyOutputsDataWithFlag(outputs_data_array, " << eval_outputs_size << ", false) != RET_OK) {\n"
+      << "    if (CopyOutputsDataWithFlag" << ctx->GetCurModelIndex() << "(outputs_data_array, " << eval_outputs_size
+      << ", false) != RET_OK) {\n"
       << "      return kMSStatusLiteError;\n"
       << "    }\n"
       << "  }\n"
@@ -126,17 +128,16 @@ MSStatus MSModelRunStep(MSModelHandle model, const MSKernelCallBackC before, con
       << "}\n\n";
 }
 
-void CodeMSModelExportWeight(std::ofstream &ofs) {
-  ofs << R"RAW(
-MSStatus MSModelExportWeight(MSModelHandle model, const char *export_path) {
-  int ret = Export(export_path);
-  return ret == RET_OK ? kMSStatusSuccess : kMSStatusLiteError;
-})RAW";
-  ofs << "\n\n";
+void CodeMSModelExportWeight(std::ofstream &ofs, const int model_index) {
+  ofs << "MSStatus MSModelExportWeight(MSModelHandle model, const char *export_path) {\n"
+      << "int ret = Export" << model_index << "(export_path);\n"
+      << "return ret == RET_OK ? kMSStatusSuccess : kMSStatusLiteError;\n"
+      << "}\n"
+      << "\n\n";
 }
 
 void CodeWeightInitFuncForTrain(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
-  ofs << "static size_t PackWeightSize() {\n";
+  ofs << "static size_t PackWeightSize" << ctx->GetCurModelIndex() << "() {\n";
   ofs << "  size_t w_size = 0;\n";
   for (const auto &block : ctx->GetInitWeightSizeCode()) {
     ofs << "  " << block;
@@ -168,12 +169,12 @@ void CodeWeightInitFuncForTrain(std::ofstream &ofs, const std::unique_ptr<CoderC
   ofs << "\n";
 
   // generate weight init function
-  ofs << "int Init(void *weight_buffer, int weight_size) {\n"
+  ofs << "int Init" << ctx->GetCurModelIndex() << "(void *weight_buffer, int weight_size) {\n"
       << "  if (weight_buffer == NULL) {\n"
       << "    return RET_ERROR;\n"
       << "  }\n";
 
-  ofs << "  size_t " << ctx->weight_size_name() << " = PackWeightSize();\n";
+  ofs << "  size_t " << ctx->weight_size_name() << " = PackWeightSize" << ctx->GetCurModelIndex() << "();\n";
 
   ofs << "  for(int i = 0; i < " << params_num << "; ++i) {\n"
       << "    if (model_params[i].offset + model_params[i].size > weight_size) {\n"
@@ -198,8 +199,8 @@ void CodeWeightInitFuncForTrain(std::ofstream &ofs, const std::unique_ptr<CoderC
   ofs << "}\n\n";
 }
 
-void CodeCopyTrainOutputsState(std::ofstream &ofs) {
-  ofs << "int CopyOutputsDataWithFlag(void **outputs, int num, bool train_mode);\n\n";
+void CodeCopyTrainOutputsState(std::ofstream &ofs, const int model_index) {
+  ofs << "int CopyOutputsDataWithFlag" << model_index << "(void **outputs, int num, bool train_mode);\n\n";
 }
 
 void CodeCopyTrainOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
@@ -209,7 +210,7 @@ void CodeCopyTrainOutputsImplement(std::ofstream &ofs, const std::unique_ptr<Cod
   size_t train_outputs_size = train_outputs.size();
   size_t eval_outputs_size = eval_outputs.size();
 
-  ofs << "int CopyOutputsDataWithFlag(void **outputs, int num, bool train_mode) {\n"
+  ofs << "int CopyOutputsDataWithFlag" << ctx->GetCurModelIndex() << "(void **outputs, int num, bool train_mode) {\n"
       << "  if (outputs == NULL) {\n"
       << "    return RET_ERROR;\n"
       << "  }\n"

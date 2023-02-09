@@ -32,27 +32,27 @@ void CodeMSModelCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<Code
 void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
 void CodeMSTensorHandleArrayDestroyState(std::ofstream &ofs, const Configurator &config);
 void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
-void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config);
-void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config);
+void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const Configurator *config);
+void CodeMSModelDestory(std::ofstream &ofs, const int model_index, const Configurator *config);
 void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
-void CodeCopyOutputsState(std::ofstream &ofs);
+void CodeCopyOutputsState(std::ofstream &ofs, const int model_index);
 void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
 void CodeGlobalCodeBlocks(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
-void CodeInputState(std::ofstream &ofs);
+void CodeInputState(std::ofstream &ofs, const int model_index);
 void CodeInputImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
-void CodeGraphQuantArgsState(std::ofstream &ofs);
+void CodeGraphQuantArgsState(std::ofstream &ofs, const int model_index);
 void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
-void CodeManageResourceState(std::ofstream &ofs);
+void CodeManageResourceState(std::ofstream &ofs, const int model_index);
 void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
 void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx,
                                const Configurator &config);
 
-void CodeExecuteState(std::ofstream &ofs);
+void CodeExecuteState(std::ofstream &ofs, const int model_index);
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_COMMON_COMPONENT_H_

@@ -33,24 +33,6 @@ typedef struct {
   MSTensorHandleArray outputs;
 } MicroModel;
 )RAW";
-const char model_runtime_malloc_source[] = R"RAW(
-MSModelHandle MSModelCreate() {
-  MicroModel *micro_model = (MicroModel *)malloc(sizeof(MicroModel));
-  if (micro_model == NULL) {
-    return NULL;
-  }
-  int buffer_size = GetBufferSize();
-  void *runtime_buffer = malloc(buffer_size);
-  if (runtime_buffer == NULL) {
-    return NULL;
-  }
-  micro_model->runtime_buffer = runtime_buffer;
-  int ret = SetBuffer(runtime_buffer);
-  if (ret != kMSStatusSuccess) {
-    return NULL;
-  }
-
-)RAW";
 
 const char handle_array_destroy_state[] = R"RAW(
 void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs);
@@ -97,12 +79,8 @@ const char cortex_set_workspace[] = R"RAW(
     return;
   }
 
-  micro_model->runtime_buffer = workspace;
-  int buffer_size = GetBufferSize();
-  char* buf = workspace;
-  SetBuffer(buf);
-  buffer_size = UP_ROUND(buffer_size, 4);
 )RAW";
+
 void CodeMSModelCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx,
                                   const Configurator &config) {
   if (config.target() == kCortex_M) {
@@ -132,6 +110,15 @@ void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderCont
   ofs << "void MSModelSetWorkspace(MSModelHandle model, void *workspace, size_t workspace_size) {\n";
   if (config.target() == kCortex_M) {
     ofs << cortex_set_workspace;
+    ofs << "  micro_model->runtime_buffer = workspace;\n"
+           "  int buffer_size = GetBufferSize"
+        << ctx->GetCurModelIndex()
+        << "();\n"
+           "  char* buf = workspace;\n"
+           "  SetBuffer"
+        << ctx->GetCurModelIndex()
+        << "(buf);\n"
+           "  buffer_size = UP_ROUND(buffer_size, 4);\n";
     ofs << "  " << ctx->weight_name() << " = (uint8_t *)&buf[buffer_size];\n";
     ofs << R"RAW(
   buffer_size += WEIGHT_BUF_SIZE;
@@ -210,7 +197,25 @@ void CodeMSTensorHandleArrayDestroyState(std::ofstream &ofs, const Configurator 
 void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
   ofs << micro_model_define_source;
   if (config.target() != kCortex_M) {
-    ofs << model_runtime_malloc_source;
+    ofs << R"RAW(
+MSModelHandle MSModelCreate() {
+  MicroModel *micro_model = (MicroModel *)malloc(sizeof(MicroModel));
+  if (micro_model == NULL) {
+    return NULL;
+  }
+)RAW";
+    ofs << "int buffer_size = GetBufferSize" << ctx->GetCurModelIndex() << "();\n";
+    ofs << R"RAW(
+  void *runtime_buffer = malloc(buffer_size);
+  if (runtime_buffer == NULL) {
+    return NULL;
+  }
+  micro_model->runtime_buffer = runtime_buffer;
+)RAW";
+    ofs << "  int ret = SetBuffer" << ctx->GetCurModelIndex() << "(runtime_buffer);\n"
+        << "  if (ret != kMSStatusSuccess) {\n"
+        << "    return NULL;\n"
+        << "  }\n";
     if (config.code_mode() == CodeMode::Inference) {
       ofs << "  micro_model->train_mode = false;\n";
     } else if (config.code_mode() == CodeMode::Train) {
@@ -277,7 +282,7 @@ void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &
   ofs << "}\n\n";
 }
 
-void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
+void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const Configurator *config) {
   ofs
     << "MSStatus MSModelBuild(MSModelHandle model, const void *model_data, size_t data_size, MSModelType model_type,\n"
        "                      const MSContextHandle model_context) {\n"
@@ -292,9 +297,9 @@ void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
        "  }\n";
   ofs << "  int ret = RET_OK;\n";
   if (config->target() != kCortex_M) {
-    ofs << "  ret = Init((void*)model_data, data_size);\n";
+    ofs << "  ret = Init" << model_index << "((void*)model_data, data_size);\n";
   } else {
-    ofs << "  ret = Init(NULL, 0);\n";
+    ofs << "  ret = Init" << model_index << "(NULL, 0);\n";
   }
   if (config->support_parallel()) {
     ofs << "  MicroContext *micro_context = (MicroContext *)model_context;\n"
@@ -311,7 +316,7 @@ void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
   ofs << "}\n";
 }
 
-void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config) {
+void CodeMSModelDestory(std::ofstream &ofs, const int model_index, const Configurator *config) {
   if (config->target() != kCortex_M) {
     ofs << handle_array_destroy;
   }
@@ -366,26 +371,29 @@ MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, M
   ofs << "  for (int i = 0; i < " << inputs_num << "; i++) {\n";
   ofs << "    inputs_data_array[i] = ((MicroTensor *)inputs.handle_list[i])->data;\n";
   ofs << "  }\n";
-  ofs << "  SetInputs(inputs_data_array, " << inputs_num << ");\n";
+  ofs << "  SetInputs" << ctx->GetCurModelIndex() << "(inputs_data_array, " << inputs_num << ");\n";
   ofs << "\n";
-  ofs << "  Execute(micro_model->train_mode);\n";
+  ofs << "  Execute" << ctx->GetCurModelIndex() << "(micro_model->train_mode);\n";
   ofs << "\n";
   ofs << "  void *outputs_data_array[" << outputs_num << "];\n";
   ofs << "  for (int i = 0; i < " << outputs_num << "; i++) {\n";
   ofs << "    outputs_data_array[i] = MSTensorGetMutableData(outputs->handle_list[i]);\n";
   ofs << "  }\n";
-  ofs << "  CopyOutputsData(outputs_data_array, " << outputs_num << ");\n";
+  ofs << "  CopyOutputsData" << ctx->GetCurModelIndex() << "(outputs_data_array, " << outputs_num << ");\n";
   ofs << "  return kMSStatusSuccess;\n";
   ofs << "}\n\n";
 }
 
-void CodeCopyOutputsState(std::ofstream &ofs) { ofs << "int CopyOutputsData(void **outputs, int num);\n\n"; }
+void CodeCopyOutputsState(std::ofstream &ofs, const int model_index) {
+  ofs << "int CopyOutputsData" << model_index << "(void **outputs, int num);\n\n";
+}
 
 void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   auto tensor_map = ctx->tensors_map();
   std::vector<Tensor *> outputs = ctx->graph_outputs();
   size_t outputs_size = outputs.size();
-  ofs << "int CopyOutputsData(void **outputs, int num) {\n"
+  ofs << "int CopyOutputsData" << ctx->GetCurModelIndex()
+      << "(void **outputs, int num) {\n"
          "  if (outputs == NULL) {\n"
          "    return RET_ERROR;\n"
          "  }\n"
@@ -407,7 +415,7 @@ void CodeGlobalCodeBlocks(std::ofstream &ofs, const std::unique_ptr<CoderContext
   }
 }
 
-void CodeInputState(std::ofstream &ofs) {
+void CodeInputState(std::ofstream &ofs, const int model_index) {
   ofs << "/**\n"
       << "  * set input tensors\n"
       << "  * @param inputs, the input data ptr's array of the model, the tensors' count of input may be greater than "
@@ -415,7 +423,7 @@ void CodeInputState(std::ofstream &ofs) {
       << "  * @param num, the input data's number of the model.\n"
       << "  **/\n"
       << "int "
-      << "SetInputs(const void **inputs, int num);\n\n";
+      << "SetInputs" << model_index << "(const void **inputs, int num);\n\n";
 }
 
 void CodeInputImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
@@ -426,7 +434,7 @@ void CodeInputImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
   }
   size_t size = inputs.size();
   ofs << "int "
-      << "SetInputs(const void **inputs, int num) {\n"
+      << "SetInputs" << ctx->GetCurModelIndex() << "(const void **inputs, int num) {\n"
       << "  if (inputs == NULL) {\n"
          "    return RET_ERROR;\n"
          "  }\n"
@@ -439,12 +447,12 @@ void CodeInputImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
   ofs << "  return RET_OK;\n}\n";
 }
 
-void CodeGraphQuantArgsState(std::ofstream &ofs) {
+void CodeGraphQuantArgsState(std::ofstream &ofs, const int model_index) {
   ofs << "/**\n"
       << "  * get input and output QuantArgs of the model \n"
       << "  **/\n"
       << "GraphQuantArgs "
-      << "GetInOutQuantArgs();\n\n";
+      << "GetInOutQuantArgs" << model_index << "();\n\n";
 }
 
 void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
@@ -469,40 +477,40 @@ void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::unique_ptr<Coder
     return;
   }
   ofs << "GraphQuantArgs "
-      << "GetInOutQuantArgs() {\n"
+      << "GetInOutQuantArgs" << ctx->GetCurModelIndex() << "() {\n"
       << "\t\tGraphQuantArgs quan_args = { " << in_quant_args.at(0).scale << ", " << out_quant_args.at(0).scale << ", "
       << in_quant_args.at(0).zeroPoint << ", " << out_quant_args.at(0).zeroPoint << "};\n"
       << "\t\treturn quan_args;\n"
       << "}\n";
 }
 
-void CodeManageResourceState(std::ofstream &ofs) {
+void CodeManageResourceState(std::ofstream &ofs, const int model_index) {
   ofs << "/**\n"
       << "  * get the memory space size of the inference.\n"
       << "  **/\n"
       << "int "
-      << "GetBufferSize();\n";
+      << "GetBufferSize" << model_index << "();\n";
 
   ofs << "/**\n"
       << "  * set the memory space for the inference\n"
       << "  **/\n"
       << "int "
-      << "SetBuffer(void *buffer);\n\n";
+      << "SetBuffer" << model_index << "(void *buffer);\n\n";
 
   ofs << "/**\n"
       << "  * free the memory of packed weights, and set the membuf buffer and input address to NULL\n"
       << "  **/\n"
       << "void "
-      << "FreeResource();\n";
+      << "FreeResource" << model_index << "();\n";
 }
 
 void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   ofs << "int "
-      << "GetBufferSize() {\n"
+      << "GetBufferSize" << ctx->GetCurModelIndex() << "() {\n"
       << "  return " << ctx->total_buffer_size() << ";\n"
       << "}\n";
   ofs << "int "
-      << "SetBuffer( void *buffer) {\n";
+      << "SetBuffer" << ctx->GetCurModelIndex() << "( void *buffer) {\n";
   ofs << "  " << ctx->buffer_name() << " = (unsigned char *)buffer;\n"
       << "  return RET_OK;\n"
          "}\n";
@@ -511,7 +519,7 @@ void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
 void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx,
                                const Configurator &config) {
   ofs << "void "
-      << "FreeResource() {\n";
+      << "FreeResource" << ctx->GetCurModelIndex() << "() {\n";
   if (config.target() != kCortex_M) {
     ofs << "  " << ctx->buffer_name() << "= NULL;\n";
     std::vector<Tensor *> inputs = ctx->graph_inputs();
@@ -540,11 +548,11 @@ void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
   ofs << "}\n";
 }
 
-void CodeExecuteState(std::ofstream &ofs) {
+void CodeExecuteState(std::ofstream &ofs, const int model_index) {
   ofs << "/**\n"
       << "  * net execute function\n"
       << "  **/\n"
       << "void "
-      << "Execute(bool train_mode);\n\n";
+      << "Execute" << model_index << "(bool train_mode);\n\n";
 }
 }  // namespace mindspore::lite::micro

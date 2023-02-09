@@ -28,9 +28,9 @@
 namespace mindspore::lite::micro {
 void CodeMSModelSetTrainMode(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 void CodeMSModelRunStep(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
-void CodeMSModelExportWeight(std::ofstream &ofs);
+void CodeMSModelExportWeight(std::ofstream &ofs, const int model_index);
 void CodeWeightInitFuncForTrain(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
-void CodeCopyTrainOutputsState(std::ofstream &ofs);
+void CodeCopyTrainOutputsState(std::ofstream &ofs, const int model_index);
 void CodeCopyTrainOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_TRAIN_COMPONENT_H_
