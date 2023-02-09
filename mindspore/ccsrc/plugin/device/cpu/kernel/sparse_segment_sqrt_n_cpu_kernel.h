@@ -54,6 +54,7 @@ class SparseSegmentSqrtNCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
   TypeId dtype1_{kTypeUnknown};
   TypeId dtype2_{kTypeUnknown};
+  bool is_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
