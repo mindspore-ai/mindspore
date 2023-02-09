@@ -38,6 +38,8 @@ def _init_sink_dataset(dataset, steps, sink_size):
         raise ValueError(f"The dataset has been used with network.")
 
     dataset_size = dataset.get_dataset_size()
+    if dataset_size == 0:
+        raise ValueError(f"For data sink, dataset size must be greater than 0, but got 0.")
     dataset_types, dataset_shapes = _get_types_and_shapes(dataset)
     dynamic_shape = _has_dynamic_shape(dataset_shapes) or ds.config.get_dynamic_shape()
 
