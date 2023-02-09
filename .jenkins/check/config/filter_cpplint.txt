@@ -105,6 +105,8 @@
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/aicpu/sample/"                                "build/include"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "build/include"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "build/include"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend_new/op_proto/"                                "build/include"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend_new/cpukernel/impl/"                          "build/include"
 
 # AICPU migration
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/" "build/include_subdir"
