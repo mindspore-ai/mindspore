@@ -112,6 +112,8 @@ TypePtr SparseSegmentMeanWithNumSegmentsInferType(const PrimitivePtr &prim,
 AbstractBasePtr SparseSegmentMeanWithNumSegmentsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &prim,
                                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
+  const int64_t kInputsNum = 4;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, prim->name());
   auto types = SparseSegmentMeanWithNumSegmentsInferType(prim, input_args);
   auto shapes = SparseSegmentMeanWithNumSegmentsInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);
