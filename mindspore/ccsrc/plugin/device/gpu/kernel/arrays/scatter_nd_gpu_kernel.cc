@@ -65,23 +65,15 @@ const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> &
   return func_list;
 }
 
-void ScatterNdGpuKernelMod::FreeResource() {
-  if (indices_stride_ != nullptr) {
-    device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(indices_stride_);
-    indices_stride_ = nullptr;
-  }
-  if (work_shape_ != nullptr) {
-    device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(work_shape_);
-    work_shape_ = nullptr;
-  }
-}
-
 template <typename T, typename S>
-bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &workspace,
                                          const std::vector<AddressPtr> &outputs) {
   S *indices = GetDeviceAddress<S>(inputs, 0);
   T *update = GetDeviceAddress<T>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);
+  S *indifes_stride = GetDeviceAddress<S>(workspace, kIndex0);
+  S *work_shape = GetDeviceAddress<S>(workspace, kIndex1);
 
   if (!memcpy_flag_) {
     const size_t indices_len = sizeof(S) * vec_indices_stride_.size();
@@ -93,12 +85,12 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
     (void)std::transform(attr_shape_.begin(), attr_shape_.end(), std::back_inserter(tmp_work_shape),
                          [](int64_t x) { return static_cast<S>(x); });
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(static_cast<S *>(indices_stride_), &tmp_ind_stride[0], indices_len, cudaMemcpyHostToDevice,
+      cudaMemcpyAsync(indifes_stride, &tmp_ind_stride[0], indices_len, cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr_)),
       "cudaMemcpy for indices_stride failed in "
       "ScatterNdGpuKernelMod::LaunchKernel.");
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(static_cast<S *>(work_shape_), &tmp_work_shape[0], vec_work_len, cudaMemcpyHostToDevice,
+      cudaMemcpyAsync(work_shape, &tmp_work_shape[0], vec_work_len, cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr_)),
       "cudaMemcpy for work_shape failed in "
       "ScatterNdGpuKernelMod::LaunchKernel.");
@@ -113,8 +105,7 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
   const size_t output_size = output_size_list_[kIndex0] / sizeof(T);
 
   ScatterNd(indices, update, output, block_size_, input_size, output_size, indices_dim_0_, indices_dim_1_,
-            static_cast<S *>(indices_stride_), static_cast<S *>(work_shape_),
-            reinterpret_cast<cudaStream_t>(stream_ptr_));
+            indifes_stride, work_shape, reinterpret_cast<cudaStream_t>(stream_ptr_));
   return true;
 }
 
@@ -142,20 +133,9 @@ int ScatterNdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   CalSize(inputs, outputs);
   auto indices_unit_size = abstract::TypeIdSize(inputs[0]->GetDtype());
   const size_t indices_len = indices_unit_size * vec_indices_stride_.size();
-  indices_stride_ = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(indices_len);
-  if (indices_stride_ == nullptr) {
-    MS_LOG(EXCEPTION) << "For 'ScatterNd', the memory alloc of "
-                         "indices_stride_work must be successful, but failed."
-                      << " got size: " << indices_len;
-  }
-
+  workspace_size_list_.push_back(indices_len);
   const size_t vec_work_len = indices_unit_size * attr_shape_.size();
-  work_shape_ = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(vec_work_len);
-  if (work_shape_ == nullptr) {
-    MS_LOG(EXCEPTION) << "For 'ScatterNd', the memory alloc of "
-                         "indices_stride_work must be successful, but failed."
-                      << " got size: " << vec_work_len;
-  }
+  workspace_size_list_.push_back(vec_work_len);
 
   return KRET_OK;
 }
