@@ -139,7 +139,7 @@ class BACKEND_EXPORT KernelBuildInfo {
   static auto constexpr kInvalidFormat = "InvalidFormat";
 
  private:
-  KernelType kernel_type_{TBE_KERNEL};
+  KernelType kernel_type_{UNKNOWN_KERNEL_TYPE};
   std::string origin_data_format_{kOpFormat_DEFAULT};
   std::string core_type_;
   std::vector<std::string> inputs_format_;
@@ -153,7 +153,7 @@ class BACKEND_EXPORT KernelBuildInfo {
   std::vector<KernelObjectType> outputs_kernel_object_type_;
   std::vector<nlohmann::json> output_data_desc_;
   std::string fusion_type_{kernel::kPatternOpaque};
-  Processor processor_{AICORE};
+  Processor processor_{UNKNOWN};
   // Indicates whether buildinfo is valid, the invalid buildinfo needs to select kernel again.
   bool valid_{true};
 };

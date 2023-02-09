@@ -99,6 +99,8 @@ TEST_F(TestHWTransposeTransdataFusion, test_transpose_transdata_fusion) {
       builder2.SetOutputsReshapeType({""});
       builder2.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
       builder2.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+      builder2.SetKernelType(KernelType::TBE_KERNEL);
+      builder2.SetProcessor(kernel::Processor::AICORE);
       AnfAlgo::SetSelectKernelBuildInfo(builder2.Build(), node.get());
     }
   }
