@@ -7929,5 +7929,5 @@ class Roll(Primitive):
                 validator.check_equal_int(len(axis), 1, "shift size", self.name)
                 validator.check_equal_int(axis[0], 0, "axis", self.name)
             elif isinstance(shift, int) and isinstance(axis, int):
-                validator.check_equal_int(axis, 0, "axis", self.name)
+                validator.check_is_int(axis, "axis", self.name)
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
