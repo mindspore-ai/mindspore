@@ -18,12 +18,14 @@
 #define MINDSPORE_CCSRC_C_API_SRC_COMMON_H_
 
 #include <string>
+#include <memory>
 #include "ir/func_graph.h"
 #include "ops/primitive_c.h"
 
 using FuncGraphImpl = mindspore::FuncGraph;
 using FuncGraphManagerImpl = mindspore::FuncGraphManager;
 using AnfNodeImpl = mindspore::AnfNode;
+using ParameterImpl = mindspore::Parameter;
 using ValueNodeImpl = mindspore::ValueNode;
 using CNodeImpl = mindspore::CNode;
 using PrimitiveImpl = mindspore::Primitive;
@@ -64,6 +66,7 @@ using CNodePtr = mindspore::CNodePtr;
 using ParameterPtr = mindspore::ParameterPtr;
 using AbstractBasePtr = mindspore::abstract::AbstractBasePtr;
 using FuncGraphPtr = mindspore::FuncGraphPtr;
+using FuncGraphManagerPtr = std::shared_ptr<mindspore::FuncGraphManager>;
 
 using AttrMap = mindspore::HashMap<std::string, ValuePtr>;
 

@@ -20,7 +20,7 @@
 #include "c_api/src/common.h"
 #include "ir/tensor.h"
 
-PrimitivePtr GetOpPrim(ResMgrHandle res_mgr, NodeHandle node) {
+PrimitivePtr GetOpPrim(ResMgrHandle res_mgr, ConstNodeHandle node) {
   auto src_node = GetSrcPtr<CNodePtr>(res_mgr, node);
   auto node_input = src_node->input(0);
   if (node_input == nullptr) {
@@ -213,7 +213,7 @@ STATUS MSOpSetAttrString(ResMgrHandle res_mgr, NodeHandle op, const char *attr_n
   return RET_OK;
 }
 
-int64_t MSOpGetScalarAttrInt64(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, STATUS *error) {
+int64_t MSOpGetScalarAttrInt64(ResMgrHandle res_mgr, ConstNodeHandle op, const char *attr_name, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
     return 0;
@@ -240,7 +240,7 @@ int64_t MSOpGetScalarAttrInt64(ResMgrHandle res_mgr, NodeHandle op, const char *
   }
 }
 
-STATUS MSOpGetAttrArrayInt64(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, int64_t values[],
+STATUS MSOpGetAttrArrayInt64(ResMgrHandle res_mgr, ConstNodeHandle op, const char *attr_name, int64_t values[],
                              size_t value_num) {
   if (res_mgr == nullptr || op == nullptr || attr_name == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] is nullptr.";

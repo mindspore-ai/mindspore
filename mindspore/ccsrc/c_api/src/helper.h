@@ -26,7 +26,7 @@
 Handle GetRawPtr(ResMgrHandle res_mgr, const BasePtr &src_ptr);
 
 template <typename T>
-T GetSrcPtr(ResMgrHandle res_mgr, Handle raw_ptr) {
+T GetSrcPtr(ResMgrHandle res_mgr, ConstHandle raw_ptr) {
   auto res_mgr_ptr = reinterpret_cast<ResourceManager *>(res_mgr);
   BasePtr base_ptr = res_mgr_ptr->GetSrcPtr(raw_ptr);
   if (base_ptr == nullptr) {

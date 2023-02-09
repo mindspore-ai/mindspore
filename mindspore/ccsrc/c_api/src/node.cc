@@ -21,7 +21,14 @@
 #include "base/base.h"
 #include "ops/core_ops.h"
 #include "ir/param_info.h"
+#include "ir/anf.h"
+#include "ir/scope.h"
+#include "ir/func_graph_cloner.h"
 #include "backend/common/optimizer/helper.h"
+
+constexpr size_t firstInIdx = 1;
+constexpr size_t secondInIdx = 2;
+constexpr size_t switchInputNum = 3;
 
 STATUS SetAttrs(ResMgrHandle res_mgr, const PrimitivePtr &prim, char **attr_names, AttrHandle attrs[],
                 size_t attr_num) {
@@ -48,7 +55,7 @@ STATUS SetAttrs(ResMgrHandle res_mgr, const PrimitivePtr &prim, char **attr_name
   return RET_OK;
 }
 
-NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type, const Handle inputs[],
+NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type, Handle const inputs[],
                    size_t input_num, char **attr_names, AttrHandle attrs[], size_t attr_num) {
   if (res_mgr == nullptr || graph == nullptr || op_type == nullptr || inputs == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [op_type] or [inputs] is nullptr.";
@@ -78,11 +85,15 @@ NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type,
     for (size_t i = 0; i < input_num; ++i) {
       auto input = GetSrcPtr<AnfNodePtr>(res_mgr, inputs[i]);
       MS_EXCEPTION_IF_NULL(input);
+      if (input->isa<ParameterImpl>() && input->func_graph() != res_fg) {
+        res_fg->AddFreeVariable(input);
+      }
       ConvertConstScalarInputToTensor(input);
       cnode_inputs.push_back(input);
       abs_list.push_back(input->abstract());
     }
     cnode = res_fg->NewCNode(cnode_inputs);
+    MS_EXCEPTION_IF_NULL(cnode);
     if (res_mgr_ptr->GetInfer()) {
       auto out_abs = mindspore::opt::CppInferShapeAndType(prim, abs_list);
       cnode->set_abstract(out_abs);
@@ -95,7 +106,7 @@ NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type,
   return GetRawPtr(res_mgr, cnode);
 }
 
-NodeHandle MSPackNodesTuple(ResMgrHandle res_mgr, GraphHandle graph, const Handle nodes[], size_t node_num) {
+NodeHandle MSPackNodesTuple(ResMgrHandle res_mgr, GraphHandle graph, Handle const nodes[], size_t node_num) {
   if (res_mgr == nullptr || graph == nullptr || nodes == nullptr) {
     MS_LOG(ERROR) << "Input GraphHandle [res_mgr] or [graph] or [nodes] is nullptr.";
     return nullptr;
@@ -114,6 +125,7 @@ NodeHandle MSPackNodesTuple(ResMgrHandle res_mgr, GraphHandle graph, const Handl
       abs_list.push_back(in_node->abstract());
     }
     make_tuple_cnode = res_fg->NewCNode(in_nodes);
+    MS_EXCEPTION_IF_NULL(make_tuple_cnode);
     make_tuple_cnode->set_abstract(std::make_shared<AbstractTupleImpl>(abs_list));
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "FuncGraph set output failed. Error info: " << e.what();
@@ -122,7 +134,7 @@ NodeHandle MSPackNodesTuple(ResMgrHandle res_mgr, GraphHandle graph, const Handl
   return GetRawPtr(res_mgr, make_tuple_cnode);
 }
 
-NodeHandle MSOpGetSpecOutput(ResMgrHandle res_mgr, GraphHandle graph, const NodeHandle op, size_t i) {
+NodeHandle MSOpGetSpecOutput(ResMgrHandle res_mgr, GraphHandle graph, ConstNodeHandle op, size_t i) {
   if (res_mgr == nullptr || graph == nullptr || op == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] is nullptr.";
     return nullptr;
@@ -148,6 +160,7 @@ NodeHandle MSOpGetSpecOutput(ResMgrHandle res_mgr, GraphHandle graph, const Node
       auto abs_scalar = std::make_shared<mindspore::abstract::AbstractScalar>(mindspore::SizeToInt(i));
       idx->set_abstract(abs_scalar);
       ret_node = res_fg->NewCNode({NewValueNode(mindspore::prim::kPrimTupleGetItem), cnode, idx});
+      MS_EXCEPTION_IF_NULL(ret_node);
       ret_node->set_abstract(abs->cast<mindspore::abstract::AbstractTuplePtr>()->elements()[i]);
     } else {
       if (i >= 1) {
@@ -167,7 +180,229 @@ NodeHandle MSOpGetSpecOutput(ResMgrHandle res_mgr, GraphHandle graph, const Node
   return GetRawPtr(res_mgr, ret_node);
 }
 
-NodeHandle MSOpGetInput(ResMgrHandle res_mgr, const NodeHandle op, size_t i) {
+CNodePtr BuildSwitchStructure(ResMgrHandle res_mgr, GraphHandle graph, NodeHandle const switch_input[],
+                              size_t input_num, bool set_fg_out) {
+  MS_EXCEPTION_IF_NULL(res_mgr);
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(switch_input);
+  MS_EXCEPTION_IF_CHECK_FAIL(input_num == switchInputNum, "Switch's input number must be 3!");
+  NodeHandle switch_op = MSNewOp(res_mgr, graph, "Switch", switch_input, input_num, NULL, NULL, 0);
+  auto src_switch = GetSrcPtr<CNodePtr>(res_mgr, switch_op);
+  MS_EXCEPTION_IF_NULL(src_switch);
+  auto fg = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
+  MS_EXCEPTION_IF_NULL(fg);
+  CNodePtr switch_call = fg->NewCNode({src_switch});
+  MS_EXCEPTION_IF_NULL(switch_call);
+  if (set_fg_out) {
+    fg->set_output(switch_call);
+  }
+  auto first_node = GetSrcPtr<ValueNodePtr>(res_mgr, switch_input[firstInIdx]);
+  MS_EXCEPTION_IF_NULL(first_node);
+  auto second_node = GetSrcPtr<ValueNodePtr>(res_mgr, switch_input[secondInIdx]);
+  MS_EXCEPTION_IF_NULL(second_node);
+  // AddFuncGraphCNodeIndex is used to set cnode_index. A funcgraph's cnode_index is a list of pair
+  // with pair-struct is (CNODE, index). The CNODE is in another funcgraph, who uses the funcgraph as its input.
+  // for eg. if fg1's cnode A uses fg2 as A's first input, then fg2's conde_index is (A, 1)
+  if (first_node->isa<ValueNodeImpl>()) {
+    fg->AddValueNode(first_node);
+    if (mindspore::IsValueNode<FuncGraphImpl>(first_node)) {
+      auto used = mindspore::GetValueNode<FuncGraphPtr>(first_node);
+      used->AddFuncGraphCNodeIndex(
+        std::make_shared<mindspore::CNodeIndexPair>(std::make_pair(src_switch, firstInIdx + 1)));
+      (void)fg->AddFuncGraphUsed(used);
+    }
+  }
+  if (second_node->isa<ValueNodeImpl>()) {
+    fg->AddValueNode(second_node);
+    if (mindspore::IsValueNode<FuncGraphImpl>(second_node)) {
+      auto used = mindspore::GetValueNode<FuncGraphPtr>(second_node);
+      used->AddFuncGraphCNodeIndex(
+        std::make_shared<mindspore::CNodeIndexPair>(std::make_pair(src_switch, secondInIdx + 1)));
+      (void)fg->AddFuncGraphUsed(used);
+    }
+  }
+  // Switch-call's abstract is equal to second branch.
+  if (mindspore::IsValueNode<FuncGraphImpl>(second_node)) {
+    auto sub_fg = mindspore::GetValueNode<FuncGraphPtr>(second_node);
+    switch_call->set_abstract(sub_fg->output()->abstract());
+  }
+  return switch_call;
+}
+
+NodeHandle MSNewSwitch(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, ConstGraphHandle true_br,
+                       ConstGraphHandle false_br) {
+  if (res_mgr == nullptr || graph == nullptr || cond == nullptr || true_br == nullptr || false_br == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [cond] or [true_br] or [false_br] is nullptr.";
+    return nullptr;
+  }
+  try {
+    auto src_cond = GetSrcPtr<BasePtr>(res_mgr, cond);
+    MS_EXCEPTION_IF_NULL(src_cond);
+    NodeHandle cond_raw_ptr = nullptr;
+    if (src_cond->isa<FuncGraphImpl>()) {
+      auto cond_graph = src_cond->cast<FuncGraphPtr>();
+      MS_EXCEPTION_IF_NULL(cond_graph);
+      auto cond_node = mindspore::NewValueNode(cond_graph);
+      cond_node->set_abstract(cond_graph->ToAbstract());
+      cond_raw_ptr = GetRawPtr(res_mgr, cond_node);
+    } else {
+      cond_raw_ptr = cond;
+    }
+    auto true_fg = GetSrcPtr<FuncGraphPtr>(res_mgr, true_br);
+    MS_EXCEPTION_IF_NULL(true_fg);
+    auto true_node = mindspore::NewValueNode(true_fg);
+    true_node->set_abstract(true_fg->ToAbstract());
+    NodeHandle true_raw_ptr = GetRawPtr(res_mgr, true_node);
+
+    auto false_fg = GetSrcPtr<FuncGraphPtr>(res_mgr, false_br);
+    MS_EXCEPTION_IF_NULL(false_fg);
+    auto false_node = mindspore::NewValueNode(false_fg);
+    false_node->set_abstract(false_fg->ToAbstract());
+    NodeHandle false_raw_ptr = GetRawPtr(res_mgr, false_node);
+
+    NodeHandle switch_input[] = {cond_raw_ptr, true_raw_ptr, false_raw_ptr};
+    auto switch_call = BuildSwitchStructure(res_mgr, graph, switch_input, switchInputNum, false);
+    MS_EXCEPTION_IF_NULL(switch_call);
+    return GetRawPtr(res_mgr, switch_call);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "New Switch node failed. Error info: " << e.what();
+    return nullptr;
+  }
+}
+
+void HandleFVInWhileGraph(const FuncGraphPtr &main_fg, const FuncGraphPtr &body_fg, const FuncGraphPtr &after_fg) {
+  std::vector<AnfNodePtr> fv_to_restore{};
+  auto body_fvs = body_fg->free_variables();
+  for (const auto &fv : body_fvs) {
+    auto fv_node = fv.first;
+    MS_EXCEPTION_IF_NULL(fv_node);
+    if (fv_node->func_graph() != main_fg &&
+        std::find(fv_to_restore.begin(), fv_to_restore.end(), fv_node) == fv_to_restore.end()) {
+      fv_to_restore.push_back(fv_node);
+    }
+  }
+  auto after_fvs = after_fg->free_variables();
+  for (const auto &fv : after_fvs) {
+    auto fv_node = fv.first;
+    MS_EXCEPTION_IF_NULL(fv_node);
+    if (fv_node->func_graph() != main_fg &&
+        std::find(fv_to_restore.begin(), fv_to_restore.end(), fv_node) == fv_to_restore.end()) {
+      fv_to_restore.push_back(fv_node);
+    }
+  }
+
+  (void)mindspore::LiftingClone(main_fg);
+
+  auto main_manager = Manage(main_fg);
+  std::vector<AnfNodePtr> new_main_params{};
+  auto main_params = main_fg->parameters();
+  for (const auto &main_param : main_params) {
+    auto src_main_param = main_param->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(src_main_param);
+    auto found_in_fv_list =
+      find_if(fv_to_restore.begin(), fv_to_restore.end(), [&main_param](const AnfNodePtr &fv_param) {
+        return !main_param->ToString().empty() && main_param->ToString() == fv_param->ToString();
+      });
+    if (found_in_fv_list != fv_to_restore.end()) {
+      (void)main_manager->Replace(main_param, *found_in_fv_list);
+    } else if (src_main_param->has_default()) {
+      auto const_input = mindspore::NewValueNode(src_main_param->default_param());
+      const_input->set_abstract(src_main_param->abstract());
+      (void)main_manager->Replace(main_param, const_input);
+    } else {
+      new_main_params.push_back(main_param);
+    }
+  }
+  main_fg->set_parameters(new_main_params);
+}
+
+NodeHandle MSNewWhile(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, GraphHandle body_graph,
+                      GraphHandle after_graph) {
+  if (res_mgr == nullptr || graph == nullptr || cond == nullptr || body_graph == nullptr || after_graph == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [cond] or [body_graph] or [after_graph] is nullptr.";
+    return nullptr;
+  }
+  try {
+    auto src_cond = GetSrcPtr<BasePtr>(res_mgr, cond);
+    MS_EXCEPTION_IF_NULL(src_cond);
+    NodeHandle cond_raw_ptr = nullptr;
+    GraphHandle cond_graph = nullptr;
+    FuncGraphPtr src_cond_graph = nullptr;
+    if (src_cond->isa<FuncGraphImpl>()) {
+      cond_graph = cond;
+      src_cond_graph = src_cond->cast<FuncGraphPtr>();
+      MS_EXCEPTION_IF_NULL(src_cond_graph);
+      auto cond_node = src_cond_graph->output();
+      MS_EXCEPTION_IF_NULL(cond_node);
+      cond_raw_ptr = GetRawPtr(res_mgr, cond_node);
+    } else {
+      cond_graph = MSFuncGraphCreate(res_mgr);
+      MS_EXCEPTION_IF_NULL(cond_graph);
+      src_cond_graph = GetSrcPtr<FuncGraphPtr>(res_mgr, cond_graph);
+      MS_EXCEPTION_IF_NULL(src_cond_graph);
+      if (src_cond->isa<CNodeImpl>()) {
+        auto cond_node = src_cond->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(cond_node);
+        auto new_cond = src_cond_graph->NewCNode(cond_node->inputs());
+        MS_EXCEPTION_IF_NULL(new_cond);
+        new_cond->set_abstract(cond_node->abstract());
+        cond_raw_ptr = GetRawPtr(res_mgr, new_cond);
+      } else {
+        cond_raw_ptr = cond;
+      }
+    }
+
+    auto body_fg = GetSrcPtr<FuncGraphPtr>(res_mgr, body_graph);
+    MS_EXCEPTION_IF_NULL(body_fg);
+    auto body_node = mindspore::NewValueNode(body_fg);
+    body_node->set_abstract(body_fg->ToAbstract());
+    NodeHandle body_raw_ptr = GetRawPtr(res_mgr, body_node);
+
+    auto after_fg = GetSrcPtr<FuncGraphPtr>(res_mgr, after_graph);
+    MS_EXCEPTION_IF_NULL(after_fg);
+    auto after_node = mindspore::NewValueNode(after_fg);
+    after_node->set_abstract(after_fg->ToAbstract());
+    NodeHandle after_raw_ptr = GetRawPtr(res_mgr, after_node);
+
+    NodeHandle switch_input[] = {cond_raw_ptr, body_raw_ptr, after_raw_ptr};
+    (void)BuildSwitchStructure(res_mgr, cond_graph, switch_input, switchInputNum, true);
+
+    // handle main graph call
+    auto main_fg = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
+    NodeHandle main_func_call = MSNewFuncCallNode(res_mgr, graph, cond_graph, nullptr, 0);
+    auto src_call = GetSrcPtr<AnfNodePtr>(res_mgr, main_func_call);
+    main_fg->set_output(src_call);
+
+    // handle free parameters in while graphs
+    HandleFVInWhileGraph(main_fg, body_fg, after_fg);
+
+    // handle multi outputs in body graph
+    auto sub_graph_node = mindspore::NewValueNode(src_cond_graph);
+    sub_graph_node->set_abstract(src_cond_graph->ToAbstract());
+    std::vector<AnfNodePtr> sub_input_nodes{sub_graph_node};
+    auto body_out_node = body_fg->output();
+    MS_EXCEPTION_IF_NULL(body_out_node);
+    if (IsPrimitiveCNode(body_out_node, mindspore::prim::kPrimMakeTuple)) {
+      auto body_out_cnode = body_out_node->cast<CNodePtr>();
+      for (size_t i = 1; i < body_out_cnode->size(); i++) {
+        sub_input_nodes.push_back(body_out_cnode->input(i));
+      }
+    } else {
+      sub_input_nodes.push_back(body_out_node);
+    }
+    auto body_func_call = body_fg->NewCNode(sub_input_nodes);
+    MS_EXCEPTION_IF_NULL(src_cond_graph->output());
+    body_func_call->set_abstract(src_cond_graph->output()->abstract());
+    MS_EXCEPTION_IF_NULL(body_func_call);
+    body_fg->set_output(body_func_call);
+    return main_func_call;
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "New While node failed. Error info: " << e.what();
+    return nullptr;
+  }
+}
+
+NodeHandle MSOpGetInput(ResMgrHandle res_mgr, ConstNodeHandle op, size_t i) {
   if (res_mgr == nullptr || op == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] is nullptr.";
     return nullptr;
@@ -188,7 +423,7 @@ NodeHandle MSOpGetInput(ResMgrHandle res_mgr, const NodeHandle op, size_t i) {
   return GetRawPtr(res_mgr, anf_node);
 }
 
-size_t MSOpGetInputsNum(ResMgrHandle res_mgr, const NodeHandle op, STATUS *error) {
+size_t MSOpGetInputsNum(ResMgrHandle res_mgr, ConstNodeHandle op, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
     return 0;
@@ -212,7 +447,7 @@ size_t MSOpGetInputsNum(ResMgrHandle res_mgr, const NodeHandle op, STATUS *error
   return input_num;
 }
 
-STATUS MSOpGetInputs(ResMgrHandle res_mgr, const NodeHandle op, NodeHandle inputs[], size_t input_num) {
+STATUS MSOpGetInputs(ResMgrHandle res_mgr, ConstNodeHandle op, NodeHandle inputs[], size_t input_num) {
   if (res_mgr == nullptr || op == nullptr || inputs == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [inputs] is nullptr.";
     return RET_NULL_PTR;
@@ -236,10 +471,10 @@ STATUS MSOpGetInputs(ResMgrHandle res_mgr, const NodeHandle op, NodeHandle input
   return RET_OK;
 }
 
-NodeHandle MSNewSubGraphNode(ResMgrHandle res_mgr, GraphHandle graph, GraphHandle sub_graph, const Handle inputs[],
+NodeHandle MSNewFuncCallNode(ResMgrHandle res_mgr, GraphHandle graph, ConstGraphHandle sub_graph, Handle const inputs[],
                              size_t input_num) {
-  if (res_mgr == nullptr || graph == nullptr || sub_graph == nullptr || inputs == nullptr) {
-    MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [sub_graph] or [inputs] is nullptr.";
+  if (res_mgr == nullptr || graph == nullptr || sub_graph == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [sub_graph] is nullptr.";
     return nullptr;
   }
   CNodePtr cnode = nullptr;
@@ -248,20 +483,22 @@ NodeHandle MSNewSubGraphNode(ResMgrHandle res_mgr, GraphHandle graph, GraphHandl
     MS_EXCEPTION_IF_NULL(res_fg);
     auto res_sub_fg = GetSrcPtr<FuncGraphPtr>(res_mgr, sub_graph);
     MS_EXCEPTION_IF_NULL(res_sub_fg);
-    auto sub_fg_node = mindspore::NewValueNode(res_sub_fg);
-    std::vector<AnfNodePtr> cnode_inputs{};
-    cnode_inputs.push_back(sub_fg_node);
+    auto sub_node = mindspore::NewValueNode(res_sub_fg);
+    sub_node->set_abstract(res_sub_fg->ToAbstract());
+    std::vector<AnfNodePtr> cnode_inputs{sub_node};
     for (size_t i = 0; i < input_num; ++i) {
       auto cnode_input = GetSrcPtr<AnfNodePtr>(res_mgr, inputs[i]);
       MS_EXCEPTION_IF_NULL(cnode_input);
       cnode_inputs.push_back(cnode_input);
     }
     cnode = res_fg->NewCNode(cnode_inputs);
+    MS_EXCEPTION_IF_NULL(res_sub_fg->output());
+    cnode->set_abstract(res_sub_fg->output()->abstract());
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "FuncGraph create SubGraph node failed. Error info: " << e.what();
     return nullptr;
   }
-  MS_LOG(INFO) << "Add subgraph node";
+  MS_LOG(INFO) << "Add function call node";
   return GetRawPtr(res_mgr, cnode);
 }
 
@@ -309,7 +546,7 @@ NodeHandle MSNewTensorVariable(ResMgrHandle res_mgr, GraphHandle graph, void *da
   return GetRawPtr(res_mgr, param);
 }
 
-NodeHandle MSNewTensorVariableFromTensor(ResMgrHandle res_mgr, GraphHandle graph, TensorHandle tensor) {
+NodeHandle MSNewTensorVariableFromTensor(ResMgrHandle res_mgr, GraphHandle graph, ConstTensorHandle tensor) {
   if (res_mgr == nullptr || graph == nullptr || tensor == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [tensor] is nullptr.";
     return nullptr;
@@ -330,7 +567,7 @@ NodeHandle MSNewTensorVariableFromTensor(ResMgrHandle res_mgr, GraphHandle graph
   return GetRawPtr(res_mgr, param);
 }
 
-size_t MSTensorVariableGetDataSize(ResMgrHandle res_mgr, NodeHandle node, STATUS *error) {
+size_t MSTensorVariableGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
     return 0;
@@ -357,7 +594,7 @@ size_t MSTensorVariableGetDataSize(ResMgrHandle res_mgr, NodeHandle node, STATUS
   }
 }
 
-void *MSTensorVariableGetData(ResMgrHandle res_mgr, NodeHandle node) {
+void *MSTensorVariableGetData(ResMgrHandle res_mgr, ConstNodeHandle node) {
   if (res_mgr == nullptr || node == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] is nullptr.";
     return nullptr;
@@ -415,7 +652,7 @@ NodeHandle MSNewTensorConstantFromTensor(ResMgrHandle res_mgr, TensorHandle tens
   return GetRawPtr(res_mgr, value_node);
 }
 
-size_t MSTensorConstantGetDataSize(ResMgrHandle res_mgr, NodeHandle node, STATUS *error) {
+size_t MSTensorConstantGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
     return 0;
@@ -442,7 +679,7 @@ size_t MSTensorConstantGetDataSize(ResMgrHandle res_mgr, NodeHandle node, STATUS
   }
 }
 
-void *MSTensorConstantGetData(ResMgrHandle res_mgr, NodeHandle node) {
+void *MSTensorConstantGetData(ResMgrHandle res_mgr, ConstNodeHandle node) {
   if (res_mgr == nullptr || node == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] is nullptr.";
     return nullptr;
@@ -548,7 +785,7 @@ NodeHandle MSNewTypeConstant(ResMgrHandle res_mgr, TypeId type) {
   return GetRawPtr(res_mgr, value_node);
 }
 
-int MSScalarConstantGetValueInt32(ResMgrHandle res_mgr, const NodeHandle node, STATUS *error) {
+int MSScalarConstantGetValueInt32(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Int32 Scalar Value!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
@@ -585,7 +822,7 @@ int MSScalarConstantGetValueInt32(ResMgrHandle res_mgr, const NodeHandle node, S
   return ret_val;
 }
 
-float MSScalarConstantGetValueFloat32(ResMgrHandle res_mgr, const NodeHandle node, STATUS *error) {
+float MSScalarConstantGetValueFloat32(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Float32 Scalar Value!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
@@ -622,7 +859,7 @@ float MSScalarConstantGetValueFloat32(ResMgrHandle res_mgr, const NodeHandle nod
   return ret_val;
 }
 
-bool MSScalarConstantGetValueBool(ResMgrHandle res_mgr, const NodeHandle node, STATUS *error) {
+bool MSScalarConstantGetValueBool(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Bool Scalar Value!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
@@ -659,7 +896,7 @@ bool MSScalarConstantGetValueBool(ResMgrHandle res_mgr, const NodeHandle node, S
   return ret_val;
 }
 
-int64_t MSScalarConstantGetValueInt64(ResMgrHandle res_mgr, const NodeHandle node, STATUS *error) {
+int64_t MSScalarConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Int64 Scalar Value!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
@@ -696,7 +933,7 @@ int64_t MSScalarConstantGetValueInt64(ResMgrHandle res_mgr, const NodeHandle nod
   return ret_val;
 }
 
-STATUS MSStringConstantGetValue(ResMgrHandle res_mgr, const NodeHandle node, char str_buf[], size_t str_len) {
+STATUS MSStringConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, char str_buf[], size_t str_len) {
   MS_LOG(INFO) << "Get String Constant Value!";
   if (res_mgr == nullptr || node == nullptr || str_buf == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] or [str_buf] is nullptr.";
@@ -721,7 +958,7 @@ STATUS MSStringConstantGetValue(ResMgrHandle res_mgr, const NodeHandle node, cha
   }
 }
 
-size_t MSTupleConstantGetSize(ResMgrHandle res_mgr, const NodeHandle node, STATUS *error) {
+size_t MSTupleConstantGetSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Tuple Constant size!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
@@ -748,7 +985,7 @@ size_t MSTupleConstantGetSize(ResMgrHandle res_mgr, const NodeHandle node, STATU
   }
 }
 
-STATUS MSTupleConstantGetValueInt64(ResMgrHandle res_mgr, const NodeHandle node, int64_t vec[], size_t size) {
+STATUS MSTupleConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, int64_t vec[], size_t size) {
   MS_LOG(INFO) << "Get Tuple Constant Value!";
   if (res_mgr == nullptr || node == nullptr || vec == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] or [vec] is nullptr.";
@@ -776,7 +1013,7 @@ STATUS MSTupleConstantGetValueInt64(ResMgrHandle res_mgr, const NodeHandle node,
   }
 }
 
-TypeId MSTypeConstantGetValue(ResMgrHandle res_mgr, const NodeHandle node, STATUS *error) {
+TypeId MSTypeConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Type Constant Value!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
@@ -803,7 +1040,7 @@ TypeId MSTypeConstantGetValue(ResMgrHandle res_mgr, const NodeHandle node, STATU
   }
 }
 
-STATUS MSOpSetName(ResMgrHandle res_mgr, const NodeHandle node, const char *name) {
+STATUS MSOpSetName(ResMgrHandle res_mgr, NodeHandle node, const char *name) {
   if (res_mgr == nullptr || node == nullptr || name == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] or [name] is nullptr.";
     return RET_NULL_PTR;
@@ -817,7 +1054,7 @@ STATUS MSOpSetName(ResMgrHandle res_mgr, const NodeHandle node, const char *name
   return RET_OK;
 }
 
-STATUS MSNodeGetName(ResMgrHandle res_mgr, const NodeHandle node, char str_buf[], size_t str_len) {
+STATUS MSNodeGetName(ResMgrHandle res_mgr, ConstNodeHandle node, char str_buf[], size_t str_len) {
   if (res_mgr == nullptr || node == nullptr || str_buf == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] or [str_buf] is nullptr.";
     return RET_NULL_PTR;

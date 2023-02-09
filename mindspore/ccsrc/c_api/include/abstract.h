@@ -35,7 +35,7 @@ extern "C" {
 /// \param[in] input_node The input node which contains the Abstract.
 ///
 /// \return Error code indicates whether the function executed successfully.
-MIND_C_API STATUS MSAssignAbstract(ResMgrHandle res_mgr, NodeHandle cur_node, NodeHandle input_node);
+MIND_C_API STATUS MSAssignAbstract(ResMgrHandle res_mgr, NodeHandle cur_node, ConstNodeHandle input_node);
 
 /// \brief Set Abstract to the node with type and shape.
 ///

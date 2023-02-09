@@ -43,7 +43,7 @@ MIND_C_API GraphHandle MSFuncGraphCreate(ResMgrHandle res_mgr);
 /// \param[in] i Index of the input node.
 ///
 /// \return The created function graph.
-MIND_C_API NodeHandle MSFuncGraphGetInput(ResMgrHandle res_mgr, const GraphHandle graph, size_t i);
+MIND_C_API NodeHandle MSFuncGraphGetInput(ResMgrHandle res_mgr, ConstGraphHandle graph, size_t i);
 
 /// \brief Get the inputs number of the function graph.
 ///
@@ -52,7 +52,7 @@ MIND_C_API NodeHandle MSFuncGraphGetInput(ResMgrHandle res_mgr, const GraphHandl
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return the inputs number of the function graph.
-MIND_C_API size_t MSFuncGraphGetInputNum(ResMgrHandle res_mgr, const GraphHandle graph, STATUS *error);
+MIND_C_API size_t MSFuncGraphGetInputNum(ResMgrHandle res_mgr, ConstGraphHandle graph, STATUS *error);
 
 /// \brief Get all inputs of the function graph.
 ///
@@ -62,7 +62,7 @@ MIND_C_API size_t MSFuncGraphGetInputNum(ResMgrHandle res_mgr, const GraphHandle
 /// \param[in] input_num The length of the array.
 ///
 /// \return Error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSFuncGraphGetInputs(ResMgrHandle res_mgr, const GraphHandle graph, NodeHandle inputs[],
+MIND_C_API STATUS MSFuncGraphGetInputs(ResMgrHandle res_mgr, ConstGraphHandle graph, NodeHandle inputs[],
                                        size_t input_num);
 
 /// \brief Set the output node.
@@ -73,7 +73,7 @@ MIND_C_API STATUS MSFuncGraphGetInputs(ResMgrHandle res_mgr, const GraphHandle g
 /// \param[in] force_new_ret If true, a new return node is always created.
 ///
 /// \return Error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSFuncGraphSetOutput(ResMgrHandle res_mgr, GraphHandle graph, const NodeHandle op_node,
+MIND_C_API STATUS MSFuncGraphSetOutput(ResMgrHandle res_mgr, GraphHandle graph, ConstNodeHandle op_node,
                                        bool force_new_ret);
 
 /// \brief Set the output node.
@@ -84,7 +84,7 @@ MIND_C_API STATUS MSFuncGraphSetOutput(ResMgrHandle res_mgr, GraphHandle graph, 
 /// \param[in] force_new_ret If true, a new return node is always created.
 ///
 /// \return Error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSFuncGraphSetOutputs(ResMgrHandle res_mgr, GraphHandle graph, const Handle outputs[],
+MIND_C_API STATUS MSFuncGraphSetOutputs(ResMgrHandle res_mgr, GraphHandle graph, Handle const outputs[],
                                         size_t output_num, bool force_new_ret);
 
 /// \brief Get the output node according to the index.
@@ -94,7 +94,7 @@ MIND_C_API STATUS MSFuncGraphSetOutputs(ResMgrHandle res_mgr, GraphHandle graph,
 /// \param[in] i The index to get the output. If there is only one output for graph, the i should be 0;
 ///
 /// \return The output node, nullptr if output not set.
-MIND_C_API NodeHandle MSFuncGraphGetOutput(ResMgrHandle res_mgr, const GraphHandle graph, size_t i);
+MIND_C_API NodeHandle MSFuncGraphGetOutput(ResMgrHandle res_mgr, ConstGraphHandle graph, size_t i);
 
 /// \brief Get the outputs number of the function graph.
 ///
@@ -103,7 +103,7 @@ MIND_C_API NodeHandle MSFuncGraphGetOutput(ResMgrHandle res_mgr, const GraphHand
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return the outputs number of the function graph.
-MIND_C_API size_t MSFuncGraphGetOutputNum(ResMgrHandle res_mgr, GraphHandle graph, STATUS *error);
+MIND_C_API size_t MSFuncGraphGetOutputNum(ResMgrHandle res_mgr, ConstGraphHandle graph, STATUS *error);
 
 /// \brief Get all outputs of the function graph.
 ///
@@ -113,7 +113,7 @@ MIND_C_API size_t MSFuncGraphGetOutputNum(ResMgrHandle res_mgr, GraphHandle grap
 /// \param[in] output_num The length of the array.
 ///
 /// \return Error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSFuncGraphGetOutputs(ResMgrHandle res_mgr, const GraphHandle graph, NodeHandle outputs[],
+MIND_C_API STATUS MSFuncGraphGetOutputs(ResMgrHandle res_mgr, ConstGraphHandle graph, NodeHandle outputs[],
                                         size_t output_num);
 
 /// \brief Replace a node in a function graph.
@@ -124,8 +124,8 @@ MIND_C_API STATUS MSFuncGraphGetOutputs(ResMgrHandle res_mgr, const GraphHandle 
 /// \param[in] new_node The replace node.
 ///
 /// \return Error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSFuncGraphReplace(ResMgrHandle res_mgr, GraphHandle graph, const NodeHandle old_node,
-                                     const NodeHandle new_node);
+MIND_C_API STATUS MSFuncGraphReplace(ResMgrHandle res_mgr, GraphHandle graph, ConstNodeHandle old_node,
+                                     ConstNodeHandle new_node);
 
 /// \brief Compile the function graph.
 ///
@@ -145,7 +145,7 @@ MIND_C_API STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph);
 /// \param[in] outputs_num The output size.
 ///
 /// \return Error code that indicate whether the function graph executed successfully.
-MIND_C_API STATUS MSFuncGraphRun(ResMgrHandle res_mgr, GraphHandle graph, const TensorHandle inputs[], size_t input_num,
+MIND_C_API STATUS MSFuncGraphRun(ResMgrHandle res_mgr, GraphHandle graph, TensorHandle const inputs[], size_t input_num,
                                  TensorHandle outputs[], size_t outputs_num);
 #ifdef __cplusplus
 }
