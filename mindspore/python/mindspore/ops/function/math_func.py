@@ -5335,7 +5335,7 @@ def gcd(x1, x2):
     The shape of two inputs should be broadcastable, and data type of them should be
     one of: int32, int64
 
-    Inputs:
+    Args:
         - **x1** (Tensor) - The first input tensor.
         - **x2** (Tensor) - The second input tensor.
 
@@ -10150,6 +10150,7 @@ __all__ = [
     'logical_or',
     'logical_and',
     'logit',
+    'gcd',
     'logsumexp',
     'ldexp',
     'rsqrt',
