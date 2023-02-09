@@ -3333,6 +3333,7 @@ def tensor_scatter_add(input_x, indices, updates):
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
         ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+        RuntimeError: If a value of `indices` is not in `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3385,6 +3386,7 @@ def tensor_scatter_sub(input_x, indices, updates):
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
         ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+        RuntimeError: If a value of `indices` is not in `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3432,6 +3434,7 @@ def tensor_scatter_max(input_x, indices, updates):
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
         ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+        RuntimeError: If a value of `indices` is not in `input_x`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -3483,6 +3486,7 @@ def tensor_scatter_min(input_x, indices, updates):
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
         ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+        RuntimeError: If a value of `indices` is not in `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4590,6 +4594,7 @@ def tensor_scatter_mul(input_x, indices, updates):
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
         ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+        RuntimeError: If a value of `indices` is not in `input_x`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -4645,6 +4650,7 @@ def tensor_scatter_div(input_x, indices, updates):
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
         ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+        RuntimeError: If a value of `indices` is not in `input_x`.
 
     Supported Platforms:
         ``GPU`` ``CPU``

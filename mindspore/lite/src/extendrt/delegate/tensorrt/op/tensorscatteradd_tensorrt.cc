@@ -101,12 +101,18 @@ int TensorScatterAddPlugin::RunCudaTensorScatterAdd(const nvinfer1::PluginTensor
   cudaMalloc(&input_shape_dptr, input_dims.nbDims * sizeof(int));
   cudaMemcpy(input_shape_dptr, input_dims.d, input_dims.nbDims * sizeof(int), cudaMemcpyHostToDevice);
 
+  // a flag for error detect
+  int flag_host[1] = {0};
+  int *flag = nullptr;
+  cudaMalloc(reinterpret_cast<void **>(&flag), sizeof(int));
+  cudaMemcpy(flag, flag_host, sizeof(int), cudaMemcpyHostToDevice);
+
   cudaMemcpy(outputs[0], inputs[0], input_num * sizeof(float), cudaMemcpyDeviceToDevice);
   TensorScatterArithmetic(TensorScatterArithmeticFunctionType::TENSOR_SCATTER_FUNC_ADD,
                           static_cast<const float *>(inputs[0]), static_cast<const int *>(inputs[1]),
-                          static_cast<const float *>(inputs[INPUT_SIZE2]), static_cast<float *>(outputs[0]), block_size,
-                          update_num, input_num, indice_dim_0, indice_dim_1, indice_stride_dptr, input_shape_dptr,
-                          device_id_, stream);
+                          static_cast<const float *>(inputs[INPUT_SIZE2]), static_cast<float *>(outputs[0]), flag,
+                          block_size, update_num, input_num, indice_dim_0, indice_dim_1, indice_stride_dptr,
+                          input_shape_dptr, device_id_, stream);
   cudaFree(indice_stride_dptr);
   cudaFree(input_shape_dptr);
 

@@ -58,7 +58,7 @@ class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod,
   bool GetOpType(const BaseOperatorPtr &base_operator);
   void UpdateSize();
   template <typename S>
-  void CheckIndicesValid(S *indices);
+  void CheckIndicesValid(int *has_error, S *indices);
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
