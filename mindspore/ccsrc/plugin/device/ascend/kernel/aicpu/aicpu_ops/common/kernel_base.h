@@ -38,6 +38,7 @@ class KernelBase {
 
   uint32_t Compute(void *param);
   size_t GetDataTypeSize(::aicpuops::DataType data_type);
+  size_t GetTensorMemSizeByShape(::aicpuops::Tensor tensor);
 
  protected:
   virtual uint32_t ParseKernelParam() = 0;

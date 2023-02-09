@@ -274,6 +274,10 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
   }
 
   size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);
+  if (output_num > 0 && kernel_build_info.GetOutputKernelObjectType(0) == kernel::TUPLE) {
+    output_num = 1;
+  }
+
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     // cal count of same output dtype between abstract and kernel info
     if (kernel_build_info.GetOutputDeviceType(output_index) ==
@@ -347,6 +351,10 @@ bool MatchObjectType(const kernel::KernelObjectType &node_object, const kernel::
 
   // for monad output op such as labelset labelswitch labelgoto ...
   if (node_object == kernel::UNKNOWN_TYPE && kernel_object == kernel::TENSOR) {
+    return true;
+  }
+  // This condition will insert TensorToTuple in the InsertTypeTransformOp pass later
+  if (node_object == kernel::TENSOR && kernel_object == kernel::TUPLE) {
     return true;
   }
 

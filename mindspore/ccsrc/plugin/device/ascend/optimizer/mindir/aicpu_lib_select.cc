@@ -41,6 +41,8 @@ bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
                                                       kReservoirReplayBufferDestroy,
                                                       kGatherDGradV2OpName,
                                                       kConcatOffsetOpName,
+                                                      kSequenceAddOpName,
+                                                      kSequenceAddOffsetOpName,
                                                       kSliceGradOpName,
                                                       kRandomShuffleOpName,
                                                       kRangeOpName,

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include <map>
+#include <functional>
+#include <numeric>
 #include "common/kernel_base.h"
 #include "common/kernel_errcode.h"
 #include "common/tensor.h"
@@ -105,6 +107,17 @@ size_t KernelBase::GetDataTypeSize(::aicpuops::DataType data_type) {
     return 0;
   }
   return it->second;
+}
+
+size_t KernelBase::GetTensorMemSizeByShape(::aicpuops::Tensor tensor) {
+  std::vector<int64_t> shape;
+  auto tensor_shape = tensor.tensor_shape();
+  for (int i = 0; i < tensor_shape.dim_size(); ++i) {
+    shape.push_back(tensor_shape.dim(i).size());
+  }
+  auto data_type = static_cast<aicpuops::DataType>(tensor.tensor_type());
+  int64_t element_num = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+  return LongToSize(element_num) * GetDataTypeSize(data_type);
 }
 
 template <typename T>

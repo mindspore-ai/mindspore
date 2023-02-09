@@ -1195,6 +1195,7 @@ class DataType:
 
     None_None = ("", "")
     None_Default = ("", "DefaultFormat")
+
     BOOL_None = ("bool", "")
     BOOL_Default = ("bool", "DefaultFormat")
     BOOL_5HD = ("bool", "NC1HWC0")
@@ -1206,6 +1207,8 @@ class DataType:
     BOOL_HWCN = ("bool", "HWCN")
     BOOL_NDHWC = ("bool", "NDHWC")
     BOOL_ChannelLast = ("bool", "ChannelLast")
+    BOOL_Default_Tuple = ("bool", "DefaultFormat", "tuple")
+    BOOL_Default_List = ("bool", "DefaultFormat", "list")
 
     I8_None = ("int8", "")
     I8_Default = ("int8", "DefaultFormat")
@@ -1220,6 +1223,8 @@ class DataType:
     I8_ChannelLast = ("int8", "ChannelLast")
     I8_NDC1HWC0 = ("int8", "NDC1HWC0")
     I8_NC1HWC0 = ("int8", "NC1HWC0")
+    I8_Default_Tuple = ("int8", "DefaultFormat", "tuple")
+    I8_Default_List = ("int8", "DefaultFormat", "list")
 
     U8_None = ("uint8", "")
     U8_Default = ("uint8", "DefaultFormat")
@@ -1234,6 +1239,8 @@ class DataType:
     U8_ChannelLast = ("uint8", "ChannelLast")
     U8_NDC1HWC0 = ("uint8", "NDC1HWC0")
     U8_NC1HWC0 = ("uint8", "NC1HWC0")
+    U8_Default_Tuple = ("uint8", "DefaultFormat", "tuple")
+    U8_Default_List = ("uint8", "DefaultFormat", "list")
 
     I16_None = ("int16", "")
     I16_Default = ("int16", "DefaultFormat")
@@ -1246,6 +1253,8 @@ class DataType:
     I16_HWCN = ("int16", "HWCN")
     I16_NDHWC = ("int16", "NDHWC")
     I16_ChannelLast = ("int16", "ChannelLast")
+    I16_Default_Tuple = ("int16", "DefaultFormat", "tuple")
+    I16_Default_List = ("int16", "DefaultFormat", "list")
 
     U16_None = ("uint16", "")
     U16_Default = ("uint16", "DefaultFormat")
@@ -1258,6 +1267,8 @@ class DataType:
     U16_HWCN = ("uint16", "HWCN")
     U16_NDHWC = ("uint16", "NDHWC")
     U16_ChannelLast = ("uint16", "ChannelLast")
+    U16_Default_Tuple = ("uint16", "DefaultFormat", "tuple")
+    U16_Default_List = ("uint16", "DefaultFormat", "list")
 
     I32_None = ("int32", "")
     I32_Default = ("int32", "DefaultFormat")
@@ -1272,6 +1283,8 @@ class DataType:
     I32_NDC1HWC0 = ("int32", "NDC1HWC0")
     I32_NCDHW = ("int32", "NCDHW")
     I32_ChannelLast = ("int32", "ChannelLast")
+    I32_Default_Tuple = ("int32", "DefaultFormat", "tuple")
+    I32_Default_List = ("int32", "DefaultFormat", "list")
 
     U32_None = ("uint32", "")
     U32_Default = ("uint32", "DefaultFormat")
@@ -1284,6 +1297,8 @@ class DataType:
     U32_HWCN = ("uint32", "HWCN")
     U32_NDHWC = ("uint32", "NDHWC")
     U32_ChannelLast = ("uint32", "ChannelLast")
+    U32_Default_Tuple = ("uint32", "DefaultFormat", "tuple")
+    U32_Default_List = ("uint32", "DefaultFormat", "list")
 
     I64_None = ("int64", "")
     I64_Default = ("int64", "DefaultFormat")
@@ -1296,6 +1311,8 @@ class DataType:
     I64_HWCN = ("int64", "HWCN")
     I64_NDHWC = ("int64", "NDHWC")
     I64_ChannelLast = ("int64", "ChannelLast")
+    I64_Default_Tuple = ("int64", "DefaultFormat", "tuple")
+    I64_Default_List = ("int64", "DefaultFormat", "list")
 
     U64_None = ("uint64", "")
     U64_Default = ("uint64", "DefaultFormat")
@@ -1308,6 +1325,8 @@ class DataType:
     U64_HWCN = ("uint64", "HWCN")
     U64_NDHWC = ("uint64", "NDHWC")
     U64_ChannelLast = ("uint64", "ChannelLast")
+    U64_Default_Tuple = ("uint64", "DefaultFormat", "tuple")
+    U64_Default_List = ("uint64", "DefaultFormat", "list")
 
     F16_None = ("float16", "")
     F16_Default = ("float16", "DefaultFormat")
@@ -1327,6 +1346,8 @@ class DataType:
     F16_FracZNRNN = ("float16", "FRACTAL_ZN_RNN")
     F16_ND_RNNBIAS = ("float16", "ND_RNN_BIAS")
     F16_ChannelLast = ("float16", "ChannelLast")
+    F16_Default_Tuple = ("float16", "DefaultFormat", "tuple")
+    F16_Default_List = ("float16", "DefaultFormat", "list")
 
     F32_None = ("float32", "")
     F32_Default = ("float32", "DefaultFormat")
@@ -1346,6 +1367,8 @@ class DataType:
     F32_FracZNRNN = ("float32", "FRACTAL_ZN_RNN")
     F32_ND_RNNBIAS = ("float32", "ND_RNN_BIAS")
     F32_ChannelLast = ("float32", "ChannelLast")
+    F32_Default_Tuple = ("float32", "DefaultFormat", "tuple")
+    F32_Default_List = ("float32", "DefaultFormat", "list")
 
     F64_None = ("float64", "")
     F64_Default = ("float64", "DefaultFormat")
@@ -1358,6 +1381,8 @@ class DataType:
     F64_HWCN = ("float64", "HWCN")
     F64_NDHWC = ("float64", "NDHWC")
     F64_ChannelLast = ("float64", "ChannelLast")
+    F64_Default_Tuple = ("float64", "DefaultFormat", "tuple")
+    F64_Default_List = ("float64", "DefaultFormat", "list")
 
     C64_Default = ("complex64", "DefaultFormat")
     C128_Default = ("complex128", "DefaultFormat")
