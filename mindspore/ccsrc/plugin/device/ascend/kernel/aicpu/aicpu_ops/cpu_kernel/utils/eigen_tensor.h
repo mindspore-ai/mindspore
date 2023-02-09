@@ -70,10 +70,17 @@ struct TTypes {
 
 namespace aicpu {
 
+namespace {
+using ShapeVector = std::vector<int64_t>;
+}
+
 class EigenTensor {
  public:
   EigenTensor() = delete;
-  EigenTensor(Tensor *tensor, void *data) : tensor_(tensor), tensor_data_(data) {}
+  EigenTensor(Tensor *tensor, void *data) : tensor_(tensor), tensor_data_(data) {
+    tensor_shape_ = tensor->GetTensorShape()->GetDimSizes();
+  }
+  EigenTensor(ShapeVector &shape, void *data_ptr) : tensor_shape_(shape), tensor_data_(data_ptr) {}
   ~EigenTensor() = default;
 
   /*
@@ -133,7 +140,9 @@ class EigenTensor {
    */
   template <typename T>
   typename TTypes<T>::Flat flat() {
-    return typename TTypes<T>::Flat(reinterpret_cast<T *>(tensor_data_), {tensor_->GetTensorShape()->NumElements()});
+    return typename TTypes<T>::Flat(
+      reinterpret_cast<T *>(tensor_data_),
+      {std::accumulate(tensor_shape_.begin(), tensor_shape_.end(), 1, std::multiplies<int64_t>())});
   }
 
   /*
@@ -143,10 +152,10 @@ class EigenTensor {
   template <int NDIMS, typename IndexType>
   Eigen::DSizes<IndexType, NDIMS> AsEigenDSizesWithPadding() const {
     Eigen::DSizes<IndexType, NDIMS> dsizes;
-    for (int d = 0; d < tensor_->GetTensorShape()->GetDims(); d++) {
-      dsizes[d] = static_cast<IndexType>(tensor_->GetTensorShape()->GetDimSize(d));
+    for (size_t d = 0; d < tensor_shape_.size(); d++) {
+      dsizes[d] = static_cast<IndexType>(tensor_shape_[d]);
     }
-    for (int d = tensor_->GetTensorShape()->GetDims(); d < NDIMS; d++) {
+    for (size_t d = tensor_shape_.size(); d < NDIMS; d++) {
       dsizes[d] = 1;
     }
     return dsizes;
@@ -163,6 +172,7 @@ class EigenTensor {
 
  private:
   Tensor *tensor_;
+  ShapeVector tensor_shape_;
   void *tensor_data_;
 };
 }  // namespace aicpu

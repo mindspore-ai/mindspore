@@ -44,6 +44,12 @@ constexpr uint64_t kFormatNCHWIndexC = 1;
 constexpr uint64_t kFormatNCHWIndexH = 2;
 constexpr uint64_t kFormatNCHWIndexW = 3;
 
+constexpr uint64_t kFormatNC1HWC0IndexN = 0;
+constexpr uint64_t kFormatNC1HWC0IndexC1 = 1;
+constexpr uint64_t kFormatNC1HWC0IndexH = 2;
+constexpr uint64_t kFormatNC1HWC0IndexW = 3;
+constexpr uint64_t kFormatNC1HWC0IndexC0 = 4;
+
 constexpr uint64_t kFormatCHWIndexC = 0;
 constexpr uint64_t kFormatCHWIndexH = 1;
 constexpr uint64_t kFormatCHWIndexW = 2;
@@ -68,6 +74,9 @@ const size_t INPUT_NUM7 = 7;
 const size_t INPUT_NUM8 = 8;
 const size_t INPUT_NUM9 = 9;
 const size_t INPUT_NUM32 = 32;
+
+using TensorShapePtr = std::shared_ptr<TensorShape>;
+
 /*
  * str cat util function
  * param[in] params need concat to string
@@ -194,6 +203,25 @@ inline bool AddWithoutOverflow(const int64_t x, const int64_t y, int64_t &sum) {
 }
 
 /**
+ * @brief check two shape vector are same
+ * @param shape shape
+ * @param check_shape check_shape
+ * @return true: same, false: different
+ */
+inline bool ShapeVectorIsSame(const std::vector<int64_t> &shape, const std::vector<int64_t> &check_shape) {
+  if (shape.size() != check_shape.size()) {
+    return false;
+  } else {
+    for (size_t idx = 0; idx < shape.size(); ++idx) {
+      if (shape[idx] != check_shape[idx]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+/**
  * @brief normal check for calculation
  * @param ctx context
  * @return status code
@@ -249,6 +277,26 @@ DataType DType(std::string dtype_str);
  * @return string of data type
  */
 std::string DTypeStr(DataType dtype);
+
+/**
+ * @brief check tensor type is same
+ * @param types a map with name and data type
+ * @param check_type check_type
+ * @param prim_name ops name
+ * @return status code
+ */
+uint32_t CheckTensorTypeSame(const std::map<std::string, DataType> &types, const DataType &check_type,
+                             const std::string &prim_name);
+
+/**
+ * @brief check tensor type is same
+ * @param shapes a map with name and shape
+ * @param check_type check_shape
+ * @param prim_name ops name
+ * @return status code
+ */
+uint32_t CheckTensorShapeSame(const std::map<std::string, TensorShapePtr> &shapes,
+                              const std::vector<int64_t> &check_shape, const std::string &prim_name);
 
 }  // namespace aicpu
 #endif

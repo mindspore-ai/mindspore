@@ -235,4 +235,48 @@ std::string DTypeStr(DataType dtype) {
     return std::string("DT_UNDEFINED");
   }
 }
+
+uint32_t CheckTensorTypeSame(const std::map<std::string, DataType> &types, const DataType &check_type,
+                             const std::string &prim_name) {
+  if (types.empty()) {
+    KERNEL_LOG_ERROR("Trying to use the function to check a empty types map!");
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
+  for (const auto type : types) {
+    auto _type_ = type.second;
+    if (_type_ != check_type) {
+      KERNEL_LOG_ERROR(
+        "For primitive[%s]'s input arguments [%s] type should equal to [%s] , "
+        "but get the real type [%s].",
+        prim_name.c_str(), type.first.c_str(), DTypeStr(check_type).c_str(), DTypeStr(_type_).c_str());
+      return KERNEL_STATUS_PARAM_INVALID;
+    }
+  }
+  return KERNEL_STATUS_OK;
+}
+
+uint32_t CheckTensorShapeSame(const std::map<std::string, TensorShapePtr> &shapes,
+                              const std::vector<int64_t> &check_shape, const std::string &prim_name) {
+  if (shapes.empty()) {
+    KERNEL_LOG_ERROR("Trying to use the function to check a empty types map!");
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
+  for (const auto shape : shapes) {
+    auto _shape_ptr_ = shape.second;
+    KERNEL_CHECK_NULLPTR(_shape_ptr_, KERNEL_STATUS_PARAM_INVALID,
+                         "For primitive[%s]'s input arguments [%s] TensorShapePtr "
+                         "should not be nullptr.",
+                         prim_name.c_str(), shape.first.c_str());
+    auto _shape_ = _shape_ptr_->GetDimSizes();
+    if (!ShapeVectorIsSame(_shape_, check_shape)) {
+      KERNEL_LOG_ERROR(
+        "For primitive[%s]'s input arguments [%s] shape should equal to (%s) , "
+        "but get the real shape (%s).",
+        prim_name.c_str(), shape.first.c_str(), VectorToString(check_shape).c_str(), VectorToString(_shape_).c_str());
+      return KERNEL_STATUS_PARAM_INVALID;
+    }
+  }
+  return KERNEL_STATUS_OK;
+}
+
 }  // namespace aicpu

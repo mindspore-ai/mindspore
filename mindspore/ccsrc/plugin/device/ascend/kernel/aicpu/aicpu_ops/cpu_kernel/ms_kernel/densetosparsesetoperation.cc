@@ -50,7 +50,7 @@ const std::vector<int64_t> Strides(const std::vector<int64_t> &shape) {
   return result;
 }
 
-uint32_t GroupShape(const std::vector<int64_t> input_shape, std::vector<int64_t> &grouped_shape) {
+uint32_t GroupsShape(const std::vector<int64_t> input_shape, std::vector<int64_t> &grouped_shape) {
   if (input_shape.size() < 2) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
@@ -69,18 +69,18 @@ uint32_t CheckShapesMatch(const std::vector<int64_t> &shape1, const std::vector<
   return KERNEL_STATUS_OK;
 }
 
-uint32_t GroupShapeFromInputs(const std::vector<int64_t> &shape1, const std::vector<int64_t> &shape2,
-                              std::vector<int64_t> &group_shape) {
+uint32_t GroupsShapeFromInputs(const std::vector<int64_t> &shape1, const std::vector<int64_t> &shape2,
+                               std::vector<int64_t> &group_shape) {
   std::vector<int64_t> group_shape_1;
-  KERNEL_HANDLE_ERROR(GroupShape(shape1, group_shape_1), "X1_Shape rank is less than 2.");
+  KERNEL_HANDLE_ERROR(GroupsShape(shape1, group_shape_1), "X1_Shape rank is less than 2.");
   std::vector<int64_t> group_shape_2;
-  KERNEL_HANDLE_ERROR(GroupShape(shape2, group_shape_2), "X2_Shape rank is less than 2.");
+  KERNEL_HANDLE_ERROR(GroupsShape(shape2, group_shape_2), "X2_Shape rank is less than 2.");
   KERNEL_HANDLE_ERROR(CheckShapesMatch(group_shape_1, group_shape_2), "Two shapes mismatch with each other.");
   group_shape.assign(group_shape_1.begin(), group_shape_1.end());
   return KERNEL_STATUS_OK;
 }
 
-uint32_t GetNumElements(const std::vector<int64_t> input_shape, int64_t &res) {
+uint32_t GetsNumElements(const std::vector<int64_t> input_shape, int64_t &res) {
   int64_t result = 1;
   for (uint32_t i = 0; i < input_shape.size(); i++) {
     KERNEL_CHECK_FALSE(MulWithoutOverflow(input_shape[i], result, result), KERNEL_STATUS_PARAM_INVALID,
@@ -278,13 +278,13 @@ uint32_t DenseToSparseSetOperationCpuKernel::ComputeDenseToSparse(DataBank &data
   std::vector<int64_t> group_shape;
   const auto shape1 = set1_t->GetTensorShape()->GetDimSizes();
 
-  KERNEL_HANDLE_ERROR(GroupShapeFromInputs(shape1, shape2, group_shape), "GroupShapeFromInputs error.");
+  KERNEL_HANDLE_ERROR(GroupsShapeFromInputs(shape1, shape2, group_shape), "GroupsShapeFromInputs error.");
   const std::vector<int64_t> set1_strides = Strides(shape1);
   std::map<std::vector<int64_t>, std::set<T>> group_sets;
   int64_t num_result_values = 0;
   int64_t max_set_size = 0;
   int64_t num_elements;
-  KERNEL_HANDLE_ERROR(GetNumElements(group_shape, num_elements), "NumElements error.");
+  KERNEL_HANDLE_ERROR(GetsNumElements(group_shape, num_elements), "NumElements error.");
   if (num_elements <= kParallelNum) {
     std::set<T> set1_group_set;
     std::set<T> set2_group_set;

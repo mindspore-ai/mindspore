@@ -33,6 +33,8 @@ class AICPU_VISIBILITY CpuKernelAllocatorUtils {
   static uint32_t CheckOutputDataPtr(const uint64_t data_ptr);
   static uint32_t DeleteOutputDataPtr(const uint64_t data_ptr);
   static int64_t GetInputDataSize(const std::vector<int64_t> &dims, DataType type);
+  static uint32_t AllocateOutputTensorDataMemory(const std::vector<uint64_t> &shape, DataType type,
+                                                 Tensor *&outputResultTensor);
 };
 }  // namespace aicpu
 #endif  // AICPU_UTILS_ALLOCATOR_UTILS_H_
