@@ -282,7 +282,7 @@ class SummaryLandscape:
                   For example, in image dataset, You can set num_samples is 2048,
                   which means that 2048 images are used to create loss landscape.
                   Default: 2048.
-                - intervals (List[List[int]): Specifies the interval
+                - intervals (List[List[int]]): Specifies the interval
                   in which the loss landscape. For example: If the user wants to
                   create loss landscape of two training processes, they are 1-5 epoch
                   and 6-10 epoch respectively. They can set [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]].

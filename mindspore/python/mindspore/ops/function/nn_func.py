@@ -1939,7 +1939,7 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
         x (Tensor): Tensor to be resized.
             Input tensor must be a 3-D, 4-D, or 5-D tensor with shape
             `(batch, channels, [optional depth], [optional height], width)`, with data type of float.
-        size (Union[int, tuple[int], list[int]], optional)): The target size.
+        size (Union[int, tuple[int], list[int]], optional): The target size.
             If size is a tuple or list, size must have the same dimensions as x.
             One and only one of size and scale_factor can be set to None. Default: None.
         scale_factor (Union[float, tuple[float], list[float]], optional): The scale factor of new size of the tensor.
@@ -1996,7 +1996,7 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
     - `×` indicates that this parameter is not currently supported.
     - `√` indicates that this parameter is supported.
 
-    Outputs:
+    Returns:
         Tensor, resized, whose dimensions and dtype are the same as `x`.
 
     Raises:

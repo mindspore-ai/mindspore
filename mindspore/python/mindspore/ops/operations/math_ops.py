@@ -6644,7 +6644,7 @@ class RaggedRange(Primitive):
 
           - if type of the input `starts`, input `limits` and input `deltas`
             are int32 or int64, shape of the output `rt_dense_values` is equal to
-            sum(abs(limits[i] - starts[i]) + abs(deltas[i]) - 1) / abs(deltas[i])),
+            sum(abs(limits[i] - starts[i]) + abs(deltas[i] - 1) / abs(deltas[i])),
           - if type of the input `starts`, input `limits` and input `deltas`
             are float32 or float64, shape of the output `rt_dense_values` is equal to
             sum(ceil(abs((limits[i] - starts[i]) / deltas[i]))).

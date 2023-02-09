@@ -1591,7 +1591,7 @@ class Pad(ImageTensorOperation, PyTensorOperation):
               value of edge.
 
     Raises:
-        TypeError: If `padding` is not of type int or Sequence[int, int], Sequence[int, int, int, int]].
+        TypeError: If `padding` is not of type int or Sequence[int, int], Sequence[int, int, int, int].
         TypeError: If `fill_value` is not of type int or tuple[int].
         TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border` .
         ValueError: If `padding` is negative.
