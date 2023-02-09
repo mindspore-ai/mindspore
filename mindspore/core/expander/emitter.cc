@@ -226,6 +226,9 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
   if (node->get()->abstract()->isa<abstract::AbstractMonad>()) {
     return Emit(prim::kZerosLike, {Tensor(0)});
   }
+  if (node->get()->abstract()->isa<abstract::AbstractNone>()) {
+    return Emit(prim::kZerosLike, {Tensor(0)});
+  }
   return Emit(prim::kZerosLike, {node});
 }
 

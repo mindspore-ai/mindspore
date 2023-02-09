@@ -494,10 +494,12 @@ REG_BPROP_BUILDER("SmoothL1Loss").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto prediction = ib->GetInput(kIndex0);
   auto target = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit("SmoothL1LossGrad", {prediction, target, dout},
-                     {{"beta", ib->GetAttr("beta")}, {"reduction", ib->GetAttr("reduction")}});
-  auto dy = ib->Emit("SmoothL1LossGrad", {target, prediction, dout},
-                     {{"beta", ib->GetAttr("beta")}, {"reduction", ib->GetAttr("reduction")}});
+  auto dx =
+    ib->Emit("SmoothL1LossGrad", {prediction, target, dout},
+             {{"beta", ib->GetAttr("beta")}, {"sigma", ib->GetAttr("beta")}, {"reduction", ib->GetAttr("reduction")}});
+  auto dy =
+    ib->Emit("SmoothL1LossGrad", {target, prediction, dout},
+             {{"beta", ib->GetAttr("beta")}, {"sigma", ib->GetAttr("beta")}, {"reduction", ib->GetAttr("reduction")}});
   return {dx, dy};
 });
 
@@ -1446,10 +1448,10 @@ REG_BPROP_BUILDER("NthElement").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto n = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto indicators = ib->Equal(ib->ExpandDims(out, -1), input_x, ib->GetDtype(input_x));
+  auto indicators = ib->Cast(ib->Equal(ib->ExpandDims(out, -1), input_x, ib->GetDtype(input_x)), kFloat32);
   dout = ib->ExpandDims(dout, -1);
   auto num_select = ib->ExpandDims(ib->ReduceSum(indicators, {-1}), -1);
-  return {ib->Mul(ib->Div(indicators, num_select), dout), ib->ZerosLike(n)};
+  return {ib->Cast(ib->Mul(ib->Div(indicators, num_select), dout), ib->GetDtype(input_x)), ib->ZerosLike(n)};
 });
 
 REG_BPROP_BUILDER("AdaptiveAvgPool3D").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {

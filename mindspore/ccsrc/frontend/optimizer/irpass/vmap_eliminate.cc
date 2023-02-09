@@ -27,6 +27,7 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/operator/composite/vmap.h"
+#include "include/common/utils/convert_utils_py.h"
 
 namespace mindspore {
 namespace opt {
@@ -412,6 +413,24 @@ AnfNodePtr PostProcessVmap(const AnfNodePtr &expanded_vmap_node, const std::vect
   return FeedBackParam(vmap_post_fg, u_monad_node, io_monad_node, match_out_axis_app, *param_mapping_table);
 }
 
+ValuePtr CreatePrimtivePy(const mindspore::HashMap<std::string, ValuePtr> &attrs, const string &op_name) {
+  const auto op_path = "mindspore.ops.primitive";
+  const auto func = "_get_primitivec";
+  py::dict attrs_py = py::dict();
+  for (auto &v : attrs) {
+    py::str name = v.first;
+    attrs_py[name] = ValueToPyData(v.second);
+  }
+  py::object obj = python_adapter::CallPyFn(op_path, func, op_name, attrs_py);
+  ValuePtr op_instance = nullptr;
+  bool succ = parse::ConvertData(obj, &op_instance);
+  if (!succ) {
+    MS_LOG(ERROR) << "Failure:get Python op " << op_path << " from " << op_name << " fail";
+    return nullptr;
+  }
+  return op_instance;
+}
+
 AnfNodePtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resource, int axis_size) {
   // Set a child scope named "vmap_'PrimitiveName'" for the vmap rule function,
   // and add "VmapRule" to the front.
@@ -436,7 +455,12 @@ AnfNodePtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBasePtr
 
   // Get vmap rule for specific primitive.
   if (prim->is_base()) {
-    vmap_rule_fn = GetVmapRuleFunction(prim->name(), axis_size);
+    if (prim->attrs().empty()) {
+      vmap_rule_fn = GetVmapRuleFunction(prim->name(), axis_size);
+    } else {
+      auto new_prim = CreatePrimtivePy(prim->attrs(), prim->name());
+      vmap_rule_fn = new_prim->cast<PrimitivePyPtr>()->GetVmapRuleFunction(is_side_effect, axis_size);
+    }
   } else {
     vmap_rule_fn = prim->cast<PrimitivePyPtr>()->GetVmapRuleFunction(is_side_effect, axis_size);
     if (py::isinstance<py::none>(vmap_rule_fn)) {
