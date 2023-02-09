@@ -19,8 +19,10 @@ from mindspore.ops import functional as F
 from mindspore import context
 from mindspore.common import mutable
 from mindspore.ops.composite import GradOperation
+from sequence_help import context_prepare
 
 context.set_context(mode=context.GRAPH_MODE)
+context_prepare()
 
 
 class NetSetItem(nn.Cell):
@@ -30,6 +32,8 @@ class NetSetItem(nn.Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_seq_setitem():
     """
@@ -48,6 +52,8 @@ def test_seq_setitem():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_seq_setitem_grad_0():
     """
@@ -66,6 +72,8 @@ def test_seq_setitem_grad_0():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_seq_setitem_grad_1():
     """

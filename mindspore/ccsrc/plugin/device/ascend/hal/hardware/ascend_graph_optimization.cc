@@ -594,6 +594,7 @@ void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
       if (cnode == nullptr) {
         std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
         device::ascend::HandleKernelSelectFailure(graph, node, failure_info);
+        continue;
       }
       (void)mng->Replace(node, cnode);
       MS_LOG(INFO) << msg << " but expand success.";

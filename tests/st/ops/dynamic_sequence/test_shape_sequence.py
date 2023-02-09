@@ -13,13 +13,15 @@
 # limitations under the License.
 # ============================================================================
 import pytest
+
 import numpy as np
-from mindspore import context
-from mindspore import Tensor
+from mindspore import context, Tensor
 from mindspore.nn import Cell
 import mindspore
+from sequence_help import context_prepare
 
 context.set_context(mode=context.GRAPH_MODE)
+context_prepare()
 
 
 class ShapeNet(Cell):
@@ -33,6 +35,8 @@ class ShapeNet(Cell):
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_shape():
     """
