@@ -60,7 +60,10 @@ std::vector<int64_t> GetSplitPadList(const api::SharedPtr<ops::Conv2DFusion> &or
     return {};
   }
   std::vector<int64_t> new_pad_list;
-  int64_t pad_up = 0, pad_down = 0, pad_left = 0, pad_right = 0;
+  int64_t pad_up = 0;
+  int64_t pad_down = 0;
+  int64_t pad_left = 0;
+  int64_t pad_right = 0;
   int64_t pad_h_all =
     (output_h - 1) * ori_conv_prim->get_stride().at(kIndexH) + (kernel_h - 1) * dilation_h + 1 - input_h;
   int64_t pad_w_all =

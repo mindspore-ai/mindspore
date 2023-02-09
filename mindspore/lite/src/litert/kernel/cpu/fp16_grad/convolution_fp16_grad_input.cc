@@ -85,7 +85,8 @@ int ConvolutionGradInputCPUKernelFp16::DoExecute(int task_id) {
   auto w_addr = reinterpret_cast<float16_t *>(input_w->data());
   auto dx_addr = reinterpret_cast<float16_t *>(out_dx->data());
 
-  int i, j;
+  int i;
+  int j;
   int in_ch = conv_param->input_channel_;
   int in_h = conv_param->input_h_;
   int nweights = input_w->ElementsNum();

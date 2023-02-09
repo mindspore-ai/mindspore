@@ -83,7 +83,8 @@ int DeConvolutionGradFilterCPUKernel::DoExecute(int task_id) {
   auto dw_addr = reinterpret_cast<float *>(out_dw->data());
   CHECK_NULL_RETURN(dw_addr);
 
-  int i, j;
+  int i;
+  int j;
   int out_w = conv_param->output_w_;
   int out_h = conv_param->output_h_;
   int out_ch = conv_param->output_channel_;

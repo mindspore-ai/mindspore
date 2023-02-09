@@ -76,7 +76,9 @@ STATUS HuffmanDecode::DoHuffmanDecode(const std::string &input_str, void *decode
 }
 
 STATUS HuffmanDecode::RebuildHuffmanTree(std::string keys, std::string codes, const HuffmanNodePtr &root) {
-  HuffmanNodePtr cur_node, tmp_node, new_node;
+  HuffmanNodePtr cur_node;
+  HuffmanNodePtr tmp_node;
+  HuffmanNodePtr new_node;
 
   auto huffman_keys = Str2Vec(std::move(keys));
   auto huffman_codes = Str2Vec(std::move(codes));

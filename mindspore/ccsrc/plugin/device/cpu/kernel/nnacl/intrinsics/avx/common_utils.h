@@ -34,6 +34,9 @@ extern "C" {
 #endif
 #endif
 
+#define AVX_ACT_RELU 1
+#define AVX_ACT_RELU6 3
+
 // Signed saturating Add
 __m128i _mm_adds_epi32(__m128i a, __m128i b);
 
@@ -89,7 +92,7 @@ static inline void ActBlock8Avx(__m256 *v1, __m256 *v2, __m256 *v3, __m256 *v4, 
   __m256 relu6 = _mm256_set1_ps(6.0);
   __m256 zero = _mm256_setzero_ps();
   switch (relu_type) {
-    case 3:
+    case AVX_ACT_RELU6:
       *v1 = _mm256_min_ps(*v1, relu6);
       *v2 = _mm256_min_ps(*v2, relu6);
       *v3 = _mm256_min_ps(*v3, relu6);
@@ -98,7 +101,7 @@ static inline void ActBlock8Avx(__m256 *v1, __m256 *v2, __m256 *v3, __m256 *v4, 
       *v6 = _mm256_min_ps(*v6, relu6);
       *v7 = _mm256_min_ps(*v7, relu6);
       *v8 = _mm256_min_ps(*v8, relu6);
-    case 1:
+    case AVX_ACT_RELU:
       *v1 = _mm256_max_ps(*v1, zero);
       *v2 = _mm256_max_ps(*v2, zero);
       *v3 = _mm256_max_ps(*v3, zero);
