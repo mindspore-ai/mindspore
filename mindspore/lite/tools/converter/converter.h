@@ -59,6 +59,8 @@ class ConverterImpl {
   std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key);
   int SaveGraph(FuncGraphPtr graph, const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size,
                 bool not_save);
+  int SaveMindIRModel(FuncGraphPtr graph, const std::shared_ptr<ConverterPara> &param, void **model_data,
+                      size_t *data_size);
   int LoadPluginLib(const std::shared_ptr<ConverterPara> &param);
 };
 }  // namespace lite

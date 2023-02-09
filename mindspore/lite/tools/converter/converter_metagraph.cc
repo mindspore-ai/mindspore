@@ -35,24 +35,6 @@ constexpr size_t kFlatbuffersBuilderInitSize = 1024;
 constexpr size_t kEncMaxLen = 16;
 }  // namespace
 
-int InitEncryptKey(const std::shared_ptr<ConverterPara> &param, unsigned char *encKey, size_t *keyLen) {
-  if (!param->enable_encryption) {
-    return RET_OK;
-  }
-  if (param->encrypt_key.empty()) {
-    MS_LOG(ERROR) << "param->encrypt_key is empty.";
-    return RET_INPUT_PARAM_INVALID;
-  }
-  *keyLen = lite::Hex2ByteArray(param->encrypt_key, encKey, kEncMaxLen);
-  if (*keyLen != kEncMaxLen) {
-    MS_LOG(ERROR) << "enc_key must expressed in hexadecimal characters "
-                  << " and only support AES-GCM method and the key length is " << kEncMaxLen;
-    return RET_INPUT_PARAM_INVALID;
-  }
-
-  return RET_OK;
-}
-
 STATUS ConverterToMetaGraph::UpdateMetaGraphOutputName(schema::MetaGraphT *meta_graph,
                                                        const std::vector<std::string> &output_names) {
   MS_CHECK_TRUE_MSG(meta_graph != nullptr, RET_NULL_PTR, "meta_graph is nullptr");

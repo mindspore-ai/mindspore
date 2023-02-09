@@ -213,6 +213,70 @@ int PreInference(const schema::MetaGraphT &meta_graph, bool train_model) {
   return RET_OK;
 }
 
+int PreInferenceMindIR(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &graph, bool train_model) {
+  if (train_model) {
+    MS_LOG(WARNING) << "train model dont support pre-infer.";
+    return RET_OK;
+  }
+  MindIRSerializer mindir_serializer(false);
+  auto ret = mindir_serializer.Save(param, graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Save funcgraph failed";
+    return ret;
+  }
+  void *data = nullptr;
+  size_t size = 0;
+  ret = mindir_serializer.GetBuffAndSize(&data, &size);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get buffer and size failed";
+    return ret;
+  }
+
+  mindspore::Model model;
+  auto context = std::make_shared<mindspore::Context>();
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "New context failed while running ";
+    std::cerr << "New context failed while running " << std::endl;
+    free(data);
+    return RET_ERROR;
+  }
+  std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
+  auto &device_list = context->MutableDeviceInfo();
+  device_list.push_back(device_info);
+
+  auto status = model.Build(data, size, kMindIR, context);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "Build error ";
+    std::cerr << "Build error " << std::endl;
+    free(data);
+    return RET_ERROR;
+  }
+  for (auto &tensor : model.GetInputs()) {
+    if (tensor.Shape().empty() || tensor.DataSize() == 0 ||
+        std::find(tensor.Shape().begin(), tensor.Shape().end(), -1) != tensor.Shape().end()) {
+      MS_LOG(WARNING) << tensor.Name() << " is dynamic shape and will not be pre-infer.";
+      free(data);
+      return RET_OK;
+    }
+    ret = GenerateRandomData(&tensor);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << tensor.Name() << "GenerateRandomData failed.";
+      free(data);
+      return ret;
+    }
+  }
+  std::vector<MSTensor> outputs;
+  status = model.Predict(model.GetInputs(), &outputs);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "Inference error ";
+    std::cerr << "Inference error " << std::endl;
+    free(data);
+    return RET_ERROR;
+  }
+  free(data);
+  return RET_OK;
+}
+
 int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param) {
   lite::ConfigFileParser config_parser;
   std::map<std::string, std::map<std::string, std::string>> maps;
@@ -740,9 +804,9 @@ int ConverterImpl::SaveGraph(FuncGraphPtr graph, const std::shared_ptr<Converter
                              size_t *data_size, bool not_save) {
   int status = RET_ERROR;
   if (param->export_mindir == kMindIR) {
-    status = ConverterFuncGraph::Save(param, graph, model_data, data_size);
+    status = SaveMindIRModel(graph, param, model_data, data_size);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "Export to mindir failed: " << status << " " << GetErrorInfo(status);
+      MS_LOG(ERROR) << "Save mindir model failed :" << status << " " << GetErrorInfo(status);
       return RET_ERROR;
     }
     return RET_OK;
@@ -773,10 +837,28 @@ int ConverterImpl::SaveGraph(FuncGraphPtr graph, const std::shared_ptr<Converter
   }
   delete meta_graph;
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Save  failed:" << status << " " << GetErrorInfo(status);
+    MS_LOG(ERROR) << "Save failed:" << status << " " << GetErrorInfo(status);
     return status;
   }
 
+  return RET_OK;
+}
+
+int ConverterImpl::SaveMindIRModel(FuncGraphPtr graph, const std::shared_ptr<ConverterPara> &param, void **model_data,
+                                   size_t *data_size) {
+  int status = RET_OK;
+  if (param->pre_infer) {
+    status = PreInferenceMindIR(param, graph, param->train_model);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "PreInferenceMindIR failed: " << status << " " << GetErrorInfo(status);
+      return status;
+    }
+  }
+  status = ConverterFuncGraph::Save(param, graph, model_data, data_size);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Export to mindir failed: " << status << " " << GetErrorInfo(status);
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

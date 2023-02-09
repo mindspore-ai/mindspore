@@ -33,6 +33,7 @@ namespace mindspore::lite {
 class MindIRSerializer {
  public:
   MindIRSerializer() {}
+  explicit MindIRSerializer(bool is_export_model) { is_export_model_ = is_export_model; }
   virtual ~MindIRSerializer() {
     if (data_fs_ != nullptr) {
       data_fs_->close();
@@ -47,9 +48,10 @@ class MindIRSerializer {
  private:
   int ParserPath(const std::string &output_path);
   int IfSaveTogether(bool *save_together);
-  int SaveMindIRTogether();
-  int SplitSave();
-  int SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file);
+  int SaveMindIRTogether(const std::shared_ptr<ConverterPara> &param);
+  int SplitSave(const std::shared_ptr<ConverterPara> &param);
+  int SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file,
+                      const std::shared_ptr<ConverterPara> &param);
   int ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &func_graph);
   std::shared_ptr<mindspore::QuantizationParam> ConvertQuantParamTToQuantizationParam(
     std::vector<schema::QuantParamT> quant_param);
@@ -77,6 +79,7 @@ class MindIRSerializer {
   std::unordered_map<tensor::TensorPtr, mind_ir::TensorProto *> para_proto_dict_{};
   std::fstream *data_fs_ = nullptr;
   std::shared_ptr<system::FileSystem> fs_{};
+  bool is_export_model_ = true;
 };
 // export func_graph
 int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph, bool need_buff,

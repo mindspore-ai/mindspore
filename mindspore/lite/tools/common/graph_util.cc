@@ -31,6 +31,7 @@
 #include "ops/core_ops.h"
 #include "tools/converter/converter_context.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/common/string_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -43,6 +44,7 @@ constexpr size_t kTupleGetItemInputSize = 3;
 constexpr size_t kSecondIndex = 1;
 constexpr size_t kInvalidSize = SIZE_MAX;
 constexpr auto kMakeTuple = "MakeTuple";
+constexpr size_t kEncMaxLen = 16;
 }  // namespace
 
 static STATUS GetAbstractfromTupleGetItem(const CNodePtr &cnode, AbstractBasePtr *abstract, size_t *idx) {
@@ -683,6 +685,24 @@ int TransferMetaGraph(const schema::MetaGraphT &graph, void **model_buf, size_t 
     return RET_ERROR;
   }
   (void)memcpy(*model_buf, content, *size);
+  return RET_OK;
+}
+
+int InitEncryptKey(const std::shared_ptr<ConverterPara> &param, unsigned char *encKey, size_t *keyLen) {
+  if (!param->enable_encryption) {
+    return RET_OK;
+  }
+  if (param->encrypt_key.empty()) {
+    MS_LOG(ERROR) << "param->encrypt_key is empty.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  *keyLen = lite::Hex2ByteArray(param->encrypt_key, encKey, kEncMaxLen);
+  if (*keyLen != kEncMaxLen) {
+    MS_LOG(ERROR) << "enc_key must expressed in hexadecimal characters "
+                  << " and only support AES-GCM method and the key length is " << kEncMaxLen;
+    return RET_INPUT_PARAM_INVALID;
+  }
+
   return RET_OK;
 }
 }  // namespace lite

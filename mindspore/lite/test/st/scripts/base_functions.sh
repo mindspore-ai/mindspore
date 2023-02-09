@@ -12,7 +12,7 @@ function Convert() {
   fail=0
   local cfg_file_list model_info model_name extra_info model_type cfg_file_name model_file weight_file output_file \
         quant_type config_file train_model in_dtype out_dtype converter_result cfg_file calib_size save_type \
-        encryption_flag input_format
+        input_format
   cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
@@ -70,7 +70,6 @@ function Convert() {
         out_dtype="DEFAULT"
         fp16_weight="off"
         save_type="MINDIR_LITE"
-        encryption_flag="false"
         optimize="general"
         if [[ ${cfg_file_name} =~ "weightquant" ]]; then
           # models_weightquant_${suffix}.cfg
@@ -91,7 +90,6 @@ function Convert() {
           fi
         elif [[ ${cfg_file_name} =~ "_cloud" ]]; then
           save_type="MINDIR"
-          encryption_flag="false"
           if [[ ${input_shapes} != "" && ${input_names} != "" ]]; then
             if [[ ${input_num} == "" ]]; then
               input_num=1
@@ -139,12 +137,12 @@ function Convert() {
         if [[ ${cfg_file_name} =~ "_cloud" ]]; then
             echo "./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes} --fp16=${fp16_weight}\
-              --configFile=${config_file} --saveType=${save_type} --optimize=${optimize} --encryption=${encryption_flag}\
+              --configFile=${config_file} --saveType=${save_type} --optimize=${optimize} \
               --trainModel=${train_model} --inputDataFormat=${input_format}"
               
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
-              --configFile=${config_file} --saveType=${save_type} --optimize=${optimize} --encryption=${encryption_flag}\
+              --configFile=${config_file} --saveType=${save_type} --optimize=${optimize} \
               --trainModel=${train_model} --inputDataFormat=${input_format} >> "$4" 
         else
             echo "./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
