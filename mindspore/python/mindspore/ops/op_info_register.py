@@ -1219,6 +1219,7 @@ class DataType:
     I8_NDHWC = ("int8", "NDHWC")
     I8_ChannelLast = ("int8", "ChannelLast")
     I8_NDC1HWC0 = ("int8", "NDC1HWC0")
+    I8_NC1HWC0 = ("int8", "NC1HWC0")
 
     U8_None = ("uint8", "")
     U8_Default = ("uint8", "DefaultFormat")
@@ -1232,6 +1233,7 @@ class DataType:
     U8_NDHWC = ("uint8", "NDHWC")
     U8_ChannelLast = ("uint8", "ChannelLast")
     U8_NDC1HWC0 = ("uint8", "NDC1HWC0")
+    U8_NC1HWC0 = ("uint8", "NC1HWC0")
 
     I16_None = ("int16", "")
     I16_Default = ("int16", "DefaultFormat")
