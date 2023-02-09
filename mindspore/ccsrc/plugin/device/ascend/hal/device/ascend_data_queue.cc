@@ -699,7 +699,7 @@ void CloseTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
 }
 
 namespace {
-std::shared_ptr<DataQueue> CreateAscendDataQueue(const std::string &channel_name, bool, size_t capacity,
+std::shared_ptr<DataQueue> CreateAscendDataQueue(const std::string &channel_name, bool, size_t,
                                                  const std::vector<size_t> &) {
   int32_t is_heterogeneous = 0;
   (void)rtGetIsHeterogenous(&is_heterogeneous);
