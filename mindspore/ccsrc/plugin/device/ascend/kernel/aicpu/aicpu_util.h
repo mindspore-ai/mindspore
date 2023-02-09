@@ -183,6 +183,7 @@ constexpr auto kSign = "Sign";
 constexpr auto kFmax = "Fmax";
 constexpr auto kGLU = "GLU";
 constexpr auto kFmin = "Fmin";
+constexpr auto kFillV2 = "FillV2";
 constexpr auto kArgmax = "Argmax";
 constexpr auto kArgmin = "Argmin";
 constexpr auto kRange = "Range";
@@ -315,6 +316,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kUpsampleNearest3DGrad, "UpsampleNearest3dGrad"},
   {kNameRangeV2, "Range"},
   {kReLUV3, "Relu"},
+  {kFillV2, "Fill"},
   {kUpsampleTrilinear3D, "UpsampleTrilinear3d"},
   {kUpsampleTrilinear3DGrad, "UpsampleTrilinear3dGrad"},
   {kStack, "Pack"},

@@ -72,7 +72,7 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                                mindspore::kCSRSparseMatrixToDenseOpName,
                                                                mindspore::kCSRSparseMatrixToSparseTensorOpName,
                                                                mindspore::kDataFormatVecPermuteOpName,
-                                                               mindspore::kFillOpName,
+                                                               mindspore::kFillV2OpName,
                                                                mindspore::kLogMatrixDeterminantOpName,
                                                                mindspore::kMatrixSolveLsOpName,
                                                                mindspore::kMedianOpName,

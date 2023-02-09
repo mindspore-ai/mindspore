@@ -285,7 +285,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kExpandDimsOpName).set_target_op_name(kExpandDi
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kFillOpName).set_target_op_name(kFillDOpName);
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kFillV2OpName).set_backend_op_name(kFillOpName).set_need_tbe_check_supported(true);
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kFillV2OpName).set_backend_op_name(kFillOpName);
 
 // In hisi code, first check dynamic impl in GatherV2
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kGatherOpName).set_backend_op_name(kGatherV2OpName);
