@@ -51,6 +51,9 @@ void ParallelThreadPoolManager::Init(bool enable_shared_thread_pool, const std::
   runner_id_pools_[runner_id] = runner_pools;
   remaining_thread_num_[runner_id] = remaining_thread_num;
   thread_num_limit_[runner_id] = thread_num_limit;
+  idle_pool_num_[runner_id] = worker_num;
+  runner_worker_num_[runner_id] = worker_num;
+  worker_init_num_[runner_id] = 0;
 #endif
 }
 
@@ -136,6 +139,7 @@ void ParallelThreadPoolManager::BindPoolToRunner(
     auto worker = static_cast<ParallelWorker *>(all_workers[i]);
     pool_workers_[parallel_pool].push_back(worker);
   }
+  worker_init_num_[runner_id]++;
 #endif
 }
 
@@ -150,7 +154,11 @@ bool ParallelThreadPoolManager::GetEnableSharedThreadPool(std::string runner_id)
 void ParallelThreadPoolManager::ActivatePool(const std::string &runner_id, int model_id) {
 #ifdef THREAD_POOL_MANAGER
   std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
+  if (!enable_shared_thread_pool_[runner_id]) {
+    return;
+  }
   auto &pool = runner_id_pools_[runner_id][model_id];
+  idle_pool_num_[runner_id]--;
   pool->UseThreadPool(1);
   auto &workers = pool_workers_[pool];
   for (auto &worker : workers) {
@@ -162,15 +170,19 @@ void ParallelThreadPoolManager::ActivatePool(const std::string &runner_id, int m
 void ParallelThreadPoolManager::SetFreePool(const std::string &runner_id, int model_id) {
 #ifdef THREAD_POOL_MANAGER
   std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
+  if (!enable_shared_thread_pool_[runner_id]) {
+    return;
+  }
   auto &pool = runner_id_pools_[runner_id][model_id];
   pool->UseThreadPool(-1);
+  idle_pool_num_[runner_id]++;
 #endif
 }
 
 #ifdef ENABLE_MINDRT
 ParallelThreadPool *ParallelThreadPoolManager::GetIdleThreadPool(const std::string &runner_id, ParallelTask *task) {
 #ifdef THREAD_POOL_MANAGER
-  if (!has_idle_pool_[runner_id]) {
+  if (runner_worker_num_[runner_id] != worker_init_num_[runner_id] || idle_pool_num_[runner_id] <= 0) {
     return nullptr;
   }
   std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
@@ -205,6 +217,9 @@ void ParallelThreadPoolManager::ResetParallelThreadPoolManager(const std::string
   enable_shared_thread_pool_.erase(runner_id);
   remaining_thread_num_.erase(runner_id);
   thread_num_limit_.erase(runner_id);
+  runner_worker_num_.erase(runner_id);
+  worker_init_num_.erase(runner_id);
+  idle_pool_num_.erase(runner_id);
 #endif
 }
 
@@ -218,6 +233,9 @@ ParallelThreadPoolManager::~ParallelThreadPoolManager() {
   enable_shared_thread_pool_.clear();
   remaining_thread_num_.clear();
   thread_num_limit_.clear();
+  runner_worker_num_.clear();
+  worker_init_num_.clear();
+  idle_pool_num_.clear();
   THREAD_INFO("~ParallelThreadPoolManager end.");
 #endif
 }

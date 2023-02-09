@@ -170,6 +170,7 @@ class LiteSession {
   int CreateCoreMLDelegate();
   int DelegateInit();
   int InitGPURuntime();
+  int InitSharedThreadPool();
 
  private:
   int IsolateOutputTensor();
@@ -242,6 +243,7 @@ class LiteSession {
   std::vector<kernel::KernelExec *> non_tail_call_kernels_;
   std::string model_id_;
   std::string runner_id_;
+  int worker_id_;
   bool is_shared_weight_ = false;
 };
 }  // namespace lite

@@ -698,19 +698,22 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
   MS_LOG(INFO) << "runner_id_: " << runner_id_ << " | enable_shared_thread_pool_: " << enable_shared_thread_pool_
                << " | workers_num_: " << workers_num_ << " | remaining_thread_num_: " << remaining_thread_num_
                << " | thread_num_limit_: " << thread_num_limit_;
-  ParallelThreadPoolManager::GetInstance()->Init(enable_shared_thread_pool_, runner_id_, workers_num_,
-                                                 remaining_thread_num_, thread_num_limit_);
   for (size_t i = 0; i < workers_num_; i++) {
     int numa_node_id = model_pool_config[i]->numa_id;
     std::map<std::string, std::string> ids;
     ids[lite::kInnerModelIDKey] = std::to_string(i);
     ids[lite::kInnerRunnerIDKey] = runner_id_;
     ids[lite::kInnerNumaIDKey] = std::to_string(model_pool_config[i]->numa_id);
-    model_pool_config[i]->config_info[lite::kInnerModelParallelRunnerSection] = ids;
+    if (enable_shared_thread_pool_) {
+      ids[lite::kInnerWorkerNumKey] = std::to_string(workers_num_);
+      ids[lite::kEnableSharedThreadPoolKey] = "true";
+      ids[lite::kThreadNumRemainingPerWorkerKey] = std::to_string(remaining_thread_num_);
+      ids[lite::kThreadNumLimitPerWorkerKey] = std::to_string(thread_num_limit_);
+    }
     if (!copy_model || model_pool_config[i]->numa_id == 0) {
       ids[lite::kInnerSharingWeightCopyBufKey] = "false";
     }
-
+    model_pool_config[i]->config_info[lite::kInnerModelParallelRunnerSection] = ids;
     model_worker = std::make_shared<ModelWorker>();
     if (model_worker == nullptr) {
       MS_LOG(ERROR) << "model worker is nullptr.";
@@ -911,8 +914,13 @@ Status ModelPool::ParseSharedThreadPoolParam(const std::shared_ptr<RunnerConfig>
 }
 
 ModelPoolConfig ModelPool::Init(const std::shared_ptr<RunnerConfig> &runner_config) {
+  auto status = ParseSharedThreadPoolParam(runner_config);
+  if (status != kSuccess) {
+    MS_LOG(WARNING) << "ParseSharedThreadPoolParam failed, Not use thread pool shared.";
+    enable_shared_thread_pool_ = false;
+  }
   ModelPoolConfig model_pool_config = {};
-  auto status = CanUseAllPhysicalResources();
+  status = CanUseAllPhysicalResources();
   if (status != kSuccess) {
     MS_LOG(ERROR) << "parser sys file failed.";
     return model_pool_config;
@@ -1080,25 +1088,15 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   auto available_worker = GetMaxWaitWorkerNum(&max_wait_worker_node_id, &max_wait_worker_num);
   if (available_worker != nullptr) {
     // dispatch tasks directly to workers
-    if (enable_shared_thread_pool_) {
-      ParallelThreadPoolManager::GetInstance()->SetHasIdlePool(runner_id_, true);
-      ParallelThreadPoolManager::GetInstance()->ActivatePool(runner_id_, available_worker->GetWorkerID());
-    }
     auto ret = available_worker->Predict(inputs, outputs, before, after);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "direct predict failed.";
       return kLiteError;
     }
     predict_task_queue_->IncreaseWaitModelNum(1, max_wait_worker_node_id);
-    if (enable_shared_thread_pool_) {
-      ParallelThreadPoolManager::GetInstance()->SetFreePool(runner_id_, available_worker->GetWorkerID());
-    }
     return kSuccess;
   } else {
     // do predict
-    if (enable_shared_thread_pool_) {
-      ParallelThreadPoolManager::GetInstance()->SetHasIdlePool(runner_id_, false);
-    }
     size_t task_id;
     auto task = CreatePredictTask(inputs, outputs, before, after, &task_id);
     if (task == nullptr) {
@@ -1133,9 +1131,6 @@ ModelPool::~ModelPool() {
   }
   if (thread_.joinable()) {
     thread_.join();
-  }
-  if (enable_shared_thread_pool_) {
-    ParallelThreadPoolManager::GetInstance()->ResetParallelThreadPoolManager(runner_id_);
   }
   MS_LOG(INFO) << "delete model pool task.";
   if (tasks_ != nullptr) {
