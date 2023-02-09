@@ -52,6 +52,9 @@ def test_has_hidden_side_effect(tag):
     def hidden_side_effect_node_graph(input_shape):
         return ops.StandardNormal(0, 1)(input_shape)
 
+    def hidden_side_effect_node_parent_graph(input_shape):
+        return hidden_side_effect_node_graph(input_shape)
+
     @fns
     def root_graph_normal_call():
         pow_out = pow_ops(x, x)
@@ -64,8 +67,8 @@ def test_has_hidden_side_effect(tag):
     @fns
     def root_graph_hidden_side_effect_call():
         shape = (1, 2, 3)
-        out1 = hidden_side_effect_node_graph(shape)
-        out2 = hidden_side_effect_node_graph(shape)
+        out1 = hidden_side_effect_node_parent_graph(shape)
+        out2 = hidden_side_effect_node_parent_graph(shape)
         return ops.make_tuple(out1, out2)
 
     return fns[tag]

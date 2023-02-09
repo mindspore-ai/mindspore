@@ -54,8 +54,11 @@ class COMMON_EXPORT CSE {
                        mindspore::HashMap<std::size_t, std::vector<AnfNodePtr>> *groups);
   void AddReplicatedNode(const AnfNodePtr &node, const AnfNodePtr &main);
   bool IsHiddenSideEffectCall(const AnfNodePtr &node);
+  void UpdateSideHiddenEffectGraph(const FuncGraphPtr &fg);
   // Record func graphs having hidden_side_effect cnode.
   HashSet<FuncGraphPtr> hidden_side_effect_func_graphs_;
+  // Record all call_nodes
+  HashMap<FuncGraphPtr, HashSet<CNodePtr>> call_nodes_;
   // Record all node need to be replaced
   OrderedMap<AnfNodePtr, AnfNodePtr> replicated_nodes_;
 };
