@@ -28,8 +28,8 @@
 
 namespace mindspore {
 namespace graph_bprop {
-constexpr int64_t TWO = 2;
-constexpr int64_t ONE = 1;
+constexpr int64_t kTwo = 2;
+constexpr int64_t kOne = 1;
 class BpropExpanderMetaFuncGraph : public BpropMetaFuncGraph {
  public:
   explicit BpropExpanderMetaFuncGraph(const PrimitivePtr &primal) : BpropMetaFuncGraph(primal->name(), primal) {}
@@ -40,7 +40,7 @@ class BpropExpanderMetaFuncGraph : public BpropMetaFuncGraph {
     auto fg = std::make_shared<FuncGraph>();
     std::vector<AnfNodePtr> grads;
     grads.push_back(NewValueNode(primal_));
-    for (int64_t i = 0; i < list_size - TWO; ++i) {
+    for (int64_t i = 0; i < list_size - kTwo; ++i) {
       auto abs_i = args_spec_list[i];
       auto x = fg->add_parameter();
       x->set_abstract(args_spec_list[i]);
@@ -48,10 +48,10 @@ class BpropExpanderMetaFuncGraph : public BpropMetaFuncGraph {
       (void)grads.emplace_back(x);
     }
     auto out = fg->add_parameter();
-    out->set_abstract(args_spec_list[list_size - TWO]);
+    out->set_abstract(args_spec_list[list_size - kTwo]);
     (void)grads.emplace_back(out);
     auto dout = fg->NewCNode({NewValueNode(prim::kPrimZerosLike), out});
-    dout->set_abstract(args_spec_list[list_size - ONE]);
+    dout->set_abstract(args_spec_list[list_size - kOne]);
     (void)grads.emplace_back(dout);
     auto newcnode = fg->NewCNode(grads);
     expander::bprop::BpropExpanderInGraphMode be;
