@@ -78,7 +78,7 @@ class MinddataProfilingAnalyzer:
         try:
             validated_dir = validate_and_normalize_path(dir_name)
         except RuntimeError as path_error:
-            logger.warning('<%s> <%s> is invalid.', dir_type, validated_dir)
+            logger.warning('<%s> is invalid.', dir_type)
             raise ProfilerPathErrorException(dir_type + 'is invalid.') from path_error
 
         if not os.path.isdir(validated_dir):
