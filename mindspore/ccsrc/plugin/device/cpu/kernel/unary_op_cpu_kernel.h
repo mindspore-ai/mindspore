@@ -49,6 +49,7 @@ class UnaryOpCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   std::shared_ptr<CpuKernelFunc> func_obj_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -197,7 +197,9 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>>
 bool UnaryOpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  if (inputs.empty() || outputs.empty()) {
+  std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
+  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
+  if (inputs.empty() || outputs.empty() || is_null_input_) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
