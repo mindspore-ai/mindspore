@@ -200,7 +200,9 @@ uint32_t MultinomialCpuKernel::Compute(CpuKernelContext &ctx) {
   // check input dimension
   KERNEL_CHECK_FALSE((input_0->GetTensorShape()->GetDims() == 2), KERNEL_STATUS_PARAM_INVALID,
                      "Input[0] should be a matrix, but got rank [%d].", input_0->GetTensorShape()->GetDims());
-  KERNEL_CHECK_FALSE((input_1->GetTensorShape()->GetDims() == 0), KERNEL_STATUS_PARAM_INVALID,
+  // scalar input is converted to rank-zero tensor in the dynamic input scenario.
+  // rank-zero tensor from ms has a dim of 1, so limit input1 dim so that it's smaller than 1.
+  KERNEL_CHECK_FALSE((input_1->GetTensorShape()->GetDims() <= 1), KERNEL_STATUS_PARAM_INVALID,
                      "Input[1] should be a scalar, but got rank [%d].", input_1->GetTensorShape()->GetDims());
 
   // check num_classes positive

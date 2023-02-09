@@ -199,12 +199,14 @@ constexpr auto kSparseCross = "SparseCross";
 constexpr auto kChannelShuffle = "ChannelShuffle";
 constexpr auto kQuantDTypeCast = "QuantDTypeCast";
 constexpr auto kFSEDecode = "FSEDecode";
+constexpr auto kSparseSegmentSum = "SparseSegmentSum";
 constexpr auto kRealDiv = "RealDiv";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kGather,
                                           kDynamicStitch,
                                           kSearchSorted,
+                                          kSparseSegmentSum,
                                           kResizeBilinear,
                                           kResizeBilinearGrad,
                                           kTensorScatterElements,
