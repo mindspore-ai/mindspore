@@ -54,21 +54,10 @@ void DynamicRNNShapeCheck(const PrimitivePtr &primitive, const std::vector<Abstr
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx0]->BuildShape())[kShape];
   auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx1]->BuildShape())[kShape];
   auto b_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx2]->BuildShape())[kShape];
-  auto seq_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx3]->BuildShape())[kShape];
-  auto h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx4]->BuildShape())[kShape];
-  auto c_shape_ptr = input_args[kDynRnnIdx5]->BuildShape();
-  auto c_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx5]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("x_shape", SizeToLong(x_shape.size()), kEqual, kDynamicRnnShapeX, op_name);
   (void)CheckAndConvertUtils::CheckInteger("w_shape", SizeToLong(w_shape.size()), kEqual, kDynamicRnnShapeW, op_name);
   (void)CheckAndConvertUtils::CheckInteger("b_shape", SizeToLong(b_shape.size()), kEqual, kDynamicRnnShapeB, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("h_shape", SizeToLong(h_shape.size()), kEqual, kDynamicRnnShapeH, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("c_shape", SizeToLong(c_shape.size()), kEqual, kDynamicRnnShapeC, op_name);
-  int64_t batch_size = x_shape[kDynRnnIdx1];
   int64_t input_size = x_shape[kDynRnnIdx2];
-  if (seq_shape.size() != 0) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', input 'seq' shape must be 0, but got " << seq_shape.size()
-                             << ".";
-  }
   int64_t hidden_size = w_shape[w_shape.size() - 1] / kDynRnnNum4;
   if (w_shape[w_shape.size() - 1] % kDynRnnNum4 != 0) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', w_shape[-1] should multiple of 4, now is "
@@ -83,11 +72,30 @@ void DynamicRNNShapeCheck(const PrimitivePtr &primitive, const std::vector<Abstr
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', b_shape[0] should equal to w_shape[1], but gets "
                              << b_shape[0] << ".";
   }
-  (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", h_shape[kDynRnnIdx0], kEqual, (int64_t)1, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("h_shape[1]", h_shape[kDynRnnIdx1], kEqual, (int64_t)batch_size, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", h_shape[kDynRnnIdx2], kEqual, (int64_t)hidden_size, op_name);
-  const std::map<std::string, BaseShapePtr> shapes = {{"c_shape", c_shape_ptr}};
-  (void)CheckAndConvertUtils::CheckTensorShapeSame(shapes, h_shape, op_name);
+
+  if (input_args.size() > kDynRnnIdx3) {
+    auto seq_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx3]->BuildShape())[kShape];
+    if (seq_shape.size() != 0) {
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', input 'seq' shape must be 0, but got " << seq_shape.size()
+                               << ".";
+    }
+  }
+  if (input_args.size() > kDynRnnIdx4) {
+    int64_t batch_size = x_shape[kDynRnnIdx1];
+    auto h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx4]->BuildShape())[kShape];
+    (void)CheckAndConvertUtils::CheckInteger("h_shape", SizeToLong(h_shape.size()), kEqual, kDynamicRnnShapeH, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", h_shape[kDynRnnIdx0], kEqual, (int64_t)1, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("h_shape[1]", h_shape[kDynRnnIdx1], kEqual, (int64_t)batch_size, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", h_shape[kDynRnnIdx2], kEqual, (int64_t)hidden_size, op_name);
+    if (input_args.size() > kDynRnnIdx5) {
+      auto c_shape_ptr = input_args[kDynRnnIdx5]->BuildShape();
+      auto c_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx5]->BuildShape())[kShape];
+      (void)CheckAndConvertUtils::CheckInteger("c_shape", SizeToLong(c_shape.size()), kEqual, kDynamicRnnShapeC,
+                                               op_name);
+      const std::map<std::string, BaseShapePtr> shapes = {{"c_shape", c_shape_ptr}};
+      (void)CheckAndConvertUtils::CheckTensorShapeSame(shapes, h_shape, op_name);
+    }
+  }
 }
 
 abstract::TupleShapePtr DynamicRNNInferShape(const PrimitivePtr &primitive,
