@@ -911,7 +911,7 @@ void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr>
     }
   } else {
     Shapes shape_outputs = GetNodeShape(out_node);
-    if (shape_outputs[0].empty()) {
+    if (shape_outputs[0].empty() || out_node->isa<Parameter>()) {
       return;
     }
     auto node_input = CreateInput(op, out_node, VIRTUAL_OUTPUT);

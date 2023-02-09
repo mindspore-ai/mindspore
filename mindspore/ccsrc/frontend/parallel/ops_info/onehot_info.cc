@@ -241,7 +241,10 @@ std::vector<StrategyPtr> OneHotInfo::GenerateOpStrategies(int64_t stage_id) {
 Status OneHotInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::shared_ptr<Strategies> OneHotInfo::GenerateBatchStrategies() {
-  Dimensions strategy = {stage_device_size_, 1};
+  Dimensions strategy(inputs_shape_[0].size() + 1, 1);
+  if (inputs_shape_[0].front() % stage_device_size_ == 0) {
+    strategy[0] = {stage_device_size_};
+  }
   Dimensions empty_strategy;
   Strategies strategy_v = {strategy, empty_strategy, empty_strategy};
   return std::make_shared<Strategies>(strategy_v);

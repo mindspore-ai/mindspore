@@ -405,7 +405,14 @@ Status StridedSliceInfo::InferMirrorOps() {
 
 // Note: if the batch dimension is not fully fetched, the batch strategy may not work.
 std::shared_ptr<Strategies> StridedSliceInfo::GenerateBatchStrategies() {
+  if (GetAttrs() != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << "generate batch parallel strategies failed.";
+  }
   split_flag_list_ = {true};
+  bool no_fully_fetch = ((begin_[0] != 0) || (end_[0] < input_shape_in_process_[0]));
+  if (no_fully_fetch) {
+    split_flag_list_ = {false};
+  }
   return GenerateBatchStrategiesBySplitFlag(inputs_shape_, split_flag_list_);
 }
 

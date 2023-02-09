@@ -141,6 +141,9 @@ Status ConcatInfo::InferTensorMap() {
 void ConcatInfo::ReComputeBatchSplitFlagList() {
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
     split_flag_list_[i] = true;
+    if (axis_ == 0) {
+      split_flag_list_[i] = false;
+    }
   }
 }
 

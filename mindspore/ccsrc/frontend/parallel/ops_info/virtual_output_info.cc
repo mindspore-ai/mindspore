@@ -40,12 +40,6 @@ Status VirtualOutputInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
   Dimensions strategy_first = stra.at(0);
-  for (auto dim = strategy_first.begin() + 1; dim != strategy_first.end(); ++dim) {
-    if (*dim != 1) {
-      MS_LOG(ERROR) << name_ << ": All dimension except the first dimension of the strategy must be 1.";
-      return FAILED;
-    }
-  }
   if (!strategy_first.empty()) {
     shard_num_ = strategy_first[0];
   }
