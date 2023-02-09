@@ -42,8 +42,6 @@ __global__ void SparseTensorDenseAddKernelFunc(size_t input_elements, size_t ran
     int out_index = 0;
     for (size_t j = 0; j < rank; j++) {
       int index = x1_indices_addr[pos * rank + j];
-      CUDA_KERNEL_ASSERT(x2_shape[j] == x1_shape_addr[j] && "The input x1_shape does not equal x2_shape!");
-      CUDA_KERNEL_ASSERT(index < x1_shape_addr[j] && "The input x1_indices is out of bounds!");
       int count = 1;
       for (size_t k = j + 1; k < rank; k++) {
         count *= x1_shape_addr[k];

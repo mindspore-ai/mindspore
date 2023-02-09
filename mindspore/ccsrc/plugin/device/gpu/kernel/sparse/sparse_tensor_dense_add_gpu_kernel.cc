@@ -203,6 +203,39 @@ bool SparseTensorDenseAddGpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(x2_shape, &x2_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
                                                      reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                      "cudaMemcpyAsync x2_shape failed");
+  constexpr int X1_SHAPE_INDICES = 2;
+  std::vector<I> x1_shape(inputs[X1_SHAPE_INDICES]->size / sizeof(I));
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(x1_shape.data(), x1_shape_addr, inputs[X1_SHAPE_INDICES]->size, cudaMemcpyDeviceToHost,
+                    reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    "cudaMemcpyAsync x1_shape failed");
+
+  std::vector<I> x1_indices_host(inputs[0]->size / sizeof(I));
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(x1_indices_host.data(), x1_indices_addr, inputs[0]->size, cudaMemcpyDeviceToHost,
+                    reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    "cudaMemcpyAsync x1_indices failed");
+
+  if (x1_shape.size() != x2_shape_.size()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << " The input x1_shape size does not equal x2_shape size! "
+                  << "tensor shape of 'sparse': " << x1_shape.size()
+                  << ",and the tensor shape of 'dense':" << x2_shape_.size();
+    return false;
+  }
+
+  for (size_t idx = 0; idx < x2_shape_.size(); ++idx) {
+    if (x1_shape[idx] != x2_shape_[idx]) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << " The input x1_shape dim does not equal x2_shape dim! "
+                    << "tensor dim of 'sparse': " << x1_shape[idx]
+                    << ",and the tensor dim of 'dense':" << x2_shape_[idx];
+      return false;
+    }
+    if (x1_indices_host[idx] >= x1_shape[idx]) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << " The input x1_indices is out of bounds! "
+                    << "x1_indices is : " << x1_indices_host[idx] << ", tensor bounds is:" << x1_shape[idx];
+      return false;
+    }
+  }
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(y_addr, x2_values_addr, output_elements_ * sizeof(T), cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
