@@ -145,8 +145,8 @@ MIND_C_API int64_t MSOpGetScalarAttrInt64(ResMgrHandle res_mgr, NodeHandle op, c
 /// \param[in] value_num Size of the given array.
 ///
 /// \return Error code indicates whether the function executed successfully.
-MIND_C_API STATUS MSOpGetAttrsInt64(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, int64_t values[],
-                                    size_t value_num);
+MIND_C_API STATUS MSOpGetAttrArrayInt64(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, int64_t values[],
+                                        size_t value_num);
 
 /// \brief Create new Int64 attribute scalar value.
 ///
@@ -163,6 +163,14 @@ MIND_C_API AttrHandle MSNewAttrInt64(ResMgrHandle res_mgr, const int64_t v);
 ///
 /// \return Attribute value handle.
 MIND_C_API AttrHandle MSNewAttrFloat32(ResMgrHandle res_mgr, const float v);
+
+/// \brief Create new Bool attribute scalar value.
+///
+/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] v Given value.
+///
+/// \return Attribute value handle.
+MIND_C_API AttrHandle MSNewAttrBool(ResMgrHandle res_mgr, const bool v);
 
 /// \brief Create new attribute value with array.
 ///

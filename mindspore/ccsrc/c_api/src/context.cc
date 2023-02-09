@@ -85,6 +85,13 @@ void MSSetGraphsSaveMode(int save_mode) {
   return;
 }
 
+void MSSetGraphsSavePath(const char *save_path) {
+  MS_LOG(DEBUG) << "Set Graphs Save Path: " << save_path;
+  auto context = mindspore::MsContext::GetInstance();
+  context->set_param<std::string>(mindspore::MS_CTX_SAVE_GRAPHS_PATH, save_path);
+  return;
+}
+
 void MSSetInfer(ResMgrHandle res_mgr, bool infer) {
   MS_LOG(DEBUG) << "Set Infer Graph: " << infer;
   auto res_mgr_ptr = reinterpret_cast<ResourceManager *>(res_mgr);

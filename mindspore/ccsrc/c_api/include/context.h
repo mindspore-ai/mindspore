@@ -72,6 +72,8 @@ MIND_C_API void MSSetDeviceId(uint32_t deviceId);
 /// 3: Full level. Save all IR graphs.
 MIND_C_API void MSSetGraphsSaveMode(int save_mode);
 
+MIND_C_API void MSSetGraphsSavePath(const char *save_path);
+
 /// \brief Set flag for auto shape and type infer
 ///
 /// \param res_mgr Resource Handle that manages the nodes of the funcGraph.
