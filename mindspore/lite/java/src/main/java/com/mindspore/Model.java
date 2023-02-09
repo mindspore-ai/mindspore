@@ -36,7 +36,7 @@ public class Model {
      * Construct function.
      */
     public Model() {
-        this.modelPtr = 0;
+        this.modelPtr = this.createModel();
     }
 
     /**
@@ -52,8 +52,7 @@ public class Model {
             return false;
         }
         long cfgPtr = cfg != null ? cfg.getTrainCfgPtr() : 0;
-        modelPtr = this.buildByGraph(graph.getGraphPtr(), context.getMSContextPtr(), cfgPtr);
-        return modelPtr != 0;
+        return this.buildByGraph(modelPtr, graph.getGraphPtr(), context.getMSContextPtr(), cfgPtr);
     }
 
     /**
@@ -71,8 +70,7 @@ public class Model {
         if (context == null || buffer == null || dec_key == null || dec_mode == null) {
             return false;
         }
-        modelPtr = this.buildByBuffer(buffer, modelType, context.getMSContextPtr(), dec_key, dec_mode, cropto_lib_path);
-        return modelPtr != 0;
+        return this.buildByBuffer(modelPtr, buffer, modelType, context.getMSContextPtr(), dec_key, dec_mode, cropto_lib_path);
     }
 
     /**
@@ -87,8 +85,7 @@ public class Model {
         if (context == null || buffer == null) {
             return false;
         }
-        modelPtr = this.buildByBuffer(buffer, modelType, context.getMSContextPtr(), null, "", "");
-        return modelPtr != 0;
+        return this.buildByBuffer(modelPtr, buffer, modelType, context.getMSContextPtr(), null, "", "");
     }
 
 
@@ -107,8 +104,7 @@ public class Model {
         if (context == null || modelPath == null || dec_key == null || dec_mode == null) {
             return false;
         }
-        modelPtr = this.buildByPath(modelPath, modelType, context.getMSContextPtr(), dec_key, dec_mode, cropto_lib_path);
-        return modelPtr != 0;
+        return this.buildByPath(modelPtr, modelPath, modelType, context.getMSContextPtr(), dec_key, dec_mode, cropto_lib_path);
     }
 
     /**
@@ -123,8 +119,7 @@ public class Model {
         if (context == null || modelPath == null) {
             return false;
         }
-        modelPtr = this.buildByPath(modelPath, modelType, context.getMSContextPtr(), null, "", "");
-        return modelPtr != 0;
+        return this.buildByPath(modelPtr, modelPath, modelType, context.getMSContextPtr(), null, "", "");
     }
 
     /**
@@ -375,14 +370,16 @@ public class Model {
         this.free(modelPtr);
     }
 
+    private native long createModel();
+
     private native void free(long modelPtr);
 
-    private native long buildByGraph(long graphPtr, long contextPtr, long cfgPtr);
+    private native boolean buildByGraph(long modelPtr, long graphPtr, long contextPtr, long cfgPtr);
 
-    private native long buildByPath(String modelPath, int modelType, long contextPtr,
+    private native boolean buildByPath(long modelPtr, String modelPath, int modelType, long contextPtr,
                                     char[] dec_key, String dec_mod, String cropto_lib_path);
 
-    private native long buildByBuffer(MappedByteBuffer buffer, int modelType, long contextPtr,
+    private native boolean buildByBuffer(long modelPtr, MappedByteBuffer buffer, int modelType, long contextPtr,
                                       char[] dec_key, String dec_mod, String cropto_lib_path);
 
     private native List<Long> getInputs(long modelPtr);
