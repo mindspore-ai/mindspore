@@ -73,7 +73,7 @@ using RecoveryContext = mindspore::distributed::recovery::RecoveryContext;
 #ifndef ENABLE_SECURITY
 namespace mindspore {
 namespace profiler {
-void RegProfiler(py::module *m) {
+void RegProfiler(const py::module *m) {
   (void)py::class_<Profiler, std::shared_ptr<Profiler>>(*m, "Profiler")
     .def_static("get_instance", &Profiler::GetInstance, py::arg("device_name"), "Profiler get_instance.")
     .def("init", &Profiler::Init, py::arg("profiling_path"), py::arg("device_id") = py::int_(0),
@@ -86,7 +86,7 @@ void RegProfiler(py::module *m) {
     .def("step_profiling_enable", &Profiler::StepProfilingEnable, py::arg("enable_flag"),
          "enable or disable step profiling");
 }
-void RegProfilerManager(py::module *m) {
+void RegProfilerManager(const py::module *m) {
   (void)py::class_<ProfilerManager, std::shared_ptr<ProfilerManager>>(*m, "ProfilerManager")
     .def_static("get_instance", &ProfilerManager::GetInstance, "ProfilerManager get_instance.")
     .def("dynamic_status", &ProfilerManager::GetNetDynamicShapeStatus, "dynamic_status");

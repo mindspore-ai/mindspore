@@ -39,7 +39,7 @@ void CellPy::AddAttr(CellPtr cell, const std::string &name, const py::object &ob
   }
 }
 // Define python 'Cell' class.
-void RegCell(py::module *m) {
+void RegCell(const py::module *m) {
   (void)py::enum_<MixedPrecisionType>(*m, "MixedPrecisionType", py::arithmetic())
     .value("NOTSET", MixedPrecisionType::kNotSet)
     .value("FP16", MixedPrecisionType::kFP16)

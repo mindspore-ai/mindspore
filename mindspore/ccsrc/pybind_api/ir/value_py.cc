@@ -15,14 +15,13 @@
  */
 
 #include "ir/value.h"
-#include <string>
 
 #include "include/common/pybind_api/api_register.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {
 // Define python class for values.
-void RegValues(py::module *m) {
+void RegValues(const py::module *m) {
   (void)py::class_<UMonad, std::shared_ptr<UMonad>>(*m, "UMonad").def(py::init());
   (void)py::class_<IOMonad, std::shared_ptr<IOMonad>>(*m, "IOMonad").def(py::init());
 }
