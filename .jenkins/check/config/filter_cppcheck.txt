@@ -81,6 +81,7 @@
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/tbe/tbe_utils.cc"                      "knownConditionTrueFalse"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/op_proto/add_dsl.cc"               "syntaxError"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/op_proto/matmul_tik.cc"            "syntaxError"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend_new/op_proto/"                                    "syntaxError"
 
 # AICPU migration
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/" "constVariable"
