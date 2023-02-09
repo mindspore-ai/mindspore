@@ -1,6 +1,9 @@
 mindspore.ops.function
 =============================
 
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops.function` operators in MindSpore, please refer to the link `mindspore.ops.function API Interface Change <https://gitee.com/mindspore/docs/blob/r1.10/resource/api_updates/func_api_updates_en.md>`_.
+
+
 Neural Network Layer Functions
 ------------------------------
 
