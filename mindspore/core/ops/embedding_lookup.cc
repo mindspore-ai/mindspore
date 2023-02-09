@@ -48,7 +48,6 @@ int64_t EmbeddingLookup::get_offset() {
     auto value_ptr = prim->GetAttr(kAttrOffset);
     if (value_ptr->isa<tensor::Tensor>()) {
       auto off_vec = CheckAndConvertUtils::CheckTensorIntValue(kAttrOffset, value_ptr, prim->name());
-      MS_LOG(EXCEPTION) << "For '" << prim->name() << "', offset must be int, bug got " << off_vec;
       offset = off_vec[0];
     } else {
       offset = GetValue<int64_t>(value_ptr);
