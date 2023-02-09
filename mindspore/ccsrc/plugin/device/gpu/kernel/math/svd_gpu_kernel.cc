@@ -87,8 +87,8 @@ void SvdGpuKernelMod::InitSizeLists() {
       output_size_list_.push_back(batch_size_ * n_ * p_ * unit_size_);
     }
   } else {
-    output_size_list_.push_back(0);
-    output_size_list_.push_back(0);
+    output_size_list_.push_back(1);
+    output_size_list_.push_back(1);
   }
   // for dev_info
   workspace_size_list_.push_back(batch_size_ * sizeof(int));
