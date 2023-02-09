@@ -24,16 +24,16 @@
 namespace py = pybind11;
 namespace mindspore {
 void RegTyping(py::module *m);
-void RegCNode(py::module *m);
-void RegCell(py::module *m);
-void RegMetaFuncGraph(py::module *m);
-void RegFuncGraph(py::module *m);
+void RegCNode(const py::module *m);
+void RegCell(const py::module *m);
+void RegMetaFuncGraph(const py::module *m);
+void RegFuncGraph(const py::module *m);
 void RegUpdateFuncGraphHyperParams(py::module *m);
-void RegParamInfo(py::module *m);
-void RegPrimitive(py::module *m);
-void RegSignatureEnumRW(py::module *m);
-void RegValues(py::module *m);
-void RegMsContext(py::module *m);
+void RegParamInfo(const py::module *m);
+void RegPrimitive(const py::module *m);
+void RegSignatureEnumRW(const py::module *m);
+void RegValues(const py::module *m);
+void RegMsContext(const py::module *m);
 void RegSecurity(py::module *m);
 
 namespace initializer {
@@ -45,28 +45,28 @@ void RegPynativeExecutor(const py::module *m);
 }
 
 namespace tensor {
-void RegMetaTensor(py::module *m);
-void RegCSRTensor(py::module *m);
-void RegCOOTensor(py::module *m);
-void RegRowTensor(py::module *m);
+void RegMetaTensor(const py::module *m);
+void RegCSRTensor(const py::module *m);
+void RegCOOTensor(const py::module *m);
+void RegRowTensor(const py::module *m);
 }  // namespace tensor
 
 namespace opt {
 namespace python_pass {
-void RegPattern(py::module *m);
-void RegPyPassManager(py::module *m);
+void RegPattern(const py::module *m);
+void RegPyPassManager(const py::module *m);
 }  // namespace python_pass
 }  // namespace opt
 
 #ifndef ENABLE_SECURITY
 namespace profiler {
-void RegProfilerManager(py::module *m);
-void RegProfiler(py::module *m);
+void RegProfilerManager(const py::module *m);
+void RegProfiler(const py::module *m);
 }  // namespace profiler
 #endif
 
 namespace prim {
-void RegCompositeOpsGroup(py::module *m);
+void RegCompositeOpsGroup(const py::module *m);
 }
 }  // namespace mindspore
 

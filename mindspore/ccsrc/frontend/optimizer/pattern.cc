@@ -148,7 +148,7 @@ void MatchResult::merge(const MatchResultPtr &other_result) {
   }
 }
 
-void RegPattern(py::module *m) {
+void RegPattern(const py::module *m) {
   (void)py::class_<Pattern, std::shared_ptr<Pattern>>(*m, "Pattern").def(py::init<>());
   (void)py::class_<OneOf, std::shared_ptr<OneOf>, Pattern>(*m, "OneOf_").def(py::init<vector<PatternPtr>>());
   (void)py::class_<Prim, std::shared_ptr<Prim>, Pattern>(*m, "Prim_", py::dynamic_attr())
