@@ -44,22 +44,3 @@ def test_float_power_real(mode):
     except_case = np.array([9.0000, 4.0000, 1.0000, 1.0000, 4.0000, 9.0000], dtype=np.float32)
     assert output_case.asnumpy().dtype == np.float64
     assert np.allclose(output_case.asnumpy(), except_case)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_float_power_complex(mode):
-    """
-    Feature: tensor.float_power
-    Description: Verify the result of float_power
-    Expectation: success
-    """
-    ms.set_context(mode=mode)
-    net = Net()
-    input_case = ms.Tensor(np.array([complex(2, 3), complex(3, 4)]), ms.complex64)
-    output_case = net(input_case, 2)
-    except_case = np.array([complex(-5, 12), complex(-7, 24)], dtype=np.complex64)
-    assert np.allclose(output_case.asnumpy(), except_case)
