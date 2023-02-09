@@ -702,14 +702,13 @@ class Tanhshrink(Cell):
     where :math:`x_i` is an element of the input Tensor.
 
     Inputs:
-        - **x** (Tensor) - Tensor of any dimension, input with data type of float16 or float32.
+        - **x** (Tensor) - Tensor of any dimension.
 
     Outputs:
         Tensor, with the same type and shape as the `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

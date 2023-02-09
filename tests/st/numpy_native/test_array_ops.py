@@ -1411,22 +1411,6 @@ def test_tensor_ravel():
         1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_tensor_swapaxes():
-    lst = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
-    tensor_list = to_tensor(lst)
-    with pytest.raises(TypeError):
-        tensor_list = tensor_list.swapaxes(0, (1,))
-    with pytest.raises(ValueError):
-        tensor_list = tensor_list.swapaxes(0, 3)
-    assert tensor_list.swapaxes(0, 1).shape == (3, 2)
-
-
 def mnp_rot90(input_tensor):
     a = mnp.rot90(input_tensor)
     b = mnp.rot90(input_tensor, 2)

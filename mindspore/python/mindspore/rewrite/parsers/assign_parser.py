@@ -430,7 +430,8 @@ class AssignParser(Parser):
         raise RuntimeError("For MindSpore Rewrite, only support Primitive or Cell operator or Primitive operator, got ",
                            type(op).__name__)
 
-    def _tuple_elts_support_scopledvalue(self, value: ast.Tuple) -> bool:
+    @staticmethod
+    def _tuple_elts_support_scopledvalue(value: ast.Tuple) -> bool:
         """ check whether each element's type in tuple is supported by scopled value. """
         if not isinstance(value, ast.Tuple):
             raise RuntimeError("For AssignParser._tuple_elts_support_scopledvalue(), the type of value should be "
@@ -489,7 +490,7 @@ class AssignParser(Parser):
                 node_ = Node.create_call_pass_through_method(node, targets, call_args, {}, node_name)
                 stree.append_origin_field(node_)
             elif isinstance(value, ast.Tuple):
-                if self._tuple_elts_support_scopledvalue(value):
+                if AssignParser._tuple_elts_support_scopledvalue(value):
                     # ensure that each element's type in tuple is supported by scopled value
                     targets = AssignParser._get_targets(AssignParser._create_scopedvalue(node.targets[0]))
                     args = []

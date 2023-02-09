@@ -27,7 +27,7 @@ from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _r
     _extend, _dict_clear, _haskey, _update, _fromkeys
 
 from ..._checkparam import Validator as validator
-from ..._checkparam import check_is_number, check_reshape_shp, check_swapaxes_axis, prepare_shape_for_squeeze, \
+from ..._checkparam import check_is_number, check_reshape_shp, prepare_shape_for_squeeze, \
     check_axis_in_range, check_axis_valid, infer_out_shape, check_and_canonicalize_axes, get_log2_size
 from ...ops import functional as F
 from ...ops import operations as P
@@ -686,49 +686,25 @@ def flatten(x, order='C'):
     return F.reshape(F.transpose(x, new_order), (-1,))
 
 
-def swapaxes(x, axis1, axis2):
+def scatter(self, axis, index, src):
+    """
+    Update the value in `src` to tensor according to the specified index.
+    """
+    return F.scatter(self, axis, index, src)
+
+
+def swapaxes(x, axis0, axis1):
     """
     Interchange two axes of a tensor.
-
-    Args:
-        axis1 (int): First axis.
-        axis2 (int): Second axis.
-
-    Returns:
-        Transposed tensor, has the same data type as the input.
-
-    Raises:
-        TypeError: If `axis1` or `axis2` is not integer.
-        ValueError: If `axis1` or `axis2` is not in the range of :math:`[-ndim, ndim-1]`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
-        >>> output = x.swapaxes(0, 2)
-        >>> print(output.shape)
-        (4,3,2)
     """
-    axis1, axis2 = check_swapaxes_axis((axis1, axis2), x.ndim)
+    return F.swapaxes(x, axis0, axis1)
 
-    if axis1 == axis2:
-        return x
-    if axis1 > axis2:
-        axis1, axis2 = axis2, axis1
 
-    perm = F.make_range(0, x.ndim)
-    new_perm = None
-    if axis2 + 1 < x.ndim:
-        new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
-    else:
-        new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
-
-    return F.transpose(x, new_perm)
+def swapdims(x, dim0, dim1):
+    """
+    Interchange two dims of a tensor.
+    """
+    return F.swapdims(x, dim0, dim1)
 
 
 def squeeze(x, axis=None):
@@ -1321,7 +1297,9 @@ def resize(x, *new_shape):
 
 
 def det(x):
-    """Computes the determinant of one or more square matrices."""
+    """
+    Computes the determinant of one or more square matrices.
+    """
     return F.det(x)
 
 
@@ -3246,6 +3224,13 @@ def str_bool(x):
 def matrix_determinant(x):
     """Computes the determinant of one or more square matrices."""
     return F.matrix_determinant(x)
+
+
+def matrix_power(x, n):
+    """
+    Raises a square matrix to the (integer) power `n` .
+    """
+    return F.matrix_power(x, n)
 
 
 def log1p(x):

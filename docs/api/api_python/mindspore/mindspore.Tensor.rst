@@ -187,6 +187,7 @@ mindspore.Tensor
     mindspore.Tensor.masked_fill
     mindspore.Tensor.masked_select
     mindspore.Tensor.matrix_determinant
+    mindspore.Tensor.matrix_power
     mindspore.Tensor.max
     mindspore.Tensor.mean
     mindspore.Tensor.median
@@ -237,6 +238,7 @@ mindspore.Tensor
     mindspore.Tensor.roll
     mindspore.Tensor.rot90
     mindspore.Tensor.rsqrt
+    mindspore.Tensor.scatter
     mindspore.Tensor.scatter_add
     mindspore.Tensor.scatter_div
     mindspore.Tensor.scatter_max
@@ -269,6 +271,7 @@ mindspore.Tensor
     mindspore.Tensor.sum_to_size
     mindspore.Tensor.svd
     mindspore.Tensor.swapaxes
+    mindspore.Tensor.swapdims
     mindspore.Tensor.T
     mindspore.Tensor.t
     mindspore.Tensor.take
