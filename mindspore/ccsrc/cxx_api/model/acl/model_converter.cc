@@ -15,7 +15,6 @@
  */
 
 #include "cxx_api/model/acl/model_converter.h"
-#include <experimental/filesystem>
 #include <memory>
 #include "include/transform/graph_ir/utils.h"
 #include "cxx_api/model/model_converter_utils/multi_process.h"
@@ -190,16 +189,49 @@ Status ModelConverter::SaveModel(const ge::ModelBufferData &model) const {
 }
 
 #if defined(ENABLE_CLOUD_FUSION_INFERENCE)
+static bool RemoveTempMindIRDir(std::string path_name, bool is_split) {
+  auto fs = system::Env::GetFileSystem();
+  if (fs == nullptr) {
+    MS_LOG(ERROR) << "Get filesystem is nullptr.";
+    return false;
+  }
+  std::string graph_name = path_name + ".mindir";
+  bool success = true;
+  if (is_split) {
+    graph_name = path_name + "_graph.mindir";
+    std::string data_dir_name = path_name + "/" + path_name + "_variables";
+    std::string data_name = data_dir_name + "/data_0";
+    success = fs->DeleteFile(data_name);
+    if (!success) {
+      return false;
+    }
+    success = fs->DeleteDir(data_dir_name);
+    if (!success) {
+      return false;
+    }
+  }
+  success = fs->DeleteFile(path_name + "/" + graph_name);
+  if (!success) {
+    return false;
+  }
+  return fs->DeleteDir(path_name);
+}
+
 Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
   MultiProcess multi_process;
   Buffer buffer_ret;
   const size_t file_name_len = 12;
   std::string rand_name = Common::GetRandomStr(file_name_len);
-  const std::string dir_prefix = "./" + rand_name + "/";
-  const std::string out_graph_path = dir_prefix + rand_name;
+  const std::string dir_prefix = "./" + rand_name;
+  const std::string out_graph_path = dir_prefix + "/" + rand_name;
 
   // Create temporary dir in local directory
-  (void)std::experimental::filesystem::create_directory(dir_prefix);
+  auto fs = system::Env::GetFileSystem();
+  if (fs == nullptr) {
+    MS_LOG(ERROR) << "Get filesystem is nullptr.";
+    return buffer_ret;
+  }
+  fs->CreateDir(dir_prefix);
 
   auto param = std::make_shared<ConverterPara>();
   param->output_file = out_graph_path;
@@ -237,9 +269,11 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     std::string selected_file_path = model_file_path_regular;
 
     // Check if model with regular naming exists, choose split naming if not.
+    bool is_split = false;
     auto real_path_ret = realpath(common::SafeCStr(model_file_path_regular), real_path_mem);
     if (real_path_ret == nullptr) {
       selected_file_path = model_file_path_split;
+      is_split = true;
     }
 
     // Load model by file
@@ -247,7 +281,10 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
     auto func_graph = mindir_loader.LoadMindIR(buffer.Data(), buffer.DataSize(), dir_prefix);
     // Clean up created temp file.
-    (void)std::experimental::filesystem::remove_all(dir_prefix);
+    if (!RemoveTempMindIRDir(dir_prefix, is_split)) {
+      MS_LOG(ERROR) << "Removing temporary mindir failed...please check serialized files.";
+      return kMCFailed;
+    }
     if (func_graph == nullptr) {
       MS_LOG(ERROR) << "Fail to load model, function graph is nullptr.";
       return kMCFailed;
