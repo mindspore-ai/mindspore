@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -419,17 +419,17 @@ class OpAdapter : public BaseOpAdapter {
                                          const AnyTraits<std::vector<int64_t>>) {
     MS_EXCEPTION_IF_NULL(value);
     MS_LOG(DEBUG) << "Value: " << value->type_name();
-    if (!value->isa<ValueList>()) {
-      MS_LOG(EXCEPTION) << "Value should be ValueList, but got " << value->type_name();
+    if (!value->isa<ValueSequence>()) {
+      MS_LOG(EXCEPTION) << "Value should be ValueSequence, but got " << value->type_name();
     }
-    auto vec = value->cast<ValueListPtr>();
+    auto vec = value->cast<ValueSequencePtr>();
     std::vector<int64_t> list;
     for (auto &it : vec->value()) {
       MS_EXCEPTION_IF_NULL(it);
-      if (!it->isa<ValueList>()) {
-        MS_LOG(EXCEPTION) << "It should be ValueList, but got " << it->type_name();
+      if (!it->isa<ValueSequence>()) {
+        MS_LOG(EXCEPTION) << "It should be ValueSequence, but got " << it->type_name();
       }
-      auto sub_vector = it->cast<ValueListPtr>();
+      auto sub_vector = it->cast<ValueSequencePtr>();
       for (auto &item : sub_vector->value()) {
         list.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
       }
