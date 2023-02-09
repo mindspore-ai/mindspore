@@ -20,6 +20,7 @@ import mindspore
 import mindspore.numpy as mnp
 from mindspore import ops
 from mindspore.common import Tensor
+from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
@@ -832,6 +833,38 @@ def get_fill_vmap_rule(prim, axis_size):
                                "can be rank: 1 with source axis: 0 in vmap scope, but got value rank: "
                                "{} with source axis: {}.".format(value_rank, vdim))
         value = cast_op(value, dtype)
+        value = F.reshape(value, (axis_size,) + (1,) * len(value_shape))
+        out = P.BroadcastTo((axis_size,) + value_shape)(value)
+        return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.FillV2)
+def get_fill_v2_vmap_rule(prim, axis_size):
+    """VmapRule for `FillV2` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(shape_bdim, value_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, shape_bdim,
+                                                      value_bdim)
+        if is_all_none:
+            return result
+        value_shape, shape_dim = shape_bdim
+        if isinstance(value_shape, Tensor_):
+            value_shape = tuple(value_shape.asnumpy())
+        if shape_dim is not None:
+            _raise_value_error(
+                "The source axis of `shape` in `P.FillV2` must be None, but got {}."
+                .format(shape_dim))
+        value, vdim = value_bdim
+        value_rank = F.rank(value)
+        if value_rank != 1 or vdim != 0:
+            _raise_value_error(
+                "The `value` in `P.FillV2` must be constant value, thus the value only "
+                "can be rank: 1 with source axis: 0 in vmap scope, but got value rank: "
+                "{} with source axis: {}.".format(value_rank, vdim))
         value = F.reshape(value, (axis_size,) + (1,) * len(value_shape))
         out = P.BroadcastTo((axis_size,) + value_shape)(value)
         return out, 0
