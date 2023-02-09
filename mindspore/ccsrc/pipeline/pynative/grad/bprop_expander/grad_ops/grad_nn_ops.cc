@@ -551,6 +551,7 @@ REG_BPROP_BUILDER("Conv3D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
                       {"kernel_size", ib->GetAttr("kernel_size")},
                       {"filter_size", MakeValue(w_shape)},
                       {"mode", ib->GetAttr("mode")}});
+  dw = ib->Cast(dw, ib->GetDtype(x));
   return {dx, dw};
 });
 

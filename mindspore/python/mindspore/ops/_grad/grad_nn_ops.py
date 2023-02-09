@@ -103,15 +103,17 @@ def get_bprop_conv3d(self):
     )
     get_shape = P.Shape()
     get_dyn_shape = P.TensorShape()
+    cast = P.Cast()
+    get_dtype = P.DType()
 
     def bprop(x, w, out, dout):
         if F.is_sequence_value_unknown(get_shape(x)) or F.is_sequence_value_unknown(get_shape(w)):
             dx = input_grad(w, dout, get_dyn_shape(x))
-            dw = filter_grad(x, dout, get_dyn_shape(w))
+            dw = cast(filter_grad(x, dout, get_dyn_shape(w)), get_dtype(x))
             return dx, dw
 
         dx = input_grad(w, dout, get_shape(x))
-        dw = filter_grad(x, dout, get_shape(w))
+        dw = cast(filter_grad(x, dout, get_shape(w)), get_dtype(x))
         return dx, dw
 
     return bprop
