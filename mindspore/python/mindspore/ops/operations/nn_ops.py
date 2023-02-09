@@ -649,9 +649,8 @@ class Mish(PrimitiveWithInfer):
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> mish = ops.Mish()
         >>> output = mish(x)
-        >>> print(output)
-        [[-0.3034014  3.9974129 -0.0026832]
-         [ 1.9439590  -0.0033576 9.0000000]]
+        >>> print(output.shape)
+        (2, 3)
     """
 
     @prim_attr_register
