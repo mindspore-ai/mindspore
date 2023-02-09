@@ -37,6 +37,7 @@ enum DeviceType {
   kAscend,
   kAscend910,
   kAscend310,
+  kCustomDevice,
   // add new type here
   kInvalidDeviceType = 100,
 };
@@ -146,7 +147,7 @@ class MS_API Context {
   /// heterogeneous scenarios with multiple members in the vector.
   ///
   /// \return Mutable reference of DeviceInfoContext vector in this context.
-  std::vector<std::shared_ptr<DeviceInfoContext>> &MutableDeviceInfo();
+  std::vector<std::shared_ptr<DeviceInfoContext>> &MutableDeviceInfo() const;
 
  private:
   std::shared_ptr<Data> data_;
@@ -182,16 +183,17 @@ class MS_API DeviceInfoContext : public std::enable_shared_from_this<DeviceInfoC
   ///
   /// \return provider's name.
   inline std::string GetProvider() const;
+
   /// \brief set provider's name.
   ///
   /// \param[in] provider define the provider's name.
-
   inline void SetProvider(const std::string &provider);
+
   /// \brief obtain provider's device type.
   ///
   /// \return provider's device type.
-
   inline std::string GetProviderDevice() const;
+
   /// \brief set provider's device type.
   ///
   /// \param[in] device define the provider's device type.EG: CPU.

@@ -1,7 +1,10 @@
 #!/bin/bash
 
 set -e
-CUR_DIR=$(cd "$(dirname $0)"; pwd)
+CUR_DIR=$(
+  cd "$(dirname $0)"
+  pwd
+)
 BUILD_DIR=${CUR_DIR}/../build
 
 export GLOG_v=2
@@ -58,10 +61,13 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter=TestDeConvolutionFp32*
 ./lite-test --gtest_filter=TestLogicalOrFp32*
 
+# test cases of generic api
+./lite-test --gtest_filter="GenericApiTest*"
+
 # test cases of INT8 OP
 ## ./lite-test --gtest_filter=TestPadInt8.*
 ./lite-test --gtest_filter=TestDeconvInt8.*
-if [ "$ENABLE_CONVERTER_TEST" = true ];then
+if [ "$ENABLE_CONVERTER_TEST" = true ]; then
   ./lite-test-converter --gtest_filter="ModelParserRegistryTest.TestRegistry"
   ./lite-test-converter --gtest_filter="NodeParserRegistryTest.TestRegistry"
   ./lite-test-converter --gtest_filter="PassRegistryTest.TestRegistry"
@@ -87,7 +93,7 @@ echo 'run inference ut tests'
 ./lite-test --gtest_filter="ControlFlowTest.TestMergeWhileModel"
 
 echo 'run mindrt parallel ut test'
-if [ "$ENABLE_CONVERTER_TEST" = true ];then
+if [ "$ENABLE_CONVERTER_TEST" = true ]; then
   ./lite-test-converter --gtest_filter="MindrtParallelTest.*"
   echo 'user set output tensors st test'
   ./lite-test --gtest_filter="GraphTest.UserSetGraphOutput*"
@@ -117,8 +123,8 @@ echo 'run c api ut test'
 echo 'run bfc memory ut test'
 ./lite-test --gtest_filter="DynamicMemManagerTest.*"
 
-mindspore_lite_whl=`ls ${CUR_DIR}/../../../output/*.whl`
-if [[ -f "${mindspore_lite_whl}" || "$MSLITE_ENABLE_SERVER_INFERENCE" = on ]]; then
+mindspore_lite_whl=$(ls ${CUR_DIR}/../../../output/*.whl)
+if [[ -f "${mindspore_lite_whl}" || "$MSLITE_ENABLE_SERVER_INFERENCE" == on ]]; then
   # prepare model and inputdata for Python-API ut test
   if [ ! -e mobilenetv2.ms ]; then
     MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms"
@@ -148,7 +154,7 @@ else
     pytest ${CUR_DIR}/ut/python/test_converter_api.py -s
     RET=$?
     if [ ${RET} -ne 0 ]; then
-        exit ${RET}
+      exit ${RET}
     fi
   fi
 
@@ -157,7 +163,7 @@ else
   pytest ${CUR_DIR}/ut/python/test_inference_api.py -s
   RET=$?
   if [ ${RET} -ne 0 ]; then
-      exit ${RET}
+    exit ${RET}
   fi
 
   # run inference CPU Python-API st test
@@ -165,16 +171,16 @@ else
   pytest ${CUR_DIR}/st/python/test_inference.py::test_cpu_inference_01 -s
   RET=$?
   if [ ${RET} -ne 0 ]; then
-      exit ${RET}
+    exit ${RET}
   fi
 fi
 
-if [ "$MSLITE_ENABLE_SERVER_INFERENCE" = on ];then
+if [ "$MSLITE_ENABLE_SERVER_INFERENCE" = on ]; then
   echo 'run ModelParallelRunner api ut test'
   ./lite-test --gtest_filter="ModelParallelRunnerTest.*"
 fi
 
-if [ "$MSLITE_ENABLE_KERNEL_EXECUTOR" = on ];then
+if [ "$MSLITE_ENABLE_KERNEL_EXECUTOR" = on ]; then
   echo 'run kernel executor api ut test'
   ./lite-test --gtest_filter="KernelExecutorTest.*"
 fi

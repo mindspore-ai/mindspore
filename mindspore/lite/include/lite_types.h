@@ -41,6 +41,7 @@ typedef enum {
   DT_GPU,    /**< GPU device type */
   DT_NPU,    /**< NPU device type */
   DT_ASCEND, /**< ASCEND device type */
+  DT_CUSTOM, /**< EXTEND device type */
   DT_END     /**< NO device type */
 } DeviceType;
 
