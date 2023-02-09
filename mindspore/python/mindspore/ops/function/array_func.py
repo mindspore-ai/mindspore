@@ -175,9 +175,9 @@ def arange(start=0, end=None, step=1, *, dtype=None):
             If Tensor, the shape must be (). Default: 1.
 
     Keyword Args:
-        dtype (mindspore.dtype, optional): The desired data type of returned tensor. Default: None.
-            If dtype is not given or None, the dtype is inferred to be the type with the highest precision among
-            the `start`, `end` and `step` parameters.
+        dtype (mindspore.dtype, optional): The required data type of returned Tensor. Default: None.
+            If the value is not specified or is None, the type with the highest precision in the
+            `start`, `end`, and `step` parameters is inferred.
 
     Returns:
         A 1-D Tensor, with the same type as the inputs.

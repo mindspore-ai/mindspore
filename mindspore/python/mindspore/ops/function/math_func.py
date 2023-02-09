@@ -1715,10 +1715,10 @@ def signbit(x):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
-        >>> x = ms.Tensor([0.7, -1.2, 0., 2.3])
+        >>> x = ms.Tensor([0.3, 1.2, 0., -2.5])
         >>> output = ops.signbit(x)
         >>> print(output)
-        [False  True False False]
+        [False False False  True]
     """
     if not isinstance(x, Tensor):
         raise TypeError(f"For signbit, the input must be a Tensor, but got {type(x)}")
@@ -1728,7 +1728,9 @@ def signbit(x):
 
 def sgn(x):
     r"""
-    This function is an extension of :func:`mindspore.ops.sign` to complex tensors.
+    Extension of :func:`mindspore.ops.sign` in the plural.
+    For real number input, this function is the same as :func:`mindspore.ops.sign`.
+    For complex input, this function is calculated according to the following formula.
 
     .. math::
         \text{out}_{i} = \begin{cases}
@@ -1868,7 +1870,7 @@ def cos(x):
 
 def cosine_similarity(x1, x2, dim=1, eps=1e-08):
     r"""
-    Returns cosine similarity between x1 and x2, computed along dim. x1 and x2 must be broadcastable to a common shape.
+    Calculate cosine similarity between `x1` and `x2` along the axis, `dim`. `x1` and `x2` must be broadcastable.
 
     .. math::
         \text{similarity} = \dfrac{x_1 \cdot x_2}{\max(\Vert x_1 \Vert _2 \cdot \Vert x_2 \Vert _2, \epsilon)}
@@ -1876,8 +1878,8 @@ def cosine_similarity(x1, x2, dim=1, eps=1e-08):
     Args:
         x1 (Tensor): The first input Tensor.
         x2 (Tensor): The second input Tensor.
-        dim (int, optional): Dimension along which cosine similarity is computed. Default: 1.
-        eps (float, optional): Small value to avoid division by zero. Default: 1e-8.
+        dim (int, optional): Axis for calculating cosine similarity. Default: 1.
+        eps (float, optional): Minimal value to avoid division by zero. Default: 1e-8.
 
     Returns:
         Tensor, cosine similarity between x1 and x2.
@@ -1922,14 +1924,13 @@ def _check_cov_weights(weights, weights_name, num_observations, valid_type, vali
 
 def cov(x, *, correction=1, fweights=None, aweights=None):
     r"""
-    Given the input 'x' and weight, estimate the covariance matrix of the input 'x', where the input row is the variable
-    and the column is the observation value.
+    Given the input `x` and weights, returns the covariance matrix (the square matrix of the covariance of each pair of
+    variables) of x, where the input row is the variable and the column is the observation value.
 
-    The covariance matrix is the square matrix of the covariance of each pair of variables. The diagonal contains the
-    covariance of each variable and its own. If 'x' represents a single variable (scalar or 1D),
-    its variance is returned.
+    The diagonal contains each variable and its own covariance. If x is a scalar or 1D vector of a single variable,
+    its variance will be returned.
 
-    The unbiased sample covariance of the variables :math:`a` and :math:`b` is given by:
+    The unbiased sample covariance of the variables :math:`a` and :math:`b` is given by the following formula:
 
     .. math::
         \text{cov}_w(a,b) = \frac{\sum^{N}_{i = 1}(a_{i} - \bar{a})(b_{i} - \bar{b})}{N~-~1}
@@ -1953,12 +1954,12 @@ def cov(x, *, correction=1, fweights=None, aweights=None):
         x (Tensor): A 2D matrix, or a scalar or 1D vector of a single variable
 
     Keyword Args:
-        correction (int, optional): difference between the sample size and sample degrees of freedom.
+        correction (int, optional): The difference between sample size and sample degrees of freedom.
             Defaults to Bessel's correction, `correction = 1` which returns the unbiased estimate,
             even if both `fweights` and `aweights` are specified. `correction = 0`
             will return the simple average. Default: 1.
-        fweights (Tensor, optional): A scalar or 1D Tensor containing integer frequency weights represents
-            the number of repeats of each observation vector. Its numel must equal the number of columns of `x`.
+        fweights (Tensor, optional): Scalar or one-dimensional Tensor containing integer frequency weight, indicating
+            the number of repetition of each observation vector. Its numel must equal the number of columns of `x`.
             Ignored if `None`. Default: None.
         aweights (Tensor, optional): A scalar or 1D Tensor containing float observation weights represents
             the importance of each observation vector. The higher the importance, the greater the corresponding value.
@@ -4135,19 +4136,17 @@ def is_complex(x):
 
 def nan_to_num(x, nan=0.0, posinf=None, neginf=None):
     """
-    Replaces `NaN`, positive infinity, and negative infinity values in the `x` with the values
-    specified by `nan`, `posinf`, and `neginf`, respectively. By default, NaN is replaced by 0,
-    positive infinity is replaced by the largest finite value representable by the x dtype,
-    and negative infinity is replaced by the smallest finite value representable by the x dtype.
+    Replace the `NaN`, positive infinity and negative infinity values in 'x' with the
+    specified values, `nan`, `posinf`, and `neginf` respectively.
 
     Args:
         x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. With float32 or float16 data type.
-        nan (float): The value to replace `NaN`. Default value is 0.0.
-        posinf (float): If a Number, the value to replace positive infinity values with. If None, positive
-          infinity values are replaced with the greatest finite value representable by `x`'s dtype.
+        nan (float): The replace value of 'NaN'. Default value is 0.0.
+        posinf (float): the value to replace positive infinity values with. Default: None,
+            replacing positive infinity with the maximum value supported by the data type of `x`.
           Default value is None.
-        neginf (float): if a Number, the value to replace negative infinity values with. If None, negative
-          infinity values are replaced with the lowest finite value representable by `x`'s dtype.
+        neginf (float): the value to replace negative infinity values with. Default: None,
+            replacing negative infinity with the minimum value supported by the data type of `x`.
           Default value is None.
 
     Returns:
@@ -4161,10 +4160,10 @@ def nan_to_num(x, nan=0.0, posinf=None, neginf=None):
         ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([float('nan'), float('inf'), -float('inf'), 3.14]), mindspore.float32)
+        >>> x = Tensor(np.array([float('nan'), float('inf'), -float('inf'), 5.0]), mindspore.float32)
         >>> output = ops.nan_to_num(x, 1.0, 2.0, 3.0)
         >>> print(output)
-        [1.  2.  3.  3.14]
+        [1.  2.  3.  5.0]
     """
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError("the input x must be Tensor!")
@@ -8321,7 +8320,7 @@ def roll(x, shifts, dims=None):
         TypeError: If `dims` is not an int, a tuple or a list.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``GPU``
 
     Examples:
         >>> import numpy as np
@@ -9982,7 +9981,7 @@ def sum(x, dim=None, keepdim=False, *, dtype=None):
 
 def tanhshrink(x):
     '''
-    Applies element-wise, :math:`Tanhshrink(x)=x-Tanh(x)` .
+    Tanhshrink Activation, :math:`Tanhshrink(x)=x-Tanh(x)` .
     See :class:`mindspore.nn.Tanhshrink` for more details.
 
     Supported Platforms:

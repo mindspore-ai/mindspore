@@ -3,7 +3,7 @@ mindspore.ops.nan_to_num
 
 .. py:function:: mindspore.ops.nan_to_num(x, nan=0.0, posinf=None, neginf=None)
 
-    将 `x` 中的 `NaN` 、正无穷大和负无穷大值分别替换为 `nan`, `posinf`, 和 `neginf` 指定的值。默认情况下，NaN替换为0，正无穷替换为 `x` 类型支持的上限，负无穷替换为由 `x` 类型支持的下限。
+    将 `x` 中的 `NaN` 、正无穷大和负无穷大值分别替换为 `nan`, `posinf`, 和 `neginf` 指定的值。
 
     参数：
         - **x** (Tensor) - shape为 :math:`(x_1, x_2, ..., x_R)` 的tensor。类型必须为float32或float16。
