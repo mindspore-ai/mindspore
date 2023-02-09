@@ -17,7 +17,7 @@
 from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops._grad.grad_base import bprop_getters, dyn_size, create_tensor_by_element, dyn_rank
 from mindspore.ops import functional as F
@@ -29,7 +29,7 @@ from mindspore.ops.operations import _rl_inner_ops as rl_ops
 from mindspore.ops._utils.utils import range_op, get_1d_shape
 
 
-@constexpr
+@_primexpr
 def bias_add_gradgrad_helper(shape, bias_shape, data_format):
     """Helper function of BiasGradGrad to calculate expanded shape."""
     new_shape = list(shape)
@@ -640,7 +640,7 @@ def get_bprop_sigmoid_grad(self):
     return bprop
 
 
-@constexpr
+@_primexpr
 def _get_transpose_axis(x_shp, axis):
     rank = len(x_shp)
     if axis < 0:

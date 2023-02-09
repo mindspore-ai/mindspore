@@ -21,6 +21,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.common._utils import is_dim_unknown
 
 
@@ -116,7 +117,7 @@ def range_op(start, limit, delta, dtype):
     return output_tensor
 
 
-@constexpr
+@_primexpr
 def get_1d_shape(in_shape):
     """helper function to get 1d shape."""
     out_shape = 1
@@ -125,7 +126,7 @@ def get_1d_shape(in_shape):
     return (out_shape,)
 
 
-@constexpr
+@_primexpr
 def generate_shape_index(out_shape, indices_shape, axis):
     out_rank = len(out_shape)
     ind_rank = len(indices_shape)

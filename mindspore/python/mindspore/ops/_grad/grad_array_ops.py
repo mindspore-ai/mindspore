@@ -26,6 +26,7 @@ from mindspore.ops.functional import broadcast_gradient_args
 from mindspore.ops import functional as F
 from mindspore.ops._grad.grad_base import bprop_getters, create_tensor_by_element
 from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.common import dtype as mstype
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops._utils.utils import range_op, get_1d_shape, generate_shape_index
@@ -203,7 +204,7 @@ def get_bprop_flatten(self):
     return bprop
 
 
-@constexpr
+@_primexpr
 def _tile_shape(multiples, shapex):
     """Calculate [1,2], [3, 4] -> [1,3,2,4]."""
     len_muli = len(multiples)
@@ -316,7 +317,7 @@ def get_bprop_embedding_lookup(self):
     return bprop_sparse
 
 
-@constexpr
+@_primexpr
 def make_begin(shp):
     """Creates a tuple with zero according to the shape."""
     begin = tuple([0 for _ in shp])
@@ -347,7 +348,7 @@ def get_bprop_padding(self):
     return bprop
 
 
-@constexpr
+@_primexpr
 def _concat_grad_uniform(input_shapes, input_nums):
     """Helper function for bprop of Concat"""
     is_uniform = True
@@ -411,7 +412,7 @@ def get_bprop_slice(self):
     return bprop
 
 
-@constexpr
+@_primexpr
 def _generate_inverse_index(x_shape, axis):
     x_rank = len(x_shape)
     index = tuple(range(x_rank))
@@ -421,7 +422,7 @@ def _generate_inverse_index(x_shape, axis):
     return perm
 
 
-@constexpr
+@_primexpr
 def _regenerate_output_shape(x_shp, ind_shp, axis):
     rank = len(x_shp)
     if axis < 0:

@@ -21,6 +21,7 @@ import numpy as np
 import mindspore.ops as ops
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops.operations._inner_ops import Cummin
@@ -7770,7 +7771,7 @@ def _tile_size(shape, out_shape, ndim):
     return tuple(size)
 
 
-@constexpr
+@_primexpr
 def _expand(x, ndim):
     """Expand x to ndim from axis, which can be 0 or -1."""
     rank_op = _get_cache_prim(P.Rank)()

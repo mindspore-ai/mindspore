@@ -26,7 +26,7 @@ import mindspore.communication.management as D
 from mindspore._checkparam import Validator
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer import Dense
 from mindspore.context import ParallelMode
@@ -131,7 +131,7 @@ def _check_moe_config(moe_config=None, parallel_config=None):
                          f"should be less than device_num: {device_num}.")
 
 
-@constexpr
+@_primexpr
 def calculate_expert_capacity(k, tokens_per_group, capacity_factor, expert_dim):
     res = k * tokens_per_group * capacity_factor / expert_dim
     res_int = int(res)
