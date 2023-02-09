@@ -302,6 +302,21 @@ Status LerpInfo::InferTensorMap() {
   return SUCCESS;
 }
 
+Status LerpInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    return FAILED;
+  }
+  // No need to insert mirror ops
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+  if (mirror_ops_.size() == kSizeTwo) {
+    // Push empty mirror op for value
+    (void)mirror_ops_.emplace_back(OperatorVector());
+  }
+  return SUCCESS;
+}
+
 std::vector<StrategyPtr> LerpInfo::GenerateOpStrategies(int64_t stage_id) {
   if (inputs_size_ == 2) {
     return ArithmeticBase::GenerateOpStrategies(stage_id);

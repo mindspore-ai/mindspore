@@ -322,6 +322,7 @@ class LerpInfo : public ArithmeticBase {
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status InferMirrorOps() override;
 
  private:
   size_t inputs_size_ = 0;

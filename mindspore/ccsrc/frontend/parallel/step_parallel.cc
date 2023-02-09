@@ -973,8 +973,8 @@ static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &no
   }
 
   if (mirror_ops.size() != node_size - 1) {
-    MS_LOG(EXCEPTION) << "Mirrorops's size is wrong! mirror_ops size is " << mirror_ops.size() << ", node_size is "
-                      << (node_size - 1);
+    MS_LOG(EXCEPTION) << "For " << node->fullname_with_scope() << ", the Mirrorops's size is wrong! mirror_ops size is "
+                      << mirror_ops.size() << ", node_size is " << (node_size - 1);
   }
   return true;
 }
