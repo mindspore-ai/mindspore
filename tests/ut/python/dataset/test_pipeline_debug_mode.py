@@ -200,7 +200,6 @@ def test_pipeline_debug_mode_generator_pipeline():
     ds.set_seed(8)
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
-
     # Here ds1 should be [2, 3, 4, 5, 6, 7, 8, 9]
     ds1 = ds1.skip(2)
 
@@ -213,7 +212,6 @@ def test_pipeline_debug_mode_generator_pipeline():
 
     buf = []
     for data in ds1.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        print(data[0])
         buf.append(data[0])
     assert len(buf) == 2
     out_expect = [[[6], [3], [8]], [[4], [7], [2]]]
@@ -480,6 +478,56 @@ def test_pipeline_debug_mode_clue_shuffle():
             np.testing.assert_array_equal(t1, t2)
 
 
+def run_celeba_pyop_pipeline(python_multiprocessing=False):
+    """ Create and execute simple CelebADataset pipeline with Python implemented ops. """
+
+    # Create CelebADataset pipeline with Python implemented ops
+    data1 = ds.CelebADataset("../data/dataset/testCelebAData/")
+    data1 = data1.map(operations=[vision.Decode(to_pil=True)], input_columns=["image"])
+    data1 = data1.map(operations=[vision.Resize((20, 30))], input_columns=["image"],
+                      python_multiprocessing=python_multiprocessing)
+    data1 = data1.map(operations=[lambda x: x], input_columns=["image"],
+                      python_multiprocessing=python_multiprocessing)
+    data1 = data1.batch(batch_size=2)
+
+    # Iterate over data pipeline
+    row_count = 0
+    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 2
+        assert item[0].shape == (2, 20, 30, 3)
+        assert item[1].shape == (2, 40)
+        row_count += 1
+    assert row_count == 2
+
+
+def test_pipeline_debug_mode_celeba_pyop():
+    """
+    Feature: Debug Mode
+    Description: Test Debug Mode enabled with CelebADataset with Python implemented ops
+    Expectation: Sanity check of data pipeline is done. Output is equal to the expected output
+    """
+    # Create and execute data pipeline
+    run_celeba_pyop_pipeline()
+
+
+@pytest.mark.skip(reason="debug mode and python_multiprocessing map op pyfunc failure")
+def test_pipeline_debug_mode_celeba_py_multiproc():
+    """
+    Feature: Debug Mode
+    Description: Test Debug Mode enabled with CelebADataset with python_multiprocessing=True
+    Expectation: Sanity check of data pipeline is done. Output is equal to the expected output
+    """
+    # Reduce memory required by disabling the shared memory optimization
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
+
+    # Create and execute data pipeline
+    run_celeba_pyop_pipeline(python_multiprocessing=True)
+
+    # Restore configuration
+    ds.config.set_enable_shared_mem(mem_original)
+
+
 if __name__ == '__main__':
     setup_function()
     test_pipeline_debug_mode_tuple()
@@ -499,4 +547,6 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_tfrecord_shard()
     test_pipeline_debug_mode_tfrecord_shard_equal_rows()
     test_pipeline_debug_mode_clue_shuffle()
+    test_pipeline_debug_mode_celeba_pyop()
+    test_pipeline_debug_mode_celeba_py_multiproc()
     teardown_function()
