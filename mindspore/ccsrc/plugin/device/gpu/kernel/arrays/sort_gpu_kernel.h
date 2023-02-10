@@ -53,17 +53,6 @@ class SortGpuKernelMod : public NativeGpuKernelMod {
 
     input_shape_ = inputs[0]->GetShapeVector();
 
-    use_fast_ = input_shape_[axis_] <= sort_dim_thres_;
-    if (use_fast_) {
-      return fast_sort_kernel_->Resize(base_operator, inputs, outputs, inputsOnHost);
-    } else {
-      if (!old_kernel_support_) {
-        auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-        MS_LOG(ERROR) << "Only support input datatype in [float16, float32] for sort kernel, but got "
-                      << kernel_attr.GetInputAttr(0).dtype << " in KernelAttr.";
-        return KRET_RESIZE_FAILED;
-      }
-    }
     auto kernel_name = base_operator->GetPrim()->name();
     is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
     if (is_null_input_) {
@@ -93,6 +82,18 @@ class SortGpuKernelMod : public NativeGpuKernelMod {
                     << ", but got the dimension of input: " << input_rank_
                     << ", got the value of 'axis': " << (size_t)axis_;
       return KRET_RESIZE_FAILED;
+    }
+
+    use_fast_ = input_shape_[axis_] > 0 && input_shape_[axis_] <= sort_dim_thres_;
+    if (use_fast_) {
+      return fast_sort_kernel_->Resize(base_operator, inputs, outputs, inputsOnHost);
+    } else {
+      if (!old_kernel_support_) {
+        auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+        MS_LOG(ERROR) << "Only support input datatype in [float16, float32] for sort kernel, but got "
+                      << kernel_attr.GetInputAttr(0).dtype << " in KernelAttr.";
+        return KRET_RESIZE_FAILED;
+      }
     }
 
     perm_.resize(input_rank_);
