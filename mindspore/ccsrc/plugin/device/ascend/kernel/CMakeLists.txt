@@ -11,7 +11,9 @@ file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "aicpu/*.cc"
         "rts/*.cc"
         "hccl/*.cc"
-        "bisheng/*.cc"
+        "bisheng/bisheng_kernel_build.cc"
+        "bisheng/bisheng_kernel_factory.cc"
+        "bisheng/custom_bisheng_kernel.cc"
     )
     file(GLOB_RECURSE AICPU_OPS_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "aicpu/aicpu_ops/*.cc"
@@ -32,3 +34,5 @@ set_property(SOURCE ${D_SRC_LIST} ${AKG_D_SRC_LIST}
 if(ENABLE_D)
     add_library(_mindspore_plugin_device_ascend_kernel_obj OBJECT ${D_SRC_LIST} ${AKG_D_SRC_LIST})
 endif()
+
+add_subdirectory(bisheng)

@@ -28,6 +28,7 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
                  KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
 void AICPUQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list);
 bool IsSupportedByAICPU(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info);
+void BishengQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_KERNEL_QUERY_H_

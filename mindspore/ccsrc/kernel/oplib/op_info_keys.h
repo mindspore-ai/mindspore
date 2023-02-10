@@ -100,6 +100,7 @@ constexpr auto kCtxGPU = "GPU";
 constexpr auto kCtxAscend = "Ascend";
 constexpr auto kImplyAKGStr = "AKG";  // this type refer: CUDA & CPU with difference process
 constexpr auto kImplyTBEStr = "TBE";
+constexpr auto kImplyBISHENGStr = "Bisheng";
 constexpr auto kImplyAICPUStr = "AiCPU";
 constexpr auto kImplyCPUStr = "CPU";
 constexpr auto kImplyCUDAStr = "CUDA";
@@ -113,15 +114,11 @@ static const std::map<std::string, OpPattern> kPatternMap = {
   {kBroadcast, kBroadcastPattern},
   {kReduce, kReducePattern},
 };
-const std::map<std::string, OpImplyType> kImplyTypeStrToEnumMap = {{kImplyTBEStr, kImplyTBE},
-                                                                   {kImplyAKGStr, kImplyAKG},
-                                                                   {kImplyCPUStr, kImplyCPU},
-                                                                   {kImplyAICPUStr, kImplyAICPU},
-                                                                   {kImplyGPUStr, kImplyGPU}};
-const std::map<OpImplyType, std::string> kImplyTypeEnumToStrMap = {{kImplyTBE, kImplyTBEStr},
-                                                                   {kImplyAKG, kImplyAKGStr},
-                                                                   {kImplyCPU, kImplyCPUStr},
-                                                                   {kImplyAICPU, kImplyAICPUStr},
-                                                                   {kImplyGPU, kImplyGPUStr}};
+const std::map<std::string, OpImplyType> kImplyTypeStrToEnumMap = {
+  {kImplyTBEStr, kImplyTBE},     {kImplyAKGStr, kImplyAKG}, {kImplyCPUStr, kImplyCPU},
+  {kImplyAICPUStr, kImplyAICPU}, {kImplyGPUStr, kImplyGPU}, {kImplyBISHENGStr, kImplyBISHENG}};
+const std::map<OpImplyType, std::string> kImplyTypeEnumToStrMap = {
+  {kImplyTBE, kImplyTBEStr},     {kImplyAKG, kImplyAKGStr}, {kImplyCPU, kImplyCPUStr},
+  {kImplyAICPU, kImplyAICPUStr}, {kImplyGPU, kImplyGPUStr}, {kImplyBISHENG, kImplyBISHENGStr}};
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_OPLIB_OP_INFO_KEYS_H_

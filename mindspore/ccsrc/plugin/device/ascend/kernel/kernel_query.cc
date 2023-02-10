@@ -29,6 +29,7 @@
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
 #include "kernel/common_utils.h"
+#include "kernel/oplib/oplib.h"
 
 namespace mindspore {
 namespace kernel {
@@ -252,6 +253,25 @@ bool IsSupportedByAICPU(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr 
                        MS_EXCEPTION_IF_NULL(item);
                        return item->IsSimilarityKernelBuildInfo(*select_kernel_build_info);
                      });
+}
+
+void BishengQuery(const CNodePtr &kernel_node,
+                  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_info_list);
+  kernel_info_list->clear();
+  std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto op_info_ptr = OpLib::FindOp(op_name, OpImplyType::kImplyBISHENG);
+  if (op_info_ptr == nullptr) {
+    MS_LOG(DEBUG) << "Bisheng does not have op [" << op_name << "].";
+    return;
+  }
+
+  if (!ParseMetadata(kernel_node, op_info_ptr, BISHENG, kernel_info_list)) {
+    MS_LOG(WARNING) << "Bisheng parsed metadata op [" << op_name << "] failed.";
+    return;
+  }
+  FilterInvalidKernelInfo(kernel_node, kernel_info_list);
 }
 }  // namespace kernel
 }  // namespace mindspore

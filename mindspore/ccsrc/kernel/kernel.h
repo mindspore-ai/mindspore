@@ -115,6 +115,7 @@ enum Processor {
   AICPU,
   CUDA,
   CPU,
+  BISHENG,
 };
 
 struct FlexArray {

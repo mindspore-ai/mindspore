@@ -1249,7 +1249,11 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
       common::AnfAlgo::SetNodeAttr(kAttrIsAiCpuKernel, MakeValue(true), kernel_node);
     }
   }
-
+  if (select_status == kNoMatched) {
+    std::vector<std::shared_ptr<kernel::KernelBuildInfo>> bisheng_kernel_info_list;
+    kernel::BishengQuery(kernel_node, &bisheng_kernel_info_list);
+    select_status = SetMatchedKernelInfo(kernel_node, bisheng_kernel_info_list);
+  }
   // The kernel info can not find in ai_cpu kernel lists and ai_core kernel lists
   if (select_status == kNoMatched) {
     GatherInputAndOutputInferType(aicpu_in_out_info, kernel_node);

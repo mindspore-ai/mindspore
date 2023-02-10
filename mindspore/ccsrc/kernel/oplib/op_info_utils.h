@@ -24,6 +24,7 @@ namespace mindspore::kernel {
 class BACKEND_EXPORT OpInfoUtils {
  public:
   static bool GenerateOpInfos(const std::string &version, const std::string &ascend_path);
+  static void UpdateRefInfo(const OpInfoPtr &op_info_ptr);
 
  private:
   OpInfoUtils() = default;
@@ -34,7 +35,6 @@ class BACKEND_EXPORT OpInfoUtils {
   static bool ParseOpIOInfo(const nlohmann::json &item, const OpInfoPtr &op_info_ptr);
   static bool ParseOpIOInfoImpl(const nlohmann::json &item, bool is_input, const OpInfoPtr &op_info_ptr);
   static void UpdateInputOrders(const OpInfoPtr &op_info_ptr);
-  static void UpdateRefInfo(const OpInfoPtr &op_info_ptr);
   static std::string NormalizeKernelName(const std::string &op_name);
   static void SetKernelName(const OpInfoPtr &op_info_ptr);
 };

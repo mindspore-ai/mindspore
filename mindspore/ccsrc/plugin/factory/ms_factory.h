@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 #include "include/backend/visible.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace kernel {
@@ -70,9 +71,11 @@ class BACKEND_EXPORT Factory {
     return false;
   }
 
- private:
+ protected:
   Factory() = default;
   ~Factory() = default;
+
+ private:
   std::map<std::string, CreatorFunc> kernel_mod_creators_;
 };
 
