@@ -354,6 +354,7 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
 
   // parameter not split axis
   if (param_strategy.at(LongToSize(axis_)) == 1) {
+    SetAttribute(strategy);
     return SUCCESS;
   }
 

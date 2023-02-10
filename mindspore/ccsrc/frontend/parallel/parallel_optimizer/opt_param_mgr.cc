@@ -117,9 +117,9 @@ class OptParamMgrImpl : public OptParamMgr {
       return false;
     }
 
-    if (!ParameterRequireGrad(parameter)) {
-      // only trainable parameters need parallel optimizer
-      MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString() << " is not trainable parameter.";
+    auto param_ptr = parameter->cast<ParameterPtr>();
+    if ((!param_ptr) || (!param_ptr->has_default())) {
+      MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString() << " is not a parameter.";
       return false;
     }
 
