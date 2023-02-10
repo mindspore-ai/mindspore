@@ -21,6 +21,7 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include <climits>
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/base/shape_vector.h"
