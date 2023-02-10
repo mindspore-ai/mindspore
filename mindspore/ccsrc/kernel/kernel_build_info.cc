@@ -53,6 +53,15 @@ std::string KernelTypeLabel(const KernelType &kernel_type) {
   return trans_map[kernel_type];
 }
 
+std::string OpTypeLabel(const OpType &op_type) {
+  std::unordered_map<OpType, std::string> trans_map{
+    {OpType::UNKNOWN_OP_TYPE, "UNKNOWN_OP_TYPE"}, {OpType::DYNAMIC, "DYNAMIC"}, {OpType::SKIP, "SKIP"}};
+  if (trans_map.find(op_type) == trans_map.end()) {
+    return "UNKNOWN_OP_TYPE";
+  }
+  return trans_map[op_type];
+}
+
 std::string KernelBuildInfo::GetInputFormat(size_t input_index) const {
   if (input_index >= inputs_format_.size()) {
     MS_LOG(ERROR) << "The index [" << input_index << "] is exceed the number of input node";
@@ -132,6 +141,8 @@ const std::vector<KernelObjectType> &KernelBuildInfo::GetAllOutputKernelObjectTy
 const std::vector<KernelObjectType> &KernelBuildInfo::GetAllInputKernelObjectTypes() const {
   return inputs_kernel_object_type_;
 }
+
+void KernelBuildInfo::SetOpType(const OpType &op_type) { op_type_ = op_type; }
 
 void KernelBuildInfo::SetOutputsKernelObjectType(const std::vector<KernelObjectType> &outputs_kernel_object_type) {
   outputs_kernel_object_type_ = outputs_kernel_object_type;
@@ -235,6 +246,7 @@ std::string KernelBuildInfo::ToString() const {
     output_buffer << KernelObjectTypeLabel(output_object_types[index]);
   }
   output_buffer << "], kernel_type: " << KernelTypeLabel(kernel_type());
+  output_buffer << ", op_type: " << OpTypeLabel(op_type());
   output_buffer << ")";
   return output_buffer.str();
 }
@@ -267,6 +279,11 @@ bool KernelBuildInfo::operator!=(const KernelBuildInfo &other) const { return !(
 void KernelBuildInfo::KernelBuildInfoBuilder::SetKernelType(const KernelType &kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->kernel_type_ = kernel_type;
+}
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOpType(const OpType &op_type) {
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  kernel_build_info_->op_type_ = op_type;
 }
 
 void KernelBuildInfo::KernelBuildInfoBuilder::SetOriginDataFormat(const std::string &origin_data_format) {

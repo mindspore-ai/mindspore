@@ -40,8 +40,15 @@ enum KernelObjectType : int {
   TUPLE_UNFOLD,
 };
 
+enum OpType : int {
+  UNKNOWN_OP_TYPE = 0,
+  DYNAMIC,
+  SKIP,
+};
+
 std::string KernelObjectTypeLabel(const KernelObjectType &obj_type);
 std::string KernelTypeLabel(const KernelType &kernel_type);
+std::string OpTypeLabel(const OpType &op_type);
 
 class BACKEND_EXPORT KernelBuildInfo {
  public:
@@ -52,7 +59,12 @@ class BACKEND_EXPORT KernelBuildInfo {
   ~KernelBuildInfo() = default;
 
   KernelType kernel_type() const { return kernel_type_; }
+
+  OpType op_type() const { return op_type_; }
+
   void set_kernel_type(KernelType kernel_type) { kernel_type_ = kernel_type; }
+
+  void set_op_type(OpType op_type) { op_type_ = op_type; }
 
   std::string GetInputFormat(size_t input_index) const;
 
@@ -87,6 +99,8 @@ class BACKEND_EXPORT KernelBuildInfo {
   const std::vector<KernelObjectType> &GetAllInputKernelObjectTypes() const;
 
   const std::vector<KernelObjectType> &GetAllOutputKernelObjectTypes() const;
+
+  void SetOpType(const OpType &op_type);
 
   void SetOutputsKernelObjectType(const std::vector<KernelObjectType> &outputs_kernel_object_type);
 
@@ -140,6 +154,7 @@ class BACKEND_EXPORT KernelBuildInfo {
 
  private:
   KernelType kernel_type_{UNKNOWN_KERNEL_TYPE};
+  OpType op_type_{UNKNOWN_OP_TYPE};
   std::string origin_data_format_{kOpFormat_DEFAULT};
   std::string core_type_;
   std::vector<std::string> inputs_format_;
@@ -166,6 +181,7 @@ class BACKEND_EXPORT KernelBuildInfo::KernelBuildInfoBuilder {
   explicit KernelBuildInfoBuilder(const KernelBuildInfoPtr &kernel_build_info)
       : kernel_build_info_(std::make_shared<KernelBuildInfo>()) {
     SetKernelType(kernel_build_info->kernel_type());
+    SetOpType(kernel_build_info->op_type());
     SetFusionType(kernel_build_info->fusion_type());
     SetProcessor(kernel_build_info->processor());
     SetOpPattern(kernel_build_info->op_pattern());
@@ -195,6 +211,8 @@ class BACKEND_EXPORT KernelBuildInfo::KernelBuildInfoBuilder {
   ~KernelBuildInfoBuilder() = default;
 
   void SetKernelType(const KernelType &kernel_type);
+
+  void SetOpType(const OpType &op_type);
 
   void SetOriginDataFormat(const std::string &origin_data_format);
 

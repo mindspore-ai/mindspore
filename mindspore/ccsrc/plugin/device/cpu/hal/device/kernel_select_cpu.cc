@@ -283,6 +283,10 @@ void SetKernelBuildInfoWithSelectedAttr(const CNodePtr &kernel_node, const kerne
     input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).format);
   }
   SetKernelBuildInfo(input_formats, input_types, output_formats, output_types, kernel_node.get());
+  if (selected_kernel_attr.GetSkipCheck()) {
+    auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+    kernel_build_info->SetOpType(kernel::OpType::SKIP);
+  }
   kernel::SetKernelObjectTypeWithSelectedAttr(kernel_node, selected_kernel_attr);
   kernel::UnfoldKernelBuildInfo(kernel_node);
   if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
