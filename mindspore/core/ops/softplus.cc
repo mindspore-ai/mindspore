@@ -42,6 +42,7 @@ class SoftplusInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(prim);
     auto prim_name = prim->name();
     // check
+    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
     std::set<TypePtr> valid_index_types = {kFloat16, kFloat32};
     auto x_type = input_args[0]->BuildType();
