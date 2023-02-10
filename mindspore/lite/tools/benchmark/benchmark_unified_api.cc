@@ -868,7 +868,7 @@ int BenchmarkUnifiedApi::MarkPerformance() {
 
   MS_LOG(INFO) << "Running benchmark loops...";
   std::cout << "Running benchmark loops..." << std::endl;
-  uint64_t time_min = 1000000;
+  uint64_t time_min = UINT64_MAX;
   uint64_t time_max = 0;
   uint64_t time_avg = 0;
 
