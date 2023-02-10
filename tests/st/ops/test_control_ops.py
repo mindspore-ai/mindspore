@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor
-from mindspore import nn
+from mindspore import nn, context
 from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.common.parameter import Parameter, ParameterTuple
@@ -52,3 +52,30 @@ def test_switch_layer_with_single_prim():
     grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
                                                               Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
     grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_switch_layer_with_index_out_of_range():
+    """
+    Feature: SwitchLayer
+    Description: run switch layer case
+    Expectation: catch exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.layers = (nn.ReLU(),)
+
+        def construct(self, inputs, index):
+            inputs = self.layers[index](inputs)
+            return inputs
+
+    context.set_context(mode=context.GRAPH_MODE)
+    inputs = Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)).astype(np.float32), mstype.float32)
+    index = Tensor(-2, mstype.int32)
+    net = Net()
+    with pytest.raises(IndexError) as err:
+        net(inputs, index)
+    assert "Given index -2 out of range" in str(err.value)

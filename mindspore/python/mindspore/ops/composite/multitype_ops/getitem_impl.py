@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -153,7 +153,6 @@ def _tuple_getitem_by_tensor(data, tensor_index):
     Outputs:
         Type, is the same as the element type of data.
     """
-    tensor_index = F.select(tensor_index >= 0, tensor_index, tensor_index + len(data))
     return _tuple_get_item_tensor(data, tensor_index)
 
 

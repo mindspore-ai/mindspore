@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,14 @@ size_t SwitchActor::GetIndex(const OpContext<DeviceTensor> *const context) const
 
   // SwitchLayer node support negative index range [-size, -1].
   if (index < 0) {
-    index += SizeToInt(formal_parameters_.size() - 1);
+    int64_t positive_index = index + SizeToLong(formal_parameters_.size() - 1);
+    if (positive_index < 0) {
+      MS_EXCEPTION(IndexError) << "Given index " << std::to_string(index)
+                               << " out of range. Please make sure the value of index in ["
+                               << std::to_string(1 - SizeToInt(input_partials_.size())) << ", "
+                               << std::to_string(input_partials_.size() - 1) + "), and the type is int32.";
+    }
+    index = positive_index;
   }
   return LongToSize(index);
 }
