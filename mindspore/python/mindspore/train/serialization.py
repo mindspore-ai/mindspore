@@ -1245,7 +1245,8 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
     It is an internal conversion function. Export the MindSpore prediction model to a file in the specified format.
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
-
+    if "obf_config" in kwargs and file_format != "MINDIR":
+        raise ValueError(f"Dynamic obfuscation only support for MindIR format, but got {file_format} format.")
     if file_format == 'GEIR':
         logger.warning(f"For 'export', format 'GEIR' is deprecated, "
                        f"it would be removed in future release, use 'AIR' instead.")

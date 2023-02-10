@@ -949,11 +949,11 @@ void DynamicObfuscator::SubGraphFakeBranch(FuncGraphPtr func_graph) {
   auto all_nodes = mgr->all_nodes();
   int node_nums = all_nodes.size();
   int obfuscate_target_num = std::ceil(node_nums * obf_ratio_ / keyExpandRate);
-  int op_num = 0;
+  int op_num = node_nums;  // Initialize op_num to the maximum node number
   std::vector<mindspore::AnfNodePtr> sorted_nodes;
   for (auto node : all_nodes) {
+    MS_LOG(INFO) << "The last node name is: " << node->fullname_with_scope();
     sorted_nodes = TopoSort(node);  // the node number in front of sorted nodes is the smallest
-    op_num = get_op_num(node);
     break;
   }
   std::reverse(sorted_nodes.begin(), sorted_nodes.end());
