@@ -17,9 +17,6 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_LOG_H_
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_LOG_H_
 
-#include <signal.h>
-#include <iostream>
-
 #include <sstream>
 #include <string>
 

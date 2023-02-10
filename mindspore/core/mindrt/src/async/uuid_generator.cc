@@ -16,7 +16,6 @@
 
 #include "async/uuid_generator.h"
 #include <atomic>
-#include <climits>
 
 namespace mindspore {
 namespace uuid_generator {
