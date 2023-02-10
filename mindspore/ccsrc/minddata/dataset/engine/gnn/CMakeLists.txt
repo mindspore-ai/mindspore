@@ -25,6 +25,6 @@ else()
     ms_protobuf_generate(TENSOR_PROTO_SRCS TENSOR_PROTO_HDRS "gnn_tensor.proto")
     ms_grpc_generate(GNN_PROTO_SRCS GNN_PROTO_HDRS "gnn_graph_data.proto")
 
-    add_library(engine-gnn OBJECT ${DATASET_ENGINE_GNN_SRC_FILES} ${TENSOR_PROTO_SRCS} ${GNN_PROTO_SRCS})
+    add_library(engine-gnn OBJECT ${TENSOR_PROTO_SRCS} ${GNN_PROTO_SRCS} ${DATASET_ENGINE_GNN_SRC_FILES})
     add_dependencies(engine-gnn mindspore::protobuf)
 endif()
