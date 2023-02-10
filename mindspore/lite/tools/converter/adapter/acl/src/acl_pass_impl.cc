@@ -715,7 +715,6 @@ STATUS AclPassImpl::PreQuantization(const FuncGraphPtr &func_graph) {
   auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
   CHECK_NULL_RETURN(fusion_pm);
   std::vector<opt::PassPtr> fusions{
-    std::make_shared<opt::ClipConvertActivationPass>(),
     std::make_shared<opt::ConvBiasaddFusion>(),
     std::make_shared<opt::ConvBatchNormFusion>(param_->fmk_type),
     std::make_shared<opt::ConvScaleFusion>(param_->fmk_type),
