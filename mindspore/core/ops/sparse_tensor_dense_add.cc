@@ -41,6 +41,10 @@ abstract::ShapePtr SparseTensorDenseAddInferShape(const PrimitivePtr &prim,
   const size_t kDimensionTwo = 2;
   const size_t kDimensionFive = 5;
 
+  if (x1_values_shape_size == 0 || x2_shape_size == 0) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the 'x1_values_shape' or 'x2_shape' cannot be scalar ";
+  }
+
   if (!IsDynamicRank(x1_indices_shape) && x1_indices_shape_size != kDimensionTwo) {
     MS_EXCEPTION(ValueError) << "For " << prim_name
                              << ", the 'x1_indices' should have rank 2, but got: " << x1_indices_shape_size;
