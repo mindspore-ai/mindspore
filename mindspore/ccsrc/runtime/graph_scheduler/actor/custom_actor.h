@@ -20,25 +20,23 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "runtime/graph_scheduler/actor/abstract_actor.h"
+#include "runtime/graph_scheduler/actor/memory_aware_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "ir/anf.h"
 
 namespace mindspore {
 namespace runtime {
-class CustomActor : public AbstractActor {
+class CustomActor : public MemoryAwareActor {
  public:
   CustomActor(const std::string &name, const AnfNodePtr &kernel, const device::DeviceContext *device_context,
-              const AID *recorder_aid)
-      : AbstractActor(name, KernelTransformType::kCustomActor, recorder_aid), kernel_(kernel) {
-    device_contexts_.push_back(device_context);
-  }
-  CustomActor(const std::string &name, const AnfNodePtr &kernel, const device::DeviceContext *device_context,
-              const AID *recorder_aid, GraphExecutionStrategy strategy)
-      : AbstractActor(name, KernelTransformType::kCustomActor, recorder_aid), kernel_(kernel), strategy_(strategy) {
+              const AID &memory_manager_aid)
+      : MemoryAwareActor(name, KernelTransformType::kCustomActor, nullptr, memory_manager_aid), kernel_(kernel) {
     device_contexts_.push_back(device_context);
   }
   ~CustomActor() override = default;
+
+  // The memory related operation interface.
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
   const AnfNodeWeakPtr &kernel() const { return kernel_; }
 
@@ -56,6 +54,8 @@ class CustomActor : public AbstractActor {
   GraphExecutionStrategy strategy_{GraphExecutionStrategy::kPipeline};
   // The device tensors for launch.
   std::vector<DeviceTensor *> input_device_tensors_;
+  // The device tensors for memory free.
+  std::vector<DeviceTensor *> memory_free_list_;
 };
 
 using CustomActorPtr = std::shared_ptr<CustomActor>;
