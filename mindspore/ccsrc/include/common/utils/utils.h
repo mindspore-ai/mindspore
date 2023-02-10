@@ -853,6 +853,8 @@ constexpr auto kAttrOffload = "offload";
 constexpr auto kAttrOutIdx = "out_idx";
 constexpr auto kAttrVisited = "visited";
 constexpr auto kAttrReshapePaddingAxis = "reshape_padding_axis";
+constexpr auto kAttrBeginNormAxis = "begin_norm_axis";
+constexpr auto kAttrBeginParamsAxis = "begin_params_axis";
 constexpr auto kAttrShape = "shape";
 constexpr auto kAttrMomentum = "momentum";
 constexpr auto kAttrEps = "eps";
@@ -1065,7 +1067,7 @@ constexpr auto kAttrOnlyUseSecondOutput = "only_use_second_output";
 constexpr auto kAttrOpAdaptationProcessed = "op_adaptation_processed";
 constexpr auto kAttrMeOpName = "me_op_name";
 constexpr auto kAttrIRChange = "ir_change";
-constexpr auto kActualAbstract = "actual_abstract";
+constexpr auto kParamterIsSequence = "param_is_sequence";
 constexpr auto kAttrZeroInfinity = "zero_infinity";
 constexpr auto kAttrBlank = "blank";
 constexpr auto kAttrUpdateSlots = "update_slots";
@@ -1102,6 +1104,7 @@ constexpr auto kFlagEnableZeroCopyInGraph = "enable_zero_copy_in_graph";
 constexpr auto kFlagUseDynamicShapeProcess = "use_dynamic_shape_process";
 constexpr auto kPrimCPrimPyMixed = "primc_primpy_mixed";
 constexpr auto kFlagEnableRunGraphBySingleOp = "enable_run_graph_by_single_op";
+constexpr auto kFlagHasControlFlow = "has_control_flow";
 // TODO(dsj): for ms_function running in graph_mode. should be delete later
 constexpr auto kAttrMSFunction = "ms_function_graph";
 

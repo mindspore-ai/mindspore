@@ -75,6 +75,7 @@ void CallPyInferFunc(const PrimitivePtr &primitive, const FrontendOpRunInfoPtr &
   op_run_info->base_op_run_info.abstract = abs;
 }
 }  // namespace
+
 void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name
@@ -119,7 +120,6 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   op_run_info->base_op_run_info.abstract = infer_res;
 
   prim->EndRecordAddAttr();
-  MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name << " infer result: " << infer_res->ToString();
 }
 
 void InferOperation::DoInfer(const FrontendOpRunInfoPtr &op_run_info) {
@@ -200,9 +200,8 @@ AbstractBasePtr InferOperation::GetAbstractByValue(const ValuePtr &value, size_t
   MS_EXCEPTION_IF_NULL(value);
   const auto &abs = value->ToAbstract();
   if (!marked_const) {
-    PyNativeAlgo::Common::SetAnyValue(abs);
     if (value->isa<tensor::Tensor>() || value->isa<mindspore::Type>()) {
-      node_abs_cache_[input_id] = abs;
+      node_abs_cache_[input_id] = PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs);
     }
   }
   return abs;
@@ -212,6 +211,8 @@ void InferOperation::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info
   // Step 1 : Infer output abstract.
   MS_EXCEPTION_IF_NULL(op_run_info);
   PynativeInfer(op_run_info);
+  MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name
+                << " infer result: " << op_run_info->base_op_run_info.abstract->ToString();
   // Step 2: Check whether output shape is dynamic.
   MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
   const auto &shape = op_run_info->base_op_run_info.abstract->BuildShape();
@@ -302,8 +303,8 @@ std::vector<bool> InferOperation::CheckPrimitiveConstFlag(const FrontendOpRunInf
 }
 
 void InferOperation::SetNodeAbsCacheByValue(const FrontendOpRunInfoPtr &op_run_info) {
-  PyNativeAlgo::Common::SetAnyValue(op_run_info->base_op_run_info.abstract);
-  node_abs_cache_[op_run_info->out_value_id] = op_run_info->base_op_run_info.abstract;
+  node_abs_cache_[op_run_info->out_value_id] =
+    PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_run_info->base_op_run_info.abstract);
   // If value is a `value tuple` or `value list`, cache the abstract of each element value.
   if (op_run_info->out_value->isa<ValueSequence>()) {
     const auto &seq_value = op_run_info->out_value->cast<ValueSequencePtr>();
@@ -341,8 +342,7 @@ void InferOperation::SaveSpecifiedOutputToCache(const std::string &op_name, cons
 }
 
 void InferOperation::SetNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs) {
-  PyNativeAlgo::Common::SetAnyValue(abs);
-  node_abs_cache_[id] = abs;
+  node_abs_cache_[id] = PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs);
 }
 
 py::object InferOperation::CallConstantFolding(const py::args &args) const {

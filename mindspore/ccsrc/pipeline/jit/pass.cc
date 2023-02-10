@@ -207,40 +207,7 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
   return func_graph;
 }
 
-FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource) {
-  opt::irpass::OptimizeIRPassLib irpass;
-  opt::OptPassConfig bg_final_opt = opt::OptPassConfig({
-    irpass.inline_,
-    irpass.tuple_list_get_set_item_eliminator_,
-    irpass.tuple_list_get_item_eliminator_,
-    irpass.tuple_list_set_item_eliminator_,
-    irpass.depend_value_elim_,
-    irpass.switch_simplify_,
-    irpass.ad_related_special_op_eliminate_,
-  });
-  OptPassGroupMap map({{"ad_final_opt", bg_final_opt}});
-  if (pynative::PyNativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
-    (void)map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
-    opt::OptPassConfig real_op_eliminate = opt::OptPassConfig{irpass.real_op_eliminate_};
-    (void)map.emplace_back(std::make_pair("real_op_eliminate", real_op_eliminate));
-    opt::OptPassConfig environ_eliminate = opt::OptPassConfig({
-      irpass.incorporate_call_,
-      irpass.incorporate_call_switch_,
-    });
-    (void)map.emplace_back(std::make_pair("environ_eliminate", environ_eliminate));
-  }
-  auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", resource, map);
-  MS_EXCEPTION_IF_NULL(resource);
-  auto func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  ProfileExecute(MsProfile::GetProfile()->Step("bprop_graph_final_opt"), [&bprop_graph_final_opt, &func_graph]() {
-    func_graph = bprop_graph_final_opt->step(func_graph, true);
-  });
-  //  Validate(func_graph);
-  return func_graph;
-}
-
-FuncGraphPtr OptGradGraphPass(const ResourcePtr &resource) {
+FuncGraphPtr MsFunctionBpropGraphPass(const ResourcePtr &resource, bool need_renormalize) {
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
     irpass.inline_,
@@ -255,23 +222,39 @@ FuncGraphPtr OptGradGraphPass(const ResourcePtr &resource) {
   });
   opt::OptPassConfig fill_zeros_like = opt::OptPassConfig{irpass.zero_like_fill_zero_};
   OptPassGroupMap map({
-    {"ad_final_opt", grad_graph_opt},
+    {"grad_graph_opt", grad_graph_opt},
     {"zeros_like", fill_zeros_like},
   });
-
-  (void)map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
-  opt::OptPassConfig real_op_eliminate = opt::OptPassConfig{irpass.real_op_eliminate_};
-  (void)map.emplace_back(std::make_pair("real_op_eliminate", real_op_eliminate));
+  if (need_renormalize) {
+    (void)map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
+    opt::OptPassConfig real_op_eliminate = opt::OptPassConfig{irpass.real_op_eliminate_};
+    (void)map.emplace_back(std::make_pair("real_op_eliminate", real_op_eliminate));
+  }
   MS_EXCEPTION_IF_NULL(resource);
-  auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("grad_graph_opt", resource, map);
   auto func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  ProfileExecute(MsProfile::GetProfile()->Step("bprop_graph_final_opt"), [&bprop_graph_final_opt, &func_graph]() {
-    func_graph = bprop_graph_final_opt->step(func_graph, true);
-  });
+  auto graph_opt = opt::Optimizer::MakeOptimizer("ms_function_bprop_graph_opt", resource, map);
+  func_graph = graph_opt->step(func_graph, false);
   func_graph = LiftingClone(func_graph);
   //  Validate(func_graph);
   return func_graph;
+}
+
+FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource) {
+  opt::irpass::OptimizeIRPassLib irpass;
+  opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
+    irpass.inline_,
+    irpass.tuple_list_get_item_eliminator_,
+    irpass.zero_like_fill_zero_,
+  });
+  OptPassGroupMap map({
+    {"ad_grad_graph_opt", grad_graph_opt},
+  });
+
+  MS_EXCEPTION_IF_NULL(resource);
+  auto func_graph = resource->func_graph();
+  auto graph_opt = opt::Optimizer::MakeOptimizer("final_bprop_graph_opt", resource, map);
+  return graph_opt->step(func_graph, false);
+  //  Validate(func_graph);
 }
 
 namespace {

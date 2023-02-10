@@ -196,10 +196,9 @@ class GradExecutor {
   FuncGraphPtr GetBpropGraph(const autograd::GradAttr &grad_attr, const vector<AnfNodePtr> &w_args,
                              const vector<size_t> &p_args);
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, bool *weight_param_is_tuple) const;
-  void CheckParamShapeAndType(const AnfNodePtr &param, const ParameterPtr &param_node,
-                              const abstract::AbstractBasePtr &input_abs,
-                              const abstract::AbstractBasePtr &param_tensor_abs, const std::string &input_shape);
-  void UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph, bool has_sens);
+  void CheckParamShapeAndType(const ParameterPtr &param_node, const abstract::AbstractBasePtr &input_abs,
+                              const abstract::AbstractBasePtr &ir_abs);
+  void UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph);
   std::vector<size_t> GetGradPositionArgs(const py::object &grad_position, bool get_by_position) const;
   void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   // Manage resource for construct forward graph.

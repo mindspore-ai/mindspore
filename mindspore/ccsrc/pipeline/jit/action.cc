@@ -33,6 +33,7 @@
 #include "abstract/abstract_value.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/graph_util/graph_splitter.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "pipeline/jit/pipeline.h"
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/parse_base.h"
@@ -883,18 +884,24 @@ bool EliminateForwardCNode(const ResourcePtr &resource) {
   MS_LOG(DEBUG) << "The phase of current pipeline graph is: " << phase;
   // Exporting graph in PyNative mode or only running forward process no need to do this action.
   auto pynative_exec = pynative::PyNativeExecutor::GetInstance();
+  pynative_exec->grad_executor()->ms_function()->set_graph_phase(phase);
   if (phase.find("export") == 0 || !pynative_exec->grad_flag()) {
     MS_LOG(DEBUG) << "When exporting graph or only running forward process, no need to eliminate forward cnode.";
     auto grad_exec = pynative_exec->grad_executor();
     grad_exec->set_eliminate_forward(true);
     return true;
   }
-
-  // Run grad process for func_graph and replace forward nodes with its output tensors.
-  MS_LOG(INFO) << "Run eliminate forward nodes action.";
   MS_EXCEPTION_IF_NULL(resource);
   auto ms_func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(ms_func_graph);
+  // Not exist control flow
+  if (!ExistControlFlow(ms_func_graph) && !parallel::IsAutoParallelCareGraph(ms_func_graph)) {
+    pynative_exec->grad_executor()->ms_function()->ModifyMsFunctionForwardOutput(ms_func_graph);
+    return true;
+  }
+
+  // Run grad process for func_graph and replace forward nodes with its output tensors.
+  MS_LOG(INFO) << "Run eliminate forward nodes action.";
   auto grad_exec = pynative_exec->grad_executor();
   bool eliminate_forward = grad_exec->eliminate_forward();
   grad_exec->set_eliminate_forward(eliminate_forward && ms_func_graph->func_graphs_used().empty());

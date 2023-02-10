@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "pipeline/pynative/pynative_utils.h"
-#include <utility>
+#include <algorithm>
 #include <vector>
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/optimizer/op_adaptation_info_factory.h"
@@ -39,18 +39,47 @@ void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
     op_run_info->op_prim->adapter()->set_attached_primitive(op_run_info->op_prim);
   }
 }
+
+std::string GetObjIdFromPython(const py::handle &obj) {
+  py::object out = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
+  if (py::isinstance<py::none>(out)) {
+    MS_LOG(EXCEPTION) << "Get pyobj failed";
+  }
+  return out.cast<std::string>();
+}
+
+std::string GetFnInfoByPyObj(const py::object &obj) {
+  std::string fn_info = obj.attr("__module__").cast<std::string>();
+  fn_info += "_" + obj.attr("__name__").cast<std::string>();
+  fn_info += "_" + obj.attr("__code__").attr("co_filename").cast<std::string>();
+  fn_info += "_" + py::str(obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
+  if (py::hasattr(obj, "__warpped__")) {
+    auto warpped_obj = obj.attr("__warpped__");
+    fn_info += "_" + warpped_obj.attr("__name__").cast<std::string>();
+    fn_info += "_" + warpped_obj.attr("__code__").attr("co_filename").cast<std::string>();
+    fn_info += "_" + py::str(warpped_obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
+  }
+  return fn_info;
+}
 }  // namespace
 
-void Common::SetAnyValue(const AbstractBasePtr &abs) {
+AbstractBasePtr Common::SetAbstractValueToAnyValue(const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
   if (abs->isa<abstract::AbstractTensor>()) {
     abs->set_value(kAnyValue);
   } else if (abs->isa<abstract::AbstractTuple>() || abs->isa<abstract::AbstractList>()) {
     const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-    MS_EXCEPTION_IF_NULL(abs_seq);
-    std::for_each(abs_seq->elements().begin(), abs_seq->elements().end(),
-                  [](const AbstractBasePtr &elem) { return SetAnyValue(elem); });
+    for (const auto &elem : abs_seq->elements()) {
+      (void)SetAbstractValueToAnyValue(elem);
+    }
+  } else if (abs->isa<abstract::AbstractDictionary>()) {
+    const auto &abs_dic = abs->cast<abstract::AbstractDictionaryPtr>();
+    for (const auto &elem : abs_dic->elements()) {
+      (void)SetAbstractValueToAnyValue(elem.first);
+      (void)SetAbstractValueToAnyValue(elem.second);
+    }
   }
+  return abs;
 }
 
 std::string Common::GetIdByValue(const ValuePtr &v) {
@@ -111,6 +140,9 @@ bool Common::IsTensor(const ValuePtr &v, bool include_sequence) {
       return true;
     } else if (v->isa<ValueSequence>()) {
       auto v_seq = v->cast<ValueSequencePtr>();
+      if (v_seq->size() == 0) {
+        return false;
+      }
       // SpareTensor have scalar index, so just check have csr tensor
       if (v_seq->value().front()->isa<tensor::MetaSparseTensor>()) {
         return true;
@@ -123,6 +155,11 @@ bool Common::IsTensor(const ValuePtr &v, bool include_sequence) {
     }
   }
   return v->isa<tensor::Tensor>() || v->isa<tensor::MetaSparseTensor>();
+}
+
+bool Common::IsControlFlowGraph(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  return !func_graph->func_graphs_used_total().empty();
 }
 
 ValuePtr Common::FilterSensValues(const ValuePtr &value) {
@@ -189,12 +226,63 @@ void Common::DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph)
 #endif
 }
 
-std::string PyParser::GetPyObjId(const py::handle &obj) {
-  py::object out = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
-  if (py::isinstance<py::none>(out)) {
-    MS_LOG(EXCEPTION) << "Get pyobj failed";
+TypeId Common::GetTypeFromAbstract(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractSequence>()) {
+    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+    return GetTypeFromAbstract(abs_seq->elements().front());
   }
-  return out.cast<std::string>();
+  const auto &type = abs->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  return common::AnfAlgo::GetOutputInferDataType(type, 0);
+}
+
+ShapeVector Common::GetShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractSequence>()) {
+    MS_LOG(EXCEPTION) << "Get abstract sequence";
+  }
+  auto shape = abs->BuildShape();
+  MS_EXCEPTION_IF_NULL(shape);
+  auto shape_ptr = shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  return shape_ptr->shape();
+}
+
+ValuePtr Common::CreatOutputTensorValueByAbstract(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  auto type_id = pynative::PyNativeAlgo::Common::GetTypeFromAbstract(abs);
+  if (abs->isa<abstract::AbstractMonad>()) {
+    return std::make_shared<tensor::Tensor>(0);
+  }
+  if (abs->isa<abstract::AbstractSequence>()) {
+    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+    std::vector<ValuePtr> out;
+    if (!abs_seq->elements().front()->isa<abstract::AbstractTensor>()) {
+      MS_LOG(EXCEPTION) << "Get non tensor output";
+    }
+    for (size_t i = 0; i < abs_seq->size(); ++i) {
+      (void)out.emplace_back(std::make_shared<tensor::Tensor>(type_id, GetShapeFromAbstract(abs_seq->elements()[i])));
+    }
+    return std::make_shared<ValueTuple>(out);
+  }
+  return std::make_shared<tensor::Tensor>(type_id, GetShapeFromAbstract(abs));
+}
+
+void Common::ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph) {
+  MS_EXCEPTION_IF_NULL(bprop_graph);
+  auto mng = MakeManager({bprop_graph}, false);
+  auto tr = mng->Transact();
+  for (const auto &forward_node : bprop_graph->used_forward_nodes()) {
+    auto cnode = forward_node->cast<CNodePtr>();
+    auto v_node = cnode->forward().first;
+    bprop_graph->AddValueNode(v_node);
+    MS_LOG(DEBUG) << "Replace " << forward_node->DebugString() << " by value node " << v_node;
+    tr.Replace(forward_node, v_node);
+  }
+  tr.Commit();
+  bprop_graph->ClearUsedForwardNodes();
+  PyNativeAlgo::Common::DumpGraphIR("replace_cnode_with_valuenode.ir", bprop_graph);
 }
 
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
@@ -230,13 +318,15 @@ std::string PyParser::GetIdByPyObj(const py::object &obj) {
     prefix.pop_back();
     prefix += ">";
     return prefix;
+  } else if (py::isinstance<py::function>(obj)) {
+    return GetFnInfoByPyObj(obj);
   }
   // For id with value and obj can be the same
   if (py::isinstance<tensor::CSRTensor>(obj) || py::isinstance<tensor::COOTensor>(obj) ||
       py::isinstance<tensor::RowTensor>(obj)) {
     return DataConvert::PyObjToValue(obj)->ToString();
   }
-  return GetPyObjId(obj);
+  return GetObjIdFromPython(obj);
 }
 
 void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object &prim_arg) {

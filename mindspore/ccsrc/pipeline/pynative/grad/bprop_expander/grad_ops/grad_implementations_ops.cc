@@ -25,5 +25,17 @@ REG_BPROP_BUILDER("Load").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
   return {dout, ib->ZerosLike(u_monad)};
 });
+
+REG_BPROP_BUILDER("UpdateState").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto u_monad = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex3);
+  return {ib->ZerosLike(u_monad), dout};
+});
+
+REG_BPROP_BUILDER("Depend").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto param = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  return {dout, ib->ZerosLike(param)};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

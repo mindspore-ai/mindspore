@@ -30,20 +30,24 @@ class PyNativeExecutor;
 namespace PyNativeAlgo {
 // Common function
 struct Common {
-  static void SetAnyValue(const AbstractBasePtr &abs);
+  static AbstractBasePtr SetAbstractValueToAnyValue(const AbstractBasePtr &abs);
   static std::string GetIdByValue(const ValuePtr &v);
   static bool ValueHasDynamicShape(const ValuePtr &value);
   static bool IsTensor(const ValuePtr &v, bool include_sequence = false);
+  static bool IsControlFlowGraph(const FuncGraphPtr &func_graph);
   static ValuePtr FilterSensValues(const ValuePtr &value);
   static tensor::TensorPtr GetTensorFromParam(const AnfNodePtr &param_node);
   static void SetForwardOutputFlag(const ValuePtr &v);
   static void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
+  static TypeId GetTypeFromAbstract(const abstract::AbstractBasePtr &abs);
+  static ShapeVector GetShapeFromAbstract(const abstract::AbstractBasePtr &abs);
+  static ValuePtr CreatOutputTensorValueByAbstract(const abstract::AbstractBasePtr &abs);
+  static void ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph);
   static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
 };
 
 // Parser python
 struct PyParser {
-  static std::string GetPyObjId(const py::handle &obj);
   static std::string GetIdByPyObj(const py::object &obj);
   static void SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object &prim_arg);
   static void ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs);

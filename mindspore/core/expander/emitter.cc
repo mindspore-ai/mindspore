@@ -214,9 +214,6 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
       }
       return MakeTuple(list);
     }
-    if (node->get()->abstract()->isa<abstract::AbstractMonad>()) {
-      return Emit(prim::kZerosLike, {Tensor(0)});
-    }
     auto v = node->get()->abstract()->BuildValue();
     if (v->isa<Scalar>() || v->isa<Type>()) {
       return Emit(prim::kZerosLike, {Tensor(0, v->type())});
@@ -225,6 +222,9 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
       auto sh = GetValue<std::vector<int64_t>>(v);
       return Emit(prim::kZerosLike, {Tensor(sh)});
     }
+  }
+  if (node->get()->abstract()->isa<abstract::AbstractMonad>()) {
+    return Emit(prim::kZerosLike, {Tensor(0)});
   }
   return Emit(prim::kZerosLike, {node});
 }

@@ -36,7 +36,7 @@ from mindspore.common.tensor import Tensor as PythonTensor
 from mindspore.common.sparse_tensor import CSRTensor as PythonCSRTensor
 from mindspore.common.sparse_tensor import COOTensor as PythonCOOTensor
 from mindspore.common.sparse_tensor import RowTensor as PythonRowTensor
-from mindspore._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, RowTensor, COOTensor, \
+from mindspore._c_expression import GraphExecutor_, Tensor, CSRTensor, RowTensor, COOTensor, \
     PyNativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \
     _ms_memory_recycle
 from mindspore.parallel._ps_context import _is_role_sched
@@ -301,19 +301,25 @@ class _MindsporeFunctionExecutor:
         if self.obj is not None:
             args_list = args_list[1:]
         try:
-            _pynative_executor.set_ms_function_compile_status(True)
-            phase = self.compile(args_list, self.fn.__name__)
-            _pynative_executor.set_ms_function_compile_status(False)
+            phase = ""
+            if context.get_context("mode") == context.PYNATIVE_MODE:
+                _pynative_executor.set_ms_function_compile_status(True, phase)
+                phase = self.compile(args_list, self.fn.__name__)
+                _pynative_executor.set_ms_function_compile_status(False, phase)
+            else:
+                phase = self.compile(args_list, self.fn.__name__)
         except Exception as err:
             _pynative_executor.clear_res()
             raise err
+
         if context.get_context("precompile_only"):
             return None
+
         new_inputs = self._generate_run_args(args_list)
         output = self._graph_executor(tuple(new_inputs), phase)
         if context.get_context("mode") == context.PYNATIVE_MODE:
-            _pynative_executor.set_graph_phase(phase)
             output = _pynative_executor.grad_ms_function(output, *new_inputs)
+
         enable_ge = os.getenv("MS_ENABLE_GE") == "1"
         if enable_ge and self.jit_config_dict is None:
             raise RuntimeError("GE and jit_level=O3 should be used together, but jit_config is None.")
@@ -413,32 +419,35 @@ class _MindsporeFunctionExecutor:
         # Case: The `set_inputs()` of Cell object has been set, using these dynamic shape args as compile args.
         if self.fn.__name__ == 'construct' and isinstance(self.obj, ms.nn.Cell) and self.obj.get_inputs():
             compile_args = self.obj.get_inputs()
-            for args in compile_args:
-                Validator.check_isinstance("args set in `set_inputs()` of Cell", args, PythonTensor)
-            Validator.check_dynamic_shape(compile_args, args_list)
+            if len(compile_args) != len(args_list):
+                raise ValueError(f"The number of actual input tensors: {len(args_list)} is not equal to the number of "
+                                 f"dynamic shape tensors: {len(compile_args)}.")
+            for i, elem in enumerate(compile_args):
+                if isinstance(elem, PythonTensor):
+                    Validator.check_dynamic_shape(compile_args[i], args_list[i], i)
+
         # Case: If dynamic shape tensors have been assigned to `input_signature`, they are preferred as compile args.
         if self.input_signature is not None:
             if not isinstance(self.input_signature, (tuple, list)):
                 self.input_signature = (self.input_signature,)
             self.input_signature = list(self.input_signature)
             dyn_shape = False
-            for sig_args in self.input_signature:
-                Validator.check_isinstance("args in `input_signature` of `jit` decorator", sig_args, MetaTensor)
-                if is_shape_unknown(sig_args.shape):
+            for i, elem in enumerate(self.input_signature):
+                if isinstance(elem, PythonTensor) and is_shape_unknown(elem.shape):
+                    Validator.check_dynamic_shape(self.input_signature[i], args_list[i], i)
                     dyn_shape = True
-            if not dyn_shape:
-                if not verify_inputs_signature(self.input_signature, args_list):
-                    raise ValueError("The input args is incompatible with the args in `input_signature`!")
-            else:
+            if dyn_shape:
                 # Checkout whether the `sens` has been added to args_list.
                 if len(self.input_signature) == len(args_list) - 1:
                     logger.warning(f"The number of actual input args `{len(args_list)}` is one more than the number "
                                    f"of input_signature args `{len(self.input_signature)}`. The last actual args may "
                                    f"be `sens` and added it to compile args.")
                     self.input_signature.append(args_list[-1])
-                Validator.check_dynamic_shape(self.input_signature, args_list)
                 compile_args = tuple(self.input_signature)
                 _pynative_executor.set_dynamic_input(self.obj, *compile_args)
+            else:
+                if not verify_inputs_signature(self.input_signature, args_list):
+                    raise ValueError("The input args is incompatible with the args in `input_signature`!")
         return compile_args
 
     def _generate_run_args(self, args_list):
@@ -1132,18 +1141,6 @@ class _PyNativeExecutor:
         """
         return self._executor.grad_ms_function(output, *args)
 
-    def set_graph_phase(self, phase):
-        """
-        Set the phase of cell/function instance.
-
-        Args:
-            phase (str): The phase of cell/function instance.
-
-        Return:
-            None.
-        """
-        self._executor.set_graph_phase(phase)
-
     def grad_flag(self):
         """
         The flag of building grad graph.
@@ -1165,16 +1162,17 @@ class _PyNativeExecutor:
         """
         self._executor.set_grad_flag(flag)
 
-    def set_ms_function_compile_status(self, status):
+    def set_ms_function_compile_status(self, status, phase):
         """
         Set ms_function is compiling
 
         Args:
             status(bool): ms_function compile status
+            phase (str): The phase of cell/function instance.
         Return:
             None.
         """
-        self._executor.set_ms_function_compile_status(status)
+        self._executor.set_ms_function_compile_status(status, phase)
 
     def set_dynamic_input(self, obj, *args):
         """

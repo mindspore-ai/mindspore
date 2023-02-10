@@ -54,8 +54,8 @@ bool ME_EXPORT AutoMonadElimOptPass(const FuncGraphPtr &func_graph);
 FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource);
 FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource,
                                 const std::vector<bool> &need_grad_flags);
-FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource);
-FuncGraphPtr OptGradGraphPass(const ResourcePtr &resource);
+FuncGraphPtr MsFunctionBpropGraphPass(const ResourcePtr &resource, bool need_renormalize);
+FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource);
 }  // namespace pipeline
 }  // namespace mindspore
 

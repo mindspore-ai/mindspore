@@ -37,7 +37,14 @@ void SplitString(const std::string &str, std::vector<std::string> *id_vec) {
   auto end = sub_str.find_first_of(colon_delim, begin);
   MS_EXCEPTION_IF_NULL(id_vec);
   while (end != std::string::npos || begin != std::string::npos) {
-    (void)id_vec->emplace_back(sub_str.substr(begin, end - begin));
+    const auto &sub = sub_str.substr(begin, end - begin);
+    if (sub.find(angle_bracket_left_delim) != std::string::npos &&
+        sub.find(angle_bracket_right_delim) == std::string::npos) {
+      end = sub_str.find_first_of(angle_bracket_right_delim, begin) + 1;
+      (void)id_vec->emplace_back(sub_str.substr(begin, end - begin));
+    } else {
+      (void)id_vec->emplace_back(sub);
+    }
     begin = sub_str.find_first_not_of(colon_delim, end);
     end = sub_str.find_first_of(colon_delim, begin);
     paren_pos = sub_str.find_first_of(angle_bracket_left_delim, begin);
@@ -159,6 +166,9 @@ void TopCellInfo::DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &
 
 void TopCellInfo::SetParamNodeMapInGraphInfoMap(const std::string &id, const ParameterPtr &param,
                                                 bool is_weight) const {
+  if (id.find('T') == std::string::npos) {
+    return;
+  }
   auto &graph_info = graph_info_map().at(fg());
   MS_EXCEPTION_IF_NULL(graph_info);
   if (is_weight) {
@@ -172,6 +182,9 @@ void TopCellInfo::SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodeP
                                            bool need_save_sub_id) const {
   auto &graph_info = graph_info_map().at(fg());
   MS_EXCEPTION_IF_NULL(graph_info);
+  if (id.find('T') == std::string::npos) {
+    return;
+  }
   graph_info->node_map[id] = std::make_pair(node, std::vector<int64_t>{index});
   // For example, set id of ((A,B),C) = {CNode, -1}
   if (need_save_sub_id) {
@@ -188,7 +201,7 @@ void TopCellInfo::SetMultipleOutputToGraphInfoMap(const string &id, const AnfNod
   auto tuple_size = static_cast<int64_t>(id_vec.size());
   for (int64_t i = 0; i < tuple_size; ++i) {
     // Set id of (A,B) = {CNode, 0}; Set id of C = {CNode, 1}
-    SetNodeMapInGraphInfoMap(id_vec[i], node, i);
+    SetNodeMapInGraphInfoMap(id_vec[i], node, i, false);
     SetNestedMultipleOutputToGraphInfoMap(id_vec[i], node, std::vector<int64_t>{i});
   }
 }
@@ -214,6 +227,9 @@ void TopCellInfo::SetNestedMultipleOutputToGraphInfoMap(const string &id, const 
 
 void TopCellInfo::SetUnpackOutputToGraphInfoMap(const std::string &id, const AnfNodePtr &node,
                                                 const std::vector<int64_t> &index) const {
+  if (id.find('T') == std::string::npos) {
+    return;
+  }
   auto &graph_info = graph_info_map().at(fg());
   MS_EXCEPTION_IF_NULL(graph_info);
   graph_info->node_map[id] = std::make_pair(node, index);
