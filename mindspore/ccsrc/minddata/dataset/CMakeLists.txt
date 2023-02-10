@@ -126,6 +126,7 @@ endif()
 
 if(ENABLE_PYTHON)
     add_dependencies(APItoPython core)
+    add_dependencies(APItoPython engine-gnn)
 endif()
 if(NOT ENABLE_SECURITY)
     add_dependencies(engine-perf core)
