@@ -1691,6 +1691,27 @@ EvalResultPtr GetEvaluatedValueForAdapterTensorAttrOrMethod(const AnalysisEngine
   return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
 }
 
+void CheckObjAttrValid(const TypePtr &data_type, const std::string &item_name) {
+  // Check if the obj's attr is invalid or decoratored by @jit_forbidden_register
+  std::string data_type_str = TypeIdLabel(data_type->type_id());
+  py::module mod1 = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  py::object obj_define = python_adapter::CallPyModFn(mod1, parse::PYTHON_MOD_GET_OBJ_DEFINED, data_type_str);
+  if (py::isinstance<py::none>(obj_define)) {
+    return;
+  }
+  py::module mod2 = python_adapter::GetPyModule(parse::PYTHON_MOD_MODULE);
+  auto is_jit_forbidden_method =
+    python_adapter::CallPyModFn(mod2, parse::PYTHON_MOD_IS_INVALID_METHOD, obj_define, data_type_str, item_name);
+  if (py::cast<bool>(is_jit_forbidden_method)) {
+    MS_LOG(EXCEPTION) << "Failed to compile in GRAPH_MODE because the '" << data_type_str << "' object's method '"
+                      << item_name << "' is not supported in 'construct' or function with @jit decorator. "
+                      << "Try to use the '" << data_type_str << "." << item_name << "' externally "
+                      << "such as initialized in the method '__init__' before assigning"
+                      << ".\nFor more details, please refer to "
+                      << "https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html \n";
+  }
+}
+
 EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine,
                                                           const AbstractBasePtrList &args_abs_list,
                                                           const ConfigPtr &data_conf,
@@ -1723,6 +1744,7 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
           MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
         }
 
+        CheckObjAttrValid(data_type, item_name);
         MS_LOG(DEBUG) << "Evaluate " << data_type->ToString() << " attribute: " << item_name
                       << ".\nnode: " << out_conf->node()->DebugString() << "\n"
                       << trace::GetDebugInfo(out_conf->node()->debug_info());

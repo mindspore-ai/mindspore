@@ -17,7 +17,7 @@ import pytest
 
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore import context, jit
+from mindspore import context, jit, Tensor
 from mindspore.common.initializer import initializer, One
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -203,3 +203,25 @@ def test_jit_forbidden_api_type():
         return x
 
     foo()
+
+
+def test_jit_forbidden_method_tensor_set_const_arg():
+    """
+    Feature: Check JIT Forbidden API
+    Description: Test 'Tensor' does not support the method 'set_const_arg' in graph mode.
+    Expectation: No Expectation
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+
+        def construct(self, x):
+            x.set_const_arg(False)
+            return x
+
+    x = Tensor([1, 2, 3], dtype=mstype.float32, const_arg=True)
+    net = Net()
+    with pytest.raises(RuntimeError) as ex:
+        net(x)
+    assert "Failed to compile in GRAPH_MODE" in str(ex.value)
+    assert "the 'Tensor' object's method 'set_const_arg' is not supported" in str(ex.value)

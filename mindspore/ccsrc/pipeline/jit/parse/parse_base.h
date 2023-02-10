@@ -73,6 +73,7 @@ const char PYTHON_MOD_GET_MS_CLASS_NAME[] = "get_ms_class_name";
 const char PYTHON_MOD_GET_MODULE_NAMESPACE[] = "get_module_namespace";
 const char PYTHON_MOD_GET_ATTR_NAMESPACE_SYMBOL[] = "get_class_attr_namespace_symbol";
 const char PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL[] = "get_class_member_namespace_symbol";
+const char PYTHON_MOD_GET_OBJ_DEFINED[] = "get_obj_defined_from_obj_type";
 const char PYTHON_MOD_GET_PARSE_METHOD[] = "get_parse_method_of_class";
 const char PYTHON_MOD_GET_BPROP_METHOD[] = "get_bprop_method_of_class";
 const char PYTHON_MOD_GET_OBJECT_DESCRIPTION[] = "get_object_description";
@@ -111,6 +112,7 @@ const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
 
 const char PYTHON_MOD_GET_MODULE_AND_NAME_INFO[] = "get_obj_module_and_name_info";
 const char PYTHON_MOD_IS_JIT_FORBIDDEN_MODULE[] = "is_jit_forbidden_module";
+const char PYTHON_MOD_IS_INVALID_METHOD[] = "is_invalid_or_jit_forbidden_method";
 
 // Define the common name.
 const char NAMED_PRIMITIVE_LEN[] = "len";
