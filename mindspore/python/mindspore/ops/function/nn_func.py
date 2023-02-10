@@ -5748,7 +5748,7 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
         negative (Tensor): A sample belonging to the different class from `anchor`, with the same type and shape
             as `anchor`.
         margin (float, optional): Make a margin between the positive pair and the negative pair. Default: 1.0.
-        p (int, optional): The norm degree for pairwise distance. Default: 2.
+        p (int, optional): The degree of norm for pairwise distance. Default: 2.
         eps (float, optional): Add small value to avoid division by zero. Default: 1e-06.
         swap (bool, optional): The distance swap change the negative distance to the distance between positive
             sample and negative sample. Default: "False".

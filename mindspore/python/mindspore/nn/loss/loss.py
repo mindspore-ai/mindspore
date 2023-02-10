@@ -1878,12 +1878,12 @@ class TripletMarginLoss(LossBase):
     r"""
     TripletMarginLoss operation.
 
-    Creates a criterion that measures the triplet loss given an input
-    tensors :math:`x`, :math:`positive`, :math:`negative` and a :math:`margin` with a value greater than :math:`0`.
-    This is used for measuring a relative similarity between samples.
-    A triplet is composed by `a`, `p` and `n` (i.e., `x`, `positive` and `negative` respectively).
-    The shapes of all input tensors should be
-    :math:`(N, D)`.
+    Triple loss is used to measure the relative similarity between samples,
+    which is measured by a triplet and a :math:`margin` with a value greater than :math:`0` .
+    The triplet is composed by :math:`a`, :math:`p`, :math:`n` in the following formula.
+
+    The shapes of all input tensors should be :math:`(N, *)` , where :math:`N` is batch size
+    and :math:`*` means any number of additional dimensions.
 
     The distance swap is described in detail in the paper
     `Learning local feature descriptors with triplets and shallow convolutional neural
@@ -1901,7 +1901,7 @@ class TripletMarginLoss(LossBase):
         d(x_i, y_i) = \left\lVert {\bf x}_i - {\bf y}_i \right\rVert_p
 
     Args:
-        p (int, optional): The norm degree for pairwise distance. Default: 2.
+        p (int, optional): The degree of norm for pairwise distance. Default: 2.
         eps (float, optional): Add small value to avoid division by zero. Default: 1e-06.
         swap (bool, optional): The distance swap change the negative distance to the distance between positive
             sample and negative sample. Default: "False".
@@ -1910,18 +1910,19 @@ class TripletMarginLoss(LossBase):
 
     Inputs:
         - **x** (Tensor) - A sample randomly selected from the training set. Data type must be BasicType.
-        - **positive** (Tensor) - A sample belonging to the same category as `x`, with the same type and shape as `x`.
+          :math:`a` in the above formula.
+        - **positive** (Tensor) - A sample belonging to the same category as `x`, with the same type and
+          shape as `x`. :math:`p` in the above formula.
         - **negative** (Tensor) - A sample belonging to the different class from `x`, with the same type and shape
-          as `x`.
-        - **margin** (Tensor) - Make a margin between the positive pair and the negative pair.
+          as `x`. :math:`n` in the above formula.
+        - **margin** (Union[Tensor, float]) - Make a margin between the positive pair and the negative pair.
 
     Outputs:
         Tensor. If `reduction` is "none", its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
 
     Raises:
-        TypeError: If `x` or `positive` or 'negative' or 'margin' is not a Tensor.
+        TypeError: If `x` or `positive` or 'negative' is not a Tensor.
         TypeError: If dtype of `x`, `positive` and `negative` is not the same.
-        TypeError: If `margin` is not float32.
         TypeError: If `p` is not an int.
         TypeError: If `eps` is not a float.
         TypeError: If `swap` is not a bool.
