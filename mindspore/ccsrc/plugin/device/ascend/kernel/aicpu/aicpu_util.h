@@ -72,6 +72,7 @@ constexpr auto kConcatOffset = "ConcatOffset";
 constexpr auto kConcatOffsetV1 = "ConcatOffsetV1";
 constexpr auto kRandomChoiceWithMask = "RandomChoiceWithMask";
 constexpr auto kGatherDGradV2 = "GatherDGradV2";
+constexpr auto kGenerateEodMask = "GenerateEodMask";
 constexpr auto kResizeNearestNeighborV2 = "ResizeNearestNeighborV2";
 constexpr auto kResizeNearestNeighborV2Grad = "ResizeNearestNeighborV2Grad";
 constexpr auto kUpdateCache = "UpdateCache";
