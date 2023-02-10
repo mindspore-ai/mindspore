@@ -4339,10 +4339,16 @@ def logsumexp(x, axis, keep_dims=False):
     _reduce_sum = _get_cache_prim(P.ReduceSum)(keep_dims)
     _log = _get_cache_prim(P.Log)()
 
-    x_max = x.max()
+    _exp = _get_cache_prim(P.Exp)()
+    _reduce_sum = _get_cache_prim(P.ReduceSum)(keep_dims)
+    _log = _get_cache_prim(P.Log)()
+
+    x_max = x.max(axis=axis, keepdims=True)
     x_exp = _exp(x - x_max)
     x_sumexp = _reduce_sum(x_exp, axis)
     x_logsumexp = _log(x_sumexp)
+    if not keep_dims:
+        x_max = x_max.squeeze(axis=axis)
     return x_logsumexp + x_max
 
 
