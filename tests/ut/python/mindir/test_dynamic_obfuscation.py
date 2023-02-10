@@ -135,7 +135,6 @@ def test_obfuscate_model_customized_func_mode():
         os.remove("obf_net_2.mindir")
 
 
-@pytest.mark.skip(reason="random failures")
 def test_export_password_mode():
     """
     Feature: Obfuscate MindIR format model with dynamic obfuscation (password mode) in export().
@@ -189,3 +188,19 @@ def test_export_customized_func_mode():
 
     if os.path.exists("obf_net_4.mindir"):
         os.remove("obf_net_4.mindir")
+
+
+def test_wrong_file_format_input():
+    """
+    Feature: Obfuscate MindIR format model with dynamic obfuscation (customized_func mode) in export().
+    Description: Test wrong file_formar input.
+    Expectation: Success.
+    """
+    net_5 = ObfuscateNet()
+    input_tensor = Tensor(np.ones((1, 1, 32, 32)).astype(np.float32))
+
+    # obfuscate model
+    obf_config = {"obf_ratio": 0.8, "obf_password": 3423}
+    with pytest.raises(ValueError) as error_info:
+        export(net_5, input_tensor, file_name="obf_net_3", file_format="ONNX", obf_config=obf_config)
+    assert str(error_info.value) == "Dynamic obfuscation only support for MindIR format, but got ONNX format."
