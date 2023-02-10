@@ -542,6 +542,19 @@ size_t AnfAlgo::GetInputTensorNum(const AnfNodePtr &node) {
   return AnfUtils::GetInputTensorNum(node);
 }
 
+bool AnfAlgo::IsPrevNodeHasTupleGetItem(const AnfNodePtr &anf_node, size_t input_idx, bool skip_nop_node) {
+  if (!anf_node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << anf_node->DebugString() << "anf_node is not CNode." << trace::DumpSourceLines(anf_node);
+  }
+  auto input_node = AnfAlgo::GetInputNode(anf_node->cast<CNodePtr>(), input_idx);
+  MS_EXCEPTION_IF_NULL(input_node);
+  auto res = VisitKernelWithReturnType(input_node, 0, skip_nop_node, {prim::kPrimTupleGetItem});
+  if (CheckPrimitiveType(res.first, prim::kPrimTupleGetItem)) {
+    return true;
+  }
+  return false;
+}
+
 KernelWithIndex AnfAlgo::GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx, bool skip_nop_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (!anf_node->isa<CNode>()) {
