@@ -309,9 +309,41 @@ class AssignParser(Parser):
         call_args = [AssignParser._create_scopedvalue(arg) for arg in father_ast_node.value.args]
         return Node.create_call_buildin_op(op, father_ast_node, targets, func, call_args, {})
 
+    @staticmethod
+    def _create_inputs_for_cell_container(father_ast_node) -> ['Node']:
+        """Create inputs for cell container first node."""
+        call_ast_node = father_ast_node.value
+        if not isinstance(call_ast_node, ast.Call):
+            raise RuntimeError(error_str(f"when creating input node for cellcontainer, value of input father ast node"
+                                         "is not ast.Call!'", child_node=call_ast_node, father_node=father_ast_node))
+        first_node_inputs: ['Node'] = []
+        exist_param_name = []
+        for arg in call_ast_node.args:
+            if isinstance(arg, ast.Name):
+                param_name = arg.id
+            elif isinstance(arg, ast.arg):
+                param_name = arg.arg
+            else:
+                raise RuntimeError(error_str(f"only support ast.arg, ast.arg in arguments arg, but got "
+                                             f"'{type(arg).__name__}'", child_node=arg, father_node=call_ast_node))
+            if param_name in exist_param_name:
+                raise RuntimeError(error_str(f"Cellcontianer has duplicate input names", child_node=arg,
+                                             father_node=call_ast_node))
+            exist_param_name.append(param_name)
+            node = Node.create_input_node(arg, param_name, name=f"input_{param_name}")
+            first_node_inputs.append(node)
+
+        if call_ast_node.keywords:
+            raise RuntimeError(error_str(f"Not support keyword input for cellcontainer now.",
+                                         child_node=call_ast_node, father_node=father_ast_node))
+
+        return first_node_inputs
+
     def _cell_container_process(self, ast_node, stree, targets, func, call_args, call_kwargs, op_name, container_obj):
         """ parse cell container object."""
         cell_container = CellContainer(ast_node, targets, func, call_args, call_kwargs, op_name, container_obj)
+        cell_container.set_belong_symbol_tree(stree)
+        first_node_inputs = AssignParser._create_inputs_for_cell_container(ast_node)
         for i, cell in enumerate(container_obj):
             is_sub_tree = is_subtree(type(cell).__name__)
             if is_sub_tree:
@@ -319,25 +351,18 @@ class AssignParser(Parser):
                 new_stree = stb.build()
                 replacer = AstReplacer(new_stree.get_class_ast())
                 replacer.replace_all(new_stree.get_ori_cls_name(), new_stree.get_opt_cls_name())
-                tree = TreeNode.create_tree_node(new_stree, ast_node, targets, func, call_args, call_kwargs,
-                                                 type(cell).__name__, cell)
-                setattr(tree, "container", cell_container)
-                setattr(tree, "valid", True)
-                tree.set_belong_symbol_tree(stree)
-                cell_container.node_list.append(tree)
-                cell_container.node_count += 1
-                if i > 0:
-                    tree.set_inputs([cell_container.node_list[i-1]])
+                sub_node = TreeNode.create_tree_node(new_stree, ast_node, targets, func, call_args, call_kwargs,
+                                                     type(cell).__name__, cell)
             else:
-                node = Node.create_call_buildin_op(cell, ast_node, targets, func, call_args, call_kwargs,
-                                                   type(cell).__name__)
-                setattr(node, "container", cell_container)
-                setattr(node, "valid", True)
-                node.set_belong_symbol_tree(stree)
-                cell_container.node_list.append(node)
-                cell_container.node_count += 1
-                if i > 0:
-                    node.set_inputs([cell_container.node_list[i-1]])
+                sub_node = Node.create_call_buildin_op(cell, ast_node, targets, func, call_args, call_kwargs,
+                                                       type(cell).__name__)
+            # add sub node to cell_container
+            cell_container.append(sub_node)
+            # set node inputs
+            if i == 0:
+                sub_node.set_inputs(first_node_inputs)
+            else:
+                sub_node.set_inputs([cell_container.node_list[i-1]])
         return cell_container
 
     def _convert_ast_call_to_node(self, ast_node: ast.Call, father_ast_node: ast.Assign, stree: SymbolTree) -> Node:

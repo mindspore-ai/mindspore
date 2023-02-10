@@ -1244,12 +1244,7 @@ class CellContainer(Node):
     @property
     def node_count(self):
         """Number of nodes."""
-        return self._node_count
-
-    @node_count.setter
-    def node_count(self, count):
-        """Set number of nodes."""
-        self._node_count = count
+        return len(self._node_list)
 
     @property
     def node_list(self):
@@ -1258,24 +1253,32 @@ class CellContainer(Node):
 
     def append(self, node):
         """ Append new node to node list. """
+        setattr(node, "container", self)
+        setattr(node, "valid", True)
+        node.set_belong_symbol_tree(self.get_belong_symbol_tree())
         self._node_list.append(node)
-        self.get_instance().append(node.get_instance())
-        self.node_count += 1
+        # when creating a cell_container, node instance is already in SequentialCell cell_list
+        # so here we need to write a if judgement
+        if node.get_instance() not in self.get_instance().cell_list:
+            self.get_instance().append(node.get_instance())
 
     def erase(self, node):
         """Erase node form container."""
-        index = self.node_list.index(node)
+        index_node = self.node_list.index(node)
+        index_instance = self.get_instance().cell_list.index(node.get_instance())
+        if index_node != index_instance:
+            raise RuntimeError("In MindSpore Rewrite CellContainer, erasing a node raises index error!!!")
         setattr(node, "valid", False)
-        self.node_count -= 1
-        index = self.get_instance().cell_list.index(node.get_instance())
-        del self.get_instance()[index]
+        del self.get_instance()[index_node]
+        del self._node_list[index_node]
 
     def insert(self, index, node):
         """Insert node into container"""
         self.node_list.insert(index, node)
+        setattr(node, "container", self)
         setattr(node, "valid", True)
+        node.set_belong_symbol_tree(self.get_belong_symbol_tree())
         self.get_instance()._insert(index, node.get_instance())
-        self.node_count += 1
 
     def nodes(self):
         """ Return a iterator of node."""

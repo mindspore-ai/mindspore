@@ -400,3 +400,21 @@ def test_cellcontainer_pattern():
     assert isinstance(getattr(cell_container, "3"), nn.MaxPool2d)
     assert isinstance(getattr(cell_container, "4"), nn.ReLU)
     assert isinstance(getattr(cell_container, "6"), nn.BiDense)
+
+
+def test_cellcontainer_first_node_inputs():
+    """
+    Feature: create CellContainer Node.
+    Description: nodes in cellcontainer has inputs.
+    Expectation: success.
+    """
+    net = ResNetSimple()
+    stree = SymbolTree.create(net)
+    for node in stree.nodes():
+        if node.get_node_type() == NodeType.CellContainer and node.get_name() == "layer1":
+            for n in node.get_handler().nodes():
+                inputs = n.get_inputs()
+                assert inputs
+                assert hasattr(n, "container")
+                assert hasattr(n, "valid")
+                assert getattr(n, "valid")
