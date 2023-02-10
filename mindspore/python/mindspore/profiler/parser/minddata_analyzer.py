@@ -350,8 +350,9 @@ class MinddataProfilingAnalyzer:
         # Initialize flag that 'device_queue_profiling_<device_id>.txt' has not yet been found
         device_queue_file_found = False
 
-        txt_names = [os.path.join(source_dir, txt_name.format(self._device_id)) for txt_name in
-                     ('device_queue_profiling_{}.txt', 'dataset_iterator_profiling_{}.txt')]
+        txt_names = []
+        for txt_name in ('device_queue_profiling_{}.txt', 'dataset_iterator_profiling_{}.txt'):
+            txt_names.append(os.path.join(source_dir, txt_name.format(self._device_id)))
 
         # Search for a device trace profiling file
         if os.path.exists(txt_names[0]):

@@ -56,6 +56,9 @@ int posix_memalign(void **ptr, size_t align, size_t size) {
   }
 
   int saved_errno = errno;
+  if ((size == 0) | (size > FOO_MAX_LEN)) {
+    MS_LOG(ERROR) << "Error allocation aligned memory.";
+  }
   void *p = _aligned_malloc(size, align);
   if (p == nullptr) {
     errno = saved_errno;

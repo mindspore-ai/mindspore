@@ -635,6 +635,17 @@ class Profiler:
         finally:
             pass
 
+    def _ascend_dynamic_shape_analyse(self):
+        """Analyse dynamic shape network info."""
+        if not self._dynamic_status:
+            return
+        if self._profile_communication:
+            raise RuntimeError("The profile_communication parameter cannot be set on the dynamic shape network.")
+        if self._profile_memory:
+            raise RuntimeError("The profile_memory parameter cannot be set on the dynamic shape network.")
+        dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
+        dynamic_parser.write_dynamic_shape_data()
+
     def _ascend_graph_hccl_analyse(self):
         """Analyse hccl profiler info."""
         if not self._profile_communication:
@@ -739,23 +750,9 @@ class Profiler:
         finally:
             pass
 
-        if self._dynamic_status and self._profile_communication:
-            raise RuntimeError("The profile_communication parameter cannot be set on the dynamic shape network.")
-        if self._dynamic_status and self._profile_memory:
-            raise RuntimeError("The profile_memory parameter cannot be set on the dynamic shape network.")
-
         # analyse step trace info
         points = None
         is_training_mode_flag = False
-
-        # analyse timeline info
-        try:
-            logger.info("Profiling: analyzing the timeline data.")
-            self._analyse_timeline(aicpu_data_parser, optime_parser, source_path)
-        except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
-            logger.warning('Fail to write timeline data: %s', err)
-        finally:
-            pass
 
         # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
         if not self._dynamic_status:
@@ -771,10 +768,16 @@ class Profiler:
                                        self._dev_id, self._rank_id, is_training_mode_flag)
             logger.info("Profiling: analyzing the operation FLOPs.")
             flops_parser.execute()
-        else:
-            dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
-            dynamic_parser.write_dynamic_shape_data()
 
+        # analyse timeline info
+        try:
+            logger.info("Profiling: analyzing the timeline data.")
+            self._analyse_timeline(aicpu_data_parser, optime_parser, source_path)
+        except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
+            logger.warning('Fail to write timeline data: %s', err)
+        finally:
+            pass
+        self._ascend_dynamic_shape_analyse()
         self._ascend_graph_memory_analyse(points)
         self._ascend_graph_hccl_analyse()
 
