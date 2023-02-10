@@ -36,8 +36,6 @@ bool ChannelShuffleCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
                                       const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   input_dtype_ = inputs[0]->GetDtype();
-  input_shape_ = inputs[0]->GetShapeVector();
-  outputs_ = outputs;
   group_ = GetValue<int64_t>(base_operator->GetAttr("group"));
   return true;
 }
@@ -64,6 +62,17 @@ bool ChannelShuffleCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
                         << TypeIdToType(input_dtype_)->ToString() << " not support.";
   }
   return true;
+}
+
+int ChannelShuffleCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs,
+                                       const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs[0]->GetShapeVector();
+  outputs_ = outputs;
+  return KRET_OK;
 }
 
 std::vector<KernelAttr> ChannelShuffleCpuKernelMod::GetOpSupport() {
