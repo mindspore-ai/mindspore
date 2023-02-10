@@ -83,6 +83,7 @@ class MatmulBaseInt8CPUKernel : public LiteKernel {
   int8_t *batch_weight_ptr_ = nullptr;
   int8_t *batch_b_ptr_ = nullptr;
   int8_t *batch_c_ptr_ = nullptr;
+  int8_t *save_b_const_ = nullptr;
   int *batch_sums_ = nullptr;
   int row_tile_ = C4NUM;
   int col_tile_ = C4NUM;
