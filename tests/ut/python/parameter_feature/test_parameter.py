@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
 
 import mindspore.context as context
@@ -799,7 +798,6 @@ def test_cell_args_kwargs():
     assert net(1, 2, c=3, d=4) == 4
 
 
-@pytest.mark.skip(reason='kwonly not support')
 def test_cell_kwonly1():
     """
     Feature: Support kwargs for top graph.
@@ -817,7 +815,6 @@ def test_cell_kwonly1():
     assert net(a=1, b=2) == 3
 
 
-@pytest.mark.skip(reason='kwonly not support')
 def test_cell_kwonly2():
     """
     Feature: Support kwargs for top graph.
@@ -853,7 +850,6 @@ def test_cell_mixed_arguments1():
     assert net(1, 2, 3, 4, 5, d=6, e=7) == 5
 
 
-@pytest.mark.skip(reason='kwonly not support')
 def test_cell_mixed_arguments2():
     """
     Feature: Support kwargs for top graph.
@@ -872,7 +868,6 @@ def test_cell_mixed_arguments2():
     assert net(1, 2, 3, b=4, d=6) == 9
 
 
-@pytest.mark.skip(reason='kwonly not support')
 def test_cell_mixed_arguments3():
     """
     Feature: Support kwargs for top graph.
@@ -891,7 +886,6 @@ def test_cell_mixed_arguments3():
     assert net(1, b=4, d=6) == 10
 
 
-@pytest.mark.skip(reason='kwonly not support')
 def test_cell_mixed_arguments_with_dict_input():
     """
     Feature: Support kwargs for top graph.
@@ -960,7 +954,6 @@ def test_jit_kwargs():
     assert func(1, 2, 2.1, 2.2, d=4, e=5, f=6) == -1
 
 
-@pytest.mark.skip(reason='kwonly not support')
 def test_jit_mixed_arguments():
     """
     Feature: Support kwargs for top graph.

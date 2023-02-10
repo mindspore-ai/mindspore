@@ -684,6 +684,11 @@ void Resource::Clean() {
   // Python threads is released.
   parse::data_converter::ClearObjectCache();
   parse::Parser::CleanParserResource();
+  // Clear all graphs' holding for python object(such as Cell),
+  // otherwise it will result to circular reference between the func_graph and cell.
+  for (auto graph : manager()->func_graphs()) {
+    graph->set_python_obj(nullptr);
+  }
   trace::ClearTraceStack();
   is_cleaned_ = true;
 }

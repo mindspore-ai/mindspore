@@ -379,13 +379,13 @@ bool ParseAction(const ResourcePtr &resource) {
     MS_LOG(EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(input));
   }
 
-  FuncGraphPtr top_graph = nullptr;
-  if (py::hasattr(input, parse::PYTHON_PARSE_METHOD)) {
-    top_graph = parse::MakeTopGraph(input, converted_ret);
-  } else if (converted_ret->isa<FuncGraph>()) {
-    top_graph = converted_ret->cast<FuncGraphPtr>();
-  } else {
+  FuncGraphPtr top_graph = converted_ret->cast<FuncGraphPtr>();
+  if (top_graph == nullptr) {
     MS_LOG(EXCEPTION) << "Object to parse " << std::string(py::str(input)) << " is not function or cell.";
+  }
+  if (py::hasattr(input, parse::PYTHON_PARSE_METHOD)) {
+    std::for_each(top_graph->parameters().begin(), top_graph->parameters().end(),
+                  [](const AnfNodePtr &param) { param->cast<ParameterPtr>()->set_is_top_graph_param(true); });
   }
   parse::Parser::UpdateTopFuncGraph(top_graph);
 

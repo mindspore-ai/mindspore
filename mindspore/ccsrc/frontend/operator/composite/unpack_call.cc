@@ -86,9 +86,8 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_abs_l
           return res_graph->NewCNode({NewValueNode(prim::kPrimMakeKeywordArg), NewValueNode(key_value), dict_get_item});
         });
     } else {
-      // For the mixed arguments: func(a, *args)
-      AnfNodePtr param = res_graph->add_parameter();
-      (void)elems.emplace_back(param);
+      MS_LOG(EXCEPTION) << "The arguments of UnpackCall operator should be tuple, list or dict, but got "
+                        << args_abs_list[index]->ToString();
     }
   }
   // Add to order list to trace if fn_node had side effect.

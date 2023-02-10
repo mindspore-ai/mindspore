@@ -127,8 +127,6 @@ def _handle_func_args(func, *args, **kwargs):
     for value in inspect.signature(func).parameters.values():
         if value.kind is inspect.Parameter.VAR_POSITIONAL or value.kind is inspect.Parameter.VAR_KEYWORD:
             has_var = True
-        if value.kind is inspect.Parameter.KEYWORD_ONLY:
-            raise TypeError(f"Function {func.__name__}, MindSpore does not support keyword-only arg: {value}.")
         if value.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD:
             if value.default is inspect.Parameter.empty:
                 positional_args += 1

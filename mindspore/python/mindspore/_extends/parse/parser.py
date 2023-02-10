@@ -736,29 +736,29 @@ def get_args_default_values(node):
             args=[arg(a), arg(b), arg(c)], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[Num(1)]
         )
     """
-    nondefaults = [None] * (len(node.args.args) - len(node.args.defaults))
-    defaults = nondefaults + node.args.defaults + node.args.kw_defaults
+    defaults = [None] * (len(node.args.args) - len(node.args.defaults))
+    defaults = defaults + node.args.defaults
     if node.args.vararg:
         defaults.append(None)
+    defaults = defaults + node.args.kw_defaults
     if node.args.kwarg:
         defaults.append(None)
     return defaults
 
 
 def get_args(node):
-    """Get the arg of parse object."""
+    """Get the arg of parse object. The order is [args, vararg, kwonlyargs, kwarg]"""
     args = []
     # Process position args.
     for arg in node.args.args:
         args.append(arg)
-
-    # Process kwonlyargs: kwonlyargs is append after position args.
+    # Process vararg: vararg is append after position.
+    if node.args.vararg:
+        args.append(node.args.vararg)
+    # Process kwonlyargs: kwonlyargs is append after vararg.
     if node.args.kwonlyargs:
         for kwonlyarg in node.args.kwonlyargs:
             args.append(kwonlyarg)
-    # Process vararg: vararg is append after kwonlyargs.
-    if node.args.vararg:
-        args.append(node.args.vararg)
     # Process kwarg: kwarg is append after vararg.
     if node.args.kwarg:
         args.append(node.args.kwarg)
