@@ -170,6 +170,9 @@ int QuantParamParser::ParseMixedBitWeightQuant(const MixedBitWeightQuantString &
     MS_LOG(ERROR) << "INPUT ILLEGAL: auto_tune should be true or false.";
     return RET_INPUT_PARAM_INVALID;
   }
+
+  // this is required only for model larger than 2G
+  mixed_bit_weight_quant->workspace = mixed_bit_weight_quant_string.workspace;
   return RET_OK;
 }
 

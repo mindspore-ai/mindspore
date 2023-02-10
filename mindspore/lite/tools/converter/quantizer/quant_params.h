@@ -129,6 +129,7 @@ struct MixedBitWeightQuantParam {
   bool auto_tune = false;
   bool use_cv_data = false;
   int max_iterations = kMinIterations;
+  std::string workspace;  // only for model larger than 2G
 };
 
 struct FullQuantParam {
