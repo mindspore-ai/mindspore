@@ -75,6 +75,7 @@ def raise_unimplemented_error(msg):
 
 @constexpr
 def log_warning(msg):
+    """Print warning logs"""
     logger.warning(msg)
 
 

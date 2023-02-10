@@ -44,7 +44,7 @@ csr_sparse_matrix_to_dense = CSRSparseMatrixToDense()
 @constexpr
 def print_info(info):
     """Print given error info"""
-    print(info)
+    logger.error(info)
 
 
 @constexpr
