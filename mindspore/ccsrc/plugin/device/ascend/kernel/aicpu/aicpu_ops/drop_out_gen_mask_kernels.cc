@@ -422,13 +422,13 @@ uint32_t DropOutGenMaskKernel::ParseKernelParam() {
     auto input0 = reinterpret_cast<int32_t *>(io_addrs_[0]);
     count_ = 1;
     for (uint64_t index = 0; index < tmp_count; index++) {
-      count_ *= static_cast<uint64_t>(input0[index]);
+      count_ *= IntToSize(input0[index]);
     }
   } else {
     auto input0 = reinterpret_cast<int64_t *>(io_addrs_[0]);
     count_ = 1;
     for (uint64_t index = 0; index < tmp_count; index++) {
-      count_ *= static_cast<uint64_t>(input0[index]);
+      count_ *= IntToSize(input0[index]);
     }
   }
 
