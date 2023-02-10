@@ -403,8 +403,11 @@ template <typename T>
 T NuclearNormCpuKernelMod::ComputeMatrixNuclearNorm(int dim0, int dim1, T *mat) {
   int n1 = dim0, n2 = dim1;
   T *M = new T[n1 * n2];
-  int64_t copy_size = dim0 * dim1 * sizeof(T);
-  memcpy(M, &mat[0], copy_size);
+  size_t copy_size = dim0 * dim1 * sizeof(T);
+  auto ret = memcpy_s(M, copy_size, &mat[0], copy_size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << " For 'NuclearNorm', it does memcpy_s failed. Error no: " << ret;
+  }
 
   int m = n2;
   int n = n1;
@@ -435,9 +438,12 @@ bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel:
     value_num_ *= input_shape[i];
   }
 
-  int64_t total_copy_size = value_num_ * sizeof(T);
+  size_t total_copy_size = value_num_ * sizeof(T);
   Eigen::Tensor<T, 1, Eigen::RowMajor> eigen_tensor(value_num_);
-  memcpy(&eigen_tensor(0), input_data_ptr, total_copy_size);
+  auto ret1 = memcpy_s(&eigen_tensor(0), total_copy_size, input_data_ptr, total_copy_size);
+  if (ret1 != EOK) {
+    MS_LOG(EXCEPTION) << " For 'NuclearNorm', it does memcpy_s failed. Error no: " << ret1;
+  }
 
   std::array<Eigen::DenseIndex, RANK> dim_array;
   for (int32_t i = 0; i < input_dimnum; i++) {
@@ -474,11 +480,14 @@ bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel:
   Eigen::Tensor<T, DIM_SIZE3, Eigen::RowMajor> permuted_tensor = shuffled_tensor.reshape(dim_array_last);
 
   auto output_data_ptr = reinterpret_cast<T *>(outputs[0]->addr);
-  int64_t copy_size = (dimsize0 * dimsize1) * sizeof(T);
+  size_t copy_size = (dimsize0 * dimsize1) * sizeof(T);
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       T *mat = new T[dimsize0 * dimsize1];
-      memcpy(mat, &permuted_tensor(i, 0, 0), copy_size);
+      auto ret2 = memcpy_s(mat, copy_size, &permuted_tensor(i, 0, 0), copy_size);
+      if (ret2 != EOK) {
+        MS_LOG(EXCEPTION) << " For 'NuclearNorm', it does memcpy_s failed. Error no: " << ret2;
+      }
       T nuclear_norm = ComputeMatrixNuclearNorm<T>(dimsize0, dimsize1, mat);
       *(output_data_ptr + i) = nuclear_norm;
     }

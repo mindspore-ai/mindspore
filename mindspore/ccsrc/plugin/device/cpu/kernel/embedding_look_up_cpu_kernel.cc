@@ -196,7 +196,10 @@ bool EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   T *output_addr = static_cast<T *>(outputs[0]->addr);
   if (inputs.size() == kEmbeddingLookupDynamicShapeInputsNum) {
     G *input_offset_addr = static_cast<G *>(inputs[2]->addr);
-    memcpy(&offset_, input_offset_addr, sizeof(G));
+    int ret = memcpy_s(&offset_, sizeof(G), input_offset_addr, sizeof(G));
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
+    }
   }
   auto task = [&](size_t start, size_t end) {
     size_t task_proc_lens = end - start;

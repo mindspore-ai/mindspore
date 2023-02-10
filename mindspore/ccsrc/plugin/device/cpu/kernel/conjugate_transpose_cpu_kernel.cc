@@ -245,7 +245,10 @@ int ConjugateTransposeCpuKernelMod::DoTranspose(const T *in_data, T *out_data, c
     }
   }
   if (!needTranspose) {
-    (void)memcpy(out_data, in_data, data_size);
+    int ret = memcpy_s(out_data, IntToSize(data_size), in_data, IntToSize(data_size));
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "The memcpy error, errorno(" << ret << ")";
+    }
     return NNACL_OK;
   }
   for (size_t i = 0; i < (unsigned int)num_axes; ++i) {

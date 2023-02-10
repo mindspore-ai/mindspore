@@ -110,7 +110,7 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
     candidate_priority_queue.pop();
     bool should_suppress = false;
     for (int32_t j = cnt - 1; j >= next_candidate.suppress_begin_index; --j) {
-      similarity = overlaps_map(next_candidate.box_index, indices_data[j]);
+      similarity = overlaps_map(next_candidate.box_index, indices_data[IntToSize(j)]);
       if (similarity >= overlap_threshold) {
         should_suppress = true;
         break;

@@ -220,7 +220,7 @@ bool MatrixExpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   return true;
 }
 
-void MatrixExpCpuKernelMod::TyepChangeForFp16(int64_t i, int64_t m, int64_t size_mm, mindspore::Float16 *input_x,
+void MatrixExpCpuKernelMod::TyepChangeForFp16(int64_t i, int64_t m, int64_t size_mm, const mindspore::Float16 *input_x,
                                               mindspore::Float16 *output_y) const {
   typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   MatrixXd I(m, m);

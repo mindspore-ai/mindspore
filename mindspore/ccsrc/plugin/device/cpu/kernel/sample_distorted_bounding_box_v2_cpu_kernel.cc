@@ -60,7 +60,10 @@ float SampleDistortedBoundingBoxV2CPUKernelMod::RandFloat() {
   const uint32_t val = (exp << 23) | man;
 
   float result;
-  (void)memcpy_s(&result, sizeof(result), &val, sizeof(val));
+  int ret = memcpy_s(&result, sizeof(result), &val, sizeof(val));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
+  }
   return result - 1.0f;
 }
 

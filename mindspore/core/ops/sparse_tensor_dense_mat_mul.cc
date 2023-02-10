@@ -38,7 +38,8 @@ bool checkType(std::string name, const TypePtr dtype, std::set<TypePtr> vtypes, 
   }
   return true;
 }
-bool checkContainer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args, std::string *info) {
+bool checkContainer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
+                    std::string *const info) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int kTwo = 2;
   const int kOne = 1;
