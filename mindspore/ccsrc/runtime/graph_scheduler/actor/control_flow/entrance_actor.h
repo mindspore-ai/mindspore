@@ -64,6 +64,7 @@ class EntranceActor : public ControlActor {
  private:
   friend class ControlNodeScheduler;
   friend class MemorySwapNodeScheduler;
+  friend class MemSwapScheduler;
   friend class SchedulerHelper;
 
   // Indicate whether the entrance actor is the execution of loop body. In the control flow, the subgraph can be

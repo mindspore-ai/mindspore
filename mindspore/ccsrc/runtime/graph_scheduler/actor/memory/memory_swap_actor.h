@@ -23,7 +23,7 @@
 #include <vector>
 #include "runtime/graph_scheduler/actor/abstract_actor.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
-#include "runtime/device/auto_mem_offload.h"
+#include "runtime/device/gsm/swap_strategy.h"
 
 namespace mindspore {
 namespace runtime {
@@ -34,15 +34,34 @@ class MemorySwapActor : public AbstractActor {
       : AbstractActor(name, KernelTransformType::kMemorySwapActor, recorder_aid),
         stream_id_(stream_id),
         device_tensors_to_swap_(std::move(device_tensors_to_swap)) {}
+  MemorySwapActor(const std::string &name, const AID *recorder_aid, size_t stream_id,
+                  std::vector<DeviceTensor *> device_tensors_to_swap, const DeviceContext *device_context,
+                  std::vector<std::pair<device::SwapActionType, vector<size_t>>> actions)
+      : AbstractActor(name, KernelTransformType::kMemorySwapActor, recorder_aid),
+        stream_id_(stream_id),
+        device_tensors_to_swap_(std::move(device_tensors_to_swap)),
+        swap_actions_(std::move(actions)) {
+    fixed_device_tensor_num_ = device_tensors_to_swap_.size();
+    (void)device_contexts_.emplace_back(device_context);
+  }
   ~MemorySwapActor() override = default;
 
  protected:
+  void Run(OpContext<DeviceTensor> *context) override;
   void FetchRealParameters(OpContext<DeviceTensor> *context);
+
+ private:
+  void AllocDeviceContinuousMem(const std::vector<DeviceTensor *> &device_tensors);
+  static void Swap(device::StorageType from, device::StorageType to, const std::vector<DeviceTensor *> &device_tensors);
+  void UpdateDeviceTensors(OpContext<DeviceTensor> *context);
+  void GetDeviceTensors(std::vector<size_t> indexes, std::vector<DeviceTensor *> *device_tensors);
 
  protected:
   size_t stream_id_;
   std::vector<DeviceTensor *> device_tensors_to_swap_;
+  std::vector<std::pair<device::SwapActionType, vector<size_t>>> swap_actions_;
   std::vector<DeviceTensor *> real_parameters_;
+  size_t fixed_device_tensor_num_{0};
 };
 
 class MemorySwapInActor : public MemorySwapActor {
