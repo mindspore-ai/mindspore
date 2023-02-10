@@ -119,7 +119,8 @@ AbstractBasePtr InferImplEnvironSet(const AnalysisEnginePtr &, const PrimitivePt
 AbstractBasePtr InferImplEnvironAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   // args: Three objects of a subclass of AbstractBase, env, key, dflt(default).
-  CheckArgsSize(primitive->name(), args_spec_list, 2);
+  constexpr auto environ_add_input_size = 2;
+  CheckArgsSize(primitive->name(), args_spec_list, environ_add_input_size);
   return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
 }
 
@@ -131,7 +132,8 @@ AbstractBasePtr InferImplEnvironDestroyAll(const AnalysisEnginePtr &, const Prim
 AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const AbstractBasePtrList &args_spec_list) {
   // args: Two objects of a subclass of AbstractBase, key and value.
-  CheckArgsSize(primitive->name(), args_spec_list, 2);
+  constexpr auto state_setitem_input_size = 2;
+  CheckArgsSize(primitive->name(), args_spec_list, state_setitem_input_size);
 
   TypePtr type = args_spec_list[0]->GetTypeTrack();
   MS_EXCEPTION_IF_NULL(type);
@@ -143,7 +145,8 @@ AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const Primitive
 
 AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const AbstractBasePtrList &args_spec_list) {
-  CheckArgsSize(primitive->name(), args_spec_list, 2);
+  constexpr auto depend_input_size = 2;
+  CheckArgsSize(primitive->name(), args_spec_list, depend_input_size);
 
   // If the dependent has a value, just return depended node.
   // If depended node is not Any, the dependent maybe eliminated.
@@ -294,7 +297,8 @@ AbstractBasePtr InferImplRowTensorAdd(const AnalysisEnginePtr &, const Primitive
 AbstractBasePtr InferImplAllSwap(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 3);
+  constexpr auto all_swap_input_size = 3;
+  CheckArgsSize(op_name, args_spec_list, all_swap_input_size);
   auto tensor_in = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(tensor_in);
   MS_EXCEPTION_IF_NULL(tensor_in->shape());
@@ -480,7 +484,8 @@ AbstractBasePtr InferImplIsElementUnknown(const AnalysisEnginePtr &, const Primi
 AbstractBasePtr InferImplLoad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const AbstractBasePtrList &args_spec_list) {
   // Inputs: Ref/Tensor, universal
-  CheckArgsSize(primitive->name(), args_spec_list, 2);
+  constexpr auto load_input_size = 2;
+  CheckArgsSize(primitive->name(), args_spec_list, load_input_size);
   auto ref_abs = dyn_cast<abstract::AbstractRefTensor>(args_spec_list[0]);
   if (ref_abs != nullptr) {
     // Return tensor value if input is Ref.
@@ -500,7 +505,8 @@ AbstractBasePtr InferImplTransData(const AnalysisEnginePtr &, const PrimitivePtr
 AbstractBasePtr InferImplAdamApplyOne(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const AbstractBasePtrList &args_spec_list) {
   // An object of a subclass of AbstractBase
-  CheckArgsSize(primitive->name(), args_spec_list, 10);
+  constexpr auto adam_input_size = 10;
+  CheckArgsSize(primitive->name(), args_spec_list, adam_input_size);
   auto input0 = args_spec_list[0];
   auto input1 = args_spec_list[1];
   auto input2 = args_spec_list[2];
@@ -539,7 +545,8 @@ AbstractBasePtr InferImplTensorMove(const AnalysisEnginePtr &, const PrimitivePt
 AbstractBasePtr InferImplAdamApplyOneWithDecay(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const AbstractBasePtrList &args_spec_list) {
   // An object of a subclass of AbstractBase
-  CheckArgsSize(primitive->name(), args_spec_list, 11);
+  constexpr auto adam_input_size = 11;
+  CheckArgsSize(primitive->name(), args_spec_list, adam_input_size);
   auto input0 = args_spec_list[0];
   auto input1 = args_spec_list[1];
   auto input2 = args_spec_list[2];
