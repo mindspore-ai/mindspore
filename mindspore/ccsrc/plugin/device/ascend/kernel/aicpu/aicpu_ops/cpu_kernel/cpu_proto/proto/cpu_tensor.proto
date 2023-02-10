@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option cc_enable_arenas = true;
+import "cpu_tensor_shape.proto";
+package aicpuops;
+
+message Tensor {
+
+  // tensor shape info
+  TensorShape tensor_shape = 1;
+
+  // tensor content data type
+  int32 tensor_type = 2;
+
+  // tensor memory device
+  // data located memory device , "DDR" "HBM" OR "NONE"
+  string mem_device = 3;
+  string name = 4;
+  uint64 data_ptr = 5;
+  uint64 data_size = 6;
+}

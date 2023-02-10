@@ -1,0 +1,18 @@
+syntax = "proto3";
+package aicpuops;
+import "cpu_attr.proto";
+import "cpu_tensor.proto";
+
+message DynamicIdx {
+  int32 idx = 1;
+  int32 num = 2;
+}
+
+message NodeDef {
+  string op = 2;
+  map<string, AttrValue> attrs = 3;
+  repeated Tensor inputs = 4;
+  repeated Tensor outputs = 5;
+  map<string, DynamicIdx> dym_inputs = 6;
+  map<string, DynamicIdx> dym_outputs = 7;
+}
