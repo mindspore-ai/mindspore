@@ -94,7 +94,7 @@ static std::pair<tensor::TensorPtr, tensor::TensorPtr> PyMapTensorGetData(const 
 }
 
 namespace tensor {
-void RegMapTensor(py::module *m) {
+void RegMapTensor(const py::module *m) {
   // Define python MapTensor class.
   (void)py::class_<MapTensor, MapTensorPtr>(*m, "MapTensor_")
     .def(py::init([](const TypePtr &key_dtype, const TypePtr &value_dtype, const ShapeVector &value_shape,

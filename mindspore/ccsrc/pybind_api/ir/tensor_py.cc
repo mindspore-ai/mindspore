@@ -488,7 +488,7 @@ static ShapeVector GetShapeFromTuple(const py::tuple &tuple) {
   }
   return shape;
 }
-void RegMetaTensor(py::module *m) {
+void RegMetaTensor(const py::module *m) {
   // Define python MetaTensor class.
   (void)py::class_<MetaTensor, std::shared_ptr<MetaTensor>>(*m, "MetaTensor")
     .def(py::init<TypePtr, const ShapeVector>(), py::arg("dtype"), py::arg("shape"))
@@ -788,7 +788,7 @@ py::tuple GetSparseTensorShape(const T &sparse_tensor) {
 
 py::tuple CSRTensorPy::GetPyTupleShape(const CSRTensor &csr_tensor) { return GetSparseTensorShape(csr_tensor); }
 
-void RegCSRTensor(py::module *m) {
+void RegCSRTensor(const py::module *m) {
   // Define python CSRTensor class.
   (void)py::class_<CSRTensor, std::shared_ptr<CSRTensor>>(*m, "CSRTensor")
     .def(py::init([](const Tensor &indptr, const Tensor &indices, const Tensor &values, const py::tuple &shape) {
@@ -809,7 +809,7 @@ void RegCSRTensor(py::module *m) {
 
 py::tuple COOTensorPy::GetPyTupleShape(const COOTensor &coo_tensor) { return GetSparseTensorShape(coo_tensor); }
 
-void RegCOOTensor(py::module *m) {
+void RegCOOTensor(const py::module *m) {
   // Define python COOTensor class.
   (void)py::class_<COOTensor, std::shared_ptr<COOTensor>>(*m, "COOTensor")
     .def(py::init([](const Tensor &indices, const Tensor &values, const py::tuple &shape) {
@@ -829,7 +829,7 @@ void RegCOOTensor(py::module *m) {
 
 py::tuple RowTensorPy::GetPyTupleShape(const RowTensor &row_tensor) { return GetSparseTensorShape(row_tensor); }
 
-void RegRowTensor(py::module *m) {
+void RegRowTensor(const py::module *m) {
   // Define python RowTensor class.
   (void)py::class_<RowTensor, std::shared_ptr<RowTensor>>(*m, "RowTensor")
     .def(py::init([](const Tensor &indices, const Tensor &values, const py::tuple &shape) {
