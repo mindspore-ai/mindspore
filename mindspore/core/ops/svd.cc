@@ -65,8 +65,8 @@ abstract::BaseShapePtr SvdInferShape(const PrimitivePtr &prim, const std::vector
       v_shape[v_shape.size() - kIndexOne] = p;
     }
   } else {
-    u_shape = {0};
-    v_shape = {0};
+    u_shape = {1};
+    v_shape = {1};
   }
 
   std::vector<abstract::BaseShapePtr> shape_tuple;
