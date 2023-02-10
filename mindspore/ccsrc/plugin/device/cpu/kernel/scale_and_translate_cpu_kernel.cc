@@ -227,8 +227,12 @@ uint32_t ScaleAndTranslateCpuKernelMod::GatherSpans(
 
 template <typename T>
 inline const T &Clamp(const T &low, const T &high, const T &value) {
-  if (high < value) return high;
-  if (value < low) return low;
+  if (high < value) {
+    return high;
+  }
+  if (value < low) {
+    return low;
+  }
   return value;
 }
 
@@ -400,8 +404,8 @@ bool ScaleAndTranslateGradCpuKernelMod::ComputeGradSpans(const KernelType kernel
                                                          const std::string kernel_name) {
   Spans spans;
   ScaleAndTranslateCpuKernelMod scale_and_translate_mod;
-  scale_and_translate_mod.ComputeSpans(kernel_type, forward_output_size, forward_input_size, scale, translate,
-                                       antialias, &spans, kernel_name);
+  (void)scale_and_translate_mod.ComputeSpans(kernel_type, forward_output_size, forward_input_size, scale, translate,
+                                             antialias, &spans, kernel_name);
   ComputeGradSpansCore(&spans, forward_output_size, forward_input_size, grad_spans);
   return true;
 }

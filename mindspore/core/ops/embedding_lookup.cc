@@ -66,8 +66,8 @@ class EmbeddingLookupInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(params_shape_ptr);
     auto params_shape = params_shape_ptr->shape();
     constexpr int64_t kEmbeddingLookupInputParamsMaxDim = 2;
-    (void)CheckAndConvertUtils::CheckInRange<int64_t>("dimension of params", params_shape.size(), kIncludeBoth,
-                                                      {1, kEmbeddingLookupInputParamsMaxDim}, op_name);
+    CheckAndConvertUtils::CheckInRange<int64_t>("dimension of params", SizeToLong(params_shape.size()), kIncludeBoth,
+                                                {1, kEmbeddingLookupInputParamsMaxDim}, op_name);
     auto indices_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, kInputIndex1);
     MS_EXCEPTION_IF_NULL(indices_shape_ptr);
     auto indices_shape = indices_shape_ptr->shape();

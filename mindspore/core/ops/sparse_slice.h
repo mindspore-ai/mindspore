@@ -37,7 +37,7 @@ class MIND_API SparseSlice : public BaseOperator {
   SparseSlice() : BaseOperator(kNameSparseSlice) {
     InitIOName({"indices", "values", "shape", "start", "size"}, {"y_indices", "y_values", "y_shape"});
   }
-  const void Init() {}
+  const void Init() const {}
 };
 AbstractBasePtr SparseSliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args);

@@ -131,7 +131,7 @@ AbstractBasePtr SparseSparseMinimumInfer(const abstract::AnalysisEnginePtr &, co
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 6;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = SparseSparseMinimumInferType(primitive, input_args);
   auto infer_shape = SparseSparseMinimumInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

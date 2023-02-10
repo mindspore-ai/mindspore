@@ -94,7 +94,7 @@ bool MeanAndVarianceValid(const std::vector<AbstractBasePtr> &input_args) {
   std::vector<int> params_ids = {3, 4};
   size_t valid_param = 0;
   for (auto idx : params_ids) {
-    auto type = input_args[idx]->BuildType();
+    auto type = input_args[IntToSize(idx)]->BuildType();
     if (type->isa<TensorType>()) {
       auto tensor_type = type->cast<TensorTypePtr>();
       auto element = tensor_type->element();
@@ -136,7 +136,6 @@ class BatchNormInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("rank of bias", SizeToLong(bias_shape.size()), kEqual, 1, prim_name);
 
     if (!x_shape_ptr->IsDynamic() && !scale_shape_ptr->IsDynamic()) {
-      // auto format = GetValue<std::string>(primitive->GetAttr(kFormat));
       auto format = get_format_in_infer(primitive);
       auto channel = format == "NHWC" ? x_shape.back() : x_shape[1];
       if (scale_shape[kInputIndex0] != channel) {

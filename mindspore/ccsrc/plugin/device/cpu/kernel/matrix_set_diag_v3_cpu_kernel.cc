@@ -46,7 +46,9 @@ void MatrixSetDiagV3CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
       MS_LOG(EXCEPTION) << "Attr 'align' of 'MatrixSetDiagV3' is not in: 'LEFT_RIGHT', "
                            "'RIGHT_LEFT', 'LEFT_LEFT', 'RIGHT_RIGHT'.";
     }
-    if (align_ == "") align_ = "RIGHT_LEFT";
+    if (align_ == "") {
+      align_ = "RIGHT_LEFT";
+    }
   } else {
     align_ = "RIGHT_LEFT";
   }
@@ -143,10 +145,11 @@ void MatrixSetDiagV3CpuKernelMod::singleCal(const std::vector<kernel::AddressPtr
       int64_t m = t / static_cast<int64_t>(input_columns_);
       int64_t n = t % static_cast<int64_t>(input_columns_);
       int64_t x = n - std::max(k_upper_, ZERO);
-      if (n - m == k_upper_)
+      if (n - m == k_upper_) {
         output_data[elem] = diagonal_data[LongToSize(index * static_cast<int64_t>(diagonal_columns_) + x)];
-      else
+      } else {
         output_data[elem] = input_data[elem];
+      }
     }
   } else {
     for (size_t elem = 0; elem < input_numelements_; ++elem) {
@@ -198,10 +201,11 @@ bool MatrixSetDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr>
           int64_t m = t / static_cast<int64_t>(input_columns_);
           int64_t n = t % static_cast<int64_t>(input_columns_);
           int64_t x = n - std::max(k_upper_, ZERO);
-          if (n - m == k_upper_)
+          if (n - m == k_upper_) {
             output_data[elem] = diagonal_data[LongToSize(index * static_cast<int64_t>(diagonal_columns_) + x)];
-          else
+          } else {
             output_data[elem] = input_data[elem];
+          }
         }
       } else {
         for (size_t elem = start; elem < end; ++elem) {

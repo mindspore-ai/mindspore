@@ -174,12 +174,14 @@ bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
         (void)memcpy_s(base_output_ptr2 + (cnt - 1) * block_size, copy_size,
                        base_output_ptr2 - (cnt + mode) * block_size, copy_size);
       }
-      if (i > 0 && count % input_shape_[i - 1] == 0) tmp_pos.push_back(item - paddings[i * PADDING_SIZE] * block_size);
+      if (i > 0 && count % input_shape_[i - 1] == 0) {
+        tmp_pos.push_back(item - paddings[i * PADDING_SIZE] * block_size);
+      }
       ++count;
     }
     output_pos.clear();
     output_pos.resize(tmp_pos.size());
-    std::copy(tmp_pos.begin(), tmp_pos.end(), output_pos.begin());
+    (void)std::copy(tmp_pos.begin(), tmp_pos.end(), output_pos.begin());
     tmp_pos.clear();
   }
   return true;

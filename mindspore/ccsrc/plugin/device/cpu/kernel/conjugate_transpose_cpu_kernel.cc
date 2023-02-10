@@ -98,7 +98,7 @@ void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value must be in [-" << perm_size << ", "
                           << (perm_size - 1) << "], but got " << p << " .";
       }
-      axes_.emplace_back(p);
+      (void)axes_.emplace_back(p);
     }
   } else if (perm_type_ == kNumberTypeInt64) {
     auto perm_addr = reinterpret_cast<int64_t *>(inputs[1]->addr);
@@ -110,7 +110,7 @@ void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value must be in [-" << perm_size << ", "
                           << (perm_size - 1) << "], but got " << p << " .";
       }
-      axes_.emplace_back(p);
+      (void)axes_.emplace_back(p);
     }
   }
 
@@ -171,7 +171,7 @@ void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<Addre
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value must be in [-" << perm_size << ", "
                           << (perm_size - 1) << "], but got " << p << " .";
       }
-      axes_.emplace_back(p);
+      (void)axes_.emplace_back(p);
     }
   } else if (perm_type_ == kNumberTypeInt64) {
     auto perm_addr = reinterpret_cast<int64_t *>(inputs[1]->addr);
@@ -183,7 +183,7 @@ void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<Addre
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value must be in [-" << perm_size << ", "
                           << (perm_size - 1) << "], but got " << p << " .";
       }
-      axes_.emplace_back(p);
+      (void)axes_.emplace_back(p);
     }
   }
 

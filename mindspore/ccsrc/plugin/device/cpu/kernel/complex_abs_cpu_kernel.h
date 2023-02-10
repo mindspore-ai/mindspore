@@ -18,9 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_COMPLEXABS_CPU_KERNEL_H_
 
 #include <vector>
-#include <memory>
 #include <map>
-#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 

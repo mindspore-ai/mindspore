@@ -60,7 +60,6 @@ class ScaleAndTranslateCpuKernelMod : public NativeCpuKernelMod {
 
   ~ScaleAndTranslateCpuKernelMod() override = default;
 
-  // void InitKernel(const CNodePtr &kernel_node) override;
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -119,7 +118,6 @@ class ScaleAndTranslateGradCpuKernelMod : public NativeCpuKernelMod {
 
   ~ScaleAndTranslateGradCpuKernelMod() override = default;
 
-  // void InitKernel(const CNodePtr &kernel_node) override;
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,

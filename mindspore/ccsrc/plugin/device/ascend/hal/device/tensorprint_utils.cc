@@ -428,7 +428,7 @@ void DestroyTensorPrintThread() {
   if (channel_type == ChannelType::kMbuf) {
     // avoid incorrect execution order in acl function
     const int32_t sleep_time = 500;
-    usleep(sleep_time);
+    (void)usleep(sleep_time);
   }
   // if TdtHandle::DestroyHandle called at taskmanager, all acl_handle will be set to nullptr;
   // but not joined the print thread, so add a protection to join the thread.

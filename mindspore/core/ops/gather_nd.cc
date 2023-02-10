@@ -51,7 +51,7 @@ abstract::ShapePtr GatherNdInferShape(const PrimitivePtr &primitive, const std::
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
-TypePtr GatherNdInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr GatherNdInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   std::set<TypePtr> int_types = {kInt32, kInt64};
   auto x_type = input_args[kInputIndex0]->BuildType();
   auto indices_type = input_args[kInputIndex1]->BuildType();

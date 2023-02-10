@@ -71,7 +71,7 @@ AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsV2Infer(const abstract::Analy
                                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = SparseSoftmaxCrossEntropyWithLogitsV2InferType(primitive, input_args);
   auto infer_shape = SparseSoftmaxCrossEntropyWithLogitsV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

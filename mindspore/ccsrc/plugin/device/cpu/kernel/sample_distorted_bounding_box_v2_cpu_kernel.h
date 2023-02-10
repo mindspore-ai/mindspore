@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SAMPLE_DISTORTED_BOUNDING_BOX_V2_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SAMPLE_DISTORTED_BOUNDING_BOX_V2_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <algorithm>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"

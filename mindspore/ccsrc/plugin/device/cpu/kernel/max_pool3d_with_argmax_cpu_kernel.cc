@@ -260,10 +260,10 @@ bool MaxPool3DWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
   const int64_t d_width = dilation_temp_list[kTwo];
   const int64_t d_height = dilation_temp_list[kOne];
   const int64_t d_depth = dilation_temp_list[kZero];
-  CheckIfLessOne(strides_temp_list);
-  CheckIfLessOne(dilation_temp_list);
-  CheckIfLessOne(ksize_temp_list);
-  CheckIfLessZero(pads_temp_list);
+  (void)CheckIfLessOne(strides_temp_list);
+  (void)CheckIfLessOne(dilation_temp_list);
+  (void)CheckIfLessOne(ksize_temp_list);
+  (void)CheckIfLessZero(pads_temp_list);
   CheckPadsValue(k_width, p_width, k_height, p_height, k_depth, p_depth);
   CheckDilationValue(d_width, in_width, d_height, in_height, d_depth, in_depth);
   // attributes limitations

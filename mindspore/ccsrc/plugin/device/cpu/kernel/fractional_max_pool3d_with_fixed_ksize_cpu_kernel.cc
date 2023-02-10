@@ -175,7 +175,7 @@ static std::vector<int> generate_intervals(random_sample_t random_sample, int in
                     static_cast<int>(random_sample * alpha);
     }
   }
-  sequence[output_size - 1] = input_size - kernel_size;
+  sequence[output_size - 1] = static_cast<int>(input_size - kernel_size);
 
   return sequence;
 }

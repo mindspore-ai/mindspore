@@ -34,7 +34,8 @@ abstract::TupleShapePtr LuUnpackInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   int64_t input_size = static_cast<int64_t>(input_args.size());
-  (void)CheckAndConvertUtils::CheckInteger("input number", input_size, kEqual, kLuUnpackInputsNum, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", input_size, kEqual, SizeToLong(kLuUnpackInputsNum),
+                                           prim_name);
   for (const auto &i : input_args) {
     MS_EXCEPTION_IF_NULL(i);
   }
@@ -94,7 +95,8 @@ TuplePtr LuUnpackInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   auto prim_name = prim->name();
   MS_EXCEPTION_IF_NULL(prim);
   int64_t input_size = static_cast<int64_t>(input_args.size());
-  (void)CheckAndConvertUtils::CheckInteger("input number", input_size, kEqual, kLuUnpackInputsNum, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", input_size, kEqual, SizeToLong(kLuUnpackInputsNum),
+                                           prim_name);
   for (const auto &i : input_args) {
     MS_EXCEPTION_IF_NULL(i);
   }
