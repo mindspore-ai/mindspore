@@ -481,10 +481,11 @@ class Im2Col(Primitive):
         self.ksizes = (ksizes, ksizes) if isinstance(ksizes, int) else ksizes
         self.strides = (strides, strides) if isinstance(strides, int) else strides
         self.dilations = (dilations, dilations) if isinstance(dilations, int) else dilations
+        self.pads = pads
         if isinstance(pads, (list, tuple)):
             if len(pads) == 2:
                 self.pads = (pads[0], pads[0], pads[1], pads[1])
-        self.pads = (pads, pads, pads, pads) if isinstance(pads, int) else pads
+        self.pads = (pads, pads, pads, pads) if isinstance(pads, int) else self.pads
 
         validator.check("ksizes size", len(self.ksizes), "", [1, 2], Rel.IN, self.name)
         validator.check_positive_int_sequence(self.ksizes, "ksizes", self.name)
