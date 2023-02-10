@@ -86,6 +86,9 @@ TypeId KernelBuildInfo::GetOutputDeviceType(size_t output_index) const {
 }
 
 KernelObjectType KernelBuildInfo::GetInputKernelObjectType(size_t input_index) const {
+  if (inputs_kernel_object_type_.empty()) {
+    return KernelObjectType::UNKNOWN_TYPE;
+  }
   if (input_index >= inputs_kernel_object_type_.size()) {
     bool has_tuple_unfold =
       std::any_of(inputs_kernel_object_type_.begin(), inputs_kernel_object_type_.end(),
@@ -101,6 +104,9 @@ KernelObjectType KernelBuildInfo::GetInputKernelObjectType(size_t input_index) c
 }
 
 KernelObjectType KernelBuildInfo::GetOutputKernelObjectType(size_t output_index) const {
+  if (outputs_kernel_object_type_.empty()) {
+    return KernelObjectType::UNKNOWN_TYPE;
+  }
   if (output_index >= outputs_kernel_object_type_.size()) {
     bool has_tuple_unfold =
       std::any_of(outputs_kernel_object_type_.begin(), outputs_kernel_object_type_.end(),
