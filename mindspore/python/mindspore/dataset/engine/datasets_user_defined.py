@@ -814,9 +814,8 @@ class _NumpySlicesDataset:
 
         if isinstance(data, tuple):
             self.data = data
-            data_len = len(data)
         else:
-            self.data = (np.array(data),)
+            self.data = (data,)
 
         # check whether the data length in each column is equal
         data_len = [len(data_item) for data_item in self.data]
