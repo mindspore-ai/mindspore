@@ -1003,7 +1003,7 @@ class Tensor(Tensor_):
 
     def scatter(self, axis, index, src):
         """
-        For details, please refer to :func:`mindspore.ops.scatter` .
+        For details, please refer to :func:`mindspore.ops.scatter`.
         """
         self._init_check()
         return tensor_operator_registry.get('scatter')(self, axis, index, src)
@@ -1702,14 +1702,14 @@ class Tensor(Tensor_):
 
     def swapaxes(self, axis0, axis1):
         """
-        For details, please refer to :func:`mindspore.ops.swapaxes` .
+        For details, please refer to :func:`mindspore.ops.swapaxes`.
         """
         self._init_check()
         return tensor_operator_registry.get('swapaxes')(self, axis0, axis1)
 
     def swapdims(self, dim0, dim1):
         """
-        For details, please refer to :func:`mindspore.ops.swapdims` .
+        For details, please refer to :func:`mindspore.ops.swapdims`.
         """
         self._init_check()
         return tensor_operator_registry.get('swapdims')(self, dim0, dim1)
@@ -3967,7 +3967,7 @@ class Tensor(Tensor_):
 
     def matrix_power(self, n):
         r"""
-        For details, please refer to :func:`mindspore.ops.matrix_power` .
+        For details, please refer to :func:`mindspore.ops.matrix_power`.
         """
         self._init_check()
         return tensor_operator_registry.get('matrix_power')(self, n)
