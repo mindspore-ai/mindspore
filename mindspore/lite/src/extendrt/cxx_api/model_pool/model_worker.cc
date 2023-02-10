@@ -129,7 +129,7 @@ Status ModelWorker::Init(const char *model_buf, size_t size) {
   }
   origin_worker_inputs_ = model_->GetInputs();
   origin_worker_outputs_ = model_->GetOutputs();
-  if (origin_worker_outputs_.empty() || origin_worker_outputs_.empty()) {
+  if (origin_worker_outputs_.empty() || origin_worker_inputs_.empty()) {
     MS_LOG(ERROR) << "model worker get empty input/output.";
     return kLiteError;
   }
