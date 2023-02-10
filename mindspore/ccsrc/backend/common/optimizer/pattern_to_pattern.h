@@ -43,11 +43,13 @@ class BACKEND_EXPORT PatternMap {
   void Clear();
   bool Check(const std::string &name, const AnfNodePtr &node) const;
   void Erase(const mindspore::HashSet<std::string> &del_set);
+  const mindspore::HashSet<AnfNodePtr> &GetOptScope() const { return opt_scope_; }
 
  private:
   mindspore::HashSet<std::string> name_set_;
   mindspore::HashMap<std::string, AnfNodePtr> node_map_;
   mindspore::HashMap<std::string, std::vector<AnfNodePtr>> seq_map_;
+  mindspore::HashSet<AnfNodePtr> opt_scope_;
 };
 
 using PatternMapPtr = std::shared_ptr<PatternMap>;
@@ -163,16 +165,22 @@ class BACKEND_EXPORT DstPattern {
 
 class BACKEND_EXPORT PatternToPatternPass : public PatternPass {
  public:
-  explicit PatternToPatternPass(const std::string &name = "", bool multigraph = true)
+  explicit PatternToPatternPass(const std::string &name = "", bool is_fast_pass = false, bool multigraph = true)
       : PatternPass(name, multigraph),
         m_(std::make_shared<PatternMap>()),
         src_pattern_(SrcPattern(m_)),
-        dst_pattern_(DstPattern(m_)) {}
+        dst_pattern_(DstPattern(m_)),
+        is_fast_pass_(is_fast_pass) {}
   ~PatternToPatternPass() override = default;
   virtual void DefineSrcPattern(SrcPattern *src_pattern) = 0;
   virtual void DefineDstPattern(DstPattern *dst_pattern) = 0;
-  virtual bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const = 0;
+  virtual bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const { return true; }
+  bool IsFastPass() override;
+  AnfNodePtr GetSrcPatternRoot();
+  std::string GetPatternRootPrimitiveName() override;
   AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) override;
+  void AfterProcess(const AnfNodePtr &old_node, const AnfNodePtr &new_node, const FuncGraphPtr &sub_graph,
+                    const FuncGraphIndexPtr &func_graph_index) override;
   std::vector<UnpackNode> Unpacking(const std::string &s);
 
  private:
@@ -180,6 +188,7 @@ class BACKEND_EXPORT PatternToPatternPass : public PatternPass {
   SrcPattern src_pattern_;
   DstPattern dst_pattern_;
   AnfNodePtr src_pattern_root_ = nullptr;
+  bool is_fast_pass_;
 };
 }  // namespace opt
 }  // namespace mindspore

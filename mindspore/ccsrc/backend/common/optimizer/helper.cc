@@ -704,8 +704,16 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
       if (b_value_ptr == nullptr) {
         MS_LOG(EXCEPTION) << "Value ptr is nullptr.";
       }
-
-      return (*a_value_ptr) == (*b_value_ptr);
+      if (a_value_ptr->isa<tensor::Tensor>() && b_value_ptr->isa<tensor::Tensor>()) {
+        auto a_tensor_ptr = a_value_ptr->cast<tensor::TensorPtr>();
+        auto b_tensor_ptr = b_value_ptr->cast<tensor::TensorPtr>();
+        if (a_tensor_ptr == nullptr || b_tensor_ptr == nullptr) {
+          MS_LOG(EXCEPTION) << "Cast value node ptr fail.";
+        }
+        return a_tensor_ptr->ValueEqual(*b_tensor_ptr);
+      } else {
+        return (*a_value_ptr) == (*b_value_ptr);
+      }
     }
     MS_LOG(DEBUG) << "check AnfNodePtr equal";
   }

@@ -29,8 +29,8 @@ constexpr size_t kReduceInputNum = 2;
 constexpr size_t kAxisInputIndex = 2;
 constexpr auto r_reduce = "r_reduce";
 constexpr auto m_reduce = "m_reduce";
-constexpr auto Xs = "Xs";
-constexpr auto V = "V";
+constexpr auto kXs = "Xs";
+constexpr auto kV = "V";
 constexpr auto v_axis = "axis";
 }  // namespace
 
@@ -128,13 +128,13 @@ AnfNodePtr BuildReduce(const PatternMap &m, const AnfNodePtr &) {
 }
 
 void ReduceAxisUpdate::DefineSrcPattern(SrcPattern *src_pattern) {
-  (void)(*src_pattern).AddVar(V, IsReduce).AddSeqVar(Xs).AddCNode(m_reduce, {V, Xs});
+  (void)(*src_pattern).AddVar(kV, IsReduce).AddSeqVar(kXs).AddCNode(m_reduce, {kV, kXs});
 }
 
 void ReduceAxisUpdate::DefineDstPattern(DstPattern *dst_pattern) {
-  auto reduce_input = Unpacking(Xs);
+  auto reduce_input = Unpacking(kXs);
   reduce_input[kAxisInputIndex - 1] = v_axis;
-  (void)(*dst_pattern).AddValueNode(v_axis, BuildAxis).AddCNode(r_reduce, {V, reduce_input}, BuildReduce);
+  (void)(*dst_pattern).AddValueNode(v_axis, BuildAxis).AddCNode(r_reduce, {kV, reduce_input}, BuildReduce);
 }
 }  // namespace opt
 }  // namespace mindspore

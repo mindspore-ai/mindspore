@@ -100,6 +100,12 @@ CNodePtr InplaceAssignAfterTupleGetItem(const FuncGraphPtr &func_graph, const CN
   return nullptr;
 }
 
+std::vector<std::string> InplaceAssignForCustomOp::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimCustom->name());
+  return ret;
+}
+
 const AnfNodePtr InplaceAssignForCustomOp::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                    const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);

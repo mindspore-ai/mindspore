@@ -27,6 +27,10 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr auto kXs = "Xs";
+constexpr auto kMCustom = "m_custom";
+constexpr auto kRCustom = "r_custom";
+
 void ParseAttrDefaultValue(const std::string &op_name, const std::string &attr_name, const std::string &attr_value,
                            const std::string &attr_type, const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
@@ -117,30 +121,14 @@ void AddMissingAttrs(const CNodePtr &cnode, kernel::OpImplyType imply_type,
     cnode->set_input(kAnfPrimitiveIndex, NewValueNode(primitive));
   }
 }
-}  // namespace
 
-const AnfNodePtr CustomOpRegInfoToAttr::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
-  if (node == nullptr || !AnfUtils::IsRealCNodeKernel(node)) {
-    return nullptr;
-  }
-  auto cnode = node->cast<CNodePtr>();
+AnfNodePtr BuildCustom(const PatternMap &m, const AnfNodePtr &default_node) {
+  auto cnode = m.Get(kMCustom)->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!IsPrimitiveCNode(cnode, prim::kPrimCustom)) {
-    return nullptr;
-  }
-
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   auto func_type = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFuncType);
-  // AKG/AICPU need to process attr, TBE will process later in the json creating phase.
-  if (!IsOneOfCustomAkgType(func_type) || func_type == kCustomTypeAICPU) {
-    return nullptr;
-  }
-  // Early return if current node does not have attr
   auto attr_names = primitive->GetAttr(kAttrAttrNames);
-  if (attr_names == nullptr) {
-    return nullptr;
-  }
   // Early return if all attr in reg info exist in the node's attr
   std::unordered_set<std::string> missing_attrs;
   auto attr_names_vec = GetValue<std::vector<std::string>>(attr_names);
@@ -156,7 +144,34 @@ const AnfNodePtr CustomOpRegInfoToAttr::Process(const FuncGraphPtr &, const AnfN
     func_type == kCustomTypeAICPU ? kernel::OpImplyType::kImplyAICPU : kernel::OpImplyType::kImplyAKG;
   AddMissingAttrs(cnode, imply_type, missing_attrs);
 
-  return node;
+  return cnode;
+}
+}  // namespace
+
+bool CustomOpRegInfoToAttr::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &node) const {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto func_type = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFuncType);
+  // AKG/AICPU need to process attr, TBE will process later in the json creating phase.
+  if (!IsOneOfCustomAkgType(func_type) || func_type == kCustomTypeAICPU) {
+    return false;
+  }
+  // Early return if current node does not have attr
+  auto attr_names = primitive->GetAttr(kAttrAttrNames);
+  if (attr_names == nullptr) {
+    return false;
+  }
+  return true;
+}
+
+void CustomOpRegInfoToAttr::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern).AddSeqVar(kXs).AddCNode(kMCustom, {prim::kPrimCustom, kXs});
+}
+
+void CustomOpRegInfoToAttr::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern).AddCNode(kRCustom, {prim::kPrimCustom, kXs}, BuildCustom);
 }
 }  // namespace opt
 }  // namespace mindspore

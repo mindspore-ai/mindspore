@@ -15,17 +15,18 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CUSTOM_OP_REG_INFO_TO_ATTR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CUSTOM_OP_REG_INFO_TO_ATTR_H_
-#include "ir/anf.h"
-#include "backend/common/optimizer/optimizer.h"
+#include <memory>
+#include "backend/common/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {
-class CustomOpRegInfoToAttr : public PatternProcessPass {
+class CustomOpRegInfoToAttr : public PatternToPatternPass {
  public:
-  explicit CustomOpRegInfoToAttr(bool multigraph = true)
-      : PatternProcessPass("custom_op_reg_info_to_attr", multigraph) {}
+  CustomOpRegInfoToAttr() : PatternToPatternPass("custom_op_reg_info_to_attr", true) {}
   ~CustomOpRegInfoToAttr() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

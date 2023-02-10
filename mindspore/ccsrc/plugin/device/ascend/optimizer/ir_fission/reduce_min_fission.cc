@@ -21,10 +21,10 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr auto m_reduce_min = "m_reduce_min";
-constexpr auto r_reduce_min1 = "r_reduce_min1";
-constexpr auto r_reduce_min2 = "r_reduce_min2";
-constexpr auto X = "X";
+constexpr auto kMReduceMin = "m_reduce_min";
+constexpr auto kRReduceMin1 = "r_reduce_min1";
+constexpr auto kRReduceMin2 = "r_reduce_min2";
+constexpr auto kX1 = "X1";
 
 bool NeedOptimize(const TypeId &dtype, const ShapeVector &shape, const std::vector<int64_t> &axis) {
   if (dtype != kNumberTypeFloat32) {
@@ -129,7 +129,7 @@ bool ReduceMinFission::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &g
 }
 
 AnfNodePtr BuildReduceMin1(const PatternMap &m, const AnfNodePtr &default_node) {
-  auto cnode = m.Get(m_reduce_min)->cast<CNodePtr>();
+  auto cnode = m.Get(kMReduceMin)->cast<CNodePtr>();
   CNodePtr reduce_min1 = InitReduceMin(default_node->cast<CNodePtr>(), cnode);
   auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
   auto dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 0);
@@ -143,7 +143,7 @@ AnfNodePtr BuildReduceMin1(const PatternMap &m, const AnfNodePtr &default_node) 
 }
 
 AnfNodePtr BuildReduceMin2(const PatternMap &m, const AnfNodePtr &default_node) {
-  auto cnode = m.Get(m_reduce_min)->cast<CNodePtr>();
+  auto cnode = m.Get(kMReduceMin)->cast<CNodePtr>();
   CNodePtr reduce_min2 = InitReduceMin(default_node->cast<CNodePtr>(), cnode);
   reduce_min2->set_abstract(cnode->abstract());
   std::vector<int64_t> axis_last = {-1};
@@ -152,13 +152,13 @@ AnfNodePtr BuildReduceMin2(const PatternMap &m, const AnfNodePtr &default_node) 
 }
 
 void ReduceMinFission::DefineSrcPattern(SrcPattern *src_pattern) {
-  (void)(*src_pattern).AddVar(X).AddCNode(m_reduce_min, {prim::kPrimReduceMinD, X});
+  (void)(*src_pattern).AddVar(kX1).AddCNode(kMReduceMin, {prim::kPrimReduceMinD, kX1});
 }
 
 void ReduceMinFission::DefineDstPattern(DstPattern *dst_pattern) {
   (void)(*dst_pattern)
-    .AddCNode(r_reduce_min1, {prim::kPrimReduceMinD, X}, BuildReduceMin1)
-    .AddCNode(r_reduce_min2, {prim::kPrimReduceMinD, r_reduce_min1}, BuildReduceMin2);
+    .AddCNode(kRReduceMin1, {prim::kPrimReduceMinD, kX1}, BuildReduceMin1)
+    .AddCNode(kRReduceMin2, {prim::kPrimReduceMinD, kRReduceMin1}, BuildReduceMin2);
 }
 }  // namespace opt
 }  // namespace mindspore

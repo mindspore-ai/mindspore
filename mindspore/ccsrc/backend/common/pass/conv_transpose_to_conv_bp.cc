@@ -25,18 +25,12 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kCNodePrimitiveIdx = 0;
-}
+constexpr auto kXs = "Xs";
+constexpr auto kMConv2dTrans = "m_conv2d_trans";
+constexpr auto kRConv2dBp = "r_conv2d_bp";
 
-const BaseRef ConvTransposeToConvBackpropInputPass::DefinePattern() const {
-  VarPtr Xs = std::make_shared<SeqVar>();
-  auto conv_transpose = std::make_shared<Primitive>(kConv2DTransposeOpName);
-  return VectorRef({conv_transpose, Xs});
-}
-
-const AnfNodePtr ConvTransposeToConvBackpropInputPass::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                               const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node);
+AnfNodePtr BuildConv2DBackpropInput(const PatternMap &m, const AnfNodePtr &default_node) {
+  auto node = m.Get(kMConv2dTrans);
   auto conv_transpose = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(conv_transpose);
 
@@ -50,6 +44,20 @@ const AnfNodePtr ConvTransposeToConvBackpropInputPass::Process(const FuncGraphPt
   prim->Named::operator=(Named(kConv2DBackpropInputOpName));
 
   return node;
+}
+}  // namespace
+
+bool ConvTransposeToConvBackpropInputPass::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &,
+                                                           const AnfNodePtr &) const {
+  return true;
+}
+
+void ConvTransposeToConvBackpropInputPass::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern).AddSeqVar(kXs).AddCNode(kMConv2dTrans, {prim::kPrimConv2DTranspose, kXs});
+}
+
+void ConvTransposeToConvBackpropInputPass::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern).AddCNode(kRConv2dBp, {prim::kPrimConv2DBackpropInput, kXs}, BuildConv2DBackpropInput);
 }
 }  // namespace opt
 }  // namespace mindspore

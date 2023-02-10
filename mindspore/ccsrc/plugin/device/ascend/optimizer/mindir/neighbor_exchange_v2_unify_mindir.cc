@@ -912,6 +912,12 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
   return addn;
 }
 
+std::vector<std::string> NeighborExchangeV2UnifyMindIR::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimNeighborExchangeV2->name());
+  return ret;
+}
+
 const BaseRef NeighborExchangeV2UnifyMindIR::DefinePattern() const {
   return VectorRef({prim::kPrimNeighborExchangeV2, std::make_shared<SeqVar>()});
 }
@@ -929,9 +935,16 @@ const AnfNodePtr NeighborExchangeV2UnifyMindIR::Process(const FuncGraphPtr &grap
   return concat;
 }
 
+std::vector<std::string> NeighborExchangeV2GradUnifyMindIR::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimNeighborExchangeV2Grad->name());
+  return ret;
+}
+
 const BaseRef NeighborExchangeV2GradUnifyMindIR::DefinePattern() const {
   return VectorRef({prim::kPrimNeighborExchangeV2Grad, std::make_shared<SeqVar>()});
 }
+
 const AnfNodePtr NeighborExchangeV2GradUnifyMindIR::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                                             const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);

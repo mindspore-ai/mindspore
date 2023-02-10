@@ -34,6 +34,10 @@ namespace opt {
 namespace {
 constexpr size_t kSliceGradInputTensorNum = 4;
 constexpr size_t kSliceGradCangjieInputTensorNum = 2;
+constexpr auto kMSliceGrad = "m_slice_grad";
+constexpr auto kRPad = "r_pad";
+constexpr auto kX1 = "X1";
+constexpr auto kXs = "Xs";
 
 std::vector<int64_t> GetInputXShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -47,19 +51,10 @@ std::vector<int64_t> GetTupleValue(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(value_node->value());
   return GetValue<std::vector<int64_t>>(value_node->value());
 }
-}  // namespace
 
-const BaseRef SliceGradUnifyMindIR::DefinePattern() const {
-  VarPtr Xs = std::make_shared<SeqVar>();
-  VectorRef slice_grad({std::make_shared<Primitive>("SliceGrad"), Xs});
-  return slice_grad;
-}
-
-const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                               const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(graph);
+AnfNodePtr BuildPad(const PatternMap &m, const AnfNodePtr &pad) {
+  auto node = m.Get(kMSliceGrad);
   MS_EXCEPTION_IF_NULL(node);
-
   auto slice_grad = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(slice_grad);
   auto input_num = common::AnfAlgo::GetInputTensorNum(slice_grad);
@@ -68,9 +63,6 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
                       << "] of node " + slice_grad->DebugString() + " is not equal to " << kSliceGradInputTensorNum
                       << " or " << kSliceGradCangjieInputTensorNum << trace::DumpSourceLines(node);
   }
-  std::vector<AnfNodePtr> pad_inputs = {NewValueNode(std::make_shared<Primitive>(kPadDOpName)),
-                                        slice_grad->input(kIndex1)};
-  auto pad = NewCNode(pad_inputs, graph);
   MS_EXCEPTION_IF_NULL(pad);
   pad->set_scope(slice_grad->scope());
   pad->set_abstract(slice_grad->abstract());
@@ -80,12 +72,6 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
   std::vector<int64_t> begins;
   std::vector<int64_t> sizes;
   if (input_num == kSliceGradInputTensorNum) {
-    auto begin_value = GetValueNode(slice_grad->input(kIndex3));
-    auto size_value = GetValueNode(slice_grad->input(kIndex4));
-    if (IsDynamic(x_shape) || begin_value == nullptr || size_value == nullptr || !begin_value->isa<ValueSequence>() ||
-        !size_value->isa<ValueSequence>()) {
-      return nullptr;
-    }
     begins = GetTupleValue(slice_grad->input(kIndex3));
     sizes = GetTupleValue(slice_grad->input(kIndex4));
   } else {
@@ -107,6 +93,32 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
   common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(std::vector<std::string>{"x"}), pad);
 
   return pad;
+}
+}  // namespace
+
+bool SliceGradUnifyMindIR::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(node);
+  auto slice_grad = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(slice_grad);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(slice_grad);
+  auto x_shape = GetInputXShape(slice_grad);
+  if (input_num == kSliceGradInputTensorNum) {
+    auto begin_value = GetValueNode(slice_grad->input(kIndex3));
+    auto size_value = GetValueNode(slice_grad->input(kIndex4));
+    if (IsDynamic(x_shape) || begin_value == nullptr || size_value == nullptr || !begin_value->isa<ValueSequence>() ||
+        !size_value->isa<ValueSequence>()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void SliceGradUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern).AddVar(kX1).AddSeqVar(kXs).AddCNode(kMSliceGrad, {std::make_shared<Primitive>("SliceGrad"), kX1, kXs});
+}
+
+void SliceGradUnifyMindIR::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern).AddCNode(kRPad, {std::make_shared<Primitive>(kPadDOpName), kX1}, BuildPad);
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -46,6 +46,11 @@ constexpr int64_t kV3ShapeLimitSize = 1 << 30;
 constexpr size_t kDropoutGradInputTensorNum = 2;
 constexpr size_t kFloat16Len = 2;  // size of float16
 constexpr size_t kInt64Len = 8;    // size of int64
+constexpr auto kX1 = "X1";
+constexpr auto kX2 = "X2";
+constexpr auto kKeepProbValue = "KeepProbValue";
+constexpr auto kMDropoutGrad = "m_dropout_grad";
+constexpr auto kRDropoutDoMask = "r_dropout_do_mask";
 
 TypeId GetInputXDataType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -303,6 +308,92 @@ void UpdateReturnNode(const FuncGraphPtr &graph, const AnfNodePtr &origin_node, 
   g_output->set_abstract(abstract);
   graph->set_output(g_output);
 }
+
+class BuildKeepProbValue {
+ public:
+  BuildKeepProbValue() = default;
+  AnfNodePtr operator()(const PatternMap &m) const {
+    auto node = m.Get(kMDropoutGrad);
+    MS_EXCEPTION_IF_NULL(node);
+    auto dropout_grad_cnode = node->cast<CNodePtr>();
+    CheckCNodeInputSize(dropout_grad_cnode, kDropoutGradInputTensorNum);
+
+    auto func_graph = node->func_graph();
+    auto grad_input_type_id = GetInputXDataType(dropout_grad_cnode);
+    auto keep_prob_value = CreateKeepPorbValueNode(func_graph, dropout_grad_cnode, grad_input_type_id);
+    return keep_prob_value;
+  }
+};
+
+AnfNodePtr BuildDropoutDoMask(const PatternMap &m, const AnfNodePtr &) {
+  auto node = m.Get(kMDropoutGrad);
+  MS_EXCEPTION_IF_NULL(node);
+  auto dropout_grad_cnode = node->cast<CNodePtr>();
+  CheckCNodeInputSize(dropout_grad_cnode, kDropoutGradInputTensorNum);
+
+  auto func_graph = dropout_grad_cnode->func_graph();
+  auto grad_input_type_id = GetInputXDataType(dropout_grad_cnode);
+  auto grad_input_shape = GetDropoutInputShape(dropout_grad_cnode->input(kIndex1));
+  auto keep_prob_value = CreateKeepPorbValueNode(func_graph, dropout_grad_cnode, grad_input_type_id);
+  auto use_v3 = WhetherUseDropoutV3(dropout_grad_cnode, grad_input_shape);
+
+  // DropoutGrad may not in the same graph with Dropout in heterogeneous scene, and mask input which is a parameter
+  // in that scene, need to be updated.
+  auto mask_input = dropout_grad_cnode->input(kIndex2);
+  MS_EXCEPTION_IF_NULL(mask_input);
+  if (mask_input->isa<Parameter>()) {
+    // update abstract
+    auto mask_abstract = mask_input->abstract();
+    MS_EXCEPTION_IF_NULL(mask_abstract);
+    auto grad_shape_vec = grad_input_shape->shape();
+    auto mask_shape =
+      use_v3 ? CalGenMaskV3OutputShape(grad_shape_vec, kNumberTypeUInt8) : CalGenMaskOutputShape(grad_shape_vec);
+    mask_abstract = std::make_shared<abstract::AbstractTensor>(kUInt8, mask_shape);
+    mask_input->set_abstract(mask_abstract);
+    // update kernel info
+    auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+    kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
+    kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{kNumberTypeUInt8});
+    kernel_build_info_builder->SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+    AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), mask_input.get());
+  } else if (IsPrimitiveCNode(mask_input, prim::kPrimTupleGetItem)) {
+    auto mask_input_cnode = mask_input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(mask_input_cnode);
+    auto tuple_input = mask_input_cnode->input(kIndex1);
+    MS_EXCEPTION_IF_NULL(tuple_input);
+    if (IsValueNode<ValueTuple>(tuple_input)) {
+      auto tuple_abstract = tuple_input->abstract();
+      MS_EXCEPTION_IF_NULL(tuple_abstract);
+      abstract::AbstractSequencePtr sequence_abstract_ptr = tuple_abstract->cast<abstract::AbstractSequencePtr>();
+      MS_EXCEPTION_IF_NULL(sequence_abstract_ptr);
+      // Dropout's outputs only have two elements.
+      if (sequence_abstract_ptr->size() != kIndex2) {
+        MS_LOG(EXCEPTION) << "Dropout's outputs have more than two elements, " << sequence_abstract_ptr->size();
+      }
+      abstract::AbstractBasePtrList abs{};
+      abs.push_back(sequence_abstract_ptr->elements()[0]);
+      // modify mask abstract
+      auto mask_abstract = mask_input->abstract();
+      MS_EXCEPTION_IF_NULL(mask_abstract);
+      auto grad_shape_vec = grad_input_shape->shape();
+      auto mask_shape =
+        use_v3 ? CalGenMaskV3OutputShape(grad_shape_vec, kNumberTypeUInt8) : CalGenMaskOutputShape(grad_shape_vec);
+      mask_abstract = std::make_shared<abstract::AbstractTensor>(kUInt8, mask_shape);
+      mask_input->set_abstract(mask_abstract);
+      abs.push_back(mask_abstract);
+      auto new_abstract = std::make_shared<abstract::AbstractTuple>(abs);
+      tuple_input->set_abstract(new_abstract);
+    }
+  }
+
+  // CreateDropoutDoMask
+  auto do_mask_abstract =
+    std::make_shared<abstract::AbstractTensor>(TypeIdToType(grad_input_type_id), grad_input_shape);
+  auto dropout_do_mask = CreateDropoutDoMaskCNode(func_graph, dropout_grad_cnode,
+                                                  {dropout_grad_cnode->input(kIndex1), mask_input, keep_prob_value},
+                                                  do_mask_abstract, use_v3);
+  return dropout_do_mask;
+}
 }  // namespace
 
 const BaseRef DropoutAndDropoutGradUnifyMindIR::DefinePattern() const {
@@ -433,6 +524,12 @@ const AnfNodePtr DropoutUnifyMindIR0::Process(const FuncGraphPtr &func_graph, co
   return tuple_cnode;
 }
 
+std::vector<std::string> DropoutUnifyMindIR1::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimDropout->name());
+  return ret;
+}
+
 const BaseRef DropoutUnifyMindIR1::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
   return VectorRef({prim::kPrimDropout, X});
@@ -477,80 +574,17 @@ const AnfNodePtr DropoutUnifyMindIR1::Process(const FuncGraphPtr &func_graph, co
   return make_tuple;
 }
 
-const BaseRef DropoutGradUnifyMindIR::DefinePattern() const {
-  VarPtr X = std::make_shared<Var>();
-  VarPtr Y = std::make_shared<Var>();
-  auto dropout_grad_prim = std::make_shared<Primitive>(kDropoutGradOpName);
-  return VectorRef({dropout_grad_prim, X, Y});
+void DropoutGradUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern)
+    .AddVar(kX1)
+    .AddVar(kX2)
+    .AddCNode(kMDropoutGrad, {std::make_shared<Primitive>(kDropoutGradOpName), kX1, kX2});
 }
 
-const AnfNodePtr DropoutGradUnifyMindIR::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                 const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(node);
-  auto dropout_grad_cnode = node->cast<CNodePtr>();
-  CheckCNodeInputSize(dropout_grad_cnode, kDropoutGradInputTensorNum);
-
-  auto grad_input_type_id = GetInputXDataType(dropout_grad_cnode);
-  auto grad_input_shape = GetDropoutInputShape(dropout_grad_cnode->input(kIndex1));
-  auto keep_prob_value = CreateKeepPorbValueNode(func_graph, dropout_grad_cnode, grad_input_type_id);
-  auto use_v3 = WhetherUseDropoutV3(dropout_grad_cnode, grad_input_shape);
-
-  // DropoutGrad may not in the same graph with Dropout in heterogeneous scene, and mask input which is a parameter
-  // in that scene, need to be updated.
-  auto mask_input = dropout_grad_cnode->input(kIndex2);
-  MS_EXCEPTION_IF_NULL(mask_input);
-  if (mask_input->isa<Parameter>()) {
-    // update abstract
-    auto mask_abstract = mask_input->abstract();
-    MS_EXCEPTION_IF_NULL(mask_abstract);
-    auto grad_shape_vec = grad_input_shape->shape();
-    auto mask_shape =
-      use_v3 ? CalGenMaskV3OutputShape(grad_shape_vec, kNumberTypeUInt8) : CalGenMaskOutputShape(grad_shape_vec);
-    mask_abstract = std::make_shared<abstract::AbstractTensor>(kUInt8, mask_shape);
-    mask_input->set_abstract(mask_abstract);
-    // update kernel info
-    auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-    kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
-    kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{kNumberTypeUInt8});
-    kernel_build_info_builder->SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
-    AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), mask_input.get());
-  } else if (IsPrimitiveCNode(mask_input, prim::kPrimTupleGetItem)) {
-    auto mask_input_cnode = mask_input->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(mask_input_cnode);
-    auto tuple_input = mask_input_cnode->input(kIndex1);
-    MS_EXCEPTION_IF_NULL(tuple_input);
-    if (IsValueNode<ValueTuple>(tuple_input)) {
-      auto tuple_abstract = tuple_input->abstract();
-      MS_EXCEPTION_IF_NULL(tuple_abstract);
-      abstract::AbstractSequencePtr sequence_abstract_ptr = tuple_abstract->cast<abstract::AbstractSequencePtr>();
-      MS_EXCEPTION_IF_NULL(sequence_abstract_ptr);
-      // Dropout's outputs only have two elements.
-      if (sequence_abstract_ptr->size() != kIndex2) {
-        MS_LOG(EXCEPTION) << "Dropout's outputs have more than two elements, " << sequence_abstract_ptr->size();
-      }
-      abstract::AbstractBasePtrList abs{};
-      abs.push_back(sequence_abstract_ptr->elements()[0]);
-      // modify mask abstract
-      auto mask_abstract = mask_input->abstract();
-      MS_EXCEPTION_IF_NULL(mask_abstract);
-      auto grad_shape_vec = grad_input_shape->shape();
-      auto mask_shape =
-        use_v3 ? CalGenMaskV3OutputShape(grad_shape_vec, kNumberTypeUInt8) : CalGenMaskOutputShape(grad_shape_vec);
-      mask_abstract = std::make_shared<abstract::AbstractTensor>(kUInt8, mask_shape);
-      mask_input->set_abstract(mask_abstract);
-      abs.push_back(mask_abstract);
-      auto new_abstract = std::make_shared<abstract::AbstractTuple>(abs);
-      tuple_input->set_abstract(new_abstract);
-    }
-  }
-
-  // CreateDropoutDoMask
-  auto do_mask_abstract =
-    std::make_shared<abstract::AbstractTensor>(TypeIdToType(grad_input_type_id), grad_input_shape);
-  auto dropout_do_mask = CreateDropoutDoMaskCNode(func_graph, dropout_grad_cnode,
-                                                  {dropout_grad_cnode->input(kIndex1), mask_input, keep_prob_value},
-                                                  do_mask_abstract, use_v3);
-  return dropout_do_mask;
+void DropoutGradUnifyMindIR::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern)
+    .AddValueNode(kKeepProbValue, BuildKeepProbValue())
+    .AddCNode(kRDropoutDoMask, {std::make_shared<Primitive>(kDropoutDoMaskOpName), kX1, kX2, kKeepProbValue},
+              BuildDropoutDoMask);
 }
 }  // namespace mindspore::opt

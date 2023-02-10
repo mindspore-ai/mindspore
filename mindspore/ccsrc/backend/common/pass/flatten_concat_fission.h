@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_FLATTEN_CONCAT_FISSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_FLATTEN_CONCAT_FISSION_H_
 
+#include <string>
+#include <vector>
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore {
@@ -26,6 +28,9 @@ class FlattenConcatFission : public PatternProcessPass {
   ~FlattenConcatFission() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

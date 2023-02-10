@@ -17,32 +17,49 @@
 #include <memory>
 #include "backend/common/pass/convert_dynamic_broadcast_to.h"
 #include "ir/anf.h"
-#include "backend/common/optimizer/optimizer.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {
-const AnfNodePtr ConvertDynamicBroadcastTo::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                    const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(func_graph);
+namespace {
+const auto kV = "V";
+const auto kMBroadcastTo = "m_broadcast_to";
+const auto kRBroadcastTo = "r_broadcast_to";
+AnfNodePtr BuildDynamicBroadcastTo(const PatternMap &m, const AnfNodePtr &) {
+  auto node = m.Get(kMBroadcastTo);
   MS_EXCEPTION_IF_NULL(node);
-  auto node_name = common::AnfAlgo::GetCNodeName(node);
-  if (node_name == prim::kPrimDynamicBroadcastTo->name() && !common::AnfAlgo::IsDynamicShape(node)) {
-    auto broadcast_to_op_name = prim::kPrimBroadcastTo->name();
-    auto ori_cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(ori_cnode);
-    auto input_x = common::AnfAlgo::GetInputNode(ori_cnode, 0);
-    CNodePtr broadcast_to_node =
-      opt::NewCNode({NewValueNode(std::make_shared<Primitive>(broadcast_to_op_name)), input_x}, func_graph, {node});
-    MS_EXCEPTION_IF_NULL(broadcast_to_node);
-    broadcast_to_node->set_abstract(node->abstract());
-    auto shape_ptr = node->abstract()->BuildShape()->cast<abstract::ShapePtr>();
-    MS_EXCEPTION_IF_NULL(shape_ptr);
-    common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(shape_ptr->shape()), broadcast_to_node);
-    return broadcast_to_node;
+  auto broadcast_to_op_name = prim::kPrimBroadcastTo->name();
+  auto ori_cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(ori_cnode);
+  auto input_x = common::AnfAlgo::GetInputNode(ori_cnode, 0);
+  auto func_graph = node->func_graph();
+  CNodePtr broadcast_to_node =
+    opt::NewCNode({NewValueNode(std::make_shared<Primitive>(broadcast_to_op_name)), input_x}, func_graph, {node});
+  MS_EXCEPTION_IF_NULL(broadcast_to_node);
+  broadcast_to_node->set_abstract(node->abstract());
+  auto shape_ptr = node->abstract()->BuildShape()->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(shape_ptr->shape()), broadcast_to_node);
+  return broadcast_to_node;
+}
+}  // namespace
+
+bool ConvertDynamicBroadcastTo::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &,
+                                                const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!common::AnfAlgo::IsDynamicShape(node)) {
+    return true;
   }
-  return node;
+  return false;
+}
+
+void ConvertDynamicBroadcastTo::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern).AddVar(kV).AddCNode(kMBroadcastTo, {prim::kPrimDynamicBroadcastTo, kV});
+}
+
+void ConvertDynamicBroadcastTo::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern).AddCNode(kRBroadcastTo, {prim::kPrimDynamicBroadcastTo, kV}, BuildDynamicBroadcastTo);
 }
 }  // namespace opt
 }  // namespace mindspore

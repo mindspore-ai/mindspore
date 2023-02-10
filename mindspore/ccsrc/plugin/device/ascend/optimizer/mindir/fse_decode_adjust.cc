@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
@@ -27,6 +28,12 @@
 
 namespace mindspore {
 namespace opt {
+std::vector<std::string> FSEDecodeAdjust::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(std::make_shared<Primitive>(kFSEDecodeOpName)->name());
+  return ret;
+}
+
 const BaseRef FSEDecodeAdjust::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   auto prim = std::make_shared<Primitive>(kFSEDecodeOpName);

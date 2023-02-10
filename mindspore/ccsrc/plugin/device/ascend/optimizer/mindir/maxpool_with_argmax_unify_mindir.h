@@ -16,27 +16,27 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_MAXPOOL_WITH_ARGMAX_UNIFY_MINDIR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_MAXPOOL_WITH_ARGMAX_UNIFY_MINDIR_H_
 
-#include <memory>
 #include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {
-class MaxPoolWithArgmaxUnifyMindIR : public PatternProcessPass {
+class MaxPoolWithArgmaxUnifyMindIR : public PatternToPatternPass {
  public:
-  explicit MaxPoolWithArgmaxUnifyMindIR(bool multigraph = true)
-      : PatternProcessPass("maxpool_with_argmax_unify_mindir", multigraph) {}
+  MaxPoolWithArgmaxUnifyMindIR() : PatternToPatternPass("maxpool_with_argmax_unify_mindir", true) {}
   ~MaxPoolWithArgmaxUnifyMindIR() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
 };
 
-class MaxPoolGradWithArgmaxUnifyMindIR : public PatternProcessPass {
+class MaxPoolGradWithArgmaxUnifyMindIR : public PatternToPatternPass {
  public:
-  explicit MaxPoolGradWithArgmaxUnifyMindIR(bool multigraph = true)
-      : PatternProcessPass("maxpool_grad_with_argmax_unify_mindir", multigraph) {}
+  MaxPoolGradWithArgmaxUnifyMindIR() : PatternToPatternPass("maxpool_grad_with_argmax_unify_mindir", true) {}
   ~MaxPoolGradWithArgmaxUnifyMindIR() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
 };
 }  // namespace opt
 }  // namespace mindspore

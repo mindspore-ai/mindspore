@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore {
@@ -31,6 +32,9 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR : public PatternProcessPass
   ~SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
 class GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR : public PatternProcessPass {
@@ -67,6 +71,9 @@ class PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR : public Patter
   ~PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
 class PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2 : public PatternProcessPass {
@@ -76,6 +83,9 @@ class PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2 : public Patt
   ~PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

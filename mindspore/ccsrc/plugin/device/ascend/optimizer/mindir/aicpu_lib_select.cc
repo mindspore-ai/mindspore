@@ -24,12 +24,7 @@
 
 namespace mindspore {
 namespace opt {
-const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                             const EquivPtr &equiv) const {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(equiv);
-
+bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
   static const std::set<std::string> kAICpuOpNames = {kDropoutGenMaskOpName,
                                                       kEnvironCreateOpName,
                                                       kEnvironSetOpName,
@@ -262,7 +257,7 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
   static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";
 
   if (!node->isa<CNode>()) {
-    return node;
+    return false;
   }
   auto kernel_name = common::AnfAlgo::GetCNodeName(node);
   if (kAICpuOpNames.find(kernel_name) != kAICpuOpNames.end()) {
@@ -272,7 +267,7 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
     common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kCpuKernelSoName), node);
   }
 
-  return node;
+  return true;
 }
 }  // namespace opt
 }  // namespace mindspore

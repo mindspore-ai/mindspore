@@ -459,6 +459,12 @@ CNodePtr CreateMulInput(const FuncGraphPtr &graph, const CNodePtr &mul_node, con
 }
 }  // namespace
 
+std::vector<std::string> SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name());
+  return ret;
+}
+
 const BaseRef SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::DefinePattern() const {
   VarPtr x1 = std::make_shared<Var>();
   VarPtr x2 = std::make_shared<Var>();
@@ -619,6 +625,13 @@ const AnfNodePtr PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process
   }
 }
 
+std::vector<std::string> PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name());
+  ret.emplace_back(prim::kPrimMul->name());
+  return ret;
+}
+
 const BaseRef PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::DefinePattern() const {
   VarPtr x1 = std::make_shared<Var>();
   VarPtr x2 = std::make_shared<Var>();
@@ -652,6 +665,14 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Pro
   new_mul_node->set_scope(mul_node->scope());
   new_mul_node->set_abstract(mul_node->abstract());
   return new_mul_node;
+}
+
+std::vector<std::string> PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name());
+  ret.emplace_back(prim::kPrimCast->name());
+  ret.emplace_back(prim::kPrimMul->name());
+  return ret;
 }
 
 const BaseRef PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::DefinePattern() const {

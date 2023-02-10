@@ -16,17 +16,19 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_SLICE_GRAD_UNIFY_MINDIR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_SLICE_GRAD_UNIFY_MINDIR_H_
 
-#include <memory>
 #include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {
-class SliceGradUnifyMindIR : public PatternProcessPass {
+class SliceGradUnifyMindIR : public PatternToPatternPass {
  public:
-  explicit SliceGradUnifyMindIR(bool multigraph = true) : PatternProcessPass("slice_grad_unify_mindir", multigraph) {}
+  SliceGradUnifyMindIR() : PatternToPatternPass("slice_grad_unify_mindir", true) {}
   ~SliceGradUnifyMindIR() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

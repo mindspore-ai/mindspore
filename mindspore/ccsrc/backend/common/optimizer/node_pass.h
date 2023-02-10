@@ -17,6 +17,8 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_NODE_PASS_H_
 #include <string>
 #include <memory>
+#include <vector>
+#include <set>
 
 #include "backend/common/optimizer/pass.h"
 #include "include/backend/visible.h"
@@ -28,10 +30,25 @@ class BACKEND_EXPORT NodePass : public Pass {
  public:
   explicit NodePass(const std::string &name) : Pass(name) {}
   ~NodePass() override = default;
-  virtual bool Run(const FuncGraphPtr &func_graph);
+  bool Run(const FuncGraphPtr &func_graph) override;
+  virtual bool IsFastPass() { return false; }
+  virtual void AfterProcess(const AnfNodePtr &, const AnfNodePtr &, const FuncGraphPtr &, const FuncGraphIndexPtr &) {}
+  virtual std::string GetPatternRootPrimitiveName() { return ""; }
   virtual AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) = 0;
+  virtual std::vector<std::string> MustExistPrimitiveName() const { return {}; }
+
+ private:
+  bool ProcessFastPassNode(const AnfNodePtr &node, const FuncGraphPtr &func_graph,
+                           const FuncGraphIndexPtr &func_graph_index, const FuncGraphManagerPtr &manager);
+  bool ProcessFastPass(const FuncGraphPtr &func_graph, const FuncGraphIndexPtr &func_graph_index);
+  bool ProcessPass(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
 };
 using NodePassPtr = std::shared_ptr<NodePass>;
+void GenIndex(const FuncGraphPtr &func_graph, const FuncGraphIndexPtr &func_graph_index);
+void ModifyOutputAndCallerToMap(const CNodePtr &cnode, const FuncGraphPtr &fg,
+                                mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> *out_caller_map,
+                                bool is_add = true);
+std::string GetCNodeKey(const AnfNodePtr &node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_NODE_PASS_H_

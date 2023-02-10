@@ -17,17 +17,17 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONV_TRANSPOSE_TO_CONV_BP_H_
 
 #include <memory>
-#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {
-class ConvTransposeToConvBackpropInputPass : public PatternProcessPass {
+class ConvTransposeToConvBackpropInputPass : public PatternToPatternPass {
  public:
-  explicit ConvTransposeToConvBackpropInputPass(bool multigraph = true)
-      : PatternProcessPass("conv_transpose_to_conv_backprop_input", multigraph) {}
+  ConvTransposeToConvBackpropInputPass() : PatternToPatternPass("conv_transpose_to_conv_backprop_input", true) {}
   ~ConvTransposeToConvBackpropInputPass() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

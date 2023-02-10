@@ -17,7 +17,10 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_DROPOUT_UNIFY_MINDIR_H_
 
 #include <memory>
+#include <string>
+#include <vector>
 #include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {
@@ -49,15 +52,18 @@ class DropoutUnifyMindIR1 : public PatternProcessPass {
   ~DropoutUnifyMindIR1() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
-class DropoutGradUnifyMindIR : public PatternProcessPass {
+class DropoutGradUnifyMindIR : public PatternToPatternPass {
  public:
-  explicit DropoutGradUnifyMindIR(bool multigraph = true)
-      : PatternProcessPass("dropoutgrad_unify_mindir", multigraph) {}
+  DropoutGradUnifyMindIR() : PatternToPatternPass("dropoutgrad_unify_mindir", true) {}
   ~DropoutGradUnifyMindIR() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
 };
 }  // namespace opt
 }  // namespace mindspore

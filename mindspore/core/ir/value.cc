@@ -132,7 +132,7 @@ bool FP32Imm::operator==(const Value &other) const {
   }
 }
 bool FP32Imm::operator==(const FP32Imm &other) const {
-  if (std::isinf(v_) && std::isinf(other.v_)) {
+  if ((std::isinf(v_) && std::isinf(other.v_)) || (std::isnan(v_) && std::isnan(other.v_))) {
     return true;
   }
   return fabs(v_ - other.v_) < DBL_EPSILON;
@@ -186,7 +186,7 @@ std::string ValueSequence::DumpText() const {
 }
 
 bool FP64Imm::operator==(const FP64Imm &other) const {
-  if (std::isinf(v_) && std::isinf(other.v_)) {
+  if ((std::isinf(v_) && std::isinf(other.v_)) || (std::isnan(v_) && std::isnan(other.v_))) {
     return true;
   }
   return fabs(v_ - other.v_) < DBL_EPSILON;

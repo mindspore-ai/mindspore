@@ -15,6 +15,10 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_INPLACE_ASSIGN_FOR_CUSTOM_OP_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_INPLACE_ASSIGN_FOR_CUSTOM_OP_H_
+
+#include <string>
+#include <vector>
+
 #include "ir/anf.h"
 #include "backend/common/optimizer/optimizer.h"
 
@@ -26,6 +30,7 @@ class InplaceAssignForCustomOp : public PatternProcessPass {
       : PatternProcessPass("inplace_assign_for_custom_op", multigraph) {}
   ~InplaceAssignForCustomOp() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  std::vector<std::string> MustExistPrimitiveName() const override;
 
  private:
   mutable mindspore::HashSet<CNodePtr> visited_{};
