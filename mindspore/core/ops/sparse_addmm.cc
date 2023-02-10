@@ -50,6 +50,10 @@ abstract::ShapePtr SparseAddmmInferShape(const PrimitivePtr &primitive,
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 2nd dimension of indices "
                                << "should be 2, but got " << indices_shape[1] << ".";
     }
+    if (shape_shape.size() != kDimensionOne) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input shape should "
+                               << "have rank 1, but got " << shape_shape.size() << ".";
+    }
     if (shape_shape[0] != kDimensionTwo) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 1st dimension of input shape "
                                << "should be 2, but got " << shape_shape[0] << ".";
@@ -66,10 +70,6 @@ abstract::ShapePtr SparseAddmmInferShape(const PrimitivePtr &primitive,
   if (values_shape.size() != kDimensionOne) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input value should "
                              << "have rank 1, but got " << values_shape.size() << ".";
-  }
-  if (shape_shape.size() != kDimensionOne) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input shape should "
-                             << "have rank 1, but got " << shape_shape.size() << ".";
   }
   if (alpha_shape.size() != kDimensionOne) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input shape should "
