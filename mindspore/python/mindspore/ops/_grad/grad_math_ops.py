@@ -30,6 +30,7 @@ from mindspore.ops._grad.grad_base import convert_to_tensor
 from mindspore.ops._grad.grad_base import sum_grad_reduce_axis, dyn_fill, dyn_rank
 from mindspore.ops._grad.grad_base import dyn_ones, dyn_rank_1d
 from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs, IsSubClass, DynamicBroadcastTo
 from mindspore.ops.operations import array_ops as A
@@ -856,7 +857,7 @@ def get_bprop_cumsum(self):
     return bprop
 
 
-@constexpr
+@_primexpr
 def _split_shape_index(input_shape, axis):
     """Calculate reduce_prod grad transpose indices and perm shape."""
     rank = len(input_shape)

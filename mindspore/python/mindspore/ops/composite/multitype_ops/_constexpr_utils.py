@@ -24,7 +24,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore import log as logger
 from mindspore import context
 
@@ -912,7 +912,7 @@ def compute_slice_shape(slice_shape, broadcast_shape_len, slice_cnt, fancy_posit
     return shape
 
 
-@constexpr
+@_primexpr
 def infer_out_shape(*shapes):
     """
     Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.

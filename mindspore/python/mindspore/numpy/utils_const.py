@@ -22,6 +22,7 @@ import operator
 import mindspore.context as context
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.common import dtype as mstype
 from mindspore.common import Tensor
 from mindspore._c_expression import Tensor as Tensor_
@@ -33,7 +34,7 @@ from mindspore.numpy.dtypes import promotion_rule, dtype_tuple, all_types, dtype
 _check_axis_type = constexpr(validator.check_axis_type)
 
 
-@constexpr
+@_primexpr
 def _check_shape(shape):
     """check the shape param to match the numpy style"""
     # convert tensor to int/list, use followed if statements to do further conversions
@@ -66,7 +67,7 @@ def _check_dtype(dtype):
     return dtype
 
 
-@constexpr
+@_primexpr
 def _is_shape_empty(shp):
     """Check whether shape contains zero"""
     if F.is_sequence_shape_unknown(shp):
@@ -78,7 +79,7 @@ def _is_shape_empty(shp):
     return F.shape_mul(shp) == 0
 
 
-@constexpr
+@_primexpr
 def _check_start_normalize(start, ndim):
     """check and normalize start argument for rollaxis."""
     if start < 0:
@@ -86,7 +87,7 @@ def _check_start_normalize(start, ndim):
     return start
 
 
-@constexpr
+@_primexpr
 def _check_axes_range(axes, ndim):
     """
     Check axes type and normalize the negative axes.
@@ -112,6 +113,7 @@ def _get_device():
     return context.get_context('device_target')
 
 
+@_primexpr
 def _infer_out_shape(*shapes):
     """
     Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
@@ -126,7 +128,7 @@ def _infer_out_shape(*shapes):
     return tuple(shape_out)
 
 
-@constexpr
+@_primexpr
 def _can_broadcast(*shapes):
     """
     Returns Ture if shapes can broadcast, False if they cannot.
@@ -135,13 +137,13 @@ def _can_broadcast(*shapes):
     return True
 
 
-@constexpr
+@_primexpr
 def _check_axis_in_range(axis, ndim):
     """Checks axes are with the bounds of ndim"""
     return axis - axis // ndim * ndim
 
 
-@constexpr
+@_primexpr
 def _check_axis_valid(axes, ndim):
     """
     Checks axes are valid given ndim, and returns axes that can be passed
@@ -156,7 +158,7 @@ def _check_axis_valid(axes, ndim):
     return (_check_axis_in_range(axes, ndim),)
 
 
-@constexpr
+@_primexpr
 def _tile_size(shape, out_shape, ndim):
     """Returns tile_size such that shape*tile_size = out_shape"""
     size = [1]*ndim
@@ -230,7 +232,7 @@ def _raise_unimplemented_error(info, param=None):
     raise NotImplementedError(info + f"{param}")
 
 
-@constexpr
+@_primexpr
 def _empty(dtype, shape):
     """Returns an uninitialized array with dtype and shape."""
     return Tensor_(dtype, shape)
@@ -256,13 +258,13 @@ def _promote_for_trigonometric(dtype):
     return res_dtype
 
 
-@constexpr
+@_primexpr
 def _max(*args):
     """Returns the maximum value."""
     return max(*args)
 
 
-@constexpr
+@_primexpr
 def _min(*args):
     """"Returns the minimum value."""
     return min(*args)
@@ -290,7 +292,7 @@ def _check_is_int(dtype):
     return isinstance(dtype, typing.Int)
 
 
-@constexpr
+@_primexpr
 def _canonicalize_axis(axis, ndim):
     """
     Check axes are within the number of dimensions of tensor x and normalize the negative axes.
@@ -356,7 +358,7 @@ def _broadcast_tuples(tup1, tup2):
     return tup1, tup2
 
 
-@constexpr
+@_primexpr
 def _expanded_shape(ndim, axis_size, axis):
     """
     Returns a shape with size = 1 for all dimensions
@@ -365,7 +367,7 @@ def _expanded_shape(ndim, axis_size, axis):
     return tuple([axis_size if i == axis else 1 for i in range(ndim)])
 
 
-@constexpr
+@_primexpr
 def _add_unit_axes(shape, ndim, append=False):
     """
     Prepends shape with 1s so that it has the number of dimensions ndim.
@@ -401,7 +403,7 @@ def _type_convert(force, obj):
     return force(obj)
 
 
-@constexpr
+@_primexpr
 def _list_comprehensions(obj, item=None, return_tuple=False, make_none=False):
     """
     Generates a new list/tuple by list comprehension.
@@ -432,7 +434,7 @@ def _list_comprehensions(obj, item=None, return_tuple=False, make_none=False):
     return res
 
 
-@constexpr
+@_primexpr
 def _tuple_setitem(tup, idx, value):
     """
     Returns a tuple with specified `idx` set to `value`.
@@ -459,7 +461,7 @@ def _ceil(number):
     return math.ceil(number)
 
 
-@constexpr
+@_primexpr
 def _seq_prod(seq1, seq2):
     """Returns the element-wise product of seq1 and seq2."""
     return tuple(map(lambda x, y: x*y, seq1, seq2))
@@ -471,7 +473,7 @@ def _make_tensor(val, dtype):
     return Tensor(val, dtype)
 
 
-@constexpr
+@_primexpr
 def _tuple_slice(tup, start, end):
     """get sliced tuple from start and end."""
     return tup[start:end]

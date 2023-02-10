@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.ops._grad.grad_base import bprop_getters, sum_grad_reduce_axis
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
@@ -44,7 +44,7 @@ def _get_matrix_diag_part_assist(x_shape, x_dtype):
     return assist
 
 
-@constexpr
+@_primexpr
 def _get_min(x):
     return min(x)
 

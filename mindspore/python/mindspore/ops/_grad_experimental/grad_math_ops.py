@@ -74,6 +74,7 @@ from mindspore.ops.operations.math_ops import Fmax
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.ops._grad.grad_base import bprop_getters, create_tensor_by_element, dyn_rank
 from mindspore.ops._grad.grad_base import dyn_ones, dyn_fill, sum_grad_reduce_axis
 from mindspore.ops._grad.grad_math_ops import binop_grad_common
@@ -85,7 +86,7 @@ dyn_shape_op = P.TensorShape()
 _conj = P.Conj()
 
 
-@constexpr
+@_primexpr
 def _generate_perm(x_dim):
     perm = tuple(range(x_dim - 2))
     return perm
@@ -358,7 +359,7 @@ def get_bprop_index_addcmul(self):
     return bprop
 
 
-@constexpr
+@_primexpr
 def renew_dim(shape, dim):
     """ Re-new dims"""
     new_dim = dim if dim >= 0 else len(shape) + dim
@@ -687,7 +688,7 @@ def get_bprop_matrix_solve(self):
     return bprop
 
 
-@constexpr
+@_primexpr
 def _generate_perm_matrix_solve_ls(x_dim):
     perm = tuple(range(x_dim - 2))
     perm = perm + (x_dim-1, x_dim-2)
@@ -1853,7 +1854,7 @@ def _fft_rank_offset(norm_shape, rank):
     return norm_shape_product
 
 
-@constexpr
+@_primexpr
 def _fft_with_size_back_norm(norm_shape, norm, inverse, rank):
     """generate reverse term for fft_with_size"""
     if inverse is False:
@@ -1873,7 +1874,7 @@ def _fft_with_size_back_norm(norm_shape, norm, inverse, rank):
     return norm_
 
 
-@constexpr
+@_primexpr
 def _rfft_norm(norm_shape, norm, rank):
     """generate norm for rfft"""
     norm_ = 1.0
@@ -1886,7 +1887,7 @@ def _rfft_norm(norm_shape, norm, rank):
     return norm_
 
 
-@constexpr
+@_primexpr
 def _get_last_dim_slice_shape(tensor_shape, index):
     """generate shape for slice last tensor"""
     from_shape = [0 for x in tensor_shape]
@@ -1899,7 +1900,7 @@ def _get_last_dim_slice_shape(tensor_shape, index):
     return tuple(from_shape), tuple(to_shape)
 
 
-@constexpr
+@_primexpr
 def _rfft_reshape(shape_a, shape_b):
     """generate rfft shape for reshape"""
     new_shape = list(shape_b)
@@ -1908,7 +1909,7 @@ def _rfft_reshape(shape_a, shape_b):
     return tuple(new_shape)
 
 
-@constexpr
+@_primexpr
 def _rfft_tile_reshape(shape_a):
     """generate rfft shape for tile"""
     reshape_a = list(shape_a)
@@ -1917,7 +1918,7 @@ def _rfft_tile_reshape(shape_a):
     return tuple(reshape_a)
 
 
-@constexpr
+@_primexpr
 def _rfft_last_term_shape(shape_a, shape_b):
     """generate rfft shape for last term"""
     new_shape = list(shape_b)
@@ -1926,13 +1927,13 @@ def _rfft_last_term_shape(shape_a, shape_b):
     return tuple(new_shape)
 
 
-@constexpr
+@_primexpr
 def _batch_matmul_shape_increase(shape_before):
     """increase tensor shape for batch_matmul"""
     return (1, *shape_before)
 
 
-@constexpr
+@_primexpr
 def _batch_matmul_shape_decrease(matrix_shape):
     """decrease tensor shape after batch_matmul"""
     shape_tmp = list(matrix_shape)
