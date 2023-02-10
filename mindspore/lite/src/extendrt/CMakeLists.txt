@@ -97,6 +97,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CCSRC_DIR}/runtime/device/memory_manager.cc
         ${CCSRC_DIR}/runtime/device/auto_mem_offload.cc
         ${CCSRC_DIR}/runtime/device/gsm/mem_usage_analyzer.cc
+        ${CCSRC_DIR}/runtime/device/gsm/swap_strategy_builder.cc
         ${CCSRC_DIR}/runtime/device/common_somas_allocator.cc
         ${CCSRC_DIR}/runtime/pynative/op_runtime_info.cc
         ${CCSRC_DIR}/runtime/hardware/device_type.cc
