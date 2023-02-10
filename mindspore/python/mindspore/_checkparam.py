@@ -1130,12 +1130,12 @@ class Validator:
     @staticmethod
     def check_dynamic_shape(dyn_elem, actual_input, i):
         """Check the consistency of dynamic shape tensors and actual input tensors."""
-        if dyn_elem.dtype is not actual_input.dtype:
-            raise TypeError(f"The data type of `{i}`th args in actual input tensors should be `{dyn_elem.dtype}`, "
-                            f"but got `{actual_input.dtype}`.")
+        if dyn_elem.dtype != actual_input.dtype:
+            raise TypeError(f"The data type of '{i}'th args in actual input tensors should be '{dyn_elem.dtype}', "
+                            f"but got '{actual_input.dtype}'.")
         if dyn_elem.ndim != actual_input.ndim:
-            raise ValueError(f"The dimension of `{i}`th args in actual input tensors should be `{dyn_elem.ndim}`, "
-                             f"but got `{actual_input.ndim}`.")
+            raise ValueError(f"The dimension of '{i}'th args in actual input tensors should be '{dyn_elem.ndim}', "
+                             f"but got '{actual_input.ndim}'.")
         check_dyn_shape_value_equal(i, dyn_elem.shape, actual_input.shape)
 
     @staticmethod

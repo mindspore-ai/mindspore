@@ -58,8 +58,8 @@ using GraphInfoPtr = std::shared_ptr<GraphInfo>;
 class TopCellInfo {
  public:
   ~TopCellInfo() = default;
-  TopCellInfo(bool is_high_order_top_cell, size_t grad_order, std::string obj_id_with_grad_order, std::string cellid,
-              std::string already_run_cell_id, pipeline::ResourcePtr r, FuncGraphPtr fg)
+  TopCellInfo(bool is_high_order_top_cell, size_t grad_order, const std::string &obj_id_with_grad_order,
+              std::string cellid, const std::string &already_run_cell_id, pipeline::ResourcePtr r, FuncGraphPtr fg)
       : is_high_order_top_cell_(is_high_order_top_cell),
         grad_order_(grad_order),
         obj_id_with_grad_order_(std::move(obj_id_with_grad_order)),

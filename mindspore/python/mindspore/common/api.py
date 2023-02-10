@@ -439,9 +439,9 @@ class _MindsporeFunctionExecutor:
             if dyn_shape:
                 # Checkout whether the `sens` has been added to args_list.
                 if len(self.input_signature) == len(args_list) - 1:
-                    logger.warning(f"The number of actual input args `{len(args_list)}` is one more than the number "
-                                   f"of input_signature args `{len(self.input_signature)}`. The last actual args may "
-                                   f"be `sens` and added it to compile args.")
+                    logger.warning(f"The number of actual input args '{len(args_list)}' is one more than the number "
+                                   f"of input_signature args '{len(self.input_signature)}'. The last actual args may "
+                                   f"be 'sens' and added it to compile args.")
                     self.input_signature.append(args_list[-1])
                 compile_args = tuple(self.input_signature)
                 _pynative_executor.set_dynamic_input(self.obj, *compile_args)
