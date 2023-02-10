@@ -28,6 +28,7 @@
 #include "frontend/optimizer/irpass/stopgrad_eliminate.h"
 #include "frontend/optimizer/irpass/incorporate_call.h"
 #include "frontend/optimizer/irpass/item_tuple_or_list_eliminate.h"
+#include "frontend/optimizer/irpass/item_dict_eliminate.h"
 #include "frontend/optimizer/irpass/merge_addn.h"
 #include "frontend/optimizer/irpass/accumulaten_eliminate.h"
 #include "frontend/optimizer/irpass/less_batch_normalization.h"
@@ -110,6 +111,12 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     {prim::kPrimTupleGetItem, prim::kPrimTupleSetItem, prim::kPrimListGetItem, prim::kPrimListSetItem});
   make_slice_get_slice_eliminator_ = MakeSubstitution(std::make_shared<MakeSliceSliceGetItemEliminator>(),
                                                       "make_slice_get_slice_eliminator", {prim::kPrimSliceGetItem});
+  dict_get_item_eliminator_ =
+    MakeSubstitution(std::make_shared<DictGetitemEliminator>(), "dict_get_item_eliminator", prim::kPrimDictGetItem);
+  dict_get_item_const_eliminator_ = MakeSubstitution(std::make_shared<DictGetitemConstEliminator>(),
+                                                     "dict_get_item_const_eliminator", prim::kPrimDictGetItem);
+  dict_set_item_eliminator_ =
+    MakeSubstitution(std::make_shared<DictSetitemEliminator>(), "dict_set_item_eliminator", prim::kPrimDictSetItem);
   stack_unstack_eliminate_ =
     MakeSubstitution(std::make_shared<StackUnstackEliminator>(), "stack_unstack_eliminate", prim::kPrimUnstack);
   tile_eliminate_ = MakeSubstitution(std::make_shared<TileEliminater>(), "tile_eliminate", prim::kPrimTile);

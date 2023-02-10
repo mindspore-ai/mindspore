@@ -77,6 +77,8 @@ class HyperMap : public MetaFuncGraph {
                       const ArgsPairList &arg_map);
   AnfNodePtr FullMake(const std::shared_ptr<Tuple> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
                       const ArgsPairList &arg_map);
+  AnfNodePtr FullMake(const std::shared_ptr<Dictionary> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
+                      const ArgsPairList &arg_map);
   AnfNodePtr Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map);
   std::pair<std::string, std::string> GetHyperMapInputIndex(size_t num) const;
 
@@ -141,6 +143,16 @@ class MakeListGradient : public MetaFuncGraph {
   friend bool operator==(const MakeListGradient &lhs, const MakeListGradient &rhs) { return lhs.name_ == rhs.name_; }
 };
 using MakeListGradientPtr = std::shared_ptr<MakeListGradient>;
+
+class MakeDictGradient : public MetaFuncGraph {
+ public:
+  explicit MakeDictGradient(const std::string &name) : MetaFuncGraph(name) {}
+  ~MakeDictGradient() override = default;
+  MS_DECLARE_PARENT(MakeDictGradient, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const MakeDictGradient &lhs, const MakeDictGradient &rhs) { return lhs.name_ == rhs.name_; }
+};
+using MakeDictGradientPtr = std::shared_ptr<MakeDictGradient>;
 
 class PyExecuteGradient : public MetaFuncGraph {
  public:

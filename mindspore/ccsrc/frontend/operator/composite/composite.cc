@@ -75,7 +75,10 @@ void HyperMap::Init() {
 }
 
 HyperMap::HyperMap(bool reverse, const std::shared_ptr<MultitypeFuncGraph> &fn_leaf)
-    : MetaFuncGraph("hyper_map"), fn_leaf_(fn_leaf), reverse_(reverse), nonleaf_({kObjectTypeList, kObjectTypeTuple}) {
+    : MetaFuncGraph("hyper_map"),
+      fn_leaf_(fn_leaf),
+      reverse_(reverse),
+      nonleaf_({kObjectTypeList, kObjectTypeTuple, kObjectTypeDictionary}) {
   Init();
 }
 
@@ -244,6 +247,63 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
   return empty_tuple;
 }
 
+AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Dictionary> &type, const FuncGraphPtr &func_graph,
+                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(type);
+
+  size_t size = type->key_values().size();
+  size_t num = 0;
+  std::ostringstream oss;
+  bool is_not_same = false;
+  for (auto &item : arg_map) {
+    num++;
+    auto lhs = std::static_pointer_cast<Dictionary>(item.second);
+    auto [error_index, next_index] = GetHyperMapInputIndex(num);
+    if (lhs == nullptr) {
+      MS_LOG(EXCEPTION) << "The " << error_index
+                        << " element in HyperMap has wrong type, expected a Dictionary, but got "
+                        << item.second->ToString() << ".";
+    }
+    if (lhs->key_values().size() != size) {
+      oss << "\nThe length of the " << error_index << " element in HyperMap is " << size << ", but the length of the "
+          << next_index << " element in HyperMap is " << lhs->key_values().size() << ".\n";
+      is_not_same = true;
+      break;
+    }
+  }
+  if (is_not_same) {
+    MS_LOG(EXCEPTION) << "The length of dict in HyperMap must be the same. " << oss.str();
+  }
+
+  // cannot use shared_from_base() also known as this, as it will make a reference cycle on
+  // hypermap and graph generated, it will cause memory leak.
+  auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
+  std::vector<AnfNodePtr> key_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  std::vector<AnfNodePtr> value_inputs{NewValueNode(prim::kPrimMakeTuple)};
+
+  for (size_t i = 0; i < size; i++) {
+    MS_LOG(DEBUG) << "FullMakeDict for the " << i << "th element of the target.";
+    auto key = type->key_values()[i].first;
+    (void)key_inputs.emplace_back(NewValueNode(key));
+    std::vector<AnfNodePtr> inputs;
+    (void)inputs.emplace_back(fn_rec);
+    if (fn_arg != nullptr) {
+      (void)inputs.emplace_back(fn_arg);
+    }
+    (void)std::transform(
+      arg_map.begin(), arg_map.end(), std::back_inserter(inputs),
+      [&func_graph, &key](const std::pair<AnfNodePtr, TypePtr> &item) {
+        return func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimDictGetItem), item.first, NewValueNode(key)});
+      });
+    auto call_node = func_graph->NewCNodeInOrder(inputs);
+    (void)value_inputs.emplace_back(call_node);
+  }
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeDict), func_graph->NewCNodeInOrder(key_inputs),
+                                 func_graph->NewCNodeInOrder(value_inputs)};
+  return func_graph->NewCNodeInOrder(inputs);
+}
+
 AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
   bool is_leaf = false;
   TypeId id = kObjectTypeEnd;
@@ -298,6 +358,10 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
     }
     case kObjectTypeTuple: {
       auto type = std::static_pointer_cast<Tuple>(pair.second);
+      return FullMake(type, func_graph, fn_arg, arg_map);
+    }
+    case kObjectTypeDictionary: {
+      auto type = std::static_pointer_cast<Dictionary>(pair.second);
       return FullMake(type, func_graph, fn_arg, arg_map);
     }
     default:
@@ -438,6 +502,63 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
   fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(bprop)}));
   (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimMakeList));
+  return fg;
+}
+
+FuncGraphPtr MakeDictGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+  constexpr size_t input_size = 2;
+  CheckArgsSize("MakeDict", args_spec_list, input_size);
+  std::ostringstream ss;
+  // ▶make_dict_
+  ss << "\u25B8make_dict_" << input_size;
+  FuncGraphPtr fg = std::make_shared<FuncGraph>();
+  fg->debug_info()->set_name(ss.str());
+
+  std::vector<AnfNodePtr> params{NewValueNode(prim::kPrimMakeDict)};
+  for (size_t i = 0; i < input_size; ++i) {
+    (void)params.emplace_back(fg->add_parameter());
+  }
+
+  // Make fprop first result, make_dict's forward result.
+  AnfNodePtr out = fg->NewCNodeInOrder(params);
+
+  // Make fprop second result, make_dict's backward function.
+  FuncGraphPtr bprop = std::make_shared<FuncGraph>();
+
+  ss.str(std::string());
+  ss.clear();
+  // ◀make_dict_
+  ss << "\u25C2make_dict_" << input_size;
+  bprop->debug_info()->set_name(ss.str());
+  AnfNodePtr dout = bprop->add_parameter();
+
+  std::vector<AnfNodePtr> grads{NewValueNode(prim::kPrimMakeTuple)};
+  (void)grads.emplace_back(NewEnviron(bprop));
+
+  auto abs0_tuple = dyn_cast_ptr<AbstractTuple>(args_spec_list[0]);
+  if (abs0_tuple == nullptr) {
+    MS_LOG(EXCEPTION) << "The first input of make_dict should be a tuple, but got abstract: "
+                      << args_spec_list[0]->ToString();
+  }
+  // Add gradients of keys tuple and values tuple.
+  std::vector<AnfNodePtr> keys_grads_inputs{NewValueNode(kPrimMakeTuple)};
+  std::vector<AnfNodePtr> values_grads_inputs{NewValueNode(kPrimMakeTuple)};
+  for (size_t i = 0; i < abs0_tuple->size(); ++i) {
+    auto key_item =
+      bprop->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), params[1], NewValueNode(SizeToLong(i))});
+    (void)keys_grads_inputs.emplace_back(key_item);
+    (void)values_grads_inputs.emplace_back(
+      bprop->NewCNodeInOrder({NewValueNode(prim::kPrimDictGetItem), dout, key_item}));
+  }
+  (void)grads.emplace_back(bprop->NewCNodeInOrder(keys_grads_inputs));
+  (void)grads.emplace_back(bprop->NewCNodeInOrder(values_grads_inputs));
+
+  bprop->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  bprop->set_output(bprop->NewCNodeInOrder(grads));
+
+  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(bprop)}));
+  (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimMakeDict));
   return fg;
 }
 
