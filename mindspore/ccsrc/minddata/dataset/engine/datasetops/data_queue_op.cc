@@ -282,24 +282,46 @@ Status DataQueueOp::SendDataToAscend() {
       LimitSendingBatches(send_batch, &sending_num, cfg);
 
 #ifndef ENABLE_SECURITY
-      if (is_profiling_enable) {
-        connector_size = ChildOpConnectorSize();
-        connector_capacity = ChildOpConnectorCapacity();
-      }
+      RecordProfilingData(is_profiling_enable, false, &connector_size, &connector_capacity, &send_batch);
 #endif
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
+
+      if (ascend_data_queue_->QueueType() == "Ascend_MBUF") {
+        // Queue control logic for mbuf in host, to prevent from hang/exit abnormally
+        // case 1: If mbuf queue memory + current row size < 2G then continue send, else suspend;
+        // case 2: Based on case 1, if elements nums in mbuf < max_queue_limit then continue send, else suspend;
+        // case 3: If current row size >= 1G, can only send 1 row each time, mbuf_queue_size will always in [0, 1];
+        // note:
+        // why need queue control: acltdtSendTensor will hang when queue is full, we need to break the thread by
+        // ourselves what about dynamic shape: yes, memory_per_batch_ collect memory of rows in different shapes. what
+        // about row too large(>2G): we can promise the first row will be sent and hang in this while, but we dont
+        //     know if the device will out of memory. If not oom, send next row, otherwise device return errors.
+
+        // Calculate the memory of next row before sending
+        size_t mbuf_queue_size = ascend_data_queue_->QueryQueueSize();
+        double row_size = curr_row.SizeInBytes() / 1024. / 1024. / 1024.;
+        memory_per_batch_.push_back(row_size);
+
+        const double max_row_size = 2.;
+        const size_t max_queue_limit = 100;
+        const int64_t send_interval = 1000;
+        while ((row_size + CalMbufQueueMemory(mbuf_queue_size) >= max_row_size || mbuf_queue_size >= max_queue_limit) &&
+               mbuf_queue_size != 0) {
+          RETURN_IF_INTERRUPTED();
+          MS_LOG(INFO) << "Mbuf queue size: " << mbuf_queue_size << ", max queue limit: " << max_queue_limit << ". "
+                       << "Next row memory: " << row_size << ", Mbuf memory: " << CalMbufQueueMemory(mbuf_queue_size);
+
+          mbuf_queue_size = ascend_data_queue_->QueryQueueSize();
+          std::this_thread::sleep_for(std::chrono::microseconds(send_interval));
+        }
+      }
     }
 
     // send epoch end flag: ACL_TENSOR_DATA_END_OF_SEQUENCE to tdt
     RETURN_IF_NOT_OK(SendEpochEndToAscend(curr_row, is_profiling_enable, &tdt_cost, &is_break_loop));
 
 #ifndef ENABLE_SECURITY
-    if (is_profiling_enable) {
-      connector_size = ChildOpConnectorSize();
-      connector_capacity = ChildOpConnectorCapacity();
-      tree_->SetEpochEnd();
-      GlobalContext::profiling_manager()->RecordEndOfEpoch(send_batch);
-    }
+    RecordProfilingData(is_profiling_enable, true, &connector_size, &connector_capacity, &send_batch);
 #endif
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
   }
@@ -312,6 +334,25 @@ Status DataQueueOp::SendDataToAscend() {
   MS_LOG(INFO) << "ExecutionTree finished. Device queue sent number of batches: " << send_batch;
 
   return Status::OK();
+}
+
+void DataQueueOp::RecordProfilingData(bool is_profiling_enable, bool end_of_epoch, int32_t *connector_size,
+                                      int32_t *connector_capacity, int64_t *send_batch) {
+  if (is_profiling_enable) {
+    *connector_size = ChildOpConnectorSize();
+    *connector_capacity = ChildOpConnectorCapacity();
+  }
+  if (end_of_epoch) {
+    tree_->SetEpochEnd();
+    GlobalContext::profiling_manager()->RecordEndOfEpoch(*send_batch);
+  }
+}
+
+double DataQueueOp::CalMbufQueueMemory(size_t realtime_queue_size) {
+  while (memory_per_batch_.size() > realtime_queue_size) {
+    memory_per_batch_.pop_front();
+  }
+  return std::accumulate(memory_per_batch_.begin(), memory_per_batch_.end(), 0.);
 }
 
 Status DataQueueOp::SendEpochEndToAscend(const TensorRow &curr_row, const bool &is_profiling_enable, int32_t *tdt_cost,

@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_DATA_QUEUE_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_DATA_QUEUE_OP_H_
 
+#include <deque>
 #include <memory>
 #include <string>
 #include <utility>
@@ -66,7 +67,10 @@ class DataQueueOp : public PipelineOp {
 
   Status EoeReceived(int32_t worker_id) override;
 
-  void StopSend() { stop_send_ = true; }
+  void StopSend() {
+    stop_send_ = true;
+    send_finished_ = true;
+  }
 
   void ContinueSend() {
     MS_LOG(INFO) << "continue send at the beginning of the epoch";
@@ -141,6 +145,9 @@ class DataQueueOp : public PipelineOp {
   Status WorkerEntry(int32_t worker_id);
   Status SetThreadDevice();
   Status CreateDynamicDataQueue();
+  double CalMbufQueueMemory(size_t realtime_queue_size);
+  void RecordProfilingData(bool is_profiling_enable, bool end_of_epoch, int32_t *connector_size,
+                           int32_t *connector_capacity, int64_t *send_batch);
 
   QueueList<TensorRow> receive_queues_;
   std::vector<std::shared_ptr<MemoryPool>> pool_;
@@ -175,6 +182,7 @@ class DataQueueOp : public PipelineOp {
   std::mutex data_info_mutex_;
   bool first_push_flag_;  // default: false, when first push, it will be true
   bool dynamic_shape_{false};
+  std::deque<double> memory_per_batch_;
   std::shared_ptr<device::DataQueue> ascend_data_queue_;
 
 #ifdef ENABLE_DUMP_IR
