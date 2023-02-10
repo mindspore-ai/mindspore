@@ -19,6 +19,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <memory>
 #include <unordered_map>
 #ifdef BFC_MEMORY
 #include "src/extendrt/dynamic_mem_allocator.h"
@@ -32,6 +33,10 @@
 #endif
 #include "include/lite_types.h"
 #include "src/litert/infer_manager.h"
+
+namespace mindspore {
+class DeviceInfoContext;
+}
 
 namespace mindspore::lite {
 typedef struct CpuDeviceInfo {
@@ -60,11 +65,17 @@ typedef struct AscendDeviceInfo {
   std::string image_size_;
 } AscendDeviceInfo;
 
+/// \brief CustomDeviceInfo defined for user defined device configuration information.
+typedef struct CustomDeviceInfo {
+  std::shared_ptr<DeviceInfoContext> user_defined_device_info_;
+} CustomDeviceInfo;
+
 struct DeviceInfo {
   CpuDeviceInfo cpu_device_info_;
   GpuDeviceInfo gpu_device_info_;
   NpuDeviceInfo npu_device_info_;
   AscendDeviceInfo ascend_device_info_;
+  CustomDeviceInfo custom_device_info_;
 };
 
 struct DeviceContext {

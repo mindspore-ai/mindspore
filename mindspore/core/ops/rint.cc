@@ -30,11 +30,13 @@ namespace ops {
 namespace {
 abstract::ShapePtr RintInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  MS_EXCEPTION_IF_ZERO("Rint input number", input_args.size());
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+
   auto prim_name = primitive->name();
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
@@ -44,6 +46,9 @@ abstract::ShapePtr RintInferShape(const PrimitivePtr &primitive, const std::vect
 }
 
 TypePtr RintInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_ZERO("Rint input number", input_args.size());
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

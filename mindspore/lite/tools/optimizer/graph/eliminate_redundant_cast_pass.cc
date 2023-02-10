@@ -22,7 +22,8 @@ int EliminateRedundantCastPass::RemoveCastOp(const AnfNodePtr &anf_node, const F
   const int expected_cast_input_count = 3;
   auto cast_cnode = anf_node->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(cast_cnode->inputs().size() == expected_cast_input_count, lite::RET_NO_CHANGE);
-  TypeId first_type, second_type;
+  TypeId first_type;
+  TypeId second_type;
   if (opt::GetDataTypeFromAnfNode(cast_cnode->input(1), &first_type) != RET_OK) {
     MS_LOG(ERROR) << "Failed to get " << anf_node->fullname_with_scope() << " output tensor data type.";
     return lite::RET_NO_CHANGE;
