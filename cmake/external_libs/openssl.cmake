@@ -33,6 +33,10 @@ if(BUILD_LITE)
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-1292.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-2068.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-2097.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-4304.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-4450.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-0215.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-0286.patch
                 )
     elseif(PLATFORM_ARM32 AND ANDROID_NDK_TOOLCHAIN_INCLUDED)
         set(openssl_USE_STATIC_LIBS OFF)
@@ -54,6 +58,10 @@ if(BUILD_LITE)
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-1292.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-2068.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-2097.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-4304.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-4450.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-0215.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-0286.patch
                 )
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE)
         set(openssl_CFLAGS -fvisibility=hidden)
@@ -70,6 +78,10 @@ if(BUILD_LITE)
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-1292.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-2068.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-2097.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-4304.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-4450.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-0215.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-0286.patch
                 )
     else()
         MESSAGE(FATAL_ERROR "openssl does not support compilation for the current environment.")
@@ -93,6 +105,10 @@ else()
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-1292.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-2068.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-2097.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-4304.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-4450.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-0215.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-0286.patch
                 )
         include_directories(${openssl_INC})
         add_library(mindspore::ssl ALIAS openssl::ssl)
