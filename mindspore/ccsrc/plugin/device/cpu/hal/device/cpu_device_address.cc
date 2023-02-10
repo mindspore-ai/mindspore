@@ -249,10 +249,6 @@ bool CPUDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, Type
     MS_LOG(INFO) << "No need sync, src device size: " << size << ", dst device size: " << size_;
     return true;
   }
-  if (size_ < size) {
-    MS_LOG(ERROR) << "Src size is greater than det size, src size is: " << size << ", dst size is: " << size_;
-    return false;
-  }
   if (format_ != format) {
     MS_LOG(ERROR) << "Format is different, src(format:" << format << "), dst(format:" << format_ << ").";
     return false;
