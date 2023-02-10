@@ -55,6 +55,9 @@ REG_ADPT_DESC(Shape, kNameShape, ADPT_DESC(Shape))
 // TensorShape
 REG_ADPT_DESC(TensorShape, kNameTensorShape, ADPT_DESC(Shape))
 
+// DynamicShape
+REG_ADPT_DESC(DynamicShape, kNameDynamicShape, ADPT_DESC(Shape))
+
 // GetShape
 INPUT_MAP(GetShape) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(GetShape) = {{1, DYN_INPUT_DESC(x)}};
