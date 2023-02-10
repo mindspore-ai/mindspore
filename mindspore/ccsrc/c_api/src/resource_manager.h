@@ -34,6 +34,7 @@ class ResourceManager {
     context_ = mindspore::MsContext::GetInstance();
     org_policy_ = context_->backend_policy();
     context_->set_backend_policy("ms");
+    context_->set_param<int>(mindspore::MS_CTX_EXECUTION_MODE, mindspore::kGraphMode);
   }
 
   ~ResourceManager() { context_->set_backend_policy(org_policy_); }
@@ -60,7 +61,7 @@ class ResourceManager {
     (void)ptr_res_pool_.insert(std::make_pair(reinterpret_cast<Handle>(src_ptr.get()), src_ptr));
   }
 
-  BasePtr GetSrcPtr(Handle ptr) {
+  BasePtr GetSrcPtr(ConstHandle ptr) {
     auto iter = ptr_res_pool_.find(ptr);
     if (iter != ptr_res_pool_.end()) {
       return iter->second;
@@ -70,7 +71,7 @@ class ResourceManager {
     }
   }
 
-  void ReleaseSrcPtr(Handle ptr) {
+  void ReleaseSrcPtr(ConstHandle ptr) {
     auto iter = ptr_res_pool_.find(ptr);
     if (iter != ptr_res_pool_.end()) {
       (void)ptr_res_pool_.erase(iter);
@@ -78,10 +79,10 @@ class ResourceManager {
   }
 
  private:
-  std::unordered_map<Handle, BasePtr> ptr_res_pool_;
+  std::unordered_map<ConstHandle, BasePtr> ptr_res_pool_;
   mindspore::HashMap<std::string, mindspore::Any> results_{};
   std::shared_ptr<mindspore::compile::Backend> backend_ = nullptr;
-  std::shared_ptr<mindspore::MsContext> context_;
+  std::shared_ptr<mindspore::MsContext> context_ = nullptr;
   std::string org_policy_;
   bool auto_infer_;
 };

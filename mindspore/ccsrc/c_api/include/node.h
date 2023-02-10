@@ -42,7 +42,7 @@ extern "C" {
 /// \param[in] attr_num The number of attributes.
 ///
 /// \return The created Operator node handle
-MIND_C_API NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type, const Handle inputs[],
+MIND_C_API NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type, Handle const inputs[],
                               size_t input_num, char **attr_names, AttrHandle attrs[], size_t attr_num);
 
 /// \brief Pack nodes into a Tuple node.
@@ -53,9 +53,9 @@ MIND_C_API NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const cha
 /// \param[in] node_num The number of nodes in the array.
 ///
 /// \return The created Tuple node handle.
-MIND_C_API NodeHandle MSPackNodesTuple(ResMgrHandle res_mgr, GraphHandle graph, const Handle nodes[], size_t node_num);
+MIND_C_API NodeHandle MSPackNodesTuple(ResMgrHandle res_mgr, GraphHandle graph, Handle const nodes[], size_t node_num);
 
-/// \brief Get specified output branch from as multi-output Operator.
+/// \brief Get specified output branch from a multi-output Operator.
 ///
 /// \param[in] res_mgr Resource manager that saves allocated instance resources.
 /// \param[in] graph The given function graph pointer handle.
@@ -63,7 +63,31 @@ MIND_C_API NodeHandle MSPackNodesTuple(ResMgrHandle res_mgr, GraphHandle graph, 
 /// \param[in] i The index of the output branch.
 ///
 /// \return The obtained output node.
-MIND_C_API NodeHandle MSOpGetSpecOutput(ResMgrHandle res_mgr, GraphHandle graph, const NodeHandle op, size_t i);
+MIND_C_API NodeHandle MSOpGetSpecOutput(ResMgrHandle res_mgr, GraphHandle graph, ConstNodeHandle op, size_t i);
+
+/// \brief Create a Switch operator for control-flow scene.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] graph The given function graph pointer handle.
+/// \param[in] cond The condition of Switch which can be an Operator or a Subgraph.
+/// \param[in] true_br The true branch of Switch which must be a Subgraph.
+/// \param[in] false_br The false branch of Switch which must be a Subgraph.
+///
+/// \return The created Switch operator node.
+MIND_C_API NodeHandle MSNewSwitch(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, ConstGraphHandle true_br,
+                                  ConstGraphHandle false_br);
+
+/// \brief Create a While operator for control-flow scene.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] graph The given function graph pointer handle.
+/// \param[in] cond The condition of While which can be an Operator or a Subgraph.
+/// \param[in] body_graph The loop body of While which must be a Subgraph.
+/// \param[in] after_graph The graph after stepping out the While which must be a Subgraph.
+///
+/// \return The created While operator node.
+MIND_C_API NodeHandle MSNewWhile(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, GraphHandle body_graph,
+                                 GraphHandle after_graph);
 
 /// \brief Get specified input node of Operator.
 ///
@@ -72,7 +96,7 @@ MIND_C_API NodeHandle MSOpGetSpecOutput(ResMgrHandle res_mgr, GraphHandle graph,
 /// \param[in] i The index of the input.
 ///
 /// \return The obtained input node handle.
-MIND_C_API NodeHandle MSOpGetInput(ResMgrHandle res_mgr, const NodeHandle op, size_t i);
+MIND_C_API NodeHandle MSOpGetInput(ResMgrHandle res_mgr, ConstNodeHandle op, size_t i);
 
 /// \brief Get the input nodes number of Operator.
 ///
@@ -81,7 +105,7 @@ MIND_C_API NodeHandle MSOpGetInput(ResMgrHandle res_mgr, const NodeHandle op, si
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The input nodes number.
-MIND_C_API size_t MSOpGetInputsNum(ResMgrHandle res_mgr, const NodeHandle op, STATUS *error);
+MIND_C_API size_t MSOpGetInputsNum(ResMgrHandle res_mgr, ConstNodeHandle op, STATUS *error);
 
 /// \brief Get all input nodes of the Operator.
 ///
@@ -91,7 +115,7 @@ MIND_C_API size_t MSOpGetInputsNum(ResMgrHandle res_mgr, const NodeHandle op, ST
 /// \param[in] input_num The size of the input array.
 ///
 /// \return Error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSOpGetInputs(ResMgrHandle res_mgr, const NodeHandle op, NodeHandle inputs[], size_t input_num);
+MIND_C_API STATUS MSOpGetInputs(ResMgrHandle res_mgr, ConstNodeHandle op, NodeHandle inputs[], size_t input_num);
 
 /// \brief Create a subgraph node.
 ///
@@ -102,8 +126,8 @@ MIND_C_API STATUS MSOpGetInputs(ResMgrHandle res_mgr, const NodeHandle op, NodeH
 /// \param[in] input_num The number of the input array.
 ///
 /// \return The created subgraph node handle.
-MIND_C_API NodeHandle MSNewSubGraphNode(ResMgrHandle res_mgr, GraphHandle graph, GraphHandle sub_graph,
-                                        const Handle inputs[], size_t input_num);
+MIND_C_API NodeHandle MSNewFuncCallNode(ResMgrHandle res_mgr, GraphHandle graph, ConstGraphHandle sub_graph,
+                                        Handle const inputs[], size_t input_num);
 
 /// \brief Create a Placeholder node, which is usually the input of graph without data.
 ///
@@ -138,7 +162,7 @@ MIND_C_API NodeHandle MSNewTensorVariable(ResMgrHandle res_mgr, GraphHandle grap
 /// \param[in] tensor The given Tensor instance.
 ///
 /// \return The created Variable node handle.
-MIND_C_API NodeHandle MSNewTensorVariableFromTensor(ResMgrHandle res_mgr, GraphHandle graph, TensorHandle tensor);
+MIND_C_API NodeHandle MSNewTensorVariableFromTensor(ResMgrHandle res_mgr, GraphHandle graph, ConstTensorHandle tensor);
 
 /// \brief Get data size of a Tensor Variable.
 ///
@@ -147,7 +171,7 @@ MIND_C_API NodeHandle MSNewTensorVariableFromTensor(ResMgrHandle res_mgr, GraphH
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The data byte size.
-MIND_C_API size_t MSTensorVariableGetDataSize(ResMgrHandle res_mgr, NodeHandle node, STATUS *error);
+MIND_C_API size_t MSTensorVariableGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get data from a Tensor Variable.
 ///
@@ -155,7 +179,7 @@ MIND_C_API size_t MSTensorVariableGetDataSize(ResMgrHandle res_mgr, NodeHandle n
 /// \param[in] node The tensor variable node
 ///
 /// \return The data.
-MIND_C_API void *MSTensorVariableGetData(ResMgrHandle res_mgr, NodeHandle node);
+MIND_C_API void *MSTensorVariableGetData(ResMgrHandle res_mgr, ConstNodeHandle node);
 
 /// \brief Create a Constant node of tensor, which contains constant tensor data.
 ///
@@ -185,7 +209,7 @@ MIND_C_API NodeHandle MSNewTensorConstantFromTensor(ResMgrHandle res_mgr, Tensor
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The data byte size.
-MIND_C_API size_t MSTensorConstantGetDataSize(ResMgrHandle res_mgr, NodeHandle node, STATUS *error);
+MIND_C_API size_t MSTensorConstantGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get data from a Tensor Constant.
 ///
@@ -193,7 +217,7 @@ MIND_C_API size_t MSTensorConstantGetDataSize(ResMgrHandle res_mgr, NodeHandle n
 /// \param[in] node The tensor constant node
 ///
 /// \return The data.
-MIND_C_API void *MSTensorConstantGetData(ResMgrHandle res_mgr, NodeHandle node);
+MIND_C_API void *MSTensorConstantGetData(ResMgrHandle res_mgr, ConstNodeHandle node);
 
 /// \brief Create Constant node of a float scalar.
 ///
@@ -259,7 +283,7 @@ MIND_C_API NodeHandle MSNewTypeConstant(ResMgrHandle res_mgr, TypeId type);
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The obtained int32 value.
-MIND_C_API int MSScalarConstantGetValueInt32(ResMgrHandle res_mgr, const NodeHandle node, STATUS *error);
+MIND_C_API int MSScalarConstantGetValueInt32(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get value from the float32 scalar Constant node.
 ///
@@ -268,7 +292,7 @@ MIND_C_API int MSScalarConstantGetValueInt32(ResMgrHandle res_mgr, const NodeHan
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The obtained float32 value.
-MIND_C_API float MSScalarConstantGetValueFloat32(ResMgrHandle res_mgr, const NodeHandle node, STATUS *error);
+MIND_C_API float MSScalarConstantGetValueFloat32(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get value from the bool scalar Constant node.
 ///
@@ -277,7 +301,7 @@ MIND_C_API float MSScalarConstantGetValueFloat32(ResMgrHandle res_mgr, const Nod
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The obtained bool value.
-MIND_C_API bool MSScalarConstantGetValueBool(ResMgrHandle res_mgr, const NodeHandle node, STATUS *error);
+MIND_C_API bool MSScalarConstantGetValueBool(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get value from the int64 scalar Constant node.
 ///
@@ -286,7 +310,7 @@ MIND_C_API bool MSScalarConstantGetValueBool(ResMgrHandle res_mgr, const NodeHan
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The obtained int64 value.
-MIND_C_API int64_t MSScalarConstantGetValueInt64(ResMgrHandle res_mgr, const NodeHandle node, STATUS *error);
+MIND_C_API int64_t MSScalarConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get value from the string Constant node.
 ///
@@ -296,7 +320,7 @@ MIND_C_API int64_t MSScalarConstantGetValueInt64(ResMgrHandle res_mgr, const Nod
 /// \param[in] str_len The size of the char array.
 ///
 /// \return The error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSStringConstantGetValue(ResMgrHandle res_mgr, const NodeHandle node, char str_buf[], size_t str_len);
+MIND_C_API STATUS MSStringConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, char str_buf[], size_t str_len);
 
 /// \brief Get value from the tuple Constant node.
 ///
@@ -305,7 +329,7 @@ MIND_C_API STATUS MSStringConstantGetValue(ResMgrHandle res_mgr, const NodeHandl
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The size of the Tuple.
-MIND_C_API size_t MSTupleConstantGetSize(ResMgrHandle res_mgr, const NodeHandle node, STATUS *error);
+MIND_C_API size_t MSTupleConstantGetSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get value from the Tuple Constant node.
 ///
@@ -315,7 +339,7 @@ MIND_C_API size_t MSTupleConstantGetSize(ResMgrHandle res_mgr, const NodeHandle 
 /// \param[in] size The size of the value vector.
 ///
 /// \return The error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSTupleConstantGetValueInt64(ResMgrHandle res_mgr, const NodeHandle node, int64_t vec[], size_t size);
+MIND_C_API STATUS MSTupleConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, int64_t vec[], size_t size);
 
 /// \brief Get value from the Type Constant node.
 ///
@@ -324,7 +348,7 @@ MIND_C_API STATUS MSTupleConstantGetValueInt64(ResMgrHandle res_mgr, const NodeH
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The obtained type value.
-MIND_C_API TypeId MSTypeConstantGetValue(ResMgrHandle res_mgr, const NodeHandle node, STATUS *error);
+MIND_C_API TypeId MSTypeConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Set Operator node name.
 ///
@@ -333,7 +357,7 @@ MIND_C_API TypeId MSTypeConstantGetValue(ResMgrHandle res_mgr, const NodeHandle 
 /// \param[in] name The op node name to be set.
 ///
 /// \return The error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSOpSetName(ResMgrHandle res_mgr, const NodeHandle node, const char *name);
+MIND_C_API STATUS MSOpSetName(ResMgrHandle res_mgr, NodeHandle node, const char *name);
 
 /// \brief Get the name of node.
 ///
@@ -343,7 +367,7 @@ MIND_C_API STATUS MSOpSetName(ResMgrHandle res_mgr, const NodeHandle node, const
 /// \param[in] str_len The size of the char array.
 ///
 /// \return The error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSNodeGetName(ResMgrHandle res_mgr, const NodeHandle node, char str_buf[], size_t str_len);
+MIND_C_API STATUS MSNodeGetName(ResMgrHandle res_mgr, ConstNodeHandle node, char str_buf[], size_t str_len);
 
 #ifdef __cplusplus
 }

@@ -21,7 +21,7 @@
 #include "abstract/dshape.h"
 #include "ir/dtype.h"
 
-STATUS MSAssignAbstract(ResMgrHandle res_mgr, NodeHandle cur_node, NodeHandle input_node) {
+STATUS MSAssignAbstract(ResMgrHandle res_mgr, NodeHandle cur_node, ConstNodeHandle input_node) {
   if (res_mgr == nullptr || cur_node == nullptr || input_node == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [inputs] are nullptr.";
     return RET_NULL_PTR;

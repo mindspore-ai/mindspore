@@ -21,8 +21,11 @@
 #include "base/base.h"
 #include "ops/core_ops.h"
 #include "ir/func_graph.h"
+#include "ir/anf.h"
+#include "ir/func_graph_cloner.h"
 #include "utils/ms_context.h"
 #include "backend/graph_compiler/backend.h"
+#include "pipeline/jit/pass.h"
 
 GraphHandle MSFuncGraphCreate(ResMgrHandle res_mgr) {
   if (res_mgr == nullptr) {
@@ -33,7 +36,7 @@ GraphHandle MSFuncGraphCreate(ResMgrHandle res_mgr) {
   return GetRawPtr(res_mgr, fg);
 }
 
-NodeHandle MSFuncGraphGetInput(ResMgrHandle res_mgr, const GraphHandle graph, size_t i) {
+NodeHandle MSFuncGraphGetInput(ResMgrHandle res_mgr, ConstGraphHandle graph, size_t i) {
   if (res_mgr == nullptr || graph == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [cnode] is nullptr.";
     return nullptr;
@@ -53,7 +56,7 @@ NodeHandle MSFuncGraphGetInput(ResMgrHandle res_mgr, const GraphHandle graph, si
   }
 }
 
-size_t MSFuncGraphGetInputNum(ResMgrHandle res_mgr, const GraphHandle graph, STATUS *error) {
+size_t MSFuncGraphGetInputNum(ResMgrHandle res_mgr, ConstGraphHandle graph, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
     return 0;
@@ -77,7 +80,7 @@ size_t MSFuncGraphGetInputNum(ResMgrHandle res_mgr, const GraphHandle graph, STA
   return input_num;
 }
 
-STATUS MSFuncGraphGetInputs(ResMgrHandle res_mgr, const GraphHandle graph, NodeHandle inputs[], size_t input_num) {
+STATUS MSFuncGraphGetInputs(ResMgrHandle res_mgr, ConstGraphHandle graph, NodeHandle inputs[], size_t input_num) {
   if (res_mgr == nullptr || graph == nullptr || inputs == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [inputs] is nullptr.";
     return RET_NULL_PTR;
@@ -100,7 +103,7 @@ STATUS MSFuncGraphGetInputs(ResMgrHandle res_mgr, const GraphHandle graph, NodeH
   return RET_OK;
 }
 
-STATUS MSFuncGraphSetOutput(ResMgrHandle res_mgr, GraphHandle graph, const NodeHandle op_node, bool force_new_ret) {
+STATUS MSFuncGraphSetOutput(ResMgrHandle res_mgr, GraphHandle graph, ConstNodeHandle op_node, bool force_new_ret) {
   if (res_mgr == nullptr || graph == nullptr || op_node == nullptr) {
     MS_LOG(ERROR) << "Input GraphHandle [res_mgr] or [graph] or [op_node] is nullptr.";
     return RET_NULL_PTR;
@@ -118,7 +121,7 @@ STATUS MSFuncGraphSetOutput(ResMgrHandle res_mgr, GraphHandle graph, const NodeH
   return RET_OK;
 }
 
-STATUS MSFuncGraphSetOutputs(ResMgrHandle res_mgr, GraphHandle graph, const Handle outputs[], size_t output_num,
+STATUS MSFuncGraphSetOutputs(ResMgrHandle res_mgr, GraphHandle graph, Handle const outputs[], size_t output_num,
                              bool force_new_ret) {
   if (res_mgr == nullptr || graph == nullptr || outputs == nullptr) {
     MS_LOG(ERROR) << "Input GraphHandle [res_mgr] or [graph] or [outputs] is nullptr.";
@@ -146,7 +149,7 @@ STATUS MSFuncGraphSetOutputs(ResMgrHandle res_mgr, GraphHandle graph, const Hand
   return RET_OK;
 }
 
-NodeHandle MSFuncGraphGetOutput(ResMgrHandle res_mgr, const GraphHandle graph, size_t i) {
+NodeHandle MSFuncGraphGetOutput(ResMgrHandle res_mgr, ConstGraphHandle graph, size_t i) {
   if (res_mgr == nullptr || graph == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] is nullptr.";
     return nullptr;
@@ -178,7 +181,7 @@ NodeHandle MSFuncGraphGetOutput(ResMgrHandle res_mgr, const GraphHandle graph, s
   }
 }
 
-size_t MSFuncGraphGetOutputNum(ResMgrHandle res_mgr, GraphHandle graph, STATUS *error) {
+size_t MSFuncGraphGetOutputNum(ResMgrHandle res_mgr, ConstGraphHandle graph, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
     return 0;
@@ -208,7 +211,7 @@ size_t MSFuncGraphGetOutputNum(ResMgrHandle res_mgr, GraphHandle graph, STATUS *
   return out_num;
 }
 
-STATUS MSFuncGraphGetOutputs(ResMgrHandle res_mgr, const GraphHandle graph, NodeHandle outputs[], size_t output_num) {
+STATUS MSFuncGraphGetOutputs(ResMgrHandle res_mgr, ConstGraphHandle graph, NodeHandle outputs[], size_t output_num) {
   if (res_mgr == nullptr || graph == nullptr || outputs == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [inputs] is nullptr.";
     return RET_NULL_PTR;
@@ -239,8 +242,7 @@ STATUS MSFuncGraphGetOutputs(ResMgrHandle res_mgr, const GraphHandle graph, Node
   return RET_OK;
 }
 
-STATUS MSFuncGraphReplace(ResMgrHandle res_mgr, GraphHandle graph, const NodeHandle old_node,
-                          const NodeHandle new_node) {
+STATUS MSFuncGraphReplace(ResMgrHandle res_mgr, GraphHandle graph, ConstNodeHandle old_node, ConstNodeHandle new_node) {
   if (res_mgr == nullptr || graph == nullptr || old_node == nullptr || new_node == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [old_node] or [new_node] is nullptr.";
     return RET_NULL_PTR;
@@ -272,9 +274,11 @@ STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph) {
   try {
     auto func_graph = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
     MS_EXCEPTION_IF_NULL(func_graph);
-    std::vector<FuncGraphPtr> func_graphs = {func_graph};
-    auto fg_mgr = mindspore::Manage(func_graphs, true);
+    auto fg_mgr = mindspore::MakeManager();
+    fg_mgr->AddFuncGraph(func_graph, true);
     MS_EXCEPTION_IF_NULL(fg_mgr);
+    func_graph->set_manager(fg_mgr);
+    (void)mindspore::LiftingClone(func_graph);
     context_ptr->Refresh();
     std::string backend_name = context_ptr->backend_policy();
     std::string target = context_ptr->get_param<std::string>(mindspore::MS_CTX_DEVICE_TARGET);
@@ -295,7 +299,7 @@ STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph) {
   return RET_OK;
 }
 
-STATUS MSFuncGraphRun(ResMgrHandle res_mgr, GraphHandle graph, const TensorHandle inputs[], size_t input_num,
+STATUS MSFuncGraphRun(ResMgrHandle res_mgr, GraphHandle graph, TensorHandle const inputs[], size_t input_num,
                       TensorHandle outputs[], size_t outputs_num) {
   if (res_mgr == nullptr || inputs == nullptr || outputs == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [inputs] or [outputs] is nullptr.";

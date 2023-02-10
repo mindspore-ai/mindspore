@@ -134,7 +134,8 @@ MIND_C_API STATUS MSOpSetAttrString(ResMgrHandle res_mgr, NodeHandle op, const c
 /// \param[in] error  Error code indicates whether the function executed successfully.
 ///
 /// \return Attribute value
-MIND_C_API int64_t MSOpGetScalarAttrInt64(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, STATUS *error);
+MIND_C_API int64_t MSOpGetScalarAttrInt64(ResMgrHandle res_mgr, ConstNodeHandle op, const char *attr_name,
+                                          STATUS *error);
 
 /// \brief Get the attribute of the target node with the given attribute name.
 ///
@@ -145,8 +146,8 @@ MIND_C_API int64_t MSOpGetScalarAttrInt64(ResMgrHandle res_mgr, NodeHandle op, c
 /// \param[in] value_num Size of the given array.
 ///
 /// \return Error code indicates whether the function executed successfully.
-MIND_C_API STATUS MSOpGetAttrArrayInt64(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, int64_t values[],
-                                        size_t value_num);
+MIND_C_API STATUS MSOpGetAttrArrayInt64(ResMgrHandle res_mgr, ConstNodeHandle op, const char *attr_name,
+                                        int64_t values[], size_t value_num);
 
 /// \brief Create new Int64 attribute scalar value.
 ///

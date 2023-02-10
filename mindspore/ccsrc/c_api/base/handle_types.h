@@ -26,8 +26,16 @@ typedef void *TensorHandle;
 typedef void *NodeHandle;
 typedef void *AttrHandle;
 typedef void *GraphHandle;
-typedef void *FuncGraphManagerHandle;
+typedef void *FuncGraphMgrHandle;
 typedef void *ResMgrHandle;
+
+typedef const void *ConstHandle;
+typedef const void *ConstTensorHandle;
+typedef const void *ConstNodeHandle;
+typedef const void *ConstAttrHandle;
+typedef const void *ConstGraphHandle;
+typedef const void *ConstFuncGraphMgrHandle;
+typedef const void *ConstResMgrHandle;
 
 #ifdef __cplusplus
 }

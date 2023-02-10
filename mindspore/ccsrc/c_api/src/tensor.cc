@@ -113,7 +113,7 @@ TensorHandle MSNewTensorWithSrcType(ResMgrHandle res_mgr, void *data, const int6
   return GetRawPtr(res_mgr, tensor);
 }
 
-void *MSTensorGetData(ResMgrHandle res_mgr, const TensorHandle tensor) {
+void *MSTensorGetData(ResMgrHandle res_mgr, ConstTensorHandle tensor) {
   if (res_mgr == nullptr || tensor == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [tensor] is nullptr.";
     return nullptr;
@@ -126,7 +126,7 @@ void *MSTensorGetData(ResMgrHandle res_mgr, const TensorHandle tensor) {
   return src_tensor->data_c();
 }
 
-STATUS MSTensorSetDataType(ResMgrHandle res_mgr, const TensorHandle tensor, TypeId type) {
+STATUS MSTensorSetDataType(ResMgrHandle res_mgr, TensorHandle tensor, TypeId type) {
   if (res_mgr == nullptr || tensor == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [tensor] is nullptr.";
     return RET_ERROR;
@@ -140,7 +140,7 @@ STATUS MSTensorSetDataType(ResMgrHandle res_mgr, const TensorHandle tensor, Type
   return RET_OK;
 }
 
-TypeId MSTensorGetDataType(ResMgrHandle res_mgr, const TensorHandle tensor, STATUS *error) {
+TypeId MSTensorGetDataType(ResMgrHandle res_mgr, ConstTensorHandle tensor, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
     return (enum TypeId)0;
@@ -160,7 +160,7 @@ TypeId MSTensorGetDataType(ResMgrHandle res_mgr, const TensorHandle tensor, STAT
   return (enum TypeId)(src_tensor->data_type_c());
 }
 
-size_t MSTensorGetDataSize(ResMgrHandle res_mgr, const TensorHandle tensor, STATUS *error) {
+size_t MSTensorGetDataSize(ResMgrHandle res_mgr, ConstTensorHandle tensor, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
     return 0;
@@ -181,7 +181,7 @@ size_t MSTensorGetDataSize(ResMgrHandle res_mgr, const TensorHandle tensor, STAT
   return size;
 }
 
-size_t MSTensorGetElementNum(ResMgrHandle res_mgr, const TensorHandle tensor, STATUS *error) {
+size_t MSTensorGetElementNum(ResMgrHandle res_mgr, ConstTensorHandle tensor, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
     return 0;
@@ -202,7 +202,7 @@ size_t MSTensorGetElementNum(ResMgrHandle res_mgr, const TensorHandle tensor, ST
   return ele_num;
 }
 
-size_t MSTensorGetDimension(ResMgrHandle res_mgr, const TensorHandle tensor, STATUS *error) {
+size_t MSTensorGetDimension(ResMgrHandle res_mgr, ConstTensorHandle tensor, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
     return 0;
@@ -223,7 +223,7 @@ size_t MSTensorGetDimension(ResMgrHandle res_mgr, const TensorHandle tensor, STA
   return dim;
 }
 
-STATUS MSTensorSetShape(ResMgrHandle res_mgr, const TensorHandle tensor, int64_t shape[], size_t dim) {
+STATUS MSTensorSetShape(ResMgrHandle res_mgr, TensorHandle tensor, const int64_t shape[], size_t dim) {
   if (res_mgr == nullptr || tensor == nullptr || shape == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [tensor] or [shape] is nullptr.";
     return RET_NULL_PTR;
@@ -243,7 +243,7 @@ STATUS MSTensorSetShape(ResMgrHandle res_mgr, const TensorHandle tensor, int64_t
   return RET_OK;
 }
 
-STATUS MSTensorGetShape(ResMgrHandle res_mgr, const TensorHandle tensor, int64_t shape[], size_t dim) {
+STATUS MSTensorGetShape(ResMgrHandle res_mgr, ConstTensorHandle tensor, int64_t shape[], size_t dim) {
   if (res_mgr == nullptr || tensor == nullptr || shape == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [tensor] or [shape] is nullptr.";
     return RET_NULL_PTR;
