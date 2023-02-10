@@ -895,9 +895,24 @@ bool EliminateAdRelatedSpecialOpNode(const ResourcePtr &resource) {
   return EliminateAdRelatedSpecialOpOptPass(resource);
 }
 
+bool HasAbstractFunction(const AbstractBasePtr &abs) {
+  if (abs->isa<abstract::AbstractSequence>() && !abs->isa<abstract::AbstractSparseTensor>()) {
+    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+    return std::any_of(abs_seq->elements().cbegin(), abs_seq->elements().cend(), HasAbstractFunction);
+  }
+  // if abs it not AbstractSequence.
+  return abs->isa<abstract::AbstractFunction>();
+}
+
 bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
   for (const auto &node : all_nodes) {
-    if (node == nullptr || !node->isa<CNode>()) {
+    if (IsValueNode<FuncGraph>(node)) {
+      auto func_graph = GetValueNode<FuncGraphPtr>(node);
+      if (HasAbstractFunction(func_graph->output()->abstract())) {
+        return true;
+      }
+    }
+    if (!node->isa<CNode>()) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
