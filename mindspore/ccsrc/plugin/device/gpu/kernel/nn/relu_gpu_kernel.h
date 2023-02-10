@@ -56,6 +56,7 @@ class ReLUFwdGpuKernelMod : public NativeGpuKernelMod {
   ReLUFwLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, ReLUFwLaunchFunc>> func_list_;
   int input_length_{0};
+  bool is_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

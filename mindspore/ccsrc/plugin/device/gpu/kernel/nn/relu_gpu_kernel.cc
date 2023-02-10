@@ -44,6 +44,7 @@ int ReLUFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     return ret;
   }
   auto x_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
+  is_null_input_ = CHECK_NULL_INPUT(inputs[kIndex0]->GetShapeVector());
   input_length_ = std::accumulate(x_shape.begin(), x_shape.end(), static_cast<int>(1), std::multiplies<>());
   return KRET_OK;
 }
@@ -51,6 +52,9 @@ int ReLUFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 template <typename T>
 bool ReLUFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (is_null_input_) {
+    return true;
+  }
   T *input = GetDeviceAddress<T>(inputs, 0);
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
   T *output = GetDeviceAddress<T>(outputs, 0);
