@@ -5197,7 +5197,7 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
     return outputs
 
 
-def multi_label_margin_loss(inputs, target, reduction='mean'):
+def multilabel_margin_loss(inputs, target, reduction='mean'):
     r"""
     Hinge loss for optimizing a multi-label classification.
 
@@ -5248,10 +5248,9 @@ def multi_label_margin_loss(inputs, target, reduction='mean'):
     Examples:
        >>> inputs = Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), mindspore.float32)
        >>> target = Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), mindspore.int32)
-       >>> output, _ = ops.multi_label_margin_loss(inputs, target)
+       >>> output = ops.multilabel_margin_loss(inputs, target)
        >>> print(output)
-       (Tensor(shape=[], dtype=Float32, value= 0.325), Tensor(shape=[2, 4], dtype=Int32, value=
-       [[1, 1, 1, 1], [0, 0, 1, 1]]))
+       0.325
     """
 
     loss = _get_cache_prim(P.MultilabelMarginLoss)(reduction)
@@ -5851,7 +5850,7 @@ __all__ = [
     'glu',
     'margin_ranking_loss',
     'multi_margin_loss',
-    'multi_label_margin_loss',
+    'multilabel_margin_loss',
     'multilabel_soft_margin_loss',
     'elu',
     'gelu',

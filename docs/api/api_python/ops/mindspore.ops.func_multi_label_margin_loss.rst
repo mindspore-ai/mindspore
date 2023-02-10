@@ -1,7 +1,7 @@
-mindspore.ops.multi_label_margin_loss
+mindspore.ops.multilabel_margin_loss
 ======================================
 
-.. py:function:: mindspore.ops.multi_label_margin_loss(inputs, target, reduction='mean')
+.. py:function:: mindspore.ops.multilabel_margin_loss(inputs, target, reduction='mean')
 
     用于优化多标签分类问题的铰链损失。
 

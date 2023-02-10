@@ -8808,7 +8808,7 @@ class MultilabelMarginLoss(Primitive):
     hinge loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`)
     and output :math:`y` (which is a 2D `Tensor` of target class indices).
 
-    Refer to :func:`mindspore.ops.multi_label_margin_loss` for more details.
+    Refer to :func:`mindspore.ops.multilabel_margin_loss` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

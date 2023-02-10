@@ -468,7 +468,7 @@ from .nn_func import (
     conv3d,
     glu,
     multi_margin_loss,
-    multi_label_margin_loss,
+    multilabel_margin_loss,
     multilabel_soft_margin_loss,
     elu,
     gelu,
