@@ -420,6 +420,50 @@ def test_map_just_exchange_columns():
         assert item[2].shape == (300, 300, 3)
 
 
+class FakeData:
+    def __init__(self):
+        self.input_ids = np.ones((128, 128), dtype=np.int32)
+        self.input_mask = np.ones((128, 128), dtype=np.int32)
+
+    def __getitem__(self, index):
+        return self.input_ids, self.input_mask
+
+    def __len__(self):
+        return 791
+
+
+def test_map_multiprocessing_without_thread():
+    """
+    Feature: Map op
+    Description: map with multiprocessing and don't degenerate into threading
+    Expectation: success
+    """
+
+    dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"])
+
+    def long_running_op(col1, col2):
+        data1 = np.ones([50, 3, 655, 655], dtype=np.float64)
+        data2 = np.ones([50, 3, 600, 600], dtype=np.float64)
+        return data1, data2
+
+    dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
+                          python_multiprocessing=True, num_parallel_workers=2, max_rowsize=10)
+    assert dataset.get_dataset_size() == 791
+    assert dataset.output_shapes() == [[50, 3, 655, 655], [50, 3, 600, 600]]
+    assert dataset.output_types() == [np.float64, np.float64]
+    assert dataset.get_col_names() == ["input_ids", "input_mask"]
+
+    count = 1
+    for item in dataset.create_tuple_iterator(output_numpy=True, num_epochs=1):
+        print("count: {}, type: {}, shape: {}".format(count, item[0].dtype, item[0].shape))
+        assert item[0].dtype == np.float64
+        assert item[0].shape == (50, 3, 655, 655)
+        assert len(item) == 2
+        count += 1
+        if count > 5:
+            break
+
+
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
@@ -431,3 +475,4 @@ if __name__ == '__main__':
     test_python_map_mp_seed_repeatability()
     test_map_with_deprecated_parameter()
     test_map_just_exchange_columns()
+    test_map_multiprocessing_without_thread()

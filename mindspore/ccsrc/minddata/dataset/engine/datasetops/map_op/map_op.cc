@@ -275,6 +275,11 @@ Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
         *out_row = TensorRow(TensorRow::kFlagError);
         return Status::OK();
       } else {
+        // if thread had been interrupted, don't care the error
+        if (TaskManager::FindMe()->Interrupted()) {
+          MS_LOG(WARNING) << "Current thread had been interrupted by TaskManager, so ignore the error.";
+          return Status::OK();
+        }
         return rc;
       }
     }
