@@ -21,9 +21,6 @@ cumulative_logsumexp_op_info = AiCPURegOp("CumulativeLogsumexp") \
     .input(0, "x", "required") \
     .input(1, "axis", "required")\
     .output(0, "y", "required") \
-    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.F64_Default) \
     .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F64_Default, DataType.I32_Default, DataType.F64_Default) \

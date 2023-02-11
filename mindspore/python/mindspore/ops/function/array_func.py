@@ -4911,7 +4911,7 @@ def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
         ValueError: If input_x.shape[3] does not match the calculated number of sliding blocks.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
@@ -6595,7 +6595,7 @@ def sequence_mask(lengths, maxlen=None):
         TypeError: If dtype of `lengths` is neither int32 nor int64.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: When maxlen is assigned

@@ -41,7 +41,7 @@ def matrix_set_diag(input_x, diagonal, k=0, alignment="RIGHT_LEFT"):
             except for the specified diagonals of the innermost matrices.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as onp
