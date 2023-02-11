@@ -28,8 +28,10 @@
 #include "mindspore/ccsrc/kernel/kernel.h"
 #include "aicpu/common/aicpu_task_struct.h"
 #include "debug/data_dump/overflow_dumper.h"
+#include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
 
 using AddressPtr = mindspore::kernel::AddressPtr;
+using mindspore::ge::model_runner::HcclTaskInfo;
 
 namespace aicpu {
 namespace dump {
@@ -62,6 +64,7 @@ class KernelDumper : public debug::OverflowDumper {
   ~KernelDumper();
 
   void OpLoadDumpInfo(const CNodePtr &kernel) override;
+  void DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info, const rtStream_t stream);
   void Init() override;
   void UnloadDumpInfo();
   void ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_info, const rtStream_t stream);
@@ -94,9 +97,12 @@ class KernelDumper : public debug::OverflowDumper {
   std::string overflow_dump_filename = "debug_files";
   void *p2p_debug_addr_ = nullptr;
   void SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info, const CNodePtr &kernel);
+  void SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info,
+                        const std::shared_ptr<HcclTaskInfo> &task_info);
 
   void ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task);
   void DumpKernelOutput(const CNodePtr &kernel, NotNull<aicpu::dump::Task *> task);
+  void DumpKernelOutput(const std::shared_ptr<HcclTaskInfo> &task_info, NotNull<aicpu::dump::Task *> task);
   void DumpKernelInput(const CNodePtr &kernel, NotNull<aicpu::dump::Task *> task);
   std::string StripUniqueId(const std::string node_name);
 

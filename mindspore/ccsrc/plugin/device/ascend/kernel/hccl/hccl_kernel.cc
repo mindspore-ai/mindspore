@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -317,6 +317,26 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
                                      private_def, hccl::HcclAdapter::GetInstance().GetHcclOpsKernelInfoStore(),
                                      hccl_count_, root_id_, op_type_, data_type, group_, NeedDump());
     hcclTaskInfo->SetGlobalWorkspaceAddr(global_workspace_addr);
+    hcclTaskInfo->set_output_num(outputs.size());
+    hcclTaskInfo->set_hccl_kernel_output_shape_list(hccl_kernel_output_shape_list_);
+    auto cnode = anf_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    hcclTaskInfo->set_graph_id(AnfAlgo::GetGraphId(cnode.get()));
+    FuncGraphPtr f_graph = cnode->func_graph();
+    auto kernel_graph = f_graph->cast<KernelGraphPtr>();
+    auto input_ctrl_tensors = kernel_graph->device_loop_control_tensors();
+    hcclTaskInfo->set_device_loop_ctrl_tensors(input_ctrl_tensors);
+    std::vector<std::vector<int64_t>> hccl_output_infer_shape_list;
+    if (!HcomUtil::GetKernelOutputInferShape(anf_node, &hccl_output_infer_shape_list)) {
+      MS_LOG(ERROR) << "GetKernelOutputInferShape fail!";
+    }
+    hcclTaskInfo->set_hccl_host_output_shape_list(hccl_output_infer_shape_list);
+    for (size_t j = 0; j < outputs.size(); j++) {
+      auto address = AnfAlgo::GetOutputAddr(cnode, j);
+      hcclTaskInfo->add_output_addr(address->GetPtr());
+      hcclTaskInfo->add_output_size_list(address->GetSize());
+      hcclTaskInfo->add_data_format(AnfAlgo::GetOutputFormat(anf_node, j));
+    }
     results.emplace_back(hcclTaskInfo);
   }
 

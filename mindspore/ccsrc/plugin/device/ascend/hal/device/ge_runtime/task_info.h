@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 #include "external/graph/types.h"
+#include "hccl/hccl_types.h"
+#include "ir/tensor.h"
 
 namespace mindspore::ge::model_runner {
 enum TaskInfoType {
@@ -272,8 +275,30 @@ class HcclTaskInfo : public TaskInfo {
   void *ops_kernel_store() const { return ops_kernel_store_; }
   int32_t count() const { return count_; }
   int64_t root_id() const { return root_id_; }
+  uint32_t graph_id() const { return graph_id_; }
+  void set_graph_id(uint32_t graph_id) { graph_id_ = graph_id; }
   int64_t op_type() const { return op_type_; }
   int64_t data_type() const { return data_type_; }
+  size_t output_num() const { return output_num_; }
+  void set_output_num(size_t output_num) { output_num_ = output_num; }
+  std::vector<std::string> data_format() const { return data_format_; }
+  void add_data_format(const std::string &data_format) { data_format_.push_back(data_format); }
+  std::vector<std::vector<int64_t>> hccl_kernel_output_shape_list() const { return hccl_kernel_output_shape_list_; }
+  void set_hccl_kernel_output_shape_list(const std::vector<std::vector<int64_t>> &hccl_kernel_output_shape_list) {
+    hccl_kernel_output_shape_list_ = hccl_kernel_output_shape_list;
+  }
+  std::vector<std::vector<int64_t>> hccl_host_output_shape_list() const { return hccl_host_output_shape_list_; }
+  void set_hccl_host_output_shape_list(const std::vector<std::vector<int64_t>> &hccl_host_output_shape_list) {
+    hccl_host_output_shape_list_ = hccl_host_output_shape_list;
+  }
+  std::vector<size_t> output_size_list() const { return output_size_list_; }
+  void add_output_size_list(size_t output_size) { output_size_list_.push_back(output_size); }
+  std::map<std::string, tensor::TensorPtr> device_loop_control_tensors() const { return device_loop_ctrl_tensors_; }
+  void set_device_loop_ctrl_tensors(const std::map<std::string, tensor::TensorPtr> &device_loop_ctrl_tensors) {
+    device_loop_ctrl_tensors_ = device_loop_ctrl_tensors;
+  }
+  std::vector<const void *> get_output_addr_list() const { return output_addr_list_; }
+  void add_output_addr(const void *output_addr) { output_addr_list_.push_back(output_addr); }
   const std::string &group() const { return group_; }
   const std::vector<void *> &global_workspace_addr() const { return global_workspace_addr_; }
 
@@ -285,6 +310,7 @@ class HcclTaskInfo : public TaskInfo {
   std::string hccl_type_;
   void *input_data_addr_;
   void *output_data_addr_;
+  std::vector<const void *> output_addr_list_;
   void *workspace_addr_;
   int64_t workspace_size_;
   int64_t hccl_stream_num_;
@@ -292,9 +318,16 @@ class HcclTaskInfo : public TaskInfo {
   void *ops_kernel_store_;
   int32_t count_;
   int64_t root_id_;
+  uint32_t graph_id_;
   int64_t op_type_;
   int64_t data_type_;
   std::string group_;
+  size_t output_num_;
+  std::vector<std::string> data_format_;
+  std::vector<std::vector<int64_t>> hccl_kernel_output_shape_list_;
+  std::vector<std::vector<int64_t>> hccl_host_output_shape_list_;
+  std::vector<size_t> output_size_list_;
+  std::map<std::string, tensor::TensorPtr> device_loop_ctrl_tensors_;
   // hccl global overflow addr
   std::vector<void *> global_workspace_addr_;
 };

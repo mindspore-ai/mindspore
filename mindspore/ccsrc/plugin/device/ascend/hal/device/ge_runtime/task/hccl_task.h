@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include <vector>
 #include <mutex>
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
+#include "plugin/device/ascend/hal/device/dump/kernel_dumper.h"
 #include "common/opskernel/ge_task_info.h"
 
 namespace mindspore::ge::model_runner {
@@ -55,6 +56,7 @@ class HcclTask : public TaskRepeater<HcclTaskInfo> {
   static std::mutex model_stream_mapping_mutex_;
 
   ::ge::GETaskInfo ge_task_;
+  device::ascend::KernelDumper kernel_dumper_;
 };
 
 class HcclTask::StreamGuard {

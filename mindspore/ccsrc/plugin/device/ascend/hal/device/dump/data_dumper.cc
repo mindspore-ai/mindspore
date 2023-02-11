@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,10 @@ void DataDumper::LoadDumpInfo() {
     MS_LOG(INFO) << "[DataDump] LoadDumpInfo kernel:" << kernel->UniqueName();
     (void)dump_kernel_names_.emplace_back(kernel->UniqueName());
     DumpJsonParser::GetInstance().MatchKernel(kernel->fullname_with_scope());
-
+    if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL) {
+      MS_LOG(INFO) << "Skip HCCL kernel.";
+      continue;
+    }
     aicpu::dump::Task task;
     ConstructDumpTask(NOT_NULL(kernel), NOT_NULL(&task));
     MS_EXCEPTION_IF_NULL(dump_info.mutable_task());
