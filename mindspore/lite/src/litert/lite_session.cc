@@ -53,6 +53,9 @@
 #if SUPPORT_NNAPI
 #include "src/litert/delegate/nnapi/nnapi_delegate.h"
 #endif
+#ifdef ENABLE_COREML
+#include "src/litert/delegate/coreml/coreml_delegate.h"
+#endif
 #include "src/litert/runtime_convert.h"
 #include "extendrt/mindir_loader/model_loader.h"
 #ifndef __ANDROID__
@@ -950,6 +953,18 @@ int LiteSession::CreateNNAPIDelegate() {
   return RET_OK;
 }
 
+int LiteSession::CreateCoreMLDelegate() {
+#ifdef ENABLE_COREML
+  delegate_ = std::make_shared<CoreMLDelegate>();
+  if (delegate_ == nullptr) {
+    MS_LOG(ERROR) << "New delegate_ failed";
+    return RET_ERROR;
+  }
+  this->context_->delegate = delegate_;
+#endif
+  return RET_OK;
+}
+
 int LiteSession::DelegateInit() {
 #ifndef DELEGATE_CLIP
   int ret = RET_OK;
@@ -960,6 +975,9 @@ int LiteSession::DelegateInit() {
     switch (context_->delegate_mode_) {
       case kNNAPI:
         ret = CreateNNAPIDelegate();
+        break;
+      case kCoreML:
+        ret = CreateCoreMLDelegate();
         break;
       default:
         MS_LOG(ERROR) << "Unsupported built-in delegate mode: " << context_->delegate_mode_;
