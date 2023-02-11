@@ -589,7 +589,7 @@ void CalAddcdiv(const std::vector<int64_t> &input_data_dims, const std::vector<i
       inp *= input_data_dims[j];
       x1_ *= x1_dims[j];
       x2_ *= x2_dims[j];
-      v *= output_dims[j];
+      v *= value_dims[j];
     }
     output_broadcast_used[i] = o;
     input_data_broadcast_used[i] = inp;
@@ -609,6 +609,20 @@ void CalAddcdiv(const std::vector<int64_t> &input_data_dims, const std::vector<i
     } else if (size_value == 1) {
       Addcdiv_all_same_value1<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, stream>>>(
         input_data, x1, x2, value, output, size);
+    } else {
+      Addcdiv<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, stream>>>(
+        input_data_dims[0], input_data_dims[1], input_data_dims[2], input_data_dims[3], input_data_dims[4],
+        input_data_dims[5], input_data_dims[6], x1_dims[0], x1_dims[1], x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5],
+        x1_dims[6], x2_dims[0], x2_dims[1], x2_dims[2], x2_dims[3], x2_dims[4], x2_dims[5], x2_dims[6], value_dims[0],
+        value_dims[1], value_dims[2], value_dims[3], value_dims[4], value_dims[5], value_dims[6], output_dims[0],
+        output_dims[1], output_dims[2], output_dims[3], output_dims[4], output_dims[5], output_dims[6],
+        output_broadcast_used[0], output_broadcast_used[1], output_broadcast_used[2], output_broadcast_used[3],
+        output_broadcast_used[4], input_data_broadcast_used[0], input_data_broadcast_used[1],
+        input_data_broadcast_used[2], input_data_broadcast_used[3], input_data_broadcast_used[4], x1_broadcast_used[0],
+        x1_broadcast_used[1], x1_broadcast_used[2], x1_broadcast_used[3], x1_broadcast_used[4], x2_broadcast_used[0],
+        x2_broadcast_used[1], x2_broadcast_used[2], x2_broadcast_used[3], x2_broadcast_used[4], value_broadcast_used[0],
+        value_broadcast_used[1], value_broadcast_used[2], value_broadcast_used[3], value_broadcast_used[4], input_data,
+        x1, x2, value, output, size);
     }
   } else if (size_value == 1) {
     Addcdiv_value1<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, stream>>>(
