@@ -1064,7 +1064,7 @@ def get_bprop_reduce_mean(self):
         grad = _sum_grad(x, axis, dout)
         shape_x = shape_op(x)
         shape_out = shape_op(out)
-        if F.is_sequence_value_unknown(shape_x):
+        if F.is_sequence_value_unknown(shape_x) or F.is_sequence_value_unknown(shape_out):
             shape_x = dyn_shape_op(x)
             shape_out = dyn_shape_op(out)
             div_shape = reduce_prod(cast(shape_x, mstype.float32), ()) /\
