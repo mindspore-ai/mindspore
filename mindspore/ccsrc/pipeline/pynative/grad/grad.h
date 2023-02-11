@@ -190,7 +190,6 @@ class GradExecutor {
                           const InputArgsInfoPtr &input_args_info);
   void DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id);
   void CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info);
-  void EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell);
   void GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<AnfNodePtr> &w_args,
                     const std::vector<size_t> &p_args);
   FuncGraphPtr GetBpropGraph(const autograd::GradAttr &grad_attr, const vector<AnfNodePtr> &w_args,
@@ -232,9 +231,8 @@ class GradExecutor {
   std::vector<std::string> bprop_cell_list_;
   // For high grad order
   std::stack<TopCellInfoPtr> high_order_stack_;
-  std::vector<TopCellInfoPtr> top_cell_list_;
   // Record all top cell which has been ran
-  mindspore::HashMap<std::string, TopCellInfoPtr> already_run_top_cell_;
+  mindspore::OrderedMap<std::string, TopCellInfoPtr> already_run_top_cell_;
   ForwardExecutorWeakPtr forward_executor_;
   MsFunctionPtr ms_function_;
   std::shared_ptr<AsyncQueue> async_executor_;

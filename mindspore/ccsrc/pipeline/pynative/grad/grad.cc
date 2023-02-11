@@ -603,7 +603,6 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
   top_cell_->set_use_dynamic_shape_process(use_dynamic_shape_process);
   top_cell_->set_need_save_dynamic_detect_nodes(IsNeedSaveDynamicDetectNodes(top_cell_, use_dynamic_shape_process));
   PushHighOrderGraphStack(top_cell_);
-  (void)top_cell_list_.emplace_back(top_cell_);
   MS_LOG(DEBUG) << "New top graph, fg ptr " << fg.get() << " resource ptr " << resource.get();
 }
 
@@ -798,21 +797,9 @@ void GradExecutor::GetCustomBpropPrim(const py::object &obj, const py::args &arg
 
 void GradExecutor::ClearPreTopCell(const TopCellInfoPtr &new_top_cell, bool is_need_clear_device_mem) {
   MS_EXCEPTION_IF_NULL(new_top_cell);
-  // Clear top cell list
-  top_cell_list_.erase(std::remove_if(top_cell_list_.begin(), top_cell_list_.end(),
-                                      [new_top_cell](const auto &elem) {
-                                        return elem != nullptr && elem.get() != new_top_cell.get() &&
-                                               elem->obj_id_with_grad_order() == new_top_cell->obj_id_with_grad_order();
-                                      }),
-                       top_cell_list_.end());
-
   // Clear already run top cell and device mem
   for (auto iter = already_run_top_cell_.begin(); iter != already_run_top_cell_.end();) {
-    if (iter->second == nullptr) {
-      iter++;
-      continue;
-    }
-
+    MS_EXCEPTION_IF_NULL(iter->second);
     if (iter->second->obj_id_with_grad_order() == new_top_cell->obj_id_with_grad_order()) {
       if (is_need_clear_device_mem) {
         iter->second->ClearDeviceMemory();
@@ -853,10 +840,8 @@ void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info
     // Function need compile every time.
     new_top_cell->use_dynamic_shape_process() ? MS_LOG(DEBUG) << "The graph is dynamic, need to compile graph again"
                                               : MS_LOG(DEBUG) << "Force outer graph compile graph";
-    auto has_higher_order = std::any_of(top_cell_list_.begin(), top_cell_list_.end(), [](const TopCellInfoPtr &value) {
-      MS_EXCEPTION_IF_NULL(value);
-      return value->is_high_order_top_cell();
-    });
+    auto has_higher_order = std::any_of(already_run_top_cell_.begin(), already_run_top_cell_.end(),
+                                        [](const auto &elem) { return elem.second->is_high_order_top_cell(); });
     ClearPreTopCell(new_top_cell, input_args_info->is_grad_topest_cell && !has_higher_order);
     already_run_top_cell_[already_top_cell_id] = new_top_cell;
     new_top_cell->set_force_top_cell_compile(false);
@@ -880,18 +865,6 @@ TopCellInfoPtr GradExecutor::GetAlreadyRunTopCell(const std::string &already_run
   return nullptr;
 }
 
-void GradExecutor::EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell) {
-  MS_EXCEPTION_IF_NULL(top_cell);
-  const auto iter = std::find_if(top_cell_list_.begin(), top_cell_list_.end(),
-                                 [&](const TopCellInfoPtr &elem) { return elem.get() == top_cell.get(); });
-  if (iter == top_cell_list_.end()) {
-    MS_LOG(WARNING) << "Can not find top cell " << top_cell.get() << " cell id " << top_cell->cell_id()
-                    << " from top cell list";
-  } else {
-    (void)top_cell_list_.erase(iter);
-  }
-}
-
 void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                                 const py::object &grad_position, const py::args &args) {
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
@@ -907,7 +880,6 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
     MS_LOG(DEBUG) << "No need compile graph";
     // If no need compile, we can finish construct left bprop
     async_executor_->Clear();
-    top_cell_list_.pop_back();
     set_top_cell(already_run_top_cell);
     top_cell()->UpdateTopCellInfo(false, false, false);
     return;
@@ -1126,7 +1098,7 @@ void GradExecutor::SetGradOrder(const std::string &obj_id) {
   // top_cell_->obj_id_with_grad_order() include obj_id and grad_order
   // If top_cell_->obj_id_with_grad_order().find(obj_id) == std::string::npos and have cell info stack, means current
   // cell is not top cell, grad high order come in
-  if (top_cell_ == nullptr || top_cell_->obj_id_with_grad_order().find(obj_id) == std::string::npos) {
+  if (top_cell_ == nullptr || top_cell_->obj_id_with_grad_order().find(obj_id + "_") == std::string::npos) {
     IncreaseGradOrder();
   }
   if (!grad_is_running_) {
@@ -1342,12 +1314,12 @@ void GradExecutor::ClearGlobalRes() {
 }
 
 void GradExecutor::ClearGradRes() {
-  bool has_high_grad = std::any_of(top_cell_list_.begin(), top_cell_list_.end(),
-                                   [](const TopCellInfoPtr &t) { return t->is_high_order_top_cell(); });
+  auto has_higher_order = std::any_of(already_run_top_cell_.begin(), already_run_top_cell_.end(),
+                                      [](const auto &elem) { return elem.second->is_high_order_top_cell(); });
   // Custom bprop nested, top cell reset by first time, second time no need clean
   if (top_cell_ != nullptr) {
     // High order must no clean
-    if (!has_high_grad) {
+    if (!has_higher_order) {
       top_cell_->ClearDeviceMemory();
     }
     const auto &pre_top_cell = GetAlreadyRunTopCell(top_cell()->already_run_cell_id());
@@ -1373,11 +1345,6 @@ void GradExecutor::ClearRes() {
   bprop_cell_list_.clear();
   grad_operation_.clear();
   async_executor_->Reset();
-  for (const auto &cell_ptr : top_cell_list_) {
-    MS_EXCEPTION_IF_NULL(cell_ptr);
-    cell_ptr->Clear();
-  }
-  top_cell_list_.clear();
   already_run_top_cell_.clear();
   cell_id_with_dynamic_detect_nodes_.clear();
   std::stack<InputArgsInfoPtr>().swap(input_args_info_stack_);
@@ -1536,8 +1503,9 @@ AnfNodePtr GradExecutor::CreateTupleGetItemNode(const std::string &obj_id,
 
 TopCellInfoPtr GradExecutor::GetTopCell(const std::string &already_run_cell_id) {
   TopCellInfoPtr find_top_cell = nullptr;
-  for (const auto &top_cell : top_cell_list_) {
+  for (const auto &[cell_id, top_cell] : already_run_top_cell_) {
     MS_EXCEPTION_IF_NULL(top_cell);
+    MS_LOG(DEBUG) << "Get top cell id " << cell_id;
     // Complete match, means run grad operation first
     if (top_cell->already_run_cell_id() == already_run_cell_id) {
       return top_cell;
@@ -1560,7 +1528,6 @@ TopCellInfoPtr GradExecutor::GetTopCell(const std::string &already_run_cell_id) 
     if (!find_top_cell->grad_operation().empty() && find_top_cell->grad_operation() != grad_operation_) {
       MS_LOG(DEBUG) << "Already exist grad operation " << find_top_cell->grad_operation() << " is different with new "
                     << grad_operation_;
-      EraseTopCellFromTopCellList(find_top_cell);
       (void)already_run_top_cell_.erase(find_top_cell->already_run_cell_id());
       return nullptr;
     } else {
