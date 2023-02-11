@@ -452,7 +452,8 @@ void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &
 
   const std::vector<CNodePtr> &orders = kernel_graph_ptr->execution_order();
   if (orders.empty()) {
-    MS_LOG(EXCEPTION) << "graph " << kernel_graph_ptr->graph_id() << " execution order is empty";
+    MS_LOG(WARNING) << "graph " << kernel_graph_ptr->graph_id() << " execution order is empty";
+    return;
   }
 
   std::vector<CNodePtr> exec_order;
