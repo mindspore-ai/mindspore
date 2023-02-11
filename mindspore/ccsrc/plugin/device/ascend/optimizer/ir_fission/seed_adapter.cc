@@ -32,7 +32,7 @@ namespace mindspore::opt {
 namespace {
 const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName,          kPoissonOpName,    kStandardLaplaceOpName,
                                                       kStandardNormalOpName, kUniformIntOpName, kUniformRealOpName,
-                                                      kDropoutGenMaskOpName};
+                                                      kDropoutGenMaskOpName, kMultinomialOpName};
 template <typename T>
 tensor::TensorPtr CreateTensor(T seed) {
   // 1 create seed tensor
@@ -90,6 +90,16 @@ std::vector<ValueNodePtr> ConvertAttrToValueNode(const std::shared_ptr<kernel::O
     }
     (void)ret.emplace_back(offset0);
     (void)ret.emplace_back(offset1);
+  } else if (op_info->op_name() == kMultinomialOpName) {
+    uint64_t count = 0;
+    int64_t state = 0;
+    auto count_node = CreateValueNode(count);
+    auto state_node = CreateValueNode(state);
+    if (count_node == nullptr || state_node == nullptr) {
+      MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << trace::DumpSourceLines(cnode);
+    }
+    (void)ret.emplace_back(count_node);
+    (void)ret.emplace_back(state_node);
   } else {
     // Get seed to create value node
     auto attrs = op_info->attrs_ptr();
