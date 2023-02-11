@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_HAL_PROFILER_CPU_DATA_SAVER_H
 #include <iostream>
 #include <unordered_map>
-#include <vector>
 #include <string>
 #include <memory>
 #include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
