@@ -19,7 +19,6 @@
 #include <iostream>
 #include <algorithm>
 #include <unordered_map>
-#include <vector>
 #include <string>
 #include <memory>
 #include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
