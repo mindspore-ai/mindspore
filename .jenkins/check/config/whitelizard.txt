@@ -339,6 +339,7 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/maximum.cc:aicpu::MaximumCpuKernel::BcastComputeOneKernel
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/lu_unpack.cc:aicpu::LuUnpackCpuKernel::Compute
 mindspore/mindspore/ccsrc/plugin/device/ascend/optimizer/mindir/aicpu_lib_select.cc:mindspore::opt::AICpuLibSelectPass::Process
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/crop_and_resize_grad_boxes.cc:aicpu::CropAndResizeGradBoxesCpuKernel::GradOfBoxesCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/fractional_max_pool_grad.cc:aicpu::FractionalMaxPoolGradCpuKernel::DoCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/fractional_avg_pool_grad.cc:aicpu::FractionalAvgPoolGradCpuKernel::DoCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/fractional_max_pool.cc:aicpu::FractionalMaxPoolCpuKernel::DoCompute
