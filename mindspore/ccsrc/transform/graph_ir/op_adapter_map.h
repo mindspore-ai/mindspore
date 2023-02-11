@@ -348,6 +348,7 @@ constexpr const char kNameMaxPoolV3[] = "MaxPoolV3";
 constexpr const char kNameAvgPoolV2[] = "AvgPoolV2";
 constexpr const char kNameShape[] = "Shape";
 constexpr const char kNameTensorShape[] = "TensorShape";
+constexpr const char kNameDynamicShape[] = "DynamicShape";
 constexpr const char kNameGather[] = "Gather";
 constexpr const char kNameUnsqueeze[] = "Unsqueeze";
 constexpr const char kNamePadV3[] = "PadV3";
