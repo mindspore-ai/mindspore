@@ -86,7 +86,7 @@ struct TTypes {
 class EigenTensor {
  public:
   EigenTensor() = delete;
-  EigenTensor(ShapeVector &shape, void *data_ptr) : tensor_shape(shape), tensor_data_ptr(data_ptr) {}
+  EigenTensor(const ShapeVector &shape, void *data_ptr) : tensor_shape(shape), tensor_data_ptr(data_ptr) {}
   EigenTensor(std::vector<size_t> &shape, void *data_ptr) : tensor_data_ptr(data_ptr) {
     for (size_t dim : shape) {
       (void)tensor_shape.emplace_back(static_cast<int64_t>(dim));

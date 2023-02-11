@@ -66,7 +66,7 @@ class MatrixExpCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
 
-  void TyepChangeForFp16(int64_t i, int64_t m, int64_t size_mm, mindspore::Float16 *input_x,
+  void TyepChangeForFp16(int64_t i, int64_t m, int64_t size_mm, const mindspore::Float16 *input_x,
                          mindspore::Float16 *output_y) const;
 
   template <typename T>

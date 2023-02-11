@@ -93,7 +93,7 @@ class MirrorPadInfer : public abstract::OpInferBase {
       if (x_shape[i] == -1) {
         continue;
       }
-      if (LongToSize(paddings_attr[i].first) < 0 || LongToSize(paddings_attr[i].second) < 0) {
+      if (paddings_attr[i].first < 0 || paddings_attr[i].second < 0) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', all elements of paddings must be >= 0.";
       }
       if (mode == "SYMMETRIC") {
