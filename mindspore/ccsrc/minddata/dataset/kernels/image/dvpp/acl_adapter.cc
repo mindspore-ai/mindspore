@@ -23,7 +23,11 @@
 namespace mindspore {
 namespace dataset {
 namespace {
+#if defined(BUILD_LITE)
+constexpr auto kAclPluginRelatedPath = "./libdvpp_utils.so";
+#else
 constexpr auto kAclPluginRelatedPath = "./lib/plugin/ascend/libdvpp_utils.so";
+#endif
 }  // namespace
 AclAdapter &AclAdapter::GetInstance() {
   static AclAdapter instance{};
