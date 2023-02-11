@@ -752,7 +752,8 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
 
     MS_EXCEPTION_IF_NULL(root_graph_);
     if (root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
-      graph_compiler_->CalculateForwardOpOutputCount(graph, inputs[graph_index], &forward_op_output_tensor_id_);
+      graph_compiler_->CalculateForwardOpOutputCount(graph, inputs[graph_index], &forward_op_output_tensor_id_,
+                                                     parameter_index);
     }
 
     bool use_dynamic_shape_process = root_graph_->has_flag(kFlagUseDynamicShapeProcess);
