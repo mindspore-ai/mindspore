@@ -31,21 +31,18 @@ bool RDMAServer::Initialize(const std::string &url, const MemAllocateCallback &a
   port_ = port;
 
   // Init URPC for RMDA server.
-  struct urpc_config urpc_cfg = {};
-  urpc_cfg.mode = URPC_MODE_SERVER;
-  urpc_cfg.sfeature = 0;
-  urpc_cfg.model = URPC_THREAD_MODEL_R2C;
-  urpc_cfg.worker_num = kServerWorkingThreadNum;
-  urpc_cfg.transport.dev_name = dev_name_;
-  urpc_cfg.transport.ip_addr = ip_addr_;
-  urpc_cfg.transport.port = port_;
-  urpc_cfg.transport.max_sge = 0;
-  urpc_cfg.allocator = nullptr;
-  if (urpc_init_func(&urpc_cfg) != kURPCSuccess) {
-    MS_LOG(EXCEPTION) << "Failed to call urpc_init. Device name: " << dev_name_ << ", ip address: " << ip_addr_
-                      << ", port: " << port_ << ". Please refer to URPC log directory: /var/log/umdk/urpc.";
-  }
-  return true;
+  return InitializeURPC();
+}
+
+bool RDMAServer::Initialize(const MemAllocateCallback &allocate_cb) {
+  dev_name_ = const_cast<char *>(common::GetEnv(kRDMADevName).c_str());
+  ip_addr_ = const_cast<char *>(common::GetEnv(kRDMAIP).c_str());
+  port_ = 0;
+  MS_LOG(INFO) << "Initialize RDMA server. Device name: " << dev_name_ << ", ip address: " << ip_addr_
+               << ", port: " << port_;
+
+  // Init URPC for RMDA server.
+  return InitializeURPC();
 }
 
 void RDMAServer::Finalize() {
@@ -67,9 +64,27 @@ void RDMAServer::SetMessageHandler(const MessageHandler &handler) {
   }
 }
 
-std::string RDMAServer::GetIP() const { return ""; }
+std::string RDMAServer::GetIP() const { return ip_addr_; }
 
-uint32_t RDMAServer::GetPort() const { return 0; }
+uint32_t RDMAServer::GetPort() const { return static_cast<uint32_t>(port_); }
+
+bool RDMAServer::InitializeURPC() {
+  struct urpc_config urpc_cfg = {};
+  urpc_cfg.mode = URPC_MODE_SERVER;
+  urpc_cfg.sfeature = 0;
+  urpc_cfg.model = URPC_THREAD_MODEL_R2C;
+  urpc_cfg.worker_num = kServerWorkingThreadNum;
+  urpc_cfg.transport.dev_name = dev_name_;
+  urpc_cfg.transport.ip_addr = ip_addr_;
+  urpc_cfg.transport.port = port_;
+  urpc_cfg.transport.max_sge = 0;
+  urpc_cfg.allocator = nullptr;
+  if (urpc_init_func(&urpc_cfg) != kURPCSuccess) {
+    MS_LOG(EXCEPTION) << "Failed to call urpc_init. Device name: " << dev_name_ << ", ip address: " << ip_addr_
+                      << ", port: " << port_ << ". Please refer to URPC log directory: /var/log/umdk/urpc.";
+  }
+  return true;
+}
 
 void RDMAServer::urpc_req_handler(struct urpc_sgl *req, void *arg, struct urpc_sgl *rsp) {
   MS_ERROR_IF_NULL_WO_RET_VAL(req);

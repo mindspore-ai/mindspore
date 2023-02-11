@@ -37,6 +37,7 @@ class BACKEND_EXPORT RDMAServer : public RPCServerBase {
   ~RDMAServer() override = default;
 
   bool Initialize(const std::string &url, const MemAllocateCallback &allocate_cb = {}) override;
+  bool Initialize(const MemAllocateCallback &allocate_cb = {}) override;
   void Finalize() override;
   void SetMessageHandler(const MessageHandler &handler) override;
 
@@ -47,6 +48,9 @@ class BACKEND_EXPORT RDMAServer : public RPCServerBase {
   struct urpc_buffer_allocator *urpc_allocator_;
 
  private:
+  // Initialize urpc configuration according to dev_name_, ip_addr_ and port_.
+  bool InitializeURPC();
+
   // The message callback for urpc. This method will call user-set message handler.
   static void urpc_req_handler(struct urpc_sgl *req, void *arg, struct urpc_sgl *rsp);
   // The callback after this server responding.

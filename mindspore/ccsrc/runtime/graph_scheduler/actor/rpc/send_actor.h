@@ -49,7 +49,7 @@ class SendActor : public RpcActor {
   // Flush and wait for sent data to be passed to kernel.
   void FlushData() override;
 
-  // Finalize tcp client.
+  // Finalize rpc client.
   void Clear() override;
 
  protected:
@@ -76,8 +76,8 @@ class SendActor : public RpcActor {
    */
   virtual void Flush();
 
-  // The tcp client connection to multiple servers.
-  std::unique_ptr<TCPClient> client_;
+  // The rpc client connection to multiple servers.
+  std::unique_ptr<RPCClientBase> client_;
 
  private:
   /**
@@ -136,7 +136,7 @@ class SendActor : public RpcActor {
   std::vector<std::string> peer_actor_ids_;
   mindspore::HashMap<std::string, std::string> peer_actor_urls_;
 
-  // The url of the peer recv actor's tcp server.
+  // The url of the peer recv actor's server.
   std::string server_url_;
 };
 

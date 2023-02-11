@@ -21,7 +21,6 @@
 #include <functional>
 #include <condition_variable>
 #include "proto/topology.pb.h"
-#include "distributed/rpc/tcp/constants.h"
 #include "plugin/device/cpu/kernel/rpc/rpc_recv_kernel.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -62,15 +61,24 @@ void RecvActor::SetRouteInfo(uint32_t, const std::string &, const std::string &r
 }
 
 bool RecvActor::StartServer() {
-  // Step 1: Create a tcp server and start listening.
+  // Step 1: Create a rpc server and start listening.
+
+#ifdef ENABLE_RDMA
+  if (common::GetEnv(kEnableRDMA) == "1") {
+    server_ = std::make_unique<RDMAServer>();
+  } else {
+    server_ = std::make_unique<TCPServer>();
+  }
+#else
   server_ = std::make_unique<TCPServer>();
+#endif
   MS_EXCEPTION_IF_NULL(server_);
 
   // Set the memory allocating callback using void* message.
   std::function<void *(size_t size)> allocate_callback =
     std::bind(&RecvActor::AllocateMessage, this, std::placeholders::_1);
   if (!server_->Initialize(allocate_callback)) {
-    MS_LOG(EXCEPTION) << "Failed to initialize tcp server for recv actor";
+    MS_LOG(EXCEPTION) << "Failed to initialize rpc server for recv actor";
   }
   ip_ = server_->GetIP();
   port_ = server_->GetPort();

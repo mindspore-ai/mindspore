@@ -18,7 +18,9 @@
 #define MINDSPORE_CCSRC_DISTRIBUTED_RPC_RDMA_CONSTANTS_H_
 
 #include <urpc.h>
+#include <mutex>
 #include <string>
+#include <condition_variable>
 
 #include "utils/dlopen_macro.h"
 #include "distributed/constants.h"
@@ -114,8 +116,10 @@ constexpr uint32_t kServerWorkingThreadNum = 4;
 constexpr uint32_t kClientPollingThreadNum = 4;
 
 struct req_cb_arg {
-  int *rsp_received;
+  bool rsp_received;
   struct urpc_buffer_allocator *allocator;
+  std::mutex *mtx;
+  std::condition_variable *cv;
 };
 }  // namespace rpc
 }  // namespace distributed

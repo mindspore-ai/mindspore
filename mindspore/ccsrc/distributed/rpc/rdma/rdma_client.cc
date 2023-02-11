@@ -21,7 +21,10 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-bool RDMAClient::Initialize() { return true; }
+bool RDMAClient::Initialize() {
+  // The initialization of URPC RDMA is implemented in 'Connect' function.
+  return true;
+}
 
 void RDMAClient::Finalize() {
   if (urpc_session_ != nullptr) {
@@ -63,7 +66,13 @@ bool RDMAClient::Connect(const std::string &dst_url, size_t retry_count, const M
 
 bool RDMAClient::IsConnected(const std::string &dst_url) { return false; }
 
-bool RDMAClient::Disconnect(const std::string &dst_url, size_t timeout_in_sec) { return true; }
+bool RDMAClient::Disconnect(const std::string &dst_url, size_t timeout_in_sec) {
+  if (urpc_session_ != nullptr) {
+    urpc_close_func(urpc_session_);
+    urpc_session_ = nullptr;
+  }
+  return true;
+}
 
 bool RDMAClient::SendSync(std::unique_ptr<MessageBase> &&msg, size_t *const send_bytes) {
   MS_EXCEPTION_IF_NULL(msg);
@@ -77,34 +86,59 @@ bool RDMAClient::SendSync(std::unique_ptr<MessageBase> &&msg, size_t *const send
   sgl.sge[0].flag = URPC_SGE_FLAG_ZERO_COPY;
   sgl.sge_num = 1;
 
-  int rsp_received = 0;
-  struct req_cb_arg cb_arg = {};
-  cb_arg.rsp_received = &rsp_received;
-  cb_arg.allocator = urpc_allocator_;
+  struct urpc_send_wr send_wr = {};
+  send_wr.func_id = kInterProcessDataHandleID;
+  send_wr.send_mode = URPC_SEND_MODE_SYNC;
+  send_wr.req = &sgl;
+  struct urpc_sgl rsp_sgl = {0};
+  send_wr.sync.rsp = &rsp_sgl;
+
+  if (urpc_send_request_func(urpc_session_, &send_wr, nullptr) < 0) {
+    MS_LOG(ERROR) << "Failed to send request for function call: " << send_wr.func_id;
+    return false;
+  }
+  MS_LOG(INFO) << "Server response message is " << reinterpret_cast<char *>(rsp_sgl.sge[0].addr);
+
+  return true;
+}
+
+void RDMAClient::SendAsync(std::unique_ptr<MessageBase> &&msg) {
+  MS_EXCEPTION_IF_NULL(msg);
+  size_t msg_size = msg->size;
+  void *msg_buf = msg->data;
+  MS_EXCEPTION_IF_NULL(msg_buf);
+
+  struct urpc_sgl sgl;
+  sgl.sge[0].addr = reinterpret_cast<uintptr_t>(msg_buf);
+  sgl.sge[0].length = msg_size;
+  sgl.sge[0].flag = URPC_SGE_FLAG_ZERO_COPY;
+  sgl.sge_num = 1;
+
+  std::unique_lock<std::mutex> lock(mtx_);
+  cb_arg_.rsp_received = false;
+  cb_arg_.allocator = urpc_allocator_;
+  cb_arg_.mtx = &mtx_;
+  cb_arg_.cv = &cv_;
+  lock.unlock();
 
   struct urpc_send_wr send_wr = {};
   send_wr.func_id = kInterProcessDataHandleID;
   send_wr.send_mode = URPC_SEND_MODE_ASYNC;
   send_wr.req = &sgl;
   send_wr.async.cb.wo_ctx = urpc_rsp_cb;
-  send_wr.async.cb_arg = &cb_arg;
+  send_wr.async.cb_arg = &cb_arg_;
 
-  if (urpc_send_request_func(urpc_session_, &send_wr, nullptr) != kURPCSuccess) {
-    MS_LOG(ERROR) << "Failed to send request.";
-    return false;
+  if (urpc_send_request_func(urpc_session_, &send_wr, nullptr) < 0) {
+    MS_LOG(EXCEPTION) << "Failed to send request to server.";
+    return;
   }
-
-  size_t sleep_time_us = 200000;
-  // Wait till server responds.
-  while (rsp_received == 0) {
-    usleep(sleep_time_us);
-  }
-  return true;
 }
 
-void RDMAClient::SendAsync(std::unique_ptr<MessageBase> &&msg) {}
-
-bool RDMAClient::Flush(const std::string &dst_url) { return true; }
+bool RDMAClient::Flush(const std::string &dst_url) {
+  std::unique_lock<std::mutex> lock(mtx_);
+  cv_.wait(lock, [this]() { return cb_arg_.rsp_received; });
+  return true;
+}
 
 void RDMAClient::urpc_rsp_cb(struct urpc_sgl *rsp, int err, void *arg) {
   MS_ERROR_IF_NULL_WO_RET_VAL(rsp);
@@ -116,7 +150,9 @@ void RDMAClient::urpc_rsp_cb(struct urpc_sgl *rsp, int err, void *arg) {
 
   MS_LOG(INFO) << "Server response message is " << reinterpret_cast<char *>(rsp->sge[0].addr);
   struct req_cb_arg *cb_arg = static_cast<struct req_cb_arg *>(arg);
-  *(cb_arg->rsp_received) = 1;
+  std::unique_lock<std::mutex> lock(*(cb_arg->mtx));
+  cb_arg->rsp_received = true;
+  cb_arg->cv->notify_all();
 }
 }  // namespace rpc
 }  // namespace distributed

@@ -62,7 +62,7 @@ class RecvActor : public RpcActor {
   // Start recv actor server and register this server address to actor route table in scheduler by proxy.
   bool StartServer();
 
-  // Finalize tcp server.
+  // Finalize rpc server.
   void Clear() override;
 
   void StopRpcAtException() override;
@@ -102,7 +102,7 @@ class RecvActor : public RpcActor {
    */
   void *AllocateMemByDeviceRes(size_t size);
 
-  std::unique_ptr<TCPServer> server_;
+  std::unique_ptr<RPCServerBase> server_;
 
   // The variables used to ensure thread-safe of op context visited by recv actor.
   bool is_context_valid_;
@@ -129,7 +129,7 @@ class RecvActor : public RpcActor {
   // it, e.g., infer shape for RpcRecv kernel and call Resize().
   void PreprocessRemoteInput(const MessageBase *const msg, bool *need_finalize);
 
-  // The message callback of the tcp server.
+  // The message callback of the rpc server.
   MessageBase *HandleMessage(MessageBase *const msg);
 
   // The network address of this recv actor. It's generated automatically by rpc module.

@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 
+#include "distributed/rpc/rpc_server_base.h"
 #include "distributed/rpc/tcp/tcp_comm.h"
 #include "utils/ms_utils.h"
 #include "include/backend/visible.h"
@@ -27,37 +28,32 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-class BACKEND_EXPORT TCPServer {
+class BACKEND_EXPORT TCPServer : public RPCServerBase {
  public:
-  explicit TCPServer(bool enable_ssl = false) : enable_ssl_(enable_ssl) {}
-  ~TCPServer() = default;
+  explicit TCPServer(bool enable_ssl = false) : RPCServerBase(enable_ssl) {}
+  ~TCPServer() override = default;
 
   // Init the tcp server using the specified url.
-  bool Initialize(const std::string &url, const MemAllocateCallback &allocate_cb = {});
+  bool Initialize(const std::string &url, const MemAllocateCallback &allocate_cb = {}) override;
 
   // Init the tcp server using local IP and random port.
-  bool Initialize(const MemAllocateCallback &allocate_cb = {});
+  bool Initialize(const MemAllocateCallback &allocate_cb = {}) override;
 
   // Destroy the tcp server.
-  void Finalize();
+  void Finalize() override;
 
   // Set the message processing handler.
-  void SetMessageHandler(const MessageHandler &handler);
+  void SetMessageHandler(const MessageHandler &handler) override;
 
   // Return the IP and port binded by this server.
-  std::string GetIP() const;
-  uint32_t GetPort() const;
+  std::string GetIP() const override;
+  uint32_t GetPort() const override;
 
  private:
   bool InitializeImpl(const std::string &url, const MemAllocateCallback &allocate_cb);
 
   // The basic TCP communication component used by the server.
   std::unique_ptr<TCPComm> tcp_comm_{nullptr};
-
-  std::string ip_{""};
-  uint32_t port_{0};
-
-  bool enable_ssl_;
 
   DISABLE_COPY_AND_ASSIGN(TCPServer);
 };
