@@ -1184,7 +1184,8 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
     grad_hash_id_str = std::string(py::str(grad_hash_id));
   }
   grad_operation_ = std::to_string(static_cast<int>(grad->get_all_)) +
-                    std::to_string(static_cast<int>(grad->get_by_list_)) + grad_hash_id_str;
+                    std::to_string(static_cast<int>(grad->get_by_list_)) +
+                    std::to_string(static_cast<int>(grad->sens_param_)) + grad_hash_id_str;
 
   std::string input_args_id;
   for (size_t i = 0; i < args.size(); ++i) {
