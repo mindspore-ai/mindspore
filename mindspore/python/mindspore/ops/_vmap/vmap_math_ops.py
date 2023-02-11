@@ -111,6 +111,9 @@ def get_addcxxx_vmap_rule(prim, axis_size):
         x1, x1_dim = x1_bdim
         x2, x2_dim = x2_bdim
         value, value_dim = value_bdim
+        if input_data_dim == x1_dim and x1_dim == x2_dim and x2_dim == value_dim:
+            out = prim(input_data, x1, x2, value)
+            return out, input_data_dim
 
         input_data = _bdim_at_front(input_data, input_data_dim, axis_size)
         x1 = _bdim_at_front(x1, x1_dim, axis_size)
