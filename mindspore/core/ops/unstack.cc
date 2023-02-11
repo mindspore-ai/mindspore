@@ -42,23 +42,29 @@ class UnstackInfer : public abstract::OpInferBase {
 
     auto output_num = GetValue<int64_t>(primitive->GetAttr(kAttrNum));
     auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
+    std::vector<abstract::BaseShapePtr> shape_tuple;
 
     auto temp_shape = x_shape;
-    if (!IsDynamicRank(x_shape)) {
-      auto x_rank = SizeToLong(x_shape.size());
-      auto axis = axis_temp < 0 ? LongToSize(axis_temp + x_rank) : LongToSize(axis_temp);
-      if (axis >= x_shape.size()) {
-        MS_LOG(EXCEPTION) << "Axis should be less than " << x_rank << ", but got " << axis;
+    if (IsDynamicRank(x_shape)) {
+      for (int64_t i = 0; i < output_num; ++i) {
+        abstract::ShapePtr output =
+          std::make_shared<abstract::Shape>(std::vector<int64_t>(1, abstract::Shape::kShapeRankAny));
+        shape_tuple.push_back(output);
       }
-      (void)temp_shape.erase(temp_shape.begin() + axis);
-      if (!IsDynamic(x_shape)) {
-        auto output_num_from_shape = x_shape[axis];
-        auto name = primitive->name();
-        (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kEqual, output_num_from_shape, name);
-      }
+      return std::make_shared<abstract::TupleShape>(shape_tuple);
+    }
+    auto x_rank = SizeToLong(x_shape.size());
+    auto axis = axis_temp < 0 ? LongToSize(axis_temp + x_rank) : LongToSize(axis_temp);
+    if (axis >= x_shape.size()) {
+      MS_LOG(EXCEPTION) << "Axis should be less than " << x_rank << ", but got " << axis;
+    }
+    (void)temp_shape.erase(temp_shape.begin() + axis);
+    if (!IsDynamic(x_shape)) {
+      auto output_num_from_shape = x_shape[axis];
+      auto name = primitive->name();
+      (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kEqual, output_num_from_shape, name);
     }
 
-    std::vector<abstract::BaseShapePtr> shape_tuple;
     for (int64_t i = 0; i < output_num; ++i) {
       abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(temp_shape);
       shape_tuple.push_back(out_shape);
@@ -73,7 +79,7 @@ class UnstackInfer : public abstract::OpInferBase {
     auto type = input_args[kInputIndex0]->BuildType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", type, common_valid_types_with_complex_and_bool, name);
 
-    int64_t output_num;
+    int64_t output_num = 1;
     auto num_value = primitive->GetAttr(kAttrNum);
     MS_EXCEPTION_IF_NULL(num_value);
     if (!num_value->isa<None>()) {
@@ -82,18 +88,16 @@ class UnstackInfer : public abstract::OpInferBase {
     } else {
       // Num attr is None, try to infer output num from shape.
       auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-      if (IsDynamicRank(x_shape)) {
-        MS_LOG(EXCEPTION) << "Unstack cannot auto infer output size in dynamic rank case.";
+      if (!IsDynamicRank(x_shape)) {
+        auto x_rank = SizeToLong(x_shape.size());
+        (void)CheckAndConvertUtils::CheckInteger("x_rank", x_rank, kGreaterEqual, 1, name);
+
+        auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
+        CheckAndConvertUtils::CheckInRange("axis value", axis_temp, kIncludeLeft, {-x_rank, x_rank}, name);
+        auto axis = axis_temp < 0 ? LongToSize(axis_temp + x_rank) : LongToSize(axis_temp);
+
+        output_num = x_shape[axis];
       }
-
-      auto x_rank = SizeToLong(x_shape.size());
-      (void)CheckAndConvertUtils::CheckInteger("x_rank", x_rank, kGreaterEqual, 1, name);
-
-      auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
-      CheckAndConvertUtils::CheckInRange("axis value", axis_temp, kIncludeLeft, {-x_rank, x_rank}, name);
-      auto axis = axis_temp < 0 ? LongToSize(axis_temp + x_rank) : LongToSize(axis_temp);
-
-      output_num = x_shape[axis];
       (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterEqual, 1, name);
       (void)primitive->AddAttr(kAttrNum, MakeValue(output_num));
     }
