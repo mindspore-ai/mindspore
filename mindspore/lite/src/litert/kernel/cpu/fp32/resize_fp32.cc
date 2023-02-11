@@ -206,7 +206,8 @@ int ResizeCPUKernel::RunImpl(int task_id) {
                                    calculate_, coordinate_transform_mode_, task_id, op_parameter_->thread_num_);
     }
     case static_cast<int>(schema::ResizeMethod_CUBIC): {
-      float *line_buffer = static_cast<float *>(line_buffer_) + new_width_ * c * sizeof(float) * task_id;
+      float *line_buffer = static_cast<float *>(line_buffer_) +
+                           static_cast<size_t>(new_width_ * c) * sizeof(float) * static_cast<size_t>(task_id);
       return ResizeBicubic(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(),
                            coordinate_.y_tops_, coordinate_.x_lefts_, static_cast<float *>(y_weights_),
                            static_cast<float *>(x_weights_), line_buffer, h_begin, h_end);

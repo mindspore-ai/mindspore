@@ -179,7 +179,7 @@ MSKernelCallBack BiasCorrectionStrategy::GetCPUFloatBeforeCallBack() {
       MS_LOG(INFO) << "tensor type is " << tensor.DataType();
       return true;
     }
-    size_t elem_count = tensor.ElementNum();
+    size_t elem_count = static_cast<size_t>(tensor.ElementNum());
     MS_CHECK_GT(elem_count, 0, false);
     std::vector<float> fp32_op_input(elem_count);
     auto ret =

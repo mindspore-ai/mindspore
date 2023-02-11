@@ -86,7 +86,8 @@ int ConvolutionGradInputCPUKernel::DoExecute(int task_id) {
   auto w_addr = reinterpret_cast<float *>(input_w->MutableData());
   auto dx_addr = reinterpret_cast<float *>(out_dx->MutableData());
 
-  int i, j;
+  int i;
+  int j;
   int batch = conv_param->output_batch_;
   int groups = conv_param->group_;
   int in_ch = conv_param->input_channel_;

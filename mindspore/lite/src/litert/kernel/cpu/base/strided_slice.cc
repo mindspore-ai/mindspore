@@ -166,7 +166,8 @@ int StridedSliceCPUKernel::FastRunImpl(int task_id) {
     if (cal_axis_num > cal_num_per_thread_) {
       cal_axis_num = cal_num_per_thread_;
     }
-    FastStride(cur_in_ptr, cur_out_ptr, cal_axis_num, param_->strides_[split_axis_], 1, inner_size_, 0);
+    FastStride(cur_in_ptr, cur_out_ptr, static_cast<uint32_t>(cal_axis_num), param_->strides_[split_axis_], 1,
+               inner_size_, 0);
   }
   return RET_OK;
 }
@@ -271,7 +272,7 @@ int StridedSliceCPUKernel::SoftCopyInputToOutput() {
       auto out_start = output_data + task_id * block_size;
       auto copy_size = block_size;
       if (task_id == (thread_num_ - 1)) {
-        copy_size = size - task_id * block_size;
+        copy_size = size - static_cast<size_t>(task_id) * block_size;
       }
       (void)memcpy(out_start, in_start, copy_size);
       return RET_OK;
