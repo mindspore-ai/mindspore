@@ -27,7 +27,7 @@ from types import FunctionType
 
 from mindspore import log as logger
 from mindspore._c_expression import MSContext, ms_ctx_param
-from mindspore._checkparam import args_type_check, Validator, args_unreset_check
+from mindspore._checkparam import args_type_check, Validator
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
 from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _reset_ps_context, \
@@ -662,7 +662,6 @@ def _check_target_specific_cfgs(device, arg_key):
     return False
 
 
-@args_unreset_check(device_id=int, variable_memory_max_size=str, max_device_memory=str, mempool_block_size=str)
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
                  save_graphs_path=str, enable_dump=bool, auto_tune_mode=str,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,

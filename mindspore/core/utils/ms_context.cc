@@ -35,6 +35,12 @@ std::map<std::string, MsBackendPolicy> MsContext::policy_map_ = {{"ge", kMsBacke
                                                                  {"ge_only", kMsBackendGeOnly},
                                                                  {"vm_prior", kMsBackendVmPrior}};
 
+std::map<MsCtxParam, std::string> kUnresetParamCheckList = {
+  {MsCtxParam::MS_CTX_DEVICE_ID, "device_id"},
+  {MsCtxParam::MS_CTX_VARIABLE_MEMORY_MAX_SIZE, "variable_memory_max_size"},
+  {MsCtxParam::MS_CTX_MAX_DEVICE_MEMORY, "max_device_memory"},
+  {MsCtxParam::MS_CTX_MEMPOOL_BLOCK_SIZE, "mempool_block_size"}};
+
 MsContext::MsContext(const std::string &policy, const std::string &target) {
 #ifndef ENABLE_SECURITY
   set_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG, false);
@@ -111,6 +117,11 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS, runtime_num_threads_default);
 
   backend_policy_ = policy_map_[policy];
+
+  params_read_status_ = std::vector<bool>(
+    static_cast<size_t>(MsCtxParam::NUM_BOOL_PARAMS + MsCtxParam::NUM_UINT32_PARAMS + MsCtxParam::NUM_INT_PARAMS +
+                        MsCtxParam::NUM_FLOAT_PARAMS + MsCtxParam::NUM_STRING_PARAMS),
+    false);
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {
@@ -157,4 +168,39 @@ bool MsContext::enable_dump_ir() const {
   return false;
 #endif
 }
+
+void MsContext::MarkReadStatus(MsCtxParam param) const {
+#if !(defined(ENABLE_TEST) || defined(ENABLE_TESTCASES) || defined(BUILD_LITE))
+  // unit tests will set device_id many times in one process
+  if (static_cast<size_t>(param) < params_read_status_.size()) {
+    params_read_status_[static_cast<size_t>(param)] = true;
+  }
+#endif
+}
+
+template <typename T>
+void MsContext::CheckReadStatus(MsCtxParam param, const T &value) const {
+#if !(defined(ENABLE_TEST) || defined(ENABLE_TESTCASES) || defined(BUILD_LITE))
+  // unit tests will set device_id many times in one process
+  if (static_cast<size_t>(param) >= params_read_status_.size()) {
+    return;
+  }
+  auto iter = kUnresetParamCheckList.find(param);
+  if (iter == kUnresetParamCheckList.end()) {
+    return;
+  }
+  auto origin_status = params_read_status_;
+  T origin_value = get_param<T>(param);
+  params_read_status_ = origin_status;
+  if (params_read_status_[static_cast<size_t>(param)] && value != origin_value) {
+    MS_EXCEPTION(TypeError) << "For 'set_context', the parameter " << iter->second
+                            << " can not be set repeatedly, origin value [" << origin_value << "] has been in effect.";
+  }
+#endif
+}
+template MS_CORE_API void MsContext::CheckReadStatus<bool>(MsCtxParam, const bool &) const;
+template MS_CORE_API void MsContext::CheckReadStatus<uint32_t>(MsCtxParam, const uint32_t &) const;
+template MS_CORE_API void MsContext::CheckReadStatus<int>(MsCtxParam, const int &) const;
+template MS_CORE_API void MsContext::CheckReadStatus<float>(MsCtxParam, const float &) const;
+template MS_CORE_API void MsContext::CheckReadStatus<std::string>(MsCtxParam, const std::string &) const;
 }  // namespace mindspore
