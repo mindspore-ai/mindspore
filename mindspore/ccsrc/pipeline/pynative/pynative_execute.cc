@@ -194,6 +194,7 @@ void PyNativeExecutor::NewGraph(const py::object &obj, const py::args &args) con
     return;
   }
   PyNativeExecutorTry(grad_executor()->InitGraph, obj, args);
+  forward_executor()->ProcessBeforeNewGraph(obj);
 }
 
 void PyNativeExecutor::EndGraph(const py::object &obj, const py::object &out, const py::args &args) const {

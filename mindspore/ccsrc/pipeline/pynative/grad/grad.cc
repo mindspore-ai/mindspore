@@ -562,6 +562,10 @@ void GradExecutor::AsyncNewGraphImpl(const InputArgsInfoPtr &input_args_info) {
 bool GradExecutor::GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info,
                                          const std::string &obj_id_with_grad_order) {
   MS_EXCEPTION_IF_NULL(input_args_info);
+  if (forward_use_dynamic_shape_process_) {
+    return true;
+  }
+
   if (dynamic_inputs_cells_.count(input_args_info->obj_id) > 0) {
     return true;
   }
@@ -1439,6 +1443,7 @@ void GradExecutor::ClearRes() {
   std::stack<InputArgsInfoPtr>().swap(input_args_info_stack_);
   std::stack<std::pair<std::string, bool>>().swap(bprop_grad_stack_);
   std::stack<TopCellInfoPtr>().swap(high_order_stack_);
+  forward_use_dynamic_shape_process_ = false;
 }
 
 AnfNodePtr GradExecutor::GetInput(const ValuePtr &v, const string &obj_id) const {

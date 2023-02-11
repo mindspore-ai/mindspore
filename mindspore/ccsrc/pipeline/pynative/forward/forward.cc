@@ -197,7 +197,11 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) co
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
   // Used for async run
   op_run_info->grad_flag = grad()->grad_flag();
-  op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->use_dynamic_shape_process();
+  if (op_run_info->grad_flag) {
+    op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->use_dynamic_shape_process();
+  } else {
+    op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->forward_use_dynamic_shape_process();
+  }
   op_run_info->base_op_run_info.op_name = args[static_cast<size_t>(RunOpArgsEnum::PY_NAME)].cast<std::string>();
   op_run_info->base_op_run_info.lazy_build = lazy_build_;
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
@@ -366,8 +370,16 @@ void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::arg
   }
   PrintPyObjInfo(obj, kBegin, is_cell);
   infer_operation()->set_only_single_op_run(false);
-  grad()->SetTopCellDynamicAttr(obj);
+  if (!grad()->grad_flag()) {
+    const auto &obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
+    if (grad()->is_cell_has_dynamic_inputs(obj_id)) {
+      MS_LOG(DEBUG) << "obj id:" << obj_id << " set forward use dynamic shape process true";
+      grad()->set_forward_use_dynamic_shape_process(true);
+    }
+  }
 }
+
+void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj) { grad()->SetTopCellDynamicAttr(obj); }
 
 void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell) {
   if (is_cell) {
@@ -392,6 +404,10 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
 void ForwardExecutor::ProcessAfterEndGraph(const py::object &obj, bool is_cell) const {
   if (IsFirstCell()) {
     ClearNodeAbsMap();
+    if (!grad()->grad_flag()) {
+      MS_LOG(DEBUG) << "first cell run end, set forward use dynamic shape process false";
+      grad()->set_forward_use_dynamic_shape_process(false);
+    }
   }
   PrintPyObjInfo(obj, kEnd, is_cell);
 }
