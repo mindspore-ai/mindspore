@@ -30,7 +30,7 @@ static ValuePtr PyArgToValue(const py::object &arg) {
   return parse::data_converter::PyDataToValue(arg);
 }
 // Bind SignatureEnumRW as a python class.
-void RegSignatureEnumRW(py::module *m) {
+void RegSignatureEnumRW(const py::module *m) {
   (void)py::class_<Signature>(*m, "Signature")
     .def(py::init([](const std::string &name, SignatureEnumRW rw, SignatureEnumKind kind, const py::object arg_default,
                      SignatureEnumDType dtype) {

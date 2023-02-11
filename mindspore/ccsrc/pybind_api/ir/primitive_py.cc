@@ -678,7 +678,7 @@ void PrimitivePyAdapter::set_attached_primitive(const PrimitivePyPtr &prim) {
   attached_primitive_ = prim;
 }
 
-void RegPrimitive(py::module *m) {
+void RegPrimitive(const py::module *m) {
   (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
     .value("unknown", PrimType::kPrimTypeUnknown)
     .value("builtin", PrimType::kPrimTypeBuiltIn)

@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace py = pybind11;
 
-void RegParamInfo(py::module *m) {
+void RegParamInfo(const py::module *m) {
   (void)py::class_<ParamInfo, ParamInfoPtr>(*m, "ParamInfo", py::dynamic_attr())
     .def(py::init())
     .def(py::init([](const ParamInfo &param_info) { return std::make_shared<ParamInfo>(param_info); }),
