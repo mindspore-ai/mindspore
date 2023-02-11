@@ -36,6 +36,7 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, Fra
 from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
+from mindspore.ops.operations._inner_ops import SiLU
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -2355,7 +2356,8 @@ def silu(x):
         >>> print(output)
         [-0.269  1.762  -0.1423  1.762  -0.269]
     """
-    return sigmoid_(x) * x
+    silu_ = _get_cache_prim(SiLU)()
+    return silu_(x)
 
 
 def selu(input_x):

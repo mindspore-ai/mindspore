@@ -2455,3 +2455,25 @@ class IsParameter(PrimitiveWithInfer):
         return {'shape': [],
                 'dtype': mstype.bool_,
                 'value': isinstance(x['dtype'], mstype.ref_type)}
+
+
+class SiLU(Primitive):
+    r"""
+    Computes SiLU (Sigmoid Linear Unit activation function) of input tensors element-wise.
+
+    Refer to :func:`mindspore.ops.silu` for more details.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
+        >>> output = ops.SiLU(x)
+        >>> print(output)
+        [-0.269  1.762  -0.1423  1.762  -0.269]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SiLU"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
