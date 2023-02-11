@@ -85,12 +85,12 @@ def test_obfuscate_model_password_mode():
 
     # obfuscate model
     obf_config = {"original_model_path": "net_1.mindir", "save_model_path": "./obf_net_1",
-                  "model_inputs": [input_tensor], "obf_ratio": 0.8, "obf_password": 3423}
+                  "model_inputs": [input_tensor], "obf_ratio": 0.8, "obf_random_seed": 3423}
     obfuscate_model(obf_config)
 
     # load obfuscated model, predict with right password
     obf_graph_1 = load("obf_net_1.mindir")
-    obf_net_1 = nn.GraphCell(obf_graph_1, obf_password=3423)
+    obf_net_1 = nn.GraphCell(obf_graph_1, obf_random_seed=3423)
     right_password_result = obf_net_1(input_tensor).asnumpy()
 
     assert np.all(original_result == right_password_result)
@@ -146,12 +146,12 @@ def test_export_password_mode():
     original_result = net_3(input_tensor).asnumpy()
 
     # obfuscate model
-    obf_config = {"obf_ratio": 0.8, "obf_password": 3423}
+    obf_config = {"obf_ratio": 0.8, "obf_random_seed": 3423}
     export(net_3, input_tensor, file_name="obf_net_3", file_format="MINDIR", obf_config=obf_config)
 
     # load obfuscated model, predict with right password
     obf_graph_3 = load("obf_net_3.mindir")
-    obf_net_3 = nn.GraphCell(obf_graph_3, obf_password=3423)
+    obf_net_3 = nn.GraphCell(obf_graph_3, obf_random_seed=3423)
     right_password_result = obf_net_3(input_tensor).asnumpy()
 
     assert np.all(original_result == right_password_result)
@@ -200,7 +200,7 @@ def test_wrong_file_format_input():
     input_tensor = Tensor(np.ones((1, 1, 32, 32)).astype(np.float32))
 
     # obfuscate model
-    obf_config = {"obf_ratio": 0.8, "obf_password": 3423}
+    obf_config = {"obf_ratio": 0.8, "obf_random_seed": 3423}
     with pytest.raises(ValueError) as error_info:
         export(net_5, input_tensor, file_name="obf_net_3", file_format="ONNX", obf_config=obf_config)
     assert str(error_info.value) == "Dynamic obfuscation only support for MindIR format, but got ONNX format."

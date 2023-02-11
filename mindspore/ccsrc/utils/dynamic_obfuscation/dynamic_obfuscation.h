@@ -30,8 +30,8 @@ namespace mindspore {
 enum struct ObfCase : unsigned int { NotObfNode, OneInputNoWeightNode, OneInputWithWeightNode };
 class COMMON_EXPORT DynamicObfuscator {
  public:
-  DynamicObfuscator(const float obf_ratio, const int obf_password, const int append_password)
-      : obf_ratio_(obf_ratio), obf_password_(obf_password), append_password_(append_password) {}
+  DynamicObfuscator(const float obf_ratio, const int branch_control_input)
+      : obf_ratio_(obf_ratio), branch_control_input_(branch_control_input) {}
 
   ~DynamicObfuscator() = default;
 
@@ -42,7 +42,7 @@ class COMMON_EXPORT DynamicObfuscator {
   std::string ObfuscateOpType(const AnfNodePtr &node);
   ObfCase ObfuscateOpCase(std::string obf_type);
   CNodePtr GetControlNode(const FuncGraphPtr &func_graph, const AnfNodePtr &prev_node);
-  CNodePtr PasswordModeControl(FuncGraphPtr func_graph);
+  CNodePtr RandomSeedModeControl(FuncGraphPtr func_graph);
   CNodePtr CustomOpModeControl(FuncGraphPtr func_graph, const AnfNodePtr &prev_node);
 
   bool IsTarget(std::string &cnode_name);
@@ -60,9 +60,9 @@ class COMMON_EXPORT DynamicObfuscator {
                                        const AnfNodePtr &weights);
   CNodePtr AddPartialBranch(FuncGraphPtr fg, FuncGraphPtr fg_sub, const std::vector<mindspore::CNodePtr> &nodes);
   PrimitivePtr get_random_prim(const std::string &obf_type, const mindspore::CNodePtr &node);
+  bool IsValidOpNum(const int &current_num, const int &compa_num) const;
   const float obf_ratio_ = 0.01;
-  const int obf_password_;
-  const int append_password_;
+  const int branch_control_input_;
   bool has_build_appended_input = false;
   std::vector<bool> customized_func_results_;
   std::map<std::string, AnfNodePtr> node_dict_;

@@ -261,7 +261,7 @@ FuncGraphPtr DynamicObfuscator::ObfuscateMindIR(const FuncGraphPtr &func_graph) 
 
   if (subgraph_obf_num_ == 0) {
     MS_LOG(WARNING)
-      << "The model has not been obfuscated, which means obf_password or customized_func is not need to set.";
+      << "The model has not been obfuscated, which means obf_random_seed or customized_func is not need to set.";
   }
   return func_graph;
 }
@@ -306,35 +306,24 @@ ObfCase DynamicObfuscator::ObfuscateOpCase(std::string obf_type) {
   }
 }
 
-CNodePtr DynamicObfuscator::PasswordModeControl(FuncGraphPtr func_graph) {
+CNodePtr DynamicObfuscator::RandomSeedModeControl(FuncGraphPtr func_graph) {
   ShapeVector y_shape{1, 1};
   tensor::TensorPtr y_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeInt32, y_shape);
   if (!has_build_appended_input) {
-    MS_LOG(INFO) << "Build parameter y_password and y_append.";
-    auto y = AddObfuscatedParam(func_graph);
-    y->set_name("y_password");
-    y->set_abstract(y_tensor->ToAbstract());
+    MS_LOG(INFO) << "Build parameter y_append.";
     auto y_append = AddObfuscatedParam(func_graph);
     y_append->set_name("y_append");
     y_append->set_abstract(y_tensor->ToAbstract());
     has_build_appended_input = true;
   }
-  auto y = func_graph->GetParameterByName("y_password");
   auto y_append = func_graph->GetParameterByName("y_append");
 
   if (used_control_node_ == 0) {
-    // make add function node
-    mindspore::PrimitivePtr add_prim = mindspore::prim::kPrimAdd;
-    add_prim->set_attr("is_load", MakeValue(true));
-    mindspore::ValueNodePtr add_v_node = std::make_shared<mindspore::ValueNode>(add_prim);
-    (void)func_graph->AddValueNode(add_v_node);
-    CNodePtr add_c_node = func_graph->NewCNode({add_v_node, y, y_append});
-    add_c_node->set_abstract(y_tensor->ToAbstract());
     // make equal function node
     ValueNodePtr equal_v_node = std::make_shared<mindspore::ValueNode>(mindspore::prim::kPrimEqual);
     (void)func_graph->AddValueNode(equal_v_node);
-    ValueNodePtr equal_compa_node = make_int_node(func_graph, obf_password_ + append_password_);
-    CNodePtr equal_c_node = func_graph->NewCNode({equal_v_node, add_c_node, equal_compa_node});
+    ValueNodePtr equal_compa_node = make_int_node(func_graph, branch_control_input_);
+    CNodePtr equal_c_node = func_graph->NewCNode({equal_v_node, y_append, equal_compa_node});
     tensor::TensorPtr equal_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeBool, y_shape);
     equal_c_node->set_abstract(equal_tensor->ToAbstract());
     (void)func_graph->AddNode(equal_c_node);
@@ -347,12 +336,12 @@ CNodePtr DynamicObfuscator::PasswordModeControl(FuncGraphPtr func_graph) {
   ValueNodePtr greater_v_node = std::make_shared<mindspore::ValueNode>(mindspore::prim::kPrimGreater);
   (void)func_graph->AddValueNode(greater_v_node);
   ValueNodePtr greater_compa_node = make_int_node(func_graph, comparison_int);
-  CNodePtr greater_c_node = func_graph->NewCNode({greater_v_node, y, greater_compa_node});
+  CNodePtr greater_c_node = func_graph->NewCNode({greater_v_node, y_append, greater_compa_node});
   tensor::TensorPtr greater_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeBool, y_shape);
   greater_c_node->set_abstract(greater_tensor->ToAbstract());
   (void)func_graph->AddNode(greater_c_node);
   used_control_node_ += 1;
-  switch_branch_ = obf_password_ > comparison_int;
+  switch_branch_ = branch_control_input_ > comparison_int;
   return greater_c_node;
 }
 
@@ -447,9 +436,9 @@ CNodePtr DynamicObfuscator::CustomOpModeControl(FuncGraphPtr func_graph, const A
 }
 
 CNodePtr DynamicObfuscator::GetControlNode(const FuncGraphPtr &func_graph, const AnfNodePtr &prev_node) {
-  if (obf_password_ != 0) {
+  if (branch_control_input_ != 0) {
     MS_LOG(INFO) << "Run password mode.";
-    return PasswordModeControl(func_graph);
+    return RandomSeedModeControl(func_graph);
   }
   MS_LOG(INFO) << "Run customized function mode.";
   if (prev_node != nullptr && prev_node->abstract() != nullptr) {
@@ -528,7 +517,7 @@ void DynamicObfuscator::CheckDuplicatedParent(const AnfNodePtr &node) {
   } else {
     node_names_.push("-");
     UpdateDict(node, true);
-    if (obf_password_ == 0) {
+    if (branch_control_input_ == 0) {
       bool customized_func_result = mindspore::kernel::CustomizedOpaquePredicate::GetInstance().run_function(
         static_cast<float>(1), static_cast<float>(1));
       customized_func_results_.push_back(customized_func_result);
@@ -905,7 +894,7 @@ void DynamicObfuscator::AddSwitchNode(FuncGraphPtr fg) {
     mindspore::ValueNodePtr switch_v_node = std::make_shared<mindspore::ValueNode>(mindspore::prim::kPrimSwitch);
     (void)fg->AddValueNode(switch_v_node);
     mindspore::CNodePtr switch_c_node;
-    if (obf_password_ == 0) {
+    if (branch_control_input_ == 0) {
       if (static_cast<int>(customized_func_results_.size()) <= used_control_node_) {
         MS_LOG(ERROR) << "customized_func_results_ size is smaller than used_control_node_.";
       }
@@ -937,6 +926,26 @@ void DynamicObfuscator::AddSwitchNode(FuncGraphPtr fg) {
   used_control_node_ = 0;
 }
 
+int GetNodeMaxNum(const AnfNodeSet nodes) {
+  int node_max_num = 0;
+  for (auto node : nodes) {
+    if (node != nullptr && node->isa<CNode>()) {
+      int op_num = get_op_num(node);
+      if (op_num > node_max_num) {
+        node_max_num = op_num;
+      }
+    }
+  }
+  return node_max_num;
+}
+
+bool DynamicObfuscator::IsValidOpNum(const int &current_num, const int &compa_num) const {
+  if (branch_control_input_ != 0) {
+    return true;
+  }
+  return current_num <= compa_num;
+}
+
 void DynamicObfuscator::SubGraphFakeBranch(FuncGraphPtr func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Build fake sub-graph failed: FuncGraph is nullptr.";
@@ -949,7 +958,8 @@ void DynamicObfuscator::SubGraphFakeBranch(FuncGraphPtr func_graph) {
   auto all_nodes = mgr->all_nodes();
   int node_nums = all_nodes.size();
   int obfuscate_target_num = std::ceil(node_nums * obf_ratio_ / keyExpandRate);
-  int op_num = node_nums;  // Initialize op_num to the maximum node number
+  int op_num = GetNodeMaxNum(all_nodes);
+  MS_LOG(INFO) << "Init op_num is: " << op_num;
   std::vector<mindspore::AnfNodePtr> sorted_nodes;
   for (auto node : all_nodes) {
     MS_LOG(INFO) << "The last node name is: " << node->fullname_with_scope();
@@ -963,10 +973,11 @@ void DynamicObfuscator::SubGraphFakeBranch(FuncGraphPtr func_graph) {
     }
     if (node->isa<CNode>()) {
       std::string cnode_name = get_node_name(node);
+      MS_LOG(INFO) << "CNode name is: " << cnode_name;
       int cur_op_num = get_op_num(node);
       float dropout_rate = 0.1;
       int dropout_rand = rand() % static_cast<int>(1.0 / dropout_rate);
-      if (IsTarget(cnode_name) && cur_op_num < op_num && dropout_rand != 0 &&
+      if (IsTarget(cnode_name) && IsValidOpNum(cur_op_num, op_num) && dropout_rand != 0 &&
           (node_dict_.find(node->fullname_with_scope()) == node_dict_.cend())) {
         UpdateDict(node, false);
         op_num = cur_op_num;
@@ -994,7 +1005,7 @@ void DynamicObfuscator::SubGraphFakeBranch(FuncGraphPtr func_graph) {
     }
   }
   node_names_.pop();
-  if (obf_password_ == 0) {
+  if (branch_control_input_ == 0) {
     (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().init_calling_count();
   }
   (void)AddSwitchNode(func_graph);

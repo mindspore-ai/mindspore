@@ -90,7 +90,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   void SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase);
   py::bytes GetFuncGraphProto(const std::string &phase, const std::string &ir_type, const bool &incremental);
   py::bytes GetObfuscateFuncGraphProto(const std::string &phase, const bool &incremental, const float obf_ratio,
-                                       const int obf_password, const int append_password);
+                                       const int branch_control_input);
 #ifndef ENABLE_SECURITY
   py::bytes GetOptimizeGraphProto(const std::string &phase);
 #endif
@@ -204,9 +204,8 @@ py::bytes PyEncrypt(char *plain_data, size_t plain_len, char *key, size_t key_le
 py::bytes PyDecrypt(const std::string &encrypt_data_path, char *key, size_t key_len, const std::string &dec_mode);
 bool PyIsCipherFile(const std::string &file_path);
 void FinalizeCluster();
-FuncGraphPtr DynamicObfuscateMindIR(const std::string &file_name, float obf_ratio, int obf_password,
-                                    int append_password, char *dec_key, const size_t key_len,
-                                    const std::string &dec_mode);
+FuncGraphPtr DynamicObfuscateMindIR(const std::string &file_name, float obf_ratio, int branch_control_input,
+                                    char *dec_key, const size_t key_len, const std::string &dec_mode);
 }  // namespace pipeline
 }  // namespace mindspore
 
