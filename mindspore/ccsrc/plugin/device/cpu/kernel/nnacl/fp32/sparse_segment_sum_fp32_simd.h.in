@@ -1,0 +1,53 @@
+/**
+ * Copyright 2023 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// clang-format off
+#ifndef MINDSPORE_NNACL_FP32_SPARSE_SEGMENT_SUM_@SIMD_INSTRUCTION@_H_
+#define MINDSPORE_NNACL_FP32_SPARSE_SEGMENT_SUM_@SIMD_INSTRUCTION@_H_
+
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+#include "nnacl/intrinsics/ms_simd_@SIMD_INSTRUCTION_LOWER@_instructions.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+@SIMD_INSTRUCTION_BEGIN@
+
+static inline int64_t SparseSegmentSumCalcFp32@SIMD_INSTRUCTION@(int64_t index, const float *in_data_ptr_fp32,
+  float * out_data_ptr_fp32, int data_num) {
+  for (int block_max_size = data_num - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 in_data_simd = SIMD_LD_F32(in_data_ptr_fp32 + index);
+    SIMD_F32 out_data_simd = SIMD_LD_F32(out_data_ptr_fp32 + index);
+    SIMD_ST_F32(out_data_ptr_fp32 + index, SIMD_ADD_F32(out_data_simd, in_data_simd));
+  }
+  return index;
+}
+
+static inline int64_t SparseSegmentSumCalcInt32@SIMD_INSTRUCTION@(int64_t index, const int32_t *in_data_ptr_int32,
+  int32_t * out_data_ptr_int32, int data_num) {
+  for (int block_max_size = data_num - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_EPI32 in_data_simd = SIMD_LD_EPI32(in_data_ptr_int32 + index);
+    SIMD_EPI32 out_data_simd = SIMD_LD_EPI32(out_data_ptr_int32 + index);
+    SIMD_ST_EPI32(out_data_ptr_int32 + index, SIMD_ADD_EPI32(out_data_simd, in_data_simd));
+  }
+  return index;
+}
+
+@SIMD_INSTRUCTION_END@
+#ifdef __cplusplus
+};
+#endif
+#endif

@@ -18,6 +18,7 @@
 #include <functional>
 #include "schema/model_generated.h"
 #include "src/runtime/kernel_registry.h"
+#include "nnacl/fp32/sparse_segment_sum_fp32.h"
 #include "include/errorcode.h"
 #include "nnacl/common_func.h"
 
@@ -38,17 +39,15 @@ int SparseSegmentSumCPUKernel::PreProcess() { return RET_OK; }
 
 int SparseSegmentSumCPUKernel::Prepare() { return RET_OK; }
 
-int SparseSegmentSumCPUKernel::Run() {
+int SparseSegmentSumCPUKernel::RunInferOutDataShape() {
   std::vector<int> in_data_shape = in_tensors_[kInput_data]->shape();
-  std::vector<int> in_indcie_shape = in_tensors_[kInput_indices]->shape();
   std::vector<int> in_segment_ids_shape = in_tensors_[kInput_segment_ids]->shape();
-
   std::vector<int> out_data_shape;
 
   auto in_segment_ids_ptr = reinterpret_cast<int32_t *>(in_tensors_[kInput_segment_ids]->data());
   if (in_segment_ids_ptr[0] != 0) {
     MS_LOG(ERROR) << "For '" << this->name_ << "', indices should start from 0.";
-    return RET_OK;
+    return RET_ERROR;
   }
   out_data_shape.emplace_back(in_segment_ids_ptr[in_segment_ids_shape[0] - 1] + 1);
   for (size_t i = 1; i < in_data_shape.size(); i++) {
@@ -59,56 +58,53 @@ int SparseSegmentSumCPUKernel::Run() {
   out_tensors_.at(kOutput_data)->set_shape(out_data_shape);
   out_tensors_.at(kOutput_data)->FreeData();
   out_tensors_.at(kOutput_data)->set_shape_changed(out_data_shape != origin_out_data_shape);
+  return RET_OK;
+}
 
-  constexpr size_t kMultiply = 1;
-  size_t n =
-    std::accumulate(in_data_shape.begin(), in_data_shape.end(), kMultiply, std::multiplies<int>()) / in_data_shape[0];
-  size_t m =
-    std::accumulate(in_segment_ids_shape.begin(), in_segment_ids_shape.end(), kMultiply, std::multiplies<int>());
-  int oldindex = -1;
+int SparseSegmentSumCPUKernel::RunSparseSegmentSumCalc() {
+  std::vector<int> in_data_shape = in_tensors_[kInput_data]->shape();
+  std::vector<int> in_segment_ids_shape = in_tensors_[kInput_segment_ids]->shape();
 
+  size_t data_num =
+    std::accumulate(in_data_shape.begin(), in_data_shape.end(), 1, std::multiplies<int>()) / in_data_shape[0];
+  size_t data_ids_num =
+    std::accumulate(in_segment_ids_shape.begin(), in_segment_ids_shape.end(), 1, std::multiplies<int>());
+
+  auto *in_data_ptr = in_tensors_[kInput_data]->data();
   auto in_indcie_ptr = reinterpret_cast<int32_t *>(in_tensors_[kInput_indices]->data());
-  int32_t *in_data_ptr_int32 = nullptr;
-  int32_t *out_data_ptr_int32 = nullptr;
-  float *in_data_ptr_fp32 = nullptr;
-  float *out_data_ptr_fp32 = nullptr;
+  auto in_segment_ids_ptr = reinterpret_cast<int32_t *>(in_tensors_[kInput_segment_ids]->data());
+  auto *out_data_ptr = out_tensors_[kOutput_data]->MutableData();
 
   auto input_data_type = in_tensors_[kInput_data]->data_type();
-
   switch (input_data_type) {
     case kNumberTypeInt32:
-      in_data_ptr_int32 = reinterpret_cast<int32_t *>(in_tensors_[kInput_data]->data());
-      out_data_ptr_int32 = reinterpret_cast<int32_t *>(out_tensors_[kOutput_data]->MutableData());
-      for (size_t i = 0; i < m; i++) {
-        if (oldindex != in_segment_ids_ptr[i]) {
-          oldindex = in_segment_ids_ptr[i];
-          for (size_t j = 0; j < n; j++) {
-            out_data_ptr_int32[j + oldindex * n] = 0;
-          }
-        }
-        for (size_t j = 0; j < n; j++) {
-          out_data_ptr_int32[j + oldindex * n] += in_data_ptr_int32[j + in_indcie_ptr[i] * n];
-        }
-      }
+      SparseSegmentSumCalcInt32(reinterpret_cast<int32_t *>(in_data_ptr), in_indcie_ptr, in_segment_ids_ptr,
+                                reinterpret_cast<int32_t *>(out_data_ptr), data_ids_num, data_num);
+
       break;
     case kNumberTypeFloat32:
-      in_data_ptr_fp32 = reinterpret_cast<float *>(in_tensors_[kInput_data]->data());
-      out_data_ptr_fp32 = reinterpret_cast<float *>(out_tensors_[kOutput_data]->MutableData());
-      for (size_t i = 0; i < m; i++) {
-        if (oldindex != in_segment_ids_ptr[i]) {
-          oldindex = in_segment_ids_ptr[i];
-          for (size_t j = 0; j < n; j++) {
-            out_data_ptr_fp32[j + oldindex * n] = 0;
-          }
-        }
-        for (size_t j = 0; j < n; j++) {
-          out_data_ptr_fp32[j + oldindex * n] += in_data_ptr_fp32[j + in_indcie_ptr[i] * n];
-        }
-      }
+      SparseSegmentSumCalcFp32(reinterpret_cast<float *>(in_data_ptr), in_indcie_ptr, in_segment_ids_ptr,
+                               reinterpret_cast<float *>(out_data_ptr), data_ids_num, data_num);
       break;
     default:
       MS_LOG(ERROR) << "Unsupported data type: " << input_data_type << " of SparseFillEmptyRows cpu kernel.";
       return RET_ERROR;
+  }
+
+  return RET_OK;
+}
+
+int SparseSegmentSumCPUKernel::Run() {
+  auto ret = RunInferOutDataShape();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run Infer OutDataShape.";
+    return RET_ERROR;
+  }
+
+  ret = RunSparseSegmentSumCalc();  // do not use ParallelLaunch, because of writing the same memory
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run SparseSegmentSum Calc.";
+    return RET_ERROR;
   }
 
   for (auto *output : this->out_tensors()) {
