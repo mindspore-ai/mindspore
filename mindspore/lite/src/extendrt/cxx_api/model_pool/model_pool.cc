@@ -899,7 +899,7 @@ Status ModelPool::ParseSharedThreadPoolParam(const std::shared_ptr<RunnerConfig>
   std::map<std::string, std::map<std::string, std::string>> config_file_info;
   if (!runner_config->GetConfigPath().empty()) {
     int ret = lite::GetAllSectionInfoFromConfigFile(runner_config->GetConfigPath(), &config_file_info);
-    if (ret != RET_OK) {
+    if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "GetAllSectionInfoFromConfigFile failed.";
       return kLiteError;
     }
