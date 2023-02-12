@@ -11,8 +11,8 @@ mindspore.ops.baddbmm
 
     参数：
         - **x** (Tensor) - 输入Tensor，shape为 :math:`(C, W, H)` 。
-        - **batch1** (Tensor) - 输入Tensor，shape为 :math:`(C, W, T)` 。
-        - **batch2** (Tensor) - 输入Tensor，shape为 :math:`(C, T, H)` 。
+        - **batch1** (Tensor) - 公式中的 :math:`batch1` ，shape为 :math:`(C, W, T)` 。
+        - **batch2** (Tensor) - 公式中的 :math:`batch2` ，shape为 :math:`(C, T, H)` 。
         - **beta** (Union[float, int]，可选) - `x` 的系数，默认值为1。
         - **alpha** (Union[float, int]，可选) - :math:`batch1 @ batch2` 的系数，默认值为1。
 
