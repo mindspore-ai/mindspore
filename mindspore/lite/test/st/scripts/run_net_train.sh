@@ -224,7 +224,7 @@ function parse_line() {
 function Run_x86() {
     # $1:cfgFileList;
     cd ${x86_path}/mindspore-lite-${version}-linux-x64 || return 1
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./runtime/lib:./runtime/third_party/libjpeg-turbo/lib
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${x86_path}/mindspore-lite-${version}-linux-x64/runtime/lib:${x86_path}/mindspore-lite-${version}-linux-x64/runtime/third_party/libjpeg-turbo/lib
     # Run mindspore converted train models:
     local fail=0
     while read line; do
@@ -676,7 +676,7 @@ adb_cmd_arm32_file=${logs_path}/adb_arm32_cmd.txt
 adb_cmd_arm32_run_file=${logs_path}/adb_arm32_cmd_run.txt
 
 run_code_examples_log_file=${logs_path}/run_code_examples_log.txt
-echo 'run code examlpe logs: ' > ${run_code_examples_log_file}
+echo 'run code example logs: ' > ${run_code_examples_log_file}
 
 isFailed=0
 if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" ]]; then
