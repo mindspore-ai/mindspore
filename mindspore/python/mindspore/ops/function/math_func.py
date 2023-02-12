@@ -5153,9 +5153,6 @@ def adjoint(x):
     r"""
     Returns a view of the tensor conjugated and with the last two dimensions transposed.
 
-    Note:
-        Ascend has not supported Complex Tensors yet.
-
     Args:
         x (Tensor): Input tensor.
 
@@ -5175,11 +5172,7 @@ def adjoint(x):
         [[0.-0.j 2.-2.j]
          [1.-1.j 3.-3.j]]
     """
-    _dtype = x.dtype
-    _t = x.swapaxes(-1, -2)
-    if _dtype in (mstype.complex128, mstype.complex64):
-        return _t.conj()
-    return _t
+    return x.swapaxes(-1, -2).conj()
 
 
 def addr(x, vec1, vec2, beta=1, alpha=1):
