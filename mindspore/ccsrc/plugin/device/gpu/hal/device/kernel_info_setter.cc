@@ -610,6 +610,10 @@ bool GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node, KernelType ker
     auto output_object_types =
       kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(kernel_node));
     kernel::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types);
+    if (!kernel_attrs.empty()) {
+      auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+      kernel_build_info->SetOpType(kernel::OpType::SKIP);
+    }
     return true;
   }
 

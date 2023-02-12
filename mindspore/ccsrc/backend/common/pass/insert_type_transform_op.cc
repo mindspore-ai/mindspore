@@ -638,6 +638,14 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTupleUnfold(const FuncGraphP
   // This pattern only supports user node is a TupleGetItem node.
   // If this pattern is matched but the user node is not TupleGetItem, throw exception.
   if (!IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    // If this node supports any input types, do not process it.
+    KernelBuildInfoPtr build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
+    MS_EXCEPTION_IF_NULL(build_info);
+    if (build_info->op_type() == kernel::OpType::SKIP) {
+      MS_LOG(INFO) << "Node " << node->fullname_with_scope() << " skip TupleToTupleUnfold type matching.";
+      *new_prim = false;
+      return {input};
+    }
     MS_LOG(EXCEPTION) << "Tuple to TupleUnfold pattern should have TupleGetItem as user node, but got "
                       << node->fullname_with_scope() << ", " << node->DebugString();
   }
