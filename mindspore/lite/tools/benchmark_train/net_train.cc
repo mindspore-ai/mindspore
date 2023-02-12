@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -466,17 +466,22 @@ void NetTrain::InitTrainCfg(const std::shared_ptr<TrainCfg> &train_cfg) {
   if (flags_->loss_name_.empty()) {
     return;
   }
-  train_cfg->loss_name_.clear();
+  std::vector<std::string> empty_loss_name;
+  train_cfg->SetLossName(empty_loss_name);  // clear train_cfg's loss_name
   std::string delimiter = ",";
   size_t pos = 0;
   std::string token;
   while ((pos = flags_->loss_name_.find(delimiter)) != std::string::npos) {
     token = flags_->loss_name_.substr(0, pos);
     flags_->loss_name_.erase(0, pos + delimiter.length());  // change to delim without deletion
-    train_cfg->loss_name_.emplace_back(token);
+    std::vector<std::string> train_cfg_loss_name = train_cfg->GetLossName();
+    train_cfg_loss_name.emplace_back(token);
+    train_cfg->SetLossName(train_cfg_loss_name);
   }
   if (!(flags_->loss_name_.empty())) {
-    train_cfg->loss_name_.emplace_back(flags_->loss_name_);
+    std::vector<std::string> train_cfg_loss_name = train_cfg->GetLossName();
+    train_cfg_loss_name.emplace_back(flags_->loss_name_);
+    train_cfg->SetLossName(train_cfg_loss_name);
   }
 }
 
