@@ -3975,19 +3975,18 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
     r"""
     Gaussian negative log likelihood loss.
 
-    The targets are treated as samples from Gaussian distributions with expectations and variances predicted by the
-    neural network. For a `target` tensor modelled as having Gaussian distribution with a tensor of expectations
-    `x` and a tensor of positive variances `var` the loss is:
+    The target values are considered to be samples from a Gaussian distribution, where the expectation and variance are
+    predicted by a neural network. For `labels` modeled on a Gaussian distribution, `logits` to record expectations,
+    and the variance `var` (elements are all positive), the calculated loss is:
 
     .. math::
         \text{loss} = \frac{1}{2}\left(\log\left(\text{max}\left(\text{var},
         \ \text{eps}\right)\right) + \frac{\left(\text{x} - \text{target}\right)^2}
         {\text{max}\left(\text{var}, \ \text{eps}\right)}\right) + \text{const.}
 
-    where `eps` is used for stability of :math:`log`. By default, the constant term of the loss function is omitted
-    unless :math:`full=True`. If the shape of :math:`var` is not the same as `x` (due to a
-    homoscedastic assumption), it must either have a final dimension of 1 or have one fewer dimension
-    (with all other sizes being the same) for correct broadcasting.
+    where `eps` is used for stability of :math:`log`. When :math:`full=True`, a constant will be added to the loss. If
+    the shape of :math:`var` and `logits` are not the same (due to a homoscedastic assumption), their shapes must allow
+    correct broadcasting.
 
     Args:
         x (Tensor): Tensor of shape :math:`(N, *)` or :math:`(*)` where :math:`*` means any number of
