@@ -78,6 +78,8 @@ class ReshapeInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
+    constexpr int64_t empty_tensor_num = 0;
+    (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterThan, empty_tensor_num, prim_name);
     constexpr size_t max_size = 2;
     (void)CheckAndConvertUtils::CheckValue<size_t>("input size", input_args.size(), kLessEqual, max_size, prim_name);
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
@@ -135,6 +137,8 @@ class ReshapeInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
+    constexpr int64_t empty_tensor_num = 0;
+    (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterThan, empty_tensor_num, prim->name());
     auto x_dtype = input_args[0]->BuildType();
     std::set<TypePtr> template_types = {kTensorType};
     (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_dtype, template_types, prim->name());
