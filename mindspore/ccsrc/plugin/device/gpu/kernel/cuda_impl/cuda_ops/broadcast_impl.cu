@@ -475,8 +475,14 @@ struct DivNoNanFunc<half2> {
   __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
     float2 l = __half22float2(lhs);
     float2 r = __half22float2(rhs);
-    if ((r.x < kFloatEplison && r.x > -kFloatEplison) || (r.y < kFloatEplison && r.y > -kFloatEplison)) {
+    if ((r.x < kFloatEplison && r.x > -kFloatEplison) && (r.y < kFloatEplison && r.y > -kFloatEplison)) {
       l.x = 0.0;
+      l.y = 0.0;
+    } else if ((r.x < kFloatEplison && r.x > -kFloatEplison)) {
+      l.x = 0.0;
+      l.y = l.y / r.y;
+    } else if (r.y < kFloatEplison && r.y > -kFloatEplison) {
+      l.x = l.x / r.x;
       l.y = 0.0;
     } else {
       l.x = l.x / r.x;
