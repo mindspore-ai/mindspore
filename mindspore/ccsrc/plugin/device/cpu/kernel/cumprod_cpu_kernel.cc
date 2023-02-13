@@ -248,6 +248,10 @@ bool CumProdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     return false;
   }
   Reshape();
+  if (dims_[kDimSize1] == 0) {
+    MS_LOG(ERROR) << "Invalid zero value. Please check resize input data.";
+    return false;
+  }
   // multithreading
   size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
   auto task = [this, &input, &output, &ws](size_t start, size_t end) {
