@@ -281,6 +281,7 @@ def get_bprop_csr_div(self):
 
 @bprop_getters.register(_csr_ops.CSR2COO)
 def get_bprop_csr2coo(self):
+    """Backpropagator for csr2coo."""
     def bprop(indptr, nnz, out, dout):
         return zeros_like(indptr), zeros_like(nnz)
     return bprop
@@ -288,6 +289,7 @@ def get_bprop_csr2coo(self):
 
 @bprop_getters.register(_csr_ops.COO2CSR)
 def get_bprop_coo2csr(self):
+    """Backpropagator for coo2csr."""
     def bprop(row_indices, height, out, dout):
         return zeros_like(row_indices), zeros_like(height)
     return bprop

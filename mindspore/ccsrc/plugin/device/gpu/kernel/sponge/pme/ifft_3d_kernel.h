@@ -36,13 +36,14 @@ class IFFT3DGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
+    int32_t double_num = 2;
     fftx = static_cast<int>(GetAttr<int64_t>(kernel_node, "fftx"));
     ffty = static_cast<int>(GetAttr<int64_t>(kernel_node, "ffty"));
     fftz = static_cast<int>(GetAttr<int64_t>(kernel_node, "fftz"));
     Nfft = fftx * ffty * fftz;
-    Nall = fftx * ffty * (fftz - 1) * 2;
+    Nall = fftx * ffty * (fftz - 1) * double_num;
 
-    cufftPlan3d(&FFT_plan_c2r, fftx, ffty, (fftz - 1) * 2, CUFFT_C2R);
+    cufftPlan3d(&FFT_plan_c2r, fftx, ffty, (fftz - 1) * double_num, CUFFT_C2R);
 
     InitSizeLists();
     return true;

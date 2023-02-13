@@ -130,8 +130,7 @@ struct VmpByValue {
 template <typename S, typename T>
 bool SparseConcatCpuKernelMod::SparseConcat(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs, const size_t shape_size,
-                                            const int size) {
+                                            const std::vector<kernel::AddressPtr> &outputs, const size_t shape_size) {
   auto output_indices = static_cast<int64_t *>(outputs[kOutputIndicesStart]->addr);
   auto output_values = static_cast<S *>(outputs[kOutputValuesStart]->addr);
   auto output_shape = static_cast<int64_t *>(outputs[kOutputShapesStart]->addr);
@@ -227,7 +226,7 @@ bool SparseConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
       }
     }
   }
-  (void)SparseConcat<S, T>(inputs, workspace, outputs, shape_size, size);
+  (void)SparseConcat<S, T>(inputs, workspace, outputs, shape_size);
   return true;
 }
 
