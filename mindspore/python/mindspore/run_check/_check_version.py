@@ -255,7 +255,7 @@ class AscendEnvChecker(EnvChecker):
 
     def __init__(self, library_path):
         self.library_path = library_path
-        self.version = ["1.84"]
+        self.version = ["6.3"]
         atlas_nnae_version = "/usr/local/Ascend/nnae/latest/compiler/version.info"
         atlas_toolkit_version = "/usr/local/Ascend/ascend-toolkit/latest/compiler/version.info"
         hisi_fwk_version = "/usr/local/Ascend/latest/compiler/version.info"
@@ -331,7 +331,7 @@ class AscendEnvChecker(EnvChecker):
 
     def check_deps_version(self):
         """
-            te, topi, hccl wheel package version check
+            te and hccl wheel package version check
             in order to update the change of 'LD_LIBRARY_PATH' env, run a sub process
         """
 
@@ -345,12 +345,6 @@ class AscendEnvChecker(EnvChecker):
                 attention_warning = True
                 logger.warning(f"MindSpore version {mindspore_version} and \"te\" wheel package version {v} does not "
                                "match, reference to the match info on: https://www.mindspore.cn/install")
-            from topi import version as topiver
-            v = '.'.join(topiver.version.split('.')[0:2])
-            if v not in supported_version:
-                attention_warning = True
-                logger.warning(f"MindSpore version {mindspore_version} and \"topi\" wheel package version {v} does not "
-                               "match, reference to the match info on: https://www.mindspore.cn/install")
             from hccl import sys_version as hccl_version
             v = '.'.join(hccl_version.__sys_version__.split('.')[0:2])
             if v not in supported_version:
@@ -361,7 +355,7 @@ class AscendEnvChecker(EnvChecker):
         # pylint: disable=broad-except
         except Exception as e:
             logger.error("CheckFailed:", e.args)
-            logger.error("MindSpore relies on the 3 whl packages of \"te\", \"topi\" and \"hccl\" in the \"latest\" "
+            logger.error("MindSpore relies on whl packages of \"te\" and \"hccl\" in the \"latest\" "
                          "folder of the Ascend AI software package (Ascend Data Center Solution), please check whether"
                          " they are installed correctly or not, reference to the match info on: "
                          "https://www.mindspore.cn/install")

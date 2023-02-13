@@ -19,6 +19,7 @@
 #include "include/transform/graph_ir/utils.h"
 #include "cxx_api/model/model_converter_utils/multi_process.h"
 #include "graph/model.h"
+#include "graph/utils/graph_utils_ex.h"
 #include "acl/acl_rt.h"
 #include "cxx_api/model/aoe/auto_tune_process.h"
 #include "plugin/device/ascend/optimizer/ge_optimization.h"
@@ -343,7 +344,7 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     }
     ge::Model model;
     ge::Buffer model_data;
-    model.SetGraph(*df_graph);
+    model.SetGraph(::ge::GraphUtilsEx::GetComputeGraph(*df_graph));
     auto ge_ret = model.Save(model_data);
     if (ge_ret != ge::SUCCESS) {
       MS_LOG(ERROR) << "Save ge model to buffer failed.";
@@ -413,7 +414,8 @@ Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
     return Buffer();
   }
 
-  transform::DfGraphPtr df_graph = std::make_shared<transform::DfGraph>(load_model.GetGraph());
+  transform::DfGraphPtr df_graph =
+    std::make_shared<transform::DfGraph>(::ge::GraphUtilsEx::CreateGraphFromComputeGraph(load_model.GetGraph()));
   if (df_graph == nullptr) {
     MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
     return Buffer();

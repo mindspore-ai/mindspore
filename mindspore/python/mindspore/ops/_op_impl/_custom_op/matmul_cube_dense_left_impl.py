@@ -21,8 +21,8 @@ import te.lang.cce
 import te.platform.cce_params as cce
 from te import tik
 from te import tvm
-from topi import generic
-from topi.cce import util
+from tbe.tvm.topi import generic
+from tbe.tvm.topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 from mindspore.ops._op_impl._custom_op._basic import _shape_check, _get_bias, _get_input_shape
 

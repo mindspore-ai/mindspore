@@ -33,7 +33,7 @@ from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 def square_with_bias(input_x, output_y, bias=0.0, kernel_name="square_with_bias"):
     import te.lang.cce
     from te import tvm
-    from topi.cce import util
+    from tbe.tvm.topi.cce import util
 
     shape = input_x.get("shape")
     dtype = input_x.get("dtype").lower()

@@ -20,7 +20,7 @@ matmul
 from __future__ import absolute_import
 
 from te import tik
-from topi.cce import util
+from tbe.tvm.topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 matmul_cube_dense_right_op_info = TBERegOp("CusMatMulCubeDenseRight") \

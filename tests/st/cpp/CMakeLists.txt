@@ -8,6 +8,11 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CUDA_INCLUDE_DIRS})
 
+# graphengine include directories
+if(ENABLE_D OR ENABLE_ACL OR ENABLE_TESTCASES)
+    include(${CMAKE_SOURCE_DIR}/cmake/graphengine_variables.cmake)
+endif()
+
 if(ENABLE_ACL)
     add_definitions(-D ENABLE_ACL)
 endif()

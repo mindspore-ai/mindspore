@@ -20,8 +20,8 @@ from functools import reduce as functools_reduce
 import te.lang.cce
 from te import tvm
 from te.platform.fusion_manager import fusion_manager
-from topi import generic
-from topi.cce import util
+from tbe.tvm.topi import generic
+from tbe.tvm.topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 fake_quant_per_layer_op_info = TBERegOp("FakeQuantPerLayer") \

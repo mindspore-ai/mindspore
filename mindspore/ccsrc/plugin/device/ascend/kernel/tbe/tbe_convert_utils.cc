@@ -78,7 +78,7 @@ const std::map<TypeId, std::string> type_id_str_maps = {
 const std::unordered_map<std::string, size_t> type_nbyte_maps = {
   {"float16", sizeof(float) / 2},   {"float32", sizeof(float)},
   {"float64", sizeof(float) * 2},   {"int8", sizeof(int) / 4},
-  {"uint1", sizeof(int) / 4},       {"int16", sizeof(int) / 2},
+  {"int1", sizeof(int) / 8},        {"int16", sizeof(int) / 2},
   {"int32", sizeof(int)},           {"int64", sizeof(int) * 2},
   {"uint8", sizeof(int) / 4},       {"uint16", sizeof(int) / 2},
   {"uint32", sizeof(int)},          {"uint64", sizeof(int) * 2},

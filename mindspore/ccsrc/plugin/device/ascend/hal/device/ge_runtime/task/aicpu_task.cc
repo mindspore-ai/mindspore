@@ -91,7 +91,7 @@ void AicpuTask::Distribute() {
                sizeof(uint32_t);
 
   // Malloc device memory for args
-  rtError_t rt_ret = rtMalloc(&args_, args_size_, RT_MEMORY_HBM);
+  rtError_t rt_ret = rtMalloc(&args_, args_size_, RT_MEMORY_HBM, 0);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << rt_ret;
   }
@@ -165,7 +165,7 @@ void AicpuTask::SetAicpuParamHead(uint32_t args_size, uint32_t io_addrs_num) {
       }
     }
     // alloc extinfo address
-    rtError_t flag = rtMalloc(&ext_info_addr_, ext_info_handler->GetExtInfoLen(), RT_MEMORY_HBM);
+    rtError_t flag = rtMalloc(&ext_info_addr_, ext_info_handler->GetExtInfoLen(), RT_MEMORY_HBM, 0);
     if (flag != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << flag;
     }

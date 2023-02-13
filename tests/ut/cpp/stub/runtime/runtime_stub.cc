@@ -30,7 +30,7 @@ rtError_t rtEventCreateWithFlag(rtEvent_t *event, uint32_t flag) { return RT_ERR
 
 rtError_t rtEventElapsedTime(float *time, rtEvent_t start, rtEvent_t end) { return RT_ERROR_NONE; }
 
-rtError_t rtMalloc(void **devPtr, uint64_t size, rtMemType_t type) { return RT_ERROR_NONE; }
+rtError_t rtMalloc(void **devPtr, uint64_t size, rtMemType_t type, const uint16_t moduleId) { return RT_ERROR_NONE; }
 
 rtError_t rtMemcpy(void *dst, uint64_t destMax, const void *src, uint64_t count, rtMemcpyKind_t kind) {
   return RT_ERROR_NONE;

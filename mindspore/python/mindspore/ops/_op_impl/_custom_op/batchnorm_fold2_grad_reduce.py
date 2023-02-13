@@ -17,9 +17,9 @@
 import te.lang.cce
 from te import tvm
 from te.platform.fusion_manager import fusion_manager
-from te.platform.cce_build import build_config
-from topi import generic
-from topi.cce import util
+from tbe.common.buildcfg import build_config
+from tbe.tvm.topi import generic
+from tbe.tvm.topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 SHAPE_SIZE_LIMIT = 2147483648
@@ -101,5 +101,5 @@ def batchnorm_fold2_grad_reduce(dout, x, dout_reduce, dout_x_reduce, kernel_name
         return
     from impl.bn_training_reduce import bn_training_reduce_schedule_nd
     sch, tensor_list = bn_training_reduce_schedule_nd(res_list)
-    with build_config:
+    with build_config():
         tvm.build(sch, tensor_list, "cce", name=kernel_name)

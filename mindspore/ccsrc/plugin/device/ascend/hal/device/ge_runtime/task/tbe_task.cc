@@ -78,7 +78,7 @@ void TbeTask::Distribute() {
                              task_info_->workspace_addrs().cend());
   args_size_ = static_cast<uint32_t>(tensor_device_addrs.size() * sizeof(void *));
 
-  rt_ret = rtMalloc(&args_, args_size_, RT_MEMORY_HBM);
+  rt_ret = rtMalloc(&args_, args_size_, RT_MEMORY_HBM, 0);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << rt_ret << " mem size " << args_size_;
   }
