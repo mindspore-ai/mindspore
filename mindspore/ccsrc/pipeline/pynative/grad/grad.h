@@ -129,6 +129,14 @@ class GradExecutor {
     return top_cell()->set_use_dynamic_shape_process(use_dynamic_shape_process);
   }
 
+  inline bool forward_use_dynamic_shape_process() const { return forward_use_dynamic_shape_process_; }
+  inline void set_forward_use_dynamic_shape_process(bool forward_use_dynamic_shape_process) {
+    forward_use_dynamic_shape_process_ = forward_use_dynamic_shape_process;
+  }
+  inline bool is_cell_has_dynamic_inputs(const std::string &obj_id) const {
+    return dynamic_inputs_cells_.count(obj_id) > 0;
+  }
+
  private:
   ForwardExecutorPtr forward() const;
   inline FuncGraphPtr curr_g() const { return top_cell()->fg(); }
@@ -238,6 +246,7 @@ class GradExecutor {
   std::shared_ptr<AsyncQueue> async_executor_;
   mutable CellIdWithDynamicNodesMap cell_id_with_dynamic_detect_nodes_;
   std::set<std::string> dynamic_inputs_cells_;
+  bool forward_use_dynamic_shape_process_{false};
 };
 }  // namespace pynative
 }  // namespace mindspore
