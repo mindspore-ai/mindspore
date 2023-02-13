@@ -328,8 +328,8 @@ FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr 
       std::vector<AnfNodePtr> node_lists = cnode->inputs();
       auto forward_inputs_size = cnode->inputs().size() - 1;
       for (size_t i = 1; i < node_lists.size(); i++) {
-        auto inputi = node_lists[i];
-        if (HasAbstractMonad(inputi)) {
+        auto input_i = node_lists[i];
+        if (HasAbstractMonad(input_i)) {
           --forward_inputs_size;
         }
       }
