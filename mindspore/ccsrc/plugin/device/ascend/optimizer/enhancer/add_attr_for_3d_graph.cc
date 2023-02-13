@@ -19,10 +19,10 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr auto m_3d = "m_3d";
-constexpr auto V = "V";
-constexpr auto Xs = "Xs";
-constexpr auto r_3d = "r_3d";
+constexpr auto kM3d = "m_3d";
+constexpr auto kV = "V";
+constexpr auto kXs = "Xs";
+constexpr auto kR3d = "r_3d";
 }  // namespace
 
 bool AddIoFormatAttrFor3DGraph::CheckMatchedDAG(const PatternMap &m, const FuncGraphPtr &graph,
@@ -36,7 +36,7 @@ bool AddIoFormatAttrFor3DGraph::CheckMatchedDAG(const PatternMap &m, const FuncG
 }
 
 AnfNodePtr AddAttr(const PatternMap &m, const AnfNodePtr & /* default_cnode */) {
-  auto node = m.Get(m_3d);
+  auto node = m.Get(kM3d);
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   auto formats = AnfAlgo::GetAllOutputFormats(node);
   if (std::any_of(formats.begin(), formats.end(), [](const std::string &format) { return IsOneOf3DFormat(format); })) {
@@ -45,10 +45,10 @@ AnfNodePtr AddAttr(const PatternMap &m, const AnfNodePtr & /* default_cnode */) 
   return node;
 }
 void AddIoFormatAttrFor3DGraph::DefineSrcPattern(SrcPattern *src_pattern) {
-  (void)(*src_pattern).AddVar(V, UnVisited).AddSeqVar(Xs).AddCNode(m_3d, {V, Xs});
+  (void)(*src_pattern).AddVar(kV, UnVisited).AddSeqVar(kXs).AddCNode(kM3d, {kV, kXs});
 }
 void AddIoFormatAttrFor3DGraph::DefineDstPattern(DstPattern *dst_pattern) {
-  (void)(*dst_pattern).AddCNode(r_3d, {V, Xs}, AddAttr);
+  (void)(*dst_pattern).AddCNode(kR3d, {kV, kXs}, AddAttr);
 }
 }  // namespace opt
 }  // namespace mindspore

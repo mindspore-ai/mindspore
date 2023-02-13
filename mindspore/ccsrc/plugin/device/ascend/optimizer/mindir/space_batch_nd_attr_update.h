@@ -17,26 +17,26 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_SPACE_BATCH_ND_ATTR_UPDATE_H_
 
 #include <memory>
-#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {
-class SpaceToBatchNDAttrUpdate : public PatternProcessPass {
+class SpaceToBatchNDAttrUpdate : public PatternToPatternPass {
  public:
-  explicit SpaceToBatchNDAttrUpdate(bool multigraph = true)
-      : PatternProcessPass("space_to_batch_nd_attr_update", multigraph) {}
+  SpaceToBatchNDAttrUpdate() : PatternToPatternPass("space_to_batch_nd_attr_update", true) {}
   ~SpaceToBatchNDAttrUpdate() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 };
 
-class BatchToSpaceNDAttrUpdate : public PatternProcessPass {
+class BatchToSpaceNDAttrUpdate : public PatternToPatternPass {
  public:
-  explicit BatchToSpaceNDAttrUpdate(bool multigraph = true)
-      : PatternProcessPass("batch_to_space_nd_attr_update", multigraph) {}
+  BatchToSpaceNDAttrUpdate() : PatternToPatternPass("batch_to_space_nd_attr_update", true) {}
   ~BatchToSpaceNDAttrUpdate() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

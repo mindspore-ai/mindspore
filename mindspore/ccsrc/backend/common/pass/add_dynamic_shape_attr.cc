@@ -21,17 +21,16 @@
 
 namespace mindspore {
 namespace opt {
-const AnfNodePtr AddDynamicShapeAttr::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                              const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(node);
+bool AddDynamicShapeAttr::Process(const AnfNodePtr &node) const {
   if (common::AnfAlgo::IsDynamicShape(node)) {
+    auto func_graph = node->func_graph();
     MS_LOG(DEBUG) << "Set Dynamic Shape Attr to Node:" << node->fullname_with_scope();
     auto kernel_graph = func_graph->cast<KernelGraphPtr>();
     MS_EXCEPTION_IF_NULL(kernel_graph);
     kernel_graph->SetGraphDynamicAttr(true);
+    return true;
   }
-  return node;
+  return false;
 }
 }  // namespace opt
 }  // namespace mindspore

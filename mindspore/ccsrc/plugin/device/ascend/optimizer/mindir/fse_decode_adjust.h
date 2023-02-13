@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FSE_DECODE_ADJUST_H_
 
 #include <vector>
+#include <string>
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -28,6 +29,9 @@ class FSEDecodeAdjust : public PatternProcessPass {
   ~FSEDecodeAdjust() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

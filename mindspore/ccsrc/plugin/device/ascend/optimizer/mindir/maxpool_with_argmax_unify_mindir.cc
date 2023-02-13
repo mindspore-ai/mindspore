@@ -32,6 +32,15 @@ constexpr size_t kMaxPoolGradWithArgmaxInputTensorNum = 3;
 constexpr size_t kMaxPoolGradWithArgmaxInputNum = 4;
 constexpr size_t kMaxPoolWithArgmaxShape = 4;
 constexpr size_t kAlignBytes = 16;
+constexpr auto kX1 = "X1";
+constexpr auto kX2 = "X2";
+constexpr auto kMaxPoolIndex = "index0";
+constexpr auto kMMaxPool = "m_max_pool";
+constexpr auto kRMaxPool = "r_max_pool";
+constexpr auto kMMaxpoolWithArgmax = "m_maxpool_with_argmax";
+constexpr auto kMTupleGetitem0 = "m_tuple_getitem0";
+constexpr auto kMMaxpoolGradWithArgmax = "m_maxpool_grad_with_argmax";
+constexpr auto kRMaxpoolGradWithArgmax = "r_maxpool_grad_with_argmax";
 
 bool IsC(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
@@ -48,17 +57,9 @@ CNodePtr GetMaxPoolWithArgmax(const CNodePtr &maxpool_grad_with_argmax) {
   MS_EXCEPTION_IF_NULL(tuple_getitem0_anf);
   return tuple_getitem0_anf->cast<CNodePtr>();
 }
-}  // namespace
 
-const BaseRef MaxPoolWithArgmaxUnifyMindIR::DefinePattern() const {
-  VarPtr X = std::make_shared<Var>();
-  VectorRef pattern({prim::kPrimMaxPoolWithArgmax, X});
-  return pattern;
-}
-
-const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                       const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(graph);
+AnfNodePtr BuildMaxPoolWithArgmax(const PatternMap &m, const AnfNodePtr &) {
+  auto node = m.Get(kMMaxPool);
   MS_EXCEPTION_IF_NULL(node);
   auto maxpool_with_argmax = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(maxpool_with_argmax);
@@ -85,19 +86,8 @@ const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph
   return maxpool_with_argmax;
 }
 
-const BaseRef MaxPoolGradWithArgmaxUnifyMindIR::DefinePattern() const {
-  VarPtr X = std::make_shared<Var>();
-  VarPtr Y = std::make_shared<Var>();
-  VarPtr index0 = std::make_shared<CondVar>(IsC);
-  VectorRef maxpool_with_argmax({prim::kPrimMaxPoolWithArgmax, X});
-  VectorRef tuple_getitem0 = VectorRef({prim::kPrimTupleGetItem, maxpool_with_argmax, index0});
-  VectorRef maxpool_grad_with_argmax({prim::kPrimMaxPoolGradWithArgmax, X, Y, tuple_getitem0});
-  return maxpool_grad_with_argmax;
-}
-
-const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                           const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(graph);
+AnfNodePtr BuildMaxPoolGradWithArgmax(const PatternMap &m, const AnfNodePtr &) {
+  auto node = m.Get(kMMaxpoolGradWithArgmax);
   MS_EXCEPTION_IF_NULL(node);
   auto maxpool_grad_with_argmax = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(maxpool_grad_with_argmax);
@@ -121,6 +111,30 @@ const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &g
   common::AnfAlgo::SetOutputInferTypeAndShape({argmax_dtype}, {argmax_shape}, tuple_getitem0_anf.get());
 
   return maxpool_grad_with_argmax;
+}
+}  // namespace
+
+void MaxPoolWithArgmaxUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern).AddVar(kX1).AddCNode(kMMaxPool, {prim::kPrimMaxPoolWithArgmax, kX1});
+}
+
+void MaxPoolWithArgmaxUnifyMindIR::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern).AddCNode(kRMaxPool, {prim::kPrimMaxPoolWithArgmax, kX1}, BuildMaxPoolWithArgmax);
+}
+
+void MaxPoolGradWithArgmaxUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern)
+    .AddVar(kX1)
+    .AddVar(kX2)
+    .AddVar(kMaxPoolIndex, IsC)
+    .AddCNode(kMMaxpoolWithArgmax, {prim::kPrimMaxPoolWithArgmax, kX1})
+    .AddCNode(kMTupleGetitem0, {prim::kPrimTupleGetItem, kMMaxpoolWithArgmax, kMaxPoolIndex})
+    .AddCNode(kMMaxpoolGradWithArgmax, {prim::kPrimMaxPoolGradWithArgmax, kX1, kX2, kMTupleGetitem0});
+}
+void MaxPoolGradWithArgmaxUnifyMindIR::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern)
+    .AddCNode(kRMaxpoolGradWithArgmax, {prim::kPrimMaxPoolGradWithArgmax, kX1, kX2, kMTupleGetitem0},
+              BuildMaxPoolGradWithArgmax);
 }
 }  // namespace opt
 }  // namespace mindspore

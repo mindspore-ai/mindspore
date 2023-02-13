@@ -19,6 +19,8 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <string>
+
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -49,6 +51,7 @@ class NeighborExchangeV2UnifyMindIR : public PatternProcessPass {
                               const CNodePtr &all_to_all_v) const;
   CNodePtr CreateConcatNodes(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2,
                              const CNodePtr &all_to_all_v) const;
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
 class NeighborExchangeV2GradUnifyMindIR : public PatternProcessPass {
@@ -68,6 +71,7 @@ class NeighborExchangeV2GradUnifyMindIR : public PatternProcessPass {
   CNodePtr CreateSplitGradNodes(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2_grad,
                                 const CNodePtr &all_to_all_v, const std::vector<CNodePtr> &split_nodes,
                                 const std::vector<int64_t> &split_num) const;
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
 }  // namespace opt

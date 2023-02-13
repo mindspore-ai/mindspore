@@ -20,6 +20,7 @@
 #include <utility>
 #include <functional>
 #include <memory>
+#include <string>
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 
@@ -137,6 +138,12 @@ void ExpandFlattenConcatTupleInput(const FuncGraphPtr &graph, const CNodePtr &cn
   cnode_ptr->set_inputs(plant_inputs);
 }
 }  // namespace
+
+std::vector<std::string> FlattenConcatFission::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimFlattenConcat->name());
+  return ret;
+}
 
 const BaseRef FlattenConcatFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();

@@ -16,42 +16,52 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_OPTIMIZER_UNIFY_OUTPUT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_OPTIMIZER_UNIFY_OUTPUT_H_
 
-#include <memory>
 #include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {
-class FtrlUnifyOutput : public PatternProcessPass {
+class BuildTupleGetFunc {
  public:
-  explicit FtrlUnifyOutput(bool multigraph = true) : PatternProcessPass("ftrl_unify_output", multigraph) {}
+  explicit BuildTupleGetFunc(const size_t output_size) : output_size_(output_size) {}
+  AnfNodePtr operator()(const PatternMap &m, const AnfNodePtr &get_item) const;
+  size_t output_size_;
+};
+class FtrlUnifyOutput : public PatternToPatternPass {
+ public:
+  FtrlUnifyOutput() : PatternToPatternPass("ftrl_unify_output", true) {}
   ~FtrlUnifyOutput() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-};
 
-class MomentumUnifyOutput : public PatternProcessPass {
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
+};
+class MomentumUnifyOutput : public PatternToPatternPass {
  public:
-  explicit MomentumUnifyOutput(bool multigraph = true) : PatternProcessPass("momentum_unify_output", multigraph) {}
+  MomentumUnifyOutput() : PatternToPatternPass("momentum_unify_output", true) {}
   ~MomentumUnifyOutput() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-};
 
-class CenteredRMSPropUnifyOutput : public PatternProcessPass {
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
+};
+class CenteredRMSPropUnifyOutput : public PatternToPatternPass {
  public:
-  explicit CenteredRMSPropUnifyOutput(bool multigraph = true)
-      : PatternProcessPass("centered_rmsprop_unify_output", multigraph) {}
+  CenteredRMSPropUnifyOutput() : PatternToPatternPass("centered_rmsprop_unify_output", true) {}
   ~CenteredRMSPropUnifyOutput() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-};
 
-class RMSPropUnifyOutput : public PatternProcessPass {
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
+};
+class RMSPropUnifyOutput : public PatternToPatternPass {
  public:
-  explicit RMSPropUnifyOutput(bool multigraph = true) : PatternProcessPass("rmsprop_unify_output", multigraph) {}
+  RMSPropUnifyOutput() : PatternToPatternPass("rmsprop_unify_output", true) {}
   ~RMSPropUnifyOutput() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

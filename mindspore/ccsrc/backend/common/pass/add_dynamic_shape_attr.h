@@ -16,17 +16,13 @@
 
 #ifndef MINDSPORE_ADD_DYNAMIC_SHAPE_ATTR_H
 #define MINDSPORE_ADD_DYNAMIC_SHAPE_ATTR_H
-#include <string>
-#include "ir/anf.h"
-#include "include/common/utils/convert_utils.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/inplace_node_pass.h"
 namespace mindspore {
 namespace opt {
-class AddDynamicShapeAttr : public PatternProcessPass {
+class AddDynamicShapeAttr : public InplaceNodePass {
  public:
-  explicit AddDynamicShapeAttr(bool multigraph = true) : PatternProcessPass("add_dynamic_shape_attr", multigraph) {}
-  ~AddDynamicShapeAttr() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  AddDynamicShapeAttr() : InplaceNodePass("add_dynamic_shape_attr") {}
+  bool Process(const AnfNodePtr &node) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

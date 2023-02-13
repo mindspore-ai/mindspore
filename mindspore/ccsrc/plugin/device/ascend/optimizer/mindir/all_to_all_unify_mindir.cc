@@ -181,6 +181,12 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
   return concat;
 }
 
+std::vector<std::string> NeighborExchangeUnifyMindIR::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimNeighborExchange->name());
+  return ret;
+}
+
 const BaseRef NeighborExchangeUnifyMindIR::DefinePattern() const {
   return VectorRef({prim::kPrimNeighborExchange, std::make_shared<SeqVar>()});
 }
@@ -191,6 +197,12 @@ const AnfNodePtr NeighborExchangeUnifyMindIR::Process(const FuncGraphPtr &graph,
   MS_EXCEPTION_IF_NULL(node);
   ChangePrimitiveToAllToAllV(node);
   return node;
+}
+
+std::vector<std::string> AllToAllUnifyMindIR::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimAllToAll->name());
+  return ret;
 }
 
 const BaseRef AllToAllUnifyMindIR::DefinePattern() const {

@@ -28,6 +28,12 @@
 
 namespace mindspore {
 namespace opt {
+std::vector<std::string> QuantDTypeCastAdjust::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(std::make_shared<Primitive>(kQuantDTypeCastOpName)->name());
+  return ret;
+}
+
 const BaseRef QuantDTypeCastAdjust::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   auto prim = std::make_shared<Primitive>(kQuantDTypeCastOpName);

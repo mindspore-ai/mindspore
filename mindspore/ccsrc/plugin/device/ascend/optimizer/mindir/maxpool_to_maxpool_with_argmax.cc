@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
@@ -118,6 +119,13 @@ void MaxPool2MaxPoolWithArgmax::SetNodeAttrs(const CNodePtr &maxpool, const CNod
   common::AnfAlgo::SetNodeAttr(kAttrStrides, MakeValue(strides), maxpool_grad_argmax);
   common::AnfAlgo::SetNodeAttr(kAttrKernelSize, MakeValue(ksize), maxpool_argmax);
   common::AnfAlgo::SetNodeAttr(kAttrKernelSize, MakeValue(ksize), maxpool_grad_argmax);
+}
+
+std::vector<std::string> MaxPool2MaxPoolWithArgmax::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimMaxPool->name());
+  ret.emplace_back(prim::kPrimMaxPoolGrad->name());
+  return ret;
 }
 
 const BaseRef MaxPool2MaxPoolWithArgmax::DefinePattern() const {

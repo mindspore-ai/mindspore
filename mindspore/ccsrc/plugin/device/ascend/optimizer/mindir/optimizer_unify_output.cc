@@ -30,12 +30,27 @@ constexpr size_t kFtrlOutputNum = 3;
 constexpr size_t kMomentumOutputNum = 2;
 constexpr size_t kRMSPropOutputNum = 3;
 constexpr size_t kCenteredRMSPropOutputNum = 4;
+constexpr auto kOptVar = "var";
+constexpr auto kOptAccum = "accum";
+constexpr auto kOptLinear = "linear";
+constexpr auto kOptGrad = "grad";
+constexpr auto kOptLr = "lr";
+constexpr auto kOptL1 = "l1";
+constexpr auto kOptL2 = "l2";
+constexpr auto kOptLrPower = "lr_power";
+constexpr auto kOptU = "u";
+constexpr auto kOptIndex = "index";
+constexpr auto kMomentum = "momentum";
+constexpr auto kInputs = "inputs";
+constexpr auto kMg = "mg";
+constexpr auto kMs = "ms";
+constexpr auto kMom = "mom";
+constexpr auto kRho = "rho";
+constexpr auto kEpsilon = "epsilon";
+constexpr auto kMOptimizer = "m_optimizer";
+constexpr auto kRTupleGet = "r_tuple_get";
 
-CNodePtr ProcessOutput(const FuncGraphPtr &graph, const AnfNodePtr &node, const size_t output_size,
-                       const PatternProcessPass &pass) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node);
-
+bool CheckNode(const AnfNodePtr &node) {
   auto cnode_ptr = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode_ptr);
 
@@ -43,89 +58,122 @@ CNodePtr ProcessOutput(const FuncGraphPtr &graph, const AnfNodePtr &node, const 
   MS_EXCEPTION_IF_NULL(abstract);
 
   if (common::AnfAlgo::HasNodeAttr("optim_output_passed", cnode_ptr) && abstract->isa<abstract::AbstractTuple>()) {
-    return nullptr;
+    return false;
   }
+  return true;
+}
+
+AnfNodePtr BuildZero(const PatternMap &) { return NewValueNode(static_cast<int64_t>(0)); }
+}  // namespace
+
+AnfNodePtr BuildTupleGetFunc::operator()(const PatternMap &m, const AnfNodePtr &get_item) const {
+  auto node = m.Get(kMOptimizer);
+  MS_EXCEPTION_IF_NULL(node);
+
+  auto cnode_ptr = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode_ptr);
+
+  auto abstract = cnode_ptr->abstract();
+  MS_EXCEPTION_IF_NULL(abstract);
   common::AnfAlgo::SetNodeAttr("optim_output_passed", MakeValue(true), cnode_ptr);
 
   std::vector<AbstractBasePtr> abstract_list;
-  for (size_t i = 0; i < output_size; i++) {
+  for (size_t i = 0; i < output_size_; i++) {
     abstract_list.push_back(abstract->Clone());
   }
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   cnode_ptr->set_abstract(abstract_tuple);
 
-  auto index = NewValueNode(static_cast<int64_t>(0));
-  auto get_item = pass.NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode_ptr, index}, graph);
-  MS_EXCEPTION_IF_NULL(get_item);
-
   get_item->set_abstract(abstract->Clone());
   return get_item;
 }
-}  // namespace
 
-const BaseRef FtrlUnifyOutput::DefinePattern() const {
-  VarPtr var = std::make_shared<Var>();
-  VarPtr accum = std::make_shared<Var>();
-  VarPtr linear = std::make_shared<Var>();
-  VarPtr grad = std::make_shared<Var>();
-  VarPtr lr = std::make_shared<Var>();
-  VarPtr l1 = std::make_shared<Var>();
-  VarPtr l2 = std::make_shared<Var>();
-  VarPtr lr_power = std::make_shared<Var>();
-  VarPtr u = std::make_shared<SeqVar>();
-  VectorRef pattern({prim::kPrimApplyFtrl, var, accum, linear, grad, lr, l1, l2, lr_power, u});
-  return pattern;
+bool FtrlUnifyOutput::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &node) const {
+  return CheckNode(node);
 }
 
-const AnfNodePtr FtrlUnifyOutput::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
-  return ProcessOutput(graph, node, kFtrlOutputNum, *this);
+void FtrlUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern)
+    .AddVar(kOptVar)
+    .AddVar(kOptAccum)
+    .AddVar(kOptLinear)
+    .AddVar(kOptGrad)
+    .AddVar(kOptLr)
+    .AddVar(kOptL1)
+    .AddVar(kOptL2)
+    .AddVar(kOptLrPower)
+    .AddVar(kOptU)
+    .AddCNode(kMOptimizer, {prim::kPrimApplyFtrl, kOptVar, kOptAccum, kOptLinear, kOptGrad, kOptLr, kOptL1, kOptL2,
+                            kOptLrPower, kOptU});
 }
 
-const BaseRef MomentumUnifyOutput::DefinePattern() const {
-  VarPtr var = std::make_shared<Var>();
-  VarPtr accum = std::make_shared<Var>();
-  VarPtr lr = std::make_shared<Var>();
-  VarPtr grad = std::make_shared<Var>();
-  VarPtr momentum = std::make_shared<Var>();
-  VarPtr u = std::make_shared<SeqVar>();
-  VectorRef pattern({prim::kPrimApplyMomentum, var, accum, lr, grad, momentum, u});
-  return pattern;
+void FtrlUnifyOutput::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern)
+    .AddValueNode(kOptIndex, BuildZero)
+    .AddCNode(kRTupleGet, {prim::kPrimTupleGetItem, kMOptimizer, kOptIndex}, BuildTupleGetFunc(kFtrlOutputNum));
 }
 
-const AnfNodePtr MomentumUnifyOutput::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                              const EquivPtr &) const {
-  return ProcessOutput(graph, node, kMomentumOutputNum, *this);
+bool MomentumUnifyOutput::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &node) const {
+  return CheckNode(node);
 }
 
-const BaseRef RMSPropUnifyOutput::DefinePattern() const {
-  VarPtr inputs = std::make_shared<SeqVar>();
-  VectorRef pattern({prim::kPrimApplyRMSProp, inputs});
-  return pattern;
+void MomentumUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern)
+    .AddVar(kOptVar)
+    .AddVar(kOptAccum)
+    .AddVar(kOptLr)
+    .AddVar(kOptGrad)
+    .AddVar(kMomentum)
+    .AddVar(kOptU)
+    .AddCNode(kMOptimizer, {prim::kPrimApplyMomentum, kOptVar, kOptAccum, kOptLr, kOptGrad, kMomentum, kOptU});
 }
 
-const AnfNodePtr RMSPropUnifyOutput::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                             const EquivPtr &) const {
-  return ProcessOutput(graph, node, kRMSPropOutputNum, *this);
+void MomentumUnifyOutput::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern)
+    .AddValueNode(kOptIndex, BuildZero)
+    .AddCNode(kRTupleGet, {prim::kPrimTupleGetItem, kMOptimizer, kOptIndex}, BuildTupleGetFunc(kMomentumOutputNum));
 }
 
-const BaseRef CenteredRMSPropUnifyOutput::DefinePattern() const {
-  VarPtr var = std::make_shared<Var>();
-  VarPtr mg = std::make_shared<Var>();
-  VarPtr ms = std::make_shared<Var>();
-  VarPtr mom = std::make_shared<Var>();
-  VarPtr grad = std::make_shared<Var>();
-  VarPtr lr = std::make_shared<Var>();
-  VarPtr rho = std::make_shared<Var>();
-  VarPtr momentum = std::make_shared<Var>();
-  VarPtr epsilon = std::make_shared<Var>();
-  VarPtr u = std::make_shared<SeqVar>();
-  VectorRef pattern({prim::kPrimApplyCenteredRMSProp, var, mg, ms, mom, grad, lr, rho, momentum, epsilon, u});
-  return pattern;
+bool RMSPropUnifyOutput::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &node) const {
+  return CheckNode(node);
 }
 
-const AnfNodePtr CenteredRMSPropUnifyOutput::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                     const EquivPtr &) const {
-  return ProcessOutput(graph, node, kCenteredRMSPropOutputNum, *this);
+void RMSPropUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern).AddSeqVar(kInputs).AddCNode(kMOptimizer, {prim::kPrimApplyRMSProp, kInputs});
+}
+
+void RMSPropUnifyOutput::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern)
+    .AddValueNode(kOptIndex, BuildZero)
+    .AddCNode(kRTupleGet, {prim::kPrimTupleGetItem, kMOptimizer, kOptIndex}, BuildTupleGetFunc(kRMSPropOutputNum));
+}
+
+bool CenteredRMSPropUnifyOutput::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &,
+                                                 const AnfNodePtr &node) const {
+  return CheckNode(node);
+}
+
+void CenteredRMSPropUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern)
+    .AddVar(kOptVar)
+    .AddVar(kMg)
+    .AddVar(kMs)
+    .AddVar(kMom)
+    .AddVar(kOptGrad)
+    .AddVar(kOptLr)
+    .AddVar(kRho)
+    .AddVar(kMomentum)
+    .AddVar(kEpsilon)
+    .AddVar(kOptU)
+    .AddCNode(kMOptimizer, {prim::kPrimApplyCenteredRMSProp, kOptVar, kMg, kMs, kMom, kOptGrad, kOptLr, kRho, kMomentum,
+                            kEpsilon, kOptU});
+}
+
+void CenteredRMSPropUnifyOutput::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern)
+    .AddValueNode(kOptIndex, BuildZero)
+    .AddCNode(kRTupleGet, {prim::kPrimTupleGetItem, kMOptimizer, kOptIndex},
+              BuildTupleGetFunc(kCenteredRMSPropOutputNum));
 }
 }  // namespace opt
 }  // namespace mindspore

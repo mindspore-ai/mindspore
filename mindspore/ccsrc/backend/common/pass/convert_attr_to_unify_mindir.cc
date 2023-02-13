@@ -23,10 +23,9 @@
 
 namespace mindspore {
 namespace opt {
-const AnfNodePtr ConvertAttrToUnifyMindIR::Process(const FuncGraphPtr &, const AnfNodePtr &node,
-                                                   const EquivPtr &) const {
+bool ConvertAttrToUnifyMindIR::Process(const AnfNodePtr &node) const {
   if (node == nullptr || !AnfUtils::IsRealCNodeKernel(node)) {
-    return nullptr;
+    return false;
   }
 
   auto cnode = node->cast<CNodePtr>();
@@ -51,7 +50,7 @@ const AnfNodePtr ConvertAttrToUnifyMindIR::Process(const FuncGraphPtr &, const A
     }
   }
 
-  return node;
+  return true;
 }
 }  // namespace opt
 }  // namespace mindspore

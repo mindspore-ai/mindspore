@@ -16,18 +16,19 @@
 
 #ifndef MINDSPORE_CONVERT_DYNAMIC_BROADCAST_TO_ATTR_H
 #define MINDSPORE_CONVERT_DYNAMIC_BROADCAST_TO_ATTR_H
-#include <string>
-#include "ir/anf.h"
-#include "include/common/utils/convert_utils.h"
-#include "backend/common/optimizer/optimizer.h"
+
+#include <memory>
+#include "backend/common/optimizer/pattern_to_pattern.h"
+
 namespace mindspore {
 namespace opt {
-class ConvertDynamicBroadcastTo : public PatternProcessPass {
+class ConvertDynamicBroadcastTo : public PatternToPatternPass {
  public:
-  explicit ConvertDynamicBroadcastTo(bool multigraph = true)
-      : PatternProcessPass("convert_dynamic_broadcast_to", multigraph) {}
+  ConvertDynamicBroadcastTo() : PatternToPatternPass("convert_dynamic_broadcast_to", true) {}
   ~ConvertDynamicBroadcastTo() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

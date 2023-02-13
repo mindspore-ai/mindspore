@@ -31,19 +31,14 @@ constexpr size_t kBlockShapeDimNum = 2;
 constexpr auto kAttrBlockShape = "block_shape";
 constexpr auto kAttrPaddings = "paddings";
 constexpr auto kAttrCrops = "crops";
-}  // namespace
+constexpr auto kV = "V";
+constexpr auto kMSpace = "m_space";
+constexpr auto kRSpace = "r_space";
+constexpr auto kMBatch = "m_batch";
+constexpr auto kRBatch = "r_batch";
 
-const BaseRef SpaceToBatchNDAttrUpdate::DefinePattern() const {
-  VarPtr X = std::make_shared<Var>();
-  VectorRef pattern({prim::kPrimSpaceToBatchND, X});
-  return pattern;
-}
-
-const AnfNodePtr SpaceToBatchNDAttrUpdate::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                   const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node);
-
+AnfNodePtr BuildSpace(const PatternMap &m, const AnfNodePtr &default_node) {
+  auto node = m.Get(kMSpace);
   auto block_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrBlockShape);
   if (block_shape.size() == kBlockShapeDimNum) {
     (void)block_shape.insert(block_shape.cbegin(), 1);
@@ -57,17 +52,8 @@ const AnfNodePtr SpaceToBatchNDAttrUpdate::Process(const FuncGraphPtr &graph, co
   return node;
 }
 
-const BaseRef BatchToSpaceNDAttrUpdate::DefinePattern() const {
-  VarPtr X = std::make_shared<Var>();
-  VectorRef pattern({prim::kPrimBatchToSpaceND, X});
-  return pattern;
-}
-
-const AnfNodePtr BatchToSpaceNDAttrUpdate::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                   const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node);
-
+AnfNodePtr BuildBatch(const PatternMap &m, const AnfNodePtr &default_node) {
+  auto node = m.Get(kMBatch);
   auto block_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrBlockShape);
   if (block_shape.size() == kBlockShapeDimNum) {
     (void)block_shape.insert(block_shape.cbegin(), 1);
@@ -79,6 +65,31 @@ const AnfNodePtr BatchToSpaceNDAttrUpdate::Process(const FuncGraphPtr &graph, co
     common::AnfAlgo::SetNodeAttr(kAttrCrops, MakeValue(crops), node);
   }
   return node;
+}
+}  // namespace
+
+bool SpaceToBatchNDAttrUpdate::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const {
+  return true;
+}
+
+void SpaceToBatchNDAttrUpdate::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern).AddVar(kV).AddCNode(kMSpace, {prim::kPrimSpaceToBatchND, kV});
+}
+
+void SpaceToBatchNDAttrUpdate::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern).AddCNode(kRSpace, {prim::kPrimSpaceToBatchND, kV}, BuildSpace);
+}
+
+bool BatchToSpaceNDAttrUpdate::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const {
+  return true;
+}
+
+void BatchToSpaceNDAttrUpdate::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern).AddVar(kV).AddCNode(kMBatch, {prim::kPrimBatchToSpaceND, kV});
+}
+
+void BatchToSpaceNDAttrUpdate::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern).AddCNode(kRBatch, {prim::kPrimBatchToSpaceND, kV}, BuildBatch);
 }
 }  // namespace opt
 }  // namespace mindspore

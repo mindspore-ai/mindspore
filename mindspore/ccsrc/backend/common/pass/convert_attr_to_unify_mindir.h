@@ -16,17 +16,15 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONVERT_ATTR_TO_UNIFY_MINDIR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONVERT_ATTR_TO_UNIFY_MINDIR_H_
 
-#include "ir/anf.h"
-#include "backend/common/optimizer/optimizer.h"
+#include <memory>
+#include "backend/common/optimizer/inplace_node_pass.h"
 
 namespace mindspore {
 namespace opt {
-class ConvertAttrToUnifyMindIR : public PatternProcessPass {
+class ConvertAttrToUnifyMindIR : public InplaceNodePass {
  public:
-  explicit ConvertAttrToUnifyMindIR(bool multigraph = true)
-      : PatternProcessPass("convert_attr_to_unify_mindir", multigraph) {}
-  ~ConvertAttrToUnifyMindIR() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
+  ConvertAttrToUnifyMindIR() : InplaceNodePass("convert_attr_to_unify_mindir") {}
+  bool Process(const AnfNodePtr &node) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -14,62 +14,11 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <memory>
-#include "common/common_test.h"
-#define private public
-#define protected public
-#include "backend/common/optimizer/pattern_to_pattern.h"
-#undef private
-#undef protected
-
-#include "mindspore/core/ops/core_ops.h"
-#include "ir/anf.h"
-#include "ir/value.h"
-#include "include/common/utils/utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "pattern_to_pattern_pass_utils.h"
 
 namespace mindspore {
 namespace opt {
-class TestPatternToPatternPass : public UT::Common {
- public:
-  TestPatternToPatternPass() : fg_(std::make_shared<FuncGraph>()){};
-
- public:
-  FuncGraphPtr fg_;
-};
-
-class CheckPattern {
- public:
-  CheckPattern()
-      : m_(std::make_shared<PatternMap>()),
-        src_pattern_(SrcPattern(m_)),
-        pattern_engine_(PatternEngine(std::make_shared<Visitor>())),
-        primitive_vars_(std::make_shared<PrimitiveVarMap>()),
-        equiv_(std::make_shared<Equiv>()){};
-  bool build_pattern_map(const AnfNodePtr &node) {
-    VarPtr root_g = std::make_shared<Var>("RootG");
-    auto src_pattern_root = SexpToNode(src_pattern_.GetRoot(), root_g, primitive_vars_.get(), multigraph_);
-    auto primitive = GetCNodePrimitive(src_pattern_root);
-    if (IsPrimitiveCNode(node, primitive)) {
-      MS_EXCEPTION_IF_NULL(primitive_vars_);
-      MS_EXCEPTION_IF_NULL(equiv_);
-      equiv_->clear();
-      EquivPtr equiv = pattern_engine_.Match(src_pattern_root, node, *primitive_vars_, equiv_);
-      if (equiv != nullptr && !equiv->empty()) {
-        return src_pattern_.build_pattern_map(node, equiv);
-      }
-    }
-    return false;
-  }
-  PatternMapPtr m_;
-  SrcPattern src_pattern_;
-  PatternEngine pattern_engine_;
-  PrimitiveVarMapPtr primitive_vars_;
-  EquivPtr equiv_;
-  bool multigraph_ = true;
-};
-
+namespace {
 class TestMul0 : public PatternToPatternPass {
   // a*b + a*c -> a*(b+c)
  public:
@@ -226,6 +175,15 @@ class TestError1 : public PatternToPatternPass {
       .AddCNode("mul", {std::make_shared<Primitive>(kMulOpName), "a", "bc"}, InplaceCNodeFunc("add"));
   }
   bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override { return true; }
+};
+}  // namespace
+
+class TestPatternToPatternPass : public UT::Common {
+ public:
+  TestPatternToPatternPass() : fg_(std::make_shared<FuncGraph>()){};
+
+ public:
+  FuncGraphPtr fg_;
 };
 
 /// Feature: PatternToPattern Pass
@@ -422,8 +380,7 @@ TEST_F(TestPatternToPatternPass, Null) {
   AnfNodePtr add = std::make_shared<CNode>(
     std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>(kAddOpName)), ab, ac}, fg_);
 
-  auto new_node = pass.Run(fg_, add);
-  ASSERT_EQ(new_node, nullptr);
+  EXPECT_THROW(pass.Run(fg_, add), std::runtime_error);
 }
 
 /// Feature: PatternToPattern Pass
