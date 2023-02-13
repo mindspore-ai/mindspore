@@ -74,6 +74,7 @@ constexpr auto kAvgPool3DOpName = "AvgPool3D";
 constexpr auto kAvgPoolGradOpName = "AvgPoolGrad";
 constexpr auto kAvgPoolGradVmOpName = "AvgPoolGradVm";
 constexpr auto kAvgPoolOpName = "AvgPool";
+constexpr auto kDeformableOffsetsOpName = "DeformableOffsets";
 constexpr auto kBasicLSTMCellCStateGradOpName = "BasicLSTMCellCStateGrad";
 constexpr auto kBasicLSTMCellCStateGradV2OpName = "BasicLSTMCellCStateGradV2";
 constexpr auto kBasicLSTMCellInputGradOpName = "BasicLSTMCellInputGrad";
