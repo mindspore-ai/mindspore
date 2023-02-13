@@ -74,15 +74,20 @@ REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
   NodePtr dx;
   NodePtr dw;
-  if (ta) {
-    dx = ib->MatMul(w, dout, (ta && tb), (ta || (!tb)));
+  auto x_dtype_id = ib->GetDtypeId(x);
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'MatMul', gradient not support for complex type currently.";
   } else {
-    dx = ib->MatMul(dout, w, (ta && tb), (ta || (!tb)));
-  }
-  if (tb) {
-    dw = ib->MatMul(dout, x, ((!ta) || tb), (ta && tb));
-  } else {
-    dw = ib->MatMul(x, dout, ((!ta) || tb), (ta && tb));
+    if (ta) {
+      dx = ib->MatMul(w, dout, (ta && tb), (ta || (!tb)));
+    } else {
+      dx = ib->MatMul(dout, w, (ta && tb), (ta || (!tb)));
+    }
+    if (tb) {
+      dw = ib->MatMul(dout, x, ((!ta) || tb), (ta && tb));
+    } else {
+      dw = ib->MatMul(x, dout, ((!ta) || tb), (ta && tb));
+    }
   }
   return {dx, dw};
 });
@@ -98,6 +103,10 @@ REG_BPROP_BUILDER("Mul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'Mul', gradient not support for complex type currently.";
+  }
   auto bc_dx = ib->Mul(y, dout);
   auto bc_dy = ib->Mul(x, dout);
   return BinopGradCommon(ib, x, y, bc_dx, bc_dy);
@@ -333,6 +342,10 @@ REG_BPROP_BUILDER("Pow").SetBody(BODYFUNC(ib) {
   auto power = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'Pow', gradient not support for complex type currently.";
+  }
   auto bc_dx = ib->Mul((ib->Mul(power, (ib->Pow(x, ib->Sub(power, ib->Tensor(1.0, ib->GetDtype(x))))))), dout);
   x = ib->Select(ib->Less(x, ib->Tensor(0, ib->GetDtype(x))),
                  ib->Fill(1.0, ib->GetShape(x), ib->GetDtype(x)->type_id()), x);
