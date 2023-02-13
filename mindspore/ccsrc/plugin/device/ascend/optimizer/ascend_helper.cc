@@ -464,31 +464,26 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
 
 AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &orig_node, const AnfNodePtr &node,
                                   const KernelSelectPtr &kernel_select) {
-  size_t outputs_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t outputs_num = AnfAlgo::GetOutputElementNum(node);
   if (outputs_num == 0) {
     return node;
   }
   MS_EXCEPTION_IF_NULL(func_graph);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  // Single output
-
-  if (outputs_num == 1) {
-    if (AnfUtils::IsRealKernel(node) &&
-        AnfAlgo::GetOutputKernelObjectType(node, 0) == kernel::KernelObjectType::TUPLE) {
-      // output is real tuple
-      MS_LOG(INFO) << "The output's ObjectType is TUPLE, can not insert transdata yet, skip it. Node: "
-                   << node->fullname_with_scope();
-      return node;
-    } else {
-      // output is tensor/scalar, not real tuple
-      auto new_node = InsertTransOpForSingleOutput(func_graph, node, kernel_select);
-      if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node, 0)) {
-        kernel_graph->ReplaceInternalOutput(node, new_node);
-      }
-      return new_node;
-    }
+  // Single output, output is real tuple
+  if (AnfUtils::IsRealKernel(node) && AnfAlgo::GetOutputKernelObjectType(node, 0) == kernel::KernelObjectType::TUPLE) {
+    MS_LOG(INFO) << "The output's ObjectType is TUPLE, can not insert transdata yet, skip it. Node: "
+                 << node->fullname_with_scope();
+    return node;
   }
-
+  // Single output, output is tensor/scalar, not real tuple
+  if (outputs_num == 1 && (!common::AnfAlgo::IsTupleOutput(node))) {
+    auto new_node = InsertTransOpForSingleOutput(func_graph, node, kernel_select);
+    if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node, 0)) {
+      kernel_graph->ReplaceInternalOutput(node, new_node);
+    }
+    return new_node;
+  }
   // Multiple output
   return InsertTransOpForMultipleOutput(func_graph, orig_node, node, kernel_select);
 }
