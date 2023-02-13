@@ -93,22 +93,8 @@ class Future : public FutureBase {
     if (data->gotten) {
       return data->t;
     }
-
-    //        try {
     data->t = data->future.get();
     data->gotten = true;
-    //        } catch (std::future_error const &e) {
-    //            ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "Future error: %s",
-    //            "%s",
-    //                                e.what());
-    //        } catch (std::exception const &e) {
-    //            ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "Standard exception:
-    //            %s",
-    //                                "%s", e.what());
-    //        } catch (...) {
-    //            ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "Unknown exception.");
-    //        }
-
     return data->t;
   }
 
@@ -390,12 +376,9 @@ class Promise {
   explicit Promise(const T &t) : future(t) {}
 
   virtual ~Promise() {
-    //        try {
     if (future.data) {
       future.Abandon();
     }
-    //        } catch (...) {
-    //        }
   }
 
   void SetValue(const T &value) const { Set(value); }

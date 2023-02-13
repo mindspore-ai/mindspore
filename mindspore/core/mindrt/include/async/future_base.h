@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_FUTURE_BASE_H
 
 #include <future>
-#include <iostream>
 #include <utility>
 #include <memory>
 #include <list>
@@ -30,7 +29,6 @@
 namespace mindspore {
 template <typename T>
 class Future;
-
 template <typename T>
 class Promise;
 class LessFuture {
