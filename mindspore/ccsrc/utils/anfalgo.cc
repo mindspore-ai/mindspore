@@ -650,7 +650,7 @@ abstract::BaseShapePtr GetDynamicSequenceShape(const AnfNodePtr &node, size_t ou
 }  // namespace
 
 ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,
-                                         size_t output_idx) {
+                                         size_t output_idx, bool is_real_squence_output) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(base_shape);
   if (base_shape->isa<abstract::Shape>()) {
@@ -666,7 +666,7 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
     if (tuple_shape->size() == 0) {
       return ShapeVector();
     }
-    if (IsDynamicSequence(node)) {
+    if (IsDynamicSequence(node) || is_real_squence_output) {
       return ShapeVector{SizeToLong(tuple_shape->size())};
     }
     if (output_idx >= tuple_shape->size()) {
@@ -700,9 +700,9 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
                     << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);
 }
 
-ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, size_t output_idx) {
+ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, size_t output_idx, bool is_real_squence_output) {
   MS_EXCEPTION_IF_NULL(node);
-  return GetOutputInferShape(node, node->Shape(), output_idx);
+  return GetOutputInferShape(node, node->Shape(), output_idx, is_real_squence_output);
 }
 
 ShapeVector AnfAlgo::GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t input_idx) {
