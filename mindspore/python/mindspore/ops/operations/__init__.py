@@ -111,7 +111,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink,
                      ApplyAdamWithAmsgrad, AdaptiveAvgPool3D, AdaptiveMaxPool2D, AdaptiveMaxPool3D,
                      GridSampler3D, MaxPool3DWithArgmax, MaxUnpool2D, NuclearNorm, NthElement, MultilabelMarginLoss,
-                     PSROIPooling, Dilation2D, DataFormatVecPermute, DeformableOffsets, FractionalAvgPool,
+                     Dilation2D, DataFormatVecPermute, DeformableOffsets, FractionalAvgPool,
                      FractionalMaxPool, FractionalMaxPool3DWithFixedKsize, FractionalMaxPoolWithFixedKsize,
                      GridSampler2D, TripletMarginLoss, UpsampleNearest3D, UpsampleTrilinear3D, PadV3, MaxPoolV1)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
@@ -583,7 +583,6 @@ __all__ = [
     "Orgqr",
     "NonDeterministicInts",
     "NonZero",
-    "PSROIPooling",
     "ResizeArea",
     "ResizeBilinearV2",
     "Qr",
