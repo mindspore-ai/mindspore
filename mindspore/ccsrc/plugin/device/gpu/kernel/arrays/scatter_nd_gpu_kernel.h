@@ -50,10 +50,9 @@ class ScatterNdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
 
-  void FreeResource();
   void CalSize(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
 
   void *stream_ptr_{nullptr};
@@ -68,8 +67,6 @@ class ScatterNdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
 
   // memory in device
   bool memcpy_flag_{false};
-  void *indices_stride_{nullptr};
-  void *work_shape_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
