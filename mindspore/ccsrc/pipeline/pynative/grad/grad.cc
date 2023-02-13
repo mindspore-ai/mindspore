@@ -386,6 +386,18 @@ ForwardExecutorPtr GradExecutor::forward() const {
   return forward_executor;
 }
 
+void GradExecutor::Init() {
+  if (init_) {
+    return;
+  }
+#ifdef _MSC_VER
+  static WinBpropRegister reg;
+  reg.DoNothing();
+  MS_LOG(DEBUG) << "Do windows bprop expander register";
+#endif
+  init_ = true;
+}
+
 TopCellInfoPtr GradExecutor::PopHighOrderGraphStack() {
   if (high_order_stack_.empty()) {
     MS_LOG(EXCEPTION) << "Stack high_order_stack_ is empty";
@@ -1035,9 +1047,6 @@ void GradExecutor::CheckParamShapeAndType(const ParameterPtr &param_node, const 
                               << param_node->DebugString();
     }
   }
-  if (param_node->debug_info()->name() == "sens" && ir_shape != input_shape) {
-    need_renormalize_ = true;
-  }
 }
 
 void GradExecutor::UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph) {
@@ -1587,10 +1596,6 @@ void GradExecutor::SaveOutputNodeMap(const std::string &obj_id, const FrontendOp
 void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNodePtr &cnode,
                             const ValuePtr &op_out) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
-#ifdef _MSC_VER
-  static WinBpropRegister reg;
-  reg.DoNothing();
-#endif
   if (grad_is_running_ && !bprop_grad_stack_.top().second) {
     MS_LOG(DEBUG) << "Custom bprop, no need do op grad";
     return;

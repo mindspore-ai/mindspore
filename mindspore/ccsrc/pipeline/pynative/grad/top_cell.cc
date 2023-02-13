@@ -49,7 +49,15 @@ void SplitString(const std::string &str, std::vector<std::string> *id_vec) {
     end = sub_str.find_first_of(colon_delim, begin);
     paren_pos = sub_str.find_first_of(angle_bracket_left_delim, begin);
     if (paren_pos < end) {
-      end = sub_str.find_last_of(angle_bracket_right_delim) + 1;
+      const auto &s = sub_str.substr(begin, end - begin);
+      auto num = std::count(s.begin(), s.end(), angle_bracket_left_delim);
+      end = begin;
+      while (num--) {
+        end = sub_str.find_first_of(angle_bracket_right_delim, end) + 1;
+      }
+      if (end >= sub_str.size()) {
+        end = std::string::npos;
+      }
     }
   }
 }
