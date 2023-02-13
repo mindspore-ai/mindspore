@@ -217,21 +217,19 @@ bool SparseTensorDenseAddGpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
     "cudaMemcpyAsync x1_indices failed");
 
   if (x1_shape.size() != x2_shape_.size()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << " The input x1_shape size does not equal x2_shape size! "
-                  << "tensor shape of 'sparse': " << x1_shape.size()
-                  << ",and the tensor shape of 'dense':" << x2_shape_.size();
+    MS_LOG(ERROR) << "For 'SparseTensorDenseAdd', the input x1_shape size does not equal x2_shape size! "
+                  << "The shape of 'sparse': " << x1_shape.size() << ",and the shape of 'dense':" << x2_shape_.size();
     return false;
   }
 
   for (size_t idx = 0; idx < x2_shape_.size(); ++idx) {
     if (x1_shape[idx] != x2_shape_[idx]) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << " The input x1_shape dim does not equal x2_shape dim! "
-                    << "tensor dim of 'sparse': " << x1_shape[idx]
-                    << ",and the tensor dim of 'dense':" << x2_shape_[idx];
+      MS_LOG(ERROR) << "For 'SparseTensorDenseAdd', the input x1_shape dim does not equal x2_shape dim! "
+                    << "The dim of 'sparse': " << x1_shape[idx] << ",and the dim of 'dense':" << x2_shape_[idx];
       return false;
     }
     if (x1_indices_host[idx] >= x1_shape[idx]) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << " The input x1_indices is out of bounds! "
+      MS_LOG(ERROR) << "For 'SparseTensorDenseAdd', the input x1_indices is out of bounds! "
                     << "x1_indices is : " << x1_indices_host[idx] << ", tensor bounds is:" << x1_shape[idx];
       return false;
     }

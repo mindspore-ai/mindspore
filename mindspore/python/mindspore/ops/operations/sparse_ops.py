@@ -560,11 +560,11 @@ class SparseTensorDenseAdd(Primitive):
 
     Inputs:
         - **x1_indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
-          Support int32, int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
+          Support int32, int64, each element value should be a non-negative int number. The shape is :math:`(n, ndim)`.
         - **x1_values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
           The shape should be :math:`(n,)`.
         - **x1_shape** (tuple(int)) - A positive int tuple which specifies the shape of sparse tensor,
-          should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
+          should have ndim elements, represent sparse tensor shape is :math:`(ndim,)`.
         - **x2** (Tensor) - A dense Tensor, the dtype is same as `values`.
 
     Outputs:
