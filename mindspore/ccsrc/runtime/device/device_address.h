@@ -217,7 +217,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual bool Load(size_t) { MS_LOG(EXCEPTION) << "Not implemented."; }
 
   // Move data to destination hardware and free resource on source hardware
-  virtual bool MoveTo(StorageType, bool) { MS_LOG(EXCEPTION) << "Not implemented."; }
+  virtual bool MoveTo(StorageType, bool, size_t) { MS_LOG(EXCEPTION) << "Not implemented."; }
 
   virtual bool Wait() const { MS_LOG(EXCEPTION) << "Not implemented."; }
 
@@ -230,6 +230,10 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual void SetStorageInfo(const StorageInfo &) {}
 
   virtual void HandOver(DeviceAddress *other) {
+    MS_EXCEPTION_IF_NULL(other);
+    if (other == this) {
+      return;
+    }
     other->set_ptr(GetMutablePtr());
     other->set_from_mem_pool(from_mem_pool());
     set_ptr(nullptr);

@@ -20,9 +20,10 @@
 #include <queue>
 #include "runtime/device/gsm/swap_strategy.h"
 #include "runtime/device/gsm/mem_usage_analyzer.h"
+#include "include/backend/visible.h"
 namespace mindspore {
 namespace device {
-class SwapStrategyBuilder {
+class BACKEND_EXPORT SwapStrategyBuilder {
  public:
   SwapStrategyBuilder() = default;
   ~SwapStrategyBuilder() = default;

@@ -31,6 +31,7 @@
 namespace mindspore {
 namespace runtime {
 constexpr size_t kFirstVirtualNode = 0;
+constexpr size_t kSecondVirtualNodeOffset = 1;
 namespace {
 AbstractActor *GetCtrlActor(const ControlNodeParserPtr &parser, const KernelGraph *graph, const string &actor_suffix) {
   MS_EXCEPTION_IF_NULL(parser);
@@ -55,10 +56,12 @@ std::map<size_t, size_t> GetActionTensors(const std::shared_ptr<device::SwapActi
   std::map<size_t, size_t> tensor_indexes;
   std::set<size_t> is_real_parameter;
   for (const auto &tensor_action : swap_action->actions_) {
+    MS_EXCEPTION_IF_NULL(tensor_action);
     if (tensor_action->tensor_id_ >= swap_strategy->tensor_infos_.size()) {
       MS_LOG(EXCEPTION) << "Invalid tensor id " << tensor_action->tensor_id_;
     }
     const auto &tensor_info = swap_strategy->tensor_infos_[tensor_action->tensor_id_];
+    MS_EXCEPTION_IF_NULL(tensor_info);
     std::vector<size_t> real_tensor_ids;
     if (tensor_info->fused_tensor_ids_.empty()) {
       real_tensor_ids.emplace_back(tensor_info->tensor_id_);
@@ -73,6 +76,7 @@ std::map<size_t, size_t> GetActionTensors(const std::shared_ptr<device::SwapActi
         MS_LOG(EXCEPTION) << "Invalid tensor id " << real_tensor_id;
       }
       const auto &real_tensor_info = swap_strategy->tensor_infos_[real_tensor_id];
+      MS_EXCEPTION_IF_NULL(real_tensor_info);
       const auto &node = real_tensor_info->node_;
       const auto &real_parameter_iter = real_parameters.find(node);
       if (real_parameter_iter == real_parameters.end()) {
@@ -105,14 +109,16 @@ void GenActionIndexList(const std::map<size_t, size_t> &tensors_id_index_map,
   std::map<device::SwapActionType, vector<size_t>> move_action_map;
   const auto &actions = swap_action->actions_;
   for (const auto &tensor_action : actions) {
+    MS_EXCEPTION_IF_NULL(tensor_action);
     if (tensor_action->tensor_id_ >= swap_strategy->tensor_infos_.size()) {
       MS_LOG(EXCEPTION) << "Invalid tensor id " << tensor_action->tensor_id_;
     }
     const auto &tensor_info = swap_strategy->tensor_infos_[tensor_action->tensor_id_];
+    MS_EXCEPTION_IF_NULL(tensor_info);
     if (tensor_action->action_ == device::SwapActionType::kAllocHBM) {
       std::vector<size_t> indexes;
-      std::transform(tensor_info->fused_tensor_ids_.begin(), tensor_info->fused_tensor_ids_.end(),
-                     std::back_inserter(indexes), [](size_t index) { return index; });
+      std::copy(tensor_info->fused_tensor_ids_.begin(), tensor_info->fused_tensor_ids_.end(),
+                std::back_inserter(indexes));
       alloc_action_map.emplace_back(indexes);
     } else if (tensor_action->action_ != device::SwapActionType::kUnDefined) {
       const auto tensor_id = tensor_info->tensor_id_;
@@ -205,7 +211,7 @@ std::vector<std::vector<MemSwapActorPtr>> MemSwapScheduler::Build(const GraphCom
     const auto device_context = graph_compiler_info.device_contexts_[i];
     const auto &graph = graph_compiler_info.graphs_[i];
     std::vector<MemSwapActorPtr> actors;
-    if (device_context == nullptr || graph->is_dynamic_shape()) {
+    if (device_context == nullptr || graph == nullptr || graph->is_dynamic_shape()) {
       swap_actors.emplace_back(actors);
       continue;
     }
@@ -228,7 +234,7 @@ AbstractActor *MemSwapScheduler::GetActorForLink(size_t id, const std::shared_pt
     if (ret == nullptr) {
       ret = actor_set->data_prepare_actor_.get();
     }
-  } else if (id == graph->execution_order().size()) {
+  } else if (id == graph->execution_order().size() + kSecondVirtualNodeOffset) {
     ret = dynamic_cast<ExitActor *>(GetCtrlActor(parser, graph.get(), kExitActorNameSuffix));
     if (ret == nullptr) {
       ret = actor_set->loop_count_actor_.get();
@@ -258,7 +264,9 @@ void MemSwapScheduler::Link(const GraphCompilerInfo &graph_compiler_info, ActorS
       continue;
     }
     const auto &strategy = strategy_iter->second;
+    MS_EXCEPTION_IF_NULL(strategy);
     for (const auto &link : strategy->links_) {
+      MS_EXCEPTION_IF_NULL(link);
       const auto from_actor =
         GetActorForLink(link->from_, strategy, graph, graph_compiler_info.control_node_parser_, actor_set);
       MS_EXCEPTION_IF_NULL(from_actor);
