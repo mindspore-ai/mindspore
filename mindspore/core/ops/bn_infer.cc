@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include <string>
-#include <algorithm>
 #include <memory>
 #include <set>
 #include <vector>
