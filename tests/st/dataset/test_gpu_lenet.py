@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
-
 import mindspore as ms
 import mindspore.dataset as ds
 import mindspore.nn as nn
@@ -135,9 +133,6 @@ def set_parameter():
                                  all_reduce_fusion_config=config.all_reduce_fusion_config)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_train_net_fade_then_sink():
     """
     Feature: The PYNATIVE mode under GPU has been trained for two consecutive times

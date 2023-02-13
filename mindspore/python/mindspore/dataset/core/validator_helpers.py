@@ -746,9 +746,9 @@ def check_gnn_list_or_ndarray(param, param_name, data_type=int):
         elif data_type == str:
             data_type = np.str_
 
-        if param.dtype.type != data_type:
+        if param.dtype != data_type:
             raise TypeError("Each member in {0} should be of type {1}. Got {2}.".format(
-                param_name, data_type, param.dtype.type))
+                param_name, data_type, param.dtype))
 
 
 def check_tensor_op(param, param_name):
