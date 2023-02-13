@@ -5877,5 +5877,7 @@ __all__ = [
     'mse_loss',
     'msort',
     'triplet_margin_loss',
+    'channel_shuffle',
+    'hardsigmoid'
 ]
 __all__.sort()

@@ -1269,6 +1269,6 @@ __all__ = [
     'standard_laplace', 'random_categorical', 'uniform', 'standard_normal', 'random_gamma',
     'uniform_candidate_sampler', 'random_poisson', 'log_uniform_candidate_sampler', 'shuffle', 'choice_with_mask',
     'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like', 'randn', 'randn_like', 'randint',
-    'randint_like'
+    'randint_like', 'multinomial_with_replacement', 'randperm'
 ]
 __all__.sort()

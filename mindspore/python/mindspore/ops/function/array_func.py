@@ -6805,6 +6805,8 @@ __all__ = [
     'hstack',
     'movedim',
     'moveaxis',
+    'aminmax',
+    'count_nonzero',
     'sort'
 ]
 __all__.sort()
