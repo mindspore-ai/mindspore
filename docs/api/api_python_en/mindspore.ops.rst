@@ -229,6 +229,7 @@ Element-wise Operations
     mindspore.ops.float_power
     mindspore.ops.fmod
     mindspore.ops.frac
+    mindspore.ops.gcd
     mindspore.ops.hypot
     mindspore.ops.igamma
     mindspore.ops.igammac
