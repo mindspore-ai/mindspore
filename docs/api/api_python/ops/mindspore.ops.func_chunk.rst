@@ -3,15 +3,15 @@ mindspore.ops.chunk
 
 .. py:function:: mindspore.ops.chunk(x, chunks, axis=0)
 
-    根据指定的轴将输入Tensor切分成块。
+    沿着指定轴 `axis` 将输入Tensor切分成 `chunks` 个sub-tensor。
 
     .. note::
         此函数返回的数量可能小于通过 `chunks` 指定的数量!
 
     参数：
-        - **x** (Tensor) - Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。
-        - **chunks** (int) - 要返回的块数。
-        - **axis** (int) - 指定分割轴。默认值：0。
+        - **x** (Tensor) - 被切分的Tensor。
+        - **chunks** (int) - 要切分的sub-tensor数量。
+        - **axis** (int) - 指定需要分割的维度。默认值：0。
 
     返回：
         tuple[Tensor]。
