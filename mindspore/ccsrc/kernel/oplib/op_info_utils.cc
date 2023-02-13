@@ -31,16 +31,22 @@
 
 namespace mindspore::kernel {
 namespace {
-constexpr auto kAscend910A = "Ascend910A";
-constexpr auto kAscend910ProA = "Ascend910ProA";
-constexpr auto kAscend910PremiumA = "Ascend910PremiumA";
-constexpr auto kAscend920A = "Ascend920A";
-constexpr auto kAscend910SuffixPath = "/opp/built-in/op_impl/ai_core/tbe/config/ascend910/aic-ascend910-ops-info.json";
-constexpr auto kAscend920SuffixPath = "/opp/built-in/op_impl/ai_core/tbe/config/ascend920/aic-ascend920-ops-info.json";
-const std::map<std::string, std::string> kAscendSuffixPathMap = {{kAscend910A, kAscend910SuffixPath},
-                                                                 {kAscend910ProA, kAscend910SuffixPath},
-                                                                 {kAscend910PremiumA, kAscend910SuffixPath},
-                                                                 {kAscend920A, kAscend920SuffixPath}};
+std::string GetAscendSuffixPath(const std::string &version) {
+  const std::set<std::string> kAscend910Versions = {"Ascend910A", "Ascend910B", "Ascend910PremiumA", "Ascend910ProA",
+                                                    "Ascend910ProB"};
+  const std::set<std::string> kAscend920Versions = {"Ascend920A"};
+  const std::string kAscend910SuffixPath =
+    "/opp/built-in/op_impl/ai_core/tbe/config/ascend910/aic-ascend910-ops-info.json";
+  const std::string kAscend920SuffixPath =
+    "/opp/built-in/op_impl/ai_core/tbe/config/ascend920/aic-ascend920-ops-info.json";
+  if (kAscend910Versions.count(version) != 0) {
+    return kAscend910SuffixPath;
+  }
+  if (kAscend920Versions.count(version) != 0) {
+    return kAscend920SuffixPath;
+  }
+  return "";
+}
 
 #define MAKE_SHARE_CHECK(expr1)                                 \
   try {                                                         \
@@ -161,12 +167,12 @@ bool OpInfoUtils::LoadOpInfoJson(const std::string &version, const std::string &
   }
   SuperBar::LoadSBConfig(super_bar);
 #endif
-  auto ascend_suffix_path = kAscendSuffixPathMap.find(version);
-  if (ascend_suffix_path == kAscendSuffixPathMap.end()) {
+  auto ascend_suffix_path = GetAscendSuffixPath(version);
+  if (ascend_suffix_path.empty()) {
     MS_LOG(ERROR) << "Get op info json suffix path failed, soc_version: " << version;
     return false;
   }
-  auto op_info_json_path = ascend_path + ascend_suffix_path->second;
+  auto op_info_json_path = ascend_path + ascend_suffix_path;
   auto real_path = FileUtils::GetRealPath(op_info_json_path.c_str());
   if (!real_path.has_value()) {
     MS_LOG(ERROR)
