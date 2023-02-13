@@ -786,6 +786,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, use_dynamic_shape_process,
                                                         &op_run_info, &graph_info, &graph_output_info);
         if (use_dynamic_shape_process) {
+          op_run_info->op_prim = std::make_shared<Primitive>(*op_run_info->op_prim);
           AnfAlgo::SetDynamicAttrToPrim(op_run_info->op_prim);
           RunOpDynamic(op_run_info, &op_outputs);
         } else {
