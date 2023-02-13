@@ -147,6 +147,7 @@ class GradExecutor {
   void ClearGlobalRes();
   void ClearGradRes();
   std::string GetAlreadyRunCellId(const std::string &cell_id) const;
+  bool FreeUselessTensors(const CNodePtr &cnode, const ValuePtrList &inputs, const ValuePtr &output) const;
 
   // Higher derivative
   inline bool IsNestedGrad() const { return grad_order_ > 1; }
