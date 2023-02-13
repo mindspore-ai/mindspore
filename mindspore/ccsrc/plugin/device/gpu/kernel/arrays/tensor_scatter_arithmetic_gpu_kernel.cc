@@ -190,7 +190,19 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 template <typename S>
-void TensorScatterArithmeticGpuKernelMod::CheckIndicesValid(S *indices) {
+void TensorScatterArithmeticGpuKernelMod::CheckIndicesValid(int *has_error, S *indices) {
+  // detect errors
+  int *has_error_host = reinterpret_cast<int *>(malloc(sizeof(int)));
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(has_error_host, has_error, sizeof(int), cudaMemcpyDeviceToHost,
+                    reinterpret_cast<cudaStream_t>(stream_ptr_)),
+    "TensorScatterArithmeticGpuKernelMod cudaMemcpy failed in TensorScatterArithmeticGpuKernelMod::CheckIndicesValid.");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                                     "cudaStreamSynchronized failed");
+  if (has_error_host[0] != 1) {
+    return;
+  }
+
   size_t total_indices_num =
     std::accumulate(indices_shape_.begin(), indices_shape_.end(), 1, std::multiplies<size_t>());
   size_t total_indices_bytes = total_indices_num * indices_unit_size_;
@@ -242,7 +254,16 @@ bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<Address
   T *update = GetDeviceAddress<T>(inputs, kIndex2);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
 
-  (void)CheckIndicesValid(indices);
+  // set a flag to detect errors
+  int has_error_host[1] = {0};
+  int *has_error = nullptr;
+  cudaMalloc(reinterpret_cast<void **>(&has_error), sizeof(int));
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(has_error, has_error_host, sizeof(int), cudaMemcpyHostToDevice,
+                    reinterpret_cast<cudaStream_t>(stream_ptr_)),
+    "TensorScatterArithmeticGpuKernelMod cudaMemcpy failed in TensorScatterArithmeticGpuKernelMod::LaunchKernel.");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                                     "cudaStreamSynchronized failed");
 
   if (!memcpy_flag_) {
     const size_t indices_len = indices_unit_size_ * vec_indices_stride_.size();
@@ -268,17 +289,20 @@ bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<Address
 
   if constexpr ((std::is_same_v<T, Complex<float>>) || (std::is_same_v<T, Complex<double>>)) {
     if (kernel_name_ == kTensorScatterUpdate) {
-      CallTensorScatterUpdate(input, indices, update, output, block_size_, update_size_, output_size_, indices_dim_0_,
-                              indices_dim_1_, reinterpret_cast<S *>(indices_stride_),
+      CallTensorScatterUpdate(input, indices, update, output, has_error, block_size_, update_size_, output_size_,
+                              indices_dim_0_, indices_dim_1_, reinterpret_cast<S *>(indices_stride_),
                               reinterpret_cast<S *>(work_shape_), device_id_,
                               reinterpret_cast<cudaStream_t>(stream_ptr_));
+
+      (void)CheckIndicesValid(has_error, indices);
       return true;
     }
   } else {
-    TensorScatterArithmetic(op_func_type_, input, indices, update, output, block_size_, update_size_, output_size_,
-                            indices_dim_0_, indices_dim_1_, reinterpret_cast<S *>(indices_stride_),
+    TensorScatterArithmetic(op_func_type_, input, indices, update, output, has_error, block_size_, update_size_,
+                            output_size_, indices_dim_0_, indices_dim_1_, reinterpret_cast<S *>(indices_stride_),
                             reinterpret_cast<S *>(work_shape_), device_id_,
                             reinterpret_cast<cudaStream_t>(stream_ptr_));
+    (void)CheckIndicesValid(has_error, indices);
   }
   return true;
 }

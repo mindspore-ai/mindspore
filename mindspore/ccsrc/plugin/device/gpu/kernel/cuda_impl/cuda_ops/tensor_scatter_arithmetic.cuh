@@ -31,13 +31,14 @@ enum TensorScatterArithmeticFunctionType {
 
 template <typename T, typename S>
 CUDA_LIB_EXPORT void TensorScatterArithmetic(const enum TensorScatterArithmeticFunctionType &func_type, const T *input,
-                                             const S *indices, const T *update, T *output, const size_t &block_size,
-                                             const size_t &input_size, const size_t &output_size,
-                                             const size_t &indices_dim_0, const size_t &indices_dim_1,
-                                             S *indices_stride, S *work_shape, uint32_t device_id, cudaStream_t stream);
+                                             const S *indices, const T *update, T *output, int *has_error,
+                                             const size_t &block_size, const size_t &input_size,
+                                             const size_t &output_size, const size_t &indices_dim_0,
+                                             const size_t &indices_dim_1, S *indices_stride, S *work_shape,
+                                             uint32_t device_id, cudaStream_t stream);
 template <typename T, typename S>
 CUDA_LIB_EXPORT void CallTensorScatterUpdate(const T *input, const S *indices, const T *update, T *output,
-                                             const size_t &block_size, const size_t &input_size,
+                                             int *has_error, const size_t &block_size, const size_t &input_size,
                                              const size_t &output_size, const size_t &indices_dim_0,
                                              const size_t &indices_dim_1, S *indices_stride, S *work_shape,
                                              uint32_t device_id, cudaStream_t stream);

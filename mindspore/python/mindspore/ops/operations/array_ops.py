@@ -6253,6 +6253,7 @@ class TensorScatterUpdate(_TensorScatterOp):
         TypeError: If dtype of `indices` is neither int32 nor int64.
         ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
         ValueError: If the value of `input_x` are not match with input `indices`.
+        RuntimeError: If a value of `indices` is not in `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -22,3 +22,4 @@ mindspore.ops.tensor_scatter_div
     异常：
         - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
         - **ValueError** - `input_x` 的shape长度小于 `indices` 的shape的最后一个维度。
+        - **RuntimeError** - `indices` 超出了 `input_x` 的索引范围。

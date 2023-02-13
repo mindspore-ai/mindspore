@@ -21,3 +21,4 @@
         - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
         - **ValueError** - `input_x` 的shape长度小于 `indices` 的shape的最后一个维度。
         - **ValueError** - `input_x` 的值与输入 `indices` 不匹配。
+        - **RuntimeError** - `indices` 超出了 `input_x` 的索引范围。
