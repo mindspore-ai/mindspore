@@ -1954,10 +1954,11 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
 
             .. code-block::
 
-                old_i = new_length != 1 ? new_i * (old_length - 1) / (new_length - 1) : 0  # 'align_corners' = True
-                old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # 'align_corners' = False
+              old_i = new_length != 1 ? new_i * (old_length - 1) / (new_length - 1) : 0   # 'align_corners' = True
 
-            This is only valid for 'linear', 'bilinear', 'bicubic', or 'trilinear' modes. Default: False.
+              old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # 'align_corners' = False
+
+          This is only valid for 'linear', 'bilinear', 'bicubic', or 'trilinear' modes. Default: False.
         recompute_scale_factor (bool, optional): Recalculate `scale_factor`.
             If True, the parameter `size` will be calculated using the value of the `scale_factor`,
             and finally scaled using the value of `size`.
@@ -2001,17 +2002,16 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
         Tensor, resized, whose dimensions and dtype are the same as `x`.
 
     Raises:
-        TypeError: If `x` is not Tensor.
-        TypeError: If `mode` is not one of 'nearest', 'linear', 'bilinear', 'bicubic',
-            'trilinear', 'area', nor 'nearest-exact'.
-        TypeError: If `size` is not one of tuple, list, None.
-        TypeError: If `scale_factor` is neither int nor None.
-        TypeError: If `align_corners` is not a bool.
-        TypeError: If dtype of `x` is neither float16 nor float32.
-        ValueError: If `size` and `scale_factor` are both None or not None.
-        ValueError: If shape of `x` or `size` and `mode` are not match.
-        ValueError: If `scale_factor` is an int which is less than 0.
-        ValueError: If `size` is a list or tuple whose length is not match `mode`.
+        TypeError: `x` is not a Tensor.
+        ValueError: Both `size` and `scale_factor` are not empty.
+        ValueError: Both `size` and `scale_factor` are empty.
+        ValueError: When `size` is a tuple or list, its length is not equal to `x.ndim - 2`.
+        ValueError: When `scale_factor` is a tuple or list, its length is not equal to `x.ndim - 2`.
+        ValueError: `mode` is not in the list of supported modes.
+        ValueError: `x.ndim` is not in the list of supported dimensions for the corresponding mode.
+        ValueError: `size` is not empty, `recompute_scale_factor` is not empty.
+        ValueError: `scale_factor` is not in the corresponding list of supported values.
+        ValueError: `align_corners` is not in the corresponding list of supported values.
 
     Examples:
         >>> import mindspore

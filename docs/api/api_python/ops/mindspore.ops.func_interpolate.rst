@@ -14,7 +14,8 @@ mindspore.ops.interpolate
 
           .. code-block::
 
-              old_i = new_length != 1 ? new_i * (old_length - 1) / (new_length - 1) : 0  # 'align_corners' 为 True
+              old_i = new_length != 1 ? new_i * (old_length - 1) / (new_length - 1) : 0   # 'align_corners' 为 True
+
               old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # 'align_corners' 为 False
 
           此选项只对'linear'、'bilinear'、'bicubic'和'trilinear'模式有效。默认值：False。
@@ -59,12 +60,12 @@ mindspore.ops.interpolate
 
     异常：
         - **TypeError** - `x` 不是Tensor。
-        - **TypeError** - `x` 的数据类型不支持。
-        - **TypeError** - `scales` 不是float类型的tuple。
-        - **ValueError** - `scales` 中的数不全是正数。
-        - **TypeError** - `sizes` 不是int64类型的tuple。
-        - **ValueError** - `sizes` 中的数不全是正数。
-        - **TypeError** - `coordinate_transformation_mode` 不是string。
-        - **ValueError** - `coordinate_transformation_mode` 不在支持的列表中。
-        - **TypeError** - `mode` 不是string类型。
-        - **ValueError** - `mode` 不在支持的列表中。
+        - **ValueError** - `size` 和 `scale_factor` 都不为空。
+        - **ValueError** - `size` 和 `scale_factor` 都为空。
+        - **ValueError** - `size` 为元组或列表类型时长度不等于 `x.ndim - 2` 。
+        - **ValueError** - `scale_factor` 为元组或列表类型时长度不等于 `x.ndim - 2` 。
+        - **ValueError** - `mode` 不在模式支持列表中。
+        - **ValueError** - `x.ndim` 不在模式对应维度的支持列表中。
+        - **ValueError** - `size` 不为空， `recompute_scale_factor` 不为空。
+        - **ValueError** - `scale_factor` 不在对应的支持列表中。
+        - **ValueError** - `align_corners` 不在对应的支持列表中。

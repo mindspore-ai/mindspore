@@ -4441,18 +4441,18 @@ def _check_check_axis_in_range(axis, ndim):
 
 def index_select(x, axis, index):
     """
-    Returns a new Tensor which indexes the `x` Tensor along dimension `axis` using the entries in `index` .
-
-    The returned Tensor has the same number of dimensions as the original Tensor ( `x` ). The `axis` th dimension
-    has the same size as the length of `index` ; other dimensions have the same size as in the original Tensor.
+    Generates a new Tensor that accesses the values of `x` along the specified `axis` dimension
+    using the indices specified in `index`. The new Tensor has the same number of dimensions as `x`,
+    with the size of the `axis` dimension being equal to the length of `index`, and the size of all other
+    dimensions will be unchanged from the original `x` Tensor.
 
     .. note::
         The value of index must be in the range of `[0, x.shape[axis])`, the result is undefined out of range.
 
     Args:
-        x (Tensor): Input Tensor.
-        axis (int): Dimension in which we index.
-        index (Tensor): The 1-D Tensor containing the indices to index. The data type can be int32 or int64.
+        x (Tensor): The input Tensor.
+        axis (int): The dimension to be indexed.
+        index (Tensor): A 1-D Tensor with the indices to access in `x` along the specified axis.
 
     Returns:
         Tensor, has the same dtype as input Tensor.
@@ -4470,13 +4470,17 @@ def index_select(x, axis, index):
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> import numpy as np
-        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32))
-        >>> index = Tensor([0, 2], mindspore.int32)
+        >>> x = Tensor(np.arange(16).astype(np.float32).reshape(2, 2, 4))
+        >>> print(x)
+        [[[ 0.  1.  2.  3.]
+          [ 4.  5.  6.  7.]]
+         [[ 8.  9. 10. 11.]
+          [12. 13. 14. 15.]]]
+        >>> index = Tensor([0,], mindspore.int32)
         >>> y = ops.index_select(x, 1, index)
         >>> print(y)
-        [[1. 3.]
-         [4. 6.]
-         [7. 9.]]
+        [[[ 0.  1.  2.  3.]]
+         [[ 8.  9. 10. 11.]]]
     """
     if not (isinstance(x, Tensor) and isinstance(index, Tensor)):
         raise TypeError(f"For 'index_select', inputs `x` and `index` must be all tensors.")

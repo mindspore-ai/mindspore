@@ -955,7 +955,7 @@ def divide(x, other, *, rounding_mode=None):
 def float_power(x, exponent):
     """
     Computes `x` to the power of the exponent.
-    For the real number type, cast x and expoent to mindspore.float64 to calculate.
+    For the real number type, cast `x` and `exponent` to mindspore.float64 to calculate.
     Currently, complex type calculation is not supported.
 
     Args:
@@ -1070,10 +1070,10 @@ def fmod(x, other):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([-3., -2, -1, 1, 2, 3]), mindspore.float32)
-        >>> output = ops.fmod(x, 1.5)
+        >>> x = Tensor(np.array([-4., -3.5, 0, 3.5, 4]), mindspore.float32)
+        >>> output = ops.fmod(x, 2.5)
         >>> print(output)
-        [ 0.  -0.5 -1.   1.   0.5  0. ]
+        [-1.5 -1.   0.   1.   1.5]
     """
     if not (isinstance(x, (Tensor, Tensor_)) or isinstance(other, (Tensor, Tensor_))):
         raise TypeError("At least one of the types of inputs must be tensor, " + \
@@ -4528,11 +4528,11 @@ def heaviside(x, values):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([-1.5, 0., 2.]))
-        >>> values = Tensor(np.array([0.5]))
+        >>> x = Tensor(np.array([-5., 1., 0., 2., 0.]))
+        >>> values = Tensor(np.array([3.]))
         >>> y = ops.heaviside(x, values)
         >>> print(y)
-        [ 0.  0.5 1. ]
+        [0. 1. 3. 1. 3.]
     """
 
     heaviside_ = Heaviside()
@@ -8105,10 +8105,10 @@ def baddbmm(x, batch1, batch2, beta=1, alpha=1):
         \text{out}_{i} = \beta \text{input}_{i} + \alpha (\text{batch1}_{i} \mathbin{@} \text{batch2}_{i})
 
     Args:
-        x (Tensor): The tensor to be added. When batch1 is a (CxWxT) tensor and batch2 is a (CxTxH) tensor,
-            x must be broadcastable with (CxWxH) tensor.
-        batch1 (Tensor): The first batch of matrices to be multiplied. Must be 3-D tensors, dtype is same as x.
-        batch2 (Tensor): The second batch of matrices to be multiplied. Must be 3-D tensors, dtype is same as x.
+        x (Tensor): The input Tensor. When batch1 is a (CxWxT) Tensor and batch2 is a (CxTxH) Tensor,
+            x must be broadcastable with (CxWxH) Tensor.
+        batch1 (Tensor): :math:`batch1` in the above formula. Must be 3-D Tensor, dtype is same as x.
+        batch2 (Tensor): :math:`batch2` in the above formula. Must be 3-D Tensor, dtype is same as x.
         beta (Union[float, int], optional): multiplier for input. The default is 1.
         alpha (Union[float, int], optional): multiplier for `batch1 @ batch2`. The default is 1.
             Arguments beta and alpha must be integers when inputs of type not FloatTensor, otherwise they should

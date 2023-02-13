@@ -13,7 +13,7 @@ mindspore.ops.index_select
     参数：
         - **x** (Tensor) - 输入Tensor。
         - **axis** (int) - `index` 的维度。
-        - **index** (Tensor) - 包含索引的一维Tensor。数据类型为int32或int64。
+        - **index** (Tensor) - 包含索引的一维Tensor。
 
     返回：
         Tensor，数据类型与输入 `x` 相同。
