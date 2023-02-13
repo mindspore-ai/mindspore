@@ -77,5 +77,11 @@ DECLARE_OP_USE_OUTPUT(Deconvolution)
 
 DECLARE_OP_ADAPTER(Conv2DTransposeD)
 DECLARE_OP_USE_OUTPUT(Conv2DTransposeD)
+
+DECLARE_OP_ADAPTER(DeformableOffsets)
+DECLARE_OP_USE_OUTPUT(DeformableOffsets)
+
+DECLARE_OP_ADAPTER(DeformableOffsetsGrad)
+DECLARE_OP_USE_OUTPUT(DeformableOffsetsGrad)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_CALCULATION_OPS_DECLARE_H_
