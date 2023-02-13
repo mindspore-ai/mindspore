@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,10 @@ namespace mindspore {
 typedef std::shared_ptr<lite::LiteSession>(CreateTrainSessionProto)(std::shared_ptr<Graph::GraphData> graph_data,
                                                                     std::shared_ptr<TrainCfg> cfg,
                                                                     const std::shared_ptr<lite::InnerContext> &context);
-CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProto *proto = nullptr);
+MS_API CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProto *proto = nullptr);
 
 using ExpressionLoader = std::function<Status(const char *, Graph *)>;
-ExpressionLoader CreateExpressionLoader(const ExpressionLoader &loader = nullptr);
+MS_API ExpressionLoader CreateExpressionLoader(const ExpressionLoader &loader = nullptr);
 
 namespace session {
 class Metrics;

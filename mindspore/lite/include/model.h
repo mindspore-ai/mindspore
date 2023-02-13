@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "include/api/visible.h"
 
 namespace mindspore {
 namespace schema {
@@ -29,7 +30,7 @@ typedef enum { ModelType_MSLite, ModelType_MindIR } LiteModelType;
 
 // LiteGraph can be considered as a light weight and subset of FuncGraph, it can not support the advanced expression of
 // FuncGraph, e.g., non-tail recursive.
-struct LiteGraph {
+struct MS_API LiteGraph {
   struct Node {
     std::string name_;
     std::string op_type_;
@@ -62,7 +63,7 @@ struct LiteGraph {
   std::vector<unsigned char *> deobf_prims_;
 #endif
 };
-struct Model {
+struct MS_API Model {
   LiteGraph graph_;
   char *buf = nullptr;
   size_t buf_size_ = 0;

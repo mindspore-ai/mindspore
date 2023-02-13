@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include <utility>
 #include "include/api/data_type.h"
 #include "include/api/dual_abi_helper.h"
+#include "include/api/types.h"
 
 namespace mindspore {
 class Model;
@@ -31,24 +32,19 @@ class CallbackImpl;
 
 using GraphPoint = std::pair<int, float>;
 
-struct TrainCallBackData {
-  TrainCallBackData(bool train_mode, int epoch, int step, Model *model): train_mode_(train_mode), epoch_(epoch),
-                    step_(step), model_(model) {}
+struct MS_API TrainCallBackData {
+  TrainCallBackData(bool train_mode, int epoch, int step, Model *model)
+      : train_mode_(train_mode), epoch_(epoch), step_(step), model_(model) {}
 
   bool train_mode_;       /**< training mode of LiteSession object */
   unsigned int epoch_;    /**< the current training epoch (starts at 0) */
   unsigned int step_ = 0; /**< the current step within the epoch */
-  Model *model_;  /**< pointer to the Model object */
+  Model *model_;          /**< pointer to the Model object */
 };
 
-enum CallbackRetValue : uint32_t {
-  kContinue = 0,
-  kStopTraining = 1,
-  kExit = 2,
-  kUnknownRetValue = 0xFFFFFFFF
-};
+enum CallbackRetValue : uint32_t { kContinue = 0, kStopTraining = 1, kExit = 2, kUnknownRetValue = 0xFFFFFFFF };
 
-class TrainCallBack {
+class MS_API TrainCallBack {
  public:
   virtual ~TrainCallBack() = default;
 
@@ -90,7 +86,7 @@ class TrainCallBack {
  protected:
   friend class Model;
   friend class ModelImpl;
-  CallbackImpl* callback_impl_ = nullptr;
+  CallbackImpl *callback_impl_ = nullptr;
 };
 
 }  // namespace mindspore

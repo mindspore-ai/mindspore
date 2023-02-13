@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-class ContextUtils {
+class MS_API ContextUtils {
  public:
   static std::shared_ptr<lite::InnerContext> Convert(Context *context);
   static std::shared_ptr<lite::InnerContext> Convert(const ContextC *context_c);

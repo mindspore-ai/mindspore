@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,10 @@
 
 namespace mindspore {
 
-class TrainAccuracy: public TrainCallBack {
+class MS_API TrainAccuracy : public TrainCallBack {
  public:
-  explicit TrainAccuracy(int print_every_n = INT_MAX,
-                         int accuracy_metrics = METRICS_CLASSIFICATION,
-                         const std::vector<int> &input_indexes = {1},
-                         const std::vector<int> &output_indexes = {0});
+  explicit TrainAccuracy(int print_every_n = INT_MAX, int accuracy_metrics = METRICS_CLASSIFICATION,
+                         const std::vector<int> &input_indexes = {1}, const std::vector<int> &output_indexes = {0});
   virtual ~TrainAccuracy();
   const std::vector<GraphPoint> &GetAccuracyPoints();
 };

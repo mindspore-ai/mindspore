@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,7 +368,7 @@ std::string MSTensor::Name() const { return CharToString(CharName()); }
 
 void MSTensor::SetTensorName(const std::string &name) { SetTensorName(StringToChar(name)); }
 
-using Key = struct Key {
+using Key = struct MS_API Key {
   const size_t max_key_len = 32;
   size_t len = 0;
   unsigned char key[32] = {0};
@@ -390,7 +390,7 @@ using MSKernelCallBack =
   std::function<bool(const std::vector<MSTensor> & /* inputs */, const std::vector<MSTensor> & /* outputs */,
                      const MSCallBackParam &opInfo)>;
 
-std::vector<char> CharVersion();
+MS_API std::vector<char> CharVersion();
 inline std::string Version() { return CharToString(CharVersion()); }
 
 }  // namespace mindspore

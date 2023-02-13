@@ -31,7 +31,7 @@ using mindspore::schema::PrimitiveType_MAX;
 using mindspore::schema::PrimitiveType_MIN;
 
 namespace mindspore::lite {
-class KernelRegistry {
+class MS_API KernelRegistry {
  public:
   KernelRegistry() = default;
   virtual ~KernelRegistry();

@@ -26,6 +26,7 @@
 #include "nnacl/infer/common_infer.h"
 #include "nnacl/tensorlist_c_utils.h"
 #include "src/litert/cxx_api/tensor/tensor_impl.h"
+#include "include/api/visible.h"
 
 namespace mindspore {
 namespace lite {
@@ -38,7 +39,7 @@ int GenerateInTensorC(const std::vector<lite::Tensor *> &inputs, std::vector<Ten
                       const std::shared_ptr<Allocator> &allocator = nullptr);
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &outputs,
                        std::vector<TensorC *> *out_tensor_c);
-int CheckTensorsInvalid(const std::vector<Tensor *> &tensors);
+MS_API int CheckTensorsInvalid(const std::vector<Tensor *> &tensors);
 int CheckGraphInputShapes(const std::vector<Tensor *> &inputs,
                           const std::unordered_map<Tensor *, std::vector<int>> &input_shape_map);
 std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::Tensor *> &lite_tensors);

@@ -39,7 +39,7 @@
 
 namespace mindspore {
 namespace lite {
-class LiteModel : public Model {
+class MS_API LiteModel : public Model {
  public:
   explicit LiteModel(std::string model_path = "") : model_path_(std::move(model_path)) {}
 

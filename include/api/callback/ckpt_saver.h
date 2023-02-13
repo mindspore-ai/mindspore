@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 
 namespace mindspore {
 
-class CkptSaver: public TrainCallBack {
+class MS_API CkptSaver : public TrainCallBack {
  public:
   inline CkptSaver(int save_every_n, const std::string &filename_prefix);
   virtual ~CkptSaver();
