@@ -40,6 +40,7 @@ void DataDumper::UnloadDumpInfo() {}
 void DataDumper::OpDebugRegister() {}
 void DataDumper::OpDebugUnregister() {}
 DataDumper::~DataDumper() {}
+std::map<std::string, std::string> KernelDumper::stream_task_graphs;
 void KernelDumper::OpLoadDumpInfo(const CNodePtr &kernel) {}
 void KernelDumper::Init() {}
 void KernelDumper::OpDebugRegisterForStream(const CNodePtr &kernel) {}
