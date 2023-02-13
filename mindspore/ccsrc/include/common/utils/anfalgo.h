@@ -113,6 +113,8 @@ class COMMON_EXPORT AnfAlgo {
   static size_t GetInputNum(const CNodePtr &cnode);
   // get the num of inputs exclude monads for real_kernel (which can be build and run in device)
   static size_t GetInputTensorNum(const AnfNodePtr &node);
+  // get prev node output width output index has tuplegetitem
+  static bool IsPrevNodeHasTupleGetItem(const AnfNodePtr &anf_node, size_t input_idx, bool skip_nop_node = false);
   // get prev node output width output index
   static KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx, bool skip_nop_node = false);
   // get all the untuple real prev_nodes output
