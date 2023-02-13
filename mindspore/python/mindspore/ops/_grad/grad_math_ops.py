@@ -364,6 +364,8 @@ def get_bprop_mul(self):
     mul_func = P.Mul()
 
     def bprop(x, y, out, dout):
+        if x.dtype in (mstype.complex64, mstype.complex128):
+            raise TypeError("For 'Mul', gradient not support for complex type currently.")
         bc_dx = mul_func(y, dout)
         bc_dy = mul_func(x, dout)
         return binop_grad_common(x, y, bc_dx, bc_dy)
@@ -760,6 +762,8 @@ def get_bprop_pow(self):
     ln = P.Log()
 
     def bprop(x, power, out, dout):
+        if x.dtype in (mstype.complex64, mstype.complex128):
+            raise TypeError("For 'Pow', gradient not support for complex type currently.")
         bc_dx = power * pow_op(x, power - 1.0) * dout
         shape_x = shape_op(x)
         if F.is_sequence_value_unknown(shape_x):
