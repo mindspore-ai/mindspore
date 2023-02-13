@@ -1850,6 +1850,8 @@ void MemoryRecycle() {
   FuncGraphLoopBreaker::Inst().BreakLoop();
 }
 
+void BindDeviceCtx() { device::DeviceContextManager::GetInstance().BindDeviceCtx(); }
+
 void ClearResPart1() {
   runtime::OpExecutor::GetInstance().WorkerJoin();
   // When the python process exits, the kernels on the device may not have finished executing.

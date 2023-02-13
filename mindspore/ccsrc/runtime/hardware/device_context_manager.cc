@@ -462,6 +462,14 @@ void DeviceContextManager::ClearDeviceContexts() {
   device_contexts_.clear();
 }
 
+void DeviceContextManager::BindDeviceCtx() const {
+  for (auto &iter : device_contexts_) {
+    MS_EXCEPTION_IF_NULL(iter.second);
+    MS_EXCEPTION_IF_NULL(iter.second->device_res_manager_);
+    iter.second->device_res_manager_->BindDeviceToCurrentThread(true);
+  }
+}
+
 DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContextKey &device_context_key,
                                                               string jit_level /* ="" */) {
   std::string device_context_key_str = device_context_key.ToString();

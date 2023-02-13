@@ -554,4 +554,5 @@ PYBIND11_MODULE(_c_expression, m) {
               "Check whether a mindir file can be loaded and up to date.");
 #endif
   (void)m.def("_ms_memory_recycle", &mindspore::pipeline::MemoryRecycle, "Recycle memory used by mindspore.");
+  (void)m.def("_bind_device_ctx", &mindspore::pipeline::BindDeviceCtx, "Bind device context to current thread");
 }

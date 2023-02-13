@@ -60,7 +60,7 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
     // Launch custom func
     MS_EXCEPTION_IF_NULL(node);
     auto custom_func = AnfUtils::GetCustomFunc(node);
-    if (!device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread()) {
+    if (!device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false)) {
       std::string error_info = "BindDevice to current thread failed: " + node->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*ctx), error_info);
     }

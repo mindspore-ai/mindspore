@@ -366,7 +366,7 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   KernelType kernel_type = AnfAlgo::GetKernelType(kernel);
   MS_EXCEPTION_IF_NULL(kernel);
-  (void)res_manager_->BindDeviceToCurrentThread();
+  (void)res_manager_->BindDeviceToCurrentThread(false);
 
   std::vector<AddressPtr> real_inputs;
   bool ret = GetKernelRealInputs(kernel, inputs, &real_inputs);

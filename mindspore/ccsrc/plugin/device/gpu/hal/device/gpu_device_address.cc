@@ -93,7 +93,7 @@ bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const
       device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
     auto gpu_device_context = dynamic_cast<GPUDeviceContext *>(device_context);
     MS_EXCEPTION_IF_NULL(gpu_device_context);
-    if (!gpu_device_context->device_res_manager_->BindDeviceToCurrentThread()) {
+    if (!gpu_device_context->device_res_manager_->BindDeviceToCurrentThread(false)) {
       MS_LOG(EXCEPTION) << "BindDeviceToCurrentThread failed.";
     }
   }

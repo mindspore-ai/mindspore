@@ -42,7 +42,7 @@ class AscendDeviceResManager : public DeviceResManager {
   void Destroy() override;
 
   // set rt_context_ to this thread to control device
-  bool BindDeviceToCurrentThread() const override;
+  bool BindDeviceToCurrentThread(bool /* force_bind */) const override;
 
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;

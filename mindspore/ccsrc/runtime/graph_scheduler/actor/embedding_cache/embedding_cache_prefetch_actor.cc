@@ -232,7 +232,7 @@ void EmbeddingCachePrefetchActor::Run() {
   // Bind device to current thread to gain device control privileges
   MS_EXCEPTION_IF_NULL(device_context_);
   MS_EXCEPTION_IF_NULL(device_context_->device_res_manager_);
-  if (!device_context_->device_res_manager_->BindDeviceToCurrentThread()) {
+  if (!device_context_->device_res_manager_->BindDeviceToCurrentThread(false)) {
     MS_LOG(ERROR) << "Failed to bind device to current thread.";
     running_ = false;
     PsDataPrefetch::GetInstance().NotifyFinalize();
