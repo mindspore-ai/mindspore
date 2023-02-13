@@ -42,7 +42,8 @@ abstract::ShapePtr CompareAndBitpackInferShape(const PrimitivePtr &primitive,
                                            SizeToLong(kShapeSize_), primitive->name());
 
   // Input should be at least a vector
-  (void)CheckAndConvertUtils::CheckInteger("x's rank'", x_rank, kNotEqual, SizeToLong(kShapeSize_), primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("x's rank'", SizeToLong(x_rank), kNotEqual, SizeToLong(kShapeSize_),
+                                           primitive->name());
 
   // check the innermost dimension of `x`'s shape is disvisible by 8.
   if (x_shape[x_rank - 1] != -1) {

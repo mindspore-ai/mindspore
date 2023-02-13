@@ -30,7 +30,7 @@ void CdistPNormalOptSpecial(const float *a, const float *b, float *dst, int64_t 
   And the result under graph is 0, resulting in precision problems.
   In order to circumvent this situation, special treatment is done when m = 1.
   */
-  if (p == 0) {
+  if (p == static_cast<float>(0.0)) {
     MS_LOG(ERROR) << "Invalid p, p should not be equal to zeor, bug got p =  " << p;
     return;
   }
