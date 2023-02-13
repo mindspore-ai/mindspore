@@ -281,10 +281,6 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // recompute
   set_cell_output_no_recompute_ = MakeSubstitution(std::make_shared<SetCellOutputNoRecompute>(),
                                                    "set_cell_output_no_recompute", IsValueNode<FuncGraph>);
-
-  // Workaround
-  stop_gradient_special_op_ =
-    MakeSubstitution(std::make_shared<StopGradientSpecialOp>(), "stop_gradient_special_op", prim::kPrimBiasAddGrad);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

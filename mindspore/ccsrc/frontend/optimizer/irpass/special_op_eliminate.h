@@ -636,40 +636,6 @@ class FloatDependGCall : public AnfVisitor {
     return nullptr;
   }
 };
-
-// {prim::kprimBiasAddGrad, Xs}->{prim::kPrimStopGradient, {prim::kPrimBiasAddGrad, Xs}}
-class StopGradientSpecialOp : public AnfVisitor {
- public:
-  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!node->isa<CNode>() || node->func_graph() == nullptr) {
-      return nullptr;
-    }
-
-    // If already insert stop_gradient before biasaddgrad, then don't do it again.
-    // Otherwise it will be infinite loop.
-    auto manager = node->func_graph()->manager();
-    MS_EXCEPTION_IF_NULL(manager);
-    auto &users_map = manager->node_users();
-    auto it = users_map.find(node);
-    if (it != users_map.end()) {
-      auto users = it->second;
-      if (users.size() == 1) {
-        for (auto &user_pair : users) {
-          auto user_node = user_pair.first;
-          if (IsPrimitiveCNode(user_node, prim::kPrimStopGradient)) {
-            return nullptr;
-          }
-        }
-      }
-    }
-    std::vector<AnfNodePtr> new_inputs({NewValueNode(prim::kPrimStopGradient), node});
-    TraceGuard guard(std::make_shared<TraceCopy>(node->debug_info()));
-    ScopePtr scope = node->scope();
-    ScopeGuard scope_guard(scope);
-    auto new_node = node->func_graph()->NewCNode(new_inputs);
-    return new_node;
-  }
-};
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

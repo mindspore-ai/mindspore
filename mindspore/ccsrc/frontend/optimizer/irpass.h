@@ -167,9 +167,6 @@ class OptimizeIRPassLib {
 
   // Recompute
   SubstitutionPtr set_cell_output_no_recompute_;
-
-  // Workaround
-  SubstitutionPtr stop_gradient_special_op_;
 };
 
 // the collection of irpass for resolve action
