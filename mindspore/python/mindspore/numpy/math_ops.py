@@ -3801,7 +3801,7 @@ def arctan2(x1, x2, dtype=None):
         if both `x1` and `x2` are scalars.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.numpy as np

@@ -1141,7 +1141,7 @@ class Bucketize(Primitive):
         TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Bucketize(nn.Cell):
@@ -5559,7 +5559,7 @@ class LogMatrixDeterminant(Primitive):
     Refer to :func:`mindspore.ops.log_matrix_determinant` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -5702,7 +5702,7 @@ class Erfinv(Primitive):
         TypeError: If dtype of `input_x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0.5, -0.9]), mindspore.float32)
@@ -6572,7 +6572,7 @@ class CholeskyInverse(Primitive):
     Refer to :func:`mindspore.ops.cholesky_inverse` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[2,0,0], [4,1,0], [-1,1,2]]), mindspore.float32)
@@ -6598,7 +6598,7 @@ class Cross(Primitive):
     Refer to :func:`mindspore.ops.cross` for more details.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import mindspore

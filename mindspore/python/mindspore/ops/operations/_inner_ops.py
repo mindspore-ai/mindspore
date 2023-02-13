@@ -791,7 +791,7 @@ class SequenceMask(PrimitiveWithCheck):
         One mask tensor of shape lengths.shape + (maxlen,).
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import ops

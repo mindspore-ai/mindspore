@@ -50,7 +50,7 @@ class SolveTriangular(Primitive):
         LinAlgError: If :math:`a` is singular
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         Solve the lower triangular system :math:`a x = b`, where:

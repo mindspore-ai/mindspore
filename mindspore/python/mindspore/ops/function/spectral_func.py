@@ -120,7 +120,7 @@ def bartlett_window(window_length, periodic=True, *, dtype=None):
         ValueError: If the dimension of `window_length` is not 0.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> window_length = Tensor(5, mstype.int32)

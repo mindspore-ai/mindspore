@@ -3303,7 +3303,7 @@ def log_matrix_determinant(x):
         ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -9036,7 +9036,7 @@ def cholesky_inverse(input_x, upper=False):
         ValueError: If the dimension of `input_x` is not equal to 2.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[2,0,0], [4,1,0], [-1,1,2]]), mindspore.float32)
@@ -9107,7 +9107,7 @@ def cross(input, other, dim=None):
         ValueError: If `dim` is out of range, `dim` should be [-len(input.shape), len(input.shape)-1].
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor([1, 2, 3], mstype.int8)

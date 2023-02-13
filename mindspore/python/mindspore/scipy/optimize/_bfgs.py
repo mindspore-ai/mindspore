@@ -188,7 +188,7 @@ def minimize_bfgs(func, x0, jac=None, maxiter=None, norm=mnp.inf, gtol=1e-5, lin
         BFGSResults, results from BFGS optimization.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
     """
     if jac is None:
         jac = grad(func)

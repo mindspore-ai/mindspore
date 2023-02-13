@@ -455,7 +455,7 @@ class Im2Col(Primitive):
         ValueError: If `pads` value is not greater than zero.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(input_data=np.random.rand(4, 4, 32, 32), dtype=mstype.float64)
@@ -565,7 +565,7 @@ class Col2Im(Primitive):
         ValueError: If x.shape[3] does not match the calculated number of sliding blocks.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -6955,7 +6955,7 @@ class LowerBound(Primitive):
         ValueError: If the first dimension of the shape of `sorted_x` is not equal to that of `values`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -7008,7 +7008,7 @@ class UpperBound(Primitive):
         ValueError: If the number of rows of `sorted_x` is not consistent with that of `values`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
