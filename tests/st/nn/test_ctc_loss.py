@@ -100,8 +100,8 @@ def test_ctc_loss_tc(mode, reduct):
     arr = np.arange(s_min).reshape((s_min,))
     targets = Tensor(arr, dtype=mstype.int32)
     if reduct == "mean":
-        expect_output = np.array([-66.061386])
+        expect_output = -66.061386
     else:
-        expect_output = np.array([[-198.18416]])
+        expect_output = -198.18416
     output = loss(inputs, targets, input_lengths, target_lengths)
     assert np.allclose(output.asnumpy(), expect_output)

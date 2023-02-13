@@ -2319,6 +2319,7 @@ class CTCLoss(LossBase):
         ValueError: If `reduction` is not "none", "mean" or "sum".
         ValueError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
         ValueError: If the value of `blank` is not in range [0, C). C is number of classes of `log_probs` .
+        ValueError: If the dimension of `targets` is not one when the shape of `log_prob` is (T, C).
         RuntimeError: If any value of `input_lengths` is larger than T. T is length of `log_probs` .
         RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].
 
@@ -2369,8 +2370,14 @@ class CTCLoss(LossBase):
         _check_is_tensor('log_probs', log_probs, self.cls_name)
         _check_is_tensor('targets', targets, self.cls_name)
         if log_probs.ndim == 2:
+            if targets.ndim > 1:
+                raise ValueError("For CTCLoss, when the shape of log_probs is (T, C), the dimension of targets should"
+                                 "be equal to one.")
             log_probs = log_probs.expand_dims(-2)
             targets = targets.expand_dims(0)
+            neg_log_hood, _ = F.ctc_loss(log_probs, targets, input_lengths, target_lengths, self.blank, self.reduction,
+                                         self.zero_infinity)
+            return neg_log_hood.squeeze()
         neg_log_hood, _ = F.ctc_loss(log_probs, targets, input_lengths, target_lengths, self.blank, self.reduction,
                                      self.zero_infinity)
         return neg_log_hood
