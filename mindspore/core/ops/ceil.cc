@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ abstract::ShapePtr CeilInferShape(const PrimitivePtr &primitive, const std::vect
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   const int64_t max_dim = 8;
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("The dimension of Atan input", SizeToLong(in_shape.size()), kLessThan,
+  (void)CheckAndConvertUtils::CheckInteger("The dimension of Ceil input", SizeToLong(in_shape.size()), kLessThan,
                                            max_dim, prim_name);
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
