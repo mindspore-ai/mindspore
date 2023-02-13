@@ -79,6 +79,10 @@ if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
   set(C_SRC ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_c_api.cc)
 endif()
 
+if(MSVC)
+    set(COMMON_SRC ${COMMON_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/../converter/converter_context.cc)
+endif()
+
 add_executable(benchmark
         ${CMAKE_CURRENT_SOURCE_DIR}/main.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/run_benchmark.cc
