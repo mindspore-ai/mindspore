@@ -134,11 +134,11 @@ Status MaxPool3DInfo::GetAttrs() {
     return FAILED;
   }
 
+  kernel_size_use_dilation_ = {kernel_size_[2], kernel_size_[3], kernel_size_[4]};
+
   if (pad_mode_ == SAME) {
     pad_list_ = CalculatePadListInSameMode();
   }
-
-  kernel_size_use_dilation_ = {kernel_size_[2], kernel_size_[3], kernel_size_[4]};
 
   MS_LOG(INFO) << name_ << ", kernel size is " << kernel_size_ << ", pad mode is " << pad_mode_ << ", pad list is "
                << pad_list_ << ", strides is " << stride_ << ", format is " << format_;

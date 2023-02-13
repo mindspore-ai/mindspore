@@ -146,6 +146,23 @@ def test_maxpool3d_pad_mode_rank7():
     assert validator.check_node_attrs('NeighborExchangeV2-0', {'recv_lens': '[1, 0, 1, 0]'})
 
 
+def test_maxpool3d_same_mode_rank0():
+    """
+    Feature: test same mode, rank0
+    Description: shard d/h, need exchange the overlap
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 2, 4, 1),)
+    strategy2 = ((1, 1, 2, 4, 1),)
+    net = MaxPool3DNet(_w, kernel_size=3, pad_mode="same", strides=1, pad_list=0,
+                       strategy1=strategy1, strategy2=strategy2)
+    phase = compile_net(net, _x, _b)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_attrs('NeighborExchangeV2-0', {'send_lens': '[0, 1, 0, 1]'})
+    assert validator.check_node_attrs('NeighborExchangeV2-0', {'recv_lens': '[0, 1, 0, 1]'})
+
+
 def test_maxpool3d_valid_mode_output_shape_cannot_div_by_strategy():
     """
     Feature: test valid mode, and output shape can not div by strategy
