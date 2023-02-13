@@ -184,7 +184,7 @@ bool CSE::IsHiddenSideEffectCall(const AnfNodePtr &node) {
     return false;
   }
   // If it is a func graph call node, get all graphs  from abstract.
-  auto func_graphs = abstract::GetFuncGraphsFromAbs(cnode->input(0));
+  auto func_graphs = abstract::GetFuncGraphsFromCallNode(cnode);
   auto is_hidden_side_effect_graph = [this](const FuncGraphPtr &fg) -> bool {
     return hidden_side_effect_func_graphs_.find(fg) != hidden_side_effect_func_graphs_.end();
   };
