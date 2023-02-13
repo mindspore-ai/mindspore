@@ -38,6 +38,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
       static_cast<int32_t>(HCCL_SUCCESS)) {
     const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
     MS_LOG(ERROR) << "HcclCommInitRootInfo failed. " + error_message;
+    return false;
   }
   initialized_ = true;
   return true;
