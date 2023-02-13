@@ -51,7 +51,6 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.TrainOneStepCell
     mindspore.nn.TrainOneStepWithLossScaleCell
     mindspore.nn.WithEvalCell
-    mindspore.nn.WithGradCell
     mindspore.nn.WithLossCell
 
 卷积神经网络层

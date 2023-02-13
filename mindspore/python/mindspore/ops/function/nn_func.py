@@ -2349,6 +2349,7 @@ def silu(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)

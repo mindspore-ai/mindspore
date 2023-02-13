@@ -14,5 +14,5 @@ mindspore.ops.gcd
         Tensor，返回的shape与广播后的shape，数据类型为两个输入中数字精度较高的类型。
 
     异常：
-        - **TypeError** - 如果`x1` 或 `x2` 的数据类型既不是int32也不是int64.。
+        - **TypeError** - 如果 `x1` 或 `x2` 的数据类型既不是int32也不是int64。
         - **ValueError** - 如果两个输入的shape不可广播。
