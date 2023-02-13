@@ -363,6 +363,8 @@ void GPUKernelExecutor::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph)
 #endif
   // ReplaceAddNFusion depends on the input expansion of AddN, so must be after the operator select.
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
+  // PrintReduceFusion depends on the input expansion of Print, so must be after the operator select.
+  pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
   pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
@@ -401,7 +403,6 @@ void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
   // Therefore, this kind of scene does not support dynamic shape.
   if (graph->is_dynamic_shape()) {
     MS_LOG(INFO) << "Dynamic shape skip some fusion pass";
-    pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
     pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
   } else {
     pm->AddPass(std::make_shared<opt::ClipByNormFission>());
@@ -417,7 +418,6 @@ void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
     }
     pm->AddPass(std::make_shared<opt::CombineMomentumFusion>("combine_momentum"));
     pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
-    pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
     pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
     pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
     pm->AddPass(std::make_shared<opt::NeighborExchangeV2Fusion>());

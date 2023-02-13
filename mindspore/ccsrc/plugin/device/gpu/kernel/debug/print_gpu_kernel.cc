@@ -223,6 +223,11 @@ std::string PrintGpuKernelMod::GetString(size_t tensor_index, size_t original_in
   return current_tensor.ToStringNoLimit();
 }
 
-MS_REG_GPU_KERNEL(Print, PrintGpuKernelMod);
+std::vector<KernelAttr> PrintGpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Print, PrintGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
