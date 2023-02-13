@@ -69,7 +69,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
     check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, deprecated
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
-    get_enable_watchdog, get_seed, set_seed
+    get_enable_watchdog, get_seed, set_seed, get_multiprocessing_timeout_interval
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
 from ..core.py_util_helpers import ExceptionHandler
@@ -2727,17 +2727,38 @@ class _PythonCallable:
         self.pool = pool
         # Python callable index
         self.idx = idx
+        self.check_interval = get_multiprocessing_timeout_interval()
 
     def __call__(self, *args):
         result = None
-        if self.pool.is_running() and check_iterator_cleanup() is False:
-            try:
-                result = self.pool.execute(self.idx, *args)
-            except multiprocessing.TimeoutError:
-                pass
-        if result is None:
-            # Invoke original Python callable in master process in case the pool is gone.
-            result = self.py_callable(*args)
+        start_time = time.time()
+        count = 1
+        get_data_from_worker_process = False
+        while get_data_from_worker_process is False:
+            cost_time = time.time() - start_time
+            if cost_time > (self.check_interval * count):
+                logger.warning("It has been waiting for " + str(cost_time) + "s because the multi "
+                               "workers of map operation cost long time to process next data. "
+                               "Worker process list are: " + str(self.pool.get_pids()) + ", you can use "
+                               "\"py-spy dump -p {PID} -l -s \""
+                               "to dump the worker process stack. You can also set the timeout interval by "
+                               "ds.config.set_multiprocessing_interval to adjust the output frequency of this "
+                               "log.")
+                count += 1
+            if self.pool.is_running() and check_iterator_cleanup() is False:
+                try:
+                    result = self.pool.execute(self.idx, *args)
+                except multiprocessing.TimeoutError:
+                    continue
+                get_data_from_worker_process = True
+            else:
+                # worker process is stopped
+                logger.warning("The worker process of map operation is stopped. "
+                               "So return None to main thread and break the main thread.")
+                return None
+        # got value from worker process
+        if not isinstance(result, tuple) and get_data_from_worker_process is True:
+            result = (result,)
         return result
 
     def to_json(self):
@@ -3109,7 +3130,6 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         atexit.register(self.terminate)
 
     def terminate(self):
-        logger.info("Terminating Python Multiprocessing for Op:" + str(self.op_id))
         self.close_all_workers()
         self.abort_watchdog()
 
