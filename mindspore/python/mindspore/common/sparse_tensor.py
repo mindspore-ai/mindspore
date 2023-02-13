@@ -188,6 +188,10 @@ class SparseTensor(COOTensor_):
                        "Please use 'COOTensor' instead.")
         if not (isinstance(indices, Tensor) and isinstance(values, Tensor) and isinstance(shape, tuple)):
             raise TypeError("Inputs must follow: COOTensor(indices, values, shape).")
+        if is_stub_tensor(indices):
+            indices.stub_sync()
+        if is_stub_tensor(values):
+            values.stub_sync()
         COOTensor_.__init__(self, indices, values, shape)
 
     @property
