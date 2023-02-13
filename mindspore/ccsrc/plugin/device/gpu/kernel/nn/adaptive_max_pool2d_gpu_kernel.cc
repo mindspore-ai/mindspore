@@ -18,15 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(AdaptiveMaxPool2D,
-                      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      AdaptiveMaxPool2DKernelMod, half)
-MS_REG_GPU_KERNEL_ONE(AdaptiveMaxPool2D,
-                      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      AdaptiveMaxPool2DKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(AdaptiveMaxPool2D,
-                      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      AdaptiveMaxPool2DKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(
   AdaptiveMaxPool2D,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
