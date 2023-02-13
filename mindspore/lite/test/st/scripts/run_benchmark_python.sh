@@ -8,6 +8,12 @@ function Run_python_ST() {
   in_data_path=$4
   cfg_file_list=$5
   target=$6
+  suffix=".mindir"
+  bin_suffix=''
+  if [ $# -gt 6 ]; then
+    suffix=$7
+    bin_suffix=$7
+  fi
   mindspore_lite_whl=`ls ${whl_path}/*.whl`
   if [[ -f "${mindspore_lite_whl}" ]]; then
     pip install ${mindspore_lite_whl} --force-reinstall --user || exit 1
@@ -35,14 +41,14 @@ function Run_python_ST() {
       input_files=""
       data_path=${in_data_path}"/input_output/"
       if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
-        input_files=${data_path}'input/'${model_name}'.bin'
+        input_files=${data_path}'input/'${model_name}${bin_suffix}'.bin'
       else
         for i in $(seq 1 $input_num)
         do
-          input_files=${input_files}${data_path}'input/'${model_name}'.bin_'$i','
+          input_files=${input_files}${data_path}'input/'${model_name}${bin_suffix}'.bin_'$i','
         done
       fi
-      model_file=${model_path}'/'${model_name}'.mindir'
+      model_file=${model_path}'/'${model_name}${suffix}
       python test_inference_cloud.py ${model_file} ${input_files} ${input_shapes} ${target} >> ${run_python_log}
       Run_python_st_status=$?
       if [[ ${Run_python_st_status} != 0 ]];then

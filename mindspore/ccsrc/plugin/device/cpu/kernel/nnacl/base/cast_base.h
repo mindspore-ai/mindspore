@@ -107,6 +107,12 @@ inline void Int32ToInt64(const int32_t *input, int64_t *output, int number) {
   }
 }
 
+inline void Int64ToInt32(const int64_t *input, int32_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (int32_t)input[i];
+  }
+}
+
 inline void Float32ToInt16(const float *input, int16_t *output, int number) {
   for (int i = 0; i < number; ++i) {
     output[i] = (int16_t)input[i];

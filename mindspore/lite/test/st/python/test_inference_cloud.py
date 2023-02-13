@@ -16,8 +16,36 @@
 Test lite python API.
 """
 import sys
+import os
 import mindspore_lite as mslite
 import numpy as np
+
+
+def prepare_inputs_data(inputs, file_path, input_shapes):
+    for i in range(len(inputs)):
+        data_type = inputs[i].get_data_type()
+        if data_type == mslite.DataType.FLOAT32:
+            in_data = np.fromfile(file_path[i], dtype=np.float32)
+        elif data_type == mslite.DataType.INT32:
+            in_data = np.fromfile(file_path[i], dtype=np.int32)
+        elif data_type == mslite.DataType.INT64:
+            in_data = np.fromfile(file_path[i], dtype=np.int64)
+        else:
+            raise RuntimeError('not support DataType!')
+        inputs[i].set_shape(input_shapes[i])
+        inputs[i].set_data_from_numpy(in_data)
+
+
+def get_inputs_group2_if_exist(in_data_path):
+    in_data_path_group2 = []
+    for data_path in in_data_path:
+        data_path_list = data_path.rsplit('.', 1)
+        data_path_list[-1] = "group2." + data_path_list[-1]
+        data_path_new = '.'.join(data_path_list)
+        if not os.path.exists(data_path_new):
+            break
+        in_data_path_group2.append(data_path_new)
+    return in_data_path_group2
 
 
 def model_common_predict(context, model_path, in_data_path, input_shapes):
@@ -25,23 +53,27 @@ def model_common_predict(context, model_path, in_data_path, input_shapes):
     model.build_from_file(model_path, mslite.ModelType.MINDIR, context)
     inputs = model.get_inputs()
     outputs = model.get_outputs()
-    for i in range(len(inputs)):
-        in_data = np.fromfile(in_data_path[i], dtype=np.float32)
-        inputs[i].set_shape(input_shapes[i])
-        inputs[i].set_data_from_numpy(in_data)
+    prepare_inputs_data(inputs, in_data_path, input_shapes)
     model.predict(inputs, outputs)
+    in_data_path_group2 = get_inputs_group2_if_exist(in_data_path)
+    if len(in_data_path_group2) == len(in_data_path):
+        prepare_inputs_data(inputs, in_data_path_group2, input_shapes)
+        model.predict(inputs, outputs)
 
 
 def runner_common_predict(runner_config, model_path, in_data_path, input_shapes):
     runner = mslite.ModelParallelRunner()
     runner.init(model_path=model_path, runner_config=runner_config)
     inputs = runner.get_inputs()
-    for i in range(len(inputs)):
-        in_data = np.fromfile(in_data_path[i], dtype=np.float32)
-        inputs[i].set_shape(input_shapes[i])
-        inputs[i].set_data_from_numpy(in_data)
-        outputs = []
+    prepare_inputs_data(inputs, in_data_path, input_shapes)
+    outputs = []
     runner.predict(inputs, outputs)
+    in_data_path_group2 = get_inputs_group2_if_exist(in_data_path)
+    if len(in_data_path_group2) == len(in_data_path):
+        inputs = runner.get_inputs()
+        prepare_inputs_data(inputs, in_data_path_group2, input_shapes)
+        outputs = []
+        runner.predict(inputs, outputs)
 
 
 # ============================ cpu inference ============================
@@ -132,6 +164,9 @@ if __name__ == '__main__':
         print("run model inference ascend success.")
         test_parallel_inference_ascend(model_file, in_data_file_list, shapes)
         print("run parallel inference ascend success.")
+    elif backend == "CPU_PARALLEL":
+        test_parallel_inference_cpu(model_file, in_data_file_list, shapes)
+        print("run parallel inference cpu success.")
     else:
         raise RuntimeError('not support backend!')
     print("run success.")

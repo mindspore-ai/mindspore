@@ -150,6 +150,9 @@ int CastCPUKernel::CastToOthers(const lite::Tensor *input, lite::Tensor *output,
   } else if (input_data_type == kNumberTypeInt32 && output_data_type == kNumberTypeInt64) {
     Int32ToInt64(reinterpret_cast<const int32_t *>(input->data()) + offset,
                  reinterpret_cast<int64_t *>(output_data) + offset, data_num);
+  } else if (input_data_type == kNumberTypeInt64 && output_data_type == kNumberTypeInt32) {
+    Int64ToInt32(reinterpret_cast<const int64_t *>(input->data()) + offset,
+                 reinterpret_cast<int32_t *>(output_data) + offset, data_num);
   } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt16) {
     Float32ToInt16(reinterpret_cast<const float *>(input->data()) + offset,
                    reinterpret_cast<int16_t *>(output_data) + offset, data_num);
