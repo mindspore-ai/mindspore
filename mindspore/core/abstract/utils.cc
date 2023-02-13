@@ -351,7 +351,14 @@ FuncGraphPtr GetFuncGraphFromAbs(const abstract::AbstractBasePtr &abs, const Anf
     auto abs_func = abs_partial_closure->fn();
     return GetFuncGraphFromAbs(abs_func, anf_node);
   }
-  MS_LOG(ERROR) << "Unexpected abs: " << abs->ToString();
+  if (abs->isa<abstract::MetaFuncGraphAbstractClosure>()) {
+    if (!IsValueNode<FuncGraph>(anf_node)) {
+      MS_LOG(EXCEPTION) << "Got unexpected MetaFuncGraphAbstractClosure: " << abs->ToString()
+                        << ", anf node: " << anf_node->DebugString();
+    }
+    return GetValueNode<FuncGraphPtr>(anf_node);
+  }
+  MS_LOG(ERROR) << "Unexpected abs: " << abs->ToString() << ", node: " << anf_node->DebugString();
   return nullptr;
 }
 }  // namespace
