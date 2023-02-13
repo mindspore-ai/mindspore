@@ -312,6 +312,9 @@ Reduction Functions
     mindspore.ops.norm
     mindspore.ops.prod
     mindspore.ops.std
+    mindspore.ops.std_mean
+    mindspore.ops.var
+    mindspore.ops.var_mean
 
 Comparison Functions
 ^^^^^^^^^^^^^^^^^^^^
