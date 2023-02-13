@@ -35,7 +35,7 @@
         - **use_locking** (bool) - 是否对参数更新增加锁保护。默认值：False。
 
     输入：
-        - **var** (Tensor) - 要更新的权重。
+        - **var** (Parameter) - 要更新的权重。
         - **mean_gradient** (Tensor) - 均值梯度，数据类型必须与 `var` 相同。
         - **mean_square** (Tensor) - 均方梯度，数据类型必须与 `var` 相同。
         - **moment** (Tensor) - `var` 的增量，数据类型必须与 `var` 相同。
