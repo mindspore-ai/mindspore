@@ -125,6 +125,12 @@ bool CumSumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     return false;
   }
 
+  auto dims_shape = inputs[kIndex0]->GetShapeVector();
+  if (dims_shape.size() == 0) {
+    MS_LOG(ERROR) << "Invalid input tensor shape: " << dims_shape.size();
+    return false;
+  }
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -193,6 +199,10 @@ bool CumSumCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     return false;
   }
   Reshape();
+  if (dims_[kIndex1] == 0) {
+    MS_LOG(ERROR) << "Invalid zero value. Please check resize input data.";
+    return false;
+  }
 
   // multithreading
   size_t lens = inputs[kIndex0]->size > 0 ? static_cast<size_t>(inputs[kIndex0]->size / sizeof(T)) : 1;
