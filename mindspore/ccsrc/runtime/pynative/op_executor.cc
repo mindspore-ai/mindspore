@@ -60,8 +60,14 @@ void OpExecutor::WaitForRun() {
 }
 
 void OpExecutor::Wait() {
-  WaitForBuild();
-  WaitForRun();
+  if (PyGILState_Check() != 0) {
+    py::gil_scoped_release gil;
+    WaitForBuild();
+    WaitForRun();
+  } else {
+    WaitForBuild();
+    WaitForRun();
+  }
 }
 
 void OpExecutor::PushOpBuildTask(const std::shared_ptr<pynative::BackendOpBuildTask> &op_build_task) {
