@@ -1117,8 +1117,8 @@ struct TruncateDivFunc {
 template <>
 struct TruncateDivFunc<half> {
   __device__ __forceinline__ half operator()(const half &lhs, const half &rhs) {
-    float res = truncf(__half2float(lhs) / __half2float(rhs));
-    return __float2half_rn(res);
+    half res = __hdiv(lhs, rhs);
+    return res;
   }
 };
 
