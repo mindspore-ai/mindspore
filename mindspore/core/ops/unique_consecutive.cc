@@ -24,6 +24,7 @@
 #include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
+#include "abstract/dshape.h"
 
 namespace mindspore {
 namespace ops {
@@ -61,13 +62,11 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
   if (axis_ptr->isa<None>() || GetValue<int64_t>(axis_ptr) == kAxisIsNone) {
     MS_LOG(INFO) << "node:" << op_name << " has no axis attribute or axis id None! Deal as flatten";
     (void)primitive->SetAttrs({{"axis", MakeValue(kAxisIsNone)}});
-    auto input_total = std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), 1, std::multiplies<int64_t>());
     output_vec = {abstract::Shape::kShapeDimAny};
-    output_max_vec = {input_total};
-
-    idx_shape_vec = input_shape_vec;
-
     counts_shape_vec = {abstract::Shape::kShapeDimAny};
+    idx_shape_vec = input_shape_vec;
+    auto input_total = std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), 1, std::multiplies<int64_t>());
+    output_max_vec = {input_total};
     counts_max_vec = {input_total};
   } else {
     int64_t axis = GetValue<int64_t>(axis_ptr);
@@ -79,15 +78,21 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
     if (axis < 0) {
       axis = axis + ndims;
     }
-    size_t axis_size = LongToSize(axis);
-    output_vec = input_shape_vec;
-    output_vec[axis_size] = abstract::Shape::kShapeDimAny;
-    output_max_vec = input_shape_vec;
+    if (IsDynamicRank(input_shape_vec) || IsDynamicShape(input_shape_vec)) {
+      output_vec = {abstract::Shape::kShapeRankAny};
+      counts_shape_vec = {abstract::Shape::kShapeRankAny};
+      idx_shape_vec = {abstract::Shape::kShapeRankAny};
+    } else {
+      size_t axis_size = LongToSize(axis);
+      output_vec = input_shape_vec;
+      output_vec[axis_size] = abstract::Shape::kShapeDimAny;
+      output_max_vec = input_shape_vec;
 
-    idx_shape_vec = {input_shape_vec[axis_size]};
+      idx_shape_vec = {input_shape_vec[axis_size]};
 
-    counts_shape_vec = {abstract::Shape::kShapeDimAny};
-    counts_max_vec = {input_shape_vec[axis_size]};
+      counts_shape_vec = {abstract::Shape::kShapeDimAny};
+      counts_max_vec = {input_shape_vec[axis_size]};
+    }
   }
 
   auto idx_ptr = primitive->GetAttr("return_idx");
@@ -103,9 +108,14 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
     counts_shape_vec = {0};
   }
 
-  output_shape = std::make_shared<abstract::Shape>(output_vec, output_max_vec);
+  if (IsDynamicRank(input_shape_vec) || IsDynamicShape(input_shape_vec)) {
+    output_shape = std::make_shared<abstract::Shape>(output_vec);
+    counts_shape = std::make_shared<abstract::Shape>(counts_shape_vec);
+  } else {
+    output_shape = std::make_shared<abstract::Shape>(output_vec, output_max_vec);
+    counts_shape = std::make_shared<abstract::Shape>(counts_shape_vec, counts_max_vec);
+  }
   idx_shape = std::make_shared<abstract::Shape>(idx_shape_vec);
-  counts_shape = std::make_shared<abstract::Shape>(counts_shape_vec, counts_max_vec);
 
   auto ret_shape_vec = std::vector<abstract::BaseShapePtr>{output_shape};
   (void)ret_shape_vec.emplace_back(idx_shape);
