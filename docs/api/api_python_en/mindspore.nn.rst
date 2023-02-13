@@ -51,7 +51,6 @@ Wrapper Layer
     mindspore.nn.TrainOneStepCell
     mindspore.nn.TrainOneStepWithLossScaleCell
     mindspore.nn.WithEvalCell
-    mindspore.nn.WithGradCell
     mindspore.nn.WithLossCell
 
 Convolutional Neural Network Layer

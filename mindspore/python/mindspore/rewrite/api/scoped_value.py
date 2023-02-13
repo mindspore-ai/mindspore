@@ -127,8 +127,8 @@ class ScopedValue:
         Create a list of naming `ScopedValue`.
 
         Args:
-            names: (list[str] or tuple[str]): List or tuple of `str` represents names of referenced variables.
-            scopes: (list[str] or tuple[str]): List or tuple of `str` represents scopes of referenced variables.
+            names (list[str] or tuple[str]): List or tuple of `str` represents names of referenced variables.
+            scopes (list[str] or tuple[str]): List or tuple of `str` represents scopes of referenced variables.
 
         Returns:
             An list of instance of `ScopedValue`.
@@ -140,7 +140,7 @@ class ScopedValue:
 
         Examples:
             >>> from mindspore.rewrite import ScopedValue
-            >>> variables = ScopedValue.create_name_values(["z", "z_1"]), name="subnet")
+            >>> variables = ScopedValue.create_name_values(["z", "z_1"], name="subnet")
         """
         Validator.check_element_type_of_iterable("names", names, [str], "ScopedValue")
         if scopes is not None:
