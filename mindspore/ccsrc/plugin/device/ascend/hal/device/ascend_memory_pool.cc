@@ -49,8 +49,9 @@ void AscendMemoryPool::SetMemPoolBlockSize(size_t available_device_mem_size) {
   }
 
   // set by default configuration
+  const auto graph_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode);
   const bool is_graph_run_mode = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  if (is_graph_run_mode) {
+  if (graph_mode && is_graph_run_mode) {
     SetMemAllocUintSize(ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH_RUN_MODE,
                         ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH_RUN_MODE);
   } else {
