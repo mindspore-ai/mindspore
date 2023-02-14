@@ -9138,8 +9138,8 @@ def _einsum_convert_num_to_char(num):
 
 def einsum(equation, *operands):
     r"""
-    Sums the product of the elements of the input Tensor along
-    dimensions specified notation based on the Einstein summation convention(Einsum).
+    According to the Einstein summation Convention (Einsum),
+    the product of the input tensor elements is summed along the specified dimension.
     You can use this operator to perform diagonal, reducesum, transpose, matmul, mul, inner product operations, etc.
 
     Note::

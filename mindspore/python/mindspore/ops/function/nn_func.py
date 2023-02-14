@@ -4464,7 +4464,7 @@ def hardtanh(x, min_val=-1.0, max_val=1.0):
 def huber_loss(x, target, reduction='mean', delta=1.0):
     r"""
     huber_loss calculates the error between the predicted value and the target value.
-    It has the advantages of both l1_loss and mse_loss.
+    It has the best of both the loss of l1 and the loss of mse.
 
     Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, the reduction parameter is set to "none"
     then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction. The formula is as follows:
@@ -4493,11 +4493,13 @@ def huber_loss(x, target, reduction='mean', delta=1.0):
 
     Args:
         x (Tensor): Predicted value, Tensor of any dimension.
-        target (Tensor): Target value, same dtype and shape as the `x`.
-        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
+        target (Tensor): Target value, has same dtype and shape as the `x` in common cases.
+            However, when the shape of `target` is different from the shape of `x`,
+            and they should be broadcasted to each other.
+        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum" and "none".
             Default: "mean".
         delta (Union[int, float]): The threshold to change between two type of loss.
-            The value must be positive. Default: 1.0.
+            The value must be greater than zero. Default: 1.0.
 
     Returns:
         Tensor, with the same dtype and shape as `x`.
@@ -4507,7 +4509,7 @@ def huber_loss(x, target, reduction='mean', delta=1.0):
         TypeError: If dtype of `delta` is neither float nor int.
         ValueError: If `delta` is less than or equal to 0.
         ValueError: If `reduction` is not one of "none", "mean", "sum".
-        ValueError: If `x` and `target` have different shapes.
+        ValueError: If `x` and `target` have different shapes and cannot be broadcasted to each other.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4523,8 +4525,6 @@ def huber_loss(x, target, reduction='mean', delta=1.0):
     _check_is_tensor('target', target, "huber_loss")
     _check_value_type("delta", delta, [int, float], "huber_loss")
     _check_number_gt_value("delta", delta, 0.0, "huber_loss")
-    if x.shape != target.shape:
-        raise ValueError(f"For huber_loss, x and target must be the same shape, but got {x.shape} and {target.shape}")
     sub = _get_cache_prim(P.Sub)()
     multi = _get_cache_prim(P.Mul)()
     z = sub(x, target)
