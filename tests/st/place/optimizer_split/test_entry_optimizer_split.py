@@ -16,7 +16,7 @@ import os
 import pytest
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_split_ref_without_optim():
@@ -36,7 +36,7 @@ def test_split_ref_without_optim():
     assert return_code == 0
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_split_optim():

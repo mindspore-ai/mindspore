@@ -139,16 +139,22 @@ AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const 
 
   SetKernelInfoForNewCNode(real_make_tuple);
 
-  // RealMakeTuple's inputs must be scalar. To avoid failing to select kernel, we must override RealMakeTuple's
-  // KernelObjectTypes, which is created from MakeTuple.
+  // RealMakeTuple's inputs must be scalar or tensor. To avoid failing to select kernel, we must override
+  // RealMakeTuple's KernelObjectTypes to TENSOR, which is created from MakeTuple.
   KernelBuildInfoPtr real_make_tuple_build_info = AnfAlgo::GetSelectKernelBuildInfo(real_make_tuple);
   MS_EXCEPTION_IF_NULL(real_make_tuple_build_info);
   auto inputs_obj_types = real_make_tuple_build_info->GetAllInputKernelObjectTypes();
-  auto new_obj_types = inputs_obj_types;
-  std::transform(new_obj_types.begin(), new_obj_types.end(), new_obj_types.begin(),
-                 [](const auto &obj_type) { return KernelObjectType::SCALAR; });
-  real_make_tuple_build_info->SetInputsKernelObjectType(new_obj_types);
-  MS_LOG(DEBUG) << "Override RealMakeTuple input kernel object types from " << inputs_obj_types << " " << new_obj_types;
+  if (!std::all_of(inputs_obj_types.begin(), inputs_obj_types.end(),
+                   [](const auto &obj_type) { return obj_type == KernelObjectType::TENSOR; }) &&
+      !std::all_of(inputs_obj_types.begin(), inputs_obj_types.end(),
+                   [](const auto &obj_type) { return obj_type == KernelObjectType::SCALAR; })) {
+    auto new_obj_types = inputs_obj_types;
+    std::transform(new_obj_types.begin(), new_obj_types.end(), new_obj_types.begin(),
+                   [](const auto &obj_type) { return KernelObjectType::TENSOR; });
+    real_make_tuple_build_info->SetInputsKernelObjectType(new_obj_types);
+    MS_LOG(DEBUG) << "Override RealMakeTuple input kernel object types from " << inputs_obj_types << " "
+                  << new_obj_types;
+  }
   return real_make_tuple;
 }
 
@@ -312,8 +318,8 @@ abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, co
 std::string GenerateOutputFormatForNewCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (IsPrimitiveCNode(cnode, prim::kPrimRealMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimTupleToTensor)) {
-    // We take first input format as the output format because multiple types and formats of RealMakeTuple/TupleToTensor
-    // are not supported.
+    // We take first input format as the output format because multiple types and formats of
+    // RealMakeTuple/TupleToTensor are not supported.
     std::string represent_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, kIndex0);
     return represent_format;
   }
@@ -399,7 +405,7 @@ void UpdateAbsForTupleGetItem(const CNodePtr &tuple_get_item_node) {
   // This method is used for TupleGetItem to RealTupleGetItem converting, the tuple elements must be scalar for now.
   for (const auto &ele : seq_element) {
     if (!ele->isa<abstract::AbstractScalar>() && !ele->isa<abstract::AbstractTensor>()) {
-      MS_LOG(EXCEPTION) << "Element of the tuple should be scalar, but got " << ele->ToString();
+      MS_LOG(EXCEPTION) << "Element of the tuple should be scalar or tensor, but got " << ele->ToString();
     }
   }
 
@@ -457,7 +463,8 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   AnfNodePtrList new_input_list = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
-  // If kernel object types are matched, set this flag to true and new node will be created to replace original node.
+  // If kernel object types are matched, set this flag to true and new node will be created to replace original
+  // node.
   bool matched = false;
   for (size_t i = 0; i < common::AnfAlgo::GetInputNum(cnode); ++i) {
     const auto &input_node = common::AnfAlgo::GetInputNode(cnode, i);
@@ -552,8 +559,8 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTupleUnfold(const Func
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
 
-  // If the input needs to be skipped as ConvertTupleInputToDynamicInput does, return the input node itself for caller
-  // to construct input list.
+  // If the input needs to be skipped as ConvertTupleInputToDynamicInput does, return the input node itself for
+  // caller to construct input list.
   bool is_bprop_cut = common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimBpropCut);
   bool skip = (is_bprop_cut && input->abstract()->isa<abstract::AbstractSparseTensor>()) ||
               IsPrimitiveCNode(node, prim::kPrimTupleGetItem);
