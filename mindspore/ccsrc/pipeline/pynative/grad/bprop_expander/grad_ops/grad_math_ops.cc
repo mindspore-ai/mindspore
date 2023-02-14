@@ -33,8 +33,12 @@ NodePtrList CompareBpropExpander(const BpropIRBuilder *ib) {
 
 NodePtrList AddnGradFunc(const BpropIRBuilder *ib) {
   auto dout = ib->GetInput(kIndex2);
-  auto n = LongToSize(ib->GetAttr<int64_t>("n"));
-  NodePtrList result(n, dout);
+  auto x_abs = ib->GetInput(kIndex0)->get()->abstract();
+  auto x_len = x_abs->cast<abstract::AbstractSequencePtr>()->elements().size();
+  NodePtrList result(x_len, dout);
+  if (x_abs->isa<abstract::AbstractList>()) {
+    return {ib->MakeList(result)};
+  }
   return {ib->MakeTuple(result)};
 }
 
