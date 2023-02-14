@@ -213,22 +213,19 @@ void MultiMarginLossCPUKernelMod::LaunchKernelFP16(const std::vector<kernel::Add
     }
   };
   CPUKernelUtils::ParallelFor(task, batch_size);
-  if (reduction == MEAN) {
-    *y_addr = static_cast<T>(0);
-    for (size_t i = 0; i < batch_size; i++) {
-      *y_addr += static_cast<T>(tmp_loss[i]);
-    }
-    *y_addr /= static_cast<T>(batch_size);
-  }
-  if (reduction == SUM) {
-    *y_addr = static_cast<T>(0);
-    for (size_t i = 0; i < batch_size; i++) {
-      *y_addr += static_cast<T>(tmp_loss[i]);
-    }
-  }
   if (reduction == NONE) {
     for (size_t t = 0; t < batch_size; t++) {
       *(y_addr + t) = static_cast<T>(tmp_loss[t]);
+    }
+  } else {
+    float tmp_loss_sum = 0.0f;
+    for (size_t i = 0; i < batch_size; i++) {
+      tmp_loss_sum += tmp_loss[i];
+    }
+    if (reduction == MEAN) {
+      *y_addr = static_cast<T>(tmp_loss_sum / batch_size);
+    } else if (reduction == SUM) {
+      *y_addr = static_cast<T>(tmp_loss_sum);
     }
   }
 }
