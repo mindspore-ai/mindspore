@@ -35,12 +35,13 @@ class FFT3DGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   ~FFT3DGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
+    int32_t double_num = 2;
     kernel_node_ = kernel_node;
     fftx = static_cast<int>(GetAttr<int64_t>(kernel_node, "fftx"));
     ffty = static_cast<int>(GetAttr<int64_t>(kernel_node, "ffty"));
     fftz = static_cast<int>(GetAttr<int64_t>(kernel_node, "fftz"));
     Nall = fftx * ffty * fftz;
-    Nfft = fftx * ffty * (fftz / 2 + 1);
+    Nfft = fftx * ffty * (fftz / double_num + 1);
 
     cufftPlan3d(&FFT_plan_r2c, fftx, ffty, fftz, CUFFT_R2C);
 
