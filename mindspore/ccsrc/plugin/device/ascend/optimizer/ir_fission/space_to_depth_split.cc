@@ -104,6 +104,14 @@ const AnfNodePtr SpaceToDepthSplit::Process(const FuncGraphPtr &graph, const Anf
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (mode == kPynativeMode && common::AnfAlgo::IsDynamicShape(node)) {
+    return nullptr;
+  }
+
   if (cnode->size() != kSpaceToDepthInputNum + 1) {
     MS_LOG(INFO) << "The node " << cnode->DebugString() << " is not equal to " << kSpaceToDepthInputNum << " inputs";
     return nullptr;
