@@ -104,7 +104,6 @@ std::vector<std::pair<KernelAttr, FillV2GpuKernelMod::FillV2LaunchFunc>> FillV2G
   {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeBool, bool)},
   {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeInt8, int8_t)},
   {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeInt16, int16_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeInt64, int32_t)},
   {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
   {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeUInt8, uint8_t)},
   {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeUInt16, uint16_t)},

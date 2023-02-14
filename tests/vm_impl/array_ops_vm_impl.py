@@ -343,3 +343,16 @@ def vm_impl_load(self):
         return value
 
     return vm_impl
+
+
+@vm_impl_getters.register(P.FillV2)
+def vm_impl_fillv2(self):
+    def vm_impl(x, y):
+        if isinstance(x, Tensor):
+            x = x.asnumpy()
+        y = y.asnumpy()
+        out = np.empty(x).astype(y.dtype)
+        out.fill(y)
+        return Tensor(out)
+
+    return vm_impl
