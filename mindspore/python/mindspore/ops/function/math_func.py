@@ -5330,8 +5330,8 @@ def gcd(x1, x2):
     one of: int32, int64
 
     Args:
-        - **x1** (Tensor) - The first input tensor.
-        - **x2** (Tensor) - The second input tensor.
+        x1 (Tensor): The first input tensor.
+        x2 (Tensor): The second input tensor.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is one

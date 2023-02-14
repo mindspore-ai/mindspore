@@ -1,6 +1,8 @@
 mindspore.ops
 =============================
 
+MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.ops API接口变更 <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/func_api_updates_cn.md>`_ 。
+
 神经网络层函数
 ----------------
 

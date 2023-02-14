@@ -270,8 +270,8 @@ ReWrite完整示例请参考
         创建ScopedValue的列表。
 
         参数：
-            - **names** (list[str] or tuple[str]) – 引用变量的名称，类型为str的列表或元组。
-            - **scopes** (list[str] or tuple[str]) – 引用变量的范围，类型为str的列表或元组。表示没有指定作用范围。默认值：None。
+            - **names** (list[str] or tuple[str]) - 引用变量的名称，类型为str的列表或元组。
+            - **scopes** (list[str] or tuple[str]) - 引用变量的范围，类型为str的列表或元组。表示没有指定作用范围。默认值：None。
 
         返回：
             ScopedValue的实例列表。
