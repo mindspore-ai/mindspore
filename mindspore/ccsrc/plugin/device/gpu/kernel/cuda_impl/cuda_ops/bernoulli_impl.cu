@@ -66,9 +66,9 @@ __global__ void BroadcastBernoulliForwardKernel(const size_t x0, const size_t x1
 template <typename T, typename S>
 void BernoulliForward(const T *input, S *output, uint64_t seed, const size_t num_count, const uint32_t &device_id,
                       cudaStream_t cuda_stream) {
-  BernoulliForwardKernel<<<CUDA_BLOCKS(device_id, num_count), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, output,
-                                                                                                         seed,
-                                                                                                         num_count);
+  int block_num = 256 > num_count ? num_count : 256;
+  BernoulliForwardKernel<<<CUDA_BLOCKS_CAL(device_id, num_count, block_num), block_num, 0, cuda_stream>>>(
+    input, output, seed, num_count);
 }
 
 template <typename T, typename S>
