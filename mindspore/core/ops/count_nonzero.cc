@@ -51,6 +51,10 @@ abstract::ShapePtr CountNonZeroInferShape(const PrimitivePtr &primitive,
   auto input_rank = SizeToLong(input_shape.size());
   std::vector<int64_t> dims = CheckAttrIntOrTuple(primitive->GetAttr("dims"));
 
+  if (IsDynamicRank(input_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   if (dims.size() == 0) {
     output_shape = std::vector<int64_t>{};
     return std::make_shared<abstract::Shape>(output_shape);

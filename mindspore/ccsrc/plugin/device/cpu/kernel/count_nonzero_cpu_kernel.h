@@ -43,18 +43,22 @@ class CountNonZeroCpuKernelMod : public NativeCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-
+  void ComputeCountParameter(void);
   using CountNonZeroLaunchFunc = std::function<bool(CountNonZeroCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                                     const std::vector<kernel::AddressPtr> &)>;
 
   static std::vector<std::pair<KernelAttr, CountNonZeroLaunchFunc>> func_list_;
   CountNonZeroLaunchFunc kernel_func_;
+  std::vector<int64_t> dims_;
   float value_;
   ShapeVector x_shape_;
   ShapeVector y_shape_;
