@@ -31,6 +31,7 @@ from mindspore.ops.operations import _csr_ops
 from mindspore.common import CSRTensor, COOTensor, Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops.composite.multitype_ops._constexpr_utils import raise_value_error, raise_type_error, make_tensor
+from mindspore import log as logger
 
 # utility functions and values
 gather_nd = GatherNd()
