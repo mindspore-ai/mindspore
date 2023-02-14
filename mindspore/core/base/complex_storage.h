@@ -20,9 +20,10 @@
 #include "utils/ms_utils.h"
 
 namespace mindspore {
+constexpr auto kComplexValueUnit = 2;
 
 template <typename T>
-struct alignas(sizeof(T) * 2) ComplexStorage {
+struct alignas(sizeof(T) * kComplexValueUnit) ComplexStorage {
   T real_;
   T imag_;
 

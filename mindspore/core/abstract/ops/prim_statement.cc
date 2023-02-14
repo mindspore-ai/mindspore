@@ -58,7 +58,8 @@ std::pair<bool, bool> CheckCondAbstractIsInterpretedObj(const AbstractBasePtr &c
 AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
                                 const AbstractBasePtrList &args_spec_list) {
   // Inputs: condition, true branch, false branch
-  if (args_spec_list.size() != 3) {
+  constexpr auto switch_input_size = 3;
+  if (args_spec_list.size() != switch_input_size) {
     MS_LOG(EXCEPTION) << "Switch evaluator requires 3 parameters, while the input size is " << args_spec_list.size()
                       << ".";
   }
