@@ -62,12 +62,7 @@ struct FutureData {
         future(promise.get_future()),
         t() {}
 
-  ~FutureData() {
-    //        try {
-    Clear();
-    //        } catch (...) {
-    //        }
-  }
+  ~FutureData() { Clear(); }
 
   // remove all callbacks
   void Clear() {
