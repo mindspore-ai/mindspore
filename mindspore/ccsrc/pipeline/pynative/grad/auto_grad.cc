@@ -34,7 +34,6 @@
 #include "utils/profile.h"
 #include "include/common/utils/primitive_utils.h"
 #include "pipeline/jit/pass.h"
-
 namespace mindspore {
 namespace pynative {
 namespace autograd {
@@ -54,7 +53,6 @@ void ClearDeviceAddress(const ValuePtr &value) {
   TensorValueToTensor(value, &tensors);
   for (auto tensor : tensors) {
     tensor->set_device_address(nullptr);
-    tensor->set_is_forward_output(false);
   }
 }
 
@@ -207,6 +205,44 @@ FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph) {
   auto after_opt_bg = pipeline::MsFunctionBpropGraphPass(resource, true);
   pynative::PyNativeAlgo::Common::DumpGraphIR("bprop_builder_after_opt.ir", after_opt_bg);
   return after_opt_bg;
+}
+
+// Handle bprob of op which input dtype is real number and output dtype is complex number.
+// If the dtype of a gradient(din) is complex number and the input of that is real number,
+// only the real part of the gradient make sense in back propagate. So we handle it by
+// insert a Real() ops after the gradient.
+// input: AnfNode with input of op which input dtype is real number and output dtype is complex number.
+// din: CNodePtr with gradient of input.
+// tape: Funcgraph witch input and din belong to.
+// return: New din with inserted real op if necessarily.
+AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const AnfNodePtr &din, const FuncGraphPtr &tape) {
+  MS_EXCEPTION_IF_NULL(din);
+  TypePtr din_type = din->Type();
+  if (din_type == nullptr || !din_type->isa<TensorType>()) {
+    return din;
+  }
+  din_type = din_type->cast_ptr<TensorType>()->element();
+  MS_EXCEPTION_IF_NULL(din_type);
+  if (din_type->type_id() != kNumberTypeComplex64 && din_type->type_id() != kNumberTypeComplex128) {
+    return din;
+  }
+
+  MS_EXCEPTION_IF_NULL(input);
+  TypePtr input_type = input->Type();
+  if (input_type == nullptr || !input_type->isa<TensorType>()) {
+    return din;
+  }
+  input_type = input_type->cast_ptr<TensorType>()->element();
+  MS_EXCEPTION_IF_NULL(input_type);
+  if (input_type->type_id() == kNumberTypeComplex64 || input_type->type_id() == kNumberTypeComplex128) {
+    return din;
+  }
+
+  AnfNodePtr new_din = tape->NewCNode({NewValueNode(prim::kPrimReal), din});
+  AbstractBasePtr abs = std::make_shared<abstract::AbstractTensor>(
+    abstract::AbstractTensor(input_type, input->abstract()->GetShapeTrack()));
+  new_din->set_abstract(abs);
+  return new_din;
 }
 
 bool IsOutputBothEmpty(const AnfNodePtr &inputs_grad, const AnfNodePtr &weights_grad) {
@@ -918,8 +954,9 @@ void AutoGradCellImpl::UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePt
     if (!it->second->is_need_grad()) {
       return;
     }
-    auto real_din = GetRealDin(fn, it->second->out_value(), input_arg, din);
-    fn->AddNextEdge(input_node, real_din);
+    auto real_din = HandleRealToComplex(input_node, din, fn->tape());
+    auto new_din = TraceShape(fn, it->second->out_value(), input_arg, real_din);
+    fn->AddNextEdge(input_node, new_din);
   } else if (input_node->isa<CNode>()) {
     const auto &cnode = input_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
@@ -995,7 +1032,7 @@ void AutoGradCellImpl::AddParameterNode(const AnfNodePtr &parameter, const Value
   (void)weights_used_in_graph_.emplace_back(parameter);
 }
 
-AnfNodePtr AutoGradCellImpl::GetRealDin(const FunctionNodePtr &fn, const ValuePtr &out_value, const ValuePtr &input_arg,
+AnfNodePtr AutoGradCellImpl::TraceShape(const FunctionNodePtr &fn, const ValuePtr &out_value, const ValuePtr &input_arg,
                                         const AnfNodePtr &din) {
   MS_EXCEPTION_IF_NULL(out_value);
   MS_EXCEPTION_IF_NULL(input_arg);
@@ -1025,11 +1062,11 @@ AnfNodePtr AutoGradCellImpl::GetRealDin(const FunctionNodePtr &fn, const ValuePt
     for (const auto &value : value_seq->value()) {
       // Find the value's din, if value equal to sub_value, means value be used, is it will get din; Otherwise value's
       // din is zero , which set by second branch condition above
-      auto real_din = GetRealDin(fn, value, input_arg, din);
-      (void)inputs.emplace_back(real_din);
+      auto new_din = TraceShape(fn, value, input_arg, din);
+      (void)inputs.emplace_back(new_din);
 
       // if exist din == fake_dout, we record it in user vector
-      if (din == fn->fake_dout() && real_din == din) {
+      if (din == fn->fake_dout() && new_din == din) {
         index = static_cast<int>(inputs.size()) - 1;
       }
     }
