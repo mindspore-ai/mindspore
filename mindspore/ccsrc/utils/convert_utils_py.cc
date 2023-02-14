@@ -33,9 +33,9 @@
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "pybind_api/ir/base_ref_py.h"
-#include "pybind_api/utils/stub_tensor_py.h"
 #include "ir/dtype/tensor_type.h"
 #include "utils/ms_context.h"
+#include "include/common/utils/stub_tensor.h"
 #include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
@@ -688,11 +688,11 @@ tensor::TensorPtr PyTensorCast(const py::handle &obj) {
     return py::cast<tensor::TensorPtr>(obj);
   }
   auto stub_node = py::getattr(obj, stub::PY_ATTR_STUB);
-  auto is_stub_tensor_sync = !py::isinstance<StubNode>(stub_node);
-  if (is_stub_tensor_sync) {
+  auto is_stub_tensor_sync = py::isinstance<stub::StubNode>(stub_node);
+  if (!is_stub_tensor_sync) {
     return py::cast<tensor::TensorPtr>(obj);
   }
-  auto stub = py::getattr(obj, stub::PY_ATTR_STUB).cast<StubNodePtr>();
-  return stub->value->cast<tensor::TensorPtr>();
+  auto stub = py::getattr(obj, stub::PY_ATTR_STUB).cast<stub::StubNodePtr>();
+  return stub->WaitValue()->cast<tensor::TensorPtr>();
 }
 }  // namespace mindspore
