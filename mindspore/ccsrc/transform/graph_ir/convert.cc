@@ -2579,7 +2579,7 @@ void DfGraphConvertor::TransDataType(const FuncGraphPtr &anf_graph) const {
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->CanDump(kAdvanced)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "ge_trans_data_type_before_graph_" + anf_graph->ToString() + ".ir";
     DumpIR(file_name, anf_graph);
   }
@@ -2595,7 +2595,7 @@ void DfGraphConvertor::TransDataType(const FuncGraphPtr &anf_graph) const {
     }
   }
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kAdvanced)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "ge_trans_data_type_after_graph_" + anf_graph->ToString() + ".ir";
     DumpIR(file_name, anf_graph);
   }
