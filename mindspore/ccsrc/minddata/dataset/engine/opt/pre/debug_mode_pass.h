@@ -52,6 +52,12 @@ class DebugModePass : public IRTreePass {
     /// \return Status code
     Status Visit(std::shared_ptr<MapNode> node, bool *const modified) override;
 
+    /// \brief Runs a pass on ShuffleNode
+    /// \param[in] node The node being visited
+    /// \param[in, out] *modified indicates if the node was changed at all
+    /// \return Status code
+    Status Visit(std::shared_ptr<ShuffleNode> node, bool *const modified) override;
+
     /// \brief Runs a pass on DatasetNode
     /// \param[in] node The node being visited
     /// \param[in, out] *modified indicates if the node was changed at all

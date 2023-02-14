@@ -57,6 +57,10 @@ class ShuffleNode : public DatasetNode {
   uint32_t ShuffleSeed() const { return shuffle_seed_; }
   bool ResetEveryEpoch() const { return reset_every_epoch_; }
 
+  /// \brief Setter function for shuffle_seed_
+  /// \param[in] shuffle_seed The shuffle seed value to be set
+  void SetShuffleSeed(uint32_t shuffle_seed) { shuffle_seed_ = shuffle_seed; }
+
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes
   /// \return Status of the function
@@ -69,6 +73,18 @@ class ShuffleNode : public DatasetNode {
   /// \return Status The status code returned
   static Status from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
                           std::shared_ptr<DatasetNode> *result);
+
+  /// \brief Base-class override for accepting IRNodePass visitor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status Accept(IRNodePass *const p, bool *const modified) override;
+
+  /// \brief Base-class override for accepting IRNodePass visitor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
 
  private:
   int32_t shuffle_size_;

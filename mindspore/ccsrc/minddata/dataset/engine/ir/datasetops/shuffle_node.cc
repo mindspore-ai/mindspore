@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/shuffle_op.h"
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
@@ -74,6 +75,22 @@ Status ShuffleNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNo
   bool reset_every_epoch = json_obj["reset_each_epoch"];
   *result = std::make_shared<ShuffleNode>(ds, buffer_size, reset_every_epoch);
   return Status::OK();
+}
+
+// Visitor accepting method for IRNodePass
+Status ShuffleNode::Accept(IRNodePass *const p, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(p);
+  RETURN_UNEXPECTED_IF_NULL(modified);
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<ShuffleNode>(), modified);
+}
+
+// Visitor accepting method for IRNodePass
+Status ShuffleNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(p);
+  RETURN_UNEXPECTED_IF_NULL(modified);
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<ShuffleNode>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -59,7 +59,7 @@ import mindspore.dataset.transforms.py_transforms as py_transforms
 import mindspore.dataset.transforms as transforms
 from mindspore.dataset.text.utils import SentencePieceModel, DE_C_INTER_SENTENCEPIECE_MODE
 from mindspore.parallel._utils import _get_device_num
-from mindspore.dataset.engine.debug import DebugWrapper
+from mindspore.dataset.debug import DebugHook
 
 from . import samplers
 from .iterators import DictIterator, TupleIterator, DummyIterator, check_iterator_cleanup, _set_iterator_cleanup, \
@@ -70,7 +70,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
     check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_padded_batch
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
-    get_enable_watchdog, get_seed, set_seed, get_debug_mode, get_multiprocessing_timeout_interval
+    get_enable_watchdog, get_seed, set_seed, get_debug_mode, get_multiprocessing_timeout_interval, _get_debug_hook_list
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
 from ..core.py_util_helpers import ExceptionHandler
@@ -3334,6 +3334,13 @@ class MapDataset(UnionBaseDataset):
         if count_new_transforms + count_pyfunc == len(operations):
             prev_op = None
             for op in operations:
+                # skip user added DebugHook to avoid changing to Py-implementation.
+                if self.__is_debug_hook_op(op):
+                    if prev_op:
+                        # manually set previous_op_name
+                        prev_op_name = self.__parse_op_name(prev_op)
+                        op.set_previous_op_name(prev_op_name)
+                    continue
                 if op.implementation is None:
                     if prev_op and prev_op.implementation == Implementation.PY:
                         op.implementation = Implementation.PY
@@ -3364,27 +3371,46 @@ class MapDataset(UnionBaseDataset):
             del self.process_pool
 
     @staticmethod
-    def __insert_debug_wrapper(operations):
+    def __parse_op_name(op):
         """
-        Insert DebuggerWrapper before and after each op if debug mode is on.
+        Utility method to get operation name.
         """
-        if not get_debug_mode():
-            return operations
-        inserted_func = transforms.py_transforms_util.FuncWrapper(DebugWrapper())
-        inserted_func.implementation = Implementation.PY
-        inserted_operations = [inserted_func]
-        for op in operations:
-            if isinstance(op, transforms.py_transforms_util.FuncWrapper):
-                try:
-                    op_name = op.transform.__name__
-                except Exception:
-                    op_name = op.transform.__class__.__name__
-            else:
-                op_name = op.__class__.__name__
-            inserted_func = transforms.py_transforms_util.FuncWrapper(DebugWrapper(op_name))
-            inserted_func.implementation = Implementation.PY
-            inserted_operations.extend([op, inserted_func])
-        return inserted_operations
+        op_name = ""
+        if isinstance(op, transforms.py_transforms_util.FuncWrapper):
+            try:
+                op_name = op.transform.__name__
+            except (Exception,):
+                op_name = op.transform.__class__.__name__
+        else:
+            op_name = op.__class__.__name__
+        return op_name
+
+    @staticmethod
+    def __construct_debug_hook(previous_op_name=None):
+        """
+        Wrap debug hook into FuncWrapper.
+        """
+        inserted_functions = []
+        debug_hook_list = _get_debug_hook_list()
+        if debug_hook_list:
+            for fn in debug_hook_list:
+                new_fn = copy.deepcopy(fn)
+                new_fn.set_previous_op_name(previous_op_name)
+                inserted_func = transforms.py_transforms_util.FuncWrapper(new_fn)
+                inserted_func.implementation = Implementation.PY
+                inserted_functions.append(inserted_func)
+        return inserted_functions
+
+    @staticmethod
+    def __is_debug_hook_op(op):
+        """
+        Check if the op is user added DebugHook and skip it to avoid changing transforms implementation.
+        """
+        if isinstance(op, DebugHook):
+            if not get_debug_mode():
+                raise ValueError("It is not allowed to inject DebugHook object in non-debug mode.")
+            return True
+        return False
 
     @staticmethod
     def __count_pyfuncs(operations):
@@ -3484,6 +3510,19 @@ class MapDataset(UnionBaseDataset):
                         # CPP ops remain the same
                         iter_specific_operations.append(op)
                 self.operations = iter_specific_operations
+
+    def __insert_debug_wrapper(self, operations):
+        """
+        Insert DebuggerWrapper before and after each op if debug mode is on.
+        """
+        if not get_debug_mode():
+            return operations
+        inserted_operations = self.__construct_debug_hook()
+        for op in operations:
+            inserted_operations.append(op)
+            op_name = self.__parse_op_name(op)
+            inserted_operations.extend(self.__construct_debug_hook(op_name))
+        return inserted_operations
 
     def __decompose_callable_operations(self):
         """
