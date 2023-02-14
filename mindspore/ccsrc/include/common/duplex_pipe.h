@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@
 #include <functional>
 
 #include "utils/log_adapter.h"
-#include "utils/os.h"
 #include "include/common/visible.h"
 
 #define DP_DEBUG MS_LOG(DEBUG) << "[DuplexPipe] "

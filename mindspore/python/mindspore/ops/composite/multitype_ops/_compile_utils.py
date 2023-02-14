@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ from __future__ import absolute_import
 
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops import functional as F
-from mindspore.ops  import operations as P
+from mindspore.ops import operations as P
 from mindspore.ops.composite import base
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, DynamicBroadcastTo, TopTypeof
