@@ -54,7 +54,7 @@ Status GPUGraphImpl::InitEnv() {
     return kMCFailed;
   }
   ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
-  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id_);
+  ms_context->set_param_inner<uint32_t>(MS_CTX_DEVICE_ID, device_id_);
   ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kGPUDevice);
 
   // Set device id for sync data to host as cudaSetDevice is thread level config.

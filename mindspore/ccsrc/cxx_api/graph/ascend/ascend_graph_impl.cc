@@ -342,7 +342,7 @@ AscendGraphImpl::MsEnvGuard::MsEnvGuard(uint32_t device_id) : device_id_(device_
   }
 
   ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
-  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id_);
+  ms_context->set_param_inner<uint32_t>(MS_CTX_DEVICE_ID, device_id_);
   ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   ms_context->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, true);
 

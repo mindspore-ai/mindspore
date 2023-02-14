@@ -103,7 +103,7 @@ void GPUDeviceResManager::Initialize() {
 
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
-    ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_context_->device_context_key().device_id_);
+    ms_context->set_param_inner<uint32_t>(MS_CTX_DEVICE_ID, device_context_->device_context_key().device_id_);
   }
 
   MS_LOG(INFO) << "Set GPU device id index " << device_context_->device_context_key().device_id_;
