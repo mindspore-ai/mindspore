@@ -890,3 +890,14 @@ def _run_op_sync(obj, op_name, args):
     """Single op execution function in synchronous mode."""
     output = _pynative_executor.real_run_op(obj, op_name, args)
     return output
+
+
+class PrimitiveC(Primitive):
+    def __init__(self, name, attrs):
+        super().__init__(name)
+        for key, value in attrs.items():
+            super().add_prim_attr(key, value)
+
+
+def _get_primitivec(name, attrs):
+    return PrimitiveC(name, attrs)
