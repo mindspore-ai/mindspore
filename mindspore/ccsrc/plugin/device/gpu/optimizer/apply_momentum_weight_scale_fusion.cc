@@ -86,8 +86,9 @@ AnfNodePtr GetCastInput(const AnfNodePtr &node) {
 
 const BaseRef ApplyMomentumWeightDecayScaleFusion::DefinePattern() const {
   VectorRef load_para = VectorRef({prim::kPrimLoad, variable_, monad_});
-  VectorRef weight =
-    VectorRef({prim::kPrimAddN, VectorRef({prim::kPrimMul, load_para, weight_decay_}), cast_gradient_});
+  VectorRef weight = VectorRef(
+    {prim::kPrimAddN,
+     VectorRef({prim::kPrimMakeTuple, VectorRef({prim::kPrimMul, load_para, weight_decay_}), cast_gradient_})});
   VectorRef scale = VectorRef({prim::kPrimMul, weight, scale_});
   VectorRef apply_momentum =
     VectorRef({prim::kPrimApplyMomentum, variable_, accumulation_, learning_rate_, scale, momentum_, monad_state_});
