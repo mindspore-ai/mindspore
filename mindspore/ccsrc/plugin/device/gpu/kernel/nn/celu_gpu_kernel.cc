@@ -33,7 +33,7 @@ bool CeluGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
     return false;
   }
   kernel_name_ = kernel_ptr->name();
-  alpha_ = kernel_ptr->get_alpha();
+  alpha_ = static_cast<double>(kernel_ptr->get_alpha());
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
@@ -67,10 +67,9 @@ int CeluGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 template <typename T>
 bool CeluGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                     const std::vector<AddressPtr> &outputs) {
-  T alpha = static_cast<T>(alpha_);
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  CalculateCelu(input, input_elements_, alpha, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CalculateCelu(input, input_elements_, alpha_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;
 }
 

@@ -19,25 +19,25 @@
 #include "include/cuda_fp16.h"
 
 template <typename T>
-__global__ void CalculateCeluKernel(const T *input, const size_t input_elements, T alpha, T *output) {
+__global__ void CalculateCeluKernel(const T *input, const size_t input_elements, double alpha, T *output) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < input_elements; i += blockDim.x * gridDim.x) {
     T input_value = input[i];
-    T template_zero = static_cast<T>(0.0);
-    output[i] = input_value > template_zero ? input_value : alpha * expm1(input_value / alpha);
+    double inv_alpha = static_cast<double>(1.0) / alpha;
+    output[i] = input_value > 0 ? input_value : alpha * std::expm1(input_value * inv_alpha);
   }
 }
 
-__global__ void CalculateCeluKernel(const half *input, const size_t input_elements, half alpha, half *output) {
+__global__ void CalculateCeluKernel(const half *input, const size_t input_elements, double alpha, half *output) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < input_elements; i += blockDim.x * gridDim.x) {
     half input_value = input[i];
-    half template_zero = static_cast<half>(0.0);
-    half template_one = static_cast<half>(1.0);
-    output[i] = input_value > template_zero ? input_value : alpha * (hexp(input_value / alpha) - template_one);
+    double inv_alpha = static_cast<double>(1.0) / alpha;
+    output[i] = input_value > static_cast<half>(0) ? input_value
+                                                   : __float2half(alpha * expm1(__half2float(input_value) * inv_alpha));
   }
 }
 
 template <typename T>
-void CalculateCelu(const T *input, size_t input_elements, T alpha, T *output, const uint32_t &device_id,
+void CalculateCelu(const T *input, size_t input_elements, double alpha, T *output, const uint32_t &device_id,
                    cudaStream_t cuda_stream) {
   CalculateCeluKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_elements, alpha, output);
@@ -47,8 +47,8 @@ template CUDA_LIB_EXPORT void CalculateCelu<double>(const double *input, size_t 
                                                     double *output, const uint32_t &device_id,
                                                     cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateCelu<float>(const float *input, size_t input_elements, float alpha,
+template CUDA_LIB_EXPORT void CalculateCelu<float>(const float *input, size_t input_elements, double alpha,
                                                    float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateCelu<half>(const half *input, size_t input_elements, half alpha, half *output,
+template CUDA_LIB_EXPORT void CalculateCelu<half>(const half *input, size_t input_elements, double alpha, half *output,
                                                   const uint32_t &device_id, cudaStream_t cuda_stream);

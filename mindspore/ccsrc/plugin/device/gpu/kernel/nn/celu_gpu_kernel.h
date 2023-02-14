@@ -52,7 +52,7 @@ class CeluGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<Cel
                     const std::vector<AddressPtr> &outputs);
 
  private:
-  float alpha_;
+  double alpha_;
   size_t unit_size_{1};
   size_t input_elements_{};
   void *cuda_stream_{nullptr};
