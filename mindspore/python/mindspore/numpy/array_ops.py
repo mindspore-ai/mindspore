@@ -1792,6 +1792,7 @@ def take_along_axis(arr, indices, axis):
                             _tuple_slice(shape_arr, None, axis), ndim)
     indices = _broadcast_to(indices, _tuple_slice(shape_arr, None, axis + 1) +
                             _tuple_slice(shape_indices, axis + 1, None), shape_arr, ndim)
+    arr = _broadcast_to(arr, shape_arr, indices.shape, ndim)
     return F.gather_d(arr, axis, indices)
 
 
