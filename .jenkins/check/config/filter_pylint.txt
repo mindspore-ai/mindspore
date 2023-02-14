@@ -75,6 +75,7 @@
 "mindspore/mindspore/python/mindspore/ops/_grad_experimental/grad_sparse_ops.py"                                         "unused-variable"
 "mindspore/mindspore/python/mindspore/ops/operations/_inner_ops.py"                                                      "not-callable"
 "mindspore/mindspore/python/mindspore/hypercomplex"                                                                      "useless-return"
+"mindspore/mindspore/python"                                                                                             "redefined-builtin"
 
 # MindData
 "mindspore/mindspore/python/mindspore/dataset/__init__.py"                                                               "redefined-builtin"
