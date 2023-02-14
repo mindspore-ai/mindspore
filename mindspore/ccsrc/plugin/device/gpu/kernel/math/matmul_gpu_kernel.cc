@@ -171,8 +171,8 @@ bool MatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     }
 #else
     cudaDataType_t compute_type = (dtype_a_ == CUDA_R_64F) ? CUDA_R_64F : CUDA_R_32F;
-    if (dtype_a_ == CUDA_C_32F) {
-      compute_type = CUDA_C_32F;
+    if (dtype_a_ == CUDA_C_32F || dtype_a_ == CUDA_C_64F) {
+      compute_type = dtype_a_;
     }
 #endif
 
