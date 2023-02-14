@@ -244,6 +244,35 @@ class _Context:
                              f"{deterministic_options}, but got {deterministic}.")
         self.set_param(ms_ctx_param.deterministic, deterministic)
 
+    def set_ascend_config(self, ascend_config):
+        """
+        Enable ascend config.
+
+        Args:
+            ascend_config (dict): 'precision_mode'
+                - precision_mode (str): "force_fp16", "allow_fp32_to_fp16", "allow_mix_precision",
+                            "must_keep_origin_dtype", "force_fp32", "force_lowerprecision", "allow_fp32_to_bf16",
+                            "allow_fp32_to_lowprecision", "allow_mix_precision_fp16" and "allow_mix_precision_bf16".
+        """
+
+        ascend_cfgs = {'precision_mode': ["force_fp16", "allow_fp32_to_fp16", "allow_mix_precision",
+                                          "must_keep_origin_dtype", "force_fp32", "force_lowerprecision",
+                                          "allow_fp32_to_bf16", "allow_fp32_to_lowprecision",
+                                          "allow_mix_precision_fp16", "allow_mix_precision_bf16"],
+                       'jit_compile': [True, False]}
+        for ascend_key in ascend_config:
+            if ascend_key not in ascend_cfgs:
+                raise ValueError(f"For 'context.set_context', the key of argument 'ascend_config' must be one of "
+                                 f"{ascend_cfgs}, but got {ascend_key}.")
+            supported_modes = ascend_cfgs.get(ascend_key)
+            if ascend_config[ascend_key] not in supported_modes:
+                raise ValueError(f"For 'ascend_config', the value of argument {ascend_key} must be one of "
+                                 f"{supported_modes}, but got {ascend_config[ascend_key]}.")
+            if ascend_key == 'precision_mode':
+                self.set_param(ms_ctx_param.precision_mode, ascend_config[ascend_key])
+            if ascend_key == 'jit_compile':
+                self.set_param(ms_ctx_param.jit_compile, ascend_config[ascend_key])
+
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
         if not success:
@@ -421,7 +450,8 @@ class _Context:
         'memory_optimize_level': set_memory_optimize_level,
         'op_timeout': set_op_timeout,
         'memory_offload': set_memory_offload,
-        'deterministic': set_deterministic
+        'deterministic': set_deterministic,
+        'ascend_config': set_ascend_config
     }
 
     @property
@@ -706,7 +736,8 @@ def _check_target_specific_cfgs(device, arg_key):
         'auto_tune_mode': ['Ascend'],
         'max_device_memory': ['Ascend', 'GPU'],
         'mempool_block_size': ['GPU', 'Ascend'],
-        'disable_format_transform': ['GPU']
+        'disable_format_transform': ['GPU'],
+        'ascend_config': ['Ascend']
     }
     # configs not in map device_cfgs are supposed to be suitable for all devices
     if arg_key not in device_cfgs:
@@ -728,7 +759,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
                  grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
-                 op_timeout=int, deterministic=str)
+                 op_timeout=int, deterministic=str, ascend_config=dict)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -809,6 +840,8 @@ def set_context(**kwargs):
     |                         |  memory_optimize_level       |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  memory_offload              |  GPU/Ascend                |
+    |                         +------------------------------+----------------------------+
+    |                         |  ascend_config               |  Ascend                    |
     +-------------------------+------------------------------+----------------------------+
 
     Args:
@@ -982,7 +1015,33 @@ def set_context(**kwargs):
               when the environment variable "GRAPH_OP_RUN=1" is not set; This parameter does not take effect when
               memory_optimize_level is set 'O1'.
             - OFF: Turn off the memory Offload function.
+        ascend_config (dict): Set the parameters specific to Ascend hardware platform. It is not set by default.
+            Currently, only setting `precision_mode' and jit_compile are supported on Ascend910B hardware platform.
 
+            - precision_mode (str): Mixed precision mode setting, on Ascend910B hardware platform, the default
+              value of training network is must_keep_origin_dtype, and the default value of inference network
+              is force_fp16. The value range is as follows:
+
+                - force_fp16: When the operator supports both float16 and float32, select float16 directly.
+                - allow_fp32_to_fp16: When the operator does not support the float32 data type, directly reduce
+                  the precision of float16.
+                - allow_mix_precision: Automatic mixing precision, facing the whole network operator, according
+                  to the built-in optimization strategy, automatically reduces the precision of some operators
+                  to float16 or bfloat16.
+                - must_keep_origin_dtype: Keep the accuracy of the original drawing.
+                - force_fp32: When the operator supports both float16 and float32, select float32 directly.
+                - force_lowerprecision: When the operator supports both float16 or bfloat16 and float32, select
+                  float16 or bfloat16 directly.
+                - allow_fp32_to_bf16: When the operator does not support the float32 data type, directly reduce
+                  the precision of bfloat16.
+                - allow_fp32_to_lowprecision: When the operator does not support the float32 data type, directly
+                  reduce the precision of float16 or bfloat16.
+                - allow_mix_precision_fp16: Automatic mixing precision, facing the whole network operator, automatically
+                  reduces the precision of some operators to float16 according to the built-in optimization strategy.
+                - allow_mix_precision_bf16: Automatic mixing precision, facing the whole network operator, according to
+                  the built-in optimization strategy, automatically reduces the precision of some operators to bfloat16.
+
+            - jit_compile (bool): Whether to select online compilation. Default: True.
     Raises:
         ValueError: If input key is not an attribute in context.
 
@@ -1014,6 +1073,7 @@ def set_context(**kwargs):
         >>> ms.set_context(memory_optimize_level='O0')
         >>> ms.set_context(memory_offload='ON')
         >>> ms.set_context(deterministic='ON')
+        >>> ms.set_context(ascend_config={"precision_mode": "force_fp16", "jit_compile": True})
     """
     ctx = _context()
     # set device target first
@@ -1029,6 +1089,8 @@ def set_context(**kwargs):
             logger.warning(f"For 'context.set_context', '{key}' parameter is deprecated. "
                            "For details, please see the interface parameter API comments")
             continue
+        if key in ('precision_mode', 'jit_compile'):
+            raise ValueError(f"Please set '{key}' through parameter ascend_config")
         if key == 'save_graphs':
             if value is True:
                 value = 1

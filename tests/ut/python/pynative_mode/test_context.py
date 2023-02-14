@@ -99,6 +99,31 @@ def test_max_device_memory_size():
         context.set_context(max_device_memory="3.5G")
     context.set_context.__wrapped__(max_device_memory="3GB")
 
+
+def test_ascend_config():
+    """"
+    Feature: test_ascend_config function
+    Description: Test case for simplest ascend_config
+    Expectation: The results are as expected
+    """
+    context.set_context(device_target="Ascend")
+    with pytest.raises(ValueError):
+        context.set_context(precision_mode="force_fp16")
+    with pytest.raises(ValueError):
+        context.set_context(jit_compile=True)
+    with pytest.raises(ValueError):
+        context.set_context(ascend_config={"precision_mode": "xxx"})
+    with pytest.raises(ValueError):
+        context.set_context(ascend_config={"xxxx": 1})
+    with pytest.raises(ValueError):
+        context.set_context(ascend_config={"jit_compile": "xxx"})
+    with pytest.raises(ValueError):
+        context.set_context(ascend_config={"jit_compile": 2})
+    with pytest.raises(ValueError):
+        context.set_context(ascend_config={"precision_mode": 2})
+    context.set_context.__wrapped__(ascend_config={"precision_mode": "force_fp16", "jit_compile": True})
+
+
 def test_print_file_path():
     """test_print_file_path"""
     with pytest.raises(IOError):
