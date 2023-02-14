@@ -15,5 +15,5 @@ mindspore.ops.ceil
         Tensor，shape与 `x` 相同。
 
     异常：
-        - **TypeError** - `x` 的不是Tensor。
+        - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `x` 的数据类型既不是float16也不是float32。
