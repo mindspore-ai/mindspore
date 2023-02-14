@@ -703,7 +703,7 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
           Data type must be in int32 or int64.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value.
         stride (Union[int, tuple[int]]): The distance of kernel moving,
-            If stride is None, then stride equal to kernel_size. Default: None.
+            If stride is 0, (0) or None, then stride equal to kernel_size. Default: None.
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0.
         output_size (tuple[int], optional): The output shape. Default: None.
             If output_size == (), then the shape of output computed by `kernel_size`, `stride` and `padding`.

@@ -4960,7 +4960,7 @@ def _split_int(x, split_size_or_sections, axis):
     arr_shape = x.shape
     length_along_dim = arr_shape[axis]
     if split_size_or_sections > length_along_dim:
-        res = P.Split(axis, length_along_dim)(x)
+        res = P.Split(axis, 1)(x)
     elif length_along_dim % split_size_or_sections == 0:
         sections = length_along_dim // split_size_or_sections
         res = P.Split(axis, sections)(x)
@@ -5036,12 +5036,16 @@ def split(x, split_size_or_sections, axis=0):
     """
     if not isinstance(x, Tensor):
         raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
-    if not isinstance(axis, int):
+    if type(axis) is not int:
         raise TypeError(f"Type of Argument `axis` should be integer but got {type(axis)}")
     axis = _canonicalize_axis(axis, x.ndim)
 
-    if isinstance(split_size_or_sections, int):
-        res = _split_int(x, split_size_or_sections, axis)
+    if type(split_size_or_sections) is int:
+        if split_size_or_sections > 0:
+            res = _split_int(x, split_size_or_sections, axis)
+        else:
+            raise ValueError(f"For split, the value of 'split_size_or_sections' must be more than zero, "
+                             f"but got {split_size_or_sections}.")
     elif isinstance(split_size_or_sections, (list, tuple)):
         for item in split_size_or_sections:
             if not isinstance(item, int):
@@ -5053,7 +5057,7 @@ def split(x, split_size_or_sections, axis=0):
     else:
         raise TypeError(f"Type of Argument `split_size_or_sections` should be integer, tuple(int) or list(int), " \
                         f"but got {type(split_size_or_sections)}")
-    return res
+    return tuple(res)
 
 
 def tril(input_x, diagonal=0): # pylint: disable=redefined-outer-name
@@ -5212,9 +5216,10 @@ def _tensor_split_sub_int(x, indices_or_sections, axis):
     length_along_dim = arr_shape[axis]
     if indices_or_sections > length_along_dim:
         res = P.Split(axis, length_along_dim)(x)
-        indices_or_sections_n = [i for i in np.arange(length_along_dim, indices_or_sections)]
+        indices_or_sections_n = [length_along_dim, length_along_dim + 1]
         res2 = _tensor_split_sub_tensors(x, indices_or_sections_n, axis)
-        res += tuple(res2)[1:]
+        for _ in np.arange(length_along_dim, indices_or_sections):
+            res += tuple(res2)[1:]
     elif length_along_dim % indices_or_sections == 0:
         res = P.Split(axis, indices_or_sections)(x)
     else:
@@ -5240,9 +5245,9 @@ def tensor_split(x, indices_or_sections, axis=0):
         indices_or_sections (Union[int, tuple(int), list(int)]):
             If `indices_or_sections` is an integer n, input is split into
             n sections along dimension `axis`. If input is divisible by n along dimension `axis`, each section will be
-            of equal size, :math:`input.size(axis) / n` . If input is not divisible by n, the sizes of the first
-            :math:`input.size(axis) % n` sections will have size :math:`input.size(axis) // n + 1` , and the rest will
-            have size :math:`input.size(axis) // n` .
+            of equal size, :math:`x.size(axis) / n` . If input is not divisible by n, the sizes of the first
+            :math:`x.size(axis) % n` sections will have size :math:`x.size(axis) // n + 1` , and the rest will
+            have size :math:`x.size(axis) // n` .
             If `indices_or_sections` is a list or tuple of ints, then input is split
             along dimension `axis` at each of the indices in the list, tuple. For instance,
             :math:`indices\_or\_sections=[2, 3]` and :math:`axis=0` would result in the tensors :math:`x[:2]` ,
@@ -5273,12 +5278,15 @@ def tensor_split(x, indices_or_sections, axis=0):
     if not isinstance(x, Tensor):
         raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
 
-    if not isinstance(axis, int):
+    if type(axis) is not int:
         raise TypeError(f"Type of Argument `axis` should be integer but got {type(axis)}")
     axis = _canonicalize_axis(axis, x.ndim)
-    if isinstance(indices_or_sections, int):
-        res = _tensor_split_sub_int(x, indices_or_sections, axis)
-
+    if type(indices_or_sections) is int:
+        if indices_or_sections > 0:
+            res = _tensor_split_sub_int(x, indices_or_sections, axis)
+        else:
+            raise ValueError(f"For tensor_split, the value of 'indices_or_sections' must be more than zero "
+                             f"but got {indices_or_sections}")
     elif isinstance(indices_or_sections, (list, tuple)):
         for item in indices_or_sections:
             if not isinstance(item, int):

@@ -76,6 +76,7 @@
 "mindspore/mindspore/python/mindspore/ops/operations/_inner_ops.py"                                                      "not-callable"
 "mindspore/mindspore/python/mindspore/hypercomplex"                                                                      "useless-return"
 "mindspore/mindspore/python"                                                                                             "redefined-builtin"
+"mindspore/mindspore/python/mindspore/ops/function/array_func.py"                                                        "unidiomatic-typecheck"
 
 # MindData
 "mindspore/mindspore/python/mindspore/dataset/__init__.py"                                                               "redefined-builtin"
