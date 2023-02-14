@@ -226,25 +226,20 @@ int PadTensorRT::AddInnerOpOld(TensorRTContext *ctx) {
     // only support pad at HW index
     nvinfer1::DimsHW prePadding;
     nvinfer1::DimsHW postPadding;
-    if (SameDims(pad_input->getDimensions(), in_tensors_[0].Shape())) {
-      // NCHW: 0: N_pre, 1: N_post, 2: C_pre, 3: C_post, 4: H_pre, 5: H_post, 6: W_pre, 7: W_post
-      constexpr size_t n_pre = 0, n_post = 1, c_pre = 2, c_post = 3;
-      constexpr size_t h_pre = 4, h_post = 5, w_pre = 6, w_post = 7;
-      if (pad_vec[n_pre] != 0 || pad_vec[n_post] != 0 || pad_vec[c_pre] != 0 || pad_vec[c_post] != 0) {
-        MS_LOG(WARNING) << "tensorrt padding only support pad at HW index, unsupported padding value of: " << op_name_;
-      }
-      prePadding = nvinfer1::DimsHW{pad_vec[h_pre], pad_vec[w_pre]};
-      postPadding = nvinfer1::DimsHW{pad_vec[h_post], pad_vec[w_post]};
-    } else {
-      // NHWC: 0: N_pre, 1: N_post, 2: H_pre, 3: H_post, 4: W_pre, 5: W_post, 6: C_pre, 7: C_post
-      constexpr size_t n_pre = 0, n_post = 1, c_pre = 6, c_post = 7;
-      constexpr size_t h_pre = 2, h_post = 3, w_pre = 4, w_post = 5;
-      if (pad_vec[n_pre] != 0 || pad_vec[n_post] != 0 || pad_vec[c_pre] != 0 || pad_vec[c_post] != 0) {
-        MS_LOG(WARNING) << "tensorrt padding only support pad at HW index, unsupported padding value of: " << op_name_;
-      }
-      prePadding = nvinfer1::DimsHW{pad_vec[h_pre], pad_vec[w_pre]};
-      postPadding = nvinfer1::DimsHW{pad_vec[h_post], pad_vec[w_post]};
+    // NCHW: 0: N_pre, 1: N_post, 2: C_pre, 3: C_post, 4: H_pre, 5: H_post, 6: W_pre, 7: W_post
+    constexpr size_t n_pre = 0;
+    constexpr size_t n_post = 1;
+    constexpr size_t c_pre = 2;
+    constexpr size_t c_post = 3;
+    constexpr size_t h_pre = 4;
+    constexpr size_t h_post = 5;
+    constexpr size_t w_pre = 6;
+    constexpr size_t w_post = 7;
+    if (pad_vec[n_pre] != 0 || pad_vec[n_post] != 0 || pad_vec[c_pre] != 0 || pad_vec[c_post] != 0) {
+      MS_LOG(WARNING) << "tensorrt padding only support pad at HW index, unsupported padding value of: " << op_name_;
     }
+    prePadding = nvinfer1::DimsHW{pad_vec[h_pre], pad_vec[w_pre]};
+    postPadding = nvinfer1::DimsHW{pad_vec[h_post], pad_vec[w_post]};
     MS_LOG(DEBUG) << op_name_ << " prePadding: " << prePadding.d[0] << ", " << prePadding.d[1]
                   << "; postPadding: " << postPadding.d[0] << ", " << postPadding.d[1];
 

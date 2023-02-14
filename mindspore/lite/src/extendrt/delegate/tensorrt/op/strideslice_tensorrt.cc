@@ -272,7 +272,6 @@ int StrideSliceTensorRT::ComputeDimsSingle(TensorRTContext *ctx, ITensorHelper *
     return RET_OK;
   }
   int end_value = ConvertTensorAsIntVector(end)[0];
-  MS_LOG(ERROR) << end_value;
   size_dims_ = slice_input->trt_tensor_->getDimensions();
   for (int i = 0; i < start_dims_.nbDims; i++) {
     if (i == axis_value) {
