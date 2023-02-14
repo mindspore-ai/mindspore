@@ -1604,6 +1604,10 @@ class Cell(Cell_):
         for training and predicting, such as `BatchNorm`, will distinguish between the branches by this attribute. If
         set to true, the training branch will be executed, otherwise another branch.
 
+        Note:
+            When execute function Model.train(), framework will call Cell.set_train(True).
+            When execute function Model.eval(), framework will call Cell.set_train(False).
+
         Args:
             mode (bool): Specifies whether the model is training. Default: True.
 

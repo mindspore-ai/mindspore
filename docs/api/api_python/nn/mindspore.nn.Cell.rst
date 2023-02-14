@@ -512,6 +512,10 @@
 
         设置当前Cell和所有子Cell的训练模式。对于训练和预测具有不同结构的网络层(如 `BatchNorm`)，将通过这个属性区分分支。如果设置为True，则执行训练分支，否则执行另一个分支。
 
+        .. note::
+            当执行Model.train()的时候，框架会默认调用Cell.set_train(True)。
+            当执行Model.eval()的时候，框架会默认调用Cell.set_train(False)。
+
         参数：
             - **mode** (bool) - 指定模型是否为训练模式。默认值：True。
 

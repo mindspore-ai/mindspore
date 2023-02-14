@@ -3313,7 +3313,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
                             from being updated. Default: False.
 
     Inputs:
-        - **var** (Tensor) - Weights to be updated.
+        - **var** (Parameter) - Weights to be updated.
         - **mean_square** (Tensor) - Mean square gradients, must be the same type as `var`.
         - **moment** (Tensor) - Delta of `var`, must be the same type as `var`.
         - **learning_rate** (Union[Number, Tensor]) - Learning rate. Must be a float number or
@@ -3407,7 +3407,7 @@ class ApplyCenteredRMSProp(Primitive):
                             from being updated. Default: False.
 
     Inputs:
-        - **var** (Tensor) - Weights to be updated.
+        - **var** (Parameter) - Weights to be updated.
         - **mean_gradient** (Tensor) - Mean gradients, must be the same type as `var`.
         - **mean_square** (Tensor) - Mean square gradients, must be the same type as `var`.
         - **moment** (Tensor) - Delta of `var`, must be the same type as `var`.

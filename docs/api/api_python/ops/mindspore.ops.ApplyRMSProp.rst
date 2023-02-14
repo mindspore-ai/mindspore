@@ -28,7 +28,7 @@ mindspore.ops.ApplyRMSProp
         - **use_locking** (bool) - 是否对参数更新加锁保护。默认值: False。
 
     输入：
-        - **var** (Tensor) - 待更新的网络参数。
+        - **var** (Parameter) - 待更新的网络参数。
         - **mean_square** (Tensor) - 均方梯度，数据类型需与 `var` 相同。
         - **moment** (Tensor) - 一阶矩，数据类型需与 `var` 相同。
         - **learning_rate** (Union[Number, Tensor]) - 学习率。需为浮点数或者数据类型为float16或float32的标量矩阵。
