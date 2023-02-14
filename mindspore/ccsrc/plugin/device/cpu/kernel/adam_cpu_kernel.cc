@@ -112,13 +112,21 @@ void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &in
 
 bool AdamCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+
+  if (prim->HasAttr("use_locking")) {
+    use_locking_ = GetValue<bool>(prim->GetAttr("use_locking"));
+  }
+  if (prim->HasAttr("use_nesterov")) {
+    use_nesterov_ = GetValue<bool>(prim->GetAttr("use_nesterov"));
+  }
+
   dtype_ = inputs.at(kIndex0)->GetDtype();
-  kernel_name_ = base_operator->GetPrim()->name();
+  kernel_name_ = prim->name();
   batch_rank_ = base_operator->get_batch_rank();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamOutputsNum, kernel_name_);
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Adam>(base_operator);
-  use_nesterov_ = kernel_ptr_->get_use_nesterov();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
