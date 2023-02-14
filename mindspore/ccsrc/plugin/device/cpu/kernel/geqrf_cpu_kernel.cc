@@ -32,9 +32,6 @@ bool GeqrfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  std::vector<int64_t> input0_tensor_shape = inputs[0]->GetShapeVector();
-  num_m = static_cast<size_t>(input0_tensor_shape[0]);
-  num_n = static_cast<size_t>(input0_tensor_shape[1]);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -43,6 +40,18 @@ bool GeqrfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   }
   kernel_func_ = func_list_[index].second;
   return true;
+}
+
+int GeqrfCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs,
+                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  std::vector<int64_t> input0_tensor_shape = inputs[0]->GetShapeVector();
+  num_m = static_cast<size_t>(input0_tensor_shape[0]);
+  num_n = static_cast<size_t>(input0_tensor_shape[1]);
+  return KRET_OK;
 }
 
 template <typename T>
