@@ -338,8 +338,7 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
         auto abs_type = AnfAlgo::GetAbstractObjectType(input_node->abstract());
         input_obj_type->push_back(kernel::TypeIdToKernelObjectType(abs_type));
       } else {
-        auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(input_node);
-        input_obj_type->push_back(kernel_build_info->GetOutputKernelObjectType(kIndex0));
+        input_obj_type->push_back(AnfAlgo::GetOutputKernelObjectType(input_node, kIndex0));
       }
     }
   };

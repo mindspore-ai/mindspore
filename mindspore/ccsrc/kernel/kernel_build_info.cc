@@ -116,15 +116,18 @@ KernelObjectType KernelBuildInfo::GetOutputKernelObjectType(size_t output_index)
   if (outputs_kernel_object_type_.empty()) {
     return KernelObjectType::UNKNOWN_TYPE;
   }
+
+  // tuple unfold may correspond to many formats or dtypes
+  bool has_tuple_unfold =
+    std::any_of(outputs_kernel_object_type_.begin(), outputs_kernel_object_type_.end(),
+                [](const KernelObjectType &obj_type) { return obj_type == KernelObjectType::TUPLE_UNFOLD; });
+  if (has_tuple_unfold) {
+    return KernelObjectType::UNKNOWN_TYPE;
+  }
+
   if (output_index >= outputs_kernel_object_type_.size()) {
-    bool has_tuple_unfold =
-      std::any_of(outputs_kernel_object_type_.begin(), outputs_kernel_object_type_.end(),
-                  [](const KernelObjectType &obj_type) { return obj_type == KernelObjectType::TUPLE_UNFOLD; });
-    // tuple unfold may correspond to many formats or dtypes
-    if (!has_tuple_unfold) {
-      MS_LOG(ERROR) << "The output index [" << output_index
-                    << "] is exceed the number of output:" << outputs_kernel_object_type_.size();
-    }
+    MS_LOG(ERROR) << "The output index [" << output_index
+                  << "] is exceed the number of output:" << outputs_kernel_object_type_.size();
     return KernelObjectType::UNKNOWN_TYPE;
   }
   return outputs_kernel_object_type_[output_index];

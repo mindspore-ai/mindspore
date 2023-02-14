@@ -34,8 +34,9 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
 
   auto is_run = CheckRunningCondition(context);
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op data and check running condition:" << is_run
-                << ", sequential num:" << sequential_num
-                << ", the input data origin ref count:" << input_data->data_->original_ref_count()
+                << ", sequential num:" << sequential_num << ", the input data:" << input_data->data_
+                << ", size:" << input_data->data_->GetSize()
+                << ", origin ref count:" << input_data->data_->original_ref_count()
                 << ", current ref count:" << input_data->data_->ref_count()
                 << ", dynamic ref count:" << input_data->data_->dynamic_ref_count()
                 << ", flag:" << input_data->data_->flag();

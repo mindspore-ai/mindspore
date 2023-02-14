@@ -1692,7 +1692,7 @@ std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
       auto &cur_input_attr = cur_kernel_attr.GetInputAttr(i);
       if ((input_attr.dtype != cur_input_attr.dtype) ||
           (!AnfAlgo::IsEquivalentFormat(input_attr.format, cur_input_attr.format)) ||
-          (input_attr.object_type != cur_input_attr.object_type)) {
+          (input_attr.object_type != cur_input_attr.object_type && input_attr.object_type != kTypeUnknown)) {
         mis_match = true;
         break;
       }
@@ -1709,7 +1709,7 @@ std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
       auto &cur_output_attr = cur_kernel_attr.GetOutputAttr(i);
       if ((output_attr.dtype != cur_output_attr.dtype) ||
           (!AnfAlgo::IsEquivalentFormat(output_attr.format, cur_output_attr.format)) ||
-          (output_attr.object_type != cur_output_attr.object_type)) {
+          (output_attr.object_type != cur_output_attr.object_type && output_attr.object_type != kTypeUnknown)) {
         mis_match = true;
         break;
       }
