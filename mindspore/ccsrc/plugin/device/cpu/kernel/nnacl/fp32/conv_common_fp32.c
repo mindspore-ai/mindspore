@@ -77,36 +77,36 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
   if (conv_param->thread_num_ == 0) {
     return;
   }
-  int output_hw = conv_param->output_h_ * conv_param->output_w_;
   Row2ColMajorFuncPtr Row2ColMajor = NULL;
+  int output_hw = conv_param->output_h_ * conv_param->output_w_;
 #ifdef ENABLE_AVX
-  const int cal_num = C6NUM;
   Row2ColMajor = RowMajor2Col6Major;
+  const int cal_num = C6NUM;
 #elif defined(ENABLE_SSE)
-  const int cal_num = C4NUM;
   Row2ColMajor = RowMajor2Col4Major;
+  const int cal_num = C4NUM;
 #elif defined(ENABLE_ARM64)
-  int cal_num = 0;
   MatmulFloatOptFuncPtr MatmulFloatOpt = NULL;
+  int cal_num = 0;
   if (output_hw <= C4NUM) {
-    cal_num = C4NUM;
     Row2ColMajor = RowMajor2Col4Major;
     MatmulFloatOpt = MatmulFloatNeon64OptRow4;
+    cal_num = C4NUM;
   } else if (output_hw <= C8NUM) {
-    cal_num = C8NUM;
     Row2ColMajor = RowMajor2Col8Major;
     MatmulFloatOpt = MatmulFloatNeon64OptRow8;
+    cal_num = C8NUM;
   } else {
-    cal_num = C12NUM;
     Row2ColMajor = RowMajor2Col12Major;
     MatmulFloatOpt = MatmulFloatNeon64OptRow12;
+    cal_num = C12NUM;
   }
 #elif defined(ENABLE_ARM32)
-  const int cal_num = C12NUM;
   Row2ColMajor = RowMajor2Col12Major;
+  const int cal_num = C12NUM;
 #else
-  const int cal_num = C12NUM;
   Row2ColMajor = RowMajor2Col12Major;
+  const int cal_num = C12NUM;
 #endif
 
   int block_per_thread = UP_DIV(UP_DIV(output_hw, cal_num), conv_param->thread_num_);

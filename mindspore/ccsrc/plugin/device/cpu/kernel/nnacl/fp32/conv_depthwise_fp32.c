@@ -60,7 +60,7 @@ int ConvDw(float *output_data, const float *input_data, const float *weight_data
         int ih = ih_origin + conv_param->dilation_h_ * kh;
 
         const float *src_kh = src + ih * conv_param->input_w_ * conv_param->input_channel_;
-        const float *weight_kh = weight_data + kh * conv_param->kernel_w_ * conv_param->output_channel_;
+        const float *dw_weight_kh = weight_data + kh * conv_param->kernel_w_ * conv_param->output_channel_;
 
         int in_sw_step = conv_param->stride_w_ * conv_param->input_channel_;
         for (int kw = 0; kw < conv_param->kernel_w_; kw++) {
@@ -76,8 +76,8 @@ int ConvDw(float *output_data, const float *input_data, const float *weight_data
           const float *src_kw = src_kh + iw_origin * conv_param->input_channel_;
           int num_pixels = out_w_end - out_w_start;
 
-          ConvDwFp32Row(dst_w, src_kw, weight_kh, num_pixels, conv_param->output_channel_, in_sw_step);
-          weight_kh += conv_param->output_channel_;
+          ConvDwFp32Row(dst_w, src_kw, dw_weight_kh, num_pixels, conv_param->output_channel_, in_sw_step);
+          dw_weight_kh += conv_param->output_channel_;
         }
       }
       if (relu) {
@@ -160,8 +160,7 @@ int ConvDwAVX512(float *output_data, const float *input_data, const float *weigh
       }
       if (relu) {
         Fp32Relu(dst_data, conv_param->output_w_ * conv_param->output_channel_, dst_data);
-      }
-      if (relu6) {
+      } else if (relu6) {
         Fp32Relu6(dst_data, conv_param->output_w_ * conv_param->output_channel_, dst_data);
       }
     }

@@ -1481,12 +1481,12 @@ void Conv1x1SWAVXFp32(const float *input_data, const float *packed_weight, const
   if (ohw_start >= ohw_end) {
     return;
   }
-  int oc_tile_ = C8NUM;  // oc in algin to C8NUM in x86_64_avx
   int act_type = C0NUM;
+  int oc_tile_ = C8NUM;  // oc in algin to C8NUM in x86_64_avx
   if (conv_param->act_type_ == ActType_Relu6) {
     act_type += C1NUM;
   }
-  if (conv_param->act_type_ == ActType_Relu || conv_param->act_type_ == ActType_Relu6) {
+  if (conv_param->act_type_ == ActType_Relu6 || conv_param->act_type_ == ActType_Relu) {
     act_type += C2NUM;
   }
   int pad_d = conv_param->pad_d_;
