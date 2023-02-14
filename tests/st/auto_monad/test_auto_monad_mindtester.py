@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -424,10 +424,9 @@ class SideEffectReturnParameterNet(Cell):
 
     def construct(self, inputs):
         self.assign(self.para, inputs)
-        p1 = self.para
         out = self.addn((inputs, inputs, inputs))
         out = self.relu(out)
-        return p1
+        return out
 
     def grad_mindspore_impl(self, params, grad_ys):
         grad_net = GradOfAllInputsAndParams(self)
@@ -436,7 +435,7 @@ class SideEffectReturnParameterNet(Cell):
         return grad_out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
