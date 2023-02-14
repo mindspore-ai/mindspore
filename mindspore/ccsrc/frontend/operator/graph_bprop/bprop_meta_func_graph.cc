@@ -15,6 +15,7 @@
  */
 
 #include "frontend/operator/graph_bprop/bprop_meta_func_graph.h"
+#include "frontend/operator/graph_bprop/bprop_expander_meta_func_graph.h"
 
 namespace mindspore {
 namespace graph_bprop {
@@ -29,6 +30,7 @@ void RegBpropMetaFuncGraph() {
   RegArrayOps();
   RegMathOps();
   RegNNOps();
+  RegBpropExpanderOps();
 }
 }  // namespace graph_bprop
 }  // namespace mindspore
