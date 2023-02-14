@@ -38,6 +38,8 @@ class SparseSegmentSumCPUKernel : public LiteKernel {
   int Prepare() override;
   int ReSize() override { return RET_OK; }
   int Run() override;
+  int RunInferOutDataShape();
+  int RunSparseSegmentSumCalc();
   // virtual int DoExcute(int task_id);
 
  protected:
