@@ -38,13 +38,13 @@ void CheckSyncBatchNormInputNum(const PrimitivePtr &prim, const std::vector<Abst
     return;
   }
 
-  // the inputs has U
+  // the inputs has not U
   if (!input_args.back()->isa<abstract::AbstractMonad>()) {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kSyncBatchNormInputNum, prim_name);
     return;
   }
 
-  // the inputs has not U
+  // the inputs has U
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size() - 1), kEqual,
                                            kSyncBatchNormInputNum, prim_name);
   for (size_t index = 0; index < input_args.size(); index++) {
