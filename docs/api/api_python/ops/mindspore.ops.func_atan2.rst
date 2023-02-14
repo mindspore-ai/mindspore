@@ -9,12 +9,12 @@ mindspore.ops.atan2
     输入 `input` 和 `other` 会通过隐式数据类型转换使数据类型保持一致。如果数据类型不同，低精度的数据类型会被转换到高精度的数据类型。
 
     参数：
-        - **input** (Tensor) - 输入Tensor，shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。
-        - **other** (Tensor) - 输入Tensor，shape应能在广播后与 `input` 相同，或 `input` 的shape在广播后与 `other` 相同。
+        - **input** (Tensor, Number.number) - 输入Tensor或常数，shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。
+        - **other** (Tensor, Number.number) - 输入Tensor或常数，shape应能在广播后与 `input` 相同，或 `input` 的shape在广播后与 `other` 相同。
 
     返回：
-        Tensor，与广播后的输入shape相同，和 `input` 数据类型相同。
+        Tensor或常数，与广播后的输入shape相同，和 `input` 数据类型相同。
 
     异常：
-        - **TypeError** - `input` 或 `other` 不是Tensor。
+        - **TypeError** - `input` 或 `other` 不是Tensor或常数。
         - **RuntimeError** - `input` 与 `other` 之间的数据类型转换不被支持。

@@ -1444,11 +1444,13 @@ class Tensor(Tensor_):
             axis = ()
         return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
 
-    def amin(self, axis=(), keep_dims=False):
+    def amin(self, axis=None, keep_dims=False):
         """
         For details, please refer to :func:`mindspore.ops.amin`.
         """
         self._init_check()
+        if axis is None:
+            axis = ()
         return tensor_operator_registry.get('amin')(self, axis, keep_dims)
 
     def reverse(self, axis):
@@ -1458,11 +1460,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('reverse')(axis)(self)
 
-    def amax(self, axis=(), keep_dims=False):
+    def amax(self, axis=None, keep_dims=False):
         """
         For details, please refer to :func:`mindspore.ops.amax`.
         """
         self._init_check()
+        if axis is None:
+            axis = ()
         return tensor_operator_registry.get('amax')(self, axis, keep_dims)
 
     def reverse_sequence(self, seq_lengths, seq_dim=0, batch_dim=0):

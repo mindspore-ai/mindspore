@@ -2551,20 +2551,20 @@ def atan2(input, other):
     such that :math:`input = r*\sin(\theta), other = r*\cos(\theta)`, where :math:`r = \sqrt{input^2 + other^2}`.
 
     Args of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower precision data type will be converted to
-    the relatively highest precision data type.
+    If they have different data types, the lower precision data type will be converted to relatively the
+    highest precision data type.
 
     Args:
-        input (Tensor): The input tensor.
+        input (Tensor, Number.number): The input tensor or scalar.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
             The data type should be one of the following types: float16, float32, float64
-        other (Tensor): The input tensor. It has the same shape with `input`.
+        other (Tensor, Number.number): The input tensor or scalar. It has the same shape with `input`.
 
     Returns:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is same as `input`.
+        Tensor or scalar, the shape is the same as the one after broadcasting,and the data type is same as `input`.
 
     Raises:
-        TypeError: If `input` or `other` is not a Tensor.
+        TypeError: If `input` or `other` is not a Tensor or scalar.
         RuntimeError: If the data type of `input` and `other` conversion of Parameter is required
                       when data type conversion of Parameter is not supported.
 
@@ -6762,24 +6762,24 @@ def logsumexp(x, axis, keep_dims=False):
     return x_logsumexp + x_max
 
 
-def amin(x, axis=(), keep_dims=False):
+def amin(input, axis=None, keep_dims=False):
     r"""
-    Reduces all dimensions of a tensor by returning the minimum value in `x`, by default. And also can
-    reduce a dimension of `x` along specified `axis`.  `keep_dims` determines whether the dimensions of
+    Reduces all dimensions of a tensor by returning the minimum value in `input`, by default. And also can
+    reduce a dimension of `input` along specified `axis`. `keep_dims` determines whether the dimensions of
     output and input are the same.
 
     Args:
-        x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r)..
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: False.
+        input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
+            Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r)..
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep
+            these dimensions. Default: False.
 
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is (), and `keep_dims` is False,
+        - If `axis` is None, and `keep_dims` is False,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
         - If `axis` is int, set as 1, and `keep_dims` is False,
           the shape of output is :math:`(x_0, x_2, ..., x_R)`.
@@ -6787,7 +6787,7 @@ def amin(x, axis=(), keep_dims=False):
           the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
         TypeError: If `keep_dims` is not a bool.
         ValueError: If `axis` is out of range.
@@ -6835,35 +6835,36 @@ def amin(x, axis=(), keep_dims=False):
           [8.]
           [9.]]]
     """
-    return _get_cache_prim(P.ReduceMin)(keep_dims)(x, axis)
+    if axis is None:
+        axis = ()
+    return _get_cache_prim(P.ReduceMin)(keep_dims)(input, axis)
 
 
-def amax(x, axis=(), keep_dims=False):
+def amax(input, axis=None, keep_dims=False):
     r"""
-    Reduces all dimensions of a tensor by returning the maximum value in `x`, by default. And also can
-    reduce a dimension of `x` along specified `axis`.  `keep_dims` determines whether the dimensions of
+    Reduces all dimensions of a tensor by returning the maximum value in `input`, by default. And also can
+    reduce a dimension of `input` along specified `axis`.  `keep_dims` determines whether the dimensions of
     output and input are the same.
 
     Args:
-        x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: False.
+        input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
+            Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep these
+            dimensions. Default: False.
 
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is (), and `keep_dims` is False,
-          the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If `axis` is int, set as 1, and `keep_dims` is False,
-          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
-          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+        - If `axis` is None, and `keep_dims` is False, the output is a 0-D tensor representing the product of all
+            elements in the input tensor.
+        - If `axis` is int, set as 1, and `keep_dims` is False, the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False, the shape of output is
+            :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
         TypeError: If `keep_dims` is not a bool.
         ValueError: If `axis` is out of range.
@@ -6911,7 +6912,9 @@ def amax(x, axis=(), keep_dims=False):
           [8.]
           [9.]]]
     """
-    return _get_cache_prim(P.ReduceMax)(keep_dims)(x, axis)
+    if axis is None:
+        axis = ()
+    return _get_cache_prim(P.ReduceMax)(keep_dims)(input, axis)
 
 
 def mean(x, axis=(), keep_dims=False):
