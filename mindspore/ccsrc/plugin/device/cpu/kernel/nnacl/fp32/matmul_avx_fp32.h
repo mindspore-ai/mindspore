@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_NNACL_FP32_MATMUL_AVX_H_
 #define MINDSPORE_NNACL_FP32_MATMUL_AVX_H_
 
-#include <float.h>
 #include "nnacl/op_base.h"
 
 #ifdef __cplusplus
