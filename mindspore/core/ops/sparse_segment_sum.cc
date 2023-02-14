@@ -49,13 +49,13 @@ abstract::ShapePtr SparseSegmentSumInferShape(const PrimitivePtr &prim,
     MS_EXCEPTION_IF_NULL(segment_ids_value_ptr);
     auto segment_ids_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("segment_ids", segment_ids_value_ptr, prim->name());
-    size_t dim_zero = LongToSize(segment_ids_value_ptr_tensor.back()) + kInputIndex1;
-    if (dim_zero < kInputIndex1) {
+    int64_t dim_zero = segment_ids_value_ptr_tensor.back() + kInputIndex1;
+    if (dim_zero < SizeToLong(kInputIndex1)) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', segment_ids must be greater or equal to 0, "
                                << "but got [" << dim_zero << "].";
     } else {
       ShapeVector y_shape = x_shape;
-      y_shape[kInputIndex0] = SizeToLong(dim_zero);
+      y_shape[kInputIndex0] = dim_zero;
       return std::make_shared<abstract::Shape>(y_shape);
     }
   } else {
