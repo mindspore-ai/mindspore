@@ -499,6 +499,7 @@ def test_grad_call_self_net():
     Expectation: Raise an error.
     """
     context.set_context(mode=context.GRAPH_MODE)
+
     @jit_class
     class Net:
         def __init__(self):
@@ -529,7 +530,7 @@ def test_grad_call_self_net():
     try:
         GradNetWrtX(Net())(x)
     except Exception as e:
-        assert "For 'GradOperation', the first argument must be a 'Function' or 'Cell' type object, "\
+        assert "For 'GradOperation', the first argument must be a 'Function' or 'Cell' type object, " \
                "but got object with jit_class type 'Net'." in str(e)
 
 
@@ -749,6 +750,7 @@ def test_custom_cell_bprop_with_parameter_in_sub_cell():
     """
 
     context.set_context(mode=context.GRAPH_MODE)
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -879,3 +881,29 @@ def test_pynative_custom_cell_bprop_with_parameter_in_sub_cell():
         GradNet(Net())(x, y)
     except Exception as e:
         assert "The user defined 'bprop' function does not support using Parameter" in str(e)
+
+
+def test_multiple_second_grad_with_same_forward():
+    """
+    Feature: Second order gradient.
+    Description: Get multiple second order gradients with the same forward.
+    Expectation: Compile successfully
+    """
+
+    @jit
+    def f(x):
+        return ops.relu(x)
+
+    @jit
+    def ff(x):
+        return ops.grad(f)(x)
+
+    @jit
+    def fff(x, y):
+        out1 = ops.grad(ff)(x)
+        out2 = ops.grad(ff)(y)
+        return out1, out2
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.5, 0.6, 0.3], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    fff(x, y)
