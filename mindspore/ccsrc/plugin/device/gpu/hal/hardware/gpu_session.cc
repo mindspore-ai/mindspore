@@ -110,7 +110,7 @@ void GPUSession::Init(uint32_t device_id) {
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+  ms_context->set_param_inner<uint32_t>(MS_CTX_DEVICE_ID, device_id);
   if (distributed::collective::CollectiveManager::instance()->initialized()) {
 #ifndef _WIN32
     rank_id_ = GetRankId();
