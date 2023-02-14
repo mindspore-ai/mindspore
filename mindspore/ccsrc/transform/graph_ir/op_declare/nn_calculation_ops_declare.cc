@@ -197,4 +197,30 @@ ATTR_MAP(DepthwiseConv2DBackpropFilterD) = {
 OUTPUT_MAP(DepthwiseConv2DBackpropFilterD) = {{0, OUTPUT_DESC(filter_grad)}};
 REG_ADPT_DESC(DepthwiseConv2DBackpropFilterD, prim::kPrimDepthwiseConv2dNativeBackpropFilter->name(),
               ADPT_DESC(DepthwiseConv2DBackpropFilterD))
+
+// DeformableOffsets
+INPUT_MAP(DeformableOffsets) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(offsets)}};
+ATTR_MAP(DeformableOffsets) = {
+  {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"ksize", ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"dilations", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"deformable_groups", ATTR_DESC(deformable_groups, AnyTraits<int64_t>())},
+  {"modulated", ATTR_DESC(modulated, AnyTraits<bool>())}};
+OUTPUT_MAP(DeformableOffsets) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DeformableOffsets, kDeformableOffsetsOpName, ADPT_DESC(DeformableOffsets))
+
+// DeformableOffsetsGrad
+INPUT_MAP(DeformableOffsetsGrad) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(offsets)}};
+ATTR_MAP(DeformableOffsetsGrad) = {
+  {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"ksize", ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"dilations", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"deformable_groups", ATTR_DESC(deformable_groups, AnyTraits<int64_t>())},
+  {"modulated", ATTR_DESC(modulated, AnyTraits<bool>())}};
+OUTPUT_MAP(DeformableOffsetsGrad) = {{0, OUTPUT_DESC(grad_x)}, {1, OUTPUT_DESC(grad_offsets)}};
+REG_ADPT_DESC(DeformableOffsetsGrad, prim::kPrimDeformableOffsetsGrad->name(), ADPT_DESC(DeformableOffsetsGrad))
 }  // namespace mindspore::transform
