@@ -19,6 +19,7 @@
 #include <map>
 namespace mindspore {
 namespace kernel {
+constexpr size_t MAX_DIMS = 7;
 namespace {
 template <typename T>
 std::unique_ptr<cukernel::GpuKernelHelperBase> CreateIsCloseKernelPtr(const std::string &kernel_name,
@@ -74,6 +75,12 @@ bool IsCloseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   helper_ptr_ = kernel_attr[index].second(kernel_name_, device_id_);
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
+
+  size_t first_rank = inputs[kIndex0]->GetShapeVector().size();
+  size_t second_rank = inputs[kIndex1]->GetShapeVector().size();
+  if (first_rank > MAX_DIMS || second_rank > MAX_DIMS) {
+    MS_EXCEPTION(ValueError) << "IsClose support up to 7d, but got " << first_rank << "d and " << second_rank << "d.";
+  }
 
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;

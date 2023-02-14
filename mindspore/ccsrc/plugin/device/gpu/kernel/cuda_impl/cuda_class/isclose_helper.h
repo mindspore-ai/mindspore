@@ -70,6 +70,9 @@ class IsCloseHelperGpuKernel : public GpuKernelHelperBase {
     auto inputx_shape = input_shapes[0];
     auto inputy_shape = input_shapes[1];
     auto output_shape = output_shapes[0];
+    if (is_null_input_) {
+      return 0;
+    }
 
     for (size_t i = 0; i < inputx_shape.size(); i++) {
       if (inputx_shape[i] != inputy_shape[i]) {
