@@ -52,6 +52,7 @@ DUMPER_REG(kAscendDevice, KernelDumper);
 std::mutex KernelDumper::debug_register_mutex_;
 std::map<rtStream_t, std::unique_ptr<OpDebugTask>> KernelDumper::op_debug_tasks;
 std::map<uint32_t, bool> KernelDumper::is_data_map;
+std::map<std::string, std::string> KernelDumper::stream_task_graphs;
 
 OpDebugTask::~OpDebugTask() {
   if (op_debug_addr != nullptr) {
@@ -107,6 +108,8 @@ void KernelDumper::OpLoadDumpInfo(const CNodePtr &kernel) {
   ExecutorDumpOp(dump_info, stream);
   // graph id may changed in Unload
   graph_id_ = AnfAlgo::GetGraphId(kernel.get());
+  std::string stream_task_id = std::to_string(stream_id_) + std::to_string(task_id_);
+  KernelDumper::stream_task_graphs.emplace(stream_task_id, kernel->fullname_with_scope());
   MS_LOG(INFO) << "[DataDump] Get runtime info graph_id:" << graph_id_ << " stream_id:" << stream_id_
                << " task_id:" << task_id_ << " fullname:" << kernel->fullname_with_scope();
 }
@@ -443,6 +446,7 @@ void KernelDumper::OpDebugUnregisterForStream() {
     }
   }
   KernelDumper::op_debug_tasks.clear();
+  KernelDumper::stream_task_graphs.clear();
   OverflowDumper::Clear();
 }
 #endif

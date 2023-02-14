@@ -71,6 +71,7 @@ class KernelDumper : public debug::OverflowDumper {
 #endif
   static std::map<rtStream_t, std::unique_ptr<OpDebugTask>> op_debug_tasks;
   static std::map<uint32_t, bool> is_data_map;
+  static std::map<std::string, std::string> stream_task_graphs;
 
   string dump_path_;
   string net_name_;

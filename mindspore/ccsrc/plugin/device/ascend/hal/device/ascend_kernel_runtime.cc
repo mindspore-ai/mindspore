@@ -666,6 +666,15 @@ void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
   constexpr uint32_t kOverflowThreshold = 5;
   std::lock_guard<std::mutex> lock(exception_mutex);
   if (task_fail_info->retcode == ACL_ERROR_RT_AICORE_OVER_FLOW) {
+    std::string stream_task_id = std::to_string(task_fail_info->streamid) + std::to_string(task_fail_info->taskid);
+    if (KernelDumper::stream_task_graphs.size() > 0 &&
+        KernelDumper::stream_task_graphs.find(stream_task_id) != KernelDumper::stream_task_graphs.end()) {
+      std::string kernel_name = KernelDumper::stream_task_graphs.find(stream_task_id)->second;
+      MS_LOG(WARNING) << "Graph in kernelByKernel mode task overflow, node name: " << kernel_name
+                      << "Task overflow infos task_id: " << task_fail_info->taskid
+                      << ", stream_id: " << task_fail_info->streamid;
+      return;
+    }
     auto node = AscendKernelRuntime::GetErrorNodeName(task_fail_info->streamid, task_fail_info->taskid);
     if (!node) {
       MS_LOG(WARNING) << "Node run task overflow, node name is unknown.";
