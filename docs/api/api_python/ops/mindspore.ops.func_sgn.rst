@@ -3,7 +3,9 @@ mindspore.ops.sgn
 
 .. py:function:: mindspore.ops.sgn(x)
 
-    此方法为 :func:`mindspore.ops.sign` 在复数Tensor上的扩展。
+    :func:`mindspore.ops.sign` 在复数上的扩展。
+    对于实数输入，此方法与 :func:`mindspore.ops.sign` 一致。
+    对于复数输入，此方法按照如下公式计算。
 
     .. math::
         \text{out}_{i} = \begin{cases}

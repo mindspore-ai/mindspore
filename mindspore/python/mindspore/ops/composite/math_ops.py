@@ -659,12 +659,13 @@ def mm(mat1, mat2):
     :math:`(m \times p)` Tensor, `out` will be a :math:`(n \times p)` Tensor.
 
     Note:
-        This function does not broadcast. For broadcasting matrix products, see :func:`mindspore.ops.matmul`.
+        This function cannot support broadcasting.
+        Refer to :func:`mindspore.ops.matmul` instead if you need a broadcastable function.
 
     Args:
-        mat1 (Tensor): The first matrix to be matrix multiplied.
+        mat1 (Tensor): The first matrix of matrix multiplication.
           The last dimension of `mat1` must be the same size as the first dimension of `mat2`.
-        mat2 (Tensor): The second matrix to be matrix multiplied.
+        mat2 (Tensor): The second matrix of matrix multiplication.
           The last dimension of `mat1` must be the same size as the first dimension of `mat2`.
 
     Returns:

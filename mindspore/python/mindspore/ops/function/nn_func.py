@@ -5708,7 +5708,7 @@ def mse_loss(input_x, target, reduction='mean'):
 
 def msort(x):
     r"""
-    Sorts the elements of the input tensor along its first dimension in ascending order by value.
+    Sorts the elements in Tensor in ascending order of value along its first dimension.
 
     ops.msort(t) is equivalent to ops.Sort(axis=0)(t)[0]. See also :class:`mindspore.ops.Sort()`.
 

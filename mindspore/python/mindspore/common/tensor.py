@@ -3873,8 +3873,8 @@ class Tensor(Tensor_):
     @property
     def mT(self):
         r"""
-        Returns a view of this tensor with the last two dimensions transposed.
-        x.mT is equivalent to x.swapaxes(-2, -1).
+        Returns the Tensor that exchanges the last two dimensions.
+        Accessing the attribute, x.mT, is equal to calling the method, x.swapaxes(-2, -1).
         For details, please refer to :func:`mindspore.Tensor.swapaxes`.
         """
         return self.swapaxes(-2, -1)
