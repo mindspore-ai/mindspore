@@ -407,6 +407,7 @@ Spectral Functions
     mindspore.ops.hamming_window
     mindspore.ops.hann_window
     mindspore.ops.kaiser_window
+    mindspore.ops.stft
 
 Tensor Operation Functions
 --------------------------

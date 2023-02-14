@@ -407,6 +407,7 @@ Reduction函数
     mindspore.ops.hamming_window
     mindspore.ops.hann_window
     mindspore.ops.kaiser_window
+    mindspore.ops.stft
 
 Tensor操作函数
 ----------------

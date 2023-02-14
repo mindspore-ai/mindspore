@@ -7627,45 +7627,69 @@ def kaiser_window(window_length, periodic=True, beta=12.0):
 def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
          pad_mode="REFLECT", normalized=False, onesided=None, return_complex=None):
     r"""
-    STFTs can be used as a way of quantifying the change
-    of a nonstationary signal’s frequency and phase content over time.
-    Ignoring the optional batch dimension, this method computes the following expression:
-    math:`X[\omega, m]=\sum_{k=0}^{\text {win_length-1 }}
-    \text { window }[k] \text { input }[m \times \text { hop_length }+
-    k] \exp \left(-j \frac{2 \pi \cdot \omega k}{\text { win_length }}\right)`
-    where m is the index of the sliding window, and
-    math:`\omegaω` is the frequency math:`0 \leq \omega < \text{n\_fft}0≤ω<n_fft`
+    STFT segments the signal into narrow time intervals and takes the Fourier transform
+    of each segment to quantify the change of a nonstationary signal’s frequency
+    and phase content over time.
+
+    Ignoring the optional batch dimension, this operation computes the following expression:
+
+    .. math::
+
+        X[\omega, m]=\sum_{k=0}^{\text {win_length-1 }}
+        \text { window }[k] \text { input }[m \times \text { hop_length }+
+        k] \exp \left(-j \frac{2 \pi \cdot \omega k}{\text { win_length }}\right)
+
+    where :math:`m` is the index of the sliding window, and
+    :math:`ω` is the frequency in range :math:`0 \leq \omega < \text{n\_fft}0≤ω<n_fft`.
+
     Args:
-        x (Tensor): Time sequence of stft, must be either a 1-D time tensor or a 2-D tensor.
+        x (Tensor): Time sequences of stft, must be either a 1-D time tensor or a 2-D tensor.
         n_fft (int): The size of Fourier transform.
         hop_length (int, optional): The distance between neighboring sliding window
-            frames. Default: ``None`` (treated as equal to ``floor(n_fft / 4)``).
-        win_length (int, optional): the size of window frame and STFT filter.
-            Default: ``None``  (treated as equal to :attr:`n_fft`).
-        window (Tensor, optional): the optional window function.
-            Default: ``None`` (treated as window of all :math:`1` s).
-        center (bool, optional): whether to pad :attr:`input` on both sides.
-            Default: ``True``.
-        pad_mode (string, optional): controls the padding method used when
-            :attr:`center` is ``True``. Default: ``"REFLECT"``.
+            frames. Default: None(treated as equal to :math:`floor(n_fft / 4)`).
+        hop_length (int, optional): the size of window frame and STFT filter.
+            Default: None(treated as equal to `n_fft`).
+        window (Tensor, optional): the optional window function, 1-D tensor of size `win_length`.
+            Default: None(treated as window of all :math:`1` s). If `win_length` < `n_fft`,
+            `window` will be padded on both sides with ones to length `n_fft` before it takes effect.
+        center (bool, optional): whether to pad `x` on both sides. Default: True.
+        pad_mode (str, optional): controls the padding method used when
+            `center` is True. Default: 'REFLECT'.
         normalized (bool, optional): controls whether to return the normalized STFT results
-             Default: ``False``.
+             Default: False.
         onesided (bool, optional): controls whether to return half of results to
             avoid redundancy for real inputs.
-            Default: ``True`` for real :attr:`input` and :attr:`window`, ``False`` otherwise.
+            Default: None. True for real `x` and `window`, False otherwise.
         return_complex (bool, optional): whether to return a complex tensor, or
             a real tensor with an extra last dimension for the real and
             imaginary components.
-            Default: ``True`` for complex :attr:`input` or :attr:`window`, ``False`` otherwise.
+            Default: None. True for complex `x` or `window`, False otherwise.
 
     Returns:
-        Tensor.
+        - **output** (Tensor) - A tensor containing the STFT result.
+            If `return_complex` is True, it returns a complex Tensor with shape :math:`(*, N, T)`.
+            If `return_complex` is False, it returns a real Tensor with shape :math:`(*, N, T, 2)`.
 
-        - **output** (Tensor) - A tensor containing the STFT result with shape described above.
+            `N` is size of Fourier transform, it depends on parameter `onesided`:
+            - If `onesided` is False, :math:`N = n_fft`.
+            - If `onesided` is True, :math:`N = n_fft // 2 + 1`.
+
+            `T` is the total number of frames used, calculated by this formula:
+            :math:`T = 1 + (len - n_fft) / hop_length`, where `len` depends on parameter `center`:
+            - If `center` is False, :math:`len = signal_length`.
+            - If `center` is True, :math:`len = signal_length + (n_fft // 2) * 2`.
+            where :math:`signal_length` is the signal length, it equals to :math:`x.shape[-1]`.
 
     Raises:
-        TypeError: If the x is not a tensor.
-        ValueError: If x arguments have values not specified above.
+        TypeError: If `x` is not a 1-D or 2-D tensor.
+        TypeError: If `window` is not a 1-D tensor.
+        TypeError: If any one of `center` , `normalized` , `onesided`
+            and `return_complex` is assigned a nonboolean value.
+        TypeError: If `pad_mode` is is assigned a value that is not string.
+        TypeError: If `n_fft` , `hop_length` or `hop_length` is not an int.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
