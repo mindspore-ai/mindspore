@@ -115,6 +115,7 @@ from .crop_and_resize import _crop_and_resize_aicpu
 from .acosh import _acosh_aicpu
 from .acosh_grad import _acosh_grad_aicpu
 from .rnnt_loss import _rnnt_loss_aicpu
+from .greater import _greater_aicpu
 from .random_categorical import _random_categorical_aicpu
 from .tanh_grad import _tanh_grad_aicpu
 from .cast import _cast_aicpu
@@ -147,6 +148,7 @@ from .sparse_fill_empty_rows_grad import _sparse_fill_empty_rows_grad_aicpu
 from .sparse_reshape import _sparse_reshape_aicpu
 from .sparse_segment_sqrt_n_grad import _sparse_segment_sqrt_n_grad_aicpu
 from .sparse_segment_mean_with_num_segments import _sparse_segment_mean_with_num_segments_aicpu
+from .sparse_segment_sum import _sparse_segment_sum_aicpu
 from .sparse_segment_sum_with_num_segments import _sparse_segment_sum_with_num_segments_aicpu
 from .sparse_softmax_cross_entropy_with_logits_v2 import _sparse_softmax_cross_entropy_with_logits_v2_aicpu
 from .sparsesparsemaximum import _sparsesparsemaximum_aicpu

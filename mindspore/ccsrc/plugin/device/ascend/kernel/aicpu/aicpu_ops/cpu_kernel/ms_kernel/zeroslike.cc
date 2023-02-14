@@ -71,10 +71,6 @@ uint32_t ZerosLikeCpuKernel::ZerosLikeCheck(const CpuKernelContext &ctx) const {
   KERNEL_CHECK_NULLPTR(input->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
   KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
   KERNEL_CHECK_NULLPTR(input->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
-  std::vector<int64_t> shape_x = input->GetTensorShape()->GetDimSizes();
-  size_t shape_size = shape_x.size();
-  KERNEL_CHECK_FALSE((shape_size > 0), KERNEL_STATUS_PARAM_INVALID, "Input must be at least rank 1, got [%zu].",
-                     shape_x.size())
   return KERNEL_STATUS_OK;
 }
 

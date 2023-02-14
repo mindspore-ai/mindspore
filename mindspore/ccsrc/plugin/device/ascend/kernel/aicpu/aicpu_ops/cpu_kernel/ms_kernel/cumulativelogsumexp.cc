@@ -62,8 +62,12 @@ uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCheck(CpuKernelContext
                      KERNEL_STATUS_PARAM_INVALID, "Data type of axis is not support, axis data type is [%u].",
                      ctx.Input(1)->GetDataType())
   KERNEL_CHECK_FALSE(ctx.Input(1)->NumElements() == 1, KERNEL_STATUS_PARAM_INVALID, "axis is out of shape");
-  auto axis_data = static_cast<int32_t *>(ctx.Input(1)->GetData());
-  int64_t axis = *axis_data;
+  int64_t axis;
+  if (ctx.Input(1)->GetDataType() == DT_INT16) {
+    axis = static_cast<int64_t>(*reinterpret_cast<int16_t *>(ctx.Input(1)->GetData()));
+  } else {
+    axis = static_cast<int64_t>(*reinterpret_cast<int32_t *>(ctx.Input(1)->GetData()));
+  }
   KERNEL_CHECK_FALSE((axis < ctx.Input(0)->GetTensorShape()->GetDims()), KERNEL_STATUS_PARAM_INVALID,
                      "axis is larger than input dims - 1")
   KERNEL_CHECK_FALSE((axis >= -ctx.Input(0)->GetTensorShape()->GetDims()), KERNEL_STATUS_PARAM_INVALID,
@@ -150,7 +154,6 @@ void CumulativeProcess(uint32_t outer, uint32_t inner, uint32_t depth, bool reve
 template <typename T>
 uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCompute(CpuKernelContext &ctx) {
   auto input_data = static_cast<T *>(ctx.Input(0)->GetData());
-  auto axis_data = static_cast<int32_t *>(ctx.Input(1)->GetData());
   bool exclusive = false;
   bool reverse = false;
   AttrValue *exclusive_attr = ctx.GetAttr("exclusive");
@@ -161,9 +164,11 @@ uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCompute(CpuKernelConte
   if (reverse_attr != nullptr) {
     reverse = reverse_attr->GetBool();
   }
-  int32_t axis = 0;
-  if (axis_data != nullptr) {
-    axis = *axis_data;
+  int64_t axis;
+  if (ctx.Input(1)->GetDataType() == DT_INT16) {
+    axis = static_cast<int64_t>(*reinterpret_cast<int16_t *>(ctx.Input(1)->GetData()));
+  } else {
+    axis = static_cast<int64_t>(*reinterpret_cast<int32_t *>(ctx.Input(1)->GetData()));
   }
   auto output_data = static_cast<T *>(ctx.Output(0)->GetData());
   auto shape = ctx.Input(0)->GetTensorShape();
