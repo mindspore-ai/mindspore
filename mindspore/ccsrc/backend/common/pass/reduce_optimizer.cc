@@ -170,6 +170,13 @@ AnfNodePtr ReduceOptimizer::NewAssistValueNode(const CNodePtr &cnode, const Kern
   return nullptr;
 }
 
+bool IsReduceOp(const std::string &op_name) {
+  const std::set<std::string> kReduceOpSet = {kReduceSumOpName, kReduceMeanOpName, kReduceProdOpName};
+
+  auto iter = kReduceOpSet.find(op_name);
+  return iter != kReduceOpSet.end();
+}
+
 const AnfNodePtr ReduceOptimizer::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                           const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -177,7 +184,7 @@ const AnfNodePtr ReduceOptimizer::Process(const FuncGraphPtr &func_graph, const 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
-  if (op_name != kReduceSumOpName && op_name != kReduceMeanOpName) {
+  if (!IsReduceOp(op_name)) {
     MS_LOG(DEBUG) << "Skip ReduceOptimizer for " << op_name;
     return nullptr;
   }
