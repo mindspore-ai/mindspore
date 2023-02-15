@@ -503,8 +503,7 @@ std::vector<KernelObjectType> AnfRuntimeAlgorithm::GetOutputKernelObjectTypes(co
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   if (build_info == nullptr) {
-    MS_LOG(EXCEPTION) << "Empty build info for node:" << node->fullname_with_scope()
-                      << ", debug name:" << node->DebugString();
+    return {};
   }
   return build_info->GetAllOutputKernelObjectTypes();
 }
@@ -566,7 +565,7 @@ bool AnfRuntimeAlgorithm::IsShapesDynamic(const std::vector<ShapeVector> &shapes
 
 ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx) {
   auto format = GetOutputFormat(node, output_idx);
-  auto infer_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
+  auto infer_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx, IsRealSquenceOutput(node));
   if (infer_shape.empty()) {
     return infer_shape;
   }
