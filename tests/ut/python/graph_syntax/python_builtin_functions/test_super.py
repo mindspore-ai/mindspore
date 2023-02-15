@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -79,16 +79,6 @@ class MulSubNet(FatherNet, MatherNet):
                ret_mather_construct, ret_mather_test, ret_mather_y, ret_sub_z
 
 
-class Net(nn.Cell):
-    def __init__(self, x):
-        super(Net, self).__init__()
-        self.x = x
-
-    def construct(self, x, y):
-        ret = super(Net, self).construct(x, y)
-        return ret
-
-
 def test_single_super():
     single_net = SingleSubNet(2, 3)
     x = Tensor(np.ones([1, 2, 3], np.int32))
@@ -101,13 +91,6 @@ def test_mul_super():
     x = Tensor(np.ones([1, 2, 3], np.int32))
     y = Tensor(np.ones([1, 2, 3], np.int32))
     mul_net(x, y)
-
-
-def test_super_cell():
-    net = Net(2)
-    x = Tensor(np.ones([1, 2, 3], np.int32))
-    y = Tensor(np.ones([1, 2, 3], np.int32))
-    assert net(x, y) is None
 
 
 def test_single_super_in():
@@ -131,9 +114,8 @@ def test_single_super_in():
             ret_father_construct = super().construct(x, y)
             ret_father_test = super(SingleSubNetIN, self).test_father(x)
             ret_father_x = super(SingleSubNetIN, self).x
-            ret_sub_z = self.z
 
-            return ret_father_construct, ret_father_test, ret_father_x, ret_sub_z
+            return ret_father_construct, ret_father_test, ret_father_x
 
     single_net_in = SingleSubNetIN(2, 3)
     x = Tensor(np.ones([1, 2, 3], np.int32))

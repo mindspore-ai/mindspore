@@ -54,9 +54,9 @@ AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const Val
   // Build new CNode for value node.
   ValuePtrList keys({std::make_shared<StringImm>(value_node_key)});
   ValuePtrList values({std::make_shared<StringImm>(value_node_key)});
-  const auto interpreted_cnode = fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str),
-                                               NewValueNode(std::make_shared<ValueTuple>(keys)),
-                                               NewValueNode(std::make_shared<ValueTuple>(values))});
+  const auto interpreted_cnode = fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str),
+                                                      NewValueNode(std::make_shared<ValueTuple>(keys)),
+                                                      NewValueNode(std::make_shared<ValueTuple>(values))});
   constexpr auto debug_recursive_level = 2;
   MS_LOG(DEBUG) << "interpreted_cnode: " << interpreted_cnode->DebugString(debug_recursive_level);
   interpreted_cnode->set_debug_info(node->debug_info());

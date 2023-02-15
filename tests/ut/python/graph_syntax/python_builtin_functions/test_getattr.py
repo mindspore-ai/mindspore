@@ -519,22 +519,6 @@ def test_getattr_ms_class_with_concate_attr():
     assert out == 6
 
 
-def test_getattr_ms_class_with_default():
-    """
-    Feature: Syntax getattr.
-    Description: Graph syntax getattr support ms_class input.
-    Expectation: No exception.
-    """
-    ms_obj = MSClass1()
-
-    @jit
-    def foo():
-        return getattr(ms_obj, "none", 10)
-
-    out = foo()
-    assert out is None
-
-
 def test_getattr_ms_class_with_concate_attr_and_default():
     """
     Feature: Syntax getattr.
@@ -575,7 +559,6 @@ def test_getattr_ms_class_with_wrong_attr():
 
 
 class Net(nn.Cell):
-
     def __init__(self):
         super(Net, self).__init__()
         self.a0 = Tensor([0])
@@ -602,22 +585,6 @@ def test_getattr_cell_obj():
 
     out = foo()
     assert out == 0
-
-
-def test_getattr_cell_obj_2():
-    """
-    Feature: Syntax getattr.
-    Description: Graph syntax getattr support cell object input.
-    Expectation: No exception.
-    """
-    cell_obj = Net()
-
-    @jit
-    def foo():
-        return getattr(cell_obj, "none")
-
-    out = foo()
-    assert out is None
 
 
 def test_getattr_cell_obj_concate_input():

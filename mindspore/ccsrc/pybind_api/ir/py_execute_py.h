@@ -63,6 +63,18 @@ class PyExecuteInitializer {
     const auto &keys_tuple_abs = input_args[1];
     const auto &keys_tuple = keys_tuple_abs->BuildValue();
     const auto &keys = dyn_cast<ValueSequence>(keys_tuple);
+
+    // Process PyExecute("None", (), (), io)
+    // Since the backend converts the empty tuple into an empty tensor(not keep ValueSequence),
+    // so special handling of None is required.
+    if (script->ToString() == "None") {
+      const auto &output = py::none();
+      MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
+      PushPyExecuteOutput(output);
+      const auto &infer_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
+      return abstract::MakeAbstract(infer_shape, kFloat64);
+    }
+
     if (keys == nullptr) {
       MS_LOG(DEBUG) << "The keys is not tuple value, but got " << keys_tuple->ToString();
       const auto &infer_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
