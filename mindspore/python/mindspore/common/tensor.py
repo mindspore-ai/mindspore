@@ -1173,29 +1173,8 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('cov')(self, correction=correction, fweights=fweights, aweights=aweights)
 
     def acosh(self):
-        r"""
-        Computes inverse hyperbolic cosine of the inputs element-wise.
-
-        .. math::
-
-            out_i = \cosh^{-1}(input_i)
-
-        .. warning::
-            Given an input tensor x, the function computes inverse hyperbolic cosine of every element.
-            Input range is [1, inf].
-
-        Returns:
-            Tensor, has the same shape as `x`.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> from mindspore import Tensor
-            >>> a = Tensor(np.array([1.0, 1.5, 3.0, 100.0]), mindspore.float32)
-            >>> output = a.acosh()
-            >>> print(output)
-            [0.        0.9624237 1.7627472 5.298292]
+        """
+        For details, please refer to :func:`mindspore.ops.acosh`.
         """
         self._init_check()
         return tensor_operator_registry.get('acosh')(self)
