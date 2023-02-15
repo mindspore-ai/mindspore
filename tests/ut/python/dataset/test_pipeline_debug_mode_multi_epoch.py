@@ -866,10 +866,7 @@ def test_pipeline_debug_mode_multi_epoch_tfrecord_shuffle(my_debug_mode):
                             [31, 21, 3, 2, 13, 22, 32, 41, 1, 11, 12, 42] + \
                             [13, 3, 11, 22, 41, 21, 31, 32, 42, 1, 12, 2]
     result = test_config(1, ds.Shuffle.GLOBAL, 12, 5)
-    if not my_debug_mode:
-        # Temporarily do not verify results when debug mode is enabled.
-        # Note: Currently, in debug mode, ds.Shuffle.GLOBAL behaves like ds.Shuffle.FILES
-        assert result == shuffle_global_golden
+    assert result == shuffle_global_golden
 
     # Restore debug mode configuration
     if my_debug_mode:
@@ -938,9 +935,7 @@ def test_pipeline_debug_mode_multi_epoch_tfrecord_ops(my_debug_mode):
               [11, 41, 31, 32, 1, 2, 22, 23, 33, 13, 42, 4, 43, 12, 21, 3] + \
               [2, 41, 11, 3, 42, 1, 22, 43, 12, 21, 13, 23, 33, 31, 32, 4]
     result = test_config(1202, data1, 3)
-    if not my_debug_mode:
-        # Temporarily do not verify results when debug mode is enabled (until shuffle op is supported)
-        assert result == golden1
+    assert result == golden1
 
     # Test with batch op
     data1 = ds.TFRecordDataset(TF_FILES, num_samples=16, shuffle=ds.Shuffle.FILES)
@@ -1001,9 +996,7 @@ def test_pipeline_debug_mode_multi_epoch_tfrecord_ops(my_debug_mode):
                [[12], [13], [3], [2], [2], [42], [32], [42]], [[23], [22], [12], [23], [3], [13], [22], [32]],
                [[3], [3], [13], [13], [23], [22], [32], [32]], [[42], [22], [12], [2], [12], [2], [42], [23]]]
     result = test_config(1202, data1, 3)
-    if not my_debug_mode:
-        # Temporarily do not verify results when debug mode is enabled (until shuffle op is supported)
-        np.testing.assert_array_equal(result, np.array(golden1))
+    np.testing.assert_array_equal(result, np.array(golden1))
 
     # Restore configuration
     if my_debug_mode:
@@ -1023,6 +1016,6 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_multi_epoch_imagefolder_repeat(True, plot=True)
     test_pipeline_debug_mode_multi_epoch_imagefolder_map_pyfunc(True)
     test_pipeline_debug_mode_multi_ep_im_batch_no_remainder(True, True, 7, plot=True)
-    test_pipeline_debug_mode_multi_ep_im_batch_with_remainder(True, False, 7, plot=True)
+    test_pipeline_debug_mode_multi_ep_im_batch_with_remainders(True, False, 7, plot=True)
     test_pipeline_debug_mode_multi_epoch_tfrecord_shuffle(True)
     test_pipeline_debug_mode_multi_epoch_tfrecord_ops(True)

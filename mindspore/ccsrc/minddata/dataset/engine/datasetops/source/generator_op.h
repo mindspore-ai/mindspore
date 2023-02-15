@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,16 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
   /// \return Number of parallel workers of the current Op
   int32_t NumWorkers() const override { return num_parallel_workers_; }
 
+  /// \brief In pull mode, gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRowPullMode(TensorRow *const row) override;
+
+ protected:
+  /// \brief Gets the implementation status for operator in pull mode
+  /// \return implementation status
+  ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }
+
  private:
   py::function generator_function_;
   std::vector<std::string> column_names_;
@@ -92,10 +102,14 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
   int32_t prefetch_size_;
   int64_t generator_counter_;
   int32_t num_parallel_workers_;
+  int64_t num_rows_sampled_;
 
   py::object generator_;
 
   WaitPost wp_;
+
+  bool prepared_data_{false};  // flag to indicate whether the data is prepared before taking for pull mode
+  bool eof_received_{false};   // flag to indicate whether end of epoch signal is reached in pull mode
 
   Status PyRowToTensorRow(py::object py_data, TensorRow *tensor_row);
 
@@ -114,6 +128,10 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
   /// Initialize GeneratorOp
   /// \return Status The status code returned
   Status Init();
+
+  /// Check whether the target number of samples has been retrieved when eoe is hit.
+  /// \return Status The status code returned
+  Status CheckNumSamples();
 };
 
 #ifndef _MSC_VER

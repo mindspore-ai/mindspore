@@ -42,6 +42,7 @@ TF_FILES = ["../data/dataset/tf_file_dataset/test1.data",
             "../data/dataset/tf_file_dataset/test3.data",
             "../data/dataset/tf_file_dataset/test4.data",
             "../data/dataset/tf_file_dataset/test5.data"]
+TEXTFILE_DATA = "../data/dataset/testTextFileDataset/*"
 
 
 def setup_function():
@@ -121,19 +122,25 @@ def test_pipeline_debug_mode_minddata():
     assert len(data_lst) == 20
 
 
-def test_pipeline_debug_mode_not_support():
+def test_pipeline_debug_mode_numpy_slice_dataset():
     """
     Feature: Pipeline debug mode.
-    Description: Test creating tuple iterator with op not supported in pull mode.
-    Expectation: Exception raised for unsupported op in debug mode.
+    Description: Test creating tuple iterator with op NumpySlicesDataset in debug mode.
+    Expectation: Successful.
     """
-    logger.info("test_pipeline_debug_mode_not_support")
-    data = ds.NumpySlicesDataset(data=[[0, 1, 2]], column_names=["data"])
+    logger.info("test_pipeline_debug_mode_numpy_slice_dataset")
 
-    with pytest.raises(RuntimeError) as error_info:
-        data.create_tuple_iterator(num_epochs=1, output_numpy=True)
-    assert "dataset pipeline" in str(error_info.value)
-    assert "Leaf node GeneratorOp is not implemented yet in pull mode." in str(error_info.value)
+    dataset = ds.NumpySlicesDataset(data=[1, 2, 3], column_names=["column_1"])
+    dataset = dataset.map(operations=(lambda x: (x - 1)), input_columns=["column_1"])
+    res_exp = np.array([[1], [0], [2]])
+    res_actual = []
+    row_count = 0
+    for item in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 1
+        res_actual.append(item)
+        row_count += 1
+    assert row_count == len(res_exp)
+    np.testing.assert_equal(res_actual, res_exp)
 
 
 def test_pipeline_debug_mode_map_pyfunc():
@@ -175,33 +182,62 @@ def test_pipeline_debug_mode_batch_pyfunc():
 
 def generator_md():
     """
-    Create a dataset with [0, 1, 2, 3, 4]
+    Create a dataset with [0-9]
     """
-    for i in range(5):
+    for i in range(10):
         yield (np.array([i]),)
 
 
-# Note: Generator op is not yet supported in pull mode
-@pytest.mark.skip(reason="Unsupported in pull mode")
-def test_pipeline_debug_mode_skip_take():
+def test_pipeline_debug_mode_generator_pipeline():
     """
     Feature: Pipeline debug mode.
-    Description: Test skip op followed by a take op
+    Description: Test generator-skip-take-shuffle-batch pipeline
     Expectation: Output is equal to the expected output
     """
+    logger.info("test_pipeline_debug_mode_generator_pipeline")
+    # Note: set seed to make sure consistent results of Shuffle op. Even in debug mode, seed has
+    # been set internally in IR pre-pass, results are still random (needs further investigation).
+    ds.set_seed(8)
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
-    # Here ds1 should be [2, 3, 4]
+
+    # Here ds1 should be [2, 3, 4, 5, 6, 7, 8, 9]
     ds1 = ds1.skip(2)
 
-    # Here ds1 should be [2, 3]
-    ds1 = ds1.take(2)
+    # Here ds1 should be [2, 3, 4, 5, 6, 7, 8]
+    ds1 = ds1.take(7)
+
+    # do shuffle followed by batch
+    ds1 = ds1.shuffle(5)
+    ds1 = ds1.batch(3, drop_remainder=True)
+
+    buf = []
+    for data in ds1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+        print(data[0])
+        buf.append(data[0])
+    assert len(buf) == 2
+    out_expect = [[[6], [3], [8]], [[4], [7], [2]]]
+    np.testing.assert_array_equal(buf, out_expect)
+
+
+def test_pipeline_debug_mode_generator_repeat():
+    """
+    Feature: Pipeline debug mode
+    Description: Test generator op followed by a repeat op
+    Expectation: Output is equal to the expected output
+    """
+    logger.info("test_pipeline_debug_mode_generator_repeat")
+    num_rows = 5
+    num_repeates = 2
+    ds1 = ds.GeneratorDataset(generator_md, ["data"], num_samples=num_rows)
+    ds1 = ds1.repeat(num_repeates)
 
     buf = []
     for data in ds1.create_tuple_iterator(num_epochs=1, output_numpy=True):
         buf.append(data[0][0])
-    assert len(buf) == 2
-    assert buf == [2, 3]
+    assert len(buf) == num_rows * num_repeates
+    out_expect = list(range(num_rows)) * num_repeates
+    assert buf == out_expect
 
 
 def test_pipeline_debug_mode_concat():
@@ -318,17 +354,23 @@ def test_pipeline_debug_mode_shuffle():
     """
     Feature: Pipeline debug mode.
     Description: Test creating dict iterator with Shuffle.
-    Expectation: Shuffle is disabled, but has the same number of rows as not in debug mode.
+    Expectation: Successful.
     """
     logger.info("test_pipeline_debug_mode_shuffle")
+    # Note: set seed to make sure consistent results of Shuffle op. Even in debug mode, seed has
+    # been set internally in IR pre-pass, results are still random (needs further investigation).
+    ds.set_seed(150)
 
     buffer_size = 5
-    data = ds.MnistDataset("../data/dataset/testMnistData", num_samples=20)
+    data = ds.TextFileDataset(TEXTFILE_DATA, shuffle=False)
     data = data.shuffle(buffer_size=buffer_size)
+    out_expect = ["Good luck to everyone.", "Be happy every day.", "This is a text file.",
+                  "Another file.", "End of file."]
     num_rows = 0
-    for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+    for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert item["text"] == out_expect[num_rows]
         num_rows += 1
-    assert num_rows == 20
+    assert num_rows == 5
 
 
 def test_pipeline_debug_mode_imdb_shuffle():
@@ -443,10 +485,11 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_tuple()
     test_pipeline_debug_mode_dict()
     test_pipeline_debug_mode_minddata()
-    test_pipeline_debug_mode_not_support()
+    test_pipeline_debug_mode_numpy_slice_dataset()
     test_pipeline_debug_mode_map_pyfunc()
     test_pipeline_debug_mode_batch_pyfunc()
-    test_pipeline_debug_mode_skip_take()
+    test_pipeline_debug_mode_generator_pipeline()
+    test_pipeline_debug_mode_generator_repeat()
     test_pipeline_debug_mode_concat()
     test_pipeline_debug_mode_tfrecord_rename_zip()
     test_pipeline_debug_mode_imagefolder_rename_zip()

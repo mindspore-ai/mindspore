@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,17 +102,26 @@ class ShuffleOp : public PipelineOp {
  protected:
   /// \brief Gets the implementation status for operator in pull mode
   /// \return implementation status
-  ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::DisabledDebugMode; }
+  ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }
 
  private:
   // Private function to add a new row to the shuffle buffer.
   // @return Status The status code returned
   Status AddRowToShuffleBuffer(TensorRow new_shuffle_row);
 
-  // Private function to populate the shuffle buffer initially by fetching from the child output
-  // connector until the shuffle buffer is full (or there is no more data coming).
-  // @return Status The status code returned
-  Status InitShuffleBuffer();
+  /// \brief Private function to populate the shuffle buffer initially by fetching from the child output
+  ///     connector until the shuffle buffer is full (or there is no more data coming).
+  /// \param is_pull_mode - flag to indicate if pull mode is on
+  /// \return Status The status code returned
+  Status InitShuffleBuffer(bool is_pull_mode);
+
+  /// \brief Gets one row out of the shuffle buffer and fills the vacant row with the last row in the buffer. This
+  ///     implemented function is for both pull mode and non-pull mode. If it's in non-pull mode, fetch data from the
+  ///     internal child iterator. Otherwise, fetch by calling GetNextRowPullMode() of its child node.
+  /// \param row[out] - Fetched TensorRow
+  /// \param is_pull_mode - flag to indicate if pull mode is on
+  /// \return Status The status code returned
+  Status GetShuffledRowImpl(TensorRow *row, bool is_pull_mode);
 
   // Private function to re-init the shuffle op for another epoch.  Shuffle op calls this by
   // itself rather than waiting for the reset driven from operators above it in the pipeline.
@@ -134,6 +143,7 @@ class ShuffleOp : public PipelineOp {
   int32_t shuffle_buffer_state_;  // State tracking for the shuffle buffer phases of work
 
   std::unique_ptr<ChildIterator> child_iterator_;  // An iterator for fetching.
+  bool eof_received_{false};                       // flag to indicate if eof is reached in pull mode.
 };
 }  // namespace dataset
 }  // namespace mindspore
