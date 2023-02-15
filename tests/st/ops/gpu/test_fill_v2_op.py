@@ -13,16 +13,18 @@
 # limitations under the License.
 # ============================================================================
 import pytest
+import numpy as np
 import mindspore as ms
 from mindspore import context, nn, Tensor
-from mindspore.ops.operations import array_ops as op
+from mindspore.ops.operations import array_ops as P
+from mindspore.ops.functional import vmap
 
 
 class Net(nn.Cell):
 
     def __init__(self):
         super(Net, self).__init__()
-        self.op = op.FillV2()
+        self.op = P.FillV2()
 
     def construct(self, shape, value):
         return self.op(shape, value)
@@ -32,14 +34,27 @@ def dyn_case():
     net = Net()
 
     shape_dyn = Tensor(shape=[None], dtype=ms.int32)
-    value_dyn = Tensor(shape=[None], dtype=ms.complex64)
+    value_dyn = Tensor(shape=[None], dtype=ms.float32)
     net.set_inputs(shape_dyn, value_dyn)
 
     shape = Tensor([2, 3], dtype=ms.int32)
-    value = Tensor(1 + 2j, dtype=ms.complex64)
+    value = Tensor(1, dtype=ms.float32)
     out = net(shape, value)
 
     assert out.asnumpy().shape == (2, 3)
+
+
+def vmap_case():
+
+    def cla_fillv2(shape, value):
+        return P.FillV2()(shape, value)
+
+    shape = (2, 2)
+    value = Tensor([1, 2], ms.float32)
+    outputs = vmap(cla_fillv2, in_axes=(None, 0), out_axes=0)(shape, value)
+
+    expect = np.array([[[1, 1], [1, 1]], [[2, 2], [2, 2]]]).astype(np.float32)
+    assert np.allclose(expect, outputs.asnumpy(), 1.e-4, 1.e-7)
 
 
 @pytest.mark.level0
@@ -53,5 +68,7 @@ def test_fill_v2_dyn():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     dyn_case()
+    vmap_case()
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     dyn_case()
+    vmap_case()
