@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,11 @@ bool IsTensorListOp(const AnfNodePtr &anf_node) {
          opt::CheckPrimitiveType(anf_node, prim::kPrimTensorListSetItem) ||
          opt::CheckPrimitiveType(anf_node, prim::kPrimTensorListReserve);
 }
+
+bool IsEmptyOp(const std::string &op_name) {
+  return op_name == "Identity" || op_name == "StopGradient" || op_name == "NoOp" || op_name == "ReadVariableOp";
+}
+
 constexpr size_t kConvWeightIndex = 2;
 
 AnfNodePtr GetAnfNode(const std::string &name, const std::unordered_map<std::string, AnfNodePtr> &anf_node_map,
@@ -68,11 +73,11 @@ AnfNodePtr GetAnfNode(const std::string &name, const std::unordered_map<std::str
 
 std::string GetOriginInputName(const tensorflow::NodeDef &node,
                                const std::map<std::string, const tensorflow::NodeDef *> &tf_graph_nodes) {
-  if (node.op() != "Identity" && node.op() != "StopGradient" && node.op() != "NoOp") {
+  if (!IsEmptyOp(node.op())) {
     return node.name();
   }
   auto tmp_node = &node;
-  while (tmp_node->op() == "Identity" || tmp_node->op() == "StopGradient" || tmp_node->op() == "NoOp") {
+  while (IsEmptyOp(tmp_node->op())) {
     auto flatten_input_name = TensorFlowUtils::GetFlattenNodeName(tmp_node->input(0));
     if (tf_graph_nodes.find(flatten_input_name) == tf_graph_nodes.end()) {
       return flatten_input_name;
@@ -1122,7 +1127,7 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   MSLITE_CHECK_PTR(anf_node_map);
   STATUS status = RET_OK;
   const auto &op_type = node_def.op();
-  if (op_type == "Identity" || op_type == "StopGradient" || op_type == "NoOp") {
+  if (IsEmptyOp(op_type)) {
     return RET_OK;
   } else if (op_type == "Placeholder" || op_type == "Const") {
     node_output_num_[node_def.name()] = 1;
@@ -1267,12 +1272,10 @@ STATUS TFModelParser::GetGraphOutputNames(std::vector<AnfNodePtr> *output_nodes)
         return RET_ERROR;
       }
       output_nodes->push_back(anf_node);
-      // Get the name of node 'Identity' and 'StopGradient' and 'NoOp'.
-      if (node->op() == "Identity" || node->op() == "StopGradient" || node->op() == "NoOp") {
+      if (IsEmptyOp(node->op())) {
         auto tmp_node = node;
         bool found_input = true;
-        while (tmp_node->name().empty() &&
-               (tmp_node->op() == "Identity" || tmp_node->op() == "StopGradient" || tmp_node->op() == "NoOp")) {
+        while (tmp_node->name().empty() && IsEmptyOp(tmp_node->op())) {
           auto flatten_input_name = TensorFlowUtils::GetFlattenNodeName(tmp_node->input(0));
           if (tf_root_graph_nodes_.find(flatten_input_name) != tf_root_graph_nodes_.end()) {
             tmp_node = tf_root_graph_nodes_.at(flatten_input_name);
