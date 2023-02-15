@@ -59,10 +59,6 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
       auto attr_str = GetValue<std::string>(GetValueNode(attr_node));
       return parse::ResolveMsClassWithAttr(optimizer->manager(), ms_class, attr_str, node);
     }
-    // {prim::kPrimGetAttr, bool, attr}
-    if (IsValueNode<BoolImm>(object_node)) {
-      return object_node;
-    }
     return nullptr;
   };
 

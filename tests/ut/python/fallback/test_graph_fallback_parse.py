@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback """
+import math
 import pytest
 import numpy as np
 import mindspore.nn as nn
@@ -318,3 +319,16 @@ def test_fallback_tuple_with_mindspore_function():
         return test_isinstance(np.array(1), (np.ndarray, nn.Cell, Primitive))
 
     assert foo()
+
+
+def test_fallback_math_method():
+    """
+    Feature: JIT Fallback
+    Description: Test math.floor()
+    Expectation: No exception
+    """
+    @jit
+    def foo():
+        return math.floor(1.5)
+
+    assert foo() == 1
