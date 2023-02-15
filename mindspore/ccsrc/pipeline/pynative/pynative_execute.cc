@@ -27,7 +27,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "ir/cell.h"
 #include "abstract/utils.h"
-#include "pybind_api/utils/stub_tensor_py.h"
+#include "include/common/utils/stub_tensor.h"
 
 namespace mindspore::pynative {
 std::shared_ptr<PyNativeExecutor> PyNativeExecutor::executor_ = nullptr;
@@ -96,10 +96,21 @@ py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
   auto run_args = py::make_tuple(prim, adapter->name(), input_args);
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(run_args);
   PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
-  auto converter = std::make_shared<StubOutConverter>();
-  auto ret_obj = converter->Convert(op_run_info->base_op_run_info.abstract, op_run_info->out_value);
-  auto ret_type = converter->GetRootType();
-  return py::make_tuple(ret_type, ret_obj);
+  // 1. get top_type from Primitive::PredictOutputType
+  auto top_type = op_run_info->base_op_run_info.abstract->BuildType();
+  // 2. if predict failed(kAnyType), return after infer(half-asynchronous) or run(synchronous mode)
+  if (top_type == kAnyType) {
+    auto ret = PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->out_value);
+    return py::make_tuple(static_cast<int>(stub::StubNode::IMMEDIATE), ret);
+  }
+  // 3. create top stub node
+  auto node = stub::MakeTopNode(top_type);
+  // 4. set abstract and value in asynchronous thread after infer and run
+  stub::StubNodePtr stub = node.second;
+  stub->SetAbstract(op_run_info->base_op_run_info.abstract);
+  stub->SetValue(op_run_info->out_value);
+  // 5. return stub node
+  return node.first;
 }
 
 py::object PyNativeExecutor::RealRunOp(const py::args &args) const {
@@ -236,7 +247,7 @@ void PyNativeExecutor::SetDynamicInput(const py::object &cell, const py::args &a
 }
 
 void RegPyNativeExecutor(const py::module *m) {
-  RegPyNativeAsyncStub(m);
+  stub::RegStubNodes(m);
 
   (void)py::class_<PyNativeExecutor, std::shared_ptr<PyNativeExecutor>>(*m, "PyNativeExecutor_")
     .def_static("get_instance", &PyNativeExecutor::GetInstance, "PyNativeExecutor get_instance.")
