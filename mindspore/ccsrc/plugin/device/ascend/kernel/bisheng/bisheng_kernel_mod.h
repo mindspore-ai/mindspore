@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,52 +14,42 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CUSTOM_BISHENG_KERNEL_MOD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CUSTOM_BISHENG_KERNEL_MOD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ASCEND_BISHENG_KERNEL_MOD_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ASCEND_BISHENG_KERNEL_MOD_H
 
+#include <algorithm>
+#include <utility>
 #include <vector>
-#include <string>
-#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
-#include "utils/custom_aot_extra.h"
-#include "include/common/utils/anfalgo.h"
+#include "kernel/kernel.h"
 #include "kernel/common_utils.h"
+#include "plugin/device/ascend/kernel/bisheng/bisheng_op_info.h"
 
 namespace mindspore {
 namespace kernel {
-class BiShengKernelMod : public AscendKernelMod {
+class BiShengKernelMod : public KernelMod {
  public:
-  explicit BiShengKernelMod(const AnfNodePtr &anf_node_ptr)
-      : AscendKernelMod(anf_node_ptr), num_input_(0), num_output_(0), handle_(nullptr), aot_func_(nullptr) {}
-  ~BiShengKernelMod();
-
-  bool InitKernel(const AnfNodePtr &kernel_node);
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
-
- protected:
-  void InitSizeLists();
-
-  std::vector<std::vector<int64_t>> shape_list_;
-  std::vector<int> ndims_;
-  std::vector<std::string> type_list_;
-
-  std::vector<int64_t *> shapes_;
-  std::vector<const char *> type_pointer_list_;
-
-  size_t num_input_;
-  size_t num_output_;
-  std::string file_path_;
-  std::string func_name_;
-  void *handle_;
-  int (*init_func_)(int *, int64_t **, const char **, AotExtra *);
-  int (*aot_func_)(int, void **, int *, int64_t **, const char **, void *, void *);
-
-  AotExtraImpl attrs_;
+  BiShengKernelMod() = default;
+  ~BiShengKernelMod() override = default;
 };
+
+#define KernelFunc(Clazz)                                                                                         \
+ public:                                                                                                          \
+  using Func =                                                                                                    \
+    std::function<bool(Clazz *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, \
+                       const std::vector<kernel::AddressPtr> &, void *stream)>;                                   \
+  using FuncList = std::vector<std::pair<KernelAttr, Clazz::Func>>;                                               \
+  std::vector<KernelAttr> GetOpSupport() override {                                                               \
+    std::vector<KernelAttr> support_list;                                                                         \
+    (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),                  \
+                         [](const std::pair<KernelAttr, Clazz::Func> &pair) { return pair.first; });              \
+    return support_list;                                                                                          \
+  }                                                                                                               \
+                                                                                                                  \
+ private:                                                                                                         \
+  friend class BishengOpInfoRegister<Clazz>;                                                                      \
+  inline static FuncList func_list_ = {};                                                                         \
+  static const BishengOpInfoRegister<Clazz> reg_;                                                                 \
+  Func kernel_func_;
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CUSTOM_BISHENG_KERNEL_MOD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ASCEND_BISHENG_KERNEL_MOD_H

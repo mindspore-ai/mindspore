@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BISHENG_KERNEL_BUILD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BISHENG_KERNEL_BUILD_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_BISHENG_IMPL_VISIBLE_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_BISHENG_IMPL_VISIBLE_H
 
-#include "kernel/kernel.h"
+#define BISHENG_LIB_EXPORT __attribute__((visibility("default")))
 
-namespace mindspore {
-namespace kernel {
-KernelModPtr BiShengOpBuild(const AnfNodePtr &anf_node);
-}  // namespace kernel
-}  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BISHENG_KERNEL_BUILD_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_BISHENG_IMPL_VISIBLE_H

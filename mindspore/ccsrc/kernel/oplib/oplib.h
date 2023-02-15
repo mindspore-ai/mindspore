@@ -35,10 +35,9 @@ class BACKEND_EXPORT OpLib {
   static bool LoadSuperBarConfig(const std::string &suber_bar_config);
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, OpImplyType imply_type,
                                         bool is_dynamic_shape = false);
-
- private:
   static std::map<mindspore::kernel::OpImplyType, std::map<std::string, std::shared_ptr<OpInfo>>> &GetOpInfoMap();
 
+ private:
   static bool RegOpFromLocalInfo();
   static std::shared_ptr<OpInfo> DecodeOpInfo(const nlohmann::json &obj, const OpImplyType &imply_type,
                                               const std::string &impl_path);

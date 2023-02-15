@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 namespace tbe {
 constexpr auto kProcessorAiCore = "aicore";
-TypeId DtypeToTypeId(const std::string &dtypes);
+BACKEND_EXPORT TypeId DtypeToTypeId(const std::string &dtypes);
 
 std::string TypeIdToString(TypeId type_id);
 

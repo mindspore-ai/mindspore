@@ -495,6 +495,8 @@ void SetKernelBuildInfo(const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBu
     builder->SetKernelType(CPU_KERNEL);
   } else if (imply_type == kImplyAICPU) {
     builder->SetKernelType(AICPU_KERNEL);
+  } else if (imply_type == kImplyBISHENG) {
+    builder->SetKernelType(BISHENG_KERNEL);
   } else {
     builder->SetKernelType(TBE_KERNEL);
   }

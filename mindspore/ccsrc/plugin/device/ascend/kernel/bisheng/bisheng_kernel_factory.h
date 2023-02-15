@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BISHENG_KERNEL_BUILD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BISHENG_KERNEL_BUILD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ASCEND_BISHENG_KERNEL_FACTORY_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ASCEND_BISHENG_KERNEL_FACTORY_H
 
-#include "kernel/kernel.h"
+#include <string>
+#include <functional>
+#include <vector>
+#include <map>
+#include <memory>
+#include "include/backend/visible.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-KernelModPtr BiShengOpBuild(const AnfNodePtr &anf_node);
+class BiShengKernelMod;
+
+class BACKEND_EXPORT BiShengKernelFactory : public Factory<BiShengKernelMod> {
+ public:
+  static BiShengKernelFactory &GetInstance();
+};
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BISHENG_KERNEL_BUILD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ASCEND_BISHENG_KERNEL_FACTORY_H
