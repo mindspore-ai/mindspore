@@ -24,7 +24,7 @@ mindspore.nn.HingeEmbeddingLoss
     其中 :math:`L = \{l_1,\dots,l_N\}^\top`。
 
     参数：
-        - **margin** (float) - Hinge Embedding Loss公式定义的阈值 :math:`margin`。公式中表示为 :math:`\Delta`。默认值：1.0。
+        - **margin** (float, int) - Hinge Embedding Loss公式定义的阈值 :math:`margin`。公式中表示为 :math:`\Delta`。默认值：1.0。
         - **reduction** (str) - 指定应用于输出结果的计算方式，'none'、'mean'、'sum'，默认值：'mean'。
 
     输入：
@@ -35,8 +35,8 @@ mindspore.nn.HingeEmbeddingLoss
         Tensor或Tensor scalar，根据 :math:`reduction` 计算的loss。
 
     异常：
-        - **TypeError** - `logits` 不是Tensor。
-        - **TypeError** - `labels` 不是Tensor。
-        - **TypeError** - `margin` 不是float。
+        - **TypeError** - `logits` 不是数据类型为float的Tensor。
+        - **TypeError** - `labels` 不是数据类型为float的Tensor。
+        - **TypeError** - `margin` 不是float或int。
         - **ValueError** - `labels` 和 `logits` shape不一致。
         - **ValueError** - `reduction` 不是"none"、"mean"或者"sum"。

@@ -4090,7 +4090,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     Args:
         inputs (Tensor): Tensor of shape :math:`(*)` where :math:`*` means any number of dimensions.
         targets (Tensor): Same shape as the logits, contains -1 or 1.
-        margin (float): Threshold defined by Hinge Embedding Loss :math:`margin`.
+        margin (float, int): Threshold defined by Hinge Embedding Loss :math:`margin`.
             Represented as :math:`\Delta` in the formula. Default: 1.0.
         reduction (str): Specify the computing method to be applied to the outputs: 'none', 'mean', or 'sum'.
             Default: 'mean'.
@@ -4099,9 +4099,9 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         Tensor or Tensor scalar, the computed loss depending on `reduction`.
 
     Raises:
-        TypeError: If `inputs` is not a Tensor.
-        TypeError: If `targets` is not a Tensor.
-        TypeError: If `margin` is not a float.
+        TypeError: If `inputs` is not a Tensor of floats.
+        TypeError: If `targets` is not a Tensor of floats.
+        TypeError: If `margin` is not a float or int.
         ValueError: If `targets` does not have the same shape as `inputs`.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
@@ -4121,13 +4121,25 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         >>> print(loss)
         0.16666666
     """
-    _dtype = inputs.dtype
-    min_val = Tensor(0, _dtype)
+    if not isinstance(margin, (float, int)):
+        raise TypeError(f"For 'HingeEmbeddingLoss', 'margin' must be a float or int, but got {type(margin)}.")
+    if reduction not in ['none', 'mean', 'sum']:
+        raise ValueError(f"For 'HingeEmbeddingLoss', 'reduction' must be one of 'none', 'mean', 'sum',"
+                         f"but got {reduction}.")
+    inputs_dtype = inputs.dtype
+    targets_dtype = targets.dtype
+    if inputs_dtype not in mstype.float_type:
+        raise TypeError(f"For 'HingeEmbeddingLoss', the dtype of the first input must be float, but got "
+                        f"{inputs_dtype}.")
+    if targets_dtype not in mstype.float_type:
+        raise TypeError(f"For 'HingeEmbeddingLoss', the dtype of the second input must be float, but got "
+                        f"{targets_dtype}.")
+    min_val = Tensor(0, inputs_dtype)
     pos_index = targets > 0
     neg_index = targets < 0
     pos = pos_index * inputs
     neg = neg_index * inputs
-    m = ops.cast(margin, _dtype)
+    m = ops.cast(margin, inputs_dtype)
     margin_matrix = m * neg_index
     neg = margin_matrix - neg
     neg = ops.clip_by_value(neg, min_val)
