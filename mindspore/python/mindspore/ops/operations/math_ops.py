@@ -5615,7 +5615,7 @@ class MatrixLogarithm(Primitive):
 
 class IndexAdd(Primitive):
     """
-    Adds tensor `y` to specified axis and indices of tensor `x`. The axis should be in [0,  len(x.dim) - 1],
+    Adds tensor `y` to specified axis and indices of tensor `x`. The axis should be in [-len(x.dim),  len(x.dim) - 1],
     and indices should be in [0, the size of `x` - 1] at the axis dimension.
 
     Args:
