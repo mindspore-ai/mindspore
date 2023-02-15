@@ -215,7 +215,8 @@ PYBIND_REGISTER(PythonMultiprocessingRuntime, 1, ([](const py::module *m) {
                     .def("is_mp_enabled", &PythonMultiprocessingRuntime::is_mp_enabled)
                     .def("add_new_workers", &PythonMultiprocessingRuntime::add_new_workers)
                     .def("remove_workers", &PythonMultiprocessingRuntime::remove_workers)
-                    .def("get_pids", &PythonMultiprocessingRuntime::get_pids);
+                    .def("get_pids", &PythonMultiprocessingRuntime::get_pids)
+                    .def("is_running", &PythonMultiprocessingRuntime::is_running);
                 }));
 
 PYBIND_REGISTER(ProjectNode, 2, ([](const py::module *m) {
