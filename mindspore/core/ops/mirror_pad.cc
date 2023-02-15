@@ -110,6 +110,8 @@ class MirrorPadInfer : public abstract::OpInferBase {
     auto paddings = input_args[1]->BuildValue();
     MS_EXCEPTION_IF_NULL(paddings);
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+    auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+    CheckPaddingParam(paddings_shape, x_shape, prim_name);
     // if shape of x is determined and padding value is unknown, return a all -1 shape
     if (paddings->isa<AnyValue>() || paddings->isa<None>()) {
       return std::make_shared<abstract::Shape>(ShapeVector(x_shape.size(), abstract::Shape::kShapeDimAny));
@@ -117,9 +119,7 @@ class MirrorPadInfer : public abstract::OpInferBase {
     auto paddings_arg = CheckAndConvertUtils::CheckTensorIntValue(kPaddings, paddings, prim_name);
     std::vector<std::pair<int64_t, int64_t>> paddings_attr;
 
-    auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
     auto mode = GetValue<std::string>(primitive->GetAttr(kMode));
-    CheckPaddingParam(paddings_shape, x_shape, prim_name);
     for (size_t i = 0; i < paddings_arg.size(); i = i + static_cast<size_t>(kPaddingsSecondDimSize)) {
       paddings_attr.push_back(std::make_pair(paddings_arg[i], paddings_arg[i + 1]));
     }
