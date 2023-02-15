@@ -1452,6 +1452,7 @@ int64_t CalOutputTupleSize(const AnfNodePtr &node) {
   }
   auto output_size = AnfAlgo::GetOutputElementNum(node);
   if (node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+    output_size = 0;
     auto make_tuple = node->cast<CNodePtr>();
     size_t tuple_input_num = common::AnfAlgo::GetInputTensorNum(make_tuple);
     for (size_t j = 0; j < tuple_input_num; ++j) {
@@ -1460,6 +1461,8 @@ int64_t CalOutputTupleSize(const AnfNodePtr &node) {
       // Handle tuple nested scenes.
       if (dyn_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple)) {
         output_size += CalOutputTupleSize(dyn_input_node);
+      } else {
+        output_size++;
       }
     }
   }
@@ -1474,7 +1477,7 @@ void SetDynamicInputSizeAttr(const CNodePtr &cnode) {
   }
   std::vector<int64_t> dyn_input_sizes;
   auto input_obj_types = AnfAlgo::GetInputKernelObjectTypes(cnode);
-  size_t input_num = cnode->inputs().size() - 1;
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 0; i < input_num; ++i) {
     if (i < input_obj_types.size() && input_obj_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
       auto input_node = common::AnfAlgo::GetInputNode(cnode, i);

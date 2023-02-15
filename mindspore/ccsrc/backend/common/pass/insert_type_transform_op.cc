@@ -102,7 +102,8 @@ AnfNodePtr CreateNewNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &i
   // methods. Only reset input types.
   auto new_prim = GetValueNode<PrimitivePtr>(new_cnode->input(kIndex0));
   auto origin_prim = GetValueNode<PrimitivePtr>(origin_node->input(kIndex0));
-  if (IsPrimitiveEquals(new_prim, origin_prim) && !kernel::IsDynamicParamKernel(origin_prim->name())) {
+  if (IsPrimitiveEquals(new_prim, origin_prim) && !kernel::IsDynamicParamKernel(origin_prim->name()) &&
+      (origin_kernel_build_info->op_type() != kernel::OpType::SKIP)) {
     SetKernelInfoForNewCNode(new_cnode, false);
   } else {
     SetKernelInfoForNewCNode(new_cnode, true);

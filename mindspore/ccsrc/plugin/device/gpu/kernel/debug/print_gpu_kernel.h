@@ -46,6 +46,8 @@ class PrintGpuKernelMod : public NativeGpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
+  std::vector<KernelAttr> GetOpSupport() override;
+
  protected:
   void InitDeviceData(const std::vector<AddressPtr> &inputs, std::vector<void *> *input_device_data);
   std::vector<int64_t> SetInputFlag(std::vector<int64_t> *string_pos, size_t input_tensor_num);
