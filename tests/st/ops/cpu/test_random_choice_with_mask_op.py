@@ -114,6 +114,8 @@ def test_RCWM_1D():
                              [10], [15], [0], [0]]).astype(np.int32)
     expect_index_mac = np.array([[11], [7], [9], [15], [2], [10],
                                  [8], [0], [0], [0]]).astype(np.int32)
+    expect_index_windows = np.array([[2], [7], [10], [15], [8], [9],
+                                     [0], [11], [0], [0]]).astype(np.int32)
     expect_mask = np.array(
         [True, True, True, True, True, True, True, True, False, False])
     rcwm = RCWM_1D()
@@ -122,6 +124,8 @@ def test_RCWM_1D():
     print(output2)
     if platform.system().lower() == "darwin":
         assert np.array_equal(output1.asnumpy(), expect_index_mac)
+    elif platform.system().lower() == "windows":
+        assert np.array_equal(output1.asnumpy(), expect_index_windows)
     else:
         assert np.array_equal(output1.asnumpy(), expect_index)
     assert np.array_equal(output2.asnumpy(), expect_mask)
