@@ -283,6 +283,7 @@ int StrideSliceTensorRT::ComputeDimsSingle(TensorRTContext *ctx, ITensorHelper *
         size_dims_.d[i] = input_dims.d[i];
       }
     }
+    size_dims_.d[i] = std::abs(size_dims_.d[i] / stride_dims_.d[i]) + ((size_dims_.d[i] % stride_dims_.d[i]) != 0);
   }
   DebugDims("size : ", size_dims_);
   return RET_OK;
