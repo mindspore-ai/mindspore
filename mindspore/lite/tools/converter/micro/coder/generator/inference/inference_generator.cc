@@ -22,7 +22,7 @@
 
 namespace mindspore::lite::micro {
 void InferenceGenerator::CodeNetExecuteFunc(std::ofstream &ofs) {
-  ofs << "void Execute(bool train_mode) {\n";
+  ofs << "void Execute" << ctx_->GetCurModelIndex() << "(bool train_mode) {\n";
   if (config_->support_parallel()) {
     ofs << "  " << gThreadNum << " = GetCurrentThreadNum();\n";
     ofs << "  SetSpinCountMaxValue();\n";
@@ -46,7 +46,7 @@ int InferenceGenerator::CodeNetHFile() {
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_include_file;
   CodeCommonNetH(ofs);
-  CodeCopyOutputsState(ofs);
+  CodeCopyOutputsState(ofs, ctx_->GetCurModelIndex());
   ofs << kEndExternCpp;
   ofs.close();
   return RET_OK;

@@ -281,16 +281,16 @@ int Generator::CodeMSModelImplement() {
   CodeMSModelCreate(ofs, ctx_, *config_);
   CodeMSModelCalcWorkspaceSize(ofs, ctx_, *config_);
   CodeMSModelSetWorkspace(ofs, ctx_, *config_);
-  CodeMSModelBuild(ofs, config_);
+  CodeMSModelBuild(ofs, ctx_->GetCurModelIndex(), config_);
   ofs << model_runtime_other_source;
   if (config_->code_mode() == CodeMode::Train) {
     CodeMSModelRunStep(ofs, ctx_);
     CodeMSModelSetTrainMode(ofs, ctx_);
-    CodeMSModelExportWeight(ofs);
+    CodeMSModelExportWeight(ofs, ctx_->GetCurModelIndex());
   } else {
     CodeMSModelPredict(ofs, ctx_);
   }
-  CodeMSModelDestory(ofs, config_);
+  CodeMSModelDestory(ofs, ctx_->GetCurModelIndex(), config_);
   return RET_OK;
 }
 
@@ -316,8 +316,8 @@ int Generator::CodeWeightFile() {
     cofs << "extern const unsigned char *" << ctx_->input_name() + std::to_string(i) << ";\n";
   }
   if (config_->target() != kCortex_M) {
-    cofs << "unsigned char * " << ctx_->buffer_name() << " = 0; \n";
-    cofs << "unsigned char * " << ctx_->weight_name() << " = 0; \n";
+    cofs << "unsigned char *" << ctx_->buffer_name() << " = 0; \n";
+    cofs << "unsigned char *" << ctx_->weight_name() << " = 0; \n";
     std::string net_file = net_src_file_path_ + "net.bin";
     SaveDataToNet(ctx_->saved_weights(), net_file);
   } else {
@@ -331,10 +331,10 @@ int Generator::CodeWeightFile() {
     CodeModelParamsData(cofs, ctx_->saved_weights());
   }
   CodeModelParamsForNet(hofs, cofs, ctx_, *config_);
-  CodeInitWeightState(hofs, *config_);
+  CodeInitWeightState(hofs, ctx_->GetCurModelIndex());
   if (config_->code_mode() == CodeMode::Train) {
     CodeWeightInitFuncForTrain(cofs, ctx_);
-    CodeExportWeightState(hofs, *config_);
+    CodeExportWeightState(hofs, ctx_->GetCurModelIndex());
     CodeWeightExportFunc(cofs, ctx_, *config_);
   } else {
     CodeWeightInitFunc(cofs, ctx_, *config_);
@@ -347,12 +347,12 @@ int Generator::CodeWeightFile() {
 void Generator::CodeCommonNetH(std::ofstream &ofs) {
   ofs << g_hwLicense;
   ofs << kExternCpp;
-  CodeInputState(ofs);
+  CodeInputState(ofs, ctx_->GetCurModelIndex());
   if (is_get_quant_args_) {
-    CodeGraphQuantArgsState(ofs);
+    CodeGraphQuantArgsState(ofs, ctx_->GetCurModelIndex());
   }
-  CodeManageResourceState(ofs);
-  CodeExecuteState(ofs);
+  CodeManageResourceState(ofs, ctx_->GetCurModelIndex());
+  CodeExecuteState(ofs, ctx_->GetCurModelIndex());
 }
 
 void Generator::CodeCommonNetC(std::ofstream &ofs) {

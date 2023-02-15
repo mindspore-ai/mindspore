@@ -16,15 +16,18 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_COMPONENT_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_COMPONENT_H_
+#include <string>
 
 namespace mindspore::lite::micro {
-constexpr auto kInputPrefixName = "g_Input";
-constexpr auto kOutputPrefixName = "g_Output";
-constexpr auto kWeightPrefixName = "g_Weight";
+extern const char *kInputPrefixName;
+extern const char *kOutputPrefixName;
+extern const char *kWeightPrefixName;
 constexpr auto kPackWeightOffsetName = "w_offset";
 constexpr auto kPackWeightSizeName = "w_size";
-constexpr auto kBufferPrefixName = "g_Buffer";
-constexpr auto kBufferPrefixNameAdd = "g_Buffer + ";
+extern const char *kBufferPrefixName;
+extern const char *kBufferPrefixNameAdd;
+void FreeGlobalVariable();
+void InitGlobalVariable(int model_index);
 
 constexpr auto kModelName = "net";
 

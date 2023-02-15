@@ -33,8 +33,12 @@
 #include "src/common/file_utils.h"
 #include "src/common/prim_util.h"
 #include "coder/opcoders/nnacl/dequant/de_quant.h"
+#include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
+namespace {
+static int kModelIndex = 0;
+}  // namespace
 CoderSession::CoderSession() { allocator_ = MemoryAllocator::GetInstance(); }
 
 int CoderSession::PassArgsToContext() {
@@ -121,7 +125,9 @@ int CoderSession::Init(const void *content, int size) {
   Model *model = lite::Model::Import(static_cast<const char *>(content), size);
   MS_CHECK_PTR(model);
   coder_graph_ = std::make_unique<CoderGraph>(model);
-  context_ = std::make_unique<CoderContext>();
+  InitGlobalVariable(kModelIndex);
+  InitThread(kModelIndex);
+  context_ = std::make_unique<CoderContext>(kModelIndex++);
   MS_LOG(INFO) << "CoderSession::Init done";
   return RET_OK;
 }

@@ -19,13 +19,14 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
 namespace mindspore::lite::micro {
-CoderContext::CoderContext() {
+CoderContext::CoderContext(int model_index) {
   this->input_name_ = kInputPrefixName;
   this->output_name_ = kOutputPrefixName;
   this->buffer_name_ = kBufferPrefixName;
   this->weight_name_ = kWeightPrefixName;
   this->pack_weight_offset_name_ = kPackWeightOffsetName;
   this->pack_weight_size_name_ = kPackWeightSizeName;
+  this->model_index_ = model_index;
 }
 
 void CoderContext::AppendCode(const std::string &codeBlock) { this->code_blocks_.emplace_back(codeBlock); }

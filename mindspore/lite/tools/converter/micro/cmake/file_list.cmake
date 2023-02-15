@@ -27,6 +27,7 @@ set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/component/weight_component.cc
         ${MICRO_DIR}/coder/generator/component/cmake_component.cc
         ${MICRO_DIR}/coder/generator/component/train_component.cc
+        ${MICRO_DIR}/coder/generator/component/component.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/cmake_lists.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/debug_utils.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/msession.cc
@@ -43,6 +44,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/wrapper/int8/conv1x1_init_int8_wrapper.c
         ${MICRO_DIR}/coder/wrapper/int8/conv_init_int8_wrapper.c
         ${MICRO_DIR}/coder/opcoders/file_collector.cc
+        ${MICRO_DIR}/coder/opcoders/parallel.cc
         ${MICRO_DIR}/coder/opcoders/op_coder.cc
         ${MICRO_DIR}/coder/opcoders/op_coder_builder.cc
         ${MICRO_DIR}/coder/opcoders/op_coder_register.cc

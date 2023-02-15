@@ -24,6 +24,7 @@
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
 #include "tools/converter/micro/coder/config.h"
+#include "tools/converter/micro/coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
 namespace {
@@ -67,6 +68,8 @@ int Coder::Run(const void *model_buff, size_t size) {
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Generate Code Files error!" << status;
   }
+  FreeGlobalVariable();
+  FreeThread();
   return status;
 }
 

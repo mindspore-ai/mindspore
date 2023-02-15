@@ -99,23 +99,23 @@ void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::
   cofs << "\n";
 }
 
-void CodeInitWeightState(std::ofstream &ofs, const Configurator &config) {
+void CodeInitWeightState(std::ofstream &ofs, const int model_index) {
   ofs << "/// \\brief Init model weight from buffer.\n\n"
       << "/// \\param[in] weight_buffer The address of the weight binary file.\n"
       << "/// \\param[in] weight_size The size of the weight file in bytes.\n"
-      << "int Init(void *weight_buffer, int weight_size);\n\n";
+      << "int Init" << model_index << "(void *weight_buffer, int weight_size);\n\n";
 }
 
-void CodeExportWeightState(std::ofstream &ofs, const Configurator &config) {
+void CodeExportWeightState(std::ofstream &ofs, const int model_index) {
   ofs << "/// \\brief Export model weight to the specified path.\n\n"
       << "/// \\param[in] output_weight_file The path of the export weight file.\n\n"
       << "/// \\return 0 on success or -1 in case of error.\n"
-      << "int Export(const char* output_weight_file);\n\n";
+      << "int Export" << model_index << "(const char* output_weight_file);\n\n";
 }
 
 void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
   if (config.target() != kCortex_M) {
-    ofs << "static size_t PackWeightSize() {\n";
+    ofs << "static size_t PackWeightSize" << ctx->GetCurModelIndex() << "() {\n";
     ofs << "  size_t w_size = 0;\n";
     for (const auto &block : ctx->GetInitWeightSizeCode()) {
       ofs << "  " << block;
@@ -123,7 +123,7 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
     ofs << "  return w_size;\n";
     ofs << "}\n\n";
 
-    ofs << "int Init(void *weight_buffer, int weight_size) {\n"
+    ofs << "int Init" << ctx->GetCurModelIndex() << "(void *weight_buffer, int weight_size) {\n"
         << "  if (weight_buffer == NULL) {\n"
         << "    return RET_ERROR;\n"
         << "  }\n";
@@ -133,7 +133,7 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
         << "    size_t offset;\n"
         << "  };\n";
 
-    ofs << "  size_t " << ctx->weight_size_name() << " = PackWeightSize();\n";
+    ofs << "  size_t " << ctx->weight_size_name() << " = PackWeightSize" << ctx->GetCurModelIndex() << "();\n";
     size_t params_num = 0;
     size_t offset = 0;
     std::string params;
@@ -171,7 +171,7 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
     ofs << "    memset(" << ctx->weight_name() << ", 0, " << ctx->weight_size_name() << ");\n";
     ofs << "  }\n";
   } else {
-    ofs << "int Init(void *weight_buffer, int weight_size) {\n";
+    ofs << "int Init" << ctx->GetCurModelIndex() << "(void *weight_buffer, int weight_size) {\n";
     ofs << "  if (" << ctx->weight_name() << "== NULL) {\n";
     ofs << "    return RET_ERROR;\n  }\n";
     ofs << "  const size_t w_size = " << ctx->weight_buffer_size() << ";\n";
@@ -191,7 +191,7 @@ void CodeWeightExportFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext
     MS_LOG(DEBUG) << "weight file is unsupported to export when in Cortex M mode.";
     return;
   }
-  ofs << "int Export(const char* output_weight_file) {\n"
+  ofs << "int Export" << ctx->GetCurModelIndex() << "(const char* output_weight_file) {\n"
       << "  if (output_weight_file == NULL) {\n"
       << "    return RET_ERROR;\n"
       << "  }\n\n"

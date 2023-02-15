@@ -28,7 +28,9 @@ constexpr auto kParallelLaunch = "ParallelLaunch";
 
 // g_thread_pool and g_thread_num are global variable,
 // and g_thread_num is equal to GetCurrentThreadNum
-constexpr auto gThreadNum = "g_thread_num";
+extern const char *gThreadNum;
+void InitThread(int model_index);
+void FreeThread();
 
 // args represents the parameters required for operator to run
 constexpr auto kRunArgs = "args";
