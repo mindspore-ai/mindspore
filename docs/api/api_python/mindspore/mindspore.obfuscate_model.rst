@@ -14,7 +14,7 @@ mindspore.obfuscate_model
           - **model_inputs** (list[Tensor]) - 模型的推理输入，Tensor的值可以是随机的，和使用 :func:`mindspore.export` 接口类似。
           - **obf_ratio** (Union[str, float]) - 全模型算子的混淆比例，可取浮点数(0, 1]或者字符串"small"、"medium"、"large"。
           - **customized_func** (function) - 在自定义函数模式下需要设置的Python函数，用来控制混淆结构中的选择分支走向。它的返回值需要是bool类型，且是恒定的，用户可以参考不透明谓词进行设置。如果设置了 `customized_func` ，那么在使用 :func:`mindspore.load` 接口导入模型的时候，需要把这个函数也传入。
-          - **obf_password** (int) - 秘密口令，用于password模式，是一个大于0、小于等于int_64_max(9223372036854775807)的整数。如果用户设置了 `obf_password` ，那么在部署混淆模型的时候，需要在 :class:`mindspore.nn.GraphCell` 接口中传入 `obf_password` 。需要注意的是，如果用户同时设置了 `customized_func` 和 `obf_password` ，那么password模式将会被采用。
+          - **obf_random_seed** (int) - 混淆随机种子，用于确定混淆分支的分布和权重混淆系数，是一个取值范围为(0, 9223372036854775807]的整数。如果用户设置了 `obf_random_seed` ，那么在部署混淆模型的时候，需要在 :class:`mindspore.nn.GraphCell` 接口中传入 `obf_random_seed` 。需要注意的是，如果用户同时设置了 `customized_func` 和 `obf_random_seed` ，那么后一种模式将会被采用。
 
         - **kwargs** (dict) - 配置选项字典。
 
@@ -28,6 +28,6 @@ mindspore.obfuscate_model
         - **ValueError** - `original_model_path` 中的模型是已经混淆过的。
         - **ValueError** - `obf_config` 没有提供 `save_model_path` 。
         - **ValueError** - `obf_config` 没有提供 `obf_ratio` 。
-        - **ValueError** - `customized_func` 和 `obf_password` 都不在 `obf_config` 里面。
-        - **ValueError** - `obf_password` 的取值没有在(0, 9223372036854775807]内。
+        - **ValueError** - `customized_func` 和 `obf_random_seed` 都不在 `obf_config` 里面。
+        - **ValueError** - `obf_random_seed` 的取值没有在(0, 9223372036854775807]内。
         - **ValueError** - `file_path` 不存在或者不以 '.mindir' 结尾。

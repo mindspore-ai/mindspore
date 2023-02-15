@@ -45,7 +45,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor as _executor
 from mindspore.common.api import _MindsporeFunctionExecutor
 from mindspore.common.api import _get_parameter_layout
-from mindspore.common.api import _generate_pair_password
+from mindspore.common.api import _generate_branch_control_input
 from mindspore.common.initializer import initializer, One
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
@@ -61,7 +61,6 @@ from mindspore.parallel._parallel_serialization import _convert_to_list, _conver
 from mindspore.train._utils import read_proto
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir
 from ..ops.operations._opaque_predicate_registry import add_opaque_predicate, clean_funcs
-
 
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
                      "Int32": mstype.int32, "UInt32": mstype.uint32, "Int64": mstype.int64, "UInt64": mstype.uint64,
@@ -585,14 +584,15 @@ def _check_param_type(param_config, key, target_type, requested):
     if key in param_config:
         if not isinstance(param_config[key], target_type):
             raise TypeError("The type of {} must be {}, but got {}.".format(key, target_type, type(param_config[key])))
-        if key == 'obf_password':
+        if key == 'obf_random_seed':
             if param_config[key] > INT_64_MAX or param_config[key] <= 0:
                 raise ValueError(
-                    "'obf_password' must be in (0, INT_64_MAX({})], but got {}.".format(INT_64_MAX, param_config[key]))
+                    "'obf_random_seed' must be in (0, INT_64_MAX({})], but got {}.".format(INT_64_MAX,
+                                                                                           param_config[key]))
         return param_config[key]
     if requested:
         raise ValueError("The parameter {} is requested, but not got.".format(key))
-    if key == "obf_password":
+    if key == "obf_random_seed":
         return 0
     return None
 
@@ -614,10 +614,10 @@ def _check_customized_func(customized_func):
 
 
 def _check_obfuscate_params(obf_config):
-    """Check obfuscation parameters, including obf_password, obf_ratio, customized_func"""
-    if 'obf_password' not in obf_config.keys() and 'customized_func' not in obf_config.keys():
+    """Check obfuscation parameters, including obf_random_seed, obf_ratio, customized_func"""
+    if 'obf_random_seed' not in obf_config.keys() and 'customized_func' not in obf_config.keys():
         raise ValueError(
-            "At least one of 'obf_password' or 'customized_func' must be set in obf_config, but got None of them.")
+            "At least one of 'obf_random_seed' or 'customized_func' must be set in obf_config, but got None of them.")
     obfuscate_type = _check_param_type(obf_config, "type", str, False)
     if obfuscate_type not in (None, "dynamic"):
         raise ValueError("Only 'dynamic' type is supported by now, but got {}.".format(obfuscate_type))
@@ -633,8 +633,8 @@ def _check_obfuscate_params(obf_config):
     customized_funcs = []
     if 'customized_func' in obf_config.keys():
         customized_funcs.append(_check_customized_func(obf_config['customized_func']))
-    obf_password = _check_param_type(obf_config, "obf_password", int, False)
-    return obf_ratio, customized_funcs, obf_password
+    obf_random_seed = _check_param_type(obf_config, "obf_random_seed", int, False)
+    return obf_ratio, customized_funcs, obf_random_seed
 
 
 def obfuscate_model(obf_config, **kwargs):
@@ -658,10 +658,11 @@ def obfuscate_model(obf_config, **kwargs):
               function needs to ensure that its result is constant for any input. Users can refer to opaque
               predicates. If customized_func is set, then it should be passed to `load()` interface when loading
               obfuscated model.
-            - obf_password (int): A password used for password mode, which should be in (0, 9223372036854775807]. If
-              obf_password is set, then it should be passed to `nn.GraphCell()` interface when loading obfuscated
-              model. It should be noted that at least one of 'customized_func' or 'obf_password' should be set, and
-              'obf_password' mode would be applied if both of them are set.
+            - obf_random_seed (int): The random seed used for determine the distribution of confusion branches and the
+              weight confusion coefficient, which should be in (0, 9223372036854775807]. If `obf_random_seed` is set,
+              then it should be passed to :class:`nn.GraphCell()` interface when loading obfuscated model. It should be
+              noted that at least one of `customized_func` or `obf_random_seed` should be set, and the latter mode
+              would be applied if both of them are set.
 
         kwargs (dict): Configuration options dictionary.
 
@@ -670,24 +671,24 @@ def obfuscate_model(obf_config, **kwargs):
               Option: 'AES-GCM' | 'AES-CBC' | 'SM4-CBC'. Default: 'AES-GCM'.
 
     Raises:
-        TypeError: If obf_config is not a dict.
-        ValueError: If enc_key is passed and enc_mode is not in ["AES-GCM", "AES-CBC", "SM4-CBC"].
-        ValueError: If original_model_path is not provided in obf_config.
-        ValueError: If the model saved in original_model_path has been obfuscated.
-        ValueError: If save_model_path is not provided in obf_config.
-        ValueError: If obf_ratio is not provided in obf_config.
-        ValueError: If both customized_func and obf_password are not provided in obf_config.
-        ValueError: If both obf_password is not in (0, 9223372036854775807].
-        ValueError: If file_path is not exist or file_path is not end with '.mindir'.
+        TypeError: If `obf_config` is not a dict.
+        ValueError: If `enc_key` is passed and `enc_mode` is not in ["AES-GCM", "AES-CBC", "SM4-CBC"].
+        ValueError: If `original_model_path` is not provided in `obf_config`.
+        ValueError: If the model saved in `original_model_path` has been obfuscated.
+        ValueError: If `save_model_path` is not provided in `obf_config`.
+        ValueError: If `obf_ratio` is not provided in `obf_config`.
+        ValueError: If both `customized_func` and `obf_random_seed` are not provided in `obf_config`.
+        ValueError: If `obf_random_seed` is not in (0, 9223372036854775807].
+        ValueError: If `original_model_path` is not exist or `original_model_path` is not end with '.mindir'.
 
     Examples:
         >>> obf_config = {'original_model_path': "./net.mindir",
         ...          'save_model_path': "./obf_net",
         ...          'model_inputs': [input1, ],
-        ...          'obf_ratio': 0.1, 'obf_password': 173262358423}
+        ...          'obf_ratio': 0.1, 'obf_random_seed': 173262358423}
         >>> obfuscate_model(obf_config)
         >>> obf_func = load("obf_net.mindir")
-        >>> obf_net = nn.GraphCell(obf_func, obf_password=173262358423)
+        >>> obf_net = nn.GraphCell(obf_func, obf_random_seed=173262358423)
         >>> print(obf_net(input1).asnumpy())
     """
     if not isinstance(obf_config, dict):
@@ -707,18 +708,18 @@ def obfuscate_model(obf_config, **kwargs):
         if -1 in item.shape:
             raise ValueError(
                 "Dynamic shape input is not supported now, but got the shape of inputs: {}.".format(item.shape))
-    obf_ratio, customized_funcs, obf_password = _check_obfuscate_params(obf_config)
-    if customized_funcs and obf_password > 0:
-        logger.warning("Although 'customized_func' and 'obf_password' are set, the 'obf_password' mode would be"
-                       " applied, remember to set 'obf_password' when loading obfuscated model.")
+    obf_ratio, customized_funcs, obf_random_seed = _check_obfuscate_params(obf_config)
+    if customized_funcs and obf_random_seed > 0:
+        logger.warning("Although 'customized_func' and 'obf_random_seed' are set, the 'obf_random_seed' mode would be"
+                       " applied, remember to set 'obf_random_seed' when loading obfuscated model.")
 
-    if obf_password == 0:  # apply customized_func mode
+    if obf_random_seed == 0:  # apply customized_func mode
         clean_funcs()
         for func in customized_funcs:
             add_opaque_predicate(func.__name__, func)
-        append_password = 0
+        branch_control_input = 0
     else:  # apply password mode
-        obf_password, append_password = _generate_pair_password(obf_password)
+        branch_control_input = _generate_branch_control_input(obf_random_seed)
 
     if 'enc_key' in kwargs.keys():
         enc_key = Validator.check_isinstance('enc_key', kwargs.get('enc_key'), bytes)
@@ -729,18 +730,18 @@ def obfuscate_model(obf_config, **kwargs):
                 raise ValueError(
                     "Only MindIR files that encrypted with 'AES-GCM', 'AES-CBC' or 'SM4-CBC' is supported for"
                     "obfuscate_model(), but got {}.".format(enc_mode))
-        obf_graph = dynamic_obfuscate_mindir(file_name=file_path, obf_ratio=obf_ratio, obf_password=obf_password,
-                                             append_password=append_password, dec_key=enc_key, key_len=len(enc_key),
+        obf_graph = dynamic_obfuscate_mindir(file_name=file_path, obf_ratio=obf_ratio,
+                                             branch_control_input=branch_control_input, dec_key=enc_key,
+                                             key_len=len(enc_key),
                                              dec_mode=enc_mode)
     else:
-        obf_graph = dynamic_obfuscate_mindir(file_name=file_path, obf_ratio=obf_ratio, obf_password=obf_password,
-                                             append_password=append_password)
+        obf_graph = dynamic_obfuscate_mindir(file_name=file_path, obf_ratio=obf_ratio,
+                                             branch_control_input=branch_control_input)
 
     obf_net = nn.GraphCell(obf_graph)
-    if obf_password != 0:
-        y_tensor = Tensor(np.ones((1, 1)).astype(np.int32))
+    if obf_random_seed != 0:
         append_y_tensor = Tensor(np.ones((1, 1)).astype(np.int32))
-        model_inputs += [y_tensor, append_y_tensor]
+        model_inputs += [append_y_tensor,]
     export(obf_net, *model_inputs, file_name=saved_path, file_format="MINDIR", **kwargs)
 
 
@@ -1195,10 +1196,11 @@ def export(net, *inputs, file_name, file_format, **kwargs):
                 function needs to ensure that its result is constant for any input. Users can refer to opaque
                 predicates. If customized_func is set, then it should be passed to `load()` interface when loading
                 obfuscated model.
-              - obf_password (int): A password used for password mode, which should be in (0, 9223372036854775807]. If
-                obf_password is set, then it should be passed to `nn.GraphCell()` interface when loading obfuscated
-                model. It should be noted that at least one of 'customized_func' or 'obf_password' should be set, and
-                'obf_password' mode would be applied if both of them are set.
+              - obf_random_seed (int): The random seed used for determine the distribution of confusion branches and the
+                weight confusion coefficient, which should be in (0, 9223372036854775807]. If `obf_random_seed` is set,
+                then it should be passed to :class:`nn.GraphCell()` interface when loading obfuscated model. It should
+                be noted that at least one of `customized_func` or `obf_random_seed` should be set, and the latter mode
+                would be applied if both of them are set.
 
             - incremental (bool): export MindIR incrementally.
 
@@ -1483,16 +1485,16 @@ def _set_obfuscate_config(**kwargs):
             raise ValueError(
                 "Only MindIR files that encrypted with 'AES-GCM', 'AES-CBC' or 'SM4-CBC' is supported for"
                 "obfuscation, but got {}.".format(enc_mode))
-    obf_ratio, customized_funcs, obf_password = _check_obfuscate_params(kwargs.get('obf_config'))
-    if customized_funcs and obf_password > 0:
-        logger.warning("Although 'customized_func' and 'obf_password' are set, the 'obf_password' mode would be"
-                       " applied, remember to set 'obf_password' when loading obfuscated model.")
+    obf_ratio, customized_funcs, obf_random_seed = _check_obfuscate_params(kwargs.get('obf_config'))
+    if customized_funcs and obf_random_seed > 0:
+        logger.warning("Although 'customized_func' and 'obf_random_seed' are set, the 'obf_random_seed' mode would be"
+                       " applied, remember to set 'obf_random_seed' when loading obfuscated model.")
 
-    if obf_password == 0:  # apply customized_func mode
+    if obf_random_seed == 0:  # apply customized_func mode
         clean_funcs()
         for func in customized_funcs:
             add_opaque_predicate(func.__name__, func)
-    _executor.obfuscate_config = {'obf_ratio': obf_ratio, 'obf_password': obf_password}
+    _executor.obfuscate_config = {'obf_ratio': obf_ratio, 'obf_random_seed': obf_random_seed}
 
 
 def _save_mindir(net, file_name, *inputs, **kwargs):

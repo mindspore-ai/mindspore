@@ -587,15 +587,14 @@ py::bytes GraphExecutorPy::GetFuncGraphProto(const std::string &phase, const std
 }
 
 py::bytes GraphExecutorPy::GetObfuscateFuncGraphProto(const std::string &phase, const bool &incremental,
-                                                      const float obf_ratio, const int obf_password,
-                                                      const int append_password) {
+                                                      const float obf_ratio, const int branch_control_input) {
   FuncGraphPtr fg_ptr = GetFuncGraph(phase);
   // obfuscate model
-  if (obf_password == 0) {
+  if (branch_control_input == 0) {
     (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().set_func_names();
     MS_LOG(DEBUG) << "[GetObfuscateFuncGraphProto] set customized function names finished";
   }
-  mindspore::DynamicObfuscator dynamic_obfuscator(obf_ratio, obf_password, append_password);
+  mindspore::DynamicObfuscator dynamic_obfuscator(obf_ratio, branch_control_input);
   mindspore::FuncGraphPtr obfuscated_graph = dynamic_obfuscator.ObfuscateMindIR(fg_ptr);
 
   std::string proto_str = GetBinaryProtoString(obfuscated_graph, incremental);
@@ -1759,14 +1758,13 @@ FuncGraphPtr LoadMindIR(const std::string &file_name, const char *dec_key, const
   return func_graph;
 }
 
-FuncGraphPtr DynamicObfuscateMindIR(const std::string &file_name, float obf_ratio, int obf_password,
-                                    int append_password, char *dec_key, const size_t key_len,
-                                    const std::string &dec_mode) {
-  if (obf_password == 0) {
+FuncGraphPtr DynamicObfuscateMindIR(const std::string &file_name, float obf_ratio, int branch_control_input,
+                                    char *dec_key, const size_t key_len, const std::string &dec_mode) {
+  if (branch_control_input == 0) {
     (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().set_func_names();
     MS_LOG(DEBUG) << "[DynamicObfuscateMindIR] set function names finished.";
   }
-  mindspore::DynamicObfuscator dynamic_obfuscator(obf_ratio, obf_password, append_password);
+  mindspore::DynamicObfuscator dynamic_obfuscator(obf_ratio, branch_control_input);
   MindIRLoader mindir_loader(false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode, false);
   FuncGraphPtr func_graph = mindir_loader.LoadMindIR(file_name);
   if (func_graph == nullptr) {
