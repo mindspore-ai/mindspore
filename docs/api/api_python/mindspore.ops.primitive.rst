@@ -457,7 +457,6 @@ Tensor创建
     mindspore.ops.ParameterizedTruncatedNormal
     mindspore.ops.RandomCategorical
     mindspore.ops.RandomChoiceWithMask
-    mindspore.ops.RandomGamma
     mindspore.ops.RandomPoisson
     mindspore.ops.Randperm
     mindspore.ops.StandardLaplace
