@@ -480,6 +480,8 @@ class Custom(ops.PrimitiveWithInfer):
             self.add_prim_attr("fn_id", func_id)
 
         self.out_shape = out_shape
+        if self.out_shape is None and self.func_type == "aot":
+            self.add_prim_attr("cpp_infer_shape", True)
         self.out_dtype = out_dtype
         self.bprop = bprop
         self.fake_output = False
@@ -547,7 +549,12 @@ class Custom(ops.PrimitiveWithInfer):
                 logger.warning("{}, 'out_dtype' is an empty tuple. Add a placeholder instead. "
                                "Not recommend to use it as it could be any uninitialized data.".format(self.log_prefix))
                 infer_dtype = mstype.int32
-
+        if self.func_type == "aot":
+            if infer_shape is None:
+                logger.warning("{}, 'out_shape' is None. Add a placeholder instead. "
+                               "A CPP version of infer shape function is required "
+                               "in this case.".format(self.log_prefix))
+                infer_shape = (1,)
         # after all automatic infer information fulfillment, throw error if infer_shape/infer_dtype is still None
         if not isinstance(infer_shape, (tuple, list)):
             raise TypeError("{}, 'out_shape' must be one of [tuple, list, function], but got {}"
