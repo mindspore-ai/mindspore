@@ -68,8 +68,7 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
         // scenario 1: map multi-processing, subprocess stop first and will get none
         // scenario 2: thread mode, user pyfunc return none
         if (ret_py_obj.is_none()) {
-          MS_LOG(INFO) << "Expect pyfunc to return numpy array(s), but got None. If python_multiprocessing is "
-                          "True, it maybe due to pyfunc execution timeout.";
+          MS_LOG(INFO) << "Maybe the multi workers of map operation had stopped, so got None from the pyfunc.";
           goto TimeoutError;
         } else if (py::isinstance<py::tuple>(ret_py_obj)) {
           // In case of a n-m mapping, the return value will be a tuple of numpy arrays
