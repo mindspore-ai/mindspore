@@ -22,6 +22,7 @@ import operator
 import numpy as onp
 
 from mindspore import context
+from mindspore import ops
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.common.seed import get_seed
@@ -974,9 +975,7 @@ def empty(shape, dtype=mstype.float32):
         Tensor(shape=[2, 3], dtype=Float32, value=
         <uninitialized>)
     """
-    shape = _check_shape(shape)
-    dtype = _check_dtype(dtype)
-    return empty_compile(dtype, shape)
+    return ops.zeros(shape, dtype)
 
 
 def _get_shape(array_like):
