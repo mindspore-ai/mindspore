@@ -25,7 +25,7 @@ class NetMatrixPower(nn.Cell):
         return ops.matrix_power(x, n)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
