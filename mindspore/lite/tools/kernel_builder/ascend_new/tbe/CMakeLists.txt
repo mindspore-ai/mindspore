@@ -46,7 +46,7 @@ if(UNIX)
 endif()
 
 message(STATUS "OUTPUT_FILES=${OUTPUT_FILES}")
-if "x${OUTPUT_FILES}" STREQUAL "x")
+if("x${OUTPUT_FILES}" STREQUAL "x")
     add_custom_target(config_json
             COMMAND echo "tbe_aic_ops_info.ini and tbe_aiv_ops_info.ini not exist.")
     return(0)
