@@ -4201,7 +4201,7 @@ def sort(input, dim=-1, descending=False):
     r"""
     Sorts the elements of the input tensor along a given dimension in ascending order by value.
     """
-    return P.Sort(axis=dim, descending=descending)(input)
+    return F.sort(input, axis=dim, descending=descending)
 
 
 def argsort(input_x, axis=-1, descending=False):
