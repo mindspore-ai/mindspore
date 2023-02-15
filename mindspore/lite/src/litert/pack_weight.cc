@@ -241,7 +241,7 @@ void PackWeight::FreeFp16ToFp32Data(ModelConstWeight *weight) {
   weight->fp16_fp32_data.clear();
 }
 
-void PackWeight::FreePackWeight(std::string id) {
+void PackWeight::FreePackWeight(std::string id, bool free_all) {
   std::lock_guard<std::mutex> lock(mtx_weight_);
   MS_LOG(INFO) << "model weight size: " << model_weights_.size() << " | shared buf size: " << shared_bufs_.size();
   if (model_weights_.find(id) == model_weights_.end() || shared_bufs_.find(id) == shared_bufs_.end()) {
@@ -267,7 +267,9 @@ void PackWeight::FreePackWeight(std::string id) {
     delete model_weight;
     model_weight = nullptr;
   }
-  model_weights_.erase(id);
+  if (!free_all) {
+    model_weights_.erase(id);
+  }
   shared_bufs_.erase(id);
   MS_LOG(INFO) << "FreePackWeight done.";
 }
@@ -280,8 +282,9 @@ PackWeight::~PackWeight() {
   }
   for (auto &numa_item : model_weights_) {
     std::string id = numa_item.first;
-    FreePackWeight(id);
+    FreePackWeight(id, true);
   }
+  model_weights_.clear();
   MS_LOG(INFO) << "~PackWeight() end";
 }
 }  // namespace mindspore::lite

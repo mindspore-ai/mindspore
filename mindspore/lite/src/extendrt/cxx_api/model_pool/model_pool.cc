@@ -1119,6 +1119,10 @@ ModelPool::~ModelPool() {
     allocator_->Free(graph_buf_);
     graph_buf_ = nullptr;
   }
+  if (allocator_ == nullptr && graph_buf_ != nullptr) {
+    delete[] graph_buf_;
+    graph_buf_ = nullptr;
+  }
   MS_LOG(INFO) << "delete model worker.";
   for (auto &item : all_model_workers_) {
     auto model_workers = item.second;

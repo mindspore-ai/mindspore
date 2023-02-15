@@ -74,10 +74,8 @@ class MemOperator {
 
 class DynamicMemManager {
  public:
-  static DynamicMemManager *GetInstance() {
-    static DynamicMemManager instance;
-    return &instance;
-  }
+  DynamicMemManager() = default;
+  ~DynamicMemManager() = default;
 
   std::shared_ptr<MemOperator> GetMemOperator(const int node_id);
 

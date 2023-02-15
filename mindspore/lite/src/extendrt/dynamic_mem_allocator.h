@@ -37,7 +37,8 @@ class DynamicMemAllocator : public Allocator {
   int DecRefCount(void *ptr, int ref_count) override;
 
  private:
-  DynamicMemManager mem_manager_;
+  std::mutex allocator_mutex_;
+  std::shared_ptr<DynamicMemManager> mem_manager_ = nullptr;
   std::shared_ptr<MemOperator> mem_oper_;
 };
 }  // namespace mindspore
