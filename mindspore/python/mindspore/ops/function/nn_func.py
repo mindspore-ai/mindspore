@@ -2676,6 +2676,7 @@ def pad(input_x, padding, mode='constant', value=None):
         TypeError: If `paddings` is not an int of tuple or int of list.
         TypeError: If `input_x` is not a Tensor.
         ValueError: If length of `padding` is not even.
+        ValueError: If length of `padding` is greater than 6.
         ValueError: If mode is not "constant" and value not None.
 
     Supported Platforms:
@@ -2728,6 +2729,8 @@ def pad(input_x, padding, mode='constant', value=None):
         if isinstance(value, (float, int)):
             value = scalar_to_tensor_(value, input_x.dtype)
     else:
+        if len(padding) > 6:
+            raise ValueError(f"For 'pad', the padding must be less than or equal to 6, but got {len(padding)}.")
         if value is not None:
             raise ValueError(f"For 'pad', the padding mode '{mode}' can not set value, but got value {value}.")
         if mode == "replicate":
