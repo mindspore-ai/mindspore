@@ -885,12 +885,12 @@ class Tensor(Tensor_):
             axis = ()
         return tensor_operator_registry.get('any')(keep_dims)(self, axis)
 
-    def atan2(self, y):
+    def atan2(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.atan2`.
         """
         self._init_check()
-        return tensor_operator_registry.get('atan2')(self, y)
+        return tensor_operator_registry.get('atan2')(self, other)
 
     def baddbmm(self, batch1, batch2, beta=1, alpha=1):
         r"""
@@ -964,26 +964,26 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get("t")(self)
 
-    def bitwise_and(self, x):
+    def bitwise_and(self, other):
         """
         For details, please refer to :func:`mindspore.ops.bitwise_and`.
         """
         self._init_check()
-        return tensor_operator_registry.get('bitwise_and')(self, x)
+        return tensor_operator_registry.get('bitwise_and')(self, other)
 
-    def bitwise_or(self, x):
+    def bitwise_or(self, other):
         """
         For details, please refer to :func:`mindspore.ops.bitwise_or`.
         """
         self._init_check()
-        return tensor_operator_registry.get('bitwise_or')(self, x)
+        return tensor_operator_registry.get('bitwise_or')(self, other)
 
-    def bitwise_xor(self, x):
+    def bitwise_xor(self, other):
         """
         For details, please refer to :func:`mindspore.ops.bitwise_xor`.
         """
         self._init_check()
-        return tensor_operator_registry.get('bitwise_xor')(self, x)
+        return tensor_operator_registry.get('bitwise_xor')(self, other)
 
     def bitwise_left_shift(self, other):
         """

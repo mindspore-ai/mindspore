@@ -2179,12 +2179,12 @@ def arctan(x):
     return atan_(x)
 
 
-def arctan2(x, other):
+def arctan2(input, other):
     r"""
     For details, please refer to :func:`mindspore.ops.atan2`.
     """
     _atan2 = _get_cache_prim(P.Atan2)()
-    return _atan2(x, other)
+    return _atan2(input, other)
 
 
 def polar(abs, angle):  # pylint: disable=redefined-outer-name
@@ -2541,263 +2541,263 @@ def atanh(x):
     return atanh_(x)
 
 
-def atan2(x, y):
+def atan2(input, other):
     r"""
-    Returns arctangent of x/y element-wise.
+    Returns arctangent of input/other element-wise.
 
     It returns :math:`\theta\ \in\ [-\pi, \pi]`
-    such that :math:`x = r*\sin(\theta), y = r*\cos(\theta)`, where :math:`r = \sqrt{x^2 + y^2}`.
+    such that :math:`input = r*\sin(\theta), other = r*\cos(\theta)`, where :math:`r = \sqrt{input^2 + other^2}`.
 
-    Args of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    Args of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, the lower precision data type will be converted to
     the relatively highest precision data type.
 
     Args:
-        x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
             The data type should be one of the following types: float16, float32, float64
-        y (Tensor): The input tensor. It has the same shape with `x`.
+        other (Tensor): The input tensor. It has the same shape with `input`.
 
     Returns:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is same as `x`.
+        Tensor, the shape is the same as the one after broadcasting,and the data type is same as `input`.
 
     Raises:
-        TypeError: If `x` or `y` is not a Tensor.
-        RuntimeError: If the data type of `x` and `y` conversion of Parameter is required
+        TypeError: If `input` or `other` is not a Tensor.
+        RuntimeError: If the data type of `input` and `other` conversion of Parameter is required
                       when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([0, 1]), mindspore.float32)
-        >>> y = Tensor(np.array([1, 1]), mindspore.float32)
-        >>> output = ops.atan2(x, y)
+        >>> input = Tensor(np.array([0, 1]), mindspore.float32)
+        >>> other = Tensor(np.array([1, 1]), mindspore.float32)
+        >>> output = ops.atan2(input, other)
         >>> print(output)
         [0.        0.7853982]
     """
     _atan2 = _get_cache_prim(P.Atan2)()
-    return _atan2(x, y)
+    return _atan2(input, other)
 
 
-def bitwise_and(x, y):
+def bitwise_and(input, other):
     r"""
     Returns bitwise `and` of two tensors element-wise.
 
     .. math::
 
-        out_i = x_{i} \wedge y_{i}
+        out_i = input_{i} \wedge other_{i}
 
-    Args of `x` and `y` comply with the implicit type conversion rules to
+    Args of `input` and `other` comply with the implicit type conversion rules to
     make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
-        x (Tensor): The first input tensor with shape :math:`(N,*)` where :math:`*` means
+        input (Tensor): The first input tensor with shape :math:`(N,*)` where :math:`*` means
             any number of additional dimensions.
-        y (Tensor): The second input tensor with the same dtype as `x`.
+        other (Tensor): The second input tensor with the same dtype as `input`.
 
     Returns:
-        Tensor, has the same type as the `x`.
+        Tensor, has the same type as the `input`.
 
     Raises:
-        TypeError: If `x` or `y` is not a Tensor.
+        TypeError: If `input` or `other` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
-        >>> y = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
-        >>> output = ops.bitwise_and(x, y)
+        >>> input = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
+        >>> other = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
+        >>> output = ops.bitwise_and(input, other)
         >>> print(output)
         [ 0  0  1 -1  1  0  1]
     """
-    return bitwise_and_(x, y)
+    return bitwise_and_(input, other)
 
 
-def bitwise_or(x, y):
+def bitwise_or(input, other):
     r"""
     Returns bitwise `or` of two tensors element-wise.
 
     .. math::
 
-        out_i = x_{i} \mid y_{i}
+        out_i = input_{i} \mid other_{i}
 
-    Args of `x` and `y` comply with the implicit type conversion rules to
+    Args of `input` and `other` comply with the implicit type conversion rules to
     make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
-        x (Tensor): The first input tensor with shape :math:`(N,*)` where :math:`*` means
+        input (Tensor): The first input tensor with shape :math:`(N,*)` where :math:`*` means
             any number of additional dimensions.
-        y (Tensor): The second input tensor with the same dtype as `x`.
+        other (Tensor): The second input tensor with the same dtype as `input`.
 
     Returns:
-        Tensor, has the same type as the `x`.
+        Tensor, has the same type as the `input`.
 
     Raises:
-        TypeError: If `x` or `y` is not a Tensor.
+        TypeError: If `input` or `other` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
-        >>> y = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
-        >>> output = ops.bitwise_or(x, y)
+        >>> input = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
+        >>> other = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
+        >>> output = ops.bitwise_or(input, other)
         >>> print(output)
         [ 0  1  1 -1 -1  3  3]
     """
-    return bitwise_or_(x, y)
+    return bitwise_or_(input, other)
 
 
-def bitwise_xor(x, y):
+def bitwise_xor(input, other):
     r"""
     Returns bitwise `xor` of two tensors element-wise.
 
     .. math::
 
-        out_i = x_{i} \oplus y_{i}
+        out_i = input_{i} \oplus other_{i}
 
-    Args of `x` and `y` comply with the implicit type conversion rules to
+    Args of `input` and `other` comply with the implicit type conversion rules to
     make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
-        x (Tensor): The first input tensor with shape :math:`(N,*)` where :math:`*` means
+        input (Tensor): The first input tensor with shape :math:`(N,*)` where :math:`*` means
             any number of additional dimensions.
-        y (Tensor): The second input tensor with the same dtype as `x`.
+        other (Tensor): The second input tensor with the same dtype as `input`.
 
     Returns:
-        Tensor, has the same type as the `x`.
+        Tensor, has the same type as the `input`.
 
     Raises:
-        TypeError: If `x` or `y` is not a Tensor.
+        TypeError: If `input` or `other` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
-        >>> y = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
-        >>> output = ops.bitwise_xor(x, y)
+        >>> input = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
+        >>> other = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
+        >>> output = ops.bitwise_xor(input, other)
         >>> print(output)
         [ 0  1  0  0 -2  3  2]
     """
-    return bitwise_xor_(x, y)
+    return bitwise_xor_(input, other)
 
 
-def bitwise_left_shift(x, other):
+def bitwise_left_shift(input, other):
     r"""
-    Calculates the left arithmetic shift of `x` by `other` bits.
+    Calculates the left arithmetic shift of `input` by `other` bits.
 
     .. math::
 
         \begin{aligned}
-        &out_{i} =x_{i} << other_{i}
+        &out_{i} =input_{i} << other_{i}
         \end{aligned}
 
     Args:
-        x (Union[Tensor, Scalar]): The input to be left shifted.
+        input (Union[Tensor, Scalar]): The input to be left shifted.
         other (Union[Tensor, Scalar]): The number of bit to be applied on left arithmetic shift.
 
     Returns:
         Tensor, the result after bitwise left shift.
 
     Raises:
-        TypeError: If neither `x` nor `other` is a tensor.
-        TypeError: If either `x` or `other` is not an int or a tensor of dtype: int or uint.
+        TypeError: If neither `input` nor `other` is a tensor.
+        TypeError: If either `input` or `other` is not an int or a tensor of dtype: int or uint.
 
     Supported Platforms:
         ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([1024, 2]), mindspore.int16)
-        >>> y = Tensor(np.array([2]), mindspore.int16)
-        >>> output = ops.bitwise_left_shift(x, y)
+        >>> input = Tensor(np.array([1024, 2]), mindspore.int16)
+        >>> other = Tensor(np.array([2]), mindspore.int16)
+        >>> output = ops.bitwise_left_shift(input, other)
         >>> print(output)
         [4096    8]
     """
-    if isinstance(x, numbers.Number) and isinstance(other, numbers.Number):
+    if isinstance(input, numbers.Number) and isinstance(other, numbers.Number):
         raise TypeError(f"For 'bitwise_left_shift', at least one of the inputs should be a Tensor.")
 
     cast = ops.Cast()
     white_list = [mstype.int8, mstype.int16, mstype.int32, mstype.int64,
                   mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
-    if isinstance(x, numbers.Number):
+    if isinstance(input, numbers.Number):
         _dtype = other.dtype
-        if not isinstance(x, int):
-            raise TypeError(f"For 'bitwise_left_shift', 'x' must be an integer, but got x:{type(x)}.")
+        if not isinstance(input, int):
+            raise TypeError(f"For 'bitwise_left_shift', 'input' must be an integer, but got input:{type(input)}.")
         if _dtype not in white_list:
             raise TypeError(f"For 'bitwise_left_shift', 'other' must be a Tensor of int or uint, but got {_dtype}.")
-        x = cast(x, other.dtype)
+        input = cast(input, other.dtype)
     elif isinstance(other, numbers.Number):
-        _dtype = x.dtype
+        _dtype = input.dtype
         if not isinstance(other, int):
             raise TypeError(f"For 'bitwise_left_shift', 'other' must be an integer, but got other:{type(other)}.")
         if _dtype not in white_list:
-            raise TypeError(f"For 'bitwise_left_shift', 'x' must be a Tensor of int or uint, but got {_dtype}.")
-    other = cast(other, x.dtype)
+            raise TypeError(f"For 'bitwise_left_shift', 'input' must be a Tensor of int or uint, but got {_dtype}.")
+    other = cast(other, input.dtype)
     ls = ops.LeftShift()
-    return ls(x, other)
+    return ls(input, other)
 
 
-def bitwise_right_shift(x, other):
+def bitwise_right_shift(input, other):
     r"""
-    Calculates the right arithmetic shift of `x` by `other` bits.
+    Calculates the right arithmetic shift of `input` by `other` bits.
 
     .. math::
 
         \begin{aligned}
-        &out_{i} =x_{i} >> y_{i}
+        &out_{i} =input_{i} >> other_{i}
         \end{aligned}
 
     Args:
-        x (Union[Tensor, Scalar]): The input to be right shifted.
+        input (Union[Tensor, Scalar]): The input to be right shifted.
         other (Union[Tensor, Scalar]): The number of bit to be applied on right arithmetic shift.
 
     Returns:
         Tensor, the result after bitwise right shift.
 
     Raises:
-        TypeError: If neither `x` nor `other` is a tensor.
-        TypeError: If either `x` or `other` is not an int or a tensor of dtype: int or uint.
+        TypeError: If neither `input` nor `other` is a tensor.
+        TypeError: If either `input` or `other` is not an int or a tensor of dtype: int or uint.
 
     Supported Platforms:
         ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([1024, 2]), mindspore.int16)
-        >>> y = Tensor(np.array([2]), mindspore.int16)
-        >>> output = ops.bitwise_right_shift(x, y)
+        >>> input = Tensor(np.array([1024, 2]), mindspore.int16)
+        >>> other = Tensor(np.array([2]), mindspore.int16)
+        >>> output = ops.bitwise_right_shift(input, other)
         >>> print(output)
         [256   0]
     """
-    if isinstance(x, numbers.Number) and isinstance(other, numbers.Number):
+    if isinstance(input, numbers.Number) and isinstance(other, numbers.Number):
         raise TypeError(f"For 'bitwise_left_shift', at least one of the inputs should be a Tensor.")
     cast = ops.Cast()
     white_list = [mstype.int8, mstype.int16, mstype.int32, mstype.int64,
                   mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
-    if isinstance(x, numbers.Number):
+    if isinstance(input, numbers.Number):
         _dtype = other.dtype
-        if not isinstance(x, int):
-            raise TypeError(f"For 'bitwise_left_shift', 'x' must be an integer, but got x:{type(x)}.")
+        if not isinstance(input, int):
+            raise TypeError(f"For 'bitwise_left_shift', 'input' must be an integer, but got input:{type(input)}.")
         if _dtype not in white_list:
             raise TypeError(f"For 'bitwise_left_shift', 'other' must be a Tensor of int or uint, but got {_dtype}.")
-        x = cast(x, other.dtype)
+        input = cast(input, other.dtype)
     elif isinstance(other, numbers.Number):
-        _dtype = x.dtype
+        _dtype = input.dtype
         if not isinstance(other, int):
             raise TypeError(f"For 'bitwise_left_shift', 'other' must be an integer, but got other:{type(other)}.")
         if _dtype not in white_list:
-            raise TypeError(f"For 'bitwise_left_shift', 'x' must be a Tensor of int or uint, but got {_dtype}.")
-    other = cast(other, x.dtype)
+            raise TypeError(f"For 'bitwise_left_shift', 'input' must be a Tensor of int or uint, but got {_dtype}.")
+    other = cast(other, input.dtype)
     rs = ops.RightShift()
-    return rs(x, other)
+    return rs(input, other)
 
 
 def inv(x):
