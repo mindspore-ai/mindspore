@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 from mindspore.common import Tensor
+from mindspore.ops import operations as P
 
 from mindspore.numpy.math_ops import _apply_tensor_op
 from mindspore.numpy.array_creations import zeros, ones, asarray
@@ -489,6 +490,7 @@ def isclose(a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         >>> print(np.isclose(a, b, equal_nan=True))
         [ True  True False False  True  True]
     """
+    a, b = _to_tensor(a, b)
     is_close = P.IsClose(rtol=rtol, atol=atol, equal_nan=equal_nan)
     return is_close(a, b)
 
