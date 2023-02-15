@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,11 @@
 #include "register/op_tiling.h"
 #include "nlohmann/json.hpp"
 #include "runtime/device/memory_manager.h"
+#include "plugin/device/ascend/hal/common/platform_info_util.h"
+#include "tiling/op_tiling_rt2.h"
+#include "graph/utils/node_utils.h"
 
-namespace mindspore {
-namespace kernel {
+namespace mindspore::kernel {
 using TbeTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::TbeTaskInfo>;
 using tbe::KernelManager;
 using AddressPtrList = std::vector<mindspore::kernel::AddressPtr>;
@@ -121,7 +123,13 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   auto ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
   MS_EXCEPTION_IF_NULL(ge_node);
   auto ge_op = converter.GeNodeToGeOperatorAdapter(ge_node);
-  auto ret = optiling::OpParaCalculateV2(ge_op, op_run_info_v2);
+  auto platform_infos = device::ascend::PlatformInfoUtil::GetInstance().platform_infos();
+  ::ge::graphStatus ret;
+  if (::optiling::EnableRt2Tiling(ge_node->GetOpDesc())) {
+    ret = optiling::AicoreRtParseAndTiling(ge_op, platform_infos, op_run_info_v2);
+  } else {
+    ret = optiling::OpParaCalculateV2(ge_op, op_run_info_v2);
+  }
   if (ret != ::ge::GRAPH_SUCCESS) {
     MS_LOG(EXCEPTION) << "The node: " << cnode->fullname_with_scope() << " compute tiling failed!";
   }
@@ -143,7 +151,11 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     converter.UpdateWorkspace(ge_node, workspace_size_list);
 
     optiling::utils::OpRunInfo atomic_op_info(-1, true, 0);
-    ret = optiling::OpAtomicCalculateV2(*ge_node, atomic_op_info);
+    if (::optiling::EnableAtomicRt2Tiling(ge_node->GetOpDesc())) {
+      ret = optiling::AtomicRtParseAndTiling(ge_op, platform_infos, op_run_info_v2);
+    } else {
+      ret = optiling::OpAtomicCalculateV2(*ge_node, atomic_op_info);
+    }
     if (ret != ::ge::GRAPH_SUCCESS) {
       MS_LOG(EXCEPTION) << "The node: " << cnode->fullname_with_scope() << " compute atomic tiling failed!";
     }
@@ -319,5 +331,4 @@ void DynamicTbeKernelMod::InitAtomicOps(const optiling::utils::OpRunInfo &op_inf
   workspace_size_list_.resize(workspace_size_list.size());
   std::transform(workspace_size_list.begin(), workspace_size_list.end(), workspace_size_list_.begin(), LongToSize);
 }
-}  // namespace kernel
-}  // namespace mindspore
+}  // namespace mindspore::kernel

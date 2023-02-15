@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,6 +130,26 @@ ShapeVector OpTilingCalculateAdapter::UpdateShape(const ShapeVector &shape, cons
   return shape;
 }
 
+void OpTilingCalculateAdapter::ConstructNodeInputAnchor(const ::ge::NodePtr &node, ::ge::ComputeGraphPtr *ge_graph) {
+  MS_EXCEPTION_IF_NULL(ge_graph);
+  MS_EXCEPTION_IF_NULL(node);
+  for (int i = 0; i < SizeToInt(node->GetOpDesc()->GetAllInputsSize()); ++i) {
+    auto node_type = node->GetType();
+    auto op_name_tmp = node_type + "_input_" + std::to_string(i);
+    auto op_desc_tmp = std::make_shared<::ge::OpDesc>(op_name_tmp, op_name_tmp);
+    MS_EXCEPTION_IF_NULL(op_desc_tmp);
+    ::ge::GeTensorDesc output_tensor;
+    op_desc_tmp->AddOutputDesc("y", output_tensor);
+    auto tmp_node = (*ge_graph)->AddNode(op_desc_tmp);
+    if (tmp_node->Init() != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Construct tmp node failed.";
+    }
+    if (node->AddLinkFromForParse(tmp_node) != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Construct node " << node_type << "'s input failed, input idx:" << i;
+    }
+  }
+}
+
 void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(op_desc);
@@ -163,6 +183,7 @@ void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ::
     ge_tensor_desc.SetOriginShape(::ge::GeShape(ms_ori_tmp_shape));
     ge_tensor_desc.SetName(input_name);
     (void)(*op_desc)->AddInputDesc(input_name, ge_tensor_desc);
+    (*op_desc)->AppendIrInput(input_name, ::ge::IrInputType::kIrInputRequired);
   }
 }
 
@@ -193,6 +214,7 @@ void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, :
     ge_tensor_desc.SetOriginShape(::ge::GeShape(ms_ori_tmp_shape));
     ge_tensor_desc.SetName(output_name);
     (void)(*op_desc)->AddOutputDesc(output_name, ge_tensor_desc);
+    (*op_desc)->AppendIrOutput(output_name, ::ge::IrOutputType::kIrOutputRequired);
   }
 }
 
@@ -250,6 +272,7 @@ void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPt
       MS_LOG(EXCEPTION) << "Currently not support to convert the attr '" << kernel_attr_name
                         << "' with value: " << value->ToString() << ", perhaps you should add more supported type.";
     }
+    (*op_desc)->AppendIrAttrName(kernel_attr_name);
   }
 }
 
@@ -481,7 +504,9 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(ge_graph);
   MS_EXCEPTION_IF_NULL(*ge_graph);
-  return CreateGeNode(node, ge_graph, depend_tensor_map, op_compile_info);
+  auto ge_node = CreateGeNode(node, ge_graph, depend_tensor_map, op_compile_info);
+  ConstructNodeInputAnchor(ge_node, ge_graph);
+  return ge_node;
 }
 
 ::ge::Operator OpTilingCalculateAdapter::AnfNodeToGeOperatorAdapter(

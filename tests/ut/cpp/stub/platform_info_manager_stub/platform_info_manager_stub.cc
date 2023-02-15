@@ -15,6 +15,7 @@
  */
 
 #include "common/util/platform_info.h"
+#include "common/util/platform_info_def.h"
 
 namespace fe {
 PlatformInfoManager &PlatformInfoManager::Instance() {
@@ -53,4 +54,8 @@ void PlatformInfoManager::SetOptionalCompilationInfo(OptionalInfos &optional_inf
 PlatformInfoManager::PlatformInfoManager() {}
 
 PlatformInfoManager::~PlatformInfoManager() {}
+
+void PlatFormInfos::SetCoreNumByCoreType(const std::string &core_type) {}
+
+void OptionalInfos::SetSocVersion(std::string soc_version) {}
 }  // namespace fe
