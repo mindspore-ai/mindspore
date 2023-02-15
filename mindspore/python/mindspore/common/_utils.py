@@ -84,3 +84,7 @@ def dict_setitem(dic, key, val):
 
 def is_stub_tensor(tensor):
     return getattr(tensor, "stub", False)
+
+
+def raise_func(type, script):
+    raise type(script)
