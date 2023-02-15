@@ -4051,8 +4051,8 @@ def meshgrid(*inputs, indexing='xy'):
     coordinate tensors for evaluating expressions on an N-D grid.
 
     Args:
-        inputs (tuple[Tensor]): A list of N 1-D Tensor objects.
-            The length of input should be greater than 1. The data type is Number.
+        inputs: List of 1-D tensors.
+            The length of inputs should be greater than 1. The data type is Number.
 
     Keyword Args:
         indexing ('xy', 'ij', optional): Cartesian ('xy', default) or
@@ -4079,8 +4079,7 @@ def meshgrid(*inputs, indexing='xy'):
         >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
         >>> y = Tensor(np.array([5, 6, 7]).astype(np.int32))
         >>> z = Tensor(np.array([8, 9, 0, 1, 2]).astype(np.int32))
-        >>> inputs = (x, y, z)
-        >>> output = ops.meshgrid(inputs, indexing='xy')
+        >>> output = ops.meshgrid(x, y, z, indexing='xy')
         >>> print(output)
         (Tensor(shape=[3, 4, 5], dtype=Int32, value=
          [[[1, 1, 1, 1, 1],
