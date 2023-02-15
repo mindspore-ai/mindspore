@@ -291,6 +291,7 @@ constexpr const char kNameAbsGrad[] = "AbsGrad";
 constexpr const char kNameBinaryCrossEntropy[] = "BinaryCrossEntropy";
 constexpr const char kNameBinaryCrossEntropyGrad[] = "BinaryCrossEntropyGrad";
 constexpr const char kNameSparseApplyAdagrad[] = "SparseApplyAdagrad";
+constexpr const char kNameSparseApplyAdagradD[] = "SparseApplyAdagradD";
 constexpr const char kNameSparseApplyFtrlD[] = "SparseApplyFtrlD";
 constexpr const char kNameApplyProximalAdagrad[] = "ApplyProximalAdagrad";
 constexpr const char kNameAcosh[] = "Acosh";

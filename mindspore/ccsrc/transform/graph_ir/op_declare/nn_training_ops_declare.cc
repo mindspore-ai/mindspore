@@ -152,9 +152,11 @@ REG_ADPT_DESC(SGD, kNameSGD, ADPT_DESC(SGD))
 INPUT_MAP(SparseApplyAdagradD) = {
   {1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(grad)}, {4, INPUT_DESC(indices)}};
 ATTR_MAP(SparseApplyAdagradD) = {{"lr", ATTR_DESC(lr, AnyTraits<float>())},
-                                 {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+                                 {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
+                                 {"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyAdagradD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
 REG_ADPT_DESC(SparseApplyAdagradD, kNameSparseApplyAdagrad, ADPT_DESC(SparseApplyAdagradD))
+REG_ADPT_DESC(SparseApplyAdagrad, kNameSparseApplyAdagradD, ADPT_DESC(SparseApplyAdagradD))
 
 // ApplyProximalAdagradD
 INPUT_MAP(ApplyProximalAdagradD) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)},
@@ -260,7 +262,6 @@ ATTR_INPUT_MAP(SparseApplyAdagrad) = {{"lr", "lr"}};
 ATTR_MAP(SparseApplyAdagrad) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
                                 {"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyAdagrad) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
-REG_ADPT_DESC(SparseApplyAdagrad, kSparseApplyAdagradDOpName, ADPT_DESC(SparseApplyAdagrad))
 
 // SparseApplyAdagradV2
 INPUT_MAP(SparseApplyAdagradV2) = {{1, INPUT_DESC(var)},     {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)},
