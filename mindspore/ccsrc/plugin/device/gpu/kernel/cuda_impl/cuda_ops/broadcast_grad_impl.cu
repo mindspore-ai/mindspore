@@ -24,8 +24,12 @@ struct MinimumGradFunc {
                                              const T &dy, T *dx1, T *dx2) {
     if (grad_x1 && x1 < x2) {
       MsAtomicAdd(dx1, dy);
-    } else if (grad_x2 && x1 >= x2) {
+    } else if (grad_x2 && x1 > x2) {
       MsAtomicAdd(dx2, dy);
+    } else if (grad_x1 && grad_x2 && x1 == x2) {
+      T ddy = dy * (T) 0.5;
+      MsAtomicAdd(dx1, ddy);
+      MsAtomicAdd(dx2, ddy);
     }
   }
 };
@@ -36,8 +40,12 @@ struct MaximumGradFunc {
                                              const T &dy, T *dx1, T *dx2) {
     if (grad_x1 && x1 > x2) {
       MsAtomicAdd(dx1, dy);
-    } else if (grad_x2 && x1 <= x2) {
+    } else if (grad_x2 && x1 < x2) {
       MsAtomicAdd(dx2, dy);
+    } else if (grad_x1 && grad_x2 && x1 == x2) {
+      T ddy = dy * (T) 0.5;
+      MsAtomicAdd(dx1, ddy);
+      MsAtomicAdd(dx2, ddy);
     }
   }
 };
