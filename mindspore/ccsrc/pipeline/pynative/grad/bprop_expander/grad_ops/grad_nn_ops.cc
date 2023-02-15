@@ -1449,7 +1449,7 @@ REG_BPROP_BUILDER("NthElement").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto n = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto indicators = ib->Cast(ib->Equal(ib->ExpandDims(out, -1), input_x, ib->GetDtype(input_x)), kFloat32);
+  auto indicators = ib->Equal(ib->ExpandDims(out, -1), input_x, kFloat32);
   dout = ib->ExpandDims(dout, -1);
   auto num_select = ib->ExpandDims(ib->ReduceSum(indicators, {-1}), -1);
   return {ib->Cast(ib->Mul(ib->Div(indicators, num_select), dout), ib->GetDtype(input_x)), ib->ZerosLike(n)};

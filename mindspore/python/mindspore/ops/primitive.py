@@ -892,7 +892,7 @@ def _run_op_sync(obj, op_name, args):
     return output
 
 
-class PrimitiveC(Primitive):
+class _PrimitiveC(Primitive):
     def __init__(self, name, attrs):
         super().__init__(name)
         for key, value in attrs.items():
@@ -900,4 +900,4 @@ class PrimitiveC(Primitive):
 
 
 def _get_primitivec(name, attrs):
-    return PrimitiveC(name, attrs)
+    return _PrimitiveC(name, attrs)
