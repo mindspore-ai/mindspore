@@ -135,38 +135,36 @@ tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_nod
 tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
                                        const std::pair<AnfNodePtr, size_t> &input_node_with_index, bool skip_nop_node,
                                        void *args) {
-  auto real_input = input_node_with_index.first;
-  MS_EXCEPTION_IF_NULL(real_input);
-  auto real_input_index = input_node_with_index.second;
-
+  MS_EXCEPTION_IF_NULL(input_node_with_index.first);
   auto depended_value = CreateTensorMem(input_node_with_index);
-  auto output_addr = AnfAlgo::GetMutableOutputAddr(real_input, real_input_index, skip_nop_node);
+  // First use the data of args.
+  if (args != nullptr) {
+    auto input_device_address = reinterpret_cast<std::vector<device::DeviceAddress *> *>(args);
+    if (i < input_device_address->size() && input_device_address->at(i) != nullptr) {
+      MS_EXCEPTION_IF_NULL(node);
+      depended_value->data_sync_directly(input_device_address->at(i));
+      return depended_value;
+    }
+  }
+
+  // Second use the device address of node.
+  auto output_addr =
+    AnfAlgo::GetMutableOutputAddr(input_node_with_index.first, input_node_with_index.second, skip_nop_node);
   if (output_addr != nullptr && output_addr->IsPtrValid()) {
     // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
     // address size will be wrong in the dynamic shape scenario.
     depended_value->set_device_address(output_addr, false);
     depended_value->data_sync();
-  } else {
-    // If real_input is parameter and is control flow's output, the device address stored in AnfNode is useless.
-    if (args == nullptr) {
-      MS_LOG(EXCEPTION) << "Address is nullptr, and no valid address args is passed!";
-    }
-    auto input_device_address = reinterpret_cast<std::vector<device::DeviceAddress *> *>(args);
-    if (i >= input_device_address->size() || input_device_address->at(i) == nullptr) {
-      MS_EXCEPTION_IF_NULL(node);
-      if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
-        MS_LOG(INFO) << "There is no valid address for " << i << " input of " << node->DebugString() << ", "
-                     << node->fullname_with_scope();
-        return depended_value;
-      }
-      MS_LOG(EXCEPTION) << "There is no valid address for " << i << " input of " << node->DebugString() << ", "
-                        << node->fullname_with_scope();
-    }
-
-    depended_value->data_sync_directly(input_device_address->at(i));
+    return depended_value;
   }
 
-  return depended_value;
+  if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
+    MS_LOG(INFO) << "There is no valid address for " << i << " input of " << node->DebugString() << ", "
+                 << node->fullname_with_scope();
+    return depended_value;
+  }
+  MS_LOG(EXCEPTION) << "There is no valid data for " << i << " input of " << node->DebugString() << ", "
+                    << node->fullname_with_scope();
 }
 
 abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor::TensorPtr &depended_value,

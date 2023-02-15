@@ -1098,7 +1098,7 @@ std::vector<CustomActorPtr> GraphScheduler::BuildCustomActor(const GraphCompiler
       auto actor_name = AnfUtils::GetCustomActorName(node);
       const auto &base_node = AnfUtils::GetCustomActorBaseNode(node);
       auto custom_actor = std::make_shared<CustomActor>(
-        actor_name, node, device::FetchRealDeviceContext(base_node, device_context), recorder_aid_);
+        actor_name, node, device::FetchRealDeviceContext(base_node, device_context), memory_manager_aid_);
       MS_EXCEPTION_IF_NULL(custom_actor);
       InsertActor(custom_actor.get());
       (void)custom_actors.emplace_back(custom_actor);
@@ -2008,8 +2008,8 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
   }
 
   // Link arrows for custom actor.
-  LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
   LinkDataArrowForCustomActor(actor_set, graph_compiler_info);
+  LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
 
   LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set,
                                     graph_compiler_info.control_node_parser_);
@@ -2085,6 +2085,15 @@ void GraphScheduler::LinkControlArrowForCustomActor(const ActorSet *actor_set,
       SchedulerHelper::AddControlArrow(from_actor, to_actor);
     }
   }
+
+  // Handle the no input custom actor.
+  for (const auto &custom_actor : actor_set->custom_actors_) {
+    MS_EXCEPTION_IF_NULL(custom_actor);
+    // In control flow, no input actors should be linked to entrance actors.
+    if (!parser->IsInited() && (custom_actor->input_controls_num_ == 0) && (custom_actor->input_datas_num_ == 0)) {
+      SchedulerHelper::AddControlArrow(actor_set->data_prepare_actor_.get(), custom_actor.get());
+    }
+  }
 }
 
 void GraphScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set,
@@ -2093,44 +2102,66 @@ void GraphScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set,
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
-  // Handle the no input custom actor.
+
+  // Link data arrow for the value depend kernel.
   for (const auto &custom_actor : actor_set->custom_actors_) {
     MS_EXCEPTION_IF_NULL(custom_actor);
-    if (custom_actor->input_controls_num_ > 0) {
-      continue;
-    }
     auto kernel = custom_actor->kernel().lock();
     MS_EXCEPTION_IF_NULL(kernel);
-    auto base_node = AnfUtils::GetCustomActorBaseNode(kernel);
+    // Only the infer type actor need the data arrow.
+    if (AnfUtils::GetCustomActorType(kernel) != kInfer) {
+      continue;
+    }
+
+    const auto &base_node = AnfUtils::GetCustomActorBaseNode(kernel);
     MS_EXCEPTION_IF_NULL(base_node);
+    const auto &graph = AnfAlgo::FetchKernelGraph(base_node.get());
     auto dynamic_shape_depends = abstract::GetValueDependArgIndices(base_node);
     for (auto iter = dynamic_shape_depends.begin(); iter != dynamic_shape_depends.end(); ++iter) {
-      auto input_node = common::AnfAlgo::GetInputNode(base_node, LongToSize(*iter));
+      const auto &input_node = common::AnfAlgo::GetInputNode(base_node, LongToSize(*iter));
       MS_EXCEPTION_IF_NULL(input_node);
       KernelWithIndex from_kernel_with_output_idx = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
-      auto graph = AnfAlgo::FetchKernelGraph(from_kernel_with_output_idx.first.get());
       if (graph != nullptr && parser->IsControlFlowDataArrow(graph, from_kernel_with_output_idx.first)) {
-        MS_LOG(DEBUG) << "Skip link arrow for custom actor:" << custom_actor->GetAID()
+        MS_LOG(DEBUG) << "Skip link arrow for custom actor:" << custom_actor->GetAID().Name()
                       << " kernel:" << base_node->fullname_with_scope() << " input node:" << input_node->DebugString()
                       << " index:" << *iter;
         continue;
       }
-      MS_LOG(DEBUG) << "Link arrow for custom actor:" << custom_actor->GetAID()
-                    << " kernel:" << base_node->fullname_with_scope() << " input node:" << input_node->DebugString()
-                    << " index:" << *iter;
+
       auto kernel_type =
         FetchKernelTransformType(from_kernel_with_output_idx.first, graph, graph_compiler_info.origin_parameters_order_,
                                  graph_compiler_info.strategy_);
-      auto from_actor = FetchActor(kernel_type, graph_compiler_info.name_, from_kernel_with_output_idx.first, graph);
-      // The input_node maybe a data(Tensor) and the from_actor is nullptr
-      if (from_actor != nullptr) {
-        SchedulerHelper::AddDataArrow(from_actor, custom_actor.get(), from_kernel_with_output_idx.second,
-                                      LongToSize(*iter), from_kernel_with_output_idx.first);
+      AbstractActor *from_actor =
+        FetchActor(kernel_type, graph_compiler_info.name_, from_kernel_with_output_idx.first, graph);
+      if (kernel_type == KernelTransformType::kInternalParameter) {
+        MS_EXCEPTION_IF_NULL(graph);
+        auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(from_kernel_with_output_idx.first);
+        auto front_output_node = front_output_with_index.first;
+        MS_EXCEPTION_IF_NULL(front_output_node);
+        if (IsSwitchActor(front_output_node) || (graph_output_to_actor_.count(front_output_with_index) == 0)) {
+          MS_LOG(INFO) << "Internal parameter has no data arrow for value depend custom actor:"
+                       << custom_actor->GetAID().Name() << ", kernel:" << base_node->fullname_with_scope()
+                       << ", input node:" << input_node->DebugString() << ", value depend input index:" << *iter;
+          continue;
+        }
+        // Update the from actor and from kernel.
+        from_actor = graph_output_to_actor_.at(front_output_with_index).first;
+        from_kernel_with_output_idx =
+          common::AnfAlgo::FetchRealNodeSkipMonadControl(graph_output_to_actor_.at(front_output_with_index).second);
       }
-    }
-    // In control flow, no input actors should be linked to entrance actors.
-    if (!parser->IsInited()) {
-      SchedulerHelper::AddControlArrow(actor_set->data_prepare_actor_.get(), custom_actor.get());
+
+      // The input_node maybe device tensor store and the from_actor is nullptr.
+      if (from_actor == nullptr) {
+        MS_LOG(INFO) << "No data arrow for value depend custom actor:" << custom_actor->GetAID().Name()
+                     << ", kernel:" << base_node->fullname_with_scope() << ", input node:" << input_node->DebugString()
+                     << ", value depend input index:" << *iter;
+        continue;
+      }
+      MS_LOG(INFO) << "Link data arrow for value depend custom actor:" << custom_actor->GetAID().Name()
+                   << ", from actor:" << from_actor->GetAID().Name() << ", kernel:" << base_node->fullname_with_scope()
+                   << ", input node:" << input_node->DebugString() << ", value depend input index:" << *iter;
+      SchedulerHelper::AddDataArrow(from_actor, custom_actor.get(), from_kernel_with_output_idx.second,
+                                    LongToSize(*iter), from_kernel_with_output_idx.first);
     }
   }
 }

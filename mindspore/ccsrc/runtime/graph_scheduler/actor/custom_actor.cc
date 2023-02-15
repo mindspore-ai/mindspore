@@ -43,6 +43,7 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
     // Collect the input data for infer shape.
     const auto &data_iter = input_op_datas_.find(ctx->sequential_num_);
     if (data_iter != input_op_datas_.end()) {
+      memory_free_list_.clear();
       for (auto &input_data : data_iter->second) {
         MS_EXCEPTION_IF_NULL(input_data);
         if (IntToSize(input_data->index_) >= input_device_tensors_.size()) {
@@ -54,6 +55,7 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
         }
         MS_LOG(DEBUG) << "Collect input data index:" << input_data->index_ << " for custom actor:" << GetAID();
         input_device_tensors_[IntToSize(input_data->index_)] = input_data->data_;
+        (void)memory_free_list_.emplace_back(input_data->data_);
       }
     }
 
@@ -84,8 +86,17 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*ctx), error_info);
   }
 
-  EraseInput(ctx);
-  SendOutput(ctx);
+  PostRun(ctx);
+}
+
+void CustomActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
+  if (ActorDispatcher::is_memory_free_sync()) {
+    ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_,
+                              device_contexts_[0], context, GetAID());
+  } else {
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_contexts_[0],
+                          context, GetAID());
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore
