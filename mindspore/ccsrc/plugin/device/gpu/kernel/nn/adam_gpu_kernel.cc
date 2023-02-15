@@ -34,7 +34,17 @@ constexpr size_t kIndexGrad = 9;
 
 bool AdamGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+
+  if (prim->HasAttr("use_locking")) {
+    use_locikng_ = GetValue<bool>(prim->GetAttr("use_locking"));
+  }
+  if (prim->HasAttr("use_nesterov")) {
+    use_nesterov_ = GetValue<bool>(prim->GetAttr("use_nesterov"));
+  }
+
+  kernel_name_ = prim->name();
   batch_rank_ = base_operator->get_batch_rank();
   constexpr size_t input_num = 10;
   constexpr size_t output_num = 3;
@@ -125,7 +135,7 @@ bool AdamGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   T *epsilon = GetDeviceAddress<T>(inputs, kIndex8);
   T *gradient = GetDeviceAddress<T>(inputs, kIndex9);
   ApplyAdam(input_elements_, batch_size_, gradient, beta1_power, beta2_power, learning_rate, beta1, beta2, epsilon,
-            variable, m, v, reinterpret_cast<cudaStream_t>(stream_ptr));
+            variable, m, v, use_nesterov_, reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
 

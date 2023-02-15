@@ -85,6 +85,8 @@ class AdamGpuKernelMod : public NativeGpuKernelMod {
   size_t epsilon_size_;
   size_t gradient_size_;
   bool is_null_input_;
+  bool use_nesterov_ = false;
+  bool use_locikng_ = false;
   std::string kernel_name_;
 };
 }  // namespace kernel

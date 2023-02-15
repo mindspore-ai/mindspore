@@ -62,6 +62,7 @@ class AdamCpuKernelMod : public NativeCpuKernelMod {
   void LaunchAdam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   void LaunchAdamNnacl(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   bool use_nesterov_{false};
+  bool use_locking_{false};
   TypeId dtype_{kTypeUnknown};
   size_t input_elements_;
   int64_t batch_rank_{0};
