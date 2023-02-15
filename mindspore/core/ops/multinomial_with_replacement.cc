@@ -62,6 +62,7 @@ abstract::BaseShapePtr MultinomialWithReplacementInferShape(const PrimitivePtr &
                                                             const std::vector<AbstractBasePtr> &input_args) {
   const int64_t x_rank_max = 2;
   const int64_t x_rank_min = 1;
+  const int64_t dyn_shape = abstract::Shape::kShapeDimAny;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   std::vector<int64_t> y_shape;
   if (x_shape.size() > x_rank_max || x_shape.size() < x_rank_min) {
@@ -72,7 +73,13 @@ abstract::BaseShapePtr MultinomialWithReplacementInferShape(const PrimitivePtr &
   auto numsamples = GetValue<int64_t>(numsamples_ptr);
   auto replacement_ptr = primitive->GetAttr("replacement");
   auto replacement = GetValue<bool>(replacement_ptr);
+
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   if (x_shape.size() == x_rank_min) {
+    numsamples = (x_shape[0] == dyn_shape) ? dyn_shape : numsamples;
     if (replacement == false && x_shape[0] < numsamples) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                                << "', the value of numsamples must equal or less than x_shape[-1], but got "
@@ -80,6 +87,7 @@ abstract::BaseShapePtr MultinomialWithReplacementInferShape(const PrimitivePtr &
     }
     y_shape.push_back(numsamples);
   } else {
+    numsamples = (x_shape[1] == dyn_shape) ? dyn_shape : numsamples;
     if (replacement == false && x_shape[1] < numsamples) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                                << "', the value of numsamples must equal or less than x_shape[-1], but got "
