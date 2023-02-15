@@ -756,6 +756,7 @@ constexpr auto kSparseSparseMaximumOpName = "SparseSparseMaximum";
 constexpr auto kSparseTensorDenseMatMulOpName = "SparseTensorDenseMatMul";
 constexpr auto kSparseTensorDenseAddOpName = "SparseTensorDenseAdd";
 constexpr auto kSparseTensorToCSRSparseMatrixOpName = "SparseTensorToCSRSparseMatrix";
+constexpr auto kSparseToDenseOpName = "SparseToDense";
 constexpr auto kSplitOpName = "Split";
 constexpr auto kSplitDOpName = "SplitD";
 constexpr auto kSplitVOpName = "SplitV";

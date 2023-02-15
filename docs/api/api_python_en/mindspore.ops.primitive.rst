@@ -78,7 +78,6 @@ Neural Network
     mindspore.ops.MaxUnpool2D
     mindspore.ops.MirrorPad
     mindspore.ops.NthElement
-    mindspore.ops.NuclearNorm
     mindspore.ops.Pad
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Padding

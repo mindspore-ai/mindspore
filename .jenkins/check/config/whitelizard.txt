@@ -366,3 +366,5 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/max_unpool_2d_grad.cc:aicpu::MaxUnpool2DGradCpuKernel::MaxUnpool2DGradCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/max_pool_3d_with_argmax.cc:aicpu::MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/layer_norm_grad_grad.cc:aicpu::LayerNormGradGradCpuKernel::LayerNormGradGradCompute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/batchmatmul.cc:aicpu::BatchMatMulCpuKernel::DoCompute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/sparse_to_dense.cc:aicpu::SparseToDenseCpuKernel::ValidParam
