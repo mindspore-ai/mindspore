@@ -371,7 +371,33 @@
       2,
       3
     ],
+    "FusionOp_Conv2DBackpropInputD_Add_ReluGradV2": [
+      1,
+      0,
+      2,
+      3
+    ],
     "FusionOp_Conv2DBackpropInputD_ReluGradV2": [
+      1,
+      0,
+      2
+    ],
+    "FusionOp_Conv2DBackpropInputD_Relu": [
+      1,
+      0,
+      2
+    ],
+    "FusionOp_Conv2DBackpropInputD_LeakyRelu": [
+      1,
+      0,
+      2
+    ],
+    "FusionOp_Conv2DBackpropInputD_PRelu": [
+      1,
+      0,
+      2
+    ],
+    "FusionOp_Conv2DBackpropInputD_Add": [
       1,
       0,
       2
