@@ -63,6 +63,7 @@ __global__ void CoalesceKernel(int64_t *origin_indices, int64_t newNnz, int64_t 
       for (int row = begin; row < end; row++) {
         output_value[pos] += input_values[origin_indices[row]];
       }
+      output_indices[pos] = input_indices[origin_indices[unique_indices[pos]]];
     } else if (pos < (newNnz * 2)) {
       for (int x = 0; x < indices_num; x++) {
         output_indices[(pos - newNnz) + (x * newNnz)] =
