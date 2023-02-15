@@ -266,6 +266,7 @@
 #include "ops/scatter_elements.h"
 #include "ops/triu.h"
 #include "ops/tril.h"
+#include "ops/adam_weight_decay.h"
 
 namespace mindspore::lite::ops {
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP) std::unique_ptr<schema::PrimitiveT> MSOp2SchemaOp(const mindspore::ops::OP *op);
@@ -500,6 +501,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(SparseSegmentSum)
 FUNC_MSOP2SCHEMAOP_DECLARE(ScatterElements)
 FUNC_MSOP2SCHEMAOP_DECLARE(Triu)
 FUNC_MSOP2SCHEMAOP_DECLARE(Tril)
+FUNC_MSOP2SCHEMAOP_DECLARE(AdamWeightDecay)
 #endif
 }  // namespace mindspore::lite::ops
 #else

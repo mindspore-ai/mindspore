@@ -237,6 +237,7 @@ union PrimitiveType {
     ScatterElements,
     Triu,
     Tril,
+    AdamWeightDecay,
 }
 
 table Abs {
@@ -1321,4 +1322,8 @@ table Triu {
 }
 
 table Tril {
+}
+
+table AdamWeightDecay {
+    use_locking: bool;
 }

@@ -237,6 +237,7 @@ OP_TYPE(SparseSegmentSum)
 OP_TYPE(ScatterElements)
 OP_TYPE(Triu)
 OP_TYPE(Tril)
+OP_TYPE(AdamWeightDecay)
 OP_TYPE_DEF_END(PrimitiveType)
 
 OP_SCHEMA_DEF(Abs)
@@ -1326,3 +1327,7 @@ OP_SCHEMA_DEF_END(Triu)
 
 OP_SCHEMA_DEF(Tril)
 OP_SCHEMA_DEF_END(Tril)
+
+OP_SCHEMA_DEF(AdamWeightDecay)
+OP_ATTR(use_locking, bool)
+OP_SCHEMA_DEF_END(AdamWeightDecay)
