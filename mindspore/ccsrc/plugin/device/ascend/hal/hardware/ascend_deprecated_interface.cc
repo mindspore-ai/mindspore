@@ -231,7 +231,7 @@ uint32_t AscendDeprecatedInterface::InitCollective() {
   (void)common::SetEnv(kRankID, std::to_string(rank_id).c_str());
   uint32_t device_id = IntToUint(collective::HcclCollectiveGroup::instance().GetDeviceId());
   (void)common::SetEnv("DEVICE_ID", std::to_string(device_id).c_str());
-  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+  ms_context->set_param_inner<uint32_t>(MS_CTX_DEVICE_ID, device_id);
   return device_id;
 #else
   return 0;

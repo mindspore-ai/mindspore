@@ -113,7 +113,7 @@ void GPUSession::Init(uint32_t device_id) {
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+  ms_context->set_param_inner<uint32_t>(MS_CTX_DEVICE_ID, device_id);
   if (CollectiveInitializer::instance().collective_inited()) {
     auto collective_handle = CollectiveInitializer::instance().collective_handle();
     if (collective_handle != nullptr) {
