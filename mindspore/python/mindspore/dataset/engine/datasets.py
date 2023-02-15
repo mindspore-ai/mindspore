@@ -1853,6 +1853,15 @@ class Dataset:
     def parse(self, children=None):
         raise NotImplementedError("Dataset has to implement parse method.")
 
+    def __len__(self):
+        """
+        Get the length of dataset.
+
+        Returns:
+            int, the length of dataset.
+        """
+        return self.get_dataset_size()
+
     @staticmethod
     def _update_data_shard(num_shards, shard_id):
         """
