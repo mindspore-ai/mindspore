@@ -3,10 +3,10 @@ mindspore.ops.full_like
 
 .. py:function:: mindspore.ops.full_like(x, fill_value, *, dtype=None)
 
-    返回一个与输入相同大小的Tensor，填充 `fill_value` 。 `ops.full_like(x, fill_value)` 相当于 `ops.full(x.shape, fill_value, dtype=x.dtype)` 。
+    返回一个shape与 `x` 相同并且使用 `fill_value` 填充的Tensor。
 
     参数：
-        - **x** (Tensor) - `x` 的shape决定输出Tensor的shape。
+        - **x** (Tensor) - 输入Tensor，输出Tensor与 `x` 具有相同的shape。
         - **fill_value** (number.Number) - 用来填充输出Tensor的值。当前不支持复数类型。
 
     关键字参数：

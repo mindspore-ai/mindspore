@@ -3,8 +3,7 @@ mindspore.ops.tril
 
 .. py:function:: mindspore.ops.tril(input_x, diagonal=0)
 
-    返回单个矩阵（二维Tensor）或批次输入矩阵的下三角形部分，其他位置的元素将被置零。
-    矩阵的下三角形部分定义为对角线本身和对角线以下的元素。
+    返回输入Tensor `input_x` 的下三角形部分(包含对角线和下面的元素)，并将其他元素设置为0。
 
     参数：
         - **input_x** (Tensor) - 输入Tensor。shape为 :math:`(x_1, x_2, ..., x_R)` ，其rank至少为2。

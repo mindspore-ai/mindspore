@@ -717,11 +717,10 @@ def full(size, fill_value, *, dtype=None): # pylint: disable=redefined-outer-nam
 
 def full_like(x, fill_value, *, dtype=None):
     """
-    Returns  a Tensor with the same size as `x` filled with `fill_value`. `ops.full_like(x, fill_value)` is
-    equivalent to `ops.full(x.shape, fill_value, dtype=x.dtype)` .
+    Return a Tensor of the same shape as `x` and filled with `fill_value`.
 
     Args:
-        x (Tensor): The shape of `x` will determine shape of the output Tensor.
+        x (Tensor): input Tensor and the output Tensor have the same shape as `x`.
         fill_value (number.Number): Value to fill the returned Tensor. Complex numbers are not supported for now.
 
     Keyword Args:
@@ -757,15 +756,15 @@ def full_like(x, fill_value, *, dtype=None):
 
 def chunk(x, chunks, axis=0):
     """
-    Splits the Tensor into chunks along the given axis.
+    Cut the input Tensor into `chunks` sub-tensors along the specified axis.
 
     Note:
         This function may return less then the specified number of chunks!
 
     Args:
-        x (Tensor): A Tensor to be divided.
-        chunks (int): Number of chunks to return.
-        axis (int): The axis along which to split. Default: 0.
+        x (Tensor): A Tensor to be cut.
+        chunks (int): Number of sub-tensors to cut.
+        axis (int): Specify the dimensions that you want to split. Default: 0.
 
     Returns:
         A tuple of sub-tensors.
@@ -5059,9 +5058,8 @@ def split(x, split_size_or_sections, axis=0):
 
 def tril(input_x, diagonal=0): # pylint: disable=redefined-outer-name
     """
-    Returns the lower triangular part of the matrix (2-D tensor) or batch of matrices input,
-    the other elements of the result tensor out are set to 0.
-    The lower triangular part of the matrix is defined as the elements on and below the diagonal.
+    Returns the lower triangle part of 'input_x' (elements that contain the diagonal and below),
+    and set the other elements to zeros.
 
     Args:
         input_x (Tensor): A Tensor with shape :math:`(x_1, x_2, ..., x_R)`. The rank must be at least 2.
