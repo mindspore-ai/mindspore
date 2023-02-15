@@ -1647,7 +1647,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
 }  // namespace pipeline
 
 std::string GetJitLevel() {
-  auto jit_config = GraphExecutorPy::GetInstance()->jit_config();
+  const auto &jit_config = GraphExecutorPy::GetInstance()->jit_config();
   auto iter = jit_config.find("jit_level");
   if (iter != jit_config.end()) {
     return iter->second;

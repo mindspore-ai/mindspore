@@ -40,6 +40,7 @@ constexpr unsigned int default_cpu_refer_tread_num = 8;
 class BACKEND_EXPORT GraphKernelFlags {
  public:
   static const GraphKernelFlags &GetInstance();
+  static void SaveJitConfig(const std::map<std::string, std::string> &jit_config);
 
   // Dump all flags to json-format string
   std::string DumpAllFlags() const;
@@ -275,7 +276,11 @@ class BACKEND_EXPORT GraphKernelFlags {
       : flags_cache_(graph_kernel_flags), enable_graph_kernel_(enable_graph_kernel) {}
 
   // get the `graph_kernel_flags` and `enable_graph_kernel`
-  static std::pair<std::string, bool> GetGraphKernelContext();
+  static std::pair<std::string, bool> GetGraphKernelConfig();
+  static std::map<std::string, std::string> &GetJitConfig() {
+    static std::map<std::string, std::string> jit_configs;
+    return jit_configs;
+  }
 
   // parse and refresh the flags
   void Refresh();
