@@ -446,6 +446,9 @@ class Custom(ops.PrimitiveWithInfer):
     registered_func = {}
     attr_dict = {}  # Save input_names and attr_names for func.
     compiled_bin = []  # Save names for compiled bin.
+    tbe_path_checked = []  # Save paths for tbe functions which is safe to be imported as module.
+    tbe_path_failed = []  # Save paths for tbe functions which fail to be imported as module.
+    op_path_in_cache = []  # Save paths for op functions created in the cached.
 
     def __init__(self, func, out_shape=None, out_dtype=None, func_type="hybrid", bprop=None, reg_info=None):
         ops.PrimitiveWithInfer.__init__(self, "Custom")
@@ -621,6 +624,63 @@ class Custom(ops.PrimitiveWithInfer):
                 raise TypeError("{}, 'func' must be of type function, but got {}"
                                 .format(self.log_prefix, type(self.func)))
 
+    def _update_func_imply_path(self):
+        """Update op_imply_path of func"""
+        file_path = os.path.realpath(inspect.getfile(self.func))
+
+        if not self.func_type == "tbe":
+            # Custom ops with type other than tbe doesn't need to import from the path
+            # use the file path directly
+            return file_path
+        # For the custom op of type tbe, the kernel compiler will import the module from file path.
+        # we will try import in the initialization,
+        if file_path in Custom.tbe_path_checked:
+            logger.info("The file of {} has already been checked good to be imported.".format(self.func_name))
+            return file_path
+
+        if not file_path in Custom.tbe_path_failed:
+            # As a single file might include multiply functions
+            # we will not try the file path which already failed in previous trials
+            try:
+                mod_spec = importlib.util.spec_from_file_location(
+                    self.func_name, file_path)
+                custom_mod = importlib.util.module_from_spec(mod_spec)
+                mod_spec.loader.exec_module(custom_mod)
+            except (ImportError, RecursionError):
+                Custom.tbe_path_failed.append(file_path)
+            else:
+                Custom.tbe_path_checked.append(file_path)
+                return file_path
+
+        # Create a new file for each tbe function
+        op_imply_path = os.path.realpath(_get_cache_path() + self.func_name + ".py")
+        if op_imply_path in Custom.op_path_in_cache:
+            logger.info("The new file of {} has already been created.".format(self.func_name))
+            return op_imply_path
+
+        logger.warning("Fail to import the original source file. Create a new source file for {}. "
+                       "The new file will not include the dependency for the op function. "
+                       "Check the definition of the function {} "
+                       "in the file: {}".format(self.func_name, self.func_name, op_imply_path))
+
+        Custom.op_path_in_cache.append(op_imply_path)
+
+        if os.path.exists(op_imply_path):
+            try:
+                os.remove(op_imply_path)
+            except FileNotFoundError:
+                logger.warning("Fail to remove the existing file. Check the definition of the function {} "
+                               "in the file: {}".format(self.func_name, op_imply_path))
+
+        with open(op_imply_path, 'at') as file:
+            if platform.system() != "Windows":
+                fcntl.flock(file.fileno(), fcntl.LOCK_EX)
+            file.seek(0, 2)
+            if file.tell() == 0:
+                file.write(self.func_source_str)
+        os.chmod(op_imply_path, stat.S_IRUSR | stat.S_IWUSR)
+        return op_imply_path
+
     def _update_func_info(self, reg_info):
         """Update information of func"""
         if callable(self.func):
@@ -636,19 +696,8 @@ class Custom(ops.PrimitiveWithInfer):
             if index != -1:
                 self.func_source_str = self.func_source_str[index:]
 
-            op_imply_path = os.path.realpath(_get_cache_path() + self.func_name + ".py")
-            if os.path.exists(op_imply_path):
-                os.remove(op_imply_path)
-            with open(op_imply_path, 'at') as file:
-                if platform.system() != "Windows":
-                    fcntl.flock(file.fileno(), fcntl.LOCK_EX)
-                file.seek(0, 2)
-                if file.tell() == 0:
-                    file.write(self.func_source_str)
-            os.chmod(op_imply_path, stat.S_IRUSR | stat.S_IWUSR)
-
-            # path of func
-            self.imply_path = op_imply_path
+            # update path of func for TBE type of custom op
+            self.imply_path = self._update_func_imply_path()
             if self._is_ms_kernel:
                 # static check for the Hybrid DSL in hybrid
                 root = ast.parse(self.func_source_str)
