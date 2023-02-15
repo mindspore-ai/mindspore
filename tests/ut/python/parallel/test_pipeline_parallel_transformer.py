@@ -18,7 +18,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.context import _Context
-from mindspore.parallel.nn import TransformerOpParallelConfig
+from mindspore.parallel._transformer import TransformerOpParallelConfig
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, MicroBatchInterleaved
 from mindspore.train import Model
 from tests.ut.python.parallel.test_parallel_transformer import TransformerEncoderNet

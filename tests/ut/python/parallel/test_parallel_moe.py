@@ -21,7 +21,7 @@ from mindspore import Tensor
 from mindspore.context import set_auto_parallel_context, ParallelMode
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
-from mindspore.parallel.nn import Transformer, TransformerOpParallelConfig, MoEConfig, CrossEntropyLoss
+from mindspore.parallel._transformer import Transformer, TransformerOpParallelConfig, MoEConfig, CrossEntropyLoss
 from mindspore.parallel import set_algo_parameters
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn.wrap.cell_wrapper import TrainOneStepCell, _VirtualDatasetCell

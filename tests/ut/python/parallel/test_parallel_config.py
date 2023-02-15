@@ -19,7 +19,7 @@ from mindspore import Tensor
 from mindspore.context import set_auto_parallel_context, ParallelMode
 from mindspore import context
 from mindspore.ops import composite as C
-from mindspore.parallel.nn import Transformer
+from mindspore.parallel._transformer import Transformer
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn.wrap.cell_wrapper import TrainOneStepCell
 from mindspore.train import Model

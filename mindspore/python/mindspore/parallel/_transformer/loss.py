@@ -30,8 +30,8 @@ from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_device_num, _get_pipeline_stages
 from mindspore.log import _LogActionOnce
 from mindspore import log as logger
-from mindspore.nn.transformer.layers import _check_input_dtype
-from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, OpParallelConfig
+from mindspore.parallel._transformer.layers import _check_input_dtype
+from mindspore.parallel._transformer.op_parallel_config import default_dpmp_config, OpParallelConfig
 
 __all__ = ["CrossEntropyLoss"]
 
