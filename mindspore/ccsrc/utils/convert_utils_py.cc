@@ -465,11 +465,15 @@ py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr 
   }
 
   // Current VectorRef reflects a COOTensor type
+  MS_LOG(DEBUG) << "abs: " << abs->ToString();
   if (abs->isa<abstract::AbstractCSRTensor>()) {
     return MakeCSRTensor(value_list);
   }
   if (abs->isa<abstract::AbstractCOOTensor>()) {
     return MakeCOOTensor(value_list);
+  }
+  if (!abs->isa<abstract::AbstractSequence>()) {
+    return VectorRefToPyData(value_list, nullptr);
   }
   auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(seq_abs);
