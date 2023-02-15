@@ -38,7 +38,6 @@ namespace irpass {
 // {prim::kPrimGetAttr, {prim::kPrimResolve, namespace, symbol}, attr}
 // {prim::kPrimGetAttr, namespace, attr}
 // {prim::kPrimGetAttr, MsClassObject, attr}
-// {prim::kPrimGetAttr, bool, attr}
 // {prim::kPrimResolve, namespace, symbol}
 class Resolver : public OptimizerCaller {
  public:

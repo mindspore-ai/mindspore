@@ -36,7 +36,6 @@ functional_ns = CellNamespace('mindspore.ops.functional')
 composite_ns = CellNamespace('mindspore.ops.composite')
 trope_ns = CellNamespace('mindspore._extends.parse.trope')
 
-NO_IMPLEMENT = None         # not implemented
 SYMBOL_UNDEFINE = 0xFF      # Undefined var and function
 
 # Some space set aside for readability of code
@@ -163,13 +162,7 @@ convert_object_map = {
     T.mutable:      Primitive('mutable'),
 
     # lib function
-    math.floor:     NO_IMPLEMENT,
-    math.trunc:     NO_IMPLEMENT,
-    math.exp:       NO_IMPLEMENT,
     math.log:       F.scalar_log,
-    math.sin:       NO_IMPLEMENT,
-    math.cos:       NO_IMPLEMENT,
-    math.tan:       NO_IMPLEMENT,
 
     # user defined
     RowTensorInner: F.make_row_tensor_inner,

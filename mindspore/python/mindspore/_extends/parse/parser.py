@@ -43,7 +43,7 @@ from mindspore.common import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
-from .resources import SYMBOL_UNDEFINE, NO_IMPLEMENT
+from .resources import SYMBOL_UNDEFINE
 from .jit_fallback_modules import jit_fallback_third_party_modules_whitelist
 from ...common.api import _convert_python_data
 
@@ -257,8 +257,6 @@ def resolve_symbol(namespace, symbol):
         if resolve_ in convert_map:
             resolve_ = convert_map.get(resolve_)
             logger.debug("Convert resolve: %r", resolve_)
-            if resolve_ == NO_IMPLEMENT:
-                raise NotImplementedError(f"Not support for '{symbol}'.")
     except Exception as e:
         if isinstance(e, NotImplementedError):
             raise e
