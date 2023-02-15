@@ -40,6 +40,7 @@ class PythonMultiprocessingRuntime {
   virtual void add_new_workers(int32_t num_new_workers) = 0;
   virtual void remove_workers(int32_t num_removed_workers) = 0;
   virtual std::vector<int32_t> get_pids() = 0;
+  virtual bool is_running() = 0;
   virtual ~PythonMultiprocessingRuntime() {}
 };
 
@@ -65,6 +66,7 @@ class PyPythonMultiprocessingRuntime : public PythonMultiprocessingRuntime {
   std::vector<int32_t> get_pids() override {
     PYBIND11_OVERLOAD_PURE(std::vector<int32_t>, PythonMultiprocessingRuntime, get_pids);
   }
+  bool is_running() override { PYBIND11_OVERLOAD_PURE(bool, PythonMultiprocessingRuntime, is_running); }
 };
 #endif
 }  // namespace dataset

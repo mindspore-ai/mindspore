@@ -255,8 +255,13 @@ Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
     if (rc.IsError()) {
       // if thread had been interrupted, don't care the error
       if (TaskManager::FindMe()->Interrupted()) {
-        MS_LOG(WARNING) << "Current thread had been interrupted by TaskManager, so ignore the error.";
-        return Status::OK();
+        MS_LOG(INFO) << "Current thread had been interrupted by TaskManager.";
+        return StatusCode::kMDInterrupted;
+      } else if (python_mp_ != nullptr && !python_mp_->is_running()) {
+        // when sink_mode=True, dataset_size / output_shapes / output_types / columna_names ops before training
+        // will cause map workers to stop first
+        MS_LOG(INFO) << "The multi workers of map operation had stopped.";
+        return StatusCode::kMDInterrupted;
       }
       return rc;
     }
