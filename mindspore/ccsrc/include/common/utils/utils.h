@@ -564,7 +564,6 @@ constexpr auto kNPUAllocFloatStatusOpName = "NPUAllocFloatStatus";
 constexpr auto kNPUClearFloatStatusOpName = "NPUClearFloatStatus";
 constexpr auto kNPUGetFloatStatusOpName = "NPUGetFloatStatus";
 constexpr auto kNthElementOpName = "NthElement";
-constexpr auto kNuclearNormOpName = "NuclearNorm";
 constexpr auto kOneHotOpName = "OneHot";
 constexpr auto kOneHotDOpName = "OneHotD";
 constexpr auto kOrgqrOpName = "Orgqr";

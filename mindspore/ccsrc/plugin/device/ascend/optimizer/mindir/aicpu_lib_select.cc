@@ -215,7 +215,6 @@ bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
                                                                mindspore::kResizeAreaOpName,
                                                                mindspore::kResizeBicubicOpName,
                                                                mindspore::kResizeBicubicGradOpName,
-                                                               mindspore::kNuclearNormOpName,
                                                                mindspore::kQuantileOpName,
                                                                mindspore::kSparseSegmentSqrtNOpName,
                                                                mindspore::kUnsortedSegmentProdOpName,
