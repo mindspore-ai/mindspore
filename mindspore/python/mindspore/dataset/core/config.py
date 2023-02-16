@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -846,13 +846,21 @@ def set_debug_mode(debug_mode_flag):
     sequentially with a single thread.
 
     Note:
-        1. If both debug_mode and auto_offload are enabled, then during runtime, auto_offload is forcibly disabled.
-        2. If both debug_mode is enabled and a dataset pipeline has Map operation with offload set, then offload is
-           ignored.
-        3. If both debug_mode is enabled and a dataset operation has cache set, then the cache is dropped.
+        - When debug_mode is enabled, if set_seed has not yet been issued, MindData will internally set the seed to 1
+          so that debug mode execution of the dataset pipeline can produce deterministic results.
+        - When debug_mode is enabled, many configuration settings are ignored, including the following noteworthy
+          settings:
+            - auto_offload (False is used.)
+            - enable_autotune (False is used.)
+            - error_samples_mode (ErrorSamplesMode.RETURN is used.)
+            - num_parallel_workers (Value 1 is used.)
+        - If both debug_mode is enabled and a dataset pipeline has Map operation with offload set, then offloading is
+          ignored.
+        - If both debug_mode is enabled and a dataset operation has cache set, then the cache is dropped.
+        - If both debug_mode and profiling are enabled, then dataset profiling is ignored.
 
     Args:
-        debug_mode_flag (bool): Whether dataset pipeline debugger is enabled, which forces the pipeline
+        debug_mode_flag (bool): Whether dataset pipeline debug mode is enabled, which forces the pipeline
             to run synchronously and sequentially.
 
     Raises:
@@ -864,8 +872,8 @@ def set_debug_mode(debug_mode_flag):
     if not isinstance(debug_mode_flag, bool):
         raise TypeError("debug_mode_flag isn't of type boolean.")
     if debug_mode_flag:
-        logger.warning("MindData Debug mode is enabled. Performance will be impacted because the pipeline will be"
-                       " running in a single thread.")
+        logger.warning("Dataset pipeline debug mode is enabled. Performance will be impacted because the pipeline"
+                       " will be running in a single thread.")
     _config.set_debug_mode(debug_mode_flag)
 
 
@@ -874,7 +882,7 @@ def get_debug_mode():
     Get the debug_mode flag of the dataset pipeline
 
     Returns:
-        bool, whether enables dataset pipeline debugger
+        bool, whether dataset pipeline debug mode is enabled
 
     Examples:
         >>> debug_mode = ds.config.get_debug_mode()

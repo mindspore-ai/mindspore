@@ -59,10 +59,10 @@ class DebugModePass : public IRTreePass {
     Status Visit(std::shared_ptr<DatasetNode> node, bool *const modified) override;
 
    protected:
-    /// \brief Check and remove cache and offload if node has any
+    /// \brief Check and remove cache if node has any
     /// \param[in] node The node being visited
     /// \return true if the node was changed; otherwise, false
-    bool RemoveCacheAndOffload(std::shared_ptr<DatasetNode> node) const;
+    bool RemoveCache(std::shared_ptr<DatasetNode> node) const;
   };
 };
 }  // namespace dataset

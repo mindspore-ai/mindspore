@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace dataset {
-bool DebugModePass::DebugPass::RemoveCacheAndOffload(std::shared_ptr<DatasetNode> node) const {
+bool DebugModePass::DebugPass::RemoveCache(std::shared_ptr<DatasetNode> node) const {
   // remove DatasetNode cache
   bool ret = false;
   if (node->IsCached()) {
@@ -36,27 +36,23 @@ bool DebugModePass::DebugPass::RemoveCacheAndOffload(std::shared_ptr<DatasetNode
     node->setDescendantOfCache(false);
     ret = true;
   }
-  if (GlobalContext::config_manager()->get_auto_offload()) {
-    MS_LOG(WARNING) << "Both debug mode and auto offload are enabled. Disabling auto offload."
-                       "If performance is a concern, then disable debug mode and re-enable auto offload.";
-    GlobalContext::config_manager()->set_auto_offload(false);
-  }
   return ret;
 }
 
 Status DebugModePass::DebugPass::Visit(std::shared_ptr<MapNode> node, bool *const modified) {
-  *modified = RemoveCacheAndOffload(node);
+  *modified = RemoveCache(node);
   if (node->GetOffload() == ManualOffloadMode::kEnabled) {
     MS_LOG(WARNING) << "Map operation with offload found in the debug mode. Ignoring offload."
-                       "If performance is a concern, then disable debug mode.";
+                       " If performance is a concern, then disable debug mode.";
     node->SetOffload(ManualOffloadMode::kDisabled);
     *modified = true;
   }
+
   return Status::OK();
 }
 
 Status DebugModePass::DebugPass::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
-  *modified = RemoveCacheAndOffload(node);
+  *modified = RemoveCache(node);
   return Status::OK();
 }
 
@@ -75,6 +71,14 @@ Status DebugModePass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *cons
     MS_LOG(WARNING) << "Debug mode is enabled. Set seed to ensure deterministic results. Seed value: "
                     << std::to_string(kSeedValue) << ".";
     GlobalContext::config_manager()->set_seed(kSeedValue);
+  }
+  if (GlobalContext::config_manager()->get_auto_offload()) {
+    MS_LOG(WARNING) << "Both debug mode and auto offload are enabled. Ignoring auto offload."
+                       " If performance is a concern, then disable debug mode.";
+  }
+  if ((GlobalContext::config_manager()->error_samples_mode() == ErrorSamplesMode::kReplace) ||
+      (GlobalContext::config_manager()->error_samples_mode() == ErrorSamplesMode::kSkip)) {
+    MS_LOG(WARNING) << "Both debug mode and error samples mode are enabled. Ignoring error samples mode setting.";
   }
   return Status::OK();
 }
