@@ -75,6 +75,7 @@ const char kMemoryFreeActorNameSuffix[] = "_MemoryFreeActor";
 const char kCopyActorNameSignFromStore[] = "_device_tensor_store:";
 const char kMemSwapInActorNameSuffix[] = "_MemorySwapInActor";
 const char kMemSwapOutActorNameSuffix[] = "_MemorySwapOutActor";
+const char kMemSwapActorNamePrefix[] = "MemorySwapActor_";
 
 enum class KernelTransformType {
   kUnknown,

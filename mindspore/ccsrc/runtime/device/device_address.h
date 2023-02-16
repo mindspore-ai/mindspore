@@ -65,7 +65,23 @@ class RuntimeUtils;
 namespace mindspore {
 namespace device {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
-enum class DeviceAddressStatus { kInDevice, kInHost, kInDeviceToHost, kInHostToDevice };
+
+struct StorageInfo {
+  void *host_ptr_{nullptr};
+  std::string file_name_;
+};
+
+enum class StorageType { kDevice, kHost, kFile };
+
+enum class DeviceAddressStatus {
+  kInDevice,
+  kInHost,
+  kInFile,
+  kInDeviceToHost,
+  kInHostToDevice,
+  kInHostToFile,
+  kInFileToHost
+};
 using UserDataPtr = std::shared_ptr<UserData>;
 
 // The flag of device address.
@@ -136,8 +152,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   bool from_persistent_mem() const { return from_persistent_mem_; }
   void set_from_persistent_mem(bool from_persistent_mem) { from_persistent_mem_ = from_persistent_mem; }
   virtual bool mem_offloaded() const { return false; }
-  virtual void set_status(DeviceAddressStatus status) {}
-  virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
+  void set_status(DeviceAddressStatus status) { status_ = status; }
+  DeviceAddressStatus status() const { return status_; }
   virtual DeviceType GetDeviceType() const { return DeviceType::kUnknown; }
   void *GetMutablePtr() const override {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
@@ -195,22 +211,30 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual void *GetValidPtr(size_t) { return ptr_; }
 
   // Offload data from device to host and free device memory
-  virtual bool Offload(size_t) {
-    MS_LOG(WARNING) << "Not implemented.";
-    return true;
-  }
+  virtual bool Offload(size_t) { MS_LOG(EXCEPTION) << "Not implemented."; }
 
   // Load data from host to device and free host memory
-  virtual bool Load(size_t) {
-    MS_LOG(WARNING) << "Not implemented.";
-    return true;
-  }
+  virtual bool Load(size_t) { MS_LOG(EXCEPTION) << "Not implemented."; }
+
+  // Move data to destination hardware and free resource on source hardware
+  virtual bool MoveTo(StorageType, bool) { MS_LOG(EXCEPTION) << "Not implemented."; }
+
+  virtual bool Wait() const { MS_LOG(EXCEPTION) << "Not implemented."; }
 
   // Set host ptr data offloaded to
   virtual void SetOffloadPtr(void *) {}
 
   // Get offloaded host ptr
   virtual void *GetOffloadPtr() const { return nullptr; }
+
+  virtual void SetStorageInfo(const StorageInfo &) {}
+
+  virtual void HandOver(DeviceAddress *other) {
+    other->set_ptr(GetMutablePtr());
+    other->set_from_mem_pool(from_mem_pool());
+    set_ptr(nullptr);
+    set_from_mem_pool(false);
+  }
 
   // Free the ptr in user data when the ref count is 0.
   virtual void ClearUserData() {}
@@ -254,6 +278,9 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   // The device address flag.
   size_t flag_{0};
+
+  // The flag identify where data is stored
+  mutable DeviceAddressStatus status_{DeviceAddressStatus::kInDevice};
 
   friend class KernelRuntime;
   friend class MemoryManager;
