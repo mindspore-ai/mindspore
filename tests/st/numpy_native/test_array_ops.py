@@ -20,7 +20,7 @@ import pytest
 import numpy as onp
 
 import mindspore.numpy as mnp
-from mindspore import context
+from mindspore import context, Tensor, int32
 from mindspore.nn import Cell
 
 from .utils import rand_int, run_non_kw_test, check_all_results, match_array, \
@@ -1170,6 +1170,19 @@ def test_take_along_axis():
     indices4 = rand_int(4, 1, 1, 1).astype(onp.int32)
     run_multi_test(mnp_take_along_axis, onp_take_along_axis,
                    (x, indices1, indices2, indices3, indices4))
+
+    e = onp.random.randint(0, 9, (4, 10, 2))
+    neighbours = onp.random.randint(0, 9, (4, 10, 3))
+    e = e[:, :, None]
+    neighbours = neighbours[:, :, :, None]
+
+    op = onp.take_along_axis(e, neighbours, 1)
+
+    new_neighbours = Tensor(neighbours, int32)
+    new_e = Tensor(e, int32)
+    output = mnp.take_along_axis(new_e, new_neighbours, 1)
+    onp.testing.assert_almost_equal(list(op), list(output),
+                                    decimal=0)
 
 
 def mnp_take(x, indices):
