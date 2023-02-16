@@ -832,7 +832,8 @@ def _tensor_setitem_by_int_tensor_with_tensor(data, index, value):
         index = F.expand_dims(index, 0)
         updates = F.expand_dims(updates, 0)
     if is_parameter(data):
-        return F.scatter_nd_update(data, index, updates)
+        F.scatter_nd_update(data, index, updates)
+        return data
     return F.tensor_scatter_update(data, index, updates)
 
 
@@ -1039,7 +1040,8 @@ def tensor_setitem_by_number_with_tensor(data, index, value):
     value_shape = const_utils.tuple_slice(F.shape(index), None, -1)
     value = _broadcast(value_shape, value.astype(F.dtype(data)))
     if is_parameter(data):
-        return F.scatter_nd_update(data, index, value)
+        F.scatter_nd_update(data, index, value)
+        return data
     return F.tensor_scatter_update(data, index, value)
 
 
