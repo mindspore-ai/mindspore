@@ -181,17 +181,17 @@ def test_converter_output_data_type_01():
     assert "output_data_type: DataType.FLOAT16" in str(converter)
 
 
-def test_converter_export_mindir_type_error():
+def test_converter_save_type_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
-                                     output_file="mobilenetv2.tflite", export_mindir=1)
-    assert "export_mindir must be ModelType" in str(raise_info.value)
+                                     output_file="mobilenetv2.tflite", save_type=1)
+    assert "save_type must be ModelType" in str(raise_info.value)
 
 
-def test_converter_export_mindir_01():
+def test_converter_save_type_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
-                                 output_file="mobilenetv2.tflite", export_mindir=mslite.ModelType.MINDIR_LITE)
-    assert "export_mindir: ModelType.MINDIR_LITE" in str(converter)
+                                 output_file="mobilenetv2.tflite", save_type=mslite.ModelType.MINDIR_LITE)
+    assert "save_type: ModelType.MINDIR_LITE" in str(converter)
 
 
 def test_converter_decrypt_key_type_error():
@@ -272,17 +272,17 @@ def test_converter_train_model_01():
     assert "train_model: True" in str(converter)
 
 
-def test_converter_no_fusion_type_error():
+def test_converter_optimize_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
-                                     output_file="mobilenetv2.tflite", no_fusion=1)
-    assert "no_fusion must be bool" in str(raise_info.value)
+                                     output_file="mobilenetv2.tflite", optimize=1)
+    assert "optimize must be str" in str(raise_info.value)
 
 
-def test_converter_no_fusion_01():
+def test_converter_optimize_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
-                                 output_file="mobilenetv2.tflite", no_fusion=True)
-    assert "no_fusion: True" in str(converter)
+                                 output_file="mobilenetv2.tflite", optimize="none")
+    assert "optimize: True" in str(converter)
 
 
 def test_converter_converter_01():
