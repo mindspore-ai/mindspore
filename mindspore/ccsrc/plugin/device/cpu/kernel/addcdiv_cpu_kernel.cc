@@ -208,6 +208,7 @@ void AddcdivCpuKernelMod::AddcdivDiv(const T *input1, const T *input2, T *output
         if (abs(addcdiv_divisor - zero) <= eps_if_zero) {
           if (abs(addcdiv_dividend - zero) <= eps_if_zero) {
             output[i] = std::numeric_limits<T>::quiet_NaN();
+            iter.GenNextPos();
             continue;
           }
           if (std::numeric_limits<T>::has_infinity) {
@@ -216,6 +217,7 @@ void AddcdivCpuKernelMod::AddcdivDiv(const T *input1, const T *input2, T *output
           } else {
             output[i] = addcdiv_dividend > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
           }
+          iter.GenNextPos();
           continue;
         }
         output[i] = addcdiv_dividend / addcdiv_divisor;
