@@ -224,7 +224,6 @@ Image Processing
     mindspore.ops.NMSWithMask
     mindspore.ops.NonMaxSuppressionV3
     mindspore.ops.NonMaxSuppressionWithOverlaps
-    mindspore.ops.PSROIPooling
     mindspore.ops.RGBToHSV
     mindspore.ops.ResizeArea
     mindspore.ops.ResizeBicubic

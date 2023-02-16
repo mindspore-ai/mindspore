@@ -225,7 +225,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.NMSWithMask
     mindspore.ops.NonMaxSuppressionV3
     mindspore.ops.NonMaxSuppressionWithOverlaps
-    mindspore.ops.PSROIPooling
     mindspore.ops.RGBToHSV
     mindspore.ops.ResizeArea
     mindspore.ops.ResizeBicubic
