@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,16 +34,16 @@ namespace {
 std::string GetAscendSuffixPath(const std::string &version) {
   const std::set<std::string> kAscend910Versions = {"Ascend910A", "Ascend910B", "Ascend910PremiumA", "Ascend910ProA",
                                                     "Ascend910ProB"};
-  const std::set<std::string> kAscend920Versions = {"Ascend920A"};
+  const std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
   const std::string kAscend910SuffixPath =
     "/opp/built-in/op_impl/ai_core/tbe/config/ascend910/aic-ascend910-ops-info.json";
-  const std::string kAscend920SuffixPath =
-    "/opp/built-in/op_impl/ai_core/tbe/config/ascend920/aic-ascend920-ops-info.json";
+  const std::string kAscend910BSuffixPath =
+    "/opp/built-in/op_impl/ai_core/tbe/config/ascend910b/aic-ascend910b-ops-info.json";
   if (kAscend910Versions.count(version) != 0) {
     return kAscend910SuffixPath;
   }
-  if (kAscend920Versions.count(version) != 0) {
-    return kAscend920SuffixPath;
+  if (kAscend910BVersions.count(version) != 0) {
+    return kAscend910BSuffixPath;
   }
   return "";
 }
