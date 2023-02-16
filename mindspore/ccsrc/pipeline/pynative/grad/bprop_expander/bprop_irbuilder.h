@@ -65,6 +65,7 @@ class BpropIRBuilder : public Emitter {
 
   std::string name() const { return name_; }
   std::string GetTargetFromContext() const;
+  bool IsGraphMode() const;
 
   // Tensor getitem by a single integer number on the outermost axis.
   NodePtr TensorGetItem(const NodePtr &node, int64_t idx) const;

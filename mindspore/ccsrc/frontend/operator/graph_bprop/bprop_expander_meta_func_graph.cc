@@ -36,7 +36,7 @@ FuncGraphPtr BpropExpanderMetaFuncGraph::BpropExpanderFunc(const AbstractBasePtr
   auto out = fg->add_parameter();
   out->set_abstract(args_spec_list[list_size - kTwo]);
   (void)grads.emplace_back(out);
-  auto dout = fg->NewCNode({NewValueNode(prim::kPrimZerosLike), out});
+  auto dout = fg->add_parameter();
   dout->set_abstract(args_spec_list[list_size - kOne]);
   (void)grads.emplace_back(dout);
   auto newcnode = fg->NewCNode(grads);
@@ -46,7 +46,7 @@ FuncGraphPtr BpropExpanderMetaFuncGraph::BpropExpanderFunc(const AbstractBasePtr
     bprop_fg = be.GetGraph();
     (void)mindspore::opt::ConvertPrimToPrimPy(bprop_fg);
   } else {
-    MS_LOG(DEBUG) << "Expander failed. Prim is: " << primal_->name();
+    MS_LOG(EXCEPTION) << "Expander failed. Prim is: " << primal_->name();
   }
   return bprop_fg;
 }
@@ -233,6 +233,18 @@ void RegNNBpropExpanderOps2() {
   REGISTER_EXPANDER_BPROP_IMPL(Softsign);
   REGISTER_EXPANDER_BPROP_IMPL(TanhGrad);
   REGISTER_EXPANDER_BPROP_IMPL(UpsampleTrilinear3D);
+  REGISTER_EXPANDER_BPROP_IMPL(AvgPool);
+  REGISTER_EXPANDER_BPROP_IMPL(MulNoNan);
+  REGISTER_EXPANDER_BPROP_IMPL(Tanh);
+  REGISTER_EXPANDER_BPROP_IMPL(LSTM);
+  REGISTER_EXPANDER_BPROP_IMPL(Dropout2D);
+  REGISTER_EXPANDER_BPROP_IMPL(Dropout3D);
+  REGISTER_EXPANDER_BPROP_IMPL(UpsampleNearest3D);
+  REGISTER_EXPANDER_BPROP_IMPL(PadV3);
+  REGISTER_EXPANDER_BPROP_IMPL(MaxUnpool2D);
+  REGISTER_EXPANDER_BPROP_IMPL(MaxUnpool3D);
+  REGISTER_EXPANDER_BPROP_IMPL(AdaptiveAvgPool2DV1);
+  REGISTER_EXPANDER_BPROP_IMPL(SparseSoftmaxCrossEntropyWithLogitsV2);
 }
 
 void RegArrayBpropExpanderOps1() {

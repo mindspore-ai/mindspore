@@ -120,6 +120,9 @@ class MS_CORE_API Emitter {
   NodePtr ReduceSum(const NodePtr &x, const ShapeVector &axis = {}, bool keep_dims = false) const;
 
   NodePtr ZerosLike(const NodePtr &node) const;
+  NodePtr Depend(const NodePtr &value, const NodePtr &expr) const {
+    return Emit("Depend", {value, expr}, {{"side_effect_propagate", MakeValue(1)}});
+  }
   NodePtr Fill(double value, const ShapeVector &shape, TypeId data_type) const;
   NodePtr Fill(int64_t value, const ShapeVector &shape, TypeId data_type) const;
   template <typename T>
