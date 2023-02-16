@@ -421,7 +421,8 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
 
 Status Model::Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
                     const Key &dec_key, const std::string &dec_mode, const std::string &cropto_lib_path) {
-  return Build(StringToChar(model_path), model_type, model_context, dec_key, StringToChar(dec_mode),
+  auto model_path_char = StringToChar(model_path);
+  return Build(model_path_char, model_type, model_context, dec_key, StringToChar(dec_mode),
                StringToChar(cropto_lib_path));
 }
 

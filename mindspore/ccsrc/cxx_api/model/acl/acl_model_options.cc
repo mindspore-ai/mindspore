@@ -25,6 +25,21 @@ static const std::map<enum DataType, std::string> kSupportedDtypeOptionMap = {{D
                                                                               {DataType::kNumberTypeFloat32, "FP32"},
                                                                               {DataType::kNumberTypeUInt8, "UINT8"}};
 
+std::string TransforPrecisionToAcl(std::string getPrecisionMode) {
+  if (getPrecisionMode == "enforce_fp32") {
+    return "force_fp32";
+  } else if (getPrecisionMode == "preferred_fp32") {
+    return "allow_fp32_to_fp16";
+  } else if (getPrecisionMode == "enforce_fp16") {
+    return "force_fp16";
+  } else if (getPrecisionMode == "enforce_origin") {
+    return "must_keep_origin_dtype";
+  } else if (getPrecisionMode == "preferred_optimal") {
+    return "allow_mix_precision";
+  }
+  return getPrecisionMode;
+}
+
 AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   if (context == nullptr) {
     return;
@@ -52,7 +67,7 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   }
   dynamic_batch_size_ = ascend_info->GetDynamicBatchSize();
   dynamic_image_size_ = ascend_info->GetDynamicImageSize();
-  precision_mode_ = ascend_info->GetPrecisionMode();
+  precision_mode_ = TransforPrecisionToAcl(ascend_info->GetPrecisionMode());
   op_select_impl_mode_ = ascend_info->GetOpSelectImplMode();
   fusion_switch_cfg_path_ = ascend_info->GetFusionSwitchConfigPath();
   device_id_ = ascend_info->GetDeviceID();

@@ -84,6 +84,10 @@ ConverterFunc ConverterPlugin::GetConverterFunc() {
 
 Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, ModelType model_type,
                                     const std::shared_ptr<Context> &model_context, const std::string &model_path) {
+  if (model_type != kMindIR) {
+    MS_LOG(ERROR) << "Invalid model type";
+    return kLiteError;
+  }
   const void *model_buff = model_data;
   size_t model_size = data_size;
   auto mindir_path = GetConfig(lite::kConfigModelFileSection, lite::kConfigMindIRPathKey);
@@ -210,6 +214,16 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
   if (dims.empty()) {
     MS_LOG(ERROR) << "Dims is null.";
     return kLiteInputParamInvalid;
+  }
+  for (size_t j = 0; j < dims.size(); j++) {
+    auto dims_v = dims[j];
+    for (size_t i = 0; i < dims_v.size(); i++) {
+      auto dim = dims_v[i];
+      if (dim <= 0 || dim > INT_MAX) {
+        MS_LOG(ERROR) << "Invalid shape! dim: " << dim;
+        return kLiteInputParamInvalid;
+      }
+    }
   }
   if (inputs.size() != dims.size()) {
     MS_LOG(ERROR) << "The size of inputs does not match the size of dims.";
