@@ -173,6 +173,10 @@ template <typename T>
 bool QuantileCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &workspace,
                                         const std::vector<kernel::AddressPtr> &outputs) {
+  if (inputs[kIndex1]->size == 0) {
+    MS_EXCEPTION(ValueError) << "For Quantile, q-th must be non-empty";
+  }
+
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kQuantileInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kQuantileOutputsNum, kernel_name_);
 
