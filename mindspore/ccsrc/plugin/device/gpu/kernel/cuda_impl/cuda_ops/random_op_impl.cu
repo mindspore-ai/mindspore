@@ -18,7 +18,7 @@
 #include <math.h>
 #include "include/cuda_fp16.h"
 template <typename T>
-__global__ void NormalKernel(int seed, curandState *globalState, T *output, size_t count) {
+__global__ void NormalKernel(int seed, curandStatePhilox4_32_10_t *globalState, T *output, size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     curand_init(seed, i, 0, &globalState[i]);
     output[i] = (T)curand_normal(&globalState[i]);
@@ -29,7 +29,7 @@ __global__ void NormalKernel(int seed, curandState *globalState, T *output, size
 __device__ bool dev_error_res = false;
 
 template <typename T>
-__global__ void UniformIntKernel(int seed, curandState *globalState, T *input1, size_t input_size_1,
+__global__ void UniformIntKernel(int seed, curandStatePhilox4_32_10_t *globalState, T *input1, size_t input_size_1,
                                  T *input2, size_t input_size_2, T *output, size_t count) {
   if (!(input1[0] < input2[0])) {
     dev_error_res = false;
@@ -44,7 +44,7 @@ __global__ void UniformIntKernel(int seed, curandState *globalState, T *input1, 
 }
 
 template <typename T>
-__global__ void UniformRealKernel(int seed, curandState *globalState, T *output, size_t count) {
+__global__ void UniformRealKernel(int seed, curandStatePhilox4_32_10_t *globalState, T *output, size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     curand_init(seed, i, 0, &globalState[i]);
     output[i] = (T)curand_uniform(&globalState[i]);
@@ -90,7 +90,8 @@ __global__ void StandardLaplaceKernel(int seed, curandState *globalState, T *out
 }
 
 template <typename T>
-void StandardNormal(int seed, int seed2, curandState *globalState, T *output, size_t count, cudaStream_t cuda_stream) {
+void StandardNormal(int seed, int seed2, curandStatePhilox4_32_10_t *globalState, T *output, size_t count,
+                    cudaStream_t cuda_stream) {
   int RNG_seed = 0;
   std::random_device rd;
   if (seed2 != 0) {
@@ -105,7 +106,7 @@ void StandardNormal(int seed, int seed2, curandState *globalState, T *output, si
 }
 
 template <typename T>
-bool UniformInt(int seed, int seed2, curandState *globalState, T *input1, size_t input_size_1,
+bool UniformInt(int seed, int seed2, curandStatePhilox4_32_10_t *globalState, T *input1, size_t input_size_1,
                 T *input2, size_t input_size_2, T *output, size_t count, cudaStream_t cuda_stream) {
   int RNG_seed = 0;
   std::random_device rd;
@@ -125,7 +126,8 @@ bool UniformInt(int seed, int seed2, curandState *globalState, T *input1, size_t
 }
 
 template <typename T>
-void UniformReal(int seed, int seed2, curandState *globalState, T *output, size_t count, cudaStream_t cuda_stream) {
+void UniformReal(int seed, int seed2, curandStatePhilox4_32_10_t *globalState, T *output, size_t count,
+                 cudaStream_t cuda_stream) {
   int RNG_seed = 0;
   std::random_device rd;
   if (seed2 != 0) {
@@ -188,19 +190,19 @@ void StandardLaplace(int seed, int seed2, curandState *globalState, T *output, s
   return;
 }
 
-template CUDA_LIB_EXPORT void StandardNormal<float>(int seed, int seed2, curandState *globalState,
+template CUDA_LIB_EXPORT void StandardNormal<float>(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
                                                     float *output, size_t count, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void StandardNormal<int>(int seed, int seed2, curandState *globalState,
+template CUDA_LIB_EXPORT void StandardNormal<int>(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
                                                   int *output, size_t count, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool UniformInt<float>(int seed, int seed2, curandState *globalState, float *input1,
-                                                size_t input_size_1, float *input2, size_t input_size_2, float *output,
-                                                size_t count, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool UniformInt<int>(int seed, int seed2, curandState *globalState, int *input1,
+template CUDA_LIB_EXPORT bool UniformInt<float>(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
+                                                float *input1, size_t input_size_1, float *input2, size_t input_size_2,
+                                                float *output, size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT bool UniformInt<int>(int seed, int seed2, curandStatePhilox4_32_10_t *globalState, int *input1,
                                               size_t input_size_1, int *input2, size_t input_size_2, int *output,
                                               size_t count, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void UniformReal<float>(int seed, int seed2, curandState *globalState,
+template CUDA_LIB_EXPORT void UniformReal<float>(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
                                                  float *output, size_t count, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void UniformReal<int>(int seed, int seed2, curandState *globalState,
+template CUDA_LIB_EXPORT void UniformReal<int>(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
                                                int *output, size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void TruncatedNormal<half>(int seed, int seed2,  curandState *globalState,
                                                     half *output, size_t count, cudaStream_t cuda_stream);
