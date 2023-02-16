@@ -78,6 +78,10 @@ class PadV3HelperGpuKernel : public GpuKernelHelperBase {
     input_size_ = input_size_list_[0] / sizeof(T);
     output_size_ = output_size_list_[0] / sizeof(T);
     is_null_input_ = (out_flag == 1);
+    if (attr_ptr_->paddings.size() > kPad3D) {
+      MS_EXCEPTION(ValueError) << "For PadV3 GPU, the max pad dim is " << kPad3D << ", but got "
+                               << attr_ptr_->paddings.size();
+    }
     if (input_shapes[0].size() > kMaxDim) {
       MS_EXCEPTION(ValueError) << "For PadV3 GPU, the max dim is " << kMaxDim << ", but got " << input_shapes[0].size();
     }
