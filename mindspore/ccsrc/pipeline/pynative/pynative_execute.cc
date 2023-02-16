@@ -173,6 +173,7 @@ void PyNativeExecutor::Init() {
   forward_executor_ = std::make_shared<ForwardExecutor>();
   forward_executor_->Init();
   grad_executor_ = std::make_shared<GradExecutor>(forward_executor_);
+  grad_executor_->Init();
   forward_executor_->set_grad_executor(grad_executor_);
 }
 

@@ -56,6 +56,7 @@ class GradExecutor {
         ms_function_(std::make_shared<MsFunction>()),
         async_executor_(std::make_shared<AsyncQueue>()) {}
 
+  void Init();
   std::function<void(const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2) {
     NewGraphInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2));
   };
@@ -220,6 +221,7 @@ class GradExecutor {
   bool IsGraphDynamic(const AnfNodePtr &anf_node, size_t node_idx, bool is_ms_function_node,
                       const std::string &graph_phase) const;
 
+  bool init_{false};
   bool grad_flag_{false};
   bool grad_is_running_{false};
   bool need_renormalize_{false};
