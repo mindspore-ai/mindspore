@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 
 from mindspore import Tensor
+import mindspore.numpy as mnp
 from mindspore.ops import matmul
 from mindspore.ops.operations.nn_ops import GridSampler2D
 from mindspore.ops.operations.nn_ops import GridSampler3D
@@ -193,12 +194,10 @@ def get_bprop_celu(self):
     """Grad definition for `CeLU` operation."""
     alpha = self.alpha
     greater_equal = P.GreaterEqual()
-    less = P.Less()
 
     def bprop(x, out, dout):
-        greater = greater_equal(x, 0.0)
-        lesser = less(x, 0.0)
-        dx = dout * (greater * 1.0 + lesser * (out / alpha + 1.0))
+        condition = greater_equal(x, 0.0)
+        dx = dout * mnp.where(condition, 1.0, out / alpha + 1.0)
         return (dx,)
 
     return bprop
