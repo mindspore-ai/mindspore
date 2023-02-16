@@ -2897,6 +2897,7 @@ class ReverseV2(Primitive):
     Raises:
         TypeError: If `axis` is neither list nor tuple.
         TypeError: If element of `axis` is not an int.
+        ValueError: There are multiple identical axes in `axis`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
