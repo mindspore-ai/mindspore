@@ -139,4 +139,5 @@ REG_ADPT_DESC(BatchToSpaceND, kNameBatchToSpaceNd, ADPT_DESC(BatchToSpaceND))
 REG_ADPT_DESC(BatchToSpaceNDD, kBatchToSpaceNDDOpName, ADPT_DESC(BatchToSpaceND))
 REG_ADPT_DESC(BatchToSpaceTF, kNameBatchToSpaceTF, ADPT_DESC(BatchToSpaceND))
 REG_ADPT_DESC(kNameBatchToSpaceNdV2, kNameBatchToSpaceNdV2, ADPT_DESC(BatchToSpaceND))
+REG_ADPT_DESC(kNameBatchToSpaceNDD, kBatchToSpaceNDDOpName, ADPT_DESC(BatchToSpaceND))
 }  // namespace mindspore::transform
