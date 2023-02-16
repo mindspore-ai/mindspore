@@ -38,7 +38,8 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             ast.Call: ["args"],
             ast.BinOp: ["left", "right"],
             ast.BoolOp: ["values"],
-            ast.unaryop: ["operand"],
+            ast.UnaryOp: ["operand"],
+            ast.Compare: ["left", "comparators"],
         }
 
     @staticmethod
@@ -55,7 +56,7 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
                 target_name = "function"
         elif isinstance(node, ast.Return):
             target_name = "return_value"
-        elif isinstance(node, (ast.BinOp, ast.boolop, ast.UnaryOp)):
+        elif isinstance(node, (ast.BinOp, ast.BoolOp, ast.UnaryOp)):
             target_name = type(node.op).__name__.lower() + "_var"
         elif isinstance(node, ast.Tuple):
             target_name = type(node).__name__.lower() + "_var"

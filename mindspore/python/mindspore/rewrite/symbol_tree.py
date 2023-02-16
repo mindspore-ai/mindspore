@@ -1337,17 +1337,13 @@ class SymbolTree(Observer, Observable):
         tmp_module_name = tmp_module_file[:-3]
         sys.path.append(tmp_module_path)
         tmp_module = None
-        i = 0
-        while not tmp_module:
-            try:
-                tmp_module = importlib.import_module(tmp_module_name)
-            except ModuleNotFoundError:
-                while i > 10:
-                    break
-                time.sleep(0.1)
-                i += 1
+
+        try:
+            tmp_module = importlib.import_module(tmp_module_name)
+        except ModuleNotFoundError:
+            time.sleep(1)
         if not tmp_module:
-            logger.error(f"load module {tmp_module_name} failed.")
+            tmp_module = importlib.import_module(tmp_module_name)
         network_cls = getattr(tmp_module, self._opt_cls_name)
         if network_cls is None:
             raise RuntimeError("Can not find network class:", self._opt_cls_name)
