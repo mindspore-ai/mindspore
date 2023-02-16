@@ -526,12 +526,27 @@ void UpdateKernelWorkspace(const CNodePtr &kernel) {
   kernel_info->set_workspace_address_list(std::vector<device::DeviceAddressPtr>(workspace_num, nullptr));
 }
 
+void UpdateGraphInputsCache(const KernelGraphPtr &graph) {
+  const auto &inputs = graph->inputs();
+  for (const auto &input : inputs) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (!input->isa<Parameter>()) {
+      continue;
+    }
+    auto op_runtime_info = input->user_data<runtime::OpRuntimeInfo>();
+    if (op_runtime_info != nullptr) {
+      op_runtime_info->Resize(input);
+    }
+  }
+}
+
 // kernel_mode launch
 void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceContext *device_context,
                           bool is_gradient_out) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(DEBUG) << "Start";
+  UpdateGraphInputsCache(graph);
 
   // Get device address from OpRuntimeInfo
   const auto &execution_order = graph->execution_order();

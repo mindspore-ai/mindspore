@@ -30,7 +30,140 @@ namespace mindspore {
 namespace kernel {
 namespace {
 const char kNAttrName[] = "N";
+}  // namespace
+
+int AclKernelMod::UpdateInput(const AnfNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info) {
+  bool need_cache_input_names = node_op_runtime_info != nullptr && node_op_runtime_info->acl_runtime_info_ != nullptr &&
+                                node_op_runtime_info->acl_runtime_info_->use() &&
+                                !node_op_runtime_info->acl_runtime_info_->is_dynamic_input_size();
+  const auto &input_names = (need_cache_input_names) ? node_op_runtime_info->acl_runtime_info_->input_names()
+                                                     : AclUtils::GetOpInputAnchorNames(node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
+  input_size_list_.clear();
+  input_size_list_.resize(input_names.size(), kSizeMax);
+  if (input_names.size() != input_desc_list_.size()) {
+    MS_LOG(EXCEPTION) << "Fail to update op input desc: " << node->fullname_with_scope()
+                      << ", input names size: " << input_names.size()
+                      << ", input_desc_list_ size: " << input_desc_list_.size();
+  }
+
+  for (size_t i = 0; i < input_num; ++i) {
+    auto index = AclUtils::GetInputKernelIdxByGraphIdx(node, i);
+    if (index < 0) {
+      continue;
+    }
+    auto [input, idx] = common::AnfAlgo::GetPrevNodeOutput(node, i);
+    auto op_runtime_info = input->user_data<runtime::OpRuntimeInfo>();
+
+    ShapeVector ori_shape;
+    ShapeVector input_shape;
+    std::string input_format;
+    TypeId input_type;
+    size_t input_size = 0;
+
+    if (op_runtime_info == nullptr) {
+      input_type = AnfAlgo::GetOutputDeviceDataType(input, idx);
+      ori_shape = common::AnfAlgo::GetOutputInferShape(input, idx);
+      input_shape = AnfAlgo::GetOutputDeviceShape(input, idx);
+      input_format = AnfAlgo::GetOutputFormat(input, idx);
+      auto type_size = GetTypeByte(TypeIdToType(input_type));
+      input_size = type_size * SizeOf(input_shape);
+    } else {
+      input_size = op_runtime_info->output_tensor_size(idx);
+      input_type = op_runtime_info->output_type(idx);
+      ori_shape = op_runtime_info->output_infer_shape(idx);
+      input_shape = op_runtime_info->output_device_shape(idx);
+      input_format = op_runtime_info->output_format(idx);
+    }
+
+    if (IsDynamic(input_shape)) {
+      MS_LOG(ERROR) << "Please check infer op shape before resize, error input index is:" << i;
+      return 1;
+    }
+    input_size_list_[index] = (input_size == 0) ? kSizeMax : input_size;
+    if (input_type == kMetaTypeNone) {
+      continue;
+    }
+    auto ori_format = IsOneOf3DFormat(input_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
+    if (!opt::NeedInsertTransData(ori_shape, input_format)) {
+      MS_LOG_DEBUG << "Set format of " << node->fullname_with_scope() << " to origin format";
+      input_shape = ori_shape;
+      input_format = ori_format;
+    }
+    ori_shape = AclUtils::UpdateShape(ori_shape, input_format, node);
+    if (op_runtime_info != nullptr && op_runtime_info->acl_runtime_info_ != nullptr &&
+        op_runtime_info->acl_runtime_info_->use() && !op_runtime_info->acl_runtime_info_->is_dynamic_input_size() &&
+        input_desc_list_[index] != nullptr) {
+      input_desc_list_[index]->SetShape(GeShape(input_shape));
+      input_desc_list_[index]->SetOriginShape(GeShape(ori_shape));
+      continue;
+    }
+
+    auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, ori_format);
+    MS_EXCEPTION_IF_NULL(input_desc);
+    input_desc->SetName(input_names[index]);
+    input_desc_list_[index] = input_desc;
+  }
+  return 0;
 }
+
+void AclKernelMod::UpdateOutput(const AnfNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info) {
+  bool node_acl_runtime_info_legal = node_op_runtime_info != nullptr &&
+                                     node_op_runtime_info->acl_runtime_info_ != nullptr &&
+                                     node_op_runtime_info->acl_runtime_info_->use();
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  const auto &output_names =
+    (node_acl_runtime_info_legal && !node_op_runtime_info->acl_runtime_info_->is_dynamic_output_size())
+      ? node_op_runtime_info->acl_runtime_info_->output_names()
+      : AclUtils::GetOpOutputAnchorNames(node);
+  if (output_names.size() != output_desc_list_.size()) {
+    MS_LOG(EXCEPTION) << "Fail to update op output desc: " << node->fullname_with_scope()
+                      << ", output names size: " << output_names.size()
+                      << ", output_desc_list_ size: " << output_desc_list_.size();
+  }
+  for (size_t i = 0; i < output_num; ++i) {
+    auto index = AclUtils::GetOutputKernelIdxByGraphIdx(node, i);
+    if (index < 0) {
+      continue;
+    }
+    TypeId output_type;
+    ShapeVector ori_shape;
+    ShapeVector output_shape;
+    std::string output_format;
+
+    if (node_op_runtime_info == nullptr) {
+      output_type = AnfAlgo::GetOutputDeviceDataType(node, i);
+      ori_shape = common::AnfAlgo::GetOutputInferShape(node, i);
+      output_shape = AnfAlgo::GetOutputDeviceShape(node, i);
+      output_format = AnfAlgo::GetOutputFormat(node, i);
+    } else {
+      output_type = node_op_runtime_info->output_type(i);
+      ori_shape = node_op_runtime_info->output_infer_shape(i);
+      output_shape = node_op_runtime_info->output_device_shape(i);
+      output_format = node_op_runtime_info->output_format(i);
+    }
+
+    auto ori_format = IsOneOf3DFormat(output_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
+    if (!opt::NeedInsertTransData(ori_shape, output_format)) {
+      MS_LOG_DEBUG << "Set format of " << node->fullname_with_scope() << " to origin format";
+      output_shape = ori_shape;
+      output_format = ori_format;
+    }
+    ori_shape = AclUtils::UpdateShape(ori_shape, output_format, node);
+    if (node_acl_runtime_info_legal && !node_op_runtime_info->acl_runtime_info_->is_dynamic_output_size() &&
+        output_desc_list_[index] != nullptr) {
+      output_desc_list_[index]->SetShape(GeShape(output_shape));
+      output_desc_list_[index]->SetOriginShape(GeShape(ori_shape));
+      continue;
+    }
+
+    auto output_desc = GeOpConvertor::GetTensorDesc(output_shape, output_type, output_format, ori_shape, ori_format);
+    MS_EXCEPTION_IF_NULL(output_desc);
+    output_desc->SetName(output_names[index]);
+    output_desc_list_[index] = output_desc;
+  }
+}
+
 int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                          const std::vector<KernelTensorPtr> &outputs,
                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
@@ -39,34 +172,33 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  const auto &input_names = AclUtils::GetOpInputAnchorNames(cnode);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  input_size_list_.clear();
-  input_size_list_.resize(input_names.size(), kSizeMax);
-  // Update input size list
-  for (size_t i = 0; i < input_num; ++i) {
-    auto index = AclUtils::GetInputKernelIdxByGraphIdx(node, i);
-    if (index < 0) {
-      continue;
+  auto node_op_runtime_info = node->user_data<runtime::OpRuntimeInfo>();
+  // init acl runtime info
+  if (node_op_runtime_info != nullptr && node_op_runtime_info->acl_runtime_info_ != nullptr &&
+      !node_op_runtime_info->acl_runtime_info_->use()) {
+    node_op_runtime_info->acl_runtime_info_->SetUse(true);
+    const auto &dynamic_input_names = GeOpConvertor::GetAclDynamicInputNames(node);
+    const auto &dynamic_output_names = GeOpConvertor::GetAclDynamicOutputNames(node);
+    node_op_runtime_info->acl_runtime_info_->SetIsDynamicInputSize(!dynamic_input_names.empty());
+    node_op_runtime_info->acl_runtime_info_->SetIsDynamicOutputSize(!dynamic_output_names.empty());
+    if (dynamic_input_names.empty()) {
+      node_op_runtime_info->acl_runtime_info_->SetInputNames(AclUtils::GetOpInputAnchorNames(node));
     }
-    auto [input, idx] = common::AnfAlgo::GetPrevNodeOutput(node, i);
-    auto type_id = AnfAlgo::GetOutputDeviceDataType(input, idx);
-    auto type_size = GetTypeByte(TypeIdToType(type_id));
-    auto shape = AnfAlgo::GetOutputDeviceShape(input, idx);
-    if (IsDynamic(shape)) {
-      MS_LOG(ERROR) << "Please check infer op shape before resize, error input index is:" << i;
-      return 1;
+    if (dynamic_output_names.empty()) {
+      node_op_runtime_info->acl_runtime_info_->SetOutputNames(AclUtils::GetOpOutputAnchorNames(node));
     }
-    auto input_size = type_size * SizeOf(shape);
-    input_size_list_[index] = (input_size == 0) ? kSizeMax : input_size;
   }
 
-  // Update output size list
+  // Update input size list & input desc list
+  auto ret = UpdateInput(node, node_op_runtime_info);
+  if (ret != 0) {
+    return ret;
+  }
+  // Resize & Update output size list
   AscendKernelMod::UpdateOutputSizeList();
+  // Update Output desc list
+  UpdateOutput(node, node_op_runtime_info);
 
-  if (!AclUtils::UpdateTensorDesc(node, &input_desc_list_, &output_desc_list_)) {
-    MS_LOG(EXCEPTION) << "Fail to update op desc: " << node->fullname_with_scope();
-  }
   return 0;
 }
 

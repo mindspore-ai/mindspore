@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
+#include "runtime/pynative/op_runtime_info.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/utils.h"
@@ -31,10 +32,15 @@ void AscendKernelMod::SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_cl
 void AscendKernelMod::UpdateOutputSizeList() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
+  auto op_runtime_info = node->user_data<runtime::OpRuntimeInfo>();
   auto cnode = node->cast<CNodePtr>();
+  if (op_runtime_info != nullptr) {
+    op_runtime_info->Resize(node);
+  }
   for (size_t i = 0; i < output_size_list_.size(); ++i) {
     auto ori_output_size = output_size_list_[i];
-    auto real_output_size = AnfAlgo::GetOutputTensorMemSize(cnode, i);
+    size_t real_output_size =
+      (op_runtime_info == nullptr) ? AnfAlgo::GetOutputTensorMemSize(cnode, i) : op_runtime_info->output_tensor_size(i);
     if (ori_output_size != real_output_size) {
       output_size_list_[i] = real_output_size;
     }
