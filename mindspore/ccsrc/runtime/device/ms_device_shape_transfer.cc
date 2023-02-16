@@ -275,18 +275,7 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
     if (tensor == nullptr) {
       MS_LOG(EXCEPTION) << " The node[ " << node->DebugString() << "]'s cannot convert ";
     }
-    auto shape_temp = tensor->shape();
-    if (IsDynamic(shape_temp) && !tensor->isa<tensor::MapTensor>()) {
-      auto base_shape = tensor->base_shape_ptr();
-      MS_EXCEPTION_IF_NULL(base_shape);
-      if (base_shape->cast<abstract::ShapePtr>() == nullptr) {
-        MS_LOG(EXCEPTION) << "Tensor with dynamic shape should be ShapePtr type.";
-      }
-      host_shape = base_shape->cast<abstract::ShapePtr>()->shape();
-    } else {
-      host_shape = shape_temp;
-    }
-
+    host_shape = tensor->shape();
     if (host_shape.empty()) {
       host_shape.push_back(1);
     }
