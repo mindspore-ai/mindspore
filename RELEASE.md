@@ -102,6 +102,7 @@
 
 - The `mindspore.ms_function` interface is renamed to `mindspore.jit`, and `mindspore.ms_function` will be deprecated and removed in a future version.
 - The `mindspore.ms_class` interface is renamed to `mindspore.jit_class`, and `mindspore.ms_class` will be deprecated and removed in a future version.
+- The `mindspore.ops.ms_kernel` interface is renamed to `mindspore.ops.kernel`, and `mindspore.ops.ms_kernel` will be deprecated and removed in a future version.
 - The `mindspore.dataset.map` interface parameter `column_order` does not take effect, use`mindspore.dataset.project`.
 - The `mindspore.dataset.close_pool` and `mindspore.dataset.to_device` and `mindspore.dataset.set_dynamic_columns` are deprecated and removed in this version.
 
