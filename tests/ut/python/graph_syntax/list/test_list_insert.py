@@ -132,7 +132,7 @@ def test_list_insert_pop_2():
         return x, y
 
     res_x, res_y = list_insert_pop(-2)
-    assert np.all(res_x == (3, 1, 4))
+    assert np.all(res_x == [3, 1, 4])
     assert res_y == 3
 
 

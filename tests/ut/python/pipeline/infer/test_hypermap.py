@@ -58,7 +58,7 @@ def test_hypermap_value():
             return map(lambda a: a + 1, self._list)
 
     net = Net()
-    assert net() == (23, 67, 89, 112)
+    assert net() == [23, 67, 89, 112]
 
 
 def test_hypermap_func_const():
@@ -80,4 +80,4 @@ def test_hypermap_func_const():
             return map(lambda f: f(4), _list)
 
     net = NetMap()
-    assert net() == (8, 12, 16)
+    assert net() == [8, 12, 16]

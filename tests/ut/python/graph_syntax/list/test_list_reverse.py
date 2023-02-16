@@ -32,7 +32,7 @@ def test_list_reverse_1():
         x.reverse()
         return x
     out = list_net_1()
-    assert np.all(out == (4, 3, 2, 1))
+    assert np.all(out == [4, 3, 2, 1])
 
 
 def test_list_reverse_2():
@@ -48,7 +48,7 @@ def test_list_reverse_2():
         x.reverse()
         return x
     out = list_net_2()
-    assert np.all(out == (4, 20, ('bb', '2', 3), 'a'))
+    assert np.all(out == [4, 20, ('bb', '2', 3), 'a'])
 
 
 def test_list_reverse_3():
@@ -65,7 +65,7 @@ def test_list_reverse_3():
         x.reverse()
         return x
     out = list_net_3()
-    assert np.all(out == (Tensor(1), (1, 2), Tensor(1), 4, 20, ('Michael', 'Bob', '2'), 'a'))
+    assert np.all(out == [Tensor(1), (1, 2), Tensor(1), 4, 20, ('Michael', 'Bob', '2'), 'a'])
 
 
 def test_list_reverse_4():
@@ -80,4 +80,4 @@ def test_list_reverse_4():
         x.reverse()
         return x
     out = list_net_4()
-    assert np.all(out == ())
+    assert np.all(out == [])

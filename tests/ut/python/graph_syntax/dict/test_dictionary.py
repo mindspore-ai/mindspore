@@ -61,7 +61,7 @@ def test_dict1():
     input_me = Tensor(input_np)
     net = Net1()
     out_me = net(input_me)
-    assert out_me == ('x', 'y', 0, 1)
+    assert out_me == ['x', 'y', 0, 1]
 
 
 def test_dict2():
@@ -76,7 +76,7 @@ def test_dict3():
     input_me = Tensor(input_np)
     net = Net3()
     out_me = net(input_me)
-    assert out_me == ('x', 'y', 0, (0, 1))
+    assert out_me == ['x', 'y', 0, (0, 1)]
 
 
 def test_dict4():

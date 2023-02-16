@@ -41,7 +41,7 @@ def test_single_if_no_else_type():
 
     test_net = FalseNet()
     res = test_net()
-    assert str(res) == "(<class 'numpy.ndarray'>, <class 'object'>)"
+    assert str(res) == "[<class 'numpy.ndarray'>, <class 'object'>]"
 
 
 def test_single_if_no_else_type_2():
@@ -64,7 +64,7 @@ def test_single_if_no_else_type_2():
 
     test_net = TrueNet()
     res = test_net()
-    assert str(res) == "(<class 'int'>, <class 'object'>)"
+    assert str(res) == "[<class 'int'>, <class 'object'>]"
 
 
 def test_single_if_1():

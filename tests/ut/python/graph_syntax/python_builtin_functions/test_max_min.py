@@ -131,7 +131,7 @@ def test_fallback_max_with_two_inputs_list():
         x = max([1, 2, 3], [4, 5])
         return x
     out = foo()
-    assert operator.eq(out, (4, 5))
+    assert operator.eq(out, [4, 5])
 
 
 def test_fallback_min_with_two_inputs_list():
@@ -145,7 +145,7 @@ def test_fallback_min_with_two_inputs_list():
         x = min([1, 2, 3], [4, 5])
         return x
     out = foo()
-    assert operator.eq(out, (1, 2, 3))
+    assert operator.eq(out, [1, 2, 3])
 
 
 def test_builtin_function_max_min_with_string():
