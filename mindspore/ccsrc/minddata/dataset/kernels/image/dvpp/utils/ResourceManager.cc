@@ -66,7 +66,7 @@ void ResourceManager::Release() {
   }
 
   // finalize the acl when the process exit
-  ret = mindspore::AclInitAdapter::GetInstance().ForceFinalize();
+  ret = mindspore::AclInitAdapter::GetInstance().AclFinalize();
   if (ret != APP_ERR_OK) {
     MS_LOG(DEBUG) << "Failed to finalize acl, ret = " << ret << ".";
   }
