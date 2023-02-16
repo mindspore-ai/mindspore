@@ -1682,6 +1682,10 @@ std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
   auto output_num = kernel_attr.GetOutputSize();
   for (size_t index = 0; index < kernel_attr_list.size(); ++index) {
     const auto &cur_kernel_attr = kernel_attr_list[index];
+    // Attr skip indicates that any attr is supported.
+    if (cur_kernel_attr.GetSkipCheck()) {
+      return std::make_pair(true, index);
+    }
     auto cur_input_num = cur_kernel_attr.GetInputSize();
     auto cur_output_num = cur_kernel_attr.GetOutputSize();
     // The num must be equal when not all same.
