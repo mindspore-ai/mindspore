@@ -83,6 +83,8 @@ class AscendTdtQueue : public DataQueue {
   DataQueueStatus Push(std::vector<DataQueueItem> data) override;
   DataQueueStatus Front(std::vector<DataQueueItem> *data) const override { return DataQueueStatus::SUCCESS; }
   DataQueueStatus Pop() override { return DataQueueStatus::SUCCESS; }
+  size_t QueryQueueSize() const override;
+  std::string QueueType() const override { return queue_type_; }
 
  private:
   void DestroyAclDataset(acltdtDataset *acl_dataset, bool include_data_item = true) const;
@@ -92,6 +94,7 @@ class AscendTdtQueue : public DataQueue {
 
   acltdtChannelHandle *acl_handle_;
   uint32_t device_id_;
+  std::string queue_type_;
 };
 
 class AscendHostQueue : public DataQueue {

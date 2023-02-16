@@ -192,10 +192,19 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 
+#if defined(ENABLE_PYTHON) && !defined(ENABLE_ANDROID)
+  // There is a python flag in MindSpore to recognize if the runtime env is python.
+  // If we only use MD feature, python_env_flag will not set to true,
+  // then init.cc will not call ClearResAtexit at the end of MindSpore to clean resource.
+  // The original case is [only MD + mbuf + device_queue + send], the ascend stream release
+  // failed if we don't call ClearResAtexit first.
+  mindspore::python_adapter::set_python_env_flag(true);
+#endif
+
   // create acl tdt handle
   if (!channel_name_.empty()) {
     // When "capacity" is too large, device memory will be exploded
-    size_t data_queue_capacity = 16;
+    size_t data_queue_capacity = 128;
     std::string env_capacity_str = common::GetEnv("MS_DATASET_SINK_QUEUE");
     if (!env_capacity_str.empty()) {
       int32_t env_capacity = atoi(env_capacity_str.c_str());
@@ -207,9 +216,11 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
     }
     MS_LOG(INFO) << "Select MBUF channel, the capacity of data queue is: " << data_queue_capacity;
     acl_handle_ = acltdtCreateChannelWithCapacity(device_id_, channel_name_.c_str(), data_queue_capacity);
+    queue_type_ = "Ascend_MBUF";
     if (acl_handle_ == nullptr) {
       MS_LOG(INFO) << "Select the TDT channel.";
       acl_handle_ = acltdtCreateChannel(device_id_, channel_name_.c_str());
+      queue_type_ = "Ascend_TDT";
       if (acl_handle_ == nullptr) {
         MS_LOG(EXCEPTION) << "Create channel for sending data failed.#umsg#User Help Message:#umsg#"
                              "Please check DEVICE ID setting, DEVICE ID that passed into dataset"
@@ -241,6 +252,16 @@ AscendTdtQueue::~AscendTdtQueue() {
   if (DataQueueMgr::GetInstance().IsCreated(channel_name_)) {
     DataQueueMgr::GetInstance().Free(channel_name_);
   }
+}
+
+size_t AscendTdtQueue::QueryQueueSize() const {
+  size_t size = 0;
+  auto status = acltdtQueryChannelSize(acl_handle_, &size);
+  if (status != ACL_SUCCESS) {
+    size = 0;
+    MS_LOG(EXCEPTION) << "Unable to query real-time size of Mbuf channel: " << channel_name_;
+  }
+  return size;
 }
 
 bool AscendTdtQueue::IsOpen() const { return !tdt_handle::IsClosed(); }
