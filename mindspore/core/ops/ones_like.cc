@@ -69,6 +69,22 @@ class MIND_API AGOnesLikeInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return OnesLikeInfer(engine, primitive, input_args);
   }
+
+  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    if (input_args.empty()) {
+      return nullptr;
+    }
+
+    auto op_name = primitive->name();
+    auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
+    auto shape_vec = shape_ptr->shape();
+    if (IsDynamic(shape_vec)) {
+      return nullptr;
+    }
+
+    auto infer_type = input_args[0]->BuildType();
+    return TensorConstructUtils::CreateOnesTensor(infer_type, shape_vec);
+  }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(OnesLike, prim::kPrimOnesLike, AGOnesLikeInfer, false);
