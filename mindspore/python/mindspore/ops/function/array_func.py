@@ -23,6 +23,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import _primexpr
 import mindspore.ops.function as ops
 from mindspore.ops import functional as F
 from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
@@ -102,7 +103,7 @@ unsorted_segment_sum_ = P.UnsortedSegmentSum()
 population_count_ = P.PopulationCount()
 
 
-@constexpr
+@_primexpr
 def get_x_shape(x_shape):
     if F.is_sequence_shape_unknown(x_shape):
         return (-2,)
