@@ -856,6 +856,10 @@ def set_debug_mode(debug_mode_flag):
             - num_parallel_workers (Value 1 is used.)
         - If both debug_mode is enabled and a dataset pipeline has Map operation with offload set, then offloading is
           ignored.
+        - If both debug_mode is enabled and a dataset pipeline has Map operation or Batch operation with
+          python_multiprocessing=True, then Python multiprocessing is ignored.
+        - If both debug_mode is enabled and a dataset pipeline has GeneratorDataset with
+          python_multiprocessing=True (the default value), then Python multiprocessing is ignored.
         - If both debug_mode is enabled and a dataset operation has cache set, then the cache is dropped.
         - If both debug_mode and profiling are enabled, then dataset profiling is ignored.
 

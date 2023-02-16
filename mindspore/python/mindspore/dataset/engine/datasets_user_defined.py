@@ -44,7 +44,7 @@ from . import samplers
 from .queue import _SharedQueue
 from .validators import check_generatordataset, check_numpyslicesdataset, check_paddeddataset
 from ..core.config import get_enable_shared_mem, get_prefetch_size, get_multiprocessing_timeout_interval, \
-    get_enable_watchdog
+    get_enable_watchdog, get_debug_mode
 from ..core.datatypes import mstypelist_to_detypelist
 from ..core.py_util_helpers import ExceptionHandler
 
@@ -679,6 +679,10 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         if platform.system().lower() == 'windows' and num_parallel_workers > 1 and python_multiprocessing:
             logger.warning("Python multiprocessing is not supported on Windows platform.")
         self.python_multiprocessing = python_multiprocessing if platform.system().lower() != 'windows' else False
+        if self.python_multiprocessing and get_debug_mode():
+            logger.warning("Python multiprocessing is not supported in debug mode."
+                           " Ignoring Python multiprocessing for GeneratorDataset.")
+            self.python_multiprocessing = False
 
         self.column_names = to_list(column_names)
 

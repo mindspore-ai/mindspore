@@ -160,13 +160,13 @@ def test_pipeline_debug_mode_map_pyfunc():
     assert num_rows == 4
 
 
-def test_pipeline_debug_mode_batch_pyfunc():
+def test_pipeline_debug_mode_mnist_batch_batch_size_get_batch_num():
     """
     Feature: Pipeline debug mode.
-    Description: Test creating dict iterator with Batch(PyFunc).
-    Expectation: Successful.
+    Description: Test MnistDataset with Batch op using per_batch_map calling get_batch_num()
+    Expectation: Output is equal to the expected output
     """
-    logger.info("test_pipeline_debug_mode_batch_pyfunc")
+    logger.info("test_pipeline_debug_mode_mnist_batch_batch_size_get_batch_num")
 
     def add_one(batch_info):
         return batch_info.get_batch_num() + 1
@@ -178,6 +178,66 @@ def test_pipeline_debug_mode_batch_pyfunc():
         num_rows += 1
         assert item["label"].shape == (num_rows,)
     assert num_rows == 5
+
+
+# this generator function yield two columns
+# col1d: [0], [1], [2], [3]
+# col2d: [[100],[200]], [[101],[201]], [102],[202]], [103],[203]]
+def gen_2cols(num):
+    for i in range(num):
+        yield (np.array([i]), np.array([[i + 100], [i + 200]]))
+
+
+def test_pipeline_debug_mode_batch_padding():
+    """
+    Feature: Pipeline debug mode.
+    Description: Test padded_batch operation with pad_info
+    Expectation: Output is equal to the expected output
+    """
+    data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
+    # Apply batch padding where input_shape=[x] and output_shape=[y] in which y > x
+    data1 = data1.padded_batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([2, 2], -2), "col1d": ([2], -1)})
+    data1 = data1.repeat(2)
+    row_count = 0
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        np.testing.assert_array_equal([[0, -1], [1, -1]], data["col1d"])
+        np.testing.assert_array_equal([[[100, -2], [200, -2]], [[101, -2], [201, -2]]], data["col2d"])
+        row_count += 1
+    assert row_count == 2
+
+
+def test_pipeline_debug_mode_batch_padding_get_batch_num():
+    """
+    Feature: Pipeline debug mode.
+    Description: Test padded_batch operation with dynamic batch_size that uses get_batch_num()
+    Expectation: Output is equal to the expected output
+    """
+
+    def add_one(batch_info):
+        return batch_info.get_batch_num() + 1
+
+    data1 = ds.GeneratorDataset((lambda: gen_2cols(3)), ["col1d", "col2d"],
+                                python_multiprocessing=False)
+    # Apply batch padding with dynamic batch_size
+    data1 = data1.padded_batch(batch_size=add_one, drop_remainder=False,
+                               pad_info={"col2d": ([2, 2], -2), "col1d": ([2], -1)},
+                               num_parallel_workers=1)
+    data1 = data1.repeat(2)
+
+    exp1 = [[[0, -1]],
+            [[1, -1], [2, -1]],
+            [[0, -1]],
+            [[1, -1], [2, -1]]]
+    exp2 = [[[[100, -2], [200, -2]]],
+            [[[101, -2], [201, -2]], [[102, -2], [202, -2]]],
+            [[[100, -2], [200, -2]]],
+            [[[101, -2], [201, -2]], [[102, -2], [202, -2]]]]
+    i = 0
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        np.testing.assert_array_equal(exp1[i], data["col1d"])
+        np.testing.assert_array_equal(exp2[i], data["col2d"])
+        i += 1
+    assert i == 4
 
 
 def generator_md():
@@ -348,6 +408,34 @@ def test_pipeline_debug_mode_map_random():
     assert index == 4
 
 
+def generator_md_two_cols():
+    """
+    Create a dataset with two columns
+    """
+    for i in range(10):
+        yield (i, i + 1)
+
+
+@pytest.mark.skip(reason="Debug mode bug with map and uneven column numbers.")
+def test_pipeline_debug_mode_generator_map_multi_cols():
+    """
+    Feature: Pipeline debug mode
+    Description: Test GeneratorDataset with multiple columns
+    Expectation: The dataset is processed as expected
+    """
+    data = ds.GeneratorDataset(generator_md_two_cols, ["col1", "col2"])
+    data = data.map(operations=[lambda x: (x - 1, x + 1),
+                                lambda x, y: (x + 1, y - 1)],
+                    input_columns=["col1"],
+                    output_columns=["col2", "col3"])
+
+    cnt = 0
+    for item in data.create_dict_iterator():
+        assert len(item) == 2
+        cnt += 1
+    assert cnt == 10
+
+
 def test_pipeline_debug_mode_shuffle():
     """
     Feature: Pipeline debug mode.
@@ -488,7 +576,7 @@ def run_celeba_pyop_pipeline(python_multiprocessing=False):
                       python_multiprocessing=python_multiprocessing)
     data1 = data1.map(operations=[lambda x: x], input_columns=["image"],
                       python_multiprocessing=python_multiprocessing)
-    data1 = data1.batch(batch_size=2)
+    data1 = data1.batch(batch_size=2, python_multiprocessing=python_multiprocessing)
 
     # Iterate over data pipeline
     row_count = 0
@@ -510,8 +598,7 @@ def test_pipeline_debug_mode_celeba_pyop():
     run_celeba_pyop_pipeline()
 
 
-@pytest.mark.skip(reason="debug mode and python_multiprocessing map op pyfunc failure")
-def test_pipeline_debug_mode_celeba_py_multiproc():
+def test_pipeline_debug_mode_celeba_pyop_mp():
     """
     Feature: Debug Mode
     Description: Test Debug Mode enabled with CelebADataset with python_multiprocessing=True
@@ -528,6 +615,232 @@ def test_pipeline_debug_mode_celeba_py_multiproc():
     ds.config.set_enable_shared_mem(mem_original)
 
 
+def test_pipeline_debug_mode_im_per_batch_map():
+    """
+    Feature: Debug Mode
+    Description: Test Debug Mode enabled with Batch op using per_batch_map parameter
+    Expectation: Output is equal to the expected output
+    """
+
+    def split_imgs_and_labels(imgs, labels, batch_info):
+        """split data into labels and images"""
+        ret_imgs = []
+        ret_labels = []
+
+        for i, image in enumerate(imgs):
+            ret_imgs.append(image)
+            ret_labels.append(labels[i])
+        return np.array(ret_imgs), np.array(ret_labels)
+
+    data1 = ds.ImageFolderDataset("../data/dataset/testImageNetData4/train", decode=True)
+    batch_size = 1
+    data1 = data1.batch(batch_size=batch_size, drop_remainder=True,
+                        input_columns=["image", "label"],
+                        per_batch_map=split_imgs_and_labels)
+
+    row_count = 0
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 2
+        assert item["image"].shape == (batch_size, 384, 682, 3)
+        row_count += 1
+    assert row_count == 7
+
+
+def test_pipeline_debug_mode_im_per_batch_map_resize():
+    """
+    Feature: Debug Mode
+    Description: Test Debug Mode enabled with Batch op plus per_batch_map that resizes and dynamic batch_size
+    Expectation: Output is equal to the expected output
+    """
+
+    # Fake resize image according to its batch number. e.g. if it's 5-th batch, resize to (5^2, 5^2) = (25, 25)
+    def np_pseudo_resize(col, batch_info):
+        s = (batch_info.get_batch_num() + 1) ** 2
+        return ([np.copy(c[0:s, 0:s, :]) for c in col],)
+
+    def add_one(batch_info):
+        return batch_info.get_batch_num() + 1
+
+    data1 = ds.ImageFolderDataset("../data/dataset/testPK/data/", decode=True)
+    # Set batch_size to callable function that dynamics updates the batch_size
+    # Set per_batch_map to callable function that resizes the input image
+    data1 = data1.batch(batch_size=add_one, drop_remainder=True,
+                        input_columns=["image"], per_batch_map=np_pseudo_resize)
+    # i-th batch has shape (i, i^2, i^2, 3)
+    i = 1
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert item["image"].shape == (i, i ** 2, i ** 2, 3)
+        i += 1
+    # Note: There are 9-1=8 rows
+    assert i == 9
+
+
+def run_cifar100_per_batch_map_pipeline(python_multiprocessing=False, num_parallel_workers=1):
+    """ Create and execute Cifar100 dataset pipline with Batch op using per_batch_map """
+    # Define dataset pipeline
+    num_samples = 300
+    cifar100_ds = ds.Cifar100Dataset("../data/dataset/testCifar100Data", num_samples=num_samples)
+    cifar100_ds = cifar100_ds.map(operations=[vision.ToType(np.int32)], input_columns="fine_label")
+    cifar100_ds = cifar100_ds.map(operations=[lambda z: z], input_columns="image")
+
+    # Callable function to delete 3rd column
+    def del_column(col1, col2, col3, batch_info):
+        return (col1, col2,)
+
+    # Apply Dataset Ops
+    buffer_size = 10000
+    batch_size = 32
+    repeat_size = 3
+    cifar100_ds = cifar100_ds.shuffle(buffer_size=buffer_size)
+    # Note: Test repeat before batch
+    cifar100_ds = cifar100_ds.repeat(repeat_size)
+    cifar100_ds = cifar100_ds.batch(batch_size, per_batch_map=del_column,
+                                    input_columns=['image', 'fine_label', 'coarse_label'],
+                                    output_columns=['image', 'label'], drop_remainder=True,
+                                    num_parallel_workers=num_parallel_workers,
+                                    python_multiprocessing=python_multiprocessing)
+
+    # Iterate over data pipeline
+    row_count = 0
+    for item in cifar100_ds.create_dict_iterator(num_epochs=1):
+        assert len(item) == 2
+        assert item["image"].shape == (batch_size, 32, 32, 3)
+        row_count += 1
+    assert row_count == 28
+
+
+def test_pipeline_debug_mode_cifar100_per_batch_map():
+    """
+    Feature: Debug Mode
+    Description: Test Debug Mode enabled with Cifar100Dataset with Batch op using per_batch_map
+    Expectation: Sanity check of data pipeline is done. Output is equal to the expected output
+    """
+    # Create and execute data pipeline
+    # Note: In Debug Mode, using num_parallel_workers > 1 is ignored
+    run_cifar100_per_batch_map_pipeline(python_multiprocessing=False, num_parallel_workers=3)
+
+
+def test_pipeline_debug_mode_cifar100_per_batch_map_mp():
+    """
+    Feature: Debug Mode
+    Description: Test Debug Mode enabled with Cifar100Dataset with Batch op using per_batch_map and
+        python_multiprocessing=True
+    Expectation: Sanity check of data pipeline is done. Output is equal to the expected output
+    """
+    # Reduce memory required by disabling the shared memory optimization
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
+
+    # Create and execute data pipeline
+    # Note: In Debug Mode, using num_parallel_workers > 1 is ignored
+    run_cifar100_per_batch_map_pipeline(python_multiprocessing=True, num_parallel_workers=5)
+
+    # Restore configuration
+    ds.config.set_enable_shared_mem(mem_original)
+
+
+def test_pipeline_debug_mode_batch_map_get_epoch_batch_num():
+    """
+    Feature: Debug Mode
+    Description: Test Debug Mode with Batch op with per_batch_map calling get_epoch_num(), get_batch_num()
+    Expectation: Output is equal to the expected output
+    """
+
+    def check_res(arr1, arr2):
+        assert len(arr1) == len(arr2)
+        for ind, _ in enumerate(arr1):
+            assert np.array_equal(arr1[ind], np.array(arr2[ind]))
+
+    def gen(num):
+        for i in range(num):
+            yield (np.array([i]),)
+
+    def invert_sign_per_epoch(col_list, batch_info):
+        return ([np.copy(((-1) ** batch_info.get_epoch_num()) * arr) for arr in col_list],)
+
+    def invert_sign_per_batch(col_list, batch_info):
+        return ([np.copy(((-1) ** batch_info.get_batch_num()) * arr) for arr in col_list],)
+
+    def batch_map_config(num, r, batch_size, func, res):
+        data1 = ds.GeneratorDataset((lambda: gen(num)), ["num"],
+                                    python_multiprocessing=False)
+        data1 = data1.batch(batch_size=batch_size, input_columns=["num"], per_batch_map=func,
+                            python_multiprocessing=False, num_parallel_workers=1)
+        data1 = data1.repeat(r)
+        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            res.append(item["num"])
+
+    tst1, tst2, = [], []
+    batch_map_config(4, 2, 2, invert_sign_per_epoch, tst1)
+    # Note: There is only one epoch; get_epoch_num() returns 0.
+    check_res(tst1, [[[0], [1]], [[2], [3]], [[0], [1]], [[2], [3]]])
+
+    # For each batch, the sign of a row is changed.
+    batch_map_config(4, 2, 2, invert_sign_per_batch, tst2)
+    check_res(tst2, [[[0], [1]], [[-2], [-3]], [[0], [1]], [[-2], [-3]]])
+
+
+def test_pipeline_debug_mode_batch_map_get_epoch_num():
+    """
+    Feature: Batch op
+    Description: Test basic map Batch op with per_batch_map function calling get_epoch_num()
+    Expectation: Output is equal to the expected output
+    """
+
+    def check_res(arr1, arr2):
+        assert len(arr1) == len(arr2)
+        for ind, _ in enumerate(arr1):
+            assert np.array_equal(arr1[ind], np.array(arr2[ind]))
+
+    def gen(num):
+        for i in range(num):
+            yield (np.array([i]),)
+
+    def invert_sign_per_epoch(col_list, batch_info):
+        return ([np.copy(((-1) ** batch_info.get_epoch_num()) * arr) for arr in col_list],)
+
+    def batch_map_config(num_samples, num_repeat, batch_size, num_epoch, func, res):
+        data1 = ds.GeneratorDataset((lambda: gen(num_samples)), ["num"],
+                                    python_multiprocessing=False)
+        data1 = data1.batch(batch_size=batch_size, input_columns=["num"], per_batch_map=func,
+                            python_multiprocessing=False, num_parallel_workers=1)
+        data1 = data1.repeat(num_repeat)
+
+        # Iterate over data pipeline
+        iter1 = data1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+        epoch_count = 0
+        sample_count = 0
+        for _ in range(num_epoch):
+            row_count = 0
+            for item in iter1:
+                res.append(item["num"])
+                row_count += 1
+            assert row_count == int(num_samples * num_repeat / batch_size)
+            epoch_count += 1
+            sample_count += row_count
+        assert epoch_count == num_epoch
+        assert sample_count == int(num_samples * num_repeat / batch_size) * num_epoch
+
+    res1, res2, res3, res4, = [], [], [], []
+
+    # Test repeat=1, num_epochs=1
+    batch_map_config(4, 1, 2, 1, invert_sign_per_epoch, res1)
+    check_res(res1, [[[0], [1]], [[2], [3]]])
+
+    # Test repeat=2, num_epochs=1
+    batch_map_config(4, 2, 2, 1, invert_sign_per_epoch, res2)
+    check_res(res2, [[[0], [1]], [[2], [3]], [[0], [1]], [[2], [3]]])
+
+    # Test repeat=1, num_epochs=2
+    batch_map_config(4, 1, 2, 2, invert_sign_per_epoch, res3)
+    check_res(res3, [[[0], [1]], [[2], [3]], [[0], [-1]], [[-2], [-3]]])
+
+    # Test repeat=2, num_epochs=2
+    batch_map_config(4, 2, 2, 2, invert_sign_per_epoch, res4)
+    check_res(res4, [[[0], [1]], [[2], [3]], [[0], [1]], [[2], [3]],
+                     [[0], [-1]], [[-2], [-3]], [[0], [-1]], [[-2], [-3]]])
+
+
 if __name__ == '__main__':
     setup_function()
     test_pipeline_debug_mode_tuple()
@@ -535,18 +848,27 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_minddata()
     test_pipeline_debug_mode_numpy_slice_dataset()
     test_pipeline_debug_mode_map_pyfunc()
-    test_pipeline_debug_mode_batch_pyfunc()
+    test_pipeline_debug_mode_mnist_batch_batch_size_get_batch_num()
+    test_pipeline_debug_mode_batch_padding()
+    test_pipeline_debug_mode_batch_padding_get_batch_num()
     test_pipeline_debug_mode_generator_pipeline()
     test_pipeline_debug_mode_generator_repeat()
     test_pipeline_debug_mode_concat()
     test_pipeline_debug_mode_tfrecord_rename_zip()
     test_pipeline_debug_mode_imagefolder_rename_zip()
-    test_pipeline_debug_mode_shuffle()
     test_pipeline_debug_mode_map_random()
+    test_pipeline_debug_mode_generator_map_multi_cols()
+    test_pipeline_debug_mode_shuffle()
     test_pipeline_debug_mode_imdb_shuffle()
     test_pipeline_debug_mode_tfrecord_shard()
     test_pipeline_debug_mode_tfrecord_shard_equal_rows()
     test_pipeline_debug_mode_clue_shuffle()
     test_pipeline_debug_mode_celeba_pyop()
-    test_pipeline_debug_mode_celeba_py_multiproc()
+    test_pipeline_debug_mode_celeba_pyop_mp()
+    test_pipeline_debug_mode_im_per_batch_map()
+    test_pipeline_debug_mode_im_per_batch_map_resize()
+    test_pipeline_debug_mode_cifar100_per_batch_map()
+    test_pipeline_debug_mode_cifar100_per_batch_map_mp()
+    test_pipeline_debug_mode_batch_map_get_epoch_batch_num()
+    test_pipeline_debug_mode_batch_map_get_epoch_num()
     teardown_function()

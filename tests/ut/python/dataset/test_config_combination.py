@@ -140,7 +140,7 @@ def test_debug_mode_ignore_config1():
     ds.config.set_debug_mode(True)
 
     # Create and execute data pipeline
-    run_imagefolder_pyop_pipeline(python_multiprocessing=False, num_epoch=2)
+    run_imagefolder_pyop_pipeline(python_multiprocessing=True, num_epoch=2)
 
     # Restore Configuration
     ds.config.set_prefetch_size(prefetch_original)

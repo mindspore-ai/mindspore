@@ -2434,6 +2434,10 @@ class BatchDataset(UnionBaseDataset):
         """
         if self.python_multiprocessing and platform.system().lower() == 'windows':
             logger.warning("Python multiprocessing is not supported on Windows platform.")
+        if self.python_multiprocessing and get_debug_mode():
+            logger.warning("Python multiprocessing is not supported in debug mode."
+                           " Ignoring Python multiprocessing for batch operation.")
+            self.python_multiprocessing = False
         if self.python_multiprocessing and platform.system().lower() != 'windows':
             if self.per_batch_map is None:
                 logger.warning("per_batch_map is None so python_multiprocessing is ignored for batch.")
@@ -3437,6 +3441,10 @@ class MapDataset(UnionBaseDataset):
         """
         if self.python_multiprocessing and platform.system().lower() == 'windows':
             logger.warning("Python multiprocessing is not supported on Windows platform.")
+            return
+        if self.python_multiprocessing and get_debug_mode():
+            logger.warning("Python multiprocessing is not supported in debug mode."
+                           " Ignoring Python multiprocessing for map operation.")
             return
         if self.python_multiprocessing:
             iter_specific_operations = []
