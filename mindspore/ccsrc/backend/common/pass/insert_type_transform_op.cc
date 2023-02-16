@@ -211,7 +211,8 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
   }
   KernelBuildInfoPtr build_info = AnfAlgo::GetSelectKernelBuildInfo(cnode);
   MS_EXCEPTION_IF_NULL(build_info);
-
+  MS_LOG(DEBUG) << "Start setting kernel info for cnode " << cnode->DebugString() << " " << cnode->fullname_with_scope()
+                << ",set_format_type: " << set_format_type;
   // Set input and output object type for subsequent type matching process.
   std::vector<KernelObjectType> input_obj_type;
   std::vector<KernelObjectType> output_obj_type;
@@ -226,17 +227,16 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
       auto input_node = common::AnfAlgo::GetInputNode(cnode, input_index);
-      if (input_node->kernel_info() == nullptr) {
+      MS_EXCEPTION_IF_NULL(input_node);
+      auto real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, kIndex0).first;
+      MS_EXCEPTION_IF_NULL(real_input_node);
+      auto output_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, kIndex0).second;
+      if (real_input_node->kernel_info() == nullptr) {
         inputs_format.emplace_back(kOpFormat_DEFAULT);
       } else {
-        auto real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, kIndex0).first;
-        MS_EXCEPTION_IF_NULL(real_input_node);
-        if (real_input_node->kernel_info() == nullptr) {
-          inputs_format.emplace_back(kOpFormat_DEFAULT);
-        } else {
-          inputs_format.emplace_back(AnfAlgo::GetOutputFormat(real_input_node, kIndex0));
-        }
+        inputs_format.emplace_back(AnfAlgo::GetOutputFormat(real_input_node, output_index));
       }
+
       inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
     }
 
