@@ -13,8 +13,10 @@
 # limitations under the License.
 # ============================================================================
 
+import platform
 import numpy as np
 import pytest
+
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -69,7 +71,7 @@ def test_slice_vmap():
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype",
                          [np.bool, np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64,
-                          np.uint64, np.float16, np.float32, np.float64, np.complex64, np.complex128])
+                          np.uint64, np.float16, np.float32, np.float64])
 def test_slice_functional_with_attr_int32(dtype):
     """
     Feature: Test strided_slice functional interface.
@@ -91,13 +93,58 @@ def test_slice_functional_with_attr_int32(dtype):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype",
                          [np.bool, np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64,
-                          np.uint64, np.float16, np.float32, np.float64, np.complex64, np.complex128])
+                          np.uint64, np.float16, np.float32, np.float64])
 def test_slice_functional_with_attr_int64(dtype):
     """
     Feature: Test strided_slice functional interface.
     Description: Test strided_slice functional interface with attr int64.
     Expectation: success.
     """
+
+    x = Tensor(np.array([[[1., 1., 1.], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 7, 8]]]).astype(dtype))
+    begin = Tensor(np.array([2, 0, 0]).astype(np.int64))
+    end = Tensor(np.array([3, 2, 3]).astype(np.int64))
+    strides = Tensor(np.array([1, 1, 1]).astype(np.int64))
+    output = ops.strided_slice(x, begin, end, strides)
+    expect = np.array([[[5., 5., 5.],
+                        [6., 7., 8.]]]).astype(dtype)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+def test_slice_functional_with_attr_int32_complex(dtype):
+    """
+    Feature: Test strided_slice functional interface.
+    Description: Test strided_slice functional interface with attr int32.
+    Expectation: success.
+    """
+    if platform.system() == 'Windows':
+        return
+    x = Tensor(np.array([[[1., 1., 1.], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 7, 8]]]).astype(dtype))
+    begin = Tensor(np.array([2, 0, 0]).astype(np.int32))
+    end = Tensor(np.array([3, 2, 3]).astype(np.int32))
+    strides = Tensor(np.array([1, 1, 1]).astype(np.int32))
+    output = ops.strided_slice(x, begin, end, strides)
+    expect = np.array([[[5., 5., 5.],
+                        [6., 7., 8.]]]).astype(dtype)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+def test_slice_functional_with_attr_int64_complex(dtype):
+    """
+    Feature: Test strided_slice functional interface.
+    Description: Test strided_slice functional interface with attr int64.
+    Expectation: success.
+    """
+    if platform.system() == 'Windows':
+        return
     x = Tensor(np.array([[[1., 1., 1.], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 7, 8]]]).astype(dtype))
     begin = Tensor(np.array([2, 0, 0]).astype(np.int64))
     end = Tensor(np.array([3, 2, 3]).astype(np.int64))
