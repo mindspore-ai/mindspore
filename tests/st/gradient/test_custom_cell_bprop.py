@@ -760,3 +760,47 @@ def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
     assert np.allclose(out[0][0].asnumpy(), expect_dx)
     assert np.allclose(out[0][1].asnumpy(), expect_dy)
     assert np.allclose(out[1][0].asnumpy(), expect_dz)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dde_self_define_cell_output_not_use():
+    """
+    Feature: Custom cell bprop
+    Description: Fprop output[1] only used by bprop, it should not erased by dde.
+    Expectation: Get the correct gradients.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+
+    class SelfDefineCell(ms.nn.Cell):
+        def construct(self, x):
+            return x + 1, x + 2
+
+        def bprop(self, x, out, dout):
+            return (out[1],)
+
+    class ForwardNet(ms.nn.Cell):
+        def __init__(self):
+            super(ForwardNet, self).__init__()
+            self.self_defined_cell = SelfDefineCell()
+
+        def construct(self, x):
+            # keep out1 not used in fprop.
+            out0, _ = self.self_defined_cell(x)
+            return out0
+
+    class TestNet(ms.nn.Cell):
+        def __init__(self):
+            super(TestNet, self).__init__()
+            self.forward_net = ForwardNet()
+            self.grad_op = ms.ops.GradOperation(get_all=True)
+
+        def construct(self, x):
+            grad_out = self.grad_op(self.forward_net)(x)
+            return grad_out
+
+    net = TestNet()
+    x_input = ms.Tensor([1])
+    out = net(x_input)
+    assert out[0] == ms.Tensor([3])
