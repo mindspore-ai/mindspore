@@ -3,7 +3,7 @@ mindspore.ops.cholesky_inverse
 
 .. py:function:: mindspore.ops.cholesky_inverse(input_x, upper=False)
 
-    计算对称正定矩阵的逆矩阵。
+    使用Cholesky分解计算对称正定矩阵的逆矩阵。
 
     如果 `upper` 为False，则返回的矩阵 :math:`U` 为下三角矩阵，输出的结果：
 
@@ -16,7 +16,7 @@ mindspore.ops.cholesky_inverse
         inv = (U^{T}U)^{-1}
 
     .. note::
-       输入Tensor必须是一个上三角矩阵或者下三角矩阵。    
+       输入Tensor必须是一个由Cholesky分解得到的上三角矩阵或者下三角矩阵。    
 
     参数：
         - **input_x** (Tensor) - 输入Tensor，其rank为2，数据类型为float32或float64。
