@@ -15,7 +15,6 @@
 """Parse ast.Assign in construct function to node of SymbolTree."""
 from typing import Union
 import ast
-import os
 import astunparse
 
 from mindspore import log as logger
@@ -537,12 +536,9 @@ class AssignParser(Parser):
                               f"ast.Attribute, ast.Num, ast.NameConstant, ast.Bytes, ast.Str, ast.Tuple, ast.List, "
                               f"ast.Dict) as value of ast.assign, but got ast type '{type(value).__name__}'",
                               child_node=value, father_node=node))
-        except RuntimeError as e:
-            if os.getenv("STREE_PYTHON_FALLBACK"):
-                logger.info(f"ops-call({astunparse.unparse(node)}) not supported in rewrite, fallback to python")
-                stree.try_append_python_node(node, node)
-            else:
-                raise e
+        except RuntimeError:
+            logger.info(f"ops-call({astunparse.unparse(node)}) not supported in rewrite, fallback to python")
+            stree.try_append_python_node(node, node)
 
 
 g_assign_parser = reg_parser(AssignParser())

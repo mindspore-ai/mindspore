@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, Parameter
 from mindspore.ops.operations.nn_ops import SparseApplyProximalGradientDescent
 from mindspore.common import dtype as mstype
 
@@ -42,7 +42,7 @@ def test_apply_proximal_gradient_descent_float32():
     Expectation: success
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    var = Tensor(np.array([[4.1, 7.2], [1.1, 3.0]]).astype(np.float32))
+    var = Parameter(Tensor(np.array([[4.1, 7.2], [1.1, 3.0]]).astype(np.float32)))
     alpha = Tensor(1.0, mstype.float32)
     l1 = Tensor(1.0, mstype.float32)
     l2 = Tensor(0.0, mstype.float32)
@@ -64,7 +64,7 @@ def test_apply_proximal_gradient_descent_float64():
     Expectation: success
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    var = Tensor(np.array([[4.1, 7.2], [1.1, 3.0]]).astype(np.float64))
+    var = Parameter(Tensor(np.array([[4.1, 7.2], [1.1, 3.0]]).astype(np.float64)))
     alpha = Tensor(1.0, mstype.float64)
     l1 = Tensor(1.0, mstype.float64)
     l2 = Tensor(0.0, mstype.float64)

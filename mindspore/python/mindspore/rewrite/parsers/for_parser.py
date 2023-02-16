@@ -67,11 +67,12 @@ class ForParser(Parser):
             iter_code = iter_code.replace("self", "stree.get_origin_network()")
         try:
             iter_obj = eval(iter_code)
-        except Exception as e:
-            error_info = f"For MindSpore Rewrtie, when eval '{iter_code}' by using JIT Fallback feature, " \
+        except (NameError, TypeError) as e:
+            _info = f"For MindSpore Rewrtie, when eval '{iter_code}' by using JIT Fallback feature, " \
                          f"an error occurred: {str(e)}"
-            logger.error(error_info)
-            raise e
+            logger.warning(_info)
+            stree.try_append_python_node(node, node)
+            return
 
         iter_var_name = iter_code.split(".")[-1]
         index = stree.get_ast_root().body.index(node) + 1
@@ -85,14 +86,17 @@ class ForParser(Parser):
                     index += 1
             if stree.get_ori_cls_name() == "SequentialCell":
                 stree.on_change(Event.CodeChangeEvent)
-        elif isinstance(iter_obj, range):
-            raise NotImplementedError("For MindSpore Rewrtie, range not support")
+            stree.get_ast_root().body.remove(node)
+            return
+        if isinstance(iter_obj, range):
+            logger.warning("For MindSpore Rewrtie, range not support.")
         elif isinstance(iter_obj, zip):
-            raise NotImplementedError("For MindSpore Rewrtie, zip not support")
+            logger.warning("For MindSpore Rewrtie, zip not support.")
         elif isinstance(iter_obj, enumerate):
-            raise NotImplementedError("For MindSpore Rewrtie, enumerate not support")
+            logger.warning("For MindSpore Rewrtie, enumerate not support.")
         else:
-            raise ValueError("For MindSpore Rewrtie, not supported type: ", iter_obj)
-
+            logger.warning("For MindSpore Rewrtie, not supported type: ", type(iter_obj))
+        stree.try_append_python_node(node, node)
+        return
 
 g_for_parser = reg_parser(ForParser())

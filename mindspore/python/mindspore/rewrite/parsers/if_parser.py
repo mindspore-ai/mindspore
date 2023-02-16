@@ -46,14 +46,17 @@ class IfParser(Parser):
         bodies = None
         try:
             test_value = eval(test_code)
-        except NameError:
+        except (NameError, TypeError):
             stree.try_append_python_node(node, node)
             return
 
         bodies = node.body if test_value else node.orelse
         index = stree.get_ast_root().body.index(node) + 1
+        info_node = ast.Name(id="# If node has bin replaced by ", lineno=0, col_offset=0, ctx=ast.Load)
+        exp_node = ast.Expr(value=info_node, lineno=0, col_offset=0, ctx=ast.Load)
+        stree.get_ast_root().body.insert(index-1, exp_node)
         for body in bodies:
             stree.get_ast_root().body.insert(index, body)
             index += 1
-
+        stree.get_ast_root().body.remove(node)
 g_if_parser = reg_parser(IfParser())

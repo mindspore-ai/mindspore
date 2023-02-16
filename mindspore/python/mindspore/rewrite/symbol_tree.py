@@ -21,7 +21,6 @@ import ast
 import importlib
 import types
 import time
-
 import astunparse
 
 from mindspore.nn import Cell
@@ -1323,15 +1322,32 @@ class SymbolTree(Observer, Observable):
             A class handle.
         """
         self._update_container()
-        file_name = "new_network_{0}.py".format(int(time.time() * 10000000))
-        with os.fdopen(os.open(file_name, os.O_WRONLY | os.O_CREAT, stat.S_IRWXU), 'wb') as f:
+        file_path = os.getcwd()
+        file_path = os.path.join(file_path, "rewritten_network")
+        if not os.path.exists(file_path):
+            os.mkdir(file_path)
+        file_name = "{0}_{1}.py".format(self._opt_cls_name, id(self))
+        network_file = os.path.join(file_path, file_name)
+        with os.fdopen(os.open(network_file, os.O_WRONLY | os.O_CREAT, stat.S_IRWXU), 'wb') as f:
             source = self.get_code()
             f.write(source.encode('utf-8'))
             f.flush()
-        tmp_module_path, tmp_module_file = os.path.split(file_name)
+            os.fsync(f)
+        tmp_module_path, tmp_module_file = os.path.split(network_file)
         tmp_module_name = tmp_module_file[:-3]
         sys.path.append(tmp_module_path)
-        tmp_module = importlib.import_module(tmp_module_name)
+        tmp_module = None
+        i = 0
+        while not tmp_module:
+            try:
+                tmp_module = importlib.import_module(tmp_module_name)
+            except ModuleNotFoundError:
+                while i > 10:
+                    break
+                time.sleep(0.1)
+                i += 1
+        if not tmp_module:
+            logger.error(f"load module {tmp_module_name} failed.")
         network_cls = getattr(tmp_module, self._opt_cls_name)
         if network_cls is None:
             raise RuntimeError("Can not find network class:", self._opt_cls_name)
