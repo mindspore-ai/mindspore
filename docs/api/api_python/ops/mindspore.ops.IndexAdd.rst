@@ -3,7 +3,7 @@ mindspore.ops.IndexAdd
 
 .. py:class:: mindspore.ops.IndexAdd(axis, use_lock=True, check_index_bound=True)
 
-    将Tensor `y` 加到Tensor `x` 的指定 `axis` 和 `indices` 。 `axis` 取值范围为[0,  len(x.dim) - 1]， `indices` 取值范围为[0, len(x[axis]) - 1]。
+    将Tensor `y` 加到Tensor `x` 的指定 `axis` 和 `indices` 。 `axis` 取值范围为[-len(x.dim),  len(x.dim) - 1]， `indices` 取值范围为[0, len(x[axis]) - 1]。
 
     参数：
         - **axis** (int) - 进行索引的axis。
