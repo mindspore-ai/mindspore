@@ -6992,25 +6992,14 @@ class Cholesky(Primitive):
 
 class STFT(Primitive):
     """
-    STFTs can be used as a way of quantifying the change of a nonstationary signal’s
-    frequency and phase content over time.
+    STFT segments the signal into narrow time intervals and takes the Fourier transform
+    of each segment to quantify the change of a nonstationary signal’s frequency
+    and phase content over time.
 
-    Args:
-        n_fft (int): The size of Fourier transform.
-        hop_length (int): The distance between neighboring sliding window frames.
-        win_length (int): the size of window frame and STFT filter.
-        normalized (bool): controls whether to return the normalized STFT results.
-        onesided (bool): controls whether to return half of results to
-            avoid redundancy for real inputs.
-        return_complex (bool): If True, return a complex tensor. If False, return
-            a real tensor with an extra last dimension for the real and imaginary components.
+    Refer to :func:`mindspore.ops.stft` for more details.
 
-    Inputs:
-        - **x** (Tensor) - Time sequence of stft, must be either a 1-D time tensor or a 2-D tensor.
-        - **window** (Tensor) - the optional window function.
-
-    Outputs:
-        - **y** (Tensor) - A tensor containing the STFT result with shape described above.
+    Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
