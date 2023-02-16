@@ -235,6 +235,7 @@ Element-wise Operations
     mindspore.ops.hypot
     mindspore.ops.igamma
     mindspore.ops.igammac
+    mindspore.ops.imag
     mindspore.ops.i0
     mindspore.ops.inv
     mindspore.ops.invert
