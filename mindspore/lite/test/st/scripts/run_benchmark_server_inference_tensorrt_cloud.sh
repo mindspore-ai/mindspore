@@ -26,7 +26,7 @@ function Run_Converter() {
 }
 
 function Run_TensorRT() {
-    source /etc/profile.tensorrt8
+    source /etc/profile.tensorrt8.5.1
     # cd ${tensorrt_path} || exit 1
     # tar -zxf ${x86_path}/cloud_fusion/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
     # tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1

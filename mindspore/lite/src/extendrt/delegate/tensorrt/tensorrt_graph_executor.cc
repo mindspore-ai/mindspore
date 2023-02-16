@@ -368,6 +368,7 @@ int TensorRTExecutor::ParseOptimizationProfile() {
   trt_profile_configs_ = profile_configs;
   auto precision_mode = ProfileParser::GetOption(gpu_context, lite::kPrecisionModeKey, "");
   device_info_->SetPrecisionMode(precision_mode);
+  serialize_path_ = ProfileParser::GetOption(gpu_context, lite::kMSCacheSerializePathKey);
   return RET_OK;
 }
 
