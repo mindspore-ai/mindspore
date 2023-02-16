@@ -1311,17 +1311,20 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
                                     const std::string &opt_shard_group) {
   int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
   auto enable_opt_shard = ParallelContext::GetInstance()->enable_parallel_optimizer();
-  if ((opt_shard_group.empty() && split_stage_num <= 1) || (!enable_opt_shard) || (!ParameterRequireGrad(parameter))) {
+  if ((opt_shard_group.empty() && split_stage_num <= 1) || (!enable_opt_shard)) {
     return;
   }
 
+  if (opt_shard_group.empty() && !ParameterRequireGrad(parameter)) {
+    return;
+  }
   // set all gather type
   MS_EXCEPTION_IF_NULL(parameter);
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
   std::string op_name;
   if (grad_accumulation_step > 1) {
     op_name = MINI_STEP_ALL_GATHER;
-  } else if (split_stage_num > 1) {
+  } else if (split_stage_num > 1 && ParameterRequireGrad(parameter)) {
     op_name = MICRO_STEP_ALL_GATHER;
   } else {
     op_name = ALL_GATHER;
