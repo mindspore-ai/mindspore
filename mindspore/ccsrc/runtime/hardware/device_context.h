@@ -103,7 +103,9 @@ class BACKEND_EXPORT DeviceResManager {
   virtual void Destroy() {}
 
   // Bind device to current thread to gain device control privileges
-  virtual bool BindDeviceToCurrentThread() const { return true; }
+  // If force_bind is true, bind context to current thread every time;
+  // Otherwise, only bind context to current thread for the first time.
+  virtual bool BindDeviceToCurrentThread(bool force_bind) const { return true; }
 
   // Relevant function to allocate and free device memory of raw ptr.
   virtual void *AllocateMemory(size_t size) const = 0;

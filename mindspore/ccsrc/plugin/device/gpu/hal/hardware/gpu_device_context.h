@@ -41,7 +41,7 @@ class GPUDeviceResManager : public DeviceResManager {
   // Release device memory, stream, cudnn and cublas handle, etc.
   void Destroy() override;
 
-  bool BindDeviceToCurrentThread() const override;
+  bool BindDeviceToCurrentThread(bool force_bind) const override;
 
   std::shared_ptr<void> AllocateHostMemory(size_t size) const override;
 

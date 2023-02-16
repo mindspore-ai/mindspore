@@ -65,7 +65,7 @@ void AscendDeviceResManager::Destroy() {
   MS_LOG(INFO) << "Device resource manager Destroy success.";
 }
 
-bool AscendDeviceResManager::BindDeviceToCurrentThread() const {
+bool AscendDeviceResManager::BindDeviceToCurrentThread(bool /* force_bind */) const {
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->SetContext();
   return true;

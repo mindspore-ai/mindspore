@@ -88,7 +88,7 @@ static thread_local bool cur_thread_device_inited{false};
 
 void GPUDeviceContext::Initialize() {
   if (initialized_) {
-    if (!device_res_manager_->BindDeviceToCurrentThread()) {
+    if (!device_res_manager_->BindDeviceToCurrentThread(false)) {
       MS_LOG(EXCEPTION) << "BindDeviceToCurrentThread failed.";
     }
     GPUMemoryAllocator::GetInstance().CheckMaxDeviceMemory();
@@ -220,7 +220,7 @@ void GPUDeviceContext::Destroy() {
 
 void *GPUDeviceResManager::AllocateMemory(size_t size) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  if (!BindDeviceToCurrentThread()) {
+  if (!BindDeviceToCurrentThread(false)) {
     return nullptr;
   }
   return mem_manager_->MallocMemFromMemPool(size, false);
@@ -245,7 +245,7 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
     return false;
   }
 
-  if (!BindDeviceToCurrentThread()) {
+  if (!BindDeviceToCurrentThread(false)) {
     return false;
   }
   if (auto_mem_offload_ != nullptr) {
@@ -262,7 +262,7 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
 }
 
 std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
-  if (!BindDeviceToCurrentThread()) {
+  if (!BindDeviceToCurrentThread(false)) {
     std::vector<void *> ptr_list;
     return ptr_list;
   }
@@ -692,7 +692,7 @@ bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<A
                                      const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
                                      size_t stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  if (!res_manager_->BindDeviceToCurrentThread()) {
+  if (!res_manager_->BindDeviceToCurrentThread(false)) {
     return false;
   }
   bool ret = true;
@@ -844,8 +844,8 @@ bool GPUDeviceResManager::LoadCollectiveCommLib() {
 #endif
 }
 
-bool GPUDeviceResManager::BindDeviceToCurrentThread() const {
-  if (cur_thread_device_inited) {
+bool GPUDeviceResManager::BindDeviceToCurrentThread(bool force_bind) const {
+  if (cur_thread_device_inited && !force_bind) {
     return true;
   }
 

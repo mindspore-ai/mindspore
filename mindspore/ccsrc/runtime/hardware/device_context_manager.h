@@ -57,6 +57,7 @@ class BACKEND_EXPORT DeviceContextManager {
   void WaitTaskFinishOnDevice() const;
   void UnloadPlugin();
   std::string GetErrorMsg() const;
+  void BindDeviceCtx() const;
 
  private:
   DeviceContextManager() = default;

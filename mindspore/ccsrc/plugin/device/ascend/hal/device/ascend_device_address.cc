@@ -164,7 +164,7 @@ void AscendDeviceAddress::BindDevice() const {
   if (!device_name_.empty()) {
     auto ascend_device_context = GetDeviceContext();
     MS_EXCEPTION_IF_NULL(ascend_device_context);
-    if (!ascend_device_context->device_res_manager_->BindDeviceToCurrentThread()) {
+    if (!ascend_device_context->device_res_manager_->BindDeviceToCurrentThread(false)) {
       MS_LOG(WARNING) << "Bind device to current thread failed.";
     }
   } else {

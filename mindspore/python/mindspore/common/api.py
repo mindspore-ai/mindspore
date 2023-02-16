@@ -38,7 +38,7 @@ from mindspore.common.sparse_tensor import COOTensor as PythonCOOTensor
 from mindspore.common.sparse_tensor import RowTensor as PythonRowTensor
 from mindspore._c_expression import GraphExecutor_, Tensor, CSRTensor, RowTensor, COOTensor, \
     PyNativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \
-    _ms_memory_recycle
+    _ms_memory_recycle, _bind_device_ctx
 from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _is_pynative_parallel, \
     _get_pipeline_stages, _is_in_auto_parallel_mode
@@ -1561,6 +1561,10 @@ def _generate_branch_control_input(obf_random_seed):
     branch_control_input %= int_max
     return branch_control_input
 
+
+def _bind_device_context():
+    """Bind device context to current thread"""
+    _bind_device_ctx()
 
 _cell_graph_executor = _CellGraphExecutor()
 _pynative_executor = _PyNativeExecutor()

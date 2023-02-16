@@ -183,6 +183,7 @@ void FinalizeBackend();
 void ME_EXPORT ClearResAtexit();
 void CloseTsd(bool force = false);
 void MemoryRecycle();
+void BindDeviceCtx();
 
 FuncGraphPtr LoadMindIR(const std::string &file_name, const char *dec_key, const size_t key_len,
                         const std::string &dec_mode, const py::object decrypt = py::none(),
