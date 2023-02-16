@@ -118,8 +118,13 @@ AnfNodePtr GetNonTensorInput(const ValuePtr &v, const std::string &obj_id) {
   MS_EXCEPTION_IF_NULL(v);
   bool is_value_seq = v->isa<ValueSequence>();
   bool is_single_non_tensor = !is_value_seq && !PyNativeAlgo::Common::IsTensor(v);
-  bool is_seq_non_tensor = is_value_seq && !PyNativeAlgo::Common::IsTensor(v, true);
-  if (is_single_non_tensor || is_seq_non_tensor) {
+  bool mixed_tensor = true;
+  if (is_value_seq) {
+    const auto &v_seq = v->cast<ValueSequencePtr>();
+    mixed_tensor = std::any_of(v_seq->value().begin(), v_seq->value().end(),
+                               [](const ValuePtr &e) { return PyNativeAlgo::Common::IsTensor(e, true); });
+  }
+  if (is_single_non_tensor || !mixed_tensor) {
     auto node = NewValueNode(v);
     MS_LOG(DEBUG) << "Get input value node " << node->ToString() << ", id " << obj_id;
     node->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(v->ToAbstract()));
@@ -1069,7 +1074,7 @@ void GradExecutor::CheckParamShapeAndType(const ParameterPtr &param_node, const 
     if (input_shape != ir_shape) {
       // Sens shape in ir graph is determined by graph output, so it can be dynamic shape; But input shape is
       // determined by user input, which could not be dynamic shape.
-      if (param_node->debug_info()->name() != "sens" || !input_abs->BuildShape()->IsDynamic()) {
+      if (param_node->debug_info()->name() != "sens" || !ir_abs->BuildShape()->IsDynamic()) {
         MS_EXCEPTION(ValueError) << "The shape should be " << ir_shape << ", but got " << input_shape << ", "
                                  << param_node->DebugString();
       }
@@ -1344,6 +1349,7 @@ void GradExecutor::SwitchTopCell() {
   // If inner graph compile graph, outer must be compile
   if (top_cell()->vm_compile()) {
     outer_top_cell->set_force_top_cell_compile(true);
+    outer_top_cell->set_use_dynamic_shape_process(top_cell()->use_dynamic_shape_process());
   }
   set_top_cell(outer_top_cell);
 }

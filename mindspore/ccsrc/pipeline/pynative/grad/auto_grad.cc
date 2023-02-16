@@ -154,10 +154,10 @@ AnfNodePtr BuildSpecialLikeValue(const FuncGraphPtr &tape, const ValuePtr &value
     std::transform(dic_v.begin(), dic_v.end(), std::back_inserter(v_list),
                    [](const std::pair<ValuePtr, ValuePtr> &elem) { return elem.second; });
     return BuildSpecialLikeValue(tape, std::make_shared<ValueTuple>(v_list), type);
-  } else if (value->isa<None>()) {
+  } else if (value->isa<None>() || value->isa<Type>()) {
     return BuildSpecialLikeValue(tape, MakeValue(0), type);
   } else {
-    MS_EXCEPTION(TypeError) << "For value " << value->ToString() << ", the type is not tensor or sequence";
+    MS_EXCEPTION(TypeError) << "For value " << value->ToString() << ", the type is not support now";
   }
 }
 
@@ -326,9 +326,7 @@ AnfNodePtr VariableAdjoint::RealDout() {
   // For input, if it is a sparsetensor, we need return a sparsetensor.
   if (out_value_->isa<tensor::Tensor>() || dout_abs->isa<abstract::AbstractSparseTensor>()) {
     return accumulate_dout;
-  } else if (out_value_->isa<tensor::COOTensor>()) {
-    return BuildSpecialLikeSparseTensor(tape, out_value_, accumulate_dout);
-  } else if (out_value_->isa<tensor::CSRTensor>()) {
+  } else if (out_value_->isa<tensor::MetaSparseTensor>()) {
     return BuildSpecialLikeSparseTensor(tape, out_value_, accumulate_dout);
   }
   return accumulate_dout;
@@ -699,7 +697,10 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const GradParamPtr &grad_param, cons
     }
     if (input_node->isa<ValueNode>()) {
       auto v_node = input_node->cast<ValueNodePtr>();
-      (void)cnode_inputs->emplace_back(v_node);
+      // In case of ms function forward graph and pynative bprop graph used same valuenode
+      auto new_v_node = NewValueNode(v_node->value());
+      new_v_node->set_abstract(v_node->abstract());
+      (void)cnode_inputs->emplace_back(new_v_node);
       op_args.emplace_back(v_node->value());
     } else {
       MS_LOG(EXCEPTION) << "Get input node " << input_node->DebugString();
@@ -740,8 +741,14 @@ CNodePtr AutoGradCellImpl::ConstructBpropGraphInput(const GradParamPtr &grad_par
   if (grad_param->grad_by_value || is_custom_prim) {
     for (size_t i = 0; i < grad_param->op_args.size(); ++i) {
       auto node = grad_param->cnode->input(i + 1);
-      if (node->isa<Parameter>() || node->has_user_data(kParamterIsSequence)) {
+      if (node->isa<Parameter>()) {
         (void)node_list.emplace_back(node);
+        continue;
+      }
+      // TupleGetItem need repalce
+      if (node->has_user_data(kParamterIsSequence)) {
+        (void)node_list.emplace_back(node);
+        need_do_manager_replace_ = true;
         continue;
       }
       auto v_node = NewValueNode(grad_param->op_args[i]);
@@ -1126,7 +1133,6 @@ void AutoGradCellImpl::BuildCustomBpropCNode(const CNodePtr &cnode, const Primit
                                              std::vector<CNodePtr> *outputs) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_LOG(DEBUG) << "Try build custom bprop: " << prim->name();
-  auto prim_py = prim->cast<PrimitivePyPtr>();
   {
     py::gil_scoped_acquire gil;
     py::function fn;
@@ -1142,6 +1148,8 @@ void AutoGradCellImpl::BuildCustomBpropCNode(const CNodePtr &cnode, const Primit
       MS_LOG(INFO) << "Fail to find bprop function for " << prim->name() << ". fn: " << py::str(fn);
       return;
     }
+    auto prim_py = prim->cast<PrimitivePyPtr>();
+    MS_EXCEPTION_IF_NULL(prim_py);
     prim_py->AddBackwardHookFn(0, fn);
     prim_py->AddAttr("custom_op_bprop", MakeValue(True));
   }
