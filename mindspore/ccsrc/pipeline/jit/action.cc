@@ -839,7 +839,6 @@ bool VmOptimizeAction(const ResourcePtr &resource) {
   }
 #endif
   auto ret = OptimizeAction(resource, kVmPasses);
-  TraceManager::ClearParseOrResolveDebugInfo();
   TraceManager::CloseRecordDebugInfoFlag();
   return ret;
 }

@@ -764,7 +764,6 @@ FunctionBlockPtr Parser::ParseStatement(const FunctionBlockPtr &block, const py:
   MS_LOG(DEBUG) << "Ast node is " << node_name;
   if (stmt_method_map_.count(node_name) != 0) {
     auto stmt_block = (this->*stmt_method_map_[node_name])(block, node);
-    TraceManager::ClearParseOrResolveDebugInfo();
     return stmt_block;
   } else {
     errcode_ = PARSE_NODE_METHOD_UNSUPPORTED;
@@ -788,7 +787,6 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
   MS_LOG(DEBUG) << "Ast node is " << node_name;
   if (expr_method_map_.count(node_name) != 0) {
     auto expr_node = (this->*expr_method_map_[node_name])(block, node);
-    TraceManager::ClearParseOrResolveDebugInfo();
     return expr_node;
   } else {
     errcode_ = PARSE_NODE_METHOD_UNSUPPORTED;
