@@ -100,7 +100,7 @@ class ForwardExecutor {
 
  private:
   bool init_{false};
-  bool lazy_build_{false};
+  bool lazy_build_{true};
   bool is_ms_function_compiling_{false};
   uint32_t device_id_{0};
   std::string last_target_{"Unknown"};

@@ -634,10 +634,9 @@ class Cell(Cell_):
 
         # Run in PyNative mode.
         if _pynative_executor.is_first_cell():
-            _pynative_executor.set_lazy_build(True)
             _pynative_executor._optimizer = getattr(self, "optimizer", None)
             _pynative_executor._top_cell = self
-            # There many Casts in parameter_broadcast. Enable lazy_build and build faster.
+            # There many Casts in parameter_broadcast. Enable build faster.
             self._do_parameter_broadcast()
 
         _check_args(args)

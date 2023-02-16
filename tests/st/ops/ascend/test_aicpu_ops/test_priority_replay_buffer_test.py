@@ -22,6 +22,7 @@ from mindspore import Tensor
 from mindspore.ops.operations._rl_inner_ops import PriorityReplayBufferCreate, PriorityReplayBufferPush
 from mindspore.ops.operations._rl_inner_ops import PriorityReplayBufferSample, PriorityReplayBufferUpdate
 from mindspore.ops.operations._rl_inner_ops import PriorityReplayBufferDestroy
+from mindspore.common.api import _pynative_executor
 
 
 class PriorityReplayBuffer(nn.Cell):
@@ -91,3 +92,4 @@ def test_priority_replay_buffer_ops():
     assert np.allclose(actions_new.asnumpy(), actions_expect)
 
     prb.destroy()
+    _pynative_executor.sync()

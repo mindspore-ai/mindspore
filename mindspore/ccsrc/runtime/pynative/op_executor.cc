@@ -98,5 +98,8 @@ bool OpExecutor::ActorInQueue(GraphId graph_id) {
   return iter != actor_in_queue_.end();
 }
 
-void OpExecutor::WorkerJoin() { async_queue_.WorkerJoin(); }
+void OpExecutor::WorkerJoin() {
+  Wait();
+  async_queue_.WorkerJoin();
+}
 }  // namespace mindspore::runtime

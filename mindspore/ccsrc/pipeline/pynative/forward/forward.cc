@@ -23,6 +23,7 @@
 #include "include/common/utils/python_fallback_running.h"
 #include "backend/graph_compiler/transform.h"
 #include "utils/ms_context.h"
+#include "runtime/pynative/op_executor.h"
 
 namespace mindspore {
 namespace pynative {
@@ -300,6 +301,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
         auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
         new_tensor->set_device_address(tensor->device_address());
         new_tensor->set_sync_status(tensor->sync_status());
+        new_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
         result[i] = new_tensor;
       } else {
         result[i] = op_run_info->input_value[i];
@@ -390,8 +392,6 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
 
   // Do some finishing work before end graph
   if (IsFirstCell()) {
-    // Reset lazy build
-    set_lazy_build(false);
     // Finish lazy task
     ExecuteLazyTask();
     if (!grad()->grad_flag()) {
