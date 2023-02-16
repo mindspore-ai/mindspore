@@ -18,6 +18,7 @@
 import os
 import shutil
 import signal
+import sys
 import time
 from multiprocessing import Process
 import numpy as np
@@ -135,6 +136,8 @@ def test_on_request_exit_callback():
     Expectation: When a signal received,
         the train process should be stopped and save the ckpt and mindir should be saved.
     """
+    if sys.platform != 'linux':
+        return
     context.set_context(mode=context.GRAPH_MODE)
     directory = "./data"
     if os.path.exists(directory):
