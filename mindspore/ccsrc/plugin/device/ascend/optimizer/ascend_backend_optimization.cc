@@ -44,6 +44,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_clip_by_norm_fission.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/dropout_gen_mask_fusion.h"
+#include "backend/common/pass/dynamic_sequence_ops_adaptation.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/square_sum_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/lamb_update_with_lr_rule_fusion.h"
@@ -729,6 +730,7 @@ void AscendOpAdaptation(const std::shared_ptr<session::KernelGraph> &kernel_grap
 #endif
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto op_adaptation_pm = std::make_shared<opt::PassManager>("op_adaptation_pm");
+  op_adaptation_pm->AddPass(std::make_shared<opt::DynamicSequenceOpsAdaptation>());
   op_adaptation_pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
 
   optimizer->AddPassManager(op_adaptation_pm);
