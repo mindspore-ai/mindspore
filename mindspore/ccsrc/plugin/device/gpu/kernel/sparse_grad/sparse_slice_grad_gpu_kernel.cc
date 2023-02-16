@@ -101,24 +101,23 @@ bool SparseSliceGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
     return false;
   }
 
-  size_t num_propagated_ = 0;
+  size_t num_propagated = 0;
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(num_propagated_ptr, &num_propagated_, sizeof(size_t), cudaMemcpyHostToDevice, cuda_stream),
-    "cudaMemcpyHostToDevice for 'SparseSliceGrad' num_propagated_ failed");
+    cudaMemcpyAsync(num_propagated_ptr, &num_propagated, sizeof(size_t), cudaMemcpyHostToDevice, cuda_stream),
+    "cudaMemcpyHostToDevice for 'SparseSliceGrad' num_propagated failed");
 
   SparseSliceGrad(x_ptr, indices_ptr, start_ptr, new_indices_ptr, y_ptr, num_propagated_ptr, input_nnz_, output_nnz_,
                   num_dim_, device_id_, cuda_stream);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(&num_propagated_, num_propagated_ptr, sizeof(size_t), cudaMemcpyDeviceToHost, cuda_stream),
-    "cudaMemcpyDeviceToHost for 'SparseSliceGrad' num_propagated_ failed");
+    cudaMemcpyAsync(&num_propagated, num_propagated_ptr, sizeof(size_t), cudaMemcpyDeviceToHost, cuda_stream),
+    "cudaMemcpyDeviceToHost for 'SparseSliceGrad' num_propagated failed");
 
-  if (num_propagated_ == num_grad_val_) {
+  if (num_propagated == num_grad_val_) {
     return true;
   } else {
     MS_LOG(ERROR) << kernel_name_ << " Elements of backprop_val_grad are not all propagated. "
-                  << "Num elements:" << num_grad_val_ << ", used: " << num_propagated_
-                  << ". Indices or new_indices should be sorted.";
+                  << "Num elements:" << num_grad_val_ << ", used: " << num_propagated;
     return false;
   }
 }
