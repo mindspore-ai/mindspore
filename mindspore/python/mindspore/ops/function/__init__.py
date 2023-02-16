@@ -153,7 +153,9 @@ from .array_func import (
     movedim,
     moveaxis,
     searchsorted,
-    sort
+    aminmax,
+    count_nonzero,
+    sort,
 )
 from .parameter_func import (
     assign,
@@ -393,7 +395,18 @@ from .math_func import (
     sum,
     matrix_power,
     matrix_exp,
-    logspace
+    logspace,
+    diag_embed,
+    fmax,
+    fmin,
+    inplace_index_add,
+    lu_unpack,
+    nanquantile,
+    polar,
+    polygamma,
+    quantile,
+    tril_indices,
+    triu_indices,
 )
 from .nn_func import (
     adaptive_avg_pool1d,
@@ -479,7 +492,9 @@ from .nn_func import (
     lp_pool2d,
     mse_loss,
     triplet_margin_loss,
-    msort
+    msort,
+    channel_shuffle,
+    hardsigmoid,
 )
 from .linalg_func import (
     svd,
@@ -542,7 +557,9 @@ from .random_func import (
     randn,
     randn_like,
     randint,
-    randint_like
+    randint_like,
+    multinomial_with_replacement,
+    randperm,
 )
 from .grad import (
     grad_func,

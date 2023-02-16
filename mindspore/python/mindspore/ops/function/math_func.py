@@ -7623,7 +7623,7 @@ def kaiser_window(window_length, periodic=True, beta=12.0):
     alpha = (window_length - 1) / 2.0
     w = np.i0(
         beta * np.sqrt(1 - ((n - alpha) / alpha) ** 2.0)
-    ) / np.i0(beta)
+    ) / np.i0(float(beta))
     out = Tensor(w[:-1]) if periodic else Tensor(w)
     return out
 
@@ -10316,5 +10316,16 @@ __all__ = [
     'matrix_exp',
     'matrix_power',
     'orgqr',
+    'diag_embed',
+    'fmax',
+    'fmin',
+    'inplace_index_add',
+    'lu_unpack',
+    'nanquantile',
+    'polar',
+    'polygamma',
+    'quantile',
+    'tril_indices',
+    'triu_indices'
 ]
 __all__.sort()
