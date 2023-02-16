@@ -47,10 +47,12 @@ class SparseSegmentSqrtNCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  ShapeVector x_shape_;
-  ShapeVector indices_shape_;
-  ShapeVector segment_ids_shape_;
-  ShapeVector y_shape_;
+  size_t x_num_ = 0;
+  size_t segment_ids_num_ = 0;
+  size_t indices_num_ = 0;
+  size_t y_num_ = 0;
+  int64_t x_shape_0_val_ = 0;
+  int64_t inner_size_ = 0;
   TypeId dtype_{kTypeUnknown};
   TypeId dtype1_{kTypeUnknown};
   TypeId dtype2_{kTypeUnknown};

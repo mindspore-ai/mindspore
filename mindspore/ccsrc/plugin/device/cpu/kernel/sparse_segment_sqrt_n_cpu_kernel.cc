@@ -51,26 +51,18 @@ int SparseSegmentSqrtNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  indices_shape_ = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
-  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
-  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
-
-  is_null_input_ = CHECK_SHAPE_NULL(x_shape_, kernel_name_, "x_shape_") ||
-                   CHECK_SHAPE_NULL(indices_shape_, kernel_name_, "indices_shape_") ||
-                   CHECK_SHAPE_NULL(segment_ids_shape_, kernel_name_, "segment_ids_shape_");
-  if (is_null_input_) {
-    return KRET_OK;
-  }
+  x_num_ = SizeOf(inputs[kIndex0]->GetShapeVector());
+  indices_num_ = SizeOf(inputs[kIndex1]->GetShapeVector());
+  segment_ids_num_ = SizeOf(inputs[kIndex2]->GetShapeVector());
+  y_num_ = SizeOf(outputs[kIndex0]->GetShapeVector());
+  x_shape_0_val_ = inputs[kIndex0]->GetShapeVector()[0];
+  inner_size_ = x_num_ / x_shape_0_val_;
   return KRET_OK;
 }
 
 bool SparseSegmentSqrtNCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &workspace,
                                             const std::vector<kernel::AddressPtr> &outputs) {
-  if (is_null_input_) {
-    return true;
-  }
   if (dtype_ == kNumberTypeFloat16) {
     if (dtype1_ == kNumberTypeInt32) {
       if (dtype2_ == kNumberTypeInt32) {
@@ -123,64 +115,45 @@ bool SparseSegmentSqrtNCpuKernelMod::Launch(const std::vector<kernel::AddressPtr
 template <typename T1, typename T2, typename T3>
 void SparseSegmentSqrtNCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                   const std::vector<kernel::AddressPtr> &outputs) {
-  size_t n = static_cast<size_t>(
-    std::accumulate(x_shape_.begin(), x_shape_.end(), kIndex1, std::multiplies<int64_t>()) / x_shape_[kIndex0]);
-  size_t m = static_cast<size_t>(
-    std::accumulate(segment_ids_shape_.begin(), segment_ids_shape_.end(), kIndex1, std::multiplies<int64_t>()));
-  size_t k =
-    static_cast<size_t>(std::accumulate(y_shape_.begin(), y_shape_.end(), kIndex1, std::multiplies<int64_t>()));
-  auto x_shape_0 = static_cast<T2>(x_shape_[kIndex0]);
   auto x_addr = static_cast<T1 *>(inputs[kIndex0]->addr);
   auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->addr);
   auto segment_ids_addr = static_cast<T3 *>(inputs[kIndex2]->addr);
   auto y_addr = static_cast<T1 *>(outputs[kIndex0]->addr);
 
-  for (size_t i = 0; i < k; i++) {
-    y_addr[i] = static_cast<T1>(0);
+  if (memset_s(y_addr, y_num_ * sizeof(T1), 0, y_num_ * sizeof(T1)) != EOK) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', failed to memset_s y_addr.";
   }
-  if (segment_ids_addr[0] != 0) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                             << "', indices in 'segment_ids' should be contiguous and start from 0.";
-  }
-  for (size_t i = 1; i < m; i++) {
-    if (segment_ids_addr[i] < segment_ids_addr[i - 1]) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', segment_ids should be sorted.";
+  if (segment_ids_num_ > 0) {
+    std::vector<int64_t> start_end_point(1, 0);
+    if (segment_ids_addr[0] != 0) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices in 'segment_ids' should be start from 0.";
     }
-    if (segment_ids_addr[i] - segment_ids_addr[i - 1] > 1) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                               << "', indices in 'segment_ids' should be contiguous and start from 0.";
-    }
-  }
-  for (size_t i = 0; i < m; i++) {
-    if (indices_addr[i] >= x_shape_0) {
+    if (indices_addr[0] >= x_shape_0_val_ || indices_addr[0] < 0) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices is out of range of x's first dimension.";
     }
-  }
-
-  int oldindex = -1;
-  int countnum = 0;
-  for (size_t i = 0; i < m; i++) {
-    if (oldindex == static_cast<int>(segment_ids_addr[i])) {
-      countnum++;
-    } else {
-      if (countnum != 0) {
-        for (size_t j = 0; j < n; j++) {
-          y_addr[j + static_cast<size_t>(oldindex) * n] /= static_cast<T1>(sqrt(countnum));
+    for (size_t idx = 1; idx < segment_ids_num_; ++idx) {
+      if (segment_ids_addr[idx] == segment_ids_addr[idx - 1] + 1) {
+        start_end_point.emplace_back(idx);
+      } else if (segment_ids_addr[idx] != segment_ids_addr[idx - 1]) {
+        MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', segment_ids should be sorted and contiguous.";
+      }
+      if (indices_addr[idx] >= x_shape_0_val_ || indices_addr[idx] < 0) {
+        MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices is out of range of x's first dimension.";
+      }
+    }
+    start_end_point.emplace_back(segment_ids_num_);
+    for (int64_t idx_inner = 0; idx_inner < inner_size_; ++idx_inner) {
+      for (size_t idx_seg_node = 0; idx_seg_node < start_end_point.size() - 1; ++idx_seg_node) {
+        int64_t start = start_end_point[idx_seg_node];
+        int64_t end = start_end_point[idx_seg_node + 1];
+        float sum_val = static_cast<float>(0);
+        for (int64_t idx_indices = start; idx_indices < end; ++idx_indices) {
+          sum_val +=
+            static_cast<float>(x_addr[idx_inner + static_cast<int64_t>(indices_addr[idx_indices]) * inner_size_]);
         }
+        y_addr[idx_inner + idx_seg_node * inner_size_] =
+          static_cast<T1>(sum_val / static_cast<float>(sqrt(end - start)));
       }
-      countnum = 1;
-      oldindex = static_cast<int>(segment_ids_addr[i]);
-      for (size_t j = 0; j < n; j++) {
-        y_addr[j + static_cast<size_t>(oldindex) * n] = static_cast<T1>(0);
-      }
-    }
-    for (size_t j = 0; j < n; j++) {
-      y_addr[j + static_cast<size_t>(oldindex) * n] += x_addr[j + static_cast<size_t>(indices_addr[i]) * n];
-    }
-  }
-  if (countnum != 0) {
-    for (size_t j = 0; j < n; j++) {
-      y_addr[j + static_cast<size_t>(oldindex) * n] /= static_cast<T1>(sqrt(countnum));
     }
   }
 }
@@ -190,7 +163,7 @@ std::vector<KernelAttr> SparseSegmentSqrtNCpuKernelMod::GetOpSupport() {
     ADD_KERNEL(Float16, Int32, Int32, Float16), ADD_KERNEL(Float16, Int32, Int64, Float16),
     ADD_KERNEL(Float16, Int64, Int32, Float16), ADD_KERNEL(Float16, Int64, Int64, Float16),
     ADD_KERNEL(Float32, Int32, Int32, Float32), ADD_KERNEL(Float32, Int32, Int64, Float32),
-    ADD_KERNEL(Float32, Int64, Int32, Float32), ADD_KERNEL(Float32, Int64, Int64, Float16),
+    ADD_KERNEL(Float32, Int64, Int32, Float32), ADD_KERNEL(Float32, Int64, Int64, Float32),
     ADD_KERNEL(Float64, Int32, Int32, Float64), ADD_KERNEL(Float64, Int32, Int64, Float64),
     ADD_KERNEL(Float64, Int64, Int32, Float64), ADD_KERNEL(Float64, Int64, Int64, Float64)};
 
