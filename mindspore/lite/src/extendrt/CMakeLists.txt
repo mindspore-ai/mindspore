@@ -70,7 +70,13 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         list(APPEND MSLITE_PROTO_SRC ${PROFILER_MEM_PROTO_SRC})
     endif()
 
-    add_library(mindspore-lite-proto OBJECT ${MSLITE_PROTO_SRC})
+    include_directories("${CMAKE_BINARY_DIR}/runtime/graph_scheduler/actor/rpc")
+    file(GLOB_RECURSE RPC_PROTO RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            "${CCSRC_DIR}/runtime/graph_scheduler/actor/rpc/protocol/rpc.proto")
+    ms_protobuf_generate(RPC_PROTO_SRCS RPC_PROTO_HDRS ${RPC_PROTO})
+    list(APPEND MSLITE_PROTO_SRC ${RPC_PROTO_SRCS})
+
+    add_library(mindspore-lite-proto STATIC ${MSLITE_PROTO_SRC})
 
     set(ANF_ALG_SRC ${ANF_ALG_SRC}
         ${CCSRC_DIR}/utils/anfalgo.cc
@@ -124,18 +130,15 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CORE_DIR}/utils/status.cc
         )
     add_library(mindspore-kernel-graph OBJECT ${KERNEL_GRAPH_SRC})
-    add_dependencies(mindspore-kernel-graph mindspore-lite-proto)
 
     add_library(mindspore-extendrt SHARED ${MSLITE_EXTEND_RUNTIME_SRC})
     add_dependencies(mindspore-extendrt fbs_inner_src)
-    add_dependencies(mindspore-extendrt mindspore-lite-proto)
     add_dependencies(mindspore-extendrt mindspore-infer-anfalgo)
     add_dependencies(mindspore-extendrt mindspore-kernel-graph)
     add_subdirectory(cxx_api)
     add_subdirectory(delegate/graph_executor/litert)
     add_library(mindspore-extendrt_static STATIC ${MSLITE_EXTEND_RUNTIME_SRC})
     add_dependencies(mindspore-extendrt_static fbs_inner_src)
-    add_dependencies(mindspore-extendrt_static mindspore-lite-proto)
     add_dependencies(mindspore-extendrt_static mindspore-infer-anfalgo)
     add_dependencies(mindspore-extendrt_static mindspore-kernel-graph)
 
@@ -154,6 +157,41 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     target_link_libraries(mindspore-extendrt_static mindspore_core mindspore::protobuf)
     add_dependencies(mindspore-extendrt_static msplugin-ge-litert)
     target_link_libraries(mindspore-extendrt_static msplugin-ge-litert)
+
+    if(NOT PLATFORM_ARM)
+    set(KERNEL_MOD_DEPEND_SRC
+        ${CCSRC_DIR}/kernel/environ_manager.cc
+        ${CCSRC_DIR}/utils/python_fallback_running.cc
+        ${CCSRC_DIR}/runtime/device/tensors_queue.cc
+        ${CCSRC_DIR}/runtime/device/tensor_array.cc
+        ${CCSRC_DIR}/runtime/graph_scheduler/actor/actor_common.cc
+        ${CCSRC_DIR}/runtime/hardware/device_context_manager.cc
+        ${CCSRC_DIR}/plugin/device/cpu/hal/device/cpu_tensor_array.cc
+        ${CCSRC_DIR}/plugin/device/cpu/hal/hardware/cpu_memory_pool.cc
+        ${CCSRC_DIR}/distributed/embedding_cache/embedding_cache_utils.cc
+        ${CCSRC_DIR}/distributed/embedding_cache/embedding_hash_map.cc
+        ${CCSRC_DIR}/distributed/embedding_cache/embedding_storage/dense_embedding_storage.cc
+        ${CCSRC_DIR}/distributed/embedding_cache/embedding_storage/embedding_storage.cc
+        ${CCSRC_DIR}/distributed/persistent/storage/local_file.cc
+        ${CCSRC_DIR}/distributed/persistent/storage/block.cc
+        ${CCSRC_DIR}/distributed/persistent/storage/json_utils.cc
+        ${CCSRC_DIR}/distributed/persistent/storage/file_io_utils.cc
+        ${CCSRC_DIR}/distributed/cluster/dummy_cluster_context.cc
+        ${CCSRC_DIR}/ps/ps_context.cc
+        )
+    add_library(_mindspore_cpu_kernel_mod_depend_obj OBJECT ${KERNEL_MOD_DEPEND_SRC})
+    target_link_libraries(mindspore-extendrt _mindspore_cpu_kernel_mod_depend_obj
+            mindspore-lite-proto mindspore::dnnl)
+    target_link_libraries(mindspore-extendrt_static _mindspore_cpu_kernel_mod_depend_obj
+            mindspore-lite-proto mindspore::dnnl)
+
+    set(CPU_KERNEL_OBJECT_COUNT 0)
+    add_subdirectory(${CCSRC_DIR}/plugin/device/cpu/kernel lite_kernel_mod)
+    foreach(number RANGE 1 ${CPU_KERNEL_OBJECT_COUNT})
+        target_link_libraries(mindspore-extendrt _mindspore_plugin_device_cpu_kernel_obj_${number})
+        target_link_libraries(mindspore-extendrt_static _mindspore_plugin_device_cpu_kernel_obj_${number})
+    endforeach()
+    endif()
 
     if(NOT WIN32)
         target_link_libraries(mindspore-extendrt dl)
