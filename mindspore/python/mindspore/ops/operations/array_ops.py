@@ -1438,7 +1438,7 @@ class MatrixBandPart(Primitive):
         self.init_prim_io_names(inputs=['x', 'lower', 'upper'], outputs=['y'])
 
 
-class Fill(Primitive):
+class Fill(PrimitiveWithCheck):
     """
     Create a Tensor of the specified shape and fill it with the specified value.
 
@@ -1464,6 +1464,34 @@ class Fill(Primitive):
     def __init__(self):
         """Initialize Fill"""
         self.init_prim_io_names(inputs=['type', 'shape', 'value'], outputs=['y'])
+
+    def __call__(self, dtype, dims, x):
+        if dtype not in mstype.all_types and dtype not in [mstype.uint16, mstype.uint32, mstype.uint64]:
+            raise TypeError(
+                f"For \'{self.name}\', the supported data type is ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', "
+                "'uint16', 'uint32', 'uint64','float16', 'float32', 'float64'], but got an invalid dtype!.")
+        x_nptype = mstype.dtype_to_nptype(dtype)
+        if not isinstance(dims, Tensor) and not isinstance(dims, tuple):
+            raise TypeError(f"For \'{self.name}\', input[1] must be tensor.")
+        if not isinstance(x, Tensor) and not isinstance(x, float) and not isinstance(x, int):
+            raise TypeError(f"For \'{self.name}\', the value input only takes scalar or scalar within a tensor!.")
+        if isinstance(dims, Tensor):
+            dims = dims.asnumpy()
+        if isinstance(x, Tensor):
+            x = x.asnumpy()
+        ret = np.full(dims, x, x_nptype)
+        return Tensor(ret)
+
+    def infer_value(self, dtype, dims, x):
+        x_nptype = mstype.dtype_to_nptype(dtype)
+        if dims is not None and None not in dims and x is not None:
+            if isinstance(dims, Tensor):
+                dims = dims.asnumpy()
+            if isinstance(x, Tensor):
+                x = x.asnumpy()
+            ret = np.full(dims, x, x_nptype)
+            return Tensor(ret)
+        return None
 
 
 class Fills(Primitive):

@@ -48,8 +48,6 @@ int FillCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &) {
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
-    MS_LOG(WARNING) << "For '" << kernel_name_ << "' "
-                    << "walk out FillCpuKernelMod::Resize with unknown shape.";
     return ret;
   }
   return KRET_OK;
