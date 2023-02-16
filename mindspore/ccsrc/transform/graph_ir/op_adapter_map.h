@@ -136,6 +136,7 @@ constexpr const char kNameArgMinWithValue[] = "ArgMinWithValue";
 constexpr const char kNameReduceProd[] = "ReduceProd";
 constexpr const char kNameDynamicReduceProd[] = "DynamicReduceProd";
 constexpr const char kNameCumProd[] = "CumProd";
+constexpr const char kNameCumProdD[] = "CumProdD";
 constexpr const char kNameDiagpart[] = "Diagpart";
 constexpr const char kNameSplit[] = "Split";
 constexpr const char kNameBatchToSpaceNd[] = "BatchToSpaceND";

@@ -96,16 +96,16 @@ REG_ADPT_DESC(PSROIPooling, prim::kPrimPSROIPooling->name(), ADPT_DESC(PSROIPool
 
 // PSROIPoolingV2
 INPUT_MAP(PSROIPoolingV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(rois)}};
-ATTR_MAP(PSROIPoolingV2) = {{"output_dim", ATTR_DESC(output_dim, AnyTraits<int64_t>())},
-                            {"group_size", ATTR_DESC(group_size, AnyTraits<int64_t>())},
+ATTR_MAP(PSROIPoolingV2) = {{"output_dim", ATTR_DESC(output_dim, AnyTraits<int64_t>(), AnyTraits<int32_t>())},
+                            {"group_size", ATTR_DESC(group_size, AnyTraits<int64_t>(), AnyTraits<int32_t>())},
                             {"spatial_scale", ATTR_DESC(spatial_scale, AnyTraits<float>())}};
 OUTPUT_MAP(PSROIPoolingV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(PSROIPoolingV2, prim::kPrimPSROIPoolingV2->name(), ADPT_DESC(PSROIPoolingV2))
 
 // PSROIPoolingGradV2D
 INPUT_MAP(PSROIPoolingGradV2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(rois)}};
-ATTR_MAP(PSROIPoolingGradV2D) = {{"output_dim", ATTR_DESC(output_dim, AnyTraits<int64_t>())},
-                                 {"group_size", ATTR_DESC(group_size, AnyTraits<int64_t>())},
+ATTR_MAP(PSROIPoolingGradV2D) = {{"output_dim", ATTR_DESC(output_dim, AnyTraits<int64_t>(), AnyTraits<int32_t>())},
+                                 {"group_size", ATTR_DESC(group_size, AnyTraits<int64_t>(), AnyTraits<int32_t>())},
                                  {"spatial_scale", ATTR_DESC(spatial_scale, AnyTraits<float>())},
                                  {"input_size", ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(PSROIPoolingGradV2D) = {{0, OUTPUT_DESC(y)}};

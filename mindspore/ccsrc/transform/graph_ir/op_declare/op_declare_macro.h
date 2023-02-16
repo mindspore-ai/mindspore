@@ -145,9 +145,15 @@ namespace mindspore::transform {
         auto p = std::static_pointer_cast<OpType>(op); \
         (void)p->set_attr_##name(ConvertAny(value, __VA_ARGS__)); \
     },                     \
-    [](ValuePtr* ms_value) { \
-        auto real_value = ConvertAny(*ms_value, __VA_ARGS__); \
-        *ms_value = GetRealValue<decltype(real_value)>(real_value); \
+    [](const OperatorPtr op, ValuePtr* ms_value) {                      \
+        if (ms_value == nullptr || *ms_value == nullptr) {              \
+            auto p = std::static_pointer_cast<OpType>(op);              \
+            auto real_value = p->get_attr_##name();                     \
+            *ms_value = GetRealValue<decltype(real_value)>(real_value); \
+        } else {                                                        \
+            auto real_value = ConvertAny(*ms_value, __VA_ARGS__);       \
+            *ms_value = GetRealValue<decltype(real_value)>(real_value); \
+        }                                                               \
     }                     \
   }
 

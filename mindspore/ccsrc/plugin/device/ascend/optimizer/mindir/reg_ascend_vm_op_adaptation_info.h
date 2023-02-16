@@ -244,7 +244,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kCropAndResizeOpName)
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kCumProdOpName)
   .set_backend_op_name(kCumprodOpName)
   .set_target_op_name(kCumprodDOpName)
-  .set_need_tbe_check_supported(true)
   .set_input_attr_info(1, "int");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kCumSumOpName)

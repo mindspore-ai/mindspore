@@ -55,7 +55,7 @@ namespace transform {
 using CusOperatorPtr = std::shared_ptr<::ge::CustomOperator>;
 using CustomOperator = ::ge::CustomOperator;
 using AttrFunc = std::function<void(OperatorPtr, ValuePtr)>;
-using GetAttrFunc = std::function<void(ValuePtr *)>;
+using GetAttrFunc = std::function<void(OperatorPtr, ValuePtr *)>;
 using OutputFunc = std::function<OutHandler(OperatorPtr)>;
 using InputOpFunc = std::function<void(OperatorPtr, OperatorPtr)>;
 using InputHandleFunc = std::function<void(OperatorPtr, OutHandler)>;

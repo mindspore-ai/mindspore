@@ -87,7 +87,7 @@ class OpAdapterImpl {
   Status UpdateSingleOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
                                 const std::string &format);
   size_t GetCustomOpOutputSize(const CusOperatorPtr &cus_op) const;
-  std::map<std::string, ValuePtr> GetNormalOpAttrList(const AnfNodePtr &node) const;
+  std::map<std::string, ValuePtr> GetNormalOpAttrList(const OperatorPtr &op, const AnfNodePtr &node) const;
   std::shared_ptr<GeTensorDesc> CreateOutputDesc(const abstract::ShapePtr &shape_ptr, const TypePtr &type,
                                                  const std::string &format) const;
   Status UpdateMultiOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
@@ -242,7 +242,7 @@ class OpAdapter : public BaseOpAdapter {
   const mindspore::HashMap<int, DynOutputDesc> &getDynOutputMap() override { return dyn_output_map_; }
   const mindspore::HashMap<int, DynSubGraphDesc> &getDynSubgraphMap() override { return dyn_subgraph_map_; }
   std::map<std::string, ValuePtr> GetNormalOpAttrList(const AnfNodePtr &node) override {
-    return impl_->GetNormalOpAttrList(node);
+    return impl_->GetNormalOpAttrList(std::make_shared<::ge::Operator>(op_type_), node);
   }
   bool IsDynInputOp(uint64_t index) override { return dyn_input_map_.find(index) != dyn_input_map_.end(); }
   bool IsDyOutputOp(uint64_t index) override { return dyn_output_map_.find(index) != dyn_output_map_.end(); }

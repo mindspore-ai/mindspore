@@ -49,9 +49,11 @@ abstract::ShapePtr InplaceIndexAddInferShape(const PrimitivePtr &primitive,
   auto indices_shape = indices_shape_ptr->shape();
   auto indices_rank = SizeToLong(indices_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("indices size", indices_rank, kEqual, 1, prim_name);
-  size_t axis_rank = LongToSize(axis);
+  size_t axis_rank = 0;
   if (axis < 0) {
     axis_rank = axis + var_rank;
+  } else {
+    axis_rank = LongToSize(axis);
   }
   if (updates_is_dynamic) {
     return var_shape_ptr;

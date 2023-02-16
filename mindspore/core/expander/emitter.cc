@@ -310,6 +310,23 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_
   if (!need_reduce.first) {
     return Reshape(x, need_reduce.second);
   }
+#ifdef WITH_BACKEND
+  const auto &shape = x->shape();
+  auto real_axis = axis;
+  if (axis.empty()) {
+    for (int64_t i = 0; i < SizeToLong(shape.size()); i++) {
+      (void)real_axis.emplace_back(i);
+    }
+  }
+  if (std::any_of(real_axis.begin(), real_axis.end(), [](int64_t v) { return v < 0; })) {
+    for (size_t i = 0; i < real_axis.size(); i++) {
+      if (real_axis[i] < 0) {
+        real_axis[i] = real_axis[i] + SizeToLong(real_axis.size());
+      }
+    }
+  }
+  return Emit(prim::kPrimReduceSum->name(), {x, Value<ShapeVector>(real_axis)}, {{"keep_dims", MakeValue(keep_dims)}});
+#endif
   return Emit(prim::kPrimReduceSum->name(), {x, Value<ShapeVector>(axis)}, {{"keep_dims", MakeValue(keep_dims)}});
 }
 
