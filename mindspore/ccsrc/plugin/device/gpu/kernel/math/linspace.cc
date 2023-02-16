@@ -86,6 +86,12 @@ std::vector<std::pair<KernelAttr, LinSpaceGpuKernelMod::LinSpaceFunc>> LinSpaceG
      .AddOutputAttr(kNumberTypeFloat32),
    &LinSpaceGpuKernelMod::LaunchKernel<float>},
   {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &LinSpaceGpuKernelMod::LaunchKernel<float>},
+  {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeInt64)
