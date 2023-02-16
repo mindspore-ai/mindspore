@@ -502,6 +502,12 @@ void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<s
     format_transform_ = false;
     return;
   }
+  // Format transform will case the different infer shape and device shape, so the dynamic shape graph can't be support.
+  if (kernel_graph->is_dynamic_shape()) {
+    MS_LOG(INFO) << "Dynamic shape doesn't support the automatic format transform function.";
+    format_transform_ = false;
+    return;
+  }
 
   // TensorCore can be used only in Volta or newer devices.
   const int marjor_sm = GET_MAJOR_SM;
