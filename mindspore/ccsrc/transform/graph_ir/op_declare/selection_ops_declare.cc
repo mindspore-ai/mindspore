@@ -205,13 +205,6 @@ ATTR_MAP(UnsortedSegmentProd) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentProd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(UnsortedSegmentProd, kNameUnsortedSegmentProd, ADPT_DESC(UnsortedSegmentProd))
 
-// UnsortedSegmentMaxD
-INPUT_MAP(UnsortedSegmentMaxD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};
-INPUT_ATTR_MAP(UnsortedSegmentMaxD) = {{3, ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
-ATTR_MAP(UnsortedSegmentMaxD) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(UnsortedSegmentMaxD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(UnsortedSegmentMaxD, kNameUnsortedSegmentMax, ADPT_DESC(UnsortedSegmentMaxD))
-
 // UnsortedSegmentMin
 INPUT_MAP(UnsortedSegmentMin) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};
 ATTR_MAP(UnsortedSegmentMin) = EMPTY_ATTR_MAP;
@@ -296,5 +289,6 @@ INPUT_MAP(UnsortedSegmentMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)
 ATTR_INPUT_MAP(UnsortedSegmentMax) = {{"num_segments", "num_segments"}};
 ATTR_MAP(UnsortedSegmentMax) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentMax) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(UnsortedSegmentMax, kUnsortedSegmentMaxDOpName, ADPT_DESC(UnsortedSegmentMax))
+REG_ADPT_DESC(UnsortedSegmentMax, kUnsortedSegmentMaxOpName, ADPT_DESC(UnsortedSegmentMax))
+REG_ADPT_DESC(UnsortedSegmentMaxD, kUnsortedSegmentMaxDOpName, ADPT_DESC(UnsortedSegmentMax))
 }  // namespace mindspore::transform

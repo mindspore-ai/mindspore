@@ -68,28 +68,13 @@ OUTPUT_MAP(ReduceSum) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceSum, prim::kPrimReduceSum->name(), ADPT_DESC(ReduceSum))
 REG_ADPT_DESC(ReduceSumD, prim::kPrimReduceSumD->name(), ADPT_DESC(ReduceSum))
 
-// ReduceProdD
-INPUT_MAP(ReduceProdD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ReduceProdD) = {
-  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(ReduceProdD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceProdD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceProd, kNameReduceProd, ADPT_DESC(ReduceProdD))
-
-// ReduceAllD
-INPUT_MAP(ReduceAllD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ReduceAllD) = {
-  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(ReduceAllD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceAllD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceAllD, prim::kPrimReduceAll->name(), ADPT_DESC(ReduceAllD))
-
 // ReduceAll
 INPUT_MAP(ReduceAll) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
 ATTR_INPUT_MAP(ReduceAll) = {{"axis", "axes"}};
 ATTR_MAP(ReduceAll) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceAll) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceAll, prim::kPrimReduceAllD->name(), ADPT_DESC(ReduceAll))
+REG_ADPT_DESC(ReduceAll, prim::kPrimReduceAll->name(), ADPT_DESC(ReduceAll))
+REG_ADPT_DESC(ReduceAllD, prim::kPrimReduceAllD->name(), ADPT_DESC(ReduceAll))
 
 // ReduceMean
 INPUT_MAP(ReduceMean) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
@@ -99,34 +84,20 @@ OUTPUT_MAP(ReduceMean) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceMean, prim::kPrimReduceMean->name(), ADPT_DESC(ReduceMean))
 REG_ADPT_DESC(ReduceMeanD, prim::kPrimReduceMeanD->name(), ADPT_DESC(ReduceMean))
 
-// ReduceMinD
-INPUT_MAP(ReduceMinD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ReduceMinD) = {
-  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(ReduceMinD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceMinD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceMinD, prim::kPrimReduceMin->name(), ADPT_DESC(ReduceMinD))
-
 // ReduceMin
 INPUT_MAP(ReduceMin) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
 ATTR_INPUT_MAP(ReduceMin) = {{"axis", "axes"}};
 ATTR_MAP(ReduceMin) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceMin) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceMin, prim::kPrimReduceMinD->name(), ADPT_DESC(ReduceMin))
-
-// ReduceMaxD
-INPUT_MAP(ReduceMaxD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ReduceMaxD) = {
-  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(ReduceMaxD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceMaxD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceMax, prim::kPrimReduceMax->name(), ADPT_DESC(ReduceMaxD))
+REG_ADPT_DESC(ReduceMin, prim::kPrimReduceMin->name(), ADPT_DESC(ReduceMin))
+REG_ADPT_DESC(ReduceMinD, prim::kPrimReduceMinD->name(), ADPT_DESC(ReduceMin))
 
 // ReduceMax
 INPUT_MAP(ReduceMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
 ATTR_INPUT_MAP(ReduceMax) = {{"axis", "axes"}};
 ATTR_MAP(ReduceMax) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceMax) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceMax, prim::kPrimReduceMax->name(), ADPT_DESC(ReduceMax))
 REG_ADPT_DESC(ReduceMaxD, prim::kPrimReduceMaxD->name(), ADPT_DESC(ReduceMax))
 
 // ReduceStd
@@ -142,6 +113,7 @@ INPUT_MAP(ReduceProd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
 ATTR_INPUT_MAP(ReduceProd) = {{"axis", "axes"}};
 ATTR_MAP(ReduceProd) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceProd) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceProd, prim::kPrimReduceProd->name(), ADPT_DESC(ReduceProd))
 REG_ADPT_DESC(DynamicReduceProd, kNameDynamicReduceProd, ADPT_DESC(ReduceProd))
 REG_ADPT_DESC(ReduceProdD, prim::kPrimReduceProdD->name(), ADPT_DESC(ReduceProd))
 }  // namespace mindspore::transform

@@ -67,7 +67,7 @@ INPUT_MAP(ApplyAdagradD) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, IN
 ATTR_MAP(ApplyAdagradD) = {{"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())},
                            {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdagradD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
-REG_ADPT_DESC(ApplyAdagradD, kNameApplyAdagrad, ADPT_DESC(ApplyAdagradD))
+REG_ADPT_DESC(ApplyAdagradD, kApplyAdagradDOpName, ADPT_DESC(ApplyAdagradD))
 
 // ApplyAdagradV2D
 INPUT_MAP(ApplyAdagradV2D) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)}, {4, INPUT_DESC(grad)}};
@@ -83,7 +83,7 @@ INPUT_MAP(ApplyAddSignD) = {{1, INPUT_DESC(var)},   {2, INPUT_DESC(m)},         
                             {7, INPUT_DESC(grad)}};
 ATTR_MAP(ApplyAddSignD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAddSignD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}};
-REG_ADPT_DESC(ApplyAddSignD, kNameApplyAddSign, ADPT_DESC(ApplyAddSignD))
+REG_ADPT_DESC(ApplyAddSignD, kApplyAddSignDOpName, ADPT_DESC(ApplyAddSignD))
 
 // SparseApplyAdagradV2D
 INPUT_MAP(SparseApplyAdagradV2D) = {
@@ -93,7 +93,7 @@ ATTR_MAP(SparseApplyAdagradV2D) = {{"lr", ATTR_DESC(lr, AnyTraits<float>())},
                                    {"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())},
                                    {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyAdagradV2D) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
-REG_ADPT_DESC(SparseApplyAdagradV2D, kNameSparseApplyAdagradV2, ADPT_DESC(SparseApplyAdagradV2D))
+REG_ADPT_DESC(SparseApplyAdagradV2D, kSparseApplyAdagradV2DOpName, ADPT_DESC(SparseApplyAdagradV2D))
 
 // DataFormatDimMap
 INPUT_MAP(DataFormatDimMap) = {{1, INPUT_DESC(x)}};
@@ -116,7 +116,7 @@ INPUT_MAP(ApplyAdaMaxD) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},    
                            {7, INPUT_DESC(beta2)},       {8, INPUT_DESC(epsilon)}, {9, INPUT_DESC(grad)}};
 ATTR_MAP(ApplyAdaMaxD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdaMaxD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}, {2, OUTPUT_DESC(v)}};
-REG_ADPT_DESC(ApplyAdaMaxD, kNameApplyAdaMax, ADPT_DESC(ApplyAdaMaxD))
+REG_ADPT_DESC(ApplyAdaMaxD, kApplyAdaMaxDOpName, ADPT_DESC(ApplyAdaMaxD))
 
 // ApplyGradientDescent
 INPUT_MAP(ApplyGradientDescent) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(alpha)}, {3, INPUT_DESC(delta)}};
@@ -184,7 +184,7 @@ ATTR_MAP(SparseApplyFtrlD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<b
                               {"l1", ATTR_DESC(l1, AnyTraits<float>())},
                               {"l2", ATTR_DESC(l2, AnyTraits<float>())},
                               {"lr_power", ATTR_DESC(lr_power, AnyTraits<float>())}};
-OUTPUT_MAP(SparseApplyFtrlD) = {{0, OUTPUT_DESC(var)}};
+OUTPUT_MAP(SparseApplyFtrlD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}, {2, OUTPUT_DESC(linear)}};
 REG_ADPT_DESC(SparseApplyFtrlD, kNameSparseApplyFtrlD, ADPT_DESC(SparseApplyFtrlD))
 
 // SparseApplyFtrl
@@ -253,7 +253,7 @@ INPUT_MAP(ApplyAdaMax) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},     
                           {7, INPUT_DESC(beta2)},       {8, INPUT_DESC(epsilon)}, {9, INPUT_DESC(grad)}};
 ATTR_MAP(ApplyAdaMax) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdaMax) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(ApplyAdaMax, kApplyAdaMaxDOpName, ADPT_DESC(ApplyAdaMax))
+REG_ADPT_DESC(ApplyAdaMax, kNameApplyAdaMax, ADPT_DESC(ApplyAdaMax))
 
 // SparseApplyAdagrad
 INPUT_MAP(SparseApplyAdagrad) = {
@@ -270,7 +270,7 @@ ATTR_INPUT_MAP(SparseApplyAdagradV2) = {{"lr", "lr"}, {"epsilon", "epsilon"}};
 ATTR_MAP(SparseApplyAdagradV2) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
                                   {"update_slots", ATTR_DESC(update_slots, AnyTraits<float>())}};
 OUTPUT_MAP(SparseApplyAdagradV2) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(SparseApplyAdagradV2, kSparseApplyAdagradV2DOpName, ADPT_DESC(SparseApplyAdagradV2))
+REG_ADPT_DESC(SparseApplyAdagradV2, kNameSparseApplyAdagradV2, ADPT_DESC(SparseApplyAdagradV2))
 
 // ApplyKerasMomentum
 INPUT_MAP(ApplyKerasMomentum) = {
@@ -278,7 +278,15 @@ INPUT_MAP(ApplyKerasMomentum) = {
 ATTR_MAP(ApplyKerasMomentum) = {{"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())},
                                 {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyKerasMomentum) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(ApplyKerasMomentum, kApplyKerasMomentumDOpName, ADPT_DESC(ApplyKerasMomentum))
+REG_ADPT_DESC(ApplyKerasMomentum, kApplyKerasMomentumOpName, ADPT_DESC(ApplyKerasMomentum))
+
+// ApplyKerasMomentumD
+INPUT_MAP(ApplyKerasMomentumD) = {
+  {1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)}, {4, INPUT_DESC(grad)}, {5, INPUT_DESC(momentum)}};
+ATTR_MAP(ApplyKerasMomentumD) = {{"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())},
+                                 {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyKerasMomentumD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
+REG_ADPT_DESC(ApplyKerasMomentumD, kApplyKerasMomentumDOpName, ADPT_DESC(ApplyKerasMomentumD))
 
 // ApplyAdamWithAmsgrad
 INPUT_MAP(ApplyAdamWithAmsgrad) = {
@@ -304,14 +312,14 @@ INPUT_MAP(ApplyAddSign) = {{1, INPUT_DESC(var)},   {2, INPUT_DESC(m)},          
                            {7, INPUT_DESC(grad)}};
 ATTR_MAP(ApplyAddSign) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAddSign) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(ApplyAddSign, kApplyAddSignDOpName, ADPT_DESC(ApplyAddSign))
+REG_ADPT_DESC(ApplyAddSign, kNameApplyAddSign, ADPT_DESC(ApplyAddSign))
 
 // ApplyAdagrad
 INPUT_MAP(ApplyAdagrad) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)}, {4, INPUT_DESC(grad)}};
 ATTR_MAP(ApplyAdagrad) = {{"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())},
                           {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdagrad) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(ApplyAdagrad, kApplyAdagradDOpName, ADPT_DESC(ApplyAdagrad))
+REG_ADPT_DESC(ApplyAdagrad, kNameApplyAdagrad, ADPT_DESC(ApplyAdagrad))
 
 // ApplyAdagradV2
 INPUT_MAP(ApplyAdagradV2) = {

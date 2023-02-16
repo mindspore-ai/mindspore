@@ -110,6 +110,9 @@ DECLARE_OP_USE_OUTPUT(SparseApplyAdagrad)
 DECLARE_OP_ADAPTER(SparseApplyAdagradV2)
 DECLARE_OP_USE_OUTPUT(SparseApplyAdagradV2)
 
+DECLARE_OP_ADAPTER(ApplyKerasMomentumD)
+DECLARE_OP_USE_OUTPUT(ApplyKerasMomentumD)
+
 DECLARE_OP_ADAPTER(ApplyKerasMomentum)
 DECLARE_OP_USE_OUTPUT(ApplyKerasMomentum)
 
