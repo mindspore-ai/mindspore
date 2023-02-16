@@ -697,7 +697,7 @@ class CumulativeLogsumexp(Primitive):
         RuntimeError: If `axis` is out of range [-rank(x), rank(x)).
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
