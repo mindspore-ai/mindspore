@@ -37,7 +37,7 @@ class Net(nn.Cell):
         return self.add(x_, y_)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @security_off_wrap
