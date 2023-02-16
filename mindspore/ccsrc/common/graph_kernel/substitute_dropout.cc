@@ -31,9 +31,6 @@
 #include "runtime/device/kernel_info.h"
 
 namespace mindspore {
-namespace prim {
-GVAR_DEF(PrimitivePtr, kPrimGkDropout, std::make_shared<Primitive>("GkDropout"));
-}  // namespace prim
 namespace graphkernel {
 using opt::CheckCNodeInputSize;
 using opt::kDropoutInputTensorNum;
@@ -79,7 +76,8 @@ AnfNodePtr DropoutExpanderDeco::Run(const AnfNodePtr &node) {
   AnfAlgo::SetSelectKernelBuildInfo(uniform_real_kernel_info_builder->Build(), uniform_real_node.get());
 
   // Create a GKDropout node with uniform_real as its second input.
-  AnfNodePtrList gkdropout_inputs = {NewValueNode(prim::kPrimGkDropout), cnode->input(1), uniform_real_node};
+  AnfNodePtrList gkdropout_inputs = {NewValueNode(std::make_shared<Primitive>("GkDropout")), cnode->input(1),
+                                     uniform_real_node};
   auto new_dropout_node = func_graph->NewCNode(gkdropout_inputs);
   SetNodeAttrSafely("keep_prob", MakeValue(common::AnfAlgo::GetNodeAttr<float>(cnode, "keep_prob")), new_dropout_node);
   // the output info is unchanged.

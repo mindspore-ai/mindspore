@@ -61,9 +61,7 @@
 #include "backend/common/pass/optimize_updatestate.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "common/graph_kernel/adapter/expander.h"
-#ifdef ENABLE_AKG
 #include "common/graph_kernel/value_graph_binder.h"
-#endif
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 
 namespace mindspore {
@@ -622,9 +620,7 @@ void GPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
 
     // Graph kernel fusion optimization
     if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
-#if (defined(ENABLE_AKG) && !defined(_WIN32))
       graphkernel::GraphKernelOptimize(kernel_graph);
-#endif
       kernel_graph->SetExecOrderByDefault();
     }
 
@@ -659,16 +655,13 @@ void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
     mng = Manage(graph, true);
     graph->set_manager(mng);
   }
-#if (defined(ENABLE_AKG) && !defined(_WIN32))
   bool do_expand = false;
-#endif
   auto &node_list = graph->execution_order();
   for (auto &node : node_list) {
     const auto &failure_info = SetKernelInfoWithMsg(node);
     if (failure_info.first.empty()) {
       continue;
     }
-#if (defined(ENABLE_AKG) && !defined(_WIN32))
     auto f = [](const CNodePtr &n) {
       auto res = SetKernelInfoWithMsg(n);
       return res.first.empty();
@@ -683,17 +676,11 @@ void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
     auto expand_fg = GetCNodeFuncGraph(cnode);
     graphkernel::InlineExpandFuncGraph(cnode, expand_fg);
     do_expand = true;
-#else
-    HandleKernelSelectFailure(graph, node, failure_info);
-    continue;
-#endif
   }
-#if (defined(ENABLE_AKG) && !defined(_WIN32))
   if (do_expand) {
     graphkernel::BindValueToGraph().Run(graph);
     graph->SetExecOrderByDefault();
   }
-#endif
 }
 
 void GPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {

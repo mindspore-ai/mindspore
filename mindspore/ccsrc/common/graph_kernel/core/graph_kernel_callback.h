@@ -24,12 +24,12 @@
 #include "ir/dtype/type_id.h"
 #include "utils/shape_utils.h"
 #include "common/graph_kernel/model/node.h"
-#include "include/common/visible.h"
+#include "include/backend/visible.h"
 
 namespace mindspore::graphkernel {
 class Callback;
 using CallbackPtr = std::shared_ptr<Callback>;
-class COMMON_EXPORT Callback {
+class BACKEND_EXPORT Callback {
  public:
   virtual ~Callback() = default;
   static CallbackPtr Instance() { return instance_; }
@@ -159,7 +159,7 @@ class COMMON_EXPORT Callback {
   friend class CallbackImplRegister;
   static void RegImpl(const CallbackPtr &cb) { instance_ = cb; }
 #ifndef _MSC_VER
-  COMMON_EXPORT inline static CallbackPtr instance_{nullptr};
+  BACKEND_EXPORT inline static CallbackPtr instance_{nullptr};
 #else
   inline static CallbackPtr instance_{nullptr};
 #endif

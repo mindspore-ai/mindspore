@@ -249,10 +249,9 @@ std::vector<AnfNodePtrList> SearchFromNodes(const AnfNodePtrList &nodes,
   // Start from multi-inputs node, stop on seen node or multi-inputs or multi-outputs nodes.
   // For backward search, the other multi-inputs node can be contained in.
   // For forward search, the other multi-outputs node can be contained in.
-  auto get_contain_node_set = is_backward ? [](const NodeRelation &info) { return info.pres; }
-                                          : [](const NodeRelation &info) { return info.nexts; };
-  auto get_exclude_node_set = is_backward ? [](const NodeRelation &info) { return info.nexts; }
-                                          : [](const NodeRelation &info) { return info.pres; };
+  auto get_contain_node_set = [is_backward](const NodeRelation &info) { return is_backward ? info.pres : info.nexts; };
+  auto get_exclude_node_set = [is_backward](const NodeRelation &info) { return is_backward ? info.nexts : info.pres; };
+
   std::vector<AnfNodePtrList> group;
   for (const auto &node : nodes) {
     AnfNodePtrList stream;
@@ -287,8 +286,7 @@ std::vector<AnfNodePtrList> SearchFromNodes(const AnfNodePtrList &nodes,
 void SearchStreamFromMultiRelationNode(const AnfNodePtrList &multi_nodes,
                                        const OrderedMap<AnfNodePtr, NodeRelation> &node_rels, bool is_backward,
                                        std::vector<std::vector<AnfNodePtrList>> *groups, std::set<AnfNodePtr> *seen) {
-  auto get_related_nodes = is_backward ? [](const NodeRelation &info) { return info.pres; }
-                                       : [](const NodeRelation &info) { return info.nexts; };
+  auto get_related_nodes = [is_backward](const NodeRelation &info) { return is_backward ? info.pres : info.nexts; };
   for (const auto &node : multi_nodes) {
     if (auto iter = node_rels.find(node); iter != node_rels.end()) {
       const auto &pre_nodes = get_related_nodes(iter->second);

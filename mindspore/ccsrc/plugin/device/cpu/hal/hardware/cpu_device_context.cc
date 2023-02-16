@@ -47,9 +47,7 @@
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "common/graph_kernel/adapter/expander.h"
-#ifdef ENABLE_AKG
 #include "common/graph_kernel/value_graph_binder.h"
-#endif
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
@@ -195,13 +193,11 @@ void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     // Run final optimization.
     opt::CommonFinalOptimization(kernel_graph);
 
-#ifdef ENABLE_AKG
     // Run graph kernel fusion optimization
     if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
       graphkernel::GraphKernelOptimize(kernel_graph);
       kernel_graph->SetExecOrderByDefault();
     }
-#endif
   }
 }
 
@@ -315,7 +311,6 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
 
 void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-#ifdef ENABLE_AKG
   bool do_expand = false;
   auto mng = graph->manager();
   if (mng == nullptr) {
@@ -323,7 +318,6 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
     MS_EXCEPTION_IF_NULL(mng);
     graph->set_manager(mng);
   }
-#endif
   auto &node_list = graph->execution_order();
   for (auto &node : node_list) {
     if (!common::AnfAlgo::IsControlOpExecInBackend(node)) {
@@ -331,7 +325,6 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
       if (msg.empty()) {
         continue;
       }
-#ifdef ENABLE_AKG
       auto f = [](const CNodePtr &n) {
         auto res = SetKernelInfoWithMsg(n);
         return res.first.empty();
@@ -346,19 +339,14 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
       auto expand_fg = GetCNodeFuncGraph(cnode);
       graphkernel::InlineExpandFuncGraph(cnode, expand_fg);
       do_expand = true;
-#else
-      MS_EXCEPTION(etype) << msg;
-#endif
     } else {
       SetControlOpInfo(node);
     }
   }
-#ifdef ENABLE_AKG
   if (do_expand) {
     (void)graphkernel::BindValueToGraph().Run(graph);
     graph->SetExecOrderByDefault();
   }
-#endif
 }
 
 void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {

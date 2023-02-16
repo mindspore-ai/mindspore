@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#ifdef ENABLE_AKG
 #include "common/graph_kernel/graph_kernel_build.h"
 
 #include <fstream>
@@ -316,3 +316,4 @@ bool GraphKernelBuild::Run(const FuncGraphPtr &func_graph) {
   return changed;
 }
 }  // namespace mindspore::graphkernel
+#endif

@@ -20,10 +20,10 @@
 #include <string>
 #include "common/graph_kernel/split_model/split_model.h"
 #include "utils/hash_map.h"
-#include "include/common/visible.h"
+#include "include/backend/visible.h"
 
 namespace mindspore::graphkernel::inner {
-class COMMON_EXPORT SplitModelFactory {
+class BACKEND_EXPORT SplitModelFactory {
  public:
   static SplitModelFactory &Instance() {
     static SplitModelFactory instance = SplitModelFactory();

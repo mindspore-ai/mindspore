@@ -45,9 +45,8 @@ CNodePtr CreateAssign(const FuncGraphPtr &sub_graph,
   const auto &target_node = parameters_infos[idx].first.op_node;
   const auto &new_parameter = parameters_infos[idx].second;
 
-  auto node =
-    CreateCNode({NewValueNode(prim::kPrimAssign), new_parameter, target_node}, sub_graph,
-                {.format = GetFormat(target_node), .shape = GetShape(target_node), .type = GetType(target_node)});
+  auto node = CreateCNode({NewValueNode(prim::kPrimAssign), new_parameter, target_node}, sub_graph,
+                          {GetFormat(target_node), GetShape(target_node), GetType(target_node)});
   return node;
 }
 
@@ -134,11 +133,11 @@ CNodePtr InplaceAssignBuilder::CreateCleanCompositeNode(const InplaceAssignerInf
   auto dtype = (dst_type == kNumberTypeFloat16) ? kNumberTypeFloat32 : dst_type;
   ValueNodePtr value_node;
   if (dtype == kNumberTypeFloat32) {
-    value_node = CreateScalarTensorValueNode<float>({.format = format, .shape = {1}, .type = TypeIdToType(dtype)},
-                                                    static_cast<float>(0), sizeof(float));
+    value_node =
+      CreateScalarTensorValueNode<float>({format, {1}, TypeIdToType(dtype)}, static_cast<float>(0), sizeof(float));
   } else {
-    value_node = CreateScalarTensorValueNode<double>({.format = format, .shape = {1}, .type = TypeIdToType(dtype)},
-                                                     static_cast<double>(0), sizeof(double));
+    value_node =
+      CreateScalarTensorValueNode<double>({format, {1}, TypeIdToType(dtype)}, static_cast<double>(0), sizeof(double));
   }
 
   // Create composite op's sub-graph.
@@ -147,8 +146,7 @@ CNodePtr InplaceAssignBuilder::CreateCleanCompositeNode(const InplaceAssignerInf
   AnfNodePtr broadcast_input_node;
   if (dst_type == kNumberTypeFloat16) {
     AnfNodePtrList cast_inputs = {NewValueNode(prim::kPrimCast), value_node};
-    auto cast_node_inner =
-      CreateCNode(cast_inputs, new_sub_graph, {.format = format, .shape = {1}, .type = TypeIdToType(dst_type)});
+    auto cast_node_inner = CreateCNode(cast_inputs, new_sub_graph, {format, {1}, TypeIdToType(dst_type)});
     SetNodeAttrSafely("dst_type", kFloat32, cast_node_inner);
     broadcast_input_node = cast_node_inner;
   } else {
@@ -158,8 +156,8 @@ CNodePtr InplaceAssignBuilder::CreateCleanCompositeNode(const InplaceAssignerInf
   // Create broadcast basic op.
   auto dst_shape_vec = GetShape(op_info.op_node);
   AnfNodePtrList clean_inputs = {NewValueNode(prim::kPrimBroadcastTo), broadcast_input_node};
-  auto broadcast_to_node_inner = CreateCNode(
-    clean_inputs, new_sub_graph, {.format = format, .shape = dst_shape_vec, .type = GetType(op_info.op_node)});
+  auto broadcast_to_node_inner =
+    CreateCNode(clean_inputs, new_sub_graph, {format, dst_shape_vec, GetType(op_info.op_node)});
   SetNodeAttrSafely("shape", MakeValue(GetDeviceShape(op_info.op_node)), broadcast_to_node_inner);
 
   // Makeup sub-graph.

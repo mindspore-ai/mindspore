@@ -954,7 +954,8 @@ void AkgKernelJsonGenerator::GenParallelJson(const std::vector<AnfNodePtr> &anf_
 
   auto output_index = GetOutputIndex(anf_nodes, input_list, output_list);
   for (size_t i = 0; i < output_index.size(); ++i) {
-    auto [tmp_output, tmp_output_index] = output_index[i];
+    auto tmp_output = output_index[i].first;
+    auto tmp_output_index = output_index[i].second;
     bool found = std::any_of(input_list.cbegin(), input_list.cend(),
                              [&tmp_output](const AnfNodePtr &in) { return tmp_output == in; });
     if (!found) {

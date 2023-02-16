@@ -129,9 +129,8 @@ std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::GetOrCreateNewTsaFirstN
   AnfAlgo::SetSelectKernelBuildInfo(para_info_builder.Build(), parameter.get());
 
   // Create inner op.
-  auto identity_node =
-    CreateCNode({NewValueNode(std::make_shared<Primitive>("Reshape")), parameter}, new_sub_graph,
-                {.format = GetFormat(parameter), .shape = GetShape(parameter), .type = GetType(parameter)});
+  auto identity_node = CreateCNode({NewValueNode(std::make_shared<Primitive>("Reshape")), parameter}, new_sub_graph,
+                                   {GetFormat(parameter), GetShape(parameter), GetType(parameter)});
   SetNodeAttrSafely("shape", MakeValue(GetDeviceShape(parameter)), identity_node);
 
   // Makeup sub-graph.

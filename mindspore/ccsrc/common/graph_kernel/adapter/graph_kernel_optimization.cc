@@ -60,8 +60,9 @@
 #include "common/graph_kernel/parallel_optimizer.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/compact_tensor_liveness.h"
+#ifdef ENABLE_AKG
 #include "common/graph_kernel/graph_kernel_build.h"
-
+#endif
 namespace mindspore::graphkernel {
 using opt::CommonSubexpressionElimination;
 using opt::GetitemTuple;
@@ -227,7 +228,9 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   // Reduce fake output memory.
   pm->Add(std::make_shared<ReduceFakeOutMem>(), OptLevel_1);
   // Compile graph kernel nodes, and inline nodes if compile failed.
+#ifdef ENABLE_AKG
   pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1);
+#endif
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   pm->Add(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1);
   return pm;

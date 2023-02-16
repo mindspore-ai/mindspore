@@ -18,11 +18,11 @@
 #include <vector>
 #include <memory>
 #include "ir/func_graph.h"
-#include "include/common/visible.h"
+#include "include/backend/visible.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 
 namespace mindspore::graphkernel {
-class COMMON_EXPORT Expander {
+class BACKEND_EXPORT Expander {
  public:
   /**
    * Expand input cnode to a funcgraph which composite same function with core ops,
@@ -44,7 +44,7 @@ class DefaultExpander : public Expander {
   CallbackPtr cb_;
 };
 
-class COMMON_EXPORT ExpanderDecorator : public Expander {
+class BACKEND_EXPORT ExpanderDecorator : public Expander {
  public:
   explicit ExpanderDecorator(const ExpanderPtr &decorated) : decorated_(decorated) {}
   ~ExpanderDecorator() override = default;
@@ -63,7 +63,7 @@ class COMMON_EXPORT ExpanderDecorator : public Expander {
 using ExpanderCreatorFunc = std::function<ExpanderPtr(const ExpanderPtr &)>;
 using ExpanderCreatorFuncList = std::vector<ExpanderCreatorFunc>;
 
-class COMMON_EXPORT InputToAttrDeco : public ExpanderDecorator {
+class BACKEND_EXPORT InputToAttrDeco : public ExpanderDecorator {
  public:
   explicit InputToAttrDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
   ~InputToAttrDeco() = default;
@@ -76,6 +76,6 @@ class COMMON_EXPORT InputToAttrDeco : public ExpanderDecorator {
 /**
  * Wrap Expander with decorators.
  */
-COMMON_EXPORT ExpanderPtr WrapExpander(const ExpanderPtr &base, const ExpanderCreatorFuncList &deco_creators);
+BACKEND_EXPORT ExpanderPtr WrapExpander(const ExpanderPtr &base, const ExpanderCreatorFuncList &deco_creators);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_CORE_EXPANDER_H_

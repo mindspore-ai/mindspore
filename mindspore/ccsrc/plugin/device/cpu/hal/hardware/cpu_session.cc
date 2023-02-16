@@ -113,14 +113,12 @@ void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
 }
 
 void CPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-#ifdef ENABLE_AKG
   if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     return;
   }
   MS_EXCEPTION_IF_NULL(kernel_graph);
   graphkernel::GraphKernelOptimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
-#endif
 }
 
 GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {

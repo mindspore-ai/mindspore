@@ -22,10 +22,6 @@
 #include "common/graph_kernel/graph_kernel_helper.h"
 
 namespace mindspore {
-namespace prim {
-GVAR_DEF(PrimitivePtr, kPrimUnPadAkg, std::make_shared<Primitive>("UnPadAkg"));
-GVAR_DEF(PrimitivePtr, kPrimPadAkg, std::make_shared<Primitive>("PadAkg"));
-}  // namespace prim
 namespace graphkernel {
 namespace {
 using vec = std::vector<int64_t>;
@@ -40,65 +36,30 @@ const auto GetPadShape = [](size_t K, size_t M, size_t N) {
   return std::tuple(pad_K, pad_M, pad_N);
 };
 
-// Get (K M .. pad_N) when tran_a is true and tran_b is false
-const auto TransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
-  size_t K, M, N, pad_K, pad_M, pad_N;
+using KMNLIST = std::tuple<size_t, size_t, size_t, size_t, size_t, size_t>;
+KMNLIST GetTransShape(bool trans_a, bool trans_b, const vec &shape_a, const vec &shape_b, vec *pad_a, vec *pad_b) {
+  size_t k, m, n, pad_k, pad_m, pad_n;
   size_t size = shape_a.size();
-  K = LongToSize(shape_a[size - 2]);
-  M = LongToSize(shape_a[size - 1]);
-  N = LongToSize(shape_b[size - 1]);
-  std::tie(pad_K, pad_M, pad_N) = GetPadShape(K, M, N);
-  pad_shape_a->push_back(pad_K);
-  pad_shape_a->push_back(pad_M);
-  pad_shape_b->push_back(pad_K);
-  pad_shape_b->push_back(pad_N);
-  return std::tuple(K, M, N, pad_K, pad_M, pad_N);
-};
-
-// Get (K M .. pad_N) when tran_a is true and tran_b is true
-const auto TransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
-  size_t K, M, N, pad_K, pad_M, pad_N;
-  size_t size = shape_a.size();
-  K = LongToSize(shape_a[size - 2]);
-  M = LongToSize(shape_a[size - 1]);
-  N = LongToSize(shape_b[size - 2]);
-  std::tie(pad_K, pad_M, pad_N) = GetPadShape(K, M, N);
-  pad_shape_a->push_back(pad_K);
-  pad_shape_a->push_back(pad_M);
-  pad_shape_b->push_back(pad_N);
-  pad_shape_b->push_back(pad_K);
-  return std::tuple(K, M, N, pad_K, pad_M, pad_N);
-};
-
-// Get (K M .. pad_N) when tran_a is false and tran_b is true
-const auto NotTransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
-  size_t K, M, N, pad_K, pad_M, pad_N;
-  size_t size = shape_a.size();
-  K = LongToSize(shape_a[size - 1]);
-  M = LongToSize(shape_a[size - 2]);
-  N = LongToSize(shape_b[size - 2]);
-  std::tie(pad_K, pad_M, pad_N) = GetPadShape(K, M, N);
-  pad_shape_a->push_back(pad_M);
-  pad_shape_a->push_back(pad_K);
-  pad_shape_b->push_back(pad_N);
-  pad_shape_b->push_back(pad_K);
-  return std::tuple(K, M, N, pad_K, pad_M, pad_N);
-};
-
-// Get (K M .. pad_N) when tran_a is false and tran_b is false
-const auto NotTransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
-  size_t K, M, N, pad_K, pad_M, pad_N;
-  size_t size = shape_a.size();
-  K = LongToSize(shape_a[size - 1]);
-  M = LongToSize(shape_a[size - 2]);
-  N = LongToSize(shape_b[size - 1]);
-  std::tie(pad_K, pad_M, pad_N) = GetPadShape(K, M, N);
-  pad_shape_a->push_back(pad_M);
-  pad_shape_a->push_back(pad_K);
-  pad_shape_b->push_back(pad_K);
-  pad_shape_b->push_back(pad_N);
-  return std::tuple(K, M, N, pad_K, pad_M, pad_N);
-};
+  k = LongToSize(trans_a ? shape_a[size - kIndex2] : shape_a[size - kIndex1]);
+  m = LongToSize(trans_a ? shape_a[size - kIndex1] : shape_a[size - kIndex2]);
+  n = LongToSize(trans_b ? shape_b[size - kIndex2] : shape_b[size - kIndex1]);
+  std::tie(pad_k, pad_m, pad_n) = GetPadShape(k, m, n);
+  if (trans_a) {
+    pad_a->push_back(pad_k);
+    pad_a->push_back(pad_m);
+  } else {
+    pad_a->push_back(pad_m);
+    pad_a->push_back(pad_k);
+  }
+  if (trans_b) {
+    pad_b->push_back(pad_n);
+    pad_b->push_back(pad_k);
+  } else {
+    pad_b->push_back(pad_k);
+    pad_b->push_back(pad_n);
+  }
+  return std::tuple(k, m, n, pad_k, pad_m, pad_n);
+}
 
 bool IsAkgMatMul(size_t K, size_t M, size_t N) {
   if (K > MAX_PER_DIM_SHAPE ||
@@ -131,10 +92,7 @@ std::tuple<bool, bool, bool> NeedPad(const CNodePtr &matmul, vec *pad_shape_a, v
   }
 
   size_t K, M, N, pad_K, pad_M, pad_N;
-  using kmn = std::tuple<size_t, size_t, size_t, size_t, size_t, size_t>;
-  using func = std::function<kmn(const vec &, const vec &, vec *, vec *)>;
-  func f = tran_a ? (tran_b ? TransATransB : TransANotTransB) : (tran_b ? NotTransATransB : NotTransANotTransB);
-  std::tie(K, M, N, pad_K, pad_M, pad_N) = f(shape_a, shape_b, pad_shape_a, pad_shape_b);
+  std::tie(K, M, N, pad_K, pad_M, pad_N) = GetTransShape(tran_a, tran_b, shape_a, shape_b, pad_shape_a, pad_shape_b);
   // Donot Pad for cublas operator
   if (!IsAkgMatMul(K, M, N)) {
     SetNodeAttrSafely("Akg", MakeValue(false), matmul);
@@ -156,7 +114,7 @@ std::tuple<bool, bool, bool> NeedPad(const CNodePtr &matmul, vec *pad_shape_a, v
 void InsertPad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, bool left, const vec &pad_shape,
                const vec &tail_shape) {
   size_t input_index = left ? 1 : 2;
-  AnfNodePtrList pad_inp = {NewValueNode(prim::kPrimPadAkg), matmul->input(input_index)};
+  AnfNodePtrList pad_inp = {NewValueNode(std::make_shared<Primitive>("PadAkg")), matmul->input(input_index)};
   auto pad_cnode = func_graph->NewCNode(pad_inp);
   func_graph->AddNode(pad_cnode);
 
@@ -191,7 +149,7 @@ void InsertPad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, bool left
 // unpad_shape is [batch, M, N], tail_shape is [0, pad_M - M, pad_N - N]
 void InsertUnpad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
                  const vec &unpad_shape, const vec &tail_shape) {
-  AnfNodePtrList unpad_inp = {NewValueNode(prim::kPrimUnPadAkg), matmul};
+  AnfNodePtrList unpad_inp = {NewValueNode(std::make_shared<Primitive>("UnPadAkg")), matmul};
   auto unpad_cnode = func_graph->NewCNode(unpad_inp);
   func_graph->AddNode(unpad_cnode);
   ShapeVector tail;
