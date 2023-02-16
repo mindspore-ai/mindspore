@@ -32,6 +32,7 @@ from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._checkparam import Rel, check_is_number
 from mindspore._checkparam import Validator as validator
+from mindspore._check_jit_forbidden_api import jit_forbidden_register
 
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
@@ -520,6 +521,7 @@ class Tensor(Tensor_):
         """
         return len(self._shape)
 
+    @jit_forbidden_register
     def set_const_arg(self, const_arg=True):
         """
         Specify whether the tensor is a constant when it is used for the argument of a network.

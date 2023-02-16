@@ -31,7 +31,7 @@ import numpy
 import asttokens
 import astunparse
 
-from mindspore import Tensor, CSRTensor, COOTensor
+from mindspore import Tensor, CSRTensor, COOTensor, RowTensor
 from mindspore import log as logger
 from mindspore import nn
 from mindspore import ops
@@ -549,6 +549,31 @@ def get_class_member_namespace_symbol(obj):
     class_namespace = ClassMemberNamespace(obj)
     logger.debug("class namespace: %r", class_namespace)
     return class_namespace
+
+
+def get_obj_defined_from_obj_type(obj_type):
+    """Get the class defined from object type which is in BuiltInMap."""
+    logger.debug("get the object type: %r", obj_type)
+    def foo():
+        pass
+
+    obj_type_defined_map = {
+        "Tensor": Tensor,
+        "RowTensor": RowTensor,
+        "COOTensor": COOTensor,
+        "CSRTensor": CSRTensor,
+        "String": "",
+        "Function": foo,
+        "Int": int,
+        "Float": float,
+        "UInt": int,
+        "Bool": bool,
+        "List": list,
+        "Tuple": tuple,
+        "Dictionary": dict,
+    }
+
+    return obj_type_defined_map.get(obj_type)
 
 
 def is_class_type(cls):
