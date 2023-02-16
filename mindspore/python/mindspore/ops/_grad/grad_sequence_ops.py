@@ -21,6 +21,9 @@ from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops.primitive import Primitive
 
 
+tuple_setitem = Primitive("tuple_setitem")
+
+
 @bprop_getters.register(seq.SequenceCount)
 def get_bprop_count(self):
     """Generate bprop for SequenceCount"""
@@ -88,8 +91,6 @@ def get_bprop_index(self):
 def get_bprop_setitem(self):
     """Generate bprop for TupleSetItem and ListSetItem"""
 
-    tuple_setitem = Primitive('tuple_setitem')
-
     def bprop(x, idx, value, out, dout):
         d_x = tuple_setitem(dout, idx, 0)
         d_value = dout[idx]
@@ -102,12 +103,24 @@ def get_bprop_setitem(self):
 @bprop_getters.register(seq.SequenceMul)
 def get_bprop_mul(self):
     """Generate bprop for SequenceMul"""
-    tuple_setitem = Primitive("tuple_setitem")
 
     def bprop(x, y, out, dout):
         dx = x
         for i in range(len(x)):
             dx = tuple_setitem(dx, i, dout[i])
         return (dx, zeros_like(y))
+
+    return bprop
+
+
+@bprop_getters.register(seq.SequenceMin)
+@bprop_getters.register(seq.SequenceMax)
+def get_bprop_max_min(self):
+    """Generate bprop for SequenceMax and SequenceMax"""
+
+    def bprop(x, out, dout):
+        index = seq.SequenceIndex()(x, out)
+        dx = tuple_setitem(zeros_like(x), index, dout)
+        return (dx,)
 
     return bprop

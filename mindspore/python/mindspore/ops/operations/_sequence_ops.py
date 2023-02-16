@@ -479,3 +479,55 @@ class sequence_len(Primitive):
     def __init__(self):
         """Initialize sequence_len"""
         self.init_prim_io_names(inputs=['sequence'], outputs=['output_data'])
+
+
+class SequenceMax(Primitive):
+    r"""
+    Support sequence max operation 'max(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **sequence** (Union[List, Tuple]) - The sequence.
+
+    Outputs:
+        The maximum element.
+
+    Raises:
+        TypeError: The 'sequence' is not list or tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SequenceMax"""
+        self.init_prim_io_names(inputs=['sequence'], outputs=['output_data'])
+
+
+class SequenceMin(Primitive):
+    r"""
+    Support sequence min operation 'min(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **sequence** (Union[List, Tuple]) - The sequence.
+
+    Outputs:
+        The minimum element.
+
+    Raises:
+        TypeError: The 'sequence' is not list or tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SequenceMax"""
+        self.init_prim_io_names(inputs=['sequence'], outputs=['output_data'])
