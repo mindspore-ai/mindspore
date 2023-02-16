@@ -154,7 +154,7 @@ AnfNodePtr ReduceOptimizer::NewAssistValueNode(const CNodePtr &cnode, const Kern
         // case 2: contain value less 0;
         for (auto &iter : value_tuple->value()) {
           auto item = GetValue<int64_t>(iter->cast<ScalarPtr>());
-          if (item < 0) {
+          if (item < 0 && !(x_shape->shape().size() == 1 && x_shape->shape()[0] == -2)) {  // -2 : dynamic rank
             (void)axis_value.emplace_back(item + static_cast<int64_t>(x_shape->shape().size()));
           } else {
             (void)axis_value.emplace_back(item);
