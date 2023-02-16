@@ -46,6 +46,7 @@ class MS_CORE_API Emitter {
   NodePtr EmitValue(const ValuePtr &value) const;
 
   NodePtr MakeTuple(const NodePtrList &inputs) const { return Emit(prim::kMakeTuple, inputs); }
+  NodePtr MakeList(const NodePtrList &inputs) const { return Emit("make_list", inputs); }
   NodePtr TupleGetItem(const NodePtr &input, size_t i) const {
     return Emit(prim::kTupleGetItem, {input, Value(static_cast<int64_t>(i))});
   }
