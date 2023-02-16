@@ -46,6 +46,17 @@ void ClearDeviceAddress(const ValuePtr &value) {
   }
 }
 
+void ClearDeviceAddress(const ValuePtr &value, const std::vector<size_t> &tuple_indices) {
+  std::vector<tensor::TensorPtr> tensors;
+  TensorValueToTensor(value, &tensors);
+  for (auto i : tuple_indices) {
+    if (i < tensors.size()) {
+      tensors[i]->set_device_address(nullptr);
+      tensors[i]->set_is_forward_output(false);
+    }
+  }
+}
+
 std::string GetCellId(const py::object &obj, const py::args &args, const InputArgsInfoPtr &input_args_info) {
   auto cell_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
   auto fn = [&cell_id](const abstract::AbstractBasePtr &abs) {
@@ -1607,6 +1618,52 @@ void GradExecutor::SaveOutputNodeMap(const std::string &obj_id, const FrontendOp
   top_cell()->SetNodeMapInGraphInfoMap(obj_id, cnode);
 }
 
+bool GradExecutor::FreeUselessTensors(const CNodePtr &cnode, const ValuePtrList &inputs, const ValuePtr &output) const {
+  bool out_is_used = true;
+  const auto &unused_inputs = BpropExpander().GetUnusedInputs(cnode);
+  auto is_unused_index = [&unused_inputs](size_t i) {
+    return std::find(unused_inputs.begin(), unused_inputs.end(), i) != unused_inputs.end();
+  };
+  for (size_t i = 0; i < inputs.size(); i++) {
+    if (is_unused_index(i)) {
+      ClearDeviceAddress(inputs[i]);
+      MS_LOG(DEBUG) << "Clear device address for inputs[" << i << "] of " << cnode->fullname_with_scope();
+    }
+  }
+  if (is_unused_index(inputs.size())) {
+    ClearDeviceAddress(output);
+    out_is_used = false;
+    MS_LOG(DEBUG) << "Clear device address for the output of " << cnode->fullname_with_scope();
+  }
+
+  // special cases, manually free more inputs.
+  if (IsPrimitiveCNode(cnode, prim::kPrimBatchNorm)) {
+    // 1. BatchNorm is a multi-output node, it's out[0] and out[1] are not used.
+    ClearDeviceAddress(output, {kIndex0, kIndex1});
+    MS_LOG(DEBUG) << "Clear device address for output[0, 1] of " << cnode->fullname_with_scope();
+  } else if (IsOneOfPrimitiveCNode(cnode, {prim::kPrimMul, prim::kPrimMatMul, prim::kPrimConv2D})) {
+    // 2. For operators like Mul, the dx ONLY rely on y, and dy ONLY rely on x.
+    //    so if y is a valuenode, the dy is useless, we can free x in ahead.
+    if (cnode->input(kIndex1)->isa<ValueNode>()) {
+      ClearDeviceAddress(inputs[kIndex1]);
+      MS_LOG(DEBUG) << "Clear device address for inputs[1] of " << cnode->fullname_with_scope();
+    }
+    if (cnode->input(kIndex2)->isa<ValueNode>()) {
+      ClearDeviceAddress(inputs[kIndex0]);
+      MS_LOG(DEBUG) << "Clear device address for inputs[0] of " << cnode->fullname_with_scope();
+    }
+  } else if (IsOneOfPrimitiveCNode(cnode, {prim::kPrimDiv, prim::kPrimRealDiv})) {
+    // 3. For operators like Div, the dy does not rely on output node, so if y is a valuenode, we can free output.
+    if (cnode->input(kIndex2)->isa<ValueNode>()) {
+      ClearDeviceAddress(output);
+      out_is_used = false;
+      MS_LOG(DEBUG) << "Clear device address for the output of " << cnode->fullname_with_scope();
+    }
+  }
+
+  return out_is_used;
+}
+
 // Run ad grad for curr op and connect grad graph with previous op
 void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNodePtr &cnode,
                             const ValuePtr &op_out) const {
@@ -1625,23 +1682,12 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNode
                        std::back_inserter(cloned_op_args),
                        [](const ValuePtr &value) { return ShallowCopyTensorValue(value); });
   ValuePtr cloned_out = ShallowCopyTensorValue(op_out);
-  const auto &unused_inputs = BpropExpander().GetUnusedInputs(cnode);
-  auto is_unused_index = [&unused_inputs](size_t i) {
-    return std::find(unused_inputs.begin(), unused_inputs.end(), i) != unused_inputs.end();
-  };
-  for (size_t i = 0; i < cloned_op_args.size(); i++) {
-    if (is_unused_index(i)) {
-      ClearDeviceAddress(cloned_op_args[i]);
-    }
-  }
-  if (is_unused_index(cloned_op_args.size())) {
-    ClearDeviceAddress(cloned_out);
-  }
+  bool out_is_used = FreeUselessTensors(cnode, cloned_op_args, cloned_out);
 
   auto grad_param = std::make_shared<autograd::GradParam>(cnode, cloned_op_args, cloned_out, nullptr,
                                                           !top_cell()->is_high_order_top_cell());
   grad_param->use_dynamic_shape_process = top_cell()->use_dynamic_shape_process();
-  grad_param->out_used_in_bporp_graph = !is_unused_index(cloned_op_args.size());
+  grad_param->out_used_in_bporp_graph = out_is_used;
   auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
     AsyncGradPynativeOp(auto_grad_cell_ptr, grad_param);
