@@ -49,20 +49,22 @@ StubNodePtr MakeStubNode(const TypePtr &type, StubNode *top = nullptr) {
   return nullptr;
 }
 
-std::pair<int, py::object> MakeOutput(StubNodePtr node) {
+py::object MakeOutput(StubNodePtr node) {
   if (node->isa<TensorNode>()) {
     auto tensor = node->cast<std::shared_ptr<TensorNode>>();
-    return std::make_pair(static_cast<int>(StubNode::TENSOR), py::cast(tensor));
+    return py::cast(tensor);
   } else {
     auto seq = node->cast<std::shared_ptr<SequenceNode>>();
     MS_EXCEPTION_IF_NULL(seq);
     auto &elements = seq->Elements();
+    if (elements.empty()) {
+      return py::cast(seq);
+    }
     py::tuple out(elements.size());
     for (size_t i = 0; i < elements.size(); ++i) {
-      auto ret = MakeOutput(elements[i]);
-      out[i] = ret.second;
+      out[i] = MakeOutput(elements[i]);
     }
-    return std::make_pair(static_cast<int>(StubNode::TUPLE), out);
+    return out;
   }
 }
 }  // namespace
@@ -90,7 +92,7 @@ AbstractBasePtr StubNode::WaitAbstract() {
     } else {
       wait_flag_.store(true);
       std::unique_lock<std::mutex> lock(stub_mutex_);
-      stub_cond_var_.wait(lock, [this] { return abstract_.get() == nullptr; });
+      stub_cond_var_.wait(lock, [this] { return abstract_.get() != nullptr; });
       wait_flag_.store(false);
     }
   }
@@ -104,7 +106,7 @@ ValuePtr StubNode::WaitValue() {
     } else {
       wait_flag_.store(true);
       std::unique_lock<std::mutex> lock(stub_mutex_);
-      stub_cond_var_.wait(lock, [this] { return value_.get() == nullptr; });
+      stub_cond_var_.wait(lock, [this] { return value_.get() != nullptr; });
       wait_flag_.store(false);
     }
   }
@@ -138,6 +140,17 @@ py::object TensorNode::GetDtype() {
   return py::cast(base);
 }
 
+py::object SequenceNode::GetElements() {
+  if (elements_.empty()) {
+    (void)WaitAbstract();
+  }
+  py::tuple out(elements_.size());
+  for (size_t i = 0; i < elements_.size(); ++i) {
+    out[i] = MakeOutput(elements_[i]);
+  }
+  return out;
+}
+
 void SequenceNode::SetAbstract(const AbstractBasePtr &abs) {
   auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
   auto children = seq_abs->elements();
@@ -164,7 +177,7 @@ void SequenceNode::SetValue(const ValuePtr &val) {
 std::pair<py::object, StubNodePtr> MakeTopNode(const TypePtr &type) {
   auto top = MakeStubNode(type, nullptr);
   auto ret = MakeOutput(top);
-  return std::make_pair(py::make_tuple(ret.first, ret.second), top);
+  return std::make_pair(ret, top);
 }
 
 void RegStubNodes(const py::module *m) {
@@ -173,6 +186,8 @@ void RegStubNodes(const py::module *m) {
     .def("get_value", &TensorNode::GetValue, "get output value of async stub.")
     .def("get_shape", &TensorNode::GetShape, "get output shape of async stub.")
     .def("get_dtype", &TensorNode::GetDtype, "get output dtype of async stub.");
+  (void)py::class_<SequenceNode, StubNode, std::shared_ptr<SequenceNode>>(*m, "SequenceNode")
+    .def("get_elements", &SequenceNode::GetElements, "get the elements of async stub_seq.");
 }
 }  // namespace stub
 }  // namespace mindspore

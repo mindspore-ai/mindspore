@@ -880,8 +880,8 @@ _RUN_OP_ASYNC = False
 def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
     if _RUN_OP_ASYNC:
-        stub_type, stub = _pynative_executor.run_op_async(obj, args)
-        return _convert_stub(stub_type, stub)
+        stub = _pynative_executor.run_op_async(obj, args)
+        return _convert_stub(stub)
     return _run_op_sync(obj, op_name, args)
 
 

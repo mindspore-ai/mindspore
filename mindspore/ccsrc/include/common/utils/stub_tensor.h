@@ -37,7 +37,6 @@ using abstract::AbstractBasePtr;
 
 class COMMON_EXPORT StubNode : public Value {
  public:
-  enum { TENSOR = 0, CSR_TENSOR, COO_TENSOR, ROW_TENSOR, TUPLE, IMMEDIATE, NOT_SUPPORT };
   explicit StubNode(StubNode *top) : top_node_(top) {}
   virtual ~StubNode() = default;
   MS_DECLARE_PARENT(StubNode, Value);
@@ -73,6 +72,8 @@ class SequenceNode : public StubNode {
  public:
   explicit SequenceNode(StubNode *top, size_t size = 0) : StubNode(top), elements_(size) {}
   MS_DECLARE_PARENT(SequenceNode, StubNode);
+
+  py::object GetElements();
 
   void SetAbstract(const AbstractBasePtr &abs) override;
   void SetValue(const ValuePtr &val) override;
