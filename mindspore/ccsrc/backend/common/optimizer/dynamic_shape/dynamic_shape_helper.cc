@@ -80,18 +80,18 @@ TypeId GetSequenceType(const abstract::AbstractSequencePtr &seq_abs) {
     MS_LOG(EXCEPTION) << "The 0'th element of sequence must be a scalar, but got:" << elems[0]->ToString();
   }
 
-  auto fixed_type = elems[0]->BuildType();
+  auto fixed_type = elems[0]->BuildType()->type_id();
   for (size_t i = 1; i < elems.size(); i++) {
     if (!elems[i]->isa<abstract::AbstractScalar>()) {
       MS_LOG(EXCEPTION) << "The " << i << "'th element of sequence must be a scalar, but got:" << elems[i]->ToString();
     }
-    auto follow_type = elems[i]->BuildType();
-    if (!(fixed_type == follow_type)) {
-      MS_LOG(EXCEPTION) << "Different type found between 0'th element[Type: " << fixed_type->ToString() << "] and " << i
-                        << "'th element[Type: " << follow_type->ToString() << "]";
+    auto follow_type = elems[i]->BuildType()->type_id();
+    if (fixed_type != follow_type) {
+      MS_LOG(EXCEPTION) << "Different type found between 0'th element[Type: " << fixed_type << "] and " << i
+                        << "'th element[Type: " << follow_type << "]";
     }
   }
-  return fixed_type->type_id();
+  return fixed_type;
 }
 
 tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_node_with_index) {
@@ -218,9 +218,9 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
       new_abs = std::make_shared<abstract::AbstractTuple>(elems);
     } else if (abs->isa<abstract::AbstractList>()) {
       new_abs = std::make_shared<abstract::AbstractList>(elems);
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported abstract type:" << abs->ToString();
     }
-
-    MS_LOG(EXCEPTION) << "Unsupported abstract type:" << abs->ToString();
   } else if (abs->isa<abstract::AbstractSequence>()) {
     auto abstract_seq = abs->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(abstract_seq);
