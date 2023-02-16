@@ -2158,11 +2158,15 @@ class Tile(PrimitiveWithInfer):
 
     def __infer__(self, x, multiples):
         multiples_v = multiples['value']
-        if multiples_v is None:
+        if multiples_v is None or None in multiples_v:
             if 'max_value' not in multiples or 'min_value' not in multiples:
-                if len(multiples['shape']) != 1:
+                if isinstance(multiples['shape'], (list, tuple)):
+                    shape = [len(multiples['shape'])]
+                else:
+                    shape = multiples['shape']
+                if len(shape) != 1:
                     raise ValueError(f'For \'{self.name}\', the dim of multiples must be 1.')
-                rank = max(len(x['shape']), multiples['shape'][0])
+                rank = max(len(x['shape']), shape[0])
                 out_shape = [-1] * rank
                 return {
                     'shape': out_shape,

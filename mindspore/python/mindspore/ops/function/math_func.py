@@ -7753,7 +7753,7 @@ def _min(*args):
     return min(*args)
 
 
-@constexpr
+@_primexpr
 def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
     """Infers the shape of the last two dimensions after performing matmul."""
     shape_rem = []
@@ -7768,7 +7768,7 @@ def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
     return tuple(shape_rem)
 
 
-@constexpr
+@_primexpr
 def _check_matmul_shapes(shape1, shape2, prim_name=None):
     """Checks shape1 and shape2 are valid to perform matmul, and returns output shape after broadcasting."""
     shape_out = list()
@@ -7782,7 +7782,7 @@ def _check_matmul_shapes(shape1, shape2, prim_name=None):
     return tuple(shape_out)
 
 
-@constexpr
+@_primexpr
 def _tile_size(shape, out_shape, ndim):
     """Returns tile_size such that shape*tile_size = out_shape"""
     size = [1] * ndim
