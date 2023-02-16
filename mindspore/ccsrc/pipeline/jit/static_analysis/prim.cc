@@ -1691,9 +1691,12 @@ EvalResultPtr GetEvaluatedValueForAdapterTensorAttrOrMethod(const AnalysisEngine
   return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
 }
 
-void CheckObjAttrValid(const TypePtr &data_type, const std::string &item_name) {
+void CheckObjAttrValid(const TypePtr &data_type, const std::string &item_name, const AbstractBasePtr &data_args) {
   // Check if the obj's attr is invalid or decoratored by @jit_forbidden_register
   std::string data_type_str = TypeIdLabel(data_type->type_id());
+  if (data_args->isa<AbstractRefTensor>()) {
+    data_type_str = "Parameter";
+  }
   py::module mod1 = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   py::object obj_define = python_adapter::CallPyModFn(mod1, parse::PYTHON_MOD_GET_OBJ_DEFINED, data_type_str);
   if (py::isinstance<py::none>(obj_define)) {
@@ -1744,7 +1747,7 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
           MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
         }
 
-        CheckObjAttrValid(data_type, item_name);
+        CheckObjAttrValid(data_type, item_name, data_args);
         MS_LOG(DEBUG) << "Evaluate " << data_type->ToString() << " attribute: " << item_name
                       << ".\nnode: " << out_conf->node()->DebugString() << "\n"
                       << trace::GetDebugInfo(out_conf->node()->debug_info());

@@ -31,6 +31,7 @@ from mindspore.common._utils import get_slice_num, get_slice_shape
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator
+from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.parallel._tensor import _get_slice_index
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
@@ -655,6 +656,7 @@ class Parameter(Tensor_):
         Parameter.__init__(param, tensor, *args, **kwargs)
         return param
 
+    @jit_forbidden_register
     def set_data(self, data, slice_shape=False):
         """
         Set Parameter's data.

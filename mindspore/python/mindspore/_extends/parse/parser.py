@@ -562,6 +562,7 @@ def get_obj_defined_from_obj_type(obj_type):
         "RowTensor": RowTensor,
         "COOTensor": COOTensor,
         "CSRTensor": CSRTensor,
+        "Parameter": Parameter,
         "String": "",
         "Function": foo,
         "Int": int,
