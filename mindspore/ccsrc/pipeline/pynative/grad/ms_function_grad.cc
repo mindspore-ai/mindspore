@@ -55,13 +55,11 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
   // Forward output of op in ms_function graph
   *added_out_v = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[1]);
   MS_LOG(DEBUG) << "Added output value is: " << (*added_out_v)->ToString();
-  PyNativeAlgo::Common::SetForwardOutputFlag(*added_out_v);
   auto op_run_info = std::make_shared<FrontendOpRunInfo>();
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args);
   op_run_info->base_op_run_info.op_name = graph_phase;
   // Output of ms_function
   op_run_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[0]);
-  PyNativeAlgo::Common::SetForwardOutputFlag(op_run_info->out_value);
   op_run_info->base_op_run_info.abstract =
     PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_run_info->out_value->ToAbstract());
   op_run_info->grad_flag = true;
@@ -237,8 +235,6 @@ void MsFunction::ReplaceWithRealTensorsInGradGraph(const GradExecutor *grad_exec
   // The forward node in ms_function graph is created during compilation and is a
   // placeholder(mindspore/ccsrc/frontend/optimizer/ad/pynative_dfunctor.cc).After running ms_function, need to update
   // to real value.
-  (void)std::for_each(total_output_tensors.begin(), total_output_tensors.end(),
-                      [](const tensor::TensorPtr &tensor) { tensor->set_is_forward_output(true); });
   RunReplace(added_make_tuple, total_output_tensors, grad_graph, is_dynamic_shape);
   grad_executor->top_cell()->set_op_info_with_ms_func_forward_tensors(op_run_info->op_info, total_output_tensors);
 }

@@ -500,6 +500,13 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
     } else if (input_args_info->is_high_order_top_cell) {
       MS_LOG(DEBUG) << "Nested grad graph existed in construct";
       MakeNewTopGraph(input_args_info);
+      // We need wait construct bprop task of outer top cell finish, if main thread run quickly, when it execute gradnet
+      // and clear async_executor queue, bprop task of outer top cell may not finish, it will cause not found cnode
+      // error.
+      {
+        py::gil_scoped_release gil_release;
+        async_executor_->Wait();
+      }
     }
   }
 
@@ -905,8 +912,11 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
   auto already_run_top_cell = already_run_top_cell_.at(top_cell()->already_run_cell_id());
   if (!already_run_top_cell->need_compile_graph()) {
     MS_LOG(DEBUG) << "No need compile graph";
-    // If no need compile, we can finish construct left bprop
-    async_executor_->Clear();
+    // If no need compile, we can clear construct bprop queue.
+    {
+      py::gil_scoped_release gil_release;
+      async_executor_->Clear();
+    }
     set_top_cell(already_run_top_cell);
     top_cell()->UpdateTopCellInfo(false, false, false);
     return;
@@ -1726,10 +1736,6 @@ void GradExecutor::AsyncUpdateOutputNodeOfTopCell(const AnfNodePtr &output_node,
 
 void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  if (op_run_info->base_op_run_info.use_dynamic_shape_process) {
-    MS_LOG(DEBUG) << "Get dynamic shape process";
-    return;
-  }
   top_cell()->GetOpInfo(op_run_info);
   MS_LOG(DEBUG) << "Current op info: " << op_run_info->op_info;
 
@@ -1841,9 +1847,6 @@ void GradExecutor::UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor,
 }
 
 void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const {
-  if (top_cell()->use_dynamic_shape_process()) {
-    return;
-  }
   // Get all tensors id of forward op
   mindspore::HashSet<std::string> forward_op_tensor_id;
   const auto &op_info_with_tensor_id = top_cell()->op_info_with_tensor_id();
@@ -1871,10 +1874,12 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr
       continue;
     }
     tensor->set_is_forward_output(true);
-    top_cell()->set_tensor_id_with_tensor_object(tensor->id(), tensor);
-    MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
-                  << " device address: " << tensor->device_address() << " shape and dtype "
-                  << tensor->GetShapeAndDataTypeInfo();
+    if (!top_cell()->use_dynamic_shape_process()) {
+      top_cell()->set_tensor_id_with_tensor_object(tensor->id(), tensor);
+      MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
+                    << " device address: " << tensor->device_address() << " shape and dtype "
+                    << tensor->GetShapeAndDataTypeInfo();
+    }
   }
 }
 

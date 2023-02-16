@@ -180,9 +180,6 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
   if (op_run_info->output_get_by_infer_value) {
     return;
   }
-  // Set forward output flag for release memory,
-  // Because tensor address may change, it should set in main thread to ensure consistency.
-  PyNativeAlgo::Common::SetForwardOutputFlag(op_run_info->out_value);
 
   // 4. Do op grad and record op info
   // If ms function is compile, op info will not be find in second training step
