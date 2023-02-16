@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -316,6 +316,9 @@ bool TbeKernelSelect::IsShapeMatchFormat(const ShapeVector &shape, const std::st
   // RNN
   if (!IsShapeMatchFormatRNN(shape, format)) {
     return false;
+  }
+  if (format == kOpFormat_NDC1HWC0) {
+    return shape.size() <= kShape6dDims;
   }
   // not support format:
   // 3D formats with shape size > 5
