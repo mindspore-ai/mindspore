@@ -1902,7 +1902,10 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
     MS_EXCEPTION_IF_NULL(inner_val);
     auto inner_fg = dyn_cast<FuncGraph>(inner_val);
     MS_EXCEPTION_IF_NULL(inner_fg);
-    auto mng = Manage(inner_fg, false);
+    auto cur_graph = out_conf->func_graph();
+    MS_EXCEPTION_IF_NULL(cur_graph);
+    auto mng = cur_graph->manager();
+    MS_EXCEPTION_IF_NULL(mng);
     inner_fg->set_manager(mng);
     MS_EXCEPTION_IF_NULL(out_conf);
     auto out_node = out_conf->node();
