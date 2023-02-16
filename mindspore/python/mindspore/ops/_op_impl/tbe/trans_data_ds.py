@@ -84,6 +84,9 @@ trans_data_op_info = TBERegOp("TransData") \
     .dtype_format(DataType.I8_HWCN, DataType.I8_Default) \
     .dtype_format(DataType.I8_HWCN, DataType.I8_NHWC) \
     .dtype_format(DataType.I8_Default, DataType.I8_NC1HWC0) \
+    .dtype_format(DataType.I8_HWCN, DataType.I8_C1HWNCoC0) \
+    .dtype_format(DataType.I8_NCDHW, DataType.I8_NDC1HWC0) \
+    .dtype_format(DataType.I8_NDC1HWC0, DataType.I8_NCDHW) \
     .dtype_format(DataType.I16_Default, DataType.I16_NHWC) \
     .dtype_format(DataType.I16_Default, DataType.I16_HWCN) \
     .dtype_format(DataType.I16_NHWC, DataType.I16_Default) \
@@ -111,6 +114,8 @@ trans_data_op_info = TBERegOp("TransData") \
     .dtype_format(DataType.U8_HWCN, DataType.U8_Default) \
     .dtype_format(DataType.U8_HWCN, DataType.U8_NHWC) \
     .dtype_format(DataType.U8_Default, DataType.U8_NC1HWC0) \
+    .dtype_format(DataType.U8_NCDHW, DataType.U8_NDC1HWC0) \
+    .dtype_format(DataType.U8_NDC1HWC0, DataType.U8_NCDHW) \
     .dtype_format(DataType.U16_Default, DataType.U16_NHWC) \
     .dtype_format(DataType.U16_Default, DataType.U16_HWCN) \
     .dtype_format(DataType.U16_NHWC, DataType.U16_Default) \
@@ -132,7 +137,6 @@ trans_data_op_info = TBERegOp("TransData") \
     .dtype_format(DataType.I32_FracNZ, DataType.I32_Default) \
     .dtype_format(DataType.F16_NDHWC, DataType.F16_5HD) \
     .dtype_format(DataType.F16_5HD, DataType.F16_NDHWC) \
-    .dtype_format(DataType.I8_HWCN, DataType.I8_C1HWNCoC0) \
     .dtype_format(DataType.F16_HWCN, DataType.F16_FracZ) \
     .dtype_format(DataType.F16_FracZ, DataType.F16_HWCN) \
     .dtype_format(DataType.F16_HWCN, DataType.F16_FracNZ) \
