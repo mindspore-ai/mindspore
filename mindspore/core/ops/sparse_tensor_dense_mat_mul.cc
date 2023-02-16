@@ -33,8 +33,8 @@ const int kDimensionTwo = 2;
 void CheckShapeRank(const size_t cur_rank, const size_t expected_rank, const std::string &op_name,
                     const std::string &arg_name) {
   if (cur_rank != expected_rank) {
-    MS_LOG(EXCEPTION) << "For '" << op_name << "', '" << arg_name << "' must be a " << expected_rank
-                      << "-dimensional tensor, but got a " << cur_rank << "-dimensional tensor.";
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', '" << arg_name << "' must be a " << expected_rank
+                             << "-dimensional tensor, but got a " << cur_rank << "-dimensional tensor.";
   }
 }
 }  // namespace
@@ -86,16 +86,16 @@ void SparseTensorDenseMatmulCheckShape(const std::string &prim_name, const bool 
   }
   if (!is_dynamic) {
     if (indices_shape[1] != kDimensionTwo) {
-      MS_LOG(EXCEPTION) << "For '" << prim_name << "', the 2nd dimension of indices "
-                        << "should be 2, but got " << indices_shape[1] << ".";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the 2nd dimension of indices "
+                               << "should be 2, but got " << indices_shape[1] << ".";
     }
     if (values_shape[0] != indices_shape[0]) {
-      MS_LOG(EXCEPTION) << "For '" << prim_name << "', the input values' length "
-                        << "is different from indices' first dimension";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the input values' length "
+                               << "is different from indices' first dimension";
     }
     if (shape_shape[0] != kDimensionTwo) {
-      MS_LOG(EXCEPTION) << "For '" << prim_name << "', the 1st dimension of sparse_shape "
-                        << "should be 2, but got " << shape_shape[0] << ".";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the 1st dimension of sparse_shape "
+                               << "should be 2, but got " << shape_shape[0] << ".";
     }
   }
 }
@@ -142,7 +142,7 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
   auto x1_shape_value = x1_shape->BuildValue();
   std::string info;
   if (!checkContainer(input_args, &info)) {
-    MS_EXCEPTION(TypeError) << "For " << prim_name << info;
+    MS_EXCEPTION(ValueError) << "For " << prim_name << info;
   }
   if (x1_shape->isa<abstract::AbstractTuple>()) {
     if (IsValueKnown(x1_shape_value)) {
@@ -160,8 +160,8 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
   if (!is_dynamic) {
     if (x1_shape_value->isa<AnyValue>() || x1_shape_value->isa<None>()) {
       if (!x1_shape->isa<abstract::AbstractTensor>()) {
-        MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the input sparse_shape "
-                          << "should be constant.";
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input sparse_shape "
+                                 << "should be constant.";
       }
     }
   }
@@ -197,9 +197,6 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
 
 TypePtr SparseTensorDenseMatmulInferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
-  }
   std::map<std::string, TypePtr> types;
   std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64, kComplex64, kComplex128};
   TypePtr indices_type = input_args[0]->BuildType();
@@ -211,12 +208,12 @@ TypePtr SparseTensorDenseMatmulInferType(const PrimitivePtr &primitive,
   (void)types.emplace("x2", x2_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   if (!checkType("indices", indices_type, {kInt64, kInt32}, primitive)) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the input indices "
-                      << "data type should be int32 or int64.";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', the input indices "
+                            << "data type should be int32 or int64.";
   }
   if (!x1_shape->isa<abstract::AbstractTuple>() && !checkType("shape_type", shape_type, {kInt64, kInt32}, primitive)) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the input shape "
-                      << "data type should be int32 or int64.";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', the input shape "
+                            << "data type should be int32 or int64.";
   }
   auto x2_tensor_type = x2_type->cast<TensorTypePtr>();
   auto x2_element = x2_tensor_type->element();
