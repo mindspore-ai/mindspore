@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #endif
 #include <map>
 #include <iomanip>
+#include <regex>
 #include <thread>
 #include <vector>
 #include "utils/convert_utils_base.h"
@@ -230,18 +231,11 @@ void LogWriter::RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const 
   auto logLevel = GetGlobalLogLevel();
   if (logLevel <= MsLogLevel::kInfo || GetEnv("GLOG_logtostderr") == "0") {
     std::string str = msg.str();
-    auto replace = [&](const std::string &orgStr, const std::string &newStr) {
-      std::string::size_type pos;
-      while ((pos = str.find(orgStr)) != std::string::npos) {
-        (void)str.replace(pos, orgStr.length(), newStr);
-      }
-      return str;
-    };
-    // remove label "#dmsg#" and "#umsg#"
-    str = replace("#dmsg#", "");
-    str = replace("#umsg#", "");
+    // remove any titles enclosed in "#dmsg#" or "#umsg#", as well as its formatted couterparts
+    std::regex title_re{R"(\#[d|u]msg\#.+?\#[d|u]msg\#|)" + std::string(kSplitLine) + R"(- .+?)" +
+                        std::string(kSplitLine)};
     std::ostringstream replaced_msg;
-    replaced_msg << str;
+    replaced_msg << std::regex_replace(str, title_re, "");
     OutputLog(replaced_msg);
   }
 }
