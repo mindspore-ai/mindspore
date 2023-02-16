@@ -1616,6 +1616,25 @@ class GruGradWeight(PrimitiveWithInfer):
         return hx_dtype
 
 
+class GRUV2Grad(Primitive):
+    """Computes the grad gradients of GRU."""
+
+    @prim_attr_register
+    def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
+        self.input_size = validator.check_positive_int(input_size, 'input_size', self.name)
+        self.hidden_size = validator.check_positive_int(hidden_size, 'hidden_size', self.name)
+        self.num_layers = validator.check_positive_int(num_layers, 'num_layers', self.name)
+        self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
+        self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
+        self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+
+        if bidirectional:
+            self.num_directions = 2
+        else:
+            self.num_directions = 1
+
+
 class DynamicGRUV2Grad(Primitive):
     r"""
     Computes the input gradients of DynamicGRUV2.
