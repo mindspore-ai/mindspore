@@ -1547,8 +1547,7 @@ class MultilabelMarginLoss(LossBase):
     Outputs:
         - **y** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
           is :math:`(N)`. Otherwise, a scalar value will be returned.
-        - **is_target** (Tensor) - Output tensor for backward input, with the same shape as `target`,
-          data type must be int32.
+
 
     Raises:
         TypeError: If `x` or `target` is not a Tensor.
@@ -1576,7 +1575,8 @@ class MultilabelMarginLoss(LossBase):
         self.multilabel_margin_loss = MultilabelMarginLossOp(reduction=reduction)
 
     def construct(self, x, target):
-        return self.multilabel_margin_loss(x, target)
+        loss, _ = self.multilabel_margin_loss(x, target)
+        return loss
 
 
 class BCEWithLogitsLoss(LossBase):

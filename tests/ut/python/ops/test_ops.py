@@ -3572,8 +3572,7 @@ test_case_nn_ops = [
         'block': MultilabelMarginLoss(reduction="none"),
         'desc_inputs': [Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.1, 0.2, 0.3, 0.4]]).astype(np.float32)),
                         Tensor(np.array([[2, 1, -1, 1], [1, -1, 2, 1]]).astype(np.int32))],
-        'desc_bprop': [Tensor(np.array([1, 2]).astype(np.float32)),
-                       Tensor(np.array([[1, 1, 2, 1], [1, 1, 2, 1]]).astype(np.int32))]}),
+        'desc_bprop': [Tensor(np.array([1, 2]).astype(np.float32))]}),
     ('GridSampler3D', {
         'block': GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=False),
         'desc_inputs': [Tensor(np.arange(32).reshape((2, 2, 2, 2, 2)).astype(np.float32)),
