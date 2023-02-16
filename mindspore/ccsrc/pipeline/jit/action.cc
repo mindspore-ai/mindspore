@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -507,6 +507,16 @@ bool HasIsolatedSideEffectNode(const FuncGraphPtr &func_graph) {
       }
     }
   } else {
+    // Process call function
+    if (isolated_node->isa<CNode>()) {
+      auto first_input = isolated_node->cast<CNodePtr>()->input(0);
+      if (IsValueNode<FuncGraph>(first_input)) {
+        auto func = GetValueNode<FuncGraphPtr>(first_input);
+        if (IsSideEffectCNode(func->output()) || HasIsolatedSideEffectNode(func)) {
+          return true;
+        }
+      }
+    }
     if (IsSideEffectCNode(isolated_node)) {
       MS_LOG(DEBUG) << "Single isolated side-effect node: " << isolated_node->DebugString();
       return true;
