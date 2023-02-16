@@ -6020,7 +6020,7 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     begin = ()
     for _ in np.arange((x_ndim - 2)):
         begin += (0,)
-    last_dim_begin = np.max((0, -offset))
+    last_dim_begin = np.max((0, -offset)).astype(np.int64)
     begin += (last_dim_begin,)
     res_size = res.shape[:-1]
     last_dim_end = np.min((x_shape[-2], np.max((0, (x_shape[-1] - offset))))) - last_dim_begin
