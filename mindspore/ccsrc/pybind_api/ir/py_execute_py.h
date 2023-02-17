@@ -63,17 +63,15 @@ class PyExecuteInitializer {
     const auto &keys_tuple_abs = input_args[1];
     const auto &keys_tuple = keys_tuple_abs->BuildValue();
     const auto &keys = dyn_cast<ValueSequence>(keys_tuple);
-
     // Process PyExecute("None", (), (), io)
     // Since the backend converts the empty tuple into an empty tensor(not keep ValueSequence),
     // so special handling of None is required.
     if (script->ToString() == "None") {
       const auto &output = py::none();
-      PushPyExecuteOutput(output);
+      PushPyExecuteOutput(script, output);
       const auto &infer_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
       return abstract::MakeAbstract(infer_shape, kFloat64);
     }
-
     if (keys == nullptr) {
       MS_LOG(DEBUG) << "The keys is not tuple value, but got " << keys_tuple->ToString();
       const auto &infer_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
@@ -101,32 +99,22 @@ class PyExecuteInitializer {
       const auto &key_str = dyn_cast<StringImm>(key);
       MS_EXCEPTION_IF_NULL(key_str);
       const auto &value = (*values)[i];
+      MS_LOG(DEBUG) << "input[" << i << "], value : " << value;
       const auto &tuple_abs = values_tuple_abs->cast<abstract::AbstractSequencePtr>();
       const auto &value_abs = (*tuple_abs)[i];
-      if (value->isa<tensor::Tensor>()) {
-        if (value_abs->has_user_data<kernel::PyExecuteOutputUserData>()) {
-          const auto &output_data = value_abs->user_data<kernel::PyExecuteOutputUserData>();
-          auto obj = output_data->obj;
-          MS_LOG(DEBUG) << "input[" << i << "], obj: " << obj;
-          local_dict[py::str(key_str->value())] = obj;
-        } else {
-          const auto &py_tensor = ValueToPyData(value);
-          MS_LOG(DEBUG) << "input[" << i << "], py_tensor: " << py_tensor;
-          local_dict[py::str(key_str->value())] = py_tensor;
-        }
-        continue;
-      } else if (value->isa<StringImm>()) {
-        const auto &str_imm = value->cast<StringImmPtr>();
-        const auto &py_str = py::str(str_imm->value());
-        MS_LOG(DEBUG) << "input[" << i << "], py_str: " << py_str;
-        local_dict[py::str(key_str->value())] = py_str;
-        continue;
+      if (value_abs->has_user_data<kernel::PyExecuteOutputUserData>()) {
+        const auto &output_data = value_abs->user_data<kernel::PyExecuteOutputUserData>();
+        auto obj = output_data->obj;
+        MS_LOG(DEBUG) << "input[" << i << "] convert value from user data, obj: " << obj;
+        local_dict[py::str(key_str->value())] = obj;
+      } else {
+        auto obj = ValueToPyData(value, value_abs);
+        local_dict[py::str(key_str->value())] = obj;
+        MS_LOG(DEBUG) << "input[" << i << "] convert value from abstract, obj: " << obj;
       }
-      MS_LOG(DEBUG) << "input[" << i << "], value: " << value;
-      local_dict[py::str(key_str->value())] = value;
     }
-    const auto &global_dict = CallPythonGetGlobalParams();
     const auto &py_script = py::str(script_str->value());
+    const auto &global_dict = CallPythonGetGlobalParams();
     auto params = py::tuple(number_two);
     params[0] = global_dict;
     params[1] = local_dict;
@@ -135,7 +123,7 @@ class PyExecuteInitializer {
       mindspore::ScopedFallbackRunning fallback_running;
       const auto &output = parse::data_converter::CallPythonScript(py_script, params);
       MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
-      PushPyExecuteOutput(output);
+      PushPyExecuteOutput(script_str, output);
       if (py::isinstance<tensor::Tensor>(output)) {
         const auto &tensor = output.cast<tensor::TensorPtr>();
         const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());

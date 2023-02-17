@@ -23,8 +23,14 @@
 
 namespace mindspore {
 static std::queue<py::object> py_execute_output_queue;
+static std::map<ValuePtr, py::object> py_execute_output_map;
 
 bool HasPyExecuteOutput() { return !py_execute_output_queue.empty(); }
+
+bool HasPyExecuteOutput(const ValuePtr &key) {
+  auto iter = py_execute_output_map.find(key);
+  return iter != py_execute_output_map.end();
+}
 
 py::object PopPyExecuteOutput() {
   auto output = py_execute_output_queue.front();
@@ -36,5 +42,27 @@ py::object PopPyExecuteOutput() {
 void PushPyExecuteOutput(const py::object &output) {
   MS_LOG(DEBUG) << "output: " << output;
   py_execute_output_queue.push(output);
+}
+
+void PushPyExecuteOutput(const ValuePtr &key, const py::object &output) {
+  auto iter = py_execute_output_map.find(key);
+  if (iter != py_execute_output_map.end()) {
+    MS_LOG(DEBUG) << "the key:" << key << "of PyExecute result map is already exist. " << key << ":" << iter->second;
+    return;
+  }
+  MS_LOG(DEBUG) << "insert " << key << ":" << output << " in PyExecute map.";
+  py_execute_output_map[key] = output;
+}
+
+py::object PopPyExecuteOutput(const ValuePtr &key) {
+  auto iter = py_execute_output_map.find(key);
+  if (iter == py_execute_output_map.end()) {
+    MS_LOG(EXCEPTION) << "Cannot find the key(" << key << ") in result map";
+  }
+  MS_LOG(DEBUG) << "Get " << key << ":" << iter->second << " in PyExecute map.";
+  auto output = iter->second;
+  MS_LOG(DEBUG) << "output: " << output;
+  py_execute_output_map.erase(iter);
+  return output;
 }
 }  // namespace mindspore

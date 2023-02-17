@@ -158,6 +158,7 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
     return depended_value;
   }
 
+  // Remove when heteroid tensor address bug fixed
   if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
     MS_LOG(INFO) << "There is no valid address for " << i << " input of " << node->DebugString() << ", "
                  << node->fullname_with_scope();

@@ -1141,13 +1141,27 @@ void SetDynamicInputSizeAttrBeforeKernelSelect(const CNodePtr &cnode) {
     return;
   }
   std::vector<int64_t> dyn_input_sizes;
+  std::vector<ValuePtr> inputs_structural;
   size_t input_num = cnode->inputs().size() - 1;
+  bool is_dyn_input = false;
   for (size_t i = 0; i < input_num; ++i) {
     auto input_node = common::AnfAlgo::GetInputNode(cnode, i);
-    dyn_input_sizes.push_back(kernel::CalOutputTupleSize(input_node));
+    // Ascend using abstract to charge the node input if is dynamic input.
+    // GPU CPU using the KernelObjectType to charge the node input if is dynamic input.
+    if (common::AnfAlgo::IsTupleOutput(input_node)) {
+      auto [input_structural, input_size, dyn_input] = kernel::CalOutputTupleSize(input_node);
+      is_dyn_input |= dyn_input;
+      dyn_input_sizes.push_back(input_size);
+      (void)inputs_structural.emplace_back(input_structural);
+    } else {
+      is_dyn_input |= false;
+      dyn_input_sizes.push_back(-1);
+      (void)inputs_structural.emplace_back(MakeValue<int64_t>(-1));
+    }
   }
-  if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
+  if (is_dyn_input) {
     common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrTupleInputStructural, std::make_shared<ValueTuple>(inputs_structural), cnode);
   }
 }
 
@@ -1169,6 +1183,7 @@ void RefreshDynamicInputSizeAttr(const CNodePtr &cnode) {
     common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);
   } else {
     common::AnfAlgo::EraseNodeAttr(kAttrDynInputSizes, cnode);
+    common::AnfAlgo::EraseNodeAttr(kAttrTupleInputStructural, cnode);
   }
 }
 
@@ -1372,6 +1387,7 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
   // and make wrong choose, for example, the TupleToTensor op
   if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, node)) {
     common::AnfAlgo::EraseNodeAttr(kAttrDynInputSizes, node);
+    common::AnfAlgo::EraseNodeAttr(kAttrTupleInputStructural, node);
   }
   auto [cpu_msg, cpu_etype] = device::cpu::SetKernelInfoWithMsg(node);
   if (cpu_msg.empty()) {

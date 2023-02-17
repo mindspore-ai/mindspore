@@ -79,7 +79,13 @@ TEST_F(TestAttrAndDynamicBackendInfer, test_attr_and_dynamic_input_infer) {
   auto input_names = std::vector<std::string>{"a", "b", "c"};
   auto attr_name = "b";
   auto attr = MakeValue(std::vector<int>{1, 2, 3});
+  auto tuple_struc_attr = std::make_shared<ValueTuple>(std::vector<ValuePtr>{
+    MakeValue<int64_t>(-1),
+    std::make_shared<ValueTuple>(std::vector<ValuePtr>{MakeValue<int64_t>(-1), MakeValue<int64_t>(-1)}),
+    MakeValue<int64_t>(-1)});
+  prim_dynamic_input_test->AddAttr(kAttrTupleInputStructural, tuple_struc_attr);
   prim_attr_test->AddAttr(kAttrInputNames, MakeValue(input_names));
+
   prim_attr_test->AddAttr(attr_name, attr);
   // set dynameic input list for primtive
   std::vector<int64_t> dynamic_input_list = {-1, 2, -1};
