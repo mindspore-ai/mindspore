@@ -478,13 +478,13 @@ ValueNodePtr KernelGraph::NewValueNode(const tensor::TensorPtr &input_tensor) {
 AnfNodePtr KernelGraph::TransValueNodeTuple(const AbstractBasePtr &abstract, const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(abstract);
   MS_EXCEPTION_IF_NULL(value);
-  if (!abstract->isa<abstract::AbstractTuple>()) {
+  if (!abstract->isa<abstract::AbstractSequence>()) {
     auto new_value_node = NewValueNode(abstract, value);
     AddValueNodeToGraph(new_value_node);
     return new_value_node;
   }
-  auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
-  auto value_tuple = value->cast<ValueTuplePtr>();
+  auto tuple_abstract = abstract->cast<abstract::AbstractSequencePtr>();
+  auto value_tuple = value->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(tuple_abstract);
   MS_EXCEPTION_IF_NULL(value_tuple);
   if (tuple_abstract->size() != value_tuple->size()) {
