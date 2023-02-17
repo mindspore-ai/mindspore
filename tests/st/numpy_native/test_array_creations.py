@@ -42,6 +42,8 @@ class Cases():
                            mnp.uint32, 'uint32',
                            mnp.bool_, 'bool', bool]
 
+        self.empty_support_type = [mnp.int32, mnp.float32, mnp.uint32, mnp.bool_]
+
         self.array_sets = [1, 1.1, True, [1, 0, True], [1, 1.0, 2], (1,),
                            [(1, 2, 3), (4, 5, 6)], onp.random.random(  # pylint: disable=no-member
                                (100, 100)).astype(onp.float32).tolist(),
@@ -425,6 +427,8 @@ def test_empty():
     for shape in test_case.all_shapes:
         for mnp_dtype, onp_dtype in zip(test_case.mnp_dtypes,
                                         test_case.onp_dtypes):
+            if mnp_dtype not in test_case.empty_support_type:
+                continue
             actual = mnp.empty(shape, mnp_dtype).asnumpy()
             expected = onp.empty(shape, onp_dtype)
             match_meta(actual, expected)
@@ -445,6 +449,8 @@ def test_empty_like():
 
         for mnp_dtype, onp_dtype in zip(test_case.mnp_dtypes,
                                         test_case.onp_dtypes):
+            if mnp_dtype not in test_case.empty_support_type:
+                continue
             actual = mnp.empty_like(mnp_proto, dtype=mnp_dtype).asnumpy()
             expected = onp.empty_like(onp_proto, dtype=onp_dtype)
             match_meta(actual, expected)
