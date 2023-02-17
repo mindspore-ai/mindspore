@@ -29,6 +29,16 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr int64_t x_min_rank = 2;
+constexpr int64_t x_max_rank = 5;
+inline bool IsNHWCorNCHW(int64_t data_format) {
+  return (data_format == static_cast<int64_t>(Format::NHWC) || data_format == static_cast<int64_t>(Format::NCHW));
+}
+inline bool IsNCHWorNCDHW(int64_t data_format) {
+  return (data_format == static_cast<int64_t>(Format::NCHW) || data_format == static_cast<int64_t>(Format::NCDHW));
+}
+inline bool IsShapeSizeOutOfRange(int64_t size) { return (size > x_max_rank || size < x_min_rank); }
+
 abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
@@ -44,8 +54,6 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
   if (IsDynamicRank(input_shape) || IsDynamicRank(bias_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
-  const int64_t x_min_rank = 2;
-  const int64_t x_max_rank = 5;
 
   (void)CheckAndConvertUtils::CheckInteger("bias rank", SizeToLong(bias_shape.size()), kEqual, 1, prim_name);
   const int64_t x_size = 2;
@@ -68,8 +76,7 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
                              << "', NCDHW format only supports 5-D input on Ascend or CPU, but got a "
                              << input_shape.size() << "-D input.";
   }
-  if ((data_format == static_cast<int64_t>(Format::NHWC) || data_format == static_cast<int64_t>(Format::NCHW)) &&
-      (input_shape.size() > x_max_rank || input_shape.size() < x_min_rank)) {
+  if (IsNHWCorNCHW(data_format) && IsShapeSizeOutOfRange(input_shape.size())) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the dimension of 'input_x' tensor must be 2D-5D when data_format is "
                              << attr_value_str << ".";
@@ -79,14 +86,17 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', bias[0] shape should be equal to input_x["
                              << (input_shape.size() - 1) << "] shape when data_format is " << attr_value_str << ".";
   }
-  if ((data_format == static_cast<int64_t>(Format::NCHW) || data_format == static_cast<int64_t>(Format::NCDHW)) &&
-      input_shape[1] != abstract::Shape::kShapeDimAny && bias_shape[0] != input_shape[1]) {
+  if (IsNCHWorNCDHW(data_format) && input_shape[1] != abstract::Shape::kShapeDimAny &&
+      bias_shape[0] != input_shape[1]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', bias[0] shape should be equal to input_x[1] "
                                 "shape when data_format is "
                              << attr_value_str << ".";
   }
-
+  if ((data_format == static_cast<int64_t>(Format::NHWC)) && (input_shape.size() == x_max_rank) && is_ascend) {
+    MS_EXCEPTION(ValueError) << "For 5-D input, '" << prim_name << "', only supports NCHW and NCDHW on Ascend, "
+                             << "but got an invalidC.";
+  }
   return std::make_shared<abstract::Shape>(input_shape);
 }
 TypePtr BiasAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
