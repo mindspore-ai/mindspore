@@ -79,7 +79,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.MaxUnpool2D
     mindspore.ops.MirrorPad
     mindspore.ops.NthElement
-    mindspore.ops.NuclearNorm
     mindspore.ops.Pad
     mindspore.ops.Padding
     mindspore.ops.PadV3

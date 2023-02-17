@@ -410,3 +410,7 @@ from .trace import _trace_aicpu
 from .tracegrad import _tracegrad_aicpu
 from .tridiagonal_solve import _tridiagonal_solve_aicpu
 from .truncated_normal import _truncated_normal_aicpu
+from .glu import _glu_aicpu
+from .multi_margin_loss import _multi_margin_loss_aicpu
+from .multi_margin_loss_grad import _multi_margin_loss_grad_aicpu
+from .sparse_to_dense_v2 import _sparse_to_dense_v2_aicpu
