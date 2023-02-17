@@ -23,6 +23,7 @@
 #include <utility>
 #include "nlohmann/json.hpp"
 #include "utils/ms_context.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -170,25 +171,61 @@ class FlagRegister {
 
 const GraphKernelFlags &GraphKernelFlags::GetInstance() {
   static std::unique_ptr<GraphKernelFlags> flags(nullptr);
-  auto contexts = GetGraphKernelContext();
-  if (flags == nullptr || contexts.first != flags->flags_cache_ || contexts.second != flags->enable_graph_kernel_) {
-    flags.reset(new GraphKernelFlags(contexts.first, contexts.second));
+  auto config = GetGraphKernelConfig();
+  if (flags == nullptr || config.first != flags->flags_cache_ || config.second != flags->enable_graph_kernel_) {
+    flags.reset(new GraphKernelFlags(config.first, config.second));
     flags->Refresh();
   }
   return *flags;
 }
 
-std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelContext() {
+void GraphKernelFlags::SaveJitConfig(const std::map<std::string, std::string> &jit_config) {
+  auto &configs = GetJitConfig();
+  configs.clear();
+  auto level_iter = jit_config.find(kAttrJitLevel);
+  if (level_iter != jit_config.end()) {
+    configs[kAttrJitLevel] = level_iter->second;
+    MS_LOG(DEBUG) << "Save jit_level from jit config, level: " << level_iter->second;
+  }
+  auto flags_iter = jit_config.find("graph_kernel_flags");
+  if (flags_iter != jit_config.end()) {
+    configs["graph_kernel_flags"] = flags_iter->second;
+    MS_LOG(DEBUG) << "Save graph_kernel_flags from jit config, flags: " << flags_iter->second;
+  }
+}
+
+std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelConfig() {
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
   auto flags = common::GetEnv("MS_GRAPH_KERNEL_FLAGS");
-  bool enable_context{false};
+  return std::make_pair(flags, false);
 #else
+  const auto &jit_config = GetJitConfig();
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
+
+  auto jit_level_iter = jit_config.find(kAttrJitLevel);
+  auto jit_level = (jit_level_iter != jit_config.end() ? jit_level_iter->second : "");
+  bool enable_gk = (jit_level == kAttrJitLevelO2 || jit_level == kAttrJitLevelO3 ||
+                    context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL));
+  // use environ flags in priority
+  auto flags_env = std::getenv("MS_DEV_GRAPH_KERNEL_FLAGS");
+  if (flags_env != nullptr) {
+    return std::make_pair(std::string(flags_env), enable_gk);
+  }
+  // get flags string from context or jitconfig
   auto flags = context->get_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS);
-  bool enable_context = context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL);
+  auto iter = jit_config.find("graph_kernel_flags");
+  if (iter != jit_config.end()) {
+    static bool print_warning_once = true;
+    if (!flags.empty() && print_warning_once) {
+      print_warning_once = false;
+      MS_LOG(WARNING) << "The 'graph_kernel_flags' in 'mindspore.context' and 'JitConfig' is set in the same time, "
+                         "only the JitConfig's setting is efficient.";
+    }
+    flags = iter->second;
+  }
+  return std::make_pair(flags, enable_gk);
 #endif
-  return std::make_pair(flags, enable_context);
 }
 
 void GraphKernelFlags::CheckSupport() const {

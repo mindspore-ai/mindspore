@@ -52,6 +52,6 @@ class JitConfig:
             raise ValueError("For 'jit_level' must be one of ['O0', 'O1', 'O2', 'O3'].")
         if exc_mode not in ['auto', 'sink', 'no_sink']:
             raise ValueError("For 'exc_mode' must be one of '['auto', 'sink', 'no_sink']'.")
-        self.jit_config_dict = dict()
+        self.jit_config_dict = kwargs
         self.jit_config_dict["jit_level"] = jit_level
         self.jit_config_dict["exc_mode"] = exc_mode
