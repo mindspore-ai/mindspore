@@ -1311,13 +1311,10 @@ REG_BPROP_BUILDER("CeLU").SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto greater = ib->GreaterEqual(x, ib->Tensor(0.0, x_dtype));
-  greater = ib->Cast(greater, x_dtype);
-  auto lesser = ib->Less(x, ib->Tensor(0.0, x_dtype));
-  lesser = ib->Cast(lesser, x_dtype);
-  auto dx = ib->Mul(
-    dout,
-    (ib->Add((ib->Mul(greater, ib->Tensor(1.0, x_dtype))),
-             (ib->Mul(lesser, (ib->Add((ib->RealDiv(out, ib->Tensor(alpha, x_dtype))), ib->Tensor(1.0, x_dtype))))))));
+
+  auto dx =
+    ib->Mul(dout, ib->Select(greater, ib->Fill(1.0, ib->GetShape(x), x_dtype->type_id()),
+                             ib->Add((ib->RealDiv(out, ib->Tensor(alpha, x_dtype))), ib->Tensor(1.0, x_dtype))));
   return {dx};
 });
 
