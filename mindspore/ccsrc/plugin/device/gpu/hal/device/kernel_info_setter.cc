@@ -52,7 +52,6 @@ static const std::set<std::string> kVmapGPUWhiteList = {kUnsortedSegmentSumOpNam
                                                         kInstanceNorm,
                                                         kInstanceNormGradOpName,
                                                         kRandomChoiceWithMaskOpName,
-                                                        kUniformCandidateSamplerOpName,
                                                         kAdamOpName,
                                                         kSplitOpName,
                                                         kApplyAdagradDAOpName,
