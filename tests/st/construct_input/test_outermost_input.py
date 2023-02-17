@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 import mindspore.nn as nn
-from mindspore import Tensor, Parameter, ParameterTuple
+from mindspore import Tensor, Parameter, ParameterTuple, jit
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 import mindspore.ops as ops
@@ -320,3 +320,82 @@ def test_grad_parameter_as_input_and_fv2(mode):
     assert np.array_equal(a[0][0].asnumpy(), b[0][0].asnumpy())
     assert np.array_equal(a[1][0].asnumpy(), b[1][0].asnumpy())
     assert np.array_equal(a[1][1].asnumpy(), b[1][1].asnumpy())
+
+
+tensor1 = Tensor([1])
+tensor2 = Tensor([2])
+tensor3 = Tensor([3])
+tensor4 = Tensor([4])
+tensor5 = Tensor([5])
+tensor6 = Tensor([6])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_cell_mixed_arguments():
+    """
+    Feature: Support kwargs for top graph.
+    Description: Mixed arguments for cell.
+    Expectation: No exception.
+    """
+
+    class FNet(nn.Cell):
+        def construct(self, a, *args, **kwargs):
+            x = a + args[0] + args[1] + kwargs["d"]
+            return x
+
+    context.set_context(mode=context.GRAPH_MODE)
+    net = FNet()
+    assert net(tensor1, tensor2, tensor3, b=tensor4, c=tensor5, d=tensor6).asnumpy() == [12]
+    assert net(1, 2, 3, d=tensor6).asnumpy() == [12]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_cell_mixed_arguments_with_grad():
+    """
+    Feature: Support kwargs for top graph.
+    Description: Mixed arguments for jit function.
+    Expectation: No exception.
+    """
+
+    class FNet(nn.Cell):
+        def construct(self, *args, **kwargs):
+            x = args[0] + args[1] - kwargs["d"]
+            return x
+
+    class GNet(nn.Cell):
+        def __init__(self, net):
+            super(GNet, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation()
+
+        def construct(self, *args, **kwargs):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(*args, **kwargs)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    grad_net = GNet(FNet())
+    assert grad_net(tensor1, tensor2, tensor3, d=tensor4, e=tensor5).asnumpy() == [1]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_jit_mixed_arguments():
+    """
+    Feature: Support kwargs for top graph.
+    Description: Mixed arguments for jit function.
+    Expectation: No exception.
+    """
+
+    @jit
+    def func(a, *args, **kwargs):
+        x = a + args[0] + args[1] + kwargs["d"]
+        return x
+
+    context.set_context(mode=context.GRAPH_MODE)
+    assert func(tensor1, tensor2, tensor3, b=tensor4, c=tensor5, d=tensor6).asnumpy() == [12]
+    assert func(1, 2, 3, d=tensor6).asnumpy() == [12]

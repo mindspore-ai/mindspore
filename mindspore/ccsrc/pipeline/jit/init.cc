@@ -157,8 +157,8 @@ PYBIND11_MODULE(_c_expression, m) {
          py::arg("incremental") = py::bool_(false), py::arg("obf_ratio") = py::float_(1.0),
          py::arg("branch_control_input") = py::int_(0), "Get graph proto of dynamic-obfuscated model.")
     .def("get_params", &GraphExecutorPy::GetParams, py::arg("phase") = py::str(""), "Get Parameters from graph")
-    .def("compile", &GraphExecutorPy::Compile, py::arg("obj"), py::arg("args"), py::arg("phase") = py::str(""),
-         py::arg("use_vm") = py::bool_(false), "Compile obj by executor.")
+    .def("compile", &GraphExecutorPy::Compile, py::arg("obj"), py::arg("args"), py::arg("kwargs"),
+         py::arg("phase") = py::str(""), py::arg("use_vm") = py::bool_(false), "Compile obj by executor.")
     .def("updata_param_node_default_input", &GraphExecutorPy::UpdataParamNodeDefaultInput, py::arg("phase"),
          py::arg("params"), "Fetch the inputs of Conv or Matmul for quant export.")
     .def("get_parameter_layout", &GraphExecutorPy::GetParameterLayout, py::arg("phase") = py::str("train"),

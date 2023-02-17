@@ -1455,7 +1455,7 @@ def _msfunc_info(net, *inputs):
     # pylint: disable=protected-access
     net_dict = OrderedDict()
     _ms_func_executor = _MindsporeFunctionExecutor(net, time.time() * 1e9)
-    graph_id = _ms_func_executor.compile(args_list=inputs, method_name=net.__name__)
+    graph_id = _ms_func_executor.compile(net.__name__, *inputs)
     mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir')
     params = _ms_func_executor._graph_executor.get_params(graph_id)
     for name, value in params.items():

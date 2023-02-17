@@ -120,28 +120,30 @@ def _handle_func_args(func, *args, **kwargs):
         bound_arguments.apply_defaults()
         args = bound_arguments.args
         kwargs = bound_arguments.kwargs
-        # After apply_defaults, kwargs should be empty here.
-        if kwargs:
-            raise ValueError(f"Failed to handle kwargs of {func.__name__}. Maybe you pass wrong arguments, "
-                             f"or there is a key in kwargs that is not used as a function argument, "
-                             f"args: {args}, kwargs: {kwargs}")
 
     positional_args = 0
     default_args = 0
+    has_var = False
     for value in inspect.signature(func).parameters.values():
         if value.kind is inspect.Parameter.VAR_POSITIONAL or value.kind is inspect.Parameter.VAR_KEYWORD:
-            return args
+            has_var = True
+        if value.kind is inspect.Parameter.KEYWORD_ONLY:
+            raise TypeError(f"Function {func.__name__}, MindSpore does not support keyword-only arg: {value}.")
         if value.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD:
             if value.default is inspect.Parameter.empty:
                 positional_args += 1
             else:
                 default_args += 1
+
+    if has_var:
+        return args, kwargs
+
     if len(args) < positional_args:
         raise TypeError(f"Function {func.__name__} needs {positional_args} positional argument, but got {len(args)}.")
     if len(args) > positional_args + default_args:
         raise TypeError(f"Function {func.__name__} needs {positional_args} positional argument and {default_args} "
                         f"default argument, total {positional_args + default_args}, but got {len(args)}.")
-    return args
+    return args, kwargs
 
 
 sys_path = list(sys.path)
@@ -240,25 +242,39 @@ def _get_parameter_layout():
     return layout
 
 
-def _get_args_for_run(obj, args_list):
-    """Get the actual input args for runtime."""
-    inputs = []
-    for i in args_list:
-        if isinstance(i, PythonTensor):
-            if i.has_init:
-                i.init_data()
-            if not i.const_arg:
-                inputs.append(i)
-        elif isinstance(i, (Tensor, CSRTensor, COOTensor)):
-            inputs.append(i)
-        elif hasattr(i, "__ms_mutable__") and getattr(i, "__ms_mutable__"):
-            inputs.append(i)
-        elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
-            inputs.append(i)
-        elif hasattr(obj, "enable_tuple_broaden") and obj.enable_tuple_broaden and isinstance(i, tuple) and \
-                _check_all_tensor(i):
-            inputs.append(i)
-    return inputs
+def _handle_arg(obj, arg):
+    """Handle arg for runtime .If need handle the arg, return True"""
+    if isinstance(arg, PythonTensor):
+        if arg.has_init:
+            arg.init_data()
+        if not arg.const_arg:
+            return arg
+    elif isinstance(arg, (Tensor, CSRTensor, COOTensor)):
+        return arg
+    elif hasattr(arg, "__ms_mutable__") and getattr(arg, "__ms_mutable__"):
+        return arg
+    elif context.get_context("grad_for_scalar") and isinstance(arg, (int, float)):
+        return arg
+    elif hasattr(obj, "enable_tuple_broaden") and obj.enable_tuple_broaden and isinstance(arg, tuple) and \
+            _check_all_tensor(arg):
+        return arg
+    return None
+
+
+def _get_args_for_run(obj, args, kwargs):
+    """Get the actual input args and kwargs for runtime."""
+    new_args = []
+    for arg in args:
+        new_arg = _handle_arg(obj, arg)
+        if new_arg is not None:
+            new_args.append(new_arg)
+
+    for _, value in kwargs.items():
+        new_value = _handle_arg(obj, value)
+        if new_value is not None:
+            new_args.append(new_value)
+
+    return new_args
 
 
 class _MindsporeFunctionExecutor:
@@ -296,7 +312,7 @@ class _MindsporeFunctionExecutor:
         self.jit_config_dict = jit_config.jit_config_dict if jit_config else None
 
     @_wrap_func
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         args_list = args
         if self.obj is not None:
             args_list = args_list[1:]
@@ -304,10 +320,10 @@ class _MindsporeFunctionExecutor:
             phase = ""
             if context.get_context("mode") == context.PYNATIVE_MODE:
                 _pynative_executor.set_ms_function_compile_status(True, phase)
-                phase = self.compile(args_list, self.fn.__name__)
+                phase = self.compile(self.fn.__name__, *args_list, **kwargs)
                 _pynative_executor.set_ms_function_compile_status(False, phase)
             else:
-                phase = self.compile(args_list, self.fn.__name__)
+                phase = self.compile(self.fn.__name__, *args_list, **kwargs)
         except Exception as err:
             _pynative_executor.clear_res()
             raise err
@@ -315,7 +331,7 @@ class _MindsporeFunctionExecutor:
         if context.get_context("precompile_only"):
             return None
 
-        new_inputs = self._generate_run_args(args_list)
+        new_inputs = self._generate_run_args(args_list, kwargs)
         output = self._graph_executor(tuple(new_inputs), phase)
         if context.get_context("mode") == context.PYNATIVE_MODE:
             output = _pynative_executor.grad_ms_function(output, *new_inputs)
@@ -331,7 +347,7 @@ class _MindsporeFunctionExecutor:
 
         return output
 
-    def compile(self, args_list, method_name):
+    def compile(self, method_name, *args, **kwargs):
         """Returns pipeline for the given args."""
         # Check whether hook function registered on Cell object.
         if self.obj and hasattr(self.obj, "_hook_fn_registered"):
@@ -340,9 +356,9 @@ class _MindsporeFunctionExecutor:
                                f"If you want to use hook function, please use context.set_context to set "
                                f"pynative mode and remove 'jit' decorator.")
         # Chose dynamic shape tensors or actual input tensors as compile args.
-        compile_args = self._generate_compile_args(args_list)
+        compile_args = self._generate_compile_args(args)
         # Restore the mutable attr for every arg.
-        compile_args = _restore_mutable_attr(args_list, compile_args)
+        compile_args = _restore_mutable_attr(args, compile_args)
 
         generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
                         str(self.fn.__code__.co_firstlineno)
@@ -371,7 +387,7 @@ class _MindsporeFunctionExecutor:
             self.enable_tuple_broaden = self.obj.enable_tuple_broaden
 
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
-        key = self._graph_executor.generate_arguments_key(self.fn, compile_args, self.enable_tuple_broaden)
+        key = self._graph_executor.generate_arguments_key(self.fn, compile_args, kwargs, self.enable_tuple_broaden)
         phase = generate_name + '.' + str(key)
         if phase in ms_compile_cache:
             return phase
@@ -382,11 +398,11 @@ class _MindsporeFunctionExecutor:
             self._graph_executor.set_jit_config(self.jit_config_dict)
 
         if self.obj is None:
-            is_compile = self._graph_executor.compile(self.fn, compile_args, phase, True)
+            is_compile = self._graph_executor.compile(self.fn, compile_args, kwargs, phase, True)
         else:
             if isinstance(self.obj, ms.nn.Cell):
                 self._graph_executor.set_weights_values(self.obj.parameters_dict())
-            is_compile = self._graph_executor.compile(self.obj, compile_args, phase, True)
+            is_compile = self._graph_executor.compile(self.obj, compile_args, kwargs, phase, True)
 
         if not is_compile:
             raise RuntimeError("Executor compile failed.")
@@ -449,17 +465,18 @@ class _MindsporeFunctionExecutor:
                     raise ValueError("The input args is incompatible with the args in `input_signature`!")
         return compile_args
 
-    def _generate_run_args(self, args_list):
+    def _generate_run_args(self, args_list, kwargs):
         """
         Generate input args, which are required for running.
 
         Args:
             args_list (Tuple): Actual input args.
+            kwargs (Dict): Actual input kwargs.
 
         Returns:
             new_inputs, new input args, which are required for running.
         """
-        return _get_args_for_run(self, args_list)
+        return _get_args_for_run(self, args_list, kwargs)
 
 
 # The attributes used to identify a given object.
@@ -577,14 +594,15 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None):
             if os.getenv("MS_JIT") == '0':
                 return func(*args, **kwargs)
 
-            args = _handle_func_args(func, *args, **kwargs)
+            args, kwargs = _handle_func_args(func, *args, **kwargs)
+
             process_obj = None
             if args and not isinstance(args[0], PythonTensor) and hasattr(args[0], func.__name__):
                 process_obj = args[0]
             # only the function or cell instance wrapped by shard will fall into this branch
             if _is_pynative_parallel() and func.__name__ == _PYNATIVE_PARALLEL_FUNC_NAME:
                 process_obj = hash_args
-            out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj, jit_config)(*args)
+            out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj, jit_config)(*args, **kwargs)
             return out
 
         return staging_specialize
@@ -1338,16 +1356,17 @@ class _CellGraphExecutor:
         if "train" in phase and (enable_compile_cache is True or enable_compile_cache == "1"):
             self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
 
-    def compile(self, obj, *args, phase='predict', do_convert=True, jit_config_dict=None):
+    def compile(self, obj, *args, phase='predict', do_convert=True, jit_config_dict=None, **kwargs):
         """
         Compiles graph.
 
         Args:
             obj (Function/Cell): The function or cell instance need compile.
-            args (tuple): Function or cell input arguments.
             phase (str): The name of compile phase. Default: 'predict'.
             do_convert (bool): When set to True, convert ME graph to GE graph after compiling graph.
             jit_config_dict (dict): Jit config for compile. Default: None.
+            args (tuple): Args of the Cell object.
+            kwargs (dict): Kwargs of the Cell object.
 
         Return:
             Str, the full phase of the cell.
@@ -1357,14 +1376,13 @@ class _CellGraphExecutor:
         if not hasattr(obj, obj.__parse_method__):
             raise AttributeError(
                 'The class {} dose not have method {}'.format(obj.__class__.__name__, obj.__parse_method__))
-        args_list = args
 
         self.enable_tuple_broaden = False
         if hasattr(obj, "enable_tuple_broaden"):
             self.enable_tuple_broaden = obj.enable_tuple_broaden
 
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
-        key = self._graph_executor.generate_arguments_key(obj, args_list, self.enable_tuple_broaden)
+        key = self._graph_executor.generate_arguments_key(obj, args, kwargs, self.enable_tuple_broaden)
         obj.arguments_key = str(key)
         phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
 
@@ -1374,14 +1392,14 @@ class _CellGraphExecutor:
 
         obj.check_names()
         _check_full_batch()
-        self._set_dataset_mode(args_list)
+        self._set_dataset_mode(args)
         self._set_compile_cache_dep_files(phase)
 
         enable_ge = context.get_context("enable_ge")
         self._graph_executor.set_weights_values(obj.parameters_dict())
         if jit_config_dict:
             self._graph_executor.set_jit_config(jit_config_dict)
-        result = self._graph_executor.compile(obj, args_list, phase, self._use_vm_mode())
+        result = self._graph_executor.compile(obj, args, kwargs, phase, self._use_vm_mode())
         obj.compile_cache.add(phase)
         if not result:
             raise RuntimeError("Executor compile failed.")
@@ -1458,6 +1476,8 @@ class _CellGraphExecutor:
         Run the specific graph.
 
         Args:
+            obj (Cell): The cell object.
+            args (tuple): Args of the Cell object.
             phase (str): The phase name. Default: 'predict'.
 
         Returns:

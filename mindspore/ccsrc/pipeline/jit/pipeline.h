@@ -77,8 +77,12 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   const std::string &phase() const { return phase_; }
   const std::map<std::string, std::string> &jit_config() const { return jit_config_; }
   void SaveCompiledGraph(const std::string &phase);
-  bool CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm);
-  bool Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase, bool use_vm);
+  void ConvertArgs(const py::tuple &args, const py::dict &kwargs, bool is_auto_parallel,
+                   abstract::AbstractBasePtrList *args_abs, std::vector<ValuePtr> *arguments);
+  bool CompileInner(const py::object &source_obj, const py::tuple &args, const py::dict &kwargs,
+                    const py::object &phase_obj, bool use_vm);
+  bool Compile(const py::object &source_obj, const py::tuple &args, const py::dict &kwargs, const py::object &phase,
+               bool use_vm);
 
   void ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *const arg_list);
 
@@ -131,7 +135,8 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
 #endif
 
   // Generate a key for mapping function graph
-  py::object GenerateArgumentsKey(const py::object &obj, const py::tuple &args, bool enable_tuple_broaden = false);
+  py::object GenerateArgumentsKey(const py::object &obj, const py::tuple &args, const py::dict &kwargs,
+                                  bool enable_tuple_broaden = false);
 
   void ClearCurConvertInput();
 

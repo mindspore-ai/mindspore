@@ -652,8 +652,8 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   // Save the function node to block
   func_block->WriteVariable(function_name, NewValueNode(current_fg));
 
-  py::object funcObj = python_adapter::GetPyObjAttr(node, "body");
-  (void)ParseStatements(func_block, funcObj);
+  py::object func_obj = python_adapter::GetPyObjAttr(node, "body");
+  (void)ParseStatements(func_block, func_obj);
 
   // Add unused variables as isolate nodes.
   for (auto &func_block_item : func_block_list_) {
@@ -1337,15 +1337,14 @@ void Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object
         values.push_back(ret_node);
       }
     }
-    auto keys_tuple = GenerateMakeTuple(block, keys);
-    auto values_tuple = GenerateMakeTuple(block, values);
-    auto make_dict_op = block->MakeResolveOperation(NAMED_PRIMITIVE_MAKEDICT);
-    std::vector<AnfNodePtr> make_dict_nodes;
-    make_dict_nodes.push_back(make_dict_op);
-    make_dict_nodes.push_back(keys_tuple);
-    make_dict_nodes.push_back(values_tuple);
-    MS_EXCEPTION_IF_NULL(block->func_graph());
-    args_context->packed_arguments.push_back(block->func_graph()->NewCNodeInOrder(std::move(make_dict_nodes)));
+    if (!keys.empty()) {
+      auto keys_tuple = GenerateMakeTuple(block, keys);
+      auto values_tuple = GenerateMakeTuple(block, values);
+      auto make_dict_op = block->MakeResolveOperation(NAMED_PRIMITIVE_MAKEDICT);
+      std::vector<AnfNodePtr> make_dict_nodes = {make_dict_op, keys_tuple, values_tuple};
+      MS_EXCEPTION_IF_NULL(block->func_graph());
+      args_context->packed_arguments.push_back(block->func_graph()->NewCNodeInOrder(std::move(make_dict_nodes)));
+    }
   }
 }
 
@@ -3562,7 +3561,7 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
     param->set_name(name);
     MS_EXCEPTION_IF_NULL(param->debug_info());
     param->debug_info()->set_name(name);
-    param->debug_info()->set_location(param->debug_info()->location());
+    param->debug_info()->set_location(orig_param->debug_info()->location());
     param->set_is_top_graph_param(true);
   }
   func_graph->set_has_vararg(current_graph->has_vararg());
