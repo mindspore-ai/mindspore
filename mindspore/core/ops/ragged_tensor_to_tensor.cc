@@ -31,12 +31,9 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("dimension of 'shape'", SizeToLong(shape_shape.size()), kEqual, 1, prim_name);
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto default_value_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("dimension of 'default_value'", SizeToLong(default_value_shape.size()), kLessThan,
-                                     SizeToLong(values_shape.size()), prim_name);
   auto shape_arg = input_args[kInputIndex0];
   MS_EXCEPTION_IF_NULL(shape_arg);
   auto output_shape = GetShapeValue(primitive, shape_arg);
@@ -46,17 +43,27 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
                    ? input_args[kInputIndex3]->cast<abstract::AbstractTuplePtr>()->elements()
                    : input_args[kInputIndex3]->cast<abstract::AbstractListPtr>()->elements();
   auto tensors_size = tensors.size();
+  auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[0]->BuildShape())[kShape];
+  auto tensor0_dim = tensor0_shape.size();
   const auto &row_partition_types_ptr = primitive->GetAttr("row_partition_types");
   MS_EXCEPTION_IF_NULL(row_partition_types_ptr);
   const auto &row_partition_types = GetValue<std::vector<std::string>>(row_partition_types_ptr);
   auto types_size = row_partition_types.size();
+
+  if (IsDynamic(shape_shape) || IsDynamicRank(values_shape) || IsDynamicRank(default_value_shape) ||
+      IsDynamicRank(tensor0_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
+
+  CheckAndConvertUtils::CheckInteger("dimension of 'shape'", SizeToLong(shape_shape.size()), kEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("dimension of 'default_value'", SizeToLong(default_value_shape.size()), kLessThan,
+                                     SizeToLong(values_shape.size()), prim_name);
+
   if (tensors_size != types_size) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the number of row_partition_tensors must be equal to the "
                              << "number of row_partition_types: " << types_size << ", but got " << tensors_size << ".";
   }
   if (row_partition_types[0] == "FIRST_DIM_SIZE") {
-    auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[0]->BuildShape())[kShape];
-    auto tensor0_dim = tensor0_shape.size();
     CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[0](for 'FIRST_DIM_SIZE')",
                                        SizeToLong(tensor0_dim), kEqual, 0, prim_name);
     if (types_size - 1 + values_rank != output_shape_rank) {
@@ -66,8 +73,6 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
                                << ", 'values' rank: " << values_rank << ".";
     }
   } else if (row_partition_types[0] == "ROW_SPLITS") {
-    auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[0]->BuildShape())[kShape];
-    auto tensor0_dim = tensor0_shape.size();
     CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[0](for 'ROW_SPLITS')",
                                        SizeToLong(tensor0_dim), kEqual, 1, prim_name);
     if (types_size + values_rank != output_shape_rank) {

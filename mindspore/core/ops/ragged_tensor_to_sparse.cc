@@ -43,6 +43,16 @@ abstract::TupleShapePtr RaggedTensorToSparseInferShape(const PrimitivePtr &primi
 
   auto rt_dense_values_shape = input_args[kRttsInputValuesStart]->BuildShape();
   auto in_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(rt_dense_values_shape)[kShape];
+  auto inputs_splits_element0_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_splits[0]->BuildShape())[kShape];
+  if (IsDynamic(inputs_splits_element0_shape) || IsDynamic(in_values_shape)) {
+    abstract::ShapePtr out_indices =
+      std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny}));
+    abstract::ShapePtr out_values = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
+    abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{out_indices, out_values, out_shape});
+  }
   CheckAndConvertUtils::CheckInteger("rank of 'rt_dense_values'", SizeToLong(in_values_shape.size()), kGreaterEqual, 1,
                                      primitive->name());
   ShapeVector out_values_shape = {};

@@ -36,14 +36,19 @@ namespace kernel {
 #define TYPE1_flat Eigen::TensorMap<Eigen::Tensor<TYPE1, 1, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned>
 #define TYPE2_flat Eigen::TensorMap<Eigen::Tensor<TYPE2, 1, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned>
 
-class RaggedTensorToTensorCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class RaggedTensorToTensorCpuKernelMod : public NativeCpuKernelMod {
  public:
   RaggedTensorToTensorCpuKernelMod() = default;
   ~RaggedTensorToTensorCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
@@ -73,10 +78,13 @@ class RaggedTensorToTensorCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename TYPE1>
   void GetFirstDimension(const std::vector<kernel::AddressPtr> &inputs, TYPE1 *first_dim);
 
-  TypeId shape_dtype{kTypeUnknown};
-  TypeId values_dtype{kTypeUnknown};
+  TypeId shape_dtype_{kTypeUnknown};
+  TypeId values_dtype_{kTypeUnknown};
+  std::vector<int64_t> values_shape_;
+  std::vector<int64_t> output_shape_;
+  std::vector<int64_t> default_values_shape_;
   std::vector<std::string> row_partition_types_;
-  CNodePtr node_wpt_;
+  std::vector<std::vector<int64_t>> row_partition_shape_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
