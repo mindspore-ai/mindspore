@@ -20,3 +20,4 @@ mindspore.ops.ReverseV2
     异常：
         - **TypeError** - `axis` 既不是list也不是tuple。
         - **TypeError** - `axis` 的元素不是int。
+        - **ValueError** - `axis` 存在多个元素指向同一个轴。
