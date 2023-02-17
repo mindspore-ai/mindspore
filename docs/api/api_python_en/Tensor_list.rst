@@ -29,6 +29,7 @@
     mindspore.Tensor.abs
     mindspore.Tensor.absolute
     mindspore.Tensor.acos
+    mindspore.Tensor.acosh
     mindspore.Tensor.add
     mindspore.Tensor.addbmm
     mindspore.Tensor.addcdiv
