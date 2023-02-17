@@ -240,7 +240,7 @@ static inline int ElementOptMinimumNum1@SIMD_INSTRUCTION@(int index, const float
   return index;
 }
 
-static inline size_t AssignSubOpt@SIMD_INSTRUCTION@(size_t index, float *in0, const float *in1, size_t size) {
+static inline size_t AssignSubOpt@SIMD_INSTRUCTION@(int index, float *in0, const float *in1, size_t size) {
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_F32 in0_tmp = SIMD_LD_F32(in0 + index);
     SIMD_F32 in1_tmp = SIMD_LD_F32(in1 + index);

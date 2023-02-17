@@ -478,7 +478,7 @@ void TileDimensionsFp32(const float *data0, const float *data1, float *tile_data
 }
 
 void AssignSubOpt(float *in0, const float *in1, size_t size) {
-  size_t index = 0;
+  int index = 0;
 
   SIMD_RUN_NO_SCALAR(AssignSubOpt, index, in0, in1, size);
 
