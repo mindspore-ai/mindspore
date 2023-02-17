@@ -75,7 +75,7 @@ ATTR_MAP(ApplyAdagradV2D) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}
                              {"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())},
                              {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdagradV2D) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
-REG_ADPT_DESC(ApplyAdagradV2D, kNameApplyAdagradV2, ADPT_DESC(ApplyAdagradV2D))
+REG_ADPT_DESC(ApplyAdagradV2D, kNameApplyAdagradV2D, ADPT_DESC(ApplyAdagradV2D))
 
 // ApplyAddSignD
 INPUT_MAP(ApplyAddSignD) = {{1, INPUT_DESC(var)},   {2, INPUT_DESC(m)},          {3, INPUT_DESC(lr)},
@@ -130,7 +130,7 @@ INPUT_MAP(ApplyPowerSignD) = {{1, INPUT_DESC(var)},     {2, INPUT_DESC(m)},     
                               {7, INPUT_DESC(grad)}};
 ATTR_MAP(ApplyPowerSignD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyPowerSignD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}};
-REG_ADPT_DESC(ApplyPowerSignD, kNameApplyPowerSign, ADPT_DESC(ApplyPowerSignD))
+REG_ADPT_DESC(ApplyPowerSignD, kNameApplyPowerSignD, ADPT_DESC(ApplyPowerSignD))
 
 // ApplyProximalGradientDescent
 INPUT_MAP(ApplyProximalGradientDescent) = {
@@ -304,7 +304,7 @@ INPUT_MAP(ApplyPowerSign) = {{1, INPUT_DESC(var)},     {2, INPUT_DESC(m)},      
                              {7, INPUT_DESC(grad)}};
 ATTR_MAP(ApplyPowerSign) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyPowerSign) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(ApplyPowerSign, kApplyPowerSignDOpName, ADPT_DESC(ApplyPowerSign))
+REG_ADPT_DESC(ApplyPowerSign, kApplyPowerSignOpName, ADPT_DESC(ApplyPowerSign))
 
 // ApplyAddSign
 INPUT_MAP(ApplyAddSign) = {{1, INPUT_DESC(var)},   {2, INPUT_DESC(m)},          {3, INPUT_DESC(lr)},
@@ -328,7 +328,7 @@ ATTR_INPUT_MAP(ApplyAdagradV2) = {{"epsilon", "epsilon"}};
 ATTR_MAP(ApplyAdagradV2) = {{"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())},
                             {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdagradV2) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(ApplyAdagradV2, kApplyAdagradV2DOpName, ADPT_DESC(ApplyAdagradV2))
+REG_ADPT_DESC(ApplyAdagradV2, kNameApplyAdagradV2, ADPT_DESC(ApplyAdagradV2))
 
 // ApplyAdagradDA
 INPUT_MAP(ApplyAdagradDA) = {{1, INPUT_DESC(var)},
