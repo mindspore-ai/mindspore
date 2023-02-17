@@ -48,6 +48,8 @@ include_directories(${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/offline_packing_optimizer.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/converter_packed_node.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter_funcgraph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter_metagraph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/anf_transform.cc
@@ -167,6 +169,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/litert/sub_graph_split.cc
         ${KERNEL_ONLINE_FUSION_SRC}
         ${SRC_DIR}/litert/lite_session.cc
+        ${SRC_DIR}/litert/runtime_packed_node_pass.cc
         ${SRC_DIR}/litert/executor.cc
         ${SRC_DIR}/litert/lite_model.cc
         ${SRC_DIR}/litert/model_manager.cc

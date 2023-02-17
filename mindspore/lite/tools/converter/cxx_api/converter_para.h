@@ -35,6 +35,11 @@ struct ParallelSplitConfig {
   std::vector<std::string> parallel_devices_;
 };
 
+struct CpuOptionCfg {
+  std::string architecture;
+  std::string instruction;
+};
+
 struct ConverterPara {
   converter::FmkType fmk_type;
   std::string model_file;
@@ -73,6 +78,7 @@ struct ConverterPara {
   lite::micro::MicroParam microParam;
   ParallelSplitConfig parallel_split_config;
   std::string device;
+  CpuOptionCfg cpuOptionCfgParam;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CXX_API_CONVERTER_PARA_H_
