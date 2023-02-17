@@ -45,7 +45,9 @@ class RDMATest : public UT::Common {
 std::unique_ptr<MessageBase> RDMATest::CreateMessage(const std::string &msg) {
   std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
   size_t msg_size = msg.size();
-  ASSERT_TRUE(msg_size != 0);
+  if (msg_size == 0) {
+    MS_LOG(EXCEPTION) << "msg_size is 0!";
+  }
   void *data = malloc(msg_size + 1);
   (void)memcpy_s(data, msg_size, msg.c_str(), msg_size);
   message->data = data;
@@ -63,6 +65,36 @@ TEST_F(RDMATest, TestRDMAConnection) {
     std::shared_ptr<RDMAServer> rdma_server = std::make_shared<RDMAServer>();
     MS_EXCEPTION_IF_NULL(rdma_server);
     ASSERT_TRUE(rdma_server->Initialize(url));
+    sleep(3);
+    rdma_server->Finalize();
+    return;
+  }
+  sleep(1);
+  size_t client_pid = fork();
+  if (client_pid == 0) {
+    std::shared_ptr<RDMAClient> rdma_client = std::make_shared<RDMAClient>();
+    MS_EXCEPTION_IF_NULL(rdma_client);
+    ASSERT_TRUE(rdma_client->Initialize());
+    ASSERT_TRUE(rdma_client->Connect(url));
+    rdma_client->Finalize();
+    return;
+  }
+
+  int wstatus;
+  (void)waitpid(client_pid, &wstatus, WUNTRACED | WCONTINUED);
+  (void)waitpid(server_pid, &wstatus, WUNTRACED | WCONTINUED);
+}
+
+/// Feature: RDMA communication.
+/// Description: test SendSync interface for RDMA client and server.
+/// Expectation: RDMA client successfully sends two messages to RDMA server synchronously.
+TEST_F(RDMATest, TestRDMASendSync) {
+  std::string url = "127.0.0.1:10969";
+  size_t server_pid = fork();
+  if (server_pid == 0) {
+    std::shared_ptr<RDMAServer> rdma_server = std::make_shared<RDMAServer>();
+    MS_EXCEPTION_IF_NULL(rdma_server);
+    ASSERT_TRUE(rdma_server->Initialize(url));
 
     auto msg_handler = [](MessageBase *const msg) {
       MS_LOG(INFO) << "Receive message from client: " << static_cast<char *>(msg->data);
@@ -70,6 +102,7 @@ TEST_F(RDMATest, TestRDMAConnection) {
     };
     rdma_server->SetMessageHandler(msg_handler);
     sleep(3);
+    rdma_server->Finalize();
     return;
   }
   sleep(1);
@@ -80,8 +113,54 @@ TEST_F(RDMATest, TestRDMAConnection) {
     ASSERT_TRUE(rdma_client->Initialize());
     ASSERT_TRUE(rdma_client->Connect(url));
 
-    auto message = CreateMessage("Hello server!");
-    ASSERT_TRUE(rdma_client->SendSync(std::move(message)));
+    auto message1 = CreateMessage("Hello server sync!");
+    ASSERT_TRUE(rdma_client->SendSync(std::move(message1)));
+    auto message2 = CreateMessage("Hello server sync!");
+    ASSERT_TRUE(rdma_client->SendSync(std::move(message2)));
+    rdma_client->Finalize();
+    return;
+  }
+
+  int wstatus;
+  (void)waitpid(client_pid, &wstatus, WUNTRACED | WCONTINUED);
+  (void)waitpid(server_pid, &wstatus, WUNTRACED | WCONTINUED);
+}
+
+/// Feature: RDMA communication.
+/// Description: test SendAsync interface for RDMA client and server.
+/// Expectation: RDMA client successfully sends two messages to RDMA server asynchronously.
+TEST_F(RDMATest, TestRDMASendAsync) {
+  std::string url = "127.0.0.1:10969";
+  size_t server_pid = fork();
+  if (server_pid == 0) {
+    std::shared_ptr<RDMAServer> rdma_server = std::make_shared<RDMAServer>();
+    MS_EXCEPTION_IF_NULL(rdma_server);
+    ASSERT_TRUE(rdma_server->Initialize(url));
+
+    auto msg_handler = [](MessageBase *const msg) {
+      MS_LOG(INFO) << "Receive message from client: " << static_cast<char *>(msg->data);
+      return nullptr;
+    };
+    rdma_server->SetMessageHandler(msg_handler);
+    sleep(3);
+    rdma_server->Finalize();
+    return;
+  }
+  sleep(1);
+  size_t client_pid = fork();
+  if (client_pid == 0) {
+    std::shared_ptr<RDMAClient> rdma_client = std::make_shared<RDMAClient>();
+    MS_EXCEPTION_IF_NULL(rdma_client);
+    ASSERT_TRUE(rdma_client->Initialize());
+    ASSERT_TRUE(rdma_client->Connect(url));
+
+    auto message1 = CreateMessage("Hello server async!");
+    rdma_client->SendAsync(std::move(message1));
+    ASSERT_TRUE(rdma_client->Flush(url));
+    auto message2 = CreateMessage("Hello server async!");
+    rdma_client->SendAsync(std::move(message2));
+    ASSERT_TRUE(rdma_client->Flush(url));
+
     rdma_client->Finalize();
     return;
   }

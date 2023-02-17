@@ -31,10 +31,10 @@ class BACKEND_EXPORT RPCServerBase {
   virtual ~RPCServerBase() = default;
 
   // Init server using the specified url, with memory allocating function.
-  virtual bool Initialize(const std::string &url, const MemAllocateCallback &allocate_cb) { return true; }
+  virtual bool Initialize(const std::string &url, const MemAllocateCallback &allocate_cb = {}) { return true; }
 
   // Init server using local IP and random port.
-  virtual bool Initialize(const MemAllocateCallback &allocate_cb) { return true; }
+  virtual bool Initialize(const MemAllocateCallback &allocate_cb = {}) { return true; }
 
   // Destroy the tcp server.
   virtual void Finalize() {}

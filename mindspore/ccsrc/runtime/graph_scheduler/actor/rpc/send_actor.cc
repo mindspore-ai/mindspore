@@ -27,7 +27,7 @@ SendActor::~SendActor() {
       (void)client_->Disconnect(server_url_);
       client_->Finalize();
     } catch (const std::exception &) {
-      MS_LOG(ERROR) << "Failed to disconnect and finalize for tcp client in send actor.";
+      MS_LOG(ERROR) << "Failed to disconnect and finalize for rpc client in send actor.";
     }
     client_ = nullptr;
   }
@@ -40,10 +40,19 @@ void SendActor::SetRouteInfo(uint32_t, const std::string &, const std::string &s
 }
 
 bool SendActor::ConnectServer() {
+#ifdef ENABLE_RDMA
+  if (common::GetEnv(kEnableRDMA) == "1") {
+    client_ = std::make_unique<RDMAClient>();
+  } else {
+    client_ = std::make_unique<TCPClient>();
+  }
+#else
   client_ = std::make_unique<TCPClient>();
+#endif
   MS_EXCEPTION_IF_NULL(client_);
+
   if (!client_->Initialize()) {
-    MS_LOG(EXCEPTION) << "Failed to initialize tcp server for send actor.";
+    MS_LOG(EXCEPTION) << "Failed to initialize rpc server for send actor.";
   }
   // Lookup actor addresses for each peer actor.
   for (const auto &peer_actor_id : peer_actor_ids_) {

@@ -27,7 +27,7 @@ namespace distributed {
 namespace rpc {
 class BACKEND_EXPORT RPCClientBase {
  public:
-  explicit RPCClientBase(bool enable_ssl = false) : enable_ssl_(enable_ssl) {}
+  explicit RPCClientBase(bool enable_ssl) : enable_ssl_(enable_ssl) {}
   virtual ~RPCClientBase() = default;
 
   // Build or destroy the rpc client.
@@ -36,19 +36,28 @@ class BACKEND_EXPORT RPCClientBase {
 
   // Connect to the specified server.
   // Function free_cb binds with client's each connection. It frees the real memory after message is sent to the peer.
-  virtual bool Connect(const std::string &dst_url, size_t retry_count, const MemFreeCallback &free_cb) { return true; }
+  virtual bool Connect(
+    const std::string &dst_url, size_t retry_count = 60, const MemFreeCallback &free_cb = [](void *data) {
+      MS_ERROR_IF_NULL(data);
+      delete static_cast<char *>(data);
+      return true;
+    }) {
+    return true;
+  }
 
   // Check if the connection to dst_url has been established.
   virtual bool IsConnected(const std::string &dst_url) { return false; }
 
   // Disconnect from the specified server.
-  virtual bool Disconnect(const std::string &dst_url, size_t timeout_in_sec) { return true; }
+  virtual bool Disconnect(const std::string &dst_url, size_t timeout_in_sec = 5) { return true; }
 
   // Send the message from the source to the destination synchronously and return the byte size by this method call.
-  virtual bool SendSync(std::unique_ptr<MessageBase> &&msg, size_t *const send_bytes) { return true; }
+  virtual bool SendSync(std::unique_ptr<MessageBase> &&msg, size_t *const send_bytes = nullptr) { return true; }
 
   // Send the message from the source to the destination asynchronously.
   virtual void SendAsync(std::unique_ptr<MessageBase> &&msg) {}
+
+  virtual MessageBase *ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t timeout = 30) { return nullptr; }
 
   // Force the data in the send buffer to be sent out.
   virtual bool Flush(const std::string &dst_url) { return true; }

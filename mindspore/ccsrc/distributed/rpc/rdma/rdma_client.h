@@ -65,6 +65,12 @@ class BACKEND_EXPORT RDMAClient : public RPCClientBase {
 
   struct urpc_buffer_allocator *urpc_allocator_;
   urpc_session_t *urpc_session_;
+
+  // The variables for synchronization of async messages.
+  std::mutex mtx_;
+  std::condition_variable cv_;
+
+  struct req_cb_arg cb_arg_;
 };
 }  // namespace rpc
 }  // namespace distributed
