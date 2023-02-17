@@ -26,7 +26,9 @@ context_prepare()
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_gpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_real_make_tuple():
     """
@@ -54,7 +56,9 @@ def test_real_make_tuple():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_real_make_tuple_dy():
     """
@@ -82,7 +86,9 @@ def test_real_make_tuple_dy():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_real_make_tuple_grad():
     """

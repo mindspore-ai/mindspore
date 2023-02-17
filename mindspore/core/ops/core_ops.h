@@ -272,6 +272,8 @@ constexpr auto kMakeRange = "make_range";
 constexpr auto kSequenceAddOffset = "SequenceAddOffset";
 constexpr auto kSequenceSliceGrad = "SequenceSliceGrad";
 constexpr auto kSequenceSliceSetItem = "SequenceSliceSetItem";
+constexpr auto kSequenceMax = "SequenceMax";
+constexpr auto kSequenceMin = "SequenceMin";
 
 // NN
 constexpr auto kFractionalMaxPoolWithFixedKsize = "FractionalMaxPoolWithFixedKsize";
@@ -1613,6 +1615,8 @@ GVAR_DEF(PrimitivePtr, kPrimSequenceSliceSetItem, std::make_shared<Primitive>(kS
 GVAR_DEF(PrimitivePtr, kPrimSequenceZerosLike, std::make_shared<Primitive>(kSequenceZerosLike));
 GVAR_DEF(PrimitivePtr, kPrimSequenceAddOffset, std::make_shared<Primitive>(kSequenceAddOffset));
 GVAR_DEF(PrimitivePtr, kPrimSequenceSliceGrad, std::make_shared<Primitive>(kSequenceSliceGrad));
+GVAR_DEF(PrimitivePtr, kPrimSequenceMax, std::make_shared<Primitive>(kSequenceMax));
+GVAR_DEF(PrimitivePtr, kPrimSequenceMin, std::make_shared<Primitive>(kSequenceMin));
 
 // Other miscellaneous
 GVAR_DEF(PrimitivePtr, kPrimSampleDistortedBoundingBoxV2, std::make_shared<Primitive>(kSampleDistortedBoundingBoxV2));
