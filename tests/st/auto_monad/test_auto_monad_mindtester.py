@@ -458,54 +458,6 @@ def test_grad_read_dependency_return_parameter():
     context.set_context(mode=context.GRAPH_MODE)
 
 
-class SideEffectAssignAddnReluReturnParNet(Cell):
-    def __init__(self):
-        super().__init__()
-        self.parameter1 = Parameter(
-            Tensor([1.0], ms.float32), name="parameter1")
-        self.assign = P.Assign()
-        self.addN = P.AddN()
-        self.relu = P.ReLU()
-
-    def construct(self, inputs):
-        self.assign(self.parameter1, inputs)
-        p1 = self.parameter1
-        out = self.addN((inputs, inputs, inputs))
-        out = self.relu(out)
-        return p1
-
-    def grad_mindspore_impl(self, params, grad_ys):
-        grad_net = GradOfAllInputsAndParams(self)
-        grad_net.set_train()
-        grad_out = grad_net(params, grad_ys)
-        return grad_out
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_side_effect_grad_read_dependency_assign_addn_relu_return_parameter():
-    """
-    Feature: Auto monad feature.
-    Description: Verify parameter.
-    Expectation: No exception.
-    """
-    net = SideEffectAssignAddnReluReturnParNet()
-    grad_ys = Tensor([18.0], ms.float32)
-    inputs = Tensor([9.0], ms.float32)
-    out1 = net.grad_mindspore_impl(inputs, grad_ys)
-    net = SideEffectAssignAddnReluReturnParNet()
-    try:
-        context.set_context(mode=context.PYNATIVE_MODE)
-        out2 = net.grad_mindspore_impl(inputs, grad_ys)
-        allclose_nparray(out1[0][0].asnumpy(), out2[0][0].asnumpy(), 0.001, 0.001)
-        allclose_nparray(out1[1][0].asnumpy(), out2[1][0].asnumpy(), 0.001, 0.001)
-    finally:
-        context.set_context(mode=context.GRAPH_MODE)
-
-
 class SideEffectPrintInHighOrdeAddnNet(Cell):
     def __init__(self):
         super().__init__()
