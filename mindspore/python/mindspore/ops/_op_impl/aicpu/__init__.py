@@ -116,6 +116,7 @@ from .acosh import _acosh_aicpu
 from .acosh_grad import _acosh_grad_aicpu
 from .rnnt_loss import _rnnt_loss_aicpu
 from .greater import _greater_aicpu
+from .greater_equal import _greater_equal_aicpu
 from .random_categorical import _random_categorical_aicpu
 from .tanh_grad import _tanh_grad_aicpu
 from .cast import _cast_aicpu
