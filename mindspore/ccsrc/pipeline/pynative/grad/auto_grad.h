@@ -193,7 +193,7 @@ class AutoGradCellImpl {
   void BuildForwardLastNode();
   // Add parameter(weights) to anfnode_to_variable_adjoint_
   void AddParameterNode(const AnfNodePtr &parameter, const ValuePtr &tensor);
-  AnfNodePtr GetRealDin(const FunctionNodePtr &fn, const ValuePtr &out_value, const ValuePtr &input_arg,
+  AnfNodePtr TraceShape(const FunctionNodePtr &fn, const ValuePtr &out_value, const ValuePtr &input_arg,
                         const AnfNodePtr &din);
   void BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
   void BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);

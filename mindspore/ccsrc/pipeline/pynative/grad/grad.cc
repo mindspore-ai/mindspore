@@ -42,7 +42,6 @@ void ClearDeviceAddress(const ValuePtr &value) {
   TensorValueToTensor(value, &tensors);
   for (auto tensor : tensors) {
     tensor->set_device_address(nullptr);
-    tensor->set_is_forward_output(false);
   }
 }
 
