@@ -663,6 +663,10 @@ from .clip_func import (
     clip,
     clip_by_global_norm,
 )
+from .other_func import (
+    depend,
+    partial,
+)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -679,4 +683,5 @@ __all__.extend(spectral_func.__all__)
 __all__.extend(vmap_func.__all__)
 __all__.extend(sparse_unary_func.__all__)
 __all__.extend(clip_func.__all__)
+__all__.extend(other_func.__all__)
 __all__.sort()
