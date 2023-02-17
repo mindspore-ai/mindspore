@@ -111,4 +111,17 @@ ATTR_MAP(NonMaxSuppressionWithOverlaps) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(NonMaxSuppressionWithOverlaps) = {{0, OUTPUT_DESC(selected_indices)}};
 REG_ADPT_DESC(NonMaxSuppressionWithOverlaps, prim::kPrimNonMaxSuppressionWithOverlaps->name(),
               ADPT_DESC(NonMaxSuppressionWithOverlaps))
+
+// CombinedNonMaxSuppression
+INPUT_MAP(CombinedNonMaxSuppression) = {
+  {1, INPUT_DESC(boxes)},          {2, INPUT_DESC(scores)},        {3, INPUT_DESC(max_output_size_per_class)},
+  {4, INPUT_DESC(max_total_size)}, {5, INPUT_DESC(iou_threshold)}, {6, INPUT_DESC(score_threshold)}};
+ATTR_MAP(CombinedNonMaxSuppression) = {{"pad_per_class", ATTR_DESC(pad_per_class, AnyTraits<bool>())},
+                                       {"clip_boxes", ATTR_DESC(clip_boxes, AnyTraits<bool>())}};
+OUTPUT_MAP(CombinedNonMaxSuppression) = {{0, OUTPUT_DESC(nmsed_boxes)},
+                                         {1, OUTPUT_DESC(nmsed_scores)},
+                                         {2, OUTPUT_DESC(nmsed_classes)},
+                                         {3, OUTPUT_DESC(valid_detections)}};
+REG_ADPT_DESC(CombinedNonMaxSuppression, prim::kPrimCombinedNonMaxSuppression->name(),
+              ADPT_DESC(CombinedNonMaxSuppression))
 }  // namespace mindspore::transform
