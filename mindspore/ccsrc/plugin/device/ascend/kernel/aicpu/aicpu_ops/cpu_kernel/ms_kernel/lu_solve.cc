@@ -113,9 +113,8 @@ uint32_t LuSolveCpuKernel::LuSolve(CpuKernelContext &ctx, T *b_working_ptr, T *l
   for (int64_t i = 0; i < input_0_Shape->GetDimSize(b_dim - 2); i++) {
     matrix_b.row(i).swap(matrix_b.row(*(pivots_working_ptr + i) - 1));
   }
-  MatrixXd L = matrix_A.template triangularView<Eigen::UnitLower>();
-  MatrixXd U = matrix_A.template triangularView<Eigen::Upper>();
-  MatrixXd result = (L * U).lu().solve(matrix_b);
+  MatrixXd result = matrix_A.template triangularView<Eigen::UnitLower>().solve(matrix_b);
+  result.noalias() = matrix_A.template triangularView<Eigen::Upper>().solve(result);
   for (int64_t m = 0; m < b_stride; m++) {
     *(output_y + a * b_stride + m) = (T2) * (result.data() + m);
   }
