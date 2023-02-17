@@ -76,7 +76,6 @@ class MultinomialWithReplacementCpuKernelMod : public NativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, MultinomialWithReplacementFunc>> func_list_;
   MultinomialWithReplacementFunc kernel_func_;
   ShapeVector x_shape_;
-  std::vector<size_t> input_shape_;
   int64_t numsamples_;
   bool replacement_;
   int64_t num_row_;

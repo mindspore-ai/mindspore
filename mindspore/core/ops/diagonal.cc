@@ -31,6 +31,7 @@ abstract::ShapePtr DiagonalInferShape(const PrimitivePtr &primitive, const std::
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 1;
+  const int64_t dyn_shape = abstract::Shape::kShapeDimAny;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
@@ -38,6 +39,11 @@ abstract::ShapePtr DiagonalInferShape(const PrimitivePtr &primitive, const std::
   auto offset = GetValue<int64_t>(primitive->GetAttr("offset"));
   auto dim1 = GetValue<int64_t>(primitive->GetAttr("dim1"));
   auto dim2 = GetValue<int64_t>(primitive->GetAttr("dim2"));
+
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   CheckAndConvertUtils::CheckInRange<int64_t>("dim1", dim1, kIncludeBoth, {-x_rank, x_rank - 1}, prim_name);
   CheckAndConvertUtils::CheckInRange<int64_t>("dim2", dim2, kIncludeBoth, {-x_rank, x_rank - 1}, prim_name);
   if (x_rank < kDimNum) {
@@ -55,11 +61,13 @@ abstract::ShapePtr DiagonalInferShape(const PrimitivePtr &primitive, const std::
       out_shape.push_back(x_shape[tmp_dim]);
     }
   }
-  int64_t dsize = 0;
-  if (offset >= 0) {
-    dsize = std::max<int64_t>(std::min(x_shape[tmp_dim1], x_shape[tmp_dim2] - offset), 0);
-  } else {
-    dsize = std::max<int64_t>(std::min(x_shape[tmp_dim1] + offset, x_shape[tmp_dim2]), 0);
+  int64_t dsize = dyn_shape;
+  if (x_shape[tmp_dim1] != dyn_shape && x_shape[tmp_dim2] != dyn_shape) {
+    if (offset >= 0) {
+      dsize = std::max<int64_t>(std::min(x_shape[tmp_dim1], x_shape[tmp_dim2] - offset), 0);
+    } else {
+      dsize = std::max<int64_t>(std::min(x_shape[tmp_dim1] + offset, x_shape[tmp_dim2]), 0);
+    }
   }
   out_shape.push_back(dsize);
   return std::make_shared<abstract::Shape>(out_shape);

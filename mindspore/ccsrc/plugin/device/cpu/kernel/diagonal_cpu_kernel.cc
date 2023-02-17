@@ -111,6 +111,23 @@ bool DiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   offset_ = GetValue<int64_t>(prim->GetAttr("offset"));
   dim1_ = GetValue<int64_t>(prim->GetAttr("dim1"));
   dim2_ = GetValue<int64_t>(prim->GetAttr("dim2"));
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For 'Diagonal', the data type of input must be float32 or double, but got: " << kernel_attr
+                  << ".";
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int DiagonalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
   input_shape = inputs[0]->GetShapeVector();
   int64_t input_size = input_shape.size();
   if (input_size < N2) {
@@ -138,15 +155,7 @@ bool DiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   } else {
     dsize = std::max<int64_t>(std::min(input_shape[dim1_] + offset_, input_shape[dim2_]), 0);
   }
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(ERROR) << "For 'Diagonal', the data type of input must be float32 or double, but got: " << kernel_attr
-                  << ".";
-    return false;
-  }
-  kernel_func_ = func_list_[index].second;
-  return true;
+  return KRET_OK;
 }
 
 template <typename T>

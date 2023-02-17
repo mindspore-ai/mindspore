@@ -91,7 +91,6 @@ bool MultinomialWithReplacementCpuKernelMod::Init(const BaseOperatorPtr &base_op
   }
   numsamples_ = op->get_numsamples();
   replacement_ = op->get_replacement();
-  x_shape_ = inputs[0]->GetShapeVector();
   kernel_func_ = func_list_[index].second;
   return true;
 }
@@ -100,13 +99,11 @@ int MultinomialWithReplacementCpuKernelMod::Resize(const BaseOperatorPtr &base_o
                                                    const std::vector<KernelTensorPtr> &inputs,
                                                    const std::vector<KernelTensorPtr> &outputs,
                                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KRET_OK;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> input_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  return ret;
+  x_shape_ = inputs[0]->GetShapeVector();
+  return KRET_OK;
 }
 
 template <typename T>
