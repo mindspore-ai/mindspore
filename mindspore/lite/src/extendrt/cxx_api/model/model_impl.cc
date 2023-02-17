@@ -115,7 +115,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
   session_ = InferSession::CreateSession(model_context, config_info_);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Create session failed.";
-    return kLiteNullptr;
+    return kLiteError;
   }
   auto ret = session_->Init(model_context);
   if (ret != kSuccess) {
@@ -160,12 +160,12 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &model_context) {
   if (model_path.empty()) {
     MS_LOG(ERROR) << "Model path cannot be empty";
-    return kLiteNullptr;
+    return kLiteError;
   }
   auto buffer = ReadFile(model_path);
   if (buffer.DataSize() == 0) {
     MS_LOG(ERROR) << "Failed to read buffer from model file: " << model_path;
-    return kLiteNullptr;
+    return kLiteError;
   }
   return BuildByBufferImpl(buffer.Data(), buffer.DataSize(), model_type, model_context, model_path);
 }
@@ -192,7 +192,7 @@ Status ModelImpl::ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::
   auto convert = ConverterPlugin::Instance().GetConverterFunc();
   if (convert == nullptr) {
     MS_LOG(ERROR) << "get Converter func failed";
-    return kLiteNullptr;
+    return kLiteError;
   }
   auto api_graph = mindspore::api::MakeShared<mindspore::api::FuncGraph>(func_graph);
   auto status = convert(api_graph, model_context, config_info_);
