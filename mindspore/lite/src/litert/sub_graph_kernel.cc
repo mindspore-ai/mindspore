@@ -369,7 +369,7 @@ int SubGraphKernel::SubGraphSplitByOperator(KernelsArray *kernels_array) {
     if (kernel == nullptr) {
       continue;
     }
-    MS_ASSERT(kernel->subgraph_type() != kernel::kNotSubGraph);
+    MS_CHECK_TRUE_MSG(kernel->subgraph_type() == kernel::kNotSubGraph, RET_ERROR, "node cannot be a subgraph.");
     kernels_array->units.push_back({});
     size_t now_index = kernels_array->units.size() - 1;
     kernels_array->units.at(now_index).kernels.push_back(kernel);
