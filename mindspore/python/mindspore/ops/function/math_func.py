@@ -8541,34 +8541,34 @@ def kron(x, y):
     return result
 
 
-def all(x, axis=(), keep_dims=False):
+def all(input, axis=None, keep_dims=False):
     r"""
-    Reduces a dimension of `x` by the "logicalAND" of all elements in the dimension, by default. And also can
-    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
-    controlling `keep_dims`.
+    Reduces a dimension of `input` by the "logicalAND" of all elements in the dimension, by default. And also can
+    reduce a dimension of `input` along the axis. Determine whether the dimensions of the output and input are the same
+    by controlling `keep_dims`.
 
     Args:
-        x (Tensor[bool]): The input Tensor. The dtype of the Tensor is bool.
+        input (Tensor[bool]): The input Tensor. The dtype of the Tensor is bool.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
-            Only constant value is allowed. Supposed the rank of `x` is r,
-            axis must be in the range [-rank(x), rank(x)). Default: (), all dimensions are reduced.
+            Only constant value is allowed. Supposed the rank of `input` is r,
+            axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
             If false, don't keep these dimensions. Default : False.
 
     Returns:
         Tensor, the dtype is bool.
 
-        - If axis is (), and keep_dims is False,
+        - If axis is None, and keep_dims is False,
           the output is a 0-D Tensor representing the "logical and" of all elements in the input Tensor.
         - If axis is int, set as 2, and keep_dims is False,
-          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
+          the shape of output is :math:`(input_1, input_3, ..., input_R)`.
         - If axis is tuple(int), set as (2, 3), and keep_dims is False,
-          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
@@ -8591,38 +8591,39 @@ def all(x, axis=(), keep_dims=False):
         >>> print(output)
         [False True]
     """
+    if axis is None:
+        axis = ()
+    return _get_cache_prim(P.ReduceAll)(keep_dims)(input, axis)
 
-    return _get_cache_prim(P.ReduceAll)(keep_dims)(x, axis)
 
-
-def any(x, axis=(), keep_dims=False):
+def any(input, axis=None, keep_dims=False):
     r"""
-    Reduces a dimension of `x` by the "logical OR" of all elements in the dimension, by default. And also can
-    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
-    controlling `keep_dims`.
+    Reduces a dimension of `input` by the "logical OR" of all elements in the dimension, by default. And also can
+    reduce a dimension of `input` along the axis. Determine whether the dimensions of the output and input are the same
+    by controlling `keep_dims`.
 
     Args:
-        x (Tensor[bool]): The input Tensor. The dtype of the Tensor is bool.
+        input (Tensor[bool]): The input Tensor. The dtype of the Tensor is bool.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
-            Only constant value is allowed. Supposed the rank of `x` is r,
-            axis must be in the range [-rank(x), rank(x)). Default: (), all dimensions are reduced.
+            Only constant value is allowed. Supposed the rank of `input` is r,
+            axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
             If false, don't keep these dimensions. Default : False.
 
     Returns:
         Tensor, the dtype is bool.
 
-        - If axis is (), and keep_dims is False,
+        - If axis is None, and keep_dims is False,
           the output is a 0-D Tensor representing the "logical or" of all elements in the input Tensor.
         - If axis is int, set as 2, and keep_dims is False,
-          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
+          the shape of output is :math:`(input_1, input_3, ..., input_R)`.
         - If axis is tuple(int), set as (2, 3), and keep_dims is False,
-          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
@@ -8645,8 +8646,9 @@ def any(x, axis=(), keep_dims=False):
         >>> print(output)
         [True True]
     """
-
-    return _get_cache_prim(P.ReduceAny)(keep_dims)(x, axis)
+    if axis is None:
+        axis = ()
+    return _get_cache_prim(P.ReduceAny)(keep_dims)(input, axis)
 
 
 def remainder(x, y):
