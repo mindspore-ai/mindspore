@@ -37,5 +37,10 @@ REG_BPROP_BUILDER("Depend").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
   return {dout, ib->ZerosLike(param)};
 });
+
+REG_BPROP_BUILDER("TensorMove").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex2);
+  return {dout};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

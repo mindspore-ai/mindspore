@@ -434,7 +434,12 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
       if (value->isa<ValueSequence>()) {
         const auto &value_sequeue = value->cast<ValueSequencePtr>();
         MS_EXCEPTION_IF_NULL(value_sequeue);
-        back_index += value_sequeue->size();
+        if (std::all_of(value_sequeue->value().begin(), value_sequeue->value().end(),
+                        [](const ValuePtr &v) { return !v->isa<tensor::Tensor>(); })) {
+          ++back_index;
+        } else {
+          back_index += value_sequeue->size();
+        }
       } else {
         ++back_index;
       }

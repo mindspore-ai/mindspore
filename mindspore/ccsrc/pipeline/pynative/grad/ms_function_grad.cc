@@ -155,7 +155,7 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
       MS_EXCEPTION_IF_NULL(grad_graph);
       grad_graph->AddValueNode(output_vnode);
     }
-    MS_LOG(DEBUG) << "Original output value node: " << output_vnode->ToString();
+    MS_LOG(DEBUG) << "Old output value node: " << output_vnode->ToString();
     size_t output_num = GetOutputTensorNumForTuple(cnode);
     if (index + output_num > total_output_tensors.size()) {
       MS_LOG(EXCEPTION) << "The size of total_output_tensors: " << total_output_tensors.size()
