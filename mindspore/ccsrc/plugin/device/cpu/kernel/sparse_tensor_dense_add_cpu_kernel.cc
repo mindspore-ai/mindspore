@@ -131,9 +131,8 @@ bool SparseTensorDenseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
       int index = static_cast<int>(indices_addr[i * rank + j]);
       int output_shape_j = static_cast<int>(output_shape_[j]);
       if (index >= output_shape_j || index < 0) {
-        MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the " << i << "th x1_value in " << j
-                                 << "th dimension index: " << index << " of 'output' out of bounds: [0, "
-                                 << output_shape_j << ")";
+        MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input x1_indices is out of bounds! "
+                                 << "x1_indices is: " << index << " , bounds is : [0, " << output_shape_j << ")";
       }
       size_t count = 1;
       for (size_t k = j + 1; k < rank; k++) {
