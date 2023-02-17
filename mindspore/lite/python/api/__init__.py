@@ -15,13 +15,16 @@
 """
 MindSpore Lite Python API.
 """
+from __future__ import absolute_import
 
-from .context import Context, DeviceInfo, CPUDeviceInfo, GPUDeviceInfo, AscendDeviceInfo
-from .converter import FmkType, Converter
-from .model import ModelType, Model, RunnerConfig, ModelParallelRunner
-from .tensor import DataType, Format, Tensor
+from mindspore_lite.version import __version__
+from mindspore_lite.context import Context, DeviceInfo, CPUDeviceInfo, GPUDeviceInfo, AscendDeviceInfo
+from mindspore_lite.converter import FmkType, Converter
+from mindspore_lite.model import ModelType, Model, RunnerConfig, ModelParallelRunner
+from mindspore_lite.tensor import DataType, Format, Tensor
 
 __all__ = []
+__all__.extend(__version__)
 __all__.extend(context.__all__)
 __all__.extend(converter.__all__)
 __all__.extend(model.__all__)

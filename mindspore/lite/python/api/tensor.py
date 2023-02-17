@@ -15,11 +15,12 @@
 """
 Tensor API.
 """
+from __future__ import absolute_import
 from enum import Enum
 
 import numpy
 
-from .lib import _c_lite_wrapper
+from mindspore_lite.lib import _c_lite_wrapper
 
 __all__ = ['DataType', 'Format', 'Tensor']
 
