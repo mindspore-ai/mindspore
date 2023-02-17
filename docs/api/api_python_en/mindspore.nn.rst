@@ -53,7 +53,7 @@ Wrapper Layer
     mindspore.nn.WithEvalCell
     mindspore.nn.WithLossCell
 
-Convolutional Neural Network Layer
+Convolutional Layer
 ----------------------------------
 
 .. msplatformautosummary::
@@ -69,7 +69,7 @@ Convolutional Neural Network Layer
     mindspore.nn.Conv3dTranspose
     mindspore.nn.Unfold
 
-Recurrent Neural Network Layer
+Recurrent Layer
 ------------------------------
 
 .. msplatformautosummary::
@@ -84,6 +84,21 @@ Recurrent Neural Network Layer
     mindspore.nn.LSTM
     mindspore.nn.LSTMCell
 
+Transformer Layer
+---------------------------
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.MultiheadAttention
+    mindspore.nn.TransformerEncoderLayer
+    mindspore.nn.TransformerDecoderLayer
+    mindspore.nn.TransformerEncoder
+    mindspore.nn.TransformerDecoder
+    mindspore.nn.Transformer
+
 Embedding Layer
 ---------------
 
@@ -96,7 +111,7 @@ Embedding Layer
     mindspore.nn.EmbeddingLookup
     mindspore.nn.MultiFieldEmbeddingLookup
 
-Nonlinear Activation Function Layer
+Nonlinear Activation Layer
 -----------------------------------
 
 .. msplatformautosummary::
