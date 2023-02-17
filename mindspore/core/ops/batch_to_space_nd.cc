@@ -53,24 +53,25 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
   auto block_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockShape));
   auto crops = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kCrops));
   size_t size = block_shape.size();
+  if (x_shape.size() <= size) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', the rank of x_shape must be greater than the rank of `block_shape`.";
+  }
   size_t offset = x_shape.size() - size;
   for (size_t i = 0; i < size; i++) {
     block_shape_prod = block_shape_prod * block_shape[i];
     auto x_block_prod = out_shape[i + offset] * block_shape[i];
     auto crops_sum = crops[i][0] + crops[i][1];
-    if (out_shape[i + offset] >= 0)
-      CheckAndConvertUtils::Check("x block shape prod", x_block_prod, kGreaterThan, crops_sum, prim_name);
+    CheckAndConvertUtils::Check("x block shape prod", x_block_prod, kGreaterThan, crops_sum, prim_name);
     out_shape[i + offset] = x_block_prod - crops_sum;
   }
-  if (out_shape[0] >= 0) {
-    if (out_shape[0] % block_shape_prod != 0) {
-      MS_EXCEPTION(ValueError)
-        << "For '" << prim_name
-        << "', the first dim of 'input_x' must be divisible by 'block_shape_prod'. But got first dim of 'input_x': "
-        << out_shape[0] << ", 'block_shape_prod' with value: " << block_shape_prod << ".";
-    }
+  if (out_shape[0] % block_shape_prod != 0) {
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim_name
+      << "', the first dim of 'input_x' must be divisible by 'block_shape_prod'. But got first dim of 'input_x': "
+      << out_shape[0] << ", 'block_shape_prod' with value: " << block_shape_prod << ".";
   }
-  out_shape[0] = int64_t(floor(out_shape[0] / static_cast<float>(block_shape_prod)));
+  out_shape[0] /= block_shape_prod;
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
