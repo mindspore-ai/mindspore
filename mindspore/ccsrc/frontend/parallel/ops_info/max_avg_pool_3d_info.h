@@ -62,6 +62,7 @@ class MaxPool3DInfo : public OperatorInfo {
   void InferRecvRankIds();
   void InferCommunicationAttrs();
   void AdjustPadList();
+  bool pad_list_adjusted_ = false;
   virtual std::string ReplaceNodeName() const;
   virtual AnfNodePtr GenerateNewOpNode(const AnfNodePtr &new_input, const CNodePtr &cnode);
   OperatorAttrs CreateNeighborExchangeV2Attrs();
