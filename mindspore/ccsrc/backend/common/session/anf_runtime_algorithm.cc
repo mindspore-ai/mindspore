@@ -412,7 +412,14 @@ std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t 
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
-  auto format = build_info->GetOutputFormat(output_idx);
+  std::string format;
+  // If the output is TUPLE, output format list's size is 1. So we use the first element as the output format.
+  if (build_info->GetOutputKernelObjectType(kIndex0) == KernelObjectType::TUPLE && output_idx > kIndex0) {
+    MS_LOG(DEBUG) << "TUPLE output format index " << output_idx << " has exceeded the boundary. Use index 0 instead.";
+    format = build_info->GetOutputFormat(kIndex0);
+  } else {
+    format = build_info->GetOutputFormat(output_idx);
+  }
   if (format == kernel::KernelBuildInfo::kInvalidFormat) {
     MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
                       << " has a invalid output format" << trace::DumpSourceLines(node);
