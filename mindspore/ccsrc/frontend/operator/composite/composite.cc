@@ -565,8 +565,10 @@ FuncGraphPtr MakeDictGradient::GenerateFuncGraph(const AbstractBasePtrList &args
 FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   int64_t args_size = SizeToLong(args_spec_list.size());
   constexpr auto py_execute_grad_input_count = 3;
-  constexpr auto op_name = "PyExecute";
-  CheckArgsSize(op_name, args_spec_list, py_execute_grad_input_count);
+  constexpr auto op_name = "PyExecuteGradient";
+  if (args_size < py_execute_grad_input_count) {
+    MS_LOG(EXCEPTION) << "The inputs size of " << op_name << " should not less than " << py_execute_grad_input_count;
+  }
 
   std::ostringstream ss;
   // ▶PyExecute
@@ -635,6 +637,18 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
     }
   }
   (void)grads.emplace_back(bprop->NewCNodeInOrder(values));
+
+  // Add gradients for extra monad.
+  for (size_t i = py_execute_grad_input_count; i < args_spec_list.size(); ++i) {
+    if (args_spec_list[i]->isa<abstract::AbstractUMonad>()) {
+      (void)grads.emplace_back(NewValueNode(kUMonad));
+    } else if (args_spec_list[i]->isa<abstract::AbstractIOMonad>()) {
+      (void)grads.emplace_back(NewValueNode(kIOMonad));
+    } else {
+      MS_LOG(EXCEPTION) << "The extra input of " << op_name << " should be UMonad or IOMonad, but got "
+                        << args_spec_list[i]->ToString();
+    }
+  }
 
   bprop->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop->set_output(bprop->NewCNodeInOrder(grads));
