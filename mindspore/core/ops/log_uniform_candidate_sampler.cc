@@ -61,6 +61,9 @@ class LogUniformCandidateSamplerInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    if (input_args.empty()) {
+      MS_EXCEPTION(ValueError) << "LogUniformCandidateSampler input can not be empty";
+    }
     // check input data type
     const std::set<TypePtr> valid_types = {kInt64};
     CheckAndConvertUtils::CheckTensorTypeValid("true_classes", input_args[0]->BuildType(), valid_types,
