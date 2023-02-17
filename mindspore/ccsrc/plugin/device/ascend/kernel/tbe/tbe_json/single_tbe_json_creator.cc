@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,6 +174,9 @@ void SingleTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
   (*input_desc)[kJDataType] = GetJsonValue<std::string>(*input_desc, kJDtype);
   (*input_desc)[kJOriShape] = ori_shape;
   (*input_desc)[kJOriFormat] = def_format;
+  if (common::AnfAlgo::GetCNodeName(anf_node) == kMaxPool3DGradGradDOpName) {
+    (*input_desc)[kJOriFormat] = kOpFormat_NDHWC;
+  }
   (*input_desc)[kJShape] = shape;
   (*input_desc)[kJFormat] = format;
   (*input_desc)[kJValid] = true;
@@ -372,6 +375,9 @@ void SelectTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
   (*input_desc)[kJDataType] = GetJsonValue<std::string>(*input_desc, kJDtype);
   (*input_desc)[kJOriShape] = ori_shape;
   (*input_desc)[kJOriFormat] = def_format;
+  if (common::AnfAlgo::GetCNodeName(anf_node) == kMaxPool3DGradGradDOpName) {
+    (*input_desc)[kJOriFormat] = kOpFormat_NDHWC;
+  }
   (*input_desc)[kJShape] = shape;
   (*input_desc)[kJFormat] = format;
   (*input_desc)[kJValid] = true;

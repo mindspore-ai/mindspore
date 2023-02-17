@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -581,6 +581,9 @@ ShapeVector DeviceShapeTransfer::NC1HWC0DeviceShape(const ShapeVector &shape, co
 }
 
 ShapeVector DeviceShapeTransfer::NDC1HWC0DeviceShape(const ShapeVector &shape, const TypeId &type) {
+  if (shape.size() == kDim6) {
+    return shape;
+  }
   if (shape.size() != kDim5) {
     MS_LOG(EXCEPTION) << "Check dims failed, expect shape dim 5, but got shape dim : " << shape.size();
   }

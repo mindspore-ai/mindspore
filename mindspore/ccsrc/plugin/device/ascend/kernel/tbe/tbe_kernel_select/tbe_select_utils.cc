@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,6 +114,9 @@ bool HostCheck::CheckValidInOutDeviceShape(const AnfNodePtr &node, size_t index,
   std::set<std::string> check_5D_format = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
   if (check_4D_format.find(format) != check_4D_format.end()) {
     return infer_shape.size() == kShape4dDims;
+  }
+  if (format == kOpFormat_NDC1HWC0) {
+    return (infer_shape.size() == kShape5dDims) || (infer_shape.size() == kShape6dDims);
   }
   if (check_5D_format.find(format) != check_5D_format.end()) {
     return infer_shape.size() == kShape5dDims;
