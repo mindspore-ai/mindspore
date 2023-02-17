@@ -899,7 +899,6 @@ bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann
   auto check_ret = DispatchCompileTask(check_json);
   compute_json[kJInputDesc] = inputs_json_tmp;
   auto json_ret = TurnStrToJson(check_ret);
-  MS_LOG(INFO) << "Check supported result: " << check_ret;
   if (json_ret.at(kStatus) == kFailed) {
     MS_LOG(DEBUG) << "Call check supported api failed, result info: " << check_ret;
     return false;

@@ -727,7 +727,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
   auto &op_executor = runtime::OpExecutor::GetInstance();
   op_executor.Register([this]() { BatchBuildCallback(); });
 
-  MS_LOG(INFO) << "Start";
+  MS_LOG(DEBUG) << "Start";
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   const auto &graphs = graph_compiler_info.graphs_;
   auto inputs = GetRunGraphInputs(graph_compiler_info, args);
@@ -805,7 +805,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
   if (root_graph_->has_flag(kFlagUseDynamicShapeProcess)) {
     ClearResource();
   }
-  MS_LOG(INFO) << "End";
+  MS_LOG(DEBUG) << "End";
 }
 
 void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
@@ -1101,7 +1101,7 @@ void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, Vecto
 void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
-  MS_LOG(INFO) << "Run Op " << op_run_info->base_op_run_info.op_name;
+  MS_LOG(DEBUG) << "Run Op " << op_run_info->base_op_run_info.op_name;
   // Get the device context.
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});

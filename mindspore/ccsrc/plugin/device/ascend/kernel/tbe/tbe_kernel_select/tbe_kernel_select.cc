@@ -422,30 +422,30 @@ bool TbeKernelSelect::IsSupportFormatDTypeValid(const SupportFormatDType &suppor
 }
 
 void TbeKernelSelect::PrintSupportedFormatDtype(const SupportFormatDType &support_format_dtype) {
-  MS_LOG(INFO) << "full_name: " << full_name_;
-  MS_LOG(INFO) << "==============input dtype=============";
+  MS_LOG(DEBUG) << "full_name: " << full_name_;
+  MS_LOG(DEBUG) << "==============input dtype=============";
   for (auto input : support_format_dtype.input_dtypes) {
     std::stringstream ss;
     (void)copy(input.begin(), input.end(), std::ostream_iterator<std::string>(ss, ","));
-    MS_LOG(INFO) << "[ " << ss.str() << " ]";
+    MS_LOG(DEBUG) << "[ " << ss.str() << " ]";
   }
-  MS_LOG(INFO) << "==============input format=============";
+  MS_LOG(DEBUG) << "==============input format=============";
   for (auto input : support_format_dtype.input_formats) {
     std::stringstream ss;
     (void)copy(input.begin(), input.end(), std::ostream_iterator<std::string>(ss, ","));
-    MS_LOG(INFO) << "[ " << ss.str() << " ]";
+    MS_LOG(DEBUG) << "[ " << ss.str() << " ]";
   }
-  MS_LOG(INFO) << "==============output dtype=============";
+  MS_LOG(DEBUG) << "==============output dtype=============";
   for (auto input : support_format_dtype.output_dtypes) {
     std::stringstream ss;
     (void)copy(input.begin(), input.end(), std::ostream_iterator<std::string>(ss, ","));
-    MS_LOG(INFO) << "[ " << ss.str() << " ]";
+    MS_LOG(DEBUG) << "[ " << ss.str() << " ]";
   }
-  MS_LOG(INFO) << "==============output format=============";
+  MS_LOG(DEBUG) << "==============output format=============";
   for (auto input : support_format_dtype.output_formats) {
     std::stringstream ss;
     (void)copy(input.begin(), input.end(), std::ostream_iterator<std::string>(ss, ","));
-    MS_LOG(INFO) << "[ " << ss.str() << " ]";
+    MS_LOG(DEBUG) << "[ " << ss.str() << " ]";
   }
 }
 

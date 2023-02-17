@@ -110,7 +110,6 @@ GeFormat TransformUtil::ConvertFormat(const string &format, const size_t shape_s
     {kOpFormat_FRACTAL_ZN_LSTM, GeFormat::FORMAT_FRACTAL_ZN_LSTM},
     {kOpFormat_ND_RNN_BIAS, GeFormat::FORMAT_ND_RNN_BIAS},
     {kOpFormat_FRACTAL_ZN_RNN, GeFormat::FORMAT_FRACTAL_ZN_RNN}};
-  MS_LOG(INFO) << "GetGeFormat format:" << format << " shape_size:" << shape_size;
   if (format == kOpFormat_DEFAULT) {
     return shape_size == k4dSize ? GeFormat::FORMAT_NCHW : GeFormat::FORMAT_ND;
   }
@@ -128,12 +127,12 @@ std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const ShapeVector &
   // convert me shape to ge shape
   GeShape shape(me_shape);
   if (shape.GetDimNum() == 0) {
-    MS_LOG(INFO) << "The dims size of Ge tensor is zero";
+    MS_LOG(DEBUG) << "The dims size of Ge tensor is zero";
   }
   // convert me format to ge format
   GeFormat ge_format = ConvertFormat(format, me_shape.size());
   if (ge_format == GeFormat::FORMAT_ND) {
-    MS_LOG(INFO) << "Set ND data format";
+    MS_LOG(DEBUG) << "Set ND data format";
   }
   // convert me datatype to ge datatype
   GeDataType data_type = ConvertDataType(me_type);
@@ -158,7 +157,7 @@ std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const ShapeVector &
     desc->SetOriginFormat(ge_ori_format);
   }
 
-  MS_LOG(INFO) << "SetRealDimCnt is :" << me_shape.size();
+  MS_LOG(DEBUG) << "SetRealDimCnt is :" << me_shape.size();
   desc->SetRealDimCnt(SizeToInt(me_shape.size()));
   return desc;
 }

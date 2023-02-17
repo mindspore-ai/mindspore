@@ -214,7 +214,7 @@ bool AicpuOpKernelMod::CheckDeviceSupportBlockingAicpuOpProcess() const {
 
 void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs,
                                            const std::vector<AddressPtr> &outputs) {
-  MS_LOG(INFO) << "CreateCpuKernelInfoOffline start";
+  MS_LOG(DEBUG) << "CreateCpuKernelInfoOffline start";
 
   ParseNodeNameAndNodeSo();
 
@@ -266,7 +266,7 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
     (void)args_.append(reinterpret_cast<const char *>(node_def_str_.data()), node_def_len);
   }
 
-  MS_LOG(INFO) << "CreateCpuKernelInfoOffline end";
+  MS_LOG(DEBUG) << "CreateCpuKernelInfoOffline end";
 }
 
 bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
@@ -282,7 +282,7 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(INFO) << "Start launch of node: " << cnode->fullname_with_scope();
+  MS_LOG(DEBUG) << "Start launch of node: " << cnode->fullname_with_scope();
 
   // create asyncflag_op's event
   CreateAsyncWaitEventAndUpdateEventInfo(cnode);
@@ -368,7 +368,7 @@ int AicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     AscendKernelMod::UpdateOutputSizeList();
   }
 
-  MS_LOG(INFO) << "UpdateExtInfo of " << cnode->fullname_with_scope() << " start";
+  MS_LOG(DEBUG) << "UpdateExtInfo of " << cnode->fullname_with_scope() << " start";
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
   if (input_num == 0 && output_num == 0) {
