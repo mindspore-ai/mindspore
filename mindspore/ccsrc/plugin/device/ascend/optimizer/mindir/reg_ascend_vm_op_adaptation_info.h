@@ -130,11 +130,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kAdamOpName)
   .set_target_op_name(kApplyAdamDOpName)
   .set_need_tbe_check_supported(true);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kApplyAdagradV2OpName).set_backend_op_name(kApplyAdagradV2DOpName);
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kApplyAdamWithAmsgradOpName)
-  .set_target_op_name(kApplyAdamWithAmsgradDOpName)
-  .set_input_attr_info(7, "float")
-  .set_input_attr_info(8, "float")
-  .set_input_attr_info(9, "float");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kApplyAdamWithAmsgradOpName).set_backend_op_name(kApplyAdamWithAmsgradDOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kApplyRMSPropOpName)
   .set_target_op_name(kApplyRMSPropDOpname)
   .set_input_attr_info(5, "float")
