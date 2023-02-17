@@ -40,6 +40,7 @@ class PythonMultiprocessingRuntime {
   virtual void add_new_workers(int32_t num_new_workers) = 0;
   virtual void remove_workers(int32_t num_removed_workers) = 0;
   virtual std::vector<int32_t> get_pids() = 0;
+  virtual bool is_running() = 0;
   virtual ~PythonMultiprocessingRuntime() {}
   virtual void set_thread_to_worker(int32_t worker_id) = 0;
   virtual Status get_thread_to_worker(int32_t *const worker_id) const = 0;
@@ -82,6 +83,8 @@ class PyPythonMultiprocessingRuntime : public PythonMultiprocessingRuntime {
   }
 
   void reset() override { threads_to_workers_.clear(); }
+
+  bool is_running() override { PYBIND11_OVERLOAD_PURE(bool, PythonMultiprocessingRuntime, is_running); }
 
  private:
   std::map<std::thread::id, int32_t> threads_to_workers_{};

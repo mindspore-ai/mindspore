@@ -481,7 +481,8 @@ Status ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, con
     db = nullptr;
     RETURN_STATUS_UNEXPECTED_MR(oss.str());
   }
-  MS_LOG(INFO) << "Succeed to get " << labels.size() << " records from shard " << std::to_string(shard_id) << " index.";
+  MS_LOG(DEBUG) << "Succeed to get " << labels.size() << " records from shard " << std::to_string(shard_id)
+                << " index.";
 
   std::string file_name = file_paths_[shard_id];
   auto realpath = FileUtils::GetRealPath(file_name.c_str());

@@ -2755,8 +2755,8 @@ class _PythonCallable:
                 get_data_from_worker_process = True
             else:
                 # worker process is stopped
-                logger.warning("The worker process of map operation is stopped. "
-                               "So return None to main thread and break the main thread.")
+                logger.info("The worker process of map operation is stopped. "
+                            "So return None to main thread and break the main thread.")
                 return None
         # got value from worker process
         if not isinstance(result, tuple) and get_data_from_worker_process is True:

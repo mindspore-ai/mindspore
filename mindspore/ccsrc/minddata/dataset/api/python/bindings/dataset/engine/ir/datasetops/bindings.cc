@@ -223,7 +223,8 @@ PYBIND_REGISTER(PythonMultiprocessingRuntime, 1, ([](const py::module *m) {
                            THROW_IF_ERROR(rt.get_thread_to_worker(&res));
                            return res;
                          })
-                    .def("reset", &PythonMultiprocessingRuntime::reset);
+                    .def("reset", &PythonMultiprocessingRuntime::reset)
+                    .def("is_running", &PythonMultiprocessingRuntime::is_running);
                 }));
 
 PYBIND_REGISTER(ProjectNode, 2, ([](const py::module *m) {
