@@ -38,11 +38,12 @@ abstract::TupleShapePtr SparseSoftmaxCrossEntropyWithLogitsV2InferShape(
   if (!IsDynamic(features_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("dimension of labels", SizeToLong(labels_shape.size()), kEqual,
                                              labels_rank, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("dimension of logits(features)", SizeToLong(features_shape.size()), kEqual,
+                                             features_rank, op_name);
     (void)CheckAndConvertUtils::CheckInteger("batch of logits(features)", features_shape[kInputIndex0], kEqual,
                                              labels_shape[kInputIndex0], op_name);
   }
-  (void)CheckAndConvertUtils::CheckInteger("dimension of logits(features)", SizeToLong(features_shape.size()), kEqual,
-                                           features_rank, op_name);
+
   auto loss_shape = labels_shape;
   auto backprop_shape = features_shape;
   abstract::ShapePtr loss_shape_ptr, backprop_shape_ptr;
