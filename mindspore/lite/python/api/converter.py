@@ -88,8 +88,8 @@ class Converter:
             Options:TF: "model.pb" | CAFFE: "model.prototxt" | ONNX: "model.onnx" | MINDIR: "model.mindir" |
             TFLITE: "model.tflite" | PYTORCH: "model.pt or model.pth".
         output_file (str): Set the path of the output model. The suffix .ms or .mindir can be automatically generated.
-            If set `export_mindir` to ModelType.MINDIR, then MindSpore's model will be generated, which uses .mindir as
-            suffix. If set `export_mindir` to ModelType.MINDIR_LITE, then MindSpore Lite's model will be generated,
+            If set `save_type` to ModelType.MINDIR, then MindSpore's model will be generated, which uses .mindir as
+            suffix. If set `save_type` to ModelType.MINDIR_LITE, then MindSpore Lite's model will be generated,
             which uses .ms as suffix. For example, the input model is "/home/user/model.prototxt", it will generate the
             model named model.prototxt.ms in /home/user/.
         weight_file (str, optional): Set the path of input model weight file. Required only when fmk_type is
@@ -158,7 +158,7 @@ class Converter:
             - DataType.UINT8:   unsigned 8-bit integer.
             - DataType.UNKNOWN: Set the Same DataType as the model output Tensor.
 
-        export_mindir (ModelType, optional): Set the model type needs to be export. Options: ModelType.MINDIR |
+        save_type (ModelType, optional): Set the model type needs to be export. Options: ModelType.MINDIR |
             ModelType.MINDIR_LITE. Default: ModelType.MINDIR_LITE. For details, see
             `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
         decrypt_key (str, optional): Set the key used to decrypt the encrypted MindIR file, expressed in hexadecimal
@@ -171,9 +171,8 @@ class Converter:
             characters. Only support when `decrypt_mode` is "AES-GCM", the key length is 16. Default: "".
         infer (bool, optional): Whether to do pre-inference after Converter. Default: False.
         train_model (bool, optional):   Whether the model is going to be trained on device. Default: False.
-        no_fusion(bool, optional): Whether avoid fusion optimization. Default: None. when export_mindir is
-            ModelType.MINDIR, None is True, which means avoid fusion optimizatio. when export_mindir is not
-            ModelType.MINDIR, None is False, which means fusion optimization is allowed.
+        optimize(str, optional): Whether avoid fusion optimization. Default: general,
+            which means fusion optimization is allowed.
         device (str, optional): Set target device when converter model. Only valid for Ascend. The use case is when on
             the Ascend device, if you need to the converted model to have the ability to use Ascend backend to perform
             inference, you can set the parameter. If it is not set, the converted model will use CPU backend to perform
@@ -192,14 +191,14 @@ class Converter:
         TypeError: `input_format` is not a Format.
         TypeError: `input_data_type` is not a DataType.
         TypeError: `output_data_type` is not a DataType.
-        TypeError: `export_mindir` is not a ModelType.
+        TypeError: `save_type` is not a ModelType.
         TypeError: `decrypt_key` is not a str.
         TypeError: `decrypt_mode` is not a str.
         TypeError: `enable_encryption` is not a bool.
         TypeError: `encrypt_key` is not a str.
         TypeError: `infer` is not a bool.
         TypeError: `train_model` is not a bool.
-        TypeError: `no_fusion` is not a bool.
+        TypeError: `general` is not a str.
         TypeError: `device` is not a str.
         ValueError: `input_format` is neither Format.NCHW nor Format.NHWC when it is a Format.
         ValueError: `decrypt_mode` is neither "AES-GCM" nor "AES-CBC" when it is a str.
@@ -221,22 +220,22 @@ class Converter:
         input_format: Format.NHWC,
         input_data_type: DataType.FLOAT32,
         output_data_type: DataType.FLOAT32,
-        export_mindir: ModelType.MINDIR_LITE,
+        save_type: ModelType.MINDIR_LITE,
         decrypt_key: ,
         decrypt_mode: AES-GCM,
         enable_encryption: False,
         encrypt_key: ,
         infer: False,
         train_model: False,
-        no_fusion: False,
+        optimize: general,
         device: .
     """
 
     def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file="", weight_fp16=False,
                  input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32,
-                 output_data_type=DataType.FLOAT32, export_mindir=ModelType.MINDIR_LITE, decrypt_key="",
+                 output_data_type=DataType.FLOAT32, save_type=ModelType.MINDIR_LITE, decrypt_key="",
                  decrypt_mode="AES-GCM", enable_encryption=False, encrypt_key="", infer=False, train_model=False,
-                 no_fusion=None, device=""):
+                 optimize="general", device=""):
         check_isinstance("fmk_type", fmk_type, FmkType)
         check_isinstance("model_file", model_file, str)
         check_isinstance("output_file", output_file, str)
@@ -247,7 +246,7 @@ class Converter:
         check_isinstance("input_format", input_format, Format)
         check_isinstance("input_data_type", input_data_type, DataType)
         check_isinstance("output_data_type", output_data_type, DataType)
-        check_isinstance("export_mindir", export_mindir, ModelType)
+        check_isinstance("save_type", save_type, ModelType)
         check_isinstance("decrypt_key", decrypt_key, str)
         check_isinstance("decrypt_mode", decrypt_mode, str)
         check_isinstance("enable_encryption", enable_encryption, bool)
@@ -255,8 +254,7 @@ class Converter:
         check_isinstance("infer", infer, bool)
         check_isinstance("train_model", train_model, bool)
         check_isinstance("device", device, str)
-        if no_fusion is not None:
-            check_isinstance("no_fusion", no_fusion, bool)
+        check_isinstance("optimize", optimize, str)
 
         if not os.path.exists(model_file):
             raise RuntimeError(f"Converter's init failed, model_file does not exist!")
@@ -297,8 +295,8 @@ class Converter:
             self._converter.set_input_data_type(data_type_py_cxx_map.get(input_data_type))
         if output_data_type != DataType.FLOAT32:
             self._converter.set_output_data_type(data_type_py_cxx_map.get(output_data_type))
-        if export_mindir != ModelType.MINDIR_LITE:
-            self._converter.set_export_mindir(model_type_py_cxx_map.get(export_mindir))
+        if save_type != ModelType.MINDIR_LITE:
+            self._converter.set_export_mindir(model_type_py_cxx_map.get(save_type))
         if decrypt_key != "":
             self._converter.set_decrypt_key(decrypt_key)
         self._converter.set_decrypt_mode(decrypt_mode)
@@ -310,10 +308,17 @@ class Converter:
             self._converter.set_infer(infer)
         if train_model:
             self._converter.set_train_model(train_model)
-        if no_fusion is None and export_mindir == ModelType.MINDIR:
+
+        no_fusion = True
+        if optimize == "none":
             no_fusion = True
-        if no_fusion is not None:
-            self._converter.set_no_fusion(no_fusion)
+        elif optimize == "general":
+            no_fusion = False
+        elif optimize == "ascend_oriented":
+            no_fusion = False
+        else:
+            raise ValueError(f"Converter's init failed, optimize must be 'general', 'none' or 'ascend_oriented'.")
+        self._converter.set_no_fusion(no_fusion)
         if device != "":
             self._converter.set_device(device)
 
@@ -325,14 +330,14 @@ class Converter:
               f"input_format: {format_cxx_py_map.get(self._converter.get_input_format())},\n" \
               f"input_data_type: {data_type_cxx_py_map.get(self._converter.get_input_data_type())},\n" \
               f"output_data_type: {data_type_cxx_py_map.get(self._converter.get_output_data_type())},\n" \
-              f"export_mindir: {model_type_cxx_py_map.get(self._converter.get_export_mindir())},\n" \
+              f"save_type: {model_type_cxx_py_map.get(self._converter.get_export_mindir())},\n" \
               f"decrypt_key: {self._converter.get_decrypt_key()},\n" \
               f"decrypt_mode: {self._converter.get_decrypt_mode()},\n" \
               f"enable_encryption: {self._converter.get_enable_encryption()},\n" \
               f"encrypt_key: {self._converter.get_encrypt_key()},\n" \
               f"infer: {self._converter.get_infer()},\n" \
               f"train_model: {self._converter.get_train_model()},\n" \
-              f"no_fusion: {self._converter.get_no_fusion()},\n" \
+              f"optimize: {self._converter.get_no_fusion()},\n" \
               f"device: {self._converter.get_device()}."
         return res
 
