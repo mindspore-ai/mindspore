@@ -61,5 +61,11 @@ int DynamicMemAllocator::DecRefCount(void *ptr, int ref_count) {
   return mem_oper_->DecRefCount(ptr, ref_count);
 }
 
-DynamicMemAllocator::DynamicMemAllocator(int node_id) { mem_oper_ = mem_manager_.GetMemOperator(node_id); }
+DynamicMemAllocator::DynamicMemAllocator(int node_id) {
+  std::lock_guard<std::mutex> l(allocator_mutex_);
+  if (mem_manager_ == nullptr) {
+    mem_manager_ = std::make_shared<DynamicMemManager>();
+  }
+  mem_oper_ = mem_manager_->GetMemOperator(node_id);
+}
 }  // namespace mindspore

@@ -29,7 +29,7 @@ Status ModelParallelRunnerImpl::Init(const std::string &model_path,
     MS_LOG(WARNING) << "ModelParallelRunner is already initialized, not need to initialize it again";
     return kSuccess;
   }
-  model_pool_ = new (std::nothrow) ModelPool;
+  model_pool_ = new (std::nothrow) ModelPool();
   if (model_pool_ == nullptr) {
     MS_LOG(ERROR) << "new model pool failed, model pool is nullptr.";
     return kLiteNullptr;
@@ -54,7 +54,7 @@ Status ModelParallelRunnerImpl::Init(const void *model_data, size_t data_size,
     MS_LOG(WARNING) << "ModelParallelRunner is already initialized, not need to initialize it again";
     return kSuccess;
   }
-  model_pool_ = new (std::nothrow) ModelPool;
+  model_pool_ = new (std::nothrow) ModelPool();
   if (model_pool_ == nullptr) {
     MS_LOG(ERROR) << "new model pool failed, model pool is nullptr.";
     return kLiteNullptr;

@@ -202,7 +202,7 @@ void FuncGraphReuseManager::ReleaseSharedFuncGraph(
   }
   if (all_infer_helpers_.find(runner_id) != all_infer_helpers_.end()) {
     MS_LOG(INFO) << "release shared infer helpers of runner id: " << runner_id;
-    all_kernel_graph_.erase(runner_id);
+    all_infer_helpers_.erase(runner_id);
   }
   if (all_in_names_.find(runner_id) != all_in_names_.end() && all_out_names_.find(runner_id) != all_out_names_.end() &&
       all_in_tensors_.find(runner_id) != all_in_tensors_.end() &&
