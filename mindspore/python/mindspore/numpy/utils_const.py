@@ -133,7 +133,13 @@ def _can_broadcast(*shapes):
     """
     Returns Ture if shapes can broadcast, False if they cannot.
     """
-    _infer_out_shape(*shapes)
+    max_len = max([len(it) for it in shapes])
+    for i in range(max_len):
+        items = [it[i-max_len+len(it)] if i-max_len +
+                 len(it) >= 0 else 1 for it in shapes]
+        max_size = 0 if 0 in items else max(items)
+        if any(item not in (1, max_size) for item in items):
+            return False
     return True
 
 
