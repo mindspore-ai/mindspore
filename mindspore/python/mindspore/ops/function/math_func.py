@@ -7093,11 +7093,11 @@ def normalize_axis_index(axis, ndim):
 
 
 def moveaxis(x, source, destination):
-    perm = [i for i in range(x.ndim)]
-    for s, d in zip(source, destination):
-        tmp = perm[s]
-        perm[s] = perm[d]
-        perm[d] = tmp
+    destination = tuple([normalize_axis_index(ax, x.ndim) for ax in destination])
+    source = tuple([normalize_axis_index(ax, x.ndim) for ax in source])
+    perm = [n for n in range(x.ndim) if n not in source]
+    for dest, src in sorted(zip(destination, source)):
+        perm.insert(dest, src)
     perm = tuple(perm)
     return ops.transpose(x, perm)
 
@@ -7183,6 +7183,9 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     `-2`                    smallest singular value          as below
     other `int` or `float`  -- not supported --              :math:`sum(abs(x)^{ord})^{(1 / ord)}`
     ====================== ================================ ==========================================
+
+    .. note::
+        Currently, plural is not supported.
 
     Args:
         A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.
@@ -7290,23 +7293,29 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
 
     if isinstance(ord, int):
         if len(dim) == 2:
+            row_axis, col_axis = dim
+            row_axis = normalize_axis_index(row_axis, ndim)
+            col_axis = normalize_axis_index(col_axis, ndim)
             if ord == 1:
-                return A.abs().sum(0).max()
+                if col_axis > row_axis:
+                    col_axis -= 1
+                return A.abs().sum(row_axis).max(axis=col_axis)
             if ord == -1:
-                return A.abs().sum(0).min()
+                if col_axis > row_axis:
+                    col_axis -= 1
+                return A.abs().sum(row_axis).min(axis=col_axis)
             if ord == 2:
-                return ops.svd(A, False, False).max(axis=-1)
+                return _multi_svd_norm(A, row_axis, col_axis, 'amax')
             if ord == -2:
-                return ops.svd(A, False, False).min(axis=-1)
+                return _multi_svd_norm(A, row_axis, col_axis, 'amin')
             raise ValueError(f"For norm, the ord {ord} are not support for matrices.")
         if len(dim) == 1:
             if ord == 0:
-                tmp = A != 0
-                return tmp.astype(mstype.float32).sum()
+                return (A != 0).astype(A.dtype).sum(axis=dim, keepdims=keepdim)
             if ord > 0:
                 _lp_norm = _get_cache_prim(ops.LpNorm)(dim, ord, keepdim)
                 return _lp_norm(A)
-            return ops.sum(ops.abs(A).pow(ord)).pow(1.0 / ord)
+            return ops.sum(ops.abs(A).pow(ord), dim=dim, keepdim=keepdim).pow(1.0 / ord)
     if len(dim) == 1:
         if ord == float('inf'):
             return ops.abs(A).max(dim, keepdim)
@@ -7327,8 +7336,6 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
             ret **= ops.reciprocal(ord)
         else:
             ret **= 1 / ord
-        if ops.isnan(ret):
-            return ops.zeros_like(ret)
         return ret
     if len(dim) == 2:
         row_axis, col_axis = dim
