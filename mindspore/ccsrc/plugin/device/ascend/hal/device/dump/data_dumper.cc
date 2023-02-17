@@ -18,16 +18,12 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <algorithm>
-#include <limits>
-#include "utility"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/convert_utils_base.h"
 #include "runtime/dev.h"
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
-#include "runtime/kernel.h"
 #include "runtime/rt_model.h"
 #include "plugin/device/ascend/hal/device/ge_types_convert.h"
 #include "proto/op_mapping_info.pb.h"

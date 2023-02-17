@@ -26,7 +26,6 @@
 #endif
 #include <map>
 #include <sstream>
-#include <iostream>
 
 namespace mindspore {
 struct Status::Data {

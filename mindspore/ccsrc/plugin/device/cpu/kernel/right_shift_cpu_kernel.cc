@@ -16,13 +16,8 @@
 
 #include "plugin/device/cpu/kernel/right_shift_cpu_kernel.h"
 #include <vector>
-#include <cmath>
-#include <type_traits>
 #include <memory>
-#include <functional>
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/arithmetic_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {

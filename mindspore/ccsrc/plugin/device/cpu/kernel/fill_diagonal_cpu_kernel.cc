@@ -18,12 +18,8 @@
 #include <algorithm>
 #include <vector>
 #include <map>
-#include <type_traits>
 #include <memory>
-#include <functional>
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/arithmetic_cpu_kernel.h"
 #include "mindspore/core/ops/fill_diagonal.h"
 
 namespace mindspore {

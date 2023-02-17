@@ -16,15 +16,10 @@
 
 #include "plugin/device/cpu/kernel/cauchy_cpu_kernel.h"
 #include <vector>
-#include <cmath>
-#include <type_traits>
 #include <memory>
-#include <functional>
 #include <random>
 #include "mindspore/core/ops/cauchy.h"
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/arithmetic_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {

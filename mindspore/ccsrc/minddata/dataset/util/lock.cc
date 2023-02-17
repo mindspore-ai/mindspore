@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "minddata/dataset/util/lock.h"
-#include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {

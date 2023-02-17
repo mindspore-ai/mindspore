@@ -17,11 +17,8 @@
 #include "plugin/device/ascend/optimizer/mindir/all_to_all_unify_mindir.h"
 #include <vector>
 #include <string>
-#include <algorithm>
 #include "utils/trace_base.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "include/common/utils/comm_manager.h"
 #include "backend/common/optimizer/helper.h"
 #include "frontend/parallel/ops_info/ops_utils.h"

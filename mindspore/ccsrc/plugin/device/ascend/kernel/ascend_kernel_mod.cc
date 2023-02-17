@@ -15,9 +15,10 @@
  */
 
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
-#include "runtime/device/kernel_runtime.h"
-#include "runtime/rt.h"
 #include "include/common/utils/anfalgo.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/utils.h"
+#include "utils/log_adapter.h"
 namespace mindspore {
 namespace kernel {
 void AscendKernelMod::SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node) {

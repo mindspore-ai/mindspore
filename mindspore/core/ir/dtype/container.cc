@@ -18,10 +18,11 @@
 #include <string>
 #include <cstdlib>
 #include <algorithm>
-#include "ir/dtype.h"
+#include <iostream>
+#include <iterator>
+#include <type_traits>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#include "ir/value.h"
 
 namespace mindspore {
 static std::string DumpTypeVector(const std::vector<TypePtr> &elements, bool is_dumptext, bool is_dynamic = false,

@@ -17,21 +17,16 @@
 #include <algorithm>
 #include <utility>
 #include <unordered_set>
+
 #include "plugin/device/ascend/kernel/tbe/tiling/op_tiling_adapter.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_kernel_build.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/device/ge_types_convert.h"
 #include "include/common/utils/utils.h"
-#include "external/graph/tensor.h"
-#include "external/register/op_tiling_registry.h"
-#include "graph/utils/graph_utils.h"
-#include "common/ge_inner_error_codes.h"
 #include "graph/utils/op_desc_utils.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "graph/utils/tensor_utils.h"
-#include "plugin/device/ascend/kernel/acl/acl_kernel_utils.h"
 #include "kernel/oplib/super_bar.h"
 
 namespace mindspore {

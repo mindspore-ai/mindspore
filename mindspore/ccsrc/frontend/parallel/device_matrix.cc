@@ -23,9 +23,10 @@
 #include <utility>
 #include <vector>
 
-#include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/status.h"
 #include "utils/log_adapter.h"
+#include "frontend/parallel/tensor_layout/map.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace parallel {

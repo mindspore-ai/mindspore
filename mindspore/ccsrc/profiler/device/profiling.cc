@@ -18,7 +18,6 @@
 #include <chrono>
 #include <cmath>
 #include "utils/log_adapter.h"
-#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

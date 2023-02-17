@@ -16,8 +16,20 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/adaptive_max_pool2d_fusion.h"
 #include <memory>
 #include <vector>
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
+
 #include "backend/common/optimizer/helper.h"
+#include "abstract/dshape.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "backend/common/session/kernel_graph.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
+#include "ir/anf.h"
+#include "ir/func_graph.h"
+#include "ir/primitive.h"
+#include "ir/value.h"
+#include "mindapi/base/type_id.h"
+#include "ops/core_ops.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace opt {

@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_build.h"
-#include <google/protobuf/text_format.h>
+
 #include <utility>
 #include <string>
 #include <vector>
 #include <memory>
-#include <algorithm>
 #include <map>
 #include <climits>
+
 #include "include/common/utils/utils.h"
-#include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_mod.h"
 #include "proto/tensor.pb.h"
 #include "proto/tensor_shape.pb.h"
@@ -33,7 +32,6 @@
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
-#include "backend/common/session/kernel_graph.h"
 #include "kernel/common_utils.h"
 #include "kernel/oplib/oplib.h"
 #include "cce/fwk_adpt_struct.h"

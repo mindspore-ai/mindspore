@@ -16,17 +16,12 @@
 
 #include "plugin/device/ascend/hal/device/dump/kernel_dumper.h"
 #include <algorithm>
-#include <limits>
-#include "utility"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
-#include "proto/ge_dtype.pb.h"
-#include "external/graph/types.h"
 #include "include/common/utils/anfalgo.h"
 #include "graph/def_types.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/convert_utils_base.h"
 #include "runtime/kernel.h"
 #include "plugin/device/ascend/hal/device/ge_types_convert.h"
 #include "proto/op_mapping_info.pb.h"

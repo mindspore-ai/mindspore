@@ -21,7 +21,6 @@
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "nlohmann/json.hpp"
-#include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include "plugin/device/ascend/hal/profiler/options.h"
 
 namespace mindspore {
