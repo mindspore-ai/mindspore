@@ -87,11 +87,14 @@ class Profiler:
 
     Args:
         output_path (str, optional): Output data path. Default: "./data".
+        op_time (bool, optional): (Ascend/GPU) Whether to collect operators performance data. Default value: True.
         profile_communication (bool, optional): (Ascend only) Whether to collect communication performance data in
             a multi devices training,collect when True. Setting this parameter has no effect during single device
-            training. Default: False.
+            training. When using this parameter, op_time must be set to True. Default: False.
         profile_memory (bool, optional): (Ascend only) Whether to collect tensor memory data, collect when True.
-            Default: False.
+            When using this parameter, op_time must be set to True. Default: False.
+        parallel_strategy (bool, optional): (Ascend only) Whether to collect parallel policy performance data.
+            Default value: true.
         start_profile (bool, optional): The start_profile parameter controls whether to enable or disable performance
             data collection based on conditions. Default: True.
         aicore_metrics (int, optional): (Ascend only) Types of AICORE performance data collected. The value must be in
@@ -115,6 +118,10 @@ class Profiler:
               The duration of the operator is the difference between the two timestamps.
             - False: The asynchronous way. The duration of the operator is that of sending from the CPU to the GPU.
               This method can reduce the impact of adding profiler on training time.
+        data_process (bool, optional): (Ascend/GPU) Whether to collect data to prepare performance data.
+            Default value: True.
+        timeline_limit (int, optional): Set the maximum storage size of the timeline file (unit M). When using this
+            parameter, op_time must be set to True. Default value: 500.
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,
@@ -1347,6 +1354,14 @@ class Profiler:
 
     def _parser_kwargs(self, kwargs):
         """Parse kwargs vale."""
+        env_run_config = json.loads(os.getenv("MS_PROFILER_RUN_CONFIG", "{}"))
+        params = list(kwargs.keys())
+        if not env_run_config.get("start"):
+            for param in params:
+                if param not in DeviceSupportParam.__getattr__(f'{self._device_target}'.upper()).value:
+                    logger.warning("%s is an invalid param which don't work.", param)
+                    kwargs.pop(param)
+
         self._data_process = kwargs.pop("data_process", True)
         if not isinstance(self._data_process, bool):
             logger.warning(f"For '{self.__class__.__name__}', the parameter data_process must be bool, "
@@ -1360,7 +1375,7 @@ class Profiler:
             self._op_time = True
 
         timeline_limit = kwargs.pop("timeline_limit", 500)
-        if not isinstance(timeline_limit, int):
+        if isinstance(timeline_limit, bool) or not isinstance(timeline_limit, int):
             logger.warning(f"For '{self.__class__.__name__}', the parameter timeline_limit must be int, "
                            f"but got type {type(timeline_limit)}, it will be set to 500.")
             timeline_limit = 500
@@ -1369,11 +1384,6 @@ class Profiler:
                 "[Profiler]The 'timeline_limit' parameter must be greater than 0, it will be set to 500.")
             timeline_limit = 500
         self._timeline_size_limit_byte = timeline_limit * 1024 * 1024
-
-        for param in kwargs.keys():
-            if param not in DeviceSupportParam.__getattr__(f'{self._device_target}'.upper()).value \
-                    and kwargs.get(param):
-                logger.warning("%s are invalid param which don't work.", param)
 
     def _analyse_hccl_info(self):
         """Analyse hccl info."""

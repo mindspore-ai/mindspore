@@ -39,8 +39,8 @@ def parse_device_support_param(origin_options, final_options, factor_s_to_us=1e7
     support_list = DeviceSupportParam.__getattr__(f'{device_target}').value
     support_dict = final_options.copy()
     for param in list(set(origin_options) | set(final_options)):
-        if param not in support_list and origin_options.get(param):
-            logger.warning(f"[Profiler]'{param}' is invalid params on this platform.")
+        if param not in support_list and param in list(origin_options.keys()):
+            logger.warning(f"[Profiler]'{param}' is an invalid param which don't work.")
         if param not in support_list and final_options.get(param):
             support_dict.pop(param)
     simple_options = {

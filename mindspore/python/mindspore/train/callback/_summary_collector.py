@@ -488,20 +488,8 @@ class SummaryCollector(Callback):
             self._record.add_value('custom_lineage_data', 'custom_lineage_data', packaged_custom_data)
             self._has_saved_custom_data = True
             self._record.record(cb_params.cur_step_num)
-
-        if self._first_step:
-            self._tensor_collect_range = self._get_tensor_collect_range(cb_params, self._dataset_sink_mode)
-            self._collect_at_step_end(cb_params, plugin_filter=None)
-            self._first_step = False
-            self._record.flush()
-        else:
-            current = cb_params.cur_epoch_num if self._dataset_sink_mode else cb_params.cur_step_num
-            if current % self._collect_freq == 0 and current in self._tensor_collect_range:
-                self._collect_at_step_end(cb_params, plugin_filter=None)
-            elif current in self._tensor_collect_range:
-                self._collect_at_step_end(cb_params, lambda plugin: plugin == PluginEnum.TENSOR.value)
-            elif current % self._collect_freq == 0:
-                self._collect_at_step_end(cb_params, lambda plugin: plugin != PluginEnum.TENSOR.value)
+        if not self._dataset_sink_mode:
+            self._collect_tensor_data(cb_params)
 
         collect_landscape = self._collect_specified_data.get('collect_landscape')
         if collect_landscape is not None:
@@ -515,6 +503,24 @@ class SummaryCollector(Callback):
 
         if collect_landscape and collect_landscape.get('unit', 'step') == 'step' and collect_interval:
             self._save_model_params_for_landscape(cb_params)
+
+    def _collect_tensor_data(self, cb_params):
+        """Collect tensor summary data."""
+        if cb_params.mode != ModeEnum.TRAIN.value:
+            return
+        if self._first_step:
+            self._tensor_collect_range = self._get_tensor_collect_range(cb_params, self._dataset_sink_mode)
+            self._collect_at_step_end(cb_params, plugin_filter=None)
+            self._first_step = False
+            self._record.flush()
+        else:
+            current = cb_params.cur_epoch_num if self._dataset_sink_mode else cb_params.cur_step_num
+            if current % self._collect_freq == 0 and current in self._tensor_collect_range:
+                self._collect_at_step_end(cb_params, plugin_filter=None)
+            elif current in self._tensor_collect_range:
+                self._collect_at_step_end(cb_params, lambda plugin: plugin == PluginEnum.TENSOR.value)
+            elif current % self._collect_freq == 0:
+                self._collect_at_step_end(cb_params, lambda plugin: plugin != PluginEnum.TENSOR.value)
 
     def _get_tensor_collect_range(self, cb_params, dataset_sink_mode):
         """Get tensor collect range."""
@@ -542,6 +548,7 @@ class SummaryCollector(Callback):
 
     def epoch_end(self, run_context):
         cb_params = run_context.original_args()
+        self._collect_tensor_data(cb_params)
         collect_landscape = self._collect_specified_data.get('collect_landscape')
         if collect_landscape is not None:
             intervals = collect_landscape.get('intervals')
@@ -863,14 +870,14 @@ class SummaryCollector(Callback):
         if regular is not None:
             for parameter in parameters:
                 if re.match(regular, parameter.name):
-                    self._record.add_value(PluginEnum.HISTOGRAM.value, parameter.name+'/auto', parameter.data)
+                    self._record.add_value(PluginEnum.HISTOGRAM.value, parameter.name + '/auto', parameter.data)
             return
 
         # Note: If `histogram_regular` in `self._collect_specified_data` and the value is None,
         # we will collect the first five parameters.
         default_parameter_count = 5
         for parameter in parameters[:default_parameter_count]:
-            self._record.add_value(PluginEnum.HISTOGRAM.value, parameter.name+'/auto', parameter.data)
+            self._record.add_value(PluginEnum.HISTOGRAM.value, parameter.name + '/auto', parameter.data)
 
     @staticmethod
     def _get_learning_rate(optimizer):
