@@ -21,13 +21,13 @@ mindspore.nn.AdaptiveAvgPool2d
         - **output_size** (Union[int, tuple]) - 输出特征图的尺寸为H * W。可以是int类型的H和W组成的tuple，也可以为一个int值，代表相同H和W，或None，如果是None，则意味着输出大小与输入相同。
 
     输入：
-        - **x** (Tensor) - AdaptiveAvgPool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
+        - **input** (Tensor) - AdaptiveAvgPool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
 
     输出：
         Tensor，输出shape为 :math:`(N, C_{out}, H_{out}, W_{out})`。
 
     异常：
         - **ValueError** - 如果 `output_size` 是tuple，并且 `output_size` 的长度不是2。
-        - **TypeError** - 如果 `x` 不是Tensor。
-        - **TypeError** - 如果 `x` 的数据类型不是float16、float32或者float64。
-        - **ValueError** - 如果 `x` 的维度小于或等于 `output_size` 的维度。
+        - **TypeError** - 如果 `input` 不是Tensor。
+        - **TypeError** - 如果 `input` 的数据类型不是float16、float32或者float64。
+        - **ValueError** - 如果 `input` 的维度小于或等于 `output_size` 的维度。
