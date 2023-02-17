@@ -97,7 +97,8 @@ void CodeMSModelCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<Code
     for (size_t i = 0; i < outputs.size(); ++i) {
       ofs << "  shape_size += " << outputs[i]->shape().size() << " * sizeof(int64_t);\n";
     }
-    ofs << "  return UP_ROUND(GetBufferSize(),4) + UP_ROUND(WEIGHT_BUF_SIZE,4) + shape_size + "
+    ofs << "  return UP_ROUND(GetBufferSize" << ctx->GetCurModelIndex()
+        << "(),4) + UP_ROUND(WEIGHT_BUF_SIZE,4) + shape_size + "
         << "(UP_ROUND(sizeof(MicroTensor),4) + UP_ROUND(sizeof(MicroTensor *),4)) * "
         << (ctx->graph_inputs().size() + ctx->graph_outputs().size()) << ";\n}\n";
   } else {
@@ -158,13 +159,11 @@ void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderCont
           << "    buffer_size = UP_ROUND(buffer_size,4);\n";
     }
     ofs << "  }\n";
-    ofs << R"RAW(
-  if (buffer_size > workspace_size) {
-    micro_model->runtime_buffer = NULL;
-    SetBuffer(NULL);
-    return;
-  }
-)RAW";
+    ofs << "  if (buffer_size > workspace_size) {\n"
+        << "    micro_model->runtime_buffer = NULL;\n"
+        << "    SetBuffer" << ctx->GetCurModelIndex() << "(NULL);\n"
+        << "    return;\n"
+        << "  }\n";
     auto array_tostring = [&ofs](Tensor *tensor, const std::string &prefix, size_t index) {
       ofs << kAlignedString << prefix << "_tensors[" << index << "]->type = " << EnumNameMSDataType(tensor->data_type())
           << ";\n";
