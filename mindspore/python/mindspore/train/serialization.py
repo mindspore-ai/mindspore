@@ -305,7 +305,7 @@ def _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name):
         raise TypeError("For 'save_checkpoint', the parameter {} for checkpoint file name is invalid,"
                         "'ckpt_file_name' must be "
                         "string, but got {}.".format(ckpt_file_name, type(ckpt_file_name)))
-    ckpt_file_name = os.path.realpath(ckpt_file_name)
+    ckpt_file_name = os.path.abspath(ckpt_file_name)
     if os.path.isdir(ckpt_file_name):
         raise IsADirectoryError("For 'save_checkpoint', the parameter `ckpt_file_name`: {} is a directory, "
                                 "it must be a file name.".format(ckpt_file_name))
@@ -549,7 +549,7 @@ def load(file_name, **kwargs):
     if not os.path.exists(file_name):
         raise ValueError("For 'load', the argument 'file_name'(MindIR file) does not exist, "
                          "please check whether the 'file_name' is correct.")
-    file_name = os.path.realpath(file_name)
+    file_name = os.path.abspath(file_name)
 
     # set customized functions for dynamic obfuscation
     obfuscated = _check_load_obfuscate(**kwargs)
@@ -859,7 +859,7 @@ def _check_ckpt_file_name(ckpt_file_name):
         raise ValueError("For 'load_checkpoint', the checkpoint file should end with '.ckpt', please "
                          "input the correct 'ckpt_file_name'.")
 
-    ckpt_file_name = os.path.realpath(ckpt_file_name)
+    ckpt_file_name = os.path.abspath(ckpt_file_name)
     if not os.path.exists(ckpt_file_name):
         raise ValueError("For 'load_checkpoint', the checkpoint file: {} does not exist, please check "
                          "whether the 'ckpt_file_name' is correct.".format(ckpt_file_name))
@@ -1056,7 +1056,7 @@ def _save_graph(network, file_name):
     """
     logger.info("Execute the process of saving graph.")
 
-    file_name = os.path.realpath(file_name)
+    file_name = os.path.abspath(file_name)
     graph_pb = network.get_func_graph_proto()
     if graph_pb:
         with open(file_name, "wb") as f:
@@ -1236,7 +1236,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
                                + str(columns))
         inputs = tuple(inputs_col)
 
-    file_name = os.path.realpath(file_name)
+    file_name = os.path.abspath(file_name)
     if 'enc_key' in kwargs.keys():
         kwargs['enc_key'], kwargs['enc_mode'] = _check_key_mode_type(file_format, **kwargs)
     _export(net, file_name, file_format, *inputs, **kwargs)
@@ -1291,7 +1291,7 @@ def _save_air(net, file_name, *inputs, **kwargs):
     if os.path.exists(file_name):
         os.chmod(file_name, stat.S_IWUSR)
     if "/" in file_name:
-        real_path = os.path.realpath(file_name[:file_name.rfind("/")])
+        real_path = os.path.abspath(file_name[:file_name.rfind("/")])
         os.makedirs(real_path, exist_ok=True)
     if 'enc_key' in kwargs.keys() and 'enc_mode' in kwargs.keys():
         _executor.export(file_name, graph_id, enc_key=kwargs.get('enc_key'), encrypt_func=kwargs.get('enc_mode'))
@@ -1648,7 +1648,7 @@ def parse_print(print_file_name):
         [[ 1.00000000e+00,  2.00000000e+00,  3.00000000e+00,  4.00000000e+00],
         [ 5.00000000e+00,  6.00000000e+00,  7.00000000e+00,  8.00000000e+00]])]
     """
-    print_file_path = os.path.realpath(print_file_name)
+    print_file_path = os.path.abspath(print_file_name)
 
     if os.path.getsize(print_file_path) == 0:
         raise ValueError("For 'parse_print', the print file may be empty, please make sure enter the correct "
@@ -2176,7 +2176,7 @@ def _get_mindir_inputs(file_name):
         >>> input_tensor = get_mindir_inputs("lenet.mindir")
     """
     Validator.check_file_name_by_regular(file_name)
-    file_name = os.path.realpath(file_name)
+    file_name = os.path.abspath(file_name)
     model = read_proto(file_name)
     input_tensor = []
 
