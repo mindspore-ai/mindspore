@@ -852,8 +852,10 @@ def get_fill_v2_vmap_rule(prim, axis_size):
         if is_all_none:
             return result
         value_shape, shape_dim = shape_bdim
-        if isinstance(value_shape, Tensor_):
-            value_shape = tuple(value_shape.asnumpy())
+        if isinstance(value_shape, (Tensor_, Tensor)):
+            _raise_value_error(
+                "For `P.FillV2`, when the `shape` is a tensor, VMAP is not supported!"
+            )
         if shape_dim is not None:
             _raise_value_error(
                 "The source axis of `shape` in `P.FillV2` must be None, but got {}."
