@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/scatter_nd_cpu_kernel.h"
 #include <algorithm>
 #include <string>
+#include <mutex>
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -39,16 +40,64 @@ struct ComputeParams {
 };
 
 template <typename S, typename T>
-void Compute(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, const size_t start, const size_t end) {
+void ParallelLaunch(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, size_t offset, size_t unit) {
   T *target = params->target_;
-  S *indices = params->indices_;
   T *updates = params->updates_;
+  auto compute_func = [&target, &updates](size_t t_idx, size_t u_idx) {
+    auto &atomic_ = reinterpret_cast<std::atomic<T> *>(target)[t_idx];
+    T expect = atomic_.load();
+    T result;
+    do {
+      result = expect + updates[u_idx];
+    } while (!atomic_.compare_exchange_weak(expect, result));
+  };
+  auto task = [&compute_func, &params, offset, unit](size_t update_start, size_t update_end) {
+    for (size_t idx = update_start; idx < update_end; idx++) {
+      compute_func(offset + idx, unit + idx);
+    }
+  };
+  ParallelLaunchAutoSearch(task, IntToSize(params->unit_size_), content, &content->parallel_search_info_);
+}
+
+// the std::atomic don't support complex type, use mutex instead.
+template <typename S, typename T>
+void LaunchForComplex(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, size_t offset, size_t unit) {
+  T *target = params->target_;
+  T *updates = params->updates_;
+  std::mutex task_mutex;
+  auto task = [&target, &updates, unit, offset, &task_mutex](size_t update_start, size_t update_end) {
+    for (size_t idx = update_start; idx < update_end; idx++) {
+      std::lock_guard<std::mutex> task_lock(task_mutex);
+      target[offset + idx] += updates[unit + idx];
+    }
+  };
+  ParallelLaunchAutoSearch(task, IntToSize(params->unit_size_), content, &content->parallel_search_info_);
+}
+
+#define DEF_COMPLEX_LAUNCH_FUNC(S, T)                                                                          \
+  template <>                                                                                                  \
+  void ParallelLaunch<S, T>(ScatterNdCpuKernelMod * content, const ComputeParams<S, T> *params, size_t offset, \
+                            size_t unit) {                                                                     \
+    LaunchForComplex(content, params, offset, unit);                                                           \
+  }
+
+DEF_COMPLEX_LAUNCH_FUNC(int16_t, complex128)
+DEF_COMPLEX_LAUNCH_FUNC(int32_t, complex128)
+DEF_COMPLEX_LAUNCH_FUNC(int64_t, complex128)
+DEF_COMPLEX_LAUNCH_FUNC(int16_t, complex64)
+DEF_COMPLEX_LAUNCH_FUNC(int32_t, complex64)
+DEF_COMPLEX_LAUNCH_FUNC(int64_t, complex64)
+
+template <typename S, typename T>
+void Compute(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, const size_t start, const size_t end) {
+  S *indices = params->indices_;
   std::vector<int> *out_strides = params->out_strides_;
 
   for (size_t i = start; i < end; ++i) {
     int offset = 0;
-    for (size_t j = 0; j < IntToSize(params->indices_unit_rank_); ++j) {
-      int index = static_cast<int>(indices[i * IntToSize(params->indices_unit_rank_) + j]);
+    auto indices_unit_rank = IntToSize(params->indices_unit_rank_);
+    for (size_t j = 0; j < indices_unit_rank; ++j) {
+      int index = static_cast<int>(indices[i * indices_unit_rank + j]);
       if (index < 0) {
         MS_LOG(EXCEPTION) << "For '" << kKernelName
                           << "', each element in 'indices' must be greater "
@@ -62,12 +111,7 @@ void Compute(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, 
       }
       offset += index * out_strides->at(j) * params->unit_size_;
     }
-    auto task = [&target, &updates, &params, offset, i](size_t update_start, size_t update_end) {
-      for (size_t idx = update_start; idx < update_end; idx++) {
-        target[IntToSize(offset) + idx] += updates[IntToSize(params->unit_size_) * i + idx];
-      }
-    };
-    ParallelLaunchAutoSearch(task, IntToSize(params->unit_size_), content, &content->parallel_search_info_);
+    ParallelLaunch(content, params, IntToSize(offset), IntToSize(params->unit_size_) * i);
   }
 }
 }  // namespace
