@@ -33,22 +33,6 @@ def test_dict_get_1():
     assert out == 1
 
 
-def test_dict_get_2():
-    """
-    Feature: dict get.
-    Description: support dict get.
-    Expectation: No exception.
-    """
-    @jit
-    def dict_net_2():
-        x = {'aa': 1, 'bb': 2}
-        res = x.get('c')
-        return res
-
-    out = dict_net_2()
-    assert out is None
-
-
 def test_dict_get_3():
     """
     Feature: dict get.

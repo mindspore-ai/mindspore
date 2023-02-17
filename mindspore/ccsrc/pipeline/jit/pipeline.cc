@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -338,7 +338,7 @@ py::object GetVectorRefOutputDataWithPyExecuteObject(const AnfNodePtr &node, con
   return ret;
 }
 
-py::object GetPyExecuteOutput(const AnfNodePtr &output, const BaseRef &value) {
+std::pair<py::object, bool> GetPyExecuteOutput(const AnfNodePtr &output, const BaseRef &value) {
   static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
   if (support_fallback_runtime) {
     const auto &real_output = GetRealOutput(output);
@@ -350,9 +350,8 @@ py::object GetPyExecuteOutput(const AnfNodePtr &output, const BaseRef &value) {
       const auto &output_data = real_output->user_data<kernel::PyExecuteOutputUserData>();
       py::object res_obj = output_data->obj;
       MS_LOG(INFO) << "Has \'PyExecuteOutputUserData\', just return it. res_obj: " << res_obj;
-      if (!py::isinstance<py::none>(res_obj)) {
-        return res_obj;
-      }
+      // Need support real none.
+      return {res_obj, true};
     }
     // Handle multiple input case.
     auto real_output_abs = real_output->abstract();
@@ -362,10 +361,10 @@ py::object GetPyExecuteOutput(const AnfNodePtr &output, const BaseRef &value) {
       if (!utils::isa<VectorRef>(value)) {
         MS_LOG(EXCEPTION) << "When the output is tuple, value should be vector ref.";
       }
-      return GetVectorRefOutputDataWithPyExecuteObject(real_output, value);
+      return {GetVectorRefOutputDataWithPyExecuteObject(real_output, value), true};
     }
   }
-  return py::none();
+  return {py::none(), false};
 }
 }  // namespace
 
@@ -1461,8 +1460,8 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
     res = BaseRefToPyData(value, output_abs);
   }
   // Replace the output if it's not Tensor, but Python data.
-  const auto &py_res = GetPyExecuteOutput(output, value);
-  if (py_res != py::none()) {
+  const auto &[py_res, has_real_output] = GetPyExecuteOutput(output, value);
+  if (has_real_output) {
     return py_res;
   }
 

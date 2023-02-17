@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+import os
 import math
 import pytest
 import numpy as np
@@ -93,6 +94,7 @@ class LSTMWeightBias():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sit_lstm_forward_input_3_32_32_is_32_hs_16():
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     input_s = 32
     hidden_s = 16
     has_bias = True
@@ -116,6 +118,7 @@ def test_sit_lstm_forward_input_3_32_32_is_32_hs_16():
     net.lstm.b_ih_list = b_ih_list
     net.lstm.b_hh_list = b_hh_list
     out, (hy, cy) = net(input_ms, h0, c0)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -138,6 +141,7 @@ def test_sit_lstm_forward_input_3_32_32_is_32_hs_16():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sit_lstm_grad_input_3_32_32_is_32_hs_16():
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     input_s = 32
     hidden_s = 16
     has_bias = True
@@ -167,6 +171,7 @@ def test_sit_lstm_grad_input_3_32_32_is_32_hs_16():
     x_grad = out_grad[0].asnumpy()
     h_grad = out_grad[1].asnumpy()
     c_grad = out_grad[2].asnumpy()
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)

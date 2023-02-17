@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ def test_missing_return():
                         return i + z
                     def g(u):
                         return x + u
-                    # here method 'construct' misses a return statement
+                    # here method 'construct' misses a return statement, mean return None
                     g(y)
                 else:
                     return 7
@@ -57,7 +57,7 @@ def test_missing_return():
     z = Tensor(2, mstype.int32)
     with pytest.raises(TypeError) as er:
         net(x, y, z)
-    assert "Function must has 'return' statement, but missing in bound method 'construct'" in str(er.value)
+    assert "For 'make_range', the 0th input should be a int64 scalar" in str(er.value)
 
 
 def test_nest_function_missing_return():
@@ -76,7 +76,7 @@ def test_nest_function_missing_return():
                         return i + z
                     def g(u):
                         x += u
-                        # nested function 'g' misses a return a statement
+                        # nested function 'g' misses a return a statement, mean that return None.
                     return g(y)
                 else:
                     return 7
@@ -89,7 +89,7 @@ def test_nest_function_missing_return():
     z = Tensor(2, mstype.int32)
     with pytest.raises(TypeError) as er:
         net(x, y, z)
-    assert "Function must has 'return' statement, but missing in function 'g'" in str(er.value)
+    assert "For 'make_range', the 0th input should be a int64 scalar" in str(er.value)
 
 
 def test_raise_in_method():
@@ -164,7 +164,7 @@ def test_any_with_no_return():
     net = NetAnyNoReturn()
     with pytest.raises(TypeError) as er:
         net(tensor)
-    assert "Function must has 'return' statement, but missing in bound method 'construct'" in str(er.value)
+    assert "Cannot join the return values of different branches" in str(er.value)
 
 
 def test_missing_construct():

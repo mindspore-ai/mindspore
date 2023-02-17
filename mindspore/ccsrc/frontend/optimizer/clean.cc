@@ -763,7 +763,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
       std::make_shared<AbstractTuple>(AbstractBasePtrList{data->abstract(), key->abstract()}));
 
     // Build the new dict node.
-    const auto dict_getitem_node = func_graph->NewCNode(
+    const auto dict_getitem_node = func_graph->NewCNodeInOrder(
       {NewValueNode(prim::kPrimPyExecute), script_str_node, key_value_name_tuple, key_value_tuple});
     int64_t index = GetElementIndex(abs_dict->elements(), key);
     const auto &val = abs_dict->elements()[index].second;
@@ -837,7 +837,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
     const auto key_value_tuple = func_graph->NewCNode(key_value_list);
 
     // Build the new dict node.
-    const auto dict_setitem_node = func_graph->NewCNode(
+    const auto dict_setitem_node = func_graph->NewCNodeInOrder(
       {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
     MS_LOG(DEBUG) << "Made dict setitem node: " << dict_setitem_node->DebugString();
     dict_setitem_node->set_debug_info(node->debug_info());
@@ -861,7 +861,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
     const auto script_key_tuple_str = std::make_shared<StringImm>(internal_tuple_keys_str);
     auto script_key_tuple_str_node = NewValueNode(script_key_tuple_str);
     script_key_tuple_str_node->set_abstract(script_key_tuple_str->ToAbstract());
-    const auto make_key_tuple_node = fg->NewCNode(
+    const auto make_key_tuple_node = fg->NewCNodeInOrder(
       {NewValueNode(prim::kPrimPyExecute), script_key_tuple_str_node, script_key_tuple_str_node, node->input(1)});
     make_key_tuple_node->set_debug_info(node->input(1)->debug_info());
     make_key_tuple_node->set_abstract(abs);
@@ -870,8 +870,9 @@ class CleanAfterOptARewriter : public BaseRewriter {
     const auto script_value_tuple_str = std::make_shared<StringImm>(internal_tuple_values_str);
     auto script_value_tuple_str_node = NewValueNode(script_value_tuple_str);
     script_value_tuple_str_node->set_abstract(script_value_tuple_str->ToAbstract());
-    const auto make_value_tuple_node = fg->NewCNode({NewValueNode(prim::kPrimPyExecute), script_value_tuple_str_node,
-                                                     script_value_tuple_str_node, node->input(values_input_index)});
+    const auto make_value_tuple_node =
+      fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_value_tuple_str_node, script_value_tuple_str_node,
+                           node->input(values_input_index)});
     make_value_tuple_node->set_debug_info(node->input(values_input_index)->debug_info());
     make_value_tuple_node->set_abstract(abs);
     // Pack the local parameters values
@@ -906,7 +907,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
 
     // Build the new dict node.
     const auto make_dict_node =
-      fg->NewCNode({NewValueNode(prim::kPrimPyExecute), script_str_node, key_value_name_tuple, key_value_tuple});
+      fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_str_node, key_value_name_tuple, key_value_tuple});
     MS_LOG(DEBUG) << "Made dict node: " << make_dict_node->DebugString();
     make_dict_node->set_debug_info(node->debug_info());
     make_dict_node->set_abstract(abs);
@@ -938,7 +939,52 @@ class CleanAfterOptARewriter : public BaseRewriter {
     {prim::kPrimMakeDict, &ThisClass::ConvertMakeDict},
   };
 
+  AnfNodePtr NoneConvertPyExecute(const FuncGraphPtr &func_graph) {
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto str_value = std::make_shared<StringImm>("None");
+    auto script_node = NewValueNode(str_value);
+    script_node->set_abstract(str_value->ToAbstract());
+
+    auto empty_tuple = std::vector<ValuePtr>();
+    auto empty_tuple_value = std::make_shared<ValueTuple>(empty_tuple);
+
+    auto local_key_node = NewValueNode(empty_tuple_value);
+    local_key_node->set_abstract(empty_tuple_value->ToAbstract());
+
+    auto local_value_node = NewValueNode(empty_tuple_value);
+    local_value_node->set_abstract(empty_tuple_value->ToAbstract());
+
+    AnfNodePtr none_execute_node =
+      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_node, local_key_node, local_value_node});
+    ShapeVector shp{abstract::Shape::kShapeRankAny};
+    auto abs = std::make_shared<abstract::AbstractTensor>(kFloat64, std::make_shared<abstract::Shape>(shp));
+    none_execute_node->set_abstract(abs);
+    MS_LOG(DEBUG) << "none_execute_node:" << none_execute_node->DebugString();
+    return none_execute_node;
+  }
+
+  void CheckCNodeInputsHasNone(const CNodePtr &cnode) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+    if (!support_fallback_runtime) {
+      return;
+    }
+    const auto &inputs = cnode->inputs();
+    const auto &cur_func = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(cur_func);
+    for (auto &input : inputs) {
+      if (!IsValueNode<None>(input)) {
+        continue;
+      }
+      // Convert ValueNode<None> to PyExecute("None", (), ()).
+      auto none_py_execute = NoneConvertPyExecute(cur_func);
+      manager_->Replace(input, none_py_execute);
+    }
+  }
+
   AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode, const PrimitivePtr &prim) override {
+    // Process None in CNode with JIT Fallback: convert ValueNode<None> to PyExecute("None", (), ()).
+    CheckCNodeInputsHasNone(cnode);
     // Find cnode converter by primitive.
     auto iter = converters_.find(prim);
     if (iter == converters_.end()) {
@@ -1002,7 +1048,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
     const auto key_tuple = std::make_shared<ValueTuple>(key_list);
     auto key_tuple_node = NewValueNode(key_tuple);
     key_tuple_node->set_abstract(key_tuple->ToAbstract());
-    const auto make_key_tuple_node = root_graph_->NewCNode(
+    const auto make_key_tuple_node = root_graph_->NewCNodeInOrder(
       {NewValueNode(prim::kPrimPyExecute), script_key_tuple_str_node, script_key_tuple_str_node, key_tuple_node});
     make_key_tuple_node->set_abstract(abs);
     // Pack the value tuple.
@@ -1012,7 +1058,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
     const auto value_tuple = std::make_shared<ValueTuple>(value_list);
     auto value_tuple_node = NewValueNode(value_tuple);
     value_tuple_node->set_abstract(value_tuple->ToAbstract());
-    const auto make_value_tuple_node = root_graph_->NewCNode(
+    const auto make_value_tuple_node = root_graph_->NewCNodeInOrder(
       {NewValueNode(prim::kPrimPyExecute), script_value_tuple_str_node, script_value_tuple_str_node, value_tuple_node});
     make_value_tuple_node->set_abstract(abs);
     // Pack the local parameters values
@@ -1046,7 +1092,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
     script_str_node->set_abstract(script_str->ToAbstract());
 
     // Build the new dict node.
-    const auto make_dict_node = root_graph_->NewCNode(
+    const auto make_dict_node = root_graph_->NewCNodeInOrder(
       {NewValueNode(prim::kPrimPyExecute), script_str_node, key_value_name_tuple, key_value_tuple});
     MS_LOG(DEBUG) << "Made dict node: " << make_dict_node->DebugString();
     make_dict_node->set_debug_info(value_node->debug_info());
@@ -1055,7 +1101,8 @@ class CleanAfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
-    if (value->isa<ValueDictionary>()) {
+    const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+    if (value->isa<ValueDictionary>() && support_fallback_runtime) {
       return RebuildValueDict(value_node, value->cast<ValueDictionaryPtr>());
     }
     bool need_convert = false;

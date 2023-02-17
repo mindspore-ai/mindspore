@@ -371,7 +371,7 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
   auto fg = cnode->func_graph();
   const auto value_tuple_node = fg->NewCNode(value_list);
 
-  const auto getattr_obj_call_node = fg->NewCNode(
+  const auto getattr_obj_call_node = fg->NewCNodeInOrder(
     {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_call_str), NewValueNode(key_tuple), value_tuple_node});
   MS_LOG(DEBUG) << "getattr_obj_call_node: " << getattr_obj_call_node->DebugString();
 

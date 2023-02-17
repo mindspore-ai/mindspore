@@ -1369,7 +1369,7 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   (void)value_list.emplace_back(owner_node);
   const auto value_tuple_node = fg->NewCNode(value_list);
 
-  const auto getattr_node = fg->NewCNode(
+  const auto getattr_node = fg->NewCNodeInOrder(
     {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_getattr_str), NewValueNode(key_tuple), value_tuple_node});
   getattr_node->set_debug_info(cnode->debug_info());
   MS_LOG(DEBUG) << "getattr_node: " << getattr_node->DebugString();

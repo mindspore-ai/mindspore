@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,8 +143,13 @@ void Parser::CheckFuncReturn(const FuncGraphPtr &fn) {
     const auto &location = GetLocation(node);
     py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
                                                location->file_name(), location->line());
-    MS_EXCEPTION(TypeError) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
-                            << ". FuncGraph: " << func_graph->ToString();
+    MS_LOG(WARNING) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
+                    << ". FuncGraph: " << func_graph->ToString()
+                    << ". We will add a 'return None' statement automatically.";
+    // If the def function has no return statement, mean that return none.
+    auto none_node = NewValueNode(kNone);
+    auto return_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), none_node});
+    func_graph->set_return(return_node);
   }
 }
 
@@ -654,6 +659,19 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
 
   py::object func_obj = python_adapter::GetPyObjAttr(node, "body");
   (void)ParseStatements(func_block, func_obj);
+  if (current_fg->get_return() == nullptr) {
+    // If the def function has no return statement, mean that return none.
+    py::object node = ast_->GetAstNode();
+    const auto &location = GetLocation(node);
+    py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
+                                               location->file_name(), location->line());
+    MS_LOG(WARNING) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
+                    << ". FuncGraph: " << current_fg->ToString()
+                    << ". We will add a 'return None' statement automatically.";
+    auto none_node = NewValueNode(kNone);
+    auto return_node = current_fg->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), none_node});
+    current_fg->set_return(return_node);
+  }
 
   // Add unused variables as isolate nodes.
   for (auto &func_block_item : func_block_list_) {
@@ -667,13 +685,6 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
     }
   }
 
-  if (current_fg->get_return() == nullptr) {
-    const auto &location = GetLocation(node);
-    py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, node,
-                                               location->file_name(), location->line());
-    MS_EXCEPTION(TypeError) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
-                            << ".";
-  }
   GenerateArgsDefaultValueForFunction(func_block, node);
   return func_block;
 }
