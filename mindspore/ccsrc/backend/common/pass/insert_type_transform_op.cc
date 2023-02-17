@@ -228,15 +228,16 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
       auto input_node = common::AnfAlgo::GetInputNode(cnode, input_index);
       MS_EXCEPTION_IF_NULL(input_node);
-      auto real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, kIndex0).first;
+
+      auto real_input = common::AnfAlgo::VisitKernelWithReturnType(input_node, kIndex0);
+      auto real_input_node = real_input.first;
       MS_EXCEPTION_IF_NULL(real_input_node);
-      auto output_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, kIndex0).second;
+      auto output_index = real_input.second;
       if (real_input_node->kernel_info() == nullptr) {
         inputs_format.emplace_back(kOpFormat_DEFAULT);
       } else {
         inputs_format.emplace_back(AnfAlgo::GetOutputFormat(real_input_node, output_index));
       }
-
       inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
     }
 
