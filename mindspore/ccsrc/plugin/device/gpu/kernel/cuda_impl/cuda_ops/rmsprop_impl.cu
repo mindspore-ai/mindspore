@@ -74,7 +74,7 @@ __global__ void RmsPropKernel(const size_t batch_size, const size_t input_elemen
   auto all_elements = batch_size * input_elements;
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (all_elements); i += blockDim.x * gridDim.x) {
     auto batch = i / input_elements;
-    mean_square[i] = decay[0] * mean_square[i] + (static_cast<T>(1.0) - decay[batch]) * gradients[i] * gradients[i];
+    mean_square[i] = decay[0] * mean_square[i] + (static_cast<T>(1.0) - decay[0]) * gradients[i] * gradients[i];
     moment[i] = momentum[0] * moment[i] + learning_rate[batch] *
                 static_cast<T>(rsqrt(static_cast<double>(mean_square[i] + epsilon[0]))) * gradients[i];
     variable[i] -= moment[i];
