@@ -48,8 +48,8 @@ def _check_input_data_type(input_data):
                     np.float16, np.float32, np.float64, np.bool_, np.str_, np.complex64, np.complex128)
     if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes and \
             input_data.dtype.kind != 'U' and input_data.dtype.kind != 'S':  # Support dtype np.str_
+        new_line = '\n'
         for index, x in np.ndenumerate(input_data):
-            new_line = '\n'
             if np.array(x).dtype not in valid_dtypes:
                 raise TypeError(f"initializing tensor by numpy array failed, because the "
                                 f"element type '{type(x)}' of array is not supported.\n"
