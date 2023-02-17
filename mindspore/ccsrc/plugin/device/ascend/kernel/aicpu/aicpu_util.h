@@ -203,6 +203,8 @@ constexpr auto kQuantDTypeCast = "QuantDTypeCast";
 constexpr auto kFSEDecode = "FSEDecode";
 constexpr auto kSparseSegmentSum = "SparseSegmentSum";
 constexpr auto kRealDiv = "RealDiv";
+constexpr auto kDeformableOffsets = "DeformableOffsets";
+constexpr auto kDeformableOffsetsGrad = "DeformableOffsetsGrad";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kGather,
