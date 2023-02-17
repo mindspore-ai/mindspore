@@ -1128,14 +1128,14 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
 
   // GRAPH | Single Op : KernelByKernel path in MindRT.
   if (common::GetEnv(kGraphOpRun) == "1") {
-    MS_LOG(INFO) << "Run graph mode with kernelbykernel because GraphOpRun is set to 1.";
+    MS_LOG(INFO) << "Run graph mode with kernel by kernel because env value GRAPH_OP_RUN is set to 1.";
     set_ctx(false, false, false);
     return;
   }
 
   // GRAPH | Dynamic Shape : KernelByKernel path in MindRT.
   if (IsDynamicShapeGraph(func_graph)) {
-    MS_LOG(INFO) << "Run graph mode with kernelbykernel(Dynamic Shape).";
+    MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist dynamic shape.";
     set_ctx(false, false, false);
     return;
   }
@@ -1147,12 +1147,12 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   (void)graphs.insert(func_graph);
   bool exist_control_flow = ExistControlFlow(func_graph);
   bool exist_func = exist_control_flow && HasIncorporateCall(all_nodes);
-  MS_LOG(INFO) << func_graph->ToString() << " exist_func: " << exist_func;
   if (exist_func) {
-    MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
     if (common::GetEnv("DISABLE_SUBGRAPH_SINK") != "1" && (!pynative_mode)) {
+      MS_LOG(INFO) << "Run graph mode with sub graph sink because graph exist control flow and incorporate call.";
       set_ctx(true, false, false);
     } else {
+      MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist control flow and incorporate call.";
       set_ctx(false, false, false);
     }
     return;
@@ -1161,10 +1161,11 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
     std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
   MS_LOG(INFO) << func_graph->ToString() << " exist_while: " << exist_while;
   if (exist_while || ExistSwitchRef(func_graph, all_nodes)) {
-    MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
     if (common::GetEnv("DISABLE_SUBGRAPH_SINK") != "1" && (!pynative_mode)) {
+      MS_LOG(INFO) << "Run graph mode with sub graph sink because graph exist while or switch ref.";
       set_ctx(true, false, false);
     } else {
+      MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist while or switch ref.";
       set_ctx(false, false, false);
     }
     return;
@@ -1174,25 +1175,26 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   if (func_graph->exist_multi_target()) {
     // Heterogeneous scenario + ControlFlow : KernelByKernel path in MindRT.
     if (exist_control_flow && (common::GetEnv("DISABLE_SUBGRAPH_SINK") == "1" || pynative_mode)) {
-      MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
+      MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist multi device target and control flow.";
       set_ctx(false, false, false);
       return;
     }
     // GRAPH | Heterogeneous scenario : No control flow, subgraph sink path in MindRT.
-    MS_LOG(INFO) << "Run graph mode with subgraph sink.";
+    MS_LOG(INFO) << "Run graph mode with subgraph sink because graph exist multi device target.";
     set_ctx(true, false, false);
     return;
   }
 
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->cache_enable()) {
+    MS_LOG(INFO) << "Run graph mode with subgraph sink because PS cache enable.";
     set_ctx(true, false, false);
     return;
   }
 #endif
 
   // GRAPH | normal network and if/for/switch scenario etc : MultiGraph path in MindRT.
-  MS_LOG(INFO) << "Run graph mode with multigraph sink.";
+  MS_LOG(INFO) << "Run graph mode with multi graph sink.";
   set_ctx(true, true, true);
   return;
 }

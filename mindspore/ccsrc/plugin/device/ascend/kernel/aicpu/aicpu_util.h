@@ -103,6 +103,8 @@ constexpr auto kEnvironDestroyAll = "EnvironDestroyAll";
 constexpr auto kKLDivLoss = "KLDivLoss";
 constexpr auto kKLDivLossGrad = "KLDivLossGrad";
 constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
+constexpr auto kSequenceAdd = "SequenceAdd";
+constexpr auto kSequenceAddOffset = "SequenceAddOffset";
 constexpr auto kSparseToDenseV2 = "SparseToDenseV2";
 constexpr auto kSparseSoftmaxCrossEntropyWithLogitsV2 = "SparseSoftmaxCrossEntropyWithLogitsV2";
 constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
@@ -282,6 +284,8 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kReservoirReplayBufferDestroy,
                                               kGatherDGradV2,
                                               kConcatOffset,
+                                              kSequenceAdd,
+                                              kSequenceAddOffset,
                                               kSliceGrad,
                                               kRandomShuffle,
                                               kRange,
