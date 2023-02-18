@@ -43,23 +43,42 @@ constexpr size_t kFirstPartitionInputIndex = 3;
   }
 }  // namespace
 
-void RaggedTensorToTensorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  node_wpt_ = kernel_node;
-  row_partition_types_ = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(kernel_node, "row_partition_types");
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+bool RaggedTensorToTensorCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  row_partition_types_ = GetValue<std::vector<std::string>>(base_operator->GetAttr("row_partition_types"));
+  shape_dtype_ = inputs[kShapeInputIndex]->GetDtype();
+  values_dtype_ = inputs[kValueInputIndex]->GetDtype();
+  size_t output_num = outputs.size();
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kRaggedTensorToTensorOutputsNum, kernel_name_);
+  return true;
+}
+
+int RaggedTensorToTensorCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs,
+                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  values_shape_ = inputs[kValueInputIndex]->GetShapeVector();
+  default_values_shape_ = inputs[kDefaultValueInputIndex]->GetShapeVector();
+  output_shape_ = outputs[0]->GetShapeVector();
+  row_partition_shape_list_.clear();
+  for (int i = 0; i < SizeToLong(row_partition_types_.size()); ++i) {
+    row_partition_shape_list_.push_back(inputs[kFirstPartitionInputIndex + i]->GetShapeVector());
+  }
+  return KRET_OK;
 }
 
 bool RaggedTensorToTensorCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<kernel::AddressPtr> &,
                                               const std::vector<kernel::AddressPtr> &outputs) {
-  auto shape_dtype = AnfAlgo::GetInputDeviceDataType(node_wpt_, kShapeInputIndex);
-  auto values_dtype = AnfAlgo::GetInputDeviceDataType(node_wpt_, kValueInputIndex);
-  switch (shape_dtype) {
+  switch (shape_dtype_) {
     case kNumberTypeInt32: {
-      switch (values_dtype) {
+      switch (values_dtype_) {
         RAGGEDTENSORTOTENSOR_COMPUTE_CASE(kNumberTypeBool, int32_t, bool)
         RAGGEDTENSORTOTENSOR_COMPUTE_CASE(kNumberTypeInt8, int32_t, int8_t)
         RAGGEDTENSORTOTENSOR_COMPUTE_CASE(kNumberTypeInt16, int32_t, int16_t)
@@ -72,12 +91,12 @@ bool RaggedTensorToTensorCpuKernelMod::Launch(const std::vector<kernel::AddressP
         RAGGEDTENSORTOTENSOR_COMPUTE_CASE(kNumberTypeFloat64, int32_t, double)
         default:
           MS_EXCEPTION(TypeError) << "For '" << kernel_name_
-                                  << "', unsupported values data type: " << TypeIdToType(values_dtype)->ToString();
+                                  << "', unsupported values data type: " << TypeIdToType(values_dtype_)->ToString();
       }
       break;
     }
     case kNumberTypeInt64: {
-      switch (values_dtype) {
+      switch (values_dtype_) {
         RAGGEDTENSORTOTENSOR_COMPUTE_CASE(kNumberTypeBool, int64_t, bool)
         RAGGEDTENSORTOTENSOR_COMPUTE_CASE(kNumberTypeInt8, int64_t, int8_t)
         RAGGEDTENSORTOTENSOR_COMPUTE_CASE(kNumberTypeInt16, int64_t, int16_t)
@@ -90,13 +109,13 @@ bool RaggedTensorToTensorCpuKernelMod::Launch(const std::vector<kernel::AddressP
         RAGGEDTENSORTOTENSOR_COMPUTE_CASE(kNumberTypeFloat64, int64_t, double)
         default:
           MS_EXCEPTION(TypeError) << "For '" << kernel_name_
-                                  << "', unsupported values data type: " << TypeIdToType(values_dtype)->ToString();
+                                  << "', unsupported values data type: " << TypeIdToType(values_dtype_)->ToString();
       }
       break;
     }
     default:
       MS_EXCEPTION(TypeError) << "For '" << kernel_name_
-                              << "', unsupported shape data type: " << TypeIdToType(shape_dtype)->ToString();
+                              << "', unsupported shape data type: " << TypeIdToType(shape_dtype_)->ToString();
   }
   return true;
 }
@@ -108,17 +127,15 @@ void RaggedTensorToTensorCpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
   TYPE1 first_dimension;
   GetFirstDimension<TYPE1>(inputs, &first_dimension);
   std::vector<TYPE1> output_size;
-  auto output_shape = AnfAlgo::GetOutputDeviceShape(node_wpt_, 0);
-  auto values_shape = AnfAlgo::GetInputDeviceShape(node_wpt_, kValueInputIndex);
-  if (ragged_rank_ + values_shape.size() != output_shape.size()) {
+  if (ragged_rank_ + values_shape_.size() != output_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', row partition size plus 'values' rank should be equal to 'shape' rank: "
-                      << output_shape.size() << ", but got row partition size: " << ragged_rank_
-                      << ", 'values' rank: " << values_shape.size();
+                      << output_shape_.size() << ", but got row partition size: " << ragged_rank_
+                      << ", 'values' rank: " << values_shape_.size();
   }
-  output_size.reserve(output_shape.size());
-  for (unsigned int dim = 0; dim < output_shape.size(); dim++) {
-    output_size.push_back(output_shape[dim]);
+  output_size.reserve(output_shape_.size());
+  for (unsigned int dim = 0; dim < output_shape_.size(); dim++) {
+    output_size.push_back(output_shape_[dim]);
   }
   if (output_size[0] < 0) {
     output_size[0] = first_dimension;
@@ -150,14 +167,14 @@ void RaggedTensorToTensorCpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
       if (row_partition_types_[0] == "FIRST_DIM_SIZE") {
         kernel::AddressPtr row_partition = inputs[i + kFirstPartitionInputIndex];
         auto row_partition_ptr = reinterpret_cast<TYPE1 *>(row_partition->addr);
-        auto row_partition_shape = AnfAlgo::GetInputDeviceShape(node_wpt_, i + kFirstPartitionInputIndex);
+        auto row_partition_shape = row_partition_shape_list_[i];
         Eigen::DSizes<Eigen::DenseIndex, 1> row_partition_dsize(row_partition_shape[0]);
         TYPE1_flat rowET(row_partition_ptr, row_partition_dsize);
         row_partition_tensor.push_back(rowET);
       } else {
         kernel::AddressPtr row_partition = inputs[i - 1 + kFirstPartitionInputIndex];
         auto row_partition_ptr = reinterpret_cast<TYPE1 *>(row_partition->addr);
-        auto row_partition_shape = AnfAlgo::GetInputDeviceShape(node_wpt_, i - 1 + kFirstPartitionInputIndex);
+        auto row_partition_shape = row_partition_shape_list_[i - 1];
         Eigen::DSizes<Eigen::DenseIndex, 1> row_partition_dsize(row_partition_shape[0]);
         TYPE1_flat rowET(row_partition_ptr, row_partition_dsize);
         row_partition_tensor.push_back(rowET);
@@ -202,7 +219,7 @@ template <typename TYPE1>
 void RaggedTensorToTensorCpuKernelMod::GetFirstDimension(const std::vector<kernel::AddressPtr> &inputs,
                                                          TYPE1 *first_dim) {
   auto first_partition_tensor = inputs[kFirstPartitionInputIndex];
-  auto firstPartitionShape = AnfAlgo::GetInputDeviceShape(node_wpt_, kFirstPartitionInputIndex);
+  auto firstPartitionShape = row_partition_shape_list_[0];
   std::string first_partition_type = row_partition_types_[0];
   if (first_partition_type == "VALUE_ROWIDS") {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cannot handle 'VALUE_ROWIDS' in first dimension.";
@@ -307,21 +324,19 @@ bool RaggedTensorToTensorCpuKernelMod::SetOutput(const std::vector<kernel::Addre
                                                  const std::vector<kernel::AddressPtr> &outputs,
                                                  const vector<TYPE1> &output_index) {
   auto output_tensor_ptr = reinterpret_cast<TYPE2 *>(outputs[0]->addr);
-  auto output_tensor_shape = AnfAlgo::GetOutputDeviceShape(node_wpt_, 0);
-  size_t output_element_sum = SizeToLong(SizeOf(output_tensor_shape));
+  size_t output_element_sum = SizeToLong(SizeOf(output_shape_));
   auto default_value_tensor = inputs[kDefaultValueInputIndex];
   TYPE2 *default_value_pt = reinterpret_cast<TYPE2 *>(default_value_tensor->addr);
   auto values_tensor = inputs[kValueInputIndex];
   auto values_tensor_ptr = reinterpret_cast<TYPE2 *>(values_tensor->addr);
-  auto value_shape = AnfAlgo::GetInputDeviceShape(node_wpt_, kValueInputIndex);
-  if (value_shape.size() == 1) {
+  if (values_shape_.size() == 1) {
     Eigen::DSizes<Eigen::DenseIndex, 1> output_tensor_dsize(output_element_sum);
     TYPE2_flat outputET(output_tensor_ptr, output_tensor_dsize);
     TYPE2_flat output_flat = outputET;
     TYPE2 *base_output = output_flat.data();
     TYPE2 default_value = default_value_pt[0];
     std::fill(base_output, base_output + output_flat.size(), default_value);
-    Eigen::DSizes<Eigen::DenseIndex, 1> values_tensor_dsize(value_shape[0]);
+    Eigen::DSizes<Eigen::DenseIndex, 1> values_tensor_dsize(values_shape_[0]);
     TYPE2_flat valuesET(values_tensor_ptr, values_tensor_dsize);
     TYPE2_flat values_flat = valuesET;
     unsigned int values_size = values_flat.size();
@@ -336,13 +351,12 @@ bool RaggedTensorToTensorCpuKernelMod::SetOutput(const std::vector<kernel::Addre
       }
     }
   } else {
-    auto default_values_shape = AnfAlgo::GetInputDeviceShape(node_wpt_, kDefaultValueInputIndex);
-    auto broadcast_shape = CPUKernelUtils::GetBroadcastShape(default_values_shape, output_tensor_shape);
-    if (broadcast_shape != output_tensor_shape) {
+    auto broadcast_shape = CPUKernelUtils::GetBroadcastShape(default_values_shape_, output_shape_);
+    if (broadcast_shape != output_shape_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unable to broadcast default_value of shape "
-                        << default_values_shape << " to tensor of shape " << output_tensor_shape;
+                        << default_values_shape_ << " to tensor of shape " << output_shape_;
     }
-    BroadcastIterator iter(default_values_shape, output_tensor_shape, broadcast_shape);
+    BroadcastIterator iter(default_values_shape_, output_shape_, broadcast_shape);
     TYPE2 *default_value_addr = reinterpret_cast<TYPE2 *>(inputs[kDefaultValueInputIndex]->addr);
     TYPE2 *output_addr = reinterpret_cast<TYPE2 *>(outputs[0]->addr);
 
@@ -356,7 +370,7 @@ bool RaggedTensorToTensorCpuKernelMod::SetOutput(const std::vector<kernel::Addre
     TYPE2_flat output_flat = outputET;
     TYPE2 *base_output = output_flat.data();
 
-    size_t values_tensor_size = SizeToLong(SizeOf(value_shape));
+    size_t values_tensor_size = SizeToLong(SizeOf(values_shape_));
     Eigen::DSizes<Eigen::DenseIndex, 1> values_tensor_dsize(values_tensor_size);
     TYPE2_flat valuesET(values_tensor_ptr, values_tensor_dsize);
     TYPE2_flat values_flat = valuesET;
@@ -370,7 +384,7 @@ bool RaggedTensorToTensorCpuKernelMod::SetOutput(const std::vector<kernel::Addre
     }
     int value_element_bytesize = value_element_size * sizeof(TYPE2);
     TYPE2 *values_base = values_flat.data();
-    size_t values_dimsize = value_shape[0];
+    size_t values_dimsize = values_shape_[0];
     if (values_dimsize != output_index_size) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', 'values' shape[0] must be equal to ragged tensor indices: " << output_index_size
