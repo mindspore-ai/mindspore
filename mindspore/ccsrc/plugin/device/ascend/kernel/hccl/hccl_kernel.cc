@@ -297,10 +297,11 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
     }
 
     std::vector<void *> global_workspace_addr;
-    auto overflow_memory_ptr =
-      device::ascend::AscendMemAdapter::GetInstance().MallocOverflowMem(anf_node_.lock()->cast<CNodePtr>());
+    auto overflow_memory_ptr = device::ascend::AscendMemAdapter::GetInstance().MallocOverflowMem();
     MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
     global_workspace_addr.push_back(reinterpret_cast<void *>(overflow_memory_ptr));
+    MS_LOG(DEBUG) << "Assign overflow memory for node " << anf_node->fullname_with_scope() << ", addr is "
+                  << overflow_memory_ptr;
 
     HcclTaskInfoPtr hcclTaskInfo =
       std::make_shared<HcclTaskInfo>(unique_name_, stream_id, hccl::HcclAdapter::GetHcclType(anf_node), input_data_addr,

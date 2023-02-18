@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "ir/func_graph.h"
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 #include "graphengine/inc/external/runtime/rt_error_codes.h"
@@ -35,6 +36,7 @@ constexpr double kHalfRatio = 0.5;
 // The Ascend max available device memory is 32GB.
 constexpr float kAscendMaxDeviceMemory = 32;
 constexpr uint64_t kOverflowAddrSize = 512;
+constexpr char kGlobalOverflowWorkspace[] = "GLOBAL_OVERFLOW_WORKSPACE";
 
 size_t AscendMemAdapter::GetRoundDownAlignSize(size_t input_size) {
   return (input_size / kAscendMemAlignSize) * kAscendMemAlignSize;
@@ -176,16 +178,16 @@ uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, const std::string &t
   return memory_block_ptr;
 }
 
-uint8_t *AscendMemAdapter::MallocOverflowMem(const CNodePtr &kernel) {
+uint8_t *AscendMemAdapter::MallocOverflowMem() {
   std::lock_guard<std::mutex> locker(overflow_mutex_);
-  auto funcGraph = kernel->func_graph();
-  MS_EXCEPTION_IF_NULL(funcGraph);
-  if (overflow_memory_info_map_.find(funcGraph->ToString()) != overflow_memory_info_map_.cend()) {
-    return overflow_memory_info_map_.find(funcGraph->ToString())->second;
+  auto iter = overflow_memory_info_map_.find(kGlobalOverflowWorkspace);
+  if (iter != overflow_memory_info_map_.cend()) {
+    return iter->second;
   } else {
-    auto overflow_memory_ptr = MallocStaticDevMem(kOverflowAddrSize, "overflow memory ptr");
+    auto overflow_memory_ptr = MallocStaticDevMem(kOverflowAddrSize, "global overflow memory ptr");
     MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
-    (void)overflow_memory_info_map_.emplace(funcGraph->ToString(), overflow_memory_ptr);
+    (void)aclrtMemset(overflow_memory_ptr, kOverflowAddrSize, 0, kOverflowAddrSize);
+    (void)overflow_memory_info_map_.emplace(kGlobalOverflowWorkspace, overflow_memory_ptr);
     return overflow_memory_ptr;
   }
 }

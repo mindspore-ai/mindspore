@@ -293,7 +293,7 @@ def get_options_info(job_content):
     options["autoTilingMode"] = job_content["SocInfo"]["autoTilingMode"]
     options["op_impl_mode_list"] = job_content["SocInfo"]["op_impl_mode_list"]
     options["kernel_meta_temp_dir"] = job_content["SocInfo"]["kernel_meta_temp_dir"]
-    options["status_check"] = "false"
+    options["status_check"] = job_content["SocInfo"]["status_check"]
     return options
 
 

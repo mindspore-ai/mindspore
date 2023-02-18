@@ -623,3 +623,5 @@ from .hard_swish_ds import _hard_swish_ds_tbe
 from .hard_swish_grad_ds import _hard_swish_grad_ds_tbe
 from .arg_min_with_value_ds import _arg_min_with_value_ds_tbe
 from .im2col import _im2col_tbe
+from .npu_clear_float_status_v2 import _npu_clear_float_status_v2_tbe
+from .npu_get_float_status_v2 import _npu_get_float_status_v2_tbe
