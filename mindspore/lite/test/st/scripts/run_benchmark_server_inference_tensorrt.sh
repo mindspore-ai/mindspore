@@ -218,7 +218,6 @@ if [[ $(Exist_File_In_Path ${ms_models_path} ".ms") != "true" ]]; then
 fi
 
 # Write benchmark result to temp file
-export GLOG_logtostderr=0
 run_benchmark_result_file=${basepath}/run_benchmark_result.txt
 echo ' ' > ${run_benchmark_result_file}
 

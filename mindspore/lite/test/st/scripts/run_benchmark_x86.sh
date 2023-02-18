@@ -158,7 +158,7 @@ function Run_x86_parallel_split() {
     rm -rf parallel_split
     mkdir parallel_split
     cd parallel_split || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../runtime/lib:./runtime/third_party/glog
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../runtime/lib:../runtime/third_party/glog
     cp ../tools/benchmark/benchmark ./ || exit 1
 
     # Run tflite parallel split converted models:

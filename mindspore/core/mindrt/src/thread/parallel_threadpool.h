@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ typedef struct Distributor {
 typedef struct ParallelTask : public Task {
   ParallelTask() : Task(nullptr, nullptr) {}
   std::atomic<Distributor> distributor;
-  std::atomic_bool valid = false;
-  std::atomic_bool occupied = false;
+  std::atomic_bool valid{false};
+  std::atomic_bool occupied{false};
 } ParallelTask;
 class ParallelThreadPool;
 class ParallelWorker : public Worker {
@@ -151,14 +151,14 @@ class ParallelThreadPool : public ActorThreadPool {
   ParallelThreadPool() {}
   int CreateParallelThreads(size_t actor_thread_num, size_t all_thread_num, const std::vector<int> &core_list);
 
-  std::atomic_int tasks_start_ = 0;
-  std::atomic_int tasks_end_ = 0;
+  std::atomic_int tasks_start_{0};
+  std::atomic_int tasks_end_{0};
   ParallelTask *tasks_;
   size_t tasks_size_ = 0;
   bool enable_shared_ = false;
   std::string bind_runner_id_;
   std::mutex mutex_pool_ref_count_;
-  std::atomic_int pool_ref_count_ = 0;
+  std::atomic_int pool_ref_count_{0};
   int thread_num_;
 };
 }  // namespace mindspore

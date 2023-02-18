@@ -66,6 +66,9 @@ HEADER_LOCATION="-I${MINDSPORE_HOME}
 REMOVE_LISTS_STR=""
 getDeep() {
   map_files=$(gcc -MM ${2} ${DEFINE_STR} ${HEADER_LOCATION})
+  if [[ ${map_files} == "" ]]; then
+    echo "failed to get deep any file from file: ${2}, compile terminated unexpectedly"
+  fi
   # first is *.o second is *.cc
   array_deep=()
   while IFS='' read -r line; do array_deep+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build|third_party|type_id.h|core/utils' | egrep -v ${REMOVE_LISTS_STR})
@@ -104,6 +107,9 @@ getOpsFile() {
       echo "${type},${3},${out_file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
       echo "${type},${3},${out_file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP}
       map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
+      if [[ ${map_files} == "" ]]; then
+        echo "failed to get operator mapping any file from file: ${file}, compile terminated unexpectedly"
+      fi
       # first is *.o second is *.cc
       array_file=()
       while IFS='' read -r line; do array_file+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build|third_party|type_id.h|core/utils' | egrep -v ${REMOVE_LISTS_STR})
@@ -136,6 +142,9 @@ getFilesFromArr() {
   # shellcheck disable=SC2068
   for file in ${arr_files[*]}; do
     map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
+    if [[ ${map_files} == "" ]]; then
+      echo "failed to get any file from arr_file: ${file}, compile terminated unexpectedly"
+    fi
     # first is *.o second is *.cc
     # shellcheck disable=SC2207
     array_runtime=($(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build|third_party|type_id.h' | egrep -v ${REMOVE_LISTS_STR}))
