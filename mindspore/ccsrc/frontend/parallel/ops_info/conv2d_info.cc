@@ -141,7 +141,7 @@ void Conv2DInfo::AdjustPadList() {
   // adjust the pad list for 'pad' mode
   // because the output_len = (in_len + pad_all - k) / s, so the useless_len = (in_len + pad_all - k) % s
   // and need to adjust the bottom_pad/right_pad if useless_len != 0
-  if (pad_mode_ != 0) {
+  if (pad_mode_ != 0 || pad_list_adjusted_) {
     return;
   }
 
@@ -163,6 +163,7 @@ void Conv2DInfo::AdjustPadList() {
   }
   pad_list_[1] -= useless_len_2th_dim;
   pad_list_[3] -= useless_len_3th_dim;
+  pad_list_adjusted_ = true;
   MS_LOG(INFO) << name_ << ": After adjusting, the pad_list is " << pad_list_;
 }
 

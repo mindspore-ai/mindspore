@@ -95,6 +95,21 @@ def test_maxpool3d_pad_mode_overlap_is_negative():
         compile_net(net, _x, _b)
 
 
+def test_maxpool3d_shard_w_dimension():
+    """
+    Feature: test shard w dimension
+    Description:
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 1, 4, 2),)
+    strategy2 = ((1, 1, 1, 4, 2),)
+    net = MaxPool3DNet(_w, kernel_size=3, pad_mode="pad", strides=1, pad_list=1,
+                       strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net, _x, _b)
+
+
 def test_maxpool3d_pad_mode_rank0():
     """
     Feature: test pad mode, rank0

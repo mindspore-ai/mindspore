@@ -257,7 +257,7 @@ void MaxPool3DInfo::AdjustPadList() {
   // adjust the pad list for 'pad' mode
   // because the output_len = (in_len + pad_all - k) / s, so the useless_len = (in_len + pad_all - k) % s
   // and need to adjust the bottom_pad/right_pad if useless_len != 0
-  if (pad_mode_ != PAD) {
+  if (pad_mode_ != PAD || pad_list_adjusted_) {
     return;
   }
 
@@ -279,6 +279,7 @@ void MaxPool3DInfo::AdjustPadList() {
   }
   pad_list_[1] -= useless_len_2th_dim;
   pad_list_[3] -= useless_len_3th_dim;
+  pad_list_adjusted_ = true;
   MS_LOG(INFO) << name_ << ": After adjusting, the pad_list is " << pad_list_;
 }
 
@@ -330,6 +331,12 @@ Status MaxPool3DInfo::CheckStrategy(const StrategyPtr &strategy) {
   Dimensions input_strategy = stra[0];
   if (input_strategy.size() != 5) {
     MS_LOG(ERROR) << name_ << ": The size of input strategy must be 5, but the input strategy is " << input_strategy;
+    return FAILED;
+  }
+
+  if (input_strategy[4] != 1) {
+    MS_LOG(ERROR) << name_ << ": Do not support to split the last dimension of input, but the strategy of input is ("
+                  << input_strategy;
     return FAILED;
   }
 

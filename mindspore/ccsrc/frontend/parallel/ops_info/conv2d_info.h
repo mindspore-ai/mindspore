@@ -152,6 +152,7 @@ class Conv2DInfo : public OperatorInfo {
   Status CheckHWStrategyPadModeByDimension(int64_t strategy, int64_t dimension_id);
   Status CheckHWStrategyPadMode(int64_t h_strategy, int64_t w_strategy);
   void AdjustPadList();
+  bool pad_list_adjusted_ = false;
 };
 
 class Conv2DBackpropInputInfo : public Conv2DInfo {
