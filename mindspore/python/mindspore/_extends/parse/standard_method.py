@@ -41,7 +41,7 @@ from ...ops.operations import _csr_ops
 from ...ops.operations import _map_tensor_ops
 from ...ops.primitive import constexpr
 from ...common import dtype as mstype
-from ...ops.operations._sequence_ops import ListAppend
+from ...ops.operations._sequence_ops import ListAppend, SequenceMax, SequenceMin
 
 __all__ = ['MultitypeFuncGraph', 'env_get',
            'hyper_add', 'zeros_like', 'ones_like']
@@ -2426,6 +2426,24 @@ def exist_tensor(data):
     return False
 
 
+def check_sequence_all_variable_scalar(x, str):
+    """Check whether x can be used in SequenceMax and SequenceMin"""
+    if F.is_sequence_shape_unknown(x):
+        if F.is_dynamic_sequence_element_unknown(x):
+            const_utils.raise_value_error(str + "() arg is an empty sequence.")
+        if not isinstance(x[0], (int, float)):
+            const_utils.raise_value_error(
+                "When the input to " + str + "() is dynamic length sequence, only support scalar type input")
+        return True
+    contain_variable_scalar = False
+    for i in x:
+        if not isinstance(i, (int, float)):
+            return False
+        if not contain_variable_scalar and not F.isconstant(i):
+            contain_variable_scalar = True
+    return contain_variable_scalar
+
+
 def ms_max_one_element(x):
     """Implementation of `max` which inputs has only one element."""
     if isinstance(x, Tensor):
@@ -2440,6 +2458,8 @@ def ms_max_one_element(x):
         return x.max()
     # Deal with Tensor in tuple or list
     if isinstance(x, (list, tuple)):
+        if check_sequence_all_variable_scalar(x, "max"):
+            return SequenceMax()(x)
         if len(x) == 0:
             const_utils.raise_value_error("max() arg is an empty sequence.")
         tensor_num = get_tensor_num(x)
@@ -2518,6 +2538,8 @@ def ms_min_one_element(x):
         return x.min()
     # Deal with Tensor in tuple or list
     if isinstance(x, (list, tuple)):
+        if check_sequence_all_variable_scalar(x, "min"):
+            return SequenceMin()(x)
         if len(x) == 0:
             const_utils.raise_value_error("min() arg is an empty sequence.")
         tensor_num = get_tensor_num(x)
