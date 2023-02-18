@@ -75,7 +75,8 @@ template <typename T, typename S>
 void BroadcastBernoulliForward(const std::vector<size_t> &x_dims, const std::vector<size_t> &p_dims, const T *input,
                                S *output, uint64_t seed, const size_t num_count, const uint32_t &device_id,
                                cudaStream_t cuda_stream) {
-  BroadcastBernoulliForwardKernel<<<CUDA_BLOCKS(device_id, num_count), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+  int block_num = 256 > num_count ? num_count : 256;
+  BroadcastBernoulliForwardKernel<<<CUDA_BLOCKS_CAL(device_id, num_count, block_num), block_num, 0, cuda_stream>>>(
     x_dims[0], x_dims[1], x_dims[2], x_dims[3], x_dims[4], x_dims[5], x_dims[6], p_dims[0], p_dims[1],
     p_dims[2], p_dims[3], p_dims[4], p_dims[5], p_dims[6], input, output, seed, num_count);
 }
