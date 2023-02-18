@@ -21,14 +21,14 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void StandardNormal(int seed, int seed2, curandState *globalState,
+CUDA_LIB_EXPORT void StandardNormal(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
                                     T *output, size_t count, cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT bool UniformInt(int seed, int seed2, curandState *globalState,
+CUDA_LIB_EXPORT bool UniformInt(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
                                 T *input1, size_t input_size_1, T *input2, size_t input_size_2,
                                 T *output, size_t count, cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void UniformReal(int seed, int seed2, curandState *globalState,
+CUDA_LIB_EXPORT void UniformReal(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
                                  T *output, size_t count, cudaStream_t cuda_stream);
 template<typename S>
 CUDA_LIB_EXPORT void TruncatedNormal(int seed, int seed2, curandState *globalState,

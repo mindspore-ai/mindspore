@@ -69,7 +69,7 @@ int RandomOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   workspace_size_list_.clear();
   if (random_op_type_ != RANDOM_OP_CUDNN_UNIFORM_REAL) {
     auto output_shape = outputs[0]->GetShapeVector();
-    auto workspace_size = sizeof(curandState);
+    auto workspace_size = sizeof(curandStatePhilox4_32_10_t);
     for (size_t i = 0; i < output_shape.size(); i++) {
       workspace_size *= output_shape[i];
     }
@@ -82,11 +82,11 @@ template <typename T>
 bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &workspace,
                                         const std::vector<kernel::AddressPtr> &outputs) {
-  curandState *devStates = nullptr;
+  curandStatePhilox4_32_10_t *devStates = nullptr;
   // Operator CudnnUniformReal does not need workspace memory.
   if (random_op_type_ != RANDOM_OP_CUDNN_UNIFORM_REAL) {
     void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
-    devStates = reinterpret_cast<curandState *>(workspace_addr);
+    devStates = reinterpret_cast<curandStatePhilox4_32_10_t *>(workspace_addr);
   }
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
