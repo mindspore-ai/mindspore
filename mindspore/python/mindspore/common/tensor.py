@@ -862,7 +862,7 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('adjoint')(self)
 
-    def all(self, axis=(), keep_dims=False):
+    def all(self, axis=None, keep_dims=False):
         r"""
         For details, please refer to :func:`mindspore.ops.all`.
         """
@@ -878,7 +878,7 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('angle')(self)
 
-    def any(self, axis=(), keep_dims=False):
+    def any(self, axis=None, keep_dims=False):
         r"""
         For details, please refer to :func:`mindspore.ops.any`.
         """
