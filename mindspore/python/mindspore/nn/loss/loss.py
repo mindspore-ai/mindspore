@@ -2492,7 +2492,7 @@ class HingeEmbeddingLoss(LossBase):
     where :math:`L = \{l_1,\dots,l_N\}^\top`.
 
     Args:
-        margin (float): Threshold defined by Hinge Embedding Loss :math:`margin`.
+        margin (float, int): Threshold defined by Hinge Embedding Loss :math:`margin`.
             Represented as :math:`\Delta` in the formula. Default: 1.0.
         reduction (str): Specify the computing method to be applied to the outputs: 'none', 'mean', or 'sum'.
             Default: 'mean'.
@@ -2505,9 +2505,9 @@ class HingeEmbeddingLoss(LossBase):
         Tensor or Tensor scalar, the computed loss depending on `reduction`.
 
     Raises:
-        TypeError: If `logits` is not a Tensor.
-        TypeError: If `labels` is not a Tensor.
-        TypeError: If `margin` is not a float.
+        TypeError: If `logits` is not a Tensor of floats.
+        TypeError: If `labels` is not a Tensor of floats.
+        TypeError: If `margin` is not a float or int.
         ValueError: If `labels` does not have the same shape as `logits`.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
@@ -2531,7 +2531,7 @@ class HingeEmbeddingLoss(LossBase):
 
     def __init__(self, margin=1.0, reduction='mean'):
         super(HingeEmbeddingLoss, self).__init__()
-        validator.check_value_type('margin', margin, [float], self.cls_name)
+        validator.check_value_type('margin', margin, [float, int], self.cls_name)
         validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.cls_name)
         self.margin = margin
         self.reduction = reduction

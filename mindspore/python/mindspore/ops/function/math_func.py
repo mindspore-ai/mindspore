@@ -1731,7 +1731,7 @@ def signbit(x):
 
 def sgn(x):
     r"""
-    Extension of :func:`mindspore.ops.sign` in the plural.
+    Extension of :func:`mindspore.ops.sign` in complex domain.
     For real number input, this function is the same as :func:`mindspore.ops.sign`.
     For complex input, this function is calculated according to the following formula.
 
@@ -7185,7 +7185,7 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     ====================== ================================ ==========================================
 
     .. note::
-        Currently, plural is not supported.
+        Currently, complex numbers are not supported.
 
     Args:
         A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.

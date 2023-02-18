@@ -26,15 +26,15 @@ mindspore.ops.hinge_embedding_loss
     参数：
         - **inputs** (Tensor) - 预测值，公式中表示为 :math:`x`，shape为 :math:`(*)`。`*` 代表着任意数量的维度。
         - **targets** (Tensor) - 标签值，公式中表示为 :math:`y`，和 `logits` 具有相同shape，包含1或-1。
-        - **margin** (float) - Hinge Embedding Loss公式定义的阈值 :math:`margin`。公式中表示为 :math:`\Delta`。默认值：1.0。
+        - **margin** (float, int) - Hinge Embedding Loss公式定义的阈值 :math:`margin`。公式中表示为 :math:`\Delta`。默认值：1.0。
         - **reduction** (str) - 指定应用于输出结果的计算方式，'none'、'mean'、'sum'，默认值：'mean'。
 
     返回：
         Tensor或Tensor scalar，根据 :math:`reduction` 计算的loss。
 
     异常：
-        - **TypeError** - `inputs` 不是Tensor。
-        - **TypeError** - `targets` 不是Tensor。
-        - **TypeError** - `margin` 不是float。
+        - **TypeError** - `inputs` 不是数据类型为float的Tensor。
+        - **TypeError** - `targets` 不是数据类型为float的Tensor。
+        - **TypeError** - `margin` 不是float或者int。
         - **ValueError** - `inputs` 和 `targets` shape不一致。
         - **ValueError** - `reduction` 不是"none"、"mean"或者"sum"。
