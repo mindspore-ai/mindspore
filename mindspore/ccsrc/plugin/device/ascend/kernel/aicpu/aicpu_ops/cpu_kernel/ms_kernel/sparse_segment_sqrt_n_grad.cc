@@ -97,7 +97,7 @@ uint32_t SparseSegmentSqrtNGradCpuKernel::ComputeKernal(CpuKernelContext &ctx) {
   }
 
   for (size_t i = 0; i < m; i++) {
-    if (indices_addr[i] >= ctx.Input(0)->GetTensorShape()->GetDimSize(0)) {
+    if (indices_addr[i] >= k) {
       KERNEL_LOG_ERROR("Indices out of range.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
@@ -118,9 +118,9 @@ uint32_t SparseSegmentSqrtNGradCpuKernel::ComputeKernal(CpuKernelContext &ctx) {
       for (size_t l = 0; l < n; l++) {
         y_addr[indices_addr[i - j] * n + l] += x_addr[beginindex * n + l] / (T)(sqrt(countnum));
       }
-      beginindex = segment_ids_addr[i];
-      countnum = 1;
     }
+    beginindex = segment_ids_addr[i];
+    countnum = 1;
   }
 
   int i = m;

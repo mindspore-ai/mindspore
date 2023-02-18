@@ -64,6 +64,18 @@ uint32_t SparseDenseCwiseOpKernel<Op>::CheckParams(CpuKernelContext &ctx) {
   KERNEL_CHECK_FALSE((input3_dims <= shape_elements_nums), KERNEL_STATUS_PARAM_INVALID,
                      "The dims of DenseTensor  is large than sparseTensor.")
   KERNEL_CHECK_FALSE((indices_0 == value_0), KERNEL_STATUS_PARAM_INVALID, "The num of indices  is not equal to value.")
+
+  int64_t indices_num = x1_indices->GetTensorShape()->GetDimSize(0);
+  int64_t dims = x1_indices->GetTensorShape()->GetDimSize(1);
+  auto x1_indices_data = reinterpret_cast<int64_t *>(x1_indices->GetData());
+  auto x1_shape_data = reinterpret_cast<int64_t *>(x1_shape->GetData());
+  for (int64_t i = 0; i < indices_num; ++i) {
+    for (int64_t j = 0; j < dims; ++j) {
+      KERNEL_CHECK_FALSE((x1_indices_data[i * dims + j] >= 0 && x1_indices_data[i * dims + j] < x1_shape_data[j]),
+                         KERNEL_STATUS_PARAM_INVALID, "For SparseDenseCwise%s, indices go out of bounds.",
+                         Op::Name().c_str());
+    }
+  }
   return KERNEL_STATUS_OK;
 }
 

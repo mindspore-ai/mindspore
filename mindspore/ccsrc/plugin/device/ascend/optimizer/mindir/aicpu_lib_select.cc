@@ -140,7 +140,7 @@ bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
                                                                mindspore::kTridiagonalSolveOpName,
                                                                mindspore::kSparseTensorToCSRSparseMatrixOpName,
                                                                mindspore::kSparseTensorDenseAddOpName,
-                                                               mindspore::kSparseTensorDenseMatMulOpName,
+                                                               mindspore::kSparseTensorDenseMatmulOpName,
                                                                mindspore::kSparseSoftmaxOpName,
                                                                mindspore::kSparseSliceOpName,
                                                                mindspore::kSparseSliceGradOpName,

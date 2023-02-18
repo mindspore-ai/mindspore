@@ -37,6 +37,14 @@ void CheckShapeRank(const size_t cur_rank, const size_t expected_rank, const std
                       << "-dimensional tensor, but got a " << cur_rank << "-dimensional tensor.";
   }
 }
+
+void AddAicpuAttr(const PrimitivePtr &primitive) {
+  // SparseTensorDenseMatmul has attr adjoint_a/b instead of adjoint_st/dt on aicpu.
+  // add_prim_attr in the python __init__ function doesn't take effect in the expander bprop,
+  // so add them here.
+  (void)primitive->AddAttr("adjoint_a", primitive->GetAttr("adjoint_st"));
+  (void)primitive->AddAttr("adjoint_b", primitive->GetAttr("adjoint_dt"));
+}
 }  // namespace
 
 bool checkType(std::string name, TypePtr dtype, const std::set<TypePtr> &vtypes, const PrimitivePtr &primitive) {
@@ -258,6 +266,9 @@ AbstractBasePtr SparseTensorDenseMatmulInfer(const abstract::AnalysisEnginePtr &
   auto type = SparseTensorDenseMatmulInferType(primitive, input_args);
   // infer shape
   auto shape = SparseTensorDenseMatmulInferShape(primitive, input_args);
+
+  AddAicpuAttr(primitive);
+
   return std::make_shared<abstract::AbstractTensor>(type, shape);
 }
 
