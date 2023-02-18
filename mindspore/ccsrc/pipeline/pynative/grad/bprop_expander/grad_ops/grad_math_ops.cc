@@ -963,7 +963,13 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
                         {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(true)}});
   auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
   auto out = ib->Mul(ib->Transpose(y, InvertPermutation(perm)), grad);
-  auto dx = ib->Reshape(out, input_shape);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  NodePtr dx;
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'ReduceProd', gradient not support for complex type currently.";
+  } else {
+    dx = ib->Reshape(out, input_shape);
+  }
   return {dx, ib->ZerosLike(axis)};
 });
 
@@ -972,7 +978,13 @@ REG_BPROP_BUILDER("ReduceMax").SetBody(BODYFUNC(ib) {
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = MinOrMaxGrad(ib, x, GetIntList(axis), out, dout);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  NodePtr dx;
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'ReduceMax', gradient not support for complex type currently.";
+  } else {
+    dx = MinOrMaxGrad(ib, x, GetIntList(axis), out, dout);
+  }
   return {dx, ib->ZerosLike(axis)};
 });
 
@@ -981,7 +993,13 @@ REG_BPROP_BUILDER("ReduceMin").SetBody(BODYFUNC(ib) {
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = MinOrMaxGrad(ib, x, GetIntList(axis), out, dout);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  NodePtr dx;
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'ReduceMin', gradient not support for complex type currently.";
+  } else {
+    dx = MinOrMaxGrad(ib, x, GetIntList(axis), out, dout);
+  }
   return {dx, ib->ZerosLike(axis)};
 });
 
@@ -1005,7 +1023,13 @@ REG_BPROP_BUILDER("ReduceMean").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
     MS_EXCEPTION(ValueError) << "out shape size can not be 0";
   }
   auto div_shape = getSize(shape_x) / shape_out_sz;
-  auto dx = ib->RealDiv(grad, ib->Tensor(div_shape, ib->GetDtype(grad)));
+  auto x_dtype_id = ib->GetDtypeId(x);
+  NodePtr dx;
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'ReduceMean', gradient not support for complex type currently.";
+  } else {
+    dx = ib->RealDiv(grad, ib->Tensor(div_shape, ib->GetDtype(grad)));
+  }
   return {dx, ib->ZerosLike(axis)};
 });
 

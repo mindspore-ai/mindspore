@@ -923,6 +923,8 @@ def get_bprop_reduceprod(self):
 
     def bprop(x, axis, out, dout):
         """Grad definition for `Product` operation."""
+        if x.dtype in (mstype.complex64, mstype.complex128):
+            raise TypeError("The 'ReduceProd', gradient not support for complex type currently.")
         # Expand dout to full input shape
         input_shape = shape_op(x)
         if input_shape == ():
@@ -1014,6 +1016,8 @@ def get_bprop_reducemax(self):
     """Grad definition for `Max` operation."""
 
     def bprop(x, axis, out, dout):
+        if x.dtype in (mstype.complex64, mstype.complex128):
+            raise TypeError("The 'ReduceMax', gradient not support for complex type currently.")
         dx = _min_or_max_grad(x, axis, out, dout)
         return (dx, zeros_like(axis))
 
@@ -1039,6 +1043,8 @@ def get_bprop_reducemin(self):
     """Grad definition for `ReduceMin` operation."""
 
     def bprop(x, axis, out, dout):
+        if x.dtype in (mstype.complex64, mstype.complex128):
+            raise TypeError("The 'ReduceMin', gradient not support for complex type currently.")
         dx = _min_or_max_grad(x, axis, out, dout)
         return (dx, zeros_like(axis))
 
@@ -1067,6 +1073,8 @@ def get_bprop_reduce_mean(self):
     dtype = P.DType()
 
     def bprop(x, axis, out, dout):
+        if x.dtype in (mstype.complex64, mstype.complex128):
+            raise TypeError("The 'ReduceMean', gradient not support for complex type currently.")
         grad = _sum_grad(x, axis, dout)
         shape_x = shape_op(x)
         shape_out = shape_op(out)
