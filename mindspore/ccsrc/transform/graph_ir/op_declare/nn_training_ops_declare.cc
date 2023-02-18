@@ -296,7 +296,19 @@ INPUT_MAP(ApplyAdamWithAmsgrad) = {
 ATTR_INPUT_MAP(ApplyAdamWithAmsgrad) = {{"beta1", "beta1"}, {"beta2", "beta2"}, {"epsilon", "epsilon"}};
 ATTR_MAP(ApplyAdamWithAmsgrad) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdamWithAmsgrad) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(ApplyAdamWithAmsgrad, kApplyAdamWithAmsgradDOpName, ADPT_DESC(ApplyAdamWithAmsgrad))
+REG_ADPT_DESC(ApplyAdamWithAmsgrad, kApplyAdamWithAmsgradOpName, ADPT_DESC(ApplyAdamWithAmsgrad))
+
+// ApplyAdamWithAmsgrad
+INPUT_MAP(ApplyAdamWithAmsgradD) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(m)},           {3, INPUT_DESC(v)},
+                                    {4, INPUT_DESC(vhat)}, {5, INPUT_DESC(beta1_power)}, {6, INPUT_DESC(beta2_power)},
+                                    {7, INPUT_DESC(lr)},   {8, INPUT_DESC(grad)}};
+ATTR_MAP(ApplyAdamWithAmsgradD) = {{"beta1", ATTR_DESC(beta1, AnyTraits<float>())},
+                                   {"beta2", ATTR_DESC(beta2, AnyTraits<float>())},
+                                   {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
+                                   {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAdamWithAmsgradD) = {
+  {0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}, {2, OUTPUT_DESC(v)}, {3, OUTPUT_DESC(vhat)}};
+REG_ADPT_DESC(ApplyAdamWithAmsgradD, kApplyAdamWithAmsgradDOpName, ADPT_DESC(ApplyAdamWithAmsgradD))
 
 // ApplyPowerSign
 INPUT_MAP(ApplyPowerSign) = {{1, INPUT_DESC(var)},     {2, INPUT_DESC(m)},          {3, INPUT_DESC(lr)},
