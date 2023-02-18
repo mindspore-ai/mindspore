@@ -7303,16 +7303,23 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
             if ord == 1:
                 if col_axis > row_axis:
                     col_axis -= 1
-                return A.abs().sum(row_axis).max(axis=col_axis)
-            if ord == -1:
+                ret = A.abs().sum(row_axis).max(axis=col_axis)
+            elif ord == -1:
                 if col_axis > row_axis:
                     col_axis -= 1
-                return A.abs().sum(row_axis).min(axis=col_axis)
-            if ord == 2:
-                return _multi_svd_norm(A, row_axis, col_axis, 'amax')
-            if ord == -2:
-                return _multi_svd_norm(A, row_axis, col_axis, 'amin')
-            raise ValueError(f"For norm, the ord {ord} are not support for matrices.")
+                ret = A.abs().sum(row_axis).min(axis=col_axis)
+            elif ord == 2:
+                ret = _multi_svd_norm(A, row_axis, col_axis, 'amax')
+            elif ord == -2:
+                ret = _multi_svd_norm(A, row_axis, col_axis, 'amin')
+            else:
+                raise ValueError(f"For norm, the ord {ord} are not support for matrices.")
+            if keepdim:
+                ret_shape = list(A.shape)
+                ret_shape[dim[0]] = 1
+                ret_shape[dim[1]] = 1
+                ret = ret.reshape(ret_shape)
+            return ret
         if len(dim) == 1:
             if ord == 0:
                 return (A != 0).astype(A.dtype).sum(axis=dim, keepdims=keepdim)
