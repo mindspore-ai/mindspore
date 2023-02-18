@@ -147,7 +147,7 @@ class MS_API Context {
   /// heterogeneous scenarios with multiple members in the vector.
   ///
   /// \return Mutable reference of DeviceInfoContext vector in this context.
-  std::vector<std::shared_ptr<DeviceInfoContext>> &MutableDeviceInfo() const;
+  std::vector<std::shared_ptr<DeviceInfoContext>> &MutableDeviceInfo();
 
  private:
   std::shared_ptr<Data> data_;

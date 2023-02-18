@@ -95,7 +95,7 @@ std::vector<int32_t> Context::GetThreadAffinityCoreList() const {
   return data_->affinity_core_list_;
 }
 
-std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() const {
+std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
   MS_EXCEPTION_IF_NULL(data_);
   return data_->device_info_list;
 }
