@@ -6049,6 +6049,11 @@ def dstack(inputs):
     return P.Concat(2)(trans_inputs)
 
 
+@constexpr
+def _check_is_int(arg_value, arg_name, cls_name):
+    validator.check_is_int(arg_value, arg_name, cls_name)
+
+
 def diff(x, n=1, axis=-1, prepend=None, append=None):
     r"""
     Calculates the n-th discrete difference along the given axis.
@@ -6102,6 +6107,7 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
         raise TypeError(f"For 'diff', 'x' must be a tensor, but got {type(x)}")
     if x.ndim < 1:
         raise TypeError(f"For 'diff', the dimension 'x' must be at least 1, but got {x.ndim}")
+    _check_is_int(n, 'n', 'diff')
     if n != 1:
         raise RuntimeError(f"For 'diff', 'n' must be 1, but got {n}")
     if x.dtype in (mstype.uint16, mstype.uint32, mstype.uint64):
@@ -6620,13 +6626,11 @@ def copysign(x, other):
             "integer, float or Tensor is expected, but got " + f"{type(other)}"
         )
 
-    if not isinstance(x, Tensor):
+    if not isinstance(other, Tensor):
         other = _type_convert(Tensor, other)
     other = _broadcast_to_shape(other, P.Shape()(x))
 
     if _check_same_type(P.DType()(x), mstype.bool_):
-        raise TypeError("copysign does not accept dtype bool.")
-    if _check_same_type(P.DType()(other), mstype.bool_):
         raise TypeError("copysign does not accept dtype bool.")
 
     if _check_same_type(P.DType()(x), mstype.complex64):
