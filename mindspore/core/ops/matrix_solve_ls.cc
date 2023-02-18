@@ -34,6 +34,9 @@ abstract::ShapePtr MatrixSolveLsInferShape(const PrimitivePtr &primitive,
   auto matrix_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto rhs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  if (IsDynamicRank(matrix_shape) || IsDynamicRank(rhs_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
 
   (void)CheckAndConvertUtils::CheckInteger("input matrix rank", SizeToLong(matrix_shape.size()), kGreaterEqual, 2L,
                                            prim_name);
@@ -49,6 +52,16 @@ abstract::ShapePtr MatrixSolveLsInferShape(const PrimitivePtr &primitive,
   int64_t matrix_col = matrix_last[1];
   int64_t rhs_row = rhs_last[0];
   int64_t rhs_col = rhs_last[1];
+  if (IsDynamicShape(matrix_shape) || IsDynamicShape(rhs_shape)) {
+    for (size_t i = 0; i < y_shape.size(); ++i) {
+      if (matrix_shape[i] == abstract::Shape::kShapeDimAny || rhs_shape[i] == abstract::Shape::kShapeDimAny) {
+        y_shape[i] = abstract::Shape::kShapeDimAny;
+      }
+    }
+    y_shape.push_back(matrix_col);
+    y_shape.push_back(rhs_col);
+    return std::make_shared<abstract::Shape>(y_shape);
+  }
 
   for (size_t i = 0; i < matrix_shape.size() - offset; ++i) {
     if (matrix_shape[i] != rhs_shape[i]) {
@@ -89,6 +102,8 @@ TypePtr MatrixSolveLsInferType(const PrimitivePtr &primitive, const std::vector<
   return matrix_type;
 }
 }  // namespace
+
+MIND_API_OPERATOR_IMPL(MatrixSolveLs, BaseOperator);
 
 AbstractBasePtr MatrixSolveLsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
