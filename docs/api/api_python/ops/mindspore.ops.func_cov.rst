@@ -24,6 +24,9 @@ mindspore.ops.cov
     .. warning::
         `fweights` 和 `aweights` 的值不能为负数，负数权重场景结果未定义。
 
+    .. note::
+        当前暂不支持复数。
+
     参数：
         - **x** (Tensor) - 一个二维矩阵，或单个变量的标量或一维向量。
 

@@ -1953,6 +1953,9 @@ def cov(x, *, correction=1, fweights=None, aweights=None):
     .. warning::
         The values of `fweights` and `aweights` cannot be negative, and the negative weight scene result is undefined.
 
+    .. note::
+        Currently, complex number is not supported.
+
     Args:
         x (Tensor): A 2D matrix, or a scalar or 1D vector of a single variable
 
@@ -2028,10 +2031,10 @@ def cov(x, *, correction=1, fweights=None, aweights=None):
         w = None
 
     if w is not None:
-        w_sum = w.sum().astype(mstype.float32)
+        w_sum = w.sum()
         avg = (input_x * w).sum(1) / w_sum
     else:
-        w_sum = Tensor(num_observations, dtype=mstype.float32)
+        w_sum = Tensor(num_observations, dtype=mstype.int64)
         avg = input_x.sum(1) / w_sum
 
     if w is not None and aweights is not None and correction != 0:
