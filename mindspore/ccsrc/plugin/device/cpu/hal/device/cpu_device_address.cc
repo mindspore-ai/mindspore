@@ -117,6 +117,10 @@ bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::str
   }
   std::string path = filepath + '.' + format_;
   MS_LOG(DEBUG) << "E2E Dump path is " << path;
+  if (size_ == 0) {
+    MS_LOG(INFO) << "Data size is 0 for file: " << path << ", no need to dump.";
+    return true;
+  }
   ret = DumpJsonParser::DumpToFile(path, ptr_, size_, host_shape, host_type);
 #endif
   return ret;
