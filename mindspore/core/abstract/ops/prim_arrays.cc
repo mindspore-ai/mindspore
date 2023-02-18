@@ -15,18 +15,32 @@
  */
 
 #include <algorithm>
-#include <functional>
 #include <iterator>
-#include <numeric>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "abstract/abstract_value.h"
 #include "abstract/ops/infer_functions.h"
 #include "abstract/param_validator.h"
 #include "abstract/utils.h"
-#include "ops/op_utils.h"
-#include "ops/op_name.h"
-#include "utils/anf_utils.h"
-#include "utils/check_convert_utils.h"
 #include "utils/shape_utils.h"
+#include "abstract/dshape.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ir/dtype.h"
+#include "ir/dtype/number.h"
+#include "ir/dtype/type.h"
+#include "ir/primitive.h"
+#include "ir/scalar.h"
+#include "ir/tensor.h"
+#include "ir/value.h"
+#include "mindapi/base/shape_vector.h"
+#include "mindapi/base/type_id.h"
+#include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace abstract {

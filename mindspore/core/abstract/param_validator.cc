@@ -17,13 +17,13 @@
 #include "abstract/param_validator.h"
 
 #include <algorithm>
-#include <set>
 #include <string>
 #include <sstream>
 #include <memory>
-#include "utils/symbolic.h"
-#include "abstract/utils.h"
-
+#include "abstract/dshape.h"
+#include "ir/dtype.h"
+#include "ir/dtype/tensor_type.h"
+#include "ir/scalar.h"
 namespace mindspore {
 namespace abstract {
 #define ABSTRACT_REPORT_NAME_DEC(abstract) constexpr char ReportNameTraits<Abstract##abstract>::name[];

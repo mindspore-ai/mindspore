@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 #include "ops/reduce.h"
-#include <string>
-#include <memory>
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/base/shared_ptr.h"
+#include "mindapi/ir/value.h"
+#include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
-#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ops {

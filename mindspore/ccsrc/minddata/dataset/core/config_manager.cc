@@ -16,16 +16,21 @@
 #include "minddata/dataset/core/config_manager.h"
 
 #include <fstream>
-#include <iostream>
 #include <limits>
 #include <string>
 #include <thread>
 #include <utility>
+#include <exception>
+#include <initializer_list>
+#include <ostream>
+#include <vector>
 
-#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"
-#include "minddata/dataset/util/system_pool.h"
 #include "utils/ms_utils.h"
+#include "include/dataset/constants.h"
+#include "nlohmann/json.hpp"
+#include "util/path.h"
+#include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {

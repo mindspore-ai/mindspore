@@ -15,7 +15,8 @@
  */
 
 #include "utils/trace_info.h"
-#include "ir/anf.h"
+#include "utils/info.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 std::string TraceInfo::GetActionBetweenNode(const DebugInfoPtr &info) const {

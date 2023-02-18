@@ -15,10 +15,8 @@
  */
 
 #include "include/common/thread_pool.h"
-#include <algorithm>
 #include <exception>
 #include "utils/log_adapter.h"
-#include "utils/convert_utils_base.h"
 #include "utils/ms_exception.h"
 
 namespace mindspore {

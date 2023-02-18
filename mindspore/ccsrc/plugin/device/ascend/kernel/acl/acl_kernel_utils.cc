@@ -16,19 +16,27 @@
 #include "plugin/device/ascend/kernel/acl/acl_kernel_utils.h"
 #include <string>
 #include <map>
-#include <set>
 #include <utility>
-#include <functional>
 #include <algorithm>
+#include <iterator>
+#include <optional>
+
 #include "ir/value.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
-#include "kernel/common_utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 
-#include "plugin/device/ascend/hal/device/ge_types_convert.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
+#include "acl/acl_rt.h"
+#include "include/robin_hood.h"
+#include "ir/primitive.h"
+#include "ir/scalar.h"
+#include "kernel/oplib/super_bar.h"
+#include "ops/base_operator.h"
+#include "ops/core_ops.h"
+#include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace kernel {

@@ -18,12 +18,18 @@
 #include <sentencepiece_trainer.h>
 
 #include <fstream>
+#include <memory>
+#include <optional>
+#include <string>
+#include <type_traits>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
-#include "include/common/utils/utils.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/include/dataset/text.h"
-#include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
+#include "include/api/status.h"
 #ifndef BUILD_LITE
 #include "mindspore/core/utils/file_utils.h"
 #else

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include <string>
 #include "ops/fake_quant_with_min_max_vars.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/base/shared_ptr.h"
+#include "mindapi/ir/value.h"
+#include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

@@ -23,13 +23,22 @@
 #include <functional>
 #include <set>
 #include <map>
+#include <iterator>
 
 #include "abstract/abstract_value.h"
-#include "ops/op_utils.h"
 #include "ir/dtype/type.h"
 #include "ir/dtype/tensor_type.h"
 #include "ir/dtype.h"
 #include "utils/ms_context.h"
+#include "ir/primitive.h"
+#include "ir/scalar.h"
+#include "ir/tensor.h"
+#include "ir/value.h"
+#include "mindapi/base/format.h"
+#include "mindapi/base/type_id.h"
+#include "mindapi/base/types.h"
+#include "ops/op_name.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 static std::map<std::string, int64_t> DataFormatToEnumMap = {

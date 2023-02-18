@@ -14,14 +14,21 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.h"
-#include <functional>
 #include <map>
 #include <string>
+#include <memory>
+#include <utility>
+
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "abstract/utils.h"
-#include "transform/graph_ir/transform_util.h"
 #include "runtime/device/memory_manager.h"
+#include "include/common/utils/utils.h"
+#include "ir/anf.h"
+#include "ir/value.h"
+#include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore::hccl {
 namespace {

@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/aicpu/aicpu_ops/random_shuffle_kernel.h"
-#include <map>
 #include <vector>
 #include <string>
 #include "securec/include/securec.h"
-#include "utils/convert_utils_base.h"
 #include "proto/aicpu_tensor.pb.h"
+#include "google/protobuf/stubs/common.h"
+#include "./kernel_base.h"
+#include "./kernel_errcode.h"
+#include "./kernel_log.h"
 
 namespace aicpu {
 template <typename Scalar>

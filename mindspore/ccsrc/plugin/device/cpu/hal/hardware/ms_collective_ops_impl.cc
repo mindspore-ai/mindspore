@@ -15,9 +15,14 @@
  */
 
 #include <numeric>
+#include <functional>
+
 #include "plugin/device/cpu/hal/hardware/ms_collective_ops_impl.h"
-#include "distributed/cluster/cluster_context.h"
 #include "utils/ms_context.h"
+#include "actor/msg.h"
+#include "plugin/device/cpu/hal/hardware/ms_collective_topo.h"
+#include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace device {

@@ -15,9 +15,11 @@
  */
 
 #include "ops/fusion/full_connection.h"
-#include <string>
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/shared_ptr.h"
+#include "mindapi/ir/value.h"
+#include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

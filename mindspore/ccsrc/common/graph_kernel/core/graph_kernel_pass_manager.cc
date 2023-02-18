@@ -16,12 +16,11 @@
 #include "common/graph_kernel/core/graph_kernel_pass_manager.h"
 
 #include <iomanip>
+#include <algorithm>
+#include <memory>
+#include <ostream>
 
-#include "ir/anf.h"
-#include "ir/func_graph.h"
-#include "ir/manager.h"
-#include "utils/ms_context.h"
-#include "include/common/debug/anf_ir_dump.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore::graphkernel {
 void GraphKernelPassManager::Add(const opt::PassPtr &pass, unsigned int pass_level, bool supported_device) {

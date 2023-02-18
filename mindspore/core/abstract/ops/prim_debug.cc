@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <memory>
+#include <string>
 
 #include "abstract/param_validator.h"
 #include "abstract/ops/infer_functions.h"
-#include "abstract/utils.h"
-#include "utils/symbolic.h"
-
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ir/primitive.h"
+#include "mindapi/base/shape_vector.h"
+#include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
 namespace mindspore {
 namespace abstract {
 AbstractBasePtr InferImplDebug(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
