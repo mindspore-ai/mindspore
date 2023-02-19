@@ -46,6 +46,7 @@ class AddcmulCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   TypeId dtype_{kTypeUnknown};
+  TypeId dtype_value_{kTypeUnknown};
   std::vector<int64_t> input_shape0_;
   std::vector<int64_t> input_shape1_;
   std::vector<int64_t> input_shape2_;
@@ -59,13 +60,16 @@ class AddcmulCpuKernelMod : public NativeCpuKernelMod {
   ArithmeticParameter mul_para_{};
 
   template <typename T>
+  bool AddcmulCheck(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
+  template <typename T1, typename T2>
   bool AddcmulCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
   void AddcmulAdd(const T *input1, const T *input2, T *out);
   template <typename T>
   void AddcmulMul1(const T *input1, const T *input2, T *out);
-  template <typename T>
-  void AddcmulMul2(const T *input1, const T *input2, T *out);
+  template <typename T1, typename T2>
+  void AddcmulMul2(const T2 *input1, const T1 *input2, T1 *out);
 };
 }  // namespace kernel
 }  // namespace mindspore
