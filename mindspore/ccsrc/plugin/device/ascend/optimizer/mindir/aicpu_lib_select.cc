@@ -323,7 +323,9 @@ bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
                                                                mindspore::kMultiMarginLossGradOpName,
                                                                mindspore::kSspaddmmOpName,
                                                                mindspore::kBatchMatMulOpName,
-                                                               mindspore::kSparseToDenseOpName};
+                                                               mindspore::kSparseToDenseOpName,
+                                                               mindspore::kTrilOpName,
+                                                               mindspore::kBernoulliOpName};
 
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
   static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";

@@ -21,4 +21,4 @@ mindspore.ops.ldexp
     异常：
         - **TypeError** - 如果 `x` 不是Tensor。
         - **TypeError** - 如果 `other` 不是Tensor。
-        - **ValueError** - 如果 `x` 和 `other` 在非单数维的size不相同，或不等于1。
+        - **ValueError** - 如果 `x` 和 `other` 的shape不能广播。

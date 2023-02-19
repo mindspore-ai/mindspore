@@ -576,7 +576,6 @@ Array Operation
     mindspore.ops.SplitV
     mindspore.ops.Squeeze
     mindspore.ops.Stack
-    mindspore.ops.STFT
     mindspore.ops.StridedSlice
     mindspore.ops.TensorScatterAdd
     mindspore.ops.TensorScatterDiv
