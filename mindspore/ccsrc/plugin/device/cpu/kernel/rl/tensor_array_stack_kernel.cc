@@ -51,9 +51,15 @@ void TensorArrayStackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else {
     value_size_ = ele_size_ * LongToSize(size);
   }
+  is_need_retrieve_output_shape_ = true;
+}
+
+void TensorArrayStackCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  output_size_list_.clear();
+  input_size_list_.clear();
   output_size_list_.push_back(value_size_);
   input_size_list_.push_back(sizeof(int64_t));
-  is_need_retrieve_output_shape_ = true;
 }
 
 void TensorArrayStackCpuKernelMod::PostExecute() {
