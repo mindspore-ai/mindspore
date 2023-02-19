@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -321,8 +321,25 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
   // Set bprop output as (env, dx)
   constexpr char model_name[] = "mindspore.ops.composite.multitype_ops.add_impl";
   constexpr char python_ops[] = "_tuple_add";
+  auto bprop_tuple_add_check_func = std::make_shared<std::function<bool(const std::vector<AbstractBasePtr> &args)>>(
+    [](const std::vector<AbstractBasePtr> &args) {
+      for (const auto &arg : args) {
+        if (!arg->isa<abstract::AbstractTuple>()) {
+          MS_EXCEPTION(TypeError) << "For bprop function, output should be a tuple, but got " << arg->ToString();
+        }
+      }
+      return true;
+    });
   auto tuple_env = NewCNode({NewValueNode(prim::kPrimMakeTuple), NewEnviron(bprop_fg)}, bprop_fg);
   auto tuple_add_ops = NewValueNode(prim::GetPythonOps(python_ops, model_name));
+  if (IsValueNode<FuncGraphBase>(tuple_add_ops)) {
+    auto tuple_add_func_graph = GetValueNode<FuncGraphBasePtr>(tuple_add_ops);
+    MS_LOG(DEBUG) << "Get tuple add func successful. Tuple add fg: " << tuple_add_func_graph->ToString();
+    auto checker = std::make_shared<FuncGraphChecker>();
+    checker->AddCheckFunc<const std::vector<AbstractBasePtr> &>(bprop_tuple_add_check_func);
+    tuple_add_func_graph->AddChecker("check_infer_inputs", checker);
+  }
+
   if (!extra_lifted_args.empty()) {
     (void)extra_lifted_args.insert(extra_lifted_args.cbegin(), NewValueNode(prim::kPrimMakeTuple));
     auto extra_tuple = NewCNode(extra_lifted_args, bprop_fg);
