@@ -358,6 +358,7 @@ ValuePtr ConvertCellObjToFuncGraph(const py::object &obj) {
       (void)func_graph->transforms().emplace(CUSTOM_BPROP_NAME, FuncGraphTransform(bprop_graph));
       (void)bprop_graph->transforms().emplace("primal", FuncGraphTransform(func_graph));
       func_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+      func_graph->set_flag(FUNC_GRAPH_FLAG_PRIMAL_OF_BPROP, true);
     }
   }
   if (py::hasattr(obj, STAGE_NAME)) {
