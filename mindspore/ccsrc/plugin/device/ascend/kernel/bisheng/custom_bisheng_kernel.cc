@@ -94,7 +94,7 @@ bool CustomBiShengKernel::InitKernel(const AnfNodePtr &kernel_node) {
       return false;
     }
   }
-  init_func_ = reinterpret_cast<std::add_pointer<int(int *, int64_t **, const char **, AotExtra *)>::type>(
+  init_func_ = reinterpret_cast<std::add_pointer<int(int *, int64_t **, const char **, AotExtraDualABI *)>::type>(
     dlsym(handle_, (func_name_ + "Init").c_str()));
   if (init_func_ != nullptr) {
     // Init func exist in the custom aot file

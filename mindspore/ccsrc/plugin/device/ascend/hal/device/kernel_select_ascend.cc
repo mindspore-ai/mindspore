@@ -663,7 +663,10 @@ KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelTyp
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, imply_type);
   // Only process Custom op that does not has reg info
   if (op_info_ptr != nullptr) {
-    return kNoMatched;
+    // For BiSheng Ascend operator, continue the process even if the input info is missed.
+    if (!(imply_type == kernel::OpImplyType::kImplyBISHENG && op_info_ptr->inputs_ptr().empty())) {
+      return kNoMatched;
+    }
   }
   // If Custom op has not set reg info, then infer info from inputs
   MS_LOG(WARNING) << "Not find operator information for Custom op[" << op_name << "]. "
@@ -1256,11 +1259,6 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
     if (select_status != kNoMatched) {
       common::AnfAlgo::SetNodeAttr(kAttrIsAiCpuKernel, MakeValue(true), kernel_node);
     }
-  }
-  if (select_status == kNoMatched) {
-    std::vector<std::shared_ptr<kernel::KernelBuildInfo>> bisheng_kernel_info_list;
-    kernel::BishengQuery(kernel_node, &bisheng_kernel_info_list);
-    select_status = SetMatchedKernelInfo(kernel_node, bisheng_kernel_info_list);
   }
   // The kernel info can not find in ai_cpu kernel lists and ai_core kernel lists
   if (select_status == kNoMatched) {
