@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,6 +244,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   void set_flag(size_t flag) { flag_ = flag; }
   void UpdateFlag(size_t flag) { SET_FLAG(flag_, flag); }
   void ClearFlag(size_t flag) { CLEAR_FLAG(flag_, flag); }
+
+  std::pair<AnfNodeWeakPtr, size_t> node_index() const { return node_index_; }
 
  protected:
   const void *ptr() const { return ptr_; }

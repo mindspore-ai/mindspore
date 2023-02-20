@@ -291,7 +291,6 @@ def test_none_is_condition():
     assert res is None
 
 
-@pytest.mark.skip(reason="No support None in control flow.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

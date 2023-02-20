@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
 
   // for pynative mode when use_vm is on
   py::object Run(const py::tuple &args, const py::object &phase_obj);
+  std::pair<py::object, bool> GetPyExecuteOutputFromAddress(const py::object &res, const BaseRef &value);
   ResourcePtr GetResource(const std::string &phase);
   FuncGraphPtr GetFuncGraph(const std::string &phase);
   FuncGraphPtr GetGradGraph(const std::string &phase);
