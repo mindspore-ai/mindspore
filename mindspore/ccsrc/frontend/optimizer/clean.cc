@@ -34,6 +34,7 @@
 #include "ir/value.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "utils/hash_map.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 /* namespace to support opt */
@@ -967,6 +968,9 @@ class CleanAfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(cnode);
     const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
     if (!support_fallback_runtime) {
+      return;
+    }
+    if (AnfUtils::IsRealKernel(cnode)) {
       return;
     }
     const auto &inputs = cnode->inputs();

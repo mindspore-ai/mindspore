@@ -70,8 +70,7 @@ class PrintConstStringWrapper : public AnfVisitor {
       return std::any_of(elements.cbegin(), elements.cend(),
                          [&](const AbstractBasePtr &ele) { return CheckNeedConvert(ele); });
     }
-    return !abs->isa<abstract::AbstractScalar>() && !abs->isa<abstract::AbstractTensor>() &&
-           !abs->isa<abstract::AbstractNone>();
+    return !abs->isa<abstract::AbstractScalar>() && !abs->isa<abstract::AbstractTensor>();
   }
 
   AnfNodePtr ConvertString(const AbstractBasePtr &abs) const {
