@@ -16,11 +16,11 @@ mindspore.ops.remainder
         - 如果shape表示为(D1,D2…Dn)，那么D1 \ * D2……\ * DN <= 1000000，n <= 8。
 
     参数：
-        - **x** (Union[Tensor, numbers.Number, bool]) - 第一个输入可以是数字，bool或者dtype是数字的Tensor。
-        - **y** (Union[Tensor, numbers.Number, bool]) - 当第一个输入是一个Tensor时，第二个输入可以是数字、bool或者dtype是数字的Tensor。
+        - **x** (Union[Tensor, numbers.Number, bool]) - 第一个输入可以是Number，bool或者dtype是Number的Tensor。
+        - **y** (Union[Tensor, numbers.Number, bool]) - 当第一个输入是一个Tensor时，第二个输入可以是Number、bool或者dtype是Number的Tensor。
 
     返回：
-        Tensor，具有和其中一个输入广播后相同的shape，数据类型是两个输入中精度较高或数字较高的数据类型。
+        Tensor，具有和其中一个输入广播后相同的shape，数据类型是两个输入中精度较高的数据类型。
 
     异常：
         - **TypeError** - `x` 和 `y` 的类型不是Tensor，number或bool。

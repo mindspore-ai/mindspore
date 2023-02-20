@@ -3537,7 +3537,7 @@ def ldexp(x, other):
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If `other` is not a Tensor.
-        ValueError: If the size of tensor `x` and `other` are different at non-singleton dimension, and not equal to 1.
+        ValueError: If shape of `x` and `other` can not broadcast.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5206,7 +5206,7 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
         TypeError: If `x`, `vec1`, `vec2` is not a Tensor.
         TypeError: If inputs `x`, `vec1`, `vec2` are not the same dtype.
         ValueError: If `x` is not a 2-D Tensor.
-            If `vec1`, `vec2` is not a 1-D Tensor.
+        ValueError: If `vec1`, `vec2` is not a 1-D Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8717,7 +8717,7 @@ def remainder(x, y):
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
+        and the data type is the one with higher precision.
 
     Raises:
         TypeError: If neither `x` nor `y` is one of the following: Tensor, number, bool.

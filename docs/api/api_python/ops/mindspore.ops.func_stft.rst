@@ -35,14 +35,14 @@ mindspore.ops.stft
           - 如果 `return_complex` 为False，则返回一个实数Tensor，shape为 :math:`(*, N, T, 2)` 。
 
           `N` 为傅立叶变换的尺寸，取值受参数 `onesided` 影响：
-            - 如果 `onesided` 为False， :math:`N = n_fft` 。
-            - 如果 `onesided` 为True， :math:`N = n_fft // 2 + 1` 。
+          - 如果 `onesided` 为False， :math:`N = n_fft` 。
+          - 如果 `onesided` 为True， :math:`N = n_fft // 2 + 1` 。
             
           `T` 为使用的总帧数，计算公式：:math:`T = 1 + (len - n_fft) / hop_length` ，其中 :math:`len` 取值受 `center` 影响：
-            - 如果 `center` 为False，则 :math:`len = signal_length` 。
-            - 如果 `center` 为True，则 :math:`len = signal_length + (n_fft // 2) * 2` 。
+          - 如果 `center` 为False，则 :math:`len = signal_length` 。
+          - 如果 `center` 为True，则 :math:`len = signal_length + (n_fft // 2) * 2` 。
 
-            其中signal_length为信号长度，取值 :math:`x.shape[-1]` 。     
+          其中signal_length为信号长度，取值 :math:`x.shape[-1]` 。     
 
     异常：
         - **TypeError** -  `x` 不是1-D或2-D Tensor。
