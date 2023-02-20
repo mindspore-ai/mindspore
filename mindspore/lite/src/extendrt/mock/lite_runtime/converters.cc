@@ -25,16 +25,11 @@ constexpr static int kDefaultThreadNumFour = 4;
 constexpr static int kCoreNumThreshold = 32;
 constexpr static int kDefaultInterOpParallelNum = 1;
 
-void ContextUtils::SetContextAttr(int32_t thread_num, int32_t inter_op_parallel_num, bool enable_parallel,
-                                  const std::vector<int32_t> &affinity_core_list,
-                                  const std::shared_ptr<Delegate> &delegate, lite::InnerContext *inner_context,
-                                  bool float_mode) {
+void ContextUtils::SetContextAttr(int32_t thread_num, int32_t inter_op_parallel_num,
+                                  const std::vector<int32_t> &affinity_core_list, lite::InnerContext *inner_context) {
   inner_context->thread_num_ = thread_num;
   inner_context->inter_op_parallel_num_ = inter_op_parallel_num;
-  inner_context->enable_parallel_ = enable_parallel;
   inner_context->affinity_core_list_ = affinity_core_list;
-  inner_context->delegate = delegate;
-  inner_context->float_mode = float_mode;
 }
 
 Status ContextUtils::AddCpuDevice(const std::shared_ptr<Allocator> &allocator, int affinity_mode, bool enable_fp16,
@@ -119,9 +114,8 @@ std::shared_ptr<lite::InnerContext> ContextUtils::Convert(Context *context) {
                   << " | thread num: " << context->GetThreadNum();
     return nullptr;
   }
-  SetContextAttr(context->GetThreadNum(), context->GetInterOpParallelNum(), context->GetEnableParallel(),
-                 context->GetThreadAffinityCoreList(), context->GetDelegate(), inner_context.get(),
-                 context->GetMultiModalHW());
+  SetContextAttr(context->GetThreadNum(), context->GetInterOpParallelNum(), context->GetThreadAffinityCoreList(),
+                 inner_context.get());
   inner_context->device_list_.clear();
   Status ret = kLiteError;
   for (auto &device : device_list) {

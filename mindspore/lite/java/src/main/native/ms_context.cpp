@@ -31,7 +31,9 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_MSContext_createMSC
     return (jlong) nullptr;
   }
   context->SetThreadNum(thread_num);
-  context->SetEnableParallel(enable_parallel);
+  if (static_cast<bool>(enable_parallel)) {
+    context->SetEnableParallel(enable_parallel);
+  }
   context->SetThreadAffinity(cpu_bind_mode);
   return (jlong)context;
 }

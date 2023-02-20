@@ -121,7 +121,9 @@ mindspore::Context *MSContextFromContext(const std::shared_ptr<InnerContext> &co
   }
   ms_context->SetThreadNum(context->thread_num_);
   ms_context->SetThreadAffinity(context->affinity_core_list_);
+#ifndef ENABLE_CLOUD_FUSION_INFERENCE
   ms_context->SetEnableParallel(context->enable_parallel_);
+#endif
   if (context->delegate) {
     ms_context->SetDelegate(context->delegate);
   }

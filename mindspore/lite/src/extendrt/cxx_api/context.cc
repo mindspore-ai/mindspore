@@ -102,18 +102,36 @@ int32_t Context::GetInterOpParallelNum() const {
   return data_->inter_op_parallel_num_;
 }
 
-void Context::SetEnableParallel(bool is_parallel) { MS_LOG(ERROR) << "Unsupported Feature."; }
+void Context::SetEnableParallel(bool is_parallel) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return;
+}
 
 bool Context::GetEnableParallel() const {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return false;
 }
 
-void Context::SetThreadAffinity(int mode) { MS_LOG(ERROR) << "Unsupported Feature."; }
+void Context::SetThreadAffinity(int mode) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  if (mode < lite::NO_BIND || mode > lite::MID_CPU) {
+    MS_LOG(WARNING) << "Invalid thread affinity mode: " << mode << ", change to NO_BIND mode.";
+    data_->affinity_mode_ = lite::NO_BIND;
+    return;
+  }
+  data_->affinity_mode_ = mode;
+  return;
+}
 
 int Context::GetThreadAffinityMode() const {
-  MS_LOG(ERROR) << "Unsupported Feature.";
-  return 0;
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return -1;
+  }
+  return data_->affinity_mode_;
 }
 
 void Context::SetThreadAffinity(const std::vector<int> &core_list) {
@@ -122,8 +140,6 @@ void Context::SetThreadAffinity(const std::vector<int> &core_list) {
     return;
   }
   data_->affinity_core_list_ = core_list;
-
-  return;
 }
 
 std::vector<int32_t> Context::GetThreadAffinityCoreList() const {
@@ -134,7 +150,10 @@ std::vector<int32_t> Context::GetThreadAffinityCoreList() const {
   return data_->affinity_core_list_;
 }
 
-void Context::SetBuiltInDelegate(DelegateMode mode) { MS_LOG(ERROR) << "Unsupported Feature."; }
+void Context::SetBuiltInDelegate(DelegateMode mode) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return;
+}
 
 DelegateMode Context::GetBuiltInDelegate() const {
   MS_LOG(ERROR) << "Unsupported Feature.";
@@ -143,6 +162,7 @@ DelegateMode Context::GetBuiltInDelegate() const {
 
 void Context::set_delegate(const std::shared_ptr<AbstractDelegate> &delegate) {
   MS_LOG(ERROR) << "Unsupported Feature.";
+  return;
 }
 
 std::shared_ptr<AbstractDelegate> Context::get_delegate() const {
@@ -162,7 +182,10 @@ std::shared_ptr<Delegate> Context::GetDelegate() const {
   return nullptr;
 }
 
-void Context::SetMultiModalHW(bool float_mode) { MS_LOG(ERROR) << "Unsupported Feature."; }
+void Context::SetMultiModalHW(bool float_mode) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return;
+}
 
 bool Context::GetMultiModalHW() const {
   MS_LOG(ERROR) << "Unsupported Feature.";
@@ -292,21 +315,30 @@ std::vector<char> GPUDeviceInfo::GetPrecisionModeChar() const {
   return StringToChar(ref);
 }
 
-void GPUDeviceInfo::SetEnableGLTexture(bool is_enable_gl_texture) { MS_LOG(ERROR) << "Unsupported Feature."; }
+void GPUDeviceInfo::SetEnableGLTexture(bool is_enable_gl_texture) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return;
+}
 
 bool GPUDeviceInfo::GetEnableGLTexture() const {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return false;
 }
 
-void GPUDeviceInfo::SetGLContext(void *gl_context) { MS_LOG(ERROR) << "Unsupported Feature."; }
+void GPUDeviceInfo::SetGLContext(void *gl_context) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return;
+}
 
 void *GPUDeviceInfo::GetGLContext() const {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return nullptr;
 }
 
-void GPUDeviceInfo::SetGLDisplay(void *gl_display) { MS_LOG(ERROR) << "Unsupported Feature."; }
+void GPUDeviceInfo::SetGLDisplay(void *gl_display) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return;
+}
 
 void *GPUDeviceInfo::GetGLDisplay() const {
   MS_LOG(ERROR) << "Unsupported Feature.";
@@ -551,5 +583,25 @@ std::vector<char> AscendDeviceInfo::GetBufferOptimizeModeChar() const {
   }
   const std::string &ref = GetValue<std::string>(data_, kModelOptionAscendBufferOptimize);
   return StringToChar(ref);
+}
+
+void KirinNPUDeviceInfo::SetEnableFP16(bool is_fp16) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return;
+}
+
+bool KirinNPUDeviceInfo::GetEnableFP16() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return false;
+}
+
+void KirinNPUDeviceInfo::SetFrequency(int frequency) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return;
+}
+
+int KirinNPUDeviceInfo::GetFrequency() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return 0;
 }
 }  // namespace mindspore

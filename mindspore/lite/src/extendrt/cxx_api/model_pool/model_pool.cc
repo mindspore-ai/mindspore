@@ -424,7 +424,6 @@ Status ModelPool::SetWorkersNumaId(std::vector<int> *numa_node_id) {
 std::shared_ptr<Context> ModelPool::CopyContext(const std::shared_ptr<Context> &context) {
   auto new_context = std::make_shared<Context>();
   new_context->SetThreadNum(context->GetThreadNum());
-  new_context->SetEnableParallel(context->GetEnableParallel());
   new_context->SetInterOpParallelNum(context->GetInterOpParallelNum());
   new_context->SetThreadAffinity(context->GetThreadAffinityMode());
   new_context->SetThreadAffinity(context->GetThreadAffinityCoreList());

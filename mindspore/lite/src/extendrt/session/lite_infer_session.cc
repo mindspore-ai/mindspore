@@ -30,7 +30,7 @@ namespace mindspore {
 const size_t tensor_max_size = 0x1000000;
 
 Status LiteInferSession::Init(const std::shared_ptr<Context> &context) {
-  MS_LOG(INFO) << "SingleOpInferSession::Init";
+  MS_LOG(INFO) << "LiteInferSession::Init";
   context_ = context;
   lite_session_ = CreateLiteSession(ContextUtils::Convert(context_.get()));
   MS_EXCEPTION_IF_NULL(lite_session_);
