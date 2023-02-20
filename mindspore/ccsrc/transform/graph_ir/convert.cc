@@ -68,6 +68,8 @@ constexpr size_t kDataInputIndex = 1;
 constexpr size_t kReturnInputSize = 2;
 constexpr size_t kMergeInputSize = 2;
 constexpr size_t kNoOpOptThreshold = 3;
+constexpr auto kHcclFusionByFusionID = 2;
+constexpr auto kHcclFusionDefault = 1;
 constexpr auto kTypeNoOp = "NoOp";
 constexpr auto kTypeIdentity = "Identity";
 constexpr auto kTypeIdentityN = "IdentityN";
@@ -2669,11 +2671,16 @@ void DfGraphConvertor::ConvertAllReduce(const CNodePtr &node) {
   auto fusion = GetValue<int64_t>(fusion_value);
   int64_t fusion_id = -1;
 
-  if (fusion != 0 && fusion != 1) {
+  // fusion 0: no fusion; 1(default): fusion; 2: fusion the ops by fusion id.
+  if (fusion > 1) {
     fusion_id = fusion;
+    fusion = kHcclFusionByFusionID;
+  } else if (fusion < 0) {
+    fusion = kHcclFusionDefault;
   }
 
   (void)op->SetAttr("fusion_id", fusion_id);
+  (void)op->SetAttr("fusion", fusion);
   op_cache_[node.get()] = op;
 }
 
