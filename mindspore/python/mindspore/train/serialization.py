@@ -632,6 +632,10 @@ def _check_obfuscate_params(obf_config):
         raise ValueError("'obf_ratio' must be in (0, 1] if it is a float, but got {}.".format(obf_config['obf_ratio']))
     customized_funcs = []
     if 'customized_func' in obf_config.keys():
+        device_target = context.get_context('device_target')
+        if device_target in ["GPU", "Ascend"]:
+            raise ValueError(
+                "Customized func mode only support 'device_target'='CPU, but got {}.".format(device_target))
         customized_funcs.append(_check_customized_func(obf_config['customized_func']))
     obf_random_seed = _check_param_type(obf_config, "obf_random_seed", int, False)
     return obf_ratio, customized_funcs, obf_random_seed
@@ -1491,6 +1495,10 @@ def _set_obfuscate_config(**kwargs):
                        " applied, remember to set 'obf_random_seed' when loading obfuscated model.")
 
     if obf_random_seed == 0:  # apply customized_func mode
+        device_target = context.get_context('device_target')
+        if device_target in ["GPU", "Ascend"]:
+            raise ValueError(
+                "Customized func mode only support 'device_target'='CPU, but got {}.".format(device_target))
         clean_funcs()
         for func in customized_funcs:
             add_opaque_predicate(func.__name__, func)
