@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,12 @@ class Layout {
 using LayoutPtr = std::shared_ptr<Layout>;
 using LayoutMap = std::map<string, LayoutPtr>;
 
+#if defined(__APPLE__) || defined(_MSC_VER)
 class MSANFModelParser {
+#else
+class MS_CORE_API MSANFModelParser {
+#endif
+
  public:
   MSANFModelParser() = default;
   ~MSANFModelParser() = default;

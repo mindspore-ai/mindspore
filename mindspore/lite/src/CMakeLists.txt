@@ -35,11 +35,15 @@ if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64)
     #for performance
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT APPLE)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
-        -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
+        -fdata-sections -ffast-math -fno-rtti")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
-        -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
+        -fdata-sections -ffast-math -fno-rtti")
         if(TARGET_HIMIX200 OR TARGET_MIX210)
             string(REPLACE "-fno-rtti " "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+        endif()
+        if(NOT MACHINE_LINUX_ARM64)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
         endif()
     endif()
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND APPLE)
@@ -229,6 +233,7 @@ if(MSLITE_ENABLE_EXPERIMENTAL_KERNEL)
 endif()
 
 if(MSLITE_ENABLE_RUNTIME_GLOG)
+    set(USE_GLOG on)
     add_definitions(-DUSE_GLOG)
     string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -382,8 +387,14 @@ set(TRAIN_SRC
         ${TOOLS_DIR}/converter/legacy_optimizer/graph/subgraph_node_pass.cc
         )
 
+if(MSLITE_ENABLE_KERNEL_EXECUTOR AND NOT MSLITE_ENABLE_CONVERTER)
+    add_subdirectory(${CORE_DIR} mindspore_core)
+endif()
+
 if(MSLITE_ENABLE_MINDRT)
-    add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
+    if((NOT MSLITE_ENABLE_CONVERTER) AND (NOT MSLITE_ENABLE_KERNEL_EXECUTOR))
+        add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
+    endif()
     set(LITE_SRC ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/lite_mindrt.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/parallel_lite_actor.cc
@@ -400,7 +411,6 @@ else()
     set(LITE_SRC ${LITE_SRC}
         ${CORE_DIR}/mindrt/src/thread/core_affinity.cc
         ${CORE_DIR}/mindrt/src/thread/threadpool.cc
-        ${CORE_DIR}/mindrt/src/thread/parallel_thread_pool_manager.cc
         )
 endif()
 
@@ -671,6 +681,11 @@ endif()
 if(MSLITE_ENABLE_MODEL_OBF)
     target_link_libraries(mindspore-lite ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
     target_link_libraries(mindspore-lite_static ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
+endif()
+
+if(MSLITE_ENABLE_KERNEL_EXECUTOR)
+    target_link_libraries(mindspore-lite mindspore_core)
+    target_link_libraries(mindspore-lite_static mindspore_core)
 endif()
 
 add_subdirectory(extendrt)

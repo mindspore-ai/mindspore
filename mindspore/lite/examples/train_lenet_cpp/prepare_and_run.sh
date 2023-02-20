@@ -115,6 +115,7 @@ cp scripts/*.sh ${PACKAGE}/
 tar -xzf ${TARBALL}
 mv mindspore-*/runtime/lib ${PACKAGE}/
 mv mindspore-*/runtime/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
+mv mindspore-*/runtime/third_party/glog/* ${PACKAGE}/lib/
 cd mindspore-*
 if [[ "${TARGET}" == "arm64" ]] && [[ -d "runtime/third_party/hiai_ddk/lib" ]]; then
   mv runtime/third_party/hiai_ddk/lib/* ../${PACKAGE}/lib/

@@ -26,11 +26,6 @@
 #include <thread>
 #include <vector>
 #include "utils/convert_utils_base.h"
-#ifdef ENABLE_ARM
-#if defined(__ANDROID__) || defined(ANDROID)
-#include <android/log.h>
-#endif
-#endif
 
 // namespace to support utils module definition
 namespace mindspore {
@@ -38,9 +33,6 @@ constexpr int kNameMaxLength = 18;
 constexpr size_t kStep = 2;
 constexpr auto kSplitLine = "\n----------------------------------------------------\n";
 constexpr auto kFrameworkErrorTitle = "Framework Error Message:";
-#if defined(__ANDROID__) || defined(ANDROID)
-constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
-#endif
 // set default log level to WARNING for all sub modules
 int g_ms_submodule_log_levels[NUM_SUBMODUES] = {MsLogLevel::kWarning};
 #if defined(_WIN32) || defined(_WIN64)
@@ -111,38 +103,6 @@ static int GetThresholdLevel(const std::string &threshold) {
   }
 }
 #undef google
-#elif defined(BUILD_CORE_RUNTIME)
-const char *EnumStrForMsLogLevel(MsLogLevel level) {
-  if (level == MsLogLevel::kDebug) {
-    return "DEBUG";
-  } else if (level == MsLogLevel::kInfo) {
-    return "INFO";
-  } else if (level == MsLogLevel::kWarning) {
-    return "WARNING";
-  } else if (level == MsLogLevel::kError) {
-    return "ERROR";
-  } else {
-    return "NO_LEVEL";
-  }
-}
-#ifdef ENABLE_ARM
-#if defined(__ANDROID__) || defined(ANDROID)
-static int GetAndroidLogLevel(MsLogLevel level) {
-  switch (level) {
-    case MsLogLevel::kDebug:
-      return ANDROID_LOG_DEBUG;
-    case MsLogLevel::kInfo:
-      return ANDROID_LOG_INFO;
-    case MsLogLevel::kWarning:
-      return ANDROID_LOG_WARN;
-    case MsLogLevel::kError:
-    default:
-      return ANDROID_LOG_ERROR;
-  }
-}
-#endif
-#endif
-
 #else
 
 #undef Dlog
@@ -377,14 +337,6 @@ void LogWriter::OutputLog(const std::ostringstream &msg) const {
     << std::this_thread::get_id() << std::dec << "," << GetProcName() << "):" << GetTimeString() << " "
     << "[" << location_.file_ << ":" << location_.line_ << "] " << location_.func_ << "] " << msg.str() << std::endl;
 #undef google
-#elif defined(BUILD_CORE_RUNTIME)
-#if defined(ENABLE_ARM) && (defined(__ANDROID__) || defined(ANDROID))
-  __android_log_print(GetAndroidLogLevel(log_level_), ANDROID_LOG_TAG, "[%s:%d] %s] %s", location_.file_,
-                      location_.line_, location_.func_, msg.str().c_str());
-#else
-  printf("%s [%s:%d] %s] %s\n", EnumStrForMsLogLevel(log_level_), location_.file_, location_.line_, location_.func_,
-         msg.str().c_str());
-#endif
 #else
   auto str_msg = msg.str();
   auto slog_module_id = (submodule_ == SM_MD ? MD : ME);
@@ -398,7 +350,6 @@ void LogWriter::operator<(const LogStream &stream) const noexcept {
   msg << stream.sstream_->rdbuf();
   OutputLog(msg);
 }
-#if !defined(BUILD_LITE_INFERENCE) || defined(BUILD_CORE_RUNTIME)
 void LogWriter::operator^(const LogStream &stream) const {
   std::ostringstream msg;
   msg << stream.sstream_->rdbuf();
@@ -436,7 +387,6 @@ void LogWriter::operator^(const LogStream &stream) const {
   }
   throw std::runtime_error(oss.str());
 }
-#endif
 
 enum class LogConfigToken : size_t {
   INVALID,      // indicate invalid token
@@ -782,17 +732,13 @@ MS_CORE_API void common_log_init(void) {
   FLAGS_logtostderr = true;
   if (logtostderr == "0") {
     if (mindspore::GetEnv("GLOG_log_dir").empty()) {
-#ifndef BUILD_LITE
       MS_LOG(ERROR) << "`GLOG_log_dir` is empty, it must be set while 'logtostderr' equals to 0.";
       // Here can not throw exception and use python to catch, because the PYBIND11_MODULE is not yet been initialed.
       exit(EXIT_FAILURE);
-#else
-      MS_LOG(WARNING) << "`GLOG_log_dir` is empty, log will be printed to stderr.";
-#endif
     } else {
       FLAGS_logtostderr = false;
       // Set log dir from GLOG_log_dir with RANK_ID or OMPI_COMM_WORLD_RANK.
-#ifndef BUILD_LITE
+
       const std::string rank_id = mindspore::GetEnv("RANK_ID");
       const std::string gpu_rank_id = mindspore::GetEnv("OMPI_COMM_WORLD_RANK");
       std::string rank = "0";
@@ -802,9 +748,6 @@ MS_CORE_API void common_log_init(void) {
         rank = gpu_rank_id;
       }
       FLAGS_log_dir = mindspore::GetEnv("GLOG_log_dir") + "/rank_" + rank + "/logs";
-#else
-      FLAGS_log_dir = mindspore::GetEnv("GLOG_log_dir");
-#endif
     }
   }
 
@@ -818,10 +761,10 @@ MS_CORE_API void common_log_init(void) {
 
 // shared lib init hook
 #if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
-#if defined(_MSC_VER) || defined(BUILD_LITE)
+#if defined(_MSC_VER)
 MS_CORE_API void mindspore_log_init(void) {
 #else
-__attribute__((constructor)) void mindspore_log_init(void) {
+__attribute__((constructor)) MS_CORE_API void mindspore_log_init(void) {
 #endif
 #else
 MS_CORE_API void mindspore_log_init(void) {

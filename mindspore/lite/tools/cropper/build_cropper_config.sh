@@ -20,7 +20,7 @@ CPU_TRAIN_MAPPING_OUTPUT_FILE=${CROPPER_OUTPUT_DIR}/cropper_mapping_cpu_train.cf
 [ -n "${CPU_TRAIN_MAPPING_OUTPUT_FILE}" ] && rm -f ${CPU_TRAIN_MAPPING_OUTPUT_FILE}
 
 ops_list=()
-DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID -DENABLE_FP16 -DMSLITE_ENABLE_EXPERIMENTAL_KERNEL -DENABLE_MINDRT -DBUILD_CORE_RUNTIME"
+DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID -DENABLE_FP16 -DMSLITE_ENABLE_EXPERIMENTAL_KERNEL -DENABLE_MINDRT -DUSE_GLOG"
 # get the flatbuffers path
 if [ ${MSLIBS_CACHE_PATH} ]; then
   FLATBUFFERS_LIST=()
@@ -42,6 +42,17 @@ else
   echo "NLOHMANN path is ${NLOHMANN}"
 fi
 
+# get the glog path
+if [ ${MSLIBS_CACHE_PATH} ]; then
+  GLOG_LIST=()
+  while IFS='' read -r line; do GLOG_LIST+=("$line"); done < <(ls -d ${MSLIBS_CACHE_PATH}/glog_*/include)
+  GLOG=${GLOG_LIST[0]}
+  echo "GLOG path is ${GLOG}"
+else
+  GLOG=$(ls -d mindspore/lite/build/.mslib/glog_*/include)
+  echo "GLOG path is ${GLOG}"
+fi
+
 HEADER_LOCATION="-I${MINDSPORE_HOME}
 -I${MINDSPORE_HOME}/mindspore/core
 -I${MINDSPORE_HOME}/mindspore/core/ir
@@ -57,6 +68,7 @@ HEADER_LOCATION="-I${MINDSPORE_HOME}
 -I${MINDSPORE_HOME}/cmake/../third_party/securec/include
 -I${FLATBUFFERS}
 -I${NLOHMANN}
+-I${GLOG}
 -I${MINDSPORE_HOME}/mindspore/lite/build/schema
 -I${MINDSPORE_HOME}/mindspore/lite/build/schema/inner
 -I${MINDSPORE_HOME}/mindspore/lite/build/src
@@ -71,7 +83,7 @@ getDeep() {
   fi
   # first is *.o second is *.cc
   array_deep=()
-  while IFS='' read -r line; do array_deep+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build|third_party|type_id.h|core/utils' | egrep -v ${REMOVE_LISTS_STR})
+  while IFS='' read -r line; do array_deep+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build|third_party|type_id.h|core/utils|glog' | egrep -v ${REMOVE_LISTS_STR})
   # shellcheck disable=SC2068
   for array_deep_file in ${array_deep[@]}; do
     # only add existing files
@@ -112,7 +124,7 @@ getOpsFile() {
       fi
       # first is *.o second is *.cc
       array_file=()
-      while IFS='' read -r line; do array_file+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build|third_party|type_id.h|core/utils' | egrep -v ${REMOVE_LISTS_STR})
+      while IFS='' read -r line; do array_file+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build|third_party|type_id.h|core/utils|glog' | egrep -v ${REMOVE_LISTS_STR})
       # shellcheck disable=SC2068
       for array_file in ${array_file[@]}; do
         # only add existing files
@@ -147,7 +159,7 @@ getFilesFromArr() {
     fi
     # first is *.o second is *.cc
     # shellcheck disable=SC2207
-    array_runtime=($(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build|third_party|type_id.h' | egrep -v ${REMOVE_LISTS_STR}))
+    array_runtime=($(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build|third_party|type_id.h|glog' | egrep -v ${REMOVE_LISTS_STR}))
     # only add existing files
     for array_runtime_file in "${array_runtime[@]}"; do
       if [[ -e ${array_runtime_file%h*}cc && ! ${all_files[*]} =~ ${array_runtime_file%h*}cc ]]; then

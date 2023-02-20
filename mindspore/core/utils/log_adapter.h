@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,7 @@
 #include <thread>
 #include <functional>
 #include "mindapi/base/macros.h"
-#ifndef BUILD_LITE
 #include "utils/os.h"
-#endif
 #include "utils/overload.h"
 #include "./securec.h"
 #ifdef USE_GLOG
@@ -37,7 +35,6 @@
 #define google mindspore_private
 #include "glog/logging.h"
 #undef google
-#elif defined(BUILD_CORE_RUNTIME)
 #else
 #include "toolchain/slog.h"
 #endif
@@ -203,11 +200,7 @@ enum SubModuleId : int {
 };
 
 #ifndef SUBMODULE_ID
-#ifndef BUILD_LITE_INFERENCE
 #define SUBMODULE_ID mindspore::SubModuleId::SM_ME
-#else
-#define SUBMODULE_ID mindspore::SubModuleId::SM_LITE
-#endif
 #endif
 
 /// \brief Get sub-module name by the module id.
@@ -262,12 +255,10 @@ class MS_CORE_API LogWriter {
   /// \param[in] stream The input log stream.
   void operator<(const LogStream &stream) const noexcept;
 
-#if !defined(BUILD_LITE_INFERENCE) || defined(BUILD_CORE_RUNTIME)
   /// \brief Output log message from the input log stream and then throw exception.
   ///
   /// \param[in] stream The input log stream.
   void operator^(const LogStream &stream) const NO_RETURN;
-#endif
 
   /// \brief Get the function pointer of converting exception types in c++.
   ///
@@ -317,16 +308,10 @@ class MS_CORE_API LogWriter {
                : mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), level, SUBMODULE_ID, \
                                       excp_type) < mindspore::LogStream()
 
-#if !defined(BUILD_LITE_INFERENCE) || defined(BUILD_CORE_RUNTIME)
 #define MSLOG_THROW(excp_type)                                                                            \
   mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::kException, \
                        SUBMODULE_ID, excp_type) ^                                                         \
     mindspore::LogStream()
-#else
-#define MSLOG_THROW(excp_type)                                                                                      \
-  mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::kError, SUBMODULE_ID, \
-                       excp_type) < mindspore::LogStream()
-#endif
 
 inline bool IS_OUTPUT_ON(enum MsLogLevel level) noexcept(true) {
   return (static_cast<int>(level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID] &&

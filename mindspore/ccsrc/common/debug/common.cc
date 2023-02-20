@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -409,7 +409,6 @@ struct GlogLogDirRegister {
       if (logtostderr_str != "0") {
         return;
       }
-#ifndef BUILD_LITE
       const char *rank_id = std::getenv("RANK_ID");
       const char *gpu_rank_id = std::getenv("OMPI_COMM_WORLD_RANK");
       std::string rank = "0";
@@ -419,7 +418,6 @@ struct GlogLogDirRegister {
         rank = std::string(gpu_rank_id);
       }
       log_dir_str += "/rank_" + rank + "/logs/";
-#endif
       auto real_log_dir_str = Common::CreatePrefixPath(log_dir_str, true);
       // While 'GLOG_logtostderr' = 0, logs output to files. 'GLOG_log_dir' must be specified as the path of log files.
       // Here can not throw exception and use python to catch, because the PYBIND11_MODULE is not yet been initialed.
@@ -427,13 +425,11 @@ struct GlogLogDirRegister {
         MS_LOG(ERROR) << "The path of log files, which set by 'GLOG_log_dir', is invalid.";
         exit(EXIT_FAILURE);
       }
-#ifndef BUILD_LITE
       if (rank_id != nullptr && gpu_rank_id != nullptr && std::string(rank_id) != std::string(gpu_rank_id)) {
         MS_LOG(WARNING) << "Environment variables RANK_ID and OMPI_COMM_WORLD_RANK set by different values: RANK_ID="
                         << std::string(rank_id) << ", OMPI_COMM_WORLD_RANK=" << std::string(gpu_rank_id)
                         << ". We will use RANK_ID to get rank id by default.";
       }
-#endif
     }
   }
 } _glog_log_dir_register;

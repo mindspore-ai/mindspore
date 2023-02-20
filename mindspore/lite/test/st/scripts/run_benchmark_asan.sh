@@ -24,7 +24,7 @@ function Run_Converter() {
 function Run_x86_asan() {
     echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-x64' >> "${run_x86_asan_log_file}"
     cd ${x86_path}/mindspore-lite-${version}-linux-x64 || return 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./runtime/third_party/glog
     cp tools/benchmark/benchmark ./ || exit 1
     # Prepare the config file list
     local asan_cfg_file_list=("$models_asan_config")

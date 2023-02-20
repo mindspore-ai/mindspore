@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,11 @@ struct MindrtAddress {
 };
 
 // brief initialize the library
-int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv = "", const std::string &udpUrl = "",
-               const std::string &udpUrlAdv = "", int threadCount = 0);
+MS_CORE_API int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv = "", const std::string &udpUrl = "",
+                           const std::string &udpUrlAdv = "", int threadCount = 0);
 
 // brief spawn a process to run an actor
-AID Spawn(const ActorReference actor, bool sharedThread = true);
+MS_CORE_API AID Spawn(const ActorReference actor, bool sharedThread = true);
 
 // brief wait for the actor process to exit . It will be discarded
 void Await(const ActorReference &actor);
@@ -46,7 +46,7 @@ ActorReference GetActor(const AID &actor);
 void Await(const AID &actor);
 
 // brief  Terminate the actor  to exit
-void Terminate(const AID &actor, const std::shared_ptr<ActorMgr> &actor_mgr = nullptr);
+MS_CORE_API void Terminate(const AID &actor, const std::shared_ptr<ActorMgr> &actor_mgr = nullptr);
 
 // brief  Terminate all actors
 void TerminateAll();
