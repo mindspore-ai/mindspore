@@ -18,8 +18,13 @@
 #include <sys/time.h>
 #include <algorithm>
 #include <map>
-#include "include/common/utils/utils.h"
+#include <memory>
+#include <utility>
+
 #include "mindspore/core/utils/convert_utils_base.h"
+#include "acl/acl_rt.h"
+#include "include/api/data_type.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 static DataType TransToApiType(aclDataType data_type) {

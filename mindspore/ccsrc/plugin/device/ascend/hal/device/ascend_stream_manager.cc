@@ -15,9 +15,13 @@
  */
 
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
+
+#include <memory>
+
 #include "utils/log_adapter.h"
-#include "include/common/utils/utils.h"
 #include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
+#include "runtime/event.h"
+#include "runtime/stream.h"
 
 namespace mindspore {
 namespace device {

@@ -16,9 +16,12 @@
 #include "kernel/oplib/super_bar.h"
 
 #include <vector>
-#include <fstream>
+#include <algorithm>
+#include <stdexcept>
 #include <nlohmann/json.hpp>
-#include "include/common/debug/common.h"
+
+#include "nlohmann/detail/iterators/iter_impl.hpp"
+#include "utils/log_adapter.h"
 namespace mindspore::kernel {
 // super bar config
 constexpr auto kNodeAttrMap = "NodeAttrMap";

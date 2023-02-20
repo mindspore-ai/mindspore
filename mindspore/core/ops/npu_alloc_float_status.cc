@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <map>
-#include <string>
-
 #include "ops/npu_alloc_float_status.h"
-#include "ops/op_utils.h"
-#include "abstract/param_validator.h"
-#include "utils/check_convert_utils.h"
+
+#include <memory>
+
 #include "abstract/ops/primitive_infer_map.h"
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "abstract/utils.h"
+#include "ir/anf.h"
+#include "ir/dtype.h"
+#include "ir/primitive.h"
+#include "mindapi/base/shape_vector.h"
+#include "ops/core_ops.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

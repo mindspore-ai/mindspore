@@ -18,7 +18,6 @@
 #include <numeric>
 #include "sys/stat.h"
 #include "utils/ms_utils.h"
-#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace profiler {

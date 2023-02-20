@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "ops/fft_real.h"
-#include "ops/op_utils.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

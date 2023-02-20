@@ -14,12 +14,28 @@
  * limitations under the License.
  */
 
-#include "ir/dtype.h"
 #include <cstdlib>
 #include <algorithm>
+#include <functional>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "ir/dtype.h"
 #include "mindapi/base/type_id.h"
 #include "utils/log_adapter.h"
-#include "abstract/abstract_value.h"
+#include "base/base.h"
+#include "include/robin_hood.h"
+#include "ir/dtype/container.h"
+#include "ir/dtype/empty.h"
+#include "ir/dtype/monad_type.h"
+#include "ir/dtype/number.h"
+#include "ir/dtype/ref.h"
+#include "ir/dtype/tensor_type.h"
+#include "ir/dtype/type.h"
+#include "utils/hash_map.h"
 
 namespace mindspore {
 TypePtr TypeAnything::DeepCopy() const { return kAnyType; }

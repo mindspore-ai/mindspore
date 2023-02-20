@@ -16,16 +16,17 @@
 
 #include "ops/coo_tensor_get_indices.h"
 
-#include "abstract/dshape.h"
-#include "abstract/param_validator.h"
+#include <memory>
+
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindapi/src/helper.h"
 #include "ops/op_utils.h"
 #include "ops/primitive_c.h"
-#include "utils/anf_utils.h"
-#include "utils/check_convert_utils.h"
-#include "utils/tensor_construct_utils.h"
-
+#include "abstract/abstract_value.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ops/core_ops.h"
+#include "utils/log_adapter.h"
+#include "mindapi/src/helper.h"
 namespace mindspore {
 namespace ops {
 AbstractBasePtr COOTensorGetIndicesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

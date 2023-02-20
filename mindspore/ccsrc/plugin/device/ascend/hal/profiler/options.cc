@@ -15,10 +15,17 @@
 
 #include <string>
 #include <climits>
+#include <initializer_list>
+#include <memory>
+#include <vector>
+
 #include "plugin/device/ascend/hal/profiler/options.h"
 #include "utils/ms_context.h"
-#include "include/common/debug/common.h"
-#include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
+#include "nlohmann/detail/iterators/iter_impl.hpp"
+#include "nlohmann/json.hpp"
+#include "profiler/device/profiling.h"
+#include "utils/log_adapter.h"
+#include "utils/ms_utils.h"
 
 constexpr char kOutputPath[] = "output";
 

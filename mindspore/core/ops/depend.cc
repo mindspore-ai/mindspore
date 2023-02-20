@@ -15,7 +15,8 @@
  */
 
 #include "ops/depend.h"
-#include "ops/op_utils.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

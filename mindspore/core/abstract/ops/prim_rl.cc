@@ -15,15 +15,17 @@
  */
 
 #include <string>
+#include <memory>
+#include <vector>
 
-#include "ir/dtype.h"
-#include "utils/ms_utils.h"
 #include "abstract/ops/infer_functions.h"
-#include "abstract/utils.h"
-#include "utils/ms_context.h"
-#include "utils/symbolic.h"
-#include "utils/shape_utils.h"
-
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ir/primitive.h"
+#include "ir/value.h"
+#include "utils/log_adapter.h"
 namespace mindspore {
 namespace abstract {
 constexpr int64_t kMaxElement = 10000;

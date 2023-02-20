@@ -15,8 +15,20 @@
  */
 #include "ps/core/server_node.h"
 
-#include "ps/core/communicator/http_communicator.h"
-#include "ps/core/communicator/tcp_communicator.h"
+#include <atomic>
+#include <map>
+#include <string>
+#include <utility>
+
+#include "proto/comm.pb.h"
+#include "ps/core/comm_util.h"
+#include "ps/core/communicator/tcp_client.h"
+#include "ps/core/communicator/tcp_server.h"
+#include "ps/core/configuration.h"
+#include "ps/core/file_configuration.h"
+#include "ps/core/node_info.h"
+#include "utils/log_adapter.h"
+#include "utils/ms_exception.h"
 
 namespace mindspore {
 namespace ps {

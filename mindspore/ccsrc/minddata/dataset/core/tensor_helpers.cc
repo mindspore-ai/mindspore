@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 #include "minddata/dataset/core/tensor_helpers.h"
-#include "minddata/dataset/util/log_adapter.h"
-#include "minddata/dataset/util/status.h"
+#include <memory>
 
+#include "include/dataset/constants.h"
+#include "include/dataset/transforms.h"
+#include "minddata/dataset/util/log_adapter.h"
 namespace mindspore {
 namespace dataset {
 

@@ -15,12 +15,8 @@
  */
 
 #include "ops/tensor_array_read.h"
-#include <string>
-#include <memory>
-#include <set>
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

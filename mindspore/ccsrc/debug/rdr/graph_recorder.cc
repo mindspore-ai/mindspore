@@ -16,13 +16,13 @@
 #include "debug/rdr/graph_recorder.h"
 #include <fstream>
 #include <utility>
+#include <optional>
+
 #include "mindspore/core/base/base.h"
-#include "backend/common/session/kernel_graph.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "include/common/debug/dump_proto.h"
-#include "include/common/debug/common.h"
 #include "include/common/debug/rdr/recorder_manager.h"
 #include "mindspore/core/utils/file_utils.h"
 

@@ -19,7 +19,6 @@
 #include <vector>
 #include <string>
 #include "utils/log_adapter.h"
-#include "utils/dlopen_macro.h"
 
 inline void *LoadLibrary(const char *name) {
   auto handle = dlopen(name, RTLD_LAZY | RTLD_LOCAL);
