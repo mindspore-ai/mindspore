@@ -147,7 +147,7 @@ KernelStatus SparseToDenseCpuKernel::ValidParam(const CpuKernelContext &ctx) {
   }
 
   // default_value
-  if (default_value_shape->GetDims() != 0) {
+  if (default_value_shape->GetDims() != 0 && default_value_tensor->NumElements() != 1) {
     KERNEL_LOG_ERROR("Default_value should be a scalar, and got dim size [%d].", default_value_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
