@@ -100,8 +100,7 @@ py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
   auto top_type = op_run_info->base_op_run_info.abstract->BuildType();
   // 2. if predict failed(kAnyType), return after infer(half-asynchronous) or run(synchronous mode)
   if (top_type == kAnyType) {
-    auto ret = PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->out_value);
-    return py::make_tuple(static_cast<int>(stub::StubNode::IMMEDIATE), ret);
+    return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->out_value);
   }
   // 3. create top stub node
   auto node = stub::MakeTopNode(top_type);

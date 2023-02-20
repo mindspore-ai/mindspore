@@ -18,6 +18,7 @@ from functools import reduce
 from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import type_size_in_bytes
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore._c_expression import TensorNode, SequenceNode
 
 
 class StubTensor(Tensor):
@@ -112,7 +113,6 @@ class StubTensor(Tensor):
         """
         return self.ndim
 
-
     def asnumpy(self):
         """api stub."""
         self.stub_sync()
@@ -154,49 +154,12 @@ class StubTensor(Tensor):
         super().flush_from_cache()
 
 
-class StubTuple(tuple):
-    """tuple that may contain stub tensor for async op run."""
-
-    def __new__(cls, stub_tuple):
-        """Do some pre-process before creating StubTuple
-
-        Args:
-            stub_tuple (tuple): a tuple of c_expression object that may contain `StubNode`
-
-        Returns:
-            StubTuple: a tuple of python object, in which `StubNode` is converted to `StubTensor`
-        """
-        new_tuple = StubTuple._dfs_convert_stubnode(stub_tuple)
-        ret = super(StubTuple, cls).__new__(cls, new_tuple)
-        return ret
-
-    @staticmethod
-    def _is_c_expression_stubnode(node):
-        """Currently we just simply use the function that defined in `py::class_<StubNode>`"""
-        return hasattr(node, "get_value")
-
-    @staticmethod
-    def _dfs_convert_stubnode(node):
-        if isinstance(node, (tuple, list)):
-            res = [StubTuple._dfs_convert_stubnode(o) for o in node]
-            return type(node)(res)
-        if StubTuple._is_c_expression_stubnode(node):
-            # Identify and handle CSR/COO/ROW Tensor here, we can use `_stub_map`
-            return StubTensor(node)
-        return node
-
-
-_stub_map = [
-    StubTensor,
-    StubTensor,  # CSR_TENSOR
-    StubTensor,  # COO_TENSOR
-    StubTensor,  # ROW_TENSOR
-    StubTuple,
-]
-
-
-def _convert_stub(stub_type, stub):
-    """convert stub node to stub tensor."""
-    if stub_type >= len(_stub_map):  # obj that already convert in c++, e.g. Scalar
-        return stub
-    return _stub_map[stub_type](stub)
+def _convert_stub(stub):
+    if isinstance(stub, TensorNode):
+        return StubTensor(stub)
+    if isinstance(stub, tuple):
+        return tuple(_convert_stub(e) for e in stub)
+    if isinstance(stub, SequenceNode):
+        elements = stub.get_elements()
+        return tuple(_convert_stub(e) for e in elements)
+    return stub
