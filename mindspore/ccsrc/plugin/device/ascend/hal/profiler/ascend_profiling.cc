@@ -212,7 +212,7 @@ void AscendProfiler::MsprofStopProfiler() const {
 }
 
 void AscendProfiler::GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id,
-                                           const KernelType kernel_type) {
+                                           const KernelType kernel_type, int32_t kernel_mod_task_id) {
   uint32_t stream_id;
   uint32_t task_id;
   uint32_t aicpu_task_id;
@@ -224,6 +224,9 @@ void AscendProfiler::GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t grap
   auto rt_ret = rtGetTaskIdAndStreamID(&task_id, &stream_id);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Profiling get task_id and stream_id failed.";
+  }
+  if (kernel_mod_task_id != -1) {
+    task_id = static_cast<uint32_t>(kernel_mod_task_id);
   }
   ProfilingReporter reporter(device_id, graph_id, rt_model_id, cnode_list, stream_ids, task_ids);
   if (task_id <= last_tid_[t_id] && stream_id == last_streamid_[t_id]) {
