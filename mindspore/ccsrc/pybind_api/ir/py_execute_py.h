@@ -69,7 +69,6 @@ class PyExecuteInitializer {
     // so special handling of None is required.
     if (script->ToString() == "None") {
       const auto &output = py::none();
-      MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
       PushPyExecuteOutput(output);
       const auto &infer_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
       return abstract::MakeAbstract(infer_shape, kFloat64);

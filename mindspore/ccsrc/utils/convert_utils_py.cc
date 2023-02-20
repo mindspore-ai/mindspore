@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -493,19 +493,14 @@ py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr 
     }
     return ref_tuple;
   }
-  // The size of seq_abs may be larger than the size of value_list, because the backend will eliminate None.
   size_t ref_idx = 0;
   for (size_t i = 0; i < seq_abs->size(); i++) {
     auto elem_abs = seq_abs->elements()[i];
-    if (elem_abs->isa<abstract::AbstractNone>()) {
-      continue;
-    }
     ref_tuple[ref_idx] = BaseRefToPyData(value_list[ref_idx], elem_abs);
     ref_idx++;
   }
   if (ref_idx != value_size) {
-    MS_LOG(EXCEPTION) << "The size of elements (excluding None) should be equal to " << value_size << ", but got "
-                      << ref_idx;
+    MS_LOG(EXCEPTION) << "The size of elements should be equal to " << value_size << ", but got " << ref_idx;
   }
   ret = ref_tuple;
   return ret;

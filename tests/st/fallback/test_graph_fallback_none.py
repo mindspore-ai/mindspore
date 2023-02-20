@@ -16,8 +16,11 @@ import pytest
 import numpy as np
 
 from mindspore import Tensor, jit, context, Parameter
+from mindspore.nn import Cell
+from mindspore.nn.probability import distribution
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
+import mindspore as ms
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -222,7 +225,6 @@ def test_none_is_slice_in_list():
     assert res == 0
 
 
-@pytest.mark.skip(reason="No support print None.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -397,3 +399,44 @@ def test_none_is_input_of_tuple_return():
 
     out = foo()
     assert out == (1, "a", None)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_none_is_input_of_tuple_return_2():
+    """
+    Feature: Support None.
+    Description: Support None is input of tuple, and the tuple is return.
+    Expectation: No exception.
+    """
+    class BernoulliCrossEntropy(Cell):
+        def __init__(self, probs, seed=10, dtype=ms.int32, name='Bernoulli', dist='Bernoulli'):
+            super().__init__()
+            self.b = distribution.Bernoulli(probs, seed, dtype, name)
+            self.dist = dist
+
+        def construct(self, probs1_b, probs1=None):
+            if probs1 is None:
+                out1 = self.b.cross_entropy(self.dist, probs1_b)
+                out2 = self.b.kl_loss(self.dist, probs1_b)
+            else:
+                out1 = self.b.cross_entropy(self.dist, probs1_b, probs1)
+                out2 = self.b.kl_loss(self.dist, probs1_b, probs1)
+            out3 = self.b.probs
+            return out1, out2, out3
+
+    probs = None
+    probs1 = 0.2
+    probs1_b = 0.9
+    context.set_context(mode=context.GRAPH_MODE)
+    net_graph = BernoulliCrossEntropy(probs)
+    out_me_graph = net_graph(Tensor(probs1_b), Tensor(probs1))
+    print("out_me_graph: ", out_me_graph)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net_pynative = BernoulliCrossEntropy(probs)
+    out_me_pynative = net_pynative(Tensor(probs1_b), Tensor(probs1))
+    print("out_me_pynative: ", out_me_pynative)
+    assert out_me_graph == out_me_pynative

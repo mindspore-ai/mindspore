@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-import os
 import math
 import pytest
 import numpy as np
@@ -94,7 +93,6 @@ class GRUWeightBias():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sit_gru_forward_input_3_32_32_is_32_hs_16():
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     input_size = 32
     hidden_size = 16
     has_bias = True
@@ -117,7 +115,6 @@ def test_sit_gru_forward_input_3_32_32_is_32_hs_16():
     net.gru.b_ih_list = b_ih_list
     net.gru.b_hh_list = b_hh_list
     out, hy = net(input_ms, h0)
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -138,7 +135,6 @@ def test_sit_gru_forward_input_3_32_32_is_32_hs_16():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sit_gru_grad_input_3_32_32_is_32_hs_16():
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     input_size = 32
     hidden_size = 16
     has_bias = True
@@ -166,7 +162,6 @@ def test_sit_gru_grad_input_3_32_32_is_32_hs_16():
     out_grad, _ = grad_net_inp(input_ms, h0)
     x_grad = out_grad[0].asnumpy()
     h_grad = out_grad[1].asnumpy()
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
