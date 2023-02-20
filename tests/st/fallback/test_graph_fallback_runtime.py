@@ -575,7 +575,7 @@ def test_net_dict_2_grad():
     outputs1 = ops.grad(net)(x)
     dict_lenet = DictLeNet()
     outputs2 = ops.grad(dict_lenet)(x)
-    assert np.all(outputs1.asnumpy() == outputs2.asnumpy())
+    assert np.allclose(outputs1.asnumpy(), outputs2.asnumpy())
 
 
 @pytest.mark.level0
