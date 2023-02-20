@@ -59,14 +59,6 @@ def test_norm_normal(mode):
     expect_output4 = np.array(9.0)
     assert np.allclose(output4.asnumpy(), expect_output4)
 
-    output5 = net(a, -float('inf'))
-    expect_output5 = np.array(0.0)
-    assert np.allclose(output5.asnumpy(), expect_output5)
-
-    output6 = net(b, -float('inf'))
-    expect_output6 = np.array(2.0)
-    assert np.allclose(output6.asnumpy(), expect_output6)
-
     output7 = net(a, 1)
     expect_output7 = np.array(20.0)
     assert np.allclose(output7.asnumpy(), expect_output7)
@@ -125,3 +117,28 @@ def test_norm_normal(mode):
     output21 = net(d[0, :, :]).asnumpy(), net(d[1, :, :]).asnumpy()
     expect_output21 = np.array([3.7416575, 11.224972])
     assert np.allclose(output21, expect_output21)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_norm_normal2(mode):
+    """
+    Feature: norm
+    Description: Verify the result of norm
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    net = Net()
+    a = ops.arange(9, dtype=ms.float32) - 4
+    b = a.reshape((3, 3))
+    output5 = net(a, -float('inf'))
+    expect_output5 = np.array(0.0)
+    assert np.allclose(output5.asnumpy(), expect_output5)
+
+    output6 = net(b, -float('inf'))
+    expect_output6 = np.array(2.0)
+    assert np.allclose(output6.asnumpy(), expect_output6)
