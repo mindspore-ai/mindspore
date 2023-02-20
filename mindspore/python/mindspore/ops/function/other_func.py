@@ -15,7 +15,7 @@
 
 """Defines other operators with functional form."""
 
-import mindspore.ops as ops
+from mindspore.ops import operations as P
 from mindspore.ops._primitive_cache import _get_cache_prim
 
 
@@ -49,7 +49,7 @@ def partial(func, *args):
         (Tensor(shape=[], dtype=Int64, value= 1), Tensor(shape=[], dtype=Int64, value= 3), Tensor(shape=[], dtype=Int64,
          value= 4))
     """
-    partial_ = _get_cache_prim(ops.Partial)()
+    partial_ = _get_cache_prim(P.Partial)()
     return partial_(func, *args)
 
 
@@ -104,7 +104,7 @@ def depend(value, expr):
          [0.2 0.2 0.2 0.2 0.2]
          [0.2 0.2 0.2 0.2 0.2]]
     """
-    depend_ = _get_cache_prim(ops.Depend)()
+    depend_ = _get_cache_prim(P.Depend)()
     return depend_(value, expr)
 
 
