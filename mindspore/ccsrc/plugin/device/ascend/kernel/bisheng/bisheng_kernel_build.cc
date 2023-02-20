@@ -22,7 +22,7 @@
 #include <map>
 #include "plugin/device/ascend/kernel/bisheng/custom_bisheng_kernel.h"
 #include "plugin/device/ascend/kernel/bisheng/bisheng_kernel_mod.h"
-#include "plugin/device/ascend/kernel/bisheng/bisheng_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/dlopen_macro.h"
 
@@ -54,7 +54,7 @@ KernelModPtr BiShengOpBuild(const AnfNodePtr &anf_node) {
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   const auto &kernel_name = common::AnfAlgo::GetCNodeName(cnode);
-  if (!BiShengKernelFactory::GetInstance().IsRegistered(kernel_name)) {
+  if (!Factory<BiShengKernelMod>::Instance().IsRegistered(kernel_name)) {
     MS_LOG(INFO) << "Bisheng custom op " << kernel_name;
     auto kernel_mod_ptr = std::make_shared<CustomBiShengKernel>(cnode);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
@@ -66,7 +66,7 @@ KernelModPtr BiShengOpBuild(const AnfNodePtr &anf_node) {
   }
 
   MS_LOG(INFO) << "Bisheng internal op " << kernel_name;
-  auto kernel_mod = BiShengKernelFactory::GetInstance().Create(kernel_name);
+  auto kernel_mod = Factory<BiShengKernelMod>::Instance().Create(kernel_name);
   auto args = AbstractArgsFromCNode(cnode, false);
   auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
   SetInputsByConstInputs(cnode, &inputs_tensor_map);

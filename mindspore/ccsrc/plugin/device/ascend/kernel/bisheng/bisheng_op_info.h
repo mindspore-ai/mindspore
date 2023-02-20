@@ -25,7 +25,7 @@
 #include "include/api/format.h"
 #include "include/api/data_type.h"
 #include "kernel/oplib/opinfo.h"
-#include "plugin/device/ascend/kernel/bisheng/bisheng_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace cl::sycl::detail::half_impl {
 class half;
@@ -33,6 +33,7 @@ class half;
 
 namespace mindspore::kernel {
 using half = cl::sycl::detail::half_impl::half;
+class BiShengKernelMod;
 
 #define REG(Clazz) const BishengOpInfoRegister<Clazz> Clazz::reg_ = BishengOpInfoRegister<Clazz>()
 
@@ -380,8 +381,8 @@ class BishengOpInfoRegister : public BishengOpInfoRegisterHelper {
   BishengOpInfoRegister() : BishengOpInfoRegisterHelper(), func_list_(T::func_list_) {}
   const BishengOpInfoRegister<T> &End() {
     BishengOpInfoRegisterHelper::End();
-    BiShengKernelFactory::GetInstance().Register(op_info_->op_name(),
-                                                 std::move([]() { return std::make_shared<T>(); }));
+    Factory<BiShengKernelMod>::Instance().Register(op_info_->op_name(),
+                                                   std::move([]() { return std::make_shared<T>(); }));
     return *this;
   }
   BishengOpInfoRegister<T> &OpName(const std::string &name) {

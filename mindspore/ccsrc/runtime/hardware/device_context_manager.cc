@@ -319,7 +319,7 @@ bool PluginLoader::GetPluginPath(std::string *file_path) {
 #ifndef _WIN32
   auto plugin_so_path = cur_so_path.substr(0, pos) + "/plugin";
 #else
-  auto plugin_so_path = cur_so_path.substr(0, pos) + "\\bin";
+  auto plugin_so_path = cur_so_path.substr(0, pos);
 #endif
   if (plugin_so_path.size() >= PATH_MAX) {
     MS_LOG(INFO) << "Current path [" << plugin_so_path << "] is invalid.";

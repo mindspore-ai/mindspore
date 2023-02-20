@@ -24,22 +24,28 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "include/backend/visible.h"
+#include "kernel/kernel_factory.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace kernel {
 template <class C>
-class BACKEND_EXPORT Factory {
+class Factory : public FactoryBase {
   using CreatorFunc = std::function<std::shared_ptr<C>()>;
 
  public:
   Factory(const Factory &) = delete;
   void operator=(const Factory &) = delete;
 
-  static Factory &Instance() {
-    static Factory instance;
-    return instance;
+  static Factory<C> &Instance() {
+    std::string key = typeid(C).name();
+    FactoryBase *instance = FactoryBase::GetInstance(key);
+    if (instance == nullptr) {
+      FactoryBase::CreateFactory(key, std::make_unique<Factory<C>>());
+      instance = FactoryBase::GetInstance(key);
+    }
+    MS_EXCEPTION_IF_NULL(instance);
+    return *static_cast<Factory<C> *>(instance);
   }
 
   void Register(const std::string &name, CreatorFunc &&creator) {
@@ -71,7 +77,6 @@ class BACKEND_EXPORT Factory {
     return false;
   }
 
- protected:
   Factory() = default;
   ~Factory() = default;
 
@@ -80,7 +85,7 @@ class BACKEND_EXPORT Factory {
 };
 
 template <class C>
-class BACKEND_EXPORT KernelRegistrar {
+class KernelRegistrar {
  public:
   explicit KernelRegistrar(const std::string &name, std::function<std::shared_ptr<C>()> creator) noexcept {
     Factory<C>::Instance().Register(name, std::move(creator));

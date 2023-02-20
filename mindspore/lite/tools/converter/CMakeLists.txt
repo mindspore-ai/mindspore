@@ -13,6 +13,7 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/common/optimizer/visit.cc
         ${CCSRC_DIR}/backend/common/optimizer/graph_optimizer.cc
         ${CCSRC_DIR}/backend/operator/ops_backend_infer_function.cc
+        ${CCSRC_DIR}/kernel/kernel_factory.cc
         )
 
 if(NOT WIN32)
