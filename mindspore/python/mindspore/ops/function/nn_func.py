@@ -4065,9 +4065,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
 
 def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     r"""
-    Hinge Embedding Loss. Compute the output according to the input elements. Measures the loss given an input tensor x
-    and a labels tensor y (containing 1 or -1).
-    This is usually used for measuring the similarity between two inputs.
+    Measures Hinge Embedding Loss given an input Tensor `logits` and a labels Tensor `labels` (containing 1 or -1).
 
     The loss function for :math:`n`-th sample in the mini-batch is
 

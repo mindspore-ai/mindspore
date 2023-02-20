@@ -1285,7 +1285,7 @@ def log(x):
 
 def logdet(x):
     r"""
-    Calculates log determinant of a square matrix or batches of square matrices.
+    Calculates log determinant of one or a batch of square matrices.
 
     Args:
         x (Tensor): Input Tensor of any dimension.
@@ -5003,8 +5003,7 @@ def mv(mat, vec):
 
 def addbmm(x, batch1, batch2, *, beta=1, alpha=1):
     r"""
-    Applies batch matrix multiplication to `batch1` and `batch2`, with a reduced add step. The matrix `x` is add to
-    final result.
+    Applies batch matrix multiplication to `batch1` and `batch2`, with a reduced add step and add `x` to the result.
 
     The optional values `alpha` and `beta` are the matrix-matrix product between `batch1` and `batch2` and the scale
     factor for the added tensor `x` respectively. If `beta` is 0, then `x` will be ignored.
@@ -5163,7 +5162,7 @@ def addmv(x, mat, vec, beta=1, alpha=1):
 
 def adjoint(x):
     r"""
-    Returns a view of the tensor conjugated and with the last two dimensions transposed.
+    Returns the conjugate with the last two dimensions transposed.
 
     Args:
         x (Tensor): Input tensor.
@@ -7933,11 +7932,15 @@ def matmul(x1, x2):
 
 def inner(x, other):
     r"""
-    Computes the dot product of 1D tensors. For higher dimensions, the result will be the summation of the elemental
-    wise production along their last dimension.
+    Returns the inner product of two tensors.
+
+    For 1-D tensors (without complex conjugation), returns the ordinary inner product of vectors.
+
+    For higher dimensions, returns a sum product over the last axis.
 
     Note:
-        If either `x` or `other` is a Tensor scalar, the result is equivalent to mindspore.mul(x, other).
+         If `x` or `other` is a Tensor scalar, :func:`mindspore.ops.inner` will be the same as
+         :func:`mindspore.ops.mul` .
 
     Args:
         x (Tensor): First input.

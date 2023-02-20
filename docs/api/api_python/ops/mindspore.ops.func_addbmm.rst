@@ -3,7 +3,7 @@
 
 .. py:function:: mindspore.ops.addbmm(x, batch1, batch2, *, beta=1, alpha=1)
 
-    对 `batch1` 和 `batch2` 应用批量矩阵乘法后进行reduced add。矩阵 `x` 和最终的结果相加。
+    对 `batch1` 和 `batch2` 应用批量矩阵乘法后进行reduced add， `x` 和最终的结果相加。
     `alpha` 和 `beta` 分别是 `batch1` 和 `batch2` 矩阵乘法和 `x` 的乘数。如果 `beta` 是0，那么 `x` 将会被忽略。
 
     .. math::

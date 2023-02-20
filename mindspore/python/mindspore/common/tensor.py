@@ -4126,14 +4126,14 @@ class Tensor(Tensor_):
 
     def new_zeros(self, size, *, dtype=None):
         r"""
-        Return a tensor of `size` filled with zeros. By default, the returned tensor has the same dtype as `self`.
+        Return a tensor of `size` filled with zeros.
 
         Args:
             size (Union[int, tuple, list]): An int, list or tuple of integers defining the output shape.
 
         Keyword Args:
-            dtype (mindspore.dtype, optional): The desired dtype of the output tensor. If None, same dtype as `self`.
-                Default: None.
+            dtype (mindspore.dtype, optional): The desired dtype of the output tensor. If None, the returned tensor has
+                thesame dtype as `self`. Default: None.
 
         Returns:
             Tensor, the shape and dtype is defined above and filled with zeros.
@@ -4160,14 +4160,14 @@ class Tensor(Tensor_):
 
     def new_ones(self, size, *, dtype=None):
         r"""
-        Return a tensor of `size` filled with ones. By default, the returned tensor has the same dtype as `self`.
+        Return a tensor of `size` filled with ones.
 
         Args:
             size (Union[int, tuple, list]): An int, list or tuple of integers defining the output shape.
 
         Keyword Args:
-            dtype (mindspore.dtype, optional): The desired dtype of the output tensor. Default: if None, same dtype as
-                `self`.
+            dtype (mindspore.dtype, optional): The desired dtype of the output tensor. If None, the returned
+                tensor has the same dtype as `self`. Default: None.
 
         Returns:
             Tensor, the shape and dtype is defined above and filled with ones.
