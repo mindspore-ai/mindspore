@@ -484,21 +484,30 @@ void SetKernelBuildInfo(const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBu
                         const std::shared_ptr<const OpInfo> &op_info_ptr) {
   MS_EXCEPTION_IF_NULL(builder);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
-
-  auto imply_type = op_info_ptr->imply_type();
   builder->SetProcessor(processor);
-  if (imply_type == kImplyAKG) {
-    builder->SetKernelType(AKG_KERNEL);
-  } else if (imply_type == kImplyGPU) {
-    builder->SetKernelType(GPU_KERNEL);
-  } else if (imply_type == kImplyCPU) {
-    builder->SetKernelType(CPU_KERNEL);
-  } else if (imply_type == kImplyAICPU) {
-    builder->SetKernelType(AICPU_KERNEL);
-  } else if (imply_type == kImplyBISHENG) {
-    builder->SetKernelType(BISHENG_KERNEL);
-  } else {
-    builder->SetKernelType(TBE_KERNEL);
+  auto imply_type = op_info_ptr->imply_type();
+  switch (imply_type) {
+    case kImplyAKG:
+      builder->SetKernelType(AKG_KERNEL);
+      break;
+    case kImplyTBE:
+      builder->SetKernelType(TBE_KERNEL);
+      break;
+    case kImplyGPU:
+      builder->SetKernelType(GPU_KERNEL);
+      break;
+    case kImplyCPU:
+      builder->SetKernelType(CPU_KERNEL);
+      break;
+    case kImplyAICPU:
+      builder->SetKernelType(AICPU_KERNEL);
+      break;
+    case kImplyBISHENG:
+      builder->SetKernelType(BISHENG_KERNEL);
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Unknown Imply Type.";
+      break;
   }
 }
 

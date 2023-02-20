@@ -100,11 +100,11 @@ constexpr auto kCtxGPU = "GPU";
 constexpr auto kCtxAscend = "Ascend";
 constexpr auto kImplyAKGStr = "AKG";  // this type refer: CUDA & CPU with difference process
 constexpr auto kImplyTBEStr = "TBE";
-constexpr auto kImplyBISHENGStr = "Bisheng";
 constexpr auto kImplyAICPUStr = "AiCPU";
 constexpr auto kImplyCPUStr = "CPU";
 constexpr auto kImplyCUDAStr = "CUDA";
 constexpr auto kImplyGPUStr = "GPU";
+constexpr auto kImplyBISHENGStr = "BiSheng";
 const std::map<std::string, std::string> kProcessorMap = {
   {kCtxAscend, kImplyTBEStr}, {kCtxGPU, kImplyCUDAStr}, {kCtxCPU, kImplyCPUStr}};
 enum OpImplyType { kImplyAKG = 0, kImplyTBE, kImplyAICPU, kImplyCPU, kImplyGPU, kImplyBISHENG };

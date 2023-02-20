@@ -14,6 +14,7 @@ file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "bisheng/bisheng_kernel_build.cc"
         "bisheng/bisheng_kernel_factory.cc"
         "bisheng/custom_bisheng_kernel.cc"
+        "bisheng/bisheng_kernel_metadata.cc"
     )
     file(GLOB_RECURSE AICPU_OPS_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "aicpu/aicpu_ops/*.cc"

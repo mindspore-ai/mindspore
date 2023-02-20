@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
-#include "utils/custom_aot_extra.h"
+#include "utils/custom_aot_extra_dual_abi.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 
@@ -54,10 +54,10 @@ class CustomBiShengKernel : public AscendKernelMod {
   std::string file_path_;
   std::string func_name_;
   void *handle_;
-  int (*init_func_)(int *, int64_t **, const char **, AotExtra *);
+  int (*init_func_)(int *, int64_t **, const char **, AotExtraDualABI *);
   int (*aot_func_)(int, void **, int *, int64_t **, const char **, void *, void *);
 
-  AotExtraImpl attrs_;
+  AotExtraDualABIImpl attrs_;
 };
 }  // namespace kernel
 }  // namespace mindspore

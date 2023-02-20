@@ -26,6 +26,7 @@ import importlib
 import platform
 import subprocess
 import numpy as np
+import mindspore as ms
 from mindspore._c_expression import Oplib, typing
 from mindspore import context
 from mindspore.common import Tensor
@@ -849,8 +850,8 @@ class Custom(ops.PrimitiveWithInfer):
                 reg_info["imply_type"].strip():
             return reg_info["imply_type"]
         # Infer imply_type from func_type
-        func_type_to_imply_type = {"hybrid": "AKG", "akg": "AKG", "tbe": "TBE", "aicpu": "AiCPU", "aot": target,
-                                   "pyfunc": target, "julia": target}
+        func_type_to_imply_type = {"hybrid": "AKG", "akg": "AKG", "tbe": "TBE", "aicpu": "AiCPU", "pyfunc": target,
+                                   "julia": target, "aot": "BiSheng" if target == "Ascend" else target}
         return func_type_to_imply_type.get(self.func_type, "AKG")
 
     def _save_attr(self, reg_info):
@@ -872,7 +873,9 @@ class Custom(ops.PrimitiveWithInfer):
                 input_names.append(item["name"])
         for item in attr:
             if isinstance(item, dict) and item.get("name") is not None:
-                input_names.append(item["name"])
+                imply = self._get_imply_type(reg_info, self._get_target(reg_info))
+                if context.get_context("mode") != ms.PYNATIVE_MODE or imply != "BiSheng":
+                    input_names.append(item["name"])
                 attr_names.append(item["name"])
         cur_attr = {"input_names": input_names, "attr_names": attr_names}
         # If func does not have attr, save current attr.
