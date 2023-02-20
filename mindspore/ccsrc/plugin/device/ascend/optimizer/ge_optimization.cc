@@ -35,6 +35,7 @@
 #include "plugin/device/ascend/optimizer/ge/sparse_softmax_cross_entropy_with_logits_split.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
+#include "plugin/device/ascend/optimizer/ge/tensorshape_for_ge.h"
 
 namespace mindspore {
 namespace opt {
@@ -73,6 +74,7 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
   pm->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
   pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicGRUV2>());
   pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
+  pm->AddPass(std::make_shared<opt::TensorShapeForGE>());
   optimizer->AddPassManager(pm);
 
   (void)optimizer->Optimize(func_graph);

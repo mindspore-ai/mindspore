@@ -48,7 +48,7 @@ REG_ADPT_DESC(Data, kNameParam, ADPT_DESC(Data))
 
 // Shape
 INPUT_MAP(Shape) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Shape) = EMPTY_ATTR_MAP;
+ATTR_MAP(Shape) = {{"dtype", ATTR_DESC(dtype, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Shape) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Shape, kNameShape, ADPT_DESC(Shape))
 
