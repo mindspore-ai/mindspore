@@ -43,7 +43,7 @@ def test_cov_normal(mode):
     """
     ms.set_context(mode=mode)
     net = Net()
-    x = ms.Tensor([[0, 2], [1, 1], [2, 0]]).T
+    x = ms.Tensor([[0., 2.], [1., 1.], [2., 0.]]).T
     output1 = net(x)
     expect_output1 = np.array([[1., -1.],
                                [-1., 1.]])
