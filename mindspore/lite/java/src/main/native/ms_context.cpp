@@ -119,6 +119,10 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_config_MSContext_addDev
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_setThreadNum(JNIEnv *env, jobject thiz,
                                                                                    jlong context_ptr, jint thread_num) {
   auto *c_context_ptr = static_cast<mindspore::Context *>(reinterpret_cast<void *>(context_ptr));
+  if (c_context_ptr == nullptr) {
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
+    return;
+  }
   c_context_ptr->SetThreadNum(thread_num);
 }
 
@@ -130,6 +134,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_setThreadN
 extern "C" JNIEXPORT jint JNICALL Java_com_mindspore_config_MSContext_getThreadNum(JNIEnv *env, jobject thiz,
                                                                                    jlong context_ptr) {
   auto *c_context_ptr = static_cast<mindspore::Context *>(reinterpret_cast<void *>(context_ptr));
+  if (c_context_ptr == nullptr) {
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
+    return 0;
+  }
   int32_t thread_num = c_context_ptr->GetThreadNum();
   return thread_num;
 }
@@ -143,6 +151,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_setInterOp
                                                                                             jlong context_ptr,
                                                                                             jint op_parallel_num) {
   auto *c_context_ptr = static_cast<mindspore::Context *>(reinterpret_cast<void *>(context_ptr));
+  if (c_context_ptr == nullptr) {
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
+    return;
+  }
   c_context_ptr->SetInterOpParallelNum((int32_t)op_parallel_num);
 }
 
@@ -154,6 +166,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_setInterOp
 extern "C" JNIEXPORT jint JNICALL Java_com_mindspore_config_MSContext_getInterOpParallelNum(JNIEnv *env, jobject thiz,
                                                                                             jlong context_ptr) {
   auto *c_context_ptr = static_cast<mindspore::Context *>(reinterpret_cast<void *>(context_ptr));
+  if (c_context_ptr == nullptr) {
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
+    return 0;
+  }
   auto inter_op_parallel_num = c_context_ptr->GetInterOpParallelNum();
   return inter_op_parallel_num;
 }
@@ -167,6 +183,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_setThreadA
                                                                                             jlong context_ptr,
                                                                                             jint thread_affinity) {
   auto *c_context_ptr = static_cast<mindspore::Context *>(reinterpret_cast<void *>(context_ptr));
+  if (c_context_ptr == nullptr) {
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
+    return;
+  }
   c_context_ptr->SetThreadAffinity(thread_affinity);
 }
 
@@ -178,6 +198,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_setThreadA
 extern "C" JNIEXPORT jint JNICALL Java_com_mindspore_config_MSContext_getThreadAffinityMode(JNIEnv *env, jobject thiz,
                                                                                             jlong context_ptr) {
   auto *c_context_ptr = static_cast<mindspore::Context *>(reinterpret_cast<void *>(context_ptr));
+  if (c_context_ptr == nullptr) {
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
+    return 0;
+  }
   auto thread_affinity_mode = c_context_ptr->GetThreadAffinityMode();
   return thread_affinity_mode;
 }
@@ -190,7 +214,15 @@ extern "C" JNIEXPORT jint JNICALL Java_com_mindspore_config_MSContext_getThreadA
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_setThreadAffinity__J_3I(JNIEnv *env, jobject thiz,
                                                                                               jlong context_ptr,
                                                                                               jintArray core_list) {
+  if (core_list == nullptr) {
+    MS_LOG(ERROR) << "core_list from java is nullptr";
+    return;
+  }
   auto *c_context_ptr = static_cast<mindspore::Context *>(reinterpret_cast<void *>(context_ptr));
+  if (c_context_ptr == nullptr) {
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
+    return;
+  }
   int32_t array_len = env->GetArrayLength(core_list);
   jboolean is_copy = JNI_FALSE;
   int *core_value = env->GetIntArrayElements(core_list, &is_copy);
@@ -209,6 +241,10 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_config_MSContext_getThre
                                                                                                    jobject thiz,
                                                                                                    jlong context_ptr) {
   auto *c_context_ptr = static_cast<mindspore::Context *>(reinterpret_cast<void *>(context_ptr));
+  if (c_context_ptr == nullptr) {
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
+    return nullptr;
+  }
   std::vector<int32_t> core_list_tmp = c_context_ptr->GetThreadAffinityCoreList();
   jobject core_list = newObjectArrayList<int32_t>(env, core_list_tmp, "java/lang/Integer", "(I)V");
   return core_list;
@@ -223,6 +259,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_setEnableP
                                                                                         jlong context_ptr,
                                                                                         jboolean is_parallel) {
   auto *c_context_ptr = static_cast<mindspore::Context *>(reinterpret_cast<void *>(context_ptr));
+  if (c_context_ptr == nullptr) {
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
+    return;
+  }
   c_context_ptr->SetEnableParallel(static_cast<bool>(is_parallel));
 }
 
@@ -234,6 +274,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_setEnableP
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_config_MSContext_getEnableParallel(JNIEnv *env, jobject thiz,
                                                                                             jlong context_ptr) {
   auto *c_context_ptr = static_cast<mindspore::Context *>(reinterpret_cast<void *>(context_ptr));
+  if (c_context_ptr == nullptr) {
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
+    return (jboolean) false;
+  }
   bool is_parallel = c_context_ptr->GetEnableParallel();
   return (jboolean)is_parallel;
 }
@@ -241,5 +285,9 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_config_MSContext_getEna
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_free(JNIEnv *env, jobject thiz,
                                                                            jlong context_ptr) {
   auto *c_context_ptr = static_cast<mindspore::Context *>(reinterpret_cast<void *>(context_ptr));
+  if (c_context_ptr == nullptr) {
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
+    return;
+  }
   delete (c_context_ptr);
 }

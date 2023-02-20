@@ -1,3 +1,18 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.mindspore.config;
 
 import java.io.File;
@@ -5,7 +20,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Logger;
+import java.util.Locale;
 
+/**
+ * NativeLibrary Class
+ *
+ * @since v1.0
+ */
 public class NativeLibrary {
     private static final Logger LOGGER = MindsporeLite.GetLogger();
 
@@ -52,7 +73,7 @@ public class NativeLibrary {
      * libmsplugin-ge-litert
      * libruntime_convert_plugin
      */
-    public static void loadLibs() {
+    private static void loadLibs() {
         loadLib(makeResourceName("lib" + GLOG_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + OPENCV_CORE_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + OPENCV_IMGPROC_LIBNAME + ".so"));
@@ -83,49 +104,49 @@ public class NativeLibrary {
         try {
             System.loadLibrary(MINDSPORE_LITE_JNI_LIBNAME);
             loadSuccess = true;
-            LOGGER.info("loadLibrary " + MINDSPORE_LITE_JNI_LIBNAME + ": success");
+            LOGGER.info("loadLibrary mindspore-lite-jni success");
         } catch (UnsatisfiedLinkError e) {
-            LOGGER.info(String.format("tryLoadLibrary " + MINDSPORE_LITE_JNI_LIBNAME + " failed: %s", e.toString()));
+            LOGGER.info(String.format(Locale.ENGLISH, "tryLoadLibrary mindspore-lite-jni failed: %s", e));
         }
         try {
             System.loadLibrary(MINDSPORE_LITE_TRAIN_JNI_LIBNAME);
             loadSuccess = true;
-            LOGGER.info("loadLibrary " + MINDSPORE_LITE_TRAIN_JNI_LIBNAME + ": success.");
+            LOGGER.info("loadLibrary mindspore-lite-train-jni success.");
         } catch (UnsatisfiedLinkError e) {
-            LOGGER.info(String.format("tryLoadLibrary " + MINDSPORE_LITE_TRAIN_JNI_LIBNAME + " failed: %s", e.toString()));
+            LOGGER.info(String.format(Locale.ENGLISH, "tryLoadLibrary mindspore-lite-train-jni failed: %s", e));
         }
         return loadSuccess;
     }
 
     private static void loadLib(String libResourceName) {
-        LOGGER.info("start load libResourceName: " + libResourceName);
+        LOGGER.info(String.format(Locale.ENGLISH,"start load libResourceName: %s.", libResourceName));
         final InputStream libResource = NativeLibrary.class.getClassLoader().getResourceAsStream(libResourceName);
         if (libResource == null) {
-            LOGGER.warning(String.format("lib file: %s not exist.", libResourceName));
+            LOGGER.warning(String.format(Locale.ENGLISH,"lib file: %s not exist.", libResourceName));
             return;
         }
         try {
             final File tmpDir = mkTmpDir();
-            String libName = libResourceName.substring(libResourceName.lastIndexOf("/") + 1);
+            String libName = libResourceName.substring(libResourceName.lastIndexOf('/') + 1);
             tmpDir.deleteOnExit();
 
-            //copy file to tmpFile
+            // copy file to tmpFile
             final File tmpFile = new File(tmpDir.getCanonicalPath(), libName);
             tmpFile.deleteOnExit();
-            LOGGER.info(String.format("extract %d bytes to %s", copyLib(libResource, tmpFile), tmpFile));
-            LOGGER.info(String.format("libName %s", libName));
-            if (libName.equals("lib" + MINDSPORE_LITE_LIBNAME + ".so")) {
+            LOGGER.info(String.format(Locale.ENGLISH,"extract %d bytes to %s", copyLib(libResource, tmpFile),
+                    tmpFile));
+            if (("lib" + MINDSPORE_LITE_LIBNAME + ".so").equals(libName)) {
                 extractLib(makeResourceName("lib" + MSPLUGIN_GE_LITERT_LIBNAME + ".so"), tmpDir);
                 extractLib(makeResourceName("lib" + RUNTIME_CONVERT_PLUGIN_LIBNAME + ".so"), tmpDir);
             }
             System.load(tmpFile.toString());
         } catch (IOException e) {
             throw new UnsatisfiedLinkError(
-                    String.format("extract library into tmp file (%s) failed.", e.toString()));
+                    String.format(Locale.ENGLISH,"extract library into tmp file (%s) failed.", e));
         }
     }
 
-    private static long copyLib(InputStream libResource, File tmpFile) throws IOException{
+    private static long copyLib(InputStream libResource, File tmpFile) throws IOException {
         try (FileOutputStream outputStream = new FileOutputStream(tmpFile);) {
             // 1MB
             byte[] buffer = new byte[1 << 20];
@@ -143,9 +164,8 @@ public class NativeLibrary {
 
 
     private static File mkTmpDir() {
-        final String MINDSPORE_LITE_LIBS = "mindspore_lite_libs-";
         Long timestamp = System.currentTimeMillis();
-        String dirName = MINDSPORE_LITE_LIBS + timestamp + "-";
+        String dirName = "mindspore_lite_libs-" + timestamp + "-";
         for (int i = 0; i < 10; i++) {
             File tmpDir = new File(new File(System.getProperty("java.io.tmpdir")), dirName + i);
             if (tmpDir.mkdir()) {
@@ -167,7 +187,7 @@ public class NativeLibrary {
 
     private static String architecture() {
         final String arch = System.getProperty("os.arch").toLowerCase();
-        return (arch.equals("amd64")) ? "x86_64" : arch;
+        return ("amd64".equals(arch)) ? "x86_64" : arch;
     }
 
     private static void extractLib(String libResourceName, File targetDir) {

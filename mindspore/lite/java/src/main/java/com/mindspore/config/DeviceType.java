@@ -21,8 +21,16 @@ package com.mindspore.config;
  * @since v1.0
  */
 public class DeviceType {
+
+    // support cpu
     public static final int DT_CPU = 0;
+
+    // support gpu
     public static final int DT_GPU = 1;
+
+    // support npu
     public static final int DT_NPU = 2;
+
+    // support ascend
     public static final int DT_ASCEND = 3;
 }

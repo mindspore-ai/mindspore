@@ -25,6 +25,11 @@ import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The Model class is used to define a MindSpore model, facilitating computational graph management.
+ *
+ * @since v1.0
+ */
 public class Model {
     static {
         MindsporeLite.init();
@@ -61,16 +66,20 @@ public class Model {
      * @param buffer          model buffer.
      * @param modelType       model type.
      * @param context         model build context.
-     * @param dec_key         define the key used to decrypt the ciphertext model. The key length is 16.
-     * @param dec_mode        define the decryption mode. Options: AES-GCM.
-     * @param cropto_lib_path define the openssl library path.
+     * @param decKey         define the key used to decrypt the ciphertext model. The key length is 16.
+     * @param decMode        define the decryption mode. Options: AES-GCM.
+     * @param croptoLibPath   define the openssl library path.
      * @return model build status.
      */
-    public boolean build(final MappedByteBuffer buffer, int modelType, MSContext context, char[] dec_key, String dec_mode, String cropto_lib_path) {
-        if (context == null || buffer == null || dec_key == null || dec_mode == null) {
+    public boolean build(final MappedByteBuffer buffer, int modelType, MSContext context, char[] decKey, String decMode,
+                         String croptoLibPath) {
+        boolean isValid = (context != null && buffer != null && decKey != null && decMode != null &&
+                           croptoLibPath != null);
+        if (!isValid) {
             return false;
         }
-        return this.buildByBuffer(modelPtr, buffer, modelType, context.getMSContextPtr(), dec_key, dec_mode, cropto_lib_path);
+        return this.buildByBuffer(modelPtr, buffer, modelType, context.getMSContextPtr(), decKey, decMode,
+                croptoLibPath);
     }
 
     /**
@@ -95,16 +104,19 @@ public class Model {
      * @param modelPath       model path.
      * @param modelType       model type.
      * @param context         model build context.
-     * @param dec_key         define the key used to decrypt the ciphertext model. The key length is 16.
-     * @param dec_mode        define the decryption mode. Options: AES-GCM.
-     * @param cropto_lib_path define the openssl library path.
+     * @param decKey          define the key used to decrypt the ciphertext model. The key length is 16.
+     * @param decMode         define the decryption mode. Options: AES-GCM.
+     * @param croptoLibPath   define the openssl library path.
      * @return model build status.
      */
-    public boolean build(String modelPath, int modelType, MSContext context, char[] dec_key, String dec_mode, String cropto_lib_path) {
-        if (context == null || modelPath == null || dec_key == null || dec_mode == null) {
+    public boolean build(String modelPath, int modelType, MSContext context, char[] decKey, String decMode,
+                         String croptoLibPath) {
+        boolean isValid = (context != null && modelPath != null && decKey != null && decMode != null &&
+                                   croptoLibPath != null);
+        if (!isValid) {
             return false;
         }
-        return this.buildByPath(modelPtr, modelPath, modelType, context.getMSContextPtr(), dec_key, dec_mode, cropto_lib_path);
+        return this.buildByPath(modelPtr, modelPath, modelType, context.getMSContextPtr(), decKey, decMode, croptoLibPath);
     }
 
     /**
@@ -164,9 +176,9 @@ public class Model {
      * @return input tensors.
      */
     public List<MSTensor> getInputs() {
-        List<Long> ret = this.getInputs(this.modelPtr);
-        List<MSTensor> tensors = new ArrayList<>();
-        for (Long msTensorAddr : ret) {
+        List<Long> tensorAddrs = this.getInputs(this.modelPtr);
+        List<MSTensor> tensors = new ArrayList<>(tensorAddrs.size());
+        for (Long msTensorAddr : tensorAddrs) {
             MSTensor msTensor = new MSTensor(msTensorAddr);
             tensors.add(msTensor);
         }
@@ -179,9 +191,9 @@ public class Model {
      * @return model outputs tensor.
      */
     public List<MSTensor> getOutputs() {
-        List<Long> ret = this.getOutputs(this.modelPtr);
-        List<MSTensor> tensors = new ArrayList<>();
-        for (Long msTensorAddr : ret) {
+        List<Long> tensorAddrs = this.getOutputs(this.modelPtr);
+        List<MSTensor> tensors = new ArrayList<>(tensorAddrs.size());
+        for (Long msTensorAddr : tensorAddrs) {
             MSTensor msTensor = new MSTensor(msTensorAddr);
             tensors.add(msTensor);
         }
@@ -224,11 +236,11 @@ public class Model {
      */
     public List<MSTensor> getOutputsByNodeName(String nodeName) {
         if (nodeName == null) {
-            return null;
+            return new ArrayList<>();
         }
-        List<Long> ret = this.getOutputsByNodeName(this.modelPtr, nodeName);
-        List<MSTensor> tensors = new ArrayList<>();
-        for (Long msTensorAddr : ret) {
+        List<Long> tensorAddrs = this.getOutputsByNodeName(this.modelPtr, nodeName);
+        List<MSTensor> tensors = new ArrayList<>(tensorAddrs.size());
+        for (Long msTensorAddr : tensorAddrs) {
             MSTensor msTensor = new MSTensor(msTensorAddr);
             tensors.add(msTensor);
         }
@@ -296,9 +308,9 @@ public class Model {
      * @return FeaturesMap Tensor list.
      */
     public List<MSTensor> getFeatureMaps() {
-        List<Long> ret = this.getFeatureMaps(this.modelPtr);
-        ArrayList<MSTensor> tensors = new ArrayList<>();
-        for (Long msTensorAddr : ret) {
+        List<Long> tensorAddrs = this.getFeatureMaps(this.modelPtr);
+        ArrayList<MSTensor> tensors = new ArrayList<>(tensorAddrs.size());
+        for (Long msTensorAddr : tensorAddrs) {
             MSTensor msTensor = new MSTensor(msTensorAddr);
             tensors.add(msTensor);
         }

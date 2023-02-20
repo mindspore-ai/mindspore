@@ -1,5 +1,5 @@
-/*
- * Copyright 2021 Huawei Technologies Co., Ltd
+/**
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.mindspore.config;
 
 /**
@@ -21,9 +22,19 @@ package com.mindspore.config;
  * @since v1.0
  */
 public class ModelType {
+
+    // mindir type
     public static final int MT_MINDIR = 0;
+
+    // air type
     public static final int MT_AIR = 1;
+
+    // om type
     public static final int MT_OM = 2;
+
+    // onnx type
     public static final int MT_ONNX = 3;
+
+    // mindir opt type
     public static final int MT_MINDIR_OPT = 4;
 }

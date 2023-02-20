@@ -22,6 +22,11 @@ import java.nio.ByteBuffer;
 import java.lang.reflect.Array;
 import java.util.HashMap;
 
+/**
+ * The MSTensor class defines a tensor in MindSpore.
+ *
+ * @since v1.0
+ */
 public class MSTensor {
     static {
         MindsporeLite.init();

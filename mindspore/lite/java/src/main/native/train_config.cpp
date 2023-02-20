@@ -51,8 +51,10 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_TrainCfg_createTrai
   }
   if (loss_name != nullptr) {
     std::vector<std::string> traincfg_loss_name = traincfg_ptr->GetLossName();
-    traincfg_loss_name.emplace_back(env->GetStringUTFChars(loss_name, JNI_FALSE));
+    auto c_loss_name = env->GetStringUTFChars(loss_name, JNI_FALSE);
+    traincfg_loss_name.emplace_back(c_loss_name);
     traincfg_ptr->SetLossName(traincfg_loss_name);
+    env->ReleaseStringUTFChars(loss_name, c_loss_name);
   }
   traincfg_ptr->optimization_level_ = ol;
   traincfg_ptr->accumulate_gradients_ = accmulateGrads;
