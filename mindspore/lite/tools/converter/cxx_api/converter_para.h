@@ -54,7 +54,11 @@ struct ConverterPara {
   Format spec_input_format = DEFAULT_FORMAT;
   DataType input_data_type = DataType::kNumberTypeFloat32;
   DataType output_data_type = DataType::kNumberTypeFloat32;
-  ModelType export_mindir = kMindIR_Lite;
+#if defined(ENABLE_CLOUD_FUSION_INFERENCE) || defined(ENABLE_CLOUD_INFERENCE)
+  ModelType save_type = kMindIR;
+#else
+  ModelType save_type = kMindIR_Lite;
+#endif
   std::string decrypt_key;
   std::string decrypt_mode = "AES-GCM";
   std::string encrypt_key;

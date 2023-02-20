@@ -74,7 +74,7 @@ FuncGraphPtr ConverterFuncGraph::Load3rdModelToFuncgraph(const std::shared_ptr<C
   }
   converter::ConverterParameters converter_parameters;
   converter_parameters.fmk = param->fmk_type;
-  converter_parameters.export_mindir = param->export_mindir;
+  converter_parameters.save_type = param->save_type;
   converter_parameters.model_file = param->model_file;
   converter_parameters.weight_file = param->weight_file;
   func_graph_base = model_parser->Parse(converter_parameters);
@@ -196,8 +196,7 @@ STATUS ConverterFuncGraph::UnifyFuncGraphForInfer(const std::shared_ptr<Converte
     }
   }
 
-  auto unify_format =
-    std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model, param->export_mindir);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model, param->save_type);
   MS_CHECK_TRUE_MSG(unify_format != nullptr, RET_NULL_PTR, "unify_format is nullptr.");
   if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
@@ -219,7 +218,7 @@ STATUS ConverterFuncGraph::UnifyFuncGraphInputFormat(const std::shared_ptr<Conve
 
   auto spec_input_format = param->spec_input_format;
   if (spec_input_format == DEFAULT_FORMAT) {
-    if (param->export_mindir == kMindIR || param->fmk_type != converter::kFmkTypeMs) {
+    if (param->save_type == kMindIR || param->fmk_type != converter::kFmkTypeMs) {
       // if it saves to mindir, the input format must be the same as the original model
       // if it saves to mindir lite, the input format must be the same as the original model for 3rd model
       func_graph->set_attr(kInputFormat, MakeValue(static_cast<int>(cur_input_format)));

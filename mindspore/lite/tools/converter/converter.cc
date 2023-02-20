@@ -622,12 +622,11 @@ int CheckInputOutputDataType(const std::shared_ptr<ConverterPara> &param) {
   return RET_OK;
 }
 
-int CheckExportMindIR(const std::shared_ptr<ConverterPara> &param) {
+int CheckSaveType(const std::shared_ptr<ConverterPara> &param) {
   if (param != nullptr) {
     std::set valid_values = {kMindIR, kMindIR_Lite};
-    if (std::find(valid_values.begin(), valid_values.end(), param->export_mindir) == valid_values.end()) {
-      MS_LOG(ERROR) << "INPUT ILLEGAL: export_mindir is not in {kMindIR, kMindIR_Lite}, but got "
-                    << param->export_mindir;
+    if (std::find(valid_values.begin(), valid_values.end(), param->save_type) == valid_values.end()) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: save_type is not in {kMindIR, kMindIR_Lite}, but got " << param->save_type;
       return RET_INPUT_PARAM_INVALID;
     }
   }
@@ -722,9 +721,9 @@ int CheckValueParam(const std::shared_ptr<ConverterPara> &param) {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  ret = CheckExportMindIR(param);
+  ret = CheckSaveType(param);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Check value of export_mindir failed.";
+    MS_LOG(ERROR) << "Check value of save_type failed.";
     return RET_INPUT_PARAM_INVALID;
   }
 
@@ -812,7 +811,7 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, void **m
 int ConverterImpl::SaveGraph(FuncGraphPtr graph, const std::shared_ptr<ConverterPara> &param, void **model_data,
                              size_t *data_size, bool not_save) {
   int status = RET_ERROR;
-  if (param->export_mindir == kMindIR) {
+  if (param->save_type == kMindIR) {
     status = SaveMindIRModel(graph, param, model_data, data_size);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Save mindir model failed :" << status << " " << GetErrorInfo(status);

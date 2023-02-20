@@ -83,12 +83,15 @@ Flags::Flags() {
           "Whether to do pre-inference after convert. "
           "true | false",
           "false");
-  AddFlag(&Flags::exportMindIR, "exportMindIR", "MINDIR  | MINDIR_LITE", "MINDIR_LITE");
   AddFlag(&Flags::noFusionStr, "NoFusion",
           "Avoid fusion optimization true|false. NoFusion is true when saveType is MINDIR.", "");
   AddFlag(&Flags::device, "device",
           "Set the target device, support Ascend, Ascend310 and Ascend310P will be deprecated.", "");
+#if defined(ENABLE_CLOUD_FUSION_INFERENCE) || defined(ENABLE_CLOUD_INFERENCE)
+  AddFlag(&Flags::saveTypeStr, "saveType", "The type of saved model. MINDIR | MINDIR_LITE", "MINDIR");
+#else
   AddFlag(&Flags::saveTypeStr, "saveType", "The type of saved model. MINDIR | MINDIR_LITE", "MINDIR_LITE");
+#endif
   AddFlag(&Flags::optimizeStr, "optimize", "The type of optimization. none | general | ascend_oriented", "general");
   AddFlag(&Flags::optimizeTransformerStr, "optimizeTransformer", "Enable Fast-Transformer fusion true|false", "false");
 }
@@ -266,22 +269,6 @@ int Flags::InitOptimize() {
   return RET_OK;
 }
 
-int Flags::InitExportMindIR() {
-  // value check not here, it is in converter c++ API's CheckValueParam method.
-  std::map<std::string, ModelType> StrToEnumModelTypeMap = {{"MINDIR", kMindIR}, {"MINDIR_LITE", kMindIR_Lite}};
-  if (StrToEnumModelTypeMap.find(this->exportMindIR) != StrToEnumModelTypeMap.end()) {
-    this->export_mindir = StrToEnumModelTypeMap.at(this->exportMindIR);
-  } else {
-    std::cerr << "INPUT ILLEGAL: exportMindIR must be MINDIR|MINDIR_LITE " << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-
-  if ((this->exportMindIR == "MINDIR") && (this->optimizeTransformer == false)) {
-    this->disableFusion = true;
-  }
-  return RET_OK;
-}
-
 int Flags::InitEncrypt() {
   if (this->encryptionStr == "true") {
     this->encryption = true;
@@ -295,13 +282,9 @@ int Flags::InitEncrypt() {
 }
 
 int Flags::InitSaveType() {
-  // For compatibility of interface, the check will be removed when exportMindIR is deleted
-  if (this->exportMindIR == "MINDIR") {
-    return RET_OK;
-  }
   std::map<std::string, ModelType> StrToEnumModelTypeMap = {{"MINDIR", kMindIR}, {"MINDIR_LITE", kMindIR_Lite}};
   if (StrToEnumModelTypeMap.find(this->saveTypeStr) != StrToEnumModelTypeMap.end()) {
-    this->export_mindir = StrToEnumModelTypeMap.at(this->saveTypeStr);
+    this->save_type = StrToEnumModelTypeMap.at(this->saveTypeStr);
   } else {
     std::cerr << "INPUT ILLEGAL: saveType must be MINDIR|MINDIR_LITE " << std::endl;
     return RET_INPUT_PARAM_INVALID;
@@ -404,12 +387,6 @@ int Flags::Init(int argc, const char **argv) {
   ret = InitPreInference();
   if (ret != RET_OK) {
     std::cerr << "Init pre inference failed." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-
-  ret = InitExportMindIR();
-  if (ret != RET_OK) {
-    std::cerr << "Init export mindir failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 

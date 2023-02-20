@@ -57,7 +57,7 @@ int main(int argc, const char **argv) {
     converter.SetInputFormat(flags.graphInputFormat);
     converter.SetInputDataType(flags.inputDataType);
     converter.SetOutputDataType(flags.outputDataType);
-    converter.SetExportMindIR(flags.export_mindir);
+    converter.SetSaveType(flags.save_type);
     converter.SetDecryptKey(flags.dec_key);
     flags.dec_key.clear();
     converter.SetDecryptMode(flags.dec_mode);

@@ -7,7 +7,7 @@ mindspore_lite.ModelType
 
     适用于以下场景：
 
-    1. Converter时，设置 `export_mindir` 参数， `ModelType` 用于定义转换生成的模型类型。
+    1. Converter时，设置 `save_type` 参数， `ModelType` 用于定义转换生成的模型类型。
 
     2. Converter之后，当从文件加载或构建模型以进行推理时， `ModelType` 用于定义输入模型框架类型。
 

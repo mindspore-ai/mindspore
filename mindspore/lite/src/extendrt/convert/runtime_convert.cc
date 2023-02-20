@@ -34,7 +34,7 @@ int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_
   param->output_data_type = mindspore::DataType::kTypeUnknown;
   param->weight_fp16 = false;
   param->train_model = false;
-  param->export_mindir = mindspore::kMindIR;
+  param->save_type = mindspore::kMindIR;
   param->enable_encryption = false;
   param->is_runtime_converter = true;
 

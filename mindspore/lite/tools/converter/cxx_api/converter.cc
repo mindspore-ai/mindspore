@@ -158,15 +158,15 @@ DataType Converter::GetOutputDataType() {
   }
 }
 
-void Converter::SetExportMindIR(ModelType export_mindir) {
+void Converter::SetSaveType(ModelType save_type) {
   if (data_ != nullptr) {
-    data_->export_mindir = export_mindir;
+    data_->save_type = save_type;
   }
 }
 
-ModelType Converter::GetExportMindIR() const {
+ModelType Converter::GetSaveType() const {
   if (data_ != nullptr) {
-    return data_->export_mindir;
+    return data_->save_type;
   } else {
     return kMindIR_Lite;
   }

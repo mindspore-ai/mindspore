@@ -100,7 +100,7 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
   if (fb_model_buf_ == nullptr) {
     auto param = std::make_shared<ConverterPara>();
     param->fmk_type = converter::kFmkTypeMs;
-    param->export_mindir = kMindIR;
+    param->save_type = kMindIR;
     auto mutable_graph = std::const_pointer_cast<FuncGraph>(graph);
     meta_graph = lite::ConverterToMetaGraph::Build(param, mutable_graph);
     if (meta_graph == nullptr) {
