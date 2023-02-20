@@ -572,6 +572,11 @@ void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceConte
     if (is_dynamic_shape) {
       kernel::UpdateNodeShape(node);
       UpdateOutputAddrSize(node, runtime_info);
+#ifndef ENABLE_SECURITY
+      if (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName) {
+        ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
+      }
+#endif
     }
   }
   MS_LOG(DEBUG) << "End";

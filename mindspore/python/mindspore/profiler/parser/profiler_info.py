@@ -35,7 +35,6 @@ class ProfilerInfo:
     @staticmethod
     def init_info(context_mode, rank_id):
         """Profiler info initialization must include context_mode, rank_id and output_path."""
-        ProfilerInfo._profiler_info_dict = dict()
         ProfilerInfo._profiler_info_dict["context_mode"] = context_mode
         ProfilerInfo._profiler_info_dict["rank_id"] = rank_id
         ProfilerInfo._profiler_info_dict["ms_version"] = ms_version
