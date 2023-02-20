@@ -4702,7 +4702,7 @@ def scalar_to_tensor(input_x, dtype=mstype.float32):
     Converts a scalar to a `Tensor`, and converts the data type to the specified type.
 
     Args:
-        input_x (Union[int, float]): The input is a scalar. Only constant value is allowed.
+        input_x (Union[bool, int, float]): The input is a scalar. Only constant value is allowed.
         dtype (mindspore.dtype): The target data type. Default: mindspore.float32. Only
             constant value is allowed.
 
@@ -4710,7 +4710,7 @@ def scalar_to_tensor(input_x, dtype=mstype.float32):
         Tensor. 0-D Tensor and the content is the input.
 
     Raises:
-        TypeError: If `input_x` is neither int nor float.
+        TypeError: If `input_x` is neither bool nor int nor float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
