@@ -36,6 +36,7 @@ constexpr int64_t kDynamicRnnShapeB = 1;
 constexpr int64_t kDynamicRnnShapeH = 3;
 constexpr int64_t kDynamicRnnShapeC = 3;
 constexpr int64_t kDynRnnNum4 = 4;
+constexpr int64_t kDynRnnInputNum = 6;
 
 abstract::TupleShapePtr DynamicRNNInferDynamicShape(const std::vector<AbstractBasePtr> &input_args) {
   const int64_t y_shape_num = 3;
@@ -100,6 +101,7 @@ void DynamicRNNShapeCheck(const PrimitivePtr &primitive, const std::vector<Abstr
 
 abstract::TupleShapePtr DynamicRNNInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kDynRnnInputNum, primitive->name());
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx0]->BuildShape())[kShape];
   auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx1]->BuildShape())[kShape];
   std::vector<ValuePtr> placeholder_index = {MakeValue((int64_t)3)};
@@ -132,6 +134,7 @@ abstract::TupleShapePtr DynamicRNNInferShape(const PrimitivePtr &primitive,
 }
 
 TuplePtr DynamicRNNInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kDynRnnInputNum, primitive->name());
   auto op_name = primitive->name();
   auto x_dtype = input_args[kDynRnnIdx0]->BuildType();
   auto w_dtype = input_args[kDynRnnIdx1]->BuildType();
@@ -165,8 +168,6 @@ MIND_API_OPERATOR_IMPL(DynamicRNN, BaseOperator);
 AbstractBasePtr DynamicRNNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 6;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto type = DynamicRNNInferType(primitive, input_args);
   auto shape = DynamicRNNInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

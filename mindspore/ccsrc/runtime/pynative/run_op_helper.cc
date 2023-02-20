@@ -318,6 +318,10 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   auto input_size = runtime_info->GetInputSize();
   for (size_t i = 0; i < input_size; ++i) {
+    if (common::AnfAlgo::IsNoneInput(node, i)) {
+      MS_LOG(DEBUG) << "Input [" << i << "] of " << node->fullname_with_scope() << " is None.";
+      continue;
+    }
     auto input_address = runtime_info->GetInputDeviceAddress(i);
     kernel_mod->set_input_user_data(input_address->user_data().get(), i);
     MS_EXCEPTION_IF_NULL(input_address);
@@ -372,11 +376,18 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
   return true;
 }
 
-kernel::AddressPtrList CreateKernelInputAddress(const std::shared_ptr<OpRuntimeInfo> &runtime_info) {
+kernel::AddressPtrList CreateKernelInputAddress(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
+                                                const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(runtime_info);
   auto input_size = runtime_info->GetInputSize();
   kernel::AddressPtrList inputs;
   for (size_t i = 0; i < input_size; ++i) {
+    if (common::AnfAlgo::IsNoneInput(node, i)) {
+      (void)inputs.emplace_back(std::make_shared<kernel::Address>());
+      MS_LOG(DEBUG) << "Input[" << i << "]:"
+                    << " is None Input";
+      continue;
+    }
     auto device_address = runtime_info->GetInputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
     (void)inputs.emplace_back(
@@ -546,7 +557,7 @@ void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceConte
     if (!MallocForKernelInput(runtime_info, device_context, node)) {
       MS_LOG(EXCEPTION) << "Malloc for kernel input failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
-    auto inputs = CreateKernelInputAddress(runtime_info);
+    auto inputs = CreateKernelInputAddress(runtime_info, node);
 
     InferNodeRealShape(node);
 
@@ -595,7 +606,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     if (!MallocForKernelInput(runtime_info, device_context, node)) {
       MS_LOG(EXCEPTION) << "Malloc for kernel input failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
-    auto inputs = CreateKernelInputAddress(runtime_info);
+    auto inputs = CreateKernelInputAddress(runtime_info, node);
     if (is_dynamic_shape) {
       InferNodeRealShape(node);
       ResizeNodeInput(node);

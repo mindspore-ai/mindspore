@@ -230,18 +230,25 @@ void AscendKernelExecutor::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr
     static const std::set<std::string> place_holder_nodes = {kDynamicRNNOpName, kDynamicGRUV2OpName};
     auto iter = place_holder_nodes.find(op_name);
     if (iter != place_holder_nodes.end()) {
-      auto none_index = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
-      // Remove seq_length
-      auto input_num = common::AnfAlgo::GetInputTensorNum(node);
-      std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(node)};
-      for (size_t i = 0; i < input_num; ++i) {
-        auto item = std::find(none_index.begin(), none_index.end(), i);
-        if (item == none_index.end()) {
-          auto input_node = common::AnfAlgo::GetInputNode(node, i);
-          new_inputs.emplace_back(input_node);
+      // keep placeholder for acl_kernel
+      auto is_acl_kernel = AnfAlgo::GetKernelType(node) == KernelType::ACL_KERNEL;
+      if (!is_acl_kernel) {
+        auto none_index = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
+        // Remove seq_length
+        auto input_num = common::AnfAlgo::GetInputTensorNum(node);
+        std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(node)};
+        for (size_t i = 0; i < input_num; ++i) {
+          auto item = std::find(none_index.begin(), none_index.end(), i);
+          if (item == none_index.end()) {
+            auto input_node = common::AnfAlgo::GetInputNode(node, i);
+            new_inputs.emplace_back(input_node);
+          }
         }
+        (void)node->set_inputs(new_inputs);
+        // update attr
+        common::AnfAlgo::EraseNodeAttr(kAttrPlaceHolderIndex, node);
+        MS_LOG(DEBUG) << "Remove placeholder input and kAttrPlaceHolderIndex for " << op_name;
       }
-      (void)node->set_inputs(new_inputs);
     }
 
     // Save the nop_op that needs to be memcpy

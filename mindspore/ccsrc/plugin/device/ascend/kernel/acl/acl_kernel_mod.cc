@@ -137,6 +137,16 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   }
 
   MS_LOG(DEBUG) << "Start aclopCompileAndExecute of node: " << node->fullname_with_scope() << " op_type_:" << op_type_;
+  if (op_desc_ptr->input_tensor_desc().size() != op_desc_ptr->input_tensor_data().size()) {
+    MS_LOG(ERROR) << "For input, the size of tensor_desc and tensor_data is inconsistent! node: "
+                  << node->fullname_with_scope();
+    return false;
+  }
+  if (op_desc_ptr->output_tensor_desc().size() != op_desc_ptr->output_tensor_data().size()) {
+    MS_LOG(ERROR) << "For output, the size of tensor_desc and tensor_data is inconsistent! node: "
+                  << node->fullname_with_scope();
+    return false;
+  }
   bool ret = aclopCompileAndExecute(const_cast<char *>(op_type_.c_str()), op_desc_ptr->input_tensor_desc().size(),
                                     op_desc_ptr->input_tensor_desc().data(), op_desc_ptr->input_tensor_data().data(),
                                     op_desc_ptr->output_tensor_desc().size(), op_desc_ptr->output_tensor_desc().data(),
