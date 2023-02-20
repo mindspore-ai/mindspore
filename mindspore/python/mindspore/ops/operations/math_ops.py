@@ -6659,7 +6659,7 @@ class RaggedRange(Primitive):
         ValueError: If the shape of `starts`, `limits` and `deltas` are not same.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> raggedrange = ops.RaggedRange(Tsplits=mstype.int64)
