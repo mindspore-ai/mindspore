@@ -20,49 +20,60 @@
 
 template <typename T>
 __device__ __forceinline__ void rgb2hsv_cuda(const T cu_r, const T cu_g, const T cu_b, T *cu_h, T *cu_s, T *cu_v) {
+  const T cu_0 = 0.0;
+  const T cu_2 = 2.0;
+  const T cu_4 = 4.0;
+  const T cu_6 = 6.0;
   *cu_v = max(cu_r, max(cu_g, cu_b));
   const T cu_m = min(cu_r, min(cu_g, cu_b));
   const T cu_chroma = (*cu_v) - cu_m;
-  if (cu_chroma > 0.0) {
+  if (cu_chroma > cu_0) {
     if ((*cu_v) == cu_r) {
       const T cu_num = (cu_g - cu_b) / cu_chroma;
-      const T cu_sign = copysign(static_cast<T>(1), cu_num);
+      const T cu_sign = static_cast<T>(copysignf(1.0f, static_cast<float>(cu_num)));
       *cu_h =
-        ((cu_sign < 0.0) * 6.0 + cu_sign * fmodf(static_cast<float>(cu_sign * cu_num), static_cast<float>(6.0))) / 6.0;
+        ((cu_sign < cu_0) * cu_6 + cu_sign * static_cast<T>(fmodf(static_cast<float>(cu_sign * cu_num), cu_6))) / cu_6;
     } else if ((*cu_v) == cu_g) {
-      *cu_h = ((cu_b - cu_r) / cu_chroma + 2.0) / 6.0;
+      *cu_h = ((cu_b - cu_r) / cu_chroma + cu_2) / cu_6;
     } else {
-      *cu_h = ((cu_r - cu_g) / cu_chroma + 4.0) / 6.0;
+      *cu_h = ((cu_r - cu_g) / cu_chroma + cu_4) / cu_6;
     }
   } else {
-    *cu_h = 0.0;
+    *cu_h = cu_0;
   }
-  if ((*cu_v) > 0.0) {
+  if ((*cu_v) > cu_0) {
     *cu_s = cu_chroma / (*cu_v);
   } else {
-    *cu_s = 0.0;
+    *cu_s = cu_0;
   }
   return;
 }
 
 template <typename T>
 __device__ __forceinline__ void hsv2rgb_cuda(const T cu_h, const T cu_s, const T cu_v, T *cu_r, T *cu_g, T *cu_b) {
-  const T cu_new_h = cu_h * 6.0;
+  const T cu_0 = 0.0;
+  const T cu_1 = 1.0;
+  const T cu_2 = 2.0;
+  const T cu_3 = 3.0;
+  const T cu_4 = 4.0;
+  const T cu_5 = 5.0;
+  const T cu_6 = 6.0;
+  const T cu_new_h = cu_h * cu_6;
   const T cu_chroma = cu_v * cu_s;
-  const T cu_x = cu_chroma * (1.0f - abs(fmodf(static_cast<float>(cu_new_h), static_cast<float>(2.0)) - 1.0));
+  const T cu_x = cu_chroma * (cu_1 - static_cast<T>(fabsf(fmodf(static_cast<float>(cu_new_h), cu_2) - cu_1)));
   const T cu_new_m = cu_v - cu_chroma;
-  const bool cu_between_0_and_1 = cu_new_h >= 0.0f && cu_new_h < 1.0f;
-  const bool cu_between_1_and_2 = cu_new_h >= 1.0f && cu_new_h < 2.0f;
-  const bool cu_between_2_and_3 = cu_new_h >= 2.0f && cu_new_h < 3.0f;
-  const bool cu_between_3_and_4 = cu_new_h >= 3.0f && cu_new_h < 4.0f;
-  const bool cu_between_4_and_5 = cu_new_h >= 4.0f && cu_new_h < 5.0f;
-  const bool cu_between_5_and_6 = cu_new_h >= 5.0f && cu_new_h < 6.0f;
+  const bool cu_between_0_and_1 = cu_new_h >= cu_0 && cu_new_h < cu_1;
+  const bool cu_between_1_and_2 = cu_new_h >= cu_1 && cu_new_h < cu_2;
+  const bool cu_between_2_and_3 = cu_new_h >= cu_2 && cu_new_h < cu_3;
+  const bool cu_between_3_and_4 = cu_new_h >= cu_3 && cu_new_h < cu_4;
+  const bool cu_between_4_and_5 = cu_new_h >= cu_4 && cu_new_h < cu_5;
+  const bool cu_between_5_and_6 = cu_new_h >= cu_5 && cu_new_h < cu_6;
   *cu_r = cu_chroma * (cu_between_0_and_1 || cu_between_5_and_6) + cu_x * (cu_between_1_and_2 || cu_between_4_and_5) +
-         cu_new_m;
+          cu_new_m;
   *cu_g = cu_chroma * (cu_between_1_and_2 || cu_between_2_and_3) + cu_x * (cu_between_0_and_1 || cu_between_3_and_4) +
-         cu_new_m;
+          cu_new_m;
   *cu_b = cu_chroma * (cu_between_3_and_4 || cu_between_4_and_5) + cu_x * (cu_between_2_and_3 || cu_between_5_and_6) +
-         cu_new_m;
+          cu_new_m;
   return;
 }
 
@@ -108,8 +119,7 @@ void CalAdjustSaturation(const int input_elements, const T *input, T *output, co
                          const uint32_t &device_id, cudaStream_t cuda_stream) {
   const int channel_num = 3;
   int tuple_element = input_elements / channel_num;
-  int thread_num = tuple_element > 256 ? 256 : tuple_element;
-  CalAdjustSaturationKernel<<<CUDA_BLOCKS_CAL(device_id, tuple_element, thread_num), thread_num, 0, cuda_stream>>>(
+  CalAdjustSaturationKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     tuple_element, channel_num, input, output, saturation_scale);
 }
 
