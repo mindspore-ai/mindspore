@@ -16,7 +16,7 @@
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator as validator
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops import functional as F
 from mindspore.ops.operations._inner_ops import DynamicResizeNearestNeighbor
 from mindspore.ops.function.math_func import cummin as cummin_
@@ -159,7 +159,7 @@ def _typecheck_input(x1_type, x2_type, prim_name=None):
                         f"and x2_type: {x2_type}.")
 
 
-@constexpr
+@_primexpr
 def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
     """
     Convert from single int axes to 2d tuple if required
@@ -175,7 +175,7 @@ def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
     return axes
 
 
-@constexpr
+@_primexpr
 def _calc_new_shape(shape, axes, position=0):
     """
     Calculate transpose and reshape parameters for input transformations,
