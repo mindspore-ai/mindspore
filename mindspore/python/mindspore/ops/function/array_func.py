@@ -4051,7 +4051,7 @@ def meshgrid(*inputs, indexing='xy'):
     coordinate tensors for evaluating expressions on an N-D grid.
 
     Args:
-        inputs: List of 1-D tensors.
+        inputs (List[Tensor]): List of 1-D tensors.
             The length of inputs should be greater than 1. The data type is Number.
 
     Keyword Args:
@@ -6371,7 +6371,6 @@ def count_nonzero(x, dims=None):
     Note:
         The value range of "dims" is [-x_dims, x_dims). "x_dims" is the dimension length of input "x".
 
-
     Args:
         x (Tensor): Input to be computed, a N-D Tensor, can be any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)` .
@@ -6389,7 +6388,7 @@ def count_nonzero(x, dims=None):
         ValueError: If any of the values of `dims` is not in [-x_dims, x_dims).
 
     Supported Platforms:
-         ``CPU``
+        ``CPU``
 
     Examples:
         >>> x = Tensor([[0, 0, 1], [1, 1, 2], [0, 0, 1]], mindspore.int64)

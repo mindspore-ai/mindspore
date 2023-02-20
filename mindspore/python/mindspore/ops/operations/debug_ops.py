@@ -454,7 +454,7 @@ class Print(Primitive):
     """
     Print the inputs to stdout.
 
-    Refer to :func:`mindspore.ops.print` for more detail.
+    Refer to :func:`mindspore.ops.print_` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
