@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include <cmath>
 #include "plugin/device/cpu/kernel/adaptive_avg_pool_3d_cpu_kernel.h"
-#include "plugin/device/cpu/kernel/nnacl/errorcode.h"
-#include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include <cmath>
+#include <algorithm>
+#include <cstdint>
+#include <iterator>
+#include <memory>
+#include <string>
 #include "ops/adaptive_avg_pool_3d.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

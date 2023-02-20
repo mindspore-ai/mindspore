@@ -17,7 +17,6 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <utility>
-#include "include/common/utils/utils.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "include/common/debug/rdr/recorder_manager.h"
 #include "mindspore/core/utils/file_utils.h"

@@ -16,9 +16,13 @@
 
 #include "common/mem_reuse/mem_dynamic_allocator.h"
 #include <string>
-#include "include/common/utils/convert_utils.h"
+#include <algorithm>
+#include <numeric>
+#include <ostream>
+#include <utility>
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace device {

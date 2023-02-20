@@ -15,7 +15,6 @@
  */
 
 #include "include/backend/data_queue/blocking_queue.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace device {

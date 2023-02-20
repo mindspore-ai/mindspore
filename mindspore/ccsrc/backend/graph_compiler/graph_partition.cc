@@ -15,8 +15,8 @@
  */
 
 #include "backend/graph_compiler/graph_partition.h"
+
 #include <string>
-#include <functional>
 #include <utility>
 #include <map>
 #include <queue>

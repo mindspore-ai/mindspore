@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 #include "cpu_kernel/inc/cpu_context.h"
-#include "aicpu_sharder/aicpu_context.h"
 #include "cpu_kernel/common/cpu_node_def.h"
 #include "cpu_kernel/common/device.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
 #include "proto/cpu_attr.pb.h"
 #include "proto/cpu_node_def.pb.h"
-#include "cpu_kernel/common/sharder.h"
 #include "cpu_kernel/common/status.h"
 
 namespace aicpu {

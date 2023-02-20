@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 #include "backend/operator/ops_backend_infer_function.h"
-#include "abstract/abstract_function.h"
 #include "abstract/ops/infer_functions.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/core_ops.h"
-#include "utils/ms_context.h"
 #include "ops/export_infer.h"
 namespace mindspore {
 namespace abstract {

@@ -15,7 +15,6 @@
  */
 
 #include "minddata/dataset/util/md_log_adapter.h"
-#include "minddata/dataset/util/status.h"
 
 #include <sstream>
 

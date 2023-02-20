@@ -21,9 +21,12 @@
 #include <string>
 #include <cfloat>
 #include <memory>
+#include <type_traits>
+
 #include "utils/log_adapter.h"
-#include "include/common/utils/convert_utils.h"
-#include "utils/ms_utils.h"
+#include "ir/scalar.h"
+#include "ir/value.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 // namespace to support primitive operators definition

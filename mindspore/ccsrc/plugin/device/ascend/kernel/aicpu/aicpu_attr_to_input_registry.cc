@@ -16,7 +16,6 @@
 
 #include "plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.h"
 
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
 

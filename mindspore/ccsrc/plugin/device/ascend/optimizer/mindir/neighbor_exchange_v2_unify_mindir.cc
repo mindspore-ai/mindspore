@@ -19,10 +19,8 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
-#include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "backend/common/optimizer/helper.h"
 #include "utils/trace_base.h"
 #include "frontend/parallel/ops_info/ops_utils.h"

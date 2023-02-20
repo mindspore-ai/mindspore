@@ -16,10 +16,10 @@
 
 #include "common/mem_reuse/mem_swap_manager.h"
 #include <algorithm>
+#include <set>
+#include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/optimizer/helper.h"
-#include "runtime/device/kernel_runtime_manager.h"
 
 namespace mindspore {
 namespace device {

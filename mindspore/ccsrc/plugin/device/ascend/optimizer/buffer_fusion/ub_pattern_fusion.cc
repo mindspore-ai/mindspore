@@ -21,16 +21,48 @@
 #include <string>
 #include <set>
 #include <algorithm>
+#include <iterator>
+#include <list>
+
 #include "utils/hash_map.h"
-#include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
-#include "include/common/debug/anf_ir_dump.h"
 #include "backend/common/optimizer/helper.h"
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "backend/common/session/kernel_graph.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
+#include "include/robin_hood.h"
+#include "ir/anf.h"
+#include "ir/func_graph.h"
+#include "ir/graph_utils.h"
+#include "ir/manager.h"
+#include "ir/primitive.h"
+#include "ir/scalar.h"
+#include "ir/value.h"
+#include "kernel/kernel.h"
+#include "kernel/kernel_build_info.h"
+#include "kernel/kernel_fusion.h"
+#include "mindapi/base/type_id.h"
+#include "ops/core_ops.h"
+#include "utils/anf_utils.h"
+#include "utils/compact_set.h"
+#include "utils/convert_utils_base.h"
+#include "utils/hash_set.h"
+#include "utils/info.h"
+#include "utils/log_adapter.h"
+#include "utils/trace_info.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 
 namespace mindspore {
+namespace kernel {
+namespace tbe {
+class TbeUtils;
+}  // namespace tbe
+}  // namespace kernel
+
 namespace opt {
 using mindspore::kernel::tbe::TbeUtils;
 namespace {

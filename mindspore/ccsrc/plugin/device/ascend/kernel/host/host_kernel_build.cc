@@ -15,13 +15,9 @@
  */
 #include "plugin/device/ascend/kernel/host/host_kernel_build.h"
 #include <string>
-#include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_mod.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/kernel_graph.h"
-#include "kernel/common_utils.h"
-
+#include "utils/log_adapter.h"
 namespace mindspore {
 namespace kernel {
 KernelModPtr HostOpBuild(const std::shared_ptr<AnfNode> &anf_node) {

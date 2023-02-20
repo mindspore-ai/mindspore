@@ -18,13 +18,10 @@
 
 #include <functional>
 #include <algorithm>
-#include <stack>
-#include "utils/ms_context.h"
-#include "utils/anf_utils.h"
-#include "runtime/device/ms_device_shape_transfer.h"
+#include <iterator>
+#include <numeric>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/optimizer/helper.h"
 #include "kernel/common_utils.h"
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 namespace mindspore {

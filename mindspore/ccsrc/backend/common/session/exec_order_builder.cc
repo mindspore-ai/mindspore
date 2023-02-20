@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "backend/common/session/exec_order_builder.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 

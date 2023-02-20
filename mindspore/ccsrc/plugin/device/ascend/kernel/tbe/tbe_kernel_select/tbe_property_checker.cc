@@ -17,9 +17,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "frontend/parallel/ops_info/ops_utils.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
