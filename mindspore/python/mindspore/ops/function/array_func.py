@@ -5692,7 +5692,9 @@ def topk(input_x, k, dim=None, largest=True, sorted=True):
     Finds values and indices of the `k` largest or smallest entries along a given dimension.
 
     .. warning::
-        - If sorted is set to False, it will use the aicpu operator, the performance may be reduced.
+        - If sorted is set to False, it will use the aicpu operator, the performance may be reduced. In addition, due to
+          different memory layout and traversal methods on different platforms, the display order of calculation results
+          may be inconsistent when `sorted` is False.
 
     If the `input_x` is a one-dimensional Tensor, finds the `k` largest  or smallest entries in the Tensor,
     and outputs its value and index as a Tensor. values[`k`] is the `k` largest item in `input_x`,
@@ -5713,7 +5715,7 @@ def topk(input_x, k, dim=None, largest=True, sorted=True):
         dim (int, optional): The dimension to sort along. Default: None.
         largest (bool, optional): If largest is False then the k smallest elements are returned. Default: True.
         sorted (bool, optional): If True, the obtained elements will be sorted by the values in descending order.
-            If False, the obtained elements will be sorted by the values in ascending order. Default: True.
+            If False, the obtained elements will not be sorted. Default: True.
 
     Returns:
         A tuple consisting of `values` and `indexes`.
