@@ -33,6 +33,8 @@ class ZerosLikeInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     auto op_name = primitive->name();
+    constexpr int64_t empty_tensor_num = 0;
+    (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterThan, empty_tensor_num, op_name);
     auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
     auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
     auto input_shape = input_shape_map[kShape];
@@ -46,6 +48,8 @@ class ZerosLikeInfer : public abstract::OpInferBase {
   }
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto op_name = primitive->name();
+    constexpr int64_t empty_tensor_num = 0;
+    (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterThan, empty_tensor_num, op_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
     auto infer_type = input_args[0]->BuildType();
     auto valid_type = common_valid_types_with_complex_and_bool;
