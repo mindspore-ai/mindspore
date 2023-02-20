@@ -345,6 +345,12 @@ def get_stride_info_from_slice(data, slice_index):
     data_shape = F.dyn_shape(data)
     begin_strides, end_strides, step_strides = [], [], []
     start, stop, step = get_slice_stride(slice_index, data_shape[0])
+    if start.ndim > 0:
+        start = start.item()
+    if stop.ndim > 0:
+        stop = stop.item()
+    if step.ndim > 0:
+        step = step.item()
     begin_strides.append(start)
     end_strides.append(stop)
     step_strides.append(step)
