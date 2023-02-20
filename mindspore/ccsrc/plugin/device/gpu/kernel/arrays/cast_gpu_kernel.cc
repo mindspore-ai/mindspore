@@ -885,8 +885,10 @@ std::vector<std::pair<KernelAttr, CastGpuKernelMod::CastFunc>> CastGpuKernelMod:
 
 std::vector<KernelAttr> CastGpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, CastFunc> &pair) { return pair.first; });
+  if (support_list.empty()) {
+    (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                         [](const std::pair<KernelAttr, CastFunc> &pair) { return pair.first; });
+  }
   return support_list;
 }
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Cast, CastGpuKernelMod);
