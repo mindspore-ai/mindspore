@@ -418,3 +418,5 @@ from .multi_margin_loss import _multi_margin_loss_aicpu
 from .multi_margin_loss_grad import _multi_margin_loss_grad_aicpu
 from .sparse_to_dense_v2 import _sparse_to_dense_v2_aicpu
 from .bernoulli import _bernoulli_aicpu
+from .glu_grad import _glu_grad_aicpu
+from .sspaddmm import _sspaddmm_aicpu

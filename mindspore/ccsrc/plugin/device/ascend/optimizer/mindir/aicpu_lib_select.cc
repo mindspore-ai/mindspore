@@ -48,8 +48,8 @@ bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
                                                       kRangeOpName,
                                                       kQuantDTypeCastOpName,
                                                       kFSEDecodeOpName};
-  static const std::set<std::string> kMigrateAicpuKernelOps = {mindspore::kAdaptiveAvgPool2DV1OpName,
-                                                               mindspore::kAdaptiveAvgPool2DGradV1OpName,
+  static const std::set<std::string> kMigrateAicpuKernelOps = {mindspore::kAdaptiveAvgPool2dOpName,
+                                                               mindspore::kAdaptiveAvgPool2dGradOpName,
                                                                mindspore::kBucketizeOpName,
                                                                mindspore::kCauchyOpName,
                                                                mindspore::kChannelShuffleOpName,
@@ -327,7 +327,9 @@ bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
                                                                mindspore::kBatchMatMulOpName,
                                                                mindspore::kSparseToDenseV2OpName,
                                                                mindspore::kTrilOpName,
-                                                               mindspore::kBernoulliOpName};
+                                                               mindspore::kBernoulliOpName,
+                                                               mindspore::kGluOpName,
+                                                               mindspore::kGluGradOpName};
 
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
   static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";
