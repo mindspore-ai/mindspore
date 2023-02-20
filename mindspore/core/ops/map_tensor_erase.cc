@@ -14,10 +14,21 @@
  * limitations under the License.
  */
 #include "ops/map_tensor_erase.h"
-#include "ops/op_utils.h"
+
 #include "utils/check_convert_utils.h"
-#include "mindapi/src/helper.h"
 #include "utils/ms_utils.h"
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "ir/anf.h"
+#include "ir/dtype/tensor_type.h"
+#include "ir/dtype/type.h"
+#include "mindapi/base/shape_vector.h"
+#include "ops/core_ops.h"
+#include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

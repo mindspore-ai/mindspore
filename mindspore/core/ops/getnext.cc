@@ -18,7 +18,6 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include <cstdint>
 #include <iterator>
 
 #include "abstract/ops/primitive_infer_map.h"

@@ -15,13 +15,27 @@
  */
 
 #include "ops/grad/atan_grad.h"
-#include <algorithm>
+
 #include <set>
-#include "abstract/param_validator.h"
+#include <memory>
+#include <vector>
+
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindapi/src/helper.h"
 #include "ops/grad/elewise_grad_infer_shape.h"
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "abstract/ops/op_infer.h"
+#include "abstract/utils.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ir/dtype/number.h"
+#include "ir/primitive.h"
+#include "ops/core_ops.h"
+#include "ops/primitive_c.h"
+#include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

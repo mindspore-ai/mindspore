@@ -14,18 +14,35 @@
  * limitations under the License.
  */
 #include "ops/multinomial.h"
+
 #include <string>
-#include <algorithm>
 #include <memory>
 #include <set>
 #include <vector>
-#include <iostream>
-#include <map>
-#include "ops/op_utils.h"
+
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "abstract/param_validator.h"
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "abstract/ops/op_infer.h"
+#include "abstract/utils.h"
+#include "base/base.h"
+#include "ir/dtype.h"
+#include "ir/dtype/number.h"
+#include "ir/dtype/type.h"
+#include "ir/primitive.h"
+#include "ir/scalar.h"
+#include "ir/tensor.h"
+#include "ir/value.h"
+#include "mindapi/base/shared_ptr.h"
+#include "mindapi/base/type_id.h"
+#include "mindapi/ir/value.h"
+#include "ops/core_ops.h"
+#include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
+#include "utils/shape_utils.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

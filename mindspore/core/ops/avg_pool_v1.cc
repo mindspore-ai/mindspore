@@ -15,14 +15,27 @@
  */
 
 #include "ops/avg_pool_v1.h"
-#include <string>
-#include <algorithm>
+
 #include <memory>
 #include <set>
 #include <vector>
-#include "ops/op_utils.h"
-#include "mindapi/src/helper.h"
+#include <cmath>
+
 #include "abstract/ops/primitive_infer_map.h"
+#include "abstract/dshape.h"
+#include "abstract/ops/op_infer.h"
+#include "ir/dtype/number.h"
+#include "ir/primitive.h"
+#include "ir/value.h"
+#include "mindapi/base/format.h"
+#include "mindapi/base/types.h"
+#include "ops/core_ops.h"
+#include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
+#include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

@@ -16,13 +16,21 @@
 
 #include "ops/coo_to_csr.h"
 
-#include "abstract/dshape.h"
+#include <memory>
+
 #include "abstract/param_validator.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindapi/src/helper.h"
 #include "ops/op_utils.h"
-#include "utils/anf_utils.h"
-#include "utils/check_convert_utils.h"
+#include "abstract/abstract_value.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ir/primitive.h"
+#include "ir/scalar.h"
+#include "mindapi/base/shape_vector.h"
+#include "ops/core_ops.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

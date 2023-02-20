@@ -16,15 +16,27 @@
 
 #include <vector>
 #include <string>
+#include <cstddef>
+#include <memory>
 
 #include "ops/tuple_get_item.h"
 #include "ops/list_getitem.h"
 #include "ops/real_tuple_getitem.h"
-#include "ops/op_utils.h"
 #include "abstract/param_validator.h"
 #include "abstract/ops/op_infer.h"
 #include "utils/check_convert_utils.h"
-#include "include/common/utils/utils.h"
+#include "abstract/abstract_value.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ir/primitive.h"
+#include "ir/scalar.h"
+#include "ir/value.h"
+#include "ops/base_operator.h"
+#include "ops/core_ops.h"
+#include "ops/primitive_c.h"
+#include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

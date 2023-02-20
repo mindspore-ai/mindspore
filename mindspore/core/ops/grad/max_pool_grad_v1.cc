@@ -15,9 +15,23 @@
  */
 
 #include "ops/grad/max_pool_grad_v1.h"
+
 #include <set>
-#include "ops/op_utils.h"
+
 #include "abstract/ops/primitive_infer_map.h"
+#include "abstract/dshape.h"
+#include "abstract/ops/op_infer.h"
+#include "base/base.h"
+#include "ir/dtype/number.h"
+#include "ir/primitive.h"
+#include "ir/value.h"
+#include "mindapi/base/format.h"
+#include "mindapi/base/types.h"
+#include "ops/core_ops.h"
+#include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

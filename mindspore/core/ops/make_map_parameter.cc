@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 #include "ops/make_map_parameter.h"
+
 #include <vector>
 #include <memory>
-#include "ops/op_utils.h"
+
 #include "utils/check_convert_utils.h"
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "ir/anf.h"
+#include "ir/map_tensor.h"
+#include "ir/tensor.h"
+#include "mindapi/base/shape_vector.h"
+#include "mindapi/base/type_id.h"
+#include "ops/core_ops.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace ops {

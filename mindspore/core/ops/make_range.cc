@@ -27,7 +27,6 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "base/base.h"
 #include "ir/anf.h"
-#include "ir/device_sync.h"
 #include "ir/dtype/number.h"
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"

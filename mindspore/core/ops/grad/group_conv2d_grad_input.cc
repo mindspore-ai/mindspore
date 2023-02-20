@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <cstdint>
 #include "ops/grad/group_conv2d_grad_input.h"
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
