@@ -558,6 +558,11 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
             parameter_index->emplace(param, index++);
             continue;
           }
+          // Input is scalar. param shape will be [1], input shape will be []
+          if (param_shape.size() == 1 && input_shape.empty()) {
+            parameter_index->emplace(param, index++);
+            continue;
+          }
           MS_LOG(EXCEPTION) << "Shape size of input tensor(" << input_shape << ") and parameter(" << param_shape
                             << ") are different, input index: " << index << ", parameter: " << param->DebugString();
         }

@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace pynative {
 namespace {
+const char kAddedValue[] = "added_value";
 const mindspore::HashSet<std::string> kNotRealOP{prim::kPrimMakeTuple->name(),
                                                  prim::kPrimTupleGetItem->name(),
                                                  prim::kPrimStopGradient->name(),
@@ -54,7 +55,6 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
   MS_EXCEPTION_IF_NULL(added_out_v);
   // Forward output of op in ms_function graph
   *added_out_v = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[1]);
-  MS_LOG(DEBUG) << "Added output value is: " << (*added_out_v)->ToString();
   auto op_run_info = std::make_shared<FrontendOpRunInfo>();
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args);
   op_run_info->base_op_run_info.op_name = graph_phase;
@@ -237,13 +237,13 @@ void MsFunction::ReplaceWithRealTensorsInGradGraph(const GradExecutor *grad_exec
   // to real value.
   RunReplace(added_make_tuple, total_output_tensors, grad_graph, is_dynamic_shape);
   grad_executor->top_cell()->set_op_info_with_ms_func_forward_tensors(op_run_info->op_info, total_output_tensors);
+  grad_executor->top_cell()->set_opinfo_with_tensor_id(op_run_info->op_info + kAddedValue, total_output_tensors);
 }
 
 void MsFunction::UpdateMsFunctionForwardTensors(const GradExecutor *grad_executor, const TopCellInfoPtr &top_cell,
                                                 const string &op_info, const ValuePtr &new_forward_value) const {
   MS_EXCEPTION_IF_NULL(new_forward_value);
   MS_LOG(DEBUG) << "Ms func graph has already ran before. The graph phase is: " << graph_phase_;
-  MS_LOG(DEBUG) << "The output values of added forward nodes are: " << new_forward_value->ToString();
   std::vector<tensor::TensorPtr> new_tensors;
   TensorValueToTensor(new_forward_value, &new_tensors);
   if (new_tensors.empty()) {
