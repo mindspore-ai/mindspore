@@ -3180,8 +3180,10 @@ def linspace(start, stop, num):
         \end{aligned}
 
     Args:
-        start (Tensor): Start value of interval. The tensor data type must be float32 or float64 and with shape of 0-D.
-        stop (Tensor): Last value of interval. The tensor data type must be float32 or float64 and with shape of 0-D.
+        start (Union[Tensor, int, float]): Start value of interval. The tensor data type must be float32 or float64
+            and with shape of 0-D.
+        stop (Union[Tensor, int, float]): Last value of interval. The tensor data type must be float32 or float64
+            and with shape of 0-D.
         num (Union[Tensor, int]): Number of ticks in the interval, inclusive of start and stop.
             Must be positive int number or 0D int32/int64 Tensor.
 
@@ -3206,6 +3208,10 @@ def linspace(start, stop, num):
         >>> print(output)
         [ 1.    3.25  5.5   7.75 10.  ]
     """
+    if not isinstance(start, Tensor):
+        start = Tensor(start, mstype.float32)
+    if not isinstance(stop, Tensor):
+        stop = Tensor(stop, mstype.float32)
     return linspace_(start, stop, num)
 
 

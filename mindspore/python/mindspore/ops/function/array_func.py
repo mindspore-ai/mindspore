@@ -603,10 +603,10 @@ def one_hot(indices, depth, on_value, off_value, axis=-1):
         indices(Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
             Data type must be uint8, int32 or int64.
         depth(int): A scalar defining the depth of the one-hot dimension.
-        on_value(Tensor): A value to fill in output when `indices[j] = i`.
+        on_value(Union[Tensor, int, float]): A value to fill in output when `indices[j] = i`.
             Support uint8, uint16, uint32, uint64, int8, int16, int32, int64, float16, float32, float64,
             bool, complex64, complex128.
-        off_value(Tensor): A value to fill in output when `indices[j] != i`.
+        off_value(Union[Tensor, int, float]): A value to fill in output when `indices[j] != i`.
             Has the same data type as `on_value`.
         axis(int): Position to insert the value. e.g. If shape of `self` is :math:`(N, C)`, and `axis` is -1,
             the output shape will be :math:`(N, C, D)`, If `axis` is 0, the output shape will be :math:`(D, N, C)`.
@@ -634,6 +634,10 @@ def one_hot(indices, depth, on_value, off_value, axis=-1):
          [0. 1. 0.]
          [0. 0. 1.]]
     """
+    if not isinstance(on_value, Tensor):
+        on_value = Tensor(on_value)
+    if not isinstance(off_value, Tensor):
+        off_value = Tensor(off_value)
     onehot = _get_cache_prim(P.OneHot)(axis)
     return onehot(indices, depth, on_value, off_value)
 
