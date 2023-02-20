@@ -127,7 +127,7 @@ class Model:
                              predicted value and label will be passed to other metrics.
                              :func:`mindspore.train.metric.set_indexes` is recommended instead of `eval_indexes`.
                              Default: None.
-        amp_level (str): Option for argument `level` in :func:`mindspore.build_train_network`, level for mixed
+        amp_level (str): Option for argument `level` in :func:`mindspore.amp.build_train_network`, level for mixed
             precision training. Supports ["O0", "O1", "O2", "O3", "auto"]. Default: "O0".
 
             - "O0": Do not change.
@@ -144,7 +144,7 @@ class Model:
             The BatchNorm strategy can be changed by `keep_batchnorm_fp32` settings in `kwargs`. `keep_batchnorm_fp32`
             must be a bool. The loss scale strategy can be changed by `loss_scale_manager` setting in `kwargs`.
             `loss_scale_manager` should be a subclass of :class:`mindspore.amp.LossScaleManager`.
-            The more detailed explanation of `amp_level` setting can be found at `mindspore.build_train_network`.
+            The more detailed explanation of `amp_level` setting can be found at `mindspore.amp.build_train_network`.
 
         boost_level (str): Option for argument `level` in `mindspore.boost`, level for boost mode
             training. Supports ["O0", "O1", "O2"]. Default: "O0".

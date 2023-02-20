@@ -4147,10 +4147,8 @@ def nan_to_num(x, nan=0.0, posinf=None, neginf=None):
         nan (float): The replace value of 'NaN'. Default value is 0.0.
         posinf (float): the value to replace positive infinity values with. Default: None,
             replacing positive infinity with the maximum value supported by the data type of `x`.
-          Default value is None.
         neginf (float): the value to replace negative infinity values with. Default: None,
             replacing negative infinity with the minimum value supported by the data type of `x`.
-          Default value is None.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -7643,7 +7641,7 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
          pad_mode="REFLECT", normalized=False, onesided=None, return_complex=None):
     r"""
     STFT segments the signal into narrow time intervals and takes the Fourier transform
-    of each segment to quantify the change of a nonstationary signal’s frequency
+    of each segment to quantify the change of a nonstationary signal's frequency
     and phase content over time.
 
     Ignoring the optional batch dimension, this operation computes the following expression:
@@ -9182,7 +9180,7 @@ def einsum(equation, *operands):
     the product of the input tensor elements is summed along the specified dimension.
     You can use this operator to perform diagonal, reducesum, transpose, matmul, mul, inner product operations, etc.
 
-    Note::
+    Note:
         The sublist format is alse supported. For example, ops.einsum(op1, sublist1, op2, sublist2, ..., sublist_out).
         In this format, equation can be derived by the sublists which are made up of Python's Ellipsis and list of
         integers in [0, 52). Each operand is followed by a sublist and an output sublist is at the end.
