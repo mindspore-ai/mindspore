@@ -23,23 +23,44 @@
 template <typename T>
 __global__ void AdjustContrastV2GpuKernel(const T* images, const float* contrast_factor, T* images_out, const int total,
                                           const int per_batch_elements) {
-  for (int k = blockIdx.x * blockDim.x + threadIdx.x; k < total; k += blockDim.x * gridDim.x) {
-      float sum = 0;
-      for (int i = 0; i < per_batch_elements; i += 3) {
-        sum += static_cast<float>(images[k / 3 * per_batch_elements + i + k % 3]);
+  const int thread_num = 128;
+  const int block_num = 128;
+  for (int k = blockIdx.x; k < total; k += block_num) {
+    __shared__ float ssum[thread_num];  // calculate the sum of elements dealt by the threads
+    memset(ssum, 0, thread_num * sizeof(float));
+    __syncthreads();
+    float sum = 0;
+    int base = k / 3 * per_batch_elements + k % 3;
+    int group_num = per_batch_elements / thread_num;  // each thread deals with group_num elements
+    while (group_num * thread_num < per_batch_elements || group_num % 3 != 0) {
+      group_num++;  // make the number a multiple of 3
+    }
+    for (int stride = 0; stride < group_num; stride += 3) {
+      if (stride + threadIdx.x * group_num < per_batch_elements) {
+        atomicAdd(&ssum[threadIdx.x], images[base + stride + threadIdx.x * group_num]);
       }
-      float mean = sum / (per_batch_elements / 3);
-      for (int i = 0; i < per_batch_elements; i += 3) {
-        images_out[k / 3 * per_batch_elements + i + k % 3] = static_cast<T>(
-            (static_cast<float>(images[k / 3 * per_batch_elements + i + k % 3]) - mean) * contrast_factor[0] + mean);
+    }
+    __syncthreads();
+
+    for (int i = 0; i < thread_num; i++) {
+      sum += ssum[i];
+    }
+
+    float mean = sum / (per_batch_elements / 3);
+
+    for (int i = threadIdx.x; i < per_batch_elements; i += thread_num) {
+      if (i % 3 == 0) {
+        images_out[base + i] = static_cast<T>((static_cast<float>(images[base + i]) - mean) * contrast_factor[0] +
+                                               mean);
       }
+    }
   }
 }
 
 template <typename T>
 void CalAdjustContrastV2GpuKernel(const T* images, const float* contrast_factor, T* images_out, const int total,
                                   const int per_batch_elements, const uint32_t& device_id, cudaStream_t cuda_stream) {
-  AdjustContrastV2GpuKernel<<<CUDA_BLOCKS(device_id, total), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+  AdjustContrastV2GpuKernel<<<128, 128, 0, cuda_stream>>>(
       images, contrast_factor, images_out, total, per_batch_elements);
 }
 
