@@ -1122,8 +1122,11 @@ class CleanAfterOptARewriter : public BaseRewriter {
     auto abs_seq = abs->cast<AbstractSequencePtr>();
     if (abs_seq != nullptr) {
       // Dynamic length sequence do not convert.
-      if (abs_seq->dynamic_len()) {
-        return abs->Clone();
+      if (abs_seq->dynamic_len() && abs_seq->isa<AbstractList>()) {
+        auto converted_abs_tuple = std::make_shared<AbstractTuple>(abs_seq->elements(), abs_seq->sequence_nodes());
+        converted_abs_tuple->set_dynamic_len(true);
+        converted_abs_tuple->set_dynamic_len_element_abs(abs_seq->dynamic_len_element_abs());
+        return converted_abs_tuple;
       }
       const auto &seq_elements = abs_seq->elements();
       // First we check if elements should be converted,
