@@ -96,7 +96,6 @@ mindspore.Tensor
     mindspore.Tensor.expand_dims
     mindspore.Tensor.expm1
     mindspore.Tensor.fill
-    mindspore.Tensor.fills
     mindspore.Tensor.flatten
     mindspore.Tensor.flip
     mindspore.Tensor.fliplr
@@ -150,7 +149,6 @@ mindspore.Tensor
     mindspore.Tensor.logaddexp
     mindspore.Tensor.logaddexp2
     mindspore.Tensor.logsumexp
-    mindspore.Tensor.log_matrix_determinant
     mindspore.Tensor.log1p
     mindspore.Tensor.logical_and
     mindspore.Tensor.logical_not
@@ -160,7 +158,6 @@ mindspore.Tensor
     mindspore.Tensor.long
     mindspore.Tensor.masked_fill
     mindspore.Tensor.masked_select
-    mindspore.Tensor.matrix_determinant
     mindspore.Tensor.max
     mindspore.Tensor.mean
     mindspore.Tensor.median

@@ -384,7 +384,6 @@ Linear Algebraic Operator
     mindspore.ops.Ger
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
-    mindspore.ops.Orgqr
 
 Tensor Operation Operator
 --------------------------
