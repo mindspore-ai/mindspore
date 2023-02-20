@@ -12,8 +12,8 @@ mindspore.ops.linspace
         \end{aligned}
 
     参数：
-        - **start** (Tensor) - 零维Tensor，数据类型必须为float32。区间的起始值。
-        - **stop** (Tensor) - 零维Tensor，数据类型必须为float32。区间的末尾值。
+        - **start** (Union[Tensor, int, float]) - 零维Tensor，数据类型必须为float32。区间的起始值。
+        - **stop** (Union[Tensor, int, float]) - 零维Tensor，数据类型必须为float32。区间的末尾值。
         - **num** (Union[Tensor, int]) - 间隔中的包含的数值数量，包括区间端点。必须为正数。
 
     返回：

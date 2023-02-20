@@ -13,8 +13,8 @@ mindspore.ops.one_hot
     参数：
         - **indices** (Tensor) - 输入索引，shape为 :math:`(X_0, \ldots, X_n)` 的Tensor。数据类型必须为int32或int64。
         - **depth** (int) - 输入的Scalar，定义one-hot的深度。
-        - **on_value** (Tensor) - 当 `indices[j] = i` 时，用来填充输出的值。数据类型为float16或float32。
-        - **off_value** (Tensor) - 当 `indices[j] != i` 时，用来填充输出的值。数据类型与 `on_value` 的相同。
+        - **on_value** (Union[Tensor, int, float]) - 当 `indices[j] = i` 时，用来填充输出的值。数据类型为float16或float32。
+        - **off_value** (Union[Tensor, int, float]) - 当 `indices[j] != i` 时，用来填充输出的值。数据类型与 `on_value` 的相同。
         - **axis** (int) - 指定one-hot的计算维度。例如，如果 `indices` 的shape为 :math:`(N, C)` ，`axis` 为-1，则输出shape为 :math:`(N, C, depth)` ，如果 `axis` 为0，则输出shape为 :math:`(depth, N, C)` 。默认值：-1。
 
     返回：
