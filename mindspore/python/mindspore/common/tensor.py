@@ -1259,13 +1259,6 @@ class Tensor(Tensor_):
             tensor_operator_registry.get('__sub__')(input_x, input_y)
         ), tolerance)
 
-    def matrix_determinant(self):
-        r"""
-        For details, please refer to :func:`mindspore.ops.matrix_determinant`.
-        """
-        self._init_check()
-        return tensor_operator_registry.get('matrix_determinant')(self)
-
     def log1p(self):
         r"""
         For details, please refer to :func:`mindspore.ops.log1p`.
@@ -1310,13 +1303,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('logdet')(self)
-
-    def log_matrix_determinant(self):
-        r"""
-        For details, please refer to :func:`mindspore.ops.log_matrix_determinant`.
-        """
-        self._init_check()
-        return tensor_operator_registry.get('log_matrix_determinant')(self)
 
     def i0(self):
         r"""

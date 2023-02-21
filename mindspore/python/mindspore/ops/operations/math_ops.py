@@ -5532,10 +5532,10 @@ class MatrixDeterminant(Primitive):
     """
     Computes the determinant of one or more square matrices.
 
-    Refer to :func:`mindspore.ops.matrix_determinant` for more details.
+    Refer to :func:`mindspore.ops.det` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -5556,7 +5556,7 @@ class LogMatrixDeterminant(Primitive):
     """
     Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
 
-    Refer to :func:`mindspore.ops.log_matrix_determinant` for more details.
+    Refer to :func:`mindspore.ops.slogdet` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

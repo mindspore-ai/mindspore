@@ -3221,11 +3221,6 @@ def str_bool(x):
     return True
 
 
-def matrix_determinant(x):
-    """Computes the determinant of one or more square matrices."""
-    return F.matrix_determinant(x)
-
-
 def matrix_power(x, n):
     """
     Raises a square matrix to the (integer) power `n` .
@@ -3269,11 +3264,6 @@ def logit(x, eps=None):
 def logdet(x):
     """Returns the log determinant of one or batches of square matrices."""
     return F.logdet(x)
-
-
-def log_matrix_determinant(x):
-    """Computes the sign and the log of the absolute value of the determinant of one or more square matrices."""
-    return F.log_matrix_determinant(x)
 
 
 def lerp(start, end, weight):

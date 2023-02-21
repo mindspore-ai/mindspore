@@ -179,7 +179,6 @@
     mindspore.Tensor.log10
     mindspore.Tensor.log1p
     mindspore.Tensor.log2
-    mindspore.Tensor.log_matrix_determinant
     mindspore.Tensor.logaddexp
     mindspore.Tensor.logaddexp2
     mindspore.Tensor.logdet
@@ -193,7 +192,6 @@
     mindspore.Tensor.lt
     mindspore.Tensor.masked_fill
     mindspore.Tensor.masked_select
-    mindspore.Tensor.matrix_determinant
     mindspore.Tensor.matrix_power
     mindspore.Tensor.max
     mindspore.Tensor.mean
