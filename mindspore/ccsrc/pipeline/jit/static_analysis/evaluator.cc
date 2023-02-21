@@ -348,12 +348,15 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   return res;
 }
 
-void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *broaded_args) {
+void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *broaded_args, bool broaden_scalar) {
   MS_EXCEPTION_IF_NULL(broaded_args);
   (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(*broaded_args),
-                       [](const AbstractBasePtr &arg) -> AbstractBasePtr {
+                       [&broaden_scalar](const AbstractBasePtr &arg) -> AbstractBasePtr {
                          if (arg->GetValueTrack() != kAnyValue) {
-                           return AbstractBroaden(arg);
+                           if (broaden_scalar) {
+                             return AbstractBroaden(arg);
+                           }
+                           return arg->Broaden();
                          }
                          return arg;
                        });
@@ -363,7 +366,8 @@ AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList 
   MS_EXCEPTION_IF_NULL(func_graph_);
   if (func_graph_->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE)) {
     AbstractBasePtrList broadened_list;
-    BroadenArgs(args_abs_list, &broadened_list);
+    auto broaden_scalar = !func_graph_->has_flag(FUNC_GRAPH_FLAG_VMAP_TRANSFORMED);
+    BroadenArgs(args_abs_list, &broadened_list, broaden_scalar);
     MS_LOG(DEBUG) << func_graph_->ToString() << ", original: " << mindspore::ToString(args_abs_list)
                   << ", broadened: " << mindspore::ToString(broadened_list);
     return broadened_list;

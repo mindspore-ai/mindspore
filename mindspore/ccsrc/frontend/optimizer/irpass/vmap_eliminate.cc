@@ -625,6 +625,7 @@ void ExpandVmapValueNode(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBa
       }
       (void)visited_graph->insert(sub_func_graph);
       auto transformed_fg = ExpandVmapFunctor(sub_func_graph, resource, axis_size, visited_pair, stacked_params);
+      transformed_fg->set_flag(FUNC_GRAPH_FLAG_VMAP_TRANSFORMED, true);
       auto replace_node = NewValueNode(transformed_fg);
       (void)visited_node->insert(replace_node);
       (void)manager->Replace(node, replace_node);

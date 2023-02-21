@@ -80,6 +80,7 @@ using CNodeIndexCounterMap = CounterOrderedMap<CNodeIndexPairPtr, CNodeIndexHash
 using FuncGraphMap = OrderedMap<FuncGraphPtr, int>;
 
 const char FUNC_GRAPH_FLAG_IGNORE_VALUE[] = "ignore_value";
+const char FUNC_GRAPH_FLAG_VMAP_TRANSFORMED[] = "vmap_transformed";
 const char FUNC_GRAPH_FLAG_DEFER_INLINE[] = "defer_inline";
 const char FUNC_GRAPH_FLAG_PRIMAL_OF_BPROP[] = "primal_of_bprop";
 const char FUNC_GRAPH_FLAG_SPARSE_BPROP[] = "sparse_bprop";

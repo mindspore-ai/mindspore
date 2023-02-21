@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 import mindspore as ms
-from mindspore import jit
-from mindspore import Tensor
-from mindspore import mutable
+from mindspore import jit, mutable, Tensor, vmap, ops
+from mindspore.nn import Cell
+import numpy as np
 
 
 def test_mutable_scalar_in_while():
@@ -152,3 +152,27 @@ def test_recursive_func():
 
     ms.context.set_context(precompile_only=True)
     test_net(Tensor(2))
+
+
+def test_vmap_while():
+    """
+    Feature: Vmap with control flow.
+    Description: In the situation of vamp with while, axis is a const scalar and as arg of while header, can't broaden
+                 this arg when header condition is variable.
+    Expectation: No exception raised.
+    """
+
+    class Net(Cell):
+        @jit
+        def construct(self, x, y):
+            out = y
+            while ops.less(x, 2):
+                out = ops.add(y, out)
+                x = ops.add(x, 1)
+            return out
+
+    net = Net()
+    x = Tensor([0], ms.dtype.float32)
+    y = Tensor(np.ones([3, 4]), ms.dtype.float32)
+    ms.context.set_context(precompile_only=True)
+    vmap(net, in_axes=(None, 1), out_axes=1)(x, y)
