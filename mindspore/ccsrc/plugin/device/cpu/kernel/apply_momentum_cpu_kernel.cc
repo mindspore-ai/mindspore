@@ -102,11 +102,16 @@ void ApplyMomentumCpuKernelMod::LaunchApplyMomentum(const std::vector<AddressPtr
   const T *gradient = reinterpret_cast<T *>(inputs[3]->addr);
   T moment = reinterpret_cast<T *>(inputs[4]->addr)[0];
   size_t elem_num = inputs[0]->size / sizeof(T);
-  for (size_t i = 0; i < elem_num; ++i) {
-    accumulate[i] = accumulate[i] * moment + gradient[i];
-    weight[i] -= accumulate[i] * learning_rate;
-  }
+
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      accumulate[i] = accumulate[i] * moment + gradient[i];
+      weight[i] -= accumulate[i] * learning_rate;
+    }
+  };
+  ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
 }
+
 #define ADD_KERNEL_1(dtype)              \
   {                                      \
     KernelAttr()                         \

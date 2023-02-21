@@ -49,7 +49,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchToScalar(const int &input_size, const
 
 template <typename T>
 void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &outputs) const {
+                                                  const std::vector<AddressPtr> &outputs) {
   const auto *input_x = reinterpret_cast<T *>(inputs[0]->addr);
   const auto *input_y = reinterpret_cast<T *>(inputs[1]->addr);
   const T *weight = weight_defined_ ? reinterpret_cast<T *>(inputs[2]->addr) : nullptr;
@@ -58,35 +58,46 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   auto epsilon = static_cast<T>(1e-12);
   auto one = static_cast<T>(1);
 
+  std::function<void(size_t, size_t)> func;
   if (reduction_ == kNone) {
     if (weight_defined_) {
-      for (size_t i = 0; i < input_size_; i++) {
-        auto value = static_cast<T>(
-          -weight[i] * (input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon)));
-        loss[i] = value;
-      }
+      func = [&](size_t start, size_t end) -> void {
+        for (size_t i = start; i < end; i++) {
+          auto value = static_cast<T>(-weight[i] * (input_y[i] * log(input_x[i] + epsilon) +
+                                                    (one - input_y[i]) * log(one - input_x[i] + epsilon)));
+          loss[i] = value;
+        }
+      };
     } else {
-      for (size_t i = 0; i < input_size_; i++) {
-        auto value = static_cast<T>(
-          -(input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon)));
-        loss[i] = value;
-      }
+      func = [&](size_t start, size_t end) -> void {
+        for (size_t i = start; i < end; i++) {
+          auto value = static_cast<T>(
+            -(input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon)));
+          loss[i] = value;
+        }
+      };
     }
   } else {
     if (weight_defined_) {
-      for (size_t i = 0; i < input_size_; i++) {
-        auto value = static_cast<T>(
-          -weight[i] * (input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon)));
-        tmp_loss[i] = value;
-      }
+      func = [&](size_t start, size_t end) -> void {
+        for (size_t i = start; i < end; i++) {
+          auto value = static_cast<T>(-weight[i] * (input_y[i] * log(input_x[i] + epsilon) +
+                                                    (one - input_y[i]) * log(one - input_x[i] + epsilon)));
+          tmp_loss[i] = value;
+        }
+      };
     } else {
-      for (size_t i = 0; i < input_size_; i++) {
-        auto value = static_cast<T>(
-          -(input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon)));
-        tmp_loss[i] = value;
-      }
+      func = [&](size_t start, size_t end) -> void {
+        for (size_t i = start; i < end; i++) {
+          auto value = static_cast<T>(
+            -(input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon)));
+          tmp_loss[i] = value;
+        }
+      };
     }
   }
+  ParallelLaunchAutoSearch(func, input_size_, this, &parallel_search_info_);
+
   if (reduction_ != kNone) {
     LaunchToScalar<T>(input_size_, reduction_, loss, tmp_loss.data());
   }

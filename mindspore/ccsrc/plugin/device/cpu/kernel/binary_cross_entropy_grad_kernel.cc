@@ -27,7 +27,7 @@ constexpr size_t kBceGradOutputsNum = 1;
 
 template <typename T>
 void BinaryCrossEntropyGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) const {
+                                                      const std::vector<AddressPtr> &outputs) {
   const auto *input_x = reinterpret_cast<T *>(inputs[0]->addr);
   const auto *input_y = reinterpret_cast<T *>(inputs[1]->addr);
   const auto *dloss = reinterpret_cast<T *>(inputs[2]->addr);
@@ -36,19 +36,24 @@ void BinaryCrossEntropyGradCpuKernelMod::LaunchKernel(const std::vector<AddressP
   auto epsilon = static_cast<T>(1e-12);
   auto one = static_cast<T>(1);
 
+  std::function<void(size_t, size_t)> func;
   if (reduction_ == kNone) {
     if (weight_defined_) {
-      for (size_t i = 0; i < input_size_; i++) {
-        T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
-        T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
-        dx[i] = value * dloss[i];
-      }
+      func = [&](size_t start, size_t end) -> void {
+        for (size_t i = start; i < end; i++) {
+          T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
+          T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
+          dx[i] = value * dloss[i];
+        }
+      };
     } else {
-      for (size_t i = 0; i < input_size_; i++) {
-        T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
-        T value = (input_x[i] - input_y[i]) / denominator;
-        dx[i] = value * dloss[i];
-      }
+      func = [&](size_t start, size_t end) -> void {
+        for (size_t i = start; i < end; i++) {
+          T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
+          T value = (input_x[i] - input_y[i]) / denominator;
+          dx[i] = value * dloss[i];
+        }
+      };
     }
   } else {
     T dloss1 = dloss[0];
@@ -56,19 +61,24 @@ void BinaryCrossEntropyGradCpuKernelMod::LaunchKernel(const std::vector<AddressP
       dloss1 = dloss[0] / static_cast<T>(input_size_);
     }
     if (weight_defined_) {
-      for (size_t i = 0; i < input_size_; i++) {
-        T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
-        T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
-        dx[i] = value * dloss1;
-      }
+      func = [&](size_t start, size_t end) -> void {
+        for (size_t i = start; i < end; i++) {
+          T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
+          T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
+          dx[i] = value * dloss1;
+        }
+      };
     } else {
-      for (size_t i = 0; i < input_size_; i++) {
-        T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
-        T value = (input_x[i] - input_y[i]) / denominator;
-        dx[i] = value * dloss1;
-      }
+      func = [&](size_t start, size_t end) -> void {
+        for (size_t i = start; i < end; i++) {
+          T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
+          T value = (input_x[i] - input_y[i]) / denominator;
+          dx[i] = value * dloss1;
+        }
+      };
     }
   }
+  ParallelLaunchAutoSearch(func, input_size_, this, &parallel_search_info_);
 }
 
 bool BinaryCrossEntropyGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,

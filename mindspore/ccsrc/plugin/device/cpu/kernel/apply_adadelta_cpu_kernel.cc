@@ -146,17 +146,17 @@ bool ApplyAdadeltaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
   auto rho = reinterpret_cast<float *>(inputs[kRhoIndex]->addr);
   auto epsilon = reinterpret_cast<float *>(inputs[kEpsilonIndex]->addr);
   auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
-  float update;
 
   for (int64_t b = 0; b < batch_size_; b++) {
-    size_t i = 0;
-
-    for (; i < input_elements_; ++i) {
-      accum[i] = rho[b] * accum[i] + (1.0 - rho[b]) * (grad[i] * grad[i]);
-      update = sqrt(accum_update[i] + epsilon[b]) * (grad[i] / sqrt(accum[i] + epsilon[b]));
-      accum_update[i] = rho[b] * accum_update[i] + (1.0 - rho[b]) * (update * update);
-      var[i] -= lr[b] * update;
-    }
+    auto task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; ++i) {
+        accum[i] = rho[b] * accum[i] + (1.0 - rho[b]) * (grad[i] * grad[i]);
+        float update = sqrt(accum_update[i] + epsilon[b]) * (grad[i] / sqrt(accum[i] + epsilon[b]));
+        accum_update[i] = rho[b] * accum_update[i] + (1.0 - rho[b]) * (update * update);
+        var[i] -= lr[b] * update;
+      }
+    };
+    ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_);
 
     var = var + input_elements_;
     accum = accum + input_elements_;

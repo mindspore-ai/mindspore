@@ -61,30 +61,30 @@ bool ArgminCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   (void)check_validation<T, S>(shape_, num_before_axis_, num_after_axis_, inputs, outputs);
 
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto ids_addr = reinterpret_cast<size_t *>(workspace[0]->addr);
   auto *output = reinterpret_cast<S *>(outputs[0]->addr);
 
-  std::function<bool(size_t, size_t)> comparator;
-  comparator = [&input](size_t index_1, size_t index_2) { return input[index_1] < input[index_2]; };
+  auto task = [&](size_t start, size_t end) {
+    auto num_after_axis = LongToSize(num_after_axis_);
+    auto dim_axis = LongToSize(dim_axis_);
+    for (size_t pos = start; pos < end; pos++) {
+      size_t i = pos / num_after_axis;
+      size_t j = pos % num_after_axis;
+      size_t src_index_j = i * dim_axis * num_after_axis + j;
 
-  auto task = [this, &ids_addr, &input, &output, &comparator](size_t start, size_t end) {
-    size_t axis_size = axisIterator_.AxisSize();
-    AxisIterator iter(axisIterator_);
-    for (size_t index = start; index < end; index++) {
-      iter.SetOffset(index);
-
-      size_t offset = index * axis_size;
-      size_t *idx = ids_addr + offset;
-      for (size_t k = 0; k < axis_size; ++k) {
-        idx[k] = iter.GetPos(k);
+      T min_value = input[src_index_j];
+      S min_index = 0;
+      for (size_t k = 0; k < dim_axis; k++) {
+        auto src_index_k = k * num_after_axis + src_index_j;
+        if (input[src_index_k] < min_value) {
+          min_value = input[src_index_k];
+          min_index = static_cast<S>(k);
+        }
       }
-      auto min_ops = std::min_element(idx, idx + axis_size, comparator);
-      auto min_index = iter.RevertPos(*min_ops);
-
-      output[index] = static_cast<S>(min_index);
+      auto dst_index = i * num_after_axis + j;
+      output[dst_index] = min_index;
     }
   };
-  ParallelLaunchAutoSearch(task, axisIterator_.OuterSize() * axisIterator_.InnerSize(), this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, LongToSize(num_before_axis_ * num_after_axis_), this, &parallel_search_info_);
 
   return true;
 }
@@ -125,6 +125,9 @@ int ArgminCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got 0.";
     return KRET_RESIZE_FAILED;
   }
+  if (CHECK_SHAPE_NULL(shape_, kernel_name_, "input")) {
+    return KRET_RESIZE_FAILED;
+  }
   int64_t dim = static_cast<int64_t>(shape_len);
   if (axis_ >= dim || axis_ < -dim) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the value of 'axis' must be in the range of [" << -dim
@@ -147,9 +150,6 @@ int ArgminCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     }
   }
   dim_axis_ = shape_[LongToSize(axis_)];
-  axisIterator_.Init(shape_, LongToSize(axis_));
-  size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
-  (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
   return KRET_OK;
 }
 

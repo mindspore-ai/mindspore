@@ -90,6 +90,7 @@ int TransposeFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 
   input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
   output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  output_size_ = SizeOf(output_shape_);
   dtype_ = inputs[kIndex0]->GetDtype();
   num_axes_ = input_shape_.size();
   strides_.resize(num_axes_);
@@ -108,6 +109,14 @@ int TransposeFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   got_perm_value_ = TryGetIntValue(inputs, kIndex1, kernel_name_, &perm_, false);
   if (got_perm_value_) {
     CheckPermValue();
+
+    tanspose_index_.clear();
+    TransposeIterator iter(output_shape_, LongVecToSizeVec(perm_), input_shape_);
+    iter.SetPos(0);
+    for (size_t i = 0; i < output_size_; i++) {
+      tanspose_index_.push_back(iter.GetPos());
+      iter.GenNextPos();
+    }
   }
   return KRET_OK;
 }
@@ -117,6 +126,7 @@ bool TransposeFwdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTransposeInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTransposeOutputsNum, kernel_name_);
+
   if (!got_perm_value_) {
     if (perm_type_ == kNumberTypeInt32) {
       InitPerm<int32_t>(inputs);
@@ -125,6 +135,7 @@ bool TransposeFwdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
     }
   }
   launch_func_(this, inputs, outputs);
+
   return true;
 }
 
@@ -200,6 +211,17 @@ void TransposeFwdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
                                             const std::vector<AddressPtr> &outputs) {
   const auto *input_addr = static_cast<T *>(inputs[0]->addr);
   auto *output_addr = static_cast<T *>(outputs[0]->addr);
+
+  if (got_perm_value_) {
+    auto task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        output_addr[i] = input_addr[tanspose_index_[i]];
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+    return;
+  }
+
   data_num_ = inputs[0]->size / sizeof(T);
   size_t data_count = (inputs[0]->size) / sizeof(T);
   if (perm_.size() > kIndex7 || data_count >= kMaxTransposeSerialSize) {

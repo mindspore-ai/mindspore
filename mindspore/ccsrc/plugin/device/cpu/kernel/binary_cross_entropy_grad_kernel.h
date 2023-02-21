@@ -46,7 +46,7 @@ class BinaryCrossEntropyGradCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   TypeId dtype_{kTypeUnknown};
   size_t input_size_{1};

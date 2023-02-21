@@ -61,21 +61,29 @@ bool ArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output = reinterpret_cast<S *>(outputs[0]->addr);
 
-  std::vector<float> array_axis(dim_axis_);
-  for (int64_t i = 0; i < num_before_axis_; i++) {
-    int64_t src_index_i = i * dim_axis_ * num_after_axis_;
-    for (int64_t j = 0; j < num_after_axis_; j++) {
-      int64_t src_index_j = src_index_i + j;
-      for (int64_t k = 0; k < dim_axis_; k++) {
-        auto src_index_k = LongToSize(k * num_after_axis_ + src_index_j);
-        array_axis[LongToSize(k)] = static_cast<float>(input[src_index_k]);
+  auto task = [&](size_t start, size_t end) {
+    size_t num_after_axis = LongToSize(num_after_axis_);
+    size_t dim_axis = LongToSize(dim_axis_);
+    for (size_t pos = start; pos < end; pos++) {
+      size_t i = pos / num_after_axis;
+      size_t j = pos % num_after_axis;
+      size_t src_index_j = i * dim_axis * num_after_axis + j;
+
+      T max_value = input[src_index_j];
+      S max_index = 0;
+      for (size_t k = 0; k < dim_axis; k++) {
+        auto src_index_k = k * num_after_axis + src_index_j;
+        if (input[src_index_k] > max_value) {
+          max_value = input[src_index_k];
+          max_index = static_cast<S>(k);
+        }
       }
-      auto max_ops = std::max_element(array_axis.begin(), array_axis.end());
-      auto max_index = static_cast<S>(std::distance(array_axis.begin(), max_ops));
-      auto dst_index = static_cast<size_t>(i * num_after_axis_ + j);
+      auto dst_index = i * num_after_axis + j;
       output[dst_index] = max_index;
     }
-  }
+  };
+  ParallelLaunchAutoSearch(task, num_before_axis_ * num_after_axis_, this, &parallel_search_info_);
+
   return true;
 }
 
@@ -113,6 +121,9 @@ int ArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   size_t shape_len = shape_.size();
   if (shape_len == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got 0.";
+    return KRET_RESIZE_FAILED;
+  }
+  if (CHECK_SHAPE_NULL(shape_, kernel_name_, "input")) {
     return KRET_RESIZE_FAILED;
   }
   axis_ += SizeToLong(shape_len);

@@ -72,23 +72,29 @@ bool ArgMinWithValueCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output0 = reinterpret_cast<int32_t *>(outputs[0]->addr);
   auto *output1 = reinterpret_cast<T *>(outputs[1]->addr);
-  std::vector<T> array_axis(dim_axis_);
-  for (size_t i = 0; i < num_before_axis_; i++) {
-    size_t src_index_i = i * dim_axis_ * num_after_axis_;
-    for (size_t j = 0; j < num_after_axis_; j++) {
-      size_t src_index_j = src_index_i + j;
+
+  auto task = [&](size_t start, size_t end) {
+    for (size_t pos = start; pos < end; pos++) {
+      size_t i = pos / num_after_axis_;
+      size_t j = pos % num_after_axis_;
+      size_t src_index_j = i * dim_axis_ * num_after_axis_ + j;
+
+      T min_value = input[src_index_j];
+      int32_t min_index = 0;
       for (size_t k = 0; k < dim_axis_; k++) {
         size_t src_index_k = k * num_after_axis_ + src_index_j;
-        array_axis[k] = input[src_index_k];
+        if (input[src_index_k] < min_value) {
+          min_value = input[src_index_k];
+          min_index = SizeToInt(k);
+        }
       }
-      auto min_ops = std::min_element(array_axis.begin(), array_axis.end());
-      auto min_index = static_cast<int32_t>(std::distance(array_axis.begin(), min_ops));
-      size_t dst_index = i * num_after_axis_ + j;
+      auto dst_index = i * num_after_axis_ + j;
       output0[dst_index] = min_index;
-      size_t src_index = IntToSize(min_index) * num_after_axis_ + src_index_j;
-      output1[dst_index] = input[src_index];
+      output1[dst_index] = min_value;
     }
-  }
+  };
+  ParallelLaunchAutoSearch(task, num_before_axis_ * num_after_axis_, this, &parallel_search_info_);
+
   return true;
 }
 

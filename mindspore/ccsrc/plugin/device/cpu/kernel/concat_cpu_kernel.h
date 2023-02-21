@@ -57,7 +57,11 @@ class ConcatCpuKernelMod : public NativeCpuKernelMod {
   ConcatFunc kernel_func_;
   int ori_axis_{0};
   int axis_{0};
+  size_t output_dim_{1};
+  size_t input_num_{1};
+  std::vector<size_t> offset_;
   std::vector<ShapeVector> inputs_shape_;
+  std::vector<ShapeVector> input_flat_shape_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
