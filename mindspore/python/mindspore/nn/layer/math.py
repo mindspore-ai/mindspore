@@ -20,7 +20,7 @@ import numpy as np
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.common._decorator import deprecated
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops import functional as F
 from mindspore.nn.cell import Cell
 from mindspore.common import dtype as mstype
@@ -761,7 +761,7 @@ class LBeta(Cell):
         return self.select(comp_xless8, temp, log_beta_two_large)
 
 
-@constexpr
+@_primexpr
 def get_broadcast_matmul_shape(x_shape, y_shape, prim_name=None):
     """get broadcast_matmul shape"""
     x_shape_batch = x_shape[:-2]

@@ -20,7 +20,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
-from mindspore.ops.primitive import constexpr, PrimitiveWithInfer, prim_attr_register
+from mindspore.ops.primitive import constexpr, _primexpr, PrimitiveWithInfer, prim_attr_register
 import mindspore.ops as ops
 import mindspore.nn as nn
 
@@ -236,7 +236,7 @@ def raise_none_error(name):
                     f" It can not be None since it is not specified during initialization.")
 
 
-@constexpr
+@_primexpr
 def raise_broadcast_error(shape_a, shape_b):
     raise ValueError(f"Shape {shape_a} and {shape_b} is not broadcastable.")
 

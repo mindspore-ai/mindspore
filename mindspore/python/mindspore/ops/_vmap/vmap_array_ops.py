@@ -24,6 +24,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.ops.operations._grad_ops import MaskedSelectGrad
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations.array_ops import Fills, UniqueConsecutive, Col2Im, NonZero, IndexFill, \
@@ -137,7 +138,7 @@ def get_arg_min_max_with_value_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@constexpr
+@_primexpr
 def _get_prefix(indices_shape, axis_size, indices_dtype):
     """
     Generate prefix by indices shape, whose -1 axis value is the index value of axis 0.
@@ -179,7 +180,7 @@ def get_transpose_vmap_rule(prim, axis_size):
     if isinstance(prim, str):
         prim = Primitive(prim)
 
-    @constexpr
+    @_primexpr
     def _get_transpose_batch_perm(dim, perm, x_rank):
         """Generate batch_perm based on the original perm of transpose operation and dim of the input."""
         if dim < 0:
@@ -223,7 +224,7 @@ def get_tile_vmap_rule(prim, axis_size):
     if isinstance(prim, str):
         prim = Primitive(prim)
 
-    @constexpr
+    @_primexpr
     def _get_batch_multiples(input_shape, dim, multiples):
         input_ndim = len(input_shape)
         multiples_ndim = len(multiples)
@@ -353,7 +354,7 @@ def get_reshape_vmap_rule(prim, axis_size):
     """VmapRule for `Reshape` operation."""
 
 
-    @constexpr
+    @_primexpr
     def get_batch_shape(x_shape, x_dim, target_shape, axis_size):
         if x_dim == 0:
             return (axis_size,) + target_shape, 0, False
@@ -423,7 +424,7 @@ def get_reverse_sequence_vmap_rule(prim, axis_size):
     batch_dim = prim.batch_dim_
     seq_dim = prim.seq_dim_
 
-    @constexpr
+    @_primexpr
     def get_batch_seq_dim(dim, batch_dim_, seq_dim_):
         if dim is None:
             batch_dim_ += 1
@@ -439,7 +440,7 @@ def get_reverse_sequence_vmap_rule(prim, axis_size):
                     seq_dim_ += 1
         return batch_dim_, seq_dim_
 
-    @constexpr
+    @_primexpr
     def get_seq_dim(dim, batch_dim_, seq_dim_):
         if dim is None:
             return seq_dim_
@@ -559,12 +560,12 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
     Reshape the output tensor to `[10, 6, 4, 5]`
     """
 
-    @constexpr
+    @_primexpr
     def _refine_shape(shape, bdim_size):
         offset = shape[0]
         return (bdim_size * shape[0],) + tuple(shape[1:]), offset, (bdim_size,) + tuple(shape)
 
-    @constexpr
+    @_primexpr
     def _gen_indices_offset(shape, offset):
         # original rank(indices.shape) is required >= 2, so indices with batch dim's rank >= 3.
         shape = (shape[0],) + (1,) * (len(shape) - 2) + (shape[-1],)
@@ -1527,7 +1528,7 @@ def get_gather_vmap_rule(prim, axis_size):
     else:
         prim_name = prim.name
 
-    @constexpr
+    @_primexpr
     def process_axis(axis, x_shape_size, has_xdim: bool, has_idim: bool):
         if has_xdim and has_idim:
             if axis < 0:
@@ -1541,7 +1542,7 @@ def get_gather_vmap_rule(prim, axis_size):
 
         return axis
 
-    @constexpr
+    @_primexpr
     def get_x_dst_shape(x_shape, axis):
         target_axis_size = x_shape[axis + 1]
         x_dst_shape = x_shape[0:axis] + (axis_size * target_axis_size,) + x_shape[axis + 2:]
@@ -1741,7 +1742,7 @@ def get_data_format_dim_map_vmap_rule(prim, axis_size):
 def get_expand_dims_vmap_rule(prim, axis_size):
     """VmapRule for `ExpandDims`."""
 
-    @constexpr
+    @_primexpr
     def process_axis(axis, rank, x_dim):
         if axis < 0:
             axis += rank
@@ -1835,7 +1836,7 @@ def get_squeeze_vmap_rule(prim, axis_size):
     else:
         prim_axis = None
 
-    @constexpr
+    @_primexpr
     def move_axis(axes):
         new_axis = ()
         for axis in axes:
@@ -1845,7 +1846,7 @@ def get_squeeze_vmap_rule(prim, axis_size):
                 new_axis = new_axis + (axis + 1,)
         return new_axis
 
-    @constexpr
+    @_primexpr
     def generate_all_axis_except_first(x_rank):
         new_axis = ()
         for i in range(1, x_rank, 1):
@@ -1889,7 +1890,7 @@ def get_stridedslice_vmap_rule(prim, axis_size):
     batch_stridedslice = P.StridedSlice(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask, \
                                         new_shrink_axis_mask)
 
-    @constexpr
+    @_primexpr
     def get_new_begin_end_strided(begin, end, strided):
         new_begin = (0,) + begin
         new_end = (0,) + end
@@ -1930,7 +1931,7 @@ def get_stridedslice_grad_vmap_rule(prim, axis_size):
     batch_stridedslice_grad = G.StridedSliceGrad(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask, \
                                                  new_shrink_axis_mask)
 
-    @constexpr
+    @_primexpr
     def get_new_xshape_begin_end_strided(xshape, begin, end, strided):
         new_xshape = (axis_size,) + xshape
         new_begin = (0,) + begin

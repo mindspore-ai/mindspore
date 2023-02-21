@@ -23,6 +23,7 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import nn_ops as NN
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_unop_vmap_rule, \
     _bdim_at_any, _bdim_at_front, _bdim_at_back, _handle_broadcasting, get_unary_grad_vmap_rule, _raise_value_error, \
     _vmap_clone_prim, _get_reduce_batch_axis
@@ -375,7 +376,7 @@ def get_bias_add_vmap_rule(prim, axis_size):
     def get_channal_pos_in_x(d_format):
         return d_format.find('C') + 1
 
-    @constexpr
+    @_primexpr
     def get_bias_dst_shape(x_shape, n_dims, d_format, has_b_dim: bool):
         pos = get_channal_pos_in_x(d_format)
 
@@ -430,7 +431,7 @@ def get_bias_add_grad_vmap_rule(prim, axis_size):
     def get_channal_pos(d_format):
         return d_format.find('C') + 1
 
-    @constexpr
+    @_primexpr
     def get_axis_for_reduce(x_shape_rank, data_format):
         channal_pos = get_channal_pos(data_format)
         axis_list = ()
@@ -1518,7 +1519,7 @@ def get_adaptive_max_pool_2d_vmap_rule(prim, axis_size):
     hw_size = 2
     output_size = prim.output_size
 
-    @constexpr
+    @_primexpr
     def get_output_shape(x_ori_shape, output_size):
         if isinstance(output_size, tuple):
             h_out, w_out = output_size
@@ -1712,7 +1713,7 @@ def get_max_pool_vmap_rule(prim, axis_size):
 
     prim_name = prim.name
 
-    @constexpr
+    @_primexpr
     def get_original_shape(x_shape, out_shape):
         h_new = out_shape[2]
         w_new = out_shape[3]
@@ -1757,7 +1758,7 @@ def get_layernorm_vmap_rule(prim, axis_size):
     params_axis = process_attr_axis(prim.begin_params_axis)
     batch_prim = P.LayerNorm(norm_axis, params_axis, prim.epsilon)
 
-    @constexpr
+    @_primexpr
     def get_logical_shape(var_shape):
         return var_shape[1:]
 

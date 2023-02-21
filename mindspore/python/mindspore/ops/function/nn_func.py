@@ -20,7 +20,7 @@ import numpy as np
 
 import mindspore.ops as ops
 import mindspore.nn as nn
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN_OPS
 import mindspore.common.dtype as mstype
@@ -1999,7 +1999,7 @@ def hardswish(x):
     return hardswish_(x)
 
 
-@constexpr
+@_primexpr
 def _scale_factor_convert_size(shape, scale_factor, dim):
     return [int(floor(float(shape[i + 2]) * scale_factor[i])) for i in range(dim)]
 
@@ -3744,7 +3744,7 @@ def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
     return _get_loss(x, reduction, "margin_ranking_loss")
 
 
-@constexpr
+@_primexpr
 def _check_reduced_shape_valid(ori_shape, reduced_shape, axis, cls_name, arg_name1, arg_name2):
     """Internal function, used to check whether the reduced shape meets the requirements."""
     validator.check_reduce_shape(ori_shape, reduced_shape, axis, cls_name, arg_name1, arg_name2)

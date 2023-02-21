@@ -39,7 +39,7 @@ from ...ops.operations.math_ops import Median
 from ...ops.operations._inner_ops import Format, issubclass_
 from ...ops.operations import _csr_ops
 from ...ops.operations import _map_tensor_ops
-from ...ops.primitive import constexpr
+from ...ops.primitive import constexpr, _primexpr
 from ...common import dtype as mstype
 from ...ops.operations._sequence_ops import ListAppend
 
@@ -3109,10 +3109,10 @@ def check_is_const_int(x, op_name, arg_name):
     return True
 
 
-@constexpr
+@_primexpr
 def check_is_tensor_bool_cond(shp):
     """check if tensor is a bool condition"""
-    if shp in ((), (1,)):
+    if not shp or (len(shp) == 1 and shp[0] == 1):
         return True
     if None in shp:
         raise ValueError(f"Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is "
@@ -3171,8 +3171,7 @@ check_value_type = constexpr(validator.check_value_type)
 
 def tensor_bool(x):
     """tensor as condition, if is constant, return immediate bool value"""
-    is_cond = check_is_tensor_bool_cond(F.shape(x))
-    if is_cond and F.isconstant(x):
+    if F.isconstant(x) and check_is_tensor_bool_cond(F.shape(x)):
         return const_tensor_to_bool(x)
     return F.cast(x, mstype.bool_)
 

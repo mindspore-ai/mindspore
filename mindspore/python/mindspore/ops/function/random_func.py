@@ -18,7 +18,7 @@ from __future__ import absolute_import
 
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common import dtype as mstype
 from mindspore.common.seed import _get_graph_seed
@@ -820,7 +820,7 @@ def gamma(shape, alpha, beta, seed=None):
     return value
 
 
-@constexpr
+@_primexpr
 def _generate_shapes(shape):
     """Generate shapes for randn and rand."""
     if not shape:

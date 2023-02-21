@@ -18,6 +18,7 @@ from __future__ import absolute_import
 
 import mindspore.numpy as mnp
 from mindspore.ops import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.operations import nn_ops as nps
@@ -141,7 +142,7 @@ def get_conv3d_backprop_filter_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@constexpr
+@_primexpr
 def _get_reshape_src_dim(data_dim, cmp_dim):
     """Get source dim for reshape"""
     if data_dim > cmp_dim:
@@ -153,7 +154,7 @@ def _get_reshape_src_dim(data_dim, cmp_dim):
     return expand_dim, merge_dim
 
 
-@constexpr
+@_primexpr
 def _get_merge_shape(src_dim, dst_dim, shape):
     """Get new shape for merging the src_dim and dst_dim. The dst_dim is the value after removing src_dim."""
     new_shape = [shape[i] for i in range(len(shape)) if i != src_dim]
@@ -170,7 +171,7 @@ def _reshape_merge_dims(src_dim, dst_dim, target):
     return output, new_shape
 
 
-@constexpr
+@_primexpr
 def _get_expand_shape(src_dim, dst_size, shape, prim_name):
     """Get new shape for splitting src_dim into dst_size parts."""
     dst_size2 = shape[src_dim] // dst_size
@@ -186,7 +187,7 @@ def _reshape_expand_dims(src_dim, dst_size, target, prim_name):
     return F.reshape(target, new_shape)
 
 
-@constexpr
+@_primexpr
 def _get_new_size_by_index(input_size, batch_size, index):
     """Get the new size of input_size by multiplying input_size[index] by batch_size."""
     new_size = ()
@@ -197,7 +198,7 @@ def _get_new_size_by_index(input_size, batch_size, index):
     return tuple(new_size)
 
 
-@constexpr
+@_primexpr
 def _update_group_attr(prim, groups, batch_size):
     """Set new value for 'group' attribute of the convolution primitive."""
     group = groups * batch_size

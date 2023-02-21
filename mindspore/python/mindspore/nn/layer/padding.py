@@ -52,7 +52,7 @@ def _swap_to_ms_padding_order(padding):
     return new_padding
 
 
-@constexpr
+@_primexpr
 def _check(input_shape, padding):
     """
     Check relationship between input shape and padding to make sure after negative dimension padding the out is

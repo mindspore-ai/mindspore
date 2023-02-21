@@ -22,6 +22,7 @@ import mindspore.numpy as mnp
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, \
@@ -38,7 +39,7 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
     2. And weight only support shape as (C,), while total_weight should be a scalar.
     """
 
-    @constexpr
+    @_primexpr
     def _get_reshape_shape(shape, keep_dim=0):
         new_batch_size = reduce(
             lambda x, y: x * y, shape if keep_dim == 0 else shape[:-keep_dim])
@@ -557,7 +558,7 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
             return prim_attr_axis
         return prim_attr_axis + 1
 
-    @constexpr
+    @_primexpr
     def get_batch_params_reduce_axes(begin_params_axis, x_shape):
         if begin_params_axis < 0:
             x_rank = len(x_shape)
@@ -565,7 +566,7 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
         batch_params_reduce_axes = tuple(range(1, begin_params_axis))
         return batch_params_reduce_axes
 
-    @constexpr
+    @_primexpr
     def get_logical_shape(var_shape):
         return var_shape[1:]
 

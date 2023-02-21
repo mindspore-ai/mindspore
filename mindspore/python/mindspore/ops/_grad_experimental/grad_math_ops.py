@@ -73,7 +73,6 @@ from mindspore.ops.operations.array_ops import Transpose, MatrixSetDiagV3
 from mindspore.ops.operations.math_ops import Fmax
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.ops.primitive import constexpr
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops._grad.grad_base import bprop_getters, create_tensor_by_element, dyn_rank
 from mindspore.ops._grad.grad_base import dyn_ones, dyn_fill, sum_grad_reduce_axis
@@ -1845,7 +1844,7 @@ def get_bprop_inplace_index_add(self):
     return bprop
 
 
-@constexpr
+@_primexpr
 def _fft_rank_offset(norm_shape, rank):
     """generate offset for fft with rank"""
     norm_shape_product = 1

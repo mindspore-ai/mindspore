@@ -25,7 +25,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import functional as F
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore._checkparam import Rel, Validator as validator
 from mindspore.nn.layer.conv import Conv2d
 from mindspore.nn.layer.container import CellList
@@ -459,7 +459,7 @@ class PSNR(Cell):
         return psnr
 
 
-@constexpr
+@_primexpr
 def _get_bbox(rank, shape, central_fraction):
     """get bbox start and size for slice"""
     n, c, h, w = -1, -1, -1, -1

@@ -21,7 +21,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.nn import Cell
 from mindspore import ops
 
@@ -327,7 +327,7 @@ def ravel(x):
     return x.ravel()
 
 
-@constexpr
+@_primexpr
 def _move_axes_for_concatenate(arr_shape, axis):
     """
     Moves axis 0 to the desiganated position, while keeps other axes' relative
@@ -1134,7 +1134,7 @@ def _get_moved_perm(ndim, source, destination):
     return tuple(perm)
 
 
-@constexpr
+@_primexpr
 def _get_moved_shape(shape, perm):
     """
     Helper function for moveaxis, returns the permuated shape after
@@ -1608,17 +1608,17 @@ def dsplit(x, indices_or_sections):
     return split(x, indices_or_sections, 2)
 
 
-@constexpr
+@_primexpr
 def _get_flip_start(ndim, shape, axes):
     return tuple([shape[i] - 1 if i in axes else 0 for i in range(ndim)])
 
 
-@constexpr
+@_primexpr
 def _get_flip_end(ndim, shape, axes):
     return tuple([-shape[i] - 1 if i in axes else shape[i] + 1 for i in range(ndim)])
 
 
-@constexpr
+@_primexpr
 def _get_flip_strides(ndim, axes):
     return tuple([-1 if i in axes else 1 for i in range(ndim)])
 
@@ -2071,7 +2071,7 @@ def select(condlist, choicelist, default=0):
     return F.reshape(default_slice, (case_size)).astype(dtype)
 
 
-@constexpr
+@_primexpr
 def _get_grid(shape):
     """Returns a grid representing all the indices for an array with the given shape."""
     grids = []
