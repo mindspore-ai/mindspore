@@ -46,16 +46,6 @@ abstract::BaseShapePtr SgdInferShape(const PrimitivePtr &primitive, const std::v
   auto stat_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kStatIndex]->BuildShape())[kShape];
   auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kAccumIndex]->BuildShape())[kShape];
 
-  (void)CheckAndConvertUtils::CheckInteger("parameters rank", SizeToLong(parameters_shape.size()), kGreaterThan, 0,
-                                           prim_name);
-
-  (void)CheckAndConvertUtils::CheckValue("parameters shape", parameters_shape, kEqual, "gradient shape", gradient_shape,
-                                         prim_name);
-  (void)CheckAndConvertUtils::CheckValue("parameters shape", parameters_shape, kEqual, "stat shape", stat_shape,
-                                         prim_name);
-  (void)CheckAndConvertUtils::CheckValue("parameters shape", parameters_shape, kEqual, "accum shape", accum_shape,
-                                         prim_name);
-
   auto learning_rate_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kLearningRateIndex]->BuildShape())[kShape];
   auto momentum_shape =
