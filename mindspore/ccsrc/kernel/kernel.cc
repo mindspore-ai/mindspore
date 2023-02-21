@@ -74,12 +74,18 @@ TypeId KernelTensor::GetDtype() const {
     if (info.base_->dynamic_len()) {
       return info.base_->dynamic_len_element_abs()->BuildType()->type_id();
     }
+    if (info.base_->elements().empty()) {
+      return TypeId::kTypeUnknown;
+    }
     return info.base_->elements()[0]->BuildType()->type_id();
   } else if (meta_type_ == kObjectTypeList) {
     // List
     const ListInfo &info = std::get<ListInfo>(meta_);
     if (info.base_->dynamic_len()) {
       return info.base_->dynamic_len_element_abs()->BuildType()->type_id();
+    }
+    if (info.base_->elements().empty()) {
+      return TypeId::kTypeUnknown;
     }
     return info.base_->elements()[0]->BuildType()->type_id();
   } else {

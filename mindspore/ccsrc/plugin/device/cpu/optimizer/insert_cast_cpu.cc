@@ -136,7 +136,8 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
     const std::string dev_fmt = AnfAlgo::GetInputFormat(cnode, input_index);
     const abstract::BaseShapePtr origin_shape =
       common::AnfAlgo::GetOutputDetailShape(prev_node.first, prev_node.second);
-    if (TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index); origin_type != device_type) {
+    TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index);
+    if (origin_type != device_type && origin_type != kTypeUnknown && device_type != kTypeUnknown) {
       auto cast = AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, origin_type, device_type, origin_shape);
       MS_EXCEPTION_IF_NULL(cast);
       cast->set_scope(cnode->scope());
