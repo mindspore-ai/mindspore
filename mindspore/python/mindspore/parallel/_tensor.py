@@ -175,20 +175,26 @@ def _chunk_tensor_by_strategy(np_tensor, strategy):
     return _chunk_tensor(np_tensor, strategy, len(strategy))
 
 
-def _get_slice_index(dev_mat, tensor_map):
+def _get_slice_index(dev_mat, tensor_map, opt_shard_group):
     """
     Get the slice index for current slice.
 
     Args:
         dev_mat (list): The device matrix of devices.
         tensor_map (list): The split strategy of tensor.
+        opt_shard_group(string): The group of optimizer shard
 
     Returns:
         Integer, the slice index for slice on this device.
     """
     rank = get_rank()
+    dev_num = get_group_size()
     tensor_strategy = _get_tensor_strategy(dev_mat, tensor_map)
     tensor_slice_index = _get_tensor_slice_index(dev_mat, tensor_strategy, tensor_map, rank)
+    if opt_shard_group:
+        tensor_slice_index += dev_num
+        opt_rank = get_rank(opt_shard_group)
+        tensor_slice_index += opt_rank
     return tensor_slice_index
 
 
