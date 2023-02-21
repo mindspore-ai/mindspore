@@ -4807,7 +4807,6 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
 
     .. warning::
         - The value of `logits` must range from `0` to `l`.
-        - The value of `labels` must be `0` or `l`.
 
     Args:
         logits (Tensor): The predictive value whose data type must be float16 or float32.
