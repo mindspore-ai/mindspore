@@ -46,8 +46,7 @@ int SoftplusGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto input_element_num =
-    std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
+  auto input_element_num = SizeOf(input_shape);
   is_null_input_ = (input_element_num == 0);
   return KRET_OK;
 }
@@ -64,6 +63,8 @@ bool SoftplusGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
 }
 
 std::vector<std::pair<KernelAttr, SoftplusGradGpuKernelMod::SoftplusGradFunc>> SoftplusGradGpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &SoftplusGradGpuKernelMod::LaunchKernel<double>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &SoftplusGradGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
