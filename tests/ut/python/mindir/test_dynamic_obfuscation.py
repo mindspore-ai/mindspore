@@ -95,8 +95,6 @@ def test_obfuscate_model_password_mode():
 
     assert np.all(original_result == right_password_result)
 
-    if os.path.exists("net_1.mindir"):
-        os.remove("net_1.mindir")
     if os.path.exists("obf_net_1.mindir"):
         os.remove("obf_net_1.mindir")
 
@@ -129,8 +127,6 @@ def test_obfuscate_model_customized_func_mode():
 
     assert np.all(original_result == right_func_result)
 
-    if os.path.exists("net_2.mindir"):
-        os.remove("net_2.mindir")
     if os.path.exists("obf_net_2.mindir"):
         os.remove("obf_net_2.mindir")
 
@@ -204,3 +200,24 @@ def test_wrong_file_format_input():
     with pytest.raises(ValueError) as error_info:
         export(net_5, input_tensor, file_name="obf_net_3", file_format="ONNX", obf_config=obf_config)
     assert str(error_info.value) == "Dynamic obfuscation only support for MindIR format, but got ONNX format."
+
+
+def test_wrong_device_target():
+    """
+    Feature: Obfuscate MindIR format model with dynamic obfuscation (customized_func mode) in export().
+    Description: Test wrong device_target.
+    Expectation: Success.
+    """
+    context.set_context(device_target="GPU")
+    net_6 = ObfuscateNet()
+    input_tensor = Tensor(np.ones((1, 1, 32, 32)).astype(np.float32))
+
+    # obfuscate model
+    def my_func(x1, x2):
+        if x1 + x2 > 1000000000:
+            return True
+        return False
+    obf_config = {"obf_ratio": 0.8, "customized_func": my_func}
+    with pytest.raises(ValueError) as error_info:
+        export(net_6, input_tensor, file_name="obf_net", file_format="MINDIR", obf_config=obf_config)
+    assert str(error_info.value) == "Customized func mode only support 'device_target'='CPU, but got GPU."
