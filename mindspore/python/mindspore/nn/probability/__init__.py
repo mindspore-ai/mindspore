@@ -20,5 +20,3 @@ The high-level components used to construct the probabilistic network.
 
 from . import bijector
 from . import distribution
-from . import infer
-from . import dpn
