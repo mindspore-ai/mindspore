@@ -5427,7 +5427,6 @@ class BinaryCrossEntropy(Primitive):
 
     .. warning::
         - The value of "x" must range from 0 to 1.
-        - The value of "y" must be "0" or "1".
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.

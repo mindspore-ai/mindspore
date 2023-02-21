@@ -203,26 +203,31 @@ template <typename T>
 __global__ void BinaryCrossEntropyLossKernel(const int input_size, const ReductionMode reduction, const T *input_x,
                                              const T *input_y, const T *weight, T *loss, T *tmp_loss) {
   T epsilon = 1e-12;
+  T zero = static_cast<T>(0);
   T one = static_cast<T>(1);
   if (reduction == ReductionMode::kNone && weight != nullptr) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
+      CUDA_KERNEL_ASSERT(input_x[i] >= zero && input_x[i] <= one);
       T value =
         -weight[i] * (input_y[i] * logT(input_x[i] + epsilon) + (one - input_y[i]) * logT(one - input_x[i] + epsilon));
       loss[i] = value;
     }
   } else if (reduction == ReductionMode::kNone && weight == nullptr) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
+      CUDA_KERNEL_ASSERT(input_x[i] >= zero && input_x[i] <= one);
       T value = -(input_y[i] * logT(input_x[i] + epsilon) + (one - input_y[i]) * logT(one - input_x[i] + epsilon));
       loss[i] = value;
     }
   } else if (reduction != ReductionMode::kNone && weight != nullptr) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
+      CUDA_KERNEL_ASSERT(input_x[i] >= zero && input_x[i] <= one);
       T value =
         -weight[i] * (input_y[i] * logT(input_x[i] + epsilon) + (one - input_y[i]) * logT(one - input_x[i] + epsilon));
       tmp_loss[i] = value;
     }
   } else {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
+      CUDA_KERNEL_ASSERT(input_x[i] >= zero && input_x[i] <= one);
       T value = -(input_y[i] * logT(input_x[i] + epsilon) + (one - input_y[i]) * logT(one - input_x[i] + epsilon));
       tmp_loss[i] = value;
     }
@@ -320,7 +325,7 @@ __global__ void NLLLossKernel(const int n, const int c, const T *input, const in
 
 template <typename T, typename S>
 int NLLLoss(const int n, const int c, const ReductionMode reduction, const T *input, const int32_t *target,
-             const S *weight, T *loss, S *total_weight, T *tmp_loss, S *tmp_target_weight, cudaStream_t stream) {
+            const S *weight, T *loss, S *total_weight, T *tmp_loss, S *tmp_target_weight, cudaStream_t stream) {
   int *ret_flag_device = nullptr;
   (void)cudaMalloc(&ret_flag_device, sizeof(int));
   (void)cudaMemset(ret_flag_device, 0, sizeof(int));
@@ -424,14 +429,14 @@ template CUDA_LIB_EXPORT void BinaryCrossEntropyLossGrad<float>(const int &input
                                                                 cudaStream_t stream);
 
 template CUDA_LIB_EXPORT int NLLLoss<float, float>(const int n, const int c, const ReductionMode reduction,
-                                                    const float *input, const int32_t *target, const float *weight,
-                                                    float *loss, float *total_weight, float *tmp_loss,
-                                                    float *tmp_target_weight, cudaStream_t stream);
+                                                   const float *input, const int32_t *target, const float *weight,
+                                                   float *loss, float *total_weight, float *tmp_loss,
+                                                   float *tmp_target_weight, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT int NLLLoss<float, half>(const int n, const int c, const ReductionMode reduction,
-                                                   const float *input, const int32_t *target, const half *weight,
-                                                   float *loss, half *total_weight, float *tmp_loss,
-                                                   half *tmp_target_weight, cudaStream_t stream);
+                                                  const float *input, const int32_t *target, const half *weight,
+                                                  float *loss, half *total_weight, float *tmp_loss,
+                                                  half *tmp_target_weight, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT void NLLLossGrad<float, float>(const int n, const int c, const ReductionMode reduction,
                                                         const float *input, const int32_t *target, const float *weight,
@@ -461,14 +466,14 @@ template CUDA_LIB_EXPORT void BinaryCrossEntropyLossGrad<half>(const int &input_
                                                                cudaStream_t stream);
 
 template CUDA_LIB_EXPORT int NLLLoss<half, half>(const int n, const int c, const ReductionMode reduction,
-                                                  const half *input, const int32_t *target, const half *weight,
-                                                  half *loss, half *total_weight, half *tmp_loss,
-                                                  half *tmp_target_weight, cudaStream_t stream);
+                                                 const half *input, const int32_t *target, const half *weight,
+                                                 half *loss, half *total_weight, half *tmp_loss,
+                                                 half *tmp_target_weight, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT int NLLLoss<half, float>(const int n, const int c, const ReductionMode reduction,
-                                                   const half *input, const int32_t *target, const float *weight,
-                                                   half *loss, float *total_weight, half *tmp_loss,
-                                                   float *tmp_target_weight, cudaStream_t stream);
+                                                  const half *input, const int32_t *target, const float *weight,
+                                                  half *loss, float *total_weight, half *tmp_loss,
+                                                  float *tmp_target_weight, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT void NLLLossGrad<half, half>(const int n, const int c, const ReductionMode reduction,
                                                       const half *input, const int32_t *target, const half *weight,
