@@ -351,19 +351,6 @@ AnfNodePtr KernelGraphMgr::CreateNewParameterFromCNode(const AnfNodePtr &anf, Ke
   MS_EXCEPTION_IF_NULL(anf);
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Create a new parameter from cnode[" << anf->DebugString() << "]";
-  if (IsPrimitiveCNode(anf, prim::kPrimLoad)) {
-    auto input = common::AnfAlgo::GetInputNode(anf->cast<CNodePtr>(), 0);
-    MS_EXCEPTION_IF_NULL(input);
-    if (input->isa<Parameter>()) {
-      auto new_param = CreateNewParameterFromParameter(input, graph);
-      auto context_ptr = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(context_ptr);
-      if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) == true) {
-        graph->CacheInternalParameterToFrontNode(new_param, {anf, 0});
-      }
-      return new_param;
-    }
-  }
   return CreateParameterFromTuple(anf, graph);
 }
 
