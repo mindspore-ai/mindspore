@@ -35,6 +35,7 @@ constexpr auto kDataPreprocessParam = "data_preprocess_param";
 constexpr auto kRegistry = "registry";
 constexpr auto kAclOptionParam = "acl_option_cfg_param";
 constexpr auto kMicroParam = "micro_param";
+constexpr auto kCpuOptionParam = "cpu_option_cfg_param";
 }  // namespace
 using ShapeVector = std::vector<int64_t>;
 const int kBatchDim = 0;
@@ -286,6 +287,12 @@ int ConfigFileParser::ParseConfigParam(std::map<std::string, std::map<std::strin
     MS_LOG(ERROR) << "ParseWeightQuantString failed.";
     return ret;
   }
+  ret = ParseCpuOptionCfgString(*maps);
+  (void)maps->erase(kCpuOptionParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParseCpuOptionCfgString failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -422,6 +429,16 @@ int ConfigFileParser::ParseWeightQuantString(const std::map<std::string, std::ma
     std::map<std::string, std::string &> parse_map{{"dequant_strategy", weight_quant_string_.dequant_strategy},
                                                    {"update_mindir", weight_quant_string_.update_mindir}};
     return SetMapData(map, parse_map, kWeightQuantParam);
+  }
+  return RET_OK;
+}
+
+int ConfigFileParser::ParseCpuOptionCfgString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
+  if (maps.find(kCpuOptionParam) != maps.end()) {
+    const auto &map = maps.at(kCpuOptionParam);
+    std::map<std::string, std::string &> parse_map{{"architecture", cpu_option_cfg_string_.architecture},
+                                                   {"instruction", cpu_option_cfg_string_.instruction}};
+    return SetMapData(map, parse_map, kCpuOptionParam);
   }
   return RET_OK;
 }

@@ -53,6 +53,8 @@
 #include "src/common/file_utils.h"
 #include "ops/dynamic_shape.h"
 #include "tools/common/parse_config_utils.h"
+#include "tools/converter/converter_packed_node.h"
+#include "tools/converter/config_parser/cpu_option_param_parser.h"
 
 namespace mindspore {
 extern "C" {
@@ -346,6 +348,13 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param) 
   ret = micro_param_parser.ParseMicroParam(config_parser.GetMicroParamString(), &param->microParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse micro param failed.";
+    return ret;
+  }
+
+  lite::CpuOptionParamParser cpu_param_parser;
+  ret = cpu_param_parser.ParseCpuOptionCfg(config_parser.GetCpuOptionCfgString(), &param->cpuOptionCfgParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse cpu option param failed.";
     return ret;
   }
   return RET_OK;
@@ -817,6 +826,16 @@ int ConverterImpl::SaveGraph(FuncGraphPtr graph, const std::shared_ptr<Converter
     MS_LOG(ERROR) << "Convert to meta graph failed";
     return RET_ERROR;
   }
+
+  if (!param->cpuOptionCfgParam.architecture.empty()) {
+    std::string cpu_option = param->cpuOptionCfgParam.architecture + param->cpuOptionCfgParam.instruction;
+    status = ConverterPackedNode(meta_graph, cpu_option);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "save pack info failed.";
+      return status;
+    }
+  }
+
   meta_graph->version = Version();
 
   if (param->pre_infer) {

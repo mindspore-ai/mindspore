@@ -62,6 +62,7 @@
 #include "kernel/ascend/plugin/ascend_kernel_plugin.h"
 #endif
 #include "thread/parallel_thread_pool_manager.h"
+#include "src/litert/runtime_packed_node_pass.h"
 
 using AbstractBaseModel = mindspore::infer::AbstractBaseModel;
 
@@ -585,6 +586,8 @@ int LiteSession::CompileGraph(Model *model) {
   InitGraphInputTensors(model);
   InitGraphOutputTensors(model);
 
+  PackedNodePass::GetInstance().Run(model, tensors_);
+
   // scheduler kernels
   Scheduler scheduler(context_.get(), ms_context_, model, &tensors_, &inputs_, &outputs_, is_train_session_,
                       &is_infershape_, &is_control_flow_, &infer_along_running_, execution_plan_, delegate_,
@@ -698,6 +701,11 @@ int LiteSession::PrepareKernels(const Model *model) {
         return RET_ERROR;
       }
       for (auto &node : subgraph_kernel->nodes()) {
+        ret = PackKernelExec(node, tensors_);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "Pack KernelExec failed.";
+          return ret;
+        }
         ret = node->Prepare();
         if (ret != RET_OK) {
           MS_LOG(ERROR) << "node: " << node->name() << " prepare failed.";

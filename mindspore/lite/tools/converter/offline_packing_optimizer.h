@@ -33,7 +33,7 @@ STATUS MatmulPacking(const mindspore::CNodePtr &cnode_ptr, const FuncGraphPtr &f
                      const lite::InnerContext *ctx);
 mindspore::lite::InnerContext *InitInnerContextForAndroidArmCpu();
 
-enum class BackendType : uint {
+enum class BackendType : uint8_t {
   kUnknownBackend = 0,
   kAndroidArmCpuBackend,
 };

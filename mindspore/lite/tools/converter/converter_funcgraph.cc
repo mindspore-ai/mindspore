@@ -55,6 +55,7 @@
 #include "tools/converter/parser/unify_format.h"
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "tools/converter/anf_transform.h"
+#include "tools/converter/offline_packing_optimizer.h"
 
 namespace mindspore {
 namespace lite {
@@ -309,6 +310,14 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
   SetInputParameterAbstractName(func_graph);
   if (!param->no_fusion) {
     func_graph->set_attr(kIsOptimized, MakeValue(true));
+  }
+
+  if (!param->cpuOptionCfgParam.architecture.empty()) {
+    // Do offline pack.
+    if (OfflinePackingOptimizer().Optimize(func_graph, "ANDROID_ARM_CPU") != RET_OK) {
+      MS_LOG(ERROR) << "Do offline packing failed.";
+      return status;
+    }
   }
 
   return RET_OK;

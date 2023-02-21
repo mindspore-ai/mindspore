@@ -125,7 +125,7 @@ void MatmulDynamicBaseInt8CPUKernel::FreeTmpBuffer() {
     free(pack_a_ptr_);
     pack_a_ptr_ = nullptr;
   }
-  if (pack_b_ptr_ != nullptr) {
+  if (pack_b_ptr_ != nullptr && !weight_is_packed_) {
     free(pack_b_ptr_);
     pack_b_ptr_ = nullptr;
   }
@@ -133,7 +133,7 @@ void MatmulDynamicBaseInt8CPUKernel::FreeTmpBuffer() {
     free(input_sums_);
     input_sums_ = nullptr;
   }
-  if (weight_sums_ != nullptr) {
+  if (weight_sums_ != nullptr && !weight_is_packed_) {
     free(weight_sums_);
     weight_sums_ = nullptr;
   }
@@ -162,6 +162,12 @@ int MatmulDynamicBaseInt8CPUKernel::InitInputQuantParam() {
 }
 
 int MatmulDynamicBaseInt8CPUKernel::TransferB() {
+  if (weight_is_packed_) {
+    CHECK_NULL_RETURN(weight_sums_tensor_);
+    pack_b_ptr_ = static_cast<int8_t *>(in_tensors_.at(kWeightIndex)->data());
+    weight_sums_ = static_cast<int *>(weight_sums_tensor_->data());
+    return RET_OK;
+  }
   auto weight_data = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->data());
   CHECK_NULL_RETURN(weight_data);
   for (int i = 0; i < b_batch_; i++) {
@@ -177,6 +183,7 @@ int MatmulDynamicBaseInt8CPUKernel::TransferB() {
       CalcWeightSums(current_weight, param_->deep_, param_->col_, current_sums, RowMajor);
     }
   }
+
   return RET_OK;
 }
 
@@ -205,6 +212,10 @@ int MatmulDynamicBaseInt8CPUKernel::InitMatrixABuffer() {
 }
 
 int MatmulDynamicBaseInt8CPUKernel::InitMatrixBBuffer() {
+  if (weight_is_packed_) {
+    return RET_OK;
+  }
+
   if (pack_b_ptr_ != nullptr) {
     free(pack_b_ptr_);
     pack_b_ptr_ = nullptr;
