@@ -36,12 +36,12 @@ void ParameterizedTruncatedNormalCheckdims(const std::vector<AbstractBasePtr> &i
     auto para_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[i]->BuildShape())[kShape];
     if (para_shape.size() > 1) {
       MS_EXCEPTION(ValueError) << "For ParameterizedTruncatedNormal, " << parameters.at(i - 1)
-                               << "should be at most rank 1, but got rank " << para_shape.size() << ".";
+                               << " should be at most rank 1, but got rank " << para_shape.size() << ".";
     }
     if (para_shape.size() == 1) {
       int64_t para_num = std::accumulate(para_shape.begin(), para_shape.end(), int64_t(1), std::multiplies{});
       if (!(para_num == 1 || para_num == batch_size)) {
-        MS_EXCEPTION(ValueError) << "For ParameterizedTruncatedNormal, " << parameters.at(i - 1) << "must be 0d, or "
+        MS_EXCEPTION(ValueError) << "For ParameterizedTruncatedNormal, " << parameters.at(i - 1) << " must be 0d, or "
                                  << parameters.at(i - 1) << ".shape = (" << batch_size << ", ), but got (" << para_num
                                  << ", ).";
       }
@@ -61,10 +61,8 @@ abstract::ShapePtr ParameterizedTruncatedNormalInferShape(const PrimitivePtr &pr
 
   (void)CheckAndConvertUtils::CheckInteger("rank of argument[shape]", SizeToLong(shape_shape.size()), kEqual, 1,
                                            op_name);
-  if (shape_shape[0] > 0) {
-    (void)CheckAndConvertUtils::CheckInteger("size of argument[shape]", shape_shape[0], kGreaterEqual, kShapeSize,
-                                             op_name);
-  }
+  (void)CheckAndConvertUtils::CheckInteger("size of argument[shape]", shape_shape[0], kGreaterEqual, kShapeSize,
+                                           op_name);
 
   auto shape_value = input_args[kInputIndex0]->BuildValue();
   MS_EXCEPTION_IF_NULL(shape_value);
