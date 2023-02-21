@@ -25,6 +25,7 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "runtime/pynative/op_runtime_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
@@ -694,13 +695,19 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
     }
 
     auto [input, idx] = common::AnfAlgo::GetPrevNodeOutput(anf_node, i);
-    auto input_type = AnfAlgo::GetOutputDeviceDataType(input, idx);
+    auto op_runtime_info = input->user_data<runtime::OpRuntimeInfo>();
+    auto input_type =
+      (op_runtime_info == nullptr) ? AnfAlgo::GetOutputDeviceDataType(input, idx) : op_runtime_info->output_type(idx);
     if (input_type == kMetaTypeNone) {
       continue;
     }
-    auto ori_shape = common::AnfAlgo::GetOutputInferShape(input, idx);
-    auto input_shape = AnfAlgo::GetOutputDeviceShape(input, idx);
-    auto input_format = AnfAlgo::GetOutputFormat(input, idx);
+    auto ori_shape = (op_runtime_info == nullptr) ? common::AnfAlgo::GetOutputInferShape(input, idx)
+                                                  : op_runtime_info->output_infer_shape(idx);
+    auto input_shape = (op_runtime_info == nullptr) ? AnfAlgo::GetOutputDeviceShape(input, idx)
+                                                    : op_runtime_info->output_device_shape(idx);
+
+    auto input_format =
+      (op_runtime_info == nullptr) ? AnfAlgo::GetOutputFormat(input, idx) : op_runtime_info->output_format(idx);
     auto ori_format = IsOneOf3DFormat(input_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
     if (!opt::NeedInsertTransData(ori_shape, input_format)) {
       MS_LOG_DEBUG << "Set format of " << anf_node->fullname_with_scope() << " to origin format";
@@ -721,19 +728,24 @@ std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf
   size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
   const auto &output_names = AclUtils::GetOpOutputAnchorNames(anf_node);
   std::vector<GeTensorDescPtr> res(output_names.size(), nullptr);
+  auto op_runtime_info = anf_node->user_data<runtime::OpRuntimeInfo>();
 
   for (size_t i = 0; i < output_num; ++i) {
     auto index = AclUtils::GetOutputKernelIdxByGraphIdx(anf_node, i);
     if (index < 0) {
       continue;
     }
-    auto output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, i);
+    auto output_type =
+      (op_runtime_info == nullptr) ? AnfAlgo::GetOutputDeviceDataType(anf_node, i) : op_runtime_info->output_type(i);
     if (output_type == kMetaTypeNone) {
       continue;
     }
-    auto ori_shape = common::AnfAlgo::GetOutputInferShape(anf_node, i);
-    auto output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, i);
-    auto output_format = AnfAlgo::GetOutputFormat(anf_node, i);
+    auto ori_shape = (op_runtime_info == nullptr) ? common::AnfAlgo::GetOutputInferShape(anf_node, i)
+                                                  : op_runtime_info->output_infer_shape(i);
+    auto output_shape = (op_runtime_info == nullptr) ? AnfAlgo::GetOutputDeviceShape(anf_node, i)
+                                                     : op_runtime_info->output_device_shape(i);
+    auto output_format =
+      (op_runtime_info == nullptr) ? AnfAlgo::GetOutputFormat(anf_node, i) : op_runtime_info->output_format(i);
     auto ori_format = IsOneOf3DFormat(output_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
     if (!opt::NeedInsertTransData(ori_shape, output_format)) {
       MS_LOG_DEBUG << "Set format of " << anf_node->fullname_with_scope() << " to origin format";

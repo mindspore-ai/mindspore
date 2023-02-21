@@ -21,6 +21,7 @@
 #include <string>
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_utils.h"
+#include "runtime/pynative/op_runtime_info.h"
 
 namespace mindspore {
 namespace kernel {
@@ -51,6 +52,8 @@ class AclKernelMod : public AscendKernelMod {
   void UpdateReduceAxisAttr(const AnfNodePtr &node);
 
  private:
+  int UpdateInput(const AnfNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info);
+  void UpdateOutput(const AnfNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info);
   std::vector<GeTensorDescPtr> input_desc_list_{};
   std::vector<GeTensorDescPtr> output_desc_list_{};
   std::string op_type_{};
