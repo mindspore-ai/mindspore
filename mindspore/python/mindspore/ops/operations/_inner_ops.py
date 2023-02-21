@@ -2435,7 +2435,7 @@ class GetGrad(Primitive):
 
         _get_grad(gradients, hash_id)
         if output is None:
-            raise ValueError(
+            raise RuntimeError(
                 f"Can not find the gradient for position or Parameter {x}")
         return output
 
