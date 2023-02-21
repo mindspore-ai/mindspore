@@ -70,9 +70,10 @@ static const std::map<std::string, std::vector<int>> kInputOrders = {
 
 static const std::map<std::string, std::vector<int>> kOutputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
-  {prim::kPrimApplyMomentum->name(), {0, -1}},          {prim::kPrimApplyFtrlD->name(), {0, -1, -1}},
-  {prim::kPrimSparseApplyFtrlV2D->name(), {0, -1, -1}}, {prim::kPrimApplyAdam->name(), {0, -1, -1}},
-  {prim::kPrimApplyAdamD->name(), {0, -1, -1}},         {prim::kPrimApplyMomentumD->name(), {0, -1}},
+  {prim::kPrimApplyMomentum->name(), {0, -1}},
+  {prim::kPrimApplyFtrlD->name(), {0, -1, -1}},
+  {prim::kPrimSparseApplyFtrlV2D->name(), {0, -1, -1}},
+  {prim::kPrimApplyMomentumD->name(), {0, -1}},
   {prim::kPrimApplyFtrl->name(), {0, -1, -1}}};
 }  // namespace
 
