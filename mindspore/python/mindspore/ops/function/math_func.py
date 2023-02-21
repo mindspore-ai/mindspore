@@ -24,7 +24,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
-from mindspore.ops.operations._inner_ops import Cummin
+from mindspore.ops.operations._inner_ops import Cummin, TileSize
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import Logit
@@ -7823,16 +7823,6 @@ def _check_matmul_shapes(shape1, shape2, prim_name=None):
 
 
 @_primexpr
-def _tile_size(shape, out_shape, ndim):
-    """Returns tile_size such that shape*tile_size = out_shape"""
-    size = [1] * ndim
-    for idx, (i, j) in enumerate(zip(shape, out_shape)):
-        if i != j:
-            size[idx] = j
-    return tuple(size)
-
-
-@_primexpr
 def _expand(x, ndim):
     """Expand x to ndim from axis, which can be 0 or -1."""
     rank_op = _get_cache_prim(P.Rank)()
@@ -7845,7 +7835,9 @@ def _expand(x, ndim):
 def _broadcast_to(x, shape_cur, shape_to, ndim_to):
     """Broadcasts x from shape_cur to shape_to."""
     tile_op = _get_cache_prim(P.Tile)()
-    size = _tile_size(shape_cur, shape_to, ndim_to)
+    tile_size_op = _get_cache_prim(TileSize)()
+    size = tile_size_op(shape_cur, shape_to, ndim_to)
+    F.stop_gradient(size)
     return tile_op(x, size)
 
 
