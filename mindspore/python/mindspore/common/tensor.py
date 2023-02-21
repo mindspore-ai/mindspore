@@ -1596,6 +1596,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('deg2rad')(self)
 
+    def dot(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.dot`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('dot')(self, other)
+
     def rad2deg(self):
         r"""
         For details, please refer to :func:`mindspore.ops.rad2deg`.

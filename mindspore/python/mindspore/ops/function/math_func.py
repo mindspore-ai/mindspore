@@ -5258,37 +5258,37 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
     return out
 
 
-def lcm(x1, x2):
+def lcm(input, other):
     """
     Computes least common multiplier of input tensors element-wise.
     The shape of two inputs should be broadcastable, and data type of them should be
     one of: int32, int64
 
     Args:
-        x1 (Tensor): The first input tensor.
-        x2 (Tensor): The second input tensor.
+        input (Tensor): The first input tensor.
+        other (Tensor): The second input tensor.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is one
         with higher digits in the two inputs.
 
     Raises:
-        TypeError: If data type `x1` or `x2` is not int32 or int64.
+        TypeError: If data type `input` or `other` is not int32 or int64.
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x1 = Tensor(np.array([7, 8, 9]))
-        >>> x2 = Tensor(np.array([14, 6, 12]))
-        >>> y = ops.lcm(x1, x2)
+        >>> input = Tensor(np.array([7, 8, 9]))
+        >>> other = Tensor(np.array([14, 6, 12]))
+        >>> y = ops.lcm(input, other)
         >>> print(y)
         [14 24 36]
     """
 
     lcm_ = _get_cache_prim(Lcm)()
-    return lcm_(x1, x2)
+    return lcm_(input, other)
 
 
 def cdist(x, y, p=2.0):
@@ -7180,9 +7180,9 @@ def dot(a, b):
     if a.shape[-1] != b.shape[-1]:
         raise ValueError('shapes are not aligned')
     a_aligned = a.reshape(-1, a.shape[-1]).astype(mstype.float32)
-    b_aligned = b.reshape(-1, b.shape[-1]).astype(mstype.float32)
+    output_aligned = b.reshape(-1, b.shape[-1]).astype(mstype.float32)
 
-    res = ops.matmul(a_aligned, b_aligned.T)
+    res = ops.matmul(a_aligned, output_aligned.T)
     res = res.reshape(a.shape[:-1] + b.shape[:-1])
 
     return res.astype(res_dtype)
@@ -7849,7 +7849,7 @@ def _broadcast_to(x, shape_cur, shape_to, ndim_to):
     return tile_op(x, size)
 
 
-def matmul(x1, x2):
+def matmul(input, other):
     """
     Returns the matrix product of two tensors.
 
@@ -7860,30 +7860,30 @@ def matmul(x1, x2):
         On CPU, the supported dtypes are np.float16 and np.float32.
 
     Args:
-        x1 (Tensor): Input tensor, scalar not allowed.
-          The last dimension of `x1` must be the same size as the second last dimension of `x2`.
-          And the shape of x1 and x2 could be broadcast.
-        x2 (Tensor): Input tensor, scalar not allowed.
-          The last dimension of `x1` must be the same size as the second last dimension of `x2`.
-          And the shape of x1 and x2 could be broadcast.
+        input (Tensor): Input tensor, scalar not allowed.
+          The last dimension of `input` must be the same size as the second last dimension of `other`.
+          And the shape of input and other could be broadcast.
+        other (Tensor): Input tensor, scalar not allowed.
+          The last dimension of `input` must be the same size as the second last dimension of `other`.
+          And the shape of input and other could be broadcast.
 
     Returns:
         Tensor or scalar, the matrix product of the inputs. This is a scalar only
-        when both `x1`, `x2` are 1-d vectors.
+        when both `input`, `other` are 1-d vectors.
 
     Raises:
-        ValueError: If the last dimension of `x1` is not the same size as the
-            second-to-last dimension of `x2`, or if a scalar value is passed in.
-        ValueError: If the shape of `x1` and `x2` could not broadcast together.
+        ValueError: If the last dimension of `input` is not the same size as the
+            second-to-last dimension of `other`, or if a scalar value is passed in.
+        ValueError: If the shape of `input` and `other` could not broadcast together.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1 : Reasonable application of broadcast mechanism
-        >>> x1 = Tensor(np.arange(2*3*4).reshape(2, 3, 4), mindspore.float32)
-        >>> x2 = Tensor(np.arange(4*5).reshape(4, 5), mindspore.float32)
-        >>> output = ops.matmul(x1, x2)
+        >>> input = Tensor(np.arange(2*3*4).reshape(2, 3, 4), mindspore.float32)
+        >>> other = Tensor(np.arange(4*5).reshape(4, 5), mindspore.float32)
+        >>> output = ops.matmul(input, other)
         >>> print(output)
         [[[  70.   76.   82.   88.   94.]
         [ 190.  212.  234.  256.  278.]
@@ -7893,10 +7893,10 @@ def matmul(x1, x2):
         [ 670.  756.  842.  928. 1014.]]]
         >>> print(output.shape)
         (2, 3, 5)
-        >>> # case 2 : the rank of `x1` is 1
-        >>> x1 = Tensor(np.ones([1, 2]), mindspore.float32)
-        >>> x2 = Tensor(np.ones([2,]), mindspore.float32)
-        >>> output = ops.matmul(x1, x2)
+        >>> # case 2 : the rank of `input` is 1
+        >>> input = Tensor(np.ones([1, 2]), mindspore.float32)
+        >>> other = Tensor(np.ones([2,]), mindspore.float32)
+        >>> output = ops.matmul(input, other)
         >>> print(output)
         [2.]
         >>> print(output.shape)
@@ -7907,14 +7907,14 @@ def matmul(x1, x2):
     shape_op = _get_cache_prim(P.Shape)()
     reshape_op = _get_cache_prim(P.Reshape)()
 
-    dtype1 = dtype_op(x1)
-    dtype2 = dtype_op(x2)
+    dtype1 = dtype_op(input)
+    dtype2 = dtype_op(other)
     if not _check_same_type(dtype1, dtype2):
-        x1 = x1.astype(mstype.float32)
-        x2 = x2.astype(mstype.float32)
+        input = input.astype(mstype.float32)
+        other = other.astype(mstype.float32)
 
-    ndim1_orig, ndim2_orig = rank_op(x1), rank_op(x2)
-    shape1_orig, shape2_orig = shape_op(x1), shape_op(x2)
+    ndim1_orig, ndim2_orig = rank_op(input), rank_op(other)
+    shape1_orig, shape2_orig = shape_op(input), shape_op(other)
     transpose_b = ndim2_orig == 1
     shape_backbone = _check_matmul_shapes(shape1_orig, shape2_orig, 'matmul')
     # infers the shape of the output
@@ -7924,21 +7924,21 @@ def matmul(x1, x2):
     _matmul = _get_cache_prim(P.MatMul)(False, transpose_b)
     _batch_matmul = _get_cache_prim(P.BatchMatMul)(False, transpose_b)
 
-    x1 = _expand(x1, 2)
-    x2 = _expand(x2, 2)
-    if rank_op(x2) == 2:
-        if rank_op(x1) > 2:
-            x1 = reshape_op(x1, (-1, shape1_orig[-1]))
-        res = _matmul(x1, x2)
+    input = _expand(input, 2)
+    other = _expand(other, 2)
+    if rank_op(other) == 2:
+        if rank_op(input) > 2:
+            input = reshape_op(input, (-1, shape1_orig[-1]))
+        res = _matmul(input, other)
     else:
-        # broadcasts x1.shape[:-2] with x2.shape[:-2]
+        # broadcasts input.shape[:-2] with other.shape[:-2]
         ndim_aligned = _max(ndim1_orig, ndim2_orig)
-        x1 = _expand(x1, ndim_aligned)
-        x2 = _expand(x2, ndim_aligned)
-        shape1_aligned, shape2_aligned = shape_op(x1), shape_op(x2)
-        x1 = _broadcast_to(x1, shape1_aligned[:-2], shape_backbone, ndim_aligned)
-        x2 = _broadcast_to(x2, shape2_aligned[:-2], shape_backbone, ndim_aligned)
-        res = _batch_matmul(x1, x2)
+        input = _expand(input, ndim_aligned)
+        other = _expand(other, ndim_aligned)
+        shape1_aligned, shape2_aligned = shape_op(input), shape_op(other)
+        input = _broadcast_to(input, shape1_aligned[:-2], shape_backbone, ndim_aligned)
+        other = _broadcast_to(other, shape2_aligned[:-2], shape_backbone, ndim_aligned)
+        res = _batch_matmul(input, other)
 
     return reshape_op(res, shape_out)
 

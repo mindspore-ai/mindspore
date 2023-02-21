@@ -285,23 +285,23 @@ def _get_transpose_shape(x2_shape):
     return x2_shape_transpose
 
 
-def dot(x1, x2):
+def dot(input, other):
     """
     Computation a dot product between samples in two tensors.
 
     Args:
-        x1 (Tensor): First tensor in Dot op with datatype float16 or float32,
+        input (Tensor): First tensor in Dot op with datatype float16 or float32,
             The rank must be greater than or equal to 2.
-        x2 (Tensor): Second tensor in Dot op with datatype float16 or float32,
+        other (Tensor): Second tensor in Dot op with datatype float16 or float32,
             The rank must be greater than or equal to 2.
 
     Returns:
-        Tensor, dot product of x1 and x2.
+        Tensor, dot product of input and other.
 
     Raises:
-        TypeError: If type of x1 and x2 are not the same.
-        TypeError: If dtype of x1 or x2 is not float16 or float32.
-        ValueError: If rank of x1 or x2 less than 2.
+        TypeError: If type of input and other are not the same.
+        TypeError: If dtype of input or other is not float16 or float32.
+        ValueError: If rank of input or other less than 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -310,25 +310,25 @@ def dot(x1, x2):
         >>> import numpy as np
         >>> import mindspore
         >>> from mindspore import Tensor, ops
-        >>> input_x1 = Tensor(np.ones(shape=[2, 3]), mindspore.float32)
-        >>> input_x2 = Tensor(np.ones(shape=[1, 3, 2]), mindspore.float32)
-        >>> output = ops.dot(input_x1, input_x2)
+        >>> input = Tensor(np.ones(shape=[2, 3]), mindspore.float32)
+        >>> other = Tensor(np.ones(shape=[1, 3, 2]), mindspore.float32)
+        >>> output = ops.dot(input, other)
         >>> print(output)
         [[[3. 3.]]
          [[3. 3.]]]
         >>> print(output.shape)
         (2, 1, 2)
-        >>> input_x1 = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
-        >>> input_x2 = Tensor(np.ones(shape=[1, 3, 2]), mindspore.float32)
-        >>> output = ops.dot(input_x1, input_x2)
+        >>> input = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
+        >>> other = Tensor(np.ones(shape=[1, 3, 2]), mindspore.float32)
+        >>> output = ops.dot(input, other)
         >>> print(output)
         [[[[3. 3.]]
           [[3. 3.]]]]
         >>> print(output.shape)
         (1, 2, 1, 2)
-        >>> input_x1 = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
-        >>> input_x2 = Tensor(np.ones(shape=[2, 3, 2]), mindspore.float32)
-        >>> output = ops.dot(input_x1, input_x2)
+        >>> input = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
+        >>> other = Tensor(np.ones(shape=[2, 3, 2]), mindspore.float32)
+        >>> output = ops.dot(input, other)
         >>> print(output)
         [[[[3. 3.]
            [3. 3.]]
@@ -336,9 +336,9 @@ def dot(x1, x2):
            [3. 3.]]]]
         >>> print(output.shape)
         (1, 2, 2, 2)
-        >>> input_x1 = Tensor(np.ones(shape=[3, 2, 3]), mindspore.float32)
-        >>> input_x2 = Tensor(np.ones(shape=[2, 1, 3, 2]), mindspore.float32)
-        >>> output = ops.dot(input_x1, input_x2)
+        >>> input = Tensor(np.ones(shape=[3, 2, 3]), mindspore.float32)
+        >>> other = Tensor(np.ones(shape=[2, 1, 3, 2]), mindspore.float32)
+        >>> output = ops.dot(input, other)
         >>> print(output)
         [[[[[3. 3.]]
            [[3. 3.]]]
@@ -359,22 +359,22 @@ def dot(x1, x2):
     reshape_op = P.Reshape()
     transpose_op = P.Transpose()
     matmul_op = P.MatMul(False, False)
-    x1_shape = shape_op(x1)
-    x2_shape = shape_op(x2)
-    x1_type = F.dtype(x1)
-    x2_type = F.dtype(x2)
-    _typecheck_input_dot(x1_type, x2_type, 'dot')
+    input_shape = shape_op(input)
+    other_shape = shape_op(other)
+    input_type = F.dtype(input)
+    other_type = F.dtype(other)
+    _typecheck_input_dot(input_type, other_type, 'dot')
 
-    if len(x1_shape) > 2 or len(x2_shape) > 2:
-        x2_shape_transpose = _get_transpose_shape(x2_shape)
-        x2_transpose = transpose_op(x2, x2_shape_transpose)
-        x1_reshape = reshape_op(x1, (-1, x1_shape[-1]))
-        x2_reshape = reshape_op(x2_transpose, (x2_shape[-2], -1))
-        mul_result = matmul_op(x1_reshape, x2_reshape)
-        reshape_shape = x1_shape[:-1] + x2_shape[:-2] + x2_shape[-1:]
+    if len(input_shape) > 2 or len(other_shape) > 2:
+        other_shape_transpose = _get_transpose_shape(other_shape)
+        other_transpose = transpose_op(other, other_shape_transpose)
+        input_reshape = reshape_op(input, (-1, input_shape[-1]))
+        other_reshape = reshape_op(other_transpose, (other_shape[-2], -1))
+        mul_result = matmul_op(input_reshape, other_reshape)
+        reshape_shape = input_shape[:-1] + other_shape[:-2] + other_shape[-1:]
         reshape_shape = (-1,) + reshape_shape[1:]
         return reshape_op(mul_result, reshape_shape)
-    return matmul_op(x1, x2)
+    return matmul_op(input, other)
 
 
 @constexpr

@@ -1035,10 +1035,10 @@ def tile(input_x, multiples):
     return tile_(input_x, multiples)
 
 
-def range(start, limit, delta):
+def range(start, end, step):
     r"""
     Creates a sequence of numbers that begins at `start` and extends by increments of
-    `delta` up to but not including `limit`.
+    `limit` up to but not including `end`.
 
     The types of all 3 inputs must be the same. The type of the resulting tensor is
     the same as the type of the inputs.
@@ -1046,34 +1046,34 @@ def range(start, limit, delta):
     Args:
         start (Tensor): A scalar Tensor. The first number in the sequence. Must have
           type: int32 ,int64, float32 or float64.
-        limit (Tensor): A scalar Tensor. Upper limit of the sequence, exclusive. Must
+        end (Tensor): A scalar Tensor. Upper limit of the sequence, exclusive. Must
           have type: int32 ,int64, float32 or float64.
-        delta (Tensor): A scalar Tensor. Number that increments `start`. Must have
+        step (Tensor): A scalar Tensor. Number that increments `start`. Must have
           type: int32 ,int64, float32 or float64.
 
     Returns:
         A 1-D Tensor, with the same type as the inputs.
 
     Raises:
-        TypeError: If `start`, `limit` or `delta` is not scalar Tensor.
-        TypeError: If datatype of `start`, `limit` or `delta` is not same.
-        TypeError: If datatype of `start`, `limit` or `delta` is not supported.
-        ValueError: If `delta` = 0.
-        ValueError: If `start` >= `limit` when `delta` > 0.
-        ValueError: If `start` <= `limit` when `delta` < 0.
+        TypeError: If `start`, `end` or `step` is not scalar Tensor.
+        TypeError: If datatype of `start`, `end` or `step` is not same.
+        TypeError: If datatype of `start`, `end` or `step` is not supported.
+        ValueError: If `step` = 0.
+        ValueError: If `start` >= `end` when `step` > 0.
+        ValueError: If `start` <= `end` when `step` < 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> start = Tensor(0, mstype.int32)
-        >>> limit = Tensor(10, mstype.int32)
-        >>> delta = Tensor(4, mstype.int32)
-        >>> output = ops.range(start, limit, delta)
+        >>> end = Tensor(10, mstype.int32)
+        >>> step = Tensor(4, mstype.int32)
+        >>> output = ops.range(start, end, step)
         >>> print(output)
         [0 4 8]
     """
-    return range_(start, limit, delta)
+    return range_(start, end, step)
 
 
 ##############################
@@ -1436,16 +1436,16 @@ def rank(input_x):
     return rank_(input_x)
 
 
-def reshape(input_x, input_shape):
+def reshape(input, shape):
     """
     Rearranges the input Tensor based on the given shape.
 
-    The 'input_shape' can only have one -1 at most, in which case it’s inferred from the remaining dimensions and
+    The 'shape' can only have one -1 at most, in which case it’s inferred from the remaining dimensions and
     the number of elements in the input.
 
     Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        input_shape (Union[tuple[int], Tensor[int]]): Constructed by multiple
+        input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        shape (Union[tuple[int], Tensor[int]]): Constructed by multiple
             integers, i.e., :math:`(y_1, y_2, ..., y_S)`. Only constant value is allowed.
 
     Returns:
@@ -1460,14 +1460,14 @@ def reshape(input_x, input_shape):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-        >>> output = ops.reshape(input_x, (3, 2))
+        >>> input = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+        >>> output = ops.reshape(input, (3, 2))
         >>> print(output)
         [[-0.1  0.3]
          [ 3.6  0.4]
          [ 0.5 -3.2]]
     """
-    return reshape_(input_x, input_shape)
+    return reshape_(input, shape)
 
 
 def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):

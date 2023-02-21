@@ -27,7 +27,7 @@ from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive, Triu
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations.math_ops import Roll
-from mindspore.ops.composite.math_ops import mm
+from mindspore.ops.composite.math_ops import mm, dot
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -199,6 +199,7 @@ tensor_operator_registry.register('minimum', P.Minimum)
 tensor_operator_registry.register('matrix_determinant', matrix_determinant)
 tensor_operator_registry.register('matrix_power', matrix_power)
 tensor_operator_registry.register('det', det)
+tensor_operator_registry.register('dot', dot)
 tensor_operator_registry.register('log1p', log1p)
 tensor_operator_registry.register('logdet', logdet)
 tensor_operator_registry.register('log_matrix_determinant', log_matrix_determinant)

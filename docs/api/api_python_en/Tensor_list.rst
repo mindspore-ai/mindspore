@@ -104,6 +104,7 @@
     mindspore.Tensor.digamma
     mindspore.Tensor.div
     mindspore.Tensor.divide
+    mindspore.Tensor.dot
     mindspore.Tensor.dsplit
     mindspore.Tensor.dtype
     mindspore.Tensor.equal
