@@ -21,17 +21,17 @@ greater_equal_op_info = AiCPURegOp("GreaterEqual") \
     .input(0, "x1", "required")                                             \
     .input(1, "x2", "required")                                             \
     .output(0, "y", "required")                                             \
-    .dtype_format(DataType.I8_None, DataType.I8_None, DataType.BOOL_None)   \
-    .dtype_format(DataType.I16_None, DataType.I16_None, DataType.BOOL_None) \
-    .dtype_format(DataType.I32_None, DataType.I32_None, DataType.BOOL_None) \
-    .dtype_format(DataType.I64_None, DataType.I64_None, DataType.BOOL_None) \
-    .dtype_format(DataType.U8_None, DataType.U8_None, DataType.BOOL_None)   \
-    .dtype_format(DataType.U16_None, DataType.U16_None, DataType.BOOL_None) \
-    .dtype_format(DataType.U32_None, DataType.U32_None, DataType.BOOL_None) \
-    .dtype_format(DataType.U64_None, DataType.U64_None, DataType.BOOL_None) \
-    .dtype_format(DataType.F16_None, DataType.F16_None, DataType.BOOL_None) \
-    .dtype_format(DataType.F32_None, DataType.F32_None, DataType.BOOL_None) \
-    .dtype_format(DataType.F64_None, DataType.F64_None, DataType.BOOL_None) \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default, DataType.BOOL_Default)   \
+    .dtype_format(DataType.I16_Default, DataType.I16_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.BOOL_Default)   \
+    .dtype_format(DataType.U16_Default, DataType.U16_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.U32_Default, DataType.U32_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.U64_Default, DataType.U64_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.F64_Default, DataType.F64_Default, DataType.BOOL_Default) \
     .get_op_info()
 
 

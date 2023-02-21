@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include <math.h>
-#include "nnacl/errorcode.h"
+#include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/fp32/adam_fp32.h"
-#include "nnacl/adam_fp32_simd.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/adam_fp32_avx512.h"
+#endif
 
 int AdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, const float *gradient,
              size_t start, size_t end, bool use_nesterov) {
@@ -157,7 +159,7 @@ int AdamDeltaFp32(float *delta, float *m, float *v, float lr, float beta1, float
 int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
                         const float *gradient, size_t start, size_t end) {
   size_t c1 = start;
-  SIMD_RUN_NO_SCALAR(AdamWeightDecayFp32, c1, var, m, v, lr, beta1, beta2, epsilon, decay, gradient, end);
+  SIMD_RUN_AVX512(AdamWeightDecayFp32, c1, var, m, v, lr, beta1, beta2, epsilon, decay, gradient, end);
 
   // remaining
   const float beta1_minus = 1 - beta1;
