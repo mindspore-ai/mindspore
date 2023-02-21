@@ -21,6 +21,8 @@
 #include <utility>
 #include <type_traits>
 #include <complex>
+#include <string>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "unsupported/Eigen/CXX11/Tensor"
@@ -29,12 +31,15 @@ namespace mindspore {
 constexpr size_t kInputNum = 1;
 constexpr size_t kOutputNum = 1;
 namespace kernel {
-class FFTWithSizeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class FFTWithSizeCpuKernelMod : public NativeCpuKernelMod {
  public:
   FFTWithSizeCpuKernelMod() = default;
   ~FFTWithSizeCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
@@ -50,7 +55,13 @@ class FFTWithSizeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                                              const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, FFTWithSizeFunc>> func_list_;
   FFTWithSizeFunc kernel_func_;
-  CNodePtr node_wpt_;
+  bool real_;
+  bool inverse_;
+  bool onesided_;
+  int64_t signal_ndim_;
+  std::string normalized_;
+  std::vector<int64_t> raw_checked_signal_size_;
+  std::vector<int64_t> x_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

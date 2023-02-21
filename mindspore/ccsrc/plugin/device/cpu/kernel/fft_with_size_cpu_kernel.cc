@@ -15,16 +15,15 @@
  */
 #include "plugin/device/cpu/kernel/fft_with_size_cpu_kernel.h"
 #include <algorithm>
-#include <string>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
-#define FFTWITHSIZE_SWITCH_DIM_CALCULATE(T1, T2, real, inverse)                                                 \
-  if (signal_ndim == 1) {                                                                                       \
-    FFTWithSizeCompute<T1, T2, 1, real, inverse>(p_x, p_y, onesided, normalized, checked_signal_size, x_shape); \
-  } else if (signal_ndim == 2) {                                                                                \
-    FFTWithSizeCompute<T1, T2, 2, real, inverse>(p_x, p_y, onesided, normalized, checked_signal_size, x_shape); \
-  } else {                                                                                                      \
-    FFTWithSizeCompute<T1, T2, 3, real, inverse>(p_x, p_y, onesided, normalized, checked_signal_size, x_shape); \
+#define FFTWITHSIZE_SWITCH_DIM_CALCULATE(T1, T2, real, inverse)                                                    \
+  if (signal_ndim_ == 1) {                                                                                         \
+    FFTWithSizeCompute<T1, T2, 1, real, inverse>(p_x, p_y, onesided_, normalized_, checked_signal_size, x_shape_); \
+  } else if (signal_ndim_ == 2) {                                                                                  \
+    FFTWithSizeCompute<T1, T2, 2, real, inverse>(p_x, p_y, onesided_, normalized_, checked_signal_size, x_shape_); \
+  } else {                                                                                                         \
+    FFTWithSizeCompute<T1, T2, 3, real, inverse>(p_x, p_y, onesided_, normalized_, checked_signal_size, x_shape_); \
   }
 using std::vector;
 namespace mindspore {
@@ -70,18 +69,40 @@ void change_axes(Eigen::array<unsigned int, size> *axes) {
 }
 }  // namespace
 
-void FFTWithSizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  node_wpt_ = kernel_node;
+bool FFTWithSizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  signal_ndim_ = GetValue<int64_t>(prim->GetAttr("signal_ndim"));
+  inverse_ = GetValue<bool>(prim->GetAttr("inverse"));
+  onesided_ = GetValue<bool>(prim->GetAttr("onesided"));
+  normalized_ = GetValue<string>(prim->GetAttr("norm"));
+  real_ = GetValue<bool>(prim->GetAttr("real"));
+  raw_checked_signal_size_ = GetValue<std::vector<int64_t>>(prim->GetAttr("signal_sizes"));
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "FFT_with_size valid cpu kernel does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << kernel_name_ << " valid cpu kernel does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
 }
 
+int FFTWithSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  x_shape_ = inputs[0]->GetShapeVector();
+  return KRET_OK;
+}
 double Getnormalized(int64_t element_num, const std::string &normalized, bool is_reverse) {
   double result = 1.0;
   if (!is_reverse) {
@@ -229,16 +250,8 @@ bool FFTWithSizeCompute(T1 *input_x, T2 *output_y, bool onesided, std::string no
 template <typename T1, typename T2>
 bool FFTWithSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &outputs) {
-  int64_t signal_ndim = common::AnfAlgo::GetNodeAttr<int64_t>(node_wpt_, "signal_ndim");
-  bool inverse = common::AnfAlgo::GetNodeAttr<bool>(node_wpt_, "inverse");
-  bool onesided = common::AnfAlgo::GetNodeAttr<bool>(node_wpt_, "onesided");
-  std::string normalized = common::AnfAlgo::GetNodeAttr<string>(node_wpt_, "norm");
-  bool real = common::AnfAlgo::GetNodeAttr<bool>(node_wpt_, "real");
-  std::vector<int64_t> raw_checked_signal_size =
-    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node_wpt_, "signal_sizes");
-  std::vector<int64_t> checked_signal_size(raw_checked_signal_size.begin(), raw_checked_signal_size.end());
-  std::vector<int64_t> x_shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 0);
-  const int64_t choose = FFTWithSize_choose(real, inverse);
+  std::vector<int64_t> checked_signal_size(raw_checked_signal_size_.begin(), raw_checked_signal_size_.end());
+  const int64_t choose = FFTWithSize_choose(real_, inverse_);
   auto p_x = reinterpret_cast<T1 *>(inputs[0]->addr);
   auto p_y = reinterpret_cast<T2 *>(outputs[0]->addr);
   if constexpr (std::is_same<T1, T2>::value) {  // fft and ifft

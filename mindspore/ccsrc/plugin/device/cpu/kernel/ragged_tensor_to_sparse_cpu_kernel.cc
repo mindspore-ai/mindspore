@@ -74,7 +74,6 @@ bool RaggedTensorToSparseCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   if (input_num < min_input_num) {
     MS_LOG(EXCEPTION) << "For op " << kernel_name_ << ", the input number must be bigger than " << min_input_num
                       << ", but got " << input_num << ".";
-    return false;
   }
   size_t output_num = outputs.size();
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kRaggedTensorToSparseOutputsNum, kernel_name_);
