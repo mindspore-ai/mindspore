@@ -119,6 +119,9 @@ DECLARE_OP_USE_OUTPUT(ApplyKerasMomentum)
 DECLARE_OP_ADAPTER(ApplyAdamWithAmsgrad)
 DECLARE_OP_USE_OUTPUT(ApplyAdamWithAmsgrad)
 
+DECLARE_OP_ADAPTER(ApplyAdamWithAmsgradD)
+DECLARE_OP_USE_OUTPUT(ApplyAdamWithAmsgradD)
+
 DECLARE_OP_ADAPTER(ApplyPowerSign)
 DECLARE_OP_USE_OUTPUT(ApplyPowerSign)
 
