@@ -49,11 +49,10 @@ AnfNodePtr BuildBatchNormGrad(const PatternMap &m, const AnfNodePtr &new_node) {
                 common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 2UL),
                 common::AnfAlgo::GetPrevNodeOutputInferDataType(bn_grad_node, 3UL),
                 common::AnfAlgo::GetPrevNodeOutputInferDataType(bn_grad_node, 4UL)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(bn_grad_node, 0UL),
-                 common::AnfAlgo::GetOutputDetailShape(bn_grad_node, 1UL),
-                 common::AnfAlgo::GetOutputDetailShape(bn_grad_node, 2UL),
-                 common::AnfAlgo::GetPrevNodeOutputDetailShape(bn_grad_node, 3UL),
-                 common::AnfAlgo::GetPrevNodeOutputDetailShape(bn_grad_node, 4UL)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(bn_grad_node, 0UL), AnfAlgo::GetOutputDetailShape(bn_grad_node, 1UL),
+                 AnfAlgo::GetOutputDetailShape(bn_grad_node, 2UL),
+                 AnfAlgo::GetPrevNodeOutputDetailShape(bn_grad_node, 3UL),
+                 AnfAlgo::GetPrevNodeOutputDetailShape(bn_grad_node, 4UL)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, new_bn_grad.get());
   common::AnfAlgo::CopyNodeAttrs(bn_grad_node, new_bn_grad);
   common::AnfAlgo::SetNodeAttr(kAttrUnifyIRPassed, MakeValue(true), new_bn_grad);

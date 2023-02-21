@@ -246,7 +246,7 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
 
   tile_node->set_scope(mul_node->scope());
   common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(mul_node, 1)},
-                                               {common::AnfAlgo::GetPrevNodeOutputDetailShape(sparse_softmax_node, 1)},
+                                               {AnfAlgo::GetPrevNodeOutputDetailShape(sparse_softmax_node, 1)},
                                                tile_node.get());
   // Feature map set
   std::vector<size_t> feature_map_input_indexs;

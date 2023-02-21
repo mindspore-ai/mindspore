@@ -44,8 +44,7 @@ void BatchNormGradSplit::CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, co
 
   auto types = {common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 1),
                 common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 2)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(bn_grad_node, 1),
-                 common::AnfAlgo::GetOutputDetailShape(bn_grad_node, 2)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(bn_grad_node, 1), AnfAlgo::GetOutputDetailShape(bn_grad_node, 2)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_update_grad.get());
 
   common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_update_grad);
@@ -79,7 +78,7 @@ void BatchNormGradSplit::CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, co
   bn_reduce_grad->set_scope(bn_grad_node->scope());
 
   auto types = {common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(bn_grad_node, 0)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(bn_grad_node, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_reduce_grad.get());
 
   common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_reduce_grad);

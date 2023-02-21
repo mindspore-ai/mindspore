@@ -22,6 +22,7 @@
 #include "include/common/utils/comm_manager.h"
 #include "backend/common/optimizer/helper.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
@@ -117,7 +118,7 @@ CNodePtr AllToAllUnifyMindIR::CreateAllToAllvNode(const FuncGraphPtr &graph, con
   (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs.begin(), split_outputs.end());
   auto all_to_all_v = NewCNode(all_to_all_v_input, graph);
   MS_EXCEPTION_IF_NULL(all_to_all_v);
-  auto single_shape = common::AnfAlgo::GetOutputDetailShape(split_outputs[0], 0UL);
+  auto single_shape = AnfAlgo::GetOutputDetailShape(split_outputs[0], 0UL);
   auto single_type = common::AnfAlgo::GetOutputInferDataType(split_outputs[0], 0UL);
   std::vector<TypeId> dtypes(split_count, single_type);
   std::vector<BaseShapePtr> shapes(split_count, single_shape);

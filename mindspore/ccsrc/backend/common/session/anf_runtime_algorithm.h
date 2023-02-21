@@ -225,6 +225,10 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static size_t GetInputElementNum(const AnfNodePtr &node);
   static bool IsRealSquenceOutput(const AnfNodePtr &node);
   static void SetDynamicAttrToPrim(const PrimitivePtr &prim);
+
+  // Get output detail shape. These interfaces should take TUPLE output into consideration.
+  static abstract::BaseShapePtr GetOutputDetailShape(const AnfNodePtr &node, size_t output_idx);
+  static abstract::BaseShapePtr GetPrevNodeOutputDetailShape(const AnfNodePtr &node, size_t input_idx);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

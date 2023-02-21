@@ -101,7 +101,7 @@ const AnfNodePtr BatchNormReluFusion::Process(const FuncGraphPtr &graph, const A
   auto output_num = AnfAlgo::GetOutputTensorNum(batch_norm);
   for (size_t i = 0; i < output_num; i++) {
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(batch_norm, i));
-    outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(batch_norm, i));
+    outputs_shape.push_back(AnfAlgo::GetOutputDetailShape(batch_norm, i));
   }
   common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, fused_batch_norm_with_relu.get());
   common::AnfAlgo::CopyNodeAttrs(batch_norm, fused_batch_norm_with_relu);

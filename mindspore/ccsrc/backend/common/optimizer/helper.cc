@@ -633,10 +633,10 @@ CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, cons
   if (is_input) {
     auto node_input = common::AnfAlgo::GetInputNode(node, 0);
     (void)new_cast_inputs.emplace_back(node_input);
-    shape = common::AnfAlgo::GetOutputDetailShape(node_input, 0);
+    shape = AnfAlgo::GetOutputDetailShape(node_input, 0);
   } else {
     (void)new_cast_inputs.emplace_back(node);
-    shape = common::AnfAlgo::GetOutputDetailShape(node, 0);
+    shape = AnfAlgo::GetOutputDetailShape(node, 0);
   }
   CNodePtr new_cast = NewCNode(new_cast_inputs, func_graph, {node});
   new_cast->set_scope(node->scope());

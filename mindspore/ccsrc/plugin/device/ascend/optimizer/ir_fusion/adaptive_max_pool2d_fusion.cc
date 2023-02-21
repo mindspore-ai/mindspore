@@ -141,8 +141,8 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
 
   if (height % output_h != 0 || width % output_w != 0) {
     auto types = {common::AnfAlgo::GetOutputInferDataType(adaptive_max_pool2d, 0), kNumberTypeInt64};
-    auto shapes = {common::AnfAlgo::GetOutputDetailShape(adaptive_max_pool2d, 0),
-                   common::AnfAlgo::GetOutputDetailShape(adaptive_max_pool2d, 0)};
+    auto shapes = {AnfAlgo::GetOutputDetailShape(adaptive_max_pool2d, 0),
+                   AnfAlgo::GetOutputDetailShape(adaptive_max_pool2d, 0)};
     common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, adaptive_max_pool2d.get());
     std::vector<AnfNodePtr> multi_outputs;
     CreateMultipleOutputsOfAnfNode(func_graph, adaptive_max_pool2d, kAdaptiveMaxpool2DOutputNumber, &multi_outputs);
@@ -159,7 +159,7 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
                               adaptive_max_pool2d->inputs().end());
   auto pooling = NewCNode(pooling_inputs, kernel_graph);
   auto types = {common::AnfAlgo::GetOutputInferDataType(adaptive_max_pool2d, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(adaptive_max_pool2d, 0)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(adaptive_max_pool2d, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, pooling.get());
   pooling->set_scope(adaptive_max_pool2d->scope());
   SetNodeAttr(pooling, height_attr, width_attr);

@@ -125,7 +125,7 @@ void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(cast);
   auto cast_dtype = common::AnfAlgo::GetOutputInferDataType(cast, 0);
-  auto cast_shape = common::AnfAlgo::GetOutputDetailShape(cast, 0);
+  auto cast_shape = AnfAlgo::GetOutputDetailShape(cast, 0);
   std::vector<abstract::BaseShapePtr> shapes;
   std::vector<TypeId> types;
   size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
@@ -135,7 +135,7 @@ void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size
       (void)types.emplace_back(cast_dtype);
       continue;
     }
-    (void)shapes.emplace_back(common::AnfAlgo::GetOutputDetailShape(cnode, index));
+    (void)shapes.emplace_back(AnfAlgo::GetOutputDetailShape(cnode, index));
     (void)types.emplace_back(common::AnfAlgo::GetOutputInferDataType(cnode, index));
   }
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, cnode.get());

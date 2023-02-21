@@ -191,7 +191,7 @@ bool PrintReduceFusion::Run(const FuncGraphPtr &graph) {
     size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t i = 0; i < output_num; i++) {
       types.push_back(common::AnfAlgo::GetOutputInferDataType(cnode, i));
-      shapes.push_back(common::AnfAlgo::GetOutputDetailShape(cnode, i));
+      shapes.push_back(AnfAlgo::GetOutputDetailShape(cnode, i));
     }
     common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, print_fused.get());
     // add build info

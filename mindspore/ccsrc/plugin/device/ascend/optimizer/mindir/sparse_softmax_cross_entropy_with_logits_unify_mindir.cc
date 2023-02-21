@@ -294,9 +294,9 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
   auto tile_node = pass.NewCNode(tile_inputs, graph);
   MS_EXCEPTION_IF_NULL(tile_node);
   tile_node->set_scope(mul_node->scope());
-  common::AnfAlgo::SetOutputTypeAndDetailShape(
-    {common::AnfAlgo::GetPrevNodeOutputInferDataType(mul_node, 1UL)},
-    {common::AnfAlgo::GetPrevNodeOutputDetailShape(sparse_softmax_node, 1UL)}, tile_node.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(mul_node, 1UL)},
+                                               {AnfAlgo::GetPrevNodeOutputDetailShape(sparse_softmax_node, 1UL)},
+                                               tile_node.get());
   if (is_convert_const_to_attr) {
     common::AnfAlgo::SetNodeAttr(kAttrMultiples, MakeValue(multiples), tile_node);
   }

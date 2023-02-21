@@ -50,7 +50,7 @@ AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const 
   if (axis_from_attr < 0) {
     axis_from_attr += SizeToLong(input_shape.size());
   }
-  auto output_shape_ptr = common::AnfAlgo::GetOutputDetailShape(origin_concat_cnode, 0);
+  auto output_shape_ptr = AnfAlgo::GetOutputDetailShape(origin_concat_cnode, 0);
   MS_EXCEPTION_IF_NULL(output_shape_ptr);
   auto output_shapeptr = output_shape_ptr->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(output_shapeptr);
@@ -63,7 +63,7 @@ AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const 
   auto axis = LongToSize(axis_from_attr);
   output_shape[axis] = 0;
   for (size_t i = begin_index; i < begin_index + offset; ++i) {
-    auto last_input_shape_ptr = common::AnfAlgo::GetPrevNodeOutputDetailShape(origin_concat_cnode, i - 1);
+    auto last_input_shape_ptr = AnfAlgo::GetPrevNodeOutputDetailShape(origin_concat_cnode, i - 1);
     MS_EXCEPTION_IF_NULL(last_input_shape_ptr);
     auto last_input_shapeptr = last_input_shape_ptr->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(last_input_shapeptr);

@@ -835,7 +835,7 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
   auto centerx = GetCenter(graph, neighbor_exchange_v2_grad, split_nodes, split_num, send_rank_ids);
   auto centerx_dtype = common::AnfAlgo::GetOutputInferDataType(centerx, 0UL);
   auto centerx_shape = common::AnfAlgo::GetOutputInferShape(centerx, 0UL);
-  auto base_shape = common::AnfAlgo::GetOutputDetailShape(centerx, 0UL);
+  auto base_shape = AnfAlgo::GetOutputDetailShape(centerx, 0UL);
   // empty
   int64_t all_to_all_output_num =
     std::count_if(recv_rank_ids.begin(), recv_rank_ids.end(), [](int64_t ids) { return ids != kInvalidId; });

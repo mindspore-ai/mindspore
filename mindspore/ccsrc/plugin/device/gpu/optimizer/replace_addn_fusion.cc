@@ -44,7 +44,7 @@ AnfNodePtr BuildAdd(const PatternMap &m, const AnfNodePtr &default_node) {
   std::vector<TypeId> outputs_type;
   std::vector<BaseShapePtr> outputs_shape;
   outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(m.Get(A), 0));
-  outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(m.Get(A), 0));
+  outputs_shape.push_back(AnfAlgo::GetOutputDetailShape(m.Get(A), 0));
   common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, default_node.get());
   AnfAlgo::SetSelectKernelBuildInfo(AnfAlgo::GetSelectKernelBuildInfo(m.Get(m_addn)), default_node.get());
   return default_node;

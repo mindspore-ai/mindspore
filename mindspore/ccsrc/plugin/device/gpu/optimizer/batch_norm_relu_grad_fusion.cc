@@ -101,7 +101,7 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
   auto output_num = AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; i++) {
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, i));
-    outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(node, i));
+    outputs_shape.push_back(AnfAlgo::GetOutputDetailShape(node, i));
   }
   common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, fused_batch_norm_grad_with_relu.get());
   common::AnfAlgo::CopyNodeAttrs(node, fused_batch_norm_grad_with_relu);

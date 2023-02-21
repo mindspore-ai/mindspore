@@ -54,7 +54,7 @@ CNodePtr InsertForInput(const FuncGraphPtr &func_graph, const CNodePtr &node, co
 
   auto in_node = common::AnfAlgo::GetInputNode(node, 0);
   auto type = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
-  auto in_shape = common::AnfAlgo::GetPrevNodeOutputDetailShape(node, 0);
+  auto in_shape = AnfAlgo::GetPrevNodeOutputDetailShape(node, 0);
   auto transpose_out_shape = InferTransposeOutputShape(in_shape, perm);
 
   auto ori_out_types = AnfAlgo::GetAllOutputInferDataTypes(node);
@@ -112,7 +112,7 @@ AnfNodePtr InsertForOutput(const FuncGraphPtr &func_graph, const CNodePtr &orig_
     (void)transpose_inputs.push_back(tuple_getitem);
     (void)transpose_inputs.push_back(perm_value_input);
 
-    auto shape = common::AnfAlgo::GetOutputDetailShape(node, output_idx);
+    auto shape = AnfAlgo::GetOutputDetailShape(node, output_idx);
     auto type = common::AnfAlgo::GetOutputInferDataType(node, output_idx);
     auto transpose_out_shape = InferTransposeOutputShape(shape, perm);
 

@@ -39,7 +39,7 @@ void CopyGraphOutputTypeAndShape(const std::vector<session::KernelWithIndex> &gr
   std::vector<BaseShapePtr> shapes;
   for (const auto &item : graph_outputs) {
     types.push_back(common::AnfAlgo::GetOutputInferDataType(item.first, item.second));
-    shapes.push_back(common::AnfAlgo::GetOutputDetailShape(item.first, item.second));
+    shapes.push_back(AnfAlgo::GetOutputDetailShape(item.first, item.second));
   }
 
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, trt_node.get());

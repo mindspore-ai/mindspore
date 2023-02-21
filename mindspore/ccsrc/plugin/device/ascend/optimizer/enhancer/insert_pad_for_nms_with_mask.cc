@@ -64,7 +64,7 @@ const AnfNodePtr InsertPadForNMSWithMask::Process(const FuncGraphPtr &func_graph
   for (size_t input_idx = 0; input_idx < input_num; input_idx++) {
     auto cur_input = common::AnfAlgo::GetInputNode(cnode, input_idx);
     auto origin_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_idx);
-    auto origin_shape_base_ptr = common::AnfAlgo::GetPrevNodeOutputDetailShape(cnode, input_idx);
+    auto origin_shape_base_ptr = AnfAlgo::GetPrevNodeOutputDetailShape(cnode, input_idx);
     auto origin_shape_ptr = origin_shape_base_ptr->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(origin_shape_ptr);
     auto origin_shape = origin_shape_ptr->shape();

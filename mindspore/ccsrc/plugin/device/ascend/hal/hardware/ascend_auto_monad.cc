@@ -1416,8 +1416,8 @@ class AscendAutoMonadConverter {
       std::vector<AnfNodePtr> cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())),
                                              source};
       auto cast_node = kernel_graph_->NewCNode(cast_inputs);
-      auto origin_shape = common::AnfAlgo::GetOutputDetailShape(source, kFirstOutput);
-      auto shape = common::AnfAlgo::GetOutputDetailShape(target, kFirstOutput);
+      auto origin_shape = AnfAlgo::GetOutputDetailShape(source, kFirstOutput);
+      auto shape = AnfAlgo::GetOutputDetailShape(target, kFirstOutput);
       if (!common::IsEqual(origin_shape, shape)) {
         MS_LOG(EXCEPTION) << "Assign: " << target->DebugString() << " and " << source->DebugString()
                           << " has different shape, source shape: " << origin_shape->ToString()

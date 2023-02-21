@@ -139,9 +139,7 @@ class COMMON_EXPORT AnfAlgo {
   static void SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
                                          AnfNode *node, bool disable_dynamic_len = false);
   static void SetScalarTupleOutputInferType(const std::vector<TypeId> &types, const AnfNodePtr &node);
-  // get and set output shape ptr
-  static abstract::BaseShapePtr GetOutputDetailShape(const AnfNodePtr &node, size_t output_idx);
-  static abstract::BaseShapePtr GetPrevNodeOutputDetailShape(const AnfNodePtr &node, size_t input_idx);
+  // set output shape ptr
   static void SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
                                           const std::vector<abstract::BaseShapePtr> &shapes, AnfNode *node);
   static void CopyAbstract(const AnfNodePtr &from_node, AnfNode *to_node);
@@ -296,6 +294,9 @@ class COMMON_EXPORT AnfAlgo {
   static bool HasTupleInput(const CNodePtr &node);
   static bool HasDynamicTupleInput(const CNodePtr &node);
   static bool IsReduceOp(const std::string &op_name);
+
+  // Get the element shape of dynamic sequence shape.
+  static abstract::BaseShapePtr GetDynamicSequenceShape(const AnfNodePtr &node, size_t output_idx);
 };
 }  // namespace common
 }  // namespace mindspore

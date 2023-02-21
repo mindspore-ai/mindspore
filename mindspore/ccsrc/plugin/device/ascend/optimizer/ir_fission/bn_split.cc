@@ -56,8 +56,7 @@ bool BnSplit::CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const C
   bn_training_reduce->set_kernel_info(kernel_info);
   auto types = {common::AnfAlgo::GetOutputInferDataType(bn_cnode, 1),
                 common::AnfAlgo::GetOutputInferDataType(bn_cnode, 1)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(bn_cnode, 1),
-                 common::AnfAlgo::GetOutputDetailShape(bn_cnode, 1)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(bn_cnode, 1), AnfAlgo::GetOutputDetailShape(bn_cnode, 1)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_training_reduce.get());
   bn_training_reduce->set_scope(bn_cnode->scope());
   if (is_dynamic) {
@@ -205,8 +204,7 @@ AnfNodePtr InsertCast(const FuncGraphPtr &graph, const AnfNodePtr &input, const 
   MS_EXCEPTION_IF_NULL(input);
   if (common::AnfAlgo::GetOutputInferDataType(input, 0) != dst_type) {
     AnfNodePtr cast = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kCastOpName)), input});
-    common::AnfAlgo::SetOutputTypeAndDetailShape({dst_type}, {common::AnfAlgo::GetOutputDetailShape(input, 0)},
-                                                 cast.get());
+    common::AnfAlgo::SetOutputTypeAndDetailShape({dst_type}, {AnfAlgo::GetOutputDetailShape(input, 0)}, cast.get());
     common::AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
     cast->set_scope(input->scope());
     return cast;

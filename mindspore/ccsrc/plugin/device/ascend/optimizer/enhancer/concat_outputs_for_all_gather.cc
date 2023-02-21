@@ -231,7 +231,7 @@ const AnfNodePtr ConcatOutputsForAllGather::Process(const FuncGraphPtr &func_gra
   for (size_t i = 0; i < output_num; ++i) {
     auto tuple_getitem = CreatTupleGetItemNode(func_graph, node, i);
     common::AnfAlgo::SetOutputTypeAndDetailShape({std::get<0>(output_info)[i]},
-                                                 {common::AnfAlgo::GetOutputDetailShape(node, i)}, tuple_getitem.get());
+                                                 {AnfAlgo::GetOutputDetailShape(node, i)}, tuple_getitem.get());
     (void)new_outputs.emplace_back(std::move(tuple_getitem));
   }
   return InsertConcatForOutput(func_graph, node, output_info, new_outputs, rank_size);

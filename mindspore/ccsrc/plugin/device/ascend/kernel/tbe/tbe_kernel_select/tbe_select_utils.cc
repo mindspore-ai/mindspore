@@ -71,8 +71,8 @@ bool HostCheck::CheckValidDeviceShape(const AnfNodePtr &node) {
 
 std::vector<int64_t> HostCheck::GetFinalInferShape(const AnfNodePtr &node, size_t index, bool is_output,
                                                    const std::string &format) {
-  auto shape = is_output ? common::AnfAlgo::GetOutputDetailShape(node, index)
-                         : common::AnfAlgo::GetPrevNodeOutputDetailShape(node, index);
+  auto shape =
+    is_output ? AnfAlgo::GetOutputDetailShape(node, index) : AnfAlgo::GetPrevNodeOutputDetailShape(node, index);
   std::vector<int64_t> infer_shape;
   if (shape->isa<abstract::Shape>()) {
     auto shape_ptr = shape->cast<abstract::ShapePtr>();

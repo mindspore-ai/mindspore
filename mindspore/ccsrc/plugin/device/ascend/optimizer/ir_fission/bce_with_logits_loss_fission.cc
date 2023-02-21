@@ -41,7 +41,7 @@ AnfNodePtr BCEWithLogitsLossFission::AddReduceNode(const FuncGraphPtr &func_grap
   MS_EXCEPTION_IF_NULL(new_cnode);
   auto predict_input = cnode->inputs()[kIndex1];
   auto new_node_dtype = {common::AnfAlgo::GetOutputInferDataType(predict_input, 0)};
-  auto new_node_shape = {common::AnfAlgo::GetOutputDetailShape(predict_input, 0)};
+  auto new_node_shape = {AnfAlgo::GetOutputDetailShape(predict_input, 0)};
   // The kAttrReduction is necessary for InferShape of BCEWithLogitsLoss op
   common::AnfAlgo::SetNodeAttr(kAttrReduction, MakeValue("none"), new_cnode);
   common::AnfAlgo::SetOutputTypeAndDetailShape(new_node_dtype, new_node_shape, new_cnode.get());
@@ -60,7 +60,7 @@ AnfNodePtr BCEWithLogitsLossFission::AddReduceNode(const FuncGraphPtr &func_grap
   }
   auto reduce_node = NewCNode(reduce_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(reduce_node);
-  auto shape = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
+  auto shape = {AnfAlgo::GetOutputDetailShape(node, 0)};
   auto type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   if (type == kNumberTypeFloat16) {
     common::AnfAlgo::SetOutputTypeAndDetailShape({kNumberTypeFloat32}, shape, reduce_node.get());

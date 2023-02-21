@@ -70,7 +70,7 @@ const AnfNodePtr LambUpdateWithLRRuleFusion::Process(const FuncGraphPtr &graph, 
   MS_EXCEPTION_IF_NULL(lamb_update_with_lr);
 
   auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(node, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, lamb_update_with_lr.get());
   lamb_update_with_lr->set_scope(node->scope());
   return lamb_update_with_lr;
