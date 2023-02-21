@@ -23,8 +23,7 @@ namespace mindspore::transform {
 INPUT_MAP(HcomAllReduce) = {{1, INPUT_DESC(x)}};
 OUTPUT_MAP(HcomAllReduce) = {{0, OUTPUT_DESC(y)}};
 ATTR_MAP(HcomAllReduce) = {{"op", ATTR_DESC(reduction, AnyTraits<std::string>())},
-                           {"group", ATTR_DESC(group, AnyTraits<std::string>())},
-                           {"fusion", ATTR_DESC(fusion, AnyTraits<int64_t>())}};
+                           {"group", ATTR_DESC(group, AnyTraits<std::string>())}};
 REG_ADPT_DESC(HcomAllReduce, kNameAllReduce, ADPT_DESC(HcomAllReduce))
 
 // HCOMBraodcast
