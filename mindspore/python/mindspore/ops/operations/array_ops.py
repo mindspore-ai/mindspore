@@ -1762,7 +1762,7 @@ class ScalarToTensor(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['input_scalar', 'dtype'], outputs=['output_data'])
 
     def __call__(self, x, dtype=mstype.float32):
-        validator.check_value_type("x", x, [int, float], self.name)
+        validator.check_value_type("x", x, [bool, int, float], self.name)
         validator.check_subclass("dtype", dtype, mstype.number, self.name)
         data_type = mstype.dtype_to_nptype(dtype)
         return Tensor(np.array(x, data_type))
