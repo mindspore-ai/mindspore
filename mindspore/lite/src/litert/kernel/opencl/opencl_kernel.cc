@@ -192,7 +192,33 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
   }
 }
 
+bool OpenCLKernel::MallocDataDone() {
+  if ((op_parameter_->type_ >= PrimType::PrimType_InnerOpMin) &&
+      (op_parameter_->type_ < PrimType::PrimType_InnerOpMax)) {
+    return false;
+  }
+  for (auto &out_tensor : out_tensors_) {
+    if (out_tensor->data() == nullptr) {
+      return false;
+    }
+    auto allocator = out_tensor->allocator();
+    if (allocator == nullptr) {
+      return false;
+    }
+    lite::opencl::MemType memType;
+    auto buffer = reinterpret_cast<mindspore::lite::opencl::OpenCLAllocator *>(allocator.get())
+                    ->GetOpenclMemPtr(out_tensor->data(), &memType);
+    if ((buffer == nullptr) || (memType != lite::opencl::MemType::IMG)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 int OpenCLKernel::PreProcess() {
+  if (MallocDataDone()) {
+    return RET_OK;
+  }
   int ret = ReSize();
   if (ret != RET_OK) {
     return ret;
