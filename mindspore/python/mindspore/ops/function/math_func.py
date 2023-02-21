@@ -4550,66 +4550,53 @@ def heaviside(x, values):
     return heaviside_(x, values)
 
 
-def _type_checking_for_xspace(start, end, steps):
-    """utility parameter checking function for linspace, logspace, geomspace."""
-    array_types = (int, float, bool, list, tuple, Tensor)
-    def _get_type(x):
-        """get the dtype of input"""
-        if isinstance(x, Tensor):
-            return x.dtype
-        return type(x)
-    if not isinstance(start, array_types):
-        raise TypeError(f"For 'logspace', 'start' should be int, float, bool, list, tuple, Tensor, but got"
-                        f" {_get_type(start)}.")
-    if not isinstance(end, array_types):
-        raise TypeError(f"For 'logspace', 'end' should be int, float, bool, list, tuple, Tensor, but got"
-                        f" {_get_type(end)}.")
-    if not isinstance(steps, int):
-        raise TypeError(f"For 'logspace', steps should be an integer, but got {_get_type(steps)}.")
-    return start, end, steps
+def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
+    r"""
+    Returns a Tensor whose value is evenly spaced on a logarithmic scale.
 
+    .. math::
+        \begin{aligned}
+        &step = (end - start)/(steps - 1)\\
+        &output = [base^{start}, base^{start + 1 * step}, ... , base^{start + (steps-2) * step}, base^{end}]
+        \end{aligned}
 
-def logspace(start, end, steps, base=10.0, dtype=None):
-    """
-    Returns numbers spaced evenly on a log scale.
-
-    In linear space, the sequence starts at base ** start (base to the power of
-    start) and ends with base ** end (see endpoint below).
+    Note:
+        - Input `base` must be integer.
 
     Args:
-        start (Union[int, list(int), tuple(int), Tensor]): ``base ** start`` is the starting
-            value of the sequence.
-        end (Union[int, list(int), tuple(int), Tensor]): ``base ** end`` is the final value of
-            the sequence.
-        steps (int): Number of samples to generate.
-        base (Union[int, float], optional): The base of the log space. The step size
-            between the elements in :math:`ln(samples) / ln(base)` (or :math:`log_{base}(samples)`)
-            is uniform. Default is 10.0.
-        dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype.
-            If `dtype` is None, infer the data type from other input arguments. Default is None.
+        start (Union[float, Tensor]): Start value of interval.
+        end (Union[float, Tensor]): End value of interval.
+        steps (int): The steps must be a non-negative integer.
+        base (int, optional): The base must be a non-negative integer. Default: 10.
+        dtype (mindspore.dtype, optional): The dtype of output. Default: mstype.float32.
 
     Returns:
-        Tensor, equally spaced on a log scale.
+        Tensor has the shape as (step, ). Its datatype is set by the attr 'dtype'.
 
     Raises:
-        TypeError: If input arguments have types not specified above.
+        TypeError: If `start` is not a float or a Tensor.
+        TypeError: If `end` is not a float or a Tensor.
+        TypeError: If `steps` is not an int.
+        TypeError: If `base` is not an int.
+        ValueError: If `steps` is not a non-negative integer.
+        ValueError: If `base` is not a non-negative integer.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops
-        >>> print(ops.logspace(0, 5, 6, base=2.0))
-        [ 1.  2.  4.  8. 16. 32.]
+        >>> start = Tensor(1, mindspore.float32)
+        >>> end = Tensor(10, mindspore.float32)
+        >>> output = ops.logspace(start, end, steps = 10, base = 10, dtype=mstype.float32)
+        >>> print(output)
+        [1.e+01 1.e+02 1.e+03 1.e+04 1.e+05 1.e+06 1.e+07 1.e+08 1.e+09 1.e+10]
     """
-    start, end, steps = _type_checking_for_xspace(start, end, steps)
-    if not isinstance(base, (int, float, bool)):
-        raise TypeError(f"For 'logspace', 'base' should be a number, but got {base}.")
-    if dtype is None:
-        dtype = mstype.float32
-    linspace_res = linspace_(start, end, steps)
-    _tensor_pow = _get_cache_prim(P.Pow)()
-    return _tensor_pow(base, linspace_res).astype(dtype)
+    if isinstance(start, float):
+        start = Tensor(start, dtype=mstype.float32)
+    if isinstance(end, float):
+        end = Tensor(end, dtype=mstype.float32)
+    logspace_ = _get_cache_prim(P.LogSpace)(steps, base, dtype)
+    return logspace_(start, end)
 
 
 def logaddexp(x1, x2):
