@@ -6,7 +6,7 @@ mindspore.ops.topk
     沿给定维度查找 `k` 个最大或最小元素和对应的索引。
 
     .. warning::
-        - 如果 `sorted` 设置为False，它将使用aicpu运算符，性能可能会降低。
+        - 如果 `sorted` 设置为False，它将使用aicpu运算符，性能可能会降低，另外，由于在不同平台上存在内存排布以及遍历方式不同等问题，`sorted` 设置为False时计算结果的显示顺序可能会出现不一致的情况。
 
     如果 `input_x` 是一维Tensor，则查找Tensor中 `k` 个最大或最小元素，并将其值和索引输出为Tensor。`values[k]` 是 `input_x` 中 `k` 个最大元素，其索引是 `indices[k]` 。
 
@@ -22,7 +22,7 @@ mindspore.ops.topk
         - **k** (int) - 指定计算最大或最小元素的数量，必须为常量。
         - **dim** (int, 可选) - 需要排序的维度。默认值：None。
         - **largest** (bool, 可选) - 如果为False，则会返回前k个最小值。默认值：True。
-        - **sorted** (bool, 可选) - 如果为True，则获取的元素将按值降序排序。如果为False，则获取的元素将按值升序排序。默认值：True。
+        - **sorted** (bool, 可选) - 如果为True，则获取的元素将按值降序排序。如果为False，则不对获取的元素进行排序。默认值：True。
 
     返回：
         由 `values` 和 `indices` 组成的tuple。
