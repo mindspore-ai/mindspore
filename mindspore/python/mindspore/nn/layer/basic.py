@@ -487,7 +487,7 @@ class Upsample(Cell):
             upsample = P.image_ops.ResizeLinear1D(
                 coordinate_transformation_mode=coordinate_transformation_mode
             )
-            return upsample(tensor, Tensor(size, dtype=mstype.int32))
+            return upsample(tensor, size)
 
         def run_bilinear(tensor, ndim, size):
             if self.scale_factor is not None:
