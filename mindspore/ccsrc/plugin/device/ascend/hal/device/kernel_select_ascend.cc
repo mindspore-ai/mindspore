@@ -1242,8 +1242,7 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
     }
 
     std::vector<std::pair<string, size_t>> attr_to_input_infos;
-    if (kernel::GetAicpuOpAttrToInputInfo(kernel_node, &attr_to_input_infos) &&
-        !common::AnfAlgo::IsDynamicShape(kernel_node)) {
+    if (kernel::GetAicpuOpAttrToInputInfo(kernel_node, &attr_to_input_infos)) {
       ConvertAttrToInput(kernel_node, &attr_to_input_infos);
     }
 
