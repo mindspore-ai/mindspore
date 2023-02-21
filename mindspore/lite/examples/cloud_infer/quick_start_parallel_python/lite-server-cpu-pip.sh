@@ -32,7 +32,7 @@
 set -e
 
 PYTHON_VERSION=${PYTHON_VERSION:-3.7}
-MINDSPORE_LITE_VERSION=${MINDSPORE_LITE_VERSION:-1.9.0}
+MINDSPORE_LITE_VERSION=${MINDSPORE_LITE_VERSION:-2.0.0}
 
 version_less() {
     test "$(echo "$@" | tr ' ' '\n' | sort -rV | head -n 1)" != "$1";
@@ -78,8 +78,7 @@ if [ ! -e ${BASEPATH}/model/input.bin ]; then
 fi
 
 # Reinstall MindSpore Lite whl package
-mindspore_lite_whl=`ls ${BASEPATH}/mindspore_lite*.whl`
-if [ -f "${mindspore_lite_whl}" ]; then
+if [ -f "'echo ${BASEPATH}/mindspore_lite*.whl'" ]; then
   echo "==========[INFO]MindSpore Lite Whl found, install the current directory's package.=========="
   python -m pip uninstall -y mindspore_lite
   python -m pip install mindspore*.whl

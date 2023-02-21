@@ -79,8 +79,7 @@ fi
 
 # Reinstall MindSpore Lite whl package
 arch=`uname -m`
-mindspore_lite_whl=`ls ${BASEPATH}/mindspore_lite*.whl`
-if [ -f "${mindspore_lite_whl}" ]; then
+if [ -f "'echo ${BASEPATH}/mindspore_lite*.whl'" ]; then
   echo "==========[INFO]MindSpore Lite Whl found, install the current directory's package.=========="
   python -m pip uninstall -y mindspore_lite
   python -m pip install mindspore*.whl
