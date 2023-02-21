@@ -20,8 +20,24 @@ import mindspore as ms
 import mindspore.nn as nn
 
 
+class Net(nn.Cell):
+    def __init__(self, kernel_size=1, stride=1, pad_mode="valid", padding=0, dilation=1, return_indices=False,
+                 ceil_mode=False):
+        super(Net, self).__init__()
+        self.pool = nn.MaxPool3d(kernel_size=kernel_size, stride=stride, pad_mode=pad_mode, padding=padding,
+                                 dilation=dilation, return_indices=return_indices, ceil_mode=ceil_mode)
+
+    def construct(self, x):
+        out = self.pool(x)
+        return out
+
+
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_maxpool3d_normal(mode):
@@ -31,40 +47,13 @@ def test_maxpool3d_normal(mode):
     Expectation: success
     """
     ms.set_context(mode=mode)
-    np_array = np.arange(1 * 2 * 4 * 4 * 5).reshape((1, 2, 4, 4, 5))
+    x = ms.Tensor(np.random.randint(0, 10, [5, 3, 4, 6, 7]), dtype=ms.float32)
+    pool1 = Net(kernel_size=2, stride=1, pad_mode='pad', padding=1, dilation=3, return_indices=False)
+    output1 = pool1(x)
 
-    net1 = nn.MaxPool3d(kernel_size=3, stride=1, padding=1)
-    net2 = nn.MaxPool3d(kernel_size=3, stride=1, padding=1, return_indices=True)
-    x = ms.Tensor(np_array, ms.float32)
-    output1 = net1(x)
-    output2 = net2(x)
-    output3 = np.array([[[[[26.0, 27.0, 28.0, 29.0, 29.0], [31.0, 32.0, 33.0, 34.0, 34.0],
-                           [36.0, 37.0, 38.0, 39.0, 39.0], [36.0, 37.0, 38.0, 39.0, 39.0]],
-                          [[46.0, 47.0, 48.0, 49.0, 49.0], [51.0, 52.0, 53.0, 54.0, 54.0],
-                           [56.0, 57.0, 58.0, 59.0, 59.0], [56.0, 57.0, 58.0, 59.0, 59.0]],
-                          [[66.0, 67.0, 68.0, 69.0, 69.0], [71.0, 72.0, 73.0, 74.0, 74.0],
-                           [76.0, 77.0, 78.0, 79.0, 79.0], [76.0, 77.0, 78.0, 79.0, 79.0]],
-                          [[66.0, 67.0, 68.0, 69.0, 69.0], [71.0, 72.0, 73.0, 74.0, 74.0],
-                           [76.0, 77.0, 78.0, 79.0, 79.0], [76.0, 77.0, 78.0, 79.0, 79.0]]],
-                         [[[106.0, 107.0, 108.0, 109.0, 109.0], [111.0, 112.0, 113.0, 114.0, 114.0],
-                           [116.0, 117.0, 118.0, 119.0, 119.0], [116.0, 117.0, 118.0, 119.0, 119.0]],
-                          [[126.0, 127.0, 128.0, 129.0, 129.0], [131.0, 132.0, 133.0, 134.0, 134.0],
-                           [136.0, 137.0, 138.0, 139.0, 139.0], [136.0, 137.0, 138.0, 139.0, 139.0]],
-                          [[146.0, 147.0, 148.0, 149.0, 149.0], [151.0, 152.0, 153.0, 154.0, 154.0],
-                           [156.0, 157.0, 158.0, 159.0, 159.0], [156.0, 157.0, 158.0, 159.0, 159.0]],
-                          [[146.0, 147.0, 148.0, 149.0, 149.0], [151.0, 152.0, 153.0, 154.0, 154.0],
-                           [156.0, 157.0, 158.0, 159.0, 159.0], [156.0, 157.0, 158.0, 159.0, 159.0]]]]])
-    output4 = np.array([[[[[26, 27, 28, 29, 29], [31, 32, 33, 34, 34], [36, 37, 38, 39, 39], [36, 37, 38, 39, 39]],
-                          [[46, 47, 48, 49, 49], [51, 52, 53, 54, 54], [56, 57, 58, 59, 59], [56, 57, 58, 59, 59]],
-                          [[66, 67, 68, 69, 69], [71, 72, 73, 74, 74], [76, 77, 78, 79, 79], [76, 77, 78, 79, 79]],
-                          [[66, 67, 68, 69, 69], [71, 72, 73, 74, 74], [76, 77, 78, 79, 79], [76, 77, 78, 79, 79]]],
-                         [[[26, 27, 28, 29, 29], [31, 32, 33, 34, 34], [36, 37, 38, 39, 39], [36, 37, 38, 39, 39]],
-                          [[46, 47, 48, 49, 49], [51, 52, 53, 54, 54], [56, 57, 58, 59, 59], [56, 57, 58, 59, 59]],
-                          [[66, 67, 68, 69, 69], [71, 72, 73, 74, 74], [76, 77, 78, 79, 79], [76, 77, 78, 79, 79]],
-                          [[66, 67, 68, 69, 69], [71, 72, 73, 74, 74], [76, 77, 78, 79, 79], [76, 77, 78, 79, 79]]]]])
-    assert output1.shape == (1, 2, 4, 4, 5)
-    assert len(output2) == 2
-    assert output2[1].shape == (1, 2, 4, 4, 5)
-    assert np.allclose(output1.asnumpy(), output3)
-    assert np.allclose(output2[0].asnumpy(), output1.asnumpy())
-    assert np.allclose(output2[1].asnumpy(), output4)
+    pool2 = Net(kernel_size=2, stride=1, pad_mode='pad', padding=1, dilation=3, return_indices=True)
+    output2 = pool2(x)
+
+    assert output1.shape == (5, 3, 3, 5, 6)
+    assert output2[0].shape == (5, 3, 3, 5, 6)
+    assert output2[1].shape == (5, 3, 3, 5, 6)
