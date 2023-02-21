@@ -380,6 +380,7 @@ Image Processing Layer
     mindspore.nn.PixelShuffle
     mindspore.nn.PixelUnshuffle
     mindspore.nn.ResizeBilinear
+    mindspore.nn.Upsample
 
 Tools
 -----

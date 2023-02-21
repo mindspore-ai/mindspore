@@ -189,6 +189,9 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.atan
     mindspore.ops.atan2
     mindspore.ops.atanh
+    mindspore.ops.atleast_1d
+    mindspore.ops.atleast_2d
+    mindspore.ops.atleast_3d
     mindspore.ops.bessel_i0
     mindspore.ops.bessel_i0e
     mindspore.ops.bessel_i1
@@ -209,11 +212,13 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.ceil
     mindspore.ops.clamp
     mindspore.ops.clip
+    mindspore.ops.combinations
     mindspore.ops.copysign
     mindspore.ops.cos
     mindspore.ops.cosh
     mindspore.ops.cosine_similarity
     mindspore.ops.cov
+    mindspore.ops.diag_embed
     mindspore.ops.diff
     mindspore.ops.deg2rad
     mindspore.ops.digamma
@@ -257,10 +262,13 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.mul
     mindspore.ops.multiply
     mindspore.ops.mvlgamma
+    mindspore.ops.nanquantile
     mindspore.ops.neg
     mindspore.ops.negative
+    mindspore.ops.polygamma
     mindspore.ops.positive
     mindspore.ops.pow
+    mindspore.ops.quantile
     mindspore.ops.rad2deg
     mindspore.ops.ravel
     mindspore.ops.real
@@ -284,6 +292,8 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.tan
     mindspore.ops.tanhshrink
     mindspore.ops.trapz
+    mindspore.ops.tril_indices
+    mindspore.ops.triu_indices
     mindspore.ops.true_divide
     mindspore.ops.trunc
     mindspore.ops.truncate_div
@@ -302,12 +312,15 @@ Reduction函数
     mindspore.ops.all
     mindspore.ops.amax
     mindspore.ops.amin
+    mindspore.ops.aminmax
     mindspore.ops.any
     mindspore.ops.argmax
     mindspore.ops.argmin
     mindspore.ops.cummax
     mindspore.ops.cummin
     mindspore.ops.cumsum
+    mindspore.ops.fmax
+    mindspore.ops.fmin
     mindspore.ops.logsumexp
     mindspore.ops.max
     mindspore.ops.mean
@@ -485,6 +498,7 @@ Array操作
     mindspore.ops.diagonal
     mindspore.ops.dyn_shape
     mindspore.ops.dsplit
+    mindspore.ops.dstack
     mindspore.ops.einsum
     mindspore.ops.expand
     mindspore.ops.expand_dims
@@ -530,6 +544,7 @@ Array操作
     mindspore.ops.shuffle
     mindspore.ops.size
     mindspore.ops.slice
+    mindspore.ops.sort
     mindspore.ops.space_to_batch_nd
     mindspore.ops.sparse_segment_mean
     mindspore.ops.split
@@ -562,6 +577,7 @@ Array操作
     mindspore.ops.unstack
     mindspore.ops.view_as_real
     mindspore.ops.vsplit
+    mindspore.ops.vstack
     mindspore.ops.where
     mindspore.ops.cross
     mindspore.ops.cumprod

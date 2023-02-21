@@ -2553,9 +2553,12 @@ def atan2(input, other):
     It returns :math:`\theta\ \in\ [-\pi, \pi]`
     such that :math:`input = r*\sin(\theta), other = r*\cos(\theta)`, where :math:`r = \sqrt{input^2 + other^2}`.
 
-    Args of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower precision data type will be converted to relatively the
-    highest precision data type.
+    .. note::
+        - Arg `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+            If they have different data types, the lower precision data type will be converted to relatively the
+            highest precision data type.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Args:
         input (Tensor, Number.number): The input tensor or scalar.
@@ -4209,28 +4212,26 @@ def fmax(x1, x2):
     r"""
     Computes the maximum of input tensors element-wise.
 
-    Note:
-        - Inputs of `x1` and `x2` comply with the implicit type conversion rules to make the data types consistent.
-        - The inputs must be two tensors.
-        - Types of them are one of the following: float16, float32, float64, int32, int64.
-        - Shapes of them are supposed to be broadcast.
-        - If one of the elements to be compared is NaN, another element is returned.
-
     .. math::
         output_i = max(x1_i, x2_i)
 
+    Note:
+        - Inputs of `x1` and `x2` comply with the implicit type conversion rules to make the data types consistent.
+        - Shapes of `x1` and `x2` should be able to broadcast.
+        - If one of the elements to be compared is NaN, another element is returned.
+
     Args:
-        x1 (Tensor): The first input is a tensor whose data type is number.
-        x2 (Tensor): The second input is is a tensor whose data type is number.
+        x1 (Tensor): The first tensor. The supported dtypes are: float16, float32, float64, int32, int64.
+        x2 (Tensor): The second tensor. The supported dtypes are: float16, float32, float64, int32, int64.
 
     Returns:
         A Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x1` and `x2` is not Tensor.
-        TypeError: If dtype of `x1` and 'x2' is not one of: float16, float32, float64, int32, int64.
-        ValueError: If `x1` and `x2` are not the same shape after broadcast.
+        TypeError: If `x1` or `x2` is not Tensor.
+        TypeError: If dtype of `x1` or `x2` is not one of: float16, float32, float64, int32, int64.
+        ValueError: If the shape of  `x1` and `x2` can not broadcast.
 
     Supported Platforms:
         ``CPU``
@@ -4301,28 +4302,26 @@ def fmin(x1, x2):
     r"""
     Computes the minimum of input tensors element-wise.
 
-    Note:
-        - Inputs of `x1` and `x2` comply with the implicit type conversion rules to make the data types consistent.
-        - The inputs must be two tensors.
-        - Types of them are one of the following: float16, float32, float64, int32, int64.
-        - Shapes of them are supposed to be broadcast.
-        - If one of the elements to be compared is NaN, another element is returned.
-
     .. math::
         output_i = min(x1_i, x2_i)
 
+    Note:
+        - Inputs of `x1` and `x2` comply with the implicit type conversion rules to make the data types consistent.
+        - Shapes of `x1` and `x2` should be able to broadcast.
+        - If one of the elements to be compared is NaN, another element is returned.
+
     Args:
-        x1 (Tensor): The first input is a tensor whose data type is number.
-        x2 (Tensor): The second input is is a tensor whose data type is number.
+        x1 (Tensor): The first tensor. The supported dtypes are: float16, float32, float64, int32, int64.
+        x2 (Tensor): The second tensor. The supported dtypes are: float16, float32, float64, int32, int64.
 
     Returns:
         A Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x1` and `x2` is not Tensor.
-        TypeError: If dtype of `x1` and 'x2' is not one of: float16, float32, float64, int32, int64.
-        ValueError: If `x1` and `x2` are not the same shape after broadcast.
+        TypeError: If `x1` or `x2` is not Tensor.
+        TypeError: If dtype of `x1` or `x2` is not one of: float16, float32, float64, int32, int64.
+        ValueError: If the shape of  `x1` and `x2` can not broadcast.
 
     Supported Platforms:
         ``CPU``
@@ -5971,18 +5970,18 @@ def block_diag(*inputs):
 
 def atleast_1d(inputs):
     r"""
-    Converts `inputs` to arrays with at least one dimension.
+    Reshapes Tensor in `inputs`, every Tensor has at least one dimension after this operation.
 
-    Scalar `inputs` are converted to 1-dimensional arrays, whilst higher-dimensional `inputs` are preserved.
+    Scalar is converted to a 1-D Tensor, input tensor with one or more dimensions will be returned as it is.
 
     Args:
-        inputs (Union[Tensor, List[Tensor]]): One or more input tensors.
+        inputs (Union[Tensor, list[Tensor]]): One or more input tensors.
 
     Returns:
-        Tensor or list of tensors, each with ``a.ndim >= 1``.
+        Tensor or list[Tensor]. If returned a list, every element `a` in that list satisfies: `a`.ndim >= 1.
 
     Raises:
-        TypeError: If the input is not a tensor or a list of tensors.
+        TypeError: If the `input` is not a tensor or a list of tensors.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6010,14 +6009,14 @@ def atleast_1d(inputs):
 
 def dstack(inputs):
     r"""
-    Stacks tensors in sequence depth wise (along the third axis).
+    Stacks tensors in sequence depth wise.
 
     This is equivalent to concatenation along the third axis.
     1-D tensors :math:`(N,)` should be reshaped to :math:`(1,N,1)`.
     2-D tensors :math:`(M,N)` should be reshaped to :math:`(M,N,1)` before concatenation.
 
     Args:
-        inputs (Union(List[tensor], Tuple[tensor])): A sequence of tensors.
+        inputs (Union(List[Tensor], Tuple[Tensor])): A sequence of tensors.
             The tensors must have the same shape along all but the third axis.
             1-D or 2-D tensors must have the same shape.
 
@@ -6033,13 +6032,16 @@ def dstack(inputs):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x1 = Tensor([1., 2., 3.])
-        >>> x2 = Tensor([4., 5., 6.])
+        >>> x1 = Tensor(np.arange(1, 7).reshape(2, 3))
+        >>> x2 = Tensor(np.arange(7, 13).reshape(2, 3))
         >>> out = ops.dstack([x1, x2])
         >>> print(out.asnumpy())
-        [[[1. 4.]
-          [2. 5.]
-          [3. 6.]]]
+        [[[ 1.  7.]
+          [ 2.  8.]
+          [ 3.  9.]]
+         [[ 4. 10.]
+          [ 5. 11.]
+          [ 6. 12.]]]
     """
     if not isinstance(inputs, (tuple, list)):
         raise TypeError(f"For 'dstack', 'diff', 'inputs' must be list or tuple of tensors, but got {type(inputs)}")
@@ -6137,11 +6139,12 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
 
 def tril_indices(row, col, offset=0, dtype=mstype.int64):
     r"""
-    Returns the indices of the lower triangular part of a row-by- col matrix in a 2-by-N Tensor,
-    where the first row contains row coordinates of all indices and the second row contains column coordinates.
-    Indices are ordered based on rows and then columns.
+    Calculates the indices of the lower triangular elements in a `row` * `col` matrix
+    and returns them as a 2-by-N Tensor. The first row of the Tensor contains
+    row coordinates, and the second row contains column coordinates. The coordinates are
+    sorted by row and then by column.
 
-    The lower triangular part of the matrix is defined as the elements on and below the diagonal.
+    The lower triangular part of the matrix consists of all elements on and below the diagonal.
 
     Note:
         When running on CUDA, row * col must be less than 2^59 to prevent overflow during calculation.
@@ -6149,9 +6152,9 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
     Args:
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
-        offset (int): diagonal offset from the main diagonal. Default: 0.
+        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
         dtype (:class:`mindspore.dtype`): The specified type of output tensor.
-            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int32`.
+            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int64`.
 
     Returns:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type is specified by `dtype`.
@@ -6169,8 +6172,8 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
     Examples:
         >>> output = ops.tril_indices(4, 3, -1, mindspore.int64)
         >>> print(output)
-        [[1 2 2 3 3 3]
-         [0 0 1 0 1 2]]
+        [[2 3 3]
+         [0 0 1]]
         >>> print(output.dtype)
         Int64
     """
@@ -6181,11 +6184,12 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
 
 def triu_indices(row, col, offset=0, dtype=mstype.int64):
     r"""
-    Returns the indices of the upper triangular part of a row by col matrix in a 2-by-N Tensor,
-    where the first row contains row coordinates of all indices and the second row contains column coordinates.
-    Indices are ordered based on rows and then columns.
+    Calculates the indices of the upper triangular elements in a `row` * `col` matrix
+    and returns them as a 2-by-N Tensor. The first row of the Tensor contains
+    row coordinates, and the second row contains column coordinates. The coordinates are
+    sorted by row and then by column.
 
-    The upper triangular part of the matrix is defined as the elements on and above the diagonal.
+    The upper triangular part of the matrix consists of all elements on and above the diagonal.
 
     Note:
         When running on CUDA, row * col must be less than 2^59 to prevent overflow during calculation.
@@ -6193,9 +6197,9 @@ def triu_indices(row, col, offset=0, dtype=mstype.int64):
     Args:
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
-        offset (int): diagonal offset from the main diagonal. Default: 0.
+        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
         dtype (:class:`mindspore.dtype`): The specified type of output tensor.
-            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int32`.
+            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int64`.
 
     Returns:
         - **y** (Tensor) - indices of the elements in upper triangular part of matrix. The type is specified by `dtype`.
@@ -6211,7 +6215,7 @@ def triu_indices(row, col, offset=0, dtype=mstype.int64):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> output = ops.triu_indices(5, 4, 2, mindspore.int64)
+        >>> output = ops.triu_indices(4, 4, 2, mindspore.int64)
         >>> print(output)
         [[0 0 1]
          [2 3 3]]
@@ -6225,17 +6229,18 @@ def triu_indices(row, col, offset=0, dtype=mstype.int64):
 
 def atleast_2d(inputs):
     r"""
-    Reshapes `inputs` as arrays with at least two dimensions.
-    Input tensor with two or more dimensions will be returned as is.
+    Reshapes Tensor in `inputs`, every Tensor has at least 2 dimension after this operation.
+
+    Scalar or 1-D Tensor is converted to 2-D Tensor, tensor with higher dimensions will be returned as it is.
 
     Args:
-        inputs (Union[tensor, List[tensor]]): one or more input tensors.
+        inputs (Union[Tensor, list[Tensor]]): One or more input tensors.
 
     Returns:
-        Tensor or list of tensors, each with ``a.ndim >= 2``.
+        Tensor or list[Tensor]. If returned a list, every element `a` in that list satisfies: `a`.ndim >= 2.
 
     Raises:
-        TypeError: If the input is not a tensor or a list of tensors.
+        TypeError: If the `input` is not a tensor or a list of tensors.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6303,19 +6308,21 @@ def cartesian_prod(*inputs):
 
 def atleast_3d(inputs):
     r"""
-    Reshapes `inputs` as arrays with at least three dimensions.
-    Input tensor with three or more dimensions will be returned as is.
+    Reshapes Tensor in `inputs`, every Tensor has at least 2 dimension after this operation.
+
+    Scalar, 1-D or 2-D Tensor is converted to 2-D Tensor,
+    tensor with higher dimensions will be returned as it is.
 
     Args:
-        inputs (Union[Tensor, List[Tensor]]): One or more input tensors.
+        inputs (Union[Tensor, list[Tensor]]): One or more input tensors.
 
     Returns:
-        Tensor or list of tensors, each with ``a.ndim >= 3``. For example,
-        a 1-D array of shape `(N,)` becomes a tensor of shape `(1, N, 1)`, and
-        a 2-D array of shape `(M, N)` becomes a tensor of shape `(M, N, 1)`.
+        Tensor or list[Tensor]. If returned a list, every element `a` in that list satisfies: `a`.ndim >= 3.
+        For example, a 1-D Tensor of shape :math:`(N,)` becomes a Tensor of shape :math:`(1, N, 1)`, and
+        a 2-D Tensor of shape :math:`(M, N)` becomes a tensor of shape :math:`(M, N, 1)`.
 
     Raises:
-        TypeError: If the input is not a tensor or a list of tensors.
+        TypeError: If the `input` is not a tensor or a list of tensors.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6400,7 +6407,8 @@ def vstack(inputs):
     Stacks tensors in sequence vertically.
 
     This is equivalent to concatenation along the first axis.
-    1-D tensors should firstly be reshaped to :math:`(1, N)`, and then be concatenated along the first axis.
+    1-D tensors :math:`(N)` should firstly be reshaped to :math:`(1, N)`,
+    and then be concatenated along the first axis.
 
     Args:
         inputs (Union(List[tensor], Tuple[tensor])): A sequence of 1-D or 2-D tensors.
@@ -6412,7 +6420,7 @@ def vstack(inputs):
         The output shape is similar to the output of `numpy.vstack()` function.
 
     Raises:
-        TypeError: If `inputs` is not list.
+        TypeError: If `inputs` is not list or tuple.
         ValueError: If `inputs` is empty.
 
     Supported Platforms:
@@ -6420,12 +6428,12 @@ def vstack(inputs):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> x1 = np.array([1, 2, 3])
-        >>> x2 = np.array([4, 5, 6])
+        >>> x1 = np.array([3, 1, 4])
+        >>> x2 = np.array([1, 5, 9])
         >>> out = ops.vstack([x1, x2])
         >>> print(out)
-        [[1 2 3]
-         [4 5 6]]
+        [[3 1 4]
+         [1 5 9]]
     """
     if not isinstance(inputs, (tuple, list)):
         msg = f"List or tuple of tensors are required, but got {type(inputs)}"
@@ -6455,20 +6463,24 @@ def vstack(inputs):
 
 def combinations(x, r=2, with_replacement=False):
     r"""
-    When `with_replacement` is set to `False`, the behavior is similar to python's
+    Returns all r-length subsequences of input Tensor.
+
+    When `with_replacement` is set to `False`, it works similar to Python's
     `itertools.combinations`, and when `with_replacement` is set to `True`,
     it behaves like `itertools.combinations_with_replacement`.
 
     Args:
         x (Tensor): One-dimensional tensors.
-        r (int, optional): Number of elements. Default: 2.
+        r (int, optional): Number of elements to perform combination. Default: 2.
         with_replacement (bool, optional): Allow duplication or not. Default: False.
 
     Returns:
-        Tensor, equivalent to resulting list.
+        Tensor, contains all possible combinations of elements sampled from input Tensor.
 
     Raises:
         TypeError: If `x` is not a tensor.
+        TypeError: If `x` is not an int.
+        TypeError: If `with_replacement` is not bool.
         ValueError: If `x` is not one-dimensional.
 
     Supported Platforms:
@@ -7679,7 +7691,7 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
         n_fft (int): The size of Fourier transform.
         hop_length (int, optional): The distance between neighboring sliding window
             frames. Default: None(treated as equal to :math:`floor(n_fft / 4)`).
-        hop_length (int, optional): the size of window frame and STFT filter.
+        win_length (int, optional): the size of window frame and STFT filter.
             Default: None(treated as equal to `n_fft`).
         window (Tensor, optional): the optional window function, 1-D tensor of size `win_length`.
             Default: None(treated as window of all :math:`1` s). If `win_length` < `n_fft`,
@@ -8043,22 +8055,22 @@ def bmm(input_x, mat2):
 
 def quantile(x, q, axis=None, keepdims=False):
     r"""
-    Computes the q-th quantiles of all elements in the input tensor, doing a linear interpolation when the
-    q-th quantile lies between two data points.
+    Computes the q-th quantiles of all elements in `x`, when the
+    q-th quantile lies between two data points, a linear interpolation is implemented between them.
 
     Args:
         x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-                    Supported dtypes: float32, float64.
-        q (float or Tensor): A scalar or 1D tensor of quantile values in the range [0, 1].
-                            Supported dtypes: float32, float64.
-        axis (int): The dimension to reduce. Default: None. By default,
-                    axis is None resulting in the input tensor being flattened before computation.
-        keepdims (bool): Whether the output tensor has dim retained or not. Default: False.
+            Supported dtypes: float32, float64.
+        q (Union[float, Tensor]): A scalar or 1D tensor of quantile values in the range [0, 1].
+            Supported dtypes: float32, float64.
+        axis (int, optional): The dimension to reduce. By default, `axis` is None resulting in the
+            input tensor being flattened before computation. Default: None.
+        keepdims (bool, optional): Whether the output tensor has dim retained or not. Default: False.
 
     Returns:
-        Tensor, has the same dtype as the `input`.
+        Tensor, has the same dtype as the `x`.
 
-        Assume the input shape is :math:`(m, x_0, x_1, ..., x_i, ..., X_R)`, axis = :math:`i` and m is
+        Suppose the shape of `x` is :math:`(m, x_0, x_1, ..., x_i, ..., X_R)`, `axis` = :math:`i` and m is
         the element count of input `q`.
 
         - If `q` is scalar and `keepdims` is True, the shape of output is :math:`(x_0, x_1, ..., 1, ..., X_R)`.
@@ -8069,9 +8081,9 @@ def quantile(x, q, axis=None, keepdims=False):
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If `q` is not a Tensor or float.
-        TypeError: If dtype of `input` is not float32 or float64.
+        TypeError: If dtype of `x` is not float32 or float64.
         TypeError: If dtype of `q` is not float32 or float64.
-        TypeError: If dtype of `input` and the dtype of `q` is different.
+        TypeError: If dtype of `x` and the dtype of `q` is different.
         ValueError: If the `q` values not in the range [0, 1].
         ValueError: If the `axis` values out of range.
 
@@ -8097,25 +8109,25 @@ def quantile(x, q, axis=None, keepdims=False):
 
 def nanquantile(x, q, axis=None, keepdims=False):
     r"""
-    This is a variant of mindspore.ops.quantile() that 'ignores' NaN values,
-    computing the quantiles q as if NaN values in input did not exist.
-    If all values in a reduced row are NaN then the quantiles for that reduction will be NaN.
+    This operator is derived from mindspore.ops.quantile() that 'ignores' NaN values.
+    It computes quantiles as though the input has no NaN values. If all values in a
+    reduced dimension are NaN then the quantiles for that reduction will be NaN.
 
-    Refer to :func:`mindspore.ops.quantile` for more detail.
+    Refer to :func:`mindspore.ops.quantile` for more details.
 
     Args:
         x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-                    Supported dtypes: float32, float64.
-        q (float or Tensor): A scalar or 1D tensor of quantile values in the range [0, 1].
-                            Supported dtypes: float32, float64.
-        axis (int): The dimension to reduce. Default: None. By default,
-                    axis is None resulting in the input tensor being flattened before computation.
-        keepdims (bool): Whether the output tensor has dim retained or not. Default: False.
+            Supported dtypes: float32, float64.
+        q (Union[float, Tensor]): A scalar or 1D tensor of quantile values in the range [0, 1].
+            Supported dtypes: float32, float64.
+        axis (int, optional): The dimension to reduce. By default, `axis` is None resulting in the
+            input tensor being flattened before computation. Default: None.
+        keepdims (bool, optional): Whether the output tensor has dim retained or not. Default: False.
 
     Returns:
-        Tensor, has the same dtype as the `input`.
+        Tensor, has the same dtype as the `x`.
 
-        Assume the input shape is :math:`(m, x_0, x_1, ..., x_i, ..., X_R)`, axis = :math:`i` and m is
+        Suppose the shape of `x` is :math:`(m, x_0, x_1, ..., x_i, ..., X_R)`, `axis` = :math:`i` and m is
         the element count of input `q`.
 
         - If `q` is scalar and `keepdims` is True, the shape of output is :math:`(x_0, x_1, ..., 1, ..., X_R)`.
@@ -8126,10 +8138,10 @@ def nanquantile(x, q, axis=None, keepdims=False):
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If `q` is not a Tensor or float.
-        TypeError: If dtype of `input` is not float32 or float64.
+        TypeError: If dtype of `x` is not float32 or float64.
         TypeError: If dtype of `q` is not float32 or float64.
-        TypeError: If dtype of `input` and the dtype of `q` is different.
-        ValueError: If the `q` values not in the range [0, 1]
+        TypeError: If dtype of `x` and the dtype of `q` is different.
+        ValueError: If the `q` values not in the range [0, 1].
         ValueError: If the `axis` values out of range.
 
     Supported Platforms:
@@ -9638,41 +9650,32 @@ def polygamma(a, x):
     .. math::
         \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
 
+    where \psi(x) is the digamma function.
+
     Args:
-        a (Tensor): the order of the polygamma function, types: int32, int64, the shape of a is 0.
-        x (Tensor): the tensor to compute the polygamma function.
+        a (Tensor): The order of the polygamma function.
+            Supported dtypes: int32, int64. The shape of `a` is :math:`()`.
+        x (Tensor): The tensor to compute the `a^{th}` derivative of the polygamma function with.
 
     Returns:
         Tensor, has the same dtype as `x`.
 
     Raises:
-        TypeError: If x is not a Tensor.
-        TypeError: If dtype of input x is not one of: float16, float32, float64.
-        TypeError: If dtype of input a is not one of: int32, int64.
-        TypeError: If shape of input a is not 0.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not one of: float16, float32, float64.
+        TypeError: If dtype of `a` is not one of: int32, int64.
+        TypeError: If shape of `a` is not :math:`()`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([1.0, -0.5]), mindspore.float32)
+        >>> x = Tensor(np.array([3.14, -2.71]), mindspore.float64)
         >>> a = Tensor(np.array(1), mindspore.int64)
         >>> polygamma = ops.Polygamma()
         >>> output = polygamma(a, x)
         >>> print(output)
-        [1.644934 8.934802]
-        >>> a = Tensor(np.array(2), mindspore.int64)
-        >>> output = polygamma(a, x)
-        >>> print(output)
-        [-2.404114  -0.8287967]
-        >>> a = Tensor(np.array(3), mindspore.int64)
-        >>> output = polygamma(a, x)
-        >>> print(output)
-        [  6.4939404 193.40909  ]
-        >>> a = Tensor(np.array(4), mindspore.int64)
-        >>> output = polygamma(a, x)
-        >>> print(output)
-        [-24.886265   -3.4742498]
+        [ 0.3745, 15.4988]
     """
     polygamma_op = _get_cache_prim(P.Polygamma)()
     return polygamma_op(a, x)
@@ -9910,11 +9913,13 @@ def diag_embed(x, offset=0, dim1=-2, dim2=-1):
 
     Args:
         x (Tensor): Values to fill diagonal.
-        offset (int): Offset of the diagonal. :math:`offset=0` refers to the main diagonal. If :math:`offset>0`,
-            fill the diagonals that are `offset` units upward from the main diagonal. If :math:`offset<0`, fill the
-            diagonals that are `offset` units downward from the main diagonal. Default: 0.
-        dim1 (int): The first dimension in `x` with respect to which to fill diagonal. Default: -2.
-        dim2 (int): The second dimension in `x` with respect to which to fill diagonal. Default: -1.
+        offset (int, optional): Offset of the diagonal. :math:`offset=0` refers to the main diagonal. Default: 0.
+
+            - If :math:`offset>0`, fill the diagonals that are `offset` units upward from the main diagonal.
+            - If :math:`offset<0`, fill the diagonals that are `offset` units downward from the main diagonal.
+
+        dim1 (int, optional): The first dimension in `x` with respect to which to fill diagonal. Default: -2.
+        dim2 (int, optional): The second dimension in `x` with respect to which to fill diagonal. Default: -1.
 
     Returns:
         Tensor, has the same dtype as `x`, but the shape of output is one dimension higher than the `x`.
@@ -9923,9 +9928,8 @@ def diag_embed(x, offset=0, dim1=-2, dim2=-1):
         TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is not supported.
         TypeError: If `offset` is not an int.
-        TypeError: If `dim1` is not an int.
-        TypeError: If `dim2` is not an int.
-        ValueError: If the dimension of input is not 1-6D.
+        TypeError: If `dim1` or `dim2` is not an int.
+        ValueError: If the dimension of `x` is not 1D-6D.
         ValueError: If `dim1` is not in range of [-len(x.shape), len(x.shape)).
         ValueError: If `dim2` is not in range of [-len(x.shape), len(x.shape)).
         ValueError: If `dim1` and `dim2` are identical.

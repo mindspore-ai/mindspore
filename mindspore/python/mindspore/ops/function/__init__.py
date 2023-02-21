@@ -155,7 +155,7 @@ from .array_func import (
     searchsorted,
     aminmax,
     count_nonzero,
-    sort,
+    sort
 )
 from .parameter_func import (
     assign,

@@ -1,7 +1,7 @@
 mindspore.nn.PoissonNLLLoss
 ============================
 
-.. py:class:: mindspore.nn.PoissonNLLLoss(log_input=True, full=False, eps=1e-8, reduction='mean')
+.. py:class:: mindspore.nn.PoissonNLLLoss(log_input=True, full=False, eps=1e-08, reduction='mean')
 
     计算泊松负对数似然损失。
 
@@ -25,7 +25,7 @@ mindspore.nn.PoissonNLLLoss
     参数：
         - **log_input** (bool，可选) - 是否使用对数输入。默认值：True。
         - **full** (bool，可选) - 是否在损失计算中包括斯特林近似项。默认值：False。
-        - **eps** (float，可选) - 算对数时 `x` 的下界。默认值：1e-8。
+        - **eps** (float，可选) - 算对数时 `x` 的下界。默认值：1e-08。
         - **reduction** (str，可选) - 指定要应用于输出的缩减方式，取值为'none'、'mean'或'sum'。默认值：'mean'。
 
     输入：

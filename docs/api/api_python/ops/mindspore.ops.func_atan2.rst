@@ -6,7 +6,11 @@ mindspore.ops.atan2
     逐元素计算input/other的反正切值。
 
     返回 :math:`\theta\ \in\ [-\pi, \pi]` ，使得 :math:`input = r*\sin(\theta), other = r*\cos(\theta)` ，其中 :math:`r = \sqrt{input^2 + other^2}` 。
-    输入 `input` 和 `other` 会通过隐式数据类型转换使数据类型保持一致。如果数据类型不同，低精度的数据类型会被转换到高精度的数据类型。
+
+    .. note::
+        - 参数 `input` 和 `other` 遵循 `隐式类型转换规则 <https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_implicit.html>`_ ，使数据类型保持一致。如果两参数数据类型不一致，则低精度类型会被转换成较高精度类型。
+        - 输入必须是两个Tensor，或一个Tensor和一个Scalar。
+        - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
 
     参数：
         - **input** (Tensor, Number.number) - 输入Tensor或常数，shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。

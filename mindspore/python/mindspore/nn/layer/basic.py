@@ -359,28 +359,34 @@ class Dropout3d(Cell):
 
 class Upsample(Cell):
     r"""
-    Samples the input tensor to the given size or scale_factor by using one of the upsampling algorithms.
+    Samples the input tensor to the given `size` or `scale_factor` by using one of the upsampling algorithms.
+
+    Either `size` or `scale_factor` must be spetified, but they cannot be specified at the same time.
 
     Args:
-        size (Union(int, tuple[int], list[int])): A tuple or list of 1, 2, or 3 int elements
-            `([new\_depth], [new\_height], new\_width)`, the new size of the tensor.
-            One and only one of size and scale_factor can be set to None. Default: None.
-        scale_factor (Union(float, tuple[float], list[float])): The scale factor of new size of the tensor.
+        size (Union(int, tuple[int], list[int]), optional): The sample size of the tensor.
+            A tuple or list of 1, 2, or 3 int elements
+            :math:`([new\_depth], [new\_height], new\_width)`.
+            One and only one of `size` and `scale_factor` can be set to None. Default: None.
+        scale_factor (Union(float, tuple[float], list[float]), optional): The scale factor of new size of the tensor.
             The value should be positive integer.
-            One and only one of size and scale_factor can be set to None.
-            Default: None. Currently only None is supported.
-        mode (str): One of 'nearest', 'linear' (3D only), 'bilinear', 'bicubic' (4D only) and 'trilinear' (5D only).
+            One and only one of `size` and `scale_factor` can be set to None.
+            Currently only None is supported. Default: None.
+        mode (str, optional): Specified upsampling algorithms.
+            Must be one of 'nearest', 'linear' (3D only), 'bilinear', 'bicubic' (4D only) and 'trilinear' (5D only).
             Default: 'nearest'.
-        align_corners (bool): If true, rescale input by `(new\_height - 1) / (height - 1)`, which exactly
-            aligns the corners of data and resized data. If false, rescale by `new\_height / height`.
-            Default: False.
+        align_corners (bool, optional): If true, rescale input by
+            :math:`(new\_height - 1) / (height - 1)`, which exactly
+            aligns the corners of data and resized data. If false, rescale by :math:`new\_height / height`.
+            Default: None, in which case `align_corners` is not specified, Fasle is assign to it.
 
     Inputs:
-        - **x** (Tensor) - Tensor to be resized. Input tensor must be a 3-D, 4-D, or 5-D tensor with shape
-          `(batch, channels, [optional depth], [optional height], width)`, with data type of float.
+        - **x** (Tensor) - Tensor to be resized. Input tensor must be a 3-D, 4-D, or 5-D. It has a data format:
+          :math:`(batch, channels, depth(4-D or 5-D only), height(5-D only), width)`,
+          with data type of float16 or float32.
 
     Outputs:
-        Tensor, resized, 3-D, 4-D, or 5-D, the data type is the same as `x`.
+        Tensor, 3-D, 4-D, or 5-D, the data type is the same as `x`.
 
     Raises:
         TypeError: If `x` is not Tensor.
@@ -391,8 +397,8 @@ class Upsample(Cell):
         TypeError: If dtype of `x` is neither float16 nor float32.
         ValueError: If `size` and `scale_factor` are both None or not None.
         ValueError: If shape of `x` or `size` and `mode` are not match.
-        ValueError: If `scale_factor` is an int which is less than 0.
-        ValueError: If `size` is a list or tuple whose length is not match `mode`.
+        ValueError: If `scale_factor` is negative.
+        ValueError: If length of `size` does not match `mode`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
