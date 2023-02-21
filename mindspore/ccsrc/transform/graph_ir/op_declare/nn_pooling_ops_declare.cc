@@ -130,6 +130,18 @@ ATTR_MAP(MaxPoolWithArgmax) = {
 OUTPUT_MAP(MaxPoolWithArgmax) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
 REG_ADPT_DESC(MaxPoolWithArgmax, kNameMaxPoolWithArgmax, ADPT_DESC(MaxPoolWithArgmax))
 
+// MaxPoolWithArgmaxV2
+INPUT_MAP(MaxPoolWithArgmaxV2) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(MaxPoolWithArgmaxV2) = {
+  {"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"pads", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilation, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
+  {"argmax_type", ATTR_DESC(dtype, AnyTraits<int64_t>())}};
+OUTPUT_MAP(MaxPoolWithArgmaxV2) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
+REG_ADPT_DESC(MaxPoolWithArgmaxV2, kNameMaxPoolWithArgmaxV2, ADPT_DESC(MaxPoolWithArgmaxV2))
+
 // MaxPoolGradWithArgmax
 INPUT_MAP(MaxPoolGradWithArgmax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grad)}, {3, INPUT_DESC(argmax)}};
 ATTR_MAP(MaxPoolGradWithArgmax) = {

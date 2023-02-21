@@ -1706,6 +1706,7 @@ def get_apply_centered_rmsprop_vmap_rule(prim, axis_size):
 
 @vmap_rules_getters.register(P.MaxPool)
 @vmap_rules_getters.register(P.MaxPoolWithArgmax)
+@vmap_rules_getters.register(P.MaxPoolWithArgmaxV2)
 def get_max_pool_vmap_rule(prim, axis_size):
     """VmapRule for `MaxPool` operation."""
     if isinstance(prim, str):
