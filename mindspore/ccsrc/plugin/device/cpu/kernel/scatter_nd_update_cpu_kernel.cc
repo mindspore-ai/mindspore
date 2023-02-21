@@ -90,6 +90,7 @@ int ScatterUpdateArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   for (int64_t i = start_back_index - 1; i >= 0; i--) {
     num_units_ *= updates_shape[LongToSize(i)];
   }
+  out_strides_.clear();
   size_t out_stride = 1;
   out_strides_.push_back(out_stride);
   for (int64_t i = SizeToLong(indices_unit_rank_) - SizeToLong(index_dist_from_end); i >= 0; i--) {
@@ -128,16 +129,16 @@ bool ScatterUpdateArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel:
       auto index = indices[i * indices_unit_rank_ + j];
       (void)local_indices.emplace_back(IntToSize(index));
       if (index < 0) {
-        MS_LOG(ERROR) << "For '" << kernel_type_
-                      << "', each element in 'indices' must be greater than or equal to 0, but got " << index;
-        return false;
+        MS_EXCEPTION(ValueError) << "For '" << kernel_type_
+                                 << "', each element in 'indices' must be greater than or equal to 0, but got "
+                                 << index;
       }
       offset += static_cast<size_t>(index) * out_strides_[j] * IntToSize(unit_size_);
     }
-    if (offset * sizeof(T) > x_mem_size) {
-      MS_LOG(ERROR) << "For '" << kernel_type_
-                    << "', indices out of range for input_x. Please check the indices which is " << local_indices;
-      return false;
+    if (offset * sizeof(T) >= x_mem_size) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_type_
+                               << "', indices out of range for input_x. Please check the indices which is "
+                               << local_indices;
     }
     auto ret = memcpy_s(x + offset, x_mem_size - offset * sizeof(T), updates + unit_size_ * i, unit_size_ * sizeof(T));
     if (ret != EOK) {
