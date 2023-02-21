@@ -85,7 +85,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        FFTWithSize, Heaviside, Histogram, Hypot, Lcm, LuUnpack, MatrixExp,
                        MatrixLogarithm, MatrixPower, MatrixSolve, MatrixTriangularSolve, ReduceStd, STFT,
                        NextAfter, Orgqr, Qr, RaggedRange, Digamma, Eig, EuclideanNorm, CompareAndBitpack, ComplexAbs,
-                       CumulativeLogsumexp, Gcd, Trace, TridiagonalMatMul, TrilIndices, TriuIndices, Zeta,
+                       CumulativeLogsumexp, Gcd, Polygamma, Trace, TridiagonalMatMul, TrilIndices, TriuIndices, Zeta,
                        Roll, Lgamma, Logit, MatrixSolveLs, Polar, Fmax, Fmin)
 from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
                      ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
@@ -651,7 +651,8 @@ __all__ = [
     "Polar",
     "Fmax",
     "Fmin",
-    "MaxPoolV1"
+    "MaxPoolV1",
+    "Polygamma"
 ]
 
 __custom__ = [
