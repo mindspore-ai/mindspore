@@ -31,9 +31,14 @@ std::shared_ptr<LiteOpActor> CreateActor(kernel::KernelExec *kernel, lite::Inner
     actor = std::make_shared<LiteEntranceOpActor>(kernel, ctx);
   } else if (kernel->subgraph_type() == kernel::kExitSubGraph) {
     actor = std::make_shared<LiteExitOpActor>(kernel, ctx);
-  } else if (ctx->inter_op_parallel_num_ > 1 && (kernel->subgraph_type() == kernel::kCpuFP32SubGraph ||
-                                                 kernel->subgraph_type() == kernel::kCpuFP16SubGraph)) {
-    actor = std::make_shared<ParallelLiteActor>(kernel, ctx);
+  } else if (kernel->subgraph_type() != kernel::kNotSubGraph) {
+    auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+    if (subgraph_kernel->nodes().size() > 1 && ctx->inter_op_parallel_num_ > 1 &&
+        (kernel->subgraph_type() == kernel::kCpuFP32SubGraph || kernel->subgraph_type() == kernel::kCpuFP16SubGraph)) {
+      actor = std::make_shared<ParallelLiteActor>(kernel, ctx);
+    } else {
+      actor = std::make_shared<LiteOpActor>(kernel, ctx);
+    }
   } else {
     actor = std::make_shared<LiteOpActor>(kernel, ctx);
   }
