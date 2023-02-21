@@ -376,6 +376,7 @@ class BACKEND_EXPORT KernelMod {
     return Launch(kernel_launch_address.inputs_, kernel_launch_address.workspaces_, kernel_launch_address.outputs_,
                   stream_ptr);
   }
+  int32_t task_id() const { return task_id_; }
 
  protected:
   virtual void SyncData() {}
@@ -400,6 +401,7 @@ class BACKEND_EXPORT KernelMod {
   std::vector<KernelTensorPtr> outputs_;
   bool is_need_retrieve_output_shape_ = false;
   uint32_t device_id_ = 0;
+  int32_t task_id_ = -1;
 
  private:
   std::vector<AddressPtr> inputs_addr_;

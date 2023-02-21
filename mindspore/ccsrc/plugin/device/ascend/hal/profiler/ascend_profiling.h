@@ -44,7 +44,8 @@ class AscendProfiler : public Profiler {
   void MsprofInitProfiler() const;
   void MsprofStopProfiler() const;
   aclprofAicoreMetrics GetAicMetrics() const;
-  void GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id, const KernelType kernel_type);
+  void GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id, const KernelType kernel_type,
+                             int32_t kernel_mod_task_id);
   std::map<std::thread::id, uint32_t> last_tid_;
   std::map<std::thread::id, uint32_t> last_streamid_;
 

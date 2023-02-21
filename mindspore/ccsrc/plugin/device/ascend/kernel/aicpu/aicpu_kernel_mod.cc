@@ -33,10 +33,14 @@
 #include "include/backend/data_queue/data_queue_mgr.h"
 #include "aicpu/common/aicpu_task_struct.h"
 #include "external/graph/types.h"
-
+#ifndef ENABLE_SECURITY
+#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
+#endif
 using AicpuTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::AicpuTaskInfo>;
 using EventWaitTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::EventWaitTaskInfo>;
-
+#ifndef ENABLE_SECURITY
+using mindspore::device::ascend::ProfilingManager;
+#endif
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -325,7 +329,13 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
     MS_LOG(ERROR) << "Aicpu op launch failed! node: " << cnode->fullname_with_scope();
     return false;
   }
-
+#ifndef ENABLE_SECURITY
+  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
+    uint32_t task_id;
+    rtGetTaskIdAndStreamID(&task_id, &stream_id_);
+    task_id_ = static_cast<int32_t>(task_id);
+  }
+#endif
   // for asyncflag op, create event wait op
   if (is_blocking_ && CheckDeviceSupportBlockingAicpuOpProcess()) {
     MS_LOG(INFO) << "Insert EventWait, stream: " << stream_ptr << ", event: " << rt_event_
