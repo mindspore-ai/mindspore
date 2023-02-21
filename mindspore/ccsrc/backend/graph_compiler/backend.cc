@@ -761,7 +761,6 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
                                                      parameter_index);
     }
 
-    bool use_dynamic_shape_process = root_graph_->has_flag(kFlagUseDynamicShapeProcess);
     py::gil_scoped_release release;
     for (const auto &kernel : graph->execution_order()) {
       MS_LOG(INFO) << "Split and run op " << kernel->fullname_with_scope();
@@ -773,7 +772,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
                            &input_tensor_info, &op_outputs);
         // Execute remaining lazy tasks before PyNative hook exit.
         WaitTaskFinish();
-      } else if (use_dynamic_shape_process && common::AnfAlgo::HasNodeAttr(kAttrMsFunctionControl, kernel)) {
+      } else if (common::AnfAlgo::HasNodeAttr(kAttrMsFunctionControl, kernel)) {
         WaitTaskFinish();
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
                                                  &input_tensor_info);
@@ -789,15 +788,11 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         GraphInfo graph_info;
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
                                                  &input_tensor_info);
-        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, use_dynamic_shape_process,
-                                                        &op_run_info, &graph_info, &graph_output_info);
-        if (use_dynamic_shape_process) {
-          op_run_info->op_prim = std::make_shared<Primitive>(*op_run_info->op_prim);
-          AnfAlgo::SetDynamicAttrToPrim(op_run_info->op_prim);
-          RunOpDynamic(op_run_info, &op_outputs);
-        } else {
-          RunOp(op_run_info, &op_outputs);
-        }
+        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, true, &op_run_info, &graph_info,
+                                                        &graph_output_info);
+        op_run_info->op_prim = std::make_shared<Primitive>(*op_run_info->op_prim);
+        AnfAlgo::SetDynamicAttrToPrim(op_run_info->op_prim);
+        RunOpDynamic(op_run_info, &op_outputs);
       }
 
       graph_compiler_->UpdateRefCount(input_tensor_info.input_kernel, &cnode_ref_count, &op_output_map);
@@ -806,9 +801,6 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       graph_compiler_->RecoverGraphOutput(kernel, op_outputs, cnode_ref_count, &op_output_map, &graph_output_info);
     }
     WaitTaskFinish();
-  }
-  if (root_graph_->has_flag(kFlagUseDynamicShapeProcess)) {
-    ClearResource();
   }
   MS_LOG(DEBUG) << "End";
 }

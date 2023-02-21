@@ -1137,7 +1137,6 @@ constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
 constexpr auto kFlagPyNativeRunInGraph = "pynative_run_in_graph";
 constexpr auto kFlagNeedRenormalize = "need_renormalize";
 constexpr auto kFlagEnableZeroCopyInGraph = "enable_zero_copy_in_graph";
-constexpr auto kFlagUseDynamicShapeProcess = "use_dynamic_shape_process";
 constexpr auto kPrimCPrimPyMixed = "primc_primpy_mixed";
 constexpr auto kFlagEnableRunGraphBySingleOp = "enable_run_graph_by_single_op";
 constexpr auto kFlagHasControlFlow = "has_control_flow";

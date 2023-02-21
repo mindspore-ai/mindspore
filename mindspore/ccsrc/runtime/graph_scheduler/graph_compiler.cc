@@ -302,7 +302,7 @@ void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(node->input(0));
     bool enable = false;
     if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
-      if (kernel::IfNeedSkipResize(node)) {
+      if (kernel::IfNeedSkipResize(node) && graph->has_flag(kFlagPyNativeRunInGraph)) {
         MS_LOG(DEBUG) << "Enable Run Graph By Single Op";
         enable = true;
       }
