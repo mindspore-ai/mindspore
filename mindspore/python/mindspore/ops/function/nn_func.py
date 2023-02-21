@@ -2042,7 +2042,7 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
         resize = _get_cache_prim(P.image_ops.ResizeLinear1D)(
             coordinate_transformation_mode
         )
-        return resize(x, Tensor(size, dtype=mstype.int32))
+        return resize(x, size)
 
     def run_bilinear(x, size, align_corners=None, scale_factor=None):
         resize = _get_cache_prim(P.ResizeBilinearV2)(align_corners, not align_corners)

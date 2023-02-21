@@ -641,6 +641,7 @@ class ResizeLinear1D(Primitive):
 
     .. warning::
         This is an experimental feature and is subjected to change.
+        Currently, the Ascend platform only supports scenarios where the input `size` is Tuple or List.
 
     Args:
         coordinate_transformation_mode (str): Default is 'align_corners'. Describes how to transform the coordinate
@@ -649,19 +650,20 @@ class ResizeLinear1D(Primitive):
     Inputs:
         - **x** (Tensor) - A 3-D tensor which to resize, with shape [batch, channel, width]. Must be one of the
           following types: uint8, int8, int16, int32, int64, float16, float32, double.
-        - **size** (Tensor) - A 1-D int64 Tensor, describes the size of the output tensor.
+        - **size** (Union[tuple[int], list[int], Tensor]): describes the size of the output tensor.
+          A tuple or list or Tensor of 1 int elements :math:`(new\_width)`.
 
     Outputs:
         A 3-D tensor which shape is [batch, channel, new_width] with the same type as `x`.
 
     Raises:
         TypeError: If dtype of `x` is not in the support list.
-        TypeError: If `size` is not a 1-D int64_t tensor.
+        TypeError: If `size` is not in Union[tuple[int], list[int], Tensor[int]].
         TypeError: If `coordinate_transformation_mode` is not a string.
         TypeError: If `coordinate_transformation_mode` is not in the support list.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``GPU`` ``CPU`` `Ascend`
 
     Examples:
         >>> input = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
