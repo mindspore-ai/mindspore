@@ -33,7 +33,7 @@ NodePtrList CompareBpropExpander(const BpropIRBuilder *ib) {
 
 NodePtrList AddnGradFunc(const BpropIRBuilder *ib) {
   auto dout = ib->GetInput(kIndex2);
-  auto x_abs = ib->GetInput(kIndex0)->get()->abstract();
+  auto x_abs = ib->GetInput(kIndex0)->abstract();
   auto x_len = x_abs->cast<abstract::AbstractSequencePtr>()->elements().size();
   NodePtrList result(x_len, dout);
   if (x_abs->isa<abstract::AbstractList>()) {

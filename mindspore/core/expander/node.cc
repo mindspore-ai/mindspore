@@ -26,6 +26,8 @@ Node::Node(const AnfNodePtr &node, const Emitter *emitter) : anf_node_(node), em
   MS_EXCEPTION_IF_NULL(emitter);
 }
 
+AbstractBasePtr Node::abstract() { return emitter()->infer()->GetAbstract(shared_from_this()); }
+
 std::vector<int64_t> Node::shape() {
   if (shape_ == nullptr) {
     shape_ = emitter()->infer()->GetShape(shared_from_this());

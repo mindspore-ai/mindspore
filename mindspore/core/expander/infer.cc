@@ -61,8 +61,7 @@ static abstract::PrimitiveEvalImplMap unreg_infer_map = {
   {prim::kPrimAdamApplyOneWithDecay, R{abstract::InferImplAdamApplyOneWithDecay, nullptr, true}},
 };
 
-void CppInfer::Infer(const NodePtr &node) {
-  auto anfnode = node->get();
+void CppInfer::InferAnfnode(const AnfNodePtr &anfnode) {
   if (anfnode->isa<ValueNode>()) {
     anfnode->set_abstract(anfnode->cast<ValueNodePtr>()->value()->ToAbstract());
     return;
@@ -101,13 +100,13 @@ void CppInfer::Infer(const NodePtr &node) {
 }
 
 BaseShapePtr CppInfer::GetShape(const NodePtr &node) {
-  auto abs = node->get()->abstract();
+  auto abs = GetAbstract(node);
   MS_EXCEPTION_IF_NULL(abs);
   return abs->BuildShape();
 }
 
 TypePtr CppInfer::GetDtype(const NodePtr &node) {
-  auto abs = node->get()->abstract();
+  auto abs = GetAbstract(node);
   MS_EXCEPTION_IF_NULL(abs);
   return abs->BuildType();
 }

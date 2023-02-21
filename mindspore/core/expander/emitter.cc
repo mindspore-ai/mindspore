@@ -497,25 +497,26 @@ class Emitter::CtrlFlowBlock {
     MS_EXCEPTION_IF_NULL(fg);
     fg->set_switch_input(std::make_shared<bool>(true));
     auto e = std::make_unique<Emitter>(fg, emitter_->infer());
-    auto output = func(e.get());
-    if (output.empty()) {
+    auto outputs = func(e.get());
+    if (outputs.empty()) {
       MS_LOG(EXCEPTION) << "The block function should not return empty list.";
     }
     if (output_num_ == 0) {
-      output_num_ = output.size();
-    } else if (output_num_ != output.size()) {
+      output_num_ = outputs.size();
+    } else if (output_num_ != outputs.size()) {
       MS_LOG(EXCEPTION) << "The count of outputs of each block function should be equal, but got " << output_num_
-                        << " vs " << output.size() << ".";
+                        << " vs " << outputs.size() << ".";
     }
+    NodePtr output;
     if (output_num_ > 1) {
-      auto mt = e->MakeTuple(output)->get();
-      fg->set_output(mt);
-      SetSequenceNodeElementsUseFlags(mt, std::make_shared<std::vector<bool>>(output_num_, true));
+      output = e->MakeTuple(outputs);
+      SetSequenceNodeElementsUseFlags(output->get(), std::make_shared<std::vector<bool>>(output_num_, true));
     } else {
-      fg->set_output(output[0]->get());
+      output = outputs[0];
     }
+    fg->set_output(output->get());
     if (out_abstract_ == nullptr) {
-      out_abstract_ = fg->output()->abstract();
+      out_abstract_ = output->abstract();
     }
     return emitter_->Value(fg);
   }

@@ -27,6 +27,7 @@ class MS_CORE_API ExpanderInfer {
   /// \brief Infer shape and dtype for node
   virtual void Infer(const NodePtr &node) = 0;
 
+  virtual AbstractBasePtr GetAbstract(const NodePtr &node) = 0;
   virtual BaseShapePtr GetShape(const NodePtr &node) = 0;
   virtual TypePtr GetDtype(const NodePtr &node) = 0;
 };
@@ -35,9 +36,13 @@ using ExpanderInferPtr = std::shared_ptr<ExpanderInfer>;
 /// \brief CppInfer calls the InferShapeAndType interface of frontend or backend map.
 class MS_CORE_API CppInfer : public ExpanderInfer {
  public:
-  void Infer(const NodePtr &node) override;
+  void Infer(const NodePtr &node) override { return InferAnfnode(node->get()); }
+  AbstractBasePtr GetAbstract(const NodePtr &node) override { return node->get()->abstract(); }
   BaseShapePtr GetShape(const NodePtr &node) override;
   TypePtr GetDtype(const NodePtr &node) override;
+
+ protected:
+  void InferAnfnode(const AnfNodePtr &anfnode);
 };
 }  // namespace expander
 }  // namespace mindspore

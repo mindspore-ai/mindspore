@@ -39,8 +39,7 @@ class BpropExpander {
  protected:
   bool RunBprop(const CNodePtr &cnode);
   virtual void ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder);
-  virtual std::unique_ptr<BpropIRBuilder> CreateIRBuilder(const std::string &name, const CNodePtr &cnode,
-                                                          const std::shared_ptr<CppInfer> &infer);
+  virtual std::unique_ptr<BpropIRBuilder> CreateIRBuilder(const std::string &name, const CNodePtr &cnode);
   const BpropHandle *GetBpropHandle(const std::string &name) const {
     return BpropIRBuilderFactory::Instance().GetBuilder(name);
   }
@@ -63,8 +62,7 @@ class BpropExpanderInGraphMode : public BpropExpander {
  protected:
   FuncGraphPtr fg_{nullptr};
   void ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder) override;
-  std::unique_ptr<BpropIRBuilder> CreateIRBuilder(const std::string &name, const CNodePtr &cnode,
-                                                  const std::shared_ptr<CppInfer> &infer) override;
+  std::unique_ptr<BpropIRBuilder> CreateIRBuilder(const std::string &name, const CNodePtr &cnode) override;
   void PostProcess() const override;
   void DumpResult(const std::string &name) const override;
 };
