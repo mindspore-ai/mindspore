@@ -96,6 +96,8 @@ class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeDeviceResManag
   bool FinalizeGe(const std::shared_ptr<MsContext> &inst_context);
   void GetGeOptions(const std::shared_ptr<MsContext> &inst_context, std::map<std::string, std::string> *ge_options);
   void SetHcclOptions(const std::shared_ptr<MsContext> &inst_context, std::map<std::string, std::string> *ge_options);
+  void SetAscendConfig(const std::shared_ptr<MsContext> &ms_context_ptr,
+                       std::map<std::string, std::string> *ge_options);
   void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const;
 
   std::unique_ptr<AscendDeprecatedInterface> deprecated_interface_;

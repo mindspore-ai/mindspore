@@ -96,6 +96,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_ENABLE_RECOVERY,
   MS_CTX_ENABLE_GE_HETEROGENOUS,
   MS_CTX_DISABLE_FORMAT_TRANSFORM,
+  MS_CTX_ENABLE_JIT_COMPILE,
   MS_CTX_TYPE_BOOL_END,
 
   // parameter of type int
@@ -139,6 +140,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_GRAPH_KERNEL_FLAGS,
   MS_CTX_INFER_PRECISION_MODE,  // GPU inference precision mode configured by Serving or Unify API.
   MS_CTX_DETERMINISTIC,
+  MS_CTX_PRECISION_MODE,
   MS_CTX_TYPE_STRING_END,
 
   // parameter numbers of each type

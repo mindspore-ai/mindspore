@@ -78,6 +78,8 @@ mindspore.set_context
     |                         |  memory_optimize_level       |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  memory_offload              |  GPU/Ascend                |
+    |                         +------------------------------+----------------------------+
+    |                         |  ascend_config               |  Ascend                    |
     +-------------------------+------------------------------+----------------------------+
 
     参数：
@@ -167,6 +169,22 @@ mindspore.set_context
 
           - ON：开启memory offload功能。在Ascend硬件平台，未设置环境变量“GRAPH_OP_RUN=1”时本参数不生效；设置memory_optimize_level='O1'时本参数不生效。
           - OFF：关闭memory offload功能。
+        - **ascend_config** (dict) - 设置Ascend硬件平台专用的参数，默认不设置。当前只仅支持在Ascend910B硬件平台设置，其他平台不生效。 
+
+          - **precision_mode** (str): 混合精度模式设置，Ascend910B硬件平台训练默认值：must_keep_origin_dtype，推理网络默认值：force_fp16。其值范围如下：
+
+            - force_fp16: 当算子既支持float16，又支持float32，直接选择float16.
+            - allow_fp32_to_fp16: 当算子不支持float32数据类型时，直接降低精度float16.
+            - allow_mix_precision: 自动混合精度，针对全网算子，按照内置的优化策略，自动将部分算子的精度降低到float16或bfloat16.
+            - must_keep_origin_dtype: 保持原图精度.
+            - force_fp32: 当算子既支持float16，又支持float32，直接选择float32.
+            - force_lowerprecision: 当算子支持float16或者bfloat16，又支持float32，直接选择float16或者bfloat16.
+            - allow_fp32_to_bf16: 当算子不支持float32数据类型时，直接降低精度到bfloat16.
+            - allow_fp32_to_lowprecision: 当算子不支持float32数据类型时，直接降低精度到float16或者bfloat16.
+            - allow_mix_precision_fp16: 自动混合精度，正对全网算子，按照内置的优化策略，自动将部分算子的精度降低到float16.
+            - allow_mix_precision_bf16: 自动混合精度，正对全网算子，按照内置的优化策略，自动将部分算子的精度降低到bfloat16.
+
+          - **jit_compile** (bool): 表示是否选择在线编译。默认值：True。当设置为False时，优先选择系统中已经编译好的算子二进制文件，提升编译性能。
 
     异常：
         - **ValueError** - 输入key不是上下文中的属性。

@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <utility>
 #include <map>
+#include <set>
 #include "include/transform/graph_ir/types.h"
 #include "include/transform/graph_ir/utils.h"
 #include "include/common/utils/utils.h"
@@ -50,6 +51,7 @@ constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 constexpr auto kOpDebugConfigFile = "ge_op_debug_config.ini";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
 const std::set<std::string> kIgnoreGEShapeOps = {kSoftMarginLossOpName};
+const std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
 
 std::string GetGraphName(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -577,6 +579,32 @@ void UseOpDebugConfig(std::map<std::string, std::string> *ge_options) {
     MS_LOG(INFO) << "Use MS_COMPILER_OP_DEBUG_CONFIG:" << ge_op_debug_config;
   }
 }
+void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_context_ptr,
+                                      std::map<std::string, std::string> *ge_options) {
+  MS_EXCEPTION_IF_NULL(ms_context_ptr);
+  MS_EXCEPTION_IF_NULL(ge_options);
+  if (ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE) != "") {
+    (*ge_options)["ge.exec.precision_mode"] = ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE);
+    MS_LOG(INFO) << "Set precision_mode " << ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE) << ".";
+  } else if (IsGeTrain()) {
+    auto soc_version = device::ascend::GetSocVersion();
+    if (kAscend910BVersions.count(soc_version) != 0) {
+      (*ge_options)["ge.exec.precision_mode"] = "must_keep_origin_dtype";
+      MS_LOG(INFO) << "Set precision_mode must_keep_origin_dtype. soc_version is " << soc_version;
+    } else {
+      (*ge_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
+      MS_LOG(INFO) << "Set precision_mode allow_fp32_to_fp16. soc_version is " << soc_version;
+    }
+  } else {
+    (*ge_options)["ge.exec.precision_mode"] = "force_fp16";
+  }
+
+  if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_JIT_COMPILE)) {
+    (*ge_options)["ge.jit_compile"] = "1";
+  } else {
+    (*ge_options)["ge.jit_compile"] = "0";
+  }
+}
 
 void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr,
                                    std::map<std::string, std::string> *ge_options) {
@@ -674,11 +702,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     MS_LOG(WARNING) << "Set proto lib path failed!";
   }
 
-  if (training) {
-    (*ge_options)["ge.exec.precision_mode"] = "allow_mix_precision";
-  } else {
-    (*ge_options)["ge.exec.precision_mode"] = "force_fp16";
-  }
+  SetAscendConfig(ms_context_ptr, ge_options);
 
   (*ge_options)["ge.enableSmallChannel"] = "1";
 

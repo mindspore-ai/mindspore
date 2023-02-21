@@ -93,6 +93,8 @@ void RegMsContext(const py::module *m) {
     .value("profiling_options", MsCtxParam::MS_CTX_PROFILING_OPTIONS)
     .value("save_dump_path", MsCtxParam::MS_CTX_SAVE_DUMP_PATH)
     .value("deterministic", MsCtxParam::MS_CTX_DETERMINISTIC)
+    .value("precision_mode", MsCtxParam::MS_CTX_PRECISION_MODE)
+    .value("jit_compile", MsCtxParam::MS_CTX_ENABLE_JIT_COMPILE)
     .value("save_graphs_path", MsCtxParam::MS_CTX_SAVE_GRAPHS_PATH)
     .value("compile_cache_path", MsCtxParam::MS_CTX_COMPILE_CACHE_PATH)
     .value("variable_memory_max_size", MsCtxParam::MS_CTX_VARIABLE_MEMORY_MAX_SIZE)
