@@ -1723,9 +1723,10 @@ AnfNodePtr AnfAlgo::GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> 
 }
 
 bool AnfAlgo::IsNopNode(const AnfNodePtr &node) {
-  static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(), kExpandDimsOpName,
-                                                      prim::kPrimSqueeze->name(), prim::kPrimFlatten->name(),
-                                                      kFlattenGradOpName,         prim::kPrimReformat->name()};
+  static mindspore::HashSet<std::string> nop_nodes = {
+    prim::kPrimReshape->name(), kExpandDimsOpName,           prim::kPrimSqueeze->name(), prim::kPrimFlatten->name(),
+    kFlattenGradOpName,         prim::kPrimReformat->name(), prim::kTupleToTensor,       prim::kScalarToTensor,
+    prim::kTensorToTuple,       prim::kTensorToScalar};
   if (node == nullptr || !node->isa<CNode>()) {
     return false;
   }
