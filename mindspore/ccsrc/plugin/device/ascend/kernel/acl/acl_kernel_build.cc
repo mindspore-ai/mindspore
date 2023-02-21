@@ -56,7 +56,7 @@ bool SetIOInputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &inpu
       continue;
     }
     if (index >= SizeToInt(input_size_list->size())) {
-      MS_LOG(EXCEPTION) << "Invalid index: " << index << ", vector length: " << input_size_list->size()
+      MS_LOG(EXCEPTION) << "Invalid index: " << index << ", input vector length: " << input_size_list->size()
                         << ", node: " << anf_node->fullname_with_scope();
     }
     if (AnfAlgo::GetInputDeviceDataType(anf_node, i) == kObjectTypeString) {
@@ -104,7 +104,7 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const AclKernelModPtr &
       continue;
     }
     if (idx >= SizeToInt(output_size_list.size())) {
-      MS_LOG(EXCEPTION) << "Invalid index: " << idx << ", vector length: " << output_size_list.size()
+      MS_LOG(EXCEPTION) << "Invalid index: " << idx << ", output vector length: " << output_size_list.size()
                         << ", node: " << anf_node->fullname_with_scope();
     }
     auto shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
