@@ -2760,13 +2760,14 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         validator.check_value_type('indices', indices, (Tensor_,), 'Tensor.gather_nd')
         return tensor_operator_registry.get('gather_nd')(self, indices)
 
-    def gather(self, input_indices, axis):
+    def gather(self, input_indices, axis, batch_dims=0):
         r"""
         For details, please refer to :func:`mindspore.ops.gather`.
         """
         self._init_check()
         validator.check_is_int(axis, 'axis')
-        return tensor_operator_registry.get('gather')(self, input_indices, axis)
+        validator.check_is_int(batch_dims, "batch_dims")
+        return tensor_operator_registry.get('gather')(self, input_indices, axis, batch_dims)
 
     def var(self, axis=None, ddof=0, keepdims=False):
         """

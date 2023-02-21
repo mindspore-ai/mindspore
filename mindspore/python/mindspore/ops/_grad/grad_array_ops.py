@@ -413,12 +413,12 @@ def get_bprop_slice(self):
 
 
 @_primexpr
-def _generate_inverse_index(x_shape, axis):
+def _generate_inverse_index(x_shape, axis, batch_dims=0):
     x_rank = len(x_shape)
     index = tuple(range(x_rank))
     if axis < 0:
         axis += x_rank
-    perm = index[1:1 + axis] + (0,) + index[1 + axis:]
+    perm = index[:batch_dims] + index[batch_dims + 1:1 + axis] + (index[batch_dims],) + index[1 + axis:]
     return perm
 
 
@@ -440,33 +440,57 @@ def _dyn_regenerate_output_shape(x_shp, ind_shp, axis):
     return out_shape
 
 
-def _dyn_generate_shape_index(out_shape, indices_shape, axis):
+def _dyn_generate_shape_index(out_shape, indices_shape, axis, batch_dims=0):
     """Get tranpose order"""
     out_rank = F.reshape(dyn_shape_op(out_shape), ())
     ind_rank = F.reshape(dyn_shape_op(indices_shape), ())
     if axis < 0:
         axis += out_rank - ind_rank + 1
     perm_part1 = P.Range()(F.cast(0, mstype.int32), F.cast(20, mstype.int32), F.cast(1, mstype.int32))
-    perm_part1 = perm_part1[axis: axis + ind_rank]
+    ind_end = axis + ind_rank - batch_dims
+    perm_part1 = perm_part1[axis: ind_end]
     index = P.Range()(F.cast(0, mstype.int32), F.cast(out_rank, mstype.int32), F.cast(1, mstype.int32))
-    perm = P.Concat(0)((perm_part1, index[:axis], index[axis + ind_rank:]))
+    perm = F.hstack((index[:batch_dims], perm_part1, index[batch_dims:axis], index[ind_end:]))
     return perm
 
 
-def _dyn_generate_inverse_index(x_shp, axis):
+def _dyn_generate_inverse_index(x_shp, axis, batch_dims=0):
     """Get tranpose order"""
     x_rank = F.reshape(dyn_shape_op(x_shp), ())
     index = P.Range()(F.cast(0, mstype.int32), F.cast(x_rank, mstype.int32), F.cast(1, mstype.int32))
     if axis < 0:
         axis += x_rank
-    perm = P.Concat(0)((index[1: 1 + axis], Tensor([0], dtype=mstype.int32), index[1 + axis:]))
+    perm = F.hstack((index[:batch_dims], index[batch_dims + 1:1 + axis], index[batch_dims], index[1 + axis:]))
     return perm
+
+
+def calculate_batch_gather(values, indices, x_shape, axis, batch_dims):
+    """Calculate gather grad with batch_dims"""
+    values_shape = dyn_shape_op(values)
+    batch_size = F.prod(x_shape[:batch_dims])
+    batch_size = F.cast(batch_size, mstype.int32)
+    axis_dim = F.cast(x_shape[axis], mstype.int32)
+
+    # Move batch dimension to first non-batch dimension
+    values = values.reshape((-1,) + values.shape[batch_dims:])
+    indices = indices.reshape((-1,) + indices.shape[batch_dims:])
+    offset = P.Range()(F.cast(0, mstype.int32), batch_size * axis_dim, axis_dim)
+    offset_shape = F.hstack([batch_size] + [Tensor(1, dtype=mstype.int32) for _ in range(len(indices.shape) - 1)])
+    offset = reshape(offset, offset_shape)
+    indices = indices + offset
+    num_segments = batch_size * axis_dim
+    params_grad = unsorted_segment_sum(values, indices, num_segments)
+    grad_shape = dyn_shape_op(params_grad)
+    ret_shape = F.hstack([values_shape[:batch_dims], F.cast(axis_dim, mstype.int64), grad_shape[1:]])
+    params_grad = reshape(params_grad, ret_shape)
+    return params_grad
 
 
 @bprop_getters.register(P.Gather)
 @bprop_getters.register(P.GatherV2)
 def get_bprop_gather_v2(self):
     """Generate bprop for GatherV2"""
+    batch_dims = self.batch_dims
 
     def _dyn_bprop_gather_v2(x, indices, axis, dout):
         """dyn shape bprop for GatherV2"""
@@ -483,10 +507,13 @@ def get_bprop_gather_v2(self):
             dout = reshape(dout, out_shp)
 
         # Example: out_shape:(3,2,3) axis 1 -> (1,0,2)
-        perm_1 = _dyn_generate_shape_index(out_shp, ind_shp, axis)
+        perm_1 = _dyn_generate_shape_index(out_shp, ind_shp, axis, batch_dims)
         values_transpose = transpose(dout, perm_1)
-        params_grad = unsorted_segment_sum(values_transpose, indices, x_shp[axis])
-        perm_2 = _dyn_generate_inverse_index(x_shp, axis)
+        if batch_dims > 0:
+            params_grad = calculate_batch_gather(values_transpose, indices, x_shp, axis, batch_dims)
+        else:
+            params_grad = unsorted_segment_sum(values_transpose, indices, x_shp[axis])
+        perm_2 = _dyn_generate_inverse_index(x_shp, axis, batch_dims)
         params_grad = transpose(params_grad, perm_2)
         return params_grad, zeros_like(orig_indices), zeros_like(axis)
 
@@ -509,14 +536,15 @@ def get_bprop_gather_v2(self):
         out_shp = shape_op(dout)
         ind_shp = shape_op(indices)
         # Example: out_shape:(3,2,3) axis 1 -> (1,0,2)
-        perm_1 = generate_shape_index(out_shp, ind_shp, axis)
+        perm_1 = generate_shape_index(out_shp, ind_shp, axis, batch_dims)
         values_transpose = transpose(dout, perm_1)
-        if F.is_sequence_value_unknown(shape_op(x)):
-            params_grad = unsorted_segment_sum(values_transpose, indices, dyn_shape_op(x)[axis])
+        dyn_x_sape = dyn_shape_op(x)
+        if batch_dims > 0:
+            params_grad = calculate_batch_gather(values_transpose, indices, dyn_x_sape, axis, batch_dims)
         else:
-            params_grad = unsorted_segment_sum(values_transpose, indices, shape_op(x)[axis])
+            params_grad = unsorted_segment_sum(values_transpose, indices, dyn_x_sape[axis])
         # Example: out_shape:(3,2,3) axis 2 -> (1,2,0)
-        perm_2 = _generate_inverse_index(x_shp, axis)
+        perm_2 = _generate_inverse_index(x_shp, axis, batch_dims)
         params_grad = transpose(params_grad, perm_2)
         return params_grad, zeros_like(orig_indices), zeros_like(axis)
 

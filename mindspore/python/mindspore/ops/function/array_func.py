@@ -3158,7 +3158,7 @@ def argsort(input_x, axis=-1, descending=False):
     return arg_sort
 
 
-def gather(input_params, input_indices, axis):
+def gather(input_params, input_indices, axis, batch_dims=0):
     r"""
     Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
 
@@ -3230,7 +3230,8 @@ def gather(input_params, input_indices, axis):
          [5.  7.]
          [9. 11.]]
     """
-    return gather_(input_params, input_indices, axis)
+    _gather = _get_cache_prim(P.Gather)(batch_dims)
+    return _gather(input_params, input_indices, axis)
 
 
 def gather_d(x, dim, index):

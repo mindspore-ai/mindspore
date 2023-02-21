@@ -998,9 +998,10 @@ class Gather(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, batch_dims=0):
         """Initialize Gather"""
-        self.add_prim_attr("batch_dims", 0)
+        validator.check_value_type("batch_dims", batch_dims, [int], self.name)
+        self.add_prim_attr("batch_dims", batch_dims)
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
 
 
@@ -1014,6 +1015,7 @@ class GatherV2(PrimitiveWithCheck):
     @prim_attr_register
     def __init__(self):
         """Initialize GatherV2"""
+        self.add_prim_attr("batch_dims", 0)
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
 
     def __check__(self, params, indices, axis):
@@ -5994,9 +5996,12 @@ class Range(PrimitiveWithCheck):
         self.add_prim_attr('maxlen', maxlen)
 
     def check_shape(self, start_shape, limit_shape, delta_shape):
-        validator.check("start_shape", len(start_shape), "", 0, Rel.EQ, self.name)
-        validator.check("limit_shape", len(limit_shape), "", 0, Rel.EQ, self.name)
-        validator.check("delta_shape", len(delta_shape), "", 0, Rel.EQ, self.name)
+        if not is_shape_unknown(start_shape):
+            validator.check("start_shape", len(start_shape), "", 0, Rel.EQ, self.name)
+        if not is_shape_unknown(limit_shape):
+            validator.check("limit_shape", len(limit_shape), "", 0, Rel.EQ, self.name)
+        if not is_shape_unknown(delta_shape):
+            validator.check("delta_shape", len(delta_shape), "", 0, Rel.EQ, self.name)
 
     def check_dtype(self, start_dtype, limit_dtype, delta_dtype):
         valid_dtypes = [mstype.int32, mstype.float32, mstype.int64, mstype.float64]
