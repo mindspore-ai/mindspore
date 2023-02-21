@@ -505,6 +505,7 @@ class SparseToDenseV2(Primitive):
         """Initialize SparseToDenseV2."""
         self.add_prim_attr("max_length", 1000000)
         self.validate_indices = validate_indices
+        validator.check_value_type('validate_indices', validate_indices, [bool], self.name)
         self.add_prim_attr("validate_indices", self.validate_indices)
         self.init_prim_io_names(
             inputs=['indices', 'output_shape', 'values', 'default_value'], outputs=['output'])
