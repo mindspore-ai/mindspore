@@ -477,11 +477,14 @@ void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::Run
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     GraphId graph_id;
-    if (root_graph_->has_flag(kFlagUseDynamicShapeProcess)) {
+    if (root_graph_->has_flag(kFlagEnableRunGraphBySingleOp)) {
       graph_id = graph_compiler_->CompileDynamicGraph(segment, outputs, device_context);
     } else {
       graph_id =
         graph_compiler_->CompileGraph(segment, outputs, device_context, run_mode, ms_execution_mode_ == kPynativeMode);
+      if (graph_compiler_->Fetch(graph_id)->has_flag(kFlagEnableRunGraphBySingleOp)) {
+        root_graph_->set_flag(kFlagEnableRunGraphBySingleOp, true);
+      }
     }
 
     graph_id_to_device_context_[graph_id] = device_context;
