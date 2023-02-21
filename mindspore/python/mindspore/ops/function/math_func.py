@@ -2563,7 +2563,7 @@ def atan2(input, other):
             The data type should be one of the following types: float16, float32, float64
         other (Tensor, Number.number): The input tensor or scalar. It has the same shape with `input`.
 
-        Note:
+        .. note::
             At least one of the input args should be Tensor.
 
     Returns:

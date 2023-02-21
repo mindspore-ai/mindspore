@@ -985,7 +985,7 @@ if platform.system().lower() != 'windows':
     class CaseFold(TextTensorOperation):
         """
         Apply case fold operation on UTF-8 string tensor, which is aggressive that can convert more characters into
-        lower case than :func:`str.lower` . For supported normalization forms, please refer to
+        lower case than :code:`str.lower` . For supported normalization forms, please refer to
         `ICU_Normalizer2 <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/classicu_1_1Normalizer2.html>`_ .
 
         Note:

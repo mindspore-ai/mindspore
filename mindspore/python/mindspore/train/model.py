@@ -125,7 +125,7 @@ class Model:
                              three elements: the positions of loss value, predicted value and label in outputs of the
                              `eval_network`. In this case, the loss value will be passed to the `Loss` metric, the
                              predicted value and label will be passed to other metrics.
-                             :func:`mindspore.train.metric.set_indexes` is recommended instead of `eval_indexes`.
+                             :func:`mindspore.train.Metric.set_indexes` is recommended instead of `eval_indexes`.
                              Default: None.
         amp_level (str): Option for argument `level` in :func:`mindspore.amp.build_train_network`, level for mixed
             precision training. Supports ["O0", "O1", "O2", "O3", "auto"]. Default: "O0".
