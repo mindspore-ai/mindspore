@@ -1661,7 +1661,7 @@ std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
     bool mis_match = false;
     for (size_t i = 0; i < input_num; ++i) {
       auto dtype = cur_kernel_attr.GetInputAttr(cur_kernel_attr.GetAllSame() ? 0 : i).dtype;
-      if (kernel_attr.GetInputAttr(i).dtype != dtype) {
+      if (kernel_attr.GetInputAttr(i).dtype != dtype && kernel_attr.GetInputAttr(i).dtype != kTypeUnknown) {
         mis_match = true;
         break;
       }
@@ -1672,7 +1672,7 @@ std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
 
     for (size_t i = 0; i < output_num; ++i) {
       auto dtype = cur_kernel_attr.GetOutputAttr(cur_kernel_attr.GetAllSame() ? 0 : i).dtype;
-      if (kernel_attr.GetOutputAttr(i).dtype != dtype) {
+      if (kernel_attr.GetOutputAttr(i).dtype != dtype && kernel_attr.GetOutputAttr(i).dtype != kTypeUnknown) {
         mis_match = true;
         break;
       }

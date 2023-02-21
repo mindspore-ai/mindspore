@@ -721,7 +721,7 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
       return tuple_ptr->dynamic_element_type()->type_id();
     }
     if (tuple_ptr->size() == 0) {
-      return tuple_ptr->type_id();
+      return kTypeUnknown;
     }
     MS_EXCEPTION_IF_NULL(tuple_ptr);
     if (output_idx >= tuple_ptr->size()) {
