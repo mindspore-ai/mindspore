@@ -43,6 +43,7 @@ class ConvTransformFusion : public LitePatternProcessPass {
 
  protected:
   FmkType fmk_type_ = converter::kFmkTypeTf;
+  bool nchw_format_ = false;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_TRANSFORM_FUSION_H_
