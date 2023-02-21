@@ -23,6 +23,7 @@
 #include <map>
 #include "runtime/hardware/device_type.h"
 #include "runtime/device/device_address.h"
+#include "runtime/device/gsm/swap_manager.h"
 #include "runtime/collective/collective_communication_lib.h"
 #include "runtime/collective/collective_comm_lib_loader.h"
 #include "backend/common/session/kernel_graph.h"
@@ -160,6 +161,8 @@ class BACKEND_EXPORT DeviceResManager {
   // Return collective communication object for caller to access
   CollectiveCommunicationLib *collective_comm_lib() const { return collective_comm_lib_; }
 
+  std::shared_ptr<SwapManager> swap_manager() const { return swap_manager_; }
+
  protected:
   // Ensure the thread safety for allocating device memory.
   mutable std::mutex alloc_mem_mutex_;
@@ -168,6 +171,8 @@ class BACKEND_EXPORT DeviceResManager {
   CollectiveCommunicationLib *collective_comm_lib_;
 
   DeviceContext *device_context_{nullptr};
+
+  std::shared_ptr<SwapManager> swap_manager_{nullptr};
 
  private:
   template <class... Args>

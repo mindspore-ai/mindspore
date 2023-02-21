@@ -59,14 +59,16 @@ void MemorySwapActor::UpdateDeviceTensors(OpContext<mindspore::runtime::DeviceTe
   }
 }
 
-void MemorySwapActor::GetDeviceTensors(std::vector<size_t> indexes, std::vector<DeviceTensor *> *device_tensors) {
+std::vector<DeviceTensor *> MemorySwapActor::GetDeviceTensors(const std::vector<size_t> &indexes) {
+  std::vector<DeviceTensor *> device_tensors;
   for (const auto index : indexes) {
     if (index >= device_tensors_to_swap_.size()) {
       MS_LOG(EXCEPTION) << "Device tensor index[" << index << "] out of range[" << device_tensors_to_swap_.size()
                         << "].";
     }
-    device_tensors->emplace_back(device_tensors_to_swap_[index]);
+    device_tensors.emplace_back(device_tensors_to_swap_[index]);
   }
+  return std::move(device_tensors);
 }
 
 void MemorySwapActor::AllocDeviceContinuousMem(const std::vector<DeviceTensor *> &device_tensors) {
@@ -85,34 +87,31 @@ void MemorySwapActor::AllocDeviceContinuousMem(const std::vector<DeviceTensor *>
   }
 }
 
-void MemorySwapActor::Swap(device::StorageType from, device::StorageType to,
-                           const std::vector<DeviceTensor *> &device_tensors) {
+void MemorySwapActor::Swap(device::StorageType to, const std::vector<DeviceTensor *> &device_tensors) {
   for (const auto &device_tensor : device_tensors) {
-    device_tensor->MoveTo(to, false);
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    device_tensor->MoveTo(to, false, kDefaultStreamIndex);
   }
 }
 
 void MemorySwapActor::Run(OpContext<mindspore::runtime::DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  static std::map<device::SwapActionType, std::pair<device::StorageType, device::StorageType>> swap_from_to_map = {
-    {device::SwapActionType::kHBM2DDR, {device::StorageType::kDevice, device::StorageType::kHost}},
-    {device::SwapActionType::kDDR2HBM, {device::StorageType::kHost, device::StorageType::kDevice}},
-    {device::SwapActionType::kDDR2DISK, {device::StorageType::kHost, device::StorageType::kFile}},
-    {device::SwapActionType::kDISK2DDR, {device::StorageType::kFile, device::StorageType::kHost}},
-    {device::SwapActionType::kHBM2DISK, {device::StorageType::kDevice, device::StorageType::kFile}},
-    {device::SwapActionType::kDISK2HBM, {device::StorageType::kFile, device::StorageType::kDevice}}};
+  static std::map<device::SwapActionType, device::StorageType> swap_to_map = {
+    {device::SwapActionType::kHBM2DDR, device::StorageType::kHost},
+    {device::SwapActionType::kDDR2HBM, device::StorageType::kDevice},
+    {device::SwapActionType::kDDR2DISK, device::StorageType::kFile},
+    {device::SwapActionType::kDISK2DDR, device::StorageType::kHost},
+    {device::SwapActionType::kHBM2DISK, device::StorageType::kFile},
+    {device::SwapActionType::kDISK2HBM, device::StorageType::kDevice}};
   UpdateDeviceTensors(context);
   for (const auto &action : swap_actions_) {
     const auto action_type = action.first;
     const auto &device_tensor_indexes = action.second;
-    std::vector<DeviceTensor *> device_tensors;
-    GetDeviceTensors(device_tensor_indexes, &device_tensors);
+    const auto &device_tensors = GetDeviceTensors(device_tensor_indexes);
     if (action_type == device::SwapActionType::kAllocHBM) {
       AllocDeviceContinuousMem(device_tensors);
     } else if (action_type != device::SwapActionType::kUnDefined) {
-      const auto from = swap_from_to_map[action_type].first;
-      const auto to = swap_from_to_map[action_type].second;
-      Swap(from, to, device_tensors);
+      Swap(swap_to_map[action_type], device_tensors);
     } else {
       MS_LOG(WARNING) << "Unknown swap action type, skip.";
     }

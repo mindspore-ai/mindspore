@@ -3,7 +3,7 @@ file(GLOB_RECURSE DEVICE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "common/*
     "memory_manager.cc" "kernel_runtime_manager.cc" "convert_tensor_utils.cc" "memory_scheduler.cc"
     "memory_offload_strategy.cc" "launch_kernel.cc" "launch_mul.cc" "tensor_array.cc"
     "ms_device_shape_transfer.cc" "context_extends.cc" "stream_synchronizer.cc" "tensors_queue.cc" "auto_mem_offload.cc"
-    "common_somas_allocator.cc" "device_address_utils.cc"
+    "common_somas_allocator.cc" "device_address_utils.cc" "loadable_device_address.cc"
 )
 
 if("${ENABLE_HIDDEN}" STREQUAL "OFF" AND NOT MSVC)

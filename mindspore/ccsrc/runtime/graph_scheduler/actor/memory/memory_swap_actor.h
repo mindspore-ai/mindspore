@@ -52,9 +52,9 @@ class MemorySwapActor : public AbstractActor {
 
  private:
   void AllocDeviceContinuousMem(const std::vector<DeviceTensor *> &device_tensors);
-  static void Swap(device::StorageType from, device::StorageType to, const std::vector<DeviceTensor *> &device_tensors);
+  static void Swap(device::StorageType to, const std::vector<DeviceTensor *> &device_tensors);
   void UpdateDeviceTensors(OpContext<DeviceTensor> *context);
-  void GetDeviceTensors(std::vector<size_t> indexes, std::vector<DeviceTensor *> *device_tensors);
+  std::vector<DeviceTensor *> GetDeviceTensors(const std::vector<size_t> &indexes);
 
  protected:
   size_t stream_id_;
