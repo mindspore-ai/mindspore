@@ -84,6 +84,21 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.LSTM
     mindspore.nn.LSTMCell
 
+Transformer层
+-----------------
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.MultiheadAttention
+    mindspore.nn.TransformerEncoderLayer
+    mindspore.nn.TransformerDecoderLayer
+    mindspore.nn.TransformerEncoder
+    mindspore.nn.TransformerDecoder
+    mindspore.nn.Transformer
+
 嵌入层
 -----------------
 
