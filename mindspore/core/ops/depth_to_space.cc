@@ -65,10 +65,6 @@ abstract::ShapePtr DepthToSpaceInferShape(const PrimitivePtr &primitive,
   auto data_format_ptr = primitive->GetAttr("format");
   int64_t format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
   (void)primitive->AddAttr("data_format", data_format_ptr);
-  // Set default value for mode
-  if (!primitive->GetAttr("mode")) {
-    (void)primitive->AddAttr("mode", MakeValue("DCR"));
-  }
   const int64_t dim_0 = 0;
   const int64_t dim_1 = 1;
   const int64_t dim_2 = 2;

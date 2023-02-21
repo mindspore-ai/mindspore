@@ -638,7 +638,8 @@ int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr 
   return 0;
 }
 
-std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const AnfNodePtr &node) const {
+std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const OperatorPtr &op,
+                                                                   const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return {};
@@ -658,17 +659,16 @@ std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const AnfNode
   auto prim = GetValueNode<PrimitivePtr>(inputs[0]);
   std::map<std::string, ValuePtr> attr_list;
   for (auto &it : attr_map_) {
-    auto value = prim->GetAttr(it.first);
-    if (value != nullptr) {
-      it.second.get_attr(&value);
+    // set attr from extra_attr
+    auto it_extra = extra_attr_->find(it.first);
+    if (it_extra != extra_attr_->end()) {
+      auto value = it_extra->second;
+      (void)attr_list.emplace(it.second.name, value);
     } else {
-      // set attr from extra_attr
-      auto it_extra = extra_attr_->find(it.first);
-      if (it_extra != extra_attr_->end()) {
-        value = it_extra->second;
-      }
+      auto value = prim->GetAttr(it.first);
+      it.second.get_attr(op, &value);
+      (void)attr_list.emplace(it.second.name, value);
     }
-    (void)attr_list.emplace(it.second.name, value);
   }
 
   // set attr from const input
