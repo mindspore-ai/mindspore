@@ -122,13 +122,13 @@ REG_ADPT_DESC(MatrixSetDiagD, kNameMatrixSetDiagD, ADPT_DESC(MatrixSetDiagD))
 INPUT_MAP(MatrixDiagPart) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(MatrixDiagPart) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MatrixDiagPart) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatrixDiagPart, kMatrixDiagPartDOpName, ADPT_DESC(MatrixDiagPart))
+REG_ADPT_DESC(MatrixDiagPart, kMatrixDiagPartOpName, ADPT_DESC(MatrixDiagPart))
 
 // MatrixSetDiag
 INPUT_MAP(MatrixSetDiag) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(MatrixSetDiag) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MatrixSetDiag) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatrixSetDiag, kMatrixSetDiagDOpName, ADPT_DESC(MatrixSetDiag))
+REG_ADPT_DESC(MatrixSetDiag, kMatrixSetDiagOpName, ADPT_DESC(MatrixSetDiag))
 
 // ConfusionMatrix
 INPUT_MAP(ConfusionMatrix) = {{1, INPUT_DESC(labels)}, {2, INPUT_DESC(predictions)}, {3, INPUT_DESC(weights)}};
