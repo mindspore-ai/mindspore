@@ -18,6 +18,7 @@
 #include <vector>
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
@@ -118,6 +119,10 @@ const AnfNodePtr DeformableOffsetsFusion::Process(const FuncGraphPtr &func_graph
   new_cnode->set_scope(deformable_offsets_cnode->scope());
   common::AnfAlgo::CopyNodeAttrs(deformable_offsets_cnode, new_cnode);
   common::AnfAlgo::SetNodeAttr(kAttrDataFormat, MakeValue("NHWC"), new_cnode);
+  if (!CheckAICoreSupportedAny(new_cnode)) {
+    MS_LOG(INFO) << "DeformableOffsets failed, return to aicpu.";
+    return nullptr;
+  }
   if (kernel_graph != nullptr) {
     kernel_graph->AddValueNodeToGraph(assist_const);
     MS_LOG(INFO) << "Add assist tensor for DeformableOffsets op success.";

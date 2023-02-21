@@ -227,6 +227,7 @@ constexpr auto kConv3DOpName = "Conv3D";
 constexpr auto kConv3DTransposeDOpName = "Conv3DTransposeD";
 constexpr auto kConv3DTransposeOpName = "Conv3DTranspose";
 constexpr auto kDeformableOffsetsOpName = "DeformableOffsets";
+constexpr auto kDeformableOffsetsGradOpName = "DeformableOffsetsGrad";
 constexpr auto kCropAndResizeOpName = "CropAndResize";
 constexpr auto kCropAndResizeDOpName = "CropAndResizeD";
 constexpr auto kCropAndResizeGradBoxesOpName = "CropAndResizeGradBoxes";

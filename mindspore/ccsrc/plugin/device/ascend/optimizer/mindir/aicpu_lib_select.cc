@@ -322,6 +322,8 @@ bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
                                                                mindspore::kMatrixInverseOpName,
                                                                mindspore::kMultiMarginLossGradOpName,
                                                                mindspore::kSspaddmmOpName,
+                                                               mindspore::kDeformableOffsetsOpName,
+                                                               mindspore::kDeformableOffsetsGradOpName,
                                                                mindspore::kBatchMatMulOpName,
                                                                mindspore::kSparseToDenseV2OpName,
                                                                mindspore::kTrilOpName,
