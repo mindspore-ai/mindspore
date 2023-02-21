@@ -46,6 +46,11 @@ mish_ = NN_OPS.Mish()
 selu_ = NN_OPS.SeLU()
 scalar_to_tensor_ = P.ScalarToTensor()
 sigmoid_ = NN_OPS.Sigmoid()
+check_positive_int_const = constexpr(validator.check_positive_int)
+check_positive_int_sequence_const = constexpr(validator.check_positive_int_sequence)
+check_positive_float_const = constexpr(validator.check_positive_float)
+check_positive_float_sequence_const = constexpr(validator.check_positive_float_sequence)
+check_bool_const = constexpr(validator.check_bool)
 
 
 def adaptive_avg_pool2d(input_x, output_size):
@@ -2121,23 +2126,27 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
                     f"For 'interpolate', 'x' and 'size' must have same number of spatial dimensions, "
                     f"but got 'x' is {x.ndim - 2}D, 'size' is {len(size)}D"
                 )
+            check_positive_int_sequence_const(size, "size", "interpolate")
         else:
+            check_positive_int_const(size, "size", "interpolate")
             size = [size for _ in range(x.ndim - 2)]
     elif scale_factor is not None:
         if isinstance(scale_factor, (list, tuple)):
             if len(scale_factor) != x.ndim - 2:
                 raise ValueError(
                     f"For 'interpolate', 'x' and 'scale_factor' must have same number of spatial dimensions, "
-                    f"but got 'x' is {x.ndim - 2}D, 'scale_factor' is {len(size)}D"
+                    f"but got 'x' is {x.ndim - 2}D, 'scale_factor' is {len(scale_factor)}D"
                 )
+            check_positive_float_sequence_const(scale_factor, "scale_factor", "interpolate")
         else:
+            check_positive_float_const(scale_factor, "scale_factor", "interpolate")
             scale_factor = [scale_factor for _ in range(x.ndim - 2)]
     else:
         raise ValueError(
             "For 'interpolate', either 'size' or 'scale_factor' should be defined"
         )
 
-    if mode not in supported_dict:
+    if isinstance(mode, list) or mode not in supported_dict:
         raise ValueError(
             f"For 'interpolate', 'mode' must be in '{list(supported_dict)}', but got {mode}"
         )
@@ -2149,7 +2158,7 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
     if mode == "area" and size is None:
         recompute_scale_factor = True
     if recompute_scale_factor is not None and recompute_scale_factor:
-        # todo: check bool type
+        check_bool_const(recompute_scale_factor, "recompute_scale_factor", "interpolate")
         if size is not None:
             raise ValueError(
                 "For 'interpolate', 'recompute_scale_factor' is not meaningful with an explicit size"
@@ -2163,6 +2172,7 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
                 f"mode = {mode} and dim = {x.ndim}D."
             )
     if align_corners is not None:
+        check_bool_const(align_corners, "align_corners", "interpolate")
         if "align_corners" not in supported_dict.get(mode, {}).get(x.ndim):
             raise ValueError(
                 f"For 'interpolate', 'align_corners' option cannot currently be set with the "

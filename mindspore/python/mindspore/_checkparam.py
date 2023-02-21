@@ -444,9 +444,9 @@ class Validator:
         Checks input value is float type or not.
 
         Usage:
-        - number = check_is_float(number, int)
-        - number = check_is_float(number, int, "bias")
-        - number = check_is_float(number, int, "bias", "bias_class")
+        - number = check_is_float(number)
+        - number = check_is_float(number, "bias")
+        - number = check_is_float(number, "bias", "bias_class")
         """
         return check_is_number(arg_value, float, arg_name, prim_name)
 
