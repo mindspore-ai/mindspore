@@ -97,14 +97,15 @@
 
         检查Cell中的网络参数名称是否重复。
 
-    .. py:method:: compile(*inputs)
+    .. py:method:: compile(*args, **kwargs)
 
         编译Cell为计算图，输入需与construct中定义的输入一致。
 
         参数：
-            - **inputs** (tuple) - Cell的输入。
+            - **args** (tuple) - Cell的输入。
+            - **kwargs** (dict) - Cell的输入。
 
-    .. py:method:: compile_and_run(*inputs)
+    .. py:method:: compile_and_run(*args, **kwargs)
 
         编译并运行Cell，输入需与construct中定义的输入一致。
 
@@ -112,12 +113,13 @@
             不推荐使用该函数，建议直接调用Cell实例。
 
         参数：
-            - **inputs** (tuple) - Cell的输入。
+            - **args** (tuple) - Cell的输入。
+            - **kwargs** (dict) - Cell的输入。
 
         返回：
             Object类型，执行的结果。
 
-    .. py:method:: construct(*inputs, **kwargs)
+    .. py:method:: construct(*args, **kwargs)
 
         定义要执行的计算逻辑。所有子类都必须重写此方法。
 
@@ -125,7 +127,7 @@
             当前不支持inputs同时输入tuple类型和非tuple类型。
 
         参数：
-            - **inputs** (tuple) - 可变参数列表，默认值：()。
+            - **args** (tuple) - 可变参数列表，默认值：()。
             - **kwargs** (dict) - 可变的关键字参数的字典，默认值：{}。
 
         返回：
