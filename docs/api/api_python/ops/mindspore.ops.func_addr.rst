@@ -25,5 +25,4 @@ mindspore.ops.addr
     异常：
         - **TypeError** - `x` 、 `vec1` 、 `vec2` 不是Tensor。
         - **TypeError** - `x` 、 `vec1` 、 `vec2` 的数据类型不一致。
-        - **ValueError** - 如果 `x` 不是一个二维Tensor。
         - **ValueError** - 如果 `vec1` ， `vec2` 不是一个一维Tensor。

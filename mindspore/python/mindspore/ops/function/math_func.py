@@ -5083,7 +5083,7 @@ def addmv(x, mat, vec, beta=1, alpha=1):
         TypeError: If `mat`, `vec`, `x` is not a Tensor.
         TypeError: If inputs `x`, `mat`, 'vec' are not the same dtype.
         ValueError: If `mat` is not a 2-D Tensor.
-            If `x`, `vec` is not a 1-D Tensor.
+        ValueError: If `vec` is not a 1-D Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5103,6 +5103,8 @@ def addmv(x, mat, vec, beta=1, alpha=1):
         raise TypeError("For Addmv, inputs must be all tensors.")
     if dtypeop(mat) != dtypeop(vec):
         raise TypeError("For Addmv, the mat and vec should be the same dtype.")
+    _check_input_1d(vec.shape, "vec", "Addmv")
+    _check_input_2d(mat.shape, "mat", "Addmv")
     _check_input_dtype("x", input_dtype,
                        [mstype.float16, mstype.float32, mstype.float64,
                         mstype.int16, mstype.int32, mstype.int64], "Addmv")
@@ -5170,7 +5172,6 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
     Raises:
         TypeError: If `x`, `vec1`, `vec2` is not a Tensor.
         TypeError: If inputs `x`, `vec1`, `vec2` are not the same dtype.
-        ValueError: If `x` is not a 2-D Tensor.
         ValueError: If `vec1`, `vec2` is not a 1-D Tensor.
 
     Supported Platforms:
@@ -5193,6 +5194,8 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
         raise TypeError("For Addr, inputs must be all tensors.")
     if dtypeop(vec1) != dtypeop(vec2):
         raise TypeError("For Addr, the vec1 and vec2 should be the same dtype.")
+    _check_input_1d(vec1.shape, "vec1", "Addr")
+    _check_input_1d(vec2.shape, "vec2", "Addr")
     _check_input_dtype("x", input_dtype,
                        [mstype.float16, mstype.float32, mstype.float64,
                         mstype.int16, mstype.int32, mstype.int64], "Addr")
@@ -5527,6 +5530,20 @@ def bessel_k1e(x):
 @constexpr
 def _check_input_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
+
+
+@constexpr
+def _check_input_1d(input_shape, param_name, func_name):
+    if len(input_shape) != 1:
+        raise ValueError(f"{func_name} {param_name} should be 1d, but got shape {input_shape}")
+    return True
+
+
+@constexpr
+def _check_input_2d(input_shape, param_name, func_name):
+    if len(input_shape) != 2:
+        raise ValueError(f"{func_name} {param_name} should be 1d, but got shape {input_shape}")
+    return True
 
 
 def deg2rad(x):
