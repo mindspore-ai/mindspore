@@ -88,6 +88,10 @@ class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>
   // @return Name of the current Op
   std::string Name() const override { return "NonMappableLeafOp"; }
 
+  // \Common implementation for PrepareOperators and PrepareOperatorPullBased
+  // @return Status The status code returned
+  Status PrepareOperatorImplementation();
+
   // \brief During tree prepare phase, operators may have specific post-operations to perform depending on
   //     their role.
   // \notes Derived versions of this function should always call their superclass version first
