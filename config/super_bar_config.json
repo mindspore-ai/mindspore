@@ -17,6 +17,12 @@
       "padding": "pad_mode",
       "data_format": "format"
     },
+    "AvgPoolGrad": {
+      "orig_input_shape": "x_origin",
+      "ksize": "kernel_size",
+      "padding": "pad_mode",
+      "data_format": "format"
+    },
     "AccumulateNV2": {
       "N": "n"
     },
