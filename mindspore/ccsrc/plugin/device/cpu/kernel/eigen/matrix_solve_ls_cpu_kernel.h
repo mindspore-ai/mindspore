@@ -20,17 +20,21 @@
 #include <vector>
 #include <utility>
 #include <complex>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class MatrixSolveLsCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MatrixSolveLsCpuKernelMod : public NativeCpuKernelMod {
  public:
   MatrixSolveLsCpuKernelMod() = default;
   ~MatrixSolveLsCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
@@ -40,7 +44,7 @@ class MatrixSolveLsCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  bool Resize(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernelAcessCheck(void);
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
@@ -76,8 +80,13 @@ class MatrixSolveLsCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   bool ComplexQr(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
-  bool qr_chole{true};
-  CNodePtr node_wpt_;
+  bool qr_chole_{true};
+  TypeId matrix_dtype_{kTypeUnknown};
+  TypeId rhs_dtype_{kTypeUnknown};
+  std::vector<int64_t> matrix_shape_;
+  std::vector<int64_t> rhs_shape_;
+  std::vector<int64_t> l2_shape_;
+  std::vector<int64_t> output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
