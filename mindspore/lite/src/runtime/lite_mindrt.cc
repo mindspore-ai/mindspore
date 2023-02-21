@@ -34,10 +34,15 @@ void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor
     return;
   }
 
-  InitInputData();
+  auto ret = InitInputData();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "run kernel failed, name: " << kernel_->name();
+    context->SetFailed(ret);
+    return;
+  }
 
-  auto ret = kernel_->Execute(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
-                              *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
+  ret = kernel_->Execute(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
+                         *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
   input_op_datas_.erase(op_uuid);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "run kernel failed, name: " << kernel_->name();
@@ -303,24 +308,21 @@ int LiteOpActor::CompileArrowThroughOutputTensors(
   return RET_OK;
 }
 
-void LiteOpActor::SetInputShape() {
+int LiteOpActor::SetInputShape() {
+  auto ret = RET_OK;
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto &input_tensor = kernel_->in_tensors()[i];
     if (input_tensor->shape() == inputs_data_[i]->shape()) {
       continue;
     }
-
-    if (input_tensor->data_type() == kObjectTypeTensorType) {
-      SetTensorListShape(input_tensor, inputs_data_[i]);
-    } else {
-      SetTensorShape(input_tensor, inputs_data_[i]);
-    }
+    ret = SetTensorShape(input_tensor, inputs_data_[i]);
+    MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "set input shape failed.");
   }
+  return RET_OK;
 }
 
-void LiteOpActor::InitInputData() {
-  SetInputShape();
-
+int LiteOpActor::AssignInputData() {
+  auto ret = RET_OK;
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto dst_tensor = kernel_->in_tensors()[i];
     auto src_tensor = inputs_data_[i];
@@ -330,18 +332,54 @@ void LiteOpActor::InitInputData() {
       continue;
     }
     if (NeedCastData(dst_tensor, src_tensor)) {
-      CastTensorData(dst_tensor, src_tensor, support_fp16_);
+      ret = CastTensorData(dst_tensor, src_tensor, support_fp16_);
+      MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "CastTensorData failed.");
       continue;
     }
     /* same data-type  */
     if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
       // delegate graph kernel output tensor
-      SetTensorData(dst_tensor, src_tensor);
+      ret = SetTensorData(dst_tensor, src_tensor);
+      MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "SetTensorData failed.");
     } else {
-      MoveTensorData(dst_tensor, src_tensor);
+      ret = MoveTensorData(dst_tensor, src_tensor);
+      MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "MoveTensorData failed.");
     }
   }
-  return;
+  return ret;
+}
+
+bool LiteOpActor::NeedResize() {
+  for (size_t i = 0; i < inputs_data_.size(); ++i) {
+    auto &subgraph_input = kernel_->in_tensors()[i];
+    auto &cur_input = inputs_data_[i];
+    if (!IsSameShape(subgraph_input, cur_input)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+int LiteOpActor::InitInputData() {
+  bool need_resize = NeedResize();
+  auto ret = SetInputShape();
+  MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "Set input shape failed.");
+  if (need_resize) {
+    auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
+    MS_CHECK_FALSE_MSG(subgraph_kernel == nullptr, RET_ERROR, "Lite actor, cast kernel to subgraph kernel failed.");
+    ret = subgraph_kernel->MallocSubgraphInputs();
+    MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "Subgraph kernel MallocSubgraphInputs failed.");
+  }
+  ret = AssignInputData();
+  MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "Subgraph kernel AssignInputData failed.");
+  if (need_resize) {
+    auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
+    ret = subgraph_kernel->ReSize();
+    MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "Subgraph kernel Resize failed.");
+    subgraph_kernel->MallocNodesOutputSpace();
+    MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "Subgraph kernel MallocSubgraphInputs failed.");
+  }
+  return RET_OK;
 }
 
 void LiteOpActor::AsyncOutput(OpContext<Tensor> *context) {

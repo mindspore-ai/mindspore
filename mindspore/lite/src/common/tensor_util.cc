@@ -21,6 +21,7 @@
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
+#include "nnacl/base/cast_base.h"
 #ifdef ENABLE_FP16
 #include "src/runtime/kernel/cpu/fp16/fp16_op_handler.h"
 #endif
@@ -241,11 +242,11 @@ std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::
   return tensors;
 }
 
-void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
+int MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
   MS_ASSERT(src_tensor != dst_tensor);
   if (src_tensor->data() == dst_tensor->data()) {
     MS_LOG(DEBUG) << "no need to move data.";
-    return;
+    return RET_OK;
   }
   dst_tensor->FreeData();
   dst_tensor->ResetRefCount();
@@ -261,20 +262,23 @@ void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
     dst_tensor->set_own_data(src_tensor->own_data());
   }
   src_tensor->DecRefCount();
+  return RET_OK;
 }
 
-void MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
+int MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
   if (src_tensor == dst_tensor) {
     MS_LOG(INFO) << "no need to move.";
-    return;
+    return RET_OK;
   }
   MS_ASSERT(src_tensor->allocator() != nullptr);
+  auto ret = RET_OK;
   if (src_tensor->data_type() == kObjectTypeTensorType) {
-    MoveTensorListTensorData(reinterpret_cast<TensorList *>(dst_tensor), reinterpret_cast<TensorList *>(src_tensor));
+    ret =
+      MoveTensorListTensorData(reinterpret_cast<TensorList *>(dst_tensor), reinterpret_cast<TensorList *>(src_tensor));
   } else {
-    MoveCommonTensorData(dst_tensor, src_tensor);
+    ret = MoveCommonTensorData(dst_tensor, src_tensor);
   }
-  return;
+  return ret;
 }
 
 void SetCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
@@ -282,25 +286,15 @@ void SetCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
   dst_tensor->set_own_data(false);
 }
 
-void SetTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
+int SetTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
+  auto ret = RET_OK;
   if (src_tensor->data_type() == kObjectTypeTensorType) {
-    SetTensorListTensorData(reinterpret_cast<TensorList *>(dst_tensor), reinterpret_cast<TensorList *>(src_tensor));
+    ret =
+      SetTensorListTensorData(reinterpret_cast<TensorList *>(dst_tensor), reinterpret_cast<TensorList *>(src_tensor));
   } else {
     SetCommonTensorData(dst_tensor, src_tensor);
   }
-}
-
-void SetTensorShape(Tensor *dst, Tensor *src) {
-  dst->set_shape(src->shape());
-  dst->set_format(src->format());
-}
-
-bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor) {
-  if (dst_tensor->data_type() != kObjectTypeTensorType && src_tensor->data_type() != kObjectTypeTensorType &&
-      dst_tensor->data_type() != src_tensor->data_type()) {
-    return true;
-  }
-  return NeedCastTensorListData(dst_tensor, src_tensor);
+  return ret;
 }
 
 int CastTensorData(Tensor *dst, Tensor *src, bool support_fp16) {
@@ -318,7 +312,6 @@ int CastTensorData(Tensor *dst, Tensor *src, bool support_fp16) {
 int CastCommonTensorData(Tensor *dst, Tensor *src, bool support_fp16) {
   dst->ReallocData();
   dst->ResetRefCount();
-#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   if (dst->shape() != src->shape()) {
     MS_LOG(ERROR) << "dst tensor: " << dst->tensor_name() << " shape: " << dst->shape() << " vs "
                   << "src tensor: " << src->tensor_name() << " shape: " << src->shape();
@@ -329,27 +322,72 @@ int CastCommonTensorData(Tensor *dst, Tensor *src, bool support_fp16) {
   auto src_nums_size = src->ElementsNum();
   auto dst_data_type = static_cast<int>(dst->data_type());
   auto src_data_type = static_cast<int>(src->data_type());
+  // Some case dst data type is unknown, we will set to float32. In this case, need case is true, but actually no need
+  // cast data
+  if (dst_data_type == src_data_type) {
+    memcpy(dst_data, src_data, src_nums_size);
+    return RET_OK;
+  }
   if (dst_data_type == kNumberTypeFloat32 && src_data_type == kNumberTypeFloat16) {
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
     Float16ToFloat32_fp16_handler(src_data, dst_data, src_nums_size, support_fp16);
+#else
+    MS_LOG(ERROR) << "not enable fp16.";
+    return RET_NOT_SUPPORT;
+#endif
   } else if (dst_data_type == kNumberTypeFloat16 && src_data_type == kNumberTypeFloat32) {
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
     Float32ToFloat16_fp16_handler(src_data, dst_data, src_nums_size, support_fp16);
+#else
+    MS_LOG(ERROR) << "not enable fp16.";
+    return RET_NOT_SUPPORT;
+#endif
+  } else if (dst_data_type == kNumberTypeFloat32 && src_data_type == kNumberTypeInt32) {
+    Int32ToFloat32(static_cast<const int32_t *>(src_data), static_cast<float *>(dst_data), src_nums_size);
+  } else if (dst_data_type == kNumberTypeInt32 && src_data_type == kNumberTypeFloat32) {
+    Float32ToInt32(static_cast<const float *>(src_data), static_cast<int32_t *>(dst_data), src_nums_size);
   } else {
     MS_LOG(ERROR) << "not support dst_data_type: " << dst_data_type << " src_data_type: " << src_data_type;
     return RET_NOT_SUPPORT;
   }
   return RET_OK;
-#endif
-  return RET_ERROR;
+}
+
+bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor) {
+  if (IsUnKnownDtype(dst_tensor) || IsUnKnownDtype(src_tensor)) {
+    MS_LOG(INFO) << "Type unknown, no need cast.";
+    return false;
+  }
+  return !IsSameDtype(dst_tensor, src_tensor);
 }
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-bool NeedCastTensorListData(Tensor *dst_tensor, Tensor *src_tensor) {
-  if (dst_tensor->data_type() == kObjectTypeTensorType && src_tensor->data_type() == kObjectTypeTensorType &&
-      reinterpret_cast<TensorList *>(dst_tensor)->tensors_data_type() !=
-        reinterpret_cast<TensorList *>(src_tensor)->tensors_data_type()) {
-    return true;
+
+int SetTensorShape(Tensor *dst, Tensor *src) {
+  if (dst->data_type() != kObjectTypeTensorType && src->data_type() != kObjectTypeTensorType) {
+    dst->set_shape(src->shape());
+    dst->set_format(src->format());
+    return RET_OK;
+  } else if (dst->data_type() == kObjectTypeTensorType && src->data_type() == kObjectTypeTensorType) {
+    auto input_tensorlist = reinterpret_cast<TensorList *>(dst);
+    auto input_data_tensorlist = reinterpret_cast<TensorList *>(src);
+    MS_CHECK_FALSE_MSG(input_tensorlist == nullptr, RET_ERROR, "cast to tensorlist failed.");
+    MS_CHECK_FALSE_MSG(input_data_tensorlist == nullptr, RET_ERROR, "cast to tensorlist failed.");
+    input_tensorlist->set_element_shape(input_data_tensorlist->element_shape());
+    // because some model shape is not same as tensors().size(), we need the real shape, which is the tensors().size().
+    int real_shape_val = static_cast<int>(input_data_tensorlist->tensors().size());
+    std::vector<int> real_shape{real_shape_val};
+    input_tensorlist->set_shape(real_shape);
+    // hard code for some model
+    if (input_data_tensorlist->tensors_data_type() != kTypeUnknown &&
+        input_tensorlist->tensors_data_type() == kTypeUnknown) {
+      input_tensorlist->set_tensors_data_type(input_data_tensorlist->tensors_data_type());
+    }
+    return RET_OK;
+  } else {
+    MS_LOG(ERROR) << "not able to set tensor shape between tensor and tensorlist.";
+    return RET_ERROR;
   }
-  return false;
 }
 
 int CastTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist, bool support_fp16) {
@@ -373,33 +411,15 @@ int CastTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorl
   dst_tensorlist->ResetRefCount();
 
   for (size_t i = 0; i < src_tensorlist->tensors().size(); ++i) {
-    auto &src_tensor = src_tensorlist->tensors()[i];
-    auto &dst_tensor = dst_tensorlist->tensors()[i];
-    CastCommonTensorData(dst_tensor, src_tensor, support_fp16);
+    auto src_tensor = src_tensorlist->tensors()[i];
+    auto dst_tensor = dst_tensorlist->tensors()[i];
+    auto ret = CastCommonTensorData(dst_tensor, src_tensor, support_fp16);
+    MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "cast tensor data failed.");
   }
   return RET_OK;
 }
 
-void SetTensorListShape(Tensor *dst, Tensor *src) {
-  auto input_tensorlist = reinterpret_cast<TensorList *>(dst);
-  auto input_data_tensorlist = reinterpret_cast<TensorList *>(src);
-  if (input_data_tensorlist == nullptr || input_tensorlist == nullptr) {
-    MS_LOG(ERROR) << "cast to tensorlist failed.";
-    return;
-  }
-  input_tensorlist->FreeTensorListData();
-  input_tensorlist->set_element_shape(input_data_tensorlist->element_shape());
-  input_tensorlist->set_shape(input_data_tensorlist->shape());
-  std::vector<std::vector<int>> tensor_shape{};
-  std::transform(input_data_tensorlist->tensors().begin(), input_data_tensorlist->tensors().end(),
-                 std::back_inserter(tensor_shape), [](const Tensor *tensor_item) { return tensor_item->shape(); });
-  if (input_data_tensorlist->shape().empty()) {
-    return;
-  }
-  input_tensorlist->MallocTensorListData(input_data_tensorlist->tensors_data_type(), tensor_shape);
-}
-
-void MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist) {
+int MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist) {
   MS_ASSERT(src_tensorlist != nullptr);
   MS_ASSERT(dst_tensorlist != nullptr);
   dst_tensorlist->FreeData();
@@ -413,13 +433,15 @@ void MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensor
                   << " tesnors size: " << src_tensorlist_tensors_size
                   << " vs dst tensorlist: " << dst_tensorlist->tensor_name()
                   << " tensors size: " << dst_tensorlist_tensors_size;
-    return;
+    return RET_ERROR;
   }
 
+  // hard code for some model
+  dst_tensorlist->set_tensors_data_type(src_tensorlist->tensors_data_type());
   dst_tensorlist->set_own_data(src_tensorlist->own_data());
   for (size_t i = 0; i < src_tensorlist_tensors_size; ++i) {
-    auto &src_tensor = src_tensorlist->tensors()[i];
-    auto &dst_tensor = dst_tensorlist->tensors()[i];
+    auto src_tensor = src_tensorlist->tensors()[i];
+    auto dst_tensor = dst_tensorlist->tensors()[i];
 
     if (src_tensor->data() != nullptr) {
       dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
@@ -437,14 +459,18 @@ void MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensor
   } else {
     src_tensorlist->DecRefCount();
   }
+  return RET_OK;
 }
 
-void SetTensorListTensorData(TensorList *dst_tensor_list, TensorList *src_tensor_list) {
+int SetTensorListTensorData(TensorList *dst_tensor_list, TensorList *src_tensor_list) {
+  auto ret = dst_tensor_list->FreeTensorListData();
+  MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "FreeTensorListData failed.");
   dst_tensor_list->FreeTensorListData();
   dst_tensor_list->set_own_data(false);
   dst_tensor_list->set_tensors(src_tensor_list->tensors());
   dst_tensor_list->set_tensors_data_type(src_tensor_list->tensors_data_type());
   dst_tensor_list->set_element_shape(src_tensor_list->element_shape());
+  return RET_OK;
 }
 
 int TensorListC2TensorList(const TensorListC *src, TensorList *dst) {
@@ -548,28 +574,94 @@ void SetTensorListTensorDataType(const TypeId &data_type, Tensor *tensor) {
   }
 }
 
+bool IsSameDtype(const Tensor *input_1, const Tensor *input_2) {
+  if (input_1->data_type() != kObjectTypeTensorType && input_2->data_type() != kObjectTypeTensorType) {
+    return input_1->data_type() == input_2->data_type();
+  } else if (input_1->data_type() == kObjectTypeTensorType && input_2->data_type() == kObjectTypeTensorType) {
+    auto input_tensor_list_1 = reinterpret_cast<const TensorList *>(input_1);
+    auto input_tensor_list_2 = reinterpret_cast<const TensorList *>(input_2);
+    return input_tensor_list_1->tensors_data_type() == input_tensor_list_2->tensors_data_type();
+  } else {
+    return false;
+  }
+}
+
+bool IsSameShape(const Tensor *input_1, const Tensor *input_2) {
+  if (input_1->data_type() != kObjectTypeTensorType && input_2->data_type() != kObjectTypeTensorType) {
+    return input_1->shape() == input_2->shape();
+  } else if (input_1->data_type() == kObjectTypeTensorType && input_2->data_type() == kObjectTypeTensorType) {
+    auto input_tensor_list_1 = reinterpret_cast<const TensorList *>(input_1);
+    auto input_tensor_list_2 = reinterpret_cast<const TensorList *>(input_2);
+    return input_tensor_list_1->shape() == input_tensor_list_2->shape() &&
+           input_tensor_list_1->element_shape() == input_tensor_list_2->element_shape();
+  } else {
+    return false;
+  }
+}
+
+int MallocTensorData(Tensor *tensor) {
+  auto ret = RET_OK;
+  if (tensor->data_type() != kObjectTypeTensorType) {
+    tensor->FreeData();
+    auto size = tensor->ElementsNum();
+    if (size <= 0) {
+      return RET_OK;
+    }
+    ret = tensor->MallocData();
+  } else {
+    auto tensor_list = reinterpret_cast<TensorList *>(tensor);
+    ret = tensor_list->FreeTensorListData();
+    MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "free tensor list data failed.");
+    auto size = tensor->ElementsNum();
+    if (size <= 0) {
+      return RET_OK;
+    }
+    std::vector<std::vector<int>> tensors_shape{};
+    for (int i = 0; i < size; ++i) {
+      tensors_shape.push_back(tensor_list->element_shape());
+    }
+    ret = tensor_list->MallocTensorListData(tensor_list->tensors_data_type(), tensors_shape);
+    MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "malloc tensor list data failed.");
+  }
+  return ret;
+}
+
+bool IsUnKnownDtype(const Tensor *input) {
+  if (input->data_type() == kTypeUnknown) {
+    return true;
+  } else if (input->data_type() == kObjectTypeTensorType) {
+    auto input_tensor_list = reinterpret_cast<const TensorList *>(input);
+    return input_tensor_list->tensors_data_type() == kTypeUnknown;
+  }
+  return false;
+}
+
 #else
 
-bool NeedCastTensorListData(Tensor *dst_tensor, Tensor *src_tensor) { return false; }
+int SetTensorShape(Tensor *dst, Tensor *src) {
+  if (dst->data_type() != kObjectTypeTensorType && src->data_type() != kObjectTypeTensorType) {
+    dst->set_shape(src->shape());
+    dst->set_format(src->format());
+    return RET_OK;
+  } else {
+    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
+    return RET_ERROR;
+  }
+}
 
 int CastTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist, bool support_fp16) {
   MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-  return RET_OK;
+  return RET_ERROR;
 }
 
-void SetTensorListShape(Tensor *dst, Tensor *src) {
+int MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist) {
   MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-  return;
+  return RET_ERROR;
 }
 
-void MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist) {
+int SetTensorListTensorData(TensorList *dst_tensor_list, TensorList *src_tensor_list) {
   MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-  return;
-}
-
-void SetTensorListTensorData(TensorList *dst_tensor_list, TensorList *src_tensor_list) {
-  MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-  return;
+  return RET_ERROR;
 }
 
 void FreeTensorListC(TensorListC *tensorlist_c, std::shared_ptr<Allocator> allocator) {
@@ -610,6 +702,47 @@ int CopyTensorListTensorDataType(TensorList *dst_tensorlist, TensorList *src_ten
 void SetTensorListTensorDataType(const TypeId &data_type, Tensor *tensor) {
   MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
   return;
+}
+
+bool IsSameDtype(const Tensor *input_1, const Tensor *input_2) {
+  if (input_1->data_type() != kObjectTypeTensorType && input_2->data_type() != kObjectTypeTensorType) {
+    return input_1->data_type() == input_2->data_type();
+  } else {
+    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
+    return false;
+  }
+}
+
+bool IsSameShape(const Tensor *input_1, const Tensor *input_2) {
+  if (input_1->data_type() != kObjectTypeTensorType && input_2->data_type() != kObjectTypeTensorType) {
+    return input_1->shape() == input_2->shape();
+  } else {
+    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
+    return false;
+  }
+}
+
+int MallocTensorData(Tensor *tensor) {
+  auto ret = RET_OK;
+  if (tensor->data_type() != kObjectTypeTensorType) {
+    tensor->FreeData();
+    auto size = tensor->ElementsNum();
+    if (size <= 0) {
+      return RET_OK;
+    }
+    ret = tensor->MallocData();
+  } else {
+    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
+    return RET_ERROR;
+  }
+  return ret;
+}
+
+bool IsUnKnownDtype(const Tensor *input) {
+  if (input->data_type() == kTypeUnknown) {
+    return true;
+  }
+  return false;
 }
 
 #endif

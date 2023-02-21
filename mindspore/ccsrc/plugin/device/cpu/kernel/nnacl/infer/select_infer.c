@@ -26,19 +26,18 @@ int SelectInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-
-  if (!InferFlag(inputs, inputs_size)) {
-    return NNACL_INFER_INVALID;
-  }
-  int data_type = inputs[1]->data_type_;
-  for (size_t i = 2; i < inputs_size; i++) {
-    if (inputs[i]->data_type_ == kNumberTypeFloat32) data_type = kNumberTypeFloat32;
-  }
   for (size_t i = 0; i < outputs_size; i++) {
     const TensorC *input = inputs[i + 1];
     TensorC *output = outputs[i];
     SetDataTypeFormat(output, input);
-    output->data_type_ = data_type;
+  }
+
+  if (!InferFlag(inputs, inputs_size)) {
+    return NNACL_INFER_INVALID;
+  }
+  for (size_t i = 0; i < outputs_size; i++) {
+    const TensorC *input = inputs[i + 1];
+    TensorC *output = outputs[i];
     if (input->data_type_ == kObjectTypeTensorType) {
       TensorListC *input_tensorlist = (TensorListC *)(input);
       TensorListC *output_tensorlist = (TensorListC *)(output);

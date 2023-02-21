@@ -81,14 +81,9 @@ int SubGraphKernel::Execute(const KernelCallBack &before, const KernelCallBack &
 
 int SubGraphKernel::ReSize() {
   for (auto kernel : nodes_) {
-    if (kernel == nullptr) {
-      MS_LOG(ERROR) << "input kernel is nullptr!";
-      return RET_ERROR;
-    }
-    if (kernel->subgraph_type() != kernel::kNotSubGraph) {
-      MS_LOG(ERROR) << "all nodes in should be kernel";
-      return RET_ERROR;
-    }
+    MS_CHECK_FALSE_MSG(kernel == nullptr, RET_ERROR, "input kernel is nullptr.");
+    MS_CHECK_FALSE_MSG(kernel->subgraph_type() != kernel::kNotSubGraph, RET_ERROR,
+                       "all nodes in should be kernel in subgraph kernels");
     std::vector<lite::Tensor *> inputs = kernel->in_tensors();
     std::vector<lite::Tensor *> outputs = kernel->out_tensors();
     for (auto &output : outputs) {
@@ -132,6 +127,33 @@ int SubGraphKernel::ReSize() {
   }
   return RET_OK;
 }
+
+int SubGraphKernel::MallocNodesOutputSpace() {
+  for (auto node : nodes_) {
+    MS_CHECK_FALSE_MSG(node == nullptr, RET_ERROR, "input kernel is nullptr.");
+    MS_CHECK_FALSE_MSG(node->subgraph_type() != kernel::kNotSubGraph, RET_ERROR,
+                       "all nodes in should be kernel in subgraph kernels");
+    std::vector<lite::Tensor *> outputs = node->out_tensors();
+    for (auto &output : outputs) {
+      auto ret = lite::MallocTensorData(output);
+      if (ret != RET_OK) {
+        return ret;
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int SubGraphKernel::MallocSubgraphInputs() {
+  for (auto input : in_tensors()) {
+    auto ret = lite::MallocTensorData(input);
+    if (ret != RET_OK) {
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+
 void SubGraphKernel::InitInputTensorInitRefCount() {
   for (auto &input : this->in_tensors()) {
     int input_init_refcount = input->init_ref_count();

@@ -32,8 +32,8 @@ class LiteEntranceOpActor : public LiteOpActor {
  protected:
   void AsyncOutput(OpContext<Tensor> *context) override;
   int PrepareOutputData() override;
-  void InitInputData() override;
-  void SetInputShape() override;
+  int InitInputData() override;
+  int SetInputShape() override;
 
  private:
   // record which actor send data

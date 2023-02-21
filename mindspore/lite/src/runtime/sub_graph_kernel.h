@@ -99,8 +99,11 @@ class SubGraphKernel : public KernelExec {
 
   int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
 
-  // called after Run
   int ReSize() override;
+
+  virtual int MallocNodesOutputSpace();
+
+  virtual int MallocSubgraphInputs();
 
   void InitOutTensorInitRefCount(const std::vector<KernelExec *> *mask_kernels) override;
 
