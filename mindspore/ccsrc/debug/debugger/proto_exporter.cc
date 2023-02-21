@@ -364,12 +364,17 @@ void DebuggerProtoExporter::ExportFuncGraph(const FuncGraphPtr &func_graph, debu
   MS_LOG(INFO) << "graph names: " << func_graph->ToString();
 
   // cast FuncGraph to KernelGraph to access root_graph_id()
-  uint32_t root_graph_id = static_cast<session::KernelGraph *>(func_graph.get())->root_graph_id();
-
+  auto kernel_graph = static_cast<session::KernelGraph *>(func_graph.get());
+  uint32_t root_graph_id = kernel_graph->root_graph_id();
+  uint32_t graph_id = kernel_graph->graph_id();
   MS_LOG(INFO) << "root graph id: " << root_graph_id;
 
   // set root graph id
-  graph_proto->set_root_name(std::to_string(root_graph_id));
+  if (kernel_graph->is_graph_run_mode()) {
+    graph_proto->set_root_name(std::to_string(root_graph_id));
+  } else {
+    graph_proto->set_root_name(std::to_string(graph_id));
+  }
 
   ExportParameters(func_graph, graph_proto);
 

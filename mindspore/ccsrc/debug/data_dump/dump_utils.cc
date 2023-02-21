@@ -15,8 +15,13 @@
  */
 #include "debug/data_dump/dump_utils.h"
 #include <dirent.h>
+#ifdef ENABLE_DEBUGGER
+#include <sys/stat.h>
+#endif
 #include <map>
 #include <vector>
+#include <stack>
+#include <queue>
 #include <algorithm>
 
 #include "runtime/device/ms_device_shape_transfer.h"
@@ -176,8 +181,17 @@ void DumpToFile(const std::string &file_name, const std::string &dump_str) {
   ChangeFileMode(real_path_str, S_IRUSR);
 }
 
-void RemoveEmptyDir(const std::string &dir_path) {
-  uint32_t dir_count = 0;
+#ifdef ENABLE_DEBUGGER
+bool IsFolder(const std::string &file_path) {
+  struct stat st;
+  if (lstat(file_path.c_str(), &st) != 0) {
+    return false;
+  }
+  return S_ISDIR(st.st_mode);
+}
+
+bool IsEmptyFolder(const std::string &dir_path) {
+  int dir_count = 0;
   DIR *d = opendir(dir_path.c_str());
   struct dirent *dir = nullptr;
   while ((dir = readdir(d)) != nullptr) {
@@ -190,11 +204,70 @@ void RemoveEmptyDir(const std::string &dir_path) {
   }
   (void)closedir(d);
   if (dir_count == 0) {
-    auto ret = remove(dir_path.c_str());
-    if (ret == 0) {
-      MS_LOG(INFO) << "Delete empty dir successfully, dir path is:" << dir_path;
+    return true;
+  }
+  return false;
+}
+
+void RemoveEmptyDir(const std::string &dir_path) {
+  if (!IsFolder(dir_path)) {
+    MS_LOG(WARNING) << "the path = " << dir_path.c_str() << "is not a folder";
+    return;
+  }
+  std::stack<std::string> dirs_stack;
+  std::queue<std::string> dirs_queue;
+  dirs_queue.push(dir_path);
+  while (!dirs_queue.empty()) {
+    std::string &folder = dirs_queue.front();
+    std::unique_ptr<DIR, int (*)(DIR *)> dir(opendir(folder.c_str()), &closedir);
+    if (!dir) {
+      MS_LOG(WARNING) << "the path = " << dir_path.c_str() << "is not exist";
+      return;
+    }
+    dirent *dt;
+    while ((dt = readdir(dir.get())) != nullptr) {
+      std::string name = dt->d_name;
+      if (name == "." || name == "..") {
+        continue;
+      }
+      std::string sub_path = folder + "/" + name;
+      if (IsFolder(sub_path)) {
+        dirs_queue.push(sub_path);
+      }
+    }
+    dirs_stack.push(folder);
+    dirs_queue.pop();
+  }
+
+  while (!dirs_stack.empty()) {
+    std::string &folder_stack = dirs_stack.top();
+    if (!IsEmptyFolder(folder_stack)) {
+      MS_LOG(INFO) << "the folder path in dirs_stack: " << folder_stack.c_str() << " is not empty folder";
+    } else {
+      if (remove(folder_stack.c_str()) != 0) {
+        MS_LOG(WARNING) << "delete folder path in dirs_stack: " << folder_stack.c_str() << " is failed.";
+      }
+    }
+    dirs_stack.pop();
+  }
+}
+
+std::vector<std::string> Split(const std::string &input, const std::string &pattern) {
+  std::string str = input;
+  std::string::size_type pos;
+  std::vector<std::string> result;
+  str += pattern;
+  size_t len = str.size();
+
+  for (size_t i = 0; i < len; i++) {
+    pos = str.find(pattern, i);
+    if (pos < len) {
+      std::string sub_s = str.substr(i, pos - i);
+      result.push_back(sub_s);
+      i = pos + pattern.size() - 1;
     }
   }
+  return result;
 }
 
 void SaveOverflowOperator(const std::string &iterator, const std::string &dump_rank_path) {
@@ -204,15 +277,23 @@ void SaveOverflowOperator(const std::string &iterator, const std::string &dump_r
   DIR *d = opendir(cur_step_overflow_path.c_str());
   overflowOperators.clear();
   if (d == nullptr) {
-    MS_LOG(WARNING) << "Overflow file directory does not exist!";
+    MS_LOG(INFO) << "Overflow file directory does not exist!";
   } else {
     struct dirent *dir = nullptr;
     while ((dir = readdir(d)) != nullptr) {
       std::string filename = dir->d_name;
       if (filename.find(overflow_file_prefix) != std::string::npos) {
-        uint32_t pos_start = overflow_file_prefix.size();
-        uint32_t n = filename.rfind(".") - pos_start + 2;
-        std::string stream_task_name = filename.substr(pos_start - 1, n);
+        const int kNumDots = 2;
+        const int first_dot = 0;
+        int dots_count = 0;
+        int pos_start = overflow_file_prefix.size() - 1;
+        std::string filename_substr = filename.substr(pos_start);
+        size_t third_dot = filename_substr.find(".");
+        while (dots_count != kNumDots && third_dot != std::string::npos) {
+          third_dot = filename_substr.find(".", third_dot + 1);
+          dots_count++;
+        }
+        std::string stream_task_name = filename_substr.substr(first_dot, third_dot + 1);
         overflowOperators.emplace_back(stream_task_name);
       }
     }
@@ -225,6 +306,10 @@ void DeleteNoOverflowFile(uint32_t rank_id, uint32_t graph_id) {
   if (!(json_parser.async_dump_enabled() || json_parser.e2e_dump_enabled())) {
     return;
   }
+  const int max_task_id = 65536;
+  const int least_dots_num = 3;
+  const int two_dots_num = 2;
+  const int one_dots_num = 1;
   std::string cur_dump_path = json_parser.path() + "/rank_" + std::to_string(rank_id);
   std::string net_name_ = json_parser.net_name();
   std::string iterator = std::to_string(json_parser.cur_dump_iter());
@@ -233,23 +318,41 @@ void DeleteNoOverflowFile(uint32_t rank_id, uint32_t graph_id) {
     cur_dump_path + "/" + net_name_ + "/" + std::to_string(graph_id) + "/" + iterator;
   DIR *d = opendir(overflow_operator_dump_path.c_str());
   if (d == nullptr) {
-    MS_LOG(WARNING) << "Overflow iterator file directory does not exist!";
+    MS_LOG(INFO) << "Overflow iterator file directory does not exist!";
   } else {
     struct dirent *dir = nullptr;
     while ((dir = readdir(d)) != nullptr) {
       std::string filename = dir->d_name;
+      if (filename == "." || filename == "..") {
+        continue;
+      }
+      const std::string tmp_filename = filename;
+      auto filename_splits = Split(filename, ".");
+      int split_len = filename_splits.size();
+      if (split_len < least_dots_num) {
+        MS_LOG(WARNING) << "Overflow operator file format is incorrect";
+        continue;
+      }
+      auto task_id = static_cast<uint32_t>(std::stoi(filename_splits.at(split_len - least_dots_num)));
+      if (task_id >= max_task_id) {
+        auto mod_val = task_id % max_task_id;
+        filename = "." + std::to_string(mod_val) + "." + filename_splits.at(split_len - two_dots_num) + "." +
+                   filename_splits.at(split_len - one_dots_num);
+      }
       bool is_exist =
         std::any_of(std::begin(overflowOperators), std::end(overflowOperators),
                     [&](std::string stream_task_str) { return filename.find(stream_task_str) != std::string::npos; });
       if (!is_exist) {
-        auto ret = remove((overflow_operator_dump_path + "/" + filename).c_str());
+        auto ret = remove((overflow_operator_dump_path + "/" + tmp_filename).c_str());
         if (ret == 0) {
-          MS_LOG(INFO) << "Delete file successfully, filename is:" << filename.c_str();
+          MS_LOG(INFO) << "Delete file successfully, filename is:" << tmp_filename.c_str();
         }
       }
     }
     (void)closedir(d);
-    RemoveEmptyDir(overflow_operator_dump_path);
+    std::string overflow_file_graph_path = cur_dump_path + "/" + net_name_ + "/" + std::to_string(graph_id);
+    RemoveEmptyDir(overflow_file_graph_path);
   }
 }
+#endif
 }  // namespace mindspore
