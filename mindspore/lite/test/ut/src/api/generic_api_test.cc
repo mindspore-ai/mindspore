@@ -44,6 +44,8 @@ TEST_F(GenericApiTest, TestConvertContextToInnerContext) {
   ASSERT_EQ(inner_ctx->device_list_.size(), device_list.size());
   ASSERT_EQ(inner_ctx->device_list_[0].device_type_, mindspore::lite::DT_CPU);
   ASSERT_EQ(inner_ctx->device_list_[1].device_type_, mindspore::lite::DT_CUSTOM);
+  delete context;
+  delete inner_ctx;
 }
 
 TEST_F(GenericApiTest, TestConvertInnerContextToContext) {
@@ -61,5 +63,8 @@ TEST_F(GenericApiTest, TestConvertInnerContextToContext) {
   ASSERT_EQ(new_device_list.size(), device_list.size());
   ASSERT_EQ(new_device_list[0]->GetDeviceType(), mindspore::DeviceType::kCPU);
   ASSERT_EQ(new_device_list[1]->GetDeviceType(), mindspore::DeviceType::kCustomDevice);
+  delete context;
+  delete inner_ctx;
+  delete ctx;
 }
 }  // namespace mindspore

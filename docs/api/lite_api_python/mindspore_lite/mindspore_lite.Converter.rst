@@ -1,7 +1,7 @@
 mindspore_lite.Converter
 ========================
 
-.. py:class:: mindspore_lite.Converter(fmk_type, model_file, output_file, weight_file="", config_file="", weight_fp16=False, input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32, output_data_type=DataType.FLOAT32, export_mindir=ModelType.MINDIR_LITE, decrypt_key="", decrypt_mode="AES-GCM", enable_encryption=False, encrypt_key="", infer=False, train_model=False, no_fusion=None, device="")
+.. py:class:: mindspore_lite.Converter(fmk_type, model_file, output_file, weight_file="", config_file="", weight_fp16=False, input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32, output_data_type=DataType.FLOAT32, save_type=ModelType.MINDIR_LITE, decrypt_key="", decrypt_mode="AES-GCM", enable_encryption=False, encrypt_key="", infer=False, train_model=False, optimize="general", device="")
 
     构造 `Converter` 的类。使用场景是：1. 将第三方模型转换生成MindSpore模型或MindSpore Lite模型；2. 将MindSpore模型转换生成MindSpore Lite模型。
 
@@ -14,7 +14,7 @@ mindspore_lite.Converter
     参数：
         - **fmk_type** (FmkType) - 输入模型框架类型。选项：FmkType.TF | FmkType.CAFFE | FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH。有关详细信息，请参见 `FmkType <https://mindspore.cn/lite/api/zh-CN/master/mindspore_lite/mindspore_lite.FmkType.html>`_ 。
         - **model_file** (str) - 转换时的输入模型文件路径。例如："/home/user/model.prototxt"。选项：TF: "model.pb" | CAFFE: "model.prototxt" | ONNX: "model.onnx" | MINDIR: "model.mindir" | TFLITE: "model.tflite" | PYTORCH: "model.pt or model.pth"。
-        - **output_file** (str) - 转换时的输出模型文件路径。可自动生成.ms后缀。如果将 `export_mindir` 设置为ModelType.MINDIR，那么将生成MindSpore模型，该模型使用.mindir作为后缀。如果将 `export_mindir` 设置为ModelType.MINDIR_LITE，那么将生成MindSpore Lite模型，该模型使用.ms作为后缀。例如：输入模型为"/home/user/model.prototxt"，它将生成名为model.prototxt.ms的模型在/home/user/路径下。
+        - **output_file** (str) - 转换时的输出模型文件路径。可自动生成.ms后缀。如果将 `save_type` 设置为ModelType.MINDIR，那么将生成MindSpore模型，该模型使用.mindir作为后缀。如果将 `save_type` 设置为ModelType.MINDIR_LITE，那么将生成MindSpore Lite模型，该模型使用.ms作为后缀。例如：输入模型为"/home/user/model.prototxt"，它将生成名为model.prototxt.ms的模型在/home/user/路径下。
         - **weight_file** (str，可选) - 输入模型权重文件。仅当输入模型框架类型为FmkType.CAFFE时必选，Caffe模型一般分为两个文件： `model.prototxt` 是模型结构，对应 `model_file` 参数； `model.caffemodel` 是模型权值文件，对应 `weight_file` 参数。例如："/home/user/model.caffemodel"。默认值：""。
         - **config_file** (str，可选) - Converter的配置文件，可配置训练后量化或离线拆分算子并行或禁用算子融合功能并将插件设置为so路径等功能。 `config_file` 配置文件采用 `key = value` 的方式定义相关参数，有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_ 。有关扩展的配置参数，请参见 `extension <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#扩展配置>`_ 。例如："/home/user/model.cfg"。默认值：""。
         - **weight_fp16** (bool，可选) - 若True，则在转换时，会将模型中Float32的常量Tensor保存成Float16数据类型，压缩生成的模型尺寸。之后根据 `DeviceInfo` 的 `enable_fp16` 参数决定输入的数据类型执行推理。 `weight_fp16` 的优先级很低，比如如果开启了量化，那么对于已经量化的权重， `weight_fp16` 不会再次生效。 `weight_fp16` 仅对Float32数据类型中的常量Tensor有效。默认值：False。
@@ -43,14 +43,14 @@ mindspore_lite.Converter
           - **DataType.UINT8**   - 无符号8位整型数。
           - **DataType.UNKNOWN** - 设置与模型输出Tensor相同的DataType。
 
-        - **export_mindir** (ModelType，可选) - 设置导出模型文件的类型。选项：ModelType.MINDIR | ModelType.MINDIR_LITE。默认值：ModelType.MINDIR_LITE。有关详细信息，请参见 `ModelType <https://mindspore.cn/lite/api/zh-CN/master/mindspore_lite/mindspore_lite.ModelType.html>`_ 。
+        - **save_type** (ModelType，可选) - 设置导出模型文件的类型。选项：ModelType.MINDIR | ModelType.MINDIR_LITE。默认值：ModelType.MINDIR_LITE。有关详细信息，请参见 `ModelType <https://mindspore.cn/lite/api/zh-CN/master/mindspore_lite/mindspore_lite.ModelType.html>`_ 。
         - **decrypt_key** (str，可选) - 设置用于加载密文MindIR时的密钥，以十六进制字符表示。仅当fmk_type为FmkType.MINDIR时有效。默认值：""。
         - **decrypt_mode** (str，可选) - 设置加载密文MindIR的模式，只在设置了 `decryptKey` 时有效。选项："AES-GCM" | "AES-CBC"。默认值："AES-GCM"。
         - **enable_encryption** (bool，可选) - 导出模型时是否加密，导出加密可保护模型完整性，但会增加运行时初始化时间。默认值：False。
         - **encrypt_key** (str，可选) - 设置用于加密文件的密钥，以十六进制字符表示。仅支持当 `decrypt_mode` 是"AES-GCM"，密钥长度为16。默认值：""。
         - **infer** (bool，可选) - Converter后是否进行预推理。默认值：False。
         - **train_model** (bool，可选) - 模型是否将在设备上进行训练。默认值：False。
-        - **no_fusion** (bool，可选) - 是否避免融合优化。默认值：False。当 `export_mindir` 为ModelType.mindir时，None为True，意味着避免融合优化。当 `export_mindir` 不是ModelType.mindir时，None为False，意味着允许融合优化。
+        - **optimize** (str，可选) - 是否避免融合优化。默认值：general，意味着允许融合优化。
         - **device** (str，可选) - 设置转换模型时的目标设备，仅对Ascend设备有效。使用场景是在Ascend设备上，如果你需要转换生成的模型调用Ascend后端执行推理，则设置该参数，若未设置，默认模型调用CPU后端推理。支持以下目标设备："Ascend"。默认值：""。
 
     异常：
@@ -67,14 +67,14 @@ mindspore_lite.Converter
         - **TypeError** - `input_format` 不是Format类型。
         - **TypeError** - `input_data_type` 不是DataType类型。
         - **TypeError** - `output_data_type` 不是DataType类型。
-        - **TypeError** - `export_mindir` 不是ModelType类型。
+        - **TypeError** - `save_type` 不是ModelType类型。
         - **TypeError** - `decrypt_key` 不是str类型。
         - **TypeError** - `decrypt_mode` 不是str类型。
         - **TypeError** - `enable_encryption` 不是bool类型。
         - **TypeError** - `encrypt_key` 不是str类型。
         - **TypeError** - `infer` 不是bool类型。
         - **TypeError** - `train_model` 不是bool类型。
-        - **TypeError** - `no_fusion` 不是bool类型。
+        - **TypeError** - `optimize` 不是str类型。
         - **TypeError** - `device` 不是str类型。
         - **ValueError** - 当 `input_format` 是Format类型时， `input_format` 既不是Format.NCHW也不是Format.NHWC。
         - **ValueError** - 当 `decrypt_mode` 是str类型时， `decrypt_mode` 既不是"AES-GCM"也不是"AES-CBC"。
