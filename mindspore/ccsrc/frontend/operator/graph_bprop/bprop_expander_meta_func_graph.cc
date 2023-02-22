@@ -162,6 +162,26 @@ void RegMathBpropExpanderOps2() {
   REGISTER_EXPANDER_BPROP_IMPL(MatrixPower);
   REGISTER_EXPANDER_BPROP_IMPL(TridiagonalMatMul);
   REGISTER_EXPANDER_BPROP_IMPL(LpNorm);
+  REGISTER_EXPANDER_BPROP_IMPL(AccumulateNV2);
+  REGISTER_EXPANDER_BPROP_IMPL(BesselI1);
+  REGISTER_EXPANDER_BPROP_IMPL(BesselJ1);
+  REGISTER_EXPANDER_BPROP_IMPL(Atan2);
+  REGISTER_EXPANDER_BPROP_IMPL(RealDiv);
+  REGISTER_EXPANDER_BPROP_IMPL(DivNoNan);
+  REGISTER_EXPANDER_BPROP_IMPL(Xdivy);
+  REGISTER_EXPANDER_BPROP_IMPL(FloorMod);
+  REGISTER_EXPANDER_BPROP_IMPL(TruncateMod);
+  REGISTER_EXPANDER_BPROP_IMPL(Mod);
+  REGISTER_EXPANDER_BPROP_IMPL(Xlogy);
+}
+
+void RegMathBpropExpanderOps3() {
+  REGISTER_EXPANDER_BPROP_IMPL(SquaredDifference);
+  REGISTER_EXPANDER_BPROP_IMPL(Hypot);
+  REGISTER_EXPANDER_BPROP_IMPL(Lerp);
+  REGISTER_EXPANDER_BPROP_IMPL(AddV2);
+  REGISTER_EXPANDER_BPROP_IMPL(Addcdiv);
+  REGISTER_EXPANDER_BPROP_IMPL(Addcmul);
 }
 
 void RegNNBpropExpanderOps1() {
@@ -303,6 +323,7 @@ void RegSparseBpropExpanderOps() {}
 void RegBpropExpanderOps() {
   RegMathBpropExpanderOps1();
   RegMathBpropExpanderOps2();
+  RegMathBpropExpanderOps3();
   RegNNBpropExpanderOps1();
   RegNNBpropExpanderOps2();
   RegArrayBpropExpanderOps1();
