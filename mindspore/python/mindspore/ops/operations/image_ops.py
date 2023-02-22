@@ -1151,3 +1151,66 @@ class CombinedNonMaxSuppression(Primitive):
         self.add_prim_attr('pad_per_class', self.pad_per_class)
         self.clip_boxes = validator.check_value_type("clip_boxes", clip_boxes, [bool], self.name)
         self.add_prim_attr('clip_boxes', self.clip_boxes)
+
+
+class ResizeV2(Primitive):
+    r"""
+    Using the nearest, linear or cubic interpolate method resize the input tensor 'x'.
+
+    Note:
+        Input x must be a 4-D tensor.
+
+    Args:
+        coordinate_transformation_mode (str): Default is 'half_pixel'. Describes how to transform the
+            coordinate in the resized tensor to the coordinate in the original tensor. Other optional: 'align_corners'.
+            In 'nearest' mode, coordinate_transformation_mode must be 'half_pixel'.
+        mode (str): Defaults to 'nearest'. Other optional: 'linear' and 'cubic'.
+
+    Inputs:
+        - **x** (Tensor) - A 4-D tensor which to resize, with shape [batch, channel, width, height]. Must be one of the
+          following types: uint8, int8, int16, int32, int64, float16, float32, float64, when mode = 'nearest'.
+          Must be one of the following types: float16, float32, float64, when mode = 'linear' or 'cubic'.
+        - **roi** (Tensor) - A 1-D float32 Tensor. Unused parameters currently.
+        - **scales** (Tensor) - A 1-D float32 Tensor. Unused parameters currently.
+        - **sizes** (Tensor) - A 1-D int64 or int32 Tensor, the length must be 4 and greater than 0.
+          And sizes[0], sizes[1] must match with the shape[0] and shape[1] of x.
+          When mode equals 'nearest' or 'linear', sizes[2] must be 1.
+
+    Outputs:
+        A 4-D tensor which shape is [batch, channel, new_height, new_width] with type as same as x.
+
+    Raises:
+        TypeError: If dtype of `x`, `roi`, `scales` or `sizes` is not supported.
+        ValueError: If shape of `x`, `roi`, `scales` or `sizes` is not supported.
+        ValueError: If the length of `sizes` is not 4.
+        ValueError: If `sizes` is not greater than 0.
+        ValueError: If sizes[2] is not 1, when `mode` = 'nearest' or 'linear'.
+        ValueError: If sizes[0] and sizes[1] don't match the shape[0] and shape[1] of x.
+        ValueError: If `coordinate_transformation_mode` or `mode` is not supported.
+        ValueError: If `coordinate_transformation_mode` is not 'half_pixel', when `mode` = 'nearest'.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[[[1., 2., 3., 4.]]]]).astype(np.float32))
+        >>> roi = Tensor(np.array([0]).astype(np.float32))
+        >>> scales = Tensor(np.array([0]).astype(np.float32))
+        >>> sizes = Tensor(np.array([1, 1, 1, 9]).astype(np.int64))
+        >>> resize_v2 = ops.ResizeV2(coordinate_transformation_mode="half_pixel", mode="nearest")
+        >>> output = resize_v2(x, roi, scales, sizes)
+        >>> print(output)
+        [[[[1. 1. 1. 2. 2. 3. 3. 4. 4.]]]]
+    """
+    @prim_attr_register
+    def __init__(self, coordinate_transformation_mode="half_pixel", mode="nearest"):
+        """Initialize ResizeV2."""
+        self.init_prim_io_names(inputs=['x', 'roi', 'scales', 'sizes'], outputs=['y'])
+        self.add_prim_attr("nearest_mode", "floor")
+        self.add_prim_attr("cubic_coeff_a", -0.75)
+        validator.check_value_type(
+            "coordinate_transformation_mode", coordinate_transformation_mode, [str], self.name)
+        validator.check_string(coordinate_transformation_mode, ["align_corners", "half_pixel"],
+                               "coordinate_transformation_mode", self.name)
+        validator.check_value_type("mode", mode, [str], self.name)
+        validator.check_string(mode, ["nearest", "linear", "cubic"], "mode", self.name)

@@ -23,6 +23,7 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations.image_ops import ResizeBicubic
 from mindspore.ops.operations._grad_ops import ResizeBicubicGrad
+from mindspore.ops.operations.image_ops import ResizeV2
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations.image_ops import CropAndResize
 from mindspore.ops.operations.image_ops import CropAndResizeGradImage
@@ -46,6 +47,19 @@ def get_bprop_resize_bicubic(self):
             images = F.cast(images, mstype.float64)
         dx = resize_bicubic_grad(dout, images)
         return (dx, P.ZerosLike()(size))
+    return bprop
+
+
+@bprop_getters.register(ResizeV2)
+def get_bprop_resize_v2(self):
+    """Grad definition for `ResizeV2` operation."""
+    resize_v2_grad = G.ResizeV2Grad(coordinate_transformation_mode=self.coordinate_transformation_mode,
+                                    mode=self.mode)
+
+    def bprop(x, roi, scales, sizes, out, dout):
+        input_size = P.Shape()(x)
+        dx = resize_v2_grad(dout, roi, scales, Tensor(input_size))
+        return (dx, zeros_like(roi), zeros_like(scales), zeros_like(sizes))
     return bprop
 
 

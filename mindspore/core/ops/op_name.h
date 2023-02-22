@@ -283,6 +283,7 @@ constexpr auto kNewHeight = "new_height";
 constexpr auto kNewWidth = "new_width";
 constexpr auto kPreserveAspectRatio = "preserve_aspect_ratio";
 constexpr auto kCoordinateTransformMode = "coordinate_transform_mode";
+constexpr auto kCoordinateTransformationMode = "coordinate_transformation_mode";
 constexpr auto kCubicCoeff = "cubic_coeff";
 constexpr auto kExcludeOutside = "exclude_outside";
 constexpr auto kExtrapolationValue = "extrapolation_value";
