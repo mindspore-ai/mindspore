@@ -2477,3 +2477,21 @@ class SiLU(Primitive):
     def __init__(self):
         """Initialize SiLU"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+
+class TileSize(Primitive):
+    r"""
+        Tile size for matmul
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize TileSize"""
+        self.init_prim_io_names(inputs=['shape', 'out_shape', 'ndim'], outputs=['output'])
+
+    def __call__(self, shape, out_shape, ndim):
+        size = [1] * ndim
+        for idx, (i, j) in enumerate(zip(shape, out_shape)):
+            if i != j:
+                size[idx] = j
+        return tuple(size)
