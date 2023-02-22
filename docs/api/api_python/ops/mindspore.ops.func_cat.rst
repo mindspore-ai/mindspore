@@ -1,5 +1,5 @@
 ﻿mindspore.ops.cat
-=================
+==================
 
 .. py:function:: mindspore.ops.cat(tensors, axis=0)
 
