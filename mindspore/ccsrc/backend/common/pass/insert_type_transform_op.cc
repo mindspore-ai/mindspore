@@ -187,10 +187,9 @@ AnfNodePtr CreateRealMakeTupleByTupleUnfoldInput(const FuncGraphPtr &func_graph,
 }
 
 void SetBackOffFlag(const KernelBuildInfoPtr &build_info, const CNodePtr &cnode) {
-  std::vector<std::string> back_off_op_list = {prim::kTupleToTensor,  prim::kScalarToTensor,  prim::kTensorToTuple,
-                                               prim::kTensorToScalar, prim::kRealMakeTuple,   prim::kRealTupleGetItem,
-                                               prim::kRealMakeList,   prim::kRealListGetItem, prim::kTupleSetItem,
-                                               prim::kListToTensor,   prim::kTensorToList};
+  std::vector<std::string> back_off_op_list = {prim::kTupleToTensor,  prim::kScalarToTensor, prim::kTensorToTuple,
+                                               prim::kTensorToScalar, prim::kRealMakeTuple,  prim::kRealTupleGetItem,
+                                               prim::kTupleSetItem};
   if (std::find(back_off_op_list.begin(), back_off_op_list.end(), common::AnfAlgo::GetCNodeName(cnode)) !=
       back_off_op_list.end()) {
     build_info->set_valid(false);

@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
+#include "backend/common/pass/convert_list_to_tuple.h"
 #include "backend/common/pass/eliminate_func_data_type.h"
 #include "backend/common/pass/convert_const_input_to_attr.h"
 #include "backend/common/pass/custom_op_const_input_to_attr.h"
@@ -175,6 +176,8 @@ void EliminateIllegalDataTypePass(const std::shared_ptr<session::KernelGraph> &k
 #endif
   auto opt = std::make_shared<GraphOptimizer>();
   auto pm = std::make_shared<PassManager>("common_eliminate_illegal_data_type_pm");
+  // Backend support the list data type converted to tuple.
+  pm->AddPass(std::make_shared<ConvertListToTuple>());
   pm->AddPass(std::make_shared<EliminateFuncDataType>());
   opt->AddPassManager(pm);
   (void)opt->Optimize(kernel_graph);

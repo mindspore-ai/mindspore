@@ -180,8 +180,16 @@ constexpr auto kPack = "Pack";
 constexpr auto kLogNormalReverse = "LogNormalReverse";
 constexpr auto kUnstack = "Unstack";
 constexpr auto kUnpack = "Unpack";
+// Tuple
+constexpr auto kMakeTuple = "MakeTuple";
 constexpr auto kTupleGetItem = "TupleGetItem";
+constexpr auto kTupleSetItem = "tuple_setitem";
+// List
+constexpr auto kMakeList = "MakeList";
+constexpr auto kMakeListNew = "make_list";
 constexpr auto kListGetItem = "list_getitem";
+constexpr auto kListSetItem = "list_setitem";
+
 constexpr auto kSliceGetItem = "SliceGetItem";
 constexpr auto kGeLU = "GeLU";
 constexpr auto kUnravelIndex = "UnravelIndex";
@@ -443,8 +451,6 @@ constexpr auto kVmap = "Vmap";
 constexpr auto kTaylor = "Taylor";
 
 // Others
-constexpr auto kMakeTuple = "MakeTuple";
-constexpr auto kMakeList = "MakeList";
 constexpr auto kSwitch = "Switch";
 constexpr auto kLoad = "Load";
 constexpr auto kUpdateState = "UpdateState";
@@ -476,9 +482,6 @@ constexpr auto kTensorToTuple = "TensorToTuple";
 constexpr auto kTensorToScalar = "TensorToScalar";
 constexpr auto kRealMakeTuple = "RealMakeTuple";
 constexpr auto kRealTupleGetItem = "RealTupleGetItem";
-constexpr auto kRealMakeList = "RealMakeList";
-constexpr auto kRealListGetItem = "RealListGetItem";
-constexpr auto kTupleSetItem = "TupleSetItem";
 constexpr auto kListToTensor = "ListToTensor";
 constexpr auto kTensorToList = "TensorToList";
 
@@ -1515,7 +1518,7 @@ GVAR_DEF(PrimitivePtr, kPrimMakeSlice, std::make_shared<Primitive>("make_slice")
 GVAR_DEF(PrimitivePtr, kPrimTupleGetItem, std::make_shared<Primitive>(kTupleGetItem));
 GVAR_DEF(PrimitivePtr, kPrimSliceGetItem, std::make_shared<Primitive>(kSliceGetItem));
 GVAR_DEF(PrimitivePtr, kPrimArrayGetItem, std::make_shared<Primitive>("array_getitem"));
-GVAR_DEF(PrimitivePtr, kPrimTupleSetItem, std::make_shared<Primitive>("tuple_setitem"));
+GVAR_DEF(PrimitivePtr, kPrimTupleSetItem, std::make_shared<Primitive>(kTupleSetItem));
 GVAR_DEF(PrimitivePtr, kPrimArraySetItem, std::make_shared<Primitive>("array_setitem"));
 GVAR_DEF(PrimitivePtr, kPrimGetAttr, std::make_shared<Primitive>("getattr"));
 GVAR_DEF(PrimitivePtr, kPrimArrayLen, std::make_shared<Primitive>("array_len"));
@@ -1594,10 +1597,10 @@ GVAR_DEF(PrimitivePtr, kPrimBlackmanWindow, std::make_shared<Primitive>("Blackma
 GVAR_DEF(PrimitivePtr, kPrimOpaquePredicate, std::make_shared<Primitive>("OpaquePredicate"));
 
 // Structures
-GVAR_DEF(PrimitivePtr, kPrimMakeList, std::make_shared<Primitive>("make_list"));
+GVAR_DEF(PrimitivePtr, kPrimMakeList, std::make_shared<Primitive>(kMakeListNew));
 GVAR_DEF(PrimitivePtr, kPrimMakeKeywordArg, std::make_shared<Primitive>("make_keyword_arg"));
 GVAR_DEF(PrimitivePtr, kPrimListGetItem, std::make_shared<Primitive>(kListGetItem));
-GVAR_DEF(PrimitivePtr, kPrimListSetItem, std::make_shared<Primitive>("list_setitem"));
+GVAR_DEF(PrimitivePtr, kPrimListSetItem, std::make_shared<Primitive>(kListSetItem));
 GVAR_DEF(PrimitivePtr, kPrimDictGetItem, std::make_shared<Primitive>("dict_getitem"));
 GVAR_DEF(PrimitivePtr, kPrimDictSetItem, std::make_shared<Primitive>("dict_setitem"));
 GVAR_DEF(PrimitivePtr, kPrimDictGetKeys, std::make_shared<Primitive>("dict_getkeys"));
