@@ -50,7 +50,7 @@ class MS_API DelegateModel {
 
   /// \brief Get Primitive of kernel::Kernel.
   ///
-  /// \param[in] a kernel in DelegateModel kernels vector.
+  /// \param[in] kernel kernel in DelegateModel kernels vector.
   ///
   /// \return The Primitive of The kernel.
   const T *GetPrimitive(kernel::Kernel *kernel) const {

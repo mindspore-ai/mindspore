@@ -54,7 +54,7 @@ class MIND_API DynamicQuant : public BaseOperator {
 
   /// \brief Method to set dst_type attribute.
   ///
-  /// \param[in] dst_t Define the data type of output.
+  /// \param[in] dst_type Define the data type of output.
   void set_dst_type(const int64_t dst_type);
 
   /// \brief Method to get dst_type attribute.

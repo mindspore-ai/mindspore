@@ -40,7 +40,7 @@ class MIND_API TensorListStack : public BaseOperator {
 
   /// \brief Method to set the op's num_elements attributes.
   ///
-  /// \param[in] element_dtype Define the num_elements data type in op;
+  /// \param[in] num_elements Define the num_elements data type in op;
   void set_num_elements(const int64_t num_elements);
 
   /// \brief Method to set the op's element_dtype attributes.
