@@ -181,6 +181,7 @@ constexpr auto kZeta = "Zeta";
 constexpr auto kSquaredDifference = "SquaredDifference";
 constexpr auto kZerosLike = "ZerosLike";
 constexpr auto kEqual = "Equal";
+constexpr auto kGreaterEqual = "GreaterEqual";
 constexpr auto kOnesLike = "OnesLike";
 constexpr auto kSign = "Sign";
 constexpr auto kFmax = "Fmax";
@@ -267,7 +268,8 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kStatelessDropOutGenMask,
                                           kTopK,
                                           kSign,
-                                          kRealDiv};
+                                          kRealDiv,
+                                          kGreaterEqual};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
                                             kDropout2D,   kNonMaxSuppressionV3, kGetNext,      kInitData,    kPrint};
 const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,

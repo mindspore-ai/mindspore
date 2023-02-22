@@ -23,6 +23,7 @@
 extern "C" {
 #endif
 @SIMD_INSTRUCTION_BEGIN@
+#ifdef MS_SIMD_AVX512
   static inline size_t AdamWeightDecayFp32@SIMD_INSTRUCTION@(size_t index, float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
     const float *gradient, size_t end) {
   SIMD_F32 beta1_r = SIMD_MOV_F32(beta1);
@@ -56,7 +57,6 @@ extern "C" {
   return index;
 }
 
-#ifdef MS_SIMD_AVX512
 static inline size_t FusedCastAdamFp32Fp16@SIMD_INSTRUCTION@(size_t index, float *var, const int16_t *gradient16, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
     float global_norm_reciprocal, size_t end) {
   SIMD_F32 beta1_r = SIMD_MOV_F32(beta1);
