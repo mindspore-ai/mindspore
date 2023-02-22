@@ -26,6 +26,12 @@ namespace {
 std::condition_variable stub_cond_var_;
 std::mutex stub_mutex_;
 
+static std::string MakeId() {
+  // Use atomic to make id generator thread safe.
+  static std::atomic<uint64_t> last_id{1};
+  return "ST" + std::to_string(last_id.fetch_add(1, std::memory_order_relaxed));
+}
+
 StubNodePtr MakeStubNode(const TypePtr &type) {
   if (type->isa<Tuple>() || type->isa<List>()) {
     TypePtrList elements;
@@ -80,6 +86,8 @@ py::object MakeOutput(StubNodePtr node) {
   }
 }
 }  // namespace
+
+StubNode::StubNode() : id_(MakeId()) {}
 
 bool StubNode::SetAbstract(const AbstractBasePtr &abs) {
   abstract_ = abs;
@@ -179,6 +187,18 @@ bool TensorNode::SetAbstract(const AbstractBasePtr &abs) {
     }
   }
   return StubNode::SetAbstract(abs);
+}
+
+void TensorNode::SetValue(const ValuePtr &val) {
+  MS_EXCEPTION_IF_NULL(val);
+  if (!val->isa<tensor::Tensor>()) {
+    MS_LOG(EXCEPTION) << "SetValue failed, val=" << val->ToString() << " is not a tensor";
+  }
+  auto t = val->cast<tensor::TensorPtr>();
+  MS_LOG(DEBUG) << "Update tensor id from " << t->id() << " to " << id_;
+  t->set_id(id_);
+
+  StubNode::SetValue(val);
 }
 
 py::object SequenceNode::GetElements() {

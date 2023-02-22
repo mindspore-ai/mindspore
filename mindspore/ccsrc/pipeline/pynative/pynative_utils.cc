@@ -101,7 +101,9 @@ AbstractBasePtr Common::SetAbstractValueToAnyValue(const AbstractBasePtr &abs) {
 
 std::string Common::GetIdByValue(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<tensor::Tensor>()) {
+  if (v->isa<stub::StubNode>()) {
+    return v->cast<stub::StubNodePtr>()->id();
+  } else if (v->isa<tensor::Tensor>()) {
     return v->cast<tensor::TensorPtr>()->id();
   } else if (v->isa<Cell>()) {
     return v->cast<CellPtr>()->id();
@@ -332,11 +334,23 @@ void Common::StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
+std::string GetIdByStubTensor(const py::object &obj) {
+  const auto &value = PyStubNodeCast(obj);
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    return value->cast<tensor::TensorPtr>()->id();
+  } else if (value->isa<stub::StubNode>()) {
+    return value->cast<stub::StubNodePtr>()->id();
+  } else {
+    MS_LOG(EXCEPTION) << "Not Tensor or StubNode";
+  }
+}
+
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
   if (py::isinstance<tensor::Tensor>(obj)) {
     return obj.cast<tensor::TensorPtr>()->id();
   } else if (IsStubTensor(obj)) {
-    return ConvertStubTensor(obj)->id();
+    return GetIdByStubTensor(obj);
   } else if (py::isinstance<Cell>(obj)) {
     return obj.cast<CellPtr>()->id();
   } else if (py::isinstance<mindspore::Type>(obj)) {

@@ -21,6 +21,7 @@
 #include <vector>
 #include <utility>
 #include <exception>
+#include <string>
 
 #include "pybind11/pybind11.h"
 #include "base/base.h"
@@ -41,7 +42,7 @@ using abstract::AbstractBasePtr;
 
 class COMMON_EXPORT StubNode : public Value {
  public:
-  StubNode() = default;
+  StubNode();
   virtual ~StubNode() = default;
   MS_DECLARE_PARENT(StubNode, Value);
 
@@ -52,6 +53,7 @@ class COMMON_EXPORT StubNode : public Value {
   AbstractBasePtr WaitAbstract();
   ValuePtr WaitValue();
 
+  std::string id() const { return id_; }
   AbstractBasePtr ToAbstract() override { return WaitAbstract(); }
   bool operator==(const Value &other) const override { return other.isa<StubNode>() && &other == this; }
 
@@ -60,6 +62,7 @@ class COMMON_EXPORT StubNode : public Value {
   ValuePtr value_;
   std::atomic<bool> wait_flag_{false};
   std::exception_ptr e_ptr_{};
+  std::string id_;
 };
 
 class TensorNode : public StubNode {
@@ -67,6 +70,7 @@ class TensorNode : public StubNode {
   TensorNode() = default;
   MS_DECLARE_PARENT(TensorNode, StubNode);
   bool SetAbstract(const AbstractBasePtr &abs) override;
+  void SetValue(const ValuePtr &val) override;
 
   py::object GetValue();
   py::object GetShape();

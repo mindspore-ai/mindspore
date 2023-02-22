@@ -537,6 +537,11 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return The id of this Tensor.
   std::string id() const { return id_; }
 
+  /// \brief Set the id of this Tensor.
+  ///
+  /// \param[in] id The tensor id.
+  void set_id(const std::string &id) { id_ = id; }
+
   /// \brief Get the cast dtype of this Tensor.
   ///
   /// \return The cast dtype of this Tensor.

@@ -263,6 +263,7 @@ void MsFunction::GetWeightsNode(const FrontendOpRunInfoPtr &op_run_info, const G
   const auto &top_cell = grad_executor->top_cell();
   const auto &graph_info = top_cell->graph_info_map().at(top_cell->fg());
   MS_EXCEPTION_IF_NULL(graph_info);
+  MS_LOG(DEBUG) << "TopCell:graph_info_map get weight_params";
   // Get weights info of ms_function
   auto manage = Manage(ms_func_graph, false);
   MS_EXCEPTION_IF_NULL(ms_func_graph);

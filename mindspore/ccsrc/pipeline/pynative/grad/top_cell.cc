@@ -169,6 +169,7 @@ void TopCellInfo::DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &
   auto &graph_info = graph_info_map().at(g);
   MS_EXCEPTION_IF_NULL(graph_info);
   graph_info->input_params.erase(id);
+  MS_LOG(DEBUG) << "TopCell:graph_info_map erase input_params " << id;
 }
 
 void TopCellInfo::SetParamNodeMapInGraphInfoMap(const std::string &id, const ParameterPtr &param,
@@ -183,10 +184,12 @@ void TopCellInfo::SetParamNodeMapInGraphInfoMap(const std::string &id, const Par
   } else {
     graph_info->input_params[id] = param;
   }
+  MS_LOG(DEBUG) << "TopCell:graph_info_map set param " << id;
 }
 
 void TopCellInfo::SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodePtr &node, int64_t index,
                                            bool need_save_sub_id) const {
+  MS_LOG(DEBUG) << "TopCell:graph_info_map set node_map " << id;
   auto &graph_info = graph_info_map().at(fg());
   MS_EXCEPTION_IF_NULL(graph_info);
   if (id.find('T') == std::string::npos) {
@@ -240,6 +243,7 @@ void TopCellInfo::SetUnpackOutputToGraphInfoMap(const std::string &id, const Anf
   auto &graph_info = graph_info_map().at(fg());
   MS_EXCEPTION_IF_NULL(graph_info);
   graph_info->node_map[id] = std::make_pair(node, index);
+  MS_LOG(DEBUG) << "TopCell:graph_info_map set node_map " << id;
 }
 
 void TopCellInfo::set_opinfo_with_tensor_id(const std::string &op_info,
