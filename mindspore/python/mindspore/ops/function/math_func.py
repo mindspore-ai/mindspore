@@ -2552,10 +2552,10 @@ def atan2(input, other):
     It returns :math:`\theta\ \in\ [-\pi, \pi]`
     such that :math:`input = r*\sin(\theta), other = r*\cos(\theta)`, where :math:`r = \sqrt{input^2 + other^2}`.
 
-    .. note::
+    Note:
         - Arg `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-            If they have different data types, the lower precision data type will be converted to relatively the
-            highest precision data type.
+          If they have different data types, the lower precision data type will be converted to relatively the
+          highest precision data type.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
@@ -5952,7 +5952,7 @@ def atleast_1d(inputs):
         inputs (Union[Tensor, list[Tensor]]): One or more input tensors.
 
     Returns:
-        Tensor or list[Tensor]. If returned a list, every element `a` in that list satisfies: `a`.ndim >= 1.
+        Tensor or list[Tensor]. If returned a list, every element `a` in that list satisfies `a.ndim >= 1`.
 
     Raises:
         TypeError: If the `input` is not a tensor or a list of tensors.
@@ -6127,7 +6127,7 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
         offset (int, optional): diagonal offset from the main diagonal. Default: 0.
-        dtype (:class:`mindspore.dtype`): The specified type of output tensor.
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
             An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int64`.
 
     Returns:
@@ -6172,7 +6172,7 @@ def triu_indices(row, col, offset=0, dtype=mstype.int64):
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
         offset (int, optional): diagonal offset from the main diagonal. Default: 0.
-        dtype (:class:`mindspore.dtype`): The specified type of output tensor.
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
             An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int64`.
 
     Returns:
@@ -6211,7 +6211,7 @@ def atleast_2d(inputs):
         inputs (Union[Tensor, list[Tensor]]): One or more input tensors.
 
     Returns:
-        Tensor or list[Tensor]. If returned a list, every element `a` in that list satisfies: `a`.ndim >= 2.
+        Tensor or list[Tensor]. If returned a list, every element `a` in that list satisfies `a.ndim >= 2` .
 
     Raises:
         TypeError: If the `input` is not a tensor or a list of tensors.
@@ -6291,7 +6291,7 @@ def atleast_3d(inputs):
         inputs (Union[Tensor, list[Tensor]]): One or more input tensors.
 
     Returns:
-        Tensor or list[Tensor]. If returned a list, every element `a` in that list satisfies: `a`.ndim >= 3.
+        Tensor or list[Tensor]. If returned a list, every element `a` in that list satisfies `a.ndim >= 3`.
         For example, a 1-D Tensor of shape :math:`(N,)` becomes a Tensor of shape :math:`(1, N, 1)`, and
         a 2-D Tensor of shape :math:`(M, N)` becomes a tensor of shape :math:`(M, N, 1)`.
 
@@ -9646,8 +9646,7 @@ def polygamma(a, x):
     Examples:
         >>> x = Tensor(np.array([3.14, -2.71]), mindspore.float64)
         >>> a = Tensor(np.array(1), mindspore.int64)
-        >>> polygamma = ops.Polygamma()
-        >>> output = polygamma(a, x)
+        >>> output = ops.polygamma(a, x)
         >>> print(output)
         [ 0.3745, 15.4988]
     """

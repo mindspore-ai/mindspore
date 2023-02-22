@@ -3081,8 +3081,10 @@ def sort(input_x, axis=-1, descending=False):
         If use Float32, it may cause loss of accuracy.
 
     Returns:
-        y1(Tensor): A tensor whose values are the sorted values, with the same shape and data type as input.
-        y2(Tensor): The indices of the elements in the original input tensor. Data type is int32.
+
+        - y1, a tensor whose values are the sorted values, with the same shape and data type as input.
+        - y2, a tensor that consists of the indices of the elements in the original input tensor.
+          Data type is int32.
 
     Raises:
         TypeError: If `axis` is not an int.
@@ -3095,8 +3097,7 @@ def sort(input_x, axis=-1, descending=False):
 
     Examples:
         >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
-        >>> sort = ops.Sort()
-        >>> output = sort(x)
+        >>> output = ops.sort(x)
         >>> # The output below is based on the Ascend platform.
         >>> print(output)
         (Tensor(shape=[3, 3], dtype=Float16, value=
