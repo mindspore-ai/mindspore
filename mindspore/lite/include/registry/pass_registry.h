@@ -57,7 +57,7 @@ class MS_API PassRegistry {
 
   /// \brief Static method to obtain pass instance according to passes' name.
   ///
-  /// \param[in] pass_names Define the name of pass.
+  /// \param[in] pass_name Define the name of pass.
   ///
   /// \return Pass Instance Vector.
   inline static PassBasePtr GetPassFromStoreRoom(const std::string &pass_name);

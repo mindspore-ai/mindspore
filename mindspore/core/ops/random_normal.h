@@ -49,7 +49,7 @@ class MIND_API RandomNormal : public BaseOperator {
 
   /// \brief Method to set scale attributes.
   ///
-  /// \param[in] mean Define random standard deviation.
+  /// \param[in] scale Define random standard deviation.
   void set_scale(float scale);
 
   /// \brief Method to get seed attributes.

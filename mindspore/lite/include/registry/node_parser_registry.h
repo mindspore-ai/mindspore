@@ -64,7 +64,7 @@ converter::NodeParserPtr NodeParserRegistry::GetNodeParser(converter::FmkType fm
 ///
 /// \param[in] fmk_type Define the framework.
 /// \param[in] node_type Define the type of the node to be resolved.
-/// \param[in] NodeParser instance corresponding with its framework and node type.
+/// \param[in] node_parser instance corresponding with its framework and node type.
 #define REG_NODE_PARSER(fmk_type, node_type, node_parser) \
   static mindspore::registry::NodeParserRegistry g_##fmk_type##node_type##ParserReg(fmk_type, #node_type, node_parser);
 }  // namespace registry
