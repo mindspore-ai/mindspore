@@ -48,20 +48,27 @@ void UpsampleTrilinear3DGradGpuKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-float UpsampleTrilinear3DGradGpuKernelMod::Scaling(const size_t in_size, const size_t out_size, bool align_corners) {
+float UpsampleTrilinear3DGradGpuKernelMod::ScalingD(const size_t in_size, const size_t out_size, bool align_corners) {
   // for input/output size
-  return (align_corners && out_size > 1) ? (in_size - 1) / static_cast<float>(out_size - 1)
-                                         : in_size / static_cast<float>(out_size);
+  if (out_size > 1) {
+    return align_corners ? (in_size - 1) / static_cast<float>(out_size - 1) : in_size / static_cast<float>(out_size);
+  } else {
+    return static_cast<float>(0.0);
+  }
 }
 
-float UpsampleTrilinear3DGradGpuKernelMod::Scaling(float scale_value, int idx) {
+float UpsampleTrilinear3DGradGpuKernelMod::ScalingS(float scale_value, int idx, const size_t out_size) {
   // for scale factors
-  if (scale_value <= 0.0f) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', "
-                      << "scales "
-                      << "dimension " << idx << " value is <= 0.";
+  if (out_size > 1) {
+    if (scale_value <= 0.0f) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', "
+                        << "scales "
+                        << "dimension " << idx << " value is <= 0.";
+    } else {
+      return static_cast<float>(1.0 / scale_value);
+    }
   } else {
-    return static_cast<float>(1.0 / scale_value);
+    return static_cast<float>(0.0);
   }
 }
 
@@ -120,13 +127,13 @@ int UpsampleTrilinear3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   dinput_h_ = dinput_shape[kIndex3];
   dinput_w_ = dinput_shape[kIndex4];
   if (!out_spatial_size_me_.empty() || align_corners_ == true) {
-    scale_factors_.push_back(Scaling(dinput_d_, grad_d_, align_corners_));
-    scale_factors_.push_back(Scaling(dinput_h_, grad_h_, align_corners_));
-    scale_factors_.push_back(Scaling(dinput_w_, grad_w_, align_corners_));
+    scale_factors_.push_back(ScalingD(dinput_d_, grad_d_, align_corners_));
+    scale_factors_.push_back(ScalingD(dinput_h_, grad_h_, align_corners_));
+    scale_factors_.push_back(ScalingD(dinput_w_, grad_w_, align_corners_));
   } else {
-    scale_factors_.push_back(Scaling(scale_factors_[kIndex0], kIndex0));
-    scale_factors_.push_back(Scaling(scale_factors_[kIndex1], kIndex1));
-    scale_factors_.push_back(Scaling(scale_factors_[kIndex2], kIndex2));
+    scale_factors_.push_back(ScalingS(scale_factors_[kIndex0], kIndex0, grad_d_));
+    scale_factors_.push_back(ScalingS(scale_factors_[kIndex1], kIndex1, grad_h_));
+    scale_factors_.push_back(ScalingS(scale_factors_[kIndex2], kIndex2, grad_w_));
   }
   input_size_list_.push_back(grad_size);
   output_size_list_.push_back(dinput_size);
