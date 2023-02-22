@@ -385,7 +385,6 @@ Reduction算子
     mindspore.ops.Ger
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
-    mindspore.ops.Orgqr
 
 Tensor操作算子
 ----------------
