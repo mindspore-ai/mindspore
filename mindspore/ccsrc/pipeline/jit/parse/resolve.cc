@@ -25,6 +25,7 @@
 #include "ir/param_info.h"
 #include "ir/value.h"
 #include "ir/map_tensor.h"
+#include "pipeline/jit/fallback.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/parse.h"
 #include "include/common/utils/python_adapter.h"
@@ -271,6 +272,16 @@ bool HasVariableLenAttr(const py::object &obj) {
   return py::hasattr(obj, variable_len_attr) && py::cast<bool>(py::getattr(obj, variable_len_attr));
 }
 
+AnfNodePtr ConvertInterpretedObjForResolve(const AnfNodePtr &origin_node, const ValuePtr &convert_result,
+                                           const FuncGraphPtr &func_graph) {
+  if (convert_result->isa<InterpretedObject>() && !origin_node->has_user_data("__py_interpret_local_value_flag__")) {
+    constexpr auto recursive_level = 2;
+    MS_LOG(DEBUG) << "Convert InterpretedObj for resolve, node: " << origin_node->DebugString(recursive_level);
+    return ConvertInterpretedObjectToPyExecute(func_graph, convert_result, origin_node);
+  }
+  return nullptr;
+}
+
 AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, const FuncGraphPtr &func_graph) {
   // When the cell is set recomputed, it should not use old scope from cache.
   MS_EXCEPTION_IF_NULL(origin_node);
@@ -298,14 +309,20 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
     (IsPrimitiveCNode(origin_node, prim::kPrimPyInterpret) && !origin_node->interpret_internal_type()) ||
     origin_node->interpret();
   static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-  if (!support_fallback_runtime && !interpret_without_internal && convert_result->isa<InterpretedObject>()) {
+  MS_EXCEPTION_IF_NULL(convert_result);
+  if (support_fallback_runtime) {
+    AnfNodePtr interpreted_output = ConvertInterpretedObjForResolve(origin_node, convert_result, func_graph);
+    if (interpreted_output != nullptr) {
+      return interpreted_output;
+    }
+  } else if (!interpret_without_internal && convert_result->isa<InterpretedObject>()) {
     auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);
     MS_EXCEPTION(TypeError) << "Do not support to convert " << py::str(type_str) << " object into graph node."
                             << ".\nFor more details, please refer to "
                             << "https://mindspore.cn/docs/zh-CN/master/search.html?q=Do+not+support+to+convert+object"
                             << "+into+graph+node&check_keywords=yes&area=default\n";
   }
-  MS_EXCEPTION_IF_NULL(convert_result);
+
   if (convert_result->isa<FuncGraph>() && has_recompute_scope) {
     UpdateDebugInfo(convert_result->cast<FuncGraphPtr>(), origin_node->scope(), origin_node->debug_info());
   }

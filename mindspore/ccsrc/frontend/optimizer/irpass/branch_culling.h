@@ -58,7 +58,7 @@ class SwitchSimplify : public OptimizerCaller {
                           << " not support this condition value: " << value_ptr->ToString();
       }
 
-      MS_LOG(DEBUG) << "condition value: " << value_ptr->ToString() << " bool:" << cond_value;
+      MS_LOG(DEBUG) << "condition value: " << value_ptr->ToString() << ", cond: " << cond_value;
       if (cond_value) {
         return true_br.GetNode(node);
       }

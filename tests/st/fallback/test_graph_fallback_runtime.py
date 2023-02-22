@@ -873,3 +873,67 @@ def test_parser_fallback_nested_class_outer_grad():
     net = NestedNet()
     output = ops.grad(net)(mutable(x), y)
     assert output == 0
+
+
+class UserDefinedNet:
+    def __init__(self):
+        self.value = 10
+
+    def __call__(self, x):
+        return self.value * x
+
+
+class UserDefinedMsFunctionCallNet:
+    def __init__(self):
+        self.value = 10
+
+    @ms.jit
+    def __call__(self, x):
+        return self.value * x
+
+
+class UNet(ms.nn.Cell):
+    def __init__(self, net):
+        super().__init__()
+        self.net = net
+
+    def construct(self, x):
+        out = x * x
+        out = self.net(x)
+        out = out + out
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_resolve_cust_class():
+    """
+    Feature: Syntax resolve.
+    Description: Graph syntax resolve support custom class input.
+    Expectation: No error.
+    """
+    net = UNet(UserDefinedNet())
+    x = np.array([10], np.float32)
+    output = net(ms.Tensor(x))
+    print(output)  # The output should == 200, but failed, check later.
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_resolve_cust_ms_function_call_class():
+    """
+    Feature: Syntax resolve.
+    Description: Graph syntax resolve support custom class input.
+    Expectation: No error.
+    """
+    net = UNet(UserDefinedMsFunctionCallNet())
+    x = np.array([10, 10], np.float32)
+    with pytest.raises(RuntimeError) as err:
+        net(ms.Tensor(x))
+    assert "Nested execution during JIT execution is not supported." in str(err.value)

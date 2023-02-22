@@ -29,6 +29,7 @@
 #include "include/common/fallback.h"
 #include "mindspore/core/ops/py_execute.h"
 #include "mindspore/ccsrc/include/common/utils/convert_utils_py.h"
+#include "mindspore/ccsrc/include/common/utils/python_utils.h"
 #include "mindspore/ccsrc/include/common/utils/python_adapter.h"
 #include "mindspore/ccsrc/include/common/utils/python_fallback_running.h"
 #include "mindspore/ccsrc/pipeline/jit/parse/data_converter.h"
@@ -161,96 +162,20 @@ class PyExecuteInitializer {
                                                           const AbstractBasePtrList &args_spec_list) {
     // We can't catch the pybind11 exception by py::builtin_exception or its base class,
     // so we have to list all pybind11 exceptions and catch one by one here.
-    try {
-      const auto &abs = opt::CppInferShapeAndType(primitive, args_spec_list);
-      MS_LOG(DEBUG) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << cnode->abstract()
-                    << " to " << abs;
-      return abs;
-    } catch (const py::type_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::type_error(ss.str());
-    } catch (const py::value_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::value_error(ss.str());
-    } catch (const py::index_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::index_error(ss.str());
-    } catch (const py::key_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::key_error(ss.str());
-    } catch (const py::attribute_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::attribute_error(ss.str());
-    } catch (const py::name_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::name_error(ss.str());
-    } catch (const py::assertion_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::assertion_error(ss.str());
-    } catch (const py::base_exception &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::base_exception(ss.str());
-    } catch (const py::keyboard_interrupt &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::keyboard_interrupt(ss.str());
-    } catch (const py::stop_iteration &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::stop_iteration(ss.str());
-    } catch (const py::overflow_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::overflow_error(ss.str());
-    } catch (const py::zero_division_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::zero_division_error(ss.str());
-    } catch (const py::environment_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::environment_error(ss.str());
-    } catch (const py::io_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::io_error(ss.str());
-    } catch (const py::os_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::os_error(ss.str());
-    } catch (const py::memory_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::memory_error(ss.str());
-    } catch (const py::unbound_local_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::unbound_local_error(ss.str());
-    } catch (const py::not_implemented_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::not_implemented_error(ss.str());
-    } catch (const py::indentation_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::indentation_error(ss.str());
-    } catch (const py::runtime_warning &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw py::runtime_warning(ss.str());
-    } catch (const std::runtime_error &e) {
-      std::stringstream ss;
-      ss << e.what() << ".\n\n" << trace::GetDebugInfo(cnode->debug_info());
-      throw std::runtime_error(ss.str());
-    }
+    AbstractBasePtr res;
+    std::function<void(void)> already_set_error_handler;
+    std::function<void(void)> other_error_handler;
+    std::function<void(void)> default_error_handler;
+    HandleExceptionRethrow(
+      [&res, &cnode, &primitive, &args_spec_list]() {
+        res = opt::CppInferShapeAndType(primitive, args_spec_list);
+        MS_LOG(DEBUG) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << cnode->abstract()
+                      << " to " << res;
+        return res;
+      },
+      already_set_error_handler, other_error_handler, default_error_handler,
+      cnode->debug_info());  // Use debug_info to re-throw.
+    return res;
   }
 };
 

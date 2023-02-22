@@ -2840,7 +2840,10 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
     const auto &iter = values.find(id_str);
     if (iter != values.end()) {
       (void)filter_keys.emplace_back(keys[iter->first]);
-      (void)filter_values.emplace_back(iter->second);
+      auto &val_node = iter->second;
+      // '__py_interpret_local_value_flag__' is used by 'ConvertInterpretedObjForResolve' not to convert PyExecute.
+      val_node->set_user_data("__py_interpret_local_value_flag__", std::make_shared<bool>(true));
+      (void)filter_values.emplace_back(val_node);
     }
   }
 
@@ -2848,11 +2851,12 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   // Update the valued node if it need interpreting.
   constexpr int recursive_level = 2;
   MS_EXCEPTION_IF_NULL(block->func_graph());
+  AnfNodePtr interpreted_node = block->MakeInterpret(script_text, global_dict_node, local_dict_node, value_node);
   MS_LOG(INFO) << "[" << block->func_graph()->ToString() << "] script_text: `" << script_text
                << "`,\nvalue_node: " << value_node->DebugString(recursive_level)
                << ",\nglobal_dict_node: " << global_dict_node->ToString()
-               << ",\nlocal_dict_node: " << local_dict_node->DebugString(recursive_level);
-  AnfNodePtr interpreted_node = block->MakeInterpret(script_text, global_dict_node, local_dict_node, value_node);
+               << ",\nlocal_dict_node: " << local_dict_node->DebugString(recursive_level)
+               << ",\ninterpreted_node: " << interpreted_node->DebugString(recursive_level);
 
   // Print a hint for user.
   auto line_info = trace::GetDebugInfo(value_node->debug_info());

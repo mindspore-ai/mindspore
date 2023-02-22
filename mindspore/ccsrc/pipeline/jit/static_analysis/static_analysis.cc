@@ -327,10 +327,12 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
   // Check if the operator input is PyExecute CNode.
   auto &func_node = inputs[0];
   MS_EXCEPTION_IF_NULL(func_node);
-  constexpr auto debug_recursive_level = 2;
-  MS_LOG(DEBUG) << "Current CNode: " << cnode->DebugString(debug_recursive_level);
+  constexpr auto recursive_level = 2;
+  MS_LOG(DEBUG) << "Current CNode: " << cnode->DebugString(recursive_level)
+                << ", func_node: " << func_node->DebugString(recursive_level);
   auto prim = GetCNodePrimitiveWithoutDoSignature(func_node);
-  if (!IsPrimitiveEquals(prim, prim::kPrimGetAttr)) {  // Optimize the performance.
+  if (!IsPrimitiveEquals(prim, prim::kPrimGetAttr) &&
+      !IsPrimitiveEquals(prim, prim::kPrimPyExecute)) {  // Optimize the performance.
     return nullptr;
   }
   AnfNodeConfigPtr func_conf = MakeConfig(func_node, conf->context(), conf->func_graph());
