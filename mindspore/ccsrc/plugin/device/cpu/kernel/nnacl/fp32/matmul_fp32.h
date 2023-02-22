@@ -56,6 +56,7 @@ void MatmulFloatNeon64OptRow4(const float *a, const float *b, float *c, const fl
                               int row, int col, size_t stride, size_t write_mode);
 void MatmulFloatNeon64OptRow12(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
                                int row, int col, size_t stride, size_t write_mode);
+void MatVecMulPackFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col);
 void MatVecMulFp32Neon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col,
                          int align_col);
 
