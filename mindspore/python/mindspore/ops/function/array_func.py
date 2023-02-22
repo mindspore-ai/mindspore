@@ -20,6 +20,7 @@ import builtins
 import operator
 import numpy as np
 
+import mindspore as ms
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
@@ -285,7 +286,7 @@ def cat(tensors, axis=0):
     return _concat(tensors)
 
 
-def eye(n, m, t):
+def eye(n, m=None, dtype=None):
     """
     Creates a tensor with ones on the diagonal and zeros in the rest.
 
@@ -296,12 +297,13 @@ def eye(n, m, t):
     Args:
         n (int): The number of rows of returned tensor. Constant value only.
         m (int): The number of columns of returned tensor. Constant value only.
-        t (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
-            The data type can be Number.
+            Default: if None, the number of columns is as the same as n.
+        dtype (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
+            The data type can be Number. Default: if None, the data type of the returned tensor is mindspore.float32.
 
     Returns:
         Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
-        the user's Inputs `n` and `m`. And the data type depends on Inputs `t`.
+        the user's Inputs `n` and `m`. And the data type depends on Inputs `dtype`.
 
     Raises:
         TypeError: If `m` or `n` is not an int.
@@ -322,8 +324,24 @@ def eye(n, m, t):
         [[1. 0.]]
         >>> print(output.dtype)
         Float64
+        >>> output = ops.eye(2, t=mindspore.int32)
+        >>> print(output)
+        [[1 0]
+         [0 1]]
+        >>> print(output.dtype)
+        Int32
+        >>> output = ops.eye(2)
+        >>> print(output)
+        [[1. 0.]
+         [0. 1.]]
+        >>> print(output.dtype)
+        Float32
     """
-    return eye_(n, m, t)
+    if m is None:
+        m = n
+    if dtype is None:
+        dtype = ms.float32
+    return eye_(n, m, dtype)
 
 
 def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype=None):
