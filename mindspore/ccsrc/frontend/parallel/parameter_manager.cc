@@ -396,10 +396,13 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
   // create python layout obj
   const auto &device_arrangement = tensor_layout->device_arrangement().array();
   const auto &tensor_map = tensor_layout->tensor_map().array();
-  const auto &slice_shape = tensor_layout->slice_shape().array();
+  auto slice_shape = tensor_layout->slice_shape().array();
   int64_t field_size = tensor_layout->get_field_size();
   bool uniform_split = tensor_layout->uniform_split();
   std::string opt_shard_group = tensor_layout->opt_shard_group();
+  if (!opt_shard_group.empty()) {
+    slice_shape = tensor_layout->opt_shard_slice_shape();
+  }
   py::tuple layout =
     py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group);
 
