@@ -74,8 +74,8 @@ const AnfNodePtr AvgPoolGradForGE::Process(const FuncGraphPtr &graph, const AnfN
   auto origin_shape_value = MakeValue(value_node_data);
   auto origin_shape_node = NewValueNode(origin_shape_value);
   origin_shape_node->set_abstract(origin_shape_value->ToAbstract());
-  auto new_avg_pool_node = graph->NewCNode(
-    {NewValueNode(prim::kPrimAvgPoolGradGe), origin_shape_node, avg_pool_grad_node->input(kAvgPoolGradInputGradIndex)});
+  auto new_avg_pool_node = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kAvgPoolGradGeOpName)),
+                                            origin_shape_node, avg_pool_grad_node->input(kAvgPoolGradInputGradIndex)});
   MS_EXCEPTION_IF_NULL(new_avg_pool_node);
   common::AnfAlgo::CopyNodeAttr(kPoolKernelSizeAttrName, avg_pool_grad_node, new_avg_pool_node);
   common::AnfAlgo::CopyNodeAttr(kPoolStridesAttrName, avg_pool_grad_node, new_avg_pool_node);
