@@ -305,6 +305,10 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_full_batch_is_set", &ParallelContext::full_batch_is_set, "Get whether attr full_batch is set.")
     .def("set_dataset_strategy", &ParallelContext::set_dataset_strategy, "Set dataset sharding strategy.")
     .def("get_dataset_strategy", &ParallelContext::dataset_strategy, "Get dataset sharding strategy.")
+    .def("set_stra_file_only_trainable_params", &ParallelContext::set_stra_file_only_trainable_params,
+         "Set strategy ckpt only save trainable params.")
+    .def("get_stra_file_only_trainable_params", &ParallelContext::stra_file_only_trainable_params,
+         "Get strategy ckpt only save trainable params.")
     .def("set_enable_parallel_optimizer", &ParallelContext::set_enable_parallel_optimizer,
          "Set enable/disable parallel optimizer.")
     .def("get_enable_parallel_optimizer", &ParallelContext::enable_parallel_optimizer,

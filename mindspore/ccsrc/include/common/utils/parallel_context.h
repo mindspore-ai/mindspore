@@ -192,6 +192,9 @@ class COMMON_EXPORT ParallelContext {
   void set_do_transform(const bool);
   bool do_transform() const { return do_transform_; }
 
+  void set_stra_file_only_trainable_params(const bool);
+  bool stra_file_only_trainable_params() const { return stra_file_only_trainable_params_; }
+
  private:
   ParallelContext();
   bool ParallelContextCareGraph(const FuncGraphPtr &func_graph) const;
@@ -239,6 +242,7 @@ class COMMON_EXPORT ParallelContext {
   bool sharding_propagation_;
   bool enable_micro_interleaved_ = false;
   bool do_transform_ = false;
+  bool stra_file_only_trainable_params_ = true;
   std::string fusion_mode_;
 };
 }  // namespace mindspore::parallel

@@ -509,6 +509,52 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_strategy_ckpt_save_file()
 
+    def set_strategy_ckpt_config(self, strategy_ckpt_config):
+        """
+        Set strategy checkpoint config.
+
+        Args:
+            strategy_ckpt_config (dict): The strategy checkpoint config.
+        """
+        self.check_context_handle()
+        if not isinstance(strategy_ckpt_config, dict):
+            raise TypeError("For 'set_auto_parallel_context', the argument 'strategy_ckpt_config' "
+                            "must be dict, but got the type : {}.".format(type(strategy_ckpt_config)))
+        for config_name in strategy_ckpt_config:
+            unknown_config = []
+            if config_name not in ["load_file", "save_file", "only_trainable_params"]:
+                unknown_config.append(config_name)
+
+            if unknown_config:
+                raise ValueError("Unknown config: {}".format(unknown_config))
+        if "load_file" in strategy_ckpt_config:
+            load_file = strategy_ckpt_config.get("load_file")
+            if not isinstance(load_file, str):
+                raise TypeError("For 'set_auto_parallel_context().set_strategy_ckpt_config', "
+                                "the argument 'load_file' must be str, but got the type : {} .".format(type(load_file)))
+            self._context_handle.set_strategy_ckpt_load_file(load_file)
+        if "save_file" in strategy_ckpt_config:
+            save_file = strategy_ckpt_config.get("save_file")
+            if not isinstance(save_file, str):
+                raise TypeError("For 'set_auto_parallel_context().set_strategy_ckpt_config', "
+                                "the argument 'save_file' must be str, but got the type : {} .".format(type(save_file)))
+            self._context_handle.set_strategy_ckpt_save_file(save_file)
+        if "only_trainable_params" in strategy_ckpt_config:
+            only_trainable_params = strategy_ckpt_config.get("only_trainable_params")
+            if not isinstance(only_trainable_params, bool):
+                raise TypeError("For 'set_auto_parallel_context().set_strategy_ckpt_config', "
+                                "the argument 'only_trainable_params' must be bool,"
+                                " but got the type : {} .".format(type(only_trainable_params)))
+            self._context_handle.set_stra_file_only_trainable_params(only_trainable_params)
+
+    def get_strategy_ckpt_config(self):
+        """Get strategy checkpoint config."""
+        self.check_context_handle()
+        load_file = self._context_handle.get_strategy_ckpt_load_file()
+        save_file = self._context_handle.get_strategy_ckpt_save_file()
+        only_trainable_param = self._context_handle.get_stra_file_only_trainable_params()
+        return {"load_file": load_file, "save_file": save_file, "only_trainable_params": only_trainable_param}
+
     def set_group_ckpt_save_file(self, group_ckpt_save_file):
         """Set group checkpoint save path."""
         self.check_context_handle()
@@ -1015,6 +1061,7 @@ _set_auto_parallel_context_func_map = {
     "optimizer_weight_shard_aggregated_save": auto_parallel_context().set_optimizer_weight_shard_aggregated_save,
     "sharding_propagation": auto_parallel_context().set_sharding_propagation,
     "enable_alltoall": auto_parallel_context().set_enable_alltoall,
+    "strategy_ckpt_config": auto_parallel_context().set_strategy_ckpt_config,
     "comm_fusion": auto_parallel_context().set_comm_fusion}
 
 
@@ -1042,6 +1089,7 @@ _get_auto_parallel_context_func_map = {
     "sharding_propagation": auto_parallel_context().get_sharding_propagation,
     "enable_alltoall": auto_parallel_context().get_enable_alltoall,
     "comm_fusion": auto_parallel_context().get_comm_fusion,
+    "strategy_ckpt_config": auto_parallel_context().get_strategy_ckpt_config(),
     "full_batch_is_set": auto_parallel_context().get_full_batch_is_set}
 
 
@@ -1051,7 +1099,8 @@ _get_auto_parallel_context_func_map = {
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
                  grad_accumulation_step=int, all_reduce_fusion_config=list, group_ckpt_save_file=str,
                  communi_parallel_mode=str, optimizer_weight_shard_size=int, sharding_propagation=bool,
-                 optimizer_weight_shard_aggregated_save=bool, enable_alltoall=bool, comm_fusion=dict)
+                 optimizer_weight_shard_aggregated_save=bool, enable_alltoall=bool, comm_fusion=dict,
+                 strategy_ckpt_config=dict)
 
 def _set_auto_parallel_context(**kwargs):
     """
