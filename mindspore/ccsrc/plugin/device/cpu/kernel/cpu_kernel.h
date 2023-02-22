@@ -156,7 +156,7 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
   static std::vector<KernelAttr> GetCpuSupportedList(const std::string &kernel_name) {
     auto temp_mod = kernel::Factory<NativeCpuKernelMod>::Instance().Create(kernel_name);
     if (temp_mod == nullptr) {
-      MS_LOG(WARNING) << "Not register CPU kernel of operator: " << kernel_name;
+      MS_LOG(INFO) << "Not register CPU kernel of operator: " << kernel_name;
       return std::vector<KernelAttr>{};
     }
     return temp_mod->GetAllSupportedList(kernel_name);
