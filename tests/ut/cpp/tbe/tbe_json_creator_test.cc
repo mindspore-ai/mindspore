@@ -79,7 +79,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_common) {
   EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 10654173078034037040U)
     << "Error json is:" << kernel_json << ", for expected json, see file: tbe_single_common_select.json";
   EXPECT_TRUE(tbe_json_creator_build->GenJson(relu1, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 15720646941952131005U)
+  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 2389029245513168162U)
     << "Error json is:" << kernel_json << ", for expected json, see file: tbe_single_common_build.json";
 }
 
@@ -122,7 +122,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_conv2d_backprop_filter) {
     << "Error json is:" << kernel_json
     << ", for expected json, see file: tbe_single_conv2d_backprop_filter_select.json";
   EXPECT_TRUE(tbe_json_creator_build->GenJson(conv2d_backprop_filter, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 2825902177943886814U)
+  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 6097606936200506174U)
     << "Error json is:" << kernel_json
     << ", for expected json, see file: tbe_single_conv2d_backprop_filter_build.json";
 }
@@ -180,7 +180,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_dynamic_rnn) {
   EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 3107761065269367419U)
     << "Error json is:" << kernel_json << ", for expected json, see file: tbe_single_dynamic_rnn_select.json";
   EXPECT_TRUE(tbe_json_creator_build->GenJson(dynamic_rnn, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 9060367167309321650U)
+  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 14916511955212123861U)
     << "Error json is:" << kernel_json << ", for expected json, see file: tbe_single_dynamic_rnn_build.json";
 }
 
@@ -233,7 +233,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_layer_norm) {
   EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 6592146268336877821U)
     << "Error json is:" << kernel_json << ", for expected json, see file: tbe_single_layer_norm_select.json";
   EXPECT_TRUE(tbe_json_creator_build->GenJson(layer_norm, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 4694544546193203240U)
+  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 2848618249728529296U)
     << "Error json is:" << kernel_json << ", for expected json, see file: tbe_single_layer_norm_build.json";
 }
 

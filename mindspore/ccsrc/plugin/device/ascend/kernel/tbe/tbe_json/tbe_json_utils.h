@@ -108,6 +108,7 @@ constexpr auto kJMaxKernelIDValue = 10;
 constexpr auto kJConstValue = "const_value";
 constexpr auto kJConstValueDtype = "const_value_dtype";
 constexpr auto kJOpDebugConfig = "op_debug_config";
+constexpr auto kJCValue = "input_c_values";
 
 class TbeJsonUtils {
  public:

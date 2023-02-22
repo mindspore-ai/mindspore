@@ -28,6 +28,7 @@
 #include "utils/ms_utils.h"
 #include "include/common/utils/json_operation_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 
 namespace mindspore::kernel {
 using mindspore::kernel::tbe::TbeAdapter;
@@ -176,6 +177,11 @@ void SingleTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
   (*input_desc)[kJOriFormat] = def_format;
   if (common::AnfAlgo::GetCNodeName(anf_node) == kMaxPool3DGradGradDOpName) {
     (*input_desc)[kJOriFormat] = kOpFormat_NDHWC;
+  }
+  if (format == kOpFormat_NC1HWC0) {
+    auto infer_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, real_input_index);
+    infer_shape = trans::PaddingShape(infer_shape, format, AnfAlgo::GetInputReshapeType(anf_node, real_input_index));
+    (*input_desc)[kJCValue] = infer_shape[1];
   }
   (*input_desc)[kJShape] = shape;
   (*input_desc)[kJFormat] = format;
