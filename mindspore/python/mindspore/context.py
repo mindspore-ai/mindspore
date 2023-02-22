@@ -1016,7 +1016,7 @@ def set_context(**kwargs):
               memory_optimize_level is set 'O1'.
             - OFF: Turn off the memory Offload function.
         ascend_config (dict): Set the parameters specific to Ascend hardware platform. It is not set by default.
-            Currently, only setting `precision_mode' and jit_compile are supported on Ascend910B hardware platform.
+            Currently, only setting `precision_mode` and `jit_compile` are supported on Ascend910B hardware platform.
 
             - precision_mode (str): Mixed precision mode setting, on Ascend910B hardware platform, the default
               value of training network is must_keep_origin_dtype, and the default value of inference network
@@ -1042,6 +1042,7 @@ def set_context(**kwargs):
                   the built-in optimization strategy, automatically reduces the precision of some operators to bfloat16.
 
             - jit_compile (bool): Whether to select online compilation. Default: True.
+
     Raises:
         ValueError: If input key is not an attribute in context.
 

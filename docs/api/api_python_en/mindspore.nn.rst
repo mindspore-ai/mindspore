@@ -87,7 +87,7 @@ Recurrent Layer
 Transformer Layer
 ---------------------------
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst

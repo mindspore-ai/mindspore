@@ -24,11 +24,11 @@ def partial(func, *args):
     Makes a partial function instance. Partial function can be used to derived specialized
     functions from general functions by fixing the value of certain arguments.
 
-    Inputs:
+    Args:
         func (FunctionType): The incoming function.
         args (Tensor): The arguments of the incoming function.
 
-    Outputs:
+    Returns:
         FunctionType, partial function bound with arguments.
 
     Supported Platforms:
@@ -67,11 +67,11 @@ def depend(value, expr):
         b = B(y)                --->        y = depend(y, a)
                                 --->        b = B(y)
 
-    Inputs:
+    Args:
         value (Tensor): The real value to return for depend operator.
         expr (Expression): The expression to execute with no outputs.
 
-    Outputs:
+    Returns:
         Tensor, the value passed by last operator.
 
     Supported Platforms:
