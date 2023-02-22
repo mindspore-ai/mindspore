@@ -67,6 +67,7 @@ ShapeVector get_node_shape(const AnfNodePtr &input_node) {
     return {};
   }
   AbstractTensorPtr input_abstract_tensor = input_abstract->cast<mindspore::abstract::AbstractTensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_abstract_tensor);
   mindspore::abstract::ShapePtr shape_ptr = input_abstract_tensor->shape();
   if (shape_ptr == nullptr) {
     return {};
@@ -85,10 +86,11 @@ TypeId get_node_dtype(const AnfNodePtr &input_node) {
     return {};
   }
   AbstractTensorPtr input_abstract_tensor = input_abstract->cast<mindspore::abstract::AbstractTensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_abstract_tensor);
   AbstractBasePtr node_element = input_abstract_tensor->element();
   mindspore::abstract::AbstractScalarPtr node_element_abs =
     node_element->cast<mindspore::abstract::AbstractScalarPtr>();
-
+  MS_EXCEPTION_IF_NULL(node_element_abs);
   TypeId data_type = node_element_abs->BuildType()->type_id();
   return data_type;
 }
@@ -104,7 +106,7 @@ std::vector<std::string> name_split(const std::string &node_name_, const std::st
     if (split_pos < name_len) {
       std::string sub_str = node_name.substr(i, split_pos - i);
       res.push_back(sub_str);
-      i = split_pos + split_sign.size() - 1;
+      i = split_pos + SizeToUint(split_sign.size()) - 1;
     }
   }
   return res;
@@ -140,7 +142,7 @@ int get_op_num(const AnfNodePtr &node) {
   return std::stoi(num);
 }
 
-ParameterPtr get_node_param(FuncGraphPtr func_graph, const CNodePtr &node) {
+ParameterPtr get_node_param(const FuncGraphPtr func_graph, const CNodePtr &node) {
   if (node == nullptr) {
     MS_LOG(ERROR) << "Node is nullptr, get param failed!";
     return nullptr;
@@ -152,7 +154,7 @@ ParameterPtr get_node_param(FuncGraphPtr func_graph, const CNodePtr &node) {
   std::string parameter_name = "";
   for (auto input : node->inputs()) {
     std::string op_name = get_node_name(input);
-    int op_name_len = op_name.size();
+    int op_name_len = LongToInt(op_name.size());
     int load_len = 7;
     if ((op_name_len >= load_len) && (op_name.substr(0, load_len) == "Load-op")) {
       for (auto param : input->cast<mindspore::CNodePtr>()->inputs()) {
@@ -187,7 +189,7 @@ ValueNodePtr build_tuple_value_node(std::vector<int64_t> values) {
   return v_node;
 }
 
-ValueNodePtr make_int_node(FuncGraphPtr func_graph, int int_value) {
+ValueNodePtr make_int_node(const FuncGraphPtr func_graph, int int_value) {
   ShapeVector int_shape{1, 1};
   tensor::TensorPtr int_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeInt32, int_shape);
   int *tensor_data = reinterpret_cast<int *>(int_tensor->data_c());
@@ -196,7 +198,7 @@ ValueNodePtr make_int_node(FuncGraphPtr func_graph, int int_value) {
   }
   mindspore::ValueNodePtr int_tensor_node = std::make_shared<mindspore::ValueNode>(int_tensor);
   int_tensor_node->set_abstract(int_tensor->ToAbstract());
-  (void)func_graph->AddValueNode(int_tensor_node);
+  func_graph->AddValueNode(int_tensor_node);
   return int_tensor_node;
 }
 
@@ -204,7 +206,7 @@ tensor::TensorPtr make_weight_tensor(TypeId type_id, ShapeVector shape) {
   tensor::TensorPtr weight_tensor = std::make_shared<Tensor>(type_id, shape);
   std::default_random_engine generator;
   int max_count = 10000;
-  int tensor_size = weight_tensor->data().size();
+  int tensor_size = SizeToInt(weight_tensor->data().size());
   if (type_id == kNumberTypeFloat64) {
     const double mean_64 = 0;
     const double stddev_64 = 1;
@@ -233,9 +235,12 @@ tensor::TensorPtr make_weight_tensor(TypeId type_id, ShapeVector shape) {
 }
 
 bool CheckIfObfuscated(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto mgr = Manage(func_graph);
+  MS_EXCEPTION_IF_NULL(mgr);
   auto all_nodes = mgr->all_nodes();
   for (AnfNodePtr node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     std::string node_name = node->fullname_with_scope();
     if (node_name.find("Switch") != std::string::npos) {
       return true;
@@ -253,11 +258,11 @@ FuncGraphPtr DynamicObfuscator::ObfuscateMindIR(const FuncGraphPtr &func_graph) 
   auto mgr = Manage(func_graph);
   MS_EXCEPTION_IF_NULL(mgr);
   auto all_nodes = mgr->all_nodes();
-  int node_nums = all_nodes.size();
+  int node_nums = SizeToLong(all_nodes.size());
   MS_LOG(INFO) << "Total node num: " << node_nums;
 
   // do subgraph fake-branch obfuscation
-  (void)SubGraphFakeBranch(func_graph);
+  SubGraphFakeBranch(func_graph);
 
   if (subgraph_obf_num_ == 0) {
     MS_LOG(WARNING)
@@ -279,8 +284,8 @@ std::string DynamicObfuscator::ObfuscateOpType(const AnfNodePtr &node) {
     target_op_list.insert(target_op_list.end(), single_input_with_weight_target_op_.begin(),
                           single_input_with_weight_target_op_.end());
     for (const auto &target_op_name : target_op_list) {
-      int op_name_len = op_name.size();
-      int target_name_len = target_op_name.size();
+      int op_name_len = SizeToInt(op_name.size());
+      int target_name_len = SizeToInt(target_op_name.size());
       if ((op_name_len >= target_name_len) && (op_name.substr(0, target_name_len) == target_op_name)) {
         return target_op_name;
       }
@@ -290,7 +295,7 @@ std::string DynamicObfuscator::ObfuscateOpType(const AnfNodePtr &node) {
   return "";
 }
 
-ObfCase DynamicObfuscator::ObfuscateOpCase(std::string obf_type) {
+ObfCase DynamicObfuscator::ObfuscateOpCase(const std::string obf_type) {
   if (obf_type.empty()) {
     MS_LOG(ERROR) << "Obf_type is empty string.";
     return ObfCase::NotObfNode;
@@ -306,7 +311,7 @@ ObfCase DynamicObfuscator::ObfuscateOpCase(std::string obf_type) {
   }
 }
 
-CNodePtr DynamicObfuscator::RandomSeedModeControl(FuncGraphPtr func_graph) {
+CNodePtr DynamicObfuscator::RandomSeedModeControl(const FuncGraphPtr func_graph) {
   ShapeVector y_shape{1, 1};
   tensor::TensorPtr y_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeInt32, y_shape);
   if (!has_build_appended_input) {
@@ -321,12 +326,12 @@ CNodePtr DynamicObfuscator::RandomSeedModeControl(FuncGraphPtr func_graph) {
   if (used_control_node_ == 0) {
     // make equal function node
     ValueNodePtr equal_v_node = std::make_shared<mindspore::ValueNode>(mindspore::prim::kPrimEqual);
-    (void)func_graph->AddValueNode(equal_v_node);
+    func_graph->AddValueNode(equal_v_node);
     ValueNodePtr equal_compa_node = make_int_node(func_graph, branch_control_input_);
     CNodePtr equal_c_node = func_graph->NewCNode({equal_v_node, y_append, equal_compa_node});
     tensor::TensorPtr equal_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeBool, y_shape);
     equal_c_node->set_abstract(equal_tensor->ToAbstract());
-    (void)func_graph->AddNode(equal_c_node);
+    func_graph->AddNode(equal_c_node);
     used_control_node_ += 1;
     switch_branch_ = true;
     return equal_c_node;
@@ -334,12 +339,12 @@ CNodePtr DynamicObfuscator::RandomSeedModeControl(FuncGraphPtr func_graph) {
   // make greater function node
   int comparison_int = rand();
   ValueNodePtr greater_v_node = std::make_shared<mindspore::ValueNode>(mindspore::prim::kPrimGreater);
-  (void)func_graph->AddValueNode(greater_v_node);
+  func_graph->AddValueNode(greater_v_node);
   ValueNodePtr greater_compa_node = make_int_node(func_graph, comparison_int);
   CNodePtr greater_c_node = func_graph->NewCNode({greater_v_node, y_append, greater_compa_node});
   tensor::TensorPtr greater_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeBool, y_shape);
   greater_c_node->set_abstract(greater_tensor->ToAbstract());
-  (void)func_graph->AddNode(greater_c_node);
+  func_graph->AddNode(greater_c_node);
   used_control_node_ += 1;
   switch_branch_ = branch_control_input_ > comparison_int;
   return greater_c_node;
@@ -351,9 +356,9 @@ mindspore::CNodePtr add_stride_slice_node(FuncGraphPtr func_graph, ShapeVector b
   mindspore::ValueNodePtr begin_v_node = build_tuple_value_node(begin_vector);
   mindspore::ValueNodePtr stride_v_node = build_tuple_value_node(stride_vector);
   mindspore::ValueNodePtr end_v_node = build_tuple_value_node(end_vector);
-  (void)func_graph->AddValueNode(begin_v_node);
-  (void)func_graph->AddValueNode(stride_v_node);
-  (void)func_graph->AddValueNode(end_v_node);
+  func_graph->AddValueNode(begin_v_node);
+  func_graph->AddValueNode(stride_v_node);
+  func_graph->AddValueNode(end_v_node);
   mindspore::PrimitivePtr slice_prim = mindspore::prim::kPrimStridedSlice;
   slice_prim->set_attr("is_load", MakeValue(true));
   slice_prim->set_attr("new_axis_mask", MakeValue(int64_t(0)));
@@ -362,29 +367,29 @@ mindspore::CNodePtr add_stride_slice_node(FuncGraphPtr func_graph, ShapeVector b
   slice_prim->set_attr("begin_mask", MakeValue(int64_t(begin_mask)));
   slice_prim->set_attr("ellipsis_mask", MakeValue(int64_t(0)));
   mindspore::ValueNodePtr slice_v_node = std::make_shared<mindspore::ValueNode>(slice_prim);
-  (void)func_graph->AddValueNode(slice_v_node);
+  func_graph->AddValueNode(slice_v_node);
   mindspore::CNodePtr slice_c_node =
     func_graph->NewCNode({slice_v_node, prev_node, begin_v_node, end_v_node, stride_v_node});
   return slice_c_node;
 }
 
-CNodePtr DynamicObfuscator::CustomOpModeControl(FuncGraphPtr func_graph, const AnfNodePtr &prev_node) {
+CNodePtr DynamicObfuscator::CustomOpModeControl(const FuncGraphPtr func_graph, const AnfNodePtr &prev_node) {
   mindspore::PrimitivePtr reshape_prim = mindspore::prim::kPrimReshape;
   reshape_prim->set_attr("is_load", MakeValue(true));
   mindspore::ValueNodePtr reshape_v_node = std::make_shared<mindspore::ValueNode>(reshape_prim);
-  (void)func_graph->AddValueNode(reshape_v_node);
+  func_graph->AddValueNode(reshape_v_node);
   ShapeVector prev_node_shape = get_node_shape(prev_node);
   int shape_multiply = std::accumulate(prev_node_shape.cbegin(), prev_node_shape.cend(), 1, std::multiplies<int>());
   MS_LOG(INFO) << "The shape_multiply is: " << shape_multiply;
 
   ShapeVector flat_shape{1, shape_multiply};
   mindspore::ValueNodePtr shape_v_node = std::make_shared<mindspore::ValueNode>(MakeValue(flat_shape));
-  (void)func_graph->AddValueNode(shape_v_node);
+  func_graph->AddValueNode(shape_v_node);
   mindspore::CNodePtr reshape_c_node = func_graph->NewCNode({reshape_v_node, prev_node, shape_v_node});
   TypeId data_type = get_node_dtype(prev_node);
   auto reshape_abstract = std::make_shared<Tensor>(data_type, flat_shape)->ToAbstract();
   reshape_c_node->set_abstract(reshape_abstract);
-  (void)func_graph->AddNode(reshape_c_node);
+  func_graph->AddNode(reshape_c_node);
 
   // the first stride_slice x[0]
   ShapeVector begin_1{0, 0};
@@ -393,7 +398,7 @@ CNodePtr DynamicObfuscator::CustomOpModeControl(FuncGraphPtr func_graph, const A
     add_stride_slice_node(func_graph, begin_1, stride_1, flat_shape, 2, 2, reshape_c_node);
   ShapeVector slice_1_shape{shape_multiply};
   slice_c_node_1->set_abstract(std::make_shared<Tensor>(data_type, slice_1_shape)->ToAbstract());
-  (void)func_graph->AddNode(slice_c_node_1);
+  func_graph->AddNode(slice_c_node_1);
 
   // the first stride_slice x[0][0]
   ShapeVector begin_2{0};
@@ -403,7 +408,7 @@ CNodePtr DynamicObfuscator::CustomOpModeControl(FuncGraphPtr func_graph, const A
     add_stride_slice_node(func_graph, begin_2, stride_2, stride_2, 0, 0, slice_c_node_1);
   ShapeVector slice_2_shape{1};
   slice_c_node_2->set_abstract(std::make_shared<Tensor>(data_type, slice_2_shape)->ToAbstract());
-  (void)func_graph->AddNode(slice_c_node_2);
+  func_graph->AddNode(slice_c_node_2);
 
   // the second stride_slice x[0][1]
   ShapeVector begin_3{1};
@@ -413,7 +418,7 @@ CNodePtr DynamicObfuscator::CustomOpModeControl(FuncGraphPtr func_graph, const A
     add_stride_slice_node(func_graph, begin_3, stride_3, stride_3, 0, 0, slice_c_node_1);
   ShapeVector slice_3_shape{1};
   slice_c_node_3->set_abstract(std::make_shared<Tensor>(data_type, slice_3_shape)->ToAbstract());
-  (void)func_graph->AddNode(slice_c_node_3);
+  func_graph->AddNode(slice_c_node_3);
 
   // add opaque predicate
   PrimitivePtr custom_prim = mindspore::prim::kPrimOpaquePredicate;
@@ -426,16 +431,18 @@ CNodePtr DynamicObfuscator::CustomOpModeControl(FuncGraphPtr func_graph, const A
   output_names_value.push_back(std::make_shared<StringImm>("output"));
   custom_prim->set_attr(mindspore::kAttrOutputNames, std::make_shared<ValueList>(output_names_value));
   auto opaque_v_node = std::make_shared<mindspore::ValueNode>(custom_prim);
-  (void)func_graph->AddValueNode(opaque_v_node);
+  func_graph->AddValueNode(opaque_v_node);
   auto opaque_c_node = func_graph->NewCNode({opaque_v_node, slice_c_node_2, slice_c_node_3});
   ShapeVector y_shape{1, 1};
   auto bool_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeBool, y_shape);
   opaque_c_node->set_abstract(bool_tensor->ToAbstract());
-  (void)func_graph->AddNode(opaque_c_node);
+  func_graph->AddNode(opaque_c_node);
   return opaque_c_node;
 }
 
 CNodePtr DynamicObfuscator::GetControlNode(const FuncGraphPtr &func_graph, const AnfNodePtr &prev_node) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(prev_node);
   if (branch_control_input_ != 0) {
     MS_LOG(INFO) << "Run password mode.";
     return RandomSeedModeControl(func_graph);
@@ -479,7 +486,7 @@ mindspore::PrimitivePtr DynamicObfuscator::get_random_prim(const std::string &ob
   }
   mindspore::PrimitivePtr prim_node = one_input_prim_[0];
   do {
-    int random = rand() % one_input_prim_.size();
+    int random = rand() % SizeToInt(one_input_prim_.size());
     prim_node = one_input_prim_[random];
   } while (prim_name_ori == prim_node->ToString());
   return prim_node;
@@ -499,7 +506,7 @@ void DynamicObfuscator::UpdateDict(const AnfNodePtr &node, const bool isParent) 
   }
   node_dict_[node->fullname_with_scope()] = node->cast<mindspore::AnfNodePtr>();
   if (node_dict_[node->fullname_with_scope()] == nullptr) {
-    MS_LOG(ERROR) << "Update node " << node_dict_[node->fullname_with_scope()] << " failed.";
+    MS_LOG(ERROR) << "Update node " << node->fullname_with_scope() << " failed.";
   }
 }
 
@@ -537,8 +544,8 @@ bool DynamicObfuscator::IsTarget(std::string &cnode_name) {
   target_op_list.insert(target_op_list.end(), single_input_with_weight_target_op_.begin(),
                         single_input_with_weight_target_op_.end());
   for (std::string target_op_name : target_op_list) {
-    int op_name_len = op_name.size();
-    int target_name_len = target_op_name.size();
+    int op_name_len = SizeToInt(op_name.size());
+    int target_name_len = SizeToInt(target_op_name.size());
     if ((op_name_len >= target_name_len) && (op_name.substr(0, target_name_len) == target_op_name)) {
       return true;
     }
@@ -572,12 +579,16 @@ mindspore::CNodePtr DynamicObfuscator::BuildOneInputNoWeightNode(const FuncGraph
     MS_LOG(ERROR) << "Build Node failed: FuncGraph is nullptr.";
     return nullptr;
   }
+  if (prim_node == nullptr) {
+    MS_LOG(ERROR) << "Build Node failed: prim_node is nullptr.";
+    return nullptr;
+  }
   std::vector<ValuePtr> input_names_value;
   input_names_value.emplace_back(std::make_shared<StringImm>("x"));
   prim_node->set_attr("is_load", MakeValue(true));
   prim_node->set_attr(mindspore::kAttrInputNames, std::make_shared<ValueList>(input_names_value));
   mindspore::ValueNodePtr v_node = std::make_shared<mindspore::ValueNode>(prim_node);
-  (void)fg->AddValueNode(v_node);
+  fg->AddValueNode(v_node);
   mindspore::CNodePtr c_node = fg->NewCNode({v_node, input_node});
   if (c_node == nullptr) {
     MS_LOG(ERROR) << "Build node failed: cnode is nullptr.";
@@ -591,7 +602,7 @@ mindspore::CNodePtr DynamicObfuscator::BuildOneInputNoWeightNode(const FuncGraph
     return nullptr;
   }
   c_node->set_abstract(node_abstract);
-  (void)fg->AddNode(c_node);
+  fg->AddNode(c_node);
   return c_node;
 }
 
@@ -622,7 +633,7 @@ mindspore::CNodePtr DynamicObfuscator::BuildOneInputWithWeightNode(const FuncGra
     return nullptr;
   }
   mindspore::ValueNodePtr v_node = node_inputs[0]->cast<mindspore::ValueNodePtr>();
-  (void)fg->AddValueNode(v_node);
+  fg->AddValueNode(v_node);
 
   mindspore::CNodePtr c_node = fg->NewCNode({v_node, input_node, weights});
   if (c_node == nullptr) {
@@ -641,12 +652,9 @@ mindspore::CNodePtr DynamicObfuscator::BuildOneInputWithWeightNode(const FuncGra
   return c_node;
 }
 
-FuncGraphPtr DynamicObfuscator::CloneSubGraph(const FuncGraphPtr &fg, const std::vector<mindspore::CNodePtr> &node_arr,
+FuncGraphPtr DynamicObfuscator::CloneSubGraph(const std::vector<mindspore::CNodePtr> &node_arr,
                                               const mindspore::AnfNodePtr &parent_node) {
   MS_LOG(INFO) << "Building Clone Graph ";
-  if (fg == nullptr) {
-    MS_LOG(ERROR) << "Build clone graph failed: FuncGraph is nullptr.";
-  }
   mindspore::FuncGraphPtr fg_clone = std::make_shared<FuncGraph>();
   ShapeVector x_shape = get_node_shape(parent_node);
   TypeId x_type_id = get_node_dtype(parent_node);
@@ -664,7 +672,7 @@ FuncGraphPtr DynamicObfuscator::CloneSubGraph(const FuncGraphPtr &fg, const std:
   for (auto node : node_arr) {
     std::string obf_type = ObfuscateOpType(node);
     mindspore::ObfCase obf_case = ObfuscateOpCase(obf_type);
-    switch (static_cast<mindspore::ObfCase>(obf_case)) {
+    switch (obf_case) {
       case ObfCase::OneInputNoWeightNode: {
         mindspore::PrimitivePtr prim_node = GetCNodePrimitive(node);
         last_node = BuildOneInputNoWeightNode(fg_clone, last_node, prim_node);
@@ -697,7 +705,7 @@ FuncGraphPtr DynamicObfuscator::CloneSubGraph(const FuncGraphPtr &fg, const std:
   }
 
   mindspore::ValueNodePtr return_v = std::make_shared<mindspore::ValueNode>(mindspore::prim::kPrimReturn);
-  (void)fg_clone->AddValueNode(return_v);
+  fg_clone->AddValueNode(return_v);
   mindspore::CNodePtr return_c_node = fg_clone->NewCNode({return_v, last_node});
   if (return_c_node == nullptr) {
     MS_LOG(ERROR) << "Build return failed: return cnode is nullptr.";
@@ -711,19 +719,15 @@ FuncGraphPtr DynamicObfuscator::CloneSubGraph(const FuncGraphPtr &fg, const std:
     return nullptr;
   }
   return_c_node->set_abstract(return_abstract);
-  (void)fg_clone->AddNode(return_c_node);
+  fg_clone->AddNode(return_c_node);
   fg_clone->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
   fg_clone->set_return(return_c_node);
   return fg_clone;
 }
 
-FuncGraphPtr DynamicObfuscator::BuildFakeGraph(const FuncGraphPtr &fg, const std::vector<mindspore::CNodePtr> &node_arr,
+FuncGraphPtr DynamicObfuscator::BuildFakeGraph(const std::vector<mindspore::CNodePtr> &node_arr,
                                                const mindspore::AnfNodePtr &parent_node) {
   MS_LOG(INFO) << "Building Fake Graph ";
-  if (fg == nullptr) {
-    MS_LOG(ERROR) << "Build fake graph failed: FuncGraph is nullptr.";
-    return nullptr;
-  }
   mindspore::FuncGraphPtr fg_fake = std::make_shared<FuncGraph>();
 
   ShapeVector x_shape = get_node_shape(parent_node);
@@ -740,7 +744,7 @@ FuncGraphPtr DynamicObfuscator::BuildFakeGraph(const FuncGraphPtr &fg, const std
   for (auto node : node_arr) {
     std::string obf_type = ObfuscateOpType(node);
     mindspore::ObfCase obf_case = ObfuscateOpCase(obf_type);
-    switch (static_cast<mindspore::ObfCase>(obf_case)) {
+    switch (obf_case) {
       case ObfCase::OneInputNoWeightNode: {
         mindspore::PrimitivePtr prim_node = get_random_prim(obf_type, node);
         last_node = BuildOneInputNoWeightNode(fg_fake, last_node, prim_node);
@@ -762,12 +766,12 @@ FuncGraphPtr DynamicObfuscator::BuildFakeGraph(const FuncGraphPtr &fg, const std
         ShapeVector shape = get_node_shape(ori_vnode);
         tensor::TensorPtr weight_tensor = make_weight_tensor(type_id, shape);
         mindspore::ValueNodePtr weight_vnode = std::make_shared<mindspore::ValueNode>(weight_tensor);
-        weight_vnode->set_abstract(weight_tensor->ToAbstract());
         if (weight_vnode == nullptr) {
           MS_LOG(ERROR) << "Build OneInputWithWeightNode failed: value node is nullptr.";
           return nullptr;
         }
-        (void)fg_fake->AddValueNode(weight_vnode);
+        weight_vnode->set_abstract(weight_tensor->ToAbstract());
+        fg_fake->AddValueNode(weight_vnode);
         last_node = BuildOneInputWithWeightNode(fg_fake, last_node, node, weight_vnode);
         if (last_node == nullptr) {
           MS_LOG(ERROR) << "Last node after build is nullptr.";
@@ -784,7 +788,7 @@ FuncGraphPtr DynamicObfuscator::BuildFakeGraph(const FuncGraphPtr &fg, const std
   }
 
   mindspore::ValueNodePtr return_v = std::make_shared<mindspore::ValueNode>(mindspore::prim::kPrimReturn);
-  (void)fg_fake->AddValueNode(return_v);
+  fg_fake->AddValueNode(return_v);
   mindspore::CNodePtr return_c_node = fg_fake->NewCNode({return_v, last_node});
   if (return_c_node == nullptr) {
     MS_LOG(ERROR) << "Build return failed: return cnode is nullptr.";
@@ -798,13 +802,13 @@ FuncGraphPtr DynamicObfuscator::BuildFakeGraph(const FuncGraphPtr &fg, const std
     return nullptr;
   }
   return_c_node->set_abstract(return_abstract);
-  (void)fg_fake->AddNode(return_c_node);
+  fg_fake->AddNode(return_c_node);
   fg_fake->set_return(return_c_node);
   fg_fake->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
   return fg_fake;
 }
 
-mindspore::CNodePtr DynamicObfuscator::AddPartialBranch(FuncGraphPtr fg, FuncGraphPtr fg_sub,
+mindspore::CNodePtr DynamicObfuscator::AddPartialBranch(const FuncGraphPtr fg, FuncGraphPtr fg_sub,
                                                         const std::vector<mindspore::CNodePtr> &nodes) {
   if (fg == nullptr) {
     MS_LOG(ERROR) << "Add subgraph failed: fg is null.";
@@ -820,10 +824,10 @@ mindspore::CNodePtr DynamicObfuscator::AddPartialBranch(FuncGraphPtr fg, FuncGra
   }
 
   mindspore::ValueNodePtr switch_partial = std::make_shared<mindspore::ValueNode>(mindspore::prim::kPrimPartial);
-  (void)fg->AddValueNode(switch_partial);
+  fg->AddValueNode(switch_partial);
   mindspore::ValueNodePtr fg_subgraph_node = std::make_shared<mindspore::ValueNode>(fg_sub);
   fg_subgraph_node->set_abstract(fg_sub->ToAbstract());
-  (void)fg->AddValueNode(fg_subgraph_node);
+  fg->AddValueNode(fg_subgraph_node);
   std::vector<mindspore::AnfNodePtr> subgraph_inputs = {switch_partial, fg_subgraph_node};
   if (nodes[0]->inputs().size() < kSwitchInputsNum) {
     MS_LOG(ERROR) << "Add subgraph failed: the input number of node[0] is smaller than " << kSwitchInputsNum;
@@ -843,11 +847,11 @@ mindspore::CNodePtr DynamicObfuscator::AddPartialBranch(FuncGraphPtr fg, FuncGra
     return nullptr;
   }
   switch_partial_c->set_abstract(fg_sub->ToAbstract());
-  (void)fg->AddNode(switch_partial_c);
+  fg->AddNode(switch_partial_c);
   return switch_partial_c;
 }
 
-void DynamicObfuscator::AddSwitchNode(FuncGraphPtr fg) {
+void DynamicObfuscator::AddSwitchNode(const FuncGraphPtr fg) {
   if (fg == nullptr) {
     MS_LOG(ERROR) << "Build switch failed: FuncGraph is nullptr.";
     return;
@@ -857,6 +861,7 @@ void DynamicObfuscator::AddSwitchNode(FuncGraphPtr fg) {
     auto mgr = mindspore::Manage(fg);
     if (mgr == nullptr) {
       MS_LOG(ERROR) << "FuncGraph manager is nullptr.";
+      return;
     }
     std::vector<mindspore::CNodePtr> nodes;
     mindspore::AnfNodePtr last_node = nullptr;
@@ -872,19 +877,22 @@ void DynamicObfuscator::AddSwitchNode(FuncGraphPtr fg) {
       auto users = mgr->node_users()[last_node];
       child_node = users.cbegin()->first->cast<mindspore::CNodePtr>();
     } else {
-      MS_LOG(ERROR) << "Child Node is nullptr.";
+      MS_LOG(WARNING) << "Child Node of " << last_node->fullname_with_scope() << " is nullptr.";
     }
     mindspore::AnfNodePtr parent_node = node_dict_[parent_names_.top()];
     parent_names_.pop();
 
-    mindspore::FuncGraphPtr fg_subgraph_clone = CloneSubGraph(fg, nodes, parent_node);
-    mindspore::FuncGraphPtr fg_subgraph_fake = BuildFakeGraph(fg, nodes, parent_node);
+    mindspore::FuncGraphPtr fg_subgraph_clone = CloneSubGraph(nodes, parent_node);
+    mindspore::FuncGraphPtr fg_subgraph_fake = BuildFakeGraph(nodes, parent_node);
 
     mgr->AddFuncGraph(fg_subgraph_clone);
     mgr->AddFuncGraph(fg_subgraph_fake);
 
     mindspore::CNodePtr switch_partial_clone_c = AddPartialBranch(fg, fg_subgraph_clone, nodes);
     mindspore::CNodePtr switch_partial_fake_c = AddPartialBranch(fg, fg_subgraph_fake, nodes);
+    if (switch_partial_clone_c == nullptr || switch_partial_fake_c == nullptr) {
+      continue;
+    }
 
     CNodePtr control_node = GetControlNode(fg, parent_node);
     if (control_node == nullptr) {
@@ -892,7 +900,7 @@ void DynamicObfuscator::AddSwitchNode(FuncGraphPtr fg) {
     }
 
     mindspore::ValueNodePtr switch_v_node = std::make_shared<mindspore::ValueNode>(mindspore::prim::kPrimSwitch);
-    (void)fg->AddValueNode(switch_v_node);
+    fg->AddValueNode(switch_v_node);
     mindspore::CNodePtr switch_c_node;
     if (branch_control_input_ == 0) {
       if (static_cast<int>(customized_func_results_.size()) <= used_control_node_) {
@@ -912,15 +920,17 @@ void DynamicObfuscator::AddSwitchNode(FuncGraphPtr fg) {
     mindspore::CNodePtr call_cnode = fg->NewCNode({switch_c_node});
     fg->AddNode(call_cnode);
 
-    unsigned i = 0;
-    for (auto input : child_node->inputs()) {
-      if (input->fullname_with_scope() == last_node->fullname_with_scope()) {
-        child_node->set_input(i, call_cnode);
-        break;
+    if (child_node != nullptr) {
+      unsigned i = 0;
+      for (auto input : child_node->inputs()) {
+        if (input->fullname_with_scope() == last_node->fullname_with_scope()) {
+          child_node->set_input(i, call_cnode);
+          break;
+        }
+        i++;
       }
-      i++;
+      switch_num_++;
     }
-    switch_num_++;
   }
   MS_LOG(WARNING) << switch_num_ << " switch nodes have been added.";
   used_control_node_ = 0;
@@ -946,17 +956,19 @@ bool DynamicObfuscator::IsValidOpNum(const int &current_num, const int &compa_nu
   return current_num <= compa_num;
 }
 
-void DynamicObfuscator::SubGraphFakeBranch(FuncGraphPtr func_graph) {
+void DynamicObfuscator::SubGraphFakeBranch(const FuncGraphPtr func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Build fake sub-graph failed: FuncGraph is nullptr.";
+    return;
   }
   node_names_.push("-");
   auto mgr = mindspore::Manage(func_graph);
   if (mgr == nullptr) {
-    MS_LOG(INFO) << "Manager is null node!";
+    MS_LOG(ERROR) << "Manager is null node!";
+    return;
   }
   auto all_nodes = mgr->all_nodes();
-  int node_nums = all_nodes.size();
+  int node_nums = SizeToInt(all_nodes.size());
   int obfuscate_target_num = std::ceil(node_nums * obf_ratio_ / keyExpandRate);
   int op_num = GetNodeMaxNum(all_nodes);
   MS_LOG(INFO) << "Init op_num is: " << op_num;
@@ -970,6 +982,7 @@ void DynamicObfuscator::SubGraphFakeBranch(FuncGraphPtr func_graph) {
   for (auto node : sorted_nodes) {
     if (node == nullptr) {
       MS_LOG(INFO) << "Find null node!" << std::endl;
+      continue;
     }
     if (node->isa<CNode>()) {
       std::string cnode_name = get_node_name(node);
@@ -990,7 +1003,7 @@ void DynamicObfuscator::SubGraphFakeBranch(FuncGraphPtr func_graph) {
               (node_dict_.find(valid_input->fullname_with_scope()) == node_dict_.cend())) {
             UpdateDict(valid_input, false);
             op_num = get_op_num(valid_input);
-            curr_cnode = valid_input->cast<mindspore::CNodePtr>();
+            curr_cnode = valid_input;
           } else {
             stop_traverse = true;
             if (curr_cnode->inputs().size() > 1) {
@@ -1006,9 +1019,9 @@ void DynamicObfuscator::SubGraphFakeBranch(FuncGraphPtr func_graph) {
   }
   node_names_.pop();
   if (branch_control_input_ == 0) {
-    (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().init_calling_count();
+    mindspore::kernel::CustomizedOpaquePredicate::GetInstance().init_calling_count();
   }
-  (void)AddSwitchNode(func_graph);
+  AddSwitchNode(func_graph);
   MS_LOG(WARNING) << subgraph_obf_num_ << " nodes have been obfuscated.";
 }
 }  // namespace mindspore
