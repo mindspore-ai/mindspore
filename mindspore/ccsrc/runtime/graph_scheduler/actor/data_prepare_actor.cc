@@ -538,8 +538,12 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
     MS_EXCEPTION_IF_NULL(graph);
     // Prepare the data of device tensor store(value nodes of graph).
     for (const auto &value_node : graph->graph_value_nodes()) {
+      MS_EXCEPTION_IF_NULL(value_node);
       if (AnfAlgo::OutputAddrExist(value_node, 0)) {
         const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
+        MS_LOG(DEBUG) << "Prepare data for value node:" << value_node->fullname_with_scope()
+                      << ", debug name:" << value_node->DebugString()
+                      << ", front node:" << front_node->fullname_with_scope();
         PrepareDataForValueNode(value_node, front_node, device_context, context);
       }
     }
@@ -766,8 +770,10 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(context);
   const auto &device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
-  if (device_tensors.size() > 1) {
-    auto another_device_tensor = (device_tensors[0] == host_tensor_address) ? device_tensors[1] : device_tensors[0];
+  for (auto &another_device_tensor : device_tensors) {
+    if (another_device_tensor == host_tensor_address) {
+      continue;
+    }
     MS_EXCEPTION_IF_NULL(another_device_tensor);
     auto another_device_name = device::GetDeviceNameByType(another_device_tensor->GetDeviceType());
     const auto &another_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(

@@ -51,7 +51,8 @@ AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNode
 
 #ifdef ENABLE_TUPLE_UNFOLD
 bool IsKerenlGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
-  const auto &outputs = common::AnfAlgo::GetAllOutputWithIndex(func_graph->output());
+  const auto &outputs =
+    common::AnfAlgo::GetAllOutputIndexByReturnTypes(func_graph->output(), {prim::kPrimTupleGetItem});
   return std::find_if(outputs.begin(), outputs.end(), [&node](const auto &output) { return output.first == node; }) !=
          outputs.end();
 }
@@ -103,6 +104,8 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   for (size_t i = 0; i < cnode->inputs().size(); ++i) {
     const auto &input = cnode->inputs()[i];
     if (IsNeedConvert(func_graph, input)) {
+      MS_LOG(INFO) << "Convert tuple input to make tuple for node:" << node->fullname_with_scope()
+                   << ", input node:" << input->fullname_with_scope();
       auto new_input = ConvertTupleInputToMakeTuple(func_graph, input);
       if (new_input->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(new_input, prim::kPrimMakeTuple)) {
         auto make_tuple = new_input->cast<CNodePtr>();

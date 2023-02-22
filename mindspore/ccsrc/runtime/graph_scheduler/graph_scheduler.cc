@@ -2510,8 +2510,8 @@ void GraphScheduler::PersistDeviceTensorForValueNode(const AnfNodePtr &value_nod
 
   // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
   if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType()) == nullptr) {
-    MS_LOG(WARNING) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
-                    << ", type:" << device_context->GetDeviceType();
+    MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
+                 << ", type:" << device_context->GetDeviceType();
     auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
       nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
       device_tensor->host_shape());
@@ -2663,7 +2663,8 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
       const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
       MS_EXCEPTION_IF_NULL(front_node);
       const auto device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
-      ofs << "\t\tdevice tensor key:" << front_node->fullname_with_scope() << "\tvalue size:" << device_tensors.size()
+      ofs << "\t\tdevice tensor key:" << front_node->fullname_with_scope()
+          << "\tbackend node name:" << value_node->fullname_with_scope() << "\tvalue size:" << device_tensors.size()
           << "\n";
       for (const auto &device_tensor : device_tensors) {
         MS_EXCEPTION_IF_NULL(device_tensor);

@@ -247,8 +247,15 @@ void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, con
     if (!node_graph->has_flag(kFlagEnableZeroCopyInGraph)) {
       AnfAlgo::SetOutputAddr(address, 0, parameter.get());
     }
-    auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type),
-                                                               parameter->Shape()->cast<abstract::BaseShapePtr>());
+
+    abstract::AbstractBasePtr abstract;
+    auto shape = parameter->Shape();
+    MS_EXCEPTION_IF_NULL(shape);
+    if (shape->isa<abstract::NoShape>()) {
+      abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(type));
+    } else {
+      abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type), shape->cast<abstract::BaseShapePtr>());
+    }
     parameter->set_abstract(abstract);
   }
 }
