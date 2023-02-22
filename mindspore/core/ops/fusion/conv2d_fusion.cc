@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <string>
 #include <vector>
 
 #include "ops/fusion/conv2d_fusion.h"
-#include "ops/op_utils.h"
+#include "mindapi/base/shared_ptr.h"
+#include "mindapi/ir/value.h"
+#include "ops/base_operator.h"
+#include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

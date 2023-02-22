@@ -15,14 +15,24 @@
  */
 
 #include "ops/fmin.h"
-#include <string>
+
 #include <memory>
 #include <set>
+#include <vector>
+
 #include "abstract/ops/op_infer.h"
-#include "abstract/dshape.h"
 #include "ops/op_utils.h"
-#include "mindapi/src/helper.h"
 #include "utils/check_convert_utils.h"
+#include "abstract/abstract_value.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ir/dtype/number.h"
+#include "ir/primitive.h"
+#include "ops/core_ops.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

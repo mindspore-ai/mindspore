@@ -14,17 +14,26 @@
  * limitations under the License.
  */
 #include "ops/xlogy.h"
-#include <functional>
-#include <algorithm>
+
 #include <memory>
-#include <string>
 #include <vector>
 #include <set>
+
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "ops/primitive_c.h"
+#include "abstract/dshape.h"
+#include "abstract/ops/op_infer.h"
+#include "abstract/param_validator.h"
+#include "abstract/utils.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ir/dtype/number.h"
+#include "ir/primitive.h"
+#include "ops/core_ops.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

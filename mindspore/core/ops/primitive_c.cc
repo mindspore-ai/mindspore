@@ -15,8 +15,13 @@
  */
 
 #include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+
 #include "abstract/ops/primitive_infer_map.h"
+#include "include/robin_hood.h"
+#include "ir/value.h"
+#include "utils/log_adapter.h"
+#include "mindapi/src/helper.h"
+
 namespace mindspore {
 namespace ops {
 void PrimitiveC::InitIOName(const std::vector<std::string> &inputs_name, const std::vector<std::string> &outputs_name) {

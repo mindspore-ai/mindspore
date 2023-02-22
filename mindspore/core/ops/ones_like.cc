@@ -15,7 +15,6 @@
  */
 #include "ops/ones_like.h"
 
-#include <string>
 #include <vector>
 #include <memory>
 

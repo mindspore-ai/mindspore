@@ -15,16 +15,34 @@
  */
 
 #include "ops/max_pool3d.h"
+
 #include <string>
 #include <memory>
 #include <set>
+#include <algorithm>
+#include <cmath>
+
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindapi/src/helper.h"
-#include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
 #include "ops/base_operator.h"
-#include "ops/avg_pool_3d.h"
 #include "ops/op_name.h"
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "abstract/ops/op_infer.h"
+#include "abstract/utils.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ir/dtype/number.h"
+#include "ir/primitive.h"
+#include "ir/value.h"
+#include "mindapi/base/shared_ptr.h"
+#include "mindapi/ir/value.h"
+#include "ops/core_ops.h"
+#include "ops/primitive_c.h"
+#include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
+#include "utils/shape_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

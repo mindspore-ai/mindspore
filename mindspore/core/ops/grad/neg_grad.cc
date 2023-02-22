@@ -15,7 +15,9 @@
  */
 
 #include "ops/grad/neg_grad.h"
-#include "abstract/ops/primitive_infer_map.h"
+
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

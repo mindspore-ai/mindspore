@@ -15,8 +15,13 @@
  */
 
 #include "ops/tensor_array.h"
+
 #include <vector>
-#include "abstract/ops/primitive_infer_map.h"
+
+#include "mindapi/base/shared_ptr.h"
+#include "mindapi/ir/value.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

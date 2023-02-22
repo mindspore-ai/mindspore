@@ -15,7 +15,6 @@
  */
 #include <map>
 #include <string>
-#include <algorithm>
 
 #include "ops/greater.h"
 #include "ops/op_utils.h"

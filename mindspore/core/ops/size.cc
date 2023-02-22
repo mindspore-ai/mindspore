@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "ops/size.h"
 #include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

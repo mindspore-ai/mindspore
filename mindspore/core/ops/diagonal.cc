@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <set>
-#include <string>
 #include <vector>
 #include <memory>
 #include <algorithm>
+
 #include "ops/diagonal.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"

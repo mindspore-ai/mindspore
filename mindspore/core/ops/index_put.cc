@@ -19,10 +19,23 @@
 #include <map>
 #include <set>
 #include <string>
+#include <memory>
+
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindapi/src/helper.h"
-#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "abstract/utils.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ir/dtype/number.h"
+#include "ir/primitive.h"
+#include "ops/core_ops.h"
+#include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

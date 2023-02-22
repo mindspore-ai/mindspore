@@ -20,11 +20,25 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include <utility>
+
 #include "ops/op_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/check_convert_utils.h"
-#include "mindapi/src/helper.h"
 #include "utils/shape_utils.h"
+#include "abstract/param_validator.h"
+#include "ir/dtype/tensor_type.h"
+#include "ir/dtype/type.h"
+#include "ir/named.h"
+#include "ir/primitive.h"
+#include "ir/scalar.h"
+#include "ir/tensor.h"
+#include "ir/value.h"
+#include "mindapi/base/type_id.h"
+#include "ops/op_name.h"
+#include "utils/convert_utils_base.h"
+#include "mindapi/src/helper.h"
+
 namespace mindspore {
 namespace ops {
 std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector<int64_t> y_shape,

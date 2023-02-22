@@ -16,13 +16,20 @@
 
 #include "ops/pack.h"
 #include "ops/stack_comm.h"
-#include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/base/shared_ptr.h"
+#include "mindapi/ir/value.h"
+#include "ops/core_ops.h"
+#include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+class AGStackInfer;
+
 void Pack::set_axis(const int64_t &axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
 
 int64_t Pack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }

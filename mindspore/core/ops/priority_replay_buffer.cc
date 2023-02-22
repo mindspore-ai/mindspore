@@ -20,7 +20,6 @@
 #include <functional>
 #include <memory>
 #include <vector>
-#include <cstdint>
 #include <numeric>
 
 #include "ir/dtype/type.h"
