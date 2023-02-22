@@ -65,10 +65,13 @@ AICORE_METRICS_DICT = {
 
 class DeviceSupportParam(Enum):
     """The device target enum."""
-    CPU = ['start', 'output_path', 'timeline_limit']
-    GPU = ['start', 'output_path', 'data_process', 'timeline_limit', 'sync_enable', 'op_time']
-    ASCEND = ['start', 'output_path', 'data_process', 'timeline_limit', 'profile_memory', 'parallel_strategy',
-              'profile_communication', 'aicore_metrics', 'l2_cache', 'op_time']
+    CPU = ['start', 'start_profile', 'output_path', 'timeline_limit']
+    GPU = ['start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'sync_enable', 'op_time']
+    ASCEND = ['start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'profile_memory',
+              'parallel_strategy', 'profile_communication', 'aicore_metrics', 'l2_cache', 'op_time', 'ascend_job_id']
+
+
+ALWAYS_VALID_PARAM = ['start_profile', 'output_path', 'data_process', 'parallel_strategy', 'l2_cache', 'ascend_job_id']
 
 
 def _environment_check():
@@ -393,8 +396,6 @@ class Profiler:
         """
         if self._msprof_enable:
             return
-        if not self.start_profile and context.get_context("mode") == context.PYNATIVE_MODE:
-            raise RuntimeError("Pynative mode does not support conditional collection of performance data.")
 
         self._start_time = int(time.time() * 10000000)
         logger.info("Profiling: start time: %d", self._start_time)
@@ -539,14 +540,6 @@ class Profiler:
             raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
                             f"but got type {type(self.start_profile)}")
 
-        self._profile_communication = kwargs.pop("profile_communication", False)
-        if self._profile_communication:
-            logger.warning(f"The parameter profile_communication is not supported on CPU currently.")
-
-        self._profile_memory = kwargs.pop("profile_memory", False)
-        if self._profile_memory:
-            logger.warning(f"The parameter profile_memory is not supported on CPU currently.")
-
     def _gpu_profiler_init(self, kwargs):
         """Gpu profiler init."""
         # Setup and start MindData Profiling
@@ -596,13 +589,6 @@ class Profiler:
         """
         Construct profiling options to determine which profiling data should be collected.
         """
-        profile_memory = "off"
-        if self._profile_memory:
-            profile_memory = "on"
-        profiler_communication = "off"
-        if self._profile_communication:
-            profiler_communication = "on"
-
         fp_point = os.environ.get("PROFILING_FP_START", "")
         bp_point = os.environ.get("PROFILING_BP_END", "")
 
@@ -614,8 +600,8 @@ class Profiler:
             "task_trace": "on" if self._op_time else "off",
             "aic_metrics": AICORE_METRICS_DICT.get(self._aicore_metrics_id, "ArithmeticUtilization"),
             "aicpu": "on" if self._data_process or self._op_time else "off",
-            "profile_memory": profile_memory,
-            "hccl": profiler_communication,
+            "profile_memory": "on" if self._op_time and self._profile_memory else "off",
+            "hccl": "on" if self._op_time and self._profile_communication else "off",
             "l2_cache": self._l2_cache,
             "parallel_strategy": "on" if self._parallel_strategy else "off",
             "op_time": "on" if self._op_time else "off"
@@ -625,19 +611,10 @@ class Profiler:
 
     def _parse_parameter_for_gpu(self, kwargs):
         """Parse parameter in Proflier when the device target is GPU."""
-
         self.start_profile = kwargs.pop("start_profile", True)
         if not isinstance(self.start_profile, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
                             f"but got type {type(self.start_profile)}")
-
-        self._profile_communication = kwargs.pop("profile_communication", False)
-        if self._profile_communication:
-            logger.warning(f"The parameter profile_communication is not supported on GPU currently.")
-
-        self._profile_memory = kwargs.pop("profile_memory", False)
-        if self._profile_memory:
-            logger.warning(f"The parameter profile_memory is not supported on GPU currently.")
 
         self._sync_enable = kwargs.pop("sync_enable", True)
         if not isinstance(self._sync_enable, bool):
@@ -1354,6 +1331,8 @@ class Profiler:
 
     def _parser_kwargs(self, kwargs):
         """Parse kwargs vale."""
+        self._op_time = kwargs.get("op_time", True)
+
         env_run_config = json.loads(os.getenv("MS_PROFILER_RUN_CONFIG", "{}"))
         params = list(kwargs.keys())
         if not env_run_config.get("start"):
@@ -1361,18 +1340,19 @@ class Profiler:
                 if param not in DeviceSupportParam.__getattr__(f'{self._device_target}'.upper()).value:
                     logger.warning("%s is an invalid param which don't work.", param)
                     kwargs.pop(param)
+                elif not self._op_time and kwargs.get(param) and param not in ALWAYS_VALID_PARAM:
+                    logger.warning(f"When op_time is set to False, the parameter '{param}' setting is invalid.")
+
+        if not isinstance(self._op_time, bool):
+            logger.warning(f"For '{self.__class__.__name__}', the parameter op_time must be bool, "
+                           f"but got type {type(self._op_time)}, it will be set to True.")
+            self._op_time = True
 
         self._data_process = kwargs.pop("data_process", True)
         if not isinstance(self._data_process, bool):
             logger.warning(f"For '{self.__class__.__name__}', the parameter data_process must be bool, "
                            f"but got type {type(self._data_process)}, it will be set to True.")
             self._data_process = True
-
-        self._op_time = kwargs.pop("op_time", True)
-        if not isinstance(self._op_time, bool):
-            logger.warning(f"For '{self.__class__.__name__}', the parameter op_time must be bool, "
-                           f"but got type {type(self._op_time)}, it will be set to True.")
-            self._op_time = True
 
         timeline_limit = kwargs.pop("timeline_limit", 500)
         if isinstance(timeline_limit, bool) or not isinstance(timeline_limit, int):

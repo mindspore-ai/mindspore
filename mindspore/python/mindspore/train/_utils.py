@@ -135,27 +135,30 @@ def _construct_input_tensors(dataset_types, dataset_shapes, device_number=1):
     return tensor_list_run, tensor_list_compile
 
 
-def _check_to_numpy(plugin, tensor):
+def _check_to_numpy(plugin, tensor, prim=None):
     """Check the tensor and return a numpy.ndarray."""
     np_value = tensor.asnumpy()
     np_value = np_value.copy()
+    summary_name = plugin.capitalize() + "Summary" if prim else "SummaryRecord"
     if plugin == 'scalar':
         if np_value.size == 1:
             return np_value
-        raise ValueError('The tensor holds more than one value, but the scalar plugin expects on value.')
+        raise ValueError(
+            f'For "{summary_name}", the v rank must be less than or equal to 1, but got {np_value.size}.')
     if plugin == 'image':
         if np_value.ndim == 4:
             return np_value
-        raise ValueError('The tensor seems not to hold a valid image.')
+        raise ValueError(f'For "{summary_name}", The tensor seems not to hold a valid image.')
     if plugin in ('tensor', 'histogram'):
         if np_value.ndim > 0:
             return np_value
-        raise ValueError('The tensor should not be empty.')
+        raise ValueError(f'For "{summary_name}", The tensor should not be empty.')
     return np_value
 
 
 def _check_lineage_value(plugin, value):
     """Check the lineage value."""
+
     def raises(plugin, prototype):
         raise TypeError(f'Plugin {repr(plugin)} expects a {prototype.__name__} value.')
 
