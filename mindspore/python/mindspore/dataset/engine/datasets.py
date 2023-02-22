@@ -115,17 +115,19 @@ def _get_training_dataset():
     return _train_dataset
 
 
-def _reset_training_dataset(step, epoch):
+def _reset_training_dataset(global_step, dataset_size):
     """
-    Reset the training dataset to the given step and epoch number.
+    Reset the training dataset to the given global step.
 
     Args:
-        step (int): Global step number.
-        epoch (int): Global epoch number
+        global_step (int): Number of global steps that have completed training.
+            Dataset will provide data from its next step after reset.
+        dataset_size (int): Number of steps per epoch.
     """
     dataset = _get_training_dataset()
     if dataset is not None:
-        dataset._reset(step, epoch)  # pylint: disable=protected-access
+        epoch = global_step // dataset_size
+        dataset._reset(global_step, epoch)  # pylint: disable=protected-access
     else:
         raise RuntimeError("Training dataset is not set.")
 
