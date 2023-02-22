@@ -181,7 +181,8 @@ void BindShardReader(const py::module *m) {
                           });
            return res;
          })
-    .def("close", &ShardReader::Close);
+    .def("close", &ShardReader::Close)
+    .def("len", &ShardReader::GetNumRows);
 }
 
 void BindShardIndexGenerator(const py::module *m) {

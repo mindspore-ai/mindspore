@@ -29,3 +29,17 @@
 
         异常：
             - **MRMUnsupportedSchemaError** - 当schema无效。
+
+    .. py:method:: schema()
+
+        返回当前MindRecord文件的Schema信息。
+
+        返回：
+            dict，Schema信息。
+
+    .. py:method:: len()
+
+        返回当前MindRecord文件的样本个数。
+
+        返回：
+            int，样本个数。

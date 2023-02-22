@@ -106,3 +106,12 @@ class ShardReader:
     def close(self):
         """close MindRecord File."""
         self._reader.close()
+
+    def len(self):
+        """
+        Get the number of the samples in MindRecord.
+
+        Returns:
+            int, the number of the samples in MindRecord.
+        """
+        return self._reader.len()

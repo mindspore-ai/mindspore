@@ -100,3 +100,21 @@ class FileReader:
     def close(self):
         """Stop reader worker and close file."""
         self._reader.close()
+
+    def schema(self):
+        """
+        Get the schema of the MindRecord.
+
+        Returns:
+            dict, the schema info.
+        """
+        return self._header.schema
+
+    def len(self):
+        """
+        Get the number of the samples in MindRecord.
+
+        Returns:
+            int, the number of the samples in MindRecord.
+        """
+        return self._reader.len()
