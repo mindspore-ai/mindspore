@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,12 +149,6 @@ bool CheckInputShape(const AnfNodePtr &node) {
   auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   if (shape.empty()) {
     MS_LOG(INFO) << "The input shape of topk to split must not be empty";
-    return false;
-  }
-  auto last_dim = shape.back();
-  const int64_t kMaxFloat16 = 65500;
-  if (last_dim > kMaxFloat16) {
-    MS_LOG(INFO) << "The last dim is more than " << kMaxFloat16 << ", switch to aicpu ops.";
     return false;
   }
   return true;
