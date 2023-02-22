@@ -4002,39 +4002,7 @@ class Tensor(Tensor_):
 
     def mul(self, value):
         r"""
-        Multiplies two tensors element-wise.
-
-        .. note::
-            - Inputs of input tensor and `value` comply with the implicit type conversion rules to make
-              the data types consistent.
-            - The inputs must be two tensors or one tensor and one scalar.
-            - When the inputs are two tensors,
-              dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
-            - When the inputs are one tensor and one scalar, the scalar could only be a constant.
-
-        Args:
-            value (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
-                the second input should be a number.Number or bool value, or a Tensor whose data type is number
-                or bool\_. When the first input is Scalar, the second input must be a Tensor whose data type is
-                number or bool\_.
-
-        Returns:
-            Tensor, the shape is the same as the one after broadcasting,
-            and the data type is the one with higher precision or higher digits among the two inputs.
-
-        Raises:
-            TypeError: If input tensor and `value` is not one of the following: Tensor, number.Number, bool.
-            ValueError: If input tensor and `value` are not the same shape.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-            >>> y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
-            >>> output = x.mul(y)
-            >>> print(output)
-            [ 4. 10. 18.]
+        For details, please refer to :func:`mindspore.ops.mul`.
         """
         self._init_check()
         return tensor_operator_registry.get('mul')(self, value)

@@ -204,6 +204,7 @@
     mindspore.Tensor.moveaxis
     mindspore.Tensor.msort
     mindspore.Tensor.mT
+    mindspore.Tensor.mul
     mindspore.Tensor.multiply
     mindspore.Tensor.nan_to_num
     mindspore.Tensor.nansum
