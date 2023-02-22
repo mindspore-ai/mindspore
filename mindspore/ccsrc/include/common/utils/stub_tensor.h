@@ -33,11 +33,13 @@ namespace stub {
 constexpr auto PY_ATTR_STUB = "stub";
 
 namespace py = pybind11;
+class StubNode;
+using StubNodePtr = std::shared_ptr<StubNode>;
 using abstract::AbstractBasePtr;
 
 class COMMON_EXPORT StubNode : public Value {
  public:
-  explicit StubNode(StubNode *top) : top_node_(top) {}
+  StubNode() = default;
   virtual ~StubNode() = default;
   MS_DECLARE_PARENT(StubNode, Value);
 
@@ -50,17 +52,18 @@ class COMMON_EXPORT StubNode : public Value {
   AbstractBasePtr ToAbstract() override { return WaitAbstract(); }
   bool operator==(const Value &other) const override { return other.isa<StubNode>() && &other == this; }
 
+  void SetTopNode(const std::shared_ptr<StubNode> &node) { top_node_ = node; }
+
  protected:
   AbstractBasePtr abstract_;
   ValuePtr value_;
   std::atomic<bool> wait_flag_{false};
-  StubNode *top_node_;
+  StubNodePtr top_node_;
 };
-using StubNodePtr = std::shared_ptr<StubNode>;
 
 class TensorNode : public StubNode {
  public:
-  explicit TensorNode(StubNode *top) : StubNode(top) {}
+  TensorNode() = default;
   MS_DECLARE_PARENT(TensorNode, StubNode);
 
   py::object GetValue();
@@ -70,7 +73,7 @@ class TensorNode : public StubNode {
 
 class SequenceNode : public StubNode {
  public:
-  explicit SequenceNode(StubNode *top, size_t size = 0) : StubNode(top), elements_(size) {}
+  explicit SequenceNode(size_t size = 0) : elements_(size) {}
   MS_DECLARE_PARENT(SequenceNode, StubNode);
 
   py::object GetElements();

@@ -15,6 +15,7 @@
  */
 #include <condition_variable>
 #include <mutex>
+#include "utils/ms_exception.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/stub_tensor.h"
 
@@ -24,7 +25,7 @@ namespace {
 std::condition_variable stub_cond_var_;
 std::mutex stub_mutex_;
 
-StubNodePtr MakeStubNode(const TypePtr &type, StubNode *top = nullptr) {
+StubNodePtr MakeStubNode(const TypePtr &type) {
   if (type->isa<Tuple>() || type->isa<List>()) {
     TypePtrList elements;
     if (type->isa<Tuple>()) {
@@ -34,17 +35,18 @@ StubNodePtr MakeStubNode(const TypePtr &type, StubNode *top = nullptr) {
       auto list_type = type->cast<ListPtr>();
       elements = list_type->elements();
     }
-    auto node = std::make_shared<SequenceNode>(top, elements.size());
-    StubNode *real_top = top ? top : node.get();
+    auto node = std::make_shared<SequenceNode>(elements.size());
     for (size_t i = 0; i < elements.size(); ++i) {
-      node->SetElement(i, MakeStubNode(elements[i], real_top));
+      auto elem = MakeStubNode(elements[i]);
+      elem->SetTopNode(node);
+      node->SetElement(i, elem);
     }
     return node;
   } else {
     if (!type->isa<TensorType>()) {
       MS_LOG(WARNING) << "stub tensor is create for type: " << type->ToString();
     }
-    return std::make_shared<TensorNode>(top);
+    return std::make_shared<TensorNode>();
   }
   return nullptr;
 }
@@ -67,6 +69,30 @@ py::object MakeOutput(StubNodePtr node) {
     return out;
   }
 }
+
+class StubException : public ExceptionListener {
+ public:
+  StubException() {
+    MsException::Instance().SetExceptionListener(this);
+    MsException::Instance().CheckException();
+  }
+  ~StubException() = default;
+
+  void Finalize() {
+    MsException::Instance().SetExceptionListener(nullptr);
+    MsException::Instance().CheckException();
+  }
+  bool HasException() const { return has_exception_; }
+
+  void OnException() override {
+    has_exception_ = true;
+    std::unique_lock<std::mutex> lock(stub_mutex_);
+    stub_cond_var_.notify_all();
+  }
+
+ private:
+  bool has_exception_{false};
+};
 }  // namespace
 
 void StubNode::SetAbstract(const AbstractBasePtr &abs) {
@@ -87,13 +113,16 @@ void StubNode::SetValue(const ValuePtr &val) {
 
 AbstractBasePtr StubNode::WaitAbstract() {
   if (abstract_.get() == nullptr) {
-    if (top_node_) {
-      top_node_->WaitAbstract();
+    auto top = top_node_;
+    if (top) {
+      top->WaitAbstract();
     } else {
+      StubException e;
       wait_flag_.store(true);
       std::unique_lock<std::mutex> lock(stub_mutex_);
-      stub_cond_var_.wait(lock, [this] { return abstract_.get() != nullptr; });
+      stub_cond_var_.wait(lock, [this, &e] { return abstract_.get() != nullptr || e.HasException(); });
       wait_flag_.store(false);
+      e.Finalize();
     }
   }
   return abstract_;
@@ -101,13 +130,16 @@ AbstractBasePtr StubNode::WaitAbstract() {
 
 ValuePtr StubNode::WaitValue() {
   if (value_.get() == nullptr) {
-    if (top_node_) {
-      top_node_->WaitValue();
+    auto top = top_node_;
+    if (top) {
+      top->WaitValue();
     } else {
+      StubException e;
       wait_flag_.store(true);
       std::unique_lock<std::mutex> lock(stub_mutex_);
-      stub_cond_var_.wait(lock, [this] { return value_.get() != nullptr; });
+      stub_cond_var_.wait(lock, [this, &e] { return value_.get() != nullptr || e.HasException(); });
       wait_flag_.store(false);
+      e.Finalize();
     }
   }
   return value_;
@@ -122,8 +154,15 @@ py::object TensorNode::GetShape() {
   auto abs = WaitAbstract();
   auto base = abs->BuildShape();
   auto shape = base->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape);
-  auto &shape_vector = shape->shape();
+  ShapeVector shape_vector;
+  if (shape && !shape->IsDynamic()) {
+    shape_vector = shape->shape();
+  } else {
+    auto val = WaitValue();
+    auto tensor = val->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    shape_vector = tensor->shape();
+  }
   auto ret = py::tuple(shape_vector.size());
   for (size_t i = 0; i < shape_vector.size(); ++i) {
     ret[i] = shape_vector[i];
@@ -170,12 +209,13 @@ void SequenceNode::SetValue(const ValuePtr &val) {
   auto children = seq_value->value();
   for (size_t i = 0; i < elements_.size(); ++i) {
     elements_[i]->SetValue(children[i]);
+    elements_[i]->SetTopNode(nullptr);
   }
   StubNode::SetValue(val);
 }
 
 std::pair<py::object, StubNodePtr> MakeTopNode(const TypePtr &type) {
-  auto top = MakeStubNode(type, nullptr);
+  auto top = MakeStubNode(type);
   auto ret = MakeOutput(top);
   return std::make_pair(ret, top);
 }
