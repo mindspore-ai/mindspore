@@ -72,7 +72,7 @@ class LSTMTensorRT : public TensorRTOp {
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  bool IsWeightInputHanledInner() const override { return true; }
+  bool IsWeightInputHanledInner() const override { return false; }
 
   int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                 const std::vector<TensorInfo> &out_tensors) override;
@@ -81,6 +81,7 @@ class LSTMTensorRT : public TensorRTOp {
 
  private:
   int PreProcess(TensorRTContext *ctx);
+  int RunLSTMPlugin(TensorRTContext *ctx);
 
   int AddLSTMLayers(TensorRTContext *ctx);
 

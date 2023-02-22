@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+#include <memory>
 #include "src/extendrt/delegate/tensorrt/op/lstm_tensorrt.h"
+#include "src/extendrt/delegate/tensorrt/op/lstm_plugin.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_runtime.h"
 #include "ops/lstm.h"
 
@@ -22,19 +24,14 @@ namespace mindspore::lite {
 int LSTMTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                             const std::vector<TensorInfo> &out_tensors) {
 #if TRT_VERSION_GE(7, 0)
-  if (in_tensors.size() < INPUT_TENSOR_SIZE) {
+  if (in_tensors.size() != INPUT_TENSOR_SIZE && in_tensors.size() != INPUT_SIZE4) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }
-  if (out_tensors.size() != OUTPUT_TENSOR_SIZE) {
+  if (out_tensors.size() != OUTPUT_TENSOR_SIZE && out_tensors.size() != INPUT_SIZE5) {
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
-  TensorInfo &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
-  hidden_init_name_ = hidden_in_init.Name() + "_hidden_init";
-  TensorInfo &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
-  cell_init_name_ = cell_in_init.Name() + "_cell_init";
-
   dynamic_shape_params_.support_dynamic_ = false;
   dynamic_shape_params_.support_hw_dynamic_ = false;
   return RET_OK;
@@ -59,6 +56,9 @@ int LSTMTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "PreProcess for " << op_name_;
     return ret;
   }
+  if (in_tensors_.size() == INPUT_SIZE4) {
+    return RunLSTMPlugin(ctx);
+  }
 
   ret = AddLSTMLayers(ctx);
   if (ret != RET_OK) {
@@ -79,6 +79,24 @@ int LSTMTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return RET_OK;
 }
 
+int LSTMTensorRT::RunLSTMPlugin(TensorRTContext *ctx) {
+  auto lstm_op = AsOps<ops::LSTM>();
+  if (params_.directional_cnt_ == BIDIRECTIONAL) {
+    MS_LOG(ERROR) << "mindir lstm with bidirectional not support yet";
+    return RET_ERROR;
+  }
+  auto plugin = std::make_shared<LSTMPlugin>(op_name_, params_.layer_count_, params_.batch_size_,
+                                             params_.sequence_size_, params_.input_data_size_, params_.hidden_size_,
+                                             0.f, lstm_op->get_has_bias(), false, device_id_);
+  CHECK_NULL_RETURN(plugin);
+  nvinfer1::ITensor *inputTensors[] = {input(ctx, 0).trt_tensor_, input(ctx, 1).trt_tensor_,
+                                       input(ctx, INPUT_SIZE2).trt_tensor_, input(ctx, INPUT_SIZE3).trt_tensor_};
+  nvinfer1::IPluginV2Layer *lstm_layer = ctx->network()->addPluginV2(inputTensors, INPUT_SIZE4, *plugin);
+  CHECK_NULL_RETURN(lstm_layer);
+  ctx->RegisterTensor(ITensorHelper{lstm_layer->getOutput(0)}, out_tensors_[0].Name());
+  return RET_OK;
+}
+
 int LSTMTensorRT::PreProcess(TensorRTContext *ctx) {
   auto ms_input_shape = ConvertMSShape(input(ctx, 0).trt_tensor_->getDimensions());
   params_.sequence_size_ = ms_input_shape[0];
@@ -86,6 +104,14 @@ int LSTMTensorRT::PreProcess(TensorRTContext *ctx) {
   params_.input_data_size_ = ms_input_shape[INPUT_SIZE_INDEX];
   if (params_.batch_size_ != 1) {
     MS_LOG(WARNING) << op_name_ << " lstm has batchsize " << params_.batch_size_ << ", needs further verify";
+  }
+  auto lstm_op = AsOps<ops::LSTM>();
+  params_.layer_count_ = lstm_op->get_num_layers() == 0 ? 1 : lstm_op->get_num_layers();
+  params_.hidden_size_ = lstm_op->get_hidden_size();
+  params_.directional_cnt_ = lstm_op->get_bidirectional() ? BIDIRECTIONAL : 1;
+  params_.data_type_ = ConvertDataType(in_tensors_[1].DataType());
+  if (in_tensors_.size() == INPUT_SIZE4) {
+    return RET_OK;
   }
   // ms: 0 sequence size, 1 batch size, 2 input size -> tensorrt: 0 batch size, 1 sequence size, 2 input size
   auto transpose_in_layer = ctx->network()->addShuffle(*input(ctx, 0).trt_tensor_);
@@ -100,11 +126,6 @@ int LSTMTensorRT::PreProcess(TensorRTContext *ctx) {
   input_data_ = transpose_in_layer->getOutput(0);
   MS_LOG(DEBUG) << "lstm input " << GetTensorFormat(input_data_);
 
-  auto lstm_op = AsOps<ops::LSTM>();
-  params_.layer_count_ = lstm_op->get_num_layers() == 0 ? 1 : lstm_op->get_num_layers();
-  params_.hidden_size_ = lstm_op->get_hidden_size();
-  params_.directional_cnt_ = lstm_op->get_bidirectional() ? BIDIRECTIONAL : 1;
-  params_.data_type_ = ConvertDataType(in_tensors_[1].DataType());
   return RET_OK;
 }
 
@@ -115,6 +136,7 @@ int LSTMTensorRT::AddLSTMLayers(TensorRTContext *ctx) {
   if (in_tensors_[HIDDEN_IN_TENSOR_INIT].Data() != nullptr && in_tensors_[CELL_IN_TENSOR_INIT].Data() != nullptr) {
     TensorInfo &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
     TensorInfo &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
+    hidden_init_name_ = hidden_in_init.Name() + "_hidden_init";
 
     hidden_init = ctx->network()->addInput(
       hidden_init_name_.c_str(), nvinfer1::DataType::kFLOAT,
@@ -125,6 +147,7 @@ int LSTMTensorRT::AddLSTMLayers(TensorRTContext *ctx) {
     }
     op_binding_tensor_.push_back(BindingHelper{hidden_init_name_, hidden_in_init.MutableData(),
                                                nvinfer1::DataType::kFLOAT, hidden_in_init.DataSize()});
+    cell_init_name_ = cell_in_init.Name() + "_cell_init";
     cell_init = ctx->network()->addInput(
       cell_init_name_.c_str(), nvinfer1::DataType::kFLOAT,
       nvinfer1::Dims3(params_.layer_count_ * params_.directional_cnt_, params_.batch_size_, params_.hidden_size_));
@@ -475,14 +498,20 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMOneLoop(TensorRTContext *ctx, const Lstm
 }
 
 int LSTMTensorRT::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine) {
+  if (in_tensors_.size() == INPUT_SIZE4) {
+    return RET_OK;
+  }
   if (in_tensors_[HIDDEN_IN_TENSOR_INIT].Data() == nullptr && in_tensors_[CELL_IN_TENSOR_INIT].Data() == nullptr) {
     return RET_OK;
   }
+
   if (op_binding_tensor_.size() == 0) {
     MS_LOG(DEBUG) << "using serialized engine, add input tensor for " << op_name_;
     TensorInfo &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
     TensorInfo &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
 
+    hidden_init_name_ = hidden_in_init.Name() + "_hidden_init";
+    cell_init_name_ = cell_in_init.Name() + "_cell_init";
     op_binding_tensor_.push_back(
       BindingHelper{hidden_init_name_, hidden_in_init.Data(), nvinfer1::DataType::kFLOAT, hidden_in_init.DataSize()});
     op_binding_tensor_.push_back(

@@ -23,7 +23,7 @@ function Run_Converter() {
 }
 
 function Run_TensorRT_Mpirun() {
-  source /etc/profile.tensorrt8
+  source /etc/profile.tensorrt8.5.1
   cd ${x86_path}/tensorrt || exit 1
   tar -zxf ${x86_path}/tensorrt/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
   tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
@@ -86,7 +86,7 @@ function Run_TensorRT_Mpirun() {
 
 # Run on NVIDIA TensorRT platform:
 function Run_TensorRT() {
-    source /etc/profile.tensorrt8
+    source /etc/profile.tensorrt8.5.1
     cd ${x86_path}/tensorrt || exit 1
     tar -zxf ${x86_path}/tensorrt/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
     tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
