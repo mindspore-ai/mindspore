@@ -482,7 +482,7 @@ void ControlActor::UpdateDynamicShapeInParameter() {
       if (common::AnfAlgo::IsDynamicSequence(parameter)) {
         const auto &shapes = BaseShapeToShapeVector(node->Shape());
         std::vector<TypeId> types = std::vector(shapes.size(), input_device_tensors_[i]->type_id());
-        common::AnfAlgo::SetScalarTupleOutputInferType(types, parameter);
+        common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, parameter);
         continue;
       }
       common::AnfAlgo::SetOutputInferTypeAndShape({input_device_tensors_[i]->type_id()}, {shape}, parameter.get());

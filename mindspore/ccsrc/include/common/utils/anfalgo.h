@@ -138,7 +138,8 @@ class COMMON_EXPORT AnfAlgo {
   // set infer shapes and types of anf node
   static void SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
                                          AnfNode *node, bool disable_dynamic_len = false);
-  static void SetScalarTupleOutputInferType(const std::vector<TypeId> &types, const AnfNodePtr &node);
+  static void SetScalarTupleOutputInferType(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
+                                            const AnfNodePtr &node);
   // set output shape ptr
   static void SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
                                           const std::vector<abstract::BaseShapePtr> &shapes, AnfNode *node);

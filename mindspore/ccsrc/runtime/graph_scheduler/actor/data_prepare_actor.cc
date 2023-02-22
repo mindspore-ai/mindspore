@@ -351,9 +351,12 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
   // If the shape of the tensor exists and is a tuple shape, it means that the tensor is a tuple type, and it needs
   // to be restored the shape to tuple type when infer shape.
   if (input_tensor->base_shape_ptr() != nullptr && input_tensor->base_shape_ptr()->isa<abstract::SequenceShape>()) {
+    MS_LOG(DEBUG) << "trans to scalar abs for node:" << input_node->fullname_with_scope()
+                  << " shape:" << input_tensor->base_shape_ptr()->ToString()
+                  << " abs:" << (input_node->abstract() == nullptr ? "nullptr" : input_node->abstract()->ToString());
     shapes = BaseShapeToShapeVector(input_tensor->base_shape_ptr());
     types = std::vector(shapes.size(), input_tensor->data_type());
-    common::AnfAlgo::SetScalarTupleOutputInferType(types, input_node);
+    common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, input_node);
     return;
   }
   // In runtime, the dynamic len tag should be removed.
@@ -377,8 +380,11 @@ void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_no
         kOpFormat_DEFAULT, kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN,
       };
       if (kNormalFormat.find(device_format) != kNormalFormat.end()) {
+        MS_LOG(DEBUG) << "Set device address:" << device_address << " size from:" << device_address->GetSize()
+                      << " to:" << tensor_data_size;
         device_address->SetSize(tensor_data_size);
       } else {
+        MS_LOG(DEBUG) << "Update data node device address size";
         // Size of 5D format device_address is larger than tensor_data_size.
         UpdateDataNodeDeviceAddressSize(input_node, input_tensor, device_address);
       }
