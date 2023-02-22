@@ -462,6 +462,7 @@ bool MetaServerNode::TransitionToInitialized() {
 bool MetaServerNode::Recovery() {
   std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
   std::string recovery_path = recovery::RecoveryPath();
+  RETURN_IF_FALSE_WITH_LOG(CheckFilePath(recovery_path), "Invalid recovery path: " << recovery_path);
   configuration_ = std::make_unique<recovery::FileConfiguration>(recovery_path + "/" + kRecoveryFileName);
   MS_EXCEPTION_IF_NULL(configuration_);
 

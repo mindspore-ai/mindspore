@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_UTILS_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_UTILS_H_
 
+#include <limits.h>
 #include <string>
 #include <memory>
 #include <chrono>
@@ -82,6 +83,14 @@ __attribute__((unused)) static std::chrono::high_resolution_clock::time_point No
 __attribute__((unused)) static std::chrono::milliseconds ElapsedTime(
   const std::chrono::high_resolution_clock::time_point &start_time) {
   return std::chrono::duration_cast<std::chrono::milliseconds>(Now() - start_time);
+}
+
+__attribute__((unused)) static bool CheckFilePath(const std::string &path) {
+  char real_path[PATH_MAX] = {0};
+  if (realpath(path.data(), real_path) == nullptr) {
+    return false;
+  }
+  return true;
 }
 }  // namespace topology
 }  // namespace cluster
