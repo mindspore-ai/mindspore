@@ -133,6 +133,7 @@ int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (output_shape_.size() == 0) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }
+  output_size_ = 1;
   for (size_t i = 0; i < output_shape_.size(); ++i) {
     output_size_ *= static_cast<size_t>(output_shape_[i]);
   }
