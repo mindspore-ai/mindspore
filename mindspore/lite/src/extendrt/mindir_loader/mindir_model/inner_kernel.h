@@ -28,6 +28,7 @@
 // #include "include/api/context.h"
 #include "kernel/kernel.h"
 #include "extendrt/mindir_loader/abstract_kernel.h"
+#include "src/extendrt/utils/tensor_utils.h"
 
 using mindspore::infer::Abstractkernel;
 
@@ -88,12 +89,6 @@ class InnerKernel : public Abstractkernel {
   const std::vector<lite::Tensor *> &in_tensors() const override { return in_tensors_; }
 
   const std::vector<lite::Tensor *> &out_tensors() const override { return out_tensors_; }
-
- private:
-  std::vector<KernelTensorPtr> LiteTensorToKernelTensorPtrVec(const std::vector<lite::Tensor *> &lite_tensors);
-  KernelTensorPtr LiteTensorToKernelTensorPtr(lite::Tensor *lite_tensor);
-  std::vector<AddressPtr> LiteTensorToAddressPtrVec(const std::vector<lite::Tensor *> &lite_tensors);
-  AddressPtr LiteTensorToAddressPtr(lite::Tensor *lite_tensor);
 
  private:
   std::shared_ptr<mindspore::kernel::KernelMod> kernel_mod_ = nullptr;

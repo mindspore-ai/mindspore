@@ -33,8 +33,9 @@ function Run_TensorRT() {
     # cd ${tensorrt_path}/mindspore-lite-${version}-linux-x64/ || exit 1
     echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-*'
     cd ${x86_path}/mindspore-lite-${version}-linux-*/ || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./runtime/third_party/glog
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./tools/converter/lib/:./runtime/third_party/glog
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./tools/converter/lib/
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/third_party/glog
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/third_party/dnnl
     cp tools/benchmark/benchmark ./ || exit 1
 
     local line_info model_info spec_acc_limit model_name input_num input_shapes \

@@ -845,8 +845,6 @@ else()
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${onednn_LIBPATH}/libdnnl.so.2.2 DESTINATION ${RUNTIME_LIB_DIR}
-                RENAME libdnnl.so.2 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${onednn_LIBPATH}/libdnnl.so.2.2 DESTINATION ${DNNL_DIR}
                 RENAME libdnnl.so.2 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})

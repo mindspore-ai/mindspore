@@ -21,6 +21,7 @@
 #include "schema/model_generated.h"
 #include "src/litert/kernel_registry.h"
 #include "include/errorcode.h"
+#include "nnacl/nnacl_common.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
@@ -29,9 +30,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ResizeGrad;
 
 namespace mindspore::kernel {
-float Scaling(size_t in_size, size_t out_size, bool align_corners) {
-  return (align_corners && out_size > 1) ? (in_size - 1) / static_cast<float>(out_size - 1)
-                                         : in_size / static_cast<float>(out_size);
+float ResizeGradCPUKernel::Scaling(size_t in_size, size_t out_size, bool align_corners) {
+  return (align_corners && out_size > 1) ? (in_size - 1) / (static_cast<float>(out_size - 1))
+                                         : in_size / (static_cast<float>(out_size));
 }
 
 int ResizeGradCPUKernel::ReSize() {

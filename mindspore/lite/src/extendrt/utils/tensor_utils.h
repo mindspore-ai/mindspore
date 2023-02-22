@@ -30,6 +30,8 @@
 #include "common/utils.h"
 #include "common/mutable_tensor_impl.h"
 #include "mindspore/core/ir/tensor.h"
+#include "kernel/kernel.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 class TensorRefData : public tensor::TensorData {
@@ -185,6 +187,19 @@ class TensorUtils {
     const std::vector<mindspore::tensor::Tensor> &tensors);
   static std::vector<mindspore::tensor::Tensor> TensorPtrToTensor(
     const std::vector<mindspore::tensor::TensorPtr> &tensor_ptrs);
+};
+
+class CloudTensorUtils {
+ public:
+  /* lite tensor ---> Address */
+  static kernel::AddressPtr LiteTensorToAddressPtr(const lite::Tensor *lite_tensor);
+  static std::vector<mindspore::kernel::AddressPtr> LiteTensorToAddressPtrVec(
+    const std::vector<lite::Tensor *> &lite_tensors);
+
+  /* lite tensor ---> kernel tensor */
+  static kernel::KernelTensorPtr LiteTensorToKernelTensorPtr(const lite::Tensor *lite_tensor);
+  static std::vector<kernel::KernelTensorPtr> LiteTensorToKernelTensorPtrVec(
+    const std::vector<lite::Tensor *> &lite_tensors);
 };
 }  // namespace mindspore
 

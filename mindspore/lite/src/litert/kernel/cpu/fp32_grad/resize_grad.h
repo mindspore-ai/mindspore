@@ -32,6 +32,9 @@ class ResizeGradCPUKernel : public LiteKernel {
   int Run() override;
   int ExecuteInit(int task_id);
   int DoExecute(int task_id);
+
+ private:
+  float Scaling(size_t in_size, size_t out_size, bool align_corners);
 };
 }  // namespace mindspore::kernel
 

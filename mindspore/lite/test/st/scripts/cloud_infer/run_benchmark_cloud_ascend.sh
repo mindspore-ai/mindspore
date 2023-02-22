@@ -38,6 +38,7 @@ function Run_Benchmark() {
     cp tools/benchmark/benchmark ./ || exit 1
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./runtime/lib
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./runtime/third_party/glog:./runtime/third_party/libjpeg-turbo/lib
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./runtime/third_party/dnnl
 
     local line_info model_info spec_acc_limit model_name input_num input_shapes \
             mode model_file input_files output_file data_path acc_limit enableFp16 \

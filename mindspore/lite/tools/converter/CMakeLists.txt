@@ -16,6 +16,33 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/kernel/kernel_factory.cc
         )
 
+if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
+    set(CCSRC_SRC ${CCSRC_SRC}
+        ${CCSRC_DIR}/ps/ps_context.cc
+        ${CCSRC_DIR}/common/thread_pool.cc
+        ${CCSRC_DIR}/plugin/device/cpu/kernel/cpu_kernel.cc
+        ${CCSRC_DIR}/distributed/cluster/dummy_cluster_context.cc
+        ${CCSRC_DIR}/kernel/common_utils.cc
+        ${CCSRC_DIR}/kernel/kash/kernel_pack.cc
+        ${CCSRC_DIR}/kernel/kernel_build_info.cc
+        ${CCSRC_DIR}/kernel/oplib/oplib.cc
+        ${CCSRC_DIR}/kernel/kernel.cc
+        ${CCSRC_DIR}/kernel/oplib/super_bar.cc
+        ${CCSRC_DIR}/runtime/device/kernel_info.cc
+        ${CCSRC_DIR}/runtime/graph_scheduler/actor/actor_common.cc
+        ${CCSRC_DIR}/runtime/device/ms_device_shape_transfer.cc
+        ${CCSRC_DIR}/runtime/hardware/device_type.cc
+        ${CCSRC_DIR}/runtime/device/kernel_runtime_manager.cc
+        ${CCSRC_DIR}/runtime/hardware/device_context_manager.cc
+        ${CCSRC_DIR}/runtime/device/convert_tensor_utils.cc
+        ${CCSRC_DIR}/backend/common/session/exec_order_builder.cc
+        ${CCSRC_DIR}/backend/common/session/kernel_graph.cc
+        ${CCSRC_DIR}/backend/common/session/anf_runtime_algorithm.cc
+        ${SRC_DIR}/extendrt/lite_kernel_mod.cc
+        ${SRC_DIR}/extendrt/utils/tensor_utils.cc
+        )
+endif()
+
 if(NOT WIN32)
     set(CCSRC_SRC ${CCSRC_SRC}
         ${CCSRC_DIR}/utils/anfalgo.cc

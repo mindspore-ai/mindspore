@@ -153,6 +153,12 @@ CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg, const std::ve
   return nullptr;
 }
 
+// not implement for lite, just for api compatible
+AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list) {
+  MS_LOG(DEBUG) << "Not implement for lite, just for api compatible.";
+  return nullptr;
+}
+
 std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
                                                                              const AnfNodePtr &node) {
   return Helper::GetRealNodeUsedList(graph, node);
