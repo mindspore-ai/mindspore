@@ -35,9 +35,6 @@ PrimitiveCPtr TFCastParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "Get attr DstT failed";
     return nullptr;
   }
-  if (dst_type == kNumberTypeInt64) {
-    dst_type = kNumberTypeInt32;
-  }
   (void)prim_c->AddAttr("to", MakeValue(static_cast<int32_t>(dst_type)));
 
   *output_size = 1;

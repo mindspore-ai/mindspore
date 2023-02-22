@@ -239,6 +239,9 @@ STATUS ConverterFuncGraph::UnifyFuncGraphInputFormat(const std::shared_ptr<Conve
 STATUS ConverterFuncGraph::UnifyFuncGraphInputDataType(const std::shared_ptr<ConverterPara> &param,
                                                        FuncGraphPtr func_graph) {
   if (param->input_data_type == DataType::kNumberTypeInt64) {
+    if (param->fmk_type != FmkType::kFmkTypeTf) {
+      MS_LOG(WARNING) << "In the current version, only TF model setting int64 input data type is supported.";
+    }
     return RET_OK;
   }
 

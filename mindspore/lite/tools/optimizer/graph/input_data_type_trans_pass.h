@@ -34,7 +34,6 @@ class InputDTypeTransPass : public Pass {
 
  private:
   STATUS HandleGraphInput(const FuncGraphPtr &graph);
-  CNodePtr GenCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, const std::string &cnode_name);
   DataType dst_input_data_type_ = DataType::kTypeUnknown;
   DataType src_input_data_type_ = DataType::kTypeUnknown;
 };

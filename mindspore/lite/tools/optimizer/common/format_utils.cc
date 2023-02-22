@@ -165,6 +165,39 @@ bool IsDynamicFormatOpWithAxis(const std::string &op_type) {
   return iter != DynamicFormatOpList.end() && iter->second;
 }
 
+STATUS GetCastDstDataType(const CNodePtr &cnode, int *perm) {
+  MS_CHECK_TRUE_RET(cnode != nullptr, lite::RET_NULL_PTR);
+  MS_CHECK_TRUE_RET(perm != nullptr, lite::RET_NULL_PTR);
+  if (cnode->size() != kInputSizeThree) {
+    MS_LOG(ERROR) << "cast op input size must be three.";
+    return lite::RET_ERROR;
+  }
+  if (utils::isa<CNodePtr>(cnode->input(kInputIndexTwo))) {
+    return lite::RET_OK;
+  }
+  lite::DataInfo data_info;
+  int status;
+  if (utils::isa<ParameterPtr>(cnode->input(kInputIndexTwo))) {
+    status = lite::FetchDataFromParameterNode(cnode, kInputIndexTwo, converter::kFmkTypeMs, &data_info, true);
+  } else {
+    status = lite::FetchDataFromValueNode(cnode, kInputIndexTwo, converter::kFmkTypeMs, false, &data_info, true);
+  }
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "fetch cast dst data type failed.";
+    return lite::RET_ERROR;
+  }
+  if (data_info.data_type_ != kNumberTypeInt && data_info.data_type_ != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "cast data type is invalid.";
+    return lite::RET_ERROR;
+  }
+  if (data_info.data_.size() < sizeof(int32_t)) {
+    MS_LOG(ERROR) << "Data and datatype of data-info not match.";
+    return false;
+  }
+  *perm = reinterpret_cast<int *>(data_info.data_.data())[0];
+  return lite::RET_OK;
+}
+
 STATUS GetTransposePerm(const CNodePtr &cnode, std::vector<int> *perm) {
   MS_CHECK_TRUE_RET(cnode != nullptr, lite::RET_NULL_PTR);
   MS_CHECK_TRUE_RET(perm != nullptr, lite::RET_NULL_PTR);

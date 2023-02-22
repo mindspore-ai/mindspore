@@ -126,6 +126,9 @@ ParameterPtr BuildFloatVecParameterNode(const FuncGraphPtr &func_graph, const st
 CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &perm,
                           const std::string &cnode_name);
 
+CNodePtr GenCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, const std::string &cnode_name,
+                     const TypeId dst_type, const AbstractBasePtr &abstract);
+
 CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &indices,
                        const std::string &cnode_name);
 
