@@ -984,6 +984,10 @@ class CleanAfterOptARewriter : public BaseRewriter {
       auto none_py_execute = NoneConvertPyExecute(cur_func);
       manager_->Replace(input, none_py_execute);
     }
+    // If the cnode is depend node, need renew the abstract of the cnode.
+    if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && IsPrimitiveCNode(cnode->input(1), prim::kPrimPyExecute)) {
+      cnode->set_abstract(cnode->input(1)->abstract());
+    }
   }
 
   AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode, const PrimitivePtr &prim) override {

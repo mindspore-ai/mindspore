@@ -440,3 +440,31 @@ def test_none_is_input_of_tuple_return_2():
     out_me_pynative = net_pynative(Tensor(probs1_b), Tensor(probs1))
     print("out_me_pynative: ", out_me_pynative)
     assert out_me_graph == out_me_pynative
+
+
+@pytest.mark.skip(reason="No support print side effect.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_none_is_return_of_sub_graph_control_flow():
+    """
+    Feature: Support None.
+    Description: Support None is the return of sub_graph in control flow.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def check_value(self, x):  # pylint: disable=R1711
+            if x[0][0] < 2:
+                print("The input is less 2.")
+            return None
+
+        def construct(self, x):
+            self.check_value(x)
+            return x
+
+    net = Net()
+    data = Tensor(np.ones([2, 3]), dtype=ms.float32)
+    out = net(data)
+    assert (out.asnumpy() == data).all()

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &n
 static void UpdateTransformingListForSubstitutions(const AnfNodePtr &node, std::deque<AnfNodePtr> *todo, bool change) {
   auto fg = GetValuePtr<FuncGraph>(node);
   if (fg != nullptr) {
-    (void)todo->emplace_back(fg->output());
+    (void)todo->emplace_back(fg->return_node());
   }
 
   if (change) {
@@ -146,7 +146,7 @@ static void UpdateTransformingListForIR(const AnfNodePtr &node, std::deque<AnfNo
                                         const SubstitutionPtr &substitution) {
   auto fg = GetValuePtr<FuncGraph>(node);
   if (fg != nullptr) {
-    (void)todo->emplace_back(fg->output());
+    (void)todo->emplace_back(fg->return_node());
   }
 
   // If there is a priority pattern in substitution, don't transform the new node,
@@ -194,7 +194,7 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
   FuncGraphManagerPtr manager = optimizer->manager();
   auto seen = NewSeenGeneration();
   std::deque<AnfNodePtr> todo;
-  (void)todo.emplace_back(func_graph->output());
+  (void)todo.emplace_back(func_graph->return_node());
   bool changes = false;
   auto &all_nodes = manager->all_nodes();
   while (!todo.empty()) {
@@ -234,7 +234,7 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
   MS_EXCEPTION_IF_NULL(manager);
   auto seen = NewSeenGeneration();
   std::deque<AnfNodePtr> todo;
-  (void)todo.emplace_back(func_graph->output());
+  (void)todo.emplace_back(func_graph->return_node());
   bool changes = false;
 
   auto &all_nodes = manager->all_nodes();
@@ -371,7 +371,7 @@ bool SimpleRewriter::Run() {
       (void)todo.emplace_back(node);
     }
   };
-  (void)todo.emplace_back(root_graph_->output());
+  (void)todo.emplace_back(root_graph_->return_node());
   auto &all_nodes = manager_->all_nodes();
   while (!todo.empty()) {
     AnfNodePtr node = std::move(todo.front());
@@ -388,7 +388,7 @@ bool SimpleRewriter::Run() {
     } else {
       auto fg = GetValuePtr<FuncGraph>(node);
       if (fg != nullptr) {
-        add_todo(fg->output());
+        add_todo(fg->return_node());
       }
     }
     auto new_node = NodeRewrite(node);
