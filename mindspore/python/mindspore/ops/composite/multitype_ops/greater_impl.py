@@ -18,6 +18,7 @@
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
+from ...operations._sequence_ops import tuple_greater_than, list_greater_than
 
 # greater is a metafuncgraph object which will determine if two objects are greater according to input type
 # using ".register" decorator
@@ -69,3 +70,33 @@ def _greater_tensor(x, y):
        tensor, return operation of x and y by P.Greater.
    """
     return F.tensor_gt(x, y)
+
+
+@greater.register("Tuple", "Tuple")
+def _greater_than_tuple(x, y):
+    """
+    Determine whether x is greater than y.
+
+    Args:
+       x(Tuple): Tuple.
+       y(Tuple): Tuple.
+
+    Returns:
+       bool, if x > y return true in python logic, x <= y return false.
+   """
+    return tuple_greater_than()(x, y)
+
+
+@greater.register("List", "List")
+def _greater_than_list(x, y):
+    """
+    Determine whether x is greater than y.
+
+    Args:
+       x(List): List.
+       y(List): List.
+
+    Returns:
+       bool, if x > y return true in python logic, x <= y return false.
+   """
+    return list_greater_than()(x, y)

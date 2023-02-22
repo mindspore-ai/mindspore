@@ -531,3 +531,115 @@ class SequenceMin(Primitive):
     def __init__(self):
         """Initialize SequenceMax"""
         self.init_prim_io_names(inputs=['sequence'], outputs=['output_data'])
+
+
+class tuple_greater_than(Primitive):
+    r"""
+    Support tuple_greater_than operation 'greater_than(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_0** (Union[Tuple]) - The first tuple.
+        - **input_1** (Union[Tuple]) - The second tuple.
+
+    Outputs:
+        A bool value to indicate whether tuple 'input_0' is greater than tuple 'input_1'.
+
+    Raises:
+        TypeError: The 'input_0' or 'input_1' is not list or tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize tuple_greater_than"""
+        self.init_prim_io_names(
+            inputs=['input_0', 'input_1'], outputs=['output_data'])
+
+
+class tuple_greater_equal(Primitive):
+    r"""
+    Support tuple_greater_equal  operation 'greater_equal(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_0** (Union[Tuple]) - The first tuple.
+        - **input_1** (Union[Tuple]) - The second tuple.
+
+    Outputs:
+        A bool value to indicate whether tuple 'input_0' is greater than or equal to tuple 'input_1'.
+
+    Raises:
+        TypeError: The 'input_0' or 'input_1' is not list or tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize tuple_greater_equal"""
+        self.init_prim_io_names(
+            inputs=['input_0', 'input_1'], outputs=['output_data'])
+
+
+class list_greater_than(Primitive):
+    r"""
+    Support list_greater_than operation 'greater_than(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_0** (Union[List]) - The first list.
+        - **input_1** (Union[List]) - The second list.
+
+    Outputs:
+        A bool value to indicate whether list 'input_0' is greater than list 'input_1'.
+
+    Raises:
+        TypeError: The 'input_0' or 'input_1' is not list or list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize list_greater_than"""
+        self.init_prim_io_names(
+            inputs=['input_0', 'input_1'], outputs=['output_data'])
+
+
+class list_greater_equal(Primitive):
+    r"""
+    Support list_greater_equal  operation 'greater_equal(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_0** (Union[List]) - The first list.
+        - **input_1** (Union[List]) - The second list.
+
+    Outputs:
+        A bool value to indicate whether list 'input_0' is greater than or equal to list 'input_1'.
+
+    Raises:
+        TypeError: The 'input_0' or 'input_1' is not list or list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize list_greater_equal"""
+        self.init_prim_io_names(
+            inputs=['input_0', 'input_1'], outputs=['output_data'])
