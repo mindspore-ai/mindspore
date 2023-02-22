@@ -496,13 +496,15 @@ DfGraphConvertor &DfGraphConvertor::InitParam(const TensorOrderMap &tensors) {
   // Processing input with MakeDatasetHandler and check whether input is dynamic
   for (auto &it : anf_graph_->parameters()) {
     auto op_itor = op_cache_.find(it.get());  // converted node
-    if (it->isa<Parameter>() && op_itor != op_cache_.end()) {
+    if (it->isa<Parameter>()) {
       const auto &param = std::static_pointer_cast<Parameter>(it);
       string name = param->name();
       auto tensor_itor = tensors.find(name);  // in init value map
       if (tensor_itor == tensors.end()) {
-        MakeDatasetHandler(name, input_idx, it);
-        AddGraphDynamicInput(param);
+        if (op_itor != op_cache_.end()) {
+          MakeDatasetHandler(name, input_idx, it);
+          AddGraphDynamicInput(param);
+        }
         input_idx++;
       }
     }
