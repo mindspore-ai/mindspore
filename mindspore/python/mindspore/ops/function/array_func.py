@@ -5053,8 +5053,12 @@ def split(x, split_size_or_sections, axis=0):
                              f"but got {split_size_or_sections}.")
     elif isinstance(split_size_or_sections, (list, tuple)):
         for item in split_size_or_sections:
-            if not isinstance(item, int):
+            if type(item) is not int:
                 raise TypeError(f"Each element in 'split_size_or_sections' should be integer, but got {type(item)}.")
+            if item < 0:
+                raise TypeError(f"Each element in 'split_size_or_sections' should be non-negative, "
+                                f"but got {split_size_or_sections}.")
+
         if sum(split_size_or_sections) != x.shape[axis]:
             raise ValueError(f"The sum of 'split_size_or_sections' should be equal to {x.shape[axis]}, "
                              f"but got {sum(split_size_or_sections)}.")
@@ -5294,8 +5298,11 @@ def tensor_split(x, indices_or_sections, axis=0):
                              f"but got {indices_or_sections}")
     elif isinstance(indices_or_sections, (list, tuple)):
         for item in indices_or_sections:
-            if not isinstance(item, int):
+            if type(item) is not int:
                 raise TypeError(f"Each element in 'indices_or_sections' should be integer, but got {type(item)}.")
+            if item < 0:
+                raise TypeError(f"Each element in 'indices_or_sections' should be non-negative,"
+                                f" but got {indices_or_sections}.")
         res = _tensor_split_sub_tensors(x, indices_or_sections, axis)
     else:
         raise TypeError(f"Type of Argument `indices_or_sections` should be integer, tuple(int) or list(int), " \
