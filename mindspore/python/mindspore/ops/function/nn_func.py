@@ -1844,7 +1844,7 @@ def flip(x, dims):
         ValueError: If `dims` is not a tuple of ints.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -1858,16 +1858,7 @@ def flip(x, dims):
          [[2 1]
           [4 3]]]
     """
-    _check_input_tensor("flip", x)
-    ndim = ops.rank(x)
-    shape = ops.shape(x)
-    dims = _check_axis_valid(dims, ndim)
-    if _is_shape_empty(shape):
-        return x
-    start = _get_flip_start(ndim, shape, dims)
-    end = _get_flip_end(ndim, shape, dims)
-    strides = _get_flip_strides(ndim, dims)
-    res = ops.strided_slice(x, start, end, strides)
+    res = _get_cache_prim(ops.ReverseV2)(axis=dims)(x)
     return res
 
 
@@ -1886,7 +1877,7 @@ def flipud(x):
         TypeError: If the input is not a tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -1918,7 +1909,7 @@ def fliplr(x):
         TypeError: If the input is not a tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
