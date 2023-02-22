@@ -64,6 +64,9 @@ ShapeVector update_shape(const std::vector<int> &padding_axis_value, const Shape
   for (int64_t value : shape) {
     shape_num = LongMulWithOverflowCheck(value, shape_num);
   }
+  if (shape_num == abstract::Shape::kShapeRankAny) {
+    return {abstract::Shape::kShapeRankAny};
+  }
   if (shape_num != x_num) {
     MS_EXCEPTION(ValueError) << "The accumulate of x_shape must be equal to out_shape, but got x_shape: " << x_shape
                              << ", and out_shape: " << shape;
