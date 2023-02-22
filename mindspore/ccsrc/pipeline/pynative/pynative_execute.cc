@@ -16,6 +16,7 @@
 
 #include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/pynative/pynative_utils.h"
+#include "pipeline/pynative/predict_out_type_map.h"
 #include "pipeline/jit/debug/trace.h"
 #include "pybind_api/pybind_patch.h"
 #include "include/common/utils/config_manager.h"
@@ -84,6 +85,21 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
 #endif
   }
 }
+
+TypePtr PredictOutTypeByName(const std::string &op_name) {
+  static PredictOutTypeMap ops_map;
+  const auto iter = ops_map.find(op_name);
+  if (iter != ops_map.end()) {
+    return iter->second;
+  }
+  static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
+  if (operator_fns.find(op_name) == operator_fns.end()) {
+    return ops_map[op_name] = kAnyType;
+  }
+  const auto pre_iter = out_type_prediction.find(op_name);
+  auto type = pre_iter == out_type_prediction.end() ? kTensorType : pre_iter->second;
+  return ops_map[op_name] = type;
+}
 }  // namespace
 
 py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
@@ -97,7 +113,7 @@ py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(run_args);
   PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
   // 1. get top_type from Primitive::PredictOutputType
-  auto top_type = op_run_info->base_op_run_info.abstract->BuildType();
+  auto top_type = PredictOutTypeByName(adapter->name());
   // 2. if predict failed(kAnyType), return after infer(half-asynchronous) or run(synchronous mode)
   if (top_type == kAnyType) {
     return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->out_value);

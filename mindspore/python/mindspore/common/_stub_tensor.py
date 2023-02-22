@@ -19,6 +19,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import type_size_in_bytes
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import TensorNode, SequenceNode
+from mindspore.common.api import _convert_python_data
 
 
 class StubTensor(Tensor):
@@ -84,8 +85,7 @@ class StubTensor(Tensor):
     @property
     def has_init(self):
         """has_init stub."""
-        self.stub_sync()
-        return super().has_init
+        return False
 
     @property
     def adapter_flag(self):
@@ -162,4 +162,4 @@ def _convert_stub(stub):
     if isinstance(stub, SequenceNode):
         elements = stub.get_elements()
         return tuple(_convert_stub(e) for e in elements)
-    return stub
+    return _convert_python_data(stub)
