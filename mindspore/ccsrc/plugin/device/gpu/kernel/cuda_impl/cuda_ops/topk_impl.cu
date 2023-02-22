@@ -226,3 +226,5 @@ template CUDA_LIB_EXPORT void FastTopK(const int outer_size, const int inner_siz
                                        half *output, int *output_index, const half init_K, cudaStream_t stream);
 template CUDA_LIB_EXPORT void FastTopK(const int outer_size, const int inner_size, const float *input, int k_cut,
                                        float *output, int *output_index, const float init_K, cudaStream_t stream);
+template CUDA_LIB_EXPORT void FastTopK(const int outer_size, const int inner_size, const int *input, int k_cut,
+                                       int *output, int *output_index, const int init_K, cudaStream_t stream);

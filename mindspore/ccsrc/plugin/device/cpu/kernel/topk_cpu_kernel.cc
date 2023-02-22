@@ -136,8 +136,11 @@ bool TopKCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
     LaunchKernel<float16>(inputs, workspaces, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, workspaces, outputs);
+  } else if (dtype_ == kNumberTypeInt32) {
+    LaunchKernel<int>(inputs, workspaces, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be float16 or float32, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of input must be float16 or float32 or int32, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;
