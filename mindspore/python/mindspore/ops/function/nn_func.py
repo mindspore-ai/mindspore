@@ -5564,7 +5564,7 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
 def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     r"""
-    Applying 2D LPPooling operation on an input Tensor can be regarded as forming a 1D input plane.
+    Applying 2D LPPooling operation on an input Tensor can be regarded as forming a 2D input plane.
 
     Typically the input is of shape :math:`(N, C, H_{in}, W_{in})`, the output is of shape
     :math:`(N, C, H_{in}, W_{in})`, with the same shape as input, the operation is as follows.

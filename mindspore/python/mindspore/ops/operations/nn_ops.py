@@ -7511,10 +7511,10 @@ class AvgPool3D(Primitive):
 
             - pad: Implicit paddings on both sides of the input in depth, height, width. The number of `pad` will
               be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
-        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
-                    head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
-                    integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
-                    pad[3], pad[4] and pad[5] correspondingly.
+        pad (Union(int, tuple[int], list[int])): The pad value to be filled. Default: 0. If `pad` is an integer,
+            the paddings of head, tail, top, bottom, left and right are the same, equal to pad.
+            If `pad` is a tuple of six integers, the padding of head, tail, top, bottom, left and right equal to
+            pad[0], pad[1], pad[2], pad[3], pad[4] and pad[5] correspondingly.
         ceil_mode (bool): If True, ceil instead of floor to compute the output shape. Default: False.
         count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
         divisor_override (int): If specified, it will be used as divisor in the averaging calculation,
@@ -7562,7 +7562,7 @@ class AvgPool3D(Primitive):
         self.add_prim_attr('kernel_size', self.kernel_size)
         self.strides = _check_3d_int_or_tuple('strides', strides, self.name, ret_five=True)
         self.add_prim_attr('strides', self.strides)
-        validator.check_value_type('pad', pad, (int, tuple), self.name)
+        validator.check_value_type('pad', pad, (int, tuple, list), self.name)
         if isinstance(pad, int):
             pad = (pad,) * 6
         if len(pad) != 6:
