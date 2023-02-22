@@ -192,6 +192,33 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
   }
 }
 
+std::string OpenCLKernel::OpenCLKernelHeader() {
+  std::stringstream header;
+  header << "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
+            "__constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n"
+            "__constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;\n";
+  if (this->registry_data_type_ == kNumberTypeFloat32) {
+    header << "#define DTYPE float\n"
+              "#define DTYPE4 float4\n"
+              "#define WRITE_IMAGE write_imagef\n"
+              "#define READ_IMAGE read_imagef\n";
+  } else if (this->registry_data_type_ == kNumberTypeFloat16) {
+    header << "#define DTYPE half\n"
+              "#define DTYPE4 half4\n"
+              "#define WRITE_IMAGE write_imageh\n"
+              "#define READ_IMAGE read_imageh\n";
+  } else if (this->registry_data_type_ == kNumberTypeInt32) {
+    header << "#define DTYPE int\n"
+              "#define DTYPE4 int4\n"
+              "#define WRITE_IMAGE write_imagei\n"
+              "#define READ_IMAGE read_imagei\n";
+  } else {
+    MS_LOG(ERROR) << "Unsupported data type: " << this->registry_data_type_;
+    return "";
+  }
+  return header.str();
+}
+
 bool OpenCLKernel::MallocDataDone() {
   if ((op_parameter_->type_ >= PrimType::PrimType_InnerOpMin) &&
       (op_parameter_->type_ < PrimType::PrimType_InnerOpMax)) {
