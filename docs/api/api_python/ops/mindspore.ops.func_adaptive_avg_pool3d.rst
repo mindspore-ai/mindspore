@@ -1,11 +1,11 @@
 mindspore.ops.adaptive_avg_pool3d
 =================================
 
-.. py:function:: mindspore.ops.adaptive_avg_pool3d(input_x, output_size)
+.. py:function:: mindspore.ops.adaptive_avg_pool3d(input, output_size)
 
     对由多个平面组成的的输入Tensor，进行三维的自适应平均池化操作。对于任何输入尺寸，指定输出的尺寸都为 :math:`(D, H, W)`，但是输入和输出特征的数目不会变化。
 
-    假设输入 `input_x` 最后三维大小分别为 :math:`(inD, inH, inW)`，则输出的最后三维大小分别为 :math:`(outD, outH, outW)`，运算如下：
+    假设输入 `input` 最后三维大小分别为 :math:`(inD, inH, inW)`，则输出的最后三维大小分别为 :math:`(outD, outH, outW)`，运算如下：
 
     .. math::
         \begin{array}{ll} \\
@@ -22,14 +22,14 @@ mindspore.ops.adaptive_avg_pool3d
         \end{array}
 
     参数：
-        - **input_x** (Tensor) - adaptive_avg_pool3d的输入，是4D或者5D的Tensor。
+        - **input** (Tensor) - adaptive_avg_pool3d的输入，是4D或者5D的Tensor。
         - **output_size** (Union[int, tuple]) - 指定输出特征图的尺寸，可以是个tuple :math:`(D, H, W)`，也可以是一个int值D来表示输出尺寸为 :math:`(D, D, D)` 。:math:`D`，:math:`H` 和 :math:`W` 可以是int值或者None，其中None表示输出大小与对应的输入的大小相同。
 
     返回：
-        Tensor，与输入 `input_x` 的数据类型相同。
+        Tensor，与输入 `input` 的数据类型相同。
 
     异常：
-        - **TypeError** - `input_x` 不是Tensor。
-        - **TypeError** - `input_x` 的数据类型不是float16、float32或者float64。
-        - **ValueError** - `input_x` 维度不是4D或者5D。
+        - **TypeError** - `input` 不是Tensor。
+        - **TypeError** - `input` 的数据类型不是float16、float32或者float64。
+        - **ValueError** - `input` 维度不是4D或者5D。
         - **ValueError** - `output_size` 的值不是正数。

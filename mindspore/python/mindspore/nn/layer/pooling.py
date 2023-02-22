@@ -773,18 +773,18 @@ class AdaptiveAvgPool1d(Cell):
         output_size (int): the target output size :math:`L_{out}`.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16 or float32 data type.
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16 or float32 data type.
 
     Outputs:
-        Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `x`.
+        Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `input`.
 
     Raises:
         TypeError: If `output_size` is not an int.
-        TypeError: If `x` is neither float16 nor float32.
+        TypeError: If `input` is neither float16 nor float32.
         ValueError: If `output_size` is less than 1.
-        ValueError: If length of shape of `x` is not equal to 3.
-        ValueError: If the last dimension of `x` is smaller than `output_size`.
-        ValueError: If the last dimension of `x` is not divisible by `output_size`.
+        ValueError: If length of shape of `input` is not equal to 3.
+        ValueError: If the last dimension of `input` is smaller than `output_size`.
+        ValueError: If the last dimension of `input` is not divisible by `output_size`.
 
 
     Supported Platforms:
@@ -795,8 +795,8 @@ class AdaptiveAvgPool1d(Cell):
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
         >>> pool = nn.AdaptiveAvgPool1d(output_size=2)
-        >>> x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
-        >>> output = pool(x)
+        >>> input = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
+        >>> output = pool(input)
         >>> result = output.shape
         >>> print(result)
         (1, 3, 2)
@@ -813,22 +813,22 @@ class AdaptiveAvgPool1d(Cell):
         self.output_size = output_size
         self.dtype = P.DType()
 
-    def construct(self, x):
-        _adaptive_dtype_check(self.dtype(x), self.cls_name)
+    def construct(self, input):
+        _adaptive_dtype_check(self.dtype(input), self.cls_name)
 
-        _, _, width = self.shape(x)
+        _, _, width = self.shape(input)
         stride = width // self.output_size
         kernel_size = width - (self.output_size - 1) * stride
 
         stride = (1, width // self.output_size)
         kernel_size = (1, kernel_size)
 
-        x = self.expand(x, 2)
+        input = self.expand(input, 2)
         avg_pool = P.AvgPool(kernel_size=kernel_size, strides=stride)
-        x = avg_pool(x)
-        x = self.squeeze(x)
+        input = avg_pool(input)
+        input = self.squeeze(input)
 
-        return x
+        return input
 
 
 class AdaptiveAvgPool2d(Cell):
@@ -856,7 +856,7 @@ class AdaptiveAvgPool2d(Cell):
             If it is None, it means the output size is the same as the input size.
 
     Inputs:
-        - **x** (Tensor) - The input of AdaptiveAvgPool2d, which is a 3D or 4D tensor,
+        - **input** (Tensor) - The input of AdaptiveAvgPool2d, which is a 3D or 4D tensor,
           with float16, float32 or float64 data type.
 
     Outputs:
@@ -864,9 +864,9 @@ class AdaptiveAvgPool2d(Cell):
 
     Raises:
         ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64.
-        ValueError: If the dimension of `x` is less than or equal to the dimension of `output_size`.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
+        ValueError: If the dimension of `input` is less than or equal to the dimension of `output_size`.
 
     Supported Platforms:
         ``GPU``
@@ -887,8 +887,8 @@ class AdaptiveAvgPool2d(Cell):
         super(AdaptiveAvgPool2d, self).__init__()
         self.adaptive_avgpool2d = P.AdaptiveAvgPool2D(output_size)
 
-    def construct(self, x):
-        return self.adaptive_avgpool2d(x)
+    def construct(self, input):
+        return self.adaptive_avgpool2d(input)
 
 
 class AdaptiveAvgPool3d(Cell):
@@ -897,14 +897,14 @@ class AdaptiveAvgPool3d(Cell):
     That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
     The number of output features is equal to the number of input planes.
 
-    Suppose the last 3 dimension size of x is :math:`(inD, inH, inW)`, then the last 3 dimension size of output is
+    Suppose the last 3 dimension size of input is :math:`(inD, inH, inW)`, then the last 3 dimension size of output is
     :math:`(outD, outH, outW)`.
 
     .. math::
         \begin{array}{ll} \\
             \forall \quad od \in [0,outD-1], oh \in [0,outH-1], ow \in [0,outW-1]\\
             output[od,oh,ow] = \\
-            \qquad mean(x[istartD:iendD+1,istartH:iendH+1,istartW:iendW+1])\\
+            \qquad mean(input[istartD:iendD+1,istartH:iendH+1,istartW:iendW+1])\\
             where,\\
             \qquad istartD= \left\lceil \frac{od * inD}{outD} \right\rceil \\
             \qquad iendD=\left\lfloor \frac{(od+1)* inD}{outD} \right\rfloor \\
@@ -920,20 +920,20 @@ class AdaptiveAvgPool3d(Cell):
             which means the output size is the same as that of the input.
 
     Inputs:
-        - **x** (Tensor) - The input of AdaptiveAvgPool3d, which is a 5D or 4D Tensor,
+        - **input** (Tensor) - The input of AdaptiveAvgPool3d, which is a 5D or 4D Tensor,
           with float16, float32 or float64 data type.
 
     Outputs:
-        Tensor, with the same type as the `x`.
+        Tensor, with the same type as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64.
-        ValueError: If the dimension of `x` is not 4D or 5D.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
+        ValueError: If the dimension of `input` is not 4D or 5D.
         ValueError: If `output_size` value is not positive.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: output_size=(3, 3, 4)
@@ -967,8 +967,8 @@ class AdaptiveAvgPool3d(Cell):
         super(AdaptiveAvgPool3d, self).__init__()
         self.adaptive_avg_pool3d = AdaptiveAvgPool3D(output_size)
 
-    def construct(self, x):
-        return self.adaptive_avg_pool3d(x)
+    def construct(self, input):
+        return self.adaptive_avg_pool3d(input)
 
 
 class AdaptiveMaxPool1d(Cell):
@@ -976,30 +976,31 @@ class AdaptiveMaxPool1d(Cell):
     Applies a 1D adaptive maximum pooling over an input Tensor which can be regarded as
     a composition of 1D input planes.
 
-    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})`,
-    AdaptiveMaxPool1d outputs regional maximum in the :math:`L_{in}`-dimension. The output is of
-    shape :math:`(N_{in}, C_{in}, L_{out})`, where :math:`L_{out}` is defined by `output_size`.
+    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})`,
+    The output is of shape :math:`(N_{in}, C_{in}, L_{out})` or :math:`(C_{in}, L_{out})`,
+    where :math:`L_{out}` is defined by `output_size`.
 
     Note:
-        :math:`L_{in}` must be divisible by `output_size`.
+        Ascend platform does not support the `return_indices` parameter.
 
     Args:
         output_size (int): the target output size :math:`L_{out}`.
+        return_indices (bool): If `return_indices` is True, the indices of max value would be output.
+            Default: False.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16 or float32 data type.
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})` or `(C_{in}, L_{in})`, with
+        float16 or float32 data type.
 
     Outputs:
-        Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `x`.
+        Tensor of shape :math:`(N_{in}, C_{in}, L_{out})` or :math:`(C_{in}, L_{out})`, has the same type as `input`.
 
     Raises:
-        TypeError: If `x` is neither float16 nor float32.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `output_size` is not an int.
+        TypeError: If `return_indices` is not a bool.
         ValueError: If `output_size` is less than 1.
-        ValueError: If the last dimension of `x` is smaller than `output_size`.
-        ValueError: If the last dimension of `x` is not divisible by `output_size`.
-        ValueError: If length of shape of `x` is not equal to 3.
-
+        ValueError: If dimension of `input` is not equal to 2 or 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1009,40 +1010,22 @@ class AdaptiveMaxPool1d(Cell):
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
         >>> pool = nn.AdaptiveMaxPool1d(output_size=3)
-        >>> x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
-        >>> output = pool(x)
+        >>> input = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
+        >>> output = pool(input)
         >>> result = output.shape
         >>> print(result)
         (1, 3, 3)
     """
 
-    def __init__(self, output_size):
+    def __init__(self, output_size, return_indices=False):
         """Initialize AdaptiveMaxPool1d."""
         super(AdaptiveMaxPool1d, self).__init__()
-        validator.check_int(output_size, 1, Rel.GE, "output_size", self.cls_name)
-        validator.check_value_type('output_size', output_size, [int], self.cls_name)
-        self.expand = P.ExpandDims()
-        self.squeeze = P.Squeeze(2)
         self.output_size = output_size
-        self.shape = F.shape
-        self.dtype = P.DType()
+        self.return_indices = return_indices
 
-    def construct(self, x):
-        _adaptive_dtype_check(self.dtype(x), self.cls_name)
-
-        _, _, width = self.shape(x)
-        stride = width // self.output_size
-        kernel_size = width - (self.output_size - 1) * stride
-
-        stride = (1, width // self.output_size)
-        kernel_size = (1, kernel_size)
-
-        max_pool = P.MaxPool(kernel_size=kernel_size, strides=stride)
-        x = self.expand(x, 2)
-        x = max_pool(x)
-        x = self.squeeze(x)
-
-        return x
+    def construct(self, input):
+        input = ops.adaptive_max_pool1d(input, self.output_size, self.return_indices)
+        return input
 
 
 class AdaptiveMaxPool2d(Cell):
@@ -1067,7 +1050,7 @@ class AdaptiveMaxPool2d(Cell):
         \end{align}
 
     Note:
-        Ascend platform only supports float16 type for input_x.
+        Ascend platform only supports float16 type for input.
 
     Args:
         output_size (Union[int, tuple]): The target output size is H x W.
@@ -1078,31 +1061,31 @@ class AdaptiveMaxPool2d(Cell):
             Default: False.
 
     Inputs:
-        - **input_x** (Tensor) - The input of AdaptiveMaxPool2d, which is a 3D or 4D tensor,
+        - **input** (Tensor) - The input of AdaptiveMaxPool2d, which is a 3D or 4D tensor,
           with float16, float32 or float64 data type.
 
     Outputs:
-        Tensor, with the same type as the `input_x`.
-        Shape of the output is `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape`.
+        Tensor, with the same type as the `input`.
+        Shape of the output is `input_shape[:len(input_shape) - len(out_shape)] + out_shape`.
 
     Raises:
         TypeError: If `output_size` is not int or tuple.
-        TypeError: If `input_x` is not a tensor.
+        TypeError: If `input` is not a tensor.
         TypeError: If `return_indices` is not a bool.
-        TypeError: If dtype of `input_x` is not float16, float32 or float64.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
         ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
-        ValueError: If the dimension of `input_x` is not NCHW or CHW.
+        ValueError: If the dimension of `input` is not NCHW or CHW.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: output_size=(None, 2)
-        >>> input_x = Tensor(np.array([[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        >>> input = Tensor(np.array([[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]]), mindspore.float32)
         >>> adaptive_max_pool_2d = nn.AdaptiveMaxPool2d((None, 2))
-        >>> output = adaptive_max_pool_2d(input_x)
+        >>> output = adaptive_max_pool_2d(input)
         >>> print(output)
         [[[[2. 3.]
            [5. 6.]
@@ -1115,7 +1098,7 @@ class AdaptiveMaxPool2d(Cell):
            [8. 9.]]]]
         >>> # case 2: output_size=2
         >>> adaptive_max_pool_2d = nn.AdaptiveMaxPool2d(2)
-        >>> output = adaptive_max_pool_2d(input_x)
+        >>> output = adaptive_max_pool_2d(input)
         >>> print(output)
         [[[[5. 6.]
            [8. 9.]]
@@ -1125,7 +1108,7 @@ class AdaptiveMaxPool2d(Cell):
            [8. 9.]]]]
         >>> # case 3: output_size=(1, 2)
         >>> adaptive_max_pool_2d = nn.AdaptiveMaxPool2d((1, 2))
-        >>> output = adaptive_max_pool_2d(input_x)
+        >>> output = adaptive_max_pool_2d(input)
         >>> print(output)
         [[[[8. 9.]]
           [[8. 9.]]
@@ -1139,8 +1122,8 @@ class AdaptiveMaxPool2d(Cell):
         self.adaptive_max_pool2d = AdaptiveMaxPool2D(output_size)
         self.return_indices = return_indices
 
-    def construct(self, input_x):
-        output = self.adaptive_max_pool2d(input_x)
+    def construct(self, input):
+        output = self.adaptive_max_pool2d(input)
         if self.return_indices:
             return output
         return output[0]
@@ -1162,18 +1145,18 @@ class AdaptiveMaxPool3d(Cell):
             Default: False.
 
     Inputs:
-        - **x** (Tensor) - Tensor, has shape of :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)` . The suppoerted dtypes
-          are int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 and float64 data type.
+        - **input** (Tensor) - Tensor, has shape of :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)` . The suppoerted
+        dtypes are int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 and float64 data type.
 
     Outputs:
-        - **y** (Tensor) - Tensor, has the same number of dims and data type as the `x` .
+        - **y** (Tensor) - Tensor, has the same number of dims and data type as the `input` .
         - **argmax** (Tensor) - Tensor, the indices of the maximum values along with the outputs, has the same shape as
           `y` and a dtype of int32. Return this only when `return_indices` is True.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        ValueError: If the dimensions number of `x` is not 4 or 5.
-        TypeError: If dtype of `x` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64,
+        TypeError: If `input` is not a Tensor.
+        ValueError: If the dimensions number of `input` is not 4 or 5.
+        TypeError: If dtype of `input` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64,
                    float16, float32 or float64.
         ValueError: If `output_size` is neither an int nor a tuple with shape (3,).
 
@@ -1181,10 +1164,10 @@ class AdaptiveMaxPool3d(Cell):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.arange(0,36).reshape((1, 3, 3, 4)).astype(np.float32))
+        >>> input = Tensor(np.arange(0,36).reshape((1, 3, 3, 4)).astype(np.float32))
         >>> output_size = (1, 1, 2)
         >>> net = nn.AdaptiveMaxPool3d(output_size, True)
-        >>> output = net(x)
+        >>> output = net(input)
         >>> print(output[0].asnumpy())
         [[[[33. 35.]]]]
         >>> print(output[1].asnumpy())
@@ -1198,8 +1181,8 @@ class AdaptiveMaxPool3d(Cell):
         self.return_indices = return_indices
         self.adaptive_max_pool3d = AdaptiveMaxPool3D()
 
-    def construct(self, x):
-        output = self.adaptive_max_pool3d(x, self.output_size)
+    def construct(self, input):
+        output = self.adaptive_max_pool3d(input, self.output_size)
         if self.return_indices:
             return output
         return output[0]
