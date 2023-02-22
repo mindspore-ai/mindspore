@@ -51,6 +51,8 @@ constexpr auto kCropAndResize = "CropAndResize";
 constexpr auto kCropAndResizeGradImage = "CropAndResizeGradImage";
 constexpr auto kScaleAndTranslate = "ScaleAndTranslate";
 constexpr auto kScaleAndTranslateGrad = "ScaleAndTranslateGrad";
+constexpr auto kResizeV2 = "ResizeV2";
+constexpr auto kResizeV2Grad = "ResizeV2Grad";
 
 // String
 constexpr auto kStringEq = "string_eq";
@@ -793,6 +795,8 @@ GVAR_DEF(PrimitivePtr, kPrimRGBToHSV, std::make_shared<Primitive>("RGBToHSV"));
 GVAR_DEF(PrimitivePtr, kPrimResizeBilinearGrad, std::make_shared<Primitive>(kResizeBilinearGrad));
 GVAR_DEF(PrimitivePtr, kPrimCropAndResize, std::make_shared<Primitive>(kCropAndResize));
 GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradImage, std::make_shared<Primitive>(kCropAndResizeGradImage));
+GVAR_DEF(PrimitivePtr, kPrimResizeV2, std::make_shared<Primitive>(kResizeV2));
+GVAR_DEF(PrimitivePtr, kPrimResizeV2Grad, std::make_shared<Primitive>(kResizeV2Grad));
 
 // NN
 GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPoolWithFixedKsize,

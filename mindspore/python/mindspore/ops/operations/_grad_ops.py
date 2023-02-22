@@ -3801,3 +3801,25 @@ class MapTensorGetGrad(Primitive):
         """Initialize MapTensorGetGrad"""
         self.init_prim_io_names(inputs=['map_tensor', 'key_tensor', 'default_value', 'grad'], outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
+
+
+class ResizeV2Grad(Primitive):
+    r"""
+    Calculates the gradient of ResizeV2 operation.
+
+    Supported Platforms:
+        ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, coordinate_transformation_mode="half_pixel", mode="nearest"):
+        """Initialize ResizeV2Grad."""
+        self.init_prim_io_names(inputs=["grads", "roi", "scales", "original_size"], outputs=["y"])
+        self.add_prim_attr("nearest_mode", "floor")
+        self.add_prim_attr("cubic_coeff_a", -0.75)
+        validator.check_value_type(
+            "coordinate_transformation_mode", coordinate_transformation_mode, [str], self.name)
+        validator.check_string(coordinate_transformation_mode,
+                               ["align_corners", "half_pixel"], "coordinate_transformation_mode", self.name)
+        validator.check_value_type("mode", mode, [str], self.name)
+        validator.check_string(mode, ["nearest", "linear", "cubic"], "mode", self.name)

@@ -92,6 +92,7 @@ from mindspore.ops.operations.random_ops import LogNormalReverse
 from mindspore.ops.operations.image_ops import NonMaxSuppressionWithOverlaps
 from mindspore.ops.operations.image_ops import ResizeArea
 from mindspore.ops.operations.image_ops import ScaleAndTranslate
+from mindspore.ops.operations.image_ops import ResizeV2
 from mindspore.ops.operations.other_ops import SampleDistortedBoundingBoxV2
 from mindspore.ops.operations.array_ops import Triu
 from mindspore.ops.operations.array_ops import ResizeNearestNeighborV2
@@ -4325,6 +4326,14 @@ test_case_image_ops = [
                         Tensor(0, mstype.float32),
                         Tensor(0, mstype.float32)],
         'skip': ['backward']}),
+    ("ResizeV2", {
+        'block': ResizeV2(coordinate_transformation_mode="half_pixel", mode="nearest"),
+        'desc_inputs': [Tensor(np.array([[[[1, 2, 3, 4]]]]).astype(np.float32)),
+                        Tensor(np.array([0]).astype(np.float32)),
+                        Tensor(np.array([0]).astype(np.float32)),
+                        Tensor(np.array([1, 1, 1, 8]).astype(np.int64))],
+        'desc_bprop': [Tensor(np.array([[[[1, 2, 3, 4, 5, 6, 7, 8]]]]).astype(np.float32))]
+    }),
 ]
 
 test_case_other_ops = [

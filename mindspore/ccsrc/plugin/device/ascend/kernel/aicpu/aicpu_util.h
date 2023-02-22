@@ -190,6 +190,8 @@ constexpr auto kFmin = "Fmin";
 constexpr auto kFillV2 = "FillV2";
 constexpr auto kArgmax = "Argmax";
 constexpr auto kArgmin = "Argmin";
+constexpr auto kResizeV2 = "ResizeV2";
+constexpr auto kResizeV2Grad = "ResizeV2Grad";
 constexpr auto kRange = "Range";
 constexpr auto kSliceGrad = "SliceGrad";
 constexpr auto kStatelessDropOutGenMask = "StatelessDropOutGenMask";
@@ -358,6 +360,8 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kHSigmoidGrad, "HardSigmoidGrad"},
   {kArgmax, "ArgMax"},
   {kArgmin, "ArgMin"},
+  {kResizeV2, "Resize"},
+  {kResizeV2Grad, "ResizeGrad"},
   {kGLU, "Glu"},
   {kChannelShuffle, "ShuffleChannel"},
   {kStridedSliceV2, "StridedSlice"},
