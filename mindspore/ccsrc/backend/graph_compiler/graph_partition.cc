@@ -27,7 +27,6 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
-#include "ps/ps_context.h"
 #include "utils/anf_utils.h"
 namespace mindspore {
 namespace compile {
