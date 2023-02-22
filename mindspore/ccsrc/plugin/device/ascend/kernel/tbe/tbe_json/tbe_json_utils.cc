@@ -97,7 +97,7 @@ std::vector<int64_t> TbeJsonUtils::GetInputDeviceShapeForTbeBuild(const AnfNodeP
 std::vector<int64_t> TbeJsonUtils::GetOutputOriShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_idx) {
   MS_EXCEPTION_IF_NULL(anf_node);
   std::vector<int64_t> shape;
-  auto out_shape = common::AnfAlgo::GetOutputDetailShape(anf_node, real_idx);
+  auto out_shape = AnfAlgo::GetOutputDetailShape(anf_node, real_idx);
   MS_EXCEPTION_IF_NULL(out_shape);
   if (out_shape->isa<abstract::Shape>()) {
     auto shape_ptr = out_shape->cast<abstract::ShapePtr>();

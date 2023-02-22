@@ -100,7 +100,7 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &all_to_a
   MS_EXCEPTION_IF_NULL(all_to_all_v);
 
   // Prepare dtypes, shapes and ranks vectors.
-  auto single_shape = common::AnfAlgo::GetOutputDetailShape(split_outputs[0], 0);
+  auto single_shape = AnfAlgo::GetOutputDetailShape(split_outputs[0], 0);
   auto single_type = common::AnfAlgo::GetOutputInferDataType(split_outputs[0], 0);
   std::vector<TypeId> dtypes(split_count, single_type);
   std::vector<BaseShapePtr> shapes(split_count, single_shape);

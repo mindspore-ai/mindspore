@@ -74,11 +74,11 @@ void SetShapeAndType(const CNodePtr &bn_add_relu_grad, const AnfNodePtr &bn_grad
   auto output_num = AnfAlgo::GetOutputTensorNum(bn_grad);
   for (size_t i = 0; i < output_num; ++i) {
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(bn_grad, i));
-    outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(bn_grad, i));
+    outputs_shape.push_back(AnfAlgo::GetOutputDetailShape(bn_grad, i));
   }
 
   outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(relu_grad, 0));
-  outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(relu_grad, 0));
+  outputs_shape.push_back(AnfAlgo::GetOutputDetailShape(relu_grad, 0));
   common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, bn_add_relu_grad.get());
 }
 

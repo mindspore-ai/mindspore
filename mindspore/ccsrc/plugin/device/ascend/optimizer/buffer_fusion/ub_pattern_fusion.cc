@@ -196,7 +196,7 @@ AnfNodePtr CreateTupleGetItem(const AnfNodePtr &buffer_fusion_kernel, session::K
   MS_EXCEPTION_IF_NULL(tuple_item);
   common::AnfAlgo::SetOutputTypeAndDetailShape(
     {common::AnfAlgo::GetOutputInferDataType(buffer_fusion_kernel, output_index)},
-    {common::AnfAlgo::GetOutputDetailShape(buffer_fusion_kernel, output_index)}, tuple_item.get());
+    {AnfAlgo::GetOutputDetailShape(buffer_fusion_kernel, output_index)}, tuple_item.get());
   return tuple_item;
 }
 
@@ -582,7 +582,7 @@ bool UbPatternFusion::ReplaceFusionOp(mindspore::HashMap<int64_t, BufferFusionIn
     size_t out_num = AnfAlgo::GetOutputTensorNum(out_node);
     for (size_t idx = 0; idx < out_num; ++idx) {
       (void)types.emplace_back(common::AnfAlgo::GetOutputInferDataType(out_node, idx));
-      (void)shapes.emplace_back(common::AnfAlgo::GetOutputDetailShape(out_node, idx));
+      (void)shapes.emplace_back(AnfAlgo::GetOutputDetailShape(out_node, idx));
     }
   }
   if (types.empty() || shapes.empty()) {

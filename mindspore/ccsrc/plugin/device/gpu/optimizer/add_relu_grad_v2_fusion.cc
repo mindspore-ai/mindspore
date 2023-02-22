@@ -89,7 +89,7 @@ const AnfNodePtr AddReluGradV2Fusion::Process(const FuncGraphPtr &graph, const A
   auto add_relugrad = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add_relugrad);
   auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(node, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, add_relugrad.get());
   add_relugrad->set_scope(node->scope());
 

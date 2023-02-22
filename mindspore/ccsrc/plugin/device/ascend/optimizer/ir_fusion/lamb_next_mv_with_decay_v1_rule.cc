@@ -183,8 +183,8 @@ const AnfNodePtr LambNextMVWithDecayV1Rule::Process(const FuncGraphPtr &func_gra
   std::tie(add0, add1) = GetAdd0Add1Nodes(real_div0, real_div1);
   auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0), common::AnfAlgo::GetOutputInferDataType(add0, 0),
                 common::AnfAlgo::GetOutputInferDataType(add1, 0), common::AnfAlgo::GetOutputInferDataType(add5, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(node, 0), common::AnfAlgo::GetOutputDetailShape(add0, 0),
-                 common::AnfAlgo::GetOutputDetailShape(add1, 0), common::AnfAlgo::GetOutputDetailShape(add5, 0)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(node, 0), AnfAlgo::GetOutputDetailShape(add0, 0),
+                 AnfAlgo::GetOutputDetailShape(add1, 0), AnfAlgo::GetOutputDetailShape(add5, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, fusion_node.get());
 
   std::vector<AnfNodePtr> fusion_node_outputs;

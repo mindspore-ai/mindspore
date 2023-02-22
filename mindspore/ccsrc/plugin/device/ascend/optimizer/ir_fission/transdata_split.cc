@@ -32,9 +32,9 @@ bool IsDepthwiseCase(const CNodePtr &node, const std::string &input_format, cons
   MS_EXCEPTION_IF_NULL(node);
   abstract::BaseShapePtr base_shape;
   if (input_format == kOpFormat_FRAC_Z && output_format == kOpFormat_DEFAULT) {
-    base_shape = common::AnfAlgo::GetPrevNodeOutputDetailShape(node, 0);
+    base_shape = AnfAlgo::GetPrevNodeOutputDetailShape(node, 0);
   } else if (input_format == kOpFormat_DEFAULT && output_format == kOpFormat_FRAC_Z) {
-    base_shape = common::AnfAlgo::GetOutputDetailShape(node, 0);
+    base_shape = AnfAlgo::GetOutputDetailShape(node, 0);
   } else {
     return false;
   }

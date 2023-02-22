@@ -40,7 +40,7 @@ AnfNodePtr PackFission::CreateNewPack(const FuncGraphPtr &func_graph, const CNod
   std::vector<int64_t> dyn_input_sizes{SizeToLong(offset)};
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), new_pack);
   // infer shape
-  auto output_shape_ptr = common::AnfAlgo::GetOutputDetailShape(origin_pack_cnode, 0);
+  auto output_shape_ptr = AnfAlgo::GetOutputDetailShape(origin_pack_cnode, 0);
   MS_EXCEPTION_IF_NULL(output_shape_ptr);
   auto output_shape = output_shape_ptr->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(output_shape);

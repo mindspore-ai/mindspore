@@ -51,7 +51,7 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
   size_t out_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t output_idx = 0; output_idx < out_num; ++output_idx) {
     AnfNodePtr replace_node = nullptr;
-    const auto origin_shape = common::AnfAlgo::GetOutputDetailShape(cnode, output_idx);
+    const auto origin_shape = AnfAlgo::GetOutputDetailShape(cnode, output_idx);
     const auto origin_type = common::AnfAlgo::GetOutputInferDataType(cnode, output_idx);
     auto idx = NewValueNode(SizeToLong(output_idx));
     MS_EXCEPTION_IF_NULL(idx);
@@ -105,7 +105,7 @@ AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &o
   // Single output, output is not TUPLE
   if (!cnode->Type()->isa<Tuple>()) {
     const std::string dev_fmt = AnfAlgo::GetOutputFormat(cnode, 0);
-    const abstract::BaseShapePtr origin_shape = common::AnfAlgo::GetOutputDetailShape(cnode, 0);
+    const abstract::BaseShapePtr origin_shape = AnfAlgo::GetOutputDetailShape(cnode, 0);
     const TypeId origin_type = common::AnfAlgo::GetOutputInferDataType(cnode, 0);
     const TypeId device_type = AnfAlgo::GetOutputDeviceDataType(cnode, 0);
     AnfNodePtr replace_node = cnode;

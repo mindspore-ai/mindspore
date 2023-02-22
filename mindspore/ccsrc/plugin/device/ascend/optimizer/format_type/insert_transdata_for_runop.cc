@@ -31,8 +31,8 @@ bool IsDepthwiseCase(const CNodePtr &node, size_t index, const std::string &form
   if (format != kOpFormat_FRAC_Z) {
     return false;
   }
-  abstract::BaseShapePtr base_shape = is_tuple ? common::AnfAlgo::GetPrevNodeOutputDetailShape(node, index)
-                                               : common::AnfAlgo::GetOutputDetailShape(node, index);
+  abstract::BaseShapePtr base_shape =
+    is_tuple ? AnfAlgo::GetPrevNodeOutputDetailShape(node, index) : AnfAlgo::GetOutputDetailShape(node, index);
   MS_EXCEPTION_IF_NULL(base_shape);
   if (base_shape->isa<abstract::Shape>()) {
     auto shape_ptr = base_shape->cast<abstract::ShapePtr>();

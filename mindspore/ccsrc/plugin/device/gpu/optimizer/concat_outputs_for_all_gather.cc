@@ -155,7 +155,7 @@ const AnfNodePtr ConcatOutputsForAllGather::Process(const FuncGraphPtr &func_gra
     idx->set_abstract(abstract_scalar);
     auto tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
     MS_EXCEPTION_IF_NULL(tuple_getitem);
-    auto shape = common::AnfAlgo::GetOutputDetailShape(node, i);
+    auto shape = AnfAlgo::GetOutputDetailShape(node, i);
     common::AnfAlgo::SetOutputTypeAndDetailShape({std::get<0>(output_info)[i]}, {shape}, tuple_getitem.get());
     new_outputs.emplace_back(std::move(tuple_getitem));
   }

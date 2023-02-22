@@ -92,7 +92,7 @@ const AnfNodePtr AddReluV2Fusion::Process(const FuncGraphPtr &graph, const AnfNo
   size_t output_num = AnfAlgo::GetOutputElementNum(node);
   for (size_t i = 0; i < output_num; i++) {
     types.push_back(common::AnfAlgo::GetOutputInferDataType(node, i));
-    shapes.push_back(common::AnfAlgo::GetOutputDetailShape(node, i));
+    shapes.push_back(AnfAlgo::GetOutputDetailShape(node, i));
   }
 
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, add_relu.get());

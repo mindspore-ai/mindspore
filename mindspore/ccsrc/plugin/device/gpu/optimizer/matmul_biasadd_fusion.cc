@@ -100,7 +100,7 @@ const AnfNodePtr MatMulBiasAddFusion::Process(const FuncGraphPtr &graph, const A
 
   // Copy Abstract and KernelBuildInfo.
   auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(node, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, fused_node.get());
   common::AnfAlgo::CopyNodeAttrs(matmul, fused_node);
   fused_node->set_scope(node->scope());

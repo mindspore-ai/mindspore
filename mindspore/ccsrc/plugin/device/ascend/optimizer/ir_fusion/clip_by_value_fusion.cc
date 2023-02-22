@@ -91,7 +91,7 @@ const AnfNodePtr ClipByValueFusion::Process(const FuncGraphPtr &graph, const Anf
   auto clip_by_value = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(clip_by_value);
   auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(node, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, clip_by_value.get());
   clip_by_value->set_scope(node->scope());
   return clip_by_value;

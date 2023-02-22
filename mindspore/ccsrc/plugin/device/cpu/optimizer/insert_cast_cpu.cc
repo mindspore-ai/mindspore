@@ -134,8 +134,7 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
     auto cur_input = common::AnfAlgo::GetInputNode(cnode, input_index);
     MS_EXCEPTION_IF_NULL(cur_input);
     const std::string dev_fmt = AnfAlgo::GetInputFormat(cnode, input_index);
-    const abstract::BaseShapePtr origin_shape =
-      common::AnfAlgo::GetOutputDetailShape(prev_node.first, prev_node.second);
+    const abstract::BaseShapePtr origin_shape = AnfAlgo::GetOutputDetailShape(prev_node.first, prev_node.second);
     TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index);
     if (origin_type != device_type && origin_type != kTypeUnknown && device_type != kTypeUnknown) {
       auto cast = AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, origin_type, device_type, origin_shape);
@@ -199,7 +198,7 @@ void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &
     auto device_type = AnfAlgo::GetPrevNodeOutputDeviceDataType(func_output, i);
     const std::string dev_fmt = AnfAlgo::GetPrevNodeOutputFormat(func_output, i);
     if (infer_type != device_type && device_type != kTypeUnknown) {
-      const abstract::BaseShapePtr origin_shape = common::AnfAlgo::GetPrevNodeOutputDetailShape(func_output_node, i);
+      const abstract::BaseShapePtr origin_shape = AnfAlgo::GetPrevNodeOutputDetailShape(func_output_node, i);
       auto cast = AddCastOpNodeToGraph(func_graph, input_node, dev_fmt, device_type, infer_type, origin_shape);
       MS_EXCEPTION_IF_NULL(cast);
       cast->set_scope(func_output->scope());

@@ -54,7 +54,7 @@ const AnfNodePtr ReduceSumFission::Process(const FuncGraphPtr &graph, const AnfN
   auto cnode = node->cast<CNodePtr>();
   auto prim = common::AnfAlgo::GetCNodePrimitive(cnode);
   auto keep_dims = common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrKeepDims);
-  auto out_shape = common::AnfAlgo::GetOutputDetailShape(cnode, 0);
+  auto out_shape = AnfAlgo::GetOutputDetailShape(cnode, 0);
   std::vector<int64_t> inp_axis;
   auto axis_value = prim->GetAttr(kAttrAxis);
   MS_EXCEPTION_IF_NULL(axis_value);

@@ -127,7 +127,7 @@ const AnfNodePtr ApplyMomentumWeightDecayScaleFusion::Process(const FuncGraphPtr
   auto replace_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(replace_node);
   auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(node, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, replace_node.get());
   replace_node->set_scope(node->scope());
   return replace_node;

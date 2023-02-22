@@ -158,7 +158,7 @@ void CopyKernelInfo(AnfNodePtr src, AnfNodePtr dst) {
   std::vector<BaseShapePtr> shapes;
   for (size_t i = 0; i < output_num; i++) {
     types.emplace_back(common::AnfAlgo::GetOutputInferDataType(src, i));
-    shapes.emplace_back(common::AnfAlgo::GetOutputDetailShape(src, i));
+    shapes.emplace_back(AnfAlgo::GetOutputDetailShape(src, i));
   }
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, dst.get());
 }

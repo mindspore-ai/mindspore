@@ -238,7 +238,7 @@ AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const
       << input_format << " and dst format " << dst_format;
   }
   std::string spec_format = input_format == kOpFormat_DEFAULT ? dst_format : input_format;
-  auto input_node_out_shape = common::AnfAlgo::GetOutputDetailShape(input_node, 0);
+  auto input_node_out_shape = AnfAlgo::GetOutputDetailShape(input_node, 0);
   MS_EXCEPTION_IF_NULL(input_node_out_shape);
   auto out_shape_ptr = input_node_out_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(out_shape_ptr);
@@ -365,7 +365,7 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   MS_EXCEPTION_IF_NULL(trans_node);
   auto infer_type = common::AnfAlgo::GetOutputInferDataType(input, 0);
 
-  auto out_shape_base = common::AnfAlgo::GetOutputDetailShape(input, 0);
+  auto out_shape_base = AnfAlgo::GetOutputDetailShape(input, 0);
   MS_EXCEPTION_IF_NULL(out_shape_base);
   ShapeVector out_shape;
   bool is_dynamic_shape = false;
@@ -555,8 +555,7 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
       origin_type = common::AnfAlgo::GetOutputInferDataType(prev_node.first, prev_node.second);
     }
     const std::string dev_fmt = AnfAlgo::GetInputFormat(cnode, input_index);
-    const abstract::BaseShapePtr origin_shape =
-      common::AnfAlgo::GetOutputDetailShape(prev_node.first, prev_node.second);
+    const abstract::BaseShapePtr origin_shape = AnfAlgo::GetOutputDetailShape(prev_node.first, prev_node.second);
     // In graph kernel, we check parameter,
     // the eliminate pass will not eliminate this case, so we just do not insert the no used cast.
     if (TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index); origin_type != device_type) {

@@ -83,7 +83,7 @@ const AnfNodePtr SoftmaxDropoutDoMaskV3Fusion::Process(const FuncGraphPtr &graph
   MS_EXCEPTION_IF_NULL(softmax_dropout);
   auto types = {common::AnfAlgo::GetOutputInferDataType(softmax, 0),
                 common::AnfAlgo::GetOutputInferDataType(dropout, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(softmax, 0), common::AnfAlgo::GetOutputDetailShape(dropout, 0)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(softmax, 0), AnfAlgo::GetOutputDetailShape(dropout, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, softmax_dropout.get());
   softmax_dropout->set_scope(softmax->scope());
   common::AnfAlgo::CopyNodeAttr(kAttrAxis, softmax, softmax_dropout);

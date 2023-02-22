@@ -51,7 +51,7 @@ const AnfNodePtr ReplaceMomentumCastFusion::Process(const FuncGraphPtr &graph, c
   auto output_num = AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; i++) {
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, i));
-    outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(node, i));
+    outputs_shape.push_back(AnfAlgo::GetOutputDetailShape(node, i));
   }
   outputs_type[kGradIndex] = common::AnfAlgo::GetPrevNodeOutputInferDataType(grad_cast, 0);
 

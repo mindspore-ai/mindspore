@@ -549,7 +549,7 @@ bool AnfRuntimeAlgorithm::IsRealSquenceOutput(const AnfNodePtr &node) {
 
 std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeForTbeBuild(const AnfNodePtr &node, size_t output_idx,
                                                                           const std::string &format) {
-  auto output_shape = common::AnfAlgo::GetOutputDetailShape(node, output_idx);
+  auto output_shape = AnfAlgo::GetOutputDetailShape(node, output_idx);
   std::vector<int64_t> infer_shape;
   if (output_shape->isa<abstract::Shape>()) {
     auto shape_ptr = output_shape->cast<abstract::ShapePtr>();
@@ -589,7 +589,7 @@ ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, si
 
 std::vector<int64_t> AnfRuntimeAlgorithm::GetInputDeviceShapeForTbeBuild(const AnfNodePtr &node, size_t input_idx,
                                                                          const std::string &format) {
-  auto output_shape = common::AnfAlgo::GetPrevNodeOutputDetailShape(node, input_idx);
+  auto output_shape = AnfAlgo::GetPrevNodeOutputDetailShape(node, input_idx);
   std::vector<int64_t> infer_shape;
   if (output_shape->isa<abstract::Shape>()) {
     auto shape_ptr = output_shape->cast<abstract::ShapePtr>();
@@ -1733,7 +1733,49 @@ std::vector<TypeId> AnfRuntimeAlgorithm::GetAllOutputObjectType(const AnfNodePtr
   return {AnfAlgo::GetAbstractObjectType(node->abstract())};
 }
 
-std::vector<TypeId> AnfAlgo::GetAllOutputInferDataTypes(const AnfNodePtr &node) {
+abstract::BaseShapePtr AnfRuntimeAlgorithm::GetOutputDetailShape(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto base_shape = node->Shape();
+  MS_EXCEPTION_IF_NULL(base_shape);
+  if (base_shape->isa<abstract::Shape>()) {
+    if (output_idx == 0) {
+      return base_shape;
+    }
+    MS_LOG(EXCEPTION) << "The node " << node->DebugString() << "is a single output node but got index [" << output_idx
+                      << "]." << trace::DumpSourceLines(node);
+  } else if (base_shape->isa<abstract::TupleShape>()) {
+    auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+    if (IsRealSquenceOutput(node)) {
+      return tuple_shape;
+    }
+    if (output_idx >= tuple_shape->size()) {
+      MS_LOG(EXCEPTION) << "Output index " << output_idx << "is larger than output number " << tuple_shape->size()
+                        << " node:" << node->DebugString() << "." << trace::DumpSourceLines(node);
+    }
+    auto b_shp = (*tuple_shape)[output_idx];
+    if (b_shp->isa<abstract::Shape>() || b_shp->isa<abstract::NoShape>()) {
+      return b_shp;
+    } else {
+      MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
+                        << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
+                        << "node :" << node->DebugString() << "." << trace::DumpSourceLines(node);
+    }
+  } else if (base_shape->isa<abstract::NoShape>()) {
+    return base_shape;
+  } else if (base_shape->isa<abstract::DynamicSequenceShape>()) {
+    return common::AnfAlgo::GetDynamicSequenceShape(node, output_idx);
+  }
+  MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
+                    << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);
+}
+
+abstract::BaseShapePtr AnfRuntimeAlgorithm::GetPrevNodeOutputDetailShape(const AnfNodePtr &node, size_t input_idx) {
+  KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, input_idx);
+  return AnfAlgo::GetOutputDetailShape(kernel_with_index.first, kernel_with_index.second);
+}
+
+std::vector<TypeId> AnfRuntimeAlgorithm::GetAllOutputInferDataTypes(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<TypeId> outputs;
   auto out_nums = AnfAlgo::GetOutputElementNum(node);
@@ -1746,7 +1788,7 @@ std::vector<TypeId> AnfAlgo::GetAllOutputInferDataTypes(const AnfNodePtr &node) 
 
 // if input node is MakeTuple, find the PrevNodeNum recursively;
 // The monad node in the end is not included in the num;
-size_t AnfAlgo::GetInputElementNum(const AnfNodePtr &node) {
+size_t AnfRuntimeAlgorithm::GetInputElementNum(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -1772,7 +1814,7 @@ size_t AnfAlgo::GetInputElementNum(const AnfNodePtr &node) {
   return element_num;
 }
 
-void AnfAlgo::SetDynamicAttrToPrim(const PrimitivePtr &prim) {
+void AnfRuntimeAlgorithm::SetDynamicAttrToPrim(const PrimitivePtr &prim) {
   prim->AddAttr(kAttrMutableKernel, MakeValue(true));
   prim->AddAttr(kAttrInputIsDynamicShape, MakeValue(true));
   prim->AddAttr(kAttrOutputIsDynamicShape, MakeValue(true));

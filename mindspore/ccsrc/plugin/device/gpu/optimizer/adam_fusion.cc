@@ -165,7 +165,7 @@ const AnfNodePtr AdamFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr
   auto adam = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(adam);
   auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(node, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, adam.get());
   adam->set_scope(node->scope());
   auto build_info = GenerateKernelBuildInfo(adam);

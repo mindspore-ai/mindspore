@@ -113,7 +113,7 @@ AnfNodePtr DealRefOutput::AddAdditionalToRefOutput(const FuncGraphPtr &func_grap
   auto cur_format = AnfAlgo::GetOutputFormat(cnode, output_index);
   auto cur_type = AnfAlgo::GetOutputDeviceDataType(cnode, output_index);
   auto cur_shape = common::AnfAlgo::GetOutputInferShape(cnode, output_index);
-  auto detail_shape = common::AnfAlgo::GetOutputDetailShape(cnode, output_index);
+  auto detail_shape = AnfAlgo::GetOutputDetailShape(cnode, output_index);
   // insert trans
   if (origin_format != cur_format && cur_shape.size() > 1) {
     auto kernel_select = std::make_shared<KernelSelect>();

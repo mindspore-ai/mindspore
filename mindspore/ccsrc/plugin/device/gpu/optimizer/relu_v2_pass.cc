@@ -83,7 +83,7 @@ CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
   auto element_num = std::accumulate(output_shape.begin(), output_shape.end(), int64_t(1), std::multiplies<int64_t>());
 
   std::vector<int64_t> mask_shape = {(element_num + kBitPerUInt - 1) / kBitPerUInt};
-  std::vector<BaseShapePtr> shapes = {common::AnfAlgo::GetOutputDetailShape(relu, 0),
+  std::vector<BaseShapePtr> shapes = {AnfAlgo::GetOutputDetailShape(relu, 0),
                                       std::make_shared<abstract::Shape>(mask_shape)};
   auto types = {common::AnfAlgo::GetOutputInferDataType(relu, 0), kNumberTypeUInt32};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, new_node.get());
@@ -110,7 +110,7 @@ CNodePtr CreateReluGradV2(const FuncGraphPtr &graph, const CNodePtr &relu_grad, 
   size_t output_num = AnfAlgo::GetOutputTensorNum(relu_grad);
   for (size_t i = 0; i < output_num; i++) {
     types.push_back(common::AnfAlgo::GetOutputInferDataType(relu_grad, i));
-    shapes.push_back(common::AnfAlgo::GetOutputDetailShape(relu_grad, i));
+    shapes.push_back(AnfAlgo::GetOutputDetailShape(relu_grad, i));
   }
 
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, new_node.get());
