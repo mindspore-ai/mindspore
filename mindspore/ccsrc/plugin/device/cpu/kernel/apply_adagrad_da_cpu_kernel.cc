@@ -188,14 +188,14 @@ void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
                            start, end);
     };
     CPUKernelUtils::ParallelForAutoSearch(task, input_elements_, &parallel_search_info_);
-    var = var + input_elements_;
-    gradient_accumulator = gradient_accumulator + input_elements_;
-    gradient_squared_accumulator = gradient_squared_accumulator + input_elements_;
-    grad = grad + input_elements_;
-    lr++;
-    l1++;
-    l2++;
-    global_step++;
+    var += input_elements_;
+    gradient_accumulator += input_elements_;
+    gradient_squared_accumulator += input_elements_;
+    grad += input_elements_;
+    ++lr;
+    ++l1;
+    ++l2;
+    ++global_step;
   }
 }
 
