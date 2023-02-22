@@ -58,17 +58,17 @@ int SequenceSetItemCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::vector<AddressPtr> &workspace) {
-  const auto data_addr = reinterpret_cast<T *>(inputs[kDataIndex]->GetData()->addr);
-  const auto idx_addr = reinterpret_cast<int64_t *>(inputs[kIdxIndex]->GetData()->addr);
-  const auto value_addr = reinterpret_cast<T *>(inputs[kValueIndex]->GetData()->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->GetData()->addr);
+bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                               const std::vector<AddressPtr> &workspace,
+                                               const std::vector<AddressPtr> &outputs) {
+  const auto data_addr = GetDeviceAddress<T>(inputs, kDataIndex);
+  const auto idx_addr = GetDeviceAddress<int64_t>(inputs, kIdxIndex);
+  const auto value_addr = GetDeviceAddress<T>(inputs, kValueIndex);
+  T *output_addr = GetDeviceAddress<T>(outputs, 0);
   T value = value_addr[0];
   int64_t idx = idx_addr[0];
-  auto input_size = inputs[kDataIndex]->GetData()->size;
-  auto output_size = outputs[0]->GetData()->size;
+  auto input_size = inputs[kDataIndex]->size;
+  auto output_size = outputs[0]->size;
   auto len = static_cast<int64_t>(input_size / sizeof(T));
 
   if (input_size != output_size) {
@@ -90,12 +90,12 @@ bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr
   return true;
 }
 
-bool SequenceSetItemCpuKernelMod::Launch(const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::vector<AddressPtr> &workspace) {
+bool SequenceSetItemCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &workspace,
+                                         const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSequenceSetItemInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSequenceSetItemOutputNum, kernel_name_);
-  return kernel_func_(this, inputs, outputs, workspace);
+  return kernel_func_(this, inputs, workspace, outputs);
 }
 
 std::vector<std::pair<KernelAttr, SequenceSetItemCpuKernelMod::SequenceSetItemFunc>>

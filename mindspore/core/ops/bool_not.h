@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_TENSOR_TO_LIST_H_
-#define MINDSPORE_CORE_OPS_TENSOR_TO_LIST_H_
+#ifndef MINDSPORE_CORE_OPS_BOOL_NOT_H_
+#define MINDSPORE_CORE_OPS_BOOL_NOT_H_
 #include "ops/base_operator.h"
 #include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief TensorToList op is used to convert tensor to tuple.
-class MIND_API TensorToList : public BaseOperator {
+/// \brief bool_not op is used to calculate the input true or false.
+class MIND_API bool_not : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(TensorToList);
+  MIND_API_BASE_MEMBER(bool_not);
   /// \brief Constructor.
-  TensorToList() : BaseOperator(prim::kTensorToList) { InitIOName({"input_tensor"}, {"output_data"}); }
+  bool_not() : BaseOperator(prim::kBoolNot) {}
   /// \brief Init.
   void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_TENSOR_TO_LIST_H_
+#endif  // MINDSPORE_CORE_OPS_BOOL_NOT_H_

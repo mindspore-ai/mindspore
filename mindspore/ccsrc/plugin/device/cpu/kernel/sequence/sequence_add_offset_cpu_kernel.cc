@@ -56,22 +56,22 @@ int SequenceAddOffsetCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SequenceAddOffsetCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs,
-                                                 const std::vector<AddressPtr> &workspace) {
-  auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->GetData()->addr);
-  auto input_0_size = inputs[0]->GetData()->size / sizeof(T);
+bool SequenceAddOffsetCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                 const std::vector<AddressPtr> &workspace,
+                                                 const std::vector<AddressPtr> &outputs) {
+  int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
+  auto input_0_size = inputs[0]->size / sizeof(T);
   output_addr[0] = 0;
   output_addr[1] = input_0_size;
   return true;
 }
 
-bool SequenceAddOffsetCpuKernelMod::Launch(const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::vector<AddressPtr> &workspace) {
+bool SequenceAddOffsetCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
+                                           const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSequenceAddOffsetInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSequenceAddOffsetOutputNum, kernel_name_);
-  return kernel_func_(this, inputs, outputs, workspace);
+  return kernel_func_(this, inputs, workspace, outputs);
 }
 
 std::vector<std::pair<KernelAttr, SequenceAddOffsetCpuKernelMod::SequenceAddOffsetFunc>>

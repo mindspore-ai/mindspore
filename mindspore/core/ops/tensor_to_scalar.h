@@ -26,7 +26,7 @@ class MIND_API TensorToScalar : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorToScalar);
   /// \brief Constructor.
-  TensorToScalar() : BaseOperator(prim::kTensorToScalar) {}
+  TensorToScalar() : BaseOperator(prim::kTensorToScalar) { InitIOName({"input_tensor"}, {"output_data"}); }
   /// \brief Init.
   void Init() const {}
 };

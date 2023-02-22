@@ -40,21 +40,21 @@ class SeqToTensorCpuKernelMod : public NativeCpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  bool Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-              const std::vector<AddressPtr> &workspace) override {
-    return kernel_func_(this, inputs, outputs, workspace);
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                    const std::vector<AddressPtr> &);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
 
   using SeqToTensorFunc =
-    std::function<bool(SeqToTensorCpuKernelMod *, const std::vector<kernel::KernelTensorPtr> &,
-                       const std::vector<kernel::KernelTensorPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(SeqToTensorCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, SeqToTensorFunc>> seq_func_list_;
   static std::vector<std::pair<KernelAttr, SeqToTensorFunc>> scalar_func_list_;
   SeqToTensorFunc kernel_func_;

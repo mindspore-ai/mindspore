@@ -53,16 +53,16 @@ int SequenceMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T, typename S>
-bool SequenceMulCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::vector<AddressPtr> &workspace) {
+bool SequenceMulCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
+                                           const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  const auto input_x_addr = reinterpret_cast<T *>(inputs[0]->GetData()->addr);
-  const auto input_y_addr = reinterpret_cast<S *>(inputs[1]->GetData()->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->GetData()->addr);
+  T *input_x_addr = GetDeviceAddress<T>(inputs, 0);
+  S *input_y_addr = GetDeviceAddress<S>(inputs, 1);
+  T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-  auto input_x_size = inputs[0]->GetData()->size;
+  auto input_x_size = inputs[0]->size;
   size_t offset = 0;
   for (auto i = 0; i < input_y_addr[0]; ++i) {
     auto cp_ret = memcpy_s(output_addr + offset, input_x_size, input_x_addr, input_x_size);

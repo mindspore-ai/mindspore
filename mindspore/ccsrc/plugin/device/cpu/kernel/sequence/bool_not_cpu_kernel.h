@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SCALAR_BITWISE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SCALAR_BITWISE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_BOOL_NOT_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_BOOL_NOT_CPU_KERNEL_H_
 #include <vector>
 #include <memory>
 #include <utility>
 #include <map>
-#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class ScalarBitwiseCpuKernelMod : public NativeCpuKernelMod {
+class BoolNotCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ScalarBitwiseCpuKernelMod() = default;
-  explicit ScalarBitwiseCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
-  ~ScalarBitwiseCpuKernelMod() override = default;
+  BoolNotCpuKernelMod() = default;
+  ~BoolNotCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -48,18 +46,17 @@ class ScalarBitwiseCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T, typename S, typename N>
+  template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
 
-  using ScalarBitwiseFunc =
-    std::function<bool(ScalarBitwiseCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+  using BoolNotFunc =
+    std::function<bool(BoolNotCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, ScalarBitwiseFunc>> func_list_;
-  ScalarBitwiseFunc kernel_func_;
-  std::string kernel_type_;
+  static std::vector<std::pair<KernelAttr, BoolNotFunc>> func_list_;
+  BoolNotFunc kernel_func_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SCALAR_BITWISE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_BOOL_NOT_CPU_KERNEL_H_

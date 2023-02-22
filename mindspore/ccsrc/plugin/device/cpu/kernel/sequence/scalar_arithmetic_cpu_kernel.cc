@@ -225,9 +225,9 @@ int ScalarArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S, typename N>
-bool ScalarArithmeticCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::vector<AddressPtr> &) {
+bool ScalarArithmeticCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                const std::vector<AddressPtr> &workspace,
+                                                const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
 
@@ -250,9 +250,9 @@ bool ScalarArithmeticCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPt
   }
   MathImplFunc compute_func = iter->second;
 
-  auto input_x = reinterpret_cast<T *>(inputs[kInputx]->GetData()->addr);
-  auto input_y = reinterpret_cast<S *>(inputs[kInputy]->GetData()->addr);
-  auto output = reinterpret_cast<N *>(outputs[0]->GetData()->addr);
+  T *input_x = GetDeviceAddress<T>(inputs, kInputx);
+  S *input_y = GetDeviceAddress<S>(inputs, kInputy);
+  N *output = GetDeviceAddress<N>(outputs, 0);
   compute_func(input_x, input_y, output);
   return true;
 }

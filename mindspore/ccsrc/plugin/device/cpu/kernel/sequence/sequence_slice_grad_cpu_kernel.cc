@@ -56,15 +56,15 @@ int SequenceSliceGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SequenceSliceGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs,
-                                                 const std::vector<AddressPtr> &workspace) {
-  const auto dout_addr = reinterpret_cast<T *>(inputs[0]->GetData()->addr);
-  const auto start_addr = reinterpret_cast<int64_t *>(inputs[2]->GetData()->addr);
-  const auto stop_addr = reinterpret_cast<int64_t *>(inputs[3]->GetData()->addr);
-  const auto step_addr = reinterpret_cast<int64_t *>(inputs[4]->GetData()->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->GetData()->addr);
-  int64_t len = inputs[1]->GetData()->size;
+bool SequenceSliceGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                 const std::vector<AddressPtr> &workspace,
+                                                 const std::vector<AddressPtr> &outputs) {
+  const auto dout_addr = GetDeviceAddress<T>(inputs, 0);
+  const auto start_addr = GetDeviceAddress<int64_t>(inputs, 2);
+  const auto stop_addr = GetDeviceAddress<int64_t>(inputs, 3);
+  const auto step_addr = GetDeviceAddress<int64_t>(inputs, 4);
+  auto output_addr = GetDeviceAddress<T>(outputs, 0);
+  int64_t len = inputs[1]->size;
   int64_t start = start_addr[0];
   int64_t stop = stop_addr[0];
   int64_t step = step_addr[0];
@@ -110,7 +110,7 @@ bool SequenceSliceGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensorP
     if (start <= stop) {
       return true;
     }
-    int64_t idx = inputs[0]->GetData()->size;
+    int64_t idx = inputs[0]->size;
     for (int64_t i = start; i > stop; i += step) {
       idx--;
       output_addr[i + len] = dout_addr[idx];
@@ -121,12 +121,12 @@ bool SequenceSliceGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensorP
   return false;
 }
 
-bool SequenceSliceGradCpuKernelMod::Launch(const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::vector<AddressPtr> &workspace) {
+bool SequenceSliceGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
+                                           const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSequenceSliceGradInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSequenceSliceGradOutputNum, kernel_name_);
-  return kernel_func_(this, inputs, outputs, workspace);
+  return kernel_func_(this, inputs, workspace, outputs);
 }
 
 std::vector<std::pair<KernelAttr, SequenceSliceGradCpuKernelMod::SequenceSliceGradFunc>>

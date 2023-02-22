@@ -58,16 +58,15 @@ int MakeRangeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool MakeRangeCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::vector<AddressPtr> &workspace) {
-  auto start = inputs.size() == 1 ? 0 : reinterpret_cast<T *>(inputs[0]->GetData()->addr)[0];
-  auto limit = inputs.size() == 1 ? reinterpret_cast<T *>(inputs[0]->GetData()->addr)[0]
-                                  : reinterpret_cast<T *>(inputs[1]->GetData()->addr)[0];
-  auto delta = inputs.size() <= 2 ? T(1) : reinterpret_cast<T *>(inputs[2]->GetData()->addr)[0];
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->GetData()->addr);
+bool MakeRangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &workspace,
+                                         const std::vector<AddressPtr> &outputs) {
+  auto start = inputs.size() == 1 ? 0 : GetDeviceAddress<T>(inputs, 0)[0];
+  auto limit = inputs.size() == 1 ? GetDeviceAddress<T>(inputs, 0)[0] : GetDeviceAddress<T>(inputs, 1)[0];
+  auto delta = inputs.size() <= 2 ? T(1) : GetDeviceAddress<T>(inputs, 2)[0];
+  T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-  size_t output_size = outputs[0]->GetData()->size / sizeof(T);
+  size_t output_size = outputs[0]->size / sizeof(T);
   if (Sign(delta) * Sign(limit - start) >= 0) {
     for (size_t index = 0; index < output_size; index++) {
       output_addr[index] = delta * index + start;

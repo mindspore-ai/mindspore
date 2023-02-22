@@ -26,7 +26,7 @@ class MIND_API ScalarToTensor : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScalarToTensor);
   /// \brief Constructor.
-  ScalarToTensor() : BaseOperator(prim::kScalarToTensor) {}
+  ScalarToTensor() : BaseOperator(prim::kScalarToTensor) { InitIOName({"input_scalar", "dtype"}, {"output_data"}); }
   /// \brief Init.
   void Init() const {}
 };

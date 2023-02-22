@@ -51,18 +51,17 @@ int TensorToSeqCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return KRET_OK;
 }
 
-bool TensorToSeqCpuKernelMod::Launch(const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::vector<AddressPtr> &workspace) {
+bool TensorToSeqCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                     const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  const auto input_addr = inputs[0]->GetData()->addr;
-  auto output_addr = outputs[0]->GetData()->addr;
-  auto input_size = inputs[0]->GetData()->size;
-  auto output_size = outputs[0]->GetData()->size;
+  const auto input_addr = inputs[0]->addr;
+  auto output_addr = outputs[0]->addr;
+  auto input_size = inputs[0]->size;
+  auto output_size = outputs[0]->size;
   if (input_size != output_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_x': {" << inputs[0]->GetData()->size
-                      << "} is not equal to the size of output: {" << outputs[0]->GetData()->size << "}";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_x': {" << inputs[0]->size
+                      << "} is not equal to the size of output: {" << outputs[0]->size << "}";
   }
   auto cp_ret = memcpy_s(output_addr, output_size, input_addr, input_size);
   if (cp_ret != EOK) {
