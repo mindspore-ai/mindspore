@@ -45,6 +45,7 @@
 #include "backend/common/pass/erase_visit_attr.h"
 #include "backend/common/pass/add_training_attr.h"
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
+#include "backend/common/pass/dynamic_sequence_ops_adaptation.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "common/graph_kernel/adapter/expander.h"
 #include "common/graph_kernel/value_graph_binder.h"
@@ -225,6 +226,7 @@ void CPUKernelExecutor::OptimizeMindIR(const KernelGraphPtr &graph) const {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::SoftmaxGradFusionCpu>("softmax_grad_fusion_cpu"));
+  pm->AddPass(std::make_shared<opt::DynamicSequenceOpsAdaptation>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();

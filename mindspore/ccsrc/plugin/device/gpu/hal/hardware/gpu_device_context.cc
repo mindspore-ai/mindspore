@@ -422,6 +422,7 @@ void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
     pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradFusion>());
     pm->AddPass(std::make_shared<opt::BiasDropoutAddFusion>());
   }
+  pm->AddPass(std::make_shared<opt::DynamicSequenceOpsAdaptation>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
