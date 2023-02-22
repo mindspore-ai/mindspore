@@ -64,6 +64,9 @@ uint32_t BiasAddCpuKernel::Compute(CpuKernelContext &ctx) {
         "tensor");
       return KERNEL_STATUS_PARAM_INVALID;
     }
+  } else if (str_format == "NCDHW") {
+    KERNEL_LOG_ERROR("For BiasAdd, 'data_format' should be `NHWC` or `NCHW`, but got [%s].", str_format.c_str());
+    return KERNEL_STATUS_PARAM_INVALID;
   }
 
   switch (data_type) {
