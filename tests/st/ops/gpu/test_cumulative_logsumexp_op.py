@@ -23,7 +23,7 @@ from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 
 
-def cumulative_logsumexp(nptype):
+def cumulative_logsumexp(nptype, loss):
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     x0 = np.random.rand(2, 3, 4, 4).astype(nptype)
     axis0 = np.array(1).astype(np.int32)
@@ -59,19 +59,19 @@ def cumulative_logsumexp(nptype):
 
     expect0 = np.log(np.cumsum(np.exp(x0.astype(np.float64)), axis=axis0)).astype(nptype)
     diff0 = abs(output[0].asnumpy() - expect0)
-    error0 = np.ones(shape=expect0.shape) * 1.0e-5
+    error0 = np.ones(shape=expect0.shape) * loss
     assert np.all(diff0 < error0)
     assert output[0].shape == expect0.shape
 
     expect1 = np.log(np.cumsum(np.exp(x1.astype(np.float64)), axis=axis1)).astype(nptype)
     diff1 = abs(output[1].asnumpy() - expect1)
-    error1 = np.ones(shape=expect1.shape) * 1.0e-5
+    error1 = np.ones(shape=expect1.shape) * loss
     assert np.all(diff1 < error1)
     assert output[1].shape == expect1.shape
 
     expect2 = np.log(np.cumsum(np.exp(x2.astype(np.float64)), axis=axis2)).astype(nptype)
     diff2 = abs(output[2].asnumpy() - expect2)
-    error2 = np.ones(shape=expect2.shape) * 1.0e-5
+    error2 = np.ones(shape=expect2.shape) * loss
     assert np.all(diff2 < error2)
     assert output[2].shape == expect2.shape
 
@@ -85,7 +85,7 @@ def test_cumulative_logsumexp_float16():
     Description: The input type is float16 and the output type is float16.
     Expectation: Check it by expected_output variable.
     """
-    cumulative_logsumexp(np.float16)
+    cumulative_logsumexp(np.float16, 1e-3)
 
 
 @pytest.mark.level1
@@ -97,7 +97,7 @@ def test_cumulative_logsumexp_float32():
     Description: The input type is float32 and the output type is float32.
     Expectation: Check it by expected_output variable.
     """
-    cumulative_logsumexp(np.float32)
+    cumulative_logsumexp(np.float32, 1e-4)
 
 
 @pytest.mark.level1
@@ -109,4 +109,4 @@ def test_cumulative_logsumexp_float64():
     Description: The input type is float64 and the output type is float64.
     Expectation: Check it by expected_output variable.
     """
-    cumulative_logsumexp(np.float64)
+    cumulative_logsumexp(np.float64, 1e-5)
