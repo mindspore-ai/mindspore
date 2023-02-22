@@ -28,6 +28,7 @@ function Convert() {
         input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
         input_format=`echo ${model_info} | awk -F ';' '{print $4}'`
         extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
+        input_data_type=`echo ${model_info} | awk -F ';' '{print $6}'`
         input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
         input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
         model_type=${model_name##*.}
@@ -71,6 +72,9 @@ function Convert() {
         fp16_weight="off"
         save_type="MINDIR_LITE"
         optimize="general"
+        if [[ ${input_data_type} != "" ]]; then
+          in_dtype=${input_data_type}
+        fi
         if [[ ${cfg_file_name} =~ "weightquant" ]]; then
           # models_weightquant_${suffix}.cfg
           suffix=${cfg_file_name: 19: -4}

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,9 @@
 #include "tools/optimizer/fisson/multi_conv_split_pass.h"
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include "tools/optimizer/format/to_nchw_format.h"
+#include "tools/optimizer/graph/int64_cast_int32_pass.h"
+#include "tools/optimizer/graph/input_data_type_trans_pass.h"
+#include "tools/optimizer/fusion/cast_fusion.h"
 #include "tools/optimizer/format/to_nhwc_format.h"
 #include "tools/optimizer/fusion/expanddims_reshape_fusion.h"
 #include "tools/optimizer/fusion/reduce_same_op_in_horizon.h"
@@ -276,6 +279,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
                                     std::make_shared<opt::PReluFusion>(),
                                     std::make_shared<opt::SqueezeFusion>(),
                                     std::make_shared<opt::TransposeFusion>(),
+                                    std::make_shared<opt::CastFusionPass>(),
                                     std::make_shared<opt::ReshapeReshapeFusion>(),
                                     std::make_shared<opt::ReshapeTransposeFusion>(),
                                     std::make_shared<opt::ConvBiasaddFusion>(),
@@ -504,6 +508,23 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const std::sha
   return RET_OK;
 }
 
+int AnfTransform::RunInt64CastInt32Pass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto int64_cast_int32_pm = std::make_shared<opt::LitePassManager>("int64 cast to int32 pass manager", false);
+  CHECK_NULL_RETURN(optimizer);
+  CHECK_NULL_RETURN(int64_cast_int32_pm);
+  int64_cast_int32_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
+  int64_cast_int32_pm->AddPass(std::make_shared<opt::Int64CastInt32Pass>());
+  int64_cast_int32_pm->AddPass(std::make_shared<opt::CastFusionPass>());
+
+  optimizer->AddPassManager(int64_cast_int32_pm);
+  if (optimizer->Optimize(old_graph) == nullptr) {
+    MS_LOG(ERROR) << "run const fold failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int RunDecreaseTransposePass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   MS_ASSERT(old_graph != nullptr && param != nullptr);
   auto pass = std::make_shared<opt::DecreaseTransposeAlgo>(param->fmk_type, param->train_model, false);
@@ -626,6 +647,12 @@ int AnfTransform::RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<C
 
   if (!RunExternalPass(old_graph, registry::POSITION_BEGIN)) {
     MS_LOG(ERROR) << "Run external pass failed, place is BEGIN";
+    return RET_ERROR;
+  }
+
+  status = RunInt64CastInt32Pass(old_graph, param);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run const fold pass failed.";
     return RET_ERROR;
   }
 

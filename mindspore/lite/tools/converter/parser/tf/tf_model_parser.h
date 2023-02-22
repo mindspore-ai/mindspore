@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ class TFModelParser : public converter::ModelParser {
                             const TypeId &type, const ParameterPtr &parameter, std::vector<int64_t> *shape_vector);
   STATUS SetInt64TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info,
                             const std::string &node_name);
-  STATUS SetInt64TensorInfoMap(const tensorflow::TensorProto &tensor_proto, const std::string &node_name);
+  STATUS SetInt64TensorToInt64Tensor(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);
   STATUS SetTensorInfoFromType(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info,
                                const std::string &node_name);
   STATUS ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,
@@ -116,8 +116,6 @@ class TFModelParser : public converter::ModelParser {
   std::vector<std::string> if_then_branch_name_;
   std::unordered_map<std::string, int> node_output_num_;
   std::map<CNodePtr, FuncGraphPtr> while_cond_map_, while_body_map_, if_then_map_, if_else_map_;
-  std::map<std::string, AbstractBasePtr> int64_abstract_map_;
-  std::map<std::string, std::pair<tensor::TensorPtr, AbstractBasePtr>> int64_tensor_info_map_;
 };
 }  // namespace lite
 }  // namespace mindspore

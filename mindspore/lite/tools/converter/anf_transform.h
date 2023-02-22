@@ -47,6 +47,8 @@ class AnfTransform {
 
   static int RunConvertPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
+  static int RunInt64CastInt32Pass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
+
   static int RunConstFoldPass(const FuncGraphPtr &olde_graph, const std::shared_ptr<ConverterPara> &param);
 
   static int RunParallelPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);

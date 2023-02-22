@@ -152,20 +152,6 @@ bool CastOpAdjust::Run(const FuncGraphPtr &func_graph, bool strict_mode_flag) {
         return false;
       }
     }
-
-    if (output_type_value == kNumberTypeInt64) {
-      auto parameter = opt::BuildIntValueParameterNode(func_graph, kNumberTypeInt32,
-                                                       cast_cnode->input(opt::kInputIndexTwo)->fullname_with_scope());
-      if (parameter == nullptr) {
-        MS_LOG(ERROR) << "Create parameter failed.";
-        return false;
-      }
-      auto ret = manager->Replace(node, parameter);
-      if (!ret) {
-        MS_LOG(ERROR) << "Replace node to parameter failed.";
-        return false;
-      }
-    }
   }
   return true;
 }

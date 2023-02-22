@@ -52,6 +52,7 @@
 #include "tools/common/func_graph_utils.h"
 #include "tools/converter/import/remove_public_primitive.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
+#include "tools/optimizer/graph/input_data_type_trans_pass.h"
 #include "tools/converter/parser/unify_format.h"
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "tools/converter/anf_transform.h"
@@ -236,6 +237,21 @@ STATUS ConverterFuncGraph::UnifyFuncGraphInputFormat(const std::shared_ptr<Conve
   return RET_OK;
 }
 
+STATUS ConverterFuncGraph::UnifyFuncGraphInputDataType(const std::shared_ptr<ConverterPara> &param,
+                                                       FuncGraphPtr func_graph) {
+  if (param->input_data_type == DataType::kNumberTypeInt64) {
+    return RET_OK;
+  }
+
+  opt::InputDTypeTransPass pass(DataType::kNumberTypeInt32, DataType::kNumberTypeInt64);
+  auto status = pass.Run(func_graph);
+  if (!status) {
+    MS_LOG(ERROR) << "Failed to Specify graph input data type to " << param->input_data_type;
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 void SetInputParameterName(const FuncGraphPtr &func_graph) {
   for (auto &input : func_graph->get_inputs()) {
     auto parameter = input->cast<ParameterPtr>();
@@ -284,6 +300,13 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
       return RET_ERROR;
     }
   }
+
+  status = UnifyFuncGraphInputDataType(param, func_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "UnifyFuncGraphForInfer failed.";
+    return status;
+  }
+
   // For converted MindIR model, update input name to the name of abstract.
   SetInputParameterName(func_graph);
   status = UpdateFuncGraphInputsAndOutputsDtype(func_graph);
