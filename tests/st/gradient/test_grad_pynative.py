@@ -808,7 +808,7 @@ def test_get_grad_not_found_pynative():
     net = ParamNetRI()
     weights = net.trainable_params()
     res = grad(net, 0, weights, return_ids=True)(x)
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         get_grad(res, 1)
 
 
