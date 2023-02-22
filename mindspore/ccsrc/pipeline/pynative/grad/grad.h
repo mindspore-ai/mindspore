@@ -250,6 +250,7 @@ class GradExecutor {
   mutable CellIdWithDynamicNodesMap cell_id_with_dynamic_detect_nodes_;
   std::set<std::string> dynamic_inputs_cells_;
   bool forward_use_dynamic_shape_process_{false};
+  mutable std::mutex async_mutex_;
 };
 }  // namespace pynative
 }  // namespace mindspore
