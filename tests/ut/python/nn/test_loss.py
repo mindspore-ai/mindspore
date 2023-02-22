@@ -57,7 +57,7 @@ def test_SoftmaxCrossEntropyWithLogits_reduce():
 
 def test_BCELoss():
     """ test_BCELoss """
-    loss = nn.BCELoss()
+    loss = nn.BCELoss(reduction="none")
 
     inputs_data = Tensor(np.array([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]]).astype(np.float32))
     target_data = Tensor(np.array([[0, 1, 0], [0, 0, 1]]).astype(np.float32))
@@ -76,7 +76,7 @@ def test_BCELoss_reduce():
 def test_BCELoss_weight():
     """ test_BCELoss """
     weight = Tensor(np.array([[1.0, 2.0, 3.0], [2.2, 2.6, 3.9]]).astype(np.float32))
-    loss = nn.BCELoss(weight=weight)
+    loss = nn.BCELoss(reduction="none", weight=weight)
 
     inputs_data = Tensor(np.array([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]]).astype(np.float32))
     target_data = Tensor(np.array([[0, 1, 0], [0, 0, 1]]).astype(np.float32))

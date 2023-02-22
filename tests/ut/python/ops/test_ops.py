@@ -145,9 +145,9 @@ from mindspore.ops.operations.nn_ops import MaxUnpool3D
 from mindspore.ops.operations.nn_ops import InstanceNormV2
 from mindspore.ops.operations._grad_ops import InstanceNormV2Grad
 from mindspore.ops.operations.linalg_ops import Geqrf
-from mindspore.nn.loss.loss import MultiMarginLoss
-from mindspore.nn.loss.loss import MultilabelMarginLoss
-from mindspore.nn.loss.loss import TripletMarginLoss
+from mindspore.ops.operations.nn_ops import MultiMarginLoss
+from mindspore.ops.operations.nn_ops import MultilabelMarginLoss
+from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations.array_ops import Mvlgamma
 from mindspore.ops.operations.spectral_ops import BartlettWindow
 from mindspore.ops.operations.nn_ops import SparseSoftmaxCrossEntropyWithLogitsV2
@@ -3367,7 +3367,7 @@ test_case_nn_ops = [
     ('MultiMarginLoss', {
         'block': MultiMarginLoss(reduction="mean"),
         'desc_inputs': [Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]).astype(np.float32)),
-                        Tensor(np.array([0, 0]).astype(np.int64))],
+                        Tensor(np.array([0, 0]).astype(np.int64)), None],
         'desc_bprop': [[1]]}),
     ('L2Loss_1', {
         'block': P.L2Loss(),
@@ -3573,7 +3573,8 @@ test_case_nn_ops = [
         'block': MultilabelMarginLoss(reduction="none"),
         'desc_inputs': [Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.1, 0.2, 0.3, 0.4]]).astype(np.float32)),
                         Tensor(np.array([[2, 1, -1, 1], [1, -1, 2, 1]]).astype(np.int32))],
-        'desc_bprop': [Tensor(np.array([1, 2]).astype(np.float32))]}),
+        'desc_bprop': [Tensor(np.array([1, 2]).astype(np.float32)),
+                       Tensor(np.array([[1, 1, 2, 1], [1, 1, 2, 1]]).astype(np.int32))]}),
     ('GridSampler3D', {
         'block': GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=False),
         'desc_inputs': [Tensor(np.arange(32).reshape((2, 2, 2, 2, 2)).astype(np.float32)),
