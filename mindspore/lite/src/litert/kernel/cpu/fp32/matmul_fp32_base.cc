@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMulFusion;
-namespace {
-constexpr int kNumDeepThreshold = 512;
-}
 namespace mindspore::kernel {
 int MatmulRun(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
@@ -741,11 +738,14 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
 }
 
 int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
+#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
+  constexpr int kNumDeepThreshold = 512;
   if (params_->deep_ < kNumDeepThreshold) {
     auto num = ParallelThreadPoolManager::GetInstance()->GetThreadPoolSize(
       static_cast<const lite::InnerContext *>(ms_context_)->thread_pool_);
     params_->op_parameter_.thread_num_ = num != -1 ? num : params_->op_parameter_.thread_num_;
   }
+#endif
   if ((a_batch_ >= thread_num_ && (b_batch_ == a_batch_ || !SupportMulBatchCuttingByRow())) || params_->col_ == 1) {
     batch_stride_ = UP_DIV(params_->batch, thread_num_);
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByBatch;

@@ -124,6 +124,17 @@ file(GLOB CXX_API_SRCS
         ${SRC_DIR}/litert/cxx_api/model/*.cc
         ${SRC_DIR}/litert/cxx_api/graph/*.cc
         ${SRC_DIR}/litert/cxx_api/tensor/*.cc)
+if(MSLITE_ENABLE_PARALLEL_INFERENCE)
+    set(CXX_API_SRCS
+            ${CXX_API_SRCS}
+            ${SRC_DIR}/extendrt/cxx_api/model_pool/predict_task_queue.cc
+            ${SRC_DIR}/extendrt/cxx_api/model_pool/model_worker.cc
+            ${SRC_DIR}/extendrt/cxx_api/model_pool/model_pool.cc
+            ${SRC_DIR}/extendrt/cxx_api/model_pool/model_parallel_runner.cc
+            ${SRC_DIR}/extendrt/cxx_api/model_pool/model_parallel_runner_impl.cc
+            ${SRC_DIR}/extendrt/cxx_api/model_pool/resource_manager.cc
+            )
+endif()
 
 file(GLOB RUNTIME_PASS_SRCS
         ${SRC_DIR}/litert/pass/*.cc)
@@ -277,14 +288,6 @@ if(MSLITE_ENABLE_MINDRT)
     include_directories(${CORE_DIR}/mindrt)
     include_directories(${CORE_DIR}/mindrt/include)
     include_directories(${CORE_DIR}/mindrt/src/)
-    file(GLOB MINDRT_SRC
-            ${CORE_DIR}/mindrt/src/*.cc
-            ${CORE_DIR}/mindrt/src/actor/*.cc
-            ${CORE_DIR}/mindrt/src/async/*.cc
-            ${CORE_DIR}/mindrt/src/evloop/*.cc
-            ${CORE_DIR}/mindrt/src/timer/*.cc
-            ${CORE_DIR}/mindrt/src/thread/*.cc
-            )
 
     set(LITE_SRC
             ${LITE_SRC}

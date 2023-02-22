@@ -769,7 +769,9 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
     MS_LOG(ERROR) << "Not support multi-threading";
     return RET_ERROR;
   }
+#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
   ParallelThreadPoolManager::GetInstance()->ActivatePool(runner_id_, worker_id_);
+#endif
   STATUS ret = CheckTensorsInvalid(inputs_);
   if (MS_UNLIKELY(ret != RET_OK)) {
     is_running_.store(false);
@@ -793,7 +795,9 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
       input->set_shape_changed(false);
     }
   }
+#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
   ParallelThreadPoolManager::GetInstance()->SetFreePool(runner_id_, worker_id_);
+#endif
   is_running_.store(false);
   return ret;
 }
@@ -824,8 +828,10 @@ int LiteSession::InitSharedThreadPool() {
   MS_LOG(INFO) << "runner id: " << runner_id_ << "  enable_shared_pool: " << enable_shared_pool
                << "  workers_num: " << workers_num << "  thread_num_limit: " << thread_num_limit
                << "  remaining_thread_num: " << remaining_thread_num;
+#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
   ParallelThreadPoolManager::GetInstance()->Init(enable_shared_pool, runner_id_, workers_num, remaining_thread_num,
                                                  thread_num_limit);
+#endif
   return RET_OK;
 }
 
@@ -853,11 +859,13 @@ int LiteSession::ContextInit(const std::shared_ptr<InnerContext> &context) {
   context_->thread_pool_->SetMinSpinCount(kDefaulLiteIosSpinCount);
 #endif
 
+#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
   if (context_->inter_op_parallel_num_ > 1 && !runner_id_.empty() &&
       ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool(runner_id_)) {
     MS_LOG(INFO) << "Enable subgraph parallelism and enable thread pool sharing";
     ParallelThreadPoolManager::GetInstance()->BindPoolToRunner(context_->thread_pool_, config_info_);
   }
+#endif
 
   return RET_OK;
 }
@@ -1132,7 +1140,9 @@ LiteSession::~LiteSession() {
 #endif
   delete ms_context_;
   ms_context_ = nullptr;
+#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
   ParallelThreadPoolManager::GetInstance()->ResetParallelThreadPoolManager(runner_id_);
+#endif
   lite::PackWeightManager::GetInstance()->FreePackWeight(runner_id_, model_id_);
   if (model_ != nullptr && is_shared_weight_) {
     model_->buf = nullptr;

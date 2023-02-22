@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
 
-#ifdef ENABLE_OPENSSL
+#if !defined(_MSC_VER) && !defined(_WIN32)
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -67,22 +67,19 @@ bool IsCipherFile(const Byte *model_data) {
   auto flag = ByteToInt(int_buf.data(), int_buf.size());
   return static_cast<unsigned int>(flag) == GCM_MAGIC_NUM || static_cast<unsigned int>(flag) == CBC_MAGIC_NUM;
 }
-#ifndef ENABLE_OPENSSL
+#if defined(_MSC_VER) || defined(_WIN32)
 std::unique_ptr<Byte[]> Encrypt(size_t *, const Byte *, size_t, const Byte *, size_t, const std::string &) {
-  MS_LOG(ERROR) << "The feature is only supported on the Linux platform "
-                   "when the OPENSSL compilation option is enabled.";
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
   return nullptr;
 }
 
 std::unique_ptr<Byte[]> Decrypt(size_t *, const std::string &, const Byte *, size_t, const std::string &) {
-  MS_LOG(ERROR) << "The feature is only supported on the Linux platform "
-                   "when the OPENSSL compilation option is enabled.";
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
   return nullptr;
 }
 
 std::unique_ptr<Byte[]> Decrypt(size_t *, const Byte *, size_t, const Byte *, size_t, const std::string &) {
-  MS_LOG(ERROR) << "The feature is only supported on the Linux platform "
-                   "when the OPENSSL compilation option is enabled.";
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
   return nullptr;
 }
 #else

@@ -91,21 +91,17 @@ build_lite_jni_and_jar() {
     cd java/jni
     # copy glog lib and headers
     LIB_GLOG="libmindspore_glog.so*"
-    if [[ ${MSLITE_ENABLE_RUNTIME_GLOG} == "on" || ${MSLITE_ENABLE_RUNTIME_GLOG} == "ON" || ${MSLITE_ENABLE_SERVER_INFERENCE} == "on" || ${MSLITE_ENABLE_SERVER_INFERENCE} == "ON" ]]; then
-      if [ -f "`echo ${INSTALL_PREFIX}/${PKG_NAME}/runtime/third_party/glog/${LIB_GLOG}`" ]; then
-        cp ${INSTALL_PREFIX}/${PKG_NAME}/runtime/third_party/glog/*.so* ${LITE_JAVA_PATH}/java/${NATIVE_PATH_ARCH}/libs/
-        cp ${INSTALL_PREFIX}/${PKG_NAME}/runtime/third_party/glog/*.so* ${LITE_JAVA_PATH}/native/libs/${NATIVE_PATH_ARCH}/
-      else
-        echo "no glog lib found, exit."
-        exit 1
-      fi
-      if [ -d "${BASEPATH}/output/tmp/${PKG_NAME}/runtime/include/third_party/glog" ]; then
-          rm -rf jni_include && mkdir jni_include
-          cp ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/include/third_party/glog  ./jni_include -r
-      else
-          echo "no glog hesders found, exit."
-          exit 1
-      fi
+    if [ -f "`echo ${INSTALL_PREFIX}/${PKG_NAME}/runtime/third_party/glog/${LIB_GLOG}`" ]; then
+      cp ${INSTALL_PREFIX}/${PKG_NAME}/runtime/third_party/glog/*.so* ${LITE_JAVA_PATH}/java/${NATIVE_PATH_ARCH}/libs/
+      cp ${INSTALL_PREFIX}/${PKG_NAME}/runtime/third_party/glog/*.so* ${LITE_JAVA_PATH}/native/libs/${NATIVE_PATH_ARCH}/
+    else
+      echo "no glog lib found."
+    fi
+    if [ -d "${BASEPATH}/output/tmp/${PKG_NAME}/runtime/include/third_party/glog" ]; then
+        rm -rf jni_include && mkdir jni_include
+        cp ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/include/third_party/glog  ./jni_include -r
+    else
+        echo "no glog hesders found."
     fi
     # build jni so
     echo "cmake ${JNI_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} ${LITE_JAVA_PATH}/native/"
@@ -531,7 +527,7 @@ build_lite() {
               cp ${INSTALL_PREFIX}/mindspore-lite*/tools/converter/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
             fi
             cp ${INSTALL_PREFIX}/mindspore-lite*/runtime/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
-            if [[ "${MSLITE_ENABLE_SERVER_INFERENCE}" == "ON" || "${MSLITE_ENABLE_SERVER_INFERENCE}" == "on" ]]; then
+            if [ -d "${INSTALL_PREFIX}/mindspore-lite*/runtime/third_party/glog" ]; then
               cp ${INSTALL_PREFIX}/mindspore-lite*/runtime/third_party/glog/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
             fi
             if [[ ! "${MSLITE_ENABLE_TRAIN}" || "${MSLITE_ENABLE_TRAIN}" == "ON" || "${MSLITE_ENABLE_TRAIN}" == "on" ]]; then

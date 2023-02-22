@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,6 @@
 #ifndef MINDSPORE_CORE_MINDRT_RUNTIME_PARALLEL_THREAD_POOL_MANAGER_H_
 #define MINDSPORE_CORE_MINDRT_RUNTIME_PARALLEL_THREAD_POOL_MANAGER_H_
 
-#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
-#define THREAD_POOL_MANAGER
-#endif
-
 #include <queue>
 #include <vector>
 #include <mutex>
@@ -29,17 +25,16 @@
 #include <condition_variable>
 #include <map>
 #include <string>
+#include "thread/parallel_threadpool.h"
 
 namespace mindspore {
 class ThreadPool;
 // class Worker;
-#ifdef ENABLE_MINDRT
 class ParallelThreadPool;
 struct ParallelTask;
 class ParallelWorker;
-#endif
 
-class ParallelThreadPoolManager {
+class MS_CORE_API ParallelThreadPoolManager {
  public:
   static ParallelThreadPoolManager *GetInstance();
 
@@ -64,15 +59,12 @@ class ParallelThreadPoolManager {
 
   int GetTaskNum(const std::map<std::string, std::map<std::string, std::string>> *config_info);
 
-#ifdef ENABLE_MINDRT
   ParallelThreadPool *GetIdleThreadPool(const std::string &runner_id, ParallelTask *task);
-#endif
 
  private:
   ParallelThreadPoolManager() = default;
 
  private:
-#ifdef THREAD_POOL_MANAGER
   // runner id <=> thread pool(a model has a thread pool)
   std::map<std::string, std::vector<ParallelThreadPool *>> runner_id_pools_;
   // pool sorted by model worker id
@@ -86,7 +78,6 @@ class ParallelThreadPoolManager {
   std::map<std::string, int> idle_pool_num_;
   std::map<std::string, int> remaining_thread_num_;
   std::map<std::string, int> thread_num_limit_;
-#endif
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_PARALLEL_THREAD_POOL_MANAGER_H_

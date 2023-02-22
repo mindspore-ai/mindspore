@@ -293,13 +293,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_L
     message(FATAL_ERROR "GCC version ${CMAKE_CXX_COMPILER_VERSION} must not be less than 7.3.0")
 endif()
 
-if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE OR MSLITE_ENABLE_ACL)
-    set(ENABLE_GLIBCXX OFF)
-    add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
-else()
-    set(ENABLE_GLIBCXX ON)
-endif()
-
 if(PLATFORM_ARM64)
     if(MSLITE_GPU_BACKEND STREQUAL "")
         set(MSLITE_GPU_BACKEND "opencl")
@@ -454,6 +447,7 @@ if(MSLITE_GPU_BACKEND STREQUAL cuda)
 endif()
 
 if(MSLITE_ENABLE_CONVERTER)
+    set(MSLITE_ENABLE_RUNTIME_GLOG on)
     add_compile_definitions(ENABLE_CONVERTER)
 endif()
 
@@ -708,6 +702,16 @@ if(ENABLE_NEON)
     add_compile_definitions(ENABLE_NEON)
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    if((${MSLITE_REGISTRY_DEVICE} STREQUAL "off") OR (${MSLITE_REGISTRY_DEVICE} STREQUAL "OFF"))
+        set(ENABLE_GLIBCXX OFF)
+    else()
+        set(ENABLE_GLIBCXX ON)
+    endif()
+else()
+    set(ENABLE_GLIBCXX ON)
+endif()
+
 if(MSLITE_GPU_BACKEND STREQUAL cuda)
     # add_definitions(-DGPU_CUDA)
     add_compile_definitions(SUPPORT_GPU)
@@ -716,6 +720,20 @@ if(MSLITE_GPU_BACKEND STREQUAL cuda)
         message("CUDA_HOME = $ENV{CUDA_HOME}")
     else()
         message(FATAL_ERROR "please set CUDA_HOME, example: export CUDA_HOME=/usr/local/cuda-10.1/")
+    endif()
+    find_package(CUDAToolkit)
+    if(NOT CUDAToolkit_FOUND)
+        message(FATAL_ERROR "Required package CUDAToolkit not found, "
+                "please install the package and try building MindSpore again.")
+    endif()
+    if((${CMAKE_SYSTEM_NAME} MATCHES "Linux") AND (${CUDAToolkit_VERSION} VERSION_GREATER "10.1.168"))
+        set(ENABLE_GLIBCXX OFF)
+    else()
+        message(WARNING "Current CUDAToolkit version (${CUDAToolkit_VERSION}) is less than 10.1.168, "
+                "might have unfixed issues with std string, set ENABLE_GLIBCXX = ON automatically to prevent errors. "
+                "However, import mindspore and import mindspore_lite in Python API at the same time cannot be used, "
+                "if you need to import them at the same time, the version higher than 10.1.168 is recommended.")
+        set(ENABLE_GLIBCXX ON)
     endif()
 endif()
 
@@ -731,6 +749,26 @@ if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
         message("CUDA_HOME = $ENV{CUDA_HOME}")
     else()
         message(FATAL_ERROR "please set CUDA_HOME, example: export CUDA_HOME=/usr/local/cuda-10.1/")
+    endif()
+    find_package(CUDAToolkit)
+    if(NOT CUDAToolkit_FOUND)
+        message(FATAL_ERROR "Required package CUDAToolkit not found, "
+                "please install the package and try building MindSpore again.")
+    endif()
+    if((${CMAKE_SYSTEM_NAME} MATCHES "Linux") AND (${CUDAToolkit_VERSION} VERSION_GREATER "10.1.168"))
+        set(ENABLE_GLIBCXX OFF)
+    else()
+        message(WARNING "Current CUDAToolkit version (${CUDAToolkit_VERSION}) is less than 10.1.168, "
+                "might have unfixed issues with std string, set ENABLE_GLIBCXX = ON automatically to prevent errors. "
+                "However, import mindspore and import mindspore_lite in Python API at the same time cannot be used, "
+                "if you need to import them at the same time, the version higher than 10.1.168 is recommended.")
+        set(ENABLE_GLIBCXX ON)
+    endif()
+endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    if(NOT ENABLE_GLIBCXX)
+        add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
     endif()
 endif()
 
@@ -790,8 +828,16 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     endif()
 endif()
 
+# In core/CMakelists, core link mindspore::crypto, and crypto need the OPENSSL lib,
+# So before enter into core/CMakelists, you need to set MSLITE_DEPS_OPENSSL on to contain the OPENSSL lib,
+# Such as when MSLITE_ENABLE_CONVERTER is on or MSLITE_ENABLE_KERNEL_EXECUTOR is on.
+if((${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE) AND (MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_KERNEL_EXECUTOR))
+    set(MSLITE_DEPS_OPENSSL on)
+endif()
+
 if(MSLITE_ENABLE_MODEL_ENCRYPTION)
     set(MSLITE_DEPS_OPENSSL on)
+    add_compile_definitions(ENABLE_OPENSSL)
 endif()
 
 include(${LITE_DIR}/cmake/lite_dependences.cmake)

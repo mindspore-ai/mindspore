@@ -199,14 +199,6 @@ int ActorMgr::EnqueueMessage(const mindspore::ActorReference actor, std::unique_
 
 int ActorMgr::Send(const AID &to, std::unique_ptr<MessageBase> msg, bool remoteLink, bool isExactNotRemote) {
   // The destination is local
-#ifdef BUILD_LITE
-  auto actor = GetActor(to);
-  if (actor != nullptr) {
-    return EnqueueMessage(actor, std::move(msg));
-  } else {
-    return ACTOR_NOT_FIND;
-  }
-#else
   if (IsLocalAddres(to)) {
     auto actor = GetActor(to);
     if (actor != nullptr) {
@@ -236,7 +228,6 @@ int ActorMgr::Send(const AID &to, std::unique_ptr<MessageBase> msg, bool remoteL
       return IO_NOT_FIND;
     }
   }
-#endif
 }
 
 AID ActorMgr::Spawn(const ActorReference &actor, bool shareThread) {

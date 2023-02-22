@@ -26,13 +26,13 @@ if(Python3_FOUND)
     if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
       add_dependencies(mindspore-extendrt_static fbs_inner_src)
       target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--whole-archive mindspore-extendrt
-        -Wl,--no-whole-archive -Wl,-z,relro,-z,now,-z,noexecstack -fstack-protector-all -s)
-    else()
-      target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--whole-archive mindspore-lite_static
-        -Wl,--no-whole-archive -Wl,-z,relro,-z,now,-z,noexecstack -fstack-protector-all -s)
+              -Wl,--no-whole-archive -Wl,-z,relro,-z,now,-z,noexecstack -fstack-protector-all -s)
     endif()
     if(MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_RUNTIME_GLOG)
       target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--no-as-needed mindspore::glog)
+    endif()
+    if(MSLITE_ENABLE_RUNTIME_GLOG AND NOT MSLITE_ENABLE_CONVERTER)
+      target_link_options(_c_lite_wrapper PRIVATE -Wl,-init,mindspore_log_init)
     endif()
     if(MSLITE_ENABLE_CONVERTER)
       target_link_libraries(_c_lite_wrapper PRIVATE
@@ -44,6 +44,11 @@ if(Python3_FOUND)
               mindspore::opencv_imgproc
               mindspore_converter
               )
+    else()
+      if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+        target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--whole-archive mindspore-lite_static
+                -Wl,--no-whole-archive -Wl,-z,relro,-z,now,-z,noexecstack -fstack-protector-all -s)
+      endif()
     endif()
   else()
     message(WARNING "NumPy not found, so Python API will not be compiled.")

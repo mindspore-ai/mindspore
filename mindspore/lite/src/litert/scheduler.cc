@@ -1090,11 +1090,13 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     }
   }
 
+#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
   // reset op task num, The number of operator segmentation tasks is not necessarily equal to the number of threads
   int thread_num_limit = ParallelThreadPoolManager::GetInstance()->GetTaskNum(config_info_);
   if (thread_num_limit != -1 && IsSharedThreadPoolOp(op_type)) {
     op_parameter->thread_num_ = thread_num_limit;
   }
+#endif
 
   ret = KernelRegistry::GetInstance()->GetKernelExec(in_tensors, out_tensors, context_, ms_context_, cpu_desc,
                                                      op_parameter, kernel);
