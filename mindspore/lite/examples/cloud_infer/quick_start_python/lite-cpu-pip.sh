@@ -32,7 +32,7 @@
 set -e
 
 PYTHON_VERSION=${PYTHON_VERSION:-3.7}
-MINDSPORE_LITE_VERSION=${MINDSPORE_LITE_VERSION:-1.9.0}
+MINDSPORE_LITE_VERSION=${MINDSPORE_LITE_VERSION:-2.0.0}
 
 version_less() {
     test "$(echo "$@" | tr ' ' '\n' | sort -rV | head -n 1)" != "$1";
@@ -79,15 +79,14 @@ fi
 
 # Reinstall MindSpore Lite whl package
 arch=`uname -m`
-mindspore_lite_whl=`ls ${BASEPATH}/mindspore_lite*.whl`
-if [ -f "${mindspore_lite_whl}" ]; then
+if [ -f "'echo ${BASEPATH}/mindspore_lite*.whl'" ]; then
   echo "==========[INFO]MindSpore Lite Whl found, install the current directory's package.=========="
   python -m pip uninstall -y mindspore_lite
   python -m pip install mindspore*.whl
 else
   echo "==========[INFO]MindSpore Lite Whl not found, install package from the network.=========="
   python -m pip uninstall -y mindspore_lite
-  python -m pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/${MINDSPORE_LITE_VERSION}/MindSpore/lite/release/linux/${arch}/mindspore_lite-${MINDSPORE_LITE_VERSION/-/}-cp37-cp37m-linux_${arch}.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
+  python -m pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/${MINDSPORE_LITE_VERSION}/MindSpore/lite/release/linux/centos_x86/cloud_fusion/mindspore_lite-${MINDSPORE_LITE_VERSION/-/}-cp37-cp37m-linux_${arch}.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
 fi
 # Check MindSpore Lite installation
 python -c "import mindspore_lite"

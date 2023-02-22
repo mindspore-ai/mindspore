@@ -26,7 +26,7 @@ context.append_device_info(cpu_device_info)
 MODEL_PATH = "./model/mobilenetv2.mindir"
 IN_DATA_PATH = "./model/input.bin"
 model = mslite.Model()
-model.build_from_file(MODEL_PATH, mslite.ModelType.MINDIR_LITE, context)
+model.build_from_file(MODEL_PATH, mslite.ModelType.MINDIR, context)
 # set model input
 inputs = model.get_inputs()
 in_data = np.fromfile(IN_DATA_PATH, dtype=np.float32)
