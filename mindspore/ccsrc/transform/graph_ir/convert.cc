@@ -493,7 +493,7 @@ DfGraphConvertor &DfGraphConvertor::InitParam(const TensorOrderMap &tensors) {
     return *this;
   }
 
-  // Processing input with MakeDatasetHandler and check whether input is dynamic
+  // Processing input with MakeDatasetHandler
   for (auto &it : anf_graph_->parameters()) {
     auto op_itor = op_cache_.find(it.get());  // converted node
     if (it->isa<Parameter>()) {
@@ -503,7 +503,6 @@ DfGraphConvertor &DfGraphConvertor::InitParam(const TensorOrderMap &tensors) {
       if (tensor_itor == tensors.end()) {
         if (op_itor != op_cache_.end()) {
           MakeDatasetHandler(name, input_idx, it);
-          AddGraphDynamicInput(param);
         }
         input_idx++;
       }
@@ -2114,17 +2113,41 @@ void DfGraphConvertor::SetNodeInput(const AnfNodePtr node) {
   DfGraphConvertor::SetOpInput(adpt, cnode);
 }
 
-void DfGraphConvertor::AddGraphDynamicInput(const ParameterPtr &param) {
-  MS_EXCEPTION_IF_NULL(param);
-  const auto &base_shape = param->Shape();
-  MS_EXCEPTION_IF_NULL(base_shape);
-  const auto &shape = base_shape->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape);
-  const auto &sv = shape->shape();
-  if (std::any_of(sv.cbegin(), sv.cend(), [](const auto e) { return e == -1; })) {
-    dynamic_shape_inputs_ = true;
+void DfGraphConvertor::AddGraphDynamicInputs(const AnfNodePtrList &params) {
+  std::vector<std::pair<std::string, BaseShapePtr>> unsupported_inputs;
+  for (const auto &input : params) {
+    MS_EXCEPTION_IF_NULL(input);
+    const auto param = input->cast<ParameterPtr>();
+    if (param != nullptr && !param->has_default()) {
+      const auto &base_shape = param->Shape();
+      MS_EXCEPTION_IF_NULL(base_shape);
+      const auto &shape = base_shape->cast<abstract::ShapePtr>();
+      if (shape == nullptr) {
+        (void)unsupported_inputs.emplace_back(param->name(), base_shape);
+        continue;
+      }
+      const auto &sv = shape->shape();
+      dynamic_shape_inputs_ |= std::any_of(sv.cbegin(), sv.cend(), [](const auto e) { return e == -1; });
+      (void)input_shapes_.emplace_back(sv);
+    }
   }
-  (void)input_shapes_.emplace_back(sv);
+  // failback to static inputs if inputs contains unsupported shapes
+  if (unsupported_inputs.size() > 0) {
+    dynamic_shape_inputs_ = false;
+    input_shapes_.clear();
+    std::ostringstream inputs_info;
+    inputs_info << "[";
+    for (size_t i = 0; i < unsupported_inputs.size(); ++i) {
+      if (i != 0) {
+        inputs_info << ", ";
+      }
+      const auto &p = unsupported_inputs[i];
+      inputs_info << "'" << p.first << "'"
+                  << ": " << p.second->ToString();
+    }
+    inputs_info << "]";
+    MS_LOG(INFO) << "Fallback to static inputs because following inputs shapes are unsupported: " << inputs_info.str();
+  }
 }
 
 std::string DfGraphConvertor::GetGNodeName(const ::ge::GNode &node) const {

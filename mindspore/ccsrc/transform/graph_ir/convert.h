@@ -98,10 +98,14 @@ class DfGraphConvertor {
     }
     is_kernel_graph_ = anf_graph_->type_name() == kKernelGraphTypeName;
     df_graph_ = std::make_shared<DfGraph>(anf_graph_->ToString());
+
+    AddGraphDynamicInputs(anf_graph_->parameters());
+
     std::string graph_type = is_kernel_graph_ ? "kernel_graph" : "func_graph";
     std::string graph_name = anf_graph_->ToString();
     MS_LOG(INFO) << "Create DfGraphConvertor with graph: " << graph_name << "(type: " << graph_type << ")"
-                 << ", training: " << training_ << ", distribute: " << distribute_;
+                 << ", training: " << training_ << ", dynamic input: " << dynamic_shape_inputs_
+                 << ", distribute: " << distribute_;
   }
 
   ~DfGraphConvertor() {}
@@ -212,7 +216,7 @@ class DfGraphConvertor {
   void UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
   void UpdateConstOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
   void AddGraphConstInput(const OperatorPtr &op);
-  void AddGraphDynamicInput(const ParameterPtr &param);
+  void AddGraphDynamicInputs(const AnfNodePtrList &params);
   AnfNodePtr ParseLoadInput(const CNodePtr &cnode) const;
   void SetGraphInputs(std::vector<Operator> *inputs);
   void TransformConstOp(const CNodePtr &node, const AnfNodePtr &pred);
