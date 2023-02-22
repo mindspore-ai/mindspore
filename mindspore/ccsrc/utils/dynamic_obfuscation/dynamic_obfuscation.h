@@ -24,6 +24,7 @@
 #include <set>
 #include "load_mindir/load_model.h"
 #include "include/common/visible.h"
+#include "include/common/utils/utils.h"
 #include "ops/core_ops.h"
 
 namespace mindspore {
@@ -70,9 +71,9 @@ class COMMON_EXPORT DynamicObfuscator {
   int subgraph_obf_num_ = 0;
   bool switch_branch_ = true;
   const std::vector<std::string> single_input_target_op_ = {
-    "ReLU-op",     "Sigmoid-op", "ReLU6-op", "Softplus-op", "HSigmoid-op", "FastGeLU-op", "HSwish-op",
-    "Softsign-op", "SeLU-op",    "Tanh-op",  "Square-op",   "AvgPool-op",  "MaxPool-op"};
-  const std::vector<std::string> single_input_with_weight_target_op_ = {"Conv2D-op", "MatMul-op"};
+    kReLUOpName,     kSigmoidOpName, kReLU6OpName, kSoftplusOpName, kHSigmoidOpName, kFastGeLUOpName, kHSwishOpName,
+    kSoftsignOpName, kSeLUOpName,    kTanhOpName,  kSquareOpName,   kAvgPoolOpName,  kMaxPoolOpName};
+  const std::vector<std::string> single_input_with_weight_target_op_ = {kConv2DOpName, kMatMulOpName};
   const std::vector<PrimitivePtr> one_input_prim_ = {
     mindspore::prim::kPrimReLU,     mindspore::prim::kPrimSigmoid,  mindspore::prim::kPrimReLU6,
     mindspore::prim::kPrimSoftplus, mindspore::prim::kPrimHSigmoid, mindspore::prim::kPrimFastGeLU,
