@@ -40,9 +40,38 @@ constexpr auto kAVectorxDimNum = 1;
 constexpr auto kAMatrixDimNum = 2;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
-void MatrixTriangularSolveCpuKernelMod::InitShape(const CNodePtr &kernel_node) {
-  auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+
+bool MatrixTriangularSolveCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSolveTriangularInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSolveTriangularOutputsNum, kernel_name_);
+
+  trans_ = GetValue<bool>(prim->GetAttr(ADJOINT));
+  lower_ = GetValue<bool>(prim->GetAttr(LOWER));
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int MatrixTriangularSolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                              const std::vector<KernelTensorPtr> &inputs,
+                                              const std::vector<KernelTensorPtr> &outputs,
+                                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto a_shape = inputs[0]->GetShapeVector();
+  auto b_shape = inputs[1]->GetShapeVector();
   // Since the shape check is done in frontend, we can suppose that the shape of a, b here is valid.
   size_t a_dims = a_shape.size();
   size_t aRowIndex = a_dims - kRowIndex;
@@ -58,20 +87,7 @@ void MatrixTriangularSolveCpuKernelMod::InitShape(const CNodePtr &kernel_node) {
   for (size_t batch = 0; batch < a_dims - kRowIndex; ++batch) {
     batch_ *= a_shape[batch];
   }
-}
-
-void MatrixTriangularSolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  InitShape(kernel_node);
-  trans_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJOINT);
-  lower_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "MatrixTriangularSolve does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename Derived_a, typename Derived_b, typename T>
@@ -97,9 +113,6 @@ template <typename T>
 bool MatrixTriangularSolveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                      const std::vector<AddressPtr> &,
                                                      const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSolveTriangularInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSolveTriangularOutputsNum, kernel_name_);
-
   auto a_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto b_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);

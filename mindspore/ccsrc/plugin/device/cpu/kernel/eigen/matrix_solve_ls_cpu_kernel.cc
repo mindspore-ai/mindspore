@@ -367,7 +367,6 @@ bool MatrixSolveLsCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", does not support this kernel data type: " << kernel_attr;
-    return false;
   }
   kernel_func_ = func_list_[index].second;
   return true;
