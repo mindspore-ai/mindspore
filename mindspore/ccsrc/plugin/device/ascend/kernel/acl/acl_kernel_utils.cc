@@ -183,7 +183,7 @@ void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vec
   MS_EXCEPTION_IF_NULL(node);
   const auto &input_names = AclUtils::GetOpInputAnchorNames(node);
   input_tensor_data_.clear();
-  input_tensor_data_.resize(input_names.size(), aclCreateDataBuffer(nullptr, 0));
+  input_tensor_data_.resize(input_names.size(), nullptr);
   for (size_t i = 0; i < inputs.size(); i++) {
     auto idx = AclUtils::GetInputKernelIdxByGraphIdx(node, i);
     if (idx < 0) {
@@ -194,7 +194,9 @@ void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vec
                         << ", node:" << node->fullname_with_scope();
     }
     if (input_size_list[idx] == kSizeMax) {
-      CreateNullAclTensor(idx, true);
+      if (input_tensor_desc_[idx] != nullptr || common::AnfAlgo::IsNoneInput(node, i)) {
+        CreateNullAclTensor(idx, true);
+      }
       continue;
     }
     input_tensor_data_[idx] = CreateDataBuf(inputs[i], input_size_list[idx]);

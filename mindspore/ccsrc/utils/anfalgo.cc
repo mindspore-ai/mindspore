@@ -1562,17 +1562,17 @@ bool AnfAlgo::IsNonTaskOp(const CNodePtr &node) {
 }
 
 bool AnfAlgo::IsNoneInput(const AnfNodePtr &node, size_t index) {
-  auto op_name = GetCNodeName(node);
-  constexpr auto none_placeholder_index = 3;
-  if (op_name == kDynamicRNNOpName && index == none_placeholder_index) {
-    return true;
+  MS_EXCEPTION_IF_NULL(node);
+  static std::set<std::string> node_set = {kDynamicRNNOpName, kDynamicGRUV2OpName};
+  auto cnode_name = common::AnfAlgo::GetCNodeName(node);
+  if (node_set.find(cnode_name) == node_set.end()) {
+    return false;
   }
-  if (op_name == kDynamicGRUV2OpName) {
-    auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
-    auto item = std::find(none_index.begin(), none_index.end(), index);
-    if (item != none_index.end()) {
-      return true;
-    }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (common::AnfAlgo::HasNodeAttr(kAttrPlaceHolderIndex, cnode)) {
+    auto none_index = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
+    return find(none_index.begin(), none_index.end(), index) != none_index.end();
   }
   return false;
 }
