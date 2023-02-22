@@ -67,6 +67,7 @@ int SparseAddGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   ResetResource();
   auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  indices_column_ = inputs.at(1)->GetShapeVector()[1];
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     if (input_size_list_.size() != kInputNum) {
       MS_LOG(ERROR) << "Input size list should be " << kInputNum << ", but got " << input_size_list_.size();
@@ -104,6 +105,26 @@ int SparseAddGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T, typename S>
+int SparseAddGradCpuKernelMod::CompareTwoIndices(const T &a_indices, const T &b_indices, const S *backprop_value,
+                                                 int64_t *a_row, const int64_t b_row, const size_t dims, S *dx_value,
+                                                 bool *idx_geq) {
+  for (int64_t dim = 0; dim < SizeToLong(dims); dim++) {
+    auto a_idx = a_indices[*a_row * dims + dim];
+    auto b_idx = b_indices[b_row * dims + dim];
+    if (a_idx < b_idx) {
+      *idx_geq = false;
+      *a_row += 1;
+      return -1;
+    } else if (a_idx > b_idx) {
+      return 1;
+    }
+  }
+  dx_value[*a_row] = backprop_value[b_row];
+  *a_row += 1;
+  return 0;
+}
+
+template <typename T, typename S>
 bool SparseAddGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &workspace,
                                              const std::vector<kernel::AddressPtr> &outputs) {
@@ -124,37 +145,40 @@ bool SparseAddGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   auto dx1 = reinterpret_cast<T *>(outputs[kDx1Idx]->addr);
   auto dx2 = reinterpret_cast<T *>(outputs[kDx2Idx]->addr);
 
-  const int64_t x1_indices_num = inputs[kX1IndicesIdx]->size / (sizeof(S) * 2);
-  const int64_t x2_indices_num = inputs[kX2IndicesIdx]->size / (sizeof(S) * 2);
-  const int64_t out_indices_num = inputs[kOutIndicesIdx]->size / (sizeof(S) * 2);
+  const int64_t x1_indices_num = inputs[kX1IndicesIdx]->size / (sizeof(S) * indices_column_);
+  const int64_t x2_indices_num = inputs[kX2IndicesIdx]->size / (sizeof(S) * indices_column_);
+  const int64_t out_indices_num = inputs[kOutIndicesIdx]->size / (sizeof(S) * indices_column_);
 
-  auto arrayHash = [fn = std::hash<int>{}](const std::array<int, 2> &arr) -> size_t {
-    return std::accumulate(arr.begin(), arr.end(), 0u, [&](size_t acc, int num) { return (acc << 1) ^ fn(num); });
-  };
+  memset(dx1, 0, sizeof(T) * x1_indices_num);
+  memset(dx2, 0, sizeof(T) * x2_indices_num);
 
-  constexpr int dimension_difference = 2;
-  std::unordered_map<std::array<int, 2>, int, decltype(arrayHash)> out_map(0, arrayHash);
-  for (int i = 0; i < out_indices_num * dimension_difference; i += dimension_difference) {
-    std::array<int, 2> index{};
-    index[0] = out_indices[i];
-    index[1] = out_indices[i + 1];
-    out_map[index] = static_cast<int>(i / dimension_difference);
-  }
+  int64_t i = 0;
+  int64_t j = 0;
+  int64_t k = 0;
+  bool a_idx_geq;
+  bool b_idx_geq;
 
-  for (int i = 0; i < x1_indices_num * dimension_difference; i += dimension_difference) {
-    std::array<int, 2> index{};
-    index[0] = x1_indices[i];
-    index[1] = x1_indices[i + 1];
-    if (out_map.find(index) != out_map.end()) {
-      dx1[static_cast<int>(i / dimension_difference)] = dout[out_map[index]];
+  while (i < x1_indices_num && j < x2_indices_num && k < out_indices_num) {
+    a_idx_geq = b_idx_geq = true;
+    CompareTwoIndices(x1_indices, out_indices, dout, &i, k, indices_column_, dx1, &a_idx_geq);
+    CompareTwoIndices(x2_indices, out_indices, dout, &j, k, indices_column_, dx2, &b_idx_geq);
+    if (a_idx_geq && b_idx_geq) {
+      k += 1;
     }
   }
-  for (int i = 0; i < x2_indices_num * dimension_difference; i += dimension_difference) {
-    std::array<int, 2> index{};
-    index[0] = x2_indices[i];
-    index[1] = x2_indices[i + 1];
-    if (out_map.find(index) != out_map.end()) {
-      dx2[static_cast<int>(i / dimension_difference)] = dout[out_map[index]];
+  while (i < x1_indices_num && k < out_indices_num) {
+    a_idx_geq = true;
+    CompareTwoIndices(x1_indices, out_indices, dout, &i, k, indices_column_, dx1, &a_idx_geq);
+    if (a_idx_geq) {
+      k += 1;
+    }
+  }
+
+  while (j < x2_indices_num && k < out_indices_num) {
+    b_idx_geq = true;
+    CompareTwoIndices(x2_indices, out_indices, dout, &j, k, indices_column_, dx2, &b_idx_geq);
+    if (b_idx_geq) {
+      k += 1;
     }
   }
 

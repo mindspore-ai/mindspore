@@ -80,6 +80,7 @@ class SparseAddGradHelperGpuKernel : public GpuKernelHelperBase {
     input_size_list_.push_back(sum_indices_size_ * index_bytes_);
     output_size_list_.push_back(x1_index_num_ * value_bytes_);
     output_size_list_.push_back(x2_index_num_ * value_bytes_);
+    work_size_list_.push_back(dim_ * index_bytes_);
     return 0;
   }
 
@@ -95,6 +96,7 @@ class SparseAddGradHelperGpuKernel : public GpuKernelHelperBase {
     T *out_indices_ptr = nullptr;
     S *dx1_ptr = nullptr;
     S *dx2_ptr = nullptr;
+    T *temp_save_ptr = nullptr;
     int flag = GetDeviceAddress<S>(input_ptrs, kSparseAddGradIndex0, kernel_name_, &dout_ptr);
     if (flag != 0) {
       return flag;
@@ -124,13 +126,19 @@ class SparseAddGradHelperGpuKernel : public GpuKernelHelperBase {
     if (flag != 0) {
       return flag;
     }
+
+    flag = GetDeviceAddress<T>(work_ptrs, kSparseAddGradIndex0, kernel_name_, &temp_save_ptr);
+    if (flag != 0) {
+      return flag;
+    }
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream)),
                                        "For SparseAddGrad, cudaStreamSynchronize failed.");
     // call cuda kernel
     MS_LOG(INFO) << "For SparseAddGrad, x1_index_num_, x2_index_num_, sum_index_num_, dim_ " << x1_index_num_ << ", "
                  << x2_index_num_ << ", " << sum_index_num_ << ", " << dim_;
     CalSparseAddGrad(dout_ptr, x1_indices_ptr, x1_index_num_, x2_indices_ptr, x2_index_num_, out_indices_ptr,
-                     sum_index_num_, dx1_ptr, dx2_ptr, dim_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+                     sum_index_num_, temp_save_ptr, dx1_ptr, dx2_ptr, dim_, device_id_,
+                     reinterpret_cast<cudaStream_t>(cuda_stream));
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream)),
                                        "For SparseAddGrad, cudaStreamSynchronize failed.");
     return 0;
