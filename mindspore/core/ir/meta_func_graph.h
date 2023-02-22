@@ -38,7 +38,7 @@ namespace mindspore {
 // generate a graph corresponding to these types.
 class MS_CORE_API MetaFuncGraph : public FuncGraphBase {
  public:
-  explicit MetaFuncGraph(const std::string &name) : name_("MetaFuncGraph-" + name) {
+  explicit MetaFuncGraph(const std::string &name) : name_(name) {
     cache_.clear();
     debug_info_ = std::make_shared<DebugInfo>();
   }
@@ -65,6 +65,7 @@ class MS_CORE_API MetaFuncGraph : public FuncGraphBase {
   std::string name() { return name_; }
   std::string ToString() const override {
     std::ostringstream buffer;
+    buffer << "MetaFuncGraph-";
     buffer << name_;
     buffer << "." << debug_info_->get_id();
     return buffer.str();
