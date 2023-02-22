@@ -2208,7 +2208,8 @@ def polar(abs, angle):  # pylint: disable=redefined-outer-name
             Must be one of the following types: float32, float64.
 
     Returns:
-        Tensor, has the same shape and data type as `abs`.
+        Tensor, has the same shape as `abs`.If the inputs are float32,data type must be complex64.
+    If the inputs are float64,data type must be complex128.
 
     Raises:
         TypeError: If neither `abs` nor `angle` is a Tensor.
