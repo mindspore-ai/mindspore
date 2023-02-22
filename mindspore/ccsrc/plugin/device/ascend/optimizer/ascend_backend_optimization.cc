@@ -42,7 +42,6 @@
 #include "plugin/device/ascend/optimizer/ir_fission/renorm_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/tensor_scatter_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_clip_by_norm_fission.h"
-#include "plugin/device/ascend/optimizer/ir_fission/resize_linear1d_fission.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/dropout_gen_mask_fusion.h"
 #include "backend/common/pass/dynamic_sequence_ops_adaptation.h"
@@ -390,8 +389,6 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<RenormSplit>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<RemoveHostKernel>());
-  ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DFission>());
-  ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DGradFission>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
   AddAscendIRFusionPass(ir_fusion_pm.get());
 
@@ -488,8 +485,6 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<RemoveHostKernel>());
   ir_fusion_pm->AddPass(std::make_shared<PackFission>());
-  ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DFission>());
-  ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DGradFission>());
   const auto &pass_creators =
     opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFissionPass);
   for (const auto &pass_creator : pass_creators) {
