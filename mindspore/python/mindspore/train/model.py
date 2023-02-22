@@ -1027,7 +1027,7 @@ class Model:
         # Parameter server and embedding cache mode check.
         if _is_ps_mode():
             if not dataset_sink_mode and _cache_enable():
-                raise ValueError("Embedding cache mode should run with 'data_sink_mode=True'.")
+                raise ValueError("Embedding cache mode should run with 'dataset_sink_mode=True'.")
 
 
         Validator.check_is_int(sink_size)
