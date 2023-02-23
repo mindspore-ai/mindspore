@@ -68,7 +68,7 @@ std::vector<DeviceTensor *> MemorySwapActor::GetDeviceTensors(const std::vector<
     }
     device_tensors.emplace_back(device_tensors_to_swap_[index]);
   }
-  return std::move(device_tensors);
+  return device_tensors;
 }
 
 void MemorySwapActor::AllocDeviceContinuousMem(const std::vector<DeviceTensor *> &device_tensors) {
