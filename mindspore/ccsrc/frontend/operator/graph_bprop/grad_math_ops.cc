@@ -31,12 +31,6 @@ FuncGraphPtr MatMulBprop(const PrimitivePtr &primal, const AbstractBasePtrList &
   auto w = parameters[kIndex1];
   auto dout = parameters[kIndex3];
 
-  auto x_origin_type = GetTensorDType(input_abs[0]);
-  if (x_origin_type == kNumberTypeComplex64 || x_origin_type == kNumberTypeComplex128) {
-    x = NewNode(fg, {Conj(), x});
-    w = NewNode(fg, {Conj(), w});
-  }
-
   auto ta = GetAttr<bool>(primal, "transpose_a");
   auto tb = GetAttr<bool>(primal, "transpose_b");
   auto mul1 = MatMul(fg, ta && tb, ta || !tb);

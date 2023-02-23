@@ -43,13 +43,13 @@ void MatmulDoubleCpuKernelFunc::ComputeMatMulOutput(T *a_addr, T *b_addr, T *out
   if (kernel_name_ == prim::kPrimMatMul->name()) {
     if (trans_a_) {
       if (trans_b_) {
-        output.noalias() = input0.transpose() * input1.transpose();
+        output.noalias() = input0.adjoint() * input1.adjoint();
       } else {
-        output.noalias() = input0.transpose() * input1;
+        output.noalias() = input0.adjoint() * input1;
       }
     } else {
       if (trans_b_) {
-        output.noalias() = input0 * input1.transpose();
+        output.noalias() = input0 * input1.adjoint();
       } else {
         output.noalias() = input0 * input1;
       }

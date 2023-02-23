@@ -78,20 +78,15 @@ REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
   NodePtr dx;
   NodePtr dw;
-  auto x_dtype_id = ib->GetDtypeId(x);
-  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    MS_EXCEPTION(TypeError) << "For 'MatMul', gradient not support for complex type currently.";
+  if (ta) {
+    dx = ib->MatMul(w, dout, (ta && tb), (ta || (!tb)));
   } else {
-    if (ta) {
-      dx = ib->MatMul(w, dout, (ta && tb), (ta || (!tb)));
-    } else {
-      dx = ib->MatMul(dout, w, (ta && tb), (ta || (!tb)));
-    }
-    if (tb) {
-      dw = ib->MatMul(dout, x, ((!ta) || tb), (ta && tb));
-    } else {
-      dw = ib->MatMul(x, dout, ((!ta) || tb), (ta && tb));
-    }
+    dx = ib->MatMul(dout, w, (ta && tb), (ta || (!tb)));
+  }
+  if (tb) {
+    dw = ib->MatMul(dout, x, ((!ta) || tb), (ta && tb));
+  } else {
+    dw = ib->MatMul(x, dout, ((!ta) || tb), (ta && tb));
   }
   return {dx, dw};
 });
