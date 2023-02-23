@@ -5662,7 +5662,7 @@ def frac(x):
 #####################################
 
 
-@constexpr
+@_primexpr
 def _create_cummin_perm(axis, x_shape):
     """Insure axis is in [-len(x_shape),len(s_shape)-1]"""
     len_axis = len(x_shape)

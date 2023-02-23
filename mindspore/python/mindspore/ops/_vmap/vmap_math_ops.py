@@ -19,7 +19,7 @@ from __future__ import absolute_import
 import mindspore.numpy as mnp
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.common import Tensor
 from mindspore.ops.operations import math_ops
 from mindspore.ops.operations import linalg_ops
@@ -33,7 +33,7 @@ from mindspore.ops.operations.math_ops import Bernoulli, BesselI0, BesselI1, Bes
     BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1, BesselK1e, Median
 
 
-@constexpr
+@_primexpr
 def _broadcast_shape(nd, x_ndim, x_shape):
     return x_shape + (1,) * (nd - x_ndim)
 
@@ -436,7 +436,7 @@ def get_median_vmap_rule(prim, axis_size):
     axis = prim.axis
     keep_dims = prim.keep_dims
 
-    @constexpr
+    @_primexpr
     def trans_axis(axis, rank, dim, keep_dims):
         if axis < 0:
             axis += rank - 1
@@ -464,7 +464,7 @@ def get_index_add_vmap_rule(prim, axis_size):
     """VmapRule for IndexAdd."""
     axis = prim.axis
 
-    @constexpr
+    @_primexpr
     def _get_index_add_batch_axis(axis, x_dim, x_ndim):
         """get batch_axis for IndexAdd."""
         # case1: batch not exists

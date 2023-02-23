@@ -421,7 +421,7 @@ def check_indices(indices_size, index):
     return indices_size
 
 
-@constexpr
+@_primexpr
 def check_indices_value_size(indices_size, value_size):
     """Checks if the sizes are already matched."""
     if value_size < 1:
@@ -478,7 +478,7 @@ def check_tensors_dtype_same(data_dtype, value_dtype, op_name):
                     f"is not consistent with assigned tensor data type {data_dtype}.")
 
 
-@constexpr
+@_primexpr
 def get_broadcast_shape(x_shape, y_shape, prim_name):
     """Get broadcast shape from input shapes."""
     if x_shape is None or y_shape is None:
@@ -522,13 +522,13 @@ def generate_broadcast_shape(shapes, op_name):
     return tuple(broadcast_shape)
 
 
-@constexpr
+@_primexpr
 def check_two_shapes_need_broadcast(shape_x, shape_y):
     """Check shape_y needs to be broadcast to shape_x."""
     return shape_y != shape_x
 
 
-@constexpr
+@_primexpr
 def compute_multiples(origin_shape, broadcast_shape):
     """Compute multiples between origin shape with broadcast shape."""
     len_gap = len(broadcast_shape) - len(origin_shape)
@@ -625,7 +625,7 @@ def check_number_index_type(number):
                      .format(number, type(number)))
 
 
-@constexpr
+@_primexpr
 def get_stride_info_from_slice(data_shape, slice_index):
     """Get stride info from a python slice"""
     begin, end, step = get_slice_stride(slice_index, data_shape[0])
@@ -726,7 +726,7 @@ def unpack(x):
     return x
 
 
-@constexpr
+@_primexpr
 def normalize_start(start, dim_size):
     """
     Normalize `start` according to the number of dimensions (`dim_size`).
@@ -741,7 +741,7 @@ def normalize_start(start, dim_size):
     return start if start < dim_size else dim_size
 
 
-@constexpr
+@_primexpr
 def normalize_stop(stop, dim_size):
     """
     Normalize `stop` according to the number of dimensions (`dim_size`).
@@ -767,7 +767,7 @@ def get_step_from_slice(input_slice):
     return step
 
 
-@constexpr
+@_primexpr
 def normalize_slice(input_slice, dim_size):
     """Normalizes start, stop, step in a slice."""
     step = input_slice.step
@@ -846,7 +846,7 @@ def sequence_to_index(sequence, dim_size):
     return make_tensor(sequence, mstype.int64, None, dim_size)
 
 
-@constexpr
+@_primexpr
 def int_to_index(i, shape):
     """Converts integer to tensor indices."""
     dim_size = shape[0]
@@ -886,12 +886,12 @@ def rem_not_expanded_dims(idx_advanced, expand_true, tensor_index_ndim, rem_ndim
     return not_expanded_dim, idx_advanced
 
 
-@constexpr
+@_primexpr
 def check_slice_empty(start, stop, step):
     return (start - stop)*step >= 0
 
 
-@constexpr
+@_primexpr
 def real_axes(ndim_orig, ndim_out, axes_orig):
     """Returns the real axes to be reduced after performing broadcast"""
     _diff = ndim_out - ndim_orig
@@ -903,7 +903,7 @@ def real_axes(ndim_orig, ndim_out, axes_orig):
 check_axis_valid_const = constexpr(validator.check_axis_valid)
 
 
-@constexpr
+@_primexpr
 def compute_slice_shape(slice_shape, broadcast_shape_len, slice_cnt, fancy_position):
     """Computes slice tensor shapes"""
     shape = [1] * len(slice_shape)
@@ -974,7 +974,7 @@ def promote_binary_dtype(dtype_1, dtype_2):
     return get_output_dtype(dtype_1, dtype_2, False)
 
 
-@constexpr
+@_primexpr
 def generate_padding_shape(shape, length):
     """
     pad the `shape` to `length` with 1.

@@ -25,7 +25,7 @@ from numpy import dtype as nptype
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.common import dtype as mstype
 from mindspore.common import Tensor
 from mindspore._c_expression import typing
@@ -2406,7 +2406,7 @@ def _real_axes(ndim_orig, ndim_out, axes_orig):
     return axes + tuple(axes_orig)
 
 
-@constexpr
+@_primexpr
 def _shape_reduced_keepdims(shape, axes):
     """
     Reduces dimensions corresponding to argument axes while
@@ -2420,7 +2420,7 @@ def _shape_reduced_keepdims(shape, axes):
     return tuple(shape_out)
 
 
-@constexpr
+@_primexpr
 def _shape_reduced(shape, axes):
     """Removes dimensions corresponding to argument axes"""
     ndim_orig = F.tuple_len(shape)
@@ -4111,7 +4111,7 @@ def _min_cost_chain_matmul(dims):
     return s
 
 
-@constexpr
+@_primexpr
 def _get_dims(shapes):
     """
     Returns the chain of the dimensions in arrays.

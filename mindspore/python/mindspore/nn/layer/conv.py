@@ -20,7 +20,7 @@ import numpy as np
 from mindspore import log as logger
 from mindspore import context
 from mindspore.ops import operations as P
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
@@ -487,7 +487,7 @@ class Conv1d(_Conv):
         return output
 
 
-@constexpr
+@_primexpr
 def _check_input_5dims(input_shape, op_name):
     if len(input_shape) != 5:
         raise ValueError(f"For '{op_name}', the dimension of input must be 5d, but got {len(input_shape)}.")

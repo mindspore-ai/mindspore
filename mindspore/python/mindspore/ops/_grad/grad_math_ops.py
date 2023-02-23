@@ -29,7 +29,6 @@ from mindspore.ops._grad.grad_base import bprop_getters, create_tensor_by_elemen
 from mindspore.ops._grad.grad_base import convert_to_tensor
 from mindspore.ops._grad.grad_base import sum_grad_reduce_axis, dyn_fill, dyn_rank
 from mindspore.ops._grad.grad_base import dyn_ones, dyn_rank_1d
-from mindspore.ops.primitive import constexpr
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs, IsSubClass, DynamicBroadcastTo
@@ -885,7 +884,7 @@ def _split_shape_index(input_shape, axis):
     return tuple([reduced_num, other_num]), perm
 
 
-@constexpr
+@_primexpr
 def _invert_permutation(perm):
     """Calculate invert permutation."""
     out = [0] * len(perm)

@@ -28,7 +28,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.seed import get_seed
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.nn.layer.basic import tril as nn_tril
 from mindspore.nn.layer.basic import triu as nn_triu
 from mindspore._c_expression import Tensor as Tensor_
@@ -2563,13 +2563,13 @@ def _pad_func(arr, pad_width, func, **kwargs):
     return arr
 
 
-@constexpr
+@_primexpr
 def _make_stat_length(shape):
     """converts the stat_length values."""
     return tuple((shape[i], shape[i]) for i, _ in enumerate(shape))
 
 
-@constexpr
+@_primexpr
 def _limit_stat_length(stat_length, shape):
     """limits the stat_length to current array length along given dimension."""
     return tuple((min(stat_pair[0], shape[i]), min(stat_pair[1], shape[i])) for i, stat_pair in enumerate(stat_length))

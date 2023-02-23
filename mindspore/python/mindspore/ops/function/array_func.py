@@ -6536,7 +6536,7 @@ def _check_axis_range(arg_value, limit, arg_name, op_name):
     return arg_value
 
 
-@constexpr
+@_primexpr
 def _cal_repeat_dims(x_rank, rep, expand_axis):
     rep_dims = [1] * (x_rank + 1)
     rep_dims[expand_axis] = rep

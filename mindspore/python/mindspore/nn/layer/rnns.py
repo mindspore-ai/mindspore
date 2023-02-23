@@ -23,7 +23,7 @@ import mindspore.ops as P
 import mindspore.context as context
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import ParameterTuple, Parameter
 from mindspore.nn.cell import Cell
@@ -35,7 +35,7 @@ from mindspore.nn.layer.rnn_cells import _rnn_relu_cell, _rnn_tanh_cell, _gru_ce
 __all__ = ['LSTM', 'GRU', 'RNN']
 
 
-@constexpr
+@_primexpr
 def _init_state(shape, dtype, is_lstm):
     hx = P.Zeros()(shape, dtype)
     cx = P.Zeros()(shape, dtype)

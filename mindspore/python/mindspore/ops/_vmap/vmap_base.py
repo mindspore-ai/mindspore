@@ -21,6 +21,7 @@ from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.ops.operations import math_ops
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import nn_ops as nps
@@ -41,7 +42,7 @@ def get_vmap_rule(prim, axis_size):
     return None
 
 
-@constexpr
+@_primexpr
 def _get_broadcast_shape_with_front_axis(x_shape, y_shape):
     """ Explicitly matched with the broadcast shape, that is, 1 is added to the broadcast position. """
     x_len = len(x_shape)
@@ -86,7 +87,7 @@ def _handle_broadcasting(x, x_shape, y_shape):
     return F.reshape(x, broadcast_shape)
 
 
-@constexpr
+@_primexpr
 def _get_broadcasting_with_front_axis_additional_axis(x_shape, y_shape):
     """ Get the axes that are inserted after broadcasting.
     Args:
@@ -129,7 +130,7 @@ def _raise_value_error(info, param=None):
     raise ValueError(info + f"{param}")
 
 
-@constexpr
+@_primexpr
 def _get_broadcast_shape(x_shape, dst, axis_size):
     """Get the target shape for broadcast array."""
     x_ndim = len(x_shape)
@@ -434,7 +435,7 @@ def _vmap_clone_prim(prim):
     return cloned
 
 
-@constexpr
+@_primexpr
 def _get_reduce_batch_axis(axis, x_dim, x_ndim):
     """get batch_axis for reduce* operation."""
     # For axis, it's value in Union[int, list, tuple]

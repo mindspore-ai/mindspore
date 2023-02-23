@@ -17,7 +17,7 @@
 from __future__ import absolute_import
 
 from mindspore.ops import functional as F
-from mindspore.ops import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, \
@@ -36,7 +36,7 @@ def get_broadcast_binary_op_grad_vmap_rule(prim, axis_size):
     if isinstance(prim, str):
         prim = broadcast_binary_op_grad_map.get(prim)()
 
-    @constexpr
+    @_primexpr
     def get_longest_shape(x_shape, y_shape, g_shape):
         x_rank = len(x_shape)
         y_rank = len(y_shape)
@@ -148,7 +148,7 @@ def get_median_grad_vmap_rule(prim, axis_size):
     axis = prim.axis
     keep_dims = prim.keep_dims
 
-    @constexpr
+    @_primexpr
     def trans_grad_axis(axis, rank, dim, keep_dims):
         if axis < 0:
             axis += rank - 1

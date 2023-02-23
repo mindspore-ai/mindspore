@@ -126,7 +126,7 @@ def _int_to_tuple_conv(axes):
     return axes
 
 
-@constexpr
+@_primexpr
 def _check_axes(axes, prim_name=None):
     """
     Check for validity and type of axes passed to function.
@@ -278,7 +278,7 @@ def _typecheck_input_dot(x1_type, x2_type, prim_name=None):
                         f"x1_type: {x1_type} and x2_type: {x2_type}.")
 
 
-@constexpr
+@_primexpr
 def _get_transpose_shape(x2_shape):
     x2_shape_range = tuple(range(len(x2_shape)))
     x2_shape_transpose = x2_shape_range[-2:-1] + x2_shape_range[:-2] + x2_shape_range[-1:]
@@ -398,7 +398,7 @@ def _typecheck_input_batch_dot(x1_type, x2_type, prim_name=None):
                         f"x2_type: {x2_type}.")
 
 
-@constexpr
+@_primexpr
 def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
     """
     Check whether axes are valid and cast axes from tuple to list
@@ -425,7 +425,7 @@ def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
     return axes
 
 
-@constexpr
+@_primexpr
 def _calc_new_shape_batchdot(shape, axes, position=0):
     """
     Calculate transpose and reshape parameters for input transformations,
@@ -449,7 +449,7 @@ def _calc_new_shape_batchdot(shape, axes, position=0):
     return new_shape, transpose_perm, free_dims
 
 
-@constexpr
+@_primexpr
 def _check_batch_size(x1_batch_size, x2_batch_size, prim_name=None):
     """
     Check whether batch size of two inputs are the same
@@ -460,7 +460,7 @@ def _check_batch_size(x1_batch_size, x2_batch_size, prim_name=None):
                          f"'x1_batch_size': {x1_batch_size} and 'x2_batch_size': {x2_batch_size}.")
 
 
-@constexpr
+@_primexpr
 def _get_output_shape(batch_size, x1_ret, x2_ret):
     """
     Compute output shape for batch dot
