@@ -405,7 +405,7 @@ def get_grad(gradients, identifier):
         >>> out_grad = grad(net, grad_position=(1, 2), return_ids=True)(x, y, z)
         >>> output = get_grad(out_grad, 1)
         >>> print(output)
-        Tensor(shape=[2], dtype=Float32, value=[0.00000000e+00,  6.00000000e+00]
+        [0. 6.]
     """
     return inner.GetGrad()(gradients, identifier)
 

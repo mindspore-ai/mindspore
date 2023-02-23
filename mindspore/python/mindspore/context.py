@@ -863,9 +863,9 @@ def set_context(**kwargs):
             Available values are:
 
             - False or 0: disable saving of intermediate compilation graphs.
-            - True or 1: some intermediate files will be generated during graph compliation.
-            - 2: Generate more ir files related to backend process.
-            - 3: Generate visualization computing graphs and detailed backend ir graphs.
+            - 1: some intermediate files will be generated during graph compliation.
+            - True or 2: Generate more ir files related to backend process.
+            - 3: Generate visualization computing graphs and detailed frontend ir graphs.
 
             When the `save_graphs` attribute is set as True, 1, 2 or 3, attribute of `save_graphs_path` is used
             to set the intermediate compilation graph storage path. By default, the graphs are saved in the current
