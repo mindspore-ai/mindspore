@@ -649,14 +649,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   }
   (*ge_options)["graphType"] = "1";
 
-  if (ms_context_ptr->get_param<std::string>(MS_CTX_GRAPH_MEMORY_MAX_SIZE) != "0") {
-    (*ge_options)["ge.graphMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_GRAPH_MEMORY_MAX_SIZE);
-  }
-
-  if (ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE) != "0") {
-    (*ge_options)["ge.variableMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
-  }
-
   bool training = IsGeTrain();
   if (training) {
     (*ge_options)["ge.graphRunMode"] = "1";
@@ -792,6 +784,18 @@ bool GeDeviceContext::FinalizeGe(const std::shared_ptr<MsContext> &inst_context)
   return true;
 }
 
+void GeDeviceResManager::GeSetContextOptions(const std::shared_ptr<MsContext> &ms_context_ptr,
+                                             transform::SessionOptions *options) {
+  MS_EXCEPTION_IF_NULL(options);
+  if (ms_context_ptr->get_param<std::string>(MS_CTX_GRAPH_MEMORY_MAX_SIZE) != "0") {
+    (*options)["ge.graphMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_GRAPH_MEMORY_MAX_SIZE);
+  }
+
+  if (ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE) != "0") {
+    (*options)["ge.variableMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
+  }
+}
+
 void GeDeviceResManager::CreateSessionAndGraphRunner(bool is_training) {
   std::shared_ptr<::ge::Session> sess = transform::GetGeSession();
   if (sess == nullptr) {
@@ -806,6 +810,10 @@ void GeDeviceResManager::CreateSessionAndGraphRunner(bool is_training) {
     }
 
     options["ge.enablePrintOpPass"] = "0";
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    GeSetContextOptions(ms_context, &options);
+
     sess = transform::NewSession(options);
     transform::SetGeSession(sess);
   }

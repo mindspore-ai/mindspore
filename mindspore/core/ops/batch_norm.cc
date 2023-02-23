@@ -202,7 +202,7 @@ class BatchNormInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterThan, 0, prim_name);
     const std::set valid_types = {kFloat16, kFloat32};
     auto x_type = input_args[0]->BuildType();
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim->name());
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
 
     std::map<std::string, TypePtr> types;
     auto scale_type = input_args[kInputIndex1]->BuildType();
@@ -212,7 +212,7 @@ class BatchNormInfer : public abstract::OpInferBase {
       (void)types.emplace("mean", input_args[kInputIndex3]->BuildType());
       (void)types.emplace("variance", input_args[kInputIndex4]->BuildType());
     }
-    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
     return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, scale_type, scale_type, scale_type, scale_type});
   }
 };
