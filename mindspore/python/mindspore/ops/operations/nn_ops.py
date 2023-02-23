@@ -352,7 +352,7 @@ class AdaptiveAvgPool2D(AdaptiveAvgPool2DV1):
 
 class AdaptiveMaxPool2D(Primitive):
     r"""
-    Applies a 2D adaptive max pooling over an input signal composed of several input planes.
+    Performs 2D adaptive max pooling on a multi-plane input signal.
 
     Refer to :func:`mindspore.ops.adaptive_max_pool2d` for more details.
 
@@ -412,7 +412,7 @@ class AdaptiveMaxPool2D(Primitive):
 
 class AdaptiveMaxPool3D(Primitive):
     r"""
-    Applies a 3D adaptive max pooling over an input signal composed of several input planes.
+    Performs 3D adaptive max pooling on a multi-plane input signal.
 
     Refer to :func:`mindspore.ops.adaptive_max_pool3d` for more details.
 

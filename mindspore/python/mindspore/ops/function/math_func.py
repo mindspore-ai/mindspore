@@ -9616,7 +9616,7 @@ def polygamma(a, x):
     .. math::
         \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
 
-    where \psi(x) is the digamma function.
+    where :math:`\psi(x)` is the digamma function.
 
     Args:
         a (Tensor): The order of the polygamma function.

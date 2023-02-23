@@ -1578,10 +1578,9 @@ class BatchMatMul(Primitive):
 
 class Betainc(Primitive):
     r"""
-    Computes the regularized incomplete beta integral
-    :math:`I_{x}(a, b)`.
-
-    The regularized incomplete beta integral is defined as:
+    Calculates the regularized incomplete beta function
+    :math:`I_{x}(a, b)`. It is defined as the ratio of the incomplete beta function
+    to the complete beta function:
 
     .. math::
 
@@ -1591,14 +1590,23 @@ class Betainc(Primitive):
 
     .. math::
 
-        B(x ; a, b)=\int_{0}^{x} t^{a-1}(1-t)^{b-1} d t
+        B(x ; a, b)=\int_{0}^{x} t^{a-1}(1-t)^{b-1} dt
 
-    is the incomplete beta function and B(a, b) is the complete beta function
+    is the incomplete beta function and
+
+    .. math::
+
+        B(a, b) = \int_0^1 t^{a-1} (1-t)^{b-1} dt
+
+    is the complete beta function.
 
     Inputs:
-        - **a** (Tensor) - A Tensor of types: float32, float64.
-        - **b** (Tensor) - A Tensor, must have the same dtype and shape as `a` .
-        - **x** (Tensor) - A Tensor, must have the same dtype and shape as `a` .
+        - **a** (Tensor) - Peak location of beta distribution.
+          A Tensor of types: float32, float64.
+        - **b** (Tensor) - Spread of the beta distribution.
+          A Tensor, must have the same dtype and shape as `a` .
+        - **x** (Tensor) - Upper limit of integration of the incomplete beta function.
+          A Tensor, must have the same dtype and shape as `a` .
 
     Outputs:
         A Tensor, has the same dtype and shape as `a` .
@@ -6966,8 +6974,8 @@ class Renorm(Primitive):
 
 class Cholesky(Primitive):
     """
-    Computes the Cholesky decomposition of a symmetric positive-definite matrix `A`
-    or for batches of symmetric positive-definite matrices.
+    Performs the Cholesky decomposition on a symmetric
+    positive-definite matrix `A`, or a batch of symmetric positive-definite matrices.
 
     Refer to :func:`mindspore.ops.cholesky` for more details.
 
@@ -7027,21 +7035,22 @@ class STFT(Primitive):
 
 class CholeskySolve(Primitive):
     """
-    Given its Cholesky factor `u`, solves a linear system of equations with a positive definite matrix.
+    Computes the solution of a set of linear equations with a positive definite matrix,
+    according to its Cholesky decomposition factor `u` , and outputs the result as `c`.
 
-    If `upper` is `True`, `u` is upper triangular and `c` is returned such that:
+    If `upper` is set to `True`, `u` is upper triangular and `c` is returned such that:
 
     .. math::
         c = (u^{T}u)^{{-1}}b
 
-    If `upper` is `False`, `u` is lower triangular and `c` is returned such that:
+    If `upper` is set to `False`, `u` is lower triangular and `c` is returned such that:
 
     .. math::
         c = (uu^{T})^{{-1}}b
 
     Args:
-        upper (bool, optional): Flag which indicates whether to consider the Cholesky factor
-            as a lower or upper triangular matrix. Default: False.
+        upper (bool, optional): A flag indicates whether to treat the Cholesky factor
+            as an upper or a lower triangular matrix. Default: False.
 
     Inputs:
         - **x1** (Tensor) - Tensor of shape :math:`(*, N, M)`, indicating 2D or 3D matrices,

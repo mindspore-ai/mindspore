@@ -3,9 +3,9 @@ mindspore.ops.Betainc
 
 .. py:class:: mindspore.ops.Betainc
 
-    计算正则化不完全beta积分 :math:`I_{x}(a, b)`。
+    计算正则化不完全beta函数 :math:`I_{x}(a, b)`。
 
-    正则化的不完全beta积分定义为：
+    正则化的不完全beta函数定义为：
 
     .. math::
 
@@ -15,14 +15,20 @@ mindspore.ops.Betainc
 
     .. math::
 
-        B(x ; a, b)=\int_{0}^{x} t^{a-1}(1-t)^{b-1} d t
+        B(x ; a, b)=\int_{0}^{x} t^{a-1}(1-t)^{b-1} dt
 
-    是不完全的 beta 函数， :math:`B(a, b)` 是完整的beta函数。
+    是不完全 beta 函数，而
+
+    .. math::
+
+        B(a, b) = \int_0^1 t^{a-1} (1-t)^{b-1} dt
+
+    是完全 beta 函数。
 
     输入：
-        - **a** (Tensor) - float32或者float64类型的Tensor。
-        - **b** (Tensor) - 必须具有与 `a` 相同的dtype和shape的Tensor。
-        - **x** (Tensor) - 必须具有与 `a` 相同的dtype和shape的Tensor。
+        - **a** (Tensor) - beta分布峰值位置。float32或者float64类型的Tensor。
+        - **b** (Tensor) - beta分布宽窄度。必须具有与 `a` 相同的dtype和shape的Tensor。
+        - **x** (Tensor) - 不完全beta函数积分上限。必须具有与 `a` 相同的dtype和shape的Tensor。
 
     输出：
         Tensor，具有与 `a` 相同的shape和dtype。

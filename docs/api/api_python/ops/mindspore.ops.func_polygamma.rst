@@ -8,7 +8,7 @@ mindspore.ops.polygamma
     .. math::
         \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
     
-    其中\psi(x)为digamma函数。
+    其中 :math:`\psi(x)` 为digamma函数。
 
     参数：
         - **a** (tuple) - 多伽马函数求导的阶数，支持的数据类型为int32和int64， `a` 的shape为 :math:`()` 。
