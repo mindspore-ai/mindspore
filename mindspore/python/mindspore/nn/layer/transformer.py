@@ -444,7 +444,7 @@ class TransformerEncoder(Cell):
 
     Inputs:
         - **src** (Tensor): the sequence to the encoder (required).
-        - **mask** (Tensor): the mask for the src sequence (optional).
+        - **src_mask** (Tensor): the mask for the src sequence (optional).
         - **src_key_padding_mask** (Tensor): the mask for the src keys per batch (optional).
 
     Outputs:

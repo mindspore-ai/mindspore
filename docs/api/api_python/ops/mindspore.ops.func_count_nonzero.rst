@@ -6,7 +6,7 @@ mindspore.ops.count_nonzero
     计算输入Tensor指定轴上的非零元素的数量。如果没有指定维度，则计算Tensor中所有非零元素的数量。
 
     .. note::
-        `dims` 的值范围是[-x_dims，x_dims)。其中， `x_dims` 是输入 `x` 的维度。
+        `dims` 的值范围是[-x_dims, x_dims)。其中， `x_dims` 是输入 `x` 的维度。
 
     参数：
         - **x** (Tensor) - 要计算的输入，可以是任意维度的Tensor。将输入张量的shape设为 :math:`(x_1, x_2, ..., x_N)` 。
@@ -18,4 +18,4 @@ mindspore.ops.count_nonzero
     异常：
         - **TypeError** - 如果 `x` 的数据类型不受支持。
         - **TypeError** - 如果 `dims` 的数据类型不是int。
-        - **ValueError** - 如果 `dims` 中的任何值不在 :math:`[-x_dims，x_dims)` 范围内。
+        - **ValueError** - 如果 `dims` 中的任何值不在 :math:`[-x_dims, x_dims)` 范围内。

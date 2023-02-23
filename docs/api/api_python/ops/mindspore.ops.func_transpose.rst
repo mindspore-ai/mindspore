@@ -12,7 +12,7 @@ mindspore.ops.transpose
 
     参数：
         - **input_x** (Tensor) - 输入Tensor，其shape是 :math:`(x_1, x_2, ..., x_R)` 。
-        - **input_perm** (tuple[int]) - 指定排列。 `input_perm` 中的元素由 `input_x` 的每个维度的索引组成。 `input_perm` 的长度和 `input_x` 的shape相同。只支持常量值。其范围在[-rank(input_x)，rank(input_x))内。
+        - **input_perm** (tuple[int]) - 指定排列。 `input_perm` 中的元素由 `input_x` 的每个维度的索引组成。 `input_perm` 的长度和 `input_x` 的shape相同。只支持常量值。其范围在[-rank(input_x), rank(input_x))内。
 
     返回：
         Tensor，输出Tensor的数据类型与 `input_x` 相同，输出Tensor的shape由 `input_x` 的shape和 `input_perm` 的值决定。

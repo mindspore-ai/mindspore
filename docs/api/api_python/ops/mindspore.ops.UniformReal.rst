@@ -3,7 +3,7 @@ mindspore.ops.UniformReal
 
 .. py:class:: mindspore.ops.UniformReal(seed=0, seed2=0)
 
-    产生随机的浮点数，均匀分布在[0，1)范围内。
+    产生随机的浮点数，均匀分布在[0, 1)范围内。
 
     参数：
         - **seed** (int) - 算子层的随机种子，用于生成随机数。必须是非负的。默认值：0。
