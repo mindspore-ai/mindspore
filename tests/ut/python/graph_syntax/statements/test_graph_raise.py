@@ -432,41 +432,6 @@ def test_raise_21():
         print("res:", res)
 
 
-def test_raise_tensor_1():
-    """
-    Feature: graph raise by JIT Fallback.
-    Description: Test raise.
-    Expectation: No exception.
-    """
-    class RaiseNet(nn.Cell):
-        def construct(self):
-            x = Tensor([1])
-            raise AssertionError(x)
-
-    with pytest.raises(RuntimeError) as raise_info_tensor_1:
-        net = RaiseNet()
-        res = net()
-        print("res:", res)
-    assert "Currently only supports raise in constant scenarios." in str(raise_info_tensor_1.value)
-
-
-def test_raise_tensor_2():
-    """
-    Feature: graph raise by JIT Fallback.
-    Description: Test raise.
-    Expectation: No exception.
-    """
-    class RaiseNet(nn.Cell):
-        def construct(self):
-            raise AssertionError(Tensor(1))
-
-    with pytest.raises(RuntimeError) as raise_info_tensor_2:
-        net = RaiseNet()
-        res = net()
-        print("res:", res)
-    assert "Currently only supports raise in constant scenarios." in str(raise_info_tensor_2.value)
-
-
 def test_raise_list():
     """
     Feature: graph raise by JIT Fallback.

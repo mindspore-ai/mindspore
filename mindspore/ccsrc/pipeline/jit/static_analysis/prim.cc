@@ -2717,6 +2717,10 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(RaiseEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
+    // initialize member variable to avoid problems caused by reusing instance.
+    num_str_ = 0;
+    keys_ = {NewValueNode(prim::kPrimMakeTuple)};
+    values_ = {NewValueNode(prim::kPrimMakeTuple)};
     auto node = out_conf->node();
     MS_EXCEPTION_IF_NULL(node);
     auto cur_graph = node->func_graph();
@@ -2750,10 +2754,6 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     auto cnode = node->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto inputs = cnode->inputs();
-    bool need_out_symbol = inputs.size() > 3;
-    if (need_out_symbol) {
-      exception_string += "(";
-    }
     for (size_t index = index_begin; index < inputs.size(); ++index) {
       const auto input = inputs[index];
       auto input_abs = args_abs_list[index - 1];
@@ -2762,7 +2762,8 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       if (need_symbol) {
         exception_string += "'";
       }
-      exception_string += GetExceptionString(input_abs, input, node);
+      bool need_comma = !IsPrimitiveCNode(input, prim::kPrimMakeTuple);
+      exception_string += GetExceptionString(input_abs, input, node, need_comma, need_symbol);
       if (need_symbol) {
         exception_string += "'";
       }
@@ -2770,13 +2771,39 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
         exception_string += ", ";
       }
     }
+    bool need_out_symbol = inputs.size() > 3;
     if (need_out_symbol) {
-      exception_string += ")";
+      exception_string = "(" + exception_string + ")";
     }
-    MS_EXCEPTION(type) << exception_string;
+    if (keys_.size() <= 1) {
+      MS_EXCEPTION(type) << exception_string;
+    }
+
+    // Build PyExecute node for raise
+    const std::string error_msg =
+      "__import__('mindspore').common._utils.raise_func(" + exception_type + "," + exception_string + ")";
+    const auto script_str = std::make_shared<StringImm>(error_msg);
+
+    // Pack local parameter keys
+    const auto key_value_name_tuple = cur_graph->NewCNodeInOrder(keys_);
+
+    // Pack local parameter values
+    const auto key_value_tuple = cur_graph->NewCNodeInOrder(values_);
+
+    // Build the PyExecute node for raise error.
+    const auto raise_error_node = cur_graph->NewCNodeInOrder(
+      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    cur_graph->ReplaceInOrder(node, raise_error_node);
+    AnalysisEnginePtr eng = out_conf->engine();
+    MS_EXCEPTION_IF_NULL(eng);
+    AnfNodeConfigPtr fn_conf = eng->MakeConfig(raise_error_node, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
   }
 
  private:
+  int num_str_ = 0;
+  std::vector<AnfNodePtr> keys_;
+  std::vector<AnfNodePtr> values_;
   // string need add quotation marks
   bool CheckNeedSymbol(const AnfNodePtr &, const AbstractBasePtr &abs) const {
     MS_EXCEPTION_IF_NULL(abs);
@@ -2807,18 +2834,24 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     }
     return need_symbol;
   }
-  std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node) {
+  std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node,
+                                 const bool need_comma = false, bool need_symbol = false) {
     std::string exception_str;
     MS_EXCEPTION_IF_NULL(arg);
-    if (arg->isa<abstract::AbstractTensor>()) {
-      MS_LOG(EXCEPTION) << "Currently only supports raise in constant scenarios. "
-                        << "Tensor type data cannot exist in the raise statement. "
-                        << "Please check your raise statement which is located at: "
-                        << trace::GetDebugInfo(node->debug_info());
-    } else if (arg->isa<abstract::AbstractTuple>()) {
-      return GetTupleString(arg, input, node);
-    } else if (arg->isa<abstract::AbstractList>()) {
-      return GetListString(arg, input, node);
+    if (arg->isa<abstract::AbstractSequence>()) {
+      return GetTupleOrListString(arg, input, node, need_comma, need_symbol);
+    } else if (arg->BuildValue() == kAnyValue || arg->isa<abstract::AbstractTensor>()) {
+      std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
+      num_str_ += 1;
+      if (need_symbol) {
+        exception_str = exception_str + "'+f'{" + key + "}'+'";
+      } else {
+        exception_str = exception_str + key;
+      }
+      (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
+      (void)values_.emplace_back(input);
+    } else if (arg->isa<abstract::AbstractDictionary>()) {
+      MS_LOG(EXCEPTION) << "Dictionary type is currently not supporting";
     } else {
       // Process raise ValueError
       exception_str += GetScalarStringValue(arg, node);
@@ -2826,54 +2859,50 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     return exception_str;
   }
 
-  std::string GetTupleString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node) {
+  std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node,
+                                   const bool need_comma, bool need_symbol = false) {
     MS_EXCEPTION_IF_NULL(arg);
     std::string exception_str;
+    bool is_tuple = arg->isa<abstract::AbstractTuple>();
     // Process raise ValueError("str")
-    auto arg_tuple = arg->cast_ptr<abstract::AbstractTuple>();
+    auto arg_tuple = arg->cast_ptr<abstract::AbstractSequence>();
     MS_EXCEPTION_IF_NULL(arg_tuple);
-    const auto &arg_tuple_elements = arg_tuple->elements();
+    auto const &arg_tuple_elements = arg_tuple->elements();
     if (arg_tuple_elements.size() == 0) {
       MS_LOG(EXCEPTION) << "The arg_tuple_elements can't be empty.";
     }
-    if (arg_tuple_elements.size() > 1) {
-      exception_str += "(";
+    if (!input->isa<CNode>()) {
+      std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
+      num_str_ += 1;
+      exception_str = exception_str + "{" + key + "}";
+      (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
+      (void)values_.emplace_back(input);
+      return exception_str;
     }
+    if (arg_tuple_elements.size() > 1 && !IsPrimitiveCNode(input, prim::kPrimJoinedStr)) {
+      if (is_tuple) {
+        exception_str += "(";
+      } else {
+        exception_str += "[";
+      }
+    }
+    auto cnode = input->cast_ptr<CNode>();
+    auto inputs = cnode->inputs();
+    bool not_variable = (arg->BuildValue() != kAnyValue) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
     for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
+      auto inputs_in_tuple = inputs[index + 1];
       auto &element = arg_tuple_elements[index];
-      exception_str += GetExceptionString(element, input, node);
-      if (index != arg_tuple_elements.size() - 1 && !IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
+      exception_str += GetExceptionString(element, inputs_in_tuple, node, need_comma, need_symbol);
+      if (index != arg_tuple_elements.size() - 1 && need_comma && not_variable) {
         exception_str += ", ";
       }
     }
-    if (arg_tuple_elements.size() > 1) {
-      exception_str += ")";
-    }
-    return exception_str;
-  }
-
-  std::string GetListString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(arg);
-    std::string exception_str;
-    // Process raise ValueError("str")
-    auto arg_list = arg->cast_ptr<abstract::AbstractList>();
-    MS_EXCEPTION_IF_NULL(arg_list);
-    const auto &arg_list_elements = arg_list->elements();
-    if (arg_list_elements.size() == 0) {
-      MS_LOG(EXCEPTION) << "The arg_list_elements can't be empty.";
-    }
-    if (arg_list_elements.size() > 1) {
-      exception_str += "[";
-    }
-    for (size_t index = 0; index < arg_list_elements.size(); ++index) {
-      auto &element = arg_list_elements[index];
-      exception_str += GetExceptionString(element, input, node);
-      if (index != arg_list_elements.size() - 1 && !IsPrimitiveCNode(input, prim::kPrimMakeList)) {
-        exception_str += ", ";
+    if (arg_tuple_elements.size() > 1 && !IsPrimitiveCNode(input, prim::kPrimJoinedStr)) {
+      if (is_tuple) {
+        exception_str += ")";
+      } else {
+        exception_str += "]";
       }
-    }
-    if (arg_list_elements.size() > 1) {
-      exception_str += "]";
     }
     return exception_str;
   }
