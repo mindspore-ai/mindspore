@@ -31,7 +31,7 @@ class EmbeddingPostprocessor(Cell):
         super(EmbeddingPostprocessor, self).__init__()
         self.layernorm = nn.LayerNorm((768,))
         self.add = P.Add()
-        self.dropout = nn.Dropout(1 - 0.1)
+        self.dropout = nn.Dropout(p=0.1)
 
     def construct(self, word_embeddings, token_type_embeddings, position_embeddings):
         output = word_embeddings

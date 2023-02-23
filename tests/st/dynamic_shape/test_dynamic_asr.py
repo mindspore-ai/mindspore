@@ -91,7 +91,7 @@ class MultiheadAttention(nn.Cell):
         self.matmul = P.BatchMatMul()
 
         self.softmax = nn.Softmax()
-        self.dropout = nn.Dropout(1 - attention_probs_dropout_prob)
+        self.dropout = nn.Dropout(p=attention_probs_dropout_prob)
         self.sub = P.Sub()
         self.add = P.TensorAdd()
         self.cast = P.Cast()
@@ -192,7 +192,7 @@ class ResidualNorm(nn.Cell):
 
     def __init__(self, size, dropout_prob=0.1):
         super(ResidualNorm, self).__init__()
-        self.dropout = nn.Dropout(1 - dropout_prob)
+        self.dropout = nn.Dropout(p=dropout_prob)
         self.add = P.TensorAdd()
         self.layernorm = nn.LayerNorm([size])
         self.out_shape = (-1, size)
@@ -213,7 +213,7 @@ class FeedForward(nn.Cell):
     def __init__(self, attention_size, intermediate_size,
                  hidden_act, hidden_dropout_prob):
         super(FeedForward, self).__init__()
-        self.dropout = nn.Dropout(1 - hidden_dropout_prob)
+        self.dropout = nn.Dropout(p=hidden_dropout_prob)
         self.linear1 = CustomDense(in_channels=attention_size,
                                    out_channels=intermediate_size,
                                    activation=hidden_act,
@@ -303,7 +303,7 @@ class EncoderCell(nn.Cell):
             has_attention_mask=has_attention_mask,
             compute_type=compute_type)
 
-        self.dropout = nn.Dropout(1 - hidden_dropout_prob)
+        self.dropout = nn.Dropout(p=hidden_dropout_prob)
         self.intermediate = CustomDense(in_channels=size, out_channels=intermediate_size,
                                         activation=hidden_act, weight_init="zeros")
         self.res_norm = ResidualNorm(size, dropout_prob=hidden_dropout_prob)
@@ -345,7 +345,7 @@ class PositionalEncoding(nn.Cell):
         super(PositionalEncoding, self).__init__()
 
         xscale = math.sqrt(dim)
-        self.dropout = nn.Dropout(1 - dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.mul = P.Mul()
         self.add = P.TensorAdd()
         self.shape = P.Shape()
@@ -593,7 +593,7 @@ class CTC(nn.Cell):
         self.reshape = P.Reshape()
         self.adim = adim
         self.odim = odim
-        self.dropout = nn.Dropout(1 - dropout_prob)
+        self.dropout = nn.Dropout(p=dropout_prob)
         self.cast = P.Cast()
         self.not_equal = P.NotEqual()
         self.ignore_id = ignore_id

@@ -708,7 +708,7 @@ class TransformerEncoderLayer(nn.Cell):
         self.feed_forward = feed_forward
         self.norm1 = CustomLayerNorm(size, epsilon=1e-5)
         self.norm2 = CustomLayerNorm(size, epsilon=1e-5)
-        self.dropout = nn.Dropout(keep_prob=1 - dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.normalize_before = normalize_before
         self.concat_after = concat_after
         if self.concat_after:
@@ -979,7 +979,7 @@ class DecoderLayer(nn.Cell):
         self.norm1 = CustomLayerNorm(size, epsilon=1e-12)
         self.norm2 = CustomLayerNorm(size, epsilon=1e-12)
         self.norm3 = CustomLayerNorm(size, epsilon=1e-12)
-        self.dropout = nn.Dropout(keep_prob=1.0 - dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.normalize_before = normalize_before
         self.concat_after = concat_after
         if self.concat_after:
@@ -1216,7 +1216,7 @@ class PositionwiseFeedForward(nn.Cell):
         super(PositionwiseFeedForward, self).__init__()
         self.w_1 = Dense(idim, hidden_units).to_float(compute_type)
         self.activation = activation
-        self.dropout = nn.Dropout(1 - dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.w_2 = Dense(hidden_units, idim).to_float(compute_type)
 
     def construct(self, xs):
@@ -1318,7 +1318,7 @@ class PositionalEncoding(nn.Cell):
         super().__init__()
         self.d_model = d_model
         self.xscale = Tensor([math.sqrt(self.d_model)], dtype=mstype.float32)
-        self.dropout = nn.Dropout(1 - dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.max_len = max_len
 
         self.pe = np.zeros((self.max_len, self.d_model))
@@ -1399,7 +1399,7 @@ class MultiHeadedAttention(nn.Cell):
         self.linear_k = Dense(n_feat, n_feat).to_float(compute_type)
         self.linear_v = Dense(n_feat, n_feat).to_float(compute_type)
         self.linear_out = Dense(n_feat, n_feat).to_float(compute_type)
-        self.dropout = nn.Dropout(keep_prob=1 - dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.softmax = nn.Softmax()
 
         self.expand_dims = ops.ExpandDims()

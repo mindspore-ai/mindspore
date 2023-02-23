@@ -23,7 +23,7 @@ from mindspore.ops.composite import GradOperation
 class DropoutNet(nn.Cell):
     def __init__(self, keep_prob):
         super(DropoutNet, self).__init__()
-        self.drop = nn.Dropout(keep_prob)
+        self.drop = nn.Dropout(p=1.0 - keep_prob)
         self.relu = ops.ReLU()
 
     def construct(self, x):

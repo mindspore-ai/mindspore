@@ -66,8 +66,8 @@ class GATConv(ms.nn.Cell):
         self.attn_d = ms.Parameter(initializer(XavierUniform(gain), [num_attn_head, out_size], ms.float32),
                                    name="attn_d")
         self.bias = ms.Parameter(initializer('zero', [num_attn_head, out_size], ms.float32), name='bias')
-        self.feat_drop = ms.nn.Dropout(input_drop_out_rate)
-        self.attn_drop = ms.nn.Dropout(attn_drop_out_rate)
+        self.feat_drop = ms.nn.Dropout(p=1.0 - input_drop_out_rate)
+        self.attn_drop = ms.nn.Dropout(p=1.0 - attn_drop_out_rate)
         self.leaky_relu = ms.nn.LeakyReLU(leaky_relu_slope)
         self.exp = ms.ops.Exp()
         if add_norm:

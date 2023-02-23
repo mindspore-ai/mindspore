@@ -380,7 +380,7 @@ class CellDropDense(nn.Cell):
     def __init__(self):
         super(CellDropDense, self).__init__()
         self.fc = nn.Dense(100, 100)
-        self.drop = nn.Dropout(1.0 - 0.1)
+        self.drop = nn.Dropout(p=0.1)
 
     def construct(self, input_x):
         out = self.fc(input_x)

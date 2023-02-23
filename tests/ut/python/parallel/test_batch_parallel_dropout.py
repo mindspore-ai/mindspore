@@ -57,7 +57,7 @@ def test_batch_parallel_dropout():
         def __init__(self):
             super().__init__()
             self.matmul1 = P.MatMul()
-            self.dropout = nn.Dropout()
+            self.dropout = nn.Dropout(p=0.5)
             self.matmul2 = P.MatMul()
 
         def construct(self, x, y, b):

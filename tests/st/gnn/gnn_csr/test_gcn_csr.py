@@ -51,7 +51,7 @@ class GCNConv(ms.nn.Cell):
         self.activation = activation
         self.min_clip = Tensor(1, ms.int32)
         self.max_clip = Tensor(100000000, ms.int32)
-        self.drop_out = ms.nn.Dropout(dropout)
+        self.drop_out = ms.nn.Dropout(p=1.0 - dropout)
         self.gather = GatherNet(indptr_backward, indices_backward)
         self.csr_reduce_sum = CSRReduceSumNet(indices_backward)
 

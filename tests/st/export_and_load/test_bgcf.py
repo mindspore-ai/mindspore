@@ -46,7 +46,7 @@ class MeanConv(nn.Cell):
         self.matmul = P.MatMul()
         self.concat = P.Concat(axis=1)
         self.reduce_mean = P.ReduceMean(keep_dims=False)
-        self.dropout = nn.Dropout(keep_prob=1 - dropout)
+        self.dropout = nn.Dropout(p=dropout)
 
     def construct(self, self_feature, neigh_feature):
         neigh_matrix = self.reduce_mean(neigh_feature, 1)
@@ -72,7 +72,7 @@ class AttenConv(nn.Cell):
         self.matmul = P.MatMul()
         self.matmul_3 = P.BatchMatMul()
         self.matmul_t = P.BatchMatMul(transpose_b=True)
-        self.dropout = nn.Dropout(keep_prob=1 - dropout)
+        self.dropout = nn.Dropout(p=dropout)
 
     def construct(self, self_feature, neigh_feature):
         query = self.expanddims(self_feature, 1)

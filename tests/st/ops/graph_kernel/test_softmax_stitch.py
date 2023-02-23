@@ -31,7 +31,7 @@ class BertAttentionPiece(Cell):
     def __init__(self):
         super(BertAttentionPiece, self).__init__()
         self.add = P.Add()
-        self.dropout = nn.Dropout(1 - 0.1)
+        self.dropout = nn.Dropout(p=0.1)
         self.softmax = nn.Softmax()
         self.multiply_data = -10000.0
         self.sub = P.Sub()

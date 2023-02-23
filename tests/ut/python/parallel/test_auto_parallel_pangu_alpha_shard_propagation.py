@@ -193,8 +193,8 @@ class FeedForward(Cell):
                                   param_init_type=param_init_type)
         self.projection.shard(strategy_matmul=((dp, mp), (mp, 1)))
         self.projection.bias.parallel_optimizer = False
-        self.dropout = nn.Dropout(1 - dropout_rate)
-        self.dropout_3d = nn.Dropout(1 - dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
+        self.dropout_3d = nn.Dropout(p=dropout_rate)
         self.cast = P.Cast()
 
     def construct(self, x):
@@ -246,8 +246,8 @@ class MultiHeadAttention(Cell):
         self.mul = P.Mul()
         self.add = P.Add()
         self.scale_factor = Tensor(math.sqrt(self.size_per_head))
-        self.dropout = nn.Dropout(1 - hidden_dropout_rate)
-        self.prob_dropout = nn.Dropout(1 - attention_dropout_rate)
+        self.dropout = nn.Dropout(p=hidden_dropout_rate)
+        self.prob_dropout = nn.Dropout(p=attention_dropout_rate)
         self.softmax = nn.Softmax().to_float(softmax_compute_type)
         self.expand_dims = P.ExpandDims()
         # Query
@@ -474,7 +474,7 @@ class EmbeddingLayer(nn.Cell):
         self.word_embedding = VocabEmbedding(vocab_size=40000, embedding_size=2560)
         self.position_embedding = VocabEmbedding(vocab_size=40000, embedding_size=2560)
         self.add = P.Add()
-        self.dropout = nn.Dropout(0.9)
+        self.dropout = nn.Dropout(p=0.1)
 
     def construct(self, input_ids, input_position, init_reset, batch_valid_length):
         word_embedding, word_table = self.word_embedding(input_ids)

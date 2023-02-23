@@ -20,7 +20,8 @@ import math
 import numpy as np
 
 import mindspore.common.dtype as mstype
-from mindspore import context, log as logger
+from mindspore import context
+from mindspore.log import logging
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
@@ -107,7 +108,7 @@ class Dropout(Cell):
     r"""
     Dropout layer for the input.
 
-    Randomly set some elements of the input tensor to zero with probability :math:`1 - keep\_prob` during training
+    Randomly set some elements of the input tensor to zero with probability `p` during training
     using samples from a Bernoulli distribution.
 
     The outputs are scaled by a factor of :math:`\frac{1}{keep\_prob}` during training so
@@ -121,13 +122,15 @@ class Dropout(Cell):
     <https://arxiv.org/pdf/1207.0580.pdf>`_.
 
     Note:
-        Each channel will be zeroed out independently on every construct call.
-        Parameter `dtype` will be removed in a future version. It is not recommended to define this parameter.
+        - Each channel will be zeroed out independently on every construct call.
+        - Parameter `keep_prob` will be removed in a future version, please use parameter `p` instead.
+          Parameter `p` means the probability of the element of the input tensor to be zeroed.
 
     Args:
-        keep_prob (float): The keep rate, greater than 0 and less equal than 1. E.g. rate=0.9,
-                   dropping out 10% of input units. Default: 0.5.
-        dtype (:class:`mindspore.dtype`): Data type of `x`. Default: mindspore.float32.
+        keep_prob (float): Deprecated. The keep rate, greater than 0 and less equal than 1.
+            E.g. rate=0.9, dropping out 10% of input neurons. Default: 0.5.
+        p (Union(float, int, None)): The dropout rate, greater than or equal to 0 and less than 1.
+            E.g. rate=0.9, dropping out 90% of input neurons. Default: None.
 
     Inputs:
         - **x** (Tensor) - The input of Dropout with data type of float16 or float32.
@@ -138,8 +141,10 @@ class Dropout(Cell):
 
     Raises:
         TypeError: If `keep_prob` is not a float.
+        TypeError: If the dtype of `p` is not float or int.
         TypeError: If dtype of `x` is not neither float16 nor float32.
         ValueError: If `keep_prob` is not in range (0, 1].
+        ValueError: If `p` is not in range [0, 1).
         ValueError: If length of shape of `x` is less than 1.
 
     Supported Platforms:
@@ -147,45 +152,46 @@ class Dropout(Cell):
 
     Examples:
         >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
-        >>> net = nn.Dropout(keep_prob=0.8)
+        >>> net = nn.Dropout(p=0.2)
         >>> net.set_train()
-        Dropout<keep_prob=0.8>
         >>> output = net(x)
         >>> print(output.shape)
         (2, 2, 3)
     """
 
-    def __init__(self, keep_prob=0.5, dtype=mstype.float32):
+    def __init__(self, keep_prob=0.5, p=None):
         """Initialize Dropout."""
         super(Dropout, self).__init__()
-        Validator.check_value_type('keep_prob', keep_prob, [
-            float], self.cls_name)
-        if keep_prob <= 0 or keep_prob > 1:
-            raise ValueError(f"For '{self.cls_name}', the 'keep_prob' must be a number in range (0, 1], "
-                             f"but got {keep_prob}.")
-        Validator.check_subclass(
-            "dtype", dtype, mstype.number_type, self.cls_name)
-        if dtype != mstype.float32:
-            logger.info(
-                "This parameter `dtype` will be deleted or invisible in the future. Please don't use it.")
+        if p is None:
+            logging.warning("This parameter `keep_prob` will be deprecated, please use `p` instead.")
+            Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
+            if keep_prob <= 0 or keep_prob > 1:
+                raise ValueError(f"For '{self.cls_name}', the 'keep_prob' must be a number in range (0, 1], "
+                                 f"but got {keep_prob}.")
+            seed0, seed1 = _get_graph_seed(0, "dropout")
+            self.dropout = P.Dropout(keep_prob, seed0, seed1)
+        else:
+            Validator.check_value_type('p', p, [float, int], self.cls_name)
+            if p < 0 or p >= 1:
+                raise ValueError(f"For '{self.cls_name}', the 'p' must be a number in range [0, 1), "
+                                 f"but got {p}.")
+            seed0, seed1 = _get_graph_seed(0, "dropout")
+            self.dropout = P.Dropout(1.0 - p, seed0, seed1)
+        self.p = p
         self.keep_prob = keep_prob
-        seed0, seed1 = _get_graph_seed(0, "dropout")
-        self.seed0 = seed0
-        self.seed1 = seed1
-        self.dropout = P.Dropout(keep_prob, seed0, seed1)
 
     def construct(self, x):
-        if not self.training:
-            return x
-
-        if self.keep_prob == 1:
+        if not self.training or self.keep_prob == 1 or self.p == 0:
             return x
 
         out, _ = self.dropout(x)
         return out
 
     def extend_repr(self):
-        return 'keep_prob={}'.format(self.keep_prob)
+        if self.p is None:
+            logging.warning("This parameter `keep_prob` will be deprecated, please use `p` instead.")
+            return f'keep_prob={self.keep_prob}'
+        return f'p={self.p}'
 
 
 class Dropout1d(Cell):
