@@ -42,15 +42,13 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors);
 int CheckGraphInputShapes(const std::vector<Tensor *> &inputs,
                           const std::unordered_map<Tensor *, std::vector<int>> &input_shape_map);
 std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::Tensor *> &lite_tensors);
-void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
-void MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor);
-void SetTensorData(Tensor *dst_tensor, Tensor *src_tensor);
+int MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
+int MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor);
+int SetTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 void SetCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
-void MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist);
-void SetTensorListTensorData(TensorList *dst_tensor_list, TensorList *src_tensor_list);
-void SetTensorShape(Tensor *dst, Tensor *src);
-void SetTensorListShape(Tensor *dst, Tensor *src);
-bool NeedCastTensorListData(Tensor *dst_tensor, Tensor *src_tensor);
+int MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist);
+int SetTensorListTensorData(TensorList *dst_tensor_list, TensorList *src_tensor_list);
+int SetTensorShape(Tensor *dst, Tensor *src);
 bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor);
 int CastTensorData(Tensor *dst, Tensor *src, bool support_fp16);
 int CastCommonTensorData(Tensor *dst, Tensor *src, bool support_fp16);
@@ -61,6 +59,10 @@ int DecodeTensorLsit(Tensor *tensor, const int *src_data);
 Tensor *CreateTensorList(const std::vector<int> &shape, const Category &src_category, const void *src_data);
 int CopyTensorListTensorDataType(TensorList *dst_tensorlist, TensorList *src_tensorlist);
 void SetTensorListTensorDataType(const TypeId &data_type, Tensor *tensor);
+bool IsSameDtype(const Tensor *input_1, const Tensor *input_2);
+bool IsUnKnownDtype(const Tensor *input);
+bool IsSameShape(const Tensor *input_1, const Tensor *input_2);
+int MallocTensorData(Tensor *tensor);
 }  // namespace lite
 }  // namespace mindspore
 

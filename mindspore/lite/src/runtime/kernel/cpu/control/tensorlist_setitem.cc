@@ -109,8 +109,9 @@ int TensorListSetItemCPUKernel::Run() {
       auto dst = output0_->GetTensor(i);
       if (dst == nullptr) {
         dst = lite::Tensor::CopyTensor(*input2_, true, ms_context_->allocator);
-        auto &tensors = output0_->tensors();
+        auto tensors = output0_->tensors();
         tensors.emplace_back(dst);
+        output0_->set_tensors(tensors);
       } else {
         dst->set_data_type(input2_->data_type());
         dst->set_shape(input2_->shape());
@@ -133,8 +134,9 @@ int TensorListSetItemCPUKernel::Run() {
       // merge move data will delete tensors
       if (dst == nullptr) {
         dst = lite::Tensor::CopyTensor(*src, src->data() != nullptr, ms_context_->allocator);
-        auto &tensors = output0_->tensors();
+        auto tensors = output0_->tensors();
         tensors.emplace_back(dst);
+        output0_->set_tensors(tensors);
         continue;
       }
 

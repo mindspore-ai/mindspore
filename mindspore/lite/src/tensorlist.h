@@ -81,7 +81,7 @@ class TensorList : public Tensor {
     }
   }
 
-  std::vector<int> element_shape() {
+  std::vector<int> element_shape() const {
     return std::vector<int>(tensor_list_c_.element_shape_,
                             tensor_list_c_.element_shape_ + tensor_list_c_.element_shape_size_);
   }
@@ -108,7 +108,7 @@ class TensorList : public Tensor {
 
   TypeId tensors_data_type() const { return static_cast<TypeId>(tensor_list_c_.tensors_data_type_); }
 
-  std::vector<Tensor *> &tensors() { return tensors_; }
+  std::vector<Tensor *> tensors() { return tensors_; }
 
   void set_tensors(const std::vector<Tensor *> &tensors) { this->tensors_ = tensors; }
 
