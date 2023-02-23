@@ -104,7 +104,7 @@ bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeou
   if (!execute_success && !execute_fail) {
     std::string node_id = common::GetEnv("MS_NODE_ID");
 #if !defined(_WIN32) && !defined(_WIN64)
-    MS_LOG(ERROR) << "Execute function asynchronously timeout, node id: " << node_id << " exit process";
+    MS_LOG(WARNING) << "Execute function asynchronously timeout, node id: " << node_id << " exit process";
     (void)kill(getpid(), SIGTERM);
 #endif
   }
@@ -340,15 +340,20 @@ bool CollectiveManager::Finalize() {
   std::function<bool()> finalize_func = [&, this]() {
     if (need_host_collective_) {
       MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
+      MS_LOG(INFO) << "Start finalizing host communication lib.";
       if (!host_comm_lib_instance_->Finalize()) {
         MS_LOG(WARNING) << "Failed to finalize device communication library.";
       }
+      MS_LOG(INFO) << "End finalizing host communication lib.";
     }
 
     MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
+
+    MS_LOG(INFO) << "Start finalizing device communication lib.";
     if (!device_comm_lib_instance_->Finalize()) {
       MS_LOG(WARNING) << "Failed to finalize device communication library.";
     }
+    MS_LOG(INFO) << "End finalizing device communication lib.";
 
     inited_ = false;
     finalized_ = true;
@@ -358,8 +363,8 @@ bool CollectiveManager::Finalize() {
 
   MS_LOG(INFO) << "Begin finalize collective manager.";
 
-  // Timeout limit 5 seconds to wait to finish finalizing device communication group.
-  const int64_t kTimeToWait = 5;
+  // Timeout limit 30 seconds to wait to finish finalizing device communication group.
+  const int64_t kTimeToWait = 30;
   // Finalize collective manager in thread with timeout limit.
   bool ret = ExecuteFuncInThread(finalize_func, kTimeToWait);
 
