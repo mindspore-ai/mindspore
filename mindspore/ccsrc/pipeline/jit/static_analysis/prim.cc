@@ -2052,6 +2052,14 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   // Call python script string.
   MS_LOG(DEBUG) << "Call script: " << script << ", args: " << args_abs_list;
 
+  // when return value should be none
+  if (current_interpret_node->has_user_data("__py_execute_no_return_type__")) {
+    AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
+    res->set_value(kAnyValue);
+    auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
+    evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+    return infer_result;
+  }
   TypePtr type = kFloat64;
   if (current_interpret_node->has_user_data("__py_execute_tensor_type__")) {
     type = current_interpret_node->user_data<Type>("__py_execute_tensor_type__");
@@ -2725,12 +2733,6 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(node);
     auto cur_graph = node->func_graph();
     MS_EXCEPTION_IF_NULL(cur_graph);
-    if (cur_graph->is_tensor_condition_branch()) {
-      MS_LOG(EXCEPTION) << "Currently only supports raise in constant scenarios. "
-                        << "Tensor type data cannot exist in the conditional statement. "
-                        << "Please check your conditions which raise node is located at: "
-                        << trace::GetDebugInfo(node->debug_info());
-    }
     if (args_abs_list.empty()) {
       // process raise
       MS_LOG(EXCEPTION) << "No active exception to reraise.";
@@ -2758,7 +2760,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       const auto input = inputs[index];
       auto input_abs = args_abs_list[index - 1];
       MS_EXCEPTION_IF_NULL(input_abs);
-      bool need_symbol = CheckNeedSymbol(input, input_abs);
+      const bool need_symbol = CheckNeedSymbol(input, input_abs);
       if (need_symbol) {
         exception_string += "'";
       }
@@ -2793,6 +2795,8 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     // Build the PyExecute node for raise error.
     const auto raise_error_node = cur_graph->NewCNodeInOrder(
       {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    auto none_type = std::make_shared<TypeNone>();
+    raise_error_node->set_user_data<Type>("__py_execute_no_return_type__", none_type);
     cur_graph->ReplaceInOrder(node, raise_error_node);
     AnalysisEnginePtr eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
@@ -2835,7 +2839,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     return need_symbol;
   }
   std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node,
-                                 const bool need_comma = false, bool need_symbol = false) {
+                                 const bool need_comma = false, const bool need_symbol = false) {
     std::string exception_str;
     MS_EXCEPTION_IF_NULL(arg);
     if (arg->isa<abstract::AbstractSequence>()) {
@@ -2860,21 +2864,25 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   }
 
   std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node,
-                                   const bool need_comma, bool need_symbol = false) {
+                                   const bool need_comma, const bool need_symbol = false) {
     MS_EXCEPTION_IF_NULL(arg);
     std::string exception_str;
     bool is_tuple = arg->isa<abstract::AbstractTuple>();
     // Process raise ValueError("str")
     auto arg_tuple = arg->cast_ptr<abstract::AbstractSequence>();
     MS_EXCEPTION_IF_NULL(arg_tuple);
-    auto const &arg_tuple_elements = arg_tuple->elements();
+    const auto &arg_tuple_elements = arg_tuple->elements();
     if (arg_tuple_elements.size() == 0) {
       MS_LOG(EXCEPTION) << "The arg_tuple_elements can't be empty.";
     }
     if (!input->isa<CNode>()) {
       std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
       num_str_ += 1;
-      exception_str = exception_str + "{" + key + "}";
+      if (need_symbol) {
+        exception_str = exception_str + "'+f'{" + key + "}'+'";
+      } else {
+        exception_str = exception_str + key;
+      }
       (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
       (void)values_.emplace_back(input);
       return exception_str;

@@ -17,7 +17,6 @@ import pytest
 import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor, context
-import mindspore.common.dtype as mstype
 from mindspore.common.api import _cell_graph_executor
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -75,25 +74,6 @@ def test_raise_3():
         net = RaiseNet()
         res = net(1)
         print("res:", res)
-
-
-def test_raise_4():
-    """
-    Feature: graph raise.
-    Description: Test raise.
-    Expectation: No exception.
-    """
-    class RaiseNet(nn.Cell):
-        def construct(self, x):
-            if x == 1:
-                raise ValueError(f"The input should not be 1.")
-            return x
-
-    with pytest.raises(RuntimeError, match="Currently only supports raise in constant scenarios."):
-        net = RaiseNet()
-        x = Tensor(9, mstype.int32)
-        res = net(x)
-        assert res == 9
 
 
 def test_raise_5():

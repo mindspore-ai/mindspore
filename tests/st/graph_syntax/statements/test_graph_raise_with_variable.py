@@ -168,3 +168,128 @@ def test_raise_with_variable_joinedstr_tensor():
         print("res:", res)
     assert "The input should not be 1" in str(
         raise_info_joinedstr_tensor.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_with_variable_dic():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            x = Tensor(1)
+            y = Tensor(2)
+            z = {"x": x, "y": y}
+            raise ValueError(z)
+
+    with pytest.raises(RuntimeError) as raise_info_list:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "Dictionary type is currently not supporting" in str(
+        raise_info_list.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_with_variable_control_flow1():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, x, y):
+            if x == y:
+                raise RuntimeError(f"The input should not be {x}.")
+
+    with pytest.raises(RuntimeError) as raise_info_joinedstr_tensor:
+        net = RaiseNet()
+        x = Tensor(1)
+        y = Tensor(1)
+        res = net(x, y)
+        print("res:", res)
+    assert "The input should not be 1" in str(
+        raise_info_joinedstr_tensor.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_with_variable_control_flow2():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, x, y):
+            if x == y:
+                raise RuntimeError(f"The input should not be {x}.")
+            return x
+
+    with pytest.raises(RuntimeError) as raise_info_joinedstr_tensor:
+        net = RaiseNet()
+        x = Tensor(1)
+        y = Tensor(1)
+        res = net(x, y)
+        print("res:", res)
+    assert "The input should not be 1" in str(
+        raise_info_joinedstr_tensor.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_with_variable_control_flow3():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, x, y, z):
+            if x == y:
+                raise RuntimeError(f"The input should not be {x}.")
+            return z
+
+    with pytest.raises(RuntimeError) as raise_info_joinedstr_tensor:
+        net = RaiseNet()
+        x = Tensor(1)
+        y = Tensor(1)
+        z = (x, y)
+        res = net(x, y, z)
+        print("res:", res)
+    assert "The input should not be 1" in str(
+        raise_info_joinedstr_tensor.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_with_variable_control_flow4():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, x, y, z):
+            if x == y:
+                raise RuntimeError(f"The input should not be {x}.")
+            return z
+
+    with pytest.raises(RuntimeError) as raise_info_joinedstr_tensor:
+        net = RaiseNet()
+        x = Tensor(1)
+        y = Tensor(1)
+        z = [x, y]
+        res = net(x, y, z)
+        print("res:", res)
+    assert "The input should not be 1" in str(
+        raise_info_joinedstr_tensor.value)
