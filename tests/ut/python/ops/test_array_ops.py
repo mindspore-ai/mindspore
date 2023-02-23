@@ -356,7 +356,7 @@ class ArgMaxWithValueFunc(Cell):
         self.argmax_ = ops.function.max
 
     def construct(self, x):
-        return self.argmax_(x, axis=0, keep_dims=False)
+        return self.argmax_(x, axis=0, keepdims=False)
 
 
 class ArgMinWithValueFunc(Cell):
@@ -365,7 +365,7 @@ class ArgMinWithValueFunc(Cell):
         self.argmin_ = ops.function.min
 
     def construct(self, x):
-        return self.argmin_(x, axis=0, keep_dims=False)
+        return self.argmin_(x, axis=0, keepdims=False)
 
 
 class AminmaxFunc(Cell):

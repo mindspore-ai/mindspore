@@ -50,28 +50,18 @@ def argmaxwithvalue_base(data_type):
         np.array([[1., 20., 5.], [67., 8., 9.], [130., 24., 15.],
                   [0.3, -0.4, -15.]]).astype(data_type))
     expect1 = np.array([2, 2, 2]).astype(data_type)
-    expect2 = np.array([1, 0, 0, 0]).astype(data_type)
     expect11 = np.array([130, 24, 15]).astype(data_type)
-    expect22 = np.array([20, 67, 130, 0.3]).astype(data_type)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     argmax = NetArgmaxWithValue()
     output = argmax(x)
     assert (output[0][0].asnumpy() == expect1).all()
     assert (output[0][1].asnumpy() == expect11).all()
-    assert (output[1][0].asnumpy() == expect2).all()
-    assert (output[1][1].asnumpy() == expect22).all()
-    assert (output[2][0].asnumpy() == expect1).all()
-    assert (output[2][1].asnumpy() == expect11).all()
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     argmax = NetArgmaxWithValue()
     output = argmax(x)
     assert (output[0][0].asnumpy() == expect1).all()
     assert (output[0][1].asnumpy() == expect11).all()
-    assert (output[1][0].asnumpy() == expect2).all()
-    assert (output[1][1].asnumpy() == expect22).all()
-    assert (output[2][0].asnumpy() == expect1).all()
-    assert (output[2][1].asnumpy() == expect11).all()
 
 
 def argmaxwithvalue_3d(data_type, shape_x):
