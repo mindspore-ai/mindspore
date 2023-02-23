@@ -122,7 +122,14 @@ py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
   auto node = stub::MakeTopNode(top_type);
   // 4. set abstract and value in asynchronous thread after infer and run
   stub::StubNodePtr stub = node.second;
-  stub->SetAbstract(op_run_info->base_op_run_info.abstract);
+  const auto &abs = op_run_info->base_op_run_info.abstract;
+  bool success = stub->SetAbstract(abs);
+  if (!success) {
+    MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, predict type is " << top_type
+                            << ", infer type is " << abs->BuildType() << ", the name of operator is ["
+                            << adapter->name()
+                            << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
+  }
   stub->SetValue(op_run_info->out_value);
   // 5. return stub node
   return node.first;
