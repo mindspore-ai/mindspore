@@ -3,4 +3,4 @@ mindspore.Tensor.i0
 
 .. py:method:: mindspore.Tensor.i0()
 
-    :func:`mindspore.Tensor.bessel_i0` 的别名。
+    详情请参考 :func:`mindspore.ops.i0`。

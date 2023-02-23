@@ -3642,7 +3642,7 @@ class SparseSliceGrad(Primitive):
         ValueError: If the number of `backprop_val_grad` is not corresponding to the number of `new_indices`.
         ValueError: If the shape of `indices[1]` is not corresponding to `start[1]`.
         ValueError: If the shape of `indices[1]` is not corresponding to `new_indices[1]`.
-        RunTimeError: If the `backprop_val_grad` is not all backpropagated, because `indices` or `new_indices`
+        RuntimeError: If the `backprop_val_grad` is not all backpropagated, because `indices` or `new_indices`
         is not sorted.
 
     Supported Platforms:

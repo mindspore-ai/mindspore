@@ -2421,8 +2421,8 @@ class SparseCountSparseOutput(Primitive):
         ValueError: If number of values does not match first dimension of indices
         ValueError: If number of dense_shape dimensions does not match second dimension of indices
         ValueError: If num dim of dense_shape is < 1
-        RunTimeError: If number of weights is not equal to number of values
-        RunTimeError: If indexes are not in bounds of the dense shape
+        RuntimeError: If number of weights is not equal to number of values
+        RuntimeError: If indexes are not in bounds of the dense shape
 
     Examples:
         >>> from mindspore.ops.operations.sparse_ops import SparseCountSparseOutput

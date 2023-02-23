@@ -533,7 +533,7 @@
 
         在Cell和所有子Cell的输入上添加类型转换，以使用特定的浮点类型运行。
 
-        如果 `dst_type` 是 `mindspore.dtype.float16` ，Cell的所有输入(包括作为常量的input，Parameter，Tensor)都会被转换为float16。请参考 `mindspore.build_train_network` 的源代码中的用法。
+        如果 `dst_type` 是 `mindspore.dtype.float16` ，Cell的所有输入(包括作为常量的input，Parameter，Tensor)都会被转换为float16。请参考 :func:`mindspore.amp.build_train_network` 的源代码中的用法。
 
         .. note:: 多次调用将产生覆盖。
 
