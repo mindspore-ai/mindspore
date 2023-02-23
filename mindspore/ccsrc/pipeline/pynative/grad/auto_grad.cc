@@ -581,17 +581,19 @@ FuncGraphPtr AutoGradCellImpl::GradFuncGraph(const GradParamPtr &grad_param) {
 
   GradGraphByExpander(grad_param);
 
-  // Set dout parameter
-  if (kMonadPrim.find(GetCNodePrimitive(ad_param()->last_node_)) != kMonadPrim.end()) {
-    ad_param()->last_node_ = common::AnfAlgo::VisitKernelWithReturnType(ad_param()->last_node_, 0, false,
-                                                                        {prim::kPrimTupleGetItem, prim::kPrimMakeTuple})
-                               .first;
-  }
-  auto ad_graph_dout = ad_param()->tape_->add_parameter();
-  ad_graph_dout->set_abstract(ad_param()->last_node_->abstract());
-  ad_param()->anfnode_to_variable_adjoint_.at(ad_param()->last_node_)->fn()->UpdateAccumulativeDout(ad_graph_dout);
+  if (ad_param()->last_node_ != nullptr) {
+    // Set dout parameter
+    if (kMonadPrim.find(GetCNodePrimitive(ad_param()->last_node_)) != kMonadPrim.end()) {
+      ad_param()->last_node_ = common::AnfAlgo::VisitKernelWithReturnType(
+                                 ad_param()->last_node_, 0, false, {prim::kPrimTupleGetItem, prim::kPrimMakeTuple})
+                                 .first;
+    }
+    auto ad_graph_dout = ad_param()->tape_->add_parameter();
+    ad_graph_dout->set_abstract(ad_param()->last_node_->abstract());
+    ad_param()->anfnode_to_variable_adjoint_.at(ad_param()->last_node_)->fn()->UpdateAccumulativeDout(ad_graph_dout);
 
-  (void)BackPropagate();
+    (void)BackPropagate();
+  }
 
   AnfNodePtrList outputs{NewValueNode(prim::kPrimMakeTuple)};
   abstract::AbstractBasePtrList out_abs_list;
@@ -655,7 +657,9 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
     k_node->set_abstract(cnode->abstract());
     // In ms function, copy forward graph cnode info to bprop graph
     if (ms_function_by_value && cnode->forward().first != nullptr) {
-      k_node->set_forward(cnode->forward().first, cnode->forward().second);
+      auto new_v_node = NewValueNode(cnode->forward().first->value());
+      new_v_node->set_abstract(cnode->forward().first->abstract());
+      k_node->set_forward(new_v_node, cnode->forward().second);
       ad_param()->tape_->set_used_forward_nodes({k_node});
     }
     MS_LOG(DEBUG) << "Build knode " << k_node->DebugString();
@@ -856,14 +860,15 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForCNodeInput(const AnfNodePtr &input_nod
       } else if (IsPrimitiveCNode(input_node, prim::kPrimTupleGetItem)) {
         return BuildKNodeForTupleGetItem(input_node);
       }
-      MS_LOG(EXCEPTION) << "Cannot find input in adjoint map, inp: " << input_node->DebugString();
+      MS_LOG(EXCEPTION) << "Can not find input in adjoint map, inp: " << input_node->DebugString();
     }
     return input_adjoint_iter->second->k_node();
   } else {
     // Tuple sens will come in
-    if (input_node->isa<Parameter>() && input_node->abstract()->isa<abstract::AbstractSequence>()) {
+    if (input_node->isa<Parameter>()) {
       const auto input_adjoint_iter = ad_param()->anfnode_to_variable_adjoint_.find(input_node);
-      if (input_adjoint_iter != ad_param()->anfnode_to_variable_adjoint_.end()) {
+      if (input_adjoint_iter != ad_param()->anfnode_to_variable_adjoint_.end() &&
+          input_adjoint_iter->second->k_node() != nullptr) {
         return input_adjoint_iter->second->k_node();
       }
     }

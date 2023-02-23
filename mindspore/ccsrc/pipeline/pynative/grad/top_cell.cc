@@ -250,9 +250,9 @@ void TopCellInfo::set_opinfo_with_tensor_id(const std::string &op_info,
                       << " in op_info_with_tensor_id map";
   }
   // Record the relationship between the forward op and its output tensor id
-  (void)std::for_each(op_out_tensors.begin(), op_out_tensors.end(), [this, &op_info](const tensor::TensorPtr &tensor) {
+  for (const auto &tensor : op_out_tensors) {
     (void)op_info_with_tensor_id_[op_info].emplace_back(tensor->id());
-  });
+  }
 }
 }  // namespace pynative
 }  // namespace mindspore
