@@ -517,7 +517,6 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
     AnfNodePtrList inputs = {NewValueNode(prim::kPrimGetAttr), resolved_node, attr};
     MS_EXCEPTION_IF_NULL(get_attr_node->func_graph());
     AnfNodePtr res_node = get_attr_node->func_graph()->NewCNodeInOrder(std::move(inputs));
-    TraceManager::ClearParseOrResolveDebugInfo();
     return res_node;
   }
 
@@ -533,7 +532,6 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
   AnfNodePtrList inputs = {NewValueNode(prim::kPrimResolve), NewValueNode(new_namespace), NewValueNode(new_symbol)};
   MS_EXCEPTION_IF_NULL(get_attr_node->func_graph());
   AnfNodePtr resolved_node = get_attr_node->func_graph()->NewCNodeInOrder(std::move(inputs));
-  TraceManager::ClearParseOrResolveDebugInfo();
   return resolved_node;
 }
 
@@ -718,7 +716,6 @@ AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const py::
   }
   py::object attr_obj = py::getattr(cls_obj, common::SafeCStr(attr));
   AnfNodePtr res_node = ResolveObjectAndAddToManager(manager, attr_obj, get_attr_node);
-  TraceManager::ClearParseOrResolveDebugInfo();
   return res_node;
 }
 

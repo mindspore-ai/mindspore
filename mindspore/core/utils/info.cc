@@ -190,7 +190,10 @@ void TraceManager::DebugTrace(const DebugInfoPtr &debug_info, const TraceInfoPtr
   (void)trace_context_stack_.emplace_back(cloned_info);
 }
 
-void TraceManager::EndTrace() noexcept { trace_context_stack_.pop_back(); }
+void TraceManager::EndTrace() noexcept {
+  trace_context_stack_.pop_back();
+  ClearParseOrResolveDebugInfo();
+}
 
 DebugInfoPtr TraceManager::record_debug_info() { return record_debug_info_; }
 
