@@ -706,17 +706,16 @@ def adaptive_max_pool2d(input, output_size, return_indices=False):
 
 def adaptive_max_pool3d(input, output_size, return_indices=False):
     r"""
-    Applies a 3D adaptive max pooling over an input signal composed of several input planes.
-
-    The output is of size :math:`(D, H, W)`, for any input size.
-    The number of output features is equal to the number of input planes.
+    Calculates the 3D adaptive max pooling for an input Tensor.
+    That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
 
     Args:
         input (Tensor): Tensor, with shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`, which support int8, int16,
             int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64 data type.
-        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(D, H, W)`,
-            or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be int or None
-            which means the output size is the same as that of the input.
+        output_size (Union[int, tuple]): The specified output size, which is an integer that represents depth,
+            height and width, or a tuple of three int numbers that represent depth, height and width respectively.
+            The value must be a positive integer. If it is None, the output size and input size of the corresponding
+            dimension are the same.
         return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output,
             else would not be output. Default: False.
 
