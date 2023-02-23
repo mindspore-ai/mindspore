@@ -333,4 +333,23 @@ void *Converter::Convert(size_t *data_size) {
   }
   return model_data;
 }
+
+Status Converter::Convert(converter::FmkType fmk_type, const std::vector<char> &model_file,
+                          const std::vector<char> &output_file, const std::vector<char> &weight_file) {
+  if (data_ != nullptr) {
+    data_->fmk_type = fmk_type;
+    data_->model_file = CharToString(model_file);
+    data_->output_file = CharToString(output_file);
+    data_->weight_file = CharToString(weight_file);
+    Status ret = Converter::Convert();
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Convert model " << CharToString(model_file) << " failed, ret=" << ret;
+    }
+    lite::ConverterInnerContext::GetInstance()->Free();
+    return ret;
+  } else {
+    MS_LOG(ERROR) << "Convert model " << CharToString(model_file) << " failed, data is null.";
+    return kLiteError;
+  }
+}
 }  // namespace mindspore

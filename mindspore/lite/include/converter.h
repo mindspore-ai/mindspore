@@ -100,6 +100,10 @@ class MS_API Converter {
   /// \return A pointer to converted FlatBuffer model buffer.
   void *Convert(size_t *data_size);
 
+  /// \brief Convert multiple models and save .ms format models into `output_file` that passed in constructor.
+  inline Status Convert(converter::FmkType fmk_type, const std::string &model_file, const std::string &output_file = "",
+                        const std::string &weight_file = "");
+
  private:
   Converter(converter::FmkType fmk_type, const std::vector<char> &model_file, const std::vector<char> &output_file,
             const std::vector<char> &weight_file);
@@ -117,6 +121,8 @@ class MS_API Converter {
   std::vector<char> GetEncryptKeyChar() const;
   void SetDevice(const std::vector<char> &device);
   std::vector<char> GetDeviceChar();
+  Status Convert(converter::FmkType fmk_type, const std::vector<char> &model_file, const std::vector<char> &output_file,
+                 const std::vector<char> &weight_file);
   std::shared_ptr<ConverterPara> data_;
 };
 
@@ -159,5 +165,10 @@ std::string Converter::GetEncryptKey() const { return CharToString(GetEncryptKey
 void Converter::SetDevice(const std::string &device) { SetDevice(StringToChar(device)); }
 
 std::string Converter::GetDevice() { return CharToString(GetDeviceChar()); }
+
+Status Converter::Convert(converter::FmkType fmk_type, const std::string &model_file, const std::string &output_file,
+                          const std::string &weight_file) {
+  return Convert(fmk_type, StringToChar(model_file), StringToChar(output_file), StringToChar(weight_file));
+}
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_INCLUDE_CONVERTER_H_
