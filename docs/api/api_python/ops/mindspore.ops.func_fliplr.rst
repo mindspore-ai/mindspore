@@ -3,8 +3,7 @@ mindspore.ops.fliplr
 
 .. py:function:: mindspore.ops.fliplr(x)
 
-    沿左右方向翻转Tensor中每行的元素。
-    Tensor的列会被保留，但显示顺序将与以前不同。
+    将输入Tensor中每一行的元素沿左右进行翻转，但保持矩阵的列不变。
 
     参数：
         - **x** (Tensor) - 输入tensor。

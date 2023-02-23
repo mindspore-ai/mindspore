@@ -1873,8 +1873,7 @@ def flip(x, dims):
 
 def flipud(x):
     """
-    Flips the entries in each column in the up/down direction.
-    Rows are preserved, but appear in a different order than before.
+    Flips the elements of each column in the up/down direction, while preserving the rows of the input tensor.
 
     Args:
         x (Tensor): Input array.
@@ -1905,8 +1904,7 @@ def flipud(x):
 
 def fliplr(x):
     """
-    Flips the entries in each row in the left/right direction.
-    Columns are preserved, but appear in a different order than before.
+    Flips the elements of each row in the left/right direction, while preserving the columns of the input tensor.
 
     Args:
         x (Tensor): Input tensor.
