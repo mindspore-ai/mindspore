@@ -478,7 +478,7 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
   const auto &kernel_name = common::AnfAlgo::GetCNodeName(node);
   const auto &kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(kernel_name);
   // CPU also doesn't support the kernel.
-  if (kernel_attrs.empty()) {
+  if (kernel_attrs.empty() || kernel::IsKernelObjectTypeNotSupportedError(failure_info.first)) {
     MS_EXCEPTION(failure_info.second) << failure_info.first;
   }
 

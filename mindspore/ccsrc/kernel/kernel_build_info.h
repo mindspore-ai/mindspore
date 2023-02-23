@@ -100,11 +100,15 @@ class BACKEND_EXPORT KernelBuildInfo {
 
   const std::vector<KernelObjectType> &GetAllOutputKernelObjectTypes() const;
 
+  const std::vector<KernelObjectType> &GetAllOutputElementsKernelObjectTypes() const;
+
   void SetOpType(const OpType &op_type);
 
   void SetOutputsKernelObjectType(const std::vector<KernelObjectType> &outputs_kernel_object_type);
 
   void SetInputsKernelObjectType(const std::vector<KernelObjectType> &inputs_kernel_object_type);
+
+  void SetOutputElementsKernelObjectType(const std::vector<KernelObjectType> &output_elements_kernel_object_type);
 
   std::vector<std::string> GetAllOutputReshapeType() const;
 
@@ -166,6 +170,9 @@ class BACKEND_EXPORT KernelBuildInfo {
   std::vector<TypeId> outputs_device_type_;
   std::vector<KernelObjectType> inputs_kernel_object_type_;
   std::vector<KernelObjectType> outputs_kernel_object_type_;
+  // Indicates kernel object types of elements in TupleUnfold.
+  // Only valid when output kernel object type is TupleUnfold.
+  std::vector<KernelObjectType> output_elements_kernel_object_type_;
   std::vector<nlohmann::json> output_data_desc_;
   std::string fusion_type_{kernel::kPatternOpaque};
   Processor processor_{UNKNOWN};

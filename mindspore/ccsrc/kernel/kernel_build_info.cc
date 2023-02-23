@@ -130,6 +130,10 @@ KernelObjectType KernelBuildInfo::GetOutputKernelObjectType(size_t output_index)
   return outputs_kernel_object_type_[output_index];
 }
 
+const std::vector<KernelObjectType> &KernelBuildInfo::GetAllOutputElementsKernelObjectTypes() const {
+  return output_elements_kernel_object_type_;
+}
+
 const std::string &KernelBuildInfo::GetOriginDataFormat() const { return origin_data_format_; }
 
 const std::vector<std::string> &KernelBuildInfo::GetAllInputFormats() const { return inputs_format_; }
@@ -156,6 +160,11 @@ void KernelBuildInfo::SetOutputsKernelObjectType(const std::vector<KernelObjectT
 
 void KernelBuildInfo::SetInputsKernelObjectType(const std::vector<KernelObjectType> &inputs_kernel_object_type) {
   inputs_kernel_object_type_ = inputs_kernel_object_type;
+}
+
+void KernelBuildInfo::SetOutputElementsKernelObjectType(
+  const std::vector<KernelObjectType> &output_elements_kernel_object_type) {
+  output_elements_kernel_object_type_ = output_elements_kernel_object_type;
 }
 
 void KernelBuildInfo::SetInputsFormat(const std::vector<std::string> &inputs_format) { inputs_format_ = inputs_format; }

@@ -49,6 +49,7 @@ constexpr auto kStridedSliceMaxDims = 8;
 constexpr auto kQuad = 4;
 constexpr size_t kInputFirstIndex = 0;
 constexpr char kOperatorOriginFormat[] = "operator_origin_format";
+constexpr char kKernelObjectTypeNotSupportedStr[] = "KernelObjectTypeNotSupported";
 
 abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
   // Other abstract class, such as AbstractCSRTensor and AbstractCOOTensor, is converted to AbstractTensor early time.
@@ -1211,6 +1212,24 @@ bool SelectKernelByObjectType(const CNodePtr &kernel_node, const std::vector<Ker
   return (!selected_kernel_attrs->empty());
 }
 
+std::pair<std::string, ExceptionType> KernelObjectTypeNotSupportWarning(const CNodePtr &kernel_node) {
+  auto GetObjectTypeStr = [](const std::vector<TypeId> &object_types) {
+    std::vector<std::string> object_type_strs;
+    std::transform(object_types.begin(), object_types.end(), std::back_inserter(object_type_strs), TypeIdLabel);
+    return std::accumulate(object_type_strs.begin(), object_type_strs.end(), std::string(),
+                           [](const std::string &x, const std::string &y) { return x.empty() ? y : x + ", " + y; });
+  };
+  const std::string warn_str = std::string(kKernelObjectTypeNotSupportedStr) + ": unsupported kernel object type for " +
+                               kernel_node->fullname_with_scope() + " with inputs (" +
+                               GetObjectTypeStr(AnfAlgo::GetAllInputObjectType(kernel_node)) + "), outputs (" +
+                               GetObjectTypeStr(AnfAlgo::GetAllOutputObjectType(kernel_node)) + ").";
+  return {warn_str, NotSupportError};
+}
+
+bool IsKernelObjectTypeNotSupportedError(const std::string &error_str) {
+  return error_str.find(kKernelObjectTypeNotSupportedStr) != std::string::npos;
+}
+
 KernelObjectType TypeIdToKernelObjectType(const TypeId &type_id) {
   std::unordered_map<TypeId, KernelObjectType> trans_map{{kObjectTypeTuple, KernelObjectType::TUPLE},
                                                          {kObjectTypeNumber, KernelObjectType::SCALAR},
@@ -1320,6 +1339,18 @@ std::vector<KernelObjectType> CalOutputKernelObjectTypes(const AnfNodePtr &kerne
                               selected_kernel_attr.GetSkipCheck());
 }
 
+std::vector<KernelObjectType> CalOutputElementObjectTypes(const AnfNodePtr &kernel_node,
+                                                          const kernel::KernelAttr &selected_kernel_attr) {
+  auto selected_output_object_types = GetOutputObjectTypeListFromKernelAttr(selected_kernel_attr);
+  auto element_num = AnfAlgo::GetOutputElementNum(kernel_node);
+  if (selected_kernel_attr.GetAllSame() && selected_output_object_types.size() == 1) {
+    return std::vector<KernelObjectType>(element_num, TypeIdToKernelObjectType(selected_output_object_types[0]));
+  }
+  MS_EXCEPTION_IF_CHECK_FAIL(element_num == selected_output_object_types.size(),
+                             "Check multi-output kernel attr size failed.");
+  return TypeIdToKernelObjectType(selected_output_object_types);
+}
+
 std::string FetchPrintInfoByKernelAttr(KernelAttr selected_kernel_attr) {
   std::string attr_info = "input[";
   std::for_each(std::begin(selected_kernel_attr.input_type()), std::end(selected_kernel_attr.input_type()),
@@ -1354,10 +1385,40 @@ void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
   kernel_build_info->SetInputsKernelObjectType(input_kernel_object_types);
 }
 
+void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
+                                  const std::vector<KernelObjectType> &input_kernel_object_types,
+                                  const std::vector<KernelObjectType> &output_kernel_object_types,
+                                  const std::vector<KernelObjectType> &output_elements_kernel_object_types) {
+  if (kernel_node->kernel_info() == nullptr) {
+    kernel_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+  }
+  if (!kernel_node->kernel_info()->has_build_info()) {
+    AnfAlgo::SetSelectKernelBuildInfo(std::make_shared<kernel::KernelBuildInfo>(), kernel_node.get());
+  }
+
+  MS_LOG(DEBUG) << kernel_node->fullname_with_scope() << " input kernel object type is: " << input_kernel_object_types
+                << ", output kernel object type is: " << output_kernel_object_types
+                << ", output elements kernel object type is: " << output_elements_kernel_object_types;
+  auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+  kernel_build_info->SetOutputsKernelObjectType(output_kernel_object_types);
+  kernel_build_info->SetInputsKernelObjectType(input_kernel_object_types);
+  kernel_build_info->SetOutputElementsKernelObjectType(output_elements_kernel_object_types);
+}
+
+bool HasOutputElementsKernelObjectType(const std::vector<KernelObjectType> &output_kernel_object_types) {
+  return output_kernel_object_types.size() == 1 &&
+         output_kernel_object_types[0] == kernel::KernelObjectType::TUPLE_UNFOLD;
+}
+
 void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kernel::KernelAttr &selected_kernel_attr) {
   auto input_kernel_object_types = CalInputKernelObjectTypes(kernel_node, selected_kernel_attr);
   auto output_kernel_object_types = CalOutputKernelObjectTypes(kernel_node, selected_kernel_attr);
-  SetKernelObjectTypeBuildInfo(kernel_node, input_kernel_object_types, output_kernel_object_types);
+  std::vector<KernelObjectType> output_element_object_types;
+  if (HasOutputElementsKernelObjectType(output_kernel_object_types)) {
+    output_element_object_types = CalOutputElementObjectTypes(kernel_node, selected_kernel_attr);
+  }
+  SetKernelObjectTypeBuildInfo(kernel_node, input_kernel_object_types, output_kernel_object_types,
+                               output_element_object_types);
 }
 
 void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std::vector<TypeId> &input_types,

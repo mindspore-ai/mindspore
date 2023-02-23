@@ -460,7 +460,8 @@ BACKEND_EXPORT void UnfoldKernelBuildInfo(const CNodePtr &kernel_node);
 BACKEND_EXPORT int64_t CalOutputTupleSize(const AnfNodePtr &node);
 BACKEND_EXPORT void SetDynamicInputSizeAttr(const CNodePtr &cnode);
 BACKEND_EXPORT bool IsDynamicParamKernel(const std::string &op_name);
-
+BACKEND_EXPORT std::pair<std::string, ExceptionType> KernelObjectTypeNotSupportWarning(const CNodePtr &kernel_node);
+BACKEND_EXPORT bool IsKernelObjectTypeNotSupportedError(const std::string &error_str);
 template <typename Derived, typename AddressType = AddressPtr>
 class MatchKernelHelper {
  public:
