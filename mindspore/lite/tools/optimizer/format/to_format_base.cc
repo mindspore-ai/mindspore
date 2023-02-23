@@ -267,6 +267,92 @@ STATUS ToFormatBase::HandleGraphInput(const FuncGraphPtr &func_graph) {
   return lite::RET_OK;
 }
 
+STATUS ToFormatBase::DealConv2dTransposeFusionNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                   const std::vector<int> &perm) {
+  MS_ERROR_IF_NULL_W_RET_VAL(func_graph, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
+  const int kInputSizeIndex = 3;
+  auto prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
+  auto prim = GetValueNode<PrimitivePtr>(prim_anf_node);
+  MS_ERROR_IF_NULL_W_RET_VAL(prim, lite::RET_ERROR);
+  auto val_ptr = prim->GetAttr(ops::kOriginalOpName);
+  if (val_ptr == nullptr || GetValue<std::string>(val_ptr) != "Conv2DBackpropInput" ||
+      cnode->inputs().size() < kInputSizeIndex + 1) {  // no input_size
+    return lite::RET_OK;
+  }
+  auto gather_input = cnode->input(kInputSizeIndex);
+  MS_CHECK_TRUE_MSG(gather_input != nullptr, RET_ERROR, "gather input is nullptr");
+  auto abstract = gather_input->abstract();
+  MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "abstract is nullptr");
+  std::vector<int> gather_indices_n, gather_indices_hw, gather_indices_c;
+  auto value_ptr = MakeValue<int64_t>(NCHW);
+  if (perm == kNH2NC) {          // NHWC To NCHW
+    gather_indices_n = {0};      // fetch N dimension
+    gather_indices_hw = {1, 2};  // fetch H and W dimension
+    gather_indices_c = {3};      // fetch C dimension
+  } else {                       // NCHW To NHWC
+    gather_indices_n = {0};      // fetch N dimension;
+    gather_indices_hw = {2, 3};  // fetch H and W dimension
+    gather_indices_c = {1};      // fetch C dimension
+    value_ptr = MakeValue<int64_t>(NHWC);
+  }
+  auto gather_name_n = cnode->fullname_with_scope() + "_gather_n";
+  auto gather_cnode_n = opt::GenGatherNode(func_graph, gather_input, gather_indices_n, gather_name_n);
+  MS_CHECK_TRUE_MSG(gather_cnode_n != nullptr, RET_ERROR, "create gather cnode n failed.");
+  auto gather_prim_n = GetValueNode<PrimitivePtr>(gather_cnode_n->input(0));
+  (void)gather_prim_n->AddAttr(ops::kFormat, value_ptr);
+  ShapeVector gather_n_shape = {1};
+  auto n_shape_ptr = std::make_shared<abstract::Shape>(gather_n_shape);
+  MS_CHECK_TRUE_MSG(n_shape_ptr != nullptr, RET_ERROR, "n_shape_ptr is nullptr.");
+  auto tmp_abstract = abstract->Clone();
+  tmp_abstract->set_shape(n_shape_ptr);
+  gather_cnode_n->set_abstract(tmp_abstract);
+
+  auto gather_name_c = cnode->fullname_with_scope() + "_gather_c";
+  auto gather_cnode_c = opt::GenGatherNode(func_graph, gather_input, gather_indices_c, gather_name_c);
+  MS_CHECK_TRUE_MSG(gather_cnode_c != nullptr, RET_ERROR, "create gather cnode c failed.");
+  auto gather_prim_c = GetValueNode<PrimitivePtr>(gather_cnode_c->input(0));
+  (void)gather_prim_c->AddAttr(ops::kFormat, value_ptr);
+  ShapeVector gather_c_shape = {1};
+  auto c_shape_ptr = std::make_shared<abstract::Shape>(gather_c_shape);
+  MS_CHECK_TRUE_MSG(c_shape_ptr != nullptr, RET_ERROR, "c_shape_ptr is nullptr.");
+  tmp_abstract = abstract->Clone();
+  tmp_abstract->set_shape(c_shape_ptr);
+  gather_cnode_c->set_abstract(tmp_abstract);
+
+  auto gather_name_hw = cnode->fullname_with_scope() + "_gather_hw";
+  auto gather_cnode_hw = opt::GenGatherNode(func_graph, gather_input, gather_indices_hw, gather_name_hw);
+  MS_CHECK_TRUE_MSG(gather_cnode_hw != nullptr, RET_ERROR, "create gather cnode hw failed.");
+  auto gather_prim_hw = GetValueNode<PrimitivePtr>(gather_cnode_hw->input(0));
+  (void)gather_prim_hw->AddAttr(ops::kFormat, value_ptr);
+  ShapeVector gather_hw_shape = {2};
+  auto hw_shape_ptr = std::make_shared<abstract::Shape>(gather_hw_shape);
+  MS_CHECK_TRUE_MSG(hw_shape_ptr != nullptr, RET_ERROR, "hw_shape_ptr is nullptr.");
+  tmp_abstract = abstract->Clone();
+  tmp_abstract->set_shape(hw_shape_ptr);
+  gather_cnode_hw->set_abstract(tmp_abstract);
+
+  std::vector<AnfNodePtr> concat_inputnodes;
+  if (perm == kNH2NC) {
+    concat_inputnodes = {gather_cnode_n, gather_cnode_c, gather_cnode_hw};
+  } else {
+    concat_inputnodes = {gather_cnode_n, gather_cnode_hw, gather_cnode_c};
+  }
+  auto concat_name = cnode->fullname_with_scope() + "_concat_gather";
+  auto concat_node = opt::GenConcatNode(func_graph, concat_inputnodes, concat_name);
+  MS_CHECK_TRUE_MSG(concat_node != nullptr, RET_ERROR, "create concat_node failed.");
+  auto concat_node_prim = GetValueNode<PrimitivePtr>(concat_node->input(0));
+  (void)concat_node_prim->AddAttr(ops::kFormat, value_ptr);
+  ShapeVector concat_shape = {4};
+  auto concat_shape_ptr = std::make_shared<abstract::Shape>(concat_shape);
+  MS_CHECK_TRUE_MSG(concat_shape_ptr != nullptr, RET_ERROR, "concat_shape_ptr is nullptr.");
+  tmp_abstract = abstract->Clone();
+  tmp_abstract->set_shape(concat_shape_ptr);
+  concat_node->set_abstract(tmp_abstract);
+  manager_->SetEdge(cnode, kInputSizeIndex, concat_node);
+  return lite::RET_OK;
+}
+
 STATUS ToFormatBase::HandleGraphNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ERROR_IF_NULL_W_RET_VAL(func_graph, lite::RET_ERROR);
   MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
@@ -280,6 +366,12 @@ STATUS ToFormatBase::HandleGraphNode(const FuncGraphPtr &func_graph, const CNode
   }
   auto before_perm = trans_info.pre_ == opt::kNHWC2NCHW ? kNH2NC : kNC2NH;
   auto after_perm = trans_info.post_ == opt::kNCHW2NHWC ? kNC2NH : kNH2NC;
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
+    if (DealConv2dTransposeFusionNode(func_graph, cnode, before_perm) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Deal conv2d transpose fusion attr: input_size failed." << cnode->fullname_with_scope();
+      return lite::RET_ERROR;
+    }
+  }
   if (InsertPreTransNode(func_graph, cnode, before_perm) != lite::RET_OK) {
     MS_LOG(ERROR) << "insert pre node failed." << cnode->fullname_with_scope();
     return lite::RET_ERROR;

@@ -18,6 +18,8 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "ops/fusion/conv2d_transpose_fusion.h"
+#include "ops/op_name.h"
 
 namespace mindspore::lite {
 namespace {
@@ -51,6 +53,7 @@ bool Conv2DTransposeInputAdjust::Run(const FuncGraphPtr &func_graph) {
             continue;
           } else {
             MS_LOG(INFO) << "node do not have has_bias attr";
+            (void)prim->AddAttr(ops::kOriginalOpName, MakeValue(ops::kNameConv2dTransposeFusion));
             inputs.pop_back();
             cnode->set_inputs(inputs);
           }

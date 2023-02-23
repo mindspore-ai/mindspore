@@ -26,6 +26,7 @@
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/transpose.h"
 #include "ops/gather.h"
+#include "ops/concat.h"
 #include "ops/tuple_get_item.h"
 #include "tools/common/tensor_util.h"
 #include "frontend/operator/ops.h"
@@ -1012,6 +1013,27 @@ CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_n
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSizeThree, 1);
   MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
   gather_prim->AddAttr("quant_params", quant_params_holder);
+  return cnode;
+}
+
+CNodePtr GenConcatNode(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &input_node_vec,
+                       const std::string &cnode_name) {
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "func_graph is nullptr, which is invalid.";
+    return nullptr;
+  }
+  ops::Concat concat_node;
+  concat_node.set_axis(0);
+  auto concat_prim = concat_node.GetPrim();
+  MS_CHECK_TRUE_RET(concat_prim != nullptr, nullptr);
+  auto cnode = func_graph->NewCNode(concat_prim, input_node_vec);
+  MS_ASSERT(cnode != nullptr);
+  auto manager = Manage(func_graph);
+  MS_ASSERT(manager != nullptr);
+  cnode->set_fullname_with_scope(cnode_name);
+  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(input_node_vec.size(), 1);
+  MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
+  concat_prim->AddAttr("quant_params", quant_params_holder);
   return cnode;
 }
 
