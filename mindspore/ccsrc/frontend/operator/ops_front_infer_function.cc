@@ -68,18 +68,6 @@ struct SlideInfo {
   int64_t stop;
 };
 
-template <typename T>
-AbstractBasePtr InferImplTupleOrListEqual(const std::string &op_name, const AbstractBasePtrList &args_spec_list) {
-  // Inputs: two tuples or two lists.
-  const size_t args_num = 2;
-  CheckArgsSize(op_name, args_spec_list, args_num);
-  auto input_x = CheckArg<T>(op_name, args_spec_list, 0);
-  auto input_y = CheckArg<T>(op_name, args_spec_list, 1);
-  ValuePtr x_value = input_x->BuildValue();
-  ValuePtr y_value = input_y->BuildValue();
-  return std::make_shared<AbstractScalar>(*x_value == *y_value);
-}
-
 void ComputeReduceIndex(const std::vector<int64_t> &reverse_x, const std::vector<int64_t> &reverse_y,
                         std::vector<int64_t> *grad_x_reduce_idx, std::vector<int64_t> *grad_y_reduce_idy) {
   MS_EXCEPTION_IF_NULL(grad_x_reduce_idx);
@@ -814,16 +802,6 @@ AbstractBasePtr InferImplStopGradient(const AnalysisEnginePtr &, const Primitive
   return args_spec_list[0]->Clone();
 }
 
-AbstractBasePtr InferImplTupleEqual(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_spec_list) {
-  return InferImplTupleOrListEqual<AbstractTuple>(primitive->name(), args_spec_list);
-}
-
-AbstractBasePtr InferImplListEqual(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_spec_list) {
-  return InferImplTupleOrListEqual<AbstractList>(primitive->name(), args_spec_list);
-}
-
 AbstractBasePtr InferImplDictLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list) {
   return InferTupleOrListOrDictLen<AbstractDictionary>(primitive->name(), args_spec_list);
@@ -1089,10 +1067,8 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringGetItem, prim::kPrimStringGetItem, Infe
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleReversed, prim::kPrimTupleReversed, InferImplTupleReversed, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleDiv, prim::kPrimTupleDiv, InferImplTupleDiv, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleToArray, prim::kPrimTupleToArray, InferImplTuple2Array, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleEqual, prim::kPrimTupleEqual, InferImplTupleEqual, nullptr);
 // List
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ListReduce, prim::kPrimListReduce, InferImplListReduce, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ListEqual, prim::kPrimListEqual, InferImplListEqual, nullptr);
 // Dict
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(DictLen, prim::kPrimDictLen, InferImplDictLen, nullptr);
 // Slice
@@ -1135,13 +1111,9 @@ void RegPrimitiveFrontEval() {
                                                 InferImplTupleDiv, nullptr);
   abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimTupleToArray,
                                                 InferImplTuple2Array, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimTupleEqual,
-                                                InferImplTupleEqual, nullptr);
   // List
   abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimListReduce,
                                                 InferImplListReduce, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimListEqual,
-                                                InferImplListEqual, nullptr);
   // Dict
   abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimDictLen,
                                                 InferImplDictLen, nullptr);

@@ -47,6 +47,9 @@ class ScalarDiv(Primitive):
     def __init__(self):
         """Initialize ScalarDiv"""
 
+    def __call__(self, x, y):
+        return x / y
+
 
 class ScalarFloordiv(Primitive):
     r"""
@@ -79,6 +82,9 @@ class ScalarFloordiv(Primitive):
         """Initialize ScalarFloordiv"""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
+    def __call__(self, x, y):
+        return x // y
+
 
 class ScalarAdd(Primitive):
     r"""
@@ -104,6 +110,9 @@ class ScalarAdd(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize ScalarAdd"""
+
+    def __call__(self, x, y):
+        return x + y
 
 
 class ScalarSub(Primitive):
@@ -131,6 +140,9 @@ class ScalarSub(Primitive):
     def __init__(self):
         """Initialize ScalarSub"""
 
+    def __call__(self, x, y):
+        return x - y
+
 
 class ScalarMul(Primitive):
     r"""
@@ -157,6 +169,9 @@ class ScalarMul(Primitive):
     def __init__(self):
         """Initialize ScalarMul"""
 
+    def __call__(self, x, y):
+        return x * y
+
 
 class scalar_eq(Primitive):
     r"""
@@ -181,7 +196,10 @@ class scalar_eq(Primitive):
     """
     @prim_attr_register
     def __init__(self):
-        """Initialize ScalarMul"""
+        """Initialize ScalarEq"""
+
+    def __call__(self, x, y):
+        return x == y
 
 
 class scalar_gt(Primitive):
@@ -209,6 +227,9 @@ class scalar_gt(Primitive):
     def __init__(self):
         """Initialize scalar_gt"""
 
+    def __call__(self, x, y):
+        return x > y
+
 
 class scalar_lt(Primitive):
     r"""
@@ -234,6 +255,9 @@ class scalar_lt(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize scalar_lt"""
+
+    def __call__(self, x, y):
+        return x < y
 
 
 class scalar_ge(Primitive):
@@ -261,6 +285,9 @@ class scalar_ge(Primitive):
     def __init__(self):
         """Initialize scalar_ge"""
 
+    def __call__(self, x, y):
+        return x >= y
+
 
 class scalar_le(Primitive):
     r"""
@@ -286,6 +313,9 @@ class scalar_le(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize scalar_le"""
+
+    def __call__(self, x, y):
+        return x <= y
 
 
 class ScalarMod(Primitive):
@@ -316,6 +346,9 @@ class ScalarMod(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize ScalarMod"""
+
+    def __call__(self, x, y):
+        return x % y
 
 
 class ScalarBool(Primitive):
@@ -366,6 +399,9 @@ class bool_not(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize bool_not"""
+
+    def __call__(self, x):
+        return not x
 
 
 class bit_and(Primitive):
