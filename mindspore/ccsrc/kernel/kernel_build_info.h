@@ -192,20 +192,14 @@ class BACKEND_EXPORT KernelBuildInfo::KernelBuildInfoBuilder {
       (void)kernel_build_info_->inputs_format_.emplace_back(kernel_build_info->GetInputFormat(index));
       (void)kernel_build_info_->input_reshape_type_.emplace_back(kernel_build_info->GetInputReshapeType(index));
     }
-    for (size_t index = 0; index < kernel_build_info->GetAllInputKernelObjectTypes().size(); ++index) {
-      (void)kernel_build_info_->inputs_kernel_object_type_.emplace_back(
-        kernel_build_info->GetInputKernelObjectType(index));
-    }
+    kernel_build_info_->inputs_kernel_object_type_ = kernel_build_info->GetAllInputKernelObjectTypes();
 
     for (size_t index = 0; index < kernel_build_info->GetOutputNum(); ++index) {
       (void)kernel_build_info_->outputs_device_type_.emplace_back(kernel_build_info->GetOutputDeviceType(index));
       (void)kernel_build_info_->outputs_format_.emplace_back(kernel_build_info->GetOutputFormat(index));
       (void)kernel_build_info_->output_reshape_type_.emplace_back(kernel_build_info->GetOutputReshapeType(index));
     }
-    for (size_t index = 0; index < kernel_build_info->GetAllOutputKernelObjectTypes().size(); ++index) {
-      (void)kernel_build_info_->outputs_kernel_object_type_.emplace_back(
-        kernel_build_info->GetOutputKernelObjectType(index));
-    }
+    kernel_build_info_->outputs_kernel_object_type_ = kernel_build_info->GetAllOutputKernelObjectTypes();
   }
 
   ~KernelBuildInfoBuilder() = default;
