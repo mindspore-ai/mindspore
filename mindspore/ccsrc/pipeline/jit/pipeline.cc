@@ -107,6 +107,7 @@ using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTensorPtr;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
+using DeviceTensor = mindspore::device::DeviceAddress;
 
 const char IR_TYPE_ANF[] = "anf_ir";
 const char IR_TYPE_ONNX[] = "onnx_ir";
@@ -1372,6 +1373,28 @@ void GraphExecutorPy::TerminateDebugger() {
 }
 #endif
 
+std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteOutputFromAddress(const py::object &res,
+                                                                           const BaseRef &value) {
+  if (py::isinstance<tensor::Tensor>(res)) {
+    auto res_tensor = res.cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(res_tensor);
+    if (res_tensor->device_address() != nullptr) {
+      auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(res_tensor->device_address());
+      MS_LOG(DEBUG) << "res tensor_address:" << tensor_address;
+      AnfNodePtr real_node = AnfNodePtr(tensor_address->node_index().first);
+      if (real_node != nullptr) {
+        MS_LOG(DEBUG) << "real_node:" << real_node->DebugString();
+        const auto &[py_res, has_real_output] = GetPyExecuteOutput(real_node, value);
+        if (has_real_output) {
+          MS_LOG(DEBUG) << "py_res:" << py_res;
+          return {py_res, true};
+        }
+      }
+    }
+  }
+  return {py::none(), false};
+}
+
 py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_obj) {
   // init for dynamic-obfuscated model infer
   (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().init_calling_count();
@@ -1448,7 +1471,7 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
   }
   MS_LOG(INFO) << "VM loop size " << vm_loop << ", loopsink size " << vm_loop;
   py::object res;
-  MS_LOG(DEBUG) << "Eval run" << ms_context->backend_policy();
+  MS_LOG(DEBUG) << "Eval run " << ms_context->backend_policy();
   const auto &output = execute_info->func_graph->output();
   MS_EXCEPTION_IF_NULL(output);
 
@@ -1458,6 +1481,12 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
   for (int64_t i = 0; i < vm_loop; i++) {
     value = (*run)(execute_info->arg_list);
     res = BaseRefToPyData(value, output_abs);
+    // If crossing the graph, may not get PyExecuteOutputUserData in the parent graph.
+    // Get PyExecuteOutputUserData by device_address bound AnfNode which is in sub graph.
+    const auto &[py_res, has_real_node_address] = GetPyExecuteOutputFromAddress(res, value);
+    if (has_real_node_address) {
+      return py_res;
+    }
   }
   // Replace the output if it's not Tensor, but Python data.
   const auto &[py_res, has_real_output] = GetPyExecuteOutput(output, value);
