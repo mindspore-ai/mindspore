@@ -1445,12 +1445,14 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             axis = ()
         return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
 
-    def amin(self, axis=None, keep_dims=False):
+    def amin(self, axis=None, keepdims=False, *, initial=None, where=None):
         """
         For details, please refer to :func:`mindspore.ops.amin`.
         """
         self._init_check()
-        return tensor_operator_registry.get('amin')(self, axis, keep_dims)
+        if axis is None:
+            axis = ()
+        return tensor_operator_registry.get('amin')(self, axis, keepdims, initial=initial, where=where)
 
     def reverse(self, axis):
         """
@@ -1459,12 +1461,14 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('reverse')(axis)(self)
 
-    def amax(self, axis=None, keep_dims=False):
+    def amax(self, axis=None, keepdims=False, *, initial=None, where=None):
         """
         For details, please refer to :func:`mindspore.ops.amax`.
         """
         self._init_check()
-        return tensor_operator_registry.get('amax')(self, axis, keep_dims)
+        if axis is None:
+            axis = ()
+        return tensor_operator_registry.get('amax')(self, axis, keepdims, initial=initial, where=where)
 
     def reverse_sequence(self, seq_lengths, seq_dim=0, batch_dim=0):
         """
@@ -2005,7 +2009,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         x = x.astype(origin_dtype)
         return x
 
-    def max(self, axis=None, keepdims=False, initial=None, where=True):
+    def max(self, axis=None, keepdims=False, *, initial=None, where=True, return_indices=False):
         """
         Return the maximum of a tensor or maximum along an axis.
 
@@ -2018,6 +2022,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
                 If this is set to True, the axes which are reduced are left in the
                 result as dimensions with size one. With this option, the result will
                 broadcast correctly against the input array. Default: False.
+
+        Keyword Args:
             initial (scalar, optional):
                 The minimum value of an output element. Must be present to allow
                 computation on empty slice. Default: None.
@@ -2025,6 +2031,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
                 A boolean tensor which is broadcasted to match the dimensions of array,
                 and selects elements to include in the reduction. If non-default value
                 is passed, initial must also be provided. Default: True.
+            return_indices (bool, optional): Whether to return the index of the maximum value. Default: False.
+                If `axis` is a list or tuple of ints, it must be False.
 
         Returns:
             Tensor or scalar, maximum of input tensor. If `axis` is None, the result is a scalar
@@ -2050,14 +2058,25 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> output = a.max()
             >>> print(output)
             3.0
+            >>> value, indices = a.max(axis=0, return_indices=True)
+            >>> print(value)
+            [2. 3.]
+            >>> print(indices)
+            [1 1]
         """
-        reduce_ = tensor_operator_registry.get("reduce")
-        reduce_max = tensor_operator_registry.get("reduce_max")
-        maximum = tensor_operator_registry.get("maximum")
-        return reduce_(self, reduce_max(keepdims), cmp_fn=maximum, axis=axis, keepdims=keepdims,
-                       initial=initial, where=where)
+        self._init_check()
+        if isinstance(axis, (list, tuple)):
+            reduce_ = tensor_operator_registry.get("reduce")
+            reduce_max = tensor_operator_registry.get("reduce_max")
+            maximum = tensor_operator_registry.get("maximum")
+            return reduce_(self, reduce_max(keepdims), cmp_fn=maximum, axis=axis, keepdims=keepdims,
+                           initial=initial, where=where)
+        values, indices = tensor_operator_registry.get("max")(self, axis, keepdims, initial=initial, where=where)
+        if not return_indices:
+            return values
+        return values, indices
 
-    def min(self, axis=None, keepdims=False, initial=None, where=True):
+    def min(self, axis=None, keepdims=False, *, initial=None, where=True, return_indices=False):
         """
         Return the minimum of a tensor or minimum along an axis.
 
@@ -2070,6 +2089,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
                 If True, the axes which are reduced are left in the
                 result as dimensions with size one. With this option, the result will
                 broadcast correctly against the input array. Default: False.
+
+        Keyword Args:
             initial (scalar, optional):
                 The minimum value of an output element. Must be present to allow
                 computation on empty slice. Default: None.
@@ -2077,6 +2098,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
                 A boolean tensor which is broadcasted to match the dimensions of array,
                 and selects elements to include in the reduction. If non-default value
                 is passed, initial must also be provided. Default: True.
+            return_indices (bool, optional): Whether to return the index of the minimum value. Default: False.
+                If `axis` is a list or tuple of ints, it must be False.
 
         Returns:
             Tensor or scalar, minimum of input tensor. If `axis` is None, the result is a scalar
@@ -2111,12 +2134,23 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> output = a.min(axis=0, initial=9, where=Tensor([False, True]))
             >>> print(output)
             [9. 1.]
+            >>> value, indices = a.min(axis=0, return_indices=True)
+            >>> print(value)
+            [0. 1.]
+            >>> print(indices)
+            [0 0]
         """
-        reduce_ = tensor_operator_registry.get("reduce")
-        reduce_min = tensor_operator_registry.get("reduce_min")
-        minimum = tensor_operator_registry.get("minimum")
-        return reduce_(self, reduce_min(keepdims), cmp_fn=minimum(), axis=axis, keepdims=keepdims,
-                       initial=initial, where=where)
+        self._init_check()
+        if isinstance(axis, (list, tuple)):
+            reduce_ = tensor_operator_registry.get("reduce")
+            reduce_min = tensor_operator_registry.get("reduce_min")
+            minimum = tensor_operator_registry.get("minimum")
+            return reduce_(self, reduce_min(keepdims), cmp_fn=minimum(), axis=axis, keepdims=keepdims,
+                           initial=initial, where=where)
+        values, indices = tensor_operator_registry.get("min")(self, axis, keepdims, initial=initial, where=where)
+        if not return_indices:
+            return values
+        return values, indices
 
     def scatter_add(self, indices, updates):
         """

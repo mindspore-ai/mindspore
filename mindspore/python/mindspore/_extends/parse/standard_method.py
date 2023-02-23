@@ -1007,8 +1007,8 @@ def copy(x):
     return x
 
 
-def max(x, axis=None, keepdims=False, initial=None,  # pylint: disable=redefined-builtin
-        where=True):  # pylint: disable=redefined-outer-name
+def max(input, axis=None, keepdims=False, *, initial=None,  # pylint: disable=redefined-builtin
+        where=True, return_indices=False):  # pylint: disable=redefined-outer-name
     """
     Returns the maximum of a tensor or maximum along an axis.
 
@@ -1022,6 +1022,8 @@ def max(x, axis=None, keepdims=False, initial=None,  # pylint: disable=redefined
             If this is set to True, the axes which are reduced are left in the
             result as dimensions with size one. With this option, the result will
             broadcast correctly against the input array.
+
+    Keyword Args:
         initial (scalar, optional):
             The minimum value of an output element. Must be present to allow
             computation on empty slice.
@@ -1029,6 +1031,8 @@ def max(x, axis=None, keepdims=False, initial=None,  # pylint: disable=redefined
             A boolean array which is broadcasted to match the dimensions of array,
             and selects elements to include in the reduction. If non-default value
             is passed, initial must also be provided.
+        return_indices (bool, optional): Whether to return the index of the minimum value. Default: False.
+                If `axis` is a list or tuple of ints, it must be False.
 
     Returns:
         Tensor or scalar, maximum of input tensor. If `axis` is None, the result is a scalar
@@ -1049,12 +1053,17 @@ def max(x, axis=None, keepdims=False, initial=None,  # pylint: disable=redefined
         >>> print(output)
         3.0
     """
-    return compile_utils.reduce_(x, P.ReduceMax(keepdims), cmp_fn=F.maximum,
-                                 axis=axis, keepdims=keepdims, initial=initial, where=where)
+    if isinstance(axis, (list, tuple)):
+        return compile_utils.reduce_(input, P.ReduceMax(keepdims), cmp_fn=F.maximum,
+                                     axis=axis, keepdims=keepdims, initial=initial, where=where)
+    values, indices = F.max(input, axis, keepdims, initial=initial, where=where)
+    if not return_indices:
+        return values
+    return values, indices
 
 
-def min(x, axis=None, keepdims=False, initial=None,  # pylint: disable=redefined-builtin
-        where=True):  # pylint: disable=redefined-outer-name
+def min(input, axis=None, keepdims=False, *, initial=None,  # pylint: disable=redefined-builtin
+        where=True, return_indices=False):  # pylint: disable=redefined-outer-name
     """
     Returns the minimum of a tensor or minimum along an axis.
 
@@ -1068,6 +1077,8 @@ def min(x, axis=None, keepdims=False, initial=None,  # pylint: disable=redefined
             If this is set to True, the axes which are reduced are left in the
             result as dimensions with size one. With this option, the result will
             broadcast correctly against the input array.
+
+    Keyword Args:
         initial (scalar, optional):
             The maximum value of an output element. Must be present to allow
             computation on empty slice.
@@ -1075,6 +1086,8 @@ def min(x, axis=None, keepdims=False, initial=None,  # pylint: disable=redefined
             A boolean array which is broadcasted to match the dimensions of array,
             and selects elements to include in the reduction. If non-default value
             is passed, initial must also be provided.
+        return_indices (bool, optional): Whether to return the index of the minimum value. Default: False.
+                If `axis` is a list or tuple of ints, it must be False.
 
     Returns:
         Tensor or scalar, minimum of `a`. If axis is None, the result is a scalar
@@ -1095,8 +1108,13 @@ def min(x, axis=None, keepdims=False, initial=None,  # pylint: disable=redefined
         >>> print(output)
         0.0
     """
-    return compile_utils.reduce_(x, P.ReduceMin(keepdims), cmp_fn=F.minimum,
-                                 axis=axis, keepdims=keepdims, initial=initial, where=where)
+    if isinstance(axis, (list, tuple)):
+        return compile_utils.reduce_(input, P.ReduceMin(keepdims), cmp_fn=F.minimum,
+                                     axis=axis, keepdims=keepdims, initial=initial, where=where)
+    values, indices = F.min(input, axis, keepdims, initial=initial, where=where)
+    if not return_indices:
+        return values
+    return values, indices
 
 
 def pow(x, y):  # pylint: disable=redefined-builtin

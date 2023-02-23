@@ -7039,10 +7039,10 @@ def logsumexp(input, axis, keep_dims=False):
     return input_logsumexp + input_max
 
 
-def amin(input, axis=None, keep_dims=False):
+def amin(input, axis=None, keepdims=False, *, initial=None, where=None):
     r"""
     Reduces all dimensions of a tensor by returning the minimum value in `input`, by default. And also can
-    reduce a dimension of `input` along specified `axis`. `keep_dims` determines whether the dimensions of
+    reduce a dimension of `input` along specified `axis`. `keepdims` determines whether the dimensions of
     output and input are the same.
 
     Args:
@@ -7050,23 +7050,30 @@ def amin(input, axis=None, keep_dims=False):
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
             Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r)..
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep
+        keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep
             these dimensions. Default: False.
+
+    Keyword Args:
+        initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
+            on empty slice. Default: None.
+        where (bool Tensor, optional): A boolean tensor which is broadcasted to match the dimensions of array,
+            and selects elements to include in the reduction. If non-default value is passed,
+            initial must also be provided. Default: True.
 
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is None, and `keep_dims` is False,
+        - If `axis` is None, and `keepdims` is False,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If `axis` is int, set as 1, and `keep_dims` is False,
+        - If `axis` is int, set as 1, and `keepdims` is False,
           the shape of output is :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+        - If `axis` is tuple(int), set as (1, 2), and `keepdims` is False,
           the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
-        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `keepdims` is not a bool.
         ValueError: If `axis` is out of range.
 
     Supported Platforms:
@@ -7074,7 +7081,7 @@ def amin(input, axis=None, keep_dims=False):
 
     Examples:
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> output = ops.amin(x, 1, keep_dims=True)
+        >>> output = ops.amin(x, 1, keepdims=True)
         >>> result = output.shape
         >>> print(result)
         (3, 1, 5, 6)
@@ -7114,13 +7121,29 @@ def amin(input, axis=None, keep_dims=False):
     """
     if axis is None:
         axis = ()
-    return _get_cache_prim(P.ReduceMin)(keep_dims)(input, axis)
+    input = _init_and_select_elem(input, initial, where, ops.minimum)
+    return _get_cache_prim(P.ReduceMin)(keepdims)(input, axis)
 
 
-def amax(input, axis=None, keep_dims=False):
+def _init_and_select_elem(input, initial, where, cmp_fn):
+    """Initialize the input according to Initial, and select the element according to where."""
+    if initial is not None:
+        initial = ops.fill(input.dtype, input.shape, initial)
+        input = cmp_fn(input, initial)
+
+    if isinstance(where, Tensor):
+        if initial is None:
+            raise ValueError('initial value must be provided for where masks')
+        where = where.broadcast_to(input.shape)
+        initial = initial.broadcast_to(input.shape)
+        input = ops.select(where, input, initial)
+    return input
+
+
+def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
     r"""
     Reduces all dimensions of a tensor by returning the maximum value in `input`, by default. And also can
-    reduce a dimension of `input` along specified `axis`.  `keep_dims` determines whether the dimensions of
+    reduce a dimension of `input` along specified `axis`.  `keepdims` determines whether the dimensions of
     output and input are the same.
 
     Args:
@@ -7128,22 +7151,29 @@ def amax(input, axis=None, keep_dims=False):
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
             Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep these
+        keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep these
             dimensions. Default: False.
+
+    Keyword Args:
+        initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
+            on empty slice. Default: None.
+        where (bool Tensor, optional): A boolean tensor which is broadcasted to match the dimensions of array,
+            and selects elements to include in the reduction. If non-default value is passed,
+            initial must also be provided. Default: True.
 
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is None, and `keep_dims` is False, the output is a 0-D tensor representing the product of all
+        - If `axis` is None, and `keepdims` is False, the output is a 0-D tensor representing the product of all
             elements in the input tensor.
-        - If `axis` is int, set as 1, and `keep_dims` is False, the shape of output is :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False, the shape of output is
+        - If `axis` is int, set as 1, and `keepdims` is False, the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int), set as (1, 2), and `keepdims` is False, the shape of output is
             :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
-        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `keepdims` is not a bool.
         ValueError: If `axis` is out of range.
 
     Supported Platforms:
@@ -7151,7 +7181,7 @@ def amax(input, axis=None, keep_dims=False):
 
     Examples:
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> output = ops.amax(x, 1, keep_dims=True)
+        >>> output = ops.amax(x, 1, keepdims=True)
         >>> result = output.shape
         >>> print(result)
         (3, 1, 5, 6)
@@ -7191,7 +7221,8 @@ def amax(input, axis=None, keep_dims=False):
     """
     if axis is None:
         axis = ()
-    return _get_cache_prim(P.ReduceMax)(keep_dims)(input, axis)
+    input = _init_and_select_elem(input, initial, where, ops.maximum)
+    return _get_cache_prim(P.ReduceMax)(keepdims)(input, axis)
 
 
 def mean(x, axis=None, keep_dims=False):
