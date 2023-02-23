@@ -704,8 +704,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
 
   SetAscendConfig(ms_context_ptr, ge_options);
 
-  (*ge_options)["ge.enableSmallChannel"] = "1";
-
   // Disable the global variable acc, only enable it while adding training graph in pipeline
   (*ge_options)["ge.exec.variable_acc"] = "0";
 
