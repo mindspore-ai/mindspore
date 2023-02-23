@@ -30,9 +30,8 @@
 
 namespace mindspore::expander::bprop {
 namespace {
-static NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis,
-                                 const ShapeVector &shape_x) {
-  auto reduce_x = dx;
+NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis) {
+  NodePtr reduce_x = dx;
   auto need_reduce = ib->NeedReduce(ib->GetShape(dx), axis, false);
   if (need_reduce.first) {
     auto dx_origin_dtypeptr = ib->GetDtype(dx);
@@ -46,7 +45,64 @@ static NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, co
       reduce_x = ib->Emit("ReduceSum", {dx, ib->Value(axis)}, {{"keep_dims", MakeValue(false)}});
     }
   }
+  return reduce_x;
+}
+
+static NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis,
+                                 const ShapeVector &shape_x) {
+  auto reduce_x = ReduceSumWithCast(ib, dx, axis);
   return ib->Reshape(reduce_x, shape_x);
+}
+
+NodePtr SumGradReduceAxisWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const NodePtr &axis) {
+  MS_EXCEPTION_IF_NULL(ib);
+  MS_EXCEPTION_IF_NULL(dx);
+  auto reduce_dx = dx;
+  auto dx_origin_dtype = dx->dtype();
+  MS_EXCEPTION_IF_NULL(dx_origin_dtype);
+  auto dx_origin_dtype_id = dx_origin_dtype->type_id();
+  bool need_cast = (dx_origin_dtype_id == kNumberTypeInt16 || dx_origin_dtype_id == kNumberTypeInt32 ||
+                    dx_origin_dtype_id == kNumberTypeInt64);
+  if (need_cast) {
+    reduce_dx = ib->Cast(reduce_dx, kFloat32);
+  }
+  reduce_dx =
+    ib->Emit("ReduceSum", {reduce_dx, axis}, {{"keep_dims", MakeValue(false)}, {"skip_mode", MakeValue(true)}});
+  if (need_cast) {
+    reduce_dx = ib->Cast(reduce_dx, dx_origin_dtype_id);
+  }
+  return reduce_dx;
+}
+
+NodePtrList DynBinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
+                               const NodePtr &dy) {
+  auto shape_of_x = ib->Emit("TensorShape", {x});
+  auto shape_of_y = ib->Emit("TensorShape", {y});
+  auto brod = ib->Emit("DynamicBroadcastGradientArgs", {shape_of_x, shape_of_y});
+  auto rx = ib->TupleGetItem(brod, 0);
+  auto ry = ib->TupleGetItem(brod, 1);
+  auto reduce_dx = SumGradReduceAxisWithCast(ib, dx, rx);
+  auto reduce_dy = SumGradReduceAxisWithCast(ib, dy, ry);
+  reduce_dx = ib->Reshape(reduce_dx, shape_of_x);
+  reduce_dy = ib->Reshape(reduce_dy, shape_of_y);
+  return {reduce_dx, reduce_dy};
+}
+
+NodePtrList DynBinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
+                                        const NodePtr &dy, size_t shift) {
+  auto shape_of_x = ib->Emit("TensorShape", {x});
+  auto shape_of_y = ib->Emit("TensorShape", {y});
+  auto neg_shift = SizeToLong(shift);
+  auto broadcast_shape_of_x = ib->StridedSlice(shape_of_x, {{0, {0, -neg_shift}}});
+  auto broadcast_shape_of_y = ib->StridedSlice(shape_of_y, {{0, {0, -neg_shift}}});
+  auto brod = ib->Emit("DynamicBroadcastGradientArgs", {broadcast_shape_of_x, broadcast_shape_of_y});
+  auto rx = ib->TupleGetItem(brod, 0);
+  auto ry = ib->TupleGetItem(brod, 1);
+  auto reduce_dx = ib->Emit("ReduceSum", {dx, rx}, {{"keep_dims", MakeValue(false)}, {"skip_mode", MakeValue(true)}});
+  auto reduce_dy = ib->Emit("ReduceSum", {dy, ry}, {{"keep_dims", MakeValue(false)}, {"skip_mode", MakeValue(true)}});
+  reduce_dx = ib->Reshape(reduce_dx, shape_of_x);
+  reduce_dy = ib->Reshape(reduce_dy, shape_of_y);
+  return {reduce_dx, reduce_dy};
 }
 
 void ComputeReduceIndex(const std::vector<int64_t> &x_rev, const std::vector<int64_t> &y_rev,
@@ -247,15 +303,29 @@ NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const No
   auto reduce_dx = dx;
   auto reduce_dy = dy;
 
-  std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(shape_x, shape_y);
-  if (!bc_axis[0].empty()) {
-    reduce_dx = ReduceSumWithCast(ib, reduce_dx, bc_axis[0], shape_x);
+  if (!IsDynamic(shape_x) && !IsDynamic(shape_y)) {
+    std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(shape_x, shape_y);
+    if (!bc_axis[0].empty()) {
+      reduce_dx = ReduceSumWithCast(ib, reduce_dx, bc_axis[0], shape_x);
+    }
+
+    if (!bc_axis[1].empty()) {
+      reduce_dy = ReduceSumWithCast(ib, reduce_dy, bc_axis[1], shape_y);
+    }
+    return {reduce_dx, reduce_dy};
   }
 
-  if (!bc_axis[1].empty()) {
-    reduce_dy = ReduceSumWithCast(ib, reduce_dy, bc_axis[1], shape_y);
+  if (shape_x.empty() || shape_y.empty()) {
+    // x or y is scalar
+    if (shape_x.empty()) {
+      reduce_dx = ReduceSumWithCast(ib, reduce_dx, std::vector<int64_t>{});
+    }
+    if (shape_y.empty()) {
+      reduce_dy = ReduceSumWithCast(ib, reduce_dy, std::vector<int64_t>{});
+    }
+    return {reduce_dx, reduce_dy};
   }
-  return {reduce_dx, reduce_dy};
+  return DynBinopGradCommon(ib, x, y, reduce_dx, reduce_dy);
 }
 
 NodePtrList BinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
@@ -267,24 +337,38 @@ NodePtrList BinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x,
   auto shape_y = ib->GetShape(y);
   auto reduce_dx = dx;
   auto reduce_dy = dy;
-  std::vector<int64_t> broadcast_shape_of_x;
-  std::vector<int64_t> broadcast_shape_of_y;
-  for (size_t i = 0; i < shape_x.size() - shift; i++) {
-    broadcast_shape_of_x.push_back(shape_x[i]);
-  }
-  for (size_t i = 0; i < shape_y.size() - shift; i++) {
-    broadcast_shape_of_y.push_back(shape_y[i]);
-  }
 
-  std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(broadcast_shape_of_x, broadcast_shape_of_y);
-  if (!bc_axis[0].empty()) {
-    reduce_dx = ReduceSumWithCast(ib, reduce_dx, bc_axis[0], shape_x);
-  }
+  if (!IsDynamic(shape_x) && !IsDynamic(shape_y)) {
+    std::vector<int64_t> broadcast_shape_of_x;
+    std::vector<int64_t> broadcast_shape_of_y;
+    for (size_t i = 0; i < shape_x.size() - shift; i++) {
+      broadcast_shape_of_x.push_back(shape_x[i]);
+    }
+    for (size_t i = 0; i < shape_y.size() - shift; i++) {
+      broadcast_shape_of_y.push_back(shape_y[i]);
+    }
 
-  if (!bc_axis[1].empty()) {
-    reduce_dy = ReduceSumWithCast(ib, reduce_dy, bc_axis[1], shape_y);
+    std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(broadcast_shape_of_x, broadcast_shape_of_y);
+    if (!bc_axis[0].empty()) {
+      reduce_dx = ReduceSumWithCast(ib, reduce_dx, bc_axis[0], shape_x);
+    }
+
+    if (!bc_axis[1].empty()) {
+      reduce_dy = ReduceSumWithCast(ib, reduce_dy, bc_axis[1], shape_y);
+    }
+    return {reduce_dx, reduce_dy};
   }
-  return {reduce_dx, reduce_dy};
+  if (shape_x.empty() || shape_y.empty()) {
+    // x or y is scalar
+    if (shape_x.empty()) {
+      reduce_dx = ReduceSumWithCast(ib, reduce_dx, std::vector<int64_t>{});
+    }
+    if (shape_y.empty()) {
+      reduce_dy = ReduceSumWithCast(ib, reduce_dy, std::vector<int64_t>{});
+    }
+    return {reduce_dx, reduce_dy};
+  }
+  return DynBinopGradCommonWithShift(ib, x, y, reduce_dx, reduce_dy, shift);
 }
 
 std::vector<int64_t> Range(int64_t start, int64_t stop, int64_t step) {
@@ -398,6 +482,8 @@ std::vector<int64_t> TileShape(const std::vector<int64_t> &multiples, const std:
   int64_t i = 0;
   int64_t j = 0;
   std::vector<int64_t> res;
+  auto res_sz = static_cast<size_t>(2 * max_len);
+  res.reserve(res_sz);
   while (i < max_len && j < max_len) {
     if (len_cmp == 0) {
       res.push_back(multiples[i]);
@@ -449,13 +535,29 @@ std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank) {
   return trans;
 }
 
-NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<int64_t> &axis, const NodePtr &dout) {
+NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout) {
   // Grad definition for `Sum` operation.
-  auto input_shape = ib->GetShape(x);
-  auto output_shape_kept_dims = ReduceShape(input_shape, axis);
-  auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto x_shape = inputs.at(0);
+    auto axis_value = inputs.at(1);
+    auto r_shape = ReduceShape(x_shape, axis_value);
+    auto scaling = TupleDiv(x_shape, r_shape);
+    return {r_shape, scaling};
+  };
+
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
+    return {x_rank, x_rank};
+  };
+
+  auto calc_res = ib->ShapeCalc({x, axis}, shape_func, infer_func, {1});
+  auto output_shape_kept_dims = calc_res[0];
+  auto tile_scaling = calc_res[1];
   auto grad = ib->Reshape(dout, output_shape_kept_dims);
-  return ib->Tile(grad, tile_scaling);
+  if (tile_scaling->isa<ValueNode>() || IsDynamic(x->shape())) {
+    return ib->Tile(grad, tile_scaling);
+  }
+  return ib->Emit("DynamicBroadcastTo", {grad, ib->Value(x->shape())});
 }
 
 NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<int64_t> &axis, const NodePtr &out,

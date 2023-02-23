@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,8 @@ REG_BPROP_BUILDER("ClipByNorm").SetBody(BODYFUNC(ib) {
   auto cast_x = ib->Cast(x, kFloat32);
   auto cast_clip_norm = ib->Cast(clip_norm, kFloat32);
   auto square_out = ib->Emit("Square", {cast_x});
-  auto reduce_sum_axis = ib->GetAttr("axis");
-  auto reduce_sum_out =
-    ib->Emit("ReduceSum", {square_out, ib->EmitValue(reduce_sum_axis)}, {{"keep_dims", MakeValue(true)}});
+  auto reduce_sum_axis = ib->EmitValue(ib->GetAttr("axis"));
+  auto reduce_sum_out = ib->Emit("ReduceSum", {square_out, reduce_sum_axis}, {{"keep_dims", MakeValue(true)}});
   auto sqrt_out = ib->Emit("Sqrt", {reduce_sum_out});
   auto max_out = ib->Maximum(sqrt_out, cast_clip_norm);
   auto mul_out = ib->Mul(cast_x, cast_clip_norm);
@@ -48,7 +47,7 @@ REG_BPROP_BUILDER("ClipByNorm").SetBody(BODYFUNC(ib) {
   auto max_dout_x = ib->TupleGetItem(tmp_max_dout, 0);
   auto max_dout_y = ib->TupleGetItem(tmp_max_dout, 1);
   auto sqrt_dout_x = ib->Emit("SqrtGrad", {sqrt_out, max_dout_x});
-  auto reduce_sum_dout_x = SumGrad(ib, square_out, GetIntList(reduce_sum_axis), sqrt_dout_x);
+  auto reduce_sum_dout_x = SumGrad(ib, square_out, reduce_sum_axis, sqrt_dout_x);
   auto temp_out = ib->Mul(reduce_sum_dout_x, cast_x);
   auto square_dout_x = ib->Mul(ib->Tensor(2.0, ib->GetDtype(temp_out)), temp_out);
   auto x_dout = ib->Cast(ib->Add(mul_dout_x, square_dout_x), ib->GetDtype(x));

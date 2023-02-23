@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,11 +178,7 @@ REG_BPROP_BUILDER("FillV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   if (type_list.count(dout_type) > 0) {
     dout = ib->Cast(dout, kFloat32);
   }
-  std::vector<int64_t> axis{};
-  for (int64_t i = 0; i < static_cast<int64_t>(dout->shape().size()); ++i) {
-    axis.push_back(i);
-  }
-  auto dvalue = ib->ReduceSum(dout, axis);
+  auto dvalue = ib->ReduceSum(dout);
   return {ib->ZerosLike(shape), ib->Cast(dvalue, dout_typeptr)};
 });
 
@@ -241,14 +237,30 @@ REG_BPROP_BUILDER("ParallelResizeBilinear").SetUnusedInputs({i2}).SetBody(BODYFU
   return {dx, ib->ZerosLike(size)};
 });
 
-REG_BPROP_BUILDER("SiLU").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
-  auto sigmoid_input = ib->Emit("Sigmoid", {x});
-  auto bc_dx = ib->Mul(x, dout);
-  auto bc_dy = ib->Mul(sigmoid_input, dout);
-  auto dx = ib->Emit("SigmoidGrad", {sigmoid_input, bc_dx});
-  return {ib->Add(dx, bc_dy)};
+  auto shp = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto x_shape = ib->Emit("TensorShape", {x});
+  auto broadcast_shape = ib->Emit("TensorShape", {out});
+  auto brod = ib->Emit("DynamicBroadcastGradientArgs", {broadcast_shape, x_shape});
+  auto reduction_axes = ib->TupleGetItem(brod, 1);
+  auto dout_dtype = dout->dtype();
+  MS_EXCEPTION_IF_NULL(dout_dtype);
+  auto dout_dtype_id = dout_dtype->type_id();
+  bool need_cast =
+    (dout_dtype_id == kNumberTypeInt16 || dout_dtype_id == kNumberTypeInt32 || dout_dtype_id == kNumberTypeInt64);
+  if (need_cast) {
+    dout = ib->Cast(dout, kFloat32);
+  }
+  auto reduced_grad =
+    ib->Emit("ReduceSum", {dout, reduction_axes}, {{"keep_dims", MakeValue(true)}, {"skip_mode", MakeValue(true)}});
+  if (need_cast) {
+    reduced_grad = ib->Cast(reduced_grad, dout_dtype_id);
+  }
+  auto dx = ib->Reshape(reduced_grad, x_shape);
+  return {dx, ib->ZerosLike(shp)};
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

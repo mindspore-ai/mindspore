@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -940,7 +940,7 @@ REG_BPROP_BUILDER("ReduceSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = SumGrad(ib, x, GetIntList(axis), dout);
+  auto dx = SumGrad(ib, x, axis, dout);
   return {dx, ib->ZerosLike(axis)};
 });
 
@@ -963,13 +963,7 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
                         {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(true)}});
   auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
   auto out = ib->Mul(ib->Transpose(y, InvertPermutation(perm)), grad);
-  auto x_dtype_id = ib->GetDtypeId(x);
-  NodePtr dx;
-  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    MS_EXCEPTION(TypeError) << "For 'ReduceProd', gradient not support for complex type currently.";
-  } else {
-    dx = ib->Reshape(out, input_shape);
-  }
+  auto dx = ib->Reshape(out, input_shape);
   return {dx, ib->ZerosLike(axis)};
 });
 
@@ -978,13 +972,7 @@ REG_BPROP_BUILDER("ReduceMax").SetBody(BODYFUNC(ib) {
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto x_dtype_id = ib->GetDtypeId(x);
-  NodePtr dx;
-  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    MS_EXCEPTION(TypeError) << "For 'ReduceMax', gradient not support for complex type currently.";
-  } else {
-    dx = MinOrMaxGrad(ib, x, GetIntList(axis), out, dout);
-  }
+  auto dx = MinOrMaxGrad(ib, x, GetIntList(axis), out, dout);
   return {dx, ib->ZerosLike(axis)};
 });
 
@@ -993,13 +981,7 @@ REG_BPROP_BUILDER("ReduceMin").SetBody(BODYFUNC(ib) {
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto x_dtype_id = ib->GetDtypeId(x);
-  NodePtr dx;
-  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    MS_EXCEPTION(TypeError) << "For 'ReduceMin', gradient not support for complex type currently.";
-  } else {
-    dx = MinOrMaxGrad(ib, x, GetIntList(axis), out, dout);
-  }
+  auto dx = MinOrMaxGrad(ib, x, GetIntList(axis), out, dout);
   return {dx, ib->ZerosLike(axis)};
 });
 
@@ -1008,7 +990,7 @@ REG_BPROP_BUILDER("ReduceMean").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto grad = SumGrad(ib, x, GetIntList(axis), dout);
+  auto grad = SumGrad(ib, x, axis, dout);
   auto shape_x = ib->GetShape(x);
   auto shape_out = ib->GetShape(out);
   auto getSize = [](const ShapeVector shape) {
@@ -1023,13 +1005,7 @@ REG_BPROP_BUILDER("ReduceMean").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
     MS_EXCEPTION(ValueError) << "out shape size can not be 0";
   }
   auto div_shape = getSize(shape_x) / shape_out_sz;
-  auto x_dtype_id = ib->GetDtypeId(x);
-  NodePtr dx;
-  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    MS_EXCEPTION(TypeError) << "For 'ReduceMean', gradient not support for complex type currently.";
-  } else {
-    dx = ib->RealDiv(grad, ib->Tensor(div_shape, ib->GetDtype(grad)));
-  }
+  auto dx = ib->RealDiv(grad, ib->Tensor(div_shape, ib->GetDtype(grad)));
   return {dx, ib->ZerosLike(axis)};
 });
 
@@ -1342,6 +1318,17 @@ REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
     auto val = GetValue<float>(v);
     sub_w = ib->Tensor(1.0 - val, dout_type);
     mul_w = ib->Tensor(val, dout_type);
+  } else if (weight->isa<Parameter>()) {
+    auto v = weight->get()->abstract()->BuildValue();
+    MS_EXCEPTION_IF_NULL(v);
+    if (v->isa<Scalar>()) {
+      auto val = GetValue<float>(v);
+      sub_w = ib->Tensor(1.0 - val, dout_type);
+      mul_w = ib->Tensor(val, dout_type);
+    } else {
+      sub_w = ib->Sub(ib->Tensor(1.0, ib->GetDtype(weight)), weight);
+      mul_w = weight;
+    }
   } else {
     sub_w = ib->Sub(ib->Tensor(1.0, ib->GetDtype(weight)), weight);
     mul_w = weight;
