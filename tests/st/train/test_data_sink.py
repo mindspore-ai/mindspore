@@ -98,7 +98,7 @@ def _train_func_sink(model, dataset, loss_fn, opt, input_signature=None):
         print("loss: ", loss)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
