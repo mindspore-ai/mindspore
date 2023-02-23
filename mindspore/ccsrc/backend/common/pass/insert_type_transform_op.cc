@@ -663,13 +663,14 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTupleUnfold(const FuncGraphP
   }
   auto index_input = node->input(kIndex2);
   MS_EXCEPTION_IF_NULL(index_input);
-  if (index_input->kernel_info() == nullptr && index_input->isa<ValueNode>()) {
+  if (index_input->isa<ValueNode>()) {
     SetKernelInfoForValueNode(index_input->cast<ValueNodePtr>());
     // Because the index is used as real kernel RealTupleGetItem's second input, we must add TupleGetItem's index to
     // kernel graph so that its device address will be allocated.
     auto kg = func_graph->cast<KernelGraphPtr>();
     MS_EXCEPTION_IF_NULL(kg);
-    MS_LOG(DEBUG) << "Add value " << index_input->DebugString() << " to kernel graph.";
+    MS_LOG(INFO) << "Add value:" << index_input->DebugString() << ", full name:" << index_input->fullname_with_scope()
+                 << " to kernel graph.";
     kg->AddValueNodeToGraph(index_input->cast<ValueNodePtr>());
   }
 
