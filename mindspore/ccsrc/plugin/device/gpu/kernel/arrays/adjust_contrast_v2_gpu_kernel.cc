@@ -22,7 +22,6 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/arrays/adjust_contrast_v2_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/adjust_contrast_v2_impl.cuh"
-
 namespace mindspore {
 namespace kernel {
 #define ADJUST_CONTRAST_V2_GPU_REGISTER(T_DT, T)                                        \
@@ -124,8 +123,9 @@ bool AdjustContrastV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   float *contrast_factor = GetDeviceAddress<float>(inputs, kIndex1);
   T *images_out = GetDeviceAddress<T>(outputs, kIndex0);
 
-  CalAdjustContrastV2GpuKernel(images, contrast_factor, images_out, total_, per_batch_elements_, device_id_,
-                               reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalAdjustContrastV2GpuKernel(images, contrast_factor, images_out, total_, per_batch_elements_,
+                                             device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 

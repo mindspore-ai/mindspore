@@ -72,8 +72,9 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 1);
     S *index = GetDeviceAddress<S>(outputs, 0);
-    CalGeneralReduction(small_, input, bound_, outer_size_, inner_size_, index, output,
-                        reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalGeneralReduction(small_, input, bound_, outer_size_, inner_size_, index, output,
+                                      reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
     return true;
   }
 

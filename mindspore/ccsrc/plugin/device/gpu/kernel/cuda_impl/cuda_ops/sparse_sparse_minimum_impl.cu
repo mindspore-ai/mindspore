@@ -108,12 +108,12 @@ __global__ void SparseSparseMinimum3(const T *a_indices, const S *a_values,
             for (int64_t m = 0; m < rank_1; m++) {
                 output_indices[x*rank_1+m] = a_indices[mid1*rank_1+m];
             }
-            output_values[x] = a_values[mid1] < 0 ? a_values[mid1] : 0;
+            output_values[x] = a_values[mid1] < static_cast<S>(0) ? a_values[mid1] : static_cast<S>(0);
         } else if (ab_stauts1[x] == 2) {
             for (int64_t m = 0; m < rank_1; m++) {
                output_indices[x*rank_1+m] = b_indices[mid1*rank_1+m];
             }
-            output_values[x] = b_values[mid1] < 0 ? b_values[mid1] : 0;
+            output_values[x] = b_values[mid1] < static_cast<S>(0) ? b_values[mid1] : static_cast<S>(0);
         } else if (ab_stauts1[x] <= 0) {
             for (int64_t m = 0; m < rank_1; m++) {
                output_indices[x*rank_1+m] = b_indices[mid1*rank_1+m];
@@ -169,7 +169,7 @@ __global__ void Min_test1(const int64_t a_len, const T *a_indices,
         for (int64_t j = 0; j < rank_1; j++) {
             output_indices[x*rank_1+j] = a_indices[x*rank_1+j];
         }
-        output_values[x] = a_values[x] < 0 ? a_values[x] : 0;
+        output_values[x] = a_values[x] < static_cast<S>(0) ? a_values[x] : static_cast<S>(0);
     }
 }
 

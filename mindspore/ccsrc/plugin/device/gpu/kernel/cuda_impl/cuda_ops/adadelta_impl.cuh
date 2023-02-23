@@ -18,15 +18,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ADADELTA_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T, typename S, typename G>
-CUDA_LIB_EXPORT void ApplyAdadelta(const size_t size,
-                                   const S *learning_rate,
-                                   const S *rho,
-                                   const S *epsilon,
-                                   const G *gradient,
-                                   T *variable,
-                                   T *accumulation,
-                                   T *accumulation_update,
-                                   const uint32_t &device_id,
-                                   cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ApplyAdadelta(const size_t size, const S *learning_rate, const S *rho, const S *epsilon,
+                                          const G *gradient, T *variable, T *accumulation, T *accumulation_update,
+                                          const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif

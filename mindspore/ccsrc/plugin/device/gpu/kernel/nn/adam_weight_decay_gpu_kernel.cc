@@ -102,8 +102,9 @@ bool AdamWeightDecayGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   float *epsilon = GetDeviceAddress<float>(inputs, kIndex6);
   float *decay = GetDeviceAddress<float>(inputs, kIndex7);
   S *gradient = GetDeviceAddress<S>(inputs, kIndex8);
-  AdamWeightDecayOp(inputs[0]->size / s_type_id_size_, gradient, lr, beta1, beta2, epsilon, decay, variable, m, v,
-                    stream_ptr_);
+  auto status = AdamWeightDecayOp(inputs[0]->size / s_type_id_size_, gradient, lr, beta1, beta2, epsilon, decay,
+                                  variable, m, v, stream_ptr_);
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 

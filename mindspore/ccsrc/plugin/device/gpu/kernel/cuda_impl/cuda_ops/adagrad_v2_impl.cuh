@@ -19,14 +19,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void ApplyAdagradV2(const size_t size,
-                                  const float epsilon,
-                                  const bool update_slots,
-                                  T *variable,
-                                  T *accumulation,
-                                  const S *learning_rate,
-                                  const T *gradient,
-                                  const uint32_t &device_id,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ApplyAdagradV2(const size_t size, const float epsilon, const bool update_slots, T *variable,
+                                           T *accumulation, const S *learning_rate, const T *gradient,
+                                           const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ADAGRAD_V2_IMPL_CUH_

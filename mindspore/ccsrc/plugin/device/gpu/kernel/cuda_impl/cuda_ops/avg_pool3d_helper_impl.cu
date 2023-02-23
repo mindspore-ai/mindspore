@@ -45,25 +45,28 @@ __global__ void RealKernelSize(const size_t size, T *kernel, const int64_t kerne
 }
 
 template <typename T>
-void CalRealKernelSize(const std::vector<int64_t> &input_shape, const std::vector<int64_t> &kernel_size,
-                       const std::vector<int64_t> &edge_kernel_size, T *kernel, const uint32_t &device_id,
-                       cudaStream_t cuda_stream) {
+cudaError_t CalRealKernelSize(const std::vector<int64_t> &input_shape, const std::vector<int64_t> &kernel_size,
+                              const std::vector<int64_t> &edge_kernel_size, T *kernel, const uint32_t &device_id,
+                              cudaStream_t cuda_stream) {
   const int64_t kernel_prod = kernel_size[2] * kernel_size[1] * kernel_size[2];
   const int64_t nc_size = input_shape[0] * input_shape[1];
   RealKernelSize<<<CUDA_BLOCKS(device_id, nc_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     nc_size, kernel, kernel_prod, input_shape[2], input_shape[3], input_shape[4], kernel_size[0], kernel_size[1],
     kernel_size[2], edge_kernel_size[0], edge_kernel_size[1], edge_kernel_size[2]);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void CalRealKernelSize<double>(const std::vector<int64_t> &input_shape,
-                                                       const std::vector<int64_t> &kernel_size,
-                                                       const std::vector<int64_t> &edge_kernel_size, double *kernel,
-                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalRealKernelSize<float>(const std::vector<int64_t> &input_shape,
-                                                       const std::vector<int64_t> &kernel_size,
-                                                       const std::vector<int64_t> &edge_kernel_size, float *kernel,
-                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalRealKernelSize<half>(const std::vector<int64_t> &input_shape,
-                                                      const std::vector<int64_t> &kernel_size,
-                                                      const std::vector<int64_t> &edge_kernel_size, half *kernel,
-                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRealKernelSize<double>(const std::vector<int64_t> &input_shape,
+                                                               const std::vector<int64_t> &kernel_size,
+                                                               const std::vector<int64_t> &edge_kernel_size,
+                                                               double *kernel, const uint32_t &device_id,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRealKernelSize<float>(const std::vector<int64_t> &input_shape,
+                                                              const std::vector<int64_t> &kernel_size,
+                                                              const std::vector<int64_t> &edge_kernel_size,
+                                                              float *kernel, const uint32_t &device_id,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRealKernelSize<half>(const std::vector<int64_t> &input_shape,
+                                                             const std::vector<int64_t> &kernel_size,
+                                                             const std::vector<int64_t> &edge_kernel_size, half *kernel,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream);

@@ -134,8 +134,9 @@ bool AdamGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   T *beta2 = GetDeviceAddress<T>(inputs, kIndex7);
   T *epsilon = GetDeviceAddress<T>(inputs, kIndex8);
   T *gradient = GetDeviceAddress<T>(inputs, kIndex9);
-  ApplyAdam(input_elements_, batch_size_, gradient, beta1_power, beta2_power, learning_rate, beta1, beta2, epsilon,
-            variable, m, v, use_nesterov_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = ApplyAdam(input_elements_, batch_size_, gradient, beta1_power, beta2_power, learning_rate, beta1, beta2,
+                          epsilon, variable, m, v, use_nesterov_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 

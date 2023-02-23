@@ -142,8 +142,9 @@ bool AdamaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   T *m_out = GetDeviceAddress<T>(outputs, kIndex1);
   T *v_out = GetDeviceAddress<T>(outputs, kIndex2);
 
-  ApplyAdamax(inputs[0]->size / sizeof(T), beta1_power, learning_rate, beta1, beta2, epsilon, gradient, variable, m, v,
-              device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status = ApplyAdamax(inputs[0]->size / sizeof(T), beta1_power, learning_rate, beta1, beta2, epsilon, gradient,
+                            variable, m, v, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(variable_out, variable, variable_size_, cudaMemcpyDeviceToDevice,
                                                      reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaMemcpyAsync output failed");

@@ -21,7 +21,7 @@
 #include "adjust_contrast_v2_impl.cuh"
 
 template <typename T>
-__global__ void AdjustContrastV2GpuKernel(const T* images, const float* contrast_factor, T* images_out, const int total,
+__global__ void AdjustContrastV2GpuKernel(const T *images, const float *contrast_factor, T *images_out, const int total,
                                           const int per_batch_elements) {
   const int thread_num = 128;
   const int block_num = 128;
@@ -50,26 +50,28 @@ __global__ void AdjustContrastV2GpuKernel(const T* images, const float* contrast
 
     for (int i = threadIdx.x; i < per_batch_elements; i += thread_num) {
       if (i % 3 == 0) {
-        images_out[base + i] = static_cast<T>((static_cast<float>(images[base + i]) - mean) * contrast_factor[0] +
-                                               mean);
+        images_out[base + i] =
+          static_cast<T>((static_cast<float>(images[base + i]) - mean) * contrast_factor[0] + mean);
       }
     }
   }
 }
 
 template <typename T>
-void CalAdjustContrastV2GpuKernel(const T* images, const float* contrast_factor, T* images_out, const int total,
-                                  const int per_batch_elements, const uint32_t& device_id, cudaStream_t cuda_stream) {
-  AdjustContrastV2GpuKernel<<<128, 128, 0, cuda_stream>>>(
-      images, contrast_factor, images_out, total, per_batch_elements);
+cudaError_t CalAdjustContrastV2GpuKernel(const T *images, const float *contrast_factor, T *images_out, const int total,
+                                         const int per_batch_elements, const uint32_t &device_id,
+                                         cudaStream_t cuda_stream) {
+  AdjustContrastV2GpuKernel<<<128, 128, 0, cuda_stream>>>(images, contrast_factor, images_out, total,
+                                                          per_batch_elements);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void CalAdjustContrastV2GpuKernel<half>(const half* images, const float* contrast_factor,
-                                                                 half* images_out, const int total,
-                                                                 const int per_batch_elements,
-                                                                 const uint32_t& device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAdjustContrastV2GpuKernel<half>(const half *images,
+                                                                        const float *contrast_factor, half *images_out,
+                                                                        const int total, const int per_batch_elements,
+                                                                        const uint32_t &device_id,
+                                                                        cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalAdjustContrastV2GpuKernel<float>(const float* images, const float* contrast_factor,
-                                                                  float* images_out, const int total,
-                                                                  const int per_batch_elements,
-                                                                  const uint32_t& device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAdjustContrastV2GpuKernel<float>(
+  const float *images, const float *contrast_factor, float *images_out, const int total, const int per_batch_elements,
+  const uint32_t &device_id, cudaStream_t cuda_stream);

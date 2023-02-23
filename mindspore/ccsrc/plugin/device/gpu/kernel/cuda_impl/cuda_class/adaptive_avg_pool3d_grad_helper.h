@@ -125,12 +125,11 @@ class AdaptiveAvgPool3DGradHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
 
-    ApplyAdaptiveAvgPool3DGrad((uint)in_size, (uint)out_size, (uint)input_channel, (uint)input_height,
-                               (uint)input_width, (uint)input_depth, (uint)output_channel, (uint)output_height,
-                               (uint)output_width, (uint)output_depth, input_ptr, output_ptr,
-                               reinterpret_cast<cudaStream_t>(cuda_stream));
-
-    return 0;
+    auto status = ApplyAdaptiveAvgPool3DGrad((uint)in_size, (uint)out_size, (uint)input_channel, (uint)input_height,
+                                             (uint)input_width, (uint)input_depth, (uint)output_channel,
+                                             (uint)output_height, (uint)output_width, (uint)output_depth, input_ptr,
+                                             output_ptr, reinterpret_cast<cudaStream_t>(cuda_stream));
+    return status;
   }
 
  private:

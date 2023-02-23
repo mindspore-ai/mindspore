@@ -162,9 +162,10 @@ bool ApplyProximalAdagradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr
   auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
   auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
 
-  CalApplyProximalAdagrad(input_elements_, batch_size_, lr, l1, l2, grad, var, accum, device_id_,
-                          reinterpret_cast<cudaStream_t>(cuda_stream));
+  auto status = CalApplyProximalAdagrad(input_elements_, batch_size_, lr, l1, l2, grad, var, accum, device_id_,
+                                        reinterpret_cast<cudaStream_t>(cuda_stream));
 
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 

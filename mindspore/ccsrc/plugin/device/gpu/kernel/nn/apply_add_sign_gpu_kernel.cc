@@ -123,8 +123,9 @@ bool ApplyAddSignGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(&beta_0, beta, s_elements_ * s_size_, cudaMemcpyDeviceToHost,
                                                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                     "cudaMemcpy beta failed");
-  ApplyAddSign(t_elements_, variable, accumulation, learning_rate_0, alpha_0, sign_decay_0, beta_0, gradient,
-               device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status = ApplyAddSign(t_elements_, variable, accumulation, learning_rate_0, alpha_0, sign_decay_0, beta_0,
+                             gradient, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(variable_out, variable, outputs.at(kIndex0)->size, cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),

@@ -22,18 +22,19 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-CUDA_LIB_EXPORT void CalArgmaxFp32(const float *input, const int bound, const size_t outer_size,
-                                   const size_t inner_size, int *output, const uint32_t &device_id,
-                                   cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalArgmaxFp32(const float *input, const int bound, const size_t outer_size,
+                                          const size_t inner_size, int *output, const uint32_t &device_id,
+                                          cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalArgmaxFp16(const half *input, const int bound, const size_t outer_size, const size_t inner_size,
-                                   int *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalArgmaxFp16(const half *input, const int bound, const size_t outer_size,
+                                          const size_t inner_size, int *output, const uint32_t &device_id,
+                                          cudaStream_t cuda_stream);
 #ifdef __cplusplus
 }
 #endif
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalArgmax(const T *input, const S bound, const size_t outer_size, const size_t inner_size,
-                               S *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalArgmax(const T *input, const S bound, const size_t outer_size, const size_t inner_size,
+                                      S *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ARGMAX_IMPL_CUH_

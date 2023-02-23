@@ -67,7 +67,8 @@ bool AngleGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   S *output_ptr = GetDeviceAddress<S>(outputs, kIndex0);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   output_size = outputs[0]->size / sizeof(S);
-  CalAngle(output_size, input_ptr, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+  auto status = CalAngle(output_size, input_ptr, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 

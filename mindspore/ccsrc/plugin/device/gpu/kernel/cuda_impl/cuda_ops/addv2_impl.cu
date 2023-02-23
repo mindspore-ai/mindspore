@@ -59,84 +59,90 @@ __global__ void Broadcast(const size_t l0, const size_t l1, const size_t l2, con
   }
 }
 
-
 template <typename T>
-void CalAddV2(const size_t size, const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-              const std::vector<size_t> &y_dims, const T *x0, const T *x1,
-              T *y, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalAddV2(const size_t size, const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+              const std::vector<size_t> &y_dims, const T *x0, const T *x1, T *y, const uint32_t &device_id,
+              cudaStream_t cuda_stream) {
   size_t size1 = 1;
   for (auto d : y_dims) {
     size1 *= d;
   }
 
-  return Broadcast<T, AddFunc<T>><<<(size1 + 255) / 256, 256, 0, cuda_stream>>>(
-        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
-        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
-        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+  Broadcast<T, AddFunc<T>><<<(size1 + 255) / 256, 256, 0, cuda_stream>>>(
+    x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+    x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
+    y_dims[5], y_dims[6], x0, x1, y);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
-template CUDA_LIB_EXPORT void CalAddV2<float>(const size_t size, const std::vector<size_t> &x0_dims,
-                                              const std::vector<size_t> &x1_dims,
-                                              const std::vector<size_t> &y_dims, const float* x0, const float* x1,
-                                              float* y, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAddV2<double>(const size_t size, const std::vector<size_t> &x0_dims,
-                                               const std::vector<size_t> &x1_dims,
-                                               const std::vector<size_t> &y_dims, const double* x0, const double* x1,
-                                               double* y, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAddV2<half>(const size_t size, const std::vector<size_t> &x0_dims,
-                                             const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, const half* x0, const half* x1,
-                                             half* y, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAddV2<int8_t>(const size_t size, const std::vector<size_t> &x0_dims,
-                                               const std::vector<size_t> &x1_dims,
-                                               const std::vector<size_t> &y_dims, const int8_t* x0, const int8_t* x1,
-                                               int8_t* y, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAddV2<int64_t>(const size_t size, const std::vector<size_t> &x0_dims,
-                                                const std::vector<size_t> &x1_dims,
-                                                const std::vector<size_t> &y_dims, const int64_t* x0, const int64_t* x1,
-                                                int64_t* y, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAddV2<int32_t>(const size_t size, const std::vector<size_t> &x0_dims,
-                                                const std::vector<size_t> &x1_dims,
-                                                const std::vector<size_t> &y_dims, const int32_t* x0, const int32_t* x1,
-                                                int32_t* y, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAddV2<int16_t>(const size_t size, const std::vector<size_t> &x0_dims,
-                                                const std::vector<size_t> &x1_dims,
-                                                const std::vector<size_t> &y_dims, const int16_t* x0, const int16_t* x1,
-                                                int16_t* y, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAddV2<uint8_t>(const size_t size, const std::vector<size_t> &x0_dims,
-                                                const std::vector<size_t> &x1_dims,
-                                                const std::vector<size_t> &y_dims, const uint8_t* x0, const uint8_t* x1,
-                                                uint8_t* y, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAddV2<uint64_t>(const size_t size, const std::vector<size_t> &x0_dims,
-                                                 const std::vector<size_t> &x1_dims,
-                                                 const std::vector<size_t> &y_dims,
-                                                 const uint64_t* x0, const uint64_t* x1,
-                                                 uint64_t* y, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAddV2<uint32_t>(const size_t size, const std::vector<size_t> &x0_dims,
-                                                 const std::vector<size_t> &x1_dims,
-                                                 const std::vector<size_t> &y_dims,
-                                                 const uint32_t* x0, const uint32_t* x1,
-                                                 uint32_t* y, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAddV2<uint16_t>(const size_t size, const std::vector<size_t> &x0_dims,
-                                                 const std::vector<size_t> &x1_dims,
-                                                 const std::vector<size_t> &y_dims,
-                                                 const uint16_t* x0, const uint16_t* x1,
-                                                 uint16_t* y, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAddV2<Complex<float>>(const size_t size, const std::vector<size_t> &x0_dims,
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<float>(const size_t size, const std::vector<size_t> &x0_dims,
+                                                     const std::vector<size_t> &x1_dims,
+                                                     const std::vector<size_t> &y_dims, const float *x0,
+                                                     const float *x1, float *y, const uint32_t &device_id,
+                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<double>(const size_t size, const std::vector<size_t> &x0_dims,
+                                                      const std::vector<size_t> &x1_dims,
+                                                      const std::vector<size_t> &y_dims, const double *x0,
+                                                      const double *x1, double *y, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<half>(const size_t size, const std::vector<size_t> &x0_dims,
+                                                    const std::vector<size_t> &x1_dims,
+                                                    const std::vector<size_t> &y_dims, const half *x0, const half *x1,
+                                                    half *y, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<int8_t>(const size_t size, const std::vector<size_t> &x0_dims,
+                                                      const std::vector<size_t> &x1_dims,
+                                                      const std::vector<size_t> &y_dims, const int8_t *x0,
+                                                      const int8_t *x1, int8_t *y, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<int64_t>(const size_t size, const std::vector<size_t> &x0_dims,
                                                        const std::vector<size_t> &x1_dims,
-                                                       const std::vector<size_t> &y_dims,
-                                                       const Complex<float>* x0, const Complex<float>* x1,
-                                                       Complex<float>* y, const uint32_t &device_id,
+                                                       const std::vector<size_t> &y_dims, const int64_t *x0,
+                                                       const int64_t *x1, int64_t *y, const uint32_t &device_id,
                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAddV2<Complex<double>>(const size_t size, const std::vector<size_t> &x0_dims,
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<int32_t>(const size_t size, const std::vector<size_t> &x0_dims,
+                                                       const std::vector<size_t> &x1_dims,
+                                                       const std::vector<size_t> &y_dims, const int32_t *x0,
+                                                       const int32_t *x1, int32_t *y, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<int16_t>(const size_t size, const std::vector<size_t> &x0_dims,
+                                                       const std::vector<size_t> &x1_dims,
+                                                       const std::vector<size_t> &y_dims, const int16_t *x0,
+                                                       const int16_t *x1, int16_t *y, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<uint8_t>(const size_t size, const std::vector<size_t> &x0_dims,
+                                                       const std::vector<size_t> &x1_dims,
+                                                       const std::vector<size_t> &y_dims, const uint8_t *x0,
+                                                       const uint8_t *x1, uint8_t *y, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<uint64_t>(const size_t size, const std::vector<size_t> &x0_dims,
                                                         const std::vector<size_t> &x1_dims,
-                                                        const std::vector<size_t> &y_dims,
-                                                        const Complex<double>* x0, const Complex<double>* x1,
-                                                        Complex<double>* y, const uint32_t &device_id,
+                                                        const std::vector<size_t> &y_dims, const uint64_t *x0,
+                                                        const uint64_t *x1, uint64_t *y, const uint32_t &device_id,
                                                         cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<uint32_t>(const size_t size, const std::vector<size_t> &x0_dims,
+                                                        const std::vector<size_t> &x1_dims,
+                                                        const std::vector<size_t> &y_dims, const uint32_t *x0,
+                                                        const uint32_t *x1, uint32_t *y, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<uint16_t>(const size_t size, const std::vector<size_t> &x0_dims,
+                                                        const std::vector<size_t> &x1_dims,
+                                                        const std::vector<size_t> &y_dims, const uint16_t *x0,
+                                                        const uint16_t *x1, uint16_t *y, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<Complex<float>>(const size_t size, const std::vector<size_t> &x0_dims,
+                                                              const std::vector<size_t> &x1_dims,
+                                                              const std::vector<size_t> &y_dims,
+                                                              const Complex<float> *x0, const Complex<float> *x1,
+                                                              Complex<float> *y, const uint32_t &device_id,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAddV2<Complex<double>>(const size_t size, const std::vector<size_t> &x0_dims,
+                                                               const std::vector<size_t> &x1_dims,
+                                                               const std::vector<size_t> &y_dims,
+                                                               const Complex<double> *x0, const Complex<double> *x1,
+                                                               Complex<double> *y, const uint32_t &device_id,
+                                                               cudaStream_t cuda_stream);
 
 template <typename T, typename Func>
 __global__ void ElewiseAddV2Kernel(const int nums, const T *x0, const T *x1, T *y) {
@@ -146,33 +152,34 @@ __global__ void ElewiseAddV2Kernel(const int nums, const T *x0, const T *x1, T *
 }
 
 template <typename T>
-void ElewiseAddV2(const int &nums, const T *x0, const T *x1, T *y, cudaStream_t stream) {
-  return ElewiseAddV2Kernel<T, AddFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+cudaError_t ElewiseAddV2(const int &nums, const T *x0, const T *x1, T *y, cudaStream_t stream) {
+  ElewiseAddV2Kernel<T, AddFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const double *x0, const double *x1,
-                                           double *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const float *x0, const float *x1,
-                                           float *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const half *x0, const half *x1,
-                                           half *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const int32_t *x0, const int32_t *x1,
-                                           int32_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const int8_t *x0, const int8_t *x1,
-                                           int8_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const int64_t *x0, const int64_t *x1,
-                                           int64_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const int16_t *x0, const int16_t *x1,
-                                           int16_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const uint8_t *x0, const uint8_t *x1,
-                                           uint8_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const uint16_t *x0,
-                                           const uint16_t *x1, uint16_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const uint32_t *x0,
-                                           const uint32_t *x1, uint32_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const uint64_t *x0,
-                                           const uint64_t *x1, uint64_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const Complex<float> *x0,
-                                           const Complex<float> *x1, Complex<float> *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const Complex<double>  *x0,
-                                           const Complex<double> *x1, Complex<double> *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const double *x0, const double *x1, double *y,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const float *x0, const float *x1, float *y,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const half *x0, const half *x1, half *y,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const int32_t *x0, const int32_t *x1, int32_t *y,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const int8_t *x0, const int8_t *x1, int8_t *y,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const int64_t *x0, const int64_t *x1, int64_t *y,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const int16_t *x0, const int16_t *x1, int16_t *y,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const uint8_t *x0, const uint8_t *x1, uint8_t *y,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const uint16_t *x0, const uint16_t *x1, uint16_t *y,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const uint32_t *x0, const uint32_t *x1, uint32_t *y,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const uint64_t *x0, const uint64_t *x1, uint64_t *y,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const Complex<float> *x0, const Complex<float> *x1,
+                                                  Complex<float> *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const Complex<double> *x0, const Complex<double> *x1,
+                                                  Complex<double> *y, cudaStream_t stream);

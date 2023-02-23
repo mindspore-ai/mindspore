@@ -180,8 +180,9 @@ __global__ void ApplyAdagradV2Kernel_(const size_t size, const float epsilon, fl
 }
 
 template <typename T, typename S>
-void ApplyAdagradV2(const size_t size, const float epsilon, const bool update_slots, T *variable, T *accumulation,
-                    const S *learning_rate, const T *gradient, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t ApplyAdagradV2(const size_t size, const float epsilon, const bool update_slots, T *variable,
+                           T *accumulation, const S *learning_rate, const T *gradient, const uint32_t &device_id,
+                           cudaStream_t cuda_stream) {
   if (update_slots) {
     ApplyAdagradV2Kernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       size, epsilon, variable, accumulation, learning_rate, gradient);
@@ -189,54 +190,59 @@ void ApplyAdagradV2(const size_t size, const float epsilon, const bool update_sl
     ApplyAdagradV2Kernel_<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       size, epsilon, variable, accumulation, learning_rate, gradient);
   }
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void ApplyAdagradV2<double, double>(const size_t size, const float epsilon,
-                                                             const bool update_slots, double *variable,
-                                                             double *accumulation, const double *learning_rate,
-                                                             const double *gradient, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdagradV2<double, double>(const size_t size, const float epsilon,
+                                                                    const bool update_slots, double *variable,
+                                                                    double *accumulation, const double *learning_rate,
+                                                                    const double *gradient, const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdagradV2<float, float>(const size_t size, const float epsilon,
-                                                           const bool update_slots, float *variable,
-                                                           float *accumulation, const float *learning_rate,
-                                                           const float *gradient, const uint32_t &device_id,
-                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdagradV2<float, float>(const size_t size, const float epsilon,
+                                                                  const bool update_slots, float *variable,
+                                                                  float *accumulation, const float *learning_rate,
+                                                                  const float *gradient, const uint32_t &device_id,
+                                                                  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdagradV2<half, half>(const size_t size, const float epsilon,
-                                                         const bool update_slots, half *variable, half *accumulation,
-                                                         const half *learning_rate, const half *gradient,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdagradV2<half, half>(const size_t size, const float epsilon,
+                                                                const bool update_slots, half *variable,
+                                                                half *accumulation, const half *learning_rate,
+                                                                const half *gradient, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdagradV2<float, half>(const size_t size, const float epsilon,
-                                                          const bool update_slots, float *variable, float *accumulation,
-                                                          const half *learning_rate, const float *gradient,
-                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdagradV2<float, half>(const size_t size, const float epsilon,
+                                                                 const bool update_slots, float *variable,
+                                                                 float *accumulation, const half *learning_rate,
+                                                                 const float *gradient, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdagradV2<half, float>(const size_t size, const float epsilon,
-                                                          const bool update_slots, half *variable, half *accumulation,
-                                                          const float *learning_rate, const half *gradient,
-                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdagradV2<half, float>(const size_t size, const float epsilon,
+                                                                 const bool update_slots, half *variable,
+                                                                 half *accumulation, const float *learning_rate,
+                                                                 const half *gradient, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdagradV2<half, double>(const size_t size, const float epsilon,
-                                                           const bool update_slots, half *variable, half *accumulation,
-                                                           const double *learning_rate, const half *gradient,
-                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdagradV2<half, double>(const size_t size, const float epsilon,
+                                                                  const bool update_slots, half *variable,
+                                                                  half *accumulation, const double *learning_rate,
+                                                                  const half *gradient, const uint32_t &device_id,
+                                                                  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdagradV2<double, float>(const size_t size, const float epsilon,
-                                                            const bool update_slots, double *variable,
-                                                            double *accumulation, const float *learning_rate,
-                                                            const double *gradient, const uint32_t &device_id,
-                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdagradV2<double, float>(const size_t size, const float epsilon,
+                                                                   const bool update_slots, double *variable,
+                                                                   double *accumulation, const float *learning_rate,
+                                                                   const double *gradient, const uint32_t &device_id,
+                                                                   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdagradV2<double, half>(const size_t size, const float epsilon,
-                                                           const bool update_slots, double *variable,
-                                                           double *accumulation, const half *learning_rate,
-                                                           const double *gradient, const uint32_t &device_id,
-                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdagradV2<double, half>(const size_t size, const float epsilon,
+                                                                  const bool update_slots, double *variable,
+                                                                  double *accumulation, const half *learning_rate,
+                                                                  const double *gradient, const uint32_t &device_id,
+                                                                  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdagradV2<float, double>(const size_t size, const float epsilon,
-                                                            const bool update_slots, float *variable,
-                                                            float *accumulation, const double *learning_rate,
-                                                            const float *gradient, const uint32_t &device_id,
-                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdagradV2<float, double>(const size_t size, const float epsilon,
+                                                                   const bool update_slots, float *variable,
+                                                                   float *accumulation, const double *learning_rate,
+                                                                   const float *gradient, const uint32_t &device_id,
+                                                                   cudaStream_t cuda_stream);

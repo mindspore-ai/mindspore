@@ -19,8 +19,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalAdjustContrastV2GpuKernel(const T* images, const float* contrast_factor, T* images_out,
-                                                  const int total, const int per_batch_elements,
-                                                  const uint32_t& device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalAdjustContrastV2GpuKernel(const T *images, const float *contrast_factor, T *images_out,
+                                                         const int total, const int per_batch_elements,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ADJUST_CONTRAST_V2_IMPL_CUH_

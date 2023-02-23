@@ -31,15 +31,16 @@ __global__ void AdaptiveMaxPool3DGradKernel(const T *input_grad, const S *input_
 }
 
 template <typename T, typename S>
-void CalAdaptiveMaxPool3DGrad(const T *input_grad, const S *input_argmax, const int output_stride,
-                              const int argmax_stride, const int batch, T *output_data, const uint32_t &device_id,
-                              cudaStream_t cuda_stream) {
+cudaError_t CalAdaptiveMaxPool3DGrad(const T *input_grad, const S *input_argmax, const int output_stride,
+                                     const int argmax_stride, const int batch, T *output_data,
+                                     const uint32_t &device_id, cudaStream_t cuda_stream) {
   AdaptiveMaxPool3DGradKernel<<<CUDA_BLOCKS(device_id, batch), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input_grad, input_argmax, output_stride, argmax_stride, batch, output_data);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
 #define REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(type1, type2)                                                   \
-  template CUDA_LIB_EXPORT void CalAdaptiveMaxPool3DGrad<type1, type2>(                                   \
+  template CUDA_LIB_EXPORT cudaError_t CalAdaptiveMaxPool3DGrad<type1, type2>(                            \
     const type1 *input_grad, const type2 *input_argmax, const int output_stride, const int argmax_stride, \
     const int batch, type1 *output_data, const uint32_t &device_id, cudaStream_t cuda_stream);
 

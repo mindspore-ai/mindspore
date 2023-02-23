@@ -37,10 +37,10 @@ bool AdaptiveMaxPool3DKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   auto *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   auto *mask_addr = GetDeviceAddress<int32_t>(outputs, kIndex1);
 
-  ApplyAdaptiveMaxPool3D(output_size_, channels_, input_depth_, input_height_, input_width_, input_addr,
-                         output_size_addr, output_addr, mask_addr, device_id_,
-                         reinterpret_cast<cudaStream_t>(cuda_stream_));
-
+  auto status = ApplyAdaptiveMaxPool3D(output_size_, channels_, input_depth_, input_height_, input_width_, input_addr,
+                                       output_size_addr, output_addr, mask_addr, device_id_,
+                                       reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 

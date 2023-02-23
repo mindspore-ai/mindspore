@@ -30,10 +30,10 @@ __global__ void AdaptiveMaxPool2DGradKernel(const T *input_data, const S *max_in
 }
 
 template <typename T, typename S>
-void CalAdaptiveMaxPool2DGrad(const T *input_data, const S *max_index, const int n, const int c,
-                              const uint input_height, const uint input_width, const uint output_height,
-                              const uint output_width, T *output_data, const uint32_t &device_id,
-                              cudaStream_t cuda_stream) {
+cudaError_t CalAdaptiveMaxPool2DGrad(const T *input_data, const S *max_index, const int n, const int c,
+                                     const uint input_height, const uint input_width, const uint output_height,
+                                     const uint output_width, T *output_data, const uint32_t &device_id,
+                                     cudaStream_t cuda_stream) {
   const int input_hw = input_height * input_width;
   const int input_chw = c * input_hw;
   const int input_nchw = n * input_chw;
@@ -41,10 +41,11 @@ void CalAdaptiveMaxPool2DGrad(const T *input_data, const S *max_index, const int
 
   AdaptiveMaxPool2DGradKernel<<<CUDA_BLOCKS(device_id, input_nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input_data, max_index, input_nchw, input_hw, output_hw, output_data);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
 #define REG_ADAPTIVE_MAX_POOL2D_GRAD_CUDA(type1, type2)                                                 \
-  template CUDA_LIB_EXPORT void CalAdaptiveMaxPool2DGrad<type1, type2>(                                    \
+  template CUDA_LIB_EXPORT cudaError_t CalAdaptiveMaxPool2DGrad<type1, type2>(                          \
     const type1 *input_data, const type2 *max_index, const int n, const int c, const uint input_height, \
     const uint input_width, const uint output_height, const uint output_width, type1 *output_data,      \
     const uint32_t &device_id, cudaStream_t cuda_stream)

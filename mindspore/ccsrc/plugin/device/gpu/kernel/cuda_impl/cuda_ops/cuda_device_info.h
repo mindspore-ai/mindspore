@@ -113,6 +113,15 @@ class GPUdeviceInfo {
   mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->share_memory_size()
 #define CUDA_GRIDS_MAXSIZE(device_id) mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->grids_max_size()
 
+#define CHECK_CUDA_LAUNCH_SUCCESS()          \
+  do {                                       \
+    cudaError_t status = cudaGetLastError(); \
+    if (status != cudaSuccess) {             \
+      return status;                         \
+    }                                        \
+    return cudaSuccess;                      \
+  } while (0)
+
 #define MINIUM_SM 6
 #define RECOMMEND_SM 7
 #define SUPPORTED_CAP 5.3

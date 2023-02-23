@@ -59,8 +59,8 @@ __device__ __forceinline__ half SgnFunc(half x) {
 }
 
 template <typename T>
-__global__ void CalApplyProximalGradientDescentKernel(const size_t input_elements, T *var, const T *alpha,
-                                                      const T *l1, const T *l2, const T *delta, T *output) {
+__global__ void CalApplyProximalGradientDescentKernel(const size_t input_elements, T *var, const T *alpha, const T *l1,
+                                                      const T *l2, const T *delta, T *output) {
   if (l1[0] > static_cast<T>(0.0)) {
     for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < static_cast<int>(input_elements);
          pos += gridDim.x * blockDim.x) {
@@ -80,25 +80,26 @@ __global__ void CalApplyProximalGradientDescentKernel(const size_t input_element
 }
 
 template <typename T>
-void CalApplyProximalGradientDescent(const size_t input_elements, T *var, const T *alpha,
-                                      const T *l1, const T *l2, const T *delta, T *output,
-                                      const uint32_t &device_id, cudaStream_t cuda_stream) {
-  CalApplyProximalGradientDescentKernel<<<CUDA_BLOCKS(device_id, input_elements),
-                                          CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    input_elements, var, alpha, l1, l2, delta, output);
+cudaError_t CalApplyProximalGradientDescent(const size_t input_elements, T *var, const T *alpha, const T *l1,
+                                            const T *l2, const T *delta, T *output, const uint32_t &device_id,
+                                            cudaStream_t cuda_stream) {
+  CalApplyProximalGradientDescentKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0,
+                                          cuda_stream>>>(input_elements, var, alpha, l1, l2, delta, output);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void CalApplyProximalGradientDescent<float>(const size_t size, float *var,
-                                                              const float *alpha, const float *l1,
-                                                              const float *l2, const float *delta, float *output,
-                                                              const uint32_t &device_id,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalApplyProximalGradientDescent<half>(const size_t size, half *var,
-                                                            const half *alpha, const half *l1,
-                                                            const half *l2, const half *delta, half *output,
-                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalApplyProximalGradientDescent<double>(const size_t size, double *var,
-                                                             const double *alpha, const double *l1,
-                                                             const double *l2, const double *delta, double *output,
-                                                             const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalApplyProximalGradientDescent<float>(const size_t size, float *var,
+                                                                            const float *alpha, const float *l1,
+                                                                            const float *l2, const float *delta,
+                                                                            float *output, const uint32_t &device_id,
+                                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalApplyProximalGradientDescent<half>(const size_t size, half *var,
+                                                                           const half *alpha, const half *l1,
+                                                                           const half *l2, const half *delta,
+                                                                           half *output, const uint32_t &device_id,
+                                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalApplyProximalGradientDescent<double>(const size_t size, double *var,
+                                                                             const double *alpha, const double *l1,
+                                                                             const double *l2, const double *delta,
+                                                                             double *output, const uint32_t &device_id,
+                                                                             cudaStream_t cuda_stream);

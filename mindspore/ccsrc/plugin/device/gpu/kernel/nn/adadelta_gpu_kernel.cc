@@ -132,8 +132,10 @@ bool AdadeltaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   T *accumulation_out = GetDeviceAddress<T>(outputs, kIndex1);
   T *accumulation_update_out = GetDeviceAddress<T>(outputs, kIndex2);
 
-  ApplyAdadelta(inputs[0]->size / sizeof(T), learning_rate, rho, epsilon, gradient, variable, accumulation,
-                accumulation_update, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status =
+    ApplyAdadelta(inputs[0]->size / sizeof(T), learning_rate, rho, epsilon, gradient, variable, accumulation,
+                  accumulation_update, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(variable_out, variable, variable_size_, cudaMemcpyDeviceToDevice,
                                                      reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaMemcpyAsync output failed");

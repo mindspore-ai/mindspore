@@ -22,27 +22,27 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-CUDA_LIB_EXPORT void CalArgminFp64Int32(const double *input, const int bound, const size_t outer_size,
+CUDA_LIB_EXPORT cudaError_t CalArgminFp64Int32(const double *input, const int bound, const size_t outer_size,
                                         const size_t inner_size, int *output, const uint32_t &device_id,
                                         cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalArgminFp32Int32(const float *input, const int bound, const size_t outer_size,
+CUDA_LIB_EXPORT cudaError_t CalArgminFp32Int32(const float *input, const int bound, const size_t outer_size,
                                         const size_t inner_size, int *output, const uint32_t &device_id,
                                         cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalArgminFp16Int32(const half *input, const int bound, const size_t outer_size,
+CUDA_LIB_EXPORT cudaError_t CalArgminFp16Int32(const half *input, const int bound, const size_t outer_size,
                                         const size_t inner_size, int *output, const uint32_t &device_id,
                                         cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalArgminFp64Int64(const double *input, const int64_t bound, const size_t outer_size,
+CUDA_LIB_EXPORT cudaError_t CalArgminFp64Int64(const double *input, const int64_t bound, const size_t outer_size,
                                         const size_t inner_size, int64_t *output, const uint32_t &device_id,
                                         cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalArgminFp32Int64(const float *input, const int64_t bound, const size_t outer_size,
+CUDA_LIB_EXPORT cudaError_t CalArgminFp32Int64(const float *input, const int64_t bound, const size_t outer_size,
                                         const size_t inner_size, int64_t *output, const uint32_t &device_id,
                                         cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalArgminFp16Int64(const half *input, const int64_t bound, const size_t outer_size,
+CUDA_LIB_EXPORT cudaError_t CalArgminFp16Int64(const half *input, const int64_t bound, const size_t outer_size,
                                         const size_t inner_size, int64_t *output, const uint32_t &device_id,
                                         cudaStream_t cuda_stream);
 #ifdef __cplusplus
@@ -50,7 +50,7 @@ CUDA_LIB_EXPORT void CalArgminFp16Int64(const half *input, const int64_t bound, 
 #endif
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalArgmin(const T *input, const S bound, const size_t outer_size, const size_t inner_size,
+CUDA_LIB_EXPORT cudaError_t CalArgmin(const T *input, const S bound, const size_t outer_size, const size_t inner_size,
                                S *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ARGMIN_IMPL_CUH_

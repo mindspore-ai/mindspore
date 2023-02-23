@@ -79,77 +79,58 @@ __global__ void AdaptiveMaxPool3DKernel(const int64_t size, const int64_t channe
 }
 
 template <typename T>
-void ApplyAdaptiveMaxPool3D(const int64_t size, const int64_t channels, const int64_t input_depth,
-                            const int64_t input_height, const int64_t input_width, const T *input_data,
-                            const int32_t *output_size, T *output_data, int32_t *mask_data, const uint32_t device_id,
-                            cudaStream_t cuda_stream) {
+cudaError_t ApplyAdaptiveMaxPool3D(const int64_t size, const int64_t channels, const int64_t input_depth,
+                                   const int64_t input_height, const int64_t input_width, const T *input_data,
+                                   const int32_t *output_size, T *output_data, int32_t *mask_data,
+                                   const uint32_t device_id, cudaStream_t cuda_stream) {
   AdaptiveMaxPool3DKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size, channels, input_depth, input_height, input_width, output_size, input_data, output_data, mask_data);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool3D<half>(const int64_t size, const int64_t channels,
-                                                           const int64_t input_depth, const int64_t input_height,
-                                                           const int64_t input_width, const half *input_data,
-                                                           const int32_t *output_size, half *output_data,
-                                                           int32_t *mask_data, const uint32_t device_id,
-                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool3D<float>(const int64_t size, const int64_t channels,
-                                                            const int64_t input_depth, const int64_t input_height,
-                                                            const int64_t input_width, const float *input_data,
-                                                            const int32_t *output_size, float *output_data,
-                                                            int32_t *mask_data, const uint32_t device_id,
-                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool3D<double>(const int64_t size, const int64_t channels,
-                                                             const int64_t input_depth, const int64_t input_height,
-                                                             const int64_t input_width, const double *input_data,
-                                                             const int32_t *output_size, double *output_data,
-                                                             int32_t *mask_data, const uint32_t device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool3D<int8_t>(const int64_t size, const int64_t channels,
-                                                             const int64_t input_depth, const int64_t input_height,
-                                                             const int64_t input_width, const int8_t *input_data,
-                                                             const int32_t *output_size, int8_t *output_data,
-                                                             int32_t *mask_data, const uint32_t device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool3D<int16_t>(const int64_t size, const int64_t channels,
-                                                              const int64_t input_depth, const int64_t input_height,
-                                                              const int64_t input_width, const int16_t *input_data,
-                                                              const int32_t *output_size, int16_t *output_data,
-                                                              int32_t *mask_data, const uint32_t device_id,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool3D<int32_t>(const int64_t size, const int64_t channels,
-                                                              const int64_t input_depth, const int64_t input_height,
-                                                              const int64_t input_width, const int32_t *input_data,
-                                                              const int32_t *output_size, int32_t *output_data,
-                                                              int32_t *mask_data, const uint32_t device_id,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool3D<int64_t>(const int64_t size, const int64_t channels,
-                                                              const int64_t input_depth, const int64_t input_height,
-                                                              const int64_t input_width, const int64_t *input_data,
-                                                              const int32_t *output_size, int64_t *output_data,
-                                                              int32_t *mask_data, const uint32_t device_id,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool3D<uint8_t>(const int64_t size, const int64_t channels,
-                                                              const int64_t input_depth, const int64_t input_height,
-                                                              const int64_t input_width, const uint8_t *input_data,
-                                                              const int32_t *output_size, uint8_t *output_data,
-                                                              int32_t *mask_data, const uint32_t device_id,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool3D<uint16_t>(const int64_t size, const int64_t channels,
-                                                               const int64_t input_depth, const int64_t input_height,
-                                                               const int64_t input_width, const uint16_t *input_data,
-                                                               const int32_t *output_size, uint16_t *output_data,
-                                                               int32_t *mask_data, const uint32_t device_id,
-                                                               cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool3D<uint32_t>(const int64_t size, const int64_t channels,
-                                                               const int64_t input_depth, const int64_t input_height,
-                                                               const int64_t input_width, const uint32_t *input_data,
-                                                               const int32_t *output_size, uint32_t *output_data,
-                                                               int32_t *mask_data, const uint32_t device_id,
-                                                               cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool3D<uint64_t>(const int64_t size, const int64_t channels,
-                                                               const int64_t input_depth, const int64_t input_height,
-                                                               const int64_t input_width, const uint64_t *input_data,
-                                                               const int32_t *output_size, uint64_t *output_data,
-                                                               int32_t *mask_data, const uint32_t device_id,
-                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool3D<half>(const int64_t size, const int64_t channels,
+                                                                  const int64_t input_depth, const int64_t input_height,
+                                                                  const int64_t input_width, const half *input_data,
+                                                                  const int32_t *output_size, half *output_data,
+                                                                  int32_t *mask_data, const uint32_t device_id,
+                                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool3D<float>(
+  const int64_t size, const int64_t channels, const int64_t input_depth, const int64_t input_height,
+  const int64_t input_width, const float *input_data, const int32_t *output_size, float *output_data,
+  int32_t *mask_data, const uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool3D<double>(
+  const int64_t size, const int64_t channels, const int64_t input_depth, const int64_t input_height,
+  const int64_t input_width, const double *input_data, const int32_t *output_size, double *output_data,
+  int32_t *mask_data, const uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool3D<int8_t>(
+  const int64_t size, const int64_t channels, const int64_t input_depth, const int64_t input_height,
+  const int64_t input_width, const int8_t *input_data, const int32_t *output_size, int8_t *output_data,
+  int32_t *mask_data, const uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool3D<int16_t>(
+  const int64_t size, const int64_t channels, const int64_t input_depth, const int64_t input_height,
+  const int64_t input_width, const int16_t *input_data, const int32_t *output_size, int16_t *output_data,
+  int32_t *mask_data, const uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool3D<int32_t>(
+  const int64_t size, const int64_t channels, const int64_t input_depth, const int64_t input_height,
+  const int64_t input_width, const int32_t *input_data, const int32_t *output_size, int32_t *output_data,
+  int32_t *mask_data, const uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool3D<int64_t>(
+  const int64_t size, const int64_t channels, const int64_t input_depth, const int64_t input_height,
+  const int64_t input_width, const int64_t *input_data, const int32_t *output_size, int64_t *output_data,
+  int32_t *mask_data, const uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool3D<uint8_t>(
+  const int64_t size, const int64_t channels, const int64_t input_depth, const int64_t input_height,
+  const int64_t input_width, const uint8_t *input_data, const int32_t *output_size, uint8_t *output_data,
+  int32_t *mask_data, const uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool3D<uint16_t>(
+  const int64_t size, const int64_t channels, const int64_t input_depth, const int64_t input_height,
+  const int64_t input_width, const uint16_t *input_data, const int32_t *output_size, uint16_t *output_data,
+  int32_t *mask_data, const uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool3D<uint32_t>(
+  const int64_t size, const int64_t channels, const int64_t input_depth, const int64_t input_height,
+  const int64_t input_width, const uint32_t *input_data, const int32_t *output_size, uint32_t *output_data,
+  int32_t *mask_data, const uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool3D<uint64_t>(
+  const int64_t size, const int64_t channels, const int64_t input_depth, const int64_t input_height,
+  const int64_t input_width, const uint64_t *input_data, const int32_t *output_size, uint64_t *output_data,
+  int32_t *mask_data, const uint32_t device_id, cudaStream_t cuda_stream);

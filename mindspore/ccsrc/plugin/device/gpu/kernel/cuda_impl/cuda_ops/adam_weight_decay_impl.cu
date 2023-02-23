@@ -35,16 +35,18 @@ __global__ void AdamWeightDecayKernel(const int element_num_, const bool need_de
 }
 
 template <typename T>
-void AdamWeightDecay(const int &element_num_, const bool &need_decay, const float *beta1, const float *one_sub_beta1,
-                     const float *beta2, const float *one_sub_beta2, const float *epsilon, const float *lr,
-                     const float *weight_decay, T *m, T *v, T *param, T *gradient, cudaStream_t stream) {
+cudaError_t AdamWeightDecay(const int &element_num_, const bool &need_decay, const float *beta1,
+                            const float *one_sub_beta1, const float *beta2, const float *one_sub_beta2,
+                            const float *epsilon, const float *lr, const float *weight_decay, T *m, T *v, T *param,
+                            T *gradient, cudaStream_t stream) {
   AdamWeightDecayKernel<<<GET_BLOCKS(element_num_), GET_THREADS, 0, stream>>>(
     element_num_, need_decay, beta1, one_sub_beta1, beta2, one_sub_beta2, epsilon, lr, weight_decay, m, v, param,
     gradient);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void AdamWeightDecay(const int &element_num_, const bool &need_decay, const float *beta1,
-                                              const float *one_sub_beta1, const float *beta2,
-                                              const float *one_sub_beta2, const float *epsilon, const float *lr,
-                                              const float *weight_decay, float *m, float *v, float *param,
-                                              float *gradient, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t AdamWeightDecay(const int &element_num_, const bool &need_decay,
+                                                     const float *beta1, const float *one_sub_beta1, const float *beta2,
+                                                     const float *one_sub_beta2, const float *epsilon, const float *lr,
+                                                     const float *weight_decay, float *m, float *v, float *param,
+                                                     float *gradient, cudaStream_t stream);

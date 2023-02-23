@@ -220,16 +220,21 @@ bool AffineGridGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     if (!PreLaunchKernel4D(theta_shape_, grid_shape_, image_size_ptr, image_size, cuda_stream, kernel_name_)) {
       return false;
     }
-    CalculateAffineGrid4D(theta_ptr, workspace_ptr, grid_ptr, image_size[kIndex0], image_size[kIndex1],
-                          image_size[kIndex2], image_size[kIndex3], align_corners_, device_id_, cuda_stream);
+    auto status =
+      CalculateAffineGrid4D(theta_ptr, workspace_ptr, grid_ptr, image_size[kIndex0], image_size[kIndex1],
+                            image_size[kIndex2], image_size[kIndex3], align_corners_, device_id_, cuda_stream);
+    if (status != CUDNN_STATUS_SUCCESS) {
+      return false;
+    }
   } else if (grid_dim_ == AffineGridDim::volumetric) {
     int32_t image_size[kDim5];
     if (!PreLaunchKernel5D(theta_shape_, grid_shape_, image_size_ptr, image_size, cuda_stream, kernel_name_)) {
       return false;
     }
-    CalculateAffineGrid5D(theta_ptr, workspace_ptr, grid_ptr, image_size[kIndex0], image_size[kIndex1],
-                          image_size[kIndex2], image_size[kIndex3], image_size[kIndex4], align_corners_, device_id_,
-                          cuda_stream);
+    auto status = CalculateAffineGrid5D(theta_ptr, workspace_ptr, grid_ptr, image_size[kIndex0], image_size[kIndex1],
+                                        image_size[kIndex2], image_size[kIndex3], image_size[kIndex4], align_corners_,
+                                        device_id_, cuda_stream);
+    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', grid_dim_ is not properly set in KernelMod::Resize";
     return false;

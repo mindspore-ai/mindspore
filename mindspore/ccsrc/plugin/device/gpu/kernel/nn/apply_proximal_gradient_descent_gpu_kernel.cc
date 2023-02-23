@@ -117,9 +117,10 @@ bool ApplyProximalGradientDescentGpuKernelMod::LaunchKernel(const std::vector<Ad
   auto delta = reinterpret_cast<T *>(inputs[kDeltaIndex]->addr);
   auto output = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
 
-  CalApplyProximalGradientDescent(input_elements_, var, alpha, l1, l2, delta, output, device_id_,
-                                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalApplyProximalGradientDescent(input_elements_, var, alpha, l1, l2, delta, output, device_id_,
+                                                reinterpret_cast<cudaStream_t>(cuda_stream_));
 
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 

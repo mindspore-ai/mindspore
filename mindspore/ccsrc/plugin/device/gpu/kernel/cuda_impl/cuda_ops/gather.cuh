@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GATHER_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T, typename S>
-CUDA_LIB_EXPORT void Gather(const T *input, const S *index, T *output, const size_t dim_before_axis,
-                            const size_t dim_at_axis_input, const size_t dim_at_axis_output,
-                            const size_t dim_after_axis, cudaStream_t stream, uint32_t device_id);
+CUDA_LIB_EXPORT cudaError_t Gather(const T *input, const S *index, T *output, const size_t dim_before_axis,
+                                   const size_t dim_at_axis_input, const size_t dim_at_axis_output,
+                                   const size_t dim_after_axis, cudaStream_t stream, uint32_t device_id);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GATHER_CUH_

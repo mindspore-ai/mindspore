@@ -147,10 +147,12 @@ bool BernoulliGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     seed = static_cast<uint64_t>(seed_);
   }
   if (need_broadcast_) {
-    BroadcastBernoulliForward(x_shape_, p_shape_, p, y, seed, x_count_, device_id_,
-                              reinterpret_cast<cudaStream_t>(cuda_stream_));
+    auto status = BroadcastBernoulliForward(x_shape_, p_shape_, p, y, seed, x_count_, device_id_,
+                                            reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   } else {
-    BernoulliForward(p, y, seed, x_count_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    auto status = BernoulliForward(p, y, seed, x_count_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   }
   return true;
 }

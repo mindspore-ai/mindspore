@@ -562,10 +562,10 @@ __global__ void Addcdiv_value1(const int64_t l0, const int64_t l1, const int64_t
 }
 
 template <typename T, typename VT>
-void CalAddcdiv(const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims,
-                const std::vector<int64_t> &x2_dims, const std::vector<int64_t> &value_dims,
-                const std::vector<int64_t> &output_dims, const T *input_data, const T *x1, const T *x2, const VT *value,
-                T *output, const uint32_t &device_id, cudaStream_t stream) {
+cudaError_t CalAddcdiv(const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims,
+                       const std::vector<int64_t> &x2_dims, const std::vector<int64_t> &value_dims,
+                       const std::vector<int64_t> &output_dims, const T *input_data, const T *x1, const T *x2,
+                       const VT *value, T *output, const uint32_t &device_id, cudaStream_t stream) {
   int64_t size = 1;
 
   int64_t size_value = 1;
@@ -651,90 +651,91 @@ void CalAddcdiv(const std::vector<int64_t> &input_data_dims, const std::vector<i
       value_broadcast_used[1], value_broadcast_used[2], value_broadcast_used[3], value_broadcast_used[4], input_data,
       x1, x2, value, output, size);
   }
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void CalAddcdiv<half, half>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<half, half>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const half *input_data,
   const half *x1, const half *x2, const half *value, half *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<half, double>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<half, double>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const half *input_data,
   const half *x1, const half *x2, const double *value, half *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<half, float>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<half, float>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const half *input_data,
   const half *x1, const half *x2, const float *value, half *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<half, int>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<half, int>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const half *input_data,
   const half *x1, const half *x2, const int *value, half *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<half, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<half, int64_t>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const half *input_data,
   const half *x1, const half *x2, const int64_t *value, half *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<float, float>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<float, float>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const float *input_data,
   const float *x1, const float *x2, const float *value, float *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<float, double>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<float, double>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const float *input_data,
   const float *x1, const float *x2, const double *value, float *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<float, half>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<float, half>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const float *input_data,
   const float *x1, const float *x2, const half *value, float *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<float, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<float, int64_t>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const float *input_data,
   const float *x1, const float *x2, const int64_t *value, float *output, const uint32_t &device_id,
   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<float, int>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<float, int>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const float *input_data,
   const float *x1, const float *x2, const int *value, float *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<double, double>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<double, double>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const double *input_data,
   const double *x1, const double *x2, const double *y, double *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<double, float>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<double, float>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const double *input_data,
   const double *x1, const double *x2, const float *y, double *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<double, int>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<double, int>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const double *input_data,
   const double *x1, const double *x2, const int *y, double *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<double, half>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<double, half>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const double *input_data,
   const double *x1, const double *x2, const half *y, double *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<double, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<double, int64_t>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const double *input_data,
   const double *x1, const double *x2, const int64_t *y, double *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<int64_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<int64_t, int64_t>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const int64_t *input_data,
   const int64_t *x1, const int64_t *x2, const int64_t *y, int64_t *output, const uint32_t &device_id,
   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<int64_t, half>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<int64_t, half>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const int64_t *input_data,
   const int64_t *x1, const int64_t *x2, const half *y, int64_t *output, const uint32_t &device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void CalAddcdiv<int64_t, double>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<int64_t, double>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const int64_t *input_data,
   const int64_t *x1, const int64_t *x2, const double *y, int64_t *output, const uint32_t &device_id,
   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<int64_t, float>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<int64_t, float>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const int64_t *input_data,
   const int64_t *x1, const int64_t *x2, const float *y, int64_t *output, const uint32_t &device_id,
   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalAddcdiv<int64_t, int>(
+template CUDA_LIB_EXPORT cudaError_t CalAddcdiv<int64_t, int>(
   const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims, const std::vector<int64_t> &x2_dims,
   const std::vector<int64_t> &value_dims, const std::vector<int64_t> &output_dims, const int64_t *input_data,
   const int64_t *x1, const int64_t *x2, const int *y, int64_t *output, const uint32_t &device_id, cudaStream_t stream);

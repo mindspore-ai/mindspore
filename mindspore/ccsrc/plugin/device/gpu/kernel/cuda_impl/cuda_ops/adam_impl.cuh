@@ -18,13 +18,13 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ADAM_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void ApplyAdam(const size_t size, const int64_t batch_size, const T *gradient, const T *beta1_power,
-                               const T *beta2_power, const T *learning_rate, const T *beta1, const T *beta2,
-                               const T *epsilon, T *variable, T *m, T *v,
-                               const bool use_nesterov, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ApplyAdam(const size_t size, const int64_t batch_size, const T *gradient,
+                                      const T *beta1_power, const T *beta2_power, const T *learning_rate,
+                                      const T *beta1, const T *beta2, const T *epsilon, T *variable, T *m, T *v,
+                                      const bool use_nesterov, cudaStream_t cuda_stream);
 template <typename T, typename S>
-CUDA_LIB_EXPORT void AdamWeightDecayOp(const size_t size, const S *gradient, const float *learning_rate,
-                                       const float *beta1, const float *beta2, const float *epsilon, const float *decay,
-                                       S *variable, T *m, T *v, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t AdamWeightDecayOp(const size_t size, const S *gradient, const float *learning_rate,
+                                              const float *beta1, const float *beta2, const float *epsilon,
+                                              const float *decay, S *variable, T *m, T *v, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ADAM_IMPL_CUH_

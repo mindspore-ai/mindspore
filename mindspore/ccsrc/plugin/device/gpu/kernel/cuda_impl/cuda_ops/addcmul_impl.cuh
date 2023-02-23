@@ -21,8 +21,9 @@
 #include "include/cuda_fp16.h"
 
 template <typename T, typename VT>
-CUDA_LIB_EXPORT void CalAddcmul(const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims,
-                                const std::vector<int64_t> &x2_dims, const std::vector<int64_t> &value_dims,
-                                const std::vector<int64_t> &output_dims, const T *input_data, const T *x1, const T *x2,
-                                const VT *value, T *output, const uint32_t &device_id, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalAddcmul(const std::vector<int64_t> &input_data_dims, const std::vector<int64_t> &x1_dims,
+                                       const std::vector<int64_t> &x2_dims, const std::vector<int64_t> &value_dims,
+                                       const std::vector<int64_t> &output_dims, const T *input_data, const T *x1,
+                                       const T *x2, const VT *value, T *output, const uint32_t &device_id,
+                                       cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ADDCMUL_IMPL_CUH_
