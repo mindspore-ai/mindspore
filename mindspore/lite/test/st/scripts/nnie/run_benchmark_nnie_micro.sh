@@ -40,16 +40,16 @@ function Run_Hi3516() {
         export MAX_ROI_NUM=${env_max_roi_num}
 
         cd ${basepath}/${model_name}/build/ || return 1
-        echo './benchmark '${input_files}' ../src/net.bin 1 '${basepath}'/../../input_output/output/'${model_name}'.ms.out 1 0 0' >> "${run_hi3516_log_file}"
-        ./benchmark ${input_files} ../src/net.bin 1 ${basepath}/../../input_output/output/${model_name}.ms.out 1 0 0 >> "${run_hi3516_log_file}"
+        echo './benchmark '${input_files}' ../src/model0/net0.bin 1 '${basepath}'/../../input_output/output/'${model_name}'.ms.out 1 0 0' >> "${run_hi3516_log_file}"
+        ./benchmark ${input_files} ../src/model0/net0.bin 1 ${basepath}/../../input_output/output/${model_name}.ms.out 1 0 0 >> "${run_hi3516_log_file}"
         if [ $? = 0 ]; then
             run_result='hi3516: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='hi3516: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
 
-        echo './benchmark '${input_files}' ../src/net.bin 2 '${basepath}'/../../input_output/output/'${model_name}'.ms.out 1 0 3' >> "${run_hi3516_log_file}"
-        ./benchmark ${input_files} ../src/net.bin 2 ${basepath}/../../input_output/output/${model_name}.ms.out 1 0 3 >> "${run_hi3516_log_file}"
+        echo './benchmark '${input_files}' ../src/model0/net0.bin 2 '${basepath}'/../../input_output/output/'${model_name}'.ms.out 1 0 3' >> "${run_hi3516_log_file}"
+        ./benchmark ${input_files} ../src/model0/net0.bin 2 ${basepath}/../../input_output/output/${model_name}.ms.out 1 0 3 >> "${run_hi3516_log_file}"
         if [ $? = 0 ]; then
             run_result='hi3516: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else

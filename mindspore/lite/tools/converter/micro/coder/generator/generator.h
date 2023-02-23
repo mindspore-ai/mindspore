@@ -42,10 +42,12 @@ class Generator {
   int GenerateCode();
 
  protected:
+  int CreateCommonFiles();
+  int CreateModelFiles();
   virtual int CodeNetHFile() = 0;
   virtual int CodeNetCFile() = 0;
   virtual void CodeNetExecuteFunc(std::ofstream &ofs) = 0;
-  virtual int CodeWeightFile();
+  int CodeWeightFile();
   virtual int CodeRegKernelHFile();
 
   void CodeCommonNetH(std::ofstream &ofs);
@@ -55,10 +57,14 @@ class Generator {
   std::unique_ptr<CoderContext> ctx_{nullptr};
 
   bool is_get_quant_args_{false};
+  std::string model_dir_;
   std::string net_inc_hfile_;
   std::string net_src_cfile_;
   std::string net_weight_hfile_;
+  std::string net_weight_cfile_;
+  std::string net_model_cfile_;
 
+  std::string net_include_file_path_;
   std::string net_src_file_path_;
   std::string net_main_file_path_;
 
@@ -66,8 +72,11 @@ class Generator {
   int CodeSourceCMakeFile();
   int CodeStaticContent();
   int CodeBenchmarkHFile(const std::string &file);
+  int CodeModelHandleHFile();
+  int CodeCommonModelFile();
   int CodeMSModelImplement();
   int CodeDataCFile();
+  int CodeAllocatorFile();
 
   std::string cmake_file_name_{"net.cmake"};
 #ifdef _MSC_VER

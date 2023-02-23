@@ -34,18 +34,18 @@ class CoderSession {
 
   ~CoderSession();
 
-  int Init(const void *content, int size);
+  int Init(const void *content, int size, const int model_index);
 
   virtual int Build();
 
-  virtual int Run();
+  virtual int Run(const std::string model_name);
 
   virtual int GenerateCode();
 
  protected:
   int Preprocess();
   virtual int DoCode();
-  virtual int PassArgsToContext();
+  virtual int PassArgsToContext(const std::string model_name);
 
  private:
   OpParameter *GenParameterAndInfer(const LiteGraph::Node *node, const std::vector<lite::Tensor *> &inputs,

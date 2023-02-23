@@ -19,6 +19,8 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
 namespace mindspore::lite::micro {
+std::set<std::string> CoderContext::c_files_;
+size_t CoderContext::max_buffer_size_ = 0;
 CoderContext::CoderContext(int model_index) {
   this->input_name_ = kInputPrefixName;
   this->output_name_ = kOutputPrefixName;

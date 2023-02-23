@@ -31,9 +31,11 @@ void InitGlobalVariable(int model_index);
 
 constexpr auto kModelName = "net";
 
-constexpr auto kSourcePath = "/src/";
+constexpr auto kIncludePath = "include";
 
-constexpr auto kBenchmarkPath = "/benchmark/";
+constexpr auto kSourcePath = "src";
+
+constexpr auto kBenchmarkPath = "benchmark";
 constexpr auto kBenchmarkFile = "benchmark.cc";
 
 constexpr auto kSession = "session";

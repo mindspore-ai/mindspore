@@ -22,7 +22,7 @@
 #include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
-void CodeWeightFileHeader(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
+void CodeWeightFileHeader(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   ofs << g_hwLicense;
   // include all operator header
   for (const auto &h_file : ctx->h_files()) {

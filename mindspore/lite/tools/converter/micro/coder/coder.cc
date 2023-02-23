@@ -28,6 +28,7 @@
 
 namespace mindspore::lite::micro {
 namespace {
+static int kModelIndex = 0;
 std::shared_ptr<CoderSession> CreateCoderSession() {
   std::shared_ptr<CoderSession> session;
   auto code_mode = Configurator::GetInstance()->code_mode();
@@ -42,24 +43,25 @@ std::shared_ptr<CoderSession> CreateCoderSession() {
   return session;
 }
 }  // namespace
-int Coder::Run(const void *model_buff, size_t size) {
+int Coder::Run(const void *model_buff, size_t size, const std::string model_name) {
   session_ = CreateCoderSession();
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "new session failed while running!";
     return RET_ERROR;
   }
-  STATUS status = session_->Init(model_buff, size);
+  STATUS status = session_->Init(model_buff, size, kModelIndex);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Init session failed!";
     return RET_ERROR;
   }
+  kModelIndex++;
 
   status = session_->Build();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Compile graph failed!";
     return status;
   }
-  status = session_->Run();
+  status = session_->Run(model_name);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Generate Code Files error!" << status;
     return status;
@@ -120,13 +122,21 @@ int Coder::MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std:
     MS_LOG(ERROR) << "Init path failed";
     return RET_ERROR;
   }
+  if (!(DirectoryGenerator::GetInstance()->CreateStaticDir(code_gen.save_path_, code_gen.model_name_))) {
+    MS_LOG(ERROR) << "Create static directories failed";
+    return RET_ERROR;
+  }
+  if (!(DirectoryGenerator::GetInstance()->CreateDynamicDir(kModelIndex))) {
+    MS_LOG(ERROR) << "Create dynamic directories failed";
+    return RET_ERROR;
+  }
   // codegeneration for micro
   STATUS status = code_gen.Init(codegen_mode, device, support_parallel, debug_mode);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Codegen init Error";
     return RET_ERROR;
   }
-  status = code_gen.Run(builder.GetBufferPointer(), size);
+  status = code_gen.Run(builder.GetBufferPointer(), size, code_gen.model_name_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Codegen Run Error";
     return RET_ERROR;
@@ -160,25 +170,9 @@ int Coder::Init(const std::string &code_mode, const std::string &target, bool su
   config->set_support_parallel(support_parallel);
   config->set_debug_mode(debug_mode);
 
-  config->set_proj_dir(model_name_);
-
-  const std::string slash = std::string(kSlash);
-  if (!save_path_.empty() && !DirExists(save_path_)) {
-    MS_LOG(ERROR) << "code_gen code path " << save_path_ << " is not valid";
-    return RET_ERROR;
-  }
-
-  if (save_path_.substr(save_path_.size() - 1, 1) != slash) {
-    std::string path = save_path_ + slash + model_name_;
-    config->set_code_path(path);
-  } else {
-    std::string path = save_path_ + model_name_;
-    config->set_code_path(path);
-  }
-
-  if (InitProjDirs(save_path_, model_name_) != RET_OK) {
-    return RET_ERROR;
-  }
+  config->set_proj_dir(DirectoryGenerator::GetInstance()->project_name());
+  config->set_code_path(DirectoryGenerator::GetInstance()->work_dir() +
+                        DirectoryGenerator::GetInstance()->project_name());
 
   auto print_parameter = [](auto name, auto value) {
     MS_LOG(INFO) << std::setw(20) << std::left << name << "= " << value;

@@ -36,7 +36,8 @@ constexpr _mode_t kMicroDirMode = 0777;
 constexpr __mode_t kMicroDirMode = 0777;
 #endif
 
-static std::array<std::string, 2> kWorkDirs = {"src", "benchmark"};
+const int kUnitDirsNum = 3;
+static std::array<std::string, kUnitDirsNum> kUnitDirs = {"src", "benchmark", "include"};
 
 bool DirExists(const std::string &dir_path) {
   struct stat file_info;
@@ -80,41 +81,82 @@ static int MkMicroDir(const std::string &currentDir) {
   return RET_OK;
 }
 
-int InitProjDirs(const std::string &project_root_dir, const std::string &proj_name) {
+bool DirectoryGenerator::CreateStaticDir(const std::string &work_dir, const std::string &proj_name) {
+  if (!work_dir_.empty()) {
+    MS_LOG(INFO) << "Work directory has been created";
+    return true;
+  }
+  if (work_dir.empty() || proj_name.empty() || !DirExists(work_dir)) {
+    MS_LOG(ERROR) << "Work directory or project name is empty";
+    return false;
+  }
+  work_dir_ = work_dir;
+  project_name_ = proj_name;
 #if defined(_WIN32) || defined(_WIN64)
   std::ofstream pro_file;
-  std::string read_me_file = project_root_dir + "\\readMe.txt";
+  std::string read_me_file = work_dir_ + "\\readMe.txt";
   pro_file.open(read_me_file.c_str());
   pro_file << "This is a directory for generating coding files. Do not edit !!!\n";
 #else
   std::ifstream pro_file;
-  pro_file.open(project_root_dir.c_str());
+  pro_file.open(work_dir_.c_str());
 #endif
   if (!pro_file.is_open()) {
-    MS_LOG(ERROR) << project_root_dir << ":  model's root dir not exists or have no access to open, please check it!!!";
+    MS_LOG(ERROR) << work_dir_ << ":  root dir not exists or have no access to open, please check it!!!";
     pro_file.close();
-    return RET_ERROR;
+    return false;
   }
-  // check other dirs && make them if not exists
-  // 1. coderDir 2.WorkRootDir 3. WorkChildDir
-  std::string current_dir = project_root_dir + proj_name;
-  std::string work_dir = current_dir;
-  STATUS ret = MkMicroDir(current_dir);
+
+  std::string slashCh = std::string(kSlash);
+  std::string project_dir = work_dir_ + project_name_;
+  if (work_dir_.substr(work_dir_.size() - 1, 1) != slashCh) {
+    project_dir = work_dir_ + slashCh + project_name_;
+  }
+  STATUS ret = MkMicroDir(project_dir);
+  if (ret == RET_ERROR) {
+    pro_file.close();
+    return false;
+  }
+
+  for (const auto &unit : kUnitDirs) {
+    std::string unit_dir = project_dir + slashCh + unit;
+    ret = MkMicroDir(unit_dir);
+    if (ret == RET_ERROR) {
+      pro_file.close();
+      return false;
+    }
+  }
+  return true;
+}
+
+bool DirectoryGenerator::CreateDynamicDir(const int model_index) {
+  if (work_dir_.empty() || project_name_.empty()) {
+    MS_LOG(ERROR) << "Work directory or project name is empty";
+    return false;
+  }
+  std::string current_work_dir = work_dir_ + project_name_ + std::string(kSlash) + kUnitDirs[0];
+#if defined(_WIN32) || defined(_WIN64)
+  std::ofstream pro_file;
+  std::string read_me_file = current_work_dir + "\\readMe.txt";
+  pro_file.open(read_me_file.c_str());
+  pro_file << "This is a directory for generating coding files. Do not edit !!!\n";
+#else
+  std::ifstream pro_file;
+  pro_file.open(current_work_dir.c_str());
+#endif
+  if (!pro_file.is_open()) {
+    MS_LOG(ERROR) << current_work_dir << ": model's upper dir not exists or have no access to open, please check it!!!";
+    pro_file.close();
+    return false;
+  }
+
+  std::string model_dir = current_work_dir + std::string(kSlash) + "model" + std::to_string(model_index);
+  auto ret = MkMicroDir(model_dir);
   if (ret == RET_ERROR) {
     pro_file.close();
     return ret;
   }
-
-  std::string slashCh = std::string(kSlash);
-  for (const auto &work : kWorkDirs) {
-    current_dir = work_dir + slashCh + work;
-    ret = MkMicroDir(current_dir);
-    if (ret == RET_ERROR) {
-      pro_file.close();
-      return ret;
-    }
-  }
   pro_file.close();
-  return RET_OK;
+  return true;
 }
 }  // namespace mindspore::lite::micro

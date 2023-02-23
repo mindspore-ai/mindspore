@@ -23,6 +23,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <algorithm>
 #include "src/tensor.h"
 
 namespace mindspore::lite::micro {
@@ -33,6 +34,8 @@ class CoderContext {
   ~CoderContext() = default;
 
   std::vector<std::string> init_contents() const { return initialContent_; }
+
+  void set_model_name(const std::string &model_name) { model_name_ = model_name; }
 
   void set_code_blocks(const std::vector<std::string> &code_block) { code_blocks_ = code_block; }
   std::vector<std::string> code_blocks() const { return code_blocks_; }
@@ -69,7 +72,10 @@ class CoderContext {
   void set_saved_weights(const std::map<std::string, Tensor *> &saved_weights) { saved_weights_ = saved_weights; }
   std::map<std::string, Tensor *> saved_weights() const { return saved_weights_; }
 
-  void set_total_buffer_size(size_t size) { total_buffer_size_ = size; }
+  void set_total_buffer_size(size_t size) {
+    total_buffer_size_ = size;
+    max_buffer_size_ = std::max(max_buffer_size_, size);
+  }
   size_t total_buffer_size() const { return total_buffer_size_; }
 
   void set_graph_inputs(const std::vector<Tensor *> &graph_inputs) { graph_inputs_ = graph_inputs; }
@@ -81,6 +87,9 @@ class CoderContext {
     graph_train_outputs_ = graph_train_outputs;
   }
 
+  void set_end_flag(bool end_flag) { end_flag_ = end_flag; }
+
+  std::string model_name() const { return model_name_; }
   std::vector<Tensor *> graph_inputs() const { return graph_inputs_; }
   std::vector<Tensor *> graph_outputs() const { return graph_outputs_; }
   std::vector<Tensor *> graph_eval_outputs() const { return graph_eval_outputs_; }
@@ -114,7 +123,12 @@ class CoderContext {
   std::set<std::string> asm_files() const { return asm_files_; }
   void set_asm_files(const std::set<std::string> &files) { asm_files_.insert(files.begin(), files.end()); }
 
+  size_t max_buffer_size() { return max_buffer_size_; }
+
+  bool end_flag() { return end_flag_; }
+
  private:
+  std::string model_name_;
   std::vector<Tensor *> graph_inputs_;
   std::vector<Tensor *> graph_outputs_;
   std::vector<Tensor *> graph_eval_outputs_;
@@ -139,8 +153,6 @@ class CoderContext {
   std::string pack_weight_size_name_;
   // code blocks store the tensor will be packed runtime
   std::vector<std::string> initialContent_;
-  // operator C Lang files list, depended by the net.c. it will be add to CMakeLists.txt
-  std::set<std::string> c_files_;
   // when codegen generate the code for ARM64 OR ARM32, we provide server optimized artimetic used the assembly
   // instructions. asm_files store the assembly file names
   std::set<std::string> asm_files_;
@@ -156,6 +168,10 @@ class CoderContext {
   std::vector<std::string> weight_buffer_size_code_blocks_;
   std::size_t weight_buffer_size_ = 0;
   int model_index_;
+  bool end_flag_{false};
+  // operator C Lang files list, depended by the net.c. it will be add to CMakeLists.txt
+  static std::set<std::string> c_files_;
+  static size_t max_buffer_size_;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_CONTEXT_H_
