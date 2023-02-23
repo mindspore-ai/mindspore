@@ -760,11 +760,13 @@ def full_like(x, fill_value, *, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> output = ops.full_like((2, 2), 1)
+        >>> input = Tensor([[0, 1], [2, 1]], dtype=mindspore.int32)
+        >>> output = ops.full_like(input, 1)
         >>> print(output)
         [[1. 1.]
          [1. 1.]]
-        >>> output = ops.full_like((3, 3), 0)
+        >>> input = Tensor([[0, 1, 1], [2, 1, 2], [1, 3, 4]], dtype=mindspore.int32)
+        >>> output = ops.full_like(input, 0)
         >>> print(output)
         [[0. 0. 0.]
          [0. 0. 0.]
