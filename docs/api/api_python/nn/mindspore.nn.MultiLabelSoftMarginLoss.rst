@@ -3,15 +3,19 @@ mindspore.nn.MultiLabelSoftMarginLoss
 
 .. py:class:: mindspore.nn.MultiLabelSoftMarginLoss(weight=None, reduction='mean')
 
-    基于最大熵计算用于多标签优化的损失。计算公式如下。
+    基于最大熵计算用于多标签优化的损失。
+
+    多标签软间隔损失通常用于多标签分类任务中，输入样本可以属于多个目标类别。
+    给定输入 :math:`x` 和二元标签 :math:`y` ，其shape为 :math:`(N,C)` ， :math:`N` 表示样本数量， :math:`C` 为样本类别数，损失计算公式如下：
 
     .. math::
-        \mathcal{L}_{D} = - \frac{1}{|D|}\sum_{i = 0}^{|D|}\left(
-        y_{i}\ln\frac{1}{1 + e^{- x_{i}}} + \left( 1 - y_{i}
-        \right)\ln\frac{1}{1 + e^{x_{i}}} \right)
+        \mathcal{loss\left( x , y \right)} = - \frac{1}{N}\frac{1}{C}\sum_{i = 1}^{N}
+        \sum_{j = 1}^{C}\left(y_{ij}\log\frac{1}{1 + e^{- x_{ij}}} + \left( 1 - y_{ij}
+        \right)\log\frac{e^{-x_{ij}}}{1 + e^{-x_{ij}}} \right)
 
-    :math:`\mathcal{L}_{D}` 为损失值，:math:`y_{i}` 为 `target` ,
-    :math:`x_{i}` 为 `x` 。如果 `weight` 不为None，将会和每个分类的loss相乘。
+    其中 :math:`x{ij}` 表示样本 :math:`i` 在 :math:`j` 类别的概率得分。 :math:`y{ij}` 表示样本 :math:`i` 是否属于类别 :math:`j` ，
+    :math:`y{ij}=1` 时属于，为0时不属于。对于多标签分类任务，每个样本可以属于多个类别，即标签中含有多个1。
+    如果 `weight` 不为None，将会和每个分类的loss相乘。
 
     参数：
         - **weight** (Union[Tensor, int, float]) - 每个类别的缩放权重。默认值：None。

@@ -1037,7 +1037,7 @@ class SampledSoftmaxLoss(LossBase):
     def _softmax_cross_entropy(self, logits, targets):
         stable_exp_logits = self.exp(logits - self.reduce_max_true(logits, 1))
         pred = stable_exp_logits / self.reduce_sum_true(stable_exp_logits, 1)
-        return -self.reduce_sum(targets * self.log(pred + 1.0e-20), 1)
+        return -1 * self.reduce_sum(targets * self.log(pred + 1.0e-20), 1)
 
     def _compute_sampled_logits(self, weights,
                                 biases,
@@ -1227,15 +1227,21 @@ def get_half_ln_2_pi():
 class MultiLabelSoftMarginLoss(LossBase):
     r"""
     Calculates the MultiLabelSoftMarginLoss.
-    Create a criterion for optimizing multi-label one-to-total loss based on maximum entropy.
+    The multi-label soft margin loss is a commonly used loss function in multi-label classification tasks
+    where an input sample can belong to multiple classes.
+    Given an input `x` and binary labels `y` of size `(N,C)`, where `N` denotes the number of samples
+    and `C` denotes the number of classes.
 
     .. math::
-        \mathcal{L}_{D} = - \frac{1}{|D|}\sum_{i = 0}^{|D|}\left(
-        y_{i}\ln\frac{1}{1 + e^{- x_{i}}} + \left( 1 - y_{i}
-        \right)\ln\frac{1}{1 + e^{x_{i}}} \right)
+        \mathcal{loss\left( x , y \right)} = - \frac{1}{N}\frac{1}{C}\sum_{i = 1}^{N}
+        \sum_{j = 1}^{C}\left(y_{ij}\log\frac{1}{1 + e^{- x_{ij}}} + \left( 1 - y_{ij}
+        \right)\log\frac{e^{-x_{ij}}}{1 + e^{-x_{ij}}} \right)
 
-    where :math:`\mathcal{L}_{D}` is the loss, :math:`y_{i}` is the `target`,
-    :math:`x_{i}` is the `x`. `weight` will multiply to the loss of each class if given.
+    where :math:`x{ij}` represents the predicted score of sample :math:`i` for class :math:`j`. :math:`y{ij}`
+    represents the binary label of sample :math:`i` for class :math:`j`, where sample :math:`i` belongs to
+    class :math:`j` if :math:`y{ij}=1` , and sample :math:`i` does not belong to class :math:`j` if :math:`y{ij}=0`.
+    For a multi-label classification task, each sample may have multiple labels with a value of 1 in the binary
+    label :math:`y`. `weight` will multiply to the loss of each class if given.
 
     Args:
         weight (Union[Tensor, int, float]): The manual rescaling weight given to each class. Default: None.
