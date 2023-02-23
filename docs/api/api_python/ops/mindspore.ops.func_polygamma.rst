@@ -11,7 +11,7 @@ mindspore.ops.polygamma
     其中\psi(x)为digamma函数。
 
     参数：
-        - **a** (tuple) - 多伽马函数求导的阶数，支持的数据类型为int32和int64， `a` 的shape为 :math:`()` 。
+        - **a** (Tensor) - 多伽马函数求导的阶数，支持的数据类型为int32和int64， `a` 的shape为 :math:`()` 。
         - **x** (Tensor) - 用于计算多伽马函数的Tensor。
 
     返回：

@@ -1,7 +1,7 @@
 mindspore.nn.AdaptiveMaxPool1d
 ==============================
 
-.. py:class:: mindspore.nn.AdaptiveMaxPool1d(output_size)
+.. py:class:: mindspore.nn.AdaptiveMaxPool1d(output_size, return_indices=False)
 
     在一个输入Tensor上应用1D自适应最大池化运算，可被视为组成一个1D输入平面。
 

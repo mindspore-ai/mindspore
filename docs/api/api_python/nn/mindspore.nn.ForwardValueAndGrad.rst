@@ -16,8 +16,8 @@ mindspore.nn.ForwardValueAndGrad
         - **sens_param** (bool) - 是否将sens作为输入。如果 `sens_param` 为False，则sens默认为'ones_like(outputs)'。默认值：False。如果 `sens_param` 为True，则需要指定sens的值。
 
     输入：
-        - **(\*inputs)** (Tuple(Tensor...)) - shape为 :math:`(N, \ldots)` 的输入tuple。
-        - **(sens)** - 反向传播梯度的缩放值。如果网络有单个输出，则sens是tensor。如果网络有多个输出，则sens是tuple(tensor)。
+        - **\*inputs** (Tuple(Tensor...)) - shape为 :math:`(N, \ldots)` 的输入tuple。
+        - **sens** - 反向传播梯度的缩放值。如果网络有单个输出，则sens是tensor。如果网络有多个输出，则sens是tuple(tensor)。
 
     输出：
         - **forward value** - 网络运行的正向结果。

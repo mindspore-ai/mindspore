@@ -1022,24 +1022,24 @@ def set_context(**kwargs):
               value of training network is must_keep_origin_dtype, and the default value of inference network
               is force_fp16. The value range is as follows:
 
-                - force_fp16: When the operator supports both float16 and float32, select float16 directly.
-                - allow_fp32_to_fp16: When the operator does not support the float32 data type, directly reduce
-                  the precision of float16.
-                - allow_mix_precision: Automatic mixing precision, facing the whole network operator, according
-                  to the built-in optimization strategy, automatically reduces the precision of some operators
-                  to float16 or bfloat16.
-                - must_keep_origin_dtype: Keep the accuracy of the original drawing.
-                - force_fp32: When the operator supports both float16 and float32, select float32 directly.
-                - force_lowerprecision: When the operator supports both float16 or bfloat16 and float32, select
-                  float16 or bfloat16 directly.
-                - allow_fp32_to_bf16: When the operator does not support the float32 data type, directly reduce
-                  the precision of bfloat16.
-                - allow_fp32_to_lowprecision: When the operator does not support the float32 data type, directly
-                  reduce the precision of float16 or bfloat16.
-                - allow_mix_precision_fp16: Automatic mixing precision, facing the whole network operator, automatically
-                  reduces the precision of some operators to float16 according to the built-in optimization strategy.
-                - allow_mix_precision_bf16: Automatic mixing precision, facing the whole network operator, according to
-                  the built-in optimization strategy, automatically reduces the precision of some operators to bfloat16.
+              - force_fp16: When the operator supports both float16 and float32, select float16 directly.
+              - allow_fp32_to_fp16: When the operator does not support the float32 data type, directly reduce
+                the precision of float16.
+              - allow_mix_precision: Automatic mixing precision, facing the whole network operator, according
+                to the built-in optimization strategy, automatically reduces the precision of some operators
+                to float16 or bfloat16.
+              - must_keep_origin_dtype: Keep the accuracy of the original drawing.
+              - force_fp32: When the operator supports both float16 and float32, select float32 directly.
+              - force_lowerprecision: When the operator supports both float16 or bfloat16 and float32, select
+                float16 or bfloat16 directly.
+              - allow_fp32_to_bf16: When the operator does not support the float32 data type, directly reduce
+                the precision of bfloat16.
+              - allow_fp32_to_lowprecision: When the operator does not support the float32 data type, directly
+                reduce the precision of float16 or bfloat16.
+              - allow_mix_precision_fp16: Automatic mixing precision, facing the whole network operator, automatically
+                reduces the precision of some operators to float16 according to the built-in optimization strategy.
+              - allow_mix_precision_bf16: Automatic mixing precision, facing the whole network operator, according to
+                the built-in optimization strategy, automatically reduces the precision of some operators to bfloat16.
 
             - jit_compile (bool): Whether to select online compilation. Default: True.
 

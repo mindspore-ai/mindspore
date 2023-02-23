@@ -146,7 +146,7 @@ class WithGradCell(Cell):
             output value. Default: None.
 
     Inputs:
-        - **(\*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         list, a list of Tensors with identical shapes as trainable weights.
@@ -217,8 +217,8 @@ class ForwardValueAndGrad(Cell):
             the input parameter.
 
     Inputs:
-        - **(\*inputs)** (Tuple(Tensor...)) - Tuple of inputs with shape :math:`(N, \ldots)`.
-        - **(sens)** - A sensitivity (gradient with respect to output) as the input of backpropagation.
+        - **\*inputs** (Tuple(Tensor...)) - Tuple of inputs with shape :math:`(N, \ldots)`.
+        - **sens** - A sensitivity (gradient with respect to output) as the input of backpropagation.
           If network has single output, the sens is a tensor.
           If network has multiple outputs, the sens is the tuple(tensor).
 
@@ -312,7 +312,7 @@ class TrainOneStepCell(Cell):
         sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
 
     Inputs:
-        - **(\*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         Tensor, a tensor means the loss value, the shape of which is usually :math:`()`.
