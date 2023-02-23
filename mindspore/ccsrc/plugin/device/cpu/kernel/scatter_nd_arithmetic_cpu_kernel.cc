@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,7 +174,7 @@ bool ScatterNdArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   };
 
   auto element_size = batch_size_ * inner_size_;
-  ParallelLaunch(task, element_size, 0, this, pool_);
+  ParallelLaunch(task, element_size, block_size_, this, pool_);
   if (invalid_index_pos != -1) {
     std::stringstream indices_ss;
     std::stringstream input_shape_ss;
