@@ -104,6 +104,10 @@ void AscendKernelExecutor::UnifyMindIR(const KernelGraphPtr &graph) const {
   AscendGraphOptimization::GetInstance().UnifyMindIR(graph);
 }
 
+void AscendKernelExecutor::AddUnifyMindIRPass(const std::shared_ptr<opt::GraphOptimizer> &opt) const {
+  AscendGraphOptimization::GetInstance().AddUnifyMindIRPass(opt);
+}
+
 void AscendKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();

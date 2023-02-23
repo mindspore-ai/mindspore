@@ -663,18 +663,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
 #endif
 }
 
-void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "hwopt_d_before_unify_mindir_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph);
-    DumpIRProto(kernel_graph, "before_unify_mindir_hwopt_" + std::to_string(kernel_graph->graph_id()));
-  }
-#endif
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+PassManagerPtr GetAscendUnifyMindIRPassManager() {
   auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
   unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
@@ -713,8 +702,22 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   unify_mindir_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
   unify_mindir_pm->AddPass(std::make_shared<opt::QuantDTypeCastAdjust>());
   unify_mindir_pm->AddPass(std::make_shared<opt::FSEDecodeAdjust>());
+  return unify_mindir_pm;
+}
 
-  optimizer->AddPassManager(unify_mindir_pm);
+void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_d_before_unify_mindir_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
+    DumpIRProto(kernel_graph, "before_unify_mindir_hwopt_" + std::to_string(kernel_graph->graph_id()));
+  }
+#endif
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  optimizer->AddPassManager(GetAscendUnifyMindIRPassManager());
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR

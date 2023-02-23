@@ -45,6 +45,7 @@
 #endif
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#include "backend/common/optimizer/graph_optimizer.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_context.h"
@@ -387,6 +388,41 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   return graph_id;
 }
 
+namespace {
+void OptimizeDynamicGraph(const KernelGraphPtr &graph, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_d_before_opt_dynamic_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph);
+    DumpIRProto(graph, "before_opt_dynamic_graph_hwopt_" + std::to_string(graph->graph_id()));
+  }
+#endif
+  auto opt = std::make_shared<opt::GraphOptimizer>();
+  opt->AddPassManager(opt::GetEliminateIllegalDataTypePassManager());
+  // Unify the MindIR, must be before of the graph optimization.
+  auto deprecated_kernel_executor =
+    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
+  if (deprecated_kernel_executor != nullptr) {
+    deprecated_kernel_executor->AddUnifyMindIRPass(opt);
+  } else {
+    opt->AddPassManager(opt::GetCommonUnifyMindIRPassManager());
+  }
+  opt->AddPassManager(opt::GetBackendCommonOptimizationPassManagerPtr(graph));
+  (void)opt->Optimize(graph);
+  graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_d_after_opt_dynamic_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph);
+  }
+#endif
+}
+}  // namespace
+
 GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
                                            const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(session_);
@@ -403,19 +439,9 @@ GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const
   graph->set_flag(kAttrMutableKernel, true);
   graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
 
-  opt::EliminateIllegalDataTypePass(graph);
-  // Unify the MindIR, must be before of the graph optimization.
-  auto deprecated_kernel_executor =
-    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
-  if (deprecated_kernel_executor != nullptr) {
-    deprecated_kernel_executor->UnifyMindIR(graph);
-  } else {
-    opt::CommonUnifyMindIR(graph);
-  }
+  OptimizeDynamicGraph(graph, device_context);
 
-  // The graph common optimization.
   graph->UpdateGraphAquireGilAttr();
-  opt::BackendCommonOptimization(graph);
   graph->SetInputNodes();
   auto manager = MakeManager({graph});
   if (manager) {

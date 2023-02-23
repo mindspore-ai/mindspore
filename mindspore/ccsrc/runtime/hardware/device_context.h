@@ -32,6 +32,7 @@
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "runtime/hardware/deprecated_interface.h"
 #include "runtime/device/auto_mem_offload.h"
+#include "backend/common/optimizer/graph_optimizer.h"
 
 namespace mindspore {
 namespace device {
@@ -236,6 +237,9 @@ class DeprecatedKernelExecutor : public KernelExecutor {
   // Unify the MindIR, the default behavior uses the common unified MindIR.
   // It is deprecated and will be removed in a future version
   virtual void UnifyMindIR(const KernelGraphPtr &graph) const { opt::CommonUnifyMindIR(graph); }
+  virtual void AddUnifyMindIRPass(const std::shared_ptr<opt::GraphOptimizer> &opt) const {
+    opt->AddPassManager(opt::GetCommonUnifyMindIRPassManager());
+  }
 
   // Get rank id for distributed training.
   // It is deprecated and will be removed in a future version

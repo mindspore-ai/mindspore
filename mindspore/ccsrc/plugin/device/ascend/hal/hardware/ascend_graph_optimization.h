@@ -19,7 +19,9 @@
 
 #include <vector>
 #include <set>
+#include <memory>
 #include "backend/common/session/kernel_graph.h"
+#include "backend/common/optimizer/graph_optimizer.h"
 
 namespace mindspore {
 namespace device {
@@ -34,6 +36,7 @@ class AscendGraphOptimization {
   void OptimizeGraph(const KernelGraphPtr &graph);
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph);
   void UnifyMindIR(const KernelGraphPtr &graph);
+  void AddUnifyMindIRPass(const std::shared_ptr<opt::GraphOptimizer> &opt) const;
   void OpAdaptation(const KernelGraphPtr &graph);
   void Reset();
 

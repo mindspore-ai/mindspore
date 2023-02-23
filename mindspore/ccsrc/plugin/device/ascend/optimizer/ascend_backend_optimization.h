@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ASCEND_BACKEND_OPTIMIZATION_H_
 #include <memory>
 #include "backend/common/session/kernel_graph.h"
+#include "backend/common/optimizer/pass_manager.h"
 namespace mindspore {
 namespace opt {
 void RunOpAscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph);
@@ -31,6 +32,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
 void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendOpAdaptation(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendUnfoldInputsForSpecialNodes(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+PassManagerPtr GetAscendUnifyMindIRPassManager();
 }  // namespace opt
 }  // namespace mindspore
 

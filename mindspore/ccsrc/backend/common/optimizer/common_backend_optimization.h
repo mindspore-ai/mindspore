@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_COMMON_BACKEND_OPTIMIZATION_H_
 #include <memory>
 #include "backend/common/session/kernel_graph.h"
+#include "backend/common/optimizer/pass_manager.h"
 namespace mindspore {
 namespace opt {
 BACKEND_EXPORT void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
@@ -24,8 +25,11 @@ BACKEND_EXPORT void OpBackendCommonOptimization(const std::shared_ptr<session::K
 BACKEND_EXPORT void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 BACKEND_EXPORT void CommonUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 BACKEND_EXPORT void AddDynamicShapeAttrPass(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+BACKEND_EXPORT PassManagerPtr GetCommonUnifyMindIRPassManager();
 void EliminateIllegalDataTypePass(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void DynamicShapeConvertPass(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+PassManagerPtr GetEliminateIllegalDataTypePassManager();
+PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &graph);
 }  // namespace opt
 }  // namespace mindspore
 

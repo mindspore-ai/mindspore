@@ -58,6 +58,7 @@ class AscendKernelExecutor : public DeprecatedKernelExecutor {
 
   // Unify the MindIR, the default behavior uses the common unified MindIR.
   void UnifyMindIR(const KernelGraphPtr &graph) const override;
+  void AddUnifyMindIRPass(const std::shared_ptr<opt::GraphOptimizer> &opt) const override;
 
   // Get rank id for distributed training.
   uint32_t GetRankID() const override { return res_manager_->rank_id_; }
