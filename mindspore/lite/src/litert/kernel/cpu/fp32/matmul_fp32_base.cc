@@ -19,7 +19,9 @@
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/pack_fp32_opt.h"
+#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
 #include "thread/parallel_thread_pool_manager.h"
+#endif
 
 using mindspore::lite::kCHWDimNumber;
 using mindspore::lite::kHWDimNumber;

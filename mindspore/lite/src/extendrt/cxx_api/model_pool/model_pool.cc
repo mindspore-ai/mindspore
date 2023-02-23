@@ -27,7 +27,9 @@
 #include "src/litert/pack_weight_manager.h"
 #include "src/extendrt/numa_adapter.h"
 #include "src/common/common.h"
+#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
 #include "thread/parallel_thread_pool_manager.h"
+#endif
 #include "src/common/config_file.h"
 namespace mindspore {
 namespace {

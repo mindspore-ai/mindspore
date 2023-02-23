@@ -55,7 +55,9 @@
 #include "include/registry/register_kernel_interface.h"
 #include "extendrt/mindir_loader/abstract_base_model.h"
 #include "src/litert/pack_weight_manager.h"
+#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
 #include "thread/parallel_thread_pool_manager.h"
+#endif
 
 using AbstractBaseModel = mindspore::infer::AbstractBaseModel;
 
