@@ -51,7 +51,7 @@ class SparseCountSparseOutputCpuKernelMod : public NativeCpuKernelMod {
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
   void CheckIndicesInBounds(const int64_t *indices_addr, const int64_t *shape_ptr, size_t indices_length, bool is_1d,
-                            size_t rank) const;
+                            size_t rank, int64_t n_batches) const;
   template <typename T>
   void CheckValidValuesAndWeights(const T *values_addr, bool use_weights) const;
   using SparseCountSparseOutputFunc =
