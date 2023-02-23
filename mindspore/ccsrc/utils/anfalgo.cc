@@ -636,14 +636,27 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
     }
 
     return GetShape(base_shape);
-  } else if (base_shape->isa<abstract::TupleShape>()) {
-    auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
+  } else if (base_shape->isa<abstract::SequenceShape>()) {
+    auto tuple_shape = base_shape->cast<abstract::SequenceShapePtr>();
     MS_EXCEPTION_IF_NULL(tuple_shape);
     if (tuple_shape->size() == 0) {
       return ShapeVector();
     }
     if (IsDynamicSequence(node) || is_real_squence_output) {
-      return ShapeVector{SizeToLong(tuple_shape->size())};
+      const auto &sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
+      MS_EXCEPTION_IF_NULL(sequence_abs);
+      const auto &element_abs = sequence_abs->dynamic_len_element_abs();
+      ShapeVector shape_vector = {SizeToLong(tuple_shape->size())};
+      if (element_abs == nullptr || (!element_abs->isa<abstract::AbstractTensor>())) {
+        return shape_vector;
+      }
+      MS_LOG(DEBUG) << "Element of dynamic sequence is tensor:" << element_abs->ToString()
+                    << " node:" << node->fullname_with_scope();
+      const auto &element_shape = element_abs->BuildShape();
+      MS_EXCEPTION_IF_NULL(element_shape);
+      const auto &element_shape_vector = GetOutputInferShape(node, element_shape, 0);
+      shape_vector.insert(shape_vector.end(), element_shape_vector.begin(), element_shape_vector.end());
+      return shape_vector;
     }
     if (output_idx >= tuple_shape->size()) {
       MS_LOG(EXCEPTION) << "Output index " << output_idx << "is larger than output number " << tuple_shape->size()
@@ -694,6 +707,12 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
     MS_EXCEPTION_IF_NULL(tuple_ptr);
     if (tuple_ptr->dynamic_len()) {
       MS_EXCEPTION_IF_NULL(tuple_ptr->dynamic_element_type());
+      if (tuple_ptr->dynamic_element_type()->isa<TensorType>()) {
+        const auto &tensor_type = tuple_ptr->dynamic_element_type()->cast<TensorTypePtr>();
+        MS_EXCEPTION_IF_NULL(tensor_type);
+        const auto &element_type = tensor_type->element();
+        return element_type->type_id();
+      }
       return tuple_ptr->dynamic_element_type()->type_id();
     }
     if (tuple_ptr->size() == 0) {
@@ -781,10 +800,33 @@ void DeleteDynamicLen(AnfNode *node) {
 }
 }  // namespace
 
-void AnfAlgo::SetScalarTupleOutputInferType(const std::vector<TypeId> &types, const AnfNodePtr &node) {
+void AnfAlgo::SetScalarTupleOutputInferType(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
+                                            const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   DeleteDynamicLen(node.get());
   std::vector<abstract::AbstractBasePtr> abstract_list;
+  MS_LOG(DEBUG) << "Set scalar tuple output infer type for node:" << node->fullname_with_scope();
+  if (node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractSequence>()) {
+    const auto &sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(sequence_abs);
+    MS_LOG(DEBUG) << "Check abs:" << sequence_abs->ToString();
+    if (sequence_abs->dynamic_len_element_abs() != nullptr &&
+        sequence_abs->dynamic_len_element_abs()->isa<AbstractTensor>()) {
+      if (shapes.empty()) {
+        MS_LOG(EXCEPTION) << "Invalid shape for node:" << node->fullname_with_scope();
+      }
+      MS_LOG(DEBUG) << "Check dynmiac len element abs:" << sequence_abs->dynamic_len_element_abs()->ToString();
+      for (size_t i = 0; i < types.size(); ++i) {
+        ShapeVector shape = shapes[0];
+        auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), shape);
+        abstract_list.emplace_back(abstract);
+      }
+      auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
+      node->set_abstract(abstract_tuple);
+      return;
+    }
+  }
+  MS_LOG(DEBUG) << "Check abs for scalar";
   for (size_t i = 0; i < types.size(); ++i) {
     abstract::AbstractScalarPtr abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(types[i]));
     abstract_list.emplace_back(abstract);

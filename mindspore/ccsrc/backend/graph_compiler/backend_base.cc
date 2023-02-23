@@ -48,6 +48,33 @@ Backend::Backend(const std::string &name) : name_(name), is_multi_graph_sink_(fa
 }
 
 namespace {
+using Tensor = tensor::Tensor;
+bool CheckValidTensorTuple(const std::vector<ValuePtr> &values) {
+  if (values.empty() || values[0] == nullptr || (!values[0]->isa<tensor::Tensor>())) {
+    return false;
+  }
+  const auto &const_tensor = values[0]->cast<TensorPtr>();
+  MS_EXCEPTION_IF_NULL(const_tensor);
+  const auto &const_shape = const_tensor->shape();
+  const auto &const_type_id = const_tensor->data_type();
+  size_t const_size = const_tensor->Size();
+  for (size_t i = 1; i < values.size(); ++i) {
+    if (values[i] == nullptr || (!values[i]->isa<Tensor>())) {
+      MS_LOG(ERROR) << "Invalid value:" << (values[i] == nullptr ? "nullptr" : values[i]->ToString()) << " index:" << i
+                    << " in value tuple";
+      return false;
+    }
+    const auto &tensor = values[i]->cast<TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    const auto &shape = tensor->shape();
+    const auto &type_id = tensor->data_type();
+    size_t size = tensor->Size();
+    if (shape != const_shape || type_id != const_type_id || size != const_size) {
+      return false;
+    }
+  }
+  return true;
+}
 // In dynamic sequence, since the number of members is not determined in compile time, the entire sequence needs
 // to be placed in single tensor, and the shape of the tuple needs to be recorded in the tensor, so that the shape
 // of the tensor can be accurately restored during the dynamic shape derivation process in runtime.
@@ -59,9 +86,47 @@ TensorPtr SequenceToTensor(const ValuePtr &value) {
 
   const auto &sequence_value = value->cast<ValueSequencePtr>();
   const auto &values = sequence_value->value();
-  if (values.empty() || values[0] == nullptr || (!values[0]->isa<Scalar>())) {
+  if (values.empty() || values[0] == nullptr || ((!values[0]->isa<Scalar>()) && (!values[0]->isa<Tensor>()))) {
     MS_LOG(WARNING) << "Empty sequence in sequence value:" << value->ToString();
     return std::make_shared<tensor::Tensor>();
+  }
+
+  if (values[0]->isa<Tensor>()) {
+    MS_LOG(DEBUG) << "Check dynamic tuple tensor";
+    if (!CheckValidTensorTuple(values)) {
+      MS_LOG(EXCEPTION) << "Invalid dynamic sequence tuple:" << value->ToString();
+    }
+    const auto &tensor = values[0]->cast<TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    size_t size = tensor->Size();
+    const auto &type_id = tensor->data_type();
+    ShapeVector shape_vector{SizeToLong(values.size())};
+    auto single_shape_vector = tensor->shape();
+    const auto &single_shape = std::make_shared<abstract::Shape>(single_shape_vector);
+    shape_vector.insert(shape_vector.end(), single_shape_vector.begin(), single_shape_vector.end());
+    const auto &shape = std::make_shared<abstract::Shape>(shape_vector);
+    auto new_tensor = std::make_shared<tensor::Tensor>(type_id, shape_vector);
+    MS_EXCEPTION_IF_NULL(new_tensor);
+    const auto dst_ptr = new_tensor->data_c();
+    MS_EXCEPTION_IF_NULL(dst_ptr);
+    MS_LOG(DEBUG) << "Copy start, dst size:" << new_tensor->data().nbytes();
+    for (size_t i = 0; i < values.size(); ++i) {
+      const auto &sub_value = values[i];
+      MS_EXCEPTION_IF_NULL(sub_value);
+      const auto &src_tensor = sub_value->cast<TensorPtr>();
+      MS_EXCEPTION_IF_NULL(src_tensor);
+      MS_EXCEPTION_IF_NULL(src_tensor->data_c());
+      auto ret = memcpy_s((reinterpret_cast<char *>(dst_ptr)) + i * size,
+                          static_cast<size_t>(new_tensor->data().nbytes()), src_tensor->data_c(), size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "Failed to copy data into tensor, memcpy_s errorno: " << ret;
+      }
+    }
+    const auto &element_shapes = std::vector<abstract::BaseShapePtr>(values.size(), single_shape);
+    new_tensor->set_base_shape(std::make_shared<abstract::TupleShape>(element_shapes));
+    MS_LOG(DEBUG) << "merge tensor from:" << value->ToString() << " to:" << new_tensor->ToString() << " tensor addr"
+                  << new_tensor;
+    return new_tensor;
   }
 
   // Create the tensor.
@@ -87,6 +152,7 @@ TensorPtr SequenceToTensor(const ValuePtr &value) {
 void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(inputs);
   if (node != nullptr && node->abstract() != nullptr && common::AnfAlgo::IsDynamicSequence(node)) {
+    MS_LOG(DEBUG) << "node:" << node->fullname_with_scope() << " abs:" << node->abstract()->ToString();
     if (!utils::isa<ValuePtr>(arg)) {
       MS_LOG(EXCEPTION) << "Invalid input for dynamic sequence node:" << node->DebugString();
     }
