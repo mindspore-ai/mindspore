@@ -502,7 +502,7 @@ def ravel(x):
         >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> output = ops.ravel(x)
         >>> print(output)
-        [0, 1, 2, 1]
+        [0. 1. 2. 1]
         >>> print(output.shape)
         (4,)
     """

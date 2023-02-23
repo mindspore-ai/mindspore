@@ -232,7 +232,6 @@ ReWrite完整示例请参考
 
         异常：
             - **RuntimeError** - 如果 `src_node` 不属于当前的SymbolTree。
-            - **RuntimeError** - 如果当前节点和 `src_node` 不属于同一个SymbolTree。
             - **TypeError** - 如果参数 `arg_idx` 不是int类型。
             - **ValueError** - 如果参数 `arg_idx` 超出了当前节点的参数数量。
             - **TypeError** - 如果参数 `src_node` 不是Node类型。

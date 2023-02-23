@@ -660,8 +660,10 @@ class ReplicationPad1d(_ReplicationPadNd):
     Pad on W dimension of input `x` according to `padding`.
 
     Args:
-        padding (union[int, tuple]): the size of the padding. If is `int`, uses the same
-            padding in all boundaries. If is tuple, uses :math:`(pad_{left}, pad_{right})` to pad.
+        padding (union[int, tuple]): The padding size to pad the last dimension of `x` .
+
+            - If `padding` is an integer, all directions will be padded with the same size.
+            - If `padding` is a tuple, uses :math:`(pad_{left}, pad_{right})` to pad.
 
     Inputs:
         - **x** (Tensor) - 2D or 3D, shape: :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
@@ -716,8 +718,10 @@ class ReplicationPad2d(_ReplicationPadNd):
     Pad on HW dimension of input `x` according to `padding`.
 
     Args:
-        padding (union[int, tuple]): the size of the padding. If is `int`, uses the same padding in all boundaries.
-            If a 4-`tuple`, uses :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})` to pad.
+        padding (union[int, tuple]): The padding size to pad the last two dimension of `x` .
+
+            - If `padding` is an integer, all directions will be padded with the same size.
+            - If `padding` is a tuple, uses :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})` to pad.
 
     Inputs:
         - **x** (Tensor) - 3D or 4D, shape: :math:`(C, H_{in}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`.
@@ -781,8 +785,11 @@ class ReplicationPad3d(_ReplicationPadNd):
     Pad on DHW dimension of input `x` according to `padding`.
 
     Args:
-        padding (union[int, tuple]): the size of the padding. If is `int`, uses the same padding in all boundaries.
-            If a 6-`tuple`, uses :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
+        padding (union[int, tuple]): The padding size to pad the last three dimension of `x` .
+
+            - If `padding` is an integer, all directions will be padded with the same size.
+            - If `padding` is a tuple, uses :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down},
+              pad_{front}, pad_{back})` to pad.
 
     Inputs:
         - **x** (Tensor) - 4D or 5D,
