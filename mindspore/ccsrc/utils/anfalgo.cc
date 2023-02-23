@@ -773,14 +773,24 @@ void AnfAlgo::SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
     node->set_abstract(std::make_shared<abstract::AbstractNone>());
   } else if (shapes.size() == 1 && tuple_node == kNodeTupleOutSet.end()) {
     // single output handle
-    auto abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shapes[0]);
-    node->set_abstract(abstract);
+    if (shapes[0]->isa<abstract::NoShape>()) {
+      auto abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(types[0]));
+      node->set_abstract(abstract);
+    } else {
+      auto abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shapes[0]);
+      node->set_abstract(abstract);
+    }
   } else {
     // multiple output handle
     std::vector<AbstractBasePtr> abstract_list;
     for (size_t i = 0; i < types.size(); ++i) {
-      auto abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[i]), shapes[i]);
-      abstract_list.emplace_back(abstract);
+      if (shapes[0]->isa<abstract::NoShape>()) {
+        auto abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(types[i]));
+        abstract_list.emplace_back(abstract);
+      } else {
+        auto abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[i]), shapes[i]);
+        abstract_list.emplace_back(abstract);
+      }
     }
     auto abstract_tuple = std::make_shared<AbstractTuple>(abstract_list);
     node->set_abstract(abstract_tuple);
