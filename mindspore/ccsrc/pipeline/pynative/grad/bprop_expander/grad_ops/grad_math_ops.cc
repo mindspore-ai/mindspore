@@ -1565,7 +1565,7 @@ REG_BPROP_BUILDER("LpNorm").SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Renorm").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
-  auto p = FloatToInt(GetValue<float>(ib->GetAttr("p")));
+  auto p = GetValue<float>(ib->GetAttr("p"));
   float ext = 1e-07;
   auto dim = GetIntList(ib->GetAttr("dim"))[0];
   auto max_norm = GetValue<float>(ib->GetAttr("maxnorm"));
@@ -1582,7 +1582,7 @@ REG_BPROP_BUILDER("Renorm").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto norm = ib->Emit("LpNorm", {input_x},
                        {{"keep_dims", MakeValue(true)},
                         {"axis", MakeValue(dims)},
-                        {"p", MakeValue(p)},
+                        {"p", MakeValue<int64_t>(p)},
                         {"epsilon", MakeValue<float>(1e-12)}});
   norm = ib->Emit("BroadcastTo", {norm}, {{"shape", MakeValue(shape)}});
   auto grad_out = ib->Mul(input_x, dout);
