@@ -32,8 +32,8 @@ namespace opt {
 class ToFormatBase : public Pass {
  public:
   explicit ToFormatBase(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false,
-                        ModelType export_mindir = kMindIR, const std::string &pass_name = "ToFormatBase")
-      : Pass(pass_name), fmk_type_(fmk_type), train_flag_(train_flag), export_mindir_(export_mindir) {}
+                        ModelType save_type = kMindIR, const std::string &pass_name = "ToFormatBase")
+      : Pass(pass_name), fmk_type_(fmk_type), train_flag_(train_flag), save_type_(save_type) {}
   ~ToFormatBase() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
   static bool IsConvFamilyNode(const AnfNodePtr &node) {
@@ -68,7 +68,7 @@ class ToFormatBase : public Pass {
                                                  schema::Format *dst_format) = 0;
   FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
-  ModelType export_mindir_ = kMindIR_Lite;
+  ModelType save_type_ = kMindIR_Lite;
   mindspore::Format format_{mindspore::NHWC};
   std::shared_ptr<NodeInferShape> node_infer_shape_{nullptr};
   std::unordered_map<std::string, std::vector<size_t>> sensitive_ops_;

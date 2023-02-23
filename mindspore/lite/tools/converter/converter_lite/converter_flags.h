@@ -41,7 +41,6 @@ class Flags : public virtual mindspore::lite::FlagParser {
   int InitSaveFP16();
   int InitNoFusion();
   int InitOptimize();
-  int InitExportMindIR();
   int InitSaveType();
   int InitOptimizeTransformer();
 
@@ -74,10 +73,12 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string encMode = "AES-GCM";
   std::string inferStr;
   bool infer = false;
-  std::string exportMindIR;
-  ModelType export_mindir = kMindIR_Lite;
   std::string saveTypeStr;
+#if defined(ENABLE_CLOUD_FUSION_INFERENCE) || defined(ENABLE_CLOUD_INFERENCE)
+  ModelType save_type = kMindIR;
+#else
   ModelType save_type = kMindIR_Lite;
+#endif
   std::string optimizeStr;
 #ifdef ENABLE_OPENSSL
   std::string encryptionStr = "true";

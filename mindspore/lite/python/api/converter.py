@@ -296,7 +296,7 @@ class Converter:
         if output_data_type != DataType.FLOAT32:
             self._converter.set_output_data_type(data_type_py_cxx_map.get(output_data_type))
         if save_type != ModelType.MINDIR_LITE:
-            self._converter.set_export_mindir(model_type_py_cxx_map.get(save_type))
+            self._converter.set_save_type(model_type_py_cxx_map.get(save_type))
         if decrypt_key != "":
             self._converter.set_decrypt_key(decrypt_key)
         self._converter.set_decrypt_mode(decrypt_mode)
@@ -330,7 +330,7 @@ class Converter:
               f"input_format: {format_cxx_py_map.get(self._converter.get_input_format())},\n" \
               f"input_data_type: {data_type_cxx_py_map.get(self._converter.get_input_data_type())},\n" \
               f"output_data_type: {data_type_cxx_py_map.get(self._converter.get_output_data_type())},\n" \
-              f"save_type: {model_type_cxx_py_map.get(self._converter.get_export_mindir())},\n" \
+              f"save_type: {model_type_cxx_py_map.get(self._converter.get_save_type())},\n" \
               f"decrypt_key: {self._converter.get_decrypt_key()},\n" \
               f"decrypt_mode: {self._converter.get_decrypt_mode()},\n" \
               f"enable_encryption: {self._converter.get_enable_encryption()},\n" \

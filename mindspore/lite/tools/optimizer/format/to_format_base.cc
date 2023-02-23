@@ -344,7 +344,7 @@ bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph)
       return false;
     }
   }
-  if (main_graph && export_mindir_ != kMindIR) {
+  if (main_graph && save_type_ != kMindIR) {
     status = HandleGraphInput(func_graph);
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "handle graph input failed.";

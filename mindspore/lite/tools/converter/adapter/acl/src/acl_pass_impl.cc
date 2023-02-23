@@ -150,7 +150,7 @@ STATUS PreProcForOnnx(const FuncGraphPtr &func_graph, bool offline) {
 AclPassImpl::AclPassImpl(const std::shared_ptr<ConverterPara> &param)
     : param_(param),
       fmk_type_(param->fmk_type),
-      export_mindir_(param->export_mindir),
+      export_mindir_(param->save_type),
       user_options_cfg_(std::move(param->aclModelOptionCfgParam)),
       om_parameter_(nullptr),
       custom_node_(nullptr) {}
@@ -693,7 +693,7 @@ STATUS AclPassImpl::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, cons
 STATUS AclPassImpl::PreQuantization(const FuncGraphPtr &func_graph) {
   auto value = func_graph->get_attr(ops::kFormat);
   if (value == nullptr) {
-    auto unify_format = std::make_shared<lite::UnifyFormatToNHWC>(fmk_type_, false, param_->export_mindir);
+    auto unify_format = std::make_shared<lite::UnifyFormatToNHWC>(fmk_type_, false, param_->save_type);
     CHECK_NULL_RETURN(unify_format);
     if (!unify_format->Run(func_graph)) {
       MS_LOG(ERROR) << "Run insert transpose failed.";

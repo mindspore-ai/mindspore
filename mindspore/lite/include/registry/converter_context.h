@@ -44,7 +44,7 @@ enum MS_API FmkType : int {
 /// \brief ConverterParameters defined read-only converter parameters used by users in ModelParser.
 struct MS_API ConverterParameters {
   FmkType fmk;
-  ModelType export_mindir = kMindIR_Lite;
+  ModelType save_type = kMindIR_Lite;
   std::string model_file;
   std::string weight_file;
   std::map<std::string, std::string> attrs;

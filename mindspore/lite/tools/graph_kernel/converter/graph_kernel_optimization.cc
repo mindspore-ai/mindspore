@@ -118,7 +118,7 @@ void GraphKernelOptimizer::Run(const FuncGraphPtr &func_graph) {
   (void)pm_list.emplace_back(BuildKernel());
 
   for (auto &pm : pm_list) {
-    pm->SetDumpIr(converter_param_->export_mindir);
+    pm->SetDumpIr(converter_param_->save_type);
     optimizer->AddPassManager(pm);
   }
 

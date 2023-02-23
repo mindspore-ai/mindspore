@@ -487,7 +487,7 @@ bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph, const converter::Co
     }
     if (opt::CheckPrimitiveType(node, prim::kPrimConstant)) {
       status = ReplaceConstant(func_graph, cnode);
-    } else if (opt::CheckPrimitiveType(node, prim::kPrimTranspose) && flag.export_mindir != kMindIR) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimTranspose) && flag.save_type != kMindIR) {
       status = ReplaceTransposeWithGraphInput(func_graph, cnode);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimStridedSlice)) {
       status = AdjustStridedSlice(func_graph, cnode);

@@ -461,7 +461,7 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::share
     }
   }
   // adjust for conv2d_transpose
-  if (!(param->no_fusion && param->export_mindir == kMindIR)) {
+  if (!(param->no_fusion && param->save_type == kMindIR)) {
     std::set<FuncGraphPtr> all_func_graphs = {};
     GetAllFuncGraph(old_graph, &all_func_graphs);
     auto conv2d_transpose_adjust = std::make_shared<Conv2DTransposeInputAdjust>();
@@ -563,7 +563,7 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const std::shared_pt
 }
 
 int AnfTransform::DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
-  if (param->export_mindir != kMindIR) {
+  if (param->save_type != kMindIR) {
     return RET_OK;
   }
   if (param->no_fusion || param->device.find("Ascend") == std::string::npos) {
@@ -709,7 +709,7 @@ int AnfTransform::RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<C
 STATUS AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   MS_ASSERT(old_graph != nullptr);
   MS_ASSERT(param != nullptr);
-  if (param->no_fusion && param->export_mindir == kMindIR) {  // converter, online
+  if (param->no_fusion && param->save_type == kMindIR) {  // converter, online
     if (ProcOnlineTransform(old_graph, param) != lite::RET_OK) {
       MS_LOG(ERROR) << "Proc online transform failed.";
       return RET_ERROR;

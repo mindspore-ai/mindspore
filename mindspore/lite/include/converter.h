@@ -59,8 +59,8 @@ class MS_API Converter {
   void SetOutputDataType(DataType data_type);
   DataType GetOutputDataType();
 
-  void SetExportMindIR(ModelType export_mindir);
-  ModelType GetExportMindIR() const;
+  void SetSaveType(ModelType save_type);
+  ModelType GetSaveType() const;
 
   inline void SetDecryptKey(const std::string &key);
   inline std::string GetDecryptKey() const;
