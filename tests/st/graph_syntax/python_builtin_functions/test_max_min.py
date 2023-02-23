@@ -17,6 +17,7 @@ import operator
 import pytest
 from mindspore import Tensor, context, jit
 from mindspore import dtype as mstype
+from mindspore.common import mutable
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -179,3 +180,52 @@ def test_builtin_function_min_with_tensor_1d(mode):
     context.set_context(mode=mode)
     res = foo()
     assert res == 1
+
+
+@pytest.mark.skip(reason="SequenceMax/SequenceMin give wrong output")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_builtin_function_max_min_with_tuple_with_variable(mode):
+    """
+    Feature: Check the arg of min.
+    Description: Test max()/min() in graph mode when input is tuple with variable.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        return max(x), min(x)
+
+    context.set_context(mode=mode)
+    x = mutable((1, 2, 3, 4))
+    res = foo(x)
+    assert len(res) == 2
+    assert res[0] == 4
+    assert res[1] == 1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_builtin_function_max_min_with_variable_length_tuple(mode):
+    """
+    Feature: Check the arg of min.
+    Description: Test max()/min() in graph mode when input is variable length tuple.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        return max(x), min(x)
+
+    context.set_context(mode=mode)
+    x = mutable((1, 2, 3, 4), True)
+    res = foo(x)
+    assert len(res) == 2
+    assert res[0] == 4
+    assert res[1] == 1

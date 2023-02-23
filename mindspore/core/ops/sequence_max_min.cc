@@ -67,7 +67,7 @@ AbstractBasePtr SequenceMaxMinInferInner(const PrimitivePtr &primitive, const st
   } else if (type->type_id() == kFloat64->type_id()) {
     return FindMaxOrMin<double, FP64ImmPtr>(seq_elements, is_max);
   } else {
-    MS_EXCEPTION(TypeError) << "For '" << op_name << "is not supported" << type->ToString() << '.';
+    MS_EXCEPTION(TypeError) << "For '" << op_name << "' is not supported" << type->ToString() << '.';
   }
 }
 
