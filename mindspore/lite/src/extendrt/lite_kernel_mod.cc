@@ -93,7 +93,9 @@ kernel::KernelExec *FindKernelMod(BaseOperatorPtr base_operator, std::vector<lit
   kernel::KernelExec *kernel_exec = new kernel::KernelExec(lite_kernel_mod);
   auto desc = kernel_exec->desc();
   desc.data_type = in_tensors.front()->data_type();
+  desc.format = mindspore::Format::NCHW;
   kernel_exec->set_desc(desc);
+  kernel_exec->set_context(ctx);
   return kernel_exec;
 }
 }  // namespace mindspore::kernel

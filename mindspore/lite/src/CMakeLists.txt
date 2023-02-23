@@ -132,7 +132,6 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/infer_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/runtime_shape_fusion_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/runtime_pass.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/litert/pass/runtime_ncx_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/schema_tensor_wrapper.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
@@ -156,6 +155,9 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_subgraph_creator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/thread_pool_reuse_manager.cc
         )
+
+file(GLOB FORMAT_PASS_SRC "${CMAKE_CURRENT_SOURCE_DIR}/litert/pass/format_pass/*.cc")
+set(LITE_SRC ${LITE_SRC} ${FORMAT_PASS_SRC})
 
 if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)
     set(LITE_SRC
@@ -262,18 +264,6 @@ if(MSLITE_ENABLE_STRING_KERNEL)
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
         )
-endif()
-if(ENABLE_RUNTIME_NCX_PASS)
-    file(GLOB RUNTIME_NCX_PASS_SRC
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/pass/decrease_transpose_algo.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/pass/delete_isolated_kernel.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/pass/infershape_pass.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/pass/pass_utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/pass/runtime_optimizer.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/pass/to_nchw_format.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/pass/transpose_strategy.cc
-            )
-    set(LITE_SRC ${LITE_SRC} ${RUNTIME_NCX_PASS_SRC})
 endif()
 
 if(MSLITE_ENABLE_WEIGHT_DECODE)

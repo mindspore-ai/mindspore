@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include "src/litert/lite_kernel.h"
 #include "src/litert/kernel_exec.h"
 #include "kernel/kernel.h"
@@ -35,6 +36,9 @@ class LiteKernelMod : public LiteKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
+
+ public:
+  std::string KernelType() const { return base_operator_->name(); }
 
  private:
   KernelModPtr kernel_mod_;

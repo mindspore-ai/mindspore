@@ -163,16 +163,15 @@ if(MSLITE_ENABLE_PARALLEL_INFERENCE)
             )
 endif()
 
-file(GLOB RUNTIME_PASS_SRCS
-        ${SRC_DIR}/litert/pass/*.cc)
-
 if(MSLITE_ENABLE_RUNTIME_PASS)
         file(GLOB KERNEL_ONLINE_FUSION_SRC ${SRC_DIR}/litert/pass/online_fusion/*.cc)
 endif()
 
+file(GLOB FORMAT_PASS_SRCS ${SRC_DIR}/litert/pass/format_pass/*.cc)
+
 set(LITE_SRC ${API_SRC}
         ${CXX_API_SRCS}
-        ${RUNTIME_PASS_SRCS}
+        ${FORMAT_PASS_SRCS}
         ${SRC_DIR}/common/ops/ops_def.cc
         ${SRC_DIR}/common/ops/ops_utils.cc
         ${SRC_DIR}/common/ops/anf_utils.cc

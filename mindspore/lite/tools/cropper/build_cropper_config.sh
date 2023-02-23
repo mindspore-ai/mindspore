@@ -261,6 +261,8 @@ getCommonFile() {
     mindspore/lite/src/expression/ops_utils.cc
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c_utils.c
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensorlist_c_utils.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/base/format_transpose.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/transpose_fp32.c
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/ms_core_x86.c
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/ms_core_sse.c
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/ms_core_avx.c

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_PASS_PASS_UTILS_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_PASS_PASS_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_PASS_FORMAT_PASS_UTILS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_PASS_FORMAT_PASS_UTILS_H_
 
 #include <string>
 #include <vector>
@@ -25,10 +25,10 @@ namespace mindspore::lite::pass {
 static const std::vector<int> nh2nc_perm = {0, 3, 1, 2};
 static const std::vector<int> nc2nh_perm = {0, 2, 3, 1};
 struct TransInfoPair {
-  FormatC src_format_;
-  FormatC dst_format_;
-  TransInfoPair() : src_format_(Format_NONE), dst_format_(Format_NONE) {}
-  TransInfoPair(FormatC src_format, FormatC dst_format) : src_format_(src_format), dst_format_(dst_format) {}
+  mindspore::Format src_format_;
+  mindspore::Format dst_format_;
+  TransInfoPair() : src_format_(DEFAULT_FORMAT), dst_format_(DEFAULT_FORMAT) {}
+  TransInfoPair(Format src, Format dst) : src_format_(src), dst_format_(dst) {}
 };
 
 bool IsNoneTranspose(const TransInfoPair &trans);
@@ -51,4 +51,4 @@ int InsertPostTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *ke
 
 int GetTransposeInfo(const kernel::KernelExec *kernel, TransInfoPair *trans_info);
 }  // namespace mindspore::lite::pass
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_PASS_PASS_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_PASS_FORMAT_PASS_UTILS_H_

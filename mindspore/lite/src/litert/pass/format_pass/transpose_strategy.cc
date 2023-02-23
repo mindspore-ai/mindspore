@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/litert/pass/transpose_strategy.h"
-#include <vector>
-#include <set>
+#include "src/litert/pass/format_pass/transpose_strategy.h"
 #include "nnacl/op_base.h"
 #include "nnacl/arg_min_max_parameter.h"
 #include "nnacl/concat_parameter.h"
@@ -35,7 +33,7 @@ static const std::set<schema::PrimitiveType> arithmetic_kernel_lists = {
   schema::PrimitiveType_MulFusion,    schema::PrimitiveType_NotEqual,
   schema::PrimitiveType_RealDiv,      schema::PrimitiveType_SquaredDifference,
   schema::PrimitiveType_SubFusion,
-};  // namespace mindspore::lite::pass
+};
 
 size_t TransposeStrategy::GetTransCount(const std::vector<kernel::KernelExec *> &kernels, TransInfoPair *trans_info) {
   size_t count = 0;
@@ -101,7 +99,7 @@ bool TransposeStrategy::CheckFusion(const kernel::KernelExec *kernel, TransInfoP
     return false;
   }
   auto in_and_out_size = kernel->in_tensors().size() + kernel->out_kernels().size();
-  if ((input_count + output_count) <= in_and_out_size / 2) {
+  if ((input_count + output_count) <= in_and_out_size / C2NUM) {
     MS_LOG(INFO) << "The fusion can't decrease transpose op number.";
     return false;
   }
