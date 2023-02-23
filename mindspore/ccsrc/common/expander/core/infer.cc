@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "expander/infer.h"
+#include "common/expander/core/infer.h"
 
 #include <algorithm>
 #include "abstract/ops/primitive_infer_map.h"

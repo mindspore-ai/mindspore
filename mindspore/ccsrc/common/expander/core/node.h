@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_EXPANDER_NODE_H_
-#define MINDSPORE_CORE_EXPANDER_NODE_H_
+#ifndef MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_NODE_H_
+#define MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_NODE_H_
 #include <vector>
 #include <string>
 #include <memory>
 #include "ir/anf.h"
 #include "ir/dtype.h"
+#include "include/common/visible.h"
 
 namespace mindspore {
 namespace expander {
 class Emitter;
 using DAttr = mindspore::HashMap<std::string, ValuePtr>;
 
-class MS_CORE_API Node : public std::enable_shared_from_this<Node> {
+class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
  public:
   Node(const AnfNodePtr &node, const Emitter *emitter);
   ~Node() = default;
@@ -68,4 +69,4 @@ using NodePtr = std::shared_ptr<Node>;
 using NodePtrList = std::vector<NodePtr>;
 }  // namespace expander
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_EXPANDER_NODE_H_
+#endif  // MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_NODE_H_
