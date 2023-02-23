@@ -39,7 +39,7 @@ __global__ void MultiMarginLoss_forward_kernel_half(half *output, const half *in
   int k = blockIdx.x;
   const half *input_k = input + k * dim;
   half *output_k = output + k;
-  CUDA_KERNEL_ASSERT(target[k] >= 0);
+  CUDA_KERNEL_ASSERT(target[k] >= 0 && target[k] < dim);
   int target_k = static_cast<int>(target[k]);
   half input_target_k = input_k[target_k];
 
@@ -164,7 +164,7 @@ __global__ void MultiMarginLoss_forward_kernel(scalar_t *output, const scalar_t 
   int k = blockIdx.x;
   const scalar_t *input_k = input + k * dim;
   scalar_t *output_k = output + k;
-  CUDA_KERNEL_ASSERT(target[k] >= 0);
+  CUDA_KERNEL_ASSERT(target[k] >= 0 && target[k] < dim);
   int target_k = static_cast<int>(target[k]);
   scalar_t input_target_k = input_k[target_k];
 
