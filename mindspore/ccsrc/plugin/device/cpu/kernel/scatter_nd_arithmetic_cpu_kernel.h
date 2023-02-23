@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ class ScatterNdArithmeticCpuKernelMod : public NativeCpuKernelMod,
   size_t inner_size_{1};
   std::vector<size_t> batch_strides_;
   std::vector<size_t> input_shape_;
+  float block_size_{128.0};
 };
 }  // namespace kernel
 }  // namespace mindspore
