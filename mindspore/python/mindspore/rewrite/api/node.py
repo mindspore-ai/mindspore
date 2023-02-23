@@ -175,7 +175,6 @@ class Node:
 
         Raises:
             RuntimeError: If `src_node` is not belong to current `SymbolTree`.
-            RuntimeError: If current node and `src_node` is not belong to same `SymbolTree`.
             TypeError: If `arg_idx` is not a `int` number.
             ValueError: If `arg_idx` is out of range.
             TypeError: If `src_node` is not a `Node` instance.
