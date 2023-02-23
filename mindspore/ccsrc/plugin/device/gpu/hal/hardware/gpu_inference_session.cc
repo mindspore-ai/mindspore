@@ -42,6 +42,10 @@ void GpuInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &kern
     }
     auto pk_node = input_nodes[i]->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(pk_node);
+    if (!pk_node->IsUsedByRealKernelInGraph(kernel_graph->graph_id())) {
+      MS_LOG(INFO) << "Kernel graph inputs have anfnode which has no user.";
+      continue;
+    }
     auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
     MS_EXCEPTION_IF_NULL(device_address);
     if (!common::AnfAlgo::IsParameterWeight(pk_node)) {
@@ -69,6 +73,10 @@ GraphId GpuInferenceSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) 
     }
     auto pk_node = input_nodes[i]->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(pk_node);
+    if (!pk_node->IsUsedByRealKernelInGraph(kernel_graph->graph_id())) {
+      MS_LOG(INFO) << "Kernel graph inputs have anfnode which has no user.";
+      continue;
+    }
     auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
     MS_EXCEPTION_IF_NULL(device_address);
     if (common::AnfAlgo::IsParameterWeight(pk_node)) {

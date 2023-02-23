@@ -355,6 +355,12 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0)) {
       auto pk_node = input_node->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(pk_node);
+      if (!pk_node->IsUsedByRealKernelInGraph(kernel_graph->graph_id())) {
+        MS_LOG(INFO) << "Kernel graph inputs have anfnode which has no user.";
+        tensor->set_sync_status(kNoNeedSync);
+        continue;
+      }
       auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
       MS_EXCEPTION_IF_NULL(device_address);
       bool need_sync = CheckIfNeedSync(tensor, device_address, pk_node);
