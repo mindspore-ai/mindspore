@@ -164,7 +164,7 @@ def test_op5(dtype):
     """
     Feature: Op ScatterNdUpdate
     Description:  test ScatterNdUpdate with index out of range
-    Expectation: raise RuntimeError
+    Expectation: raise ValueError
     """
 
     class ScatterNdUpdate(nn.Cell):
@@ -180,7 +180,7 @@ def test_op5(dtype):
     update = Tensor(np.array([[1], [1], [1]], dtype=dtype))
 
     scatter_nd_update = ScatterNdUpdate()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         scatter_nd_update(indices, update)
 
 
