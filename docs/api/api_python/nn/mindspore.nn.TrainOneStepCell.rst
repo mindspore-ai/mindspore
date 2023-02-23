@@ -14,7 +14,7 @@ mindspore.nn.TrainOneStepCell
         - **sens** (numbers.Number) - 反向传播的输入，缩放系数。默认值为1.0。
 
     输入：
-        - **(\*inputs)** (Tuple(Tensor)) - shape为 :math:`(N, \ldots)` 的Tensor组成的元组。
+        - **\*inputs** (Tuple(Tensor)) - shape为 :math:`(N, \ldots)` 的Tensor组成的元组。
 
     输出：
         Tensor，损失函数值，其shape通常为 :math:`()` 。

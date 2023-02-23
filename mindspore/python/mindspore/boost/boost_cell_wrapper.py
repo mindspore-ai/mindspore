@@ -115,7 +115,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
 
     Inputs:
-        - **(\*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         Tensor, a tensor means the loss value, the shape of which is usually :math:`()`.
@@ -392,7 +392,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
                                           is Tensor type, Tensor with shape :math:`()` or :math:`(1,)`.
 
     Inputs:
-        - **(*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         Tuple of 3 Tensor, the loss, overflow flag and current loss scaling value.

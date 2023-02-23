@@ -226,7 +226,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **sens** (numbers.Number) - 作为反向传播输入要填充的缩放数，默认值为1.0。
 
     输入：
-        - **(*inputs)** (Tuple(Tensor)) - 网络的所有输入组成的元组。
+        - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组。
 
     输出：
         Tuple，包含三个Tensor，分别为损失函数值、溢出状态和当前损失缩放系数。
@@ -299,7 +299,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **scale_sense** (Union[Tensor, Cell]) - 如果此值为Cell类型，`BoostTrainOneStepWithLossScaleCell` 会调用它来更新损失缩放系数。如果此值为Tensor类型，可调用 `set_sense_scale` 来更新损失缩放系数，shape为 :math:`()` 或 :math:`(1,)` 。
 
     输入：
-        - **(*inputs)** (Tuple(Tensor)) - 网络的所有输入组成的元组。
+        - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组。
 
     输出：
         Tuple，包含三个Tensor，分别为损失函数值、溢出状态和当前损失缩放系数。
@@ -460,7 +460,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **old_grad** (Tuple(Tensor)) - 网络权重提取组成的元组。
         - **weight** (Tuple(Tensor)) - 网络权重组成的元组。
         - **weight_clone** (Tuple(Tensor)) - 网络权重的副本。
-        - **(\*inputs)** (Tuple(Tensor)) - 网络的所有输入组成的元组。
+        - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组。
 
     输出：
         - **loss** (Tensor) - 网络loss，标量Tensor。

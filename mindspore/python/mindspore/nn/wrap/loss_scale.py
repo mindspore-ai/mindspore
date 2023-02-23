@@ -244,7 +244,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
             the shape should be :math:`()` or :math:`(1,)`.
 
     Inputs:
-        - **(*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         Tuple of 3 Tensor, the loss, overflow flag and current loss scale value.

@@ -138,7 +138,7 @@ class DimReduce(Cell):
         - **old_grad** (Tuple(Tensor)) - Tuple of gradient tensors.
         - **weight** (Tuple(Tensor)) - Tuple of parameters.
         - **weight_clone** (Tuple(Tensor)) - clone of weight
-        - **(\*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         - **loss** (Tensor) - Tensor with shape :math:`()`.

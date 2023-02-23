@@ -1,4 +1,4 @@
-mindspore.dataset.config.set_prefetch_size
+mindspore.dataset.config.get_prefetch_size
 ===========================================
 
 .. py:function:: mindspore.dataset.config.get_prefetch_size()
