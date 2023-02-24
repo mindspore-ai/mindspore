@@ -120,6 +120,11 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
                        std::pair<std::string, std::string>(lite::kDumpModelNameKey, model_name));
   }
   SetMsContext();
+  auto thread_num = model_context->GetThreadNum();
+  if (thread_num < 0) {
+    MS_LOG(ERROR) << "Invalid thread num " << thread_num;
+    return kLiteError;
+  }
   session_ = InferSession::CreateSession(model_context, config_info_);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Create session failed.";
