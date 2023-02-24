@@ -468,14 +468,14 @@ OUTPUT_MAP(Minimum) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Minimum, prim::kPrimMinimum->name(), ADPT_DESC(Minimum))
 
 // MaximumGrad
-INPUT_MAP(MaximumGrad) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(grads)}};
+INPUT_MAP(MaximumGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(x1)}, {3, INPUT_DESC(x2)}};
 ATTR_MAP(MaximumGrad) = {{"grad_x", ATTR_DESC(grad_x, AnyTraits<bool>())},
                          {"grad_y", ATTR_DESC(grad_y, AnyTraits<bool>())}};
 OUTPUT_MAP(MaximumGrad) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
 REG_ADPT_DESC(MaximumGrad, prim::kPrimMaximumGrad->name(), ADPT_DESC(MaximumGrad))
 
 // MinimumGrad
-INPUT_MAP(MinimumGrad) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(grads)}};
+INPUT_MAP(MinimumGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(x1)}, {3, INPUT_DESC(x2)}};
 ATTR_MAP(MinimumGrad) = {{"grad_x", ATTR_DESC(grad_x, AnyTraits<bool>())},
                          {"grad_y", ATTR_DESC(grad_y, AnyTraits<bool>())}};
 OUTPUT_MAP(MinimumGrad) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
