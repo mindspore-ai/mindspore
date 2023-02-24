@@ -226,7 +226,6 @@ bool SparseCrossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   hash_key_ = GetValue<int64_t>(prim->GetAttr("hash_key"));
   hash_out_ = GetValue<bool>(prim->GetAttr("hashed_output"));
   num_buckets_ = GetValue<int64_t>(prim->GetAttr("num_buckets"));
-  N_ = GetValue<int64_t>(prim->GetAttr("N"));
   is_need_retrieve_output_shape_ = true;
   return true;
 }
@@ -235,6 +234,9 @@ int SparseCrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
                                     const std::vector<KernelTensorPtr> &outputs,
                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
+    return ret;
+  }
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     outputs_ = outputs;
     if (input_size_list_.size() < kInputsNum) {
@@ -243,7 +245,8 @@ int SparseCrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
       return KRET_RESIZE_FAILED;
     }
   }
-  return ret;
+  N_ = GetValue<int64_t>(base_operator->GetPrim()->GetAttr("N"));
+  return KRET_OK;
 }
 
 void SparseCrossCpuKernelMod::SyncData() {

@@ -21,23 +21,35 @@
 
 namespace mindspore {
 namespace kernel {
-void TriuIndicesCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  row_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "row");
-  col_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "col");
-  offset_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "offset");
+bool TriuIndicesCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+
+  row_ = GetValue<int64_t>(prim->GetAttr("row"));
+  col_ = GetValue<int64_t>(prim->GetAttr("col"));
+  offset_ = GetValue<int64_t>(prim->GetAttr("offset"));
   if (row_ < 0) {
     MS_EXCEPTION(ValueError) << "For TriuIndices, row is " << row_ << ", but row should be greater than or equal to 0.";
   }
   if (col_ < 0) {
     MS_EXCEPTION(ValueError) << "For TriuIndices, col is " << col_ << ", but col should be greater than or equal to 0.";
   }
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "TriuIndices does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int TriuIndicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+  return KernelMod::Resize(base_operator, inputs, outputs);
 }
 
 template <typename T>
