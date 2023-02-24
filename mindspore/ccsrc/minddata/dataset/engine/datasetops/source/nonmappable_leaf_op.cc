@@ -270,16 +270,15 @@ Status NonMappableLeafOp::WaitToFillIOBlockQueue() {
   return Status::OK();
 }
 
-Status NonMappableLeafOp::PrepareOperator() {
-  // Run any common code from super class first before adding our own
-  RETURN_IF_NOT_OK(DatasetOp::PrepareOperator());
-
+Status NonMappableLeafOp::PrepareOperatorImplementation() {
   if (shuffle_files_) {
     for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
       shuffled_keys_.push_back(it.key());
     }
-    // in reset mode, shuffled_keys needs to be ordered in the resetting epoch
+    // Please note that this code is added for future use. Resetting dataset is only used in sink mode and pull mode
+    // doesn't support sink mode.
     if (GlobalContext::config_manager()->fast_recovery() && op_current_repeats_ > 0) {
+      // in reset mode, shuffled_keys needs to be ordered in the resetting epoch
       for (auto i = 0; i < op_current_repeats_; i++) {
         ShuffleKeys();
       }
@@ -288,24 +287,16 @@ Status NonMappableLeafOp::PrepareOperator() {
   return Status::OK();
 }
 
+Status NonMappableLeafOp::PrepareOperator() {
+  // Run any common code from super class first before adding our own
+  RETURN_IF_NOT_OK(DatasetOp::PrepareOperator());
+  return PrepareOperatorImplementation();
+}
+
 Status NonMappableLeafOp::PrepareOperatorPullBased() {
   // Run any common code from super class first before adding our own
   RETURN_IF_NOT_OK(DatasetOp::PrepareOperatorPullBased());
-
-  if (shuffle_files_) {
-    for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
-      shuffled_keys_.push_back(it.key());
-    }
-    // Please note that this code is added for future use. Resetting dataset is only used in sink mode and pull mode
-    // doesn't support sink mode.
-    if (GlobalContext::config_manager()->fast_recovery() && op_current_repeats_ > 0) {
-      // In reset mode, shuffled_keys needs to be ordered in the resetting epoch
-      for (auto i = 0; i < op_current_repeats_; i++) {
-        ShuffleKeys();
-      }
-    }
-  }
-  return Status::OK();
+  return PrepareOperatorImplementation();
 }
 
 Status NonMappableLeafOp::PrepareData() {
@@ -358,7 +349,7 @@ Status NonMappableLeafOp::GetNextRowPullMode(TensorRow *const row) {
   //    until eoe is hit so that no data remains in all queues and they can be reset properly for the new iteration.
   while (new_row.eoe()) {
     workers_done_++;
-    if (workers_done_ == num_workers_) {
+    if (static_cast<int32_t>(workers_done_) == num_workers_) {
       RETURN_IF_NOT_OK(ResetAndUpdateRepeat());
       *row = TensorRow(TensorRow::kFlagEOE);
       return Status::OK();
@@ -383,7 +374,7 @@ Status NonMappableLeafOp::GetNextRowPullMode(TensorRow *const row) {
       load_io_block_queue_ = false;
     }
     // drain data in jagged_rows_connector_ until eoe is hit.
-    while (workers_done_ < num_workers_) {
+    while (static_cast<int32_t>(workers_done_) < num_workers_) {
       TensorRow next_row;
       jagged_rows_connector_->Pop(0, &next_row);
       if (next_row.eoe()) {
