@@ -457,7 +457,7 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   } else {
     auto ret = BpropExpander(&outputs, &ad_param()->users_).Run(input_node);
     if (!ret || outputs.empty()) {
-      MS_LOG(DEBUG) << "Expander has no bprop of this prim: " << grad_param->cnode->DebugString();
+      MS_LOG(DEBUG) << "Expander has no bprop of this node: " << grad_param->cnode->DebugString();
       BuildCustomBpropCNode(input_node, prim, &outputs);
     }
   }
@@ -672,7 +672,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
       MS_LOG(EXCEPTION) << "Should be primitive, but: " << cnode->DebugString();
     }
     ad_param()->last_node_ = node;
-    if (IsMonadPrim(prim, cnode, grad_param)) {
+    if (IsMonadPrim(prim, cnode, grad_param) || IsPrimitiveEquals(prim, prim::kPrimStopGradient)) {
       continue;
     }
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString() << ", " << cnode->fullname_with_scope();
@@ -686,14 +686,20 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
 
     std::vector<AnfNodePtr> cnode_inputs{std::make_shared<ValueNode>(prim)};
     auto op_args = GetInputArgs(grad_param, cnode, &cnode_inputs);
-    auto k_node = ad_param()->tape_->NewCNode(cnode_inputs);
-    k_node->set_abstract(cnode->abstract());
-    // In ms function, copy forward graph cnode info to bprop graph
-    if (ms_function_by_value && cnode->forward().first != nullptr) {
-      auto new_v_node = NewValueNode(cnode->forward().first->value());
-      new_v_node->set_abstract(cnode->forward().first->abstract());
-      k_node->set_forward(new_v_node, cnode->forward().second);
-      ad_param()->tape_->set_used_forward_nodes({k_node});
+    AnfNodePtr k_node = nullptr;
+    if (IsPrimitiveEquals(prim, prim::kPrimMirror)) {
+      k_node = ad_param()->anfnode_to_variable_adjoint_.at(cnode->input(kIndex1))->k_node();
+    } else {
+      auto c_k_node = ad_param()->tape_->NewCNode(cnode_inputs);
+      c_k_node->set_abstract(cnode->abstract());
+      // In ms function, copy forward graph cnode info to bprop graph
+      if (ms_function_by_value && cnode->forward().first != nullptr) {
+        auto new_v_node = NewValueNode(cnode->forward().first->value());
+        new_v_node->set_abstract(cnode->forward().first->abstract());
+        c_k_node->set_forward(new_v_node, cnode->forward().second);
+        ad_param()->tape_->set_used_forward_nodes({c_k_node});
+      }
+      k_node = c_k_node;
     }
     MS_LOG(DEBUG) << "Build knode " << k_node->DebugString();
     // Set out
@@ -1227,6 +1233,7 @@ void AutoGradCellImpl::BuildCustomBpropCNode(const CNodePtr &cnode, const Primit
     MS_EXCEPTION_IF_NULL(prim_py);
     prim_py->AddBackwardHookFn(0, fn);
     prim_py->AddAttr("custom_op_bprop", MakeValue(True));
+    prim_py->AddAttr("custom_op_name", MakeValue(cnode->fullname_with_scope()));
   }
   BuildBPropCutCNode(cnode, prim, outputs);
 }

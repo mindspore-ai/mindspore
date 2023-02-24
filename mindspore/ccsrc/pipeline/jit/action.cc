@@ -936,8 +936,10 @@ bool EliminateForwardCNode(const ResourcePtr &resource) {
   auto ms_func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   // Not exist control flow
-  if (!ExistControlFlow(ms_func_graph) && !parallel::IsAutoParallelCareGraph(ms_func_graph)) {
-    pynative_exec->grad_executor()->ms_function()->ModifyMsFunctionForwardOutput(ms_func_graph);
+  if (!ExistControlFlow(ms_func_graph)) {
+    auto clone_graph = pynative_exec->grad_executor()->ms_function()->ProcessMsFunctionFuncGraph(ms_func_graph);
+    clone_graph->set_flag(kFlagGraphGradByExpander, true);
+    graph_executor->SetGradGraph(clone_graph, phase);
     return true;
   }
 

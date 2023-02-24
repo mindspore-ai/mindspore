@@ -35,11 +35,10 @@ class MsFunction {
   MsFunction() = default;
   ~MsFunction() = default;
   inline void set_graph_phase(const std::string &graph_phase) { graph_phase_ = graph_phase; }
-  void ModifyMsFunctionForwardOutput(const FuncGraphPtr &ms_func_graph);
+  FuncGraphPtr ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_graph);
   py::object GradMsFunction(const py::object &out, const py::args &args);
 
  private:
-  void SetMsFuncGraphParameters(const FuncGraphPtr &ms_func_graph);
   void GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                            const ValuePtr &added_out_v, const FuncGraphPtr &ms_func_graph,
                            const FuncGraphPtr &grad_graph) const;
@@ -65,12 +64,11 @@ class MsFunction {
   // Make adjoint for ms_function fprop graph and connect it with previous op
   CNodePtr MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                                     const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph) const;
+  void Reset();
 
-  bool is_not_support_by_expander_{false};
+  bool is_not_support_by_expander_{true};
   // The graph phase is used to obtain backend graph that is complied by ms_function
   std::string graph_phase_;
-  // Stores parameter in ms_function
-  std::vector<std::string> ms_function_params_;
 };
 using MsFunctionPtr = std::shared_ptr<MsFunction>;
 }  // namespace pynative
