@@ -78,15 +78,15 @@ int ScalarBitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T, typename S, typename N>
-bool ScalarBitwiseCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::vector<AddressPtr> &) {
+bool ScalarBitwiseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &workspace,
+                                             const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
 
-  auto input_x = reinterpret_cast<T *>(inputs[kInputx]->GetData()->addr);
-  auto input_y = reinterpret_cast<S *>(inputs[kInputy]->GetData()->addr);
-  auto output = reinterpret_cast<N *>(outputs[0]->GetData()->addr);
+  T *input_x = GetDeviceAddress<T>(inputs, kInputx);
+  S *input_y = GetDeviceAddress<S>(inputs, kInputy);
+  N *output = GetDeviceAddress<N>(outputs, 0);
   auto x = static_cast<N>(*input_x);
   auto y = static_cast<N>(*input_y);
   if (kernel_type_ == kScalarBitwiseAnd) {

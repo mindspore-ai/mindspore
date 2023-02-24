@@ -38,23 +38,22 @@ class SequenceIndexCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost);
 
-  bool Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-              const std::vector<AddressPtr> &workspace) {
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) {
     MS_EXCEPTION_IF_NULL(kernel_func_);
-    return kernel_func_(this, inputs, outputs, workspace);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::KernelTensorPtr> &inputs,
-                    const std::vector<kernel::KernelTensorPtr> &outputs,
-                    const std::vector<kernel::AddressPtr> &workspace);
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
   using SequenceIndexFunc =
-    std::function<bool(SequenceIndexCpuKernelMod *, const std::vector<kernel::KernelTensorPtr> &,
-                       const std::vector<kernel::KernelTensorPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(SequenceIndexCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
   static std::vector<std::pair<KernelAttr, SequenceIndexFunc>> func_list_;
   SequenceIndexFunc kernel_func_;

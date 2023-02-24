@@ -343,6 +343,31 @@ class ScalarBool(Primitive):
         """Initialize ScalarBool"""
 
 
+class bool_not(Primitive):
+    r"""
+    Returns bool_not `not` of bool input.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as 'not' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar, the type can be bool.
+
+    Outputs:
+        Scalar, the type is bool.
+
+    Raises:
+        TypeError: If `x` are not bool scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize bool_not"""
+
+
 class bit_and(Primitive):
     r"""
     Returns bitwise `and` of two scalars.

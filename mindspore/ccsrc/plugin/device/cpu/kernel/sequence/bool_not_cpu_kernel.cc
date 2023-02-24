@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/sequence/scalar_bool_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/sequence/bool_not_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
 #include <complex>
@@ -30,8 +30,8 @@ constexpr size_t kInputNum = 1;
 constexpr size_t kOutputNum = 1;
 }  // namespace
 
-bool ScalarBoolCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
+bool BoolNotCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   if (inputs.size() != kInputNum) {
@@ -47,9 +47,9 @@ bool ScalarBoolCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int ScalarBoolCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int BoolNotCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   if (ret != 0) {
     return ret;
@@ -58,14 +58,13 @@ int ScalarBoolCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool ScalarBoolCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) {
+bool BoolNotCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                       const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   T *input_x = GetDeviceAddress<T>(inputs, 0);
   bool *output = GetDeviceAddress<bool>(outputs, 0);
-  *output = static_cast<bool>(*input_x);
+  *output = !static_cast<bool>(*input_x);
   return true;
 }
 
@@ -74,19 +73,18 @@ bool ScalarBoolCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     KernelAttr()                                                 \
       .AddInputAttr(kObjectTypeNumber, kNumberType##in_dtype)    \
       .AddOutputAttr(kObjectTypeNumber, kNumberType##out_dtype), \
-      &ScalarBoolCpuKernelMod::LaunchKernel<in_type>             \
+      &BoolNotCpuKernelMod::LaunchKernel<in_type>                \
   }
 
-std::vector<std::pair<KernelAttr, ScalarBoolCpuKernelMod::ScalarBoolFunc>> ScalarBoolCpuKernelMod::func_list_ = {
-  ADD_KERNEL(Float32, Bool, float), ADD_KERNEL(Float64, Bool, double), ADD_KERNEL(Int32, Bool, int32_t),
-  ADD_KERNEL(Int64, Bool, int64_t), ADD_KERNEL(Bool, Bool, bool)};
+std::vector<std::pair<KernelAttr, BoolNotCpuKernelMod::BoolNotFunc>> BoolNotCpuKernelMod::func_list_ = {
+  ADD_KERNEL(Bool, Bool, bool)};
 
-std::vector<KernelAttr> ScalarBoolCpuKernelMod::GetOpSupport() {
+std::vector<KernelAttr> BoolNotCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, ScalarBoolFunc> &item) { return item.first; });
+                       [](const std::pair<KernelAttr, BoolNotFunc> &item) { return item.first; });
   return support_list;
 }
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScalarBool, ScalarBoolCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, bool_not, BoolNotCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -54,15 +54,15 @@ int SequenceSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::vector<AddressPtr> &workspace) {
-  const auto seq_addr = reinterpret_cast<T *>(inputs[0]->GetData()->addr);
-  const auto start_addr = reinterpret_cast<int64_t *>(inputs[1]->GetData()->addr);
-  const auto stop_addr = reinterpret_cast<int64_t *>(inputs[2]->GetData()->addr);
-  const auto step_addr = reinterpret_cast<int64_t *>(inputs[3]->GetData()->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->GetData()->addr);
-  int64_t len = inputs[0]->GetData()->size;
+bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &workspace,
+                                             const std::vector<AddressPtr> &outputs) {
+  const auto seq_addr = GetDeviceAddress<T>(inputs, 0);
+  const auto start_addr = GetDeviceAddress<int64_t>(inputs, 1);
+  const auto stop_addr = GetDeviceAddress<int64_t>(inputs, 2);
+  const auto step_addr = GetDeviceAddress<int64_t>(inputs, 3);
+  auto output_addr = GetDeviceAddress<T>(outputs, 0);
+  int64_t len = inputs[0]->size;
   int64_t start = start_addr[0];
   int64_t stop = stop_addr[0];
   int64_t step = step_addr[0];
@@ -114,12 +114,11 @@ bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> 
   return false;
 }
 
-bool SequenceSliceCpuKernelMod::Launch(const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::vector<AddressPtr> &workspace) {
+bool SequenceSliceCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                       const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSequenceSliceInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSequenceSliceOutputNum, kernel_name_);
-  return kernel_func_(this, inputs, outputs, workspace);
+  return kernel_func_(this, inputs, workspace, outputs);
 }
 
 std::vector<std::pair<KernelAttr, SequenceSliceCpuKernelMod::SequenceSliceFunc>> SequenceSliceCpuKernelMod::func_list_ =

@@ -54,15 +54,15 @@ int SequenceAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool SequenceAddCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::vector<AddressPtr> &workspace) {
-  const auto input_0_addr = reinterpret_cast<T *>(inputs[0]->GetData()->addr);
-  const auto input_1_addr = reinterpret_cast<T *>(inputs[1]->GetData()->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->GetData()->addr);
-  auto input_0_size = inputs[0]->GetData()->size;
-  auto input_1_size = inputs[1]->GetData()->size;
-  auto output_size = outputs[0]->GetData()->size;
+bool SequenceAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
+                                           const std::vector<AddressPtr> &outputs) {
+  T *input_0_addr = GetDeviceAddress<T>(inputs, 0);
+  T *input_1_addr = GetDeviceAddress<T>(inputs, 1);
+  T *output_addr = GetDeviceAddress<T>(outputs, 0);
+  auto input_0_size = inputs[0]->size;
+  auto input_1_size = inputs[1]->size;
+  auto output_size = outputs[0]->size;
   if (input_0_size + input_1_size != output_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_0 + input_1': {"
                       << input_0_size + input_1_size << "} is not equal to the size of output: {" << output_size << "}";
@@ -80,12 +80,11 @@ bool SequenceAddCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &i
   return true;
 }
 
-bool SequenceAddCpuKernelMod::Launch(const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::vector<AddressPtr> &workspace) {
+bool SequenceAddCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                     const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSequenceAddInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSequenceAddOutputNum, kernel_name_);
-  return kernel_func_(this, inputs, outputs, workspace);
+  return kernel_func_(this, inputs, workspace, outputs);
 }
 
 std::vector<std::pair<KernelAttr, SequenceAddCpuKernelMod::SequenceAddFunc>> SequenceAddCpuKernelMod::func_list_ = {

@@ -317,3 +317,30 @@ def test_scalar_lt():
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_bool_not():
+    """
+    Feature: test bool_not.
+    Description: inputs is dynamic scalar.
+    Expectation: the result match with numpy result
+    """
+    class Net(Cell):
+        def construct(self, x, y):
+            return x != y
+
+    def func(x, y):
+        return x != y
+
+    net_ms = Net()
+    input_x = 3
+    input_y = 4
+    fact = TupleFactory(net_ms, func, (input_x, input_y))
+    fact.forward_cmp()
+    fact.grad_impl()

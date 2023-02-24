@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 class SequenceGetItemCpuKernelMod : public NativeCpuKernelMod,
-                                    public MatchKernelHelper<SequenceGetItemCpuKernelMod, KernelTensorPtr> {
+                                    public MatchKernelHelper<SequenceGetItemCpuKernelMod, AddressPtr> {
  public:
   SequenceGetItemCpuKernelMod() = default;
   ~SequenceGetItemCpuKernelMod() override = default;
@@ -39,10 +39,10 @@ class SequenceGetItemCpuKernelMod : public NativeCpuKernelMod,
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  bool Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-              const std::vector<AddressPtr> &workspace) {
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) {
     MS_EXCEPTION_IF_NULL(kernel_func_);
-    return kernel_func_(this, inputs, outputs, workspace);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
@@ -51,8 +51,8 @@ class SequenceGetItemCpuKernelMod : public NativeCpuKernelMod,
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                    const std::vector<AddressPtr> &workspace);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

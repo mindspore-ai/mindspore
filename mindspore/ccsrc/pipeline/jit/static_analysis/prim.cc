@@ -3127,7 +3127,6 @@ PrimitiveToImplMap &GetUniformPrimitiveToImplMap() {
     {prim::kPrimBitLeftShift, R{prim::BitLeftShift, true, nullptr, true}},
     {prim::kPrimBitRightShift, R{prim::BitRightShift, true, nullptr, true}},
     {prim::kPrimScalarNe, R{prim::ScalarNe, true, std::make_shared<Bool>(), true}},
-    {prim::kPrimBoolNot, R{prim::BoolNot, true, std::make_shared<Bool>(), true}},
     {prim::kPrimBoolAnd, R{prim::BoolAnd, true, std::make_shared<Bool>(), true}},
     {prim::kPrimBoolEq, R{prim::BoolEq, true, std::make_shared<Bool>(), true}},
     {prim::kPrimBoolOr, R{prim::BoolOr, true, std::make_shared<Bool>(), true}},

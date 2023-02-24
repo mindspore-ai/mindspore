@@ -26,7 +26,7 @@ class MIND_API TupleToTensor : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TupleToTensor);
   /// \brief Constructor.
-  TupleToTensor() : BaseOperator(prim::kTupleToTensor) {}
+  TupleToTensor() : BaseOperator(prim::kTupleToTensor) { InitIOName({"input_tuple", "dtype"}, {"output_data"}); }
   /// \brief Init.
   void Init() const {}
 };

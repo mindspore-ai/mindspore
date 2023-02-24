@@ -48,12 +48,12 @@ int SequenceMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool SequenceMaxCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::vector<AddressPtr> &workspace) {
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->GetData()->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->GetData()->addr);
-  auto input_size = inputs[0]->GetData()->size;
+bool SequenceMaxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
+                                           const std::vector<AddressPtr> &outputs) {
+  T *input_addr = GetDeviceAddress<T>(inputs, 0);
+  T *output_addr = GetDeviceAddress<T>(outputs, 0);
+  auto input_size = inputs[0]->size;
   output_addr[0] = *std::max_element(input_addr, input_addr + input_size / sizeof(T));
   return true;
 }

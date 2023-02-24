@@ -53,15 +53,15 @@ int SequenceIndexCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool SequenceIndexCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::vector<AddressPtr> &workspace) {
+bool SequenceIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &workspace,
+                                             const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  const auto seq_addr = reinterpret_cast<T *>(inputs[0]->GetData()->addr);
-  const auto target_addr = reinterpret_cast<T *>(inputs[1]->GetData()->addr);
-  auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->GetData()->addr);
-  auto seq_size = inputs[0]->GetData()->size;
+  T *seq_addr = GetDeviceAddress<T>(inputs, 0);
+  T *target_addr = GetDeviceAddress<T>(inputs, 1);
+  int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
+  auto seq_size = inputs[0]->size;
 
   int64_t index = 0;
   size_t elem_num = seq_size / sizeof(T);
