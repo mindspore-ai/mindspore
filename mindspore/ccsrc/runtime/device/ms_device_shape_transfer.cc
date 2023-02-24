@@ -487,7 +487,7 @@ ShapeVector DeviceShapeTransfer::TransCore(const ShapeVector &shape, const std::
   auto temp_shape = shape;
   if (!IsOneOfNoPaddingFormat(format) && format != kOpFormat_FRACTAL_ZN_LSTM && shape.size() < kDim4 &&
       !IsOneOf3DFormat(format)) {
-    MS_LOG(WARNING) << "Origin shape size is less than 4, should be Padding shape by Default firstly";
+    MS_LOG(INFO) << "Origin shape size is less than 4, should be Padding shape by Default firstly";
     temp_shape = PaddingShapeTo4dDefault(shape);
   }
   if (shape.size() != kDim5 && IsOneOf3DFormat(format)) {
