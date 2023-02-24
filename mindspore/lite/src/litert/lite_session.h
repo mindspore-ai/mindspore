@@ -37,6 +37,7 @@
 #include "src/litert/kernel/gpu/opencl/opencl_runtime.h"
 #endif
 #include "src/litert/scheduler_cb.h"
+#include "src/litert/sub_graph_kernel.h"
 
 #ifdef ENABLE_LITE_HELPER
 #include "src/common/helper/infer_helpers.h"
@@ -150,6 +151,7 @@ class MS_API LiteSession {
   int ResizeInputs(const std::vector<mindspore::lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims);
   int SetAllocatorForDelegateKernels(const kernel::KernelExec *kernel);
   int PrepareKernels(const Model *model);
+  static int DrawGraph(kernel::SubGraphKernel *graph);
   int SetTensorInitRefCount();
   int SetNonTaiCallSubgraphOutputInitRefCount();
   static int ReSizeKernels(

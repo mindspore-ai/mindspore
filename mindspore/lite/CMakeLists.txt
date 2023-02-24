@@ -56,6 +56,7 @@ option(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE "enable cloud and device fusion infe
 option(MSLITE_ENABLE_CLOUD_INFERENCE "alias to MSLITE_ENABLE_CLOUD_FUSION_INFERENCE" off)
 option(MSLITE_ENABLE_MODEL_OBF "enable model obfuscation" off)
 option(MSLITE_ENABLE_MODEL_PRE_INFERENCE "enable model do pre-inference when Build interface is called" off)
+option(MSLITE_EXPORT_COMPUTE_IR "export graph structure dotfile when debug mode" off)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -232,6 +233,10 @@ endif()
 
 if(DEFINED ENV{MSLITE_ENABLE_GITEE_MIRROR})
     set(MSLITE_ENABLE_GITEE_MIRROR $ENV{MSLITE_ENABLE_GITEE_MIRROR})
+endif()
+
+if(MSLITE_EXPORT_COMPUTE_IR)
+    set(MSLITE_EXPORT_COMPUTE_IR $ENV{MSLITE_EXPORT_COMPUTE_IR})
 endif()
 
 if(MSLITE_ENABLE_GITEE_MIRROR)
@@ -507,6 +512,7 @@ message(STATUS "\tMSLITE_ENABLE_CLOUD_INFERENCE              = \t${MSLITE_ENABLE
 message(STATUS "\tMSLITE_ENABLE_CAPTURE_SIGNALS              = \t${MSLITE_ENABLE_CAPTURE_SIGNALS}")
 message(STATUS "\tMSLITE_ENABLE_MODEL_OBF                    = \t${MSLITE_ENABLE_MODEL_OBF}")
 message(STATUS "\tMSLITE_ENABLE_MODEL_PRE_INFERENCE          = \t${MSLITE_ENABLE_MODEL_PRE_INFERENCE}")
+message(STATUS "\tMSLITE_EXPORT_COMPUTE_IR                   = \t${tMSLITE_EXPORT_COMPUTE_IR}")
 
 if((MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_TESTCASES) AND (
         NOT MSLITE_ENABLE_MINDRT
