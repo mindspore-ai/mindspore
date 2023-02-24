@@ -37,6 +37,13 @@ class CastFusionPass : public MultiplePatternProcessPass {
 
  private:
   VectorRef DefineCastCastPattern() const;
+  VectorRef DefineCastEqualPattern() const;
+  VectorRef DefineCastEqual2Pattern() const;
+  VectorRef DefineCastGatherPattern() const;
+  VectorRef DefineCastSplitPattern() const;
+  AnfNodePtr CastNotEqualFusion(const FuncGraphPtr &func_graph, const mindspore::AnfNodePtr &node) const;
+  AnfNodePtr CastSplitFusion(const FuncGraphPtr &func_graph, const mindspore::AnfNodePtr &node) const;
+  AnfNodePtr CastGatherFusion(const FuncGraphPtr &func_graph, const mindspore::AnfNodePtr &node) const;
   AnfNodePtr CastCastFusion(const FuncGraphPtr &func_graph, const mindspore::AnfNodePtr &node) const;
 };
 }  // namespace opt

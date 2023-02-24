@@ -38,6 +38,7 @@ const std::unordered_map<std::string, std::vector<size_t>> &GetToNCHWOpMap();
 const std::vector<std::string> &GetDynamicFormatOpList();
 bool IsDynamicFormatOp(const std::string &op_type);
 bool IsDynamicFormatOpWithAxis(const std::string &op_type);
+STATUS GetCastDstDataType(const CNodePtr &cnode, int *perm);
 STATUS GetTransposePerm(const CNodePtr &cnode, std::vector<int> *perm);
 void RemoveIfMonad(const CNodePtr &cnode);
 bool IsMonadNode(const AnfNodePtr &node);

@@ -31,30 +31,6 @@ namespace {
 constexpr size_t kNotEqualMinIndex = 3;
 }  // namespace
 
-CNodePtr InputDTypeTransPass::GenCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node,
-                                          const std::string &cnode_name) {
-  MS_CHECK_TRUE_RET(graph != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(input_node != nullptr, nullptr);
-  // auto new_cast = std::make_shared<mindspore::ops::Cast>();
-  ops::Cast cast_node;
-  auto new_cast_c = cast_node.GetPrim();
-  MS_CHECK_TRUE_MSG(new_cast_c != nullptr, nullptr, "new_cast_c is nullptr");
-  ValueNodePtr value_node = NewValueNode(new_cast_c);
-  MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "NewValueNode Failed");
-
-  auto param_node =
-    opt::BuildIntValueParameterNode(graph, static_cast<int32_t>(src_input_data_type_), cnode_name + "_type");
-
-  auto cast_cnode = graph->NewCNode({value_node});
-  MS_CHECK_TRUE_MSG(cast_cnode != nullptr, nullptr, "new_cnode is nullptr");
-  cast_cnode->set_fullname_with_scope(cnode_name);
-  auto manager = Manage(graph);
-  (void)manager->Replace(input_node, cast_cnode);
-  manager->AddEdge(cast_cnode, input_node);
-  manager->AddEdge(cast_cnode, param_node);
-  return cast_cnode;
-}
-
 STATUS InputDTypeTransPass::HandleGraphInput(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
   auto manager = graph->manager();
@@ -80,12 +56,13 @@ STATUS InputDTypeTransPass::HandleGraphInput(const FuncGraphPtr &graph) {
       MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
       auto element = abstract_tensor->element();
       element->set_type(TypeIdToType(kNumberTypeInt32));
-
-      auto cast_cnode = GenCastNode(graph, input, input->fullname_with_scope() + "_post_cast");
-      cast_cnode->set_abstract(abstract->Clone());
-      auto cast_abstract = cast_cnode->abstract();
-      MS_ASSERT(cast_abstract != nullptr);
-      cast_abstract->set_value(std::make_shared<AnyValue>());
+      auto new_abstract = abstract->Clone();
+      new_abstract->set_value(std::make_shared<AnyValue>());
+      if (GenCastNode(graph, input, input->fullname_with_scope() + "_post_cast",
+                      static_cast<TypeId>(src_input_data_type_), new_abstract) == nullptr) {
+        MS_LOG(ERROR) << "GenCastNode failed.";
+        return RET_ERROR;
+      }
     }
   }
   return lite::RET_OK;

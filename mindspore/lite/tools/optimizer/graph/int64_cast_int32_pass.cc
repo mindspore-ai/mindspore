@@ -92,7 +92,10 @@ bool Int64CastInt32Pass::Run(const FuncGraphPtr &graph) {
 
     for (size_t index = kInputIndexOne; index < inputs_size; index++) {
       auto abstract = GetCNodeInputAbstract(cnode, index);
-      MS_CHECK_TRUE_MSG(abstract != nullptr, change_flag, "Abstract of CNode is nullptr");
+      if (abstract == nullptr) {
+        MS_LOG(WARNING) << "Cnode " << cnode->fullname_with_scope() << " input " << index << " abstract is nullptr";
+        continue;
+      }
       if (!utils::isa<abstract::AbstractTensorPtr>(abstract)) {
         MS_LOG(DEBUG) << "abstract is not AbstractTensor";
         continue;

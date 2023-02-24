@@ -25,6 +25,7 @@
 #include "base/float16.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/transpose.h"
+#include "ops/cast.h"
 #include "ops/gather.h"
 #include "ops/concat.h"
 #include "ops/tuple_get_item.h"
@@ -981,6 +982,30 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
   trans_prim->AddAttr("quant_params", quant_params_holder);
   return cnode;
+}
+
+CNodePtr GenCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, const std::string &cnode_name,
+                     const TypeId dst_type, const AbstractBasePtr &abstract) {
+  MS_CHECK_TRUE_RET(graph != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(input_node != nullptr, nullptr);
+  // auto new_cast = std::make_shared<mindspore::ops::Cast>();
+  ops::Cast cast_node;
+  auto new_cast_c = cast_node.GetPrim();
+  MS_CHECK_TRUE_MSG(new_cast_c != nullptr, nullptr, "new_cast_c is nullptr");
+  ValueNodePtr value_node = NewValueNode(new_cast_c);
+  MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "NewValueNode Failed");
+
+  auto param_node = opt::BuildIntValueParameterNode(graph, static_cast<int32_t>(dst_type), cnode_name + "_type");
+
+  auto cast_cnode = graph->NewCNode({value_node});
+  MS_CHECK_TRUE_MSG(cast_cnode != nullptr, nullptr, "new_cnode is nullptr");
+  cast_cnode->set_fullname_with_scope(cnode_name);
+  cast_cnode->set_abstract(abstract);
+  auto manager = Manage(graph);
+  (void)manager->Replace(input_node, cast_cnode);
+  manager->AddEdge(cast_cnode, input_node);
+  manager->AddEdge(cast_cnode, param_node);
+  return cast_cnode;
 }
 
 CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &indices,
