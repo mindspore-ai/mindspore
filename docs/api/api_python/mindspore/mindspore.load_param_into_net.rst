@@ -12,6 +12,7 @@ mindspore.load_param_into_net
 
     返回：
         List，网络中没有被加载的参数。
+        List，checkpoint文件中没有被加载的参数。
 
     异常：
         - **TypeError** - 如果参数不是Cell，或者 `parameter_dict` 不是Parameter类型的字典。
