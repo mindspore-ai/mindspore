@@ -187,7 +187,8 @@ REG_BPROP_BUILDER("AsinhGrad").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Sinh").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Mul((ib->Emit("Cosh", {x})), dout);
+  auto conj_x = ib->Emit("Conj", {x});
+  auto dx = ib->Mul((ib->Emit("Cosh", {conj_x})), dout);
   return {dx};
 });
 
