@@ -61,10 +61,7 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
 
     auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
     if (!IsDynamic(input2_shape)) {
-      if (input2_shape.size() > 1 || (input2_shape.size() == 1 && input2_shape[0] > 1)) {
-        MS_EXCEPTION(ValueError) << "For '" << prim_name
-                                 << "', the value input only takes scalar or scalar within a tensor!";
-      }
+      CheckAndConvertUtils::CheckInteger("value's rank", SizeToLong(input2_shape.size()), kEqual, kDimZero, prim_name);
     }
 
     auto input1_type = input_args[kInputIndex0]->BuildType();
