@@ -52,8 +52,8 @@ class UpsampleTrilinear3DGpuKernelMod : public NativeGpuKernelMod {
   template <typename F>
   void CheckDims(string check_dim_name, int expected_size, std::vector<F> check_vector);
   void ResetResource() noexcept;
-  float Scaling(const size_t in_size, const size_t out_size, bool align_corners);
-  float Scaling(float scale_value, int idx);
+  float ScalingD(const size_t in_size, const size_t out_size, bool align_corners);
+  float ScalingS(float scale_value, int idx, const size_t out_size);
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);

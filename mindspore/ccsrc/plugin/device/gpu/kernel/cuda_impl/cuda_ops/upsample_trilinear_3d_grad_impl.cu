@@ -20,19 +20,6 @@
 __inline__ __device__ float GetInput(const float *input, size_t index) { return input[index]; }
 __inline__ __device__ float GetInput(const half *input, size_t index) { return static_cast<float>(input[index]); }
 
-__inline__ __device__ float AreaPixelComputeScale(const size_t input_size, const size_t output_size, bool align_corners,
-                                                  float scale) {
-  if (align_corners) {
-    if (output_size > 1) {
-      return (static_cast<float>(input_size - 1)) / (static_cast<float>(output_size - 1));
-    } else {
-      return 0.0;
-    }
-  } else {
-    return (scale > 0.) ? scale : static_cast<float>(input_size) / static_cast<float>(output_size);
-  }
-}
-
 __inline__ __device__ float AreaPixelComputeSourceIndex(float scale, int dst_index, bool align_corners, bool cubic) {
   if (align_corners) {
     return scale * dst_index;
@@ -57,10 +44,6 @@ __global__ void UpsampleTrilinear3DGrad(const T *grad, const size_t n, const siz
                                         const size_t dinput_cdhw, const size_t dinput_dhw, const size_t dinput_hw,
                                         const float d_scale, const float h_scale, const float w_scale,
                                         const bool align_corner, T *dinput) {
-  const float rdepth = AreaPixelComputeScale(dinput_d, grad_d, align_corner, d_scale);
-  const float rheight = AreaPixelComputeScale(dinput_h, grad_h, align_corner, h_scale);
-  const float rwidth = AreaPixelComputeScale(dinput_w, grad_w, align_corner, w_scale);
-
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < grad_ncdhw; pos += blockDim.x * gridDim.x) {
     const size_t posn = pos / grad_cdhw;
     const size_t posc = pos / grad_dhw % c;
@@ -68,21 +51,21 @@ __global__ void UpsampleTrilinear3DGrad(const T *grad, const size_t n, const siz
     const size_t posh = pos / grad_w % grad_h;
     const size_t posw = pos % grad_w;
 
-    const float t1r = AreaPixelComputeSourceIndex(rdepth, posd, align_corner, false);
-    const float t1 = floorf(t1r);
-    const float t1p = (t1 < (dinput_d - 1)) ? 1 : 0;
+    const float t1r = AreaPixelComputeSourceIndex(d_scale, posd, align_corner, false);
+    const size_t t1 = floorf(t1r);
+    const size_t t1p = (t1 < (dinput_d - 1)) ? 1 : 0;
     const float t1lambda = t1r - t1;
     const float t0lambda = 1.0f - t1lambda;
 
-    const float h1r = AreaPixelComputeSourceIndex(rheight, posh, align_corner, false);
-    const float h1 = floorf(h1r);
-    const float h1p = (h1 < (dinput_h - 1)) ? 1 : 0;
+    const float h1r = AreaPixelComputeSourceIndex(h_scale, posh, align_corner, false);
+    const size_t h1 = floorf(h1r);
+    const size_t h1p = (h1 < (dinput_h - 1)) ? 1 : 0;
     const float h1lambda = h1r - h1;
     const float h0lambda = 1.0f - h1lambda;
 
-    const float w1r = AreaPixelComputeSourceIndex(rwidth, posw, align_corner, false);
-    const float w1 = floorf(w1r);
-    const float w1p = (w1 < (dinput_w - 1)) ? 1 : 0;
+    const float w1r = AreaPixelComputeSourceIndex(w_scale, posw, align_corner, false);
+    const size_t w1 = floorf(w1r);
+    const size_t w1p = (w1 < (dinput_w - 1)) ? 1 : 0;
     const float w1lambda = w1r - w1;
     const float w0lambda = 1.0f - w1lambda;
 
@@ -99,20 +82,14 @@ __global__ void UpsampleTrilinear3DGrad(const T *grad, const size_t n, const siz
 
     const float d2val = GetInput(grad, pos);
 
-    // This reduces the total number of calculations by storing repeat computations
-    const float A = t0lambda * h0lambda;
-    const float B = t0lambda * h1lambda;
-    const float C = t1lambda * h0lambda;
-    const float D = t1lambda * h1lambda;
-
-    MsAtomicAdd(dinput + p1, static_cast<T>(A * w0lambda * d2val));
-    MsAtomicAdd(dinput + p2, static_cast<T>(A * w1lambda * d2val));
-    MsAtomicAdd(dinput + p3, static_cast<T>(B * w0lambda * d2val));
-    MsAtomicAdd(dinput + p4, static_cast<T>(B * w1lambda * d2val));
-    MsAtomicAdd(dinput + p5, static_cast<T>(C * w0lambda * d2val));
-    MsAtomicAdd(dinput + p6, static_cast<T>(C * w1lambda * d2val));
-    MsAtomicAdd(dinput + p7, static_cast<T>(D * w0lambda * d2val));
-    MsAtomicAdd(dinput + p8, static_cast<T>(D * w1lambda * d2val));
+    MsAtomicAdd(dinput + p1, static_cast<T>(t0lambda * h0lambda * w0lambda * d2val));
+    MsAtomicAdd(dinput + p2, static_cast<T>(t0lambda * h0lambda * w1lambda * d2val));
+    MsAtomicAdd(dinput + p3, static_cast<T>(t0lambda * h1lambda * w0lambda * d2val));
+    MsAtomicAdd(dinput + p4, static_cast<T>(t0lambda * h1lambda * w1lambda * d2val));
+    MsAtomicAdd(dinput + p5, static_cast<T>(t1lambda * h0lambda * w0lambda * d2val));
+    MsAtomicAdd(dinput + p6, static_cast<T>(t1lambda * h0lambda * w1lambda * d2val));
+    MsAtomicAdd(dinput + p7, static_cast<T>(t1lambda * h1lambda * w0lambda * d2val));
+    MsAtomicAdd(dinput + p8, static_cast<T>(t1lambda * h1lambda * w1lambda * d2val));
   }
   return;
 }
