@@ -9816,6 +9816,16 @@ def imag(input):
     return _get_cache_prim(P.Imag)()(input)
 
 
+@constexpr
+def _check_repeat_in_axis(axis, x_ndim, prim_name):
+    """check repeat dim in axis"""
+    if isinstance(axis, (list, tuple)):
+        axis_deal = [dim + x_ndim if dim < 0 else dim for dim in axis]
+        for dim in axis_deal:
+            if axis_deal.count(dim) > 1:
+                raise RuntimeError(f"For {prim_name}, dim {dim} appears multiple times in axis.")
+
+
 def nansum(x, axis=None, keepdims=False, *, dtype=None):
     """
     Computes sum of `x` over a given dimension, treating NaNs as zero.
@@ -9859,6 +9869,7 @@ def nansum(x, axis=None, keepdims=False, *, dtype=None):
     """
     if not isinstance(x, Tensor):
         raise TypeError(f"For nansum, input must be Tensor, but got {type(x)}.")
+    _check_repeat_in_axis(axis, x.ndim, "nansum")
     if x.is_complex():
         raise TypeError(f'For nansum, input are not supported complex type, but got {type(x)}.')
     if dtype is not None and dtype in mstype.complex_type:
