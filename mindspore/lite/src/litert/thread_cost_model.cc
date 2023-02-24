@@ -71,6 +71,17 @@ const std::map<int32_t, float> kernel_compute_cost_map_ = {
 
   {TC_TYPE(schema::PrimitiveType_LayerNormFusion, 0), 507.812f},  // dataNum about 0.5k
   {TC_TYPE(schema::PrimitiveType_OneHot, 0), 136.562f},           // dataNum about 1.5k
+
+  {TC_TYPE(schema::PrimitiveType_ReduceFusion, schema::ReduceMode_ReduceAll), 66.5625f},         // dataNum about 3k
+  {TC_TYPE(schema::PrimitiveType_ReduceFusion, schema::ReduceMode_ReduceASum), 206.5625f},       // dataNum about 1k
+  {TC_TYPE(schema::PrimitiveType_ReduceFusion, schema::ReduceMode_ReduceL2), 259.0625f},         // dataNum about 0.8k
+  {TC_TYPE(schema::PrimitiveType_ReduceFusion, schema::ReduceMode_ReduceMax), 66.5625f},         // dataNum about 3k
+  {TC_TYPE(schema::PrimitiveType_ReduceFusion, schema::ReduceMode_ReduceMean), 259.0625f},       // dataNum about 0.8k
+  {TC_TYPE(schema::PrimitiveType_ReduceFusion, schema::ReduceMode_ReduceMin), 66.5625f},         // dataNum about 3k
+  {TC_TYPE(schema::PrimitiveType_ReduceFusion, schema::ReduceMode_ReduceProd), 206.5625f},       // dataNum about 1k
+  {TC_TYPE(schema::PrimitiveType_ReduceFusion, schema::ReduceMode_ReduceSum), 206.5625f},        // dataNum about 1k
+  {TC_TYPE(schema::PrimitiveType_ReduceFusion, schema::ReduceMode_ReduceSumSquare), 206.5625f},  // dataNum about 1k
+  {TC_TYPE(schema::PrimitiveType_ReduceFusion, (schema::ReduceMode_MAX + 1)), 259.0625f},        // dataNum about 0.8k
 };
 
 float ThreadCostModel::per_unit_load_cost_ = 1.0 / 64 * 11;   // 64: L2 cache size, 11 : L2 cache latency on Haswell
