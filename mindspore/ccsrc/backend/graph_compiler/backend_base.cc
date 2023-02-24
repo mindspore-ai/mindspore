@@ -398,6 +398,47 @@ void MindRTBackendBase::ProcessNotSupportCnode(const FuncGraphPtr &func_graph,
   }
 }
 
+namespace {
+KernelWithIndex VisitRealNodeWithNestLevel(const AnfNodePtr &anf_node, size_t index, size_t *nest_level) {
+  if (!anf_node->isa<CNode>()) {
+    return {anf_node, index};
+  }
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (common::AnfAlgo::GetCNodeName(cnode) == prim::kTupleGetItem) {
+    (*nest_level)++;
+    auto real_node_with_index = VisitRealNodeWithNestLevel(common::AnfAlgo::GetTupleGetItemRealInput(cnode),
+                                                           common::AnfAlgo::GetTupleGetItemOutIndex(cnode), nest_level);
+    auto real_node = real_node_with_index.first;
+    auto real_index = real_node_with_index.second;
+    if (real_node->isa<CNode>() && common::AnfAlgo::GetCNodeName(real_node) == prim::kMakeTuple) {
+      (*nest_level)--;
+      auto make_tuple = real_node->cast<CNodePtr>();
+      return VisitRealNodeWithNestLevel(make_tuple->input(real_index + 1), index, nest_level);
+    }
+    return real_node_with_index;
+  }
+  return common::AnfAlgo::VisitKernelWithReturnType(anf_node, index, false,
+                                                    {prim::kPrimMakeTuple, prim::kPrimTupleGetItem});
+}
+
+bool NeedConvertToRealTupleGetItem(const CNodePtr &cnode) {
+  if (common::AnfAlgo::GetCNodeName(cnode) != prim::kTupleGetItem || cnode->inputs().size() != kTupleGetItemInputSize) {
+    return false;
+  }
+  if (!cnode->input(kInputNodeOutputIndexInTupleGetItem)->isa<ValueNode>()) {
+    return true;
+  }
+  size_t nest_level = 0;
+  const size_t nest_limit = 1;
+  auto real_node = VisitRealNodeWithNestLevel(cnode, 0, &nest_level);
+  if (!common::AnfAlgo::IsCallNode(real_node.first) && AnfUtils::IsRealCNodeKernel(real_node.first) &&
+      nest_level > nest_limit) {
+    return true;
+  }
+  return false;
+}
+}  // namespace
+
 const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -490,14 +531,22 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) {
       }
 
       // TupleGetItem --> RealTupleGetItem.
-      if (common::AnfAlgo::GetCNodeName(cnode) == prim::kTupleGetItem &&
-          cnode->inputs().size() == kTupleGetItemInputSize &&
-          (!cnode->input(kInputNodeOutputIndexInTupleGetItem)->isa<ValueNode>())) {
+      if (NeedConvertToRealTupleGetItem(cnode)) {
         common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
         cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(prim::kRealTupleGetItem)));
         // Reset full scope name.
         cnode->set_fullname_with_scope("");
         MS_LOG(INFO) << "Rename op from TupleGetItem to RealTupleGetItem for op " << cnode->fullname_with_scope()
+                     << ", debug name:" << cnode->DebugString();
+      }
+
+      // MakeTuple --> RealMakeTuple
+      if (common::AnfAlgo::GetCNodeName(cnode) == prim::kMakeTuple && common::AnfAlgo::IsDynamicSequence(cnode)) {
+        common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
+        cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(prim::kRealMakeTuple)));
+        // Reset full scope name.
+        cnode->set_fullname_with_scope("");
+        MS_LOG(INFO) << "Rename op from MakeTuple to RealMakeTuple for op " << cnode->fullname_with_scope()
                      << ", debug name:" << cnode->DebugString();
       }
     }
