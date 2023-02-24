@@ -56,6 +56,7 @@ class GeDeviceResManager : public DeviceResManager {
   void FreeMemory(void *ptr) const override;
 
  private:
+  static void GeSetContextOptions(const std::shared_ptr<MsContext> &ms_context_ptr, transform::SessionOptions *options);
   std::shared_ptr<MemoryManager> mem_manager_;
 };
 
