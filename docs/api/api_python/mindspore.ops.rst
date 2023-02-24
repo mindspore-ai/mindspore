@@ -484,7 +484,6 @@ Array操作
     mindspore.ops.bincount
     mindspore.ops.block_diag
     mindspore.ops.broadcast_to
-    mindspore.ops.cartesian_prod
     mindspore.ops.cat
     mindspore.ops.chunk
     mindspore.ops.column_stack

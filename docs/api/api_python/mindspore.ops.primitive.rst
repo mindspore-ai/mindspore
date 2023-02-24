@@ -353,7 +353,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Xdivy
     mindspore.ops.Xlogy
     mindspore.ops.Zeta
-    
+
 
 Reduction算子
 ^^^^^^^^^^^^^
@@ -415,7 +415,6 @@ Reduction算子
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
     mindspore.ops.Orgqr
-    mindspore.ops.Qr
     mindspore.ops.Svd
     mindspore.ops.TridiagonalMatMul
 

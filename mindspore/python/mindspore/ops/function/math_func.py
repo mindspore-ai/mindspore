@@ -5084,7 +5084,7 @@ def addmv(x, mat, vec, beta=1, alpha=1):
 
     Raises:
         TypeError: If `mat`, `vec`, `x` is not a Tensor.
-        TypeError: If inputs `x`, `mat`, 'vec' are not the same dtype.
+        TypeError: If inputs `mat`, 'vec' are not the same dtype.
         ValueError: If `mat` is not a 2-D Tensor.
         ValueError: If `vec` is not a 1-D Tensor.
 
@@ -5174,7 +5174,7 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
 
     Raises:
         TypeError: If `x`, `vec1`, `vec2` is not a Tensor.
-        TypeError: If inputs `x`, `vec1`, `vec2` are not the same dtype.
+        TypeError: If inputs `vec1`, `vec2` are not the same dtype.
         ValueError: If `vec1`, `vec2` is not a 1-D Tensor.
 
     Supported Platforms:
