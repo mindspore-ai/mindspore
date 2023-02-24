@@ -149,8 +149,8 @@ bool SparseAddGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   const int64_t x2_indices_num = inputs[kX2IndicesIdx]->size / (sizeof(S) * indices_column_);
   const int64_t out_indices_num = inputs[kOutIndicesIdx]->size / (sizeof(S) * indices_column_);
 
-  memset(dx1, 0, sizeof(T) * x1_indices_num);
-  memset(dx2, 0, sizeof(T) * x2_indices_num);
+  memset_s(dx1, sizeof(T) * x1_indices_num, 0, sizeof(T) * x1_indices_num);
+  memset_s(dx2, sizeof(T) * x2_indices_num, 0, sizeof(T) * x2_indices_num);
 
   int64_t i = 0;
   int64_t j = 0;
