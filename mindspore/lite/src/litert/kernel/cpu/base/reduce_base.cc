@@ -178,6 +178,18 @@ int ReduceBaseCPUKernel::ReSize() {
   DecideIfOnlyCopy();
   CalculateTmpBufferSize();
   CalculateInnerOuterSize();
+
+  if (num_axes_ == 1) {
+    if (UpdateThreadNumPass(TC_TYPE(schema::PrimitiveType_ReduceFusion, mode_), inner_sizes_.at(0) * axis_sizes_.at(0),
+                            inner_sizes_.at(0) * axis_sizes_.at(0), outer_sizes_.at(0)) != RET_OK) {
+      return RET_ERROR;
+    }
+  } else {
+    if (UpdateThreadNumPass(TC_TYPE(schema::PrimitiveType_ReduceFusion, schema::ReduceMode_MAX + 1), 0, 0,
+                            out_tensors_.at(0)->ElementsNum()) != RET_OK) {
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 

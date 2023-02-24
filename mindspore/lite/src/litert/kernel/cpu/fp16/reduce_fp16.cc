@@ -47,7 +47,7 @@ int ReduceFp16CPUKernel::CallReduceUnit(int task_id) {
     return RET_NULL_PTR;
   }
   fp16_reducer_(outer_size_, inner_size_, axis_size_, static_cast<const float16_t *>(src_data_),
-                static_cast<float16_t *>(dst_data_), task_id, op_parameter_->thread_num_);
+                static_cast<float16_t *>(dst_data_), task_id, thread_num_);
   return RET_OK;
 }
 
