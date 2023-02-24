@@ -15,9 +15,6 @@
 """
 Test PSROIPooling.
 """
-import tempfile
-import os
-
 import numpy as np
 import pytest
 
@@ -165,16 +162,14 @@ def test_ps_roi_pooling_mind_ir():
 
     net = NetPSROIPooling(spatial_scale, group_size, output_dim, dynamic_shape=False)
     old_out = net(features, rois_ms)
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        file_name = os.path.join(tmp_dir, "ps_roi_pooling.mindir")
-        ms.export(
-            net, features, rois_ms,
-            file_name=file_name,
-            file_format='MINDIR')
+    ms.export(
+        net, features, rois_ms,
+        file_name="ps_roi_pooling",
+        file_format='MINDIR')
 
-        graph = ms.load(file_name)
-        new_net = nn.GraphCell(graph)
-        new_out = new_net(features, rois_ms)
+    graph = ms.load("ps_roi_pooling.mindir")
+    new_net = nn.GraphCell(graph)
+    new_out = new_net(features, rois_ms)
     assert np.allclose(
         old_out.asnumpy(), new_out.asnumpy(),
         atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)

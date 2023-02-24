@@ -15,9 +15,6 @@
 """
 Test PSROIPoolingGrad.
 """
-import tempfile
-import os
-
 import numpy as np
 import pytest
 
@@ -205,24 +202,17 @@ def test_ps_roi_pooling_grad_mind_ir():
     spatial_scale = 1.0 / 16
     net = NetPSROIPoolingGrad(input_size, spatial_scale, group_size, output_dim)
     old_out = net(dy_ms, rois_ms)
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        file_name = os.path.join(tmp_dir, "ps_roi_pooling_grad.mindir")
-        ms.export(
-            net, dy_ms, rois_ms,
-            file_name=file_name,
-            file_format='MINDIR')
+    ms.export(
+        net, dy_ms, rois_ms,
+        file_name="ps_roi_pooling_grad",
+        file_format='MINDIR')
 
-        try:
-            graph = ms.load(file_name)
-            new_net = nn.GraphCell(graph)
-            new_out = new_net(dy_ms, rois_ms)
-            assert np.allclose(
-                old_out.asnumpy(), new_out.asnumpy(),
-                atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
-        finally:
-            # Get write mode so that we can delete the file on Windows.
-            os.chmod(file_name, 0o700)
-            os.remove(file_name)
+    graph = ms.load("ps_roi_pooling_grad.mindir")
+    new_net = nn.GraphCell(graph)
+    new_out = new_net(dy_ms, rois_ms)
+    assert np.allclose(
+        old_out.asnumpy(), new_out.asnumpy(),
+        atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
 
 
 @pytest.mark.level0
