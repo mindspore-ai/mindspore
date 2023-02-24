@@ -3,7 +3,10 @@ mindspore.ops.cosine_similarity
 
 .. py:function:: mindspore.ops.cosine_similarity(x1, x2, dim=1, eps=1e-08)
 
-    沿轴计算的x1和x2之间的余弦相似度。x1和x2必须可被广播。
+    沿轴计算的x1和x2之间的余弦相似度。
+
+    .. note::
+        当前暂不支持对输入进行广播。
 
     .. math::
         \text{similarity} = \dfrac{x_1 \cdot x_2}{\max(\Vert x_1 \Vert _2 \cdot \Vert x_2 \Vert _2, \epsilon)}
