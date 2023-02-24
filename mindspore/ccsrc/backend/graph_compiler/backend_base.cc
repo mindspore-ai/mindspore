@@ -398,31 +398,6 @@ void MindRTBackendBase::ProcessNotSupportCnode(const FuncGraphPtr &func_graph,
   }
 }
 
-namespace {
-void ExchangeRealTupleGetItem(const FuncGraphPtr &root_graph) {
-  MS_EXCEPTION_IF_NULL(root_graph);
-  MS_EXCEPTION_IF_NULL(root_graph->manager());
-  FuncGraphSet graphs = root_graph->manager()->func_graphs();
-  for (const auto &graph : graphs) {
-    MS_EXCEPTION_IF_NULL(graph);
-    auto nodes = TopoSort(graph->get_return());
-    for (const auto &node : nodes) {
-      if (node == nullptr || (!node->isa<CNode>())) {
-        continue;
-      }
-      const auto &cnode = node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      if (common::AnfAlgo::GetCNodeName(cnode) == prim::kTupleGetItem &&
-          cnode->inputs().size() == kTupleGetItemInputSize &&
-          (!cnode->input(kInputNodeOutputIndexInTupleGetItem)->isa<ValueNode>())) {
-        cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(prim::kRealTupleGetItem)));
-        MS_LOG(INFO) << "Exchange tuple get item to real tuple get item for node:" << cnode->DebugString();
-      }
-    }
-  }
-}
-}  // namespace
-
 const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -431,9 +406,8 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
 
   auto root_graph = WrapPrimitives(func_graph);
   MS_EXCEPTION_IF_NULL(root_graph);
+  UnifyMindIR(root_graph);
   root_graph_ = root_graph;
-
-  ExchangeRealTupleGetItem(root_graph);
 
   // Register a summary callback function, which is called in the final stages of summary.
   graph_compiler_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
@@ -485,6 +459,49 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   MS_LOG(INFO) << "Status record: end compile function graph: " << func_graph->ToString()
                << ", produce actor: " << actor_info;
   return actor_info;
+}
+
+void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) {
+  MS_EXCEPTION_IF_NULL(root_graph);
+  MS_EXCEPTION_IF_NULL(root_graph->manager());
+  const std::map<std::string, std::string> kOpListToTupleNames = {{prim::kMakeListNew, prim::kMakeTuple},
+                                                                  {prim::kListGetItem, prim::kTupleGetItem},
+                                                                  {prim::kListSetItem, prim::kTupleSetItem}};
+
+  FuncGraphSet graphs = root_graph->manager()->func_graphs();
+  for (const auto &graph : graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
+    auto nodes = TopoSort(graph->get_return());
+    for (const auto &node : nodes) {
+      if (node == nullptr || (!node->isa<CNode>())) {
+        continue;
+      }
+      const auto &cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      // List name --> tuple name.
+      auto iter = kOpListToTupleNames.find(common::AnfAlgo::GetCNodeName(cnode));
+      if (iter != kOpListToTupleNames.end()) {
+        common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
+        cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(iter->second)));
+        // Reset full scope name.
+        cnode->set_fullname_with_scope("");
+        MS_LOG(INFO) << "Rename op from " << iter->first << " to " << iter->second << " for op "
+                     << cnode->fullname_with_scope() << ", debug name:" << cnode->DebugString();
+      }
+
+      // TupleGetItem --> RealTupleGetItem.
+      if (common::AnfAlgo::GetCNodeName(cnode) == prim::kTupleGetItem &&
+          cnode->inputs().size() == kTupleGetItemInputSize &&
+          (!cnode->input(kInputNodeOutputIndexInTupleGetItem)->isa<ValueNode>())) {
+        common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
+        cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(prim::kRealTupleGetItem)));
+        // Reset full scope name.
+        cnode->set_fullname_with_scope("");
+        MS_LOG(INFO) << "Rename op from TupleGetItem to RealTupleGetItem for op " << cnode->fullname_with_scope()
+                     << ", debug name:" << cnode->DebugString();
+      }
+    }
+  }
 }
 
 void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode) {
