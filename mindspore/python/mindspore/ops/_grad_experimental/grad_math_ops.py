@@ -453,7 +453,7 @@ def get_bprop_lp_norm(self):
         else:
             input_scaled = pow_op(abs_op(input_x), (p - 2)) * input_x
             scale_v = dout / pow_op(out, (p - 1))
-        return (input_scaled * scale_v,)
+        return (mnp.where(input_scaled == 0, 0, input_scaled * scale_v),)
 
     return bprop
 

@@ -1575,7 +1575,9 @@ REG_BPROP_BUILDER("LpNorm").SetBody(BODYFUNC(ib) {
     auto input_x_abs = ib->Emit("Abs", {input_x});
     auto input_scaled = ib->Mul(ib->Pow(input_x_abs, ib->Tensor(p - 2, ib->GetDtype(input_x_abs))), input_x);
     auto scale_v = ib->RealDiv(dout, ib->Pow(out, ib->Tensor(p - 1, ib->GetDtype(out))));
-    return {ib->Mul(input_scaled, scale_v)};
+    auto equal_zero = ib->Equal(input_scaled, ib->Tensor(0, ib->GetDtype(input_scaled)));
+    return {ib->Select(equal_zero, ib->Fill(0.0, ib->GetShape(input_scaled), ib->GetDtype(input_scaled)->type_id()),
+                       ib->Mul(input_scaled, scale_v))};
   }
 });
 
