@@ -250,6 +250,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   void ClearFlag(size_t flag) { CLEAR_FLAG(flag_, flag); }
 
   std::pair<AnfNodeWeakPtr, size_t> node_index() const { return node_index_; }
+  void set_deleter(const std::function<void(uint8_t *)> &deleter) { deleter_ = deleter; }
+  std::function<void(uint8_t *)> deleter() { return deleter_; }
 
  protected:
   const void *ptr() const { return ptr_; }
@@ -288,6 +290,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   // The flag identify where data is stored
   mutable DeviceAddressStatus status_{DeviceAddressStatus::kInDevice};
 
+  // The specified deleter to release memory
+  std::function<void(uint8_t *)> deleter_;
   friend class KernelRuntime;
   friend class MemoryManager;
   friend class mindspore::device::ascend::tasksink::TaskGenerator;

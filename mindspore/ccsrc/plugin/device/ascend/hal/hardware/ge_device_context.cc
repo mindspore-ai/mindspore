@@ -426,9 +426,11 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     const auto &tensor = ge_outputs[i];
     auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, idx);
     ::ge::Placement dp = tensor->GetTensorDesc().GetPlacement();
-    auto ge_data = tensor->ResetData().release();
+    auto &&ge_data_uni = tensor->ResetData();
+    auto deleter = ge_data_uni.get_deleter();
+    auto ge_data = ge_data_uni.release();
     MS_EXCEPTION_IF_NULL(ge_data);
-    if (dp != ::ge::kPlacementDevice) {
+    if (dp == ::ge::kPlacementHost) {
       constexpr int64_t kTensorAlignBytes = 64;
       if (reinterpret_cast<uintptr_t>(ge_data) % kTensorAlignBytes != 0) {
         MS_LOG(EXCEPTION) << "Skip zero-copy ge tensor " << reinterpret_cast<uintptr_t>(ge_data)
@@ -443,6 +445,11 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
       output_addr->set_ptr(ge_data);
       output_addr->SetSize(tensor->GetSize());
       output_addr->set_is_ptr_persisted(false);
+      output_addr->set_from_mem_pool(false);
+      output_addr->set_deleter(deleter);
+    } else {
+      MS_LOG(EXCEPTION) << "It is not supported that Output node " << output_node->DebugString()
+                        << "'s output data's placement is device now.";
     }
 
     auto actual_shapes = tensor->GetTensorDesc().GetShape().GetDims();
