@@ -11,6 +11,11 @@ set(CMAKE_C_COMPILER ${TOOLCHAIN_PATH}/hcc/bin/aarch64-target-linux-gnu-gcc)
 set(CMAKE_CXX_COMPILER ${TOOLCHAIN_PATH}/hcc/bin/aarch64-target-linux-gnu-g++)
 
 if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
+    if(ENABLE_SYM_FILE)
+        string(REPLACE "-ggdb" " " CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+        string(REPLACE "-g" " " CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    endif()
+
     include(${CMAKE_SOURCE_DIR}/cmake/dependency_securec_arm.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/protobuf_arm.cmake)
 
