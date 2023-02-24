@@ -614,7 +614,8 @@ void ControlNodeScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_
       MS_EXCEPTION_IF_NULL(kernel_graph);
       AbstractActor *from_actor = nullptr;
       if (parser->IsCallInputKernelGraph(kernel_graph)) {
-        const auto &actor_name = kernel_graph->ToString() + kStackActorNameSuffix;
+        auto kernel_graph_ptr = std::dynamic_pointer_cast<KernelGraph>(kernel->func_graph());
+        const auto &actor_name = parser->FetchGroupNameByKernelGraph(kernel_graph_ptr) + kStackActorNameSuffix;
         from_actor = FetchActor(actor_name);
       } else {
         const auto &func_graph = parser->FetchFuncGraphByKernelGraph(kernel_graph);
