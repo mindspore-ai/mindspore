@@ -331,8 +331,8 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_
 }
 
 NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &shape_func,
-                               const ops::InferFunc &infer_func,
-                               const std::vector<int64_t> &value_depend_indices) const {
+                               const ops::InferFunc &infer_func, const std::vector<int64_t> &value_depend_indices,
+                               size_t size) const {
   MS_EXCEPTION_IF_NULL(shape_func);
   MS_EXCEPTION_IF_NULL(infer_func);
   if (inputs.empty()) {
@@ -385,13 +385,8 @@ NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &
                    {ops::kAttrValueDependIndices, MakeValue(value_depend_indices)},
                    {kAttrPrimitiveTarget, MakeValue("CPU")}});
   MS_EXCEPTION_IF_NULL(out);
-  MS_EXCEPTION_IF_NULL(out->get());
-  auto abstract = out->get()->abstract();
-  MS_EXCEPTION_IF_NULL(abstract);
-  if (abstract->isa<abstract::AbstractTuple>()) {
-    auto abstract_tuple = abstract->cast<abstract::AbstractTuplePtr>();
-    MS_EXCEPTION_IF_NULL(abstract_tuple);
-    for (size_t i = 0; i < abstract_tuple->size(); ++i) {
+  if (size > 1) {
+    for (size_t i = 0; i < size; ++i) {
       res.push_back(TupleGetItem(out, i));
     }
   } else {

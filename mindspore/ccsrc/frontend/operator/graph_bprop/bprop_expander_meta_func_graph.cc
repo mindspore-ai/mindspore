@@ -310,6 +310,7 @@ void RegArrayBpropExpanderOps1() {
   REGISTER_EXPANDER_BPROP_IMPL(Tril);
   REGISTER_EXPANDER_BPROP_IMPL(Triu);
   REGISTER_EXPANDER_BPROP_IMPL(ZerosLike);
+  REGISTER_EXPANDER_BPROP_IMPL(Concat);
 }
 
 void RegArrayBpropExpanderOps2() {}
