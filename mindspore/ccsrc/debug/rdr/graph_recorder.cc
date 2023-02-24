@@ -93,7 +93,10 @@ void GraphRecorder::Export() {
 namespace RDR {
 bool RecordAnfGraph(const SubModuleId module, const std::string &name, const FuncGraphPtr &graph,
                     const DumpGraphParams &info, const std::string &file_type) {
-  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!mindspore::RecorderManager::Instance().RdrEnable() ||
+      ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     return false;
   }
   std::string submodule_name = std::string(GetSubModuleName(module));
