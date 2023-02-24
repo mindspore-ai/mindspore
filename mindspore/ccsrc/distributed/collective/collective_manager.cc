@@ -483,7 +483,7 @@ bool CollectiveManager::AssignLocalRank() {
   host_comm_lib_instance_->SetLocalGroupSize(host_comm_lib_instance_->global_group_name(), local_group_size);
   // No need to reset device_id if library on device side is not supported, e.g., ascend.
   if (device_lib_supported_) {
-    MsContext::GetInstance()->set_param<uint32_t>(MS_CTX_DEVICE_ID, local_rank_id_);
+    MsContext::GetInstance()->set_param_inner<uint32_t>(MS_CTX_DEVICE_ID, local_rank_id_);
     MS_LOG(INFO) << "The local rank id assigned for this process is " << local_rank_id_
                  << ". device_id of ms_context is set.";
     common::SetEnv("RANK_ID", std::to_string(global_rank_id_).c_str());

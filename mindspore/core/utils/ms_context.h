@@ -189,8 +189,14 @@ class MS_CORE_API MsContext {
   static void ResisterLoadPluginErrorFunc(LoadPluginError func);
 
   template <typename T>
-  void set_param(MsCtxParam, const T &) {
+  void set_param_inner(MsCtxParam, const T &) {
     MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
+  }
+
+  template <typename T>
+  void set_param(MsCtxParam param, const T &value) {
+    CheckReadStatus<T>(param, value);
+    set_param_inner<T>(param, value);
   }
 
   template <typename T>
@@ -239,8 +245,7 @@ class MS_CORE_API MsContext {
 
 // set method implementation for type bool/int/uint32_t/float/std::string
 template <>
-inline void MsContext::set_param<bool>(MsCtxParam param, const bool &value) {
-  CheckReadStatus<bool>(param, value);
+inline void MsContext::set_param_inner<bool>(MsCtxParam param, const bool &value) {
 #ifdef ENABLE_SECURITY
   if (param == MS_CTX_SAVE_GRAPHS_FLAG) {
     MS_EXCEPTION(ValueError) << "The save_graphs is not supported, please without '-s on' and recompile source.";
@@ -250,26 +255,22 @@ inline void MsContext::set_param<bool>(MsCtxParam param, const bool &value) {
 }
 
 template <>
-inline void MsContext::set_param<int>(MsCtxParam param, const int &value) {
-  CheckReadStatus<int>(param, value);
+inline void MsContext::set_param_inner<int>(MsCtxParam param, const int &value) {
   int_params_[param - MS_CTX_TYPE_INT_BEGIN] = value;
 }
 
 template <>
-inline void MsContext::set_param<uint32_t>(MsCtxParam param, const uint32_t &value) {
-  CheckReadStatus<uint32_t>(param, value);
+inline void MsContext::set_param_inner<uint32_t>(MsCtxParam param, const uint32_t &value) {
   uint32_params_[param - MS_CTX_TYPE_UINT32_BEGIN] = value;
 }
 
 template <>
-inline void MsContext::set_param<float>(MsCtxParam param, const float &value) {
-  CheckReadStatus<float>(param, value);
+inline void MsContext::set_param_inner<float>(MsCtxParam param, const float &value) {
   float_params_[param - MS_CTX_TYPE_FLOAT_BEGIN] = value;
 }
 
 template <>
-inline void MsContext::set_param<std::string>(MsCtxParam param, const std::string &value) {
-  CheckReadStatus<std::string>(param, value);
+inline void MsContext::set_param_inner<std::string>(MsCtxParam param, const std::string &value) {
 #ifdef ENABLE_SECURITY
   if (param == MS_CTX_SAVE_GRAPHS_PATH) {
     MS_EXCEPTION(ValueError) << "The save_graphs is not supported, please without '-s on' and recompile source.";
