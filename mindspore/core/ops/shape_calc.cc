@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/shape_clac.h"
+#include "ops/shape_calc.h"
 #include <vector>
 #include <string>
 #include <unordered_set>

@@ -231,7 +231,7 @@ def test_async_dump_net_multi_layer_mode1():
         label = Tensor(np.zeros(shape=(32, 1000)).astype(np.float32))
         net_dict = train_network(inputs, label)
         dump_file_path = os.path.join(dump_path, 'rank_0', 'test', '0', '0')
-        dump_file_name = list(Path(dump_file_path).rglob("*SoftmaxCrossEntropyWithLogits*"))[0]
+        dump_file_name = list(Path(dump_file_path).rglob("SoftmaxCrossEntropyWithLogits*"))[0]
         dump_file_full_path = os.path.join(dump_file_path, dump_file_name)
         npy_path = os.path.join(dump_path, "npy_files")
         if os.path.exists(npy_path):

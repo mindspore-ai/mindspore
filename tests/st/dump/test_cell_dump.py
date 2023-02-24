@@ -149,7 +149,7 @@ def test_ascend_not_cell_dump():
         check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
 
         # make sure set_dump is ignored and all cell layer are dumped
-        assert len(os.listdir(dump_file_path)) == 10
+        assert len(os.listdir(dump_file_path)) == 11
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 

@@ -24,7 +24,7 @@
 #include <tuple>
 #include "ir/func_graph.h"
 #include "ops/core_ops.h"
-#include "ops/shape_clac.h"
+#include "ops/shape_calc.h"
 #include "include/common/utils/utils.h"
 #include "expander/node.h"
 #include "expander/infer.h"
@@ -170,6 +170,7 @@ class MS_CORE_API Emitter {
   ///     used in infer_shape of 'ShapeCalc' op.
   /// \param[in] value_depend_indices If index i exists in 'value_depend', then the value of i'th input tensor instead
   ///     of its shape will be passed to 'func'.
+  /// \param[in] size The size of outputs.
   /// \return NodePtrList, the outputs shape list.
   NodePtrList ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &shape_func, const ops::InferFunc &infer_func,
                         const std::vector<int64_t> &value_depend_indices = {}, size_t size = 1) const;

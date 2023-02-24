@@ -111,7 +111,8 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
 
     const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,
                                            kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-    return CheckAndConvertUtils::CheckSubClass("dtype", output_dtype, valid_types, prim_name);
+    return std::make_shared<TensorType>(
+      CheckAndConvertUtils::CheckSubClass("dtype", output_dtype, valid_types, prim_name));
   }
 
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -134,11 +135,12 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
     }
     TypePtr res_dtype;
     if (input_args.size() == 1) {
-      res_dtype = kFloat32;
+      res_dtype = std::make_shared<TensorType>(kFloat32);
     } else {
       res_dtype = InferType(primitive, input_args);
     }
-    return ScalarToTensorByType(elem_value->cast<ScalarPtr>(), elem->BuildType(), res_dtype);
+    return ScalarToTensorByType(elem_value->cast<ScalarPtr>(), elem->BuildType(),
+                                res_dtype->cast<TensorTypePtr>()->element());
   }
 };
 MIND_API_OPERATOR_IMPL(ScalarToTensor, BaseOperator);

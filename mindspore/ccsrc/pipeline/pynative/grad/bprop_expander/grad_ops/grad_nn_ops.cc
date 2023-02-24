@@ -19,6 +19,22 @@
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::expander::bprop {
+namespace {
+bool IsLastAxis(const ShapeVector &shape, int64_t axis) {
+  if (axis == -1) {
+    return true;
+  }
+  if (IsDynamicRank(shape)) {
+    return false;
+  }
+  auto rank = SizeToLong(shape.size());
+  if (axis < 0) {
+    axis += rank;
+  }
+  return (axis == (rank - 1));
+}
+}  // namespace
+
 NodePtrList Dropout2DBpropExpander(const BpropIRBuilder *ib) {
   auto keep_prob = GetValue<float>(ib->GetAttr("keep_prob"));
   auto x = ib->GetInput(kIndex0);
@@ -55,7 +71,8 @@ NodePtrList Conv2DTransposeBpropExpander(const BpropIRBuilder *ib) {
   auto w = ib->GetInput(kIndex1);
   auto f_sizes = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto w_shape = ib->GetShape(w);
+  auto shp = ib->GetShape(w);
+  auto w_shape = IsDynamic(shp) ? ib->Emit("Shape", {w}) : ib->Value<ShapeVector>(shp);
   auto dx = ib->Emit(kConv2DOpName, {dout, w},
                      {{"pad_mode", ib->GetAttr("pad_mode")},
                       {"pad", ib->GetAttr("pad")},
@@ -68,7 +85,7 @@ NodePtrList Conv2DTransposeBpropExpander(const BpropIRBuilder *ib) {
                       {"out_channel", ib->GetAttr("out_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
                       {"mode", MakeValue(1)}});
-  auto dw = ib->Emit(kConv2DBackpropFilterOpName, {x, dout, ib->Value(w_shape)},
+  auto dw = ib->Emit(kConv2DBackpropFilterOpName, {x, dout, w_shape},
                      {{"mode", ib->GetAttr("mode")},
                       {"dilation", ib->GetAttr("dilation")},
                       {"stride", ib->GetAttr("stride")},
@@ -137,6 +154,7 @@ REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
                       {"pad_list", ib->GetAttr("pad_list")}});
   return {dx, dw};
 });
+
 REG_BPROP_BUILDER("MaxPool").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
@@ -234,7 +252,8 @@ REG_BPROP_BUILDER("Pad").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
     begin.push_back(item.at(0));
   }
   auto shp = ib->GetShape(x);
-  auto dx = ib->Emit("Slice", {dout, ib->EmitValue(MakeValue(begin)), ib->EmitValue(MakeValue(shp))});
+  auto x_shape = IsDynamic(shp) ? ib->Emit("Shape", {x}) : ib->Value<ShapeVector>(shp);
+  auto dx = ib->Emit("Slice", {dout, ib->EmitValue(MakeValue(begin)), x_shape});
   return {dx};
 });
 
@@ -242,11 +261,12 @@ REG_BPROP_BUILDER("ROIAlign").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto inputs = ib->GetInput(kIndex0);
   auto rois = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto inputs_shape = ib->GetShape(inputs);
-  auto dx = ib->Emit("ROIAlignGrad", {dout, rois, ib->EmitValue(MakeValue(inputs_shape))},
+  auto shp = ib->GetShape(inputs);
+  auto inputs_shape = IsDynamic(shp) ? ib->Emit("Shape", {inputs}) : ib->Value<ShapeVector>(shp);
+  auto dx = ib->Emit("ROIAlignGrad", {dout, rois, inputs_shape},
                      {{"pooled_height", ib->GetAttr("pooled_height")},
                       {"pooled_width", ib->GetAttr("pooled_width")},
-                      {"xdiff_shape", MakeValue(inputs_shape)},
+                      {"xdiff_shape", MakeValue(shp)},
                       {"spatial_scale", ib->GetAttr("spatial_scale")},
                       {"sample_num", ib->GetAttr("sample_num")}});
   return {dx, ib->ZerosLike(rois)};
@@ -523,9 +543,11 @@ REG_BPROP_BUILDER("Conv3D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto x_shape = ib->GetShape(x);
-  auto w_shape = ib->GetShape(w);
-  auto dx = ib->Emit("Conv3DBackpropInput", {w, dout, ib->Value<ShapeVector>(x_shape)},
+  auto x_sh = ib->GetShape(x);
+  auto w_sh = ib->GetShape(w);
+  auto x_shape = IsDynamic(x_sh) ? ib->Emit("Shape", {x}) : ib->Value<ShapeVector>(x_sh);
+  auto w_shape = IsDynamic(w_sh) ? ib->Emit("Shape", {w}) : ib->Value<ShapeVector>(w_sh);
+  auto dx = ib->Emit("Conv3DBackpropInput", {w, dout, x_shape},
                      {{"pad_mode", ib->GetAttr("pad_mode")},
                       {"pad", ib->GetAttr("pad")},
                       {"strides", ib->GetAttr("strides")},
@@ -537,9 +559,9 @@ REG_BPROP_BUILDER("Conv3D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
                       {"format", ib->GetAttr("format")},
                       {"out_channel", ib->GetAttr("out_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"input_size", MakeValue(x_shape)},
+                      {"input_size", MakeValue(x_sh)},
                       {"mode", ib->GetAttr("mode")}});
-  auto dw = ib->Emit("Conv3DBackpropFilter", {x, dout, ib->Value<ShapeVector>(w_shape)},
+  auto dw = ib->Emit("Conv3DBackpropFilter", {x, dout, w_shape},
                      {{"pad_mode", ib->GetAttr("pad_mode")},
                       {"pad", ib->GetAttr("pad")},
                       {"strides", ib->GetAttr("strides")},
@@ -551,7 +573,7 @@ REG_BPROP_BUILDER("Conv3D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
                       {"format", ib->GetAttr("format")},
                       {"out_channel", ib->GetAttr("out_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"filter_size", MakeValue(w_shape)},
+                      {"filter_size", MakeValue(w_sh)},
                       {"mode", ib->GetAttr("mode")}});
   dw = ib->Cast(dw, ib->GetDtype(x));
   return {dx, dw};
@@ -565,7 +587,8 @@ REG_BPROP_BUILDER("Conv3DTranspose").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) 
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto w_shape = ib->GetShape(w);
+  auto w_sh = ib->GetShape(w);
+  auto w_shape = IsDynamic(w_sh) ? ib->Emit("Shape", {w}) : ib->Value<ShapeVector>(w_sh);
   auto dx = ib->Emit("Conv3D", {dout, w},
                      {{"out_channel", ib->GetAttr("in_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
@@ -581,10 +604,10 @@ REG_BPROP_BUILDER("Conv3DTranspose").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) 
                       {"offset_x", MakeValue<int64_t>(0)},
                       {"format", ib->GetAttr("format")},
                       {"data_format", ib->GetAttr("format")}});
-  auto dw = ib->Emit("Conv3DBackpropFilter", {dout, x, ib->Value<ShapeVector>(w_shape)},
+  auto dw = ib->Emit("Conv3DBackpropFilter", {dout, x, w_shape},
                      {{"out_channel", ib->GetAttr("in_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"filter_size", MakeValue(w_shape)},
+                      {"filter_size", MakeValue(w_sh)},
                       {"mode", ib->GetAttr("mode")},
                       {"pad_mode", MakeValue("pad")},
                       {"pad", ib->GetAttr("pad_list")},
@@ -778,10 +801,11 @@ REG_BPROP_BUILDER("AvgPool").SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("AvgPool3D").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto x_shape = ib->GetShape(x);
-  auto dx = ib->Emit("AvgPool3DGrad", {ib->Value<ShapeVector>(x_shape), dout},
+  auto x_sh = ib->GetShape(x);
+  auto x_shape = IsDynamic(x_sh) ? ib->Emit("Shape", {x}) : ib->Value<ShapeVector>(x_sh);
+  auto dx = ib->Emit("AvgPool3DGrad", {x_shape, dout},
                      {{"kernel_size", ib->GetAttr("kernel_size")},
-                      {"origin_input_shape", MakeValue(x_shape)},
+                      {"origin_input_shape", MakeValue(x_sh)},
                       {"strides", ib->GetAttr("strides")},
                       {"pad_list", ib->GetAttr("pad_list")},
                       {"ceil_mode", ib->GetAttr("ceil_mode")},
@@ -1062,11 +1086,27 @@ REG_BPROP_BUILDER("Softmax").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto shp = ib->GetShape(x);
-  auto reverse_axis = GetTransposeAxis(shp, one_axis);
+
+  if (IsLastAxis(shp, one_axis)) {
+    return {ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)))};
+  }
+
+  auto shape_func = [one_axis](const ShapeArray &inputs) -> ShapeArray {
+    // inputs: {x_shape}
+    return {GetTransposeAxis(inputs.at(0), one_axis)};
+  };
+
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
+    return {x_rank};
+  };
+
+  NodePtr reverse_axis =
+    IsDynamicRank(shp) ? ib->ShapeCalc({x}, shape_func, infer_func)[0] : ib->Value(GetTransposeAxis(shp, one_axis));
+
   out = ib->Transpose(out, reverse_axis);
   dout = ib->Transpose(dout, reverse_axis);
-  ShapeVector reduce_axis = {-1};
-  auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), reduce_axis, true)));
+  auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)));
   dx = ib->Transpose(dx, reverse_axis);
   return {dx};
 });
@@ -1187,8 +1227,9 @@ REG_BPROP_BUILDER("Conv2DBackpropFilter").SetUnusedInputs({i2, i3}).SetBody(BODY
   auto x = ib->GetInput(kIndex1);
   auto filter_size = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto x_shape = ib->GetShape(x);
-  auto dw_dx = ib->Emit(kConv2DBackpropInputOpName, {dy, dout, ib->Value(x_shape)},
+  auto shp = ib->GetShape(x);
+  auto x_shape = IsDynamic(shp) ? ib->Emit("Shape", {x}) : ib->Value<ShapeVector>(shp);
+  auto dw_dx = ib->Emit(kConv2DBackpropInputOpName, {dy, dout, x_shape},
                         {{"mode", ib->GetAttr("mode")},
                          {"dilation", ib->GetAttr("dilation")},
                          {"stride", ib->GetAttr("stride")},
@@ -1458,7 +1499,9 @@ REG_BPROP_BUILDER("NthElement").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("AdaptiveAvgPool3D").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto x_shape = ib->Tensor(ib->GetShape(x));
+  auto shp = ib->GetShape(x);
+  auto x_shape =
+    IsDynamic(shp) ? ib->Emit("TupleToTensor", {ib->Emit("Shape", {x}), ib->Value(kInt64)}) : ib->Tensor(shp);
   auto dx = ib->Emit("AdaptiveAvgPool3DGrad", {dout, ib->Cast(x_shape, kInt32)});
   return {dx};
 });

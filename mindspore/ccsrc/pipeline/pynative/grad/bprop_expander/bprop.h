@@ -33,7 +33,7 @@ class BpropExpander {
   BpropExpander() {}
   BpropExpander(CNodePtrList *outputs, UserType *users) : outputs_(outputs), users_(users) {}
   ~BpropExpander() = default;
-  bool Run(const CNodePtr &cnode);
+  virtual bool Run(const CNodePtr &cnode);
   const std::vector<size_t> &GetUnusedInputs(const CNodePtr &cnode) const;
 
  protected:
@@ -57,6 +57,7 @@ class BpropExpanderInGraphMode : public BpropExpander {
  public:
   BpropExpanderInGraphMode() {}
   ~BpropExpanderInGraphMode() = default;
+  bool Run(const CNodePtr &cnode) override;
   FuncGraphPtr GetGraph() { return fg_; }
 
  protected:

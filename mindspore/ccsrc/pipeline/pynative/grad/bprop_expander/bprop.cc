@@ -21,6 +21,7 @@
 #include "expander/infer.h"
 #include "utils/anf_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
+#include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
 namespace expander {
@@ -215,6 +216,27 @@ void BpropExpander::DumpResult(const std::string &name) const {
       }
     }
   }
+}
+
+bool BpropExpanderInGraphMode::Run(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(DEBUG) << "Begin building bprop for " << cnode->fullname_with_scope();
+  bool ret = true;
+  if (outputs_ != nullptr) {
+    outputs_->clear();
+  }
+  auto node_name = AnfUtils::GetCNodeName(cnode);
+  try {
+    ret = RunBprop(cnode);
+  } catch (const py::type_error &ex) {
+    MS_EXCEPTION(TypeError) << "Bprop \"" << node_name << "\" encounter a problem: [" << ex.what() << "]";
+  } catch (const py::value_error &ex) {
+    MS_EXCEPTION(ValueError) << "Bprop \"" << node_name << "\" encounter a problem: [" << ex.what() << "]";
+  } catch (const std::exception &e) {
+    MS_LOG(EXCEPTION) << "Bprop \"" << node_name << "\" encounter a problem: [" << e.what() << "]";
+  }
+  MS_LOG(DEBUG) << "Finish building bprop for " << cnode->fullname_with_scope();
+  return ret;
 }
 
 void BpropExpanderInGraphMode::ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder) {
