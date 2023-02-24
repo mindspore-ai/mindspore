@@ -2475,9 +2475,7 @@ class GaussianNLLLoss(LossBase):
 
 class HingeEmbeddingLoss(LossBase):
     r"""
-    Hinge Embedding Loss. Compute the output according to the input elements. Measures the loss given an input tensor x
-    and a labels tensor y (containing 1 or -1).
-    This is usually used for measuring the similarity between two inputs.
+    Measures Hinge Embedding Loss given an input Tensor `logits` and a labels Tensor `labels` (containing 1 or -1).
 
     The loss function for :math:`n`-th sample in the mini-batch is
 

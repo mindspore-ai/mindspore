@@ -3,7 +3,7 @@ mindspore.ops.hinge_embedding_loss
 
 .. py:function:: mindspore.ops.hinge_embedding_loss(inputs, targets, margin=1.0, reduction="mean")
 
-    Hinge Embedding 损失函数。按输入元素计算输出。衡量输入x和标签y（包含1或-1）之间的损失值。通常被用来衡量两个输入之间的相似度。
+    Hinge Embedding 损失函数，衡量输入 `inputs` 和标签 `targets` （包含1或-1）之间的损失值。
 
     mini-batch中的第n个样例的损失函数为：
 

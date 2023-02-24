@@ -3,10 +3,14 @@ mindspore.ops.inner
 
 .. py:function:: mindspore.ops.inner(x, other)
 
-    计算两个1D Tensor的点积。对于更高维度来说，计算结果为在最后一维上，逐元素乘法的和。
+    计算两个1D Tensor的点积。
+
+    对于1D Tensor（没有复数共轭的情况），返回两个向量的点积。
+
+    对于更高的维度，返回最后一个轴上的和积。
 
     .. note::
-        如果 `x` 或 `other` 之一是标量，那么相当于 :code:`mindspore.ops.mul(x, other)`。
+        如果 `x` 或 `other` 之一是标量，那么 :func:`mindspore.ops.inner` 相当于 :func:`mindspore.ops.mul`。
 
     参数：
         - **x** (Tensor) - 第一个输入。

@@ -847,8 +847,8 @@ def _generate_shapes(shape):
 @_function_forbid_reuse
 def rand(*size, dtype=None, seed=None):
     r"""
-    Returns a new Tensor with given shape and dtype, filled with random numbers from the uniform distribution on the
-    interval :math:`[0, 1)`.
+    Returns a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
+    based on the given shape and dtype.
 
     Args:
         size (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g. :math:`(2, 3)` or :math:`2`.
@@ -890,8 +890,8 @@ def rand(*size, dtype=None, seed=None):
 @_function_forbid_reuse
 def rand_like(x, seed=None, *, dtype=None):
     r"""
-    Returns a new Tensor with the shape and dtype as `x`, filled with random numbers from the uniform distribution on
-    the interval :math:`[0, 1)`.
+    Returns a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
+    based on the given shape and dtype.
 
     Args:
         x (Tensor): Input Tensor to specify the output shape and its default dtype.
@@ -961,9 +961,9 @@ def randn(*size, dtype=None, seed=None):
 
     Examples:
         >>> import mindspore.ops as ops
-        >>> print(ops.randn((2,3)))
-        [[ 0.30639967 -0.42438635 -0.20454668]
-         [-0.4287376   1.3054721   0.64747655]]
+        >>> print(ops.randn((2, 2)))
+        [[ 0.30639967 -0.42438635]
+         [-0.4287376   1.3054721 ]]
     """
     if dtype is None:
         dtype = mstype.float32
@@ -1025,7 +1025,7 @@ def randn_like(x, seed=None, *, dtype=None):
 @_function_forbid_reuse
 def randint(low, high, size, seed=None, *, dtype=None):
     r"""
-    Return a Tensor whose elements are random integers from low (inclusive) to high (exclusive).
+    Returns a Tensor whose elements are random integers in the range of [ `low` , `high` ) .
 
     Args:
         low (int): Start value of interval.
@@ -1077,8 +1077,8 @@ def randint(low, high, size, seed=None, *, dtype=None):
 @_function_forbid_reuse
 def randint_like(x, low, high, seed=None, *, dtype=None):
     r"""
-    Returns a tensor with the same shape as Tensor `x` filled with random integers generated uniformly between
-    low (inclusive) and high (exclusive).
+    Returns a tensor with the same shape as Tensor `x` whose elements are random integers in the range
+    of [ `low` , `high` ) .
 
     Args:
         x (Tensor): Input Tensor to specify the output shape and its default dtype.

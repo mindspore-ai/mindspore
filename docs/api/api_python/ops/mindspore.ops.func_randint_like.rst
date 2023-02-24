@@ -3,7 +3,7 @@ mindspore.ops.randint_like
 
 .. py:function:: mindspore.ops.randint_like(x, low, high, *, dtype=None, seed=None)
 
-    返回一个Tensor，其元素为 [ `low` , `high` ) 区间的随机整数。
+    返回一个Tensor，其元素为 [ `low` , `high` ) 区间的随机整数，根据 `x` 决定shape和dtype。
 
     参数：
         - **x** (Tensor) - 输入的Tensor，用来决定输出Tensor的shape和默认的dtype。

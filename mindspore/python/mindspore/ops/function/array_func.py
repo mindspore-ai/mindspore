@@ -405,15 +405,15 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
 
 def where(condition, x, y):
     r"""
-    Returns a tensor whose elements are selected from either `x` or `y` depending on `condition`.
+    Selects elements from `x` or `y` based on `condition` and returns a tensor.
 
     .. math::
         output_i = \begin{cases} x_i,\quad &if\ condition_i \\ y_i,\quad &otherwise \end{cases}
 
     Args:
-        condition (Union[Bool Tensor, bool, scalar]): If True, yield `x` otherwise yield `y`.
-        x (Union[Tensor, Scalar]): Value (if `x` is a scalar) or values selected at indices where condition is True.
-        y (Union[Tensor, Scalar]): Value (if `y` is a scalar) or values selected at indices where condition is False.
+        condition (Union[Bool Tensor, bool, scalar]): If True, yield `x`, otherwise yield `y`.
+        x (Union[Tensor, Scalar]): When `condition` is True, values to select from.
+        y (Union[Tensor, Scalar]): When `condition` is Fasle, values to select from.
 
     Returns:
         Tensor, elements are selected from `x` and `y`.
