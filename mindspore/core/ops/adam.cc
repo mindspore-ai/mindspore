@@ -129,23 +129,19 @@ class AdamInfer : public abstract::OpInferBase {
     auto beta2_type = input_args[kInputIndex7]->BuildType();
     auto epsilon_type = input_args[kInputIndex8]->BuildType();
     auto grad_type = input_args[kInputIndex9]->BuildType();
-    std::map<std::string, TypePtr> type_dict;
-    (void)type_dict.emplace("var", var_type);
-    (void)type_dict.emplace("m", m_type);
-    (void)type_dict.emplace("v", v_type);
-    (void)type_dict.emplace("grad", grad_type);
-    std::set<TypePtr> num_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
-                                  kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-    (void)CheckAndConvertUtils::CheckTensorTypeSame(type_dict, num_type, prim_name);
     std::map<std::string, TypePtr> type_dict1;
+    (void)type_dict1.emplace("var", var_type);
+    (void)type_dict1.emplace("m", m_type);
+    (void)type_dict1.emplace("v", v_type);
+    (void)type_dict1.emplace("grad", grad_type);
     (void)type_dict1.emplace("beta1_power", beta1_power_type);
     (void)type_dict1.emplace("beta2_power", beta2_power_type);
     (void)type_dict1.emplace("lr", lr_type);
     (void)type_dict1.emplace("beta1", beta1_type);
     (void)type_dict1.emplace("beta2", beta2_type);
     (void)type_dict1.emplace("epsilon", epsilon_type);
-    std::set<TypePtr> float_set = {kFloat16, kFloat32};
-    (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(type_dict1, float_set, prim_name, true);
+    std::set<TypePtr> num_type = {kFloat16, kFloat32};
+    (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(type_dict1, num_type, prim_name, true);
     return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, m_type, v_type});
   }
 };
