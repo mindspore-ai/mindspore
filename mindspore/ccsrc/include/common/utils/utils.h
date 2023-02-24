@@ -295,6 +295,7 @@ constexpr auto kDropOutDoMaskOpName = "DropOutDoMask";
 constexpr auto kDropoutDoMaskV3OpName = "DropoutDoMaskV3";
 constexpr auto kDropOutDoMaskV3OpName = "DropOutDoMaskV3";
 constexpr auto kDropOutDoMaskV3DOpName = "DropOutDoMaskV3D";
+constexpr auto kDropOutGenMaskV4OpName = "DropOutGenMaskV4";
 constexpr auto kDropoutGenMaskOpName = "DropoutGenMask";
 constexpr auto kDropoutGenMaskV3OpName = "DropoutGenMaskV3";
 constexpr auto kStatelessDropOutGenMaskOpName = "StatelessDropOutGenMask";

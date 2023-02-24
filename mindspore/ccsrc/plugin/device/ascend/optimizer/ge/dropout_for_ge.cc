@@ -30,6 +30,7 @@ constexpr char kSeed1AttrName[] = "Seed1";
 constexpr char kDstAttrName[] = "DstT";
 constexpr char kSrcAttrName[] = "SrcT";
 constexpr char kDstTypeAttrName[] = "dst_type";
+constexpr char kDtypeAttrName[] = "dtype";
 constexpr size_t kInputIndexOne = 1;
 constexpr size_t kInputIndexTwo = 2;
 }  // namespace
@@ -78,7 +79,7 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
   MS_EXCEPTION_IF_NULL(dropout);
   MS_EXCEPTION_IF_NULL(input_shape);
   std::vector<AnfNodePtr> dropout_gen_mask_inputs =
-    std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>(kDropoutGenMaskOpName))};
+    std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>(kDropOutGenMaskV4OpName))};
   if (input_shape->IsDynamic() || common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, dropout)) {
     CNodePtr dynamic_shape = CreateDynamicShapeCNode(func_graph, dropout->input(kIndex1), input_shape);
     dynamic_shape->set_scope(dropout->scope());
@@ -111,6 +112,7 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
   common::AnfAlgo::CopyNodeAttrs(dropout, dropout_gen_mask);
   common::AnfAlgo::SetNodeAttr(kSeed0AttrName, seed_0, dropout_gen_mask);
   common::AnfAlgo::SetNodeAttr(kSeed1AttrName, seed_1, dropout_gen_mask);
+  common::AnfAlgo::SetNodeAttr(kDtypeAttrName, MakeValue(TypeIdToType(TypeId::kNumberTypeBool)), dropout_gen_mask);
   return dropout_gen_mask;
 }
 
@@ -156,7 +158,7 @@ const AnfNodePtr DropoutForGE::Process(const FuncGraphPtr &graph, const AnfNodeP
     CreateDropoutGenMaskCNode(graph, dropout_node, gen_mask_input_prob, input_shape_ptr, seed_0, seed_1);
 
   auto dropout_do_mask_node =
-    node->func_graph()->NewCNode({NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskOpName)),
+    node->func_graph()->NewCNode({NewValueNode(std::make_shared<Primitive>(kDropOutDoMaskV3DOpName)),
                                   dropout_node->input(kInputIndexOne), dropout_gen_mask_node, gen_mask_input_prob});
   auto do_mask_abstract = dropout_node->input(kInputIndexOne)->abstract();
   dropout_do_mask_node->set_abstract(do_mask_abstract);
@@ -207,7 +209,7 @@ const AnfNodePtr DropoutGradForGE::Process(const FuncGraphPtr &graph, const AnfN
     do_mask_input_prob = cast_node;
   }
   auto dropout_do_mask_node = node->func_graph()->NewCNode(
-    {NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskOpName)), dropout_grad_node->input(kInputIndexOne),
+    {NewValueNode(std::make_shared<Primitive>(kDropOutDoMaskV3DOpName)), dropout_grad_node->input(kInputIndexOne),
      dropout_grad_node->input(kInputIndexTwo), do_mask_input_prob});
   MS_EXCEPTION_IF_NULL(dropout_do_mask_node);
   auto do_mask_abstract = node->abstract();

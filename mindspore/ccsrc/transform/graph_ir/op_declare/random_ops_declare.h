@@ -25,6 +25,9 @@ namespace mindspore::transform {
 DECLARE_OP_ADAPTER(DropOutGenMask)
 DECLARE_OP_USE_OUTPUT(DropOutGenMask)
 
+DECLARE_OP_ADAPTER(DropOutGenMaskV4)
+DECLARE_OP_USE_OUTPUT(DropOutGenMaskV4)
+
 DECLARE_OP_ADAPTER(StatelessDropOutGenMask)
 DECLARE_OP_USE_OUTPUT(StatelessDropOutGenMask)
 

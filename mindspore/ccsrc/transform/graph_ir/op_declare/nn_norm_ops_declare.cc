@@ -151,6 +151,19 @@ OUTPUT_MAP(DropOutDoMask) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DropOutDoMask, kDropOutDoMaskOpName, ADPT_DESC(DropOutDoMask))
 REG_ADPT_DESC(DropoutDoMask, kDropoutDoMaskOpName, ADPT_DESC(DropOutDoMask))
 
+// DropOutDoMaskV3
+INPUT_MAP(DropOutDoMaskV3) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}, {3, INPUT_DESC(keep_prob)}};
+ATTR_MAP(DropOutDoMaskV3) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(DropOutDoMaskV3) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DropOutDoMaskV3, kNameDropOutDoMaskV3, ADPT_DESC(DropOutDoMaskV3))
+
+// DropOutDoMaskV3D
+INPUT_MAP(DropOutDoMaskV3D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}};
+INPUT_ATTR_MAP(DropOutDoMaskV3D) = {{3, ATTR_DESC(keep_prob, AnyTraits<float>())}};
+ATTR_MAP(DropOutDoMaskV3D) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(DropOutDoMaskV3D) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DropOutDoMaskV3D, kNameDropOutDoMaskV3D, ADPT_DESC(DropOutDoMaskV3D))
+
 // BinaryCrossEntropy
 INPUT_MAP(BinaryCrossEntropy) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}, {3, INPUT_DESC(weight)}};
 ATTR_MAP(BinaryCrossEntropy) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};

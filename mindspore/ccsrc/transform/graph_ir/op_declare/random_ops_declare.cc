@@ -24,6 +24,14 @@ ATTR_MAP(DropOutGenMask) = {{"Seed0", ATTR_DESC(seed, AnyTraits<int64_t>())},
 OUTPUT_MAP(DropOutGenMask) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DropOutGenMask, prim::kDropoutGenMask, ADPT_DESC(DropOutGenMask))
 
+// DropOutGenMaskV4
+INPUT_MAP(DropOutGenMaskV4) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(prob)}};
+ATTR_MAP(DropOutGenMaskV4) = {{"Seed0", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                              {"Seed1", ATTR_DESC(seed2, AnyTraits<int64_t>())},
+                              {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+OUTPUT_MAP(DropOutGenMaskV4) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DropOutGenMaskV4, kNameDropOutGenMaskV4, ADPT_DESC(DropOutGenMaskV4))
+
 // StatelessDropOutGenMask
 INPUT_MAP(StatelessDropOutGenMask) = {{1, INPUT_DESC(shape)},
                                       {2, INPUT_DESC(prob)},
