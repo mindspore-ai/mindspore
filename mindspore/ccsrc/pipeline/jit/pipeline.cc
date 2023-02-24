@@ -49,6 +49,7 @@
 #include "utils/crypto.h"
 #include "utils/phase.h"
 #include "include/common/utils/comm_manager.h"
+#include "include/common/utils/stub_tensor.h"
 #include "utils/interpret_node_recorder.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
@@ -208,7 +209,7 @@ bool CheckArgValid(const py::handle &arg) {
   }
 
   if (py::isinstance<Tensor>(arg)) {
-    TensorPtr tensor = PyTensorCast(arg);
+    auto tensor = py::cast<TensorPtr>(arg);
     if (tensor->data_type() == kNumberTypeBool) {
       MS_LOG(INFO) << "It is not recommended to use a tensor of bool data type as network input, which may cause "
                    << "operator compilation failure. For more details, please refer to the FAQ at "
@@ -216,9 +217,9 @@ bool CheckArgValid(const py::handle &arg) {
     }
   }
 
-  return py::isinstance<py::int_>(arg) || py::isinstance<py::float_>(arg) || py::isinstance<py::none>(arg) ||
-         py::isinstance<Number>(arg) || py::isinstance<Tensor>(arg) || py::isinstance<CSRTensor>(arg) ||
-         py::isinstance<COOTensor>(arg);
+  return IsStubTensor(arg) || py::isinstance<py::int_>(arg) || py::isinstance<py::float_>(arg) ||
+         py::isinstance<py::none>(arg) || py::isinstance<Number>(arg) || py::isinstance<Tensor>(arg) ||
+         py::isinstance<CSRTensor>(arg) || py::isinstance<COOTensor>(arg);
 }
 
 std::string GetCompileExceptionInfo() {
@@ -473,13 +474,22 @@ py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple 
 
   size_t count = 0;
   for (auto arg_obj : inputs) {
+    std::shared_ptr<Tensor> m_tensor = nullptr;
+    bool is_tensor = false;
     if (py::isinstance<Tensor>(arg_obj)) {
+      m_tensor = arg_obj.cast<std::shared_ptr<Tensor>>();
+      is_tensor = true;
+    } else if (IsStubTensor(arg_obj)) {
+      m_tensor = ConvertStubTensor(arg_obj);
+      is_tensor = true;
+    }
+    if (is_tensor && m_tensor == nullptr) {
+      MS_LOG(ERROR) << "Verify Tensor error, get ptr is null";
+      return false;
+    }
+
+    if (m_tensor != nullptr) {
       MS_LOG(DEBUG) << "Verify Tensor";
-      std::shared_ptr<Tensor> m_tensor = PyTensorCast(arg_obj);
-      if (m_tensor == nullptr) {
-        MS_LOG(ERROR) << "Verify Tensor error, get ptr is null";
-        return false;
-      }
       auto sig = input_signature[count].cast<std::shared_ptr<MetaTensor>>();
       ShapeVector sig_shape = sig->shape();
       TypePtr sig_type = sig->Dtype();

@@ -22,13 +22,13 @@ from typing import Tuple
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
-from mindspore.common._utils import is_stub_tensor
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import COOTensor as COOTensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import RowTensor as RowTensor_
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import is_stub_tensor
 
 
 class RowTensorInner(RowTensor_):
@@ -49,7 +49,7 @@ class RowTensorInner(RowTensor_):
         # Init a RowTensor from indices, values and shape
         else:
             if is_stub_tensor(values):
-                values.stub_sync()
+                values = values.stub_sync()
             RowTensor_.__init__(self, indices, values, shape)
         self.init_finished = True
 
@@ -189,9 +189,9 @@ class SparseTensor(COOTensor_):
         if not (isinstance(indices, Tensor) and isinstance(values, Tensor) and isinstance(shape, tuple)):
             raise TypeError("Inputs must follow: COOTensor(indices, values, shape).")
         if is_stub_tensor(indices):
-            indices.stub_sync()
+            indices = indices.stub_sync()
         if is_stub_tensor(values):
-            values.stub_sync()
+            values = values.stub_sync()
         COOTensor_.__init__(self, indices, values, shape)
 
     @property
@@ -280,9 +280,9 @@ class COOTensor(COOTensor_):
             validator.check_coo_tensor_dtype(indices.dtype)
             indices = tensor_operator_registry.get('stop_gradient')(indices)
             if is_stub_tensor(indices):
-                indices.stub_sync()
+                indices = indices.stub_sync()
             if is_stub_tensor(values):
-                values.stub_sync()
+                values = values.stub_sync()
             COOTensor_.__init__(self, indices, values, shape)
         self.init_finished = True
 
@@ -617,11 +617,11 @@ class CSRTensor(CSRTensor_):
             indptr = tensor_operator_registry.get('stop_gradient')(indptr)
             indices = tensor_operator_registry.get('stop_gradient')(indices)
             if is_stub_tensor(indptr):
-                indptr.stub_sync()
+                indptr = indptr.stub_sync()
             if is_stub_tensor(values):
-                values.stub_sync()
+                values = values.stub_sync()
             if is_stub_tensor(indices):
-                indices.stub_sync()
+                indices = indices.stub_sync()
             CSRTensor_.__init__(self, indptr, indices, values, shape)
         self.init_finished = True
 

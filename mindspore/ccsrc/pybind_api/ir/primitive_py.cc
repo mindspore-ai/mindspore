@@ -215,8 +215,8 @@ py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args,
                             << (py_args.size() - filter_args_size) << ", but got:" << grads.size() << ".";
   }
   for (size_t i = 0; i < grads.size(); i++) {
-    if (py::isinstance<tensor::Tensor>(py_args[i])) {
-      if (!py::isinstance<tensor::Tensor>(grads[i])) {
+    if (py::isinstance<tensor::Tensor>(py_args[i]) || IsStubTensor(py_args[i])) {
+      if (!py::isinstance<tensor::Tensor>(grads[i]) && !IsStubTensor(grads[i])) {
         MS_EXCEPTION(ValueError) << "For user defined method 'bprop' of net '" << bprop_cls_name << "', the " << i
                                  << "th return value(gradient of the " << i << "th argument) should be Tensor, but got "
                                  << py::cast<std::string>(grads[i].attr("__class__").attr("__name__"))
@@ -313,8 +313,11 @@ void PrimitivePy::CheckHookConsistency(const py::object &grad_out, const py::obj
       MS_EXCEPTION(TypeError) << "The output type of:" << py::str(co_name) << " should be a tensor but got "
                               << py::cast<std::string>(grad_out.attr("__class__").attr("__name__")) << ".";
     }
-    auto actual_out_tensor = PyTensorCast(grad_out);
-    auto expected_out_tensor = PyTensorCast(expected_grad_out);
+    tensor::TensorPtr actual_out_tensor =
+      IsStubTensor(grad_out) ? ConvertStubTensor(grad_out) : py::cast<tensor::TensorPtr>(grad_out);
+    tensor::TensorPtr expected_out_tensor = IsStubTensor(expected_grad_out)
+                                              ? ConvertStubTensor(expected_grad_out)
+                                              : py::cast<tensor::TensorPtr>(expected_grad_out);
     MS_EXCEPTION_IF_NULL(actual_out_tensor);
     MS_EXCEPTION_IF_NULL(expected_out_tensor);
     if (actual_out_tensor->GetShapeAndDataTypeInfo() != expected_out_tensor->GetShapeAndDataTypeInfo()) {

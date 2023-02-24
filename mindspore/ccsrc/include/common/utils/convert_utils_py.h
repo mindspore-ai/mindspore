@@ -34,8 +34,8 @@ namespace mindspore {
 py::object AnyToPyData(const Any &value);
 COMMON_EXPORT py::object BaseRefToPyData(const BaseRef &value, const AbstractBasePtr &abs = nullptr);
 COMMON_EXPORT py::object ValueToPyData(const ValuePtr &value, const AbstractBasePtr &abs = nullptr);
-// Convert python (stub) tensor to c++ tensor.
-COMMON_EXPORT tensor::TensorPtr PyTensorCast(const py::handle &obj);
+COMMON_EXPORT bool IsStubTensor(const py::handle &obj);
+COMMON_EXPORT tensor::TensorPtr ConvertStubTensor(const py::handle &obj);
 COMMON_EXPORT bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
                                                      const std::shared_ptr<py::object> &ret_val);
 }  // namespace mindspore

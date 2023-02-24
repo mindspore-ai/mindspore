@@ -42,7 +42,7 @@ from mindspore._c_expression import GraphExecutor_, Tensor, CSRTensor, RowTensor
 from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _is_pynative_parallel, \
     _get_pipeline_stages, _is_in_auto_parallel_mode
-from mindspore._checkparam import Validator
+from mindspore._checkparam import Validator, is_stub_tensor
 from mindspore.common._utils import is_shape_unknown
 from mindspore.common.mutable import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
@@ -106,7 +106,8 @@ def _wrap_func(fn):
 
 def _check_all_tensor(sequence):
     for element in sequence:
-        if not isinstance(element, Tensor) and not (isinstance(element, tuple) and _check_all_tensor(element)):
+        if not isinstance(element, Tensor) and not is_stub_tensor(element) and not (isinstance(element, tuple)
+                                                                                    and _check_all_tensor(element)):
             return False
     return True
 
@@ -359,7 +360,7 @@ class _MindsporeFunctionExecutor:
         compile_args = _restore_mutable_attr(args, compile_args)
 
         generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
-                        str(self.fn.__code__.co_firstlineno)
+            str(self.fn.__code__.co_firstlineno)
         if _pynative_executor.grad_flag():
             generate_name = generate_name + ".grad"
         if _is_pynative_parallel():
@@ -690,7 +691,7 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
         ...     closure_fn(inputs, func)
     """
 
-    logger.warning("'mindspore.ms_function' will be deprecated and removed in a future version. " \
+    logger.warning("'mindspore.ms_function' will be deprecated and removed in a future version. "
                    "Please use 'mindspore.jit' instead.")
     return jit(fn=fn, input_signature=input_signature, hash_args=hash_args, jit_config=jit_config)
 
@@ -836,7 +837,7 @@ def ms_class(cls):
         20
     """
 
-    logger.warning("'mindspore.ms_class' will be deprecated and removed in a future version. " \
+    logger.warning("'mindspore.ms_class' will be deprecated and removed in a future version. "
                    "Please use 'mindspore.jit_class' instead.")
 
     # Check if cls is of type class.
@@ -1583,6 +1584,7 @@ def _generate_branch_control_input(obf_random_seed):
 def _bind_device_context():
     """Bind device context to current thread"""
     _bind_device_ctx()
+
 
 _cell_graph_executor = _CellGraphExecutor()
 _pynative_executor = _PyNativeExecutor()

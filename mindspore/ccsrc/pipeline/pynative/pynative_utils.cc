@@ -48,6 +48,21 @@ std::string GetObjIdFromPython(const py::handle &obj) {
   return out.cast<std::string>();
 }
 
+std::string GetIdForPyTupleOrList(const py::handle &obj) {
+  auto p_list = py::cast<py::tuple>(obj);
+  string prefix = py::isinstance<py::tuple>(obj) ? "Tuple<" : "List<";
+  if (p_list.empty()) {
+    prefix = "Empty:";
+  } else {
+    for (size_t i = 0; i < p_list.size(); ++i) {
+      prefix += PyParser::GetIdByPyObj(p_list[i]) + ":";
+    }
+  }
+  prefix.pop_back();
+  prefix += ">";
+  return prefix;
+}
+
 std::string GetFnInfoByPyObj(const py::object &obj) {
   std::string fn_info = obj.attr("__module__").cast<std::string>();
   fn_info += "_" + obj.attr("__name__").cast<std::string>();
@@ -287,7 +302,9 @@ void Common::ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph) {
 
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
   if (py::isinstance<tensor::Tensor>(obj)) {
-    return PyTensorCast(obj)->id();
+    return obj.cast<tensor::TensorPtr>()->id();
+  } else if (IsStubTensor(obj)) {
+    return ConvertStubTensor(obj)->id();
   } else if (py::isinstance<Cell>(obj)) {
     return obj.cast<CellPtr>()->id();
   } else if (py::isinstance<mindspore::Type>(obj)) {
@@ -306,18 +323,7 @@ std::string PyParser::GetIdByPyObj(const py::object &obj) {
   } else if (py::isinstance<py::ellipsis>(obj)) {
     return "Ellipsis";
   } else if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
-    auto p_list = py::cast<py::tuple>(obj);
-    string prefix = py::isinstance<py::tuple>(obj) ? "Tuple<" : "List<";
-    if (p_list.empty()) {
-      prefix = "Empty:";
-    } else {
-      for (size_t i = 0; i < p_list.size(); ++i) {
-        prefix += PyParser::GetIdByPyObj(p_list[i]) + ":";
-      }
-    }
-    prefix.pop_back();
-    prefix += ">";
-    return prefix;
+    return GetIdForPyTupleOrList(obj);
   } else if (py::isinstance<py::function>(obj)) {
     return GetFnInfoByPyObj(obj);
   }
