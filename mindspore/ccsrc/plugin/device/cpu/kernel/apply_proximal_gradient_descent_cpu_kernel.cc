@@ -162,7 +162,7 @@ void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelDefault(const std::ve
   auto delta_addr = reinterpret_cast<T *>(inputs[4]->addr);
   auto task = [this, &var_addr, &alpha_addr, &l1_addr, &l2_addr, &delta_addr](size_t start, size_t end) {
     auto cur_input_elements = end - start;
-    for (int64_t b = 0; b < batch_size_; b++) {
+    for (size_t b = 0; b < static_cast<size_t>(batch_size_); b++) {
       auto offset = b * input_elements_ + start;
       auto var_cur = var_addr + offset;
       auto delta_cur = delta_addr + offset;
@@ -192,7 +192,7 @@ void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelOptFp32(const std::ve
 
   auto task = [this, &var, &alpha, &l1, &l2, &delta](size_t start, size_t end) {
     auto cur_input_elements = end - start;
-    for (int64_t b = 0; b < batch_size_; b++) {
+    for (size_t b = 0; b < static_cast<size_t>(batch_size_); b++) {
       auto offset = b * input_elements_ + start;
       auto var_cur = var + offset;
       auto delta_cur = delta + offset;
