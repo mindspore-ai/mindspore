@@ -18,6 +18,46 @@ import pytest
 import mindspore as ms
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_return_scalar():
+    """
+    Feature: Return scalar.
+    Description: Support return scalar type.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x, y):
+        return x + y
+
+    out1 = func(ms.mutable(1), ms.mutable(2))
+    out2 = func(ms.mutable(3), ms.mutable(4.0))
+    out3 = func(ms.mutable(5.0), ms.mutable(6.0))
+    assert isinstance(out1, int) and out1 == 3
+    assert isinstance(out2, float) and abs(out2 - 7) < 1e-6
+    assert isinstance(out3, float) and abs(out3 - 11) < 1e-6
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_return_scalar_tuple():
+    """
+    Feature: Return scalar.
+    Description: Support return scalar type.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x, y):
+        return (x + y, x - y, x * y)
+
+    out = func(ms.mutable(6), ms.mutable(4))
+    assert isinstance(out[0], int) and out[0] == 10
+    assert isinstance(out[1], int) and out[1] == 2
+    assert isinstance(out[2], int) and out[2] == 24
+
+
 @pytest.mark.skip(reason="No support by now.")
 def test_builtin_int():
     """

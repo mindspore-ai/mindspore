@@ -39,6 +39,7 @@ class TensorArrayNet(nn.Cell):
         self.ta.close()
         return v, s
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -56,7 +57,7 @@ def test_tensorarray():
     expect_v = 24
     expect_s = [15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
     assert np.allclose(s.asnumpy(), expect_s)
-    assert np.allclose(v.asnumpy(), expect_v)
+    assert v == expect_v
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     tb = nn.TensorArray(mindspore.int64, ())
@@ -100,6 +101,7 @@ def test_tensorarray():
     assert np.allclose(s.asnumpy(), expect_s)
     td.close()
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -117,4 +119,4 @@ def test_static_tensorarray():
     expect_v = 24
     expect_s = [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 0, 0]
     assert np.allclose(s.asnumpy(), expect_s)
-    assert np.allclose(v.asnumpy(), expect_v)
+    assert v == expect_v

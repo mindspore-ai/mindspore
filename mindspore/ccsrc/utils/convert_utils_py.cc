@@ -24,6 +24,7 @@
 #include <utility>
 #include <cfloat>
 
+#include "Eigen/Core"
 #include "abstract/abstract_value.h"
 #include "abstract/utils.h"
 #include "pipeline/jit/parse/parse_base.h"
@@ -74,6 +75,45 @@ py::object SetAdaptedAttrToTensor(const py::object &tensor, const AbstractBasePt
   return tensor;
 }
 
+py::object CheckAndConvertToScalar(const tensor::TensorPtr &tensor, const AbstractBasePtr &abs) {
+  if (abs == nullptr || !abs->isa<abstract::AbstractScalar>()) {
+    return py::none();
+  }
+  tensor->data_sync();
+  auto *data = tensor->data_c();
+  auto type = abs->BuildType()->type_id();
+  switch (type) {
+    case kNumberTypeBool:
+      return py::bool_(*reinterpret_cast<const bool *>(data));
+    case kNumberTypeInt16:
+      return py::int_(*reinterpret_cast<const int16_t *>(data));
+    case kNumberTypeUInt16:
+      return py::int_(*reinterpret_cast<const uint16_t *>(data));
+    case kNumberTypeInt8:
+      return py::int_(*reinterpret_cast<const int8_t *>(data));
+    case kNumberTypeUInt8:
+      return py::int_(*reinterpret_cast<const uint8_t *>(data));
+    case kNumberTypeInt32:
+      return py::int_(*reinterpret_cast<const int32_t *>(data));
+    case kNumberTypeUInt32:
+      return py::int_(*reinterpret_cast<const uint32_t *>(data));
+    case kNumberTypeInt64:
+      return py::int_(*reinterpret_cast<const int64_t *>(data));
+    case kNumberTypeUInt64:
+      return py::int_(*reinterpret_cast<const uint64_t *>(data));
+    case kNumberTypeFloat16: {
+      const Eigen::half_impl::__half_raw data_half(*reinterpret_cast<const uint16_t *>(data));
+      return py::float_(Eigen::half_impl::half_to_float(data_half));
+    }
+    case kNumberTypeFloat32:
+      return py::float_(*reinterpret_cast<const float *>(data));
+    case kNumberTypeFloat64:
+      return py::float_(*reinterpret_cast<const double *>(data));
+    default:
+      return py::none();
+  }
+}
+
 py::object CSRTensorToPyData(const tensor::CSRTensorPtr &csr_tensor) {
   auto ref = py::tuple(1);
   ref[0] = csr_tensor;
@@ -86,6 +126,11 @@ py::object TensorToPyData(const tensor::TensorPtr &tensor, const AbstractBasePtr
     py::gil_scoped_release release;
     tensor->Wait();
   }
+  auto scalar_obj = CheckAndConvertToScalar(tensor, abs);
+  if (!py::isinstance<py::none>(scalar_obj)) {
+    return scalar_obj;
+  }
+
   py::tuple v(1);
   v[0] = tensor;
   v[0] = SetAdaptedAttrToTensor(v[0], abs);
