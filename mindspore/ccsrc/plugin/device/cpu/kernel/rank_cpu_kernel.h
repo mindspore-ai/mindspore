@@ -20,100 +20,32 @@
 #include <string>
 #include <limits>
 #include <tuple>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 
 namespace mindspore {
 namespace kernel {
-namespace rank {
-enum Method : int {
-  Average,
-  Max,
-  Min,
-  First,
-  Dense,
-  MethodNotDefined,
-};
-enum NaOption : int {
-  Keep,
-  Top,
-  Bottom,
-  OptionNotDefined,
-};
-}  // namespace rank
-class RankCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class RankCpuKernelMod : public NativeCpuKernelMod {
  public:
   RankCpuKernelMod() = default;
   ~RankCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
-  void SetFunc();
-
-  template <typename T>
-  void Launch1D(const T *input_addr, size_t *sort_idx, T *values, const AxisIterator &iter, float *output_addr) const;
-  template <typename T>
-  void Launch1D(const T *input_addr, size_t *sort_idx, T *values, bool *is_nan, const AxisIterator &iter,
-                float *output_addr) const;
-
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, workspace, outputs);
-  }
-
-  std::vector<KernelAttr> GetOpSupport() override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override { init_func_(this, kernel_node); }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T>
-  inline void SortIndex(size_t *sort_idx, const T *values, const AxisIterator &iter) const {
-    std::iota(sort_idx, sort_idx + iter.AxisSize(), 0);
-    if (ascending_) {
-      std::stable_sort(sort_idx, sort_idx + iter.AxisSize(),
-                       [values](size_t lhs, size_t rhs) { return values[lhs] < values[rhs]; });
-    } else {
-      std::stable_sort(sort_idx, sort_idx + iter.AxisSize(),
-                       [values](size_t lhs, size_t rhs) { return values[lhs] > values[rhs]; });
-    }
-  }
-  template <typename T>
-  inline T GetPaddingValue() const {
-    if (ascending_ != (option_ == rank::NaOption::Top)) {
-      return std::numeric_limits<T>::max();
-    } else {
-      return std::numeric_limits<T>::min();
-    }
-  }
-  void PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank, size_t nans_count) const;
-  void PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank) const;
-
-  template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
-  template <typename T>
-  void InitIOSize(const CNodePtr &kernel_node);
-
-  using RankFunc = std::function<bool(RankCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  using InitFunc = std::function<void(RankCpuKernelMod *, const CNodePtr &)>;
-  static std::vector<std::tuple<KernelAttr, RankFunc, InitFunc>> func_list_;
-  RankFunc kernel_func_;
-  InitFunc init_func_;
-
-  // shape info
-  AxisIterator axisIterator_{};
-  // parameters
-  size_t axis_{0};
-  rank::Method method_{rank::MethodNotDefined};
-  std::function<void(size_t, size_t, int, const AxisIterator &, const size_t *const, float *const)> func_;
-  rank::NaOption option_{rank::OptionNotDefined};
-  bool ascending_{true};
-  bool pct_{false};
+  int64_t input_shape_size;
 };
 }  // namespace kernel
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RANK_CPU_KERNEL_H_

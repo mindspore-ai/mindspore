@@ -1170,7 +1170,7 @@ class Split(Primitive):
         self.add_prim_attr('num_split', self.output_num)
 
 
-class Rank(PrimitiveWithInfer):
+class Rank(Primitive):
     """
     Returns the rank of a tensor.
 
@@ -1192,13 +1192,6 @@ class Rank(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize Rank"""
-
-    def __infer__(self, x):
-        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
-        out = {'shape': None,
-               'dtype': None,
-               'value': len(x['shape'])}
-        return out
 
     def __call__(self, x):
         if not isinstance(x, (Tensor, Tensor_)):
