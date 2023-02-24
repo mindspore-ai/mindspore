@@ -44,19 +44,7 @@
 
 namespace mindspore {
 namespace opt {
-void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  MS_LOG(INFO) << "Status record: start common optimization. graph id: " << kernel_graph->graph_id();
-  PROF_START(backend_common_optimization);
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-#ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "hwopt_common_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph);
-  }
-#endif
-  auto optimizer = std::make_shared<GraphOptimizer>();
+PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &graph) {
   auto common_pm = std::make_shared<PassManager>("common_pm");
   common_pm->AddPass(std::make_shared<AddDynamicShapeAttr>());
   common_pm->AddPass(std::make_shared<ConvertDynamicBroadcastTo>());
@@ -69,7 +57,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
 #ifdef ENABLE_TUPLE_UNFOLD
   MS_LOG(INFO) << "Enable tuple unfold.";
-  if (kernel_graph->has_flag(kAttrMutableKernel) || kernel_graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
+  if (graph->has_flag(kAttrMutableKernel) || graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
     common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
   }
 #else
@@ -77,7 +65,23 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
 #endif
   common_pm->AddPass(std::make_shared<FlattenConcatFission>());
   common_pm->AddPass(std::make_shared<AddDropoutAttrs>());
-  optimizer->AddPassManager(common_pm);
+  return common_pm;
+}
+
+void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  PROF_START(backend_common_optimization);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "Status record: start common optimization. graph id: " << kernel_graph->graph_id();
+#ifdef ENABLE_DUMP_IR
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_common_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
+  }
+#endif
+  auto optimizer = std::make_shared<GraphOptimizer>();
+  optimizer->AddPassManager(GetBackendCommonOptimizationPassManagerPtr(kernel_graph));
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   PROF_END(backend_common_optimization);
@@ -92,8 +96,8 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
 
 // Delete this optimizer when dynamic and static ReduceSum is unified.
 void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  MS_LOG(INFO) << "Status record: start op common optimization. graph id: " << kernel_graph->graph_id();
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "Status record: start op common optimization. graph id: " << kernel_graph->graph_id();
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("op_common_pm");
   common_pm->AddPass(std::make_shared<ReduceOptimizer>());
@@ -125,6 +129,15 @@ void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel
 #endif
 }
 
+PassManagerPtr GetCommonUnifyMindIRPassManager() {
+  auto pm = std::make_shared<PassManager>("common_unify_mindir_pm");
+  pm->AddPass(std::make_shared<ConvTransposeToConvBackpropInputPass>());
+  pm->AddPass(std::make_shared<CustomOpRegInfoToAttr>());
+  pm->AddPass(std::make_shared<InplaceAssignForCustomOp>());
+  pm->AddPass(std::make_shared<ConvertAttrToUnifyMindIR>());
+  return pm;
+}
+
 void CommonUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "start common unify mindir opt graph:" << kernel_graph->graph_id();
@@ -138,12 +151,7 @@ void CommonUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   }
 #endif
   auto opt = std::make_shared<GraphOptimizer>();
-  auto pm = std::make_shared<PassManager>("common_unify_mindir_pm");
-  pm->AddPass(std::make_shared<ConvTransposeToConvBackpropInputPass>());
-  pm->AddPass(std::make_shared<CustomOpRegInfoToAttr>());
-  pm->AddPass(std::make_shared<InplaceAssignForCustomOp>());
-  pm->AddPass(std::make_shared<ConvertAttrToUnifyMindIR>());
-  opt->AddPassManager(pm);
+  opt->AddPassManager(GetCommonUnifyMindIRPassManager());
   (void)opt->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
@@ -162,6 +170,13 @@ void AddDynamicShapeAttrPass(const std::shared_ptr<session::KernelGraph> &kernel
   (void)opt->Optimize(kernel_graph);
 }
 
+PassManagerPtr GetEliminateIllegalDataTypePassManager() {
+  auto pm = std::make_shared<PassManager>("common_eliminate_illegal_data_type_pm");
+  pm->AddPass(std::make_shared<ConvertListToTuple>());
+  pm->AddPass(std::make_shared<EliminateFuncDataType>());
+  return pm;
+}
+
 void EliminateIllegalDataTypePass(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Start eliminate illegal data type for kernel graph id:" << kernel_graph->graph_id();
@@ -175,11 +190,7 @@ void EliminateIllegalDataTypePass(const std::shared_ptr<session::KernelGraph> &k
   }
 #endif
   auto opt = std::make_shared<GraphOptimizer>();
-  auto pm = std::make_shared<PassManager>("common_eliminate_illegal_data_type_pm");
-  // Backend support the list data type converted to tuple.
-  pm->AddPass(std::make_shared<ConvertListToTuple>());
-  pm->AddPass(std::make_shared<EliminateFuncDataType>());
-  opt->AddPassManager(pm);
+  opt->AddPassManager(GetEliminateIllegalDataTypePassManager());
   (void)opt->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR

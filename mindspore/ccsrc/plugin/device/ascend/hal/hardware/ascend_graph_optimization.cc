@@ -548,6 +548,11 @@ void AscendGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
   MS_LOG(INFO) << "Status record: end unify mindir. graph id: " << graph->graph_id();
 }
 
+void AscendGraphOptimization::AddUnifyMindIRPass(const std::shared_ptr<opt::GraphOptimizer> &opt) const {
+  opt->AddPassManager(opt::GetCommonUnifyMindIRPassManager());
+  opt->AddPassManager(opt::GetAscendUnifyMindIRPassManager());
+}
+
 void AscendGraphOptimization::OpAdaptation(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start op adaptation. graph id: " << graph->graph_id();
