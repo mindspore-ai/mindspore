@@ -2,6 +2,26 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 1.10.1 Release Notes
+
+### 问题修复
+
+- 修复logsumexp防溢出处理中未考虑指定axis的问题
+- 修复proto文件的编译依赖问题
+- 修复print算子打印结果不正常的问题
+- 修复equal算子越界问题
+- 修复函数被@jit修饰后，导致的cell_id解析不正确的问题
+- 修复GNN场景数据类型校验错误
+- 修复Dataset map多进程退化成线程的问题
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+archer2049, caifubi, chenfei_mindspore, gaoshuanglong, Greatpan, guozhijian, huoxinyou, Kxiong, lanzhineng, lijunbin, liubuyu, liuchuting, luochao60, lyqlola, nomindcarry, TuDouNi, xiaotianci, xupan, yangshuo, yefeng, YingtongHu, yuchaojie, zhoufeng, ZPaC, 刘勇琪, 吕昱峰, 王禹程, 于振华.
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 1.10.0 Release Notes
 
 ### 主要特性和增强
