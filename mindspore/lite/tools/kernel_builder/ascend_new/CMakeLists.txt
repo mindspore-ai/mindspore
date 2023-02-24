@@ -109,8 +109,5 @@ endif()
 add_custom_command(TARGET ${RUN_TARGET}
         PRE_BUILD
         COMMAND chmod u+x ./makepkg/*.sh
-        COMMAND ${CMAKE_SOURCE_DIR}/cmake/util/makeself/makeself.sh
-                    --gzip --complevel 4 --nomd5 --sha256
-                    ./makepkg ${RUN_TARGET} "version:1.0" ./install.sh
         )
 
