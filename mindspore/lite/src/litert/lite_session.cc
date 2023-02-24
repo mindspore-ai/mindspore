@@ -61,7 +61,9 @@
 #ifndef __ANDROID__
 #include "kernel/ascend/plugin/ascend_kernel_plugin.h"
 #endif
+#if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
 #include "thread/parallel_thread_pool_manager.h"
+#endif
 #include "src/litert/runtime_packed_node_pass.h"
 
 using AbstractBaseModel = mindspore::infer::AbstractBaseModel;
