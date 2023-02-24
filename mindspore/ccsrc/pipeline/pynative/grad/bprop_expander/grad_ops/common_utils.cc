@@ -290,7 +290,8 @@ std::vector<int64_t> GetIntList(const NodePtr &node) {
     auto value = node->get<ValueNodePtr>()->value();
     return GetIntList(value);
   }
-  return GetIntList(node->get()->abstract()->BuildValue());
+  MS_EXCEPTION_IF_NULL(node->abstract());
+  return GetIntList(node->abstract()->BuildValue());
 }
 
 NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,

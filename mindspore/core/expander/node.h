@@ -43,6 +43,8 @@ class MS_CORE_API Node : public std::enable_shared_from_this<Node> {
     return anf_node_->cast<T>();
   }
 
+  AbstractBasePtr abstract();
+
   std::vector<int64_t> shape();
   std::vector<std::vector<int64_t>> shapes();
 

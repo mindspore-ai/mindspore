@@ -1667,7 +1667,7 @@ REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex4);
   auto mode = GetValue<std::string>(ib->GetAttr("mode"));
   NodePtr dx;
-  auto pad = paddings->get()->abstract()->BuildValue();
+  auto pad = paddings->abstract()->BuildValue();
   MS_EXCEPTION_IF_NULL(pad);
   std::vector<int64_t> pad_value;
   if (pad->isa<tensor::Tensor>()) {

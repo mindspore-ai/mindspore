@@ -65,15 +65,14 @@ void BpropExpander::ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *i
                        [ir_builder](const AnfNodePtr &no) { return std::make_shared<Node>(no, ir_builder); });
 }
 
-std::unique_ptr<BpropIRBuilder> BpropExpander::CreateIRBuilder(const std::string &name, const CNodePtr &cnode,
-                                                               const std::shared_ptr<CppInfer> &infer) {
+std::unique_ptr<BpropIRBuilder> BpropExpander::CreateIRBuilder(const std::string &name, const CNodePtr &cnode) {
+  auto infer = std::make_shared<CppInfer>();
   return std::make_unique<BpropIRBuilder>(name, cnode->func_graph(), infer);
 }
 
 bool BpropExpander::RunBprop(const CNodePtr &cnode) {
-  auto infer = std::make_shared<CppInfer>();
   auto name = AnfUtils::GetCNodeName(cnode);
-  auto ir_builder = CreateIRBuilder(name, cnode, infer);
+  auto ir_builder = CreateIRBuilder(name, cnode);
   ExtractInputs(cnode, ir_builder.get());
   auto &attrs = GetCNodePrimitive(cnode)->attrs();
   auto handle = GetBpropHandle(name);
@@ -229,23 +228,48 @@ void BpropExpanderInGraphMode::ExtractInputs(const CNodePtr &cnode, const BpropI
                        });
 }
 
+class LazyInfer : public CppInfer {
+ public:
+  void Infer(const NodePtr &node) override { return; }
+
+  AbstractBasePtr GetAbstract(const NodePtr &node) override {
+    auto anfnode = node->get();
+    if (anfnode->abstract() == nullptr) {
+      InferNow(anfnode);
+    }
+    return anfnode->abstract();
+  }
+
+ protected:
+  void InferNow(const AnfNodePtr &node) {
+    if (node->isa<CNode>()) {
+      auto cnode = node->cast<CNodePtr>();
+      for (size_t i = 1; i < cnode->size(); i++) {
+        if (cnode->input(i)->abstract() == nullptr) {
+          InferNow(cnode->input(i));
+        }
+      }
+    }
+    CppInfer::InferAnfnode(node);
+  }
+};
+
 std::unique_ptr<BpropIRBuilder> BpropExpanderInGraphMode::CreateIRBuilder(const std::string &name,
-                                                                          const CNodePtr &cnode,
-                                                                          const std::shared_ptr<CppInfer> &infer) {
+                                                                          const CNodePtr &cnode) {
   fg_ = std::make_shared<FuncGraph>();
+  ExpanderInferPtr infer;
+  // default use LazyInfer in graph mode.
+  static bool use_imm_infer = (common::GetEnv("MS_DEV_BPROP_IMM_INFER") == "on");
+  if (use_imm_infer) {
+    infer = std::make_shared<CppInfer>();
+  } else {
+    infer = std::make_shared<LazyInfer>();
+  }
   return std::make_unique<BpropIRBuilder>(name, fg_, infer);
 }
 
 void BpropExpanderInGraphMode::PostProcess() const {
-  AnfNodePtrList new_outputs{NewValueNode(prim::kPrimMakeTuple)};
-  AbstractBasePtrList abs;
-  (void)std::transform(output_nodes_.cbegin(), output_nodes_.cend(), std::back_inserter(new_outputs),
-                       [&abs](const NodePtr &node) {
-                         abs.push_back(node->get()->abstract());
-                         return node->get();
-                       });
-  auto mt = fg_->NewCNode(new_outputs);
-  mt->set_abstract(std::make_shared<abstract::AbstractTuple>(abs));
+  auto mt = output_nodes_[0]->emitter()->MakeTuple(output_nodes_)->get();
   fg_->set_output(mt);
 
   // clear all abstract, to let the specializer re-infer the subgraph of controlflow graphs.
