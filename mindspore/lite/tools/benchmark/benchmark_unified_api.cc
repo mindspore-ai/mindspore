@@ -432,7 +432,6 @@ void BenchmarkUnifiedApi::UpdateDistributionName(const std::shared_ptr<mindspore
 
 int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context> &context) {
   context->SetThreadNum(flags_->num_threads_);
-  context->SetEnableParallel(flags_->enable_parallel_);
   context->SetThreadAffinity(flags_->cpu_bind_mode_);
   context->SetInterOpParallelNum(flags_->inter_op_parallel_num_);
   if (!flags_->core_list_.empty()) {
@@ -444,6 +443,7 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
   } else if (flags_->delegate_mode_ == "NNAPI") {
     context->SetBuiltInDelegate(kNNAPI);
   }
+  context->SetEnableParallel(flags_->enable_parallel_);
 #endif
 
   auto &device_list = context->MutableDeviceInfo();

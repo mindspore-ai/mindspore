@@ -32,9 +32,8 @@ class ContextUtils {
   static std::shared_ptr<lite::InnerContext> Convert(Context *context);
 
  private:
-  static void SetContextAttr(int32_t thread_num, int32_t inter_op_parallel_num, bool enable_parallel,
-                             const std::vector<int32_t> &affinity_core_list, const std::shared_ptr<Delegate> &delegate,
-                             lite::InnerContext *inner_context, bool float_mode = false);
+  static void SetContextAttr(int32_t thread_num, int32_t inter_op_parallel_num,
+                             const std::vector<int32_t> &affinity_core_list, lite::InnerContext *inner_context);
   static Status AddCpuDevice(const std::shared_ptr<Allocator> &allocator, int affinity_mode, bool enable_fp16,
                              const std::string &provider, const std::string &provider_device,
                              lite::InnerContext *inner_context);

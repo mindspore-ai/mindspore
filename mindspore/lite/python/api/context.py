@@ -99,7 +99,8 @@ class Context:
         if thread_affinity_mode is not None:
             self._context.set_thread_affinity_mode(thread_affinity_mode)
         self._context.set_thread_affinity_core_list(core_list)
-        self._context.set_enable_parallel(enable_parallel)
+        if enable_parallel:
+            self._context.set_enable_parallel(enable_parallel)
 
     def __str__(self):
         res = f"thread_num: {self._context.get_thread_num()},\n" \

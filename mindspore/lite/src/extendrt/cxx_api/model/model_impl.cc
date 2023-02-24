@@ -84,6 +84,14 @@ ConverterFunc ConverterPlugin::GetConverterFunc() {
 
 Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, ModelType model_type,
                                     const std::shared_ptr<Context> &model_context, const std::string &model_path) {
+  if (model_data == nullptr) {
+    MS_LOG(ERROR) << "The input model buffer is nullptr.";
+    return kLiteNullptr;
+  }
+  if (data_size == 0) {
+    MS_LOG(ERROR) << "The input model buffer size is 0.";
+    return kLiteInputParamInvalid;
+  }
   if (model_type != kMindIR) {
     MS_LOG(ERROR) << "Invalid model type";
     return kLiteError;
