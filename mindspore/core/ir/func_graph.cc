@@ -598,7 +598,7 @@ AnfNodePtr FuncGraph::GetVariableArgParameter() {
                       << ", has_vararg: " << has_vararg_ << ", has_kwarg: " << has_kwarg_
                       << ", kw_only_args_count_: " << kw_only_args_count_;
   }
-  return parameters_[parameters_.size() - min_param_num + IntToSize(kw_only_args_count_)];
+  return parameters_[parameters_.size() - min_param_num];
 }
 
 std::string FuncGraph::GetVariableArgName() {
@@ -625,12 +625,9 @@ AnfNodePtr FuncGraph::GetVariableKwargParameter() {
 }
 
 std::string FuncGraph::GetVariableKwargName() {
-  if (has_kwarg_) {
-    if (parameters_.size() < fv_param_count_ + 1) {
-      MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", fv_param_count is " << fv_param_count_
-                        << ", parameters is less than 1 + fv_param_count";
-    }
-    auto parameter = parameters_[(parameters_.size() - fv_param_count_) - 1]->cast_ptr<Parameter>();
+  auto kwarg_param = GetVariableKwargParameter();
+  if (kwarg_param != nullptr) {
+    auto parameter = kwarg_param->cast_ptr<Parameter>();
     MS_EXCEPTION_IF_NULL(parameter);
     return parameter->name();
   }
@@ -645,10 +642,6 @@ AnfNodePtrList FuncGraph::GetKwOnlyArgsParameters() {
 
   size_t min_param_num = 0;
   size_t varargs_kwargs_num = 0;
-  if (has_vararg_) {
-    min_param_num += 1;
-    varargs_kwargs_num += 1;
-  }
   if (has_kwarg_) {
     min_param_num += 1;
     varargs_kwargs_num += 1;

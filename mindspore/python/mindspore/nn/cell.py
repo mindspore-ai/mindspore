@@ -451,8 +451,6 @@ class Cell(Cell_):
         for value in inspect.signature(self.construct).parameters.values():
             if value.kind is inspect.Parameter.VAR_POSITIONAL or value.kind is inspect.Parameter.VAR_KEYWORD:
                 has_var = True
-            if value.kind is inspect.Parameter.KEYWORD_ONLY:
-                raise TypeError(f"For the method 'construct', MindSpore does not support keyword-only arg: {value}.")
             if value.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD:
                 if value.default is inspect.Parameter.empty:
                     positional_args += 1
