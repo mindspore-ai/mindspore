@@ -174,7 +174,7 @@ void TileInfo::UpdateMultiples() {
 
     ValuePtr new_multiples = MakeValue(slice_multiples_);
     AnfNodePtr val = NewValueNode(new_multiples);
-    (void)manager->Replace(cnode->input(2), val);
+    cnode->set_input(kIndex2, val);
   }
 }
 
