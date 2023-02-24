@@ -277,7 +277,7 @@ class Profiler:
         Raises:
             TypeError: If the op_name parameter type is incorrect.
             TypeError: If the device_id parameter type is incorrect.
-            RunTimeError: If MindSpore runs on Ascend, this interface cannot be used.
+            RuntimeError: If MindSpore runs on Ascend, this interface cannot be used.
 
         Supported Platforms:
             ``GPU`` ``CPU``

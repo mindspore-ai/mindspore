@@ -990,7 +990,7 @@ class AdaptiveMaxPool1d(Cell):
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})` or `(C_{in}, L_{in})`, with
-        float16 or float32 data type.
+          float16 or float32 data type.
 
     Outputs:
         Tensor of shape :math:`(N_{in}, C_{in}, L_{out})` or :math:`(C_{in}, L_{out})`, has the same type as `input`.
@@ -1146,7 +1146,7 @@ class AdaptiveMaxPool3d(Cell):
 
     Inputs:
         - **input** (Tensor) - Tensor, has shape of :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)` . The suppoerted
-        dtypes are int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 and float64 data type.
+          dtypes are int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 and float64 data type.
 
     Outputs:
         - **y** (Tensor) - Tensor, has the same number of dims and data type as the `input` .

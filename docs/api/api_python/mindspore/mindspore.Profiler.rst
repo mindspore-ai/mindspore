@@ -44,7 +44,7 @@ mindspore.Profiler
         异常：
             - **TypeError** - op_name参数类型不正确。
             - **TypeError** - device_id参数类型不正确。
-            - **RunTimeError** - 在Ascend上使用该接口获取性能数据。
+            - **RuntimeError** - 在Ascend上使用该接口获取性能数据。
 
     .. py:method:: start()
 
