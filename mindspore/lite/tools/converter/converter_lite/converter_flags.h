@@ -61,7 +61,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string outputDataTypeStr;
   DataType outputDataType;
   std::string configFile;
-  std::string trainModelIn;
+  std::string trainModelIn = "false";
   bool trainModel = false;
   std::string inTensorShape;
   mutable std::map<std::string, std::vector<int64_t>> graph_input_shape_map;
