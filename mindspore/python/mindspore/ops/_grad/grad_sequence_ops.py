@@ -100,6 +100,19 @@ def get_bprop_setitem(self):
     return bprop
 
 
+@bprop_getters.register("tuple_le")
+@bprop_getters.register("tuple_lt")
+@bprop_getters.register("list_le")
+@bprop_getters.register("list_lt")
+def get_bprop_less(self):
+    """Generate bprop for SequenceLessThan and SequenceLessEqual"""
+
+    def bprop(x, y, out, dout):
+        return zeros_like(x), zeros_like(y)
+
+    return bprop
+
+
 @bprop_getters.register(seq.SequenceMul)
 def get_bprop_mul(self):
     """Generate bprop for SequenceMul"""

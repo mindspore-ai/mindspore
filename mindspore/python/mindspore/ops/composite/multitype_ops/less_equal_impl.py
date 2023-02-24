@@ -19,6 +19,7 @@ from __future__ import division
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.operations import _sequence_ops as _seq
 
 # less_equal is a metagraph object which will determine if two objects are less_equal according to input type
 # using ".register" decorator
@@ -70,3 +71,33 @@ def _less_equal_tensor(x, y):
        Tensor, return value by operator P.LessEqual.
    """
     return F.tensor_le(x, y)
+
+
+@less_equal.register("Tuple", "Tuple")
+def _less_equal_tuple(x, y):
+    """
+    Determine whether x is less than or equal to y.
+
+    Args:
+       x(Tuple): Tuple.
+       y(Tuple): Tuple.
+
+    Returns:
+       bool, if x <= y return true in python logic, x > y return false.
+   """
+    return _seq.tuple_le()(x, y)
+
+
+@less_equal.register("List", "List")
+def _less_equal_list(x, y):
+    """
+    Determine whether x is less than or equal to y.
+
+    Args:
+       x(List): List.
+       y(List): List.
+
+    Returns:
+       bool, if x <= y return true in python logic, x > y return false.
+   """
+    return _seq.list_le()(x, y)
