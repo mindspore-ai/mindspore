@@ -62,9 +62,16 @@ TypePtr Atan2InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            op_name);
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("y", input_args[1]->BuildType());
-
+  auto x_type = input_args[0]->BuildType();
+  auto y_type = input_args[1]->BuildType();
+  (void)types.emplace("x", x_type);
+  (void)types.emplace("y", y_type);
+  if (!x_type->isa<TensorType>() && !y_type->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim->name()
+                            << "', the input must be either scalar or Tensor, and at least one of the input args "
+                            << "should be Tensor. But got " << x_type->ToString() << " and " << y_type->ToString()
+                            << ".";
+  }
   auto context_ptr = MsContext::GetInstance();
   auto is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   auto is_cpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
