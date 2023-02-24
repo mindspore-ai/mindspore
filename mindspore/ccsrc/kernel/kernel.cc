@@ -63,6 +63,31 @@ size_t KernelTensor::GetSizeInBytes() const {
   return cur_size;
 }
 
+TypeId GetSeqElementsDtype(const abstract::AbstractBasePtr &abs) {
+  if (!abs->isa<abstract::AbstractSequence>()) {
+    return TypeId::kTypeUnknown;
+  }
+  TypePtr type_ptr;
+  auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  if (seq_abs->dynamic_len()) {
+    type_ptr = seq_abs->dynamic_len_element_abs()->BuildType();
+  } else {
+    if (seq_abs->elements().empty()) {
+      return TypeId::kTypeUnknown;
+    }
+    type_ptr = seq_abs->elements()[0]->BuildType();
+  }
+  if (type_ptr->isa<TensorType>()) {
+    auto tensor_ptr = type_ptr->cast<TensorTypePtr>();
+    auto elem = tensor_ptr->element();
+    if (elem == nullptr) {
+      return TypeId::kTypeUnknown;
+    }
+    return elem->type_id();
+  }
+  return type_ptr->type_id();
+}
+
 TypeId KernelTensor::GetDtype() const {
   if (meta_type_ == kObjectTypeNumber) {
     // Scalar
@@ -71,23 +96,11 @@ TypeId KernelTensor::GetDtype() const {
   } else if (meta_type_ == kObjectTypeTuple) {
     // Tuple
     const TupleInfo &info = std::get<TupleInfo>(meta_);
-    if (info.base_->dynamic_len()) {
-      return info.base_->dynamic_len_element_abs()->BuildType()->type_id();
-    }
-    if (info.base_->elements().empty()) {
-      return TypeId::kTypeUnknown;
-    }
-    return info.base_->elements()[0]->BuildType()->type_id();
+    return GetSeqElementsDtype(info.base_);
   } else if (meta_type_ == kObjectTypeList) {
     // List
     const ListInfo &info = std::get<ListInfo>(meta_);
-    if (info.base_->dynamic_len()) {
-      return info.base_->dynamic_len_element_abs()->BuildType()->type_id();
-    }
-    if (info.base_->elements().empty()) {
-      return TypeId::kTypeUnknown;
-    }
-    return info.base_->elements()[0]->BuildType()->type_id();
+    return GetSeqElementsDtype(info.base_);
   } else {
     // Tensor
     const TensorInfo &info = std::get<TensorInfo>(meta_);
@@ -108,6 +121,30 @@ TypeId KernelTensor::GetDtype() const {
   return kTypeUnknown;
 }
 
+ShapeVector GetSequenceFlattenShape(const abstract::AbstractBasePtr &abs) {
+  if (!abs->isa<abstract::AbstractSequence>()) {
+    return {};
+  }
+  auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  if (seq_abs->dynamic_len()) {
+    return {-1};
+  }
+  auto type_ptr = seq_abs->elements()[0]->BuildType();
+  if (!type_ptr->isa<TensorType>()) {
+    return {(int64_t)seq_abs->elements().size()};
+  }
+  // for tuple of tensor, the tensors shape must be same
+  ShapeVector flatten_shp;
+  flatten_shp.emplace_back(seq_abs->elements().size());
+  if (seq_abs->elements().empty()) {
+    return flatten_shp;
+  }
+  auto tensor_shp_ptr = seq_abs->elements()[0]->BuildShape();
+  auto shape = tensor_shp_ptr->cast<abstract::ShapePtr>()->shape();
+  (void)flatten_shp.insert(flatten_shp.end(), shape.begin(), shape.end());
+  return flatten_shp;
+}
+
 ShapeVector KernelTensor::GetShapeVector() const {
   if (meta_type_ == kObjectTypeTensorType) {
     // Tensor
@@ -118,21 +155,11 @@ ShapeVector KernelTensor::GetShapeVector() const {
     auto shape = base_shape_ptr->cast<abstract::ShapePtr>()->shape();
     return shape;
   } else if (meta_type_ == kObjectTypeTuple) {
-    // Tuple: only for depth=1 cases
     const TupleInfo &tuple_info = std::get<TupleInfo>(meta_);
-    if (tuple_info.base_->dynamic_len()) {
-      return {-1};
-    } else {
-      return {(int64_t)tuple_info.base_->elements().size()};
-    }
+    return GetSequenceFlattenShape(tuple_info.base_);
   } else if (meta_type_ == kObjectTypeList) {
-    // List: only for depth=1 cases
     const ListInfo &list_info = std::get<ListInfo>(meta_);
-    if (list_info.base_->dynamic_len()) {
-      return {-1};
-    } else {
-      return {(int64_t)list_info.base_->elements().size()};
-    }
+    return GetSequenceFlattenShape(list_info.base_);
   } else {
     // Scalar
     return {};

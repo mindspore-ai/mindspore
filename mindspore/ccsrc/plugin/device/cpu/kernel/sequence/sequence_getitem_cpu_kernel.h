@@ -53,6 +53,7 @@ class SequenceGetItemCpuKernelMod : public NativeCpuKernelMod,
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
+  std::vector<int64_t> tuple_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

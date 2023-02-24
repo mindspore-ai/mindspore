@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <utility>
 #include <complex>
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
 #include "include/common/thread_pool.h"
@@ -45,6 +46,10 @@ int SequenceGetItemCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != 0) {
     return ret;
   }
+  tuple_shape_ = inputs[0]->GetShapeVector();
+  if (tuple_shape_.empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";
+  }
   return KRET_OK;
 }
 
@@ -52,11 +57,26 @@ template <typename T>
 bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                const std::vector<AddressPtr> &workspace,
                                                const std::vector<AddressPtr> &outputs) {
-  T *input_addr = GetDeviceAddress<T>(inputs, 0);
-  int64_t *index = GetDeviceAddress<int64_t>(inputs, 1);
-  T *output_addr = GetDeviceAddress<T>(outputs, 0);
+  const auto input_addr = GetDeviceAddress<T>(inputs, 0);
+  const auto index = GetDeviceAddress<int64_t>(inputs, 1);
+  auto output_addr = GetDeviceAddress<T>(outputs, 0);
 
-  *output_addr = input_addr[*index];
+  if (*index >= static_cast<int64_t>(tuple_shape_[0])) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' index = " << *index
+                      << " must be smaller the input_tuple_size = " << tuple_shape_[0];
+  }
+  if (tuple_shape_.size() == 1 || tuple_shape_[1] == 0) {
+    *output_addr = input_addr[*index];
+    return true;
+  }
+  auto output_size = output_size_list_[0];
+  size_t element_index_size =
+    std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), 1, std::multiplies<int64_t>());
+  size_t input_addr_offset = element_index_size * (*index);
+  auto cp_ret = memcpy_s(output_addr, output_size, input_addr + input_addr_offset, element_index_size * sizeof(T));
+  if (cp_ret != EOK) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+  }
 
   return true;
 }
@@ -64,26 +84,6 @@ bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
 const std::vector<std::pair<KernelAttr, SequenceGetItemCpuKernelMod::KernelRunFunc>>
   &SequenceGetItemCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, SequenceGetItemCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr()
-       .AddInputAttr(kObjectTypeList, kNumberTypeFloat32)
-       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-       .AddOutputAttr(kObjectTypeNumber, kNumberTypeFloat32),
-     &SequenceGetItemCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr()
-       .AddInputAttr(kObjectTypeList, kNumberTypeFloat64)
-       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-       .AddOutputAttr(kObjectTypeNumber, kNumberTypeFloat64),
-     &SequenceGetItemCpuKernelMod::LaunchKernel<double>},
-    {KernelAttr()
-       .AddInputAttr(kObjectTypeList, kNumberTypeInt32)
-       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-       .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt32),
-     &SequenceGetItemCpuKernelMod::LaunchKernel<int>},
-    {KernelAttr()
-       .AddInputAttr(kObjectTypeList, kNumberTypeInt64)
-       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-       .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
-     &SequenceGetItemCpuKernelMod::LaunchKernel<int64_t>},
     {KernelAttr()
        .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
@@ -103,10 +103,29 @@ const std::vector<std::pair<KernelAttr, SequenceGetItemCpuKernelMod::KernelRunFu
        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
        .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+     &SequenceGetItemCpuKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &SequenceGetItemCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &SequenceGetItemCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr()
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt32),
+     &SequenceGetItemCpuKernelMod::LaunchKernel<int>},
+    {KernelAttr()
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt64),
      &SequenceGetItemCpuKernelMod::LaunchKernel<int64_t>}};
   return func_list;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RealTupleGetItem, SequenceGetItemCpuKernelMod);
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RealListGetItem, SequenceGetItemCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

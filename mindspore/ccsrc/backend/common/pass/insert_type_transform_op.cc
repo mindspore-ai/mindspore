@@ -398,7 +398,7 @@ void UpdateAbsForTupleGetItem(const CNodePtr &tuple_get_item_node) {
   AbstractBasePtrList seq_element = seq_abs->elements();
   // This method is used for TupleGetItem to RealTupleGetItem converting, the tuple elements must be scalar for now.
   for (const auto &ele : seq_element) {
-    if (!ele->isa<abstract::AbstractScalar>()) {
+    if (!ele->isa<abstract::AbstractScalar>() && !ele->isa<abstract::AbstractTensor>()) {
       MS_LOG(EXCEPTION) << "Element of the tuple should be scalar, but got " << ele->ToString();
     }
   }

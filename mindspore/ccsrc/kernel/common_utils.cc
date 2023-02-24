@@ -81,9 +81,9 @@ abstract::AbstractBasePtr GetChildAbstract(const abstract::AbstractBasePtr &cur_
 
 KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract, const TypeId &real_type, size_t idx,
                                    const ShapeVector &device_shape_adaptively, const std::string &format_str,
-                                   bool is_real_tuple = false) {
+                                   bool prev_node_has_getitem = false) {
   abstract::AbstractBasePtr tag_abstract = nullptr;
-  if (is_real_tuple) {
+  if (prev_node_has_getitem) {
     tag_abstract = cur_abstract;
   } else {
     tag_abstract = GetChildAbstract(cur_abstract, idx);

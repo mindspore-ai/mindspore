@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import numpy as np
 import pytest
 
 import mindspore.nn as nn
-from mindspore import context
+from mindspore import context, Tensor
 from mindspore.common import mutable
 from mindspore.ops.composite import GradOperation
 from sequence_help import context_prepare
@@ -27,6 +28,44 @@ context_prepare()
 class NetGetItem(nn.Cell):
     def construct(self, seq, idx):
         return seq[idx]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_seq_tensor_getitem():
+    """
+    Feature: test sequence getitem op
+    Description: setitem operation on tuple type
+    Expectation: the behavior is matched to python style
+    """
+    seq = mutable((Tensor(1), Tensor(2), Tensor(3), Tensor(4)), True)
+    idx = 3
+    expect = Tensor(4)
+    net = NetGetItem()
+    res = net(seq, idx)
+    assert np.all(res.asnumpy() == expect.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_seq_tensor_getitem1():
+    """
+    Feature: test sequence getitem op
+    Description: setitem operation on tuple type
+    Expectation: the behavior is matched to python style
+    """
+    seq = mutable((Tensor([[1, 2], [2, 3]]), Tensor([[2, 3], [3, 4]]), Tensor([[3, 4], [4, 5]])), True)
+    idx = 2
+    expect = Tensor([[3, 4], [4, 5]])
+    net = NetGetItem()
+    res = net(seq, idx)
+    assert np.all(res.asnumpy() == expect.asnumpy())
 
 
 @pytest.mark.level0
