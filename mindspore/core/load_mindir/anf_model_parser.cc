@@ -2009,14 +2009,14 @@ bool MSANFModelParser::BuildPrimitiveNode(const mind_ir::PrimitiveProto &primiti
     if (prim_type.compare(0, strlen(kDoSignaturePrimitivePrefix), kDoSignaturePrimitivePrefix) == 0) {
       auto op_name = prim_type.substr(strlen(kDoSignaturePrimitivePrefix));
       prim = std::make_shared<prim::DoSignaturePrimitive>(op_name, std::make_shared<Primitive>(op_name));
-      MS_EXCEPTION_IF_NULL(prim);
-      prim->set_instance_name(op_name);
     } else {
       MS_LOG(DEBUG) << "Special node_type: " << prim_type;
       prim = std::make_shared<Primitive>(prim_type);
-      MS_EXCEPTION_IF_NULL(prim);
-      prim->set_instance_name(prim_type);
     }
+  }
+
+  if (primitive_proto.has_instance_name()) {
+    prim->set_instance_name(primitive_proto.instance_name());
   }
 
   // Set primitive attributes

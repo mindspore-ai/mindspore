@@ -246,6 +246,8 @@ bool IrExportBuilder::BuildPrimitives() {
       prim = real_prim;
     }
 
+    prim_proto->set_instance_name(prim->instance_name());
+
     // Set primitive attributes
     for (const auto &attr : prim->attrs()) {
       MS_LOG(DEBUG) << "attr: " << attr.first << " " << attr.second->DumpText() << " " << attr.second->type_name();
