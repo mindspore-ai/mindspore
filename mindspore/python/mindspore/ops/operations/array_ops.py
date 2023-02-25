@@ -176,7 +176,7 @@ def _check_infer_attr_reduce(axis, keep_dims, prim_name):
 
 class Expand(Primitive):
     """
-    Returns a new view of the self tensor with singleton dimensions expanded to a larger size.
+    Expands the Tensor along singleton dimensions to match given desired shape.
 
     Refer to :func:`mindspore.ops.expand` for more details.
 
@@ -3572,10 +3572,10 @@ class Diag(PrimitiveWithCheck):
 class DiagPart(PrimitiveWithCheck):
     r"""
 
-    Extracts the diagonal part from given tensor.
+    Extracts the diagonal elements from the given Tensor.
 
-    Assume input has dimensions :math:`[D_1,..., D_k, D_1,..., D_k]`, the output is a tensor
-    of rank k with dimensions :math:`[D_1,..., D_k]` where:
+    If the input is a Tensor of shape :math:`[D_1,..., D_k, D_1,..., D_k]`, then the
+    output will be a Tensor of rank k of shape :math:`[D_1,..., D_k]` where:
     :math:`output[i_1,..., i_k] = input[i_1,..., i_k, i_1,..., i_k]`.
 
     Inputs:
@@ -7587,20 +7587,23 @@ class LeftShift(Primitive):
 
 class FillDiagonal(Primitive):
     """
-    Fill the main diagonal of a tensor that has at least 2-dimensions.
-    When dims>2, all dimensions of input must be of equal length.
-    This function modifies the input tensor in-place, and returns the input tensor.
+    Fills the main diagonal of a Tensor in-place with a specified value and returns the result.
+    The input has at least 2 dimensions, and all dimensions of input must be equal in length
+    when the dimension of input is greater than 2.
 
     Args:
-        fill_value (float): The fill value.
-        wrap (bool, optional): the diagonal `wrapped` after N columns for tall matrices. Default: False.
+        fill_value (float): The value to fill the diagonal of `input_x`.
+        wrap (bool, optional): Controls whether the diagonal elements continue onto the
+            remaining rows in case of a tall matrix(A matrix has more rows than columns).
+            Examples blow demonstrates how it works on a tall matrix if `wrap` is set True.
+            Default: False.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
           The data type must be float32, int32 or int64.
 
     Outputs:
-        - **y** (Tensor) - Tensor, has the same shape and data type as the input `x`.
+        - **y** (Tensor) - Tensor, has the same shape and data type as the input `input_x`.
 
     Raises:
         TypeError: If data type of `input_x` is not one of the following: float32, int32, int64.

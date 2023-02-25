@@ -1064,33 +1064,40 @@ class ScaleAndTranslate(Primitive):
 
 class CombinedNonMaxSuppression(Primitive):
     r"""
-    Greedily selects a subset of bounding boxes in descending order of score.
+    Applies a greedy approach to select a subset of bounding boxes from a list of
+    candidates using NonMaxSuppression, where the boxes are sorted in descending order of their confidence score.
 
     Args:
-        clip_boxes (bool, optional): If true, assume the box coordinates are between [0, 1] and clip the output boxes
-            if they fall beyond [0, 1]. If false, do not do clipping and output the box coordinates as it is.
-            Defaults to true.
-        pad_per_class (bool, optional): If false, the output nmsed boxes,
-            scores and classes are padded/clipped to max_total_size.
-            If true, the output nmsed boxes, scores and classes are padded to be of length
-            max_size_per_class * num_classes, unless it exceeds max_total_size in which case it is clipped to
-            max_total_size. Defaults to false.
+        clip_boxes (bool, optional): Determines whether to apply bounding box normalization to ensure the
+            coordinates are within [0, 1] range. Default: True.
+
+            - If True, clip the boxes that fall outside this range.
+            - If False, return the box coordinates as they are without any modifications.
+
+        pad_per_class (bool, optional): Determines whether the output of the non-maximum suppression (NMS)
+            algorithm should be padded or clipped to meet the maximum size constraints. Default: False.
+
+            - If False, the output is clipped to the maximum size of `max_total_size`.
+            - If True, the output is padded up to `max_size_per_class` * `num_classes` and clipped if
+              it exceeds `max_total_size`.
 
     Inputs:
-        - **boxes** (Tensor) - A Tensor of type float32 and shape (batch_size, num_boxes, q, 4).
-          If q is 1 then same boxes are used for all classes otherwise,
-          if q is equal to number of classes, class-specific boxes are used.
-        - **scores** (Tensor) - A Tensor of type float32 and shape (batch_size, num_boxes, num_classes)
-          representing a single score corresponding to each box (each row of boxes).
-        - **max_output_size_per_class** (Tensor) - A 0D Tensor of type int32, representing the max number of boxes to be
-          selected by non max suppression per class.
-        - **max_total_size** (Tensor) - A 0D Tensor of type int32, representing the maximum number of boxes retained
-          over all classes.
-        - **iou_threshold** (Tensor) - A 0D float32 tensor representing the threshold for deciding whether
-          boxes overlap too much with respect to IOU, and iou_threshold must be equal or greater
+        - **boxes** (Tensor) - A float32 Tensor with shape :math:`(batch_size, num_boxes, q, 4)`
+          representing the bounding box coordinates.
+          `q` can be 1, indicating that all classes use the same bounding box, or the number of classes,
+          indicating that class-specific boxes are applied.
+        - **scores** (Tensor) - A 3-D Tensor of float32 type with the shape
+          :math:`(batch_size, num_boxes, num_classes)`. It contains a score value for each box,
+          with each row of `boxes` represented by a single score.
+        - **max_output_size_per_class** (Tensor) - The maximum number of boxes that can be selected for each class
+          by the non-maximum suppression algorithm, represented by a scalar Tensor of type int32.
+        - **max_total_size** (Tensor) - A scalar Tensor of type int32 that represents the
+          maximum number of boxes that are kept for all classes.
+        - **iou_threshold** (Tensor) - A scalar Tensor of float32 type that represents the threshold for
+          determining if the IOU overlap between boxes is too high. `iou_threshold` must be equal or greater
           than 0 and be equal or smaller than 1.
-        - **score_threshold** (Tensor) - A 0D float32 tensor representing the threshold for deciding when to remove
-          boxes based on score.
+        - **score_threshold** (Tensor) - A scalar Tensor of type float32 that represents the threshold
+          for determining when to remove boxes based on their scores.
 
     Outputs:
         - **nmsed_boxes** - A Tensor of float32 with shape of (batch_size, num_detection, 4), which contains
