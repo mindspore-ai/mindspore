@@ -119,6 +119,26 @@ AGroupofProbiotocs, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bing
 
 Contributions of any kind are welcome!
 
+## MindSpore 1.10.1 Release Notes
+
+### Bug fixes
+
+- Fixed the issue that the specified axis is not considered in logsumexp anti-overflow processing
+- Fixed the compilation dependency of proto file
+- Fixed the issue that the print operator printing result is not normal
+- Fixed the issue that the equal operator is out of range
+- Fixed the problem that when function wrapped by @jit，the cell id is not correct
+- Fixed the GNN scenario data type verification error
+- Fixed the problem that the dataset.map multi-process degenerates into threads
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+archer2049, caifubi, chenfei_mindspore, gaoshuanglong, Greatpan, guozhijian, huoxinyou, Kxiong, lanzhineng, lijunbin, liubuyu, liuchuting, luochao60, lyqlola, nomindcarry, TuDouNi, xiaotianci, xupan, yangshuo, yefeng, YingtongHu, yuchaojie, zhoufeng, ZPaC, 刘勇琪, 吕昱峰, 王禹程, 于振华.
+
+Contributions of any kind are welcome!
+
 ## MindSpore 1.10.0 Release Notes
 
 ### Major Features and Improvements
