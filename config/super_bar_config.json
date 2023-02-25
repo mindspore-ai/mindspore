@@ -388,6 +388,7 @@
     "BiasAddGrad"
   ],
   "SkipNodesComments": {
+    "Im2col": "not support int8, uint8, float16 in op json, need add pass",
     "BroadcastTo": "The name is occupied",
     "DynamicBroadcastTo ": "The name is occupied",
     "BatchToSpaceD ": "attr type is listInt，not listListInt",
@@ -418,6 +419,7 @@
     "AssignAdd": "Frac_nz in pangu not support"
   },
   "SkipNodes": [
+    "Im2col",
     "BroadcastTo",
     "DynamicBroadcastTo",
     "BatchToSpaceD",
