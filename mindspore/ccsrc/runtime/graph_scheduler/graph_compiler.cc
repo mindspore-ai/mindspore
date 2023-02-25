@@ -443,7 +443,7 @@ GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const
 
   graph->UpdateGraphAquireGilAttr();
   graph->SetInputNodes();
-  auto manager = MakeManager({graph});
+  auto manager = Manage(graph);
   if (manager) {
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
@@ -459,7 +459,7 @@ GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const
   graph->set_root_graph_id(graph_id);
   session_->DumpGraphs({graph});
 
-  auto exec_nodes = graph->execution_order();
+  auto &exec_nodes = graph->execution_order();
   std::for_each(exec_nodes.begin(), exec_nodes.end(),
                 [](const CNodePtr &node) { common::AnfAlgo::SetNodeAttr(kAttrMutableKernel, MakeValue(true), node); });
 

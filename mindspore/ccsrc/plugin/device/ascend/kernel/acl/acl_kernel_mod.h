@@ -48,7 +48,7 @@ class AclKernelMod : public AscendKernelMod {
 
  protected:
   void SyncData() override;
-  void ProcessAttribute(const std::shared_ptr<AclOpDesc> &op_desc_ptr);
+  void ProcessAttribute(const std::shared_ptr<AclOpDesc> &op_desc_ptr, const std::vector<string> &input_names);
   void UpdateReduceAxisAttr(const AnfNodePtr &node);
 
  private:

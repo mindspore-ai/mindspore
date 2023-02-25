@@ -505,12 +505,11 @@ BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, cons
   const auto &shape = abstract->BuildShape();
   MS_EXCEPTION_IF_NULL(shape);
 
-  bool is_gradient_out =
-    graph_output_info != nullptr &&
-    std::any_of(graph_output_info->output_indexes.cbegin(), graph_output_info->output_indexes.cend(),
-                [cnode](const std::pair<KernelWithIndex, std::vector<std::vector<size_t>>> &output_index) {
-                  return output_index.first.first == cnode;
-                });
+  bool is_gradient_out = false;
+  if (graph_output_info != nullptr) {
+    auto lb_iter = graph_output_info->output_indexes.lower_bound({cnode, 0});
+    is_gradient_out = lb_iter != graph_output_info->output_indexes.end() && lb_iter->first.first == cnode;
+  }
   pynative::BaseOpRunInfo base_op_run_info;
   base_op_run_info.is_mixed_precision_cast = false;
   base_op_run_info.lazy_build = !shape->IsDynamic();

@@ -19,38 +19,38 @@
 #include <string>
 namespace mindspore {
 bool IsOneOfPosteriorOperator(const std::string &name) {
-  const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
+  static const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
 
   auto iter = kPosteriorOperatorSet.find(name);
   return iter != kPosteriorOperatorSet.end();
 }
 
 bool IsOneOfCacheBlackList(const std::string &name) {
-  const std::set<std::string> kOpCacheBlackList = {kUniformCandidateSamplerOpName, kInitDatasetQueueOpName,
-                                                   kGetNextOpName};
+  static const std::set<std::string> kOpCacheBlackList = {kUniformCandidateSamplerOpName, kInitDatasetQueueOpName,
+                                                          kGetNextOpName};
 
   auto iter = kOpCacheBlackList.find(name);
   return iter != kOpCacheBlackList.end();
 }
 
 bool IsOneOf3DFormat(const std::string &format) {
-  const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
-                                              kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};
+  static const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
+                                                     kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};
 
   auto iter = k3DFormatSet.find(format);
   return iter != k3DFormatSet.end();
 }
 
 bool IsOneOfNoPaddingFormat(const std::string &format) {
-  const std::set<std::string> kNoPaddingFormatSet = {kOpFormat_ChannelLast, kOpFormat_FRAC_NZ, kOpFormat_FRACTAL_ZN_RNN,
-                                                     kOpFormat_ND_RNN_BIAS, kOpFormat_DEFAULT};
+  static const std::set<std::string> kNoPaddingFormatSet = {
+    kOpFormat_ChannelLast, kOpFormat_FRAC_NZ, kOpFormat_FRACTAL_ZN_RNN, kOpFormat_ND_RNN_BIAS, kOpFormat_DEFAULT};
 
   auto iter = kNoPaddingFormatSet.find(format);
   return iter != kNoPaddingFormatSet.end();
 }
 
 bool IsOneOfDynamicShapeConstInputToAttrGPU(const std::string &name) {
-  const std::set<std::string> DynamicShapeConstInputToAttrGPU = {
+  static const std::set<std::string> DynamicShapeConstInputToAttrGPU = {
     kCastOpName,      kExpandDimsOpName, kReshapeOpName,    kEmbeddingLookupOpName, kTransposeOpName,
     kReduceSumOpName, kReduceMinOpName,  kReduceMeanOpName, kReduceMaxOpName,       kReduceAllOpName,
     kReduceAnyOpName, kConcatOpName,     kScatterNdOpName,  kGatherOpName,          kAvgPool3DGradOpName};
@@ -67,120 +67,120 @@ bool IsOneOfCustomAkgType(const std::string &name) {
 }
 
 bool IsOneOfOperator(const std::string &name) {
-  const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
-                                                 kApplyMomentumOpName,
-                                                 kApplyMomentumDOpName,
-                                                 kApplyAdadeltaOpName,
-                                                 kApplyAdadeltaDOpName,
-                                                 kApplyAdagradOpName,
-                                                 kApplyAdagradDOpName,
-                                                 kApplyAdagradDAOpName,
-                                                 kApplyAdagradDADOpName,
-                                                 kAdamOpName,
-                                                 kApplyAdamDOpName,
-                                                 kApplyAdamOpName,
-                                                 kApplyAdaMaxOpName,
-                                                 kApplyAdaMaxDOpName,
-                                                 kApplyAddSignOpName,
-                                                 kApplyAddSignDOpName,
-                                                 kApplyCenteredRMSPOpName,
-                                                 kApplyFtrlOpName,
-                                                 kApplyFtrlDOpName,
-                                                 kApplyFtrlV2OpName,
-                                                 kApplyFtrlV2DOpName,
-                                                 kApplyGradientDescentOpName,
-                                                 kApplyPowerSignOpName,
-                                                 kApplyPowerSignDOpName,
-                                                 kApplyProximalAdagradOpName,
-                                                 kApplyProximalAdagradDOpName,
-                                                 kApplyProximalGradientDescentOpName,
-                                                 kApplyRMSPropOpName,
-                                                 kApplyRMSPropDOpname,
-                                                 kAdamApplyOneWithDecayOpName,
-                                                 kAdamApplyOneWithDecayAssignOpName,
-                                                 kFusedAdamWeightDecayName,
-                                                 kAdamWeightDecayName,
-                                                 kFusedCastAdamWeightDecayName,
-                                                 kFusedAdamName,
-                                                 kFusedAdaFactorName,
-                                                 kFusedAdaFactorWithGlobalNormName,
-                                                 kFusedSparseAdamName,
-                                                 kFusedMulApplyMomentumOpName,
-                                                 kFusedWeightScaleApplyMomentum,
-                                                 kFusedScaleApplyMomentum,
-                                                 kApplyCenteredRMSPropOpName,
-                                                 kApplyCenteredRMSPropDOpName,
-                                                 kFusedSparseFtrlName,
-                                                 kFusedSparseProximalAdagradName,
-                                                 kFusedSparseLazyAdamName,
-                                                 kSparseApplyFtrlOpName,
-                                                 kSparseApplyFtrlDOpName,
-                                                 kSparseApplyFtrlV2OpName,
-                                                 kSparseApplyFtrlV2DOpName,
-                                                 kSGDName,
-                                                 kLARSUpdateOpName,
-                                                 kLarsV2UpdateOpName,
-                                                 kCombineMomentumWeightOpName,
-                                                 kCombineMomentumOpName,
-                                                 kScatterAddOpName,
-                                                 kScatterUpdateOpName,
-                                                 kSparseApplyProximalAdagradOpName,
-                                                 kSparseApplyProximalAdagradDOpName,
-                                                 kAdaptiveMaxPool2dOpName,
-                                                 kApplyKerasMomentumDOpName};
+  static const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
+                                                        kApplyMomentumOpName,
+                                                        kApplyMomentumDOpName,
+                                                        kApplyAdadeltaOpName,
+                                                        kApplyAdadeltaDOpName,
+                                                        kApplyAdagradOpName,
+                                                        kApplyAdagradDOpName,
+                                                        kApplyAdagradDAOpName,
+                                                        kApplyAdagradDADOpName,
+                                                        kAdamOpName,
+                                                        kApplyAdamDOpName,
+                                                        kApplyAdamOpName,
+                                                        kApplyAdaMaxOpName,
+                                                        kApplyAdaMaxDOpName,
+                                                        kApplyAddSignOpName,
+                                                        kApplyAddSignDOpName,
+                                                        kApplyCenteredRMSPOpName,
+                                                        kApplyFtrlOpName,
+                                                        kApplyFtrlDOpName,
+                                                        kApplyFtrlV2OpName,
+                                                        kApplyFtrlV2DOpName,
+                                                        kApplyGradientDescentOpName,
+                                                        kApplyPowerSignOpName,
+                                                        kApplyPowerSignDOpName,
+                                                        kApplyProximalAdagradOpName,
+                                                        kApplyProximalAdagradDOpName,
+                                                        kApplyProximalGradientDescentOpName,
+                                                        kApplyRMSPropOpName,
+                                                        kApplyRMSPropDOpname,
+                                                        kAdamApplyOneWithDecayOpName,
+                                                        kAdamApplyOneWithDecayAssignOpName,
+                                                        kFusedAdamWeightDecayName,
+                                                        kAdamWeightDecayName,
+                                                        kFusedCastAdamWeightDecayName,
+                                                        kFusedAdamName,
+                                                        kFusedAdaFactorName,
+                                                        kFusedAdaFactorWithGlobalNormName,
+                                                        kFusedSparseAdamName,
+                                                        kFusedMulApplyMomentumOpName,
+                                                        kFusedWeightScaleApplyMomentum,
+                                                        kFusedScaleApplyMomentum,
+                                                        kApplyCenteredRMSPropOpName,
+                                                        kApplyCenteredRMSPropDOpName,
+                                                        kFusedSparseFtrlName,
+                                                        kFusedSparseProximalAdagradName,
+                                                        kFusedSparseLazyAdamName,
+                                                        kSparseApplyFtrlOpName,
+                                                        kSparseApplyFtrlDOpName,
+                                                        kSparseApplyFtrlV2OpName,
+                                                        kSparseApplyFtrlV2DOpName,
+                                                        kSGDName,
+                                                        kLARSUpdateOpName,
+                                                        kLarsV2UpdateOpName,
+                                                        kCombineMomentumWeightOpName,
+                                                        kCombineMomentumOpName,
+                                                        kScatterAddOpName,
+                                                        kScatterUpdateOpName,
+                                                        kSparseApplyProximalAdagradOpName,
+                                                        kSparseApplyProximalAdagradDOpName,
+                                                        kAdaptiveMaxPool2dOpName,
+                                                        kApplyKerasMomentumDOpName};
 
   auto iter = kOptOperatorSet.find(name);
   return iter != kOptOperatorSet.end();
 }
 
 bool IsOneOfNotSupportedTransFormat(const std::string &format) {
-  const std::set<std::string> kNotSupportedFormat = {kOpFormat_DHWCN, kOpFormat_NDHWC, kOpFormat_CHWN};
+  static const std::set<std::string> kNotSupportedFormat = {kOpFormat_DHWCN, kOpFormat_NDHWC, kOpFormat_CHWN};
   return (kNotSupportedFormat.find(format) != kNotSupportedFormat.end());
 }
 
 bool IsOneOfComputeDepend(const std::string &name) {
-  const std::set<std::string> kComputeDepend = {kUniqueOpName,
-                                                kUniqueConsecutiveOpName,
-                                                kComputeAccidentalHitsOpName,
-                                                kSubAndFilterOpName,
-                                                kPadAndShiftOpName,
-                                                kCTCGreedyDecoderOpName,
-                                                kMaskedSelectOpName,
-                                                kDynamicStitchOpName,
-                                                kGetNextOpName,
-                                                kListDiffOpName,
-                                                kNonMaxSuppressionV3OpName,
-                                                kNonMaxSuppressionWithOverlapsOpName,
-                                                kCoalesceOpName,
-                                                kTruncatedNormal,
-                                                kNonDeterministicInts,
-                                                kFractionalAvgPoolGradOpName,
-                                                kDenseToDenseSetOperation,
-                                                kDenseToSparseSetOperation,
-                                                kSegmentMaxOpName,
-                                                kCSRSparseMatrixToSparseTensorOpName,
-                                                kSegmentMinOpName,
-                                                kLuUnpackOpName,
-                                                kSegmentSumOpName,
-                                                kResizeBicubicOpName,
-                                                kResizeAreaOpName,
-                                                kSegmentMeanOpName,
-                                                kSegmentProdOpName,
-                                                kSparseSliceOpName,
-                                                kNonZeroOpName,
-                                                kSparseSparseMinimumOpName,
-                                                kSparseSparseMaximumOpName,
-                                                kRpcRecvOpName,
-                                                kSparseFillEmptyRows,
-                                                kSparseCrossOpName,
-                                                kAdaptiveMaxPool3DGradOpName};
+  static const std::set<std::string> kComputeDepend = {kUniqueOpName,
+                                                       kUniqueConsecutiveOpName,
+                                                       kComputeAccidentalHitsOpName,
+                                                       kSubAndFilterOpName,
+                                                       kPadAndShiftOpName,
+                                                       kCTCGreedyDecoderOpName,
+                                                       kMaskedSelectOpName,
+                                                       kDynamicStitchOpName,
+                                                       kGetNextOpName,
+                                                       kListDiffOpName,
+                                                       kNonMaxSuppressionV3OpName,
+                                                       kNonMaxSuppressionWithOverlapsOpName,
+                                                       kCoalesceOpName,
+                                                       kTruncatedNormal,
+                                                       kNonDeterministicInts,
+                                                       kFractionalAvgPoolGradOpName,
+                                                       kDenseToDenseSetOperation,
+                                                       kDenseToSparseSetOperation,
+                                                       kSegmentMaxOpName,
+                                                       kCSRSparseMatrixToSparseTensorOpName,
+                                                       kSegmentMinOpName,
+                                                       kLuUnpackOpName,
+                                                       kSegmentSumOpName,
+                                                       kResizeBicubicOpName,
+                                                       kResizeAreaOpName,
+                                                       kSegmentMeanOpName,
+                                                       kSegmentProdOpName,
+                                                       kSparseSliceOpName,
+                                                       kNonZeroOpName,
+                                                       kSparseSparseMinimumOpName,
+                                                       kSparseSparseMaximumOpName,
+                                                       kRpcRecvOpName,
+                                                       kSparseFillEmptyRows,
+                                                       kSparseCrossOpName,
+                                                       kAdaptiveMaxPool3DGradOpName};
 
   auto iter = kComputeDepend.find(name);
   return iter != kComputeDepend.end();
 }
 
 bool IsOneOfHWSpecialFormat(const std::string &format) {
-  const std::set<std::string> kHWSpecialFormatSet = {
+  static const std::set<std::string> kHWSpecialFormatSet = {
     kOpFormat_FRACTAL_Z_3D,   kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,       kOpFormat_FRAC_NZ,
     kOpFormat_C1HWNCoC0,      kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_FRACTAL_ZN_LSTM,
     kOpFormat_FRACTAL_ZN_RNN, kOpFormat_NDC1HWC0,    kOpFormat_FRAC_Z};
@@ -190,7 +190,7 @@ bool IsOneOfHWSpecialFormat(const std::string &format) {
 }
 
 bool IsOneOfFormat(const std::string &format) {
-  const std::set<std::string> kOpFormatList = {
+  static const std::set<std::string> kOpFormatList = {
     kOpFormat_DEFAULT,        kOpFormat_NC1KHKWHWC0,  kOpFormat_ND,
     kOpFormat_NCHW,           kOpFormat_NHWC,         kOpFormat_HWCN,
     kOpFormat_CHWN,           kOpFormat_NC1HWC0,      kOpFormat_FRAC_Z,
@@ -205,7 +205,7 @@ bool IsOneOfFormat(const std::string &format) {
 }
 
 bool IsOneOfServerFormatC04(const std::string &format) {
-  const std::set<std::string> kServerFormatC04List = {kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
+  static const std::set<std::string> kServerFormatC04List = {kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
   return kServerFormatC04List.find(format) != kServerFormatC04List.end();
 }
 }  // namespace mindspore

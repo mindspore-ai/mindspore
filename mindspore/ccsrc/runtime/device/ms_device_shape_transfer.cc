@@ -456,8 +456,8 @@ std::optional<ShapeVector> DeviceShapeTransfer::GetFixedDeviceShape(const ShapeV
 
 ShapeVector DeviceShapeTransfer::TransCore(const ShapeVector &shape, const std::string &format, const TypeId &type,
                                            int64_t groups, const ShapeVector &input_hidden_size) const {
-  using DeviceShapeTransfer = std::function<ShapeVector(const ShapeVector &, const TypeId &)>;
-  const std::map<std::string, DeviceShapeTransfer> device_shape_map = {
+  using DeviceShapeTransferFunc = std::function<ShapeVector(const ShapeVector &, const TypeId &)>;
+  static const mindspore::HashMap<std::string, DeviceShapeTransferFunc> device_shape_map = {
     {kOpFormat_NCHW, NCHWDeviceShape},
     {kOpFormat_NHWC, NHWCDeviceShape},
     {kOpFormat_HWCN, HWCNDeviceShape},
