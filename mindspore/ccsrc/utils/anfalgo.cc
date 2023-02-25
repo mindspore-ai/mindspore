@@ -1737,6 +1737,11 @@ bool AnfAlgo::IsNopNode(const AnfNodePtr &node) {
     return false;
   }
 
+  // Check the input type and output type.
+  if (GetOutputInferDataType(node, 0) != GetPrevNodeOutputInferDataType(node, 0)) {
+    return false;
+  }
+
   return true;
 }
 
