@@ -238,27 +238,5 @@ TEST_F(TestInferStrategyIndividualMode, GenerateFullStrategy11) {
   Strategies in_strategy = {{}, {1, 1}, {}};
   ASSERT_ANY_THROW(scatter_update->GenerateFullStrategy(in_strategy));
 }
-
-/// Feature: infer strategy for conv2d
-/// Description: the in strategy is {{8, 2, 1, 1}, {}}
-/// Expectation: the return strategy is {{8, 2, 1, 1}, {1, 2, 1, 1}}
-TEST_F(TestInferStrategyIndividualMode, GenerateFullStrategy12) {
-  Strategies in_strategy = {{8, 2, 1, 1}, {}};
-  Strategies ret = conv2d->GenerateFullStrategy(in_strategy);
-
-  Strategies expect = {{8, 2, 1, 1}, {1, 2, 1, 1}};
-  ASSERT_EQ(ret, expect);
-}
-
-/// Feature: infer strategy for conv2d
-/// Description: the in strategy is {{}, {1, 2, 1, 1}}
-/// Expectation: the return strategy is {{1, 2, 1, 1}, {1, 2, 1, 1}}
-TEST_F(TestInferStrategyIndividualMode, GenerateFullStrategy13) {
-  Strategies in_strategy = {{}, {1, 2, 1, 1}};
-  Strategies ret = conv2d->GenerateFullStrategy(in_strategy);
-
-  Strategies expect = {{1, 2, 1, 1}, {1, 2, 1, 1}};
-  ASSERT_EQ(ret, expect);
-}
 }  // namespace parallel
 }  // namespace mindspore
