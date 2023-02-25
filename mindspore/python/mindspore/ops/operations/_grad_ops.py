@@ -1719,13 +1719,13 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
         - **dw_hidden** (Tensor) - A Tensor has the same shape as `weight_hidden`.
           Has the same type with input `x`.
         - **db_input** (Tensor) - A Tensor of shape :math:`(3 x hidden_size)`.
-          Has the same type with input `x`.
+          Has the same type with input `init_h`.
         - **db_hidden** (Tensor) - A Tensor of shape :math:`(3 x hidden_size)`.
-          Has the same type with input `x`.
+          Has the same type with input `init_h`.
         - **dx** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
           Has the same type with input `x`.
         - **dh_prev** (Tensor) - A Tensor of shape :math:`(batch_size, hidden_size)`.
-          Has the same type with input `x`.
+          Has the same type with input `init_h`.
     """
 
     @prim_attr_register
@@ -1801,7 +1801,7 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
             validator.check_tensor_dtype_valid("seq_dtype", seq_dtype, valid_types, self.name)
         if mask_dtype is not None:
             validator.check_tensor_dtype_valid("mask_dtype", mask_dtype, valid_types, self.name)
-        return x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype
+        return winput_dtype, whidden_dtype, init_h_dtype, init_h_dtype, x_dtype, init_h_dtype
 
 
 class PReLUGrad(Primitive):
