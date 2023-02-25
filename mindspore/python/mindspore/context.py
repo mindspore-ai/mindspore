@@ -32,10 +32,11 @@ from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context
     _reset_auto_parallel_context
 from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _reset_ps_context, \
     _need_reset_device_target_for_ps
+from mindspore.parallel._offload_context import _set_offload_context, _get_offload_context
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_auto_parallel_context',
            'get_auto_parallel_context', 'reset_auto_parallel_context', 'ParallelMode', 'set_ps_context',
-           'get_ps_context', 'reset_ps_context']
+           'get_ps_context', 'reset_ps_context', 'set_offload_context', 'get_offload_context']
 
 GRAPH_MODE = 0
 PYNATIVE_MODE = 1
@@ -723,6 +724,46 @@ def reset_auto_parallel_context():
     - fusion_threshold: 64.
     """
     _reset_auto_parallel_context()
+
+
+@args_type_check(offload_config=dict)
+def set_offload_context(offload_config):
+    r"""
+    Set offload context.
+    Some configurations are offload specific, see the below table for details:
+
+    Args:
+        offload_config (dict): A dict contains the keys and values for setting the offload context
+                        configure.It supports the following keys.
+            enable_offload (bool):  The flag of whether enabling offload. Default: False.
+            offload_param (str):  The param for offload destination, cpu or disk.
+            offload_path (str):  The path of offload.
+            offload_checkpoint (str):  The checkpoint for offload destination, cpu or disk.
+            offload_ddr_size (int):  The ddr size for offload.
+            offload_disk_size (int): The disk size for offload.
+            enable_aio (bool): The flag of whether enabling aio. Default: True.
+            aio_block_size (int): The size of aio block.
+            aio_queue_depth (int): The depth of aio queue.
+            enable_pinned_mem (bool): The flag of whether enabling pinned memory.
+
+    Raises:
+        ValueError: If input key is not attribute in auto parallel context.
+
+    Examples:
+        >>> from mindspore import context
+        >>> context.set_offload_context(offload_config={"offload_param"="cpu"})
+    """
+    _set_offload_context(offload_config)
+
+
+def get_offload_context():
+    """
+    Get offload context.
+    Examples:
+        >>> from mindspore import context
+        >>> offload_config = context.get_offload_context()
+    """
+    return _get_offload_context()
 
 
 def _check_target_specific_cfgs(device, arg_key):

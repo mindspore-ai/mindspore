@@ -31,6 +31,7 @@
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/parallel_context.h"
+#include "include/common/utils/offload_context.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/optimizer/ad/bprop_utils.h"
 #include "frontend/operator/graph_bprop/bprop_meta_func_graph.h"
@@ -65,6 +66,7 @@ using OpLib = mindspore::kernel::OpLib;
 using ParallelContext = mindspore::parallel::ParallelContext;
 using CostModelContext = mindspore::parallel::CostModelContext;
 using TensorTransform = mindspore::parallel::TensorTransform;
+using OffloadContext = mindspore::OffloadContext;
 using mindspore::MsCtxParam;
 using PSContext = mindspore::ps::PSContext;
 using CollectiveManager = mindspore::distributed::collective::CollectiveManager;
@@ -421,6 +423,31 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get the flag of whether or not generating a single suite of OperatorInfos in for-loop.")
     .def("reset_cost_model", &CostModelContext::ResetCostModel, "Reset the CostModelContext.")
     .def("reset_algo_parameters", &CostModelContext::ResetAlgoParameters, "Reset the AlgoParameters.");
+
+  (void)py::class_<OffloadContext, std::shared_ptr<OffloadContext>>(m, "OffloadContext")
+    .def_static("get_instance", &OffloadContext::GetInstance, "Get offload context instance.")
+    .def("set_enable_offload", &OffloadContext::set_enable_offload, "Set the flag of whether enabling offload.")
+    .def("enable_offload", &OffloadContext::enable_offload, "Get the flag of whether enabling offload.")
+    .def("set_offload_param", &OffloadContext::set_offload_param, "Set the param for offload destination, cpu or disk.")
+    .def("offload_param", &OffloadContext::offload_param, "Get the param for offload destination.")
+    .def("set_offload_path", &OffloadContext::set_offload_path, "Set the path of offload.")
+    .def("offload_path", &OffloadContext::offload_path, "Get the path of offload.")
+    .def("set_offload_checkpoint", &OffloadContext::set_offload_checkpoint,
+         "Set the checkpoint for offload destination, cpu or disk.")
+    .def("offload_checkpoint", &OffloadContext::offload_checkpoint, "Get the checkpoint for offload destination.")
+    .def("set_offload_ddr_size", &OffloadContext::set_offload_ddr_size, "Set the ddr size for offload.")
+    .def("offload_ddr_size", &OffloadContext::offload_ddr_size, "Get the ddr size for offload.")
+    .def("set_offload_disk_size", &OffloadContext::set_offload_disk_size, "Set the disk size for offload.")
+    .def("offload_disk_size", &OffloadContext::offload_disk_size, "Get the disk size for offload.")
+    .def("set_enable_aio", &OffloadContext::set_enable_aio, "Set the flag of whether enabling aio.")
+    .def("enable_aio", &OffloadContext::enable_aio, "Get the flag of whether enabling aio.")
+    .def("set_aio_block_size", &OffloadContext::set_aio_block_size, "Set the size of aio block.")
+    .def("aio_block_size", &OffloadContext::aio_block_size, "Get the size of aio block.")
+    .def("set_aio_queue_depth", &OffloadContext::set_aio_queue_depth, "Set the depth of aio queue.")
+    .def("aio_queue_depth", &OffloadContext::aio_queue_depth, "Get the depth of aio queue.")
+    .def("set_enable_pinned_mem", &OffloadContext::set_enable_pinned_mem,
+         "Set the flag of whether enabling pinned memory.")
+    .def("enable_pinned_mem", &OffloadContext::enable_pinned_mem, "Get the flag of whether enabling pinned memory.");
 
   (void)py::module::import("atexit").attr("register")(py::cpp_function{[&]() -> void {
     mindspore::MsContext::GetInstance()->RegisterCheckEnv(nullptr);
