@@ -31,6 +31,7 @@
 #include "src/train/train_populate_parameter.h"
 #endif
 #include "include/registry/model_parser_registry.h"
+#include "include/api/format.h"
 #include "src/common/dynamic_library_loader.h"
 #include "src/common/log_util.h"
 #include "tools/converter/parser/parser_utils.h"
@@ -57,6 +58,7 @@
 #include "tools/converter/config_parser/cpu_option_param_parser.h"
 
 namespace mindspore {
+std::map<std::string, Format> StrToEnumFormatMap = {{"NHWC", Format::NHWC}, {"NCHW", Format::NCHW}};
 extern "C" {
 void mindspore_log_init();
 }
@@ -84,9 +86,199 @@ constexpr auto kEncryption = "encryption";
 constexpr auto kInputDataType = "inputDataType";
 constexpr auto kOutputDataType = "outputDataType";
 constexpr auto kInfer = "infer";
+std::map<std::string, FmkType> StrToEnumFmkTypeMap = {
+  {"CAFFE", FmkType::kFmkTypeCaffe}, {"MINDIR", FmkType::kFmkTypeMs}, {"TFLITE", FmkType::kFmkTypeTflite},
+  {"ONNX", FmkType::kFmkTypeOnnx},   {"TF", FmkType::kFmkTypeTf},     {"PYTORCH", FmkType::kFmkTypePytorch}};
+std::map<std::string, DataType> StrToEnumDataTypeMap = {{"FLOAT", DataType::kNumberTypeFloat32},
+                                                        {"INT8", DataType::kNumberTypeInt8},
+                                                        {"UINT8", DataType::kNumberTypeUInt8},
+                                                        {"DEFAULT", DataType::kTypeUnknown}};
+
+#if defined(_WIN32) || defined(_WIN64)
+static const char kSlash[] = "\\";
+#else
+static const char kSlash[] = "/";
+#endif
 
 // Deal with early release of 3rd-party plugin library.
 static std::vector<std::shared_ptr<DynamicLibraryLoader>> dl_loaders;
+bool FileExists(const std::string &path) {
+  std::ifstream file(path);
+  return file.good();
+}
+
+int InitModelFmk(const std::string &value, const std::shared_ptr<ConverterPara> &param) {
+  if (StrToEnumFmkTypeMap.find(value) != StrToEnumFmkTypeMap.end()) {
+    param->fmk_type = StrToEnumFmkTypeMap.at(value);
+  } else {
+    std::cerr << "INPUT ILLEGAL: fmk must be TF|TFLITE|CAFFE|MINDIR|ONNX" << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int InitModelFile(const std::string &value, const std::shared_ptr<ConverterPara> &param) {
+  if (value.empty() || !FileExists(value)) {
+    MS_LOG(ERROR) << "model file path is empty or invalid";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  param->model_file = value;
+  return RET_OK;
+}
+
+int InitModelInputDataType(const std::string &value, const std::shared_ptr<ConverterPara> &param) {
+  if (StrToEnumDataTypeMap.find(value) == StrToEnumDataTypeMap.end()) {
+    std::cerr << "INPUT INVALID: inputDataType is invalid, supported inputDataType: FLOAT | INT8 | UINT8 | DEFAULT"
+              << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  param->input_data_type = StrToEnumDataTypeMap.at(value);
+  return RET_OK;
+}
+
+int InitModelOutputDataType(const std::string &value, const std::shared_ptr<ConverterPara> &param) {
+  if (StrToEnumDataTypeMap.find(value) == StrToEnumDataTypeMap.end()) {
+    std::cerr << "OUTPUT INVALID: outputDataType is invalid, supported outputDataType: FLOAT | INT8 | UINT8 | DEFAULT"
+              << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  param->output_data_type = StrToEnumDataTypeMap.at(value);
+  return RET_OK;
+}
+
+int InitModelSaveFP16(const std::string &value, const std::shared_ptr<ConverterPara> &param) {
+  if (value == "on") {
+    param->weight_fp16 = true;
+  } else if (value.empty() || value == "off") {
+    param->weight_fp16 = false;
+  } else {
+    std::cerr << "Init save_fp16 failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int InitModelTrainMode(const std::string &value, const std::shared_ptr<ConverterPara> &param) {
+  if (value == "true") {
+    param->train_model = true;
+  } else if (value.empty() || value == "false") {
+    param->train_model = false;
+  } else {
+    std::cerr << "INPUT ILLEGAL: trainModel must be true|false " << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int InitModelInputShape(const std::string &value, const std::shared_ptr<ConverterPara> &param) {
+  if (value.empty()) {
+    return RET_OK;
+  }
+  std::vector<int64_t> shape;
+  auto shape_strs = lite::StrSplit(value, std::string(";"));
+  for (const auto &shape_str : shape_strs) {
+    if (shape_str.empty()) {
+      continue;
+    }
+    shape.clear();
+    auto string_split = lite::StrSplit(shape_str, std::string(":"));
+    constexpr int kMinShapeSizeInStr = 2;
+    if (string_split.size() < kMinShapeSizeInStr) {
+      MS_LOG(ERROR) << "shape size must not be less than " << kMinShapeSizeInStr;
+      return lite::RET_INPUT_PARAM_INVALID;
+    }
+    auto name = string_split[0];
+    for (size_t i = 1; i < string_split.size() - 1; ++i) {
+      name += ":" + string_split[i];
+    }
+    if (name.empty()) {
+      MS_LOG(ERROR) << "input tensor name is empty";
+      return lite::RET_INPUT_PARAM_INVALID;
+    }
+    auto dim_strs = string_split[string_split.size() - 1];
+    if (dim_strs.empty()) {
+      MS_LOG(ERROR) << "input tensor dim string is empty";
+      return lite::RET_INPUT_PARAM_INVALID;
+    }
+    auto dims = lite::StrSplit(dim_strs, std::string(","));
+    if (dims.empty()) {
+      MS_LOG(ERROR) << "input tensor dim is empty";
+      return lite::RET_INPUT_PARAM_INVALID;
+    }
+    for (const auto &dim : dims) {
+      int64_t dim_value;
+      try {
+        dim_value = std::stoi(dim);
+      } catch (const std::exception &e) {
+        MS_LOG(ERROR) << "Get dim failed: " << e.what();
+        return lite::RET_INPUT_PARAM_INVALID;
+      }
+      shape.push_back(dim_value);
+    }
+    param->input_shape[name] = shape;
+  }
+  return RET_OK;
+}
+
+int InitModelInputDataFormat(const std::string &value, const std::shared_ptr<ConverterPara> &param) {
+  if (StrToEnumFormatMap.find(value) != StrToEnumFormatMap.end()) {
+    param->input_format = StrToEnumFormatMap.at(value);
+  } else if (!value.empty()) {
+    MS_LOG(ERROR) << "Input format is invalid.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int InitModelInfer(const std::string &value, const std::shared_ptr<ConverterPara> &param) {
+  if (value == "true") {
+    param->pre_infer = true;
+  } else if (value == "false" || value.empty()) {
+    param->pre_infer = false;
+  } else {
+    std::cerr << "INPUT ILLEGAL: infer must be true|false " << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int InitModelNoFusion(const std::string &value, const std::shared_ptr<ConverterPara> &param) {
+  if (value == "true") {
+    param->no_fusion = true;
+  } else if (value == "false") {
+    param->no_fusion = false;
+  } else if (!value.empty()) {
+    std::cerr << "INPUT ILLEGAL: NoFusion must be true|false " << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+std::shared_ptr<ConverterPara> CreateConvertParam(const std::map<std::string, string> &model_params) {
+  auto parm = std::make_shared<ConverterPara>();
+  std::map<std::string, std::function<int(const std::string &, const std::shared_ptr<ConverterPara> &)>> parse_funcs = {
+    {"fmk", InitModelFmk},
+    {"modelFile", InitModelFile},
+    {"inputDataType", InitModelInputDataType},
+    {"outputDataType", InitModelOutputDataType},
+    {"fp16", InitModelSaveFP16},
+    {"trainModel", InitModelTrainMode},
+    {"inputShape", InitModelInputShape},
+    {"inputDataFormat", InitModelInputDataFormat},
+    {"infer", InitModelInfer},
+    {"NoFusion", InitModelNoFusion}};
+  for (auto &pair : model_params) {
+    if (parse_funcs.find(pair.first) == parse_funcs.end()) {
+      MS_LOG(ERROR) << pair.first << "is not a valid flag";
+      return nullptr;
+    }
+    if (parse_funcs[pair.first](pair.second, parm) != RET_OK) {
+      MS_LOG(ERROR) << pair.first << "'s param is invalid";
+      return nullptr;
+    }
+  }
+  return parm;
+}
 }  // namespace
 
 STATUS StoreConverterParameters(const std::shared_ptr<ConverterPara> &param) {
@@ -279,14 +471,16 @@ int PreInferenceMindIR(const std::shared_ptr<ConverterPara> &param, const FuncGr
   return RET_OK;
 }
 
-int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param) {
+int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param,
+                                   std::map<int, std::map<std::string, std::string>> *model_param_infos) {
+  model_param_infos->clear();
   lite::ConfigFileParser config_parser;
   std::map<std::string, std::map<std::string, std::string>> maps;
   auto ret = RET_OK;
   auto parse_map_ret = RET_OK;
   if (!param->config_file.empty()) {
-    ret = config_parser.ParseConfigFile(param->config_file);
-    parse_map_ret = mindspore::lite::ParseConfigFile(param->config_file, &maps);
+    ret = config_parser.ParseConfigFile(param->config_file, model_param_infos);
+    parse_map_ret = mindspore::lite::ParseConfigFile(param->config_file, &maps, model_param_infos);
   } else {
     ret = config_parser.ParseConfigParam(&param->config_param);
   }
@@ -294,55 +488,66 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param) 
     MS_LOG(ERROR) << "Parse config param failed.";
     return ret;
   }
-  ret = lite::PreprocessParser::ParsePreprocess(config_parser.GetDataPreProcessString(), &param->dataPreProcessParam);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Parse preprocess failed.";
-    return ret;
-  }
-  ret = lite::QuantParamParser::ParseCommonQuant(config_parser.GetCommonQuantString(), &param->commonQuantParam);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Parse common quant param failed.";
-    return ret;
-  }
-  ret = lite::QuantParamParser::ParseFullQuant(config_parser.GetFullQuantString(), &param->fullQuantParam);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Parse full quant param failed.";
-    return ret;
-  }
-  ret = lite::QuantParamParser::ParseWeightQuant(config_parser.GetWeightQuantString(), &param->weightQuantParam);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Parse full quant param failed.";
-    return ret;
-  }
-  ret = lite::QuantParamParser::ParseMixedBitWeightQuant(config_parser.GetMixedBitWeightQuantString(),
-                                                         &param->mixedBitWeightQuantParam);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Parse mixed bit weight quant param failed.";
-    return ret;
-  }
-  ret = InitExtendedIntegrationInfo(param, config_parser);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Parse extended integration info failed.";
-    return ret;
-  }
-  std::string output_file = param->output_file;
-  param->aclModelOptionCfgParam.om_file_path = output_file;
-  auto dir_pos = output_file.find_last_of('/');
-  param->aclModelOptionCfgParam.dump_model_name =
-    dir_pos != std::string::npos ? output_file.substr(dir_pos + 1) : output_file;
-  lite::AclOptionParamParser acl_param_parser;
-  ret = acl_param_parser.ParseAclOptionCfg(config_parser.GetAclOptionCfgString(), &param->aclModelOptionCfgParam);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Parse acl option param failed.";
-    return ret;
-  }
-  // parse ascend_context in config file, the priority is higher
-  if (maps.find("ascend_context") != maps.end()) {
-    auto map = maps.at("ascend_context");
-    config_parser.SetParamByConfigfile(param, map);
-  }
-  if (!param->config_file.empty()) {
-    (void)CheckOfflineParallelConfig(param->config_file, &param->parallel_split_config);
+  if (model_param_infos->empty()) {
+    ret = lite::PreprocessParser::ParsePreprocess(config_parser.GetDataPreProcessString(), &param->dataPreProcessParam);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse preprocess failed.";
+      return ret;
+    }
+    ret = lite::QuantParamParser::ParseCommonQuant(config_parser.GetCommonQuantString(), &param->commonQuantParam);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse common quant param failed.";
+      return ret;
+    }
+    ret = lite::QuantParamParser::ParseFullQuant(config_parser.GetFullQuantString(), &param->fullQuantParam);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse full quant param failed.";
+      return ret;
+    }
+    ret = lite::QuantParamParser::ParseWeightQuant(config_parser.GetWeightQuantString(), &param->weightQuantParam);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse full quant param failed.";
+      return ret;
+    }
+    ret = lite::QuantParamParser::ParseMixedBitWeightQuant(config_parser.GetMixedBitWeightQuantString(),
+                                                           &param->mixedBitWeightQuantParam);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse mixed bit weight quant param failed.";
+      return ret;
+    }
+    ret = InitExtendedIntegrationInfo(param, config_parser);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse extended integration info failed.";
+      return ret;
+    }
+    std::string output_file = param->output_file;
+    param->aclModelOptionCfgParam.om_file_path = output_file;
+    auto dir_pos = output_file.find_last_of('/');
+    param->aclModelOptionCfgParam.dump_model_name =
+      dir_pos != std::string::npos ? output_file.substr(dir_pos + 1) : output_file;
+    lite::AclOptionParamParser acl_param_parser;
+    ret = acl_param_parser.ParseAclOptionCfg(config_parser.GetAclOptionCfgString(), &param->aclModelOptionCfgParam);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse acl option param failed.";
+      return ret;
+    }
+    // parse ascend_context in config file, the priority is higher
+    if (maps.find("ascend_context") != maps.end()) {
+      auto map = maps.at("ascend_context");
+      config_parser.SetParamByConfigfile(param, map);
+    }
+    if (!param->config_file.empty()) {
+      (void)CheckOfflineParallelConfig(param->config_file, &param->parallel_split_config);
+    }
+
+    lite::CpuOptionParamParser cpu_param_parser;
+    ret = cpu_param_parser.ParseCpuOptionCfg(config_parser.GetCpuOptionCfgString(), &param->cpuOptionCfgParam);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse cpu option param failed.";
+      return ret;
+    }
+  } else {
+    MS_LOG(WARNING) << "Multi mode only support micro_param and model_param, other configure can not take effect";
   }
   lite::MicroParamParser micro_param_parser;
   ret = micro_param_parser.ParseMicroParam(config_parser.GetMicroParamString(), &param->microParam);
@@ -351,12 +556,6 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param) 
     return ret;
   }
 
-  lite::CpuOptionParamParser cpu_param_parser;
-  ret = cpu_param_parser.ParseCpuOptionCfg(config_parser.GetCpuOptionCfgString(), &param->cpuOptionCfgParam);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Parse cpu option param failed.";
-    return ret;
-  }
   return RET_OK;
 }
 
@@ -679,7 +878,7 @@ int CheckDevice(const std::shared_ptr<ConverterPara> &param) {
   return RET_OK;
 }
 
-int CheckValueParam(const std::shared_ptr<ConverterPara> &param) {
+int CheckValueParam(const std::shared_ptr<ConverterPara> &param, bool is_multi_model) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "INPUT MISSING: param is nullptr.";
     return RET_INPUT_PARAM_INVALID;
@@ -697,10 +896,12 @@ int CheckValueParam(const std::shared_ptr<ConverterPara> &param) {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  ret = CheckOutputFile(param);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Check value of output_file failed.";
-    return RET_INPUT_PARAM_INVALID;
+  if (!is_multi_model) {
+    ret = CheckOutputFile(param);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Check value of output_file failed.";
+      return RET_INPUT_PARAM_INVALID;
+    }
   }
 
   ret = CheckInputShape(param);
@@ -770,7 +971,8 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, void **m
     MS_LOG(ERROR) << "Input param is nullptr";
     return RET_ERROR;
   }
-  auto ret = InitConfigParam(param);
+  std::map<int, std::map<std::string, std::string>> model_param_infos;  // {model_index, {param_key:param_value}}
+  auto ret = InitConfigParam(param, &model_param_infos);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init config file failed: " << ret << " " << GetErrorInfo(ret);
     return ret;
@@ -787,19 +989,57 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, void **m
     return ret;
   }
 
+  if (model_param_infos.empty()) {
+    ret = CheckValueParam(param, false);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Converter input parameters check valid failed";
+      return ret;
+    }
+    ret = HandleGraphCommon(param, model_data, data_size, not_save, false);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Handle graph failed: " << ret << " " << GetErrorInfo(ret);
+      return ret;
+    }
+  } else {
+    size_t model_index = 0;
+    for (auto pair : model_param_infos) {
+      auto convert_param = CreateConvertParam(pair.second);
+      convert_param->microParam = param->microParam;
+      ret = CheckValueParam(convert_param, true);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "For model" << pair.first << ", converter input parameters check valid failed";
+        return ret;
+      }
+      if (model_index == model_param_infos.size() - 1) {
+        convert_param->microParam.is_last_model = true;
+      }
+      ret = HandleGraphCommon(convert_param, model_data, data_size, not_save, true);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Handle graph failed: " << ret << " " << GetErrorInfo(ret);
+        return ret;
+      }
+      model_index++;
+    }
+  }
+
+  return RET_OK;
+}
+
+int ConverterImpl::HandleGraphCommon(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size,
+                                     bool not_save, bool is_multi_model) {
   auto graph = ConverterFuncGraph::Build(param);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Build func graph failed";
     return RET_ERROR;
   }
 
-  ret = ConverterFuncGraph::Optimize(param, graph);
+  int ret = ConverterFuncGraph::Optimize(param, graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Optimize func graph failed: " << ret << " " << GetErrorInfo(ret);
     return ret;
   }
 
-  ret = SaveGraph(graph, param, model_data, data_size, not_save);
+  ret = SaveGraph(graph, param, model_data, data_size, not_save, is_multi_model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Save graph failed: " << ret << " " << GetErrorInfo(ret);
     return ret;
@@ -809,7 +1049,7 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, void **m
 }
 
 int ConverterImpl::SaveGraph(FuncGraphPtr graph, const std::shared_ptr<ConverterPara> &param, void **model_data,
-                             size_t *data_size, bool not_save) {
+                             size_t *data_size, bool not_save, bool is_multi_model) {
   int status = RET_ERROR;
   if (param->save_type == kMindIR) {
     status = SaveMindIRModel(graph, param, model_data, data_size);
@@ -847,9 +1087,24 @@ int ConverterImpl::SaveGraph(FuncGraphPtr graph, const std::shared_ptr<Converter
   }
 
   if (param->microParam.enable_micro) {
-    status = micro::Coder::MicroSourceCodeGeneration(*meta_graph, param->output_file, param->microParam.codegen_mode,
-                                                     param->microParam.target, param->microParam.support_parallel,
-                                                     param->microParam.debug_mode);
+    if (!is_multi_model) {
+      status = micro::Coder::MicroSourceCodeGeneration(*meta_graph, param->output_file, param->microParam.codegen_mode,
+                                                       param->microParam.target, param->microParam.support_parallel,
+                                                       param->microParam.debug_mode, true);
+    } else {
+      if (param->microParam.save_path.empty() || param->microParam.project_name.empty()) {
+        MS_LOG(ERROR) << "Micro param for invalid: save_path or project name is needed";
+        return RET_ERROR;
+      }
+      auto output_path = param->microParam.save_path + param->microParam.project_name;
+      if (param->microParam.save_path[param->microParam.save_path.size() - 1] != '/' ||
+          param->microParam.save_path[param->microParam.save_path.size() - 1] != '\\') {
+        output_path = param->microParam.save_path + kSlash + param->microParam.project_name;
+      }
+      status = micro::Coder::MicroSourceCodeGeneration(*meta_graph, output_path, param->microParam.codegen_mode,
+                                                       param->microParam.target, param->microParam.support_parallel,
+                                                       param->microParam.debug_mode, param->microParam.is_last_model);
+    }
   } else {
     status = ConverterToMetaGraph::Save(meta_graph, param, model_data, data_size, not_save);
   }
@@ -884,11 +1139,7 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
   mindspore::mindspore_log_init();
 
   param->aclModelOptionCfgParam.offline = !not_save;
-  int status = CheckValueParam(param);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Converter input parameters check valid failed";
-    return status;
-  }
+  int status = RET_OK;
   ConverterImpl converter_impl;
   status = converter_impl.Convert(param, model_data, data_size, not_save);
   if (status != RET_OK) {

@@ -19,6 +19,8 @@
 
 #include <memory>
 #include <string>
+#include <vector>
+#include <map>
 #include "include/converter.h"
 #include "include/registry/model_parser.h"
 #include "schema/inner/model_generated.h"
@@ -52,16 +54,19 @@ class ConverterImpl {
   int Convert(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size, bool not_save);
 
  private:
-  int InitConfigParam(const std::shared_ptr<ConverterPara> &param);
+  int InitConfigParam(const std::shared_ptr<ConverterPara> &param,
+                      std::map<int, std::map<std::string, std::string>> *model_param_infos);
   int InitExtendedIntegrationInfo(const std::shared_ptr<ConverterPara> &param,
                                   const lite::ConfigFileParser &config_file_parser);
   bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);
   std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key);
   int SaveGraph(FuncGraphPtr graph, const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size,
-                bool not_save);
+                bool not_save, bool is_multi_model);
   int SaveMindIRModel(FuncGraphPtr graph, const std::shared_ptr<ConverterPara> &param, void **model_data,
                       size_t *data_size);
   int LoadPluginLib(const std::shared_ptr<ConverterPara> &param);
+  int HandleGraphCommon(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size,
+                        bool not_save, bool is_multi_model);
 };
 }  // namespace lite
 }  // namespace mindspore

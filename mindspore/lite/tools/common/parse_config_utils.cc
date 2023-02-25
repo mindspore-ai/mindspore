@@ -49,7 +49,8 @@ int ReadFileToIfstream(const std::string &file_path, std::ifstream *ifstream) {
 }
 
 int SplitLineToMap(std::ifstream *ifs, std::map<std::string, std::map<std::string, std::string>> *maps,
-                   const char &ignore_delimiter, const char &split_delimiter) {
+                   std::map<int, std::map<std::string, std::string>> *model_param_infos, const char &ignore_delimiter,
+                   const char &split_delimiter) {
   if (ifs == nullptr || maps == nullptr) {
     MS_LOG(ERROR) << "ifs or maps is nullptr.";
     return RET_ERROR;
@@ -58,6 +59,7 @@ int SplitLineToMap(std::ifstream *ifs, std::map<std::string, std::map<std::strin
   size_t num_of_line = 0;
   const size_t kMaxLineCount = 9999;
   std::string section = "DEFAULT";
+  int model_index = -1;
   while (std::getline(*ifs, raw_line)) {
     if (num_of_line > kMaxLineCount) {
       MS_LOG(ERROR) << "the line count is exceeds the maximum range 9999.";
@@ -84,6 +86,9 @@ int SplitLineToMap(std::ifstream *ifs, std::map<std::string, std::map<std::strin
     }
     if (raw_line.at(0) == '[') {
       section = raw_line.substr(1, raw_line.size() - 2);
+      if (section == "model_param") {
+        ++model_index;
+      }
       continue;
     }
     auto split_vector = SplitStringToVector(raw_line, split_delimiter);
@@ -101,13 +106,18 @@ int SplitLineToMap(std::ifstream *ifs, std::map<std::string, std::map<std::strin
       MS_LOG(ERROR) << "Erase Blank Space for value failed.";
       return RET_ERROR;
     }
-    (*maps)[section][key] = value;
+    if (section == "model_param") {
+      (*model_param_infos)[model_index][key] = value;
+    } else {
+      (*maps)[section][key] = value;
+    }
   }
   return RET_OK;
 }
 
 int ParseConfigFile(const std::string &config_file_path,
-                    std::map<std::string, std::map<std::string, std::string>> *maps) {
+                    std::map<std::string, std::map<std::string, std::string>> *maps,
+                    std::map<int, std::map<std::string, std::string>> *model_param_infos) {
   auto real_path = RealPath(config_file_path.c_str());
   if (real_path.empty()) {
     MS_LOG(ERROR) << "real path is invalid.";
@@ -119,7 +129,7 @@ int ParseConfigFile(const std::string &config_file_path,
     MS_LOG(ERROR) << "read file to ifstream failed.";
     return ret;
   }
-  ret = SplitLineToMap(&ifs, maps, '#', '=');
+  ret = SplitLineToMap(&ifs, maps, model_param_infos, '#', '=');
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Split line to map failed.";
     ifs.close();

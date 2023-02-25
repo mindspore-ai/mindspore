@@ -359,8 +359,7 @@ int Generator::CodeModelHandleHFile() {
          "#define MINDSPORE_LITE_MICRO_LIBRARY_INCLUDE_MODEL_HANDLE_H_\n\n"
       << "#include \"c_api/model_c.h\"\n\n";
   for (int i = 0; i <= ctx_->GetCurModelIndex(); ++i) {
-    ofs << "extern MSModelHandle model" << std::to_string(ctx_->GetCurModelIndex()) << "; // " << ctx_->model_name()
-        << "\n";
+    ofs << "extern MSModelHandle model" << std::to_string(i) << "; // " << ctx_->model_name() << "\n";
   }
   ofs << "\n#endif  // MINDSPORE_LITE_MICRO_LIBRARY_INCLUDE_MODEL_HANDLE_H_\n";
   return RET_OK;
@@ -573,7 +572,7 @@ int Generator::CreateModelFiles() {
 int Generator::GenerateCode() {
   auto ret = CreateModelFiles();
   MS_CHECK_RET_CODE(ret, "Create model files failed.");
-  if (!ctx_->end_flag()) {  // this flag must be changed in converter
+  if (ctx_->end_flag()) {
     ret = CreateCommonFiles();
     MS_CHECK_RET_CODE(ret, "Create common files failed.");
   }

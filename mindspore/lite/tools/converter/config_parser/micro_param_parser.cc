@@ -61,6 +61,18 @@ STATUS MicroParamParser::ParseEnableMicro(const std::string &enable_micro, micro
   return RET_OK;
 }
 
+STATUS MicroParamParser::ParseSavePath(const std::string &save_path, micro::MicroParam *micro_param) {
+  MS_LOG(DEBUG) << "Micro save path : " << save_path;
+  micro_param->save_path = save_path;
+  return RET_OK;
+}
+
+STATUS MicroParamParser::ParseProjName(const std::string &project_name, micro::MicroParam *micro_param) {
+  MS_LOG(DEBUG) << "Micro project name : " << project_name;
+  micro_param->project_name = project_name;
+  return RET_OK;
+}
+
 STATUS MicroParamParser::ParseMicroParam(const MicroParamString &micro_param_string, micro::MicroParam *micro_param) {
   CHECK_NULL_RETURN(micro_param);
   if (!micro_param_string.target.empty()) {
@@ -90,6 +102,18 @@ STATUS MicroParamParser::ParseMicroParam(const MicroParamString &micro_param_str
   if (!micro_param_string.enable_micro.empty()) {
     if (ParseEnableMicro(micro_param_string.enable_micro, micro_param) != RET_OK) {
       MS_LOG(ERROR) << "Parse enable micro val； " << micro_param_string.enable_micro;
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  if (!micro_param_string.save_path.empty()) {
+    if (ParseSavePath(micro_param_string.save_path, micro_param) != RET_OK) {
+      MS_LOG(ERROR) << "Parse save path val failed: " << micro_param_string.save_path;
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  if (!micro_param_string.project_name.empty()) {
+    if (ParseProjName(micro_param_string.project_name, micro_param) != RET_OK) {
+      MS_LOG(ERROR) << "Parse project name val failed: " << micro_param_string.project_name;
       return RET_INPUT_PARAM_INVALID;
     }
   }

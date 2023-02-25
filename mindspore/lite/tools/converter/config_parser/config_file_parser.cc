@@ -216,9 +216,10 @@ void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
   }
 }
 
-int ConfigFileParser::ParseConfigFile(const std::string &config_file_path) {
+int ConfigFileParser::ParseConfigFile(const std::string &config_file_path,
+                                      std::map<int, std::map<std::string, std::string>> *model_param_infos) {
   std::map<std::string, std::map<std::string, std::string>> maps;
-  auto ret = mindspore::lite::ParseConfigFile(config_file_path, &maps);
+  auto ret = mindspore::lite::ParseConfigFile(config_file_path, &maps, model_param_infos);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse config file failed.";
     return ret;
@@ -417,7 +418,9 @@ int ConfigFileParser::ParseMicroParamString(const std::map<std::string, std::map
                                                    {"codegen_mode", micro_param_string_.codegen_mode},
                                                    {"debug_mode", micro_param_string_.debug_mode},
                                                    {"support_parallel", micro_param_string_.support_parallel},
-                                                   {"enable_micro", micro_param_string_.enable_micro}};
+                                                   {"enable_micro", micro_param_string_.enable_micro},
+                                                   {"save_path", micro_param_string_.save_path},
+                                                   {"project_name", micro_param_string_.project_name}};
     return SetMapData(map, parse_map, kMicroParam);
   }
   return RET_OK;

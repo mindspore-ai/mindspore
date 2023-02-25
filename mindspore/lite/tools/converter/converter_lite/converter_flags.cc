@@ -322,21 +322,11 @@ int Flags::PreInit(int argc, const char **argv) {
     std::cout << this->Usage() << std::endl;
     return lite::RET_SUCCESS_EXIT;
   }
-
-  if (this->fmkIn.empty()) {
-    std::cerr << "INPUT MISSING: fmk is necessary" << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-
   return RET_OK;
 }
 
 int Flags::Init(int argc, const char **argv) {
-  auto ret = PreInit(argc, argv);
-  if (ret != RET_OK) {
-    return ret;
-  }
-  ret = InitSaveFP16();
+  auto ret = InitSaveFP16();
   if (ret != RET_OK) {
     std::cerr << "Init save fp16 failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;

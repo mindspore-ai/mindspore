@@ -28,6 +28,13 @@ constexpr size_t kMaxConfigNumPerSection = 1000;
 namespace lite {
 int RunConverter(const std::shared_ptr<ConverterPara> &data_);
 }
+Converter::Converter() {
+  data_ = std::make_shared<ConverterPara>();
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Create ConverterPara failed";
+  }
+}
+
 Converter::Converter(converter::FmkType fmk_type, const std::vector<char> &model_file,
                      const std::vector<char> &output_file, const std::vector<char> &weight_file) {
   data_ = std::make_shared<ConverterPara>();

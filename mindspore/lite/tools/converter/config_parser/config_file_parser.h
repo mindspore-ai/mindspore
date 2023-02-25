@@ -96,6 +96,8 @@ struct MicroParamString {
   std::string support_parallel;
   std::string debug_mode;
   std::string enable_micro;
+  std::string save_path;
+  std::string project_name;
 };
 
 struct CpuOptionCfgString {
@@ -105,7 +107,8 @@ struct CpuOptionCfgString {
 
 class ConfigFileParser {
  public:
-  int ParseConfigFile(const std::string &config_file_path);
+  int ParseConfigFile(const std::string &config_file_path,
+                      std::map<int, std::map<std::string, std::string>> *model_param_infos);
   int ParseConfigParam(std::map<std::string, std::map<std::string, std::string>> *maps);
   void SetParamByConfigfile(const std::shared_ptr<mindspore::ConverterPara> &param,
                             const std::map<std::string, std::string> &ascend_map);

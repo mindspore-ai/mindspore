@@ -27,14 +27,14 @@ class CoderTrainSession : public CoderSession {
  public:
   int Build() override;
 
-  int Run(const std::string model_name) override;
+  int Run(const std::string &model_name) override;
 
   int GenerateCode() override;
 
  private:
   int DoCode() override;
   int UpdateCodeBlocksWithFlag();
-  int PassArgsToContext(const std::string model_name) override;
+  int PassArgsToContext(const std::string &model_name) override;
   void FindEvalCoders(OperatorCoder *coder);
   int CompileTrainCoders();
   int CompileEvalCoders(const std::map<std::string, std::vector<Tensor *>> &eval_outputs_map);
