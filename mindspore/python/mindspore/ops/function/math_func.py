@@ -6223,6 +6223,7 @@ def atleast_2d(inputs):
 
     Examples:
         >>> import mindspore.numpy as np
+        >>> from mindspore import ops
         >>> x1 = np.ones((2, 3))
         >>> x2 = np.ones(())
         >>> x3 = np.ones(5)
