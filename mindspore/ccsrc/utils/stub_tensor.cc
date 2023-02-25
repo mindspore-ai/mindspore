@@ -95,12 +95,13 @@ class StubException : public ExceptionListener {
 };
 }  // namespace
 
-void StubNode::SetAbstract(const AbstractBasePtr &abs) {
+bool StubNode::SetAbstract(const AbstractBasePtr &abs) {
   abstract_ = abs;
   if (wait_flag_.load()) {
     std::unique_lock<std::mutex> lock(stub_mutex_);
     stub_cond_var_.notify_all();
   }
+  return true;
 }
 
 void StubNode::SetValue(const ValuePtr &val) {
@@ -179,6 +180,13 @@ py::object TensorNode::GetDtype() {
   return py::cast(base);
 }
 
+bool TensorNode::SetAbstract(const AbstractBasePtr &abs) {
+  if (!abs->isa<abstract::AbstractTensor>()) {
+    return false;
+  }
+  return StubNode::SetAbstract(abs);
+}
+
 py::object SequenceNode::GetElements() {
   if (elements_.empty()) {
     (void)WaitAbstract();
@@ -190,18 +198,26 @@ py::object SequenceNode::GetElements() {
   return out;
 }
 
-void SequenceNode::SetAbstract(const AbstractBasePtr &abs) {
+bool SequenceNode::SetAbstract(const AbstractBasePtr &abs) {
   auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  if (seq_abs == nullptr) {
+    return false;
+  }
   auto children = seq_abs->elements();
   if (elements_.empty()) {
     for (auto child : children) {
       elements_.emplace_back(MakeStubNode(child->BuildType()));
     }
   }
-  for (size_t i = 0; i < elements_.size(); ++i) {
-    elements_[i]->SetAbstract(children[i]);
+  if (elements_.size() != children.size()) {
+    return false;
   }
-  StubNode::SetAbstract(abs);
+  for (size_t i = 0; i < elements_.size(); ++i) {
+    if (!elements_[i]->SetAbstract(children[i])) {
+      return false;
+    }
+  }
+  return StubNode::SetAbstract(abs);
 }
 
 void SequenceNode::SetValue(const ValuePtr &val) {

@@ -43,7 +43,7 @@ class COMMON_EXPORT StubNode : public Value {
   virtual ~StubNode() = default;
   MS_DECLARE_PARENT(StubNode, Value);
 
-  virtual void SetAbstract(const AbstractBasePtr &abs);
+  virtual bool SetAbstract(const AbstractBasePtr &abs);
   virtual void SetValue(const ValuePtr &val);
 
   AbstractBasePtr WaitAbstract();
@@ -65,6 +65,7 @@ class TensorNode : public StubNode {
  public:
   TensorNode() = default;
   MS_DECLARE_PARENT(TensorNode, StubNode);
+  bool SetAbstract(const AbstractBasePtr &abs) override;
 
   py::object GetValue();
   py::object GetShape();
@@ -78,7 +79,7 @@ class SequenceNode : public StubNode {
 
   py::object GetElements();
 
-  void SetAbstract(const AbstractBasePtr &abs) override;
+  bool SetAbstract(const AbstractBasePtr &abs) override;
   void SetValue(const ValuePtr &val) override;
 
   void SetElement(int i, StubNodePtr node) { elements_[i] = node; }

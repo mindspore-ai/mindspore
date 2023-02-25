@@ -19,8 +19,8 @@
 #include <string>
 #include <memory>
 
-#include "pipeline/pynative/pynative_execute.h"
 #include "utils/hash_map.h"
+#include "base/base.h"
 
 namespace mindspore {
 namespace pynative {
@@ -46,7 +46,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"AdamApplyOneWithDecay", kTupleTensor3},
                                                        {"AdamApplyOneWithDecayAssign", kTupleTensor3},
                                                        {"AdamWeightDecay", kTupleTensor3},
-                                                       {"AdaptiveMaxPool2D", kAnyType},
+                                                       {"AdaptiveMaxPool2D", kTupleTensor2},
                                                        {"AdaptiveMaxPool3D", kTupleTensor2},
                                                        {"ApplyAdaMax", kTupleTensor3},
                                                        {"ApplyAdadelta", kTupleTensor3},
@@ -157,7 +157,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"LayerNormXBackpropV2", kTupleTensor2},
                                                        {"LinearSumAssignment", kTupleTensor2},
                                                        {"ListDiff", kTupleTensor2},
-                                                       {"LogMatrixDeterminant", kTuple},
+                                                       {"LogMatrixDeterminant", kTupleTensor2},
                                                        {"LogUniformCandidateSampler", kTupleTensor3},
                                                        {"Lu", kTupleTensor2},
                                                        {"LuUnpack", kTupleTensor3},
