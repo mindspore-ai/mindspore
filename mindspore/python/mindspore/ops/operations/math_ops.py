@@ -6567,7 +6567,7 @@ class Polygamma(Primitive):
 
 class CholeskyInverse(Primitive):
     """
-    Returns the inverse of the positive definite matrix using cholesky matrix factorization.
+    Returns the inverse of the positive definite matrix using cholesky matrix factorization by its Cholesky factor `U`.
 
     Refer to :func:`mindspore.ops.cholesky_inverse` for more details.
 

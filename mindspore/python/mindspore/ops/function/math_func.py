@@ -9049,7 +9049,7 @@ def cholesky(input_x, upper=False):
 
 def cholesky_inverse(input_x, upper=False):
     r"""
-    Returns the inverse of the positive definite matrix using cholesky matrix factorization.
+    Returns the inverse of the positive definite matrix using cholesky matrix factorization by its Cholesky factor `U`.
 
     If `upper` is `False`, :math:`U` is a lower triangular such that the output tensor is
 
@@ -9064,7 +9064,7 @@ def cholesky_inverse(input_x, upper=False):
         inv = (U^{T}U)^{-1}
 
     Note:
-        The input must be either an upper triangular matrix or a lower triangular matrix.
+        The input must be either an upper triangular matrix or a lower triangular matrix from Cholesky decomposition.
 
     Args:
         input_x (Tensor): The input tensor with a rank of 2. Supported dtypes: float32, float64.
