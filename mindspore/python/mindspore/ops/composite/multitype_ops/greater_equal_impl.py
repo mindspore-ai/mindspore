@@ -17,6 +17,7 @@
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
+from ...operations._sequence_ops import tuple_greater_equal, list_greater_equal
 
 # greater_equal is a metagraph object which will determine if two objects are greater_equal according to input type
 # using ".register" decorator
@@ -68,3 +69,33 @@ def _greater_equal_tensor(x, y):
        Tensor, return value by operator P.GreaterEqual.
    """
     return F.tensor_ge(x, y)
+
+
+@greater_equal.register("Tuple", "Tuple")
+def _greater_equal_tuple(x, y):
+    """
+    Determine whether x is greater than or equal to y.
+
+    Args:
+       x(Tuple): Tuple.
+       y(Tuple): Tuple.
+
+    Returns:
+       bool, if x >= y return true in python logic, x < y return false.
+   """
+    return tuple_greater_equal()(x, y)
+
+
+@greater_equal.register("List", "List")
+def _greater_equal_list(x, y):
+    """
+    Determine whether x is greater than or equal to y.
+
+    Args:
+       x(List): List.
+       y(List): List.
+
+    Returns:
+       bool, if x >= y return true in python logic, x < y return false.
+   """
+    return list_greater_equal()(x, y)

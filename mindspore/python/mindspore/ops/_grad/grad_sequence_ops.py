@@ -124,3 +124,18 @@ def get_bprop_max_min(self):
         return (dx,)
 
     return bprop
+
+
+@bprop_getters.register("tuple_greater_than")
+@bprop_getters.register("list_greater_than")
+@bprop_getters.register("tuple_greater_equal")
+@bprop_getters.register("list_greater_equal")
+def get_bprop_greater(self):
+    """Generate bprop for tuple_greater_than, list_greater_than,
+    tuple_greater_equal, list_greater_equal.
+    """
+
+    def bprop(x, y, out, dout):
+        return (zeros_like(x), zeros_like(y))
+
+    return bprop
