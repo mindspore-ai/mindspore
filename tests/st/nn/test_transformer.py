@@ -93,7 +93,7 @@ def test_transformerencoder_square_input(training, jit):
     src_mask = Tensor([[0, 1], [0, 0]]).to(ms.bool_)
 
     def forward(x, mask):
-        result = model(x, mask=mask)
+        result = model(x, src_mask=mask)
         return result
 
     if jit:
