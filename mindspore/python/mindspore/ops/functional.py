@@ -55,7 +55,7 @@ is_dynamic_sequence_element_unknown = Primitive("IsElementUnknown")
 partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()
-identity = P.identity()
+identity = P.Identity()
 # tuple/list/scalar ops
 scalar_div = _scalar_ops.ScalarDiv()
 scalar_mod = _scalar_ops.ScalarMod()

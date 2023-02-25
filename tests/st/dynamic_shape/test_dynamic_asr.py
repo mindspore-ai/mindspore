@@ -790,7 +790,7 @@ class MultiTaskTrainOneStepCell(nn.Cell):
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
         self.reducer_flag = False
-        self.grad_reducer = F.identity
+        self.grad_reducer = self.identity
         self.parallel_mode = _get_parallel_mode()
         if self.parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL):
             self.reducer_flag = True
@@ -808,6 +808,9 @@ class MultiTaskTrainOneStepCell(nn.Cell):
         grads = self.grad(self.network, weights)(*inputs, sens)
         grads = self.grad_reducer(grads)
         return (F.depend(loss, self.optimizer(grads)), aloss, closs)
+
+    def identity(self, x):
+        return x
 
 
 def warmup_lr(init_lr, warmup_steps, total_steps):
