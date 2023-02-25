@@ -549,13 +549,18 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
     MS_LOG(INFO) << "graph: " << graph->graph_id() << " is dataset graph, not creating graph history file.";
     return;
   }
-  if (!IsDeviceTargetGPU() && (graph->graph_id() != graph->root_graph_id())) {
+  if (!Debugger::GetInstance()->GetAscendKernelByKernelFlag() && !IsDeviceTargetGPU() &&
+      (graph->graph_id() != graph->root_graph_id())) {
     // when device target is ascend, we only dump graph run iter for the root graph.
     return;
   }
   std::string execution_order_path = json_parser.path() + "/rank_" + std::to_string(rank_id) + "/execution_order/";
-  std::string graph_str =
-    IsDeviceTargetGPU() ? std::to_string(graph->graph_id()) : std::to_string(graph->root_graph_id());
+  std::string graph_str;
+  if (Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
+    graph_str = std::to_string(graph->graph_id());
+  } else {
+    graph_str = IsDeviceTargetGPU() ? std::to_string(graph->graph_id()) : std::to_string(graph->root_graph_id());
+  }
   std::string file_name_to_check = execution_order_path + "/ms_global_execution_order_graph_" + graph_str + ".csv";
   auto real_path = Common::CreatePrefixPath(file_name_to_check);
   if (!real_path.has_value()) {

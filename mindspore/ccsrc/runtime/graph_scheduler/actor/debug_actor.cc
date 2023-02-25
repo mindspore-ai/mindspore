@@ -81,6 +81,8 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
   } else if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
 #ifdef ENABLE_DEBUGGER
 #ifndef ENABLE_SECURITY
+    auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
+    graph_id_sets_.insert(kernel_graph->graph_id());
     if (DumpJsonParser::GetInstance().async_dump_enabled()) {
       auto kernel_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
       kernel_dumper->Init();
@@ -90,7 +92,6 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
 #endif
     auto debugger = Debugger::GetInstance();
     if (debugger != nullptr) {
-      auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
       debugger->InsertExecutedGraph(kernel_graph);
       debugger->SetAscendKernelByKernelFlag(true);
       bool read_data = CheckReadData(cnode);
@@ -185,7 +186,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
         return kernel->fullname_with_scope().find("InitDataSetQueue") != std::string::npos;
       });
     }
-    if (!is_data_map_) {
+    if (!is_data_map_ && !graphs[0]->is_graph_run_mode()) {
       auto kCurLoopCountName = "current_loop_count";
       for (size_t i = 0; i < graphs.size(); i++) {
         const auto &graph_ = graphs[i];
@@ -240,8 +241,12 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   if (DumpJsonParser::GetInstance().async_dump_enabled() && DumpJsonParser::GetInstance().op_debug_mode() > 0 &&
       Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
     uint32_t rank_id = Debugger::GetRankID();
-    uint32_t graph_id = Debugger::GetInstance()->GetCurrentRootGraphId();
-    DeleteNoOverflowFile(rank_id, graph_id);
+    std::set<uint32_t>::iterator graph_id_iter;
+    for (graph_id_iter = graph_id_sets_.begin(); graph_id_iter != graph_id_sets_.end(); ++graph_id_iter) {
+      auto graph_id = *graph_id_iter;
+      DeleteNoOverflowFile(rank_id, graph_id);
+    }
+    graph_id_sets_.clear();
   }
 #endif
 #endif

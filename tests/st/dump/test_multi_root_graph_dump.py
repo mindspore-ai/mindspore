@@ -101,8 +101,8 @@ def run_multi_root_graph_dump(device, dump_mode, test_name):
                 time.sleep(2)
         execution_order_path = os.path.join(dump_path, 'rank_0', 'execution_order')
         # Multi root graph script: check dump data dir and graph history files and see if iteration number is matched.
-        if device == "GPU":
-            # In GPU, we have 4 kernel graphs folders under rank_0 dir.
+        if device == "GPU" or os.environ.get('GRAPH_OP_RUN') == "1":
+            # In GPU or KernelByKernel, we have 4 kernel graphs folders under rank_0 dir.
             # In graph history dir, there are 2 files for each graph (ms_execution_order and ms_global_execution_order).
             assert len(os.listdir(dump_file_path)) == 4
             assert len(os.listdir(execution_order_path)) == 8
@@ -111,7 +111,7 @@ def run_multi_root_graph_dump(device, dump_mode, test_name):
             check_graph_structure(dump_file_path, execution_order_path, '2', ['1', '3'])
             check_graph_structure(dump_file_path, execution_order_path, '3', ['5'])
         else:
-            # In Ascend, we have 2 root graphs folders under rank_0 dir.
+            # In Ascend Super Kernel, we have 2 root graphs folders under rank_0 dir.
             # In graph history dir, there are 4 ms_execution_order files and 2 ms_global_execution_order files.
             # Each graph should have 3 iterations. Each graph was executed once per epoch.
             # Graph 0 was executed in even iterations, graph 1 was executed in odd iterations.

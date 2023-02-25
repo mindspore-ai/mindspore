@@ -30,7 +30,7 @@ namespace debug {
 class BACKEND_EXPORT OverflowDumper {
  public:
   OverflowDumper() = default;
-  ~OverflowDumper() = default;
+  virtual ~OverflowDumper() = default;
 
   static std::shared_ptr<OverflowDumper> GetInstance(const std::string &name) noexcept;
   static bool Register(const std::string &name, const std::shared_ptr<OverflowDumper> &instance);

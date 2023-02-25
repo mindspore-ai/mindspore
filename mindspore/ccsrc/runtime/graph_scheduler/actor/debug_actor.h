@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_DEBUG_ACTOR_H_
 
 #include <vector>
+#include <set>
 #include <mutex>
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
@@ -62,6 +63,7 @@ class DebugActor : public ActorBase {
 
   // Support multi-thread.
   std::mutex debug_mutex_;
+  std::set<uint32_t> graph_id_sets_;
 };
 
 }  // namespace runtime
