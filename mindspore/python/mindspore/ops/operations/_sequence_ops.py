@@ -643,3 +643,115 @@ class list_greater_equal(Primitive):
         """Initialize list_greater_equal"""
         self.init_prim_io_names(
             inputs=['input_0', 'input_1'], outputs=['output_data'])
+
+
+class tuple_lt(Primitive):
+    r"""
+    Support tuple less_than operation 'less_than(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_0** (Union[Tuple]) - The first sequence.
+        - **input_1** (Union[Tuple]) - The second sequence, dtype and shape should be same as 'input_0'.
+
+    Outputs:
+        A bool value to indicate whether every element in 'input_0' is less than element in 'input_1' correspondingly.
+
+    Raises:
+        TypeError: The 'input_0' or 'input_1' is not tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize tuple_lt"""
+        self.init_prim_io_names(
+            inputs=['input_0', 'input_1'], outputs=['output_data'])
+
+
+class list_lt(Primitive):
+    r"""
+    Support list less_than operation 'less_than(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_0** (Union[List]) - The first sequence.
+        - **input_1** (Union[List]) - The second sequence, dtype and shape should be same as 'input_0'.
+
+    Outputs:
+        A bool value to indicate whether every element in 'input_0' is less than element in 'input_1' correspondingly.
+
+    Raises:
+        TypeError: The 'input_0' or 'input_1' is not list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize list_lt"""
+        self.init_prim_io_names(
+            inputs=['input_0', 'input_1'], outputs=['output_data'])
+
+
+class tuple_le(Primitive):
+    r"""
+    Support tuple less_equal operation 'less_equal(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_0** (Union[Tuple]) - The first sequence.
+        - **input_1** (Union[Tuple]) - The second sequence, dtype and shape should be same as 'input_0'.
+
+    Outputs:
+        A bool value to indicate whether every element in 'input_0' is less equal element in 'input_1' correspondingly.
+
+    Raises:
+        TypeError: The 'input_0' or 'input_1' is not tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize tuple_le"""
+        self.init_prim_io_names(
+            inputs=['input_0', 'input_1'], outputs=['output_data'])
+
+
+class list_le(Primitive):
+    r"""
+    Support list less equal operation 'less_equal(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_0** (Union[List]) - The first sequence.
+        - **input_1** (Union[List]) - The second sequence, dtype and shape should be same as 'input_0'.
+
+    Outputs:
+        A bool value to indicate whether every element in 'input_0' is less equal element in 'input_1' correspondingly.
+
+    Raises:
+        TypeError: The 'input_0' or 'input_1' is not list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize list_le"""
+        self.init_prim_io_names(
+            inputs=['input_0', 'input_1'], outputs=['output_data'])

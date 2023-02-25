@@ -96,6 +96,6 @@ class SequenceMulInfer : public abstract::OpInferBase {
 
   std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
-REGISTER_PRIMITIVE_OP_INFER_IMPL(SequenceMul, prim::kPrimSequenceMul, SequenceMulInfer, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SequenceMul, prim::kPrimSequenceMul, SequenceMulInfer, false);
 }  // namespace ops
 }  // namespace mindspore
