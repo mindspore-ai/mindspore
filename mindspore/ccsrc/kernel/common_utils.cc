@@ -1445,37 +1445,38 @@ void UnfoldKernelBuildInfo(const CNodePtr &kernel_node) {
                      kernel_node);
 }
 
-int64_t CalOutputTupleSize(const AnfNodePtr &node) {
+std::tuple<ValuePtr, int64_t, bool> CalOutputTupleSize(const AnfNodePtr &node) {
   bool is_bprop_cut = common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimBpropCut);
   bool skip = (is_bprop_cut && node->abstract()->isa<abstract::AbstractSparseTensor>());
-  if (skip || !common::AnfAlgo::IsTupleOutput(node)) {
-    return -1;
+  if (skip) {
+    return std::make_tuple(MakeValue<int64_t>(-1), -1, false);
   }
   const auto &real_node = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false, {prim::kPrimTupleGetItem}).first;
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(real_node);
   if (build_info != nullptr) {
     auto output_object = AnfAlgo::GetOutputKernelObjectType(real_node, 0);
     if (output_object != kernel::KernelObjectType::TUPLE_UNFOLD) {
-      return -1;
+      return std::make_tuple(MakeValue<int64_t>(-1), 1, false);
     }
   }
   auto output_size = AnfAlgo::GetOutputElementNum(node);
   if (node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
-    output_size = 0;
+    std::vector<ValuePtr> dyn_input_size;
     auto make_tuple = node->cast<CNodePtr>();
     size_t tuple_input_num = common::AnfAlgo::GetInputTensorNum(make_tuple);
+    int64_t input_dyn_size = 0;
     for (size_t j = 0; j < tuple_input_num; ++j) {
-      // using for graph kernel
       auto dyn_input_node = common::AnfAlgo::GetInputNode(make_tuple, j);
-      // Handle tuple nested scenes.
-      if (dyn_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple)) {
-        output_size += CalOutputTupleSize(dyn_input_node);
-      } else {
-        output_size++;
-      }
+      auto [tuple_structual, input_size, is_dyn_input] = CalOutputTupleSize(dyn_input_node);
+      input_dyn_size += input_size;
+      (void)dyn_input_size.emplace_back(tuple_structual);
+      MS_LOG(DEBUG) << "Tuple structural:" << tuple_structual->ToString() << ", input size:" << input_size
+                    << ", is dyn size:" << is_dyn_input;
     }
+    return std::make_tuple(std::make_shared<ValueTuple>(dyn_input_size), input_dyn_size, true);
   }
-  return output_size == 0 ? -1 : output_size;
+  output_size = output_size == 0 ? 1 : output_size;
+  return std::make_tuple(MakeValue<int64_t>(-1), SizeToLong(output_size), true);
 }
 
 void SetDynamicInputSizeAttr(const CNodePtr &cnode) {
@@ -1484,19 +1485,33 @@ void SetDynamicInputSizeAttr(const CNodePtr &cnode) {
       common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimPartial)) {
     return;
   }
-  std::vector<int64_t> dyn_input_sizes;
+  std::vector<ValuePtr> tuple_placeholder;  // Record Tuple Structural of the node input
+  std::vector<int64_t> dyn_input_size;
   auto input_obj_types = AnfAlgo::GetInputKernelObjectTypes(cnode);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  bool is_dyn_input = false;
   for (size_t i = 0; i < input_num; ++i) {
+    auto input_node = common::AnfAlgo::GetInputNode(cnode, i);
+    // remove monad input
+    auto abs = input_node->abstract();
+    if (abs->isa<abstract::AbstractMonad>()) {
+      continue;
+    }
     if (i < input_obj_types.size() && input_obj_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
-      auto input_node = common::AnfAlgo::GetInputNode(cnode, i);
-      dyn_input_sizes.push_back(CalOutputTupleSize(input_node));
+      auto [input_structural, input_size, dyn_input] = CalOutputTupleSize(input_node);
+      is_dyn_input |= dyn_input;
+      tuple_placeholder.push_back(input_structural);
+      (void)dyn_input_size.emplace_back(input_size);
     } else {
-      dyn_input_sizes.push_back(-1);
+      tuple_placeholder.push_back(MakeValue<int64_t>(-1));
+      (void)dyn_input_size.emplace_back(-1);
     }
   }
-  if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
-    common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);
+  if (is_dyn_input) {
+    auto dyn_input_attr = std::make_shared<ValueTuple>(tuple_placeholder);
+    auto prim = GetCNodePrimitive(cnode);
+    prim->set_attr(kAttrTupleInputStructural, dyn_input_attr);
+    prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_input_size));
   }
 }
 

@@ -22,6 +22,7 @@
 
 #include "Eigen/Core"
 #include "abstract/utils.h"
+#include "ir/anf.h"
 #include "plugin/device/cpu/hal/device/cpu_common.h"
 #include "include/common/fallback.h"
 #include "include/common/utils/python_adapter.h"
@@ -68,6 +69,9 @@ void PyExecuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
     // Record the inputs' information by their abstract types.
     const auto &input_abstract = input->abstract();
+    if (input_abstract->isa<abstract::AbstractMonad>()) {
+      continue;
+    }
     MS_EXCEPTION_IF_NULL(input_abstract);
     if (input_abstract->isa<abstract::AbstractRefTensor>()) {
       const auto &param = dyn_cast<Parameter>(input);
@@ -120,168 +124,145 @@ void PyExecuteCpuKernelMod::AttachPyOutputData(const py::object &py_res) {
   }
 }
 
-// Notice: Remove here after BE kernel supports tuple input.
-py::object PyExecuteCpuKernelMod::BuildLocalTupleParameters(const std::vector<AddressPtr> &inputs) {
-  constexpr auto internal_tuple_keys_str = "__internal_tuple_keys__";
-  constexpr auto internal_tuple_values_str = "__internal_tuple_values__";
-  constexpr auto number_two = 2;
-  std::string tuple_key_str;
-  py::tuple local_tuple_inputs(inputs_info_.size() - number_two);  // Exclude the script and key.
-  MS_LOG(DEBUG) << "Local parameter tuple size: " << (inputs_info_.size() - number_two);
-  bool tuple_input_start = false;
-  size_t tuple_index = 0;
-  py::dict local_tuple_dict;
-  for (size_t i = 1; i < inputs.size() && i < inputs_info_.size(); ++i) {
-    const auto &input = inputs[i];
-    MS_EXCEPTION_IF_NULL(input);
-    const auto &input_info = inputs_info_[i];
-    const auto &input_abstract = input_info.abstract;
-    MS_EXCEPTION_IF_NULL(input_abstract);
-    const auto &input_type = input_abstract->BuildType();
-    MS_EXCEPTION_IF_NULL(input_type);
-    if (!tuple_input_start) {
-      if (input_abstract->isa<abstract::AbstractScalar>() && input_type->isa<String>()) {
-        const auto &value = input_abstract->BuildValue();
-        MS_EXCEPTION_IF_NULL(value);
-        const auto &str_value = dyn_cast<StringImm>(value);
-        MS_EXCEPTION_IF_NULL(str_value);
-        std::string str = str_value->value();
-        if (str != internal_tuple_keys_str && str != internal_tuple_values_str) {
-          return py::none();
-        }
-        tuple_key_str = str;
-        tuple_input_start = true;
-        MS_LOG(DEBUG) << "String, key input[" << i << "]: " << input_abstract->ToString();
-        continue;
-      } else {
-        return py::none();
-      }
-    }
-
-    // Rebuild the tuple with all left inputs.
-    if (input_abstract->isa<abstract::AbstractScalar>() && input_type->isa<String>()) {
-      const auto &value = input_abstract->BuildValue();
-      MS_EXCEPTION_IF_NULL(value);
-      const auto &str_value = dyn_cast<StringImm>(value);
-      MS_EXCEPTION_IF_NULL(str_value);
-      const auto &str = str_value->value();
-      local_tuple_inputs[tuple_index++] = py::str(str);
-      MS_LOG(DEBUG) << "String, value input[" << i << "]: " << input_abstract->ToString();
-    } else if (input_abstract->isa<abstract::AbstractTensor>()) {
-      const auto &py_array_value = input_info.py_obj_output;
-      bool is_py_middle_data = !py::isinstance<py::none>(py_array_value);
-      MS_LOG(DEBUG) << "Tensor, value input[" << i << "]: " << input_abstract->ToString()
-                    << ", type: " << input_info.type << ", shape: " << input_info.shape << ", addr: " << inputs[i]->addr
-                    << ", size: " << inputs[i]->size << ", py_array_value: " << py_array_value
-                    << ", is_py_middle_data: " << is_py_middle_data;
-      if (!is_py_middle_data) {
-        const auto tensor =
-          std::make_shared<tensor::Tensor>(input_info.type, input_info.shape, inputs[i]->addr, inputs[i]->size);
-        MS_EXCEPTION_IF_NULL(tensor);
-        local_tuple_inputs[tuple_index++] = tensor;
-      } else {
-        local_tuple_inputs[tuple_index++] = py_array_value;
-      }
-    } else {
-      MS_LOG(ERROR) << "Unsupported value type.";
-    }
+std::pair<ValueTuplePtr, ValueTuplePtr> GetKeyAndValueArgsStructural(const ValuePtr &value) {
+  if (value == nullptr) {
+    MS_LOG(DEBUG) << "Structural info is miss return default structural.";
+    auto structural = std::make_shared<ValueTuple>(std::vector<ValuePtr>{MakeValue<int64_t>(-1)});
+    return std::make_pair(structural, structural);
   }
-  local_tuple_dict[py::str(tuple_key_str)] = local_tuple_inputs;
-  return local_tuple_dict;
+  auto tuple_structural_value = value->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_structural_value);
+  constexpr auto tuple_structural_size = 3;
+  if (tuple_structural_value->size() != tuple_structural_size) {
+    MS_LOG(EXCEPTION) << "The " << kAttrDynInputSizes << " of PyExec should be a value tuple of size 3, but got "
+                      << tuple_structural_value->ToString();
+  }
+  auto key_size_structural = (*tuple_structural_value)[1];
+  auto value_size_structural = (*tuple_structural_value)[2];
+  auto key_structural = key_size_structural->cast<ValueTuplePtr>();
+  auto value_structural = value_size_structural->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(key_structural);
+  MS_EXCEPTION_IF_NULL(value_structural);
+  if (key_structural->size() != value_structural->size()) {
+    MS_LOG(EXCEPTION) << "The key size must equal with the value size.";
+  }
+  return std::make_pair(key_structural, value_structural);
 }
 
-py::object PyExecuteCpuKernelMod::BuildLocalParameters(const std::vector<AddressPtr> &inputs) {
-  const auto &local_tuple_params = BuildLocalTupleParameters(inputs);
-  if (local_tuple_params != py::none()) {
-    return local_tuple_params;
+std::string ConstructLocalDictKey(const abstract::AbstractBasePtr &key_abs) {
+  MS_EXCEPTION_IF_NULL(key_abs);
+  const auto &input_type = key_abs->BuildType();
+  MS_EXCEPTION_IF_NULL(input_type);
+  if (key_abs->isa<abstract::AbstractScalar>() && input_type->isa<String>()) {
+    const auto &value = key_abs->BuildValue();
+    MS_EXCEPTION_IF_NULL(value);
+    const auto &str_value = dyn_cast<StringImm>(value);
+    MS_EXCEPTION_IF_NULL(str_value);
+    const auto &str = str_value->value();
+    return str;
   }
+  MS_LOG(EXCEPTION) << "input should be a string but got :" << key_abs->type_name() << ", abs:" << key_abs->ToString();
+}
 
-  MS_LOG(DEBUG) << "Build normal local parameters.";
-  // Build local parameters dict.
-  std::vector<std::string> keys;
-  std::vector<tensor::TensorPtr> tensor_values;
-  std::vector<py::object> py_object_values;
-  std::vector<bool> py_array_flags;
-  constexpr auto number_two = 2;
-  size_t pair_size = (inputs_info_.size() - 1) / number_two;
-
-  // Handle the keys.
-  size_t i = 1;
-  for (; i < inputs.size() && i < pair_size + 1; ++i) {
-    const auto &input = inputs[i];
-    MS_EXCEPTION_IF_NULL(input);
-    const auto &input_info = inputs_info_[i];
-    const auto &input_abstract = input_info.abstract;
-    MS_EXCEPTION_IF_NULL(input_abstract);
-    const auto &input_type = input_abstract->BuildType();
-    MS_EXCEPTION_IF_NULL(input_type);
-    if (input_abstract->isa<abstract::AbstractScalar>() && input_type->isa<String>()) {
-      const auto &value = input_abstract->BuildValue();
-      MS_EXCEPTION_IF_NULL(value);
-      const auto &str_value = dyn_cast<StringImm>(value);
-      MS_EXCEPTION_IF_NULL(str_value);
-      const auto &str = str_value->value();
-      (void)keys.emplace_back(str);
-      MS_LOG(DEBUG) << "String, input[" << i << "]: " << input_abstract->ToString();
-    } else {
-      MS_LOG(EXCEPTION) << "Other, input[" << i << "]: " << input_abstract->ToString();
+py::object GenerateElementOfLocalDictValue(const AddressPtr &input, const PyExecuteInputInfo &input_info) {
+  MS_EXCEPTION_IF_NULL(input);
+  const auto &input_abstract = input_info.abstract;
+  MS_EXCEPTION_IF_NULL(input_abstract);
+  const auto &input_type = input_abstract->BuildType();
+  MS_EXCEPTION_IF_NULL(input_type);
+  if (input_abstract->isa<abstract::AbstractScalar>() && input_type->isa<String>()) {
+    const auto &value = input_abstract->BuildValue();
+    MS_EXCEPTION_IF_NULL(value);
+    const auto &str_value = dyn_cast<StringImm>(value);
+    MS_EXCEPTION_IF_NULL(str_value);
+    const auto &str = str_value->value();
+    MS_LOG(DEBUG) << "String, input" << input_abstract->ToString();
+    return py::str(str);
+  } else if (input_abstract->isa<abstract::AbstractTensor>()) {
+    const auto &py_array_value = input_info.py_obj_output;
+    bool is_py_middle_data = !py::isinstance<py::none>(py_array_value);
+    MS_LOG(DEBUG) << "Tensor: " << input_abstract->ToString() << ", type: " << input_info.type
+                  << ", shape: " << input_info.shape << ", addr: " << input->addr << ", size: " << input->size
+                  << ", py_array_value: " << py_array_value << ", is_py_middle_data: " << is_py_middle_data;
+    tensor::TensorPtr tensor = nullptr;
+    if (!is_py_middle_data) {
+      tensor = std::make_shared<tensor::Tensor>(input_info.type, input_info.shape, input->addr, input->size);
+      return py::cast(tensor);
     }
+    return py_array_value;
   }
-  // Handle the values.
-  for (; i < inputs.size() && i < inputs_info_.size(); ++i) {
-    const auto &input = inputs[i];
-    MS_EXCEPTION_IF_NULL(input);
-    const auto &input_info = inputs_info_[i];
-    const auto &input_abstract = input_info.abstract;
-    MS_EXCEPTION_IF_NULL(input_abstract);
-    const auto &input_type = input_abstract->BuildType();
-    MS_EXCEPTION_IF_NULL(input_type);
-    if (input_abstract->isa<abstract::AbstractScalar>() && input_type->isa<String>()) {
-      const auto &value = input_abstract->BuildValue();
-      MS_EXCEPTION_IF_NULL(value);
-      const auto &str_value = dyn_cast<StringImm>(value);
-      MS_EXCEPTION_IF_NULL(str_value);
-      const auto &str = str_value->value();
-      (void)py_object_values.emplace_back(py::str(str));
-      (void)tensor_values.emplace_back(nullptr);
-      (void)py_array_flags.emplace_back(true);
-      MS_LOG(DEBUG) << "String, input[" << i << "]: " << input_abstract->ToString();
-    } else if (input_abstract->isa<abstract::AbstractTensor>()) {
-      const auto &py_array_value = input_info.py_obj_output;
-      bool is_py_middle_data = !py::isinstance<py::none>(py_array_value);
-      MS_LOG(DEBUG) << "Tensor, input[" << i << "]: " << input_abstract->ToString() << ", type: " << input_info.type
-                    << ", shape: " << input_info.shape << ", addr: " << inputs[i]->addr << ", size: " << inputs[i]->size
-                    << ", py_array_value: " << py_array_value << ", is_py_middle_data: " << is_py_middle_data;
-      tensor::TensorPtr tensor = nullptr;
-      if (!is_py_middle_data) {
-        tensor = std::make_shared<tensor::Tensor>(input_info.type, input_info.shape, inputs[i]->addr, inputs[i]->size);
-        MS_EXCEPTION_IF_NULL(tensor);
-      }
-      (void)py_object_values.emplace_back(py_array_value);
-      (void)tensor_values.emplace_back(tensor);
-      (void)py_array_flags.emplace_back(is_py_middle_data);
-    } else if (input_abstract->isa<abstract::AbstractRefTensor>()) {
-      MS_LOG(DEBUG) << "Parameter, input[" << i << "]: " << input_abstract->ToString();
-    } else {
-      MS_LOG(DEBUG) << "Other, input[" << i << "]: " << input_abstract->ToString();
+  MS_LOG(EXCEPTION) << "unsupported value type." << input_abstract->ToString();
+}
+
+std::pair<py::object, size_t> ConstructLocalDictValue(
+  const std::vector<AddressPtr>::const_iterator &addr_begin_iter,
+  const std::vector<AddressPtr>::const_iterator &addr_end_iter,
+  const std::vector<PyExecuteInputInfo>::const_iterator &info_begin_iter,
+  const std::vector<PyExecuteInputInfo>::const_iterator &info_end_iter, const ValuePtr &structural) {
+  if (addr_begin_iter == addr_end_iter) {
+    MS_LOG(EXCEPTION) << "The address is out of range.";
+  }
+  if (info_begin_iter == info_end_iter) {
+    MS_LOG(EXCEPTION) << "PyExecute Input info is out of range.";
+  }
+  MS_EXCEPTION_IF_NULL(structural);
+  size_t offset = 0;
+  if (structural->isa<Scalar>()) {
+    offset = 1;
+    const auto &input = *addr_begin_iter;
+    const auto &input_info = *info_begin_iter;
+    const auto &obj = GenerateElementOfLocalDictValue(input, input_info);
+    return std::make_pair(obj, offset);
+  } else if (structural->isa<ValueTuple>()) {
+    auto tuple_structural = structural->cast_ptr<ValueTuple>();
+    py::tuple py_args(tuple_structural->size());
+    for (size_t i = 0; i < tuple_structural->size(); ++i) {
+      auto element = (*tuple_structural)[i];
+      const auto &res = ConstructLocalDictValue(addr_begin_iter + offset, addr_end_iter, info_begin_iter + offset,
+                                                info_end_iter, element);
+      offset += res.second;
+      py_args[i] = res.first;
     }
+    return std::make_pair(py_args, offset);
   }
+  MS_LOG(EXCEPTION) << "The structural must be all Scalar or ValueTuple but got " << structural->type_name()
+                    << ", value :" << structural->ToString();
+}
 
-  if (keys.size() != tensor_values.size() || keys.size() != pair_size) {
-    MS_LOG(EXCEPTION) << "The local dict input is invalid, " << keys.size() << ", " << tensor_values.size() << ", "
-                      << inputs_info_.size();
-  }
-
+py::dict PyExecuteCpuKernelMod::BuildLocalParameters(const std::vector<AddressPtr> &inputs) {
+  auto prim = GetCNodePrimitive(cnode_ptr_.lock());
+  // dyn_attr [-1(script), (key size), (value size)] and the value size may be a value tuple
+  // record the input of real key struct
+  // eg: the argument dict is {key1 : 1, key2 : (1,2), key3 :((1,2),3,4)} the front node is
+  // {PyExec, Script, (key1, key2, key3), (1,(1,2),((1,2),3,4))}
+  // the backend node is {PyExec, Script, key1, key2, key3, 1, 1, 2, 1, 2, 3, 4}
+  // and the TupleInputStructural of PyExec is (-1, -1, (-1, (-1,-1), ((-1,-1),-1,-1)))
+  auto tuple_structural = prim->GetAttr(kAttrTupleInputStructural);
+  auto [key_structural, value_structural] = GetKeyAndValueArgsStructural(tuple_structural);
+  MS_LOG(DEBUG) << "Value structural :" << value_structural->ToString();
   // To call the script with global and local parameters.
   py::dict local_dict;
-  for (i = 0; i < keys.size(); ++i) {
-    if (py_array_flags[i]) {
-      local_dict[py::str(keys[i])] = py_object_values[i];
-    } else {
-      local_dict[py::str(keys[i])] = tensor_values[i];
-    }
+  size_t offset_index = key_structural->size() + 1;
+  size_t value_index = 0;
+  for (size_t i = 0; i < key_structural->size(); ++i) {
+    // skip the script address
+    size_t key_index = i + 1;
+    const auto &key_address = inputs.at(key_index);
+    MS_EXCEPTION_IF_NULL(key_address);
+    const auto &key_input_info = inputs_info_.at(key_index);
+    const auto &key_abstract = key_input_info.abstract;
+    const auto &key = ConstructLocalDictKey(key_abstract);
+    MS_LOG(DEBUG) << "String, input[" << i << "]: " << key_abstract->ToString() << ", got the key :" << key;
+    // Get Values
+    auto structural = (*value_structural)[value_index++];
+    MS_LOG(DEBUG) << "value structural :" << structural->ToString();
+
+    const auto &value_with_offset = ConstructLocalDictValue(
+      inputs.begin() + offset_index, inputs.end(), inputs_info_.begin() + offset_index, inputs_info_.end(), structural);
+    offset_index += value_with_offset.second;
+    local_dict[py::str(key)] = value_with_offset.first;
   }
-  MS_LOG(DEBUG) << "local_dict: " << local_dict;
+  MS_LOG(DEBUG) << kernel_node_->DebugString() << " local_dict: " << local_dict;
   return local_dict;
 }
 
@@ -306,21 +287,6 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     MS_LOG(EXCEPTION) << "The output num is 1, but got " << outputs.size();
   }
   py::gil_scoped_acquire gil_acquire;
-
-  // Check if output exists created by 'CppInferShapeAndType'.
-  if (HasPyExecuteOutput()) {
-    const auto &output = PopPyExecuteOutput();
-    const auto &output_type = py::str(output.get_type());
-    MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
-    if (py::isinstance<tensor::Tensor>(output)) {
-      TensorToRawMemory(output.cast<tensor::TensorPtr>(), outputs[0]);
-    }
-    AttachPyOutputData(output);
-    return true;
-  }
-  MS_LOG(ERROR) << "Prebuilt output result not exists.";
-
-  // Build the script.
   const auto &input0_info = inputs_info_[0];
   const auto &input0_abstract = input0_info.abstract;
   const auto &input0_abstract_scalar = dyn_cast<abstract::AbstractScalar>(input0_abstract);
@@ -332,12 +298,21 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   MS_EXCEPTION_IF_NULL(input0_value);
   const auto &input0_str = dyn_cast<StringImm>(input0_value);
   MS_LOG(DEBUG) << "Script: " << input0_str->ToString();
-  const std::string &script = input0_str->value();
-
-  // Build local parameters dict.
-  const auto &local_dict = BuildLocalParameters(inputs);
-  // To call the script with global and local parameters.
-  const auto &global_dict = CallPythonGetGlobalParams();
+  // Check if output exists created by 'CppInferShapeAndType'.
+  if (HasPyExecuteOutput(input0_str)) {
+    const auto &output = PopPyExecuteOutput(input0_str);
+    const auto &output_type = py::str(output.get_type());
+    MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
+    if (py::isinstance<tensor::Tensor>(output)) {
+      TensorToRawMemory(output.cast<tensor::TensorPtr>(), outputs[0]);
+    }
+    AttachPyOutputData(output);
+    return true;
+  }
+  const auto &script = input0_str->value();
+  auto local_dict = BuildLocalParameters(inputs);
+  auto global_dict = CallPythonGetGlobalParams();
+  MS_LOG(INFO) << "Prebuilt output result not exists.";
   const auto &py_script = py::str(script);
   constexpr auto number_two = 2;
   auto params = py::tuple(number_two);

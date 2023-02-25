@@ -74,6 +74,7 @@
 #include "kernel/akg/akg_kernel_build_manager.h"
 #include "kernel/graph_kernel_info.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
+
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #include "abstract/abstract_value.h"

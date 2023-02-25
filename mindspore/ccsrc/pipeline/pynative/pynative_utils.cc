@@ -30,6 +30,18 @@ namespace mindspore {
 namespace pynative {
 namespace PyNativeAlgo {
 namespace {
+ValuePtr GetInputStructural(const ValuePtr &input) {
+  if (!input->isa<ValueSequence>()) {
+    return MakeValue<int64_t>(-1);
+  }
+  auto seq = input->cast_ptr<ValueSequence>();
+  std::vector<ValuePtr> tuple_structural;
+  for (size_t i = 0; i < seq->size(); ++i) {
+    (void)tuple_structural.emplace_back(GetInputStructural((*seq)[i]));
+  }
+  return std::make_shared<ValueTuple>(tuple_structural);
+}
+
 void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
   // Clone a new prim
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -732,6 +744,8 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
 
   // Get input tensors.
   op_prim->BeginRecordAddAttr();
+  std::vector<ValuePtr> inputs_structural;
+  bool is_dyn_input = false;
   for (size_t index = 0; index < op_run_info->input_size; ++index) {
     const ValuePtr &input_object = op_run_info->input_value[index];
     // convert const input to attr
@@ -753,7 +767,15 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
         (void)dyn_v.emplace_back(-1);
         op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
       }
+      auto input_structural = GetInputStructural(input_object);
+      is_dyn_input = true;
+      (void)inputs_structural.emplace_back(input_structural);
+    } else {
+      (void)inputs_structural.emplace_back(MakeValue<int64_t>(-1));
     }
+  }
+  if (is_dyn_input) {
+    op_prim->set_attr(kAttrTupleInputStructural, std::make_shared<ValueTuple>(inputs_structural));
   }
   op_prim->EndRecordAddAttr();
   ReplaceValueNodeWithParameter(op_run_info, device_target);

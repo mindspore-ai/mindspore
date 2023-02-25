@@ -24,6 +24,7 @@
 #include <cstdint>
 #include <iterator>
 
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "ops/dropout.h"
 
@@ -193,6 +194,76 @@ PrimShapeDependMap &GetInferDependsMap() {
   return depends;
 }
 
+int64_t GetDependValueSize(const ValuePtr &value) {
+  if (value->isa<Int64Imm>()) {
+    return GetValue<int64_t>(value);
+  }
+  if (!value->isa<ValueTuple>()) {
+    MS_LOG(EXCEPTION) << "the element of attr[dyn_input_size] should be all int64 of ValueTuple but got"
+                      << value->ToString() << ", type :" << value->type_name();
+  }
+  int64_t size = 0;
+  auto value_tuple = value->cast_ptr<ValueTuple>();
+  MS_EXCEPTION_IF_NULL(value_tuple);
+  for (size_t i = 0; i < value_tuple->size(); ++i) {
+    size += GetDependValueSize((*value_tuple)[i]);
+  }
+  return size;
+}
+
+std::set<int64_t> RectifyDependListFromDynamicInputAttr(const CNodePtr &cnode, const PrimitivePtr &primitive,
+                                                        const std::set<int64_t> &ori_depend_list) {
+  std::set<int64_t> rec_depend_list = {};
+  constexpr auto all_tensor_inputs = -1;
+  if (ori_depend_list.size() == 1 && *(ori_depend_list.cbegin()) == all_tensor_inputs) {
+    for (size_t i = 1; i < cnode->size(); ++i) {
+      const auto &input = cnode->inputs()[i];
+      const auto &input_abstract = input->abstract();
+      if (input_abstract != nullptr && input_abstract->isa<abstract::AbstractTensor>()) {
+        (void)rec_depend_list.emplace(SizeToLong(i - 1));
+      }
+    }
+    return rec_depend_list;
+  }
+
+  const auto &inputs = cnode->inputs();
+  auto attr = primitive->GetAttr(kAttrDynInputSizes);
+  if (attr == nullptr) {
+    return ori_depend_list;
+  }
+  MS_EXCEPTION_IF_NULL(attr);
+  auto dyn_input_list = attr->cast_ptr<ValueTuple>();
+  MS_EXCEPTION_IF_NULL(dyn_input_list);
+  for (const auto i : ori_depend_list) {
+    if (LongToSize(i) > dyn_input_list->size()) {
+      MS_LOG(EXCEPTION) << "The index is out of range.";
+    }
+    int64_t start_index = 0;
+    for (int64_t index = 0; index < i; ++index) {
+      auto place_holder_size = GetValue<int64_t>((*dyn_input_list)[index]);
+      if (place_holder_size < 0) {
+        start_index += 1;
+      }
+      start_index += place_holder_size;
+    }
+    auto dyn_size = GetValue<int64_t>((*dyn_input_list)[i]);
+    MS_LOG(DEBUG) << "The input " << i << " dynamic input size is " << dyn_size;
+    while (dyn_size >= 0) {
+      auto depend_index = start_index + dyn_size;
+      // skip primitive input
+      const auto &input = inputs.at(depend_index + 1);
+      MS_EXCEPTION_IF_NULL(input);
+      const auto &input_abs = input->abstract();
+      if (input_abs != nullptr && input_abs->isa<abstract::AbstractTensor>()) {
+        rec_depend_list.emplace(depend_index);
+        MS_LOG(DEBUG) << "Rectify dynamic input " << start_index + dyn_size;
+      }
+      --dyn_size;
+    }
+  }
+  return rec_depend_list;
+}
+
 std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
@@ -204,14 +275,13 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  std::set<int64_t> ori = {};
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   // Special dynamic shape depends for Ascend.
   if (device == kAscendDevice && prim_name == prim::kPrimTranspose->name()) {
-    return {1};
+    ori.emplace(1);
   }
 
-  std::set<int64_t> res = {};
-  std::set<int64_t> ori = {};
   auto iter = GetInferDependsMap().find(prim_name);
   if (iter != GetInferDependsMap().end()) {
     ori = iter->second;
@@ -224,26 +294,15 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
       ori = op_infer->GetValueDependArgIndices();
     }
   }
-
   if (ori.empty()) {
-    return res;
-  }
-  // To support {-1}, filter all the real tensor input index here.
-  constexpr auto all_tensor_inputs = -1;
-  if (ori.size() == 1 && *(ori.cbegin()) == all_tensor_inputs) {
-    for (size_t i = 1; i < cnode->size(); ++i) {
-      const auto &input = cnode->inputs()[i];
-      const auto &input_abstract = input->abstract();
-      if (input_abstract != nullptr && input_abstract->isa<abstract::AbstractTensor>()) {
-        (void)res.emplace(SizeToLong(i - 1));
-      }
-    }
-    return res;
+    return ori;
   }
   size_t input_num = cnode->inputs().size() - 1;
+  std::set<int64_t> res = {};
+
   (void)std::copy_if(ori.begin(), ori.end(), std::inserter(res, res.begin()),
                      [&](int64_t idx) { return idx < SizeToLong(input_num); });
-  return res;
+  return RectifyDependListFromDynamicInputAttr(cnode, primitive, res);
 }
 
 RegisterInferDependsHelper::RegisterInferDependsHelper(const std::string &name, const std::set<int64_t> &depends) {

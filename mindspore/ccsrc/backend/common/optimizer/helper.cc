@@ -804,55 +804,59 @@ AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, Primitive
   return CreateCNodeWithGraph(input_nodes, graph);
 }
 
-AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &prim,
-                                                    const AbstractBasePtrList &input_abstract) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto dynamic_inputs_list = prim->GetAttr(kAttrDynInputSizes);
-  if (dynamic_inputs_list == nullptr) {
-    return input_abstract;
-  }
-  AbstractBasePtrList rectifyed_abs_list;
-  const int kNotDynamicFlag = -1;
-  auto dynamic_inputs_index = GetValue<std::vector<int64_t>>(dynamic_inputs_list);
-  size_t input_index = 0;
-  for (auto item : dynamic_inputs_index) {
-    if (item == kNotDynamicFlag) {
-      if (input_index >= input_abstract.size()) {
-        if ((prim->Hash() == prim::kPrimPyExecute->Hash() && prim->name() == prim::kPrimPyExecute->name())) {
-          MS_LOG(WARNING) << "For primitive \'PyExecute\', index " << input_index
-                          << " is out of range in input abstract " << input_abstract.size();
-          continue;
-        }
-        MS_LOG(EXCEPTION) << "For primitive \'" << prim->name() << "\', index " << input_index
-                          << " is out of range in input abstract " << input_abstract.size();
-      }
-      (void)rectifyed_abs_list.emplace_back(input_abstract[input_index++]);
-    } else {
-      if (item < 0) {
-        MS_LOG(EXCEPTION) << "The dynamic input size check error the index should be -1 or positive number but got "
-                          << item;
-      }
-      AbstractBasePtrList dynamic_inputs_abs;
-      for (auto index = item; index > 0; --index) {
-        if (input_index >= input_abstract.size()) {
-          if ((prim->Hash() == prim::kPrimPyExecute->Hash() && prim->name() == prim::kPrimPyExecute->name())) {
-            MS_LOG(WARNING) << "For primitive \'PyExecute\', index " << input_index
-                            << " is out of range in input abstract " << input_abstract.size();
-            continue;
-          }
-          MS_LOG(EXCEPTION) << "For primitive \'" << prim->name() << "\', index " << input_index
-                            << " is out of range in input abstract " << input_abstract.size();
-        }
-        (void)dynamic_inputs_abs.emplace_back(input_abstract[input_index++]);
-      }
-      (void)rectifyed_abs_list.emplace_back(std::make_shared<abstract::AbstractTuple>(dynamic_inputs_abs));
+std::pair<AbstractBasePtr, int> RectifyAbstractFromStructuralAttr(const ValuePtr &value,
+                                                                  AbstractBasePtrList::const_iterator begin_iter,
+                                                                  AbstractBasePtrList::const_iterator end_iter) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<ValueSequence>()) {
+    int offset = 0;
+    std::vector<AbstractBasePtr> abs_list;
+    auto seq_value = value->cast_ptr<ValueSequence>();
+    for (size_t i = 0; i < seq_value->size(); ++i) {
+      auto [abs, offset_inner] = RectifyAbstractFromStructuralAttr((*seq_value)[i], begin_iter + offset, end_iter);
+      abs_list.emplace_back(abs);
+      offset += offset_inner;
     }
+    (void)std::for_each(begin_iter, begin_iter + offset, [](AbstractBasePtr abs) -> void {
+      MS_LOG(DEBUG) << "The convert abs is :" << abs->ToString();
+    });
+    return std::make_pair(std::make_shared<abstract::AbstractTuple>(abs_list), offset);
   }
-  return rectifyed_abs_list;
+
+  const auto num_value = GetValue<int64_t>(value);
+
+  constexpr auto kNotDynamicFlag = -1;
+  if (num_value == kNotDynamicFlag) {
+    return std::make_pair(*begin_iter, 1);
+  } else {
+    MS_LOG(EXCEPTION) << "The attr of structural must all value -1 but got " << num_value;
+  }
 }
 
-AbstractBasePtrList RectifyAbstract(const PrimitivePtr &primitive, const AbstractBasePtrList &input_abstract) {
-  return RectifyAbstractFromDynamicInput(primitive, input_abstract);
+AbstractBasePtrList RectifyAbstractFromTupleInputStructural(const PrimitivePtr &prim,
+                                                            const AbstractBasePtrList &input_abstract) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto tuple_structural = prim->GetAttr(kAttrTupleInputStructural);
+  if (tuple_structural == nullptr) {
+    return input_abstract;
+  }
+  auto tuple_structural_value = tuple_structural->cast_ptr<ValueSequence>();
+  MS_EXCEPTION_IF_NULL(tuple_structural_value);
+  AbstractBasePtrList rectifyed_abs_list;
+  size_t input_index = 0;
+  for (size_t i = 0; i < tuple_structural_value->size(); ++i) {
+    auto item = (*tuple_structural_value)[i];
+    if (input_abstract.size() <= input_index) {
+      MS_LOG(EXCEPTION) << "input abstract is out of range.";
+    }
+    auto [abs, offset] =
+      RectifyAbstractFromStructuralAttr(item, (input_abstract.begin() + input_index), (input_abstract.cend()));
+    input_index += offset;
+    rectifyed_abs_list.emplace_back(abs);
+    MS_LOG(DEBUG) << "Rectify abs :" << item->ToString() << ", from structural " << abs->ToString();
+  }
+
+  return rectifyed_abs_list;
 }
 }  // namespace
 
@@ -1042,7 +1046,7 @@ void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spe
   if (found.has_value()) {
     auto infer = found.value();
     MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-shape implement for backend!");
-    auto infer_spec_list = RectifyAbstract(prim_clone, args_spec_list);
+    auto infer_spec_list = RectifyAbstractFromTupleInputStructural(prim_clone, args_spec_list);
     if (common::AnfAlgo::IsDynamicSequence(cnode)) {
       out_abs = infer.InferShapeAndType(nullptr, prim_clone, infer_spec_list);
     } else {
@@ -1083,7 +1087,7 @@ AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim, const AbstractBas
   if (found.has_value()) {
     auto infer = found.value();
     MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-    auto infer_spec_list = RectifyAbstract(prim_clone, args_spec_list);
+    auto infer_spec_list = RectifyAbstractFromTupleInputStructural(prim_clone, args_spec_list);
     auto ret = infer.InferShapeAndType(nullptr, prim_clone, infer_spec_list);
     if (prim_clone != prim) {
       *prim = *prim_clone;

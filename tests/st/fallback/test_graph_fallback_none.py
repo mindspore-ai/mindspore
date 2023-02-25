@@ -335,7 +335,7 @@ def test_none_is_output_of_function_with_side_effect():
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.param = Parameter(Tensor(1, dtype=mstype.int64), name="param")
+            self.param = Parameter(Tensor([1], dtype=mstype.int64), name="param")
 
         def func(self, y):  # pylint: disable=R1711
             if y == self.param:
