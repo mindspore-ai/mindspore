@@ -135,8 +135,6 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
 
   // FuncGraph pointer for model.
   FuncGraphPtr graph_;
-  // Graph Partition Manager for control flow, not implemented.
-  compile::GraphPartitionPtr partition_;
 };  // namespace mindspore
 }  // namespace mindspore
 #endif

@@ -447,8 +447,13 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
 #endif
 
   auto &device_list = context->MutableDeviceInfo();
+  // if (flags_->device_ == "Auto") {
+  //   std::shared_ptr<AutoDeviceInfo> auto_device_info = std::make_shared<AutoDeviceInfo>();
+  //   device_list.push_back(auto_device_info);
+  //   device_list = auto_device_info->MutableDeviceInfo();
+  // }
 
-  if (flags_->device_ == "GPU") {
+  if (flags_->device_ == "GPU" || flags_->device_ == "Auto") {
     std::shared_ptr<GPUDeviceInfo> gpu_device_info = std::make_shared<GPUDeviceInfo>();
     gpu_device_info->SetEnableFP16(flags_->enable_fp16_);
     uint32_t device_id = 0;
@@ -477,14 +482,14 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
     device_list.push_back(gpu_device_info);
   }
 
-  if (flags_->device_ == "NPU") {
+  if (flags_->device_ == "NPU" || flags_->device_ == "Auto") {
     std::shared_ptr<KirinNPUDeviceInfo> npu_device_info = std::make_shared<KirinNPUDeviceInfo>();
     npu_device_info->SetEnableFP16(flags_->enable_fp16_);
     npu_device_info->SetFrequency(kFrequencyDefault);
     device_list.push_back(npu_device_info);
   }
 
-  if (flags_->device_ == "Ascend310" || flags_->device_ == "Ascend310P") {
+  if (flags_->device_ == "Ascend310" || flags_->device_ == "Ascend310P" || flags_->device_ == "Auto") {
     uint32_t device_id = 0;
     auto device_id_env = std::getenv("ASCEND_DEVICE_ID");
     if (device_id_env != nullptr) {

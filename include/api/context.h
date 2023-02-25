@@ -38,6 +38,7 @@ enum DeviceType {
   kAscend910,
   kAscend310,
   kCustomDevice,
+  kAllDevice,
   // add new type here
   kInvalidDeviceType = 100,
 };
@@ -222,6 +223,16 @@ std::string DeviceInfoContext::GetProvider() const { return CharToString(GetProv
 void DeviceInfoContext::SetProvider(const std::string &provider) { SetProvider(StringToChar(provider)); }
 std::string DeviceInfoContext::GetProviderDevice() const { return CharToString(GetProviderDeviceChar()); }
 void DeviceInfoContext::SetProviderDevice(const std::string &device) { SetProviderDevice(StringToChar(device)); }
+
+/// \brief Derived from DeviceInfoContext, The configuration of the model running auto on the Host Devices, include
+/// CPU/GPU/NPU/Ascend310/Ascend910. This option is only valid for MindSpore Lite.
+class MS_API AutoDeviceInfo : public DeviceInfoContext {
+ public:
+  /// \brief Get the type of this DeviceInfoContext.
+  ///
+  /// \return Type of this DeviceInfoContext.
+  enum DeviceType GetDeviceType() const override { return DeviceType::kAllDevice; };
+};
 
 /// \brief Derived from DeviceInfoContext, The configuration of the model running on the CPU. This option is only valid
 /// for MindSpore Lite.

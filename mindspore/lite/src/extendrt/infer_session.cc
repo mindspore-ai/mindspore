@@ -30,61 +30,6 @@
 #include "extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
 
 namespace mindspore {
-static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
-                                                            prim::kPrimSwitch,   prim::kPrimMakeTuple,
-                                                            prim::kPrimBpropCut, prim::kPrimSwitchLayer};
-static bool is_infer_single_op = true;
-static bool is_use_lite_session = false;
-
-/// \brief Default Infer Session Implementation, using kernelmod, not implemented now.
-class DefaultInferSession : public InferSession {
- public:
-  explicit DefaultInferSession(const std::shared_ptr<Context> &context) {}
-  virtual ~DefaultInferSession() = default;
-  Status Init(const std::shared_ptr<Context> &context) override;
-  Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
-  Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
-  Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
-                  const MSKernelCallBack &before, const MSKernelCallBack &after) override;
-  std::vector<MutableTensorImplPtr> GetOutputs() override;
-  std::vector<MutableTensorImplPtr> GetInputs() override;
-  std::vector<std::string> GetOutputNames() override;
-  std::vector<std::string> GetInputNames() override;
-  MutableTensorImplPtr GetOutputByTensorName(const std::string &tensorName) override;
-  MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
-
- private:
-  KernelGraphUtilsPtr kernel_graph_utils_;
-  KernelGraphPtr kernel_graph_;
-  std::vector<KernelGraphPtr> kernel_graphs_;
-};
-
-Status DefaultInferSession::Init(const std::shared_ptr<Context> &context) {
-  MS_LOG(INFO) << "DefaultInferSession::Init";
-  kernel_graph_utils_ = std::make_shared<mindspore::KernelGraphUtils>();
-  partition_ = std::make_shared<compile::GraphPartition>(ms_infer_cut_list, "ms");
-  return kSuccess;
-}
-Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
-  MS_LOG(INFO) << "DefaultInferSession::CompileGraph";
-  return kSuccess;
-}
-
-Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
-                                     const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  return kSuccess;
-}
-
-Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
-  return kSuccess;
-}
-std::vector<MutableTensorImplPtr> DefaultInferSession::GetOutputs() { return {}; }
-std::vector<MutableTensorImplPtr> DefaultInferSession::GetInputs() { return {}; }
-std::vector<std::string> DefaultInferSession::GetOutputNames() { return std::vector<std::string>(); }
-std::vector<std::string> DefaultInferSession::GetInputNames() { return std::vector<std::string>(); }
-MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
-MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
-
 std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> &context,
                                                           const ConfigInfos &config_info) {
   HandleContext(context);
@@ -148,6 +93,10 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
       }
       continue;
     }
+    if (device_info->GetDeviceType() == kAllDevice) {
+      // Auto Device: MSLite will detect available device and run graph/sub-graph on suitable device by its scheduler
+      continue;
+    }
   }
 }
 
@@ -165,23 +114,12 @@ SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context)
       if (device_context->GetDeviceType() == kGPU || device_context->GetDeviceType() == kCPU) {
         return kDelegateSession;
       }
+      if (device_context->GetDeviceType() == kAllDevice) {
+        // Default Session support auto device context
+        return kDefaultSession;
+      }
     }
-  }
-
-  if (is_infer_single_op) {
-    return kSingleOpSession;
-  }
-  if (is_use_lite_session) {
-    return kLiteInferSession;
   }
   return kDefaultSession;
 }
-
-static std::shared_ptr<InferSession> DefaultSessionCreator(const std::shared_ptr<Context> &ctx,
-                                                           const ConfigInfos &config_infos) {
-  auto session = std::make_shared<DefaultInferSession>(ctx);
-  session->Init(ctx);
-  return session;
-}
-REG_SESSION(kDefaultSession, DefaultSessionCreator);
 }  // namespace mindspore
