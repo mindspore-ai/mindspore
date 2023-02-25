@@ -13,7 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Transformer for training."""
-import mindspore
+from mindspore import jit
+
+import mindspore as ms
 import mindspore.ops as ops
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
@@ -25,7 +27,9 @@ from tests.st.dynamic_shape.transformer.transformer_model import TransformerMode
 
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 5.0
-BATCH_SIZE_VALUE = 32
+VOCAB_SIZE = 36560
+LABEL_SMOOTHING = 0.1
+BATCH_SIZE = 32
 
 clip_grad = ops.MultitypeFuncGraph("clip_grad")
 
@@ -55,12 +59,21 @@ def _clip_grad(clip_type, clip_value, grad):
 
 
 class TransformerTrainingLoss(nn.Cell):
-    def __init__(self):
+    """
+    Provide transformer training loss.
+
+    Args:
+        is_graph_mode (bool): is graph mode.
+
+    Returns:
+        Tensor, total loss.
+    """
+    def __init__(self, is_graph_mode):
         super(TransformerTrainingLoss, self).__init__(auto_prefix=False)
-        self.vocab_size = 36560
+        self.vocab_size = VOCAB_SIZE
         self.onehot = ops.OneHot()
-        self.on_value = Tensor(float(1 - 0.1), mindspore.float32)
-        self.off_value = Tensor(0.1 / float(self.vocab_size - 1), mindspore.float32)
+        self.on_value = Tensor(float(1 - LABEL_SMOOTHING), ms.float32)
+        self.off_value = Tensor(LABEL_SMOOTHING / float(self.vocab_size - 1), ms.float32)
         self.reduce_sum = ops.ReduceSum()
         self.reduce_mean = ops.ReduceMean()
         self.reshape = ops.Reshape()
@@ -68,20 +81,23 @@ class TransformerTrainingLoss(nn.Cell):
         self.flatten = ops.Flatten()
         self.neg = ops.Neg()
         self.cast = ops.Cast()
-        self.batch_size = BATCH_SIZE_VALUE
+        self.batch_size = BATCH_SIZE
+        self.is_graph_mode = is_graph_mode
 
     def construct(self, prediction_scores, label_ids, label_weights, seq_length):
         """Defines the computation performed."""
         flat_shape = (self.batch_size * seq_length,)
-        flat_shape = (-1,)
+        if self.is_graph_mode:
+            flat_shape = (-1,)
         label_ids = self.reshape(label_ids, flat_shape)
-        label_weights = self.cast(self.reshape(label_weights, flat_shape), mindspore.float32)
-        one_hot_labels = self.onehot(label_ids, self.vocab_size, self.on_value, self.off_value)
+        label_weights = self.cast(self.reshape(label_weights, flat_shape), ms.float32)
+        one_hot_labels = self.onehot(self.cast(label_ids, ms.int32), self.cast(self.vocab_size, ms.int32),
+                                     self.on_value, self.off_value)
 
         per_example_loss = self.neg(self.reduce_sum(prediction_scores * one_hot_labels, self.last_idx))
         numerator = self.reduce_sum(label_weights * per_example_loss, ())
         denominator = self.reduce_sum(label_weights, ()) + \
-                      self.cast(ops.tuple_to_array((1e-5,)), mindspore.float32)
+                      self.cast(ops.tuple_to_array((1e-5,)), ms.float32)
         loss = numerator / denominator
         return loss
 
@@ -93,16 +109,19 @@ class TransformerNetworkWithLoss(nn.Cell):
     Args:
         is_training (bool): Specifies whether to use the training mode.
         use_one_hot_embeddings (bool): Specifies whether to use one-hot for embeddings. Default: False.
+        is_graph_mode (bool): is graph mode.
 
     Returns:
         Tensor, the loss of the network.
     """
-    def __init__(self, is_training, use_one_hot_embeddings=False):
+    def __init__(self, is_training, use_one_hot_embeddings=False, is_graph_mode=False):
         super(TransformerNetworkWithLoss, self).__init__(auto_prefix=False)
-        self.transformer = TransformerModel(is_training, use_one_hot_embeddings)
-        self.loss = TransformerTrainingLoss()
+        self.transformer = TransformerModel(is_training, use_one_hot_embeddings, is_graph_mode)
+        self.loss = TransformerTrainingLoss(is_graph_mode)
         self.cast = ops.Cast()
-        self.shape = ops.TensorShape()
+        self.shape = ops.Shape()
+        if is_graph_mode:
+            self.shape = ops.TensorShape()
 
     def construct(self,
                   source_ids,
@@ -115,7 +134,7 @@ class TransformerNetworkWithLoss(nn.Cell):
         prediction_scores = self.transformer(source_ids, source_mask, target_ids, target_mask)
         seq_length = self.shape(source_ids)[1]
         total_loss = self.loss(prediction_scores, label_ids, label_weights, seq_length)
-        return self.cast(total_loss, mindspore.float32)
+        return self.cast(total_loss, ms.float32)
 
 
 grad_scale = ops.MultitypeFuncGraph("grad_scale")
@@ -158,7 +177,18 @@ class TransformerTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell)
         self.loss_scale = None
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
-            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mindspore.float32))
+            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=ms.float32))
+        self.enable_tuple_broaden = True
+
+    @jit
+    def clip_grads(self, grads):
+        grads = self.hyper_map(ops.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+        return grads
+
+    @jit
+    def clip_scale_grads(self, scale, grads):
+        grads = self.hyper_map(ops.partial(grad_scale, scale * self.degree), grads)
+        return grads
 
     def construct(self,
                   source_eos_ids,
@@ -195,12 +225,12 @@ class TransformerTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell)
                                                  label_ids,
                                                  label_weights,
                                                  self.cast(scaling_sens,
-                                                           mindspore.float32))
+                                                           ms.float32))
 
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)
-        grads = self.hyper_map(ops.partial(grad_scale, scaling_sens * self.degree), grads)
-        grads = self.hyper_map(ops.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+        grads = self.clip_scale_grads(scaling_sens, grads)
+        grads = self.clip_grads(grads)
 
         cond = self.get_overflow_status(status, grads)
         overflow = cond
@@ -208,4 +238,39 @@ class TransformerTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell)
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
         if not overflow:
             self.optimizer(grads)
-        return (loss, cond, scaling_sens)
+        return (loss, cond, scaling_sens.value())
+
+
+cast = ops.Cast()
+add_grads = ops.MultitypeFuncGraph("add_grads")
+
+
+@add_grads.register("Tensor", "Tensor")
+def _add_grads(accu_grad, grad):
+    return accu_grad + cast(grad, ms.float32)
+
+update_accu_grads = ops.MultitypeFuncGraph("update_accu_grads")
+
+
+@update_accu_grads.register("Tensor", "Tensor")
+def _update_accu_grads(accu_grad, grad):
+    succ = True
+    return ops.depend(succ, ops.assign(accu_grad, cast(grad, ms.float32)))
+
+accumulate_accu_grads = ops.MultitypeFuncGraph("accumulate_accu_grads")
+
+
+@accumulate_accu_grads.register("Tensor", "Tensor")
+def _accumulate_accu_grads(accu_grad, grad):
+    succ = True
+    return ops.depend(succ, ops.assign_add(accu_grad, cast(grad, ms.float32)))
+
+
+zeroslike = ops.ZerosLike()
+reset_accu_grads = ops.MultitypeFuncGraph("reset_accu_grads")
+
+
+@reset_accu_grads.register("Tensor")
+def _reset_accu_grads(accu_grad):
+    succ = True
+    return ops.depend(succ, ops.assign(accu_grad, zeroslike(accu_grad)))

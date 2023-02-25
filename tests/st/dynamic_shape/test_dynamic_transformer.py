@@ -142,12 +142,18 @@ def create_transformer_dynamic_dataset(rank_size=1, rank_id=0, do_shuffle="true"
     return dataset
 
 
-def get_train_loss():
+def get_train_loss(is_graph_mode, device_target, device_id=0):
     """
     Transformer training.
     """
-    ms.set_context(mode=ms.GRAPH_MODE, device_target="GPU", reserve_class_name_in_scope=False,
+    if is_graph_mode:
+        mode = ms.GRAPH_MODE
+    else:
+        mode = ms.PYNATIVE_MODE
+
+    ms.set_context(mode=mode, device_target=device_target, reserve_class_name_in_scope=False,
                    enable_graph_kernel=False)
+
     # Set mempool block size in PYNATIVE_MODE for improving memory utilization, which will not take effect in GRAPH_MODE
     if ms.get_context("mode") == ms.PYNATIVE_MODE:
         ms.set_context(mempool_block_size="31GB")
@@ -156,7 +162,7 @@ def get_train_loss():
     rank_id = 0
 
     dataset = create_transformer_dynamic_dataset(rank_size=device_num, rank_id=rank_id, do_shuffle=True)
-    netwithloss = TransformerNetworkWithLoss(True)
+    netwithloss = TransformerNetworkWithLoss(True, is_graph_mode=is_graph_mode)
 
     hidden_size = 1024
     learning_rate = 1.0
@@ -177,8 +183,12 @@ def get_train_loss():
     update_cell = scale_manager.get_update_cell()
     netwithgrads = TransformerTrainOneStepWithLossScaleCell(netwithloss, optimizer=optimizer,
                                                             scale_update_cell=update_cell)
-    data_col = Tensor(shape=[BATCH_SIZE, None], dtype=ms.int64)
-    netwithgrads.set_inputs(data_col, data_col, data_col, data_col, data_col, data_col, data_col)
+    if is_graph_mode:
+        data_col_int64 = Tensor(shape=[BATCH_SIZE, None], dtype=ms.int64)
+        data_col = Tensor(shape=[BATCH_SIZE, None], dtype=ms.float32)
+        netwithgrads.set_inputs(data_col_int64, data_col_int64, data_col_int64,
+                                data_col_int64, data_col_int64, data_col_int64,
+                                data_col)
 
     netwithgrads.set_train(True)
     model = Model(netwithgrads)
@@ -187,15 +197,29 @@ def get_train_loss():
     return loss_list
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_train():
+def test_train_graph_mode_gpu():
     """
     Feature: Test the simplified dynamic shape transformer network with small data.
     Description:  The sequence length of inputs is dynamic.
     Expectation: Assert that the training loss of fixed data is consistent with the expected loss.
     """
-    graph_loss = get_train_loss()
+    graph_loss = get_train_loss(True, "GPU")
     expect_loss = [11.193909]
     assert np.allclose(graph_loss, expect_loss, 5e-3, 5e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_train_pynative_mode_gpu():
+    """
+    Feature: Test the simplified dynamic shape transformer network with small data.
+    Description:  The sequence length of inputs is dynamic.
+    Expectation: Assert that the training loss of fixed data is consistent with the expected loss.
+    """
+    graph_loss = get_train_loss(False, "GPU")
+    expect_loss = [11.112342]
+    assert np.allclose(graph_loss[0], expect_loss, 5e-3, 5e-3)
