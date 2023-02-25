@@ -25,6 +25,7 @@ set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/inference/inference_generator.cc
         ${MICRO_DIR}/coder/generator/component/common_component.cc
         ${MICRO_DIR}/coder/generator/component/weight_component.cc
+        ${MICRO_DIR}/coder/generator/component/allocator_component.cc
         ${MICRO_DIR}/coder/generator/component/cmake_component.cc
         ${MICRO_DIR}/coder/generator/component/train_component.cc
         ${MICRO_DIR}/coder/generator/component/component.cc

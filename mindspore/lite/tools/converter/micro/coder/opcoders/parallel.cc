@@ -31,9 +31,14 @@ void InitThread(int model_index) {
   FreeThread();
   std::string weight_name = "m" + std::to_string(model_index) + "_thread_num";
   gThreadNum = static_cast<const char *>(malloc((weight_name.size() + 1) * sizeof(char)));
-  int ret = snprintf(const_cast<char *>(gThreadNum), weight_name.size() + 1, "%s\n", weight_name.c_str());
+  if (gThreadNum == nullptr) {
+    MS_LOG(ERROR) << "malloc failed";
+    return;
+  }
+  int ret = memcpy_s(const_cast<char *>(gThreadNum), (weight_name.size() + 1) * sizeof(char), weight_name.c_str(),
+                     (weight_name.size() + 1) * sizeof(char));
   if (ret == RET_ERROR) {
-    MS_LOG(ERROR) << "snprintf failed";
+    MS_LOG(ERROR) << "memcpy_s failed";
     return;
   }
 }

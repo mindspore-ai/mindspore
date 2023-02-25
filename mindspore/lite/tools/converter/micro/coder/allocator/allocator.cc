@@ -78,12 +78,21 @@ void MemoryAllocator::Free() {
       iter++;
     }
   }
-  malloc_weights_addr_.clear();
   for (auto &item : allocated_) {
     free(item);
     item = nullptr;
   }
+  workspaces_addr_.clear();
+  workspace_size_ = 0;
+  tensors_size_ = 0;
+  weight_index_ = 0;
+  is_next_ = false;
+  offset_ = 0;
   allocated_.clear();
+  saved_weights_addr_.clear();
+  origin_weights_addr_.clear();
+  malloc_weights_addr_.clear();
+  tensors_addr_.clear();
 }
 
 std::map<Tensor *, std::string> MemoryAllocator::tensors_map() const {

@@ -25,15 +25,6 @@
 #include "include/c_api/model_c.h"
 
 namespace mindspore::lite::micro {
-const char micro_model_define_source[] = R"RAW(
-typedef struct {
-  void *runtime_buffer;
-  bool train_mode;  // true: train mode, false: eval mode
-  MSTensorHandleArray inputs;
-  MSTensorHandleArray outputs;
-} MicroModel;
-)RAW";
-
 const char handle_array_destroy_state[] = R"RAW(
 void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs);
 )RAW";
@@ -64,6 +55,7 @@ void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs) {
 }
 
 )RAW";
+
 const char cortex_set_workspace[] = R"RAW(
   MicroModel *micro_model = (MicroModel *)model;
   if (micro_model == NULL) {
@@ -79,6 +71,36 @@ const char cortex_set_workspace[] = R"RAW(
     return;
   }
 
+)RAW";
+
+const char micro_model_build_state[] = R"RAW(
+typedef MSStatus (*ModelBuild)(MSModelHandle model, const void *model_data,
+                               size_t data_size,
+                               const MSContextHandle model_context);
+)RAW";
+
+const char micro_model_build_implement[] = R"RAW(
+MSStatus MSModelBuild(MSModelHandle model, const void *model_data,
+                      size_t data_size, MSModelType model_type,
+                      const MSContextHandle model_context) {
+  if (model_type != kMSModelTypeMindIR) {
+    return kMSStatusLiteNotSupport;
+  }
+  if (model == NULL) {
+    return kMSStatusLiteParamInvalid;
+  }
+)RAW";
+
+const char micro_model_predict_state[] = R"RAW(
+typedef MSStatus (*ModelPredict)(MSModelHandle model,
+                                 const MSTensorHandleArray inputs,
+                                 MSTensorHandleArray *outputs,
+                                 const MSKernelCallBackC before,
+                                 const MSKernelCallBackC after);
+)RAW";
+
+const char free_resource_state[] = R"RAW(
+typedef void (*FreeResource)();
 )RAW";
 
 void CodeMSModelCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx,
@@ -108,8 +130,9 @@ void CodeMSModelCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<Code
 }
 
 void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
-  ofs << "void MSModelSetWorkspace(MSModelHandle model, void *workspace, size_t workspace_size) {\n";
+  ofs << "void MSModelSetWorkspace(MSModelHandle model, void *workspace, size_t workspace_size) {";
   if (config.target() == kCortex_M) {
+    ofs << "\n";
     ofs << cortex_set_workspace;
     ofs << "  micro_model->runtime_buffer = workspace;\n"
            "  int buffer_size = GetBufferSize"
@@ -193,28 +216,26 @@ void CodeMSTensorHandleArrayDestroyState(std::ofstream &ofs, const Configurator 
   }
 }
 
+void CodeMSModelCreateDefault(std::ofstream &ofs) { ofs << "MSModelHandle MSModelCreate() { return model0; }\n"; }
+
 void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
-  ofs << micro_model_define_source;
   if (config.target() != kCortex_M) {
+    ofs << "MSStatus MSModelCreate" << ctx->GetCurModelIndex() << "(MicroModel *micro_model) {";
     ofs << R"RAW(
-MSModelHandle MSModelCreate() {
-  MicroModel *micro_model = (MicroModel *)malloc(sizeof(MicroModel));
   if (micro_model == NULL) {
-    return NULL;
+    return kMSStatusLiteNullptr;
   }
-)RAW";
-    ofs << "int buffer_size = GetBufferSize" << ctx->GetCurModelIndex() << "();\n";
-    ofs << R"RAW(
-  void *runtime_buffer = malloc(buffer_size);
+
+  void *runtime_buffer = GlobalMemory();
   if (runtime_buffer == NULL) {
-    return NULL;
+    return kMSStatusLiteNullptr;
   }
   micro_model->runtime_buffer = runtime_buffer;
 )RAW";
-    ofs << "  int ret = SetBuffer" << ctx->GetCurModelIndex() << "(runtime_buffer);\n"
+    ofs << "  int ret = SetBuffer" << ctx->GetCurModelIndex() << "(((MemBlock *)runtime_buffer)->addr);\n"
         << "  if (ret != kMSStatusSuccess) {\n"
-        << "    return NULL;\n"
-        << "  }\n";
+        << "    return kMSStatusLiteMemoryFailed;\n"
+        << "  }\n\n";
     if (config.code_mode() == CodeMode::Inference) {
       ofs << "  micro_model->train_mode = false;\n";
     } else if (config.code_mode() == CodeMode::Train) {
@@ -263,12 +284,12 @@ MSModelHandle MSModelCreate() {
       Tensor *output = outputs[i];
       array_tostring(output, "output", i);
     }
-    ofs << "  return (MSModelHandle)micro_model;\n";
+    ofs << "  return kMSStatusSuccess;\n";
   } else {
     ofs << "#define GRAPH_INPUTS_SIZE " << ctx->graph_inputs().size() << "\n";
     ofs << "#define GRAPH_OUTPUTS_SIZE " << ctx->graph_outputs().size() << "\n";
     ofs << "#define WEIGHT_BUF_SIZE " << ctx->weight_buffer_size() << "\n";
-    ofs << "MSModelHandle MSModelCreate() {\n";
+    ofs << "MSModelHandle MSModelCreate" << ctx->GetCurModelIndex() << "() {\n";
     ofs << "  static MicroModel model;\n";
     ofs << "  model.runtime_buffer = NULL;\n";
     ofs << "  model.inputs.handle_num = GRAPH_INPUTS_SIZE;\n";
@@ -281,26 +302,44 @@ MSModelHandle MSModelCreate() {
   ofs << "}\n\n";
 }
 
-void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const Configurator *config) {
-  ofs
-    << "MSStatus MSModelBuild(MSModelHandle model, const void *model_data, size_t data_size, MSModelType model_type,\n"
-       "                      const MSContextHandle model_context) {\n"
-       "  if (model_type != kMSModelTypeMindIR) {\n"
-       "    return kMSStatusLiteNotSupport;\n"
-       "  }\n"
-       "  if (model == NULL) {\n"
-       "    return kMSStatusLiteParamInvalid;\n"
-       "  }\n"
-       "  if (((MicroModel *)model)->runtime_buffer == NULL) {\n"
-       "    return kMSStatusLiteMemoryFailed;\n"
-       "  }\n";
-  ofs << "  int ret = RET_OK;\n";
-  if (config->target() != kCortex_M) {
+void CodeMSModelBuildState(std::ofstream &ofs) { ofs << micro_model_build_state; }
+
+void CodeMSModelBuildCommon(std::ofstream &ofs, const Configurator &config) {
+  ofs << micro_model_build_implement;
+  if (config.target() != kCortex_M) {
+    ofs << "  IncRefCount();\n";
+  }
+  ofs << R"RAW(
+  MSStatus ret =
+    ((MicroModel *)model)->build(model, model_data, data_size, model_context);
+  if (ret != kMSStatusSuccess) {
+    MSModelDestroy(model);
+  }
+  return ret;
+}
+)RAW";
+}
+
+void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const Configurator &config) {
+  ofs << "MSStatus MSModelBuild" << model_index
+      << "(MSModelHandle model, const void *model_data, size_t data_size,\n"
+         "                      const MSContextHandle model_context) {\n"
+         "  if (model == NULL) {\n"
+         "    return kMSStatusLiteParamInvalid;\n"
+         "  }\n"
+         "  MicroModel *micro_model = (MicroModel *)model;\n"
+         "  int ret = MSModelCreate"
+      << model_index
+      << "(micro_model);\n"
+         "  if (ret != kMSStatusSuccess) {\n"
+         "    return ret;\n"
+         "  }\n";
+  if (config.target() != kCortex_M) {
     ofs << "  ret = Init" << model_index << "((void*)model_data, data_size);\n";
   } else {
     ofs << "  ret = Init" << model_index << "(NULL, 0);\n";
   }
-  if (config->support_parallel()) {
+  if (config.support_parallel()) {
     ofs << "  MicroContext *micro_context = (MicroContext *)model_context;\n"
            "  if (micro_context == NULL) {\n"
            "      return kMSStatusLiteNullptr;"
@@ -315,7 +354,7 @@ void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const Configura
   ofs << "}\n";
 }
 
-void CodeMSModelDestory(std::ofstream &ofs, const int model_index, const Configurator *config) {
+void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config) {
   if (config->target() != kCortex_M) {
     ofs << handle_array_destroy;
   }
@@ -324,13 +363,14 @@ void CodeMSModelDestory(std::ofstream &ofs, const int model_index, const Configu
     ofs << "  if (*model) {\n"
            "    MicroModel *micro_model = (MicroModel *)*model;\n";
     ofs << "    if (micro_model->runtime_buffer) {\n"
-           "      free(micro_model->runtime_buffer);\n"
            "      micro_model->runtime_buffer = NULL;\n"
            "    }\n";
     ofs << "    MSTensorHandleArrayDestroy(micro_model->inputs);\n"
            "    MSTensorHandleArrayDestroy(micro_model->outputs);\n"
-           "    free(*model);\n"
-           "    *model = NULL;\n"
+           "    micro_model->inputs.handle_list = NULL;\n"
+           "    micro_model->outputs.handle_list = NULL;\n"
+           "    micro_model->free_resource();\n"
+           "    DecRefCount();\n"
            "  }\n";
 
     if (config->support_parallel()) {
@@ -346,12 +386,29 @@ void CodeMSModelDestory(std::ofstream &ofs, const int model_index, const Configu
   ofs << "}\n";
 }
 
-void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
-  auto inputs_num = ctx->graph_inputs().size();
-  auto outputs_num = ctx->graph_outputs().size();
+void CodeMSModelPredictState(std::ofstream &ofs) { ofs << micro_model_predict_state; }
+
+void CodeMSModelPredictCommon(std::ofstream &ofs) {
   ofs << R"RAW(
 MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, MSTensorHandleArray *outputs,
                         const MSKernelCallBackC before, const MSKernelCallBackC after) {
+  MicroModel *micro_model = (MicroModel *)model;
+  if (micro_model == NULL) {
+    return kMSStatusLiteNullptr;
+  }
+  return micro_model->predict(model, inputs, outputs, before, after);
+}
+
+)RAW";
+}
+
+void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
+  auto inputs_num = ctx->graph_inputs().size();
+  auto outputs_num = ctx->graph_outputs().size();
+  ofs << "MSStatus MSModelPredict" << ctx->GetCurModelIndex()
+      << "(MSModelHandle model, const MSTensorHandleArray inputs, MSTensorHandleArray *outputs,\n"
+      << "                         const MSKernelCallBackC before, const MSKernelCallBackC after) {\n";
+  ofs << R"RAW(
   MicroModel *micro_model = (MicroModel *)model;
   if (micro_model == NULL) {
     return kMSStatusLiteNullptr;
@@ -366,6 +423,21 @@ MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, M
   ofs << "  if (outputs->handle_num != " << outputs_num << ") {\n";
   ofs << "    return kMSStatusLiteParamInvalid;\n";
   ofs << "  }\n";
+  if (config.target() != kCortex_M) {
+    ofs << "  if (!LockBuffer(micro_model->runtime_buffer)) {\n"
+        << "    void *buffer = Malloc(GetBufferSize" << ctx->GetCurModelIndex() << "());\n"
+        << "    if (buffer == NULL) {\n"
+        << "      return kMSStatusLiteNullptr;\n"
+        << "    }\n"
+        << "    if (micro_model->runtime_buffer != buffer) {\n"
+        << "      micro_model->runtime_buffer = buffer;\n"
+        << "      int ret = SetBuffer" << ctx->GetCurModelIndex() << "(((MemBlock *)buffer)->addr);\n"
+        << "      if (ret != kMSStatusSuccess) {\n"
+        << "        return kMSStatusLiteMemoryFailed;\n"
+        << "      }\n"
+        << "    }\n"
+        << "  }\n";
+  }
   ofs << "  const void *inputs_data_array[" << inputs_num << "];\n";
   ofs << "  for (int i = 0; i < " << inputs_num << "; i++) {\n";
   ofs << "    inputs_data_array[i] = ((MicroTensor *)inputs.handle_list[i])->data;\n";
@@ -379,8 +451,11 @@ MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, M
   ofs << "    outputs_data_array[i] = MSTensorGetMutableData(outputs->handle_list[i]);\n";
   ofs << "  }\n";
   ofs << "  CopyOutputsData" << ctx->GetCurModelIndex() << "(outputs_data_array, " << outputs_num << ");\n";
+  if (config.target() != kCortex_M) {
+    ofs << "  UnLockBuffer(micro_model->runtime_buffer);\n";
+  }
   ofs << "  return kMSStatusSuccess;\n";
-  ofs << "}\n\n";
+  ofs << "}\n";
 }
 
 void CodeCopyOutputsState(std::ofstream &ofs, const int model_index) {
@@ -514,6 +589,8 @@ void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
       << "  return RET_OK;\n"
          "}\n";
 }
+
+void CodeFreeResourceState(std::ofstream &ofs) { ofs << free_resource_state; }
 
 void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx,
                                const Configurator &config) {

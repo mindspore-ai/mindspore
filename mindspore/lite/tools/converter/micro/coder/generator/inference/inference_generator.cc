@@ -41,7 +41,7 @@ void InferenceGenerator::CodeNetExecuteFunc(std::ofstream &ofs) {
 }
 
 int InferenceGenerator::CodeNetHFile() {
-  std::string net_include_file = net_src_file_path_ + net_inc_hfile_;
+  std::string net_include_file = model_dir_ + net_inc_hfile_;
   std::ofstream ofs(net_include_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_include_file;
@@ -53,7 +53,7 @@ int InferenceGenerator::CodeNetHFile() {
 }
 
 int InferenceGenerator::CodeNetCFile() {
-  std::string net_impl_file = net_src_file_path_ + net_src_cfile_;
+  std::string net_impl_file = model_dir_ + net_src_cfile_;
   std::ofstream ofs(net_impl_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_impl_file;

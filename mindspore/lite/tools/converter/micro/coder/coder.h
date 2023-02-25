@@ -36,7 +36,7 @@ class Coder final {
 
  private:
   int Init(const std::string &code_mode, const std::string &target, bool support_parallel, bool debug_mode_) const;
-  int Run(const void *model_buff, size_t size);
+  int Run(const void *model_buff, size_t size, const std::string model_name);
   bool InitPath(const std::string &output_path);
   std::shared_ptr<CoderSession> session_{nullptr};
 

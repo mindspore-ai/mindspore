@@ -36,7 +36,7 @@ int CoderTrainSession::Build() {
   return RET_OK;
 }
 
-int CoderTrainSession::Run() {
+int CoderTrainSession::Run(const std::string model_name) {
   MS_LOG(INFO) << "start run op coders";
   int ret = Preprocess();
   MS_CHECK_RET_CODE(ret, "preprocess failed");
@@ -44,7 +44,7 @@ int CoderTrainSession::Run() {
   ret = DoCode();
   MS_CHECK_RET_CODE(ret, "do code failed");
 
-  PassArgsToContext();
+  PassArgsToContext(model_name);
   MS_LOG(INFO) << "run op coders success";
   return RET_OK;
 }
@@ -90,8 +90,8 @@ int CoderTrainSession::UpdateCodeBlocksWithFlag() {
   return RET_OK;
 }
 
-int CoderTrainSession::PassArgsToContext() {
-  int ret = CoderSession::PassArgsToContext();
+int CoderTrainSession::PassArgsToContext(const std::string model_name) {
+  int ret = CoderSession::PassArgsToContext(model_name);
   MS_CHECK_RET_CODE(ret, "PassArgsToContext failed");
   if (Configurator::GetInstance()->debug_mode()) {
     ret = UpdateCodeBlocksWithFlag();
@@ -99,6 +99,7 @@ int CoderTrainSession::PassArgsToContext() {
   }
   context_->set_graph_train_outputs(coder_graph_->train_output_tensors());
   context_->set_graph_eval_outputs(coder_graph_->eval_output_tensors());
+  context_->set_model_name(model_name);
   return ret;
 }
 

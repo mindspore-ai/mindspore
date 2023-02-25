@@ -32,9 +32,14 @@ char *ModifyPrefixName(char *name, int model_index, const std::string &prefix) {
   }
   std::string variable_prefix_name = "m" + std::to_string(model_index) + prefix;
   name = static_cast<char *>(malloc((variable_prefix_name.size() + 1) * sizeof(char)));
-  int ret = snprintf(name, variable_prefix_name.size() + 1, "%s\n", variable_prefix_name.c_str());
+  if (name == nullptr) {
+    MS_LOG(ERROR) << "malloc failed";
+    return nullptr;
+  }
+  int ret = memcpy_s(name, (variable_prefix_name.size() + 1) * sizeof(char), variable_prefix_name.c_str(),
+                     (variable_prefix_name.size() + 1) * sizeof(char));
   if (ret == RET_ERROR) {
-    MS_LOG(ERROR) << "snprintf failed";
+    MS_LOG(ERROR) << "memcpy_s failed";
     return nullptr;
   }
   return name;

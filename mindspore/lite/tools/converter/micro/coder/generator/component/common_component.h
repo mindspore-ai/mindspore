@@ -31,10 +31,15 @@ void CodeMSModelCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<Code
                                   const Configurator &config);
 void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
 void CodeMSTensorHandleArrayDestroyState(std::ofstream &ofs, const Configurator &config);
+void CodeMSModelCreateDefault(std::ofstream &ofs);
 void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
-void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const Configurator *config);
-void CodeMSModelDestory(std::ofstream &ofs, const int model_index, const Configurator *config);
-void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+void CodeMSModelBuildState(std::ofstream &ofs);
+void CodeMSModelBuildCommon(std::ofstream &ofs, const Configurator &config);
+void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const Configurator &config);
+void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config);
+void CodeMSModelPredictState(std::ofstream &ofs);
+void CodeMSModelPredictCommon(std::ofstream &ofs);
+void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
 
 void CodeCopyOutputsState(std::ofstream &ofs, const int model_index);
 void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
@@ -50,6 +55,7 @@ void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::unique_ptr<Coder
 void CodeManageResourceState(std::ofstream &ofs, const int model_index);
 void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
+void CodeFreeResourceState(std::ofstream &ofs);
 void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx,
                                const Configurator &config);
 

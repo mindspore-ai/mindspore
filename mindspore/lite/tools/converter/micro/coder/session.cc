@@ -36,12 +36,9 @@
 #include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
-namespace {
-static int kModelIndex = 0;
-}  // namespace
 CoderSession::CoderSession() { allocator_ = MemoryAllocator::GetInstance(); }
 
-int CoderSession::PassArgsToContext() {
+int CoderSession::PassArgsToContext(const std::string model_name) {
   context_->set_tensor_map(allocator_->tensors_map());
   context_->set_saved_weights(allocator_->saved_weights());
   size_t de_quant_max_workspace_size = nnacl::Dequant::GetInstance()->de_quant_max_workspace();
@@ -60,6 +57,7 @@ int CoderSession::PassArgsToContext() {
     }
     context_->set_code_blocks(blocks);
   }
+  context_->set_model_name(model_name);
   return RET_OK;
 }
 
@@ -90,7 +88,7 @@ int CoderSession::DoCode() {
   }
   return ret;
 }
-int CoderSession::Run() {
+int CoderSession::Run(const std::string model_name) {
   MS_LOG(INFO) << "start run opcoders";
 
   int ret = Preprocess();
@@ -99,7 +97,7 @@ int CoderSession::Run() {
   ret = DoCode();
   MS_CHECK_RET_CODE(ret, "do code failed");
 
-  ret = PassArgsToContext();
+  ret = PassArgsToContext(model_name);
   MS_CHECK_RET_CODE(ret, "PassArgsToContext failed");
   MS_LOG(INFO) << "run opcoders success";
   return RET_OK;
@@ -120,14 +118,14 @@ int CoderSession::GenerateCode() {
   return ret;
 }
 
-int CoderSession::Init(const void *content, int size) {
+int CoderSession::Init(const void *content, int size, const int model_index) {
   MS_LOG(INFO) << "CoderSession::Init start";
   Model *model = lite::Model::Import(static_cast<const char *>(content), size);
   MS_CHECK_PTR(model);
   coder_graph_ = std::make_unique<CoderGraph>(model);
-  InitGlobalVariable(kModelIndex);
-  InitThread(kModelIndex);
-  context_ = std::make_unique<CoderContext>(kModelIndex++);
+  InitGlobalVariable(model_index);
+  InitThread(model_index);
+  context_ = std::make_unique<CoderContext>(model_index);
   MS_LOG(INFO) << "CoderSession::Init done";
   return RET_OK;
 }

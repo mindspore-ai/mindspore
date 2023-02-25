@@ -110,9 +110,9 @@ function Run_x86_codegen() {
           input_files=${input_files}${models_path}'/input_output/input/'${model_name}'.ms.bin_'$i','
         done
       fi
-      echo "net file: ${output_file}/src/net.bin" >> $4
-      echo "./benchmark ${input_files} ${output_file}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} 0" >> $4
-      ./benchmark ${input_files} ${output_file}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} 0 >> $4
+      echo "net file: ${output_file}/src/model0/net0.bin" >> $4
+      echo "./benchmark ${input_files} ${output_file}/src/model0/net0.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} 0" >> $4
+      ./benchmark ${input_files} ${output_file}/src/model0/net0.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} 0 >> $4
       if [ $? = 0 ]; then
           run_result='x86_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
       else
@@ -376,9 +376,9 @@ function Run_quant_codegen() {
         done
       fi
       benchmark_data_file=${models_path}"/input_output/output/"${model_name}.ms.out
-      echo "net file: ${output_file}/src/net.bin" >> $4
-      echo "./benchmark ${input_files} ${output_file}/src/net.bin 1  ${benchmark_data_file} ${thread_num} ${bind_mode} 0 ${cosine_threshold}" >> $4
-      ./benchmark ${input_files} ${output_file}/src/net.bin 1 ${benchmark_data_file} ${thread_num} ${bind_mode} 0 ${cosine_threshold}>> $4
+      echo "net file: ${output_file}/src/model0/net0.bin" >> $4
+      echo "./benchmark ${input_files} ${output_file}/src/model0/net0.bin 1  ${benchmark_data_file} ${thread_num} ${bind_mode} 0 ${cosine_threshold}" >> $4
+      ./benchmark ${input_files} ${output_file}/src/model0/net0.bin 1 ${benchmark_data_file} ${thread_num} ${bind_mode} 0 ${cosine_threshold}>> $4
       if [ $? = 0 ]; then
           run_result='x86_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
       else
@@ -520,7 +520,7 @@ function Run_arm_codegen() {
       rm -rf "$benchmark_dir"
       mkdir "$benchmark_dir" && cd "$benchmark_dir" || exit 1
       cp -a "$1/benchmark/benchmark" "$benchmark_dir/benchmark" || exit 1
-      cp -a "$1/$model_name/src/net.bin" "$benchmark_dir/net.bin" || exit 1
+      cp -a "$1/$model_name/src/model0/net0.bin" "$benchmark_dir/net.bin" || exit 1
 
       {
             echo "ls $benchmark_dir:"
@@ -532,18 +532,18 @@ function Run_arm_codegen() {
       {
           echo "cd  /data/local/tmp/codegen_test_$7"
           echo 'chmod 777 benchmark'
-          echo 'chmod 777 net.bin'
+          echo 'chmod 777 net0.bin'
           echo 'ls'
-          echo './benchmark /data/local/tmp/input_output/input/'${model_name}'.ms.bin ./net.bin 1 /data/local/tmp/input_output/output/'${model_name}'.ms.out'
+          echo './benchmark /data/local/tmp/input_output/input/'${model_name}'.ms.bin ./net0.bin 1 /data/local/tmp/input_output/output/'${model_name}'.ms.out'
           echo "cd .. && rm -rf codegen_test_$7"
       } >> $4
 
         {
             echo "cd  /data/local/tmp/codegen_test_$7"
             echo 'chmod 777 benchmark'
-            echo 'chmod 777 net.bin'
+            echo 'chmod 777 net0.bin'
             echo 'ls'
-            echo './benchmark /data/local/tmp/input_output/input/'${model_name}'.ms.bin ./net.bin 1 /data/local/tmp/input_output/output/'${model_name}'.ms.out'
+            echo './benchmark /data/local/tmp/input_output/input/'${model_name}'.ms.bin ./net0.bin 1 /data/local/tmp/input_output/output/'${model_name}'.ms.out'
             echo "cd .. && rm -rf codegen_test_$7"
         } > adb_run_cmd.txt
 

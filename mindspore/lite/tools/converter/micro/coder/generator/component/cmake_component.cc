@@ -21,6 +21,7 @@
 namespace mindspore::lite::micro {
 void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator *config) {
   ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)\n";
+  ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../)\n";
   if (config->target() == kCortex_M) {
     ofs << "include_directories(${OP_HEADER_PATH}/CMSIS/NN/Include)\n"
         << "include_directories(${OP_HEADER_PATH}/CMSIS/DSP/Include)\n"
@@ -30,11 +31,17 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext>
   for (const std::string &c_file : ctx->c_files()) {
     ofs << "    " << c_file << ".o\n";
   }
-  ofs << "    weight.c.o\n"
-      << "    net.c.o\n"
-      << "    model.c.o\n"
+  for (int i = 0; i <= ctx->GetCurModelIndex(); ++i) {
+    ofs << "    weight" << i << ".c.o\n"
+        << "    net" << i << ".c.o\n"
+        << "    model" << i << ".c.o\n";
+  }
+  ofs << "    model.c.o\n"
       << "    context.c.o\n"
       << "    tensor.c.o\n";
+  if (config->target() != kCortex_M) {
+    ofs << "    allocator.c.o\n";
+  }
   if (config->debug_mode()) {
     ofs << "    debug_utils.c.o\n";
   }
@@ -53,7 +60,7 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext>
         << "set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)\n"
         << "list(APPEND OP_SRC ${ASSEMBLY_SRC})\n";
   }
-  ofs << "file(GLOB NET_SRC\n"
+  ofs << "file(GLOB_RECURSE NET_SRC\n"
          "     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc\n"
          "     ${CMAKE_CURRENT_SOURCE_DIR}/*.c\n"
          "     )\n"
