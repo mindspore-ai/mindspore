@@ -187,6 +187,7 @@
 #include "plugin/device/ascend/optimizer/optimizer_factory.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
+#include "plugin/device/ascend/optimizer/format_type/replace_transdata_with_transpose.h"
 
 namespace mindspore {
 namespace opt {
@@ -313,6 +314,7 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   data_layout_pm->AddPass(std::make_shared<RemoveReshapePair>());
   data_layout_pm->AddPass(std::make_shared<EliminateRedundantOp>());
+  data_layout_pm->AddPass(std::make_shared<ReplaceTransDataWithTranspose>());
   if (kernel_graph->has_flag(kFlagPyNativeRunInGraph)) {
     data_layout_pm->AddPass(std::make_shared<EliminateGraphOutputTransdata>());
   }
