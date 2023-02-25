@@ -181,8 +181,10 @@ py::object TensorNode::GetDtype() {
 }
 
 bool TensorNode::SetAbstract(const AbstractBasePtr &abs) {
-  if (!abs->isa<abstract::AbstractTensor>()) {
-    return false;
+  if (!abs->isa<abstract::AbstractTensor>() && !abs->isa<abstract::AbstractMapTensor>()) {
+    if (!abs->isa<abstract::AbstractScalar>() || abs->BuildValue() != kAnyValue) {
+      return false;
+    }
   }
   return StubNode::SetAbstract(abs);
 }
@@ -223,7 +225,7 @@ bool SequenceNode::SetAbstract(const AbstractBasePtr &abs) {
 void SequenceNode::SetValue(const ValuePtr &val) {
   auto seq_value = val->cast<ValueSequencePtr>();
   auto children = seq_value->value();
-  for (size_t i = 0; i < elements_.size(); ++i) {
+  for (size_t i = 0; i < children.size(); ++i) {
     elements_[i]->SetValue(children[i]);
     elements_[i]->SetTopNode(nullptr);
   }
