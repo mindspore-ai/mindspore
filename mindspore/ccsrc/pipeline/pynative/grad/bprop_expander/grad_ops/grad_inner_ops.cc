@@ -270,5 +270,12 @@ REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody([](const BpropIRBuilder *ib) -> 
   auto dx = ib->Reshape(reduced_grad, x_shape);
   return {dx, ib->ZerosLike(shp)};
 });
+
+REG_BPROP_BUILDER("SiLU").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto out = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("SiLUGrad", {dout, out});
+  return {dx};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

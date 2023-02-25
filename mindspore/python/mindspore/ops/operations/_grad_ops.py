@@ -1792,6 +1792,15 @@ class ReluGrad(Primitive):
         self.init_prim_io_names(inputs=['y_backprop', 'x'], outputs=['output'])
 
 
+class SiLUGrad(Primitive):
+    """Performs grad of SiLU operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SiLUGrad"""
+        self.init_prim_io_names(inputs=['dout', 'out'], outputs=['output'])
+
+
 class ReLU6Grad(Primitive):
     """Performs grad of ReLU6 operation."""
 

@@ -61,9 +61,9 @@ class SiLUInfer : public abstract::OpInferBase {
 abstract::AbstractBasePtr SiLUInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  SiLUInfer relu_infer;
-  auto type = relu_infer.InferType(primitive, input_args);
-  auto shape = relu_infer.InferShape(primitive, input_args);
+  SiLUInfer silu_infer;
+  auto type = silu_infer.InferType(primitive, input_args);
+  auto shape = silu_infer.InferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
 REGISTER_PRIMITIVE_OP_INFER_IMPL(SiLU, prim::kPrimSiLU, SiLUInfer, false);
