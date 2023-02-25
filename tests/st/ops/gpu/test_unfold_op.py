@@ -41,6 +41,6 @@ def test_unfold_functional_api_modes(mode):
     x = Tensor(np.ones((4, 4, 32, 32)), mstype.float32)
     net = UnfoldFuncNet()
     output = net(x)
-    expected_shape = (4, 36, 30, 30)
+    expected_shape = (4, 4, 9, 900)
     assert output.dtype == x.dtype
     assert output.shape == expected_shape

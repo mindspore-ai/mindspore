@@ -60,6 +60,14 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore import context
 
 
+@constexpr
+def _raise_value_error(*info):
+    info_str = ""
+    for obj in info:
+        info_str = info_str + f"{obj}"
+    raise ValueError(info_str)
+
+
 @bprop_getters.register(P.FillV2)
 def get_bprop_fill_v2(self):
     """Generate bprop for FillV2"""
@@ -575,23 +583,29 @@ def get_bprop_im2col(self):
     Im2Col, corresponding to torch's UnFold operator.
     The Unfold operator has no `padding_mode` attribute,
     and it's implementation corresponds to the mindspore
-    implementation when `padding_mode=CALCULATED` .
+    implementation with `padding_mode=CALCULATED` .
     So, currently the bprop function of Im2Col only supports
     the CALCULATED mode.
     """
     kernel_size = self.ksizes
     dilation = self.dilations
     stride = self.strides
-    padding = self.pads
+    padding = (self.pads[0], self.pads[2])
+    mode = self.padding_mode
+    if mode != "CALCULATED":
+        _raise_value_error(
+            "Currently, the bprop function of `Im2Col` only supports the `CALCULATED` mode."
+        )
+    shape_op = P.TensorShape()
     col2im = Col2Im(kernel_size=kernel_size,
                     dilation=dilation,
                     stride=stride,
                     padding=padding)
 
     def bprop(x, out, dout):
-        x_shape = Tensor(x.shape, dtype=mstype.int32)
+        x_shape = shape_op(x)[2:]
         dx = col2im(dout, x_shape)
-        return dx
+        return (dx,)
 
     return bprop
 
