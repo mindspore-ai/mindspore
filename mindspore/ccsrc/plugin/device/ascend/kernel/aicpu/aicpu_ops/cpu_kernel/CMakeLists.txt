@@ -57,4 +57,3 @@ install(TARGETS mindspore_cpu_kernels OPTIONAL
     EXPORT mindspore_cpu_kernels-targets
     LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR}/ascend
 )
-
