@@ -62,7 +62,10 @@ void GraphExecOrderRecorder::Export() {
 namespace RDR {
 bool RecordGraphExecOrder(const SubModuleId module, const std::string &name,
                           const std::vector<CNodePtr> &final_exec_order) {
-  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!mindspore::RecorderManager::Instance().RdrEnable() ||
+      ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     return false;
   }
   std::string submodule_name = std::string(GetSubModuleName(module));
