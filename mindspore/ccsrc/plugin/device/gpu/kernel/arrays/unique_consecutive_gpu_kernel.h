@@ -74,7 +74,6 @@ class UniqueConsecutiveGpuKernelMod : public NativeGpuKernelMod {
   bool is_flattend_{false};
   int64_t axis_;
   std::unique_ptr<cukernel::UniqueConsecutiveHelperBase> helper_ptr_ = nullptr;
-  std::optional<bool> is_input_dynamic_shape_ = {};
   BaseOperatorPtr base_operator_ = nullptr;
   std::vector<KernelTensorPtr> inputs_ = {};
   std::vector<KernelTensorPtr> outputs_ = {};
