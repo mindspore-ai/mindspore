@@ -20,6 +20,7 @@ namespace mindspore {
 namespace distributed {
 namespace rpc {
 constexpr int EAGAIN_RETRY = 1024000;
+constexpr int EAGAIN_SLEEP_INTERVAL = 10000;
 
 ssize_t TCPSocketOperation::ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) {
   return recv(connection->socket_fd, recvBuf, recvLen, MSG_PEEK);
@@ -97,7 +98,10 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
       return IO_RW_ERROR;
     } else {
       if (EAGAIN == errno) {
-        return IO_RW_OK;
+        MS_LOG(DEBUG) << "'recvmsg' returns " << retval << ". Error is EAGAIN: " << strerror(errno)
+                      << ". Retry recvmsg.";
+        std::this_thread::sleep_for(std::chrono::microseconds(EAGAIN_SLEEP_INTERVAL));
+        continue;
       } else if (ECONNRESET == errno || ECONNABORTED == errno || ENOTCONN == errno || EPIPE == errno) {
         connection->error_code = errno;
         return IO_RW_ERROR;
