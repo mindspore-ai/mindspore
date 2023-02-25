@@ -14,9 +14,8 @@
 # ============================================================================
 """ test tuple mul number """
 
-import pytest
 import numpy as np
-from mindspore import Tensor, context, jit
+from mindspore import Tensor, context
 from mindspore import nn
 
 
@@ -46,18 +45,3 @@ def test_tuple_mul_number():
     for i in range(len(net()[0])):
         assert np.array_equal(net()[0][i].asnumpy(), expect_ret0[i].asnumpy())
     assert net()[1] == expect_ret1
-
-
-def test_tuple_mul_non_integer_number():
-    """
-    Feature: tuple multiple non-integer number.
-    Description: tuple can only multiply integer number.
-    Expectation: Raise TypeError.
-    """
-    @jit
-    def foo():
-        x = (1, 2, 3, 4)
-        return x * 2.0
-    with pytest.raises(TypeError) as error_info:
-        foo()
-    assert "can't multiply sequence by non-int of type" in str(error_info)

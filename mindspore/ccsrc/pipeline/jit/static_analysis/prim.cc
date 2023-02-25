@@ -2756,23 +2756,23 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     }
 
     std::string exception_type = GetExceptionType(args_abs_list[0]);
-    auto iter = exception_types_map.find(exception_type);
-    if (iter == exception_types_map.end()) {
-      MS_LOG(EXCEPTION) << "Unsupported exception type: " << exception_type
-                        << ". Raise only support some Python standard exception types: "
-                        << SupportedExceptionsToString();
-    }
-    ExceptionType type = iter->second;
-    if (args_abs_list.size() == 1) {
-      // Process raise ValueError()
-      MS_EXCEPTION(type);
-    }
-    std::string exception_string;
-    // Processed in units of nodes. Raise ValueError(xxxx)
+    has_variable_ = false;
     size_t index_begin = 2;
     auto cnode = node->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto inputs = cnode->inputs();
+    for (size_t index = index_begin; index < inputs.size(); ++index) {
+      CheckHasVariable(args_abs_list[index - 1]);
+    }
+    std::string exception_string;
+    if (args_abs_list.size() == 1 && !has_variable_) {
+      // Process raise ValueError()
+      std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
+      (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
+      (void)values_.emplace_back(NewValueNode(std::make_shared<StringImm>("")));
+      exception_string = key;
+    }
+    // Processed in units of nodes. Raise ValueError(xxxx)
     for (size_t index = index_begin; index < inputs.size(); ++index) {
       const auto input = inputs[index];
       auto input_abs = args_abs_list[index - 1];
@@ -2794,8 +2794,11 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     if (need_out_symbol) {
       exception_string = "(" + exception_string + ")";
     }
-    if (keys_.size() <= 1) {
-      MS_EXCEPTION(type) << exception_string;
+    if (keys_.size() <= 1 && !has_variable_) {
+      std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
+      (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
+      (void)values_.emplace_back(NewValueNode(std::make_shared<StringImm>(exception_string)));
+      exception_string = key;
     }
 
     // Build PyExecute node for raise
@@ -2833,7 +2836,24 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   int num_str_ = 0;
   std::vector<AnfNodePtr> keys_;
   std::vector<AnfNodePtr> values_;
+  bool has_variable_ = false;
   // string need add quotation marks
+  void CheckHasVariable(const AbstractBasePtr &arg) {
+    if (arg->isa<abstract::AbstractSequence>()) {
+      auto arg_tuple = arg->cast_ptr<abstract::AbstractSequence>();
+      MS_EXCEPTION_IF_NULL(arg_tuple);
+      const auto &arg_tuple_elements = arg_tuple->elements();
+      if (arg_tuple_elements.size() == 0) {
+        MS_LOG(EXCEPTION) << "The arg_tuple_elements can't be empty.";
+      }
+      for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
+        auto &element = arg_tuple_elements[index];
+        CheckHasVariable(element);
+      }
+    } else if (arg->BuildValue() == kAnyValue || arg->isa<abstract::AbstractTensor>()) {
+      has_variable_ = true;
+    }
+  }
   bool CheckNeedSymbol(const AnfNodePtr &, const AbstractBasePtr &abs) const {
     MS_EXCEPTION_IF_NULL(abs);
     bool need_symbol = false;
@@ -2864,7 +2884,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     return need_symbol;
   }
   std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node,
-                                 const bool need_comma = false, const bool need_symbol = false) {
+                                 bool need_comma = false, bool need_symbol = false) {
     std::string exception_str;
     MS_EXCEPTION_IF_NULL(arg);
     if (arg->isa<abstract::AbstractSequence>()) {
@@ -2889,7 +2909,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   }
 
   std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node,
-                                   const bool need_comma, const bool need_symbol = false) {
+                                   bool need_comma, bool need_symbol = false) {
     MS_EXCEPTION_IF_NULL(arg);
     std::string exception_str;
     bool is_tuple = arg->isa<abstract::AbstractTuple>();
@@ -2897,10 +2917,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     auto arg_tuple = arg->cast_ptr<abstract::AbstractSequence>();
     MS_EXCEPTION_IF_NULL(arg_tuple);
     const auto &arg_tuple_elements = arg_tuple->elements();
-    if (arg_tuple_elements.size() == 0) {
-      MS_LOG(EXCEPTION) << "The arg_tuple_elements can't be empty.";
-    }
-    if (!input->isa<CNode>()) {
+    if (!input->isa<CNode>() && has_variable_) {
       std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
       num_str_ += 1;
       if (need_symbol) {
@@ -2920,12 +2937,19 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       }
     }
     auto cnode = input->cast_ptr<CNode>();
-    auto inputs = cnode->inputs();
-    bool not_variable = (arg->BuildValue() != kAnyValue) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
+    bool not_variable = !has_variable_;
+    if (has_variable_) {
+      not_variable = (arg->BuildValue() != kAnyValue) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
+    }
     for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
-      auto inputs_in_tuple = inputs[index + 1];
       auto &element = arg_tuple_elements[index];
-      exception_str += GetExceptionString(element, inputs_in_tuple, node, need_comma, need_symbol);
+      if (has_variable_) {
+        auto inputs = cnode->inputs();
+        auto inputs_in_tuple = inputs[index + 1];
+        exception_str += GetExceptionString(element, inputs_in_tuple, node, need_comma, need_symbol);
+      } else {
+        exception_str += GetExceptionString(element, input, node, need_comma, need_symbol);
+      }
       if (index != arg_tuple_elements.size() - 1 && need_comma && not_variable) {
         exception_str += ", ";
       }

@@ -1554,6 +1554,14 @@ std::string AbstractNone::ToString() const {
   return buffer.str();
 }
 
+AbstractBasePtr AbstractNone::Join(const AbstractBasePtr &other) {
+  MS_EXCEPTION_IF_NULL(other);
+  if (!other->isa<AbstractNone>()) {
+    AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
+  }
+  return shared_from_base<AbstractNone>();
+}
+
 ValuePtr AbstractNone::RealBuildValue() const { return kNone; }
 
 bool AbstractNull::operator==(const AbstractBase &other) const { return other.isa<AbstractNull>(); }

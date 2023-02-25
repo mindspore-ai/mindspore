@@ -471,9 +471,10 @@ def test_with_as_exception():
                 a = sample.do_something(a + x)
             return x * a
 
-    with pytest.raises(ValueError, match="The divisor could not be zero."):
+    with pytest.raises(ValueError) as as_exception:
         x = Tensor([1])
         test_net = TestNet()
         res = test_net(x)
         print("res:", res)
         assert res == 10
+    assert "The divisor could not be zero" in str(as_exception.value)
