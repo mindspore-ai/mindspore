@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#include <vector>
+#include <algorithm>
+#include <numeric>
 #include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
 #include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
@@ -140,6 +143,76 @@ NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
   auto perm_2 = GenerateInverseIndex(x_shp, axis_v);
   auto params_grad = ib->Transpose(tmp, perm_2);
   return {params_grad, ib->ZerosLike(orig_indices), ib->ZerosLike(axis)};
+}
+
+int64_t RecorrectAxis(int64_t axis, size_t rank) {
+  auto rank_i = SizeToLong(rank);
+  if (rank == 0 || axis < -rank_i || axis >= rank_i) {
+    MS_EXCEPTION(ValueError) << "Rank can not be 0 and 'axis' must be in range [-" << rank_i << ", " << rank_i
+                             << "), but got " << axis;
+  }
+  return (axis < 0) ? (axis + rank_i) : axis;
+}
+
+ShapeArray ConcatOffsetCal(const ShapeArray &input_shapes, size_t axis_s) {
+  ShapeArray res;
+  auto rank = input_shapes[0].size();
+  auto input_num = input_shapes.size();
+  int64_t sum_axis = 0;
+  for (size_t i = 0; i < input_num; ++i) {
+    std::vector<int64_t> offset(rank, 0);
+    offset[axis_s] = sum_axis;
+    sum_axis += input_shapes.at(i)[axis_s];
+    res.push_back(offset);
+  }
+  return res;
+}
+
+NodePtrList ConcatBpropStatic(const BpropIRBuilder *ib, const NodePtr &dout, const ShapeArray &input_shapes,
+                              int64_t axis, bool is_list) {
+  auto rank = input_shapes[0].size();
+  auto axis_s = LongToSize(RecorrectAxis(axis, rank));
+
+  bool is_uniform = true;
+  auto input_nums = input_shapes.size();
+  for (size_t i = 0; i < input_nums; ++i) {
+    if (input_shapes[i].size() != rank) {
+      MS_EXCEPTION(ValueError) << "For gradient of 'Concat', input shapes [" << i
+                               << "] and input shapes [0] must have same rank, but got: " << input_shapes[i].size()
+                               << " vs " << rank;
+    }
+    if (input_shapes[i][axis_s] != input_shapes[0][axis_s]) {
+      is_uniform = false;
+    }
+  }
+
+  NodePtrList res;
+  if (is_uniform) {
+    auto long_nums = SizeToLong(input_nums);
+    auto dx = ib->Emit(
+      kSplitOpName, {dout},
+      {{kAttrAxis, MakeValue(axis)}, {kAttrOutputNum, MakeValue(long_nums)}, {"num_split", MakeValue(long_nums)}});
+    // Split output is a tuple.
+    if (!is_list) {
+      return {dx};
+    }
+
+    for (size_t i = 0; i < input_nums; ++i) {
+      res.push_back(ib->TupleGetItem(dx, i));
+    }
+  } else {
+    auto offsets = ConcatOffsetCal(input_shapes, axis_s);
+    for (size_t i = 0; i < input_nums; ++i) {
+      auto offset_value = ib->Value(offsets[i]);
+      auto slice_out = ib->Emit(kSliceOpName, {dout, offset_value, ib->Value(input_shapes[i])});
+      res.push_back(slice_out);
+    }
+  }
+
+  if (is_list) {
+    return {ib->MakeList(res)};
+  }
+  return {ib->MakeTuple(res)};
 }
 }  // namespace
 
@@ -561,48 +634,49 @@ REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto input_shapes = ib->GetShapes(x);
   if (input_shapes.empty()) {
-    MS_EXCEPTION(ValueError) << "For 'ConcatOffset', 'x' can not be empty";
+    MS_EXCEPTION(ValueError) << "For gradient of 'Concat', 'x' can not be empty";
   }
-  // axis
-  auto rank = input_shapes[0].size();
-  auto rank_i = SizeToLong(rank);
-  if (rank == 0 || axis < -rank_i || axis >= rank_i) {
-    MS_EXCEPTION(ValueError) << "For 'ConcatOffset', input shapes rank can not be 0 and 'axis' must be in range [-"
-                             << rank_i << ", " << rank_i << "), but got " << axis;
+
+  bool is_dynamic = std::any_of(input_shapes.cbegin(), input_shapes.cend(),
+                                [](const std::vector<int64_t> &shape) { return IsDynamic(shape); });
+  auto x_abs = x->get()->abstract();
+  MS_EXCEPTION_IF_NULL(x_abs);
+  bool is_list = x_abs->isa<abstract::AbstractList>();
+
+  if (!is_dynamic) {
+    return ConcatBpropStatic(ib, dout, input_shapes, axis, is_list);
   }
-  if (axis < 0) {
-    axis += rank_i;
-  }
-  auto axis_s = LongToSize(axis);
-  // is_uniform
-  bool is_uniform = true;
-  for (size_t i = 0; i < input_shapes.size(); ++i) {
-    if (input_shapes[i].size() != rank) {
-      MS_EXCEPTION(ValueError) << "For 'ConcatOffset', input shapes [" << i
-                               << "] and input shapes [0] must have same rank, but got: " << input_shapes[i].size()
-                               << " vs " << rank;
+
+  auto input_nums = input_shapes.size();
+
+  auto shape_func = [axis](const ShapeArray &inputs) -> ShapeArray {
+    auto rank = inputs[0].size();
+    auto axis_s = LongToSize(RecorrectAxis(axis, rank));
+    return ConcatOffsetCal(inputs, axis_s);
+  };
+
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
+    auto input_num = inputs.size();
+    if (!invalid_indices.empty()) {
+      return ShapeVector(input_num, -1);
     }
-    if (input_shapes[i][axis_s] != input_shapes[0][axis_s]) {
-      is_uniform = false;
-    }
+    return ShapeVector(input_num, SizeToLong(inputs[0].size()));
+  };
+
+  NodePtrList x_tuple;
+  for (size_t i = 0; i < input_nums; ++i) {
+    x_tuple.push_back(ib->TupleGetItem(x, i));
   }
-  // use Split if is_uniform is true
-  if (is_uniform) {
-    auto input_nums = SizeToLong(input_shapes.size());
-    auto dx = ib->Emit(
-      kSplitOpName, {dout},
-      {{kAttrAxis, MakeValue(axis)}, {kAttrOutputNum, MakeValue(input_nums)}, {"num_split", MakeValue(input_nums)}});
-    return {dx};
-  }
-  // else use Slice
+  auto concat_offset = ib->ShapeCalc(x_tuple, shape_func, infer_func, {}, input_nums);
   NodePtrList res;
-  int64_t sum_axis = 0;
-  for (size_t i = 0; i < input_shapes.size(); ++i) {
-    std::vector<int64_t> offset(rank, 0);
-    offset[axis_s] = sum_axis;
-    sum_axis += input_shapes[i][axis_s];
-    auto slice_out = ib->Emit(kSliceOpName, {dout, ib->Value(offset), ib->Value(input_shapes[i])});
+  for (size_t i = 0; i < input_nums; ++i) {
+    auto input = ib->Emit("Shape", {ib->TupleGetItem(x, i)});
+    auto slice_out = ib->Emit(kSliceOpName, {dout, concat_offset[i], input});
     res.push_back(slice_out);
+  }
+
+  if (is_list) {
+    return {ib->MakeList(res)};
   }
   return {ib->MakeTuple(res)};
 });
