@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,10 @@ DataType::DataType(const std::string &type_str) {
     type_ = DE_STRING;
   } else if (type_str == "bytes") {
     type_ = DE_BYTES;
+#ifdef ENABLE_PYTHON
+  } else if (type_str == "python") {
+    type_ = DE_PYTHON;
+#endif
   } else {
     type_ = DE_UNKNOWN;
   }

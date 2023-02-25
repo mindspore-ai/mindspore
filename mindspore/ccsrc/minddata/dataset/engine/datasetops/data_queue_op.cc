@@ -136,7 +136,8 @@ Status DataQueueOp::FilterMetadata(TensorRow *row) const {
 Status DataQueueOp::CheckExceptions(const TensorRow &row) const {
   // this method checks if the row meets the conditions to be sent to TDT
   for (const auto &item : row) {
-    CHECK_FAIL_RETURN_UNEXPECTED(item->type().IsNumeric(), "Invalid datatype, cannot send string data to device.");
+    CHECK_FAIL_RETURN_UNEXPECTED(item->type().IsNumeric(),
+                                 "Invalid datatype, cannot send string, or Python dict to device.");
     CHECK_FAIL_RETURN_UNEXPECTED(item->HasData(), "Invalid data, the data send to device is null.");
   }
   return Status::OK();

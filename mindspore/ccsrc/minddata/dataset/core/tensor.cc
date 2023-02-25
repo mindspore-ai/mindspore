@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,12 @@ Tensor::Tensor(Tensor &&other) noexcept
       data_(other.GetMutableBuffer()),
       data_end_(other.data_end_),
       data_allocator_(std::move(other.data_allocator_)) {
+#ifdef ENABLE_PYTHON
+  if (type_.value() == DataType::DE_PYTHON) {
+    py::gil_scoped_acquire gil_acquire;
+    python_dict_ = (other.python_dict_);
+  }
+#endif
   other.Invalidate();
 }
 
@@ -83,6 +89,12 @@ Tensor &Tensor::operator=(Tensor &&other) noexcept {
     data_end_ = other.data_end_;
     data_allocator_ = std::move(other.data_allocator_);
     yuv_shape_ = other.yuv_shape_;
+#ifdef ENABLE_PYTHON
+    if (type_.value() == DataType::DE_PYTHON) {
+      py::gil_scoped_acquire gil_acquire;
+      python_dict_ = (other.python_dict_);
+    }
+#endif
     other.Invalidate();
   }
   return *this;
@@ -231,6 +243,21 @@ Status Tensor::CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *
   }
   return Status::OK();
 }
+
+Status Tensor::CreateFromPythonObject(py::object obj, std::shared_ptr<Tensor> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
+  std::vector<dsize_t> shape{};
+  DataType type = DataType(DataType::DE_PYTHON);
+  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
+  *out = std::allocate_shared<Tensor>(*alloc, TensorShape({0}), type);
+  {
+    py::gil_scoped_acquire gil_acquire;
+    (*out)->python_dict_ = obj;
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Failed to create a tensor for python object.");
+  return Status::OK();
+}
+
 #endif
 
 #ifndef ENABLE_ANDROID
@@ -384,9 +411,33 @@ Tensor::~Tensor() {
       data_end_ = nullptr;
     }
   }
-}
+#ifdef ENABLE_PYTHON
+  try {
+    if (Py_IsInitialized()) {
+      if (static_cast<bool>(python_dict_)) {  // if it contains data
+        // Acquire Python GIL
+        py::gil_scoped_acquire gil_acquire;
+        if (python_dict_.ref_count() == 1) {  // if we aren't referencing it anywhere else
+          python_dict_.dec_ref();             // manually set the ref count to zero (to be garbage collected by Python)
+          python_dict_ = py::none();          // wrapper now pointing to a meaningful thing (added to avoid a segfault)
+        }
+      }
+    }
+  } catch (py::error_already_set &e) {
+    // ignore exceptions as everything could be shutting down at this point
+  }
+#endif
+}  // namespace dataset
 
 bool Tensor::operator==(const Tensor &rhs) const {
+#ifdef ENABLE_PYTHON
+  if (type_.value() == DataType::DE_PYTHON) {  // we are holding a python object
+    if (static_cast<bool>(python_dict_) && static_cast<bool>(rhs.python_dict_) && python_dict_ == rhs.python_dict_) {
+      return true;
+    }
+    return false;
+  }
+#endif
   // 1. different shape 2. different type 3. one data_ is nullptr and the other is not
   if (shape_ != rhs.shape() || type_ != rhs.type_ || (data_ == nullptr && rhs.data_ != nullptr) ||
       (data_ != nullptr && rhs.data_ == nullptr)) {
@@ -473,6 +524,15 @@ void Tensor::Print(std::ostream &out) const {
   out << ", Type: " << type_ << ")\n";
   if (data_) {
     PrintRecursive(out, 0, std::vector<dsize_t>{});
+#ifdef ENABLE_PYTHON
+  } else if (static_cast<bool>(python_dict_)) {
+    std::string s;
+    {
+      py::gil_scoped_acquire gil_acquire;
+      s = py::str(python_dict_);
+    }
+    out << s;
+#endif
   } else {
     out << "[Data area is null]";
   }
@@ -510,6 +570,12 @@ void Tensor::Invalidate() {
   data_ = nullptr;
   data_end_ = nullptr;
   data_allocator_ = nullptr;
+#ifdef ENABLE_PYTHON
+  if (type_.value() == DataType::DE_PYTHON) {
+    py::gil_scoped_acquire gil_acquire;
+    python_dict_ = py::none();
+  }
+#endif
 }
 
 template <typename T>
@@ -851,6 +917,15 @@ Status Tensor::GetDataAsNumpyStrings(py::array *data) {
     RETURN_IF_NOT_OK(GetDataAsNumpyStrings<py::bytes>(data));
   } else {
     RETURN_STATUS_UNEXPECTED("Can not convert a numeric Tensor to a string NumPy array.");
+  }
+  return Status::OK();
+}
+
+Status Tensor::GetDataAsPythonObject(py::dict *data) {
+  RETURN_UNEXPECTED_IF_NULL(data);
+  {
+    py::gil_scoped_acquire gil_acquire;
+    *data = python_dict_;
   }
   return Status::OK();
 }

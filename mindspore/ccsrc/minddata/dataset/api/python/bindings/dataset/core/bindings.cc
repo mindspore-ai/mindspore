@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,13 @@ PYBIND_REGISTER(Tensor, 0, ([](const py::module *m) {
                     .def("__str__", &Tensor::ToString)
                     .def("shape", &Tensor::shape)
                     .def("type", &Tensor::type)
+                    .def("as_python",
+                         [](py::object &t) {
+                           auto &tensor = py::cast<Tensor &>(t);
+                           py::dict res;
+                           THROW_IF_ERROR(tensor.GetDataAsPythonObject(&res));
+                           return res;
+                         })
                     .def("as_array", [](py::object &t) {
                       auto &tensor = py::cast<Tensor &>(t);
                       if (tensor.type().IsString()) {
@@ -124,6 +131,7 @@ PYBIND_REGISTER(DataType, 0, ([](const py::module *m) {
                   (void)py::class_<DataType>(*m, "DataType")
                     .def(py::init<std::string>())
                     .def(py::self == py::self)
+                    .def("is_python", &DataType::IsPython)
                     .def("__str__", &DataType::ToString)
                     .def("__deepcopy__", [](py::object &t, const py::dict &memo) { return t; });
                 }));

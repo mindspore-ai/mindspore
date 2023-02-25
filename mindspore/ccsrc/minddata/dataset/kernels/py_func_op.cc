@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,16 @@ Status ConvertNumpyToTensor(const py::object &py_obj, TensorRow *output) {
   return Status::OK();
 }
 
+Status ConvertPythonToTensor(py::object py_obj, TensorRow *output) {
+  // Python objects such as dictionary are converted to a tensor
+  // Note that the tensor will hold a reference to the python object while
+  // the python object will be kept alive in Python layer.
+  std::shared_ptr<Tensor> out;
+  RETURN_IF_NOT_OK(Tensor::CreateFromPythonObject(py_obj, &out));
+  output->push_back(out);
+  return Status::OK();
+}
+
 Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   Status ret = Status(StatusCode::kSuccess, "PyFunc Call Succeed");
@@ -48,14 +58,20 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
     }
     try {
       // Transform input tensor vector into numpy array vector
-      py::tuple input_args(input.size());
       py::object ret_py_obj;
       if (input.size() > 0) {
+        py::tuple input_args(input.size());
         for (size_t i = 0; i < input.size(); i++) {
-          py::array new_data;
-          RETURN_IF_NOT_OK(input.at(i)->GetDataAsNumpy(&new_data));
-          // possible memcpy here
-          input_args[i] = new_data;
+          if (input.at(i)->type().IsPython()) {
+            py::dict new_data;
+            RETURN_IF_NOT_OK(input.at(i)->GetDataAsPythonObject(&new_data));
+            input_args[i] = new_data;
+          } else {
+            py::array new_data;
+            RETURN_IF_NOT_OK(input.at(i)->GetDataAsNumpy(&new_data));
+            // possible memcpy here
+            input_args[i] = new_data;
+          }
         }
         // Invoke python function
         ret_py_obj = this->py_func_ptr_(*input_args);
@@ -78,15 +94,23 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
             py::object ret_py_ele = ret_py_tuple[i];
             // Object is none if pyfunc timeout
             if (ret_py_ele.is_none()) {
-              MS_LOG(INFO) << "Expect pyfunc to return numpy array(s), but got None. If python_multiprocessing is "
-                              "True, it maybe due to pyfunc execution timeout.";
+              MS_LOG(INFO) << "Expected pyfunc to return NumPy array(s) or Python dict(s), but got None. "
+                              "If python_multiprocessing is True, it may be due to pyfunc execution timeout.";
               goto TimeoutError;
+            } else if (py::isinstance<py::dict>(ret_py_ele)) {
+              RETURN_IF_NOT_OK(ConvertPythonToTensor(ret_py_ele, output));
+            } else {
+              RETURN_IF_NOT_OK(ConvertNumpyToTensor(ret_py_ele, output));
             }
-            RETURN_IF_NOT_OK(ConvertNumpyToTensor(ret_py_ele, output));
           }
         } else {
-          // In case of a n-1 mapping, the return value will be a numpy array
-          RETURN_IF_NOT_OK(ConvertNumpyToTensor(ret_py_obj, output));
+          // In case of a n-1 mapping, the return value will be a numpy array or a python object
+          // Note that for Python dictionaries, only a reference will be stored in tensor.
+          if (py::isinstance<py::dict>(ret_py_obj)) {
+            RETURN_IF_NOT_OK(ConvertPythonToTensor(ret_py_obj, output));
+          } else {
+            RETURN_IF_NOT_OK(ConvertNumpyToTensor(ret_py_obj, output));
+          }
         }
       }
     } catch (const py::error_already_set &e) {
