@@ -33,39 +33,32 @@ void SplitString(const std::string &str, std::vector<std::string> *id_vec) {
   size_t str_size = str.size();
   const auto &sub_str = str.substr(paren_pos + 1, str_size - paren_pos - 2);
   MS_LOG(DEBUG) << "Ori str " << str << ", get sub str " << sub_str;
-  auto begin = sub_str.find_first_not_of(colon_delim, 0);
-  auto end = sub_str.find_first_of(colon_delim, begin);
-  MS_EXCEPTION_IF_NULL(id_vec);
-  while (end != std::string::npos || begin != std::string::npos) {
-    const auto &sub = sub_str.substr(begin, end - begin);
-    if (sub.find(angle_bracket_left_delim) != std::string::npos &&
-        sub.find(angle_bracket_right_delim) == std::string::npos) {
-      end = sub_str.find_first_of(angle_bracket_right_delim, begin) + 1;
-      (void)id_vec->emplace_back(sub_str.substr(begin, end - begin));
-    } else {
-      (void)id_vec->emplace_back(sub);
-    }
-    begin = sub_str.find_first_not_of(colon_delim, end);
-    end = sub_str.find_first_of(colon_delim, begin);
-    paren_pos = sub_str.find_first_of(angle_bracket_left_delim, begin);
-    if (paren_pos < end) {
-      const auto &s = sub_str.substr(begin, end - begin);
-      auto num = std::count(s.begin(), s.end(), angle_bracket_left_delim);
-      end = begin;
-      size_t last_end = 0;
-      while (num--) {
-        end = sub_str.find_first_of(angle_bracket_right_delim, end);
-        if (last_end != 0 && end != std::string::npos && end > last_end) {
-          const auto &s_t = sub_str.substr(last_end, end - last_end);
-          num += std::count(s_t.begin(), s_t.end(), angle_bracket_left_delim);
+  size_t begin = 0;
+  size_t angle_bracket_left = 0;
+  size_t angle_bracket_right = 0;
+  size_t sub_str_size = sub_str.size();
+  for (size_t i = 0; i < sub_str_size; ++i) {
+    switch (sub_str[i]) {
+      case colon_delim:
+        if (i != 0 && angle_bracket_left == angle_bracket_right) {
+          id_vec->emplace_back(sub_str.substr(begin, i - begin));
+          begin = i + 1;
+          angle_bracket_left = 0;
+          angle_bracket_right = 0;
         }
-        last_end = end;
-        ++end;
-      }
-      if (end >= sub_str.size()) {
-        end = std::string::npos;
+        break;
+      case angle_bracket_left_delim:
+        ++angle_bracket_left;
+        break;
+      case angle_bracket_right_delim:
+        ++angle_bracket_right;
+        break;
+      default: {
       }
     }
+  }
+  if (angle_bracket_left == angle_bracket_right) {
+    id_vec->emplace_back(sub_str.substr(begin, sub_str_size - begin));
   }
 }
 }  // namespace
