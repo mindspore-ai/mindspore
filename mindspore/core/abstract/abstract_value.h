@@ -259,6 +259,14 @@ class MS_CORE_API AbstractBase : public Base {
   static void set_interpret_bool_checker(InterpretBoolChecker checker) { interpret_bool_checker_ = checker; }
   static inline InterpretBoolChecker interpret_bool_checker() { return interpret_bool_checker_; }
 
+  /// \brief Process the user date of abstract with PyExecute node.
+  using PyExecuteUserDataCatcher = std::pair<bool, ValuePtr> (*)(const AbstractBasePtr &element_abs);
+  static inline PyExecuteUserDataCatcher pyexecute_user_data_catcher_ = nullptr;
+  static void set_pyexecute_user_data_catcher(PyExecuteUserDataCatcher catcher) {
+    pyexecute_user_data_catcher_ = catcher;
+  }
+  static inline PyExecuteUserDataCatcher pyexecute_user_data_catcher() { return pyexecute_user_data_catcher_; }
+
   std::string name() const { return name_; }
 
   void set_name(const std::string &name) { name_ = name; }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1553,11 +1553,6 @@ void SetDynamicInputSizeAttr(const CNodePtr &cnode) {
   bool is_dyn_input = false;
   for (size_t i = 0; i < input_num; ++i) {
     auto input_node = common::AnfAlgo::GetInputNode(cnode, i);
-    // remove monad input
-    auto abs = input_node->abstract();
-    if (abs->isa<abstract::AbstractMonad>()) {
-      continue;
-    }
     if (i < input_obj_types.size() && input_obj_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
       auto [input_structural, input_size, dyn_input] = CalOutputTupleSize(input_node);
       is_dyn_input |= dyn_input;

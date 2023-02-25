@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/clean.h"
+#include "frontend/optimizer/fallback_rewriter.h"
 #include <iterator>
 #include <string>
 #include <vector>
@@ -97,6 +97,8 @@ class BaseRewriter : protected SimpleRewriter {
   ~BaseRewriter() override = default;
 
   bool need_renormalized() const { return need_renormalized_; }
+
+  void set_need_renormalized(bool need_renormalized) { need_renormalized_ = need_renormalized; }
 
   virtual bool Execute() {
     bool changed = Run();
@@ -941,26 +943,18 @@ class CleanAfterOptARewriter : public BaseRewriter {
     {prim::kPrimMakeDict, &ThisClass::ConvertMakeDict},
   };
 
+  // Convert ValueNode<None> to PyExecute("None", ("None"), ("None")).
   AnfNodePtr NoneConvertPyExecute(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(func_graph);
     auto str_value = std::make_shared<StringImm>("None");
     auto script_node = NewValueNode(str_value);
-    script_node->set_abstract(str_value->ToAbstract());
 
-    auto empty_tuple = std::vector<ValuePtr>();
-    auto empty_tuple_value = std::make_shared<ValueTuple>(empty_tuple);
-
-    auto local_key_node = NewValueNode(empty_tuple_value);
-    local_key_node->set_abstract(empty_tuple_value->ToAbstract());
-
-    auto local_value_node = NewValueNode(empty_tuple_value);
-    local_value_node->set_abstract(empty_tuple_value->ToAbstract());
+    std::vector<ValuePtr> none_value{str_value};
+    const auto none_tuple = std::make_shared<ValueTuple>(none_value);
+    auto none_tuple_node = NewValueNode(none_tuple);
 
     AnfNodePtr none_execute_node =
-      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_node, local_key_node, local_value_node});
-    ShapeVector shp{abstract::Shape::kShapeRankAny};
-    auto abs = std::make_shared<abstract::AbstractTensor>(kFloat64, std::make_shared<abstract::Shape>(shp));
-    none_execute_node->set_abstract(abs);
+      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_node, none_tuple_node, none_tuple_node});
     MS_LOG(DEBUG) << "none_execute_node:" << none_execute_node->DebugString();
     return none_execute_node;
   }
@@ -981,13 +975,9 @@ class CleanAfterOptARewriter : public BaseRewriter {
       if (!IsValueNode<None>(input)) {
         continue;
       }
-      // Convert ValueNode<None> to PyExecute("None", (), ()).
       auto none_py_execute = NoneConvertPyExecute(cur_func);
       manager_->Replace(input, none_py_execute);
-    }
-    // If the cnode is depend node, need renew the abstract of the cnode.
-    if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && IsPrimitiveCNode(cnode->input(1), prim::kPrimPyExecute)) {
-      cnode->set_abstract(cnode->input(1)->abstract());
+      set_need_renormalized(true);
     }
   }
 
@@ -1029,26 +1019,53 @@ class CleanAfterOptARewriter : public BaseRewriter {
     return value;
   }
 
+  AnfNodePtr ProcessValueSequence(const ValuePtr &value) {
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<ValueSequence>()) {
+      auto value_seq = value->cast<ValueSequencePtr>();
+      MS_EXCEPTION_IF_NULL(value_seq);
+      auto values = value_seq->value();
+      std::vector<AnfNodePtr> value_seq_inputs{NewValueNode(prim::kPrimMakeTuple)};
+      for (auto inner_value : values) {
+        auto inner_value_seq = ProcessValueSequence(inner_value);
+        (void)value_seq_inputs.emplace_back(inner_value_seq);
+      }
+      auto iter_value = root_graph_->NewCNode(value_seq_inputs);
+      return iter_value;
+    }
+    if (value->isa<None>()) {
+      return NoneConvertPyExecute(root_graph_);
+    }
+    return NewValueNode(value);
+  }
+
+  AnfNodePtr PackDictValue(const ValueDictionaryPtr &dict) {
+    const auto &keys_values = dict->value();
+    std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
+    for (const auto &key_value : keys_values) {
+      auto iter_value = ProcessValueSequence(key_value.second);
+      (void)value_list.emplace_back(iter_value);
+    }
+    auto value_tuple_node = root_graph_->NewCNode(value_list);
+    return value_tuple_node;
+  }
+
   // dict(k0:v0, k1:v1, ...) --> PyExecute('dict(zip(keys, values))', ...)
   AnfNodePtr RebuildValueDict(const ValueNodePtr &value_node, const ValueDictionaryPtr &dict) {
     const auto &keys_values = dict->value();
-    std::vector<ValuePtr> key_list;
-    key_list.reserve(keys_values.size());
-    std::vector<ValuePtr> value_list;
-    value_list.reserve(keys_values.size());
-    for (const auto &key_value : keys_values) {
-      (void)key_list.emplace_back(key_value.first);
-      (void)value_list.emplace_back(key_value.second);
-    }
 
     // Local parameters values.
     // Pack the key tuple.
+    std::vector<ValuePtr> key_list;
+    key_list.reserve(keys_values.size());
+    for (const auto &key_value : keys_values) {
+      (void)key_list.emplace_back(key_value.first);
+    }
     const auto key_tuple = std::make_shared<ValueTuple>(key_list);
     auto key_tuple_node = NewValueNode(key_tuple);
 
-    // Pack the value
-    const auto value_tuple = std::make_shared<ValueTuple>(value_list);
-    auto value_tuple_node = NewValueNode(value_tuple);
+    // Pack the value tuple.
+    auto value_tuple_node = PackDictValue(dict);
 
     // Generate Make Dict PyExecute Node value
     auto make_key_tuple_node = ConstructInternalTupleKeysNode(root_graph_, key_tuple_node);
@@ -1151,7 +1168,7 @@ bool CleanAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resou
   CleanAfterOptARewriter rewriter(root, manager);
   bool change = rewriter.Execute();
   // Renormalize for new PyExecute node.
-  if (change && rewriter.need_renormalized()) {
+  if (rewriter.need_renormalized()) {
     abstract::AbstractBasePtrList new_args_spec;
     std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
                    [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });

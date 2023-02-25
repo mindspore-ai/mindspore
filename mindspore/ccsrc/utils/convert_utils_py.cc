@@ -337,6 +337,12 @@ static ValueNameToConverterVector value_name_to_converter = {
      auto interpreted_object = value->cast<parse::InterpretedObjectPtr>();
      return interpreted_object->obj();
    }},
+  // parse::PyObjectWrapper
+  {parse::PyObjectWrapper::kTypeId,
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
+     auto py_object = value->cast<parse::PyObjectWrapperPtr>();
+     return py_object->obj();
+   }},
   // None
   {None::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
   // AnyValue
