@@ -1691,6 +1691,13 @@ EvalResultPtr GetEvaluatedValueForAdapterTensorAttrOrMethod(const AnalysisEngine
   return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
 }
 
+bool IsPyExecuteCNodeData(const AbstractBasePtr &data_abstract) {
+  if (data_abstract->has_user_data("__py_execute_cnode_flag__")) {
+    return true;
+  }
+  return false;
+}
+
 void CheckObjAttrValid(const TypePtr &data_type, const std::string &item_name, const AbstractBasePtr &data_args) {
   // Check if the obj's attr is invalid or decoratored by @jit_forbidden_register
   std::string data_type_str = TypeIdLabel(data_type->type_id());
@@ -1747,10 +1754,15 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
           MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
         }
 
-        CheckObjAttrValid(data_type, item_name, data_args);
+        constexpr auto recursive_level = 3;
         MS_LOG(DEBUG) << "Evaluate " << data_type->ToString() << " attribute: " << item_name
-                      << ".\nnode: " << out_conf->node()->DebugString() << "\n"
+                      << ".\nnode: " << out_conf->node()->DebugString(recursive_level) << "\n"
                       << trace::GetDebugInfo(out_conf->node()->debug_info());
+        auto cnode = dyn_cast<CNode>(out_conf->node());
+        MS_EXCEPTION_IF_NULL(cnode);
+        if (!IsPyExecuteCNodeData(data_args)) {  // Not check if the data is PyExecute CNode.
+          CheckObjAttrValid(data_type, item_name, data_args);
+        }
         auto res = InterpretGetAttrNode(args_abs_list, out_conf);
         if (res == nullptr) {
           MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
@@ -2067,6 +2079,8 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     shape = std::make_shared<Shape>(shp);
   }
   AbstractBasePtr res = std::make_shared<AbstractTensor>(type, shape);
+  // User data '__py_execute_cnode_flag__' is used by 'IsPyExecuteCNodeData' to check forward PyExecute CNode.
+  res->set_user_data("__py_execute_cnode_flag__", std::make_shared<bool>(true));
   auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
   return infer_result;

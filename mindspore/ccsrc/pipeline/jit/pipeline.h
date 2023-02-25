@@ -74,20 +74,16 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
 
   ~GraphExecutorPy();
 
+  bool Compile(const py::object &source, const py::tuple &args, const py::dict &kwargs, const py::object &phase,
+               bool use_vm);
+  py::object Run(const py::tuple &args, const py::object &phase);
+
   const std::string &phase() const { return phase_; }
   const std::map<std::string, std::string> &jit_config() const { return jit_config_; }
   void SaveCompiledGraph(const std::string &phase);
   void ConvertArgs(const py::tuple &args, const py::dict &kwargs, bool is_auto_parallel,
                    abstract::AbstractBasePtrList *args_abs, std::vector<ValuePtr> *arguments);
-  bool CompileInner(const py::object &source_obj, const py::tuple &args, const py::dict &kwargs,
-                    const py::object &phase_obj, bool use_vm);
-  bool Compile(const py::object &source_obj, const py::tuple &args, const py::dict &kwargs, const py::object &phase,
-               bool use_vm);
-
   void ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *const arg_list);
-
-  // for pynative mode when use_vm is on
-  py::object Run(const py::tuple &args, const py::object &phase_obj);
   std::pair<py::object, bool> GetPyExecuteOutputFromAddress(const py::object &res, const BaseRef &value);
   ResourcePtr GetResource(const std::string &phase);
   FuncGraphPtr GetFuncGraph(const std::string &phase);
@@ -121,8 +117,8 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   size_t GetNumOpsInfo(const std::string &phase);
   void SetNumOpsInfo(size_t num_ops);
   py::dict GetAllreduceFusion(const std::string &phase);
-  void DelNetRes(const py::object &source_obj, const py::set &id);
-  void ReleaseResource(const py::object &phase);
+  void DelNetRes(const py::object &source, const py::set &id);
+  void ReleaseResourceOnException(const py::object &phase);
   void CleanCompileRes(const ResourcePtr &resource);
   static void ClearRes();
   void set_queue_name(const std::string &queue_name) { queue_name_ = queue_name; }
@@ -153,11 +149,16 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   // If enable compile cache, get the compile cache resource.
   void InitCompileCacheInfo(const ResourcePtr &resource, const std::string &phase);
 
+  bool CompileInner(const py::object &source, const py::tuple &args, const py::dict &kwargs, const py::object &phase,
+                    bool use_vm);
+  py::object RunInner(const py::tuple &args, const py::object &phase);
+
   std::map<std::string, ExecutorInfoPtr> info_;
   static std::shared_ptr<GraphExecutorPy> executor_;
   static std::mutex instance_lock_;
   std::map<std::string, py::dict> stra_dict_;
-  std::string phase_ = "";
+  std::string phase_{""};
+  std::string source_{""};
   std::map<std::string, std::string> jit_config_;
   std::map<std::string, size_t> phase_to_num_op_info_;
   std::string queue_name_;
@@ -166,14 +167,15 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   bool compile_cache_consistent_{true};
   py::dict weights_;
   std::map<PyObject *, std::pair<ValuePtr, AbstractBasePtr>> cur_convert_input_;
+  bool executor_running_{false};
 };
 using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
 
 std::string GetJitLevel();
 
-std::string GetObjDesc(const py::object &source_obj);
+std::string GetObjDesc(const py::object &source);
 bool IsPhaseLoadFromMindIR(const std::string &phase);
-void CheckArgsValid(const py::object &source_obj, const py::tuple &args);
+void CheckArgsValid(const py::object &source, const py::tuple &args);
 py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs);
 
 bool InitDistribute(const std::map<std::string, std::string> &options);

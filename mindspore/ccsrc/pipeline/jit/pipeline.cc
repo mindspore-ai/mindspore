@@ -43,6 +43,7 @@
 #include "include/common/utils/config_manager.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "include/common/utils/python_utils.h"
 #include "utils/ms_context.h"
 #include "utils/shape_utils.h"
 #include "utils/info.h"
@@ -370,28 +371,28 @@ std::pair<py::object, bool> GetPyExecuteOutput(const AnfNodePtr &output, const B
 }
 }  // namespace
 
-std::string GetObjDesc(const py::object &source_obj) {
+std::string GetObjDesc(const py::object &source) {
   std::string obj_desc;
-  if (py::hasattr(source_obj, parse::PYTHON_PARSE_METHOD)) {
-    auto cell_class_name = source_obj.attr("__class__").attr("__name__");
-    auto ms_function_name = source_obj.attr(parse::PYTHON_PARSE_METHOD);
+  if (py::hasattr(source, parse::PYTHON_PARSE_METHOD)) {
+    auto cell_class_name = source.attr("__class__").attr("__name__");
+    auto ms_function_name = source.attr(parse::PYTHON_PARSE_METHOD);
     obj_desc = "'" + py::cast<std::string>(cell_class_name) + "." + py::cast<std::string>(ms_function_name) + "'";
   } else {
-    if (py::hasattr(source_obj, "__name__")) {
-      auto ms_function_name = source_obj.attr("__name__");
+    if (py::hasattr(source, "__name__")) {
+      auto ms_function_name = source.attr("__name__");
       obj_desc = "'" + py::cast<std::string>(ms_function_name) + "'";
-    } else if (py::isinstance<Cell>(source_obj)) {
-      auto cell_class_name = source_obj.attr("__class__").attr("__name__");
+    } else if (py::isinstance<Cell>(source)) {
+      auto cell_class_name = source.attr("__class__").attr("__name__");
       obj_desc = "'" + py::cast<std::string>(cell_class_name) + ".construct'";
     } else {
-      MS_EXCEPTION(TypeError) << "The source object is invalid: " << py::str(source_obj);
+      MS_EXCEPTION(TypeError) << "The source object is invalid: " << py::str(source);
     }
   }
   return obj_desc;
 }
 
-void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
-  std::string obj_desc = GetObjDesc(source_obj);
+void CheckArgsValid(const py::object &source, const py::tuple &args) {
+  std::string obj_desc = GetObjDesc(source);
   for (size_t i = 0; i < args.size(); i++) {
     if (!CheckArgValid(args[i])) {
       MS_EXCEPTION(TypeError)
@@ -697,8 +698,8 @@ py::dict GraphExecutorPy::GetAllreduceFusion(const std::string &phase) {
 
 // Not support multi thread, not support nested call too.
 // Here using nested_called flg to avoid nested call.
-void GraphExecutorPy::DelNetRes(const py::object &source_obj, const py::set &id) {
-  ClearArgCache(source_obj);
+void GraphExecutorPy::DelNetRes(const py::object &source, const py::set &id) {
+  ClearArgCache(source);
   // Del all graphs by different phase
   for (auto item : id) {
     DelOneNetRes(item);
@@ -882,38 +883,38 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   MS_LOG(INFO) << "Clean compile resource end";
 }
 
-bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple &args, const py::dict &kwargs,
-                                   const py::object &phase_obj, bool use_vm) {
+bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &args, const py::dict &kwargs,
+                                   const py::object &phase, bool use_vm) {
   // Check if the phase is valid.
-  if ((!py::isinstance<py::str>(phase_obj))) {
+  if ((!py::isinstance<py::str>(phase))) {
     MS_LOG(ERROR) << "The `phase` must be string.";
     return false;
   }
   // Check if the function or net is valid.
-  if (py::isinstance<py::none>(source_obj)) {
+  if (py::isinstance<py::none>(source)) {
     MS_LOG(ERROR) << "The source object to compile should not be None.";
     return false;
   }
   // Check if the args of function or net is valid.
-  CheckArgsValid(source_obj, args);
+  CheckArgsValid(source, args);
 
-  auto phase = py::cast<std::string>(phase_obj);
-  PhaseManager::GetInstance().set_phase(phase);
-  phase_ = phase;
-  auto obj_desc = GetObjDesc(source_obj);
-  MS_LOG(INFO) << "Start compiling, phase: " << phase;
-  MS_LOG(DEBUG) << "source: {" << py::str(source_obj) << "}\nargs: " << py::str(const_cast<py::tuple &>(args))
+  source_ = py::cast<std::string>(py::str(source));
+  phase_ = py::cast<std::string>(phase);
+  PhaseManager::GetInstance().set_phase(phase_);
+  auto obj_desc = GetObjDesc(source);
+  MS_LOG(INFO) << "Start compiling, phase: " << phase_;
+  MS_LOG(DEBUG) << "source: {" << source_ << "}\nargs: " << py::str(const_cast<py::tuple &>(args))
                 << "\nkwargs: " << py::str(const_cast<py::dict &>(kwargs));
-  EventMessage::PrintCompileStartMsg(phase, obj_desc);
+  EventMessage::PrintCompileStartMsg(phase_, obj_desc);
 
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
-  ResourcePtr resource = std::make_shared<Resource>(source_obj);
-  InitCompileCacheInfo(resource, phase);
+  ResourcePtr resource = std::make_shared<Resource>(source);
+  InitCompileCacheInfo(resource, phase_);
   bool use_compile_cache = resource->EnableCompileCache() && resource->func_graph();
   ConfigManager::GetInstance().ResetQueue(queue_name_);
 
-  auto actions = GetPipeline(resource, phase, use_vm);
-  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase));
+  auto actions = GetPipeline(resource, phase_, use_vm);
+  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase_));
 
   if (pip->NeedCreateBackend()) {
     // Create backend asynchronously.
@@ -933,26 +934,26 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
   bool is_parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kSemiAutoParallel ||
                           parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kAutoParallel;
-  bool is_auto_parallel = is_parallel_mode && !py::hasattr(source_obj, parallel::kSkipAutoParallelCompile) &&
-                          !py::hasattr(source_obj, parallel::kKeepInputUnchanged);
+  bool is_auto_parallel = is_parallel_mode && !py::hasattr(source, parallel::kSkipAutoParallelCompile) &&
+                          !py::hasattr(source, parallel::kKeepInputUnchanged);
   ConvertArgs(args, kwargs, is_auto_parallel, &args_abs, &arguments);
   resource->set_arguments(arguments);
   resource->set_args_abs(args_abs);
   executor_info->arg_list_size = args.size() + kwargs.size();
   executor_info->resource = resource;
-  info_[phase] = executor_info;
+  info_[phase_] = executor_info;
   pip->Run();
 
   // Save the compiled graph to MsPipeLine.
-  SaveCompiledGraph(phase);
+  SaveCompiledGraph(phase_);
   if (is_parallel_mode) {
-    ParallelPostProcess(phase, use_compile_cache);
+    ParallelPostProcess(phase_, use_compile_cache);
   }
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::Snapshot();
 #endif
   CleanCompileRes(resource);
-  EventMessage::PrintCompileEndMsg(phase, obj_desc);
+  EventMessage::PrintCompileEndMsg(phase_, obj_desc);
   PhaseManager::GetInstance().ClearPhase();
   MS_LOG(INFO) << "Finish compiling.";
   return true;
@@ -1028,7 +1029,7 @@ std::vector<ActionItem> GraphExecutorPy::FilterActions(const std::vector<ActionI
   return filtered_actions;
 }
 
-void GraphExecutorPy::ReleaseResource(const py::object &phase) {
+void GraphExecutorPy::ReleaseResourceOnException(const py::object &phase) {
   bool clear = false;
   // Be sure the pointer res destroyed before do DelOneNetRes.
   {
@@ -1044,100 +1045,33 @@ void GraphExecutorPy::ReleaseResource(const py::object &phase) {
   }
 }
 
-bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &args, const py::dict &kwargs,
+bool GraphExecutorPy::Compile(const py::object &source, const py::tuple &args, const py::dict &kwargs,
                               const py::object &phase, bool use_vm) {
-  bool ret_value = false;
-  try {
-    ProcessStatus::GetInstance().RecordStart("CompileInner");
-    ret_value = CompileInner(source_obj, args, kwargs, phase, use_vm);
-    ProcessStatus::GetInstance().RecordEnd();
-    ProcessStatus::GetInstance().Print();
-  } catch (const py::error_already_set &ex) {
-    if (!StaticAnalysisException::Instance().HasException()) {
-      // print function call stack info before release
-      std::string compile_exception_info = GetCompileExceptionInfo();
-      if (!compile_exception_info.empty()) {
-        MS_LOG(ERROR) << compile_exception_info;
+  bool res = false;
+  HandleExceptionRethrow(
+    [this, &res, &source, &args, &kwargs, &phase, use_vm]() {
+      if (executor_running_) {
+        MS_LOG(EXCEPTION) << "Nested execution during JIT execution is not supported."
+                          << "\n\touter phase: " << phase_ << "\n\touter source: " << source_
+                          << "\n\tinner phase: " << py::cast<std::string>(phase) << "\n\tinner source: " << source;
       }
-    }
-    ReleaseResource(phase);
-
-    // re-throw this exception to Python interpreter to handle it
-    throw(py::error_already_set(ex));
-  } catch (const py::type_error &ex) {
-    ReleaseResource(phase);
-    throw py::type_error(ex);
-  } catch (const py::value_error &ex) {
-    ReleaseResource(phase);
-    throw py::value_error(ex);
-  } catch (const py::index_error &ex) {
-    ReleaseResource(phase);
-    throw py::index_error(ex);
-  } catch (const py::key_error &ex) {
-    ReleaseResource(phase);
-    throw py::key_error(ex);
-  } catch (const py::attribute_error &ex) {
-    ReleaseResource(phase);
-    throw py::attribute_error(ex);
-  } catch (const py::name_error &ex) {
-    ReleaseResource(phase);
-    throw py::name_error(ex);
-  } catch (const py::assertion_error &ex) {
-    ReleaseResource(phase);
-    throw py::assertion_error(ex);
-  } catch (const py::base_exception &ex) {
-    ReleaseResource(phase);
-    throw py::base_exception(ex);
-  } catch (const py::keyboard_interrupt &ex) {
-    ReleaseResource(phase);
-    throw py::keyboard_interrupt(ex);
-  } catch (const py::stop_iteration &ex) {
-    ReleaseResource(phase);
-    throw py::stop_iteration(ex);
-  } catch (const py::overflow_error &ex) {
-    ReleaseResource(phase);
-    throw py::overflow_error(ex);
-  } catch (const py::zero_division_error &ex) {
-    ReleaseResource(phase);
-    throw py::zero_division_error(ex);
-  } catch (const py::environment_error &ex) {
-    ReleaseResource(phase);
-    throw py::environment_error(ex);
-  } catch (const py::io_error &ex) {
-    ReleaseResource(phase);
-    throw py::io_error(ex);
-  } catch (const py::os_error &ex) {
-    ReleaseResource(phase);
-    throw py::os_error(ex);
-  } catch (const py::memory_error &ex) {
-    ReleaseResource(phase);
-    throw py::memory_error(ex);
-  } catch (const py::unbound_local_error &ex) {
-    ReleaseResource(phase);
-    throw py::unbound_local_error(ex);
-  } catch (const py::not_implemented_error &ex) {
-    ReleaseResource(phase);
-    throw py::not_implemented_error(ex);
-  } catch (const py::indentation_error &ex) {
-    ReleaseResource(phase);
-    throw py::indentation_error(ex);
-  } catch (const py::runtime_warning &ex) {
-    ReleaseResource(phase);
-    throw py::runtime_warning(ex);
-  } catch (const std::exception &ex) {
-    ReleaseResource(phase);
-    // re-throw this exception to Python interpreter to handle it
-    throw(std::runtime_error(ex.what()));
-  } catch (...) {
-    ReleaseResource(phase);
-#ifndef _MSC_VER
-    std::string exName(abi::__cxa_current_exception_type()->name());
-    MS_LOG(EXCEPTION) << "Error occurred when compile graph. Exception name: " << exName;
-#else
-    MS_LOG(EXCEPTION) << "Error occurred when compile graph. Exception name: ";
-#endif
-  }
-  return ret_value;
+      ProcessStatus::GetInstance().RecordStart("CompileInner");
+      res = CompileInner(source, args, kwargs, phase, use_vm);
+      ProcessStatus::GetInstance().RecordEnd();
+      ProcessStatus::GetInstance().Print();
+    },
+    [this, &phase]() {
+      if (!StaticAnalysisException::Instance().HasException()) {
+        // print function call stack info before release
+        std::string compile_exception_info = GetCompileExceptionInfo();
+        if (!compile_exception_info.empty()) {
+          MS_LOG(ERROR) << compile_exception_info;
+        }
+      }
+      ReleaseResourceOnException(phase);
+    },
+    [this, &phase]() { ReleaseResourceOnException(phase); }, [this, &phase]() { ReleaseResourceOnException(phase); });
+  return res;
 }
 
 void CacheValidateFuncGraph(const ResourcePtr &resource) {
@@ -1396,8 +1330,21 @@ std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteOutputFromAddress(const
   return {py::none(), false};
 }
 
-py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_obj) {
-  // init for dynamic-obfuscated model infer
+py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase) {
+  py::object res;
+  HandleExceptionRethrow(
+    [this, &res, &args, &phase]() {
+      executor_running_ = true;
+      res = RunInner(args, phase);
+      executor_running_ = false;
+    },
+    [this]() { executor_running_ = false; }, [this]() { executor_running_ = false; },
+    [this]() { executor_running_ = false; });
+  return res;
+}
+
+py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &phase_obj) {
+  // Init for dynamic-obfuscated model infer
   (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().init_calling_count();
   // Mindspore debugger notify main thread to exit after one step, and will not run next step
 #ifdef ENABLE_DEBUGGER

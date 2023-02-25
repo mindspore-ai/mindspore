@@ -58,7 +58,8 @@ AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const Val
                                                       NewValueNode(std::make_shared<ValueTuple>(keys)),
                                                       NewValueNode(std::make_shared<ValueTuple>(values))});
   constexpr auto debug_recursive_level = 2;
-  MS_LOG(DEBUG) << "interpreted_cnode: " << interpreted_cnode->DebugString(debug_recursive_level);
+  MS_LOG(DEBUG) << "original node: " << node->DebugString(debug_recursive_level)
+                << ", interpreted_cnode: " << interpreted_cnode->DebugString(debug_recursive_level);
   interpreted_cnode->set_debug_info(node->debug_info());
   return interpreted_cnode;
 }

@@ -815,7 +815,7 @@ def eval_script(exp_str, params):
     except Exception as e:
         error_info = f"When eval '{exp_str}' by using JIT Fallback feature, an error occurred: " + str(e) + \
             ". You can try to turn off JIT Fallback feature by 'export MS_DEV_ENABLE_FALLBACK=0'."
-        logger.error(error_info)
+        logger.debug(error_info)
         raise e
 
     # Convert set to tuple.

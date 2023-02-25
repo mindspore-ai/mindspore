@@ -29,6 +29,7 @@
 #include "ir/cell.h"
 #include "abstract/utils.h"
 #include "include/common/utils/stub_tensor.h"
+#include "include/common/utils/python_utils.h"
 
 namespace mindspore::pynative {
 std::shared_ptr<PyNativeExecutor> PyNativeExecutor::executor_ = nullptr;
@@ -43,46 +44,26 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
   const auto &inst = PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   MS_EXCEPTION_IF_NULL(method);
-  try {
-    return method(args...);
-  } catch (const py::error_already_set &ex) {
-    // print function call stack info before release
+  auto already_set_error_handler = [&inst]() {
+    // Print function call stack info before release.
     std::ostringstream oss;
     trace::TraceGraphEval();
     trace::GetEvalStackInfo(oss);
-    // call py::print to output function call stack to STDOUT, in case of output the log to file, the user can see
-    // these info from screen, no need to open log file to find these info
+    // Call py::print to output function call stack to STDOUT, in case of output the log to file, the user can see
+    // these info from screen, no need to open log file to find these info.
     py::print(oss.str());
     MS_LOG(ERROR) << oss.str();
     inst->ClearRes();
-    // re-throw this exception to Python interpreter to handle it
-    throw(py::error_already_set(ex));
-  } catch (const py::index_error &ex) {
-    inst->ClearRes();
-    throw py::index_error(ex);
-  } catch (const py::value_error &ex) {
-    inst->ClearRes();
-    throw py::value_error(ex);
-  } catch (const py::type_error &ex) {
-    inst->ClearRes();
-    throw py::type_error(ex);
-  } catch (const py::name_error &ex) {
-    inst->ClearRes();
-    throw py::name_error(ex);
-  } catch (const std::exception &ex) {
-    inst->ClearRes();
-    // re-throw this exception to Python interpreter to handle it
-    throw(std::runtime_error(ex.what()));
-  } catch (...) {
-    inst->ClearRes();
-#ifndef _MSC_VER
-    auto exception_type = abi::__cxa_current_exception_type();
-    MS_EXCEPTION_IF_NULL(exception_type);
-    std::string ex_name(exception_type->name());
-    MS_LOG(EXCEPTION) << "Error occurred when compile graph. Exception name: " << ex_name;
-#else
-    MS_LOG(EXCEPTION) << "Error occurred when compile graph.";
-#endif
+  };
+
+  if constexpr (std::is_same_v<T, void>) {
+    HandleExceptionRethrow([&method, &args...]() { method(args...); }, already_set_error_handler,
+                           [&inst]() { inst->ClearRes(); }, [&inst]() { inst->ClearRes(); });
+  } else {
+    T res;
+    HandleExceptionRethrow([&res, &method, &args...]() { res = method(args...); }, already_set_error_handler,
+                           [&inst]() { inst->ClearRes(); }, [&inst]() { inst->ClearRes(); });
+    return res;
   }
 }
 

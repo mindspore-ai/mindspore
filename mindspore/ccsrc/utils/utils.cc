@@ -15,8 +15,10 @@
  */
 
 #include "include/common/utils/utils.h"
+
 #include <set>
 #include <string>
+
 namespace mindspore {
 bool IsOneOfPosteriorOperator(const std::string &name) {
   const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
