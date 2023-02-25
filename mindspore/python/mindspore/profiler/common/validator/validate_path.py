@@ -32,11 +32,11 @@ def check_valid_character_of_path(file_path):
     Returns:
         bool, whether valid.
     """
-    re_path = r'^[/\\_a-zA-Z0-9-_.]+$'
+    re_path = r'^[/\\_a-zA-Z0-9-_.@]+$'
     path_valid = re.fullmatch(re_path, file_path)
     if not path_valid:
         msg = "The output path of profiler only supports alphabets(a-zA-Z), " \
-              "digit(0-9) or {'-', '_', '.', '/'}, but got the absolute path= " + file_path
+              "digit(0-9) or {'-', '_', '.', '/', '@'}, but got the absolute path= " + file_path
         raise RuntimeError(msg)
 
 
