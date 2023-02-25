@@ -3035,7 +3035,7 @@ class SoftMarginLoss(Primitive):
         ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> loss = ops.SoftMarginLoss()
@@ -4138,7 +4138,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
 
         \begin{array}{ll} \\
             p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
-            L_{ij} = -[Y_{ij} * log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
+            L_{ij} = -[Y_{ij}log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
         \end{array}
 
     :math:`i` indicates the :math:`i^{th}` sample, :math:`j` indicates the category. Then,
@@ -4169,8 +4169,8 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         \end{array}
 
     where c is the class number (c>1 for multi-label binary classification, c=1 for single-label binary classification),
-    n is the number of the sample in the batch and :math:`p_c` is the weight of the positive answer for the class c.
-    :math:`p_c>1` increases the recall, :math:`p_c<1` increases the precision.
+    n is the number of the sample in the batch and :math:`P_c` is the weight of the positive answer for the class c.
+    :math:`P_c>1` increases the recall, :math:`P_c<1` increases the precision.
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none',

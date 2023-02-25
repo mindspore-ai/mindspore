@@ -9,7 +9,8 @@ mindspore.ops.binary_cross_entropy_with_logits
 
     .. math::
         \begin{array}{ll} \\
-            L_{ij} = -W_{ij}[Y_{ij}log(X_{ij}) + (1 - Y_{ij})log(1 - X_{ij})]
+            p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
+            L_{ij} = -[Y_{ij}log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
         \end{array}
 
     :math:`i` 表示 :math:`i^{th}` 样例， :math:`j` 表示类别。则，
@@ -22,6 +23,22 @@ mindspore.ops.binary_cross_entropy_with_logits
         \end{cases}
 
     :math:`\ell` 表示计算损失的方法。有三种方法：第一种方法是直接提供损失值，第二种方法是计算所有损失的平均值，第三种方法是计算所有损失的总和。
+
+    该算子会将输出乘以相应的权重。
+    :math:`weight` 表示一个batch中的每条数据分配不同的权重，
+    :math:`pos_weight` 为每个类别的正例子添加相应的权重。
+
+    此外，它可以通过向正例添加权重来权衡召回率和精度。
+    在多标签分类的情况下，损失可以描述为：
+
+    .. math::
+        \begin{array}{ll} \\
+            p_{ij,c} = sigmoid(X_{ij,c}) = \frac{1}{1 + e^{-X_{ij,c}}} \\
+            L_{ij,c} = -[P_{c}Y_{ij,c} * log(p_{ij,c}) + (1 - Y_{ij,c})log(1 - p_{ij,c})]
+        \end{array}
+
+    其中 c 是类别数目（C>1 表示多标签二元分类，c=1 表示单标签二元分类），n 是批次中样本的数量，:math:`P_c` 是 第c类正例的权重。
+    :math:`P_c>1` 增大召回率, :math:`P_c<1` 增大精度。
 
     参数：
         - **logits** (Tensor) - 输入预测值，任意维度的Tensor。其数据类型为float16或float32。

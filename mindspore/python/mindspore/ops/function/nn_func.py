@@ -1094,7 +1094,7 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
 
         \begin{array}{ll} \\
             p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
-            L_{ij} = -[Y_{ij} * log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
+            L_{ij} = -[Y_{ij}log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
         \end{array}
 
     :math:`i` indicates the :math:`i^{th}` sample, :math:`j` indicates the category. Then,
@@ -1125,8 +1125,8 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
         \end{array}
 
     where c is the class number (c>1 for multi-label binary classification, c=1 for single-label binary classification),
-    n is the number of the sample in the batch and :math:`p_c` is the weight of the positive answer for the class c.
-    :math:`p_c>1` increases the recall, :math:`p_c<1` increases the precision.
+    n is the number of the sample in the batch and :math:`P_c` is the weight of the positive answer for the class c.
+    :math:`P_c>1` increases the recall, :math:`P_c<1` increases the precision.
 
     Args:
         logits (Tensor): Input logits. Data type must be float16 or float32.

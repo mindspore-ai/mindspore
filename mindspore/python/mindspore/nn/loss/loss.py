@@ -640,7 +640,7 @@ class SoftMarginLoss(LossBase):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> loss = nn.SoftMarginLoss()
