@@ -17,8 +17,11 @@ This module is to write data into mindrecord.
 """
 import os
 import platform
+import queue
 import re
 import stat
+import time
+import multiprocessing as mp
 import numpy as np
 from mindspore import log as logger
 from .shardwriter import ShardWriter
@@ -26,7 +29,7 @@ from .shardreader import ShardReader
 from .shardheader import ShardHeader
 from .shardindexgenerator import ShardIndexGenerator
 from .shardutils import MIN_SHARD_COUNT, MAX_SHARD_COUNT, VALID_ATTRIBUTES, VALID_ARRAY_ATTRIBUTES, \
-    check_filename, VALUE_TYPE_MAP
+    check_filename, VALUE_TYPE_MAP, SUCCESS
 from .common.exceptions import ParamValueError, ParamTypeError, MRMInvalidSchemaError, MRMDefineIndexError
 
 __all__ = ['FileWriter']
@@ -102,6 +105,13 @@ class FileWriter:
         self._header = ShardHeader()
         self._writer = ShardWriter()
         self._generator = None
+
+        # parallel write mode
+        self._parallel_writer = None
+        self._writers = None
+        self._queue = None
+        self._workers = None
+        self._index_workers = None
 
     @classmethod
     def open_for_append(cls, file_name):
@@ -259,22 +269,67 @@ class FileWriter:
             MRMSetHeaderError: If failed to set header.
             MRMWriteDatasetError: If failed to write dataset.
         """
-        if not self._writer.is_open:
-            self._writer.open(self._paths, self._overwrite)
-        if not self._writer.get_shard_header():
-            self._writer.set_shard_header(self._header)
-        if not isinstance(raw_data, list):
-            raise ParamTypeError('raw_data', 'list')
-        if self._flush and not self._append:
-            raise RuntimeError("Not allowed to call `write_raw_data` on flushed MindRecord files." \
-                               "When creating new Mindrecord files, please remove `commit` before `write_raw_data`." \
-                               "In other cases, when appending to existing MindRecord files, " \
-                               "please call `open_for_append` first and then `write_raw_data`.")
-        for each_raw in raw_data:
-            if not isinstance(each_raw, dict):
-                raise ParamTypeError('raw_data item', 'dict')
-        self._verify_based_on_schema(raw_data)
-        return self._writer.write_raw_data(raw_data, True, parallel_writer)
+        if self._parallel_writer is None:
+            self._parallel_writer = parallel_writer
+        if self._parallel_writer != parallel_writer:
+            raise RuntimeError("The parameter `parallel_writer` must be consistent during use.")
+        if not self._parallel_writer:
+            if not self._writer.is_open:
+                self._writer.open(self._paths, self._overwrite)
+            if not self._writer.get_shard_header():
+                self._writer.set_shard_header(self._header)
+            if not isinstance(raw_data, list):
+                raise ParamTypeError('raw_data', 'list')
+            if self._flush and not self._append:
+                raise RuntimeError("Not allowed to call `write_raw_data` on flushed MindRecord files." \
+                                   "When creating new Mindrecord files, please remove `commit` before " \
+                                   "`write_raw_data`. In other cases, when appending to existing MindRecord files, " \
+                                   "please call `open_for_append` first and then `write_raw_data`.")
+            for each_raw in raw_data:
+                if not isinstance(each_raw, dict):
+                    raise ParamTypeError('raw_data item', 'dict')
+            self._verify_based_on_schema(raw_data)
+            return self._writer.write_raw_data(raw_data, True, parallel_writer)
+
+        ## parallel write mode
+        # init the _writers and launch the workers
+        if self._writers is None:
+            self._writers = [None] * len(self._paths)  # writers used by worker
+            self._queue = mp.Queue(len(self._paths) * 2)  # queue for worker
+            self._workers = [None] * len(self._paths)  # worker process
+            for i, path in enumerate(self._paths):
+                self._writers[i] = ShardWriter()
+                self._writers[i].open([path], self._overwrite)
+                self._writers[i].set_shard_header(self._header)
+
+                # launch the workers for parallel write
+                self._queue._joincancelled = True  # pylint: disable=W0212
+                p = mp.Process(target=self._write_worker, args=(i, self._queue))
+                p.daemon = True
+                p.start()
+                logger.info("Start worker process(pid:{}) to parallel write.".format(p.pid))
+                self._workers[i] = p
+
+        # fill the self._queue
+        check_interval = 0.5  # 0.5s
+        start_time = time.time()
+        while True:
+            try:
+                self._queue.put(raw_data, block=False)
+            except queue.Full:
+                if time.time() - start_time > check_interval:
+                    start_time = time.time()
+                    logger.warning("Because there are too few MindRecord file shards, the efficiency of parallel " \
+                                   "writing is too low. You can stop the current task and add the parameter " \
+                                   "`shard_num` of `FileWriter` to upgrade the task.")
+
+                # check the status of worker process
+                for i in range(len(self._paths)):
+                    if not self._workers[i].is_alive():
+                        raise RuntimeError("Worker process(pid:{}) has stopped. Please check " \
+                                           "the above log".format(self._workers[i].pid))
+                continue
+            return SUCCESS
 
     def set_header_size(self, header_size):
         """
@@ -326,7 +381,7 @@ class FileWriter:
         """
         return self._writer.set_page_size(page_size)
 
-    def commit(self):
+    def commit(self):  # pylint: disable=W0212
         """
         Flush data in memory to disk and generate the corresponding database files.
 
@@ -343,24 +398,35 @@ class FileWriter:
             MRMGenerateIndexError: If failed to write to database.
             MRMCommitError: If failed to flush data to disk.
         """
-        self._flush = True
-        if not self._writer.is_open:
-            self._writer.open(self._paths, self._overwrite)
-        # permit commit without data
-        if not self._writer.get_shard_header():
-            self._writer.set_shard_header(self._header)
-        ret = self._writer.commit()
-        if self._index_generator:
-            if self._append:
-                self._generator = ShardIndexGenerator(self._file_name, self._append)
-            elif len(self._paths) >= 1:
-                self._generator = ShardIndexGenerator(os.path.realpath(self._paths[0]), self._append)
-            self._generator.build()
-            self._generator.write_to_db()
+        if not self._parallel_writer:
+            self._flush = True
+            if not self._writer.is_open:
+                self._writer.open(self._paths, self._overwrite)
+            # permit commit without data
+            if not self._writer.get_shard_header():
+                self._writer.set_shard_header(self._header)
+            self._writer.commit()
+            if self._index_generator:
+                if self._append:
+                    self._generator = ShardIndexGenerator(self._file_name, self._append)
+                elif len(self._paths) >= 1:
+                    self._generator = ShardIndexGenerator(os.path.realpath(self._paths[0]), self._append)
+                self._generator.build()
+                self._generator.write_to_db()
+        else:
+            # maybe a empty mindrecord, so need check _writers
+            if self._writers is None:
+                self._writers = [None] * len(self._paths)
+                for i, path in enumerate(self._paths):
+                    self._writers[i] = ShardWriter()
+                    self._writers[i].open(path, self._overwrite)
+                    self._writers[i].set_shard_header(self._header)
 
+            self._parallel_commit()
+
+        # change the file mode to 600
         mindrecord_files = []
         index_files = []
-        # change the file mode to 600
         for item in self._paths:
             if os.path.exists(item):
                 os.chmod(item, stat.S_IRUSR | stat.S_IWUSR)
@@ -373,7 +439,62 @@ class FileWriter:
         logger.info("The list of mindrecord files created are: {}, and the list of index files are: {}".format(
             mindrecord_files, index_files))
 
-        return ret
+        return SUCCESS
+
+    def _index_worker(self, i):
+        """The worker do the index generator"""
+        generator = ShardIndexGenerator(os.path.realpath(self._paths[i]), False)
+        generator.build()
+        generator.write_to_db()
+
+    def _parallel_commit(self):
+        """Parallel commit"""
+        # send EOF to worker process
+        for _ in range(len(self._paths)):
+            while True:
+                try:
+                    self._queue.put("EOF", block=False)
+                except queue.Full:
+                    time.sleep(1)
+                    continue
+                break
+
+        # wait the worker processing
+        while True:
+            if not self._queue.empty():
+                logger.info("Waiting for worker process write done.")
+                time.sleep(1)
+                continue
+            break
+
+        del self._queue
+
+        # wait for worker process stop
+        for index in range(len(self._paths)):
+            while True:
+                logger.info("Waiting for the worker process(pid:{}) to process all the data.".format(
+                    self._workers[index].pid))
+                if self._workers[index].is_alive():
+                    time.sleep(1)
+                    continue
+                elif self._workers[index].exitcode != 0:
+                    raise RuntimeError("Worker process(pid:{}) has stopped abnormal. Please check " \
+                                       "the above log".format(self._workers[index].pid))
+                break
+
+        if self._index_generator:
+            # use parallel index workers to generator index
+            self._index_workers = [None] * len(self._paths)
+            for index in range(len(self._paths)):
+                p = mp.Process(target=self._index_worker, args=(index,))
+                p.daemon = True
+                p.start()
+                logger.info("Start worker process(pid:{}) to generate index.".format(p.pid))
+                self._index_workers[index] = p
+
+            # wait the index workers stop
+            for index in range(len(self._paths)):
+                self._index_workers[index].join()
 
     def _validate_array(self, k, v):
         """
@@ -487,3 +608,29 @@ class FileWriter:
                 error = "Field '{}' should be dict.".format(k)
                 return False, error
         return True, error
+
+    def _write_worker(self, i, in_queue):
+        """The worker do the data check and write to disk for parallel mode"""
+        while True:
+            # try to get new raw_data from master
+            try:
+                raw_data = in_queue.get()
+            except queue.Empty:
+                continue
+
+            # get EOF from master, worker should commit and stop
+            if raw_data == "EOF":
+                ret = self._writers[i].commit()
+                if ret != SUCCESS:
+                    raise RuntimeError("Commit the {}th shard of MindRecord file failed.".format(index))
+                break
+
+            # check the raw_data
+            if not isinstance(raw_data, list):
+                raise ParamTypeError('raw_data', 'list')
+            for each_raw in raw_data:
+                if not isinstance(each_raw, dict):
+                    raise ParamTypeError('raw_data item', 'dict')
+
+            self._verify_based_on_schema(raw_data)
+            self._writers[i].write_raw_data(raw_data, True, False)

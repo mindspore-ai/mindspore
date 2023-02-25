@@ -129,8 +129,9 @@ void BindShardWriter(py::module *m) {
            return SUCCESS;
          })
     .def("write_raw_data",
-         [](ShardWriter &s, std::map<uint64_t, std::vector<py::handle>> &raw_data, vector<vector<uint8_t>> &blob_data,
+         [](ShardWriter &s, std::map<uint64_t, std::vector<py::handle>> &raw_data, vector<py::bytes> &blob_data,
             bool sign, bool parallel_writer) {
+           // convert the raw_data from dict to json
            std::map<uint64_t, std::vector<json>> raw_data_json;
            (void)std::transform(raw_data.begin(), raw_data.end(), std::inserter(raw_data_json, raw_data_json.end()),
                                 [](const std::pair<uint64_t, std::vector<py::handle>> &p) {
@@ -141,7 +142,54 @@ void BindShardWriter(py::module *m) {
                                     [](const py::handle &obj) { return nlohmann::detail::ToJsonImpl(obj); });
                                   return std::make_pair(p.first, std::move(json_raw_data));
                                 });
-           THROW_IF_ERROR(s.WriteRawData(raw_data_json, blob_data, sign, parallel_writer));
+
+           // parallel convert blob_data from vector<py::bytes> to vector<vector<uint8_t>>
+           int32_t parallel_convert = kParallelConvert;
+           if (parallel_convert > blob_data.size()) {
+             parallel_convert = blob_data.size();
+           }
+           parallel_convert = parallel_convert != 0 ? parallel_convert : 1;
+           std::vector<std::thread> thread_set(parallel_convert);
+           vector<vector<uint8_t>> vector_blob_data(blob_data.size());
+           uint32_t step = uint32_t(blob_data.size() / parallel_convert);
+           if (blob_data.size() % parallel_convert != 0) {
+             step = step + 1;
+           }
+           for (int x = 0; x < parallel_convert; ++x) {
+             uint32_t start = x * step;
+             uint32_t end = ((x + 1) * step) < blob_data.size() ? ((x + 1) * step) : blob_data.size();
+             thread_set[x] = std::thread([&vector_blob_data, &blob_data, start, end]() {
+               for (auto i = start; i < end; i++) {
+                 char *buffer = nullptr;
+                 ssize_t length = 0;
+                 if (PYBIND11_BYTES_AS_STRING_AND_SIZE(blob_data[i].ptr(), &buffer, &length)) {
+                   MS_LOG(ERROR) << "Unable to extract bytes contents!";
+                   return FAILED;
+                 }
+                 vector<uint8_t> blob_data_item(length);
+                 if (length < SECUREC_MEM_MAX_LEN) {
+                   int ret_code = memcpy_s(&blob_data_item[0], length, buffer, length);
+                   if (ret_code != EOK) {
+                     MS_LOG(ERROR) << "memcpy_s failed for py::bytes to vector<uint8_t>.";
+                     return FAILED;
+                   }
+                 } else {
+                   auto ret_code = std::memcpy(&blob_data_item[0], buffer, length);
+                   if (ret_code != &blob_data_item[0]) {
+                     MS_LOG(ERROR) << "memcpy failed for py::bytes to vector<uint8_t>.";
+                     return FAILED;
+                   }
+                 }
+                 vector_blob_data[i] = blob_data_item;
+               }
+             });
+           }
+
+           // wait for the threads join
+           for (int x = 0; x < parallel_convert; ++x) {
+             thread_set[x].join();
+           }
+           THROW_IF_ERROR(s.WriteRawData(raw_data_json, vector_blob_data, sign, parallel_writer));
            return SUCCESS;
          })
     .def("commit", [](ShardWriter &s) {

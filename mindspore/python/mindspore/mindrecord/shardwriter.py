@@ -173,7 +173,7 @@ class ShardWriter:
         for item in data:
             row_blob = self._merge_blob({field: item[field] for field in self._header.blob_fields})
             if row_blob:
-                blob_data.append(list(row_blob))
+                blob_data.append(row_blob)
             # filter raw data according to schema
             row_raw = {field: self.convert_np_types(item[field])
                        for field in self._header.schema.keys() - self._header.blob_fields if field in item}

@@ -35,3 +35,5 @@ from .acos import _acos_tbe # Accuracy issues(task error in parallel)
 from .trans_data_ds import _trans_data_ds_tbe # support bool
 from .scatter_nd_d import _scatter_nd_d_tbe # in python no check supported
 from .assign_add_ds import _assign_add_ds_tbe # "Frac_nz in pangu not support"
+from .assign import _assign_tbe # Different formats of assign inputs cause memory to increase
+from .atomic_addr_clean import _atomic_addr_clean_tbe # need to clean addr larger than 2G, int32 is not enough

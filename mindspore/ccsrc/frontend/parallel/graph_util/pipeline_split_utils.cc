@@ -104,6 +104,10 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
     if (skip_redis && !full_batch && input_strategy.size() > 0) {
       input_strategy[0] = dev_num < shape_list[1][0][0] ? dev_num : shape_list[1][0][0];
       auto prim = GetCNodePrimitive(node);
+      if (prim->HasAttr("out_shard_size")) {
+        auto out_shard_size = GetValue<int64_t>(prim->GetAttr("out_shard_size"));
+        input_strategy[0] = out_shard_size;
+      }
       auto attrs = prim->attrs();
       attrs[parallel::SKIP_REDISTRIBUTION] = MakeValue<bool>(true);
       prim->SetAttrs(attrs);

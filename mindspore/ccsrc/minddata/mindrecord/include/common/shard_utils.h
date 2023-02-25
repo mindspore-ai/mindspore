@@ -160,6 +160,9 @@ const std::unordered_map<std::string, std::string> kTypesMap = {
 /// \brief the max number of samples to enable lazy load
 const uint32_t LAZY_LOAD_THRESHOLD = 5000000;
 
+/// \brief parallel convert from vector<py::bytes> to vector<vector<uint8_t>>
+const uint32_t kParallelConvert = 4;
+
 /// \brief split a string using a character
 /// \param[in] field target string
 /// \param[in] separator a character for splitting
