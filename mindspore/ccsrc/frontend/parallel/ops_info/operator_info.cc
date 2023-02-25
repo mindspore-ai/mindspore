@@ -456,21 +456,11 @@ void AddCommOpMeanFlag(const CNodePtr &comm_node) {
   (void)prim->SetAttrs(attrs);
 }
 
-void AddCommOpMirrorFlag(const CNodePtr &comm_node, bool do_mirror) {
+void AddCNodePrimAttr(const CNodePtr &comm_node, const std::string &attr_name, const ValuePtr &attr_val) {
   MS_EXCEPTION_IF_NULL(comm_node);
   auto prim = GetValueNode<PrimitivePtr>(comm_node->input(0));
   auto attrs = prim->attrs();
-  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
-  attrs[DO_MIRROR] = MakeValue<bool>(do_mirror);
-  (void)prim->SetAttrs(attrs);
-}
-
-void AddCommOpAddAccuFlag(const CNodePtr &comm_node, bool add_accu) {
-  MS_EXCEPTION_IF_NULL(comm_node);
-  auto prim = GetValueNode<PrimitivePtr>(comm_node->input(0));
-  auto attrs = prim->attrs();
-  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
-  attrs[ADD_ACCU] = MakeValue<bool>(add_accu);
+  attrs[attr_name] = attr_val;
   (void)prim->SetAttrs(attrs);
 }
 
