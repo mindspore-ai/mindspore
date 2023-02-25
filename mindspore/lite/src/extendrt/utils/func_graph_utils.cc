@@ -92,20 +92,22 @@ bool FuncGraphUtils::GetCNodeOperator(const mindspore::CNodePtr &cnode,
   }
   auto kernel_name = prim->name();
   ops::PrimitiveCPtr primc_ptr = nullptr;
-  static auto primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-  if (primc_fns.find(kernel_name) != primc_fns.end()) {
-    primc_ptr = primc_fns[kernel_name]();
-    (void)primc_ptr->SetAttrs(prim->attrs());
+  static auto &primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+  auto primc_it = primc_fns.find(kernel_name);
+  if (primc_it != primc_fns.end() && primc_it->second) {
+    primc_ptr = primc_it->second();
   }
   if (primc_ptr == nullptr) {
     MS_LOG(ERROR) << "OpPrimCRegister can not find " << kernel_name;
     return false;
   }
+  (void)primc_ptr->SetAttrs(prim->attrs());
 
   *base_operator = nullptr;
-  static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
-  if (operator_fns.find(kernel_name) != operator_fns.end()) {
-    *base_operator = operator_fns[kernel_name](primc_ptr);
+  static auto &operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
+  auto op_it = operator_fns.find(kernel_name);
+  if (op_it != operator_fns.end() && op_it->second) {
+    *base_operator = op_it->second(primc_ptr);
   }
   if (*base_operator == nullptr) {
     MS_LOG(ERROR) << "Failed to create operator of type " << kernel_name;

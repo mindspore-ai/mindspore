@@ -97,8 +97,12 @@ AclModelOptionsPtr CustomAscendKernelMod::GenAclOptions(const BaseOperatorPtr &b
   return acl_options_ptr;
 }
 
-bool CustomAscendKernelMod::InitParam(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
+bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  if (load_model_) {
+    MS_LOG(INFO) << "Om has been loaded in custom kernel.";
+    return true;
+  }
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "Custom kernel has empty inputs or outputs, which is invalid.";
     return false;
@@ -110,45 +114,22 @@ bool CustomAscendKernelMod::InitParam(const BaseOperatorPtr &base_operator, cons
     MS_LOG(ERROR) << "Generate acl options failed.";
     return false;
   }
-  int idx = inputs.size() - 1;
-  if (inputs[idx] == nullptr || inputs[idx]->GetData() == nullptr) {
-    MS_LOG(ERROR) << "Input " << idx << " is invalid.";
+  auto &om_input = inputs.back();
+  if (om_input == nullptr || om_input->GetData() == nullptr) {
+    MS_LOG(ERROR) << "Om data input is invalid, inputs size " << inputs.size();
     return false;
   }
-  // buffer deep copy
-  Buffer om_data(inputs[idx]->GetData()->addr, inputs[idx]->GetData()->size);
-  model_infer_ = std::make_shared<ModelInfer>(om_data, acl_options_);
+  auto om_data = om_input->GetData();
+  model_infer_ = std::make_shared<ModelInfer>(acl_options_);
   if (model_infer_ == nullptr) {
     MS_LOG(ERROR) << "Create ModelInfer failed.";
     return false;
   }
-  return true;
-}
-
-bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  if (load_model_) {
-    MS_LOG(INFO) << "Om has been loaded in custom kernel.";
-    return true;
-  }
-  if (!InitParam(base_operator, inputs, outputs)) {
-    MS_LOG(ERROR) << "Init param failed.";
-    return false;
-  }
-  if (!LoadModel()) {
-    MS_LOG(ERROR) << "Load model failed.";
-    return false;
-  }
-  load_model_ = true;
-  return true;
-}
-
-bool CustomAscendKernelMod::LoadModel() {
   if (!model_infer_->Init()) {
     MS_LOG(ERROR) << "Model infer init failed.";
     return false;
   }
-  if (!model_infer_->Load()) {
+  if (!model_infer_->Load(om_data->addr, om_data->size)) {
     MS_LOG(ERROR) << "Load om data failed.";
     return false;
   }
@@ -156,6 +137,7 @@ bool CustomAscendKernelMod::LoadModel() {
   (void)RetrieveOutputShape();
 
   MS_LOG(INFO) << "Load om data success.";
+  load_model_ = true;
   return true;
 }
 

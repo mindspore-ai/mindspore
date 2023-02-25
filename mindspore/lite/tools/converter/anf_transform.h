@@ -58,6 +58,7 @@ class AnfTransform {
   static int DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
   static bool StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param);
+  static void ClearBuiltinPass();
 
   static int RunFormatTrans(const FuncGraphPtr &old_graph);
 

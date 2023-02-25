@@ -537,6 +537,7 @@ bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
     func_graph->DropNode(node);
   }
   FlattenMakeTuple(func_graph, manager);
+  remove_cnode_.clear();
   return true;
 }
 }  // namespace mindspore::opt

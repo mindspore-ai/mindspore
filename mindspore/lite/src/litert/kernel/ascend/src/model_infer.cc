@@ -52,14 +52,14 @@ STATUS ModelInfer::Init() {
   int32_t device_id = options_.device_id;
   aclError ret = aclrtSetDevice(device_id);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Acl open device " << device_id << " failed.";
+    MS_LOG(ERROR) << "Acl open device " << device_id << " failed, ret " << ret;
     return lite::RET_ERROR;
   }
   MS_LOG(INFO) << "Open device " << device_id << " success.";
 
   ret = aclrtCreateContext(&context_, device_id);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Acl create context failed.";
+    MS_LOG(ERROR) << "Acl create context failed, ret " << ret;
     return lite::RET_ERROR;
   }
   MS_LOG(INFO) << "Create context success.";
@@ -67,7 +67,7 @@ STATUS ModelInfer::Init() {
   aclrtRunMode run_mode;
   ret = aclrtGetRunMode(&run_mode);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Acl get run mode failed.";
+    MS_LOG(ERROR) << "Acl get run mode failed, ret " << ret;
     return lite::RET_ERROR;
   }
   bool is_device = (run_mode == ACL_DEVICE);
@@ -87,7 +87,7 @@ STATUS ModelInfer::Finalize() {
 
   aclError rt_ret = aclrtSetCurrentContext(context_);
   if (rt_ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Set the ascend device context failed.";
+    MS_LOG(ERROR) << "Set the ascend device context failed, ret " << rt_ret;
     return lite::RET_ERROR;
   }
   if (load_flag_) {
@@ -100,7 +100,7 @@ STATUS ModelInfer::Finalize() {
   if (context_ != nullptr) {
     rt_ret = aclrtDestroyContext(context_);
     if (rt_ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Destroy context failed.";
+      MS_LOG(ERROR) << "Destroy context failed, ret " << rt_ret;
     }
     context_ = nullptr;
   }
@@ -108,7 +108,7 @@ STATUS ModelInfer::Finalize() {
 
   rt_ret = aclrtResetDevice(options_.device_id);
   if (rt_ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Reset device " << options_.device_id << " failed.";
+    MS_LOG(ERROR) << "Reset device " << options_.device_id << " failed, ret " << rt_ret;
   }
   MS_LOG(INFO) << "End to reset device " << options_.device_id;
   init_flag_ = false;

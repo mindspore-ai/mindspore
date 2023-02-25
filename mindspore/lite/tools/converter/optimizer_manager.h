@@ -36,6 +36,10 @@ class PassStorage {
       (void)inaccessible_for_outer_.insert(pass_name);
     }
   }
+  static void ClearPass() {
+    pass_storage_.clear();
+    inaccessible_for_outer_.clear();
+  }
   static opt::PassPtr GetPassFromStorage(const std::string &pass_name) { return pass_storage_[pass_name]; }
   static bool IsAccessibleForOuter(const std::string &pass_name) {
     return inaccessible_for_outer_.find(pass_name) == inaccessible_for_outer_.end();

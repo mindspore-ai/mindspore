@@ -72,7 +72,7 @@ class MS_CORE_API MSANFModelParser {
   MSANFModelParser() = default;
   ~MSANFModelParser() = default;
 
-  static void LoadTensorMapClear() { load_tensor_map_.clear(); }
+  static void LoadTensorMapClear();
   FuncGraphPtr Parse(const mind_ir::ModelProto &model_proto, const std::map<std::string, ValuePtr> &weights = {});
   const LayoutMap ParseLayout(const mind_ir::ModelProto &model_proto);
   bool MSANFParseModelConfigureInfo(const mind_ir::ModelProto &model_proto);
@@ -145,6 +145,9 @@ class MS_CORE_API MSANFModelParser {
   AnfNodePtr GetAnfNode(const std::string &node_name);
   tensor::TensorPtr GenerateTensorPtrFromTensorProto(const mind_ir::TensorProto &attr_tensor);
 
+  static tensor::TensorPtr GetIncTensor(const std::string &tensor_name);
+  static void SetIncTensor(const std::string &tensor_name, const tensor::TensorPtr &tensor);
+
   FuncGraphPtr top_graph_ = nullptr;
   std::string producer_name_;
   std::string model_version_;
@@ -159,7 +162,9 @@ class MS_CORE_API MSANFModelParser {
   std::string mindir_dec_mode_;
   bool little_endian_ = common::IsLittleByteOrder();
   std::map<std::string, std::unique_ptr<Byte[]>> tenor_data_;
+
   static std::map<std::string, tensor::TensorPtr> load_tensor_map_;
+  static std::mutex load_tensor_map_mutex_;
 };
 }  // namespace mindspore
 

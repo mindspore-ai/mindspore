@@ -445,19 +445,14 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const std::shared_
 
 int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   if (param->device.find("Ascend") != std::string::npos) {
-    if (opt::AclPassPlugin::GetInstance().HasPluginSo()) {
-      auto acl_pass_ptr = opt::AclPassPlugin::GetInstance().CreateAclPass(param);
-      if (acl_pass_ptr == nullptr) {
-        MS_LOG(ERROR) << "Acl pass ptr is nullptr.";
-        return RET_ERROR;
-      }
-
-      if (!acl_pass_ptr->Run(old_graph)) {
-        MS_LOG(ERROR) << "Acl pass failed.";
-        opt::AclPassPlugin::GetInstance().DestroyAclPass(acl_pass_ptr);
-        return RET_ERROR;
-      }
-      opt::AclPassPlugin::GetInstance().DestroyAclPass(acl_pass_ptr);
+    auto acl_pass_ptr = opt::AclPassPlugin::CreateAclPass(param);
+    if (acl_pass_ptr == nullptr) {
+      MS_LOG(ERROR) << "Failed to create acl pass";
+      return RET_ERROR;
+    }
+    if (!acl_pass_ptr->Run(old_graph)) {
+      MS_LOG(ERROR) << "Acl pass failed.";
+      return RET_ERROR;
     }
   }
   // adjust for conv2d_transpose
@@ -789,6 +784,8 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
   return true;
 }
 
+void AnfTransform::ClearBuiltinPass() { PassStorage::ClearPass(); }
+
 STATUS AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::shared_ptr<ConverterPara> &param) {
   MS_CHECK_TRUE_MSG(main_graph != nullptr, RET_NULL_PTR, "Input func_graph is nullptr");
   MS_CHECK_TRUE_MSG(param != nullptr, RET_NULL_PTR, "Input converter param is nullptr");
@@ -813,6 +810,7 @@ STATUS AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::shared
   }
 
   auto status = TransformFuncGraph(main_graph, param);
+  ClearBuiltinPass();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "optimizer failed.";
     return RET_NULL_PTR;

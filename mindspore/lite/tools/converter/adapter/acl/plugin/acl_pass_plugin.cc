@@ -25,14 +25,23 @@
 
 namespace mindspore {
 namespace opt {
-AclPassPlugin &AclPassPlugin::GetInstance() {
-  static AclPassPlugin instance;
-  return instance;
+std::mutex AclPassPlugin::mutex_;
+
+AclPassPlugin::AclPassPlugin() = default;
+
+AclPassPlugin::~AclPassPlugin() {
+#if !defined(_WIN32)
+  MS_LOG(DEBUG) << "~AclPassPlugin() begin.";
+  if (handle_ != nullptr) {
+    (void)dlclose(handle_);
+    handle_ = nullptr;
+    creator_func_ = nullptr;
+  }
+  MS_LOG(DEBUG) << "~AclPassPlugin() end.";
+#endif
 }
 
-AclPassPlugin::AclPassPlugin() : handle_(nullptr), pass_ptr_(nullptr) {}
-
-bool AclPassPlugin::HasPluginSo() {
+bool AclPassPlugin::GetPluginSoPath() {
 #if !defined(_WIN32)
   Dl_info dl_info;
   dladdr(reinterpret_cast<void *>(this), &dl_info);
@@ -58,60 +67,40 @@ bool AclPassPlugin::HasPluginSo() {
   return false;
 }
 
-Pass *AclPassPlugin::CreateAclPass(const std::shared_ptr<ConverterPara> &param) {
-#if !defined(_WIN32)
-  if (pass_ptr_ != nullptr) {
-    MS_LOG(INFO) << "Acl pass has been created.";
-    return pass_ptr_;
-  }
-  void *function = nullptr;
-  auto ret = DLSoOpen(real_path_, "CreateAclPass", &handle_, &function);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "DLSoOpen failed, so path: " << real_path_ << ", ret: " << ret;
-    return nullptr;
-  }
-  auto create_func = reinterpret_cast<mindspore::opt::Pass *(*)(const std::shared_ptr<ConverterPara> &)>(function);
-  if (create_func == nullptr) {
-    MS_LOG(ERROR) << "Cast symbol CreateAclPass failed.";
-    return nullptr;
-  }
-  pass_ptr_ = create_func(param);
-  if (pass_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "New acl pass failed.";
-    return nullptr;
-  }
-#endif
-  return pass_ptr_;
+std::shared_ptr<Pass> AclPassPlugin::CreateAclPass(const std::shared_ptr<ConverterPara> &param) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  static AclPassPlugin instance;
+  return instance.CreateAclPassInner(param);
 }
 
-void AclPassPlugin::DestroyAclPass(Pass *acl_pass) {
+std::shared_ptr<Pass> AclPassPlugin::CreateAclPassInner(const std::shared_ptr<ConverterPara> &param) {
 #if !defined(_WIN32)
-  if (handle_ == nullptr) {
-    MS_LOG(ERROR) << "Handle is nullptr .";
-    return;
+  if (creator_func_ == nullptr) {
+    if (!GetPluginSoPath() || real_path_.empty()) {
+      MS_LOG(ERROR) << "Failed to get path of libascend_pass_plugin.so";
+      return nullptr;
+    }
+    void *function = nullptr;
+    auto ret = DLSoOpen(real_path_, "CreateAclPass", &handle_, &function);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "DLSoOpen failed, so path: " << real_path_ << ", ret: " << ret;
+      return nullptr;
+    }
+    creator_func_ = reinterpret_cast<AclPassCreatorFunc>(function);
+    if (creator_func_ == nullptr) {
+      MS_LOG(ERROR) << "Cast symbol CreateAclPass failed.";
+      return nullptr;
+    }
   }
-  if (acl_pass != pass_ptr_) {
-    MS_LOG(ERROR) << "Out pass ptr is not same as inner pass ptr.";
-    return;
+  auto pass_ptr = creator_func_(param);
+  if (pass_ptr == nullptr) {
+    MS_LOG(ERROR) << "Failed to call CreateAclPass.";
+    return nullptr;
   }
-  auto destroy_func = reinterpret_cast<void (*)(mindspore::opt::Pass *)>(dlsym(handle_, "DestroyAclPass"));
-  if (destroy_func == nullptr) {
-    MS_LOG(ERROR) << "Undefined symbol DestroyAclPass in ['libascend_pass_plugin.so']";
-    return;
-  }
-  destroy_func(acl_pass);
-  pass_ptr_ = nullptr;
-#endif
-}
-
-AclPassPlugin::~AclPassPlugin() {
-#if !defined(_WIN32)
-  MS_LOG(DEBUG) << "~AclPassPlugin() begin.";
-  if (handle_ != nullptr) {
-    (void)dlclose(handle_);
-    handle_ = nullptr;
-  }
-  MS_LOG(DEBUG) << "~AclPassPlugin() end.";
+  return std::shared_ptr<Pass>(pass_ptr);
+#else
+  MS_LOG(ERROR) << "Not support load libascend_pass_plugin.so in Windows";
+  return nullptr;
 #endif
 }
 }  // namespace opt
