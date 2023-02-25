@@ -20,6 +20,7 @@
 #include <fstream>
 #include <thread>
 #include <algorithm>
+#include <regex>
 #include "include/api/allocator.h"
 #include "include/api/model.h"
 #include "include/api/context.h"
@@ -702,6 +703,99 @@ int RunCallback(const char *model_path) {
   return 0;
 }
 
+size_t Hex2ByteArray(const std::string &hex_str, unsigned char *byte_array, size_t max_len) {
+  std::regex r("[0-9a-fA-F]+");
+  if (!std::regex_match(hex_str, r)) {
+    std::cerr << "Some characters of dec_key not in [0-9a-fA-F]";
+    return 0;
+  }
+  if (hex_str.size() % 2 == 1) {  // Mod 2 determines whether it is odd
+    std::cerr << "the hexadecimal dec_key length must be even";
+    return 0;
+  }
+  size_t byte_len = hex_str.size() / 2;  // Two hexadecimal characters represent a byte
+  if (byte_len > max_len) {
+    std::cerr << "the hexadecimal dec_key length exceeds the maximum limit: " << max_len;
+    return 0;
+  }
+  constexpr int32_t a_val = 10;  // The value of 'A' in hexadecimal is 10
+  constexpr size_t half_byte_offset = 4;
+  for (size_t i = 0; i < byte_len; ++i) {
+    size_t p = i * 2;  // The i-th byte is represented by the 2*i and 2*i+1 hexadecimal characters
+    if (hex_str[p] >= 'a' && hex_str[p] <= 'f') {
+      byte_array[i] = hex_str[p] - 'a' + a_val;
+    } else if (hex_str[p] >= 'A' && hex_str[p] <= 'F') {
+      byte_array[i] = hex_str[p] - 'A' + a_val;
+    } else {
+      byte_array[i] = hex_str[p] - '0';
+    }
+    if (hex_str[p + 1] >= 'a' && hex_str[p + 1] <= 'f') {
+      byte_array[i] = (byte_array[i] << half_byte_offset) | (hex_str[p + 1] - 'a' + a_val);
+    } else if (hex_str[p] >= 'A' && hex_str[p] <= 'F') {
+      byte_array[i] = (byte_array[i] << half_byte_offset) | (hex_str[p + 1] - 'A' + a_val);
+    } else {
+      byte_array[i] = (byte_array[i] << half_byte_offset) | (hex_str[p + 1] - '0');
+    }
+  }
+  return byte_len;
+}
+
+int RunEncryptedInfer(const char *model_path, const char *dec_key_str, const char *crypto_lib_path) {
+  constexpr int kEncMaxLen = 16;
+  // Create and init context, add CPU device info
+  auto context = std::make_shared<mindspore::Context>();
+  if (context == nullptr) {
+    std::cerr << "New context failed." << std::endl;
+    return -1;
+  }
+  auto &device_list = context->MutableDeviceInfo();
+  auto device_info = std::make_shared<mindspore::CPUDeviceInfo>();
+  if (device_info == nullptr) {
+    std::cerr << "New CPUDeviceInfo failed." << std::endl;
+    return -1;
+  }
+  device_list.push_back(device_info);
+
+  // Create model
+  auto model = new (std::nothrow) mindspore::Model();
+  if (model == nullptr) {
+    std::cerr << "New Model failed." << std::endl;
+    return -1;
+  }
+
+  // Set Decrypt Parameters
+  mindspore::Key dec_key;
+  std::string dec_mode = "AES-GCM";
+  dec_key.len = Hex2ByteArray(dec_key_str, dec_key.key, kEncMaxLen);
+  if (dec_key.len == 0) {
+    delete model;
+    std::cerr << "dec_key.len == 0" << std::endl;
+    return -1;
+  }
+
+  // Build model
+  auto build_ret = model->Build(model_path, mindspore::kMindIR, context, dec_key, dec_mode, crypto_lib_path);
+  if (build_ret != mindspore::kSuccess) {
+    delete model;
+    std::cerr << "Build model error " << build_ret << std::endl;
+    return -1;
+  }
+
+  // Predict
+  auto inputs = model->GetInputs();
+  auto outputs = model->GetOutputs();
+  auto predict_ret = model->Predict(inputs, &outputs);
+  if (predict_ret != mindspore::kSuccess) {
+    delete model;
+    std::cerr << "Predict error " << predict_ret << std::endl;
+    return -1;
+  }
+
+  // Delete model.
+  delete model;
+  return 0;
+}
+
 int main(int argc, const char **argv) {
   if (argc < 3) {
     std::cerr << "Usage: ./runtime_cpp model_path Option" << std::endl;
@@ -734,6 +828,15 @@ int main(int argc, const char **argv) {
     return RunWithSharedMemoryPool(model_path.c_str());
   } else if (strcmp(flag, "5") == 0) {
     return RunCallback(model_path.c_str());
+  } else if (strcmp(flag, "6") == 0) {
+    if (argc < 5) {
+      std::cerr << "If you would like to run MindSpore Lite predict with encrypted model, "
+                << "you need to pass in the dec_key and crypto_lib_path.";
+      return -1;
+    }
+    auto dec_key_str = argv[3];
+    auto crypto_lib_path = argv[4];
+    return RunEncryptedInfer(model_path.c_str(), dec_key_str, crypto_lib_path);
   } else {
     std::cerr << "Unsupported Flag " << flag << std::endl;
     return -1;
