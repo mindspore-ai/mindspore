@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-static const std::unordered_set<std::string> kAclStaticList = {kTensorMoveOpName, kAddNOpName};
+static const std::unordered_set<std::string> kAclStaticList = {kTensorMoveOpName, kAddNOpName, kCheckValidOpName};
 
 void GetStringTypeSize(const AnfNodePtr &node, size_t current_idx, size_t real_index,
                        std::vector<size_t> *input_size_list) {

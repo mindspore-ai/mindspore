@@ -76,7 +76,8 @@ abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive
     c_axis = kInputIndex3;
   }
   // input_x rank must be equal to 4
-  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(input_x_shape.size()), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(input_x_shape.size()), kGreaterThan, 1,
+                                           prim_name);
   // sum rank must be equal to 1
   (void)CheckAndConvertUtils::CheckInteger("sum rank", SizeToLong(sum_shape.size()), kEqual, 1, prim_name);
   // square_sum rank must be equal to 1

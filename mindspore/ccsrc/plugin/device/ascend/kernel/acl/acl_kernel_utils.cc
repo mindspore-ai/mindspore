@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <iterator>
 #include <optional>
+#include <unordered_map>
 
 #include "ir/value.h"
 #include "include/common/utils/utils.h"
@@ -62,6 +63,12 @@ static const std::map<::ge::Format, aclFormat> kMsFormatToAclFormat = {
 
 static const std::map<std::string, aclFormat> kMsSpecOriginFormat = {{"BatchMatMul", ACL_FORMAT_ND},
                                                                      {"MatMul", ACL_FORMAT_ND}};
+
+static const std::unordered_map<std::string, std::string> kMsNeedPad = {{kTransDataOpName, ""},
+                                                                        {kBNTrainingReduceOpName, kOpFormat_NCHW},
+                                                                        {kBNTrainingUpdateOpName, kOpFormat_NCHW},
+                                                                        {kBNTrainingReduceGradOpName, kOpFormat_NCHW},
+                                                                        {kBNTrainingUpdateGradOpName, kOpFormat_NCHW}};
 
 static const std::map<std::string, std::vector<int>> kInputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
@@ -645,11 +652,23 @@ std::vector<std::string> AclUtils::GetOpOutputAnchorNames(const AnfNodePtr &node
   return names;
 }
 
-ShapeVector AclUtils::UpdateShape(const ShapeVector &shape, const std::string &format, const AnfNodePtr &node) {
-  if (!IsOneOfNoPaddingFormat(format) && shape.size() < kDim4) {
-    return trans::PaddingShape(shape, format);
+void AclUtils::UpdateShape(const AnfNodePtr &node, ShapeVector *shape, std::string *format) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(shape);
+  MS_EXCEPTION_IF_NULL(format);
+  auto node_name = common::AnfAlgo::GetCNodeName(node);
+  if (kMsNeedPad.count(node_name) == 0 || shape->size() >= kDim4) {
+    return;
   }
-  return shape;
+  const auto &default_format = kMsNeedPad.at(node_name);
+  if (!default_format.empty()) {
+    std::string format_pad = (shape->size() < kDim2) ? "" : default_format;
+    *shape = trans::PaddingShape(*shape, *format, format_pad);
+    *format = default_format;
+  } else if (!IsOneOfNoPaddingFormat(*format)) {
+    *shape = trans::PaddingShape(*shape, *format);
+  }
+  return;
 }
 
 aclDataType AclUtils::ConvertTypeIdToAclType(const ::ge::DataType &type) {
@@ -717,7 +736,7 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
       input_shape = ori_shape;
       input_format = ori_format;
     }
-    ori_shape = UpdateShape(ori_shape, input_format, anf_node);
+    UpdateShape(anf_node, &ori_shape, &input_format);
     auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(input_desc);
     input_desc->SetName(input_names[index]);
@@ -755,7 +774,7 @@ std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf
       output_shape = ori_shape;
       output_format = ori_format;
     }
-    ori_shape = UpdateShape(ori_shape, output_format, anf_node);
+    UpdateShape(anf_node, &ori_shape, &output_format);
     auto output_desc = GeOpConvertor::GetTensorDesc(output_shape, output_type, output_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(output_desc);
     output_desc->SetName(output_names[index]);

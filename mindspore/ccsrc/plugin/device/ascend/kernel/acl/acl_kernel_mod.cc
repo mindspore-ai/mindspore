@@ -90,7 +90,7 @@ int AclKernelMod::UpdateInput(const AnfNodePtr &node, const runtime::OpRuntimeIn
       input_shape = ori_shape;
       input_format = ori_format;
     }
-    ori_shape = AclUtils::UpdateShape(ori_shape, input_format, node);
+    AclUtils::UpdateShape(node, &ori_shape, &input_format);
     if (op_runtime_info != nullptr && op_runtime_info->acl_runtime_info_ != nullptr &&
         op_runtime_info->acl_runtime_info_->use() && !op_runtime_info->acl_runtime_info_->is_dynamic_input_size() &&
         input_desc_list_[index] != nullptr) {
@@ -149,7 +149,7 @@ void AclKernelMod::UpdateOutput(const AnfNodePtr &node, const runtime::OpRuntime
       output_shape = ori_shape;
       output_format = ori_format;
     }
-    ori_shape = AclUtils::UpdateShape(ori_shape, output_format, node);
+    AclUtils::UpdateShape(node, &ori_shape, &output_format);
     if (node_acl_runtime_info_legal && !node_op_runtime_info->acl_runtime_info_->is_dynamic_output_size() &&
         output_desc_list_[index] != nullptr) {
       output_desc_list_[index]->SetShape(GeShape(output_shape));

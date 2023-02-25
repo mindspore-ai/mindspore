@@ -90,5 +90,8 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/utils)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/)
     add_subdirectory(cpu_kernel)
-
+else()
+    message("[WARNING]Due to the lack of cross compiler, the aicpu operator is not compiled.
+    If you need to use a custom aicpu operator, please confirm whether the relevant directory
+    [${CMAKE_C_COMPILER}] and [${CMAKE_CXX_COMPILER}] is exists")
 endif()

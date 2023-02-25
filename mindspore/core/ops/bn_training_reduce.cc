@@ -58,13 +58,15 @@ abstract::TupleShapePtr BNTrainingReduceInferShape(const PrimitivePtr &primitive
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto shape = input_shape[kShape];
 
-  constexpr auto kInputDim = 4;
-  (void)CheckAndConvertUtils::CheckInteger("x_dim", SizeToLong(shape.size()), kEqual, kInputDim, primitive->name());
+  constexpr auto kMinInputDim = 1;
+  (void)CheckAndConvertUtils::CheckInteger("x_dim", SizeToLong(shape.size()), kGreaterThan, kMinInputDim,
+                                           primitive->name());
   auto data_format_ptr = primitive->GetAttr("format");
   MS_EXCEPTION_IF_NULL(data_format_ptr);
   int64_t data_format = BNTrainingReduceGetAndCheckFormat(primitive, data_format_ptr);
   size_t c_axis = kInputIndex1;
-  if (data_format == static_cast<int64_t>(Format::NHWC)) {
+  constexpr auto kNHWCInputDim = 4;
+  if (data_format == static_cast<int64_t>(Format::NHWC) && shape.size() == kNHWCInputDim) {
     c_axis = kInputIndex3;
   }
   ShapeVector batch = {shape[c_axis]};
