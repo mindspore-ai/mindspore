@@ -27,12 +27,14 @@ broadcast_to_op_info = TBERegOp("DynamicBroadcastTo") \
     .input(0, "x", False, "required", "all") \
     .input(1, "shape", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default) \
     .dtype_format(DataType.I32_Default, DataType.I64_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.F16_Default) \
+    .dtype_format(DataType.U32_Default, DataType.I32_Default, DataType.U32_Default) \
+    .dtype_format(DataType.U32_Default, DataType.I64_Default, DataType.U32_Default) \
     .get_op_info()
 
 
