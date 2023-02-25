@@ -8,7 +8,7 @@ mindspore.ops.adaptive_max_pool3d
     参数：
         - **input** (Tensor) - shape为 :math:`(C, D, H, W)` 或 :math:`(N，C, D, H, W)` 的Tensor，支持的数据类型包括int8、int16、int32、int64、uint8、uint16、uint32、uint64、float16、float32、float64。
         - **output_size** (Union[int, tuple]) - 指定输出的size。可以用一个整数统一表示输出的深度、高度和宽度，或者用一个整数三元组来分别表示输出的深度、高度和宽度。指定的值必须是正整数。如果是None则表示对应维度输出和输入size相同。
-        - **return_indices** (bool，可选) - 如果 `return_indices` 为True，将会输出最大值对应的索引，否则不输出索引。默认值为False。
+        - **return_indices** (bool，可选) - 如果 `return_indices` 为 ``True``，将会输出最大值对应的索引，否则不输出索引。默认值为 ``False``。
 
     返回：
         - **y** (Tensor) - Tensor，与输入 `input` 的数据类型和维度相同。

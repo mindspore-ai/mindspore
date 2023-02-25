@@ -639,20 +639,18 @@ def adaptive_max_pool2d(input, output_size, return_indices=False):
         Ascend platform only supports float16 type for input.
 
     Args:
-        input (Tensor): The input of adaptive_max_pool2d, which is a 3D or 4D tensor,
+        input (Tensor): A 3D or 4D tensor,
             with float16, float32 or float64 data type.
 
         output_size (Union[int, tuple]): The target output size is H x W.
             ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
             which means the output size is the same as the input.
 
-        return_indices (bool): If `return_indices` is True, the indices of max value would be output.
-            Default: False.
+        return_indices (bool): If `return_indices` is ``True`` , the indices of max value would be output.
+            Default: ``False`` .
 
     Returns:
-        Tensor, with the same type as the `input`.
-
-        Shape of the output is `input_shape[:len(input_shape) - len(out_shape)] + out_shape`.
+        Tensor, with the same shape and dtype as the `input`.
 
     Raises:
         TypeError: If `output_size` is not int or tuple.
@@ -660,7 +658,7 @@ def adaptive_max_pool2d(input, output_size, return_indices=False):
         TypeError: If `return_indices` is not a bool.
         TypeError: If dtype of `input` is not float16, float32 or float64.
         ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
-        ValueError: If the dimension of `input` is not NCHW or CHW.
+        ValueError: If the data format of `input` is not "NCHW" or "CHW".
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -716,8 +714,8 @@ def adaptive_max_pool3d(input, output_size, return_indices=False):
             height and width, or a tuple of three int numbers that represent depth, height and width respectively.
             The value must be a positive integer. If it is None, the output size and input size of the corresponding
             dimension are the same.
-        return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output,
-            else would not be output. Default: False.
+        return_indices (bool, optional): If `return_indices` is ``True``, the indices of max value would be output,
+            else would not be output. Default: ``False``.
 
     Returns:
         - **y** (Tensor) - Tensor, with the same number of dims and data type as the `input`.
@@ -4066,10 +4064,10 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
             but with one dimension equal to 1, or same shape as the x but with one fewer dimension
             (to allow for broadcasting).
         full (bool, optional): Include the constant term in the loss calculation. When :math:`full=True`,
-            the constant term `const.` will be :math:`0.5 * log(2\pi)`. Default: False.
-        eps (float, optional): Used to improve the stability of log function must be greater than 0. Default: 1e-6.
-        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean', or 'sum'.
-            Default: 'mean'.
+            the constant term `const.` will be :math:`0.5 * log(2\pi)`. Default: ``False`` .
+        eps (float, optional): Used to improve the stability of log function must be greater than 0. Default: ``1e-6`` .
+        reduction (str, optional): Apply specific reduction method to the
+            output: ``"none"`` , ``"mean"`` , or ``"sum"`` . Default: ``"mean"`` .
 
     Returns:
         Tensor or Tensor scalar, the computed loss depending on `reduction`.
@@ -4081,7 +4079,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
         TypeError: If `full` is not a bool.
         TypeError: If `eps` is not a float.
         ValueError: If `eps` is not a float within [0, inf).
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``"none"`` , ``"mean"`` , ``"sum"`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

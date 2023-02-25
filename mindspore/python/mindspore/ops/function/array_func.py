@@ -4152,7 +4152,7 @@ def meshgrid(*inputs, indexing='xy'):
 
 def affine_grid(theta, output_size, align_corners=False):
     r"""
-    Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta.
+    Returns a 2D or 3D flow field (sampling grid) based on `theta`, a batch of affine matrices.
 
     Args:
         theta (Tensor): The input tensor of flow field whose dtype is float16, float32.
@@ -4160,8 +4160,8 @@ def affine_grid(theta, output_size, align_corners=False):
         output_size (tuple[int]): The target output image size.
             The value of target output with format [N, C, H, W] for 2D grid or [N, C, D, H, W] for 3D grid.
         align_corners (bool, optional): Geometrically, each pixel of input is viewed as a squqre instead of dot.
-            If True, consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
-            The default value is False, extremum -1 and 1 refer to the corners of the pixels, so that sampling is
+            If ``True``, consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
+            The default value is ``False``, extremum -1 and 1 refer to the corners of the pixels, so that sampling is
             irrelevant to resolution of the image.
     Returns:
         Tensor, a tensor whose data type is same as 'theta', and the shape is [N, H, W, 2] for 2D grid
