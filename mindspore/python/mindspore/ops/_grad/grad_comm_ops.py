@@ -198,7 +198,6 @@ def get_bprop_mirror_micro_step_operator(self):
         assign.add_prim_attr("parameter_micro", 0)
     out_tensor = Tensor(1.0, mstype.float16)
     opt_shard = _get_enable_parallel_optimizer()
-
     def bprop(x, z, out, dout):
         real_grad = z
         assign_out = dout
@@ -207,14 +206,16 @@ def get_bprop_mirror_micro_step_operator(self):
                 z = F.depend(z, dout)
                 real_grad = all_reduce(z)
                 real_grad = F.tensor_mul(real_grad, scale)
+                if opt_shard:
+                    return (real_grad, cast(out_tensor, dtype(z)))
                 return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z))), assign(z, real_grad))
         else:
             if issubclass_(F.typeof(dout), mstype.tensor):
                 z = F.depend(z, dout)
                 real_grad = all_reduce(z)
+                if opt_shard:
+                    return (real_grad, cast(out_tensor, dtype(z)))
                 return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z))), assign(z, real_grad))
-        if opt_shard:
-            return (real_grad, cast(out_tensor, dtype(z)))
         return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z))), assign_out)
     return bprop
 
@@ -312,9 +313,18 @@ def get_bprop_micro_step_all_gather(self):
     cast = P.Cast()
     dtype = P.DType()
     out_tensor = Tensor(1.0, mstype.float16)
+    with_mirror_operator = self.get_attr_dict()["with_mirror_operator"]
 
     # z: accu_grad
     def bprop(x, z, out, dout):
+        if with_mirror_operator:
+            if not do_mirror:
+                return (dout, cast(out_tensor, dtype(z)))
+            real_grad = all_reduce(dout)
+            real_grad = split(real_grad)[rank]
+            if mean_flag:
+                real_grad = F.tensor_mul(real_grad, scale)
+            return (real_grad, cast(out_tensor, dtype(z)))
         z = F.depend(z, dout)
         if not do_mirror:
             return (z, cast(out_tensor, dtype(z)))
