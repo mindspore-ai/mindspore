@@ -19,6 +19,7 @@ import math
 import numpy as np
 import pytest
 import mindspore.dataset as ds
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import config_get_set_seed, visualize_list, config_get_set_num_parallel_workers
 
@@ -1003,6 +1004,147 @@ def test_pipeline_debug_mode_multi_epoch_tfrecord_ops(my_debug_mode):
         ds.config.set_debug_mode(debug_mode_original)
 
 
+@pytest.mark.parametrize("my_debug_mode", (False, True))
+def test_pipeline_debug_mode_multi_epoch_cifar100_per_batch_map(my_debug_mode):
+    """
+    Feature: Pipeline debug mode.
+    Description: Test multiple epoch scenario using Cifar100Dataset with Batch op with per_batch_map parameter
+    Expectation: Output is equal to the expected output
+    """
+    logger.info("test_pipeline_debug_mode_multi_epoch_cifar10_zip_batch_repeat")
+
+    # Set configuration
+    original_seed = config_get_set_seed(1399)
+    if my_debug_mode:
+        debug_mode_original = ds.config.get_debug_mode()
+        ds.config.set_debug_mode(True)
+
+    # Define dataset pipeline
+    num_samples = 12
+    cifar100_ds = ds.Cifar100Dataset("../data/dataset/testCifar100Data", num_samples=num_samples)
+    cifar100_ds = cifar100_ds.map(operations=[vision.ToType(np.int32)], input_columns="fine_label")
+    cifar100_ds = cifar100_ds.map(operations=[lambda z: z], input_columns="image")
+
+    # Callable function to delete 3rd column
+    def del_column(col1, col2, col3, batch_info):
+        return (col1, col2,)
+
+    # Apply Dataset Ops
+    batch_size = 4
+    num_repeat = 2
+    # Note: Test repeat before batch
+    cifar100_ds = cifar100_ds.repeat(num_repeat)
+    cifar100_ds = cifar100_ds.batch(batch_size, per_batch_map=del_column,
+                                    input_columns=['image', 'fine_label', 'coarse_label'],
+                                    output_columns=['image', 'label'], drop_remainder=False)
+
+    # Iterate over data pipeline
+    num_epoch = 2
+    iter1 = cifar100_ds.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+    epoch_count = 0
+    sample_count = 0
+    label_list = []
+    label_golden = [[30, 26, 59, 25], [51, 7, 89, 73], [50, 74, 56, 70],
+                    [23, 11, 3, 73], [96, 98, 31, 24], [9, 4, 86, 30],
+                    [35, 56, 59, 57], [43, 53, 87, 59], [58, 7, 95, 76],
+                    [27, 16, 69, 30], [21, 62, 67, 67], [78, 94, 58, 27]]
+    for _ in range(num_epoch):
+        row_count = 0
+        label_list_per_epoch = []
+        for row_item in iter1:
+            image = row_item["image"]
+            label = row_item["label"]
+            assert len(row_item) == 2
+            assert image.shape == (batch_size, 32, 32, 3)
+            label_list.append(label)
+            label_list_per_epoch.append(label)
+            row_count += 1
+        logger.info("epoch_count is {}, label_list_per_epoch is {}".format(epoch_count, label_list_per_epoch))
+        assert row_count == int(num_samples * num_repeat / batch_size)
+        epoch_count += 1
+        sample_count += row_count
+    assert epoch_count == num_epoch
+    assert sample_count == int(num_samples * num_repeat / batch_size) * num_epoch
+    np.testing.assert_array_equal(label_list, np.array(label_golden))
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    if my_debug_mode:
+        ds.config.set_debug_mode(debug_mode_original)
+
+
+@pytest.mark.parametrize("my_debug_mode", (False, True))
+def test_pipeline_debug_mode_batch_map_get_batch_num(my_debug_mode):
+    """
+    Feature: Batch op
+    Description: Test basic map Batch op with per_batch_map function calling get_batch_num()
+    Expectation: Output is equal to the expected output
+    """
+    # Set configuration
+    original_seed = config_get_set_seed(1499)
+    if my_debug_mode:
+        debug_mode_original = ds.config.get_debug_mode()
+        ds.config.set_debug_mode(True)
+
+    def check_res(arr1, arr2):
+        assert len(arr1) == len(arr2)
+        for ind, _ in enumerate(arr1):
+            assert np.array_equal(arr1[ind], np.array(arr2[ind]))
+
+    def gen(num):
+        for i in range(num):
+            yield (np.array([i]),)
+
+    def invert_sign_per_batch(col_list, batch_info):
+        return ([np.copy(((-1) ** batch_info.get_batch_num()) * arr) for arr in col_list],)
+
+    def batch_map_config(num_samples, num_repeat, batch_size, num_epoch, func, res):
+        data1 = ds.GeneratorDataset((lambda: gen(num_samples)), ["num"],
+                                    python_multiprocessing=False)
+        data1 = data1.batch(batch_size=batch_size, input_columns=["num"], per_batch_map=func,
+                            python_multiprocessing=False, num_parallel_workers=1)
+        data1 = data1.repeat(num_repeat)
+
+        # Iterate over data pipeline
+        iter1 = data1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+        epoch_count = 0
+        sample_count = 0
+        for _ in range(num_epoch):
+            row_count = 0
+            for item in iter1:
+                res.append(item["num"])
+                row_count += 1
+            assert row_count == int(num_samples * num_repeat / batch_size)
+            epoch_count += 1
+            sample_count += row_count
+        assert epoch_count == num_epoch
+        assert sample_count == int(num_samples * num_repeat / batch_size) * num_epoch
+
+    res1, res2, res3, res4 = [], [], [], []
+
+    # Test repeat=1, num_epochs=1
+    batch_map_config(4, 1, 2, 1, invert_sign_per_batch, res1)
+    check_res(res1, [[[0], [1]], [[-2], [-3]]])
+
+    # Test repeat=2, num_epochs=1
+    batch_map_config(4, 2, 2, 1, invert_sign_per_batch, res2)
+    check_res(res2, [[[0], [1]], [[-2], [-3]], [[0], [1]], [[-2], [-3]]])
+
+    # Test repeat=1, num_epochs=3
+    batch_map_config(4, 1, 2, 3, invert_sign_per_batch, res3)
+    check_res(res3, [[[0], [1]], [[-2], [-3]], [[0], [1]], [[-2], [-3]], [[0], [1]], [[-2], [-3]]])
+
+    # Test repeat=2, num_epochs=2
+    batch_map_config(4, 2, 2, 2, invert_sign_per_batch, res4)
+    check_res(res4, [[[0], [1]], [[-2], [-3]], [[0], [1]], [[-2], [-3]],
+                     [[0], [1]], [[-2], [-3]], [[0], [1]], [[-2], [-3]]])
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    if my_debug_mode:
+        ds.config.set_debug_mode(debug_mode_original)
+
+
 if __name__ == '__main__':
     test_pipeline_debug_mode_multi_epoch_celaba(True, plot=True)
     test_pipeline_debug_mode_multi_epoch_celaba_take(True)
@@ -1019,3 +1161,5 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_multi_ep_im_batch_with_remainders(True, False, 7, plot=True)
     test_pipeline_debug_mode_multi_epoch_tfrecord_shuffle(True)
     test_pipeline_debug_mode_multi_epoch_tfrecord_ops(True)
+    test_pipeline_debug_mode_multi_epoch_cifar100_per_batch_map(True)
+    test_pipeline_debug_mode_batch_map_get_batch_num(True)

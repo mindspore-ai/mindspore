@@ -72,7 +72,7 @@ BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size,
   // Adjust connector queue size.  After batch each row is batch_size times larger
   worker_connector_size_ = std::max(1, worker_connector_size_ / start_batch_size_);
   if (num_workers == 1) {
-    // ensure there is at least 2 queue slots for whole operation..  If only 1 worker, incrase it to 2
+    // Ensure there are at least 2 queue slots for whole operation.  If only 1 worker, increase queue size to 2.
     worker_connector_size_ = std::max(2, worker_connector_size_);
   }
 }
@@ -281,7 +281,7 @@ Status BatchOp::MakeBatchedRow(std::pair<std::unique_ptr<TensorQTable>, CBatchIn
 #ifdef ENABLE_PYTHON
   if (batch_map_func_) {
     RETURN_IF_NOT_OK(MapColumns(&table_pair, &concat_batch));
-  }  // pass it through pyfun
+  }  // pass it through pyfunc
 #endif
   if (pad_) {
     RETURN_IF_NOT_OK(PadColumns(&table_pair.first, pad_info_, column_name_id_map_));
@@ -684,19 +684,26 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
     UpdateRepeatAndEpochCounter();
     *row = TensorRow(TensorRow::kFlagEOE);
     eoe_received_ = false;
+    // Reset batch_num_
+    batch_num_ = 0;
     return Status::OK();
   }
   std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
+  // Note: Create table_pair since needed for per_batch_support when calling MapColumns()
+  std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair =
+    std::make_pair(std::move(table), CBatchInfo(op_current_epochs_, batch_num_, batch_cnt_));
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   int32_t cur_batch_size = 0;
-  RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(0, batch_num_, batch_cnt_)));
+  RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, table_pair.second));
   for (int i = 0; i < cur_batch_size; i++) {
     TensorRow new_row;
     RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
     if (new_row.eoe()) {
-      if (drop_ || table->empty()) {
+      if (drop_ || table_pair.first->empty()) {
         *row = TensorRow(TensorRow::kFlagEOE);
         UpdateRepeatAndEpochCounter();
+        // Reset batch_num_
+        batch_num_ = 0;
         return Status::OK();
       } else {
         eoe_received_ = true;
@@ -704,22 +711,22 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
       break;
     }
     if (!new_row.empty()) {
-      table->emplace_back(new_row);
-      if (table->size() == static_cast<size_t>(cur_batch_size)) {
+      table_pair.first->emplace_back(new_row);
+      if (table_pair.first->size() == static_cast<size_t>(cur_batch_size)) {
         break;
       }
     } else {
-      if (drop_ || table->empty()) {
-        table = std::make_unique<TensorQTable>();  // this drops when drop == true
+      if (drop_ || table_pair.first->empty()) {
+        table_pair.first = std::make_unique<TensorQTable>();  // this drops when drop == true
       }
     }
   }
-  RETURN_UNEXPECTED_IF_NULL(table);
-  if (!table->empty()) {
-    if (pad_) {
-      RETURN_IF_NOT_OK(PadColumns(&table, pad_info_, column_name_id_map_));
-    }  // do padding if needed
-    RETURN_IF_NOT_OK(BatchRows(&table, row, table->size()));
+  RETURN_UNEXPECTED_IF_NULL(table_pair.first);
+  if (!table_pair.first->empty()) {
+    table_pair.second = std::move(CBatchInfo(op_current_epochs_, batch_num_, batch_cnt_));
+    // Generate row with batched tensors
+    RETURN_IF_NOT_OK(MakeBatchedRow(std::move(table_pair), row));
+    // Increment batch counters
     batch_cnt_++;
     batch_num_++;
   }
