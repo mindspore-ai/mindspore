@@ -352,33 +352,36 @@ class CropAndResize(Primitive):
 
 class NonMaxSuppressionV3(Primitive):
     r"""
-    Greedily selects a subset of bounding boxes in descending order of score.
+    Selects a subset of bounding boxes in a greedy manner, based on their descending score.
+    It removes boxes that have high intersection-over-union (IOU) overlap with previously
+    selected boxes, and eliminates boxes with scores lower than a given threshold.
 
     .. warning::
         When input `max_output_size` is negative, it will be treated as 0.
 
     Note:
-        - This algorithm is agnostic to where the origin is in the coordinate system.
-        - This algorithm is invariant to orthogonal transformations and translations of the coordinate system,
-          thus translating or reflections of the coordinate system result in the same boxes being
-          selected by the algorithm.
+        - This algorithm does not depend on the location of the origin in the coordinate system.
+        - This algorithm remains unaffected by orthogonal transformations and translations of
+          the coordinate system, which means that translating or reflecting the coordinate system
+          will result in the same boxes being chosen by the algorithm.
 
     Inputs:
         - **boxes** (Tensor) - A 2-D Tensor of shape :math:`(num\_boxes, 4)`.
-        - **scores** (Tensor) - A 1-D Tensor of shape :math:`(num\_boxes)` representing a single score
-          corresponding to each box (each row of boxes), the num_boxes of `scores` must be equal to
-          the num_boxes of `boxes`.
+        - **scores** (Tensor) - A 1-D Tensor of shape :math:`(num\_boxes)` where each element represents a
+          single score associated with each box (i.e., each row of the `boxes` Tensor).
+          It is required that the number of scores in `scores` must be equal to the number of boxes in `boxes`.
+          The supported data type is float32.
         - **max_output_size** (Union[Tensor, Number.Int]) - A scalar integer Tensor representing the maximum
-          number of boxes to be selected by non max suppression.
-        - **iou_threshold** (Union[Tensor, Number.Float]) - A 0-D float tensor representing the threshold for
-          deciding whether boxes overlap too much with respect to IOU, and `iou_threshold` must be equal or greater
-          than 0 and be equal or smaller than 1.
-        - **score_threshold** (Union[Tensor, Number.Float]) - A 0-D float tensor representing the threshold for
-          deciding when to remove boxes based on score.
+          number of boxes to be selected by non max suppression. The supported data type is int32.
+        - **iou_threshold** (Union[Tensor, Number.Float]) - A scalar float Tensor represents the threshold
+          used for determining if the intersection over union (IOU) between boxes is too high.
+          Data type of `iou_threshold` is float32 and must be in range [0, 1].
+        - **score_threshold** (Union[Tensor, Number.Float]) - A scalar float Tensor represents the threshold for
+          determining when to remove boxes based on score. The supported data type is float32.
 
     Outputs:
         A 1-D integer Tensor of shape [M] representing the selected indices from the boxes tensor,
-        where M <= max_output_size.
+        where M <= `max_output_size`.
 
     Raises:
         TypeError: If the dtype of `boxes` and `scores` are different.
@@ -418,33 +421,40 @@ class NonMaxSuppressionV3(Primitive):
 
 class NonMaxSuppressionWithOverlaps(Primitive):
     r"""
-    Greedily selects a subset of bounding boxes in descending order of score.
+    Selects a subset of bounding boxes in a greedy manner by prioritizing those with higher
+    scores and removing those with high overlaps with previously selected boxes.
+    Boxes with scores lower than the score threshold are also removed.
+    The overlap values between boxes are represented as an N-by-N square matrix,
+    which can be customized to define different overlap criteria such as intersection
+    over union or intersection over area.
+
 
     Note:
-        - This algorithm is agnostic to where the origin is in the coordinate system.
-        - This algorithm is invariant to orthogonal transformations and translations of the coordinate system;
-          thus translating or reflections of the coordinate system result in the same boxes being
-          selected by the algorithm.
+        - This algorithm does not depend on the location of the origin in the coordinate system.
+        - This algorithm remains unaffected by orthogonal transformations and translations of
+          the coordinate system, which means that translating or reflecting the coordinate system
+          will result in the same boxes being chosen by the algorithm.
 
     Inputs:
         - **overlaps** (Tensor) - A 2-D Tensor of shape :math:`(num\_boxes, num\_boxes)`,
           representing the n-by-n box overlap values. Types allowed:float16, float32 and float64.
-        - **scores** (Tensor) - A 1-D Tensor of shape :math:`(num\_boxes)` representing a single score
-          corresponding to each box (each row of boxes), the num_boxes of `scores` must be equal to
-          the num_boxes of `overlaps`. It has the same dtype as `overlaps`.
+        - **scores** (Tensor) - A 1-D Tensor of shape :math:`(num\_boxes)` where each element represents a
+          single score associated with each box (i.e., each row of the `boxes` Tensor).
+          It is required that the number of scores in `scores` must be equal to the number of boxes in `boxes`.
+          The supported data type is float32.
         - **max_output_size** (Union[Tensor, Number.Int]) - A scalar integer Tensor representing the maximum
           number of boxes to be selected by non max suppression, and max_output_size must be equal to or greater
           than 0.
           Types allowed:int32.
-        - **overlap_threshold** (Union[Tensor, Number.Float]) - A 0-D float Tensor representing the threshold for
-          deciding whether boxes overlap too much.
+        - **overlap_threshold** (Union[Tensor, Number.Float]) - A scalar value, represented by a 0-D float Tensor,
+          which is used as a threshold to determine if two boxes overlap too much.
           Types allowed:float16, float32 and float64.
         - **score_threshold** (Union[Tensor, Number.Float]) - A 0-D float Tensor representing the threshold for
           deciding when to remove boxes based on score. It has the same dtype as `overlap_threshold`.
 
     Outputs:
-       A 1-D integer Tensor of shape :math:`(M)` representing the selected indices from the boxes Tensor,
-       where M <= max_output_size. Its data type is int32.
+       A 1-D integer Tensor of shape :math:`(M)` representing the selected indices from the `boxes` Tensor,
+       where M <= `max_output_size`. Its data type is int32.
 
     Raises:
         TypeError: If the dtype of `overlaps` , `scores` `overlap_threshold` and `score_threshold`
@@ -488,10 +498,9 @@ class NonMaxSuppressionWithOverlaps(Primitive):
 
 class HSVToRGB(Primitive):
     r"""
-    Convert one or more images from HSV to RGB.
-    Outputs a tensor of the same shape as the images tensor,
-    containing the HSV value of the pixels. The output is only
-    well defined if the value in images are in [0,1].
+    Transform one single or a batch of images from HSV to RGB color space.
+    Each pixel's HSV value is converted to its corresponding RGB value.
+    Note that the function is only well-defined for input pixel values in the range [0, 1].
 
     Inputs:
         - **x** (Tensor) - The input image must be a 4-D tensor of shape

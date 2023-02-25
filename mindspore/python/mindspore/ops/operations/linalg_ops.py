@@ -23,13 +23,14 @@ from mindspore.ops.primitive import prim_attr_register
 
 class Geqrf(Primitive):
     r"""
-    Geqrf is a low-level function for computing QR decompositions. This function returns two tensors
-    (y, tau).
+    Decomposes a matrix into the product of an orthogonal matrix `Q` and an upper triangular matrix `R`.
+    The process is called QR decomposition: :math:`A = QR`.
 
+    Both `Q` and `R` matrices are stored in the same output tensor `y`.
+    The elements of `R` are stored on and above the diagonal, whereas elementary reflectors
+    (or Householder vectors) implicitly defining matrix `Q` are stored below the diagonal.
 
-    Computes a QR decomposition of `x`. Both `Q` and `R` matrices are stored in the same output tensor `y`.
-    The elements of `R` are stored on and above the diagonal.
-    Elementary reflectors (or Householder vectors) implicitly defining matrix `Q` are stored below the diagonal.
+    This function returns two tensors (`y`, `tau`).
 
 
     Inputs:
