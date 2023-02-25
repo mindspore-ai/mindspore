@@ -285,17 +285,8 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructEmbeddingLookupSubGraph(const An
   input_indices->set_abstract(
     std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(kOneDimDynamicShape)));
 
-  if (!common::AnfAlgo::HasNodeAttr(kAttrOffset, dyn_cast<CNode>(node))) {
-    MS_LOG(EXCEPTION) << "Can not find offset attr of kernel: " << node->fullname_with_scope();
-  }
-  int64_t offset = common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrOffset);
-  ValueNodePtr offset_value_node = NewValueNode(offset);
-
-  // 2. Create EmbeddingLookup node.
-  PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kEmbeddingLookupOpName);
-  std::vector<AnfNodePtr> emb_lookup_inputs{NewValueNode(emb_lookup_primitive), input_param, input_indices,
-                                            offset_value_node};
-  auto embedding_cache_lookup_node = graph->NewCNode(emb_lookup_inputs);
+  // 2. Create embedding lookup node.
+  auto embedding_cache_lookup_node = CreateEmbeddingLookupKernel(graph, input_param, input_indices, node);
   MS_EXCEPTION_IF_NULL(embedding_cache_lookup_node);
 
   common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), embedding_cache_lookup_node);
@@ -348,20 +339,17 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructUpdateEmbeddingSubGraph(const Pa
   ParameterPtr update_values = graph->add_parameter();
   MS_EXCEPTION_IF_NULL(update_values);
   auto emb_shape = common::AnfAlgo::GetOutputInferShape(param, 0);
-  if (emb_shape.size() != kEmbeddingTableDims) {
-    MS_LOG(EXCEPTION) << "Embedding table should be 2 dims for embedding cache mode, but got: " << emb_shape.size()
-                      << " dims";
+  if (emb_shape.empty()) {
+    MS_LOG(EXCEPTION) << "Embedding table shape is empty.";
   }
-  int64_t emb_dim = emb_shape.back();
-  ShapeVector update_values_shape = {-1, emb_dim};
+  ShapeVector update_values_shape = emb_shape;
+  const int64_t dynamic_dim = -1;
+  update_values_shape[0] = dynamic_dim;
   update_values->set_abstract(
     std::make_shared<abstract::AbstractTensor>(kFloat32, std::make_shared<abstract::Shape>(update_values_shape)));
 
-  // 2. Create ScatterUpdate node.
-  PrimitivePtr embedding_cache_update_primitive = std::make_shared<Primitive>(kScatterUpdateOpName);
-  std::vector<AnfNodePtr> embedding_cache_update_inputs{NewValueNode(embedding_cache_update_primitive), input_param,
-                                                        input_indices, update_values};
-  auto embedding_cache_update_node = graph->NewCNode(embedding_cache_update_inputs);
+  // 2. Create embedding update node.
+  auto embedding_cache_update_node = CreateEmbeddingUpdateKernel(graph, input_param, input_indices, update_values);
   MS_EXCEPTION_IF_NULL(embedding_cache_update_node);
   common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), embedding_cache_update_node);
 
@@ -380,6 +368,55 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructUpdateEmbeddingSubGraph(const Pa
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(graph);
   return graph;
+}
+
+CNodePtr PsEmbeddingCacheInserter::CreateEmbeddingLookupKernel(const FuncGraphPtr &graph,
+                                                               const ParameterPtr &input_param,
+                                                               const ParameterPtr &input_indices,
+                                                               const AnfNodePtr &origin_embedding_lookup_node) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(input_param);
+  MS_EXCEPTION_IF_NULL(input_indices);
+  MS_EXCEPTION_IF_NULL(origin_embedding_lookup_node);
+
+  std::vector<AnfNodePtr> embedding_lookup_inputs;
+  // Sparse format is true meaning embedding table implements in the form of hash, false means the form of tensor.
+  if (!distributed::EmbeddingCacheTableManager::GetInstance().is_sparse_format()) {
+    if (!common::AnfAlgo::HasNodeAttr(kAttrOffset, dyn_cast<CNode>(origin_embedding_lookup_node))) {
+      MS_LOG(EXCEPTION) << "Can not find offset attr of kernel: "
+                        << origin_embedding_lookup_node->fullname_with_scope();
+    }
+    int64_t offset = common::AnfAlgo::GetNodeAttr<int64_t>(origin_embedding_lookup_node, kAttrOffset);
+    ValueNodePtr offset_value_node = NewValueNode(offset);
+    MS_EXCEPTION_IF_NULL(offset_value_node);
+
+    PrimitivePtr embedding_lookup_primitive = std::make_shared<Primitive>(kEmbeddingLookupOpName);
+    embedding_lookup_inputs = {NewValueNode(embedding_lookup_primitive), input_param, input_indices, offset_value_node};
+  } else {
+    PrimitivePtr embedding_lookup_primitive = std::make_shared<Primitive>(kMapTensorGetOpName);
+    embedding_lookup_primitive->set_attr(kAttrInsertDefaultValue, MakeValue(false));
+    embedding_lookup_inputs = {NewValueNode(embedding_lookup_primitive), input_param, input_indices};
+  }
+
+  return graph->NewCNode(embedding_lookup_inputs);
+}
+
+CNodePtr PsEmbeddingCacheInserter::CreateEmbeddingUpdateKernel(const FuncGraphPtr &graph,
+                                                               const ParameterPtr &input_param,
+                                                               const ParameterPtr &input_indices,
+                                                               const ParameterPtr &update_values) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(input_param);
+  MS_EXCEPTION_IF_NULL(input_indices);
+  MS_EXCEPTION_IF_NULL(update_values);
+
+  // Sparse format is true meaning embedding table implements in the form of hash, false means the form of tensor.
+  bool is_sparse_format = distributed::EmbeddingCacheTableManager::GetInstance().is_sparse_format();
+  PrimitivePtr embedding_update_primitive = is_sparse_format ? std::make_shared<Primitive>(kMapTensorPutOpName)
+                                                             : std::make_shared<Primitive>(kScatterUpdateOpName);
+  std::vector<AnfNodePtr> embedding_update_inputs{NewValueNode(embedding_update_primitive), input_param, input_indices,
+                                                  update_values};
+  return graph->NewCNode(embedding_update_inputs);
 }
 
 CNodePtr PsEmbeddingCacheInserter::CreateRecvNode() const {
