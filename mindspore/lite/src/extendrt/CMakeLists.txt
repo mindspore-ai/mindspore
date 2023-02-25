@@ -34,6 +34,9 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/transpose_kernel_mod.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/single_op_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/session/delegate_session.cc
+        # ${CMAKE_CURRENT_SOURCE_DIR}/session/default_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/session/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_device_address.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_build_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_graph_utils.cc
@@ -41,8 +44,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/runtime_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/serialization.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/func_graph_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/session/delegate_session.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/session/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/tensorrt_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/litert_executor_plugin.cc
@@ -51,6 +52,8 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate_graph_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/optimizer/tensorrt_optimizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/litert/func_graph_reuse_manager.cc
+        # ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/factory.cc
+        # ${CMAKE_CURRENT_SOURCE_DIR}/graph_runtime/factory.cc
         )
     if(MSLITE_ENABLE_BFC_MEMORY)
         set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
