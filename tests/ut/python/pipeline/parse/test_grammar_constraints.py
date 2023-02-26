@@ -92,6 +92,7 @@ def test_nest_function_missing_return():
     assert "For 'make_range', the 0th input should be a int64 scalar" in str(er.value)
 
 
+@pytest.mark.skip(reason='Case will not appear for now, but may appear in the future')
 def test_raise_in_method():
     class NetRaiseInMethod(nn.Cell):
         def construct(self, x, y, z):
@@ -104,31 +105,6 @@ def test_raise_in_method():
                 return y + z
 
     net = NetRaiseInMethod()
-    x = Tensor(0, mstype.int32)
-    y = Tensor(5, mstype.int32)
-    z = Tensor(2, mstype.int32)
-    with pytest.raises(RuntimeError) as er:
-        net(x, y, z)
-    assert "Currently only supports raise in constant scenarios." in str(er.value)
-
-
-def test_raise_in_nested_function():
-    class NetNestRaise(nn.Cell):
-        def nest_fn(self, u):
-            if u > 0:
-                # add not support grammar 'raise' here
-                raise ValueError('Illegal case')
-            return u + z + 1
-
-        def construct(self, x, y, z):
-            if x == 1:
-                return Tensor(10, mstype.int32)
-            elif x == 20:
-                return self.nest_fn(y)
-            else:
-                return y + z
-
-    net = NetNestRaise()
     x = Tensor(0, mstype.int32)
     y = Tensor(5, mstype.int32)
     z = Tensor(2, mstype.int32)

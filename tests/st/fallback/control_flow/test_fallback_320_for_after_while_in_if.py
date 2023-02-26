@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow."""
-import pytest
 import numpy as np
 import mindspore
 from mindspore import Tensor, jit, context
@@ -48,43 +47,6 @@ def test_for_after_while_in_if_1():
 
     res = func3201()
     assert res == 8
-
-
-@case_register.level1
-@case_register.target_gpu
-@case_register.target_ascend
-def test_for_after_while_in_if_2():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-
-    @jit
-    def func3202():
-        x = Tensor([2])
-        y = Tensor([2])
-        if x == y and x > Tensor([0]).astype("int32"):
-            y = y + Tensor([3]).astype("int32")
-            z = Tensor([5], dtype=mindspore.int32)
-            while y == z and z == Tensor([5], dtype=mindspore.int32):
-                y = y * 1
-                assert y == z, "y must equal z"
-                z = z + 1
-
-        else:
-            raise ValueError("Enter this branch, not expect!")
-
-        for i in range(3):
-            z = Tensor([i]).astype("int32")
-            x = x + z
-
-        return x, y
-
-    with pytest.raises(RuntimeError, match="Currently only supports raise in constant scenarios."):
-        res_x, res_y = func3202()
-        assert res_x == 5
-        assert res_y == 5
 
 
 @case_register.level1

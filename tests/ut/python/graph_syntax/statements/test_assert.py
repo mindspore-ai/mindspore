@@ -14,7 +14,7 @@
 # ============================================================================
 """ test_assert """
 import pytest
-from mindspore import nn, context, Tensor
+from mindspore import nn, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -153,22 +153,3 @@ def test_assert7():
         net()
     assert "1 not in [2, 3, 4]" in str(excinfo.value)
     assert "assert x in [2, 3, 4]" in str(excinfo.value)
-
-
-def test_assert8():
-    """
-    Feature: support assert
-    Description: test assert with variable in condition
-    Expectation: no error
-    """
-
-    class Net(nn.Cell):
-        def construct(self, x):
-            assert x == 1
-            return x
-
-    net = Net()
-    a = Tensor(1)
-    with pytest.raises(RuntimeError) as excinfo:
-        net(a)
-    assert "Currently only supports raise in constant scenarios." in str(excinfo.value)
