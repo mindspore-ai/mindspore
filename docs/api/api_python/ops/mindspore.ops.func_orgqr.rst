@@ -3,8 +3,10 @@ mindspore.ops.orgqr
 
 .. py:function:: mindspore.ops.orgqr(x, tau)
 
-    计算 `Householder <https://en.wikipedia.org/wiki/Householder_transformation#Householder_matrix>`_ 矩阵乘积的前 :math:`N` 列。
-    以输入无批次的情况为例， 假设输入x的shape经过 `Householder转换 <https://en.wikipedia.org/wiki/Householder_transformation#Householder_matrix>`_ 之后为：:math:`(M, N)` 。
+    计算 :class:`mindspore.ops.Geqrf` 返回的正交矩阵 :math:`Q` 的显式表示。
+
+    下面以输入无batch维的情况为例， 计算 `Householder <https://en.wikipedia.org/wiki/Householder_transformation#Householder_matrix>`_ 矩阵的前 :math:`N` 列。
+    假设输入 `x` 的shape经过 `Householder转换 <https://en.wikipedia.org/wiki/Householder_transformation#Householder_matrix>`_ 之后为：:math:`(M, N)` 。
     当 `x` 的对角线被置为1， `x` 中下三角形的每一列都表示为： :math:`w_j` ，其中 :math:`j` 在 :math:`j=1, \ldots, M` 范围内，此函数返回Householder矩阵乘积的前 :math:`N` 列：
 
     .. math::

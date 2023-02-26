@@ -9239,19 +9239,21 @@ class FractionalAvgPool(Primitive):
 
 class NthElement(Primitive):
     r"""
-    Finds values of the n-th order statistic for the last dimension.
-    If the input is a vector (rank-1), finds the entries which is the nth-smallest value in
-    the vector and outputs their values as scalar tensor.
-    For matrices (resp. higher rank input), computes the entries which is the nth-smallest value in
-    each row (resp. vector along the last dimension). Thus, values.shape = input.shape[:-1].
+    Computes the n-th smallest values for the last dimension of the input Tensor.
+
+    - When `input` is a 1-D Tensor (i.e. Vector), it finds the nth-smallest value in the vector
+      and outputs its value as a scalar Tensor.
+    - When `input` is matrices or has higher rank, it finds the nth-smallest value
+      in each row (or vector along the last dimension) and outputs
+      these values in a Tensor with shape of `values.shape = input.shape[:-1]`.
 
     Args:
-        reverse (bool, optional): An optional bool. When set to True, find the nth-largest value
-          in the vector and vice versa. Default: False.
+        reverse (bool, optional): An optional bool. If set to True, it find the nth-largest value
+          in the vector instead of the nth-smallest. Default: False.
 
     Inputs:
         - **input** (Tensor) - A Tensor. 1-D or higher with last dimension at least :math:`n+1`.
-        - **n** (Union[int, Tensor]) -  If the n is a tensor, it should be a 0-D tensor, dtype is int32.
+        - **n** (Union[int, Tensor]) -  If the `n` is a Tensor, it should be a 0-D Tensor, dtype is int32.
           Valid range of n is :math:`[0, input.shape[-1])`.
 
     Outputs:

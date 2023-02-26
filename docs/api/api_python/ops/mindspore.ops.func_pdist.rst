@@ -13,7 +13,7 @@ mindspore.ops.pdist
 
     参数：
         - **x** (Tensor) - 输入Tensor `x` ，其shape为 :math:`(*B, N, M)`，其中 :math:`*B` 表示批处理大小，可以是多维度。类型：float16，float32或float64。
-        - **p** (float) - p-范数距离的p值，:math:`p∈[0，∞]`。默认值：2.0。
+        - **p** (float) - 范数距离的阶， :math:`p∈[0，∞)`。默认值：2.0。
 
     返回：
         Tensor，类型与 `x` 一致。
@@ -24,4 +24,3 @@ mindspore.ops.pdist
         - **TypeError** - `p` 不是float。
         - **ValueError** - `p` 是负数。
         - **ValueError** - `x` 的维度小于2。
-

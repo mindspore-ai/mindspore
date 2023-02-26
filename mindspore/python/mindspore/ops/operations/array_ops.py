@@ -76,11 +76,11 @@ class _ScatterOp(PrimitiveWithInfer):
 
 class UnravelIndex(Primitive):
     """
-    Converts an array of flat indices into a tuple of coordinate arrays.
+    Transforms an array consisting of flattened indices into a tuple that contains coordinate arrays.
 
     Inputs:
-        - **indices** (Tensor) - Input Tensor whose elements are indices converting into
-          the flattened version of an array of dimensions dims.
+        - **indices** (Tensor) - The input Tensor, containing indices that will be transformed
+          into the flattened form of an array with dimensions specified by `dims`.
           The dimension of `indices` must be 0-D or 1-D.
           Must be one of the following types: int32, int64.
         - **dims** (Tensor) - The shape of the array to use for unraveling indices.
@@ -3854,7 +3854,7 @@ class ResizeNearestNeighborV2(Primitive):
         ValueError: If attr `half_pixel_centers` and `align_corners` are True at the same time.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_tensor = Tensor(np.ones((1, 4, 4, 1)), mstype.float32)
@@ -4394,9 +4394,10 @@ class ScatterSub(Primitive):
 
 class Triu(Primitive):
     """
-    Returns the higher triangular part of a single Tensor,
-    the other elements of the result tensor out are set to 0.
-    The higher triangular part of the matrix is defined as the elements on and above the diagonal.
+    Returns the upper triangular portion of the 2-D matrix or the set of matrices
+    in a batch. The remaining elements of the resulting Tensor are assigned a value of 0.
+    The upper triangular section of the matrix comprises of the
+    elements present on and above the main diagonal.
 
     Args:
         diagonal (int, optional): The index of diagonal. Default: 0, indicating the main diagonal.
@@ -6189,9 +6190,8 @@ class MaskedSelect(PrimitiveWithCheck):
 
 class SearchSorted(Primitive):
     """
-    Find the indices from the innermost dimension of `sorted_sequence` such that the order of the innermost dimension
-    within `sorted_sequence` would be preserved when the corresponding values in `values` were inserted before the
-    indices.
+    Returns the indices correspond to the positions where the given numbers in `values` should be inserted
+    into `sorted_sequence` so that the order of the sequence is maintained.
 
     Refer to :func:`mindspore.ops.searchsorted` for more details.
 
@@ -6649,11 +6649,12 @@ class SplitV(Primitive):
          (x_1, x_2, ..., x_{m_N}, ..., x_R))
 
     Args:
-        size_splits (Union[tuple, list]): The list containing the sizes of each output tensor
-            along the split dimension. Must sum to the dimension of value along `split_dim`.
-            Can contain one -1 indicating that dimension is to be inferred.
-        split_dim (int): The dimension along which to split. Must be in the range [-len(input_x.shape),
-            len(input_x.shape)).
+        size_splits (Union[tuple, list]): A tuple or list of sizes of each output tensor along the split
+            dimension, and the sum of these sizes should equal to the dimension of the
+            input tensor along `split_dim`. The list may also contain a single instance of
+            the value -1, which indicates that the size of that dimension should be inferred.
+        split_dim (int): An int indicates the dimension along which to split.
+            Must be in the range [-len(input_x.shape), len(input_x.shape)).
         num_split (int): The number of output tensors. Must be positive int.
 
     Inputs:
@@ -7249,9 +7250,10 @@ class NonZero(Primitive):
 
 class Tril(Primitive):
     """
-    Returns the lower triangular part of the matrix (2-D tensor) or batch of matrices input,
-    the other elements of the result tensor out are set to 0.
-    The lower triangular part of the matrix is defined as the elements on and below the diagonal.
+    Returns the lower triangular portion of the 2-D matrix or the set of matrices
+    in a batch. The remaining elements of the resulting Tensor are assigned a value of 0.
+    The lower triangular section of the matrix comprises of the
+    elements present on and below the main diagonal.
 
     Args:
         diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: 0,
@@ -7399,10 +7401,13 @@ class IndexPut(Primitive):
 
 class SegmentMax(Primitive):
     r"""
-    Computes the maximum along segments of a tensor.
+    Computes the maximum along segments of a Tensor.
 
-    Computes a tensor such that :math:`output_i=max_j(input\_x_j)` where max is over :math:`j` such that
-    :math:`segment\_ids[j] == i`. If the max is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
+    Specifically, it generates a new Tensor `output` such that :math:`output_i=max_j(input\_x_j)`
+    in which the maximum value is obtained from all elements corresponding
+    to :math:j that meets :math:`segment\_ids[j] == i`.
+    If a segment contains no elements for a given segment :math:`i`,
+    then the corresponding element in the output Tensor is set to zero: :math:`output[i] = 0`.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor whose dtype is real number and whose rank is not less than 1.
@@ -7449,10 +7454,13 @@ class SegmentMax(Primitive):
 
 class SegmentMin(Primitive):
     r"""
-    Computes the minimum along segments of a tensor.
+    Computes the minimum along segments of a Tensor.
 
-    Computes a tensor such that :math:`output_i=min_j(input\_x_j)` where :math:`min` is over :math:`j` such that
-    :math:`segment\_ids[j] == i`. If the min is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
+    Specifically, it generates a new Tensor `output` such that :math:`output_i=min_j(input\_x_j)`
+    in which the minimum value is obtained from all elements corresponding
+    to :math:j that meets :math:`segment\_ids[j] == i`.
+    If a segment contains no elements for a given segment :math:`i`,
+    then the corresponding element in the output Tensor is set to zero: :math:`output[i] = 0`.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor whose dtype is real number and whose rank is not less than 1.
@@ -7499,10 +7507,13 @@ class SegmentMin(Primitive):
 
 class SegmentSum(Primitive):
     r"""
-    Computes the sum along segments of a tensor.
+    Computes the cumulative sum along segments of a Tensor.
 
-    Computes a tensor such that :math:`output_i = \sum_j input\_x_j` where sum is over :math:`j` such that
-    :math:`segment\_ids[j] == i`. If the sum is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
+    Specifically, it generates a new Tensor `output` such that :math:`output_i = \sum_j input\_x_j`
+    in which the cumulative sum is obtained from all elements corresponding
+    to :math:j that meets :math:`segment\_ids[j] == i`.
+    If a segment contains no elements for a given segment :math:`i`,
+    then the corresponding element in the output Tensor is set to 0: :math:`output[i] = 0`.
 
     .. warning::
         If the dtype of `input_x` is complex number, the gradient can not be calculated.
@@ -7778,10 +7789,13 @@ class AffineGrid(Primitive):
 
 class SegmentMean(Primitive):
     r"""
-    Computes the mean along segments of a tensor.
+    Computes the mean along segments of a Tensor.
 
-    Computes a tensor such that :math:`output_i = mean_j(input\_x_j)` where mean is over :math:`j` such that
-    :math:`segment\_ids[j] == i`. If the mean is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
+    Specifically, it generates a new Tensor `output` such that :math:`output_i=mean_j(input\_x_j)`
+    in which the mean value is obtained from all elements corresponding
+    to :math:j that meets :math:`segment\_ids[j] == i`.
+    If a segment contains no elements for a given segment :math:`i`,
+    then the corresponding element in the output Tensor is set to zero: :math:`output[i] = 0`.
 
     .. warning::
         If the dtype of `input_x` is complex number, the gradient can not be calculated.
@@ -7832,10 +7846,13 @@ class SegmentMean(Primitive):
 
 class SegmentProd(Primitive):
     r"""
-    Computes the prod along segments of a tensor.
+    Computes the cumulative product along segments of a Tensor.
 
-    Computes a tensor such that :math:`output_i = \prod_j input\_x_j` where prod is over :math:`j` such that
-    :math:`segment\_ids[j] == i`. If the prod is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
+    Specifically, it generates a new Tensor `output` such that :math:`output_i = \prod_j input\_x_j`
+    in which the cumulative product is obtained from all elements corresponding
+    to :math:j that meets :math:`segment\_ids[j] == i`.
+    If a segment contains no elements for a given segment :math:`i`,
+    then the corresponding element in the output Tensor is set to 1: :math:`output[i] = 1`.
 
     .. warning::
         If the dtype of `input_x` is complex number, the gradient can not be calculated.

@@ -3,7 +3,7 @@ mindspore.ops.rad2deg
 
 .. py:function:: mindspore.ops.rad2deg(x)
 
-    计算一个新的Tensor，其中 `x` 的每个角度元素都从弧度转换为度。
+    逐元素地将 `x` 从弧度制转换为度数制。
 
     参数：
         - **x** (Tensor) - 输入的Tensor。

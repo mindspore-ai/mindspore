@@ -213,43 +213,53 @@ class BoundingBoxDecode(Primitive):
 
 class SampleDistortedBoundingBoxV2(Primitive):
     r"""
-    Generate a single randomly distorted bounding box for an image.
+    Creates a single bounding box that is randomly distorted for an image.
 
-    Bounding box annotations are often supplied in addition to ground-truth labels in image recognition or object
-    localization tasks. A common technique for training such a system is to randomly distort an image while preserving
-    its content, i.e. data augmentation. This Op outputs a randomly distorted localization of an object, i.e. bounding
-    box, given an `image_size`, `bounding_boxes` and a series of constraints. The output is returned as 3 tensors:
-    `begin`, `size` and `bboxes`. The first 2 tensors can be fed directly into mindspore.ops.Slice to crop the image.
+    It is often used for object localization and image recognition tasks.
+    In such tasks, bounding box annotations are supplied in addition to ground-truth
+    labels, and data augmentation techniques are often used to randomly distort an image
+    while preserving its content.
+
+    This function takes the `image_size`, `bounding_boxes`, and
+    a series of constraints as input, and outputs a randomly distorted localization of an
+    object (i.e., bounding box) based on these inputs.
+
+    The output is returned as 3 tensors:
+
+    The output is returned as 3 tensors:
+    `begin`, `size` and `bboxes`. The first 2 tensors can be fed directly
+    into :class:`mindspore.ops.Slice` to crop the image.
     The latter is the generated distorted bounding box.
 
     Args:
-        seed (int, optional): If either `seed` or `seed2` is set to non-zero, the random number generator is
-            seeded by the given seed. Otherwise, it is seeded by a random seed. Default: 0.
-        seed2 (int, optional): A second seed to avoid seed collision. Default: 0.
+        seed (int, optional): Random number seed. If either `seed` or `seed2` is set to a non-zero value,
+            the seed is to the given value. Otherwise, a random seed is uesed. Default: 0.
+        seed2 (int, optional): The second seed to avoid seed collision. Default: 0.
         aspect_ratio_range (Union[list(float), tuple(float)], optional): Specifying the valild range of aspect
             ratio of cropped area. Aspect ratio of area = area_width / area_height. The value of this
             attribute should be positive. Default: (0.75, 1.33).
         area_range (Union[list(float), tuple(float)], optional): The cropped area of the image must contain a
             fraction of the supplied image within this range. The value of this attribute should
             be in range (0.0, 1.0]. Default: (0.05, 1.0).
-        max_attempts (int, optional): Number of attempts at generating a cropped region of the image
-            of the specified constraints. After max_attempts failures, return the entire image. The value of
-            this attribute should be positive. Default: 100.
+        max_attempts (int, optional): A poditive integer specifies the number of attempts that will be made to
+            generate a cropped region of the image based on the given constraints. If the maximum number of
+            attempts is exceeded without success, the function will return the entire original image.
+            Default: 100.
         use_image_if_no_bounding_boxes (bool, optional): Controls behavior if no bounding boxes supplied.
             If no bounding boxes supplied (`bounding_boxes` in shape [0, N, 4] or [batch, 0, 4]), and this
             attribute is set True, then assume an implicit bounding box covering the
             whole input, else if this attribute is set False, then raise an error. Default: False.
 
     Inputs:
-        - **image_size** (Tensor) - 1-D, containing [height, width, channels]. The value of this input
+        - **image_size** (Tensor) - 1-D Tensor, containing [height, width, channels]. The value of this input
           tensor should be positive.
-        - **bounding_boxes** (Tensor) - 3-D with shape [batch, N, 4] describing the N bounding boxes associated with
-          the image. The value of this input tensor should be in range [0.0, 1.0]. The
-          data type is float32.
-        - **min_object_covered** (Tensor) - The cropped area of the image must contain at least this fraction of any
-          bounding box supplied. The value of this parameter should be in range
-          [0.0, 1.0]. In the case of 0, the cropped area does not need to overlap any
-          of the bounding boxes supplied. The data type is float32.
+        - **bounding_boxes** (Tensor) - 3-D Tensor with shape :math:`(batch, N, 4)` describing the N
+          bounding boxes associated with the image. The value of this input tensor should be in range [0.0, 1.0].
+          The data type is float32.
+        - **min_object_covered** (Tensor) - The least fraction of bounding box the croped area need to cover.
+          This parameter's value should be between 0.0 and 1.0, inclusive. If the value is 0,
+          the cropped area does not need to overlap with any of the supplied bounding boxes.
+          The data type is float32.
 
     Outputs:
         - **begin** (Tensor) - A 1-D Tensor, containing [offset_height, offset_width, 0]. The data type is same as
@@ -257,8 +267,8 @@ class SampleDistortedBoundingBoxV2(Primitive):
         - **size** (Tensor) - A 1-D Tensor, containing [target_height, target_width, -1]. The data type is same as
           `image_size`. When the data type of `image_size` is uint8, the last value of `size`,
           which is originally -1, will be forced to 255.
-        - **bboxes** (Tensor) - A 3-D Tensor with shape [1, 1, 4], containing the distorted bounding box. The data type
-          is float32.
+        - **bboxes** (Tensor) - A 3-D Tensor with shape :math:`(1, 1, 4)`, containing
+          the distorted bounding box. The data type is float32.
 
     Raises:
         TypeError: If `image_size` is not a Tensor.

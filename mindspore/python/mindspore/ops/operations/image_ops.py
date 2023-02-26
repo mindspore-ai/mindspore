@@ -606,9 +606,9 @@ class CropAndResizeGradBoxes(Primitive):
 
 class RGBToHSV(Primitive):
     """
-    Convert one or more images from RGB to HSV.
-    Outputs a tensor of the same shape as the images tensor, containing the HSV value of the pixels.
-    The output is only well defined if the value in images are in [0,1].
+    Transform one single or a batch of images from RGB to HSV color space.
+    Each pixel's RGB value is converted to its corresponding HSV value.
+    Note that the function is only well-defined for input pixel values in the range [0, 1].
 
     Note:
         Last dimension of input images must be size 3.
@@ -862,12 +862,15 @@ class ResizeArea(Primitive):
         The values of `size` must be greater than zero.
 
     Args:
-        align_corners (bool, optional): If true, the centers of the 4 corner pixels of the input and output
-          tensors are aligned, preserving the values at the corner pixels. Defaults: False.
+        align_corners (bool, optional): A boolean flag that specifies whether
+            to align the centers of the four corner pixels of the input and output tensors.
+            When this flag is set to True, the corner pixels of the output tensor are aligned
+            with the corner pixels of the input tensor, which preserves the values at the corner pixels.
+            Defaults: False.
 
     Inputs:
         - **images** (Tensor) -  Input images must be a 4-D tensor with shape
-          which is :math:`(batch, channels, height, width)`. The format must be NHWC.
+          which is :math:`(batch, channels, height, width)`. The format must be "NHWC".
           Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
         - **size** (Tensor) - Input size must be a 1-D tensor of 2 elements: new_height, new_width.
           The new size of output image.

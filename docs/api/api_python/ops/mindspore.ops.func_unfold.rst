@@ -3,7 +3,7 @@ mindspore.ops.unfold
 
 .. py:function:: mindspore.ops.unfold(input, kernel_size, dilation=1, padding=0, stride=1)
 
-    从一个输入Tensor中，提取出滑动的局部区域块。输入Tensor格式为：(N, C, H, W)。
+    通过从数据格式为（N，C，H，W）的Tensor中提取局部滑块并沿新的维度连接它们来重新排列输入Tensor。
 
     .. warning::
         目前，仅支持输入为一个四维的Tensor（类似图片格式）。

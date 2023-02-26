@@ -7,11 +7,12 @@ mindspore.ops.TruncatedNormal
 
     生成的值符合正态分布。
 
-    .. warning::
-        `shape` 所含元素的值必须大于零。输出长度必须不超过1000000。
+    .. note::
+        - `shape` 所含元素的值必须大于零。输出长度必须不超过1000000。
+        - 当 `seed` 或 `seed2` 被赋予一个非零值时，该值将被用作种子。否则，将使用一个随机种子。
 
     参数：
-        - **seed** (int，可选) - 随机数种子。如果 `seed` 或者 `seed2` 被设置为非零，则使用这个非零值。否则使用一个随机生成的种子。默认值：0。
+        - **seed** (int，可选) - 随机数种子。默认值：0。
         - **seed2** (int，可选) - 另一个随机种子，避免发生冲突。默认值：0。
         - **dtype** (mindspore.dtype，可选) - 指定输出类型。可选值为：mindspore.float16、mindspore.float32和mindspore.float64。默认值：mindspore.float32。
 

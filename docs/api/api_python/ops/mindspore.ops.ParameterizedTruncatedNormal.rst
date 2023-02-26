@@ -7,10 +7,11 @@ mindspore.ops.ParameterizedTruncatedNormal
     当其shape为 :math:`(batch\_size, *)` 的时候， `mean` 、 `stdevs` 、 `min` 和 `max` 的shape应该为 :math:`()` 或者 :math:`(batch\_size, )` 。
 
     .. note::
-        在广播之后，在任何位置， `min` 的值必须严格小于 `max` 的值。
+        - 在广播之后，在任何位置， `min` 的值必须严格小于 `max` 的值。
+        - 当 `seed` 或 `seed2` 被赋予一个非零值时，该值将被用作种子。否则，将使用一个随机种子。
 
     参数：
-        - **seed** (int，可选) - 随机数种子。如果 `seed` 或者 `seed2` 被设置为非零，则使用这个非零值。否则使用一个随机生成的种子。默认值：0。
+        - **seed** (int，可选) - 随机数种子。默认值：0。
         - **seed2** (int，可选) - 另一个随机种子，避免发生冲突。默认值：0。
 
     输入：
