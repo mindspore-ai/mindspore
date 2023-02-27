@@ -85,7 +85,7 @@ AbstractBasePtr SequenceGreaterInferInner(const PrimitivePtr &primitive, const s
     return std::make_shared<abstract::AbstractScalar>(kAnyValue, kBool);
   }
   const auto &seqx_elements = seqx_abs->elements();
-  const auto &seqy_elements = seqx_abs->elements();
+  const auto &seqy_elements = seqy_abs->elements();
   return SequenceIsGreater(seqx_elements, seqy_elements, prim_name, include_equal);
 }
 

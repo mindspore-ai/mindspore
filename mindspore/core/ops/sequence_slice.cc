@@ -50,6 +50,57 @@ int64_t SequenceSliceGetValue(const std::string &prim_name, const std::string &a
                             << "' should be int32, int64 but got: " << abs->BuildType()->ToString();
   }
 }
+AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, int64_t start_v, int64_t end,
+                                int64_t step) {
+  auto elems = seq_abs->elements();
+  int64_t len = elems.size();
+  int64_t start = start_v;
+  abstract::AbstractBasePtrList abs{};
+  if (step == 0) {
+    MS_EXCEPTION(ValueError) << "For 'SequenceSlice', step cannot be 0.";
+  } else if (step > 0) {
+    if (start <= -len) {
+      start = 0;
+    } else if (start < 0) {
+      start += len;
+    }
+    if (end > len) {
+      end = len;
+    } else if (end > -len && end < 0) {
+      end += len;
+    }
+    if (start >= end) {
+      return std::make_shared<abstract::AbstractTuple>(abs);
+    }
+    int64_t idx = 0;
+    for (int64_t i = start; i < end; i += step) {
+      abs.push_back(std::make_shared<abstract::AbstractScalar>(elems[i]->BuildValue(), elems[i]->BuildType()));
+      idx++;
+    }
+    return std::make_shared<abstract::AbstractTuple>(abs);
+  } else {
+    // when step < 0
+    if (start >= len) {
+      start = -1;
+    } else if (start >= 0 && start < len) {
+      start -= len;
+    }
+    if (end < -len) {
+      end = -1 - len;
+    } else if (end >= 0 && end < len) {
+      end -= len;
+    }
+    if (start <= end) {
+      return std::make_shared<abstract::AbstractTuple>(abs);
+    }
+    int64_t idx = 0;
+    for (int64_t i = start; i > end; i += step) {
+      abs.push_back(std::make_shared<abstract::AbstractScalar>(elems[i]->BuildValue(), elems[i]->BuildType()));
+      idx++;
+    }
+    return std::make_shared<abstract::AbstractTuple>(abs);
+  }
+}
 AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
@@ -88,14 +139,7 @@ AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector
     start_v = SequenceSliceGetValue(prim_name, start_str, start_abs);
     end_v = SequenceSliceGetValue(prim_name, end_str, end_abs);
     step_v = SequenceSliceGetValue(prim_name, step_str, step_abs);
-    int64_t len = seq_abs->elements().size();
-    auto output_size = SequenceSliceGetOutputSize(start_v, end_v, step_v, len);
-    abstract::AbstractBasePtrList abs{};
-    for (int64_t i = 0; i < output_size; i++) {
-      abs.push_back(std::make_shared<abstract::AbstractScalar>(kAnyValue, seq_abs->ElementsType()[0]));
-    }
-    auto ret = std::make_shared<abstract::AbstractTuple>(abs);
-    return ret;
+    return SliceInferValue(seq_abs, start_v, end_v, step_v);
   }
   auto ret = seq_abs->Clone()->cast<abstract::AbstractSequencePtr>();
   ret->CheckAndConvertToDynamicLenSequence();
