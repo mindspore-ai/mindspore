@@ -60,6 +60,9 @@ MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
     }
   }
   if (params_->b_const_) {
+    if (!matrix_b_.need_pack && weight_is_packed_) {
+      return;
+    }
     if (is_sharing_pack_) {
       lite::PackWeightManager::GetInstance()->Free(matrix_b_.pack_ptr);
     } else {
@@ -70,7 +73,7 @@ MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
 
 void MatmulFp32BaseCPUKernel::InitGlobalVariable() {
   matrix_a_.need_pack = true;
-  matrix_b_.need_pack = true;
+  matrix_b_.need_pack = !weight_is_packed_;
   matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12MajorParallel : RowMajor2Col12MajorParallel;
   matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col8MajorParallel : RowMajor2Row8MajorParallel;
   row_tile_ = C12NUM;
@@ -239,6 +242,10 @@ int MatmulFp32BaseCPUKernel::PackMatrixB() {
         reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_b_.pack_size * sizeof(float)));
     }
   } else {
+    if (!matrix_b_.need_pack && weight_is_packed_) {
+      matrix_b_.pack_ptr = reinterpret_cast<float *>(in_tensors_[SECOND_INPUT]->data());
+      return RET_OK;
+    }
     bool is_packed = false;
     void *data = nullptr;
     if (is_sharing_pack_) {

@@ -88,6 +88,9 @@ class MatmulCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
 
+  int PreparePackedWeight(const lite::Tensor *tensor) override;
+  MatmulFp32BaseCPUKernel *GetMatmulBase() const { return matmul_base_; }
+
  private:
   MatmulFp32BaseCPUKernel *matmul_base_ = nullptr;
 };

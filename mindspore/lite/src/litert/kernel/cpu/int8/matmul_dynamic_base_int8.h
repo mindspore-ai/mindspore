@@ -45,8 +45,7 @@ class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
   const int8_t *GetPackBPtr() const { return pack_b_ptr_; }
   const int *GetWeightSums() const { return weight_sums_; }
   const int GetBBatch() const { return b_batch_; }
-  void SetWeightIsPacked(bool weight_is_packed) { this->weight_is_packed_ = weight_is_packed; }
-  void SetWeightSumsTensor(lite::Tensor *weight_sums_tensor) { this->weight_sums_tensor_ = weight_sums_tensor; }
+  int PreparePackedWeight(const lite::Tensor *tensor) override;
 
  private:
   void ResizeMatrixBParameter();
@@ -97,7 +96,7 @@ class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
   bool enable_fp16_ = false;
   PackFunc b_pack_func_ = nullptr;
   bool weight_is_packed_ = false;
-  lite::Tensor *weight_sums_tensor_ = nullptr;
+  const lite::Tensor *weight_sums_tensor_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

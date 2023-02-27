@@ -40,6 +40,7 @@ const char kAndroidArmCpuBackendOption[] = "ANDROID_ARM_CPU";
 mindspore::lite::InnerContext *InitInnerContextForAndroidArmCpu() {
   // if the operation use thread_pool in inner context will throw exception.
   auto inner_context = new (std::nothrow) lite::InnerContext();
+  inner_context->Init();
   MS_CHECK_TRUE_MSG(inner_context != nullptr, nullptr, "Create InnerContext failed.");
   inner_context->thread_num_ = kSingleThread;
   inner_context->instructions_ctx_.support_sdot = true;
@@ -234,10 +235,6 @@ STATUS MatmulPacking(const mindspore::CNodePtr &cnode_ptr, const FuncGraphPtr &f
   }
   op_parameter->thread_num_ = kSingleThread;
   op_parameter->quant_type_ = GetQuantType(cnode_ptr);
-  if (op_parameter->quant_type_ != schema::QuantType::QuantType_QUANT_DYNAMIC) {
-    MS_LOG(DEBUG) << "Only do pack for dynamic quant matmul operation now, skip " << cnode_ptr->fullname_with_scope();
-    return RET_OK;
-  }
 
   (void)snprintf(op_parameter->name_, cnode_ptr->fullname_with_scope().length() + 1, "%s",
                  cnode_ptr->fullname_with_scope().c_str());

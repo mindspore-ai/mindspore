@@ -21,6 +21,7 @@
 #include "tools/converter/offline_packing_optimizer.h"
 #include "src/litert/kernel/cpu/int8/matmul_dynamic_base_int8.h"
 #include "mindspore/core/ops/op_name.h"
+#include "src/litert/kernel/cpu/fp32/matmul_fp32.h"
 
 namespace mindspore {
 namespace {
@@ -37,6 +38,27 @@ void AddCustomAttr(std::vector<std::unique_ptr<mindspore::schema::AttributeT>> *
   attrs->emplace_back(std::move(attr));
 }
 
+int AddWeightSumsToInputs(const mindspore::kernel::MatmulDynamicBaseInt8CPUKernel *matmul_kernel,
+                          schema::MetaGraphT *meta_graph, const std::unique_ptr<schema::CNodeT> &cnode,
+                          size_t weight_sum_size) {
+  auto weight_sums_tensor = std::make_unique<schema::TensorT>();
+  weight_sums_tensor->nodeType = lite::NodeType_ValueNode;
+  weight_sums_tensor->format = schema::Format_NHWC;
+  weight_sums_tensor->dataType = TypeId::kNumberTypeInt32;
+  weight_sums_tensor->dims = {};
+  weight_sums_tensor->dims.emplace_back(weight_sum_size / sizeof(int));
+  weight_sums_tensor->data.resize(weight_sum_size);
+  weight_sums_tensor->name = cnode->name + "_weight_sums";
+  if (memcpy_s(weight_sums_tensor->data.data(), weight_sums_tensor->data.size(), matmul_kernel->GetWeightSums(),
+               weight_sum_size) != EOK) {
+    MS_LOG(ERROR) << "new CustomT error.";
+    return RET_ERROR;
+  }
+  cnode->inputIndex.emplace_back(meta_graph->allTensors.size());
+  meta_graph->allTensors.emplace_back(std::move(weight_sums_tensor));
+  return RET_OK;
+}
+
 int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::unique_ptr<schema::CNodeT> &cnode,
                                 const std::unique_ptr<mindspore::schema::TensorT> &b_input,
                                 const std::string &cpu_option) {
@@ -51,65 +73,75 @@ int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::uniqu
     return RET_ERROR;
   }
   auto matmul_param = reinterpret_cast<MatMulParameter *>(param);
+  if (matmul_param->matmul_type_ == kNotImplemented) {
+    MS_LOG(ERROR) << "Unsupported matmul type, only support fp32 and dynamic quant int8.";
+    return RET_ERROR;
+  }
+  cnode->primitive->value.type = schema::PrimitiveType_Custom;
+  auto primitive = new (std::nothrow) schema::CustomT;
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new CustomT error.";
+    return RET_NULL_PTR;
+  }
+  primitive->type = kMatmulCustomType;
+
+  // activation_type
+  AddCustomAttr(&(primitive->attr), ops::kActivationType, std::to_string(matmul_param->act_type_));
+  // transpose_a
+  AddCustomAttr(&(primitive->attr), ops::kTransposeA, std::to_string(matmul_param->a_transpose_));
+  // transpose_b
+  AddCustomAttr(&(primitive->attr), ops::kTransposeB, std::to_string(matmul_param->b_transpose_));
+
+  int b_batch;
+  const void *pack_b_ptr = nullptr;
+  size_t pack_b_size;
   if (matmul_param->matmul_type_ == kMatmulDynamicSdotInt8Cpu) {
-    cnode->primitive->value.type = schema::PrimitiveType_Custom;
-    auto primitive = new (std::nothrow) schema::CustomT;
-    if (primitive == nullptr) {
-      MS_LOG(ERROR) << "new CustomT error.";
-      return RET_NULL_PTR;
-    }
-    primitive->type = kMatmulCustomType;
-
-    // activation_type
-    AddCustomAttr(&(primitive->attr), ops::kActivationType, std::to_string(matmul_param->act_type_));
-    // transpose_a
-    AddCustomAttr(&(primitive->attr), ops::kTransposeA, std::to_string(matmul_param->a_transpose_));
-    // transpose_b
-    AddCustomAttr(&(primitive->attr), ops::kTransposeB, std::to_string(matmul_param->b_transpose_));
-
     // replace packed data
     auto matmul_kernel = reinterpret_cast<const mindspore::kernel::MatmulDynamicBaseInt8CPUKernel *>(lite_kernel);
-    auto b_batch = matmul_kernel->GetBBatch();
-    auto pack_b_size = b_batch * matmul_param->col_align_ * matmul_param->deep_align_ * sizeof(int8_t);
-    b_input->data.resize(pack_b_size);
-    if (memcpy_s(b_input->data.data(), b_input->data.size(), matmul_kernel->GetPackBPtr(), pack_b_size) != EOK) {
-      delete primitive;
-      MS_LOG(ERROR) << "new CustomT error.";
-      return RET_ERROR;
-    }
-
-    // add weight_sums to inputs
+    b_batch = matmul_kernel->GetBBatch();
+    pack_b_size = b_batch * matmul_param->col_align_ * matmul_param->deep_align_ * sizeof(int8_t);
+    pack_b_ptr = reinterpret_cast<const void *>(matmul_kernel->GetPackBPtr());
     auto weight_sum_size = b_batch * matmul_param->col_align_ * sizeof(int);
-    auto weight_sums_tensor = std::make_unique<schema::TensorT>();
-    weight_sums_tensor->nodeType = lite::NodeType_ValueNode;
-    weight_sums_tensor->format = schema::Format_NHWC;
-    weight_sums_tensor->dataType = TypeId::kNumberTypeInt32;
-    weight_sums_tensor->dims = {};
-    weight_sums_tensor->dims.emplace_back(weight_sum_size / sizeof(int));
-    weight_sums_tensor->data.resize(weight_sum_size);
-    weight_sums_tensor->name = cnode->name + "_weight_sums";
-    if (memcpy_s(weight_sums_tensor->data.data(), weight_sums_tensor->data.size(), matmul_kernel->GetWeightSums(),
-                 weight_sum_size) != EOK) {
+    int ret = AddWeightSumsToInputs(matmul_kernel, meta_graph, cnode, weight_sum_size);
+    if (ret != RET_OK) {
       delete primitive;
-      MS_LOG(ERROR) << "new CustomT error.";
-      return RET_ERROR;
+      MS_LOG(ERROR) << "add weight sums to inputs error.";
+      return ret;
     }
-    cnode->inputIndex.emplace_back(meta_graph->allTensors.size());
-    meta_graph->allTensors.emplace_back(std::move(weight_sums_tensor));
-
-    // add scalar to attr
-    AddCustomAttr(&(primitive->attr), "b_batch", std::to_string(b_batch));
-    AddCustomAttr(&(primitive->attr), "deep", std::to_string(matmul_param->deep_));
-    AddCustomAttr(&(primitive->attr), "col", std::to_string(matmul_param->col_));
-    AddCustomAttr(&(primitive->attr), "col_align", std::to_string(matmul_param->col_align_));
-    AddCustomAttr(&(primitive->attr), "deep_align", std::to_string(matmul_param->deep_align_));
-
-    // add cpu option
-    std::string cpu_option_str = cpu_option;
-    AddCustomAttr(&(primitive->attr), "cpu_option", std::move(cpu_option_str));
-
-    cnode->primitive->value.value = primitive;
+  } else if (matmul_param->matmul_type_ == kMatmulFp32BaseCpu || matmul_param->matmul_type_ == kMatmulFp32Arm64Cpu) {
+    auto matmul_kernel = reinterpret_cast<const mindspore::kernel::MatmulCPUKernel *>(lite_kernel);
+    auto matmul_kernel_base = matmul_kernel->GetMatmulBase();
+    b_batch = matmul_kernel_base->GetBBatch();
+    pack_b_size = b_batch * matmul_param->col_align_ * matmul_param->deep_ * sizeof(float);
+    pack_b_ptr = reinterpret_cast<const void *>(matmul_kernel_base->GetPackBPtr());
   }
+
+  if (pack_b_ptr == nullptr) {
+    delete primitive;
+    MS_LOG(ERROR) << "pack_b_ptr is nullptr.";
+    return RET_NULL_PTR;
+  }
+
+  // copy packed weight to meta graph
+  b_input->data.resize(pack_b_size);
+  if (memcpy_s(b_input->data.data(), b_input->data.size(), pack_b_ptr, pack_b_size) != EOK) {
+    delete primitive;
+    MS_LOG(ERROR) << "memcpy packed weight error.";
+    return RET_ERROR;
+  }
+
+  // add scalar to attr
+  AddCustomAttr(&(primitive->attr), "b_batch", std::to_string(b_batch));
+  AddCustomAttr(&(primitive->attr), "deep", std::to_string(matmul_param->deep_));
+  AddCustomAttr(&(primitive->attr), "col", std::to_string(matmul_param->col_));
+  AddCustomAttr(&(primitive->attr), "col_align", std::to_string(matmul_param->col_align_));
+  AddCustomAttr(&(primitive->attr), "deep_align", std::to_string(matmul_param->deep_align_));
+
+  // add cpu option
+  std::string cpu_option_str = cpu_option;
+  AddCustomAttr(&(primitive->attr), "cpu_option", std::move(cpu_option_str));
+
+  cnode->primitive->value.value = primitive;
   return RET_OK;
 }
 
