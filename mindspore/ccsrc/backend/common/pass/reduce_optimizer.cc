@@ -192,6 +192,11 @@ const AnfNodePtr ReduceOptimizer::Process(const FuncGraphPtr &func_graph, const 
     MS_LOG(DEBUG) << "Current node is not dynamic shape, skip!";
     return nullptr;
   }
+  auto shape = dyn_cast<abstract::Shape>(cnode->input(1)->Shape())->shape();
+  if (IsDynamicRank(shape)) {
+    MS_LOG(DEBUG) << "Current node is dynamic rank, skip!";
+    return nullptr;
+  }
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
   MS_EXCEPTION_IF_NULL(kernel_graph);

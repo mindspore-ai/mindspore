@@ -53,6 +53,7 @@ const std::map<std::string, std::vector<std::string>> op2attrs = {
   {prim::kPrimLayerNormGradGrad->name(), {kAttrBeginNormAxis, kAttrBeginParamsAxis}},
   {prim::kPrimBiasAdd->name(), {kAttrDataFormat}},
   {prim::kPrimBiasAddGrad->name(), {kAttrDataFormat}},
+  {prim::kPrimStack->name(), {kAttrAxis}},
   {prim::kPrimBatchMatMul->name(), {kTransposeA, kTransposeB}}};
 }  // namespace
 

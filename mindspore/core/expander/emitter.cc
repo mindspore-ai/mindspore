@@ -194,6 +194,9 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
     }
   }
   if (node->isa<Parameter>()) {
+    if (node->get()->abstract()->isa<abstract::AbstractNone>()) {
+      return Emit(prim::kZerosLike, {Tensor(0)});
+    }
     if (node->get()->abstract()->isa<abstract::AbstractTensor>()) {
       return Emit(prim::kZerosLike, {node});
     }
@@ -246,6 +249,9 @@ NodePtr Emitter::Fill(int64_t value, const ShapeVector &shape, TypeId data_type)
 
 std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis,
                                                  bool keep_dim) const {
+  if (IsDynamic(shape)) {
+    return std::make_pair(true, shape);
+  }
   if (shape.empty()) {
     return std::make_pair(false, shape);
   }
