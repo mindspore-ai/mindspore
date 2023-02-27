@@ -33,8 +33,8 @@ mindspore.ops.hinge_embedding_loss
         Tensor或Tensor scalar，根据 :math:`reduction` 计算的loss。
 
     异常：
-        - **TypeError** - `inputs` 不是数据类型为float的Tensor。
-        - **TypeError** - `targets` 不是数据类型为float的Tensor。
+        - **TypeError** - `inputs` 不是Tensor。
+        - **TypeError** - `targets` 不是Tensor。
         - **TypeError** - `margin` 不是float或者int。
-        - **ValueError** - `inputs` 和 `targets` shape不一致。
+        - **ValueError** - `inputs` 和 `targets` shape不一致且不能广播。
         - **ValueError** - `reduction` 不是"none"、"mean"或者"sum"。

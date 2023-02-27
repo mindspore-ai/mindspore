@@ -2509,10 +2509,10 @@ class HingeEmbeddingLoss(LossBase):
         Tensor or Tensor scalar, the computed loss depending on `reduction`.
 
     Raises:
-        TypeError: If `logits` is not a Tensor of floats.
-        TypeError: If `labels` is not a Tensor of floats.
+        TypeError: If `logits` is not a Tensor.
+        TypeError: If `labels` is not a Tensor.
         TypeError: If `margin` is not a float or int.
-        ValueError: If `labels` does not have the same shape as `logits`.
+        ValueError: If `labels` does not have or could not broadcast to the same shape as `logits`.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:

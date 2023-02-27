@@ -35,8 +35,8 @@ mindspore.nn.HingeEmbeddingLoss
         Tensor或Tensor scalar，根据 :math:`reduction` 计算的loss。
 
     异常：
-        - **TypeError** - `logits` 不是数据类型为float的Tensor。
-        - **TypeError** - `labels` 不是数据类型为float的Tensor。
+        - **TypeError** - `logits` 不是Tensor。
+        - **TypeError** - `labels` 不是Tensor。
         - **TypeError** - `margin` 不是float或int。
-        - **ValueError** - `labels` 和 `logits` shape不一致。
+        - **ValueError** - `labels` 和 `logits` shape不一致且不能广播。
         - **ValueError** - `reduction` 不是"none"、"mean"或者"sum"。
