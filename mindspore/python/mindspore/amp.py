@@ -51,11 +51,11 @@ def _grad_scale(scale, grad):
     return grad * scale.astype(grad.dtype)
 
 
-def _is_finite(inputs):
+def _overflow(inputs):
     if _gpu_target():
-        return ops.FloatStatus()(inputs)[0] == 0
+        return ops.FloatStatus()(inputs)
     status = ops.isfinite(inputs)
-    return status.all()
+    return 1 - status.all()
 
 
 def init_status():
@@ -120,8 +120,10 @@ def all_finite(inputs, status=None):
         status_finite = status.sum() == 0
         _ = ops.NPUClearFloatStatus()(status)
         return status_finite
-    outputs = _hypermap(_partial(_is_finite), inputs)
-    return ops.stack(outputs).all()
+    outputs = _hypermap(_partial(_overflow), inputs)
+    flag_sum = ops.addn(outputs).reshape(())
+    _all_finite = ops.less(flag_sum, 1)
+    return _all_finite
 
 
 @jit_class
@@ -313,7 +315,7 @@ class DynamicLossScaler(LossScaler):
             grads_finite,
             ops.select(
                 self.counter == (self.scale_window - 1),
-                ops.select(_is_finite(scale_mul_factor),
+                ops.select(ops.isfinite(scale_mul_factor),
                            scale_mul_factor,
                            self.scale_value),
                 self.scale_value),
