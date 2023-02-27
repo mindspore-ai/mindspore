@@ -54,37 +54,28 @@ OpParameter *PopulateActivationOpParameter(const BaseOperatorPtr &base_operator)
   }
   mindspore::ValuePtr attr = base_operator->GetPrim()->GetAttr(kActivationType);
   if (attr != nullptr) {
-    auto activation_type = GetValue<int64_t>(attr);
-    static const std::set<int> activation_types = {
-      schema::ActivationType_RELU,    schema::ActivationType_RELU6,    schema::ActivationType_LEAKY_RELU,
-      schema::ActivationType_SIGMOID, schema::ActivationType_TANH,     schema::ActivationType_SWISH,
-      schema::ActivationType_HSWISH,  schema::ActivationType_HSIGMOID, schema::ActivationType_HARD_TANH,
-      schema::ActivationType_GELU,    schema::ActivationType_SOFTPLUS, schema::ActivationType_ELU};
+    auto activation_type = ActivationType(GetValue<int64_t>(attr));
+    static const std::set<ActivationType> activation_types = {RELU,   RELU6,    LEAKY_RELU, SIGMOID, TANH,     SWISH,
+                                                              HSWISH, HSIGMOID, HARD_TANH,  GELU,    SOFTPLUS, ELU};
     if (activation_types.find(activation_type) == activation_types.end()) {
       MS_LOG(ERROR) << "invalid activation type: " << activation_type;
       free(param);
       return nullptr;
     }
-    param->type_ = activation_type;
+    param->type_ = static_cast<int>(activation_type);
   } else {
     auto type_name = base_operator->name();
-    static const std::map<std::string, int> op_type_map = {{kNameReLU, schema::ActivationType_RELU},
-                                                           {kNameReLU6, schema::ActivationType_RELU6},
-                                                           {kNameLeakyRelu, schema::ActivationType_LEAKY_RELU},
-                                                           {kNameSigmoid, schema::ActivationType_SIGMOID},
-                                                           {kNameTanh, schema::ActivationType_TANH},
-                                                           {kNameHSwish, schema::ActivationType_HSWISH},
-                                                           {kNameHSigmoid, schema::ActivationType_HSIGMOID},
-                                                           {kNameGeLU, schema::ActivationType_GELU},
-                                                           {kNameSoftplus, schema::ActivationType_SOFTPLUS},
-                                                           {kNameElu, schema::ActivationType_ELU}};
+    static const std::map<std::string, ActivationType> op_type_map = {
+      {kNameReLU, RELU},         {kNameReLU6, RELU6},   {kNameLeakyRelu, LEAKY_RELU}, {kNameSigmoid, SIGMOID},
+      {kNameTanh, TANH},         {kNameHSwish, HSWISH}, {kNameHSigmoid, HSIGMOID},    {kNameGeLU, GELU},
+      {kNameSoftplus, SOFTPLUS}, {kNameElu, ELU}};
     auto iter = op_type_map.find(type_name);
     if (iter == op_type_map.end()) {
       MS_LOG(ERROR) << "invalid activation type: " << type_name;
       free(param);
       return nullptr;
     }
-    param->type_ = iter->second;
+    param->type_ = static_cast<int>(iter->second);
   }
 
   mindspore::ValuePtr alpha = base_operator->GetPrim()->GetAttr(kAlpha);
