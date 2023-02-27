@@ -3134,12 +3134,12 @@ def sort(input_x, axis=-1, descending=False):
 
 def argsort(input_x, axis=-1, descending=False):
     r"""
-    Return the indices that sort the input tensor along the given dimension in the specified order.
+    Sorts the input tensor along the given dimension in specified order and return the sorted indices.
 
     Args:
         input_x(Tensor): The input tensor to sort.
-        axis (int): The dimension to sort along. Default: -1.
-        descending (bool): Controls the sort order. If `descending` is True then the elements
+        axis (int): The axis to sort along. Default: -1, means the last axis
+        descending (bool): The sort order. If `descending` is True then the elements
             are sorted in descending order by value. Otherwise sort in descending order. Default: False.
 
     Returns:
@@ -5273,15 +5273,18 @@ def tensor_split(x, indices_or_sections, axis=0):
     Args:
         x (Tensor): A Tensor to be divided.
         indices_or_sections (Union[int, tuple(int), list(int)]):
-            If `indices_or_sections` is an integer n, input is split into
-            n sections along dimension `axis`. If input is divisible by n along dimension `axis`, each section will be
-            of equal size, :math:`x.size(axis) / n` . If input is not divisible by n, the sizes of the first
-            :math:`x.size(axis) % n` sections will have size :math:`x.size(axis) // n + 1` , and the rest will
-            have size :math:`x.size(axis) // n` .
-            If `indices_or_sections` is a list or tuple of ints, then input is split
-            along dimension `axis` at each of the indices in the list, tuple. For instance,
-            :math:`indices\_or\_sections=[2, 3]` and :math:`axis=0` would result in the tensors :math:`x[:2]` ,
-            :math:`x[2:3]` , and :math:`x[3:]` .
+
+          - If `indices_or_sections` is an integer n, input tensor will be split into n sections.
+
+            - If :math:`x.size(axis)` can be divisible by n, sub-sections will have equal size
+              :math:`x.size(axis) / n` .
+            - If :math:`x.size(axis)` is not divisible by n, the first :math:`x.size(axis) % n` sections
+              will have size :math:`x.size(axis) // n + 1` , and the rest will have size :math:`x.size(axis) // n` .
+
+          - If `indices_or_sections` is of type tuple(int) or list(int), the input tensor will be split at the
+            indices in the list or tuple. For example, given parameters :math:`indices\_or\_sections=[1, 4]`
+            and :math:`axis=0` , the input tensor will be split into sections :math:`x[:1]` , :math:`x[1:4]` ,
+            and :math:`x[4:]` .
         axis (int): The axis along which to split. Default: 0.
 
     Returns:

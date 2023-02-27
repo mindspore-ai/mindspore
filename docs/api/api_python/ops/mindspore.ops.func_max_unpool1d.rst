@@ -3,8 +3,8 @@ mindspore.ops.max_unpool1d
 
 .. py:function:: mindspore.ops.max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=None)
 
-    `maxpool1d` 的部分逆过程。 `maxpool1d` 不是完全可逆的，因为非最大值丢失。
-    `max_unpool1d` 以 `maxpool1d` 的输出为输入，包括最大值的索引。在计算 `maxpool1d` 部分逆的过程中，非最大值设置为零。
+    `max_unpool1d` 是 `maxpool1d` 的部分逆过程，因为非最大值丢失。
+    `max_unpool1d` 以 `maxpool1d` 的输出和最大值的索引为输入。然后计算 `maxpool1d` 部分逆的过程，非最大值将设为零。
     支持的输入数据格式为 :math:`(N, C, H_{in})` 或 :math:`(C, H_{in})` ，输出数据的格式为 :math:`(N, C, H_{out})`
     或 :math:`(C, H_{out})` ，计算公式如下：
 
