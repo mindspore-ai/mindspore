@@ -2035,7 +2035,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
   overflow_bin_path =
     dump_dir_ + "/rank_" + std::to_string(device_id) + "/debug_files/" + IterationString(iteration) + "/";
   overflow_bin_path = RealPath(overflow_bin_path);
-  MS_LOG(WARNING) << "overflow_bin_path: " << overflow_bin_path;
+  MS_LOG(INFO) << "overflow_bin_path: " << overflow_bin_path;
   tensors_path = dump_dir_ + "/rank_" + std::to_string(device_id) + "/" + net_name_ + "/" +
                  std::to_string(root_graph_id) + "/" + IterationString(iteration) + "/";
   tensors_path = RealPath(tensors_path);
@@ -2062,7 +2062,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
   std::vector<std::string> op_names;
 
   std::lock_guard<std::mutex> lg(overflow_wp_lock_);
-  MS_LOG(WARNING) << "Searching for overflow in node " << node_name_to_find;
+  MS_LOG(INFO) << "Searching for overflow in node " << node_name_to_find;
   auto found_overflows = overflow_ops_.find(overflow_bin_path);
   if (found_overflows != overflow_ops_.end()) {
     MS_LOG(INFO) << "Found already computed overflows for " << overflow_bin_path;
