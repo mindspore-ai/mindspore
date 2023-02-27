@@ -16,12 +16,13 @@
 
 __all__ = ['Tensor']
 
+import abc
 import math
 import numbers
 import numpy as np
 
 from mindspore.communication.management import get_group_size
-from mindspore.common._utils import is_shape_unknown, is_stub_tensor
+from mindspore.common._utils import is_shape_unknown
 from mindspore.common.seed import get_seed
 from mindspore import context
 from mindspore import log as logger
@@ -30,7 +31,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common._utils import get_slice_num
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore._c_expression import Tensor as Tensor_
-from mindspore._checkparam import Rel, check_is_number
+from mindspore._checkparam import Rel, check_is_number, is_stub_tensor
 from mindspore._checkparam import Validator as validator
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
 
@@ -42,7 +43,7 @@ np_types = (np.int8, np.int16, np.int32, np.int64,
 def _check_input_data_type(input_data):
     """Check the type of input_data for Tensor"""
     validator.check_value_type('input_data', input_data,
-                               (Tensor_, np.ndarray, np.str_, list, tuple, float, int, bool, complex),
+                               (Tensor_, Tensor, np.ndarray, np.str_, list, tuple, float, int, bool, complex),
                                'Tensor')
     valid_dtypes = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
                     np.float16, np.float32, np.float64, np.bool_, np.str_, np.complex64, np.complex128)
@@ -67,7 +68,13 @@ def _check_input_data_type(input_data):
             f"For Tensor, the input_data is {input_data} that contain unsupported element.")
 
 
-class Tensor(Tensor_):
+class _TensorMeta(type(Tensor_), abc.ABCMeta):
+    """
+    Meta class for Tensor. Used internally.
+    """
+
+
+class Tensor(Tensor_, metaclass=_TensorMeta):
     """
     Tensor is a data structure that stores an n-dimensional array.
 
@@ -151,12 +158,13 @@ class Tensor(Tensor_):
 
     def __init__(self, input_data=None, dtype=None, shape=None, init=None, internal=False, const_arg=False):
         self.init_finished = False
+
         if internal:
             if input_data is not None:
                 Tensor_.__init__(self, input_data)
         else:
             if is_stub_tensor(input_data):
-                input_data.stub_sync()
+                input_data = input_data.stub_sync()
 
             # If input data is numpy number, convert it to np array
             if isinstance(input_data, np_types):
@@ -174,8 +182,8 @@ class Tensor(Tensor_):
             else:
                 _check_input_data_type(input_data)
                 if dtype is not None:
-                    validator.check_type_name(
-                        'dtype', dtype, mstype.number_type + (mstype.bool_, mstype.string), "Tensor")
+                    validator.check_type_name('dtype', dtype, mstype.number_type +
+                                              (mstype.bool_, mstype.string), "Tensor")
                 else:
                     dtype = self._set_default_dtype(input_data, dtype)
 
@@ -186,8 +194,8 @@ class Tensor(Tensor_):
                     Tensor_.__init__(self, input_data, dtype)
                 else:
                     Tensor_.__init__(self, input_data)
+                validator.check_value_type('const_arg', const_arg, bool, 'Tensor')
 
-        validator.check_value_type('const_arg', const_arg, bool, 'Tensor')
         self.const_arg = const_arg
         self.virtual_flag = False
         self.init = init
@@ -201,6 +209,16 @@ class Tensor(Tensor_):
 
         self.slice_num_of_persistent_data_ = None
         self.slice_shape_of_persistent_data_ = None
+
+    @classmethod
+    def __subclasshook__(cls, sub):
+        """
+        Subclass with stub_sync attr will be instance of Tensor
+        """
+        if cls is Tensor:
+            if any("stub_sync" in s.__dict__ for s in sub.__mro__):
+                return True
+        return NotImplemented
 
     @staticmethod
     def _set_default_dtype(input_data, dtype):
@@ -401,8 +419,6 @@ class Tensor(Tensor_):
 
     def __setitem__(self, index, value):
         out = tensor_operator_registry.get('__setitem__')(self, index, value)
-        if is_stub_tensor(out):
-            out.stub_sync()
         self.assign_value(out)
         if self.parent_tensor_ is not None and self.index_of_parent_ is not None:
             self.parent_tensor_.__setitem__(self.index_of_parent_, self)
@@ -587,6 +603,8 @@ class Tensor(Tensor_):
         Returns:
             Tensor, Tensor that's been assigned.
         """
+        if is_stub_tensor(value):
+            value = value.stub_sync()
         self.assign_value_cpp(value)
         return self
 

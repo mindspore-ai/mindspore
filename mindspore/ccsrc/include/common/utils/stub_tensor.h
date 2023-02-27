@@ -31,6 +31,7 @@
 namespace mindspore {
 namespace stub {
 constexpr auto PY_ATTR_STUB = "stub";
+constexpr auto PY_ATTR_TENSOR = "tensor";
 
 namespace py = pybind11;
 class StubNode;

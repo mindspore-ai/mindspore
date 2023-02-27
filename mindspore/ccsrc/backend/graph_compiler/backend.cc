@@ -463,7 +463,9 @@ void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePt
   MS_EXCEPTION_IF_NULL(tensors);
   ValuePtr tensor_ptr = nullptr;
   if (py::isinstance<tensor::Tensor>(input_object)) {
-    tensor_ptr = PyTensorCast(input_object);
+    tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
+  } else if (IsStubTensor(input_object)) {
+    tensor_ptr = ConvertStubTensor(input_object);
   } else if (py::isinstance<py::float_>(input_object)) {
     double input_value = py::cast<py::float_>(input_object);
     tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);

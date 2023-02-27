@@ -14,46 +14,70 @@
 # ============================================================================
 """Stub Tensor implementation."""
 
+import inspect
 from functools import reduce
 from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import type_size_in_bytes
-from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import TensorNode, SequenceNode
 from mindspore.common.api import _convert_python_data
 
 
-class StubTensor(Tensor):
+def _stub_member(var, init):
+    def getx(stub):
+        return init if stub.tensor is None else getattr(stub.tensor, var)
+
+    def setx(stub, value):
+        setattr(stub.stub_sync(), var, value)
+    return property(getx, setx)
+
+
+def _stub_method(method):
+    def fun(*arg, **kwargs):
+        stub = arg[0]
+        arg = (stub.stub_sync(),) + arg[1:]
+        return method(*arg, **kwargs)
+    return fun
+
+
+class StubTensor:
     """stub tensor for async op run."""
+    const_arg = _stub_member("const_arg", None)
+    init = _stub_member("init", None)
+    init_finished = _stub_member("init_finished", False)
+    virtual_flag = _stub_member("virtual_flag", False)
+    parent_tensor_ = _stub_member("parent_tensor_", None)
+    index_of_parent_ = _stub_member("index_of_parent_", None)
+    slice_num_of_persistent_data_ = _stub_member("slice_num_of_persistent_data_", None)
+    slice_shape_of_persistent_data_ = _stub_member("slice_shape_of_persistent_data_", None)
 
     def __init__(self, stub):
-        Tensor.__init__(self, internal=True)
         self.stub = stub
+        self.tensor = None
 
-    def __repr__(self):
-        self.stub_sync()
-        return super().__repr__()
+    __repr__ = _stub_method(Tensor.__repr__)
+    __str__ = _stub_method(Tensor.__str__)
+    __setitem__ = _stub_method(Tensor.__setitem__)
 
-    def __str__(self):
-        self.stub_sync()
-        return super().__str__()
-
-    def __setitem__(self, index, value):
-        self.stub_sync()
-        return super().__setitem__(index, value)
+    __lt__ = Tensor.__lt__
+    __le__ = Tensor.__le__
+    __gt__ = Tensor.__gt__
+    __ge__ = Tensor.__ge__
+    __eq__ = Tensor.__eq__
+    __ne__ = Tensor.__ne__
 
     @property
     def shape(self):
         """shape stub."""
         if self.stub:
             return self.stub.get_shape()
-        return super().shape
+        return self.tensor.shape
 
     @property
     def dtype(self):
         """dtype stub."""
         if self.stub:
             return self.stub.get_dtype()
-        return super().dtype
+        return self.tensor.dtype
 
     @property
     def size(self):
@@ -77,29 +101,18 @@ class StubTensor(Tensor):
         return len(self.shape)
 
     @property
+    def adapter_flag(self):
+        return False
+
+    @property
     def strides(self):
         """strides stub."""
-        self.stub_sync()
-        return super().strides
+        return self.stub_sync().strides
 
     @property
     def has_init(self):
         """has_init stub."""
         return False
-
-    @property
-    def adapter_flag(self):
-        """adapter_flag stub."""
-        if self.stub:
-            return False
-        return super().adapter_flag
-
-    def stub_sync(self):
-        """data sync to get real tensor"""
-        if self.stub:
-            val = self.stub.get_value()
-            Tensor_.__init__(self, val)
-            self.stub = None
 
     def ndimension(self):
         r"""
@@ -113,45 +126,30 @@ class StubTensor(Tensor):
         """
         return self.ndim
 
-    def asnumpy(self):
-        """api stub."""
-        self.stub_sync()
-        return super().asnumpy()
+    asnumpy = _stub_method(Tensor.asnumpy)
+    is_persistent_data = _stub_method(Tensor.is_persistent_data)
+    asnumpy_of_slice_persistent_data = _stub_method(Tensor.asnumpy_of_slice_persistent_data)
+    slice_num_of_persistent_data = _stub_method(Tensor.slice_num_of_persistent_data)
+    slice_shape_of_persistent_data = _stub_method(Tensor.slice_shape_of_persistent_data)
+    flush_from_cache = _stub_method(Tensor.flush_from_cache)
 
-    def is_persistent_data(self):
-        """
-        For details, please refer to :`mindspore.common.tensor.is_persistent_data`.
-        """
-        self.stub_sync()
-        super().is_persistent_data()
+    def stub_sync(self):
+        if self.stub:
+            val = self.stub.get_value()
+            self.tensor = Tensor(val, internal=True)
+            self.stub = None
+        return self.tensor
 
-    def asnumpy_of_slice_persistent_data(self, param_key, slice_index):
-        """
-        For details, please refer to :`mindspore.common.tensor.asnumpy_of_slice_persistent_data`.
-        """
-        self.stub_sync()
-        return super().asnumpy_of_slice_persistent_data(param_key, slice_index)
 
-    def slice_num_of_persistent_data(self):
-        """
-        For details, please refer to :`mindspore.common.tensor.slice_num_of_persistent_data`.
-        """
-        self.stub_sync()
-        return super().slice_num_of_persistent_data()
+def _init_stub_tensor_api():
+    stub_func = dir(StubTensor)
+    for attr in dir(Tensor):
+        if attr not in stub_func:
+            func = inspect.getattr_static(Tensor, attr)
+            setattr(StubTensor, attr, func)
 
-    def slice_shape_of_persistent_data(self):
-        """
-        For details, please refer to :`mindspore.common.tensor.slice_shape_of_persistent_data`.
-        """
-        self.stub_sync()
-        return super().slice_shape_of_persistent_data()
 
-    def flush_from_cache(self):
-        """
-        For details, please refer to :`mindspore.common.tensor.flush_from_cache`.
-        """
-        self.stub_sync()
-        super().flush_from_cache()
+_init_stub_tensor_api()
 
 
 def _convert_stub(stub):

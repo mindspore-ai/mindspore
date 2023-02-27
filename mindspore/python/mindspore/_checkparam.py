@@ -308,6 +308,10 @@ def get_log2_size(size):
     return cast_res
 
 
+def is_stub_tensor(tensor):
+    return hasattr(tensor, "stub")
+
+
 class Validator:
     """validator for checking input parameters"""
 
@@ -622,7 +626,7 @@ class Validator:
         hit = False
         for template_type in template_types:
             if isinstance(template_type, mstype.Type):
-                if mstype._issubclass_(type_, template_type): # pylint: disable=W0212
+                if mstype._issubclass_(type_, template_type):  # pylint: disable=W0212
                     hit = True
                     break
             elif type_ is template_type:
@@ -1021,9 +1025,9 @@ class Validator:
     @staticmethod
     def check_sparse_tensor_input(indices, values, shape):
         """Common input check for SparseTensors."""
-        if not isinstance(indices, Tensor_):
+        if not isinstance(indices, Tensor_) and not is_stub_tensor(indices):
             raise TypeError(f"For SparseTensors, 'indices' must be Tensor, but got {type(indices)}.")
-        if not isinstance(values, Tensor_):
+        if not isinstance(values, Tensor_) and not is_stub_tensor(values):
             raise TypeError(f"For SparseTensors, 'values' must be Tensor, but got {type(values)}.")
         if not isinstance(shape, tuple):
             raise TypeError(f"For SparseTensors, 'shape' must be tuple, but got {type(shape)}.")
@@ -1031,7 +1035,7 @@ class Validator:
     @staticmethod
     def check_csr_tensor_input(indptr, indices, values, shape):
         """Checks inputs type for CSRTensor."""
-        if not isinstance(indptr, Tensor_):
+        if not isinstance(indptr, Tensor_) and not is_stub_tensor(indptr):
             raise TypeError(f"For CSRTensor, 'indptr' must be Tensor, but got {type(indptr)}.")
         Validator.check_sparse_tensor_input(indices, values, shape)
 
@@ -1069,13 +1073,13 @@ class Validator:
             err_msg2 = f"but got indices shape: {indices_shp[0]}, values shape: {values_shp[0]}."
             raise ValueError(err_msg1 + err_msg2)
         if len(values_shp) + 1 != len(csr_shp):
-            raise ValueError(f"Values' dimension should equal to CSRTensor's dimension - 1, but got"\
-                            f"Values' dimension: {len(values_shp)} , CSRTensor's dimension: "\
-                            f"{len(csr_shp)}")
-        if values_shp[1: ] != csr_shp[2: ]:
-            raise ValueError(f"CSRTensor's shape[2: ] must be equal to value's shape[1: ],"\
-                            f"but CSRTensor's shape[2: ] got: {csr_shp[2: ]} and value's shape[1: ]"\
-                            f"got: {values_shp[1: ]}")
+            raise ValueError(f"Values' dimension should equal to CSRTensor's dimension - 1, but got"
+                             f"Values' dimension: {len(values_shp)} , CSRTensor's dimension: "
+                             f"{len(csr_shp)}")
+        if values_shp[1:] != csr_shp[2:]:
+            raise ValueError(f"CSRTensor's shape[2: ] must be equal to value's shape[1: ],"
+                             f"but CSRTensor's shape[2: ] got: {csr_shp[2: ]} and value's shape[1: ]"
+                             f"got: {values_shp[1: ]}")
 
     @staticmethod
     def check_csr_tensor_dtype(indptr_dtype, indices_dtype):
