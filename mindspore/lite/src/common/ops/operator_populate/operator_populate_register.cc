@@ -22,5 +22,9 @@ OperatorPopulateRegistry *OperatorPopulateRegistry::GetInstance() {
   static OperatorPopulateRegistry registry;
   return &registry;
 }
+
+OpParameter *CreatePopulatePtr(const BaseOperatorPtr &base_operator) {
+  return OperatorPopulateRegistry::GetInstance()->CreatePopulateByOp(base_operator);
+}
 }  // namespace lite
 }  // namespace mindspore
