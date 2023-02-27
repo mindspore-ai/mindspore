@@ -120,8 +120,8 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
     MS_EXCEPTION_IF_NULL(value);
     if (value->isa<None>()) {
       return ret;
-    } else if (value->isa<ValueTuple>()) {
-      auto value_tuple = value->cast<ValueTuplePtr>();
+    } else if (value->isa<ValueSequence>()) {
+      auto value_tuple = value->cast<ValueSequencePtr>();
       auto value_tuple_size = CountValueNum(value_tuple);
       for (size_t i = 0; i < value_tuple_size; ++i) {
         (void)ret.emplace_back(node, i);
@@ -142,8 +142,14 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
       outputs_num = AnfUtils::GetOutputTensorNum(node);
     }
   }
-  // Call node maybe a real cnode and the last interface cannot get output num exactly, so we should get
-  // output num from abstract again.
+  // Call node maybe a real cnode and the unreal node cannot get output num exactly, so we should get
+  // output num from abstract again. For example the TupleGetItem/Makeple multi-level nesting:
+  // '''G = op()  ---> Assume that the output of G is a multi-member tuple
+  //    A = MakeTuple(E, F, G)
+  //    B = MakeTuple(H, A)
+  //    C = TupleGetItem(B, 1) ---> Euqal the A
+  //    D = TupleGetItem(C, 2)  ---> VisitKernel will return the {G, 0}, but expect the whole G with all the members
+  //    return D'''
   if (common::AnfAlgo::IsCallNode(node) || (!AnfUtils::IsRealCNodeKernel(node))) {
     MS_EXCEPTION_IF_NULL(node->abstract());
     outputs_num = AnfAlgo::GetOutputNumByAbstract(node->abstract());

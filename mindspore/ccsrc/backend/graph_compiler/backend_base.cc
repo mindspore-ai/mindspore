@@ -173,8 +173,8 @@ void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs,
   } else if (utils::isa<ValuePtr>(arg)) {
     auto value = utils::cast<ValuePtr>(arg);
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<ValueTuple>()) {
-      auto value_tuple = value->cast<ValueTuplePtr>();
+    if (value->isa<ValueSequence>()) {
+      auto value_tuple = value->cast<ValueSequencePtr>();
       MS_EXCEPTION_IF_NULL(value_tuple);
       auto tuple_value = value_tuple->value();
       (void)std::transform(tuple_value.begin(), tuple_value.end(), std::back_inserter(*inputs),
@@ -202,23 +202,6 @@ void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs,
 }
 
 namespace {
-// Move these function to anonymous namespace
-void FlatValueTupleValue(const ValuePtrList &value, ValuePtrList *flatted_value) {
-  MS_EXCEPTION_IF_NULL(flatted_value);
-  for (auto value_element : value) {
-    MS_EXCEPTION_IF_NULL(value_element);
-    if (utils::isa<tensor::TensorPtr>(value_element)) {
-      (void)flatted_value->emplace_back(value_element);
-    } else if (utils::isa<ValueTuplePtr>(value_element)) {
-      auto value_tuple_element = value_element->cast<ValueTuplePtr>();
-      MS_EXCEPTION_IF_NULL(value_tuple_element);
-      FlatValueTupleValue(value_tuple_element->value(), flatted_value);
-    } else {
-      MS_LOG(EXCEPTION) << "The value input to FlatValueTupleValue should only contains Tensor and ValueTuple.";
-    }
-  }
-}
-
 void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
   MS_EXCEPTION_IF_NULL(flatted_value);
   if (utils::isa<ValueSequencePtr>(arg)) {
@@ -598,8 +581,8 @@ namespace {
 void TensorValueToVector(const ValuePtr &value, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(value);
   MS_EXCEPTION_IF_NULL(outputs);
-  if (value->isa<ValueTuple>()) {
-    auto value_tuple = value->cast<ValueTuplePtr>();
+  if (value->isa<ValueSequence>()) {
+    auto value_tuple = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_tuple);
     for (size_t i = 0; i < value_tuple->size(); ++i) {
       ValuePtr element = value_tuple->value()[i];
@@ -612,7 +595,7 @@ void TensorValueToVector(const ValuePtr &value, VectorRef *outputs) {
         auto scalar = element->cast<ScalarPtr>();
         MS_EXCEPTION_IF_NULL(scalar);
         outputs->emplace_back(ScalarToTensor(scalar));
-      } else if (element->isa<ValueTuple>()) {
+      } else if (element->isa<ValueSequence>()) {
         VectorRef tuple;
         TensorValueToVector(element, &tuple);
         outputs->emplace_back(tuple);
@@ -638,7 +621,7 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
     ValuePtr value = GetValueNode(graph_output);
     TensorValueToVector(value, &output_tmp);
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<ValueTuple>()) {
+    if (value->isa<ValueSequence>()) {
       outputs->emplace_back(output_tmp);
     } else if (value->isa<tensor::Tensor>() || value->isa<Scalar>()) {
       *outputs = output_tmp;
@@ -903,9 +886,9 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
   if (output_node->isa<ValueNode>()) {
     auto value = output_node->cast<ValueNodePtr>()->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<ValueTuple>()) {
+    if (value->isa<ValueSequence>()) {
       outputs->emplace_back(value);
-      (*output_position) += CountValueNum(value->cast<ValueTuplePtr>());
+      (*output_position) += CountValueNum(value->cast<ValueSequencePtr>());
     } else if (outputs_num != 0) {
       outputs->emplace_back(value);
       (*output_position) += outputs_num;

@@ -381,8 +381,8 @@ ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor) {
 void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *tensors) {
   MS_EXCEPTION_IF_NULL(value);
   MS_EXCEPTION_IF_NULL(tensors);
-  if (value->isa<ValueTuple>()) {
-    auto value_tuple = value->cast<ValueTuplePtr>();
+  if (value->isa<ValueSequence>()) {
+    auto value_tuple = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_tuple);
     for (size_t i = 0; i < value_tuple->size(); ++i) {
       ValuePtr element = value_tuple->value()[i];
@@ -390,8 +390,12 @@ void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *
         auto tensor = element->cast<tensor::TensorPtr>();
         MS_EXCEPTION_IF_NULL(tensor);
         tensors->emplace_back(tensor);
-      } else if (element->isa<ValueTuple>()) {
+      } else if (element->isa<ValueSequence>()) {
         TensorValueToTensor(element, tensors);
+      } else if (element->isa<Scalar>()) {
+        auto scalar = element->cast<ScalarPtr>();
+        MS_EXCEPTION_IF_NULL(scalar);
+        tensors->emplace_back(ScalarToTensor(scalar));
       }
     }
   } else if (value->isa<tensor::Tensor>()) {
@@ -425,15 +429,15 @@ ValuePtr ShallowCopyTensorValue(const ValuePtr &value) {
   }
 }
 
-size_t CountValueNum(const ValueTuplePtr &value_tuple) {
-  MS_EXCEPTION_IF_NULL(value_tuple);
+size_t CountValueNum(const ValueSequencePtr &value_sequence) {
+  MS_EXCEPTION_IF_NULL(value_sequence);
   size_t cnt = 0;
-  const auto &value_list = value_tuple->value();
+  const auto &value_list = value_sequence->value();
   for (const auto &value : value_list) {
     if (value->isa<None>()) {
       continue;
-    } else if (value->isa<ValueTuple>()) {
-      cnt += CountValueNum(value->cast<ValueTuplePtr>());
+    } else if (value->isa<ValueSequence>()) {
+      cnt += CountValueNum(value->cast<ValueSequencePtr>());
     } else {
       cnt++;
     }

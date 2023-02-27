@@ -111,6 +111,11 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
     }
   };
 
+  ShapeVector host_shape = {};
+  // GetRuntimePaddingShape doesn't support the value tuple node.
+  if (!node->isa<ValueNode>()) {
+    host_shape = trans::GetRuntimePaddingShape(node, 0);
+  }
   auto get_tensor_num = (host_tensor->isa<tensor::MapTensor>() ? kMapTensorNum : kNormalTensorNum);
   for (size_t i = 0; i < get_tensor_num; ++i) {
     const auto &real_host_tensor = get_tensor_by_index(i);
@@ -118,8 +123,11 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
     // Copy data from host tensor to device.
     auto host_tensor_size = LongToSize(real_host_tensor->data().nbytes());
     auto host_tensor_type = real_host_tensor->data_type();
-    if (!device_tensor->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), host_tensor_size, host_tensor_type,
-                                         real_host_tensor->data_c(), real_host_tensor->device_info().host_format_)) {
+    if (node->isa<ValueNode>()) {
+      host_shape = real_host_tensor->shape();
+    }
+    if (!device_tensor->SyncHostToDevice(host_shape, host_tensor_size, host_tensor_type, real_host_tensor->data_c(),
+                                         real_host_tensor->device_info().host_format_)) {
       std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
                                ", host tensor size: " + std::to_string(host_tensor_size) +
                                ", host tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +
