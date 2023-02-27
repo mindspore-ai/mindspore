@@ -2001,14 +2001,11 @@ class MaxPool3D(Primitive):
 
 class MaxUnpool2D(Primitive):
     r"""
-    Computes a partial inverse of MaxPool2D.
+    Computes inverse of MaxPool2D.
 
-    MaxPool2D is not fully invertible, since the non-maximal values are lost.
-
-    MaxUnpool2D takes in as input the output of MaxPool2D including the indices of
-    the maximal values and computes a partial inverse in which all non-maximal values
-    are set to zero. Typically the input is of shape :math:`(N, C, H_{in}, W_{in})` ,
-    the output is of shape :math:`(N, C, H_{out}, W_{out})` , the operation is as follows:
+    MaxUnpool2D keeps the maximal value and set all position of non-maximal values to zero.
+    Typically the input is of shape :math:`(N, C, H_{in}, W_{in})` , the output is of
+    shape :math:`(N, C, H_{out}, W_{out})` , the operation is as follows:
 
     .. math::
         \begin{array}{ll} \\
@@ -2104,12 +2101,9 @@ class MaxUnpool2D(Primitive):
 
 class MaxUnpool3D(Primitive):
     r"""
-    Computes a partial inverse of MaxUnpool3D.
+    Computes inverse of MaxUnpool3D.
 
-    MaxUnpool3D is not fully invertible, since the non-maximal values are lost.
-
-    MaxUnpool3D takes in as input the output of MaxUnpool3D including the indices of the maximal
-    values and computes a partial inverse in which all non-maximal values are set to zero.
+    MaxUnpool3D keeps the maximal value and set all position of non-maximal values to zero.
     Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, the output is of
     shape :math:`(N, C, D_{out}, H_{out}, W_{out})`, the operation is as follows.
 
