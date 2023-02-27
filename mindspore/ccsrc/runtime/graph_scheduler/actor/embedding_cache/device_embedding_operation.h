@@ -62,7 +62,7 @@ class DeviceEmbeddingOperation {
 
   virtual ~DeviceEmbeddingOperation() = default;
 
-  bool Initialize();
+  virtual bool Initialize();
 
   // Analyze the hit/miss info of the local host cache and device cache, and calculate the swapping and
   // mapping information of the missing feature id that needs to be inserted into the cache.
@@ -71,37 +71,23 @@ class DeviceEmbeddingOperation {
                                  bool *host_cache_need_wait_graph) = 0;
 
   // Pull missing embeddings on the device cache from the local host.
-  bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info);
+  virtual bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info) = 0;
 
   // Push non-hotspot embeddings on the device cache to the local host cache.
-  bool PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info);
+  virtual bool PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info) = 0;
 
  protected:
-  // Look up feature weights on Device Embedding Cache:
-  // 1. Update the shape of parameter node.
-  // 2. Infer shape for embedding cache look up kernel(operator name: 'Gather').
-  // 3. Launch embedding cache look up kernel.
-  virtual bool LookupDeviceCache(void *indices, void *embedding_cache, size_t indices_num, size_t cache_size,
-                                 size_t embedding_size, void *outputs) = 0;
-
-  // Update feature weights on Device Embedding Cache:
-  // 1. Update the shape of parameter node.
-  // 2. Infer shape for embedding cache update kernel(operator name: 'ScatterUpdate').
-  // 3. Launch embedding cache update kernel.
-  bool UpdateDeviceCache(void *indices, void *update_value, size_t indices_num, size_t cache_size,
-                         size_t embedding_size, void *embedding_cache);
-
   // Parse the hit and swap out to device cache information of the currently preprocessed id of the local host cache.
   bool ParseHostDataHostToDevice(int id, size_t data_step, size_t graph_running_step, bool *host_cache_need_wait_graph);
 
   // Parse the swap in information from device cache of the currently preprocessed id of the local host cache.
   bool ParseHostDataDeviceToHost(size_t data_step, size_t graph_running_step, bool *host_cache_need_wait_graph);
 
-  // Build a CNode of embedding cache look up kernel(operator name: 'Gather'), which is used to look up local device
+  // Build a CNode of embedding cache look up kernel, which is used to look up local device
   // embedding cache.
   virtual void BuildEmbeddingCacheLookupKernel() = 0;
 
-  // Build a CNode of embedding cache update kernel(operator name: 'ScatterUpdate'), which is used to update local
+  // Build a CNode of embedding cache update kernel, which is used to update local
   // device embedding cache.
   virtual void BuildEmbeddingCacheUpdateKernel() = 0;
 
@@ -133,10 +119,11 @@ class DeviceEmbeddingOperation {
   // range corresponding to the embedding table slice of the process.
   std::pair<int, int> local_device_cache_bounds_;
 
-  // The embedding cache look up kernel node(operator name: 'Gather').
+  // The embedding cache look up kernel node(operator name: 'Gather' for dense mode and 'MapTensorGet' for sparse mode).
   CNodePtr embedding_cache_lookup_node_{nullptr};
 
-  // The embedding cache update kernel node(operator name: 'ScatterUpdate').
+  // The embedding cache update kernel node(operator name: 'ScatterUpdate' for dense mode and 'MapTensorPut' for sparse
+  // mode).
   CNodePtr embedding_cache_update_node_{nullptr};
 
   // The feature ids that have been initialized already.

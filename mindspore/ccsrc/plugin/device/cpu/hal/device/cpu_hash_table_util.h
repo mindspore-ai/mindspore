@@ -41,9 +41,7 @@ template <typename KeyType, typename ValueType>
 void CreateCPUHashTable(const UserDataPtr &user_data) {
   MS_EXCEPTION_IF_NULL(user_data);
   auto shape_vector = user_data->get<ShapeVector>(kHashTableShapeVector);
-  auto default_value = user_data->get<Value>(kHashTableDefaultValue);
   MS_EXCEPTION_IF_NULL(shape_vector);
-  MS_EXCEPTION_IF_NULL(default_value);
 
   int32_t value_size = 1;
   for (size_t i = 0; i < (*shape_vector).size(); ++i) {
