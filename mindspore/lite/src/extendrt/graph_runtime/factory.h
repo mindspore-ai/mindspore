@@ -23,19 +23,18 @@
 #include "infer/graph_runtime.h"
 
 namespace mindspore {
-using GraphRuntime = infer::abstract::GraphRuntime;
-using GraphRuntimeRegFunc = std::function<std::shared_ptr<GraphRuntime>()>;
+using GraphRuntimeRegFunc = std::function<std::shared_ptr<infer::abstract::GraphRuntime>()>;
 
-class GraphRuntimRegistry {
+class GraphRuntimeRegistry {
  public:
-  GraphRuntimRegistry() = default;
-  virtual ~GraphRuntimRegistry() = default;
+  GraphRuntimeRegistry() = default;
+  virtual ~GraphRuntimeRegistry() = default;
 
-  static GraphRuntimRegistry &GetInstance();
+  static GraphRuntimeRegistry &GetInstance();
 
   void RegRuntime(const GraphRuntimeType &type, const GraphRuntimeRegFunc &creator);
 
-  std::shared_ptr<GraphRuntime> GetRuntime(const mindspore::GraphRuntimeType &type);
+  std::shared_ptr<infer::abstract::GraphRuntime> GetRuntime(const mindspore::GraphRuntimeType &type);
 
  private:
   mindspore::HashMap<GraphRuntimeType, GraphRuntimeRegFunc> graph_runtime_map_;
@@ -44,7 +43,7 @@ class GraphRuntimRegistry {
 class GraphRuntimeRegistrar {
  public:
   GraphRuntimeRegistrar(const mindspore::GraphRuntimeType &type, const GraphRuntimeRegFunc &creator) {
-    GraphRuntimRegistry::GetInstance().RegRuntime(type, creator);
+    GraphRuntimeRegistry::GetInstance().RegRuntime(type, creator);
   }
   ~GraphRuntimeRegistrar() = default;
 };

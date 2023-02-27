@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_INFER_KERNEL_CALLBACK_H_
-#define MINDSPORE_LITE_INFER_KERNEL_CALLBACK_H_
+#ifndef MINDSPORE_LITE_EXTENDRT_GRAPH_EXECUTOR_TYPE_H_
+#define MINDSPORE_LITE_EXTENDRT_GRAPH_EXECUTOR_TYPE_H_
 
-#include <memory>
-
-namespace mindspore::infer::abstract {
-using KernelCallBack = mindspore::lite::KernelCallBack;
-}  // namespace mindspore::infer::abstract
-
-#endif  // MINDSPORE_LITE_INFER_KERNEL_CALLBACK_H_
+namespace mindspore {
+enum GraphExecutorType { kDefaultExecutor = 0, kMindRTExecutor, kNoneExcutor };
+}  // namespace mindspore
+#endif  // MINDSPORE_LITE_EXTENDRT_GRAPH_EXECUTOR_TYPE_H_

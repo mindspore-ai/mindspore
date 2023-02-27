@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "extendrt/flow_executor.h"
+#include "extendrt/graph_executor/flow_executor.h"
 #include "extendrt/execution_plan.h"
 #include "litert/mindrt_executor.h"
 

@@ -27,11 +27,12 @@ void GraphCompilerRegistry::RegCompiler(const mindspore::GraphCompilerType &type
   graph_compiler_map_[type] = creator;
 }
 
-std::shared_ptr<infer::GraphCompiler> GraphCompilerRegistry::GetCompiler(const mindspore::GraphCompilerType &type) {
+std::shared_ptr<infer::abstract::GraphCompiler> GraphCompilerRegistry::GetCompiler(
+  const mindspore::GraphCompilerType &type, const std::shared_ptr<Context> &context) {
   auto it = graph_compiler_map_.find(type);
   if (it == graph_compiler_map_.end()) {
     return nullptr;
   }
-  return it->second();
+  return it->second(context);
 }
 }  // namespace mindspore

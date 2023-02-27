@@ -27,19 +27,24 @@ class DefaultGraphRuntime : public mindspore::infer::abstract::GraphRuntime {
   DefaultGraphRuntime() = default;
   virtual ~DefaultGraphRuntime() = default;
 
-  Status Prepare(std::shared_ptr<abstract::ExecutionPlan> execution_plan) override;
+  Status Prepare(std::shared_ptr<infer::abstract::ExecutionPlan> execution_plan) override;
 
   Status Execute() override;
 
-  Status Execute(const std::vector<abstract::Tensor *> &inputs, const std::vector<abstract::Tensor *> &outputs,
-                 abstract::KernelCallBack before = nullptr, abstract::KernelCallBack after = nullptr) override;
+  Status Execute(const std::vector<infer::abstract::Tensor *> &inputs,
+                 const std::vector<infer::abstract::Tensor *> &outputs,
+                 infer::abstract::KernelCallBack before = nullptr,
+                 infer::abstract::KernelCallBack after = nullptr) override;
+
+  Status Resize(const std::vector<infer::abstract::Tensor *> *inputs,
+                const std::vector<std::vector<int64_t>> &dims) override;
 
  private:
-  std::shared_ptr<abstract::Executor> SelectExecutor(const std::shared_ptr<abstract::ExecutionFlow> &execution_flow);
+  std::shared_ptr<infer::abstract::Executor> SelectExecutor();
 
  private:
-  std::shared_ptr<abstract::ExecutionPlan> execution_plan_ = nullptr;
-  mindspore::HashMap<std::shared_ptr<abstract::ExecutionFlow>, std::shared_ptr<abstract::Executor>> executor_map_;
+  std::shared_ptr<infer::abstract::ExecutionPlan> execution_plan_ = nullptr;
+  std::shared_ptr<infer::abstract::Executor> default_executor_ = nullptr;
 };
 }  // namespace mindspore
 

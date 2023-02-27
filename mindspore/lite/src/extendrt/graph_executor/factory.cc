@@ -13,10 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXTENDRT_GRAPH_RUNTIME_TYPE_H_
-#define MINDSPORE_LITE_EXTENDRT_GRAPH_RUNTIME_TYPE_H_
+#include "extendrt/graph_executor/factory.h"
+#include <functional>
+#include <memory>
 
 namespace mindspore {
-enum GraphRuntimeType { kDefaultRuntime = 0, kSingleOpSession, kLiteInferSession, kDelegateSession, kNoneRuntime };
+GraphExecutorRegistry &GraphExecutorRegistry::GetInstance() {
+  static GraphExecutorRegistry instance;
+  return instance;
+}
+
+void GraphExecutorRegistry::RegExecutor(const mindspore::GraphExecutorType &type, const GraphExecutorRegFunc &creator) {
+  graph_executor_map_[type] = creator;
+}
+
+std::shared_ptr<infer::GraphExecutor> GraphExecutorRegistry::GetExecutor(const mindspore::GraphExecutorType &type) {
+  auto it = graph_executor_map_.find(type);
+  if (it == graph_executor_map_.end()) {
+    return nullptr;
+  }
+  return it->second();
+}
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_EXTENDRT_GRAPH_RUNTIME_TYPE_H_

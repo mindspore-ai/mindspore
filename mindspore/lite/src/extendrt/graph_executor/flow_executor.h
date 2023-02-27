@@ -35,7 +35,7 @@ class FlowExecutor : public mindspore::infer::abstract::Executor {
 
   const std::string &Name() override { return name_; }
 
-  Status Prepare(std::shared_ptr<abstract::ExecutionFlow> execution_flow) override;
+  Status Prepare() override;
 
   Status Execute() override;
 
