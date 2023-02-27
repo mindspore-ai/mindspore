@@ -21,7 +21,7 @@
         - **sorted** (bool, 可选) - 如果为True，则获取的元素将按值降序排序。如果为False，则不对获取的元素进行排序。默认值：True。
 
     输入：
-        - **input_x** (Tensor) - 需计算的输入，数据类型必须为float16、float32或int32。
+        - **input_x** (Tensor) - 需计算的输入，CPU推理数据类型必须为float16、float32或int32；GPU推理数据类型必须为float16或float32。
         - **k** (int) - 指定计算最大元素的数量，必须为常量。
 
     输出：
