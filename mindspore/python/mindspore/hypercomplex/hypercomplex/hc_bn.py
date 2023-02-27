@@ -167,17 +167,12 @@ class _BatchNorm(nn.Cell):
         self.is_graph_mode = context.get_context("mode") == context.GRAPH_MODE
         self.momentum = 1.0 - momentum
 
-        self.reduce_mean_op1 = P.ReduceMean(keep_dims=True)
-        self.reduce_mean_op2 = P.ReduceMean(keep_dims=False)
-
         self.features_dim = data_format.lower().find('c')
-        self.get_dtype = P.DType()
-        self.get_shape = P.Shape()
 
     def construct(self, u: Tensor) -> Tensor:
         """construct"""
-        u_dtype = self.get_dtype(u)
-        u_shape = self.get_shape(u)
+        u_dtype = u.dtype
+        u_shape = P.shape(u)
         self._check_input_dim(u_shape, u_dtype)
         if u_dtype == mindspore.complex64:
             hc_axis = None
@@ -195,11 +190,11 @@ class _BatchNorm(nn.Cell):
             sh = sh[sh != feature_axis]
             if hc_axis is None:
                 u_x, u_y = get_x_and_y(u)
-                mu_x = self.reduce_mean_op1(u_x, sh.tolist())
-                mu_y = self.reduce_mean_op1(u_y, sh.tolist())
+                mu_x = P.mean(u_x, sh.tolist(), keep_dims=True)
+                mu_y = P.mean(u_y, sh.tolist(), keep_dims=True)
                 mu = to_2channel(mu_x, mu_y, mindspore.complex64)
             else:
-                mu = self.reduce_mean_op1(u, sh.tolist())
+                mu = P.mean(u, sh.tolist(), keep_dims=True)
 
             u_centered = u - mu
             norma2 = self.bn_impl.get_square_norm(u_centered)
@@ -207,7 +202,7 @@ class _BatchNorm(nn.Cell):
             ndim = norma2.ndim
             mean_dims = np.arange(ndim)
             mean_dims = mean_dims[mean_dims != norma_feature_axis]
-            sigma2 = self.reduce_mean_op2(norma2, mean_dims.tolist()) + self.eps
+            sigma2 = P.mean(norma2, mean_dims.tolist(), keep_dims=False) + self.eps
             result = self._calculate_bn(u_centered, sigma2, feature_axis)
 
             if self.use_batch_statistics:
@@ -249,7 +244,7 @@ class _BatchNorm(nn.Cell):
         if self.affine:
             out_x, out_y = get_x_and_y(out)
             out_x, out_y = self.bn_impl.calculate_bn(out_x, out_y, sigma)
-            out = to_2channel(out_x, out_y, self.get_dtype(u_centered))
+            out = to_2channel(out_x, out_y, u_centered.dtype)
         else:
             out = out / sigma
         out = P.transpose(out, u_shape)
@@ -584,7 +579,6 @@ class BatchNorm3d(nn.Cell):
         """Initialize _BatchNorm."""
         super(BatchNorm3d, self).__init__()
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.cls_name)
-        self.reshape = P.Reshape()
         self.bn2d = BatchNorm2d(bn_impl=bn_impl,
                                 num_features=num_features,
                                 eps=eps,
@@ -598,19 +592,19 @@ class BatchNorm3d(nn.Cell):
                                 data_format="NCHW")
 
     def construct(self, u: Tensor) -> Tensor:
-        '''construct'''
+        """construct"""
         u_shape = F.shape(u)
         self._check_3d_shape(u_shape, F.dtype(u))
         reshape = list(u_shape)
         reshape[-3] *= reshape[-2]
         reshape = tuple(int(i) for i in reshape[:-2] + reshape[-1:])
-        u = self.reshape(u, tuple(reshape))
+        u = P.reshape(u, tuple(reshape))
         out = self.bn2d(u)
-        out = self.reshape(out, u_shape)
+        out = P.reshape(out, u_shape)
         return out
 
     def _check_3d_shape(self, input_shape, dtype: Any) -> None:
-        '''_check_3d_shape'''
+        """check 3d shapes"""
         dim = len(input_shape)
         if dtype in [mindspore.float16, mindspore.float32]:
             if dim != 6:

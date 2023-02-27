@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Complex Operators"""
-from mindspore.hypercomplex.complex.complex_relu import ReLU
+from mindspore.hypercomplex.complex.complex_operators import ReLU
 from mindspore.hypercomplex.complex.complex_operators import Conv1d, Conv2d, Conv3d
 from mindspore.hypercomplex.complex.complex_operators import BatchNorm1d, BatchNorm2d, BatchNorm3d
 from mindspore.hypercomplex.complex.complex_operators import Dense

@@ -108,8 +108,7 @@ class _BatchNormImpl(HCBatchNormImpl):
             the input tensor, but without the very first dimension because the output tensor is real-valued.
         """
         u_r, u_d = get_real_and_double(u)
-        abs_op = ops.Abs()
-        out = abs_op(u_r) + abs_op(u_d)
+        out = ops.abs(u_r) + ops.abs(u_d)
         return out
 
     def get_square_norm(self, u: Tensor) -> Tensor:
@@ -224,9 +223,7 @@ class _J1J2BatchNormImpl(HCBatchNormImpl):
             the input tensor, but without the very first dimension because the output tensor is real-valued.
         """
         u_1, u_2 = get_u1_and_u2(u)
-        abs_op = ops.Abs()
-        max_op = ops.Maximum()
-        out = max_op(abs_op(u_1), abs_op(u_2))
+        out = ops.maximum(ops.abs(u_1), ops.abs(u_2))
         return out
 
     def get_square_norm(self, u: Tensor) -> Tensor:

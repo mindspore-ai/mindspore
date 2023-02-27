@@ -14,7 +14,7 @@
 # ============================================================================
 """hypercomplex dense implementation"""
 import numbers
-from typing import Callable, Union, Tuple
+from typing import Union, Tuple
 
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.parameter import Parameter
@@ -65,7 +65,6 @@ class _DenseImpl(nn.Cell):
         super(_DenseImpl, self).__init__()
 
     def construct(self,
-                  matmul_op: Callable,
                   x: Tensor,
                   y: Tensor) -> Tuple[Tensor, Tensor]:
         pass

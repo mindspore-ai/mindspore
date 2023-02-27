@@ -69,9 +69,14 @@ class _ConvImpl(nn.Cell):
         super(_ConvImpl, self).__init__()
 
     def construct(self,
-                  conv_op: Callable,
+                  conv_fn: Callable,
                   x: Tensor,
-                  y: Tensor) -> Tuple[Tensor, Tensor]:
+                  y: Tensor,
+                  pad_mode: str,
+                  padding: Tuple[int, ...],
+                  stride: Tuple[int, ...],
+                  dilation: Tuple[int, ...],
+                  group: int) -> Tuple[Tensor, Tensor]:
         pass
 
 

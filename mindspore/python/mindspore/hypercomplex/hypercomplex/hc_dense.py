@@ -22,7 +22,7 @@ from mindspore._checkparam import Validator
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
-from mindspore.ops import operations as P
+from mindspore import ops as P
 from mindspore.hypercomplex.hypercomplex._hc_dense_impl import _DenseImpl as DenseImpl
 from mindspore.hypercomplex.utils import get_x_and_y, to_2channel
 
@@ -101,8 +101,6 @@ class Dense(nn.Cell):
         self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
         self.has_bias = Validator.check_bool(has_bias, "has_bias", self.cls_name)
         self.dtype = None
-        self.reshape = P.Reshape()
-        self.shape_op = P.Shape()
 
         self.weight_x = None
         self.weight_y = None
@@ -157,9 +155,6 @@ class Dense(nn.Cell):
                 bias_init_x = bias_init_y = bias_init
             self.bias_x = Parameter(initializer(bias_init_x, [out_channels]), name="bias_x")
             self.bias_y = Parameter(initializer(bias_init_y, [out_channels]), name="bias_y")
-            self.bias_add = P.BiasAdd()
-
-        self.matmul = P.MatMul(transpose_b=True)
 
     def check_dense_input_shape(self, x: Tensor, x_dtype):
         msg_prefix = f"For '{self.cls_name}', the" if self.cls_name else "The"
@@ -175,22 +170,22 @@ class Dense(nn.Cell):
         if self.dtype is not None and self.dtype != u.dtype:
             raise TypeError("dtype must be equal to the data type of the inputs tensor, but got: "
                             f"dtype={self.dtype} and inputs.dtype={u.dtype}")
-        u_shape = self.shape_op(u)
+        u_shape = P.shape(u)
         self.check_dense_input_shape(u_shape, u.dtype)
         u_reshape = [-1, u_shape[-1]]
         if u.dtype in [mindspore.float32, mindspore.float64]:
             u_reshape = [2] + u_reshape
         if len(u_reshape) < len(u_shape):
-            u = self.reshape(u, tuple(u_reshape))
+            u = P.reshape(u, tuple(u_reshape))
         x, y = get_x_and_y(u)
-        out_x, out_y = self.dense_impl(self.matmul, x, y)
+        out_x, out_y = self.dense_impl(x, y)
         if self.has_bias:
-            out_x = self.bias_add(out_x, self.bias_x)
-            out_y = self.bias_add(out_y, self.bias_y)
+            out_x = P.bias_add(out_x, self.bias_x)
+            out_y = P.bias_add(out_y, self.bias_y)
         out = to_2channel(out_x, out_y, u.dtype)
         if len(u_reshape) < len(u_shape):
             out_shape = u_shape[:-1] + (-1,)
-            out = self.reshape(out, out_shape)
+            out = P.reshape(out, out_shape)
         return out
 
     def extend_repr(self):

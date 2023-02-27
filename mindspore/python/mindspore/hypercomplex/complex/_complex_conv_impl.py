@@ -63,13 +63,23 @@ class _ConvImpl(BaseConvImpl):
     """
 
     def construct(self,
-                  conv_op: Callable,
+                  conv_fn: Callable,
                   real: Tensor,
-                  imag: Tensor) -> Tuple[Tensor, Tensor]:
-        out_rr = conv_op(real, self.weight_x)
-        out_ii = conv_op(imag, self.weight_y)
-        out_ri = conv_op(real, self.weight_y)
-        out_ir = conv_op(imag, self.weight_x)
+                  imag: Tensor,
+                  pad_mode: str,
+                  padding: Tuple[int, ...],
+                  stride: Tuple[int, ...],
+                  dilation: Tuple[int, ...],
+                  group: int) -> Tuple[Tensor, Tensor]:
+
+        out_rr = conv_fn(real, self.weight_x, pad_mode=pad_mode, padding=padding,
+                         stride=stride, dilation=dilation, group=group)
+        out_ii = conv_fn(imag, self.weight_y, pad_mode=pad_mode, padding=padding,
+                         stride=stride, dilation=dilation, group=group)
+        out_ri = conv_fn(real, self.weight_y, pad_mode=pad_mode, padding=padding,
+                         stride=stride, dilation=dilation, group=group)
+        out_ir = conv_fn(imag, self.weight_x, pad_mode=pad_mode, padding=padding,
+                         stride=stride, dilation=dilation, group=group)
 
         out_r = out_rr - out_ii
         out_i = out_ri + out_ir
@@ -119,12 +129,21 @@ class _KaratsubaConvImpl(BaseConvImpl):
     """
 
     def construct(self,
-                  conv_op: Callable,
+                  conv_fn: Callable,
                   real: Tensor,
-                  imag: Tensor) -> Tuple[Tensor, Tensor]:
-        c1 = conv_op(real, self.weight_x)
-        c2 = conv_op(imag, self.weight_y)
-        c3 = conv_op(real + imag, self.weight_x + self.weight_y)
+                  imag: Tensor,
+                  pad_mode: str,
+                  padding: Tuple[int, ...],
+                  stride: Tuple[int, ...],
+                  dilation: Tuple[int, ...],
+                  group: int) -> Tuple[Tensor, Tensor]:
+
+        c1 = conv_fn(real, self.weight_x, pad_mode=pad_mode, padding=padding,
+                     stride=stride, dilation=dilation, group=group)
+        c2 = conv_fn(imag, self.weight_y, pad_mode=pad_mode, padding=padding,
+                     stride=stride, dilation=dilation, group=group)
+        c3 = conv_fn(real + imag, self.weight_x + self.weight_y, pad_mode=pad_mode, padding=padding,
+                     stride=stride, dilation=dilation, group=group)
 
         out_r = c1 - c2
         out_i = c3 - c1 - c2
@@ -180,22 +199,29 @@ class _ReImConvImpl(BaseConvImpl):
                  weight_shape: tuple,
                  **factory_kwargs) -> None:
         super(_ReImConvImpl, self).__init__(weight_init, weight_shape, **factory_kwargs)
-        data_format = factory_kwargs.get('data_format', 'nchw')
-        c_idx = data_format.lower().find('c')
-        if c_idx < 0:
+        data_format = factory_kwargs.get('data_format')
+        if data_format is None:
+            data_format = "NCHW"
+        self.c_idx = data_format.lower().find('c')
+        if self.c_idx < 0:
             raise ValueError(f"Data format {data_format} is unsupported")
-        self.concat = P.Concat(c_idx)
-        self.neg = P.Neg()
 
     def construct(self,
-                  conv_op: Callable,
+                  conv_fn: Callable,
                   real: Tensor,
-                  imag: Tensor) -> Tuple[Tensor, Tensor]:
+                  imag: Tensor,
+                  pad_mode: str,
+                  padding: Tuple[int, ...],
+                  stride: Tuple[int, ...],
+                  dilation: Tuple[int, ...],
+                  group: int) -> Tuple[Tensor, Tensor]:
 
-        inp = self.concat([real, imag])
-        weight_y_neg = self.neg(self.weight_y)
-        w1 = self.concat([self.weight_x, weight_y_neg])
-        w2 = self.concat([self.weight_y, self.weight_x])
-        out_r = conv_op(inp, w1)
-        out_i = conv_op(inp, w2)
+        inp = P.concat([real, imag], axis=self.c_idx)
+        weight_y_neg = P.neg(self.weight_y)
+        w1 = P.concat([self.weight_x, weight_y_neg], axis=self.c_idx)
+        w2 = P.concat([self.weight_y, self.weight_x], axis=self.c_idx)
+        out_r = conv_fn(inp, w1, pad_mode=pad_mode, padding=padding,
+                        stride=stride, dilation=dilation, group=group)
+        out_i = conv_fn(inp, w2, pad_mode=pad_mode, padding=padding,
+                        stride=stride, dilation=dilation, group=group)
         return out_r, out_i
