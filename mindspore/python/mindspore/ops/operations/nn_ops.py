@@ -2001,7 +2001,7 @@ class MaxPool3D(Primitive):
 
 class MaxUnpool2D(Primitive):
     r"""
-    Computes inverse of MaxPool2D.
+    Computes the inverse of MaxPool2D.
 
     MaxUnpool2D keeps the maximal value and set all position of non-maximal values to zero.
     Typically the input is of shape :math:`(N, C, H_{in}, W_{in})` , the output is of
@@ -2101,7 +2101,7 @@ class MaxUnpool2D(Primitive):
 
 class MaxUnpool3D(Primitive):
     r"""
-    Computes inverse of MaxUnpool3D.
+    Computes the inverse of :class:`mindspore.ops.MaxPool3D`.
 
     MaxUnpool3D keeps the maximal value and set all position of non-maximal values to zero.
     Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, the output is of

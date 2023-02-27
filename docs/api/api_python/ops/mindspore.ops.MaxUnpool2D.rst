@@ -3,11 +3,9 @@ mindspore.ops.MaxUnpool2D
 
 .. py:class:: mindspore.ops.MaxUnpool2D(ksize, strides=0, pads=0, output_shape=(), data_format="NCHW")
 
-    计算MaxPool2D的部分逆。
+    MaxPool2D的逆过程。
 
-    MaxPool2D不是完全可逆的，因为一些非最大值丢失了。
-
-    MaxUnpool2D将MaxPool2D的输出作为输入(包括最大值的索引)，并计算一个部分逆，其中的所有非最大值被设置为0。
+    MaxUnpool2D在计算过程中，保留最大值位置的元素，并将非最大值位置元素设置为0。
     例如，输入的shape为 :math:`(N, C, H_{in}, W_{in})` ，输出的shape为 :math:`(N, C, H_{out}, W_{out})` ，
     则该操作如下式所示：
 
