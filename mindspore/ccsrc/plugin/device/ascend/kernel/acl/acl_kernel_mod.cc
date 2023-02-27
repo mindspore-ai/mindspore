@@ -213,11 +213,11 @@ void AclKernelMod::UpdateReduceAxisAttr(const AnfNodePtr &node) {
   opt::NormalizeReduceAttrAxis(cnode);
 }
 
-void AclKernelMod::ProcessAttribute(const std::shared_ptr<AclOpDesc> &op_desc_ptr) {
+void AclKernelMod::ProcessAttribute(const std::shared_ptr<AclOpDesc> &op_desc_ptr,
+                                    const std::vector<string> &input_names) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   const auto &attr_to_input_maps = GeOpConvertor::GetNeedAddInput(node, true);
-  const auto &input_names = kernel::AclUtils::GetOpInputAnchorNames(node);
   UpdateReduceAxisAttr(node);
   auto attr_list = GeOpConvertor::GetAttrAndValue(node, true);
   for (auto &[attr_name, value] : attr_list) {
@@ -246,11 +246,24 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   }
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
+  auto node_op_runtime_info = node->user_data<runtime::OpRuntimeInfo>();
+  bool node_acl_runtime_info_legal = node_op_runtime_info != nullptr &&
+                                     node_op_runtime_info->acl_runtime_info_ != nullptr &&
+                                     node_op_runtime_info->acl_runtime_info_->use();
+  const auto &input_names =
+    (node_acl_runtime_info_legal && !node_op_runtime_info->acl_runtime_info_->is_dynamic_input_size())
+      ? node_op_runtime_info->acl_runtime_info_->input_names()
+      : AclUtils::GetOpInputAnchorNames(node);
+  const auto &output_names =
+    (node_acl_runtime_info_legal && !node_op_runtime_info->acl_runtime_info_->is_dynamic_output_size())
+      ? node_op_runtime_info->acl_runtime_info_->output_names()
+      : AclUtils::GetOpOutputAnchorNames(node);
+
   auto op_desc_ptr = std::make_shared<AclOpDesc>(op_type_, node);
   MS_EXCEPTION_IF_NULL(op_desc_ptr);
   op_desc_ptr->AddTensorDesc(input_desc_list_, output_desc_list_);
-  op_desc_ptr->AddDataBuf(inputs, input_size_list_, outputs, output_size_list_);
-  ProcessAttribute(op_desc_ptr);
+  op_desc_ptr->AddDataBuf(inputs, input_size_list_, outputs, output_size_list_, input_names, output_names);
+  ProcessAttribute(op_desc_ptr, input_names);
   op_desc_ptr->ClearNullTensor();
 
   // cppcheck-suppress unreadVariable

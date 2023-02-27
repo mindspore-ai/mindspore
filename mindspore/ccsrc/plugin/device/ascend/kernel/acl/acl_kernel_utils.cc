@@ -186,10 +186,10 @@ void AclOpDesc::AddTensorDesc(const std::vector<GeTensorDescPtr> &inputs, const 
 }
 
 void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vector<size_t> &input_size_list,
-                           const std::vector<AddressPtr> &outputs, const std::vector<size_t> &output_size_list) {
+                           const std::vector<AddressPtr> &outputs, const std::vector<size_t> &output_size_list,
+                           const std::vector<std::string> &input_names, const std::vector<std::string> &output_names) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
-  const auto &input_names = AclUtils::GetOpInputAnchorNames(node);
   input_tensor_data_.clear();
   input_tensor_data_.resize(input_names.size(), nullptr);
   for (size_t i = 0; i < inputs.size(); i++) {
@@ -209,7 +209,7 @@ void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vec
     }
     input_tensor_data_[idx] = CreateDataBuf(inputs[i], input_size_list[idx]);
   }
-  const auto &output_names = AclUtils::GetOpOutputAnchorNames(node);
+
   output_tensor_data_.clear();
   output_tensor_data_.resize(output_names.size(), aclCreateDataBuffer(nullptr, 0));
   for (size_t i = 0; i < outputs.size(); ++i) {
