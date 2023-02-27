@@ -67,15 +67,17 @@ bool SequenceAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_0 + input_1': {"
                       << input_0_size + input_1_size << "} is not equal to the size of output: {" << output_size << "}";
   }
-
-  auto cp_ret = memcpy_s(output_addr, input_0_size, input_0_addr, input_0_size);
-  if (cp_ret != EOK) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+  if (input_0_size != 0) {
+    auto cp_ret = memcpy_s(output_addr, input_0_size, input_0_addr, input_0_size);
+    if (cp_ret != EOK) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+    }
   }
-
-  cp_ret = memcpy_s(output_addr + input_0_size / sizeof(T), input_1_size, input_1_addr, input_1_size);
-  if (cp_ret != EOK) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+  if (input_1_size != 0) {
+    auto cp_ret = memcpy_s(output_addr + input_0_size / sizeof(T), input_1_size, input_1_addr, input_1_size);
+    if (cp_ret != EOK) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+    }
   }
   return true;
 }

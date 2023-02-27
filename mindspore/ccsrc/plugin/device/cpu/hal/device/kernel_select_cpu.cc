@@ -114,7 +114,7 @@ void GetInputFormat(const CNodePtr &kernel_node, std::vector<std::string> *input
 }
 
 bool InputDtypeMatch(TypeId InputAttr, TypeId input_type, bool strict) {
-  if (InputAttr == input_type) {
+  if (InputAttr == input_type || kTypeUnknown == input_type) {
     return true;
   }
   if (!strict && InputAttr == kNumberTypeInt32 && (input_type == kNumberTypeInt16 || input_type == kNumberTypeInt64)) {
@@ -135,6 +135,9 @@ bool OutputDtypeMatched(const kernel::KernelAttr &kernel_attr, const std::vector
   }
   auto output_num = output_types.size();
   for (size_t i = 0; i < output_num; ++i) {
+    if (output_types[i] == kTypeUnknown) {
+      continue;
+    }
     if (kernel_attr.GetOutputAttr(i).dtype != output_types[i]) {
       MS_LOG(DEBUG) << "required dtype:" << kernel_attr.GetOutputAttr(i).dtype
                     << ", actual output dtype:" << output_types[i];

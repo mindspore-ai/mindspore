@@ -64,21 +64,28 @@ size_t KernelTensor::GetSizeInBytes() const {
 }
 
 TypeId GetSeqElementsDtype(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
   if (!abs->isa<abstract::AbstractSequence>()) {
     return TypeId::kTypeUnknown;
   }
   TypePtr type_ptr;
   auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_abs);
   if (seq_abs->dynamic_len()) {
+    if (seq_abs->dynamic_len_element_abs() == nullptr) {
+      return TypeId::kTypeUnknown;
+    }
     type_ptr = seq_abs->dynamic_len_element_abs()->BuildType();
   } else {
-    if (seq_abs->elements().empty()) {
+    if (seq_abs->elements().empty() || seq_abs->elements()[0] == nullptr) {
       return TypeId::kTypeUnknown;
     }
     type_ptr = seq_abs->elements()[0]->BuildType();
   }
+  MS_EXCEPTION_IF_NULL(type_ptr);
   if (type_ptr->isa<TensorType>()) {
     auto tensor_ptr = type_ptr->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_ptr);
     auto elem = tensor_ptr->element();
     if (elem == nullptr) {
       return TypeId::kTypeUnknown;
@@ -122,14 +129,21 @@ TypeId KernelTensor::GetDtype() const {
 }
 
 ShapeVector GetSequenceFlattenShape(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
   if (!abs->isa<abstract::AbstractSequence>()) {
     return {};
   }
   auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_abs);
   if (seq_abs->dynamic_len()) {
     return {-1};
   }
+  if (seq_abs->elements().empty() || seq_abs->elements()[0] == nullptr) {
+    MS_LOG(INFO) << "Empty sequence abstract:" << seq_abs->ToString();
+    return {0};
+  }
   auto type_ptr = seq_abs->elements()[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(type_ptr);
   if (!type_ptr->isa<TensorType>()) {
     return {(int64_t)seq_abs->elements().size()};
   }
