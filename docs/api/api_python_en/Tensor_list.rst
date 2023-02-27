@@ -194,6 +194,7 @@
     mindspore.Tensor.masked_select
     mindspore.Tensor.matrix_power
     mindspore.Tensor.max
+    mindspore.Tensor.maximum
     mindspore.Tensor.mean
     mindspore.Tensor.median
     mindspore.Tensor.mH
@@ -212,6 +213,7 @@
     mindspore.Tensor.nbytes
     mindspore.Tensor.ndim
     mindspore.Tensor.ndimension
+    mindspore.Tensor.ne
     mindspore.Tensor.negative
     mindspore.Tensor.nelement
     mindspore.Tensor.new_ones
