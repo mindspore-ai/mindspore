@@ -59,18 +59,16 @@ function(set_nvcc_flag CUDA_NVCC_FLAGS)
             list(APPEND cuda_archs_bin ${arch_bin})
         endforeach()
     else()
-        message("Failed to detect gpu arch automatically, build a base arch 5.3.")
-        list(APPEND CUDA_NVCC_FLAGS -arch=sm_53)
+        message("Failed to detect gpu arch automatically, build a base arch 6.0.")
+        list(APPEND CUDA_NVCC_FLAGS -arch=sm_60)
     endif()
     # Get build flag from env to choose common/auto build.
     set(NVCC_ARCH_FLAG_FROM_ENV $ENV{CUDA_ARCH})
     if(NVCC_ARCH_FLAG_FROM_ENV STREQUAL "common")
         message("Build common archs for release.")
-        list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_53,code=sm_53
-                                    -gencode=arch=compute_60,code=sm_60
+        list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_60,code=sm_60
                                     -gencode=arch=compute_61,code=sm_61
-                                    -gencode=arch=compute_70,code=sm_70
-                                    -gencode=arch=compute_72,code=sm_72)
+                                    -gencode=arch=compute_70,code=sm_70)
         if(${CUDA_VERSION} VERSION_GREATER "9.5")
             list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_75,code=sm_75)
             if(${CUDA_VERSION} VERSION_LESS "11.0")
@@ -93,9 +91,9 @@ function(set_nvcc_flag CUDA_NVCC_FLAGS)
         foreach(arch ${cuda_archs_bin})
             list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_${arch},code=sm_${arch})
         endforeach()
-        # For auto build, it only generate the code for indeed arch, so add sm_53 as a default arch
+        # For auto build, it only generate the code for indeed arch, so add sm_60 as a default arch
         # to avoid error in different archs. It may increase the compilation time.
-        list(APPEND CUDA_NVCC_FLAGS -arch=sm_53)
+        list(APPEND CUDA_NVCC_FLAGS -arch=sm_60)
     endif()
     list(REMOVE_DUPLICATES CUDA_NVCC_FLAGS)
     message("Final CUDA_NVCC_FLASG " ${CUDA_NVCC_FLAGS})

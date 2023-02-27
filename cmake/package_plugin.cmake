@@ -89,9 +89,10 @@ if(ENABLE_GPU)
         endif()
     endif()
     install(
-            TARGETS cuda_ops
+            TARGETS cuda_ops LIBRARY
             DESTINATION ${INSTALL_PLUGIN_DIR}/gpu${CUDA_VERSION}
             COMPONENT mindspore
+            NAMELINK_SKIP
     )
 endif()
 
@@ -117,7 +118,7 @@ if(ENABLE_SYM_FILE)
     install(CODE "\
       execute_process(COMMAND ${CMAKE_COMMAND} -DMS_PACK_ROOT_DIR=${CPACK_PACKAGE_DIRECTORY} \
         -DMS_INSTALL_DIR=${CPACK_PACKAGE_DIRECTORY}/_CPack_Packages/${CMAKE_HOST_SYSTEM_NAME}/${CPACK_GENERATOR} \
-        -DMS_PACKAGE_FILE_NAME=${CPACK_PACKAGE_FILE_NAME} -P${CMAKE_SOURCE_DIR}/cmake/plugin_debuginfo_script.cmake)"
+        -DMS_PACKAGE_FILE_NAME=${CPACK_PACKAGE_FILE_NAME} -P ${CMAKE_SOURCE_DIR}/cmake/plugin_debuginfo_script.cmake)"
     )
 endif()
 
