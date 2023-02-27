@@ -1392,14 +1392,12 @@ class FractionalMaxPool3d(Cell):
 
 class MaxUnpool1d(Cell):
     r"""
-    Computes a partial inverse of MaxPool1d.
+    Computes the inverse of :class:`mindspore.nn.MaxPool1d`.
 
-    MaxPool1d is not fully invertible, since the non-maximal values are lost.
+    MaxUnpool2d keeps the maximal value and set all position of non-maximal values to zero. Typically the input
+    is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape
+    :math:`(N, C, H_{out})` or :math:`(C, H_{out})`. The operation is as follows.
 
-    MaxUnpool1d takes in as input the output of MaxPool1d including the indices of the maximal values
-    and computes a partial inverse in which all non-maximal values are set to zero. Typically the input
-    is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape :math:`(N, C, H_{out})`
-    or :math:`(C, H_{out})`. The operation is as follows.
 
     .. math::
         \begin{array}{ll} \\

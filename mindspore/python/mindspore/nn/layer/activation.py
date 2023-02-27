@@ -164,10 +164,9 @@ class Softmin(Cell):
 
 class Softmax2d(Cell):
     r"""
-    Applies SoftMax over features to each spatial location.
+    Softmax function applied to 2D features data.
 
-    When given a Tensor with shape of :math:`(C, H, W)` , it will
-    apply `Softmax` to each location :math:`(c, h, w)`.
+    Applies `Softmax` to each location :math:`(c, h, w)` with an input Tensor of shape :math:`(C, H, W)` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})`.
@@ -1418,7 +1417,7 @@ class Mish(Cell):
 
 class GLU(Cell):
     r"""
-    Applies the gated linear unit function.
+    The gated linear unit function.
 
     .. math::
         {GLU}(a, b)= a \otimes \sigma(b)
@@ -1428,7 +1427,7 @@ class GLU(Cell):
     Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
 
     Args:
-        axis (int): the dimension on which to split the input. Default: -1
+        axis (int): the axis to split the input. Default: -1, the last axis in `x`.
 
     Inputs:
         - **x** (Tensor) - :math:`(\ast_1, N, \ast_2)` where `*` means, any number of additional dimensions.
@@ -1444,7 +1443,7 @@ class GLU(Cell):
         >>> input = Tensor([[0.1,0.2,0.3,0.4],[0.5,0.6,0.7,0.8]])
         >>> output = m(input)
         >>> print(output)
-        [[0.05744425 0.11973753
+        [[0.05744425 0.11973753]
          [0.33409387 0.41398472]]
     """
 

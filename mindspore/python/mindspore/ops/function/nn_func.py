@@ -5109,7 +5109,7 @@ def glu(x, axis=-1):
     Args:
         x (Tensor): Tensor to be splited. Its dtype is number.Number, and shape is :math:`(\ast_1, N, \ast_2)`
             where `*` means, any number of additional dimensions.
-        axis (int, optional): the dimension on which to split the input. It must be int. Default: -1.
+        axis (int, optional): the axis to split the input. It must be int. Default: -1, the last axis of `x`.
 
     Returns:
         Tensor, the same dtype as the `x`, with the shape :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`.
