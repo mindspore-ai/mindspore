@@ -421,14 +421,11 @@ def test_scatter_func_input_less_than_1_float32():
     updates = Tensor(np.arange(34, 70).reshape((2, 2, 3, 3)).astype(np.float32))
 
     # update
-    output = scatter_func_net("update", inputx, indices, updates)
+    indices_unique = Tensor(np.array([[[1, 0, 2]]]).astype(np.int32))
+    updates_unique = Tensor(np.arange(34, 43).reshape((1, 1, 3, 3)).astype(np.float32))
+    output = scatter_func_net("update", inputx, indices_unique, updates_unique)
     expected = np.array(
-        [
-            [37.0, 38.0, 39.0],
-            [34.0, 35.0, 66.0],
-            [67.0, 68.0, 69.0],
-        ],
-        dtype=np.float32,
+        [[37.0, 38.0, 39.0], [34.0, 35.0, 36.0], [40.0, 41.0, 42.0]], dtype=np.float32,
     )
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
@@ -517,10 +514,12 @@ def test_scatter_func_large_float16():
     updates = Tensor(np.arange(63, 111).reshape((2, 2, 3, 4)).astype(np.float16))
 
     # update
-    output = scatter_func_net("update", inputx, indices, updates)
+    indices_unique = Tensor(np.array([[1, 0]]).astype(np.int32))
+    updates_unique = Tensor(np.arange(87, 111).reshape((1, 2, 3, 4)).astype(np.float16))
+    output = scatter_func_net("update", inputx, indices_unique, updates_unique)
     expected = np.array([
-        [[63.0, 64.0, 65.0, 66.0], [67.0, 68.0, 69.0, 70.0], [71.0, 72.0, 73.0, 74.0]],
-        [[99.0, 100.0, 101.0, 102.0], [103.0, 104.0, 105.0, 106.0], [95.0, 96.0, 97.0, 98.0]],
+        [[99.0, 100.0, 101.0, 102.0], [103.0, 104.0, 105.0, 106.0], [107.0, 108.0, 109.0, 110.0]],
+        [[87.0, 88.0, 89.0, 90.0], [91.0, 92.0, 93.0, 94.0], [95.0, 96.0, 97.0, 98.0]],
     ])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
@@ -570,13 +569,6 @@ def test_scatter_func_disordered_float16():
     indices = Tensor(np.array([[[0, 1, 2], [2, 1, 0]], [[0, 0, 0], [2, 2, 2]]]).astype(np.int32))
     updates = Tensor(np.arange(63, 111).reshape((2, 2, 3, 4)).astype(np.float16))
 
-    # update
-    output = scatter_func_net("update", inputx, indices, updates)
-    expected = np.array(
-        [[95.0, 96.0, 97.0, 98.0], [67.0, 68.0, 69.0, 70.0], [99.0, 100.0, 101.0, 102.0]]
-    )
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
     # add
     output = scatter_func_net("add", inputx, indices, updates)
     expected = np.array(
@@ -621,10 +613,12 @@ def test_scatter_func_large_int32():
     updates = Tensor(np.arange(63, 111).reshape((2, 2, 3, 4)).astype(np.int32))
 
     # update
-    output = scatter_func_net("update", inputx, indices, updates)
+    indices_unique = Tensor(np.array([[1, 0]]).astype(np.int32))
+    updates_unique = Tensor(np.arange(87, 111).reshape((1, 2, 3, 4)).astype(np.int32))
+    output = scatter_func_net("update", inputx, indices_unique, updates_unique)
     expected = np.array([
-        [[63.0, 64.0, 65.0, 66.0], [67.0, 68.0, 69.0, 70.0], [71.0, 72.0, 73.0, 74.0]],
-        [[99.0, 100.0, 101.0, 102.0], [103.0, 104.0, 105.0, 106.0], [95.0, 96.0, 97.0, 98.0]],
+        [[99.0, 100.0, 101.0, 102.0], [103.0, 104.0, 105.0, 106.0], [107.0, 108.0, 109.0, 110.0]],
+        [[87.0, 88.0, 89.0, 90.0], [91.0, 92.0, 93.0, 94.0], [95.0, 96.0, 97.0, 98.0]],
     ]).astype(np.int32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
@@ -674,13 +668,6 @@ def test_scatter_func_disordered_int32():
     indices = Tensor(np.array([[[0, 1, 2], [2, 1, 0]], [[0, 0, 0], [2, 2, 2]]]).astype(np.int32))
     updates = Tensor(np.arange(63, 111).reshape((2, 2, 3, 4)).astype(np.int32))
 
-    # update
-    output = scatter_func_net("update", inputx, indices, updates)
-    expected = np.array(
-        [[95.0, 96.0, 97.0, 98.0], [67.0, 68.0, 69.0, 70.0], [99.0, 100.0, 101.0, 102.0]]
-    ).astype(np.int32)
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
     # add
     output = scatter_func_net("add", inputx, indices, updates)
     expected = np.array(
@@ -724,13 +711,6 @@ def test_scatter_func_disordered_dynamic_int32():
     indices = Tensor(np.array([[[0, 1, 2], [2, 1, 0]], [[0, 0, 0], [2, 2, 2]]]).astype(np.int32))
     updates = Tensor(np.arange(63, 111).reshape((2, 2, 3, 4)).astype(np.int32))
 
-    # update
-    output = scatter_func_d_net("update", inputx, indices, updates)
-    expected = np.array(
-        [[95.0, 96.0, 97.0, 98.0], [67.0, 68.0, 69.0, 70.0], [99.0, 100.0, 101.0, 102.0]]
-    ).astype(np.int32)
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
     # add
     output = scatter_func_d_net("add", inputx, indices, updates)
     expected = np.array(
@@ -770,13 +750,6 @@ def test_scatter_func_disordered_dynamic_int8():
     indices = Tensor(np.array([[[0, 1, 2], [2, 1, 0]], [[0, 0, 0], [2, 2, 2]]]).astype(np.int32))
     updates = Tensor(np.arange(63, 111).reshape((2, 2, 3, 4)).astype(np.int8))
 
-    # update
-    output = scatter_func_d_net("update", inputx, indices, updates)
-    expected = np.array(
-        [[95.0, 96.0, 97.0, 98.0], [67.0, 68.0, 69.0, 70.0], [99.0, 100.0, 101.0, 102.0]]
-    ).astype(np.int8)
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
     # add
     output = scatter_func_d_net("add", inputx, indices, updates)
     expected = np.array(
@@ -803,13 +776,6 @@ def test_scatter_func_disordered_dynamic_uint8():
     inputx = Tensor(np.flip(np.arange(34, 46).reshape(3, 4).astype(np.uint8)))
     indices = Tensor(np.array([[[0, 1, 2], [2, 1, 0]], [[0, 0, 0], [2, 2, 2]]]).astype(np.int32))
     updates = Tensor(np.arange(63, 111).reshape((2, 2, 3, 4)).astype(np.uint8))
-
-    # update
-    output = scatter_func_d_net("update", inputx, indices, updates)
-    expected = np.array(
-        [[95.0, 96.0, 97.0, 98.0], [67.0, 68.0, 69.0, 70.0], [99.0, 100.0, 101.0, 102.0]]
-    ).astype(np.uint8)
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
     # add
     output = scatter_func_d_net("add", inputx, indices, updates)
@@ -842,9 +808,11 @@ def test_scatter_func_input_less_than_1_dynamic_float32():
     updates = Tensor(np.arange(34, 70).reshape((2, 2, 3, 3)).astype(np.float32))
 
     # update
-    output = scatter_func_d_net("update", inputx, indices, updates)
+    indices_unique = Tensor(np.array([[[1, 0, 2]]]).astype(np.int32))
+    updates_unique = Tensor(np.arange(34, 43).reshape((1, 1, 3, 3)).astype(np.float32))
+    output = scatter_func_d_net("update", inputx, indices_unique, updates_unique)
     expected = np.array(
-        [[37.0, 38.0, 39.0], [34.0, 35.0, 66.0], [67.0, 68.0, 69.0]], dtype=np.float32,
+        [[37.0, 38.0, 39.0], [34.0, 35.0, 36.0], [40.0, 41.0, 42.0]], dtype=np.float32,
     )
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
