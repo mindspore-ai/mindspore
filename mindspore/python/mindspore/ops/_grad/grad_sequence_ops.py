@@ -86,6 +86,17 @@ def get_bprop_index(self):
     return bprop
 
 
+@bprop_getters.register("tuple_equal")
+@bprop_getters.register("list_equal")
+def get_bprop_seq_equal(self):
+    """Generate bprop for tuple_equal and list_equal"""
+
+    def bprop(x, y, out, dout):
+        return (zeros_like(x), zeros_like(y))
+
+    return bprop
+
+
 @bprop_getters.register("tuple_setitem")
 @bprop_getters.register("list_setitem")
 def get_bprop_setitem(self):

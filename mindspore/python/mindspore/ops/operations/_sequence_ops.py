@@ -454,6 +454,67 @@ class make_range(Primitive):
         """Initialize make_range"""
         self.init_prim_io_names(inputs=['start', 'limit', 'delta'], outputs=['output_data'])
 
+    def __call__(self, start, limit, delta):
+        return range(start, limit, delta)
+
+
+class tuple_equal(Primitive):
+    r"""
+    Support sequence equal operation 'equal(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Union[Tuple]) - The tuple.
+        - **y** (Union[Tuple]) - The tuple.
+
+    Outputs:
+        Bool.
+
+    Raises:
+        TypeError: The 'x' is not tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize tuple_equal"""
+
+    def __call__(self, x, y):
+        return x == y
+
+
+class list_equal(Primitive):
+    r"""
+    Support sequence equal operation 'equal(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Union[List]) - The list.
+        - **y** (Union[List]) - The list.
+
+    Outputs:
+        Bool.
+
+    Raises:
+        TypeError: The 'x' is not list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize list_equal"""
+
+    def __call__(self, x, y):
+        return x == y
+
 
 class sequence_len(Primitive):
     r"""
@@ -479,6 +540,9 @@ class sequence_len(Primitive):
     def __init__(self):
         """Initialize sequence_len"""
         self.init_prim_io_names(inputs=['sequence'], outputs=['output_data'])
+
+    def __call__(self, x):
+        return len(x)
 
 
 class SequenceMax(Primitive):
