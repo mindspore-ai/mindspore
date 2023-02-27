@@ -62,18 +62,13 @@ void AscendMemoryPool::SetMemPoolBlockSize(size_t available_device_mem_size) {
 size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_mem) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size) {
-    MS_LOG(WARNING) << "The dynamic memory pool total size is "
-                    << device::ascend::AscendMemoryPool::GetInstance().TotalMemStatistics() / kMBToByte
-                    << "M, total used size is "
-                    << device::ascend::AscendMemoryPool::GetInstance().TotalUsedMemStatistics() / kMBToByte
-                    << "M, used peak size is "
-                    << device::ascend::AscendMemoryPool::GetInstance().UsedMemPeakStatistics() / kMBToByte << "M.";
-    MS_LOG(WARNING) << "Out of Memory. Request memory size: " << size << ", device free size " << device_free_mem_size
-                    << ", Memory Statistic:" << AscendMemAdapter::GetInstance().DevMemStatistics()
-                    << "Please try to reduce 'batch_size' or check whether exists extra large shape. More "
-                       "details can be found in MindSpore's FAQ with keyword 'Out of Memory'.";
-    MS_LOG(WARNING) << "Memory Statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
-    DumpDynamicMemPoolDebugInfo();
+    MS_LOG(INFO) << "The dynamic memory pool total size is "
+                 << device::ascend::AscendMemoryPool::GetInstance().TotalMemStatistics() / kMBToByte
+                 << "M, total used size is "
+                 << device::ascend::AscendMemoryPool::GetInstance().TotalUsedMemStatistics() / kMBToByte
+                 << "M, used peak size is "
+                 << device::ascend::AscendMemoryPool::GetInstance().UsedMemPeakStatistics() / kMBToByte << "M.";
+    MS_LOG(INFO) << "Memory Statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
     return 0;
   }
 

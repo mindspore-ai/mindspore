@@ -1539,11 +1539,23 @@ void AnfAlgo::GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNo
 }
 
 bool AnfAlgo::IsHostKernel(const CNodePtr &kernel_node) {
-  const std::set<std::string> host_kernel = {prim::kPrimDynamicShape->name(), prim::kPrimReshape->name(),
-                                             prim::kPrimDynamicBroadcastGradientArgs->name(),
-                                             prim::kPrimTensorShape->name()};
+  static const std::map<std::string, std::pair<size_t, size_t>> host_kernel_input_output_num = {
+    {prim::kPrimDynamicShape->name(), {1, 1}},
+    {prim::kPrimReshape->name(), {2, 1}},
+    {prim::kPrimDynamicBroadcastGradientArgs->name(), {2, 2}},
+    {prim::kPrimTensorShape->name(), {1, 1}}};
+
   auto op_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (host_kernel.find(op_name) == host_kernel.end()) {
+  auto iter = host_kernel_input_output_num.find(op_name);
+  if (iter == host_kernel_input_output_num.end()) {
+    return false;
+  }
+
+  auto input_num = GetInputTensorNum(kernel_node);
+  auto output_num = AnfUtils::GetOutputTensorNum(kernel_node);
+  auto kernel_input_num = iter->second.first;
+  auto kernel_output_num = iter->second.second;
+  if (kernel_input_num != input_num || kernel_output_num != output_num) {
     return false;
   }
   return true;
