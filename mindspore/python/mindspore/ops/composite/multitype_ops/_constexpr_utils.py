@@ -478,7 +478,7 @@ def check_tensors_dtype_same(data_dtype, value_dtype, op_name):
                     f"is not consistent with assigned tensor data type {data_dtype}.")
 
 
-@_primexpr
+@constexpr
 def get_broadcast_shape(x_shape, y_shape, prim_name):
     """Get broadcast shape from input shapes."""
     if x_shape is None or y_shape is None:

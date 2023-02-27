@@ -317,11 +317,33 @@ def _expand_data_dims(data, tuple_index):
     return data, tuple_index_new
 
 
+def convert_variable_to_tensor_slice(slice_index):
+    """convert mutable scalar to tensor"""
+    start = slice_get_item(slice_index, "start")
+    stop = slice_get_item(slice_index, "stop")
+    step = slice_get_item(slice_index, "step")
+    find_mutable_scalar = False
+    if isinstance(start, int) and not F.isconstant(start):
+        start = ops.Cast()(start, mstype.int64)
+        find_mutable_scalar = True
+    if isinstance(stop, int) and not F.isconstant(stop):
+        stop = ops.Cast()(stop, mstype.int64)
+        find_mutable_scalar = True
+    if isinstance(step, int) and not F.isconstant(step):
+        step = ops.Cast()(step, mstype.int64)
+        find_mutable_scalar = True
+    if find_mutable_scalar:
+        return F.make_slice(start, stop, step)
+    return slice_index
+
+
 def tensor_index_by_slice(data, slice_index):
     """Tensor getitem by a slice."""
     min_data_dim, max_data_dim = 1, 8
     const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
     data_shape = F.shape(data)
+    slice_index = convert_variable_to_tensor_slice(slice_index)
+
     is_dynamic = (F.is_sequence_value_unknown(data_shape)
                   or isinstance(slice_get_item(slice_index, "start"), Tensor)
                   or isinstance(slice_get_item(slice_index, "stop"), Tensor)
@@ -452,11 +474,22 @@ def tensor_index_by_list(data, list_index):
     return tensor_index_by_tuple(data, tuple_index_new)
 
 
+def convert_tupleslice_to_tensor(tuple_index):
+    """convert mutable scalar in slice to tensor"""
+    new_tuple_index = []
+    for item in tuple_index:
+        if isinstance(item, slice):
+            item = convert_variable_to_tensor_slice(item)
+        new_tuple_index.append(item)
+    return tuple(new_tuple_index)
+
+
 def tensor_index_by_tuple(data, tuple_index):
     """Tensor getitem by tuple of various types with None"""
     if not tuple_index:
         return data
 
+    tuple_index = convert_tupleslice_to_tensor(tuple_index)
     op_name = const_utils.TENSOR_GETITEM
     tuple_index = _transform_ellipsis_to_slice(data, tuple_index, op_name)
     data, tuple_index = _expand_data_dims(data, tuple_index)
@@ -791,6 +824,7 @@ def tensor_setitem_by_tensor(self, index, value):
 
 
 def tensor_setitem_by_tuple(self, index, value):
+    index = convert_tupleslice_to_tensor(index)
     if isinstance(value, (int, float, bool)):
         index = format_tuple_indices(index)
         return tensor_setitem_by_tuple_with_number(self, index, value)
@@ -808,6 +842,7 @@ def tensor_setitem_by_number(self, index, value):
 
 
 def tensor_setitem_by_slice(self, index, value):
+    index = convert_variable_to_tensor_slice(index)
     if isinstance(value, (int, float, bool)):
         return tensor_setitem_by_slice_with_number(self, index, value)
     if isinstance(value, Tensor):
