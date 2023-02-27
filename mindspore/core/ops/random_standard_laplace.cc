@@ -82,6 +82,11 @@ abstract::ShapePtr StandardLaplaceInferShape(const PrimitivePtr &primitive,
     }
   } else if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
     if (IsValueKnown(shape_value)) {
+      auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+      if (x_shape.size() != 1) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "', rank of the input Tensor shall be 1, but got: " << x_shape.size() << ".";
+      }
       ShapeVector input_shape = CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, prim_name);
       return std::make_shared<abstract::Shape>(input_shape);
     } else {
