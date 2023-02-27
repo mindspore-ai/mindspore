@@ -172,7 +172,7 @@ void AddDynamicShapeAttrPass(const std::shared_ptr<session::KernelGraph> &kernel
 
 PassManagerPtr GetEliminateIllegalDataTypePassManager() {
   auto pm = std::make_shared<PassManager>("common_eliminate_illegal_data_type_pm");
-  pm->AddPass(std::make_shared<ConvertListToTuple>());
+  pm->AddPass(std::make_shared<ConvertListToTuple>("convert_list_to_tuple"));
   pm->AddPass(std::make_shared<EliminateFuncDataType>());
   return pm;
 }

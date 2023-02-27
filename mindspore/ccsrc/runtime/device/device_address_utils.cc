@@ -238,6 +238,9 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
                     << " addr:" << address;
       address->set_from_persistent_mem(true);
       AnfAlgo::SetOutputAddr(address, 0, value_node.get());
+    } else {
+      MS_LOG(INFO) << "No device address for value node:" << value_node->fullname_with_scope()
+                   << ", debug name:" << common::AnfAlgo::GetNodeDebugString(value_node);
     }
   }
 }

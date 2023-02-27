@@ -23,15 +23,13 @@
 
 namespace mindspore {
 namespace opt {
-class BACKEND_EXPORT ConvertListToTuple : public PatternProcessPass {
+class BACKEND_EXPORT ConvertListToTuple : public Pass {
  public:
-  explicit ConvertListToTuple(bool multigraph = true) : PatternProcessPass("convert_list_to_tuple", multigraph) {}
+  explicit ConvertListToTuple(const std::string &name) : Pass("convert_list_to_tuple") {}
   ~ConvertListToTuple() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
+  bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  // ValueSequence --> ValueTuple.
-  ValuePtr ConvertValueSequenceToValueTuple(const ValuePtr &value, bool *need_convert, size_t depth = 0) const;
   // AbstractSequence --> AbstractTuple.
   AbstractBasePtr ConvertSequenceAbsToTupleAbs(const AbstractBasePtr &abs, size_t depth = 0) const;
 };

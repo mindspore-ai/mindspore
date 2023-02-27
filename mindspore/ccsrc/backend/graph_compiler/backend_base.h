@@ -98,6 +98,9 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
                                    const VectorRef &args, VectorRef *outputs) {}
 
  protected:
+  // Convert the nodes which are not supported in the backend.
+  void UnifyMindIR(const FuncGraphPtr &func_graph);
+
   // The parameter func_graph is a graph, it can be either a root graph or a sub graph,
   // The result of graph compiler is stored in graph_id_to_device_context_ and control_nodes_.
   void CompileGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode);

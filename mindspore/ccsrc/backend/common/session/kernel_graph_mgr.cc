@@ -994,7 +994,7 @@ void KernelGraphMgr::SetReturnNode(const AnfNodePtr &node, KernelGraph *graph) {
           auto input = common::AnfAlgo::GetInputNode(make_tuple, i);
           auto node_abs = input->abstract();
           MS_EXCEPTION_IF_NULL(node_abs);
-          if (node_abs->isa<abstract::AbstractTuple>()) {
+          if (node_abs->isa<abstract::AbstractSequence>()) {
             MS_EXCEPTION_IF_CHECK_FAIL(
               i == 0, "Input index: " + std::to_string(i) + " is a make tuple, input node: " + input->DebugString());
             MS_LOG(DEBUG) << "Flatten the make tuple, input node: " << input->DebugString()
