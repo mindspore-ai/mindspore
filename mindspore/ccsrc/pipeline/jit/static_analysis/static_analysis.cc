@@ -373,7 +373,7 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
   auto fg = cnode->func_graph();
   const auto value_tuple_node = fg->NewCNode(value_list);
 
-  const auto getattr_obj_call_node = fg->NewCNodeInOrder(
+  const auto getattr_obj_call_node = fg->NewCNode(
     {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_call_str), NewValueNode(key_tuple), value_tuple_node});
   MS_LOG(DEBUG) << "getattr_obj_call_node: " << getattr_obj_call_node->DebugString();
 
@@ -382,7 +382,7 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
   AnalysisEnginePtr eng = conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
   AnfNodeConfigPtr fn_conf = eng->MakeConfig(getattr_obj_call_node, conf->context(), conf->func_graph());
-  return eng->ForwardConfig(conf, fn_conf);
+  return eng->ForwardConfig(conf, fn_conf, false);
 }
 
 AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context,
@@ -807,7 +807,8 @@ EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
   MS_LOG(EXCEPTION) << "Cannot GetEvaluator from " << func->type_name();
 }
 
-EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf) {
+EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf,
+                                            bool need_erase) {
   MS_EXCEPTION_IF_NULL(orig_conf);
   MS_EXCEPTION_IF_NULL(new_conf);
   // If always_eval_flag is true in BaseFuncGraphEvaluaotr, then the CNode with same orig_conf may be forwarded
@@ -816,7 +817,7 @@ EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, c
   MS_LOG(DEBUG) << "Forward orig_conf: " << orig_conf->ToString() << ", to new_conf: " << new_conf->ToString();
   auto old_cnode = orig_conf->node()->cast_ptr<CNode>();
   auto new_cnode = new_conf->node()->cast<CNodePtr>();
-  if (old_cnode != nullptr && new_cnode != nullptr) {
+  if (need_erase && old_cnode != nullptr && new_cnode != nullptr) {
     if (old_cnode->func_graph() == new_cnode->func_graph()) {
       MS_LOG(DEBUG) << "Try to remove forward node from order list, forward node: " << new_cnode->DebugString()
                     << ", as origin node should be in order list, origin_node: " << old_cnode->DebugString();
