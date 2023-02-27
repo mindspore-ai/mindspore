@@ -108,7 +108,7 @@ std::vector<std::vector<int>> ComputeUniqueConsecutive(const T *input, int num_e
   auto policy = thrust::cuda::par.on(cuda_stream);
   std::vector<std::vector<int>> out_shapes;
   // Copy input to output.
-  thrust::copy(thrust::device_pointer_cast(input), thrust::device_pointer_cast(input) + num_elements,
+  thrust::copy(policy, thrust::device_pointer_cast(input), thrust::device_pointer_cast(input) + num_elements,
                thrust::device_pointer_cast(output));
 
   // Inverse indices.
@@ -164,7 +164,7 @@ std::vector<std::vector<int>> ComputeUniqueConsecutiveByAxis(const T *input, int
   // Compute UniqueConsecutive by axis.
   auto policy = thrust::cuda::par.on(cuda_stream);
   std::vector<std::vector<int>> out_shapes;
-  thrust::copy(thrust::device_pointer_cast(input), thrust::device_pointer_cast(input) + num_elements,
+  thrust::copy(policy, thrust::device_pointer_cast(input), thrust::device_pointer_cast(input) + num_elements,
                thrust::device_pointer_cast(output));
   // Do transpose.
   size_t shape_size = input_shape.size();
@@ -234,10 +234,11 @@ std::vector<std::vector<int>> ComputeUniqueConsecutiveByAxis(const T *input, int
   if (indices_size != num_inp) {
     thrust::sequence(policy, thrust::device_pointer_cast(input_index),
                      thrust::device_pointer_cast(input_index) + num_elements);
-    thrust::transform(thrust::device_pointer_cast(input_index), thrust::device_pointer_cast(input_index) + num_elements,
+    thrust::transform(policy, thrust::device_pointer_cast(input_index),
+                      thrust::device_pointer_cast(input_index) + num_elements,
                       thrust::device_pointer_cast(input_index),
                       IndexToAxis<S>(num_elements, axis, dev_input_shape, range_data, indices_size));
-    thrust::remove_if(thrust::device_pointer_cast(output), thrust::device_pointer_cast(output) + num_elements,
+    thrust::remove_if(policy, thrust::device_pointer_cast(output), thrust::device_pointer_cast(output) + num_elements,
                       input_index, thrust::identity<T>());
     output_shape[axis] = indices_size;
   }

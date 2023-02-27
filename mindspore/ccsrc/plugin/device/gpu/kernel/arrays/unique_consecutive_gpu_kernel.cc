@@ -99,14 +99,7 @@ void UniqueConsecutiveGpuKernelMod::InitUniqueConsecutiveAttrs(const BaseOperato
     is_flattend_ = true;
   } else {
     axis_ = GetValue<int64_t>(attr_axis);
-    auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
-    int64_t dims = SizeToLong(input_shape.size());
-    if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << base_operator_->name() << "', the 'axis' must be in the range [-" << dims << ","
-                        << dims << "), but got " << axis_ << ".";
-    }
-    axis_ = axis_ >= 0 ? axis_ : axis_ + dims;
-    is_flattend_ = input_shape.size() <= 1;
+    is_flattend_ = false;
   }
 }
 
@@ -122,12 +115,45 @@ bool UniqueConsecutiveGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
   helper_ptr_ = kernel_attr[index].second(kernel_name_, device_id_);
-  std::vector<std::vector<int64_t>> input_shapes;
-  std::vector<std::vector<int64_t>> output_shapes;
   if (inputs.empty()) {
     MS_LOG(ERROR) << "Invalid inputs is empty.";
     return false;
   }
+  is_need_retrieve_output_shape_ = true;
+  return true;
+}
+
+int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  for (const auto &input : inputs) {
+    // If any input shape contains -1, means input shape is dynamic, so just
+    // return do nothing.
+    auto input_shape = input->GetShapeVector();
+    if (!IsValidShape(input_shape)) {
+      return KRET_UNKNOWN_SHAPE;
+    }
+  }
+
+  DestroyResource();
+  ResetResource();
+  base_operator_ = base_operator;
+  inputs_ = inputs;
+  outputs_ = outputs;
+
+  auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
+  int64_t dims = SizeToLong(input_shape.size());
+  if (axis_ < -dims || axis_ >= dims) {
+    MS_LOG(EXCEPTION) << "For '" << base_operator_->name() << "', the 'axis' must be in the range [-" << dims << ","
+                      << dims << "), but got " << axis_ << ".";
+  }
+  axis_ = axis_ >= 0 ? axis_ : axis_ + dims;
+  is_flattend_ = input_shape.size() <= 1;
+
+  std::vector<std::vector<int64_t>> input_shapes;
+  std::vector<std::vector<int64_t>> output_shapes;
+
   // Check if shape contains 0.
   std::vector<size_t> shape =
     std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
@@ -144,37 +170,6 @@ bool UniqueConsecutiveGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   helper_ptr_->set_axis(axis_);
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
-  is_need_retrieve_output_shape_ = true;
-  // Check if dynamic shape.
-  if (!is_input_dynamic_shape_.has_value()) {
-    bool is_input_dynamic_shape = false;
-    for (const auto &input : inputs) {
-      auto input_shape = input->GetShapeVector();
-      if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t dim) { return dim < 0; })) {
-        is_input_dynamic_shape = true;
-        break;
-      }
-    }
-    is_input_dynamic_shape_ = is_input_dynamic_shape;
-  }
-  return true;
-}
-
-int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
-    DestroyResource();
-    ResetResource();
-    if (!Init(base_operator, inputs, outputs)) {
-      return KRET_RESIZE_FAILED;
-    }
-    return 0;
-  }
-  base_operator_ = base_operator;
-  inputs_ = inputs;
-  outputs_ = outputs;
   return 0;
 }
 
