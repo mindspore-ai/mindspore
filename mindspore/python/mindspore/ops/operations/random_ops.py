@@ -599,7 +599,8 @@ class UniformInt(Primitive):
     the :math:`b` indicates the max distribution parameter.
 
     Note:
-        The number in tensor minval must be strictly less than maxval at any position after broadcasting.
+        - The number in tensor minval must be strictly less than maxval at any position after broadcasting.
+        - If neither `seed` nor `seed2` is assigned a non-zero value, a randomly generated seed is used instead.
 
     Args:
         seed (int): Random seed, must be non-negative. Default: 0.
@@ -655,7 +656,7 @@ class UniformReal(Primitive):
             final generated random number, must be non-negative. Default: 0.
 
     .. note::
-        - Global random seed and operator-level random seed are not set: Use the default value as the random seed.
+        - Global random seed and operator-level random seed are not set: Use a randomly generated seed.
         - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
           with a randomly generated seed.
         - Global random seed is not set, operator-level random seed is set: The default global random seed is used,

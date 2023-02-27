@@ -55,7 +55,7 @@ check_bool_const = constexpr(validator.check_bool)
 
 def adaptive_avg_pool2d(input, output_size):
     r"""
-    This operator applies a 2D adaptive average pooling to an input signal composed of multiple input planes.
+    Performs 2D adaptive average pooling on a multi-plane input signal.
     That is, for any input size, the size of the specified output is H x W.
     The number of output features is equal to the number of input features.
 
@@ -143,7 +143,7 @@ def adaptive_avg_pool2d(input, output_size):
 
 def adaptive_avg_pool3d(input, output_size):
     r"""
-    This operator applies a 3D adaptive average pooling to an input signal composed of multiple input planes.
+    Performs 3D adaptive average pooling on a multi-plane input signal.
     That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
     The number of output features is equal to the number of input planes.
 
@@ -4142,8 +4142,10 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     where :math:`L = \{l_1,\dots,l_N\}^\top`.
 
     Args:
-        inputs (Tensor): Tensor of shape :math:`(*)` where :math:`*` means any number of dimensions.
-        targets (Tensor): Same shape as the logits, contains -1 or 1.
+        inputs (Tensor): Predicted values, represented as :math:`x` in the formula.
+            Tensor of shape :math:`(*)` where :math:`*` means any number of dimensions.
+        targets (Tensor): Label values, represented as :math:`y` in the formula.
+            Has the same shape as `inputs`, contains -1 or 1.
         margin (float, int): Threshold defined by Hinge Embedding Loss :math:`margin`.
             Represented as :math:`\Delta` in the formula. Default: 1.0.
         reduction (str): Specify the computing method to be applied to the outputs: 'none', 'mean', or 'sum'.
