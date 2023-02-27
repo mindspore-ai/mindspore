@@ -6075,7 +6075,7 @@ def block_diag(*inputs):
     Creates a block diagonal matrix from the provided tensor.
 
     Args:
-        inputs (List[Tensor]): The dimension of Tensor should be 0, 1 or 2.
+        inputs (Tensor): One or more tensors, the dimension of Tensor should be 0, 1 or 2.
 
     Returns:
         Tensor, two-dimensional with all input tensors arranged in
@@ -6083,7 +6083,7 @@ def block_diag(*inputs):
         diagonally adjacent. All other elements are set to 0.
 
     Raises:
-        TypeError: If the input is not a list of tensors.
+        TypeError: If the input is not a tensor.
         ValueError: If the dimension of Tensor is not 0, 1 or 2.
 
     Supported Platforms:
