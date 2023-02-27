@@ -221,7 +221,7 @@ bool NPUSubGraph::IsSubGraphInputTensor(const mindspore::MSTensor &input) {
   return false;
 }
 
-int NPUSubGraph::GetNPUOperators(const vector<NPUOp *> &ops) {
+int NPUSubGraph::GetNPUOperators(const std::vector<NPUOp *> &ops) {
   subgraph_output_ops_.reserve(ops.size());
   for (int i = 0; i < ops.size(); i++) {
     auto npu_op = reinterpret_cast<NPUOp *>(ops[i])->GetNPUOp();

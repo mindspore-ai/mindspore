@@ -70,7 +70,7 @@ int SplitNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                              const std::vector<ge::Operator *> &npu_inputs) {
   ge::TensorDesc split_dim_tensor_desc(ge::Shape({1}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr split_dim_tensor = std::make_shared<hiai::Tensor>(split_dim_tensor_desc);
-  vector<int32_t> split_dim_data_value = {axis_};
+  std::vector<int32_t> split_dim_data_value = {axis_};
   split_dim_tensor->SetData(reinterpret_cast<uint8_t *>(split_dim_data_value.data()), 1 * sizeof(int));
   split_dim_ = new hiai::op::Const(name_ + "_dim");
   if (split_dim_ == nullptr) {

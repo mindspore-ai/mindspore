@@ -83,7 +83,7 @@ int PadNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspo
 
   ge::TensorDesc constant_values_tensor_desc(ge::Shape({1}), ge::FORMAT_NCHW, ge::DT_FLOAT);
   ge::TensorPtr constant_values_tensor = std::make_shared<hiai::Tensor>(constant_values_tensor_desc);
-  vector<float> constant_values_data_value = {pad_prim->constant_value()};
+  std::vector<float> constant_values_data_value = {pad_prim->constant_value()};
   constant_values_tensor->SetData(reinterpret_cast<uint8_t *>(constant_values_data_value.data()), 1 * sizeof(float));
   constant_value_ = new (std::nothrow) hiai::op::Const(name_ + "constant");
   if (constant_value_ == nullptr) {
