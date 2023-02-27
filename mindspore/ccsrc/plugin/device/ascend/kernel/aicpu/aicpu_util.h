@@ -173,6 +173,7 @@ constexpr auto kAddcdiv = "Addcdiv";
 constexpr auto kAddcmul = "Addcmul";
 constexpr auto kTriu = "Triu";
 constexpr auto kExpand = "Expand";
+constexpr auto kExpandDims = "ExpandDims";
 constexpr auto kMatrixDiagPartV3 = "MatrixDiagPartV3";
 constexpr auto kMatrixDiagV3 = "MatrixDiagV3";
 constexpr auto kBetainc = "Betainc";
@@ -297,7 +298,8 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kRandomShuffle,
                                               kRange,
                                               kQuantDTypeCast,
-                                              kFSEDecode};
+                                              kFSEDecode,
+                                              kExpandDims};
 const std::set<std::string> kDynamicInputOps{kRaggedTensorToTensor,
                                              kSparseCross,
                                              kRaggedTensorToSparse,
