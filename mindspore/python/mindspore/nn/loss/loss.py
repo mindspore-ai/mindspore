@@ -2512,7 +2512,7 @@ class HingeEmbeddingLoss(LossBase):
         TypeError: If `logits` is not a Tensor.
         TypeError: If `labels` is not a Tensor.
         TypeError: If `margin` is not a float or int.
-        ValueError: If `labels` does not have or could not broadcast to the same shape as `logits`.
+        ValueError: If `labels` does not have the same shape as `logits` or they could not broadcast to each other.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:

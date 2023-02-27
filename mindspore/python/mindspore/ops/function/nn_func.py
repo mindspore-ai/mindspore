@@ -4156,7 +4156,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         TypeError: If `inputs` is not a Tensor.
         TypeError: If `targets` is not a Tensor.
         TypeError: If `margin` is not a float or int.
-        ValueError: If `targets` does not have or could not broadcast to the same shape as `inputs`.
+        ValueError: If `targets` does not have the same shape as `inputs` or they could not broadcast to each other.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
