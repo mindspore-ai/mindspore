@@ -1,9 +1,9 @@
-mindspore.ops.std
-==================
+mindspore.ops.std_mean
+======================
 
-.. py:function:: mindspore.ops.std(input, axis=None, ddof=0, keepdims=False)
+.. py:function:: mindspore.ops.std_mean(input, axis=None, ddof=0, keepdims=False)
 
-    默认情况下，输出Tensor各维度上的标准差，也可以对指定维度求标准差。如果 `axis` 是维度列表，则计算对应维度的标准差。
+    默认情况下，输出Tensor各维度上的标准差和均值，也可以对指定维度求标准差和均值。如果 `axis` 是维度列表，则计算对应维度的标准差和均值。
 
     .. note::
         如果 `ddof` 是0、1、True或False，支持的平台只有 `Ascend` 和 `CPU` 。其他情况下，支持平台是 `Ascend` 、 `GPU` 和 `CPU` 。
@@ -15,7 +15,7 @@ mindspore.ops.std
         - **keepdims** (bool，可选) - 是否保留输出Tensor的维度。如果为True，则保留缩小的维度，大小为1。否则移除维度。默认值：False。
  
     返回：
-        Tensor，标准差。
+        包含标准差和均值的tuple。
         假设输入 `input` 的shape为 :math:`(x_0, x_1, ..., x_R)` ：
         - 如果 `axis` 为()，且 `keepdims` 为False，则输出一个零维Tensor，表示输入Tensor `input` 中所有元素的标准差。
         - 如果 `axis` 为int，取值为1，并且 `keepdims` 为False，则输出的shape为 :math:`(x_0, x_2, ..., x_R)` 。

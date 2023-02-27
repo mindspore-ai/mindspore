@@ -26,7 +26,6 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops.operations._inner_ops import Cummin, TileSize
 from mindspore.ops.operations.math_ops import STFT
-from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import Logit
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
@@ -1440,7 +1439,7 @@ def inplace_add(x, v, indices):
     return inplace_add_inner(x, v)
 
 
-def inplace_index_add(var, indices, updates, axis):
+def inplace_index_add(var, indices, updates, axis): # pylint: disable=redefined-outer-name
     """
     Adds tensor `updates` to specified axis and indices of tensor `var`. The axis should be in [0,  len(var.dim) - 1],
     and indices should be in [0, the size of `var` - 1] at the axis dimension.
@@ -4652,57 +4651,262 @@ def logaddexp2(x1, x2):
     return log_op(add_exp) / log_op(tensor_2)
 
 
-def std(input_x, axis=(), unbiased=True, keep_dims=False):
-    """
-    Returns the standard-deviation and mean of each row of the input tensor by default,
-    or it can calculate them in specified dimension `axis`.
-    If `axis` is a list of dimensions, reduce over all of them.
+@constexpr
+def _check_and_canonicalize_axes(axes, ndim):
+    """Check whether the types and values of input axes are valid."""
+    return validator.check_and_canonicalize_axes(axes, ndim)
+
+
+def _check_var_std_input(input, ddof, keepdims, axis, cls_name):
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For {cls_name}, input should be Tensor, but got {type(input)}")
+    _check_attr_dtype("ddof", ddof, [int, bool], cls_name)
+    _check_attr_dtype("keepdims", keepdims, [bool], cls_name)
+    if axis is None:
+        axis = ()
+    else:
+        axis = _check_and_canonicalize_axes(axis, input.ndim)
+    return axis
+
+
+def var(input, axis=None, ddof=0, keepdims=False): # pylint: disable=redefined-outer-name
+    r"""
+    Returns the variance of each row of the input Tensor by default, or it can calculate them
+    in specified dimension `axis`. If `axis` is a list of dimensions, reduce over all of them.
+
+    Note:
+        If ddof is 0, 1, True or Flase, the supported device is only Ascend and CPU. In other cases,
+        the supported device is Ascend, GPU and CPU.
 
     Args:
-        input_x (Tensor[Number]): Input tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
-          where :math:`*` means any number of additional dims, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
-                                                  Only constant value is allowed.
-                                                  Must be in the range [-rank(`input_x`), rank(`input_x`)).
-        unbiased (bool):  Whether to use Bessel’s correction.
-                          If true, will use the Bessel correction unbiased estimation.
-                          If false, will through the biased estimation to calculate the standard deviation.
-        keep_dims (bool): Whether the output tensor has dim retained or not.
-                          If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions.
+        input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
+            where :math:`*` means any number of additional dims, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Only constant value is allowed.
+            Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
+        ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
+            If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
+            where :math:`N` represents the number of elements.
+            If ddof is True, will use the Bessel correction unbiased estimation.
+            If ddof is False, will through the biased estimation to calculate variance.
+            Default: 0.
+        keepdims (bool, optional): Whether the output Tensor has dim retained or not.
+            If true, keep these reduced dimensions and the length is 1.
+            If false, don't keep these dimensions. Default: False.
 
     Returns:
-        A tuple of 2 Tensors (output_std, output_mean) containing the standard deviation and mean.
-        Suppose the shape of `input_x` is :math:`(x_0, x_1, ..., x_R)`:
+        Tensor, the variance.
+        Suppose the shape of `input` is :math:`(x_0, x_1, ..., x_R)`:
 
-        - If `axis` is () and `keep_dims` is set to False, returns a 0-D Tensor, indicating
-          the standard deviation of all elements in `input_x`.
-        - If `axis` is int 1 and `keep_dims` is set to False, then the returned Tensor
+        - If `axis` is () and `keepdims` is set to False, returns a 0-D Tensor, indicating
+          the standard deviation of all elements in `input`.
+        - If `axis` is int 1 and `keepdims` is set to False, then the returned Tensor
           has shape :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int) or list(int), e.g. (1, 2) and `keep_dims` is set to False,
+        - If `axis` is tuple(int) or list(int), e.g. (1, 2) and `keepdims` is set to False,
           then the returned Tensor has shape :math:`(x_0, x_2, ..., x_R)`.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If `axis` is not one of the following: int, tuple or list.
-        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `axis` is not one of the following: None, int, tuple or list.
+        TypeError: If `keepdims` is not a bool.
         ValueError: If `axis` is out of range.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
-        >>> output = ops.std(input_x, 1, True, False)
-        >>> output_std, output_mean = output[0], output[1]
-        >>> print(output_std)
-        [1.        2.5166116]
+        >>> input = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
+        >>> output = ops.var(input, 1, True, False)
+        >>> print(output)
+        [1.        6.3333325]
+    """
+    axis = _check_var_std_input(input, ddof, keepdims, axis, "var")
+    output = var_mean(input, axis, ddof, keepdims)
+    return output[0]
+
+
+def var_mean(input, axis=None, ddof=0, keepdims=False):
+    r"""
+    Returns the variance and mean of each row of the input Tensor by default,
+    or it can calculate them in specified dimension `axis`.
+    If `axis` is a list of dimensions, reduce over all of them.
+
+    Note:
+        If ddof is 0, 1, True or Flase, the supported device is only Ascend and CPU. In other cases,
+        the supported device is Ascend, GPU and CPU.
+
+    Args:
+        input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
+            where :math:`*` means any number of additional dims, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Only constant value is allowed.
+            Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
+        ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
+            If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
+            where :math:`N` represents the number of elements.
+            If ddof is True, will use the Bessel correction unbiased estimation.
+            If ddof is False, will through the biased estimation to calculate the variance and mean.
+            Default: 0.
+        keepdims (bool, optional): Whether the output Tensor has dim retained or not.
+            If true, keep these reduced dimensions and the length is 1.
+            If false, don't keep these dimensions. Default: False.
+
+    Returns:
+        A tuple containing the variance and mean.
+        Suppose the shape of `input` is :math:`(x_0, x_1, ..., x_R)`:
+
+        - If `axis` is () and `keepdims` is set to False, returns a 0-D Tensor, indicating
+          the standard deviation of all elements in `input`.
+        - If `axis` is int 1 and `keepdims` is set to False, then the returned Tensor
+          has shape :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int) or list(int), e.g. (1, 2) and `keepdims` is set to False,
+          then the returned Tensor has shape :math:`(x_0, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `axis` is not one of the following: None, int, tuple or list.
+        TypeError: If `keepdims` is not a bool.
+        ValueError: If `axis` is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
+        >>> output_var, output_mean = ops.var_mean(input, 1, True, False)
+        >>> print(output_var)
+        [1.        6.3333325]
         >>> print(output_mean)
         [2.        1.3333334]
     """
-    reduce_std_op = ReduceStd(axis=axis, unbiased=unbiased, keep_dims=keep_dims)
-    output = reduce_std_op(input_x)
-    return output
+    axis = _check_var_std_input(input, ddof, keepdims, axis, "var_mean")
+    if ddof in (0, 1):
+        output = _get_cache_prim(P.ReduceStd)(axis=axis, unbiased=bool(ddof), keep_dims=keepdims)(input)
+        return _get_cache_prim(P.Pow)()(output[0], 2), output[1]
+    x_mean = mean(input, axis, True)
+    x_sub = _get_cache_prim(P.Sub)()(input, x_mean)
+    x_pow = _get_cache_prim(P.Pow)()(x_sub, 2)
+    x_sum = sum(x_pow, axis, keepdims)
+    nums = 1
+    if axis == ():
+        nums = input.size
+    else:
+        for ax in axis:
+            nums *= input.shape[ax]
+    return true_divide(x_sum, nums - ddof), x_mean
+
+
+def std(input, axis=None, ddof=0, keepdims=False):
+    r"""
+    Returns the standard-deviation of each row of the input Tensor by default, or it can calculate them
+    in specified dimension `axis`. If `axis` is a list of dimensions, reduce over all of them.
+
+    Note:
+        If ddof is 0, 1, True or Flase, the supported device is only Ascend and CPU. In other cases,
+        the supported device is Ascend, GPU and CPU.
+
+    Args:
+        input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
+            where :math:`*` means any number of additional dims, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Only constant value is allowed.
+            Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
+        ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
+            If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
+            where :math:`N` represents the number of elements.
+            If ddof is True, will use the Bessel correction unbiased estimation.
+            If ddof is False, will through the biased estimation to calculate the standard deviation.
+            Default: 0.
+        keepdims (bool, optional): Whether the output Tensor has dim retained or not.
+            If true, keep these reduced dimensions and the length is 1.
+            If false, don't keep these dimensions. Default: False.
+
+    Returns:
+        Tensor, the standard deviation.
+        Suppose the shape of `input` is :math:`(x_0, x_1, ..., x_R)`:
+
+        - If `axis` is () and `keepdims` is set to False, returns a 0-D Tensor, indicating
+          the standard deviation of all elements in `input`.
+        - If `axis` is int 1 and `keepdims` is set to False, then the returned Tensor
+          has shape :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int) or list(int), e.g. (1, 2) and `keepdims` is set to False,
+          then the returned Tensor has shape :math:`(x_0, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `axis` is not one of the following: None, int, tuple or list.
+        TypeError: If `keepdims` is not a bool.
+        ValueError: If `axis` is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
+        >>> output = ops.std(input, 1, True, False)
+        >>> print(output)
+        [1.        2.5166113]
+    """
+    axis = _check_var_std_input(input, ddof, keepdims, axis, "std")
+    output = std_mean(input, axis, ddof, keepdims)
+    return output[0]
+
+
+def std_mean(input, axis=None, ddof=0, keepdims=False):
+    r"""
+    Returns the standard-deviation and mean of each row of the input Tensor by default,
+    or it can calculate them in specified dimension `axis`.
+    If `axis` is a list of dimensions, reduce over all of them.
+
+    Note:
+        If ddof is 0, 1, True or Flase, the supported device is only Ascend and CPU. In other cases,
+        the supported device is Ascend, GPU and CPU.
+
+    Args:
+        input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
+            where :math:`*` means any number of additional dims, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Only constant value is allowed.
+            Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
+        ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
+            If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
+            where :math:`N` represents the number of elements.
+            If ddof is True, will use the Bessel correction unbiased estimation.
+            If ddof is False, will through the biased estimation to calculate the standard deviation and mean.
+            Default: 0.
+        keepdims (bool, optional): Whether the output Tensor has dim retained or not.
+            If true, keep these reduced dimensions and the length is 1.
+            If false, don't keep these dimensions. Default: False.
+
+    Returns:
+        A tuple containing the standard deviation and mean.
+        Suppose the shape of `input` is :math:`(x_0, x_1, ..., x_R)`:
+
+        - If `axis` is () and `keepdims` is set to False, returns a 0-D Tensor, indicating
+          the standard deviation of all elements in `input`.
+        - If `axis` is int 1 and `keepdims` is set to False, then the returned Tensor
+          has shape :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int) or list(int), e.g. (1, 2) and `keepdims` is set to False,
+          then the returned Tensor has shape :math:`(x_0, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `axis` is not one of the following: None, int, tuple or list.
+        TypeError: If `keepdims` is not a bool.
+        ValueError: If `axis` is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
+        >>> output_std, output_mean = ops.std_mean(input, 1, True, False)
+        >>> print(output_std)
+        [1.        2.5166113]
+        >>> print(output_mean)
+        [2.        1.3333334]
+    """
+    axis = _check_var_std_input(input, ddof, keepdims, axis, "std_mean")
+    if ddof in (0, 1):
+        return _get_cache_prim(P.ReduceStd)(axis=axis, unbiased=bool(ddof), keep_dims=keepdims)(input)
+    output = var_mean(input, axis, ddof, keepdims)
+    return _get_cache_prim(P.Pow)()(output[0], 0.5), output[1]
 
 
 def real(x):
@@ -9872,7 +10076,7 @@ def nansum(x, axis=None, keepdims=False, *, dtype=None):
         raise TypeError(f"For nansum, input must be Tensor, but got {type(x)}.")
     _check_repeat_in_axis(axis, x.ndim, "nansum")
     if x.is_complex():
-        raise TypeError(f'For nansum, input are not supported complex type, but got {type(x)}.')
+        raise TypeError(f'For nansum, input are not supported complex type, but got {x.dtype}.')
     if dtype is not None and dtype in mstype.complex_type:
         raise TypeError(f'For nansum, dtype not supported complex type, but got {dtype}.')
     if axis is None:
@@ -10311,6 +10515,9 @@ __all__ = [
     'atleast_3d',
     'view_as_real',
     'vstack',
+    'var',
+    'var_mean',
+    'std_mean',
     'combinations',
     'dist',
     'copysign',

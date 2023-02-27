@@ -34,8 +34,8 @@ class NetReduceStd(nn.Cell):
     @jit
     def construct(self, indice):
         if self._axis is None:
-            return F.std(indice, unbiased=False, keep_dims=self._keep_dims)
-        return F.std(indice, axis=self._axis, unbiased=False, keep_dims=self._keep_dims)
+            return F.std_mean(indice, ddof=False, keepdims=self._keep_dims)
+        return F.std_mean(indice, axis=self._axis, ddof=False, keepdims=self._keep_dims)
 
 
 @pytest.mark.level0
@@ -73,7 +73,7 @@ class ReduceStdDynamicShapeNet(nn.Cell):
     def construct(self, x):
         x_unique, _ = self.unique(x)
         x_unique = self.reshape(x_unique, (2, 5))
-        return F.std(x_unique, unbiased=False, keep_dims=False)
+        return F.std_mean(x_unique, ddof=False, keepdims=False)
 
 
 @pytest.mark.level0
