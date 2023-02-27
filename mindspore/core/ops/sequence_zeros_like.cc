@@ -35,6 +35,15 @@
 
 namespace mindspore {
 namespace ops {
+template <typename T>
+AbstractBasePtr MakeZeros(const size_t &len) {
+  abstract::AbstractBasePtrList abs;
+  for (size_t i = 0; i < len; i++) {
+    abs.push_back(std::make_shared<abstract::AbstractScalar>(T(0)));
+  }
+  return std::make_shared<abstract::AbstractTuple>(abs);
+}
+
 AbstractBasePtr SequenceZerosLikeInferInner(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -51,8 +60,20 @@ AbstractBasePtr SequenceZerosLikeInferInner(const PrimitivePtr &primitive,
   if (seq_abs->dynamic_len()) {
     return seq_abs;
   }
-  auto ret = seq_abs->Clone()->cast<abstract::AbstractSequencePtr>();
-  return ret;
+  const auto &seq_elements = seq_abs->elements();
+  const auto &len = seq_elements.size();
+  auto type = seq_elements[0]->BuildType();
+  if (type->type_id() == kInt64->type_id()) {
+    return MakeZeros<int64_t>(len);
+  } else if (type->type_id() == kInt32->type_id()) {
+    return MakeZeros<int>(len);
+  } else if (type->type_id() == kFloat32->type_id()) {
+    return MakeZeros<float>(len);
+  } else if (type->type_id() == kFloat64->type_id()) {
+    return MakeZeros<double>(len);
+  } else {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "' is not supported" << type->ToString() << '.';
+  }
 }
 
 MIND_API_OPERATOR_IMPL(SequenceZerosLike, BaseOperator);
