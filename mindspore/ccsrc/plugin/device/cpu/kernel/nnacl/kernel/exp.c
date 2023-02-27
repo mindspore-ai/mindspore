@@ -96,9 +96,9 @@ KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *o
   return (KernelBase *)exp;
 }
 
-// REG_KERNEL_CREATOR(PrimType_ExpFusion, Format_NHWC, kNumberTypeFloat32, CreateExp);
-// REG_KERNEL_CREATOR(PrimType_ExpFusion, Format_NHWC, kNumberTypeFloat16, CreateExp);
-// REG_KERNEL_CREATOR(PrimType_ExpFusion, Format_NCHW, kNumberTypeFloat32, CreateExp);
-// REG_KERNEL_CREATOR(PrimType_ExpFusion, Format_NCHW, kNumberTypeFloat16, CreateExp);
-// REG_KERNEL_CREATOR(PrimType_ExpFusion, Format_NC4HW4, kNumberTypeFloat32, CreateExp);
-// REG_KERNEL_CREATOR(PrimType_ExpFusion, Format_NC8HW8, kNumberTypeFloat16, CreateExp);
+REG_KERNEL_CREATOR(PrimType_ExpFusion, Format_NHWC, kNumberTypeFloat32, CreateExp);
+REG_KERNEL_CREATOR(PrimType_ExpFusion, Format_NHWC, kNumberTypeFloat16, CreateExp);
+REG_KERNEL_CREATOR(PrimType_ExpFusion, Format_NCHW, kNumberTypeFloat32, CreateExp);
+REG_KERNEL_CREATOR(PrimType_ExpFusion, Format_NCHW, kNumberTypeFloat16, CreateExp);
+REG_KERNEL_CREATOR(PrimType_ExpFusion, Format_NC4HW4, kNumberTypeFloat32, CreateExp);
+REG_KERNEL_CREATOR(PrimType_ExpFusion, Format_NC8HW8, kNumberTypeFloat16, CreateExp);
