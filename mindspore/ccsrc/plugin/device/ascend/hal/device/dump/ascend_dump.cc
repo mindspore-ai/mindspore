@@ -184,6 +184,10 @@ bool AscendAsyncDump::ConvertFormatForOneTensor(dump_data_t *dump_tensor_info) {
         MS_LOG(ERROR) << "Trans format failed.";
       }
     }
+  } else {
+    MS_LOG(INFO) << "The host_format and device_format are same, no need to convert format for file: "
+                 << dump_tensor_info->dump_file_path;
+    return true;
   }
   if (trans_success) {
     dump_tensor_info->format = host_format;
@@ -274,6 +278,9 @@ bool AscendAsyncDump::DumpTensorDataIfNeeded(const dump_data_t &dump_tensor_info
   if (trans_buf) {
     dump_succ = DumpJsonParser::DumpToFile(dump_path_slot, trans_buf->data_c(), trans_buf->Size(),
                                            dump_tensor_info.host_shape, dump_tensor_info.data_type);
+  } else if (dump_tensor_info.data_size == 0) {
+    MS_LOG(INFO) << "Data size is 0 for file: " << dump_tensor_info.dump_file_path << " no need to dump.";
+    return true;
   } else {
     dump_succ = DumpJsonParser::DumpToFile(dump_path_slot, dump_tensor_info.data_ptr, dump_tensor_info.data_size,
                                            dump_tensor_info.host_shape, dump_tensor_info.data_type);
