@@ -136,7 +136,7 @@ class DictGetitemConstEliminator : public AnfVisitor {
   }
 
  private:
-  ValuePtr real_value_;
+  ValuePtr real_value_{nullptr};
   ValueDictionaryPtr dict_{nullptr};
 };
 

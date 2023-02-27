@@ -28,6 +28,7 @@
 #include "base/base.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "pipeline/jit/debug/trace.h"
+#include "pipeline/jit/action.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/anf.h"
@@ -95,6 +96,8 @@ class BaseRewriter : protected SimpleRewriter {
       : SimpleRewriter(root_graph, manager) {}
   ~BaseRewriter() override = default;
 
+  bool need_renormalized() const { return need_renormalized_; }
+
   virtual bool Execute() {
     bool changed = Run();
     if (changed) {
@@ -110,7 +113,11 @@ class BaseRewriter : protected SimpleRewriter {
 
   AnfNodePtr NodeRewrite(const AnfNodePtr &node) override {
     auto new_node = ConvertNode(node);
-    if (new_node != nullptr && !IsPrimitiveCNode(new_node, prim::kPrimPyExecute)) {
+    if (IsPrimitiveCNode(new_node, prim::kPrimPyExecute)) {
+      need_renormalized_ = true;
+      return new_node;
+    }
+    if (new_node != nullptr) {
       new_node->set_abstract(node->abstract());
     }
     return new_node;
@@ -145,9 +152,6 @@ class BaseRewriter : protected SimpleRewriter {
   void UpdateAbstracts() {
     const auto &nodes = manager_->all_nodes();
     for (const auto &node : nodes) {
-      if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
-        continue;
-      }
       const auto &abs = node->abstract();
       if (abs == nullptr) {
         continue;
@@ -192,6 +196,9 @@ class BaseRewriter : protected SimpleRewriter {
     }
     return SizeToLong(n_attrs);
   }
+
+ private:
+  bool need_renormalized_{false};
 };
 
 // ===========================================================================
@@ -739,34 +746,24 @@ class CleanAfterOptARewriter : public BaseRewriter {
     script_buffer << internal_dict_self_str << "[" << internal_dict_key_str << "]";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
-    auto script_str_node = NewValueNode(script_str);
-    script_str_node->set_abstract(script_str->ToAbstract());
 
     // Pack local parameters keys.
     const auto script_dict_self_name = std::make_shared<StringImm>(internal_dict_self_str);
-    auto script_dict_self_name_node = NewValueNode(script_dict_self_name);
-    script_dict_self_name_node->set_abstract(script_dict_self_name->ToAbstract());
     const auto script_dict_key_name = std::make_shared<StringImm>(internal_dict_key_str);
-    auto script_dict_key_name_node = NewValueNode(script_dict_key_name);
-    script_dict_key_name_node->set_abstract(script_dict_key_name->ToAbstract());
     std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
-    (void)key_value_names_list.emplace_back(script_dict_self_name_node);
-    (void)key_value_names_list.emplace_back(script_dict_key_name_node);
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_self_name));
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_key_name));
     const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
-    key_value_name_tuple->set_abstract(std::make_shared<AbstractTuple>(
-      AbstractBasePtrList{script_dict_self_name_node->abstract(), script_dict_key_name_node->abstract()}));
 
     // Pack the local parameters values, not support list, tuple, or dict.
     std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
     (void)key_value_list.emplace_back(data);
     (void)key_value_list.emplace_back(key);
     const auto key_value_tuple = func_graph->NewCNode(key_value_list);
-    key_value_tuple->set_abstract(
-      std::make_shared<AbstractTuple>(AbstractBasePtrList{data->abstract(), key->abstract()}));
 
     // Build the new dict node.
     const auto dict_getitem_node = func_graph->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimPyExecute), script_str_node, key_value_name_tuple, key_value_tuple});
+      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
     int64_t index = GetElementIndex(abs_dict->elements(), key);
     const auto &val = abs_dict->elements()[index].second;
     const auto &tensor_val = dyn_cast<abstract::AbstractTensor>(val);
@@ -781,9 +778,6 @@ class CleanAfterOptARewriter : public BaseRewriter {
     }
     MS_LOG(DEBUG) << "Made dict getitem node: " << dict_getitem_node->DebugString();
     dict_getitem_node->set_debug_info(node->debug_info());
-    ShapeVector shp{abstract::Shape::kShapeRankAny};
-    auto abs = std::make_shared<abstract::AbstractTensor>(kFloat64, std::make_shared<abstract::Shape>(shp));
-    dict_getitem_node->set_abstract(abs);
     return dict_getitem_node;
   }
 
@@ -849,47 +843,24 @@ class CleanAfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConstructInternalTupleKeysNode(const FuncGraphPtr &fg, const AnfNodePtr &keys_node) {
     constexpr auto internal_tuple_keys_str = "__internal_tuple_keys__";
     MS_EXCEPTION_IF_NULL(fg);
-    ShapeVector shp{abstract::Shape::kShapeRankAny};
-    auto shape = std::make_shared<abstract::Shape>(shp);
-    auto abs = std::make_shared<abstract::AbstractTensor>(kFloat64, shape);
     const auto script_key_tuple_str = std::make_shared<StringImm>(internal_tuple_keys_str);
-    auto script_key_tuple_str_node = NewValueNode(script_key_tuple_str);
-    script_key_tuple_str_node->set_abstract(script_key_tuple_str->ToAbstract());
-
     auto dict_py_exec_key = std::make_shared<ValueTuple>(std::vector<ValuePtr>{script_key_tuple_str});
-    auto dict_py_exec_key_node = NewValueNode(dict_py_exec_key);
-    dict_py_exec_key_node->set_abstract(dict_py_exec_key->ToAbstract());
-
     auto dict_tuple_key_value = fg->NewCNode({std::make_shared<ValueNode>(prim::kPrimMakeTuple), keys_node});
-    dict_tuple_key_value->set_abstract(
-      std::make_shared<AbstractTuple>(std::vector<AbstractBasePtr>{keys_node->abstract()}));
-
-    const auto make_key_tuple_node = fg->NewCNode(
-      {NewValueNode(prim::kPrimPyExecute), script_key_tuple_str_node, dict_py_exec_key_node, dict_tuple_key_value});
-    make_key_tuple_node->set_abstract(abs);
+    const auto make_key_tuple_node =
+      fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_key_tuple_str),
+                    NewValueNode(dict_py_exec_key), dict_tuple_key_value});
     return make_key_tuple_node;
   }
 
   AnfNodePtr ConstructInternalTupleValueNode(const FuncGraphPtr &fg, const AnfNodePtr &values_node) {
     constexpr auto internal_tuple_values_str = "__internal_tuple_values__";
     MS_EXCEPTION_IF_NULL(fg);
-    ShapeVector shp{abstract::Shape::kShapeRankAny};
-    auto shape = std::make_shared<abstract::Shape>(shp);
-    auto abs = std::make_shared<abstract::AbstractTensor>(kFloat64, shape);
     const auto script_value_tuple_str = std::make_shared<StringImm>(internal_tuple_values_str);
-    auto script_value_tuple_str_node = NewValueNode(script_value_tuple_str);
-    script_value_tuple_str_node->set_abstract(script_value_tuple_str->ToAbstract());
-
     auto dict_py_exec_value = std::make_shared<ValueTuple>(std::vector<ValuePtr>{script_value_tuple_str});
-    auto dict_py_exec_value_node = NewValueNode(dict_py_exec_value);
-    dict_py_exec_value_node->set_abstract(dict_py_exec_value->ToAbstract());
-
     auto dict_tuple_node = fg->NewCNode({std::make_shared<ValueNode>(prim::kPrimMakeTuple), values_node});
-    dict_tuple_node->set_abstract(
-      std::make_shared<AbstractTuple>(std::vector<AbstractBasePtr>{values_node->abstract()}));
-    const auto make_value_tuple_node = fg->NewCNode(
-      {NewValueNode(prim::kPrimPyExecute), script_value_tuple_str_node, dict_py_exec_value_node, dict_tuple_node});
-    make_value_tuple_node->set_abstract(abs);
+    const auto make_value_tuple_node =
+      fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_value_tuple_str),
+                    NewValueNode(dict_py_exec_value), dict_tuple_node});
     return make_value_tuple_node;
   }
 
@@ -897,44 +868,30 @@ class CleanAfterOptARewriter : public BaseRewriter {
                                   const AnfNodePtr &make_value_tuple_node) {
     constexpr auto internal_dict_zip_keys_str = "__internal_dict_zip_keys__";
     constexpr auto internal_dict_zip_values_str = "__internal_dict_zip_values__";
-    ShapeVector shp{abstract::Shape::kShapeRankAny};
-    auto shape = std::make_shared<abstract::Shape>(shp);
-    auto abs = std::make_shared<abstract::AbstractTensor>(kFloat64, shape);
     // Pack the local parameters values
     std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
     (void)key_value_list.emplace_back(make_key_tuple_node);
     (void)key_value_list.emplace_back(make_value_tuple_node);
     const auto key_value_tuple = fg->NewCNode(key_value_list);
-    key_value_tuple->set_abstract(std::make_shared<AbstractTuple>(
-      AbstractBasePtrList{make_key_tuple_node->abstract(), make_value_tuple_node->abstract()}));
 
     // Pack local parameters keys.
     const auto script_dict_key_name = std::make_shared<StringImm>(internal_dict_zip_keys_str);
     const auto script_dict_value_name = std::make_shared<StringImm>(internal_dict_zip_values_str);
     std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
-    auto script_dict_key_name_node = NewValueNode(script_dict_key_name);
-    script_dict_key_name_node->set_abstract(script_dict_key_name->ToAbstract());
-    (void)key_value_names_list.emplace_back(script_dict_key_name_node);
-    auto script_dict_value_name_node = NewValueNode(script_dict_value_name);
-    script_dict_value_name_node->set_abstract(script_dict_value_name->ToAbstract());
-    (void)key_value_names_list.emplace_back(script_dict_value_name_node);
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_key_name));
+    (void)key_value_names_list.emplace_back(NewValueNode(script_dict_value_name));
     const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
-    key_value_name_tuple->set_abstract(std::make_shared<AbstractTuple>(
-      AbstractBasePtrList{script_dict_key_name_node->abstract(), script_dict_value_name_node->abstract()}));
 
     // Construct Script Node
     std::stringstream script_buffer;
     script_buffer << "dict(zip(" << internal_dict_zip_keys_str << "," << internal_dict_zip_values_str << "),)";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
-    auto script_str_node = NewValueNode(script_str);
-    script_str_node->set_abstract(script_str->ToAbstract());
 
     // Build the new dict node.
-    const auto make_dict_node =
-      fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_str_node, key_value_name_tuple, key_value_tuple});
+    const auto make_dict_node = fg->NewCNodeInOrder(
+      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
     MS_LOG(DEBUG) << "Made dict node: " << make_dict_node->DebugString();
-    make_dict_node->set_abstract(abs);
     return make_dict_node;
   }
 
@@ -1088,15 +1045,10 @@ class CleanAfterOptARewriter : public BaseRewriter {
     // Pack the key tuple.
     const auto key_tuple = std::make_shared<ValueTuple>(key_list);
     auto key_tuple_node = NewValueNode(key_tuple);
-    key_tuple_node->set_abstract(key_tuple->ToAbstract());
-    auto tuple_dict_key = root_graph_->NewCNode({NewValueNode(prim::kPrimMakeTuple), key_tuple_node});
-    tuple_dict_key->set_abstract(
-      std::make_shared<AbstractTuple>(std::vector<AbstractBasePtr>{key_tuple_node->abstract()}));
 
     // Pack the value
     const auto value_tuple = std::make_shared<ValueTuple>(value_list);
     auto value_tuple_node = NewValueNode(value_tuple);
-    value_tuple_node->set_abstract(value_tuple->ToAbstract());
 
     // Generate Make Dict PyExecute Node value
     auto make_key_tuple_node = ConstructInternalTupleKeysNode(root_graph_, key_tuple_node);
@@ -1120,7 +1072,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
     return nullptr;
   }
 
-  // AbstractSequence, AbstractDict, AbstractRowTensor --> AbstractTuple.
+  // AbstractSequence, AbstractRowTensor --> AbstractTuple.
   static AbstractBasePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
       MS_LOG(EXCEPTION) << "List or Dict nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
@@ -1166,12 +1118,6 @@ class CleanAfterOptARewriter : public BaseRewriter {
       }
       return std::make_shared<AbstractTuple>(std::move(elements));
     }
-    // AbstractDict --> AbstractTuple.
-    auto abs_dict = abs->cast<AbstractDictionaryPtr>();
-    if (abs_dict != nullptr) {
-      ShapeVector shp{abstract::Shape::kShapeRankAny};
-      return std::make_shared<abstract::AbstractTensor>(kFloat64, std::make_shared<abstract::Shape>(shp));
-    }
     // AbstractRowTensor --> AbstractTuple.
     auto abs_row_tensor = abs->cast<std::shared_ptr<AbstractRowTensor>>();
     if (abs_row_tensor != nullptr) {
@@ -1196,11 +1142,22 @@ bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
   return rewriter.Execute();
 }
 
-bool CleanAfterOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
+bool CleanAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(root);
+  MS_EXCEPTION_IF_NULL(resource);
+  auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(root);
   CleanAfterOptARewriter rewriter(root, manager);
-  return rewriter.Execute();
+  bool change = rewriter.Execute();
+  // Renormalize for new PyExecute node.
+  if (change && rewriter.need_renormalized()) {
+    abstract::AbstractBasePtrList new_args_spec;
+    std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
+                   [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
+    (void)pipeline::Renormalize(resource, root, new_args_spec);
+  }
+  return change;
 }
 }  // namespace opt
 }  // namespace mindspore

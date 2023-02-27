@@ -26,7 +26,9 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_backward_return_dict():
     """
@@ -65,7 +67,9 @@ def test_backward_return_dict():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_forward_contain_make_dict_and_dict_getitem():
     """
@@ -104,7 +108,9 @@ def test_forward_contain_make_dict_and_dict_getitem():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_forward_return_dict():
     """
@@ -142,7 +148,9 @@ def test_forward_return_dict():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_forward_return_dict_backward_return_dict():
     """
@@ -182,7 +190,9 @@ def test_forward_return_dict_backward_return_dict():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_forward_contain_make_dict_and_dict_getitem_backward_return_dict():
     """
@@ -223,7 +233,9 @@ def test_forward_contain_make_dict_and_dict_getitem_backward_return_dict():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict1():
     """
@@ -265,7 +277,9 @@ def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict1():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict2():
     """
