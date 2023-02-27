@@ -467,6 +467,7 @@ Randomly Generating Functions
     mindspore.ops.randn
     mindspore.ops.randn_like
     mindspore.ops.random_poisson
+    mindspore.ops.randperm
     mindspore.ops.standard_laplace
     mindspore.ops.standard_normal
     mindspore.ops.uniform

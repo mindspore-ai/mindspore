@@ -16,6 +16,7 @@
 
 from __future__ import absolute_import
 
+from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr, _primexpr
@@ -584,6 +585,11 @@ def choice_with_mask(input_x, count=256, seed=None):
     return output
 
 
+@constexpr
+def is_cpu_backend():
+    return context.get_context('device_target') == 'CPU'
+
+
 @_function_forbid_reuse
 def randperm(n, seed=0, offset=0, dtype=mstype.int64):
     r"""
@@ -600,7 +606,7 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
         seed (int): Random seed. Default: 0. When seed is -1(only negative value), offset is 0, it's determined by time.
         offset (int): Priority is higher than random seed. Default: 0. It must be non-negative.
         dtype (mindspore.dtype): The type of output. Its value must be one of the following types: int32, int16, int8,
-        uint8, int64, float64, float32, float16. Default: int64.
+            uint8, int64, float64, float32, float16. Default: int64.
 
     Returns:
         Tensor. Its shape is spcified by the required args `n`. Its type is spcified by `dtype`. Otherwise is default.
@@ -612,18 +618,26 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
         ValueError: If `n` is larger than the maximal data of the set dtype.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> n = Tensor([4], mstype.int64)
+        >>> n = 4
         >>> seed = 0
         >>> offset = 0
         >>> output = ops.randperm(n, seed, offset, dtype=mstype.int64)
         >>> print(output)
         [1 0 2 3]
     """
-    randperm_ = _get_cache_prim(RandpermV2)(dtype=dtype)
-    return randperm_(n, seed, offset)
+    if is_cpu_backend():
+        if isinstance(n, int):
+            n = Tensor(n)
+        randperm_ = _get_cache_prim(RandpermV2)(dtype=dtype)
+        return randperm_(n, seed, offset)
+    if isinstance(n, Tensor):
+        n = int(n)
+    randperm_ = _get_cache_prim(P.Randperm)(max_length=n, dtype=dtype)
+    return randperm_(Tensor((n,)))
+
 
 
 @_function_forbid_reuse
