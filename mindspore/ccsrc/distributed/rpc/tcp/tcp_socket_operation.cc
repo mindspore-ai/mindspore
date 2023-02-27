@@ -20,7 +20,7 @@ namespace mindspore {
 namespace distributed {
 namespace rpc {
 constexpr int EAGAIN_RETRY = 1024000;
-constexpr int EAGAIN_SLEEP_INTERVAL = 10000;
+constexpr int EAGAIN_SLEEP_INTERVAL = 100;
 
 ssize_t TCPSocketOperation::ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) {
   return recv(connection->socket_fd, recvBuf, recvLen, MSG_PEEK);
