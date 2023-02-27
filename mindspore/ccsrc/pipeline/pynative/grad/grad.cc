@@ -1617,7 +1617,8 @@ void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) co
   cnode->set_abstract(op_run_info->base_op_run_info.abstract);
   SaveOutputNodeMap(op_run_info->out_value_id, op_run_info, cnode);
   DoOpGrad(op_run_info, cnode, op_run_info->out_value);
-  UpdateForwardTensorInfoInBpropGraph(op_run_info);
+  top_cell()->GetOpInfo(op_run_info);
+  UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->out_value);
   CheckGraphDynamic(cnode);
 }
 
@@ -1739,16 +1740,13 @@ void GradExecutor::AsyncUpdateOutputNodeOfTopCell(const AnfNodePtr &output_node,
   async_executor_->Push(task);
 }
 
-void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const FrontendOpRunInfoPtr &op_run_info) const {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  top_cell()->GetOpInfo(op_run_info);
-  MS_LOG(DEBUG) << "Current op info: " << op_run_info->op_info;
-
+void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) const {
+  MS_LOG(DEBUG) << "Current op info: " << op_info;
   std::vector<tensor::TensorPtr> op_output_tensors;
   // Get output tensors
-  TensorValueToTensor(op_run_info->out_value, &op_output_tensors);
+  TensorValueToTensor(v, &op_output_tensors);
   // Save all tensors info of current op
-  top_cell()->set_opinfo_with_tensor_id(op_run_info->op_info, op_output_tensors);
+  top_cell()->set_opinfo_with_tensor_id(op_info, op_output_tensors);
 
   // First run top cell
   const auto &pre_top_cell = GetAlreadyRunTopCell(top_cell()->already_run_cell_id());
@@ -1757,15 +1755,17 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const FrontendOpRunInfoPt
     return;
   }
   // Non-first run
-  if (pre_top_cell->op_info_with_tensor_id().find(op_run_info->op_info) ==
-      pre_top_cell->op_info_with_tensor_id().end()) {
-    MS_LOG(DEBUG) << "Can not find op info " << op_run_info->op_info << " in op info with tensor id map. Top cell "
+  if (pre_top_cell->op_info_with_tensor_id().find(op_info) == pre_top_cell->op_info_with_tensor_id().end()) {
+    MS_LOG(DEBUG) << "Can not find op info " << op_info << " in op info with tensor id map. Top cell "
                   << top_cell_->already_run_cell_id();
     return;
   }
 
   // Update new output tensor info in bprop graph
-  const auto &pre_op_tensor_id = pre_top_cell->op_info_with_tensor_id().at(op_run_info->op_info);
+  if (top_cell()->use_dynamic_shape_process()) {
+    return;
+  }
+  const auto &pre_op_tensor_id = pre_top_cell->op_info_with_tensor_id().at(op_info);
   if (pre_op_tensor_id.size() != op_output_tensors.size()) {
     MS_LOG(EXCEPTION) << "The size of op pre output tensor size: " << pre_op_tensor_id.size()
                       << " is not equal to current " << op_output_tensors.size();
@@ -1879,12 +1879,13 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr
       continue;
     }
     tensor->set_is_forward_output(true);
-    if (!top_cell()->use_dynamic_shape_process()) {
-      top_cell()->set_tensor_id_with_tensor_object(tensor->id(), tensor);
-      MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
-                    << " device address: " << tensor->device_address() << " shape and dtype "
-                    << tensor->GetShapeAndDataTypeInfo();
+    if (top_cell()->use_dynamic_shape_process()) {
+      continue;
     }
+    top_cell()->set_tensor_id_with_tensor_object(tensor->id(), tensor);
+    MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
+                  << " device address: " << tensor->device_address() << " shape and dtype "
+                  << tensor->GetShapeAndDataTypeInfo();
   }
 }
 

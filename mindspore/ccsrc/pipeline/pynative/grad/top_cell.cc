@@ -162,7 +162,6 @@ void TopCellInfo::Clear() {
   graph_info_map_.clear();
   op_info_with_tensor_id_.clear();
   tensor_id_with_tensor_object_.clear();
-  op_info_with_ms_func_forward_tensors_.clear();
   cnode_hash_with_op_index_.clear();
 }
 

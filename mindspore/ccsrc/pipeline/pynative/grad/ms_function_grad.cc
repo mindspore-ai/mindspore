@@ -195,9 +195,9 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
   }
 }
 
-void MsFunction::ReplaceWithRealTensorsInGradGraph(const GradExecutor *grad_executor, const ValuePtr &added_out,
-                                                   const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
-                                                   const FrontendOpRunInfoPtr &op_run_info) const {
+void MsFunction::ReplaceAddedCnodeActualOutput(const GradExecutor *grad_executor, const ValuePtr &added_out,
+                                               const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
+                                               const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   // Get added forward nodes.
   auto merge_node = ms_func_graph->output();
@@ -221,9 +221,6 @@ void MsFunction::ReplaceWithRealTensorsInGradGraph(const GradExecutor *grad_exec
   MS_EXCEPTION_IF_NULL(added_forward_node);
   if (added_forward_node->isa<ValueNode>()) {
     MS_LOG(DEBUG) << "The added forward output node is value node: " << added_forward_node->DebugString();
-    std::vector<tensor::TensorPtr> total_output_tensors;
-    TensorValueToTensor(added_out, &total_output_tensors);
-    grad_executor->top_cell()->set_op_info_with_ms_func_forward_tensors(op_run_info->op_info, total_output_tensors);
     return;
   }
   // Replace new output tensors for forward nodes, it will also work in grad graph with same value node.
@@ -236,33 +233,6 @@ void MsFunction::ReplaceWithRealTensorsInGradGraph(const GradExecutor *grad_exec
   // placeholder(mindspore/ccsrc/frontend/optimizer/ad/pynative_dfunctor.cc).After running ms_function, need to update
   // to real value.
   RunReplace(added_make_tuple, total_output_tensors, grad_graph, is_dynamic_shape);
-  grad_executor->top_cell()->set_op_info_with_ms_func_forward_tensors(op_run_info->op_info, total_output_tensors);
-  grad_executor->top_cell()->set_opinfo_with_tensor_id(op_run_info->op_info + kAddedValue, total_output_tensors);
-}
-
-void MsFunction::UpdateMsFunctionForwardTensors(const GradExecutor *grad_executor, const TopCellInfoPtr &top_cell,
-                                                const string &op_info, const ValuePtr &new_forward_value) const {
-  MS_EXCEPTION_IF_NULL(new_forward_value);
-  MS_LOG(DEBUG) << "Ms func graph has already ran before. The graph phase is: " << graph_phase_;
-  std::vector<tensor::TensorPtr> new_tensors;
-  TensorValueToTensor(new_forward_value, &new_tensors);
-  if (new_tensors.empty()) {
-    MS_LOG(DEBUG) << "The size of added forward tensors is zero, no need to update.";
-    return;
-  }
-  MS_EXCEPTION_IF_NULL(top_cell);
-  const auto &old_tensors = top_cell->op_info_with_ms_func_forward_tensors().at(op_info);
-  if (old_tensors.size() != new_tensors.size()) {
-    MS_LOG(EXCEPTION) << "The size of old tensors is: " << old_tensors.size()
-                      << ", but the size of new tensors is: " << new_tensors.size()
-                      << ", the current op info is: " << op_info;
-  }
-  MS_EXCEPTION_IF_NULL(grad_executor);
-  for (size_t i = 0; i < new_tensors.size(); ++i) {
-    grad_executor->UpdatePreTensorInfo(new_tensors[i], {old_tensors[i]});
-    MS_EXCEPTION_IF_NULL(old_tensors[i]);
-    old_tensors[i]->set_sync_status(kNeedSyncDeviceToHost);
-  }
 }
 
 void MsFunction::GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, AnfNodePtrList *input_nodes,
@@ -404,23 +374,15 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   MS_EXCEPTION_IF_NULL(grad_executor);
 
   // Step 1: Update actual output tensors used in grad graph.
-  MS_EXCEPTION_IF_NULL(op_run_info->out_value);
   MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->out_value->ToString();
-  // The output of ms_function may be used in subsequent PyNative process
-  grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info);
+  grad_executor->top_cell()->GetOpInfo(op_run_info);
+  grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->out_value);
 
   // Step 2: Update output tensors of added forward nodes, which are added to return node of ms_function func graph.
-  if (grad_executor->use_dynamic_shape_process()) {
-    MS_LOG(DEBUG) << "Get dynamic shape process";
-  } else {
-    const auto &pre_top_cell = grad_executor->GetAlreadyRunTopCell(grad_executor->top_cell()->already_run_cell_id());
-    if (pre_top_cell != nullptr && pre_top_cell->op_info_with_ms_func_forward_tensors().find(op_run_info->op_info) !=
-                                     pre_top_cell->op_info_with_ms_func_forward_tensors().end()) {
-      UpdateMsFunctionForwardTensors(grad_executor, pre_top_cell, op_run_info->op_info, added_out_v);
-    }
-  }
+  grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, added_out_v);
 
-  ReplaceWithRealTensorsInGradGraph(grad_executor, added_out_v, ms_func_graph, grad_graph, op_run_info);
+  // Step 3: Replace added cnode forward with actual output
+  ReplaceAddedCnodeActualOutput(grad_executor, added_out_v, ms_func_graph, grad_graph, op_run_info);
 
   // Change ms function graph to real output
   auto clone_ms_func_graph = BasicClone(ms_func_graph);

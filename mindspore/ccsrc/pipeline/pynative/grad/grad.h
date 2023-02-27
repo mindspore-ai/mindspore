@@ -107,7 +107,7 @@ class GradExecutor {
   void AsyncProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   AnfNodePtr GetInput(const ValuePtr &v, const string &obj_id) const;
   AnfNodePtr GetParamInput(const ValuePtr &v, const std::string &id) const;
-  void UpdateForwardTensorInfoInBpropGraph(const FrontendOpRunInfoPtr &op_run_info) const;
+  void UpdateForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) const;
   void UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor,
                            const std::vector<tensor::TensorPtr> &pre_tensors) const;
   void ClearRes();
