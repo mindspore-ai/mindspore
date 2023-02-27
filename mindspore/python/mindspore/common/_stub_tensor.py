@@ -53,8 +53,9 @@ class StubTensor:
     def __init__(self, stub):
         self.stub = stub
         self.tensor = None
+        self.stub_shape = None
+        self.stub_dtype = None
 
-    __repr__ = _stub_method(Tensor.__repr__)
     __str__ = _stub_method(Tensor.__str__)
     __setitem__ = _stub_method(Tensor.__setitem__)
 
@@ -65,18 +66,29 @@ class StubTensor:
     __eq__ = Tensor.__eq__
     __ne__ = Tensor.__ne__
 
+    def __repr__(self):
+        try:
+            return _stub_method(Tensor.__repr__)(self)
+        except RuntimeError:
+            return "{} object at {}\nThe real tensor data is {} due to the internal error below.".format(
+                type(self), hex(id(self)), type(self.tensor))
+
     @property
     def shape(self):
         """shape stub."""
         if self.stub:
-            return self.stub.get_shape()
+            if self.stub_shape is None:
+                self.stub_shape = self.stub.get_shape()
+            return self.stub_shape
         return self.tensor.shape
 
     @property
     def dtype(self):
         """dtype stub."""
         if self.stub:
-            return self.stub.get_dtype()
+            if self.stub_dtype is None:
+                self.stub_dtype = self.stub.get_dtype()
+            return self.stub_dtype
         return self.tensor.dtype
 
     @property
