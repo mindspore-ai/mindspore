@@ -533,6 +533,31 @@ class SequenceMin(Primitive):
         self.init_prim_io_names(inputs=['sequence'], outputs=['output_data'])
 
 
+class SequenceAddN(Primitive):
+    r"""
+    Support sequence AddN operation.
+
+    .. note::
+        This it is only for internal used.
+
+    Inputs:
+        - **sequence** (Union[List, Tuple]) - The sequence.
+
+    Outputs:
+        The addition of all input.
+
+    Raises:
+        TypeError: The 'sequence' is not list or tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SequenceAddN"""
+        self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
+
+
 class tuple_greater_than(Primitive):
     r"""
     Support tuple_greater_than operation 'greater_than(target)'.
