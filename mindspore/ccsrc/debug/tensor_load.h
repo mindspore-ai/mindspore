@@ -254,7 +254,10 @@ class TensorLoader {
     if (iter != tensor_list_map_.cend()) {
       std::shared_ptr<TensorData> node = iter->second;
       std::string path = filepath + '.' + node->GetFormat();
-
+      if (node->GetByteSize() == 0) {
+        MS_LOG(INFO) << "The byte size is 0 for tensor: " << tensor_loader_name;
+        return false;
+      }
       return DumpJsonParser::DumpToFile(path, node->GetDataPtr(), node->GetByteSize(), node->GetShape(),
                                         StringToTypeId(node->GetTypeString()));
     }
