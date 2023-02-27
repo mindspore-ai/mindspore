@@ -20,11 +20,12 @@
 #include <memory>
 
 #include "extendrt/graph_compiler/type.h"
+#include "include/api/context.h"
 #include "infer/graph_compiler.h"
 
 namespace mindspore {
-using GraphCompiler = infer::abstract::GraphCompiler;
-using GraphCompilerRegFunc = std::function<std::shared_ptr<GraphCompiler>()>;
+using GraphCompilerRegFunc =
+  std::function<std::shared_ptr<infer::abstract::GraphCompiler>(const std::shared_ptr<Context> &)>;
 
 class GraphCompilerRegistry {
  public:
@@ -35,7 +36,8 @@ class GraphCompilerRegistry {
 
   void RegCompiler(const mindspore::GraphCompilerType &graph_compiler_type, const GraphCompilerRegFunc &creator);
 
-  std::shared_ptr<GraphCompiler> GetCompiler(const mindspore::GraphCompilerType &type);
+  std::shared_ptr<infer::abstract::GraphCompiler> GetCompiler(const mindspore::GraphCompilerType &type,
+                                                              const std::shared_ptr<Context> &context);
 
  private:
   mindspore::HashMap<mindspore::GraphCompilerType, GraphCompilerRegFunc> graph_compiler_map_;
@@ -44,7 +46,7 @@ class GraphCompilerRegistry {
 class GraphCompilerRegistrar {
  public:
   GraphCompilerRegistrar(const mindspore::GraphCompilerType &graph_compiler_type, const GraphCompilerRegFunc &creator) {
-    GraphCompilerRegistry::GetInstance().GetGraphCompiler(graph_compiler_type, creator);
+    GraphCompilerRegistry::GetInstance().RegCompiler(graph_compiler_type, creator);
   }
   ~GraphCompilerRegistrar() = default;
 };

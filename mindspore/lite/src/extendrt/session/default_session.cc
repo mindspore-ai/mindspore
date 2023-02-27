@@ -22,6 +22,7 @@
 #include "extendrt/session/factory.h"
 #include "extendrt/graph_compiler/factory.h"
 #include "extendrt/graph_runtime/factory.h"
+#include "extendrt/utils/tensor_utils.h"
 #include "backend/graph_compiler/graph_partition.h"
 
 #include "litert/cxx_api/tensor/tensor_impl.h"
@@ -32,18 +33,18 @@ static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,  
                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
 Status DefaultInferSession::Init(const std::shared_ptr<Context> &context) {
   MS_LOG(INFO) << "DefaultInferSession::Init";
-  context_ = context;
+  // context_ = context;
 
   // Set MSContext::GetInstance param?
 
   // init compiler and runtime according to context
-  compiler_ = GraphCompilerRegistry::GetInstance()->GetCompiler(kDefaultCompiler);
+  compiler_ = GraphCompilerRegistry::GetInstance().GetCompiler(kDefaultCompiler, context_);
   if (compiler_ == nullptr) {
     MS_LOG(ERROR) << "DefaultInferSession::Init Get Compiler is nullptr";
     return kLiteNullptr;
   }
 
-  runtime_ = GraphRuntimRegistry::GetInstance()->GetRuntime(kDefaultRuntime);
+  runtime_ = GraphRuntimeRegistry::GetInstance().GetRuntime(kDefaultRuntime);
   if (runtime_ == nullptr) {
     MS_LOG(ERROR) << "DefaultInferSession::Init Get Runtime is nullptr";
     return kLiteNullptr;
@@ -68,7 +69,7 @@ Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, s
   MS_LOG(DEBUG) << "DefaultInferSession::CompileGraph Compile Graph End";
 
   MS_LOG(DEBUG) << "DefaultInferSession::CompileGraph Prepare ExecutionPlan Begin";
-  auto runtime = this->GetRuntime();
+  auto runtime = this->GetGraphRuntime();
   if (runtime == nullptr) {
     MS_LOG(ERROR) << "DefaultInferSession::CompileGraph Runtime in Infer Session is null";
     return kLiteNullptr;
@@ -86,7 +87,7 @@ Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, s
 Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
                                      const MSKernelCallBack &before, const MSKernelCallBack &after) {
   MS_LOG(DEBUG) << "DefaultInferSession::RunGraph Execute ExecutionPlan Begin";
-  auto runtime = this->GetRuntime();
+  auto runtime = this->GetGraphRuntime();
   if (runtime_ == nullptr) {
     MS_LOG(ERROR) << "DefaultInferSession::RunGraph Runtime in Infer Session is null";
     return kLiteNullptr;
@@ -101,7 +102,7 @@ Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, 
     MS_LOG(ERROR) << "DefaultInferSession::RunGraph Copy Data Pointer to input tensors failed";
     return status;
   }
-  status = CopyDataToInnerTensors(outputs, inner_outputs);
+  status = CopyDataToInnerTensors(*outputs, inner_outputs);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "DefaultInferSession::RunGraph Copy Data Pointer to output tensors failed";
     return status;
@@ -124,11 +125,16 @@ Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, 
   return RunGraph(inputs, outputs, nullptr, nullptr);
 }
 
+Status DefaultInferSession::Resize(const std::vector<tensor::Tensor> &inputs,
+                                   const std::vector<std::vector<int64_t>> &dims) {
+  return kSuccess;
+}
+
 std::vector<MutableTensorImplPtr> DefaultInferSession::GetOutputs() {
-  auto runtime = this->GetRuntime();
+  auto runtime = this->GetGraphRuntime();
   if (runtime_ == nullptr) {
     MS_LOG(ERROR) << "DefaultInferSession::GetOutputs Runtime in Infer Session is null";
-    return kLiteNullptr;
+    return std::vector<MutableTensorImplPtr>{};
   }
   auto lite_outputs = runtime->GetOutputs();
   MS_LOG(DEBUG) << "DefaultInferSession::GetOutputs end";
@@ -136,10 +142,10 @@ std::vector<MutableTensorImplPtr> DefaultInferSession::GetOutputs() {
 }
 
 std::vector<MutableTensorImplPtr> DefaultInferSession::GetInputs() {
-  auto runtime = this->GetRuntime();
+  auto runtime = this->GetGraphRuntime();
   if (runtime_ == nullptr) {
     MS_LOG(ERROR) << "DefaultInferSession::GetOutputs Runtime in Infer Session is null";
-    return kLiteNullptr;
+    return std::vector<MutableTensorImplPtr>{};
   }
   auto lite_inputs = runtime->GetInputs();
   MS_LOG(DEBUG) << "DefaultInferSession::GetOutputs end";
@@ -152,7 +158,7 @@ MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(const std::strin
 MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
 
 Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Tensor> &tensors,
-                                                   std::vector<abstract::Tensor *> inner_tensors) {
+                                                   std::vector<infer::abstract::Tensor *> inner_tensors) {
   if (tensors.size() == inner_tensors.size()) {
     MS_LOG(EXCEPTION) << "user input size " << tensors.size() << " is not equal to graphp input size "
                       << inner_tensors.size();
@@ -200,17 +206,17 @@ Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Ten
   return kSuccess;
 }
 
-std::vector<MutableTensorImplPtr> &DefaultInferSession::AbstractTensorsToTensorImpls(
-  const std::vector<abstract::Tensor *> &abstract_tensors) {
-  std::vector<std::shared_ptr<LiteTensorImpl>> tensorImpls;
+std::vector<MutableTensorImplPtr> DefaultInferSession::AbstractTensorsToTensorImpls(
+  const std::vector<infer::abstract::Tensor *> &abstract_tensors) {
+  std::vector<MutableTensorImplPtr> tensorImpls;
   tensorImpls.reserve(abstract_tensors.size());
   (void)std::transform(abstract_tensors.begin(), abstract_tensors.end(), std::back_inserter(tensorImpls),
-                       [](abstract::Tensor *tensor) { return std::make_shared<LiteTensorImpl>(tensor); });
+                       [](infer::abstract::Tensor *tensor) { return std::make_shared<LiteTensorImpl>(tensor); });
   return tensorImpls;
 }
 
 std::vector<mindspore::tensor::Tensor> DefaultInferSession::LiteTensorToTensor(
-  const std::vector<abstract::Tensor *> &abstract_tensors) {
+  const std::vector<infer::abstract::Tensor *> &abstract_tensors) {
   std::vector<mindspore::tensor::Tensor> tensors;
   for (auto abstract_tensor : abstract_tensors) {
     if (abstract_tensor == nullptr) {
@@ -222,16 +228,47 @@ std::vector<mindspore::tensor::Tensor> DefaultInferSession::LiteTensorToTensor(
     auto data = abstract_tensor->MutableData();
     auto data_size = abstract_tensor->Size();
     auto ref_tensor_data =
-      std::make_shared<TensorRefData>(data, abstract_tensor->ElementNum(), data_size, shape.size());
-    mindspore::tensor::Tensor tensor(type_id, shape, ref_tensor_data);
+      std::make_shared<TensorRefData>(data, abstract_tensor->ElementsNum(), data_size, shape.size());
+    std::vector<int64_t> shape64;
+    std::transform(shape.begin(), shape.end(), std::back_inserter(shape64),
+                   [](int dim) { return static_cast<int64_t>(dim); });
+    mindspore::tensor::Tensor tensor(type_id, shape64, ref_tensor_data);
     auto device_address = abstract_tensor->device_data();
     if (device_address != nullptr) {
-      auto lite_device_address = std::make_shared<LiteDeviceAddress>(device_address, abstract_tensor->DataSize());
+      auto lite_device_address = std::make_shared<LiteDeviceAddress>(device_address, abstract_tensor->Size());
       tensor.set_device_address(lite_device_address);
     }
     tensors.emplace_back(std::move(tensor));
   }
   return tensors;
+}
+
+std::vector<int32_t> DefaultInferSession::TruncateShape(const std::vector<int64_t> &shape, enum TypeId type,
+                                                        size_t data_len, bool verify_size) {
+  std::vector<int32_t> empty;
+  if (shape.empty()) {
+    return empty;
+  }
+  std::vector<int32_t> truncated_shape;
+  truncated_shape.resize(shape.size());
+  size_t element_size = lite::DataTypeSize(type);
+  for (size_t i = 0; i < shape.size(); i++) {
+    auto dim = shape[i];
+    if (dim < 0 || dim > INT_MAX || (dim != 0 && element_size > INT_MAX / static_cast<size_t>(dim))) {
+      MS_LOG(ERROR) << "Invalid shape!dim: " << dim << ", element_size: " << element_size;
+      return empty;
+    } else {
+      element_size *= static_cast<size_t>(dim);
+      truncated_shape[i] = static_cast<int32_t>(dim);
+    }
+  }
+  if (verify_size) {
+    if (element_size != data_len) {
+      MS_LOG(ERROR) << "Invalid data size!element_size: " << element_size << ", data_len: " << data_len;
+      return empty;
+    }
+  }
+  return truncated_shape;
 }
 
 static std::shared_ptr<InferSession> DefaultSessionCreator(const std::shared_ptr<Context> &ctx,

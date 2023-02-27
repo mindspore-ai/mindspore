@@ -18,7 +18,9 @@
 #include <algorithm>
 
 #include "extendrt/graph_compiler/default_graph_compiler.h"
+#include "extendrt/graph_compiler/factory.h"
 
+#include "extendrt/mock/lite_runtime/converters.h"
 #include "backend/graph_compiler/graph_partition.h"
 #include "backend/graph_compiler/segment_runner.h"
 #include "common/log.h"
@@ -31,6 +33,8 @@ static constexpr auto ms_infer_backend_name = "mindspore_lite_backend";
 
 std::shared_ptr<abstract::ExecutionPlan> DefaultGraphCompiler::Compile(FuncGraphPtr graph) {
   MS_LOG(INFO) << "DefaultGraphCompiler::Compile";
+
+  inner_context_ = ContextUtils::Convert(context_.get());
 
   MS_LOG(DEBUG) << "DefaultGraphCompiler::Partition Partition FunctionGraph Begin";
   auto graph_segments = Partition(graph);
@@ -102,6 +106,7 @@ std::shared_ptr<abstract::ExecutionPlan> DefaultGraphCompiler::Schedule(
     return nullptr;
   }
   execution_plan->SetOutputs(graph_output_tensor);
+  execution_plan->SetContext(inner_context_);
 
   for (auto graph_segment : graph_segments) {
     FuncGraphPtr fg = nullptr;
@@ -115,6 +120,7 @@ std::shared_ptr<abstract::ExecutionPlan> DefaultGraphCompiler::Schedule(
       delete output_isolate_map;
       return nullptr;
     }
+    execution_flow->SetContext(inner_context_);
 
     for (auto i = 0; i < execution_flow->GetInputs().size(); i++) {
       auto input_tensor = execution_flow->GetInputs()[i];
@@ -231,4 +237,10 @@ std::shared_ptr<abstract::ExecutionFlow> DefaultGraphCompiler::Schedule(const Gr
   // implementation by hangangqiang
   return nullptr;
 }
+
+static std::shared_ptr<InferSession> DefaultGraphCompilerCreator(const std::shared_ptr<Context> &ctx) {
+  auto graph_compiler = std::make_shared<DefaultGraphCompiler>(ctx);
+  return graph_compiler;
+}
+REG_GRAPH_COMPILER(kDefaultCompiler, DefaultGraphCompilerCreator);
 }  // namespace mindspore

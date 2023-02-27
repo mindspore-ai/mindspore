@@ -20,11 +20,14 @@
 #include <vector>
 
 #include "infer/graph_compiler.h"
+#include "infer/context.h"
 
 namespace mindspore {
 class DefaultGraphCompiler : public mindspore::infer::abstract::GraphCompiler {
  public:
-  DefaultGraphCompiler() {}
+  explicit DefaultGraphCompiler(const std::shared_ptr<Context> &context) : context_(context) {
+    inner_context_ = nullptr;
+  }
   virtual ~DefaultGraphCompiler() = default;
 
   std::shared_ptr<abstract::ExecutionPlan> Compile(FuncGraphPtr graph) override;
@@ -48,6 +51,8 @@ class DefaultGraphCompiler : public mindspore::infer::abstract::GraphCompiler {
 
  private:
   mindspore::HashMap<AnfNodePtr, infer::abstract::Tensor *> anf_tensor_map_;
+  const std::shared_ptr<Context> &context_;
+  std::shared_ptr<mindspore::infer::abstract::Context> inner_context_;
 }
 }  // namespace mindspore
 

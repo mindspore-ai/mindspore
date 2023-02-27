@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_EXECUTION_FLOW_H_
 
 #include <vector>
+#include <memory>
 
 #include "infer/execution_flow.h"
 
@@ -25,23 +26,7 @@ namespace mindspore::infer {
 class ExecutionFlow : public abstract::ExecutionFlow {
  public:
   ExecutionFlow() = default;
-  virtual ~ExecutionFlow() {
-    for (auto tensor : inputs_) {
-      if (tensor != nullptr) {
-        delete tensor;
-      }
-    }
-    for (auto tensor : outputs_) {
-      if (tensor != nullptr) {
-        delete tensor;
-      }
-    }
-    for (auto kernel : kernels_) {
-      if (kernel != nullptr) {
-        delete kernel;
-      }
-    }
-  }
+  virtual ~ExecutionFlow();
 
   std::vector<abstract::Kernel *> GetKernels() override { return kernels_; }
 
@@ -55,9 +40,9 @@ class ExecutionFlow : public abstract::ExecutionFlow {
 
   void SetOutputs(const std::vector<abstract::Tensor *> &outputs) override { outputs_ = outputs; }
 
-  abstract::Context *GetContext() override { return context_; }
+  std::shared_ptr<abstract::Context> GetContext() override { return context_; }
 
-  void SetContext(abstract::Context *context) override { context_ = context; }
+  void SetContext(std::shared_ptr<abstract::Context> context) override { context_ = context; }
 
   const abstract::KernelCallBack &GetKernelBeforeCallBack() override { return before_; }
 
@@ -67,11 +52,13 @@ class ExecutionFlow : public abstract::ExecutionFlow {
 
   void SetKernelAfterCallBack(const abstract::KernelCallBack &callback) override { after_ = callback; }
 
+  abstract::Kernel *ConstructFusionKernel() override;
+
  private:
   std::vector<abstract::Kernel *> kernels_;
   std::vector<abstract::Tensor *> inputs_;
   std::vector<abstract::Tensor *> outputs_;
-  abstract::Context *context_;
+  std::shared_ptr<abstract::Context> context_;
   abstract::KernelCallBack before_;
   abstract::KernelCallBack after_;
 };

@@ -18,16 +18,17 @@
 #include <memory>
 
 namespace mindspore {
-GraphRuntimRegistry &GraphRuntimRegistry::GetInstance() {
-  static GraphRuntimRegistry instance;
+GraphRuntimeRegistry &GraphRuntimeRegistry::GetInstance() {
+  static GraphRuntimeRegistry instance;
   return instance;
 }
 
-void GraphRuntimRegistry::RegRuntime(const mindspore::GraphRuntimeType &type, const GraphRuntimeRegFunc &creator) {
+void GraphRuntimeRegistry::RegRuntime(const mindspore::GraphRuntimeType &type, const GraphRuntimeRegFunc &creator) {
   graph_runtime_map_[type] = creator;
 }
 
-std::shared_ptr<infer::GraphRuntime> GraphRuntimRegistry::GetRuntime(const mindspore::GraphRuntimeType &type) {
+std::shared_ptr<infer::abstract::GraphRuntime> GraphRuntimeRegistry::GetRuntime(
+  const mindspore::GraphRuntimeType &type) {
   auto it = graph_runtime_map_.find(type);
   if (it == graph_runtime_map_.end()) {
     return nullptr;

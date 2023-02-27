@@ -37,6 +37,7 @@ class DefaultInferSession : public InferSession {
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
                   const MSKernelCallBack &before, const MSKernelCallBack &after) override;
+  Status Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
   std::vector<MutableTensorImplPtr> GetOutputs() override;
   std::vector<MutableTensorImplPtr> GetInputs() override;
   std::vector<std::string> GetOutputNames() override;
@@ -45,16 +46,19 @@ class DefaultInferSession : public InferSession {
   MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
 
  protected:
-  virtual std::shared_ptr<infer::abstract::GraphCompiler> GetCompiler() { return compiler_; }
+  virtual std::shared_ptr<infer::abstract::GraphCompiler> GetGraphCompiler() { return compiler_; }
 
-  virtual std::shared_ptr<infer::abstract::GraphRuntime> GetRuntime() { return runtime_; }
+  virtual std::shared_ptr<infer::abstract::GraphRuntime> GetGraphRuntime() { return runtime_; }
 
  private:
   Status CopyDataToInnerTensors(const std::vector<tensor::Tensor> &tensors,
-                                std::vector<abstract::Tensor *> inner_tensors);
-  std::vector<MutableTensorImplPtr> &AbstractTensorsToTensorImpls(
-    const std::vector<abstract::Tensor *> &abstract_tensors);
-  std::vector<mindspore::tensor::Tensor> LiteTensorToTensor(const std::vector<abstract::Tensor *> &abstract_tensors);
+                                std::vector<infer::abstract::Tensor *> inner_tensors);
+  std::vector<MutableTensorImplPtr> AbstractTensorsToTensorImpls(
+    const std::vector<infer::abstract::Tensor *> &abstract_tensors);
+  std::vector<mindspore::tensor::Tensor> LiteTensorToTensor(
+    const std::vector<infer::abstract::Tensor *> &abstract_tensors);
+  std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
+                                     bool verify_size);
 
  private:
   std::shared_ptr<infer::abstract::GraphCompiler> compiler_;

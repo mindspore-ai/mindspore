@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_INFER_GRAPH__RUNTIME_H_
-#define MINDSPORE_LITE_INFER_GRAPH__RUNTIME_H_
+#ifndef MINDSPORE_LITE_INFER_GRAPH_RUNTIME_H_
+#define MINDSPORE_LITE_INFER_GRAPH_RUNTIME_H_
 
 #include <vector>
 #include <memory>
@@ -50,6 +50,14 @@ class GraphRuntime : public std::enable_shared_from_this<GraphRuntime> {
   virtual Status Execute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
                          KernelCallBack before = nullptr, KernelCallBack after = nullptr) = 0;
 
+  /// \brief Resize According to New Inputs and dims.
+  ///
+  /// \param[in] inputs, inputs tensors to resize
+  /// \param[in] dims, targe dim shape to resize
+  ///
+  /// \return Status.
+  virtual Status Resize(const std::vector<Tensor *> *inputs, const std::vector<std::vector<int64_t>> &dims) = 0;
+
   /// \brief Get list of inputs for the model.
   ///
   /// \return vector of Tensor.
@@ -62,4 +70,4 @@ class GraphRuntime : public std::enable_shared_from_this<GraphRuntime> {
 };
 }  // namespace mindspore::infer::abstract
 
-#endif  // MINDSPORE_LITE_INFER_GRAPH__RUNTIME_H_
+#endif  // MINDSPORE_LITE_INFER_GRAPH_RUNTIME_H_

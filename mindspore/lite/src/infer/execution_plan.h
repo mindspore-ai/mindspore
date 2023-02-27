@@ -21,6 +21,7 @@
 
 #include "ir/func_graph.h"
 #include "infer/execution_flow.h"
+#include "infer/context.h"
 
 namespace mindspore::infer::abstract {
 class ExecutionPlan : public std::enable_shared_from_this<ExecutionPlan> {
@@ -81,6 +82,47 @@ class ExecutionPlan : public std::enable_shared_from_this<ExecutionPlan> {
   ///
   /// \return void.
   virtual void SetOutputs(const std::vector<Tensor *> &outputs) = 0;
+
+  /// \brief Get context of execution plan.
+  ///
+  /// \return Context of execution plan.
+  virtual std::shared_ptr<Context> GetContext() = 0;
+
+  /// \brief Set context to run.
+  ///
+  /// \param[in] context, context
+  ///
+  /// \return void.
+  virtual void SetContext(std::shared_ptr<Context> context) = 0;
+
+  /// \brief Get callback before kernel execution.
+  ///
+  /// \return KernelCallBack pointer.
+  virtual const KernelCallBack &GetKernelBeforeCallBack() = 0;
+
+  /// \brief Set callback before kernel execution.
+  ///
+  /// \param[in] callback, callback function pointer
+  ///
+  /// \return void.
+  virtual void SetKernelBeforeCallBack(const KernelCallBack &callback) = 0;
+
+  /// \brief Get callback after kernel execution.
+  ///
+  /// \return KernelCallBack pointer.
+  virtual const KernelCallBack &GetKernelAfterCallBack() = 0;
+
+  /// \brief Set callback after kernel execution.
+  ///
+  /// \param[in] callback, callback function pointer
+  ///
+  /// \return void.
+  virtual void SetKernelAfterCallBack(const KernelCallBack &callback) = 0;
+
+  /// \brief Convert Execution Plan to Kernel List
+  ///
+  /// \return Kernel List
+  virtual std::vector<Kernel *> ToKernelList() = 0;
 };
 }  // namespace mindspore::infer::abstract
 

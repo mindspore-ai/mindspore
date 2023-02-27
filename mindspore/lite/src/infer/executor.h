@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "include/api/status.h"
-#include "infer/execution_flow.h"
+#include "infer/tensor.h"
 
 namespace mindspore::infer::abstract {
 class Executor : public std::enable_shared_from_this<Executor> {
@@ -38,7 +38,7 @@ class Executor : public std::enable_shared_from_this<Executor> {
   /// \param[in] execution_flow Abstract Execution Plan for execute.
   ///
   /// \return Status.
-  virtual Status Prepare(std::shared_ptr<ExecutionFlow> execution_flow) = 0;
+  virtual Status Prepare() = 0;
 
   /// \brief Execute According to ExecutionFlow.
   ///

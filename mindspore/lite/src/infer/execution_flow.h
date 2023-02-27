@@ -67,14 +67,14 @@ class ExecutionFlow : public std::enable_shared_from_this<ExecutionFlow> {
   /// \brief Get context for the execution flow.
   ///
   /// \return Context pointer.
-  virtual Context *GetContext() = 0;
+  virtual std::shared_ptr<Context> GetContext() = 0;
 
   /// \brief Set context of execution run
   ///
   /// \param[in] context, context for running
   ///
   /// \return void.
-  virtual void SetContext(Context *context) = 0;
+  virtual void SetContext(std::shared_ptr<Context> context) = 0;
 
   /// \brief Get callback before kernel execution.
   ///
@@ -99,6 +99,11 @@ class ExecutionFlow : public std::enable_shared_from_this<ExecutionFlow> {
   ///
   /// \return void.
   virtual void SetKernelAfterCallBack(const KernelCallBack &callback) = 0;
+
+  /// \brief Construct flow into one fusion Kernel, eg. SubGraphKernel.
+  ///
+  /// \return Kernel pointer.
+  virtual Kernel *ConstructFusionKernel() = 0;
 };
 }  // namespace mindspore::infer::abstract
 

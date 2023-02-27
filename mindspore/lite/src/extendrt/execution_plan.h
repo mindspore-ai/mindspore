@@ -27,27 +27,7 @@ namespace mindspore::infer {
 class ExecutionPlan : public abstract::ExecutionPlan {
  public:
   ExecutionPlan() = default;
-  virtual ~ExecutionPlan() {
-    if (input_isolate_map_ != nullptr) {
-      delete input_isolate_map_;
-      input_isolate_map_ = nullptr;
-    }
-    if (output_isolate_map_) {
-      delete output_isolate_map_;
-      output_isolate_map_ = nullptr;
-    }
-
-    for (auto tensor : inputs_) {
-      if (tensor != nullptr) {
-        delete tensor;
-      }
-    }
-    for (auto tensor : outputs_) {
-      if (tensor != nullptr) {
-        delete tensor;
-      }
-    }
-  }
+  virtual ~ExecutionPlan();
 
   std::vector<std::shared_ptr<abstract::ExecutionFlow>> GetExecutionFLows() override { return execution_flows_; }
 
@@ -55,7 +35,7 @@ class ExecutionPlan : public abstract::ExecutionPlan {
     execution_flows_ = execution_flows;
   }
 
-  void AddExecutionFlow(std::shared_ptr<ExecutionFlow> execution_flow) override {
+  void AddExecutionFlow(std::shared_ptr<abstract::ExecutionFlow> execution_flow) override {
     execution_flows_.emplace_back(execution_flow);
   }
 
@@ -71,25 +51,42 @@ class ExecutionPlan : public abstract::ExecutionPlan {
 
   void SetOutputs(const std::vector<abstract::Tensor *> &outputs) override { outputs_ = outputs; }
 
-  void SetInputsMap(std::unordered_map<Tensor *, Tensor *> *input_isolate_map) {
+  std::shared_ptr<abstract::Context> GetContext() override { return context_; }
+
+  void SetContext(std::shared_ptr<abstract::Context> context) override { context_ = context; }
+
+  const abstract::KernelCallBack &GetKernelBeforeCallBack() override { return before_; }
+
+  void SetKernelBeforeCallBack(const abstract::KernelCallBack &callback) override { before_ = callback; }
+
+  const abstract::KernelCallBack &GetKernelAfterCallBack() override { return after_; }
+
+  void SetKernelAfterCallBack(const abstract::KernelCallBack &callback) override { after_ = callback; }
+
+  void SetInputsMap(std::unordered_map<abstract::Tensor *, abstract::Tensor *> *input_isolate_map) {
     input_isolate_map_ = input_isolate_map;
   }
 
-  std::unordered_map<Tensor *, Tensor *> *GetInputMap() { return input_isolate_map_; }
+  std::unordered_map<abstract::Tensor *, abstract::Tensor *> *GetInputMap() { return input_isolate_map_; }
 
-  void SetOutputsMap(std::unordered_map<Tensor *, Tensor *> *output_isolate_map) {
+  void SetOutputsMap(std::unordered_map<abstract::Tensor *, abstract::Tensor *> *output_isolate_map) {
     output_isolate_map_ = output_isolate_map;
   }
 
-  std::unordered_map<Tensor *, Tensor *> *GetOutputMap() { return output_isolate_map_; }
+  std::unordered_map<abstract::Tensor *, abstract::Tensor *> *GetOutputMap() { return output_isolate_map_; }
+
+  std::vector<abstract::Kernel *> ToKernelList() override;
 
  private:
   std::vector<std::shared_ptr<abstract::ExecutionFlow>> execution_flows_;
   FuncGraphPtr func_graph_;
   std::vector<abstract::Tensor *> inputs_;
   std::vector<abstract::Tensor *> outputs_;
-  std::unordered_map<Tensor *, Tensor *> *input_isolate_map_ = nullptr;
-  std::unordered_map<Tensor *, Tensor *> *output_isolate_map_ = nullptr;
+  std::shared_ptr<abstract::Context> context_;
+  abstract::KernelCallBack before_;
+  abstract::KernelCallBack after_;
+  std::unordered_map<abstract::Tensor *, abstract::Tensor *> *input_isolate_map_ = nullptr;
+  std::unordered_map<abstract::Tensor *, abstract::Tensor *> *output_isolate_map_ = nullptr;
 };
 }  // namespace mindspore::infer
 
