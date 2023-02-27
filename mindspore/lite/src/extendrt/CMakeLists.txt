@@ -176,6 +176,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CCSRC_DIR}/distributed/embedding_cache/embedding_cache_utils.cc
         ${CCSRC_DIR}/distributed/embedding_cache/embedding_hash_map.cc
         ${CCSRC_DIR}/distributed/embedding_cache/embedding_storage/dense_embedding_storage.cc
+        ${CCSRC_DIR}/distributed/embedding_cache/embedding_storage/sparse_embedding_storage.cc
         ${CCSRC_DIR}/distributed/embedding_cache/embedding_storage/embedding_storage.cc
         ${CCSRC_DIR}/distributed/persistent/storage/local_file.cc
         ${CCSRC_DIR}/distributed/persistent/storage/block.cc
