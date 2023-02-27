@@ -1692,6 +1692,9 @@ int BenchmarkUnifiedApi::InitDumpTensorDataCallbackParameter() {
 
 BenchmarkUnifiedApi::~BenchmarkUnifiedApi() {
 #ifdef PARALLEL_INFERENCE
+  if (!flags_->enable_parallel_predict_) {
+    return;
+  }
   for (auto tensor : ms_inputs_for_api_) {
     auto data = tensor.MutableData();
     if (data != nullptr) {
