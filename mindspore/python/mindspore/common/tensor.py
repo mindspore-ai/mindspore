@@ -3941,43 +3941,7 @@ class Tensor(Tensor_):
 
     def maximum(self, other):
         r"""
-        Computes the maximum of input tensors element-wise.
-
-        Note:
-            - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data
-              types consistent.
-            - The inputs must be two tensors or one tensor and one scalar.
-            - When the inputs are two tensors,
-              dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-            - When the inputs are one tensor and one scalar,
-              the scalar could only be a constant.
-            - Broadcasting is supported.
-            - If one of the elements being compared is a NaN, then that element is returned.
-
-        .. math::
-            output_i = max(input_i, other_i)
-
-        Args:
-            other (Union[Tensor, Number, bool]): The second input is a number or
-                a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-        Returns:
-            Tensor, the shape is the same as the one after broadcasting,
-            and the data type is the one with higher precision or higher digits among the two inputs.
-
-        Raises:
-            TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
-            ValueError: If `input` and `other` are not the same shape.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
-            >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
-            >>> output = x.maximum(y)
-            >>> print(output)
-            [4. 5. 6.]
+        For details, please refer to :func:`mindspore.ops.maximum`.
         """
         self._init_check()
         return tensor_operator_registry.get('maximum')(self, other)
@@ -4034,35 +3998,7 @@ class Tensor(Tensor_):
 
     def ne(self, other):
         r"""
-        Computes the non-equivalence of two tensors element-wise.
-
-        Note:
-            - Input tensor and `other` comply with the implicit type conversion rules to make the data
-              types consistent.
-            - The inputs must be two tensors or one tensor and one scalar.
-            - When the inputs are two tensors, the shapes of them could be broadcast.
-            - When the inputs are one tensor and one scalar, the scalar could only be a constant.
-            - Broadcasting is supported.
-
-        Args:
-            other (Union[Tensor, Number, bool]): The second input is a number or
-                a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-        Returns:
-            Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
-
-        Raises:
-            TypeError: If input tensor and `other` is not one of the following: Tensor, Number, bool.
-            TypeError: If neither input tensor and `other` is a Tensor.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
-            >>> output = x.ne(2.0)
-            >>> print(output)
-            [ True False  True]
+        For details, please refer to :func:`mindspore.ops.ne`.
         """
         self._init_check()
         return tensor_operator_registry.get('ne')(self, other)
