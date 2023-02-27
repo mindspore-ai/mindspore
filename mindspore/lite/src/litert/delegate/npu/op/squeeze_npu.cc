@@ -25,7 +25,7 @@ int SqueezeNPUOp::Init(const schema::Primitive *primitive, const std::vector<min
   }
   auto squeeze_prim = primitive->value_as_Squeeze();
   auto axis = squeeze_prim->axis();
-  vector<int64_t> axes;
+  std::vector<int64_t> axes;
   if (axis != nullptr) {
     for (size_t i = 0; i < axis->size(); i++) {
       axes.push_back(*(axis->begin() + i));

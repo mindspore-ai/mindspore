@@ -60,7 +60,7 @@ int FullconnectionINT8NPUOp::Init(const schema::Primitive *primitive,
     MS_LOG(ERROR) << "New Const operator for fullconnection op " << name_ << " failed.";
     return RET_ERROR;
   }
-  vector<int> reshape_data = {static_cast<int>(input_shape[0]), col};
+  std::vector<int> reshape_data = {static_cast<int>(input_shape[0]), col};
   ge::TensorDesc reshape_tensor_desc(ge::Shape({FC_INPUT_DIM}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr reshape_tensor = std::make_shared<hiai::Tensor>(reshape_tensor_desc);
   reshape_tensor->SetData(reinterpret_cast<uint8_t *>(reshape_data.data()), FC_INPUT_DIM * sizeof(int32_t));

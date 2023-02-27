@@ -44,7 +44,7 @@ class UnsqueezeNPUOp : public NPUOp {
  private:
   hiai::op::ExpandDims *unsqueeze_ = nullptr;
   hiai::op::Const *axis_const_ = nullptr;
-  vector<int> axis_;
+  std::vector<int> axis_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_UNSQUEEZE_NPU_H_

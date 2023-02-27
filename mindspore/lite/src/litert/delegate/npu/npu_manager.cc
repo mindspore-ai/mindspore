@@ -27,11 +27,11 @@ constexpr int KIRIN_REGEX_MIN_SIZE = 2;
 constexpr int KIRIN_VERSION_810 = 810;
 constexpr int KIRIN_VERSION_820 = 820;
 constexpr int KIRIN_VERSION_985 = 985;
-int NPUManager::CompareVersion(const string &version1, const string &version2) {
+int NPUManager::CompareVersion(const std::string &version1, const std::string &version2) {
   std::istringstream iss1(version1);
   std::istringstream iss2(version2);
-  string string1;
-  string string2;
+  std::string string1;
+  std::string string2;
   while (!iss1.eof() || !iss2.eof()) {
     getline(iss1, string1, '.');
     getline(iss2, string2, '.');
